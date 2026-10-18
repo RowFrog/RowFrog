@@ -75,10 +75,16 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     var id: Date { time }
 }
 
+struct WaterTemperature: Codable, Hashable {
+    let celsius: Double
+    let measuredAt: Date
+}
+
 struct ClubForecast: Codable, Hashable {
     let clubId: String
     let lakeId: String
     let generatedAt: Date
+    let waterTemperature: WaterTemperature?
     let attribution: [String]
     let hours: [ForecastHour]
 }

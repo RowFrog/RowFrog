@@ -13,12 +13,13 @@ from fastapi import FastAPI, HTTPException
 
 from . import locations, outlines
 from .forecast import RowingHour, rowing_forecast
-from .sources import open_meteo
+from .sources import gkd, open_meteo
 
 CACHE_SECONDS = 30 * 60
 ATTRIBUTION = [
     "Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0",
     "Lake outlines: © OpenStreetMap contributors, ODbL",
+    "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 ]
 
 app = FastAPI(title="RowerWeather")
@@ -80,13 +81,24 @@ async def club_forecast(club_id: str) -> dict:
     if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
         return cached[1]
 
+    lake = _locations.lakes[club.lake_id]
+    now = datetime.now(timezone.utc)
     async with httpx.AsyncClient() as client:
         weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
-    hours = rowing_forecast(club, weather, outlines.load(club.lake_id))
+        water = None
+        if lake.gkd_water_temperature_station:
+            try:
+                water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
+            except httpx.HTTPError:
+                water = None  # the forecast is still useful without it
+    hours = rowing_forecast(club, weather, outlines.load(club.lake_id), water.celsius if water else None)
     body = {
         "clubId": club.id,
         "lakeId": club.lake_id,
-        "generatedAt": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "generatedAt": now.replace(microsecond=0).isoformat(),
+        "waterTemperature": None
+        if water is None
+        else {"celsius": water.celsius, "measuredAt": water.time.astimezone(timezone.utc).isoformat()},
         "attribution": ATTRIBUTION,
         "hours": [_hour_json(h) for h in hours],
     }

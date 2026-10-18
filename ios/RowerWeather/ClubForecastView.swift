@@ -20,6 +20,11 @@ struct ClubForecastView: View {
                             }
                         }
                     }
+                    if let water = forecast?.waterTemperature {
+                        LabeledContent("Water temperature") {
+                            Text("\(water.celsius, specifier: "%.1f") °C")
+                        }
+                    }
                 }
             }
             if let forecast {
