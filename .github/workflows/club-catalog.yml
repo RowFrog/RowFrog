@@ -1,0 +1,44 @@
+name: Club catalog
+
+# Finds rowing clubs on lakes in southern Bavaria in OpenStreetMap and writes
+# data/catalog.json (what the app's search offers) plus any missing lake
+# outlines, committed back to the same branch. Runs by hand from the Actions
+# tab or when the script changes.
+
+on:
+  push:
+    paths:
+      - scripts/discover_clubs.py
+      - .github/workflows/club-catalog.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Discover clubs
+        run: |
+          python3 scripts/discover_clubs.py | tee catalog-report.txt
+          { echo '```'; cat catalog-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Check the catalog loads
+        run: python3 -c 'from rowerweather import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "lakes")'
+      - name: Commit the catalog
+        run: |
+          git add data/catalog.json data/outlines
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update club catalog from OpenStreetMap"
+            git pull --rebase
+            git push
+          fi
