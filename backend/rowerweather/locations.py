@@ -7,7 +7,7 @@ comes from the German Rowing Association's club list (scripts/import_drv.py)
 and catalog.json from OpenStreetMap (scripts/discover_clubs.py). Their launch
 points count as unconfirmed. locations.json always wins, then the DRV
 catalog; a catalog club with the same id as an earlier club, or within
-DUPLICATE_M of one, is left out as the same club.
+DUPLICATE_M of a club from an earlier file, is left out as the same club.
 """
 
 from __future__ import annotations
@@ -71,6 +71,8 @@ def _distance_m(a: Point, b: Point) -> float:
 
 
 def _parse(raw: dict, lakes: dict[str, Lake], clubs: dict[str, Club], source: str | None = None) -> None:
+    # Clubs in one file can share a boathouse or a town; only earlier files count as duplicates.
+    earlier = list(clubs.values()) if source is not None else []
     for l in raw.get("lakes", []):
         lakes.setdefault(
             l["id"],
@@ -91,7 +93,7 @@ def _parse(raw: dict, lakes: dict[str, Lake], clubs: dict[str, Club], source: st
             raise ValueError(f"club {c['id']} refers to unknown lake {c['lakeId']}")
         lp = c["launchPoint"]
         point = Point(lat=lp["lat"], lon=lp["lon"])
-        if source is not None and any(_distance_m(point, o.launch_point) < DUPLICATE_M for o in clubs.values()):
+        if source is not None and any(_distance_m(point, o.launch_point) < DUPLICATE_M for o in earlier):
             continue
         clubs[c["id"]] = Club(
             id=c["id"],

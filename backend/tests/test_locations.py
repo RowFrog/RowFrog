@@ -52,3 +52,14 @@ def test_later_catalogs_skip_clubs_already_listed_nearby(tmp_path):
     assert "ruderclub-ammersee" not in locs.clubs
     assert "ammersee-osm" not in locs.lakes  # no clubs left on it
     assert locs.clubs["mrc-1880"].source is None
+
+
+def test_clubs_sharing_a_boathouse_in_one_catalog_are_all_kept(tmp_path):
+    drv = {
+        "lakes": [{"id": "river-main", "name": "Main", "center": {"lat": 49.9, "lon": 10.9}}],
+        "clubs": [{"id": f"club-{i}", "name": f"Club {i}", "lakeId": "river-main",
+                   "launchPoint": {"lat": 49.9, "lon": 10.9}} for i in range(2)],
+    }
+    (tmp_path / "drv.json").write_text(json.dumps(drv))
+    locs = locations.load(catalog_paths=[tmp_path / "drv.json"])
+    assert {"club-0", "club-1"} <= set(locs.clubs)
