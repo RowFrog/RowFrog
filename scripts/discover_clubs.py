@@ -133,7 +133,11 @@ def main() -> int:
     if not features:
         sys.exit("no rowing clubs found; keeping the old catalog")
     waters = []
-    for e in query_waters([position(f) for f in features]):
+    raw_waters = query_waters([position(f) for f in features])
+    print(f"{len(features)} club features; lakes nearby: " + ", ".join(
+        f"{e.get('tags', {}).get('name')} ({e['type']}/{e['id']}, {len(e.get('members', []))} members)" for e in raw_waters
+    ))
+    for e in raw_waters:
         tags = e.get("tags", {})
         is_water = tags.get("natural") == "water" or tags.get("landuse") == "reservoir"
         if not is_water or tags.get("water") in NOT_LAKES:
