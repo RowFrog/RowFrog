@@ -5,6 +5,7 @@ Usage (from the repository root):
     python3 scripts/discover_clubs.py
 
 Writes data/catalog.json with every OSM feature tagged sport=rowing that lies
+or is named like a rowing club ("Ruderclub", "Ruderverein", ...) and lies
 within 300 m of a named lake, plus that lake, and saves the lake outline to
 data/outlines/ when it is missing. The app offers these clubs in its search.
 Their launch point is the shore point nearest the boathouse and counts as
@@ -33,6 +34,8 @@ OUTLINES = ROOT / "data" / "outlines"
 # Upper Bavaria and the lakes south of Munich: south, west, north, east.
 BBOX = (47.40, 10.70, 48.60, 12.90)
 MAX_SHORE_M = 300.0
+# Few clubs carry sport=rowing in OSM, so club names are matched too.
+CLUB_NAME = "Ruder|Rowing|Regatta"
 NOT_LAKES = {"river", "canal", "stream", "ditch", "drain", "wastewater", "moat", "fish_pass"}
 
 
@@ -47,11 +50,18 @@ def query() -> dict:
     return overpass(
         f"""
         [out:json][timeout:180];
-        nwr["sport"="rowing"]["name"]({s},{w},{n},{e})->.r;
+        (
+          nwr["sport"="rowing"]["name"]({s},{w},{n},{e});
+          nwr["name"~"{CLUB_NAME}",i]["club"]({s},{w},{n},{e});
+          nwr["name"~"{CLUB_NAME}",i]["leisure"]({s},{w},{n},{e});
+          nwr["name"~"{CLUB_NAME}",i]["building"]({s},{w},{n},{e});
+        )->.r;
         .r out center tags;
         (
           way(around.r:{MAX_SHORE_M:.0f})["natural"="water"]["name"];
           relation(around.r:{MAX_SHORE_M:.0f})["natural"="water"]["name"];
+          way(around.r:{MAX_SHORE_M:.0f})["landuse"="reservoir"]["name"];
+          relation(around.r:{MAX_SHORE_M:.0f})["landuse"="reservoir"]["name"];
         );
         out geom tags;
         """
@@ -88,11 +98,18 @@ def main() -> int:
     confirmed_names = {slug(c["name"]) for c in confirmed["clubs"]} | {slug(c.get("shortName", "")) for c in confirmed["clubs"]}
 
     result = query()["elements"]
-    features = [e for e in result if e.get("tags", {}).get("sport") == "rowing"]
+    def is_club(tags: dict) -> bool:
+        name = tags.get("name", "")
+        if re.search("verleih|rental|boote? ", name, re.I) or tags.get("shop") or tags.get("amenity") == "boat_rental":
+            return False  # boat hire, not a club
+        return tags.get("sport") == "rowing" or bool(re.search(CLUB_NAME, name, re.I))
+
+    features = [e for e in result if is_club(e.get("tags", {})) and ("center" in e or "lat" in e)]
     waters = []
     for e in result:
         tags = e.get("tags", {})
-        if tags.get("natural") != "water" or tags.get("water") in NOT_LAKES:
+        is_water = tags.get("natural") == "water" or tags.get("landuse") == "reservoir"
+        if not is_water or tags.get("water") in NOT_LAKES:
             continue
         if "geometry" not in e and "members" not in e:
             continue  # a water area also tagged sport=rowing, listed once more with its geometry

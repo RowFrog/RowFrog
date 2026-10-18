@@ -13,7 +13,8 @@ The first lake is Starnberger See.
 | --- | --- |
 | `ios/` | SwiftUI iPhone app (iOS 17+). The Xcode project is generated from `project.yml` with XcodeGen. |
 | `backend/` | Python (FastAPI) service that fetches the forecast, computes waves and the traffic light, and serves the app. |
-| `data/locations.json` | Lakes and clubs. Add a club or lake here; no code change is needed. |
+| `data/locations.json` | Lakes and clubs with confirmed launch points. Add a club or lake here; no code change is needed. |
+| `data/catalog.json` | More clubs from OpenStreetMap that the app's search offers, written by `scripts/discover_clubs.py` (the "Club catalog" workflow). Launch points are unconfirmed until a club is moved into `locations.json`. |
 | `data/outlines/` | Lake outlines (GeoJSON) for the wave calculation, made with `scripts/fetch_lake_outline.py`. |
 | `CREDITS.md` | Data sources, licences and the credits the app must show. |
 
@@ -58,6 +59,15 @@ Proposed for small boats (1x, 2x) and to be tuned with rowers; see
 | Wave height | 0.15 m | 0.30 m |
 | Visibility | 1 km or less | under 500 m |
 | DWD lake warning | strong wind | storm |
+| Daylight | sunrise or sunset within the hour | sun down for the whole hour |
+
+## The app
+
+The app opens on the home base (MRC 1880 by default) and pages left and
+right between saved locations, like the iOS Weather app. The list button
+shows all saved locations with their light and key numbers; swipe a row to
+remove it or make it the home base, and use the search to add clubs from
+the catalog. The saved list is stored on the phone.
 
 ## Licence
 

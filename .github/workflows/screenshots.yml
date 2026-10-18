@@ -27,7 +27,7 @@ jobs:
           (cd backend && nohup uvicorn rowerweather.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
           # Warm the forecast cache; Open-Meteo sometimes times out on the first call.
-          for club in mrc-1880 tutzinger-rv; do
+          for club in mrc-1880 mrsv-bayern tutzinger-rv; do
             curl -sS -f --retry 3 --retry-all-errors --retry-delay 5 "http://localhost:8000/clubs/$club/forecast" \
               | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["clubId"], len(d["hours"]), "hours, now:", d["hours"][0]["light"])'
           done
@@ -63,13 +63,16 @@ jobs:
             xcrun simctl terminate "$UDID" com.rowerweatherfrog.RowerWeather || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
             SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowerweatherfrog.RowerWeather "$@"
-            sleep 10
+            sleep 12
             xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
           }
-          shoot 1-lakes light
-          shoot 2-club-starnberg light -RWOpenClub mrc-1880
-          shoot 3-club-tutzing light -RWOpenClub tutzinger-rv
-          shoot 4-club-starnberg-dark dark -RWOpenClub mrc-1880
+          rm -f docs/screenshots/*.png
+          shoot 1-home light
+          shoot 2-home-hourly light -RWScrollTo hourly
+          shoot 3-list light -RWShowList YES
+          shoot 4-search light -RWSearch "Ammersee"
+          shoot 5-club-tutzing light -RWOpenClub tutzinger-rv
+          shoot 6-home-dark dark
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -79,7 +82,7 @@ jobs:
             uvicorn.log
       - name: Commit screenshots
         run: |
-          git add docs/screenshots
+          git add -A docs/screenshots
           if git diff --cached --quiet; then
             echo "No changes."
           else
