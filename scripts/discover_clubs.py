@@ -35,7 +35,7 @@ OUTLINES = ROOT / "data" / "outlines"
 BBOX = (47.40, 10.70, 48.60, 12.90)
 MAX_SHORE_M = 300.0
 # Few clubs carry sport=rowing in OSM, so club names are matched too.
-CLUB_NAME = "[Rr]uder(club|verein|gesellschaft|sport|-| )|Ruder[A-Z]|Rowing|Regatta"
+CLUB_NAME = "[Rr]uder(club|verein|gesellschaft|sport|-| )|Rowing"
 NOT_LAKES = {"river", "canal", "stream", "ditch", "drain", "wastewater", "moat", "fish_pass"}
 
 
@@ -69,14 +69,25 @@ def query_clubs() -> list[dict]:
 
 
 def query_waters(points: list[tuple[float, float]]) -> list[dict]:
-    """Named lakes and reservoirs within MAX_SHORE_M of any of the (lat, lon) points."""
-    around = "\n".join(
-        f'{kind}(around:{MAX_SHORE_M:.0f},{lat},{lon})["{key}"="{value}"]["name"];'
-        for lat, lon in points
-        for kind in ("way", "relation")
-        for key, value in (("natural", "water"), ("landuse", "reservoir"))
+    """Named lakes and reservoirs within MAX_SHORE_M of any of the (lat, lon) points.
+
+    Big lakes are multipolygon relations, which `around` does not find
+    directly, so their shore ways are found first and then their relations.
+    """
+    near = "\n".join(f"way(around:{MAX_SHORE_M:.0f},{lat},{lon});" for lat, lon in points)
+    return _run(
+        f"""
+        [out:json][timeout:240];
+        ({near})->.near;
+        (
+          way.near["natural"="water"]["name"];
+          way.near["landuse"="reservoir"]["name"];
+          rel(bw.near)["natural"="water"]["name"];
+          rel(bw.near)["landuse"="reservoir"]["name"];
+        );
+        out geom tags;
+        """
     )
-    return _run(f"[out:json][timeout:240];\n(\n{around}\n);\nout geom tags;")
 
 
 def water_rings(e: dict) -> list[list[tuple[float, float]]]:
