@@ -37,6 +37,7 @@ jobs:
             fi
           done
       - name: Check launch points and live forecast
+        if: always()
         run: python3 scripts/live_check.py
       - name: Commit new outlines
         if: always()

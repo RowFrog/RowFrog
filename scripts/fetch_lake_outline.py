@@ -12,12 +12,35 @@ from __future__ import annotations
 
 import json
 import sys
+import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from pathlib import Path
 
-OVERPASS = "https://overpass-api.de/api/interpreter"
+# The main Overpass server is often overloaded (502/504); fall back to mirrors.
+OVERPASS_SERVERS = [
+    "https://overpass-api.de/api/interpreter",
+    "https://overpass.kumi.systems/api/interpreter",
+    "https://overpass.private.coffee/api/interpreter",
+]
 OUT_DIR = Path(__file__).resolve().parents[1] / "data" / "outlines"
+
+
+def overpass(q: str) -> dict:
+    """Run an Overpass QL query, trying each server in turn."""
+    data = urllib.parse.urlencode({"data": q}).encode()
+    errors = []
+    for attempt in range(2):
+        for url in OVERPASS_SERVERS:
+            req = urllib.request.Request(url, data=data, headers={"User-Agent": "RowerWeather/0.1"})
+            try:
+                with urllib.request.urlopen(req, timeout=90) as resp:
+                    return json.load(resp)
+            except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+                errors.append(f"{url}: {e}")
+        time.sleep(10)
+    raise OSError("all Overpass servers failed: " + "; ".join(errors))
 
 
 def query(name: str) -> dict:
@@ -27,10 +50,7 @@ def query(name: str) -> dict:
     relation["natural"="water"]["name"="{name}"](area.de);
     out geom;
     """
-    data = urllib.parse.urlencode({"data": q}).encode()
-    req = urllib.request.Request(OVERPASS, data=data, headers={"User-Agent": "RowerWeather/0.1"})
-    with urllib.request.urlopen(req, timeout=90) as resp:
-        return json.load(resp)
+    return overpass(q)
 
 
 def stitch(ways: list[list[tuple[float, float]]]) -> list[list[tuple[float, float]]]:
