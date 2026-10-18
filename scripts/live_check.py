@@ -91,7 +91,10 @@ def rowing_features(lat: float, lon: float) -> list[dict]:
 
 
 def forecast_summary(client: TestClient, club_id: str) -> list[str]:
-    resp = client.get(f"/clubs/{club_id}/forecast")
+    try:
+        resp = client.get(f"/clubs/{club_id}/forecast")
+    except Exception as e:  # the server's own exception, so the report says what broke
+        return [f"forecast: HTTP 500 {type(e).__name__}: {e}"]
     if resp.status_code != 200:
         return [f"forecast: HTTP {resp.status_code} {resp.text[:200]}"]
     body = resp.json()
@@ -108,7 +111,7 @@ def forecast_summary(client: TestClient, club_id: str) -> list[str]:
 
 def main() -> int:
     locs = locations.load()
-    client = TestClient(app, raise_server_exceptions=False)
+    client = TestClient(app)
     report: list[str] = []
     ok = True
     for club in locs.clubs.values():
