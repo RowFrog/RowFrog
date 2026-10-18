@@ -95,6 +95,14 @@ def parse(payload: dict) -> list[ForecastHour]:
 
 
 async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48) -> list[ForecastHour]:
-    resp = await client.get(BASE_URL, params=request_params(lat, lon, hours), timeout=20)
+    # Live checks on GitHub saw about one connect timeout in six calls, so
+    # connection failures are retried once before giving up.
+    for attempt in range(2):
+        try:
+            resp = await client.get(BASE_URL, params=request_params(lat, lon, hours), timeout=20)
+            break
+        except httpx.TransportError:
+            if attempt == 1:
+                raise
     resp.raise_for_status()
     return parse(resp.json())

@@ -1,3 +1,6 @@
+import asyncio
+
+import httpx
 from fastapi.testclient import TestClient
 
 from rowerweather import api, locations
@@ -36,6 +39,23 @@ def test_parse_tolerates_missing_variables():
     (hour,) = open_meteo.parse(payload)
     assert hour.visibility_m is None
     assert hour.is_day is None
+
+
+def test_fetch_retries_one_connect_timeout():
+    calls = []
+
+    def handler(request):
+        calls.append(request)
+        if len(calls) == 1:
+            raise httpx.ConnectTimeout("timed out", request=request)
+        return httpx.Response(200, json=PAYLOAD)
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await open_meteo.fetch(client, 47.9, 11.3)
+
+    assert len(asyncio.run(run())) == 2
+    assert len(calls) == 2
 
 
 def test_rowing_forecast_combines_fog_and_waves():
