@@ -85,7 +85,7 @@ def query_waters(points: list[tuple[float, float]]) -> list[dict]:
           rel(bw.near)["natural"="water"]["name"];
           rel(bw.near)["landuse"="reservoir"]["name"];
         );
-        out geom tags;
+        out geom;  # "out geom tags" would drop the members of multipolygons
         """
     )
 
