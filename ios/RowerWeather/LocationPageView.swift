@@ -15,7 +15,7 @@ struct LocationPageView: View {
                 VStack(spacing: 16) {
                     header
                     if let forecast, let now = forecast.current() {
-                        NowCard(hour: now)
+                        NowCard(hour: now, water: forecast.waterTemperature)
                         if let sun = forecast.sunState(at: .now) {
                             DaylightCard(state: sun)
                         }
@@ -100,6 +100,7 @@ struct Card<Content: View>: View {
 
 private struct NowCard: View {
     let hour: ForecastHour
+    let water: WaterTemperature?
 
     var body: some View {
         Card {
@@ -110,12 +111,34 @@ private struct NowCard: View {
                     Text(hour.reasons.isEmpty ? "No warnings right now" : hour.reasons.map(\.label).joined(separator: ", "))
                         .foregroundStyle(.secondary)
                 }
+                Spacer(minLength: 0)
+            }
+            Divider()
+            HStack(alignment: .lastTextBaseline) {
+                TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
                 Spacer()
-                if let temp = hour.temperatureC {
-                    Text("\(Format.number(temp))°").font(.system(size: 44, weight: .light))
-                }
+                TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28)
             }
         }
+    }
+}
+
+/// A temperature with the icon and word that say whether it is air or water.
+struct TemperatureView: View {
+    let condition: Condition
+    let celsius: Double?
+    var digits = 0
+    var size: CGFloat
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Label(condition == .temperature ? "Air" : "Water", systemImage: condition.symbol)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(celsius.map { "\(Format.number($0, digits: digits))°" } ?? "–")
+                .font(.system(size: size, weight: .light))
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

@@ -123,10 +123,16 @@ private struct LocationSummaryRow: View {
             Spacer()
             VStack(alignment: .trailing, spacing: 6) {
                 if let now {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         TrafficLightDot(light: now.light, size: 18)
+                        Image(systemName: Condition.temperature.symbol)
+                            .symbolRenderingMode(.hierarchical)
+                            .accessibilityLabel("Air")
                         Text("\(Format.number(now.temperatureC))°").font(.system(size: 36, weight: .light))
                     }
+                    Label(forecast?.waterTemperature.map { "Water \(Format.number($0.celsius, digits: 1))°" } ?? "Water –",
+                          systemImage: Condition.waterTemperature.symbol)
+                        .font(.caption)
                     Label("\(Format.number(now.windSpeedMs))–\(Format.number(now.windGustMs)) m/s", systemImage: Condition.wind.symbol)
                         .font(.caption)
                     if let wave = now.waveHeightM {
