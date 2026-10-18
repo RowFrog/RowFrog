@@ -1,0 +1,9 @@
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.venv/
+ios/RowerWeather.xcodeproj/
+ios/RowerWeather/Info.plist
+xcuserdata/
+DerivedData/
+.DS_Store

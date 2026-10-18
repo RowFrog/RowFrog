@@ -1,0 +1,31 @@
+from rowerweather.score import HourConditions, LakeWarning, Light, assess
+
+
+def test_calm_morning_is_green():
+    a = assess(HourConditions(wind_speed_ms=2, wind_gust_ms=4, wave_height_m=0.05, visibility_m=10_000, water_temp_c=18))
+    assert a.light == Light.GREEN
+    assert a.reasons == []
+
+
+def test_worst_condition_wins_and_is_reported():
+    a = assess(HourConditions(wind_speed_ms=6, wind_gust_ms=9, wave_height_m=0.35))
+    assert a.light == Light.RED
+    assert a.reasons[0] == ("waves", Light.RED)
+    assert ("wind", Light.AMBER) in a.reasons
+
+
+def test_storm_warning_overrides_calm_forecast():
+    a = assess(HourConditions(wind_speed_ms=1, wind_gust_ms=2, lake_warning=LakeWarning.STORM))
+    assert a.light == Light.RED
+    assert a.reasons == [("lake_warning", Light.RED)]
+
+
+def test_fog_thresholds():
+    assert assess(HourConditions(0, 0, visibility_m=800)).light == Light.AMBER
+    assert assess(HourConditions(0, 0, visibility_m=300)).light == Light.RED
+
+
+def test_cold_water_is_a_warning_not_a_closure():
+    a = assess(HourConditions(0, 0, water_temp_c=6))
+    assert a.light == Light.AMBER
+    assert a.reasons == [("cold_water", Light.AMBER)]
