@@ -14,6 +14,7 @@ The first lake is Starnberger See.
 | `ios/` | SwiftUI iPhone app (iOS 17+). The Xcode project is generated from `project.yml` with XcodeGen. |
 | `backend/` | Python (FastAPI) service that fetches the forecast, computes waves and the traffic light, and serves the app. |
 | `data/locations.json` | Lakes and clubs with confirmed launch points. Add a club or lake here; no code change is needed. |
+| `data/catalog-drv.json` | All clubs from the German Rowing Association's club list (rudern.de), written by `scripts/import_drv.py` (the "DRV club catalog" workflow). Each boathouse is geocoded and matched to the lake or river it lies on; launch points are unconfirmed. Geocoding results are cached in `data/drv-geocode.json`. |
 | `data/catalog.json` | More clubs from OpenStreetMap that the app's search offers, written by `scripts/discover_clubs.py` (the "Club catalog" workflow). Launch points are unconfirmed until a club is moved into `locations.json`. |
 | `data/outlines/` | Lake outlines (GeoJSON) for the wave calculation, made with `scripts/fetch_lake_outline.py`. |
 | `CREDITS.md` | Data sources, licences and the credits the app must show. |

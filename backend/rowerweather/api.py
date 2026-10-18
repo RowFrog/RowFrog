@@ -48,11 +48,14 @@ def list_lakes() -> list[dict]:
                     "website": c.website,
                     "launchPoint": _point(c.launch_point),
                     "launchPointVerified": c.launch_point_verified,
+                    "source": c.source,
+                    "abbreviation": c.abbreviation,
                 }
                 for c in _locations.clubs_on(lake.id)
             ],
         }
         for lake in _locations.lakes.values()
+        if _locations.clubs_on(lake.id)
     ]
 
 

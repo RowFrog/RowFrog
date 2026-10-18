@@ -16,6 +16,11 @@ struct Club: Codable, Identifiable, Hashable {
     let website: URL?
     let launchPoint: Coordinate
     let launchPointVerified: Bool
+    /// Where an unconfirmed club comes from: "drv" (the German Rowing
+    /// Association's club list) or "osm" (OpenStreetMap); nil when confirmed.
+    var source: String? = nil
+    /// The DRV abbreviation, e.g. "BRG".
+    var abbreviation: String? = nil
 
     var displayName: String { shortName ?? name }
 

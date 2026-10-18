@@ -39,7 +39,7 @@ final class LocationStore {
         let terms = Self.fold(text).split(separator: " ")
         guard !terms.isEmpty else { return [] }
         return catalog.filter { club in
-            let haystack = Self.fold([club.name, club.shortName ?? "", club.address, lake(of: club)?.name ?? ""].joined(separator: " "))
+            let haystack = Self.fold([club.name, club.shortName ?? "", club.abbreviation ?? "", club.address, lake(of: club)?.name ?? ""].joined(separator: " "))
             return terms.allSatisfy { haystack.contains($0) }
         }
     }

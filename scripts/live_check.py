@@ -110,7 +110,7 @@ def forecast_summary(client: TestClient, club_id: str) -> list[str]:
 
 
 def main() -> int:
-    locs = locations.load(catalog_path=None)  # the confirmed clubs; catalog clubs are unconfirmed by design
+    locs = locations.load(catalog_paths=())  # the confirmed clubs; catalog clubs are unconfirmed by design
     client = TestClient(app)
     report: list[str] = []
     ok = True

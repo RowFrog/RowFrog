@@ -25,7 +25,11 @@ struct LocationPageView: View {
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(forecast.attribution, id: \.self) { Text($0) }
                             if !club.launchPointVerified {
-                                Text("Launch point from © OpenStreetMap contributors, ODbL")
+                                if club.source == "drv" {
+                                    Text("Club data: Deutscher Ruderverband e.V. (rudern.de). Launch point geocoded with © OpenStreetMap contributors, ODbL")
+                                } else {
+                                    Text("Launch point from © OpenStreetMap contributors, ODbL")
+                                }
                             }
                         }
                         .font(.footnote)
