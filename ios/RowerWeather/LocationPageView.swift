@@ -110,19 +110,36 @@ private struct NowCard: View {
         Card {
             HStack(spacing: 14) {
                 TrafficLightDot(light: hour.light, size: 36)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(hour.light.title).font(.title2.bold())
-                    Text(hour.reasons.isEmpty ? "No warnings right now" : hour.reasons.map(\.label).joined(separator: ", "))
-                        .foregroundStyle(.secondary)
-                }
+                Text(hour.light.title).font(.title2.bold())
                 Spacer(minLength: 0)
             }
+            VStack(alignment: .leading, spacing: 6) {
+                if hour.reasons.isEmpty {
+                    Label("All conditions are within the limits.", systemImage: "checkmark.circle")
+                } else {
+                    ForEach(hour.reasons, id: \.self) { reason in
+                        Label(reason.explanation, systemImage: reason.symbol)
+                            .foregroundStyle(reason.light == .red ? Color.red : Color.orange)
+                    }
+                }
+            }
+            .font(.subheadline)
+            .symbolRenderingMode(.hierarchical)
+            .accessibilityLabel(hour.reasons.isEmpty ? "Why: all conditions within the limits" : "Why: " + hour.reasons.map(\.explanation).joined(separator: " "))
             Divider()
             HStack(alignment: .lastTextBaseline) {
                 TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
                 Spacer()
                 TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28)
             }
+            HStack {
+                Label("Visibility \(visibilityText(hour.visibilityM))", systemImage: Condition.visibility.symbol)
+                Spacer()
+                Label("Ice: no data yet", systemImage: Condition.ice.symbol)
+                    .foregroundStyle(.secondary)
+            }
+            .font(.subheadline)
+            .symbolRenderingMode(.hierarchical)
         }
     }
 }

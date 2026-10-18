@@ -104,9 +104,10 @@ private struct LocationSummaryRow: View {
                     .lineLimit(1)
                 Spacer(minLength: 6)
                 if let now {
-                    Text(now.reasons.isEmpty ? now.light.title : now.reasons.map(\.label).joined(separator: ", "))
-                        .font(.subheadline)
-                        .lineLimit(1)
+                    Text(now.light.title).font(.subheadline.weight(.semibold))
+                    Text(now.reasons.isEmpty ? "All conditions within the limits" : "Why: " + now.reasons.map(\.label).joined(separator: ", "))
+                        .font(.caption)
+                        .lineLimit(2)
                 }
                 if let forecast, let sun = forecast.sunState(at: .now) {
                     Group {
@@ -139,6 +140,12 @@ private struct LocationSummaryRow: View {
                         Label("\(Format.number(wave, digits: 2)) m", systemImage: Condition.waves.symbol)
                             .font(.caption)
                     }
+                    Label(visibilityText(now.visibilityM), systemImage: Condition.visibility.symbol)
+                        .font(.caption)
+                    Label("Ice –", systemImage: Condition.ice.symbol)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel("Ice: no data yet")
                 } else {
                     ProgressView()
                 }

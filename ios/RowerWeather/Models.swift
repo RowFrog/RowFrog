@@ -75,6 +75,29 @@ struct Reason: Codable, Hashable {
         default: condition
         }
     }
+
+    /// One sentence saying why this condition changes the advice.
+    var explanation: String {
+        switch condition {
+        case "lake_warning": "A storm warning is active for the lake."
+        case "wind": "Mean wind is above the limit."
+        case "gusts": "Gusts are above the limit."
+        case "waves": "Waves at the launch point are too high."
+        case "fog": "Visibility is poor (fog or mist)."
+        case "thunderstorm": "Thunderstorms are possible."
+        case "ice": "There is ice on the water."
+        case "daylight": "The sun is down. Rowing is only advised in daylight."
+        case "twilight": "Sunrise or sunset falls in this hour."
+        case "cold_water": "Water is below 10 °C, so a capsize is dangerous."
+        case "cool_water": "Water is below 15 °C. Take extra care."
+        default: condition
+        }
+    }
+
+    /// The condition whose icon stands for this reason.
+    var symbol: String {
+        (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
+    }
 }
 
 struct ForecastHour: Codable, Identifiable, Hashable {
