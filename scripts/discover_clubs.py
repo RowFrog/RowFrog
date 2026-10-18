@@ -62,7 +62,6 @@ def query_clubs() -> list[dict]:
           nwr["sport"="rowing"]["name"]{bbox};
           nwr["name"~"{CLUB_NAME}"]["club"]{bbox};
           nwr["name"~"{CLUB_NAME}"]["leisure"]{bbox};
-          nwr["name"~"{CLUB_NAME}"]["building"]{bbox};
         );
         out center tags;
         """
