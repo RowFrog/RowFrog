@@ -2,8 +2,7 @@ name: App screenshots
 
 # Runs the backend on the runner with live data, starts the app in the iOS
 # Simulator and saves screenshots to docs/screenshots on the same branch.
-# macOS minutes count ten times against a private repository's free allowance,
-# so this only runs by hand from the Actions tab or when this file changes.
+# Runs by hand from the Actions tab or when this file changes.
 
 on:
   push:

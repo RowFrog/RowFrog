@@ -21,9 +21,6 @@ jobs:
       - run: pytest -q
 
   ios:
-    # macOS minutes count ten times against a private repository's free allowance,
-    # so the app is only built for pull requests and manual runs.
-    if: github.event_name != 'push'
     runs-on: macos-latest
     defaults:
       run:
