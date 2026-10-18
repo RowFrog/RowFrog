@@ -1,0 +1,52 @@
+name: Live data check
+
+# Downloads missing lake outlines from OpenStreetMap, checks the club launch
+# points against them and runs the forecast against live Open-Meteo and GKD.
+# Runs when the club list or these scripts change, or by hand from the
+# Actions tab. New outlines are committed back to the branch.
+
+on:
+  push:
+    paths:
+      - data/locations.json
+      - scripts/**
+      - .github/workflows/live-check.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  live-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Download missing lake outlines
+        run: |
+          python3 - <<'EOF' | while IFS=$'\t' read -r id name; do
+          import json
+          for lake in json.load(open("data/locations.json"))["lakes"]:
+              print(f"{lake['id']}\t{lake['name']}")
+          EOF
+            if [ ! -f "data/outlines/$id.geojson" ]; then
+              python3 scripts/fetch_lake_outline.py "$id" "$name"
+            fi
+          done
+      - name: Check launch points and live forecast
+        run: python3 scripts/live_check.py
+      - name: Commit new outlines
+        if: always()
+        run: |
+          git add data/outlines
+          if git diff --cached --quiet; then
+            echo "No new outlines."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Add lake outlines from OpenStreetMap"
+            git push
+          fi

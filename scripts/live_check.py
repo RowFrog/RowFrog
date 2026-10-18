@@ -1,0 +1,149 @@
+#!/usr/bin/env python3
+"""Check the backend and the club list against live data.
+
+Usage (from the repository root, after `pip install -e backend`):
+    python3 scripts/live_check.py
+
+For every club in data/locations.json it prints:
+  - where the launch point sits relative to the OSM shoreline (in the water,
+    on land, distance to the nearest shore point),
+  - rowing-related OSM features within 1.5 km (boathouses tagged
+    sport=rowing, slipways), as candidates for a better launch point,
+  - a summary of the live forecast from GET /clubs/<id>/forecast.
+
+The report is printed and, on GitHub Actions, added to the job summary.
+Nothing is written to the data files; corrections are made by hand.
+"""
+
+from __future__ import annotations
+
+import json
+import math
+import os
+import sys
+import urllib.parse
+import urllib.request
+from pathlib import Path
+
+from fastapi.testclient import TestClient
+
+from rowerweather import locations, outlines
+from rowerweather.api import app
+from rowerweather.waves import EARTH_RADIUS_M, _to_local_m
+
+OVERPASS = "https://overpass-api.de/api/interpreter"
+
+
+def nearest_shore(lon: float, lat: float, rings) -> tuple[float, float, float]:
+    """Distance in metres to the nearest ring edge, and that point as (lon, lat)."""
+    best = (math.inf, lon, lat)
+    for ring in rings:
+        pts = [_to_local_m(x, y, lon, lat) for x, y in ring]
+        for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]):
+            ex, ey = x2 - x1, y2 - y1
+            length2 = ex * ex + ey * ey
+            t = 0.0 if length2 == 0 else max(0.0, min(1.0, -(x1 * ex + y1 * ey) / length2))
+            px, py = x1 + t * ex, y1 + t * ey
+            d = math.hypot(px, py)
+            if d < best[0]:
+                plat = lat + math.degrees(py / EARTH_RADIUS_M)
+                plon = lon + math.degrees(px / (EARTH_RADIUS_M * math.cos(math.radians(lat))))
+                best = (d, plon, plat)
+    return best
+
+
+def in_water(lon: float, lat: float, rings) -> bool:
+    """Even-odd rule over all rings, so a point on an island counts as land."""
+    inside = False
+    for ring in rings:
+        for (x1, y1), (x2, y2) in zip(ring, list(ring[1:]) + [ring[0]]):
+            if (y1 > lat) != (y2 > lat) and lon < x1 + (lat - y1) * (x2 - x1) / (y2 - y1):
+                inside = not inside
+    return inside
+
+
+def rowing_features(lat: float, lon: float) -> list[dict]:
+    q = f"""
+    [out:json][timeout:60];
+    (
+      nwr["sport"="rowing"](around:1500,{lat},{lon});
+      nwr["leisure"="slipway"](around:1500,{lat},{lon});
+    );
+    out center tags;
+    """
+    data = urllib.parse.urlencode({"data": q}).encode()
+    req = urllib.request.Request(OVERPASS, data=data, headers={"User-Agent": "RowerWeather/0.1"})
+    with urllib.request.urlopen(req, timeout=90) as resp:
+        elements = json.load(resp)["elements"]
+    found = []
+    for e in elements:
+        c = e.get("center") or {"lat": e.get("lat"), "lon": e.get("lon")}
+        if c["lat"] is None:
+            continue
+        x, y = _to_local_m(c["lon"], c["lat"], lon, lat)
+        tags = e.get("tags", {})
+        found.append(
+            {
+                "osm": f"{e['type']}/{e['id']}",
+                "name": tags.get("name", ""),
+                "kind": "slipway" if tags.get("leisure") == "slipway" else "rowing",
+                "lat": round(c["lat"], 5),
+                "lon": round(c["lon"], 5),
+                "distanceM": round(math.hypot(x, y)),
+            }
+        )
+    return sorted(found, key=lambda f: f["distanceM"])
+
+
+def forecast_summary(client: TestClient, club_id: str) -> list[str]:
+    resp = client.get(f"/clubs/{club_id}/forecast")
+    if resp.status_code != 200:
+        return [f"forecast: HTTP {resp.status_code} {resp.text[:200]}"]
+    body = resp.json()
+    hours = body["hours"]
+    lines = [f"forecast: {len(hours)} hours, water temperature {body['waterTemperature']}"]
+    for h in hours[:24:3]:
+        lines.append(
+            f"  {h['time']}  {h['light']:6}  wind {h['windSpeedMs']} m/s gust {h['windGustMs']} "
+            f"from {h['windFromDeg']}°  waves {h['waveHeightM']} m  fetch {h['fetchM']} m  "
+            f"vis {h['visibilityM']} m  {h['temperatureC']} °C"
+        )
+    return lines
+
+
+def main() -> int:
+    locs = locations.load()
+    client = TestClient(app, raise_server_exceptions=False)
+    report: list[str] = []
+    ok = True
+    for club in locs.clubs.values():
+        p = club.launch_point
+        report.append(f"## {club.name} ({club.id})")
+        report.append(f"launch point: {p.lat}, {p.lon}")
+        rings = outlines.load(club.lake_id)
+        if rings is None:
+            report.append("outline: missing")
+            ok = False
+        else:
+            d, slon, slat = nearest_shore(p.lon, p.lat, rings)
+            where = "in the water" if in_water(p.lon, p.lat, rings) else "on land"
+            report.append(f"shore: {where}, {d:.0f} m from the nearest shore point ({slat:.5f}, {slon:.5f})")
+        try:
+            for f in rowing_features(p.lat, p.lon):
+                report.append(f"  osm {f['kind']}: {f['name'] or '(no name)'} {f['osm']} at {f['lat']}, {f['lon']} ({f['distanceM']} m)")
+        except OSError as e:
+            report.append(f"  osm features: lookup failed ({e})")
+        lines = forecast_summary(client, club.id)
+        ok = ok and lines[0].startswith("forecast: ") and "HTTP" not in lines[0]
+        report.extend(lines)
+        report.append("")
+    text = "\n".join(report)
+    print(text)
+    summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary:
+        Path(summary).write_text("```\n" + text + "\n```\n", encoding="utf-8")
+    return 0 if ok else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())
