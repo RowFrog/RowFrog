@@ -21,8 +21,6 @@ import json
 import math
 import os
 import sys
-import urllib.parse
-import urllib.request
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -31,7 +29,7 @@ from rowerweather import locations, outlines
 from rowerweather.api import app
 from rowerweather.waves import EARTH_RADIUS_M, _to_local_m
 
-OVERPASS = "https://overpass-api.de/api/interpreter"
+from fetch_lake_outline import overpass
 
 
 def nearest_shore(lon: float, lat: float, rings) -> tuple[float, float, float]:
@@ -71,10 +69,7 @@ def rowing_features(lat: float, lon: float) -> list[dict]:
     );
     out center tags;
     """
-    data = urllib.parse.urlencode({"data": q}).encode()
-    req = urllib.request.Request(OVERPASS, data=data, headers={"User-Agent": "RowerWeather/0.1"})
-    with urllib.request.urlopen(req, timeout=90) as resp:
-        elements = json.load(resp)["elements"]
+    elements = overpass(q)["elements"]
     found = []
     for e in elements:
         c = e.get("center") or {"lat": e.get("lat"), "lon": e.get("lon")}
