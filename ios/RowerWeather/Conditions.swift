@@ -4,7 +4,7 @@ import SwiftUI
 /// The same icons head the hourly table and label the current conditions,
 /// so the legend explains both.
 enum Condition: String, CaseIterable, Identifiable {
-    case temperature, wind, waves, waterTemperature, visibility, cloudCover, thunderstorm, ice, daylight
+    case temperature, wind, waves, waterTemperature, precipitation, visibility, cloudCover, thunderstorm, ice, daylight
 
     var id: String { rawValue }
 
@@ -14,6 +14,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .wind: "wind"
         case .waves: "water.waves"
         case .waterTemperature: "thermometer.and.liquid.waves"
+        case .precipitation: "cloud.rain"
         case .visibility: "cloud.fog"
         case .cloudCover: "cloud"
         case .thunderstorm: "cloud.bolt"
@@ -28,6 +29,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .wind: "Wind and gusts"
         case .waves: "Waves"
         case .waterTemperature: "Water temperature"
+        case .precipitation: "Rain, hail, snow"
         case .visibility: "Visibility (fog)"
         case .cloudCover: "Cloud cover"
         case .thunderstorm: "Thunderstorm risk"
@@ -42,6 +44,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .temperature, .waterTemperature: "°C"
         case .wind: "m/s"
         case .waves: "m"
+        case .precipitation: "mm"
         case .visibility: "km"
         case .cloudCover: "%"
         case .thunderstorm, .ice, .daylight: ""
@@ -54,6 +57,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .wind: "Mean wind – strongest gust, in m/s. The arrow points where the wind blows to."
         case .waves: "Estimated wave height at the launch point, from wind and open water upwind."
         case .waterTemperature: "Latest lake measurement. Below 15 °C, extra care; below 10 °C, cold water."
+        case .precipitation: "What falls in the hour (rain, drizzle, snow, hail) and how much, in mm. Hail comes with thunderstorms."
         case .visibility: "How far you can see. Fog below 1 km is amber, below 500 m red."
         case .cloudCover: "Share of the sky covered by cloud."
         case .thunderstorm: "Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings."
@@ -72,7 +76,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .thunderstorm: ["thunderstorm"]
         case .ice: ["ice"]
         case .daylight: ["daylight", "twilight"]
-        case .temperature, .cloudCover: []
+        case .temperature, .cloudCover, .precipitation: []
         }
     }
 }

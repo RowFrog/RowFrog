@@ -87,6 +87,8 @@ def _hour_json(h: RowingHour) -> dict:
         "visibilityM": w.visibility_m,
         "temperatureC": w.temperature_c,
         "cloudCoverPct": w.cloud_cover_pct,
+        "precipitationMm": w.precipitation_mm,
+        "weatherCode": w.weather_code,
         "sunUp": h.sun_up,
     }
 

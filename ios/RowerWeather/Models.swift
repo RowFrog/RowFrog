@@ -117,6 +117,10 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     let cloudCoverPct: Double?
     /// Whether the sun is up in the middle of this hour.
     let sunUp: Bool?
+    /// Rain, snow or hail in this hour, in mm.
+    var precipitationMm: Double? = nil
+    /// WMO weather code; see Sky.
+    var weatherCode: Int? = nil
 
     var id: Date { time }
 
@@ -125,7 +129,8 @@ struct ForecastHour: Codable, Identifiable, Hashable {
             time: time, light: reasons.map(\.light).max() ?? .green, reasons: reasons,
             windSpeedMs: windSpeedMs, windGustMs: windGustMs, windFromDeg: windFromDeg,
             waveHeightM: waveHeightM, fetchM: fetchM, visibilityM: visibilityM,
-            temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp
+            temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp,
+            precipitationMm: precipitationMm, weatherCode: weatherCode
         )
     }
 

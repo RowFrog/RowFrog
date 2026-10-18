@@ -1,0 +1,108 @@
+import SwiftUI
+
+/// The weather in an hour as the iOS Weather app shows it: a multicolour
+/// symbol (sun, cloud, rain, hail ...) and a word. Built from the WMO weather
+/// code DWD's model gives; without one, from cloud cover and precipitation.
+enum Sky: CaseIterable {
+    case clear, mostlyClear, partlyCloudy, cloudy, fog, drizzle, rain, showers, heavyRain,
+         freezingRain, snow, thunderstorm, hail
+
+    init(code: Int?, cloudCoverPct: Double?, precipitationMm: Double?) {
+        switch code {
+        case 0: self = .clear
+        case 1: self = .mostlyClear
+        case 2: self = .partlyCloudy
+        case 3: self = .cloudy
+        case 45, 48: self = .fog
+        case 51, 53, 55: self = .drizzle
+        case 56, 57, 66, 67: self = .freezingRain
+        case 61, 63: self = .rain
+        case 80, 81: self = .showers
+        case 65, 82: self = .heavyRain
+        case 71, 73, 75, 77, 85, 86: self = .snow
+        case 95: self = .thunderstorm
+        case 96, 99: self = .hail
+        default:
+            let rain = precipitationMm ?? 0
+            let cloud = cloudCoverPct ?? 0
+            if rain >= 4 { self = .heavyRain }
+            else if rain >= 0.1 { self = .rain }
+            else if cloud >= 80 { self = .cloudy }
+            else if cloud >= 40 { self = .partlyCloudy }
+            else if cloud >= 15 { self = .mostlyClear }
+            else { self = .clear }
+        }
+    }
+
+    init(hour: ForecastHour) {
+        self.init(code: hour.weatherCode, cloudCoverPct: hour.cloudCoverPct, precipitationMm: hour.precipitationMm)
+    }
+
+    /// Multicolour SF Symbol; night variants show a moon.
+    func symbol(night: Bool = false) -> String {
+        switch self {
+        case .clear: night ? "moon.stars.fill" : "sun.max.fill"
+        case .mostlyClear: night ? "moon.fill" : "sun.max.fill"
+        case .partlyCloudy: night ? "cloud.moon.fill" : "cloud.sun.fill"
+        case .cloudy: "cloud.fill"
+        case .fog: "cloud.fog.fill"
+        case .drizzle: "cloud.drizzle.fill"
+        case .rain: "cloud.rain.fill"
+        case .showers: night ? "cloud.moon.rain.fill" : "cloud.sun.rain.fill"
+        case .heavyRain: "cloud.heavyrain.fill"
+        case .freezingRain: "cloud.sleet.fill"
+        case .snow: "cloud.snow.fill"
+        case .thunderstorm: "cloud.bolt.rain.fill"
+        case .hail: "cloud.hail.fill"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .clear: "Clear"
+        case .mostlyClear: "Mostly clear"
+        case .partlyCloudy: "Partly cloudy"
+        case .cloudy: "Cloudy"
+        case .fog: "Fog"
+        case .drizzle: "Drizzle"
+        case .rain: "Rain"
+        case .showers: "Showers"
+        case .heavyRain: "Heavy rain"
+        case .freezingRain: "Freezing rain"
+        case .snow: "Snow"
+        case .thunderstorm: "Thunderstorm"
+        case .hail: "Thunderstorm with hail"
+        }
+    }
+
+    /// What falls, for the precipitation value: "Rain", "Hail", "Snow" ... or nil when nothing does.
+    var precipitationKind: String? {
+        switch self {
+        case .drizzle: "Drizzle"
+        case .rain, .showers, .heavyRain, .thunderstorm: "Rain"
+        case .freezingRain: "Freezing rain"
+        case .snow: "Snow"
+        case .hail: "Hail"
+        default: nil
+        }
+    }
+}
+
+struct SkyIcon: View {
+    let sky: Sky
+    var night = false
+
+    var body: some View {
+        Image(systemName: sky.symbol(night: night))
+            .symbolRenderingMode(.multicolor)
+            .accessibilityLabel(sky.title)
+    }
+}
+
+/// "Rain 0.4 mm", "Hail 2.1 mm", or "None".
+func precipitationText(_ hour: ForecastHour) -> String {
+    let sky = Sky(hour: hour)
+    guard let mm = hour.precipitationMm else { return sky.precipitationKind ?? "–" }
+    if mm < 0.05 && sky.precipitationKind == nil { return "None" }
+    return "\(sky.precipitationKind ?? "Rain") \(Format.number(mm, digits: 1)) mm"
+}

@@ -15,10 +15,10 @@ struct LocationPageView: View {
                 VStack(spacing: 16) {
                     header
                     if let forecast, let now = forecast.current() {
+                        NowCard(hour: now, water: forecast.waterTemperature)
                         if let warnings = forecast.warnings {
                             WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                         }
-                        NowCard(hour: now, water: forecast.waterTemperature)
                         if let sun = forecast.sunState(at: .now) {
                             DaylightCard(state: sun)
                         }
@@ -116,6 +116,10 @@ private struct NowCard: View {
                 TrafficLightDot(light: hour.light, size: 36)
                 Text(hour.light.title).font(.title2.bold())
                 Spacer(minLength: 0)
+                VStack(spacing: 2) {
+                    SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 34))
+                    Text(Sky(hour: hour).title).font(.caption).foregroundStyle(.secondary)
+                }
             }
             VStack(alignment: .leading, spacing: 6) {
                 if hour.reasons.isEmpty {
@@ -139,13 +143,14 @@ private struct NowCard: View {
                 MetricView(title: "Waves", symbol: Condition.waves.symbol,
                            value: hour.waveHeightM.map { "\(Format.number($0, digits: 2)) m" } ?? "–", size: 28)
             }
-            HStack {
-                Label("Visibility \(visibilityText(hour.visibilityM))", systemImage: Condition.visibility.symbol)
+            HStack(alignment: .top) {
+                MetricView(title: "Visibility", symbol: Condition.visibility.symbol, value: visibilityText(hour.visibilityM), size: 17)
                 Spacer()
-                Label("Ice: no data yet", systemImage: Condition.ice.symbol)
+                MetricView(title: "Rain, hail", symbol: Condition.precipitation.symbol, value: precipitationText(hour), size: 17)
+                Spacer()
+                MetricView(title: "Ice", symbol: Condition.ice.symbol, value: "No data", size: 17)
                     .foregroundStyle(.secondary)
             }
-            .font(.subheadline)
             .symbolRenderingMode(.hierarchical)
         }
     }
@@ -226,6 +231,15 @@ private struct CurrentConditionsCard: View {
 
     var body: some View {
         Card(title: "Current conditions", symbol: "gauge.with.dots.needle.33percent") {
+            HStack(spacing: 12) {
+                SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 40))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(Sky(hour: hour).title).font(.title3.weight(.semibold))
+                    Text("\(Format.number(hour.temperatureC))° · Clouds \(Format.number(hour.cloudCoverPct)) %")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                 ForEach(Condition.allCases.filter { $0 != .daylight }) { condition in
                     ConditionTile(condition: condition, light: hour.light(for: condition.reasonNames)) {
@@ -254,6 +268,11 @@ private struct CurrentConditionsCard: View {
             }
         case .waves: Text(hour.waveHeightM.map { "\(Format.number($0, digits: 2)) m" } ?? "–")
         case .waterTemperature: Text(water.map { "\(Format.number($0.celsius, digits: 1)) °C" } ?? "–")
+        case .precipitation:
+            HStack(spacing: 6) {
+                Text(hour.precipitationMm.map { "\(Format.number($0, digits: 1)) mm" } ?? "–")
+                SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.callout)
+            }
         case .visibility: Text(visibilityText(hour.visibilityM))
         case .cloudCover: Text("\(Format.number(hour.cloudCoverPct)) %")
         case .thunderstorm:
@@ -276,6 +295,8 @@ private struct CurrentConditionsCard: View {
         case .waves:
             guard let fetch = hour.fetchM else { return nil }
             return fetch < 50 ? "Wind blows off the shore" : "\(Format.number(fetch / 1000, digits: 1)) km open water upwind"
+        case .precipitation:
+            return Sky(hour: hour).precipitationKind ?? "Dry"
         case .waterTemperature:
             return water.map { "Measured \(Format.time($0.measuredAt))" } ?? "No lake station"
         case .visibility:
@@ -330,7 +351,7 @@ private struct ConditionTile<Value: View>: View {
 private enum Column {
     static let time: CGFloat = 44
     static let light: CGFloat = 14
-    static let sun: CGFloat = 18
+    static let sky: CGFloat = 24
 }
 
 private struct HourlyCard: View {
@@ -371,12 +392,14 @@ private struct HourlyLegendHeader: View {
                 .accessibilityLabel("Time")
             Image(systemName: "circle.fill").font(.system(size: 8)).frame(width: Column.light)
                 .accessibilityLabel("Rowing light")
+            Image(systemName: "cloud.sun").frame(width: Column.sky)
+                .accessibilityLabel("Weather")
             column(.temperature)
             column(.wind)
             column(.waves)
+            column(.precipitation)
             column(.visibility)
             column(.cloudCover)
-            ConditionIcon(condition: .daylight).frame(width: Column.sun)
         }
         .font(.subheadline)
         .foregroundStyle(.secondary)
@@ -422,17 +445,17 @@ private struct HourRow: View {
             Text(Format.time(hour.time))
                 .frame(width: Column.time, alignment: .leading)
             TrafficLightDot(light: hour.light, size: 12).frame(width: Column.light)
+            SkyIcon(sky: Sky(hour: hour), night: dark)
+                .font(.callout)
+                .frame(width: Column.sky)
             cell(Format.number(hour.temperatureC))
             cell(hour.windSpeedMs.map { "\(Format.number($0))–\(Format.number(hour.windGustMs))" } ?? "–")
             cell(Format.number(hour.waveHeightM, digits: 2))
+            cell(Format.number(hour.precipitationMm, digits: 1))
+                .foregroundStyle((hour.precipitationMm ?? 0) >= 0.1 ? Color.blue : .primary)
             cell(visibilityText(hour.visibilityM).replacingOccurrences(of: " km", with: ""))
                 .foregroundStyle(hour.light(for: ["fog"]).map(\.color) ?? .primary)
             cell(Format.number(hour.cloudCoverPct))
-            Image(systemName: dark ? "moon.fill" : "sun.max.fill")
-                .font(.caption)
-                .foregroundStyle(dark ? Color.indigo : Color.orange)
-                .frame(width: Column.sun)
-                .accessibilityLabel(dark ? "Sun down" : "Sun up")
         }
         .font(.subheadline.monospacedDigit())
         .lineLimit(1)
@@ -460,6 +483,17 @@ private struct LegendCard: View {
                             Text(light.title).font(.subheadline)
                         }
                     }
+                    Divider()
+                    Text("Weather symbols").font(.subheadline.weight(.semibold))
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 8) {
+                        ForEach(Sky.allCases, id: \.self) { sky in
+                            HStack(spacing: 8) {
+                                SkyIcon(sky: sky).frame(width: 24)
+                                Text(sky.title).font(.caption)
+                            }
+                        }
+                    }
+                    Text("At night the sun becomes a moon and the row is dimmed.").font(.caption).foregroundStyle(.secondary)
                     Divider()
                     ForEach(Condition.allCases) { c in
                         HStack(alignment: .top, spacing: 10) {

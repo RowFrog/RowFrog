@@ -69,6 +69,14 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD lake warning")
     }
 
+    func testSkyFromWeatherCode() {
+        XCTAssertEqual(Sky(code: 96, cloudCoverPct: 100, precipitationMm: 3).precipitationKind, "Hail")
+        XCTAssertEqual(Sky(code: 2, cloudCoverPct: 50, precipitationMm: 0).symbol(night: true), "cloud.moon.fill")
+        // Without a code, cloud cover and precipitation decide.
+        XCTAssertEqual(Sky(code: nil, cloudCoverPct: 95, precipitationMm: 0), .cloudy)
+        XCTAssertEqual(Sky(code: nil, cloudCoverPct: 95, precipitationMm: 0.6), .rain)
+    }
+
     func testLightOrdering() {
         XCTAssertLessThan(Light.green, Light.amber)
         XCTAssertEqual([Light.amber, .red, .green].max(), .red)

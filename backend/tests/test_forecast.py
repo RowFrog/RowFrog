@@ -22,6 +22,7 @@ PAYLOAD = {
         "visibility": [400, 20_000],
         "precipitation": [0, 0],
         "cape": [0, 0],
+        "weather_code": [45, 96],
         "is_day": [1, 1],
     }
 }
@@ -32,6 +33,7 @@ def test_parse_open_meteo_payload():
     assert len(hours) == 2
     assert hours[0].time.isoformat() == "2026-10-18T06:00:00+00:00"
     assert hours[1].wind_gust_ms == 14.0
+    assert hours[1].weather_code == 96  # thunderstorm with hail
 
 
 def test_parse_tolerates_missing_variables():
@@ -106,3 +108,5 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
     day = body["daylight"][0]
     assert day["sunrise"] < day["sunset"]
     assert body["hours"][0]["sunUp"] is True
+    assert body["hours"][1]["weatherCode"] == 96
+    assert body["hours"][0]["precipitationMm"] == 0

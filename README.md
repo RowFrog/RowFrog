@@ -71,7 +71,7 @@ shows all saved locations with their light and key numbers; swipe a row to
 remove it or make it the home base, and use the search to add clubs from
 the catalog. The saved list is stored on the phone.
 
-Each page starts with the official DWD warnings: the lake warning (strong
+Each page shows, under the rowing light, the official DWD warnings: the lake warning (strong
 wind or storm, as the shore lights show it) where DWD runs its lake warning
 service (23 lakes, among them Starnberger See, Ammersee and Chiemsee), and
 DWD's weather warnings for the municipality, which cover rivers and canals

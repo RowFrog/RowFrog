@@ -25,6 +25,7 @@ HOURLY = [
     "cloud_cover_low",
     "visibility",
     "precipitation",
+    "weather_code",
     "cape",
     "is_day",
 ]
@@ -43,6 +44,8 @@ class ForecastHour:
     precipitation_mm: float | None
     cape_jkg: float | None
     is_day: bool | None
+    # WMO weather code (0 clear ... 61 rain ... 96/99 thunderstorm with hail).
+    weather_code: int | None = None
 
 
 def request_params(lat: float, lon: float, hours: int = 48) -> dict[str, str]:
@@ -75,6 +78,7 @@ def parse(payload: dict) -> list[ForecastHour]:
         col("precipitation"),
         col("cape"),
         col("is_day"),
+        col("weather_code"),
     )
     return [
         ForecastHour(
@@ -89,8 +93,9 @@ def parse(payload: dict) -> list[ForecastHour]:
             precipitation_mm=pr,
             cape_jkg=cape,
             is_day=None if day is None else bool(day),
+            weather_code=None if code is None else int(code),
         )
-        for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day in rows
+        for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code in rows
     ]
 
 
