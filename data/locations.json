@@ -19,7 +19,7 @@
       "lakeId": "starnberger-see",
       "address": "Dampfschiffstraße 6, 82319 Starnberg",
       "website": "https://www.mrc1880.de",
-      "launchPoint": { "lat": 47.9974, "lon": 11.3475, "precision": "address", "verified": false }
+      "launchPoint": { "lat": 47.9970, "lon": 11.3476, "precision": "shore point nearest the address (OSM)", "verified": false }
     },
     {
       "id": "mrsv-bayern",
@@ -27,7 +27,7 @@
       "lakeId": "starnberger-see",
       "address": "Seepromenade 2, 82319 Starnberg",
       "website": "http://www.mrsv-bayern.de",
-      "launchPoint": { "lat": 47.997, "lon": 11.345, "precision": "approximate", "verified": false }
+      "launchPoint": { "lat": 47.9963, "lon": 11.3463, "precision": "shore point nearest the approximate address (OSM)", "verified": false }
     },
     {
       "id": "tutzinger-rv",
@@ -35,7 +35,7 @@
       "lakeId": "starnberger-see",
       "address": "Seestraße 22, 82327 Tutzing",
       "website": "https://www.tutzinger-ruderverein.de",
-      "launchPoint": { "lat": 47.8964, "lon": 11.2746, "precision": "plus-code V7WF+MR", "verified": false }
+      "launchPoint": { "lat": 47.8970, "lon": 11.2759, "precision": "OSM slipway node/8874401830 near the plus code", "verified": false }
     }
   ]
 }
