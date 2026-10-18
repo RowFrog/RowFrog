@@ -11,31 +11,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Probe DWD warning endpoints
+        shell: python3 {0}
         run: |
-          G="https://maps.dwd.de/geoserver/dwd/ows"
-          echo "=== layers"
-          curl -sS "$G?service=WFS&version=2.0.0&request=GetCapabilities" | grep -oE '<Name>dwd:[^<]+</Name>' | sort -u | grep -iE 'warn|see|kuest|binnen|gewaess' || true
-          for layer in Warnungen_Binnenseen Warnungen_Gemeinden; do
-            echo "=== $layer describe"
-            curl -sS "$G?service=WFS&version=2.0.0&request=DescribeFeatureType&typeName=dwd:$layer" | grep -oE 'name="[^"]+"' | tr '\n' ' '; echo
-          done
-          echo "=== Binnenseen features (no geometry)"
-          curl -sS "$G?service=WFS&version=2.0.0&request=GetFeature&typeName=dwd:Warnungen_Binnenseen&outputFormat=application/json" \
-            | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("totalFeatures"), "features"); [print(json.dumps(f["properties"], ensure_ascii=False)[:1500], (f.get("geometry") or {}).get("type")) for f in d["features"][:15]]'
-          echo "=== Gemeinden at Starnberg"
-          curl -sS -G "$G" --data-urlencode service=WFS --data-urlencode version=2.0.0 --data-urlencode request=GetFeature \
-            --data-urlencode typeName=dwd:Warnungen_Gemeinden --data-urlencode outputFormat=application/json \
-            --data-urlencode "CQL_FILTER=CONTAINS(THE_GEOM,POINT(47.9967 11.3474))" | head -c 3000; echo
-          echo "=== Gemeinden any (count + sample)"
-          curl -sS "$G?service=WFS&version=2.0.0&request=GetFeature&typeName=dwd:Warnungen_Gemeinden&outputFormat=application/json&count=2&propertyName=NAME,EVENT,SEVERITY,EC_II,ONSET,EXPIRES,HEADLINE" | head -c 2500; echo
-          for l in $(curl -sS "$G?service=WFS&version=2.0.0&request=GetCapabilities" | grep -oE '<Name>dwd:[^<]+</Name>' | sed -E 's/<\/?Name>//g' | grep -iE 'binnen|seen'); do
-            echo "=== $l sample"
-            curl -sS "$G?service=WFS&version=2.0.0&request=GetFeature&typeName=$l&outputFormat=application/json&count=40" \
-              | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d.get("totalFeatures")); [print(json.dumps(f["properties"], ensure_ascii=False)[:300]) for f in d["features"][:40]]' || true
-          done
-          echo "=== opendata cap"
-          curl -sS https://opendata.dwd.de/weather/alerts/cap/ | grep -oE 'href="[^"]+"'
-          echo "=== warnapp json"
-          for u in https://www.dwd.de/DWD/warnungen/warnapp/json/warnings.json https://www.dwd.de/DWD/warnungen/warnapp_gemeinden/json/warnings_gemeinde.json; do
-            curl -sS -o /tmp/x -w "$u %{http_code} %{size_download}\n" "$u"; head -c 300 /tmp/x; echo
-          done
+          import json, urllib.request, urllib.parse
+          G = "https://maps.dwd.de/geoserver/dwd/ows"
+          def get(**p):
+              q = dict(service="WFS", version="2.0.0", request="GetFeature", outputFormat="application/json"); q.update(p)
+              with urllib.request.urlopen(G + "?" + urllib.parse.urlencode(q), timeout=60) as r:
+                  return json.load(r)
+          for crs in ["EPSG:4326", "urn:ogc:def:crs:EPSG::4326"]:
+              d = get(typeName="dwd:Warngebiete_Binnenseen", srsName=crs, count=1)
+              f = d["features"][0]; g = f["geometry"]
+              c = g["coordinates"]
+              while isinstance(c[0], list): c = c[0]
+              print("binnen", crs, f["properties"]["NAME"], g["type"], c, f.get("bbox"))
+          for name, pt in [("starnberg", (47.9967, 11.3474)), ("kronshagen", (54.337, 10.08))]:
+              for order in ["latlon", "lonlat"]:
+                  a, b = pt if order == "latlon" else pt[::-1]
+                  for layer in ["Warngebiete_Gemeinden", "Warnungen_Gemeinden"]:
+                      try:
+                          d = get(typeName="dwd:" + layer, CQL_FILTER=f"INTERSECTS(THE_GEOM,POINT({a} {b}))", propertyName="NAME,WARNCELLID,EVENT", count=5)
+                          print(name, order, layer, d.get("totalFeatures"), [f["properties"] for f in d["features"]])
+                      except Exception as e:
+                          print(name, order, layer, "ERR", e)
+          d = get(typeName="dwd:Warnungen_Gemeinden", count=1)
+          print(json.dumps(d["features"][0]["properties"], ensure_ascii=False, indent=1))
+          d = get(typeName="dwd:Warnungen_Gemeinden", propertyName="EVENT,EC_II,EC_GROUP,SEVERITY")
+          print(sorted({(f["properties"]["EVENT"], f["properties"]["EC_II"], f["properties"]["EC_GROUP"], f["properties"]["SEVERITY"]) for f in d["features"]}))
+          d = get(typeName="dwd:Warngebiete_Binnenseen", propertyName="NAME,WARNCELLID,SUCHE,ZUSATZ,BL")
+          for f in d["features"]: print(f["properties"])
