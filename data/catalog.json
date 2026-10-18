@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "updated": "2026-10-18",
+  "source": "© OpenStreetMap contributors, ODbL",
+  "lakes": [
+    {
+      "id": "regattastrecke-oberschleissheim",
+      "name": "Regattastrecke Oberschleißheim",
+      "center": {
+        "lat": 48.2429,
+        "lon": 11.5154
+      },
+      "osm": "way/4083380"
+    }
+  ],
+  "clubs": [
+    {
+      "id": "regattastrecke-oberschleissheim",
+      "name": "Regattastrecke Oberschleißheim",
+      "shortName": "Regattastrecke Oberschleißheim",
+      "lakeId": "regattastrecke-oberschleissheim",
+      "address": "Dachauer Straße 35, 85764 Oberschleißheim",
+      "website": "https://www.leistungszentrum-muenchen.de/",
+      "launchPoint": {
+        "lat": 48.2437,
+        "lon": 11.5152,
+        "precision": "shore point nearest way/1202406597 in OpenStreetMap, 61 m away",
+        "verified": false
+      }
+    }
+  ]
+}
