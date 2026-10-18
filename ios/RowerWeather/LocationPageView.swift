@@ -131,6 +131,9 @@ private struct NowCard: View {
                 TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
                 Spacer()
                 TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28)
+                Spacer()
+                MetricView(title: "Waves", symbol: Condition.waves.symbol,
+                           value: hour.waveHeightM.map { "\(Format.number($0, digits: 2)) m" } ?? "–", size: 28)
             }
             HStack {
                 Label("Visibility \(visibilityText(hour.visibilityM))", systemImage: Condition.visibility.symbol)
@@ -157,6 +160,25 @@ struct TemperatureView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(celsius.map { "\(Format.number($0, digits: digits))°" } ?? "–")
+                .font(.system(size: size, weight: .light))
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// A value with the icon and word that say what it is, matching TemperatureView.
+struct MetricView: View {
+    let title: String
+    let symbol: String
+    let value: String
+    var size: CGFloat
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Label(title, systemImage: symbol)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            Text(value)
                 .font(.system(size: size, weight: .light))
         }
         .accessibilityElement(children: .combine)
