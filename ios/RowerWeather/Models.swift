@@ -10,10 +10,22 @@ struct Coordinate: Codable, Hashable {
 struct Club: Codable, Identifiable, Hashable {
     let id: String
     let name: String
+    /// Short name for titles, e.g. "MRC 1880"; older backends send none.
+    let shortName: String?
     let address: String
     let website: URL?
     let launchPoint: Coordinate
     let launchPointVerified: Bool
+
+    var displayName: String { shortName ?? name }
+
+    /// The town from the address, e.g. "Starnberg".
+    var town: String? {
+        guard let last = address.split(separator: ",").last else { return nil }
+        let words = last.split(separator: " ")
+        let town = words.drop(while: { $0.allSatisfy(\.isNumber) }).joined(separator: " ")
+        return town.isEmpty ? nil : town
+    }
 }
 
 struct Lake: Codable, Identifiable, Hashable {
@@ -51,7 +63,8 @@ struct Reason: Codable, Hashable {
         case "fog": "Fog"
         case "thunderstorm": "Thunderstorm risk"
         case "ice": "Ice"
-        case "daylight": "Dark"
+        case "daylight": "Sun down"
+        case "twilight": "Sunrise / sunset"
         case "cold_water": "Cold water"
         case "cool_water": "Cool water"
         default: condition
@@ -71,13 +84,25 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     let visibilityM: Double?
     let temperatureC: Double?
     let cloudCoverPct: Double?
+    /// Whether the sun is up in the middle of this hour.
+    let sunUp: Bool?
 
     var id: Date { time }
+
+    /// The worst light among these conditions in this hour, or nil when they are all fine.
+    func light(for conditions: Set<String>) -> Light? {
+        reasons.filter { conditions.contains($0.condition) }.map(\.light).max()
+    }
 }
 
 struct WaterTemperature: Codable, Hashable {
     let celsius: Double
     let measuredAt: Date
+}
+
+struct SunDay: Codable, Hashable {
+    let sunrise: Date
+    let sunset: Date
 }
 
 struct ClubForecast: Codable, Hashable {
@@ -86,5 +111,23 @@ struct ClubForecast: Codable, Hashable {
     let generatedAt: Date
     let waterTemperature: WaterTemperature?
     let attribution: [String]
+    let daylight: [SunDay]?
     let hours: [ForecastHour]
+
+    /// Where the sun stands at `date`: up until sunset, or down until the next sunrise.
+    func sunState(at date: Date) -> SunState? {
+        guard let days = daylight?.sorted(by: { $0.sunrise < $1.sunrise }) else { return nil }
+        if let today = days.first(where: { $0.sunrise <= date && date < $0.sunset }) {
+            return .up(sunrise: today.sunrise, sunset: today.sunset)
+        }
+        if let next = days.first(where: { $0.sunrise > date }) {
+            return .down(nextSunrise: next.sunrise, nextSunset: next.sunset)
+        }
+        return nil
+    }
+}
+
+enum SunState: Hashable {
+    case up(sunrise: Date, sunset: Date)
+    case down(nextSunrise: Date, nextSunset: Date)
 }

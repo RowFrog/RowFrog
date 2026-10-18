@@ -26,6 +26,7 @@ jobs:
       - run: pip install -e backend
       - name: Discover clubs
         run: |
+          set -o pipefail
           python3 scripts/discover_clubs.py | tee catalog-report.txt
           { echo '```'; cat catalog-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Check the catalog loads

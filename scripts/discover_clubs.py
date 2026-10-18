@@ -94,6 +94,8 @@ def main() -> int:
         tags = e.get("tags", {})
         if tags.get("natural") != "water" or tags.get("water") in NOT_LAKES:
             continue
+        if "geometry" not in e and "members" not in e:
+            continue  # a water area also tagged sport=rowing, listed once more with its geometry
         try:
             rings = water_rings(e)
         except ValueError as err:
