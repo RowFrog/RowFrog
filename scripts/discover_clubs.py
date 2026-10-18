@@ -35,7 +35,7 @@ OUTLINES = ROOT / "data" / "outlines"
 BBOX = (47.40, 10.70, 48.60, 12.90)
 MAX_SHORE_M = 300.0
 # Few clubs carry sport=rowing in OSM, so club names are matched too.
-CLUB_NAME = "Ruder|Rowing|Regatta"
+CLUB_NAME = "Ruder|ruder|Rowing|Regatta"
 NOT_LAKES = {"river", "canal", "stream", "ditch", "drain", "wastewater", "moat", "fish_pass"}
 
 
@@ -49,12 +49,12 @@ def query() -> dict:
     s, w, n, e = BBOX
     return overpass(
         f"""
-        [out:json][timeout:180];
+        [out:json][timeout:240];
         (
           nwr["sport"="rowing"]["name"]({s},{w},{n},{e});
-          nwr["name"~"{CLUB_NAME}",i]["club"]({s},{w},{n},{e});
-          nwr["name"~"{CLUB_NAME}",i]["leisure"]({s},{w},{n},{e});
-          nwr["name"~"{CLUB_NAME}",i]["building"]({s},{w},{n},{e});
+          nwr["name"~"{CLUB_NAME}"]["club"]({s},{w},{n},{e});
+          nwr["name"~"{CLUB_NAME}"]["leisure"]({s},{w},{n},{e});
+          nwr["name"~"{CLUB_NAME}"]["building"]({s},{w},{n},{e});
         )->.r;
         .r out center tags;
         (
@@ -64,7 +64,8 @@ def query() -> dict:
           relation(around.r:{MAX_SHORE_M:.0f})["landuse"="reservoir"]["name"];
         );
         out geom tags;
-        """
+        """,
+        timeout=250,
     )
 
 
@@ -102,7 +103,7 @@ def main() -> int:
         name = tags.get("name", "")
         if re.search("verleih|rental|boote? ", name, re.I) or tags.get("shop") or tags.get("amenity") == "boat_rental":
             return False  # boat hire, not a club
-        return tags.get("sport") == "rowing" or bool(re.search(CLUB_NAME, name, re.I))
+        return tags.get("sport") == "rowing" or bool(re.search(CLUB_NAME, name))
 
     features = [e for e in result if is_club(e.get("tags", {})) and ("center" in e or "lat" in e)]
     waters = []

@@ -27,7 +27,7 @@ OVERPASS_SERVERS = [
 OUT_DIR = Path(__file__).resolve().parents[1] / "data" / "outlines"
 
 
-def overpass(q: str) -> dict:
+def overpass(q: str, timeout: float = 90) -> dict:
     """Run an Overpass QL query, trying each server in turn."""
     data = urllib.parse.urlencode({"data": q}).encode()
     errors = []
@@ -35,7 +35,7 @@ def overpass(q: str) -> dict:
         for url in OVERPASS_SERVERS:
             req = urllib.request.Request(url, data=data, headers={"User-Agent": "RowerWeather/0.1"})
             try:
-                with urllib.request.urlopen(req, timeout=90) as resp:
+                with urllib.request.urlopen(req, timeout=timeout) as resp:
                     return json.load(resp)
             except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
                 errors.append(f"{url}: {e}")
