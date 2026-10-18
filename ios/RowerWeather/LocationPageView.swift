@@ -14,7 +14,7 @@ struct LocationPageView: View {
             ScrollView {
                 VStack(spacing: 16) {
                     header
-                    if let forecast, let now = forecast.hours.first {
+                    if let forecast, let now = forecast.current() {
                         NowCard(hour: now)
                         if let sun = forecast.sunState(at: .now) {
                             DaylightCard(state: sun)
@@ -145,7 +145,8 @@ private struct DaylightCard: View {
             Spacer()
         }
         .font(.title3.weight(.semibold))
-        .symbolRenderingMode(.multicolor)
+        .symbolRenderingMode(.hierarchical)
+        .labelStyle(SunLabelStyle())
     }
 }
 
@@ -203,7 +204,8 @@ private struct CurrentConditionsCard: View {
             let from = hour.windFromDeg.map { " · from \(Format.compass($0))" } ?? ""
             return "Gusts \(Format.number(gust)) m/s\(from)"
         case .waves:
-            return hour.fetchM.map { "\(Format.number($0 / 1000, digits: 1)) km open water upwind" }
+            guard let fetch = hour.fetchM else { return nil }
+            return fetch < 50 ? "Wind blows off the shore" : "\(Format.number(fetch / 1000, digits: 1)) km open water upwind"
         case .waterTemperature:
             return water.map { "Measured \(Format.time($0.measuredAt))" } ?? "No lake station"
         case .visibility:
@@ -335,7 +337,8 @@ private struct DayHeader: View {
             }
         }
         .font(.caption)
-        .symbolRenderingMode(.multicolor)
+        .symbolRenderingMode(.hierarchical)
+        .labelStyle(SunLabelStyle())
         .padding(.top, 8)
     }
 }
@@ -401,6 +404,16 @@ private struct LegendCard: View {
             } label: {
                 Label("Legend", systemImage: "info.circle").font(.subheadline.weight(.semibold))
             }
+        }
+    }
+}
+
+/// Orange sun symbols, so the sunrise and sunset arrows show in light mode too.
+struct SunLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 6) {
+            configuration.icon.foregroundStyle(.orange)
+            configuration.title
         }
     }
 }

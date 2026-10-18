@@ -89,6 +89,15 @@ struct ForecastHour: Codable, Identifiable, Hashable {
 
     var id: Date { time }
 
+    func with(reasons: [Reason], sunUp: Bool?) -> ForecastHour {
+        ForecastHour(
+            time: time, light: reasons.map(\.light).max() ?? .green, reasons: reasons,
+            windSpeedMs: windSpeedMs, windGustMs: windGustMs, windFromDeg: windFromDeg,
+            waveHeightM: waveHeightM, fetchM: fetchM, visibilityM: visibilityM,
+            temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp
+        )
+    }
+
     /// The worst light among these conditions in this hour, or nil when they are all fine.
     func light(for conditions: Set<String>) -> Light? {
         reasons.filter { conditions.contains($0.condition) }.map(\.light).max()
@@ -113,6 +122,21 @@ struct ClubForecast: Codable, Hashable {
     let attribution: [String]
     let daylight: [SunDay]?
     let hours: [ForecastHour]
+
+    /// The first forecast hour as it stands at `date`. That hour began up to
+    /// an hour ago, so "sunrise or sunset within the hour" is replaced by
+    /// whether the sun is actually up now.
+    func current(at date: Date = .now) -> ForecastHour? {
+        guard let first = hours.first else { return nil }
+        guard let sun = sunState(at: date), first.reasons.contains(where: { $0.condition == "twilight" }) else { return first }
+        var reasons = first.reasons.filter { $0.condition != "twilight" }
+        var sunUp = true
+        if case .down = sun {
+            sunUp = false
+            reasons.insert(Reason(condition: "daylight", light: .red), at: 0)
+        }
+        return first.with(reasons: reasons, sunUp: sunUp)
+    }
 
     /// Where the sun stands at `date`: up until sunset, or down until the next sunrise.
     func sunState(at date: Date) -> SunState? {

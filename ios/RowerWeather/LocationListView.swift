@@ -89,7 +89,7 @@ private struct LocationSummaryRow: View {
     let forecast: ClubForecast?
 
     var body: some View {
-        let now = forecast?.hours.first
+        let now = forecast?.current()
         HStack(alignment: .top) {
             VStack(alignment: .leading, spacing: 4) {
                 HStack(spacing: 6) {
@@ -117,6 +117,7 @@ private struct LocationSummaryRow: View {
                     }
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .labelStyle(SunLabelStyle())
                 }
             }
             Spacer()
@@ -143,7 +144,7 @@ private struct LocationSummaryRow: View {
     }
 
     private var cardBackground: some ShapeStyle {
-        (forecast?.hours.first?.light.color ?? .gray).opacity(0.18)
+        (forecast?.current()?.light.color ?? .gray).opacity(0.18)
     }
 }
 
