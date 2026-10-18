@@ -51,6 +51,8 @@ class HourConditions:
     lake_warning: LakeWarning = LakeWarning.NONE
     ice: Light = Light.GREEN
     daylight: Light = Light.GREEN
+    # "daylight" when the hour is dark, "twilight" when the sun rises or sets in it.
+    daylight_name: str = "daylight"
 
 
 @dataclass(frozen=True)
@@ -74,7 +76,7 @@ def assess(c: HourConditions, t: Thresholds = Thresholds()) -> Assessment:
         ("gusts", _rising(c.wind_gust_ms, t.gust_amber_ms, t.gust_red_ms)),
         ("thunderstorm", c.thunderstorm),
         ("ice", c.ice),
-        ("daylight", c.daylight),
+        (c.daylight_name, c.daylight),
     ]
     if c.wave_height_m is not None:
         checks.append(("waves", _rising(c.wave_height_m, t.wave_amber_m, t.wave_red_m)))

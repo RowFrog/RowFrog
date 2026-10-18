@@ -1,0 +1,2243 @@
+{
+ "11 06|48001|Münster": {
+  "lat": 51.96251,
+  "lon": 7.62519,
+  "precision": "town"
+ },
+ "Achterdiek 1 A|26131|Oldenburg": {
+  "lat": 53.11458,
+  "lon": 8.19814,
+  "precision": "street"
+ },
+ "Achterdiek 3|26131|Oldenburg": {
+  "lat": 53.11978,
+  "lon": 8.2049,
+  "precision": "street"
+ },
+ "Ahornstr. 6|83101|Rohrdorf": {
+  "lat": 47.83551,
+  "lon": 12.154,
+  "precision": "street"
+ },
+ "Alfred-Schütte-Allee 163|51105|Köln": {
+  "lat": 50.91139,
+  "lon": 6.98456,
+  "precision": "street"
+ },
+ "Allermöher Deich 36|22037|Hamburg": {
+  "lat": 53.48232,
+  "lon": 10.11465,
+  "precision": "street"
+ },
+ "Alsterkrugchaussee 222|22297|Hamburg": {
+  "lat": 53.60869,
+  "lon": 9.99496,
+  "precision": "street"
+ },
+ "Alsterkrugchaussee 224|22297|Hamburg": {
+  "lat": 53.60885,
+  "lon": 9.99525,
+  "precision": "street"
+ },
+ "Alsterufer 21|20354|Hamburg": {
+  "lat": 53.56082,
+  "lon": 9.99739,
+  "precision": "street"
+ },
+ "Alsterufer 9|20354|Hamburg": {
+  "lat": 53.56004,
+  "lon": 9.99697,
+  "precision": "street"
+ },
+ "Alt-Vynscher-Weg|46509|Xanten": {
+  "lat": 51.69708,
+  "lon": 6.41778,
+  "precision": "street"
+ },
+ "Alte Brücke 2|60594|Frankfurt": {
+  "lat": 50.10801,
+  "lon": 8.68731,
+  "precision": "street"
+ },
+ "Alte Steige 8|74206|Bad Wimpfen": {
+  "lat": 49.23003,
+  "lon": 9.16881,
+  "precision": "street"
+ },
+ "Altstadt 25|15517|Fürstenwalde": {
+  "lat": 52.36117,
+  "lon": 14.05491,
+  "precision": "street"
+ },
+ "Am Babenberg 37|15913|Schwielochsee OT Jessern": null,
+ "Am Bahndamm 4|23879|Mölln": {
+  "lat": 53.62753,
+  "lon": 10.68451,
+  "precision": "street"
+ },
+ "Am Bootshaus 4|31675|Bückeburg": {
+  "lat": 52.31108,
+  "lon": 9.0544,
+  "precision": "street"
+ },
+ "Am Doktorsee 18|31737|Rinteln": {
+  "lat": 52.18758,
+  "lon": 9.04933,
+  "precision": "street"
+ },
+ "Am Elbe-Seitenkanal 1|29378|Wittingen": {
+  "lat": 52.73372,
+  "lon": 10.66408,
+  "precision": "street"
+ },
+ "Am Elsterwehr 1|04109|Leipzig": {
+  "lat": 51.33517,
+  "lon": 12.35285,
+  "precision": "street"
+ },
+ "Am Floßhafen 80|63743|Aschaffenburg": {
+  "lat": 49.96127,
+  "lon": 9.13358,
+  "precision": "street"
+ },
+ "Am Flugplatz 5|94474|Vilshofen an der Donau": {
+  "lat": 48.63739,
+  "lon": 13.18833,
+  "precision": "street"
+ },
+ "Am Fährbahnhof 2|17438|Wolgast": {
+  "lat": 54.05365,
+  "lon": 13.77578,
+  "precision": "town"
+ },
+ "Am Großen Wannsee 44|14109|Berlin": {
+  "lat": 52.42953,
+  "lon": 13.16525,
+  "precision": "street"
+ },
+ "Am Großen Wannsee 46 a|14109|Berlin": {
+  "lat": 52.42989,
+  "lon": 13.16566,
+  "precision": "street"
+ },
+ "Am Großen Wannsee 46|14109|Berlin": {
+  "lat": 52.42975,
+  "lon": 13.16556,
+  "precision": "street"
+ },
+ "Am Hafen 3|04931|Mühlberg": {
+  "lat": 51.43245,
+  "lon": 13.20992,
+  "precision": "street"
+ },
+ "Am Hafen 5|26506|Norden": {
+  "lat": 53.58931,
+  "lon": 7.2103,
+  "precision": "street"
+ },
+ "Am Hasenkamp 5|14797|Lehnin": {
+  "lat": 52.32083,
+  "lon": 12.75454,
+  "precision": "street"
+ },
+ "Am Havelgut 2 a|14774|Brandenburg an der Havel": {
+  "lat": 52.40946,
+  "lon": 12.42659,
+  "precision": "street"
+ },
+ "Am Kanal 20 a|39288|Burg": {
+  "lat": 52.28349,
+  "lon": 11.84924,
+  "precision": "street"
+ },
+ "Am Klingenberg 9|06618|Naumburg": {
+  "lat": 51.15256,
+  "lon": 11.80992,
+  "precision": "town"
+ },
+ "Am Kuhgrund 6|21481|Lauenburg/Elbe": {
+  "lat": 53.37117,
+  "lon": 10.54326,
+  "precision": "street"
+ },
+ "Am Luisenbad 1b|24837|Schleswig": {
+  "lat": 53.63228,
+  "lon": 10.6993,
+  "precision": "street"
+ },
+ "Am Maingarten 404|63075|Offenbach": {
+  "lat": 50.11983,
+  "lon": 8.77862,
+  "precision": "street"
+ },
+ "Am Mainkanal 22|63450|Hanau": {
+  "lat": 50.12839,
+  "lon": 8.90649,
+  "precision": "street"
+ },
+ "Am Mittelhafen 40|48155|Münster": {
+  "lat": 51.95082,
+  "lon": 7.64448,
+  "precision": "street"
+ },
+ "Am Moselstadion 1|56856|Zell-Kaimt": null,
+ "Am Moselstausee 16|56073|Koblenz": {
+  "lat": 50.36128,
+  "lon": 7.56711,
+  "precision": "street"
+ },
+ "Am Mühlentorsweg 2 A|31582|Nienburg": {
+  "lat": 52.63862,
+  "lon": 9.20561,
+  "precision": "town"
+ },
+ "Am Nachtigallenwäldchen 20|49716|Meppen": {
+  "lat": 52.68705,
+  "lon": 7.29985,
+  "precision": "street"
+ },
+ "Am Obergraben 3|58300|Wetter": {
+  "lat": 51.38075,
+  "lon": 7.39712,
+  "precision": "street"
+ },
+ "Am Obergraben 6|58300|Wetter": {
+  "lat": 51.38034,
+  "lon": 7.39654,
+  "precision": "street"
+ },
+ "Am Ostseebad 8|24939|Flensburg": {
+  "lat": 54.8109,
+  "lon": 9.43186,
+  "precision": "street"
+ },
+ "Am Pumpwerk 2|32423|Minden": {
+  "lat": 52.30095,
+  "lon": 8.92767,
+  "precision": "street"
+ },
+ "Am Pumpwerk 2|32425|Minden": {
+  "lat": 52.30095,
+  "lon": 8.92767,
+  "precision": "street"
+ },
+ "Am Rhein 5|67547|Worms": {
+  "lat": 49.63268,
+  "lon": 8.3768,
+  "precision": "street"
+ },
+ "Am Rhein-Herne-Kanal 13|46242|Bottrop": {
+  "lat": 51.49841,
+  "lon": 6.93668,
+  "precision": "street"
+ },
+ "Am Rheinufer 2|65366|Geisenheim": {
+  "lat": 50.03922,
+  "lon": 7.94145,
+  "precision": "town"
+ },
+ "Am Sandacker 43|40221|Düsseldorf": {
+  "lat": 51.20611,
+  "lon": 6.73476,
+  "precision": "street"
+ },
+ "Am Segelhafen 3|91174|Enderndorf": {
+  "lat": 49.14424,
+  "lon": 10.91616,
+  "precision": "street"
+ },
+ "Am Sorpesee 43|59846|Sundern": {
+  "lat": 51.34828,
+  "lon": 7.95701,
+  "precision": "street"
+ },
+ "Am Stadtpark 39|06217|Merseburg": {
+  "lat": 51.377,
+  "lon": 11.99547,
+  "precision": "street"
+ },
+ "Am Stammheimer Schloßpark 20|51061|Köln": {
+  "lat": 50.98723,
+  "lon": 6.97931,
+  "precision": "street"
+ },
+ "Am Steinbruch 15|04828|Schmölen": {
+  "lat": 51.34715,
+  "lon": 12.73051,
+  "precision": "street"
+ },
+ "Am Trockendock 4|15890|Eisenhüttenstadt": {
+  "lat": 52.14636,
+  "lon": 14.63975,
+  "precision": "street"
+ },
+ "Am Unterhafen|21379|Scharnebeck": {
+  "lat": 53.29291,
+  "lon": 10.50682,
+  "precision": "town"
+ },
+ "Am Wasser 23|28759|Bremen": {
+  "lat": 53.16322,
+  "lon": 8.63447,
+  "precision": "street"
+ },
+ "Am Weserufer 27|31592|Stolzenau": {
+  "lat": 52.51795,
+  "lon": 9.07639,
+  "precision": "street"
+ },
+ "Am Yachthafen 7|46487|Wesel": {
+  "lat": 51.6635,
+  "lon": 6.58622,
+  "precision": "street"
+ },
+ "An den Bootshäusern 11|44147|Dortmund": {
+  "lat": 51.5399,
+  "lon": 7.43474,
+  "precision": "street"
+ },
+ "An den Bootshäusern 7|44147|Dortmund": {
+  "lat": 51.54061,
+  "lon": 7.43495,
+  "precision": "street"
+ },
+ "An der Alster 47 a|20099|Hamburg": {
+  "lat": 53.56003,
+  "lon": 10.00868,
+  "precision": "street"
+ },
+ "An der Elbe 11|01796|Pirna": {
+  "lat": 50.96417,
+  "lon": 13.93222,
+  "precision": "street"
+ },
+ "An der Festwiese 9|01445|Radebeul": {
+  "lat": 51.10389,
+  "lon": 13.62426,
+  "precision": "street"
+ },
+ "An der Jugendherberge 3|54292|Trier": {
+  "lat": 49.76751,
+  "lon": 6.63866,
+  "precision": "street"
+ },
+ "An der Ochsenwiese 1|63450|Hanau": {
+  "lat": 50.12628,
+  "lon": 8.91013,
+  "precision": "street"
+ },
+ "An der Pirschheide 28|14471|Potsdam": {
+  "lat": 52.37293,
+  "lon": 13.01487,
+  "precision": "street"
+ },
+ "An der Überfahrt 2 b|06406|Bernburg": {
+  "lat": 51.7917,
+  "lon": 11.72928,
+  "precision": "street"
+ },
+ "Antonienstraße 1a|04229|Leipzig": {
+  "lat": 51.3156,
+  "lon": 12.34024,
+  "precision": "street"
+ },
+ "Auedamm 11|34121|Kassel": {
+  "lat": 51.30521,
+  "lon": 9.50108,
+  "precision": "street"
+ },
+ "Auedamm 25|34121|Kassel": {
+  "lat": 51.29821,
+  "lon": 9.49983,
+  "precision": "street"
+ },
+ "Auedamm 27|34121|Kassel": {
+  "lat": 51.29785,
+  "lon": 9.49917,
+  "precision": "street"
+ },
+ "Auedamm 29|34121|Kassel": {
+  "lat": 51.29723,
+  "lon": 9.49797,
+  "precision": "street"
+ },
+ "Auedamm 33|34121|Kassel": {
+  "lat": 51.29683,
+  "lon": 9.49692,
+  "precision": "street"
+ },
+ "Auedamm 35|34121|Kassel": {
+  "lat": 51.29658,
+  "lon": 9.49631,
+  "precision": "street"
+ },
+ "Auedamm 53|34121|Kassel": {
+  "lat": 51.29467,
+  "lon": 9.49006,
+  "precision": "street"
+ },
+ "Ausschläger Billdeich 95 a|20539|Hamburg": {
+  "lat": 53.54411,
+  "lon": 10.05424,
+  "precision": "street"
+ },
+ "Badstraße|97225|Zellingen": {
+  "lat": 49.89705,
+  "lon": 9.82371,
+  "precision": "street"
+ },
+ "Baggertsweg 7|97753|Karlstadt": {
+  "lat": 49.95783,
+  "lon": 9.76451,
+  "precision": "street"
+ },
+ "Barbarastr. 47 - 49|50996|Köln": {
+  "lat": 50.89356,
+  "lon": 6.99558,
+  "precision": "street"
+ },
+ "Barbarastr. 47-49|50996|Köln": {
+  "lat": 50.89356,
+  "lon": 6.99558,
+  "precision": "street"
+ },
+ "Barther Straße 80|13051|Berlin": {
+  "lat": 52.5668,
+  "lon": 13.49376,
+  "precision": "street"
+ },
+ "Baselerstr. 1|79761|Waldshut-Tiengen": {
+  "lat": 47.62193,
+  "lon": 8.20307,
+  "precision": "street"
+ },
+ "Bayernstr. 136|90478|Nürnberg": {
+  "lat": 49.43355,
+  "lon": 11.11871,
+  "precision": "street"
+ },
+ "Bei der Grünen Brücke 3|20539|Hamburg": {
+  "lat": 53.54347,
+  "lon": 10.04312,
+  "precision": "street"
+ },
+ "Bennostr. 7|48155|Münster": {
+  "lat": 51.95334,
+  "lon": 7.65284,
+  "precision": "street"
+ },
+ "Benrather Schloßufer 35|40597|Düsseldorf": {
+  "lat": 51.15699,
+  "lon": 6.8606,
+  "precision": "street"
+ },
+ "Berenbrock 22|59348|Lüdinghausen": {
+  "lat": 51.77859,
+  "lon": 7.4095,
+  "precision": "street"
+ },
+ "Berghauser Bucht 1|59872|Meschede": {
+  "lat": 51.33605,
+  "lon": 8.26003,
+  "precision": "street"
+ },
+ "Bergiusstr. 11|68219|Mannheim": {
+  "lat": 49.43367,
+  "lon": 8.52123,
+  "precision": "street"
+ },
+ "Bernkasteler RV 1874|54470|Bernkastel-Kues": {
+  "lat": 49.91574,
+  "lon": 7.07082,
+  "precision": "town"
+ },
+ "Beuditz - Vorstadt 23|06667|Weißenfels": {
+  "lat": 51.2052,
+  "lon": 11.94577,
+  "precision": "street"
+ },
+ "Beufleth 3|21762|Otterndorf": {
+  "lat": 53.82363,
+  "lon": 8.91971,
+  "precision": "street"
+ },
+ "Bismarckstr. 129|66121|Saarbrücken": {
+  "lat": 49.22522,
+  "lon": 7.01231,
+  "precision": "street"
+ },
+ "Bismarckstr. 68|14109|Berlin": {
+  "lat": 52.41465,
+  "lon": 13.15875,
+  "precision": "street"
+ },
+ "Bismarckstr.4|14109|Berlin": {
+  "lat": 52.41855,
+  "lon": 13.17155,
+  "precision": "street"
+ },
+ "Bismarckstraße 129|66121|Saarbrücken": {
+  "lat": 49.22522,
+  "lon": 7.01231,
+  "precision": "street"
+ },
+ "Bleiche 2|55411|Bingen": {
+  "lat": 49.96973,
+  "lon": 7.89078,
+  "precision": "street"
+ },
+ "Boootshaus am Hafen|39590|Tangermünde": {
+  "lat": 52.54311,
+  "lon": 11.97225,
+  "precision": "town"
+ },
+ "Bootshausstr. 12|35390|Gießen": {
+  "lat": 50.58984,
+  "lon": 8.66961,
+  "precision": "street"
+ },
+ "Bootshausstraße 7|89231|Neu-Ulm": {
+  "lat": 48.39047,
+  "lon": 9.9882,
+  "precision": "street"
+ },
+ "Bootshausweg 5|13599|Berlin": {
+  "lat": 52.5524,
+  "lon": 13.23692,
+  "precision": "street"
+ },
+ "Brandensteinweg 10|13595|Berlin": {
+  "lat": 52.51293,
+  "lon": 13.21235,
+  "precision": "street"
+ },
+ "Brandensteinweg 2|13595|Berlin": {
+  "lat": 52.51098,
+  "lon": 13.20982,
+  "precision": "street"
+ },
+ "Breslauer Str. 120|84028|Landshut": {
+  "lat": 48.55418,
+  "lon": 12.18015,
+  "precision": "street"
+ },
+ "Bruno-Bürgel-Weg 127|12439|Berlin": {
+  "lat": 52.45397,
+  "lon": 13.54771,
+  "precision": "street"
+ },
+ "Bruno-Bürgel-Weg 99|12439|Berlin": {
+  "lat": 52.45489,
+  "lon": 13.54546,
+  "precision": "street"
+ },
+ "Brückenstraße 1|54439|Saarburg": {
+  "lat": 49.60861,
+  "lon": 6.55783,
+  "precision": "street"
+ },
+ "Burgauer Weg 7|07743|Jena": {
+  "lat": 50.91699,
+  "lon": 11.57969,
+  "precision": "street"
+ },
+ "Burgstr. 163|45289|Essen": {
+  "lat": 51.42519,
+  "lon": 7.13545,
+  "precision": "street"
+ },
+ "Buschweg 7|39218|Schönebeck": {
+  "lat": 52.02582,
+  "lon": 11.7706,
+  "precision": "street"
+ },
+ "Bäkepromenade|14532|Stahnsdorf": {
+  "lat": 52.39462,
+  "lon": 13.20744,
+  "precision": "street"
+ },
+ "Bürgermeister-Dieckmann-Str. 1|26789|Leer": {
+  "lat": 53.2184,
+  "lon": 7.44646,
+  "precision": "street"
+ },
+ "Castöhlenweg 5|24211|Preetz": {
+  "lat": 54.22236,
+  "lon": 10.28209,
+  "precision": "street"
+ },
+ "Charlottenstr. 33|23560|Lübeck": {
+  "lat": 53.85506,
+  "lon": 10.68183,
+  "precision": "street"
+ },
+ "Chausseestr. 55|15746|Klein Köris": {
+  "lat": 52.16735,
+  "lon": 13.68414,
+  "precision": "street"
+ },
+ "Cliff 10|45525|Hattingen": {
+  "lat": 51.40214,
+  "lon": 7.17349,
+  "precision": "street"
+ },
+ "Dachauer Str. 35|85764|Oberschleißheim": {
+  "lat": 48.23983,
+  "lon": 11.51108,
+  "precision": "street"
+ },
+ "Daimlerstr. 2|76744|Wörth": {
+  "lat": 49.0536,
+  "lon": 8.30401,
+  "precision": "street"
+ },
+ "Dammweg 18|55130|Mainz-Laubenheim": {
+  "lat": 49.97281,
+  "lon": 8.3197,
+  "precision": "street"
+ },
+ "Deelbögenkamp 1|22299|Hamburg": {
+  "lat": 53.60177,
+  "lon": 9.99152,
+  "precision": "street"
+ },
+ "Dieburgerstr. 68|60386|Frankfurt": {
+  "lat": 50.11475,
+  "lon": 8.7585,
+  "precision": "street"
+ },
+ "Domhof 37|23909|Ratzeburg": {
+  "lat": 53.70213,
+  "lon": 10.77307,
+  "precision": "street"
+ },
+ "Dorfstr. 25 f|13597|Berlin": {
+  "lat": 52.51906,
+  "lon": 13.20722,
+  "precision": "street"
+ },
+ "Dorfstraße 23|13597|Berlin": {
+  "lat": 52.52003,
+  "lon": 13.20985,
+  "precision": "street"
+ },
+ "Dr. Georg v. Opel Anlage 1|65439|Flörsheim": {
+  "lat": 50.01165,
+  "lon": 8.43101,
+  "precision": "street"
+ },
+ "Dr.-Alfred-Block-Allee 5|23909|Ratzeburg": {
+  "lat": 53.69893,
+  "lon": 10.762,
+  "precision": "street"
+ },
+ "Dresdener Str. 160|06886|Wittenberg": {
+  "lat": 51.86352,
+  "lon": 12.6672,
+  "precision": "street"
+ },
+ "Düsseldorfer Str. 47|47829|Krefeld": {
+  "lat": 51.34858,
+  "lon": 6.65553,
+  "precision": "street"
+ },
+ "Düsternbrooker Weg 16|24105|Kiel": {
+  "lat": 54.32944,
+  "lon": 10.14798,
+  "precision": "street"
+ },
+ "Düsternbrooker Weg 2|24105|Kiel": {
+  "lat": 54.328,
+  "lon": 10.14663,
+  "precision": "street"
+ },
+ "Düsternbrooker Weg 42|24105|Kiel": {
+  "lat": 54.33187,
+  "lon": 10.14983,
+  "precision": "street"
+ },
+ "Eickhöpen 62|49459|Lembruch": {
+  "lat": 52.53829,
+  "lon": 8.33866,
+  "precision": "street"
+ },
+ "Eisenhammerweg 22 - 24|13507|Berlin": {
+  "lat": 52.58411,
+  "lon": 13.27708,
+  "precision": "street"
+ },
+ "Elbuferstr. 31|21502|Geesthacht": {
+  "lat": 53.42443,
+  "lon": 10.38151,
+  "precision": "street"
+ },
+ "Elisabeth-Flickenschildt-Str. 26|13599|Berlin": {
+  "lat": 52.54421,
+  "lon": 13.22279,
+  "precision": "street"
+ },
+ "Elsa-Brändström-Str. 74|53227|Bonn": {
+  "lat": 50.72657,
+  "lon": 7.12391,
+  "precision": "street"
+ },
+ "Enkircher Str. 41|56841|Traben-Trarbach": {
+  "lat": 49.95155,
+  "lon": 7.12932,
+  "precision": "street"
+ },
+ "Eschhöfer Weg 3|65549|Limburg": {
+  "lat": 50.38809,
+  "lon": 8.07028,
+  "precision": "street"
+ },
+ "Fasanenweg 34|15711|Königs Wusterhausen": {
+  "lat": 52.30067,
+  "lon": 13.64585,
+  "precision": "street"
+ },
+ "Fechenheimer Leinpfad 1|60386|Frankfurt": {
+  "lat": 50.12062,
+  "lon": 8.77399,
+  "precision": "street"
+ },
+ "Feudenheimer Str. 2|68167|Mannheim": {
+  "lat": 49.48935,
+  "lon": 8.49371,
+  "precision": "street"
+ },
+ "Fischerstr. 21|30167|Hannover": {
+  "lat": 52.37813,
+  "lon": 9.719,
+  "precision": "street"
+ },
+ "Franzosenweg 21|19061|Schwerin": {
+  "lat": 53.62079,
+  "lon": 11.42039,
+  "precision": "street"
+ },
+ "Frauenauracher Straße 43|91056|Erlangen": {
+  "lat": 49.58545,
+  "lon": 10.97037,
+  "precision": "street"
+ },
+ "Freiherr-vom-Stein-Str. 204 a|45133|Essen": {
+  "lat": 51.40248,
+  "lon": 7.00654,
+  "precision": "street"
+ },
+ "Freiherr-vom-Stein-Str. 206 e|45133|Essen": {
+  "lat": 51.40483,
+  "lon": 7.01403,
+  "precision": "street"
+ },
+ "Freiherr-von-Stein-Str. 206 d|45239|Essen": {
+  "lat": 51.45822,
+  "lon": 7.01582,
+  "precision": "town"
+ },
+ "Freygäßchen 3|65343|Eltville": {
+  "lat": 50.02602,
+  "lon": 8.12432,
+  "precision": "street"
+ },
+ "Friedrich-Ebert-Str. 21|31319|Sehnde": {
+  "lat": 52.30645,
+  "lon": 9.96802,
+  "precision": "street"
+ },
+ "Friedrich-Naumann-Str. 5|18435|Stralsund": {
+  "lat": 54.32243,
+  "lon": 13.08607,
+  "precision": "street"
+ },
+ "Fritzenwiese 113|29221|Celle": {
+  "lat": 52.62442,
+  "lon": 10.08899,
+  "precision": "street"
+ },
+ "Fruchtbahnhofstraße 43|68159|Mannheim": {
+  "lat": 49.48728,
+  "lon": 8.45203,
+  "precision": "street"
+ },
+ "Fährenstr. 38|63165|Mühlheim": {
+  "lat": 50.12905,
+  "lon": 8.83645,
+  "precision": "street"
+ },
+ "Fährhausstraße 3a|22085|Hamburg": {
+  "lat": 53.57568,
+  "lon": 10.00644,
+  "precision": "street"
+ },
+ "Fährstr. 16|13503|Berlin": {
+  "lat": 52.6068,
+  "lon": 13.20371,
+  "precision": "street"
+ },
+ "Fährstr. 17|27283|Verden": {
+  "lat": 52.91148,
+  "lon": 9.23186,
+  "precision": "street"
+ },
+ "Fährstr. 253 b|40221|Düsseldorf": {
+  "lat": 51.20495,
+  "lon": 6.73412,
+  "precision": "street"
+ },
+ "Fährweg 30|34346|Hann Münden": {
+  "lat": 51.40845,
+  "lon": 9.64488,
+  "precision": "street"
+ },
+ "Fährweg 30|34346|Hann. Münden": {
+  "lat": 51.40845,
+  "lon": 9.64488,
+  "precision": "street"
+ },
+ "Gabrielenstr. 69 e|13507|Berlin": {
+  "lat": 52.59257,
+  "lon": 13.27609,
+  "precision": "street"
+ },
+ "Gabrielenstr. 83|13507|Berlin": {
+  "lat": 52.58978,
+  "lon": 13.2692,
+  "precision": "street"
+ },
+ "Gahlener Str. 216|46282|Dorsten": {
+  "lat": 51.66081,
+  "lon": 6.928,
+  "precision": "street"
+ },
+ "Gartenstr. 180|72074|Tübingen": {
+  "lat": 48.5229,
+  "lon": 9.08143,
+  "precision": "street"
+ },
+ "Gaßnerallee 93|55120|Mainz": {
+  "lat": 50.03053,
+  "lon": 8.22632,
+  "precision": "street"
+ },
+ "Georg-Mayr-Str. 25|97828|Marktheidenfeld": {
+  "lat": 49.85232,
+  "lon": 9.59987,
+  "precision": "street"
+ },
+ "Gettnau 99|79713|Bad Säckingen": {
+  "lat": 47.54825,
+  "lon": 7.94031,
+  "precision": "street"
+ },
+ "Giesenallee 11|34121|Kassel": {
+  "lat": 51.2901,
+  "lon": 9.48767,
+  "precision": "street"
+ },
+ "Giesenallee|34121|Kassel": {
+  "lat": 51.28968,
+  "lon": 9.48748,
+  "precision": "street"
+ },
+ "Glückaufstr. 16|49090|Osnabrück": {
+  "lat": 52.30966,
+  "lon": 8.00023,
+  "precision": "street"
+ },
+ "Gnattenbergstr. 7|27432|Bremervörde": {
+  "lat": 53.49031,
+  "lon": 9.16299,
+  "precision": "street"
+ },
+ "Gneisenaustr. 187|44628|Herne": {
+  "lat": 51.56363,
+  "lon": 7.24643,
+  "precision": "street"
+ },
+ "Grauhöfter Weg 2|24376|Kappeln": {
+  "lat": 54.67032,
+  "lon": 9.93696,
+  "precision": "street"
+ },
+ "Grendtor 40|45276|Essen-Steele": {
+  "lat": 51.44355,
+  "lon": 7.07618,
+  "precision": "street"
+ },
+ "Griesheimer Stadtweg 77 a|65933|Frankfurt am Main": {
+  "lat": 50.0906,
+  "lon": 8.61232,
+  "precision": "street"
+ },
+ "Grimlinghauser Brücke 54|41468|Neuss": {
+  "lat": 51.18442,
+  "lon": 6.73026,
+  "precision": "street"
+ },
+ "Grüne Str. 32|27283|Verden": {
+  "lat": 52.91476,
+  "lon": 9.22886,
+  "precision": "street"
+ },
+ "Grüner Weg 27|26605|Aurich": {
+  "lat": 53.46362,
+  "lon": 7.47241,
+  "precision": "street"
+ },
+ "Gutenbergstr. 4-5|12557|Berlin-Köpenick": {
+  "lat": 52.44557,
+  "lon": 13.5702,
+  "precision": "street"
+ },
+ "Haarlemer Str. 45 E|12359|Berlin": {
+  "lat": 52.45834,
+  "lon": 13.45473,
+  "precision": "street"
+ },
+ "Habichtstr. 12|91056|Erlangen": {
+  "lat": 49.59506,
+  "lon": 10.97279,
+  "precision": "street"
+ },
+ "Hafenstr. 133|45711|Datteln": {
+  "lat": 51.6583,
+  "lon": 7.36157,
+  "precision": "street"
+ },
+ "Hafenstr. 32 - 34|16761|Hennigsdorf": {
+  "lat": 52.63569,
+  "lon": 13.20821,
+  "precision": "street"
+ },
+ "Hafenstr. 35|49565|Bramsche": {
+  "lat": 52.39918,
+  "lon": 7.99694,
+  "precision": "street"
+ },
+ "Hafenstr.|53859|Niederkassel": {
+  "lat": 50.77228,
+  "lon": 7.07562,
+  "precision": "street"
+ },
+ "Hafenstraße 35|49565|Bramsche": {
+  "lat": 52.39918,
+  "lon": 7.99694,
+  "precision": "street"
+ },
+ "Hafenstraße 49|31137|Hildesheim": {
+  "lat": 52.18096,
+  "lon": 9.92956,
+  "precision": "street"
+ },
+ "Hahns Mühle 12|12587|Berlin-Friedrichshagen": {
+  "lat": 52.44645,
+  "lon": 13.61456,
+  "precision": "street"
+ },
+ "Hain 34|07356|Bad Lobenstein": {
+  "lat": 50.44526,
+  "lon": 11.64122,
+  "precision": "street"
+ },
+ "Hamburger Str. 74|01157|Dresden": {
+  "lat": 51.06271,
+  "lon": 13.68411,
+  "precision": "street"
+ },
+ "Hammer Deich 132|20537|Hamburg": {
+  "lat": 53.54531,
+  "lon": 10.04814,
+  "precision": "street"
+ },
+ "Hammerstr. 5|14776|Brandenburg an der Havel": {
+  "lat": 52.41266,
+  "lon": 12.56215,
+  "precision": "street"
+ },
+ "Hans-Reschke-Ufer 3|68165|Mannheim": {
+  "lat": 49.48657,
+  "lon": 8.49332,
+  "precision": "street"
+ },
+ "Hansastr. 18 b|76189|Karlsruhe": {
+  "lat": 49.01016,
+  "lon": 8.33511,
+  "precision": "street"
+ },
+ "Hansastraße 18b|76189|Karlsruhe": {
+  "lat": 49.01016,
+  "lon": 8.33511,
+  "precision": "street"
+ },
+ "Hardenbergufer 121|45239|Essen": {
+  "lat": 51.39925,
+  "lon": 7.00871,
+  "precision": "street"
+ },
+ "Hasseler Steinweg 6|27318|Hoya": {
+  "lat": 52.805,
+  "lon": 9.1469,
+  "precision": "street"
+ },
+ "Havelchaussee 115|14055|Berlin": {
+  "lat": 52.50477,
+  "lon": 13.21094,
+  "precision": "street"
+ },
+ "Heerstr. 200 d|13595|Berlin": {
+  "lat": 52.50993,
+  "lon": 13.20309,
+  "precision": "street"
+ },
+ "Heinrich-Lüth-Weg 12|23701|Eutin": {
+  "lat": 54.14207,
+  "lon": 10.61616,
+  "precision": "street"
+ },
+ "Heinrich-Schütz-Str. 2|01277|Dresden": {
+  "lat": 51.04721,
+  "lon": 13.81316,
+  "precision": "street"
+ },
+ "Hertener Straße 53|44653|Herne": {
+  "lat": 51.54751,
+  "lon": 7.18091,
+  "precision": "street"
+ },
+ "Herzog-Ernst-Ring 46|29221|Celle": {
+  "lat": 52.62235,
+  "lon": 10.09587,
+  "precision": "street"
+ },
+ "Heseper Weg 52|48529|Nordhorn": {
+  "lat": 52.43436,
+  "lon": 7.08222,
+  "precision": "street"
+ },
+ "Hindenburgstr. 65|66119|Saarbrücken": {
+  "lat": 49.22461,
+  "lon": 7.00537,
+  "precision": "street"
+ },
+ "Hoppenhof 6|34454|Bad Arolsen": {
+  "lat": 51.3834,
+  "lon": 9.0607,
+  "precision": "street"
+ },
+ "Hugo-Junkers-Allee 75|39128|Magdeburg": {
+  "lat": 52.1498,
+  "lon": 11.60094,
+  "precision": "street"
+ },
+ "Hüxtertoralle 4|23564|Lübeck": {
+  "lat": 53.86644,
+  "lon": 10.68474,
+  "precision": "town"
+ },
+ "Hüxtertorallee 4|23564|Lübeck": {
+  "lat": 53.86226,
+  "lon": 10.69508,
+  "precision": "street"
+ },
+ "Im Dom 19|49593|Bersenbrück": {
+  "lat": 52.55147,
+  "lon": 7.95512,
+  "precision": "street"
+ },
+ "Im Eickel 40|45731|Waltrop": {
+  "lat": 51.63513,
+  "lon": 7.40182,
+  "precision": "street"
+ },
+ "Im Hafenbecken 11|67346|Speyer": {
+  "lat": 49.32092,
+  "lon": 8.44821,
+  "precision": "street"
+ },
+ "Im I. Wehr 3|97424|Schweinfurt": {
+  "lat": 50.04508,
+  "lon": 10.24569,
+  "precision": "street"
+ },
+ "Imkerweg 26|12527|Berlin": {
+  "lat": 52.37864,
+  "lon": 13.65074,
+  "precision": "street"
+ },
+ "In den Allerwiesen 3|38446|Wolfsburg": {
+  "lat": 52.43181,
+  "lon": 10.81113,
+  "precision": "street"
+ },
+ "In der Rosenau 10 a|51143|Köln": {
+  "lat": 50.87302,
+  "lon": 7.04861,
+  "precision": "street"
+ },
+ "In der Rosenau 10|51143|Köln": {
+  "lat": 50.87302,
+  "lon": 7.04861,
+  "precision": "street"
+ },
+ "Innstr. 123|94036|Passau": {
+  "lat": 48.54957,
+  "lon": 13.43622,
+  "precision": "street"
+ },
+ "Innstraße 145|94036|Passau": {
+  "lat": 48.55398,
+  "lon": 13.43259,
+  "precision": "street"
+ },
+ "Inselstr. 10|35576|Wetzlar": {
+  "lat": 50.56086,
+  "lon": 8.50307,
+  "precision": "street"
+ },
+ "Inselstr. 147|70327|Stuttgart": {
+  "lat": 48.7797,
+  "lon": 9.24695,
+  "precision": "street"
+ },
+ "Isekai 12ö|20249|Hamburg": {
+  "lat": 53.58555,
+  "lon": 9.99095,
+  "precision": "street"
+ },
+ "Isekai Ö11a|20249|Hamburg": {
+  "lat": 53.55017,
+  "lon": 10.00132,
+  "precision": "town"
+ },
+ "Jahnstr. 14|49808|Lingen": {
+  "lat": 52.52184,
+  "lon": 7.30938,
+  "precision": "street"
+ },
+ "Johannesstr. 51|56112|Lahnstein": {
+  "lat": 50.3087,
+  "lon": 7.59919,
+  "precision": "street"
+ },
+ "Jungfernheideweg 80|13629|Berlin": {
+  "lat": 52.54797,
+  "lon": 13.27181,
+  "precision": "street"
+ },
+ "Jupp-Eickhoff-Weg 2|59065|Hamm": {
+  "lat": 51.68783,
+  "lon": 7.82178,
+  "precision": "street"
+ },
+ "K15, Rheinstraße Außerhalb (Altrhein-km 8,5)|64560|Riedstadt-Erfelden": null,
+ "Kaemmererufer 26|22303|Hamburg": {
+  "lat": 53.58499,
+  "lon": 10.03136,
+  "precision": "street"
+ },
+ "Kaemmererufer 30|22303|Hamburg": {
+  "lat": 53.58501,
+  "lon": 10.03234,
+  "precision": "street"
+ },
+ "Kapellenstr.|40789|Monheim": {
+  "lat": 48.84825,
+  "lon": 10.95049,
+  "precision": "street"
+ },
+ "Karl-Thiele-Weg 15|30169|Hannover": {
+  "lat": 52.35464,
+  "lon": 9.73939,
+  "precision": "street"
+ },
+ "Karl-Thiele-Weg 19|30169|Hannover": {
+  "lat": 52.35422,
+  "lon": 9.73959,
+  "precision": "street"
+ },
+ "Kiellinie 7|24105|Kiel": {
+  "lat": 54.32883,
+  "lon": 10.14744,
+  "precision": "street"
+ },
+ "Kirchesohl 1|57462|Olpe": {
+  "lat": 51.02948,
+  "lon": 7.84353,
+  "precision": "town"
+ },
+ "Konrad-Adenauer-Allee 75|46049|Oberhausen": {
+  "lat": 51.4947,
+  "lon": 6.86379,
+  "precision": "street"
+ },
+ "Krahnenstraße 15|51063|Köln": {
+  "lat": 50.96824,
+  "lon": 7.00031,
+  "precision": "street"
+ },
+ "Kronenbruch 2 a|32816|Schieder-Schwalenberg": {
+  "lat": 51.92172,
+  "lon": 9.16604,
+  "precision": "street"
+ },
+ "Krotzenburgerstr. 37|63457|Hanau": {
+  "lat": 50.10026,
+  "lon": 8.94361,
+  "precision": "street"
+ },
+ "Kruppstr. 28 a|47055|Duisburg": {
+  "lat": 51.40974,
+  "lon": 6.78593,
+  "precision": "street"
+ },
+ "Kölner Str. 6|56626|Andernach": {
+  "lat": 50.44206,
+  "lon": 7.39454,
+  "precision": "street"
+ },
+ "Küchenmeisterallee 14 a|15711|Königs Wusterhausen": {
+  "lat": 52.29624,
+  "lon": 13.65571,
+  "precision": "street"
+ },
+ "Landrat-Müller-Hahl-Str. 14|86916|Kaufering": {
+  "lat": 48.08879,
+  "lon": 10.87453,
+  "precision": "street"
+ },
+ "Laubegaster Ufer 8|01279|Dresden": {
+  "lat": 51.02765,
+  "lon": 13.83859,
+  "precision": "street"
+ },
+ "Ledastraße 2|26789|Leer": {
+  "lat": 53.22957,
+  "lon": 7.45732,
+  "precision": "street"
+ },
+ "Lehmgasse 11|15230|Frankfurt (Oder)": {
+  "lat": 52.33754,
+  "lon": 14.55683,
+  "precision": "street"
+ },
+ "Leuchtbergstr. 19|37269|Eschwege": {
+  "lat": 51.18942,
+  "lon": 10.07278,
+  "precision": "street"
+ },
+ "Limmerstr. 134|30451|Hannover": {
+  "lat": 52.3776,
+  "lon": 9.69618,
+  "precision": "street"
+ },
+ "Linser Str. 14|37619|Bodenwerder": {
+  "lat": 51.97637,
+  "lon": 9.51918,
+  "precision": "street"
+ },
+ "Luxemburger Straße 81|54294|Trier": {
+  "lat": 49.74461,
+  "lon": 6.62443,
+  "precision": "street"
+ },
+ "Lütkenbecker Weg 2|48155|Münster": {
+  "lat": 51.9507,
+  "lon": 7.6509,
+  "precision": "street"
+ },
+ "Maaraue 48|55246|Mainz-Kostheim": {
+  "lat": 50.00225,
+  "lon": 8.28572,
+  "precision": "street"
+ },
+ "Mahnkopfweg 6|13595|Berlin": {
+  "lat": 52.51282,
+  "lon": 13.20202,
+  "precision": "street"
+ },
+ "Mainfeldstr. 33|60528|Frankfurt am Main": {
+  "lat": 50.09135,
+  "lon": 8.64061,
+  "precision": "street"
+ },
+ "Mainfeldstr. 35|60528|Frankfurt": {
+  "lat": 50.09144,
+  "lon": 8.64084,
+  "precision": "street"
+ },
+ "Mainwasenweg 31|60599|Frankfurt": {
+  "lat": 50.10527,
+  "lon": 8.71706,
+  "precision": "street"
+ },
+ "Mainwasenweg 32|60599|Frankfurt am Main": {
+  "lat": 50.1052,
+  "lon": 8.71675,
+  "precision": "street"
+ },
+ "Mainwasenweg 33|60599|Frankfurt": {
+  "lat": 50.10515,
+  "lon": 8.71617,
+  "precision": "street"
+ },
+ "Mainwasenweg 34|60599|Frankfurt": {
+  "lat": 50.10516,
+  "lon": 8.71578,
+  "precision": "street"
+ },
+ "Mainzer Landstr. 791|65934|Frankfurt": {
+  "lat": 50.09774,
+  "lon": 8.56584,
+  "precision": "street"
+ },
+ "Mainzer Landstr. 793|65934|Frankfurt": {
+  "lat": 50.09899,
+  "lon": 8.56254,
+  "precision": "street"
+ },
+ "Mainzer Straße|56130|Bad Ems": {
+  "lat": 50.32938,
+  "lon": 7.72868,
+  "precision": "street"
+ },
+ "Mannheimer Straße 71|55543|Bad Kreuznach": {
+  "lat": 49.84507,
+  "lon": 7.85765,
+  "precision": "street"
+ },
+ "Maschplatz 15|38114|Braunschweig": {
+  "lat": 52.27288,
+  "lon": 10.5145,
+  "precision": "street"
+ },
+ "Mendener Str. 68|45470|Mülheim": {
+  "lat": 51.40833,
+  "lon": 6.89422,
+  "precision": "street"
+ },
+ "Mendener Str. 6|45468|Mülheim": {
+  "lat": 51.41172,
+  "lon": 6.88903,
+  "precision": "street"
+ },
+ "Mendener Str. 6|45470|Mülheim an der Ruhr": {
+  "lat": 51.41172,
+  "lon": 6.88903,
+  "precision": "street"
+ },
+ "Mendener Str. 74|45470|Mülheim": {
+  "lat": 51.40778,
+  "lon": 6.89483,
+  "precision": "street"
+ },
+ "Mendener Str. 74|45470|Mülheim an der Ruhr": {
+  "lat": 51.40778,
+  "lon": 6.89483,
+  "precision": "street"
+ },
+ "Mergentheimer Str. 11|97082|Würzburg": {
+  "lat": 49.78051,
+  "lon": 9.92648,
+  "precision": "street"
+ },
+ "Mergentheimer Str. 9h+13|97082|Würzburg": {
+  "lat": 49.76963,
+  "lon": 9.93629,
+  "precision": "street"
+ },
+ "Messerschmittstr. 2|93049|Regensburg": {
+  "lat": 49.02841,
+  "lon": 12.05663,
+  "precision": "street"
+ },
+ "Moselallee 44|56253|Treis-Karden": {
+  "lat": 50.17358,
+  "lon": 7.29884,
+  "precision": "street"
+ },
+ "Moselufer unterhalb der Brücke|54492|Zeltingen": {
+  "lat": 49.95268,
+  "lon": 7.01873,
+  "precision": "town"
+ },
+ "Mühlendamm 20|14712|Rathenow": {
+  "lat": 52.606,
+  "lon": 12.32844,
+  "precision": "street"
+ },
+ "Mühlentorsweg 2|31582|Nienburg": {
+  "lat": 52.63599,
+  "lon": 9.20574,
+  "precision": "street"
+ },
+ "Mühlwert 1|71672|Marbach": {
+  "lat": 48.94039,
+  "lon": 9.25339,
+  "precision": "street"
+ },
+ "Mühlwörth 18|96049|Bamberg": {
+  "lat": 49.88516,
+  "lon": 10.89363,
+  "precision": "street"
+ },
+ "Mündener Str.|34233|Fuldatal-Wilhelmshausen": {
+  "lat": 51.39352,
+  "lon": 9.57323,
+  "precision": "street"
+ },
+ "Neckarallee 1|74821|Mosbach": {
+  "lat": 49.34044,
+  "lon": 9.09998,
+  "precision": "street"
+ },
+ "Neckaruferweg 2|74348|Lauffen": {
+  "lat": 49.06903,
+  "lon": 9.16262,
+  "precision": "street"
+ },
+ "Neubrandenburger Str. 47|18196|Kessin": {
+  "lat": 54.0649,
+  "lon": 12.17263,
+  "precision": "street"
+ },
+ "Neue Krugallee 219 - 231|12437|Berlin-Niederschöneweide": null,
+ "Neuenheimer Landstr. 16|69120|Heidelberg": {
+  "lat": 49.41522,
+  "lon": 8.70645,
+  "precision": "street"
+ },
+ "Neuenheimer Landstr. 3|69120|Heidelberg": {
+  "lat": 49.41358,
+  "lon": 8.69465,
+  "precision": "street"
+ },
+ "Nixenstr. 2|12459|Berlin": {
+  "lat": 52.4562,
+  "lon": 13.54875,
+  "precision": "street"
+ },
+ "Nordring 129a|63067|Offenbach": {
+  "lat": 50.11203,
+  "lon": 8.74005,
+  "precision": "street"
+ },
+ "Nordring 131|63067|Offenbach": {
+  "lat": 50.1117,
+  "lon": 8.73912,
+  "precision": "street"
+ },
+ "Nymphaeaweg 14|73730|Esslingen": {
+  "lat": 48.72443,
+  "lon": 9.33325,
+  "precision": "street"
+ },
+ "Oberer Ring 2|71332|Waiblingen": {
+  "lat": 48.82563,
+  "lon": 9.32853,
+  "precision": "street"
+ },
+ "Oberländer Ufer|50968|Köln": {
+  "lat": 50.90438,
+  "lon": 6.98007,
+  "precision": "street"
+ },
+ "Odelshamer Au 2|83547|Babensham": {
+  "lat": 48.07111,
+  "lon": 12.23305,
+  "precision": "street"
+ },
+ "Okerstausee an der B 498|38707|Schulenberg": {
+  "lat": 51.83472,
+  "lon": 10.43425,
+  "precision": "town"
+ },
+ "Oranjehof Str. 105|50769|Köln": {
+  "lat": 51.0226,
+  "lon": 6.9266,
+  "precision": "street"
+ },
+ "Osterbekstr. 79|22083|Hamburg": {
+  "lat": 53.5821,
+  "lon": 10.02151,
+  "precision": "street"
+ },
+ "Pestalozziweg 15|04860|Torgau": {
+  "lat": 51.56362,
+  "lon": 13.00792,
+  "precision": "street"
+ },
+ "Peter-Maeth-Str.|53424|Remagen": {
+  "lat": 50.57777,
+  "lon": 7.23995,
+  "precision": "street"
+ },
+ "Pfarrstr. 4|06120|Halle": {
+  "lat": 51.51219,
+  "lon": 11.95619,
+  "precision": "street"
+ },
+ "Pfirsichweg 9-11|14089|Berlin": {
+  "lat": 52.49044,
+  "lon": 13.18174,
+  "precision": "street"
+ },
+ "Piwipper Straße 152|41539|Dormagen": {
+  "lat": 51.09908,
+  "lon": 6.87637,
+  "precision": "street"
+ },
+ "Promenadenweg 100|45219|Essen": {
+  "lat": 51.35893,
+  "lon": 6.94695,
+  "precision": "street"
+ },
+ "Pöplitzer Weg 49|06791|Zschornewitz": {
+  "lat": 51.71133,
+  "lon": 12.38894,
+  "precision": "street"
+ },
+ "RPRC von 1880|24768|Rendsburg": {
+  "lat": 54.30029,
+  "lon": 9.66501,
+  "precision": "town"
+ },
+ "Rathenauufer 2|53113|Bonn": {
+  "lat": 50.73109,
+  "lon": 7.10985,
+  "precision": "street"
+ },
+ "Regattastr. 16|16816|Neuruppin": {
+  "lat": 52.91926,
+  "lon": 12.80836,
+  "precision": "street"
+ },
+ "Regattastr. 231|12527|Berlin-Grünau": {
+  "lat": 52.41119,
+  "lon": 13.59102,
+  "precision": "street"
+ },
+ "Regattastr. 247|12527|Berlin": {
+  "lat": 52.41112,
+  "lon": 13.59447,
+  "precision": "street"
+ },
+ "Regattastr. 251|12527|Berlin": {
+  "lat": 52.41111,
+  "lon": 13.59525,
+  "precision": "street"
+ },
+ "Regattastraße 237|12527|Berlin": {
+  "lat": 52.41119,
+  "lon": 13.59219,
+  "precision": "street"
+ },
+ "Rheinallee 42|79639|Grenzach-Wyhlen": {
+  "lat": 47.53885,
+  "lon": 7.66667,
+  "precision": "street"
+ },
+ "Rheinallee 6|56154|Boppard": {
+  "lat": 50.23077,
+  "lon": 7.60263,
+  "precision": "street"
+ },
+ "Rheinanlagen 13|47198|Duisburg": {
+  "lat": 51.45495,
+  "lon": 6.71744,
+  "precision": "street"
+ },
+ "Rheinpromenade 10|67061|Ludwigshafen": {
+  "lat": 49.47587,
+  "lon": 8.45833,
+  "precision": "street"
+ },
+ "Rheinpromenade 15|68163|Mannheim": {
+  "lat": 49.47939,
+  "lon": 8.46153,
+  "precision": "street"
+ },
+ "Rheinpromenade 7|53604|Bad Honnef": {
+  "lat": 50.64449,
+  "lon": 7.21607,
+  "precision": "street"
+ },
+ "Rheinstr. 257|55218|Ingelheim": {
+  "lat": 49.99294,
+  "lon": 8.02147,
+  "precision": "street"
+ },
+ "Rheinstr. 54|56564|Neuwied": {
+  "lat": 50.42231,
+  "lon": 7.46136,
+  "precision": "street"
+ },
+ "Rheinstr. 80|53179|Bonn": {
+  "lat": 50.68133,
+  "lon": 7.17783,
+  "precision": "street"
+ },
+ "Rheinstraße 52|56564|Neuwied": {
+  "lat": 50.4248,
+  "lon": 7.45878,
+  "precision": "street"
+ },
+ "Rheinuferstr. 14|79206|Breisach": {
+  "lat": 48.02011,
+  "lon": 7.58789,
+  "precision": "street"
+ },
+ "Richard-Leisebein-Strasse 22|04178|Leipzig": {
+  "lat": 51.35685,
+  "lon": 12.25657,
+  "precision": "street"
+ },
+ "Riedweg 9|29525|Uelzen": {
+  "lat": 52.95877,
+  "lon": 10.59514,
+  "precision": "street"
+ },
+ "Roesebeckstr. 1|30449|Hannover": {
+  "lat": 52.3625,
+  "lon": 9.72307,
+  "precision": "street"
+ },
+ "Rohrerhof 23|56072|Koblenz": {
+  "lat": 50.36773,
+  "lon": 7.5678,
+  "precision": "street"
+ },
+ "Rohrwallallee 11|12527|Berlin": {
+  "lat": 52.39591,
+  "lon": 13.63594,
+  "precision": "street"
+ },
+ "Rosenbuschweg|30453|Hannover": {
+  "lat": 52.38662,
+  "lon": 9.66763,
+  "precision": "street"
+ },
+ "Rotterdamer Str. 40|40474|Düsseldorf": {
+  "lat": 51.2502,
+  "lon": 6.75832,
+  "precision": "street"
+ },
+ "Saarlandstr. 56a|55411|Bingen": {
+  "lat": 49.95441,
+  "lon": 7.89825,
+  "precision": "street"
+ },
+ "Sachsenbergstr.|06862|Roßlau": {
+  "lat": 51.88262,
+  "lon": 12.23549,
+  "precision": "street"
+ },
+ "Salinenstr.|17489|Greifswald": {
+  "lat": 54.09943,
+  "lon": 13.38052,
+  "precision": "street"
+ },
+ "Sandhofer Str. 51-53|68305|Mannheim": {
+  "lat": 49.51981,
+  "lon": 8.47189,
+  "precision": "street"
+ },
+ "Scabellstr. 8|14109|Berlin": {
+  "lat": 52.42926,
+  "lon": 13.18298,
+  "precision": "street"
+ },
+ "Scharfe Lanke 63|13595|Berlin": {
+  "lat": 52.50705,
+  "lon": 13.18844,
+  "precision": "street"
+ },
+ "Scharfe Lanke 71|13595|Berlin": {
+  "lat": 52.50628,
+  "lon": 13.18818,
+  "precision": "street"
+ },
+ "Schaumainkai 65|60596|Frankfurt am Main": {
+  "lat": 50.10397,
+  "lon": 8.67416,
+  "precision": "street"
+ },
+ "Schleusendamm 20|21037|Hamburg": {
+  "lat": 53.46722,
+  "lon": 10.18936,
+  "precision": "street"
+ },
+ "Schloßstraße|78343|Gaienhofen": {
+  "lat": 47.68009,
+  "lon": 8.98297,
+  "precision": "street"
+ },
+ "Schurmanstraße 2|69115|Heidelberg": {
+  "lat": 49.40958,
+  "lon": 8.68118,
+  "precision": "street"
+ },
+ "Schwarzspechtweg 42-44|13505|Berlin": {
+  "lat": 52.58177,
+  "lon": 13.22371,
+  "precision": "street"
+ },
+ "Schweensandhauptdeich 5|21079|Hamburg": {
+  "lat": 53.55017,
+  "lon": 10.00132,
+  "precision": "town"
+ },
+ "Schweenssand-Hauptdeich 7|21079|Hamburg": {
+  "lat": 53.47078,
+  "lon": 10.00168,
+  "precision": "street"
+ },
+ "Schöne Aussicht 39|22085|Hamburg": {
+  "lat": 53.57474,
+  "lon": 10.00703,
+  "precision": "street"
+ },
+ "Seepromenade 2|82319|Starnberg": {
+  "lat": 47.99181,
+  "lon": 11.33826,
+  "precision": "street"
+ },
+ "Seestr. 15|88339|Bad Waldsee": {
+  "lat": 47.92096,
+  "lon": 9.75428,
+  "precision": "town"
+ },
+ "Seestr. 23|30916|Isernhagen": {
+  "lat": 52.42729,
+  "lon": 9.85957,
+  "precision": "street"
+ },
+ "Seestraße 13|15562|Rüdersdorf bei Berlin": {
+  "lat": 52.46702,
+  "lon": 13.77984,
+  "precision": "street"
+ },
+ "Seestraße 22|15859|Storkow": {
+  "lat": 52.25902,
+  "lon": 13.94096,
+  "precision": "street"
+ },
+ "Seeweg-Süd|86911|Dießen am Ammersee": {
+  "lat": 47.98183,
+  "lon": 11.09746,
+  "precision": "street"
+ },
+ "Segrépromenade 5|89415|Lauingen": {
+  "lat": 48.56974,
+  "lon": 10.43395,
+  "precision": "street"
+ },
+ "Seilerweg 23|39114|Magdeburg": {
+  "lat": 52.12112,
+  "lon": 11.64263,
+  "precision": "street"
+ },
+ "Seilerweg 5|39114|Magdeburg": {
+  "lat": 52.11293,
+  "lon": 11.65553,
+  "precision": "street"
+ },
+ "Seminarstr. 1|57462|Olpe": {
+  "lat": 51.03322,
+  "lon": 7.84705,
+  "precision": "street"
+ },
+ "Senziger Weg 17|15758|Zernsdorf": {
+  "lat": 52.29512,
+  "lon": 13.67611,
+  "precision": "street"
+ },
+ "Siebeneichener Str. 39|01662|Meißen": {
+  "lat": 51.15271,
+  "lon": 13.48062,
+  "precision": "street"
+ },
+ "Siemenswerderweg 40 (Pichelswerder Süd)|13595|Berlin": null,
+ "Spanierstr. 1|78467|Konstanz": {
+  "lat": 47.6673,
+  "lon": 9.1784,
+  "precision": "street"
+ },
+ "Sportpromenade 17|12527|Berlin": {
+  "lat": 52.40079,
+  "lon": 13.62552,
+  "precision": "street"
+ },
+ "Sportpromenade 23|12527|Berlin": {
+  "lat": 52.39731,
+  "lon": 13.62932,
+  "precision": "street"
+ },
+ "Sportpromenade 3|12527|Berlin": {
+  "lat": 52.40937,
+  "lon": 13.60293,
+  "precision": "street"
+ },
+ "Sportzentrum 18|37671|Höxter": {
+  "lat": 51.7688,
+  "lon": 9.38175,
+  "precision": "street"
+ },
+ "Spreestr. 1|12587|Berlin": {
+  "lat": 52.44584,
+  "lon": 13.61669,
+  "precision": "street"
+ },
+ "Stadtpark 2|04838|Eilenburg": {
+  "lat": 51.4534,
+  "lon": 12.63024,
+  "precision": "street"
+ },
+ "Starkenburger Str. 150|60386|Frankfurt": {
+  "lat": 50.10977,
+  "lon": 8.76593,
+  "precision": "street"
+ },
+ "Steingaesserstr. 30|63897|Miltenberg": {
+  "lat": 49.70625,
+  "lon": 9.2566,
+  "precision": "street"
+ },
+ "Strandallee 1|26954|Nordenham": {
+  "lat": 53.48178,
+  "lon": 8.48683,
+  "precision": "street"
+ },
+ "Strandallee 7|24536|Neumünster": {
+  "lat": 54.13217,
+  "lon": 9.99861,
+  "precision": "street"
+ },
+ "Strandbadweg 6|55422|Bacharach": {
+  "lat": 50.0557,
+  "lon": 7.77101,
+  "precision": "street"
+ },
+ "Strandweg 18 a|88662|Überlingen": {
+  "lat": 47.7604,
+  "lon": 9.17306,
+  "precision": "street"
+ },
+ "Stresemannstr. 51|27576|Bremerhaven": {
+  "lat": 53.55986,
+  "lon": 8.59366,
+  "precision": "street"
+ },
+ "Theresienstein 4|95028|Hof/Saale": null,
+ "Tiefwerderweg 19|13597|Berlin": {
+  "lat": 52.5239,
+  "lon": 13.20993,
+  "precision": "street"
+ },
+ "Tiergarten 3|06842|Dessau-Roßlau": {
+  "lat": 51.8301,
+  "lon": 12.2486,
+  "precision": "street"
+ },
+ "Tietjen's Hütte 3|27711|Osterholz-Scharmbeck": {
+  "lat": 53.22818,
+  "lon": 8.79482,
+  "precision": "town"
+ },
+ "Timmermannufer 105|48429|Rheine": {
+  "lat": 52.27977,
+  "lon": 7.43736,
+  "precision": "town"
+ },
+ "Timmermanufer 105|48429|Rheine": {
+  "lat": 52.27618,
+  "lon": 7.44639,
+  "precision": "street"
+ },
+ "Tolkewitzer Str. 45|01277|Dresden": {
+  "lat": 51.04587,
+  "lon": 13.81436,
+  "precision": "street"
+ },
+ "Tönninger Str. 2 a|25840|Friedrichstadt": {
+  "lat": 54.37587,
+  "lon": 9.0831,
+  "precision": "street"
+ },
+ "Tündernsche Warte 3|31789|Hameln": {
+  "lat": 52.08553,
+  "lon": 9.3689,
+  "precision": "street"
+ },
+ "Ufersteig 1|16831|Rheinsberg": {
+  "lat": 53.11505,
+  "lon": 12.91544,
+  "precision": "town"
+ },
+ "Uferstr. 16|50996|Köln": {
+  "lat": 50.8919,
+  "lon": 7.00168,
+  "precision": "street"
+ },
+ "Uferstr. 1|65203|Wiesbaden": {
+  "lat": 50.03872,
+  "lon": 8.2256,
+  "precision": "street"
+ },
+ "Uferstraße 18 d|15848|Beeskow": {
+  "lat": 52.16843,
+  "lon": 14.25158,
+  "precision": "street"
+ },
+ "Uferstraße 5|45881|Gelsenkirchen": {
+  "lat": 51.53532,
+  "lon": 7.06944,
+  "precision": "street"
+ },
+ "Uferweg 14|35398|Gießen": {
+  "lat": 50.59112,
+  "lon": 8.66864,
+  "precision": "street"
+ },
+ "Victor-Hugo-Ufer 1|55116|Mainz": {
+  "lat": 49.99211,
+  "lon": 8.28822,
+  "precision": "street"
+ },
+ "Viti Furth 2|21357|Bardowick": {
+  "lat": 53.29964,
+  "lon": 10.39823,
+  "precision": "street"
+ },
+ "Vogelhüttendeich 120|21107|Hamburg": {
+  "lat": 53.51441,
+  "lon": 9.99809,
+  "precision": "street"
+ },
+ "Vor der Hardt 121|42399|Wuppertal": {
+  "lat": 51.24175,
+  "lon": 7.30322,
+  "precision": "street"
+ },
+ "Wagrainstr. 140|70378|Stuttgart": {
+  "lat": 48.8273,
+  "lon": 9.2169,
+  "precision": "street"
+ },
+ "Wahnbachtalstraße 15|53721|Siegburg": {
+  "lat": 50.78905,
+  "lon": 7.22651,
+  "precision": "street"
+ },
+ "Wanderruderstützpunkt - Damgarten-Hafen|18311|Ribnitz-Damgarten": {
+  "lat": 54.24736,
+  "lon": 12.46086,
+  "precision": "town"
+ },
+ "Warmbacher Strasse 37|79618|Rheinfelden": {
+  "lat": 47.55246,
+  "lon": 7.76986,
+  "precision": "street"
+ },
+ "Wartaweil 27|82211|Herrsching": {
+  "lat": 47.97223,
+  "lon": 11.15316,
+  "precision": "street"
+ },
+ "Wasserübungsplatz 8|37603|Holzminden": {
+  "lat": 51.8352,
+  "lon": 9.43998,
+  "precision": "street"
+ },
+ "Weddigenufer 25|30167|Hannover": {
+  "lat": 52.37736,
+  "lon": 9.71478,
+  "precision": "street"
+ },
+ "Wellenweg 1|18147|Rostock": {
+  "lat": 54.09744,
+  "lon": 12.13143,
+  "precision": "street"
+ },
+ "Wendenschloßstr. 404|12557|Berlin-Köpenick": {
+  "lat": 52.42088,
+  "lon": 13.58733,
+  "precision": "street"
+ },
+ "Werderstr. 60|28199|Bremen": {
+  "lat": 53.06902,
+  "lon": 8.81204,
+  "precision": "street"
+ },
+ "Werderstr. 64|28199|Bremen": {
+  "lat": 53.06814,
+  "lon": 8.81283,
+  "precision": "street"
+ },
+ "Werderstr. 66|28199|Bremen": {
+  "lat": 53.06827,
+  "lon": 8.81359,
+  "precision": "street"
+ },
+ "Werftstr. 1|76726|Germersheim": {
+  "lat": 49.22201,
+  "lon": 8.38177,
+  "precision": "street"
+ },
+ "Werftstr. 5 a|17389|Anklam": {
+  "lat": 53.8606,
+  "lon": 13.69139,
+  "precision": "street"
+ },
+ "Werftstr. 8 b|76189|Karlsruhe": {
+  "lat": 49.01744,
+  "lon": 8.34219,
+  "precision": "street"
+ },
+ "Wertwiesen 5|74081|Heilbronn": {
+  "lat": 49.13178,
+  "lon": 9.20308,
+  "precision": "street"
+ },
+ "Weserpromenade 10 (am Sommerbad)|32423|Minden": {
+  "lat": 52.2881,
+  "lon": 8.91689,
+  "precision": "town"
+ },
+ "Weserpromenade 10|32423|Minden": {
+  "lat": 52.28156,
+  "lon": 8.91964,
+  "precision": "street"
+ },
+ "Westerholz 85|44147|Dortmund": {
+  "lat": 51.54061,
+  "lon": 7.43492,
+  "precision": "street"
+ },
+ "Wetterstr. 30 a|58453|Witten": {
+  "lat": 51.42621,
+  "lon": 7.34652,
+  "precision": "street"
+ },
+ "Wetterstraße 38|58453|Witten": {
+  "lat": 51.4219,
+  "lon": 7.3527,
+  "precision": "street"
+ },
+ "Wickenhagenweg 11|24768|Rendsburg": {
+  "lat": 54.30766,
+  "lon": 9.67569,
+  "precision": "street"
+ },
+ "Wickenhagenweg 5|24768|Rendsburg": {
+  "lat": 54.30813,
+  "lon": 9.67639,
+  "precision": "street"
+ },
+ "Widukindstr. 22|49716|Meppen": {
+  "lat": 52.69143,
+  "lon": 7.29694,
+  "precision": "street"
+ },
+ "Wilhelm-Spiritus-Ufer 2|53113|Bonn": {
+  "lat": 50.72115,
+  "lon": 7.12134,
+  "precision": "street"
+ },
+ "Willi-Brandt-Str.|21335|Lüneburg": {
+  "lat": 53.24871,
+  "lon": 10.40785,
+  "precision": "town"
+ },
+ "Wisch 30|25335|Elmshorn": {
+  "lat": 53.74982,
+  "lon": 9.63599,
+  "precision": "street"
+ },
+ "Wißmarer Weg 125|35396|Gießen": {
+  "lat": 50.6064,
+  "lon": 8.67422,
+  "precision": "street"
+ },
+ "Wundermühlweg 54|94315|Straubing": {
+  "lat": 48.89756,
+  "lon": 12.57314,
+  "precision": "street"
+ },
+ "Wörthstr. 20|72622|Nürtingen": {
+  "lat": 48.62435,
+  "lon": 9.3312,
+  "precision": "street"
+ },
+ "Würzburger Str. 27|97877|Wertheim": {
+  "lat": 49.76354,
+  "lon": 9.53263,
+  "precision": "street"
+ },
+ "Zevenaar-Str. 3|35781|Weilburg": {
+  "lat": 50.48434,
+  "lon": 8.27863,
+  "precision": "street"
+ },
+ "Zierker Nebenstr. 31|17235|Neustrelitz": {
+  "lat": 53.36784,
+  "lon": 13.05272,
+  "precision": "street"
+ },
+ "Zu den sieben Hämmern 12|45527|Hattingen": {
+  "lat": 51.41088,
+  "lon": 7.22592,
+  "precision": "street"
+ },
+ "Zum Salzgittersee 48|38226|Salzgitter": {
+  "lat": 52.15094,
+  "lon": 10.31305,
+  "precision": "street"
+ },
+ "Zum Seeteufel 45|83329|Waging am See": {
+  "lat": 47.94322,
+  "lon": 12.74122,
+  "precision": "street"
+ },
+ "Zur Buhne 11-14|15537|Erkner": {
+  "lat": 52.41737,
+  "lon": 13.73144,
+  "precision": "street"
+ },
+ "Zur Rabeninsel 23|06128|Halle": {
+  "lat": 51.46149,
+  "lon": 11.94718,
+  "precision": "street"
+ },
+ "Zur Teerhofinsel 5 e|23554|Lübeck": {
+  "lat": 53.86644,
+  "lon": 10.68474,
+  "precision": "town"
+ },
+ "Zur Ziegeninsel 5|29221|Celle": {
+  "lat": 52.62471,
+  "lon": 10.09037,
+  "precision": "street"
+ },
+ "Zweibrücker Hof 4 a|58313|Herdecke": {
+  "lat": 51.39667,
+  "lon": 7.43061,
+  "precision": "street"
+ },
+ "|06385|Aken": {
+  "lat": 51.85,
+  "lon": 12.05,
+  "precision": "town"
+ },
+ "|06571|Roßleben-Wiehe": {
+  "lat": 51.29142,
+  "lon": 11.39655,
+  "precision": "town"
+ },
+ "|14109|Berlin": {
+  "lat": 52.3895,
+  "lon": 13.1297,
+  "precision": "town"
+ },
+ "|16827|Alt Ruppin": {
+  "lat": 52.94615,
+  "lon": 12.84991,
+  "precision": "town"
+ },
+ "|21745|Hemmoor": {
+  "lat": 53.68869,
+  "lon": 9.15951,
+  "precision": "town"
+ },
+ "|23858|Reinfeld": {
+  "lat": 53.83006,
+  "lon": 10.48695,
+  "precision": "town"
+ },
+ "|24601|Belau": {
+  "lat": 54.09745,
+  "lon": 10.25948,
+  "precision": "town"
+ },
+ "|26725|Emden": {
+  "lat": 53.36705,
+  "lon": 7.20583,
+  "precision": "town"
+ },
+ "|32312|Lübbecke": {
+  "lat": 52.30272,
+  "lon": 8.61831,
+  "precision": "town"
+ },
+ "|35781|Weilburg": {
+  "lat": 50.48474,
+  "lon": 8.26592,
+  "precision": "town"
+ },
+ "|36228|Bad Hersfeld": {
+  "lat": 50.86042,
+  "lon": 9.67677,
+  "precision": "town"
+ },
+ "|36251|Bad Hersfeld": {
+  "lat": 50.86042,
+  "lon": 9.67677,
+  "precision": "town"
+ },
+ "|36251|Hersfeld": {
+  "lat": 50.86042,
+  "lon": 9.67677,
+  "precision": "town"
+ },
+ "|47720|Krefeld": {
+  "lat": 51.33312,
+  "lon": 6.56233,
+  "precision": "town"
+ },
+ "|50354|Hürth": {
+  "lat": 50.88074,
+  "lon": 6.87657,
+  "precision": "town"
+ },
+ "|56329|St. Goar": {
+  "lat": 50.15,
+  "lon": 7.71667,
+  "precision": "town"
+ },
+ "|64560|Riedstadt": {
+  "lat": 49.84252,
+  "lon": 8.48294,
+  "precision": "town"
+ },
+ "|76477|Elchesheim-Illingen": {
+  "lat": 48.93069,
+  "lon": 8.21013,
+  "precision": "town"
+ },
+ "|79822|Titisee-Neustadt": {
+  "lat": 47.91734,
+  "lon": 8.17352,
+  "precision": "town"
+ },
+ "|85049|Ingolstadt": {
+  "lat": 48.76302,
+  "lon": 11.42504,
+  "precision": "town"
+ },
+ "|88107|Lindau": {
+  "lat": 47.57287,
+  "lon": 9.69619,
+  "precision": "town"
+ },
+ "Ölmühlenweg 23|26871|Papenburg": {
+  "lat": 53.0866,
+  "lon": 7.38469,
+  "precision": "street"
+ },
+ "Östliche Uferstr. 4|88046|Friedrichshafen": {
+  "lat": 47.65162,
+  "lon": 9.48715,
+  "precision": "street"
+ }
+}

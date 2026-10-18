@@ -10,10 +10,27 @@ struct Coordinate: Codable, Hashable {
 struct Club: Codable, Identifiable, Hashable {
     let id: String
     let name: String
+    /// Short name for titles, e.g. "MRC 1880"; older backends send none.
+    let shortName: String?
     let address: String
     let website: URL?
     let launchPoint: Coordinate
     let launchPointVerified: Bool
+    /// Where an unconfirmed club comes from: "drv" (the German Rowing
+    /// Association's club list) or "osm" (OpenStreetMap); nil when confirmed.
+    var source: String? = nil
+    /// The DRV abbreviation, e.g. "BRG".
+    var abbreviation: String? = nil
+
+    var displayName: String { shortName ?? name }
+
+    /// The town from the address, e.g. "Starnberg".
+    var town: String? {
+        guard let last = address.split(separator: ",").last else { return nil }
+        let words = last.split(separator: " ")
+        let town = words.drop(while: { $0.allSatisfy(\.isNumber) }).joined(separator: " ")
+        return town.isEmpty ? nil : town
+    }
 }
 
 struct Lake: Codable, Identifiable, Hashable {
@@ -51,11 +68,35 @@ struct Reason: Codable, Hashable {
         case "fog": "Fog"
         case "thunderstorm": "Thunderstorm risk"
         case "ice": "Ice"
-        case "daylight": "Dark"
+        case "daylight": "Sun down"
+        case "twilight": "Sunrise / sunset"
         case "cold_water": "Cold water"
         case "cool_water": "Cool water"
         default: condition
         }
+    }
+
+    /// One sentence saying why this condition changes the advice.
+    var explanation: String {
+        switch condition {
+        case "lake_warning": "A storm warning is active for the lake."
+        case "wind": "Mean wind is above the limit."
+        case "gusts": "Gusts are above the limit."
+        case "waves": "Waves at the launch point are too high."
+        case "fog": "Visibility is poor (fog or mist)."
+        case "thunderstorm": "Thunderstorms are possible."
+        case "ice": "There is ice on the water."
+        case "daylight": "The sun is down. Rowing is only advised in daylight."
+        case "twilight": "Sunrise or sunset falls in this hour."
+        case "cold_water": "Water is below 10 °C, so a capsize is dangerous."
+        case "cool_water": "Water is below 15 °C. Take extra care."
+        default: condition
+        }
+    }
+
+    /// The condition whose icon stands for this reason.
+    var symbol: String {
+        (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
     }
 }
 
@@ -71,13 +112,34 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     let visibilityM: Double?
     let temperatureC: Double?
     let cloudCoverPct: Double?
+    /// Whether the sun is up in the middle of this hour.
+    let sunUp: Bool?
 
     var id: Date { time }
+
+    func with(reasons: [Reason], sunUp: Bool?) -> ForecastHour {
+        ForecastHour(
+            time: time, light: reasons.map(\.light).max() ?? .green, reasons: reasons,
+            windSpeedMs: windSpeedMs, windGustMs: windGustMs, windFromDeg: windFromDeg,
+            waveHeightM: waveHeightM, fetchM: fetchM, visibilityM: visibilityM,
+            temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp
+        )
+    }
+
+    /// The worst light among these conditions in this hour, or nil when they are all fine.
+    func light(for conditions: Set<String>) -> Light? {
+        reasons.filter { conditions.contains($0.condition) }.map(\.light).max()
+    }
 }
 
 struct WaterTemperature: Codable, Hashable {
     let celsius: Double
     let measuredAt: Date
+}
+
+struct SunDay: Codable, Hashable {
+    let sunrise: Date
+    let sunset: Date
 }
 
 struct ClubForecast: Codable, Hashable {
@@ -86,5 +148,38 @@ struct ClubForecast: Codable, Hashable {
     let generatedAt: Date
     let waterTemperature: WaterTemperature?
     let attribution: [String]
+    let daylight: [SunDay]?
     let hours: [ForecastHour]
+
+    /// The first forecast hour as it stands at `date`. That hour began up to
+    /// an hour ago, so "sunrise or sunset within the hour" is replaced by
+    /// whether the sun is actually up now.
+    func current(at date: Date = .now) -> ForecastHour? {
+        guard let first = hours.first else { return nil }
+        guard let sun = sunState(at: date), first.reasons.contains(where: { $0.condition == "twilight" }) else { return first }
+        var reasons = first.reasons.filter { $0.condition != "twilight" }
+        var sunUp = true
+        if case .down = sun {
+            sunUp = false
+            reasons.insert(Reason(condition: "daylight", light: .red), at: 0)
+        }
+        return first.with(reasons: reasons, sunUp: sunUp)
+    }
+
+    /// Where the sun stands at `date`: up until sunset, or down until the next sunrise.
+    func sunState(at date: Date) -> SunState? {
+        guard let days = daylight?.sorted(by: { $0.sunrise < $1.sunrise }) else { return nil }
+        if let today = days.first(where: { $0.sunrise <= date && date < $0.sunset }) {
+            return .up(sunrise: today.sunrise, sunset: today.sunset)
+        }
+        if let next = days.first(where: { $0.sunrise > date }) {
+            return .down(nextSunrise: next.sunrise, nextSunset: next.sunset)
+        }
+        return nil
+    }
+}
+
+enum SunState: Hashable {
+    case up(sunrise: Date, sunset: Date)
+    case down(nextSunrise: Date, nextSunset: Date)
 }

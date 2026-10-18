@@ -62,6 +62,7 @@ def test_rowing_forecast_combines_fog_and_waves():
     club = locations.Club(
         id="test",
         name="Test RC",
+        short_name="Test RC",
         lake_id="test-lake",
         address="",
         website=None,
@@ -83,3 +84,21 @@ def test_lakes_endpoint_lists_starnberger_see_clubs():
 
 def test_unknown_club_is_404():
     assert TestClient(api.app).get("/clubs/nope/forecast").status_code == 404
+
+
+def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
+    async def fake_fetch(client, lat, lon, hours=48):
+        return open_meteo.parse(PAYLOAD)
+
+    async def no_water(*args, **kwargs):
+        return None
+
+    monkeypatch.setattr(open_meteo, "fetch", fake_fetch)
+    monkeypatch.setattr(api.gkd, "fetch_latest", no_water)
+    api._cache.clear()
+    body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
+    api._cache.clear()
+    assert body["daylight"], "sunrise and sunset for each day"
+    day = body["daylight"][0]
+    assert day["sunrise"] < day["sunset"]
+    assert body["hours"][0]["sunUp"] is True

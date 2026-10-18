@@ -6,7 +6,7 @@ Run locally:  uvicorn rowerweather.api:app --reload   (from the backend folder)
 from __future__ import annotations
 
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -14,6 +14,7 @@ from fastapi import FastAPI, HTTPException
 from . import locations, outlines
 from .forecast import RowingHour, rowing_forecast
 from .sources import gkd, open_meteo
+from .sun import sun_days
 
 CACHE_SECONDS = 30 * 60
 ATTRIBUTION = [
@@ -42,16 +43,24 @@ def list_lakes() -> list[dict]:
                 {
                     "id": c.id,
                     "name": c.name,
+                    "shortName": c.short_name,
                     "address": c.address,
                     "website": c.website,
                     "launchPoint": _point(c.launch_point),
                     "launchPointVerified": c.launch_point_verified,
+                    "source": c.source,
+                    "abbreviation": c.abbreviation,
                 }
                 for c in _locations.clubs_on(lake.id)
             ],
         }
         for lake in _locations.lakes.values()
+        if _locations.clubs_on(lake.id)
     ]
+
+
+def _utc(t: datetime) -> str:
+    return t.astimezone(timezone.utc).replace(microsecond=0).isoformat()
 
 
 def _hour_json(h: RowingHour) -> dict:
@@ -68,6 +77,7 @@ def _hour_json(h: RowingHour) -> dict:
         "visibilityM": w.visibility_m,
         "temperatureC": w.temperature_c,
         "cloudCoverPct": w.cloud_cover_pct,
+        "sunUp": h.sun_up,
     }
 
 
@@ -103,6 +113,10 @@ async def club_forecast(club_id: str) -> dict:
         if water is None
         else {"celsius": water.celsius, "measuredAt": water.time.astimezone(timezone.utc).isoformat()},
         "attribution": ATTRIBUTION,
+        "daylight": [
+            {"date": d.day.isoformat(), "sunrise": _utc(d.sunrise), "sunset": _utc(d.sunset)}
+            for d in sun_days(now, now + timedelta(hours=len(hours)), club.launch_point.lat, club.launch_point.lon)
+        ],
         "hours": [_hour_json(h) for h in hours],
     }
     _cache[club_id] = (time.monotonic(), body)
