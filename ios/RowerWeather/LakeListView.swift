@@ -4,9 +4,10 @@ struct LakeListView: View {
     let api: APIClient
     @State private var lakes: [Lake] = []
     @State private var error: String?
+    @State private var path: [Club] = []
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             List {
                 if let error {
                     Text(error).foregroundStyle(.secondary)
@@ -37,8 +38,16 @@ struct LakeListView: View {
         do {
             lakes = try await api.lakes()
             error = nil
+            openClubFromLaunchArgument()
         } catch {
             self.error = "Could not load lakes. Pull to retry."
         }
+    }
+
+    /// Launching with `-RWOpenClub <club id>` opens that club's forecast straight away (used for screenshots).
+    private func openClubFromLaunchArgument() {
+        guard path.isEmpty, let id = UserDefaults.standard.string(forKey: "RWOpenClub"),
+              let club = lakes.flatMap(\.clubs).first(where: { $0.id == id }) else { return }
+        path = [club]
     }
 }

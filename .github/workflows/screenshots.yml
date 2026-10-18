@@ -1,0 +1,90 @@
+name: App screenshots
+
+# Runs the backend on the runner with live data, starts the app in the iOS
+# Simulator and saves screenshots to docs/screenshots on the same branch.
+# macOS minutes count ten times against a private repository's free allowance,
+# so this only runs by hand from the Actions tab or when this file changes.
+
+on:
+  push:
+    paths:
+      - .github/workflows/screenshots.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  screenshots:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Start the backend with live data
+        run: |
+          (cd backend && nohup uvicorn rowerweather.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
+          # Warm the forecast cache; Open-Meteo sometimes times out on the first call.
+          for club in mrc-1880 tutzinger-rv; do
+            curl -sS -f --retry 3 --retry-all-errors --retry-delay 5 "http://localhost:8000/clubs/$club/forecast" \
+              | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["clubId"], len(d["hours"]), "hours, now:", d["hours"][0]["light"])'
+          done
+      - name: Build the app
+        working-directory: ios
+        run: |
+          brew install xcodegen
+          xcodegen
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          phones = [d for runtime, devices in json.load(sys.stdin)["devices"].items() if "iOS" in runtime
+                    for d in devices if d["name"].startswith("iPhone")]
+          pro = [d for d in phones if d["name"].endswith(" Pro")]
+          print((pro or phones)[-1]["udid"])')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcodebuild build \
+            -project RowerWeather.xcodeproj \
+            -scheme RowerWeather \
+            -destination "id=$UDID" \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Take screenshots
+        run: |
+          set -x
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowerWeather.app
+          xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4
+          mkdir -p docs/screenshots
+          shoot() {  # name, appearance, launch arguments...
+            local name=$1 appearance=$2; shift 2
+            xcrun simctl ui "$UDID" appearance "$appearance"
+            xcrun simctl terminate "$UDID" com.rowerweatherfrog.RowerWeather || true
+            xcrun simctl launch "$UDID" com.rowerweatherfrog.RowerWeather "$@"
+            sleep 10
+            xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
+          }
+          shoot 1-lakes light
+          shoot 2-club-starnberg light -RWOpenClub mrc-1880
+          shoot 3-club-tutzing light -RWOpenClub tutzinger-rv
+          shoot 4-club-starnberg-dark dark -RWOpenClub mrc-1880
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screenshots
+          path: |
+            docs/screenshots
+            uvicorn.log
+      - name: Commit screenshots
+        run: |
+          git add docs/screenshots
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update app screenshots"
+            git push
+          fi
