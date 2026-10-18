@@ -1,0 +1,62 @@
+import XCTest
+@testable import RowerWeather
+
+final class LocationStoreTests: XCTestCase {
+    private var defaults: UserDefaults!
+
+    override func setUp() {
+        defaults = UserDefaults(suiteName: "LocationStoreTests")
+        defaults.removePersistentDomain(forName: "LocationStoreTests")
+    }
+
+    private func club(_ id: String, _ name: String, verified: Bool = true, address: String = "Seestraße 1, 82319 Starnberg") -> Club {
+        Club(id: id, name: name, shortName: nil, address: address, website: nil,
+             launchPoint: Coordinate(lat: 48, lon: 11.3), launchPointVerified: verified)
+    }
+
+    private var lakes: [Lake] {
+        [
+            Lake(id: "starnberger-see", name: "Starnberger See", center: Coordinate(lat: 47.9, lon: 11.3), clubs: [
+                club("tutzinger-rv", "Tutzinger Ruderverein", address: "Seestraße 22, 82327 Tutzing"),
+                club("mrc-1880", "Münchener Ruder-Club von 1880"),
+            ]),
+            Lake(id: "ammersee", name: "Ammersee", center: Coordinate(lat: 48, lon: 11.1), clubs: [
+                club("rc-diessen", "Ruderclub Dießen", verified: false, address: "Seeweg 1, 86911 Dießen am Ammersee"),
+            ]),
+        ]
+    }
+
+    func testFirstLaunchSavesHomeBaseFirstAndConfirmedClubs() {
+        let store = LocationStore(defaults: defaults)
+        store.setCatalog(lakes)
+        XCTAssertEqual(store.saved.map(\.id), ["mrc-1880", "tutzinger-rv"])
+    }
+
+    func testSearchMatchesLakeAndTownIgnoringAccents() {
+        let store = LocationStore(defaults: defaults)
+        store.setCatalog(lakes)
+        XCTAssertEqual(store.search("ammer").map(\.id), ["rc-diessen"])
+        XCTAssertEqual(store.search("diessen").map(\.id), ["rc-diessen"])
+        XCTAssertEqual(store.search("Dießen ruder").map(\.id), ["rc-diessen"])
+        XCTAssertEqual(store.search("tutzing").map(\.id), ["tutzinger-rv"])
+    }
+
+    func testAddRemoveAndHomeBasePersist() {
+        let store = LocationStore(defaults: defaults)
+        store.setCatalog(lakes)
+        let diessen = lakes[1].clubs[0]
+        store.add(diessen)
+        store.remove(lakes[0].clubs[1])  // the home base cannot be removed
+        XCTAssertEqual(store.saved.map(\.id), ["mrc-1880", "tutzinger-rv", "rc-diessen"])
+        store.makeHome(diessen)
+
+        let reopened = LocationStore(defaults: defaults)
+        reopened.setCatalog(lakes)
+        XCTAssertEqual(reopened.saved.map(\.id), ["rc-diessen", "mrc-1880", "tutzinger-rv"])
+    }
+
+    func testTownFromAddress() {
+        XCTAssertEqual(club("x", "X", address: "Seestraße 22, 82327 Tutzing").town, "Tutzing")
+        XCTAssertNil(club("x", "X", address: "").town)
+    }
+}

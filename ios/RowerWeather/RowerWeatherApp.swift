@@ -4,7 +4,7 @@ import SwiftUI
 struct RowerWeatherApp: App {
     var body: some Scene {
         WindowGroup {
-            LakeListView(api: APIClient.fromBundle())
+            RootView(api: APIClient.fromBundle())
         }
     }
 }

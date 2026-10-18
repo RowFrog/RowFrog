@@ -1,0 +1,52 @@
+name: DRV club catalog
+
+# Imports the German Rowing Association's club list (rudern.de) into
+# data/catalog-drv.json, the main source of the app's club search, plus any
+# missing lake outlines, committed back to the same branch. Reads one club
+# page a second and geocodes with Nominatim at one request a second, so a
+# full run takes a while. Runs by hand from the Actions tab or when the
+# script changes.
+
+on:
+  push:
+    paths:
+      - scripts/import_drv.py
+      - .github/workflows/drv-catalog.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: drv-catalog-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Import DRV clubs
+        run: |
+          set -o pipefail
+          python3 -u scripts/import_drv.py | tee drv-report.txt
+          { echo '```'; tail -n 400 drv-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Check the catalog loads
+        run: python3 -c 'from rowerweather import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "waters")'
+      - name: Commit the catalog
+        run: |
+          git add data/catalog-drv.json data/drv-geocode.json data/outlines
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update club catalog from the DRV club list"
+            git pull --rebase
+            git push
+          fi
