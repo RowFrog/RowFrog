@@ -15,6 +15,9 @@ struct LocationPageView: View {
                 VStack(spacing: 16) {
                     header
                     if let forecast, let now = forecast.current() {
+                        if let warnings = forecast.warnings {
+                            WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
+                        }
                         NowCard(hour: now, water: forecast.waterTemperature)
                         if let sun = forecast.sunState(at: .now) {
                             DaylightCard(state: sun)
@@ -48,6 +51,7 @@ struct LocationPageView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 24)
             }
+            .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
             .refreshable { await forecasts.load(club.id, force: true) }
             .task {
                 await forecasts.load(club.id)
@@ -444,6 +448,7 @@ private struct HourRow: View {
 
 private struct LegendCard: View {
     @State private var expanded = UserDefaults.standard.string(forKey: "RWScrollTo") == "hourly"
+        || UserDefaults.standard.integer(forKey: "RWScrollPage") > 0
 
     var body: some View {
         Card {
@@ -471,6 +476,49 @@ private struct LegendCard: View {
                 Label("Legend", systemImage: "info.circle").font(.subheadline.weight(.semibold))
             }
         }
+    }
+}
+
+/// Screenshot hook: `-RWScrollPage n` scrolls the page down by n screens
+/// (less a little overlap), stopping at the bottom, so a series of screenshots
+/// covers the whole page.
+private struct ScreenshotScroll: ViewModifier {
+    let page: Int
+    let ready: Bool
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *), page > 0 {
+            content.modifier(PagedScroll(page: page, ready: ready))
+        } else {
+            content
+        }
+    }
+}
+
+@available(iOS 18.0, *)
+private struct PagedScroll: ViewModifier {
+    let page: Int
+    let ready: Bool
+    @State private var position = ScrollPosition(edge: .top)
+    @State private var size: (content: CGFloat, container: CGFloat) = (0, 0)
+
+    func body(content: Content) -> some View {
+        content
+            .scrollPosition($position)
+            .onScrollGeometryChange(for: [CGFloat].self) { [$0.contentSize.height, $0.containerSize.height] } action: { _, new in
+                size = (new[0], new[1])
+            }
+            .task(id: ready) {
+                guard ready else { return }
+                try? await Task.sleep(for: .seconds(2))
+                // Bars cover about 150 points of the screen; overlap pages by a few rows.
+                let target = CGFloat(page) * (size.container - 260)
+                if target < size.content - size.container {
+                    position.scrollTo(y: target)
+                } else {
+                    position.scrollTo(edge: .bottom)
+                }
+            }
     }
 }
 

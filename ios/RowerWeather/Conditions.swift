@@ -56,7 +56,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .waterTemperature: "Latest lake measurement. Below 15 °C, extra care; below 10 °C, cold water."
         case .visibility: "How far you can see. Fog below 1 km is amber, below 500 m red."
         case .cloudCover: "Share of the sky covered by cloud."
-        case .thunderstorm: "Estimated from the forecast until DWD warnings are added."
+        case .thunderstorm: "Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings."
         case .ice: "Not available yet. Check the lake yourself in winter."
         case .daylight: "Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red."
         }
@@ -97,6 +97,19 @@ enum Format {
         if calendar.isDateInToday(date) { return "Today" }
         if calendar.isDateInTomorrow(date) { return "Tomorrow" }
         return date.formatted(.dateTime.weekday(.wide).day().month(.abbreviated))
+    }
+
+    /// "Today 21:00", "Tomorrow 03:00" or "Mon 21:00".
+    static func dayTime(_ date: Date, calendar: Calendar = .current) -> String {
+        let day: String
+        if calendar.isDateInToday(date) {
+            day = "Today"
+        } else if calendar.isDateInTomorrow(date) {
+            day = "Tomorrow"
+        } else {
+            day = date.formatted(.dateTime.weekday(.abbreviated))
+        }
+        return "\(day) \(time(date))"
     }
 
     static func number(_ value: Double?, digits: Int = 0) -> String {

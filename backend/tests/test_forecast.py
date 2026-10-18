@@ -94,7 +94,11 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
         return None
 
     monkeypatch.setattr(open_meteo, "fetch", fake_fetch)
+    async def no_warnings(client, club, now):
+        return {"status": "ok", "lakeArea": None, "items": []}, []
+
     monkeypatch.setattr(api.gkd, "fetch_latest", no_water)
+    monkeypatch.setattr(api, "_warnings", no_warnings)
     api._cache.clear()
     body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
     api._cache.clear()

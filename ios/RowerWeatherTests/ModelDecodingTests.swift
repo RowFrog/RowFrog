@@ -53,6 +53,22 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertNil(forecast.hours.first?.sunUp)
     }
 
+    func testDecodesWarnings() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": [],
+         "warnings": {"status": "ok", "lakeArea": "Starnberger See",
+                      "items": [{"kind": "lake", "area": "Starnberger See", "event": "STURM", "severity": "severe",
+                                 "headline": "Sturmwarnung", "description": "Sturmböen um 65 km/h.", "instruction": null,
+                                 "onset": "2026-10-18T12:00:00+00:00", "expires": null, "sample": false}]}}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        let warning = try XCTUnwrap(forecast.warnings?.items.first)
+        XCTAssertTrue(warning.isLake)
+        XCTAssertNil(warning.expires)
+        XCTAssertEqual(warning.shortLabel, "DWD lake warning")
+        XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD lake warning")
+    }
+
     func testLightOrdering() {
         XCTAssertLessThan(Light.green, Light.amber)
         XCTAssertEqual([Light.amber, .red, .green].max(), .red)

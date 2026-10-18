@@ -60,6 +60,7 @@ Proposed for small boats (1x, 2x) and to be tuned with rowers; see
 | Wave height | 0.15 m | 0.30 m |
 | Visibility | 1 km or less | under 500 m |
 | DWD lake warning | strong wind | storm |
+| DWD weather warning for the place | minor (yellow) | moderate (orange) or above, or any thunderstorm |
 | Daylight | sunrise or sunset within the hour | sun down for the whole hour |
 
 ## The app
@@ -69,6 +70,14 @@ right between saved locations, like the iOS Weather app. The list button
 shows all saved locations with their light and key numbers; swipe a row to
 remove it or make it the home base, and use the search to add clubs from
 the catalog. The saved list is stored on the phone.
+
+Each page starts with the official DWD warnings: the lake warning (strong
+wind or storm, as the shore lights show it) where DWD runs its lake warning
+service (23 lakes, among them Starnberger See, Ammersee and Chiemsee), and
+DWD's weather warnings for the municipality, which cover rivers and canals
+too. When there is none the page says so and when it was checked; when DWD
+cannot be reached it says that instead. Warnings come from DWD's GeoServer
+(`backend/rowerweather/sources/dwd_warnings.py`) and also set the hourly light.
 
 ## Licence
 

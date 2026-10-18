@@ -61,7 +61,8 @@ struct Reason: Codable, Hashable {
     /// Short label shown under the traffic light.
     var label: String {
         switch condition {
-        case "lake_warning": "Lake storm warning"
+        case "lake_warning": "DWD lake warning"
+        case "weather_warning": "DWD weather warning"
         case "wind": "Wind"
         case "gusts": "Gusts"
         case "waves": "Waves"
@@ -79,7 +80,8 @@ struct Reason: Codable, Hashable {
     /// One sentence saying why this condition changes the advice.
     var explanation: String {
         switch condition {
-        case "lake_warning": "A storm warning is active for the lake."
+        case "lake_warning": "DWD has issued a wind or storm warning for the lake."
+        case "weather_warning": "DWD has issued a weather warning for this place."
         case "wind": "Mean wind is above the limit."
         case "gusts": "Gusts are above the limit."
         case "waves": "Waves at the launch point are too high."
@@ -96,7 +98,8 @@ struct Reason: Codable, Hashable {
 
     /// The condition whose icon stands for this reason.
     var symbol: String {
-        (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
+        if condition.hasSuffix("_warning") { return "exclamationmark.triangle.fill" }
+        return (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
     }
 }
 
@@ -142,11 +145,43 @@ struct SunDay: Codable, Hashable {
     let sunset: Date
 }
 
+/// An official DWD warning: for the lake (strong wind or storm, shown by the
+/// shore lights) or for the place (thunderstorm, gusts, frost, fog ...).
+struct DWDWarning: Codable, Hashable, Identifiable {
+    let kind: String
+    let area: String
+    let event: String
+    /// "minor", "moderate", "severe" or "extreme", as DWD's levels 1 to 4.
+    let severity: String
+    let headline: String
+    let description: String
+    let instruction: String?
+    let onset: Date?
+    let expires: Date?
+    /// A made-up warning for the screenshots, never from DWD.
+    var sample: Bool? = nil
+
+    var id: String { [kind, area, event, onset?.description ?? "", headline].joined(separator: "|") }
+    var isLake: Bool { kind == "lake" }
+}
+
+struct Warnings: Codable, Hashable {
+    /// "ok" when DWD was checked, "unavailable" when it could not be reached.
+    let status: String
+    /// DWD's lake warning area for this launch point, nil when the water is not covered.
+    let lakeArea: String?
+    let items: [DWDWarning]
+
+    var checked: Bool { status == "ok" }
+}
+
 struct ClubForecast: Codable, Hashable {
     let clubId: String
     let lakeId: String
     let generatedAt: Date
     let waterTemperature: WaterTemperature?
+    /// Missing from older backends.
+    var warnings: Warnings? = nil
     let attribution: [String]
     let daylight: [SunDay]?
     let hours: [ForecastHour]

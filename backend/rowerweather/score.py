@@ -49,6 +49,8 @@ class HourConditions:
     water_temp_c: float | None = None
     thunderstorm: Light = Light.GREEN
     lake_warning: LakeWarning = LakeWarning.NONE
+    # DWD weather warning for the municipality: amber for a minor one, red above.
+    weather_warning: Light = Light.GREEN
     ice: Light = Light.GREEN
     daylight: Light = Light.GREEN
     # "daylight" when the hour is dark, "twilight" when the sun rises or sets in it.
@@ -72,6 +74,7 @@ def _rising(value: float, amber: float, red: float) -> Light:
 def assess(c: HourConditions, t: Thresholds = Thresholds()) -> Assessment:
     checks: list[tuple[str, Light]] = [
         ("lake_warning", Light(int(c.lake_warning))),
+        ("weather_warning", c.weather_warning),
         ("wind", _rising(c.wind_speed_ms, t.wind_amber_ms, t.wind_red_ms)),
         ("gusts", _rising(c.wind_gust_ms, t.gust_amber_ms, t.gust_red_ms)),
         ("thunderstorm", c.thunderstorm),

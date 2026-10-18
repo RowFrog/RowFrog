@@ -109,6 +109,12 @@ private struct LocationSummaryRow: View {
                         .font(.caption)
                         .lineLimit(2)
                 }
+                if let warning = forecast?.warnings?.items.first {
+                    Label(warning.shortLabel, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(warning.severity == "minor" ? Color.orange : warning.color)
+                        .lineLimit(1)
+                }
                 if let forecast, let sun = forecast.sunState(at: .now) {
                     Group {
                         switch sun {
