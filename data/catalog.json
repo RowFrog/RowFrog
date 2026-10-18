@@ -4,6 +4,15 @@
   "source": "© OpenStreetMap contributors, ODbL",
   "lakes": [
     {
+      "id": "forggensee",
+      "name": "Forggensee",
+      "center": {
+        "lat": 47.6168,
+        "lon": 10.7353
+      },
+      "osm": "relation/897899"
+    },
+    {
       "id": "regattastrecke-oberschleissheim",
       "name": "Regattastrecke Oberschleißheim",
       "center": {
@@ -11,9 +20,32 @@
         "lon": 11.5154
       },
       "osm": "way/4083380"
+    },
+    {
+      "id": "simssee",
+      "name": "Simssee",
+      "center": {
+        "lat": 47.873,
+        "lon": 12.2392
+      },
+      "osm": "relation/3597692"
     }
   ],
   "clubs": [
+    {
+      "id": "ruderclub-forggensee",
+      "name": "Ruderclub Forggensee",
+      "shortName": "Ruderclub Forggensee",
+      "lakeId": "forggensee",
+      "address": "",
+      "website": "https://www.ruderclub-forggensee.de/",
+      "launchPoint": {
+        "lat": 47.59896,
+        "lon": 10.71473,
+        "precision": "shore point nearest node/13386912123 in OpenStreetMap, 48 m away",
+        "verified": false
+      }
+    },
     {
       "id": "regattastrecke-oberschleissheim",
       "name": "Regattastrecke Oberschleißheim",
@@ -25,6 +57,20 @@
         "lat": 48.2437,
         "lon": 11.5152,
         "precision": "shore point nearest way/1202406597 in OpenStreetMap, 61 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "segler-und-ruderclub-simssee",
+      "name": "Segler- und Ruderclub Simssee",
+      "shortName": "SRS",
+      "lakeId": "simssee",
+      "address": "",
+      "website": null,
+      "launchPoint": {
+        "lat": 47.86858,
+        "lon": 12.22216,
+        "precision": "shore point nearest node/7216939744 in OpenStreetMap, 26 m away",
         "verified": false
       }
     }
