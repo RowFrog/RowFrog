@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The weather in an hour as the iOS Weather app shows it: a multicolour
+/// The weather in an hour as the iOS Weather app shows it: a coloured
 /// symbol (sun, cloud, rain, hail ...) and a word. Built from the WMO weather
 /// code DWD's model gives; without one, from cloud cover and precipitation.
 enum Sky: CaseIterable {
@@ -38,7 +38,7 @@ enum Sky: CaseIterable {
         self.init(code: hour.weatherCode, cloudCoverPct: hour.cloudCoverPct, precipitationMm: hour.precipitationMm)
     }
 
-    /// Multicolour SF Symbol; night variants show a moon.
+    /// SF Symbol; night variants show a moon.
     func symbol(night: Bool = false) -> String {
         switch self {
         case .clear: night ? "moon.stars.fill" : "sun.max.fill"
@@ -47,13 +47,29 @@ enum Sky: CaseIterable {
         case .cloudy: "cloud.fill"
         case .fog: "cloud.fog.fill"
         case .drizzle: "cloud.drizzle.fill"
-        case .rain: "cloud.rain.fill"
-        case .showers: night ? "cloud.moon.rain.fill" : "cloud.sun.rain.fill"
+        case .rain, .showers: "cloud.rain.fill"
         case .heavyRain: "cloud.heavyrain.fill"
         case .freezingRain: "cloud.sleet.fill"
         case .snow: "cloud.snow.fill"
-        case .thunderstorm: "cloud.bolt.rain.fill"
+        case .thunderstorm: "cloud.bolt.fill"
         case .hail: "cloud.hail.fill"
+        }
+    }
+
+    /// Colours for the symbol's layers: the cloud first, then sun, moon, rain,
+    /// snow, hail or lightning. The Weather app's multicolour symbols draw
+    /// clouds white, which vanishes on the app's light cards, so clouds are gray.
+    func colors(night: Bool = false) -> (Color, Color) {
+        let cloud = Color(.systemGray)
+        let sun = Color.yellow
+        let moon = Color.indigo
+        switch self {
+        case .clear, .mostlyClear: return night ? (moon, sun) : (sun, sun)
+        case .partlyCloudy: return (cloud, night ? moon : sun)
+        case .cloudy, .fog: return (cloud, cloud)
+        case .drizzle, .rain, .showers, .heavyRain: return (cloud, .blue)
+        case .freezingRain, .snow, .hail: return (cloud, .cyan)
+        case .thunderstorm: return (cloud, sun)
         }
     }
 
@@ -93,8 +109,10 @@ struct SkyIcon: View {
     var night = false
 
     var body: some View {
+        let colors = sky.colors(night: night)
         Image(systemName: sky.symbol(night: night))
-            .symbolRenderingMode(.multicolor)
+            .symbolRenderingMode(.palette)
+            .foregroundStyle(colors.0, colors.1)
             .accessibilityLabel(sky.title)
     }
 }
