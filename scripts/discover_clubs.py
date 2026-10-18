@@ -35,7 +35,7 @@ OUTLINES = ROOT / "data" / "outlines"
 BBOX = (47.40, 10.70, 48.60, 12.90)
 MAX_SHORE_M = 300.0
 # Few clubs carry sport=rowing in OSM, so club names are matched too.
-CLUB_NAME = "Ruder|ruder|Rowing|Regatta"
+CLUB_NAME = "[Rr]uder(club|verein|gesellschaft|sport|-| )|Ruder[A-Z]|Rowing|Regatta"
 NOT_LAKES = {"river", "canal", "stream", "ditch", "drain", "wastewater", "moat", "fish_pass"}
 
 
@@ -45,28 +45,39 @@ def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text).strip("-")[:48].rstrip("-")
 
 
-def query() -> dict:
+def _run(q: str) -> list[dict]:
+    result = overpass(q, timeout=250)
+    if "remark" in result:  # Overpass reports timeouts and memory limits here, with a partial result
+        raise OSError(f"Overpass: {result['remark']}")
+    return result["elements"]
+
+
+def query_clubs() -> list[dict]:
     s, w, n, e = BBOX
-    return overpass(
+    bbox = f"({s},{w},{n},{e})"
+    return _run(
         f"""
         [out:json][timeout:240];
         (
-          nwr["sport"="rowing"]["name"]({s},{w},{n},{e});
-          nwr["name"~"{CLUB_NAME}"]["club"]({s},{w},{n},{e});
-          nwr["name"~"{CLUB_NAME}"]["leisure"]({s},{w},{n},{e});
-          nwr["name"~"{CLUB_NAME}"]["building"]({s},{w},{n},{e});
-        )->.r;
-        .r out center tags;
-        (
-          way(around.r:{MAX_SHORE_M:.0f})["natural"="water"]["name"];
-          relation(around.r:{MAX_SHORE_M:.0f})["natural"="water"]["name"];
-          way(around.r:{MAX_SHORE_M:.0f})["landuse"="reservoir"]["name"];
-          relation(around.r:{MAX_SHORE_M:.0f})["landuse"="reservoir"]["name"];
+          nwr["sport"="rowing"]["name"]{bbox};
+          nwr["name"~"{CLUB_NAME}"]["club"]{bbox};
+          nwr["name"~"{CLUB_NAME}"]["leisure"]{bbox};
+          nwr["name"~"{CLUB_NAME}"]["building"]{bbox};
         );
-        out geom tags;
-        """,
-        timeout=250,
+        out center tags;
+        """
     )
+
+
+def query_waters(points: list[tuple[float, float]]) -> list[dict]:
+    """Named lakes and reservoirs within MAX_SHORE_M of any of the (lat, lon) points."""
+    around = "\n".join(
+        f'{kind}(around:{MAX_SHORE_M:.0f},{lat},{lon})["{key}"="{value}"]["name"];'
+        for lat, lon in points
+        for kind in ("way", "relation")
+        for key, value in (("natural", "water"), ("landuse", "reservoir"))
+    )
+    return _run(f"[out:json][timeout:240];\n(\n{around}\n);\nout geom tags;")
 
 
 def water_rings(e: dict) -> list[list[tuple[float, float]]]:
@@ -98,22 +109,25 @@ def main() -> int:
     confirmed_points = [(c["launchPoint"]["lat"], c["launchPoint"]["lon"]) for c in confirmed["clubs"]]
     confirmed_names = {slug(c["name"]) for c in confirmed["clubs"]} | {slug(c.get("shortName", "")) for c in confirmed["clubs"]}
 
-    result = query()["elements"]
     def is_club(tags: dict) -> bool:
         name = tags.get("name", "")
         if re.search("verleih|rental|boote? ", name, re.I) or tags.get("shop") or tags.get("amenity") == "boat_rental":
             return False  # boat hire, not a club
         return tags.get("sport") == "rowing" or bool(re.search(CLUB_NAME, name))
 
-    features = [e for e in result if is_club(e.get("tags", {})) and ("center" in e or "lat" in e)]
+    def position(e: dict) -> tuple[float, float]:
+        c = e.get("center") or e
+        return c["lat"], c["lon"]
+
+    features = [e for e in query_clubs() if is_club(e.get("tags", {})) and ("center" in e or "lat" in e)]
+    if not features:
+        sys.exit("no rowing clubs found; keeping the old catalog")
     waters = []
-    for e in result:
+    for e in query_waters([position(f) for f in features]):
         tags = e.get("tags", {})
         is_water = tags.get("natural") == "water" or tags.get("landuse") == "reservoir"
         if not is_water or tags.get("water") in NOT_LAKES:
             continue
-        if "geometry" not in e and "members" not in e:
-            continue  # a water area also tagged sport=rowing, listed once more with its geometry
         try:
             rings = water_rings(e)
         except ValueError as err:
@@ -126,10 +140,7 @@ def main() -> int:
     report = []
     for f in features:
         tags = f["tags"]
-        c = f.get("center") or {"lat": f.get("lat"), "lon": f.get("lon")}
-        if c.get("lat") is None:
-            continue
-        lat, lon = c["lat"], c["lon"]
+        lat, lon = position(f)
         best = None
         for name, osm_id, rings in waters:
             d, slon, slat = nearest_shore(lon, lat, rings)
