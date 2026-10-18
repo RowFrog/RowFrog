@@ -1,0 +1,23 @@
+[project]
+name = "rowerweather"
+version = "0.1.0"
+description = "Backend for RowerWeather: merges weather and lake data into a rowing forecast per launch point"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.110",
+    "httpx>=0.27",
+    "uvicorn>=0.29",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["rowerweather*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

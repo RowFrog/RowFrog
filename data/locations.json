@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "updated": "2026-10-18",
+  "lakes": [
+    {
+      "id": "starnberger-see",
+      "name": "Starnberger See",
+      "center": { "lat": 47.9039, "lon": 11.3072 },
+      "areaKm2": 56.36,
+      "lengthKm": 19.45,
+      "gkdWaterTemperatureStation": "starnberg-16663002",
+      "stormWarningService": true
+    }
+  ],
+  "clubs": [
+    {
+      "id": "mrc-1880",
+      "name": "Münchener Ruder-Club von 1880 e.V.",
+      "lakeId": "starnberger-see",
+      "address": "Dampfschiffstraße 6, 82319 Starnberg",
+      "website": "https://www.mrc1880.de",
+      "launchPoint": { "lat": 47.99667, "lon": 11.34745, "precision": "boat ramp, given by the owner", "verified": true }
+    },
+    {
+      "id": "mrsv-bayern",
+      "name": "Münchener Ruder- und Segel-Verein \"Bayern\" von 1910 e.V.",
+      "lakeId": "starnberger-see",
+      "address": "Seepromenade 2, 82319 Starnberg",
+      "website": "http://www.mrsv-bayern.de",
+      "launchPoint": { "lat": 47.99156, "lon": 11.33901, "precision": "boat ramp, given by the owner", "verified": true }
+    },
+    {
+      "id": "tutzinger-rv",
+      "name": "Tutzinger Ruderverein 1983 e.V.",
+      "lakeId": "starnberger-see",
+      "address": "Seestraße 22, 82327 Tutzing",
+      "website": "https://www.tutzinger-ruderverein.de",
+      "launchPoint": { "lat": 47.89578, "lon": 11.27525, "precision": "boat ramp, given by the owner", "verified": true }
+    }
+  ]
+}
