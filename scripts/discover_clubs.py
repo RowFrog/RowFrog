@@ -73,6 +73,7 @@ def query_waters(points: list[tuple[float, float]]) -> list[dict]:
 
     Big lakes are multipolygon relations, which `around` does not find
     directly, so their shore ways are found first and then their relations.
+    "out geom" (not "out geom tags", which drops members) returns the shores.
     """
     near = "\n".join(f"way(around:{MAX_SHORE_M:.0f},{lat},{lon});" for lat, lon in points)
     return _run(
@@ -85,7 +86,7 @@ def query_waters(points: list[tuple[float, float]]) -> list[dict]:
           rel(bw.near)["natural"="water"]["name"];
           rel(bw.near)["landuse"="reservoir"]["name"];
         );
-        out geom;  # "out geom tags" would drop the members of multipolygons
+        out geom;
         """
     )
 
