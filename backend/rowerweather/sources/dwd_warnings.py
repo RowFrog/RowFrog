@@ -162,7 +162,7 @@ async def fetch_lake_areas(client: httpx.AsyncClient) -> list[LakeArea]:
     # The polygons are detailed and DWD's server can take a minute; they rarely change and are cached.
     resp = await client.get(
         WFS_URL,
-        params=_query(typeName="dwd:Warngebiete_Binnenseen", srsName="EPSG:4326", propertyName="WARNCELLID,NAME,THE_GEOM"),
+        params=_query(typeName="dwd:Warngebiete_Binnenseen", srsName="EPSG:4326", propertyName="WARNCELLID,NAME,SHAPE"),
         timeout=120,
     )
     resp.raise_for_status()

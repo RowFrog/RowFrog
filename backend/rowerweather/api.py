@@ -5,6 +5,7 @@ Run locally:  uvicorn rowerweather.api:app --reload   (from the backend folder)
 
 from __future__ import annotations
 
+import logging
 import os
 import time
 from datetime import datetime, timedelta, timezone
@@ -143,7 +144,8 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         if area is not None:
             lake = [w for cell, w in await dwd_warnings.fetch_lake_warnings(client) if cell == area.warncell_id]
         local = await dwd_warnings.fetch_local_warnings(client, club.launch_point.lon, club.launch_point.lat)
-    except (httpx.HTTPError, ValueError, KeyError):
+    except (httpx.HTTPError, ValueError, KeyError) as e:
+        logging.getLogger(__name__).warning("DWD warnings unavailable for %s: %r", club.id, e)
         result = ({"status": "unavailable", "lakeArea": None, "items": []}, [])
         _warnings_cache[club.id] = (time.monotonic() - WARNINGS_CACHE_SECONDS + 60, result)  # retry in a minute
         return result

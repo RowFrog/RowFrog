@@ -29,4 +29,9 @@ jobs:
                           print(name, "FAILED", round(time.time() - t, 1), "s", repr(e))
                           if isinstance(e, httpx.HTTPStatusError): print(e.response.text[:1500])
                           traceback.print_exc()
+              async with httpx.AsyncClient() as c:
+                  areas = await d.fetch_lake_areas(c)
+                  for name, lon, lat in [("MRC 1880", 11.34745, 47.99667), ("Tutzinger RV", 11.27525, 47.89578), ("ARC Wuerzburg", 9.93, 49.78)]:
+                      a = d.lake_area_for(lon, lat, areas)
+                      print(name, "->", a and a.name, [round(d.distance_to_area_m(lon, lat, x.rings)) for x in areas if x.name == "Starnberger See"])
           asyncio.run(main())
