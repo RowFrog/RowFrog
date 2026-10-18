@@ -84,7 +84,10 @@ async def club_forecast(club_id: str) -> dict:
     lake = _locations.lakes[club.lake_id]
     now = datetime.now(timezone.utc)
     async with httpx.AsyncClient() as client:
-        weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
+        try:
+            weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
+        except httpx.HTTPError:
+            raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
         water = None
         if lake.gkd_water_temperature_station:
             try:

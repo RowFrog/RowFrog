@@ -2,7 +2,7 @@ name: Live data check
 
 # Downloads missing lake outlines from OpenStreetMap, checks the club launch
 # points against them and runs the forecast against live Open-Meteo and GKD.
-# Runs when the club list or these scripts change, or by hand from the
+# Runs when the club list, the data sources or these scripts change, or by hand from the
 # Actions tab. New outlines are committed back to the branch.
 
 on:
@@ -10,6 +10,7 @@ on:
     paths:
       - data/locations.json
       - scripts/**
+      - backend/rowerweather/sources/**
       - .github/workflows/live-check.yml
   workflow_dispatch:
 
