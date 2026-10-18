@@ -8,7 +8,7 @@
       "center": { "lat": 47.9039, "lon": 11.3072 },
       "areaKm2": 56.36,
       "lengthKm": 19.45,
-      "gkdWaterTemperatureStation": "16663002",
+      "gkdWaterTemperatureStation": "starnberg-16663002",
       "stormWarningService": true
     }
   ],
