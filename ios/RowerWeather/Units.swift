@@ -137,6 +137,94 @@ enum DistanceUnit: String, CaseIterable, Identifiable {
     }
 }
 
+enum TimeFormat: String, CaseIterable, Identifiable {
+    /// The phone's 12- or 24-hour setting.
+    case device
+    case hours24
+    case hours12
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .device: tr("Device")
+        case .hours24: tr("24-hour")
+        case .hours12: tr("12-hour")
+        }
+    }
+
+    func string(from date: Date) -> String {
+        Self.formatters[self]!.string(from: date)
+    }
+
+    /// Whether times carry AM or PM, so take more room.
+    var usesAMPM: Bool {
+        Self.formatters[self]!.dateFormat.contains("a")
+    }
+
+    private static let formatters: [TimeFormat: DateFormatter] = Dictionary(uniqueKeysWithValues: allCases.map { format in
+        let f = DateFormatter()
+        switch format {
+        case .device:
+            f.locale = .current
+            f.dateFormat = DateFormatter.dateFormat(fromTemplate: "jmm", options: 0, locale: .current) ?? "HH:mm"
+        case .hours24:
+            f.locale = Locale(identifier: "en_US_POSIX")
+            f.dateFormat = "HH:mm"
+        case .hours12:
+            f.locale = Locale(identifier: "en_US_POSIX")
+            f.dateFormat = "h:mm a"
+        }
+        return (format, f)
+    })
+}
+
+/// How days are written, e.g. over each day of the hourly forecast.
+enum DateFormat: String, CaseIterable, Identifiable {
+    /// The phone's style for the app's language.
+    case device
+    /// "Monday, 19 October"
+    case long
+    /// "Mon, 19 Oct"
+    case short
+    /// "Mon 19.10.2026"
+    case dayMonthYear
+    /// "Mon 10/19/2026"
+    case monthDayYear
+    /// "Mon 2026-10-19"
+    case iso
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .device: tr("Device")
+        case .long: tr("Long")
+        case .short: tr("Short")
+        case .dayMonthYear: tr("Day.Month.Year")
+        case .monthDayYear: tr("Month/Day/Year")
+        case .iso: "ISO 8601"
+        }
+    }
+
+    func string(from date: Date, locale: Locale) -> String {
+        let weekday = date.formatted(.dateTime.weekday(.abbreviated).locale(locale))
+        switch self {
+        case .device: return date.formatted(.dateTime.weekday(.wide).day().month(.abbreviated).locale(locale))
+        case .long: return date.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(locale))
+        case .short: return date.formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(locale))
+        case .dayMonthYear: return "\(weekday) \(Self.fixed("dd.MM.yyyy", date))"
+        case .monthDayYear: return "\(weekday) \(Self.fixed("MM/dd/yyyy", date))"
+        case .iso: return "\(weekday) \(Self.fixed("yyyy-MM-dd", date))"
+        }
+    }
+
+    private static func fixed(_ pattern: String, _ date: Date) -> String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = pattern
+        return f.string(from: date)
+    }
+}
+
 /// Values in the user's units. Without a unit the number alone, for the
 /// hourly table whose header names the unit.
 extension Format {

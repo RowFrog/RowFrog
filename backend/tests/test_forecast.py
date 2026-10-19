@@ -24,6 +24,9 @@ PAYLOAD = {
         "cape": [0, 0],
         "weather_code": [45, 96],
         "apparent_temperature": [5.2, 9.8],
+        "relative_humidity_2m": [93, 71],
+        "dew_point_2m": [6.1, 4.0],
+        "pressure_msl": [1016.4, 1015.2],
         "is_day": [1, 1],
     }
 }
@@ -112,4 +115,7 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
     assert body["hours"][0]["sunUp"] is True
     assert body["hours"][1]["weatherCode"] == 96
     assert body["hours"][1]["apparentTemperatureC"] == 9.8
+    assert body["hours"][0]["humidityPct"] == 93
+    assert body["hours"][0]["dewPointC"] == 6.1
+    assert body["hours"][1]["pressureHpa"] == 1015.2
     assert body["hours"][0]["precipitationMm"] == 0

@@ -17,6 +17,8 @@ final class AppSettings {
     var waveUnit: WaveUnit { didSet { defaults.set(waveUnit.rawValue, forKey: Keys.waves) } }
     var rainUnit: RainUnit { didSet { defaults.set(rainUnit.rawValue, forKey: Keys.rain) } }
     var distanceUnit: DistanceUnit { didSet { defaults.set(distanceUnit.rawValue, forKey: Keys.distance) } }
+    var timeFormat: TimeFormat { didSet { defaults.set(timeFormat.rawValue, forKey: Keys.timeFormat) } }
+    var dateFormat: DateFormat { didSet { defaults.set(dateFormat.rawValue, forKey: Keys.dateFormat) } }
 
     /// The picture behind every page, unless a page or club has its own.
     var allPagesBackground: BackgroundChoice { didSet { defaults.set(allPagesBackground.rawValue, forKey: Keys.background) } }
@@ -43,6 +45,8 @@ final class AppSettings {
         static let waves = "RWUnitWaves"
         static let rain = "RWUnitRain"
         static let distance = "RWUnitDistance"
+        static let timeFormat = "RWTimeFormat"
+        static let dateFormat = "RWDateFormat"
         static let background = "RWBackground"
         static let pageBackgrounds = "RWBackgroundPages"
         static let clubBackgrounds = "RWBackgroundClubs"
@@ -50,7 +54,7 @@ final class AppSettings {
         static let tileStyle = "RWTileStyle"
         static let userPictures = "RWUserPictures"
 
-        static let all = [appearance, language, temperature, wind, waves, rain, distance,
+        static let all = [appearance, language, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures]
     }
 
@@ -66,6 +70,8 @@ final class AppSettings {
         waveUnit = value(Keys.waves, .meters)
         rainUnit = value(Keys.rain, .millimeters)
         distanceUnit = value(Keys.distance, .kilometers)
+        timeFormat = value(Keys.timeFormat, .hours24)
+        dateFormat = value(Keys.dateFormat, .device)
         allPagesBackground = defaults.string(forKey: Keys.background).flatMap(BackgroundChoice.init(rawValue:)) ?? .noPicture
         let pages = defaults.dictionary(forKey: Keys.pageBackgrounds) as? [String: String] ?? [:]
         pageBackgrounds = Dictionary(uniqueKeysWithValues: pages.compactMap { key, raw in
@@ -123,6 +129,8 @@ final class AppSettings {
         waveUnit = .meters
         rainUnit = .millimeters
         distanceUnit = .kilometers
+        timeFormat = .hours24
+        dateFormat = .device
         removeAllBackgrounds()
         userPictures = []
         // The assignments above write the defaults back; remove them so a later

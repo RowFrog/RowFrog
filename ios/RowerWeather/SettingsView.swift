@@ -38,6 +38,9 @@ struct SettingsView: View {
     @State private var showingTour = false
     @State private var showResetTip = false
     private let resetTip = FactoryResetTip()
+    @State private var showAppIconTip = false
+    private let appIconTip = AppIconTip()
+    @State private var appIcon = AppIcons.current
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -78,10 +81,25 @@ struct SettingsView: View {
                     } header: {
                         SectionTitle(tr("Units"), symbol: "ruler")
                     } footer: {
-                        SectionFooter(tr("Cloud cover stays in percent and times use the 24-hour clock."))
+                        SectionFooter(tr("Cloud cover stays in percent."))
                     }
                     .surfaceRows()
                     .id("units")
+
+                    Section {
+                        FormatRow(title: tr("Time"), symbol: "clock", selection: $settings.timeFormat) { format in
+                            format.string(from: Self.sampleTime)
+                        }
+                        FormatRow(title: tr("Date"), symbol: "calendar", selection: $settings.dateFormat) { format in
+                            format.string(from: .now, locale: AppSettings.shared.locale)
+                        }
+                    } header: {
+                        SectionTitle(tr("Date and time"), symbol: "calendar.badge.clock")
+                    } footer: {
+                        SectionFooter(tr("Device follows the phone's settings. Today and tomorrow are always written as words."))
+                    }
+                    .surfaceRows()
+                    .id("datetime")
 
                     Section {
                         NavigationLink(value: SettingsRoute.backgrounds) {
@@ -117,6 +135,19 @@ struct SettingsView: View {
                     .id("help")
 
                     Section {
+                        if showAppIconTip {
+                            TipView(appIconTip)
+                        }
+                        AppIconPicker(selected: $appIcon)
+                    } header: {
+                        SectionTitle(tr("App icon"), symbol: "app.badge")
+                    } footer: {
+                        SectionFooter(tr("The icon on your home screen. iOS asks you to confirm the change."))
+                    }
+                    .surfaceRows()
+                    .id("appicon")
+
+                    Section {
                         if showResetTip {
                             TipView(resetTip)
                         }
@@ -126,7 +157,7 @@ struct SettingsView: View {
                             Label(tr("Reset to factory settings"), systemImage: "arrow.counterclockwise")
                         }
                     } footer: {
-                        SectionFooter(tr("Appearance, units, language and background pictures go back to how the app came. Your locations and home base stay."))
+                        SectionFooter(tr("Appearance, units, language, background pictures and the app icon go back to how the app came. Your locations and home base stay."))
                     }
                     .surfaceRows()
                     .id("reset")
@@ -156,12 +187,17 @@ struct SettingsView: View {
                 .confirmationDialog(tr("Reset all settings?"), isPresented: $confirmingReset, titleVisibility: .visible) {
                     Button(tr("Reset"), role: .destructive) {
                         AppSettings.shared.resetToFactorySettings()
+                        Task {
+                            try? await AppIcons.select(AppIcons.primary)
+                            appIcon = AppIcons.current
+                        }
                     }
                     Button(tr("Cancel"), role: .cancel) {}
                 } message: {
-                    Text(tr("Appearance, units, language and background pictures go back to how the app came, and your own pictures are deleted from the app. Your locations and home base stay."))
+                    Text(tr("Appearance, units, language, background pictures and the app icon go back to how the app came, and your own pictures are deleted from the app. Your locations and home base stay."))
                 }
-                .screenshotSections(["appearance", "units", "background", "help", "reset"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "datetime", "background", "help", "appicon", "reset"], proxy: proxy)
+                .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
                 .fullScreenCover(isPresented: $showingTour) {
                     TutorialView(locations: locations, reload: {}) {
@@ -173,11 +209,75 @@ struct SettingsView: View {
         }
     }
 
+    /// 14:30 today, to show each time format.
+    private static var sampleTime: Date {
+        Calendar.current.date(bySettingHour: 14, minute: 30, second: 0, of: .now) ?? .now
+    }
+
     private var backgroundSummary: String {
         let settings = AppSettings.shared
         let own = settings.pageBackgrounds.count + settings.clubBackgrounds.count
         let all = tr("All pages: %@", settings.allPagesBackground.title)
         return own == 0 ? all : all + " · " + tr("%@ with their own", String(own))
+    }
+}
+
+/// All app icons in a grid; the one on the home screen is ticked.
+private struct AppIconPicker: View {
+    @Binding var selected: AppIconOption
+    @State private var failed = false
+
+    private let columns = [GridItem(.adaptive(minimum: 72), spacing: 12, alignment: .top)]
+
+    var body: some View {
+        LazyVGrid(columns: columns, spacing: 14) {
+            ForEach(AppIcons.all) { option in
+                Button {
+                    Task {
+                        do {
+                            try await AppIcons.select(option)
+                            selected = AppIcons.current
+                        } catch {
+                            failed = true
+                        }
+                    }
+                } label: {
+                    VStack(spacing: 6) {
+                        option.previewImage
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 60, height: 60)
+                            .clipShape(RoundedRectangle(cornerRadius: 13.5, style: .continuous))
+                            .overlay {
+                                RoundedRectangle(cornerRadius: 13.5, style: .continuous)
+                                    .strokeBorder(option == selected ? Color.accentColor : Color.secondary.opacity(0.25),
+                                                  lineWidth: option == selected ? 3 : 0.5)
+                            }
+                            .overlay(alignment: .bottomTrailing) {
+                                if option == selected {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .symbolRenderingMode(.multicolor)
+                                        .font(.title3)
+                                        .background(Circle().fill(.background))
+                                        .offset(x: 6, y: 6)
+                                }
+                            }
+                        Text(option.title)
+                            .font(.caption2)
+                            .multilineTextAlignment(.center)
+                            .lineLimit(3)
+                            .foregroundStyle(.primary)
+                    }
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(option.title)
+                .accessibilityAddTraits(option == selected ? .isSelected : [])
+            }
+        }
+        .padding(.vertical, 6)
+        .alert(tr("The icon could not be changed."), isPresented: $failed) {
+            Button(tr("OK"), role: .cancel) {}
+        }
     }
 }
 
@@ -258,6 +358,42 @@ private struct UnitRow<Unit: Hashable & Identifiable & CaseIterable>: View where
             }
         }
         .accessibilityValue(selection.title)
+    }
+}
+
+/// A time or date format: its name and icon, the current choice as an example,
+/// and a menu with every format written out.
+private struct FormatRow<Option: Hashable & Identifiable & CaseIterable>: View where Option.AllCases: RandomAccessCollection {
+    let title: String
+    let symbol: String
+    @Binding var selection: Option
+    let example: (Option) -> String
+
+    var body: some View {
+        LabeledContent {
+            Menu {
+                Picker(title, selection: $selection) {
+                    ForEach(Option.allCases) { format in
+                        Text("\(name(format)) · \(example(format))").tag(format)
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(example(selection)).lineLimit(1)
+                    Image(systemName: "chevron.up.chevron.down").font(.caption2)
+                }
+            }
+        } label: {
+            Label {
+                Text(title)
+            } icon: {
+                Image(systemName: symbol).foregroundStyle(Color.accentColor)
+            }
+        }
+    }
+
+    private func name(_ format: Option) -> String {
+        (format as? TimeFormat)?.title ?? (format as? DateFormat)?.title ?? ""
     }
 }
 
