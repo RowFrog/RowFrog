@@ -200,10 +200,12 @@ private struct SunPathPreview: View {
                 Text("1 h 4 min of daylight left").font(.caption).foregroundStyle(.secondary)
             }
             Canvas { context, size in
+                // Sun height through the day, 0 at sunrise and sunset; scaled so
+                // noon touches the top and midnight the bottom.
+                let height = { (t: Double) -> Double in cos(2 * .pi * (t - noon) / 24) - cos(2 * .pi * (sunset - noon) / 24) }
+                let top = height(noon), bottom = height(noon + 12)
                 let y = { (t: Double) -> CGFloat in
-                    // Sun height through the day; horizon where it crosses sunrise/sunset.
-                    let h = cos(2 * .pi * (t - noon) / 24) - cos(2 * .pi * (sunset - noon) / 24)
-                    return size.height * 0.62 - CGFloat(h) * size.height * 0.85
+                    CGFloat((top - height(t)) / (top - bottom)) * (size.height - 16) + 8
                 }
                 let x = { (t: Double) -> CGFloat in CGFloat(t / 24) * size.width }
                 var path = Path()
