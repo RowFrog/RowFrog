@@ -164,7 +164,7 @@ struct SettingsView: View {
                 .screenshotSections(["appearance", "units", "background", "help", "reset"], proxy: proxy)
                 .tipVisibility(resetTip, $showResetTip)
                 .fullScreenCover(isPresented: $showingTour) {
-                    TutorialView {
+                    TutorialView(locations: locations, reload: {}) {
                         Tutorial.markSeen()
                         showingTour = false
                     }

@@ -36,14 +36,18 @@ enum Tutorial {
 
 // MARK: - Tour
 
-/// The tour's pages, in order.
+/// The tour's pages, in order. The two choice pages only show while there is no home base.
 enum TourPage: Int, CaseIterable, Identifiable {
-    case welcome, rowingLight, conditions, warnings, locations, settings
+    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, locations, settings
     var id: Int { rawValue }
+
+    var isChoice: Bool { self == .homeBase || self == .moreClubs }
 
     var symbol: String {
         switch self {
         case .welcome: "figure.rower"
+        case .homeBase: "house.fill"
+        case .moreClubs: "plus.circle.fill"
         case .rowingLight: "light.beacon.max"
         case .conditions: "thermometer.and.liquid.waves"
         case .warnings: "exclamationmark.triangle.fill"
@@ -54,7 +58,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
 
     var tint: Color {
         switch self {
-        case .welcome, .locations: .blue
+        case .welcome, .homeBase, .moreClubs, .locations: .blue
         case .rowingLight: .green
         case .conditions: .teal
         case .warnings: .orange
@@ -65,6 +69,8 @@ enum TourPage: Int, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .welcome: tr("Welcome to RowerWeather")
+        case .homeBase: tr("Choose your home base")
+        case .moreClubs: tr("Add more clubs")
         case .rowingLight: tr("The rowing light")
         case .conditions: tr("Conditions at a glance")
         case .warnings: tr("DWD warnings")
@@ -76,6 +82,8 @@ enum TourPage: Int, CaseIterable, Identifiable {
     var intro: String {
         switch self {
         case .welcome: tr("Weather and a rowing forecast for your club's launch point.")
+        case .homeBase: tr("It opens first when you start the app. You can change it later.")
+        case .moreClubs: tr("Add the other places you row, or skip this and add clubs later in the list.")
         case .rowingLight: tr("Every page starts with the rowing light for the hour ahead.")
         case .conditions: tr("Below the light you find what matters on the water.")
         case .warnings: tr("Warnings from the Deutscher Wetterdienst come right under the rowing light.")
@@ -88,9 +96,10 @@ enum TourPage: Int, CaseIterable, Identifiable {
     var points: [TourPoint] {
         switch self {
         case .welcome: [
-            TourPoint(symbol: "house.fill", text: tr("Your home base opens first. At the start that is MRC 1880.")),
+            TourPoint(symbol: "house.fill", text: tr("Your home base opens first when you start the app.")),
             TourPoint(symbol: "hand.draw", text: tr("To change it, open the list, swipe a club to the right and tap Home base.")),
         ]
+        case .homeBase, .moreClubs: []
         case .rowingLight: [
             TourPoint(symbol: "text.bubble", text: tr("The line starting with \"Why\" names the conditions that set the light.")),
             TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up. The daylight card shows the time left until sunset.")),
@@ -127,33 +136,65 @@ struct TourPoint: Hashable {
     let text: String
 }
 
-/// The swipeable tour. `-RWTutorialPage n` opens it on page n for screenshots.
+/// The swipeable tour. On first start it includes choosing the home base and
+/// more clubs. `-RWTutorialPage n` opens it on page n for screenshots.
 struct TutorialView: View {
+    let locations: LocationStore
+    let reload: () async -> Void
     let finish: () -> Void
-    @State private var page = TourPage(rawValue: UserDefaults.standard.integer(forKey: "RWTutorialPage")) ?? .welcome
+    @State private var pages: [TourPage]
+    @State private var page: TourPage
+
+    init(locations: LocationStore, reload: @escaping () async -> Void, finish: @escaping () -> Void) {
+        self.locations = locations
+        self.reload = reload
+        self.finish = finish
+        let pages = TourPage.allCases.filter { locations.homeID == nil || !$0.isChoice }
+        let start = TourPage(rawValue: UserDefaults.standard.integer(forKey: "RWTutorialPage")) ?? .welcome
+        _pages = State(initialValue: pages)
+        _page = State(initialValue: pages.contains(start) ? start : pages[0])
+    }
 
     var body: some View {
-        let isLast = page == TourPage.allCases.last
+        let index = pages.firstIndex(of: page) ?? 0
+        let isLast = index == pages.count - 1
+        let needsHome = locations.homeID == nil
         VStack(spacing: 12) {
             HStack {
                 Spacer()
-                Button(tr("Skip"), action: finish)
-                    .opacity(isLast ? 0 : 1)
-                    .disabled(isLast)
+                // Skipping still asks for a home base first.
+                Button(tr("Skip")) {
+                    if needsHome { withAnimation { page = .homeBase } } else { finish() }
+                }
+                .opacity(isLast || page.isChoice ? 0 : 1)
+                .disabled(isLast || page.isChoice)
             }
             .padding(.horizontal)
             TabView(selection: $page) {
-                ForEach(TourPage.allCases) { page in
-                    TourPageView(page: page).tag(page)
+                ForEach(pages) { page in
+                    Group {
+                        if page.isChoice {
+                            ClubChoicePage(page: page, locations: locations, reload: reload)
+                        } else {
+                            TourPageView(page: page)
+                        }
+                    }
+                    .tag(page)
                 }
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .onChange(of: page) {
+                // No swiping past the home base choice without one.
+                if locations.homeID == nil, page.rawValue > TourPage.homeBase.rawValue {
+                    withAnimation { page = .homeBase }
+                }
+            }
             Button {
                 if isLast {
                     finish()
-                } else if let next = TourPage(rawValue: page.rawValue + 1) {
-                    withAnimation { page = next }
+                } else {
+                    withAnimation { page = pages[index + 1] }
                 }
             } label: {
                 Text(isLast ? tr("Let's row") : tr("Next"))
@@ -162,12 +203,133 @@ struct TutorialView: View {
             }
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
+            .disabled(page == .homeBase && needsHome)
             .padding(.horizontal)
             .padding(.bottom, 8)
         }
         .padding(.top, 8)
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .environment(\.locale, AppSettings.shared.locale)
+    }
+}
+
+/// Picking the home base, or adding more clubs: suggestions first, then any
+/// club in the catalog by search.
+private struct ClubChoicePage: View {
+    let page: TourPage
+    let locations: LocationStore
+    let reload: () async -> Void
+    @State private var search = ""
+
+    var body: some View {
+        VStack(spacing: 12) {
+            VStack(spacing: 6) {
+                Image(systemName: page.symbol)
+                    .font(.system(size: 36))
+                    .foregroundStyle(page.tint)
+                    .accessibilityHidden(true)
+                Text(page.title).font(.title2.bold())
+                Text(page.intro)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+            }
+            .multilineTextAlignment(.center)
+            .padding(.horizontal)
+            HStack {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField(tr("Search clubs, lakes or towns"), text: $search)
+                    .autocorrectionDisabled()
+                if !search.isEmpty {
+                    Button { search = "" } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel(tr("Cancel"))
+                }
+            }
+            .padding(10)
+            .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+            .padding(.horizontal)
+            List {
+                if locations.catalog.isEmpty {
+                    if let error = locations.catalogError {
+                        ContentUnavailableView {
+                            Label(tr("No connection"), systemImage: "wifi.slash")
+                        } description: {
+                            Text(error)
+                        } actions: {
+                            Button(tr("Try again")) { Task { await reload() } }
+                        }
+                    } else {
+                        ProgressView().frame(maxWidth: .infinity)
+                    }
+                } else if search.isEmpty {
+                    if page == .moreClubs, !locations.saved.isEmpty {
+                        Section(tr("In your list")) {
+                            ForEach(locations.saved) { row($0) }
+                        }
+                    }
+                    let suggestions = locations.suggestions.filter { page == .homeBase || !locations.isSaved($0) }
+                    Section {
+                        ForEach(suggestions) { row($0) }
+                    } header: {
+                        if !suggestions.isEmpty { Text(tr("Suggestions")) }
+                    } footer: {
+                        Text(tr("Search by club, lake or town to find any club in the DRV club directory."))
+                    }
+                } else {
+                    let results = locations.search(search)
+                    if results.isEmpty {
+                        ContentUnavailableView.search(text: search)
+                    }
+                    ForEach(results.prefix(50)) { row($0) }
+                }
+            }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
+            .scrollDismissesKeyboard(.immediately)
+            // Room for the page dots.
+            .padding(.bottom, 36)
+        }
+        .padding(.top, 8)
+    }
+
+    private func row(_ club: Club) -> some View {
+        let isHome = club.id == locations.homeID
+        let saved = locations.isSaved(club)
+        return Button {
+            if page == .homeBase {
+                locations.replaceHome(with: club)
+            } else if !saved {
+                locations.add(club)
+            } else if !isHome {
+                locations.remove(club)
+            }
+        } label: {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(club.name).foregroundStyle(Color.primary)
+                    Text([locations.lake(of: club)?.name, club.town].compactMap { $0 }.joined(separator: " · "))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+                Group {
+                    if isHome {
+                        Image(systemName: "house.fill").foregroundStyle(.blue)
+                            .accessibilityLabel(tr("Home base"))
+                    } else if page == .homeBase {
+                        Image(systemName: "circle").foregroundStyle(.secondary)
+                    } else if saved {
+                        Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+                            .accessibilityLabel(tr("In your list"))
+                    } else {
+                        Image(systemName: "plus.circle.fill").foregroundStyle(Color.accentColor)
+                            .accessibilityLabel(tr("Add %@", club.displayName))
+                    }
+                }
+                .font(.title3)
+            }
+        }
     }
 }
 
@@ -256,7 +418,7 @@ private struct TourPageView: View {
             }
             .padding()
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-        case .warnings, .locations, .settings:
+        case .homeBase, .moreClubs, .warnings, .locations, .settings:
             EmptyView()
         }
     }

@@ -26,10 +26,23 @@ final class LocationStoreTests: XCTestCase {
         ]
     }
 
-    func testFirstLaunchSavesHomeBaseFirstAndConfirmedClubs() {
+    func testFirstLaunchStartsEmptyAndFirstClubBecomesHomeBase() {
         let store = LocationStore(defaults: defaults)
         store.setCatalog(lakes)
-        XCTAssertEqual(store.saved.map(\.id), ["mrc-1880", "tutzinger-rv"])
+        XCTAssertEqual(store.saved.map(\.id), [])
+        XCTAssertNil(store.homeID)
+        XCTAssertEqual(store.suggestions.map(\.id), ["tutzinger-rv", "mrc-1880"])
+        store.add(lakes[0].clubs[0])
+        XCTAssertEqual(store.homeID, "tutzinger-rv")
+    }
+
+    func testReplacingTheHomeBaseDropsTheOldOne() {
+        let store = LocationStore(defaults: defaults)
+        store.setCatalog(lakes)
+        store.replaceHome(with: lakes[0].clubs[0])
+        store.replaceHome(with: lakes[0].clubs[1])
+        store.add(lakes[1].clubs[0])
+        XCTAssertEqual(store.saved.map(\.id), ["mrc-1880", "rc-diessen"])
     }
 
     func testSearchMatchesLakeAndTownIgnoringAccents() {
@@ -44,6 +57,8 @@ final class LocationStoreTests: XCTestCase {
     func testAddRemoveAndHomeBasePersist() {
         let store = LocationStore(defaults: defaults)
         store.setCatalog(lakes)
+        store.add(lakes[0].clubs[1])  // the first club becomes the home base
+        store.add(lakes[0].clubs[0])
         let diessen = lakes[1].clubs[0]
         store.add(diessen)
         store.remove(lakes[0].clubs[1])  // the home base cannot be removed

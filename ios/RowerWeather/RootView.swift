@@ -5,9 +5,9 @@ import SwiftUI
 /// behind the button at the bottom, or beside the pages on a wide screen.
 struct RootView: View {
     let api: APIClient
-    @State private var locations = LocationStore()
+    @State private var locations = LocationStore.forLaunch()
     @State private var forecasts: ForecastStore
-    @State private var selection: String = LocationStore.defaultHomeID
+    @State private var selection = ""
     @State private var showingList = false
     @State private var initialSearch = ""
     @State private var showingTour = !Tutorial.seen
@@ -29,8 +29,17 @@ struct RootView: View {
                     } actions: {
                         Button(tr("Try again")) { Task { await loadCatalog() } }
                     }
-                } else {
+                } else if locations.catalog.isEmpty {
                     ProgressView()
+                } else {
+                    ContentUnavailableView {
+                        Label(tr("No clubs yet"), systemImage: "figure.rower")
+                    } description: {
+                        Text(tr("Choose your home base and the other places you row."))
+                    } actions: {
+                        Button(tr("Add a club")) { showingList = true }
+                            .buttonStyle(.borderedProminent)
+                    }
                 }
             } else {
                 GeometryReader { geometry in
@@ -54,8 +63,9 @@ struct RootView: View {
         .overlay {
             // The first-start tour, over everything until it is finished or skipped.
             if showingTour {
-                TutorialView {
+                TutorialView(locations: locations, reload: loadCatalog) {
                     Tutorial.markSeen()
+                    selection = locations.homeID ?? ""
                     withAnimation { showingTour = false }
                 }
                 .transition(.opacity)
@@ -129,7 +139,7 @@ struct RootView: View {
             locations.add(club)
             selection = id
         } else {
-            selection = locations.homeID
+            selection = locations.homeID ?? ""
         }
         if let search = args.string(forKey: "RWSearch") {
             initialSearch = search
