@@ -10,6 +10,7 @@ struct RootView: View {
     @State private var selection: String = LocationStore.defaultHomeID
     @State private var showingList = false
     @State private var initialSearch = ""
+    @State private var showingTour = !Tutorial.seen
 
     init(api: APIClient) {
         self.api = api
@@ -48,6 +49,16 @@ struct RootView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
+        .overlay {
+            // The first-start tour, over everything until it is finished or skipped.
+            if showingTour {
+                TutorialView {
+                    Tutorial.markSeen()
+                    withAnimation { showingTour = false }
+                }
+                .transition(.opacity)
+            }
+        }
         .environment(\.locale, AppSettings.shared.locale)
         .fullScreenCover(isPresented: $showingList) {
             LocationListView(locations: locations, forecasts: forecasts, initialSearch: initialSearch) { club in
