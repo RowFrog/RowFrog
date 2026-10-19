@@ -72,6 +72,17 @@ final class LocationStore {
         persist()
     }
 
+    /// Reorders the list as dragged; offsets are into `saved`. The home base stays first.
+    func move(fromOffsets source: IndexSet, toOffset destination: Int) {
+        var order = saved.map(\.id)
+        order.move(fromOffsets: source, toOffset: destination)
+        order.removeAll { $0 == homeID }
+        order.insert(homeID, at: 0)
+        // Clubs the backend does not serve right now keep their place at the end.
+        savedIDs = order + savedIDs.filter { !order.contains($0) }
+        persist()
+    }
+
     func makeHome(_ club: Club) {
         if !savedIDs.contains(club.id) { savedIDs.append(club.id) }
         homeID = club.id

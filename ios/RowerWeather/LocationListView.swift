@@ -50,6 +50,14 @@ struct LocationListView: View {
                             }
                         }
                         .task { await forecasts.load(club.id) }
+                        .moveDisabled(club.id == locations.homeID)
+                        .deleteDisabled(club.id == locations.homeID)
+                    }
+                    // Touch and hold a row to drag it, or use Edit, as in the Weather app.
+                    .onMove { locations.move(fromOffsets: $0, toOffset: $1) }
+                    .onDelete { offsets in
+                        let saved = locations.saved
+                        offsets.map { saved[$0] }.forEach(locations.remove)
                     }
                     if let updated = locations.saved.compactMap({ forecasts.forecasts[$0.id]?.generatedAt }).min() {
                         Text("Updated \(Format.time(updated)) · Pull down to refresh")
@@ -79,6 +87,9 @@ struct LocationListView: View {
             .navigationTitle("Locations")
             .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search clubs, lakes or towns")
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    if search.isEmpty { EditButton() }
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                 }
