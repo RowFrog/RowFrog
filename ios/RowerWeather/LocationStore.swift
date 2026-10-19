@@ -43,8 +43,24 @@ final class LocationStore {
         return ((homeID.map { [$0] } ?? []) + savedIDs.filter { $0 != homeID }).compactMap { byID[$0] }
     }
 
-    /// Clubs with a launch point confirmed by the club, offered before the user searches.
-    var suggestions: [Club] { catalog.filter(\.launchPointVerified) }
+    /// Three clubs picked at random when the catalog loads, for suggestions without a location.
+    private var randomPicks: [String] = []
+
+    /// Clubs offered before the user searches: the five nearest to `location`,
+    /// or three picked at random when the location is unknown.
+    func suggestions(near location: Coordinate?) -> [Club] {
+        if let location {
+            return Array(catalog.sorted { Self.distance($0.launchPoint, location) < Self.distance($1.launchPoint, location) }.prefix(5))
+        }
+        return randomPicks.compactMap { id in catalog.first { $0.id == id } }
+    }
+
+    /// Rough distance in km, good enough to sort clubs by.
+    static func distance(_ a: Coordinate, _ b: Coordinate) -> Double {
+        let x = (b.lon - a.lon) * cos((a.lat + b.lat) / 2 * .pi / 180)
+        let y = b.lat - a.lat
+        return (x * x + y * y).squareRoot() * 111.2
+    }
 
     func lake(of club: Club) -> Lake? { lakesByClub[club.id] }
 
@@ -69,6 +85,7 @@ final class LocationStore {
     func setCatalog(_ lakes: [Lake]) {
         catalog = lakes.flatMap(\.clubs)
         lakesByClub = Dictionary(lakes.flatMap { lake in lake.clubs.map { ($0.id, lake) } }, uniquingKeysWith: { a, _ in a })
+        randomPicks = catalog.shuffled().prefix(3).map(\.id)
         if seedsDemoClubs, homeID == nil {
             homeID = "mrc-1880"
             savedIDs = catalog.filter { $0.launchPointVerified && $0.id != homeID }.map(\.id)

@@ -9,9 +9,10 @@ final class LocationStoreTests: XCTestCase {
         defaults.removePersistentDomain(forName: "LocationStoreTests")
     }
 
-    private func club(_ id: String, _ name: String, verified: Bool = true, address: String = "Seestraße 1, 82319 Starnberg") -> Club {
+    private func club(_ id: String, _ name: String, verified: Bool = true, address: String = "Seestraße 1, 82319 Starnberg",
+                      at launchPoint: Coordinate = Coordinate(lat: 48, lon: 11.3)) -> Club {
         Club(id: id, name: name, shortName: nil, address: address, website: nil,
-             launchPoint: Coordinate(lat: 48, lon: 11.3), launchPointVerified: verified)
+             launchPoint: launchPoint, launchPointVerified: verified)
     }
 
     private var lakes: [Lake] {
@@ -31,9 +32,18 @@ final class LocationStoreTests: XCTestCase {
         store.setCatalog(lakes)
         XCTAssertEqual(store.saved.map(\.id), [])
         XCTAssertNil(store.homeID)
-        XCTAssertEqual(store.suggestions.map(\.id), ["tutzinger-rv", "mrc-1880"])
+        XCTAssertEqual(Set(store.suggestions(near: nil).map(\.id)), ["tutzinger-rv", "mrc-1880", "rc-diessen"])
         store.add(lakes[0].clubs[0])
         XCTAssertEqual(store.homeID, "tutzinger-rv")
+    }
+
+    func testSuggestionsNearALocationComeNearestFirst() {
+        let store = LocationStore(defaults: defaults)
+        store.setCatalog([Lake(id: "x", name: "X", center: Coordinate(lat: 48, lon: 11), clubs: [
+            club("far", "Far", at: Coordinate(lat: 49, lon: 11)),
+            club("near", "Near", at: Coordinate(lat: 48.01, lon: 11)),
+        ])])
+        XCTAssertEqual(store.suggestions(near: Coordinate(lat: 48, lon: 11)).map(\.id), ["near", "far"])
     }
 
     func testReplacingTheHomeBaseDropsTheOldOne() {

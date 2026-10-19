@@ -127,9 +127,15 @@ jobs:
           shoot_pages 21-home-dark-picture dark -RWBackground sample:night-lake
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
-          # The first-start tour with an empty list, page by page, and the one-time tips.
-          for page in 0 1 2 3 4 5 6 7; do
+          # The first-start tour with an empty list, page by page, and the one-time tips:
+          # in English with the location allowed (clubs near Starnberg), in German without.
+          xcrun simctl privacy "$UDID" grant location com.rowerweatherfrog.RowerWeather
+          xcrun simctl location "$UDID" set 47.9990,11.3405
+          for page in 0 1 2 3 4 5 6 7 8; do
             GUIDE=1 shoot "24-tour-p$((page + 1))" light -RWNoTips YES -RWTutorialPage $page
+          done
+          xcrun simctl privacy "$UDID" revoke location com.rowerweatherfrog.RowerWeather
+          for page in 0 1 2 3 4 5 6 7 8; do
             GUIDE=1 shoot "25-tour-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de
           done
           GUIDE=1 shoot 26-tip-hourly light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWScrollTo hourly
