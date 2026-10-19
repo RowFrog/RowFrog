@@ -123,6 +123,8 @@ jobs:
           shoot_pages 21-home-dark-picture dark -RWBackground sample:night-lake
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
+          shoot 24-hourly-12h-long-date light -RWScrollTo hourly -RWTimeFormat hours12 -RWDateFormat long
+          shoot 25-hourly-iso-date light -RWScrollTo hourly -RWDateFormat iso
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2

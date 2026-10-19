@@ -95,15 +95,15 @@ struct ConditionIcon: View {
 }
 
 enum Format {
-    /// 24-hour clock as used in Germany, whatever the phone's region.
+    /// The time in the format chosen in the settings; 24-hour by default.
     static func time(_ date: Date) -> String {
-        timeFormatter.string(from: date)
+        AppSettings.shared.timeFormat.string(from: date)
     }
 
     static func day(_ date: Date, calendar: Calendar = .current) -> String {
         if calendar.isDateInToday(date) { return tr("Today") }
         if calendar.isDateInTomorrow(date) { return tr("Tomorrow") }
-        return date.formatted(.dateTime.weekday(.wide).day().month(.abbreviated).locale(locale))
+        return AppSettings.shared.dateFormat.string(from: date, locale: locale)
     }
 
     /// "Today 21:00", "Tomorrow 03:00" or "Mon 21:00".
@@ -139,10 +139,4 @@ enum Format {
         return minutes >= 60 ? "\(minutes / 60) h \(minutes % 60) min" : "\(minutes) min"
     }
 
-    private static let timeFormatter: DateFormatter = {
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "de_DE")
-        f.dateFormat = "HH:mm"
-        return f
-    }()
 }

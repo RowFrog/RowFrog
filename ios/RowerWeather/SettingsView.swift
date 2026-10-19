@@ -74,10 +74,25 @@ struct SettingsView: View {
                     } header: {
                         SectionTitle(tr("Units"), symbol: "ruler")
                     } footer: {
-                        SectionFooter(tr("Cloud cover stays in percent and times use the 24-hour clock."))
+                        SectionFooter(tr("Cloud cover stays in percent."))
                     }
                     .surfaceRows()
                     .id("units")
+
+                    Section {
+                        FormatRow(title: tr("Time"), symbol: "clock", selection: $settings.timeFormat) { format in
+                            format.string(from: Self.sampleTime)
+                        }
+                        FormatRow(title: tr("Date"), symbol: "calendar", selection: $settings.dateFormat) { format in
+                            format.string(from: .now, locale: AppSettings.shared.locale)
+                        }
+                    } header: {
+                        SectionTitle(tr("Date and time"), symbol: "calendar.badge.clock")
+                    } footer: {
+                        SectionFooter(tr("Device follows the phone's settings. Today and tomorrow are always written as words."))
+                    }
+                    .surfaceRows()
+                    .id("datetime")
 
                     Section {
                         NavigationLink(value: SettingsRoute.backgrounds) {
@@ -139,9 +154,14 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language and background pictures go back to how the app came, and your own pictures are deleted from the app. Your locations and home base stay."))
                 }
-                .screenshotSections(["appearance", "units", "background", "reset"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "datetime", "background", "reset"], proxy: proxy)
             }
         }
+    }
+
+    /// 14:30 today, to show each time format.
+    private static var sampleTime: Date {
+        Calendar.current.date(bySettingHour: 14, minute: 30, second: 0, of: .now) ?? .now
     }
 
     private var backgroundSummary: String {
@@ -229,6 +249,42 @@ private struct UnitRow<Unit: Hashable & Identifiable & CaseIterable>: View where
             }
         }
         .accessibilityValue(selection.title)
+    }
+}
+
+/// A time or date format: its name and icon, the current choice as an example,
+/// and a menu with every format written out.
+private struct FormatRow<Option: Hashable & Identifiable & CaseIterable>: View where Option.AllCases: RandomAccessCollection {
+    let title: String
+    let symbol: String
+    @Binding var selection: Option
+    let example: (Option) -> String
+
+    var body: some View {
+        LabeledContent {
+            Menu {
+                Picker(title, selection: $selection) {
+                    ForEach(Option.allCases) { format in
+                        Text("\(name(format)) · \(example(format))").tag(format)
+                    }
+                }
+            } label: {
+                HStack(spacing: 4) {
+                    Text(example(selection)).lineLimit(1)
+                    Image(systemName: "chevron.up.chevron.down").font(.caption2)
+                }
+            }
+        } label: {
+            Label {
+                Text(title)
+            } icon: {
+                Image(systemName: symbol).foregroundStyle(Color.accentColor)
+            }
+        }
+    }
+
+    private func name(_ format: Option) -> String {
+        (format as? TimeFormat)?.title ?? (format as? DateFormat)?.title ?? ""
     }
 }
 
