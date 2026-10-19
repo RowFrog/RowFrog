@@ -18,6 +18,7 @@ struct LocationListView: View {
 
     var body: some View {
         NavigationStack {
+            ScrollViewReader { proxy in
             List {
                 if search.isEmpty {
                     ForEach(locations.saved) { club in
@@ -76,6 +77,13 @@ struct LocationListView: View {
             }
             .refreshable {
                 for club in locations.saved { await forecasts.load(club.id, force: true) }
+            }
+            .task {
+                // Screenshot hook: `-RWScrollPage n` (n > 0) scrolls to the end of the list.
+                guard UserDefaults.standard.integer(forKey: "RWScrollPage") > 0, let last = locations.saved.last else { return }
+                try? await Task.sleep(for: .seconds(3))
+                withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+            }
             }
         }
     }

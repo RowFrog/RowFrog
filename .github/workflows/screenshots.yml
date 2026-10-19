@@ -96,11 +96,11 @@ jobs:
           }
           rm -f docs/screenshots/*.png
           shoot_pages 01-home light
-          shoot 02-list light -RWShowList YES
+          shoot_pages 02-list light -RWShowList YES
           shoot 03-search light -RWSearch "Ammersee"
           shoot_pages 04-tutzing-warning light -RWOpenClub tutzinger-rv
           shoot_pages 05-wuerzburg-river light -RWOpenClub akademischer-ruderclub-wuerzburg
-          shoot 06-list-with-river-club light -RWShowList YES
+          shoot_pages 06-list-with-river-club light -RWShowList YES
           shoot_pages 07-home-dark dark
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
