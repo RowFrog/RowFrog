@@ -140,6 +140,8 @@ private struct LocationSummaryRow: View {
                 if let now {
                     HStack(spacing: 6) {
                         TrafficLightDot(light: now.light, size: 18)
+                        SkyIcon(sky: Sky(hour: now), night: now.sunUp == false)
+                            .font(.title3)
                         Image(systemName: Condition.temperature.symbol)
                             .symbolRenderingMode(.hierarchical)
                             .accessibilityLabel("Air")
@@ -156,6 +158,9 @@ private struct LocationSummaryRow: View {
                     }
                     Label(visibilityText(now.visibilityM), systemImage: Condition.visibility.symbol)
                         .font(.caption)
+                    Label(precipitationText(now) == "None" ? "Dry" : precipitationText(now), systemImage: Condition.precipitation.symbol)
+                        .font(.caption)
+                        .accessibilityLabel("Rain, hail, snow: \(precipitationText(now))")
                     Label("Ice –", systemImage: Condition.ice.symbol)
                         .font(.caption)
                         .foregroundStyle(.secondary)
