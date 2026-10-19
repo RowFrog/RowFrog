@@ -18,6 +18,7 @@ enum BackgroundLibrary {
         SampleBackground(id: "soft-waves", englishTitle: "Soft waves"),
         SampleBackground(id: "sunrise-sculler", englishTitle: "Sunrise sculler"),
         SampleBackground(id: "alpine-lake", englishTitle: "Alpine lake"),
+        SampleBackground(id: "cloud-shell", englishTitle: "Frog in the cloud shell"),
         SampleBackground(id: "cloud-sculler", englishTitle: "Cloud sculler"),
         SampleBackground(id: "sunny-day", englishTitle: "Sunny day"),
         SampleBackground(id: "morning-mist", englishTitle: "Morning mist"),

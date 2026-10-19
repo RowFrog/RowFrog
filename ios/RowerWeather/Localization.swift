@@ -251,6 +251,7 @@ enum German {
         "Sunrise sculler": "Skuller im Sonnenaufgang",
         "Alpine lake": "Alpensee",
         "Cloud sculler": "Wolkenskuller",
+        "Frog in the cloud shell": "Frosch im Wolkenboot",
         "Sunny day": "Sonniger Tag",
         "Morning mist": "Morgennebel",
         "Rain on the lake": "Regen auf dem See",
