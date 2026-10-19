@@ -610,7 +610,8 @@ private struct PagedScroll: ViewModifier {
                 try? await Task.sleep(for: .seconds(1))
                 for _ in 0..<2 {
                     // Bars cover about 150 points of the screen; overlap pages by a few rows.
-                    let target = CGFloat(page) * (size.container - 260)
+                    // On a phone on its side that would leave little, so move at least 70 %.
+                    let target = CGFloat(page) * max(size.container - 260, size.container * 0.7)
                     if target < size.content - size.container {
                         position.scrollTo(y: target)
                     } else {

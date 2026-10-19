@@ -77,6 +77,10 @@ jobs:
             SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowerweatherfrog.RowerWeather "${guide[@]}" "$@"
             sleep 12
             xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
+            # The simulator saves landscape shots sideways; turn them upright.
+            if [[ " $* " == *" -RWLandscape YES "* ]]; then
+              python3 -c 'import sys; from PIL import Image; p = sys.argv[1]; Image.open(p).rotate(90, expand=True).save(p)' "docs/screenshots/$name.png"
+            fi
           }
           # Compares two screenshots below the navigation bar, whose glass
           # effect differs from launch to launch.
