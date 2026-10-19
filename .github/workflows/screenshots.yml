@@ -118,6 +118,9 @@ jobs:
           # The phone on its side: two columns of cards.
           shoot_pages 30-home-landscape light -RWLandscape YES
           shoot_pages 31-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES
+          # Landscape turned off in the settings: the app stays upright.
+          shoot 32-settings-landscape-off light -RWShowSettings YES -RWAllowsLandscape NO
+          shoot 33-home-landscape-off light -RWAllowsLandscape NO -RWLandscape YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
           shoot_pages 10-settings light -RWShowSettings YES

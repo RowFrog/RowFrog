@@ -11,6 +11,8 @@ final class AppSettings {
 
     var appearance: Appearance { didSet { defaults.set(appearance.rawValue, forKey: Keys.appearance) } }
     var language: AppLanguage { didSet { defaults.set(language.rawValue, forKey: Keys.language) } }
+    /// Whether the app turns with the phone; off keeps it upright.
+    var allowsLandscape: Bool { didSet { defaults.set(allowsLandscape, forKey: Keys.landscape) } }
 
     var temperatureUnit: TemperatureUnit { didSet { defaults.set(temperatureUnit.rawValue, forKey: Keys.temperature) } }
     var windUnit: SpeedUnit { didSet { defaults.set(windUnit.rawValue, forKey: Keys.wind) } }
@@ -38,6 +40,7 @@ final class AppSettings {
     enum Keys {
         static let appearance = "RWAppearance"
         static let language = "RWLanguage"
+        static let landscape = "RWAllowsLandscape"
         static let temperature = "RWUnitTemperature"
         static let wind = "RWUnitWind"
         static let waves = "RWUnitWaves"
@@ -50,7 +53,7 @@ final class AppSettings {
         static let tileStyle = "RWTileStyle"
         static let userPictures = "RWUserPictures"
 
-        static let all = [appearance, language, temperature, wind, waves, rain, distance,
+        static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures]
     }
 
@@ -61,6 +64,7 @@ final class AppSettings {
         }
         appearance = value(Keys.appearance, .device)
         language = value(Keys.language, .device)
+        allowsLandscape = defaults.object(forKey: Keys.landscape) == nil || defaults.bool(forKey: Keys.landscape)
         temperatureUnit = value(Keys.temperature, .celsius)
         windUnit = value(Keys.wind, .metersPerSecond)
         waveUnit = value(Keys.waves, .meters)
@@ -118,6 +122,7 @@ final class AppSettings {
         for key in Keys.all { defaults.removeObject(forKey: key) }
         appearance = .device
         language = .device
+        allowsLandscape = true
         temperatureUnit = .celsius
         windUnit = .metersPerSecond
         waveUnit = .meters

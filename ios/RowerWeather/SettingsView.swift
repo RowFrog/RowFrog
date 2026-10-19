@@ -47,8 +47,13 @@ struct SettingsView: View {
                 Form {
                     Section {
                         AppearancePicker(selection: $settings.appearance)
+                        Toggle(isOn: $settings.allowsLandscape) {
+                            Label(tr("Landscape"), systemImage: "rectangle.landscape.rotate")
+                        }
                     } header: {
                         SectionTitle(tr("Appearance"), symbol: "circle.lefthalf.filled")
+                    } footer: {
+                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright."))
                     }
                     .surfaceRows()
                     .id("appearance")

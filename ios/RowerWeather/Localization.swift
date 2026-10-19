@@ -184,6 +184,8 @@ enum German {
         // Settings
         "Settings": "Einstellungen",
         "Appearance": "Erscheinungsbild",
+        "Landscape": "Querformat",
+        "Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright.": "Querformat an: Die App dreht sich mit dem Handy und zeigt die Karten in zwei Spalten. Aus: Sie bleibt im Hochformat.",
         "Device": "Gerät",
         "Light": "Hell",
         "Dark": "Dunkel",

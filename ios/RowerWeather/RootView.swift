@@ -81,6 +81,7 @@ struct RootView: View {
         }
         .onAppear { applyAppearance() }
         .onChange(of: AppSettings.shared.appearance) { applyAppearance() }
+        .onChange(of: AppSettings.shared.allowsLandscape) { Orientation.apply() }
         .task { await loadCatalog() }
     }
 
@@ -97,8 +98,9 @@ struct RootView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .onAppear { if selection.isEmpty { selection = saved[0].id } }
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            PageBar(clubs: saved, homeID: locations.homeID, selection: $selection, showList: showsListButton ? { showingList = true } : nil)
+            PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection, showList: showsListButton ? { showingList = true } : nil)
         }
     }
 

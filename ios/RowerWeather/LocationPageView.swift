@@ -107,14 +107,21 @@ struct LocationPageView: View {
 
     @ViewBuilder
     private func forecastCards(_ forecast: ClubForecast) -> some View {
-        if tourSeen && showHourlyTip {
-            TipView(hourlyTip)
+        // Each tip sits above its card and scrolls with it.
+        VStack(spacing: 16) {
+            if tourSeen && showHourlyTip {
+                TipView(hourlyTip)
+            }
+            HourlyCard(forecast: forecast)
         }
-        HourlyCard(forecast: forecast).id("hourly")
-        if tourSeen && showLaunchPointTip {
-            TipView(launchPointTip)
+        .id("hourly")
+        VStack(spacing: 16) {
+            if tourSeen && showLaunchPointTip {
+                TipView(launchPointTip)
+            }
+            LaunchPointMapCard(club: club)
         }
-        LaunchPointMapCard(club: club).id("launchpoint")
+        .id("launchpoint")
     }
 
     private var header: some View {
