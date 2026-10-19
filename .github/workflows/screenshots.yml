@@ -2,6 +2,9 @@ name: App screenshots
 
 # Runs the backend on the runner with live data, starts the app in the iOS
 # Simulator and saves screenshots to docs/screenshots on the same branch.
+# Long pages are shot screen by screen (-p1, -p2, ...) down to the bottom.
+# Tutzinger RV gets a made-up lake storm warning, marked SAMPLE in the app,
+# so both warning states show; every other warning is live from DWD.
 # Runs by hand from the Actions tab or when this file changes.
 
 on:
@@ -21,15 +24,21 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e backend
+      - run: pip install -e backend pillow
       - name: Start the backend with live data
         run: |
-          (cd backend && nohup uvicorn rowerweather.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv nohup uvicorn rowerweather.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
-          # Warm the forecast cache; Open-Meteo sometimes times out on the first call.
-          for club in mrc-1880 mrsv-bayern tutzinger-rv; do
-            curl -sS -f --retry 3 --retry-all-errors --retry-delay 5 "http://localhost:8000/clubs/$club/forecast" \
-              | python3 -c 'import json,sys; d=json.load(sys.stdin); print(d["clubId"], len(d["hours"]), "hours, now:", d["hours"][0]["light"])'
+          # Warm the forecast and warning caches; Open-Meteo sometimes times out
+          # on the first call and DWD's lake areas take a while to download.
+          for club in mrc-1880 mrsv-bayern tutzinger-rv akademischer-ruderclub-wuerzburg; do
+            curl -sS -f -m 200 --retry 3 --retry-all-errors --retry-delay 5 "http://localhost:8000/clubs/$club/forecast" \
+              | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)
+          w = d["warnings"]
+          print(d["clubId"], len(d["hours"]), "hours, now:", d["hours"][0]["light"], "| DWD:", w["status"], "lake area:", w["lakeArea"],
+                "warnings:", [(i["kind"], i["event"], i["severity"], i["sample"]) for i in w["items"]])'
           done
       - name: Build the app
         working-directory: ios
@@ -66,13 +75,43 @@ jobs:
             sleep 12
             xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
           }
+          # Compares two screenshots below the navigation bar, whose glass
+          # effect differs from launch to launch.
+          same() {
+            python3 -c 'import sys; from PIL import Image, ImageChops
+          a, b = (Image.open(p).convert("RGB") for p in sys.argv[1:3])
+          box = (0, 500, a.width, a.height - 300)
+          sys.exit(0 if ImageChops.difference(a.crop(box), b.crop(box)).getbbox() is None else 1)' "$1" "$2"
+          }
+          shoot_pages() {  # name, appearance, launch arguments...: one screenshot per screen until the bottom
+            local name=$1 appearance=$2; shift 2
+            local page dir=docs/screenshots
+            for page in 1 2 3 4 5 6 7 8 9 10 11 12; do
+              shoot "$name-p$page" "$appearance" "$@" -RWScrollPage $((page - 1))
+              if [ "$page" -gt 1 ] && same "$dir/$name-p$page.png" "$dir/$name-p1.png"; then
+                echo "Page $page did not scroll; shooting it again."
+                shoot "$name-p$page" "$appearance" "$@" -RWScrollPage $((page - 1))
+              fi
+              if [ "$page" -gt 1 ] && same "$dir/$name-p$page.png" "$dir/$name-p$((page - 1)).png"; then
+                rm "$dir/$name-p$page.png"
+                break
+              fi
+            done
+          }
           rm -f docs/screenshots/*.png
-          shoot 1-home light
-          shoot 2-home-hourly light -RWScrollTo hourly
-          shoot 3-list light -RWShowList YES
-          shoot 4-search light -RWSearch "Ammersee"
-          shoot 5-club-tutzing light -RWOpenClub tutzinger-rv
-          shoot 6-home-dark dark
+          shoot_pages 01-home light
+          shoot_pages 02-list light -RWShowList YES
+          shoot 03-search light -RWSearch "Ammersee"
+          shoot_pages 04-tutzing-warning light -RWOpenClub tutzinger-rv
+          shoot_pages 05-wuerzburg-river light -RWOpenClub akademischer-ruderclub-wuerzburg
+          shoot_pages 06-list-with-river-club light -RWShowList YES
+          shoot_pages 07-home-dark dark
+          shoot_pages 09-icons light -RWIconGallery YES
+          # Without the backend the app shows its "no connection" screen.
+          pkill -f uvicorn || true
+          sleep 2
+          shoot 08-no-connection light
+          ls docs/screenshots
       - uses: actions/upload-artifact@v4
         if: always()
         with:

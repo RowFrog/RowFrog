@@ -66,11 +66,13 @@ struct RootView: View {
         }
     }
 
-    /// Screenshot hooks: `-RWOpenClub <id>` opens that page, `-RWShowList YES`
+    /// Screenshot hooks: `-RWOpenClub <id>` opens that page (adding it from the
+    /// catalog if needed), `-RWShowList YES`
     /// opens the list and `-RWSearch <text>` opens it searching for the text.
     private func applyLaunchArguments() {
         let args = UserDefaults.standard
-        if let id = args.string(forKey: "RWOpenClub"), locations.saved.contains(where: { $0.id == id }) {
+        if let id = args.string(forKey: "RWOpenClub"), let club = locations.catalog.first(where: { $0.id == id }) {
+            locations.add(club)
             selection = id
         } else {
             selection = locations.homeID

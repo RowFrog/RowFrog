@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// One full-screen location page: rowing light now, daylight, current
-/// conditions, the hourly forecast with its icon legend, and the credits.
+/// conditions, the hourly forecast, the launch point on a map, the icon
+/// legend, and the credits.
 struct LocationPageView: View {
     let club: Club
     let lake: Lake?
@@ -16,11 +17,15 @@ struct LocationPageView: View {
                     header
                     if let forecast, let now = forecast.current() {
                         NowCard(hour: now, water: forecast.waterTemperature)
+                        if let warnings = forecast.warnings {
+                            WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
+                        }
                         if let sun = forecast.sunState(at: .now) {
                             DaylightCard(state: sun)
                         }
-                        CurrentConditionsCard(hour: now, water: forecast.waterTemperature)
+                        CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
                         HourlyCard(forecast: forecast).id("hourly")
+                        LaunchPointMapCard(club: club)
                         LegendCard()
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(forecast.attribution, id: \.self) { Text($0) }
@@ -48,6 +53,7 @@ struct LocationPageView: View {
                 .padding(.horizontal)
                 .padding(.bottom, 24)
             }
+            .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
             .refreshable { await forecasts.load(club.id, force: true) }
             .task {
                 await forecasts.load(club.id)
@@ -75,6 +81,17 @@ struct LocationPageView: View {
                 Label("Launch point not yet confirmed", systemImage: "mappin.slash")
                     .font(.caption)
                     .foregroundStyle(.orange)
+            }
+            if let updated = forecasts.forecasts[club.id]?.generatedAt {
+                if forecasts.failed.contains(club.id) {
+                    Label("Could not update. Showing data from \(Format.time(updated)).", systemImage: "wifi.exclamationmark")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                } else {
+                    Text("Updated \(Format.time(updated)) · Pull down to refresh")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
         .padding(.top, 24)
@@ -112,6 +129,10 @@ private struct NowCard: View {
                 TrafficLightDot(light: hour.light, size: 36)
                 Text(hour.light.title).font(.title2.bold())
                 Spacer(minLength: 0)
+                VStack(spacing: 2) {
+                    SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 34))
+                    Text(Sky(hour: hour).title).font(.caption).foregroundStyle(.secondary)
+                }
             }
             VStack(alignment: .leading, spacing: 6) {
                 if hour.reasons.isEmpty {
@@ -128,20 +149,29 @@ private struct NowCard: View {
             .accessibilityLabel(hour.reasons.isEmpty ? "Why: all conditions within the limits" : "Why: " + hour.reasons.map(\.explanation).joined(separator: " "))
             Divider()
             HStack(alignment: .lastTextBaseline) {
-                TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
+                VStack(alignment: .leading, spacing: 0) {
+                    TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
+                    if let feels = hour.apparentTemperatureC {
+                        Label("Feels like \(Format.number(feels))°", systemImage: Condition.feelsLike.symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Feels like \(Format.number(feels)) degrees. \(feelsLikeNote(hour) ?? "")")
+                    }
+                }
                 Spacer()
                 TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28)
                 Spacer()
                 MetricView(title: "Waves", symbol: Condition.waves.symbol,
                            value: hour.waveHeightM.map { "\(Format.number($0, digits: 2)) m" } ?? "–", size: 28)
             }
-            HStack {
-                Label("Visibility \(visibilityText(hour.visibilityM))", systemImage: Condition.visibility.symbol)
+            HStack(alignment: .top) {
+                MetricView(title: "Visibility", symbol: Condition.visibility.symbol, value: visibilityText(hour.visibilityM), size: 17)
                 Spacer()
-                Label("Ice: no data yet", systemImage: Condition.ice.symbol)
+                MetricView(title: "Rain, hail", symbol: Condition.precipitation.symbol, value: precipitationText(hour), size: 17)
+                Spacer()
+                MetricView(title: "Ice", symbol: Condition.ice.symbol, value: "No data", size: 17)
                     .foregroundStyle(.secondary)
             }
-            .font(.subheadline)
             .symbolRenderingMode(.hierarchical)
         }
     }
@@ -219,9 +249,20 @@ private struct DaylightCard: View {
 private struct CurrentConditionsCard: View {
     let hour: ForecastHour
     let water: WaterTemperature?
+    /// Pressure change over the next 3 hours, in hPa.
+    let pressureChange: Double?
 
     var body: some View {
         Card(title: "Current conditions", symbol: "gauge.with.dots.needle.33percent") {
+            HStack(spacing: 12) {
+                SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 40))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(Sky(hour: hour).title).font(.title3.weight(.semibold))
+                    Text("\(Format.number(hour.temperatureC))° · Clouds \(Format.number(hour.cloudCoverPct)) %")
+                        .font(.subheadline).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+            }
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
                 ForEach(Condition.allCases.filter { $0 != .daylight }) { condition in
                     ConditionTile(condition: condition, light: hour.light(for: condition.reasonNames)) {
@@ -238,6 +279,14 @@ private struct CurrentConditionsCard: View {
     private func value(for condition: Condition) -> some View {
         switch condition {
         case .temperature: Text("\(Format.number(hour.temperatureC)) °C")
+        case .feelsLike: Text(hour.apparentTemperatureC.map { "\(Format.number($0)) °C" } ?? "–")
+        case .humidity: Text(hour.humidityPct.map { "\(Format.number($0)) %" } ?? "–")
+        case .pressure:
+            HStack(spacing: 8) {
+                PressureGauge(hpa: hour.pressureHpa, trend: pressureChange.map(PressureTrend.init(change:)))
+                    .frame(width: 44, height: 44)
+                Text(hour.pressureHpa.map { "\(Format.number($0))" } ?? "–") + Text(" hPa").font(.caption)
+            }
         case .wind:
             HStack(spacing: 6) {
                 Text("\(Format.number(hour.windSpeedMs)) m/s")
@@ -250,6 +299,11 @@ private struct CurrentConditionsCard: View {
             }
         case .waves: Text(hour.waveHeightM.map { "\(Format.number($0, digits: 2)) m" } ?? "–")
         case .waterTemperature: Text(water.map { "\(Format.number($0.celsius, digits: 1)) °C" } ?? "–")
+        case .precipitation:
+            HStack(spacing: 6) {
+                Text(hour.precipitationMm.map { "\(Format.number($0, digits: 1)) mm" } ?? "–")
+                SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.callout)
+            }
         case .visibility: Text(visibilityText(hour.visibilityM))
         case .cloudCover: Text("\(Format.number(hour.cloudCoverPct)) %")
         case .thunderstorm:
@@ -272,6 +326,16 @@ private struct CurrentConditionsCard: View {
         case .waves:
             guard let fetch = hour.fetchM else { return nil }
             return fetch < 50 ? "Wind blows off the shore" : "\(Format.number(fetch / 1000, digits: 1)) km open water upwind"
+        case .precipitation:
+            return Sky(hour: hour).precipitationKind ?? "Dry"
+        case .feelsLike:
+            return feelsLikeNote(hour)
+        case .humidity:
+            return hour.dewPointC.map { "Dew point \(Format.number($0))°" }
+        case .pressure:
+            guard let change = pressureChange else { return nil }
+            let trend = PressureTrend(change: change)
+            return trend == .steady ? "Steady next 3 h" : "\(trend.title) \(Format.number(abs(change), digits: 1)) hPa in 3 h"
         case .waterTemperature:
             return water.map { "Measured \(Format.time($0.measuredAt))" } ?? "No lake station"
         case .visibility:
@@ -280,6 +344,37 @@ private struct CurrentConditionsCard: View {
         default:
             return nil
         }
+    }
+}
+
+/// A small dial like the Weather app's pressure gauge: an arc from 960 to
+/// 1060 hPa with a mark at the current value and the trend arrow inside.
+struct PressureGauge: View {
+    let hpa: Double?
+    let trend: PressureTrend?
+    private let range = 960.0...1060.0
+    private let sweep = 0.75  // share of the circle the arc covers
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .trim(from: 0, to: sweep)
+                .stroke(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(135))
+            if let hpa {
+                let share = (min(max(hpa, range.lowerBound), range.upperBound) - range.lowerBound) / (range.upperBound - range.lowerBound)
+                Circle()
+                    .trim(from: max(0, share * sweep - 0.012), to: min(sweep, share * sweep + 0.012))
+                    .stroke(Color.primary, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .rotationEffect(.degrees(135))
+            }
+            Image(systemName: trend?.symbol ?? "minus")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(4)
+        .accessibilityElement()
+        .accessibilityLabel("Pressure \(hpa.map { Format.number($0) } ?? "unknown") hectopascal, \(trend?.title ?? "trend unknown")")
     }
 }
 
@@ -326,7 +421,7 @@ private struct ConditionTile<Value: View>: View {
 private enum Column {
     static let time: CGFloat = 44
     static let light: CGFloat = 14
-    static let sun: CGFloat = 18
+    static let sky: CGFloat = 24
 }
 
 private struct HourlyCard: View {
@@ -367,12 +462,14 @@ private struct HourlyLegendHeader: View {
                 .accessibilityLabel("Time")
             Image(systemName: "circle.fill").font(.system(size: 8)).frame(width: Column.light)
                 .accessibilityLabel("Rowing light")
+            Image(systemName: "cloud.sun").frame(width: Column.sky)
+                .accessibilityLabel("Weather")
             column(.temperature)
             column(.wind)
             column(.waves)
+            column(.precipitation)
             column(.visibility)
             column(.cloudCover)
-            ConditionIcon(condition: .daylight).frame(width: Column.sun)
         }
         .font(.subheadline)
         .foregroundStyle(.secondary)
@@ -418,17 +515,17 @@ private struct HourRow: View {
             Text(Format.time(hour.time))
                 .frame(width: Column.time, alignment: .leading)
             TrafficLightDot(light: hour.light, size: 12).frame(width: Column.light)
+            SkyIcon(sky: Sky(hour: hour), night: dark)
+                .font(.callout)
+                .frame(width: Column.sky)
             cell(Format.number(hour.temperatureC))
             cell(hour.windSpeedMs.map { "\(Format.number($0))–\(Format.number(hour.windGustMs))" } ?? "–")
             cell(Format.number(hour.waveHeightM, digits: 2))
+            cell(Format.number(hour.precipitationMm, digits: 1))
+                .foregroundStyle((hour.precipitationMm ?? 0) >= 0.1 ? Color.blue : .primary)
             cell(visibilityText(hour.visibilityM).replacingOccurrences(of: " km", with: ""))
                 .foregroundStyle(hour.light(for: ["fog"]).map(\.color) ?? .primary)
             cell(Format.number(hour.cloudCoverPct))
-            Image(systemName: dark ? "moon.fill" : "sun.max.fill")
-                .font(.caption)
-                .foregroundStyle(dark ? Color.indigo : Color.orange)
-                .frame(width: Column.sun)
-                .accessibilityLabel(dark ? "Sun down" : "Sun up")
         }
         .font(.subheadline.monospacedDigit())
         .lineLimit(1)
@@ -444,6 +541,7 @@ private struct HourRow: View {
 
 private struct LegendCard: View {
     @State private var expanded = UserDefaults.standard.string(forKey: "RWScrollTo") == "hourly"
+        || UserDefaults.standard.integer(forKey: "RWScrollPage") > 0
 
     var body: some View {
         Card {
@@ -455,6 +553,17 @@ private struct LegendCard: View {
                             Text(light.title).font(.subheadline)
                         }
                     }
+                    Divider()
+                    Text("Weather symbols").font(.subheadline.weight(.semibold))
+                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 8) {
+                        ForEach(Sky.allCases, id: \.self) { sky in
+                            HStack(spacing: 8) {
+                                SkyIcon(sky: sky).frame(width: 24)
+                                Text(sky.title).font(.caption)
+                            }
+                        }
+                    }
+                    Text("At night the sun becomes a moon and the row is dimmed.").font(.caption).foregroundStyle(.secondary)
                     Divider()
                     ForEach(Condition.allCases) { c in
                         HStack(alignment: .top, spacing: 10) {
@@ -471,6 +580,57 @@ private struct LegendCard: View {
                 Label("Legend", systemImage: "info.circle").font(.subheadline.weight(.semibold))
             }
         }
+    }
+}
+
+/// Screenshot hook: `-RWScrollPage n` scrolls the page down by n screens
+/// (less a little overlap), stopping at the bottom, so a series of screenshots
+/// covers the whole page.
+struct ScreenshotScroll: ViewModifier {
+    let page: Int
+    let ready: Bool
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *), page > 0 {
+            content.modifier(PagedScroll(page: page, ready: ready))
+        } else {
+            content
+        }
+    }
+}
+
+@available(iOS 18.0, *)
+private struct PagedScroll: ViewModifier {
+    let page: Int
+    let ready: Bool
+    @State private var position = ScrollPosition(edge: .top)
+    @State private var size: (content: CGFloat, container: CGFloat) = (0, 0)
+
+    func body(content: Content) -> some View {
+        content
+            .scrollPosition($position)
+            .onScrollGeometryChange(for: [CGFloat].self) { [$0.contentSize.height, $0.containerSize.height] } action: { _, new in
+                size = (new[0], new[1])
+            }
+            .task(id: ready) {
+                guard ready else { return }
+                // Wait for the page to be laid out, then scroll twice in case the
+                // first request lands before the scroll view is ready.
+                for _ in 0..<50 where size.content <= size.container {
+                    try? await Task.sleep(for: .milliseconds(100))
+                }
+                try? await Task.sleep(for: .seconds(1))
+                for _ in 0..<2 {
+                    // Bars cover about 150 points of the screen; overlap pages by a few rows.
+                    let target = CGFloat(page) * (size.container - 260)
+                    if target < size.content - size.container {
+                        position.scrollTo(y: target)
+                    } else {
+                        position.scrollTo(edge: .bottom)
+                    }
+                    try? await Task.sleep(for: .seconds(1))
+                }
+            }
     }
 }
 

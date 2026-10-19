@@ -61,7 +61,8 @@ struct Reason: Codable, Hashable {
     /// Short label shown under the traffic light.
     var label: String {
         switch condition {
-        case "lake_warning": "Lake storm warning"
+        case "lake_warning": "DWD lake warning"
+        case "weather_warning": "DWD weather warning"
         case "wind": "Wind"
         case "gusts": "Gusts"
         case "waves": "Waves"
@@ -79,7 +80,8 @@ struct Reason: Codable, Hashable {
     /// One sentence saying why this condition changes the advice.
     var explanation: String {
         switch condition {
-        case "lake_warning": "A storm warning is active for the lake."
+        case "lake_warning": "DWD has issued a wind or storm warning for the lake."
+        case "weather_warning": "DWD has issued a weather warning for this place."
         case "wind": "Mean wind is above the limit."
         case "gusts": "Gusts are above the limit."
         case "waves": "Waves at the launch point are too high."
@@ -96,7 +98,8 @@ struct Reason: Codable, Hashable {
 
     /// The condition whose icon stands for this reason.
     var symbol: String {
-        (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
+        if condition.hasSuffix("_warning") { return "exclamationmark.triangle.fill" }
+        return (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
     }
 }
 
@@ -114,6 +117,17 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     let cloudCoverPct: Double?
     /// Whether the sun is up in the middle of this hour.
     let sunUp: Bool?
+    /// Rain, snow or hail in this hour, in mm.
+    var precipitationMm: Double? = nil
+    /// WMO weather code; see Sky.
+    var weatherCode: Int? = nil
+    /// How warm it feels, in °C (wind chill, humidity, sun).
+    var apparentTemperatureC: Double? = nil
+    /// Relative humidity in %, and the dew point in °C.
+    var humidityPct: Double? = nil
+    var dewPointC: Double? = nil
+    /// Air pressure at sea level, in hPa.
+    var pressureHpa: Double? = nil
 
     var id: Date { time }
 
@@ -122,7 +136,10 @@ struct ForecastHour: Codable, Identifiable, Hashable {
             time: time, light: reasons.map(\.light).max() ?? .green, reasons: reasons,
             windSpeedMs: windSpeedMs, windGustMs: windGustMs, windFromDeg: windFromDeg,
             waveHeightM: waveHeightM, fetchM: fetchM, visibilityM: visibilityM,
-            temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp
+            temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp,
+            precipitationMm: precipitationMm, weatherCode: weatherCode,
+            apparentTemperatureC: apparentTemperatureC,
+            humidityPct: humidityPct, dewPointC: dewPointC, pressureHpa: pressureHpa
         )
     }
 
@@ -142,11 +159,54 @@ struct SunDay: Codable, Hashable {
     let sunset: Date
 }
 
+/// An official DWD warning: for the lake (strong wind or storm, shown by the
+/// shore lights) or for the place (thunderstorm, gusts, frost, fog ...).
+struct DWDWarning: Codable, Hashable, Identifiable {
+    let kind: String
+    let area: String
+    let event: String
+    /// "minor", "moderate", "severe" or "extreme", as DWD's levels 1 to 4.
+    let severity: String
+    let headline: String
+    let description: String
+    let instruction: String?
+    let onset: Date?
+    let expires: Date?
+    /// A made-up warning for the screenshots, never from DWD.
+    var sample: Bool? = nil
+    /// The warning in English: DWD's own English text where it publishes one
+    /// (official), else only the event and headline translated.
+    var english: EnglishWarningText? = nil
+
+    var id: String { [kind, area, event, onset?.description ?? "", headline].joined(separator: "|") }
+    var isLake: Bool { kind == "lake" }
+}
+
+struct EnglishWarningText: Codable, Hashable {
+    let event: String
+    let headline: String
+    let description: String?
+    let instruction: String?
+    let official: Bool
+}
+
+struct Warnings: Codable, Hashable {
+    /// "ok" when DWD was checked, "unavailable" when it could not be reached.
+    let status: String
+    /// DWD's lake warning area for this launch point, nil when the water is not covered.
+    let lakeArea: String?
+    let items: [DWDWarning]
+
+    var checked: Bool { status == "ok" }
+}
+
 struct ClubForecast: Codable, Hashable {
     let clubId: String
     let lakeId: String
     let generatedAt: Date
     let waterTemperature: WaterTemperature?
+    /// Missing from older backends.
+    var warnings: Warnings? = nil
     let attribution: [String]
     let daylight: [SunDay]?
     let hours: [ForecastHour]
@@ -154,6 +214,13 @@ struct ClubForecast: Codable, Hashable {
     /// The first forecast hour as it stands at `date`. That hour began up to
     /// an hour ago, so "sunrise or sunset within the hour" is replaced by
     /// whether the sun is actually up now.
+    /// How much the pressure changes from this hour to `hours` later, in hPa.
+    func pressureChange(after hour: ForecastHour, hours: Int = 3) -> Double? {
+        guard let i = self.hours.firstIndex(where: { $0.time == hour.time }), i + hours < self.hours.count,
+              let now = hour.pressureHpa, let later = self.hours[i + hours].pressureHpa else { return nil }
+        return later - now
+    }
+
     func current(at date: Date = .now) -> ForecastHour? {
         guard let first = hours.first else { return nil }
         guard let sun = sunState(at: date), first.reasons.contains(where: { $0.condition == "twilight" }) else { return first }
