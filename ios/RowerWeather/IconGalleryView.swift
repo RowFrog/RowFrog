@@ -69,6 +69,7 @@ struct IconGalleryView: View {
                 SunPathPreview()
                 WindDialPreview()
                 FeelsLikeOptions()
+                ListFeelsLikeOptions()
 
                 Card(title: "Conditions", symbol: "gauge.with.dots.needle.33percent") {
                     ForEach(Condition.allCases, id: \.self) { condition in
@@ -314,6 +315,63 @@ private struct WindDialPreview: View {
             Text(title).foregroundStyle(.secondary)
             Spacer()
             Text(value).fontWeight(.semibold)
+        }
+    }
+}
+
+/// Preview, not in the app yet: ways to show "feels like" in the location
+/// list. Sample: air 9°, feels like 6°.
+private struct ListFeelsLikeOptions: View {
+    var body: some View {
+        Card(title: "Preview: feels like in the location list", symbol: Condition.feelsLike.symbol) {
+            option("L1: Always, small under the temperature") {
+                tile(under: "Feels 6°", footer: "Sunset 18:19")
+            }
+            option("L2: Only when it differs by 2° or more, with the reason") {
+                tile(under: "Feels 6° · wind", footer: "Sunset 18:19")
+            }
+            option("L3: In the line with sunset, left side") {
+                tile(under: nil, footer: "Feels like 6° · Sunset 18:19")
+            }
+        }
+    }
+
+    private func tile(under: String?, footer: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("MRC 1880").font(.title3.bold())
+                    Text("Starnberger See · Starnberg").font(.subheadline).foregroundStyle(.secondary)
+                }
+                Spacer()
+                VStack(alignment: .trailing, spacing: 0) {
+                    HStack(spacing: 6) {
+                        TrafficLightDot(light: .green, size: 18)
+                        SkyIcon(sky: .partlyCloudy).font(.title3)
+                        Image(systemName: Condition.temperature.symbol).symbolRenderingMode(.hierarchical)
+                        Text("9°").font(.system(size: 36, weight: .light))
+                    }
+                    if let under {
+                        Label(under, systemImage: Condition.feelsLike.symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            Text("Good to row").font(.subheadline.weight(.semibold))
+            Label(footer, systemImage: footer.hasPrefix("Feels") ? Condition.feelsLike.symbol : "sunset.fill")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(12)
+        .background(Light.green.color.opacity(0.18), in: RoundedRectangle(cornerRadius: 16))
+    }
+
+    private func option(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Divider()
+            Text(title).font(.subheadline.weight(.semibold))
+            content()
         }
     }
 }
