@@ -133,6 +133,9 @@ jobs:
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
           shoot 24-hourly-12h-long-date light -RWScrollTo hourly -RWTimeFormat hours12 -RWDateFormat long
           shoot 25-hourly-iso-date light -RWScrollTo hourly -RWDateFormat iso
+          # The home-screen and lock-screen widget in every size, with the home base's live forecast.
+          shoot_pages 26-widgets light -RWWidgetGallery YES
+          shoot_pages 27-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2

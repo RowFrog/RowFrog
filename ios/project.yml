@@ -14,6 +14,12 @@ targets:
     type: application
     platform: iOS
     sources: [RowerWeather]
+    dependencies:
+      - target: RowerWeatherWidget
+    entitlements:
+      path: RowerWeather/RowerWeather.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.rowerweatherfrog.RowerWeather]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowerWeather
@@ -32,6 +38,46 @@ targets:
       path: RowerWeather/Info.plist
       properties:
         # Backend address; the simulator reaches a backend running on the Mac at localhost.
+        RWAPIBaseURL: http://localhost:8000
+        NSAppTransportSecurity:
+          NSAllowsLocalNetworking: true
+        # A tap on the widget opens rowerweather://club/<id>.
+        CFBundleURLTypes:
+          - CFBundleURLName: com.rowerweatherfrog.RowerWeather
+            CFBundleURLSchemes: [rowerweather]
+  RowerWeatherWidget:
+    type: app-extension
+    platform: iOS
+    sources:
+      - RowerWeatherWidget
+      # The app's models, settings and formatting, and the widget's views, which
+      # the app also uses for its widget preview page.
+      - path: RowerWeather/Models.swift
+      - path: RowerWeather/APIClient.swift
+      - path: RowerWeather/Localization.swift
+      - path: RowerWeather/AppSettings.swift
+      - path: RowerWeather/Units.swift
+      - path: RowerWeather/Conditions.swift
+      - path: RowerWeather/Sky.swift
+      - path: RowerWeather/TrafficLightView.swift
+      - path: RowerWeather/Backgrounds.swift
+      - path: RowerWeather/WidgetViews.swift
+    entitlements:
+      path: RowerWeatherWidget/RowerWeatherWidget.entitlements
+      properties:
+        com.apple.security.application-groups: [group.com.rowerweatherfrog.RowerWeather]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowerWeather.Widget
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: RowerWeather
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) WIDGET_EXTENSION
+    info:
+      path: RowerWeatherWidget/Info.plist
+      properties:
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
         RWAPIBaseURL: http://localhost:8000
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
