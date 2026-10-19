@@ -230,7 +230,7 @@ private struct AppIconPicker: View {
                         Text(option.title)
                             .font(.caption2)
                             .multilineTextAlignment(.center)
-                            .lineLimit(2, reservesSpace: true)
+                            .lineLimit(3)
                             .foregroundStyle(.primary)
                     }
                 }
