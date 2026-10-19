@@ -110,6 +110,9 @@ jobs:
           shoot_pages 06-list-with-river-club light -RWShowList YES
           shoot_pages 07-home-dark dark
           shoot_pages 09-icons light -RWIconGallery YES
+          # The phone on its side: two columns of cards.
+          shoot_pages 30-home-landscape light -RWLandscape YES
+          shoot_pages 31-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
           shoot_pages 10-settings light -RWShowSettings YES

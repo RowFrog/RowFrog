@@ -5,14 +5,17 @@ import SwiftUI
 struct LocationListView: View {
     let locations: LocationStore
     let forecasts: ForecastStore
+    /// The page on screen when the list sits beside the pages; nil when it is a full-screen cover.
+    var selectedID: String?
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
     @Environment(\.dismiss) private var dismiss
 
-    init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", select: @escaping (Club) -> Void) {
+    init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil, select: @escaping (Club) -> Void) {
         self.locations = locations
         self.forecasts = forecasts
+        self.selectedID = selectedID
         self.select = select
         _search = State(initialValue: initialSearch)
     }
@@ -34,7 +37,11 @@ struct LocationListView: View {
                         .buttonStyle(.plain)
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
-                        .listRowBackground(Color.clear)
+                        .listRowBackground(
+                            RoundedRectangle(cornerRadius: 18)
+                                .fill(club.id == selectedID ? Color.accentColor.opacity(0.18) : Color.clear)
+                                .padding(.horizontal, 10)
+                        )
                         .swipeActions(edge: .trailing) {
                             if club.id != locations.homeID {
                                 Button(role: .destructive) { locations.remove(club) } label: {
@@ -78,8 +85,10 @@ struct LocationListView: View {
                     }
                     .accessibilityLabel(tr("Settings"))
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(tr("Done")) { dismiss() }
+                if selectedID == nil {
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(tr("Done")) { dismiss() }
+                    }
                 }
             }
             .sheet(isPresented: $showingSettings) {

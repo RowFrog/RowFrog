@@ -18,69 +18,103 @@ struct LocationPageView: View {
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
-        ScrollViewReader { proxy in
-            ScrollView {
-                VStack(spacing: 16) {
-                    header
-                    if let forecast, let now = forecast.current() {
-                        NowCard(hour: now, water: forecast.waterTemperature)
-                        if let warnings = forecast.warnings {
-                            WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
-                        }
-                        if let sun = forecast.sunState(at: .now) {
-                            DaylightCard(state: sun)
-                        }
-                        CurrentConditionsCard(hour: now, water: forecast.waterTemperature)
-                        if tourSeen && showHourlyTip {
-                            TipView(hourlyTip)
-                        }
-                        HourlyCard(forecast: forecast).id("hourly")
-                        if tourSeen && showLaunchPointTip {
-                            TipView(launchPointTip)
-                        }
-                        LaunchPointMapCard(club: club).id("launchpoint")
-                        LegendCard()
-                        VStack(alignment: .leading, spacing: 4) {
-                            ForEach(forecast.attribution, id: \.self) { Text(tr($0)) }
-                            if !club.launchPointVerified {
-                                if club.source == "drv" {
-                                    Text(tr("Club data: Deutscher Ruderverband e.V. (rudern.de). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
-                                } else {
-                                    Text(tr("Launch point from © OpenStreetMap contributors, ODbL"))
+        GeometryReader { geometry in
+            // Wide screens (an unfolded iPhone Duo, an iPhone on its side) put the
+            // cards below the rowing light in two columns; phones upright keep one.
+            let twoColumns = geometry.size.width >= Self.twoColumnWidth
+            ScrollViewReader { proxy in
+                ScrollView {
+                    VStack(spacing: 16) {
+                        header
+                        if let forecast, let now = forecast.current() {
+                            NowCard(hour: now, water: forecast.waterTemperature)
+                            if let warnings = forecast.warnings {
+                                WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
+                            }
+                            if twoColumns {
+                                HStack(alignment: .top, spacing: 16) {
+                                    VStack(spacing: 16) {
+                                        conditionCards(forecast, now: now)
+                                        LegendCard()
+                                    }
+                                    VStack(spacing: 16) {
+                                        forecastCards(forecast)
+                                    }
+                                }
+                            } else {
+                                conditionCards(forecast, now: now)
+                                forecastCards(forecast)
+                                LegendCard()
+                            }
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(forecast.attribution, id: \.self) { Text(tr($0)) }
+                                if !club.launchPointVerified {
+                                    if club.source == "drv" {
+                                        Text(tr("Club data: Deutscher Ruderverband e.V. (rudern.de). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
+                                    } else {
+                                        Text(tr("Launch point from © OpenStreetMap contributors, ODbL"))
+                                    }
                                 }
                             }
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(surface.hasPicture ? 12 : 0)
+                            .background(surface.label, in: RoundedRectangle(cornerRadius: 12))
+                        } else if forecasts.failed.contains(club.id) {
+                            ContentUnavailableView {
+                                Label(tr("No forecast"), systemImage: "icloud.slash")
+                            } description: {
+                                Text(tr("Could not load the forecast. Pull to retry."))
+                            }
+                        } else {
+                            ProgressView().padding(.top, 40)
                         }
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(surface.hasPicture ? 12 : 0)
-                        .background(surface.label, in: RoundedRectangle(cornerRadius: 12))
-                    } else if forecasts.failed.contains(club.id) {
-                        ContentUnavailableView {
-                            Label(tr("No forecast"), systemImage: "icloud.slash")
-                        } description: {
-                            Text(tr("Could not load the forecast. Pull to retry."))
-                        }
-                    } else {
-                        ProgressView().padding(.top, 40)
                     }
+                    .padding(.horizontal)
+                    .padding(.bottom, 24)
+                    .frame(maxWidth: Self.maxContentWidth)
+                    .frame(maxWidth: .infinity)
                 }
-                .padding(.horizontal)
-                .padding(.bottom, 24)
-            }
-            .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
-            .refreshable { await forecasts.load(club.id, force: true) }
-            .tipVisibility(hourlyTip, $showHourlyTip)
-            .tipVisibility(launchPointTip, $showLaunchPointTip)
-            .task {
-                await forecasts.load(club.id)
-                // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`) scrolls to that card.
-                if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
-                    try? await Task.sleep(for: .milliseconds(300))
-                    proxy.scrollTo(target, anchor: .top)
+                .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
+                .refreshable { await forecasts.load(club.id, force: true) }
+                .tipVisibility(hourlyTip, $showHourlyTip)
+                .tipVisibility(launchPointTip, $showLaunchPointTip)
+                .task {
+                    await forecasts.load(club.id)
+                    // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`) scrolls to that card.
+                    if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
+                        try? await Task.sleep(for: .milliseconds(300))
+                        proxy.scrollTo(target, anchor: .top)
+                    }
                 }
             }
         }
+    }
+
+    /// From this width (in points) the page shows two columns of cards.
+    static let twoColumnWidth: CGFloat = 600
+    /// Keeps lines readable on very wide screens.
+    static let maxContentWidth: CGFloat = 1000
+
+    @ViewBuilder
+    private func conditionCards(_ forecast: ClubForecast, now: ForecastHour) -> some View {
+        if let sun = forecast.sunState(at: .now) {
+            DaylightCard(state: sun)
+        }
+        CurrentConditionsCard(hour: now, water: forecast.waterTemperature)
+    }
+
+    @ViewBuilder
+    private func forecastCards(_ forecast: ClubForecast) -> some View {
+        if tourSeen && showHourlyTip {
+            TipView(hourlyTip)
+        }
+        HourlyCard(forecast: forecast).id("hourly")
+        if tourSeen && showLaunchPointTip {
+            TipView(launchPointTip)
+        }
+        LaunchPointMapCard(club: club).id("launchpoint")
     }
 
     private var header: some View {

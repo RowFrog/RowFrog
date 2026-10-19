@@ -28,6 +28,11 @@ targets:
         RWAPIBaseURL: http://localhost:8000
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        # Upright and on its side; the pages switch to two columns when wide enough.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
   RowerWeatherTests:
     type: bundle.unit-test
     platform: iOS
