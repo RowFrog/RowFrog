@@ -1,7 +1,8 @@
 import SwiftUI
 
 /// One full-screen location page: rowing light now, daylight, current
-/// conditions, the hourly forecast with its icon legend, and the credits.
+/// conditions, the hourly forecast, the launch point on a map, the icon
+/// legend, and the credits.
 struct LocationPageView: View {
     let club: Club
     let lake: Lake?
@@ -24,6 +25,7 @@ struct LocationPageView: View {
                         }
                         CurrentConditionsCard(hour: now, water: forecast.waterTemperature)
                         HourlyCard(forecast: forecast).id("hourly")
+                        LaunchPointMapCard(club: club)
                         LegendCard()
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(forecast.attribution, id: \.self) { Text($0) }

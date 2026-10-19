@@ -79,6 +79,9 @@ too. When there is none the page says so and when it was checked; when DWD
 cannot be reached it says that instead. Warnings come from DWD's GeoServer
 (`backend/rowerweather/sources/dwd_warnings.py`) and also set the hourly light.
 
+Below the forecast a map (Apple MapKit, no key needed) shows the launch point
+the forecast is for, with its coordinates and a button to open it in Maps.
+
 ## Licence
 
 Proprietary, all rights reserved. See `LICENSE`.
