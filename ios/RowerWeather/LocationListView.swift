@@ -199,6 +199,8 @@ struct ListMetrics: View {
         }
         .font(.caption)
         .lineLimit(1)
+        // Take the width the numbers need, e.g. "12–17 m/s"; the text on the left wraps instead.
+        .fixedSize()
     }
 }
 
