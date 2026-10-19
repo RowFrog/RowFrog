@@ -272,5 +272,14 @@ enum German {
         "Rain on the lake": "Regen auf dem See",
         "Winter ice": "Wintereis",
         "Night on the lake": "Nacht auf dem See",
+        // App icons
+        "Cloud and crossed oars": "Wolke und gekreuzte Ruder",
+        "Blade and wind": "Ruderblatt und Wind",
+        "Rowing-light gauge": "Ruderampel als Anzeige",
+        "Blade rowing light": "Ruderblatt als Ampel",
+        "Single from above": "Einer von oben",
+        "Coxed double": "Gesteuerter Doppelzweier",
+        "Coxed pair": "Gesteuerter Zweier",
+        "Frog and rowing light": "Frosch und Ruderampel",
     ]
 }
