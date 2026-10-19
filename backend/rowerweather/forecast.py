@@ -7,7 +7,8 @@ from datetime import timedelta
 
 from .locations import Club
 from .outlines import Rings
-from .score import Assessment, HourConditions, Light, Thresholds, assess
+from .score import Assessment, HourConditions, LakeWarning, Light, Thresholds, assess
+from .sources.dwd_warnings import Warning
 from .sources.open_meteo import ForecastHour
 from .sun import SunDay, sun_days
 from .waves import fetch_m, significant_wave_height
@@ -57,11 +58,34 @@ def _daylight(h: ForecastHour, days: list[SunDay]) -> tuple[str, Light, bool | N
     return "daylight", Light.RED, sun_up
 
 
+def _lake_warning(warnings: list[Warning], start, end) -> LakeWarning:
+    """Storm (red) for storm, hurricane or severe lake warnings; strong wind (amber) otherwise."""
+    worst = LakeWarning.NONE
+    for w in warnings:
+        if w.kind != "lake" or not w.active_during(start, end):
+            continue
+        storm = w.level >= 2 or any(word in w.event.upper() for word in ("STURM", "ORKAN"))
+        worst = max(worst, LakeWarning.STORM if storm else LakeWarning.STRONG_WIND)
+    return worst
+
+
+def _weather_warning(warnings: list[Warning], start, end) -> Light:
+    """A minor DWD warning (yellow) is amber; moderate (orange) and above, or any thunderstorm, is red."""
+    worst = Light.GREEN
+    for w in warnings:
+        if w.kind != "local" or not w.active_during(start, end):
+            continue
+        red = w.level >= 1 or "GEWITTER" in w.event.upper()
+        worst = max(worst, Light.RED if red else Light.AMBER)
+    return worst
+
+
 def rowing_forecast(
     club: Club,
     weather: list[ForecastHour],
     outline: Rings | None,
     water_temp_c: float | None = None,
+    warnings: list[Warning] = (),
     thresholds: Thresholds = Thresholds(),
 ) -> list[RowingHour]:
     hours = []
@@ -82,6 +106,8 @@ def rowing_forecast(
             thunderstorm=_thunderstorm(h),
             daylight=daylight,
             daylight_name=daylight_name,
+            lake_warning=_lake_warning(list(warnings), h.time, h.time + timedelta(hours=1)),
+            weather_warning=_weather_warning(list(warnings), h.time, h.time + timedelta(hours=1)),
         )
         hours.append(RowingHour(h, fetch, wave, assess(conditions, thresholds), sun_up))
     return hours

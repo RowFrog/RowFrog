@@ -55,6 +55,21 @@ final class LocationStoreTests: XCTestCase {
         XCTAssertEqual(reopened.saved.map(\.id), ["rc-diessen", "mrc-1880", "tutzinger-rv"])
     }
 
+    func testMoveKeepsHomeBaseFirstAndPersists() {
+        let store = LocationStore(defaults: defaults)
+        store.setCatalog(lakes)
+        store.add(lakes[1].clubs[0])
+        XCTAssertEqual(store.saved.map(\.id), ["mrc-1880", "tutzinger-rv", "rc-diessen"])
+        store.move(fromOffsets: [2], toOffset: 1)
+        XCTAssertEqual(store.saved.map(\.id), ["mrc-1880", "rc-diessen", "tutzinger-rv"])
+        store.move(fromOffsets: [2], toOffset: 0)  // nothing goes above the home base
+        XCTAssertEqual(store.saved.map(\.id), ["mrc-1880", "tutzinger-rv", "rc-diessen"])
+
+        let reopened = LocationStore(defaults: defaults)
+        reopened.setCatalog(lakes)
+        XCTAssertEqual(reopened.saved.map(\.id), ["mrc-1880", "tutzinger-rv", "rc-diessen"])
+    }
+
     func testTownFromAddress() {
         XCTAssertEqual(club("x", "X", address: "Seestraße 22, 82327 Tutzing").town, "Tutzing")
         XCTAssertNil(club("x", "X", address: "").town)

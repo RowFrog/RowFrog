@@ -53,6 +53,43 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertNil(forecast.hours.first?.sunUp)
     }
 
+    func testDecodesWarnings() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": [],
+         "warnings": {"status": "ok", "lakeArea": "Starnberger See",
+                      "items": [{"kind": "lake", "area": "Starnberger See", "event": "STURM", "severity": "severe",
+                                 "headline": "Sturmwarnung", "description": "Sturmböen um 65 km/h.", "instruction": null,
+                                 "onset": "2026-10-18T12:00:00+00:00", "expires": null, "sample": false}]}}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        let warning = try XCTUnwrap(forecast.warnings?.items.first)
+        XCTAssertTrue(warning.isLake)
+        XCTAssertNil(warning.expires)
+        XCTAssertEqual(warning.shortLabel, "DWD lake warning")
+        XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD lake warning")
+    }
+
+    func testDecodesEnglishWarningText() throws {
+        let json = """
+        {"kind": "local", "area": "Starnberg", "event": "WINDBÖEN", "severity": "minor",
+         "headline": "Amtliche WARNUNG vor WINDBÖEN", "description": "Es treten Windböen auf.", "instruction": null,
+         "onset": null, "expires": null,
+         "english": {"event": "wind gusts", "headline": "Official WARNING of WIND GUSTS",
+                     "description": "There is a risk of wind gusts.", "instruction": null, "official": true}}
+        """
+        let warning = try APIClient.decoder.decode(DWDWarning.self, from: Data(json.utf8))
+        XCTAssertEqual(warning.english?.headline, "Official WARNING of WIND GUSTS")
+        XCTAssertEqual(warning.english?.official, true)
+    }
+
+    func testSkyFromWeatherCode() {
+        XCTAssertEqual(Sky(code: 96, cloudCoverPct: 100, precipitationMm: 3).precipitationKind, "Hail")
+        XCTAssertEqual(Sky(code: 2, cloudCoverPct: 50, precipitationMm: 0).symbol(night: true), "cloud.moon.fill")
+        // Without a code, cloud cover and precipitation decide.
+        XCTAssertEqual(Sky(code: nil, cloudCoverPct: 95, precipitationMm: 0), .cloudy)
+        XCTAssertEqual(Sky(code: nil, cloudCoverPct: 95, precipitationMm: 0.6), .rain)
+    }
+
     func testLightOrdering() {
         XCTAssertLessThan(Light.green, Light.amber)
         XCTAssertEqual([Light.amber, .red, .green].max(), .red)

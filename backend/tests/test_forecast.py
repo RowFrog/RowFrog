@@ -22,6 +22,11 @@ PAYLOAD = {
         "visibility": [400, 20_000],
         "precipitation": [0, 0],
         "cape": [0, 0],
+        "weather_code": [45, 96],
+        "apparent_temperature": [5.2, 9.8],
+        "relative_humidity_2m": [93, 71],
+        "dew_point_2m": [6.1, 4.0],
+        "pressure_msl": [1016.4, 1015.2],
         "is_day": [1, 1],
     }
 }
@@ -32,6 +37,8 @@ def test_parse_open_meteo_payload():
     assert len(hours) == 2
     assert hours[0].time.isoformat() == "2026-10-18T06:00:00+00:00"
     assert hours[1].wind_gust_ms == 14.0
+    assert hours[1].weather_code == 96  # thunderstorm with hail
+    assert hours[0].apparent_temperature_c == 5.2
 
 
 def test_parse_tolerates_missing_variables():
@@ -94,7 +101,11 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
         return None
 
     monkeypatch.setattr(open_meteo, "fetch", fake_fetch)
+    async def no_warnings(client, club, now):
+        return {"status": "ok", "lakeArea": None, "items": []}, []
+
     monkeypatch.setattr(api.gkd, "fetch_latest", no_water)
+    monkeypatch.setattr(api, "_warnings", no_warnings)
     api._cache.clear()
     body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
     api._cache.clear()
@@ -102,3 +113,9 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
     day = body["daylight"][0]
     assert day["sunrise"] < day["sunset"]
     assert body["hours"][0]["sunUp"] is True
+    assert body["hours"][1]["weatherCode"] == 96
+    assert body["hours"][1]["apparentTemperatureC"] == 9.8
+    assert body["hours"][0]["humidityPct"] == 93
+    assert body["hours"][0]["dewPointC"] == 6.1
+    assert body["hours"][1]["pressureHpa"] == 1015.2
+    assert body["hours"][0]["precipitationMm"] == 0
