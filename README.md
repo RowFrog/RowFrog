@@ -78,6 +78,9 @@ DWD's weather warnings for the municipality, which cover rivers and canals
 too. When there is none the page says so and when it was checked; when DWD
 cannot be reached it says that instead. Warnings come from DWD's GeoServer
 (`backend/rowerweather/sources/dwd_warnings.py`) and also set the hourly light.
+When the app is in English, warnings show DWD's own English text (from its
+English CAP files on opendata.dwd.de) with the German original below; where DWD
+has no English version, only the event and headline are translated.
 
 Below the forecast a map (Apple MapKit, no key needed) shows the launch point
 the forecast is for, with its coordinates and a button to open it in Maps.
