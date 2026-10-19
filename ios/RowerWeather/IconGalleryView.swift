@@ -65,6 +65,9 @@ struct IconGalleryView: View {
                     }
                 }
 
+                Text("Previews to decide").font(.title2.bold())
+                SunPathPreview()
+                WindDialPreview()
                 FeelsLikeOptions()
 
                 Card(title: "Conditions", symbol: "gauge.with.dots.needle.33percent") {
@@ -109,11 +112,12 @@ struct IconGalleryView: View {
 }
 
 /// Suggestions for showing "feels like" in the rowing-light tile, with
-/// sample values (air 9°, feels like 6°, water 15.6°), for the owner to pick from.
+/// sample values (air 9°, feels like 6°, water 15.6°). A is in the app; B–D
+/// are kept here for later.
 private struct FeelsLikeOptions: View {
     var body: some View {
-        Card(title: "Feels like in the light tile: options", symbol: Condition.feelsLike.symbol) {
-            option("A: Small line under the air temperature") {
+        Card(title: "Feels like in the light tile: A in use, B–D saved", symbol: Condition.feelsLike.symbol) {
+            option("A (in use): Small line under the air temperature") {
                 HStack(alignment: .lastTextBaseline) {
                     VStack(alignment: .leading, spacing: 0) {
                         TemperatureView(condition: .temperature, celsius: 9, size: 44)
@@ -173,6 +177,143 @@ private struct FeelsLikeOptions: View {
             Divider()
             Text(title).font(.subheadline.weight(.semibold))
             content()
+        }
+    }
+}
+
+/// Preview, not in the app yet: the day's sun path as in the Weather app's
+/// sunrise tile, with first light, sunrise, sunset and last light (civil
+/// twilight) and the sun's position now. Sample times for Starnberg in October.
+private struct SunPathPreview: View {
+    // Hours of the day.
+    private let firstLight = 7.12, sunrise = 7.65, noon = 12.98, sunset = 18.32, lastLight = 18.85, now = 17.25
+
+    var body: some View {
+        Card(title: "Preview: sunrise and sunset in current conditions", symbol: "sunrise") {
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("Sunset").font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+                    Text(clock(sunset)).font(.system(size: 28, weight: .light))
+                }
+                Spacer()
+                Text("1 h 4 min of daylight left").font(.caption).foregroundStyle(.secondary)
+            }
+            Canvas { context, size in
+                let y = { (t: Double) -> CGFloat in
+                    // Sun height through the day; horizon where it crosses sunrise/sunset.
+                    let h = cos(2 * .pi * (t - noon) / 24) - cos(2 * .pi * (sunset - noon) / 24)
+                    return size.height * 0.62 - CGFloat(h) * size.height * 0.85
+                }
+                let x = { (t: Double) -> CGFloat in CGFloat(t / 24) * size.width }
+                var path = Path()
+                for step in 0...96 {
+                    let t = Double(step) / 4
+                    step == 0 ? path.move(to: CGPoint(x: x(t), y: y(t))) : path.addLine(to: CGPoint(x: x(t), y: y(t)))
+                }
+                let horizon = y(sunrise)
+                // Day part bright, night part faint.
+                context.drawLayer { layer in
+                    layer.clip(to: Path(CGRect(x: 0, y: 0, width: size.width, height: horizon)))
+                    layer.stroke(path, with: .color(.orange), lineWidth: 3)
+                }
+                context.drawLayer { layer in
+                    layer.clip(to: Path(CGRect(x: 0, y: horizon, width: size.width, height: size.height - horizon)))
+                    layer.stroke(path, with: .color(.secondary.opacity(0.5)), lineWidth: 2)
+                }
+                context.stroke(Path { $0.move(to: CGPoint(x: 0, y: horizon)); $0.addLine(to: CGPoint(x: size.width, y: horizon)) },
+                               with: .color(.secondary), lineWidth: 1)
+                // Twilight band: first light to sunrise and sunset to last light.
+                for (a, b) in [(firstLight, sunrise), (sunset, lastLight)] {
+                    context.fill(Path(CGRect(x: x(a), y: horizon - 2, width: x(b) - x(a), height: 4)), with: .color(.orange.opacity(0.35)))
+                }
+                let sun = CGPoint(x: x(now), y: y(now))
+                context.fill(Path(ellipseIn: CGRect(x: sun.x - 7, y: sun.y - 7, width: 14, height: 14)), with: .color(.yellow))
+                context.stroke(Path(ellipseIn: CGRect(x: sun.x - 7, y: sun.y - 7, width: 14, height: 14)), with: .color(.orange), lineWidth: 1.5)
+            }
+            .frame(height: 90)
+            Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 4) {
+                GridRow {
+                    Label("First light \(clock(firstLight))", systemImage: "sun.horizon")
+                    Label("Sunrise \(clock(sunrise))", systemImage: "sunrise.fill")
+                }
+                GridRow {
+                    Label("Sunset \(clock(sunset))", systemImage: "sunset.fill")
+                    Label("Last light \(clock(lastLight))", systemImage: "moon.haze")
+                }
+            }
+            .font(.caption)
+            .symbolRenderingMode(.multicolor)
+            Text("Rowing advised from sunrise to sunset; first and last light are civil twilight.")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func clock(_ hours: Double) -> String {
+        String(format: "%02d:%02d", Int(hours), Int((hours - Double(Int(hours))) * 60))
+    }
+}
+
+/// Preview, not in the app yet: a compass dial for the wind as in the
+/// Weather app, with the speed in the middle and the arrow showing where the
+/// wind blows to. Sample: 3 m/s, gusts 6 m/s, from the south-east.
+private struct WindDialPreview: View {
+    private let fromDeg = 130.0
+
+    var body: some View {
+        Card(title: "Preview: wind dial in current conditions", symbol: Condition.wind.symbol) {
+            HStack(spacing: 16) {
+                VStack(alignment: .leading, spacing: 8) {
+                    row("Wind", "3 m/s")
+                    Divider()
+                    row("Gusts", "6 m/s")
+                    Divider()
+                    row("From", "SE · 130°")
+                }
+                .font(.subheadline)
+                ZStack {
+                    Canvas { context, size in
+                        let c = CGPoint(x: size.width / 2, y: size.height / 2)
+                        let r = min(size.width, size.height) / 2
+                        for i in 0..<72 {
+                            let a = Double(i) / 72 * 2 * .pi
+                            let long = i % 18 == 0
+                            let inner = r - (long ? 9 : 5)
+                            var tick = Path()
+                            tick.move(to: CGPoint(x: c.x + inner * sin(a), y: c.y - inner * cos(a)))
+                            tick.addLine(to: CGPoint(x: c.x + r * sin(a), y: c.y - r * cos(a)))
+                            context.stroke(tick, with: .color(.secondary.opacity(long ? 0.9 : 0.4)), lineWidth: long ? 2 : 1)
+                        }
+                    }
+                    ForEach(Array(["N", "E", "S", "W"].enumerated()), id: \.offset) { i, letter in
+                        let angle = Double(i) * .pi / 2
+                        Text(letter)
+                            .font(.caption2.weight(.bold))
+                            .foregroundStyle(.secondary)
+                            .offset(x: 42 * sin(angle), y: -42 * cos(angle))
+                    }
+                    // Arrow across the dial, pointing where the wind blows to.
+                    Capsule().fill(Color.primary).frame(width: 3, height: 104)
+                        .overlay(alignment: .top) {
+                            Image(systemName: "arrowtriangle.up.fill").font(.system(size: 12)).offset(y: -4)
+                        }
+                        .rotationEffect(.degrees(fromDeg + 180))
+                    Circle().fill(Color(.secondarySystemGroupedBackground)).frame(width: 52, height: 52)
+                    VStack(spacing: -2) {
+                        Text("3").font(.title2.weight(.semibold))
+                        Text("m/s").font(.caption2).foregroundStyle(.secondary)
+                    }
+                }
+                .frame(width: 120, height: 120)
+            }
+        }
+    }
+
+    private func row(_ title: String, _ value: String) -> some View {
+        HStack {
+            Text(title).foregroundStyle(.secondary)
+            Spacer()
+            Text(value).fontWeight(.semibold)
         }
     }
 }

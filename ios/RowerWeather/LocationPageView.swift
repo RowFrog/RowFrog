@@ -23,7 +23,7 @@ struct LocationPageView: View {
                         if let sun = forecast.sunState(at: .now) {
                             DaylightCard(state: sun)
                         }
-                        CurrentConditionsCard(hour: now, water: forecast.waterTemperature)
+                        CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
                         HourlyCard(forecast: forecast).id("hourly")
                         LaunchPointMapCard(club: club)
                         LegendCard()
@@ -149,7 +149,15 @@ private struct NowCard: View {
             .accessibilityLabel(hour.reasons.isEmpty ? "Why: all conditions within the limits" : "Why: " + hour.reasons.map(\.explanation).joined(separator: " "))
             Divider()
             HStack(alignment: .lastTextBaseline) {
-                TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
+                VStack(alignment: .leading, spacing: 0) {
+                    TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
+                    if let feels = hour.apparentTemperatureC {
+                        Label("Feels like \(Format.number(feels))°", systemImage: Condition.feelsLike.symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel("Feels like \(Format.number(feels)) degrees. \(feelsLikeNote(hour) ?? "")")
+                    }
+                }
                 Spacer()
                 TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28)
                 Spacer()
@@ -241,6 +249,8 @@ private struct DaylightCard: View {
 private struct CurrentConditionsCard: View {
     let hour: ForecastHour
     let water: WaterTemperature?
+    /// Pressure change over the next 3 hours, in hPa.
+    let pressureChange: Double?
 
     var body: some View {
         Card(title: "Current conditions", symbol: "gauge.with.dots.needle.33percent") {
@@ -270,6 +280,13 @@ private struct CurrentConditionsCard: View {
         switch condition {
         case .temperature: Text("\(Format.number(hour.temperatureC)) °C")
         case .feelsLike: Text(hour.apparentTemperatureC.map { "\(Format.number($0)) °C" } ?? "–")
+        case .humidity: Text(hour.humidityPct.map { "\(Format.number($0)) %" } ?? "–")
+        case .pressure:
+            HStack(spacing: 8) {
+                PressureGauge(hpa: hour.pressureHpa, trend: pressureChange.map(PressureTrend.init(change:)))
+                    .frame(width: 44, height: 44)
+                Text(hour.pressureHpa.map { "\(Format.number($0))" } ?? "–") + Text(" hPa").font(.caption)
+            }
         case .wind:
             HStack(spacing: 6) {
                 Text("\(Format.number(hour.windSpeedMs)) m/s")
@@ -312,10 +329,13 @@ private struct CurrentConditionsCard: View {
         case .precipitation:
             return Sky(hour: hour).precipitationKind ?? "Dry"
         case .feelsLike:
-            guard let feels = hour.apparentTemperatureC, let air = hour.temperatureC else { return nil }
-            if feels <= air - 2 { return (hour.windSpeedMs ?? 0) >= 3 ? "Colder, wind chill" : "Colder than the air" }
-            if feels >= air + 2 { return "Warmer than the air" }
-            return "About the air temperature"
+            return feelsLikeNote(hour)
+        case .humidity:
+            return hour.dewPointC.map { "Dew point \(Format.number($0))°" }
+        case .pressure:
+            guard let change = pressureChange else { return nil }
+            let trend = PressureTrend(change: change)
+            return trend == .steady ? "Steady next 3 h" : "\(trend.title) \(Format.number(abs(change), digits: 1)) hPa in 3 h"
         case .waterTemperature:
             return water.map { "Measured \(Format.time($0.measuredAt))" } ?? "No lake station"
         case .visibility:
@@ -324,6 +344,37 @@ private struct CurrentConditionsCard: View {
         default:
             return nil
         }
+    }
+}
+
+/// A small dial like the Weather app's pressure gauge: an arc from 960 to
+/// 1060 hPa with a mark at the current value and the trend arrow inside.
+struct PressureGauge: View {
+    let hpa: Double?
+    let trend: PressureTrend?
+    private let range = 960.0...1060.0
+    private let sweep = 0.75  // share of the circle the arc covers
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .trim(from: 0, to: sweep)
+                .stroke(Color.secondary.opacity(0.3), style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(135))
+            if let hpa {
+                let share = (min(max(hpa, range.lowerBound), range.upperBound) - range.lowerBound) / (range.upperBound - range.lowerBound)
+                Circle()
+                    .trim(from: max(0, share * sweep - 0.012), to: min(sweep, share * sweep + 0.012))
+                    .stroke(Color.primary, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                    .rotationEffect(.degrees(135))
+            }
+            Image(systemName: trend?.symbol ?? "minus")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.secondary)
+        }
+        .padding(4)
+        .accessibilityElement()
+        .accessibilityLabel("Pressure \(hpa.map { Format.number($0) } ?? "unknown") hectopascal, \(trend?.title ?? "trend unknown")")
     }
 }
 

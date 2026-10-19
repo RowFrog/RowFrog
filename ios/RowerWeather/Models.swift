@@ -123,6 +123,11 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     var weatherCode: Int? = nil
     /// How warm it feels, in °C (wind chill, humidity, sun).
     var apparentTemperatureC: Double? = nil
+    /// Relative humidity in %, and the dew point in °C.
+    var humidityPct: Double? = nil
+    var dewPointC: Double? = nil
+    /// Air pressure at sea level, in hPa.
+    var pressureHpa: Double? = nil
 
     var id: Date { time }
 
@@ -133,7 +138,8 @@ struct ForecastHour: Codable, Identifiable, Hashable {
             waveHeightM: waveHeightM, fetchM: fetchM, visibilityM: visibilityM,
             temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp,
             precipitationMm: precipitationMm, weatherCode: weatherCode,
-            apparentTemperatureC: apparentTemperatureC
+            apparentTemperatureC: apparentTemperatureC,
+            humidityPct: humidityPct, dewPointC: dewPointC, pressureHpa: pressureHpa
         )
     }
 
@@ -197,6 +203,13 @@ struct ClubForecast: Codable, Hashable {
     /// The first forecast hour as it stands at `date`. That hour began up to
     /// an hour ago, so "sunrise or sunset within the hour" is replaced by
     /// whether the sun is actually up now.
+    /// How much the pressure changes from this hour to `hours` later, in hPa.
+    func pressureChange(after hour: ForecastHour, hours: Int = 3) -> Double? {
+        guard let i = self.hours.firstIndex(where: { $0.time == hour.time }), i + hours < self.hours.count,
+              let now = hour.pressureHpa, let later = self.hours[i + hours].pressureHpa else { return nil }
+        return later - now
+    }
+
     func current(at date: Date = .now) -> ForecastHour? {
         guard let first = hours.first else { return nil }
         guard let sun = sunState(at: date), first.reasons.contains(where: { $0.condition == "twilight" }) else { return first }

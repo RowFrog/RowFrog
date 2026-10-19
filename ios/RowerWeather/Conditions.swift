@@ -4,7 +4,7 @@ import SwiftUI
 /// The same icons head the hourly table and label the current conditions,
 /// so the legend explains both.
 enum Condition: String, CaseIterable, Identifiable {
-    case temperature, feelsLike, wind, waves, waterTemperature, precipitation, visibility, cloudCover, thunderstorm, ice, daylight
+    case temperature, feelsLike, humidity, wind, waves, waterTemperature, precipitation, visibility, cloudCover, pressure, thunderstorm, ice, daylight
 
     var id: String { rawValue }
 
@@ -12,6 +12,8 @@ enum Condition: String, CaseIterable, Identifiable {
         switch self {
         case .temperature: "thermometer.medium"
         case .feelsLike: "thermometer.variable.and.figure"
+        case .humidity: "humidity"
+        case .pressure: "gauge.with.dots.needle.bottom.50percent"
         case .wind: "wind"
         case .waves: "water.waves"
         case .waterTemperature: "thermometer.and.liquid.waves"
@@ -28,6 +30,8 @@ enum Condition: String, CaseIterable, Identifiable {
         switch self {
         case .temperature: "Air temperature"
         case .feelsLike: "Feels like"
+        case .humidity: "Humidity"
+        case .pressure: "Air pressure"
         case .wind: "Wind and gusts"
         case .waves: "Waves"
         case .waterTemperature: "Water temperature"
@@ -47,6 +51,8 @@ enum Condition: String, CaseIterable, Identifiable {
         case .wind: "m/s"
         case .waves: "m"
         case .precipitation: "mm"
+        case .humidity: "%"
+        case .pressure: "hPa"
         case .visibility: "km"
         case .cloudCover: "%"
         case .thunderstorm, .ice, .daylight: ""
@@ -56,7 +62,9 @@ enum Condition: String, CaseIterable, Identifiable {
     var explanation: String {
         switch self {
         case .temperature: "Air temperature at 2 m."
-        case .feelsLike: "How warm or cold it feels on the water, from air temperature, wind, humidity and sun."
+        case .feelsLike: "How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index)."
+        case .humidity: "Relative humidity. The dew point is the temperature at which the air turns to mist or dew."
+        case .pressure: "Air pressure at sea level and where it goes in the next 3 hours. Falling fast often means wind and rain ahead."
         case .wind: "Mean wind – strongest gust, in m/s. The arrow points where the wind blows to."
         case .waves: "Estimated wave height at the launch point, from wind and open water upwind."
         case .waterTemperature: "Latest lake measurement. Below 15 °C, extra care; below 10 °C, cold water."
@@ -79,7 +87,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .thunderstorm: ["thunderstorm"]
         case .ice: ["ice"]
         case .daylight: ["daylight", "twilight"]
-        case .temperature, .feelsLike, .cloudCover, .precipitation: []
+        case .temperature, .feelsLike, .humidity, .pressure, .cloudCover, .precipitation: []
         }
     }
 }
@@ -91,6 +99,43 @@ struct ConditionIcon: View {
         Image(systemName: condition.symbol)
             .symbolRenderingMode(.hierarchical)
             .accessibilityLabel(condition.title)
+    }
+}
+
+/// Why it feels colder or warmer than the air, for the feels-like value.
+func feelsLikeNote(_ hour: ForecastHour) -> String? {
+    guard let feels = hour.apparentTemperatureC, let air = hour.temperatureC else { return nil }
+    if feels <= air - 2 {
+        return (hour.windSpeedMs ?? 0) >= 3 ? "Colder from wind chill" : "Colder than the air"
+    }
+    if feels >= air + 2 {
+        return (hour.humidityPct ?? 0) >= 60 ? "Warmer from humidity (heat index)" : "Warmer in the sun"
+    }
+    return "About the air temperature"
+}
+
+/// Where the pressure goes from this hour to three hours later.
+enum PressureTrend {
+    case rising, steady, falling
+
+    init(change: Double) {
+        self = change >= 1 ? .rising : change <= -1 ? .falling : .steady
+    }
+
+    var symbol: String {
+        switch self {
+        case .rising: "arrow.up"
+        case .steady: "equal"
+        case .falling: "arrow.down"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .rising: "Rising"
+        case .steady: "Steady"
+        case .falling: "Falling"
+        }
     }
 }
 
