@@ -106,6 +106,7 @@ jobs:
           shoot_pages 05-wuerzburg-river light -RWOpenClub akademischer-ruderclub-wuerzburg
           shoot_pages 06-list-with-river-club light -RWShowList YES
           shoot_pages 07-home-dark dark
+          shoot_pages 09-icons light -RWIconGallery YES
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2

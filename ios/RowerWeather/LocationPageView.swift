@@ -518,7 +518,7 @@ private struct LegendCard: View {
 /// Screenshot hook: `-RWScrollPage n` scrolls the page down by n screens
 /// (less a little overlap), stopping at the bottom, so a series of screenshots
 /// covers the whole page.
-private struct ScreenshotScroll: ViewModifier {
+struct ScreenshotScroll: ViewModifier {
     let page: Int
     let ready: Bool
 

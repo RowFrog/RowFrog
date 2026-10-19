@@ -4,7 +4,11 @@ import SwiftUI
 struct RowerWeatherApp: App {
     var body: some Scene {
         WindowGroup {
-            RootView(api: APIClient.fromBundle())
+            if UserDefaults.standard.bool(forKey: "RWIconGallery") {
+                IconGalleryView()
+            } else {
+                RootView(api: APIClient.fromBundle())
+            }
         }
     }
 }
