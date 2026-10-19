@@ -98,6 +98,14 @@ jobs:
               fi
             done
           }
+          shoot_n() {  # name, pages, appearance, launch arguments...: a fixed number of screens, for
+            # pages with frosted glass, where two screenshots of the same screen are not identical
+            local name=$1 pages=$2 appearance=$3; shift 3
+            local page
+            for page in $(seq 1 "$pages"); do
+              shoot "$name-p$page" "$appearance" "$@" -RWScrollPage $((page - 1))
+            done
+          }
           rm -f docs/screenshots/*.png
           shoot_pages 01-home light
           shoot_pages 02-list light -RWShowList YES
@@ -109,16 +117,16 @@ jobs:
           shoot_pages 09-icons light -RWIconGallery YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
-          shoot_pages 10-settings light -RWShowSettings YES
-          shoot_pages 11-settings-german-dark dark -RWShowSettings YES -RWLanguage de
-          shoot_pages 12-background-settings light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
-          shoot_pages 13-background-picker light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
+          shoot_n 10-settings 5 light -RWShowSettings YES
+          shoot_n 11-settings-german-dark 5 dark -RWShowSettings YES -RWLanguage de
+          shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
+          shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
           shoot 15-settings-with-picture light -RWShowSettings YES -RWBackground sample:soft-waves
-          shoot_pages 16-home-picture-frosted light -RWBackground sample:alpine-lake
+          shoot_pages 16-home-picture-frosted light -RWBackground sample:cloud-shell
           shoot_pages 17-home-picture-blurred-solid light -RWBackground sample:lake-waves -RWBackgroundBlur YES -RWTileStyle solid
-          shoot_pages 18-list-picture-frosted light -RWShowList YES -RWBackground sample:sunny-day
-          shoot_pages 19-list-picture-solid light -RWShowList YES -RWBackground sample:sunny-day -RWTileStyle solid
+          shoot_n 18-list-picture-frosted 2 light -RWShowList YES -RWBackground sample:sunny-day
+          shoot_n 19-list-picture-solid 2 light -RWShowList YES -RWBackground sample:sunny-day -RWTileStyle solid
           shoot 20-tutzing-own-picture light -RWOpenClub tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
           shoot_pages 21-home-dark-picture dark -RWBackground sample:night-lake
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
