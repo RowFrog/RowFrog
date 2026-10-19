@@ -114,22 +114,18 @@ struct RowingWidgetView: View {
 
     // MARK: Home screen
 
+    /// The light and why on top, temperature and sky below, the club at the bottom.
     private var small: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            title
-            HStack(alignment: .firstTextBaseline) {
-                temperature.font(.system(size: 40, weight: .light))
-                Spacer(minLength: 0)
-            }
-            Spacer(minLength: 0)
+        VStack(alignment: .leading, spacing: 4) {
             if let hour = snapshot.current {
-                skyIcon(hour).font(.body)
-                LightPill(light: hour.light, compact: true)
-                Text(detailLine(hour))
-                    .font(.caption2)
-                    .opacity(0.85)
-                    .lineLimit(1)
+                lightAndWhy(hour)
+                Spacer(minLength: 0)
+                HStack(alignment: .center, spacing: 6) {
+                    temperature.font(.system(size: 38, weight: .light))
+                    skyIcon(hour).font(.title2)
+                }
             }
+            title
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
@@ -201,7 +197,7 @@ struct RowingWidgetView: View {
     private var title: some View {
         HStack(spacing: 4) {
             Text(snapshot.clubName)
-                .font(.subheadline.weight(.semibold))
+                .font(.caption.weight(.semibold))
                 .lineLimit(1)
             if snapshot.isHome {
                 Image(systemName: "location.fill").font(.caption2)
@@ -213,24 +209,32 @@ struct RowingWidgetView: View {
         Text(Format.degrees(snapshot.current?.temperatureC))
     }
 
-    /// Club, temperature and the light on the left; sky and the reason on the right.
+    /// The light, why and club on the left; sky and temperature on the right.
     private var header: some View {
         HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                title
-                temperature.font(.system(size: 40, weight: .light))
-            }
-            Spacer(minLength: 8)
             if let hour = snapshot.current {
-                VStack(alignment: .trailing, spacing: 4) {
-                    skyIcon(hour).font(.title3)
-                    LightPill(light: hour.light, compact: false)
-                    Text(detailLine(hour))
-                        .font(.caption)
-                        .opacity(0.85)
-                        .lineLimit(1)
+                VStack(alignment: .leading, spacing: 4) {
+                    lightAndWhy(hour)
+                    title
+                }
+                Spacer(minLength: 8)
+                HStack(alignment: .center, spacing: 6) {
+                    skyIcon(hour).font(.title)
+                    temperature.font(.system(size: 40, weight: .light))
                 }
             }
+        }
+    }
+
+    /// The rowing light large, with the reason under it.
+    private func lightAndWhy(_ hour: ForecastHour) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            LightPill(light: hour.light, compact: false)
+            Text(detailLine(hour))
+                .font(.caption.weight(.medium))
+                .opacity(0.9)
+                .lineLimit(1)
+                .padding(.leading, 4)
         }
     }
 
@@ -403,15 +407,15 @@ struct LightPill: View {
         HStack(spacing: 5) {
             Circle()
                 .fill(light.color)
-                .frame(width: 10, height: 10)
+                .frame(width: compact ? 10 : 16, height: compact ? 10 : 16)
                 .overlay(Circle().stroke(.white, lineWidth: 1.5))
             Text(light.title)
-                .font((compact ? Font.caption : Font.subheadline).weight(.semibold))
+                .font((compact ? Font.caption : Font.headline).weight(.semibold))
                 .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .minimumScaleFactor(0.7)
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 3)
+        .padding(.horizontal, compact ? 8 : 10)
+        .padding(.vertical, compact ? 3 : 5)
         .background(.white.opacity(0.22), in: Capsule())
     }
 }
