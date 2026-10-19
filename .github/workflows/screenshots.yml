@@ -117,8 +117,8 @@ jobs:
           shoot_pages 09-icons light -RWIconGallery YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
-          shoot_n 10-settings 5 light -RWShowSettings YES
-          shoot_n 11-settings-german-dark 5 dark -RWShowSettings YES -RWLanguage de
+          shoot_n 10-settings 6 light -RWShowSettings YES
+          shoot_n 11-settings-german-dark 6 dark -RWShowSettings YES -RWLanguage de
           shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
           shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
