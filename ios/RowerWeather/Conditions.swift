@@ -25,27 +25,27 @@ enum Condition: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .temperature: "Air temperature"
-        case .wind: "Wind and gusts"
-        case .waves: "Waves"
-        case .waterTemperature: "Water temperature"
-        case .precipitation: "Rain, hail, snow"
-        case .visibility: "Visibility (fog)"
-        case .cloudCover: "Cloud cover"
-        case .thunderstorm: "Thunderstorm risk"
-        case .ice: "Ice cover"
-        case .daylight: "Daylight"
+        case .temperature: tr("Air temperature")
+        case .wind: tr("Wind and gusts")
+        case .waves: tr("Waves")
+        case .waterTemperature: tr("Water temperature")
+        case .precipitation: tr("Rain, hail, snow")
+        case .visibility: tr("Visibility (fog)")
+        case .cloudCover: tr("Cloud cover")
+        case .thunderstorm: tr("Thunderstorm risk")
+        case .ice: tr("Ice cover")
+        case .daylight: tr("Daylight")
         }
     }
 
     /// Unit shown under the icon in the hourly table header.
     var unit: String {
         switch self {
-        case .temperature, .waterTemperature: "°C"
-        case .wind: "m/s"
-        case .waves: "m"
-        case .precipitation: "mm"
-        case .visibility: "km"
+        case .temperature, .waterTemperature: AppSettings.shared.temperatureUnit.symbol
+        case .wind: AppSettings.shared.windUnit.symbol
+        case .waves: AppSettings.shared.waveUnit.symbol
+        case .precipitation: AppSettings.shared.rainUnit.symbol
+        case .visibility: AppSettings.shared.distanceUnit.symbol
         case .cloudCover: "%"
         case .thunderstorm, .ice, .daylight: ""
         }
@@ -53,16 +53,16 @@ enum Condition: String, CaseIterable, Identifiable {
 
     var explanation: String {
         switch self {
-        case .temperature: "Air temperature at 2 m."
-        case .wind: "Mean wind – strongest gust, in m/s. The arrow points where the wind blows to."
-        case .waves: "Estimated wave height at the launch point, from wind and open water upwind."
-        case .waterTemperature: "Latest lake measurement. Below 15 °C, extra care; below 10 °C, cold water."
-        case .precipitation: "What falls in the hour (rain, drizzle, snow, hail) and how much, in mm. Hail comes with thunderstorms."
-        case .visibility: "How far you can see. Fog below 1 km is amber, below 500 m red."
-        case .cloudCover: "Share of the sky covered by cloud."
-        case .thunderstorm: "Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings."
-        case .ice: "Not available yet. Check the lake yourself in winter."
-        case .daylight: "Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red."
+        case .temperature: tr("Air temperature at 2 m.")
+        case .wind: tr("Mean wind – strongest gust, in %@. The arrow points where the wind blows to.", unit)
+        case .waves: tr("Estimated wave height at the launch point, from wind and open water upwind.")
+        case .waterTemperature: tr("Latest lake measurement. Below %@, extra care; below %@, cold water.", Format.temperature(15), Format.temperature(10))
+        case .precipitation: tr("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unit)
+        case .visibility: tr("How far you can see. Fog below %@ is amber, below %@ red.", Format.distance(1000), Format.distance(500))
+        case .cloudCover: tr("Share of the sky covered by cloud.")
+        case .thunderstorm: tr("Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings.")
+        case .ice: tr("Not available yet. Check the lake yourself in winter.")
+        case .daylight: tr("Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red.")
         }
     }
 
@@ -98,31 +98,36 @@ enum Format {
     }
 
     static func day(_ date: Date, calendar: Calendar = .current) -> String {
-        if calendar.isDateInToday(date) { return "Today" }
-        if calendar.isDateInTomorrow(date) { return "Tomorrow" }
-        return date.formatted(.dateTime.weekday(.wide).day().month(.abbreviated))
+        if calendar.isDateInToday(date) { return tr("Today") }
+        if calendar.isDateInTomorrow(date) { return tr("Tomorrow") }
+        return date.formatted(.dateTime.weekday(.wide).day().month(.abbreviated).locale(locale))
     }
 
     /// "Today 21:00", "Tomorrow 03:00" or "Mon 21:00".
     static func dayTime(_ date: Date, calendar: Calendar = .current) -> String {
         let day: String
         if calendar.isDateInToday(date) {
-            day = "Today"
+            day = tr("Today")
         } else if calendar.isDateInTomorrow(date) {
-            day = "Tomorrow"
+            day = tr("Tomorrow")
         } else {
-            day = date.formatted(.dateTime.weekday(.abbreviated))
+            day = date.formatted(.dateTime.weekday(.abbreviated).locale(locale))
         }
         return "\(day) \(time(date))"
     }
 
     static func number(_ value: Double?, digits: Int = 0) -> String {
         guard let value else { return "–" }
-        return value.formatted(.number.precision(.fractionLength(digits)))
+        return value.formatted(.number.precision(.fractionLength(digits)).locale(locale))
     }
 
+    /// Numbers and dates follow the language chosen in the settings.
+    static var locale: Locale { AppSettings.shared.locale }
+
     static func compass(_ degrees: Double) -> String {
-        let points = ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
+        let points = AppSettings.shared.resolvedLanguage == .german
+            ? ["N", "NO", "O", "SO", "S", "SW", "W", "NW"]
+            : ["N", "NE", "E", "SE", "S", "SW", "W", "NW"]
         return points[Int((degrees / 45).rounded()) % 8]
     }
 

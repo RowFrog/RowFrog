@@ -11,15 +11,15 @@ struct WarningsCard: View {
     let checkedAt: Date
 
     var body: some View {
-        Card(title: "DWD warnings", symbol: "exclamationmark.triangle") {
+        Card(title: tr("DWD warnings"), symbol: "exclamationmark.triangle") {
             if !warnings.checked {
-                Label("Warnings could not be loaded. Check dwd.de or the shore lights before going out.", systemImage: "wifi.exclamationmark")
+                Label(tr("Warnings could not be loaded. Check dwd.de or the shore lights before going out."), systemImage: "wifi.exclamationmark")
                     .foregroundStyle(.orange)
             } else if warnings.items.isEmpty {
-                Label("No warning right now", systemImage: "checkmark.shield.fill")
+                Label(tr("No warning right now"), systemImage: "checkmark.shield.fill")
                     .font(.headline)
                     .foregroundStyle(.green)
-                Text(coverage + " Checked \(Format.time(checkedAt)).")
+                Text(coverage + " " + tr("Checked %@.", Format.time(checkedAt)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
@@ -34,12 +34,12 @@ struct WarningsCard: View {
 
     /// What was checked: the lake warning service where DWD runs one, and the place.
     private var coverage: String {
-        let place = town.map { "weather warnings for \($0)" } ?? "weather warnings for this place"
+        let place = town.map { tr("weather warnings for %@", $0) } ?? tr("weather warnings for this place")
         if let area = warnings.lakeArea {
-            return "Covers the DWD lake warning for \(area) and \(place)."
+            return tr("Covers the DWD lake warning for %@ and %@.", area, place)
         }
-        let water = lakeName.map { "for \($0)" } ?? "for this water"
-        return "DWD has no lake warning service \(water). Covers \(place)."
+        let water = lakeName.map { tr("for %@", $0) } ?? tr("for this water")
+        return tr("DWD has no lake warning service %@. Covers %@.", water, place)
     }
 }
 
@@ -55,16 +55,16 @@ private struct WarningRow: View {
                 HStack(spacing: 6) {
                     Image(systemName: warning.isLake ? "light.beacon.max.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(warning.color)
-                    Text(warning.isLake ? "Lake warning · \(warning.area)" : "Weather warning · \(warning.area)")
+                    Text((warning.isLake ? tr("Lake warning") : tr("Weather warning")) + " · \(warning.area)")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     if warning.sample == true {
-                        Text("SAMPLE")
+                        Text(tr("SAMPLE"))
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(Color.secondary.opacity(0.2), in: Capsule())
-                            .accessibilityLabel("Sample warning for the preview, not from DWD")
+                            .accessibilityLabel(tr("Sample warning for the preview, not from DWD"))
                     }
                 }
                 Text(warning.headline).font(.headline)
@@ -85,9 +85,9 @@ private struct WarningRow: View {
 
     private var period: String? {
         switch (warning.onset, warning.expires) {
-        case let (onset?, expires?): "\(Format.dayTime(onset)) until \(Format.dayTime(expires))"
-        case let (onset?, nil): "From \(Format.dayTime(onset))"
-        case let (nil, expires?): "Until \(Format.dayTime(expires))"
+        case let (onset?, expires?): tr("%@ until %@", Format.dayTime(onset), Format.dayTime(expires))
+        case let (onset?, nil): tr("From %@", Format.dayTime(onset))
+        case let (nil, expires?): tr("Until %@", Format.dayTime(expires))
         default: nil
         }
     }
@@ -106,6 +106,6 @@ extension DWDWarning {
 
     /// Short label for the location list, e.g. "Lake warning" or "Warning: WINDBÖEN".
     var shortLabel: String {
-        isLake ? "DWD lake warning" : "DWD warning: \(event.capitalized(with: Locale(identifier: "de_DE")))"
+        isLake ? tr("DWD lake warning") : tr("DWD warning: %@", event.capitalized(with: Locale(identifier: "de_DE")))
     }
 }

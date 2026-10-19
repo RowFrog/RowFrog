@@ -75,30 +75,30 @@ enum Sky: CaseIterable {
 
     var title: String {
         switch self {
-        case .clear: "Clear"
-        case .mostlyClear: "Mostly clear"
-        case .partlyCloudy: "Partly cloudy"
-        case .cloudy: "Cloudy"
-        case .fog: "Fog"
-        case .drizzle: "Drizzle"
-        case .rain: "Rain"
-        case .showers: "Showers"
-        case .heavyRain: "Heavy rain"
-        case .freezingRain: "Freezing rain"
-        case .snow: "Snow"
-        case .thunderstorm: "Thunderstorm"
-        case .hail: "Thunderstorm with hail"
+        case .clear: tr("Clear")
+        case .mostlyClear: tr("Mostly clear")
+        case .partlyCloudy: tr("Partly cloudy")
+        case .cloudy: tr("Cloudy")
+        case .fog: tr("Fog")
+        case .drizzle: tr("Drizzle")
+        case .rain: tr("Rain")
+        case .showers: tr("Showers")
+        case .heavyRain: tr("Heavy rain")
+        case .freezingRain: tr("Freezing rain")
+        case .snow: tr("Snow")
+        case .thunderstorm: tr("Thunderstorm")
+        case .hail: tr("Thunderstorm with hail")
         }
     }
 
     /// What falls, for the precipitation value: "Rain", "Hail", "Snow" ... or nil when nothing does.
     var precipitationKind: String? {
         switch self {
-        case .drizzle: "Drizzle"
-        case .rain, .showers, .heavyRain, .thunderstorm: "Rain"
-        case .freezingRain: "Freezing rain"
-        case .snow: "Snow"
-        case .hail: "Hail"
+        case .drizzle: tr("Drizzle")
+        case .rain, .showers, .heavyRain, .thunderstorm: tr("Rain")
+        case .freezingRain: tr("Freezing rain")
+        case .snow: tr("Snow")
+        case .hail: tr("Hail")
         default: nil
         }
     }
@@ -117,10 +117,10 @@ struct SkyIcon: View {
     }
 }
 
-/// "Rain 0.4 mm", "Hail 2.1 mm", or "None".
-func precipitationText(_ hour: ForecastHour) -> String {
+/// "Rain 0.4 mm", "Hail 2.1 mm", or nil when nothing falls.
+func precipitationText(_ hour: ForecastHour) -> String? {
     let sky = Sky(hour: hour)
     guard let mm = hour.precipitationMm else { return sky.precipitationKind ?? "–" }
-    if mm < 0.05 && sky.precipitationKind == nil { return "None" }
-    return "\(sky.precipitationKind ?? "Rain") \(Format.number(mm, digits: 1)) mm"
+    if mm < 0.05 && sky.precipitationKind == nil { return nil }
+    return "\(sky.precipitationKind ?? tr("Rain")) \(Format.rain(mm))"
 }

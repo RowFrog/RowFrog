@@ -20,6 +20,12 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest -q
 
+  translations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/check_translations.py
+
   ios:
     runs-on: macos-latest
     defaults:
