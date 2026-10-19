@@ -31,14 +31,21 @@ struct LocationPageView: View {
                             DaylightCard(state: sun)
                         }
                         CurrentConditionsCard(hour: now, water: forecast.waterTemperature)
-                        if tourSeen && showHourlyTip {
-                            TipView(hourlyTip)
+                        // Each tip sits above its card and scrolls with it.
+                        VStack(spacing: 16) {
+                            if tourSeen && showHourlyTip {
+                                TipView(hourlyTip)
+                            }
+                            HourlyCard(forecast: forecast)
                         }
-                        HourlyCard(forecast: forecast).id("hourly")
-                        if tourSeen && showLaunchPointTip {
-                            TipView(launchPointTip)
+                        .id("hourly")
+                        VStack(spacing: 16) {
+                            if tourSeen && showLaunchPointTip {
+                                TipView(launchPointTip)
+                            }
+                            LaunchPointMapCard(club: club)
                         }
-                        LaunchPointMapCard(club: club).id("launchpoint")
+                        .id("launchpoint")
                         LegendCard()
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(forecast.attribution, id: \.self) { Text(tr($0)) }
