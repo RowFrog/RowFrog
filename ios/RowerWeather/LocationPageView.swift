@@ -8,6 +8,7 @@ struct LocationPageView: View {
     let lake: Lake?
     let isHome: Bool
     let forecasts: ForecastStore
+    @Environment(\.surface) private var surface
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
@@ -28,23 +29,25 @@ struct LocationPageView: View {
                         LaunchPointMapCard(club: club)
                         LegendCard()
                         VStack(alignment: .leading, spacing: 4) {
-                            ForEach(forecast.attribution, id: \.self) { Text($0) }
+                            ForEach(forecast.attribution, id: \.self) { Text(tr($0)) }
                             if !club.launchPointVerified {
                                 if club.source == "drv" {
-                                    Text("Club data: Deutscher Ruderverband e.V. (rudern.de). Launch point geocoded with © OpenStreetMap contributors, ODbL")
+                                    Text(tr("Club data: Deutscher Ruderverband e.V. (rudern.de). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
                                 } else {
-                                    Text("Launch point from © OpenStreetMap contributors, ODbL")
+                                    Text(tr("Launch point from © OpenStreetMap contributors, ODbL"))
                                 }
                             }
                         }
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(surface.hasPicture ? 12 : 0)
+                        .background(surface.label, in: RoundedRectangle(cornerRadius: 12))
                     } else if forecasts.failed.contains(club.id) {
                         ContentUnavailableView {
-                            Label("No forecast", systemImage: "icloud.slash")
+                            Label(tr("No forecast"), systemImage: "icloud.slash")
                         } description: {
-                            Text("Could not load the forecast. Pull to retry.")
+                            Text(tr("Could not load the forecast. Pull to retry."))
                         }
                     } else {
                         ProgressView().padding(.top, 40)
@@ -68,7 +71,7 @@ struct LocationPageView: View {
     private var header: some View {
         VStack(spacing: 4) {
             if isHome {
-                Label("Home base", systemImage: "house.fill")
+                Label(tr("Home base"), systemImage: "house.fill")
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
@@ -78,22 +81,25 @@ struct LocationPageView: View {
             Text([lake?.name, club.town].compactMap { $0 }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             if !club.launchPointVerified {
-                Label("Launch point not yet confirmed", systemImage: "mappin.slash")
+                Label(tr("Launch point not yet confirmed"), systemImage: "mappin.slash")
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
             if let updated = forecasts.forecasts[club.id]?.generatedAt {
                 if forecasts.failed.contains(club.id) {
-                    Label("Could not update. Showing data from \(Format.time(updated)).", systemImage: "wifi.exclamationmark")
+                    Label(tr("Could not update. Showing data from %@.", Format.time(updated)), systemImage: "wifi.exclamationmark")
                         .font(.caption)
                         .foregroundStyle(.orange)
                 } else {
-                    Text("Updated \(Format.time(updated)) · Pull down to refresh")
+                    Text(tr("Updated %@ · Pull down to refresh", Format.time(updated)))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
             }
         }
+        .padding(.horizontal, surface.hasPicture ? 16 : 0)
+        .padding(.vertical, surface.hasPicture ? 10 : 0)
+        .background(surface.label, in: RoundedRectangle(cornerRadius: 16))
         .padding(.top, 24)
     }
 }
@@ -102,6 +108,7 @@ struct Card<Content: View>: View {
     var title: String?
     var symbol: String?
     @ViewBuilder var content: Content
+    @Environment(\.surface) private var surface
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -115,7 +122,7 @@ struct Card<Content: View>: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+        .background(surface.card, in: RoundedRectangle(cornerRadius: 16))
     }
 }
 
@@ -136,7 +143,7 @@ private struct NowCard: View {
             }
             VStack(alignment: .leading, spacing: 6) {
                 if hour.reasons.isEmpty {
-                    Label("All conditions are within the limits.", systemImage: "checkmark.circle")
+                    Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
                 } else {
                     ForEach(hour.reasons, id: \.self) { reason in
                         Label(reason.explanation, systemImage: reason.symbol)
@@ -146,30 +153,29 @@ private struct NowCard: View {
             }
             .font(.subheadline)
             .symbolRenderingMode(.hierarchical)
-            .accessibilityLabel(hour.reasons.isEmpty ? "Why: all conditions within the limits" : "Why: " + hour.reasons.map(\.explanation).joined(separator: " "))
+            .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map(\.explanation).joined(separator: " ")))
             Divider()
             HStack(alignment: .lastTextBaseline) {
                 VStack(alignment: .leading, spacing: 0) {
                     TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
                     if let feels = hour.apparentTemperatureC {
-                        Label("Feels like \(Format.number(feels))°", systemImage: Condition.feelsLike.symbol)
+                        Label(tr("Feels like %@", Format.degrees(feels)), systemImage: Condition.feelsLike.symbol)
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .accessibilityLabel("Feels like \(Format.number(feels)) degrees. \(feelsLikeNote(hour) ?? "")")
+                            .accessibilityLabel(tr("Feels like %@", Format.temperature(feels)) + ". " + (feelsLikeNote(hour) ?? ""))
                     }
                 }
                 Spacer()
                 TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28)
                 Spacer()
-                MetricView(title: "Waves", symbol: Condition.waves.symbol,
-                           value: hour.waveHeightM.map { "\(Format.number($0, digits: 2)) m" } ?? "–", size: 28)
+                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 28)
             }
             HStack(alignment: .top) {
-                MetricView(title: "Visibility", symbol: Condition.visibility.symbol, value: visibilityText(hour.visibilityM), size: 17)
+                MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17)
                 Spacer()
-                MetricView(title: "Rain, hail", symbol: Condition.precipitation.symbol, value: precipitationText(hour), size: 17)
+                MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: precipitationText(hour) ?? tr("None"), size: 17)
                 Spacer()
-                MetricView(title: "Ice", symbol: Condition.ice.symbol, value: "No data", size: 17)
+                MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: tr("No data"), size: 17)
                     .foregroundStyle(.secondary)
             }
             .symbolRenderingMode(.hierarchical)
@@ -186,10 +192,10 @@ struct TemperatureView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Label(condition == .temperature ? "Air" : "Water", systemImage: condition.symbol)
+            Label(condition == .temperature ? tr("Air") : tr("Water"), systemImage: condition.symbol)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            Text(celsius.map { "\(Format.number($0, digits: digits))°" } ?? "–")
+            Text(Format.degrees(celsius, digits: digits))
                 .font(.system(size: size, weight: .light))
         }
         .accessibilityElement(children: .combine)
@@ -219,15 +225,15 @@ private struct DaylightCard: View {
     let state: SunState
 
     var body: some View {
-        Card(title: "Daylight", symbol: Condition.daylight.symbol) {
+        Card(title: tr("Daylight"), symbol: Condition.daylight.symbol) {
             switch state {
             case let .up(sunrise, sunset):
                 sunTimes(sunrise: sunrise, sunset: sunset)
-                Label("Sun is up. Rowing advised for \(Format.duration(from: .now, to: sunset)) until sunset.", systemImage: "sun.max.fill")
+                Label(tr("Sun is up. Rowing advised for %@ until sunset.", Format.duration(from: .now, to: sunset)), systemImage: "sun.max.fill")
                     .foregroundStyle(.primary)
             case let .down(nextSunrise, nextSunset):
                 sunTimes(sunrise: nextSunrise, sunset: nextSunset)
-                Label("Sun is down. Rowing is advised again from sunrise at \(Format.time(nextSunrise)).", systemImage: "moon.stars.fill")
+                Label(tr("Sun is down. Rowing is advised again from sunrise at %@.", Format.time(nextSunrise)), systemImage: "moon.stars.fill")
                     .foregroundStyle(.primary)
             }
         }
@@ -253,12 +259,12 @@ private struct CurrentConditionsCard: View {
     let pressureChange: Double?
 
     var body: some View {
-        Card(title: "Current conditions", symbol: "gauge.with.dots.needle.33percent") {
+        Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent") {
             HStack(spacing: 12) {
                 SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 40))
                 VStack(alignment: .leading, spacing: 2) {
                     Text(Sky(hour: hour).title).font(.title3.weight(.semibold))
-                    Text("\(Format.number(hour.temperatureC))° · Clouds \(Format.number(hour.cloudCoverPct)) %")
+                    Text(tr("%@ · Clouds %@ %%", Format.degrees(hour.temperatureC), Format.number(hour.cloudCoverPct)))
                         .font(.subheadline).foregroundStyle(.secondary)
                 }
                 Spacer(minLength: 0)
@@ -278,8 +284,8 @@ private struct CurrentConditionsCard: View {
     @ViewBuilder
     private func value(for condition: Condition) -> some View {
         switch condition {
-        case .temperature: Text("\(Format.number(hour.temperatureC)) °C")
-        case .feelsLike: Text(hour.apparentTemperatureC.map { "\(Format.number($0)) °C" } ?? "–")
+        case .temperature: Text(Format.temperature(hour.temperatureC))
+        case .feelsLike: Text(Format.temperature(hour.apparentTemperatureC))
         case .humidity: Text(hour.humidityPct.map { "\(Format.number($0)) %" } ?? "–")
         case .pressure:
             HStack(spacing: 8) {
@@ -289,30 +295,30 @@ private struct CurrentConditionsCard: View {
             }
         case .wind:
             HStack(spacing: 6) {
-                Text("\(Format.number(hour.windSpeedMs)) m/s")
+                Text(Format.wind(hour.windSpeedMs))
                 if let from = hour.windFromDeg {
                     Image(systemName: "location.north.fill")
                         .font(.caption)
                         .rotationEffect(.degrees(from + 180))
-                        .accessibilityLabel("from \(Format.compass(from))")
+                        .accessibilityLabel(tr("from %@", Format.compass(from)))
                 }
             }
-        case .waves: Text(hour.waveHeightM.map { "\(Format.number($0, digits: 2)) m" } ?? "–")
-        case .waterTemperature: Text(water.map { "\(Format.number($0.celsius, digits: 1)) °C" } ?? "–")
+        case .waves: Text(Format.waves(hour.waveHeightM))
+        case .waterTemperature: Text(Format.temperature(water?.celsius, digits: 1))
         case .precipitation:
             HStack(spacing: 6) {
-                Text(hour.precipitationMm.map { "\(Format.number($0, digits: 1)) mm" } ?? "–")
+                Text(Format.rain(hour.precipitationMm))
                 SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.callout)
             }
-        case .visibility: Text(visibilityText(hour.visibilityM))
+        case .visibility: Text(Format.distance(hour.visibilityM))
         case .cloudCover: Text("\(Format.number(hour.cloudCoverPct)) %")
         case .thunderstorm:
             switch hour.light(for: condition.reasonNames) {
-            case .red: Text("High")
-            case .amber: Text("Possible")
-            default: Text("Low")
+            case .red: Text(tr("High"))
+            case .amber: Text(tr("Possible"))
+            default: Text(tr("Low"))
             }
-        case .ice: Text("No data yet").foregroundStyle(.secondary)
+        case .ice: Text(tr("No data yet")).foregroundStyle(.secondary)
         case .daylight: EmptyView()
         }
     }
@@ -321,26 +327,26 @@ private struct CurrentConditionsCard: View {
         switch condition {
         case .wind:
             guard let gust = hour.windGustMs else { return nil }
-            let from = hour.windFromDeg.map { " · from \(Format.compass($0))" } ?? ""
-            return "Gusts \(Format.number(gust)) m/s\(from)"
+            let from = hour.windFromDeg.map { " · " + tr("from %@", Format.compass($0)) } ?? ""
+            return tr("Gusts %@", Format.wind(gust)) + from
         case .waves:
             guard let fetch = hour.fetchM else { return nil }
-            return fetch < 50 ? "Wind blows off the shore" : "\(Format.number(fetch / 1000, digits: 1)) km open water upwind"
+            return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
         case .precipitation:
-            return Sky(hour: hour).precipitationKind ?? "Dry"
+            return Sky(hour: hour).precipitationKind ?? tr("Dry")
         case .feelsLike:
             return feelsLikeNote(hour)
         case .humidity:
-            return hour.dewPointC.map { "Dew point \(Format.number($0))°" }
+            return hour.dewPointC.map { tr("Dew point %@", Format.degrees($0)) }
         case .pressure:
             guard let change = pressureChange else { return nil }
             let trend = PressureTrend(change: change)
-            return trend == .steady ? "Steady next 3 h" : "\(trend.title) \(Format.number(abs(change), digits: 1)) hPa in 3 h"
+            return trend == .steady ? tr("Steady next 3 h") : tr("%@ %@ hPa in 3 h", trend.title, Format.number(abs(change), digits: 1))
         case .waterTemperature:
-            return water.map { "Measured \(Format.time($0.measuredAt))" } ?? "No lake station"
+            return water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
         case .visibility:
             guard let v = hour.visibilityM else { return nil }
-            return v < 1000 ? "Fog" : "No fog"
+            return v < 1000 ? tr("Fog") : tr("No fog")
         default:
             return nil
         }
@@ -374,14 +380,8 @@ struct PressureGauge: View {
         }
         .padding(4)
         .accessibilityElement()
-        .accessibilityLabel("Pressure \(hpa.map { Format.number($0) } ?? "unknown") hectopascal, \(trend?.title ?? "trend unknown")")
+        .accessibilityLabel(tr("Pressure %@ hectopascal, %@", hpa.map { Format.number($0) } ?? "–", trend?.title ?? "–"))
     }
-}
-
-func visibilityText(_ metres: Double?) -> String {
-    guard let metres else { return "–" }
-    let km = metres / 1000
-    return "\(Format.number(km, digits: km < 10 ? 1 : 0)) km"
 }
 
 private struct ConditionTile<Value: View>: View {
@@ -389,6 +389,7 @@ private struct ConditionTile<Value: View>: View {
     let light: Light?
     @ViewBuilder var value: Value
     var detail: () -> String?
+    @Environment(\.surface) private var surface
 
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -413,13 +414,14 @@ private struct ConditionTile<Value: View>: View {
         }
         .padding(10)
         .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
-        .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12))
+        .background(surface.tile, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 
 /// Columns of the hourly table, shared by the icon header and the rows.
 private enum Column {
-    static let time: CGFloat = 44
+    /// Wider for "10:00 PM" than for "22:00".
+    static var time: CGFloat { AppSettings.shared.timeFormat.usesAMPM ? 64 : 44 }
     static let light: CGFloat = 14
     static let sky: CGFloat = 24
 }
@@ -428,7 +430,7 @@ private struct HourlyCard: View {
     let forecast: ClubForecast
 
     var body: some View {
-        Card(title: "Next 48 hours", symbol: "clock") {
+        Card(title: tr("Next 48 hours"), symbol: "clock") {
             HourlyLegendHeader()
             ForEach(days) { group in
                 DayHeader(day: group.day, sun: sunDay(on: group.day))
@@ -459,11 +461,11 @@ private struct HourlyLegendHeader: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "clock").frame(width: Column.time, alignment: .leading)
-                .accessibilityLabel("Time")
+                .accessibilityLabel(tr("Time"))
             Image(systemName: "circle.fill").font(.system(size: 8)).frame(width: Column.light)
-                .accessibilityLabel("Rowing light")
+                .accessibilityLabel(tr("Rowing light"))
             Image(systemName: "cloud.sun").frame(width: Column.sky)
-                .accessibilityLabel("Weather")
+                .accessibilityLabel(tr("Weather"))
             column(.temperature)
             column(.wind)
             column(.waves)
@@ -518,12 +520,12 @@ private struct HourRow: View {
             SkyIcon(sky: Sky(hour: hour), night: dark)
                 .font(.callout)
                 .frame(width: Column.sky)
-            cell(Format.number(hour.temperatureC))
-            cell(hour.windSpeedMs.map { "\(Format.number($0))–\(Format.number(hour.windGustMs))" } ?? "–")
-            cell(Format.number(hour.waveHeightM, digits: 2))
-            cell(Format.number(hour.precipitationMm, digits: 1))
+            cell(Format.degrees(hour.temperatureC).replacingOccurrences(of: "°", with: ""))
+            cell(hour.windSpeedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(hour.windGustMs))" } ?? "–")
+            cell(Format.wavesNumber(hour.waveHeightM))
+            cell(Format.rainNumber(hour.precipitationMm))
                 .foregroundStyle((hour.precipitationMm ?? 0) >= 0.1 ? Color.blue : .primary)
-            cell(visibilityText(hour.visibilityM).replacingOccurrences(of: " km", with: ""))
+            cell(Format.distanceNumber(hour.visibilityM))
                 .foregroundStyle(hour.light(for: ["fog"]).map(\.color) ?? .primary)
             cell(Format.number(hour.cloudCoverPct))
         }
@@ -554,7 +556,7 @@ private struct LegendCard: View {
                         }
                     }
                     Divider()
-                    Text("Weather symbols").font(.subheadline.weight(.semibold))
+                    Text(tr("Weather symbols")).font(.subheadline.weight(.semibold))
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 8) {
                         ForEach(Sky.allCases, id: \.self) { sky in
                             HStack(spacing: 8) {
@@ -563,7 +565,7 @@ private struct LegendCard: View {
                             }
                         }
                     }
-                    Text("At night the sun becomes a moon and the row is dimmed.").font(.caption).foregroundStyle(.secondary)
+                    Text(tr("At night the sun becomes a moon and the row is dimmed.")).font(.caption).foregroundStyle(.secondary)
                     Divider()
                     ForEach(Condition.allCases) { c in
                         HStack(alignment: .top, spacing: 10) {
@@ -577,7 +579,7 @@ private struct LegendCard: View {
                 }
                 .padding(.top, 8)
             } label: {
-                Label("Legend", systemImage: "info.circle").font(.subheadline.weight(.semibold))
+                Label(tr("Legend"), systemImage: "info.circle").font(.subheadline.weight(.semibold))
             }
         }
     }
