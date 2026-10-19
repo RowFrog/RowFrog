@@ -51,6 +51,14 @@ struct LocationListView: View {
                         }
                         .task { await forecasts.load(club.id) }
                     }
+                    if let updated = locations.saved.compactMap({ forecasts.forecasts[$0.id]?.generatedAt }).min() {
+                        Text("Updated \(Format.time(updated)) · Pull down to refresh")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
+                    }
                 } else {
                     let results = locations.search(search)
                     if results.isEmpty {
@@ -75,9 +83,8 @@ struct LocationListView: View {
                     Button("Done") { dismiss() }
                 }
             }
-            .refreshable {
-                for club in locations.saved { await forecasts.load(club.id, force: true) }
-            }
+            // Pull down to reload every saved location at once, as in Mail.
+            .refreshable { await forecasts.reload(locations.saved.map(\.id)) }
             .task {
                 // Screenshot hook: `-RWScrollPage n` (n > 0) scrolls to the end of the list.
                 guard UserDefaults.standard.integer(forKey: "RWScrollPage") > 0, let last = locations.saved.last else { return }

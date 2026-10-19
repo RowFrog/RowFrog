@@ -82,6 +82,17 @@ struct LocationPageView: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
+            if let updated = forecasts.forecasts[club.id]?.generatedAt {
+                if forecasts.failed.contains(club.id) {
+                    Label("Could not update. Showing data from \(Format.time(updated)).", systemImage: "wifi.exclamationmark")
+                        .font(.caption)
+                        .foregroundStyle(.orange)
+                } else {
+                    Text("Updated \(Format.time(updated)) · Pull down to refresh")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .padding(.top, 24)
     }
