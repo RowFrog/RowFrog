@@ -4,18 +4,19 @@ import SwiftUI
 /// The same icons head the hourly table and label the current conditions,
 /// so the legend explains both.
 enum Condition: String, CaseIterable, Identifiable {
-    case temperature, wind, waves, waterTemperature, precipitation, visibility, cloudCover, thunderstorm, ice, daylight
+    case temperature, feelsLike, wind, waves, waterTemperature, precipitation, visibility, cloudCover, thunderstorm, ice, daylight
 
     var id: String { rawValue }
 
     var symbol: String {
         switch self {
         case .temperature: "thermometer.medium"
+        case .feelsLike: "thermometer.variable.and.figure"
         case .wind: "wind"
         case .waves: "water.waves"
         case .waterTemperature: "thermometer.and.liquid.waves"
         case .precipitation: "cloud.rain"
-        case .visibility: "cloud.fog"
+        case .visibility: "binoculars"
         case .cloudCover: "cloud"
         case .thunderstorm: "cloud.bolt"
         case .ice: "snowflake"
@@ -26,6 +27,7 @@ enum Condition: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .temperature: "Air temperature"
+        case .feelsLike: "Feels like"
         case .wind: "Wind and gusts"
         case .waves: "Waves"
         case .waterTemperature: "Water temperature"
@@ -41,7 +43,7 @@ enum Condition: String, CaseIterable, Identifiable {
     /// Unit shown under the icon in the hourly table header.
     var unit: String {
         switch self {
-        case .temperature, .waterTemperature: "°C"
+        case .temperature, .feelsLike, .waterTemperature: "°C"
         case .wind: "m/s"
         case .waves: "m"
         case .precipitation: "mm"
@@ -54,6 +56,7 @@ enum Condition: String, CaseIterable, Identifiable {
     var explanation: String {
         switch self {
         case .temperature: "Air temperature at 2 m."
+        case .feelsLike: "How warm or cold it feels on the water, from air temperature, wind, humidity and sun."
         case .wind: "Mean wind – strongest gust, in m/s. The arrow points where the wind blows to."
         case .waves: "Estimated wave height at the launch point, from wind and open water upwind."
         case .waterTemperature: "Latest lake measurement. Below 15 °C, extra care; below 10 °C, cold water."
@@ -76,7 +79,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .thunderstorm: ["thunderstorm"]
         case .ice: ["ice"]
         case .daylight: ["daylight", "twilight"]
-        case .temperature, .cloudCover, .precipitation: []
+        case .temperature, .feelsLike, .cloudCover, .precipitation: []
         }
     }
 }

@@ -258,6 +258,7 @@ private struct CurrentConditionsCard: View {
     private func value(for condition: Condition) -> some View {
         switch condition {
         case .temperature: Text("\(Format.number(hour.temperatureC)) °C")
+        case .feelsLike: Text(hour.apparentTemperatureC.map { "\(Format.number($0)) °C" } ?? "–")
         case .wind:
             HStack(spacing: 6) {
                 Text("\(Format.number(hour.windSpeedMs)) m/s")
@@ -299,6 +300,11 @@ private struct CurrentConditionsCard: View {
             return fetch < 50 ? "Wind blows off the shore" : "\(Format.number(fetch / 1000, digits: 1)) km open water upwind"
         case .precipitation:
             return Sky(hour: hour).precipitationKind ?? "Dry"
+        case .feelsLike:
+            guard let feels = hour.apparentTemperatureC, let air = hour.temperatureC else { return nil }
+            if feels <= air - 2 { return (hour.windSpeedMs ?? 0) >= 3 ? "Colder, wind chill" : "Colder than the air" }
+            if feels >= air + 2 { return "Warmer than the air" }
+            return "About the air temperature"
         case .waterTemperature:
             return water.map { "Measured \(Format.time($0.measuredAt))" } ?? "No lake station"
         case .visibility:
