@@ -99,4 +99,14 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(RainUnit.inches.convert(25.4), 1, accuracy: 0.001)
         XCTAssertEqual(DistanceUnit.nauticalMiles.convert(1852), 1, accuracy: 0.001)
     }
+
+    func testTimeAndDateFormats() {
+        let date = ISO8601DateFormatter().date(from: "2026-10-19T13:05:00Z")!
+        XCTAssertNotNil(TimeFormat.hours24.string(from: date).range(of: #"^\d\d:05$"#, options: .regularExpression))
+        XCTAssertNotNil(TimeFormat.hours12.string(from: date).range(of: #"^\d{1,2}:05 (AM|PM)$"#, options: .regularExpression))
+        let english = Locale(identifier: "en_GB")
+        XCTAssertTrue(DateFormat.iso.string(from: date, locale: english).hasSuffix("2026-10-19"))
+        XCTAssertTrue(DateFormat.dayMonthYear.string(from: date, locale: english).hasSuffix("19.10.2026"))
+        XCTAssertTrue(DateFormat.monthDayYear.string(from: date, locale: english).hasSuffix("10/19/2026"))
+    }
 }

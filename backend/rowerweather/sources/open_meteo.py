@@ -27,6 +27,9 @@ HOURLY = [
     "precipitation",
     "weather_code",
     "apparent_temperature",
+    "relative_humidity_2m",
+    "dew_point_2m",
+    "pressure_msl",
     "cape",
     "is_day",
 ]
@@ -49,6 +52,10 @@ class ForecastHour:
     weather_code: int | None = None
     # How warm it feels, from temperature, wind, humidity and sun.
     apparent_temperature_c: float | None = None
+    humidity_pct: float | None = None
+    dew_point_c: float | None = None
+    # Air pressure reduced to sea level, in hPa.
+    pressure_hpa: float | None = None
 
 
 def request_params(lat: float, lon: float, hours: int = 48) -> dict[str, str]:
@@ -83,6 +90,9 @@ def parse(payload: dict) -> list[ForecastHour]:
         col("is_day"),
         col("weather_code"),
         col("apparent_temperature"),
+        col("relative_humidity_2m"),
+        col("dew_point_2m"),
+        col("pressure_msl"),
     )
     return [
         ForecastHour(
@@ -99,8 +109,11 @@ def parse(payload: dict) -> list[ForecastHour]:
             is_day=None if day is None else bool(day),
             weather_code=None if code is None else int(code),
             apparent_temperature_c=feels,
+            humidity_pct=rh,
+            dew_point_c=dew,
+            pressure_hpa=hpa,
         )
-        for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code, feels in rows
+        for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code, feels, rh, dew, hpa in rows
     ]
 
 

@@ -1,3 +1,4 @@
+import CoreLocation
 import SwiftUI
 import TipKit
 
@@ -38,7 +39,7 @@ enum Tutorial {
 
 /// The tour's pages, in order. The two choice pages only show while there is no home base.
 enum TourPage: Int, CaseIterable, Identifiable {
-    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, locations, settings
+    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, locations, wideScreen, settings
     var id: Int { rawValue }
 
     var isChoice: Bool { self == .homeBase || self == .moreClubs }
@@ -52,6 +53,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .conditions: "thermometer.and.liquid.waves"
         case .warnings: "exclamationmark.triangle.fill"
         case .locations: "list.bullet"
+        case .wideScreen: "rectangle.split.2x1"
         case .settings: "gearshape"
         }
     }
@@ -62,6 +64,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: .green
         case .conditions: .teal
         case .warnings: .orange
+        case .wideScreen: .indigo
         case .settings: .gray
         }
     }
@@ -75,6 +78,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .conditions: tr("Conditions at a glance")
         case .warnings: tr("DWD warnings")
         case .locations: tr("Your locations")
+        case .wideScreen: tr("Landscape and wide screens")
         case .settings: tr("Settings")
         }
     }
@@ -88,6 +92,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .conditions: tr("Below the light you find what matters on the water.")
         case .warnings: tr("Warnings from the Deutscher Wetterdienst come right under the rowing light.")
         case .locations: tr("Keep all the places you row in one list.")
+        case .wideScreen: tr("Turn your iPhone sideways, or use a wide screen, to see more at once.")
         case .settings: tr("Open the settings with the cog at the top of the location list.")
         }
     }
@@ -106,6 +111,9 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "clock", text: tr("The next 48 hours each have their own light, so you can plan your outing.")),
         ]
         case .conditions: [
+            TourPoint(symbol: "thermometer.variable.and.figure", text: tr("Feels like: colder with wind chill, warmer with humidity and heat.")),
+            TourPoint(symbol: "humidity", text: tr("Humidity, with the dew point underneath.")),
+            TourPoint(symbol: "gauge.with.dots.needle.33percent", text: tr("Air pressure on a gauge, with its trend for the hours ahead.")),
             TourPoint(symbol: "info.circle", text: tr("Open the Legend at the bottom of each page to see what every icon and colour means.")),
         ]
         case .warnings: [
@@ -119,12 +127,19 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("Touch and hold a club, then drag to reorder.")),
             TourPoint(symbol: "trash", text: tr("Swipe a club in the list to the left to remove it.")),
             TourPoint(symbol: "arrow.clockwise", text: tr("Pull a page or the list down to refresh.")),
+            TourPoint(symbol: "apps.iphone", text: tr("Add a RowerWeather widget to your home or lock screen to see the rowing light at a glance.")),
+        ]
+        case .wideScreen: [
+            TourPoint(symbol: "sidebar.left", text: tr("The location list stays on the left, the club page on the right.")),
+            TourPoint(symbol: "square.grid.2x2", text: tr("The cards on the club page sit in two columns.")),
+            TourPoint(symbol: "gearshape", text: tr("Prefer portrait only? Switch landscape off in the settings.")),
         ]
         case .settings: [
             TourPoint(symbol: "globe", text: tr("Language: English or German.")),
             TourPoint(symbol: "ruler", text: tr("Units for temperature, wind, waves, rain and distances.")),
             TourPoint(symbol: "circle.lefthalf.filled", text: tr("Light, dark or like your phone.")),
             TourPoint(symbol: "photo", text: tr("Background pictures, including your own photos.")),
+            TourPoint(symbol: "app.badge", text: tr("Your choice of app icon.")),
             TourPoint(symbol: "questionmark.circle", text: tr("You can watch this tour again in the settings.")),
         ]
         }
@@ -144,6 +159,7 @@ struct TutorialView: View {
     let finish: () -> Void
     @State private var pages: [TourPage]
     @State private var page: TourPage
+    @State private var here = DeviceLocation()
 
     init(locations: LocationStore, reload: @escaping () async -> Void, finish: @escaping () -> Void) {
         self.locations = locations
@@ -174,7 +190,7 @@ struct TutorialView: View {
                 ForEach(pages) { page in
                     Group {
                         if page.isChoice {
-                            ClubChoicePage(page: page, locations: locations, reload: reload)
+                            ClubChoicePage(page: page, locations: locations, near: here.coordinate, reload: reload)
                         } else {
                             TourPageView(page: page)
                         }
@@ -184,6 +200,10 @@ struct TutorialView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .task(id: page) {
+                // Ask for the location when choosing the home base, for clubs nearby.
+                if page == .homeBase { here.request() }
+            }
             .onChange(of: page) {
                 // No swiping past the home base choice without one.
                 if locations.homeID == nil, page.rawValue > TourPage.homeBase.rawValue {
@@ -218,6 +238,7 @@ struct TutorialView: View {
 private struct ClubChoicePage: View {
     let page: TourPage
     let locations: LocationStore
+    let near: Coordinate?
     let reload: () async -> Void
     @State private var search = ""
 
@@ -268,11 +289,11 @@ private struct ClubChoicePage: View {
                             ForEach(locations.saved) { row($0) }
                         }
                     }
-                    let suggestions = locations.suggestions.filter { page == .homeBase || !locations.isSaved($0) }
+                    let suggestions = locations.suggestions(near: near).filter { page == .homeBase || !locations.isSaved($0) }
                     Section {
                         ForEach(suggestions) { row($0) }
                     } header: {
-                        if !suggestions.isEmpty { Text(tr("Suggestions")) }
+                        if !suggestions.isEmpty { Text(near == nil ? tr("Suggestions") : tr("Near you")) }
                     } footer: {
                         Text(tr("Search by club, lake or town to find any club in the DRV club directory."))
                     }
@@ -418,7 +439,7 @@ private struct TourPageView: View {
             }
             .padding()
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-        case .homeBase, .moreClubs, .warnings, .locations, .settings:
+        case .homeBase, .moreClubs, .warnings, .locations, .wideScreen, .settings:
             EmptyView()
         }
     }
@@ -448,6 +469,55 @@ struct FactoryResetTip: Tip {
     var title: Text { Text(tr("What a reset does")) }
     var message: Text? { Text(tr("Appearance, units, language and background pictures go back to how the app came, and your own pictures are deleted. Your locations and home base stay.")) }
     var image: Image? { Image(systemName: "arrow.counterclockwise") }
+}
+
+struct ConditionsExtrasTip: Tip {
+    var title: Text { Text(tr("More on the air")) }
+    var message: Text? { Text(tr("Feels like now covers wind chill and heat. Humidity shows the dew point underneath, and the gauge shows the air pressure and where it is heading.")) }
+    var image: Image? { Image(systemName: "gauge.with.dots.needle.33percent") }
+}
+
+struct AppIconTip: Tip {
+    var title: Text { Text(tr("Pick your app icon")) }
+    var message: Text? { Text(tr("Choose the icon RowerWeather shows on your home screen.")) }
+    var image: Image? { Image(systemName: "app.badge") }
+}
+
+// MARK: - Location for nearby clubs
+
+/// The device's location, asked for only while the app is in use and only to
+/// suggest clubs nearby. Stays nil when the user says no.
+@Observable
+final class DeviceLocation: NSObject, CLLocationManagerDelegate {
+    private(set) var coordinate: Coordinate?
+    @ObservationIgnored private let manager = CLLocationManager()
+
+    override init() {
+        super.init()
+        manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyKilometer
+    }
+
+    func request() {
+        switch manager.authorizationStatus {
+        case .notDetermined: manager.requestWhenInUseAuthorization()
+        case .authorizedWhenInUse, .authorizedAlways: manager.requestLocation()
+        default: break
+        }
+    }
+
+    func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
+            manager.requestLocation()
+        }
+    }
+
+    func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
+        guard let last = locations.last else { return }
+        coordinate = Coordinate(lat: last.coordinate.latitude, lon: last.coordinate.longitude)
+    }
+
+    func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {}
 }
 
 extension View {

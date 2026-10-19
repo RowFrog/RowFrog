@@ -58,6 +58,22 @@ struct LocationListView: View {
                             }
                         }
                         .task { await forecasts.load(club.id) }
+                        .moveDisabled(club.id == locations.homeID)
+                        .deleteDisabled(club.id == locations.homeID)
+                    }
+                    // Touch and hold a row to drag it, or use Edit, as in the Weather app.
+                    .onMove { locations.move(fromOffsets: $0, toOffset: $1) }
+                    .onDelete { offsets in
+                        let saved = locations.saved
+                        offsets.map { saved[$0] }.forEach(locations.remove)
+                    }
+                    if let updated = locations.saved.compactMap({ forecasts.forecasts[$0.id]?.generatedAt }).min() {
+                        Text(tr("Updated %@ · Pull down to refresh", Format.time(updated)))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .frame(maxWidth: .infinity)
+                            .listRowSeparator(.hidden)
+                            .listRowBackground(Color.clear)
                     }
                 } else {
                     let results = locations.search(search)
@@ -85,6 +101,9 @@ struct LocationListView: View {
                     }
                     .accessibilityLabel(tr("Settings"))
                 }
+                ToolbarItem(placement: .topBarLeading) {
+                    if search.isEmpty { EditButton() }
+                }
                 if selectedID == nil {
                     ToolbarItem(placement: .confirmationAction) {
                         Button(tr("Done")) { dismiss() }
@@ -95,9 +114,8 @@ struct LocationListView: View {
                 SettingsView(locations: locations)
                     .environment(\.locale, AppSettings.shared.locale)
             }
-            .refreshable {
-                for club in locations.saved { await forecasts.load(club.id, force: true) }
-            }
+            // Pull down to reload every saved location at once, as in Mail.
+            .refreshable { await forecasts.reload(locations.saved.map(\.id)) }
             .task {
                 // Screenshot hook: `-RWShowSettings YES` opens the settings once the list is up.
                 guard UserDefaults.standard.bool(forKey: "RWShowSettings") else { return }

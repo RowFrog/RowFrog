@@ -18,12 +18,23 @@ EXPIRES. Coordinate order in the answers depends on the requested CRS, so
 geometry is normalised by value: in Germany latitude is 47-55 and longitude
 6-15, so the order can be told apart safely.
 
+The GeoServer texts are German. DWD publishes the same municipality warnings
+in English as CAP files on opendata.dwd.de (one zip of all current warnings,
+file identifiers ending .ENG instead of .DEU); fetch_english_texts reads them.
+For a warning that has no English CAP (e.g. a lake warning), english_fallback
+translates the event and headline from DWD's fixed wording; the description
+then stays German only.
+
 Data: Deutscher Wetterdienst, CC BY 4.0 (credit "Deutscher Wetterdienst").
 """
 
 from __future__ import annotations
 
+import io
 import math
+import re
+import zipfile
+import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Iterable
@@ -31,6 +42,10 @@ from typing import Iterable
 import httpx
 
 WFS_URL = "https://maps.dwd.de/geoserver/dwd/ows"
+ENGLISH_CAP_URL = (
+    "https://opendata.dwd.de/weather/alerts/cap/COMMUNEUNION_DWD_STAT/"
+    "Z_CAP_C_EDZW_LATEST_PVW_STATUS_PREMIUMDWD_COMMUNEUNION_EN.zip"
+)
 # A launch point on the shore can sit just outside DWD's lake polygon.
 LAKE_AREA_TOLERANCE_M = 1000.0
 EARTH_RADIUS_M = 6_371_000.0
@@ -56,6 +71,8 @@ class Warning:
     instruction: str | None
     onset: datetime | None
     expires: datetime | None
+    # CAP identifier without the language suffix (.DEU/.ENG), to find the English text.
+    identifier: str = ""
 
     @property
     def level(self) -> int:
@@ -122,6 +139,7 @@ def parse_warnings(geojson: dict, kind: str) -> list[tuple[int, Warning]]:
                     instruction=p.get("INSTRUCTION") or None,
                     onset=_time(p.get("ONSET") or p.get("EFFECTIVE")),
                     expires=_time(p.get("EXPIRES")),
+                    identifier=_base_identifier(p.get("IDENTIFIER") or ""),
                 ),
             )
         )
@@ -196,4 +214,105 @@ async def fetch_local_warnings(client: httpx.AsyncClient, lon: float, lat: float
     return [w for _, w in parse_warnings(resp.json(), "local")]
 
 
-_PROPERTIES = "AREADESC,WARNCELLID,STATUS,MSGTYPE,EVENT,SEVERITY,HEADLINE,DESCRIPTION,INSTRUCTION,EFFECTIVE,ONSET,EXPIRES"
+_PROPERTIES = "AREADESC,IDENTIFIER,WARNCELLID,STATUS,MSGTYPE,EVENT,SEVERITY,HEADLINE,DESCRIPTION,INSTRUCTION,EFFECTIVE,ONSET,EXPIRES"
+
+
+@dataclass(frozen=True)
+class EnglishText:
+    event: str
+    headline: str
+    description: str | None
+    instruction: str | None
+    # True when the text is DWD's own English warning, False when only the
+    # event and headline were translated here.
+    official: bool
+
+
+def _base_identifier(identifier: str) -> str:
+    return re.sub(r"\.(DEU|ENG)$", "", identifier)
+
+
+_CAP = "{urn:oasis:names:tc:emergency:cap:1.2}"
+
+
+def parse_english_cap(data: bytes) -> dict[str, EnglishText]:
+    """English texts by identifier (without .ENG) from DWD's zip of CAP files."""
+    out = {}
+    with zipfile.ZipFile(io.BytesIO(data)) as z:
+        for name in z.namelist():
+            root = ET.fromstring(z.read(name))
+            info = root.find(f"{_CAP}info")
+            if info is None:
+                continue
+
+            def text(tag: str) -> str | None:
+                el = info.find(f"{_CAP}{tag}")
+                return el.text.strip() if el is not None and el.text else None
+
+            out[_base_identifier(root.findtext(f"{_CAP}identifier", ""))] = EnglishText(
+                event=text("event") or "",
+                headline=text("headline") or "",
+                description=text("description"),
+                instruction=text("instruction"),
+                official=True,
+            )
+    return out
+
+
+async def fetch_english_texts(client: httpx.AsyncClient) -> dict[str, EnglishText]:
+    resp = await client.get(ENGLISH_CAP_URL, timeout=30)
+    resp.raise_for_status()
+    return parse_english_cap(resp.content)
+
+
+# DWD's event names and their English names as DWD's English warnings use them.
+EVENTS_EN = {
+    "WINDBÖEN": "wind gusts",
+    "STURMBÖEN": "gale-force gusts",
+    "SCHWERE STURMBÖEN": "storm-force gusts",
+    "ORKANARTIGE BÖEN": "violent storm-force gusts",
+    "ORKANBÖEN": "hurricane-force gusts",
+    "EXTREME ORKANBÖEN": "extreme hurricane-force gusts",
+    "STARKWIND": "strong wind",
+    "STURM": "gale",
+    "SCHWERER STURM": "storm",
+    "ORKAN": "hurricane",
+    "GEWITTER": "thunderstorms",
+    "STARKES GEWITTER": "strong thunderstorms",
+    "SCHWERES GEWITTER": "severe thunderstorms",
+    "STARKREGEN": "heavy rain",
+    "HEFTIGER STARKREGEN": "very heavy rain",
+    "EXTREM HEFTIGER STARKREGEN": "extremely heavy rain",
+    "DAUERREGEN": "persistent rain",
+    "ERGIEBIGER DAUERREGEN": "heavy persistent rain",
+    "SCHNEEFALL": "snowfall",
+    "STARKER SCHNEEFALL": "heavy snowfall",
+    "SCHNEEVERWEHUNG": "snow drifts",
+    "NEBEL": "fog",
+    "FROST": "frost",
+    "STRENGER FROST": "severe frost",
+    "GLÄTTE": "slippery roads",
+    "GLATTEIS": "black ice",
+    "HAGEL": "hail",
+    "HITZE": "heat",
+    "STARKE HITZE": "extreme heat",
+    "UV-INDEX": "UV index",
+    "TAUWETTER": "thaw",
+}
+
+
+def english_fallback(w: Warning) -> EnglishText:
+    """Event and headline in English from DWD's fixed wording; the description stays German."""
+    event = EVENTS_EN.get(w.event.upper(), w.event.lower())
+    headline = w.headline
+    for german, english in (
+        ("Amtliche EXTREME UNWETTERWARNUNG vor", "Official EXTREME SEVERE WEATHER WARNING of"),
+        ("Amtliche UNWETTERWARNUNG vor", "Official SEVERE WEATHER WARNING of"),
+        ("Amtliche WARNUNG vor", "Official WARNING of"),
+    ):
+        if headline.startswith(german):
+            headline = f"{english} {event.upper()}"
+            break
+    else:
+        headline = f"Official warning: {event}"
+    return EnglishText(event=event, headline=headline, description=None, instruction=None, official=False)
