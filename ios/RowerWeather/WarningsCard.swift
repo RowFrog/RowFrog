@@ -11,15 +11,15 @@ struct WarningsCard: View {
     let checkedAt: Date
 
     var body: some View {
-        Card(title: "DWD warnings", symbol: "exclamationmark.triangle") {
+        Card(title: tr("DWD warnings"), symbol: "exclamationmark.triangle") {
             if !warnings.checked {
-                Label("Warnings could not be loaded. Check dwd.de or the shore lights before going out.", systemImage: "wifi.exclamationmark")
+                Label(tr("Warnings could not be loaded. Check dwd.de or the shore lights before going out."), systemImage: "wifi.exclamationmark")
                     .foregroundStyle(.orange)
             } else if warnings.items.isEmpty {
-                Label("No warning right now", systemImage: "checkmark.shield.fill")
+                Label(tr("No warning right now"), systemImage: "checkmark.shield.fill")
                     .font(.headline)
                     .foregroundStyle(.green)
-                Text(coverage + " Checked \(Format.time(checkedAt)).")
+                Text(coverage + " " + tr("Checked %@.", Format.time(checkedAt)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
@@ -34,12 +34,12 @@ struct WarningsCard: View {
 
     /// What was checked: the lake warning service where DWD runs one, and the place.
     private var coverage: String {
-        let place = town.map { "weather warnings for \($0)" } ?? "weather warnings for this place"
+        let place = town.map { tr("weather warnings for %@", $0) } ?? tr("weather warnings for this place")
         if let area = warnings.lakeArea {
-            return "Covers the DWD lake warning for \(area) and \(place)."
+            return tr("Covers the DWD lake warning for %@ and %@.", area, place)
         }
-        let water = lakeName.map { "for \($0)" } ?? "for this water"
-        return "DWD has no lake warning service \(water). Covers \(place)."
+        let water = lakeName.map { tr("for %@", $0) } ?? tr("for this water")
+        return tr("DWD has no lake warning service %@. Covers %@.", water, place)
     }
 }
 
@@ -55,16 +55,16 @@ private struct WarningRow: View {
                 HStack(spacing: 6) {
                     Image(systemName: warning.isLake ? "light.beacon.max.fill" : "exclamationmark.triangle.fill")
                         .foregroundStyle(warning.color)
-                    Text(warning.isLake ? "Lake warning · \(warning.area)" : "Weather warning · \(warning.area)")
+                    Text((warning.isLake ? tr("Lake warning") : tr("Weather warning")) + " · \(warning.area)")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
                     if warning.sample == true {
-                        Text("SAMPLE")
+                        Text(tr("SAMPLE"))
                             .font(.caption2.weight(.bold))
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(Color.secondary.opacity(0.2), in: Capsule())
-                            .accessibilityLabel("Sample warning for the preview, not from DWD")
+                            .accessibilityLabel(tr("Sample warning for the preview, not from DWD"))
                     }
                 }
                 if warningsInEnglish, let english = warning.english {
@@ -72,7 +72,7 @@ private struct WarningRow: View {
                     if let period = period {
                         Label(period, systemImage: "clock").font(.caption)
                     }
-                    Text(english.description ?? "DWD publishes the details of this warning in German only; see the original below.")
+                    Text(english.description ?? tr("DWD publishes the details of this warning in German only; see the original below."))
                         .fixedSize(horizontal: false, vertical: true)
                     if let instruction = english.instruction, !instruction.isEmpty {
                         Text(instruction)
@@ -101,9 +101,9 @@ private struct WarningRow: View {
 
     private var period: String? {
         switch (warning.onset, warning.expires) {
-        case let (onset?, expires?): "\(Format.dayTime(onset)) until \(Format.dayTime(expires))"
-        case let (onset?, nil): "From \(Format.dayTime(onset))"
-        case let (nil, expires?): "Until \(Format.dayTime(expires))"
+        case let (onset?, expires?): tr("%@ until %@", Format.dayTime(onset), Format.dayTime(expires))
+        case let (onset?, nil): tr("From %@", Format.dayTime(onset))
+        case let (nil, expires?): tr("Until %@", Format.dayTime(expires))
         default: nil
         }
     }
@@ -115,7 +115,7 @@ private struct GermanOriginal: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Label("Original from DWD (German)", systemImage: "character.book.closed")
+            Label(tr("Original from DWD (German)"), systemImage: "character.book.closed")
                 .font(.caption2.weight(.semibold))
             Text(warning.headline).font(.caption.weight(.semibold))
             Text(warning.description).font(.caption)
@@ -134,15 +134,7 @@ private struct GermanOriginal: View {
 }
 
 /// Whether DWD warnings are shown in English: when the app is in English.
-/// Reads the language from the settings ("RWLanguage": "en", "de", or the
-/// device's language when unset), as AppSettings.resolvedLanguage does.
-var warningsInEnglish: Bool {
-    switch UserDefaults.standard.string(forKey: "RWLanguage") {
-    case "en": true
-    case "de": false
-    default: Locale.preferredLanguages.first?.hasPrefix("de") != true
-    }
-}
+var warningsInEnglish: Bool { AppSettings.shared.resolvedLanguage == .english }
 
 extension DWDWarning {
     /// DWD's warning colours: yellow, orange, red, dark red.
@@ -157,10 +149,10 @@ extension DWDWarning {
 
     /// Short label for the location list, e.g. "DWD lake warning" or "DWD warning: Wind gusts".
     var shortLabel: String {
-        if isLake { return "DWD lake warning" }
+        if isLake { return tr("DWD lake warning") }
         if warningsInEnglish, let english {
-            return "DWD warning: \(english.event.prefix(1).uppercased() + english.event.dropFirst())"
+            return tr("DWD warning: %@", english.event.prefix(1).uppercased() + english.event.dropFirst())
         }
-        return "DWD warning: \(event.capitalized(with: Locale(identifier: "de_DE")))"
+        return tr("DWD warning: %@", event.capitalized(with: Locale(identifier: "de_DE")))
     }
 }

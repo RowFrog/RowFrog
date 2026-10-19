@@ -61,18 +61,18 @@ struct Reason: Codable, Hashable {
     /// Short label shown under the traffic light.
     var label: String {
         switch condition {
-        case "lake_warning": "DWD lake warning"
-        case "weather_warning": "DWD weather warning"
-        case "wind": "Wind"
-        case "gusts": "Gusts"
-        case "waves": "Waves"
-        case "fog": "Fog"
-        case "thunderstorm": "Thunderstorm risk"
-        case "ice": "Ice"
-        case "daylight": "Sun down"
-        case "twilight": "Sunrise / sunset"
-        case "cold_water": "Cold water"
-        case "cool_water": "Cool water"
+        case "lake_warning": tr("DWD lake warning")
+        case "weather_warning": tr("DWD weather warning")
+        case "wind": tr("Wind")
+        case "gusts": tr("Gusts")
+        case "waves": tr("Waves")
+        case "fog": tr("Fog")
+        case "thunderstorm": tr("Thunderstorm risk")
+        case "ice": tr("Ice")
+        case "daylight": tr("Sun down")
+        case "twilight": tr("Sunrise / sunset")
+        case "cold_water": tr("Cold water")
+        case "cool_water": tr("Cool water")
         default: condition
         }
     }
@@ -80,18 +80,18 @@ struct Reason: Codable, Hashable {
     /// One sentence saying why this condition changes the advice.
     var explanation: String {
         switch condition {
-        case "lake_warning": "DWD has issued a wind or storm warning for the lake."
-        case "weather_warning": "DWD has issued a weather warning for this place."
-        case "wind": "Mean wind is above the limit."
-        case "gusts": "Gusts are above the limit."
-        case "waves": "Waves at the launch point are too high."
-        case "fog": "Visibility is poor (fog or mist)."
-        case "thunderstorm": "Thunderstorms are possible."
-        case "ice": "There is ice on the water."
-        case "daylight": "The sun is down. Rowing is only advised in daylight."
-        case "twilight": "Sunrise or sunset falls in this hour."
-        case "cold_water": "Water is below 10 °C, so a capsize is dangerous."
-        case "cool_water": "Water is below 15 °C. Take extra care."
+        case "lake_warning": tr("DWD has issued a wind or storm warning for the lake.")
+        case "weather_warning": tr("DWD has issued a weather warning for this place.")
+        case "wind": tr("Mean wind is above the limit.")
+        case "gusts": tr("Gusts are above the limit.")
+        case "waves": tr("Waves at the launch point are too high.")
+        case "fog": tr("Visibility is poor (fog or mist).")
+        case "thunderstorm": tr("Thunderstorms are possible.")
+        case "ice": tr("There is ice on the water.")
+        case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
+        case "twilight": tr("Sunrise or sunset falls in this hour.")
+        case "cold_water": tr("Water is below %@, so a capsize is dangerous.", Format.temperature(10))
+        case "cool_water": tr("Water is below %@. Take extra care.", Format.temperature(15))
         default: condition
         }
     }

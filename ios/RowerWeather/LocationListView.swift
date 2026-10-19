@@ -7,6 +7,7 @@ struct LocationListView: View {
     let forecasts: ForecastStore
     let select: (Club) -> Void
     @State private var search: String
+    @State private var showingSettings = false
     @Environment(\.dismiss) private var dismiss
 
     init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", select: @escaping (Club) -> Void) {
@@ -37,14 +38,14 @@ struct LocationListView: View {
                         .swipeActions(edge: .trailing) {
                             if club.id != locations.homeID {
                                 Button(role: .destructive) { locations.remove(club) } label: {
-                                    Label("Remove", systemImage: "trash")
+                                    Label(tr("Remove"), systemImage: "trash")
                                 }
                             }
                         }
                         .swipeActions(edge: .leading) {
                             if club.id != locations.homeID {
                                 Button { locations.makeHome(club) } label: {
-                                    Label("Home base", systemImage: "house.fill")
+                                    Label(tr("Home base"), systemImage: "house.fill")
                                 }
                                 .tint(.blue)
                             }
@@ -60,7 +61,7 @@ struct LocationListView: View {
                         offsets.map { saved[$0] }.forEach(locations.remove)
                     }
                     if let updated = locations.saved.compactMap({ forecasts.forecasts[$0.id]?.generatedAt }).min() {
-                        Text("Updated \(Format.time(updated)) · Pull down to refresh")
+                        Text(tr("Updated %@ · Pull down to refresh", Format.time(updated)))
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .frame(maxWidth: .infinity)
@@ -82,20 +83,36 @@ struct LocationListView: View {
                 }
             }
             .listStyle(.plain)
-            .background(Color(.systemGroupedBackground))
             .scrollContentBackground(.hidden)
-            .navigationTitle("Locations")
-            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search clubs, lakes or towns")
+            .pageBackground(.list)
+            .navigationTitle(tr("Locations"))
+            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(tr("Search clubs, lakes or towns")))
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button { showingSettings = true } label: {
+                        Image(systemName: "gearshape")
+                    }
+                    .accessibilityLabel(tr("Settings"))
+                }
                 ToolbarItem(placement: .topBarLeading) {
                     if search.isEmpty { EditButton() }
                 }
                 ToolbarItem(placement: .confirmationAction) {
-                    Button("Done") { dismiss() }
+                    Button(tr("Done")) { dismiss() }
                 }
+            }
+            .sheet(isPresented: $showingSettings) {
+                SettingsView(locations: locations)
+                    .environment(\.locale, AppSettings.shared.locale)
             }
             // Pull down to reload every saved location at once, as in Mail.
             .refreshable { await forecasts.reload(locations.saved.map(\.id)) }
+            .task {
+                // Screenshot hook: `-RWShowSettings YES` opens the settings once the list is up.
+                guard UserDefaults.standard.bool(forKey: "RWShowSettings") else { return }
+                try? await Task.sleep(for: .seconds(1))
+                showingSettings = true
+            }
             .task {
                 // Screenshot hook: `-RWScrollPage n` (n > 0) scrolls to the end of the list.
                 guard UserDefaults.standard.integer(forKey: "RWScrollPage") > 0, let last = locations.saved.last else { return }
@@ -138,8 +155,8 @@ private struct LocationSummaryRow: View {
                             .font(.title3)
                         Image(systemName: Condition.temperature.symbol)
                             .symbolRenderingMode(.hierarchical)
-                            .accessibilityLabel("Air")
-                        Text("\(Format.number(now.temperatureC))°").font(.system(size: 36, weight: .light))
+                            .accessibilityLabel(tr("Air"))
+                        Text(Format.degrees(now.temperatureC)).font(.system(size: 36, weight: .light))
                     }
                 } else {
                     ProgressView()
@@ -149,7 +166,7 @@ private struct LocationSummaryRow: View {
                 VStack(alignment: .leading, spacing: 4) {
                     if let now {
                         Text(now.light.title).font(.subheadline.weight(.semibold))
-                        Text(now.reasons.isEmpty ? "All conditions within the limits" : "Why: " + now.reasons.map(\.label).joined(separator: ", "))
+                        Text(now.reasons.isEmpty ? tr("All conditions within the limits") : tr("Why: %@", now.reasons.map(\.label).joined(separator: ", ")))
                             .font(.caption)
                             .lineLimit(2)
                     }
@@ -162,8 +179,8 @@ private struct LocationSummaryRow: View {
                     if let forecast, let sun = forecast.sunState(at: .now) {
                         Group {
                             switch sun {
-                            case let .up(_, sunset): Label("Sunset \(Format.time(sunset))", systemImage: "sunset.fill")
-                            case let .down(sunrise, _): Label("Sunrise \(Format.time(sunrise))", systemImage: "sunrise.fill")
+                            case let .up(_, sunset): Label(tr("Sunset %@", Format.time(sunset)), systemImage: "sunset.fill")
+                            case let .down(sunrise, _): Label(tr("Sunrise %@", Format.time(sunrise)), systemImage: "sunrise.fill")
                             }
                         }
                         .font(.caption)
@@ -180,12 +197,8 @@ private struct LocationSummaryRow: View {
             }
         }
         .padding(14)
-        .background(cardBackground, in: RoundedRectangle(cornerRadius: 16))
+        .background { TintedCardBackground(tint: forecast?.current()?.light.color ?? .gray, cornerRadius: 16) }
         .contentShape(RoundedRectangle(cornerRadius: 16))
-    }
-
-    private var cardBackground: some ShapeStyle {
-        (forecast?.current()?.light.color ?? .gray).opacity(0.18)
     }
 }
 
@@ -200,21 +213,21 @@ struct ListMetrics: View {
         let rain = precipitationText(hour)
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
             GridRow {
-                Label(water.map { "\(Format.number($0.celsius, digits: 1))°" } ?? "–", systemImage: Condition.waterTemperature.symbol)
-                    .accessibilityLabel("Water: \(water.map { "\(Format.number($0.celsius, digits: 1)) degrees" } ?? "no data")")
-                Label(visibilityText(hour.visibilityM), systemImage: visibilitySymbol)
-                    .accessibilityLabel("Visibility: \(visibilityText(hour.visibilityM))")
+                Label(Format.degrees(water?.celsius, digits: 1), systemImage: Condition.waterTemperature.symbol)
+                    .accessibilityLabel(tr("Water: %@", water.map { Format.temperature($0.celsius, digits: 1) } ?? tr("no data")))
+                Label(Format.distance(hour.visibilityM), systemImage: visibilitySymbol)
+                    .accessibilityLabel(tr("Visibility: %@", Format.distance(hour.visibilityM)))
             }
             GridRow {
-                Label("\(Format.number(hour.windSpeedMs))–\(Format.number(hour.windGustMs)) m/s", systemImage: Condition.wind.symbol)
-                Label(rain == "None" ? "Dry" : rain, systemImage: Condition.precipitation.symbol)
-                    .accessibilityLabel("Rain, hail, snow: \(rain)")
+                Label(Format.windRange(hour.windSpeedMs, hour.windGustMs), systemImage: Condition.wind.symbol)
+                Label(rain ?? tr("Dry"), systemImage: Condition.precipitation.symbol)
+                    .accessibilityLabel(tr("Rain, hail, snow: %@", rain ?? tr("None")))
             }
             GridRow {
-                Label(hour.waveHeightM.map { "\(Format.number($0, digits: 2)) m" } ?? "–", systemImage: Condition.waves.symbol)
+                Label(Format.waves(hour.waveHeightM), systemImage: Condition.waves.symbol)
                 Label("–", systemImage: Condition.ice.symbol)
                     .foregroundStyle(.secondary)
-                    .accessibilityLabel("Ice: no data yet")
+                    .accessibilityLabel(tr("Ice: no data yet"))
             }
         }
         .font(.caption)
@@ -236,19 +249,19 @@ private struct SearchResultRow: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if !club.launchPointVerified {
-                    Text("Launch point not yet confirmed").font(.caption2).foregroundStyle(.orange)
+                    Text(tr("Launch point not yet confirmed")).font(.caption2).foregroundStyle(.orange)
                 }
             }
             Spacer()
             if saved {
                 Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-                    .accessibilityLabel("In your list")
+                    .accessibilityLabel(tr("In your list"))
             } else {
                 Button(action: add) {
                     Image(systemName: "plus.circle.fill").font(.title2)
                 }
                 .buttonStyle(.borderless)
-                .accessibilityLabel("Add \(club.displayName)")
+                .accessibilityLabel(tr("Add %@", club.displayName))
             }
         }
     }
