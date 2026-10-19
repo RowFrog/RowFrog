@@ -2,13 +2,12 @@ import Foundation
 import Observation
 
 /// The user's saved locations, kept on the device like the Weather app's list.
-/// The home base is always first and opens at launch.
+/// The home base is always first and opens at launch. The list starts empty;
+/// the user picks a home base and more clubs in the first-start tour.
 @Observable
 final class LocationStore {
-    static let defaultHomeID = "mrc-1880"
-
     private(set) var savedIDs: [String]
-    private(set) var homeID: String
+    private(set) var homeID: String?
     /// Every club the backend can serve, used for the list and the search.
     private(set) var catalog: [Club] = []
     private(set) var lakesByClub: [String: Lake] = [:]
@@ -20,15 +19,32 @@ final class LocationStore {
 
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
-        homeID = defaults.string(forKey: Self.homeKey) ?? Self.defaultHomeID
+        homeID = defaults.string(forKey: Self.homeKey)
         savedIDs = defaults.stringArray(forKey: Self.savedKey) ?? []
     }
+
+    /// For screenshots (`-RWDemoClubs YES`): MRC 1880 as home base and the other
+    /// confirmed clubs, kept apart from the user's own list.
+    static func forLaunch() -> LocationStore {
+        guard UserDefaults.standard.bool(forKey: "RWDemoClubs") else { return LocationStore() }
+        let suite = "RWDemoClubs"
+        let defaults = UserDefaults(suiteName: suite) ?? .standard
+        defaults.removePersistentDomain(forName: suite)
+        let store = LocationStore(defaults: defaults)
+        store.seedsDemoClubs = true
+        return store
+    }
+
+    private var seedsDemoClubs = false
 
     /// Saved clubs that the backend knows, home base first.
     var saved: [Club] {
         let byID = Dictionary(catalog.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
-        return ([homeID] + savedIDs.filter { $0 != homeID }).compactMap { byID[$0] }
+        return ((homeID.map { [$0] } ?? []) + savedIDs.filter { $0 != homeID }).compactMap { byID[$0] }
     }
+
+    /// Clubs with a launch point confirmed by the club, offered before the user searches.
+    var suggestions: [Club] { catalog.filter(\.launchPointVerified) }
 
     func lake(of club: Club) -> Lake? { lakesByClub[club.id] }
 
@@ -53,15 +69,17 @@ final class LocationStore {
     func setCatalog(_ lakes: [Lake]) {
         catalog = lakes.flatMap(\.clubs)
         lakesByClub = Dictionary(lakes.flatMap { lake in lake.clubs.map { ($0.id, lake) } }, uniquingKeysWith: { a, _ in a })
-        if defaults.stringArray(forKey: Self.savedKey) == nil {
-            // First launch: the home base plus the other confirmed clubs.
-            savedIDs = [homeID] + catalog.filter { $0.launchPointVerified && $0.id != homeID }.map(\.id)
+        if seedsDemoClubs, homeID == nil {
+            homeID = "mrc-1880"
+            savedIDs = catalog.filter { $0.launchPointVerified && $0.id != homeID }.map(\.id)
             persist()
         }
     }
 
+    /// Adds a club to the list; the first one becomes the home base.
     func add(_ club: Club) {
         guard !isSaved(club) else { return }
+        guard homeID != nil else { return makeHome(club) }
         savedIDs.append(club.id)
         persist()
     }
@@ -78,9 +96,16 @@ final class LocationStore {
         persist()
     }
 
+    /// For the first-start choice: the new home base takes the old one's place,
+    /// so trying several does not fill the list.
+    func replaceHome(with club: Club) {
+        if let old = homeID, old != club.id { savedIDs.removeAll { $0 == old } }
+        makeHome(club)
+    }
+
     private func persist() {
         defaults.set(savedIDs, forKey: Self.savedKey)
-        defaults.set(homeID, forKey: Self.homeKey)
+        if let homeID { defaults.set(homeID, forKey: Self.homeKey) } else { defaults.removeObject(forKey: Self.homeKey) }
     }
 }
 

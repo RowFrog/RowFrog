@@ -68,8 +68,9 @@ jobs:
           mkdir -p docs/screenshots
           shoot() {  # name, appearance, launch arguments...
             local name=$1 appearance=$2; shift 2
-            # Without the tour and the one-time tips, unless GUIDE is set for the shot.
-            local guide=(-RWTutorialSeen YES -RWNoTips YES)
+            # With MRC 1880 as home base and the confirmed clubs, and without the
+            # tour and the one-time tips, unless GUIDE is set for the shot.
+            local guide=(-RWDemoClubs YES -RWTutorialSeen YES -RWNoTips YES)
             [ -n "${GUIDE:-}" ] && guide=()
             xcrun simctl ui "$UDID" appearance "$appearance"
             xcrun simctl terminate "$UDID" com.rowerweatherfrog.RowerWeather || true
@@ -126,15 +127,15 @@ jobs:
           shoot_pages 21-home-dark-picture dark -RWBackground sample:night-lake
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
-          # The first-start tour, page by page, and the one-time tips.
-          for page in 0 1 2 3 4 5; do
+          # The first-start tour with an empty list, page by page, and the one-time tips.
+          for page in 0 1 2 3 4 5 6 7; do
             GUIDE=1 shoot "24-tour-p$((page + 1))" light -RWNoTips YES -RWTutorialPage $page
             GUIDE=1 shoot "25-tour-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de
           done
-          GUIDE=1 shoot 26-tip-hourly light -RWTutorialSeen YES -RWShowTips YES -RWScrollTo hourly
-          GUIDE=1 shoot 27-tip-launch-point light -RWTutorialSeen YES -RWShowTips YES -RWScrollTo launchpoint
-          GUIDE=1 shoot_pages 28-tips-settings light -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES
-          GUIDE=1 shoot 29-tip-backgrounds light -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage backgrounds
+          GUIDE=1 shoot 26-tip-hourly light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWScrollTo hourly
+          GUIDE=1 shoot 27-tip-launch-point light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWScrollTo launchpoint
+          GUIDE=1 shoot_pages 28-tips-settings light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES
+          GUIDE=1 shoot 29-tip-backgrounds light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage backgrounds
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2
