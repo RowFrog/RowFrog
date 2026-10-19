@@ -358,7 +358,8 @@ private struct ConditionTile<Value: View>: View {
 
 /// Columns of the hourly table, shared by the icon header and the rows.
 private enum Column {
-    static let time: CGFloat = 44
+    /// Wider for "10:00 PM" than for "22:00".
+    static var time: CGFloat { AppSettings.shared.timeFormat.usesAMPM ? 64 : 44 }
     static let light: CGFloat = 14
     static let sky: CGFloat = 24
 }

@@ -156,6 +156,11 @@ enum TimeFormat: String, CaseIterable, Identifiable {
         Self.formatters[self]!.string(from: date)
     }
 
+    /// Whether times carry AM or PM, so take more room.
+    var usesAMPM: Bool {
+        Self.formatters[self]!.dateFormat.contains("a")
+    }
+
     private static let formatters: [TimeFormat: DateFormatter] = Dictionary(uniqueKeysWithValues: allCases.map { format in
         let f = DateFormatter()
         switch format {
