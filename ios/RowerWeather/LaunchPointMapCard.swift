@@ -11,7 +11,7 @@ struct LaunchPointMapCard: View {
     }
 
     var body: some View {
-        Card(title: "Launch point", symbol: "mappin.and.ellipse") {
+        Card(title: tr("Launch point"), symbol: "mappin.and.ellipse") {
             // Zoom only, so a drag over the map still scrolls the page.
             Map(initialPosition: .region(MKCoordinateRegion(center: coordinate, latitudinalMeters: 1500, longitudinalMeters: 1500)), interactionModes: [.zoom]) {
                 Marker(club.displayName, systemImage: "figure.rower", coordinate: coordinate)
@@ -21,21 +21,21 @@ struct LaunchPointMapCard: View {
             .mapControls { MapCompass() }
             .frame(height: 220)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .accessibilityLabel("Map of the launch point of \(club.displayName)")
+            .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
-            Text("The forecast, waves and warnings are for this point.")
+            Text(tr("The forecast, waves and warnings are for this point."))
             if !club.launchPointVerified {
-                Label("Not yet confirmed by the club; taken from \(club.source == "drv" ? "the club's address" : "OpenStreetMap").", systemImage: "mappin.slash")
+                Label(club.source == "drv" ? tr("Not yet confirmed by the club; taken from the club's address.") : tr("Not yet confirmed by the club; taken from OpenStreetMap."), systemImage: "mappin.slash")
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
             HStack {
-                Text(String(format: "%.5f° N, %.5f° E", club.launchPoint.lat, club.launchPoint.lon))
+                Text(String(format: tr("%.5f° N, %.5f° E"), club.launchPoint.lat, club.launchPoint.lon))
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                 Spacer()
-                Button("Open in Maps", systemImage: "map") { openInMaps() }
+                Button(tr("Open in Maps"), systemImage: "map") { openInMaps() }
                     .font(.caption.weight(.semibold))
                     .buttonStyle(.bordered)
             }

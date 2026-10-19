@@ -11,9 +11,9 @@ extension Light {
 
     var title: String {
         switch self {
-        case .green: "Good to row"
-        case .amber: "Row with care"
-        case .red: "Stay ashore"
+        case .green: tr("Good to row")
+        case .amber: tr("Row with care")
+        case .red: tr("Stay ashore")
         }
     }
 }

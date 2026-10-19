@@ -22,11 +22,11 @@ struct RootView: View {
             if saved.isEmpty {
                 if let error = locations.catalogError {
                     ContentUnavailableView {
-                        Label("No connection", systemImage: "wifi.slash")
+                        Label(tr("No connection"), systemImage: "wifi.slash")
                     } description: {
                         Text(error)
                     } actions: {
-                        Button("Try again") { Task { await loadCatalog() } }
+                        Button(tr("Try again")) { Task { await loadCatalog() } }
                     }
                 } else {
                     ProgressView()
@@ -35,6 +35,7 @@ struct RootView: View {
                 TabView(selection: $selection) {
                     ForEach(saved) { club in
                         LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
+                            .pageBackground(.clubPages, clubID: club.id)
                             .tag(club.id)
                     }
                 }
@@ -47,12 +48,16 @@ struct RootView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
+        .environment(\.locale, AppSettings.shared.locale)
         .fullScreenCover(isPresented: $showingList) {
             LocationListView(locations: locations, forecasts: forecasts, initialSearch: initialSearch) { club in
                 selection = club.id
                 showingList = false
             }
+            .environment(\.locale, AppSettings.shared.locale)
         }
+        .onAppear { applyAppearance() }
+        .onChange(of: AppSettings.shared.appearance) { applyAppearance() }
         .task { await loadCatalog() }
     }
 
@@ -62,12 +67,24 @@ struct RootView: View {
             locations.catalogError = nil
             applyLaunchArguments()
         } catch {
-            locations.catalogError = "Could not load the rowing locations."
+            locations.catalogError = tr("Could not load the rowing locations.")
+        }
+    }
+
+    /// Light, dark or the phone's setting, for every window and sheet.
+    private func applyAppearance() {
+        let style: UIUserInterfaceStyle = switch AppSettings.shared.appearance {
+        case .device: .unspecified
+        case .light: .light
+        case .dark: .dark
+        }
+        for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+            for window in scene.windows { window.overrideUserInterfaceStyle = style }
         }
     }
 
     /// Screenshot hooks: `-RWOpenClub <id>` opens that page (adding it from the
-    /// catalog if needed), `-RWShowList YES`
+    /// catalog if needed), `-RWShowList YES` (or `-RWShowSettings YES`)
     /// opens the list and `-RWSearch <text>` opens it searching for the text.
     private func applyLaunchArguments() {
         let args = UserDefaults.standard
@@ -80,7 +97,7 @@ struct RootView: View {
         if let search = args.string(forKey: "RWSearch") {
             initialSearch = search
             showingList = true
-        } else if args.bool(forKey: "RWShowList") {
+        } else if args.bool(forKey: "RWShowList") || args.bool(forKey: "RWShowSettings") {
             showingList = true
         }
     }
@@ -117,7 +134,7 @@ private struct PageBar: View {
                     .font(.title3)
                     .frame(width: 44, height: 44)
             }
-            .accessibilityLabel("All locations")
+            .accessibilityLabel(tr("All locations"))
         }
         .padding(.horizontal)
         .padding(.top, 4)

@@ -21,6 +21,13 @@ targets:
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: RowerWeather
         TARGETED_DEVICE_FAMILY: "1"
+        # Icon 9 (coxed double) is the app icon; the others can be picked in the settings.
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        ASSETCATALOG_COMPILER_ALTERNATE_APPICON_NAMES: >-
+          AppIcon-SunriseSculler AppIcon-CloudCrossedOars AppIcon-AlpineLake
+          AppIcon-BladeAndWind AppIcon-RowingLightGauge AppIcon-AvatarFrog
+          AppIcon-BladeTrafficLight AppIcon-ShellTrafficLight AppIcon-CoxedPair AppIcon-FrogGauge
+        ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
     info:
       path: RowerWeather/Info.plist
       properties:
