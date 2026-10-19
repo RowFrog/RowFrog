@@ -69,6 +69,19 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD lake warning")
     }
 
+    func testDecodesEnglishWarningText() throws {
+        let json = """
+        {"kind": "local", "area": "Starnberg", "event": "WINDBÖEN", "severity": "minor",
+         "headline": "Amtliche WARNUNG vor WINDBÖEN", "description": "Es treten Windböen auf.", "instruction": null,
+         "onset": null, "expires": null,
+         "english": {"event": "wind gusts", "headline": "Official WARNING of WIND GUSTS",
+                     "description": "There is a risk of wind gusts.", "instruction": null, "official": true}}
+        """
+        let warning = try APIClient.decoder.decode(DWDWarning.self, from: Data(json.utf8))
+        XCTAssertEqual(warning.english?.headline, "Official WARNING of WIND GUSTS")
+        XCTAssertEqual(warning.english?.official, true)
+    }
+
     func testSkyFromWeatherCode() {
         XCTAssertEqual(Sky(code: 96, cloudCoverPct: 100, precipitationMm: 3).precipitationKind, "Hail")
         XCTAssertEqual(Sky(code: 2, cloudCoverPct: 50, precipitationMm: 0).symbol(night: true), "cloud.moon.fill")

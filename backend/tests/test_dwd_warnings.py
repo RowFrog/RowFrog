@@ -1,4 +1,6 @@
 import asyncio
+import io
+import zipfile
 from datetime import datetime, timezone
 
 import httpx
@@ -114,6 +116,7 @@ def _reset():
     api._cache.clear()
     api._warnings_cache.clear()
     api._lake_areas = None
+    api._english = None
 
 
 def _fake_weather(monkeypatch):
@@ -154,3 +157,60 @@ def test_forecast_reports_unavailable_warnings(monkeypatch):
     _reset()
     assert body["warnings"]["status"] == "unavailable"
     assert body["hours"], "the forecast still comes through"
+
+
+ENGLISH_CAP = """<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<alert xmlns="urn:oasis:names:tc:emergency:cap:1.2">
+  <identifier>2.49.0.0.276.0.DWD.PVW.1.abc.ENG</identifier>
+  <info>
+    <language>en</language>
+    <event>wind gusts</event>
+    <headline>Official WARNING of WIND GUSTS</headline>
+    <description>There is a risk of wind gusts (level 1 of 4).</description>
+    <instruction>NOTE: be aware that this is an automatically generated product.</instruction>
+  </info>
+</alert>"""
+
+
+def _english_zip() -> bytes:
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("2.49.0.0.276.0.DWD.PVW.1.abc.ENG.xml", ENGLISH_CAP)
+    return buf.getvalue()
+
+
+def test_english_cap_is_keyed_like_the_german_warning():
+    texts = dwd_warnings.parse_english_cap(_english_zip())
+    (_, w), = dwd_warnings.parse_warnings(
+        {"features": [_warning(1, "WINDBÖEN", "Minor", IDENTIFIER="2.49.0.0.276.0.DWD.PVW.1.abc.DEU")]}, "local"
+    )
+    english = texts[w.identifier]
+    assert english.headline == "Official WARNING of WIND GUSTS" and english.official
+
+
+def test_english_fallback_translates_event_and_headline_only():
+    (_, w), = dwd_warnings.parse_warnings({"features": [_warning(1, "STURMBÖEN", "Moderate")]}, "local")
+    english = dwd_warnings.english_fallback(w)
+    assert english.headline == "Official WARNING of GALE-FORCE GUSTS"
+    assert english.description is None and not english.official
+
+
+def test_forecast_warning_carries_english_and_german(monkeypatch):
+    _fake_weather(monkeypatch)
+
+    def handler(request):
+        if request.url.host == "opendata.dwd.de":
+            return httpx.Response(200, content=_english_zip())
+        layer = request.url.params["typeName"]
+        if layer == "dwd:Warnungen_Gemeinden":
+            return httpx.Response(200, json={"features": [_warning(1, "WINDBÖEN", "Minor", IDENTIFIER="2.49.0.0.276.0.DWD.PVW.1.abc.DEU", EXPIRES="2099-01-01T00:00:00Z")]})
+        return httpx.Response(200, json={"features": []})
+
+    monkeypatch.setattr(api.httpx, "AsyncClient", _serve(handler))
+    _reset()
+    body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
+    _reset()
+    (item,) = body["warnings"]["items"]
+    assert item["headline"] == "Amtliche WARNUNG vor WINDBÖEN"
+    assert item["english"]["headline"] == "Official WARNING of WIND GUSTS"
+    assert item["english"]["official"] is True

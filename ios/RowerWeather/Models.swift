@@ -174,9 +174,20 @@ struct DWDWarning: Codable, Hashable, Identifiable {
     let expires: Date?
     /// A made-up warning for the screenshots, never from DWD.
     var sample: Bool? = nil
+    /// The warning in English: DWD's own English text where it publishes one
+    /// (official), else only the event and headline translated.
+    var english: EnglishWarningText? = nil
 
     var id: String { [kind, area, event, onset?.description ?? "", headline].joined(separator: "|") }
     var isLake: Bool { kind == "lake" }
+}
+
+struct EnglishWarningText: Codable, Hashable {
+    let event: String
+    let headline: String
+    let description: String?
+    let instruction: String?
+    let official: Bool
 }
 
 struct Warnings: Codable, Hashable {

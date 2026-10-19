@@ -8,6 +8,8 @@ from __future__ import annotations
 import logging
 import os
 import time
+import xml.etree.ElementTree as ET
+import zipfile
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -35,6 +37,7 @@ app = FastAPI(title="RowerWeather")
 _locations = locations.load()
 _cache: dict[str, tuple[float, tuple]] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
+_english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
 
 
@@ -97,7 +100,19 @@ def _hour_json(h: RowingHour) -> dict:
     }
 
 
-def _warning_json(w: dwd_warnings.Warning, sample: bool = False) -> dict:
+def _english_json(e: dwd_warnings.EnglishText | None) -> dict | None:
+    if e is None:
+        return None
+    return {
+        "event": e.event,
+        "headline": e.headline,
+        "description": e.description,
+        "instruction": e.instruction,
+        "official": e.official,
+    }
+
+
+def _warning_json(w: dwd_warnings.Warning, english: dwd_warnings.EnglishText | None = None, sample: bool = False) -> dict:
     return {
         "kind": w.kind,
         "area": w.area,
@@ -109,6 +124,8 @@ def _warning_json(w: dwd_warnings.Warning, sample: bool = False) -> dict:
         "onset": None if w.onset is None else _utc(w.onset),
         "expires": None if w.expires is None else _utc(w.expires),
         "sample": sample,
+        # DWD's English text where it publishes one, else the event and headline translated.
+        "english": _english_json(english),
     }
 
 
@@ -125,6 +142,33 @@ def _sample_warning(area: str, now: datetime) -> dwd_warnings.Warning:
         onset=start,
         expires=start + timedelta(hours=3),
     )
+
+
+_SAMPLE_ENGLISH = dwd_warnings.EnglishText(
+    event="gale",
+    headline="Gale warning for the lake",
+    description="Gale-force gusts around 65 km/h (18 m/s, Bft 8) from the west.",
+    instruction="Bring boats ashore or head for the nearest shore at once.",
+    official=True,
+)
+
+
+async def _english_texts(client: httpx.AsyncClient) -> dict[str, dwd_warnings.EnglishText]:
+    """DWD's English warnings, cached like the warnings; empty when they cannot be loaded."""
+    global _english
+    if _english is not None and time.monotonic() - _english[0] < WARNINGS_CACHE_SECONDS:
+        return _english[1]
+    try:
+        texts = await dwd_warnings.fetch_english_texts(client)
+    except (httpx.HTTPError, ValueError, KeyError, zipfile.BadZipFile, ET.ParseError) as e:
+        logging.getLogger(__name__).warning("DWD English warnings unavailable: %r", e)
+        texts = {}
+    _english = (time.monotonic(), texts)
+    return texts
+
+
+def _english_for(w: dwd_warnings.Warning, texts: dict[str, dwd_warnings.EnglishText]) -> dwd_warnings.EnglishText:
+    return texts.get(w.identifier) or dwd_warnings.english_fallback(w)
 
 
 async def _lake_area(client: httpx.AsyncClient, club: locations.Club) -> dwd_warnings.LakeArea | None:
@@ -155,11 +199,12 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         result = ({"status": "unavailable", "lakeArea": None, "items": []}, [])
         _warnings_cache[club.id] = (time.monotonic() - WARNINGS_CACHE_SECONDS + 60, result)  # retry in a minute
         return result
-    items = [_warning_json(w) for w in lake + local]
+    english = await _english_texts(client) if lake or local else {}
+    items = [_warning_json(w, _english_for(w, english)) for w in lake + local]
     if club.id in SAMPLE_WARNING_CLUBS and area is not None:
         sample = _sample_warning(area.name, now)
         lake.append(sample)
-        items.insert(0, _warning_json(sample, sample=True))
+        items.insert(0, _warning_json(sample, _SAMPLE_ENGLISH, sample=True))
     current = [w for w in lake + local if w.expires is None or w.expires > now]
     result = ({"status": "ok", "lakeArea": None if area is None else area.name, "items": items}, current)
     _warnings_cache[club.id] = (time.monotonic(), result)
