@@ -155,7 +155,9 @@ private struct LocationSummaryRow: View {
                 }
                 Spacer(minLength: 8)
                 if let now {
+                    // Numbers first, e.g. "12–17 m/s" in full; the text on the left wraps instead.
                     ListMetrics(hour: now, water: forecast?.waterTemperature)
+                        .layoutPriority(1)
                 }
             }
         }
@@ -199,8 +201,6 @@ struct ListMetrics: View {
         }
         .font(.caption)
         .lineLimit(1)
-        // Take the width the numbers need, e.g. "12–17 m/s"; the text on the left wraps instead.
-        .fixedSize()
     }
 }
 
