@@ -6,10 +6,10 @@ import SwiftUI
 struct IconGalleryView: View {
     /// Candidates for the visibility icon; the first is the one in use.
     static let visibilityCandidates: [(symbol: String, note: String)] = [
-        ("cloud.fog", "In use now"),
+        ("binoculars", "In use now (binoculars)"),
+        ("cloud.fog", "Fog cloud (previous icon)"),
         ("eye", "Eye"),
         ("eye.fill", "Eye, filled"),
-        ("binoculars", "Binoculars"),
         ("binoculars.fill", "Binoculars, filled"),
         ("sun.haze", "Haze"),
         ("arrow.left.and.right", "Distance"),
@@ -65,6 +65,8 @@ struct IconGalleryView: View {
                     }
                 }
 
+                FeelsLikeOptions()
+
                 Card(title: "Conditions", symbol: "gauge.with.dots.needle.33percent") {
                     ForEach(Condition.allCases, id: \.self) { condition in
                         row(Image(systemName: condition.symbol).symbolRenderingMode(.hierarchical), condition.title, condition.symbol)
@@ -102,6 +104,75 @@ struct IconGalleryView: View {
             Text(title).font(.subheadline)
             Spacer()
             Text(symbol).font(.caption2.monospaced()).foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// Suggestions for showing "feels like" in the rowing-light tile, with
+/// sample values (air 9°, feels like 6°, water 15.6°), for the owner to pick from.
+private struct FeelsLikeOptions: View {
+    var body: some View {
+        Card(title: "Feels like in the light tile: options", symbol: Condition.feelsLike.symbol) {
+            option("A: Small line under the air temperature") {
+                HStack(alignment: .lastTextBaseline) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        TemperatureView(condition: .temperature, celsius: 9, size: 44)
+                        Label("Feels like 6°", systemImage: Condition.feelsLike.symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    TemperatureView(condition: .waterTemperature, celsius: 15.6, digits: 1, size: 28)
+                    Spacer()
+                    MetricView(title: "Waves", symbol: Condition.waves.symbol, value: "0.05 m", size: 28)
+                }
+            }
+            option("B: Own value in the top row, smaller") {
+                HStack(alignment: .lastTextBaseline) {
+                    TemperatureView(condition: .temperature, celsius: 9, size: 44)
+                    Spacer()
+                    MetricView(title: "Feels", symbol: Condition.feelsLike.symbol, value: "6°", size: 28)
+                    Spacer()
+                    TemperatureView(condition: .waterTemperature, celsius: 15.6, digits: 1, size: 28)
+                    Spacer()
+                    MetricView(title: "Waves", symbol: Condition.waves.symbol, value: "0.05 m", size: 28)
+                }
+            }
+            option("C: In the bottom row, before visibility") {
+                HStack(alignment: .top) {
+                    MetricView(title: "Feels like", symbol: Condition.feelsLike.symbol, value: "6°", size: 17)
+                    Spacer()
+                    MetricView(title: "Visibility", symbol: Condition.visibility.symbol, value: "12 km", size: 17)
+                    Spacer()
+                    MetricView(title: "Rain, hail", symbol: Condition.precipitation.symbol, value: "None", size: 17)
+                    Spacer()
+                    MetricView(title: "Ice", symbol: Condition.ice.symbol, value: "No data", size: 17)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            option("D: Only when it differs by 2° or more, as a note") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Label("Feels like 6° in the wind. Dress warmer.", systemImage: Condition.feelsLike.symbol)
+                        .font(.subheadline)
+                        .foregroundStyle(.blue)
+                    HStack(alignment: .lastTextBaseline) {
+                        TemperatureView(condition: .temperature, celsius: 9, size: 44)
+                        Spacer()
+                        TemperatureView(condition: .waterTemperature, celsius: 15.6, digits: 1, size: 28)
+                        Spacer()
+                        MetricView(title: "Waves", symbol: Condition.waves.symbol, value: "0.05 m", size: 28)
+                    }
+                }
+            }
+        }
+        .symbolRenderingMode(.hierarchical)
+    }
+
+    private func option(_ title: String, @ViewBuilder content: () -> some View) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Divider()
+            Text(title).font(.subheadline.weight(.semibold))
+            content()
         }
     }
 }

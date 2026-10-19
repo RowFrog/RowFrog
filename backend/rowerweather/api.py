@@ -86,6 +86,7 @@ def _hour_json(h: RowingHour) -> dict:
         "fetchM": None if h.fetch_m is None else round(h.fetch_m),
         "visibilityM": w.visibility_m,
         "temperatureC": w.temperature_c,
+        "apparentTemperatureC": w.apparent_temperature_c,
         "cloudCoverPct": w.cloud_cover_pct,
         "precipitationMm": w.precipitation_mm,
         "weatherCode": w.weather_code,

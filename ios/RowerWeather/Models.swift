@@ -121,6 +121,8 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     var precipitationMm: Double? = nil
     /// WMO weather code; see Sky.
     var weatherCode: Int? = nil
+    /// How warm it feels, in °C (wind chill, humidity, sun).
+    var apparentTemperatureC: Double? = nil
 
     var id: Date { time }
 
@@ -130,7 +132,8 @@ struct ForecastHour: Codable, Identifiable, Hashable {
             windSpeedMs: windSpeedMs, windGustMs: windGustMs, windFromDeg: windFromDeg,
             waveHeightM: waveHeightM, fetchM: fetchM, visibilityM: visibilityM,
             temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp,
-            precipitationMm: precipitationMm, weatherCode: weatherCode
+            precipitationMm: precipitationMm, weatherCode: weatherCode,
+            apparentTemperatureC: apparentTemperatureC
         )
     }
 
