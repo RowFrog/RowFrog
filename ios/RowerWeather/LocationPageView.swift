@@ -24,7 +24,7 @@ struct LocationPageView: View {
                         if let sun = forecast.sunState(at: .now) {
                             DaylightCard(state: sun)
                         }
-                        CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
+                        CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now), ice: forecast.ice)
                         HourlyCard(forecast: forecast).id("hourly")
                         LaunchPointMapCard(club: club)
                         LegendCard()
@@ -257,6 +257,7 @@ private struct CurrentConditionsCard: View {
     let water: WaterTemperature?
     /// Pressure change over the next 3 hours, in hPa.
     let pressureChange: Double?
+    var ice: IceEstimate? = nil
 
     var body: some View {
         Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent") {
@@ -318,7 +319,12 @@ private struct CurrentConditionsCard: View {
             case .amber: Text(tr("Possible"))
             default: Text(tr("Low"))
             }
-        case .ice: Text(tr("No data yet")).foregroundStyle(.secondary)
+        case .ice:
+            if let ice, ice.status != "unavailable" {
+                Text(ice.title)
+            } else {
+                Text(tr("No data yet")).foregroundStyle(.secondary)
+            }
         case .daylight: EmptyView()
         }
     }
@@ -347,6 +353,8 @@ private struct CurrentConditionsCard: View {
         case .visibility:
             guard let v = hour.visibilityM else { return nil }
             return v < 1000 ? tr("Fog") : tr("No fog")
+        case .ice:
+            return ice?.detail
         default:
             return nil
         }

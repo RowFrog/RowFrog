@@ -191,7 +191,7 @@ private struct LocationSummaryRow: View {
                 Spacer(minLength: 8)
                 if let now {
                     // Numbers first, e.g. "12–17 m/s" in full; the text on the left wraps instead.
-                    ListMetrics(hour: now, water: forecast?.waterTemperature)
+                    ListMetrics(hour: now, water: forecast?.waterTemperature, ice: forecast?.ice)
                         .layoutPriority(1)
                 }
             }
@@ -207,6 +207,7 @@ private struct LocationSummaryRow: View {
 struct ListMetrics: View {
     let hour: ForecastHour
     let water: WaterTemperature?
+    var ice: IceEstimate? = nil
     var visibilitySymbol = Condition.visibility.symbol
 
     var body: some View {
@@ -225,9 +226,14 @@ struct ListMetrics: View {
             }
             GridRow {
                 Label(Format.waves(hour.waveHeightM), systemImage: Condition.waves.symbol)
-                Label("–", systemImage: Condition.ice.symbol)
-                    .foregroundStyle(.secondary)
-                    .accessibilityLabel(tr("Ice: no data yet"))
+                if let ice, ice.status != "unavailable" {
+                    Label(ice.title, systemImage: Condition.ice.symbol)
+                        .accessibilityLabel(tr("Ice: %@", ice.title))
+                } else {
+                    Label("–", systemImage: Condition.ice.symbol)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(tr("Ice: no data yet"))
+                }
             }
         }
         .font(.caption)

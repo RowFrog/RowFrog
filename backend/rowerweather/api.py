@@ -15,8 +15,9 @@ from datetime import datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import locations, outlines
-from .forecast import RowingHour, rowing_forecast
+from . import ice, locations, outlines
+from .forecast import LOCAL, RowingHour, rowing_forecast
+from .score import Light
 from .sources import dwd_warnings, gkd, open_meteo
 from .sun import sun_days
 
@@ -24,6 +25,7 @@ CACHE_SECONDS = 30 * 60
 # Warnings can be issued at short notice, so they are fetched more often than the forecast.
 WARNINGS_CACHE_SECONDS = 5 * 60
 LAKE_AREAS_CACHE_SECONDS = 24 * 3600
+ICE_CACHE_SECONDS = 6 * 3600
 # Club ids that get a made-up lake storm warning, marked as a sample, for screenshots.
 SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "").split(",") if c}
 ATTRIBUTION = [
@@ -39,6 +41,7 @@ _cache: dict[str, tuple[float, tuple]] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
+_ice_temps: dict[str, tuple[float, list[ice.DayTemperature]]] = {}
 
 
 def _point(p: locations.Point) -> dict:
@@ -211,6 +214,43 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
     return result
 
 
+def _ice_json(e: ice.IceEstimate | None) -> dict:
+    if e is None:
+        return {"status": "unavailable", "light": None, "days": []}
+    return {
+        "status": e.status,
+        "light": Light(e.light).name.lower(),
+        "thicknessCm": e.thickness_cm,
+        "waterTemperatureC": e.water_c,
+        "basis": e.basis,
+        "frostDegreeDays7": e.frost_degree_days_7,
+        "days": [{"date": d.day.isoformat(), "status": d.status, "thicknessCm": d.thickness_cm} for d in e.days],
+    }
+
+
+async def _ice(client: httpx.AsyncClient, lake: locations.Lake, water_c: float | None, now: datetime) -> ice.IceEstimate | None:
+    """The ice estimate for the lake; None when the air temperatures cannot be loaded."""
+    today = now.astimezone(LOCAL).date()
+    if ice.out_of_season(today):
+        return ice.IceEstimate(ice.OPEN, None, water_c, "season", None, [])
+    if lake.kind != "river" and water_c is not None and water_c > ice.WARM_WATER_C:
+        return ice.IceEstimate(ice.OPEN, None, water_c, "measured", None, [])
+    cached = _ice_temps.get(lake.id)
+    if cached and time.monotonic() - cached[0] < ICE_CACHE_SECONDS:
+        temps = cached[1]
+    else:
+        try:
+            daily = await open_meteo.fetch_daily_mean(client, lake.center.lat, lake.center.lon)
+        except (httpx.HTTPError, ValueError, KeyError) as e:
+            logging.getLogger(__name__).warning("Air temperatures for the ice estimate unavailable for %s: %r", lake.id, e)
+            return None
+        temps = [ice.DayTemperature(d, t) for d, t in daily]
+        _ice_temps[lake.id] = (time.monotonic(), temps)
+    if lake.kind == "river":
+        return ice.river(temps, today)
+    return ice.simulate(temps, today, lake.mean_depth_m, water_c)
+
+
 @app.get("/clubs/{club_id}/forecast")
 async def club_forecast(club_id: str) -> dict:
     club = _locations.clubs.get(club_id)
@@ -236,7 +276,11 @@ async def club_forecast(club_id: str) -> dict:
                     water = None  # the forecast is still useful without it
             _cache[club_id] = (time.monotonic(), (weather, water))
         warnings_block, warnings = await _warnings(client, club, now)
-    hours = rowing_forecast(club, weather, outlines.load(club.lake_id), water.celsius if water else None, warnings)
+        ice_estimate = await _ice(client, lake, water.celsius if water else None, now)
+    ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
+    hours = rowing_forecast(
+        club, weather, outlines.load(club.lake_id), water.celsius if water else None, warnings, ice_by_day=ice_by_day
+    )
     return {
         "clubId": club.id,
         "lakeId": club.lake_id,
@@ -245,6 +289,7 @@ async def club_forecast(club_id: str) -> dict:
         if water is None
         else {"celsius": water.celsius, "measuredAt": water.time.astimezone(timezone.utc).isoformat()},
         "warnings": warnings_block,
+        "ice": _ice_json(ice_estimate),
         "attribution": ATTRIBUTION,
         "daylight": [
             {"date": d.day.isoformat(), "sunrise": _utc(d.sunrise), "sunset": _utc(d.sunset)}

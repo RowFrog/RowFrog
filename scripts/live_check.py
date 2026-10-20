@@ -100,6 +100,8 @@ def forecast_summary(client: TestClient, club_id: str) -> list[str]:
     body = resp.json()
     hours = body["hours"]
     lines = [f"forecast: {len(hours)} hours, water temperature {body['waterTemperature']}"]
+    ice = dict(body.get("ice") or {})
+    lines.append(f"ice: {ice.pop('status', None)}, {ice.pop('days', [])[:3]} ..., {ice}")
     for h in hours[:24:3]:
         lines.append(
             f"  {h['time']}  {h['light']:6}  wind {h['windSpeedMs']} m/s gust {h['windGustMs']} "

@@ -11,11 +11,12 @@ Data: Deutscher Wetterdienst via Open-Meteo, CC BY 4.0.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 
 import httpx
 
 BASE_URL = "https://api.open-meteo.com/v1/forecast"
+ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 HOURLY = [
     "temperature_2m",
     "wind_speed_10m",
@@ -117,15 +118,56 @@ def parse(payload: dict) -> list[ForecastHour]:
     ]
 
 
-async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48) -> list[ForecastHour]:
+async def _get(client: httpx.AsyncClient, url: str, params: dict[str, str]) -> dict:
     # Live checks on GitHub saw about one connect timeout in six calls, so
     # connection failures are retried once before giving up.
     for attempt in range(2):
         try:
-            resp = await client.get(BASE_URL, params=request_params(lat, lon, hours), timeout=20)
+            resp = await client.get(url, params=params, timeout=20)
             break
         except httpx.TransportError:
             if attempt == 1:
                 raise
     resp.raise_for_status()
-    return parse(resp.json())
+    return resp.json()
+
+
+async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48) -> list[ForecastHour]:
+    return parse(await _get(client, BASE_URL, request_params(lat, lon, hours)))
+
+
+def daily_params(lat: float, lon: float, past_days: int = 92, forecast_days: int = 7) -> dict[str, str]:
+    """Daily mean air temperature for the ice estimate, by local (German) day."""
+    return {
+        "latitude": f"{lat:.4f}",
+        "longitude": f"{lon:.4f}",
+        "daily": "temperature_2m_mean",
+        "timezone": "Europe/Berlin",
+        "past_days": str(past_days),
+        "forecast_days": str(forecast_days),
+    }
+
+
+def parse_daily(payload: dict) -> list[tuple[date, float]]:
+    """(day, mean °C) oldest first; days without a value are left out."""
+    d = payload["daily"]
+    return [(date.fromisoformat(t), v) for t, v in zip(d["time"], d["temperature_2m_mean"]) if v is not None]
+
+
+async def fetch_daily_mean(client: httpx.AsyncClient, lat: float, lon: float) -> list[tuple[date, float]]:
+    return parse_daily(await _get(client, BASE_URL, daily_params(lat, lon)))
+
+
+async def fetch_archive_daily_mean(
+    client: httpx.AsyncClient, lat: float, lon: float, start: date, end: date
+) -> list[tuple[date, float]]:
+    """Past daily means from Open-Meteo's archive (ERA5), for testing the ice model on past winters."""
+    params = {
+        "latitude": f"{lat:.4f}",
+        "longitude": f"{lon:.4f}",
+        "daily": "temperature_2m_mean",
+        "timezone": "Europe/Berlin",
+        "start_date": start.isoformat(),
+        "end_date": end.isoformat(),
+    }
+    return parse_daily(await _get(client, ARCHIVE_URL, params))
