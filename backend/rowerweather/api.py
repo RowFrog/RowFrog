@@ -38,6 +38,8 @@ ATTRIBUTION = [
 app = FastAPI(title="RowerWeather")
 _locations = locations.load()
 _cache: dict[str, tuple[float, tuple]] = {}
+# Forecasts loaded ahead in bulk (scripts/publish_static.py), used once instead of a call per club.
+_primed_weather: dict[str, list] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
@@ -264,10 +266,13 @@ async def club_forecast(club_id: str) -> dict:
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
             weather, water = cached[1]
         else:
-            try:
-                weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
-            except httpx.HTTPError:
-                raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
+            weather = _primed_weather.pop(club_id, None)
+            if weather is None:
+                try:
+                    weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
+                except httpx.HTTPError as e:
+                    logging.getLogger(__name__).warning("Open-Meteo unavailable for %s: %r", club_id, e)
+                    raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
             water = None
             if lake.gkd_water_temperature_station:
                 try:

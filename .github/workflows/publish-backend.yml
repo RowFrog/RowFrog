@@ -43,11 +43,12 @@ jobs:
           python-version: "3.12"
       - run: pip install -e backend
       - name: Get the published files
+        # A separate worktree, so only the published files are committed, never the repository.
         run: |
           if git fetch --depth 1 origin gh-pages; then
-            git worktree add site origin/gh-pages
+            git worktree add --detach site origin/gh-pages
           else
-            mkdir site
+            git worktree add --orphan -b gh-pages-new site
           fi
       - name: Run the backend and write the files
         env:
@@ -65,7 +66,12 @@ jobs:
           cd site
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-          git checkout --orphan publish
+          git checkout -q --orphan publish
           git add -A
+          # Never publish anything but the forecast files.
+          if git diff --cached --name-only | grep -qv -e '^v1/' -e '^\.nojekyll$'; then
+            echo "Unexpected files in the site:"; git diff --cached --name-only | grep -v -e '^v1/' -e '^\.nojekyll$' | head
+            exit 1
+          fi
           git commit -q -m "Forecasts $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -f origin publish:gh-pages

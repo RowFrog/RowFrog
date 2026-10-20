@@ -136,6 +136,18 @@ async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 
     return parse(await _get(client, BASE_URL, request_params(lat, lon, hours)))
 
 
+async def fetch_many(
+    client: httpx.AsyncClient, points: list[tuple[float, float]], hours: int = 48
+) -> list[list[ForecastHour]]:
+    """Forecasts for several points in one request (Open-Meteo takes comma-separated
+    coordinates and answers with a list). Open-Meteo still counts one call per point."""
+    params = request_params(points[0][0], points[0][1], hours)
+    params["latitude"] = ",".join(f"{lat:.4f}" for lat, _ in points)
+    params["longitude"] = ",".join(f"{lon:.4f}" for _, lon in points)
+    payload = await _get(client, BASE_URL, params)
+    return [parse(p) for p in (payload if isinstance(payload, list) else [payload])]
+
+
 def daily_params(lat: float, lon: float, past_days: int = 92, forecast_days: int = 7) -> dict[str, str]:
     """Daily mean air temperature for the ice estimate, by local (German) day."""
     return {
