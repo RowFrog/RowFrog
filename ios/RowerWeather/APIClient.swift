@@ -31,6 +31,10 @@ struct APIClient {
         try await get("clubs/\(clubID)/forecast")
     }
 
+    func lakeView(lakeID: String) async throws -> LakeView {
+        try await get("lakes/\(lakeID)/view")
+    }
+
     private func get<T: Decodable>(_ path: String) async throws -> T {
         let (data, response) = try await session.data(from: baseURL.appending(path: path))
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
