@@ -18,6 +18,7 @@ struct LocationPageView: View {
                     header
                     if let forecast, let now = forecast.current() {
                         NowCard(hour: now, water: forecast.waterTemperature)
+                        RainRadarCard(point: club.launchPoint)
                         if let warnings = forecast.warnings {
                             WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                         }
