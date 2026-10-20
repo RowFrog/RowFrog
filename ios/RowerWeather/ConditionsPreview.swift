@@ -224,13 +224,13 @@ private struct CompactConditionsMock: View {
                     ScaleBar(fraction: 0, colors: uvColors)
                 }
                 if !wideSun {
-                    compactTile(.ice, "–", "No data yet")
+                    compactTile(.ice, "No ice", "Water too warm")
                     narrowSunTile
                 }
             }
             if wideSun {
                 wideSunTile
-                compactTile(.ice, "–", "No data yet")
+                compactTile(.ice, "No ice", "Water too warm")
             }
         }
     }
@@ -821,11 +821,13 @@ extension DetailMock {
             source: "UV index forecast via Open-Meteo; bands from the WHO. Glare times calculated by the app from the sun's height."
         ),
         DetailMock(
-            symbol: d(.ice).0, title: d(.ice).1, value: "No data yet", note: "Planned for winter", unit: "",
+            symbol: d(.ice).0, title: d(.ice).1, value: "No ice", note: "Water 15.6 °C, too warm for ice", unit: "",
             series: [],
-            facts: [("Planned", "ice cover from satellite (Copernicus) and water temperature"), ("Until then", "check the lake yourself")],
-            rowing: "Never row between ice floes; thin ice cuts hulls.",
-            source: "Not available yet."
+            facts: [("Mon", "no ice"), ("Tue", "no ice"), ("Wed", "no ice"), ("Thu", "no ice"),
+                    ("Fri", "no ice"), ("Sat", "no ice"), ("Sun", "no ice"), ("Basis", "measured water temperature")],
+            twoColumnFacts: true,
+            rowing: "Never go onto the ice because of this app. Never row between ice floes; thin ice cuts hulls.",
+            source: "Estimated by the app from water temperature and frost (the ice thread's model, PR #11)."
         ),
         DetailMock(
             symbol: d(.daylight).0, title: d(.daylight).1, value: "Sunset 18:18", note: "Sun is down · sunrise 07:40",
