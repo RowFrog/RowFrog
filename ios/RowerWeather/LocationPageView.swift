@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// One full-screen location page: rowing light now, daylight, current
-/// conditions, the hourly forecast, the launch point on a map, the icon
+/// conditions, the lake view, the hourly forecast, the launch point on a map, the icon
 /// legend, and the credits.
 struct LocationPageView: View {
     let club: Club
@@ -25,6 +25,9 @@ struct LocationPageView: View {
                             DaylightCard(state: sun)
                         }
                         CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
+                        if lake?.hasOutline != false {
+                            LakeViewCard(lakeID: forecast.lakeId, clubID: club.id).id("lakeview")
+                        }
                         HourlyCard(forecast: forecast).id("hourly")
                         LaunchPointMapCard(club: club)
                         LegendCard()
@@ -60,9 +63,10 @@ struct LocationPageView: View {
             .refreshable { await forecasts.load(club.id, force: true) }
             .task {
                 await forecasts.load(club.id)
-                if UserDefaults.standard.string(forKey: "RWScrollTo") == "hourly" {
-                    try? await Task.sleep(for: .milliseconds(300))
-                    proxy.scrollTo("hourly", anchor: .top)
+                if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
+                    // The lake view loads after the forecast, so wait for it.
+                    try? await Task.sleep(for: .milliseconds(target == "lakeview" ? 2500 : 300))
+                    proxy.scrollTo(target, anchor: .top)
                 }
             }
         }

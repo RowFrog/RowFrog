@@ -5,6 +5,8 @@ name: App screenshots
 # Long pages are shot screen by screen (-p1, -p2, ...) down to the bottom.
 # Tutzinger RV gets a made-up lake storm warning, marked SAMPLE in the app,
 # so both warning states show; every other warning is live from DWD.
+# The lake view gets a made-up south wind (RW_SAMPLE_LAKE_WIND), marked
+# "Sample wind", so its screens show waves building along the lake.
 # Runs by hand from the Actions tab or when this file changes.
 
 on:
@@ -12,6 +14,11 @@ on:
     paths:
       - .github/workflows/screenshots.yml
   workflow_dispatch:
+    inputs:
+      only:
+        description: Only shoot screens whose name matches this regular expression, e.g. lake-view (empty = all)
+        required: false
+        default: ""
 
 permissions:
   contents: write
@@ -27,7 +34,7 @@ jobs:
       - run: pip install -e backend pillow
       - name: Start the backend with live data
         run: |
-          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv nohup uvicorn rowerweather.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv RW_SAMPLE_LAKE_WIND=192,5.2,7.9 nohup uvicorn rowerweather.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
           # Warm the forecast and warning caches; Open-Meteo sometimes times out
           # on the first call and DWD's lake areas take a while to download.
@@ -40,6 +47,12 @@ jobs:
           print(d["clubId"], len(d["hours"]), "hours, now:", d["hours"][0]["light"], "| DWD:", w["status"], "lake area:", w["lakeArea"],
                 "warnings:", [(i["kind"], i["event"], i["severity"], i["sample"]) for i in w["items"]])'
           done
+          curl -sS -f -m 200 --retry 3 --retry-all-errors --retry-delay 5 http://localhost:8000/lakes/starnberger-see/view \
+            | python3 -c '
+          import json, sys
+          d = json.load(sys.stdin)
+          print(d["lakeId"], len(d["grid"]["cells"]), "cells,", len(d["points"]), "forecast points,", len(d["hours"]), "hours, zones:",
+                list(zip(d["zones"], [z["light"] for z in d["hours"][0]["zones"]])))'
       - name: Build the app
         working-directory: ios
         run: |
@@ -66,8 +79,11 @@ jobs:
           xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowerWeather.app
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4
           mkdir -p docs/screenshots
+          ONLY="${{ github.event.inputs.only }}"
+          wanted() { [ -z "$ONLY" ] || [[ "$1" =~ $ONLY ]]; }
           shoot() {  # name, appearance, launch arguments...
             local name=$1 appearance=$2; shift 2
+            wanted "$name" || return 0
             xcrun simctl ui "$UDID" appearance "$appearance"
             xcrun simctl terminate "$UDID" com.rowerweatherfrog.RowerWeather || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
@@ -85,6 +101,7 @@ jobs:
           }
           shoot_pages() {  # name, appearance, launch arguments...: one screenshot per screen until the bottom
             local name=$1 appearance=$2; shift 2
+            wanted "$name" || return 0
             local page dir=docs/screenshots
             for page in 1 2 3 4 5 6 7 8 9 10 11 12; do
               shoot "$name-p$page" "$appearance" "$@" -RWScrollPage $((page - 1))
@@ -101,12 +118,15 @@ jobs:
           shoot_n() {  # name, pages, appearance, launch arguments...: a fixed number of screens, for
             # pages with frosted glass, where two screenshots of the same screen are not identical
             local name=$1 pages=$2 appearance=$3; shift 3
+            wanted "$name" || return 0
             local page
             for page in $(seq 1 "$pages"); do
               shoot "$name-p$page" "$appearance" "$@" -RWScrollPage $((page - 1))
             done
           }
-          rm -f docs/screenshots/*.png
+          for f in docs/screenshots/*.png; do
+            if [ -e "$f" ] && wanted "$(basename "$f" .png)"; then rm "$f"; fi
+          done
           shoot_pages 01-home light
           shoot_pages 02-list light -RWShowList YES
           shoot 03-search light -RWSearch "Ammersee"
@@ -133,6 +153,14 @@ jobs:
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
           shoot 24-hourly-12h-long-date light -RWScrollTo hourly -RWTimeFormat hours12 -RWDateFormat long
           shoot 25-hourly-iso-date light -RWScrollTo hourly -RWDateFormat iso
+          # Lake view (sample wind from the south)
+          shoot 40-lake-view-tile light -RWOpenClub mrc-1880 -RWScrollTo lakeview
+          shoot 41-lake-view-map light -RWOpenClub mrc-1880 -RWOpenLakeView YES
+          shoot 42-lake-view-waves light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWLakeLayer waves
+          shoot 43-lake-view-wind light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWLakeLayer wind
+          shoot 44-lake-view-spot light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWLakeSpot 47.975,11.343
+          shoot 45-lake-view-german-dark dark -RWOpenClub tutzinger-rv -RWOpenLakeView YES -RWLanguage de
+          shoot 46-lake-view-tile-tutzing light -RWOpenClub tutzinger-rv -RWScrollTo lakeview
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2
