@@ -37,6 +37,11 @@ targets:
         NSLocationWhenInUseUsageDescription: RowerWeather uses your location only to suggest rowing clubs near you.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        # Upright and on its side; the pages switch to two columns when wide enough.
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
   RowerWeatherTests:
     type: bundle.unit-test
     platform: iOS
