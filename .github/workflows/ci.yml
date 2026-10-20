@@ -27,7 +27,9 @@ jobs:
       - run: python3 scripts/check_translations.py
 
   ios:
-    runs-on: macos-latest
+    # Apple Silicon runners (macos-latest) have not been assigned since
+    # 2026-10-19; the Intel image still gets one.
+    runs-on: macos-15-intel
     defaults:
       run:
         working-directory: ios
