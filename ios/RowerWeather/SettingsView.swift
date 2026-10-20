@@ -1,5 +1,6 @@
 import PhotosUI
 import SwiftUI
+import TipKit
 
 /// Pages pushed inside the settings.
 enum SettingsRoute: Hashable {
@@ -34,6 +35,11 @@ struct SettingsView: View {
     let locations: LocationStore
     @State private var path = SettingsRoute.fromLaunchArguments()
     @State private var confirmingReset = false
+    @State private var showingTour = false
+    @State private var showResetTip = false
+    private let resetTip = FactoryResetTip()
+    @State private var showAppIconTip = false
+    private let appIconTip = AppIconTip()
     @State private var appIcon = AppIcons.current
     @Environment(\.dismiss) private var dismiss
 
@@ -44,8 +50,13 @@ struct SettingsView: View {
                 Form {
                     Section {
                         AppearancePicker(selection: $settings.appearance)
+                        Toggle(isOn: $settings.allowsLandscape) {
+                            Label(tr("Landscape"), systemImage: "rectangle.landscape.rotate")
+                        }
                     } header: {
                         SectionTitle(tr("Appearance"), symbol: "circle.lefthalf.filled")
+                    } footer: {
+                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright."))
                     }
                     .surfaceRows()
                     .id("appearance")
@@ -114,6 +125,24 @@ struct SettingsView: View {
                     .id("background")
 
                     Section {
+                        Button {
+                            Tutorial.replay()
+                            showingTour = true
+                        } label: {
+                            Label(tr("Show the tour again"), systemImage: "questionmark.circle")
+                        }
+                    } header: {
+                        SectionTitle(tr("Help"), symbol: "questionmark.circle")
+                    } footer: {
+                        SectionFooter(tr("The one-time tips come back the next time you open the app."))
+                    }
+                    .surfaceRows()
+                    .id("help")
+
+                    Section {
+                        if showAppIconTip {
+                            TipView(appIconTip)
+                        }
                         AppIconPicker(selected: $appIcon)
                     } header: {
                         SectionTitle(tr("App icon"), symbol: "app.badge")
@@ -124,6 +153,9 @@ struct SettingsView: View {
                     .id("appicon")
 
                     Section {
+                        if showResetTip {
+                            TipView(resetTip)
+                        }
                         Button(role: .destructive) {
                             confirmingReset = true
                         } label: {
@@ -169,7 +201,15 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures and the app icon go back to how the app came, and your own pictures are deleted from the app. Your locations and home base stay."))
                 }
-                .screenshotSections(["appearance", "units", "datetime", "background", "appicon", "reset"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "datetime", "background", "help", "appicon", "reset"], proxy: proxy)
+                .tipVisibility(appIconTip, $showAppIconTip)
+                .tipVisibility(resetTip, $showResetTip)
+                .fullScreenCover(isPresented: $showingTour) {
+                    TutorialView(locations: locations, reload: {}) {
+                        Tutorial.markSeen()
+                        showingTour = false
+                    }
+                }
             }
         }
     }
@@ -380,11 +420,19 @@ extension DistanceUnit: UnitDisplay {}
 struct BackgroundSettingsView: View {
     let locations: LocationStore
     @State private var confirmingRemove = false
+    @State private var showTip = false
+    private let tip = BackgroundsTip()
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
         ScrollViewReader { proxy in
             Form {
+                if showTip {
+                    Section {
+                        TipView(tip)
+                    }
+                }
+
                 Section {
                     BackgroundPreview()
                         .listRowInsets(EdgeInsets())
@@ -480,6 +528,7 @@ struct BackgroundSettingsView: View {
                 Button(tr("Cancel"), role: .cancel) {}
             }
             .screenshotSections(["preview", "pages", "clubs", "look", "remove"], proxy: proxy)
+            .tipVisibility(tip, $showTip)
         }
     }
 }
