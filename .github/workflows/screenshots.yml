@@ -19,13 +19,17 @@ on:
         description: Only shoot screens whose name matches this regular expression, e.g. lake-view (empty = all)
         required: false
         default: ""
+      runner:
+        description: Mac runner image (macos-latest when Apple Silicon runners are available again)
+        required: false
+        default: macos-15-intel
 
 permissions:
   contents: write
 
 jobs:
   screenshots:
-    runs-on: macos-latest
+    runs-on: ${{ inputs.runner || 'macos-15-intel' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
