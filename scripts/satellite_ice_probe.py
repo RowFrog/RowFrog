@@ -11,7 +11,8 @@ On GitHub the two values are repository secrets. The script prints:
      (River and Lake Ice Extent from Sentinel-1/-2, Lake Ice Extent),
   2. for each of those and each lake, the passes over the lake last winter,
   3. per pass, the share of the lake seen as ice, open water and cloud,
-  4. a few Lake Ice Extent 250 m files from the public CDSE OData catalogue.
+  4. a few Lake Ice Extent 250 m and lake surface water temperature files
+     from the public CDSE OData catalogue.
 Nothing is stored; the report goes to the log and the job summary.
 
 Data: Copernicus Land Monitoring Service, free and open, credit "Copernicus".
@@ -32,7 +33,8 @@ SH = "https://sh.dataspace.copernicus.eu"
 ODATA = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
 LAKES = ["starnberger-see", "ammersee", "regattastrecke-oberschleissheim"]
 WINTER = ("2025-12-01T00:00:00Z", "2026-03-31T23:59:59Z")
-ICE_WORDS = re.compile(r"\b(ice|rlie|lie)\b")
+# Ice products, and lake surface water temperature (LSWT) as a backup for lakes without a GKD station.
+ICE_WORDS = re.compile(r"\b(ice|rlie|lie|lswt|surface water temperature)\b")
 # River and Lake Ice Extent classes (CLMS HR-S&I): 1 open water, 100 ice, 205 cloud, 254 other, 255 no data.
 EVALSCRIPT = """//VERSION=3
 function setup() {
@@ -148,26 +150,28 @@ def shares(client: httpx.Client, collection: dict, geometry: dict) -> list[str]:
 
 
 def odata_sample(client: httpx.Client) -> None:
-    say("## Lake Ice Extent 250 m files in the CDSE catalogue (public, no login)")
-    flt = "contains(Name,'LIE') and ContentDate/Start gt 2026-01-15T00:00:00.000Z and ContentDate/Start lt 2026-01-20T00:00:00.000Z"
-    try:
-        resp = client.get(ODATA, params={"$filter": flt, "$top": "10"}, timeout=60)
-        resp.raise_for_status()
-        for p in resp.json().get("value", []):
-            say(f"  {p.get('Name')}  {p.get('ContentLength')} bytes")
-        if not resp.json().get("value"):
-            say("  none found with that name filter")
-    except httpx.HTTPError as e:
-        say(f"  OData search failed: {e!r}")
+    for label, word in (("Lake Ice Extent", "LIE"), ("Lake surface water temperature", "LSWT")):
+        say(f"## {label} files in the CDSE catalogue (public, no login)")
+        flt = f"contains(Name,'{word}') and ContentDate/Start gt 2026-01-15T00:00:00.000Z and ContentDate/Start lt 2026-01-20T00:00:00.000Z"
+        try:
+            resp = client.get(ODATA, params={"$filter": flt, "$top": "10"}, timeout=60)
+            resp.raise_for_status()
+            for p in resp.json().get("value", []):
+                say(f"  {p.get('Name')}  {p.get('ContentLength')} bytes")
+            if not resp.json().get("value"):
+                say("  none found with that name filter")
+        except httpx.HTTPError as e:
+            say(f"  OData search failed: {e!r}")
 
 
 def main() -> int:
-    if not os.environ.get("CDSE_CLIENT_ID") or not os.environ.get("CDSE_CLIENT_SECRET"):
-        say("CDSE_CLIENT_ID / CDSE_CLIENT_SECRET are not set; add them as repository secrets to run this check.")
-        return 0
     locs = locations.load()
     with httpx.Client() as client:
         odata_sample(client)
+        if not os.environ.get("CDSE_CLIENT_ID") or not os.environ.get("CDSE_CLIENT_SECRET"):
+            say("CDSE_CLIENT_ID / CDSE_CLIENT_SECRET are not set; add them as repository secrets for the rest of this check.")
+            write_summary()
+            return 0
         client.headers["Authorization"] = f"Bearer {token(client)}"
         collections = ice_collections(client)
         say()
@@ -190,11 +194,15 @@ def main() -> int:
                     say(f"  {lake_id}: failed {e!r}")
                 except (KeyError, ValueError) as e:
                     say(f"  {lake_id}: unexpected answer {e!r}")
+    write_summary()
+    return 0
+
+
+def write_summary() -> None:
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
             f.write("### Satellite ice data\n```\n" + "\n".join(report) + "\n```\n")
-    return 0
 
 
 if __name__ == "__main__":
