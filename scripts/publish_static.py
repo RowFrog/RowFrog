@@ -36,8 +36,8 @@ from rowerweather.sources import open_meteo
 # requests instead of one per club; single requests from GitHub's shared
 # runners often timed out or were refused.
 BATCH = 50
-# Waits before retrying a failed batch, in seconds.
-RETRY_WAITS = (10, 30, 60)
+# Waits before retrying a failed batch, in seconds; Open-Meteo's limit is per minute.
+RETRY_WAITS = (65, 120)
 
 
 async def prime_weather(clubs: list[locations.Club]) -> list[str]:
