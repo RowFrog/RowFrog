@@ -44,6 +44,9 @@ jobs:
       - name: Ice model on past winters
         if: always()
         run: python3 scripts/ice_backtest.py
+      - name: DWD rain radar at the launch points
+        if: always()
+        run: python3 scripts/radar_probe.py
       - name: Commit new outlines
         if: always()
         run: |
