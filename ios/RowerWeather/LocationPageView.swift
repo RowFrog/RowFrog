@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 
 /// One full-screen location page: rowing light now, daylight, current
 /// conditions, the hourly forecast, the launch point on a map, the icon
@@ -9,6 +10,13 @@ struct LocationPageView: View {
     let isHome: Bool
     let forecasts: ForecastStore
     @Environment(\.surface) private var surface
+    @AppStorage(Tutorial.seenKey) private var tourSeen = false
+    @State private var showHourlyTip = false
+    @State private var showLaunchPointTip = false
+    @State private var showConditionsTip = false
+    private let conditionsTip = ConditionsExtrasTip()
+    private let hourlyTip = HourlyTip()
+    private let launchPointTip = LaunchPointTip()
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
@@ -24,9 +32,27 @@ struct LocationPageView: View {
                         if let sun = forecast.sunState(at: .now) {
                             DaylightCard(state: sun)
                         }
-                        CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
-                        HourlyCard(forecast: forecast).id("hourly")
-                        LaunchPointMapCard(club: club)
+                        VStack(spacing: 16) {
+                            if tourSeen && showConditionsTip {
+                                TipView(conditionsTip)
+                            }
+                            CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
+                        }
+                        // Each tip sits above its card and scrolls with it.
+                        VStack(spacing: 16) {
+                            if tourSeen && showHourlyTip {
+                                TipView(hourlyTip)
+                            }
+                            HourlyCard(forecast: forecast)
+                        }
+                        .id("hourly")
+                        VStack(spacing: 16) {
+                            if tourSeen && showLaunchPointTip {
+                                TipView(launchPointTip)
+                            }
+                            LaunchPointMapCard(club: club)
+                        }
+                        .id("launchpoint")
                         LegendCard()
                         VStack(alignment: .leading, spacing: 4) {
                             ForEach(forecast.attribution, id: \.self) { Text(tr($0)) }
@@ -58,11 +84,15 @@ struct LocationPageView: View {
             }
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
             .refreshable { await forecasts.load(club.id, force: true) }
+            .tipVisibility(conditionsTip, $showConditionsTip)
+            .tipVisibility(hourlyTip, $showHourlyTip)
+            .tipVisibility(launchPointTip, $showLaunchPointTip)
             .task {
                 await forecasts.load(club.id)
-                if UserDefaults.standard.string(forKey: "RWScrollTo") == "hourly" {
+                // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`) scrolls to that card.
+                if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                     try? await Task.sleep(for: .milliseconds(300))
-                    proxy.scrollTo("hourly", anchor: .top)
+                    proxy.scrollTo(target, anchor: .top)
                 }
             }
         }

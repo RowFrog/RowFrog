@@ -33,6 +33,8 @@ targets:
       properties:
         # Backend address; the simulator reaches a backend running on the Mac at localhost.
         RWAPIBaseURL: http://localhost:8000
+        # Shown when the first-start tour asks for the location (German in de.lproj/InfoPlist.strings).
+        NSLocationWhenInUseUsageDescription: RowerWeather uses your location only to suggest rowing clubs near you.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
   RowerWeatherTests:
