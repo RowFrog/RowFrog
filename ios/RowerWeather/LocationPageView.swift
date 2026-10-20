@@ -85,9 +85,10 @@ struct LocationPageView: View {
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
                     await forecasts.load(club.id)
-                    // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`) scrolls to that card.
+                    // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`, `lakeview`) scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
-                        try? await Task.sleep(for: .milliseconds(300))
+                        // The lake view loads after the forecast, so wait for it.
+                        try? await Task.sleep(for: .milliseconds(target == "lakeview" ? 2500 : 300))
                         proxy.scrollTo(target, anchor: .top)
                     }
                 }
@@ -110,6 +111,9 @@ struct LocationPageView: View {
                 TipView(conditionsTip)
             }
             CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
+        }
+        if lake?.hasOutline != false {
+            LakeViewCard(lakeID: forecast.lakeId, clubID: club.id).id("lakeview")
         }
     }
 
