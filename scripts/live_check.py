@@ -22,6 +22,7 @@ import json
 import math
 import os
 import sys
+import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -113,6 +114,9 @@ def forecast_summary(client: TestClient, club_id: str) -> list[str]:
 def lake_view_summary(client: TestClient, lake_id: str) -> list[str]:
     try:
         resp = client.get(f"/lakes/{lake_id}/view")
+        if resp.status_code == 503:  # Open-Meteo sometimes refuses for a moment
+            time.sleep(20)
+            resp = client.get(f"/lakes/{lake_id}/view")
     except Exception as e:
         return [f"lake view: HTTP 500 {type(e).__name__}: {e}"]
     if resp.status_code != 200:

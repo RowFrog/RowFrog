@@ -283,7 +283,9 @@ async def lake_view_forecast(lake_id: str) -> dict:
         else:
             try:
                 weather = await open_meteo.fetch_many(client, [(lat, lon) for lon, lat in grid.samples])
-            except httpx.HTTPError:
+            except httpx.HTTPError as e:
+                body = e.response.text[:300] if isinstance(e, httpx.HTTPStatusError) else ""
+                logging.getLogger(__name__).warning("Open-Meteo failed for lake view %s: %r %s", lake_id, e, body)
                 raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
             water = None
             if lake.gkd_water_temperature_station:
