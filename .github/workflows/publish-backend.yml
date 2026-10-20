@@ -1,0 +1,71 @@
+name: Publish forecasts
+
+# The app's backend while it has no server of its own: runs the backend code
+# on a schedule and publishes its answers as static files on GitHub Pages, at
+# https://rowerweatherfrog.github.io/RowerWeather/v1/ (see scripts/publish_static.py).
+# The confirmed clubs are refreshed every 30 minutes, all catalog clubs every
+# 6 hours. The files live on the gh-pages branch, kept as a single commit so
+# its history does not grow. Pages must be set to "Deploy from a branch",
+# gh-pages, / (root) in the repository settings.
+# Secrets: CDSE_CLIENT_ID / CDSE_CLIENT_SECRET (satellite ice, when used).
+
+on:
+  # A change to the publisher publishes at once, from whichever branch it was pushed to.
+  push:
+    paths:
+      - scripts/publish_static.py
+      - .github/workflows/publish-backend.yml
+  schedule:
+    - cron: "*/30 * * * *"
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      clubs:
+        description: "Which clubs to refresh"
+        type: choice
+        options: [confirmed, all]
+        default: all
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-forecasts
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Get the published files
+        run: |
+          if git fetch --depth 1 origin gh-pages; then
+            git worktree add site origin/gh-pages
+          else
+            mkdir site
+          fi
+      - name: Run the backend and write the files
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
+        run: |
+          CLUBS="${{ inputs.clubs }}"
+          if [ -z "$CLUBS" ]; then
+            if [ "${{ github.event.schedule }}" = "*/30 * * * *" ]; then CLUBS=confirmed; else CLUBS=all; fi
+          fi
+          python3 scripts/publish_static.py site/v1 --clubs "$CLUBS"
+          touch site/.nojekyll
+      - name: Publish to gh-pages as a single commit
+        run: |
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan publish
+          git add -A
+          git commit -q -m "Forecasts $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f origin publish:gh-pages

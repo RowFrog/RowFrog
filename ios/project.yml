@@ -28,11 +28,18 @@ targets:
           AppIcon-BladeAndWind AppIcon-RowingLightGauge AppIcon-AvatarFrog
           AppIcon-BladeTrafficLight AppIcon-ShellTrafficLight AppIcon-CoxedPair AppIcon-FrogGauge
         ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS: YES
+      configs:
+        # Debug (Simulator) uses the backend running on the Mac; Release uses the published
+        # forecasts on GitHub Pages. A server of our own later only changes this address.
+        Debug:
+          RW_API_BASE_URL: http://localhost:8000
+        Release:
+          RW_API_BASE_URL: https://rowerweatherfrog.github.io/RowerWeather/v1
     info:
       path: RowerWeather/Info.plist
       properties:
-        # Backend address; the simulator reaches a backend running on the Mac at localhost.
-        RWAPIBaseURL: http://localhost:8000
+        # Backend address, set per build configuration above.
+        RWAPIBaseURL: $(RW_API_BASE_URL)
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
   RowerWeatherTests:
