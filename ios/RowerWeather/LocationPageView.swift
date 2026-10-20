@@ -14,7 +14,9 @@ struct LocationPageView: View {
     @State private var showHourlyTip = false
     @State private var showLaunchPointTip = false
     @State private var showConditionsTip = false
+    @State private var showLakeViewTip = false
     private let conditionsTip = ConditionsExtrasTip()
+    private let lakeViewTip = LakeViewTip()
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
 
@@ -81,6 +83,7 @@ struct LocationPageView: View {
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
                 .refreshable { await forecasts.load(club.id, force: true) }
                 .tipVisibility(conditionsTip, $showConditionsTip)
+                .tipVisibility(lakeViewTip, $showLakeViewTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
@@ -113,7 +116,13 @@ struct LocationPageView: View {
             CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
         }
         if lake?.hasOutline != false {
-            LakeViewCard(lakeID: forecast.lakeId, clubID: club.id).id("lakeview")
+            VStack(spacing: 16) {
+                if tourSeen && showLakeViewTip {
+                    TipView(lakeViewTip)
+                }
+                LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
+            }
+            .id("lakeview")
         }
     }
 
