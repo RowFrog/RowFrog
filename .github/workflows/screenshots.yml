@@ -12,13 +12,17 @@ on:
     paths:
       - .github/workflows/screenshots.yml
   workflow_dispatch:
+    inputs:
+      runner:
+        description: Runner image, e.g. macos-15-intel when the default Mac runners are full
+        default: macos-latest
 
 permissions:
   contents: write
 
 jobs:
   screenshots:
-    runs-on: macos-latest
+    runs-on: ${{ inputs.runner || 'macos-latest' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
