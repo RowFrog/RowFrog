@@ -161,6 +161,10 @@ jobs:
           shoot 44-lake-view-spot light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWLakeSpot 47.975,11.343
           shoot 45-lake-view-german-dark dark -RWOpenClub tutzinger-rv -RWOpenLakeView YES -RWLanguage de
           shoot 46-lake-view-tile-tutzing light -RWOpenClub tutzinger-rv -RWScrollTo lakeview
+          route="47.99667,11.34745;47.983,11.338;47.965,11.331;47.945,11.325;47.925,11.318;47.905,11.305"
+          shoot 47-route-plan light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route"
+          shoot 48-route-plan-later-start light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3
+          shoot 49-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2

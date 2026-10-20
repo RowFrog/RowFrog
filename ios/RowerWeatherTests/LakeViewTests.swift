@@ -59,4 +59,41 @@ final class LakeViewTests: XCTestCase {
         XCTAssertGreaterThan(LakeRaster.waveColor(0.3).r, LakeRaster.waveColor(0).r)
         XCTAssertEqual(LakeRaster.waveColor(0.30).g, LakeRaster.red.g, accuracy: 0.5)
     }
+
+    func testWindRelationToTheBoat() {
+        XCTAssertEqual(WindRelation(heading: 0, windFrom: 10), .head)
+        XCTAssertEqual(WindRelation(heading: 0, windFrom: 180), .tail)
+        XCTAssertEqual(WindRelation(heading: 350, windFrom: 80), .cross)
+        XCTAssertEqual(WindRelation(heading: 270, windFrom: 100), .tail)
+    }
+
+    func testRoutePlanOutAndBack() throws {
+        let view = try decode()
+        let start = CLLocationCoordinate2D(latitude: 47.80, longitude: 11.30)
+        let turn = CLLocationCoordinate2D(latitude: 47.82, longitude: 11.31)
+        let once = try XCTUnwrap(RoutePlanner(view: view, waypoints: [start, turn], outAndBack: false))
+        let both = try XCTUnwrap(RoutePlanner(view: view, waypoints: [start, turn], outAndBack: true))
+        XCTAssertEqual(both.distanceM, 2 * once.distanceM, accuracy: 1)
+
+        let plan = both.plan(start: view.hours[0].time, paceSecondsPer500: 150)
+        // 500 m in 150 s is 3.33 m/s.
+        XCTAssertEqual(plan.end.timeIntervalSince(plan.start), both.distanceM / (500.0 / 150), accuracy: 1)
+        XCTAssertFalse(plan.beyondForecast)
+        XCTAssertEqual(plan.worstLight, .red, "the route reaches the red cell at the turn")
+        XCTAssertEqual(plan.maxWaveM, 0.34, accuracy: 0.001)
+        XCTAssertEqual(plan.segments.first?.light, .green)
+        XCTAssertGreaterThan(plan.segments.count, 1)
+        // The way out heads north into a wind from the south: tailwind.
+        XCTAssertEqual(plan.stops.first?.relation, .tail)
+    }
+
+    func testRouteNeedsTwoPoints() throws {
+        let view = try decode()
+        XCTAssertNil(RoutePlanner(view: view, waypoints: [CLLocationCoordinate2D(latitude: 47.8, longitude: 11.3)], outAndBack: true))
+    }
+
+    func testPaceFormat() {
+        XCTAssertEqual(Format.pace(135), "2:15")
+        XCTAssertEqual(Format.pace(90), "1:30")
+    }
 }
