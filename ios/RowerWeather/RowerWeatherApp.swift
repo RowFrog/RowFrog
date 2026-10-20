@@ -2,6 +2,10 @@ import SwiftUI
 
 @main
 struct RowerWeatherApp: App {
+    init() {
+        Tutorial.configureTips()
+    }
+
     var body: some Scene {
         WindowGroup {
             if UserDefaults.standard.bool(forKey: "RWIconGallery") {
