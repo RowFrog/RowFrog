@@ -455,9 +455,9 @@ enum German {
         "Frog and rowing light": "Frosch und Ruderampel",
         // Current conditions card and its larger views
         "%@ %@ hPa": "%@ %@ hPa",
-        "%@ (%@) at %@": "%@ (%@) um %@",
-        "%@ J/kg at %@": "%@ J/kg um %@",
-        "%@ at %@": "%@ um %@",
+        "%@ (%@) · %@": "%@ (%@) · %@",
+        "%@ J/kg · %@": "%@ J/kg · %@",
+        "%@ · %@": "%@ · %@",
         "%@ from %@": "%@ ab %@",
         "%@ hPa": "%@ hPa",
         "%@ hPa on %@": "%@ hPa am %@",

@@ -57,9 +57,16 @@ struct ConditionData {
 
     init(forecast: ClubForecast, now: ForecastHour) {
         self.forecast = forecast
-        self.now = now
         let outlook = forecast.outlook ?? []
         timeline = (outlook.isEmpty ? forecast.hours : outlook).sorted { $0.time < $1.time }
+        // The rowing hours have no UV index; the outlook has it for the same hour.
+        var now = now
+        if let same = timeline.first(where: { $0.time == now.time }) {
+            now.uvIndex = now.uvIndex ?? same.uvIndex
+            now.cloudCoverMidPct = now.cloudCoverMidPct ?? same.cloudCoverMidPct
+            now.cloudCoverHighPct = now.cloudCoverHighPct ?? same.cloudCoverHighPct
+        }
+        self.now = now
     }
 
     /// Hours from now; negative is the past.
@@ -494,6 +501,8 @@ struct ConditionDetailView: View {
 private struct ConditionChart: View {
     let detail: ConditionDetail
     let data: ConditionData
+    /// The hour at the left edge of the visible 24 hours.
+    @State private var scrollX = -1.0
 
     private struct Arrow: Identifiable {
         let x: Double
@@ -569,7 +578,10 @@ private struct ConditionChart: View {
             AxisMarks(values: axisHours) { value in
                 AxisGridLine()
                 AxisValueLabel(anchor: .top) {
-                    if let x = value.as(Double.self) { Text(label(x)) }
+                    // Labels right at the visible edges would be cut in half.
+                    if let x = value.as(Double.self), detail.history || (x - scrollX > 1.2 && scrollX + 24 - x > 1.2) {
+                        Text(label(x))
+                    }
                 }
             }
         }
@@ -621,7 +633,7 @@ private struct ConditionChart: View {
             chart
                 .chartScrollableAxes(.horizontal)
                 .chartXVisibleDomain(length: 24)
-                .chartScrollPosition(initialX: max(range.lowerBound, -1))
+                .chartScrollPosition(x: $scrollX)
         }
     }
 
@@ -691,10 +703,10 @@ extension ConditionDetail {
         let h = d.now
         var facts: [(String, String)] = [(tr("Now"), Format.temperature(h.temperatureC))]
         if let lo = extreme(d.next24, \.temperatureC, highest: false) {
-            facts.append((tr("Lowest next 24 h"), tr("%@ at %@", Format.temperature(lo.temperatureC), Format.dayTime(lo.time))))
+            facts.append((tr("Lowest next 24 h"), tr("%@ · %@", Format.temperature(lo.temperatureC), Format.dayTime(lo.time))))
         }
         if let hi = extreme(d.next24, \.temperatureC, highest: true) {
-            facts.append((tr("Highest next 24 h"), tr("%@ at %@", Format.temperature(hi.temperatureC), Format.dayTime(hi.time))))
+            facts.append((tr("Highest next 24 h"), tr("%@ · %@", Format.temperature(hi.temperatureC), Format.dayTime(hi.time))))
         }
         let past = d.timeline.filter { d.x($0.time) < 0 }
         if let hi = extreme(past, \.temperatureC, highest: true) {
@@ -788,7 +800,7 @@ extension ConditionDetail {
         var facts: [(String, String)] = [(tr("Beaufort"), h.windSpeedMs.map { "\(SpeedUnit.beaufort($0))" } ?? "–")]
         if let from = h.windFromDeg { facts.append((tr("From"), "\(Format.compass(from)) (\(Format.number(from))°)")) }
         if let fetch = h.fetchM { facts.append((tr("Open water upwind"), Format.distance(fetch))) }
-        if let gust { facts.append((tr("Strongest gust next 24 h"), tr("%@ at %@", Format.wind(gust.windGustMs), Format.dayTime(gust.time)))) }
+        if let gust { facts.append((tr("Strongest gust next 24 h"), tr("%@ · %@", Format.wind(gust.windGustMs), Format.dayTime(gust.time)))) }
         return ConditionDetail(
             value: Format.wind(h.windSpeedMs),
             note: tr("Gusts %@", Format.wind(h.windGustMs)) + (h.windFromDeg.map { " · " + tr("from %@", Format.compass($0)) } ?? ""),
@@ -803,7 +815,7 @@ extension ConditionDetail {
                 ChartLimit(value: w.convert(8), color: .red, label: tr("Wind: stay ashore")),
             ],
             limitInfo: tr("Amber from %@ (Beaufort 4, the first whitecaps) and red from %@ (Beaufort 5, many whitecaps): in a single or double the boat gets hard to steer and water comes over the side. Gusts have their own limits: amber from %@ and red from %@ (46 km/h), the level at which DWD issues a strong-wind warning and the lake's warning lights start flashing. These are the app's starting values for small boats.",
-                          Format.wind(5.5), Format.wind(8), Format.wind(8), Format.wind(12.8)),
+                          windLimit(5.5), windLimit(8), windLimit(8), windLimit(12.8)),
             windArrows: true,
             chartNote: tr("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days."),
             facts: facts,
@@ -816,6 +828,14 @@ extension ConditionDetail {
         )
     }
 
+    /// A wind limit with one decimal where it has one, so 5.5 m/s does not read as 6.
+    private static func windLimit(_ ms: Double) -> String {
+        let w = units.windUnit
+        guard w != .beaufort else { return Format.wind(ms) }
+        let v = w.convert(ms)
+        return "\(Format.number(v, digits: abs(v - v.rounded()) < 0.05 ? 0 : 1)) \(w.symbol)"
+    }
+
     private static func waves(_ d: ConditionData) -> ConditionDetail {
         let h = d.now
         let u = units.waveUnit
@@ -824,7 +844,7 @@ extension ConditionDetail {
         if let fetch = h.fetchM {
             facts.append((tr("Open water upwind"), fetch < 50 ? tr("none, the wind blows off the shore") : Format.distance(fetch)))
         }
-        if let top { facts.append((tr("Highest next 24 h"), tr("%@ at %@", Format.waves(top.waveHeightM), Format.dayTime(top.time)))) }
+        if let top { facts.append((tr("Highest next 24 h"), tr("%@ · %@", Format.waves(top.waveHeightM), Format.dayTime(top.time)))) }
         return ConditionDetail(
             value: Format.waves(h.waveHeightM),
             note: (h.fetchM ?? 100) < 50 ? tr("Wind blows off the shore") : tr("At the launch point"),
@@ -904,7 +924,7 @@ extension ConditionDetail {
         var facts: [(String, String)] = [(tr("Next 24 h"), tr("%@ in total", Format.rain(total)))]
         facts.append((tr("Kind"), kinds.isEmpty ? tr("dry") : kinds.sorted().joined(separator: ", ")))
         if let top, (top.precipitationMm ?? 0) >= 0.1 {
-            facts.append((tr("Heaviest"), tr("%@ at %@", Format.rain(top.precipitationMm), Format.dayTime(top.time))))
+            facts.append((tr("Heaviest"), tr("%@ · %@", Format.rain(top.precipitationMm), Format.dayTime(top.time))))
         }
         facts.append((tr("DWD warnings"), d.warningNames(rainWords)))
         facts.append((tr("Rowing light now"), light))
@@ -1040,7 +1060,7 @@ extension ConditionDetail {
         let top = extreme(d.next24, \.capeJkg, highest: true)
         var facts: [(String, String)] = []
         if let top, (top.capeJkg ?? 0) > 0 {
-            facts.append((tr("Most energy next 24 h"), tr("%@ J/kg at %@", Format.number(top.capeJkg), Format.dayTime(top.time))))
+            facts.append((tr("Most energy next 24 h"), tr("%@ J/kg · %@", Format.number(top.capeJkg), Format.dayTime(top.time))))
         }
         facts.append((tr("DWD warnings"), d.warningNames(["GEWITTER"])))
         return ConditionDetail(
@@ -1061,7 +1081,7 @@ extension ConditionDetail {
     }
 
     private static func uvBand(_ uv: Double) -> String {
-        switch uv {
+        switch uv.rounded() {
         case ..<3: tr("low")
         case ..<6: tr("moderate")
         case ..<8: tr("high")
@@ -1073,11 +1093,11 @@ extension ConditionDetail {
     private static func uv(_ d: ConditionData) -> ConditionDetail {
         let h = d.now
         let top = extreme(d.next24, \.uvIndex, highest: true)
-        let protect = d.firstRun(in: d.next24) { ($0.uvIndex ?? 0) >= 3 }
+        let protect = d.firstRun(in: d.next24) { ($0.uvIndex ?? 0).rounded() >= 3 }
         let hot = d.future.first { ($0.apparentTemperatureC ?? 0) >= 25 }
         var facts: [(String, String)] = [(tr("Now"), h.uvIndex.map { "\(Format.number($0)) (\(uvBand($0)))" } ?? "–")]
         if let top, let uv = top.uvIndex {
-            facts.append((tr("Highest next 24 h"), tr("%@ (%@) at %@", Format.number(uv), uvBand(uv), Format.dayTime(top.time))))
+            facts.append((tr("Highest next 24 h"), tr("%@ (%@) · %@", Format.number(uv), uvBand(uv), Format.dayTime(top.time))))
         }
         facts.append((tr("Protection needed"), protect.map(d.span) ?? tr("not in the next 24 h")))
         if let days = d.forecast.daylight?.sorted(by: { $0.sunrise < $1.sunrise }),
