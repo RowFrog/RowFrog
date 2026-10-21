@@ -172,7 +172,7 @@ struct RowingWidgetView: View {
             title
             Spacer(minLength: 0)
             Image(systemName: "wifi.slash").font(.title3)
-            Text(tr("Open RowerWeather to load the forecast."))
+            Text(tr("Open Row Frog to load the forecast."))
                 .font(.caption)
                 .opacity(0.85)
         }
@@ -380,7 +380,7 @@ struct RowingWidgetView: View {
                     .font(.caption)
                     .lineLimit(1)
             } else {
-                Text(tr("Open RowerWeather to load the forecast.")).font(.caption)
+                Text(tr("Open Row Frog to load the forecast.")).font(.caption)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

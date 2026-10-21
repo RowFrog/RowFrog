@@ -25,7 +25,7 @@ targets:
         PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowerWeather
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
-        INFOPLIST_KEY_CFBundleDisplayName: RowerWeather
+        INFOPLIST_KEY_CFBundleDisplayName: Row Frog
         TARGETED_DEVICE_FAMILY: "1"
         # Icon 9 (coxed double) is the app icon; the others can be picked in the settings.
         ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
@@ -40,7 +40,7 @@ targets:
         # Backend address; the simulator reaches a backend running on the Mac at localhost.
         RWAPIBaseURL: http://localhost:8000
         # Shown when the first-start tour asks for the location (German in de.lproj/InfoPlist.strings).
-        NSLocationWhenInUseUsageDescription: RowerWeather uses your location only to suggest rowing clubs near you.
+        NSLocationWhenInUseUsageDescription: Row Frog uses your location only to suggest rowing clubs near you.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
         # A tap on the widget opens rowerweather://club/<id>.
@@ -77,7 +77,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowerWeather.Widget
         GENERATE_INFOPLIST_FILE: YES
-        INFOPLIST_KEY_CFBundleDisplayName: RowerWeather
+        INFOPLIST_KEY_CFBundleDisplayName: Row Frog
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_ACTIVE_COMPILATION_CONDITIONS: $(inherited) WIDGET_EXTENSION
     info:
