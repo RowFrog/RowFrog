@@ -12,6 +12,8 @@ struct RowerWeatherApp: App {
         WindowGroup {
             if UserDefaults.standard.bool(forKey: "RWIconGallery") {
                 IconGalleryView()
+            } else if UserDefaults.standard.bool(forKey: "RWWidgetGallery") {
+                WidgetGalleryView(api: APIClient.fromBundle())
             } else {
                 RootView(api: APIClient.fromBundle())
             }
