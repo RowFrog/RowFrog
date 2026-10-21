@@ -38,6 +38,8 @@ struct Lake: Codable, Identifiable, Hashable {
     let name: String
     let center: Coordinate
     let clubs: [Club]
+    /// Whether the backend has the lake's outline, which the lake view needs; older backends send none.
+    var hasOutline: Bool? = nil
 }
 
 enum Light: String, Codable, Comparable {
