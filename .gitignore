@@ -7,3 +7,6 @@ ios/RowerWeather/Info.plist
 xcuserdata/
 DerivedData/
 .DS_Store
+ios/RowerWeatherWidget/Info.plist
+ios/RowerWeather/RowerWeather.entitlements
+ios/RowerWeatherWidget/RowerWeatherWidget.entitlements

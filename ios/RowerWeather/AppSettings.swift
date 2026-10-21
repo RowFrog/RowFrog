@@ -7,7 +7,12 @@ import SwiftUI
 /// which the screenshot workflow uses to show each state.
 @Observable
 final class AppSettings {
+#if WIDGET_EXTENSION
+    /// The widget reads the settings the app copies into the shared app group.
+    static let shared = AppSettings(defaults: WidgetShared.defaults)
+#else
     static let shared = AppSettings()
+#endif
 
     var appearance: Appearance { didSet { defaults.set(appearance.rawValue, forKey: Keys.appearance) } }
     var language: AppLanguage { didSet { defaults.set(language.rawValue, forKey: Keys.language) } }

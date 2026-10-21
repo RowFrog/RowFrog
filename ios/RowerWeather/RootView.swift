@@ -10,6 +10,7 @@ struct RootView: View {
     @State private var selection = ""
     @State private var showingList = false
     @State private var initialSearch = ""
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showingTour = !Tutorial.seen
 
     init(api: APIClient) {
@@ -83,6 +84,17 @@ struct RootView: View {
         .onChange(of: AppSettings.shared.appearance) { applyAppearance() }
         .onChange(of: AppSettings.shared.allowsLandscape) { Orientation.apply() }
         .task { await loadCatalog() }
+        // The widget picks up the home base, clubs and settings when the user leaves the app.
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { WidgetBridge.publish(locations) }
+        }
+        // A tap on the widget opens its club.
+        .onOpenURL { url in
+            guard url.scheme == "rowerweather", url.host() == "club", let id = url.pathComponents.last,
+                  locations.saved.contains(where: { $0.id == id }) else { return }
+            showingList = false
+            selection = id
+        }
     }
 
     static let sideListWidth: CGFloat = 320
@@ -109,6 +121,7 @@ struct RootView: View {
             locations.setCatalog(try await api.lakes())
             locations.catalogError = nil
             applyLaunchArguments()
+            WidgetBridge.publish(locations)
         } catch {
             locations.catalogError = tr("Could not load the rowing locations.")
         }

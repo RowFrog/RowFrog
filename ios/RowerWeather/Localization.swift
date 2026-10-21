@@ -294,6 +294,10 @@ enum German {
         "Rain on the lake": "Regen auf dem See",
         "Winter ice": "Wintereis",
         "Night on the lake": "Nacht auf dem See",
+        // Widget
+        "Now": "Jetzt",
+        "Open RowerWeather to load the forecast.": "Öffne RowerWeather, um die Vorhersage zu laden.",
+        "No green hours in the forecast.": "Keine grünen Stunden in der Vorhersage.",
         // Lake view
         "Lake view": "Seeansicht",
         "Open lake view": "Seeansicht öffnen",

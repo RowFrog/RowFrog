@@ -201,6 +201,9 @@ jobs:
           shoot 57-route-plan light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route"
           shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3
           shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de
+          # The home-screen and lock-screen widget in every size, with the home base's live forecast.
+          shoot_pages 32-widgets light -RWWidgetGallery YES
+          shoot_pages 33-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2
