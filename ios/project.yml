@@ -19,10 +19,10 @@ targets:
     entitlements:
       path: RowerWeather/RowerWeather.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.rowerweatherfrog.RowerWeather]
+        com.apple.security.application-groups: [group.com.rowerweatherfrog.RowFrog]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowerWeather
+        PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowFrog
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: Row Frog
@@ -43,10 +43,10 @@ targets:
         NSLocationWhenInUseUsageDescription: Row Frog uses your location only to suggest rowing clubs near you.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
-        # A tap on the widget opens rowerweather://club/<id>.
+        # A tap on the widget opens rowfrog://club/<id>.
         CFBundleURLTypes:
-          - CFBundleURLName: com.rowerweatherfrog.RowerWeather
-            CFBundleURLSchemes: [rowerweather]
+          - CFBundleURLName: com.rowerweatherfrog.RowFrog
+            CFBundleURLSchemes: [rowfrog]
         # Upright and on its side; the pages switch to two columns when wide enough.
         UISupportedInterfaceOrientations:
           - UIInterfaceOrientationPortrait
@@ -72,10 +72,10 @@ targets:
     entitlements:
       path: RowerWeatherWidget/RowerWeatherWidget.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.rowerweatherfrog.RowerWeather]
+        com.apple.security.application-groups: [group.com.rowerweatherfrog.RowFrog]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowerWeather.Widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowFrog.Widget
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Row Frog
         TARGETED_DEVICE_FAMILY: "1"

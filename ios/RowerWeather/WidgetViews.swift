@@ -5,7 +5,7 @@ import WidgetKit
 /// the saved clubs with their names, the settings, and the last forecast of
 /// each club so the widget still shows something without a connection.
 enum WidgetShared {
-    static let group = "group.com.rowerweatherfrog.RowerWeather"
+    static let group = "group.com.rowerweatherfrog.RowFrog"
     static let kind = "RowingLight"
     /// Until the app has run once and shared its home base.
     static let defaultHomeID = "mrc-1880"
