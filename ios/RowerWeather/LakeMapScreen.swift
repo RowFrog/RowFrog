@@ -1,5 +1,6 @@
 import MapKit
 import SwiftUI
+import TipKit
 
 /// The full lake view: the lake on a map, coloured by the rowing light, the
 /// waves or the wind, hour by hour. Tap the water to see the conditions there.
@@ -125,6 +126,7 @@ struct LakeMapScreen: View {
                 }
                 .background(routeMode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.regularMaterial), in: Circle())
                 .accessibilityLabel(routeMode ? tr("End route planning") : tr("Plan a route"))
+                .popoverTip(RoutePlanningTip(), arrowEdge: .top)
                 Button { showingInfo = true } label: {
                     Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
                 }
