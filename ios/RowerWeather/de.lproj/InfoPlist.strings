@@ -1,0 +1,2 @@
+/* Shown when the first-start tour asks for the location. */
+"NSLocationWhenInUseUsageDescription" = "RowerWeather nutzt deinen Standort nur, um Rudervereine in deiner Nähe vorzuschlagen.";

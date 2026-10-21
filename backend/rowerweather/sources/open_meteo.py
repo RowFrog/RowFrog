@@ -129,3 +129,23 @@ async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 
                 raise
     resp.raise_for_status()
     return parse(resp.json())
+
+
+async def fetch_many(
+    client: httpx.AsyncClient, points: list[tuple[float, float]], hours: int = 48
+) -> list[list[ForecastHour]]:
+    """Forecasts for several (lat, lon) points in one call; Open-Meteo answers with a list."""
+    params = request_params(points[0][0], points[0][1], hours)
+    params["latitude"] = ",".join(f"{lat:.4f}" for lat, _ in points)
+    params["longitude"] = ",".join(f"{lon:.4f}" for _, lon in points)
+    for attempt in range(2):
+        try:
+            resp = await client.get(BASE_URL, params=params, timeout=30)
+            break
+        except httpx.TransportError:
+            if attempt == 1:
+                raise
+    resp.raise_for_status()
+    payload = resp.json()
+    payloads = payload if isinstance(payload, list) else [payload]
+    return [parse(p) for p in payloads]

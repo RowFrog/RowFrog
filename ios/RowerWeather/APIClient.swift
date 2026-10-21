@@ -31,6 +31,13 @@ struct APIClient {
         try await get("clubs/\(clubID)/forecast")
     }
 
+#if !WIDGET_EXTENSION
+    // The widget doesn't show the lake view, so it leaves out LakeView.swift.
+    func lakeView(lakeID: String) async throws -> LakeView {
+        try await get("lakes/\(lakeID)/view")
+    }
+#endif
+
     private func get<T: Decodable>(_ path: String) async throws -> T {
         let (data, response) = try await session.data(from: baseURL.appending(path: path))
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {

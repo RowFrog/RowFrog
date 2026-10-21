@@ -65,6 +65,15 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(AppSettings(defaults: defaults).appearance, .device)
     }
 
+    func testLandscapeIsOnUntilTurnedOff() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertTrue(settings.allowsLandscape)
+        settings.allowsLandscape = false
+        XCTAssertFalse(AppSettings(defaults: defaults).allowsLandscape)
+        settings.resetToFactorySettings()
+        XCTAssertTrue(AppSettings(defaults: defaults).allowsLandscape)
+    }
+
     func testBackgroundChoiceRawValues() {
         for choice in [BackgroundChoice.noPicture, .sample("night-lake"), .custom("user-1.jpg")] {
             XCTAssertEqual(BackgroundChoice(rawValue: choice.rawValue), choice)
