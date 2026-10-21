@@ -149,6 +149,13 @@ jobs:
           shoot_pages 07-home-dark dark
           shoot_pages 09-icons light -RWIconGallery YES
           shoot_pages 39-conditions-proposal light -RWConditionsPreview YES
+          # The Current conditions card and the larger view behind each tile.
+          shoot 60-conditions-card light -RWOpenClub mrc-1880 -RWScrollTo conditions
+          for c in temperature feelsLike humidity wind waves waterTemperature precipitation visibility cloudCover pressure thunderstorm uvIndex ice daylight; do
+            shoot_pages "61-condition-$c" light -RWOpenClub mrc-1880 -RWOpenCondition "$c"
+          done
+          shoot 62-condition-wind-limits light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES
+          shoot 63-condition-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES -RWLanguage de
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES

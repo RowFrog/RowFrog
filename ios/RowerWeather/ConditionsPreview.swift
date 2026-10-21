@@ -362,7 +362,8 @@ struct DewGap: View {
         // 0–8 degrees of gap across the bar; mist when the dots touch.
         let offset = min(gap, 8) / 8 * (width - 12)
         VStack(spacing: 3) {
-            Text("\(Int(gap.rounded()))°").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+            // The gap in the user's unit: a difference, so °F is 1.8 times °C.
+            Text("\(Int((AppSettings.shared.temperatureUnit == .celsius ? gap : gap * 1.8).rounded()))°").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
             ZStack(alignment: .leading) {
                 Capsule().fill(Color.secondary.opacity(0.25)).frame(height: 4)
                 Circle().fill(Color.teal).frame(width: 10, height: 10)

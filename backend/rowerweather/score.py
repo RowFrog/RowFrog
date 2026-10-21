@@ -38,6 +38,7 @@ class Thresholds:
     visibility_red_m: float = 500.0
     water_temp_amber_c: float = 15.0
     water_temp_cold_c: float = 10.0
+    rain_amber_mm: float = 4.0  # heavy rain per hour
 
 
 @dataclass(frozen=True)
@@ -55,12 +56,18 @@ class HourConditions:
     daylight: Light = Light.GREEN
     # "daylight" when the hour is dark, "twilight" when the sun rises or sets in it.
     daylight_name: str = "daylight"
+    precipitation_mm: float | None = None
+    # WMO weather code; 96 and 99 are thunderstorms with hail.
+    weather_code: int | None = None
 
 
 @dataclass(frozen=True)
 class Assessment:
     light: Light
     reasons: list[tuple[str, Light]] = field(default_factory=list)
+
+
+HAIL_CODES = (96, 99)
 
 
 def _rising(value: float, amber: float, red: float) -> Light:
@@ -88,6 +95,10 @@ def assess(c: HourConditions, t: Thresholds = Thresholds()) -> Assessment:
             checks.append(("fog", Light.RED))
         elif c.visibility_m <= t.visibility_amber_m:
             checks.append(("fog", Light.AMBER))
+    if c.weather_code in HAIL_CODES:
+        checks.append(("hail", Light.RED))
+    elif c.precipitation_mm is not None and c.precipitation_mm >= t.rain_amber_mm:
+        checks.append(("heavy_rain", Light.AMBER))
     if c.water_temp_c is not None and c.water_temp_c < t.water_temp_amber_c:
         # Cold water calls for extra care but never closes the lake on its own.
         name = "cold_water" if c.water_temp_c < t.water_temp_cold_c else "cool_water"

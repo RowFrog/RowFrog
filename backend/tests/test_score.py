@@ -29,3 +29,11 @@ def test_cold_water_is_a_warning_not_a_closure():
     a = assess(HourConditions(0, 0, water_temp_c=6))
     assert a.light == Light.AMBER
     assert a.reasons == [("cold_water", Light.AMBER)]
+
+
+def test_heavy_rain_is_amber_and_hail_red():
+    assert assess(HourConditions(0, 0, precipitation_mm=1.0)).light == Light.GREEN
+    a = assess(HourConditions(0, 0, precipitation_mm=5.0))
+    assert a.reasons == [("heavy_rain", Light.AMBER)]
+    a = assess(HourConditions(0, 0, precipitation_mm=1.0, weather_code=96))
+    assert a.reasons == [("hail", Light.RED)]

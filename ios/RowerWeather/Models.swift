@@ -69,6 +69,8 @@ struct Reason: Codable, Hashable {
         case "gusts": tr("Gusts")
         case "waves": tr("Waves")
         case "fog": tr("Fog")
+        case "heavy_rain": tr("Heavy rain")
+        case "hail": tr("Hail")
         case "thunderstorm": tr("Thunderstorm risk")
         case "ice": tr("Ice")
         case "daylight": tr("Sun down")
@@ -88,6 +90,8 @@ struct Reason: Codable, Hashable {
         case "gusts": tr("Gusts are above the limit.")
         case "waves": tr("Waves at the launch point are too high.")
         case "fog": tr("Visibility is poor (fog or mist).")
+        case "heavy_rain": tr("Heavy rain of %@ or more in the hour.", Format.rain(4))
+        case "hail": tr("Hail is forecast with a thunderstorm.")
         case "thunderstorm": tr("Thunderstorms are possible.")
         case "ice": tr("There is ice on the water.")
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
@@ -130,6 +134,14 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     var dewPointC: Double? = nil
     /// Air pressure at sea level, in hPa.
     var pressureHpa: Double? = nil
+    /// Low, middle and high cloud in % (all cloud is cloudCoverPct).
+    var cloudCoverLowPct: Double? = nil
+    var cloudCoverMidPct: Double? = nil
+    var cloudCoverHighPct: Double? = nil
+    /// WHO UV index.
+    var uvIndex: Double? = nil
+    /// Energy for thunderstorms (CAPE), in J/kg.
+    var capeJkg: Double? = nil
 
     var id: Date { time }
 
@@ -141,7 +153,9 @@ struct ForecastHour: Codable, Identifiable, Hashable {
             temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp,
             precipitationMm: precipitationMm, weatherCode: weatherCode,
             apparentTemperatureC: apparentTemperatureC,
-            humidityPct: humidityPct, dewPointC: dewPointC, pressureHpa: pressureHpa
+            humidityPct: humidityPct, dewPointC: dewPointC, pressureHpa: pressureHpa,
+            cloudCoverLowPct: cloudCoverLowPct, cloudCoverMidPct: cloudCoverMidPct, cloudCoverHighPct: cloudCoverHighPct,
+            uvIndex: uvIndex, capeJkg: capeJkg
         )
     }
 
@@ -154,6 +168,13 @@ struct ForecastHour: Codable, Identifiable, Hashable {
 struct WaterTemperature: Codable, Hashable {
     let celsius: Double
     let measuredAt: Date
+    /// Earlier readings of the station, one per hour, oldest first.
+    var history: [WaterReading]? = nil
+}
+
+struct WaterReading: Codable, Hashable {
+    let time: Date
+    let celsius: Double
 }
 
 struct SunDay: Codable, Hashable {
@@ -212,6 +233,8 @@ struct ClubForecast: Codable, Hashable {
     let attribution: [String]
     let daylight: [SunDay]?
     let hours: [ForecastHour]
+    /// Yesterday and the next 7 days, for the charts behind the conditions tiles.
+    var outlook: [ForecastHour]? = nil
 
     /// The first forecast hour as it stands at `date`. That hour began up to
     /// an hour ago, so "sunrise or sunset within the hour" is replaced by

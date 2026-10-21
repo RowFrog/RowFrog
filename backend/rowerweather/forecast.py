@@ -106,6 +106,8 @@ def rowing_forecast(
             thunderstorm=_thunderstorm(h),
             daylight=daylight,
             daylight_name=daylight_name,
+            precipitation_mm=h.precipitation_mm,
+            weather_code=h.weather_code,
             lake_warning=_lake_warning(list(warnings), h.time, h.time + timedelta(hours=1)),
             weather_warning=_weather_warning(list(warnings), h.time, h.time + timedelta(hours=1)),
         )
