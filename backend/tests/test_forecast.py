@@ -110,6 +110,11 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
         return {"status": "ok", "lakeArea": None, "items": []}, []
 
     monkeypatch.setattr(api.gkd, "fetch_latest", no_water)
+
+    async def no_water_history(*args, **kwargs):
+        return None, []
+
+    monkeypatch.setattr(api.gkd, "fetch_recent", no_water_history)
     monkeypatch.setattr(api, "_warnings", no_warnings)
     api._cache.clear()
     body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()

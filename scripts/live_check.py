@@ -108,6 +108,8 @@ def forecast_summary(client: TestClient, club_id: str) -> list[str]:
             f"from {h['windFromDeg']}°  waves {h['waveHeightM']} m  fetch {h['fetchM']} m  "
             f"vis {h['visibilityM']} m  {h['temperatureC']} °C"
         )
+    history = (body["waterTemperature"] or {}).get("history") or []
+    lines.append(f"  water history: {len(history)} hours" + (f" from {history[0]['time']}" if history else ""))
     outlook = body.get("outlook")
     if outlook is None:
         lines.append("  outlook: missing")

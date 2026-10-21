@@ -234,16 +234,16 @@ async def club_forecast(club_id: str) -> dict:
     async with httpx.AsyncClient() as client:
         cached = _cache.get(club_id)
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
-            weather, water, outlook = cached[1]
+            weather, water, water_history, outlook = cached[1]
         else:
             try:
                 weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
             except httpx.HTTPError:
                 raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
-            water = None
+            water, water_history = None, []
             if lake.gkd_water_temperature_station:
                 try:
-                    water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
+                    water, water_history = await gkd.fetch_recent(client, lake.gkd_water_temperature_station, now)
                 except httpx.HTTPError:
                     water = None  # the forecast is still useful without it
             # Yesterday and the next 7 days for the charts; the forecast works without it.
@@ -251,7 +251,7 @@ async def club_forecast(club_id: str) -> dict:
                 outlook = await open_meteo.fetch_outlook(client, club.launch_point.lat, club.launch_point.lon)
             except httpx.HTTPError:
                 outlook = None
-            _cache[club_id] = (time.monotonic(), (weather, water, outlook))
+            _cache[club_id] = (time.monotonic(), (weather, water, water_history, outlook))
         warnings_block, warnings = await _warnings(client, club, now)
     rings = outlines.load(club.lake_id)
     water_c = water.celsius if water else None
@@ -263,7 +263,12 @@ async def club_forecast(club_id: str) -> dict:
         "generatedAt": now.replace(microsecond=0).isoformat(),
         "waterTemperature": None
         if water is None
-        else {"celsius": water.celsius, "measuredAt": water.time.astimezone(timezone.utc).isoformat()},
+        else {
+            "celsius": water.celsius,
+            "measuredAt": water.time.astimezone(timezone.utc).isoformat(),
+            # The station page's history, one value per hour, for the water temperature chart.
+            "history": [{"time": _utc(r.time), "celsius": r.celsius} for r in water_history],
+        },
         "warnings": warnings_block,
         "attribution": ATTRIBUTION,
         "daylight": [
