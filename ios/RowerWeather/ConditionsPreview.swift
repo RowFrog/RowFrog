@@ -111,14 +111,11 @@ struct ConditionsPreviewView: View {
                 Text("A compact card on the club page. Every tile can be tapped and opens a larger view from the bottom, like in the Weather app. Sample values.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
-                optionHeader("Sun tile S1: across both columns")
-                CompactConditionsMock(wideSun: true)
-                optionHeader("Sun tile S2: one column, next to ice cover")
                 CompactConditionsMock(wideSun: false)
-                optionHeader("Other graphics for humidity and cloud cover")
+                optionHeader("Graphics for humidity and cloud cover")
                 GraphicOptionsMock()
                 Text("Larger views when a tile is tapped").font(.title2.bold()).padding(.top, 8)
-                Text("Charts can be dragged sideways: back to yesterday and forward up to 7 days. Arrows above a chart show where the value rises, falls or stays the same in each 6 hours. ⓘ explains the limits.")
+                Text("Charts can be dragged sideways: back to yesterday and forward up to 7 days. Arrows above a chart show where the value rises, falls or stays the same in each 3 hours; on the wind chart they show the wind direction instead. ⓘ explains the limits.")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
                 ForEach(DetailMock.all) { DetailMockView(detail: $0) }
@@ -298,8 +295,14 @@ private struct GraphicOptionsMock: View {
                 compactTile(Condition.humidity.symbol, "H4 Scale", "80 %", "Dew point 8°") {
                     ScaleBar(fraction: 0.8, colors: [.yellow, .teal, .blue])
                 }
+                compactTile(Condition.humidity.symbol, "H5 Drop + mist gap", "80 %", "Dew point 8°") {
+                    VStack(spacing: 0) {
+                        SymbolFill(outline: "drop", filled: "drop.fill", fraction: 0.8, color: .teal, size: 20)
+                        DewGap(air: 11, dewPoint: 8)
+                    }
+                }
             }
-            Text("H3 shows air and dew point as two dots: when they meet, mist forms, so it also warns of fog.")
+            Text("H3 shows air and dew point as two dots: when they meet, mist forms, so it also warns of fog. H5 puts the drop above the mist gap.")
                 .font(.caption).foregroundStyle(.secondary)
             Text("Cloud cover").font(.subheadline.weight(.semibold)).padding(.top, 4)
             LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
@@ -315,8 +318,14 @@ private struct GraphicOptionsMock: View {
                 compactTile(Condition.cloudCover.symbol, "C4 Filling cloud", "100 %", "Low cloud 70 %") {
                     SymbolFill(outline: "cloud", filled: "cloud.fill", fraction: 1, color: .gray)
                 }
+                compactTile(Condition.cloudCover.symbol, "C5 Cloud + layers", "100 %", "Low cloud 70 %") {
+                    VStack(spacing: 2) {
+                        SymbolFill(outline: "cloud", filled: "cloud.fill", fraction: 1, color: .gray, size: 20)
+                        CloudLayers(layers: [("H", 0.9), ("M", 0.4), ("L", 0.7)])
+                    }
+                }
             }
-            Text("C2 is the weather map symbol: the sky in eighths. C3 shows high, middle and low cloud; low cloud matters most for visibility.")
+            Text("C2 is the weather map symbol: the sky in eighths. C3 shows high, middle and low cloud; low cloud matters most for visibility. C5 puts the cloud above the layers.")
                 .font(.caption).foregroundStyle(.secondary)
         }
     }
@@ -327,18 +336,19 @@ struct SymbolFill: View {
     let outline: String, filled: String
     let fraction: Double
     let color: Color
+    var size: CGFloat = 26
 
     var body: some View {
         ZStack {
             Image(systemName: outline)
             Image(systemName: filled)
                 .mask(alignment: .bottom) {
-                    Rectangle().frame(height: 30 * fraction)
+                    Rectangle().frame(height: size * 1.15 * fraction)
                 }
         }
-        .font(.system(size: 26))
+        .font(.system(size: size))
         .foregroundStyle(color)
-        .frame(width: 36, height: 30)
+        .frame(width: size + 10, height: size * 1.15)
     }
 }
 
@@ -446,8 +456,11 @@ struct DetailMock: Identifiable {
     var limitInfo: String? = nil
     var yDomain: ClosedRange<Double>? = nil
     var logScale = false
-    /// Change in 6 hours that counts as rising or falling; nil for no arrows.
+    /// Change in 3 hours that counts as rising or falling; nil for no arrows.
     var trendStep: Double? = nil
+    /// Where the wind comes from (degrees) at an hour; the arrows above the
+    /// chart then show the wind direction instead of the trend.
+    var windFrom: ((Int) -> Double)? = nil
     /// The chart shows the past 7 days instead of the forecast.
     var history = false
     let facts: [(String, String)]
@@ -471,7 +484,7 @@ private struct DetailMockView: View {
         let lo = values.min() ?? 0, hi = values.max() ?? 1
         let span = max(hi - lo, 0.1)
         let bottom = lo >= 0 ? 0 : lo - span * 0.1
-        return bottom...(hi + span * (detail.trendStep == nil ? 0.1 : 0.3))
+        return bottom...(hi + span * (detail.trendStep == nil && detail.windFrom == nil ? 0.1 : 0.3))
     }
 
     /// Where the trend arrows sit: near the top of the chart.
@@ -484,14 +497,22 @@ private struct DetailMockView: View {
     private struct Trend: Identifiable {
         let mid: Int
         let symbol: String
+        var rotation = 0.0
         var id: Int { mid }
     }
 
+    /// One arrow per 3 hours: rising, falling or steady, or for wind the
+    /// direction the wind blows to.
     private var trends: [Trend] {
+        if let from = detail.windFrom {
+            return stride(from: hours.lowerBound, to: hours.upperBound - 2, by: 3).map { h in
+                Trend(mid: h + 1, symbol: "arrow.down", rotation: from(h + 1))
+            }
+        }
         guard let step = detail.trendStep, let s = detail.series.first else { return [] }
-        return stride(from: hours.lowerBound, to: hours.upperBound - 5, by: 6).map { h in
-            let change = s.value(h + 6) - s.value(h)
-            return Trend(mid: h + 3, symbol: change > step ? "arrow.up" : change < -step ? "arrow.down" : "equal")
+        return stride(from: hours.lowerBound, to: hours.upperBound - 2, by: 3).map { h in
+            let change = s.value(h + 3) - s.value(h)
+            return Trend(mid: h + 1, symbol: change > step ? "arrow.up" : change < -step ? "arrow.down" : "equal")
         }
     }
 
@@ -560,6 +581,7 @@ private struct DetailMockView: View {
                     .symbolSize(0)
                     .annotation(position: .overlay) {
                         Image(systemName: t.symbol).font(.caption2.weight(.bold)).foregroundStyle(.secondary)
+                            .rotationEffect(.degrees(t.rotation))
                     }
             }
         }
@@ -625,7 +647,7 @@ private struct DetailMockView: View {
 
     private var axisHours: [Int] {
         if detail.history { return [-23, -10, 0] }
-        // Every 6 hours on the clock (00, 06, 12, 18), and now.
+        // Labels every 6 hours on the clock (00, 06, 12, 18), and now.
         return Array(stride(from: -20, through: hours.upperBound, by: 6)).filter { abs($0) >= 3 } + [0]
     }
 
@@ -699,7 +721,7 @@ extension DetailMock {
         DetailMock(
             symbol: d(.temperature).0, title: d(.temperature).1, value: "11°", note: "Cloudy · high 14°, low 6° today", unit: "°C",
             series: [Series(name: "Air", values: air, color: .orange), Series(name: "Feels like", values: feels, color: .blue)],
-            trendStep: 1,
+            trendStep: 0.5,
             facts: [("Now", "11 °C"), ("Tonight", "lowest 6 °C at 05:00"), ("Tomorrow", "highest 14 °C at 14:00"), ("Yesterday", "highest 13 °C")],
             rowing: "Under 5 °C dress in layers and keep a dry set in the boathouse.",
             source: "Deutscher Wetterdienst (DWD) via Open-Meteo, 2 m above ground."
@@ -707,7 +729,7 @@ extension DetailMock {
         DetailMock(
             symbol: d(.feelsLike).0, title: d(.feelsLike).1, value: "9°", note: "2° colder than the air: wind chill", unit: "°C",
             series: [Series(name: "Air", values: air, color: .orange), Series(name: "Feels like", values: feels, color: .blue)],
-            trendStep: 1,
+            trendStep: 0.5,
             facts: [("Why", "Wind 2 m/s, gusts 4 m/s"), ("Humidity", "80 %"), ("Sun", "down"), ("On the water", "feels about 1° colder again from the boat's speed")],
             rowing: "Feels colder than 5 °C: gloves or pogies and a hat.",
             source: "Apparent temperature from air temperature, wind, humidity and sun (DWD via Open-Meteo)."
@@ -715,7 +737,7 @@ extension DetailMock {
         DetailMock(
             symbol: d(.humidity).0, title: d(.humidity).1, value: "80 %", note: "Dew point 8° · 3° below the air", unit: "%",
             series: [Series(name: "Humidity", values: [80, 82, 85, 87, 89, 91, 93, 94, 95, 96, 96, 94, 90, 84, 78, 72, 68, 65, 64, 66, 70, 74, 77, 79], color: .teal)],
-            trendStep: 5,
+            trendStep: 2.5,
             facts: [("Dew point", "8 °C"), ("Air minus dew point", "3° (mist forms near 0–1°)"), ("Morning mist", "likely 04:00–08:00")],
             rowing: "When air and dew point meet, mist forms over the water: check visibility before going out early.",
             source: "Relative humidity and dew point, DWD via Open-Meteo."
@@ -729,9 +751,10 @@ extension DetailMock {
             ],
             limits: [(5.5, .orange, "Wind: row with care"), (8, .red, "Wind: stay ashore")],
             limitInfo: "Amber from 5.5 m/s (Beaufort 4, the first whitecaps) and red from 8 m/s (Beaufort 5, many whitecaps): in a single or double the boat gets hard to steer and water comes over the side. Gusts have their own limits: amber from 8 m/s and red from 12.8 m/s (46 km/h), the level at which DWD issues a strong-wind warning and the lake's warning lights start flashing. These are the app's starting values for small boats and can be tuned with rowers.",
-            yDomain: 0...14, trendStep: 1,
-            facts: [("Beaufort", "2 · light breeze"), ("Direction", "E, along the lake"), ("Open water upwind", "0.1 km"), ("Strongest gust", "9 m/s at 15:00")],
-            rowing: "Calm now; gusts reach the amber limit tomorrow afternoon.",
+            yDomain: 0...14,
+            windFrom: { h in h < 12 ? 90 : h < 20 ? 90 + Double(h - 12) * 22.5 : 270 },
+            facts: [("Beaufort", "2 · light breeze"), ("Direction", "E now, turning W tomorrow afternoon"), ("Open water upwind", "0.1 km"), ("Strongest gust", "9 m/s at 15:00")],
+            rowing: "Calm now; gusts reach the amber limit tomorrow afternoon. The arrows above the chart show where the wind blows to.",
             source: "Wind at 10 m and gusts, DWD ICON via Open-Meteo."
         ),
         DetailMock(
@@ -739,7 +762,7 @@ extension DetailMock {
             series: [Series(name: "Waves", values: [0.01, 0.01, 0.01, 0.01, 0, 0, 0, 0.01, 0.01, 0.02, 0.04, 0.05, 0.08, 0.1, 0.14, 0.16, 0.15, 0.12, 0.1, 0.07, 0.05, 0.03, 0.02, 0.01], color: .blue)],
             limits: [(0.15, .orange, "Row with care"), (0.3, .red, "Stay ashore")],
             limitInfo: "Amber from 0.15 m and red from 0.30 m wave height. A racing single sits only about 10–15 cm above the water at its side, so from about 15 cm waves start to wash in; from about 30 cm the boat fills and capsizing becomes likely. The waves are calculated from the wind and the open water upwind, not measured.",
-            yDomain: 0...0.4, trendStep: 0.03,
+            yDomain: 0...0.4, trendStep: 0.015,
             facts: [("Open water upwind", "0.1 km (wind off the shore)"), ("Highest", "0.16 m at 15:00"), ("Period", "about 1 s, short and steep")],
             rowing: "Flat now; around 15:00 the waves just reach the amber limit.",
             source: "Calculated by the app from wind and the lake's shape (fetch), not measured."
@@ -758,9 +781,9 @@ extension DetailMock {
             symbol: d(.precipitation).0, title: d(.precipitation).1, value: "Dry", note: "Rain expected from 23:00", unit: "mm",
             series: [Series(name: "Rain", values: [0, 0, 0, 0.2, 0.6, 0.9, 0.4, 0.1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0.1, 0.3], color: .blue, kind: .bars)],
             limits: [(4, .orange, "Heavy rain")],
-            limitInfo: "4 mm per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water. Hail always counts as red. This limit is still a proposal: the traffic light does not use rain yet.",
+            limitInfo: "4 mm per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water. Hail always counts as red. Official DWD warnings for heavy rain or hail always win over this estimate.",
             yDomain: 0...6,
-            facts: [("Next 24 h", "2.6 mm in total"), ("Kind", "rain, no hail or snow"), ("Heaviest", "0.9 mm at 01:00")],
+            facts: [("Next 24 h", "2.6 mm in total"), ("Kind", "rain, no hail or snow"), ("Heaviest", "0.9 mm at 01:00"), ("DWD warnings", "none (heavy rain and hail show here)"), ("Rowing light", "green: under 4 mm per hour")],
             rowing: "Light rain only; hail would come with a thunderstorm warning.",
             source: "Precipitation per hour and weather code, DWD via Open-Meteo."
         ),
@@ -769,8 +792,8 @@ extension DetailMock {
             series: [Series(name: "Visibility", values: [32, 30, 25, 20, 15, 10, 6, 3, 0.9, 0.4, 0.3, 0.7, 1.6, 4, 10, 20, 30, 35, 40, 40, 38, 35, 30, 28], color: .gray)],
             limits: [(5, .secondary, "Mist"), (1, .orange, "Fog: row with care"), (0.5, .red, "Stay ashore")],
             limitInfo: "Fog means visibility under 1 km (the WMO definition): amber. Under 500 m you see another boat or a passenger ship only about 2 minutes ahead at rowing speed, and you lose sight of the shore: red. Mist (1–5 km) has no limit, but the app mentions it because it often thickens into fog. The scale is stretched at the bottom so short distances are easy to read.",
-            yDomain: 0.1...80, logScale: true, trendStep: 2,
-            facts: [("Fog", "04:00–07:00, thickest 0.3 km at 06:00"), ("Mist", "08:00–09:00, 1.6–4 km"), ("Rowing possible", "from about 08:00 by visibility (sunrise 07:40)")],
+            yDomain: 0.1...80, logScale: true, trendStep: 1,
+            facts: [("Fog", "04:00–07:00, thickest 0.3 km at 06:00"), ("Mist", "08:00–09:00, 1.6–4 km"), ("Rowing possible", "from about 08:00 by visibility (sunrise 07:40)"), ("DWD fog warning", "none"), ("Lake view", "fog shows as a banner over the whole lake")],
             rowing: "Fog tomorrow morning: wait until about 08:00, when it has lifted to mist.",
             source: "Visibility, DWD via Open-Meteo."
         ),
@@ -778,10 +801,12 @@ extension DetailMock {
             symbol: d(.cloudCover).0, title: d(.cloudCover).1, value: "100 %", note: "Low cloud 70 %", unit: "%",
             series: [
                 Series(name: "All cloud", values: [100, 100, 95, 90, 90, 85, 80, 80, 75, 70, 60, 55, 50, 45, 40, 40, 45, 50, 60, 70, 80, 90, 95, 100], color: .gray),
-                Series(name: "Low cloud", values: [70, 70, 65, 60, 60, 55, 50, 50, 40, 30, 20, 15, 10, 10, 5, 5, 10, 15, 20, 30, 40, 55, 65, 70], color: .indigo),
+                Series(name: "High", values: [90, 90, 85, 80, 75, 70, 60, 50, 40, 30, 25, 20, 20, 15, 15, 20, 30, 40, 50, 60, 70, 80, 85, 90], color: .cyan),
+                Series(name: "Middle", values: [40, 40, 45, 50, 50, 45, 40, 35, 30, 30, 25, 25, 20, 20, 15, 15, 20, 25, 30, 35, 35, 40, 40, 40], color: .teal),
+                Series(name: "Low", values: [70, 70, 65, 60, 60, 55, 50, 50, 40, 30, 20, 15, 10, 10, 5, 5, 10, 15, 20, 30, 40, 55, 65, 70], color: .indigo),
             ],
-            yDomain: 0...130, trendStep: 10,
-            facts: [("Sunny spells", "tomorrow 11:00–15:00"), ("Low cloud", "fog-like on the hills")],
+            yDomain: 0...130, trendStep: 5,
+            facts: [("Sunny spells", "tomorrow 11:00–15:00"), ("High cloud", "90 %, thin veil (cirrus)"), ("Middle cloud", "40 %"), ("Low cloud", "70 %, fog-like on the hills")],
             rowing: "No effect on the rowing light; low cloud often comes with poor visibility.",
             source: "Cloud cover, DWD via Open-Meteo."
         ),
@@ -794,7 +819,7 @@ extension DetailMock {
                 if h < 72 { return 1016.6 - 0.12 * Double(h - 23) }
                 return 1010.8 + 0.1 * Double(h - 71)
             }],
-            yDomain: 1005...1030, trendStep: 0.5,
+            yDomain: 1005...1030, trendStep: 0.25,
             facts: [("Next 24 h", "falling 6 hPa"), ("Next days", "down to 1011 hPa on Wednesday, then rising"), ("High pressure", "above 1013 hPa: mostly settled")],
             rowing: "Falling slowly: settled now, wind and rain more likely in 1–2 days. Falling 3 hPa or more in 3 hours often means wind soon.",
             source: "Air pressure at sea level, DWD via Open-Meteo."
