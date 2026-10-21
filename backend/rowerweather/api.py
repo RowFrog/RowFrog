@@ -101,6 +101,11 @@ def _hour_json(h: RowingHour) -> dict:
         "dewPointC": w.dew_point_c,
         "pressureHpa": w.pressure_hpa,
         "cloudCoverPct": w.cloud_cover_pct,
+        "cloudCoverLowPct": w.cloud_cover_low_pct,
+        "cloudCoverMidPct": w.cloud_cover_mid_pct,
+        "cloudCoverHighPct": w.cloud_cover_high_pct,
+        "uvIndex": w.uv_index,
+        "capeJkg": w.cape_jkg,
         "precipitationMm": w.precipitation_mm,
         "weatherCode": w.weather_code,
         "sunUp": h.sun_up,
@@ -229,7 +234,7 @@ async def club_forecast(club_id: str) -> dict:
     async with httpx.AsyncClient() as client:
         cached = _cache.get(club_id)
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
-            weather, water = cached[1]
+            weather, water, outlook = cached[1]
         else:
             try:
                 weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
@@ -241,9 +246,17 @@ async def club_forecast(club_id: str) -> dict:
                     water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
                 except httpx.HTTPError:
                     water = None  # the forecast is still useful without it
-            _cache[club_id] = (time.monotonic(), (weather, water))
+            # Yesterday and the next 7 days for the charts; the forecast works without it.
+            try:
+                outlook = await open_meteo.fetch_outlook(client, club.launch_point.lat, club.launch_point.lon)
+            except httpx.HTTPError:
+                outlook = None
+            _cache[club_id] = (time.monotonic(), (weather, water, outlook))
         warnings_block, warnings = await _warnings(client, club, now)
-    hours = rowing_forecast(club, weather, outlines.load(club.lake_id), water.celsius if water else None, warnings)
+    rings = outlines.load(club.lake_id)
+    water_c = water.celsius if water else None
+    hours = rowing_forecast(club, weather, rings, water_c, warnings)
+    outlook_hours = rowing_forecast(club, outlook, rings, water_c, warnings) if outlook else None
     return {
         "clubId": club.id,
         "lakeId": club.lake_id,
@@ -258,6 +271,7 @@ async def club_forecast(club_id: str) -> dict:
             for d in sun_days(now, now + timedelta(hours=len(hours)), club.launch_point.lat, club.launch_point.lon)
         ],
         "hours": [_hour_json(h) for h in hours],
+        "outlook": None if outlook_hours is None else [_hour_json(h) for h in outlook_hours],
     }
 
 

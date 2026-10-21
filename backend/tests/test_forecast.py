@@ -1,4 +1,5 @@
 import asyncio
+from dataclasses import replace
 
 import httpx
 from fastapi.testclient import TestClient
@@ -100,7 +101,11 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
     async def no_water(*args, **kwargs):
         return None
 
+    async def fake_outlook(client, lat, lon):
+        return [replace(h, uv_index=2.5, cloud_cover_high_pct=40) for h in open_meteo.parse(PAYLOAD)]
+
     monkeypatch.setattr(open_meteo, "fetch", fake_fetch)
+    monkeypatch.setattr(open_meteo, "fetch_outlook", fake_outlook)
     async def no_warnings(client, club, now):
         return {"status": "ok", "lakeArea": None, "items": []}, []
 
@@ -119,3 +124,27 @@ def test_forecast_reports_sun_times_and_sun_up(monkeypatch):
     assert body["hours"][0]["dewPointC"] == 6.1
     assert body["hours"][1]["pressureHpa"] == 1015.2
     assert body["hours"][0]["precipitationMm"] == 0
+    assert len(body["outlook"]) == len(body["hours"])
+    assert body["outlook"][0]["uvIndex"] == 2.5
+    assert body["outlook"][0]["cloudCoverHighPct"] == 40
+    assert "waveHeightM" in body["outlook"][0]
+
+
+def test_outlook_takes_uv_from_the_default_models_when_icon_has_none():
+    seen = []
+
+    def handler(request):
+        seen.append(dict(request.url.params))
+        if "models" in request.url.params:
+            return httpx.Response(200, json={"hourly": {**PAYLOAD["hourly"]}})
+        times = PAYLOAD["hourly"]["time"]
+        return httpx.Response(200, json={"hourly": {"time": times, "uv_index": [3.1] * len(times)}})
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await open_meteo.fetch_outlook(client, 47.9, 11.3)
+
+    hours = asyncio.run(run())
+    assert seen[0]["past_hours"] == "24" and seen[0]["forecast_hours"] == "168"
+    assert seen[1]["hourly"] == "uv_index" and "models" not in seen[1]
+    assert all(h.uv_index == 3.1 for h in hours)

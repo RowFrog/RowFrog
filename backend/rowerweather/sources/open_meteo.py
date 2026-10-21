@@ -10,7 +10,7 @@ Data: Deutscher Wetterdienst via Open-Meteo, CC BY 4.0.
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime, timezone
 
 import httpx
@@ -23,6 +23,8 @@ HOURLY = [
     "wind_direction_10m",
     "cloud_cover",
     "cloud_cover_low",
+    "cloud_cover_mid",
+    "cloud_cover_high",
     "visibility",
     "precipitation",
     "weather_code",
@@ -56,10 +58,14 @@ class ForecastHour:
     dew_point_c: float | None = None
     # Air pressure reduced to sea level, in hPa.
     pressure_hpa: float | None = None
+    cloud_cover_mid_pct: float | None = None
+    cloud_cover_high_pct: float | None = None
+    # WHO UV index; only filled in the outlook (see fetch_outlook).
+    uv_index: float | None = None
 
 
-def request_params(lat: float, lon: float, hours: int = 48) -> dict[str, str]:
-    return {
+def request_params(lat: float, lon: float, hours: int = 48, past_hours: int = 0) -> dict[str, str]:
+    params = {
         "latitude": f"{lat:.4f}",
         "longitude": f"{lon:.4f}",
         "hourly": ",".join(HOURLY),
@@ -68,6 +74,9 @@ def request_params(lat: float, lon: float, hours: int = 48) -> dict[str, str]:
         "timezone": "GMT",
         "forecast_hours": str(hours),
     }
+    if past_hours:
+        params["past_hours"] = str(past_hours)
+    return params
 
 
 def parse(payload: dict) -> list[ForecastHour]:
@@ -93,6 +102,9 @@ def parse(payload: dict) -> list[ForecastHour]:
         col("relative_humidity_2m"),
         col("dew_point_2m"),
         col("pressure_msl"),
+        col("cloud_cover_mid"),
+        col("cloud_cover_high"),
+        col("uv_index"),
     )
     return [
         ForecastHour(
@@ -112,23 +124,57 @@ def parse(payload: dict) -> list[ForecastHour]:
             humidity_pct=rh,
             dew_point_c=dew,
             pressure_hpa=hpa,
+            cloud_cover_mid_pct=ccm,
+            cloud_cover_high_pct=cch,
+            uv_index=uv,
         )
-        for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code, feels, rh, dew, hpa in rows
+        for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code, feels, rh, dew, hpa, ccm, cch, uv in rows
     ]
 
 
-async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48) -> list[ForecastHour]:
+async def _get(client: httpx.AsyncClient, params: dict[str, str], timeout: float = 20) -> dict:
     # Live checks on GitHub saw about one connect timeout in six calls, so
     # connection failures are retried once before giving up.
     for attempt in range(2):
         try:
-            resp = await client.get(BASE_URL, params=request_params(lat, lon, hours), timeout=20)
+            resp = await client.get(BASE_URL, params=params, timeout=timeout)
             break
         except httpx.TransportError:
             if attempt == 1:
                 raise
     resp.raise_for_status()
-    return parse(resp.json())
+    return resp.json()
+
+
+async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48) -> list[ForecastHour]:
+    return parse(await _get(client, request_params(lat, lon, hours)))
+
+
+OUTLOOK_PAST_HOURS = 24
+OUTLOOK_HOURS = 168
+
+
+async def fetch_outlook(client: httpx.AsyncClient, lat: float, lon: float) -> list[ForecastHour]:
+    """Yesterday plus the next 7 days, for the charts behind the conditions tiles.
+
+    ICON has no UV index, so it comes from Open-Meteo's default model mix in a
+    second, small call; without it the outlook simply has no UV values.
+    """
+    params = request_params(lat, lon, OUTLOOK_HOURS, OUTLOOK_PAST_HOURS)
+    hours = parse(await _get(client, params))
+    if all(h.uv_index is None for h in hours):
+        uv_params = {k: v for k, v in params.items() if k != "models"}
+        uv_params["hourly"] = "uv_index"
+        try:
+            payload = (await _get(client, uv_params))["hourly"]
+            uv = {
+                datetime.fromisoformat(t).replace(tzinfo=timezone.utc): v
+                for t, v in zip(payload["time"], payload.get("uv_index") or [])
+            }
+            hours = [replace(h, uv_index=uv.get(h.time)) for h in hours]
+        except (httpx.HTTPError, KeyError, ValueError):
+            pass
+    return hours
 
 
 async def fetch_many(

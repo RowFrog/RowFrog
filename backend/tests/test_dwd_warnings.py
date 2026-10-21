@@ -126,7 +126,11 @@ def _fake_weather(monkeypatch):
     async def no_water(*args, **kwargs):
         return None
 
+    async def no_outlook(client, lat, lon):
+        return None
+
     monkeypatch.setattr(open_meteo, "fetch", fake_fetch)
+    monkeypatch.setattr(open_meteo, "fetch_outlook", no_outlook)
     monkeypatch.setattr(api.gkd, "fetch_latest", no_water)
 
 
