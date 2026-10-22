@@ -822,7 +822,7 @@ extension ConditionDetail {
             ],
             limitInfo: tr("Amber from %@ (Beaufort 4, the first whitecaps) and red from %@ (Beaufort 5, many whitecaps): in a single or double the boat gets hard to steer and water comes over the side. Gusts have their own limits: amber from %@ and red from %@ (46 km/h), the level at which DWD issues a strong-wind warning and the lake's warning lights start flashing. These are the app's starting values for small boats.",
                           RowingLimit.windAmber.format(5.5), RowingLimit.windRed.format(8), RowingLimit.gustAmber.format(8), RowingLimit.gustRed.format(12.8))
-                + inUse([(.windAmber, .windRed), (.gustAmber, .gustRed)]),
+                + inUse([(tr("Wind"), .windAmber, .windRed), (tr("Gusts"), .gustAmber, .gustRed)]),
             windArrows: true,
             chartNote: tr("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days."),
             facts: facts,
@@ -843,8 +843,8 @@ extension ConditionDetail {
     }
 
     /// The limits in use, after the explanation of the app's own.
-    private static func inUse(_ pairs: [(RowingLimit, RowingLimit)]) -> String {
-        let parts = pairs.map { tr("amber from %@, red above %@", $0.0.format(userLimits.value($0.0)), $0.1.format(userLimits.value($0.1))) }
+    private static func inUse(_ pairs: [(String, RowingLimit, RowingLimit)]) -> String {
+        let parts = pairs.map { tr("%@ amber from %@, red above %@", $0.0, $0.1.format(userLimits.value($0.1)), $0.2.format(userLimits.value($0.2))) }
         return " " + tr("In use for %@: %@. You can change them under Settings, Rowing limits.", userLimits.boat.title.lowercased(), parts.joined(separator: "; "))
     }
 
@@ -868,7 +868,7 @@ extension ConditionDetail {
             ],
             limitInfo: tr("Amber from %@ and red from %@ wave height. A racing single sits only about 10–15 cm above the water at its side, so from about 15 cm waves start to wash in; from about 30 cm the boat fills and capsizing becomes likely. The waves are calculated from the wind and the open water upwind, not measured.",
                           Format.waves(0.15), Format.waves(0.3))
-                + inUse([(.waveAmber, .waveRed)]),
+                + inUse([(tr("Waves"), .waveAmber, .waveRed)]),
             yDomain: 0...max(u.convert(userLimits.value(.waveRed) * 4 / 3), u.convert(d.timeline.compactMap(\.waveHeightM).max() ?? 0) * 1.3),
             trendStep: step(u.convert, 0.015),
             facts: facts,

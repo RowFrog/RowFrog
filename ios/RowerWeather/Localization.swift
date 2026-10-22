@@ -658,6 +658,6 @@ enum German {
         "Your boat": "Dein Boot",
         "Your boat and limits": "Dein Boot und Grenzwerte",
         "Your limit · the app's: %@": "Dein Grenzwert · der App: %@",
-        "amber from %@, red above %@": "gelb ab %@, rot über %@",
+        "%@ amber from %@, red above %@": "%@ gelb ab %@, rot über %@",
     ]
 }
