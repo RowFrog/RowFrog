@@ -124,6 +124,7 @@ struct LocationPageView: View {
                 LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
             }
             .id("lakeview")
+            SatellitePictureCard(lakeID: forecast.lakeId)
         }
     }
 

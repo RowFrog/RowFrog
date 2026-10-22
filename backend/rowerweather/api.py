@@ -58,6 +58,8 @@ def _point(p: locations.Point) -> dict:
 
 
 @app.get("/lakes")
+# The same list under a path that also works as a static file next to lakes/<id>/view.
+@app.get("/lakes/index")
 def list_lakes() -> list[dict]:
     return [
         {

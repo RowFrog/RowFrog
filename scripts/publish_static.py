@@ -6,10 +6,15 @@ Usage (from the repository root, after `pip install -e backend`):
 
 Calls the same FastAPI app the server would run (no network server needed)
 and writes each answer at its API path, without a file extension:
-    OUT_DIR/lakes                       = GET /lakes
+    OUT_DIR/lakes/index                 = GET /lakes/index (the lake list)
+    OUT_DIR/lakes/<id>/view             = GET /lakes/<id>/view
     OUT_DIR/clubs/<id>/forecast         = GET /clubs/<id>/forecast
 So the app reads the files with the same paths as from a live backend, and
 moving to a real server later only changes the app's RWAPIBaseURL.
+With the Copernicus account (CDSE_CLIENT_ID / CDSE_CLIENT_SECRET) it also
+writes the latest cloud-free Sentinel-2 picture of each lake:
+    OUT_DIR/lakes/<id>/satellite        when it was taken, its size, credit
+    OUT_DIR/lakes/<id>/satellite.jpg    the picture
 
 "confirmed" refreshes the clubs in data/locations.json, "all" every club in
 the catalogs too; the scheduled workflow runs the first often and the second
@@ -23,7 +28,7 @@ import argparse
 import asyncio
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import httpx
@@ -31,7 +36,7 @@ from fastapi.testclient import TestClient
 
 from rowerweather import api, ice, locations, outlines
 from rowerweather.api import LOCAL, app
-from rowerweather.sources import lake_ice_satellite, open_meteo
+from rowerweather.sources import lake_ice_satellite, open_meteo, sentinel2
 
 # Clubs per Open-Meteo request. Loading forecasts in batches takes a few
 # requests instead of one per club; single requests from GitHub's shared
@@ -39,6 +44,9 @@ from rowerweather.sources import lake_ice_satellite, open_meteo
 BATCH = 50
 # Waits before retrying a failed batch, in seconds; Open-Meteo's limit is per minute.
 RETRY_WAITS = (65, 120)
+# How often a lake's satellite picture is looked for, and how many lakes one run looks at.
+PICTURE_REFRESH = {"confirmed": timedelta(hours=24), "other": timedelta(hours=72)}
+PICTURES_PER_RUN = 40
 
 
 async def prime_weather(clubs: list[locations.Club]) -> list[str]:
@@ -81,7 +89,60 @@ def prime_satellite_ice(clubs: list[locations.Club]) -> None:
         print(f"  satellite {lake_id}: {last.day} seen {last.seen_share:.0%} ice {last.ice_share:.0%}")
 
 
+def publish_pictures(out: Path, lake_ids: list[str], confirmed: set[str]) -> None:
+    """Look for newer Sentinel-2 pictures of the lakes whose last look is old enough."""
+    client = sentinel2.client()
+    if client is None:
+        return
+    now = datetime.now(timezone.utc)
+    looked = 0
+    try:
+        for lake_id in sorted(lake_ids, key=lambda i: (i not in confirmed, i)):
+            rings = outlines.load(lake_id)
+            meta_path = out / "lakes" / lake_id / "satellite"
+            old = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
+            refresh = PICTURE_REFRESH["confirmed" if lake_id in confirmed else "other"]
+            checked = datetime.fromisoformat(old["checkedAt"]) if "checkedAt" in old else None
+            if not rings or (checked and now - checked < refresh) or looked >= PICTURES_PER_RUN:
+                continue
+            looked += 1
+            try:
+                picture = sentinel2.latest(client, rings[0], now)
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 401:  # the sign-in lasts minutes; renew it once
+                    client.close()
+                    client = sentinel2.client()
+                    if client is None:
+                        return
+                print(f"  picture {lake_id}: HTTP {e.response.status_code} {e.response.text[:200]}")
+                continue
+            except (httpx.HTTPError, KeyError, ValueError) as e:
+                print(f"  picture {lake_id}: {e!r}")
+                continue
+            body = dict(old, checkedAt=now.replace(microsecond=0).isoformat())
+            if picture and picture.taken.isoformat() != old.get("taken"):
+                jpg = out / "lakes" / lake_id / "satellite.jpg"
+                jpg.parent.mkdir(parents=True, exist_ok=True)
+                jpg.write_bytes(picture.jpeg)
+                body.update(
+                    taken=picture.taken.isoformat(),
+                    lakeCloud=round(picture.lake_cloud, 2),
+                    bbox=[round(v, 5) for v in picture.bbox],
+                    width=picture.width,
+                    height=picture.height,
+                    image="satellite.jpg",
+                    attribution=f"Contains modified Copernicus Sentinel data {picture.taken.year}",
+                )
+            write(meta_path, body)
+            print(f"  picture {lake_id}: {body.get('taken', 'none in the last 30 days')}")
+    finally:
+        if client is not None:
+            client.close()
+
+
 def write(path: Path, body) -> None:
+    if path.parent.is_file():  # the lake list used to be a file at v1/lakes
+        path.parent.unlink()
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(body, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
@@ -95,9 +156,9 @@ def main() -> int:
     args = parser.parse_args()
 
     client = TestClient(app)
-    resp = client.get("/lakes")
+    resp = client.get("/lakes/index")
     resp.raise_for_status()
-    write(args.out / "lakes", resp.json())
+    write(args.out / "lakes" / "index", resp.json())
 
     if args.clubs == "all":
         clubs = list(locations.load().clubs.values())
@@ -119,6 +180,22 @@ def main() -> int:
             continue
         write(args.out / "clubs" / club_id / "forecast", resp.json())
     print(f"Wrote {len(club_ids) - len(failed)} of {len(club_ids)} forecasts to {args.out}")
+    lake_ids = sorted({c.lake_id for c in clubs if outlines.load(c.lake_id)})
+    views = 0
+    for lake_id in lake_ids:
+        try:
+            resp = client.get(f"/lakes/{lake_id}/view")
+        except Exception as e:
+            print(f"  lake view {lake_id}: {type(e).__name__}: {e}")
+            continue
+        if resp.status_code != 200:
+            print(f"  lake view {lake_id}: HTTP {resp.status_code} {resp.text[:120]}")
+            continue
+        write(args.out / "lakes" / lake_id / "view", resp.json())
+        views += 1
+    print(f"Wrote {views} of {len(lake_ids)} lake views")
+    confirmed = {c.lake_id for c in locations.load(catalog_paths=()).clubs.values()}
+    publish_pictures(args.out, lake_ids, confirmed)
     for line in failed:
         print("  failed", line)
     # Fail the run only when nothing could be written, so one flaky club does not raise alarms.

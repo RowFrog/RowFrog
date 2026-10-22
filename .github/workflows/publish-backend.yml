@@ -68,9 +68,9 @@ jobs:
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git checkout -q --orphan publish
           git add -A
-          # Never publish anything but the forecast files.
-          if git diff --cached --name-only | grep -qv -e '^v1/' -e '^\.nojekyll$'; then
-            echo "Unexpected files in the site:"; git diff --cached --name-only | grep -v -e '^v1/' -e '^\.nojekyll$' | head
+          # Never publish anything but the forecast files (and CNAME, which GitHub writes for a custom domain).
+          if git diff --cached --name-only | grep -qv -e '^v1/' -e '^\.nojekyll$' -e '^CNAME$'; then
+            echo "Unexpected files in the site:"; git diff --cached --name-only | grep -v -e '^v1/' -e '^\.nojekyll$' -e '^CNAME$' | head
             exit 1
           fi
           git commit -q -m "Forecasts $(date -u +%Y-%m-%dT%H:%MZ)"
