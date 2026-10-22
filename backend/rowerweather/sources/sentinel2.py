@@ -131,13 +131,15 @@ def _passes(client: httpx.Client, bbox, now: datetime) -> list[datetime]:
 
 def _lake_cloud(client: httpx.Client, ring, taken: datetime) -> float | None:
     day = taken.strftime("%Y-%m-%d")
+    next_day = (taken + timedelta(days=1)).strftime("%Y-%m-%d")
     request = {
         "input": {
             "bounds": {"geometry": _polygon(ring), "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
             "data": [{"type": COLLECTION, "dataFilter": {"mosaickingOrder": "leastCC"}}],
         },
         "aggregation": {
-            "timeRange": {"from": f"{day}T00:00:00Z", "to": f"{day}T23:59:59Z"},
+            # The interval must span the whole day, or the API leaves it out.
+            "timeRange": {"from": f"{day}T00:00:00Z", "to": f"{next_day}T00:00:00Z"},
             "aggregationInterval": {"of": "P1D"},
             "evalscript": CLOUD_SCRIPT,
             "resx": 0.0008,
