@@ -34,7 +34,7 @@ from pathlib import Path
 import httpx
 from fastapi.testclient import TestClient
 
-from rowerweather import api, ice, locations, outlines
+from rowerweather import api, ice, lake_view, locations, outlines
 from rowerweather.api import LOCAL, app
 from rowerweather.sources import lake_ice_satellite, open_meteo, sentinel2
 
@@ -49,25 +49,49 @@ PICTURE_REFRESH = {"confirmed": timedelta(hours=24), "other": timedelta(hours=72
 PICTURES_PER_RUN = 40
 
 
-async def prime_weather(clubs: list[locations.Club]) -> list[str]:
-    """Load the forecasts for `clubs` in batches into the API's cache; returns problems."""
+async def _batched(points: list[tuple[float, float]]) -> tuple[list[list | None], list[str]]:
+    """Forecasts for `points` in batches of BATCH; None where a batch failed."""
+    out: list[list | None] = []
     problems = []
     async with httpx.AsyncClient() as client:
-        for start in range(0, len(clubs), BATCH):
-            batch = clubs[start : start + BATCH]
-            points = [(c.launch_point.lat, c.launch_point.lon) for c in batch]
+        for start in range(0, len(points), BATCH):
+            batch = points[start : start + BATCH]
+            forecasts = None
             for attempt, wait in enumerate((0, *RETRY_WAITS)):
                 await asyncio.sleep(wait)
                 try:
-                    forecasts = await open_meteo.fetch_many(client, points)
+                    forecasts = await open_meteo.fetch_many(client, batch)
                     break
                 except (httpx.HTTPError, ValueError, KeyError) as e:
                     detail = e.response.text[:200] if isinstance(e, httpx.HTTPStatusError) else ""
                     problems.append(f"batch {start // BATCH + 1} attempt {attempt + 1}: {e!r} {detail}")
-            else:
-                continue
-            for club, weather in zip(batch, forecasts):
-                api._primed_weather[club.id] = weather
+            out += forecasts if forecasts else [None] * len(batch)
+    return out, problems
+
+
+async def prime_weather(clubs: list[locations.Club]) -> list[str]:
+    """Load the forecasts for `clubs` in batches into the API's cache; returns problems."""
+    forecasts, problems = await _batched([(c.launch_point.lat, c.launch_point.lon) for c in clubs])
+    for club, weather in zip(clubs, forecasts):
+        if weather is not None:
+            api._primed_weather[club.id] = weather
+    return problems
+
+
+async def prime_lake_weather(lake_ids: list[str]) -> list[str]:
+    """The same for the lake views' sample points, all lakes together."""
+    owners, points = [], []
+    for lake_id in lake_ids:
+        for lon, lat in lake_view.grid_for(lake_id, outlines.load(lake_id)).samples:
+            owners.append(lake_id)
+            points.append((lat, lon))
+    forecasts, problems = await _batched(points)
+    per_lake: dict[str, list] = {}
+    for lake_id, weather in zip(owners, forecasts):
+        per_lake.setdefault(lake_id, []).append(weather)
+    for lake_id, weathers in per_lake.items():
+        if all(w is not None for w in weathers):
+            api._primed_lake_weather[lake_id] = weathers
     return problems
 
 
@@ -181,6 +205,8 @@ def main() -> int:
         write(args.out / "clubs" / club_id / "forecast", resp.json())
     print(f"Wrote {len(club_ids) - len(failed)} of {len(club_ids)} forecasts to {args.out}")
     lake_ids = sorted({c.lake_id for c in clubs if outlines.load(c.lake_id)})
+    for line in asyncio.run(prime_lake_weather(lake_ids)):
+        print("  lake weather", line)
     views = 0
     for lake_id in lake_ids:
         try:

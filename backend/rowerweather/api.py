@@ -44,6 +44,8 @@ _locations = locations.load()
 _cache: dict[str, tuple[float, tuple]] = {}
 # Forecasts loaded ahead in bulk (scripts/publish_static.py), used once instead of a call per club.
 _primed_weather: dict[str, list] = {}
+# The same for the lake view's sample points, per lake.
+_primed_lake_weather: dict[str, list] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
@@ -342,6 +344,14 @@ async def lake_view_forecast(lake_id: str) -> dict:
         cached = _lake_view_cache.get(lake_id)
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
             weather, water = cached[1]
+        elif (primed := _primed_lake_weather.pop(lake_id, None)) is not None:
+            weather, water = primed, None
+            if lake.gkd_water_temperature_station:
+                try:
+                    water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
+                except httpx.HTTPError:
+                    water = None
+            _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         else:
             try:
                 weather = await open_meteo.fetch_many(client, [(lat, lon) for lon, lat in grid.samples])

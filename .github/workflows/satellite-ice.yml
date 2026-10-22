@@ -26,11 +26,11 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e "backend[satellite]"
-      - run: python3 scripts/satellite_picture_probe.py
+      - run: python3 scripts/satellite_ice_probe.py
         env:
           CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
           CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
-      - run: python3 scripts/satellite_ice_probe.py
+      - run: python3 scripts/satellite_picture_probe.py
         env:
           CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
           CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}

@@ -22,6 +22,7 @@ from __future__ import annotations
 import logging
 import math
 import os
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 
@@ -39,7 +40,22 @@ MAX_PIXELS = 1280  # longer side of the picture
 METRES_PER_PIXEL = 10.0
 MARGIN = 0.08  # shore around the lake, as a share of its size
 
+# The free account allows only a few requests a minute: pause between requests, and wait out a refusal.
+PAUSE_SECONDS = 2.0
+RATE_LIMIT_WAITS = (30, 65)
+
 log = logging.getLogger(__name__)
+
+
+def _post(client: httpx.Client, url: str, **kwargs) -> httpx.Response:
+    for wait in (*RATE_LIMIT_WAITS, None):
+        time.sleep(PAUSE_SECONDS)
+        resp = client.post(url, **kwargs)
+        if resp.status_code != 429 or wait is None:
+            resp.raise_for_status()
+            return resp
+        time.sleep(wait)
+    raise AssertionError("unreachable")
 
 CLOUD_SCRIPT = """//VERSION=3
 function setup() {
@@ -101,8 +117,7 @@ def _passes(client: httpx.Client, bbox, now: datetime) -> list[datetime]:
         "fields": {"include": ["properties.datetime", "properties.eo:cloud_cover"]},
         "limit": 50,
     }
-    resp = client.post(f"{SH}/api/v1/catalog/1.0.0/search", json=body, timeout=60)
-    resp.raise_for_status()
+    resp = _post(client, f"{SH}/api/v1/catalog/1.0.0/search", json=body, timeout=60)
     taken = {
         datetime.fromisoformat(f["properties"]["datetime"].replace("Z", "+00:00"))
         for f in resp.json().get("features", [])
@@ -129,8 +144,7 @@ def _lake_cloud(client: httpx.Client, ring, taken: datetime) -> float | None:
             "resy": 0.0005,
         },
     }
-    resp = client.post(f"{SH}/api/v1/statistics", json=request, timeout=120)
-    resp.raise_for_status()
+    resp = _post(client, f"{SH}/api/v1/statistics", json=request, timeout=120)
     for entry in resp.json().get("data", []):
         stats = entry["outputs"]["cloud"]["bands"]["B0"]["stats"]
         if stats.get("sampleCount", 0) > stats.get("noDataCount", 0):
@@ -160,8 +174,7 @@ def _jpeg(client: httpx.Client, bbox, width: int, height: int, taken: datetime) 
         },
         "evalscript": PICTURE_SCRIPT,
     }
-    resp = client.post(f"{SH}/api/v1/process", json=request, headers={"Accept": "image/jpeg"}, timeout=120)
-    resp.raise_for_status()
+    resp = _post(client, f"{SH}/api/v1/process", json=request, headers={"Accept": "image/jpeg"}, timeout=120)
     return resp.content
 
 
