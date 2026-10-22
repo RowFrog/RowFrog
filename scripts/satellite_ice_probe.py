@@ -275,6 +275,23 @@ def lie_winter(client: httpx.Client, locs) -> None:
             say(line)
 
 
+def backend_check(locs) -> None:
+    """The backend's own reader (sources.lake_ice_satellite), as on 8 March 2026."""
+    from datetime import date
+
+    from rowerweather.sources import lake_ice_satellite
+
+    say()
+    say("## Backend reader, as on 2026-03-08 (passes from 2026-03-04 on)")
+    shores = {lake_id: outlines.load(lake_id)[0] for lake_id in LAKES}
+    passes = lake_ice_satellite.fetch(shores, date(2026, 3, 8))
+    for lake_id in LAKES:
+        for p in passes.get(lake_id, [])[:6]:
+            say(f"  {lake_id} {p.day}: {p.pixels} pixels, seen {p.seen_share:.0%}, ice {p.ice_share:.0%}")
+        if lake_id not in passes:
+            say(f"  {lake_id}: too small for the 250 m map")
+
+
 def main() -> int:
     locs = locations.load()
     with httpx.Client() as client:
@@ -306,6 +323,7 @@ def main() -> int:
                 except (KeyError, ValueError) as e:
                     say(f"  {lake_id}: unexpected answer {e!r}")
         lie_winter(client, locs)
+    backend_check(locs)
     write_summary()
     return 0
 
