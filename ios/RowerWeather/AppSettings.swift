@@ -27,6 +27,15 @@ final class AppSettings {
     var timeFormat: TimeFormat { didSet { defaults.set(timeFormat.rawValue, forKey: Keys.timeFormat) } }
     var dateFormat: DateFormat { didSet { defaults.set(dateFormat.rawValue, forKey: Keys.dateFormat) } }
 
+    /// The boat the rowing light's wind and wave limits are for.
+    var boatClass: BoatClass { didSet { defaults.set(boatClass.rawValue, forKey: Keys.boat) } }
+    /// Limits the user changed; a missing entry means the app's limit for the boat class.
+    var customLimits: [RowingLimit: Double] {
+        didSet { defaults.set(Dictionary(uniqueKeysWithValues: customLimits.map { ($0.key.rawValue, $0.value) }), forKey: Keys.limits) }
+    }
+
+    var limits: RowingLimits { RowingLimits(boat: boatClass, custom: customLimits) }
+
     /// The picture behind every page, unless a page or club has its own.
     var allPagesBackground: BackgroundChoice { didSet { defaults.set(allPagesBackground.rawValue, forKey: Keys.background) } }
     /// Pictures for one kind of page; a missing entry means "same as all pages".
@@ -61,9 +70,11 @@ final class AppSettings {
         static let blur = "RWBackgroundBlur"
         static let tileStyle = "RWTileStyle"
         static let userPictures = "RWUserPictures"
+        static let boat = "RWBoatClass"
+        static let limits = "RWLimits"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
-                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures]
+                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, limits]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -81,6 +92,14 @@ final class AppSettings {
         distanceUnit = value(Keys.distance, .kilometers)
         timeFormat = value(Keys.timeFormat, .hours24)
         dateFormat = value(Keys.dateFormat, .device)
+        boatClass = value(Keys.boat, .small)
+        // Launch arguments (`-RWLimits '{windAmber = 7;}'`) give the numbers as text.
+        let limits = defaults.dictionary(forKey: Keys.limits) ?? [:]
+        customLimits = Dictionary(uniqueKeysWithValues: limits.compactMap { key, raw in
+            guard let limit = RowingLimit(rawValue: key),
+                  let number = (raw as? Double) ?? (raw as? String).flatMap(Double.init) else { return nil }
+            return (limit, number)
+        })
         allPagesBackground = defaults.string(forKey: Keys.background).flatMap(BackgroundChoice.init(rawValue:)) ?? .noPicture
         let pages = defaults.dictionary(forKey: Keys.pageBackgrounds) as? [String: String] ?? [:]
         pageBackgrounds = Dictionary(uniqueKeysWithValues: pages.compactMap { key, raw in
@@ -126,7 +145,8 @@ final class AppSettings {
         tileStyle = .frosted
     }
 
-    /// Factory settings: every preference back to its default and the user's pictures deleted.
+    /// Factory settings: every preference back to its default, the boat and the
+    /// rowing limits back to the app's, and the user's pictures deleted.
     /// Saved locations and the home base are not settings and stay.
     func resetToFactorySettings() {
         for name in userPictures { BackgroundLibrary.deleteUserPicture(name) }
@@ -141,6 +161,8 @@ final class AppSettings {
         distanceUnit = .kilometers
         timeFormat = .hours24
         dateFormat = .device
+        boatClass = .small
+        customLimits = [:]
         removeAllBackgrounds()
         userPictures = []
         // The assignments above write the defaults back; remove them so a later

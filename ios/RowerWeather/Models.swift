@@ -59,9 +59,25 @@ enum Light: String, Codable, Comparable {
 struct Reason: Codable, Hashable {
     let condition: String
     let light: Light
+    /// Set by the app when the user's own limit decided this reason.
+    var mine: Bool? = nil
 
     /// Short label shown under the traffic light.
     var label: String {
+        mine == true ? tr("%@ (your limit)", baseLabel) : baseLabel
+    }
+
+    /// One sentence saying why this condition changes the advice.
+    var explanation: String {
+        mine == true ? baseExplanation + " " + tr("You set this limit yourself.") : baseExplanation
+    }
+
+    /// For a note: the value is within the user's own limit but above the app's.
+    var noteText: String {
+        tr("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel, AppSettings.shared.boatClass.title.lowercased())
+    }
+
+    private var baseLabel: String {
         switch condition {
         case "lake_warning": tr("DWD lake warning")
         case "weather_warning": tr("DWD weather warning")
@@ -81,8 +97,7 @@ struct Reason: Codable, Hashable {
         }
     }
 
-    /// One sentence saying why this condition changes the advice.
-    var explanation: String {
+    private var baseExplanation: String {
         switch condition {
         case "lake_warning": tr("DWD has issued a wind or storm warning for the lake.")
         case "weather_warning": tr("DWD has issued a weather warning for this place.")
@@ -96,7 +111,7 @@ struct Reason: Codable, Hashable {
         case "ice": tr("There is ice on the water.")
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
         case "twilight": tr("Sunrise or sunset falls in this hour.")
-        case "cold_water": tr("Water is below %@, so a capsize is dangerous.", Format.temperature(10))
+        case "cold_water": tr("Water is below %@, so a capsize is dangerous.", Format.temperature(AppSettings.shared.limits.value(.lifeJacket)))
         case "cool_water": tr("Water is below %@. Take extra care.", Format.temperature(15))
         default: condition
         }
@@ -142,6 +157,8 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     var uvIndex: Double? = nil
     /// Energy for thunderstorms (CAPE), in J/kg.
     var capeJkg: Double? = nil
+    /// Set by the app: conditions above the app's usual limit but within the user's own.
+    var notes: [Reason]? = nil
 
     var id: Date { time }
 
@@ -155,7 +172,7 @@ struct ForecastHour: Codable, Identifiable, Hashable {
             apparentTemperatureC: apparentTemperatureC,
             humidityPct: humidityPct, dewPointC: dewPointC, pressureHpa: pressureHpa,
             cloudCoverLowPct: cloudCoverLowPct, cloudCoverMidPct: cloudCoverMidPct, cloudCoverHighPct: cloudCoverHighPct,
-            uvIndex: uvIndex, capeJkg: capeJkg
+            uvIndex: uvIndex, capeJkg: capeJkg, notes: notes
         )
     }
 
@@ -232,7 +249,7 @@ struct ClubForecast: Codable, Hashable {
     var warnings: Warnings? = nil
     let attribution: [String]
     let daylight: [SunDay]?
-    let hours: [ForecastHour]
+    var hours: [ForecastHour]
     /// Yesterday and the next 7 days, for the charts behind the conditions tiles.
     var outlook: [ForecastHour]? = nil
 

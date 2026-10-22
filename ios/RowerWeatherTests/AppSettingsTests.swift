@@ -58,7 +58,11 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.temperatureUnit, .fahrenheit)
 
         settings.appearance = .dark
+        settings.boatClass = .big
+        settings.customLimits[.windAmber] = 7
         settings.resetToFactorySettings()
+        XCTAssertEqual(settings.limits, .standard)
+        XCTAssertEqual(AppSettings(defaults: defaults).limits, .standard)
         XCTAssertEqual(settings.appearance, .device)
         XCTAssertEqual(settings.temperatureUnit, .celsius)
         XCTAssertNil(defaults.object(forKey: AppSettings.Keys.appearance))

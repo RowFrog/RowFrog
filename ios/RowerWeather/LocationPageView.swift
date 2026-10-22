@@ -228,6 +228,10 @@ private struct NowCard: View {
                             .foregroundStyle(reason.light == .red ? Color.red : Color.orange)
                     }
                 }
+                ForEach(hour.notes ?? [], id: \.self) { note in
+                    Label(note.noteText, systemImage: "info.circle")
+                        .foregroundStyle(.secondary)
+                }
             }
             .font(.subheadline)
             .symbolRenderingMode(.hierarchical)

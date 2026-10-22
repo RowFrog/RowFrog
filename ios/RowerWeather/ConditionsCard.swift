@@ -249,7 +249,10 @@ private struct ConditionTile: View {
                     .frame(width: 44, height: 44)
             }
         case .waves:
-            ScaleBar(fraction: (hour.waveHeightM ?? 0) / 0.4, zones: [(0, .green), (0.375, .orange), (0.75, .red)])
+            let userLimits = AppSettings.shared.limits
+            let top = userLimits.value(.waveRed) * 4 / 3
+            ScaleBar(fraction: (hour.waveHeightM ?? 0) / top,
+                     zones: [(0, .green), (userLimits.value(.waveAmber) / top, .orange), (userLimits.value(.waveRed) / top, .red)])
         case .waterTemperature:
             if let c = data.water?.celsius {
                 ScaleBar(fraction: c / 25, zones: [(0, .red), (0.4, .orange), (0.6, .green)])
@@ -786,6 +789,9 @@ extension ConditionDetail {
         case .red: return red
         case .amber: return amber
         default:
+            if (d.now.notes ?? []).contains(where: { names.contains($0.condition) }) {
+                return tr("Within your own limit, but above the app's usual limit for %@: take extra care.", userLimits.boat.title.lowercased())
+            }
             if let next = d.next24.first(where: { $0.light(for: names) != nil }) {
                 return tr(later, Format.dayTime(next.time))
             }
@@ -811,11 +817,12 @@ extension ConditionDetail {
                 ChartLine(name: tr("Gusts"), color: .purple, points: d.points { $0.windGustMs.map(w.convert) }),
             ],
             limits: [
-                ChartLimit(value: w.convert(5.5), color: .orange, label: tr("Wind: row with care")),
-                ChartLimit(value: w.convert(8), color: .red, label: tr("Wind: stay ashore")),
+                line(.windAmber, w.convert, .orange, tr("Wind: row with care")),
+                line(.windRed, w.convert, .red, tr("Wind: stay ashore")),
             ],
             limitInfo: tr("Amber from %@ (Beaufort 4, the first whitecaps) and red from %@ (Beaufort 5, many whitecaps): in a single or double the boat gets hard to steer and water comes over the side. Gusts have their own limits: amber from %@ and red from %@ (46 km/h), the level at which DWD issues a strong-wind warning and the lake's warning lights start flashing. These are the app's starting values for small boats.",
-                          windLimit(5.5), windLimit(8), windLimit(8), windLimit(12.8)),
+                          RowingLimit.windAmber.format(5.5), RowingLimit.windRed.format(8), RowingLimit.gustAmber.format(8), RowingLimit.gustRed.format(12.8))
+                + inUse([(.windAmber, .windRed), (.gustAmber, .gustRed)]),
             windArrows: true,
             chartNote: tr("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days."),
             facts: facts,
@@ -828,12 +835,17 @@ extension ConditionDetail {
         )
     }
 
-    /// A wind limit with one decimal where it has one, so 5.5 m/s does not read as 6.
-    private static func windLimit(_ ms: Double) -> String {
-        let w = units.windUnit
-        guard w != .beaufort else { return Format.wind(ms) }
-        let v = w.convert(ms)
-        return "\(Format.number(v, digits: abs(v - v.rounded()) < 0.05 ? 0 : 1)) \(w.symbol)"
+    private static var userLimits: RowingLimits { units.limits }
+
+    /// A limit line, marked when it is the user's own.
+    private static func line(_ limit: RowingLimit, _ convert: (Double) -> Double, _ color: Color, _ label: String) -> ChartLimit {
+        ChartLimit(value: convert(userLimits.value(limit)), color: color, label: userLimits.isMine(limit) ? tr("%@ (your limit)", label) : label)
+    }
+
+    /// The limits in use, after the explanation of the app's own.
+    private static func inUse(_ pairs: [(RowingLimit, RowingLimit)]) -> String {
+        let parts = pairs.map { tr("amber from %@, red above %@", $0.0.format(userLimits.value($0.0)), $0.1.format(userLimits.value($0.1))) }
+        return " " + tr("In use for %@: %@. You can change them under Settings, Rowing limits.", userLimits.boat.title.lowercased(), parts.joined(separator: "; "))
     }
 
     private static func waves(_ d: ConditionData) -> ConditionDetail {
@@ -851,12 +863,13 @@ extension ConditionDetail {
             unit: u.symbol,
             lines: [ChartLine(name: tr("Waves"), color: .blue, points: d.points { $0.waveHeightM.map(u.convert) })],
             limits: [
-                ChartLimit(value: u.convert(0.15), color: .orange, label: tr("Row with care")),
-                ChartLimit(value: u.convert(0.3), color: .red, label: tr("Stay ashore")),
+                line(.waveAmber, u.convert, .orange, tr("Row with care")),
+                line(.waveRed, u.convert, .red, tr("Stay ashore")),
             ],
             limitInfo: tr("Amber from %@ and red from %@ wave height. A racing single sits only about 10–15 cm above the water at its side, so from about 15 cm waves start to wash in; from about 30 cm the boat fills and capsizing becomes likely. The waves are calculated from the wind and the open water upwind, not measured.",
-                          Format.waves(0.15), Format.waves(0.3)),
-            yDomain: 0...max(u.convert(0.4), u.convert(d.timeline.compactMap(\.waveHeightM).max() ?? 0) * 1.3),
+                          Format.waves(0.15), Format.waves(0.3))
+                + inUse([(.waveAmber, .waveRed)]),
+            yDomain: 0...max(u.convert(userLimits.value(.waveRed) * 4 / 3), u.convert(d.timeline.compactMap(\.waveHeightM).max() ?? 0) * 1.3),
             trendStep: step(u.convert, 0.015),
             facts: facts,
             rowing: advice(d, ["waves"],
@@ -877,17 +890,18 @@ extension ConditionDetail {
             let change = step(t.convert, last.celsius - first.celsius)
             facts.append((tr("Trend"), tr("%@° since %@", (change >= 0 ? "+" : "−") + Format.number(abs(change), digits: 1), Format.day(first.time))))
         }
-        facts.append((tr("Life jacket"), tr("advised below %@", Format.temperature(10))))
+        let jacket = Format.temperature(userLimits.value(.lifeJacket))
+        facts.append((tr("Life jacket"), userLimits.isMine(.lifeJacket) ? tr("%@ (your limit)", tr("advised below %@", jacket)) : tr("advised below %@", jacket)))
         let rowing: String
         switch now?.celsius {
-        case let c? where c < 10:
-            rowing = tr("Below %@ we advise wearing a life jacket and rowing with a second boat or a safety boat nearby. Wear clothes that keep you warm when wet.", Format.temperature(10))
+        case let c? where c < userLimits.value(.lifeJacket):
+            rowing = tr("Below %@ we advise wearing a life jacket and rowing with a second boat or a safety boat nearby. Wear clothes that keep you warm when wet.", jacket)
         case let c? where c < 15:
-            rowing = tr("Below %@ wear clothes that keep you warm when wet. Below %@ we advise a life jacket.", Format.temperature(15), Format.temperature(10))
+            rowing = tr("Below %@ wear clothes that keep you warm when wet. Below %@ we advise a life jacket.", Format.temperature(15), jacket)
         case .some:
             rowing = tr("Warm enough that a capsize is not a cold-water danger.")
         case nil:
-            rowing = tr("No lake station: check the water yourself. Below %@ we advise a life jacket.", Format.temperature(10))
+            rowing = tr("No lake station: check the water yourself. Below %@ we advise a life jacket.", jacket)
         }
         return ConditionDetail(
             value: Format.degrees(now?.celsius, digits: 1),
@@ -896,7 +910,7 @@ extension ConditionDetail {
             lines: history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })],
             limits: [
                 ChartLimit(value: t.convert(15), color: .orange, label: tr("Cold-water shock")),
-                ChartLimit(value: t.convert(10), color: .red, label: tr("Cold water")),
+                line(.lifeJacket, t.convert, .red, tr("Life jacket")),
             ],
             limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the light turns amber below %@ and the advice gets stricter below %@. Your club's own rules come first.",
                           Format.temperature(15), Format.temperature(15), Format.temperature(10)),

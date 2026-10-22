@@ -143,16 +143,20 @@ final class LocationStore {
 @MainActor
 @Observable
 final class ForecastStore {
-    private(set) var forecasts: [String: ClubForecast] = [:]
+    /// As the backend sent them, with the app's standard limits.
+    private var raw: [String: ClubForecast] = [:]
+    /// With the boat and limits chosen in the settings, worked out when read,
+    /// so a change of limits shows at once.
+    var forecasts: Forecasts { Forecasts(raw: raw, limits: AppSettings.shared.limits) }
     private(set) var failed: Set<String> = []
     private let api: APIClient
 
     nonisolated init(api: APIClient) { self.api = api }
 
     func load(_ clubID: String, force: Bool = false) async {
-        if !force, forecasts[clubID] != nil { return }
+        if !force, raw[clubID] != nil { return }
         do {
-            forecasts[clubID] = try await api.forecast(clubID: clubID)
+            raw[clubID] = try await api.forecast(clubID: clubID)
             failed.remove(clubID)
         } catch {
             failed.insert(clubID)
@@ -167,4 +171,11 @@ final class ForecastStore {
             }
         }
     }
+}
+
+struct Forecasts {
+    let raw: [String: ClubForecast]
+    let limits: RowingLimits
+
+    subscript(clubID: String) -> ClubForecast? { raw[clubID]?.applying(limits) }
 }

@@ -156,6 +156,10 @@ jobs:
           done
           shoot 62-condition-wind-limits light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES
           shoot 63-condition-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES -RWLanguage de
+          # Boat and limits: the settings page, and a club page with limits the user changed.
+          shoot 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits -RWBoatClass big -RWLimits '{windAmber = 7; lifeJacket = 12;}'
+          shoot 65-own-limits light -RWOpenClub mrc-1880 -RWLimits '{windAmber = 2; gustAmber = 16; gustRed = 18;}'
+          shoot 66-own-limits-wind light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES -RWLimits '{windAmber = 2; gustAmber = 16; gustRed = 18;}'
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES
@@ -164,8 +168,8 @@ jobs:
           shoot 43-home-landscape-off light -RWAllowsLandscape NO -RWLandscape YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
-          shoot_n 10-settings 6 light -RWShowSettings YES
-          shoot_n 11-settings-german-dark 6 dark -RWShowSettings YES -RWLanguage de
+          shoot_n 10-settings 7 light -RWShowSettings YES
+          shoot_n 11-settings-german-dark 7 dark -RWShowSettings YES -RWLanguage de
           shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
           shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
