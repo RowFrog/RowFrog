@@ -149,6 +149,7 @@ def _lake_cloud(client: httpx.Client, ring, taken: datetime) -> float | None:
         stats = entry["outputs"]["cloud"]["bands"]["B0"]["stats"]
         if stats.get("sampleCount", 0) > stats.get("noDataCount", 0):
             return float(stats["mean"])
+    log.info("No cloud statistics for %s: %s", day, str(resp.json())[:1500])
     return None
 
 

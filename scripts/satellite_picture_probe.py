@@ -6,7 +6,7 @@ Usage: CDSE_CLIENT_ID=... CDSE_CLIENT_SECRET=... python3 scripts/satellite_pictu
 
 from __future__ import annotations
 
-import json
+import logging
 import sys
 from datetime import datetime, timezone
 
@@ -17,6 +17,7 @@ LAKES = ["starnberger-see", "ammersee"]
 
 
 def main() -> int:
+    logging.basicConfig(level=logging.INFO, format="  %(message)s")
     client = sentinel2.client()
     if client is None:
         print("No Copernicus account in CDSE_CLIENT_ID / CDSE_CLIENT_SECRET, or sign-in failed.")
@@ -33,7 +34,7 @@ def main() -> int:
             print(f"  catalogue failed: {e!r} {body}")
             continue
         print(f"  {len(passes)} passes: {[p.isoformat() for p in passes[:8]]}")
-        for taken in passes[:4]:
+        for taken in passes[:2]:
             try:
                 print(f"  {taken:%Y-%m-%d}: lake cloud {sentinel2._lake_cloud(client, ring, taken)}")
             except Exception as e:
