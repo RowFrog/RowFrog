@@ -23,7 +23,7 @@ final class LimitsTests: XCTestCase {
     func testBigBoatsAllowMore() {
         let h = hour(wind: 6, gust: 9, waves: 0.2).applying(RowingLimits(boat: .big), waterC: nil)
         XCTAssertEqual(h.light, .green)
-        XCTAssertEqual(h.notes?.map(\.condition), ["wind", "gusts", "waves"])
+        XCTAssertNil(h.notes, "the app's own big-boat limits need no note")
     }
 
     func testOwnLimitIsMarkedAndTheAppStillAdvises() {
