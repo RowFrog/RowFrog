@@ -147,7 +147,10 @@ final class ForecastStore {
     private var raw: [String: ClubForecast] = [:]
     /// With the boat and limits chosen in the settings, worked out when read,
     /// so a change of limits shows at once.
-    var forecasts: Forecasts { Forecasts(raw: raw, limits: AppSettings.shared.limits) }
+    var forecasts: Forecasts { Forecasts(store: self) }
+    /// The last forecast worked out per club and the limits it used, so pages
+    /// that read it many times per frame neither redo the work nor get a new value.
+    @ObservationIgnored private var applied: [String: (limits: RowingLimits, forecast: ClubForecast)] = [:]
     private(set) var failed: Set<String> = []
     private let api: APIClient
 
@@ -156,11 +159,23 @@ final class ForecastStore {
     func load(_ clubID: String, force: Bool = false) async {
         if !force, raw[clubID] != nil { return }
         do {
-            raw[clubID] = try await api.forecast(clubID: clubID)
+            let forecast = try await api.forecast(clubID: clubID)
+            applied[clubID] = nil
+            raw[clubID] = forecast
             failed.remove(clubID)
         } catch {
             failed.insert(clubID)
         }
+    }
+
+    /// The forecast for a club with the user's boat and limits.
+    func forecast(_ clubID: String) -> ClubForecast? {
+        guard let base = raw[clubID] else { return nil }
+        let limits = AppSettings.shared.limits
+        if let cached = applied[clubID], cached.limits == limits { return cached.forecast }
+        let forecast = base.applying(limits)
+        applied[clubID] = (limits, forecast)
+        return forecast
     }
 
     /// Reloads several locations in parallel, for pull to refresh on the list.
@@ -173,9 +188,9 @@ final class ForecastStore {
     }
 }
 
+@MainActor
 struct Forecasts {
-    let raw: [String: ClubForecast]
-    let limits: RowingLimits
+    let store: ForecastStore
 
-    subscript(clubID: String) -> ClubForecast? { raw[clubID]?.applying(limits) }
+    subscript(clubID: String) -> ClubForecast? { store.forecast(clubID) }
 }
