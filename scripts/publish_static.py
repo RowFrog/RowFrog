@@ -45,7 +45,9 @@ BATCH = 50
 # Waits before retrying a failed batch, in seconds; Open-Meteo's limit is per minute.
 RETRY_WAITS = (65, 120)
 # How often a lake's satellite picture is looked for, and how many lakes one run looks at.
-PICTURE_REFRESH = {"confirmed": timedelta(hours=24), "other": timedelta(hours=72)}
+PICTURE_REFRESH = {"confirmed": timedelta(hours=24), "other": timedelta(hours=72), "none yet": timedelta(hours=12)}
+# Bumped when the search changes, so every lake is looked at again.
+PICTURE_SEARCH_VERSION = 2
 PICTURES_PER_RUN = 40
 
 
@@ -125,7 +127,12 @@ def publish_pictures(out: Path, lake_ids: list[str], confirmed: set[str]) -> Non
             rings = outlines.load(lake_id)
             meta_path = out / "lakes" / lake_id / "satellite"
             old = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
-            refresh = PICTURE_REFRESH["confirmed" if lake_id in confirmed else "other"]
+            if old.get("searchVersion") != PICTURE_SEARCH_VERSION:
+                old = {k: v for k, v in old.items() if k != "checkedAt"}
+            if "taken" not in old:
+                refresh = PICTURE_REFRESH["none yet"]
+            else:
+                refresh = PICTURE_REFRESH["confirmed" if lake_id in confirmed else "other"]
             checked = datetime.fromisoformat(old["checkedAt"]) if "checkedAt" in old else None
             if not rings or (checked and now - checked < refresh) or looked >= PICTURES_PER_RUN:
                 continue
@@ -143,7 +150,7 @@ def publish_pictures(out: Path, lake_ids: list[str], confirmed: set[str]) -> Non
             except (httpx.HTTPError, KeyError, ValueError) as e:
                 print(f"  picture {lake_id}: {e!r}")
                 continue
-            body = dict(old, checkedAt=now.replace(microsecond=0).isoformat())
+            body = dict(old, checkedAt=now.replace(microsecond=0).isoformat(), searchVersion=PICTURE_SEARCH_VERSION)
             if picture and picture.taken.isoformat() != old.get("taken"):
                 jpg = out / "lakes" / lake_id / "satellite.jpg"
                 jpg.parent.mkdir(parents=True, exist_ok=True)
