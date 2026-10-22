@@ -23,14 +23,15 @@ import argparse
 import asyncio
 import json
 import sys
+from datetime import datetime
 from pathlib import Path
 
 import httpx
 from fastapi.testclient import TestClient
 
-from rowerweather import api, locations
-from rowerweather.api import app
-from rowerweather.sources import open_meteo
+from rowerweather import api, ice, locations, outlines
+from rowerweather.api import LOCAL, app
+from rowerweather.sources import lake_ice_satellite, open_meteo
 
 # Clubs per Open-Meteo request. Loading forecasts in batches takes a few
 # requests instead of one per club; single requests from GitHub's shared
@@ -62,6 +63,24 @@ async def prime_weather(clubs: list[locations.Club]) -> list[str]:
     return problems
 
 
+def prime_satellite_ice(clubs: list[locations.Club]) -> None:
+    """Load the last days of the satellite ice map for the clubs' lakes, in the ice season."""
+    today = datetime.now(LOCAL).date()
+    if ice.out_of_season(today) or not lake_ice_satellite.configured():
+        return
+    lakes = locations.load().lakes
+    shores = {}
+    for lake_id in {c.lake_id for c in clubs}:
+        lake = lakes.get(lake_id)
+        rings = outlines.load(lake_id) if lake and lake.kind == "lake" else None
+        if rings:
+            shores[lake_id] = rings[0]
+    api._satellite_ice.update(lake_ice_satellite.fetch(shores, today))
+    for lake_id, passes in sorted(api._satellite_ice.items()):
+        last = passes[-1]
+        print(f"  satellite {lake_id}: {last.day} seen {last.seen_share:.0%} ice {last.ice_share:.0%}")
+
+
 def write(path: Path, body) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
@@ -87,6 +106,7 @@ def main() -> int:
     club_ids = [c.id for c in clubs]
     for line in asyncio.run(prime_weather(clubs)):
         print("  weather", line)
+    prime_satellite_ice(clubs)
     failed = []
     for club_id in club_ids:
         try:

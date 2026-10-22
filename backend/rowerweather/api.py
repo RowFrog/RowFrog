@@ -43,6 +43,8 @@ _primed_weather: dict[str, list] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
+# Satellite lake ice passes per lake, set by the publishing job (see sources.lake_ice_satellite).
+_satellite_ice: dict[str, list] = {}
 _ice_temps: dict[str, tuple[float, list[ice.DayTemperature]]] = {}
 
 
@@ -226,6 +228,13 @@ def _ice_json(e: ice.IceEstimate | None) -> dict:
         "waterTemperatureC": e.water_c,
         "basis": e.basis,
         "frostDegreeDays7": e.frost_degree_days_7,
+        "satellite": None
+        if e.satellite is None
+        else {
+            "date": e.satellite.day.isoformat(),
+            "seenShare": round(e.satellite.seen_share, 2),
+            "iceShare": round(e.satellite.ice_share, 2),
+        },
         "days": [{"date": d.day.isoformat(), "status": d.status, "thicknessCm": d.thickness_cm} for d in e.days],
     }
 
@@ -250,7 +259,8 @@ async def _ice(client: httpx.AsyncClient, lake: locations.Lake, water_c: float |
         _ice_temps[lake.id] = (time.monotonic(), temps)
     if lake.kind == "river":
         return ice.river(temps, today)
-    return ice.simulate(temps, today, lake.mean_depth_m, water_c)
+    estimate = ice.simulate(temps, today, lake.mean_depth_m, water_c)
+    return ice.with_satellite(estimate, _satellite_ice.get(lake.id, []), today)
 
 
 @app.get("/clubs/{club_id}/forecast")

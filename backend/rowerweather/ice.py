@@ -26,6 +26,13 @@ Sheltered bays and harbours freeze long before the open lake, so a cold lake
 (at or below 4 °C) after a few frosty days counts as "edges": thin ice at the
 shore is possible.
 
+Where the Copernicus Lake Ice Extent map saw the lake in the last days
+(sources/lake_ice_satellite.py, larger lakes only), it checks the model:
+a lake seen mostly open is not reported frozen, and a cold lake seen mostly
+frozen is reported as freezing even if the model has no ice yet. A single
+pass is not trusted beyond that, as haze and low sun are sometimes classed as
+ice (Starnberger See "42 % ice" on 6 March 2026).
+
 All of this is an estimate for the rowing advice. It can never say that ice is
 safe to walk on, and the app says so.
 """
@@ -33,8 +40,8 @@ safe to walk on, and the app says so.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
-from datetime import date
+from dataclasses import dataclass, replace
+from datetime import date, timedelta
 
 # Heat exchange between air and water, as metres of water cooled by 1 °C per day and °C difference.
 EXCHANGE_M_PER_DAY = 0.41
@@ -63,6 +70,13 @@ DRIFT_ICE_FROST_DEGREE_DAYS = 30.0
 # Rough lake surface temperatures in southern Bavaria by month, used only to
 # start the model ~90 days back when there is no measurement.
 TYPICAL_WATER_C = {1: 3.5, 2: 3.5, 3: 4.5, 4: 8, 5: 13, 6: 18, 7: 21, 8: 21, 9: 18, 10: 13, 11: 8, 12: 5}
+
+# A satellite pass counts when it saw at least this share of the lake, at most SATELLITE_DAYS ago.
+SATELLITE_SEEN_SHARE = 0.3
+SATELLITE_DAYS = 3
+# Seen share of ice above which a cold lake counts as freezing, and below which a frozen model is overruled.
+SATELLITE_ICE_SHARE = 0.5
+SATELLITE_OPEN_SHARE = 0.1
 
 # Ice can only occur in these months; outside them no data is fetched.
 ICE_MONTHS = {11, 12, 1, 2, 3, 4}
@@ -98,6 +112,8 @@ class IceEstimate:
     basis: str
     frost_degree_days_7: float | None
     days: list[IceDay]
+    # The latest satellite pass that saw the lake, if any (sources.lake_ice_satellite.SatellitePass).
+    satellite: object | None = None
 
     @property
     def light(self) -> int:
@@ -186,6 +202,36 @@ def river(temps: list[DayTemperature], today: date) -> IceEstimate:
         basis="model",
         frost_degree_days_7=round(_frost(upto_today[-7:]), 1),
         days=days,
+    )
+
+
+def with_satellite(estimate: IceEstimate, passes: list, today: date) -> IceEstimate:
+    """Check today's status against the newest usable satellite pass (see the module text)."""
+    usable = [
+        p for p in passes if p.seen_share >= SATELLITE_SEEN_SHARE and today - timedelta(days=SATELLITE_DAYS) <= p.day <= today
+    ]
+    if not usable or estimate.basis == "season":
+        return estimate
+    seen = usable[-1]
+    status = estimate.status
+    if seen.ice_share < SATELLITE_OPEN_SHARE and status in (FORMING, FROZEN):
+        status = EDGES  # open on the satellite picture; thin ice may stay in bays
+    elif seen.ice_share >= SATELLITE_ICE_SHARE and status in (OPEN, EDGES):
+        cold = estimate.water_c is not None and estimate.water_c <= DENSEST_WATER_C
+        if cold:
+            status = FORMING
+    if status == estimate.status:
+        return replace(estimate, satellite=seen)
+    days = list(estimate.days)
+    if days and days[0].day == today:
+        days[0] = replace(days[0], status=status)
+    return replace(
+        estimate,
+        status=status,
+        thickness_cm=None if status == EDGES else estimate.thickness_cm,
+        basis="satellite",
+        days=days,
+        satellite=seen,
     )
 
 

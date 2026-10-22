@@ -72,7 +72,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .visibility: tr("How far you can see. Fog below %@ is amber, below %@ red.", Format.distance(1000), Format.distance(500))
         case .cloudCover: tr("Share of the sky covered by cloud.")
         case .thunderstorm: tr("Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings.")
-        case .ice: tr("Estimated from the last weeks' frost and the water temperature. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.")
+        case .ice: tr("Estimated from the last weeks' frost and the water temperature, and on larger lakes checked against the Copernicus satellite ice map when clouds allow. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.")
         case .daylight: tr("Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red.")
         }
     }

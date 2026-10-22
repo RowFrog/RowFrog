@@ -193,10 +193,12 @@ enum German {
         "Water %@, too warm for ice": "Wasser %@, zu warm für Eis",
         "Bays and harbours first": "Zuerst in Buchten und Häfen",
         "Estimated from frost": "Aus dem Frost geschätzt",
+        "Satellite, %@: open water": "Satellit, %@: offenes Wasser",
+        "Satellite, %@: %@ %% ice": "Satellit, %@: %@ %% Eis",
         "Check the lake yourself": "Den See selbst prüfen",
         "Ice on the lake is likely (estimate).": "Eis auf dem See ist wahrscheinlich (Schätzung).",
         "Thin ice at the shore or drift ice is possible (estimate).": "Dünnes Ufereis oder Treibeis ist möglich (Schätzung).",
-        "Estimated from the last weeks' frost and the water temperature. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.": "Geschätzt aus dem Frost der letzten Wochen und der Wassertemperatur. Wahrscheinliches Eis schaltet die Ampel auf Rot, mögliches Ufereis oder Treibeis auf Gelb. Betritt das Eis nie wegen dieser App.",
+        "Estimated from the last weeks' frost and the water temperature, and on larger lakes checked against the Copernicus satellite ice map when clouds allow. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.": "Geschätzt aus dem Frost der letzten Wochen und der Wassertemperatur, auf größeren Seen bei wolkenfreiem Himmel mit der Copernicus-Satelliten-Eiskarte abgeglichen. Wahrscheinliches Eis schaltet die Ampel auf Rot, mögliches Ufereis oder Treibeis auf Gelb. Betritt das Eis nie wegen dieser App.",
         "In your list": "In deiner Liste",
         "Add %@": "%@ hinzufügen",
 

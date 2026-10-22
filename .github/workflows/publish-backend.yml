@@ -41,7 +41,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e backend
+      - run: pip install -e "backend[satellite]"
       - name: Get the published files
         # A separate worktree, so only the published files are committed, never the repository.
         run: |

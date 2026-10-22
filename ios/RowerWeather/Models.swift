@@ -258,9 +258,12 @@ struct IceEstimate: Codable, Hashable {
     var thicknessCm: Double? = nil
     /// Measured where the lake has a station, else modelled.
     var waterTemperatureC: Double? = nil
-    /// "season" (no ice this month), "measured" (the water is too warm) or "model".
+    /// "season" (no ice this month), "measured" (the water is too warm),
+    /// "satellite" (the satellite picture corrected the model) or "model".
     var basis: String? = nil
     var days: [IceDay]? = nil
+    /// The latest satellite picture that saw the lake (larger lakes only).
+    var satellite: IceSatellite? = nil
 
     var title: String {
         switch status {
@@ -278,6 +281,9 @@ struct IceEstimate: Codable, Hashable {
         if let cm = thicknessCm, cm > 0 {
             return tr("About %@ cm, estimated", Format.number(cm))
         }
+        if let satellite, basis == "satellite" || basis == "model" {
+            return satellite.summary
+        }
         switch basis {
         case "season": return tr("No ice this time of year")
         case "measured": return tr("Water %@, too warm for ice", Format.temperature(waterTemperatureC, digits: 1))
@@ -285,6 +291,31 @@ struct IceEstimate: Codable, Hashable {
         default: return tr("Check the lake yourself")
         }
     }
+}
+
+/// Copernicus Lake Ice Extent: what a cloud-free satellite pass saw of the lake.
+struct IceSatellite: Codable, Hashable {
+    /// Local calendar day, "yyyy-MM-dd".
+    let date: String
+    /// Share of the lake that was seen (not under cloud), 0...1.
+    let seenShare: Double
+    /// Share of the seen part that was ice, 0...1.
+    let iceShare: Double
+
+    /// "Satellite, Today: open water" or "Satellite, Mon 20 Jan: 60 % ice".
+    var summary: String {
+        let day = Self.parser.date(from: date).map { Format.day($0) } ?? date
+        if iceShare < 0.1 { return tr("Satellite, %@: open water", day) }
+        return tr("Satellite, %@: %@ %% ice", day, Format.number(iceShare * 100))
+    }
+
+    private static let parser: DateFormatter = {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
 }
 
 struct IceDay: Codable, Hashable {

@@ -117,3 +117,46 @@ def test_api_ice_json(monkeypatch):
     assert body["status"] == "frozen" and body["light"] == "red"
     assert body["days"][0]["date"] == "2027-01-20"
     assert api._ice_json(None) == {"status": "unavailable", "light": None, "days": []}
+
+
+def _pass(day, ice_px, water_px, pixels=1000):
+    from rowerweather.sources.lake_ice_satellite import SatellitePass
+
+    return SatellitePass(day, pixels, ice_px, water_px)
+
+
+def test_satellite_open_water_overrules_a_frozen_model():
+    frozen = ice.simulate(_temps((62, 4.0), (37, -6.0)), TODAY, mean_depth_m=4)
+    e = ice.with_satellite(frozen, [_pass(TODAY - timedelta(days=1), 10, 690)], TODAY)
+    assert e.status == ice.EDGES and e.basis == "satellite" and e.thickness_cm is None
+    assert e.days[0].status == ice.EDGES and e.satellite.day == TODAY - timedelta(days=1)
+
+
+def test_satellite_ice_on_a_cold_lake_means_freezing():
+    cold = ice.IceEstimate(ice.OPEN, None, 2.0, "model", 3.0, [ice.IceDay(TODAY, ice.OPEN, 0.0, 2.0)])
+    e = ice.with_satellite(cold, [_pass(TODAY, 600, 100)], TODAY)
+    assert e.status == ice.FORMING and e.light == Light.RED
+
+
+def test_satellite_ice_on_a_warm_lake_is_ignored():
+    # Haze or low sun classed as ice, as on Starnberger See on 6 March 2026.
+    warm = ice.IceEstimate(ice.OPEN, None, 4.6, "model", 0.0, [ice.IceDay(TODAY, ice.OPEN, 0.0, 4.6)])
+    e = ice.with_satellite(warm, [_pass(TODAY, 452, 317)], TODAY)
+    assert e.status == ice.OPEN and e.basis == "model" and e.satellite is not None
+
+
+def test_cloudy_or_old_satellite_passes_are_not_used():
+    frozen = ice.simulate(_temps((62, 4.0), (37, -6.0)), TODAY, mean_depth_m=4)
+    cloudy = _pass(TODAY, 5, 100)  # 10 % of the lake seen
+    old = _pass(TODAY - timedelta(days=5), 0, 700)
+    assert ice.with_satellite(frozen, [old, cloudy], TODAY) == frozen
+
+
+def test_satellite_pixel_count():
+    from rowerweather.sources.lake_ice_satellite import count, inside
+
+    p = count([0, 0, 1, 2, 3, 3, 3, 5], TODAY)
+    assert (p.pixels, p.ice, p.water) == (8, 2, 3)
+    assert round(p.ice_share, 2) == 0.4 and round(p.seen_share, 3) == 0.625
+    square = [(0.0, 0.0), (1.0, 0.0), (1.0, 1.0), (0.0, 1.0)]
+    assert inside(0.5, 0.5, square) and not inside(1.5, 0.5, square)

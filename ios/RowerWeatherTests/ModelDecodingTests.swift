@@ -62,6 +62,15 @@ final class ModelDecodingTests: XCTestCase {
         let without = try APIClient.decoder.decode(ClubForecast.self, from: Data(unavailable.utf8))
         XCTAssertNil(without.ice?.light)
         XCTAssertNil(without.ice?.thicknessCm)
+
+        let seen = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2027-01-20T11:20:00+00:00", "attribution": [], "hours": [],
+         "ice": {"status": "edges", "light": "amber", "basis": "satellite", "days": [],
+                 "satellite": {"date": "2027-01-18", "seenShare": 0.7, "iceShare": 0.02}}}
+        """
+        let satellite = try APIClient.decoder.decode(ClubForecast.self, from: Data(seen.utf8))
+        XCTAssertEqual(satellite.ice?.satellite?.seenShare, 0.7)
+        XCTAssertTrue(satellite.ice?.detail.hasSuffix(": open water") ?? false)
     }
 
     func testDecodesForecastWithoutDaylight() throws {

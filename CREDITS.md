@@ -10,7 +10,7 @@ The app must show these credits wherever their data appears.
 | Deutscher Ruderverband e.V. (rudern.de) | Club list in the search: names, short names, website, boathouse address, kinds of rowing | No open licence; imported with the owner's OK, permission to be asked | "Deutscher Ruderverband e.V." |
 | GKD Bayern (Bayerisches Landesamt für Umwelt) | Lake water temperature | CC BY 4.0 | "Gewässerkundlicher Dienst Bayern" |
 | Deutscher Wetterdienst (DWD) via Open-Meteo archive (ERA5 for the backtest) | Daily mean air temperature for the ice estimate | CC BY 4.0 | as above |
-| Copernicus Land Monitoring Service | Lake ice extent and lake surface temperature (planned, via Copernicus Data Space) | Copernicus data policy: free, full and open | "Copernicus Land Monitoring Service" |
+| Copernicus Land Monitoring Service | Lake Ice Extent 250 m (VIIRS) via Copernicus Data Space, checks the ice estimate on larger lakes | Copernicus data policy: free, full and open | "Copernicus Land Monitoring Service" |
 | Windy Webcams API | Webcam images (planned) | Windy API terms | Windy credit and a link on every image |
 
 If the app ever has ads or subscriptions, the Open-Meteo free tier no longer
