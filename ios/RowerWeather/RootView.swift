@@ -2,14 +2,16 @@ import SwiftUI
 
 /// Like the iOS Weather app: one full-screen page per saved location, swiped
 /// left and right, with the home base first, and a list of all locations
-/// behind the button at the bottom.
+/// behind the button at the bottom, or beside the pages on a wide screen.
 struct RootView: View {
     let api: APIClient
-    @State private var locations = LocationStore()
+    @State private var locations = LocationStore.forLaunch()
     @State private var forecasts: ForecastStore
-    @State private var selection: String = LocationStore.defaultHomeID
+    @State private var selection = ""
     @State private var showingList = false
     @State private var initialSearch = ""
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var showingTour = !Tutorial.seen
 
     init(api: APIClient) {
         self.api = api
@@ -28,26 +30,48 @@ struct RootView: View {
                     } actions: {
                         Button(tr("Try again")) { Task { await loadCatalog() } }
                     }
-                } else {
+                } else if locations.catalog.isEmpty {
                     ProgressView()
-                }
-            } else {
-                TabView(selection: $selection) {
-                    ForEach(saved) { club in
-                        LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
-                            .pageBackground(.clubPages, clubID: club.id)
-                            .tag(club.id)
+                } else {
+                    ContentUnavailableView {
+                        Label(tr("No clubs yet"), systemImage: "figure.rower")
+                    } description: {
+                        Text(tr("Choose your home base and the other places you row."))
+                    } actions: {
+                        Button(tr("Add a club")) { showingList = true }
+                            .buttonStyle(.borderedProminent)
                     }
                 }
-                .tabViewStyle(.page(indexDisplayMode: .never))
-                .safeAreaInset(edge: .bottom, spacing: 0) {
-                    PageBar(clubs: saved, homeID: locations.homeID, selection: $selection) {
-                        showingList = true
+            } else {
+                GeometryReader { geometry in
+                    // A wide and tall screen (an unfolded iPhone Duo on its side)
+                    // keeps the list on the left; phones show it behind the button.
+                    let sideList = geometry.size.width >= Self.sideListMinWidth && geometry.size.height >= Self.sideListMinHeight
+                    HStack(spacing: 0) {
+                        if sideList {
+                            LocationListView(locations: locations, forecasts: forecasts, selectedID: selection) { club in
+                                withAnimation { selection = club.id }
+                            }
+                            .frame(width: Self.sideListWidth)
+                            Divider().ignoresSafeArea()
+                        }
+                        pages(saved, showsListButton: !sideList)
                     }
                 }
             }
         }
         .background(Color(.systemGroupedBackground))
+        .overlay {
+            // The first-start tour, over everything until it is finished or skipped.
+            if showingTour {
+                TutorialView(locations: locations, reload: loadCatalog) {
+                    Tutorial.markSeen()
+                    selection = locations.homeID ?? ""
+                    withAnimation { showingTour = false }
+                }
+                .transition(.opacity)
+            }
+        }
         .environment(\.locale, AppSettings.shared.locale)
         .fullScreenCover(isPresented: $showingList) {
             LocationListView(locations: locations, forecasts: forecasts, initialSearch: initialSearch) { club in
@@ -58,7 +82,38 @@ struct RootView: View {
         }
         .onAppear { applyAppearance() }
         .onChange(of: AppSettings.shared.appearance) { applyAppearance() }
+        .onChange(of: AppSettings.shared.allowsLandscape) { Orientation.apply() }
         .task { await loadCatalog() }
+        // The widget picks up the home base, clubs and settings when the user leaves the app.
+        .onChange(of: scenePhase) { _, phase in
+            if phase != .active { WidgetBridge.publish(locations) }
+        }
+        // A tap on the widget opens its club.
+        .onOpenURL { url in
+            guard url.scheme == "rowerweather", url.host() == "club", let id = url.pathComponents.last,
+                  locations.saved.contains(where: { $0.id == id }) else { return }
+            showingList = false
+            selection = id
+        }
+    }
+
+    static let sideListWidth: CGFloat = 320
+    static let sideListMinWidth: CGFloat = 860
+    static let sideListMinHeight: CGFloat = 560
+
+    private func pages(_ saved: [Club], showsListButton: Bool) -> some View {
+        TabView(selection: $selection) {
+            ForEach(saved) { club in
+                LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
+                    .pageBackground(.clubPages, clubID: club.id)
+                    .tag(club.id)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .onAppear { if selection.isEmpty { selection = saved[0].id } }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection, showList: showsListButton ? { showingList = true } : nil)
+        }
     }
 
     private func loadCatalog() async {
@@ -66,6 +121,7 @@ struct RootView: View {
             locations.setCatalog(try await api.lakes())
             locations.catalogError = nil
             applyLaunchArguments()
+            WidgetBridge.publish(locations)
         } catch {
             locations.catalogError = tr("Could not load the rowing locations.")
         }
@@ -85,14 +141,20 @@ struct RootView: View {
 
     /// Screenshot hooks: `-RWOpenClub <id>` opens that page (adding it from the
     /// catalog if needed), `-RWShowList YES` (or `-RWShowSettings YES`)
-    /// opens the list and `-RWSearch <text>` opens it searching for the text.
+    /// opens the list, `-RWSearch <text>` opens it searching for the text and
+    /// `-RWLandscape YES` turns the phone on its side.
     private func applyLaunchArguments() {
         let args = UserDefaults.standard
+        if args.bool(forKey: "RWLandscape") {
+            for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
+                scene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight))
+            }
+        }
         if let id = args.string(forKey: "RWOpenClub"), let club = locations.catalog.first(where: { $0.id == id }) {
             locations.add(club)
             selection = id
         } else {
-            selection = locations.homeID
+            selection = locations.homeID ?? ""
         }
         if let search = args.string(forKey: "RWSearch") {
             initialSearch = search
@@ -108,7 +170,8 @@ private struct PageBar: View {
     let clubs: [Club]
     let homeID: String
     @Binding var selection: String
-    let showList: () -> Void
+    /// Nil when the list is already on screen.
+    let showList: (() -> Void)?
 
     var body: some View {
         HStack {
@@ -129,12 +192,16 @@ private struct PageBar: View {
                 }
             }
             Spacer()
-            Button(action: showList) {
-                Image(systemName: "list.bullet")
-                    .font(.title3)
-                    .frame(width: 44, height: 44)
+            if let showList {
+                Button(action: showList) {
+                    Image(systemName: "list.bullet")
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel(tr("All locations"))
+            } else {
+                Spacer().frame(width: 44, height: 44)
             }
-            .accessibilityLabel(tr("All locations"))
         }
         .padding(.horizontal)
         .padding(.top, 4)

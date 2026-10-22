@@ -10,12 +10,13 @@ import os
 import time
 import xml.etree.ElementTree as ET
 import zipfile
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import ice, locations, outlines
+from . import ice, lake_view, locations, outlines
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
 from .sources import dwd_warnings, gkd, open_meteo
@@ -28,6 +29,9 @@ LAKE_AREAS_CACHE_SECONDS = 24 * 3600
 ICE_CACHE_SECONDS = 6 * 3600
 # Club ids that get a made-up lake storm warning, marked as a sample, for screenshots.
 SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "").split(",") if c}
+# "from,speed,gusts" (degrees, m/s) replaces the wind in the lake view, marked as a
+# sample, so screenshots show waves building across the lake on a calm day.
+SAMPLE_LAKE_WIND = os.environ.get("RW_SAMPLE_LAKE_WIND", "")
 ATTRIBUTION = [
     "Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0",
     "Warnings: Deutscher Wetterdienst (DWD), CC BY 4.0",
@@ -46,6 +50,7 @@ _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
 # Satellite lake ice passes per lake, set by the publishing job (see sources.lake_ice_satellite).
 _satellite_ice: dict[str, list] = {}
 _ice_temps: dict[str, tuple[float, list[ice.DayTemperature]]] = {}
+_lake_view_cache: dict[str, tuple[float, tuple]] = {}
 
 
 def _point(p: locations.Point) -> dict:
@@ -59,6 +64,8 @@ def list_lakes() -> list[dict]:
             "id": lake.id,
             "name": lake.name,
             "center": _point(lake.center),
+            # The lake view needs an outline (data/outlines).
+            "hasOutline": (outlines.DEFAULT_DIR / f"{lake.id}.geojson").exists(),
             "clubs": [
                 {
                     "id": c.id,
@@ -311,4 +318,88 @@ async def club_forecast(club_id: str) -> dict:
             for d in sun_days(now, now + timedelta(hours=len(hours)), club.launch_point.lat, club.launch_point.lon)
         ],
         "hours": [_hour_json(h) for h in hours],
+    }
+
+
+def _sample_wind(weather: list[list]) -> list[list]:
+    wind_from, speed, gusts = (float(v) for v in SAMPLE_LAKE_WIND.split(","))
+    return [[replace(h, wind_from_deg=wind_from, wind_speed_ms=speed, wind_gust_ms=gusts) for h in w] for w in weather]
+
+
+@app.get("/lakes/{lake_id}/view")
+async def lake_view_forecast(lake_id: str) -> dict:
+    """Conditions across the whole lake, hour by hour, for the app's lake view (see lake_view.py)."""
+    lake = _locations.lakes.get(lake_id)
+    rings = outlines.load(lake_id) if lake else None
+    if lake is None or rings is None:
+        raise HTTPException(status_code=404, detail="no outline for this lake")
+    grid = lake_view.grid_for(lake_id, rings)
+    clubs = _locations.clubs_on(lake_id)
+    now = datetime.now(timezone.utc)
+    async with httpx.AsyncClient() as client:
+        cached = _lake_view_cache.get(lake_id)
+        if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
+            weather, water = cached[1]
+        else:
+            try:
+                weather = await open_meteo.fetch_many(client, [(lat, lon) for lon, lat in grid.samples])
+            except httpx.HTTPError as e:
+                body = e.response.text[:300] if isinstance(e, httpx.HTTPStatusError) else ""
+                logging.getLogger(__name__).warning("Open-Meteo failed for lake view %s: %r %s", lake_id, e, body)
+                raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
+            water = None
+            if lake.gkd_water_temperature_station:
+                try:
+                    water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
+                except httpx.HTTPError:
+                    water = None
+            _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
+        # DWD lake warnings are per lake area, so any club on the lake finds them.
+        warnings = (await _warnings(client, clubs[0], now))[1] if clubs else []
+    sample = bool(SAMPLE_LAKE_WIND)
+    if sample:
+        weather = _sample_wind(weather)
+    hours = lake_view.lake_hours(grid, weather, warnings, water.celsius if water else None)
+    return {
+        "lakeId": lake.id,
+        "name": lake.name,
+        "generatedAt": now.replace(microsecond=0).isoformat(),
+        "sample": sample,
+        "attribution": ATTRIBUTION,
+        "grid": {
+            "south": round(grid.south, 6),
+            "west": round(grid.west, 6),
+            "dLat": grid.d_lat,
+            "dLon": grid.d_lon,
+            "cols": grid.cols,
+            "rows": grid.rows,
+            "cellM": round(grid.cell_m),
+            "cells": grid.cells,
+            "cellPoint": grid.nearest,
+            "cellZone": grid.zone_of,
+        },
+        "zones": grid.zones,
+        "outline": [[[x, y] for x, y in ring] for ring in grid.outline],
+        "points": [{"lat": round(lat, 5), "lon": round(lon, 5)} for lon, lat in grid.samples],
+        "clubs": [{"id": c.id, "shortName": c.short_name, "launchPoint": _point(c.launch_point)} for c in clubs],
+        "hours": [
+            {
+                "time": h.time.isoformat(),
+                "lakeWide": {
+                    "light": h.lake_wide_light.name.lower(),
+                    "reasons": [{"condition": name, "light": light.name.lower()} for name, light in h.lake_wide],
+                },
+                # One digit per water cell: 0 green, 1 amber, 2 red.
+                "lights": "".join(str(int(light)) for light in h.lights),
+                "wavesCm": [round(w * 100) for w in h.waves_m],
+                "wind": [
+                    {"speedMs": w.wind_speed_ms, "gustMs": w.wind_gust_ms, "fromDeg": w.wind_from_deg} for w in h.wind
+                ],
+                "zones": [
+                    {"light": light.name.lower(), "maxWaveM": round(wave, 2)}
+                    for light, wave in zip(h.zone_lights, h.zone_max_wave_m)
+                ],
+            }
+            for h in hours
+        ],
     }

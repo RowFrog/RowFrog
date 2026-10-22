@@ -31,6 +31,13 @@ struct APIClient {
         try await get("clubs/\(clubID)/forecast")
     }
 
+#if !WIDGET_EXTENSION
+    // The widget doesn't show the lake view, so it leaves out LakeView.swift.
+    func lakeView(lakeID: String) async throws -> LakeView {
+        try await get("lakes/\(lakeID)/view")
+    }
+#endif
+
     private func get<T: Decodable>(_ path: String) async throws -> T {
         // Published files are cached for minutes by GitHub Pages; never add a local cache on top.
         let request = URLRequest(url: baseURL.appending(path: path), cachePolicy: .reloadIgnoringLocalCacheData)

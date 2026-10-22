@@ -9,7 +9,8 @@ For every club in data/locations.json it prints:
     on land, distance to the nearest shore point),
   - rowing-related OSM features within 1.5 km (boathouses tagged
     sport=rowing, slipways), as candidates for a better launch point,
-  - a summary of the live forecast from GET /clubs/<id>/forecast.
+  - a summary of the live forecast from GET /clubs/<id>/forecast,
+  - a summary of the lake view from GET /lakes/<id>/view.
 
 The report is printed and, on GitHub Actions, added to the job summary.
 Nothing is written to the data files; corrections are made by hand.
@@ -21,6 +22,7 @@ import json
 import math
 import os
 import sys
+import time
 from pathlib import Path
 
 from fastapi.testclient import TestClient
@@ -111,6 +113,32 @@ def forecast_summary(client: TestClient, club_id: str) -> list[str]:
     return lines
 
 
+def lake_view_summary(client: TestClient, lake_id: str) -> list[str]:
+    try:
+        resp = client.get(f"/lakes/{lake_id}/view")
+        if resp.status_code == 503:  # Open-Meteo sometimes refuses for a moment
+            time.sleep(20)
+            resp = client.get(f"/lakes/{lake_id}/view")
+    except Exception as e:
+        return [f"lake view: HTTP 500 {type(e).__name__}: {e}"]
+    if resp.status_code != 200:
+        return [f"lake view: HTTP {resp.status_code} {resp.text[:200]}"]
+    body = resp.json()
+    lines = [
+        f"lake view: {len(body['grid']['cells'])} cells of {body['grid']['cellM']} m, "
+        f"{len(body['points'])} forecast points, {len(body['hours'])} hours, zones {body['zones']}"
+    ]
+    for h in body["hours"][:24:3]:
+        counts = {c: h["lights"].count(c) for c in "012"}
+        winds = [w["speedMs"] for w in h["wind"] if w["speedMs"] is not None]
+        lines.append(
+            f"  {h['time']}  green/amber/red cells {counts['0']}/{counts['1']}/{counts['2']}  "
+            f"waves up to {max(h['wavesCm'], default=0)} cm  wind {min(winds, default=None)}-{max(winds, default=None)} m/s  "
+            f"lake wide {h['lakeWide']['light']}  zones {[z['light'] for z in h['zones']]}"
+        )
+    return lines
+
+
 def main() -> int:
     locs = locations.load(catalog_paths=())  # the confirmed clubs; catalog clubs are unconfirmed by design
     client = TestClient(app)
@@ -135,6 +163,12 @@ def main() -> int:
             report.append(f"  osm features: lookup failed ({e})")
         lines = forecast_summary(client, club.id)
         ok = ok and lines[0].startswith("forecast: ") and "HTTP" not in lines[0]
+        report.extend(lines)
+        report.append("")
+    for lake_id in sorted({c.lake_id for c in locs.clubs.values()}):
+        report.append(f"## Lake view {lake_id}")
+        lines = lake_view_summary(client, lake_id)
+        ok = ok and "HTTP" not in lines[0]
         report.extend(lines)
         report.append("")
     text = "\n".join(report)
