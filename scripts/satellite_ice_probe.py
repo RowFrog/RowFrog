@@ -12,7 +12,10 @@ On GitHub the two values are repository secrets. The script prints:
   2. for each of those and each lake, the passes over the lake last winter,
   3. per pass, the share of the lake seen as ice, open water and cloud,
   4. a few Lake Ice Extent 250 m and lake surface water temperature files
-     from the public CDSE OData catalogue.
+     from the public CDSE OData catalogue,
+  5. the daily Lake Ice Extent 250 m (VIIRS, central Europe) over each lake
+     last winter: the file is downloaded with the account and the pixel
+     classes inside the lake's outline are counted.
 Nothing is stored; the report goes to the log and the job summary.
 
 Data: Copernicus Land Monitoring Service, free and open, credit "Copernicus".
@@ -20,9 +23,13 @@ Data: Copernicus Land Monitoring Service, free and open, credit "Copernicus".
 
 from __future__ import annotations
 
+import io
 import os
 import re
 import sys
+import tempfile
+import zipfile
+from collections import Counter
 
 import httpx
 
@@ -31,6 +38,7 @@ from rowerweather import locations, outlines
 TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH = "https://sh.dataspace.copernicus.eu"
 ODATA = "https://catalogue.dataspace.copernicus.eu/odata/v1/Products"
+DOWNLOAD = "https://download.dataspace.copernicus.eu/odata/v1/Products({id})/$value"
 LAKES = ["starnberger-see", "ammersee", "regattastrecke-oberschleissheim"]
 WINTER = ("2025-12-01T00:00:00Z", "2026-03-31T23:59:59Z")
 # Ice products, and lake surface water temperature (LSWT) as a backup for lakes without a GKD station.
@@ -164,6 +172,105 @@ def odata_sample(client: httpx.Client) -> None:
             say(f"  OData search failed: {e!r}")
 
 
+def inside(x: float, y: float, ring: list[tuple[float, float]]) -> bool:
+    hit, j = False, len(ring) - 1
+    for i, (xi, yi) in enumerate(ring):
+        xj, yj = ring[j]
+        if (yi > y) != (yj > y) and x < (xj - xi) * (y - yi) / (yj - yi) + xi:
+            hit = not hit
+        j = i
+    return hit
+
+
+def lie_products(client: httpx.Client) -> list[dict]:
+    flt = (
+        "contains(Name,'LIE250') and contains(Name,'CEURO') and endswith(Name,'_cog') "
+        f"and ContentDate/Start ge {WINTER[0][:19]}.000Z and ContentDate/Start le {WINTER[1][:19]}.000Z"
+    )
+    found, params = [], {"$filter": flt, "$top": "100", "$orderby": "ContentDate/Start asc"}
+    url: str | None = ODATA
+    while url:
+        resp = client.get(url, params=params, timeout=60)
+        resp.raise_for_status()
+        body = resp.json()
+        found += body.get("value", [])
+        url, params = body.get("@odata.nextLink"), None
+    return found
+
+
+def tif_from(content: bytes, folder: str) -> str:
+    path = os.path.join(folder, "lie.tif")
+    if content[:2] == b"PK":
+        with zipfile.ZipFile(io.BytesIO(content)) as z:
+            names = [n for n in z.namelist() if n.lower().endswith((".tif", ".tiff"))]
+            with open(path, "wb") as f:
+                f.write(z.read(names[0]))
+    else:
+        with open(path, "wb") as f:
+            f.write(content)
+    return path
+
+
+def lie_winter(client: httpx.Client, locs) -> None:
+    """Lake Ice Extent 250 m, class counts inside each lake's outline, day by day."""
+    import rasterio
+    from rasterio.warp import transform as reproject
+
+    say()
+    say("## Lake Ice Extent 250 m (VIIRS, central Europe), last winter")
+    try:
+        products = lie_products(client)
+    except httpx.HTTPError as e:
+        say(f"  catalogue search failed: {e!r}")
+        return
+    say(f"  {len(products)} daily files from {WINTER[0][:10]} to {WINTER[1][:10]}")
+    rings = {lake_id: outlines.load(lake_id)[0] for lake_id in LAKES}
+    rows: dict[str, list[str]] = {lake_id: [] for lake_id in LAKES}
+    totals: dict[str, Counter] = {lake_id: Counter() for lake_id in LAKES}
+    described = False
+    with tempfile.TemporaryDirectory() as folder:
+        for product in products:
+            day = product["ContentDate"]["Start"][:10]
+            try:
+                resp = client.get(DOWNLOAD.format(id=product["Id"]), timeout=120, follow_redirects=True)
+                resp.raise_for_status()
+                path = tif_from(resp.content, folder)
+            except (httpx.HTTPError, zipfile.BadZipFile, IndexError) as e:
+                say(f"  {day}: download failed {e!r}")
+                if not described:
+                    return
+                continue
+            with rasterio.open(path) as ds:
+                if not described:
+                    described = True
+                    say(f"  file: crs {ds.crs}, pixel {ds.res}, bands {ds.count}, nodata {ds.nodata}")
+                    say(f"  tags: {dict(list(ds.tags().items())[:12])}")
+                    say(f"  band tags: {dict(list(ds.tags(1).items())[:12])}")
+                for lake_id, ring in rings.items():
+                    xs, ys = zip(*ring)
+                    if str(ds.crs) != "EPSG:4326":
+                        xs, ys = reproject("EPSG:4326", ds.crs, list(xs), list(ys))
+                    shore = list(zip(xs, ys))
+                    window = rasterio.windows.from_bounds(min(xs), min(ys), max(xs), max(ys), ds.transform)
+                    window = window.round_offsets().round_lengths()
+                    data = ds.read(1, window=window, boundless=True)
+                    t = ds.window_transform(window)
+                    counts: Counter = Counter()
+                    for r in range(data.shape[0]):
+                        for c in range(data.shape[1]):
+                            x, y = t * (c + 0.5, r + 0.5)
+                            if inside(x, y, shore):
+                                counts[int(data[r, c])] += 1
+                    totals[lake_id].update(counts)
+                    rows[lake_id].append(f"    {day}  " + "  ".join(f"{k}:{v}" for k, v in sorted(counts.items())))
+    for lake_id in LAKES:
+        lake = locs.lakes.get(lake_id)
+        say()
+        say(f"  {lake.name if lake else lake_id}: class totals over the winter {dict(sorted(totals[lake_id].items()))}")
+        for line in rows[lake_id]:
+            say(line)
+
+
 def main() -> int:
     locs = locations.load()
     with httpx.Client() as client:
@@ -194,6 +301,7 @@ def main() -> int:
                     say(f"  {lake_id}: failed {e!r}")
                 except (KeyError, ValueError) as e:
                     say(f"  {lake_id}: unexpected answer {e!r}")
+        lie_winter(client, locs)
     write_summary()
     return 0
 
