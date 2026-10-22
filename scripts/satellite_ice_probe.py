@@ -158,7 +158,11 @@ def shares(client: httpx.Client, collection: dict, geometry: dict) -> list[str]:
 
 
 def odata_sample(client: httpx.Client) -> None:
-    for label, word in (("Lake Ice Extent", "LIE"), ("Lake surface water temperature", "LSWT")):
+    for label, word in (
+        ("Lake Ice Extent", "LIE"),
+        ("River and Lake Ice Extent 20 m (Sentinel-1/-2)", "RLIE"),
+        ("Lake surface water temperature", "LSWT"),
+    ):
         say(f"## {label} files in the CDSE catalogue (public, no login)")
         flt = f"contains(Name,'{word}') and ContentDate/Start gt 2026-01-15T00:00:00.000Z and ContentDate/Start lt 2026-01-20T00:00:00.000Z"
         try:
