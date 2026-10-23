@@ -54,7 +54,7 @@ def params(lat: float, lon: float, when: str | None) -> dict[str, str]:
 
 
 def main() -> int:
-    with httpx.Client(headers={"User-Agent": "RowerWeather/0.1 (+https://github.com/RowerWeatherFrog/RowerWeather)"}) as client:
+    with httpx.Client(headers={"User-Agent": "RowerWeather/0.1 (+https://github.com/RowFrog/RowFrog)"}) as client:
         caps = client.get(WMS, params={"SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetCapabilities"}, timeout=60).text
         at = caps.find("<Name>Niederschlagsradar</Name>")
         block = caps[at : caps.find("</Layer>", at)] if at >= 0 else ""

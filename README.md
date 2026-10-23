@@ -41,7 +41,7 @@ python3 scripts/fetch_lake_outline.py starnberger-see "Starnberger See"
 There is no server yet. The "Publish forecasts" workflow runs the backend on
 GitHub every 30 minutes (confirmed clubs) and every 6 hours (all clubs) and
 publishes its answers as files on GitHub Pages, at
-https://rowerweatherfrog.github.io/RowerWeather/v1/ (same paths as the API:
+https://rowfrog.github.io/RowFrog/v1/ (same paths as the API:
 `lakes`, `clubs/<id>/forecast`). Release builds of the app read from there;
 Debug builds use a backend on the Mac at localhost. To move to a server of our
 own, run `uvicorn rowerweather.api:app` there and change `RW_API_BASE_URL` for

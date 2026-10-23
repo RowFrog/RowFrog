@@ -2,7 +2,7 @@ name: Publish forecasts
 
 # The app's backend while it has no server of its own: runs the backend code
 # on a schedule and publishes its answers as static files on GitHub Pages, at
-# https://rowerweatherfrog.github.io/RowerWeather/v1/ (see scripts/publish_static.py).
+# https://rowfrog.github.io/RowFrog/v1/ (see scripts/publish_static.py).
 # The confirmed clubs are refreshed every 30 minutes, all catalog clubs every
 # 6 hours. The files live on the gh-pages branch, kept as a single commit so
 # its history does not grow. Pages must be set to "Deploy from a branch",
