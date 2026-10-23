@@ -1,0 +1,803 @@
+{
+  "version": 1,
+  "updated": "2026-10-23",
+  "source": "© OpenStreetMap contributors, ODbL",
+  "lakes": [
+    {
+      "id": "altarm-thondorf",
+      "name": "Altarm Thondorf",
+      "country": "at",
+      "center": {
+        "lat": 47.0126,
+        "lon": 15.462
+      },
+      "osm": "way/267326375"
+    },
+    {
+      "id": "attersee",
+      "name": "Attersee",
+      "country": "at",
+      "center": {
+        "lat": 47.8699,
+        "lon": 13.5391
+      },
+      "osm": "relation/1751615"
+    },
+    {
+      "id": "river-donau",
+      "name": "Donau",
+      "country": "at",
+      "center": {
+        "lat": 48.3995,
+        "lon": 15.57536
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-donaukanal",
+      "name": "Donaukanal",
+      "country": "at",
+      "center": {
+        "lat": 48.26071,
+        "lon": 16.36961
+      },
+      "kind": "river"
+    },
+    {
+      "id": "fischerhafen",
+      "name": "Fischerhafen",
+      "country": "at",
+      "center": {
+        "lat": 47.5063,
+        "lon": 9.7301
+      },
+      "osm": "way/127395078"
+    },
+    {
+      "id": "hochwiesegraben",
+      "name": "Hochwiesegraben",
+      "country": "at",
+      "center": {
+        "lat": 48.33,
+        "lon": 16.0286
+      },
+      "osm": "way/642950869"
+    },
+    {
+      "id": "river-inn",
+      "name": "Inn",
+      "country": "at",
+      "center": {
+        "lat": 47.58742,
+        "lon": 12.1657
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-lafnitz",
+      "name": "Lafnitz",
+      "country": "at",
+      "center": {
+        "lat": 47.05093,
+        "lon": 16.11583
+      },
+      "kind": "river"
+    },
+    {
+      "id": "mondsee",
+      "name": "Mondsee",
+      "country": "at",
+      "center": {
+        "lat": 47.8255,
+        "lon": 13.3956
+      },
+      "osm": "way/3868930"
+    },
+    {
+      "id": "river-neue-donau",
+      "name": "Neue Donau",
+      "country": "at",
+      "center": {
+        "lat": 48.19151,
+        "lon": 16.46505
+      },
+      "kind": "river"
+    },
+    {
+      "id": "ossiacher-see",
+      "name": "Ossiacher See",
+      "country": "at",
+      "center": {
+        "lat": 46.6725,
+        "lon": 13.9569
+      },
+      "osm": "way/27446051"
+    },
+    {
+      "id": "pionierhafen",
+      "name": "Pionierhafen",
+      "country": "at",
+      "center": {
+        "lat": 48.2358,
+        "lon": 15.3347
+      },
+      "osm": "way/850540754"
+    },
+    {
+      "id": "river-rodl",
+      "name": "Rodl",
+      "country": "at",
+      "center": {
+        "lat": 48.32765,
+        "lon": 14.16222
+      },
+      "kind": "river"
+    },
+    {
+      "id": "stadtweiher",
+      "name": "Stadtweiher",
+      "country": "at",
+      "center": {
+        "lat": 48.2125,
+        "lon": 15.2008
+      },
+      "osm": "way/144589950"
+    },
+    {
+      "id": "traunsee",
+      "name": "Traunsee",
+      "country": "at",
+      "center": {
+        "lat": 47.8631,
+        "lon": 13.7909
+      },
+      "osm": "relation/67371"
+    },
+    {
+      "id": "near-rc-argonauten",
+      "name": "Water near RC Argonauten",
+      "country": "at",
+      "center": {
+        "lat": 48.23567,
+        "lon": 16.43218
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-rc-ellida",
+      "name": "Water near RC Ellida",
+      "country": "at",
+      "center": {
+        "lat": 48.23725,
+        "lon": 16.4307
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-rc-friesen",
+      "name": "Water near RC Friesen",
+      "country": "at",
+      "center": {
+        "lat": 48.2333,
+        "lon": 16.43352
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-rc-lia",
+      "name": "Water near RC Lia",
+      "country": "at",
+      "center": {
+        "lat": 48.23304,
+        "lon": 16.43377
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-ruderverein-staw",
+      "name": "Water near Ruderverein Staw",
+      "country": "at",
+      "center": {
+        "lat": 48.22904,
+        "lon": 16.42746
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-spielplatz-merowinger",
+      "name": "Water near Spielplatz Merowinger",
+      "country": "at",
+      "center": {
+        "lat": 47.27286,
+        "lon": 9.63011
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-wien",
+      "name": "Water near Wien",
+      "country": "at",
+      "center": {
+        "lat": 48.23649,
+        "lon": 16.43128
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "winterhafen",
+      "name": "Winterhafen",
+      "country": "at",
+      "center": {
+        "lat": 48.3192,
+        "lon": 14.3115
+      },
+      "osm": "way/137884542"
+    },
+    {
+      "id": "wolfgangsee",
+      "name": "Wolfgangsee",
+      "country": "at",
+      "center": {
+        "lat": 47.7455,
+        "lon": 13.4268
+      },
+      "osm": "relation/1764080"
+    },
+    {
+      "id": "woerthersee",
+      "name": "Wörthersee",
+      "country": "at",
+      "center": {
+        "lat": 46.6215,
+        "lon": 14.1489
+      },
+      "osm": "relation/301560"
+    }
+  ],
+  "clubs": [
+    {
+      "id": "askoe-ruderverein-donau-linz",
+      "name": "ASKÖ Ruderverein Donau Linz",
+      "shortName": "ASKÖ Ruderverein Donau Linz",
+      "address": "",
+      "website": "https://rudernlinz.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.31969,
+        "lon": 14.29452,
+        "precision": "node/11043621209 in OpenStreetMap, 274 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "alemannia-ruderverein",
+      "name": "Alemannia Ruderverein",
+      "shortName": "Alemannia Ruderverein",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.33963,
+        "lon": 16.32134,
+        "precision": "way/374920029 in OpenStreetMap, 326 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "bootshaus-ruder-union-melk",
+      "name": "Bootshaus Ruder Union Melk",
+      "shortName": "Bootshaus RUM",
+      "address": "",
+      "website": "https://www.ruderunionmelk.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.22201,
+        "lon": 15.26993,
+        "precision": "way/396993889 in OpenStreetMap, 230 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "ekrv-donau-linz",
+      "name": "EKRV Donau Linz",
+      "shortName": "EKRV Donau Linz",
+      "address": "Heilhamer Weg 2, 4040 Linz",
+      "website": "http://www.donaulinz.com",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.31983,
+        "lon": 14.29465,
+        "precision": "way/44132706 in OpenStreetMap, 276 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "gmundner-ruderverein",
+      "name": "Gmundner Ruderverein",
+      "shortName": "Gmundner Ruderverein",
+      "address": "Dr. Franz Thomas-Straße 15, 4810 Gmunden",
+      "website": "https://www.gmundner-ruderverein.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "traunsee",
+      "launchPoint": {
+        "lat": 47.90762,
+        "lon": 13.78344,
+        "precision": "shore point of Traunsee nearest the way/247575490 in OpenStreetMap, 15 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ooe-leistungszentrum-fuer-wassersport",
+      "name": "Oö. Leistungszentrum für Wassersport",
+      "shortName": "Oö. Leistungszentrum für Wassersport",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-rodl",
+      "launchPoint": {
+        "lat": 48.32765,
+        "lon": 14.16222,
+        "precision": "node/276726334 in OpenStreetMap, 341 m from the Rodl",
+        "verified": false
+      }
+    },
+    {
+      "id": "rc-argonauten",
+      "name": "RC Argonauten",
+      "shortName": "RC Argonauten",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "near-rc-argonauten",
+      "launchPoint": {
+        "lat": 48.23567,
+        "lon": 16.43218,
+        "precision": "way/226565647 in OpenStreetMap (osm level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "rc-ellida",
+      "name": "RC Ellida",
+      "shortName": "RC Ellida",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "near-rc-ellida",
+      "launchPoint": {
+        "lat": 48.23725,
+        "lon": 16.4307,
+        "precision": "way/226565646 in OpenStreetMap (osm level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "rc-friesen",
+      "name": "RC Friesen",
+      "shortName": "RC Friesen",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "near-rc-friesen",
+      "launchPoint": {
+        "lat": 48.2333,
+        "lon": 16.43352,
+        "precision": "way/236617895 in OpenStreetMap (osm level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "rc-lia",
+      "name": "RC Lia",
+      "shortName": "RC Lia",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "near-rc-lia",
+      "launchPoint": {
+        "lat": 48.23304,
+        "lon": 16.43377,
+        "precision": "way/226565650 in OpenStreetMap (osm level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "regattaverein-linz-ottensheim-rvlo",
+      "name": "Regattaverein Linz-Ottensheim (RVLO)",
+      "shortName": "Regattaverein Linz-Ottensheim (RVLO)",
+      "address": "",
+      "website": "https://regattaverein.linz-ottensheim.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-rodl",
+      "launchPoint": {
+        "lat": 48.32752,
+        "lon": 14.16182,
+        "precision": "node/11999200059 in OpenStreetMap, 373 m from the Rodl",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruder-club-graz",
+      "name": "Ruder Club Graz",
+      "shortName": "Ruder Club Graz",
+      "address": "Murfelder Straße 260, 8041 Graz",
+      "website": "https://www.ruderclub-graz.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "altarm-thondorf",
+      "launchPoint": {
+        "lat": 47.01379,
+        "lon": 15.46191,
+        "precision": "shore point of Altarm Thondorf nearest the way/465181485 in OpenStreetMap, 246 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruder-union-melk",
+      "name": "Ruder Union Melk",
+      "shortName": "Ruder Union Melk",
+      "address": "Pionierstraße 7, 3390 Melk",
+      "website": "https://www.ruderunionmelk.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "pionierhafen",
+      "launchPoint": {
+        "lat": 48.23541,
+        "lon": 15.33419,
+        "precision": "shore point of Pionierhafen nearest the node/7960907633 in OpenStreetMap, 161 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruder-zentrum",
+      "name": "Ruder Zentrum",
+      "shortName": "Ruder Zentrum",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-neue-donau",
+      "launchPoint": {
+        "lat": 48.19151,
+        "lon": 16.46505,
+        "precision": "way/214262471 in OpenStreetMap, 103 m from the Neue Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-kufstein",
+      "name": "Ruderclub Kufstein",
+      "shortName": "Ruderclub Kufstein",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-inn",
+      "launchPoint": {
+        "lat": 47.58742,
+        "lon": 12.1657,
+        "precision": "node/7790457280 in OpenStreetMap, 65 m from the Inn",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-mondsee",
+      "name": "Ruderclub Mondsee",
+      "shortName": "Ruderclub Mondsee",
+      "address": "5310 Mondsee",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "mondsee",
+      "launchPoint": {
+        "lat": 47.85099,
+        "lon": 13.3498,
+        "precision": "shore point of Mondsee nearest the way/147616150 in OpenStreetMap, 16 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-sankt-gilgen",
+      "name": "Ruderclub Sankt Gilgen",
+      "shortName": "Ruderclub Sankt Gilgen",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "wolfgangsee",
+      "launchPoint": {
+        "lat": 47.76893,
+        "lon": 13.36859,
+        "precision": "shore point of Wolfgangsee nearest the way/212437054 in OpenStreetMap, 26 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-albatros",
+      "name": "Ruderverein Albatros",
+      "shortName": "Ruderverein Albatros",
+      "address": "Friedelstrand 11, 9020 Klagenfurt am Wörthersee",
+      "website": "https://www.rv-albatros.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "woerthersee",
+      "launchPoint": {
+        "lat": 46.62351,
+        "lon": 14.24938,
+        "precision": "shore point of Wörthersee nearest the node/9921446200 in OpenStreetMap, 11 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-donauhort",
+      "name": "Ruderverein Donauhort",
+      "shortName": "Ruderverein Donauhort",
+      "address": "Am Brigittenauer Sporn 9, 1200 Wien",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donaukanal",
+      "launchPoint": {
+        "lat": 48.26071,
+        "lon": 16.36961,
+        "precision": "way/170478600 in OpenStreetMap, 54 m from the Donaukanal",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-ister",
+      "name": "Ruderverein Ister",
+      "shortName": "RV Ister Linz",
+      "address": "Am Winterhafen 19, 4020 Linz",
+      "website": "https://www.ister.at/Ister1/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "winterhafen",
+      "launchPoint": {
+        "lat": 48.31985,
+        "lon": 14.30502,
+        "precision": "shore point of Winterhafen nearest the way/78162326 in OpenStreetMap, 31 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-seewalchen",
+      "name": "Ruderverein Seewalchen",
+      "shortName": "Ruderverein Seewalchen",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "attersee",
+      "launchPoint": {
+        "lat": 47.95039,
+        "lon": 13.58945,
+        "precision": "shore point of Attersee nearest the way/131600617 in OpenStreetMap, 83 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-staw",
+      "name": "Ruderverein Staw",
+      "shortName": "Ruderverein Staw",
+      "address": "",
+      "website": "https://www.ruderverein.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "near-ruderverein-staw",
+      "launchPoint": {
+        "lat": 48.22904,
+        "lon": 16.42746,
+        "precision": "way/226565645 in OpenStreetMap (osm level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-villach",
+      "name": "Ruderverein Villach",
+      "shortName": "Ruderverein Villach",
+      "address": "Ossiachersee Süduferstraße 67, 9523 Villach",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "ossiacher-see",
+      "launchPoint": {
+        "lat": 46.65076,
+        "lon": 13.90096,
+        "precision": "shore point of Ossiacher See nearest the way/509630183 in OpenStreetMap, 19 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-wiking-bregenz-e-v-1900",
+      "name": "Ruderverein Wiking Bregenz e.V. 1900",
+      "shortName": "Ruderverein Wiking Bregenz e.V. 1900",
+      "address": "Strandweg 40, 6900 Bregenz",
+      "website": "https://www.rv-wiking.at/home/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "fischerhafen",
+      "launchPoint": {
+        "lat": 47.50587,
+        "lon": 9.72926,
+        "precision": "shore point of Fischerhafen nearest the way/115624167 in OpenStreetMap, 29 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-wiking-linz",
+      "name": "Ruderverein Wiking Linz",
+      "shortName": "Ruderverein Wiking Linz",
+      "address": "Wilheringer Straße 10, 4048 Puchenau",
+      "website": "https://www.wikinglinz.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.3108,
+        "lon": 14.24191,
+        "precision": "way/234875260 in OpenStreetMap, 219 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "spielplatz-merowinger",
+      "name": "Spielplatz Merowinger",
+      "shortName": "Spielplatz Merowinger",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "near-spielplatz-merowinger",
+      "launchPoint": {
+        "lat": 47.27286,
+        "lon": 9.63011,
+        "precision": "way/78241008 in OpenStreetMap (osm level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "steiner-ruder-club-1867",
+      "name": "Steiner Ruder-Club 1867",
+      "shortName": "Steiner Ruder-Club 1867",
+      "address": "Sepp-Puchinger-Promenade, 3500 Krems an der Donau",
+      "website": "https://www.steiner-ruder-club.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.3995,
+        "lon": 15.57536,
+        "precision": "node/4239868614 in OpenStreetMap, 200 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "tullner-ruderverein",
+      "name": "Tullner Ruderverein",
+      "shortName": "Tullner Ruderverein",
+      "address": "3430 Tulln an der Donau",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "hochwiesegraben",
+      "launchPoint": {
+        "lat": 48.32714,
+        "lon": 16.02805,
+        "precision": "shore point of Hochwiesegraben nearest the way/30534107 in OpenStreetMap, 130 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "usv-sattler-rudersdorf",
+      "name": "USV Sattler Rudersdorf",
+      "shortName": "USV Sattler Rudersdorf",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-lafnitz",
+      "launchPoint": {
+        "lat": 47.05093,
+        "lon": 16.11583,
+        "precision": "way/205007217 in OpenStreetMap, 296 m from the Lafnitz",
+        "verified": false
+      }
+    },
+    {
+      "id": "union-ruderverein-poechlarn",
+      "name": "Union Ruderverein Pöchlarn",
+      "shortName": "Union Ruderverein Pöchlarn",
+      "address": "Regensburger Straße 16, 3380 Pöchlarn",
+      "website": "https://urv-poechlarn.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "stadtweiher",
+      "launchPoint": {
+        "lat": 48.21211,
+        "lon": 15.20623,
+        "precision": "shore point of Stadtweiher nearest the node/8248302159 in OpenStreetMap, 84 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "wasser-sportunion-wachau",
+      "name": "Wasser Sportunion Wachau",
+      "shortName": "Wasser Sportunion Wachau",
+      "address": "141, 3601 Dürnstein",
+      "website": "https://www.wsw.at",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.38805,
+        "lon": 15.5247,
+        "precision": "way/683147866 in OpenStreetMap, 219 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderclub-pirat",
+      "name": "Wiener Ruderclub Pirat",
+      "shortName": "Wiener Ruderclub Pirat",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-neue-donau",
+      "launchPoint": {
+        "lat": 48.21701,
+        "lon": 16.43319,
+        "precision": "way/230897330 in OpenStreetMap, 231 m from the Neue Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderklub-donau",
+      "name": "Wiener Ruderklub Donau",
+      "shortName": "Wiener Ruderklub Donau",
+      "address": "An der unteren Alten Donau 13, 1220 Wien",
+      "website": "https://www.wrkdonau.at/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "near-wien",
+      "launchPoint": {
+        "lat": 48.23649,
+        "lon": 16.43128,
+        "precision": "way/226565648 in OpenStreetMap (osm level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderverein-austria",
+      "name": "Wiener Ruderverein Austria",
+      "shortName": "Wiener Ruderverein Austria",
+      "address": "Kuchelauer Hafenstraße 4, 1190 Wien",
+      "website": "https://www.ruderverein-austria.at",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.27709,
+        "lon": 16.35463,
+        "precision": "way/1520793276 in OpenStreetMap, 262 m from the Donau",
+        "verified": false
+      }
+    }
+  ]
+}

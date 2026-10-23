@@ -2125,6 +2125,227 @@
   "lon": 7.43061,
   "precision": "street"
  },
+ "at|Alte Fähre|6911|Lochau": {
+  "lat": 47.52942,
+  "lon": 9.75339,
+  "precision": "town"
+ },
+ "at|Am Strandweg 40|6900|Bregenz": {
+  "lat": 47.50258,
+  "lon": 9.74729,
+  "precision": "town"
+ },
+ "at|Am Winterhafen 19|4020|Linz": {
+  "lat": 48.32012,
+  "lon": 14.3049,
+  "precision": "street"
+ },
+ "at|An der unteren Alten Donau 13|1220|Wien": {
+  "lat": 48.23652,
+  "lon": 16.43132,
+  "precision": "street"
+ },
+ "at|An der unteren Alten Donau 21|1220|Wien": {
+  "lat": 48.23561,
+  "lon": 16.43203,
+  "precision": "street"
+ },
+ "at|An der unteren Alten Donau 47|1220|Wien": {
+  "lat": 48.23325,
+  "lon": 16.43337,
+  "precision": "street"
+ },
+ "at|An der unteren Alten Donau 49|1220|Wien": {
+  "lat": 48.23299,
+  "lon": 16.43347,
+  "precision": "street"
+ },
+ "at|Anton-Payr-Straße 5|4863|Seewalchen": {
+  "lat": 47.95464,
+  "lon": 13.58395,
+  "precision": "street"
+ },
+ "at|Brigittenauer Sporn 9|1200|Wien": {
+  "lat": 48.26075,
+  "lon": 16.36958,
+  "precision": "street"
+ },
+ "at|Dampfschiffhaufen 41|1220|Wien": {
+  "lat": 48.21935,
+  "lon": 16.43232,
+  "precision": "street"
+ },
+ "at|Dampfschiffhaufen 65|1220|Wien": {
+  "lat": 48.2169,
+  "lon": 16.43326,
+  "precision": "street"
+ },
+ "at|Donaustraße 70|2100|Korneuburg": {
+  "lat": 48.33887,
+  "lon": 16.32183,
+  "precision": "street"
+ },
+ "at|Dr. Thomas Straße 15|4810|Gmunden": {
+  "lat": 47.90773,
+  "lon": 13.78333,
+  "precision": "street"
+ },
+ "at|Drauweg 18|9100|Völkermarkt": {
+  "lat": 46.6555,
+  "lon": 14.63408,
+  "precision": "street"
+ },
+ "at|Dürnstein 51|3601|Dürnstein": {
+  "lat": 48.39323,
+  "lon": 15.52587,
+  "precision": "street"
+ },
+ "at|Florian Berndlgasse 10|1220|Wien": {
+  "lat": 48.23499,
+  "lon": 16.43292,
+  "precision": "street"
+ },
+ "at|Florian-Berndl-Gasse 3|1220|Wien": {
+  "lat": 48.2385,
+  "lon": 16.43013,
+  "precision": "street"
+ },
+ "at|Friedelstrand 11|9020|Klagenfurt": {
+  "lat": 46.62361,
+  "lon": 14.24939,
+  "precision": "street"
+ },
+ "at|Friedelstrand 21|9020|Klagenfurt": {
+  "lat": 46.62409,
+  "lon": 14.24822,
+  "precision": "street"
+ },
+ "at|Heilhamerweg 2|4040|Linz": {
+  "lat": 48.31983,
+  "lon": 14.29465,
+  "precision": "street"
+ },
+ "at|Josefstraße 29|3313|Wallsee": {
+  "lat": 48.16437,
+  "lon": 14.70928,
+  "precision": "street"
+ },
+ "at|Kronauer Straße 8|3430|Tulln": {
+  "lat": 48.3253,
+  "lon": 16.03048,
+  "precision": "street"
+ },
+ "at|Kuchelauer Hafenstraße 4|1190|Wien": {
+  "lat": 48.27693,
+  "lon": 16.35478,
+  "precision": "street"
+ },
+ "at|Melker Straße 38|3393|Matzleinsdorf": {
+  "lat": 48.20674,
+  "lon": 15.27844,
+  "precision": "street"
+ },
+ "at|Moissigasse 21|1220|Wien": {
+  "lat": 48.22946,
+  "lon": 16.43038,
+  "precision": "street"
+ },
+ "at|Mondseestraße 14|5340|St. Gilgen": {
+  "lat": 47.76917,
+  "lon": 13.36817,
+  "precision": "street"
+ },
+ "at|Murfelder Straße 260|8041|Graz": {
+  "lat": 47.01541,
+  "lon": 15.45969,
+  "precision": "street"
+ },
+ "at|Nibelungenlände 10|3400|Klosterneuburg": {
+  "lat": 48.30499,
+  "lon": 16.32376,
+  "precision": "town"
+ },
+ "at|Normannengasse 2|3400|Klosterneuburg": {
+  "lat": 48.29376,
+  "lon": 16.34304,
+  "precision": "street"
+ },
+ "at|Ossiachersee-Süduferstraße 67|9523|Landskron": {
+  "lat": 46.65066,
+  "lon": 13.90112,
+  "precision": "street"
+ },
+ "at|Pionierstraße 7|3390|Melk": {
+  "lat": 48.23411,
+  "lon": 15.33348,
+  "precision": "street"
+ },
+ "at|Prielstraße 2|4600|Wels": {
+  "lat": 48.15679,
+  "lon": 14.03594,
+  "precision": "street"
+ },
+ "at|Regattastraße 1|4100|Ottensheim Österreich": {
+  "lat": 48.32754,
+  "lon": 14.16181,
+  "precision": "street"
+ },
+ "at|Regensburgerstraße 16|3380|Pöchlarn": {
+  "lat": 48.21235,
+  "lon": 15.20736,
+  "precision": "street"
+ },
+ "at|Robert Baum-Promenade 7|5310|Mondsee": {
+  "lat": 47.85073,
+  "lon": 13.35094,
+  "precision": "street"
+ },
+ "at|Rodlstraße 21|4100|Ottensheim": {
+  "lat": 48.33083,
+  "lon": 14.17062,
+  "precision": "street"
+ },
+ "at|Rupertiweg 13|5201|Seekirchen": {
+  "lat": 47.91471,
+  "lon": 13.15298,
+  "precision": "street"
+ },
+ "at|Schachensiedlung|8993|Grundlsee": {
+  "lat": 47.62727,
+  "lon": 13.83793,
+  "precision": "town"
+ },
+ "at|Seebad|7091|Breitenbrunn": {
+  "lat": 47.94635,
+  "lon": 16.73253,
+  "precision": "town"
+ },
+ "at|Seehofstraße 33|9871|Seeboden": {
+  "lat": 46.81427,
+  "lon": 13.51168,
+  "precision": "street"
+ },
+ "at|Sepp Puchinger Promenade|3500|Krems-Stein": {
+  "lat": 48.3989,
+  "lon": 15.57387,
+  "precision": "street"
+ },
+ "at|Uferstraße 20|2304|Orth an der Donau": {
+  "lat": 48.12447,
+  "lon": 16.71215,
+  "precision": "street"
+ },
+ "at|Waldbadstraße|5081|Anif": {
+  "lat": 47.73748,
+  "lon": 13.06929,
+  "precision": "street"
+ },
+ "at|Wilheringerstraße 10|4048|Puchenau": {
+  "lat": 48.31081,
+  "lon": 14.24183,
+  "precision": "street"
+ },
+ "at||6330|Kufstein, Münchener Straße 38": null,
  "|06385|Aken": {
   "lat": 51.85,
   "lon": 12.05,
