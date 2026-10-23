@@ -6,6 +6,7 @@
     {
       "id": "adolf-mittag-see",
       "name": "Adolf-Mittag-See",
+      "country": "de",
       "center": {
         "lat": 52.1188,
         "lon": 11.6449
@@ -15,6 +16,7 @@
     {
       "id": "river-aller",
       "name": "Aller",
+      "country": "de",
       "center": {
         "lat": 52.62235,
         "lon": 10.09587
@@ -24,6 +26,7 @@
     {
       "id": "allersee",
       "name": "Allersee",
+      "country": "de",
       "center": {
         "lat": 52.4336,
         "lon": 10.8188
@@ -33,6 +36,7 @@
     {
       "id": "river-alte-donau",
       "name": "Alte Donau",
+      "country": "de",
       "center": {
         "lat": 48.89756,
         "lon": 12.57314
@@ -42,6 +46,7 @@
     {
       "id": "river-alte-fahrt",
       "name": "Alte Fahrt",
+      "country": "de",
       "center": {
         "lat": 51.77859,
         "lon": 7.4095
@@ -51,6 +56,7 @@
     {
       "id": "river-alte-oder",
       "name": "Alte Oder",
+      "country": "de",
       "center": {
         "lat": 52.33754,
         "lon": 14.55683
@@ -60,6 +66,7 @@
     {
       "id": "alter-hafen",
       "name": "Alter Hafen",
+      "country": "de",
       "center": {
         "lat": 49.3211,
         "lon": 8.4476
@@ -69,6 +76,7 @@
     {
       "id": "altwarmbuechener-see",
       "name": "Altwarmbüchener See",
+      "country": "de",
       "center": {
         "lat": 52.4231,
         "lon": 9.8546
@@ -78,6 +86,7 @@
     {
       "id": "ammersee",
       "name": "Ammersee",
+      "country": "de",
       "center": {
         "lat": 48.0063,
         "lon": 11.1331
@@ -87,6 +96,7 @@
     {
       "id": "river-an-der-alten-werft",
       "name": "An der Alten Werft",
+      "country": "de",
       "center": {
         "lat": 53.0866,
         "lon": 7.38469
@@ -96,6 +106,7 @@
     {
       "id": "aussenalster",
       "name": "Außenalster",
+      "country": "de",
       "center": {
         "lat": 53.5689,
         "lon": 10.006
@@ -105,6 +116,7 @@
     {
       "id": "river-assmannkanal",
       "name": "Aßmannkanal",
+      "country": "de",
       "center": {
         "lat": 53.51441,
         "lon": 9.99809
@@ -114,6 +126,7 @@
     {
       "id": "bahrensdorfer-see",
       "name": "Bahrensdorfer See",
+      "country": "de",
       "center": {
         "lat": 52.1671,
         "lon": 14.2524
@@ -123,6 +136,7 @@
     {
       "id": "baldeneysee",
       "name": "Baldeneysee",
+      "country": "de",
       "center": {
         "lat": 51.3972,
         "lon": 7.0401
@@ -132,6 +146,7 @@
     {
       "id": "bammelsburger-teich",
       "name": "Bammelsburger Teich",
+      "country": "de",
       "center": {
         "lat": 52.2704,
         "lon": 10.5168
@@ -141,6 +156,7 @@
     {
       "id": "river-becken-i",
       "name": "Becken I",
+      "country": "de",
       "center": {
         "lat": 49.01744,
         "lon": 8.34219
@@ -150,6 +166,7 @@
     {
       "id": "river-becken-iv",
       "name": "Becken IV",
+      "country": "de",
       "center": {
         "lat": 49.01016,
         "lon": 8.33511
@@ -159,6 +176,7 @@
     {
       "id": "river-berlin-spandauer-schifffahrtskanal",
       "name": "Berlin-Spandauer Schifffahrtskanal",
+      "country": "de",
       "center": {
         "lat": 52.54797,
         "lon": 13.27181
@@ -168,6 +186,7 @@
     {
       "id": "bertasee",
       "name": "Bertasee",
+      "country": "de",
       "center": {
         "lat": 51.4086,
         "lon": 6.7849
@@ -177,6 +196,7 @@
     {
       "id": "beyenburger-stausee",
       "name": "Beyenburger Stausee",
+      "country": "de",
       "center": {
         "lat": 51.2431,
         "lon": 7.3052
@@ -186,6 +206,7 @@
     {
       "id": "river-bille",
       "name": "Bille",
+      "country": "de",
       "center": {
         "lat": 53.54411,
         "lon": 10.05424
@@ -195,6 +216,7 @@
     {
       "id": "bodensee",
       "name": "Bodensee",
+      "country": "de",
       "center": {
         "lat": 47.6478,
         "lon": 9.3063
@@ -204,6 +226,7 @@
     {
       "id": "bootsportverein-vilshofen",
       "name": "Bootsportverein - Vilshofen",
+      "country": "de",
       "center": {
         "lat": 48.6381,
         "lon": 13.1866
@@ -213,6 +236,7 @@
     {
       "id": "borsighafen",
       "name": "Borsighafen",
+      "country": "de",
       "center": {
         "lat": 52.5818,
         "lon": 13.2761
@@ -222,6 +246,7 @@
     {
       "id": "bruch",
       "name": "Bruch",
+      "country": "de",
       "center": {
         "lat": 51.3478,
         "lon": 12.7342
@@ -231,6 +256,7 @@
     {
       "id": "bugasee",
       "name": "Bugasee",
+      "country": "de",
       "center": {
         "lat": 51.2961,
         "lon": 9.4988
@@ -240,6 +266,7 @@
     {
       "id": "river-dahme",
       "name": "Dahme",
+      "country": "de",
       "center": {
         "lat": 52.30067,
         "lon": 13.64585
@@ -249,6 +276,7 @@
     {
       "id": "river-datteln-hamm-kanal",
       "name": "Datteln-Hamm-Kanal",
+      "country": "de",
       "center": {
         "lat": 51.63513,
         "lon": 7.40182
@@ -258,6 +286,7 @@
     {
       "id": "river-diamantgraben",
       "name": "Diamantgraben",
+      "country": "de",
       "center": {
         "lat": 53.47078,
         "lon": 10.00168
@@ -267,6 +296,7 @@
     {
       "id": "die-anger",
       "name": "Die Anger",
+      "country": "de",
       "center": {
         "lat": 51.4093,
         "lon": 6.8884
@@ -276,6 +306,7 @@
     {
       "id": "doktorsee",
       "name": "Doktorsee",
+      "country": "de",
       "center": {
         "lat": 52.1896,
         "lon": 9.0527
@@ -285,6 +316,7 @@
     {
       "id": "river-donau",
       "name": "Donau",
+      "country": "de",
       "center": {
         "lat": 48.56974,
         "lon": 10.43395
@@ -294,6 +326,7 @@
     {
       "id": "river-dortmund-ems-kanal",
       "name": "Dortmund-Ems-Kanal",
+      "country": "de",
       "center": {
         "lat": 51.9507,
         "lon": 7.6509
@@ -303,6 +336,7 @@
     {
       "id": "river-dove-elbe",
       "name": "Dove Elbe",
+      "country": "de",
       "center": {
         "lat": 53.48232,
         "lon": 10.11465
@@ -312,6 +346,7 @@
     {
       "id": "daemeritzsee",
       "name": "Dämeritzsee",
+      "country": "de",
       "center": {
         "lat": 52.4219,
         "lon": 13.7341
@@ -321,6 +356,7 @@
     {
       "id": "river-eider",
       "name": "Eider",
+      "country": "de",
       "center": {
         "lat": 54.30766,
         "lon": 9.67569
@@ -330,6 +366,7 @@
     {
       "id": "einfelder-see",
       "name": "Einfelder See",
+      "country": "de",
       "center": {
         "lat": 54.1437,
         "lon": 10.0002
@@ -339,6 +376,7 @@
     {
       "id": "eisenbahnhafen",
       "name": "Eisenbahnhafen",
+      "country": "de",
       "center": {
         "lat": 51.4564,
         "lon": 6.7187
@@ -348,6 +386,7 @@
     {
       "id": "river-elbe",
       "name": "Elbe",
+      "country": "de",
       "center": {
         "lat": 51.06271,
         "lon": 13.68411
@@ -357,6 +396,7 @@
     {
       "id": "river-elbe-havel-kanal",
       "name": "Elbe-Havel-Kanal",
+      "country": "de",
       "center": {
         "lat": 52.28349,
         "lon": 11.84924
@@ -366,6 +406,7 @@
     {
       "id": "river-elbe-seitenkanal",
       "name": "Elbe-Seitenkanal",
+      "country": "de",
       "center": {
         "lat": 52.73372,
         "lon": 10.66408
@@ -375,6 +416,7 @@
     {
       "id": "river-elstermuehlgraben",
       "name": "Elstermühlgraben",
+      "country": "de",
       "center": {
         "lat": 51.33517,
         "lon": 12.35285
@@ -384,6 +426,7 @@
     {
       "id": "river-ems",
       "name": "Ems",
+      "country": "de",
       "center": {
         "lat": 52.27618,
         "lon": 7.44639
@@ -393,6 +436,7 @@
     {
       "id": "river-ems-jade-kanal",
       "name": "Ems-Jade-Kanal",
+      "country": "de",
       "center": {
         "lat": 53.46362,
         "lon": 7.47241
@@ -402,6 +446,7 @@
     {
       "id": "essen-werdener-ruder-club-von-1896-e-v",
       "name": "Essen-Werdener Ruder-Club von 1896 e.V.",
+      "country": "de",
       "center": {
         "lat": 51.3995,
         "lon": 7.0085
@@ -411,6 +456,7 @@
     {
       "id": "europaweiher",
       "name": "Europaweiher",
+      "country": "de",
       "center": {
         "lat": 48.0201,
         "lon": 7.5919
@@ -420,6 +466,7 @@
     {
       "id": "river-flaumbach",
       "name": "Flaumbach",
+      "country": "de",
       "center": {
         "lat": 50.17358,
         "lon": 7.29884
@@ -429,6 +476,7 @@
     {
       "id": "forellenbaechle",
       "name": "Forellenbächle",
+      "country": "de",
       "center": {
         "lat": 48.3896,
         "lon": 9.992
@@ -438,6 +486,7 @@
     {
       "id": "river-fulda",
       "name": "Fulda",
+      "country": "de",
       "center": {
         "lat": 51.39352,
         "lon": 9.57323
@@ -447,6 +496,7 @@
     {
       "id": "fuehlinger-see",
       "name": "Fühlinger See",
+      "country": "de",
       "center": {
         "lat": 51.0266,
         "lon": 6.9205
@@ -456,6 +506,7 @@
     {
       "id": "river-fuerstenwalder-spree",
       "name": "Fürstenwalder Spree",
+      "country": "de",
       "center": {
         "lat": 52.36117,
         "lon": 14.05491
@@ -465,6 +516,7 @@
     {
       "id": "grimnitzsee",
       "name": "Grimnitzsee",
+      "country": "de",
       "center": {
         "lat": 52.5148,
         "lon": 13.2001
@@ -474,6 +526,7 @@
     {
       "id": "river-grosse-isar",
       "name": "Große Isar",
+      "country": "de",
       "center": {
         "lat": 48.55418,
         "lon": 12.18015
@@ -483,6 +536,7 @@
     {
       "id": "grosser-brombachsee",
       "name": "Großer Brombachsee",
+      "country": "de",
       "center": {
         "lat": 49.1315,
         "lon": 10.9283
@@ -492,6 +546,7 @@
     {
       "id": "grosser-dutzendteich",
       "name": "Großer Dutzendteich",
+      "country": "de",
       "center": {
         "lat": 49.4308,
         "lon": 11.1165
@@ -501,6 +556,7 @@
     {
       "id": "grosser-eutiner-see",
       "name": "Großer Eutiner See",
+      "country": "de",
       "center": {
         "lat": 54.1422,
         "lon": 10.6405
@@ -510,6 +566,7 @@
     {
       "id": "grosser-ratzeburger-see",
       "name": "Großer Ratzeburger See",
+      "country": "de",
       "center": {
         "lat": 53.7405,
         "lon": 10.7521
@@ -519,6 +576,7 @@
     {
       "id": "grosser-storkower-see",
       "name": "Großer Storkower See",
+      "country": "de",
       "center": {
         "lat": 52.2429,
         "lon": 13.9665
@@ -528,6 +586,7 @@
     {
       "id": "grosser-wannsee",
       "name": "Großer Wannsee",
+      "country": "de",
       "center": {
         "lat": 52.4278,
         "lon": 13.1725
@@ -537,6 +596,7 @@
     {
       "id": "river-hadelner-kanal",
       "name": "Hadelner Kanal",
+      "country": "de",
       "center": {
         "lat": 53.82363,
         "lon": 8.91971
@@ -546,6 +606,7 @@
     {
       "id": "hafen",
       "name": "Hafen",
+      "country": "de",
       "center": {
         "lat": 50.3049,
         "lon": 7.5993
@@ -555,6 +616,7 @@
     {
       "id": "hafen-britz-ost",
       "name": "Hafen Britz Ost",
+      "country": "de",
       "center": {
         "lat": 52.4602,
         "lon": 13.454
@@ -564,6 +626,7 @@
     {
       "id": "hafen-erlangen",
       "name": "Hafen Erlangen",
+      "country": "de",
       "center": {
         "lat": 49.5829,
         "lon": 10.9708
@@ -573,6 +636,7 @@
     {
       "id": "hafen-friedrichshafen",
       "name": "Hafen Friedrichshafen",
+      "country": "de",
       "center": {
         "lat": 47.6503,
         "lon": 9.4841
@@ -582,6 +646,7 @@
     {
       "id": "river-hafen-muehlberg",
       "name": "Hafen Mühlberg",
+      "country": "de",
       "center": {
         "lat": 51.43245,
         "lon": 13.20992
@@ -591,6 +656,7 @@
     {
       "id": "river-hase",
       "name": "Hase",
+      "country": "de",
       "center": {
         "lat": 52.55147,
         "lon": 7.95512
@@ -600,6 +666,7 @@
     {
       "id": "river-havel",
       "name": "Havel",
+      "country": "de",
       "center": {
         "lat": 52.50993,
         "lon": 13.20309
@@ -609,6 +676,7 @@
     {
       "id": "havel",
       "name": "Havel",
+      "country": "de",
       "center": {
         "lat": 52.5849,
         "lon": 13.2183
@@ -618,6 +686,7 @@
     {
       "id": "havel-158521683",
       "name": "Havel",
+      "country": "de",
       "center": {
         "lat": 52.4981,
         "lon": 13.1974
@@ -627,6 +696,7 @@
     {
       "id": "havel-5202401",
       "name": "Havel",
+      "country": "de",
       "center": {
         "lat": 52.6021,
         "lon": 13.2069
@@ -636,6 +706,7 @@
     {
       "id": "havel-4578498",
       "name": "Havel",
+      "country": "de",
       "center": {
         "lat": 52.4633,
         "lon": 13.1698
@@ -645,6 +716,7 @@
     {
       "id": "hennetalsperre",
       "name": "Hennetalsperre",
+      "country": "de",
       "center": {
         "lat": 51.3194,
         "lon": 8.2674
@@ -654,6 +726,7 @@
     {
       "id": "henrichsteich",
       "name": "Henrichsteich",
+      "country": "de",
       "center": {
         "lat": 51.4034,
         "lon": 7.18
@@ -663,6 +736,7 @@
     {
       "id": "hirschgraben",
       "name": "Hirschgraben",
+      "country": "de",
       "center": {
         "lat": 51.3038,
         "lon": 9.4985
@@ -672,6 +746,7 @@
     {
       "id": "river-hunte",
       "name": "Hunte",
+      "country": "de",
       "center": {
         "lat": 53.11978,
         "lon": 8.2049
@@ -681,6 +756,7 @@
     {
       "id": "river-ihme",
       "name": "Ihme",
+      "country": "de",
       "center": {
         "lat": 52.3625,
         "lon": 9.72307
@@ -690,6 +766,7 @@
     {
       "id": "river-ilmenau",
       "name": "Ilmenau",
+      "country": "de",
       "center": {
         "lat": 53.29964,
         "lon": 10.39823
@@ -699,6 +776,7 @@
     {
       "id": "river-inn",
       "name": "Inn",
+      "country": "de",
       "center": {
         "lat": 48.54957,
         "lon": 13.43622
@@ -708,6 +786,7 @@
     {
       "id": "inselkanal",
       "name": "Inselkanal",
+      "country": "de",
       "center": {
         "lat": 53.6047,
         "lon": 9.9926
@@ -717,6 +796,7 @@
     {
       "id": "river-isebekkanal",
       "name": "Isebekkanal",
+      "country": "de",
       "center": {
         "lat": 53.58555,
         "lon": 9.99095
@@ -726,6 +806,7 @@
     {
       "id": "kalksee",
       "name": "Kalksee",
+      "country": "de",
       "center": {
         "lat": 52.4583,
         "lon": 13.7716
@@ -735,6 +816,7 @@
     {
       "id": "river-kanal-trave",
       "name": "Kanal-Trave",
+      "country": "de",
       "center": {
         "lat": 53.85506,
         "lon": 10.68183
@@ -744,6 +826,7 @@
     {
       "id": "karpfenteich",
       "name": "Karpfenteich",
+      "country": "de",
       "center": {
         "lat": 52.6059,
         "lon": 12.3251
@@ -753,6 +836,7 @@
     {
       "id": "kettwiger-stausee",
       "name": "Kettwiger Stausee",
+      "country": "de",
       "center": {
         "lat": 51.3596,
         "lon": 6.9448
@@ -762,6 +846,7 @@
     {
       "id": "klein-koeriser-see",
       "name": "Klein Köriser See",
+      "country": "de",
       "center": {
         "lat": 52.1771,
         "lon": 13.6892
@@ -771,6 +856,7 @@
     {
       "id": "kleiner-see",
       "name": "Kleiner See",
+      "country": "de",
       "center": {
         "lat": 48.7242,
         "lon": 9.3337
@@ -780,6 +866,7 @@
     {
       "id": "kleiner-wannsee",
       "name": "Kleiner Wannsee",
+      "country": "de",
       "center": {
         "lat": 52.4161,
         "lon": 13.1639
@@ -789,6 +876,7 @@
     {
       "id": "kraehenteich",
       "name": "Krähenteich",
+      "country": "de",
       "center": {
         "lat": 53.8622,
         "lon": 10.6916
@@ -798,6 +886,7 @@
     {
       "id": "river-krueckau",
       "name": "Krückau",
+      "country": "de",
       "center": {
         "lat": 53.74982,
         "lon": 9.63599
@@ -807,6 +896,7 @@
     {
       "id": "kruepelsee",
       "name": "Krüpelsee",
+      "country": "de",
       "center": {
         "lat": 52.2945,
         "lon": 13.6961
@@ -816,6 +906,7 @@
     {
       "id": "kutzerweiher",
       "name": "Kutzerweiher",
+      "country": "de",
       "center": {
         "lat": 49.484,
         "lon": 8.4948
@@ -825,6 +916,7 @@
     {
       "id": "kuechensee",
       "name": "Küchensee",
+      "country": "de",
       "center": {
         "lat": 53.6886,
         "lon": 10.7661
@@ -834,6 +926,7 @@
     {
       "id": "river-kuestenkanal",
       "name": "Küstenkanal",
+      "country": "de",
       "center": {
         "lat": 53.11458,
         "lon": 8.19814
@@ -843,6 +936,7 @@
     {
       "id": "river-lahn",
       "name": "Lahn",
+      "country": "de",
       "center": {
         "lat": 50.59112,
         "lon": 8.66864
@@ -852,6 +946,7 @@
     {
       "id": "landeshafen-woerth",
       "name": "Landeshafen Wörth",
+      "country": "de",
       "center": {
         "lat": 49.0631,
         "lon": 8.3095
@@ -861,6 +956,7 @@
     {
       "id": "langer-see",
       "name": "Langer See",
+      "country": "de",
       "center": {
         "lat": 52.3981,
         "lon": 13.6194
@@ -870,6 +966,7 @@
     {
       "id": "river-lech",
       "name": "Lech",
+      "country": "de",
       "center": {
         "lat": 48.08879,
         "lon": 10.87453
@@ -879,6 +976,7 @@
     {
       "id": "river-leda",
       "name": "Leda",
+      "country": "de",
       "center": {
         "lat": 53.2184,
         "lon": 7.44646
@@ -888,6 +986,7 @@
     {
       "id": "river-leine",
       "name": "Leine",
+      "country": "de",
       "center": {
         "lat": 52.37813,
         "lon": 9.719
@@ -897,6 +996,7 @@
     {
       "id": "river-lesum",
       "name": "Lesum",
+      "country": "de",
       "center": {
         "lat": 53.16322,
         "lon": 8.63447
@@ -906,6 +1006,7 @@
     {
       "id": "river-linker-regnitzarm",
       "name": "Linker Regnitzarm",
+      "country": "de",
       "center": {
         "lat": 49.88516,
         "lon": 10.89363
@@ -915,6 +1016,7 @@
     {
       "id": "river-lippe",
       "name": "Lippe",
+      "country": "de",
       "center": {
         "lat": 51.68783,
         "lon": 7.82178
@@ -924,6 +1026,7 @@
     {
       "id": "river-magnusgraben",
       "name": "Magnusgraben",
+      "country": "de",
       "center": {
         "lat": 52.62471,
         "lon": 10.09037
@@ -933,6 +1036,7 @@
     {
       "id": "river-main",
       "name": "Main",
+      "country": "de",
       "center": {
         "lat": 49.78051,
         "lon": 9.92648
@@ -942,6 +1046,7 @@
     {
       "id": "river-main-donau-kanal",
       "name": "Main-Donau-Kanal",
+      "country": "de",
       "center": {
         "lat": 49.59506,
         "lon": 10.97279
@@ -951,6 +1056,7 @@
     {
       "id": "maschsee",
       "name": "Maschsee",
+      "country": "de",
       "center": {
         "lat": 52.3528,
         "lon": 9.7448
@@ -960,6 +1066,7 @@
     {
       "id": "river-mittellandkanal",
       "name": "Mittellandkanal",
+      "country": "de",
       "center": {
         "lat": 52.39918,
         "lon": 7.99694
@@ -969,6 +1076,7 @@
     {
       "id": "river-mosel",
       "name": "Mosel",
+      "country": "de",
       "center": {
         "lat": 50.36128,
         "lon": 7.56711
@@ -978,6 +1086,7 @@
     {
       "id": "river-mulde",
       "name": "Mulde",
+      "country": "de",
       "center": {
         "lat": 51.8301,
         "lon": 12.2486
@@ -987,6 +1096,7 @@
     {
       "id": "museumshafen",
       "name": "Museumshafen",
+      "country": "de",
       "center": {
         "lat": 54.0994,
         "lon": 13.3835
@@ -996,6 +1106,7 @@
     {
       "id": "river-mueggelspree",
       "name": "Müggelspree",
+      "country": "de",
       "center": {
         "lat": 52.44584,
         "lon": 13.61669
@@ -1005,6 +1116,7 @@
     {
       "id": "muehlauhafen",
       "name": "Mühlauhafen",
+      "country": "de",
       "center": {
         "lat": 49.4976,
         "lon": 8.4463
@@ -1014,6 +1126,7 @@
     {
       "id": "muehlenteich",
       "name": "Mühlenteich",
+      "country": "de",
       "center": {
         "lat": 52.3183,
         "lon": 12.7527
@@ -1023,6 +1136,7 @@
     {
       "id": "river-muehlgraben",
       "name": "Mühlgraben",
+      "country": "de",
       "center": {
         "lat": 51.4534,
         "lon": 12.63024
@@ -1032,6 +1146,7 @@
     {
       "id": "river-muellermain",
       "name": "Müllermain",
+      "country": "de",
       "center": {
         "lat": 50.10801,
         "lon": 8.68731
@@ -1041,6 +1156,7 @@
     {
       "id": "river-nahe",
       "name": "Nahe",
+      "country": "de",
       "center": {
         "lat": 49.96973,
         "lon": 7.89078
@@ -1050,6 +1166,7 @@
     {
       "id": "river-neckar",
       "name": "Neckar",
+      "country": "de",
       "center": {
         "lat": 49.41522,
         "lon": 8.70645
@@ -1059,6 +1176,7 @@
     {
       "id": "neckar",
       "name": "Neckar",
+      "country": "de",
       "center": {
         "lat": 48.6264,
         "lon": 9.3323
@@ -1068,6 +1186,7 @@
     {
       "id": "river-neckarkanal",
       "name": "Neckarkanal",
+      "country": "de",
       "center": {
         "lat": 49.48935,
         "lon": 8.49371
@@ -1077,6 +1196,7 @@
     {
       "id": "river-norder-tief",
       "name": "Norder Tief",
+      "country": "de",
       "center": {
         "lat": 53.58931,
         "lon": 7.2103
@@ -1086,6 +1206,7 @@
     {
       "id": "river-obergraben",
       "name": "Obergraben",
+      "country": "de",
       "center": {
         "lat": 51.38034,
         "lon": 7.39654
@@ -1095,6 +1216,7 @@
     {
       "id": "river-oder-spree-kanal",
       "name": "Oder-Spree-Kanal",
+      "country": "de",
       "center": {
         "lat": 52.14636,
         "lon": 14.63975
@@ -1104,6 +1226,7 @@
     {
       "id": "offenbacher-hafen",
       "name": "Offenbacher Hafen",
+      "country": "de",
       "center": {
         "lat": 50.1134,
         "lon": 8.7472
@@ -1113,6 +1236,7 @@
     {
       "id": "river-olpe",
       "name": "Olpe",
+      "country": "de",
       "center": {
         "lat": 51.03322,
         "lon": 7.84705
@@ -1122,6 +1246,7 @@
     {
       "id": "river-osterbekkanal",
       "name": "Osterbekkanal",
+      "country": "de",
       "center": {
         "lat": 53.58501,
         "lon": 10.03234
@@ -1131,6 +1256,7 @@
     {
       "id": "river-peene",
       "name": "Peene",
+      "country": "de",
       "center": {
         "lat": 53.8606,
         "lon": 13.69139
@@ -1140,6 +1266,7 @@
     {
       "id": "plauer-see",
       "name": "Plauer See",
+      "country": "de",
       "center": {
         "lat": 52.3974,
         "lon": 12.4495
@@ -1149,6 +1276,7 @@
     {
       "id": "prester-see",
       "name": "Prester See",
+      "country": "de",
       "center": {
         "lat": 52.1076,
         "lon": 11.6689
@@ -1158,6 +1286,7 @@
     {
       "id": "river-pumpwerkskanal",
       "name": "Pumpwerkskanal",
+      "country": "de",
       "center": {
         "lat": 52.30095,
         "lon": 8.92767
@@ -1167,6 +1296,7 @@
     {
       "id": "rhb-doberaner-strasse",
       "name": "RHB Doberaner Straße",
+      "country": "de",
       "center": {
         "lat": 52.5686,
         "lon": 13.4906
@@ -1176,6 +1306,7 @@
     {
       "id": "regattastrecke",
       "name": "Regattastrecke",
+      "country": "de",
       "center": {
         "lat": 51.2952,
         "lon": 9.5008
@@ -1185,6 +1316,7 @@
     {
       "id": "regattastrecke-oberschleissheim",
       "name": "Regattastrecke Oberschleißheim",
+      "country": "de",
       "center": {
         "lat": 48.2429,
         "lon": 11.5154
@@ -1194,6 +1326,7 @@
     {
       "id": "river-rhein",
       "name": "Rhein",
+      "country": "de",
       "center": {
         "lat": 50.0557,
         "lon": 7.77101
@@ -1203,6 +1336,7 @@
     {
       "id": "river-rhein-herne-kanal",
       "name": "Rhein-Herne-Kanal",
+      "country": "de",
       "center": {
         "lat": 51.54751,
         "lon": 7.18091
@@ -1212,6 +1346,7 @@
     {
       "id": "rheinauhafen-hafenbecken-21",
       "name": "Rheinauhafen (Hafenbecken 21)",
+      "country": "de",
       "center": {
         "lat": 49.434,
         "lon": 8.515
@@ -1221,6 +1356,7 @@
     {
       "id": "rheinhafen",
       "name": "Rheinhafen",
+      "country": "de",
       "center": {
         "lat": 51.3411,
         "lon": 6.6706
@@ -1230,6 +1366,7 @@
     {
       "id": "rohrbruchteich",
       "name": "Rohrbruchteich",
+      "country": "de",
       "center": {
         "lat": 52.5521,
         "lon": 13.2345
@@ -1239,6 +1376,7 @@
     {
       "id": "rosslauer-werft",
       "name": "Roßlauer Werft",
+      "country": "de",
       "center": {
         "lat": 51.8812,
         "lon": 12.2296
@@ -1248,6 +1386,7 @@
     {
       "id": "river-ruhr",
       "name": "Ruhr",
+      "country": "de",
       "center": {
         "lat": 51.42621,
         "lon": 7.34652
@@ -1257,6 +1396,7 @@
     {
       "id": "ruppiner-see",
       "name": "Ruppiner See",
+      "country": "de",
       "center": {
         "lat": 52.8986,
         "lon": 12.8443
@@ -1266,6 +1406,7 @@
     {
       "id": "river-saale",
       "name": "Saale",
+      "country": "de",
       "center": {
         "lat": 51.7917,
         "lon": 11.72928
@@ -1275,6 +1416,7 @@
     {
       "id": "river-saale-leipzig-kanal",
       "name": "Saale-Leipzig-Kanal",
+      "country": "de",
       "center": {
         "lat": 51.35685,
         "lon": 12.25657
@@ -1284,6 +1426,7 @@
     {
       "id": "river-saar",
       "name": "Saar",
+      "country": "de",
       "center": {
         "lat": 49.22461,
         "lon": 7.00537
@@ -1293,6 +1436,7 @@
     {
       "id": "salzgittersee",
       "name": "Salzgittersee",
+      "country": "de",
       "center": {
         "lat": 52.1565,
         "lon": 10.307
@@ -1302,6 +1446,7 @@
     {
       "id": "schiedersee",
       "name": "Schiedersee",
+      "country": "de",
       "center": {
         "lat": 51.9274,
         "lon": 9.1735
@@ -1311,6 +1456,7 @@
     {
       "id": "schildkroetenteich",
       "name": "Schildkrötenteich",
+      "country": "de",
       "center": {
         "lat": 48.8246,
         "lon": 9.3319
@@ -1320,6 +1466,7 @@
     {
       "id": "schlei",
       "name": "Schlei",
+      "country": "de",
       "center": {
         "lat": 54.5921,
         "lon": 9.7901
@@ -1329,6 +1476,7 @@
     {
       "id": "schulsee",
       "name": "Schulsee",
+      "country": "de",
       "center": {
         "lat": 53.6305,
         "lon": 10.6966
@@ -1338,6 +1486,7 @@
     {
       "id": "schwentine",
       "name": "Schwentine",
+      "country": "de",
       "center": {
         "lat": 54.2233,
         "lon": 10.2843
@@ -1347,6 +1496,7 @@
     {
       "id": "schweriner-see-innensee",
       "name": "Schweriner See (Innensee)",
+      "country": "de",
       "center": {
         "lat": 53.6404,
         "lon": 11.4614
@@ -1356,6 +1506,7 @@
     {
       "id": "seehundbecken",
       "name": "Seehundbecken",
+      "country": "de",
       "center": {
         "lat": 54.3297,
         "lon": 10.1489
@@ -1365,6 +1516,7 @@
     {
       "id": "river-sieg",
       "name": "Sieg",
+      "country": "de",
       "center": {
         "lat": 50.77228,
         "lon": 7.07562
@@ -1374,6 +1526,7 @@
     {
       "id": "river-siegburger-muehlengraben",
       "name": "Siegburger Mühlengraben",
+      "country": "de",
       "center": {
         "lat": 50.78905,
         "lon": 7.22651
@@ -1383,6 +1536,7 @@
     {
       "id": "sorpestalsperre",
       "name": "Sorpestalsperre",
+      "country": "de",
       "center": {
         "lat": 51.3309,
         "lon": 7.9532
@@ -1392,6 +1546,7 @@
     {
       "id": "spandauer-see",
       "name": "Spandauer See",
+      "country": "de",
       "center": {
         "lat": 52.5517,
         "lon": 13.2195
@@ -1401,6 +1556,7 @@
     {
       "id": "sporthafen",
       "name": "Sporthafen",
+      "country": "de",
       "center": {
         "lat": 51.6622,
         "lon": 6.5869
@@ -1410,6 +1566,7 @@
     {
       "id": "sporthafen-neuss",
       "name": "Sporthafen Neuss",
+      "country": "de",
       "center": {
         "lat": 51.1851,
         "lon": 6.7283
@@ -1419,6 +1576,7 @@
     {
       "id": "river-stadthafen-1",
       "name": "Stadthafen 1",
+      "country": "de",
       "center": {
         "lat": 51.95082,
         "lon": 7.64448
@@ -1428,6 +1586,7 @@
     {
       "id": "stadtteich",
       "name": "Stadtteich",
+      "country": "de",
       "center": {
         "lat": 50.4481,
         "lon": 11.6425
@@ -1437,6 +1596,7 @@
     {
       "id": "starnberger-see",
       "name": "Starnberger See",
+      "country": "de",
       "center": {
         "lat": 47.9093,
         "lon": 11.3145
@@ -1446,6 +1606,7 @@
     {
       "id": "river-steinhuder-meerbach",
       "name": "Steinhuder Meerbach",
+      "country": "de",
       "center": {
         "lat": 52.63599,
         "lon": 9.20574
@@ -1455,6 +1616,7 @@
     {
       "id": "river-stichkanal-hannover-linden",
       "name": "Stichkanal Hannover-Linden",
+      "country": "de",
       "center": {
         "lat": 52.38662,
         "lon": 9.66763
@@ -1464,6 +1626,7 @@
     {
       "id": "river-stichkanal-hildesheim",
       "name": "Stichkanal Hildesheim",
+      "country": "de",
       "center": {
         "lat": 52.18096,
         "lon": 9.92956
@@ -1473,6 +1636,7 @@
     {
       "id": "river-stichkanal-osnabrueck",
       "name": "Stichkanal Osnabrück",
+      "country": "de",
       "center": {
         "lat": 52.30966,
         "lon": 8.00023
@@ -1482,6 +1646,7 @@
     {
       "id": "stoessensee",
       "name": "Stößensee",
+      "country": "de",
       "center": {
         "lat": 52.5083,
         "lon": 13.2119
@@ -1491,6 +1656,7 @@
     {
       "id": "tegeler-hafen",
       "name": "Tegeler Hafen",
+      "country": "de",
       "center": {
         "lat": 52.591,
         "lon": 13.2791
@@ -1500,6 +1666,7 @@
     {
       "id": "tegeler-see",
       "name": "Tegeler See",
+      "country": "de",
       "center": {
         "lat": 52.5745,
         "lon": 13.2502
@@ -1509,6 +1676,7 @@
     {
       "id": "river-teltowkanal",
       "name": "Teltowkanal",
+      "country": "de",
       "center": {
         "lat": 52.39462,
         "lon": 13.20744
@@ -1518,6 +1686,7 @@
     {
       "id": "templiner-see",
       "name": "Templiner See",
+      "country": "de",
       "center": {
         "lat": 52.367,
         "lon": 13.0151
@@ -1527,6 +1696,7 @@
     {
       "id": "tonteiche",
       "name": "Tonteiche",
+      "country": "de",
       "center": {
         "lat": 52.2975,
         "lon": 13.6588
@@ -1536,6 +1706,7 @@
     {
       "id": "river-treene",
       "name": "Treene",
+      "country": "de",
       "center": {
         "lat": 54.37587,
         "lon": 9.0831
@@ -1545,6 +1716,7 @@
     {
       "id": "river-treptower-spree",
       "name": "Treptower Spree",
+      "country": "de",
       "center": {
         "lat": 52.45397,
         "lon": 13.54771
@@ -1554,6 +1726,7 @@
     {
       "id": "river-triebwerkskanal-neustaedtischer-streng-naethewin",
       "name": "Triebwerkskanal Neustädtischer Streng (Näthewinde)",
+      "country": "de",
       "center": {
         "lat": 52.41266,
         "lon": 12.56215
@@ -1563,6 +1736,7 @@
     {
       "id": "twistesee",
       "name": "Twistesee",
+      "country": "de",
       "center": {
         "lat": 51.3729,
         "lon": 9.0604
@@ -1572,6 +1746,7 @@
     {
       "id": "unterhafen-spandau",
       "name": "Unterhafen Spandau",
+      "country": "de",
       "center": {
         "lat": 52.522,
         "lon": 13.2083
@@ -1581,6 +1756,7 @@
     {
       "id": "river-unterwarnow",
       "name": "Unterwarnow",
+      "country": "de",
       "center": {
         "lat": 54.09744,
         "lon": 12.13143
@@ -1590,6 +1766,7 @@
     {
       "id": "vechtesee",
       "name": "Vechtesee",
+      "country": "de",
       "center": {
         "lat": 52.4326,
         "lon": 7.0798
@@ -1599,6 +1776,7 @@
     {
       "id": "viereckweiher",
       "name": "Viereckweiher",
+      "country": "de",
       "center": {
         "lat": 51.1579,
         "lon": 6.8613
@@ -1608,6 +1786,7 @@
     {
       "id": "voerder-see",
       "name": "Vörder See",
+      "country": "de",
       "center": {
         "lat": 53.4928,
         "lon": 9.1565
@@ -1617,6 +1796,7 @@
     {
       "id": "waldhofbecken",
       "name": "Waldhofbecken",
+      "country": "de",
       "center": {
         "lat": 49.5178,
         "lon": 8.4724
@@ -1626,6 +1806,7 @@
     {
       "id": "river-warnow",
       "name": "Warnow",
+      "country": "de",
       "center": {
         "lat": 54.0649,
         "lon": 12.17263
@@ -1635,6 +1816,7 @@
     {
       "id": "near-aken",
       "name": "Water near Aken",
+      "country": "de",
       "center": {
         "lat": 51.85,
         "lon": 12.05
@@ -1644,6 +1826,7 @@
     {
       "id": "near-alt-ruppin",
       "name": "Water near Alt Ruppin",
+      "country": "de",
       "center": {
         "lat": 52.94615,
         "lon": 12.84991
@@ -1653,6 +1836,7 @@
     {
       "id": "near-babensham",
       "name": "Water near Babensham",
+      "country": "de",
       "center": {
         "lat": 48.07111,
         "lon": 12.23305
@@ -1662,6 +1846,7 @@
     {
       "id": "near-bad-hersfeld",
       "name": "Water near Bad Hersfeld",
+      "country": "de",
       "center": {
         "lat": 50.86042,
         "lon": 9.67677
@@ -1671,6 +1856,7 @@
     {
       "id": "near-bad-waldsee",
       "name": "Water near Bad Waldsee",
+      "country": "de",
       "center": {
         "lat": 47.92096,
         "lon": 9.75428
@@ -1680,6 +1866,7 @@
     {
       "id": "near-belau",
       "name": "Water near Belau",
+      "country": "de",
       "center": {
         "lat": 54.09745,
         "lon": 10.25948
@@ -1689,6 +1876,7 @@
     {
       "id": "near-berlin",
       "name": "Water near Berlin",
+      "country": "de",
       "center": {
         "lat": 52.3895,
         "lon": 13.1297
@@ -1698,6 +1886,7 @@
     {
       "id": "near-bernkastel-kues",
       "name": "Water near Bernkastel-Kues",
+      "country": "de",
       "center": {
         "lat": 49.91574,
         "lon": 7.07082
@@ -1707,6 +1896,7 @@
     {
       "id": "near-bonn",
       "name": "Water near Bonn",
+      "country": "de",
       "center": {
         "lat": 50.72657,
         "lon": 7.12391
@@ -1716,6 +1906,7 @@
     {
       "id": "near-bremerhaven",
       "name": "Water near Bremerhaven",
+      "country": "de",
       "center": {
         "lat": 53.55986,
         "lon": 8.59366
@@ -1725,6 +1916,7 @@
     {
       "id": "near-elchesheim-illingen",
       "name": "Water near Elchesheim-Illingen",
+      "country": "de",
       "center": {
         "lat": 48.93069,
         "lon": 8.21013
@@ -1734,6 +1926,7 @@
     {
       "id": "near-emden",
       "name": "Water near Emden",
+      "country": "de",
       "center": {
         "lat": 53.36705,
         "lon": 7.20583
@@ -1743,6 +1936,7 @@
     {
       "id": "near-essen",
       "name": "Water near Essen",
+      "country": "de",
       "center": {
         "lat": 51.45822,
         "lon": 7.01582
@@ -1752,6 +1946,7 @@
     {
       "id": "near-flensburg",
       "name": "Water near Flensburg",
+      "country": "de",
       "center": {
         "lat": 54.8109,
         "lon": 9.43186
@@ -1761,6 +1956,7 @@
     {
       "id": "near-geisenheim",
       "name": "Water near Geisenheim",
+      "country": "de",
       "center": {
         "lat": 50.03922,
         "lon": 7.94145
@@ -1770,6 +1966,7 @@
     {
       "id": "near-hamburg",
       "name": "Water near Hamburg",
+      "country": "de",
       "center": {
         "lat": 53.55017,
         "lon": 10.00132
@@ -1779,6 +1976,7 @@
     {
       "id": "near-hemmoor",
       "name": "Water near Hemmoor",
+      "country": "de",
       "center": {
         "lat": 53.68869,
         "lon": 9.15951
@@ -1788,6 +1986,7 @@
     {
       "id": "near-hennigsdorf",
       "name": "Water near Hennigsdorf",
+      "country": "de",
       "center": {
         "lat": 52.63569,
         "lon": 13.20821
@@ -1797,6 +1996,7 @@
     {
       "id": "near-hersfeld",
       "name": "Water near Hersfeld",
+      "country": "de",
       "center": {
         "lat": 50.86042,
         "lon": 9.67677
@@ -1806,6 +2006,7 @@
     {
       "id": "near-huerth",
       "name": "Water near Hürth",
+      "country": "de",
       "center": {
         "lat": 50.88074,
         "lon": 6.87657
@@ -1815,6 +2016,7 @@
     {
       "id": "near-ingolstadt",
       "name": "Water near Ingolstadt",
+      "country": "de",
       "center": {
         "lat": 48.76302,
         "lon": 11.42504
@@ -1824,6 +2026,7 @@
     {
       "id": "near-krefeld",
       "name": "Water near Krefeld",
+      "country": "de",
       "center": {
         "lat": 51.33312,
         "lon": 6.56233
@@ -1833,6 +2036,7 @@
     {
       "id": "near-koeln",
       "name": "Water near Köln",
+      "country": "de",
       "center": {
         "lat": 50.91139,
         "lon": 6.98456
@@ -1842,6 +2046,7 @@
     {
       "id": "near-lindau",
       "name": "Water near Lindau",
+      "country": "de",
       "center": {
         "lat": 47.57287,
         "lon": 9.69619
@@ -1851,6 +2056,7 @@
     {
       "id": "near-luebbecke",
       "name": "Water near Lübbecke",
+      "country": "de",
       "center": {
         "lat": 52.30272,
         "lon": 8.61831
@@ -1860,6 +2066,7 @@
     {
       "id": "near-luebeck",
       "name": "Water near Lübeck",
+      "country": "de",
       "center": {
         "lat": 53.86644,
         "lon": 10.68474
@@ -1869,6 +2076,7 @@
     {
       "id": "near-lueneburg",
       "name": "Water near Lüneburg",
+      "country": "de",
       "center": {
         "lat": 53.24871,
         "lon": 10.40785
@@ -1878,6 +2086,7 @@
     {
       "id": "near-magdeburg",
       "name": "Water near Magdeburg",
+      "country": "de",
       "center": {
         "lat": 52.1498,
         "lon": 11.60094
@@ -1887,6 +2096,7 @@
     {
       "id": "near-minden",
       "name": "Water near Minden",
+      "country": "de",
       "center": {
         "lat": 52.2881,
         "lon": 8.91689
@@ -1896,6 +2106,7 @@
     {
       "id": "near-monheim",
       "name": "Water near Monheim",
+      "country": "de",
       "center": {
         "lat": 48.84825,
         "lon": 10.95049
@@ -1905,6 +2116,7 @@
     {
       "id": "near-muenster",
       "name": "Water near Münster",
+      "country": "de",
       "center": {
         "lat": 51.96251,
         "lon": 7.62519
@@ -1914,6 +2126,7 @@
     {
       "id": "near-naumburg",
       "name": "Water near Naumburg",
+      "country": "de",
       "center": {
         "lat": 51.15256,
         "lon": 11.80992
@@ -1923,6 +2136,7 @@
     {
       "id": "near-nienburg",
       "name": "Water near Nienburg",
+      "country": "de",
       "center": {
         "lat": 52.63862,
         "lon": 9.20561
@@ -1932,6 +2146,7 @@
     {
       "id": "near-nordenham",
       "name": "Water near Nordenham",
+      "country": "de",
       "center": {
         "lat": 53.48178,
         "lon": 8.48683
@@ -1941,6 +2156,7 @@
     {
       "id": "near-olpe",
       "name": "Water near Olpe",
+      "country": "de",
       "center": {
         "lat": 51.02948,
         "lon": 7.84353
@@ -1950,6 +2166,7 @@
     {
       "id": "near-osterholz-scharmbeck",
       "name": "Water near Osterholz-Scharmbeck",
+      "country": "de",
       "center": {
         "lat": 53.22818,
         "lon": 8.79482
@@ -1959,6 +2176,7 @@
     {
       "id": "near-reinfeld",
       "name": "Water near Reinfeld",
+      "country": "de",
       "center": {
         "lat": 53.83006,
         "lon": 10.48695
@@ -1968,6 +2186,7 @@
     {
       "id": "near-rendsburg",
       "name": "Water near Rendsburg",
+      "country": "de",
       "center": {
         "lat": 54.30029,
         "lon": 9.66501
@@ -1977,6 +2196,7 @@
     {
       "id": "near-rheine",
       "name": "Water near Rheine",
+      "country": "de",
       "center": {
         "lat": 52.27977,
         "lon": 7.43736
@@ -1986,6 +2206,7 @@
     {
       "id": "near-rheinsberg",
       "name": "Water near Rheinsberg",
+      "country": "de",
       "center": {
         "lat": 53.11505,
         "lon": 12.91544
@@ -1995,6 +2216,7 @@
     {
       "id": "near-ribnitz-damgarten",
       "name": "Water near Ribnitz-Damgarten",
+      "country": "de",
       "center": {
         "lat": 54.24736,
         "lon": 12.46086
@@ -2004,6 +2226,7 @@
     {
       "id": "near-riedstadt",
       "name": "Water near Riedstadt",
+      "country": "de",
       "center": {
         "lat": 49.84252,
         "lon": 8.48294
@@ -2013,6 +2236,7 @@
     {
       "id": "near-rossleben-wiehe",
       "name": "Water near Roßleben-Wiehe",
+      "country": "de",
       "center": {
         "lat": 51.29142,
         "lon": 11.39655
@@ -2022,6 +2246,7 @@
     {
       "id": "near-scharnebeck",
       "name": "Water near Scharnebeck",
+      "country": "de",
       "center": {
         "lat": 53.29291,
         "lon": 10.50682
@@ -2031,6 +2256,7 @@
     {
       "id": "near-schulenberg",
       "name": "Water near Schulenberg",
+      "country": "de",
       "center": {
         "lat": 51.83472,
         "lon": 10.43425
@@ -2040,6 +2266,7 @@
     {
       "id": "near-st-goar",
       "name": "Water near St. Goar",
+      "country": "de",
       "center": {
         "lat": 50.15,
         "lon": 7.71667
@@ -2049,6 +2276,7 @@
     {
       "id": "near-stralsund",
       "name": "Water near Stralsund",
+      "country": "de",
       "center": {
         "lat": 54.32243,
         "lon": 13.08607
@@ -2058,6 +2286,7 @@
     {
       "id": "near-tangermuende",
       "name": "Water near Tangermünde",
+      "country": "de",
       "center": {
         "lat": 52.54311,
         "lon": 11.97225
@@ -2067,6 +2296,7 @@
     {
       "id": "near-titisee-neustadt",
       "name": "Water near Titisee-Neustadt",
+      "country": "de",
       "center": {
         "lat": 47.91734,
         "lon": 8.17352
@@ -2076,6 +2306,7 @@
     {
       "id": "near-waging-am-see",
       "name": "Water near Waging am See",
+      "country": "de",
       "center": {
         "lat": 47.94322,
         "lon": 12.74122
@@ -2085,6 +2316,7 @@
     {
       "id": "near-weilburg",
       "name": "Water near Weilburg",
+      "country": "de",
       "center": {
         "lat": 50.48434,
         "lon": 8.27863
@@ -2094,6 +2326,7 @@
     {
       "id": "near-wolgast",
       "name": "Water near Wolgast",
+      "country": "de",
       "center": {
         "lat": 54.05365,
         "lon": 13.77578
@@ -2103,6 +2336,7 @@
     {
       "id": "near-zeltingen",
       "name": "Water near Zeltingen",
+      "country": "de",
       "center": {
         "lat": 49.95268,
         "lon": 7.01873
@@ -2112,6 +2346,7 @@
     {
       "id": "near-zschornewitz",
       "name": "Water near Zschornewitz",
+      "country": "de",
       "center": {
         "lat": 51.71133,
         "lon": 12.38894
@@ -2121,6 +2356,7 @@
     {
       "id": "river-weisse-elster",
       "name": "Weiße Elster",
+      "country": "de",
       "center": {
         "lat": 51.3156,
         "lon": 12.34024
@@ -2130,6 +2366,7 @@
     {
       "id": "werratalsee",
       "name": "Werratalsee",
+      "country": "de",
       "center": {
         "lat": 51.1927,
         "lon": 10.0785
@@ -2139,6 +2376,7 @@
     {
       "id": "river-wesel-datteln-kanal",
       "name": "Wesel-Datteln-Kanal",
+      "country": "de",
       "center": {
         "lat": 51.66081,
         "lon": 6.928
@@ -2148,6 +2386,7 @@
     {
       "id": "river-weser",
       "name": "Weser",
+      "country": "de",
       "center": {
         "lat": 53.06814,
         "lon": 8.81283
@@ -2157,6 +2396,7 @@
     {
       "id": "westbad-weiher",
       "name": "Westbad-Weiher",
+      "country": "de",
       "center": {
         "lat": 49.0258,
         "lon": 12.0513
@@ -2166,6 +2406,7 @@
     {
       "id": "winterhafen",
       "name": "Winterhafen",
+      "country": "de",
       "center": {
         "lat": 49.63,
         "lon": 8.3775
@@ -2175,6 +2416,7 @@
     {
       "id": "xantener-nordsee",
       "name": "Xantener Nordsee",
+      "country": "de",
       "center": {
         "lat": 51.6989,
         "lon": 6.4268
@@ -2184,6 +2426,7 @@
     {
       "id": "ziegelsee",
       "name": "Ziegelsee",
+      "country": "de",
       "center": {
         "lat": 53.6283,
         "lon": 10.6784
@@ -2193,6 +2436,7 @@
     {
       "id": "zierker-see",
       "name": "Zierker See",
+      "country": "de",
       "center": {
         "lat": 53.361,
         "lon": 13.0366
@@ -2202,6 +2446,7 @@
     {
       "id": "oelhafen-koenig-wilhelm",
       "name": "Ölhafen König Wilhelm",
+      "country": "de",
       "center": {
         "lat": 51.498,
         "lon": 6.9411
@@ -2216,6 +2461,7 @@
       "shortName": "1.Frauen-RC Hannover",
       "abbreviation": "FRCH",
       "drvId": "11819",
+      "country": "de",
       "lakeId": "maschsee",
       "address": "Karl-Thiele-Weg 15, 30169 Hannover",
       "website": "https://www.frauen-ruder-club-hannover.de",
@@ -2239,6 +2485,7 @@
       "shortName": "ARG zu Berlin",
       "abbreviation": "ARGB",
       "drvId": "11202",
+      "country": "de",
       "lakeId": "river-havel",
       "address": "Heerstr. 200 d, 13595 Berlin",
       "website": "https://www.arg.berlin",
@@ -2265,6 +2512,7 @@
       "shortName": "Akadem. Rvb. \"Alania\" zu Hamburg",
       "abbreviation": "ARvbH",
       "drvId": "11523",
+      "country": "de",
       "lakeId": "inselkanal",
       "address": "Deelbögenkamp 1, 22299 Hamburg",
       "website": "https://www.arv-alania.de",
@@ -2290,6 +2538,7 @@
       "shortName": "Akademische Turnverbindung Hannover",
       "abbreviation": "ATVH",
       "drvId": "11822",
+      "country": "de",
       "lakeId": "river-leine",
       "address": "Fischerstr. 21, 30167 Hannover",
       "website": "https://www.atv-hannover.de",
@@ -2308,6 +2557,7 @@
       "shortName": "ARC zu Berlin",
       "abbreviation": "ARCB",
       "drvId": "11201",
+      "country": "de",
       "lakeId": "stoessensee",
       "address": "Brandensteinweg 10, 13595 Berlin",
       "website": null,
@@ -2331,6 +2581,7 @@
       "shortName": "ARC zu Münster",
       "abbreviation": "ARCM",
       "drvId": "11961",
+      "country": "de",
       "lakeId": "near-muenster",
       "address": "11 06, 48001 Münster",
       "website": "https://www.arc-ms.de",
@@ -2361,6 +2612,7 @@
       "shortName": "ARC Würzburg",
       "abbreviation": "ARCW",
       "drvId": "11128",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mergentheimer Str. 11, 97082 Würzburg",
       "website": "http://www.arcw.de",
@@ -2392,6 +2644,7 @@
       "shortName": "ARV Westfalen Münster",
       "abbreviation": "ARVWM",
       "drvId": "11962",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "Lütkenbecker Weg 2, 48155 Münster",
       "website": null,
@@ -2418,6 +2671,7 @@
       "shortName": "ARV Kiel",
       "abbreviation": "ARV",
       "drvId": "12407",
+      "country": "de",
       "lakeId": "seehundbecken",
       "address": "Düsternbrooker Weg 2, 24105 Kiel",
       "website": "https://www.arv-kiel.de",
@@ -2446,6 +2700,7 @@
       "shortName": "ARV zu Leipzig",
       "abbreviation": "ARVL",
       "drvId": "12212",
+      "country": "de",
       "lakeId": "river-elstermuehlgraben",
       "address": "Am Elsterwehr 1, 04109 Leipzig",
       "website": "https://www.arvleipzig.de",
@@ -2473,6 +2728,7 @@
       "shortName": "Allgem. Alster-Club",
       "abbreviation": "AAC/NRB",
       "drvId": "30015",
+      "country": "de",
       "lakeId": "river-dove-elbe",
       "address": "Allermöher Deich 36, 22037 Hamburg",
       "website": "https://www.lrv-hamburg.de",
@@ -2495,6 +2751,7 @@
       "shortName": "Alster-RV Hanseat",
       "abbreviation": "ARVH",
       "drvId": "11502",
+      "country": "de",
       "lakeId": "river-osterbekkanal",
       "address": "Kaemmererufer 30, 22303 Hamburg",
       "website": "https://www.arv-hanseat.de",
@@ -2524,6 +2781,7 @@
       "shortName": "Alt Ruppiner RC",
       "abbreviation": "ARC",
       "drvId": "11327",
+      "country": "de",
       "lakeId": "near-alt-ruppin",
       "address": "16827 Alt Ruppin",
       "website": "https://www.arc1928.de",
@@ -2549,6 +2807,7 @@
       "shortName": "Alte Herren RR am Gymn. RLV",
       "abbreviation": "RRaGLV",
       "drvId": "11010",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Neuenheimer Landstr. 16, 69120 Heidelberg",
       "website": "https://www.heidelberg-college.de",
@@ -2567,6 +2826,7 @@
       "shortName": "Ammersee-Ruderer",
       "abbreviation": "ASR",
       "drvId": "11151",
+      "country": "de",
       "lakeId": "ammersee",
       "address": "Seeweg-Süd, 86911 Dießen am Ammersee",
       "website": null,
@@ -2585,6 +2845,7 @@
       "shortName": "Anklamer RK",
       "abbreviation": "ARK",
       "drvId": "11702",
+      "country": "de",
       "lakeId": "river-peene",
       "address": "Werftstr. 5 a, 17389 Anklam",
       "website": "http://www.anklamer-ruderklub.de",
@@ -2607,6 +2868,7 @@
       "shortName": "Argonauten RC Meppen",
       "abbreviation": "ARCM",
       "drvId": "11864",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "Am Nachtigallenwäldchen 20, 49716 Meppen",
       "website": "https://www.argonauten-rc.de",
@@ -2638,6 +2900,7 @@
       "shortName": "Berliner RK Astoria",
       "abbreviation": "BRKA",
       "drvId": "11205",
+      "country": "de",
       "lakeId": "kleiner-wannsee",
       "address": "Bismarckstr. 68, 14109 Berlin",
       "website": "https://www.astoria-rudergemeinschaft.de",
@@ -2664,6 +2927,7 @@
       "shortName": "Bacharacher RV",
       "abbreviation": "BRV",
       "drvId": "12002",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Strandbadweg 6, 55422 Bacharach",
       "website": "http://www.brv1884.de/",
@@ -2682,6 +2946,7 @@
       "shortName": "Bad Lobensteiner RV",
       "abbreviation": "LRV",
       "drvId": "12502",
+      "country": "de",
       "lakeId": "stadtteich",
       "address": "Hain 34, 07356 Bad Lobenstein",
       "website": "https://www.lobenstein-rudern.de",
@@ -2710,6 +2975,7 @@
       "shortName": "Bamberger RG",
       "abbreviation": "BRG",
       "drvId": "11102",
+      "country": "de",
       "lakeId": "river-linker-regnitzarm",
       "address": "Mühlwörth 18, 96049 Bamberg",
       "website": "https://www.bamberger-rudergesellschaft.de",
@@ -2741,6 +3007,7 @@
       "shortName": "Berliner RC Hevella",
       "abbreviation": "BRCHE",
       "drvId": "11216",
+      "country": "de",
       "lakeId": "unterhafen-spandau",
       "address": "Dorfstraße 23, 13597 Berlin",
       "website": null,
@@ -2767,6 +3034,7 @@
       "shortName": "Berliner RC",
       "abbreviation": "BRC",
       "drvId": "11208",
+      "country": "de",
       "lakeId": "kleiner-wannsee",
       "address": "Bismarckstr.4, 14109 Berlin",
       "website": "https://www.berliner-ruder-club.de",
@@ -2798,6 +3066,7 @@
       "shortName": "Berliner RC Welle-Poseidon",
       "abbreviation": "WePo",
       "drvId": "11232",
+      "country": "de",
       "lakeId": "grosser-wannsee",
       "address": "Am Großen Wannsee 46 a, 14109 Berlin",
       "website": "https://www.welle-poseidon.de",
@@ -2828,6 +3097,7 @@
       "shortName": "Berliner RG",
       "abbreviation": "BRG",
       "drvId": "11209",
+      "country": "de",
       "lakeId": "unterhafen-spandau",
       "address": "Dorfstr. 25 f, 13597 Berlin",
       "website": "https://www.brg1884.de",
@@ -2851,6 +3121,7 @@
       "shortName": "Berliner RK Brandenburgia",
       "abbreviation": "BRKB",
       "drvId": "11206",
+      "country": "de",
       "lakeId": "spandauer-see",
       "address": "Elisabeth-Flickenschildt-Str. 26, 13599 Berlin",
       "website": "https://www.ruderklub-brandenburgia.de",
@@ -2873,6 +3144,7 @@
       "shortName": "Berliner-RC Ägir",
       "abbreviation": "BRCÄ",
       "drvId": "11238",
+      "country": "de",
       "lakeId": "river-mueggelspree",
       "address": "Spreestr. 1, 12587 Berlin",
       "website": "https://www.b-r-c-aegir.de",
@@ -2903,6 +3175,7 @@
       "shortName": "Bernburger RC",
       "abbreviation": "BRC",
       "drvId": "12302",
+      "country": "de",
       "lakeId": "river-saale",
       "address": "An der Überfahrt 2 b, 06406 Bernburg",
       "website": "https://www.bernburger-ruderclub.de",
@@ -2929,6 +3202,7 @@
       "shortName": "Bernkasteler RV",
       "abbreviation": "BRV",
       "drvId": "12007",
+      "country": "de",
       "lakeId": "near-bernkastel-kues",
       "address": "Bernkasteler RV 1874, 54470 Bernkastel-Kues",
       "website": "https://www.bernkasteler-ruderverein.de",
@@ -2960,6 +3234,7 @@
       "shortName": "Bessel-RC",
       "abbreviation": "BRC",
       "drvId": "11965",
+      "country": "de",
       "lakeId": "river-pumpwerkskanal",
       "address": "Am Pumpwerk 2, 32423 Minden",
       "website": "https://www.besselrc.de",
@@ -2985,6 +3260,7 @@
       "shortName": "Biller RC",
       "abbreviation": "BRC",
       "drvId": "11505",
+      "country": "de",
       "lakeId": "river-bille",
       "address": "Ausschläger Billdeich 95 a, 20539 Hamburg",
       "website": "https://www.biller-rc.de",
@@ -3003,6 +3279,7 @@
       "shortName": "Binger RG",
       "abbreviation": "BRG",
       "drvId": "12008",
+      "country": "de",
       "lakeId": "river-nahe",
       "address": "Bleiche 2, 55411 Bingen",
       "website": "https://www.brg1911.de",
@@ -3031,6 +3308,7 @@
       "shortName": "Bonner RG",
       "abbreviation": "BRG",
       "drvId": "11907",
+      "country": "de",
       "lakeId": "near-bonn",
       "address": "Elsa-Brändström-Str. 74, 53227 Bonn",
       "website": "https://www.bonnerrg.de",
@@ -3049,6 +3327,7 @@
       "shortName": "Bonner RV",
       "abbreviation": "BRV",
       "drvId": "11908",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Wilhelm-Spiritus-Ufer 2, 53113 Bonn",
       "website": "https://www.bonnerruderverein.de",
@@ -3074,6 +3353,7 @@
       "shortName": "Bootsclub Nordhorn",
       "abbreviation": "BCN",
       "drvId": "11841",
+      "country": "de",
       "lakeId": "vechtesee",
       "address": "Heseper Weg 52, 48529 Nordhorn",
       "website": "https://www.bootsclub-nordhorn.de",
@@ -3096,6 +3376,7 @@
       "shortName": "Breisacher RV",
       "abbreviation": "BRV",
       "drvId": "11003",
+      "country": "de",
       "lakeId": "europaweiher",
       "address": "Rheinuferstr. 14, 79206 Breisach",
       "website": "https://www.breisacher-ruderverein.de",
@@ -3126,6 +3407,7 @@
       "shortName": "Bremer RC HANSA",
       "abbreviation": "BRCH",
       "drvId": "11401",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Werderstr. 64, 28199 Bremen",
       "website": "https://www.brc-hansa.de",
@@ -3158,6 +3440,7 @@
       "shortName": "Bremer RV",
       "abbreviation": "BRV",
       "drvId": "11402",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Werderstr. 60, 28199 Bremen",
       "website": "https://www.bremer-ruderverein.de",
@@ -3176,6 +3459,7 @@
       "shortName": "Bremer SC RA",
       "abbreviation": "BSCRA",
       "drvId": "11403",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Werderstr. 66, 28199 Bremen",
       "website": "http://www.rudern-bsc.de",
@@ -3206,6 +3490,7 @@
       "shortName": "Bremerhavener RV",
       "abbreviation": "BHRV",
       "drvId": "11405",
+      "country": "de",
       "lakeId": "near-bremerhaven",
       "address": "Stresemannstr. 51, 27576 Bremerhaven",
       "website": "https://www.bremerhavener-ruderverein.de",
@@ -3238,6 +3523,7 @@
       "shortName": "BSP Berlin",
       "abbreviation": "BSPB",
       "drvId": "90001",
+      "country": "de",
       "lakeId": "river-berlin-spandauer-schifffahrtskanal",
       "address": "Jungfernheideweg 80, 13629 Berlin",
       "website": "http://www.lrvberlin.de",
@@ -3256,6 +3542,7 @@
       "shortName": "BSP Dortmund",
       "abbreviation": "BSP",
       "drvId": "90003",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "An den Bootshäusern 11, 44147 Dortmund",
       "website": null,
@@ -3276,6 +3563,7 @@
       "shortName": "BSP Dresden",
       "abbreviation": "BSPD",
       "drvId": "90004",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Hamburger Str. 74, 01157 Dresden",
       "website": null,
@@ -3294,6 +3582,7 @@
       "shortName": "BSP Hannover",
       "abbreviation": "BSPH",
       "drvId": "90011",
+      "country": "de",
       "lakeId": "river-stichkanal-hannover-linden",
       "address": "Rosenbuschweg, 30453 Hannover",
       "website": "https://www.hannover-rv.de/leistungszentrum/",
@@ -3314,6 +3603,7 @@
       "shortName": "BSP Ratzeburg / Hamburg",
       "abbreviation": "BSPRH",
       "drvId": "90008",
+      "country": "de",
       "lakeId": "grosser-ratzeburger-see",
       "address": "Domhof 37, 23909 Ratzeburg",
       "website": "https://www.ruderakademie.de",
@@ -3332,6 +3622,7 @@
       "shortName": "BSP Rostock",
       "abbreviation": "BSPR",
       "drvId": "90009",
+      "country": "de",
       "lakeId": "river-warnow",
       "address": "Neubrandenburger Str. 47, 18196 Kessin",
       "website": null,
@@ -3350,6 +3641,7 @@
       "shortName": "Casseler Frauen-RV",
       "abbreviation": "CFRV",
       "drvId": "11631",
+      "country": "de",
       "lakeId": "regattastrecke",
       "address": "Auedamm 35, 34121 Kassel",
       "website": "https://www.cfrv.de",
@@ -3374,6 +3666,7 @@
       "shortName": "Celler RV",
       "abbreviation": "CRV",
       "drvId": "11807",
+      "country": "de",
       "lakeId": "river-magnusgraben",
       "address": "Zur Ziegeninsel 5, 29221 Celle",
       "website": "http://www.cellerruderverein.de",
@@ -3405,6 +3698,7 @@
       "shortName": "ClfW Porz",
       "abbreviation": "CFWP",
       "drvId": "11943",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "In der Rosenau 10 a, 51143 Köln",
       "website": "https://www.cfwp.de",
@@ -3429,6 +3723,7 @@
       "shortName": "Crefelder RC",
       "abbreviation": "CRC",
       "drvId": "11950",
+      "country": "de",
       "lakeId": "near-krefeld",
       "address": "47720 Krefeld",
       "website": "https://www.crc1883.de",
@@ -3460,6 +3755,7 @@
       "shortName": "Creuznacher RV",
       "abbreviation": "CRV",
       "drvId": "12004",
+      "country": "de",
       "lakeId": "river-nahe",
       "address": "Mannheimer Straße 71, 55543 Bad Kreuznach",
       "website": "https://www.crv1876.de",
@@ -3478,6 +3774,7 @@
       "shortName": "Darmstädter Schwimm- und WSC",
       "abbreviation": "DSW",
       "drvId": "11603",
+      "country": "de",
       "lakeId": "near-riedstadt",
       "address": "64560 Riedstadt",
       "website": "https://www.dsw-1912.de",
@@ -3502,6 +3799,7 @@
       "shortName": "Der Hamburger und Germania RC",
       "abbreviation": "DHUGRC",
       "drvId": "11506",
+      "country": "de",
       "lakeId": "aussenalster",
       "address": "Alsterufer 21, 20354 Hamburg",
       "website": "https://www.der-club.de",
@@ -3533,6 +3831,7 @@
       "shortName": "Deutscher RC",
       "abbreviation": "DRC",
       "drvId": "11818",
+      "country": "de",
       "lakeId": "river-ihme",
       "address": "Roesebeckstr. 1, 30449 Hannover",
       "website": "https://www.drc1884.de",
@@ -3566,6 +3865,7 @@
       "shortName": "Domschulruderclub Schleswig",
       "abbreviation": "DRC",
       "drvId": "12425",
+      "country": "de",
       "lakeId": "schulsee",
       "address": "Am Luisenbad 1b, 24837 Schleswig",
       "website": "https://www.drc-schleswig.de",
@@ -3596,6 +3896,7 @@
       "shortName": "Donau-RC Ingolstadt",
       "abbreviation": "DRCI",
       "drvId": "11106",
+      "country": "de",
       "lakeId": "near-ingolstadt",
       "address": "85049 Ingolstadt",
       "website": "https://www.drci.de",
@@ -3624,6 +3925,7 @@
       "shortName": "Dormagener RG Bayer",
       "abbreviation": "DRG",
       "drvId": "11913",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Piwipper Straße 152, 41539 Dormagen",
       "website": "https://www.drg-bayer.de",
@@ -3642,6 +3944,7 @@
       "shortName": "Dresdner RV",
       "abbreviation": "DRV",
       "drvId": "12209",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Tolkewitzer Str. 45, 01277 Dresden",
       "website": "https://www.dresdnerruderverein.de",
@@ -3669,6 +3972,7 @@
       "shortName": "Duisburger RV",
       "abbreviation": "DuRV",
       "drvId": "11921",
+      "country": "de",
       "lakeId": "bertasee",
       "address": "Kruppstr. 28 a, 47055 Duisburg",
       "website": "http://www.duisburger-ruderverein.de",
@@ -3700,6 +4004,7 @@
       "shortName": "Düsseldorfer RV",
       "abbreviation": "DRV 1880",
       "drvId": "11918",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Fährstr. 253 b, 40221 Düsseldorf",
       "website": "https://www.drv1880.de",
@@ -3728,6 +4033,7 @@
       "shortName": "ESV Lok Zernsdorf",
       "abbreviation": "ESVLZ",
       "drvId": "11328",
+      "country": "de",
       "lakeId": "kruepelsee",
       "address": "Senziger Weg 17, 15758 Zernsdorf",
       "website": "https://www.ruderverein-zernsdorf.de",
@@ -3746,6 +4052,7 @@
       "shortName": "Eisenbahn-SV Lingen",
       "abbreviation": "ESVL",
       "drvId": "11833",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "Jahnstr. 14, 49808 Lingen",
       "website": "https://www.esv-lingen.de",
@@ -3769,6 +4076,7 @@
       "shortName": "ESV Schmöckwitz",
       "abbreviation": "ESVS",
       "drvId": "11239",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Imkerweg 26, 12527 Berlin",
       "website": "https://www.rudern-schmoeckwitz.de",
@@ -3795,6 +4103,7 @@
       "shortName": "Elmshorner RC",
       "abbreviation": "ERC",
       "drvId": "12402",
+      "country": "de",
       "lakeId": "river-krueckau",
       "address": "Wisch 30, 25335 Elmshorn",
       "website": "https://www.erc09.de",
@@ -3822,6 +4131,7 @@
       "shortName": "Emder RV",
       "abbreviation": "ERV",
       "drvId": "11813",
+      "country": "de",
       "lakeId": "near-emden",
       "address": "26725 Emden",
       "website": "https://www.emderruderverein.de",
@@ -3840,6 +4150,7 @@
       "shortName": "Erlanger WRG Franken",
       "abbreviation": "EWF",
       "drvId": "11133",
+      "country": "de",
       "lakeId": "hafen-erlangen",
       "address": "Frauenauracher Straße 43, 91056 Erlangen",
       "website": null,
@@ -3868,6 +4179,7 @@
       "shortName": "Erster Kieler RC",
       "abbreviation": "EKRC",
       "drvId": "12408",
+      "country": "de",
       "lakeId": "seehundbecken",
       "address": "Düsternbrooker Weg 16, 24105 Kiel",
       "website": "https://www.ekrc.de",
@@ -3898,6 +4210,7 @@
       "shortName": "Eschweger RV",
       "abbreviation": "ERV",
       "drvId": "11605",
+      "country": "de",
       "lakeId": "werratalsee",
       "address": "Leuchtbergstr. 19, 37269 Eschwege",
       "website": "https://www.eschweger-ruderverein.de",
@@ -3927,6 +4240,7 @@
       "shortName": "Essen-Werdener RC",
       "abbreviation": "EWRC",
       "drvId": "11926",
+      "country": "de",
       "lakeId": "essen-werdener-ruder-club-von-1896-e-v",
       "address": "Hardenbergufer 121, 45239 Essen",
       "website": "https://www.ewrc.de",
@@ -3956,6 +4270,7 @@
       "shortName": "Flörsheimer RV",
       "abbreviation": "FRV",
       "drvId": "11606",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Dr. Georg v. Opel Anlage 1, 65439 Flörsheim",
       "website": "https://www.frv1908.de",
@@ -3984,6 +4299,7 @@
       "shortName": "Frankfurter Ruder- und Kanusport Verein",
       "abbreviation": "FRVS",
       "drvId": "11620",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mainwasenweg 34, 60599 Frankfurt",
       "website": "https://www.frvs-1898.de",
@@ -4002,6 +4318,7 @@
       "shortName": "Frankfurter RC",
       "abbreviation": "FRC 84",
       "drvId": "11616",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mainwasenweg 33, 60599 Frankfurt",
       "website": "https://www.frc84.de",
@@ -4031,6 +4348,7 @@
       "shortName": "Frankfurter RC Fechenheim",
       "abbreviation": "FRCF",
       "drvId": "11608",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Fechenheimer Leinpfad 1, 60386 Frankfurt",
       "website": "https://www.frcf.de",
@@ -4061,6 +4379,7 @@
       "shortName": "Frankfurter RC Griesheim",
       "abbreviation": "FRCG",
       "drvId": "11611",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Griesheimer Stadtweg 77 a, 65933 Frankfurt am Main",
       "website": "http://www.rcgriesheim.de",
@@ -4089,6 +4408,7 @@
       "shortName": "Frankfurter RC (a.d.Oder)",
       "abbreviation": "FRC v.1882",
       "drvId": "11305",
+      "country": "de",
       "lakeId": "river-alte-oder",
       "address": "Lehmgasse 11, 15230 Frankfurt (Oder)",
       "website": "https://www.frcvon1882.de",
@@ -4115,6 +4435,7 @@
       "shortName": "Frankfurter RG Oberrad",
       "abbreviation": "FRGO",
       "drvId": "11614",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mainwasenweg 32, 60599 Frankfurt am Main",
       "website": "https://www.frgo.de",
@@ -4143,6 +4464,7 @@
       "shortName": "Frankfurter RG Borussia",
       "abbreviation": "FRGB",
       "drvId": "11607",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mainwasenweg 31, 60599 Frankfurt",
       "website": "https://www.frg-borussia.de",
@@ -4171,6 +4493,7 @@
       "shortName": "Frankfurter RG Germania",
       "abbreviation": "FRGG",
       "drvId": "11610",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Schaumainkai 65, 60596 Frankfurt am Main",
       "website": "https://www.frg-germania.de",
@@ -4203,6 +4526,7 @@
       "shortName": "Frankfurter RG Nied",
       "abbreviation": "FRGN",
       "drvId": "11613",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mainzer Landstr. 793, 65934 Frankfurt",
       "website": "https://www.frg-nied.de",
@@ -4229,6 +4553,7 @@
       "shortName": "Frankfurter RV",
       "abbreviation": "FRV1865",
       "drvId": "11617",
+      "country": "de",
       "lakeId": "river-muellermain",
       "address": "Alte Brücke 2, 60594 Frankfurt",
       "website": "https://www.frv1865.de",
@@ -4257,6 +4582,7 @@
       "shortName": "Frauen-RC Wannsee",
       "abbreviation": "FRCW",
       "drvId": "11230",
+      "country": "de",
       "lakeId": "grosser-wannsee",
       "address": "Am Großen Wannsee 44, 14109 Berlin",
       "website": "https://www.frcw.de",
@@ -4285,6 +4611,7 @@
       "shortName": "Frauen-RV Freiweg Frankfurt",
       "abbreviation": "FRVF",
       "drvId": "11609",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mainfeldstr. 35, 60528 Frankfurt",
       "website": "https://www.freiweg-frankfurt.de",
@@ -4314,6 +4641,7 @@
       "shortName": "Friedrichshagener RV",
       "abbreviation": "FRV",
       "drvId": "11240",
+      "country": "de",
       "lakeId": "river-mueggelspree",
       "address": "Hahns Mühle 12, 12587 Berlin-Friedrichshagen",
       "website": "https://www.f-r-v.de",
@@ -4343,6 +4671,7 @@
       "shortName": "Friedrichstädter RG",
       "abbreviation": "FRG",
       "drvId": "12405",
+      "country": "de",
       "lakeId": "river-treene",
       "address": "Tönninger Str. 2 a, 25840 Friedrichstadt",
       "website": "https://www.friedrichstaedter-rudergesellschaft.de",
@@ -4361,6 +4690,7 @@
       "shortName": "Förderv. für Freizeit u. Sport am KG",
       "abbreviation": "FVKG",
       "drvId": "11981",
+      "country": "de",
       "lakeId": "near-rheine",
       "address": "Timmermannufer 105, 48429 Rheine",
       "website": "https://www.kopernikus-rheine.de",
@@ -4379,6 +4709,7 @@
       "shortName": "GRV am Beethoven-Gymnasium Bonn",
       "abbreviation": "GRVBGB",
       "drvId": "15902",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rathenauufer 2, 53113 Bonn",
       "website": "https://www.grvbonn.de",
@@ -4397,6 +4728,7 @@
       "shortName": "Universität Göttingen",
       "abbreviation": "UniGö",
       "drvId": "60008",
+      "country": "de",
       "lakeId": "river-fulda",
       "address": "Mündener Str., 34233 Fuldatal-Wilhelmshausen",
       "website": "https://www.hochschulsport.uni-goettingen.de/",
@@ -4417,6 +4749,7 @@
       "shortName": "Germania RV Eutin",
       "abbreviation": "GRVE",
       "drvId": "12403",
+      "country": "de",
       "lakeId": "grosser-eutiner-see",
       "address": "Heinrich-Lüth-Weg 12, 23701 Eutin",
       "website": "https://www.grve.de",
@@ -4445,6 +4778,7 @@
       "shortName": "Gießener RC Hassia",
       "abbreviation": "GRCH",
       "drvId": "11622",
+      "country": "de",
       "lakeId": "river-lahn",
       "address": "Uferweg 14, 35398 Gießen",
       "website": "https://www.rc-hassia.de",
@@ -4474,6 +4808,7 @@
       "shortName": "Gießener R.G.",
       "abbreviation": "GRG",
       "drvId": "11624",
+      "country": "de",
       "lakeId": "river-lahn",
       "address": "Bootshausstr. 12, 35390 Gießen",
       "website": "http://www.giessener-rg.de",
@@ -4503,6 +4838,7 @@
       "shortName": "Greifswalder RC Hilda",
       "abbreviation": "GRCH",
       "drvId": "11714",
+      "country": "de",
       "lakeId": "museumshafen",
       "address": "Salinenstr., 17489 Greifswald",
       "website": null,
@@ -4531,6 +4867,7 @@
       "shortName": "Gymnasial RV Hamburg am Wilhelm-Gymn.",
       "abbreviation": "GRVH",
       "drvId": "15504",
+      "country": "de",
       "lakeId": "aussenalster",
       "address": "Alsterufer 21, 20354 Hamburg",
       "website": "https://www.wilhelm-gymnasium.de",
@@ -4556,6 +4893,7 @@
       "shortName": "Gymnasial Turn- und RV Lingen",
       "abbreviation": "GTRV",
       "drvId": "15801",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "Jahnstr. 14, 49808 Lingen",
       "website": "https://www.gtrv1880.de",
@@ -4580,6 +4918,7 @@
       "shortName": "GTRV Neuwied 1882 e.V.",
       "abbreviation": "GTRVN",
       "drvId": "12025",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinstr. 54, 56564 Neuwied",
       "website": "https://www.gtrvn.de",
@@ -4610,6 +4949,7 @@
       "shortName": "Hallesche-Rvg. Böllberg u. Nelson",
       "abbreviation": "HRBN",
       "drvId": "12303",
+      "country": "de",
       "lakeId": "river-saale",
       "address": "Zur Rabeninsel 23, 06128 Halle",
       "website": "https://www.hrv-rudern.de",
@@ -4628,6 +4968,7 @@
       "shortName": "Hallescher RC im Uni-SV",
       "abbreviation": "HRC",
       "drvId": "12305",
+      "country": "de",
       "lakeId": "river-saale",
       "address": "Pfarrstr. 4, 06120 Halle",
       "website": "https://www.hrc-halle.de",
@@ -4656,6 +4997,7 @@
       "shortName": "Hamburger Ruderinnen-Club",
       "abbreviation": "HRC",
       "drvId": "11517",
+      "country": "de",
       "lakeId": "near-hamburg",
       "address": "Isekai Ö11a, 20249 Hamburg",
       "website": "https://www.hamburger-ruderinnen.de",
@@ -4674,6 +5016,7 @@
       "shortName": "Hamburger SRV",
       "abbreviation": "HSRVb",
       "drvId": "50005",
+      "country": "de",
       "lakeId": "aussenalster",
       "address": "Fährhausstraße 3a, 22085 Hamburg",
       "website": "https://schulrudern.hamburg.de/",
@@ -4701,6 +5044,7 @@
       "shortName": "Hammerdeicher RV",
       "abbreviation": "HRV",
       "drvId": "11510",
+      "country": "de",
       "lakeId": "river-bille",
       "address": "Hammer Deich 132, 20537 Hamburg",
       "website": "https://www.hammerdeicher-rv.de",
@@ -4730,6 +5074,7 @@
       "shortName": "Hanauer RC Hassia",
       "abbreviation": "HRCH",
       "drvId": "11626",
+      "country": "de",
       "lakeId": "river-main",
       "address": "An der Ochsenwiese 1, 63450 Hanau",
       "website": "https://www.ruderclub-hassia.de",
@@ -4761,6 +5106,7 @@
       "shortName": "Hanauer RG",
       "abbreviation": "HRG",
       "drvId": "11627",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Am Mainkanal 22, 63450 Hanau",
       "website": "https://www.hrg1879.de/",
@@ -4791,6 +5137,7 @@
       "shortName": "Hattinger RV",
       "abbreviation": "HRV",
       "drvId": "11933",
+      "country": "de",
       "lakeId": "henrichsteich",
       "address": "Cliff 10, 45525 Hattingen",
       "website": "https://www.rudervereinhattingen.de",
@@ -4818,6 +5165,7 @@
       "shortName": "Heidelberger RK",
       "abbreviation": "HRK",
       "drvId": "11009",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Neuenheimer Landstr. 3, 69120 Heidelberg",
       "website": "https://www.heidelberger-ruderklub.de",
@@ -4850,6 +5198,7 @@
       "shortName": "Heilbronner RG Schwaben",
       "abbreviation": "HRGS",
       "drvId": "11011",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Wertwiesen 5, 74081 Heilbronn",
       "website": "https://www.ruderschwaben.de",
@@ -4882,6 +5231,7 @@
       "shortName": "Hermann Billung Celle",
       "abbreviation": "HBC",
       "drvId": "11809",
+      "country": "de",
       "lakeId": "river-magnusgraben",
       "address": "Fritzenwiese 113, 29221 Celle",
       "website": "https://www.hermann-billung.de",
@@ -4910,6 +5260,7 @@
       "shortName": "Hersfelder RV",
       "abbreviation": "HRV",
       "drvId": "11628",
+      "country": "de",
       "lakeId": "near-bad-hersfeld",
       "address": "36251 Bad Hersfeld",
       "website": "https://www.hersfelder-ruderverein.de",
@@ -4938,6 +5289,7 @@
       "shortName": "Hildesheimer RC",
       "abbreviation": "HRC",
       "drvId": "11825",
+      "country": "de",
       "lakeId": "river-stichkanal-hildesheim",
       "address": "Hafenstraße 49, 31137 Hildesheim",
       "website": "https://www.hildesheimerrc.de",
@@ -4968,6 +5320,7 @@
       "shortName": "Homberger RK Germania",
       "abbreviation": "HRK",
       "drvId": "11938",
+      "country": "de",
       "lakeId": "eisenbahnhafen",
       "address": "Rheinanlagen 13, 47198 Duisburg",
       "website": "https://www.homberger.ruderklub.de",
@@ -4993,6 +5346,7 @@
       "shortName": "Humboldt-Oberschule Gymnasium Berlin",
       "abbreviation": "HOGB",
       "drvId": "15206",
+      "country": "de",
       "lakeId": "tegeler-hafen",
       "address": "Gabrielenstr. 69 e, 13507 Berlin",
       "website": null,
@@ -5013,6 +5367,7 @@
       "shortName": "Hürther RG",
       "abbreviation": "HRG",
       "drvId": "11978",
+      "country": "de",
       "lakeId": "near-huerth",
       "address": "50354 Hürth",
       "website": "https://www.huerther-rudergesellschaft.de",
@@ -5044,6 +5399,7 @@
       "shortName": "Jenaer Ruder- u. Seesportverein",
       "abbreviation": "JRSV",
       "drvId": "12505",
+      "country": "de",
       "lakeId": "river-saale",
       "address": "Burgauer Weg 7, 07743 Jena",
       "website": "https://www.jrsv.de",
@@ -5072,6 +5428,7 @@
       "shortName": "Karlsruher RK Alemannia",
       "abbreviation": "KRA",
       "drvId": "11012",
+      "country": "de",
       "lakeId": "river-becken-i",
       "address": "Werftstr. 8 b, 76189 Karlsruhe",
       "website": "https://www.rheinklub-alemannia.de",
@@ -5106,6 +5463,7 @@
       "shortName": "Karlsruher RV Wiking",
       "abbreviation": "KRVW",
       "drvId": "11013",
+      "country": "de",
       "lakeId": "river-becken-iv",
       "address": "Hansastr. 18 b, 76189 Karlsruhe",
       "website": "https://www.krv-wiking.de",
@@ -5139,6 +5497,7 @@
       "shortName": "Kasteler Ruder- und Kanu- Gesellschaft",
       "abbreviation": "KRKG",
       "drvId": "11651",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Maaraue 48, 55246 Mainz-Kostheim",
       "website": "https://www.krkg.de",
@@ -5166,6 +5525,7 @@
       "shortName": "Katharineum RR",
       "abbreviation": "KRR",
       "drvId": "16429",
+      "country": "de",
       "lakeId": "river-kanal-trave",
       "address": "Charlottenstr. 33, 23560 Lübeck",
       "website": "https://www.krr.de",
@@ -5184,6 +5544,7 @@
       "shortName": "Kettwiger RG",
       "abbreviation": "KRG",
       "drvId": "11939",
+      "country": "de",
       "lakeId": "kettwiger-stausee",
       "address": "Promenadenweg 100, 45219 Essen",
       "website": "https://www.kettwiger-rg.de",
@@ -5214,6 +5575,7 @@
       "shortName": "Koblenzer RC Rhenania",
       "abbreviation": "KRCR",
       "drvId": "12016",
+      "country": "de",
       "lakeId": "river-mosel",
       "address": "Am Moselstausee 16, 56073 Koblenz",
       "website": "https://www.krc-rhenania.de",
@@ -5232,6 +5594,7 @@
       "shortName": "KCfW",
       "abbreviation": "KCfW",
       "drvId": "11949",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Oberländer Ufer, 50968 Köln",
       "website": "https://www.kcfw.de",
@@ -5256,6 +5619,7 @@
       "shortName": "Kölner RG 1891",
       "abbreviation": "KRG",
       "drvId": "11946",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Uferstr. 16, 50996 Köln",
       "website": null,
@@ -5280,6 +5644,7 @@
       "shortName": "Kölner RV",
       "abbreviation": "KRV",
       "drvId": "11947",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Barbarastr. 47-49, 50996 Köln",
       "website": "https://www.krv77.de",
@@ -5310,6 +5675,7 @@
       "shortName": "Kölner-RC Köln",
       "abbreviation": "KRC",
       "drvId": "11952",
+      "country": "de",
       "lakeId": "fuehlinger-see",
       "address": "Oranjehof Str. 105, 50769 Köln",
       "website": "https://www.krc71.de",
@@ -5328,6 +5694,7 @@
       "shortName": "LRV Berlin",
       "abbreviation": "LRVB",
       "drvId": "30012",
+      "country": "de",
       "lakeId": "river-berlin-spandauer-schifffahrtskanal",
       "address": "Jungfernheideweg 80, 13629 Berlin",
       "website": "https://www.lrvberlin.de",
@@ -5363,6 +5730,7 @@
       "shortName": "Landshuter RV",
       "abbreviation": "LRV",
       "drvId": "11109",
+      "country": "de",
       "lakeId": "river-grosse-isar",
       "address": "Breslauer Str. 120, 84028 Landshut",
       "website": "https://www.ruderverein-landshut.de",
@@ -5392,6 +5760,7 @@
       "shortName": "Laubegaster RV Dresden",
       "abbreviation": "LRVD",
       "drvId": "12208",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Laubegaster Ufer 8, 01279 Dresden",
       "website": "https://www.lrvd.de",
@@ -5419,6 +5788,7 @@
       "shortName": "Lauffener RC Neckar",
       "abbreviation": "LRCN",
       "drvId": "11015",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Neckaruferweg 2, 74348 Lauffen",
       "website": "https://www.lauffener-ruderclub.de",
@@ -5446,6 +5816,7 @@
       "shortName": "Lauinger RSC Donau",
       "abbreviation": "LRSC",
       "drvId": "11110",
+      "country": "de",
       "lakeId": "river-donau",
       "address": "Segrépromenade 5, 89415 Lauingen",
       "website": "https://www.lrsc.de",
@@ -5464,6 +5835,7 @@
       "shortName": "Limburger ClfW",
       "abbreviation": "LCW",
       "drvId": "11635",
+      "country": "de",
       "lakeId": "river-lahn",
       "address": "Eschhöfer Weg 3, 65549 Limburg",
       "website": "http://www.lcw-limburg.de",
@@ -5493,6 +5865,7 @@
       "shortName": "Ludwigshafener RV",
       "abbreviation": "LRV",
       "drvId": "12018",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinpromenade 10, 67061 Ludwigshafen",
       "website": "https://www.ludwigshafener-rv.de",
@@ -5523,6 +5896,7 @@
       "shortName": "Lübecker Frauen-RG",
       "abbreviation": "LFRG",
       "drvId": "12413",
+      "country": "de",
       "lakeId": "kraehenteich",
       "address": "Hüxtertorallee 4, 23564 Lübeck",
       "website": null,
@@ -5551,6 +5925,7 @@
       "shortName": "Lübecker RG",
       "abbreviation": "LRG",
       "drvId": "12415",
+      "country": "de",
       "lakeId": "near-luebeck",
       "address": "Hüxtertoralle 4, 23564 Lübeck",
       "website": "http://www.lrg1885.de",
@@ -5569,6 +5944,7 @@
       "shortName": "Lübecker RK",
       "abbreviation": "LRK",
       "drvId": "12416",
+      "country": "de",
       "lakeId": "river-kanal-trave",
       "address": "Charlottenstr. 33, 23560 Lübeck",
       "website": "http://www.luebecker-ruderklub.de",
@@ -5599,6 +5975,7 @@
       "shortName": "LRC Wiking v.1875",
       "abbreviation": "LRCW",
       "drvId": "11836",
+      "country": "de",
       "lakeId": "near-lueneburg",
       "address": "Willi-Brandt-Str., 21335 Lüneburg",
       "website": "https://www.rc-wiking.de",
@@ -5629,6 +6006,7 @@
       "shortName": "Magdeburger RC",
       "abbreviation": "MRC",
       "drvId": "12316",
+      "country": "de",
       "lakeId": "prester-see",
       "address": "Seilerweg 5, 39114 Magdeburg",
       "website": "https://www.magdeburger-ruder-club.de",
@@ -5647,6 +6025,7 @@
       "shortName": "Mainzer RG",
       "abbreviation": "MRG 1898",
       "drvId": "12021",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Gaßnerallee 93, 55120 Mainz",
       "website": "https://www.mainzerrg.de",
@@ -5675,6 +6054,7 @@
       "shortName": "Mainzer RV",
       "abbreviation": "MRV",
       "drvId": "12022",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Victor-Hugo-Ufer 1, 55116 Mainz",
       "website": "https://www.mainzerruderverein.de",
@@ -5703,6 +6083,7 @@
       "shortName": "Mannheimer Regatta-Verein",
       "abbreviation": "MaRegV",
       "drvId": "11041",
+      "country": "de",
       "lakeId": "muehlauhafen",
       "address": "Fruchtbahnhofstraße 43, 68159 Mannheim",
       "website": "https://www.regatta-ma.de",
@@ -5721,6 +6102,7 @@
       "shortName": "Mannheimer RC",
       "abbreviation": "MRC",
       "drvId": "11018",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinpromenade 15, 68163 Mannheim",
       "website": "https://www.mannheimer-rc.de",
@@ -5752,6 +6134,7 @@
       "shortName": "Mannheimer RV Amicitia",
       "abbreviation": "MRVA",
       "drvId": "11016",
+      "country": "de",
       "lakeId": "kutzerweiher",
       "address": "Hans-Reschke-Ufer 3, 68165 Mannheim",
       "website": "https://www.amicitia-mannheim.de",
@@ -5783,6 +6166,7 @@
       "shortName": "Mannheimer RG Baden",
       "abbreviation": "MRGB",
       "drvId": "11017",
+      "country": "de",
       "lakeId": "river-neckarkanal",
       "address": "Feudenheimer Str. 2, 68167 Mannheim",
       "website": "https://www.mrg-baden.de",
@@ -5811,6 +6195,7 @@
       "shortName": "Mannheimer RG Rheinau",
       "abbreviation": "MRGR",
       "drvId": "11019",
+      "country": "de",
       "lakeId": "rheinauhafen-hafenbecken-21",
       "address": "Bergiusstr. 11, 68219 Mannheim",
       "website": "https://www.mrgr.de",
@@ -5841,6 +6226,7 @@
       "shortName": "Marbacher RV",
       "abbreviation": "MRV20",
       "drvId": "11021",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Mühlwert 1, 71672 Marbach",
       "website": "http://www.marbacher-ruderverein.de",
@@ -5872,6 +6258,7 @@
       "shortName": "Masterruderclub Berlin",
       "abbreviation": "MRCB",
       "drvId": "11253",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Regattastr. 231, 12527 Berlin-Grünau",
       "website": null,
@@ -5894,6 +6281,7 @@
       "shortName": "Meissner RC Neptun",
       "abbreviation": "MRC",
       "drvId": "12213",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Siebeneichener Str. 39, 01662 Meißen",
       "website": "https://www.meissner-ruderclub.de",
@@ -5912,6 +6300,7 @@
       "shortName": "Merseburger RG",
       "abbreviation": "MRG",
       "drvId": "12301",
+      "country": "de",
       "lakeId": "river-saale",
       "address": "Am Stadtpark 39, 06217 Merseburg",
       "website": "https://www.merseburger-rudergesellschaft.de",
@@ -5940,6 +6329,7 @@
       "shortName": "Miltenberger RC",
       "abbreviation": "MRC",
       "drvId": "11113",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Steingaesserstr. 30, 63897 Miltenberg",
       "website": "https://www.miltenberger-ruderclub.de",
@@ -5958,6 +6348,7 @@
       "shortName": "Mindener RV",
       "abbreviation": "MRV",
       "drvId": "11957",
+      "country": "de",
       "lakeId": "near-minden",
       "address": "Weserpromenade 10 (am Sommerbad), 32423 Minden",
       "website": "https://www.mrv1905.de",
@@ -5976,6 +6367,7 @@
       "shortName": "Märkischer Wassersport",
       "abbreviation": "MWS",
       "drvId": "11217",
+      "country": "de",
       "lakeId": "rohrbruchteich",
       "address": "Bootshausweg 5, 13599 Berlin",
       "website": "https://www.maerkischer-wassersport.de",
@@ -5998,6 +6390,7 @@
       "shortName": "Möllner RC vorm. Möllner Turnerschaft v",
       "abbreviation": "MRC",
       "drvId": "12417",
+      "country": "de",
       "lakeId": "ziegelsee",
       "address": "Am Bahndamm 4, 23879 Mölln",
       "website": "http://www.moellner-rc.com",
@@ -6026,6 +6419,7 @@
       "shortName": "Mühlheimer RV",
       "abbreviation": "MRV",
       "drvId": "11637",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Fährenstr. 38, 63165 Mühlheim",
       "website": "https://www.mrv1911.de",
@@ -6056,6 +6450,7 @@
       "shortName": "Mülheimer RG",
       "abbreviation": "MRG",
       "drvId": "11958",
+      "country": "de",
       "lakeId": "die-anger",
       "address": "Mendener Str. 74, 45470 Mülheim an der Ruhr",
       "website": "https://www.muelheimer-rg.de",
@@ -6087,6 +6482,7 @@
       "shortName": "Mülheimer Wassersport Köln",
       "abbreviation": "Müwa Köln",
       "drvId": "11942",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Krahnenstraße 15, 51063 Köln",
       "website": "https://www.muewa-koeln.de",
@@ -6113,6 +6509,7 @@
       "shortName": "Münchener RSV Bayern",
       "abbreviation": "MRSVB",
       "drvId": "11116",
+      "country": "de",
       "lakeId": "starnberger-see",
       "address": "Seepromenade 2, 82319 Starnberg",
       "website": "https://www.mrsv-bayern.de",
@@ -6143,6 +6540,7 @@
       "shortName": "Mündener RV",
       "abbreviation": "MRV",
       "drvId": "11823",
+      "country": "de",
       "lakeId": "river-fulda",
       "address": "Fährweg 30, 34346 Hann Münden",
       "website": "https://www.mrv1912.de",
@@ -6174,6 +6572,7 @@
       "shortName": "Neuruppiner RC",
       "abbreviation": "NRC",
       "drvId": "11322",
+      "country": "de",
       "lakeId": "ruppiner-see",
       "address": "Regattastr. 16, 16816 Neuruppin",
       "website": "https://www.neuruppinerruderclub.de",
@@ -6192,6 +6591,7 @@
       "shortName": "Neusser RV",
       "abbreviation": "NRV",
       "drvId": "11967",
+      "country": "de",
       "lakeId": "sporthafen-neuss",
       "address": "Grimlinghauser Brücke 54, 41468 Neuss",
       "website": "https://www.neusserrv.de",
@@ -6223,6 +6623,7 @@
       "shortName": "Neuwieder RG",
       "abbreviation": "NRG",
       "drvId": "12024",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinstraße 52, 56564 Neuwied",
       "website": "https://www.neuwieder-rg.de",
@@ -6241,6 +6642,7 @@
       "shortName": "Nordenhamer RC Nordenham",
       "abbreviation": "NRC",
       "drvId": "11839",
+      "country": "de",
       "lakeId": "near-nordenham",
       "address": "Strandallee 1, 26954 Nordenham",
       "website": "https://www.nordenhamer-ruderclub.de",
@@ -6259,6 +6661,7 @@
       "shortName": "Norder RC",
       "abbreviation": "NRC",
       "drvId": "11840",
+      "country": "de",
       "lakeId": "river-norder-tief",
       "address": "Am Hafen 5, 26506 Norden",
       "website": "https://www.norder-ruderclub.de",
@@ -6287,6 +6690,7 @@
       "shortName": "Offenbacher RG Undine",
       "abbreviation": "ORGU",
       "drvId": "11641",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Dieburgerstr. 68, 60386 Frankfurt",
       "website": "http://www.undine-offenbach.de",
@@ -6315,6 +6719,7 @@
       "shortName": "Offenbacher RV",
       "abbreviation": "ORV",
       "drvId": "11640",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Starkenburger Str. 150, 60386 Frankfurt",
       "website": "https://www.orv1874.de",
@@ -6337,6 +6742,7 @@
       "shortName": "Oldenburger RV",
       "abbreviation": "ORVO",
       "drvId": "11842",
+      "country": "de",
       "lakeId": "river-hunte",
       "address": "Achterdiek 3, 26131 Oldenburg",
       "website": "https://www.orvo.de",
@@ -6369,6 +6775,7 @@
       "shortName": "Osnabrücker RV",
       "abbreviation": "ORV",
       "drvId": "11844",
+      "country": "de",
       "lakeId": "river-stichkanal-osnabrueck",
       "address": "Glückaufstr. 16, 49090 Osnabrück",
       "website": "https://www.orv.de",
@@ -6401,6 +6808,7 @@
       "shortName": "Papenburger RC",
       "abbreviation": "PRC",
       "drvId": "11849",
+      "country": "de",
       "lakeId": "river-an-der-alten-werft",
       "address": "Ölmühlenweg 23, 26871 Papenburg",
       "website": "https://www.papenburger-ruderclub.de",
@@ -6428,6 +6836,7 @@
       "shortName": "Passauer RV",
       "abbreviation": "PRV",
       "drvId": "11120",
+      "country": "de",
       "lakeId": "river-inn",
       "address": "Innstr. 123, 94036 Passau",
       "website": "https://www.passauer-ruderverein.de",
@@ -6458,6 +6867,7 @@
       "shortName": "Pichelsberger RG",
       "abbreviation": "PRG",
       "drvId": "11219",
+      "country": "de",
       "lakeId": "unterhafen-spandau",
       "address": "Tiefwerderweg 19, 13597 Berlin",
       "website": "https://www.pichelsberger-rg.de",
@@ -6476,6 +6886,7 @@
       "shortName": "Pirnaer RV",
       "abbreviation": "PRV 1872",
       "drvId": "12204",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "An der Elbe 11, 01796 Pirna",
       "website": "https://www.pirnaer-ruderverein.de",
@@ -6506,6 +6917,7 @@
       "shortName": "Post und Telekom SG Lübbecke",
       "abbreviation": "PTSGL",
       "drvId": "11979",
+      "country": "de",
       "lakeId": "near-luebbecke",
       "address": "32312 Lübbecke",
       "website": "https://www.ptsg-luebbecke.de",
@@ -6531,6 +6943,7 @@
       "shortName": "Post-SV Koblenz",
       "abbreviation": "PSVK",
       "drvId": "12015",
+      "country": "de",
       "lakeId": "river-mosel",
       "address": "Rohrerhof 23, 56072 Koblenz",
       "website": "https://www.post-sv-koblenz.de",
@@ -6549,6 +6962,7 @@
       "shortName": "Postsportverein Oldenburg RA",
       "abbreviation": "PSVO",
       "drvId": "11843",
+      "country": "de",
       "lakeId": "river-kuestenkanal",
       "address": "Achterdiek 1 A, 26131 Oldenburg",
       "website": "https://www.postsv-oldenburg.de",
@@ -6567,6 +6981,7 @@
       "shortName": "Potsdamer RC Germania",
       "abbreviation": "PRCG",
       "drvId": "11222",
+      "country": "de",
       "lakeId": "grosser-wannsee",
       "address": "Am Großen Wannsee 46, 14109 Berlin",
       "website": "https://www.prcg.de",
@@ -6596,6 +7011,7 @@
       "shortName": "Potsdamer RG",
       "abbreviation": "PRG",
       "drvId": "11312",
+      "country": "de",
       "lakeId": "templiner-see",
       "address": "An der Pirschheide 28, 14471 Potsdam",
       "website": "https://www.prg1.de",
@@ -6624,6 +7040,7 @@
       "shortName": "Preetzer RC",
       "abbreviation": "PRC",
       "drvId": "12419",
+      "country": "de",
       "lakeId": "schwentine",
       "address": "Castöhlenweg 5, 24211 Preetz",
       "website": "https://www.preetzer-ruderclub.de",
@@ -6642,6 +7059,7 @@
       "shortName": "Pro Sport Berlin 24 e.V.",
       "abbreviation": "PSB 24",
       "drvId": "11220",
+      "country": "de",
       "lakeId": "rhb-doberaner-strasse",
       "address": "Barther Straße 80, 13051 Berlin",
       "website": "https://www.pro-sport-berlin24.de",
@@ -6666,6 +7084,7 @@
       "shortName": "RR Mark am Helmholtz-Gymnasium Essen",
       "abbreviation": "RRM",
       "drvId": "15921",
+      "country": "de",
       "lakeId": "near-essen",
       "address": "Freiherr-von-Stein-Str. 206 d, 45239 Essen",
       "website": "https://www.rrmark.de",
@@ -6684,6 +7103,7 @@
       "shortName": "RR Besselgymnasium Minden",
       "abbreviation": "RRBM",
       "drvId": "15922",
+      "country": "de",
       "lakeId": "river-pumpwerkskanal",
       "address": "Am Pumpwerk 2, 32425 Minden",
       "website": "https://www.besselgymnasium.de",
@@ -6702,6 +7122,7 @@
       "shortName": "RR Domgymnasium Verden",
       "abbreviation": "RRDV",
       "drvId": "15811",
+      "country": "de",
       "lakeId": "river-aller",
       "address": "Grüne Str. 32, 27283 Verden",
       "website": "https://www.domgymnasium.de",
@@ -6720,6 +7141,7 @@
       "shortName": "RR Greselius Gymnasium Bramsche",
       "abbreviation": "RRGGB",
       "drvId": "15803",
+      "country": "de",
       "lakeId": "river-mittellandkanal",
       "address": "Hafenstr. 35, 49565 Bramsche",
       "website": "http://rudern.greselius.de",
@@ -6738,6 +7160,7 @@
       "shortName": "RR Gymnasium Carolinum Osnabrück",
       "abbreviation": "RRGCO",
       "drvId": "15810",
+      "country": "de",
       "lakeId": "river-stichkanal-osnabrueck",
       "address": "Glückaufstr. 16, 49090 Osnabrück",
       "website": "https://ruderriege.carolinum-osnabrück.de",
@@ -6766,6 +7189,7 @@
       "shortName": "RR Schillergymnasium Münster",
       "abbreviation": "RRSM",
       "drvId": "15923",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "Bennostr. 7, 48155 Münster",
       "website": "https://www.schillergymnasium-muenster.de",
@@ -6784,6 +7208,7 @@
       "shortName": "RR am Helene-Lange-Gymn. Rendsburg",
       "abbreviation": "RRHLG",
       "drvId": "16411",
+      "country": "de",
       "lakeId": "river-eider",
       "address": "Wickenhagenweg 5, 24768 Rendsburg",
       "website": "https://www.hela-rd.de/angebote-aktivitaeten/ruderriege/",
@@ -6802,6 +7227,7 @@
       "shortName": "RR am KAV-Gymn. Celle",
       "abbreviation": "RRKAVC",
       "drvId": "15804",
+      "country": "de",
       "lakeId": "river-aller",
       "address": "Herzog-Ernst-Ring 46, 29221 Celle",
       "website": "https://www.kav-celle.de",
@@ -6822,6 +7248,7 @@
       "shortName": "RR am Ratsgymnasium Minden e.V.",
       "abbreviation": "RRRM",
       "drvId": "15910",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Weserpromenade 10, 32423 Minden",
       "website": "https://www.ratsgymnasium.de",
@@ -6849,6 +7276,7 @@
       "shortName": "RR am Schulsportz. Obersbg. Bad Hersfeld",
       "abbreviation": "RRSBH",
       "drvId": "15605",
+      "country": "de",
       "lakeId": "near-hersfeld",
       "address": "36251 Hersfeld",
       "website": "http://www.hersfelder-ruderverein.de",
@@ -6869,6 +7297,7 @@
       "shortName": "RTHC Bayer Leverkusen",
       "abbreviation": "RTHC",
       "drvId": "11954",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Am Stammheimer Schloßpark 20, 51061 Köln",
       "website": "https://www.rthc.de",
@@ -6887,6 +7316,7 @@
       "shortName": "RVB",
       "abbreviation": "RVB",
       "drvId": "15806",
+      "country": "de",
       "lakeId": "maschsee",
       "address": "Karl-Thiele-Weg 19, 30169 Hannover",
       "website": "https://www.rvb-hannover.de",
@@ -6912,6 +7342,7 @@
       "shortName": "RV Helene-Lange-Schule Hannover",
       "abbreviation": "RVHLS",
       "drvId": "15814",
+      "country": "de",
       "lakeId": "maschsee",
       "address": "Karl-Thiele-Weg 19, 30169 Hannover",
       "website": "https://www.rvhls.de",
@@ -6934,6 +7365,7 @@
       "shortName": "RV Humboldtschule Hannover",
       "abbreviation": "RVHH",
       "drvId": "15813",
+      "country": "de",
       "lakeId": "maschsee",
       "address": "Karl-Thiele-Weg 19, 30169 Hannover",
       "website": "https://www.humboldtschule.de",
@@ -6960,6 +7392,7 @@
       "shortName": "Rathenower RC Wiking",
       "abbreviation": "RRCW",
       "drvId": "11313",
+      "country": "de",
       "lakeId": "karpfenteich",
       "address": "Mühlendamm 20, 14712 Rathenow",
       "website": "https://www.rrcwiking.de",
@@ -6978,6 +7411,7 @@
       "shortName": "Ratzeburger RC",
       "abbreviation": "RRC",
       "drvId": "12420",
+      "country": "de",
       "lakeId": "kuechensee",
       "address": "Dr.-Alfred-Block-Allee 5, 23909 Ratzeburg",
       "website": "http://www.rrc-online.de",
@@ -7008,6 +7442,7 @@
       "shortName": "Regensburger RK",
       "abbreviation": "RRK",
       "drvId": "11122",
+      "country": "de",
       "lakeId": "westbad-weiher",
       "address": "Messerschmittstr. 2, 93049 Regensburg",
       "website": "https://www.regensburger-ruderklub.de",
@@ -7039,6 +7474,7 @@
       "shortName": "Regensburger RV",
       "abbreviation": "RRV",
       "drvId": "11121",
+      "country": "de",
       "lakeId": "westbad-weiher",
       "address": "Messerschmittstr. 2, 93049 Regensburg",
       "website": "https://www.regensburger-ruderverein.de",
@@ -7069,6 +7505,7 @@
       "shortName": "Reinfelder Rugm.",
       "abbreviation": "RRG",
       "drvId": "12421",
+      "country": "de",
       "lakeId": "near-reinfeld",
       "address": "23858 Reinfeld",
       "website": "https://www.reinfelder-rudergemeinschaft.de",
@@ -7099,6 +7536,7 @@
       "shortName": "Rendsburger Primaner RC",
       "abbreviation": "RPRC",
       "drvId": "12423",
+      "country": "de",
       "lakeId": "near-rendsburg",
       "address": "RPRC von 1880, 24768 Rendsburg",
       "website": "https://www.rprc1880.de",
@@ -7128,6 +7566,7 @@
       "shortName": "Rendsburger RV",
       "abbreviation": "RRV",
       "drvId": "12422",
+      "country": "de",
       "lakeId": "river-eider",
       "address": "Wickenhagenweg 11, 24768 Rendsburg",
       "website": "https://www.rendsburger-ruderverein.de",
@@ -7157,6 +7596,7 @@
       "shortName": "Renn-Rugm. Mülheim",
       "abbreviation": "RRugmM",
       "drvId": "11959",
+      "country": "de",
       "lakeId": "die-anger",
       "address": "Mendener Str. 74, 45470 Mülheim",
       "website": "https://www.rrg-muelheim.de",
@@ -7180,6 +7620,7 @@
       "shortName": "Ribnitzer SV",
       "abbreviation": "RSV",
       "drvId": "11715",
+      "country": "de",
       "lakeId": "near-ribnitz-damgarten",
       "address": "Wanderruderstützpunkt - Damgarten-Hafen, 18311 Ribnitz-Damgarten",
       "website": "https://www.rudern-ribnitz.de",
@@ -7209,6 +7650,7 @@
       "shortName": "Richtershorner RV",
       "abbreviation": "RRV",
       "drvId": "11241",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Sportpromenade 17, 12527 Berlin",
       "website": "https://www.riho-verein.de",
@@ -7238,6 +7680,7 @@
       "shortName": "Rostocker RC",
       "abbreviation": "RRC",
       "drvId": "11706",
+      "country": "de",
       "lakeId": "river-unterwarnow",
       "address": "Wellenweg 1, 18147 Rostock",
       "website": "https://www.rostockerruderclub.de",
@@ -7268,6 +7711,7 @@
       "shortName": "Roßlauer RG",
       "abbreviation": "RRG",
       "drvId": "12312",
+      "country": "de",
       "lakeId": "rosslauer-werft",
       "address": "Sachsenbergstr., 06862 Roßlau",
       "website": "https://www.rudern-rosslau.de",
@@ -7286,6 +7730,7 @@
       "shortName": "RC Leer",
       "abbreviation": "RCL",
       "drvId": "11830",
+      "country": "de",
       "lakeId": "river-leda",
       "address": "Bürgermeister-Dieckmann-Str. 1, 26789 Leer",
       "website": "https://www.ruderclub-leer.de",
@@ -7316,6 +7761,7 @@
       "shortName": "RC am Lech Kaufering",
       "abbreviation": "RCLK",
       "drvId": "11134",
+      "country": "de",
       "lakeId": "river-lech",
       "address": "Landrat-Müller-Hahl-Str. 14, 86916 Kaufering",
       "website": "https://www.rclk.de",
@@ -7344,6 +7790,7 @@
       "shortName": "RTK GERMANIA Köln",
       "abbreviation": "RTK Germania",
       "drvId": "11941",
+      "country": "de",
       "lakeId": "near-koeln",
       "address": "Alfred-Schütte-Allee 163, 51105 Köln",
       "website": "https://www.rtk-germania.de",
@@ -7371,6 +7818,7 @@
       "shortName": "Ruder- und Kanu-Club Wörth",
       "abbreviation": "RKCW",
       "drvId": "12037",
+      "country": "de",
       "lakeId": "landeshafen-woerth",
       "address": "Daimlerstr. 2, 76744 Wörth",
       "website": "https://www.rkcw.de",
@@ -7389,6 +7837,7 @@
       "shortName": "RTG Wesel",
       "abbreviation": "RTGW",
       "drvId": "11974",
+      "country": "de",
       "lakeId": "sporthafen",
       "address": "Am Yachthafen 7, 46487 Wesel",
       "website": "https://www.rudern-wesel.de",
@@ -7421,6 +7870,7 @@
       "shortName": "RHTC Rheine",
       "abbreviation": "RHTC",
       "drvId": "11971",
+      "country": "de",
       "lakeId": "river-ems",
       "address": "Timmermanufer 105, 48429 Rheine",
       "website": "https://www.rhtcrheine.de",
@@ -7439,6 +7889,7 @@
       "shortName": "RC Allemannia",
       "abbreviation": "RCA",
       "drvId": "11501",
+      "country": "de",
       "lakeId": "aussenalster",
       "address": "An der Alster 47 a, 20099 Hamburg",
       "website": null,
@@ -7471,6 +7922,7 @@
       "shortName": "RC Mark Wetter",
       "abbreviation": "RCMW",
       "drvId": "11976",
+      "country": "de",
       "lakeId": "river-obergraben",
       "address": "Am Obergraben 6, 58300 Wetter",
       "website": "https://www.rc-mark.de",
@@ -7489,6 +7941,7 @@
       "shortName": "RC Welle Bardowick",
       "abbreviation": "RCW",
       "drvId": "11815",
+      "country": "de",
       "lakeId": "river-ilmenau",
       "address": "Viti Furth 2, 21357 Bardowick",
       "website": "https://www.rcwelle-bardowick.de/",
@@ -7518,6 +7971,7 @@
       "shortName": "RC Aken",
       "abbreviation": "RCA",
       "drvId": "12315",
+      "country": "de",
       "lakeId": "near-aken",
       "address": "06385 Aken",
       "website": "https://www.rc-aken.de",
@@ -7544,6 +7998,7 @@
       "shortName": "RC Aschaffenburg",
       "abbreviation": "RCA",
       "drvId": "11101",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Am Floßhafen 80, 63743 Aschaffenburg",
       "website": "https://www.ruder-club-aschaffenburg.de",
@@ -7562,6 +8017,7 @@
       "shortName": "RC Bergedorf",
       "abbreviation": "RCB",
       "drvId": "11503",
+      "country": "de",
       "lakeId": "river-dove-elbe",
       "address": "Schleusendamm 20, 21037 Hamburg",
       "website": "https://www.rc-bergedorf.de",
@@ -7591,6 +8047,7 @@
       "shortName": "RC Biggesee",
       "abbreviation": "RCB",
       "drvId": "11902",
+      "country": "de",
       "lakeId": "near-olpe",
       "address": "Kirchesohl 1, 57462 Olpe",
       "website": "https://www.rc-biggesee.de",
@@ -7618,6 +8075,7 @@
       "shortName": "RC Dresdenia",
       "abbreviation": "RCD",
       "drvId": "11508",
+      "country": "de",
       "lakeId": "river-osterbekkanal",
       "address": "Kaemmererufer 26, 22303 Hamburg",
       "website": "https://www.ruderclub-dresdenia.de",
@@ -7636,6 +8094,7 @@
       "shortName": "RC Favorite Hammonia",
       "abbreviation": "RCFH",
       "drvId": "11509",
+      "country": "de",
       "lakeId": "aussenalster",
       "address": "Alsterufer 9, 20354 Hamburg",
       "website": "https://www.favorite-hammonia.de",
@@ -7667,6 +8126,7 @@
       "shortName": "RC Holzminden",
       "abbreviation": "RCH",
       "drvId": "11826",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Wasserübungsplatz 8, 37603 Holzminden",
       "website": "https://www.Ruderclub-Holzminden.de",
@@ -7695,6 +8155,7 @@
       "shortName": "RC Karlstadt",
       "abbreviation": "RCK 28",
       "drvId": "11107",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Baggertsweg 7, 97753 Karlstadt",
       "website": "https://www.ruderclub-karlstadt.de",
@@ -7724,6 +8185,7 @@
       "shortName": "RC Nassovia Höchst",
       "abbreviation": "RCNH",
       "drvId": "11612",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mainzer Landstr. 791, 65934 Frankfurt",
       "website": "https://www.nassovia-hoechst.de",
@@ -7750,6 +8212,7 @@
       "shortName": "RC Neumünster",
       "abbreviation": "RCN",
       "drvId": "12418",
+      "country": "de",
       "lakeId": "einfelder-see",
       "address": "Strandallee 7, 24536 Neumünster",
       "website": "http://www.rcnms.de",
@@ -7768,6 +8231,7 @@
       "shortName": "RC Plaue (Havel)",
       "abbreviation": "RCP",
       "drvId": "11306",
+      "country": "de",
       "lakeId": "plauer-see",
       "address": "Am Havelgut 2 a, 14774 Brandenburg an der Havel",
       "website": null,
@@ -7793,6 +8257,7 @@
       "shortName": "RC Rastatt",
       "abbreviation": "RCR",
       "drvId": "11026",
+      "country": "de",
       "lakeId": "near-elchesheim-illingen",
       "address": "76477 Elchesheim-Illingen",
       "website": "https://www.ruder-club-rastatt.de",
@@ -7811,6 +8276,7 @@
       "shortName": "RC \"Saar\" 1885 e.V.",
       "abbreviation": "RCS",
       "drvId": "12101",
+      "country": "de",
       "lakeId": "river-saar",
       "address": "Hindenburgstr. 65, 66119 Saarbrücken",
       "website": "http://www.rcsaar.de",
@@ -7838,6 +8304,7 @@
       "shortName": "RC Süderelbe Hamburg",
       "abbreviation": "RCS",
       "drvId": "11512",
+      "country": "de",
       "lakeId": "river-diamantgraben",
       "address": "Schweenssand-Hauptdeich 7, 21079 Hamburg",
       "website": "http://www.rc-suederelbe.de",
@@ -7869,6 +8336,7 @@
       "shortName": "RC Tegel 1886",
       "abbreviation": "RCT",
       "drvId": "11225",
+      "country": "de",
       "lakeId": "tegeler-see",
       "address": "Gabrielenstr. 83, 13507 Berlin",
       "website": "https://www.rctegel.de",
@@ -7900,6 +8368,7 @@
       "shortName": "RC Tegelort",
       "abbreviation": "RCT",
       "drvId": "11226",
+      "country": "de",
       "lakeId": "havel",
       "address": "Schwarzspechtweg 42-44, 13505 Berlin",
       "website": "https://www.rctegelort-berlin.de",
@@ -7925,6 +8394,7 @@
       "shortName": "RC Traben-Trarbach",
       "abbreviation": "RCTT",
       "drvId": "12033",
+      "country": "de",
       "lakeId": "river-mosel",
       "address": "Enkircher Str. 41, 56841 Traben-Trarbach",
       "website": "https://www.rctt.de",
@@ -7951,6 +8421,7 @@
       "shortName": "RC Witten",
       "abbreviation": "RCW",
       "drvId": "11977",
+      "country": "de",
       "lakeId": "river-ruhr",
       "address": "Wetterstr. 30 a, 58453 Witten",
       "website": "http://www.ruderclub-witten.de",
@@ -7981,6 +8452,7 @@
       "shortName": "RC Wittenberg",
       "abbreviation": "RCW",
       "drvId": "12309",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Dresdener Str. 160, 06886 Wittenberg",
       "website": "https://www.ruderclubwittenberg.de",
@@ -7999,6 +8471,7 @@
       "shortName": "RC Havel Brandenburg",
       "abbreviation": "RCHB",
       "drvId": "11316",
+      "country": "de",
       "lakeId": "river-triebwerkskanal-neustaedtischer-streng-naethewin",
       "address": "Hammerstr. 5, 14776 Brandenburg an der Havel",
       "website": "https://www.rch-brandenburg.de",
@@ -8027,6 +8500,7 @@
       "shortName": "Rugm. Grünau",
       "abbreviation": "RGG",
       "drvId": "11243",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Regattastr. 247, 12527 Berlin",
       "website": "https://www.rg-gruenau.de",
@@ -8045,6 +8519,7 @@
       "shortName": "RG Benrath",
       "abbreviation": "RGB",
       "drvId": "11916",
+      "country": "de",
       "lakeId": "viereckweiher",
       "address": "Benrather Schloßufer 35, 40597 Düsseldorf",
       "website": "http://rudergesellschaft-benrath.de",
@@ -8063,6 +8538,7 @@
       "shortName": "RG HANSA e.V .",
       "abbreviation": "RGH",
       "drvId": "11511",
+      "country": "de",
       "lakeId": "aussenalster",
       "address": "Schöne Aussicht 39, 22085 Hamburg",
       "website": "https://www.rghansa.de",
@@ -8094,6 +8570,7 @@
       "shortName": "RG Lauenburg",
       "abbreviation": "RGL",
       "drvId": "12412",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Am Kuhgrund 6, 21481 Lauenburg/Elbe",
       "website": "https://www.rglauenburg.de",
@@ -8120,6 +8597,7 @@
       "shortName": "RG Remagen",
       "abbreviation": "RGR",
       "drvId": "12028",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Peter-Maeth-Str., 53424 Remagen",
       "website": "https://www.rudern-in-remagen.de",
@@ -8145,6 +8623,7 @@
       "shortName": "RK Normannia",
       "abbreviation": "RKN",
       "drvId": "11803",
+      "country": "de",
       "lakeId": "bammelsburger-teich",
       "address": "Maschplatz 15, 38114 Braunschweig",
       "website": "https://www.rk-normannia.de",
@@ -8175,6 +8654,7 @@
       "shortName": "RR der Turngemeinde in Berlin",
       "abbreviation": "RRTiB",
       "drvId": "11228",
+      "country": "de",
       "lakeId": "river-treptower-spree",
       "address": "Bruno-Bürgel-Weg 127, 12439 Berlin",
       "website": "https://www.tib1848ev.de",
@@ -8206,6 +8686,7 @@
       "shortName": "RU Arkona Berlin",
       "abbreviation": "RUAB",
       "drvId": "11204",
+      "country": "de",
       "lakeId": "havel-158521683",
       "address": "Scharfe Lanke 71, 13595 Berlin",
       "website": null,
@@ -8235,6 +8716,7 @@
       "shortName": "RV Nienburg",
       "abbreviation": "RVN",
       "drvId": "11838",
+      "country": "de",
       "lakeId": "river-steinhuder-meerbach",
       "address": "Mühlentorsweg 2, 31582 Nienburg",
       "website": "https://www.rv-nienburg.de",
@@ -8257,6 +8739,7 @@
       "shortName": "RV Osterholz-Scharmbeck",
       "abbreviation": "RV OSCH",
       "drvId": "11845",
+      "country": "de",
       "lakeId": "near-osterholz-scharmbeck",
       "address": "Tietjen's Hütte 3, 27711 Osterholz-Scharmbeck",
       "website": "http://www.rvosch.de",
@@ -8283,6 +8766,7 @@
       "shortName": "Rvg. Bille",
       "abbreviation": "RVB",
       "drvId": "11504",
+      "country": "de",
       "lakeId": "river-bille",
       "address": "Bei der Grünen Brücke 3, 20539 Hamburg",
       "website": "https://www.rvbille.de",
@@ -8301,6 +8785,7 @@
       "shortName": "Rvg. Preußen Saffonia",
       "abbreviation": "RVPS",
       "drvId": "11223",
+      "country": "de",
       "lakeId": "havel-5202401",
       "address": "Fährstr. 16, 13503 Berlin",
       "website": "https://www.rvp-saffonia.de",
@@ -8328,6 +8813,7 @@
       "shortName": "RA Gaienhofen",
       "abbreviation": "RAG",
       "drvId": "15001",
+      "country": "de",
       "lakeId": "bodensee",
       "address": "Schloßstraße, 78343 Gaienhofen",
       "website": "https://www.schloss-gaienhofen.de",
@@ -8346,6 +8832,7 @@
       "shortName": "RA TSV Bremervörde",
       "abbreviation": "TSVBRV",
       "drvId": "11804",
+      "country": "de",
       "lakeId": "voerder-see",
       "address": "Gnattenbergstr. 7, 27432 Bremervörde",
       "website": "http://www.tsvbremervoerde.de/default.cfm?mid=30281",
@@ -8373,6 +8860,7 @@
       "shortName": "RC \"Westfalen\" Herdecke 1929",
       "abbreviation": "RWH",
       "drvId": "11934",
+      "country": "de",
       "lakeId": "river-ruhr",
       "address": "Zweibrücker Hof 4 a, 58313 Herdecke",
       "website": "https://www.rc-herdecke.de",
@@ -8404,6 +8892,7 @@
       "shortName": "RC Amicitia Bad Hersfeld",
       "abbreviation": "RCAH",
       "drvId": "11630",
+      "country": "de",
       "lakeId": "near-bad-hersfeld",
       "address": "36228 Bad Hersfeld",
       "website": "https://www.ruderclub-amicitia.de",
@@ -8422,6 +8911,7 @@
       "shortName": "RC Bad Säckingen",
       "abbreviation": "RCS",
       "drvId": "11028",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Gettnau 99, 79713 Bad Säckingen",
       "website": "https://www.ruderclub-bad-saeckingen.de",
@@ -8446,6 +8936,7 @@
       "shortName": "RC Beeskow",
       "abbreviation": "RCB",
       "drvId": "11319",
+      "country": "de",
       "lakeId": "bahrensdorfer-see",
       "address": "Uferstraße 18 d, 15848 Beeskow",
       "website": "https://www.ruderclub-beeskow.de",
@@ -8475,6 +8966,7 @@
       "shortName": "RC Eilenburg",
       "abbreviation": "RCE",
       "drvId": "12206",
+      "country": "de",
       "lakeId": "river-muehlgraben",
       "address": "Stadtpark 2, 04838 Eilenburg",
       "website": "https://www.ruderclub-eilenburg.de",
@@ -8505,6 +8997,7 @@
       "shortName": "RC Fürstenwalde",
       "abbreviation": "RCF",
       "drvId": "11314",
+      "country": "de",
       "lakeId": "river-fuerstenwalder-spree",
       "address": "Altstadt 25, 15517 Fürstenwalde",
       "website": "https://www.rcf-ev.de",
@@ -8523,6 +9016,7 @@
       "shortName": "RC Germania Boppard",
       "abbreviation": "RCGB",
       "drvId": "12010",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinallee 6, 56154 Boppard",
       "website": "https://www.ruderclubgermaniaboppard.de",
@@ -8549,6 +9043,7 @@
       "shortName": "RC Germania Düsseldorf",
       "abbreviation": "RCGD",
       "drvId": "11917",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Am Sandacker 43, 40221 Düsseldorf",
       "website": "https://www.rcgermania.de",
@@ -8580,6 +9075,7 @@
       "shortName": "RC Germania",
       "abbreviation": "RCG",
       "drvId": "11914",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "An den Bootshäusern 7, 44147 Dortmund",
       "website": "https://www.rc-germania.de",
@@ -8608,6 +9104,7 @@
       "shortName": "RC Grenzach",
       "abbreviation": "RCG",
       "drvId": "11007",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinallee 42, 79639 Grenzach-Wyhlen",
       "website": "https://www.ruderclubgrenzach.de",
@@ -8626,6 +9123,7 @@
       "shortName": "RC Hamm",
       "abbreviation": "RCH",
       "drvId": "11931",
+      "country": "de",
       "lakeId": "river-lippe",
       "address": "Jupp-Eickhoff-Weg 2, 59065 Hamm",
       "website": "https://www.ruderclubhamm.de",
@@ -8656,6 +9154,7 @@
       "shortName": "RC Hansa Dortmund",
       "abbreviation": "RCHD",
       "drvId": "11915",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "An den Bootshäusern 11, 44147 Dortmund",
       "website": "https://www.rchd1898.de",
@@ -8688,6 +9187,7 @@
       "shortName": "RC Kleinmachnow-Stahnsdorf-Teltow",
       "abbreviation": "RCK",
       "drvId": "11336",
+      "country": "de",
       "lakeId": "river-teltowkanal",
       "address": "Bäkepromenade, 14532 Stahnsdorf",
       "website": "https://www.wanderrudern.de",
@@ -8706,6 +9206,7 @@
       "shortName": "RC Königs Wusterhausen",
       "abbreviation": "RCKW",
       "drvId": "11325",
+      "country": "de",
       "lakeId": "river-dahme",
       "address": "Fasanenweg 34, 15711 Königs Wusterhausen",
       "website": "https://www.rckw.de",
@@ -8733,6 +9234,7 @@
       "shortName": "Ruderclub Lindau",
       "abbreviation": "RCL",
       "drvId": "11111",
+      "country": "de",
       "lakeId": "near-lindau",
       "address": "88107 Lindau",
       "website": "https://www.ruderclub-lindau.de",
@@ -8762,6 +9264,7 @@
       "shortName": "RC Meschede",
       "abbreviation": "RCM",
       "drvId": "11956",
+      "country": "de",
       "lakeId": "hennetalsperre",
       "address": "Berghauser Bucht 1, 59872 Meschede",
       "website": "https://www.ruderclub-meschede.de",
@@ -8789,6 +9292,7 @@
       "shortName": "RC Möve Grossauheim",
       "abbreviation": "RCM",
       "drvId": "11625",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Krotzenburgerstr. 37, 63457 Hanau",
       "website": "https://www.ruderclub-moeve.de",
@@ -8819,6 +9323,7 @@
       "shortName": "RC Mülheim a. d. Ruhr",
       "abbreviation": "RCM",
       "drvId": "11964",
+      "country": "de",
       "lakeId": "die-anger",
       "address": "Mendener Str. 6, 45470 Mülheim an der Ruhr",
       "website": null,
@@ -8840,6 +9345,7 @@
       "shortName": "SG NARVA Berlin",
       "abbreviation": "SGNB",
       "drvId": "11248",
+      "country": "de",
       "lakeId": "river-treptower-spree",
       "address": "Bruno-Bürgel-Weg 99, 12439 Berlin",
       "website": "https://www.sgnarva.ag.vu",
@@ -8864,6 +9370,7 @@
       "shortName": "RC Neptun Neckarelz",
       "abbreviation": "RCN",
       "drvId": "11022",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Neckarallee 1, 74821 Mosbach",
       "website": "https://www.rcn-neckarelz.de",
@@ -8887,6 +9394,7 @@
       "shortName": "RC Nürtingen",
       "abbreviation": "RCN",
       "drvId": "11024",
+      "country": "de",
       "lakeId": "neckar",
       "address": "Wörthstr. 20, 72622 Nürtingen",
       "website": "https://www.ruderclub-nuertingen.de",
@@ -8918,6 +9426,7 @@
       "shortName": "RC Oberhavel Hennigsdorf",
       "abbreviation": "RCO",
       "drvId": "11317",
+      "country": "de",
       "lakeId": "near-hennigsdorf",
       "address": "Hafenstr. 32 - 34, 16761 Hennigsdorf",
       "website": "https://www.ruderclub-oberhavel.de",
@@ -8936,6 +9445,7 @@
       "shortName": "RC Protesia",
       "abbreviation": "RCP",
       "drvId": "11515",
+      "country": "de",
       "lakeId": "river-osterbekkanal",
       "address": "Osterbekstr. 79, 22083 Hamburg",
       "website": "https://www.rc-protesia.de",
@@ -8954,6 +9464,7 @@
       "shortName": "RC Ratsgymnasium Osnabrück",
       "abbreviation": "RCRO",
       "drvId": "11847",
+      "country": "de",
       "lakeId": "river-stichkanal-osnabrueck",
       "address": "Glückaufstr. 16, 49090 Osnabrück",
       "website": "https://www.rcr-online.com",
@@ -8972,6 +9483,7 @@
       "shortName": "RC Rheinfelden/Baden",
       "abbreviation": "RCR",
       "drvId": "11027",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Warmbacher Strasse 37, 79618 Rheinfelden",
       "website": "https://www.ruderclub-rheinfelden.de",
@@ -9000,6 +9512,7 @@
       "shortName": "RC Roßleben",
       "abbreviation": "RCR",
       "drvId": "12501",
+      "country": "de",
       "lakeId": "near-rossleben-wiehe",
       "address": "06571 Roßleben-Wiehe",
       "website": "https://www.ruderclub-rossleben.de",
@@ -9028,6 +9541,7 @@
       "shortName": "RC Schieder",
       "abbreviation": "RCS",
       "drvId": "11980",
+      "country": "de",
       "lakeId": "schiedersee",
       "address": "Kronenbruch 2 a, 32816 Schieder-Schwalenberg",
       "website": "https://www.ruderclub-schieder.de",
@@ -9056,6 +9570,7 @@
       "shortName": "RC Sorpesee",
       "abbreviation": "RCS",
       "drvId": "11953",
+      "country": "de",
       "lakeId": "sorpestalsperre",
       "address": "Am Sorpesee 43, 59846 Sundern",
       "website": "https://www.rc-sorpesee.de",
@@ -9085,6 +9600,7 @@
       "shortName": "RC Stolzenau",
       "abbreviation": "RCS",
       "drvId": "11855",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Am Weserufer 27, 31592 Stolzenau",
       "website": "https://www.ruderclub-stolzenau.de",
@@ -9111,6 +9627,7 @@
       "shortName": "RC Titisee",
       "abbreviation": "RCT",
       "drvId": "11032",
+      "country": "de",
       "lakeId": "near-titisee-neustadt",
       "address": "79822 Titisee-Neustadt",
       "website": "http://www.ruderclub-titisee.de/",
@@ -9132,6 +9649,7 @@
       "shortName": "RC Turbine Grünau",
       "abbreviation": "RCTG",
       "drvId": "11245",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Regattastraße 237, 12527 Berlin",
       "website": "https://www.rctg.de",
@@ -9158,6 +9676,7 @@
       "shortName": "RC Vilshofen",
       "abbreviation": "RCV",
       "drvId": "11127",
+      "country": "de",
       "lakeId": "bootsportverein-vilshofen",
       "address": "Am Flugplatz 5, 94474 Vilshofen an der Donau",
       "website": "https://www.ruderclub-vilshofen.de",
@@ -9187,6 +9706,7 @@
       "shortName": "RC Zellingen",
       "abbreviation": "RCZ",
       "drvId": "11132",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Badstraße, 97225 Zellingen",
       "website": "http://www.rczellingen.de/",
@@ -9215,6 +9735,7 @@
       "shortName": "RC am Salzgittersee",
       "abbreviation": "RCS",
       "drvId": "11851",
+      "country": "de",
       "lakeId": "salzgittersee",
       "address": "Zum Salzgittersee 48, 38226 Salzgitter",
       "website": "https://www.rc-am-salzgittersee.de",
@@ -9244,6 +9765,7 @@
       "shortName": "Ruderclub des Johanneums",
       "abbreviation": "RdJ",
       "drvId": "15509",
+      "country": "de",
       "lakeId": "aussenalster",
       "address": "Alsterufer 21, 20354 Hamburg",
       "website": "http://www.rdj-hamburg.de",
@@ -9270,6 +9792,7 @@
       "shortName": "Ruderer-Vereinigung Nordharz",
       "abbreviation": "RVN",
       "drvId": "11814",
+      "country": "de",
       "lakeId": "near-schulenberg",
       "address": "Okerstausee an der B 498, 38707 Schulenberg",
       "website": "https://www.rvn-goslar.de",
@@ -9303,6 +9826,7 @@
       "shortName": "Rugm. Angaria",
       "abbreviation": "RugmA",
       "drvId": "11817",
+      "country": "de",
       "lakeId": "river-leine",
       "address": "Weddigenufer 25, 30167 Hannover",
       "website": "https://www.angaria.de",
@@ -9329,6 +9853,7 @@
       "shortName": "Rugm. Bottrop",
       "abbreviation": "RugmB",
       "drvId": "11910",
+      "country": "de",
       "lakeId": "oelhafen-koenig-wilhelm",
       "address": "Am Rhein-Herne-Kanal 13, 46242 Bottrop",
       "website": "https://www.rudergemeinschaft-bottrop.de",
@@ -9357,6 +9882,7 @@
       "shortName": "Rugm. Rotation Berlin",
       "abbreviation": "RGRB",
       "drvId": "11244",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Sportpromenade 23, 12527 Berlin",
       "website": "https://www.rg-rotation.de",
@@ -9386,6 +9912,7 @@
       "shortName": "RG Ghibellinia Waiblingen",
       "abbreviation": "RGGW",
       "drvId": "11036",
+      "country": "de",
       "lakeId": "schildkroetenteich",
       "address": "Oberer Ring 2, 71332 Waiblingen",
       "website": "https://www.rggw.de",
@@ -9414,6 +9941,7 @@
       "shortName": "RG Germania Kiel",
       "abbreviation": "RGK",
       "drvId": "12409",
+      "country": "de",
       "lakeId": "seehundbecken",
       "address": "Düsternbrooker Weg 42, 24105 Kiel",
       "website": "https://www.rggermaniakiel.de",
@@ -9442,6 +9970,7 @@
       "shortName": "RG Heidelberg",
       "abbreviation": "RGH",
       "drvId": "11008",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Schurmanstraße 2, 69115 Heidelberg",
       "website": "https://www.rgh-heidelberg.de",
@@ -9474,6 +10003,7 @@
       "shortName": "RG Kassel",
       "abbreviation": "RGK",
       "drvId": "11633",
+      "country": "de",
       "lakeId": "regattastrecke",
       "address": "Auedamm 33, 34121 Kassel",
       "website": "https://www.rudergesellschaft-kassel.de",
@@ -9504,6 +10034,7 @@
       "shortName": "RG Lahnstein",
       "abbreviation": "RGL",
       "drvId": "12026",
+      "country": "de",
       "lakeId": "hafen",
       "address": "Johannesstr. 51, 56112 Lahnstein",
       "website": "https://www.rg-lahnstein.de",
@@ -9532,6 +10063,7 @@
       "shortName": "RG Linden- Dahlhausen",
       "abbreviation": "RGLD",
       "drvId": "11932",
+      "country": "de",
       "lakeId": "river-ruhr",
       "address": "Burgstr. 163, 45289 Essen",
       "website": null,
@@ -9550,6 +10082,7 @@
       "shortName": "RG Marktheidenfeld",
       "abbreviation": "RGM",
       "drvId": "11112",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Georg-Mayr-Str. 25, 97828 Marktheidenfeld",
       "website": "https://www.rgmarktheidenfeld.de",
@@ -9576,6 +10109,7 @@
       "shortName": "RG München",
       "abbreviation": "RGM",
       "drvId": "11117",
+      "country": "de",
       "lakeId": "regattastrecke-oberschleissheim",
       "address": "Dachauer Str. 35, 85764 Oberschleißheim",
       "website": "https://www.rgm72.de",
@@ -9606,6 +10140,7 @@
       "shortName": "RG Niederkassel",
       "abbreviation": "RGN",
       "drvId": "11982",
+      "country": "de",
       "lakeId": "river-sieg",
       "address": "Hafenstr., 53859 Niederkassel",
       "website": "http://www.rg-niederkassel.de/",
@@ -9624,6 +10159,7 @@
       "shortName": "RG Speyer",
       "abbreviation": "RGS",
       "drvId": "12031",
+      "country": "de",
       "lakeId": "alter-hafen",
       "address": "Im Hafenbecken 11, 67346 Speyer",
       "website": "http://www.rg-speyer.de",
@@ -9654,6 +10190,7 @@
       "shortName": "RG Treis-Karden",
       "abbreviation": "RGTK",
       "drvId": "12034",
+      "country": "de",
       "lakeId": "river-flaumbach",
       "address": "Moselallee 44, 56253 Treis-Karden",
       "website": "https://www.rgtreis-karden.de",
@@ -9672,6 +10209,7 @@
       "shortName": "RG Trier",
       "abbreviation": "RGT",
       "drvId": "12035",
+      "country": "de",
       "lakeId": "river-mosel",
       "address": "An der Jugendherberge 3, 54292 Trier",
       "website": "https://www.rg-trier.de",
@@ -9696,6 +10234,7 @@
       "shortName": "RG Wertheim",
       "abbreviation": "RGW",
       "drvId": "11038",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Würzburger Str. 27, 97877 Wertheim",
       "website": "https://www.rg-wertheim.de",
@@ -9721,6 +10260,7 @@
       "shortName": "RG Wetzlar",
       "abbreviation": "RGW",
       "drvId": "11647",
+      "country": "de",
       "lakeId": "river-lahn",
       "address": "Inselstr. 10, 35576 Wetzlar",
       "website": "https://www.rgwetzlar.de",
@@ -9752,6 +10292,7 @@
       "shortName": "RG Wiesbaden- Biebrich",
       "abbreviation": "RGWB",
       "drvId": "11648",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Uferstr. 1, 65203 Wiesbaden",
       "website": "https://www.rgwb.de",
@@ -9780,6 +10321,7 @@
       "shortName": "RG Wiking",
       "abbreviation": "RGWB",
       "drvId": "11234",
+      "country": "de",
       "lakeId": "hafen-britz-ost",
       "address": "Haarlemer Str. 45 E, 12359 Berlin",
       "website": "https://www.rg-wiking.de",
@@ -9809,6 +10351,7 @@
       "shortName": "RG Zeltingen",
       "abbreviation": "RGZ",
       "drvId": "12040",
+      "country": "de",
       "lakeId": "near-zeltingen",
       "address": "Moselufer unterhalb der Brücke, 54492 Zeltingen",
       "website": "https://www.rgzeltingen.de",
@@ -9831,6 +10374,7 @@
       "shortName": "Rgr. Geesthacht",
       "abbreviation": "RGG",
       "drvId": "12406",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Elbuferstr. 31, 21502 Geesthacht",
       "website": "https://www.rudergruppe.de",
@@ -9859,6 +10403,7 @@
       "shortName": "RK Flensburg",
       "abbreviation": "RKF",
       "drvId": "12404",
+      "country": "de",
       "lakeId": "near-flensburg",
       "address": "Am Ostseebad 8, 24939 Flensburg",
       "website": "https://www.ruderklub-flensburg.de",
@@ -9890,6 +10435,7 @@
       "shortName": "RK am Baldeneysee",
       "abbreviation": "RaB",
       "drvId": "11924",
+      "country": "de",
       "lakeId": "baldeneysee",
       "address": "Freiherr-vom-Stein-Str. 206 e, 45133 Essen",
       "website": "https://www.rab-essen.de",
@@ -9917,6 +10463,7 @@
       "shortName": "RK am Wannsee",
       "abbreviation": "RaW",
       "drvId": "11231",
+      "country": "de",
       "lakeId": "grosser-wannsee",
       "address": "Scabellstr. 8, 14109 Berlin",
       "website": "https://www.raw-berlin.org",
@@ -9944,6 +10491,7 @@
       "shortName": "RR Schaumburgia am Adolfinum Bückeburg",
       "abbreviation": "RRSAB",
       "drvId": "15818",
+      "country": "de",
       "lakeId": "river-mittellandkanal",
       "address": "Am Bootshaus 4, 31675 Bückeburg",
       "website": null,
@@ -9970,6 +10518,7 @@
       "shortName": "RR ETUF Essen",
       "abbreviation": "RRE",
       "drvId": "11925",
+      "country": "de",
       "lakeId": "baldeneysee",
       "address": "Freiherr-vom-Stein-Str. 204 a, 45133 Essen",
       "website": "https://www.etuf.de",
@@ -9988,6 +10537,7 @@
       "shortName": "RR Grotefend-Gymnasium Münden",
       "abbreviation": "RRGGM",
       "drvId": "15824",
+      "country": "de",
       "lakeId": "river-fulda",
       "address": "Fährweg 30, 34346 Hann. Münden",
       "website": "https://www.grotefend-gymnasium.de",
@@ -10008,6 +10558,7 @@
       "shortName": "RR Schaumburgia Bückeburg",
       "abbreviation": "RRSB",
       "drvId": "11862",
+      "country": "de",
       "lakeId": "river-mittellandkanal",
       "address": "Am Bootshaus 4, 31675 Bückeburg",
       "website": "https://www.rrschaumburgia.de",
@@ -10037,6 +10588,7 @@
       "shortName": "RR TV Waidmannslust",
       "abbreviation": "RRTVW",
       "drvId": "11229",
+      "country": "de",
       "lakeId": "borsighafen",
       "address": "Eisenhammerweg 22 - 24, 13507 Berlin",
       "website": "https://www.ruder-riege-tvw.de",
@@ -10065,6 +10617,7 @@
       "shortName": "RR am Städt. Gymnasium Olpe",
       "abbreviation": "RRSGO",
       "drvId": "15941",
+      "country": "de",
       "lakeId": "river-olpe",
       "address": "Seminarstr. 1, 57462 Olpe",
       "website": "https://www.gymnasium-olpe.de",
@@ -10083,6 +10636,7 @@
       "shortName": "RR Humboldt-Uni Berlin",
       "abbreviation": "HUniB",
       "drvId": "60016",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Rohrwallallee 11, 12527 Berlin",
       "website": "http://www.hu-rudern.de",
@@ -10106,6 +10660,7 @@
       "shortName": "Karlsruher Institut für Technologie (KIT)",
       "abbreviation": "KIT",
       "drvId": "60010",
+      "country": "de",
       "lakeId": "river-becken-iv",
       "address": "Hansastraße 18b, 76189 Karlsruhe",
       "website": "http://www.sport.kit.edu/rudern/",
@@ -10133,6 +10688,7 @@
       "shortName": "RR am MPG Dortmund",
       "abbreviation": "RRMPGDO",
       "drvId": "15920",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "Westerholz 85, 44147 Dortmund",
       "website": "https://www.ruderriege-mpg.de",
@@ -10151,6 +10707,7 @@
       "shortName": "RC Rosenheim",
       "abbreviation": "RCRH",
       "drvId": "11142",
+      "country": "de",
       "lakeId": "river-inn",
       "address": "Ahornstr. 6, 83101 Rohrdorf",
       "website": "https://www.rsc-rosenheim.de",
@@ -10177,6 +10734,7 @@
       "shortName": "RTG Bersenbrück",
       "abbreviation": "RTGB",
       "drvId": "15828",
+      "country": "de",
       "lakeId": "river-hase",
       "address": "Im Dom 19, 49593 Bersenbrück",
       "website": "https://www.gymbsb.de",
@@ -10201,6 +10759,7 @@
       "shortName": "Ruderverbindung Rheno- Franconia",
       "abbreviation": "RVRF",
       "drvId": "11615",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mainfeldstr. 33, 60528 Frankfurt am Main",
       "website": "https://www.rhenofranconia.de",
@@ -10219,6 +10778,7 @@
       "shortName": "RV Emscher Wanne-Eickel-Herten",
       "abbreviation": "RVE",
       "drvId": "11935",
+      "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "address": "Hertener Straße 53, 44653 Herne",
       "website": "https://www.rvemscher.de",
@@ -10237,6 +10797,7 @@
       "shortName": "RV ARGO Aurich",
       "abbreviation": "RVA",
       "drvId": "11861",
+      "country": "de",
       "lakeId": "river-ems-jade-kanal",
       "address": "Grüner Weg 27, 26605 Aurich",
       "website": "https://www.rv-argo.de",
@@ -10265,6 +10826,7 @@
       "shortName": "RV Babensham-Wasserburg",
       "abbreviation": "RVB",
       "drvId": "11131",
+      "country": "de",
       "lakeId": "near-babensham",
       "address": "Odelshamer Au 2, 83547 Babensham",
       "website": "https://www.ruderverein-babensham.de",
@@ -10289,6 +10851,7 @@
       "shortName": "RV Bad Ems",
       "abbreviation": "RVBE",
       "drvId": "12003",
+      "country": "de",
       "lakeId": "river-lahn",
       "address": "Mainzer Straße, 56130 Bad Ems",
       "website": "https://www.rv-bad-ems.de",
@@ -10307,6 +10870,7 @@
       "shortName": "RV Bad Wimpfen",
       "abbreviation": "RVW",
       "drvId": "11002",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Alte Steige 8, 74206 Bad Wimpfen",
       "website": "https://www.rv-bad-wimpfen.de",
@@ -10334,6 +10898,7 @@
       "shortName": "RVBerlin 1878 e.V.",
       "abbreviation": "RVB",
       "drvId": "11210",
+      "country": "de",
       "lakeId": "stoessensee",
       "address": "Brandensteinweg 2, 13595 Berlin",
       "website": "https://www.rvb1878.de",
@@ -10361,6 +10926,7 @@
       "shortName": "RV Blankenstein-Ruhr",
       "abbreviation": "RVB",
       "drvId": "11904",
+      "country": "de",
       "lakeId": "river-ruhr",
       "address": "Zu den sieben Hämmern 12, 45527 Hattingen",
       "website": "https://www.ruderverein-blankenstein.de",
@@ -10390,6 +10956,7 @@
       "shortName": "RV Bochum",
       "abbreviation": "RVB",
       "drvId": "11905",
+      "country": "de",
       "lakeId": "river-ruhr",
       "address": "Wetterstraße 38, 58453 Witten",
       "website": "https://ruderverein-bochum.de",
@@ -10419,6 +10986,7 @@
       "shortName": "RV Bodenwerder",
       "abbreviation": "RVB",
       "drvId": "11802",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Linser Str. 14, 37619 Bodenwerder",
       "website": "https://www.ruderverein-bodenwerder.de",
@@ -10443,6 +11011,7 @@
       "shortName": "RV Brombachsee",
       "abbreviation": "RV Brombachsee",
       "drvId": "11150",
+      "country": "de",
       "lakeId": "grosser-brombachsee",
       "address": "Am Segelhafen 3, 91174 Enderndorf",
       "website": null,
@@ -10461,6 +11030,7 @@
       "shortName": "RV Cassel 2010 e.V.",
       "abbreviation": "RVC",
       "drvId": "11654",
+      "country": "de",
       "lakeId": "bugasee",
       "address": "Auedamm 53, 34121 Kassel",
       "website": "http://rudervereincassel.de",
@@ -10492,6 +11062,7 @@
       "shortName": "RV Collegia",
       "abbreviation": "RVC",
       "drvId": "11211",
+      "country": "de",
       "lakeId": "havel-4578498",
       "address": "Pfirsichweg 9-11, 14089 Berlin",
       "website": "https://www.collegia.de",
@@ -10519,6 +11090,7 @@
       "shortName": "RV Datteln",
       "abbreviation": "RVD",
       "drvId": "11912",
+      "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "address": "Hafenstr. 133, 45711 Datteln",
       "website": "https://www.rv-datteln.de",
@@ -10548,6 +11120,7 @@
       "shortName": "RV Dorsten",
       "abbreviation": "RVD",
       "drvId": "11922",
+      "country": "de",
       "lakeId": "river-wesel-datteln-kanal",
       "address": "Gahlener Str. 216, 46282 Dorsten",
       "website": "https://www.ruderverein-dorsten.de",
@@ -10576,6 +11149,7 @@
       "shortName": "RV Eltville",
       "abbreviation": "RVE",
       "drvId": "11604",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Freygäßchen 3, 65343 Eltville",
       "website": "https://www.ruderverein-eltville.de",
@@ -10603,6 +11177,7 @@
       "shortName": "RV Empor",
       "abbreviation": "RVE",
       "drvId": "11246",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Regattastr. 251, 12527 Berlin",
       "website": "https://www.rv-empor.de",
@@ -10631,6 +11206,7 @@
       "shortName": "RV Erlangen",
       "abbreviation": "RVE",
       "drvId": "11104",
+      "country": "de",
       "lakeId": "river-main-donau-kanal",
       "address": "Habichtstr. 12, 91056 Erlangen",
       "website": "http://ruderverein-erlangen.de",
@@ -10661,6 +11237,7 @@
       "shortName": "RV Esslingen",
       "abbreviation": "RVE",
       "drvId": "11005",
+      "country": "de",
       "lakeId": "kleiner-see",
       "address": "Nymphaeaweg 14, 73730 Esslingen",
       "website": null,
@@ -10689,6 +11266,7 @@
       "shortName": "RV FG Kassel",
       "abbreviation": "RVFG",
       "drvId": "15610",
+      "country": "de",
       "lakeId": "river-fulda",
       "address": "Giesenallee, 34121 Kassel",
       "website": "http://www.rvfg.de",
@@ -10715,6 +11293,7 @@
       "shortName": "RV Friedrichshafen",
       "abbreviation": "RVF",
       "drvId": "11006",
+      "country": "de",
       "lakeId": "hafen-friedrichshafen",
       "address": "Östliche Uferstr. 4, 88046 Friedrichshafen",
       "website": "https://www.rvfn.de",
@@ -10744,6 +11323,7 @@
       "shortName": "RV Fürstenberg/O.",
       "abbreviation": "RVF",
       "drvId": "11301",
+      "country": "de",
       "lakeId": "river-oder-spree-kanal",
       "address": "Am Trockendock 4, 15890 Eisenhüttenstadt",
       "website": null,
@@ -10762,6 +11342,7 @@
       "shortName": "RV Gelsenkirchen",
       "abbreviation": "RVG",
       "drvId": "11930",
+      "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "address": "Uferstraße 5, 45881 Gelsenkirchen",
       "website": null,
@@ -10790,6 +11371,7 @@
       "shortName": "RV GG Kassel",
       "abbreviation": "RVGG",
       "drvId": "15607",
+      "country": "de",
       "lakeId": "bugasee",
       "address": "Giesenallee 11, 34121 Kassel",
       "website": "http://rv-goethegymnasium.jimdo.com/",
@@ -10808,6 +11390,7 @@
       "shortName": "RV Hellas Offenbach",
       "abbreviation": "RVHG",
       "drvId": "11638",
+      "country": "de",
       "lakeId": "offenbacher-hafen",
       "address": "Nordring 129a, 63067 Offenbach",
       "website": "https://www.hellas-offenbach.de",
@@ -10835,6 +11418,7 @@
       "shortName": "RV Hoya",
       "abbreviation": "RVH",
       "drvId": "11827",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Hasseler Steinweg 6, 27318 Hoya",
       "website": "https://www.rvhoya.de",
@@ -10853,6 +11437,7 @@
       "shortName": "RV Höxter",
       "abbreviation": "RVH",
       "drvId": "11937",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Sportzentrum 18, 37671 Höxter",
       "website": "https://www.ruderverein-hoexter.de",
@@ -10879,6 +11464,7 @@
       "shortName": "RV Ingelheim",
       "abbreviation": "RVI",
       "drvId": "12014",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinstr. 257, 55218 Ingelheim",
       "website": "https://www.ruderverein-ingelheim.de",
@@ -10906,6 +11492,7 @@
       "shortName": "RV Isenhagener Land",
       "abbreviation": "RV IL",
       "drvId": "15805",
+      "country": "de",
       "lakeId": "river-elbe-seitenkanal",
       "address": "Am Elbe-Seitenkanal 1, 29378 Wittingen",
       "website": "https://www.rvil.de",
@@ -10932,6 +11519,7 @@
       "shortName": "RV Kurhessen-Cassel",
       "abbreviation": "RKC",
       "drvId": "11632",
+      "country": "de",
       "lakeId": "regattastrecke",
       "address": "Auedamm 27, 34121 Kassel",
       "website": "http://rvkurhessen-cassel.de/",
@@ -10961,6 +11549,7 @@
       "shortName": "RV Leer",
       "abbreviation": "RVL",
       "drvId": "11831",
+      "country": "de",
       "lakeId": "river-leda",
       "address": "Ledastraße 2, 26789 Leer",
       "website": "https://www.ruderverein-leer.de",
@@ -10992,6 +11581,7 @@
       "shortName": "RV Linden",
       "abbreviation": "RVL",
       "drvId": "11820",
+      "country": "de",
       "lakeId": "river-leine",
       "address": "Limmerstr. 134, 30451 Hannover",
       "website": "https://www.rvlinden.de",
@@ -11020,6 +11610,7 @@
       "shortName": "RV Lüdinghausen",
       "abbreviation": "RVLH",
       "drvId": "11983",
+      "country": "de",
       "lakeId": "river-alte-fahrt",
       "address": "Berenbrock 22, 59348 Lüdinghausen",
       "website": "https://www.rvlh.de",
@@ -11048,6 +11639,7 @@
       "shortName": "RV Monheim",
       "abbreviation": "RVM",
       "drvId": "11966",
+      "country": "de",
       "lakeId": "near-monheim",
       "address": "Kapellenstr., 40789 Monheim",
       "website": "https://www.rv.monheim.de",
@@ -11066,6 +11658,7 @@
       "shortName": "RV Mühlberg",
       "abbreviation": "RVM",
       "drvId": "11332",
+      "country": "de",
       "lakeId": "river-hafen-muehlberg",
       "address": "Am Hafen 3, 04931 Mühlberg",
       "website": "http://www.rudervereinmuehlberg.de",
@@ -11095,6 +11688,7 @@
       "shortName": "RV Münster",
       "abbreviation": "RVM",
       "drvId": "11963",
+      "country": "de",
       "lakeId": "river-stadthafen-1",
       "address": "Am Mittelhafen 40, 48155 Münster",
       "website": "https://www.rvm1882.de",
@@ -11125,6 +11719,7 @@
       "shortName": "RV Neptun Konstanz",
       "abbreviation": "RVNK",
       "drvId": "11014",
+      "country": "de",
       "lakeId": "bodensee",
       "address": "Spanierstr. 1, 78467 Konstanz",
       "website": "https://www.rvneptun.de",
@@ -11156,6 +11751,7 @@
       "shortName": "RV Nürnberg",
       "abbreviation": "RVN",
       "drvId": "11118",
+      "country": "de",
       "lakeId": "grosser-dutzendteich",
       "address": "Bayernstr. 136, 90478 Nürnberg",
       "website": "https://www.rv-nbg.de",
@@ -11186,6 +11782,7 @@
       "shortName": "RV Oberhausen",
       "abbreviation": "RVO",
       "drvId": "11969",
+      "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "address": "Konrad-Adenauer-Allee 75, 46049 Oberhausen",
       "website": "http://www.ruderverein-oberhausen.de",
@@ -11216,6 +11813,7 @@
       "shortName": "RV Rheinsberg",
       "abbreviation": "RVR",
       "drvId": "11315",
+      "country": "de",
       "lakeId": "near-rheinsberg",
       "address": "Ufersteig 1, 16831 Rheinsberg",
       "website": "https://www.rv-rheinsberg.de",
@@ -11242,6 +11840,7 @@
       "shortName": "RV Rhenania Germersheim e.V.",
       "abbreviation": "RVRG",
       "drvId": "12013",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Werftstr. 1, 76726 Germersheim",
       "website": "https://www.rudern-germersheim.de",
@@ -11270,6 +11869,7 @@
       "shortName": "RV Rhenus Andernach",
       "abbreviation": "RVRA",
       "drvId": "12001",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Kölner Str. 6, 56626 Andernach",
       "website": "https://www.rv-rhenus.de",
@@ -11291,6 +11891,7 @@
       "shortName": "RV Rot-Weiß Naumburg",
       "abbreviation": "RVN",
       "drvId": "12314",
+      "country": "de",
       "lakeId": "near-naumburg",
       "address": "Am Klingenberg 9, 06618 Naumburg",
       "website": "https://www.ruderverein-naumburg.de",
@@ -11309,6 +11910,7 @@
       "shortName": "RV Saarbrücken",
       "abbreviation": "RVS",
       "drvId": "12103",
+      "country": "de",
       "lakeId": "river-saar",
       "address": "Bismarckstraße 129, 66121 Saarbrücken",
       "website": "http://www.ruderbund.de",
@@ -11339,6 +11941,7 @@
       "shortName": "RV Sparta Klein Köris",
       "abbreviation": "RVSKK",
       "drvId": "11309",
+      "country": "de",
       "lakeId": "klein-koeriser-see",
       "address": "Chausseestr. 55, 15746 Klein Köris",
       "website": "https://www.rv-sparta.de",
@@ -11363,6 +11966,7 @@
       "shortName": "RV Treviris",
       "abbreviation": "RVT",
       "drvId": "12036",
+      "country": "de",
       "lakeId": "river-mosel",
       "address": "Luxemburger Straße 81, 54294 Trier",
       "website": "https://www.treviris.de",
@@ -11395,6 +11999,7 @@
       "shortName": "RV Triton Leipzig",
       "abbreviation": "RVT",
       "drvId": "12210",
+      "country": "de",
       "lakeId": "river-weisse-elster",
       "address": "Antonienstraße 1a, 04229 Leipzig",
       "website": "https://www.rv-triton.de",
@@ -11421,6 +12026,7 @@
       "shortName": "RV Uelzen",
       "abbreviation": "RVU",
       "drvId": "11856",
+      "country": "de",
       "lakeId": "river-elbe-seitenkanal",
       "address": "Riedweg 9, 29525 Uelzen",
       "website": "https://www.rv-uelzen.de",
@@ -11448,6 +12054,7 @@
       "shortName": "RV Waldsee",
       "abbreviation": "RVW",
       "drvId": "11001",
+      "country": "de",
       "lakeId": "near-bad-waldsee",
       "address": "Seestr. 15, 88339 Bad Waldsee",
       "website": "https://www.rvw.de",
@@ -11475,6 +12082,7 @@
       "shortName": "RV Waltrop",
       "abbreviation": "RVW",
       "drvId": "11973",
+      "country": "de",
       "lakeId": "river-datteln-hamm-kanal",
       "address": "Im Eickel 40, 45731 Waltrop",
       "website": "https://www.rvwaltrop.de",
@@ -11503,6 +12111,7 @@
       "shortName": "RV Wandsbek",
       "abbreviation": "RVW",
       "drvId": "11519",
+      "country": "de",
       "lakeId": "inselkanal",
       "address": "Alsterkrugchaussee 224, 22297 Hamburg",
       "website": "https://www.ruderverein-wandsbek.de",
@@ -11533,6 +12142,7 @@
       "shortName": "RV Wasserfreunde Erkner",
       "abbreviation": "RVWE",
       "drvId": "11320",
+      "country": "de",
       "lakeId": "daemeritzsee",
       "address": "Zur Buhne 11-14, 15537 Erkner",
       "website": "https://www.rv-wasserfreunde-erkner.de",
@@ -11551,6 +12161,7 @@
       "shortName": "RV Weser",
       "abbreviation": "RVW",
       "drvId": "11816",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Tündernsche Warte 3, 31789 Hameln",
       "website": "https://www.rvweser.de",
@@ -11580,6 +12191,7 @@
       "shortName": "RV WG Kassel",
       "abbreviation": "RVWG",
       "drvId": "15609",
+      "country": "de",
       "lakeId": "regattastrecke",
       "address": "Auedamm 25, 34121 Kassel",
       "website": "http://www.rvwgkassel.de",
@@ -11598,6 +12210,7 @@
       "shortName": "RV Wolgast",
       "abbreviation": "RVW",
       "drvId": "11707",
+      "country": "de",
       "lakeId": "near-wolgast",
       "address": "Am Fährbahnhof 2, 17438 Wolgast",
       "website": null,
@@ -11624,6 +12237,7 @@
       "shortName": "Ruderverein Xanten e.V.",
       "abbreviation": null,
       "drvId": "11987",
+      "country": "de",
       "lakeId": "xantener-nordsee",
       "address": "Alt-Vynscher-Weg, 46509 Xanten",
       "website": "https://www.ruderverein-xanten.de/",
@@ -11642,6 +12256,7 @@
       "shortName": "RV an den Teichwiesen",
       "abbreviation": "RVT",
       "drvId": "11518",
+      "country": "de",
       "lakeId": "inselkanal",
       "address": "Alsterkrugchaussee 222, 22297 Hamburg",
       "website": "https://www.teichwiesen.de",
@@ -11671,6 +12286,7 @@
       "shortName": "RV HSS Kassel",
       "abbreviation": "RVHSS",
       "drvId": "15606",
+      "country": "de",
       "lakeId": "hirschgraben",
       "address": "Auedamm 11, 34121 Kassel",
       "website": "https://www.heinrich-schuetz-schule.de",
@@ -11697,6 +12313,7 @@
       "shortName": "RV Jacob-Grimm Schule Kassel",
       "abbreviation": "RVJGS",
       "drvId": "15617",
+      "country": "de",
       "lakeId": "regattastrecke",
       "address": "Auedamm 29, 34121 Kassel",
       "website": "https://www.rvjgs.de",
@@ -11715,6 +12332,7 @@
       "shortName": "RV für das Große Freie Lehrte/Sehnde",
       "abbreviation": "RGF",
       "drvId": "11832",
+      "country": "de",
       "lakeId": "river-mittellandkanal",
       "address": "Friedrich-Ebert-Str. 21, 31319 Sehnde",
       "website": "https://www.rudern-rgf.de",
@@ -11744,6 +12362,7 @@
       "shortName": "Rvg.Dessau",
       "abbreviation": "RVD",
       "drvId": "12313",
+      "country": "de",
       "lakeId": "river-mulde",
       "address": "Tiergarten 3, 06842 Dessau-Roßlau",
       "website": "http://www.rudervereinigung-dessau.de",
@@ -11770,6 +12389,7 @@
       "shortName": "Rvg. Hellas-Titania Berlin",
       "abbreviation": "RvgHTB",
       "drvId": "11215",
+      "country": "de",
       "lakeId": "havel-158521683",
       "address": "Scharfe Lanke 63, 13595 Berlin",
       "website": "https://www.hellas-titania.de",
@@ -11803,6 +12423,7 @@
       "shortName": "Rvg. Kappeln im Turn- und SV Kappeln",
       "abbreviation": "RVK",
       "drvId": "12411",
+      "country": "de",
       "lakeId": "schlei",
       "address": "Grauhöfter Weg 2, 24376 Kappeln",
       "website": "https://www.rudervereinigung-kappeln.de",
@@ -11831,6 +12452,7 @@
       "shortName": "Rüdersdorfer RV Kalkberge",
       "abbreviation": "RRVK",
       "drvId": "11304",
+      "country": "de",
       "lakeId": "kalksee",
       "address": "Seestraße 13, 15562 Rüdersdorf bei Berlin",
       "website": "https://www.RRVK.net",
@@ -11860,6 +12482,7 @@
       "shortName": "SC DHfK Leipzig",
       "abbreviation": "SCDHfKL",
       "drvId": "12211",
+      "country": "de",
       "lakeId": "river-saale-leipzig-kanal",
       "address": "Richard-Leisebein-Strasse 22, 04178 Leipzig",
       "website": null,
@@ -11888,6 +12511,7 @@
       "shortName": "SC Magdeburg",
       "abbreviation": "SCM",
       "drvId": "12308",
+      "country": "de",
       "lakeId": "adolf-mittag-see",
       "address": "Seilerweg 23, 39114 Magdeburg",
       "website": "https://www.sc-magdeburg.de",
@@ -11915,6 +12539,7 @@
       "shortName": "SRR Albert-Schweitzer- Schule Nienburg",
       "abbreviation": "SRRASSN",
       "drvId": "15809",
+      "country": "de",
       "lakeId": "near-nienburg",
       "address": "Am Mühlentorsweg 2 A, 31582 Nienburg",
       "website": "https://www.ass-nienburg.de",
@@ -11933,6 +12558,7 @@
       "shortName": "SRR Domschulruderclub Schleswig",
       "abbreviation": "SRRDS",
       "drvId": "16412",
+      "country": "de",
       "lakeId": "schulsee",
       "address": "Am Luisenbad 1b, 24837 Schleswig",
       "website": "https://www.domschule-sl.de",
@@ -11958,6 +12584,7 @@
       "shortName": "SRR Goethe-Schule Wetzlar",
       "abbreviation": "SRRGSW",
       "drvId": "15612",
+      "country": "de",
       "lakeId": "river-lahn",
       "address": "Inselstr. 10, 35576 Wetzlar",
       "website": null,
@@ -11982,6 +12609,7 @@
       "shortName": "SRR Gymnasium Philippinum Weilburg",
       "abbreviation": "SRRGPW",
       "drvId": "15621",
+      "country": "de",
       "lakeId": "near-weilburg",
       "address": "Zevenaar-Str. 3, 35781 Weilburg",
       "website": "https://www.weilburgerruderverein.de",
@@ -12000,6 +12628,7 @@
       "shortName": "SRR Gymnasium Stolzenau",
       "abbreviation": "SRRGS",
       "drvId": "15826",
+      "country": "de",
       "lakeId": "river-weser",
       "address": "Am Weserufer 27, 31592 Stolzenau",
       "website": "https://www.gymnasium-stolzenau-2.de/",
@@ -12027,6 +12656,7 @@
       "shortName": "SRR Leibnizgymnasium Offenbach",
       "abbreviation": "SRRLO",
       "drvId": "15622",
+      "country": "de",
       "lakeId": "offenbacher-hafen",
       "address": "Nordring 131, 63067 Offenbach",
       "website": "https://www.srr-leibnizgymnasium.de",
@@ -12045,6 +12675,7 @@
       "shortName": "SRR Sophie-Barat-Schule Hamburg",
       "abbreviation": "SRRSBSH",
       "drvId": "15507",
+      "country": "de",
       "lakeId": "aussenalster",
       "address": "Alsterufer 9, 20354 Hamburg",
       "website": null,
@@ -12063,6 +12694,7 @@
       "shortName": "SRV Albatros Friedrich-Ebert- Gymnasium",
       "abbreviation": "SRVAGH",
       "drvId": "15503",
+      "country": "de",
       "lakeId": "near-hamburg",
       "address": "Schweensandhauptdeich 5, 21079 Hamburg",
       "website": "http://www.srv-albatros.de/",
@@ -12086,6 +12718,7 @@
       "shortName": "SRV Friedrich-Wilhelm-Gymnasium Köln",
       "abbreviation": "SRV am FWG",
       "drvId": "15935",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Barbarastr. 47 - 49, 50996 Köln",
       "website": "https://www.fwg-srv.de",
@@ -12106,6 +12739,7 @@
       "shortName": "GTRV Neuwied",
       "abbreviation": "GTRVN",
       "drvId": "16002",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinstr. 54, 56564 Neuwied",
       "website": "https://www.gtrvn.de",
@@ -12134,6 +12768,7 @@
       "shortName": "SRV Karl-Ziegler-Schule",
       "abbreviation": "SRVKZS",
       "drvId": "15911",
+      "country": "de",
       "lakeId": "die-anger",
       "address": "Mendener Str. 6, 45468 Mülheim",
       "website": null,
@@ -12161,6 +12796,7 @@
       "shortName": "SV Kloster Lehnin/Rudern",
       "abbreviation": "SVKL",
       "drvId": "11324",
+      "country": "de",
       "lakeId": "muehlenteich",
       "address": "Am Hasenkamp 5, 14797 Lehnin",
       "website": "https://www.svklosterlehnin.de/index.php?page=sektion-rudern",
@@ -12186,6 +12822,7 @@
       "shortName": "Saarbrücker RG Undine",
       "abbreviation": "SRG",
       "drvId": "12102",
+      "country": "de",
       "lakeId": "river-saar",
       "address": "Bismarckstr. 129, 66121 Saarbrücken",
       "website": "https://www.srg-undine.de",
@@ -12216,6 +12853,7 @@
       "shortName": "Saarburger RC",
       "abbreviation": "SRC",
       "drvId": "12030",
+      "country": "de",
       "lakeId": "river-saar",
       "address": "Brückenstraße 1, 54439 Saarburg",
       "website": "https://www.saarburger-ruderclub.de",
@@ -12244,6 +12882,7 @@
       "shortName": "Schleissheimer RC",
       "abbreviation": "SRC",
       "drvId": "11137",
+      "country": "de",
       "lakeId": "regattastrecke-oberschleissheim",
       "address": "Dachauer Str. 35, 85764 Oberschleißheim",
       "website": "https://www.schleissheimer-ruderclub.de",
@@ -12273,6 +12912,7 @@
       "shortName": "SRZ Kassel",
       "abbreviation": "SRZ",
       "drvId": "11650",
+      "country": "de",
       "lakeId": "bugasee",
       "address": "Auedamm 53, 34121 Kassel",
       "website": "http://www.trvass.de/kooperationen/schulerregatta-kassel/",
@@ -12295,6 +12935,7 @@
       "shortName": "Schweinfurter RC Franken",
       "abbreviation": "SRCF",
       "drvId": "11123",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Im I. Wehr 3, 97424 Schweinfurt",
       "website": "http://www.schweinfurterruderclub.de",
@@ -12325,6 +12966,7 @@
       "shortName": "Schweriner RG",
       "abbreviation": "SRG",
       "drvId": "11705",
+      "country": "de",
       "lakeId": "schweriner-see-innensee",
       "address": "Franzosenweg 21, 19061 Schwerin",
       "website": "https://www.schwerinerrudergesellschaft.de",
@@ -12354,6 +12996,7 @@
       "shortName": "SRR Leibniz-Gymnasium Bad Schwartau",
       "abbreviation": "SRRLG",
       "drvId": "16414",
+      "country": "de",
       "lakeId": "near-luebeck",
       "address": "Zur Teerhofinsel 5 e, 23554 Lübeck",
       "website": "https://www.srrlg.de",
@@ -12378,6 +13021,7 @@
       "shortName": "Siegburger RV",
       "abbreviation": "SRV",
       "drvId": "11972",
+      "country": "de",
       "lakeId": "river-siegburger-muehlengraben",
       "address": "Wahnbachtalstraße 15, 53721 Siegburg",
       "website": "https://www.siegburger-ruderverein.de",
@@ -12408,6 +13052,7 @@
       "shortName": "Spandauer RC \"Friesen\"",
       "abbreviation": "SRCF",
       "drvId": "11213",
+      "country": "de",
       "lakeId": "grimnitzsee",
       "address": "Mahnkopfweg 6, 13595 Berlin",
       "website": "https://www.srcf.de",
@@ -12437,6 +13082,7 @@
       "shortName": "Spiel- und SV Planeta Radebeul",
       "abbreviation": "SSVPR",
       "drvId": "12217",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "An der Festwiese 9, 01445 Radebeul",
       "website": "https://www.rudern-radebeul.de",
@@ -12465,6 +13111,7 @@
       "shortName": "SC Berlin-Köpenick",
       "abbreviation": "SCBK",
       "drvId": "11247",
+      "country": "de",
       "lakeId": "river-treptower-spree",
       "address": "Nixenstr. 2, 12459 Berlin",
       "website": "https://www.scbk.de",
@@ -12493,6 +13140,7 @@
       "shortName": "SC Berlin-Grünau",
       "abbreviation": "SCBG",
       "drvId": "11249",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Sportpromenade 3, 12527 Berlin",
       "website": "https://www.scbg.de",
@@ -12518,6 +13166,7 @@
       "shortName": "SG DEMAG",
       "abbreviation": "SGD",
       "drvId": "11975",
+      "country": "de",
       "lakeId": "river-obergraben",
       "address": "Am Obergraben 3, 58300 Wetter",
       "website": "http://www.sgdemag.de/rudern",
@@ -12546,6 +13195,7 @@
       "shortName": "SG Diepholz RA",
       "abbreviation": "SGD",
       "drvId": "11811",
+      "country": "de",
       "lakeId": "river-hunte",
       "address": "Eickhöpen 62, 49459 Lembruch",
       "website": "https://www.rudern-in-diepholz.de",
@@ -12573,6 +13223,7 @@
       "shortName": "SG Wiking",
       "abbreviation": "SGW",
       "drvId": "11643",
+      "country": "de",
       "lakeId": "offenbacher-hafen",
       "address": "Nordring 131, 63067 Offenbach",
       "website": "https://www.sgwiking.de",
@@ -12602,6 +13253,7 @@
       "shortName": "SV Energie Berlin",
       "abbreviation": "SVEB",
       "drvId": "11250",
+      "country": "de",
       "lakeId": "river-dahme",
       "address": "Gutenbergstr. 4-5, 12557 Berlin-Köpenick",
       "website": "https://www.sv-energie-berlin.de",
@@ -12631,6 +13283,7 @@
       "shortName": "WSAP Hamburg",
       "abbreviation": "WSAP",
       "drvId": "11514",
+      "country": "de",
       "lakeId": "river-isebekkanal",
       "address": "Isekai 12ö, 20249 Hamburg",
       "website": "https://wsap-hamburg.de",
@@ -12658,6 +13311,7 @@
       "shortName": "Svg. Scharnebeck RA",
       "abbreviation": "SvgS",
       "drvId": "11853",
+      "country": "de",
       "lakeId": "near-scharnebeck",
       "address": "Am Unterhafen, 21379 Scharnebeck",
       "website": "https://www.sv-scharnebeck.de",
@@ -12690,6 +13344,7 @@
       "shortName": "Uni Kiel",
       "abbreviation": "CAU Kiel",
       "drvId": "60011",
+      "country": "de",
       "lakeId": "seehundbecken",
       "address": "Kiellinie 7, 24105 Kiel",
       "website": "http://www.sportzentrum.uni-kiel.de/",
@@ -12710,6 +13365,7 @@
       "shortName": "Spree-RC Köpenick",
       "abbreviation": "SRCK",
       "drvId": "11251",
+      "country": "de",
       "lakeId": "langer-see",
       "address": "Wendenschloßstr. 404, 12557 Berlin-Köpenick",
       "website": "https://www.spreeruderclub.de",
@@ -12735,6 +13391,7 @@
       "shortName": "Steeler RV",
       "abbreviation": "SRV",
       "drvId": "11927",
+      "country": "de",
       "lakeId": "river-ruhr",
       "address": "Grendtor 40, 45276 Essen-Steele",
       "website": "https://www.steeler-ruder-verein.de",
@@ -12753,6 +13410,7 @@
       "shortName": "Storkower Rvg.",
       "abbreviation": "SRvg",
       "drvId": "11326",
+      "country": "de",
       "lakeId": "grosser-storkower-see",
       "address": "Seestraße 22, 15859 Storkow",
       "website": "https://www.rudern-in-storkow.de",
@@ -12771,6 +13429,7 @@
       "shortName": "Stralsunder RC",
       "abbreviation": "SRC",
       "drvId": "11703",
+      "country": "de",
       "lakeId": "near-stralsund",
       "address": "Friedrich-Naumann-Str. 5, 18435 Stralsund",
       "website": "https://www.stralsunder-ruderclub.de",
@@ -12789,6 +13448,7 @@
       "shortName": "Straubinger RC",
       "abbreviation": "StRC",
       "drvId": "11124",
+      "country": "de",
       "lakeId": "river-alte-donau",
       "address": "Wundermühlweg 54, 94315 Straubing",
       "website": "https://www.straubinger-ruderclub.de",
@@ -12818,6 +13478,7 @@
       "shortName": "Stuttgart-Cannstatter RC",
       "abbreviation": "StCRC",
       "drvId": "11029",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Wagrainstr. 140, 70378 Stuttgart",
       "website": "https://www.stcrc.net",
@@ -12847,6 +13508,7 @@
       "shortName": "Stuttgarter RG",
       "abbreviation": "SRG",
       "drvId": "11030",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Inselstr. 147, 70327 Stuttgart",
       "website": "https://www.strg1899.de",
@@ -12874,6 +13536,7 @@
       "shortName": "TPSK Köln",
       "abbreviation": "TPSK",
       "drvId": "11944",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "In der Rosenau 10, 51143 Köln",
       "website": "https://www.tpsk-koeln.de",
@@ -12892,6 +13555,7 @@
       "shortName": "TRV Rhenania Bingen e.V",
       "abbreviation": "TRVR",
       "drvId": "12009",
+      "country": "de",
       "lakeId": "river-nahe",
       "address": "Saarlandstr. 56a, 55411 Bingen",
       "website": "https://www.trv-rhenania.de",
@@ -12913,6 +13577,7 @@
       "shortName": "TSV Herrsching",
       "abbreviation": "TSVH",
       "drvId": "11141",
+      "country": "de",
       "lakeId": "ammersee",
       "address": "Wartaweil 27, 82211 Herrsching",
       "website": "https://www.tsvh-wassersport.de",
@@ -12937,6 +13602,7 @@
       "shortName": "TSV Otterndorf/RA",
       "abbreviation": "TSVO",
       "drvId": "11846",
+      "country": "de",
       "lakeId": "river-hadelner-kanal",
       "address": "Beufleth 3, 21762 Otterndorf",
       "website": "https://www.tsv-otterndorf.de",
@@ -12966,6 +13632,7 @@
       "shortName": "Tangermünder RC",
       "abbreviation": "TRC",
       "drvId": "12304",
+      "country": "de",
       "lakeId": "near-tangermuende",
       "address": "Boootshaus am Hafen, 39590 Tangermünde",
       "website": "https://www.tangermuender-ruderclub.de",
@@ -12984,6 +13651,7 @@
       "shortName": "Theodor-Heuss-Gymnasium Essen-Kettwig",
       "abbreviation": "THGEK",
       "drvId": "15927",
+      "country": "de",
       "lakeId": "kettwiger-stausee",
       "address": "Promenadenweg 100, 45219 Essen",
       "website": "https://www.thg-essen.de",
@@ -13004,6 +13672,7 @@
       "shortName": "Torgauer RV",
       "abbreviation": "TRV",
       "drvId": "12215",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Pestalozziweg 15, 04860 Torgau",
       "website": "https://www.torgauer-ruderverein.de",
@@ -13034,6 +13703,7 @@
       "shortName": "TRV Albert-Schweitzer-Schule Kassel",
       "abbreviation": "TRVASS",
       "drvId": "15608",
+      "country": "de",
       "lakeId": "bugasee",
       "address": "Auedamm 53, 34121 Kassel",
       "website": "http://www.trvass.de",
@@ -13061,6 +13731,7 @@
       "shortName": "Turn- und SV Bramsche RA",
       "abbreviation": "TSVB",
       "drvId": "11805",
+      "country": "de",
       "lakeId": "river-mittellandkanal",
       "address": "Hafenstraße 35, 49565 Bramsche",
       "website": "https://www.tus-bramsche.de",
@@ -13086,6 +13757,7 @@
       "shortName": "Tübinger RV Fidelia",
       "abbreviation": "TRV",
       "drvId": "11033",
+      "country": "de",
       "lakeId": "river-neckar",
       "address": "Gartenstr. 180, 72074 Tübingen",
       "website": "https://www.trv-fidelia.de",
@@ -13113,6 +13785,7 @@
       "shortName": "Uerdinger RC",
       "abbreviation": "URC",
       "drvId": "11951",
+      "country": "de",
       "lakeId": "rheinhafen",
       "address": "Düsseldorfer Str. 47, 47829 Krefeld",
       "website": "https://www.uerc.de",
@@ -13142,6 +13815,7 @@
       "shortName": "Ulmer RC Donau",
       "abbreviation": "URCD",
       "drvId": "11035",
+      "country": "de",
       "lakeId": "forellenbaechle",
       "address": "Bootshausstraße 7, 89231 Neu-Ulm",
       "website": "https://www.ulmer-ruderclub.de",
@@ -13175,6 +13849,7 @@
       "shortName": "RC Schönebeck",
       "abbreviation": "RC Schönebeck",
       "drvId": "12318",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Buschweg 7, 39218 Schönebeck",
       "website": "https://www.ruderclub-schönebeck.de",
@@ -13202,6 +13877,7 @@
       "shortName": "Uni Passau",
       "abbreviation": "Uni PA",
       "drvId": "60020",
+      "country": "de",
       "lakeId": "river-inn",
       "address": "Innstraße 145, 94036 Passau",
       "website": "http://www.sportzentrum.uni-passau.de/",
@@ -13222,6 +13898,7 @@
       "shortName": "Uni-SC Otto Guericke Magdeburg",
       "abbreviation": "USCM",
       "drvId": "12310",
+      "country": "de",
       "lakeId": "near-magdeburg",
       "address": "Hugo-Junkers-Allee 75, 39128 Magdeburg",
       "website": "https://www.usc-rudern.de",
@@ -13244,6 +13921,7 @@
       "shortName": "USV TU Dresden",
       "abbreviation": "USVD",
       "drvId": "12214",
+      "country": "de",
       "lakeId": "river-elbe",
       "address": "Heinrich-Schütz-Str. 2, 01277 Dresden",
       "website": "https://www.usvrudern.de",
@@ -13262,6 +13940,7 @@
       "shortName": "Vegesacker RV",
       "abbreviation": "VRV",
       "drvId": "11404",
+      "country": "de",
       "lakeId": "river-lesum",
       "address": "Am Wasser 23, 28759 Bremen",
       "website": "http://www.vrv.de",
@@ -13292,6 +13971,7 @@
       "shortName": "Verdener RV",
       "abbreviation": "VRV",
       "drvId": "11857",
+      "country": "de",
       "lakeId": "river-aller",
       "address": "Fährstr. 17, 27283 Verden",
       "website": "https://www.verdener-rv.de",
@@ -13310,6 +13990,7 @@
       "shortName": "Versehrten-Wassersport-Gemeinschaft",
       "abbreviation": "VWG",
       "drvId": "11236",
+      "country": "de",
       "lakeId": "stoessensee",
       "address": "Havelchaussee 115, 14055 Berlin",
       "website": "https://www.vwg-berlin.de",
@@ -13330,6 +14011,7 @@
       "shortName": "VW Mannheim",
       "abbreviation": "VWM",
       "drvId": "11020",
+      "country": "de",
       "lakeId": "waldhofbecken",
       "address": "Sandhofer Str. 51-53, 68305 Mannheim",
       "website": "https://www.vwm-wassersport.de",
@@ -13359,6 +14041,7 @@
       "shortName": "WSC WannseeLöwe",
       "abbreviation": "WSCWL",
       "drvId": "11255",
+      "country": "de",
       "lakeId": "near-berlin",
       "address": "14109 Berlin",
       "website": null,
@@ -13380,6 +14063,7 @@
       "shortName": "Waginger RV",
       "abbreviation": "WRV",
       "drvId": "11136",
+      "country": "de",
       "lakeId": "near-waging-am-see",
       "address": "Zum Seeteufel 45, 83329 Waging am See",
       "website": "https://www.waginger-ruderverein.de",
@@ -13408,6 +14092,7 @@
       "shortName": "WSV Düsseldorf RG",
       "abbreviation": "WSVD",
       "drvId": "11919",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rotterdamer Str. 40, 40474 Düsseldorf",
       "website": "https://www.wsvd.de",
@@ -13438,6 +14123,7 @@
       "shortName": "Wasser-Sport-Verein Rinteln",
       "abbreviation": "WSVR",
       "drvId": "11850",
+      "country": "de",
       "lakeId": "doktorsee",
       "address": "Am Doktorsee 18, 31737 Rinteln",
       "website": "https://www.wsv-rinteln.com",
@@ -13462,6 +14148,7 @@
       "shortName": "Wasserfreunde Hemmoor",
       "abbreviation": "WFH",
       "drvId": "11824",
+      "country": "de",
       "lakeId": "near-hemmoor",
       "address": "21745 Hemmoor",
       "website": "https://www.WF-Hemmoor.de",
@@ -13490,6 +14177,7 @@
       "shortName": "WV Ennepetal",
       "abbreviation": "WVE",
       "drvId": "11923",
+      "country": "de",
       "lakeId": "beyenburger-stausee",
       "address": "Vor der Hardt 121, 42399 Wuppertal",
       "website": "https://www.wv-ennepetal.de",
@@ -13520,6 +14208,7 @@
       "shortName": "WSV Waldshut",
       "abbreviation": "WVW",
       "drvId": "11037",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Baselerstr. 1, 79761 Waldshut-Tiengen",
       "website": "https://wv-waldshut.de/",
@@ -13548,6 +14237,7 @@
       "shortName": "Wassersportfreunde Burg",
       "abbreviation": "WSFB",
       "drvId": "12311",
+      "country": "de",
       "lakeId": "river-elbe-havel-kanal",
       "address": "Am Kanal 20 a, 39288 Burg",
       "website": null,
@@ -13576,6 +14266,7 @@
       "shortName": "WSV Offenbach am Main-Bürgel",
       "abbreviation": "WSVO",
       "drvId": "11642",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Am Maingarten 404, 63075 Offenbach",
       "website": "https://www.wsv-buergel.de",
@@ -13605,6 +14296,7 @@
       "shortName": "WSV Altwarmbüchen",
       "abbreviation": "WSVA",
       "drvId": "11801",
+      "country": "de",
       "lakeId": "altwarmbuechener-see",
       "address": "Seestr. 23, 30916 Isernhagen",
       "website": "https://www.wsv-altwarmbuechen.de",
@@ -13633,6 +14325,7 @@
       "shortName": "WSV Belau",
       "abbreviation": "WSVB",
       "drvId": "12426",
+      "country": "de",
       "lakeId": "near-belau",
       "address": "24601 Belau",
       "website": "https://www.wsv-belau.com",
@@ -13657,6 +14350,7 @@
       "shortName": "WSV Einheit Neustrelitz",
       "abbreviation": "WSVN",
       "drvId": "11701",
+      "country": "de",
       "lakeId": "zierker-see",
       "address": "Zierker Nebenstr. 31, 17235 Neustrelitz",
       "website": "https://www.wsv-neustrelitz.de",
@@ -13675,6 +14369,7 @@
       "shortName": "WSV Geisenheim",
       "abbreviation": "WSVG",
       "drvId": "11621",
+      "country": "de",
       "lakeId": "near-geisenheim",
       "address": "Am Rheinufer 2, 65366 Geisenheim",
       "website": "https://www.wsv-geisenheim.de",
@@ -13702,6 +14397,7 @@
       "shortName": "WSV Godesberg",
       "abbreviation": "WSVG",
       "drvId": "11909",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinstr. 80, 53179 Bonn",
       "website": "https://www.wsvg.de",
@@ -13731,6 +14427,7 @@
       "shortName": "WSV Hellas Gießen",
       "abbreviation": "WSVH",
       "drvId": "11623",
+      "country": "de",
       "lakeId": "river-lahn",
       "address": "Wißmarer Weg 125, 35396 Gießen",
       "website": "https://www.wsv-hellas.de",
@@ -13759,6 +14456,7 @@
       "shortName": "WSV Herne",
       "abbreviation": "WSVH",
       "drvId": "11936",
+      "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "address": "Gneisenaustr. 187, 44628 Herne",
       "website": "https://www.wsv-herne.de",
@@ -13777,6 +14475,7 @@
       "shortName": "WSV Honnef",
       "abbreviation": "WSVH",
       "drvId": "11903",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Rheinpromenade 7, 53604 Bad Honnef",
       "website": "https://wsvhonnef.de/",
@@ -13806,6 +14505,7 @@
       "shortName": "WSV Königs Wusterhausen",
       "abbreviation": "WSVKW",
       "drvId": "11334",
+      "country": "de",
       "lakeId": "tonteiche",
       "address": "Küchenmeisterallee 14 a, 15711 Königs Wusterhausen",
       "website": "https://www.wsv-koewu.de",
@@ -13838,6 +14538,7 @@
       "shortName": "WSV Meppen",
       "abbreviation": "WSVM",
       "drvId": "11837",
+      "country": "de",
       "lakeId": "river-hase",
       "address": "Widukindstr. 22, 49716 Meppen",
       "website": "https://www.wsvm.de",
@@ -13869,6 +14570,7 @@
       "shortName": "WSV Mülheim-Ruhr",
       "abbreviation": "WSVM",
       "drvId": "11960",
+      "country": "de",
       "lakeId": "die-anger",
       "address": "Mendener Str. 68, 45470 Mülheim",
       "website": "https://www.wsv-muelheim.de",
@@ -13899,6 +14601,7 @@
       "shortName": "WSV St. Goar",
       "abbreviation": "WSV St. Goar",
       "drvId": "12032",
+      "country": "de",
       "lakeId": "near-st-goar",
       "address": "56329 St. Goar",
       "website": null,
@@ -13917,6 +14620,7 @@
       "shortName": "WSV Twistesee",
       "abbreviation": "WSVT",
       "drvId": "11652",
+      "country": "de",
       "lakeId": "twistesee",
       "address": "Hoppenhof 6, 34454 Bad Arolsen",
       "website": "https://www.wassersportverein-twistesee.de",
@@ -13943,6 +14647,7 @@
       "shortName": "Weilburger RV",
       "abbreviation": "WRV",
       "drvId": "11646",
+      "country": "de",
       "lakeId": "near-weilburg",
       "address": "35781 Weilburg",
       "website": "https://www.weilburgerruderverein.de",
@@ -13971,6 +14676,7 @@
       "shortName": "Weisenauer RV",
       "abbreviation": "WRV",
       "drvId": "12023",
+      "country": "de",
       "lakeId": "river-rhein",
       "address": "Dammweg 18, 55130 Mainz-Laubenheim",
       "website": "https://www.wrv-1913.de",
@@ -14000,6 +14706,7 @@
       "shortName": "Weißenfelser RV",
       "abbreviation": "WRV",
       "drvId": "12319",
+      "country": "de",
       "lakeId": "river-saale",
       "address": "Beuditz - Vorstadt 23, 06667 Weißenfels",
       "website": "https://www.wrv-sport.de",
@@ -14027,6 +14734,7 @@
       "shortName": "Wilhelmsburger RC",
       "abbreviation": "WRC",
       "drvId": "11520",
+      "country": "de",
       "lakeId": "river-assmannkanal",
       "address": "Vogelhüttendeich 120, 21107 Hamburg",
       "website": "http://www.wrc1895.de",
@@ -14056,6 +14764,7 @@
       "shortName": "Wolfsburger RC",
       "abbreviation": "WRC",
       "drvId": "11860",
+      "country": "de",
       "lakeId": "allersee",
       "address": "In den Allerwiesen 3, 38446 Wolfsburg",
       "website": "https://www.wob-rc.de",
@@ -14088,6 +14797,7 @@
       "shortName": "Wormser RC Blau-Weiß",
       "abbreviation": "WRC",
       "drvId": "12038",
+      "country": "de",
       "lakeId": "winterhafen",
       "address": "Am Rhein 5, 67547 Worms",
       "website": "https://www.wrcbw1883.de",
@@ -14106,6 +14816,7 @@
       "shortName": "Wurzener Rvg. Schwarz-Gelb",
       "abbreviation": "WRVg",
       "drvId": "12202",
+      "country": "de",
       "lakeId": "bruch",
       "address": "Am Steinbruch 15, 04828 Schmölen",
       "website": "https://www.wurzener-rudervereinigung.de",
@@ -14135,6 +14846,7 @@
       "shortName": "Würzburger RV Bayern",
       "abbreviation": "WRVB",
       "drvId": "11135",
+      "country": "de",
       "lakeId": "river-main",
       "address": "Mergentheimer Str. 9h+13, 97082 Würzburg",
       "website": "https://www.wuerzburger-ruderverein-bayern.de",
@@ -14166,6 +14878,7 @@
       "shortName": "Zschornewitzer RC im SV Turbine Zschw.",
       "abbreviation": "ZRC",
       "drvId": "12307",
+      "country": "de",
       "lakeId": "near-zschornewitz",
       "address": "Pöplitzer Weg 49, 06791 Zschornewitz",
       "website": "https://www.zrc-online.de",
@@ -14191,6 +14904,7 @@
       "shortName": "Überlinger RC Bodan",
       "abbreviation": "ÜRCB",
       "drvId": "11034",
+      "country": "de",
       "lakeId": "bodensee",
       "address": "Strandweg 18 a, 88662 Überlingen",
       "website": "https://ueberlinger-ruderclub.de",

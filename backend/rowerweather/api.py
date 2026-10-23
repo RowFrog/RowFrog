@@ -63,35 +63,75 @@ def _point(p: locations.Point) -> dict:
     return {"lat": p.lat, "lon": p.lon}
 
 
+def _lake_json(lake: locations.Lake, country: str | None = None) -> dict:
+    """A water with its clubs; with `country`, only the clubs in that country."""
+    return {
+        "id": lake.id,
+        "name": lake.name,
+        "country": lake.country,
+        "center": _point(lake.center),
+        # The lake view needs an outline (data/outlines).
+        "hasOutline": (outlines.DEFAULT_DIR / f"{lake.id}.geojson").exists(),
+        "clubs": [
+            {
+                "id": c.id,
+                "name": c.name,
+                "shortName": c.short_name,
+                "address": c.address,
+                "website": c.website,
+                "launchPoint": _point(c.launch_point),
+                "launchPointVerified": c.launch_point_verified,
+                "source": c.source,
+                "abbreviation": c.abbreviation,
+                "country": c.country,
+                "region": c.region,
+            }
+            for c in _locations.clubs_on(lake.id, country)
+        ],
+    }
+
+
 @app.get("/lakes")
 # The same list under a path that also works as a static file next to lakes/<id>/view.
 @app.get("/lakes/index")
 def list_lakes() -> list[dict]:
-    return [
-        {
-            "id": lake.id,
-            "name": lake.name,
-            "center": _point(lake.center),
-            # The lake view needs an outline (data/outlines).
-            "hasOutline": (outlines.DEFAULT_DIR / f"{lake.id}.geojson").exists(),
-            "clubs": [
-                {
-                    "id": c.id,
-                    "name": c.name,
-                    "shortName": c.short_name,
-                    "address": c.address,
-                    "website": c.website,
-                    "launchPoint": _point(c.launch_point),
-                    "launchPointVerified": c.launch_point_verified,
-                    "source": c.source,
-                    "abbreviation": c.abbreviation,
-                }
-                for c in _locations.clubs_on(lake.id)
-            ],
-        }
-        for lake in _locations.lakes.values()
-        if _locations.clubs_on(lake.id)
-    ]
+    """Every water with clubs, in all countries; for app versions before the country files."""
+    return [_lake_json(lake) for lake in _locations.lakes.values() if _locations.clubs_on(lake.id)]
+
+
+@app.get("/countries")
+@app.get("/countries/index")
+def list_countries() -> list[dict]:
+    """The countries the search covers, with how many clubs and where they lie.
+
+    The app loads its own country's file first and others when needed; the
+    box around a country's clubs tells it which countries are near the user.
+    """
+    out = []
+    for code in _locations.countries():
+        clubs = [c for c in _locations.clubs.values() if c.country == code]
+        lats = [c.launch_point.lat for c in clubs]
+        lons = [c.launch_point.lon for c in clubs]
+        name, name_de = locations.COUNTRIES.get(code, (code.upper(), code.upper()))
+        out.append({
+            "code": code,
+            "name": name,
+            "nameDe": name_de,
+            "clubs": len(clubs),
+            "bounds": {"south": min(lats), "west": min(lons), "north": max(lats), "east": max(lons)},
+        })
+    return out
+
+
+@app.get("/countries/{code}/lakes")
+def country_lakes(code: str) -> list[dict]:
+    """The waters with clubs in one country, with only that country's clubs.
+
+    A lake on a border (Lake Constance) is listed in each country with its own clubs.
+    """
+    if code not in _locations.countries():
+        raise HTTPException(status_code=404, detail="unknown country")
+    return [_lake_json(lake, code) for lake in _locations.lakes.values() if _locations.clubs_on(lake.id, code)]
 
 
 def _now() -> datetime:

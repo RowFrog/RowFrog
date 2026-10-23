@@ -1,7 +1,7 @@
 name: DRV club catalog
 
 # Imports the German Rowing Association's club list (rudern.de) into
-# data/catalog-drv.json, the main source of the app's club search, plus any
+# data/catalogs/de-drv.json, the main source of the app's club search, plus any
 # missing lake outlines, committed back to the same branch. Reads one club
 # page a second and geocodes with Nominatim at one request a second, so a
 # full run takes a while. Runs by hand from the Actions tab or when the
@@ -11,6 +11,7 @@ on:
   push:
     paths:
       - scripts/import_drv.py
+      - scripts/club_import.py
       - .github/workflows/drv-catalog.yml
   workflow_dispatch:
 
@@ -40,7 +41,7 @@ jobs:
         run: python3 -c 'from rowerweather import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "waters")'
       - name: Commit the catalog
         run: |
-          git add data/catalog-drv.json data/drv-geocode.json data/outlines
+          git add data/catalogs/de-drv.json data/geocode.json data/outlines
           if git diff --cached --quiet; then
             echo "No changes."
           else

@@ -1,0 +1,84 @@
+name: Austria and Switzerland club catalogs
+
+# Imports the rowing clubs of Austria and Switzerland into the search:
+# - Austria from the ÖRV club list (rudern.at, one page) into
+#   data/catalogs/at-oerv.json, plus clubs only OpenStreetMap knows into at-osm.json;
+# - Switzerland from OpenStreetMap into data/catalogs/ch-osm.json.
+# Swiss Rowing's own directory (ch-swissrowing.json) is only imported when
+# started by hand with "Import Swiss Rowing" ticked, once Swiss Rowing has
+# agreed; otherwise the job only reads three club pages to check the parsing.
+# Results, lake outlines and the geocoding cache are committed back to the
+# same branch. Runs by hand from the Actions tab or when the scripts change.
+
+on:
+  push:
+    paths:
+      - scripts/import_oerv.py
+      - scripts/import_osm_clubs.py
+      - scripts/import_swissrowing.py
+      - .github/workflows/alpine-catalogs.yml
+  workflow_dispatch:
+    inputs:
+      swissrowing:
+        description: "Import Swiss Rowing's directory (only once Swiss Rowing has agreed)"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: alpine-catalogs-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  catalogs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Import ÖRV clubs
+        run: |
+          set -o pipefail
+          python3 -u scripts/import_oerv.py | tee oerv-report.txt
+          { echo '### ÖRV'; echo '```'; tail -n 200 oerv-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Import OpenStreetMap clubs (Austria, Switzerland)
+        run: |
+          set -o pipefail
+          for country in at ch; do
+            python3 -u scripts/import_osm_clubs.py "$country" | tee "osm-$country-report.txt"
+            { echo "### OpenStreetMap $country"; echo '```'; tail -n 200 "osm-$country-report.txt"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+            sleep 10  # Overpass asks for pauses between big queries
+          done
+      - name: Swiss Rowing directory
+        run: |
+          set -o pipefail
+          if [ "${{ inputs.swissrowing }}" = "true" ]; then
+            python3 -u scripts/import_swissrowing.py | tee sr-report.txt
+          else
+            python3 -u scripts/import_swissrowing.py --dry-run 3 | tee sr-report.txt
+          fi
+          { echo '### Swiss Rowing'; echo '```'; tail -n 200 sr-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Check the catalogs load
+        run: |
+          python3 -c '
+          from rowerweather import locations
+          l = locations.load()
+          for c in l.countries():
+              print(c, sum(1 for x in l.clubs.values() if x.country == c), "clubs")'
+      - name: Commit the catalogs
+        run: |
+          git add data/catalogs data/geocode.json data/outlines
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update the Austrian and Swiss club catalogs"
+            git pull --rebase
+            git push
+          fi
