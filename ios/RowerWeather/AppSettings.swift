@@ -58,8 +58,8 @@ final class AppSettings {
 
     /// Adds a boat and returns it.
     @discardableResult
-    func addBoat(type: BoatType = .gig) -> Boat {
-        let boat = Boat(id: UUID().uuidString, name: "", type: type)
+    func addBoat(type: BoatType = .gig, boatClass: BoatClass = .quad) -> Boat {
+        let boat = Boat(id: UUID().uuidString, name: "", type: type, boatClass: boatClass)
         myBoats.append(boat)
         return boat
     }
@@ -134,10 +134,11 @@ final class AppSettings {
         if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
             myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
         } else {
-            // As a launch argument: `-RWMyBoats '({id = b1; name = Anna; type = gig;})'`.
+            // As a launch argument: `-RWMyBoats '({id = b1; name = Anna; type = gig; class = "4x";})'`.
             myBoats = (defaults.array(forKey: Keys.myBoats) as? [[String: String]] ?? []).compactMap { raw in
-                guard let id = raw["id"], let type = raw["type"].flatMap(BoatType.init(rawValue:)) else { return nil }
-                return Boat(id: id, name: raw["name"] ?? "", type: type)
+                guard let id = raw["id"], let type = raw["type"].flatMap(BoatType.init(rawValue:)),
+                      let boatClass = raw["class"].flatMap(BoatClass.init(rawValue:)) else { return nil }
+                return Boat(id: id, name: raw["name"] ?? "", type: type, boatClass: boatClass)
             }
         }
         boatID = defaults.string(forKey: Keys.boat) ?? Boat.small.id

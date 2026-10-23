@@ -1,16 +1,15 @@
 import Foundation
 
-/// A kind of boat. Freeboard and width decide how much wind and how high a
-/// wave a boat takes, so each type has its own starting limits.
+/// How a boat is built. Freeboard and width decide how much wind and how high
+/// a wave a boat takes, so each type has its own starting limits.
 enum BoatType: String, CaseIterable, Identifiable, Codable {
-    case racingSmall, racingBig, trainingSingle, gig, coastal
+    case racing, training, gig, coastal
     var id: String { rawValue }
 
     var title: String {
         switch self {
-        case .racingSmall: tr("Racing boat, small")
-        case .racingBig: tr("Racing boat, big")
-        case .trainingSingle: tr("Training single")
+        case .racing: tr("Racing boat")
+        case .training: tr("Training boat")
         case .gig: tr("Gig boat")
         case .coastal: tr("Coastal boat")
         }
@@ -18,13 +17,34 @@ enum BoatType: String, CaseIterable, Identifiable, Codable {
 
     var detail: String {
         switch self {
-        case .racingSmall: tr("Singles, doubles and pairs (1x, 2x, 2-)")
-        case .racingBig: tr("Fours and eights (4x, 4-, 4+, 8+)")
-        case .trainingSingle: tr("A wider learner or training single")
+        case .racing: tr("Narrow and low, with the least side above the water")
+        case .training: tr("Wider and steadier than a racing boat")
         case .gig: tr("Gig and touring boats, higher sides")
         case .coastal: tr("Coastal boats that drain themselves")
         }
     }
+}
+
+/// Size and rigging: how many rowers, sculling or sweep, with or without cox.
+enum BoatClass: String, CaseIterable, Identifiable, Codable {
+    case single = "1x", double = "2x", pair = "2-", quad = "4x", four = "4-", coxedFour = "4+", octuple = "8x", eight = "8+"
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .single: tr("Single (1x)")
+        case .double: tr("Double (2x)")
+        case .pair: tr("Pair (2-)")
+        case .quad: tr("Quad (4x)")
+        case .four: tr("Four (4-)")
+        case .coxedFour: tr("Coxed four (4+)")
+        case .octuple: tr("Octuple (8x)")
+        case .eight: tr("Eight (8+)")
+        }
+    }
+
+    /// Fours and eights: longer, heavier and steadier.
+    var isBig: Bool { ![.single, .double, .pair].contains(self) }
 }
 
 /// A boat the rowing light can be worked out for: the two groups every user
@@ -33,18 +53,37 @@ struct Boat: Codable, Hashable, Identifiable {
     var id: String
     var name: String
     var type: BoatType
+    var boatClass: BoatClass
 
-    static let small = Boat(id: "small", name: "", type: .racingSmall)
-    static let big = Boat(id: "big", name: "", type: .racingBig)
+    static let small = Boat(id: "small", name: "", type: .racing, boatClass: .single)
+    static let big = Boat(id: "big", name: "", type: .racing, boatClass: .eight)
     static let groups = [small, big]
 
+    init(id: String, name: String, type: BoatType, boatClass: BoatClass) {
+        self.id = id
+        self.name = name
+        self.type = type
+        self.boatClass = boatClass
+    }
+
+    private enum CodingKeys: String, CodingKey { case id, name, type, boatClass = "class" }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        id = try c.decode(String.self, forKey: .id)
+        name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
+        type = try c.decodeIfPresent(BoatType.self, forKey: .type) ?? .racing
+        boatClass = try c.decodeIfPresent(BoatClass.self, forKey: .boatClass) ?? .single
+    }
+
     var isGroup: Bool { id == Self.small.id || id == Self.big.id }
+    var isBig: Bool { boatClass.isBig }
 
     var title: String {
         switch id {
         case Self.small.id: tr("Small boats")
         case Self.big.id: tr("Big boats")
-        default: name.trimmingCharacters(in: .whitespaces).isEmpty ? type.title : name
+        default: name.trimmingCharacters(in: .whitespaces).isEmpty ? "\(type.title) \(boatClass.rawValue)" : name
         }
     }
 
@@ -57,7 +96,13 @@ struct Boat: Codable, Hashable, Identifiable {
         }
     }
 
-    var detail: String { isGroup ? type.detail : type.title }
+    var detail: String {
+        switch id {
+        case Self.small.id: tr("Singles, doubles and pairs (1x, 2x, 2-)")
+        case Self.big.id: tr("Fours and eights (4x, 4-, 4+, 8x, 8+)")
+        default: tr("%@ · %@", type.title, boatClass.rawValue)
+        }
+    }
 }
 
 /// A rowing limit the user can fine-tune. Values are metric: m/s, m and °C.
@@ -68,34 +113,40 @@ enum RowingLimit: String, CaseIterable, Identifiable {
     /// Wind, gusts and waves: the limits that differ from boat to boat.
     static let boatDependent: [RowingLimit] = [.windAmber, .windRed, .gustAmber, .gustRed, .waveAmber, .waveRed]
 
-    /// The app's limit for a boat type; the small racing boats' are the
-    /// backend's (score.py). The others are estimates to be checked with
-    /// experienced rowers.
-    func standard(for type: BoatType) -> Double {
-        switch (self, type) {
-        case (.windAmber, .racingSmall): 5.5  // Beaufort 4
-        case (.windAmber, .trainingSingle): 6.5
-        case (.windAmber, .racingBig), (.windAmber, .gig): 8.0  // Beaufort 5
-        case (.windAmber, .coastal): 9.0
-        case (.windRed, .racingSmall): 8.0
-        case (.windRed, .trainingSingle): 9.0
-        case (.windRed, .racingBig), (.windRed, .gig): 10.8  // Beaufort 6
-        case (.windRed, .coastal): 12.0
-        case (.gustAmber, .racingSmall): 8.0
-        case (.gustAmber, .trainingSingle): 9.0
-        case (.gustAmber, _): 10.8
-        case (.gustRed, _): 12.8  // 46 km/h, DWD's strong-wind warning
-        case (.waveAmber, .racingSmall): 0.15
-        case (.waveAmber, .trainingSingle): 0.20
-        case (.waveAmber, .racingBig): 0.25
-        case (.waveAmber, .gig): 0.35
-        case (.waveAmber, .coastal): 0.60
-        case (.waveRed, .racingSmall): 0.30
-        case (.waveRed, .trainingSingle): 0.35
-        case (.waveRed, .racingBig): 0.45
-        case (.waveRed, .gig): 0.60
-        case (.waveRed, .coastal): 1.0
-        case (.lifeJacket, _): 10
+    /// The app's limit for a boat; small racing boats' are the backend's
+    /// (score.py). The others are estimates to be checked with experienced rowers.
+    func standard(for boat: Boat) -> Double {
+        switch (self, boat.type, boat.isBig) {
+        case (.lifeJacket, _, _): 10
+        case (.gustRed, _, _): 12.8  // 46 km/h, DWD's strong-wind warning
+        // Racing boats, and big training boats, which are as steady as big racing boats.
+        case (.windAmber, .racing, false): 5.5  // Beaufort 4
+        case (.windRed, .racing, false): 8.0  // Beaufort 5
+        case (.gustAmber, .racing, false): 8.0
+        case (.waveAmber, .racing, false): 0.15
+        case (.waveRed, .racing, false): 0.30
+        case (.windAmber, .racing, true), (.windAmber, .training, true): 8.0
+        case (.windRed, .racing, true), (.windRed, .training, true): 10.8  // Beaufort 6
+        case (.gustAmber, .racing, true), (.gustAmber, .training, true): 10.8
+        case (.waveAmber, .racing, true), (.waveAmber, .training, true): 0.25
+        case (.waveRed, .racing, true), (.waveRed, .training, true): 0.45
+        // Small training boats: wider than racing boats.
+        case (.windAmber, .training, false): 6.5
+        case (.windRed, .training, false): 9.0
+        case (.gustAmber, .training, false): 9.0
+        case (.waveAmber, .training, false): 0.20
+        case (.waveRed, .training, false): 0.35
+        // Gigs and coastal boats: higher sides, any size.
+        case (.windAmber, .gig, _): 8.0
+        case (.windRed, .gig, _): 10.8
+        case (.gustAmber, .gig, _): 10.8
+        case (.waveAmber, .gig, _): 0.35
+        case (.waveRed, .gig, _): 0.60
+        case (.windAmber, .coastal, _): 9.0
+        case (.windRed, .coastal, _): 12.0
+        case (.gustAmber, .coastal, _): 10.8
+        case (.waveAmber, .coastal, _): 0.60
+        case (.waveRed, .coastal, _): 1.0
         }
     }
 
@@ -160,7 +211,7 @@ struct RowingLimits: Equatable {
     /// What the backend's rowing light already uses.
     static let standard = RowingLimits()
 
-    func value(_ limit: RowingLimit) -> Double { custom[limit] ?? limit.standard(for: boat.type) }
+    func value(_ limit: RowingLimit) -> Double { custom[limit] ?? limit.standard(for: boat) }
     func isMine(_ limit: RowingLimit) -> Bool { custom[limit] != nil }
     /// The same wind, gust and wave limits as the backend's, whatever the boat is called.
     var matchesStandard: Bool { RowingLimit.allCases.allSatisfy { value($0) == Self.standard.value($0) } }
@@ -205,7 +256,7 @@ extension ForecastHour {
             let cold = water < limits.value(.lifeJacket)
             reasons.append(Reason(condition: cold ? "cold_water" : "cool_water", light: .amber,
                                   mine: cold && limits.isMine(.lifeJacket) ? true : nil))
-            if !cold && water < RowingLimit.lifeJacket.standard(for: limits.boat.type) {
+            if !cold && water < RowingLimit.lifeJacket.standard(for: limits.boat) {
                 notes.append(Reason(condition: "cold_water", light: .amber))
             }
         }

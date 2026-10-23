@@ -35,18 +35,22 @@ final class LimitsTests: XCTestCase {
 
     func testEveryBoatTypeIsAtLeastAsLenientAsSmallRacingBoats() {
         for type in BoatType.allCases {
-            let limits = RowingLimits(boat: Boat(id: type.rawValue, name: "", type: type))
-            XCTAssertFalse(RowingLimits.standard.allowsMore(than: limits), type.rawValue)
-            for (amber, red) in [(RowingLimit.windAmber, RowingLimit.windRed), (.gustAmber, .gustRed), (.waveAmber, .waveRed)] {
-                XCTAssertLessThan(limits.value(amber), limits.value(red), "\(type.rawValue) \(amber.rawValue)")
+            for boatClass in BoatClass.allCases {
+                let limits = RowingLimits(boat: Boat(id: type.rawValue, name: "", type: type, boatClass: boatClass))
+                XCTAssertFalse(RowingLimits.standard.allowsMore(than: limits), "\(type.rawValue) \(boatClass.rawValue)")
+                for (amber, red) in [(RowingLimit.windAmber, RowingLimit.windRed), (.gustAmber, .gustRed), (.waveAmber, .waveRed)] {
+                    XCTAssertLessThan(limits.value(amber), limits.value(red), "\(type.rawValue) \(boatClass.rawValue) \(amber.rawValue)")
+                }
             }
         }
     }
 
     func testOwnBoatWithTheSmallBoatLimitsChangesNothing() {
-        let single = RowingLimits(boat: Boat(id: "x", name: "Flash", type: .racingSmall))
+        let single = RowingLimits(boat: Boat(id: "x", name: "Flash", type: .racing, boatClass: .double))
         XCTAssertTrue(single.matchesStandard)
         XCTAssertFalse(RowingLimits(boat: .big).matchesStandard)
+        let quad = RowingLimits(boat: Boat(id: "q", name: "", type: .racing, boatClass: .quad))
+        XCTAssertEqual(quad.value(.waveRed), RowingLimits(boat: .big).value(.waveRed), "a racing quad gets the big-boat limits")
     }
 
     func testSuggestsASteadierBoatOfYourOwn() {
@@ -57,8 +61,8 @@ final class LimitsTests: XCTestCase {
         XCTAssertEqual(rough.light, .red)
         XCTAssertNil(SteadierBoat.suggestion(for: rough, water: nil, settings: settings), "no boats of your own, no suggestion")
 
-        let gig = settings.addBoat(type: .gig)
-        settings.addBoat(type: .trainingSingle)
+        let gig = settings.addBoat(type: .gig, boatClass: .quad)
+        settings.addBoat(type: .training, boatClass: .single)
         XCTAssertEqual(SteadierBoat.suggestion(for: rough, water: nil, settings: settings), SteadierBoat(boat: gig, light: .green))
 
         let dark = rough.with(reasons: rough.reasons + [Reason(condition: "daylight", light: .red)], sunUp: false)

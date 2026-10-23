@@ -164,7 +164,7 @@ jobs:
           shoot 63-condition-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES -RWLanguage de
           # Boats and rowing limits: small boats ticked with own limits, two boats of
           # the user's own, the lake map coloured for big boats (so it warns).
-          BOATS=(-RWMyBoats '({id = b-anna; name = Anna; type = gig;}, {id = b-flash; name = Flash; type = trainingSingle;})')
+          BOATS=(-RWMyBoats '({id = b-anna; name = Anna; type = gig; class = "4x";}, {id = b-flash; name = Flash; type = training; class = "1x";})')
           OWN=(-RWBoatLimits '{small = {windAmber = 2; gustAmber = 16; gustRed = 18;}; b-anna = {waveAmber = 0.4;};}')
           shoot 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
           shoot 64-settings-limits-map light -RWShowSettings YES -RWSettingsPage limits -RWLimitsScroll map "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big

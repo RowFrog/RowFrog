@@ -986,6 +986,11 @@ struct BoatLimitsView: View {
                             Text(type.title).tag(type)
                         }
                     }
+                    Picker(tr("Size and rigging"), selection: $settings.myBoats[index].boatClass) {
+                        ForEach(BoatClass.allCases) { boatClass in
+                            Text(boatClass.title).tag(boatClass)
+                        }
+                    }
                 } header: {
                     SectionTitle(tr("Boat"), symbol: "figure.rower")
                 } footer: {
@@ -1033,7 +1038,7 @@ private struct LimitRow: View {
     var body: some View {
         let limits = AppSettings.shared.limits(for: boat)
         let value = limits.value(limit)
-        let usual = limit.standard(for: boat.type)
+        let usual = limit.standard(for: boat)
         let mine = limits.isMine(limit)
         Stepper {
             HStack {
@@ -1058,7 +1063,7 @@ private struct LimitRow: View {
         let settings = AppSettings.shared
         let clamped = min(max((new / limit.step).rounded() * limit.step, limit.range.lowerBound), limit.range.upperBound)
         var custom = settings.boatLimits[boat.id] ?? [:]
-        custom[limit] = abs(clamped - limit.standard(for: boat.type)) < limit.step / 2 ? nil : clamped
+        custom[limit] = abs(clamped - limit.standard(for: boat)) < limit.step / 2 ? nil : clamped
         settings.boatLimits[boat.id] = custom.isEmpty ? nil : custom
     }
 }
