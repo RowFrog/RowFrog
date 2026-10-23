@@ -1,19 +1,20 @@
-# Model check, 2026-10-23 20:02 UTC
+# Model check, 2026-10-23 22:49 UTC
 
-1 forecast runs stored (2026-10-23T20:00Z to 2026-10-23T20:00Z).
+2 forecast runs stored (2026-10-23T20:00Z to 2026-10-23T22:00Z).
 Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.
 "Light wrong" = how often wind and gusts alone would have given a different rowing light than measured.
 Stations are on land, where wind is usually weaker than on the lake, so the ranking matters more than the numbers.
 
 ## icon_d2 vs best_match
 
-5 forecast hours differ by more than wind 2.0 m/s, gusts 3.0 m/s or air 2.0 °C.
+7 forecast hours differ by more than wind 2.0 m/s, gusts 3.0 m/s or air 2.0 °C.
 
 | Point | Hours |
 | --- | --- |
+| staffelsee | 3 |
 | tegernsee | 2 |
-| staffelsee | 2 |
 | starnberger-see-south | 1 |
+| starnberger-see-centre | 1 |
 
 Latest:
 
@@ -24,6 +25,8 @@ Latest:
 | 2026-10-23T20:00Z | tegernsee | 2026-10-25T18:00Z | gust -5.3 |
 | 2026-10-23T20:00Z | staffelsee | 2026-10-24T23:00Z | temp -2.3 |
 | 2026-10-23T20:00Z | staffelsee | 2026-10-25T05:00Z | temp -2.1 |
+| 2026-10-23T22:00Z | starnberger-see-centre | 2026-10-25T16:00Z | gust -3.2 |
+| 2026-10-23T22:00Z | staffelsee | 2026-10-25T05:00Z | temp -2.1 |
 
 ## Per point (day 1)
 
