@@ -39,6 +39,7 @@ struct LocationPageView: View {
                                 HStack(alignment: .top, spacing: 16) {
                                     VStack(spacing: 16) {
                                         conditionCards(forecast, now: now)
+                                        if let source = forecast.forecastSource { ForecastSourceLine(source: source).id("source") }
                                         LegendCard()
                                     }
                                     VStack(spacing: 16) {
@@ -48,6 +49,7 @@ struct LocationPageView: View {
                             } else {
                                 conditionCards(forecast, now: now)
                                 forecastCards(forecast)
+                                if let source = forecast.forecastSource { ForecastSourceLine(source: source).id("source") }
                                 LegendCard()
                             }
                             VStack(alignment: .leading, spacing: 4) {
@@ -88,7 +90,7 @@ struct LocationPageView: View {
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
                     await forecasts.load(club.id)
-                    // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`, `lakeview`) scrolls to that card.
+                    // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`, `lakeview`, `source`) scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast, so wait for it.
                         try? await Task.sleep(for: .milliseconds(target == "lakeview" ? 2500 : 300))

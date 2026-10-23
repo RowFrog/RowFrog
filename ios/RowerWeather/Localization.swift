@@ -70,6 +70,17 @@ enum German {
         "At night the sun becomes a moon and the row is dimmed.": "Nachts wird die Sonne zum Mond und die Zeile abgedunkelt.",
         "Legend": "Legende",
 
+        // Forecast source
+        "Forecast: %@": "Vorhersage: %@",
+        "%@ km grid": "%@-km-Raster",
+        "Shows which weather models the forecast comes from.": "Zeigt, von welchen Wettermodellen die Vorhersage stammt.",
+        "Hours %@ to %@ · %@": "Stunden %@ bis %@ · %@",
+        "Weather models are computer forecasts from national weather services. A finer grid shows more of the lake and the hills around it.": "Wettermodelle sind Computervorhersagen nationaler Wetterdienste. Ein feineres Raster zeigt mehr vom See und den Hügeln ringsum.",
+        "The app picks the weather model that does best for this region.": "Die App wählt das Wettermodell, das für diese Region am besten passt.",
+        "The choice is checked regularly against measured wind and temperature.": "Die Wahl wird regelmäßig mit gemessenem Wind und gemessener Temperatur überprüft.",
+        "Data via Open-Meteo.": "Daten über Open-Meteo.",
+        "Where the forecast comes from": "Woher die Vorhersage kommt",
+
         // Weather
         "Clear": "Klar",
         "Mostly clear": "Überwiegend klar",
