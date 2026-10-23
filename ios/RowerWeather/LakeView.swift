@@ -74,7 +74,7 @@ struct LakeClub: Decodable, Hashable, Identifiable {
 struct LakeHour: Decodable, Hashable, Identifiable {
     let time: Date
     /// What holds for the whole lake: DWD warnings, dark, cold water.
-    let lakeWide: LakeWide
+    var lakeWide: LakeWide
     /// Per water cell, from the conditions at the cell only.
     var lights: [Light]
     let wavesCm: [Int]
