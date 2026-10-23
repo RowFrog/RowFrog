@@ -80,6 +80,12 @@ jobs:
         run: |
           set -x
           xcrun simctl bootstatus "$UDID" -b
+          # The build takes longer than the backend keeps DWD warnings; warm it again
+          # so the first shots do not catch a page still loading.
+          for club in mrc-1880 mrsv-bayern tutzinger-rv; do
+            curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/clubs/$club/forecast" || true
+          done
+          curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null http://localhost:8000/lakes/starnberger-see/view || true
           xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowerWeather.app
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4
           mkdir -p docs/screenshots
@@ -160,7 +166,8 @@ jobs:
           # the user's own, the lake map coloured for big boats (so it warns).
           BOATS=(-RWMyBoats '({id = b-anna; name = Anna; type = gig;}, {id = b-flash; name = Flash; type = trainingSingle;})')
           OWN=(-RWBoatLimits '{small = {windAmber = 2; gustAmber = 16; gustRed = 18;}; b-anna = {waveAmber = 0.4;};}')
-          shoot_pages 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
+          shoot 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
+          shoot 64-settings-limits-map light -RWShowSettings YES -RWSettingsPage limits -RWLimitsScroll map "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
           shoot 65-own-limits light -RWOpenClub mrc-1880 "${BOATS[@]}" "${OWN[@]}"
           shoot 66-own-limits-wind light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES "${BOATS[@]}" "${OWN[@]}"
           shoot 67-boat-limits light -RWShowSettings YES -RWSettingsPage boat:b-anna "${BOATS[@]}" "${OWN[@]}"

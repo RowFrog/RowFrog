@@ -859,60 +859,70 @@ struct RowingLimitsView: View {
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
-        Form {
-            Section {
-                ForEach(Boat.groups) { boat in
-                    BoatRow(boat: boat) { path.append(.boat(boat.id)) }
-                }
-            } header: {
-                SectionTitle(tr("Your boat"), symbol: "figure.rower")
-            } footer: {
-                SectionFooter(tr("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))
-            }
-            .surfaceRows()
-
-            Section {
-                ForEach(settings.myBoats) { boat in
-                    BoatRow(boat: boat) { path.append(.boat(boat.id)) }
-                }
-                .onDelete { offsets in
-                    for id in offsets.map({ settings.myBoats[$0].id }) { settings.removeBoat(id) }
-                }
-                Button {
-                    path.append(.boat(settings.addBoat().id))
-                } label: {
-                    Label(tr("Add a boat"), systemImage: "plus.circle")
-                }
-            } header: {
-                SectionTitle(tr("My boats"), symbol: "list.bullet")
-            } footer: {
-                SectionFooter(tr("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))
-            }
-            .surfaceRows()
-
-            Section {
-                Picker(selection: $settings.mapBoatID) {
-                    Text(tr("Same as the ticked boat")).tag(AppSettings.followBoat)
-                    ForEach(settings.boats) { boat in
-                        Text(boat.title).tag(boat.id)
+        ScrollViewReader { proxy in
+            Form {
+                Section {
+                    ForEach(Boat.groups) { boat in
+                        BoatRow(boat: boat) { path.append(.boat(boat.id)) }
                     }
-                } label: {
-                    EmptyView()
+                } header: {
+                    SectionTitle(tr("Your boat"), symbol: "figure.rower")
+                } footer: {
+                    SectionFooter(tr("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))
                 }
-                .pickerStyle(.inline)
-                .labelsHidden()
-                if settings.mapLooksCalmer {
-                    Label(tr("The map uses the limits for %@, which are higher than those for %@. The map points this out too.", settings.mapBoat.inSentence, settings.selectedBoat.inSentence),
-                          systemImage: "exclamationmark.triangle.fill")
-                        .font(.footnote)
-                        .foregroundStyle(.orange)
+                .surfaceRows()
+
+                Section {
+                    ForEach(settings.myBoats) { boat in
+                        BoatRow(boat: boat) { path.append(.boat(boat.id)) }
+                    }
+                    .onDelete { offsets in
+                        for id in offsets.map({ settings.myBoats[$0].id }) { settings.removeBoat(id) }
+                    }
+                    Button {
+                        path.append(.boat(settings.addBoat().id))
+                    } label: {
+                        Label(tr("Add a boat"), systemImage: "plus.circle")
+                    }
+                } header: {
+                    SectionTitle(tr("My boats"), symbol: "list.bullet")
+                } footer: {
+                    SectionFooter(tr("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))
                 }
-            } header: {
-                SectionTitle(tr("Lake map colours"), symbol: "map")
-            } footer: {
-                SectionFooter(tr("The boat whose limits colour the lake view and route planning."))
+                .surfaceRows()
+
+                Section {
+                    Picker(selection: $settings.mapBoatID) {
+                        Text(tr("Same as the ticked boat")).tag(AppSettings.followBoat)
+                        ForEach(settings.boats) { boat in
+                            Text(boat.title).tag(boat.id)
+                        }
+                    } label: {
+                        EmptyView()
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                    if settings.mapLooksCalmer {
+                        Label(tr("The map uses the limits for %@, which are higher than those for %@. The map points this out too.", settings.mapBoat.inSentence, settings.selectedBoat.inSentence),
+                              systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                    }
+                } header: {
+                    SectionTitle(tr("Lake map colours"), symbol: "map")
+                } footer: {
+                    SectionFooter(tr("The boat whose limits colour the lake view and route planning."))
+                }
+                .surfaceRows()
+                .id("map")
             }
-            .surfaceRows()
+            .task {
+                // Screenshot hook: `-RWLimitsScroll map` shows the lake map section.
+                if UserDefaults.standard.string(forKey: "RWLimitsScroll") == "map" {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    proxy.scrollTo("map", anchor: .top)
+                }
+            }
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
@@ -940,6 +950,7 @@ private struct BoatRow: View {
                             .font(.caption)
                             .foregroundStyle(changed ? Color.orange : Color.secondary)
                     }
+                    .multilineTextAlignment(.leading)
                     Spacer(minLength: 4)
                     if settings.selectedBoat.id == boat.id {
                         Image(systemName: "checkmark").fontWeight(.semibold).foregroundStyle(.tint)
@@ -947,7 +958,7 @@ private struct BoatRow: View {
                 }
                 .contentShape(Rectangle())
             }
-            .buttonStyle(.borderless)
+            .buttonStyle(.plain)
             Button(action: openLimits) {
                 Image(systemName: "slider.horizontal.3")
                     .padding(6)
