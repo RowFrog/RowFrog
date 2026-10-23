@@ -21,6 +21,7 @@ from pathlib import Path
 import httpx
 
 from rowerweather import model_check as mc
+from rowerweather import usage
 
 ROOT = Path(__file__).resolve().parent.parent
 
@@ -39,17 +40,21 @@ def main() -> None:
     print(f"{len(points)} points, {len(models)} models")
 
     with httpx.Client(headers={"User-Agent": "RowFrog model check (github.com/RowFrog)"}, follow_redirects=True) as client:
+        calls = 0.0
         if not args.no_forecast:
             rows, log = mc.fetch_forecasts(client, points, models, now)
+            calls += len(models) * usage.call_weight(len(mc.VARIABLES), locations=len(points))
             print("\n".join("  " + l for l in log))
             if rows:
                 mc.write_rows(args.data_dir / "forecasts" / f"{now:%Y/%m/%d-%H}.csv.gz", rows)
         if args.archive_days:
             rows, log = mc.fetch_archive(client, points, models, args.archive_days, now.date())
+            calls += len(models) * usage.call_weight(len(mc.VARIABLES), days=args.archive_days, locations=len(points))
             print("\n".join("  " + l for l in log))
             if rows:
                 mc.write_rows(args.data_dir / "forecasts" / "archive" / f"{now:%Y-%m-%d}.csv.gz", rows)
 
+        usage.report_calls("open-meteo", calls, "model-check", client)
         stored = mc.read_rows(args.data_dir)
         print(f"{len(stored)} stored forecast hours")
         since = now.date() - timedelta(days=3)

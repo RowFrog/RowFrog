@@ -53,6 +53,8 @@ jobs:
             git worktree add --orphan -b model-check-new store
           fi
       - name: Store forecasts and write the report
+        env:
+          RW_USAGE_KEY: ${{ secrets.USAGE_KEY }}
         run: python3 scripts/model_check.py store --archive-days "${{ inputs.archive_days || '0' }}"
       - name: Commit to the model-check branch
         run: |
