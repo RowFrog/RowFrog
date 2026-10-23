@@ -10,6 +10,11 @@ struct LocationListView: View {
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
+    /// The country chip picked above the results; nil searches every country.
+    @State private var countryFilter: String?
+    @State private var addingPlace = false
+    /// Screenshot hook `-RWBrowse YES` (the country list) or `-RWBrowse <code>` (one country).
+    @State private var browseHook: String?
     @Environment(\.dismiss) private var dismiss
 
     init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil, select: @escaping (Club) -> Void) {
@@ -75,18 +80,52 @@ struct LocationListView: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                     }
+                    Section {
+                        if locations.countries.count > 1 {
+                            NavigationLink {
+                                CountryListView(locations: locations)
+                            } label: {
+                                Label(tr("Browse clubs by country"), systemImage: "globe.europe.africa")
+                            }
+                        }
+                        Button { addingPlace = true } label: {
+                            Label(tr("Add a place yourself"), systemImage: "mappin.and.ellipse")
+                        }
+                    }
+                    .listRowBackground(Color.clear)
                 } else {
-                    let results = locations.search(search)
-                    if results.isEmpty {
-                        ContentUnavailableView.search(text: search)
+                    if locations.countries.count > 1 {
+                        CountryChips(countries: locations.countries, selection: $countryFilter)
+                            .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                            .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                     }
+                    let results = locations.search(search, country: countryFilter, near: KnownLocation.coordinate)
+                    let showsFlags = locations.loadedCountries.count > 1 && countryFilter == nil
+                    if results.isEmpty {
+                        if locations.loadingCountries.isEmpty {
+                            ContentUnavailableView.search(text: search)
+                                .listRowBackground(Color.clear)
+                        } else {
+                            ProgressView().frame(maxWidth: .infinity).listRowBackground(Color.clear)
+                        }
+                    }
                     ForEach(results) { club in
-                        SearchResultRow(club: club, lake: locations.lake(of: club), saved: locations.isSaved(club)) {
+                        SearchResultRow(club: club, lake: locations.lake(of: club), saved: locations.isSaved(club),
+                                        flag: showsFlags ? Country.flag(club.countryCode) : nil) {
                             locations.add(club)
                             search = ""
                         }
                     }
+                    Button { addingPlace = true } label: {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Label(tr("Not in the list? Add a place"), systemImage: "mappin.and.ellipse")
+                            Text(tr("Put your club, boathouse or spot on the map yourself."))
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .listRowBackground(Color.clear)
                 }
             }
             .listStyle(.plain)
@@ -109,6 +148,33 @@ struct LocationListView: View {
                         Button(tr("Done")) { dismiss() }
                     }
                 }
+            }
+            // Searching all countries, or one, loads the clubs not loaded yet.
+            .task(id: "\(search.isEmpty)|\(countryFilter ?? "all")") {
+                guard !search.isEmpty else { return }
+                await locations.ensureLoaded(countryFilter.map { [$0] } ?? locations.unloadedCountries)
+            }
+            .navigationDestination(item: $browseHook) { code in
+                if let country = locations.country(code) {
+                    CountryWatersView(locations: locations, country: country)
+                } else {
+                    CountryListView(locations: locations)
+                }
+            }
+            .task {
+                // Screenshot hooks: `-RWAddPlace YES` opens "Add a place", `-RWBrowse` browses.
+                let args = UserDefaults.standard
+                guard args.bool(forKey: "RWAddPlace") || args.string(forKey: "RWBrowse") != nil else { return }
+                try? await Task.sleep(for: .seconds(1))
+                if args.bool(forKey: "RWAddPlace") { addingPlace = true }
+                browseHook = args.string(forKey: "RWBrowse")
+            }
+            .sheet(isPresented: $addingPlace) {
+                AddPlaceView(locations: locations, name: search) { place in
+                    search = ""
+                    select(place.club)
+                }
+                .environment(\.locale, AppSettings.shared.locale)
             }
             .sheet(isPresented: $showingSettings) {
                 SettingsView(locations: locations)
@@ -250,14 +316,19 @@ struct ListMetrics: View {
     }
 }
 
-private struct SearchResultRow: View {
+struct SearchResultRow: View {
     let club: Club
     let lake: Lake?
     let saved: Bool
+    /// The country's flag, when the results mix countries.
+    var flag: String? = nil
     let add: () -> Void
 
     var body: some View {
         HStack {
+            if let flag {
+                Text(flag).accessibilityHidden(true)
+            }
             VStack(alignment: .leading, spacing: 2) {
                 Text(club.name)
                 Text([lake?.name, club.town].compactMap { $0 }.joined(separator: " · "))
