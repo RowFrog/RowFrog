@@ -6,8 +6,9 @@ import SwiftUI
 /// first-start tour asks); never asks by itself. Used to sort the search
 /// and to load the countries near the user.
 enum KnownLocation {
+    private static let manager = CLLocationManager()
+
     static var coordinate: Coordinate? {
-        let manager = CLLocationManager()
         guard [.authorizedWhenInUse, .authorizedAlways].contains(manager.authorizationStatus),
               let location = manager.location else { return nil }
         return Coordinate(lat: location.coordinate.latitude, lon: location.coordinate.longitude)
