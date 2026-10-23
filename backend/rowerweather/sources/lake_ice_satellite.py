@@ -25,9 +25,11 @@ from __future__ import annotations
 import io
 import logging
 import os
+import struct
 import tempfile
 import zipfile
-from dataclasses import dataclass
+import zlib
+from dataclasses import dataclass, field
 from datetime import date, timedelta
 from typing import Iterable
 
@@ -44,6 +46,8 @@ MIN_PIXELS = 40
 DAYS = 4
 
 log = logging.getLogger(__name__)
+# Requests sent since the process started, for the usage report.
+requests_made = 0
 
 
 @dataclass(frozen=True)
@@ -52,6 +56,11 @@ class SatellitePass:
     pixels: int  # inside the lake's outline
     ice: int
     water: int
+    # The map around the lake for the app's ice overlay: one class per pixel, row by
+    # row from the north, 0 outside the lake or under cloud; and its lon/lat box.
+    classes: bytes = field(default=b"", compare=False, repr=False)
+    width: int = field(default=0, compare=False)
+    bbox: tuple[float, float, float, float] | None = field(default=None, compare=False)  # west, south, east, north
 
     @property
     def seen_share(self) -> float:
@@ -83,6 +92,25 @@ def inside(x: float, y: float, ring: list[tuple[float, float]]) -> bool:
             hit = not hit
         j = i
     return hit
+
+
+def png(p: SatellitePass) -> bytes | None:
+    """The pass as a small transparent PNG for the app: ice white, open water blue, the rest clear."""
+    if not p.classes or not p.width:
+        return None
+    colours = {SNOW_ICE: (255, 255, 255, 230), CLEAR_ICE: (200, 235, 255, 230), OPEN_WATER: (0, 90, 200, 90)}
+    rows = len(p.classes) // p.width
+    raw = bytearray()
+    for r in range(rows):
+        raw.append(0)  # no filter
+        for v in p.classes[r * p.width : (r + 1) * p.width]:
+            raw += bytes(colours.get(v, (0, 0, 0, 0)))
+
+    def chunk(kind: bytes, body: bytes) -> bytes:
+        return struct.pack(">I", len(body)) + kind + body + struct.pack(">I", zlib.crc32(kind + body))
+
+    header = struct.pack(">IIBBBBB", p.width, rows, 8, 6, 0, 0, 0)
+    return b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", header) + chunk(b"IDAT", zlib.compress(bytes(raw), 9)) + chunk(b"IEND", b"")
 
 
 def configured() -> bool:
@@ -139,15 +167,21 @@ def _read(path: str, day: date, shores: dict[str, list[tuple[float, float]]]) ->
             window = from_bounds(min(xs), min(ys), max(xs), max(ys), ds.transform).round_offsets().round_lengths()
             data = ds.read(1, window=window, boundless=True, fill_value=0)
             t = ds.window_transform(window)
-            values = (
-                int(data[r, c])
-                for r in range(data.shape[0])
-                for c in range(data.shape[1])
-                if inside(*(t * (c + 0.5, r + 0.5)), ring)
-            )
+            rows, cols = data.shape
+            classes = bytearray(rows * cols)
+            values = []
+            for r in range(rows):
+                for c in range(cols):
+                    if inside(*(t * (c + 0.5, r + 0.5)), ring):
+                        values.append(int(data[r, c]))
+                        classes[r * cols + c] = data[r, c]
             p = count(values, day)
             if p.pixels >= MIN_PIXELS:
-                found[lake_id] = p
+                west, north = t * (0, 0)
+                east, south = t * (cols, rows)
+                found[lake_id] = SatellitePass(
+                    day, p.pixels, p.ice, p.water, bytes(classes), cols, (west, south, east, north)
+                )
     return found
 
 
@@ -155,11 +189,13 @@ def fetch(shores: dict[str, list[tuple[float, float]]], today: date) -> dict[str
     """Passes of the last days per lake (oldest first), for lakes whose outline `shores` gives in lon/lat."""
     if not configured() or not shores:
         return {}
+    global requests_made
     passes: dict[str, list[SatellitePass]] = {}
     try:
         with httpx.Client() as client, tempfile.TemporaryDirectory() as folder:
             products = _products(client, today)
             client.headers["Authorization"] = f"Bearer {_token(client)}"
+            requests_made += 2 + len(products)
             for product in products:
                 day = date.fromisoformat(product["ContentDate"]["Start"][:10])
                 resp = client.get(DOWNLOAD.format(id=product["Id"]), timeout=120, follow_redirects=True)

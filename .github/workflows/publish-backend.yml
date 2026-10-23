@@ -3,11 +3,14 @@ name: Publish forecasts
 # The app's backend while it has no server of its own: runs the backend code
 # on a schedule and publishes its answers as static files on GitHub Pages, at
 # https://api.rowfrog.com/v1/ (see scripts/publish_static.py).
-# The confirmed clubs are refreshed every 30 minutes, all catalog clubs every
-# 6 hours. The files live on the gh-pages branch, kept as a single commit so
+# The confirmed and used clubs are rebuilt every 30 minutes, all catalog clubs
+# every 6 hours; weather is loaded only after a new model run (see the script),
+# and the last forecasts are kept between runs in the Actions cache.
+# The files live on the gh-pages branch, kept as a single commit so
 # its history does not grow. Pages must be set to "Deploy from a branch",
 # gh-pages, / (root) in the repository settings.
-# Secrets: CDSE_CLIENT_ID / CDSE_CLIENT_SECRET (satellite ice, when used).
+# Secrets: CDSE_CLIENT_ID / CDSE_CLIENT_SECRET (satellite pictures and ice),
+# USAGE_KEY (the usage counter, when it is set up).
 
 on:
   # A change to the publisher publishes at once, from whichever branch it was pushed to.
@@ -50,17 +53,30 @@ jobs:
           else
             git worktree add --orphan -b gh-pages-new site
           fi
+      - name: Get the last forecasts
+        uses: actions/cache/restore@v4
+        with:
+          path: state
+          key: publish-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: publish-state-
       - name: Run the backend and write the files
         env:
           CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
           CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
+          RW_USAGE_KEY: ${{ secrets.USAGE_KEY }}
         run: |
           CLUBS="${{ inputs.clubs }}"
           if [ -z "$CLUBS" ]; then
             if [ "${{ github.event.schedule }}" = "*/30 * * * *" ]; then CLUBS=confirmed; else CLUBS=all; fi
           fi
-          python3 scripts/publish_static.py site/v1 --clubs "$CLUBS"
+          python3 scripts/publish_static.py site/v1 --clubs "$CLUBS" --state state/publish.pickle
           touch site/.nojekyll
+      - name: Keep the forecasts for the next run
+        if: always() && hashFiles('state/publish.pickle') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: state
+          key: publish-state-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Publish to gh-pages as a single commit
         run: |
           cd site

@@ -1,18 +1,18 @@
-"""The latest cloud-free Sentinel-2 picture of a lake, for the app's satellite card.
+"""Sentinel-2 pictures of a lake, for the app's satellite card.
 
 Sentinel-2 (ESA, Copernicus) photographs every lake in Germany every two to
 five days at 10 m. The backend asks the Copernicus Data Space Ecosystem's
 Sentinel Hub with the project's free account (CDSE_CLIENT_ID /
 CDSE_CLIENT_SECRET; app users need none):
-1. the catalogue for passes over the lake in the last MAX_AGE_DAYS,
-   newest first, whose image tile is not mostly cloud,
-2. for up to CANDIDATES of them, the share of the lake itself under cloud
-   (Statistical API on the scene classification band SCL),
-3. the first pass with at most MAX_LAKE_CLOUD of the lake under cloud as a
-   true-colour JPEG of the lake and its shore (Process API).
+1. one Statistical API request for the share of the lake under cloud on every
+   day with a pass (scene classification band SCL), over the last SEARCH_DAYS,
+2. a true-colour JPEG of the lake and its shore (Process API) for the newest
+   pass that shows most of the lake ("latest") and the newest with at most
+   CLEAR_MAX_LAKE_CLOUD of it under cloud ("clearest"), when they are new.
+A lake that has never had a picture is searched once over FIRST_SEARCH_DAYS.
 
-The free account allows about 10,000 requests a month, so the publishing job
-looks for new pictures at most every REFRESH_HOURS per lake.
+The free account allows about 10,000 requests a month; a look at a lake takes
+one request plus one per new picture.
 
 Data: "Contains modified Copernicus Sentinel data <year>".
 """
@@ -24,7 +24,7 @@ import math
 import os
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, timedelta
 
 import httpx
 
@@ -32,10 +32,15 @@ from . import lake_ice_satellite
 
 SH = "https://sh.dataspace.copernicus.eu"
 COLLECTION = "sentinel-2-l2a"
-MAX_AGE_DAYS = 30
-TILE_MAX_CLOUD = 60  # per cent of the whole 100 km image tile
-CANDIDATES = 6
-MAX_LAKE_CLOUD = 0.2
+SEARCH_DAYS = 30
+FIRST_SEARCH_DAYS = 365
+# Days per Statistical API request on the long first search.
+CHUNK_DAYS = 92
+# A pass counts when it saw nearly the whole lake (the swath edge can cut a lake) ...
+MIN_SEEN = 0.9
+# ... and, for the latest picture, not too much of it is under cloud.
+LATEST_MAX_LAKE_CLOUD = 0.8
+CLEAR_MAX_LAKE_CLOUD = 0.1
 MAX_PIXELS = 1280  # longer side of the picture
 METRES_PER_PIXEL = 10.0
 MARGIN = 0.08  # shore around the lake, as a share of its size
@@ -45,11 +50,15 @@ PAUSE_SECONDS = 2.0
 RATE_LIMIT_WAITS = (30, 65)
 
 log = logging.getLogger(__name__)
+# Requests sent since the process started, for the usage report.
+requests_made = 0
 
 
 def _post(client: httpx.Client, url: str, **kwargs) -> httpx.Response:
+    global requests_made
     for wait in (*RATE_LIMIT_WAITS, None):
         time.sleep(PAUSE_SECONDS)
+        requests_made += 1
         resp = client.post(url, **kwargs)
         if resp.status_code != 429 or wait is None:
             resp.raise_for_status()
@@ -79,13 +88,9 @@ function evaluatePixel(s) {
 
 
 @dataclass(frozen=True)
-class Picture:
-    taken: datetime
-    lake_cloud: float
-    bbox: tuple[float, float, float, float]  # west, south, east, north
-    width: int
-    height: int
-    jpeg: bytes
+class Pass:
+    day: date
+    lake_cloud: float  # share of the lake under cloud, 0...1
 
 
 def frame(ring: list[tuple[float, float]]) -> tuple[tuple[float, float, float, float], int, int]:
@@ -107,56 +112,47 @@ def _polygon(ring: list[tuple[float, float]], max_points: int = 300) -> dict:
     return {"type": "Polygon", "coordinates": [pts + [pts[0]]]}
 
 
-def _passes(client: httpx.Client, bbox, now: datetime) -> list[datetime]:
-    body = {
-        "collections": [COLLECTION],
-        "bbox": list(bbox),
-        "datetime": f"{(now - timedelta(days=MAX_AGE_DAYS)).strftime('%Y-%m-%dT%H:%M:%SZ')}/{now.strftime('%Y-%m-%dT%H:%M:%SZ')}",
-        "filter": f"eo:cloud_cover < {TILE_MAX_CLOUD}",
-        "filter-lang": "cql2-text",
-        "fields": {"include": ["properties.datetime", "properties.eo:cloud_cover"]},
-        "limit": 50,
-    }
-    resp = _post(client, f"{SH}/api/v1/catalog/1.0.0/search", json=body, timeout=60)
-    taken = {
-        datetime.fromisoformat(f["properties"]["datetime"].replace("Z", "+00:00"))
-        for f in resp.json().get("features", [])
-    }
-    # Neighbouring tiles of one pass are minutes apart; keep one time per day.
-    by_day: dict = {}
-    for t in sorted(taken, reverse=True):
-        by_day.setdefault(t.date(), t)
-    return list(by_day.values())
+def cloud_by_day(client: httpx.Client, ring, start: date, end: date) -> list[Pass]:
+    """Passes from `start` to `end` (inclusive) that saw nearly the whole lake, oldest first."""
+    seen: dict[date, tuple[int, float]] = {}
+    day = start
+    while day <= end:
+        stop = min(end, day + timedelta(days=CHUNK_DAYS - 1))
+        request = {
+            "input": {
+                "bounds": {"geometry": _polygon(ring), "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
+                "data": [{"type": COLLECTION, "dataFilter": {"mosaickingOrder": "leastCC"}}],
+            },
+            "aggregation": {
+                # Each interval must span whole days, or the API leaves it out.
+                "timeRange": {"from": f"{day}T00:00:00Z", "to": f"{stop + timedelta(days=1)}T00:00:00Z"},
+                "aggregationInterval": {"of": "P1D"},
+                "evalscript": CLOUD_SCRIPT,
+                "resx": 0.0008,
+                "resy": 0.0005,
+            },
+        }
+        resp = _post(client, f"{SH}/api/v1/statistics", json=request, timeout=180)
+        for entry in resp.json().get("data", []):
+            stats = entry["outputs"]["cloud"]["bands"]["B0"]["stats"]
+            valid = stats.get("sampleCount", 0) - stats.get("noDataCount", 0)
+            if valid > 0 and stats.get("mean") is not None:
+                seen[date.fromisoformat(entry["interval"]["from"][:10])] = (valid, float(stats["mean"]))
+        day = stop + timedelta(days=1)
+    if not seen:
+        return []
+    full = max(valid for valid, _ in seen.values())
+    return [Pass(d, cloud) for d, (valid, cloud) in sorted(seen.items()) if valid >= MIN_SEEN * full]
 
 
-def _lake_cloud(client: httpx.Client, ring, taken: datetime) -> float | None:
-    day = taken.strftime("%Y-%m-%d")
-    next_day = (taken + timedelta(days=1)).strftime("%Y-%m-%d")
-    request = {
-        "input": {
-            "bounds": {"geometry": _polygon(ring), "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
-            "data": [{"type": COLLECTION, "dataFilter": {"mosaickingOrder": "leastCC"}}],
-        },
-        "aggregation": {
-            # The interval must span the whole day, or the API leaves it out.
-            "timeRange": {"from": f"{day}T00:00:00Z", "to": f"{next_day}T00:00:00Z"},
-            "aggregationInterval": {"of": "P1D"},
-            "evalscript": CLOUD_SCRIPT,
-            "resx": 0.0008,
-            "resy": 0.0005,
-        },
-    }
-    resp = _post(client, f"{SH}/api/v1/statistics", json=request, timeout=120)
-    for entry in resp.json().get("data", []):
-        stats = entry["outputs"]["cloud"]["bands"]["B0"]["stats"]
-        if stats.get("sampleCount", 0) > stats.get("noDataCount", 0):
-            return float(stats["mean"])
-    log.info("No cloud statistics for %s: %s", day, str(resp.json())[:1500])
-    return None
+def choose(passes: list[Pass]) -> tuple[Pass | None, Pass | None]:
+    """The latest pass that shows most of the lake, and the latest clear one."""
+    latest = next((p for p in reversed(passes) if p.lake_cloud <= LATEST_MAX_LAKE_CLOUD), None)
+    clearest = next((p for p in reversed(passes) if p.lake_cloud <= CLEAR_MAX_LAKE_CLOUD), None)
+    return latest, clearest
 
 
-def _jpeg(client: httpx.Client, bbox, width: int, height: int, taken: datetime) -> bytes:
-    day = taken.strftime("%Y-%m-%d")
+def jpeg(client: httpx.Client, bbox, width: int, height: int, day: date) -> bytes:
     request = {
         "input": {
             "bounds": {"bbox": list(bbox), "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
@@ -179,18 +175,6 @@ def _jpeg(client: httpx.Client, bbox, width: int, height: int, taken: datetime) 
     }
     resp = _post(client, f"{SH}/api/v1/process", json=request, headers={"Accept": "image/jpeg"}, timeout=120)
     return resp.content
-
-
-def latest(client: httpx.Client, ring: list[tuple[float, float]], now: datetime | None = None) -> Picture | None:
-    """The newest picture with the lake mostly free of cloud, or None. `client` carries the token."""
-    now = now or datetime.now(timezone.utc)
-    bbox, width, height = frame(ring)
-    for taken in _passes(client, bbox, now)[:CANDIDATES]:
-        cloud = _lake_cloud(client, ring, taken)
-        if cloud is None or cloud > MAX_LAKE_CLOUD:
-            continue
-        return Picture(taken, cloud, bbox, width, height, _jpeg(client, bbox, width, height, taken))
-    return None
 
 
 def client() -> httpx.Client | None:

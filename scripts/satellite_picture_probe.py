@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import logging
 import sys
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from rowerweather import outlines
 from rowerweather.sources import sentinel2
@@ -22,24 +22,22 @@ def main() -> int:
     if client is None:
         print("No Copernicus account in CDSE_CLIENT_ID / CDSE_CLIENT_SECRET, or sign-in failed.")
         return 0
-    now = datetime.now(timezone.utc)
+    today = datetime.now(timezone.utc).date()
     for lake_id in LAKES:
         ring = outlines.load(lake_id)[0]
         bbox, width, height = sentinel2.frame(ring)
         print(f"## {lake_id}: box {bbox}, {width} x {height} px")
-        try:
-            passes = sentinel2._passes(client, bbox, now)
-        except Exception as e:
-            body = getattr(getattr(e, "response", None), "text", "")[:500]
-            print(f"  catalogue failed: {e!r} {body}")
-            continue
-        print(f"  {len(passes)} passes: {[p.isoformat() for p in passes[:8]]}")
-        for taken in passes[:2]:
+        for days in (sentinel2.SEARCH_DAYS, sentinel2.FIRST_SEARCH_DAYS):
             try:
-                print(f"  {taken:%Y-%m-%d}: lake cloud {sentinel2._lake_cloud(client, ring, taken)}")
+                passes = sentinel2.cloud_by_day(client, ring, today - timedelta(days=days), today)
             except Exception as e:
                 body = getattr(getattr(e, "response", None), "text", "")[:500]
-                print(f"  {taken:%Y-%m-%d}: statistics failed {e!r} {body}")
+                print(f"  {days} days: statistics failed {e!r} {body}")
+                continue
+            latest, clearest = sentinel2.choose(passes)
+            print(f"  {days} days: {len(passes)} passes, latest {latest}, clearest {clearest}")
+            print("   ", ", ".join(f"{p.day:%m-%d} {p.lake_cloud:.0%}" for p in passes[-12:]))
+    print(f"Requests: {sentinel2.requests_made}")
     return 0
 
 

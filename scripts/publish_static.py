@@ -2,7 +2,7 @@
 """Write the backend's answers as static files, for hosting on GitHub Pages.
 
 Usage (from the repository root, after `pip install -e backend`):
-    python3 scripts/publish_static.py OUT_DIR [--clubs confirmed|all]
+    python3 scripts/publish_static.py OUT_DIR [--clubs confirmed|all] [--state FILE]
 
 Calls the same FastAPI app the server would run (no network server needed)
 and writes each answer at its API path, without a file extension:
@@ -10,16 +10,23 @@ and writes each answer at its API path, without a file extension:
     OUT_DIR/lakes/<id>/view             = GET /lakes/<id>/view
     OUT_DIR/clubs/<id>/forecast         = GET /clubs/<id>/forecast
 So the app reads the files with the same paths as from a live backend, and
-moving to a real server later only changes the app's RWAPIBaseURL.
+moving to a real server later only changes where api.rowfrog.com points.
 With the Copernicus account (CDSE_CLIENT_ID / CDSE_CLIENT_SECRET) it also
-writes the latest cloud-free Sentinel-2 picture of each lake:
-    OUT_DIR/lakes/<id>/satellite        when it was taken, its size, credit
-    OUT_DIR/lakes/<id>/satellite.jpg    the picture
+writes Sentinel-2 pictures of each lake and, in winter, the satellite ice map:
+    OUT_DIR/lakes/<id>/satellite        dates, cloud, picture box, credit
+    OUT_DIR/lakes/<id>/satellite-latest.jpg, satellite-clearest.jpg, ice.png
 
-"confirmed" refreshes the clubs in data/locations.json, "all" every club in
-the catalogs too; the scheduled workflow runs the first often and the second
-a few times a day, to stay within Open-Meteo's free daily limit. A club whose
-forecast fails keeps its previous file, which still shows when it was made.
+"confirmed" rebuilds the clubs in data/locations.json and the clubs people
+use, "all" every club in the catalogs too. Warnings and water temperatures
+are fresh in every file, but weather is loaded only when the weather model
+has a new run for it (WEATHER_HOURS), to stay within Open-Meteo's free
+10,000 calls a day; between loads the --state file (kept by the workflow's
+cache) holds the last forecast. A club whose forecast fails keeps its
+previous file, which still shows when it was made.
+
+Which clubs and lakes are "used" comes from the usage counter in front of
+api.rowfrog.com (rowerweather.usage, when it is set up); without it the
+confirmed clubs count as used and the rest follow the fixed schedule.
 """
 
 from __future__ import annotations
@@ -27,8 +34,9 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import pickle
 import sys
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import httpx
@@ -38,20 +46,82 @@ from rowerweather import api, ice, lake_view, locations, outlines
 from rowerweather.api import LOCAL, app
 from rowerweather.sources import lake_ice_satellite, open_meteo, sentinel2
 
-# Clubs per Open-Meteo request. Loading forecasts in batches takes a few
-# requests instead of one per club; single requests from GitHub's shared
+try:  # the usage counter (PR #15) may not be part of this checkout yet
+    from rowerweather import usage
+except ImportError:
+    usage = None
+
+# Points per Open-Meteo request. Loading forecasts in batches takes a few
+# requests instead of one per point; single requests from GitHub's shared
 # runners often timed out or were refused.
 BATCH = 50
 # Waits before retrying a failed batch, in seconds; Open-Meteo's limit is per minute.
 RETRY_WAITS = (65, 120)
-# How often a lake's satellite picture is looked for, and how many lakes one run looks at.
-PICTURE_REFRESH = {"confirmed": timedelta(hours=24), "other": timedelta(hours=72), "none yet": timedelta(hours=12)}
-# Bumped when the search changes, so every lake is looked at again.
-PICTURE_SEARCH_VERSION = 2
+# Hours loaded per forecast: two days from now plus the longest wait for the next load.
+FETCH_HOURS = 60
+
+# ICON-D2 runs every 3 hours (00, 03, ... UTC) and its forecast is ready
+# about READY_AFTER later. Loading more often brings nothing new.
+READY_AFTER = timedelta(hours=2, minutes=30)
+WEATHER_HOURS = {"used": 3, "other": 6, "other with usage": 12}
+# Lakes nobody uses are loaded twice a day, at a different hour from the clubs
+# (04:00 and 16:00 UTC), so no single run takes too many calls.
+LAKE_OTHER_HOURS = 12
+LAKE_OTHER_OFFSET = timedelta(hours=1, minutes=30)
+
+# The satellite ice map comes once a day from an afternoon pass; it is looked
+# for in the morning and the evening (UTC).
+ICE_MAP_LOOKS = (6, 18)
+
+# How often a lake is looked at for new Sentinel-2 pictures, and how many lakes one run looks at.
+PICTURE_REFRESH = {"used": timedelta(days=1), "other": timedelta(days=5)}
+# Bumped when the search changes, so every lake gets its long first search again.
+PICTURE_SEARCH_VERSION = 3
 PICTURES_PER_RUN = 40
 
 
-async def _batched(points: list[tuple[float, float]]) -> tuple[list[list | None], list[str]]:
+def last_ready(now: datetime, every_hours: int, offset: timedelta = timedelta()) -> datetime:
+    """When the newest forecast run (every `every_hours` from 00 UTC) became ready."""
+    base = now - READY_AFTER - offset
+    run = base.replace(hour=base.hour - base.hour % every_hours, minute=0, second=0, microsecond=0)
+    return run + READY_AFTER + offset
+
+
+def due(loaded: datetime | None, now: datetime, every_hours: int, offset: timedelta = timedelta()) -> bool:
+    return loaded is None or loaded < last_ready(now, every_hours, offset)
+
+
+def ice_map_due(checked: datetime | None, now: datetime) -> bool:
+    midnight = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    looks = [midnight + timedelta(days=d, hours=h) for d in (-1, 0) for h in ICE_MAP_LOOKS]
+    return checked is None or checked < max(t for t in looks if t <= now)
+
+
+class State:
+    """What one run leaves for the next: the last forecasts and satellite looks."""
+
+    def __init__(self, path: Path | None):
+        self.path = path
+        self.clubs: dict[str, tuple[datetime, list]] = {}
+        self.lakes: dict[str, tuple[datetime, int, list]] = {}  # loaded, points, weather per point
+        self.ice_map: tuple[datetime | None, dict[str, list]] = (None, {})
+        if path and path.exists():
+            try:
+                saved = pickle.loads(path.read_bytes())
+                self.clubs, self.lakes, self.ice_map = saved["clubs"], saved["lakes"], saved["ice_map"]
+                api._ice_temps.update(saved["ice_temps"])
+            except Exception as e:  # an old or broken state only means loading everything again
+                print(f"  state not readable, starting afresh: {e!r}")
+
+    def save(self) -> None:
+        if not self.path:
+            return
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        body = {"clubs": self.clubs, "lakes": self.lakes, "ice_map": self.ice_map, "ice_temps": api._ice_temps}
+        self.path.write_bytes(pickle.dumps(body))
+
+
+async def _batched(points: list[tuple[float, float]], hourly: list[str]) -> tuple[list[list | None], list[str]]:
     """Forecasts for `points` in batches of BATCH; None where a batch failed."""
     out: list[list | None] = []
     problems = []
@@ -62,7 +132,7 @@ async def _batched(points: list[tuple[float, float]]) -> tuple[list[list | None]
             for attempt, wait in enumerate((0, *RETRY_WAITS)):
                 await asyncio.sleep(wait)
                 try:
-                    forecasts = await open_meteo.fetch_many(client, batch)
+                    forecasts = await open_meteo.fetch_many(client, batch, FETCH_HOURS, hourly)
                     break
                 except (httpx.HTTPError, ValueError, KeyError) as e:
                     detail = e.response.text[:200] if isinstance(e, httpx.HTTPStatusError) else ""
@@ -71,74 +141,156 @@ async def _batched(points: list[tuple[float, float]]) -> tuple[list[list | None]
     return out, problems
 
 
-async def prime_weather(clubs: list[locations.Club]) -> list[str]:
-    """Load the forecasts for `clubs` in batches into the API's cache; returns problems."""
-    forecasts, problems = await _batched([(c.launch_point.lat, c.launch_point.lon) for c in clubs])
-    for club, weather in zip(clubs, forecasts):
-        if weather is not None:
-            api._primed_weather[club.id] = weather
-    return problems
+def club_weather(state: State, clubs: list[locations.Club], used: set[str], with_usage: bool, now: datetime) -> None:
+    """Loads the forecasts that are due and hands every club's last forecast to the API."""
+    other = WEATHER_HOURS["other with usage" if with_usage else "other"]
+    stale = [
+        c for c in clubs if due(state.clubs.get(c.id, (None,))[0], now, WEATHER_HOURS["used"] if c.id in used else other)
+    ]
+    if stale:
+        points = [(c.launch_point.lat, c.launch_point.lon) for c in stale]
+        forecasts, problems = asyncio.run(_batched(points, open_meteo.HOURLY))
+        for line in problems:
+            print("  weather", line)
+        for club, weather in zip(stale, forecasts):
+            if weather is not None:
+                state.clubs[club.id] = (now, weather)
+    print(f"  weather loaded for {len(stale)} of {len(clubs)} clubs")
+    for club in clubs:
+        if club.id in state.clubs:
+            api._primed_weather[club.id] = state.clubs[club.id][1]
 
 
-async def prime_lake_weather(lake_ids: list[str]) -> list[str]:
-    """The same for the lake views' sample points, all lakes together."""
-    owners, points = [], []
+def lake_weather(state: State, lake_ids: list[str], used: set[str], now: datetime) -> list[str]:
+    """The same for the lake views; returns the lakes that have a forecast."""
+    stale = []
     for lake_id in lake_ids:
-        for lon, lat in lake_view.grid_for(lake_id, outlines.load(lake_id)).samples:
+        samples = lake_view.USED_SAMPLES if lake_id in used else lake_view.MAX_SAMPLES
+        if samples != lake_view.MAX_SAMPLES:
+            api._lake_samples[lake_id] = samples
+        loaded, points, _ = state.lakes.get(lake_id, (None, 0, None))
+        grid = api.lake_grid(lake_id, outlines.load(lake_id))
+        hours, offset = (WEATHER_HOURS["used"], timedelta()) if lake_id in used else (LAKE_OTHER_HOURS, LAKE_OTHER_OFFSET)
+        if points != len(grid.samples) or due(loaded, now, hours, offset):
+            stale.append((lake_id, grid))
+    owners, points = [], []
+    for lake_id, grid in stale:
+        for lon, lat in grid.samples:
             owners.append(lake_id)
             points.append((lat, lon))
-    forecasts, problems = await _batched(points)
-    per_lake: dict[str, list] = {}
-    for lake_id, weather in zip(owners, forecasts):
-        per_lake.setdefault(lake_id, []).append(weather)
-    for lake_id, weathers in per_lake.items():
-        if all(w is not None for w in weathers):
-            api._primed_lake_weather[lake_id] = weathers
-    return problems
+    if points:
+        forecasts, problems = asyncio.run(_batched(points, open_meteo.LAKE_HOURLY))
+        for line in problems:
+            print("  lake weather", line)
+        per_lake: dict[str, list] = {}
+        for lake_id, weather in zip(owners, forecasts):
+            per_lake.setdefault(lake_id, []).append(weather)
+        for lake_id, weathers in per_lake.items():
+            if all(w is not None for w in weathers):
+                state.lakes[lake_id] = (now, len(weathers), weathers)
+    print(f"  weather loaded for {len(stale)} of {len(lake_ids)} lakes ({len(points)} points)")
+    ready = []
+    for lake_id in lake_ids:
+        if lake_id in state.lakes:
+            api._primed_lake_weather[lake_id] = state.lakes[lake_id][2]
+            ready.append(lake_id)
+    return ready
 
 
-def prime_satellite_ice(clubs: list[locations.Club]) -> None:
-    """Load the last days of the satellite ice map for the clubs' lakes, in the ice season."""
-    today = datetime.now(LOCAL).date()
-    if ice.out_of_season(today) or not lake_ice_satellite.configured():
+def satellite_ice(state: State, lake_ids: list[str], now: datetime) -> None:
+    """Looks at the satellite ice map twice a day in the ice season and hands the passes to the API."""
+    today = now.astimezone(LOCAL).date()
+    if ice.out_of_season(today):
+        state.ice_map = (None, {})
         return
-    lakes = locations.load().lakes
-    shores = {}
-    for lake_id in {c.lake_id for c in clubs}:
-        lake = lakes.get(lake_id)
-        rings = outlines.load(lake_id) if lake and lake.kind == "lake" else None
-        if rings:
-            shores[lake_id] = rings[0]
-    api._satellite_ice.update(lake_ice_satellite.fetch(shores, today))
-    for lake_id, passes in sorted(api._satellite_ice.items()):
-        last = passes[-1]
-        print(f"  satellite {lake_id}: {last.day} seen {last.seen_share:.0%} ice {last.ice_share:.0%}")
+    checked, passes = state.ice_map
+    if lake_ice_satellite.configured() and ice_map_due(checked, now):
+        lakes = locations.load().lakes
+        shores = {}
+        for lake_id in lake_ids:
+            lake = lakes.get(lake_id)
+            rings = outlines.load(lake_id) if lake and lake.kind == "lake" else None
+            if rings:
+                shores[lake_id] = rings[0]
+        passes = lake_ice_satellite.fetch(shores, today)
+        state.ice_map = (now, passes)
+        for lake_id, found in sorted(passes.items()):
+            last = found[-1]
+            print(f"  satellite ice {lake_id}: {last.day} seen {last.seen_share:.0%} ice {last.ice_share:.0%}")
+    api._satellite_ice.clear()
+    api._satellite_ice.update(passes)
 
 
-def publish_pictures(out: Path, lake_ids: list[str], confirmed: set[str]) -> None:
-    """Look for newer Sentinel-2 pictures of the lakes whose last look is old enough."""
+def _read_json(path: Path) -> dict:
+    try:
+        return json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    except ValueError:
+        return {}
+
+
+def publish_ice_map(out: Path, lake_ids: list[str], today: date) -> None:
+    """The newest usable satellite ice pass of each lake, as a picture over the lake (winter only)."""
+    for lake_id in lake_ids:
+        meta_path = out / "lakes" / lake_id / "satellite"
+        meta = _read_json(meta_path)
+        usable = [
+            p
+            for p in api._satellite_ice.get(lake_id, [])
+            if p.seen_share >= ice.SATELLITE_SEEN_SHARE and p.bbox and (today - p.day).days <= ice.SATELLITE_DAYS
+        ]
+        if not usable:
+            if meta.pop("ice", None) is not None:
+                write(meta_path, meta)
+            continue
+        newest = usable[-1]
+        if (meta.get("ice") or {}).get("date") == newest.day.isoformat():
+            continue
+        image = lake_ice_satellite.png(newest)
+        if image is None:
+            continue
+        png_path = out / "lakes" / lake_id / "ice.png"
+        png_path.parent.mkdir(parents=True, exist_ok=True)
+        png_path.write_bytes(image)
+        meta["ice"] = {
+            "date": newest.day.isoformat(),
+            "seenShare": round(newest.seen_share, 2),
+            "iceShare": round(newest.ice_share, 2),
+            "bbox": [round(v, 5) for v in newest.bbox],
+            "image": "ice.png",
+            "attribution": "Copernicus Land Monitoring Service, Lake Ice Extent",
+        }
+        write(meta_path, meta)
+
+
+def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: datetime) -> None:
+    """Looks for newer Sentinel-2 pictures of the lakes whose last look is old enough.
+
+    Two per lake: the latest pass that shows most of the lake, even with some
+    cloud, and the latest clear one. A lake looked at for the first time is
+    searched over a whole year, so every lake has a picture.
+    """
     client = sentinel2.client()
     if client is None:
         return
-    now = datetime.now(timezone.utc)
+    today = now.date()
     looked = 0
     try:
-        for lake_id in sorted(lake_ids, key=lambda i: (i not in confirmed, i)):
+        for lake_id in sorted(lake_ids, key=lambda i: (i not in used, i)):
             rings = outlines.load(lake_id)
             meta_path = out / "lakes" / lake_id / "satellite"
-            old = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
-            if old.get("searchVersion") != PICTURE_SEARCH_VERSION:
-                old = {k: v for k, v in old.items() if k != "checkedAt"}
-            if "taken" not in old:
-                refresh = PICTURE_REFRESH["none yet"]
-            else:
-                refresh = PICTURE_REFRESH["confirmed" if lake_id in confirmed else "other"]
-            checked = datetime.fromisoformat(old["checkedAt"]) if "checkedAt" in old else None
+            old = _read_json(meta_path)
+            first = old.get("searchVersion") != PICTURE_SEARCH_VERSION
+            checked = None if first or "checkedAt" not in old else datetime.fromisoformat(old["checkedAt"])
+            refresh = PICTURE_REFRESH["used" if lake_id in used else "other"]
             if not rings or (checked and now - checked < refresh) or looked >= PICTURES_PER_RUN:
                 continue
             looked += 1
+            days = sentinel2.FIRST_SEARCH_DAYS if first else sentinel2.SEARCH_DAYS
             try:
-                picture = sentinel2.latest(client, rings[0], now)
+                latest, clearest = sentinel2.choose(
+                    sentinel2.cloud_by_day(client, rings[0], today - timedelta(days=days), today)
+                )
+                body = _picture_meta(client, out / "lakes" / lake_id, rings[0], old, latest, clearest)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 401:  # the sign-in lasts minutes; renew it once
                     client.close()
@@ -150,25 +302,42 @@ def publish_pictures(out: Path, lake_ids: list[str], confirmed: set[str]) -> Non
             except (httpx.HTTPError, KeyError, ValueError) as e:
                 print(f"  picture {lake_id}: {e!r}")
                 continue
-            body = dict(old, checkedAt=now.replace(microsecond=0).isoformat(), searchVersion=PICTURE_SEARCH_VERSION)
-            if picture and picture.taken.isoformat() != old.get("taken"):
-                jpg = out / "lakes" / lake_id / "satellite.jpg"
-                jpg.parent.mkdir(parents=True, exist_ok=True)
-                jpg.write_bytes(picture.jpeg)
-                body.update(
-                    taken=picture.taken.isoformat(),
-                    lakeCloud=round(picture.lake_cloud, 2),
-                    bbox=[round(v, 5) for v in picture.bbox],
-                    width=picture.width,
-                    height=picture.height,
-                    image="satellite.jpg",
-                    attribution=f"Contains modified Copernicus Sentinel data {picture.taken.year}",
-                )
+            body.update(checkedAt=now.replace(microsecond=0).isoformat(), searchVersion=PICTURE_SEARCH_VERSION)
             write(meta_path, body)
-            print(f"  picture {lake_id}: {body.get('taken', 'none in the last 30 days')}")
+            shown = {k: (body.get(k) or {}).get("date") for k in ("latest", "clearest")}
+            print(f"  picture {lake_id}: latest {shown['latest']}, clearest {shown['clearest']}")
     finally:
         if client is not None:
             client.close()
+
+
+def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest) -> dict:
+    """The satellite file's picture part, rendering the pictures that are new."""
+    bbox, width, height = sentinel2.frame(ring)
+    body = {k: v for k, v in old.items() if k in ("ice",)}
+    body.update(bbox=[round(v, 5) for v in bbox], width=width, height=height)
+    old_frame = old.get("bbox") == body["bbox"] and old.get("width") == width
+    for kind, found in (("latest", latest), ("clearest", clearest)):
+        before = old.get(kind) if old_frame else None
+        if found is None:  # nothing new: keep showing the last one
+            if before:
+                body[kind] = before
+            continue
+        entry = {"date": found.day.isoformat(), "lakeCloud": round(found.lake_cloud, 2), "image": f"satellite-{kind}.jpg"}
+        path = folder / entry["image"]
+        folder.mkdir(parents=True, exist_ok=True)
+        if before and before.get("date") == entry["date"] and path.exists():
+            pass  # already there
+        elif kind == "clearest" and latest is not None and found.day == latest.day:
+            path.write_bytes((folder / "satellite-latest.jpg").read_bytes())  # the same pass
+        else:
+            path.write_bytes(sentinel2.jpeg(client, bbox, width, height, found.day))
+        body[kind] = entry
+    years = sorted({e["date"][:4] for e in (body.get("latest"), body.get("clearest")) if e})
+    if years:
+        body["attribution"] = f"Contains modified Copernicus Sentinel data {', '.join(years)}"
+    (folder / "satellite.jpg").unlink(missing_ok=True)  # the single picture of the first version
+    return body
 
 
 def write(path: Path, body) -> None:
@@ -180,42 +349,66 @@ def write(path: Path, body) -> None:
     tmp.replace(path)
 
 
+def usage_now() -> tuple[set[str], set[str], bool]:
+    """Club and lake ids in use, and whether the usage counter answered."""
+    confirmed = locations.load(catalog_paths=()).clubs.values()
+    clubs = {c.id for c in confirmed}
+    counted = usage.used(7) if usage else None
+    if counted is not None:
+        clubs |= set(counted.clubs)
+    all_clubs = locations.load().clubs
+    lakes = {all_clubs[c].lake_id for c in clubs if c in all_clubs}
+    if counted is not None:
+        lakes |= set(counted.lakes)
+    return clubs, lakes, counted is not None
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("out", type=Path)
     parser.add_argument("--clubs", choices=["confirmed", "all"], default="confirmed")
+    parser.add_argument("--state", type=Path, help="file that keeps forecasts between runs")
     args = parser.parse_args()
+    now = datetime.now(timezone.utc)
+    state = State(args.state)
+    used_clubs, used_lakes, with_usage = usage_now()
+    print(f"Used: {len(used_clubs)} clubs, {len(used_lakes)} lakes{'' if with_usage else ' (no usage counter)'}")
 
     client = TestClient(app)
     resp = client.get("/lakes/index")
     resp.raise_for_status()
     write(args.out / "lakes" / "index", resp.json())
 
-    if args.clubs == "all":
-        clubs = list(locations.load().clubs.values())
-    else:
-        clubs = list(locations.load(catalog_paths=()).clubs.values())
-    club_ids = [c.id for c in clubs]
-    for line in asyncio.run(prime_weather(clubs)):
-        print("  weather", line)
-    prime_satellite_ice(clubs)
+    every = list(locations.load().clubs.values())
+    clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
+    club_weather(state, clubs, used_clubs, with_usage, now)
+    all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
+    satellite_ice(state, all_lakes, now)
     failed = []
-    for club_id in club_ids:
+    for club in clubs:
+        if club.id not in api._primed_weather:
+            failed.append(f"{club.id}: no forecast loaded")
+            continue
         try:
-            resp = client.get(f"/clubs/{club_id}/forecast")
+            resp = client.get(f"/clubs/{club.id}/forecast")
         except Exception as e:  # one broken club must not stop the others
-            failed.append(f"{club_id}: {type(e).__name__}: {e}")
+            failed.append(f"{club.id}: {type(e).__name__}: {e}")
             continue
         if resp.status_code != 200:
-            failed.append(f"{club_id}: HTTP {resp.status_code} {resp.text[:120]}")
+            failed.append(f"{club.id}: HTTP {resp.status_code} {resp.text[:120]}")
             continue
-        write(args.out / "clubs" / club_id / "forecast", resp.json())
-    print(f"Wrote {len(club_ids) - len(failed)} of {len(club_ids)} forecasts to {args.out}")
-    lake_ids = sorted({c.lake_id for c in clubs if outlines.load(c.lake_id)})
-    for line in asyncio.run(prime_lake_weather(lake_ids)):
-        print("  lake weather", line)
+        write(args.out / "clubs" / club.id / "forecast", resp.json())
+    print(f"Wrote {len(clubs) - len(failed)} of {len(clubs)} forecasts to {args.out}")
+
+    # The lakes of this run's clubs, and any other lake whose forecast is due.
+    run_lakes = {c.lake_id for c in clubs}
+    lake_ids = [
+        i
+        for i in all_lakes
+        if i in run_lakes or i in used_lakes or due(state.lakes.get(i, (None,))[0], now, LAKE_OTHER_HOURS, LAKE_OTHER_OFFSET)
+    ]
     views = 0
-    for lake_id in lake_ids:
+    for lake_id in lake_weather(state, lake_ids, used_lakes, now):
         try:
             resp = client.get(f"/lakes/{lake_id}/view")
         except Exception as e:
@@ -227,12 +420,20 @@ def main() -> int:
         write(args.out / "lakes" / lake_id / "view", resp.json())
         views += 1
     print(f"Wrote {views} of {len(lake_ids)} lake views")
-    confirmed = {c.lake_id for c in locations.load(catalog_paths=()).clubs.values()}
-    publish_pictures(args.out, lake_ids, confirmed)
+    state.save()
+
+    publish_ice_map(args.out, all_lakes, now.astimezone(LOCAL).date())
+    publish_pictures(args.out, all_lakes, used_lakes, now)
+    calls = round(open_meteo.calls_counted, 1)
+    copernicus = sentinel2.requests_made + lake_ice_satellite.requests_made
+    print(f"Open-Meteo calls: {calls}, Copernicus requests: {copernicus}")
+    if usage:
+        usage.report_calls("open-meteo", calls, "publish")
+        usage.report_calls("copernicus", copernicus, "publish")
     for line in failed:
         print("  failed", line)
     # Fail the run only when nothing could be written, so one flaky club does not raise alarms.
-    return 1 if club_ids and len(failed) == len(club_ids) else 0
+    return 1 if clubs and len(failed) == len(clubs) else 0
 
 
 if __name__ == "__main__":

@@ -3,20 +3,28 @@
 `icon_seamless` uses ICON-D2 (2 km) for the first two days, then ICON-EU and
 ICON global. Open-Meteo's free tier is for non-commercial use only and allows
 fewer than 10,000 calls a day; the backend calls it once per launch point and
-caches the result, so app users never call it directly.
+caches the result, so app users never call it directly. A request for one
+point counts as one call per 10 variables (see call_weight), so the backend
+asks for few variables and works out the rest itself.
 
 Data: Deutscher Wetterdienst via Open-Meteo, CC BY 4.0.
 """
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import asyncio
+import math
+import time
+from collections import deque
+from dataclasses import dataclass, replace
 from datetime import date, datetime, timezone
 
 import httpx
 
 BASE_URL = "https://api.open-meteo.com/v1/forecast"
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
+# Dew point and feels-like temperature are worked out from these (derive()),
+# and daylight comes from the sun times, which keeps a club at 12 variables.
 HOURLY = [
     "temperature_2m",
     "wind_speed_10m",
@@ -27,13 +35,60 @@ HOURLY = [
     "visibility",
     "precipitation",
     "weather_code",
-    "apparent_temperature",
     "relative_humidity_2m",
-    "dew_point_2m",
     "pressure_msl",
     "cape",
-    "is_day",
 ]
+# What the lake view needs at its forecast points: wind for the waves, fog and thunderstorms.
+LAKE_HOURLY = [
+    "wind_speed_10m",
+    "wind_gusts_10m",
+    "wind_direction_10m",
+    "visibility",
+    "precipitation",
+    "cape",
+]
+
+
+# Open-Meteo allows 600 calls a minute; staying at half leaves room for other users of GitHub's runners.
+MAX_CALLS_PER_MINUTE = 300
+
+
+def call_weight(variables: int, points: int = 1, days: float = 2) -> float:
+    """How many calls Open-Meteo counts for a request: one per point and 10 variables,
+    more for over two weeks of data, at least one per point."""
+    weight = variables / 10
+    return points * max(1.0, weight, weight * days / 14)
+
+
+def params_weight(params: dict[str, str]) -> float:
+    variables = len((params.get("hourly") or params.get("daily") or "").split(","))
+    points = params.get("latitude", "").count(",") + 1
+    if "forecast_hours" in params:
+        days = int(params["forecast_hours"]) / 24
+    elif "start_date" in params:
+        days = (date.fromisoformat(params["end_date"]) - date.fromisoformat(params["start_date"])).days + 1
+    else:
+        days = int(params.get("past_days", 0)) + int(params.get("forecast_days", 7))
+    return call_weight(variables, points, days)
+
+
+# Calls counted since the process started, and the recent ones for pacing: (monotonic time, weight).
+calls_counted = 0.0
+_recent: deque[tuple[float, float]] = deque()
+
+
+async def _pace(weight: float) -> None:
+    """Waits until the request fits into the last minute's allowance."""
+    while True:
+        now = time.monotonic()
+        while _recent and now - _recent[0][0] > 60:
+            _recent.popleft()
+        used = sum(w for _, w in _recent)
+        if not _recent or used + weight <= MAX_CALLS_PER_MINUTE:
+            _recent.append((now, weight))
+            return
+        await asyncio.sleep(60 - (now - _recent[0][0]) + 0.5)
 
 
 @dataclass(frozen=True)
@@ -59,16 +114,43 @@ class ForecastHour:
     pressure_hpa: float | None = None
 
 
-def request_params(lat: float, lon: float, hours: int = 48) -> dict[str, str]:
+def request_params(lat: float, lon: float, hours: int = 48, hourly: list[str] = HOURLY) -> dict[str, str]:
     return {
         "latitude": f"{lat:.4f}",
         "longitude": f"{lon:.4f}",
-        "hourly": ",".join(HOURLY),
+        "hourly": ",".join(hourly),
         "models": "icon_seamless",
         "wind_speed_unit": "ms",
         "timezone": "GMT",
         "forecast_hours": str(hours),
     }
+
+
+def dew_point(temperature_c: float, humidity_pct: float) -> float:
+    """Magnus formula, good to about 0.1 °C in the range that matters here."""
+    gamma = math.log(max(humidity_pct, 1.0) / 100) + 17.62 * temperature_c / (243.12 + temperature_c)
+    return round(243.12 * gamma / (17.62 - gamma), 1)
+
+
+def apparent_temperature(temperature_c: float, humidity_pct: float, wind_ms: float) -> float:
+    """Steadman's apparent temperature without sunshine (as used by the Australian
+    Bureau of Meteorology), the formula Open-Meteo's own value is based on."""
+    vapour_hpa = humidity_pct / 100 * 6.105 * math.exp(17.27 * temperature_c / (237.7 + temperature_c))
+    return round(temperature_c + 0.33 * vapour_hpa - 0.70 * wind_ms - 4.0, 1)
+
+
+def derive(h: ForecastHour) -> ForecastHour:
+    """Fills in dew point and feels-like temperature when the request did not ask for them."""
+    t, rh = h.temperature_c, h.humidity_pct
+    if t is None or rh is None:
+        return h
+    return replace(
+        h,
+        dew_point_c=h.dew_point_c if h.dew_point_c is not None else dew_point(t, rh),
+        apparent_temperature_c=h.apparent_temperature_c
+        if h.apparent_temperature_c is not None
+        else apparent_temperature(t, rh, h.wind_speed_ms or 0.0),
+    )
 
 
 def parse(payload: dict) -> list[ForecastHour]:
@@ -95,7 +177,7 @@ def parse(payload: dict) -> list[ForecastHour]:
         col("dew_point_2m"),
         col("pressure_msl"),
     )
-    return [
+    hours = [
         ForecastHour(
             time=datetime.fromisoformat(t).replace(tzinfo=timezone.utc),
             temperature_c=temp,
@@ -116,12 +198,17 @@ def parse(payload: dict) -> list[ForecastHour]:
         )
         for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code, feels, rh, dew, hpa in rows
     ]
+    return [derive(h) for h in hours]
 
 
 async def _get(client: httpx.AsyncClient, url: str, params: dict[str, str]) -> dict:
+    global calls_counted
+    weight = params_weight(params)
     # Live checks on GitHub saw about one connect timeout in six calls, so
     # connection failures are retried once before giving up.
     for attempt in range(2):
+        await _pace(weight)
+        calls_counted += weight
         try:
             resp = await client.get(url, params=params, timeout=20)
             break
@@ -137,11 +224,11 @@ async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 
 
 
 async def fetch_many(
-    client: httpx.AsyncClient, points: list[tuple[float, float]], hours: int = 48
+    client: httpx.AsyncClient, points: list[tuple[float, float]], hours: int = 48, hourly: list[str] = HOURLY
 ) -> list[list[ForecastHour]]:
     """Forecasts for several points in one request (Open-Meteo takes comma-separated
-    coordinates and answers with a list). Open-Meteo still counts one call per point."""
-    params = request_params(points[0][0], points[0][1], hours)
+    coordinates and answers with a list). Open-Meteo still counts calls per point."""
+    params = request_params(points[0][0], points[0][1], hours, hourly)
     params["latitude"] = ",".join(f"{lat:.4f}" for lat, _ in points)
     params["longitude"] = ",".join(f"{lon:.4f}" for _, lon in points)
     payload = await _get(client, BASE_URL, params)

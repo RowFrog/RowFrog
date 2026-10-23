@@ -124,4 +124,24 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertLessThan(Light.green, Light.amber)
         XCTAssertEqual([Light.amber, .red, .green].max(), .red)
     }
+
+    func testDecodesSatellitePictures() throws {
+        let json = """
+        {"bbox": [11.24, 47.82, 11.37, 48.0], "width": 600, "height": 1280,
+         "latest": {"date": "2026-10-21", "lakeCloud": 0.35, "image": "satellite-latest.jpg"},
+         "clearest": {"date": "2026-10-12", "lakeCloud": 0.02, "image": "satellite-clearest.jpg"},
+         "attribution": "Contains modified Copernicus Sentinel data 2026",
+         "checkedAt": "2026-10-23T22:00:00+00:00", "searchVersion": 3}
+        """
+        let picture = try APIClient.decoder.decode(SatellitePicture.self, from: Data(json.utf8))
+        XCTAssertTrue(picture.hasChoice)
+        XCTAssertEqual(picture.shot(.clearest)?.lakeCloud, 0.02)
+        XCTAssertNil(picture.ice)
+
+        let one = """
+        {"latest": {"date": "2026-10-21", "lakeCloud": 0.0, "image": "satellite-latest.jpg"},
+         "clearest": {"date": "2026-10-21", "lakeCloud": 0.0, "image": "satellite-clearest.jpg"}}
+        """
+        XCTAssertFalse(try APIClient.decoder.decode(SatellitePicture.self, from: Data(one.utf8)).hasChoice)
+    }
 }

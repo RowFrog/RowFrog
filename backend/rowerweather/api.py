@@ -11,7 +11,7 @@ import time
 import xml.etree.ElementTree as ET
 import zipfile
 from dataclasses import replace
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 
 import httpx
 from fastapi import FastAPI, HTTPException
@@ -26,7 +26,8 @@ CACHE_SECONDS = 30 * 60
 # Warnings can be issued at short notice, so they are fetched more often than the forecast.
 WARNINGS_CACHE_SECONDS = 5 * 60
 LAKE_AREAS_CACHE_SECONDS = 24 * 3600
-ICE_CACHE_SECONDS = 6 * 3600
+# Hours of forecast the app gets, from the current hour.
+FORECAST_HOURS = 48
 # Club ids that get a made-up lake storm warning, marked as a sample, for screenshots.
 SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "").split(",") if c}
 # "from,speed,gusts" (degrees, m/s) replaces the wind in the lake view, marked as a
@@ -46,12 +47,15 @@ _cache: dict[str, tuple[float, tuple]] = {}
 _primed_weather: dict[str, list] = {}
 # The same for the lake view's sample points, per lake.
 _primed_lake_weather: dict[str, list] = {}
+# Forecast points per lake where it differs from lake_view.MAX_SAMPLES (lakes people look at).
+_lake_samples: dict[str, int] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
 # Satellite lake ice passes per lake, set by the publishing job (see sources.lake_ice_satellite).
 _satellite_ice: dict[str, list] = {}
-_ice_temps: dict[str, tuple[float, list[ice.DayTemperature]]] = {}
+# Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
+_ice_temps: dict[str, tuple[date, list[ice.DayTemperature]]] = {}
 _lake_view_cache: dict[str, tuple[float, tuple]] = {}
 
 
@@ -88,6 +92,20 @@ def list_lakes() -> list[dict]:
         for lake in _locations.lakes.values()
         if _locations.clubs_on(lake.id)
     ]
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def _from_now(weather: list, now: datetime) -> list:
+    """The forecast from the current hour on; stored forecasts can be a few hours old."""
+    hour = now.replace(minute=0, second=0, microsecond=0)
+    return [h for h in weather if h.time >= hour][:FORECAST_HOURS]
+
+
+def lake_grid(lake_id: str, rings) -> lake_view.Grid:
+    return lake_view.grid_for(lake_id, rings, _lake_samples.get(lake_id, lake_view.MAX_SAMPLES))
 
 
 def _utc(t: datetime) -> str:
@@ -258,7 +276,7 @@ async def _ice(client: httpx.AsyncClient, lake: locations.Lake, water_c: float |
     if lake.kind != "river" and water_c is not None and water_c > ice.WARM_WATER_C:
         return ice.IceEstimate(ice.OPEN, None, water_c, "measured", None, [])
     cached = _ice_temps.get(lake.id)
-    if cached and time.monotonic() - cached[0] < ICE_CACHE_SECONDS:
+    if cached and cached[0] == today:
         temps = cached[1]
     else:
         try:
@@ -267,7 +285,7 @@ async def _ice(client: httpx.AsyncClient, lake: locations.Lake, water_c: float |
             logging.getLogger(__name__).warning("Air temperatures for the ice estimate unavailable for %s: %r", lake.id, e)
             return None
         temps = [ice.DayTemperature(d, t) for d, t in daily]
-        _ice_temps[lake.id] = (time.monotonic(), temps)
+        _ice_temps[lake.id] = (today, temps)
     if lake.kind == "river":
         return ice.river(temps, today)
     estimate = ice.simulate(temps, today, lake.mean_depth_m, water_c)
@@ -281,7 +299,7 @@ async def club_forecast(club_id: str) -> dict:
         raise HTTPException(status_code=404, detail="unknown club")
 
     lake = _locations.lakes[club.lake_id]
-    now = datetime.now(timezone.utc)
+    now = _now()
     async with httpx.AsyncClient() as client:
         cached = _cache.get(club_id)
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
@@ -304,6 +322,9 @@ async def club_forecast(club_id: str) -> dict:
         warnings_block, warnings = await _warnings(client, club, now)
         ice_estimate = await _ice(client, lake, water.celsius if water else None, now)
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
+    weather = _from_now(weather, now)
+    if not weather:
+        raise HTTPException(status_code=503, detail="forecast too old, try again shortly")
     hours = rowing_forecast(
         club, weather, outlines.load(club.lake_id), water.celsius if water else None, warnings, ice_by_day=ice_by_day
     )
@@ -337,9 +358,9 @@ async def lake_view_forecast(lake_id: str) -> dict:
     rings = outlines.load(lake_id) if lake else None
     if lake is None or rings is None:
         raise HTTPException(status_code=404, detail="no outline for this lake")
-    grid = lake_view.grid_for(lake_id, rings)
+    grid = lake_grid(lake_id, rings)
     clubs = _locations.clubs_on(lake_id)
-    now = datetime.now(timezone.utc)
+    now = _now()
     async with httpx.AsyncClient() as client:
         cached = _lake_view_cache.get(lake_id)
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
@@ -354,7 +375,9 @@ async def lake_view_forecast(lake_id: str) -> dict:
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         else:
             try:
-                weather = await open_meteo.fetch_many(client, [(lat, lon) for lon, lat in grid.samples])
+                weather = await open_meteo.fetch_many(
+                    client, [(lat, lon) for lon, lat in grid.samples], hourly=open_meteo.LAKE_HOURLY
+                )
             except httpx.HTTPError as e:
                 body = e.response.text[:300] if isinstance(e, httpx.HTTPStatusError) else ""
                 logging.getLogger(__name__).warning("Open-Meteo failed for lake view %s: %r %s", lake_id, e, body)
@@ -368,6 +391,7 @@ async def lake_view_forecast(lake_id: str) -> dict:
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         # DWD lake warnings are per lake area, so any club on the lake finds them.
         warnings = (await _warnings(client, clubs[0], now))[1] if clubs else []
+    weather = [_from_now(w, now) for w in weather]
     sample = bool(SAMPLE_LAKE_WIND)
     if sample:
         weather = _sample_wind(weather)

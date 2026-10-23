@@ -36,7 +36,10 @@ MAX_CELL_M = 1000.0
 DIRECTIONS = 36  # every 10 degrees
 # ICON-D2, the model behind the first two forecast days, has a 2.2 km grid.
 SAMPLE_SPACING_M = 2200.0
-MAX_SAMPLES = 20
+# Forecast points per lake. Each costs one Open-Meteo call per refresh, so
+# lakes that people look at get a few more (USED_SAMPLES) than the rest.
+MAX_SAMPLES = 12
+USED_SAMPLES = 15
 
 # Lakes at least this much longer than wide are split into three parts.
 ELONGATED = 1.6
@@ -172,7 +175,7 @@ def _zones(points_m: list[tuple[float, float]]) -> tuple[list[str], list[int]]:
     return [hi_name, "middle", lo_name], [2 - z for z in zone_of]
 
 
-def build_grid(rings: Rings, target_cells: int = TARGET_CELLS) -> Grid:
+def build_grid(rings: Rings, target_cells: int = TARGET_CELLS, max_samples: int = MAX_SAMPLES) -> Grid:
     lons = [x for x, _ in rings[0]]
     lats = [y for _, y in rings[0]]
     lon0, lat0 = (min(lons) + max(lons)) / 2, (min(lats) + max(lats)) / 2
@@ -199,7 +202,7 @@ def build_grid(rings: Rings, target_cells: int = TARGET_CELLS) -> Grid:
                 points_m.append((x, y))
                 fetch.append(_fetch_from(x, y, simple))
 
-    samples_m = _samples(points_m, simple)
+    samples_m = _samples(points_m, simple, max_samples)
     samples = [
         (lon0 + math.degrees(x / (EARTH_RADIUS_M * math.cos(math.radians(lat0)))), lat0 + math.degrees(y / EARTH_RADIUS_M))
         for x, y in samples_m
@@ -217,8 +220,10 @@ def build_grid(rings: Rings, target_cells: int = TARGET_CELLS) -> Grid:
     return Grid(south, west, d_lat, d_lon, cols, rows, cell, cells, points, fetch, samples, nearest, zones, zone_of, outline)
 
 
-def _samples(points_m: list[tuple[float, float]], rings_m: list[list[tuple[float, float]]]) -> list[tuple[float, float]]:
-    """Forecast points about one model grid cell apart, on the water, at most MAX_SAMPLES."""
+def _samples(
+    points_m: list[tuple[float, float]], rings_m: list[list[tuple[float, float]]], max_samples: int = MAX_SAMPLES
+) -> list[tuple[float, float]]:
+    """Forecast points about one model grid cell apart, on the water, at most `max_samples`."""
     if not points_m:
         return [(0.0, 0.0)]
     spacing = SAMPLE_SPACING_M
@@ -236,7 +241,7 @@ def _samples(points_m: list[tuple[float, float]], rings_m: list[list[tuple[float
                     found.append(best)
                 x += spacing
             y += spacing
-        if len(found) <= MAX_SAMPLES:
+        if len(found) <= max_samples:
             break
         spacing *= 1.3
     if not found:
@@ -246,13 +251,13 @@ def _samples(points_m: list[tuple[float, float]], rings_m: list[list[tuple[float
     return found
 
 
-@lru_cache(maxsize=16)
-def _grid_cached(key: str, rings: tuple) -> Grid:
-    return build_grid([list(r) for r in rings])
+@lru_cache(maxsize=256)
+def _grid_cached(key: str, rings: tuple, max_samples: int) -> Grid:
+    return build_grid([list(r) for r in rings], max_samples=max_samples)
 
 
-def grid_for(lake_id: str, rings: Rings) -> Grid:
-    return _grid_cached(lake_id, tuple(tuple(r) for r in rings))
+def grid_for(lake_id: str, rings: Rings, max_samples: int = MAX_SAMPLES) -> Grid:
+    return _grid_cached(lake_id, tuple(tuple(r) for r in rings), max_samples)
 
 
 def _interpolated_fetch(table: list[float], wind_from_deg: float) -> float:
