@@ -18,6 +18,7 @@ from fastapi import FastAPI, HTTPException
 
 from . import lake_view, locations, outlines
 from .forecast import RowingHour, rowing_forecast
+from .score import Light
 from .sources import dwd_warnings, gkd, open_meteo
 from .sun import sun_days
 
@@ -351,8 +352,10 @@ async def lake_view_forecast(lake_id: str) -> dict:
                 # One digit per water cell: 0 green, 1 amber, 2 red.
                 "lights": "".join(str(int(light)) for light in h.lights),
                 "wavesCm": [round(w * 100) for w in h.waves_m],
+                # "other": the light from fog and thunderstorms at the point, 0 green to 2 red.
                 "wind": [
-                    {"speedMs": w.wind_speed_ms, "gustMs": w.wind_gust_ms, "fromDeg": w.wind_from_deg} for w in h.wind
+                    {"speedMs": w.wind_speed_ms, "gustMs": w.wind_gust_ms, "fromDeg": w.wind_from_deg, "other": int(other)}
+                    for w, other in zip(h.wind, h.point_other or [Light.GREEN] * len(h.wind))
                 ],
                 "zones": [
                     {"light": light.name.lower(), "maxWaveM": round(wave, 2)}

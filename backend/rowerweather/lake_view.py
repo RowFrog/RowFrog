@@ -71,6 +71,9 @@ class LakeHour:
     wind: list[ForecastHour]  # per forecast point
     zone_lights: list[Light] = field(default_factory=list)
     zone_max_wave_m: list[float] = field(default_factory=list)
+    # Per forecast point: the light from fog and thunderstorms alone, so the app
+    # can work out the cells again with a rower's own wind and wave limits.
+    point_other: list[Light] = field(default_factory=list)
 
     @property
     def lake_wide_light(self) -> Light:
@@ -295,6 +298,13 @@ def lake_hours(
             ),
             thresholds,
         )
+        point_other = [
+            assess(
+                HourConditions(wind_speed_ms=0.0, wind_gust_ms=0.0, visibility_m=w.visibility_m, thunderstorm=_thunderstorm(w)),
+                thresholds,
+            ).light
+            for w in at_points
+        ]
         lights, waves = [], []
         n_zones = len(grid.zones)
         zone_lights = [Light.GREEN] * n_zones
@@ -320,5 +330,5 @@ def lake_hours(
             z = grid.zone_of[i]
             zone_lights[z] = max(zone_lights[z], light)
             zone_waves[z] = max(zone_waves[z], wave)
-        hours.append(LakeHour(when, wide.reasons, lights, waves, at_points, zone_lights, zone_waves))
+        hours.append(LakeHour(when, wide.reasons, lights, waves, at_points, zone_lights, zone_waves, point_other))
     return hours

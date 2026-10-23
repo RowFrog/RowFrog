@@ -156,10 +156,16 @@ jobs:
           done
           shoot 62-condition-wind-limits light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES
           shoot 63-condition-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES -RWLanguage de
-          # Boat and limits: the settings page, and a club page with limits the user changed.
-          shoot 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits -RWBoatClass big -RWLimits '{windAmber = 7; lifeJacket = 12;}'
-          shoot 65-own-limits light -RWOpenClub mrc-1880 -RWLimits '{windAmber = 2; gustAmber = 16; gustRed = 18;}'
-          shoot 66-own-limits-wind light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES -RWLimits '{windAmber = 2; gustAmber = 16; gustRed = 18;}'
+          # Boats and rowing limits: small boats ticked with own limits, two boats of
+          # the user's own, the lake map coloured for big boats (so it warns).
+          BOATS=(-RWMyBoats '({id = b-anna; name = Anna; type = gig;}, {id = b-flash; name = Flash; type = trainingSingle;})')
+          OWN=(-RWBoatLimits '{small = {windAmber = 2; gustAmber = 16; gustRed = 18;}; b-anna = {waveAmber = 0.4;};}')
+          shoot_pages 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
+          shoot 65-own-limits light -RWOpenClub mrc-1880 "${BOATS[@]}" "${OWN[@]}"
+          shoot 66-own-limits-wind light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES "${BOATS[@]}" "${OWN[@]}"
+          shoot 67-boat-limits light -RWShowSettings YES -RWSettingsPage boat:b-anna "${BOATS[@]}" "${OWN[@]}"
+          shoot 68-lake-card-map-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview "${BOATS[@]}" -RWMapBoat big
+          shoot 69-lake-map-boat light -RWOpenClub mrc-1880 -RWOpenLakeView YES "${BOATS[@]}" -RWMapBoat big
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES

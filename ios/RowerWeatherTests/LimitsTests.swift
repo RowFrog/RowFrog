@@ -33,6 +33,38 @@ final class LimitsTests: XCTestCase {
         XCTAssertEqual(h.notes, [Reason(condition: "gusts", light: .red)])
     }
 
+    func testEveryBoatTypeIsAtLeastAsLenientAsSmallRacingBoats() {
+        for type in BoatType.allCases {
+            let limits = RowingLimits(boat: Boat(id: type.rawValue, name: "", type: type))
+            XCTAssertFalse(RowingLimits.standard.allowsMore(than: limits), type.rawValue)
+            for (amber, red) in [(RowingLimit.windAmber, RowingLimit.windRed), (.gustAmber, .gustRed), (.waveAmber, .waveRed)] {
+                XCTAssertLessThan(limits.value(amber), limits.value(red), "\(type.rawValue) \(amber.rawValue)")
+            }
+        }
+    }
+
+    func testOwnBoatWithTheSmallBoatLimitsChangesNothing() {
+        let single = RowingLimits(boat: Boat(id: "x", name: "Flash", type: .racingSmall))
+        XCTAssertTrue(single.matchesStandard)
+        XCTAssertFalse(RowingLimits(boat: .big).matchesStandard)
+    }
+
+    func testSuggestsASteadierBoatOfYourOwn() {
+        let defaults = UserDefaults(suiteName: "LimitsTests")!
+        defaults.removePersistentDomain(forName: "LimitsTests")
+        let settings = AppSettings(defaults: defaults)
+        let rough = hour(wind: 6, gust: 9, waves: 0.32).applying(settings.limits, waterC: nil)
+        XCTAssertEqual(rough.light, .red)
+        XCTAssertNil(SteadierBoat.suggestion(for: rough, water: nil, settings: settings), "no boats of your own, no suggestion")
+
+        let gig = settings.addBoat(type: .gig)
+        settings.addBoat(type: .trainingSingle)
+        XCTAssertEqual(SteadierBoat.suggestion(for: rough, water: nil, settings: settings), SteadierBoat(boat: gig, light: .green))
+
+        let dark = rough.with(reasons: rough.reasons + [Reason(condition: "daylight", light: .red)], sunUp: false)
+        XCTAssertNil(SteadierBoat.suggestion(for: dark, water: nil, settings: settings), "no boat helps in the dark")
+    }
+
     func testOtherReasonsStay() {
         let dark = Reason(condition: "daylight", light: .red)
         let h = hour(wind: 1, gust: 2, waves: 0, reasons: [dark, Reason(condition: "wind", light: .amber)])

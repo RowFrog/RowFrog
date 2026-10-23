@@ -212,7 +212,12 @@ private struct NowCard: View {
         Card {
             HStack(spacing: 14) {
                 TrafficLightDot(light: hour.light, size: 36)
-                Text(hour.light.title).font(.title2.bold())
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(hour.light.title).font(.title2.bold())
+                    Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer(minLength: 0)
                 VStack(spacing: 2) {
                     SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 34))
@@ -231,6 +236,13 @@ private struct NowCard: View {
                 ForEach(hour.notes ?? [], id: \.self) { note in
                     Label(note.noteText, systemImage: "info.circle")
                         .foregroundStyle(.secondary)
+                }
+                if let steadier = SteadierBoat.suggestion(for: hour, water: water?.celsius) {
+                    Label(steadier.light == .green
+                          ? tr("A steadier boat helps: %@ would be green now.", steadier.boat.title)
+                          : tr("A steadier boat helps: %@ would only need care now.", steadier.boat.title),
+                          systemImage: "figure.rower")
+                        .foregroundStyle(.tint)
                 }
             }
             .font(.subheadline)

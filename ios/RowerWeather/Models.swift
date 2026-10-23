@@ -74,7 +74,7 @@ struct Reason: Codable, Hashable {
 
     /// For a note: the value is within the user's own limit but above the app's.
     var noteText: String {
-        tr("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel, AppSettings.shared.boatClass.title.lowercased())
+        tr("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel, AppSettings.shared.selectedBoat.inSentence)
     }
 
     private var baseLabel: String {

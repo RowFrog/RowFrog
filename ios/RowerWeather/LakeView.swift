@@ -21,7 +21,7 @@ struct LakeView: Decodable, Hashable {
     /// The forecast points the wind comes from.
     let points: [Coordinate]
     let clubs: [LakeClub]
-    let hours: [LakeHour]
+    var hours: [LakeHour]
 
     /// The hour that is running at `date`, else the first one.
     func hourIndex(at date: Date = .now) -> Int {
@@ -76,12 +76,12 @@ struct LakeHour: Decodable, Hashable, Identifiable {
     /// What holds for the whole lake: DWD warnings, dark, cold water.
     let lakeWide: LakeWide
     /// Per water cell, from the conditions at the cell only.
-    let lights: [Light]
+    var lights: [Light]
     let wavesCm: [Int]
     /// Per forecast point.
     let wind: [LakeWind]
     /// Per part of the lake: the worst light and the highest waves in it.
-    let zones: [LakeZone]
+    var zones: [LakeZone]
 
     var id: Date { time }
 
@@ -137,6 +137,47 @@ struct LakeWind: Decodable, Hashable {
     let speedMs: Double?
     let gustMs: Double?
     let fromDeg: Double?
+    /// The light from fog and thunderstorms at the point; missing from older backends.
+    let other: Light?
+
+    private enum CodingKeys: String, CodingKey { case speedMs, gustMs, fromDeg, other }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        speedMs = try c.decodeIfPresent(Double.self, forKey: .speedMs)
+        gustMs = try c.decodeIfPresent(Double.self, forKey: .gustMs)
+        fromDeg = try c.decodeIfPresent(Double.self, forKey: .fromDeg)
+        // 0 green, 1 amber, 2 red.
+        other = try c.decodeIfPresent(Int.self, forKey: .other).map { $0 >= 2 ? .red : $0 == 1 ? .amber : .green }
+    }
+}
+
+extension LakeView {
+    /// The lake coloured for a boat's wind, gust and wave limits; unchanged
+    /// with the app's own, or when the backend does not send fog per point.
+    func applying(_ limits: RowingLimits) -> LakeView {
+        guard !limits.matchesStandard,
+              hours.allSatisfy({ $0.wind.allSatisfy { $0.other != nil } }) else { return self }
+        var copy = self
+        copy.hours = hours.map { original in
+            var hour = original
+            var zoneLights = [Light](repeating: .green, count: hour.zones.count)
+            hour.lights = hour.lights.indices.map { i in
+                let p = i < grid.cellPoint.count ? grid.cellPoint[i] : 0
+                let wind = p < hour.wind.count ? hour.wind[p] : nil
+                let light = max(wind?.other ?? .green,
+                                limits.light(wind?.speedMs, .windAmber, .windRed),
+                                limits.light(wind?.gustMs, .gustAmber, .gustRed),
+                                limits.light(i < hour.wavesCm.count ? hour.wave(ofCell: i) : nil, .waveAmber, .waveRed))
+                let z = i < grid.cellZone.count ? grid.cellZone[i] : 0
+                if z < zoneLights.count { zoneLights[z] = max(zoneLights[z], light) }
+                return light
+            }
+            hour.zones = zip(hour.zones, zoneLights).map { LakeZone(light: $1, maxWaveM: $0.maxWaveM) }
+            return hour
+        }
+        return copy
+    }
 }
 
 struct LakeZone: Decodable, Hashable {
@@ -225,21 +266,44 @@ extension LakeView {
 final class LakeViewStore {
     static let shared = LakeViewStore(api: .fromBundle())
 
-    private(set) var views: [String: LakeView] = [:]
+    /// As the backend sent them, coloured for small boats.
+    private var raw: [String: LakeView] = [:]
+    /// Coloured for the boat chosen in the settings, worked out once per change.
+    var views: LakeViews { LakeViews(store: self) }
+    @ObservationIgnored private var applied: [String: (limits: RowingLimits, view: LakeView)] = [:]
     private(set) var failed: Set<String> = []
     private let api: APIClient
 
     nonisolated init(api: APIClient) { self.api = api }
 
     func load(_ lakeID: String, force: Bool = false) async {
-        if !force, let view = views[lakeID], view.generatedAt > .now.addingTimeInterval(-30 * 60) { return }
+        if !force, let view = raw[lakeID], view.generatedAt > .now.addingTimeInterval(-30 * 60) { return }
         do {
-            views[lakeID] = try await api.lakeView(lakeID: lakeID)
+            let view = try await api.lakeView(lakeID: lakeID)
+            applied[lakeID] = nil
+            raw[lakeID] = view
             failed.remove(lakeID)
         } catch {
             failed.insert(lakeID)
         }
     }
+
+    /// The lake for the map's boat.
+    func view(_ lakeID: String) -> LakeView? {
+        guard let base = raw[lakeID] else { return nil }
+        let limits = AppSettings.shared.mapLimits
+        if let cached = applied[lakeID], cached.limits == limits { return cached.view }
+        let view = base.applying(limits)
+        applied[lakeID] = (limits, view)
+        return view
+    }
+}
+
+@MainActor
+struct LakeViews {
+    let store: LakeViewStore
+
+    subscript(lakeID: String) -> LakeView? { store.view(lakeID) }
 }
 
 /// The lake's cells as a small picture, one pixel per cell, north up. Drawn
@@ -274,10 +338,16 @@ enum LakeRaster {
         return purple
     }
 
-    /// Wave limits as in the backend's score.py: amber from 0.15 m, red above 0.30 m.
-    static func waveColor(_ m: Double) -> RGB { ramp(m, amber: 0.15, red: 0.30) }
-    /// Wind limits: amber from 5.5 m/s (Bft 4), red above 8 m/s (Bft 5).
-    static func windColor(_ ms: Double) -> RGB { ramp(ms, amber: 5.5, red: 8.0) }
+    /// The wave and wind limits of the boat the map is coloured for; for
+    /// small boats amber from 0.15 m and 5.5 m/s, red above 0.30 m and 8 m/s.
+    static func waveColor(_ m: Double) -> RGB {
+        let limits = AppSettings.shared.mapLimits
+        return ramp(m, amber: limits.value(.waveAmber), red: limits.value(.waveRed))
+    }
+    static func windColor(_ ms: Double) -> RGB {
+        let limits = AppSettings.shared.mapLimits
+        return ramp(ms, amber: limits.value(.windAmber), red: limits.value(.windRed))
+    }
 
     static func image(_ view: LakeView, hour: LakeHour, layer: LakeLayer) -> CGImage? {
         let grid = view.grid

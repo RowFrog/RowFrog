@@ -790,7 +790,7 @@ extension ConditionDetail {
         case .amber: return amber
         default:
             if (d.now.notes ?? []).contains(where: { names.contains($0.condition) }) {
-                return tr("Within your own limit, but above the app's usual limit for %@: take extra care.", userLimits.boat.title.lowercased())
+                return tr("Within your own limit, but above the app's usual limit for %@: take extra care.", userLimits.boat.inSentence)
             }
             if let next = d.next24.first(where: { $0.light(for: names) != nil }) {
                 return tr(later, Format.dayTime(next.time))
@@ -845,7 +845,7 @@ extension ConditionDetail {
     /// The limits in use, after the explanation of the app's own.
     private static func inUse(_ pairs: [(String, RowingLimit, RowingLimit)]) -> String {
         let parts = pairs.map { tr("%@ amber from %@, red above %@", $0.0, $0.1.format(userLimits.value($0.1)), $0.2.format(userLimits.value($0.2))) }
-        return " " + tr("In use for %@: %@. You can change them under Settings, Rowing limits.", userLimits.boat.title.lowercased(), parts.joined(separator: "; "))
+        return " " + tr("In use for %@: %@. You can change them under Settings, Rowing limits.", userLimits.boat.inSentence, parts.joined(separator: "; "))
     }
 
     private static func waves(_ d: ConditionData) -> ConditionDetail {
