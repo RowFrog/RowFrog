@@ -46,8 +46,10 @@ final class LimitsTests: XCTestCase {
     }
 
     func testOwnBoatWithTheSmallBoatLimitsChangesNothing() {
-        let single = RowingLimits(boat: Boat(id: "x", name: "Flash", type: .racing, boatClass: .double))
+        let single = RowingLimits(boat: Boat(id: "x", name: "Flash", type: .racing, boatClass: .single))
         XCTAssertTrue(single.matchesStandard)
+        let double = RowingLimits(boat: Boat(id: "d", name: "", type: .racing, boatClass: .double))
+        XCTAssertFalse(double.matchesStandard, "same limits, but no partner-boat hint for a double")
         XCTAssertFalse(RowingLimits(boat: .big).matchesStandard)
         let quad = RowingLimits(boat: Boat(id: "q", name: "", type: .racing, boatClass: .quad))
         XCTAssertEqual(quad.value(.waveRed), RowingLimits(boat: .big).value(.waveRed), "a racing quad gets the big-boat limits")

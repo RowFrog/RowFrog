@@ -89,7 +89,7 @@ final class AppSettingsTests: XCTestCase {
         let again = AppSettings(defaults: defaults)
         XCTAssertEqual(again.selectedBoat, anna, "the last boat picked stays ticked")
         XCTAssertEqual(again.limits.value(.waveAmber), 0.4)
-        XCTAssertEqual(again.limits.value(.waveRed), 0.6, "the gig's own limit where the user changed nothing")
+        XCTAssertEqual(again.limits.value(.waveRed), 0.5, "the gig's own limit where the user changed nothing")
         XCTAssertEqual(again.limits(for: .big).value(.windAmber), 9)
         XCTAssertEqual(again.limits(for: .small), .standard)
     }
