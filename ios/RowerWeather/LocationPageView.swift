@@ -34,6 +34,7 @@ struct LocationPageView: View {
                             NowCard(hour: now, water: forecast.waterTemperature)
                             if let warnings = forecast.warnings {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
+                                    .id("warnings")
                             }
                             if twoColumns {
                                 HStack(alignment: .top, spacing: 16) {
@@ -88,7 +89,7 @@ struct LocationPageView: View {
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
                     await forecasts.load(club.id)
-                    // Screenshot hook: `-RWScrollTo hourly` (or `conditions`, `launchpoint`, `lakeview`) scrolls to that card.
+                    // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `conditions`, `launchpoint`, `lakeview`) scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast, so wait for it.
                         try? await Task.sleep(for: .milliseconds(target == "lakeview" ? 2500 : 300))

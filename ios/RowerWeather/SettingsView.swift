@@ -1009,7 +1009,9 @@ struct BoatLimitsView: View {
             } header: {
                 SectionTitle(tr("Fine-tune the limits"), symbol: "slider.horizontal.3")
             } footer: {
-                SectionFooter(tr("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. DWD warnings, thunderstorms, fog, hail and darkness always count."))
+                SectionFooter(tr("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. DWD warnings, thunderstorms, fog, hail and darkness always count.")
+                              + " " + tr("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.",
+                                         Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs)))
             }
             .surfaceRows()
 

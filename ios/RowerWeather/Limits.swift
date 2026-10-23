@@ -114,38 +114,46 @@ enum RowingLimit: String, CaseIterable, Identifiable {
     static let boatDependent: [RowingLimit] = [.windAmber, .windRed, .gustAmber, .gustRed, .waveAmber, .waveRed]
 
     /// The app's limit for a boat; small racing boats' are the backend's
-    /// (score.py). The others are estimates to be checked with experienced rowers.
+    /// (score.py). From the research in the thread "Boat sizes and rowing
+    /// limits", approved by the owner on 2026-10-23; to be checked with
+    /// experienced rowers before release.
     func standard(for boat: Boat) -> Double {
         switch (self, boat.type, boat.isBig) {
         case (.lifeJacket, _, _): 10
-        case (.gustRed, _, _): 12.8  // 46 km/h, DWD's strong-wind warning
-        // Racing boats, and big training boats, which are as steady as big racing boats.
-        case (.windAmber, .racing, false): 5.5  // Beaufort 4
+        // Small racing boats: ~7 cm of side.
+        case (.windAmber, .racing, false): 5.5  // Beaufort 4, the first whitecaps
         case (.windRed, .racing, false): 8.0  // Beaufort 5
         case (.gustAmber, .racing, false): 8.0
+        case (.gustRed, .racing, false): 10.3  // 20 kn
         case (.waveAmber, .racing, false): 0.15
-        case (.waveRed, .racing, false): 0.30
+        case (.waveRed, .racing, false): 0.25
+        // Big racing boats, and big training boats, which are as steady.
         case (.windAmber, .racing, true), (.windAmber, .training, true): 8.0
-        case (.windRed, .racing, true), (.windRed, .training, true): 10.8  // Beaufort 6
+        case (.windRed, .racing, true), (.windRed, .training, true): 10.8  // Beaufort 6, the strong-wind warning
         case (.gustAmber, .racing, true), (.gustAmber, .training, true): 10.8
+        case (.gustRed, .racing, true), (.gustRed, .training, true): 12.8  // 46 km/h
         case (.waveAmber, .racing, true), (.waveAmber, .training, true): 0.25
-        case (.waveRed, .racing, true), (.waveRed, .training, true): 0.45
+        case (.waveRed, .racing, true), (.waveRed, .training, true): 0.40
         // Small training boats: wider than racing boats.
         case (.windAmber, .training, false): 6.5
         case (.windRed, .training, false): 9.0
         case (.gustAmber, .training, false): 9.0
+        case (.gustRed, .training, false): 11.0
         case (.waveAmber, .training, false): 0.20
         case (.waveRed, .training, false): 0.35
-        // Gigs and coastal boats: higher sides, any size.
+        // Gigs: ~18-20 cm of side, but an open gig sinks when swamped.
         case (.windAmber, .gig, _): 8.0
         case (.windRed, .gig, _): 10.8
         case (.gustAmber, .gig, _): 10.8
-        case (.waveAmber, .gig, _): 0.35
-        case (.waveRed, .gig, _): 0.60
-        case (.windAmber, .coastal, _): 9.0
+        case (.gustRed, .gig, _): 12.8
+        case (.waveAmber, .gig, _): 0.30
+        case (.waveRed, .gig, _): 0.50
+        // Coastal boats: built for Beaufort 4 and 0.5 m waves, and self-bailing.
+        case (.windAmber, .coastal, _): 8.0
         case (.windRed, .coastal, _): 12.0
         case (.gustAmber, .coastal, _): 10.8
-        case (.waveAmber, .coastal, _): 0.60
+        case (.gustRed, .coastal, _): 12.8
+        case (.waveAmber, .coastal, _): 0.50
         case (.waveRed, .coastal, _): 1.0
         }
     }
@@ -207,14 +215,42 @@ enum RowingLimit: String, CaseIterable, Identifiable {
 struct RowingLimits: Equatable {
     var boat: Boat = .small
     var custom: [RowingLimit: Double] = [:]
+    /// Taken off the app's wind and gust limits in cold water; the user's own stay.
+    var coldMargin: Double = 0
 
     /// What the backend's rowing light already uses.
     static let standard = RowingLimits()
+    /// Below this water temperature: life jacket, singles with a coach or partner
+    /// boat, and the app's wind and gust limits lowered by `coldWindMarginMs` (DRV).
+    static let coldWaterC = 10.0
+    static let coldWindMarginMs = 1.0
+    /// Below this, small boats are strongly advised to stay ashore.
+    static let freezingWaterC = 4.0
 
-    func value(_ limit: RowingLimit) -> Double { custom[limit] ?? limit.standard(for: boat) }
+    func value(_ limit: RowingLimit) -> Double {
+        if let mine = custom[limit] { return mine }
+        let isWind = [.windAmber, .windRed, .gustAmber, .gustRed].contains(limit)
+        return limit.standard(for: boat) - (isWind ? coldMargin : 0)
+    }
     func isMine(_ limit: RowingLimit) -> Bool { custom[limit] != nil }
-    /// The same wind, gust and wave limits as the backend's, whatever the boat is called.
-    var matchesStandard: Bool { RowingLimit.allCases.allSatisfy { value($0) == Self.standard.value($0) } }
+
+    /// These limits for water of `celsius`: in cold water the app's wind and gust limits drop.
+    func forWater(_ celsius: Double?) -> RowingLimits {
+        var copy = self
+        copy.coldMargin = (celsius ?? 99) < Self.coldWaterC ? Self.coldWindMarginMs : 0
+        return copy
+    }
+
+    /// The boat may be a single, so cold water calls for a coach or partner boat.
+    var maybeSingle: Bool { boat.id == Boat.small.id || boat.boatClass == .single }
+    /// The lake's strong-wind light: red for small racing and training boats, amber for the rest.
+    var strongWindLight: Light { !boat.isBig && [.racing, .training].contains(boat.type) ? .red : .amber }
+
+    /// The same limits and rules as the backend's small boats, whatever the boat is called.
+    var matchesStandard: Bool {
+        RowingLimit.allCases.allSatisfy { value($0) == Self.standard.value($0) }
+            && maybeSingle && strongWindLight == .red
+    }
 
     /// Whether these limits let any wind, gust or wave pass that `other` already flags.
     func allowsMore(than other: RowingLimits) -> Bool {
@@ -226,19 +262,32 @@ struct RowingLimits: Equatable {
         guard let value else { return .green }
         return value > self.value(red) ? .red : value >= self.value(amber) ? .amber : .green
     }
+
+    /// Reasons that depend on the boat but not on a measured value: the lake's
+    /// strong-wind light and the advice for singles.
+    func boatReasons(_ reasons: [Reason]) -> [Reason] {
+        reasons.compactMap { reason in
+            switch reason.condition {
+            case "lake_strong_wind": Reason(condition: reason.condition, light: strongWindLight)
+            case "single_cold": maybeSingle ? reason : nil
+            default: reason
+            }
+        }
+    }
 }
 
 extension ForecastHour {
-    /// Reasons whose limits the user can change; the app works them out again.
-    static let limitReasons: Set<String> = ["wind", "gusts", "waves", "cold_water", "cool_water"]
+    /// Reasons the app works out again for the user's boat and limits.
+    static let limitReasons: Set<String> = ["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water"]
 
     /// This hour with wind, gusts, waves and water checked against `limits`.
     /// Where the user's own limit is looser than the app's, a note says the
     /// value is above the app's limit, so the advice is never lost.
-    func applying(_ limits: RowingLimits, waterC: Double?) -> ForecastHour {
-        var reasons = self.reasons.filter { !Self.limitReasons.contains($0.condition) }
+    func applying(_ chosen: RowingLimits, waterC: Double?) -> ForecastHour {
+        let limits = chosen.forWater(waterC)
+        var reasons = limits.boatReasons(self.reasons.filter { !Self.limitReasons.contains($0.condition) })
         var notes: [Reason] = []
-        let usualLimits = RowingLimits(boat: limits.boat)
+        let usualLimits = RowingLimits(boat: limits.boat).forWater(waterC)
         func check(_ name: String, _ value: Double?, _ amber: RowingLimit, _ red: RowingLimit) {
             let light = limits.light(value, amber, red)
             if light > .green {
@@ -258,6 +307,16 @@ extension ForecastHour {
                                   mine: cold && limits.isMine(.lifeJacket) ? true : nil))
             if !cold && water < RowingLimit.lifeJacket.standard(for: limits.boat) {
                 notes.append(Reason(condition: "cold_water", light: .amber))
+            }
+            if water < RowingLimits.coldWaterC {
+                if limits.maybeSingle { reasons.append(Reason(condition: "single_cold", light: .amber)) }
+                // The user's own wind limits do not drop with the water; say so.
+                if [RowingLimit.windAmber, .windRed, .gustAmber, .gustRed].contains(where: limits.isMine) {
+                    notes.append(Reason(condition: "cold_margin", light: .amber))
+                }
+            }
+            if water < RowingLimits.freezingWaterC {
+                reasons.append(Reason(condition: "freezing_water", light: .amber))
             }
         }
         var hour = self

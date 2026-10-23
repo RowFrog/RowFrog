@@ -74,12 +74,19 @@ struct Reason: Codable, Hashable {
 
     /// For a note: the value is within the user's own limit but above the app's.
     var noteText: String {
-        tr("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel, AppSettings.shared.selectedBoat.inSentence)
+        if condition == "cold_margin" {
+            return tr("Cold water: the app lowers its wind and gust limits by %@ below %@. Your own limits stay as you set them, so take extra care.",
+                      Format.wind(RowingLimits.coldWindMarginMs), Format.temperature(RowingLimits.coldWaterC))
+        }
+        return tr("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel, AppSettings.shared.selectedBoat.inSentence)
     }
 
     private var baseLabel: String {
         switch condition {
-        case "lake_warning": tr("DWD lake warning")
+        case "lake_warning": tr("DWD storm warning")
+        case "lake_strong_wind": tr("DWD strong-wind warning")
+        case "single_cold": tr("Single in cold water")
+        case "freezing_water": tr("Near-freezing water")
         case "weather_warning": tr("DWD weather warning")
         case "wind": tr("Wind")
         case "gusts": tr("Gusts")
@@ -99,7 +106,10 @@ struct Reason: Codable, Hashable {
 
     private var baseExplanation: String {
         switch condition {
-        case "lake_warning": tr("DWD has issued a wind or storm warning for the lake.")
+        case "lake_warning": tr("DWD has issued a storm warning for the lake; its warning lights flash 90 times a minute.")
+        case "lake_strong_wind": tr("DWD has issued a strong-wind warning for the lake; its warning lights flash 40 times a minute.")
+        case "single_cold": tr("In a single, row with a coach boat or a partner boat while the water is this cold.")
+        case "freezing_water": tr("The water is below %@. You are strongly advised not to go out, at least not in a small boat.", Format.temperature(RowingLimits.freezingWaterC))
         case "weather_warning": tr("DWD has issued a weather warning for this place.")
         case "wind": tr("Mean wind is above the limit.")
         case "gusts": tr("Gusts are above the limit.")

@@ -83,9 +83,9 @@ enum Condition: String, CaseIterable, Identifiable {
     /// Backend reason names that belong to this condition.
     var reasonNames: Set<String> {
         switch self {
-        case .wind: ["wind", "gusts", "lake_warning"]
+        case .wind: ["wind", "gusts", "lake_warning", "lake_strong_wind"]
         case .waves: ["waves"]
-        case .waterTemperature: ["cold_water", "cool_water"]
+        case .waterTemperature: ["cold_water", "cool_water", "single_cold", "freezing_water"]
         case .visibility: ["fog"]
         case .precipitation: ["heavy_rain", "hail"]
         case .thunderstorm: ["thunderstorm"]

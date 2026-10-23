@@ -309,6 +309,8 @@ def lake_hours(
         n_zones = len(grid.zones)
         zone_lights = [Light.GREEN] * n_zones
         zone_waves = [0.0] * n_zones
+        # Cold water lowers the wind limits for the cells too.
+        cell_thresholds = thresholds.for_water(water_temp_c)
         for i, table in enumerate(grid.fetch):
             w = at_points[grid.nearest[i]]
             speed = w.wind_speed_ms or 0.0
@@ -323,7 +325,7 @@ def lake_hours(
                     visibility_m=w.visibility_m,
                     thunderstorm=_thunderstorm(w),
                 ),
-                thresholds,
+                cell_thresholds,
             ).light
             lights.append(light)
             waves.append(wave)

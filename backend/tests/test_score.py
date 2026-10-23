@@ -1,4 +1,4 @@
-from rowerweather.score import HourConditions, LakeWarning, Light, assess
+from rowerweather.score import HourConditions, LakeWarning, Light, Thresholds, assess
 
 
 def test_calm_morning_is_green():
@@ -28,7 +28,25 @@ def test_fog_thresholds():
 def test_cold_water_is_a_warning_not_a_closure():
     a = assess(HourConditions(0, 0, water_temp_c=6))
     assert a.light == Light.AMBER
-    assert a.reasons == [("cold_water", Light.AMBER)]
+    assert a.reasons == [("cold_water", Light.AMBER), ("single_cold", Light.AMBER)]
+    a = assess(HourConditions(0, 0, water_temp_c=3))
+    assert a.light == Light.AMBER, "near-freezing water is a strong warning, the rower decides"
+    assert ("freezing_water", Light.AMBER) in a.reasons
+
+
+def test_cold_water_lowers_the_wind_limits_by_one_metre_per_second():
+    assert assess(HourConditions(wind_speed_ms=5.0, wind_gust_ms=5.0, water_temp_c=16)).light == Light.GREEN
+    a = assess(HourConditions(wind_speed_ms=5.0, wind_gust_ms=5.0, water_temp_c=8))
+    assert ("wind", Light.AMBER) in a.reasons
+    assert ("gusts", Light.RED) in assess(HourConditions(wind_speed_ms=1, wind_gust_ms=9.5, water_temp_c=8)).reasons
+
+
+def test_strong_wind_light_is_red_for_small_boats_and_storm_for_all():
+    a = assess(HourConditions(wind_speed_ms=1, wind_gust_ms=2, lake_warning=LakeWarning.STRONG_WIND))
+    assert a.reasons == [("lake_strong_wind", Light.RED)]
+    big = Thresholds(strong_wind_light=Light.AMBER)
+    assert assess(HourConditions(1, 2, lake_warning=LakeWarning.STRONG_WIND), big).light == Light.AMBER
+    assert assess(HourConditions(1, 2, lake_warning=LakeWarning.STORM), big).light == Light.RED
 
 
 def test_heavy_rain_is_amber_and_hail_red():

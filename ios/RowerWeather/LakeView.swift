@@ -129,8 +129,8 @@ struct LakeHour: Decodable, Hashable, Identifiable {
 }
 
 struct LakeWide: Decodable, Hashable {
-    let light: Light
-    let reasons: [Reason]
+    var light: Light
+    var reasons: [Reason]
 }
 
 struct LakeWind: Decodable, Hashable {
@@ -161,14 +161,19 @@ extension LakeView {
         var copy = self
         copy.hours = hours.map { original in
             var hour = original
+            // The backend says when the water is cold; then the app's wind limits drop.
+            let cold = original.lakeWide.reasons.contains { $0.condition == "cold_water" }
+            let forBoat = limits.forWater(cold ? 0 : nil)
+            hour.lakeWide.reasons = forBoat.boatReasons(original.lakeWide.reasons).sorted { $0.light > $1.light }
+            hour.lakeWide.light = hour.lakeWide.reasons.map(\.light).max() ?? .green
             var zoneLights = [Light](repeating: .green, count: hour.zones.count)
             hour.lights = hour.lights.indices.map { i in
                 let p = i < grid.cellPoint.count ? grid.cellPoint[i] : 0
                 let wind = p < hour.wind.count ? hour.wind[p] : nil
                 let light = max(wind?.other ?? .green,
-                                limits.light(wind?.speedMs, .windAmber, .windRed),
-                                limits.light(wind?.gustMs, .gustAmber, .gustRed),
-                                limits.light(i < hour.wavesCm.count ? hour.wave(ofCell: i) : nil, .waveAmber, .waveRed))
+                                forBoat.light(wind?.speedMs, .windAmber, .windRed),
+                                forBoat.light(wind?.gustMs, .gustAmber, .gustRed),
+                                forBoat.light(i < hour.wavesCm.count ? hour.wave(ofCell: i) : nil, .waveAmber, .waveRed))
                 let z = i < grid.cellZone.count ? grid.cellZone[i] : 0
                 if z < zoneLights.count { zoneLights[z] = max(zoneLights[z], light) }
                 return light

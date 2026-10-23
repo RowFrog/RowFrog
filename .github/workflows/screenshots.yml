@@ -173,6 +173,9 @@ jobs:
           shoot 67-boat-limits light -RWShowSettings YES -RWSettingsPage boat:b-anna "${BOATS[@]}" "${OWN[@]}"
           shoot 68-lake-card-map-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview "${BOATS[@]}" -RWMapBoat big
           shoot 69-lake-map-boat light -RWOpenClub mrc-1880 -RWOpenLakeView YES "${BOATS[@]}" -RWMapBoat big
+          # The shore warning lights explained, at a club with a lake warning.
+          shoot 70-shore-lights light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES
+          shoot 70-shore-lights-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES -RWLanguage de
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES

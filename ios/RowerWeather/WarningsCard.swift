@@ -28,6 +28,9 @@ struct WarningsCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            if warnings.lakeArea != nil {
+                ShoreLightsGuide()
+            }
         }
         .font(.subheadline)
     }
@@ -106,6 +109,44 @@ private struct WarningRow: View {
         case let (nil, expires?): tr("Until %@", Format.dayTime(expires))
         default: nil
         }
+    }
+}
+
+/// What the lake's shore warning lights mean, where DWD runs the lake warning
+/// service (Bavarian notice "Sturmwarndienst auf bayerischen Seen", AllMBl. 2010 S. 170).
+struct ShoreLightsGuide: View {
+    @State private var open = UserDefaults.standard.bool(forKey: "RWShoreLights")
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $open) {
+            VStack(alignment: .leading, spacing: 8) {
+                row(flashes: 40, color: .orange, title: tr("Strong-wind warning"),
+                    text: tr("Wind or gusts of Beaufort 6 to 7 (39 to 61 km/h) are expected. Boats on the water head for the shore; small boats stay ashore. The rowing light is red for small racing and training boats and amber for the others."))
+                row(flashes: 90, color: .red, title: tr("Storm warning"),
+                    text: tr("Beaufort 8 or more (62 km/h and above). Go ashore at once and do not launch. The rowing light is red for every boat."))
+                Text(tr("The lights run from 1 April to 31 October, usually from 7:00 to 22:00; times may vary by lake. Outside these times there is no light, so check the forecast yourself."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.top, 6)
+        } label: {
+            Label(tr("What the shore warning lights mean"), systemImage: "light.beacon.max")
+                .font(.subheadline.weight(.semibold))
+        }
+    }
+
+    private func row(flashes: Int, color: Color, title: String, text: String) -> some View {
+        HStack(alignment: .top, spacing: 10) {
+            Image(systemName: "light.beacon.max.fill")
+                .foregroundStyle(color)
+                .frame(width: 22)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(tr("%@ flashes a minute: %@", "\(flashes)", title)).font(.subheadline.weight(.semibold))
+                Text(text).font(.caption).fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 
