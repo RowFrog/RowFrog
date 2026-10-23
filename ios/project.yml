@@ -1,7 +1,7 @@
 # Generate the Xcode project on a Mac with:  brew install xcodegen && xcodegen
 name: RowerWeather
 options:
-  bundleIdPrefix: com.rowerweatherfrog
+  bundleIdPrefix: com.rowfrog
   deploymentTarget:
     iOS: "17.0"
 settings:
@@ -19,10 +19,10 @@ targets:
     entitlements:
       path: RowerWeather/RowerWeather.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.rowerweatherfrog.RowFrog]
+        com.apple.security.application-groups: [group.com.rowfrog.RowFrog]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowFrog
+        PRODUCT_BUNDLE_IDENTIFIER: com.rowfrog.RowFrog
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
         INFOPLIST_KEY_CFBundleDisplayName: Row Frog
@@ -45,7 +45,7 @@ targets:
           NSAllowsLocalNetworking: true
         # A tap on the widget opens rowfrog://club/<id>.
         CFBundleURLTypes:
-          - CFBundleURLName: com.rowerweatherfrog.RowFrog
+          - CFBundleURLName: com.rowfrog.RowFrog
             CFBundleURLSchemes: [rowfrog]
         # Upright and on its side; the pages switch to two columns when wide enough.
         UISupportedInterfaceOrientations:
@@ -72,10 +72,10 @@ targets:
     entitlements:
       path: RowerWeatherWidget/RowerWeatherWidget.entitlements
       properties:
-        com.apple.security.application-groups: [group.com.rowerweatherfrog.RowFrog]
+        com.apple.security.application-groups: [group.com.rowfrog.RowFrog]
     settings:
       base:
-        PRODUCT_BUNDLE_IDENTIFIER: com.rowerweatherfrog.RowFrog.Widget
+        PRODUCT_BUNDLE_IDENTIFIER: com.rowfrog.RowFrog.Widget
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: Row Frog
         TARGETED_DEVICE_FAMILY: "1"
