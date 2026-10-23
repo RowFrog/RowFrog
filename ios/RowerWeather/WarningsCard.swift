@@ -23,12 +23,15 @@ struct WarningsCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             } else {
-                ForEach(warnings.items) { WarningRow(warning: $0) }
+                // The shore lights explained right under the lake warning, before the weather warnings.
+                ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
+                if warnings.lakeArea != nil { ShoreLightsGuide() }
+                ForEach(warnings.items.filter { !$0.isLake }) { WarningRow(warning: $0) }
                 Text(coverage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            if warnings.lakeArea != nil {
+            if warnings.checked, warnings.items.isEmpty, warnings.lakeArea != nil {
                 ShoreLightsGuide()
             }
         }
