@@ -1,0 +1,85 @@
+name: Model check
+
+# Compares weather models for the test points in data/model-check/points.json
+# against DWD station measurements (scripts/model_check.py). Twice a day it
+# stores every model's forecast on the model-check branch and rewrites
+# report.md there. On Mondays (or by hand) the report is posted as a comment
+# on the "Model check" issue, so the owner gets it by e-mail.
+
+on:
+  push:
+    paths:
+      - scripts/model_check.py
+      - backend/rowerweather/model_check.py
+      - data/model-check/**
+      - .github/workflows/model-check.yml
+  schedule:
+    # After the 00 and 12 UTC model runs are out.
+    - cron: "40 4 * * *"
+    - cron: "40 16 * * *"
+  workflow_dispatch:
+    inputs:
+      archive_days:
+        description: "Also load this many days of archived forecasts (0 = none)"
+        default: "0"
+      post_report:
+        description: "Post the report on the Model check issue"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: model-check
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Get the stored forecasts
+        # A separate worktree, so only the model-check data is committed there.
+        run: |
+          if git fetch --depth 1 origin model-check; then
+            git worktree add --detach store origin/model-check
+          else
+            git worktree add --orphan -b model-check-new store
+          fi
+      - name: Store forecasts and write the report
+        run: python3 scripts/model_check.py store --archive-days "${{ inputs.archive_days || '0' }}"
+      - name: Commit to the model-check branch
+        run: |
+          cd store
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then echo "Nothing new"; exit 0; fi
+          git commit -q -m "Model check $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do
+            git push origin HEAD:model-check && exit 0
+            git fetch origin model-check && git rebase origin/model-check
+          done
+          exit 1
+      - name: Post the report on the Model check issue
+        if: inputs.post_report || github.event.schedule == '40 4 * * *'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ inputs.post_report }}" != "true" ] && [ "$(date -u +%u)" != "1" ]; then echo "Not Monday"; exit 0; fi
+          number=$(gh issue list --state open --search "Model check in:title" --json number,title \
+            --jq '[.[] | select(.title == "Model check")][0].number')
+          if [ -z "$number" ]; then
+            gh issue create --title "Model check" \
+              --body "Weekly weather model comparison from the Model check workflow. Data and the latest report: branch model-check."
+            number=$(gh issue list --state open --search "Model check in:title" --json number,title \
+              --jq '[.[] | select(.title == "Model check")][0].number')
+          fi
+          head -c 60000 store/report.md > comment.md
+          gh issue comment "$number" --body-file comment.md
