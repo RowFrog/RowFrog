@@ -2,7 +2,7 @@ name: Publish forecasts
 
 # The app's backend while it has no server of its own: runs the backend code
 # on a schedule and publishes its answers as static files on GitHub Pages, at
-# https://rowfrog.github.io/RowFrog/v1/ (see scripts/publish_static.py).
+# https://api.rowfrog.com/v1/ (see scripts/publish_static.py).
 # The confirmed clubs are refreshed every 30 minutes, all catalog clubs every
 # 6 hours. The files live on the gh-pages branch, kept as a single commit so
 # its history does not grow. Pages must be set to "Deploy from a branch",
@@ -75,3 +75,11 @@ jobs:
           fi
           git commit -q -m "Forecasts $(date -u +%Y-%m-%dT%H:%MZ)"
           git push -f origin publish:gh-pages
+      - name: Check the published address
+        # GitHub Pages takes a minute or two to serve a new commit.
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS -o /dev/null https://api.rowfrog.com/v1/lakes/index; then echo "api.rowfrog.com answers"; exit 0; fi
+            sleep 30
+          done
+          echo "::warning::https://api.rowfrog.com/v1/lakes/index does not answer"

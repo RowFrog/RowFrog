@@ -40,7 +40,7 @@ targets:
         Debug:
           RW_API_BASE_URL: http://localhost:8000
         Release:
-          RW_API_BASE_URL: https://rowfrog.github.io/RowFrog/v1
+          RW_API_BASE_URL: https://api.rowfrog.com/v1
     info:
       path: RowerWeather/Info.plist
       properties:
@@ -92,7 +92,7 @@ targets:
         Debug:
           RW_API_BASE_URL: http://localhost:8000
         Release:
-          RW_API_BASE_URL: https://rowfrog.github.io/RowFrog/v1
+          RW_API_BASE_URL: https://api.rowfrog.com/v1
     info:
       path: RowerWeatherWidget/Info.plist
       properties:
