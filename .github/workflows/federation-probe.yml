@@ -1,0 +1,28 @@
+name: Federation club pages probe
+
+# Looks at the club pages of Swiss Rowing and the Austrian rowing federation
+# and prints what they hold, so the import scripts match the real markup.
+# Reads a handful of pages; imports nothing. Runs by hand or when the probe
+# changes.
+
+on:
+  push:
+    paths:
+      - scripts/probe_federations.py
+      - .github/workflows/federation-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - run: cd scripts && python3 -u probe_federations.py
