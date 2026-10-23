@@ -6,7 +6,7 @@ Usage (from the repository root):
 
 Reads the club list at rudern.de/service/vereinssuche and each club's page,
 geocodes the boathouse address with Nominatim, and finds the water it lies
-on in OpenStreetMap. Writes data/catalog-drv.json, which the app's search
+on in OpenStreetMap. Writes data/catalogs/de-drv.json, which the app's search
 offers next to the OSM catalog. Launch points count as unconfirmed:
 
 - on a lake, the shore point nearest the boathouse, with the lake outline
@@ -16,7 +16,7 @@ offers next to the OSM catalog. Launch points count as unconfirmed:
 
 Only club facts are kept (name, short name, abbreviation, DRV-ID, website,
 kinds of rowing offered, boathouse address); no names, e-mails or phone
-numbers of people. Geocoding results are cached in data/drv-geocode.json so
+numbers of people. Geocoding results are cached in data/geocode.json so
 reruns ask Nominatim only about new or moved boathouses.
 
 Club data: Deutscher Ruderverband e.V., rudern.de. Positions and waters:
@@ -30,41 +30,14 @@ import json
 import re
 import sys
 import time
-import urllib.parse
-import urllib.request
-from datetime import date
-from pathlib import Path
 
-from discover_clubs import _run, slug, water_rings
-from live_check import nearest_shore
+from club_import import ROOT, geocode, get, load_geocode_cache, place, save_geocode_cache, write_catalog
 
-ROOT = Path(__file__).resolve().parents[1]
-OUT = ROOT / "data" / "catalog-drv.json"
-GEOCODE_CACHE = ROOT / "data" / "drv-geocode.json"
-OUTLINES = ROOT / "data" / "outlines"
 BASE = "https://www.rudern.de"
-UA = "RowerWeather/0.1 (+https://github.com/RowFrog/RowFrog)"
-LAKE_M = 300.0
-RIVER_M = 400.0
-BATCH = 20
 LABELS = {
     "DRV-ID", "Kurzname", "Abkürzung", "Mitglieder", "Gründung", "Website", "E-Mail", "Telefon",
     "Sportliches Angebot", "Bootshaus", "Anschrift", "Vereine in der Umgebung", "Route planen",
 }
-RIVER_WATER = {"river", "canal", "stream", "oxbow", "lock", "moat", "ditch", "drain", "fish_pass"}
-
-
-def get(url: str) -> str:
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept-Language": "de"})
-    for attempt in range(4):
-        try:
-            with urllib.request.urlopen(req, timeout=60) as r:
-                return r.read().decode("utf-8")
-        except OSError:
-            if attempt == 3:
-                raise
-            time.sleep(5 * (attempt + 1))
-    raise AssertionError
 
 
 def club_slugs(page: str) -> list[str]:
@@ -143,55 +116,10 @@ def parse_club(club_slug: str, page: str) -> dict | None:
     }
 
 
-def geocode(street: str, plz: str, town: str, cache: dict) -> dict | None:
-    key = f"{street}|{plz}|{town}"
-    if key in cache:
-        return cache[key]
-    tries = []
-    if street:
-        tries.append(("street", {"street": street, "postalcode": plz, "city": town}))
-        tries.append(("street", {"q": f"{street}, {plz} {town}"}))
-    tries.append(("town", {"postalcode": plz, "city": town}))
-    result = None
-    for precision, params in tries:
-        q = urllib.parse.urlencode({**params, "countrycodes": "de", "format": "jsonv2", "limit": 1})
-        time.sleep(1.1)  # Nominatim usage policy: at most one request per second
-        hits = json.loads(get(f"https://nominatim.openstreetmap.org/search?{q}"))
-        if hits:
-            result = {"lat": round(float(hits[0]["lat"]), 5), "lon": round(float(hits[0]["lon"]), 5), "precision": precision}
-            break
-    cache[key] = result
-    return result
-
-
-def query_waters(points: list[tuple[float, float]]) -> list[dict]:
-    """Named lakes within LAKE_M and named rivers and canals within RIVER_M of the points.
-
-    River polygons (riverbanks) are left out: they are huge and the river
-    line is enough to name the water.
-    """
-    near = "\n".join(f"way(around:{RIVER_M:.0f},{lat},{lon});" for lat, lon in points)
-    return _run(
-        f"""
-        [out:json][timeout:240];
-        ({near})->.near;
-        (
-          way.near["natural"="water"]["name"]["water"!~"^(river|canal|stream|oxbow|lock)$"];
-          way.near["landuse"="reservoir"]["name"];
-          rel(bw.near)["natural"="water"]["name"]["water"!~"^(river|canal|stream|oxbow|lock)$"];
-          rel(bw.near)["landuse"="reservoir"]["name"];
-          way.near["waterway"~"^(river|canal)$"]["name"];
-        );
-        out geom;
-        """
-    )
-
-
 def main() -> int:
     confirmed = json.loads((ROOT / "data" / "locations.json").read_text(encoding="utf-8"))
     confirmed_names = {c["name"] for c in confirmed["clubs"]}
-    confirmed_lakes = {l["name"]: l["id"] for l in confirmed["lakes"]}
-    cache = json.loads(GEOCODE_CACHE.read_text(encoding="utf-8")) if GEOCODE_CACHE.exists() else {}
+    cache = load_geocode_cache()
 
     slugs = club_slugs(get(f"{BASE}/service/vereinssuche"))
     print(f"{len(slugs)} clubs on the DRV list")
@@ -231,110 +159,26 @@ def main() -> int:
         clubs.append(club)
         if i % 50 == 0:
             print(f"{i}/{len(slugs)} pages read")
-    GEOCODE_CACHE.write_text(json.dumps(cache, ensure_ascii=False, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    save_geocode_cache(cache)
     if failures > len(slugs) // 5:
         print("\n".join(report))
         sys.exit(f"{failures} clubs failed; keeping the old catalog")
 
-    lakes: dict[str, dict] = {}
-    rivers: dict[str, dict] = {}
-    out_clubs = []
-    for start in range(0, len(clubs), BATCH):
-        batch = clubs[start : start + BATCH]
-        # Only street-level positions are near enough to say which water a club is on.
-        exact = [c for c in batch if c["_pos"]["precision"] == "street"]
-        elements = query_waters([(c["_pos"]["lat"], c["_pos"]["lon"]) for c in exact]) if exact else []
-        time.sleep(2)
-        waters = []
-        for e in elements:
-            tags = e.get("tags", {})
-            if "waterway" in tags:
-                rings = [[(p["lon"], p["lat"]) for p in e.get("geometry", [])]]
-                segments = [[a, b] for r in rings for a, b in zip(r, r[1:])]
-                if segments:
-                    waters.append(("river", tags["name"], f"way/{e['id']}", segments))
-                continue
-            try:
-                waters.append(("lake", tags["name"], f"{e['type']}/{e['id']}", water_rings(e)))
-            except (ValueError, KeyError) as err:
-                report.append(f"skip water {tags.get('name')} {e['type']}/{e['id']}: {err}")
-
-        for c in batch:
-            lat, lon = c["_pos"]["lat"], c["_pos"]["lon"]
-            street, plz, town = c["_address"]
-            lake = river = None
-            if c in exact:
-                for kind, name, osm_id, rings in waters:
-                    d, slon, slat = nearest_shore(lon, lat, rings)
-                    if kind == "lake" and d <= LAKE_M and (lake is None or d < lake[0]):
-                        lake = (d, name, osm_id, rings, slat, slon)
-                    if kind == "river" and d <= RIVER_M and (river is None or d < river[0]):
-                        river = (d, name)
-            where = "boathouse" if c["boathouse"] else "club address"
-            if lake:
-                d, name, osm_id, rings, lat, lon = lake
-                water_id = confirmed_lakes.get(name) or slug(name)
-                if water_id in lakes and lakes[water_id]["osm"] != osm_id:
-                    water_id = f"{water_id}-{osm_id.split('/')[1]}"
-                if water_id not in lakes:
-                    lons = [p[0] for p in rings[0]]
-                    lats = [p[1] for p in rings[0]]
-                    lakes[water_id] = {
-                        "id": water_id,
-                        "name": name,
-                        "center": {"lat": round((min(lats) + max(lats)) / 2, 4), "lon": round((min(lons) + max(lons)) / 2, 4)},
-                        "osm": osm_id,
-                    }
-                    outline = OUTLINES / f"{water_id}.geojson"
-                    if not outline.exists():
-                        outline.write_text(json.dumps({
-                            "type": "Feature",
-                            "properties": {"id": water_id, "name": name, "source": "© OpenStreetMap contributors, ODbL"},
-                            "geometry": {"type": "Polygon", "coordinates": [[list(p) for p in r] for r in rings]},
-                        }), encoding="utf-8")
-                precision = f"shore point of {name} nearest the geocoded {where}, {d:.0f} m away"
-                report.append(f"lake: {c['name']} -> {name}, {d:.0f} m")
-            elif river:
-                name = river[1]
-                water_id = "river-" + slug(name)
-                rivers.setdefault(water_id, {"id": water_id, "name": name, "center": {"lat": lat, "lon": lon}, "kind": "river"})
-                precision = f"geocoded {where}, {river[0]:.0f} m from the {name}"
-                report.append(f"river: {c['name']} -> {name}")
-            else:
-                name = f"Water near {town}"
-                water_id = "near-" + slug(town)
-                rivers.setdefault(water_id, {"id": water_id, "name": name, "center": {"lat": lat, "lon": lon}, "kind": "unknown"})
-                precision = f"geocoded {where} ({c['_pos']['precision']} level); water not identified"
-                report.append(f"no water found: {c['name']} ({c['_pos']['precision']})")
-
-            out_clubs.append({
-                "id": re.sub(r"-e-?v$", "", c["drvSlug"]),
-                "name": c["name"],
-                "shortName": c["shortName"],
-                "abbreviation": c["abbreviation"],
-                "drvId": c["drvId"],
-                "lakeId": water_id,
-                "address": ", ".join(filter(None, [street, f"{plz} {town}"])),
-                "website": c["website"],
-                "sports": c["sports"],
-                "source": "drv",
-                "launchPoint": {"lat": round(lat, 5), "lon": round(lon, 5), "precision": precision, "verified": False},
-            })
-        print(f"{min(start + BATCH, len(clubs))}/{len(clubs)} clubs placed")
-
-    waters = {**rivers, **lakes}
-    catalog = {
-        "version": 1,
-        "updated": date.today().isoformat(),
-        "source": "Club data: Deutscher Ruderverband e.V. (rudern.de). Positions and waters: © OpenStreetMap contributors, ODbL",
-        "lakes": sorted(waters.values(), key=lambda l: l["name"]),
-        "clubs": sorted(out_clubs, key=lambda c: c["name"]),
-    }
-    OUT.write_text(json.dumps(catalog, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    for c in clubs:
+        street, plz, town = c.pop("_address")
+        c["_town"] = town
+        c["_where"] = "geocoded " + ("boathouse" if c.pop("boathouse") else "club address")
+        c["id"] = re.sub(r"-e-?v$", "", c.pop("drvSlug"))
+        c["address"] = ", ".join(filter(None, [street, f"{plz} {town}"]))
+        c["source"] = "drv"
+    waters, out_clubs = place(clubs, "de", report)
+    write_catalog(
+        "de-drv",
+        "Club data: Deutscher Ruderverband e.V. (rudern.de). Positions and waters: © OpenStreetMap contributors, ODbL",
+        waters,
+        out_clubs,
+    )
     print("\n".join(sorted(report)))
-    print(f"wrote {OUT} with {len(out_clubs)} clubs: {len(lakes)} lakes, "
-          f"{sum(1 for c in out_clubs if c['lakeId'].startswith('river-'))} on rivers, "
-          f"{sum(1 for c in out_clubs if c['lakeId'].startswith('near-'))} on unidentified water")
     return 0
 
 
