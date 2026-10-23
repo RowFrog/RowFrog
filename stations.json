@@ -1,0 +1,172 @@
+{
+ "mrc-1880": {
+  "wind": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 19.0
+  },
+  "gust": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 19.0
+  },
+  "temp": {
+   "station": "00217",
+   "name": "Attenkam",
+   "km": 13.3
+  }
+ },
+ "tutzinger-rv": {
+  "wind": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 8.9
+  },
+  "gust": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 8.9
+  },
+  "temp": {
+   "station": "00217",
+   "name": "Attenkam",
+   "km": 6.9
+  }
+ },
+ "starnberger-see-centre": {
+  "wind": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 11.4
+  },
+  "gust": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 11.4
+  },
+  "temp": {
+   "station": "00217",
+   "name": "Attenkam",
+   "km": 5.2
+  }
+ },
+ "starnberger-see-south": {
+  "wind": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 13.6
+  },
+  "gust": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 13.6
+  },
+  "temp": {
+   "station": "00217",
+   "name": "Attenkam",
+   "km": 5.6
+  }
+ },
+ "ammersee": {
+  "wind": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 13.3
+  },
+  "gust": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 13.3
+  },
+  "temp": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 13.3
+  }
+ },
+ "woerthsee": {
+  "wind": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 20.6
+  },
+  "gust": {
+   "station": "05538",
+   "name": "Wielenbach (Demollstr.)",
+   "km": 20.6
+  },
+  "temp": {
+   "station": "06346",
+   "name": "Maisach-Galgen",
+   "km": 15.7
+  }
+ },
+ "tegernsee": {
+  "wind": {
+   "station": "02738",
+   "name": "Kreuth",
+   "km": 9.0
+  },
+  "gust": {
+   "station": "19912",
+   "name": "Bichl",
+   "km": 25.7
+  },
+  "temp": {
+   "station": "02738",
+   "name": "Kreuth",
+   "km": 9.0
+  }
+ },
+ "kochelsee": {
+  "wind": {
+   "station": "19912",
+   "name": "Bichl",
+   "km": 8.9
+  },
+  "gust": {
+   "station": "19912",
+   "name": "Bichl",
+   "km": 8.9
+  },
+  "temp": {
+   "station": "19912",
+   "name": "Bichl",
+   "km": 8.9
+  }
+ },
+ "staffelsee": {
+  "wind": {
+   "station": "02290",
+   "name": "Hohenpeißenberg",
+   "km": 16.9
+  },
+  "gust": {
+   "station": "02290",
+   "name": "Hohenpeißenberg",
+   "km": 16.9
+  },
+  "temp": {
+   "station": "02708",
+   "name": "Kohlgrub, Bad (Rosshof)",
+   "km": 7.4
+  }
+ },
+ "regattastrecke-oberschleissheim": {
+  "wind": {
+   "station": "03379",
+   "name": "München-Stadt",
+   "km": 9.2
+  },
+  "gust": {
+   "station": "03379",
+   "name": "München-Stadt",
+   "km": 9.2
+  },
+  "temp": {
+   "station": "03379",
+   "name": "München-Stadt",
+   "km": 9.2
+  }
+ }
+}
