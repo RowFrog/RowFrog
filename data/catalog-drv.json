@@ -1009,7 +1009,7 @@
         "lat": 49.4976,
         "lon": 8.4463
       },
-      "osm": "relation/21189561"
+      "osm": "way/149948498"
     },
     {
       "id": "muehlenteich",
@@ -9044,9 +9044,9 @@
       ],
       "source": "drv",
       "launchPoint": {
-        "lat": 51.9225,
-        "lon": 9.16551,
-        "precision": "shore point of Schiedersee nearest the geocoded boathouse, 94 m away",
+        "lat": 51.92247,
+        "lon": 9.16538,
+        "precision": "shore point of Schiedersee nearest the geocoded boathouse, 95 m away",
         "verified": false
       }
     },
@@ -9402,9 +9402,9 @@
       ],
       "source": "drv",
       "launchPoint": {
-        "lat": 48.8248,
-        "lon": 9.33132,
-        "precision": "shore point of Schildkrötenteich nearest the geocoded boathouse, 224 m away",
+        "lat": 48.82482,
+        "lon": 9.33139,
+        "precision": "shore point of Schildkrötenteich nearest the geocoded boathouse, 228 m away",
         "verified": false
       }
     },
