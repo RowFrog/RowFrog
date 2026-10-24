@@ -674,7 +674,7 @@ private struct BackgroundPreview: View {
     var body: some View {
         let settings = AppSettings.shared
         let image = BackgroundLibrary.image(for: settings.background(for: .clubPages))
-        let surface: Surface = image == nil ? .plain : (settings.tileStyle == .frosted ? .frosted : .solid)
+        let surface: Surface = image == nil ? .plain : settings.tileStyle.surface
         VStack(spacing: 10) {
             Text("MRC 1880")
                 .font(.headline)
@@ -697,7 +697,7 @@ private struct BackgroundPreview: View {
                 .font(.caption)
             }
             .padding(10)
-            .background(surface.card, in: RoundedRectangle(cornerRadius: 12))
+            .cardBackground(surface, cornerRadius: 12)
         }
         .padding(16)
         .frame(maxWidth: .infinity)
@@ -1160,7 +1160,7 @@ private struct SurfaceRowBackground: View {
     @Environment(\.surface) private var surface
 
     var body: some View {
-        Rectangle().fill(surface == .frosted ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color(.secondarySystemGroupedBackground)))
+        Rectangle().fill(surface == .frosted || surface == .glass ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color(.secondarySystemGroupedBackground)))
     }
 }
 
