@@ -83,6 +83,18 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertNil(forecast.hours.first?.sunUp)
     }
 
+    func testDecodesForecastSource() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": [],
+         "forecastSource": {"region": "germany", "parts": [{"model": "ICON-D2", "provider": "Deutscher Wetterdienst (DWD)",
+                                                             "resolutionKm": 2.2, "fromHour": 0, "toHour": 48}]}}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        XCTAssertEqual(forecast.forecastSource?.parts.first?.model, "ICON-D2")
+        XCTAssertEqual(forecast.forecastSource?.parts.first?.providerShort, "DWD")
+        XCTAssertNil(try APIClient.decoder.decode(ClubForecast.self, from: Data(#"{"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": []}"#.utf8)).forecastSource)
+    }
+
     func testDecodesWarnings() throws {
         let json = """
         {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": [],
@@ -96,7 +108,7 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertTrue(warning.isLake)
         XCTAssertNil(warning.expires)
         XCTAssertEqual(warning.shortLabel, "DWD lake warning")
-        XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD lake warning")
+        XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD storm warning")
     }
 
     func testDecodesEnglishWarningText() throws {

@@ -24,7 +24,7 @@ import httpx
 BASE_URL = "https://api.open-meteo.com/v1/forecast"
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
 # Dew point and feels-like temperature are worked out from these (derive()),
-# and daylight comes from the sun times, which keeps a club at 12 variables.
+# and daylight comes from the sun times, which keeps a club at 14 variables.
 HOURLY = [
     "temperature_2m",
     "wind_speed_10m",
@@ -32,6 +32,8 @@ HOURLY = [
     "wind_direction_10m",
     "cloud_cover",
     "cloud_cover_low",
+    "cloud_cover_mid",
+    "cloud_cover_high",
     "visibility",
     "precipitation",
     "weather_code",
@@ -112,10 +114,16 @@ class ForecastHour:
     dew_point_c: float | None = None
     # Air pressure reduced to sea level, in hPa.
     pressure_hpa: float | None = None
+    cloud_cover_mid_pct: float | None = None
+    cloud_cover_high_pct: float | None = None
+    # WHO UV index; only filled in the outlook (see fetch_outlook).
+    uv_index: float | None = None
 
 
-def request_params(lat: float, lon: float, hours: int = 48, hourly: list[str] = HOURLY) -> dict[str, str]:
-    return {
+def request_params(
+    lat: float, lon: float, hours: int = 48, past_hours: int = 0, hourly: list[str] = HOURLY
+) -> dict[str, str]:
+    params = {
         "latitude": f"{lat:.4f}",
         "longitude": f"{lon:.4f}",
         "hourly": ",".join(hourly),
@@ -124,6 +132,9 @@ def request_params(lat: float, lon: float, hours: int = 48, hourly: list[str] = 
         "timezone": "GMT",
         "forecast_hours": str(hours),
     }
+    if past_hours:
+        params["past_hours"] = str(past_hours)
+    return params
 
 
 def dew_point(temperature_c: float, humidity_pct: float) -> float:
@@ -176,6 +187,9 @@ def parse(payload: dict) -> list[ForecastHour]:
         col("relative_humidity_2m"),
         col("dew_point_2m"),
         col("pressure_msl"),
+        col("cloud_cover_mid"),
+        col("cloud_cover_high"),
+        col("uv_index"),
     )
     hours = [
         ForecastHour(
@@ -195,8 +209,11 @@ def parse(payload: dict) -> list[ForecastHour]:
             humidity_pct=rh,
             dew_point_c=dew,
             pressure_hpa=hpa,
+            cloud_cover_mid_pct=ccm,
+            cloud_cover_high_pct=cch,
+            uv_index=uv,
         )
-        for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code, feels, rh, dew, hpa in rows
+        for t, temp, ws, wg, wd, cc, ccl, vis, pr, cape, day, code, feels, rh, dew, hpa, ccm, cch, uv in rows
     ]
     return [derive(h) for h in hours]
 
@@ -223,12 +240,39 @@ async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 
     return parse(await _get(client, BASE_URL, request_params(lat, lon, hours)))
 
 
+OUTLOOK_PAST_HOURS = 24
+OUTLOOK_HOURS = 168
+
+
+async def fetch_outlook(client: httpx.AsyncClient, lat: float, lon: float) -> list[ForecastHour]:
+    """Yesterday plus the next 7 days, for the charts behind the conditions tiles.
+
+    ICON has no UV index, so it comes from Open-Meteo's default model mix in a
+    second, small call; without it the outlook simply has no UV values.
+    """
+    params = request_params(lat, lon, OUTLOOK_HOURS, OUTLOOK_PAST_HOURS)
+    hours = parse(await _get(client, BASE_URL, params))
+    if all(h.uv_index is None for h in hours):
+        uv_params = {k: v for k, v in params.items() if k != "models"}
+        uv_params["hourly"] = "uv_index"
+        try:
+            payload = (await _get(client, BASE_URL, uv_params))["hourly"]
+            uv = {
+                datetime.fromisoformat(t).replace(tzinfo=timezone.utc): v
+                for t, v in zip(payload["time"], payload.get("uv_index") or [])
+            }
+            hours = [replace(h, uv_index=uv.get(h.time)) for h in hours]
+        except (httpx.HTTPError, KeyError, ValueError):
+            pass
+    return hours
+
+
 async def fetch_many(
     client: httpx.AsyncClient, points: list[tuple[float, float]], hours: int = 48, hourly: list[str] = HOURLY
 ) -> list[list[ForecastHour]]:
     """Forecasts for several points in one request (Open-Meteo takes comma-separated
     coordinates and answers with a list). Open-Meteo still counts calls per point."""
-    params = request_params(points[0][0], points[0][1], hours, hourly)
+    params = request_params(points[0][0], points[0][1], hours, hourly=hourly)
     params["latitude"] = ",".join(f"{lat:.4f}" for lat, _ in points)
     params["longitude"] = ",".join(f"{lon:.4f}" for _, lon in points)
     payload = await _get(client, BASE_URL, params)

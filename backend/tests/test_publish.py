@@ -82,8 +82,8 @@ def test_mostly_clear_picture_only_when_it_adds_something(tmp_path, monkeypatch)
 
 
 def test_club_requests_stay_small():
-    # 12 variables count as 1.2 calls per club, a lake point as one.
-    assert open_meteo.params_weight(open_meteo.request_params(48, 11, 60)) == 1.2
+    # 14 variables count as 1.4 calls per club, a lake point as one.
+    assert open_meteo.params_weight(open_meteo.request_params(48, 11, 60)) == 1.4
     assert open_meteo.call_weight(len(open_meteo.LAKE_HOURLY), 15) == 15
 
 
