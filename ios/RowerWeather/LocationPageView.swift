@@ -132,14 +132,19 @@ struct LocationPageView: View {
     @ViewBuilder
     private func sourceLine(_ forecast: ClubForecast) -> some View {
         if let source = forecast.forecastSource {
-            ForecastSourceLine(
-                source: source,
-                choices: forecast.modelChoices ?? [],
-                selected: AppSettings.shared.pickedModel(for: club.id),
-                pickedModelMissing: forecasts.pickedModelMissing.contains(club.id)
-            ) { model in
-                AppSettings.shared.pickedModels[club.id] = model
-                await forecasts.load(club.id, force: true)
+            VStack(spacing: 16) {
+                if tourSeen && showSourceTip {
+                    TipView(sourceTip)
+                }
+                ForecastSourceLine(
+                    source: source,
+                    choices: forecast.modelChoices ?? [],
+                    selected: AppSettings.shared.pickedModel(for: club.id),
+                    pickedModelMissing: forecasts.pickedModelMissing.contains(club.id)
+                ) { model in
+                    AppSettings.shared.pickedModels[club.id] = model
+                    await forecasts.load(club.id, force: true)
+                }
             }
             .id("source")
         }
@@ -180,19 +185,6 @@ struct LocationPageView: View {
                 SatellitePictureCard(lakeID: forecast.lakeId)
             }
             .id("satellite")
-        }
-    }
-
-    @ViewBuilder
-    private func sourceLine(_ forecast: ClubForecast) -> some View {
-        if let source = forecast.forecastSource {
-            VStack(spacing: 16) {
-                if tourSeen && showSourceTip {
-                    TipView(sourceTip)
-                }
-                ForecastSourceLine(source: source)
-            }
-            .id("source")
         }
     }
 
