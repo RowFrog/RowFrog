@@ -4,11 +4,11 @@ name: Place suggestions
 # suggestions from the app into GitHub issues. Needs the secrets
 # SUGGESTIONS_GITHUB_TOKEN (fine-grained, Issues read and write on this
 # repository), CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
-# Run by hand with "deploy" off to only check the GitHub token.
+# Pushes to other branches and runs with "deploy" off only check the GitHub
+# token and the label; the Worker is deployed from main.
 
 on:
   push:
-    branches: [main]
     paths:
       - cloudflare/suggestions/**
       - .github/workflows/suggestions-worker.yml
