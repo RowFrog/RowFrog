@@ -43,6 +43,36 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(forecast.current(at: after)?.reasons.first?.label, "Sun down")
     }
 
+    func testDecodesIceEstimate() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2027-01-20T11:20:00+00:00", "attribution": [], "hours": [],
+         "ice": {"status": "frozen", "light": "red", "thicknessCm": 12.4, "waterTemperatureC": 0.0, "basis": "model",
+                 "frostDegreeDays7": 42.0, "days": [{"date": "2027-01-20", "status": "frozen", "thicknessCm": 12.4}]}}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        XCTAssertEqual(forecast.ice?.light, .red)
+        XCTAssertEqual(forecast.ice?.title, "Ice cover likely")
+        XCTAssertEqual(forecast.ice?.detail, "About 12 cm, estimated")
+        XCTAssertEqual(forecast.ice?.days?.first?.date, "2027-01-20")
+
+        let unavailable = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2027-01-20T11:20:00+00:00", "attribution": [], "hours": [],
+         "ice": {"status": "unavailable", "light": null, "days": []}}
+        """
+        let without = try APIClient.decoder.decode(ClubForecast.self, from: Data(unavailable.utf8))
+        XCTAssertNil(without.ice?.light)
+        XCTAssertNil(without.ice?.thicknessCm)
+
+        let seen = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2027-01-20T11:20:00+00:00", "attribution": [], "hours": [],
+         "ice": {"status": "edges", "light": "amber", "basis": "satellite", "days": [],
+                 "satellite": {"date": "2027-01-18", "seenShare": 0.7, "iceShare": 0.02}}}
+        """
+        let satellite = try APIClient.decoder.decode(ClubForecast.self, from: Data(seen.utf8))
+        XCTAssertEqual(satellite.ice?.satellite?.seenShare, 0.7)
+        XCTAssertTrue(satellite.ice?.detail.hasSuffix(": open water") ?? false)
+    }
+
     func testDecodesForecastWithoutDaylight() throws {
         let json = """
         {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [],
@@ -105,5 +135,26 @@ final class ModelDecodingTests: XCTestCase {
     func testLightOrdering() {
         XCTAssertLessThan(Light.green, Light.amber)
         XCTAssertEqual([Light.amber, .red, .green].max(), .red)
+    }
+
+    func testDecodesSatellitePictures() throws {
+        let json = """
+        {"bbox": [11.24, 47.82, 11.37, 48.0], "width": 600, "height": 1280,
+         "latest": {"date": "2026-10-21", "lakeCloud": 0.35, "image": "satellite-latest.jpg"},
+         "clearest": {"date": "2026-10-12", "lakeCloud": 0.02, "image": "satellite-clearest.jpg"},
+         "attribution": "Contains modified Copernicus Sentinel data 2026",
+         "checkedAt": "2026-10-23T22:00:00+00:00", "searchVersion": 3}
+        """
+        let picture = try APIClient.decoder.decode(SatellitePicture.self, from: Data(json.utf8))
+        XCTAssertTrue(picture.hasChoice)
+        XCTAssertEqual(picture.kinds, [.latest, .clearest])
+        XCTAssertEqual(picture.shot(.clearest)?.lakeCloud, 0.02)
+        XCTAssertNil(picture.ice)
+
+        let one = """
+        {"latest": {"date": "2026-10-21", "lakeCloud": 0.0, "image": "satellite-latest.jpg"},
+         "clearest": {"date": "2026-10-21", "lakeCloud": 0.0, "image": "satellite-clearest.jpg"}}
+        """
+        XCTAssertFalse(try APIClient.decoder.decode(SatellitePicture.self, from: Data(one.utf8)).hasChoice)
     }
 }

@@ -36,6 +36,17 @@ Waves are only computed for lakes that have an outline. To add Starnberger See:
 python3 scripts/fetch_lake_outline.py starnberger-see "Starnberger See"
 ```
 
+## Hosting
+
+There is no server yet. The "Publish forecasts" workflow runs the backend on
+GitHub every 30 minutes (confirmed clubs) and every 6 hours (all clubs) and
+publishes its answers as files on GitHub Pages, at
+https://api.rowfrog.com/v1/ (same paths as the API:
+`lakes`, `clubs/<id>/forecast`). Release builds of the app read from there;
+Debug builds use a backend on the Mac at localhost. To move to a server of our
+own, run `uvicorn rowerweather.api:app` there and point the DNS record of
+`api.rowfrog.com` at it; the app keeps its address.
+
 ## Run the app
 
 On a Mac with Xcode 15 or later:
