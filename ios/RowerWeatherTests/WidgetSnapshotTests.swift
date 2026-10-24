@@ -33,4 +33,12 @@ final class WidgetSnapshotTests: XCTestCase {
         XCTAssertEqual(later.current?.light, .red)
         XCTAssertEqual(later.hours.count, 2)
     }
+
+    func testOutOfDateForecastShowsNoRowingWindows() {
+        let hours = (0..<8).map { hour($0, .green) }
+        XCTAssertFalse(snapshot(hours, at: start.addingTimeInterval(2 * 3600)).isStale)
+        let late = snapshot(hours, at: start.addingTimeInterval(3 * 3600 + 60))
+        XCTAssertTrue(late.isStale)
+        XCTAssertEqual(late.rowingWindows, [])
+    }
 }

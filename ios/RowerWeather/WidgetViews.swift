@@ -50,8 +50,13 @@ struct RowingSnapshot {
 
     var isNight: Bool { current?.sunUp == false }
 
+    /// The forecast is too old at `date` to show green.
+    var isStale: Bool { forecast?.isStale(at: date) ?? false }
+
     /// Stretches of green, daylight hours from now on: the times to go rowing.
+    /// None from an out-of-date forecast.
     var rowingWindows: [ClosedRange<Date>] {
+        guard !isStale else { return [] }
         var windows: [ClosedRange<Date>] = []
         var start: Date?
         var end: Date?
@@ -80,6 +85,8 @@ extension Light {
         case .red: "xmark.circle.fill"
         }
     }
+
+    func glyph(stale: Bool) -> String { stale && self == .green ? "clock.badge.exclamationmark" : glyph }
 }
 
 /// The widget for every size, in the style of the iOS Weather widgets: a sky
@@ -229,7 +236,7 @@ struct RowingWidgetView: View {
     /// The rowing light large, with the reason under it.
     private func lightAndWhy(_ hour: ForecastHour) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            LightPill(light: hour.light, compact: false)
+            LightPill(light: hour.light, compact: false, stale: snapshot.isStale)
             Text(detailLine(hour))
                 .font(.caption.weight(.medium))
                 .opacity(0.9)
@@ -240,6 +247,9 @@ struct RowingWidgetView: View {
 
     /// The main reason for amber or red, else wind and gusts.
     private func detailLine(_ hour: ForecastHour) -> String {
+        if snapshot.isStale, let forecast = snapshot.forecast {
+            return tr("As of %@", Format.dayTime(forecast.generatedAt))
+        }
         if let reason = hour.reasons.filter({ $0.light == hour.light }).first, hour.light != .green {
             return reason.label
         }
@@ -264,10 +274,10 @@ struct RowingWidgetView: View {
                         .minimumScaleFactor(0.7)
                     skyIcon(hour).font(.subheadline)
                     Circle()
-                        .fill(hour.light.color)
+                        .fill(hour.light.color(stale: snapshot.isStale))
                         .frame(width: 9, height: 9)
                         .overlay(Circle().stroke(.white.opacity(0.8), lineWidth: 1))
-                        .accessibilityLabel(hour.light.title)
+                        .accessibilityLabel(hour.light.title(stale: snapshot.isStale))
                     Text(Format.degrees(hour.temperatureC))
                         .font(.caption.weight(.medium))
                 }
@@ -329,7 +339,7 @@ struct RowingWidgetView: View {
                 .font(.caption.weight(.semibold))
             let windows = snapshot.rowingWindows.prefix(limit)
             if windows.isEmpty {
-                Text(tr("No green hours in the forecast."))
+                Text(snapshot.isStale ? tr("Forecast out of date. Open Row Frog to update.") : tr("No green hours in the forecast."))
                     .font(.caption)
                     .opacity(0.85)
             }
@@ -350,10 +360,11 @@ struct RowingWidgetView: View {
 
     private var inline: some View {
         let light = snapshot.current?.light
+        let stale = snapshot.isStale
         return Label {
-            Text("\(snapshot.clubName) · \(light?.title ?? "–") · \(Format.degrees(snapshot.current?.temperatureC))")
+            Text("\(snapshot.clubName) · \(light?.title(stale: stale) ?? "–") · \(Format.degrees(snapshot.current?.temperatureC))")
         } icon: {
-            Image(systemName: light?.glyph ?? "questionmark.circle")
+            Image(systemName: light?.glyph(stale: stale) ?? "questionmark.circle")
         }
     }
 
@@ -361,7 +372,7 @@ struct RowingWidgetView: View {
         ZStack {
             AccessoryWidgetBackground()
             VStack(spacing: 1) {
-                Image(systemName: snapshot.current?.light.glyph ?? "questionmark.circle")
+                Image(systemName: snapshot.current?.light.glyph(stale: snapshot.isStale) ?? "questionmark.circle")
                     .font(.title3)
                 Text(Format.degrees(snapshot.current?.temperatureC))
                     .font(.caption.weight(.semibold))
@@ -374,7 +385,7 @@ struct RowingWidgetView: View {
         VStack(alignment: .leading, spacing: 1) {
             Text(snapshot.clubName).font(.headline).lineLimit(1)
             if let hour = snapshot.current {
-                Label(hour.light.title, systemImage: hour.light.glyph)
+                Label(hour.light.title(stale: snapshot.isStale), systemImage: hour.light.glyph(stale: snapshot.isStale))
                     .font(.subheadline.weight(.medium))
                 Text("\(Format.degrees(hour.temperatureC)) · \(detailLine(hour))")
                     .font(.caption)
@@ -402,14 +413,15 @@ private extension WidgetFamily {
 struct LightPill: View {
     let light: Light
     let compact: Bool
+    var stale = false
 
     var body: some View {
         HStack(spacing: 5) {
             Circle()
-                .fill(light.color)
+                .fill(light.color(stale: stale))
                 .frame(width: compact ? 10 : 16, height: compact ? 10 : 16)
                 .overlay(Circle().stroke(.white, lineWidth: 1.5))
-            Text(light.title)
+            Text(light.title(stale: stale))
                 .font((compact ? Font.caption : Font.headline).weight(.semibold))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)

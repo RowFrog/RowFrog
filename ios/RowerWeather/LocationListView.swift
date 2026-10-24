@@ -142,6 +142,7 @@ private struct LocationSummaryRow: View {
 
     var body: some View {
         let now = forecast?.current()
+        let stale = forecast?.isStale() ?? false
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top) {
                 VStack(alignment: .leading, spacing: 4) {
@@ -159,7 +160,7 @@ private struct LocationSummaryRow: View {
                 Spacer()
                 if let now {
                     HStack(spacing: 6) {
-                        TrafficLightDot(light: now.light, size: 18)
+                        TrafficLightDot(light: now.light, size: 18, stale: stale)
                         SkyIcon(sky: Sky(hour: now), night: now.sunUp == false)
                             .font(.title3)
                         Image(systemName: Condition.temperature.symbol)
@@ -174,7 +175,12 @@ private struct LocationSummaryRow: View {
             HStack(alignment: .bottom) {
                 VStack(alignment: .leading, spacing: 4) {
                     if let now {
-                        Text(now.light.title).font(.subheadline.weight(.semibold))
+                        Text(now.light.title(stale: stale)).font(.subheadline.weight(.semibold))
+                        if let forecast, stale {
+                            Label(tr("As of %@", Format.dayTime(forecast.generatedAt)), systemImage: "clock.badge.exclamationmark")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.orange)
+                        }
                         Text(now.reasons.isEmpty ? tr("All conditions within the limits") : tr("Why: %@", now.reasons.map(\.label).joined(separator: ", ")))
                             .font(.caption)
                             .lineLimit(2)
@@ -206,7 +212,7 @@ private struct LocationSummaryRow: View {
             }
         }
         .padding(14)
-        .background { TintedCardBackground(tint: forecast?.current()?.light.color ?? .gray, cornerRadius: 16) }
+        .background { TintedCardBackground(tint: now?.light.color(stale: stale) ?? .gray, cornerRadius: 16) }
         .contentShape(RoundedRectangle(cornerRadius: 16))
     }
 }
