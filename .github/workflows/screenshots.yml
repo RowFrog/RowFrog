@@ -222,7 +222,7 @@ jobs:
           # Lake view (sample wind from the south)
           shoot 50-lake-view-tile light -RWOpenClub mrc-1880 -RWScrollTo lakeview
           shoot 51-lake-view-map light -RWOpenClub mrc-1880 -RWOpenLakeView YES
-          shoot 71-lake-view-panel-expanded light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWPanel expanded
+          shoot 92-lake-view-panel-expanded light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWPanel expanded
           shoot 52-lake-view-waves light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWLakeLayer waves
           shoot 53-lake-view-wind light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWLakeLayer wind
           shoot 54-lake-view-spot light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWLakeSpot 47.975,11.343
@@ -232,11 +232,11 @@ jobs:
           shoot 57-route-plan light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWPanel expanded
           shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3 -RWPanel expanded
           shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de -RWPanel expanded
-          shoot 60-route-follow-boat light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWPanel expanded
-          shoot 61-route-follow-boat-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWLanguage de -RWPanel expanded
+          shoot 88-route-follow-boat light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWPanel expanded
+          shoot 89-route-follow-boat-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWLanguage de -RWPanel expanded
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
-          shoot 62-route-loop light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$loop"
-          shoot 63-route-edit-point light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$loop" -RWRoutePoint 2
+          shoot 90-route-loop light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$loop"
+          shoot 91-route-edit-point light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$loop" -RWRoutePoint 2
           # Where the forecast comes from: the line at the bottom of the page and its details.
           shoot 64-forecast-source light -RWOpenClub mrc-1880 -RWScrollTo source
           shoot 65-forecast-source-details light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES
