@@ -105,7 +105,8 @@ def ice_map_due(checked: datetime | None, now: datetime) -> bool:
 
 
 class State:
-    """What one run leaves for the next: the last forecasts and satellite looks."""
+    """What one run leaves for the next: the last forecasts, satellite looks
+    and water temperatures."""
 
     def __init__(self, path: Path | None):
         self.path = path
@@ -118,6 +119,7 @@ class State:
                 saved = pickle.loads(path.read_bytes())
                 self.clubs, self.lakes, self.ice_map = saved["clubs"], saved["lakes"], saved["ice_map"]
                 self.outlooks = saved.get("outlooks", {})
+                api._last_water.update(saved.get("water", {}))
                 api._ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
                 print(f"  state not readable, starting afresh: {e!r}")
@@ -132,6 +134,7 @@ class State:
             "ice_map": self.ice_map,
             "ice_temps": api._ice_temps,
             "outlooks": self.outlooks,
+            "water": api._last_water,
         }
         self.path.write_bytes(pickle.dumps(body))
 
