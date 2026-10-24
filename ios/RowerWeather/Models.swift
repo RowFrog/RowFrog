@@ -220,7 +220,24 @@ struct ForecastSource: Codable, Hashable {
     }
 
     let region: String
+    /// The model the user picked instead of the automatic choice (a hidden test).
+    var picked: String? = nil
     let parts: [Part]
+}
+
+/// A weather model that can be picked instead of the automatic choice, for
+/// the confirmed clubs only (a test behind the developer options).
+struct ModelChoice: Codable, Hashable, Identifiable {
+    let id: String
+    let model: String
+    let provider: String
+    let resolutionKm: Double
+    let hours: Int
+    /// "ok" or "notAdvised".
+    let advice: String
+    let note: String
+
+    var notAdvised: Bool { advice == "notAdvised" }
 }
 
 struct ClubForecast: Codable, Hashable {
@@ -235,6 +252,8 @@ struct ClubForecast: Codable, Hashable {
     let attribution: [String]
     /// Missing from older backends.
     var forecastSource: ForecastSource? = nil
+    /// Other models this club's forecast can come from; empty for most clubs.
+    var modelChoices: [ModelChoice]? = nil
     let daylight: [SunDay]?
     let hours: [ForecastHour]
 

@@ -114,12 +114,14 @@ class ForecastHour:
     pressure_hpa: float | None = None
 
 
-def request_params(lat: float, lon: float, hours: int = 48, hourly: list[str] = HOURLY) -> dict[str, str]:
+def request_params(
+    lat: float, lon: float, hours: int = 48, hourly: list[str] = HOURLY, models: str = "icon_seamless"
+) -> dict[str, str]:
     return {
         "latitude": f"{lat:.4f}",
         "longitude": f"{lon:.4f}",
         "hourly": ",".join(hourly),
-        "models": "icon_seamless",
+        "models": models,
         "wind_speed_unit": "ms",
         "timezone": "GMT",
         "forecast_hours": str(hours),
@@ -219,8 +221,10 @@ async def _get(client: httpx.AsyncClient, url: str, params: dict[str, str]) -> d
     return resp.json()
 
 
-async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48) -> list[ForecastHour]:
-    return parse(await _get(client, BASE_URL, request_params(lat, lon, hours)))
+async def fetch(
+    client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48, models: str = "icon_seamless"
+) -> list[ForecastHour]:
+    return parse(await _get(client, BASE_URL, request_params(lat, lon, hours, models=models)))
 
 
 async def fetch_many(

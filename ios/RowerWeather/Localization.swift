@@ -79,6 +79,23 @@ enum German {
         "Data via Open-Meteo.": "Daten über Open-Meteo.",
         "Where the forecast comes from": "Woher die Vorhersage kommt",
 
+        // Weather model picker (developer options)
+        "(your choice)": "(deine Wahl)",
+        "Automatic": "Automatisch",
+        "Recommended. The model that does best here, checked against measurements.": "Empfohlen. Das Modell, das hier am besten passt, mit Messungen überprüft.",
+        "%@ hours ahead": "%@ Stunden voraus",
+        "Weather model (test)": "Wettermodell (Test)",
+        "This model's forecast is not published yet, so the automatic one is shown.": "Für dieses Modell gibt es noch keine Vorhersage, deshalb wird die automatische gezeigt.",
+        "A test in the developer options. Other models can be better or worse here; the automatic one is checked against measurements.": "Ein Test in den Entwickleroptionen. Andere Modelle können hier besser oder schlechter sein; das automatische wird mit Messungen überprüft.",
+        "Not advised for rowing": "Zum Rudern nicht empfohlen",
+        "The finest grid near the Alps. It reaches 33 hours ahead; the hours after that come from the automatic choice.": "Das feinste Raster nahe den Alpen. Es reicht 33 Stunden voraus; die Stunden danach kommen aus der automatischen Wahl.",
+        "Good with wind in the Alpine foothills. A little coarser than ICON-D2.": "Gut beim Wind im Alpenvorland. Etwas gröber als ICON-D2.",
+        "Very coarse grid: it does not see the lake or the hills, so the wind on the water is often wrong.": "Sehr grobes Raster: Es sieht weder den See noch die Hügel, deshalb stimmt der Wind auf dem Wasser oft nicht.",
+        "Developer options": "Entwickleroptionen",
+        "All clubs back to the automatic model": "Alle Vereine zurück zum automatischen Modell",
+        "Developer": "Entwickler",
+        "Test: on a confirmed club's page, tap the forecast line at the bottom to pick another weather model. Switched off, every club uses the automatic model again. Tap the version seven times to show this again.": "Test: Auf der Seite eines bestätigten Vereins die Vorhersage-Zeile unten antippen, um ein anderes Wettermodell zu wählen. Ausgeschaltet nutzt jeder Verein wieder das automatische Modell. Siebenmal auf die Version tippen, um dies wieder zu zeigen.",
+
         // Weather
         "Clear": "Klar",
         "Mostly clear": "Überwiegend klar",

@@ -167,8 +167,31 @@ struct SettingsView: View {
                     .surfaceRows()
                     .id("reset")
 
+                    if settings.developerOptions {
+                        Section {
+                            Toggle(isOn: $settings.developerOptions) {
+                                Label(tr("Developer options"), systemImage: "hammer")
+                            }
+                            Button {
+                                settings.pickedModels = [:]
+                            } label: {
+                                Label(tr("All clubs back to the automatic model"), systemImage: "arrow.uturn.backward")
+                            }
+                            .disabled(settings.pickedModels.isEmpty)
+                        } header: {
+                            SectionTitle(tr("Developer"), symbol: "hammer")
+                        } footer: {
+                            SectionFooter(tr("Test: on a confirmed club's page, tap the forecast line at the bottom to pick another weather model. Switched off, every club uses the automatic model again. Tap the version seven times to show this again."))
+                        }
+                        .surfaceRows()
+                        .id("developer")
+                    }
+
                     Section {
                         LabeledContent(tr("Version"), value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")
+                            .contentShape(Rectangle())
+                            // Hidden: seven taps show the developer options.
+                            .onTapGesture(count: 7) { settings.developerOptions = true }
                     }
                     .surfaceRows()
                 }
@@ -201,7 +224,7 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures and the app icon go back to how the app came, and your own pictures are deleted from the app. Your locations and home base stay."))
                 }
-                .screenshotSections(["appearance", "units", "datetime", "background", "help", "appicon", "reset"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "datetime", "background", "help", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
                 .fullScreenCover(isPresented: $showingTour) {
