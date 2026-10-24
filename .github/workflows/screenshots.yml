@@ -226,8 +226,8 @@ jobs:
           SAFETY=1 GUIDE=1 shoot 77-safety-notice light -RWNoTips YES
           SAFETY=1 GUIDE=1 shoot 78-safety-notice-german-dark dark -RWNoTips YES -RWLanguage de
           shoot 79-safety-notice-settings light -RWShowSettings YES -RWSettingsPage safety
-          shoot 81-legal-notice light -RWShowSettings YES -RWSettingsPage impressum
-          shoot 82-privacy-german-dark dark -RWShowSettings YES -RWSettingsPage privacy -RWLanguage de
+          shoot 97-legal-notice light -RWShowSettings YES -RWSettingsPage impressum
+          shoot 98-privacy-german-dark dark -RWShowSettings YES -RWSettingsPage privacy -RWLanguage de
           shoot 80-forecast-out-of-date light -RWOpenClub mrc-1880 -RWStaleForecast YES
           # Lake view (sample wind from the south)
           shoot 50-lake-view-tile light -RWOpenClub mrc-1880 -RWScrollTo lakeview
