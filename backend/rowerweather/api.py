@@ -5,6 +5,7 @@ Run locally:  uvicorn rowerweather.api:app --reload   (from the backend folder)
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import time
@@ -55,6 +56,9 @@ _lake_samples: dict[str, int] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
+# The last good reading and history per GKD station, kept between runs by the
+# publishing job, so one failed fetch does not blank the water temperature.
+_last_water: dict[str, tuple[gkd.WaterTemperature, list[gkd.WaterTemperature]]] = {}
 # Satellite lake ice passes per lake, set by the publishing job (see sources.lake_ice_satellite).
 _satellite_ice: dict[str, list] = {}
 # Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
@@ -300,6 +304,30 @@ async def _ice(client: httpx.AsyncClient, lake: locations.Lake, water_c: float |
     return ice.with_satellite(estimate, _satellite_ice.get(lake.id, []), today)
 
 
+async def _water(
+    client: httpx.AsyncClient, station: str, now: datetime
+) -> tuple[gkd.WaterTemperature | None, list[gkd.WaterTemperature]]:
+    """The station's newest reading and hourly history. GKD sometimes fails a
+    request, so it is tried twice, then the last good reading stands in while
+    it is younger than gkd.MAX_AGE."""
+    for attempt in (1, 2):
+        try:
+            water, history = await gkd.fetch_recent(client, station, now)
+        except httpx.HTTPError as e:
+            logging.getLogger(__name__).warning("GKD failed for %s (try %d): %r", station, attempt, e)
+            if attempt == 1:
+                await asyncio.sleep(2)
+            continue
+        if water is not None:
+            _last_water[station] = (water, history)
+            return water, history
+        break  # the station has gone quiet; an older reading would be older still
+    saved = _last_water.get(station)
+    if saved and now - saved[0].time <= gkd.MAX_AGE:
+        return saved
+    return None, []
+
+
 @app.get("/clubs/{club_id}/forecast")
 async def club_forecast(club_id: str) -> dict:
     club = _locations.clubs.get(club_id)
@@ -322,10 +350,7 @@ async def club_forecast(club_id: str) -> dict:
                     raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
             water, water_history = None, []
             if lake.gkd_water_temperature_station:
-                try:
-                    water, water_history = await gkd.fetch_recent(client, lake.gkd_water_temperature_station, now)
-                except httpx.HTTPError:
-                    water = None  # the forecast is still useful without it
+                water, water_history = await _water(client, lake.gkd_water_temperature_station, now)
             # Yesterday and the next 7 days for the charts; the forecast works without it.
             if club_id in _primed_outlook:
                 outlook = _primed_outlook.pop(club_id)
@@ -394,10 +419,7 @@ async def lake_view_forecast(lake_id: str) -> dict:
         elif (primed := _primed_lake_weather.pop(lake_id, None)) is not None:
             weather, water = primed, None
             if lake.gkd_water_temperature_station:
-                try:
-                    water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
-                except httpx.HTTPError:
-                    water = None
+                water = (await _water(client, lake.gkd_water_temperature_station, now))[0]
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         else:
             try:
@@ -410,10 +432,7 @@ async def lake_view_forecast(lake_id: str) -> dict:
                 raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
             water = None
             if lake.gkd_water_temperature_station:
-                try:
-                    water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
-                except httpx.HTTPError:
-                    water = None
+                water = (await _water(client, lake.gkd_water_temperature_station, now))[0]
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         # DWD lake warnings are per lake area, so any club on the lake finds them.
         warnings = (await _warnings(client, clubs[0], now))[1] if clubs else []
