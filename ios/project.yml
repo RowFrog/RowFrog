@@ -46,6 +46,9 @@ targets:
       properties:
         # Backend address, set per build configuration above.
         RWAPIBaseURL: $(RW_API_BASE_URL)
+        # The published files, in every build: only the publishing job makes the
+        # satellite pictures, so the backend on the Mac has none.
+        RWPublishedBaseURL: https://api.rowfrog.com/v1
         # Shown when the first-start tour asks for the location (German in de.lproj/InfoPlist.strings).
         NSLocationWhenInUseUsageDescription: Row Frog uses your location only to suggest rowing clubs near you.
         NSAppTransportSecurity:
@@ -77,6 +80,7 @@ targets:
       - path: RowerWeather/TrafficLightView.swift
       - path: RowerWeather/Backgrounds.swift
       - path: RowerWeather/WidgetViews.swift
+      - path: RowerWeather/OwnPlaces.swift
     entitlements:
       path: RowerWeatherWidget/RowerWeatherWidget.entitlements
       properties:

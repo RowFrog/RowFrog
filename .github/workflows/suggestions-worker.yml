@@ -1,0 +1,83 @@
+name: Place suggestions
+
+# Deploys the Cloudflare Worker in cloudflare/suggestions/ that turns place
+# suggestions from the app into GitHub issues. Needs the secrets
+# SUGGESTIONS_GITHUB_TOKEN (fine-grained, Issues read and write on this
+# repository), CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID.
+# Pushes to other branches and runs with "deploy" off only check the GitHub
+# token and the label; the Worker is deployed from main.
+
+on:
+  push:
+    paths:
+      - cloudflare/suggestions/**
+      - .github/workflows/suggestions-worker.yml
+  workflow_dispatch:
+    inputs:
+      deploy:
+        description: Deploy the Worker (off = only check the GitHub token and the label)
+        type: boolean
+        default: false
+
+concurrency:
+  group: suggestions-worker
+  cancel-in-progress: false
+
+jobs:
+  token:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the GitHub token and the label
+        env:
+          TOKEN: ${{ secrets.SUGGESTIONS_GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          if [ -z "$TOKEN" ]; then echo "::error::Missing secret SUGGESTIONS_GITHUB_TOKEN"; exit 1; fi
+          api() { curl -sS -o /tmp/out -w '%{http_code}' -H "Authorization: Bearer $TOKEN" -H "Accept: application/vnd.github+json" "$@"; }
+          code=$(api "https://api.github.com/repos/$REPO/issues?per_page=1")
+          echo "reading issues: HTTP $code"
+          [ "$code" = 200 ] || { cat /tmp/out; echo "::error::The token cannot read this repository's issues"; exit 1; }
+          code=$(api "https://api.github.com/repos/$REPO/labels/place%20suggestion")
+          if [ "$code" = 404 ]; then
+            code=$(api -X POST "https://api.github.com/repos/$REPO/labels" \
+              -d '{"name":"place suggestion","color":"2e8b57","description":"A club or place suggested from the app"}')
+            echo "creating the label: HTTP $code"
+            [ "$code" = 201 ] || { cat /tmp/out; echo "::error::The token cannot write issues (needs Issues: Read and write)"; exit 1; }
+          else
+            echo "label: HTTP $code"
+          fi
+
+  deploy:
+    needs: token
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || inputs.deploy)
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4.20.0
+    defaults:
+      run:
+        working-directory: cloudflare/suggestions
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check the Cloudflare secrets
+        run: |
+          missing=""
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || missing="$missing CLOUDFLARE_API_TOKEN"
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing="$missing CLOUDFLARE_ACCOUNT_ID"
+          if [ -n "$missing" ]; then echo "::error::Missing secrets:$missing"; exit 1; fi
+      - name: Deploy the Worker
+        run: $WRANGLER deploy
+      - name: Set the GitHub token
+        env:
+          TOKEN: ${{ secrets.SUGGESTIONS_GITHUB_TOKEN }}
+        run: printf '%s' "$TOKEN" | $WRANGLER secret put GITHUB_TOKEN
+      - name: Check it answers
+        run: |
+          sleep 20
+          code=$(curl -sS -o /dev/null -w '%{http_code}' https://api.rowfrog.com/v1/suggestions)
+          echo "GET /v1/suggestions: HTTP $code (405 = the Worker answers)"
+          [ "$code" = 405 ] || echo "::warning::The Worker does not answer yet. Is the api DNS record proxied (orange cloud)?"

@@ -82,7 +82,7 @@ struct SatellitePicture: Decodable, Hashable {
 @MainActor
 @Observable
 final class SatellitePictureStore {
-    static let shared = SatellitePictureStore(api: .fromBundle())
+    static let shared = SatellitePictureStore(api: .published())
 
     private(set) var pictures: [String: SatellitePicture] = [:]
     private(set) var missing: Set<String> = []
@@ -99,6 +99,9 @@ final class SatellitePictureStore {
             } else {
                 missing.insert(lakeID)
             }
+        } catch let error as URLError where error.code != .badServerResponse {
+            // Offline or a timeout: try again the next time the page opens. A lake
+            // without pictures answers 404 (badServerResponse) and stays missing.
         } catch {
             missing.insert(lakeID)
         }

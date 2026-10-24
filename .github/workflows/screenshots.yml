@@ -240,6 +240,14 @@ jobs:
           shoot 64-forecast-source light -RWOpenClub mrc-1880 -RWScrollTo source
           shoot 65-forecast-source-details light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES
           shoot 66-forecast-source-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWLanguage de
+          # Clubs in several countries, browsing by country, and own places.
+          shoot 70-search-all-countries light -RWSearch "Zürich"
+          shoot 71-browse-countries light -RWShowList YES -RWBrowse YES
+          shoot_pages 72-browse-austria light -RWShowList YES -RWBrowse at
+          shoot 73-add-place light -RWShowList YES -RWAddPlace YES
+          shoot 74-add-place-german-dark dark -RWShowList YES -RWAddPlace YES -RWLanguage de
+          shoot_pages 75-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401"
+          shoot_pages 76-list-with-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401" -RWShowList YES
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES
           shoot_pages 33-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de
