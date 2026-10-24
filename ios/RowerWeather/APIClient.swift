@@ -28,6 +28,16 @@ struct APIClient {
         try await get("lakes/index")
     }
 
+    /// The countries the club search covers; older backends have none (then `lakes()` holds every club).
+    func countries() async throws -> [Country] {
+        try await get("countries/index")
+    }
+
+    /// One country's waters with that country's clubs.
+    func lakes(country: String) async throws -> [Lake] {
+        try await get("countries/\(country)/lakes")
+    }
+
     func forecast(clubID: String) async throws -> ClubForecast {
         try await get("clubs/\(clubID)/forecast")
     }

@@ -1,0 +1,14 @@
+# Place suggestions from the app (see src/index.js).
+# Deployed by .github/workflows/suggestions-worker.yml.
+name = "rowfrog-suggestions"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+workers_dev = false
+# More specific than the usage counter's api.rowfrog.com/*, so this route wins.
+routes = [{ pattern = "api.rowfrog.com/v1/suggestions", zone_name = "rowfrog.com" }]
+
+# At most 3 suggestions a minute from one address.
+[[ratelimits]]
+name = "LIMITER"
+namespace_id = "1001"
+simple = { limit = 3, period = 60 }
