@@ -49,9 +49,10 @@ page suggests it.
 **Current conditions.** A compact card of tiles in two columns, each with a
 small graphic: wind, gusts, waves, temperatures, rain, cloud, visibility,
 pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
-a detail view with a chart you can drag from yesterday to 7 days ahead, the
-limit lines, wind arrows every 3 hours, an "About the limits" note, advice
-for rowing and the data source (`ios/RowerWeather/ConditionsCard.swift`).
+a detail view with a chart you can drag from yesterday to 7 days ahead (a
+"Now" button jumps back to the current hour), the limit lines, wind arrows
+every 3 hours, an "About the limits" note, advice for rowing and the data
+source (`ios/RowerWeather/ConditionsCard.swift`).
 
 **Rowing limits.** Settings › Rowing limits chooses the limits the light
 uses: *Small boats* (the default) or *Big boats*, or *My boats*, where each
@@ -247,7 +248,7 @@ Run the backend first; the simulator reaches it at `http://localhost:8000`
 | Workflow | What it does |
 | --- | --- |
 | **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests only (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately). |
-| **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and saves screenshots of every screen to `docs/screenshots` on the same branch. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Run it from the Actions tab; the `only` input limits it to matching screens. |
+| **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and saves screenshots to `docs/screenshots` on the same branch. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue. |
