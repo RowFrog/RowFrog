@@ -9,6 +9,12 @@ struct APIClient {
         return APIClient(baseURL: URL(string: raw)!)
     }
 
+    /// The published files, also in Debug builds that talk to the backend on the Mac.
+    static func published(_ bundle: Bundle = .main) -> APIClient {
+        let raw = bundle.object(forInfoDictionaryKey: "RWPublishedBaseURL") as? String ?? "https://api.rowfrog.com/v1"
+        return APIClient(baseURL: URL(string: raw)!)
+    }
+
     static let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in

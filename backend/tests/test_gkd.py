@@ -41,3 +41,31 @@ def test_hourly_keeps_the_first_reading_of_each_hour_oldest_first():
     readings = gkd.parse(PAGE.replace("18.10.2026 12:45", "18.10.2026 13:05"))
     hours = gkd.hourly(readings)
     assert [(r.time.hour, r.celsius) for r in hours] == [(12, 15.9), (13, 15.8)]
+
+
+def test_failed_fetch_keeps_the_last_good_reading(monkeypatch):
+    import asyncio
+
+    import httpx
+
+    from rowerweather import api
+
+    reading = gkd.WaterTemperature(datetime(2026, 10, 18, 5, 45, tzinfo=timezone.utc), 12.8)
+    pages = iter([(reading, [reading])])
+
+    async def flaky(client, station, now):
+        try:
+            return next(pages)
+        except StopIteration:
+            raise httpx.ConnectTimeout("GKD did not answer")
+
+    async def no_wait(_):
+        pass
+
+    monkeypatch.setattr(api.gkd, "fetch_recent", flaky)
+    monkeypatch.setattr(api.asyncio, "sleep", no_wait)
+    now = datetime(2026, 10, 18, 6, tzinfo=timezone.utc)
+    assert asyncio.run(api._water(None, "starnberg-16663002", now))[0] == reading
+    # GKD fails twice: the reading from the last run stands in, until it is too old.
+    assert asyncio.run(api._water(None, "starnberg-16663002", now))[0] == reading
+    assert asyncio.run(api._water(None, "starnberg-16663002", now + timedelta(hours=7))) == (None, [])
