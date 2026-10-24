@@ -6,7 +6,10 @@ name: Club catalog
 # tab or when the script changes.
 
 on:
+  # Only on main: a run commits the catalog back to its branch, and a bot
+  # commit on a pull request branch holds that PR's checks for approval.
   push:
+    branches: [main]
     paths:
       - scripts/discover_clubs.py
       - .github/workflows/club-catalog.yml
