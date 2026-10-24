@@ -29,9 +29,32 @@ Pages swipe left and right between saved locations, like the iOS Weather
 app. The list shows each location's light and key numbers; swipe a row to
 remove it or make it the home base. The saved list stays on the phone.
 
-**Each location page** shows the rowing light and why it has that colour,
-air and water temperature side by side, wave height, the hourly forecast for
-48 hours, sunrise and sunset, and legends that explain every icon.
+**Each location page** shows the rowing light, which boat it is for and why
+it has that colour, air and water temperature side by side, wave height, the
+hourly forecast for 48 hours, sunrise and sunset, and legends that explain
+every icon. When a steadier boat of your own would get a better light, the
+page suggests it.
+
+**Current conditions.** A compact card of tiles in two columns, each with a
+small graphic: wind, gusts, waves, temperatures, rain, cloud, visibility,
+pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
+a detail view with a chart you can drag from yesterday to 7 days ahead, the
+limit lines, wind arrows every 3 hours, an "About the limits" note, advice
+for rowing and the data source (`ios/RowerWeather/ConditionsCard.swift`).
+
+**Rowing limits.** Settings › Rowing limits chooses the limits the light
+uses: *Small boats* (the default) or *Big boats*, or *My boats*, where each
+boat has a name, a type (racing, training, gig or coastal) and a size and
+rigging from 1x to 8+. Limits can be fine-tuned per group and per boat. A
+separate choice sets which boat the lake map is coloured for, with a warning
+when the map looks calmer than your boat. The phone works the light out
+again for the chosen boat on the club page, the lake map and the widget
+(`ios/RowerWeather/Limits.swift`).
+
+**Cold water.** Below 10 °C water the app advises a life jacket, suggests a
+coach or partner boat for singles and lowers its own wind and gust limits by
+1 m/s (your own limits stay as set, with a note). Below 4 °C it warns of
+near-freezing water.
 
 **DWD warnings.** Under the light the page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
@@ -43,6 +66,8 @@ Warnings come from DWD's GeoServer (`backend/rowerweather/sources/dwd_warnings.p
 and also set the hourly light. In English the app shows DWD's own English
 text (from its English CAP files) with the German original below; where DWD
 has no English version, only the event and headline are translated.
+At lakes with shore warning lights the card explains both lights (40 and 90
+flashes a minute) and the season they run in.
 
 **Lake view and route planning.** A tile opens a map of the whole lake with
 waves, wind and the light for each part of the lake, and a spot you can tap
@@ -97,7 +122,9 @@ with the temperature and the weather symbol beside each other.
   plus 10 alternates.
 - Help: replay the tour. One-time tips point out features the first time they
   appear.
-- Factory reset (keeps saved locations and the home base, resets the icon).
+- Rowing limits (see above).
+- Factory reset (keeps saved locations, the home base and My boats; resets
+  the icon and the limits).
 
 **Wide screens.** Phones on their side and the unfolded iPhone Duo get wide
 layouts (two columns from 600 pt, a side list from 860 × 560 pt).
@@ -166,7 +193,9 @@ Every 30 minutes it refreshes the clubs people actually load (until the
 usage counter is set up, the confirmed clubs in `data/locations.json` stand
 in); every 6 hours it refreshes all clubs. Weather is only loaded again after
 a weather model has a new run, which keeps the job within Open-Meteo's free
-limit; the last forecasts are kept between runs in the Actions cache.
+limit. For clubs people use it also loads the 8-day outlook after each model
+run (every 3 hours) for the charts in the condition details. The last
+forecasts are kept between runs in the Actions cache.
 
 Only `main` publishes to the live site. A branch can be published by running
 the workflow by hand, which overwrites the live files until `main` publishes
@@ -207,17 +236,19 @@ Run the backend first; the simulator reaches it at `http://localhost:8000`
 
 ## Traffic light defaults
 
-Proposed for small boats (1x, 2x) and to be tuned with rowers; see
-`backend/rowerweather/score.py`.
+For small racing boats (1x, 2x, 2-), the app's starting boat; see
+`backend/rowerweather/score.py`. Other boats and limits the user changed are
+worked out on the phone (`ios/RowerWeather/Limits.swift`).
 
 | Condition | Amber from | Red above |
 | --- | --- | --- |
 | Mean wind | 5.5 m/s (Bft 4) | 8 m/s (Bft 5) |
-| Gusts | 8 m/s | 12.8 m/s (46 km/h) |
-| Wave height | 0.15 m | 0.30 m |
+| Gusts | 8 m/s | 10.3 m/s (20 kn) |
+| Wave height | 0.15 m | 0.25 m |
 | Visibility | 1 km or less | under 500 m |
-| Water temperature | under 15 °C (never red on its own) | – |
-| DWD lake warning | strong wind | storm |
+| Rain and hail | heavy rain, 4 mm per hour or more | hail |
+| Water temperature | under 15 °C; under 10 °C also a life jacket hint, a hint for singles and wind and gust limits 1 m/s lower; under 4 °C near-freezing water (never red on its own) | – |
+| Shore warning lights (DWD lake warning) | strong wind (40 flashes a minute) for all other boats | strong wind for small racing boats and training boats; storm (90 flashes a minute) for all |
 | DWD weather warning for the place | minor (yellow) | moderate (orange) or above, or any thunderstorm |
 | Ice | shore ice possible, or drift ice on a river | ice cover likely |
 | Daylight | sunrise or sunset within the hour | sun down for the whole hour |
@@ -226,8 +257,6 @@ Proposed for small boats (1x, 2x) and to be tuned with rowers; see
 
 Not on `main` yet:
 
-- A compact current-conditions card with detail sheets, and rowing limits you
-  can set per boat.
 - Weather models chosen per region from the model check results, and a
   model choice in Settings.
 
