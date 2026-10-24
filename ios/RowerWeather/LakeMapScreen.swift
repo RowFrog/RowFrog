@@ -651,11 +651,19 @@ struct LakeMapView: UIViewRepresentable {
         map.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))
         map.setVisibleMapRect(overlay.boundingMapRect, animated: false)
         // Fit the lake once the map has its size, clear of the buttons at the top
-        DispatchQueue.main.async {
-            // and of the panel at the bottom, so the whole lake and every club show.
-            map.setVisibleMapRect(overlay.boundingMapRect, edgePadding: UIEdgeInsets(top: 130, left: 24, bottom: LakeMapView.panelHeight, right: 24), animated: false)
-        }
+        // and of the panel at the bottom, so the whole lake and every club show.
+        let inRouteMode = routeMode
+        DispatchQueue.main.async { Self.fit(overlay, in: map, routeMode: inRouteMode, animated: false) }
+        context.coordinator.fittedForRoute = routeMode
         return map
+    }
+
+    /// Room the buttons at the top take; in route mode the editing bar adds a row.
+    static let routeTop: CGFloat = 215
+
+    static func fit(_ overlay: LakeOverlay, in map: MKMapView, routeMode: Bool, animated: Bool) {
+        let padding = UIEdgeInsets(top: routeMode ? routeTop : 130, left: 24, bottom: panelHeight, right: 24)
+        map.setVisibleMapRect(overlay.boundingMapRect, edgePadding: padding, animated: animated)
     }
 
     func updateUIView(_ map: MKMapView, context: Context) {
@@ -666,6 +674,15 @@ struct LakeMapView: UIViewRepresentable {
         c.movePoint = movePoint
         c.selectPoint = selectPoint
         c.showRoute(segments: segments, waypoints: waypoints, selected: selectedPoint, on: map)
+        // The editing bar shows in route mode; move the lake down when the bar
+        // would hide the start of the route.
+        if !routeMode { c.fittedForRoute = false }
+        if routeMode, !c.fittedForRoute, let overlay = c.overlay, let start = waypoints.first {
+            c.fittedForRoute = true
+            if map.convert(start, toPointTo: map).y < Self.routeTop {
+                Self.fit(overlay, in: map, routeMode: true, animated: true)
+            }
+        }
         if let hour, c.shown != "\(hour.time.timeIntervalSince1970) \(layer.rawValue)" {
             c.shown = "\(hour.time.timeIntervalSince1970) \(layer.rawValue)"
             c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour))
@@ -691,6 +708,8 @@ struct LakeMapView: UIViewRepresentable {
         var shown: String?
         var current: (image: CGImage?, arrows: [LakeRenderer.Arrow]) = (nil, [])
         var routeMode = false
+        /// Whether the lake was fitted below the editing bar of route mode.
+        var fittedForRoute = false
         var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
         var movePoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
         var selectPoint: (Int?) -> Void = { _ in }
