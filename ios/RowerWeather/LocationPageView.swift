@@ -47,6 +47,7 @@ struct LocationPageView: View {
                             .id("radar")
                             if let warnings = forecast.warnings {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
+                                    .id("warnings")
                             }
                             if twoColumns {
                                 HStack(alignment: .top, spacing: 16) {
@@ -106,7 +107,7 @@ struct LocationPageView: View {
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
                     await forecasts.load(club.id)
-                    // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`, `lakeview`, `satellite`, `radar`, `source`) scrolls to that card.
+                    // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `conditions`, `radar`, `launchpoint`, `lakeview`, `satellite`, `source`) scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast and pushes the cards below it down,
                         // so for cards below it scroll again once it has settled.
@@ -135,8 +136,9 @@ struct LocationPageView: View {
             if tourSeen && showConditionsTip {
                 TipView(conditionsTip)
             }
-            CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now), ice: forecast.ice)
+            ConditionsCard(forecast: forecast, hour: now)
         }
+        .id("conditions")
         if lake?.hasOutline != false {
             VStack(spacing: 16) {
                 if tourSeen && showLakeViewTip {
@@ -253,7 +255,12 @@ private struct NowCard: View {
         Card {
             HStack(spacing: 14) {
                 TrafficLightDot(light: hour.light, size: 36)
-                Text(hour.light.title).font(.title2.bold())
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(hour.light.title).font(.title2.bold())
+                    Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
                 Spacer(minLength: 0)
                 VStack(spacing: 2) {
                     SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 34))
@@ -268,6 +275,17 @@ private struct NowCard: View {
                         Label(reason.explanation, systemImage: reason.symbol)
                             .foregroundStyle(reason.light == .red ? Color.red : Color.orange)
                     }
+                }
+                ForEach(hour.notes ?? [], id: \.self) { note in
+                    Label(note.noteText, systemImage: "info.circle")
+                        .foregroundStyle(.secondary)
+                }
+                if let steadier = SteadierBoat.suggestion(for: hour, water: water?.celsius) {
+                    Label(steadier.light == .green
+                          ? tr("A steadier boat helps: %@ would be green now.", steadier.boat.title)
+                          : tr("A steadier boat helps: %@ would only need care now.", steadier.boat.title),
+                          systemImage: "figure.rower")
+                        .foregroundStyle(.tint)
                 }
             }
             .font(.subheadline)
@@ -371,115 +389,6 @@ private struct DaylightCard: View {
     }
 }
 
-private struct CurrentConditionsCard: View {
-    let hour: ForecastHour
-    let water: WaterTemperature?
-    /// Pressure change over the next 3 hours, in hPa.
-    let pressureChange: Double?
-    var ice: IceEstimate? = nil
-
-    var body: some View {
-        Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent") {
-            HStack(spacing: 12) {
-                SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 40))
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(Sky(hour: hour).title).font(.title3.weight(.semibold))
-                    Text(tr("%@ · Clouds %@ %%", Format.degrees(hour.temperatureC), Format.number(hour.cloudCoverPct)))
-                        .font(.subheadline).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-            }
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 10), GridItem(.flexible(), spacing: 10)], spacing: 10) {
-                ForEach(Condition.allCases.filter { $0 != .daylight }) { condition in
-                    ConditionTile(condition: condition, light: hour.light(for: condition.reasonNames)) {
-                        value(for: condition)
-                    } detail: {
-                        detail(for: condition)
-                    }
-                }
-            }
-        }
-    }
-
-    @ViewBuilder
-    private func value(for condition: Condition) -> some View {
-        switch condition {
-        case .temperature: Text(Format.temperature(hour.temperatureC))
-        case .feelsLike: Text(Format.temperature(hour.apparentTemperatureC))
-        case .humidity: Text(hour.humidityPct.map { "\(Format.number($0)) %" } ?? "–")
-        case .pressure:
-            HStack(spacing: 8) {
-                PressureGauge(hpa: hour.pressureHpa, trend: pressureChange.map(PressureTrend.init(change:)))
-                    .frame(width: 44, height: 44)
-                Text(hour.pressureHpa.map { "\(Format.number($0))" } ?? "–") + Text(" hPa").font(.caption)
-            }
-        case .wind:
-            HStack(spacing: 6) {
-                Text(Format.wind(hour.windSpeedMs))
-                if let from = hour.windFromDeg {
-                    Image(systemName: "location.north.fill")
-                        .font(.caption)
-                        .rotationEffect(.degrees(from + 180))
-                        .accessibilityLabel(tr("from %@", Format.compass(from)))
-                }
-            }
-        case .waves: Text(Format.waves(hour.waveHeightM))
-        case .waterTemperature: Text(Format.temperature(water?.celsius, digits: 1))
-        case .precipitation:
-            HStack(spacing: 6) {
-                Text(Format.rain(hour.precipitationMm))
-                SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.callout)
-            }
-        case .visibility: Text(Format.distance(hour.visibilityM))
-        case .cloudCover: Text("\(Format.number(hour.cloudCoverPct)) %")
-        case .thunderstorm:
-            switch hour.light(for: condition.reasonNames) {
-            case .red: Text(tr("High"))
-            case .amber: Text(tr("Possible"))
-            default: Text(tr("Low"))
-            }
-        case .ice:
-            if let ice, ice.status != "unavailable" {
-                Text(ice.title)
-            } else {
-                Text(tr("No data yet")).foregroundStyle(.secondary)
-            }
-        case .daylight: EmptyView()
-        }
-    }
-
-    private func detail(for condition: Condition) -> String? {
-        switch condition {
-        case .wind:
-            guard let gust = hour.windGustMs else { return nil }
-            let from = hour.windFromDeg.map { " · " + tr("from %@", Format.compass($0)) } ?? ""
-            return tr("Gusts %@", Format.wind(gust)) + from
-        case .waves:
-            guard let fetch = hour.fetchM else { return nil }
-            return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
-        case .precipitation:
-            return Sky(hour: hour).precipitationKind ?? tr("Dry")
-        case .feelsLike:
-            return feelsLikeNote(hour)
-        case .humidity:
-            return hour.dewPointC.map { tr("Dew point %@", Format.degrees($0)) }
-        case .pressure:
-            guard let change = pressureChange else { return nil }
-            let trend = PressureTrend(change: change)
-            return trend == .steady ? tr("Steady next 3 h") : tr("%@ %@ hPa in 3 h", trend.title, Format.number(abs(change), digits: 1))
-        case .waterTemperature:
-            return water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
-        case .visibility:
-            guard let v = hour.visibilityM else { return nil }
-            return v < 1000 ? tr("Fog") : tr("No fog")
-        case .ice:
-            return ice?.detail
-        default:
-            return nil
-        }
-    }
-}
-
 /// A small dial like the Weather app's pressure gauge: an arc from 960 to
 /// 1060 hPa with a mark at the current value and the trend arrow inside.
 struct PressureGauge: View {
@@ -508,40 +417,6 @@ struct PressureGauge: View {
         .padding(4)
         .accessibilityElement()
         .accessibilityLabel(tr("Pressure %@ hectopascal, %@", hpa.map { Format.number($0) } ?? "–", trend?.title ?? "–"))
-    }
-}
-
-private struct ConditionTile<Value: View>: View {
-    let condition: Condition
-    let light: Light?
-    @ViewBuilder var value: Value
-    var detail: () -> String?
-    @Environment(\.surface) private var surface
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 6) {
-                ConditionIcon(condition: condition)
-                    .frame(width: 20)
-                Text(condition.title)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                Spacer(minLength: 0)
-                if let light {
-                    TrafficLightDot(light: light, size: 10)
-                }
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-            value
-                .font(.title3.weight(.semibold))
-            if let detail = detail() {
-                Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(2)
-            }
-        }
-        .padding(10)
-        .frame(maxWidth: .infinity, minHeight: 84, alignment: .topLeading)
-        .background(surface.tile, in: RoundedRectangle(cornerRadius: 12))
     }
 }
 

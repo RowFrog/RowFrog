@@ -174,7 +174,10 @@ struct LakeMapScreen: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                if !routeMode { LakeLegend(layer: layer) }
+                if !routeMode {
+                    LakeLegend(layer: layer)
+                    MapBoatNote()
+                }
             }
             if routeMode {
                 Text(tr("Start time")).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
@@ -286,9 +289,29 @@ struct LakeMapScreen: View {
     }
 }
 
+/// Which boat the lake is coloured for, with a warning when that boat takes
+/// more wind or waves than the one the rowing light is for.
+struct MapBoatNote: View {
+    var body: some View {
+        let settings = AppSettings.shared
+        if settings.mapLooksCalmer {
+            Label(tr("Coloured for %@, not for %@: the lake may look calmer than it is for you.", settings.mapBoat.inSentence, settings.selectedBoat.inSentence),
+                  systemImage: "exclamationmark.triangle.fill")
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.orange)
+                .fixedSize(horizontal: false, vertical: true)
+        } else {
+            Label(tr("Coloured for %@", settings.mapBoat.inSentence), systemImage: "figure.rower")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+}
+
 /// What the colours mean for the chosen layer.
 struct LakeLegend: View {
     let layer: LakeLayer
+    private var limits: RowingLimits { AppSettings.shared.mapLimits }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -298,9 +321,11 @@ struct LakeLegend: View {
                     HStack(spacing: 4) { TrafficLightDot(light: light, size: 9); Text(light.title) }
                 }
             case .waves:
-                ramp(LakeRaster.waveColor, stops: [0, 0.15, 0.30, 0.48], labels: [Format.waves(0), Format.waves(0.15), Format.waves(0.3)])
+                let amber = limits.value(.waveAmber), red = limits.value(.waveRed)
+                ramp(LakeRaster.waveColor, stops: [0, amber, red, red * 1.6], labels: [Format.waves(0), Format.waves(amber), Format.waves(red)])
             case .wind:
-                ramp(LakeRaster.windColor, stops: [0, 5.5, 8, 12.8], labels: [Format.wind(0), Format.wind(5.5), Format.wind(8)])
+                let amber = limits.value(.windAmber), red = limits.value(.windRed)
+                ramp(LakeRaster.windColor, stops: [0, amber, red, red * 1.6], labels: [Format.wind(0), Format.wind(amber), Format.wind(red)])
             }
         }
         .font(.caption)
