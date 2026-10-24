@@ -32,6 +32,7 @@ struct LocationPageView: View {
                         header
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, water: forecast.waterTemperature)
+                            RainRadarCard(point: club.launchPoint)
                             if let warnings = forecast.warnings {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                             }
@@ -113,7 +114,7 @@ struct LocationPageView: View {
             if tourSeen && showConditionsTip {
                 TipView(conditionsTip)
             }
-            CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now))
+            CurrentConditionsCard(hour: now, water: forecast.waterTemperature, pressureChange: forecast.pressureChange(after: now), ice: forecast.ice)
         }
         if lake?.hasOutline != false {
             VStack(spacing: 16) {
@@ -123,6 +124,7 @@ struct LocationPageView: View {
                 LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
             }
             .id("lakeview")
+            SatellitePictureCard(lakeID: forecast.lakeId)
         }
     }
 
@@ -334,6 +336,7 @@ private struct CurrentConditionsCard: View {
     let water: WaterTemperature?
     /// Pressure change over the next 3 hours, in hPa.
     let pressureChange: Double?
+    var ice: IceEstimate? = nil
 
     var body: some View {
         Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent") {
@@ -395,7 +398,12 @@ private struct CurrentConditionsCard: View {
             case .amber: Text(tr("Possible"))
             default: Text(tr("Low"))
             }
-        case .ice: Text(tr("No data yet")).foregroundStyle(.secondary)
+        case .ice:
+            if let ice, ice.status != "unavailable" {
+                Text(ice.title)
+            } else {
+                Text(tr("No data yet")).foregroundStyle(.secondary)
+            }
         case .daylight: EmptyView()
         }
     }
@@ -424,6 +432,8 @@ private struct CurrentConditionsCard: View {
         case .visibility:
             guard let v = hour.visibilityM else { return nil }
             return v < 1000 ? tr("Fog") : tr("No fog")
+        case .ice:
+            return ice?.detail
         default:
             return nil
         }
