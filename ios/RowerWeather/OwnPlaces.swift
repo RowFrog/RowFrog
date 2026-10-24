@@ -79,7 +79,7 @@ struct OwnPlace: Codable, Identifiable, Hashable {
             let name: String, kind: String, lat: Double, lon: Double
             let water: String?, website: String?, country: String?
         }
-        var request = URLRequest(url: api.url("suggestions"))
+        var request = URLRequest(url: api.baseURL.appending(path: "suggestions"))
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.httpBody = try JSONEncoder().encode(Body(

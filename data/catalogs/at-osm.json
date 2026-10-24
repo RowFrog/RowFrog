@@ -204,16 +204,6 @@
       "kind": "unknown"
     },
     {
-      "id": "near-spielplatz-merowinger",
-      "name": "Water near Spielplatz Merowinger",
-      "country": "at",
-      "center": {
-        "lat": 47.27286,
-        "lon": 9.63011
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "near-wien",
       "name": "Water near Wien",
       "country": "at",
@@ -652,22 +642,6 @@
         "lat": 48.3108,
         "lon": 14.24191,
         "precision": "way/234875260 in OpenStreetMap, 219 m from the Donau",
-        "verified": false
-      }
-    },
-    {
-      "id": "spielplatz-merowinger",
-      "name": "Spielplatz Merowinger",
-      "shortName": "Spielplatz Merowinger",
-      "address": "",
-      "website": null,
-      "source": "osm",
-      "country": "at",
-      "lakeId": "near-spielplatz-merowinger",
-      "launchPoint": {
-        "lat": 47.27286,
-        "lon": 9.63011,
-        "precision": "way/78241008 in OpenStreetMap (osm level); water not identified",
         "verified": false
       }
     },

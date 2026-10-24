@@ -164,36 +164,6 @@
       "osm": "relation/1442399"
     },
     {
-      "id": "near-axe-throwing-riviera",
-      "name": "Water near Axe Throwing Riviera",
-      "country": "ch",
-      "center": {
-        "lat": 46.49449,
-        "lon": 6.84403
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-brunnen-im-bruderholzschulhaus",
-      "name": "Water near Brunnen im Bruderholzschulhaus",
-      "country": "ch",
-      "center": {
-        "lat": 47.53095,
-        "lon": 7.59551
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-spielplatz-bruderhaus-wildpark-bruderhaus",
-      "name": "Water near Spielplatz Bruderhaus Wildpark Bruderhaus",
-      "country": "ch",
-      "center": {
-        "lat": 47.47748,
-        "lon": 8.72657
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "wohlensee",
       "name": "Wohlensee",
       "country": "ch",
@@ -242,22 +212,6 @@
       }
     },
     {
-      "id": "axe-throwing-riviera",
-      "name": "Axe Throwing Riviera",
-      "shortName": "Axe Throwing Riviera",
-      "address": "",
-      "website": "https://axethrowingriviera.ch/",
-      "source": "osm",
-      "country": "ch",
-      "lakeId": "near-axe-throwing-riviera",
-      "launchPoint": {
-        "lat": 46.49449,
-        "lon": 6.84403,
-        "precision": "way/1057948795 in OpenStreetMap (osm level); water not identified",
-        "verified": false
-      }
-    },
-    {
       "id": "basler-ruder-club",
       "name": "Basler Ruder Club",
       "shortName": "Basler Ruder Club",
@@ -290,38 +244,6 @@
       }
     },
     {
-      "id": "bootshaus",
-      "name": "Bootshaus",
-      "shortName": "Bootshaus",
-      "address": "Pontonierweg 10, 8548 Ellikon an der Thur",
-      "website": null,
-      "source": "osm",
-      "country": "ch",
-      "lakeId": "river-rhein",
-      "launchPoint": {
-        "lat": 47.60728,
-        "lon": 8.60001,
-        "precision": "way/47405915 in OpenStreetMap, 89 m from the Rhein",
-        "verified": false
-      }
-    },
-    {
-      "id": "brunnen-im-bruderholzschulhaus",
-      "name": "Brunnen im Bruderholzschulhaus",
-      "shortName": "Brunnen im Bruderholzschulhaus",
-      "address": "",
-      "website": null,
-      "source": "osm",
-      "country": "ch",
-      "lakeId": "near-brunnen-im-bruderholzschulhaus",
-      "launchPoint": {
-        "lat": 47.53095,
-        "lon": 7.59551,
-        "precision": "way/863196033 in OpenStreetMap (osm level); water not identified",
-        "verified": false
-      }
-    },
-    {
       "id": "club-aviron-ville-fribourg-ruderclub-freiburg",
       "name": "Club aviron ville Fribourg / Ruderclub Freiburg",
       "shortName": "Club aviron ville Fribourg / Ruderclub Freiburg",
@@ -350,22 +272,6 @@
         "lat": 46.38321,
         "lon": 6.24466,
         "precision": "shore point of Le Léman nearest the way/219393913 in OpenStreetMap, 45 m away",
-        "verified": false
-      }
-    },
-    {
-      "id": "hafen-ruderbaum-altnau",
-      "name": "Hafen Ruderbaum (Altnau)",
-      "shortName": "Hafen Ruderbaum (Altnau)",
-      "address": "",
-      "website": null,
-      "source": "osm",
-      "country": "ch",
-      "lakeId": "bodensee",
-      "launchPoint": {
-        "lat": 47.62288,
-        "lon": 9.26784,
-        "precision": "shore point of Bodensee nearest the node/2294139629 in OpenStreetMap, 33 m away",
         "verified": false
       }
     },
@@ -478,22 +384,6 @@
         "lat": 46.74094,
         "lon": 7.62989,
         "precision": "shore point of Thunersee nearest the way/213473008 in OpenStreetMap, 26 m away",
-        "verified": false
-      }
-    },
-    {
-      "id": "ruderalflaeche",
-      "name": "Ruderalfläche",
-      "shortName": "Ruderalfläche",
-      "address": "",
-      "website": null,
-      "source": "osm",
-      "country": "ch",
-      "lakeId": "river-aare",
-      "launchPoint": {
-        "lat": 46.95392,
-        "lon": 7.44536,
-        "precision": "way/336989679 in OpenStreetMap, 203 m from the Aare",
         "verified": false
       }
     },
@@ -990,22 +880,6 @@
         "lat": 47.20105,
         "lon": 7.53076,
         "precision": "node/4549455377 in OpenStreetMap, 52 m from the Aare",
-        "verified": false
-      }
-    },
-    {
-      "id": "spielplatz-bruderhaus-wildpark-bruderhaus",
-      "name": "Spielplatz Bruderhaus Wildpark Bruderhaus",
-      "shortName": "Spielplatz Bruderhaus Wildpark Bruderhaus",
-      "address": "",
-      "website": null,
-      "source": "osm",
-      "country": "ch",
-      "lakeId": "near-spielplatz-bruderhaus-wildpark-bruderhaus",
-      "launchPoint": {
-        "lat": 47.47748,
-        "lon": 8.72657,
-        "precision": "node/6819205116 in OpenStreetMap (osm level); water not identified",
         "verified": false
       }
     },

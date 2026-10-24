@@ -25,7 +25,10 @@ from discover_clubs import _run, address, slug
 
 # Rowing club names in German, English, French and Italian; "Seeclub" alone is often sailing.
 CLUB_NAME = "[Rr]uder|[Rr]owing|[Aa]viron|[Cc]anott"
-NOT_CLUBS = re.compile(r"(?i)verleih|vermietung|rental|location|noleggio|shop")
+# Rentals, and names that only contain the letters: "Bruderhaus", "Ruderalfläche", "Axe Throwing".
+NOT_CLUBS = re.compile(
+    r"(?i)verleih|vermietung|rental|location|noleggio|shop|spielplatz|brunnen|ruderal|throwing|^hafen|^bootshaus$"
+)
 
 
 def query_clubs(country: str) -> list[dict]:
