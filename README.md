@@ -22,6 +22,12 @@ Android may follow later.
 
 ## What the app does
 
+**Safety notice.** Before anything else, a first start shows a "Before you
+row" safety notice that has to be accepted; it cannot be skipped, and a new
+version of it is asked for again. Across the app, "Advice only, you decide"
+lines remind rowers that the app only advises and they decide. A forecast
+older than 3 hours shows a grey light instead of green.
+
 **Locations.** On first start the list is empty: a short tour explains the
 app, then the user picks a home base and more clubs. With location access
 ("While using") it suggests the 5 nearest clubs, otherwise 3 at random. The
@@ -136,6 +142,8 @@ with the temperature and the weather symbol beside each other.
 - Help: replay the tour. One-time tips point out features the first time they
   appear.
 - Rowing limits (see above).
+- Legal: the safety notice, a privacy summary and the legal notice
+  (Impressum, still with placeholders).
 - Factory reset (keeps saved locations, the home base and My boats; resets
   the icon and the limits).
 
@@ -254,12 +262,12 @@ Run the backend first; the simulator reaches it at `http://localhost:8000`
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue. |
 | **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
 | **Usage limits** (`budget-check.yml`) | Once a day compares the calls with Open-Meteo's and Copernicus' free limits and comments on the "Usage limits" issue at 70 % (warning) and 85 % (alert), plus a monthly summary. |
-| **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). |
+| **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). By hand, or when its scripts change on `main`. |
 | **Place suggestions** (`suggestions-worker.yml`) | Deploys the Cloudflare Worker that turns place suggestions into GitHub issues. Needs `SUGGESTIONS_GITHUB_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 | **API check** (`api-check.yml`) | Shows how `api.rowfrog.com` answers (Cloudflare proxy, SSL mode, usage counter). Runs by hand. |
-| **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs when the club list or data sources change; new outlines are committed back. |
-| **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. |
-| **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. |
+| **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs by hand, or when the club list or data sources change on `main`; new outlines are committed back. |
+| **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
+| **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 
 ## Traffic light defaults
 
