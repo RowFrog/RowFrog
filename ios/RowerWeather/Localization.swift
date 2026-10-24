@@ -320,6 +320,7 @@ enum German {
         "Location list": "Ortsliste",
         "Picture blurred": "Bild unscharf",
         "No picture": "Kein Bild",
+        "Liquid Glass": "Liquid Glass",
         "Your picture": "Dein Bild",
         "Preview of the club pages with the picture for all pages.": "Vorschau der Vereinsseiten mit dem Bild für alle Seiten.",
         "Preview": "Vorschau",

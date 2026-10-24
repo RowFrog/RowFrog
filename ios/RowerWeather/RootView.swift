@@ -109,11 +109,23 @@ struct RootView: View {
         TabView(selection: $selection) {
             ForEach(saved) { club in
                 LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
-                    .pageBackground(.clubPages, clubID: club.id)
+                    .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
                     .tag(club.id)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .background {
+            // Behind the pages, not on each one: a swiping TabView keeps its
+            // pages out of the status bar and the page bar, which left black bars.
+            let settings = AppSettings.shared
+            ZStack {
+                PagePicture(image: BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection)),
+                            blurred: settings.blurBackground)
+                    .id(selection)
+                    .transition(.opacity)
+            }
+            .animation(.easeInOut(duration: 0.35), value: selection)
+        }
         .onAppear { if selection.isEmpty { selection = saved[0].id } }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection, showList: showsListButton ? { showingList = true } : nil)

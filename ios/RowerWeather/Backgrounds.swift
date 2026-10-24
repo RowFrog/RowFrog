@@ -93,7 +93,7 @@ enum BackgroundLibrary {
 /// How cards are drawn: plain without a picture; over a picture either
 /// frosted (the picture shows through, blurred) or solid (no picture inside).
 enum Surface {
-    case plain, frosted, solid
+    case plain, frosted, glass, solid
 }
 
 private struct SurfaceKey: EnvironmentKey {
@@ -113,15 +113,16 @@ extension Surface {
     /// A card's background.
     var card: AnyShapeStyle {
         switch self {
-        case .frosted: AnyShapeStyle(.regularMaterial)
+        case .frosted, .glass: AnyShapeStyle(.regularMaterial)
         case .plain, .solid: AnyShapeStyle(Color(.secondarySystemGroupedBackground))
         }
     }
 
-    /// A tile inside a card.
+    /// A tile inside a card. Tiles in a glass card stay a light shade, since
+    /// glass on glass looks muddy.
     var tile: AnyShapeStyle {
         switch self {
-        case .frosted: AnyShapeStyle(Color(.tertiarySystemGroupedBackground).opacity(0.55))
+        case .frosted, .glass: AnyShapeStyle(Color(.tertiarySystemGroupedBackground).opacity(0.55))
         case .plain, .solid: AnyShapeStyle(Color(.tertiarySystemGroupedBackground))
         }
     }
@@ -149,6 +150,51 @@ struct TintedCardBackground: View {
             shape.fill(Color(.systemGroupedBackground)).overlay(shape.fill(tint.opacity(0.18)))
         case .frosted:
             shape.fill(.regularMaterial).overlay(shape.fill(tint.opacity(0.22)))
+        case .glass:
+            Color.clear.glass(tint: tint.opacity(0.3), in: shape)
+        }
+    }
+}
+
+extension View {
+    /// A card's background: Liquid Glass when the tiles are set to it, else
+    /// the surface's usual card style.
+    func cardBackground(_ surface: Surface, cornerRadius: CGFloat = 16) -> some View {
+        modifier(CardBackground(surface: surface, cornerRadius: cornerRadius))
+    }
+
+    /// Liquid Glass in the shape, optionally tinted; frosted glass with the
+    /// tint on top before iOS 26 or when built with an older Xcode.
+    @ViewBuilder
+    func glass(tint: Color? = nil, in shape: some Shape) -> some View {
+#if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            glassEffect(.regular.tint(tint), in: shape)
+        } else {
+            frostedGlass(tint: tint, in: shape)
+        }
+#else
+        frostedGlass(tint: tint, in: shape)
+#endif
+    }
+
+    private func frostedGlass(tint: Color?, in shape: some Shape) -> some View {
+        background {
+            shape.fill(.regularMaterial).overlay(shape.fill(tint ?? .clear))
+        }
+    }
+}
+
+private struct CardBackground: ViewModifier {
+    let surface: Surface
+    let cornerRadius: CGFloat
+
+    func body(content: Content) -> some View {
+        let shape = RoundedRectangle(cornerRadius: cornerRadius)
+        if surface == .glass {
+            content.glass(in: shape)
+        } else {
+            content.background(surface.card, in: shape)
         }
     }
 }
@@ -158,25 +204,39 @@ struct TintedCardBackground: View {
 struct PageBackground: ViewModifier {
     let page: PageKind
     var clubID: String? = nil
+    /// Off where the picture is drawn further out, as behind the swiping club pages.
+    var drawsPicture = true
 
     func body(content: Content) -> some View {
         let settings = AppSettings.shared
         let image = BackgroundLibrary.image(for: settings.background(for: page, clubID: clubID))
         content
-            .environment(\.surface, image == nil ? .plain : (settings.tileStyle == .frosted ? .frosted : .solid))
+            .environment(\.surface, image == nil ? .plain : settings.tileStyle.surface)
             .background {
-                if let image {
-                    BackgroundPicture(image: image, blurred: settings.blurBackground)
-                } else {
-                    Color(.systemGroupedBackground).ignoresSafeArea()
+                if drawsPicture {
+                    PagePicture(image: image, blurred: settings.blurBackground)
                 }
             }
     }
 }
 
 extension View {
-    func pageBackground(_ page: PageKind, clubID: String? = nil) -> some View {
-        modifier(PageBackground(page: page, clubID: clubID))
+    func pageBackground(_ page: PageKind, clubID: String? = nil, drawsPicture: Bool = true) -> some View {
+        modifier(PageBackground(page: page, clubID: clubID, drawsPicture: drawsPicture))
+    }
+}
+
+/// A page's picture filling the screen, or the plain grouped background.
+struct PagePicture: View {
+    let image: UIImage?
+    var blurred = false
+
+    var body: some View {
+        if let image {
+            BackgroundPicture(image: image, blurred: blurred)
+        } else {
+            Color(.systemGroupedBackground).ignoresSafeArea()
+        }
     }
 }
 

@@ -306,6 +306,9 @@ enum PageKind: String, CaseIterable, Identifiable {
 enum TileStyle: String, CaseIterable, Identifiable {
     /// Frosted glass: the picture shows through, blurred, under a light rowing-light tint.
     case frosted
+    /// Liquid Glass (iOS 26): clear glass that bends the picture at its edges.
+    /// Earlier iOS versions show frosted glass instead.
+    case glass
     /// Solid: no picture in the cards, which keep their full rowing-light shading.
     case solid
     var id: String { rawValue }
@@ -313,7 +316,16 @@ enum TileStyle: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .frosted: tr("Picture blurred")
+        case .glass: tr("Liquid Glass")
         case .solid: tr("No picture")
+        }
+    }
+
+    var surface: Surface {
+        switch self {
+        case .frosted: .frosted
+        case .glass: .glass
+        case .solid: .solid
         }
     }
 }
