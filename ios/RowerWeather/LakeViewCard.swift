@@ -74,6 +74,11 @@ struct LakeViewCard: View {
             Text(view.headline(for: hour))
                 .font(.headline)
                 .fixedSize(horizontal: false, vertical: true)
+            if view.isStale {
+                Label(tr("Forecast out of date: from %@. Check the conditions yourself.", Format.dayTime(view.generatedAt)), systemImage: "clock.badge.exclamationmark")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+            }
             if hour.lakeWide.light > .green {
                 LakeWideBanner(lakeWide: hour.lakeWide)
             }
@@ -82,7 +87,7 @@ struct LakeViewCard: View {
                     if i < hour.zones.count {
                         VStack(alignment: .leading, spacing: 1) {
                             HStack(spacing: 6) {
-                                TrafficLightDot(light: hour.zones[i].light, size: 10)
+                                TrafficLightDot(light: hour.zones[i].light, size: 10, stale: view.isStale)
                                 Text(LakeZoneName.title(zone)).font(.subheadline.weight(.semibold))
                             }
                             Text(tr("Waves up to %@", Format.waves(hour.zones[i].maxWaveM)))

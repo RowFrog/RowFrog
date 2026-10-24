@@ -262,8 +262,8 @@ struct LakeMapScreen: View {
         let zone = view.grid.cellZone[i]
         return VStack(alignment: .leading, spacing: 4) {
             HStack {
-                TrafficLightDot(light: hour.lights[i], size: 14)
-                Text(hour.lights[i].title).font(.headline)
+                TrafficLightDot(light: hour.lights[i], size: 14, stale: view.isStale)
+                Text(hour.lights[i].title(stale: view.isStale)).font(.headline)
                 Spacer()
                 Button { spot = nil } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
                     .accessibilityLabel(tr("Close"))

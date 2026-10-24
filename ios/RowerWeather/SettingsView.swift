@@ -6,12 +6,14 @@ import TipKit
 enum SettingsRoute: Hashable {
     case backgrounds
     case picker(BackgroundTarget)
+    case safety
 
-    /// Screenshot hook: `-RWSettingsPage backgrounds`, `picker-all`,
+    /// Screenshot hook: `-RWSettingsPage backgrounds`, `safety`, `picker-all`,
     /// `picker-page:list` or `picker-club:<id>` opens that page.
     static func fromLaunchArguments() -> [SettingsRoute] {
         guard let page = UserDefaults.standard.string(forKey: "RWSettingsPage") else { return [] }
         if page == "backgrounds" { return [.backgrounds] }
+        if page == "safety" { return [.safety] }
         if page == "picker-all" { return [.backgrounds, .picker(.all)] }
         if page.hasPrefix("picker-page:"), let kind = PageKind(rawValue: String(page.dropFirst("picker-page:".count))) {
             return [.backgrounds, .picker(.page(kind))]
@@ -131,6 +133,9 @@ struct SettingsView: View {
                         } label: {
                             Label(tr("Show the tour again"), systemImage: "questionmark.circle")
                         }
+                        NavigationLink(value: SettingsRoute.safety) {
+                            Label(tr("Safety notice"), systemImage: "exclamationmark.shield")
+                        }
                     } header: {
                         SectionTitle(tr("Help"), symbol: "questionmark.circle")
                     } footer: {
@@ -187,6 +192,8 @@ struct SettingsView: View {
                         BackgroundSettingsView(locations: locations)
                     case let .picker(target):
                         BackgroundPickerView(target: target, locations: locations)
+                    case .safety:
+                        SafetyNoticeSettingsView()
                     }
                 }
                 .confirmationDialog(tr("Reset all settings?"), isPresented: $confirmingReset, titleVisibility: .visible) {

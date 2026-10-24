@@ -43,6 +43,20 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(forecast.current(at: after)?.reasons.first?.label, "Sun down")
     }
 
+    func testOlderForecastShowsTheHourNowAndIsOutOfDate() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T08:00:00+00:00", "attribution": [],
+         "hours": [{"time": "2026-10-18T08:00:00+00:00", "light": "green", "reasons": []},
+                   {"time": "2026-10-18T09:00:00+00:00", "light": "amber", "reasons": []},
+                   {"time": "2026-10-18T10:00:00+00:00", "light": "red", "reasons": []}]}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        let ten = ISO8601DateFormatter().date(from: "2026-10-18T10:30:00Z")!
+        XCTAssertEqual(forecast.current(at: ten)?.light, .red)
+        XCTAssertFalse(forecast.isStale(at: ten))
+        XCTAssertTrue(forecast.isStale(at: ten.addingTimeInterval(3600)))
+    }
+
     func testDecodesIceEstimate() throws {
         let json = """
         {"clubId": "x", "lakeId": "y", "generatedAt": "2027-01-20T11:20:00+00:00", "attribution": [], "hours": [],
