@@ -26,6 +26,8 @@ struct LakeMapScreen: View {
     @State private var boatAt: Double
     /// The turning point tapped for changing, by its index in `waypoints`.
     @State private var selectedPoint: Int?
+    /// The panel at the bottom shows everything, or only a summary and the hours.
+    @State private var panelExpanded: Bool
     /// Seconds per 500 m.
     @AppStorage("RWRoutePace") private var pace = 150.0
     @Environment(\.dismiss) private var dismiss
@@ -57,6 +59,8 @@ struct LakeMapScreen: View {
         _outAndBack = State(initialValue: !RouteEdit.isLoop(points))
         // Screenshot hook: `-RWRoutePoint 2` selects that turning point.
         _selectedPoint = State(initialValue: args.object(forKey: "RWRoutePoint") != nil ? args.integer(forKey: "RWRoutePoint") : nil)
+        // Screenshot hook: `-RWPanel expanded` opens the panel in full.
+        _panelExpanded = State(initialValue: args.string(forKey: "RWPanel") == "expanded")
         // Screenshot hook: `-RWBoatAt 0.6` shows the lake when the boat is 60 % along the route.
         _followBoat = State(initialValue: args.object(forKey: "RWBoatAt") != nil)
         _boatAt = State(initialValue: min(max(args.double(forKey: "RWBoatAt"), 0), 1))
@@ -181,14 +185,65 @@ struct LakeMapScreen: View {
             .pickerStyle(.segmented)
             .padding(4)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+            if routeMode { editBar }
         }
         .padding(.horizontal)
         .padding(.top, 6)
     }
 
+    /// Changing the route, on the map where the points are: undo, close the
+    /// loop, clear, and delete the turning point that is tapped.
+    @ViewBuilder private var editBar: some View {
+        let loop = RouteEdit.isLoop(waypoints)
+        HStack(spacing: 14) {
+            if let i = selectedPoint, i > 0, i < waypoints.count {
+                Text(tr("Turning point %d", i)).font(.subheadline.weight(.semibold))
+                Spacer(minLength: 0)
+                Button(tr("Delete point"), systemImage: "trash", role: .destructive) {
+                    waypoints = RouteEdit.remove(at: i, from: waypoints)
+                    selectedPoint = nil
+                    savedRoute = nil
+                }
+                Button(tr("Done")) { selectedPoint = nil }
+                    .fontWeight(.semibold)
+            } else {
+                Button(tr("Undo"), systemImage: "arrow.uturn.backward") {
+                    if waypoints.count > 1 { waypoints.removeLast() }
+                }
+                .disabled(waypoints.count < 2)
+                Button(tr("Close loop"), systemImage: "arrow.triangle.capsulepath") {
+                    waypoints = RouteEdit.close(waypoints)
+                    outAndBack = false
+                }
+                .disabled(waypoints.count < 3 || loop)
+                Spacer(minLength: 0)
+                Button(tr("Clear"), systemImage: "trash") {
+                    waypoints = Array(waypoints.prefix(1))
+                    savedRoute = nil
+                }
+                .disabled(waypoints.count < 2)
+            }
+        }
+        .font(.subheadline)
+        .labelStyle(.titleAndIcon)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
+        .background(.regularMaterial, in: Capsule())
+        if let i = selectedPoint, i > 0, i < waypoints.count {
+            Text(tr("Hold the point and drag it to move it."))
+                .font(.caption)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(.regularMaterial, in: Capsule())
+        }
+    }
+
     private func panel(plan: RoutePlan?, boat: RoutePlan.Stop?, shown: LakeHour?) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            if let hour = shown {
+            grabber
+            if !panelExpanded, let hour = shown {
+                collapsedSummary(hour, plan: plan, boat: boat)
+            } else if let hour = shown {
                 HStack(alignment: .firstTextBaseline) {
                     Text(boat == nil ? Format.dayTime(hour.time) : tr("%@ · at the boat", Format.dayTime(hour.time))).font(.headline)
                     Spacer()
@@ -227,7 +282,7 @@ struct LakeMapScreen: View {
             LakeHourStrip(hours: view.hours, selection: $hourIndex)
         }
         .padding(.horizontal)
-        .padding(.top, 14)
+        .padding(.top, 6)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
@@ -235,28 +290,66 @@ struct LakeMapScreen: View {
                 .fill(.regularMaterial)
                 .ignoresSafeArea(edges: .bottom)
         }
+        // Pull up for everything, push down for the map.
+        .gesture(DragGesture(minimumDistance: 20).onEnded { drag in
+            if drag.translation.height < -30 { withAnimation(.snappy) { panelExpanded = true } }
+            if drag.translation.height > 30 { withAnimation(.snappy) { panelExpanded = false } }
+        })
+    }
+
+    private var grabber: some View {
+        Button { withAnimation(.snappy) { panelExpanded.toggle() } } label: {
+            Capsule()
+                .fill(.secondary.opacity(0.5))
+                .frame(width: 38, height: 5)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(panelExpanded ? tr("Show less") : tr("Show more"))
+    }
+
+    /// The panel when pushed down: the hour, one line on the conditions or
+    /// the route, and the hour strip.
+    @ViewBuilder private func collapsedSummary(_ hour: LakeHour, plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(boat == nil ? Format.dayTime(hour.time) : tr("%@ · at the boat", Format.dayTime(hour.time))).font(.headline)
+            Spacer()
+            if view.sample {
+                Label(tr("Sample wind"), systemImage: "exclamationmark.triangle")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+            }
+        }
+        if hour.lakeWide.light > .green {
+            LakeWideBanner(lakeWide: hour.lakeWide).lineLimit(1)
+        }
+        Group {
+            if routeMode, let plan {
+                HStack(spacing: 6) {
+                    TrafficLightDot(light: plan.worstLight, size: 10)
+                    Text(tr("%@ · %@ · finished at %@", Format.distance(plan.distanceM), Format.duration(from: plan.start, to: plan.end), Format.time(plan.end)))
+                        .monospacedDigit()
+                }
+            } else if routeMode {
+                Text(tr("Tap the water to add the turning points of your route."))
+            } else if let spot, spot < hour.lights.count {
+                HStack(spacing: 6) {
+                    TrafficLightDot(light: hour.lights[spot], size: 10)
+                    Text(hour.lights[spot].title + " · " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: spot))))
+                }
+            } else {
+                Text(view.headline(for: hour))
+            }
+        }
+        .font(.subheadline.weight(.semibold))
+        .lineLimit(1)
     }
 
     @ViewBuilder private func routePanel(plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
         let saved = routes.routes(on: view.lakeId)
         let loop = RouteEdit.isLoop(waypoints)
-        if let i = selectedPoint, i > 0, i < waypoints.count {
-            HStack(spacing: 16) {
-                Label(tr("Turning point %d", i), systemImage: "smallcircle.filled.circle")
-                    .font(.subheadline.weight(.semibold))
-                Spacer()
-                Button(tr("Delete point"), systemImage: "trash", role: .destructive) {
-                    waypoints = RouteEdit.remove(at: i, from: waypoints)
-                    selectedPoint = nil
-                    savedRoute = nil
-                }
-                Button(tr("Done")) { selectedPoint = nil }
-            }
-            .font(.subheadline)
-            Text(tr("Hold the point and drag it to move it."))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
         if let planner, let plan {
             RouteSummary(view: view, plan: plan)
             HStack(spacing: 12) {
@@ -301,23 +394,6 @@ struct LakeMapScreen: View {
             }
         }
         HStack(spacing: 16) {
-            Button(tr("Undo"), systemImage: "arrow.uturn.backward") {
-                if waypoints.count > 1 { waypoints.removeLast() }
-                selectedPoint = nil
-            }
-            .disabled(waypoints.count < 2)
-            Button(tr("Close loop"), systemImage: "arrow.triangle.capsulepath") {
-                waypoints = RouteEdit.close(waypoints)
-                outAndBack = false
-                selectedPoint = nil
-            }
-            .disabled(waypoints.count < 3 || loop)
-            Button(tr("Clear"), systemImage: "trash") {
-                waypoints = Array(waypoints.prefix(1))
-                savedRoute = nil
-                selectedPoint = nil
-            }
-            .disabled(waypoints.count < 2)
             Spacer()
             Menu {
                 Button(tr("Save route"), systemImage: "square.and.arrow.down") {
@@ -540,6 +616,9 @@ struct LakeMapView: UIViewRepresentable {
     var movePoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
     var selectPoint: (Int?) -> Void = { _ in }
 
+    /// Room the pushed-down panel and the home indicator take at the bottom.
+    static let panelHeight: CGFloat = 230
+
     func makeCoordinator() -> Coordinator { Coordinator(spot: $spot) }
 
     func makeUIView(context: Context) -> MKMapView {
@@ -561,9 +640,10 @@ struct LakeMapView: UIViewRepresentable {
         }
         map.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))
         map.setVisibleMapRect(overlay.boundingMapRect, animated: false)
-        // Fit the lake once the map has its size, clear of the buttons at the top.
+        // Fit the lake once the map has its size, clear of the buttons at the top
         DispatchQueue.main.async {
-            map.setVisibleMapRect(overlay.boundingMapRect, edgePadding: UIEdgeInsets(top: 130, left: 24, bottom: 30, right: 24), animated: false)
+            // and of the panel at the bottom, so the whole lake and every club show.
+            map.setVisibleMapRect(overlay.boundingMapRect, edgePadding: UIEdgeInsets(top: 130, left: 24, bottom: LakeMapView.panelHeight, right: 24), animated: false)
         }
         return map
     }
