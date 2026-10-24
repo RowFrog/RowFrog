@@ -24,7 +24,7 @@ import httpx
 
 PAGE_URL = "https://www.gkd.bayern.de/en/lakes/watertemperature/bayern/{station}/current-values/table"
 LOCAL = ZoneInfo("Europe/Berlin")
-HEADERS = {"User-Agent": "RowerWeather/0.1 (+https://github.com/RowerWeatherFrog/RowerWeather)"}
+HEADERS = {"User-Agent": "RowerWeather/0.1 (+https://github.com/RowFrog/RowFrog)"}
 
 _TAG = re.compile(r"<[^>]+>")
 _ROW = re.compile(r"(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})\s+(-?\d+(?:[.,]\d+)?)")

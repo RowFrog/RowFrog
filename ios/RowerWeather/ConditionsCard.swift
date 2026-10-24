@@ -284,6 +284,9 @@ private struct ConditionTile: View {
 
     /// Until the ice estimate is in the app: warm water cannot freeze over.
     private var iceGuess: (value: String, detail: String) {
+        if let ice = data.forecast.ice, ice.status != "unavailable" {
+            return (ice.title, ice.detail)
+        }
         if let c = data.water?.celsius, c >= 8 {
             return (tr("No ice"), tr("Water too warm"))
         }
@@ -1142,6 +1145,18 @@ extension ConditionDetail {
     }
 
     private static func ice(_ d: ConditionData) -> ConditionDetail {
+        if let ice = d.forecast.ice, ice.status != "unavailable" {
+            var facts: [(String, String)] = [(tr("Water"), Format.temperature(ice.waterTemperatureC ?? d.water?.celsius, digits: 1))]
+            if let cm = ice.thicknessCm, cm > 0 { facts.append((tr("Ice"), tr("About %@ cm, estimated", Format.number(cm)))) }
+            if let satellite = ice.satellite { facts.append((tr("Satellite"), satellite.summary)) }
+            return ConditionDetail(
+                value: ice.title,
+                note: ice.detail,
+                facts: facts,
+                rowing: tr("Never go onto the ice because of this app. Never row between ice floes; thin ice cuts hulls."),
+                source: Condition.ice.explanation
+            )
+        }
         let warm = (d.water?.celsius ?? 0) >= 8
         return ConditionDetail(
             value: warm ? tr("No ice") : tr("No data yet"),

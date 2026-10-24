@@ -1,0 +1,36 @@
+name: Satellite ice check
+
+# Looks at Copernicus satellite ice data (River and Lake Ice Extent, Lake Ice
+# Extent) for our lakes with the CDSE account in the repository secrets
+# CDSE_CLIENT_ID and CDSE_CLIENT_SECRET. Runs when the script changes, or by
+# hand from the Actions tab. Without the secrets it only says they are missing.
+
+on:
+  push:
+    paths:
+      - scripts/satellite_ice_probe.py
+      - scripts/satellite_picture_probe.py
+      - backend/rowerweather/sources/sentinel2.py
+      - .github/workflows/satellite-ice.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e "backend[satellite]"
+      - run: python3 scripts/satellite_ice_probe.py
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
+      - run: python3 scripts/satellite_picture_probe.py
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}

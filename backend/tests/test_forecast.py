@@ -153,3 +153,26 @@ def test_outlook_takes_uv_from_the_default_models_when_icon_has_none():
     assert seen[0]["past_hours"] == "24" and seen[0]["forecast_hours"] == "168"
     assert seen[1]["hourly"] == "uv_index" and "models" not in seen[1]
     assert all(h.uv_index == 3.1 for h in hours)
+
+
+def test_fetch_many_reads_one_forecast_per_point():
+    import asyncio
+
+    import httpx
+
+    from rowerweather.sources import open_meteo
+
+    one = {"hourly": {"time": ["2026-10-20T12:00"], "temperature_2m": [10.0]}}
+    seen = {}
+
+    def handler(request):
+        seen["lat"] = request.url.params["latitude"]
+        return httpx.Response(200, json=[one, one])
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await open_meteo.fetch_many(client, [(47.9, 11.3), (48.0, 11.1)])
+
+    forecasts = asyncio.run(run())
+    assert seen["lat"] == "47.9000,48.0000"
+    assert [f[0].temperature_c for f in forecasts] == [10.0, 10.0]

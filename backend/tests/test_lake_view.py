@@ -61,7 +61,7 @@ def test_simplify_keeps_a_square():
 
 
 def test_lake_view_endpoint(monkeypatch):
-    async def fake_fetch_many(client, points, hours=48):
+    async def fake_fetch_many(client, points, hours=48, hourly=None):
         return [open_meteo.parse(PAYLOAD) for _ in points]
 
     async def no_water(*args, **kwargs):

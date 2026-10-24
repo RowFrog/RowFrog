@@ -99,9 +99,9 @@ jobs:
             local guide=(-RWDemoClubs YES -RWTutorialSeen YES -RWNoTips YES)
             [ -n "${GUIDE:-}" ] && guide=()
             xcrun simctl ui "$UDID" appearance "$appearance"
-            xcrun simctl terminate "$UDID" com.rowerweatherfrog.RowerWeather || true
+            xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
-            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowerweatherfrog.RowerWeather "${guide[@]}" "$@"
+            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${guide[@]}" "$@"
             sleep 12
             xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
             # The simulator saves landscape shots sideways; turn them upright.
@@ -202,12 +202,12 @@ jobs:
           shoot 25-hourly-iso-date light -RWScrollTo hourly -RWDateFormat iso
           # The first-start tour with an empty list, page by page, and the one-time tips:
           # in English with the location allowed (clubs near Starnberg), in German without.
-          xcrun simctl privacy "$UDID" grant location com.rowerweatherfrog.RowerWeather
+          xcrun simctl privacy "$UDID" grant location com.rowfrog.RowFrog
           xcrun simctl location "$UDID" set 47.9990,11.3405
           for page in 0 1 2 3 4 5 6 7 8 9; do
             GUIDE=1 shoot "26-tour-p$((page + 1))" light -RWNoTips YES -RWTutorialPage $page
           done
-          xcrun simctl privacy "$UDID" revoke location com.rowerweatherfrog.RowerWeather
+          xcrun simctl privacy "$UDID" revoke location com.rowfrog.RowFrog
           for page in 0 1 2 3 4 5 6 7 8 9; do
             GUIDE=1 shoot "27-tour-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de
           done
