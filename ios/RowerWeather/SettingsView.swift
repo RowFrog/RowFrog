@@ -5,6 +5,8 @@ import TipKit
 /// Pages pushed inside the settings.
 enum SettingsRoute: Hashable {
     case backgrounds
+    case limits
+    case boat(String)
     case picker(BackgroundTarget)
 
     /// Screenshot hook: `-RWSettingsPage backgrounds`, `picker-all`,
@@ -12,6 +14,8 @@ enum SettingsRoute: Hashable {
     static func fromLaunchArguments() -> [SettingsRoute] {
         guard let page = UserDefaults.standard.string(forKey: "RWSettingsPage") else { return [] }
         if page == "backgrounds" { return [.backgrounds] }
+        if page == "limits" { return [.limits] }
+        if page.hasPrefix("boat:") { return [.limits, .boat(String(page.dropFirst("boat:".count)))] }
         if page == "picker-all" { return [.backgrounds, .picker(.all)] }
         if page.hasPrefix("picker-page:"), let kind = PageKind(rawValue: String(page.dropFirst("picker-page:".count))) {
             return [.backgrounds, .picker(.page(kind))]
@@ -38,6 +42,13 @@ struct SettingsView: View {
     @State private var showingTour = false
     @State private var showResetTip = false
     private let resetTip = FactoryResetTip()
+
+    private var limitsSummary: String {
+        let settings = AppSettings.shared
+        let boat = settings.selectedBoat
+        let changed = settings.limits.custom.count
+        return changed == 0 ? boat.title : tr("%@ · %@ changed", boat.title, "\(changed)")
+    }
     @State private var showAppIconTip = false
     private let appIconTip = AppIconTip()
     @State private var appIcon = AppIcons.current
@@ -90,6 +101,23 @@ struct SettingsView: View {
                     }
                     .surfaceRows()
                     .id("units")
+
+                    Section {
+                        NavigationLink(value: SettingsRoute.limits) {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tr("Your boat and limits"))
+                                Text(limitsSummary)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    } header: {
+                        SectionTitle(tr("Rowing limits"), symbol: "figure.rower")
+                    } footer: {
+                        SectionFooter(tr("When the rowing light turns amber or red. Big boats get higher wind and wave limits, and you can fine-tune each limit."))
+                    }
+                    .surfaceRows()
+                    .id("limits")
 
                     Section {
                         FormatRow(title: tr("Time"), symbol: "clock", selection: $settings.timeFormat) { format in
@@ -162,7 +190,7 @@ struct SettingsView: View {
                             Label(tr("Reset to factory settings"), systemImage: "arrow.counterclockwise")
                         }
                     } footer: {
-                        SectionFooter(tr("Appearance, units, language, background pictures and the app icon go back to how the app came. Your locations and home base stay."))
+                        SectionFooter(tr("Appearance, units, language, background pictures and the app icon go back to how the app came. Small boats are ticked again and every boat's limits go back to the app's. Your locations, home base and boats stay."))
                     }
                     .surfaceRows()
                     .id("reset")
@@ -185,6 +213,10 @@ struct SettingsView: View {
                     switch route {
                     case .backgrounds:
                         BackgroundSettingsView(locations: locations)
+                    case .limits:
+                        RowingLimitsView(path: $path)
+                    case let .boat(id):
+                        BoatLimitsView(boatID: id)
                     case let .picker(target):
                         BackgroundPickerView(target: target, locations: locations)
                     }
@@ -199,9 +231,9 @@ struct SettingsView: View {
                     }
                     Button(tr("Cancel"), role: .cancel) {}
                 } message: {
-                    Text(tr("Appearance, units, language, background pictures and the app icon go back to how the app came, and your own pictures are deleted from the app. Your locations and home base stay."))
+                    Text(tr("Appearance, units, language, background pictures and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
-                .screenshotSections(["appearance", "units", "datetime", "background", "help", "appicon", "reset"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "appicon", "reset"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
                 .fullScreenCover(isPresented: $showingTour) {
@@ -819,6 +851,224 @@ struct BackgroundPickerView: View {
 }
 
 // MARK: - Shared pieces
+
+/// The boats the rowing light can be for: small boats, big boats and the
+/// user's own. Each has its own limits, behind the slider button.
+struct RowingLimitsView: View {
+    @Binding var path: [SettingsRoute]
+
+    var body: some View {
+        @Bindable var settings = AppSettings.shared
+        ScrollViewReader { proxy in
+            Form {
+                Section {
+                    ForEach(Boat.groups) { boat in
+                        BoatRow(boat: boat) { path.append(.boat(boat.id)) }
+                    }
+                } header: {
+                    SectionTitle(tr("Your boat"), symbol: "figure.rower")
+                } footer: {
+                    SectionFooter(tr("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))
+                }
+                .surfaceRows()
+
+                Section {
+                    ForEach(settings.myBoats) { boat in
+                        BoatRow(boat: boat) { path.append(.boat(boat.id)) }
+                    }
+                    .onDelete { offsets in
+                        for id in offsets.map({ settings.myBoats[$0].id }) { settings.removeBoat(id) }
+                    }
+                    Button {
+                        path.append(.boat(settings.addBoat().id))
+                    } label: {
+                        Label(tr("Add a boat"), systemImage: "plus.circle")
+                    }
+                } header: {
+                    SectionTitle(tr("My boats"), symbol: "list.bullet")
+                } footer: {
+                    SectionFooter(tr("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))
+                }
+                .surfaceRows()
+
+                Section {
+                    Picker(selection: $settings.mapBoatID) {
+                        Text(tr("Same as the ticked boat")).tag(AppSettings.followBoat)
+                        ForEach(settings.boats) { boat in
+                            Text(boat.title).tag(boat.id)
+                        }
+                    } label: {
+                        EmptyView()
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                    if settings.mapLooksCalmer {
+                        Label(tr("The map uses the limits for %@, which are higher than those for %@. The map points this out too.", settings.mapBoat.inSentence, settings.selectedBoat.inSentence),
+                              systemImage: "exclamationmark.triangle.fill")
+                            .font(.footnote)
+                            .foregroundStyle(.orange)
+                    }
+                } header: {
+                    SectionTitle(tr("Lake map colours"), symbol: "map")
+                } footer: {
+                    SectionFooter(tr("The boat whose limits colour the lake view and route planning."))
+                }
+                .surfaceRows()
+                .id("map")
+            }
+            .task {
+                // Screenshot hook: `-RWLimitsScroll map` shows the lake map section.
+                if UserDefaults.standard.string(forKey: "RWLimitsScroll") == "map" {
+                    try? await Task.sleep(for: .milliseconds(600))
+                    proxy.scrollTo("map", anchor: .top)
+                }
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
+        .navigationTitle(tr("Rowing limits"))
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// A boat to tick, with a button to its limits.
+private struct BoatRow: View {
+    let boat: Boat
+    let openLimits: () -> Void
+
+    var body: some View {
+        let settings = AppSettings.shared
+        let changed = !(settings.boatLimits[boat.id] ?? [:]).isEmpty
+        HStack(spacing: 12) {
+            Button {
+                settings.boatID = boat.id
+            } label: {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(boat.title).foregroundStyle(.primary)
+                        Text(changed ? tr("%@ · your limits", boat.detail) : boat.detail)
+                            .font(.caption)
+                            .foregroundStyle(changed ? Color.orange : Color.secondary)
+                    }
+                    .multilineTextAlignment(.leading)
+                    Spacer(minLength: 4)
+                    if settings.selectedBoat.id == boat.id {
+                        Image(systemName: "checkmark").fontWeight(.semibold).foregroundStyle(.tint)
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            Button(action: openLimits) {
+                Image(systemName: "slider.horizontal.3")
+                    .padding(6)
+            }
+            .buttonStyle(.borderless)
+            .accessibilityLabel(tr("Limits for %@", boat.title))
+        }
+    }
+}
+
+/// One boat's name, type and limits.
+struct BoatLimitsView: View {
+    let boatID: String
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        @Bindable var settings = AppSettings.shared
+        let boat = settings.boat(boatID) ?? .small
+        Form {
+            if !boat.isGroup, let index = settings.myBoats.firstIndex(where: { $0.id == boatID }) {
+                Section {
+                    TextField(tr("Name, e.g. the boat's name"), text: $settings.myBoats[index].name)
+                    Picker(tr("Type"), selection: $settings.myBoats[index].type) {
+                        ForEach(BoatType.allCases) { type in
+                            Text(type.title).tag(type)
+                        }
+                    }
+                    Picker(tr("Size and rigging"), selection: $settings.myBoats[index].boatClass) {
+                        ForEach(BoatClass.allCases) { boatClass in
+                            Text(boatClass.title).tag(boatClass)
+                        }
+                    }
+                } header: {
+                    SectionTitle(tr("Boat"), symbol: "figure.rower")
+                } footer: {
+                    SectionFooter(boat.type.detail)
+                }
+                .surfaceRows()
+            }
+
+            Section {
+                ForEach(RowingLimit.allCases) { limit in
+                    LimitRow(limit: limit, boat: boat)
+                }
+                if !(settings.boatLimits[boat.id] ?? [:]).isEmpty {
+                    Button(tr("Use the app's limits again")) { settings.boatLimits[boat.id] = nil }
+                }
+            } header: {
+                SectionTitle(tr("Fine-tune the limits"), symbol: "slider.horizontal.3")
+            } footer: {
+                SectionFooter(tr("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. DWD warnings, thunderstorms, fog, hail and darkness always count.")
+                              + " " + tr("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.",
+                                         Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs)))
+            }
+            .surfaceRows()
+
+            if !boat.isGroup {
+                Section {
+                    Button(tr("Remove this boat"), role: .destructive) {
+                        dismiss()
+                        settings.removeBoat(boat.id)
+                    }
+                }
+                .surfaceRows()
+            }
+        }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
+        .navigationTitle(boat.title)
+        .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// One limit with buttons to raise or lower it; the app's value is shown beside a changed one.
+private struct LimitRow: View {
+    let limit: RowingLimit
+    let boat: Boat
+
+    var body: some View {
+        let limits = AppSettings.shared.limits(for: boat)
+        let value = limits.value(limit)
+        let usual = limit.standard(for: boat)
+        let mine = limits.isMine(limit)
+        Stepper {
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Label(limit.title, systemImage: limit.condition.symbol)
+                        .symbolRenderingMode(.hierarchical)
+                    Text(mine ? tr("Your limit · the app's: %@", limit.format(usual)) : tr("The app's limit"))
+                        .font(.caption)
+                        .foregroundStyle(mine ? Color.orange : Color.secondary)
+                }
+                Spacer(minLength: 4)
+                Text(limit.format(value)).monospacedDigit().fontWeight(.semibold)
+            }
+        } onIncrement: {
+            set(value + limit.step)
+        } onDecrement: {
+            set(value - limit.step)
+        }
+    }
+
+    private func set(_ new: Double) {
+        let settings = AppSettings.shared
+        let clamped = min(max((new / limit.step).rounded() * limit.step, limit.range.lowerBound), limit.range.upperBound)
+        var custom = settings.boatLimits[boat.id] ?? [:]
+        custom[limit] = abs(clamped - limit.standard(for: boat)) < limit.step / 2 ? nil : clamped
+        settings.boatLimits[boat.id] = custom.isEmpty ? nil : custom
+    }
+}
 
 /// A section header that stays readable over a background picture.
 private struct SectionTitle: View {
