@@ -334,7 +334,7 @@ enum German {
         "Night on the lake": "Nacht auf dem See",
         // Widget
         "Now": "Jetzt",
-        "Open RowerWeather to load the forecast.": "Öffne RowerWeather, um die Vorhersage zu laden.",
+        "Open Row Frog to load the forecast.": "Öffne Row Frog, um die Vorhersage zu laden.",
         "No green hours in the forecast.": "Keine grünen Stunden in der Vorhersage.",
         // Lake view
         "Lake view": "Seeansicht",
@@ -407,7 +407,7 @@ enum German {
         "waves from the side": "Wellen von der Seite",
 
         // Tour and tips
-        "Welcome to RowerWeather": "Willkommen bei RowerWeather",
+        "Welcome to Row Frog": "Willkommen bei Row Frog",
         "The rowing light": "Die Ruderampel",
         "Conditions at a glance": "Bedingungen auf einen Blick",
         "Your locations": "Deine Orte",
@@ -424,7 +424,7 @@ enum German {
         "Add the other places you row, or skip this and add clubs later in the list.": "Füge die anderen Orte hinzu, an denen du ruderst, oder überspringe das und füge Vereine später in der Liste hinzu.",
         "Suggestions": "Vorschläge",
         "Near you": "In deiner Nähe",
-        "Add a RowerWeather widget to your home or lock screen to see the rowing light at a glance.": "Füge ein RowerWeather-Widget zu deinem Home- oder Sperrbildschirm hinzu, um die Ruderampel auf einen Blick zu sehen.",
+        "Add a Row Frog widget to your home or lock screen to see the rowing light at a glance.": "Füge ein Row-Frog-Widget zu deinem Home- oder Sperrbildschirm hinzu, um die Ruderampel auf einen Blick zu sehen.",
         "Landscape and wide screens": "Querformat und breite Bildschirme",
         "Turn your iPhone sideways, or use a wide screen, to see more at once.": "Dreh dein iPhone quer oder nutze einen breiten Bildschirm, um mehr auf einmal zu sehen.",
         "The location list stays on the left, the club page on the right.": "Die Ortsliste bleibt links, die Vereinsseite steht rechts.",
@@ -446,7 +446,7 @@ enum German {
         "Look across the lake": "Blick über den See",
         "Tap the map to see the rowing light, waves and wind for the whole lake, hour by hour. Tap the water for the details of one spot.": "Tippe auf die Karte, um Ruderampel, Wellen und Wind für den ganzen See Stunde für Stunde zu sehen. Tippe aufs Wasser für die Details einer Stelle.",
         "Tap here, then tap your turning points on the water. You see the light along the route and the best time to start.": "Tippe hier und dann auf deine Wendepunkte auf dem Wasser. Du siehst die Ampel entlang der Route und die beste Startzeit.",
-        "Choose the icon RowerWeather shows on your home screen.": "Wähle das Symbol, das RowerWeather auf deinem Home-Bildschirm zeigt.",
+        "Choose the icon Row Frog shows on your home screen.": "Wähle das Symbol, das Row Frog auf deinem Home-Bildschirm zeigt.",
         "Search by club, lake or town to find any club in the DRV club directory.": "Suche nach Verein, See oder Ort, um jeden Verein aus dem DRV-Vereinsverzeichnis zu finden.",
         "No clubs yet": "Noch keine Vereine",
         "Choose your home base and the other places you row.": "Wähle deinen Heimatverein und die anderen Orte, an denen du ruderst.",
