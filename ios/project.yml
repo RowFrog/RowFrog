@@ -77,6 +77,7 @@ targets:
       - path: RowerWeather/TrafficLightView.swift
       - path: RowerWeather/Backgrounds.swift
       - path: RowerWeather/WidgetViews.swift
+      - path: RowerWeather/OwnPlaces.swift
     entitlements:
       path: RowerWeatherWidget/RowerWeatherWidget.entitlements
       properties:

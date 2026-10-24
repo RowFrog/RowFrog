@@ -2125,6 +2125,600 @@
   "lon": 7.43061,
   "precision": "street"
  },
+ "at|Alte Fähre|6911|Lochau": {
+  "lat": 47.52942,
+  "lon": 9.75339,
+  "precision": "town"
+ },
+ "at|Am Strandweg 40|6900|Bregenz": {
+  "lat": 47.50258,
+  "lon": 9.74729,
+  "precision": "town"
+ },
+ "at|Am Winterhafen 19|4020|Linz": {
+  "lat": 48.32012,
+  "lon": 14.3049,
+  "precision": "street"
+ },
+ "at|An der unteren Alten Donau 13|1220|Wien": {
+  "lat": 48.23652,
+  "lon": 16.43132,
+  "precision": "street"
+ },
+ "at|An der unteren Alten Donau 21|1220|Wien": {
+  "lat": 48.23561,
+  "lon": 16.43203,
+  "precision": "street"
+ },
+ "at|An der unteren Alten Donau 47|1220|Wien": {
+  "lat": 48.23325,
+  "lon": 16.43337,
+  "precision": "street"
+ },
+ "at|An der unteren Alten Donau 49|1220|Wien": {
+  "lat": 48.23299,
+  "lon": 16.43347,
+  "precision": "street"
+ },
+ "at|Anton-Payr-Straße 5|4863|Seewalchen": {
+  "lat": 47.95464,
+  "lon": 13.58395,
+  "precision": "street"
+ },
+ "at|Brigittenauer Sporn 9|1200|Wien": {
+  "lat": 48.26075,
+  "lon": 16.36958,
+  "precision": "street"
+ },
+ "at|Dampfschiffhaufen 41|1220|Wien": {
+  "lat": 48.21935,
+  "lon": 16.43232,
+  "precision": "street"
+ },
+ "at|Dampfschiffhaufen 65|1220|Wien": {
+  "lat": 48.2169,
+  "lon": 16.43326,
+  "precision": "street"
+ },
+ "at|Donaustraße 70|2100|Korneuburg": {
+  "lat": 48.33887,
+  "lon": 16.32183,
+  "precision": "street"
+ },
+ "at|Dr. Thomas Straße 15|4810|Gmunden": {
+  "lat": 47.90773,
+  "lon": 13.78333,
+  "precision": "street"
+ },
+ "at|Drauweg 18|9100|Völkermarkt": {
+  "lat": 46.6555,
+  "lon": 14.63408,
+  "precision": "street"
+ },
+ "at|Dürnstein 51|3601|Dürnstein": {
+  "lat": 48.39323,
+  "lon": 15.52587,
+  "precision": "street"
+ },
+ "at|Florian Berndlgasse 10|1220|Wien": {
+  "lat": 48.23499,
+  "lon": 16.43292,
+  "precision": "street"
+ },
+ "at|Florian-Berndl-Gasse 3|1220|Wien": {
+  "lat": 48.2385,
+  "lon": 16.43013,
+  "precision": "street"
+ },
+ "at|Friedelstrand 11|9020|Klagenfurt": {
+  "lat": 46.62361,
+  "lon": 14.24939,
+  "precision": "street"
+ },
+ "at|Friedelstrand 21|9020|Klagenfurt": {
+  "lat": 46.62409,
+  "lon": 14.24822,
+  "precision": "street"
+ },
+ "at|Heilhamerweg 2|4040|Linz": {
+  "lat": 48.31983,
+  "lon": 14.29465,
+  "precision": "street"
+ },
+ "at|Josefstraße 29|3313|Wallsee": {
+  "lat": 48.16437,
+  "lon": 14.70928,
+  "precision": "street"
+ },
+ "at|Kronauer Straße 8|3430|Tulln": {
+  "lat": 48.3253,
+  "lon": 16.03048,
+  "precision": "street"
+ },
+ "at|Kuchelauer Hafenstraße 4|1190|Wien": {
+  "lat": 48.27693,
+  "lon": 16.35478,
+  "precision": "street"
+ },
+ "at|Melker Straße 38|3393|Matzleinsdorf": {
+  "lat": 48.20674,
+  "lon": 15.27844,
+  "precision": "street"
+ },
+ "at|Moissigasse 21|1220|Wien": {
+  "lat": 48.22946,
+  "lon": 16.43038,
+  "precision": "street"
+ },
+ "at|Mondseestraße 14|5340|St. Gilgen": {
+  "lat": 47.76917,
+  "lon": 13.36817,
+  "precision": "street"
+ },
+ "at|Murfelder Straße 260|8041|Graz": {
+  "lat": 47.01541,
+  "lon": 15.45969,
+  "precision": "street"
+ },
+ "at|Nibelungenlände 10|3400|Klosterneuburg": {
+  "lat": 48.30499,
+  "lon": 16.32376,
+  "precision": "town"
+ },
+ "at|Normannengasse 2|3400|Klosterneuburg": {
+  "lat": 48.29376,
+  "lon": 16.34304,
+  "precision": "street"
+ },
+ "at|Ossiachersee-Süduferstraße 67|9523|Landskron": {
+  "lat": 46.65066,
+  "lon": 13.90112,
+  "precision": "street"
+ },
+ "at|Pionierstraße 7|3390|Melk": {
+  "lat": 48.23411,
+  "lon": 15.33348,
+  "precision": "street"
+ },
+ "at|Prielstraße 2|4600|Wels": {
+  "lat": 48.15679,
+  "lon": 14.03594,
+  "precision": "street"
+ },
+ "at|Regattastraße 1|4100|Ottensheim Österreich": {
+  "lat": 48.32754,
+  "lon": 14.16181,
+  "precision": "street"
+ },
+ "at|Regensburgerstraße 16|3380|Pöchlarn": {
+  "lat": 48.21235,
+  "lon": 15.20736,
+  "precision": "street"
+ },
+ "at|Robert Baum-Promenade 7|5310|Mondsee": {
+  "lat": 47.85073,
+  "lon": 13.35094,
+  "precision": "street"
+ },
+ "at|Rodlstraße 21|4100|Ottensheim": {
+  "lat": 48.33083,
+  "lon": 14.17062,
+  "precision": "street"
+ },
+ "at|Rupertiweg 13|5201|Seekirchen": {
+  "lat": 47.91471,
+  "lon": 13.15298,
+  "precision": "street"
+ },
+ "at|Schachensiedlung|8993|Grundlsee": {
+  "lat": 47.62727,
+  "lon": 13.83793,
+  "precision": "town"
+ },
+ "at|Seebad|7091|Breitenbrunn": {
+  "lat": 47.94635,
+  "lon": 16.73253,
+  "precision": "town"
+ },
+ "at|Seehofstraße 33|9871|Seeboden": {
+  "lat": 46.81427,
+  "lon": 13.51168,
+  "precision": "street"
+ },
+ "at|Sepp Puchinger Promenade|3500|Krems-Stein": {
+  "lat": 48.3989,
+  "lon": 15.57387,
+  "precision": "street"
+ },
+ "at|Uferstraße 20|2304|Orth an der Donau": {
+  "lat": 48.12447,
+  "lon": 16.71215,
+  "precision": "street"
+ },
+ "at|Waldbadstraße|5081|Anif": {
+  "lat": 47.73748,
+  "lon": 13.06929,
+  "precision": "street"
+ },
+ "at|Wilheringerstraße 10|4048|Puchenau": {
+  "lat": 48.31081,
+  "lon": 14.24183,
+  "precision": "street"
+ },
+ "at||6330|Kufstein, Münchener Straße 38": null,
+ "ch|Aarburgerstrasse 96|4618|Boningen": {
+  "lat": 47.31238,
+  "lon": 7.87397,
+  "precision": "street"
+ },
+ "ch|Alpenquai 31|6000|Luzern": {
+  "lat": 47.04509,
+  "lon": 8.32054,
+  "precision": "street"
+ },
+ "ch|Alpenquai 33|6000|Luzern": {
+  "lat": 47.04486,
+  "lon": 8.32089,
+  "precision": "street"
+ },
+ "ch|Araweg 12|3032|Hinterkappelen": {
+  "lat": 46.96192,
+  "lon": 7.37203,
+  "precision": "street"
+ },
+ "ch|Case postale 142|1000|Lausanne": {
+  "lat": 46.52183,
+  "lon": 6.6327,
+  "precision": "town"
+ },
+ "ch|Case postale 635|1470|Estavayer-le-Lac": {
+  "lat": 46.84964,
+  "lon": 6.84774,
+  "precision": "town"
+ },
+ "ch|Case postale 6697|1002|Lausanne": {
+  "lat": 46.52183,
+  "lon": 6.6327,
+  "precision": "town"
+ },
+ "ch|Chemin de la Réserve 1|1222|Vésenaz": {
+  "lat": 46.245,
+  "lon": 6.19375,
+  "precision": "street"
+ },
+ "ch|Chemin des Moulines 8|1782|Cormagens": {
+  "lat": 46.84086,
+  "lon": 7.13847,
+  "precision": "street"
+ },
+ "ch|Chemin du Brison 5|1897|Le Bouveret": {
+  "lat": 46.38775,
+  "lon": 6.86267,
+  "precision": "street"
+ },
+ "ch|Goesgerstrasse 11|4600|Olten": {
+  "lat": 47.35363,
+  "lon": 7.90682,
+  "precision": "street"
+ },
+ "ch|Grenzacherstrasse 536|4125|Riehen": {
+  "lat": 47.56221,
+  "lon": 7.63384,
+  "precision": "street"
+ },
+ "ch|Grosserstrasse 1|8841|Gross": {
+  "lat": 47.11754,
+  "lon": 8.77545,
+  "precision": "street"
+ },
+ "ch|Hauptstrasse 100|8246|Langwiesen": {
+  "lat": 47.68805,
+  "lon": 8.65508,
+  "precision": "street"
+ },
+ "ch|Hergenfeld 12|5034|Suhr": {
+  "lat": 47.37317,
+  "lon": 8.07953,
+  "precision": "town"
+ },
+ "ch|Hirsackerstrasse 27|8810|Horgen": {
+  "lat": 47.2582,
+  "lon": 8.60731,
+  "precision": "street"
+ },
+ "ch|Hornstrasse 1|8805|Richterswil": {
+  "lat": 47.21167,
+  "lon": 8.70417,
+  "precision": "street"
+ },
+ "ch|Kehrsitenstrasse 17|6362|Stansstad": {
+  "lat": 46.98089,
+  "lon": 8.34053,
+  "precision": "street"
+ },
+ "ch|Lachenweg 8|3604|Thun": {
+  "lat": 46.74116,
+  "lon": 7.62976,
+  "precision": "street"
+ },
+ "ch|Lidoplatz 20|8640|Rapperswil": {
+  "lat": 47.22251,
+  "lon": 8.82403,
+  "precision": "street"
+ },
+ "ch|Mythenquai 71|8002|Zürich": {
+  "lat": 47.36194,
+  "lon": 8.53531,
+  "precision": "street"
+ },
+ "ch|Mythenquai 75|8002|Zürich": {
+  "lat": 47.35708,
+  "lon": 8.53623,
+  "precision": "street"
+ },
+ "ch|Mythenquai 79|8002|Zürich": {
+  "lat": 47.35672,
+  "lon": 8.53627,
+  "precision": "street"
+ },
+ "ch|Mythenquai 81|8002|Zürich": {
+  "lat": 47.35646,
+  "lon": 8.53616,
+  "precision": "street"
+ },
+ "ch|Mythenquai 81|8022|Zürich": {
+  "lat": 47.35646,
+  "lon": 8.53616,
+  "precision": "street"
+ },
+ "ch|Mythenquai 83|8002|Zürich": {
+  "lat": 47.35632,
+  "lon": 8.53618,
+  "precision": "street"
+ },
+ "ch|Mythenquai 85|8002|Zürich": {
+  "lat": 47.35621,
+  "lon": 8.53621,
+  "precision": "street"
+ },
+ "ch|Mythenquai 87|8002|Zürich": {
+  "lat": 47.35582,
+  "lon": 8.53614,
+  "precision": "street"
+ },
+ "ch|Neuenburgerstrasse 162c|2505|Biel/Bienne": {
+  "lat": 47.14021,
+  "lon": 7.2439,
+  "precision": "town"
+ },
+ "ch|Olympiaweg|6204|Sempach": {
+  "lat": 47.13671,
+  "lon": 8.1885,
+  "precision": "street"
+ },
+ "ch|Place des Perchettes 4|2012|Milvignes": {
+  "lat": 46.97261,
+  "lon": 6.87721,
+  "precision": "street"
+ },
+ "ch|Promenade du Petit-Bois 29B|1110|Morges": {
+  "lat": 46.50201,
+  "lon": 6.48681,
+  "precision": "street"
+ },
+ "ch|Promenadenstrasse 50|8280|Kreuzlingen": {
+  "lat": 47.64732,
+  "lon": 9.19829,
+  "precision": "street"
+ },
+ "ch|Quai Ernest-Ansermet 10|1800|Vevey": {
+  "lat": 46.46437,
+  "lon": 6.83425,
+  "precision": "street"
+ },
+ "ch|Quai de Nogent 6|1400|Yverdon": {
+  "lat": 46.7866,
+  "lon": 6.64035,
+  "precision": "street"
+ },
+ "ch|Riva Paradiso 9|6902|Paradiso": {
+  "lat": 45.98874,
+  "lon": 8.95462,
+  "precision": "street"
+ },
+ "ch|Rotseestrasse 18|6006|Luzern": {
+  "lat": 47.06729,
+  "lon": 8.3122,
+  "precision": "street"
+ },
+ "ch|Route de Falaises 114|2000|Neuchâtel": {
+  "lat": 46.98958,
+  "lon": 6.92926,
+  "precision": "town"
+ },
+ "ch|Route de Neuchâtel 156|2502|Biel/Bienne": {
+  "lat": 47.13427,
+  "lon": 7.23022,
+  "precision": "street"
+ },
+ "ch|Route des Neigles 39|1700|Fribourg": {
+  "lat": 46.81159,
+  "lon": 7.16171,
+  "precision": "street"
+ },
+ "ch|Römerstrasse 29|4500|Solothurn": {
+  "lat": 47.20105,
+  "lon": 7.53076,
+  "precision": "street"
+ },
+ "ch|Scherzliweg 28|3600|Thun": {
+  "lat": 46.75828,
+  "lon": 7.62809,
+  "precision": "town"
+ },
+ "ch|Seeburgstrasse 18|6403|Küssnacht a.R.": null,
+ "ch|Seehofstrasse 16|6330|Cham": {
+  "lat": 47.18014,
+  "lon": 8.46218,
+  "precision": "street"
+ },
+ "ch|Seeplatz|6315|Oberägeri": {
+  "lat": 47.13436,
+  "lon": 8.60871,
+  "precision": "street"
+ },
+ "ch|Seestrasse 174|8266|Steckborn": {
+  "lat": 47.66193,
+  "lon": 8.97297,
+  "precision": "street"
+ },
+ "ch|Seestrasse 178|8800|Thalwil": {
+  "lat": 47.30095,
+  "lon": 8.5628,
+  "precision": "street"
+ },
+ "ch|Seestrasse 19|5432|Neuenhof": {
+  "lat": 47.45653,
+  "lon": 8.3253,
+  "precision": "street"
+ },
+ "ch|Seestrasse 2|8712|Stäfa": {
+  "lat": 47.24123,
+  "lon": 8.71315,
+  "precision": "street"
+ },
+ "ch|Seestrasse 497|8038|Zürich": {
+  "lat": 47.33781,
+  "lon": 8.53968,
+  "precision": "street"
+ },
+ "ch|Seestrasse 559|8034|Zürich": {
+  "lat": 47.33582,
+  "lon": 8.54118,
+  "precision": "street"
+ },
+ "ch|Seestrasse|9403|Goldach": {
+  "lat": 47.48144,
+  "lon": 9.48058,
+  "precision": "street"
+ },
+ "ch|Sendlistrasse 44|3800|Interlaken": {
+  "lat": 46.69312,
+  "lon": 7.88482,
+  "precision": "street"
+ },
+ "ch|Strandbadweg 12|8610|Uster": {
+  "lat": 47.34519,
+  "lon": 8.69752,
+  "precision": "street"
+ },
+ "ch|Theodor-Brunner-Weg 4|8700|Küsnacht": {
+  "lat": 47.31533,
+  "lon": 8.57922,
+  "precision": "street"
+ },
+ "ch|Via Foce|6900|Lugano-Cassarate": {
+  "lat": 46.00432,
+  "lon": 8.9614,
+  "precision": "street"
+ },
+ "ch|Via S.Michele 62|6987|Caslano": {
+  "lat": 45.96925,
+  "lon": 8.87372,
+  "precision": "street"
+ },
+ "ch|Via al Lido|6600|Locarno": {
+  "lat": 46.14968,
+  "lon": 8.77906,
+  "precision": "street"
+ },
+ "ch|Wassergasse 2|9320|Arbon": {
+  "lat": 47.5184,
+  "lon": 9.43738,
+  "precision": "street"
+ },
+ "ch|Wohlenstrasse 66|3032|Bern": {
+  "lat": 46.9657,
+  "lon": 7.38504,
+  "precision": "street"
+ },
+ "ch|Wydenstrasse|8703|Erlenbach": {
+  "lat": 47.30627,
+  "lon": 8.58897,
+  "precision": "street"
+ },
+ "ch||1000|Lausanne": {
+  "lat": 46.52183,
+  "lon": 6.6327,
+  "precision": "town"
+ },
+ "ch||1223|Cologny-Genève": null,
+ "ch||1260|Nyon": {
+  "lat": 46.38206,
+  "lon": 6.24028,
+  "precision": "town"
+ },
+ "ch||1344|L'Abbaye": {
+  "lat": 46.64927,
+  "lon": 6.31862,
+  "precision": "town"
+ },
+ "ch||1814|La-Tour-de-Peilz": {
+  "lat": 46.45375,
+  "lon": 6.85691,
+  "precision": "town"
+ },
+ "ch||1815|Clarens": {
+  "lat": 46.44111,
+  "lon": 6.89306,
+  "precision": "town"
+ },
+ "ch||3286|Muntelier": {
+  "lat": 46.93863,
+  "lon": 7.13059,
+  "precision": "town"
+ },
+ "ch||4127|Birsfelden": {
+  "lat": 47.55422,
+  "lon": 7.63047,
+  "precision": "town"
+ },
+ "ch||5616|Meisterschwanden": {
+  "lat": 47.29498,
+  "lon": 8.22772,
+  "precision": "town"
+ },
+ "ch||6060|Sarnen": {
+  "lat": 46.89567,
+  "lon": 8.24615,
+  "precision": "town"
+ },
+ "ch||6210|Sursee": {
+  "lat": 47.17253,
+  "lon": 8.10678,
+  "precision": "town"
+ },
+ "ch||6300|Zug": {
+  "lat": 47.16799,
+  "lon": 8.51737,
+  "precision": "town"
+ },
+ "ch||6454|Flüelen": {
+  "lat": 46.90272,
+  "lon": 8.62535,
+  "precision": "town"
+ },
+ "ch||6976|Lugano-Castagnola": null,
+ "ch||8606|Greifensee": {
+  "lat": 47.36625,
+  "lon": 8.67867,
+  "precision": "town"
+ },
+ "ch||8820|Wädenswil": {
+  "lat": 47.2279,
+  "lon": 8.67014,
+  "precision": "town"
+ },
  "|06385|Aken": {
   "lat": 51.85,
   "lon": 12.05,
