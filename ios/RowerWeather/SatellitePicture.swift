@@ -114,8 +114,11 @@ final class SatellitePictureStore {
 
 /// What can be drawn over the picture.
 enum SatelliteLayer: String, CaseIterable, Identifiable {
-    case shore, clubs, routes, wind, ice
+    case shore, clubs, routes, wind, waves, light, ice
     var id: String { rawValue }
+
+    /// Waves and rowing light both colour the water, so only one is on at a time.
+    var colorsWater: Bool { self == .waves || self == .light }
 
     var title: String {
         switch self {
@@ -123,6 +126,8 @@ enum SatelliteLayer: String, CaseIterable, Identifiable {
         case .clubs: tr("Clubs")
         case .routes: tr("Routes")
         case .wind: tr("Wind")
+        case .waves: tr("Waves")
+        case .light: tr("Rowing light")
         case .ice: tr("Ice map")
         }
     }
@@ -133,6 +138,8 @@ enum SatelliteLayer: String, CaseIterable, Identifiable {
         case .clubs: "mappin"
         case .routes: "point.topleft.down.to.point.bottomright.curvepath"
         case .wind: "wind"
+        case .waves: "water.waves"
+        case .light: "light.beacon.max"
         case .ice: "snowflake"
         }
     }
@@ -155,13 +162,19 @@ final class SatelliteLayers {
     }
 
     func toggle(_ layer: SatelliteLayer) {
-        if on.contains(layer) { on.remove(layer) } else { on.insert(layer) }
+        if on.contains(layer) {
+            on.remove(layer)
+        } else {
+            if layer.colorsWater { on = on.filter { !$0.colorsWater } }
+            on.insert(layer)
+        }
     }
 }
 
 /// "Satellite picture": the lake from space. Shows the latest picture; when it
-/// is cloudy, a switch offers the clearest one. Shore, clubs, saved routes, wind
-/// and (in winter) the ice map can be drawn over it. Tap for full screen.
+/// is cloudy, a switch offers the clearest one. Shore, clubs, saved routes, wind,
+/// waves or the rowing light, and (in winter) the ice map can be drawn over it.
+/// Tap for full screen.
 /// Hidden when there is no picture.
 struct SatellitePictureCard: View {
     let lakeID: String
@@ -309,7 +322,7 @@ struct SatelliteLayerChips: View {
             case .shore: view != nil
             case .clubs: !(view?.clubs.isEmpty ?? true)
             case .routes: !RouteStore.shared.routes(on: lakeID).isEmpty
-            case .wind: !(view?.hours.isEmpty ?? true)
+            case .wind, .waves, .light: !(view?.hours.isEmpty ?? true)
             case .ice: picture.ice != nil
             }
         }
@@ -373,6 +386,24 @@ struct SatelliteOverlay: View {
                 CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * size.width, y: (box[3] - lat) / (box[3] - box[1]) * size.height)
             }
             let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))
+            if let fill = layers.first(where: \.colorsWater), let view, !view.hours.isEmpty,
+               let image = LakeRaster.image(view, hour: view.hours[view.hourIndex()], layer: fill == .waves ? .waves : .light) {
+                // The lake view's cells for the selected hour, clipped to the shore.
+                var shore = Path()
+                for ring in view.outline where ring.count > 1 {
+                    shore.addLines(ring.map { point($0[0], $0[1]) })
+                    shore.closeSubpath()
+                }
+                let g = view.grid
+                let corner = point(g.westEdge, g.north), far = point(g.east, g.southEdge)
+                var water = context
+                water.clip(to: shore, style: FillStyle(eoFill: true))
+                water.opacity = 0.55
+                water.draw(
+                    Image(decorative: image, scale: 1).interpolation(.high),
+                    in: CGRect(x: corner.x, y: corner.y, width: far.x - corner.x, height: far.y - corner.y)
+                )
+            }
             if layers.contains(.shore), let view {
                 var path = Path()
                 for ring in view.outline where ring.count > 1 {
