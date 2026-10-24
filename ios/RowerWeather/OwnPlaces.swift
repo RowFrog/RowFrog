@@ -71,6 +71,33 @@ struct OwnPlace: Codable, Identifiable, Hashable {
         ]
         return parts?.url
     }
+
+    /// The suggestion for the Row Frog service (cloudflare/suggestions), which
+    /// files it as a GitHub issue, so the user needs no GitHub account.
+    func suggestionRequest(api: APIClient, country: String?) throws -> URLRequest {
+        struct Body: Encodable {
+            let name: String, kind: String, lat: Double, lon: Double
+            let water: String?, website: String?, country: String?
+        }
+        var request = URLRequest(url: api.url("suggestions"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.httpBody = try JSONEncoder().encode(Body(
+            name: name, kind: kind.rawValue, lat: coordinate.lat, lon: coordinate.lon,
+            water: waterName, website: website?.absoluteString, country: country
+        ))
+        return request
+    }
+
+    /// Sends the suggestion; if the service cannot take it, the prefilled
+    /// GitHub page opens instead, as before.
+    func suggest(api: APIClient, country: String?, open: @escaping (URL) -> Void) async {
+        do {
+            let (_, response) = try await api.session.data(for: suggestionRequest(api: api, country: country))
+            if let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) { return }
+        } catch {}
+        if let url = suggestionURL { await MainActor.run { open(url) } }
+    }
 }
 
 /// The forecast for an own place, worked out on the iPhone: the published

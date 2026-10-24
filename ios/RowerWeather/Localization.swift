@@ -487,7 +487,7 @@ enum German {
         "%@ clubs": "%@ Vereine",
         "Add a place": "Ort hinzufügen",
         "Add a place yourself": "Selbst einen Ort hinzufügen",
-        "After saving, a prefilled suggestion opens on GitHub; it is only sent when you send it there. We check it and add it to the list for everyone.": "Nach dem Sichern öffnet sich ein vorausgefüllter Vorschlag auf GitHub; er wird erst gesendet, wenn du ihn dort abschickst. Wir prüfen ihn und nehmen ihn in die Liste für alle auf.",
+        "When you save, the name, kind, position, water and website are sent to us. Nothing about you is sent. We check the place and add it to the list for everyone.": "Beim Sichern werden Name, Art, Position, Gewässer und Website an uns gesendet. Nichts über dich wird gesendet. Wir prüfen den Ort und nehmen ihn in die Liste für alle auf.",
         "All countries": "Alle Länder",
         "Boathouse": "Bootshaus",
         "Browse clubs by country": "Vereine nach Land durchsuchen",

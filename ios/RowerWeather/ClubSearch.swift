@@ -213,7 +213,7 @@ struct AddPlaceView: View {
                     Toggle(tr("Suggest it for everyone's list"), isOn: $share)
                 } footer: {
                     Text(share
-                        ? tr("After saving, a prefilled suggestion opens on GitHub; it is only sent when you send it there. We check it and add it to the list for everyone.")
+                        ? tr("When you save, the name, kind, position, water and website are sent to us. Nothing about you is sent. We check the place and add it to the list for everyone.")
                         : tr("The place stays on this iPhone and nobody else sees it."))
                 }
                 Section {
@@ -244,7 +244,11 @@ struct AddPlaceView: View {
             coordinate: center, waterName: water?.name, shared: share
         )
         locations.addOwnPlace(place)
-        if share, let url = place.suggestionURL { openURL(url) }
+        if share {
+            let country = water?.country
+            let open = openURL
+            Task { await place.suggest(api: .fromBundle(), country: country) { open($0) } }
+        }
         added(place)
         dismiss()
     }

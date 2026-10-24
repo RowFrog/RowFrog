@@ -95,6 +95,21 @@ final class CountriesAndOwnPlacesTests: XCTestCase {
         XCTAssertTrue(items.first { $0.name == "body" }?.value?.contains("47.12346, 8.50000") == true)
     }
 
+    func testSuggestionGoesToTheRowFrogService() throws {
+        let place = OwnPlace(name: "Bootshaus Nord", kind: .boathouse, website: nil,
+                             coordinate: Coordinate(lat: 47.5, lon: 9.7), waterName: "Bodensee", shared: true)
+        let api = APIClient(baseURL: URL(string: "https://api.rowfrog.com/v1")!)
+        let request = try place.suggestionRequest(api: api, country: "at")
+        XCTAssertEqual(request.url?.absoluteString, "https://api.rowfrog.com/v1/suggestions")
+        XCTAssertEqual(request.httpMethod, "POST")
+        let body = try XCTUnwrap(JSONSerialization.jsonObject(with: XCTUnwrap(request.httpBody)) as? [String: Any])
+        XCTAssertEqual(body["name"] as? String, "Bootshaus Nord")
+        XCTAssertEqual(body["kind"] as? String, "boathouse")
+        XCTAssertEqual(body["country"] as? String, "at")
+        XCTAssertEqual(body["water"] as? String, "Bodensee")
+        XCTAssertNil(body["id"])  // the place's id on the phone stays there
+    }
+
     func testPhoneForecastAppliesTheRowingLightRules() throws {
         let json = """
         {"hourly": {"time": ["2026-10-23T10:00", "2026-10-23T11:00", "2026-10-23T22:00"],
