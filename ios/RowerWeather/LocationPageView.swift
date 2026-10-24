@@ -15,8 +15,12 @@ struct LocationPageView: View {
     @State private var showLaunchPointTip = false
     @State private var showConditionsTip = false
     @State private var showLakeViewTip = false
+    @State private var showRainRadarTip = false
+    @State private var showSatelliteTip = false
     private let conditionsTip = ConditionsExtrasTip()
     private let lakeViewTip = LakeViewTip()
+    private let rainRadarTip = RainRadarTip()
+    private let satelliteTip = SatellitePictureTip()
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
 
@@ -32,7 +36,13 @@ struct LocationPageView: View {
                         header
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, water: forecast.waterTemperature)
-                            RainRadarCard(point: club.launchPoint)
+                            VStack(spacing: 16) {
+                                if tourSeen && showRainRadarTip {
+                                    TipView(rainRadarTip)
+                                }
+                                RainRadarCard(point: club.launchPoint)
+                            }
+                            .id("radar")
                             if let warnings = forecast.warnings {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                             }
@@ -85,6 +95,8 @@ struct LocationPageView: View {
                 .refreshable { await forecasts.load(club.id, force: true) }
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
+                .tipVisibility(rainRadarTip, $showRainRadarTip)
+                .tipVisibility(satelliteTip, $showSatelliteTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
@@ -92,7 +104,7 @@ struct LocationPageView: View {
                     // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`, `lakeview`) scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast, so wait for it.
-                        try? await Task.sleep(for: .milliseconds(target == "lakeview" ? 2500 : 300))
+                        try? await Task.sleep(for: .milliseconds(["lakeview", "satellite", "radar"].contains(target) ? 2500 : 300))
                         proxy.scrollTo(target, anchor: .top)
                     }
                 }
@@ -124,7 +136,13 @@ struct LocationPageView: View {
                 LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
             }
             .id("lakeview")
-            SatellitePictureCard(lakeID: forecast.lakeId)
+            VStack(spacing: 16) {
+                if tourSeen && showSatelliteTip {
+                    TipView(satelliteTip)
+                }
+                SatellitePictureCard(lakeID: forecast.lakeId)
+            }
+            .id("satellite")
         }
     }
 

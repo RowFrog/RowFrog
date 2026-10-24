@@ -112,11 +112,13 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "text.bubble", text: tr("The line starting with \"Why\" names the conditions that set the light.")),
             TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up. The daylight card shows the time left until sunset.")),
             TourPoint(symbol: "clock", text: tr("The next 48 hours each have their own light, so you can plan your outing.")),
+            TourPoint(symbol: "umbrella", text: tr("The rain radar under the light shows rain at the launch point for the next two hours.")),
         ]
         case .conditions: [
             TourPoint(symbol: "thermometer.variable.and.figure", text: tr("Feels like: colder with wind chill, warmer with humidity and heat.")),
             TourPoint(symbol: "humidity", text: tr("Humidity, with the dew point underneath.")),
             TourPoint(symbol: "gauge.with.dots.needle.33percent", text: tr("Air pressure on a gauge, with its trend for the hours ahead.")),
+            TourPoint(symbol: "snowflake", text: tr("In winter, the Ice value estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.")),
             TourPoint(symbol: "info.circle", text: tr("Open the Legend at the bottom of each page to see what every icon and colour means.")),
         ]
         case .warnings: [
@@ -129,6 +131,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "clock", text: tr("On the map, move through the hours in the strip at the bottom and tap the water for one spot.")),
             TourPoint(symbol: "point.topleft.down.to.point.bottomright.curvepath", text: tr("Plan a route: tap your turning points to see the light along the way and the best time to start.")),
             TourPoint(symbol: "bookmark", text: tr("Save the routes you row often in the Routes menu.")),
+            TourPoint(symbol: "globe.europe.africa", text: tr("Below it, the latest satellite picture of the lake, with a switch to the clearest one.")),
         ]
         case .locations: [
             TourPoint(symbol: "hand.draw", text: tr("Swipe left and right to move between your clubs. The house marks your home base.")),
@@ -496,6 +499,18 @@ struct LakeViewTip: Tip {
     var title: Text { Text(tr("Look across the lake")) }
     var message: Text? { Text(tr("Tap the map to see the rowing light, waves and wind for the whole lake, hour by hour. Tap the water for the details of one spot.")) }
     var image: Image? { Image(systemName: "map") }
+}
+
+struct RainRadarTip: Tip {
+    var title: Text { Text(tr("Rain on the way?")) }
+    var message: Text? { Text(tr("The radar of the Deutscher Wetterdienst shows rain at the launch point for the next two hours, in 15-minute steps. It updates every few minutes.")) }
+    var image: Image? { Image(systemName: "umbrella") }
+}
+
+struct SatellitePictureTip: Tip {
+    var title: Text { Text(tr("Satellite picture")) }
+    var message: Text? { Text(tr("The lake from space, as Sentinel-2 saw it last. New pictures come every 2 to 5 days, when the sky allows. Switch to the clearest picture, and draw the shore, clubs, your routes or the wind over it.")) }
+    var image: Image? { Image(systemName: "globe.europe.africa") }
 }
 
 struct RoutePlanningTip: Tip {
