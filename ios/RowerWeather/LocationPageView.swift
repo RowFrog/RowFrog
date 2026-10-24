@@ -131,15 +131,15 @@ struct LocationPageView: View {
             ConditionsCard(forecast: forecast, hour: now)
         }
         .id("conditions")
+        // The satellite card further down is empty until its picture has loaded, and an
+        // empty view never runs its own .task, so this always-shown card loads it.
+        .task(id: forecast.lakeId) { await SatellitePictureStore.shared.load(forecast.lakeId) }
         if lake?.hasOutline != false {
             VStack(spacing: 16) {
                 if tourSeen && showLakeViewTip {
                     TipView(lakeViewTip)
                 }
                 LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
-                    // The satellite card is empty until its picture has loaded, and an empty
-                    // view never runs its own .task, so the always-shown lake view loads it.
-                    .task(id: forecast.lakeId) { await SatellitePictureStore.shared.load(forecast.lakeId) }
             }
             .id("lakeview")
             SatellitePictureCard(lakeID: forecast.lakeId)
