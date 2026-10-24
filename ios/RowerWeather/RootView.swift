@@ -12,6 +12,7 @@ struct RootView: View {
     @State private var initialSearch = ""
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingTour = !Tutorial.seen
+    @State private var showingSafety = SafetyNotice.needsAcceptance
 
     init(api: APIClient) {
         self.api = api
@@ -65,9 +66,17 @@ struct RootView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
+        .accessibilityHidden(showingSafety)
         .overlay {
-            // The first-start tour, over everything until it is finished or skipped.
-            if showingTour {
+            // The safety notice comes first, before the tour and before any
+            // question; it stays until it is accepted.
+            if showingSafety {
+                SafetyNoticeView {
+                    withAnimation { showingSafety = false }
+                }
+                .transition(.opacity)
+            } else if showingTour {
+                // The first-start tour, over everything until it is finished or skipped.
                 TutorialView(locations: locations, reload: loadCatalog) {
                     Tutorial.markSeen()
                     selection = locations.homeID ?? ""
