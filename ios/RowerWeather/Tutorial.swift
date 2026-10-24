@@ -312,7 +312,7 @@ private struct ClubChoicePage: View {
                         ContentUnavailableView {
                             Label(tr("No connection"), systemImage: "wifi.slash")
                         } description: {
-                            Text(error)
+                            Text(tr(error))
                         } actions: {
                             Button(tr("Try again")) { Task { await reload() } }
                         }

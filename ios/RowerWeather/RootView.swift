@@ -26,7 +26,7 @@ struct RootView: View {
                     ContentUnavailableView {
                         Label(tr("No connection"), systemImage: "wifi.slash")
                     } description: {
-                        Text(error)
+                        Text(tr(error))
                     } actions: {
                         Button(tr("Try again")) { Task { await loadCatalog() } }
                     }
@@ -123,7 +123,8 @@ struct RootView: View {
             applyLaunchArguments()
             WidgetBridge.publish(locations)
         } catch {
-            locations.catalogError = tr("Could not load the rowing locations.")
+            // Kept in English and translated where it shows, so it follows a language change.
+            locations.catalogError = "Could not load the rowing locations."
         }
     }
 
