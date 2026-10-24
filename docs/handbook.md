@@ -12,6 +12,8 @@ secret or a manual step adds a line here.
 | Developer options | Settings > tap **Version** seven times | Shows the Developer section. Switching it off hides it again and puts every club back on the automatic weather model. Factory reset also turns it off. |
 | Weather model picker (test) | Developer options on, then on a confirmed club (MRC 1880, MRSV Bayern, Tutzinger RV) tap the grey **Forecast** line at the bottom of the page | Pick Automatic (recommended), ICON-CH1, AROME or ECMWF IFS (not advised). The line then says "(your choice)". The widget always uses the automatic model. |
 | Tour again | Settings > Help > Show the tour again | Replays the first-start tour; one-time tips come back on the next start. |
+| Safety notice | First start, before the tour; later Settings > Legal > Safety notice | Has to be read to the end and agreed to. The device stores the agreed version and date (`RWSafetyAcceptedVersion`, `RWSafetyAcceptedAt`); factory reset keeps them. Raising `SafetyNotice.version` in `SafetyNotice.swift` makes everyone agree again. |
+| Legal notice (Impressum) | Settings > Legal | The placeholders in `LegalInfo` in `Legal.swift` must be filled in before release. |
 
 ### Testing the model picker
 
@@ -39,6 +41,9 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWDeveloperOptions YES` and `-RWPickedModels '<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'`
 - `-RWShowSettings YES -RWScrollPage n` open the settings at section n
 - `-RWLanguage de`, `-RWAppearance dark`, `-RWLandscape YES`
+- `-RWSafetyAccepted YES` skip the first-start safety notice (the screenshot workflow passes it to every shot except 77 and 78)
+- `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
+- `-RWSettingsPage safety|impressum|privacy` open those Settings pages
 
 ## What runs on its own (GitHub Actions)
 

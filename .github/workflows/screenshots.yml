@@ -97,11 +97,14 @@ jobs:
             # tour and the one-time tips, unless GUIDE is set for the shot.
             local guide=(-RWDemoClubs YES -RWTutorialSeen YES -RWNoTips YES)
             [ -n "${GUIDE:-}" ] && guide=()
+            # The safety notice is accepted for every shot except its own (SAFETY set).
+            local safety=(-RWSafetyAccepted YES)
+            [ -n "${SAFETY:-}" ] && safety=()
             xcrun simctl ui "$UDID" appearance "$appearance"
             # A hung simulator once blocked here until the 6-hour job limit; give up after a minute.
             perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
-            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${guide[@]}" "$@"
+            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${safety[@]}" "${guide[@]}" "$@"
             # The first launch after install, and the backend's first answers, are slower.
             if [ -z "${WARM:-}" ]; then sleep 30; WARM=1; else sleep 12; fi
             xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
@@ -218,6 +221,13 @@ jobs:
           GUIDE=1 shoot 31-tip-backgrounds light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage backgrounds
           GUIDE=1 shoot 32-tip-lake-view light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview
           GUIDE=1 shoot 33-tip-route light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWOpenLakeView YES
+          # The safety notice before first use, again in the settings, and an out-of-date forecast.
+          SAFETY=1 GUIDE=1 shoot 77-safety-notice light -RWNoTips YES
+          SAFETY=1 GUIDE=1 shoot 78-safety-notice-german-dark dark -RWNoTips YES -RWLanguage de
+          shoot 79-safety-notice-settings light -RWShowSettings YES -RWSettingsPage safety
+          shoot 97-legal-notice light -RWShowSettings YES -RWSettingsPage impressum
+          shoot 98-privacy-german-dark dark -RWShowSettings YES -RWSettingsPage privacy -RWLanguage de
+          shoot 80-forecast-out-of-date light -RWOpenClub mrc-1880 -RWStaleForecast YES
           # Lake view (sample wind from the south)
           shoot 50-lake-view-tile light -RWOpenClub mrc-1880 -RWScrollTo lakeview
           shoot 51-lake-view-map light -RWOpenClub mrc-1880 -RWOpenLakeView YES
@@ -247,7 +257,7 @@ jobs:
           shoot 84-model-picker light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES
           shoot 85-model-picked light -RWOpenClub mrc-1880 -RWScrollTo source -RWDeveloperOptions YES -RWPickedModels "$ifs"
           shoot 86-model-picker-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES -RWPickedModels "$ifs" -RWLanguage de
-          shoot 87-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 8
+          shoot 87-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 9
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES
           shoot_pages 33-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de

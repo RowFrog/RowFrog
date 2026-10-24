@@ -354,9 +354,16 @@ struct ClubForecast: Codable, Hashable {
     /// Yesterday and the next 7 days, for the charts behind the conditions tiles.
     var outlook: [ForecastHour]? = nil
 
-    /// The first forecast hour as it stands at `date`. That hour began up to
-    /// an hour ago, so "sunrise or sunset within the hour" is replaced by
-    /// whether the sun is actually up now.
+    /// The backend publishes every half hour; after this the forecast counts as out of date.
+    static let staleAfter: TimeInterval = 3 * 3600
+
+    /// True when the forecast is older than `staleAfter` at `date`: the app
+    /// then warns and shows grey instead of green. `-RWStaleForecast YES`
+    /// makes every forecast out of date, for screenshots.
+    func isStale(at date: Date = .now) -> Bool {
+        UserDefaults.standard.bool(forKey: "RWStaleForecast") || date.timeIntervalSince(generatedAt) > Self.staleAfter
+    }
+
     /// How much the pressure changes from this hour to `hours` later, in hPa.
     func pressureChange(after hour: ForecastHour, hours: Int = 3) -> Double? {
         guard let i = self.hours.firstIndex(where: { $0.time == hour.time }), i + hours < self.hours.count,
@@ -364,8 +371,12 @@ struct ClubForecast: Codable, Hashable {
         return later - now
     }
 
+    /// The forecast hour as it stands at `date`. That hour began up to
+    /// an hour ago, so "sunrise or sunset within the hour" is replaced by
+    /// whether the sun is actually up now.
     func current(at date: Date = .now) -> ForecastHour? {
-        guard let first = hours.first else { return nil }
+        // An older forecast still starts hours ago: take the hour `date` falls in.
+        guard let first = hours.last(where: { $0.time <= date }) ?? hours.first else { return nil }
         guard let sun = sunState(at: date), first.reasons.contains(where: { $0.condition == "twilight" }) else { return first }
         var reasons = first.reasons.filter { $0.condition != "twilight" }
         var sunUp = true

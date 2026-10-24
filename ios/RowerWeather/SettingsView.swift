@@ -8,12 +8,18 @@ enum SettingsRoute: Hashable {
     case limits
     case boat(String)
     case picker(BackgroundTarget)
+    case safety
+    case impressum
+    case privacy
 
-    /// Screenshot hook: `-RWSettingsPage backgrounds`, `picker-all`,
+    /// Screenshot hook: `-RWSettingsPage backgrounds`, `safety`, `impressum`, `privacy`, `picker-all`,
     /// `picker-page:list` or `picker-club:<id>` opens that page.
     static func fromLaunchArguments() -> [SettingsRoute] {
         guard let page = UserDefaults.standard.string(forKey: "RWSettingsPage") else { return [] }
         if page == "backgrounds" { return [.backgrounds] }
+        if page == "safety" { return [.safety] }
+        if page == "impressum" { return [.impressum] }
+        if page == "privacy" { return [.privacy] }
         if page == "limits" { return [.limits] }
         if page.hasPrefix("boat:") { return [.limits, .boat(String(page.dropFirst("boat:".count)))] }
         if page == "picker-all" { return [.backgrounds, .picker(.all)] }
@@ -168,6 +174,22 @@ struct SettingsView: View {
                     .id("help")
 
                     Section {
+                        NavigationLink(value: SettingsRoute.safety) {
+                            Label(tr("Safety notice"), systemImage: "exclamationmark.shield")
+                        }
+                        NavigationLink(value: SettingsRoute.privacy) {
+                            Label(tr("Privacy"), systemImage: "hand.raised")
+                        }
+                        NavigationLink(value: SettingsRoute.impressum) {
+                            Label(tr("Legal notice"), systemImage: "building.columns")
+                        }
+                    } header: {
+                        SectionTitle(tr("Legal"), symbol: "doc.text")
+                    }
+                    .surfaceRows()
+                    .id("legal")
+
+                    Section {
                         if showAppIconTip {
                             TipView(appIconTip)
                         }
@@ -242,6 +264,12 @@ struct SettingsView: View {
                         BoatLimitsView(boatID: id)
                     case let .picker(target):
                         BackgroundPickerView(target: target, locations: locations)
+                    case .safety:
+                        SafetyNoticeSettingsView()
+                    case .impressum:
+                        ImpressumView()
+                    case .privacy:
+                        PrivacySummaryView()
                     }
                 }
                 .confirmationDialog(tr("Reset all settings?"), isPresented: $confirmingReset, titleVisibility: .visible) {
@@ -256,7 +284,7 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
-                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "appicon", "reset", "developer"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
                 .fullScreenCover(isPresented: $showingTour) {
