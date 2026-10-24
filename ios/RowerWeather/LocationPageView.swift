@@ -129,6 +129,22 @@ struct LocationPageView: View {
         }
     }
 
+    @ViewBuilder
+    private func sourceLine(_ forecast: ClubForecast) -> some View {
+        if let source = forecast.forecastSource {
+            ForecastSourceLine(
+                source: source,
+                choices: forecast.modelChoices ?? [],
+                selected: AppSettings.shared.pickedModel(for: club.id),
+                pickedModelMissing: forecasts.pickedModelMissing.contains(club.id)
+            ) { model in
+                AppSettings.shared.pickedModels[club.id] = model
+                await forecasts.load(club.id, force: true)
+            }
+            .id("source")
+        }
+    }
+
     /// From this width (in points) the page shows two columns of cards.
     static let twoColumnWidth: CGFloat = 600
     /// Keeps lines readable on very wide screens.

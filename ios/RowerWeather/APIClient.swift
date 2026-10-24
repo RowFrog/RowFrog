@@ -44,8 +44,10 @@ struct APIClient {
         try await get("countries/\(country)/lakes")
     }
 
-    func forecast(clubID: String) async throws -> ClubForecast {
-        try await get("clubs/\(clubID)/forecast")
+    /// `model` is a model the user picked (developer options); nil = the automatic choice.
+    func forecast(clubID: String, model: String? = nil) async throws -> ClubForecast {
+        if let model { return try await get("clubs/\(clubID)/models/\(model)/forecast") }
+        return try await get("clubs/\(clubID)/forecast")
     }
 
 #if !WIDGET_EXTENSION
