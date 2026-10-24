@@ -626,7 +626,17 @@ struct LakeMapView: UIViewRepresentable {
         map.delegate = context.coordinator
         map.pointOfInterestFilter = .excludingAll
         map.preferredConfiguration = MKStandardMapConfiguration(emphasisStyle: .muted)
-        map.showsCompass = true
+        // MapKit's own compass sits under the buttons at the top; this one sits
+        // on the right below the layer picker and the route bar.
+        map.showsCompass = false
+        let compass = MKCompassButton(mapView: map)
+        compass.compassVisibility = .adaptive
+        compass.translatesAutoresizingMaskIntoConstraints = false
+        map.addSubview(compass)
+        NSLayoutConstraint.activate([
+            compass.trailingAnchor.constraint(equalTo: map.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            compass.topAnchor.constraint(equalTo: map.safeAreaLayoutGuide.topAnchor, constant: 185),
+        ])
         let overlay = LakeOverlay(view: view)
         context.coordinator.overlay = overlay
         context.coordinator.grid = view.grid
