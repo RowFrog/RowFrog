@@ -308,11 +308,11 @@ private struct ClubChoicePage: View {
             .padding(.horizontal)
             List {
                 if locations.catalog.isEmpty {
-                    if let error = locations.catalogError {
+                    if locations.catalogFailed {
                         ContentUnavailableView {
                             Label(tr("No connection"), systemImage: "wifi.slash")
                         } description: {
-                            Text(tr(error))
+                            Text(tr("Could not load the rowing locations."))
                         } actions: {
                             Button(tr("Try again")) { Task { await reload() } }
                         }

@@ -22,11 +22,11 @@ struct RootView: View {
         let saved = locations.saved
         Group {
             if saved.isEmpty {
-                if let error = locations.catalogError {
+                if locations.catalogFailed {
                     ContentUnavailableView {
                         Label(tr("No connection"), systemImage: "wifi.slash")
                     } description: {
-                        Text(tr(error))
+                        Text(tr("Could not load the rowing locations."))
                     } actions: {
                         Button(tr("Try again")) { Task { await loadCatalog() } }
                     }
@@ -119,12 +119,11 @@ struct RootView: View {
     private func loadCatalog() async {
         do {
             locations.setCatalog(try await api.lakes())
-            locations.catalogError = nil
+            locations.catalogFailed = false
             applyLaunchArguments()
             WidgetBridge.publish(locations)
         } catch {
-            // Kept in English and translated where it shows, so it follows a language change.
-            locations.catalogError = "Could not load the rowing locations."
+            locations.catalogFailed = true
         }
     }
 

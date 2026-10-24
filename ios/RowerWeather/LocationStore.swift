@@ -11,7 +11,8 @@ final class LocationStore {
     /// Every club the backend can serve, used for the list and the search.
     private(set) var catalog: [Club] = []
     private(set) var lakesByClub: [String: Lake] = [:]
-    var catalogError: String?
+    /// Set when the catalog could not be loaded; the message is translated where it shows.
+    var catalogFailed = false
 
     private let defaults: UserDefaults
     private static let savedKey = "RWSavedClubs"
