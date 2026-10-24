@@ -219,6 +219,9 @@ jobs:
           GUIDE=1 shoot 31-tip-backgrounds light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage backgrounds
           GUIDE=1 shoot 32-tip-lake-view light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview
           GUIDE=1 shoot 33-tip-route light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWOpenLakeView YES
+          GUIDE=1 shoot 34-tip-rain-radar light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo radar
+          GUIDE=1 shoot 35-tip-satellite light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo satellite
+          GUIDE=1 shoot 36-tip-forecast-source light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo source
           # Lake view (sample wind from the south)
           shoot 50-lake-view-tile light -RWOpenClub mrc-1880 -RWScrollTo lakeview
           shoot 51-lake-view-map light -RWOpenClub mrc-1880 -RWOpenLakeView YES

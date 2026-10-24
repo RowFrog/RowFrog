@@ -15,8 +15,14 @@ struct LocationPageView: View {
     @State private var showLaunchPointTip = false
     @State private var showConditionsTip = false
     @State private var showLakeViewTip = false
+    @State private var showRainRadarTip = false
+    @State private var showSatelliteTip = false
+    @State private var showSourceTip = false
     private let conditionsTip = ConditionsExtrasTip()
     private let lakeViewTip = LakeViewTip()
+    private let rainRadarTip = RainRadarTip()
+    private let satelliteTip = SatellitePictureTip()
+    private let sourceTip = ForecastSourceTip()
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
 
@@ -32,7 +38,13 @@ struct LocationPageView: View {
                         header
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, water: forecast.waterTemperature)
-                            RainRadarCard(point: club.launchPoint)
+                            VStack(spacing: 16) {
+                                if tourSeen && showRainRadarTip {
+                                    TipView(rainRadarTip)
+                                }
+                                RainRadarCard(point: club.launchPoint)
+                            }
+                            .id("radar")
                             if let warnings = forecast.warnings {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
@@ -41,7 +53,7 @@ struct LocationPageView: View {
                                 HStack(alignment: .top, spacing: 16) {
                                     VStack(spacing: 16) {
                                         conditionCards(forecast, now: now)
-                                        if let source = forecast.forecastSource { ForecastSourceLine(source: source).id("source") }
+                                        sourceLine(forecast)
                                         LegendCard()
                                     }
                                     VStack(spacing: 16) {
@@ -51,7 +63,7 @@ struct LocationPageView: View {
                             } else {
                                 conditionCards(forecast, now: now)
                                 forecastCards(forecast)
-                                if let source = forecast.forecastSource { ForecastSourceLine(source: source).id("source") }
+                                sourceLine(forecast)
                                 LegendCard()
                             }
                             VStack(alignment: .leading, spacing: 4) {
@@ -88,15 +100,18 @@ struct LocationPageView: View {
                 .refreshable { await forecasts.load(club.id, force: true) }
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
+                .tipVisibility(rainRadarTip, $showRainRadarTip)
+                .tipVisibility(satelliteTip, $showSatelliteTip)
+                .tipVisibility(sourceTip, $showSourceTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
                     await forecasts.load(club.id)
-                    // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `conditions`, `launchpoint`, `lakeview`, `source`) scrolls to that card.
+                    // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `conditions`, `radar`, `launchpoint`, `lakeview`, `satellite`, `source`) scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast and pushes the cards below it down,
                         // so for cards below it scroll again once it has settled.
-                        let waits = ["lakeview", "source"].contains(target) ? [2500, 3000, 3000] : [300]
+                        let waits = ["lakeview", "satellite", "radar", "source"].contains(target) ? [2500, 3000, 3000] : [300]
                         for wait in waits {
                             try? await Task.sleep(for: .milliseconds(wait))
                             proxy.scrollTo(target, anchor: .top)
@@ -132,7 +147,26 @@ struct LocationPageView: View {
                 LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
             }
             .id("lakeview")
-            SatellitePictureCard(lakeID: forecast.lakeId)
+            VStack(spacing: 16) {
+                if tourSeen && showSatelliteTip {
+                    TipView(satelliteTip)
+                }
+                SatellitePictureCard(lakeID: forecast.lakeId)
+            }
+            .id("satellite")
+        }
+    }
+
+    @ViewBuilder
+    private func sourceLine(_ forecast: ClubForecast) -> some View {
+        if let source = forecast.forecastSource {
+            VStack(spacing: 16) {
+                if tourSeen && showSourceTip {
+                    TipView(sourceTip)
+                }
+                ForecastSourceLine(source: source)
+            }
+            .id("source")
         }
     }
 
