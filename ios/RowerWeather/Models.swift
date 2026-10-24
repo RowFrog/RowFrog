@@ -250,6 +250,27 @@ struct Warnings: Codable, Hashable {
     var checked: Bool { status == "ok" }
 }
 
+/// Which weather models a forecast comes from: the best local model for the
+/// first hours, then longer-range ones (backend weather_models.py).
+struct ForecastSource: Codable, Hashable {
+    struct Part: Codable, Hashable {
+        let model: String
+        let provider: String
+        let resolutionKm: Double
+        let fromHour: Int
+        let toHour: Int
+
+        /// "DWD" from "Deutscher Wetterdienst (DWD)".
+        var providerShort: String {
+            guard let open = provider.lastIndex(of: "("), let close = provider.lastIndex(of: ")"), open < close else { return provider }
+            return String(provider[provider.index(after: open)..<close])
+        }
+    }
+
+    let region: String
+    let parts: [Part]
+}
+
 struct ClubForecast: Codable, Hashable {
     let clubId: String
     let lakeId: String
@@ -260,6 +281,8 @@ struct ClubForecast: Codable, Hashable {
     /// Missing from older backends.
     var ice: IceEstimate? = nil
     let attribution: [String]
+    /// Missing from older backends.
+    var forecastSource: ForecastSource? = nil
     let daylight: [SunDay]?
     var hours: [ForecastHour]
     /// Yesterday and the next 7 days, for the charts behind the conditions tiles.

@@ -99,10 +99,12 @@ jobs:
             local guide=(-RWDemoClubs YES -RWTutorialSeen YES -RWNoTips YES)
             [ -n "${GUIDE:-}" ] && guide=()
             xcrun simctl ui "$UDID" appearance "$appearance"
-            xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
+            # A hung simulator once blocked here until the 6-hour job limit; give up after a minute.
+            perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
             SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${guide[@]}" "$@"
-            sleep 12
+            # The first launch after install, and the backend's first answers, are slower.
+            if [ -z "${WARM:-}" ]; then sleep 30; WARM=1; else sleep 12; fi
             xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
             # The simulator saves landscape shots sideways; turn them upright.
             # With landscape off the app stays upright, so the shot already is.
@@ -229,6 +231,10 @@ jobs:
           shoot 57-route-plan light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route"
           shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3
           shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de
+          # Where the forecast comes from: the line at the bottom of the page and its details.
+          shoot 64-forecast-source light -RWOpenClub mrc-1880 -RWScrollTo source
+          shoot 65-forecast-source-details light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES
+          shoot 66-forecast-source-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWLanguage de
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES
           shoot_pages 33-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de
