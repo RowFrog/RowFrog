@@ -200,6 +200,9 @@ jobs:
           shoot_n 19-list-picture-solid 2 light -RWShowList YES -RWBackground sample:sunny-day -RWTileStyle solid
           shoot 20-tutzing-own-picture light -RWOpenClub tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
           shoot_pages 21-home-dark-picture dark -RWBackground sample:night-lake
+          # Liquid Glass tiles (frosted glass when the runner's Xcode has no iOS 26 SDK).
+          shoot_pages 95-home-picture-glass light -RWBackground sample:cloud-shell -RWTileStyle glass
+          shoot_n 96-list-picture-glass 2 light -RWShowList YES -RWBackground sample:sunny-day -RWTileStyle glass
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
           shoot 24-hourly-12h-long-date light -RWScrollTo hourly -RWTimeFormat hours12 -RWDateFormat long
