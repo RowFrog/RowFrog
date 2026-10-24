@@ -72,7 +72,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .welcome: tr("Welcome to RowerWeather")
+        case .welcome: tr("Welcome to Row Frog")
         case .homeBase: tr("Choose your home base")
         case .moreClubs: tr("Add more clubs")
         case .rowingLight: tr("The rowing light")
@@ -139,7 +139,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("Touch and hold a club, then drag to reorder.")),
             TourPoint(symbol: "trash", text: tr("Swipe a club in the list to the left to remove it.")),
             TourPoint(symbol: "arrow.clockwise", text: tr("Pull a page or the list down to refresh.")),
-            TourPoint(symbol: "apps.iphone", text: tr("Add a RowerWeather widget to your home or lock screen to see the rowing light at a glance.")),
+            TourPoint(symbol: "apps.iphone", text: tr("Add a Row Frog widget to your home or lock screen to see the rowing light at a glance.")),
         ]
         case .wideScreen: [
             TourPoint(symbol: "sidebar.left", text: tr("The location list stays on the left, the club page on the right.")),
@@ -491,7 +491,7 @@ struct ConditionsExtrasTip: Tip {
 
 struct AppIconTip: Tip {
     var title: Text { Text(tr("Pick your app icon")) }
-    var message: Text? { Text(tr("Choose the icon RowerWeather shows on your home screen.")) }
+    var message: Text? { Text(tr("Choose the icon Row Frog shows on your home screen.")) }
     var image: Image? { Image(systemName: "app.badge") }
 }
 

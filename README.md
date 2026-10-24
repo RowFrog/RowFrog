@@ -1,4 +1,6 @@
-# RowerWeather
+# Row Frog
+
+Working title until 2026-10: RowerWeather (the repo, Xcode project and bundle IDs keep that name).
 
 Weather and conditions for rowers at different rowing locations, incl. weather and conditions forecast and web-cam footage if available.
 

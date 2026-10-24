@@ -68,6 +68,17 @@ enum German {
         "At night the sun becomes a moon and the row is dimmed.": "Nachts wird die Sonne zum Mond und die Zeile abgedunkelt.",
         "Legend": "Legende",
 
+        // Forecast source
+        "Forecast: %@": "Vorhersage: %@",
+        "%@ km grid": "%@-km-Raster",
+        "Shows which weather models the forecast comes from.": "Zeigt, von welchen Wettermodellen die Vorhersage stammt.",
+        "Hours %@ to %@ · %@": "Stunden %@ bis %@ · %@",
+        "Weather models are computer forecasts from national weather services. A finer grid shows more of the lake and the hills around it.": "Wettermodelle sind Computervorhersagen nationaler Wetterdienste. Ein feineres Raster zeigt mehr vom See und den Hügeln ringsum.",
+        "The app picks the weather model that does best for this region.": "Die App wählt das Wettermodell, das für diese Region am besten passt.",
+        "The choice is checked regularly against measured wind and temperature.": "Die Wahl wird regelmäßig mit gemessenem Wind und gemessener Temperatur überprüft.",
+        "Data via Open-Meteo.": "Daten über Open-Meteo.",
+        "Where the forecast comes from": "Woher die Vorhersage kommt",
+
         // Weather
         "Clear": "Klar",
         "Mostly clear": "Überwiegend klar",
@@ -334,7 +345,7 @@ enum German {
         "Night on the lake": "Nacht auf dem See",
         // Widget
         "Now": "Jetzt",
-        "Open RowerWeather to load the forecast.": "Öffne RowerWeather, um die Vorhersage zu laden.",
+        "Open Row Frog to load the forecast.": "Öffne Row Frog, um die Vorhersage zu laden.",
         "No green hours in the forecast.": "Keine grünen Stunden in der Vorhersage.",
         // Lake view
         "Lake view": "Seeansicht",
@@ -407,7 +418,7 @@ enum German {
         "waves from the side": "Wellen von der Seite",
 
         // Tour and tips
-        "Welcome to RowerWeather": "Willkommen bei RowerWeather",
+        "Welcome to Row Frog": "Willkommen bei Row Frog",
         "The rowing light": "Die Ruderampel",
         "Conditions at a glance": "Bedingungen auf einen Blick",
         "Your locations": "Deine Orte",
@@ -424,7 +435,7 @@ enum German {
         "Add the other places you row, or skip this and add clubs later in the list.": "Füge die anderen Orte hinzu, an denen du ruderst, oder überspringe das und füge Vereine später in der Liste hinzu.",
         "Suggestions": "Vorschläge",
         "Near you": "In deiner Nähe",
-        "Add a RowerWeather widget to your home or lock screen to see the rowing light at a glance.": "Füge ein RowerWeather-Widget zu deinem Home- oder Sperrbildschirm hinzu, um die Ruderampel auf einen Blick zu sehen.",
+        "Add a Row Frog widget to your home or lock screen to see the rowing light at a glance.": "Füge ein Row-Frog-Widget zu deinem Home- oder Sperrbildschirm hinzu, um die Ruderampel auf einen Blick zu sehen.",
         "Landscape and wide screens": "Querformat und breite Bildschirme",
         "Turn your iPhone sideways, or use a wide screen, to see more at once.": "Dreh dein iPhone quer oder nutze einen breiten Bildschirm, um mehr auf einmal zu sehen.",
         "The location list stays on the left, the club page on the right.": "Die Ortsliste bleibt links, die Vereinsseite steht rechts.",
@@ -452,7 +463,7 @@ enum German {
         "The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind or the ice map over it.": "Das neueste Bild der Sentinel-2-Satelliten. Sie kommen nur alle 2 bis 5 Tage vorbei, daher kann es ein paar Tage alt sein und Wolken zeigen. „Klarstes“ zeigt das neueste Bild mit freier Sicht auf den See. Blende Ufer, Vereine, deine Routen, den Wind oder die Eiskarte ein.",
         "Tap the map to see the rowing light, waves and wind for the whole lake, hour by hour. Tap the water for the details of one spot.": "Tippe auf die Karte, um Ruderampel, Wellen und Wind für den ganzen See Stunde für Stunde zu sehen. Tippe aufs Wasser für die Details einer Stelle.",
         "Tap here, then tap your turning points on the water. You see the light along the route and the best time to start.": "Tippe hier und dann auf deine Wendepunkte auf dem Wasser. Du siehst die Ampel entlang der Route und die beste Startzeit.",
-        "Choose the icon RowerWeather shows on your home screen.": "Wähle das Symbol, das RowerWeather auf deinem Home-Bildschirm zeigt.",
+        "Choose the icon Row Frog shows on your home screen.": "Wähle das Symbol, das Row Frog auf deinem Home-Bildschirm zeigt.",
         "Search by club, lake or town to find any club in the DRV club directory.": "Suche nach Verein, See oder Ort, um jeden Verein aus dem DRV-Vereinsverzeichnis zu finden.",
         "No clubs yet": "Noch keine Vereine",
         "Choose your home base and the other places you row.": "Wähle deinen Heimatverein und die anderen Orte, an denen du ruderst.",

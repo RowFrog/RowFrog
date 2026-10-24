@@ -5,7 +5,7 @@ import WidgetKit
 /// the saved clubs with their names, the settings, and the last forecast of
 /// each club so the widget still shows something without a connection.
 enum WidgetShared {
-    static let group = "group.com.rowerweatherfrog.RowerWeather"
+    static let group = "group.com.rowfrog.RowFrog"
     static let kind = "RowingLight"
     /// Until the app has run once and shared its home base.
     static let defaultHomeID = "mrc-1880"
@@ -172,7 +172,7 @@ struct RowingWidgetView: View {
             title
             Spacer(minLength: 0)
             Image(systemName: "wifi.slash").font(.title3)
-            Text(tr("Open RowerWeather to load the forecast."))
+            Text(tr("Open Row Frog to load the forecast."))
                 .font(.caption)
                 .opacity(0.85)
         }
@@ -380,7 +380,7 @@ struct RowingWidgetView: View {
                     .font(.caption)
                     .lineLimit(1)
             } else {
-                Text(tr("Open RowerWeather to load the forecast.")).font(.caption)
+                Text(tr("Open Row Frog to load the forecast.")).font(.caption)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)

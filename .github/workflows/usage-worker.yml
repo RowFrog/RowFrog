@@ -1,0 +1,65 @@
+name: Usage counter
+
+# Deploys the Cloudflare Worker in cloudflare/usage/ that counts club and lake
+# loads on api.rowfrog.com and keeps the jobs' call totals. Creates its D1
+# database on the first run. Needs the secrets CLOUDFLARE_API_TOKEN,
+# CLOUDFLARE_ACCOUNT_ID and USAGE_KEY (steps in the regional weather models doc).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - cloudflare/usage/**
+      - .github/workflows/usage-worker.yml
+  workflow_dispatch:
+
+concurrency:
+  group: usage-worker
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      WRANGLER: npx --yes wrangler@4.20.0
+    defaults:
+      run:
+        working-directory: cloudflare/usage
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Check the secrets
+        env:
+          USAGE_KEY: ${{ secrets.USAGE_KEY }}
+        run: |
+          missing=""
+          [ -n "$CLOUDFLARE_API_TOKEN" ] || missing="$missing CLOUDFLARE_API_TOKEN"
+          [ -n "$CLOUDFLARE_ACCOUNT_ID" ] || missing="$missing CLOUDFLARE_ACCOUNT_ID"
+          [ -n "$USAGE_KEY" ] || missing="$missing USAGE_KEY"
+          if [ -n "$missing" ]; then echo "::error::Missing secrets:$missing"; exit 1; fi
+      - name: Create the database if needed
+        run: |
+          id=$($WRANGLER d1 list --json | python3 -c "import json,sys; print(next((d['uuid'] for d in json.load(sys.stdin) if d['name']=='rowfrog-usage'), ''))")
+          if [ -z "$id" ]; then
+            $WRANGLER d1 create rowfrog-usage
+            id=$($WRANGLER d1 list --json | python3 -c "import json,sys; print(next(d['uuid'] for d in json.load(sys.stdin) if d['name']=='rowfrog-usage'))")
+          fi
+          sed -i "s/DATABASE_ID/$id/" wrangler.toml
+          $WRANGLER d1 execute rowfrog-usage --remote --file schema.sql
+      - name: Deploy the Worker
+        run: $WRANGLER deploy
+      - name: Set the key
+        env:
+          USAGE_KEY: ${{ secrets.USAGE_KEY }}
+        run: printf '%s' "$USAGE_KEY" | $WRANGLER secret put USAGE_KEY
+      - name: Check it answers
+        env:
+          USAGE_KEY: ${{ secrets.USAGE_KEY }}
+        run: |
+          sleep 20
+          curl -fsS -H "Authorization: Bearer $USAGE_KEY" "https://api.rowfrog.com/usage?days=1" \
+            || echo "::warning::api.rowfrog.com/usage does not answer yet. Is the api DNS record proxied (orange cloud)?"
