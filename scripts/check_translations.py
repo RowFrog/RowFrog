@@ -28,6 +28,9 @@ def main() -> int:
     keys |= set(re.findall(r'"([^"]+)"', credits))
 
     problems = []
+    # A key twice in a Swift dictionary literal stops the app when the table is first read.
+    all_keys = [unescape(k) for k, _ in re.findall(STRING + r": " + STRING + ",", table_source)]
+    problems += [f"German text listed twice: {k}" for k in sorted({k for k in all_keys if all_keys.count(k) > 1})]
     for key in sorted(keys):
         if key not in table:
             problems.append(f"no German text for: {key}")

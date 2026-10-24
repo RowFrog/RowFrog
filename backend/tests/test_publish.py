@@ -44,9 +44,10 @@ def test_latest_and_clearest_pass():
         sentinel2.Pass(date(2026, 10, 8), 0.3),
         sentinel2.Pass(date(2026, 10, 13), 0.95),  # the latest, however cloudy
     ]
-    latest, clearest = sentinel2.choose(passes)
+    latest, mostly_clear, clearest = sentinel2.choose(passes)
     assert latest.day == date(2026, 10, 13) and clearest.day == date(2026, 10, 3)
-    assert sentinel2.choose([]) == (None, None)
+    assert mostly_clear.day == date(2026, 10, 8)
+    assert sentinel2.choose([]) == (None, None, None)
 
 
 def test_pictures_are_rendered_only_when_new(tmp_path, monkeypatch):
@@ -64,6 +65,20 @@ def test_pictures_are_rendered_only_when_new(tmp_path, monkeypatch):
     assert rendered == [date(2026, 10, 8), date(2026, 10, 13)]
     assert body["latest"]["lakeCloud"] == 0.4 and body["clearest"]["date"] == "2026-10-08"
     assert body["attribution"] == "Contains modified Copernicus Sentinel data 2026"
+    assert "mostlyClear" not in body
+
+
+def test_mostly_clear_picture_only_when_it_adds_something(tmp_path, monkeypatch):
+    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
+    clear = sentinel2.Pass(date(2026, 10, 3), 0.05)
+    mostly = sentinel2.Pass(date(2026, 10, 8), 0.25)
+    cloudy = sentinel2.Pass(date(2026, 10, 13), 0.9)
+    body = publish._picture_meta(None, tmp_path, ring, {}, cloudy, clear, mostly)
+    assert body["mostlyClear"]["date"] == "2026-10-08"
+    # The latest pass itself is mostly clear: no third picture.
+    body = publish._picture_meta(None, tmp_path, ring, {}, mostly, clear, mostly)
+    assert "mostlyClear" not in body
 
 
 def test_club_requests_stay_small():

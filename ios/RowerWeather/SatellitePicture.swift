@@ -30,8 +30,10 @@ struct SatellitePicture: Decodable, Hashable {
     var bbox: [Double]?
     var width: Int?
     var height: Int?
-    /// The newest pass that shows most of the lake, even with some cloud.
+    /// The newest pass, however cloudy.
     var latest: Shot?
+    /// In cloudy weeks: a newer pass than the clearest with most of the lake free of cloud.
+    var mostlyClear: Shot?
     /// The newest pass with the lake (nearly) free of cloud.
     var clearest: Shot?
     var ice: IceMap?
@@ -42,21 +44,28 @@ struct SatellitePicture: Decodable, Hashable {
         return CGFloat(width) / CGFloat(height)
     }
 
-    /// Both pictures, when they are different passes.
-    var hasChoice: Bool {
-        guard let latest, let clearest else { return false }
-        return latest.date != clearest.date
-    }
-
-    func shot(_ kind: Kind) -> Shot? {
-        switch kind {
-        case .latest: latest ?? clearest
-        case .clearest: clearest ?? latest
+    /// The pictures to choose from, each a different pass.
+    var kinds: [Kind] {
+        var dates: Set<String> = []
+        return Kind.allCases.filter { kind in
+            guard let shot = shot(kind, fallback: false) else { return false }
+            return dates.insert(shot.date).inserted
         }
     }
 
+    var hasChoice: Bool { kinds.count > 1 }
+
+    func shot(_ kind: Kind, fallback: Bool = true) -> Shot? {
+        let own: Shot? = switch kind {
+        case .latest: latest
+        case .mostlyClear: mostlyClear
+        case .clearest: clearest
+        }
+        return fallback ? own ?? latest ?? clearest : own
+    }
+
     enum Kind: String, CaseIterable, Identifiable {
-        case latest, clearest
+        case latest, mostlyClear, clearest
         var id: String { rawValue }
     }
 
@@ -195,16 +204,28 @@ struct SatelliteKindPicker: View {
 
     var body: some View {
         Picker(tr("Satellite picture"), selection: $kind) {
-            ForEach(SatellitePicture.Kind.allCases) { kind in
+            ForEach(picture.kinds) { kind in
                 Text(label(kind)).tag(kind)
             }
         }
         .pickerStyle(.segmented)
     }
 
+    /// "Latest, 22 Oct"; with three pictures just "Latest", as the grey line below names the day.
     private func label(_ kind: SatellitePicture.Kind) -> String {
+        if picture.kinds.count > 2 {
+            switch kind {
+            case .latest: return tr("Latest")
+            case .mostlyClear: return tr("Mostly clear")
+            case .clearest: return tr("Clearest")
+            }
+        }
         let day = picture.shot(kind)?.day.map { Format.day($0) } ?? ""
-        return kind == .latest ? tr("Latest, %@", day) : tr("Clearest, %@", day)
+        switch kind {
+        case .latest: return tr("Latest, %@", day)
+        case .mostlyClear: return tr("Mostly clear, %@", day)
+        case .clearest: return tr("Clearest, %@", day)
+        }
     }
 }
 

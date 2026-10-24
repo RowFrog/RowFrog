@@ -291,10 +291,10 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
             looked += 1
             days = sentinel2.FIRST_SEARCH_DAYS if first else sentinel2.SEARCH_DAYS
             try:
-                latest, clearest = sentinel2.choose(
+                latest, mostly_clear, clearest = sentinel2.choose(
                     sentinel2.cloud_by_day(client, rings[0], today - timedelta(days=days), today)
                 )
-                body = _picture_meta(client, out / "lakes" / lake_id, rings[0], old, latest, clearest)
+                body = _picture_meta(client, out / "lakes" / lake_id, rings[0], old, latest, clearest, mostly_clear)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 401:  # the sign-in lasts minutes; renew it once
                     client.close()
@@ -315,8 +315,12 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
             client.close()
 
 
-def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest) -> dict:
-    """The satellite file's picture part, rendering the pictures that are new."""
+def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostly_clear=None) -> dict:
+    """The satellite file's picture part, rendering the pictures that are new.
+
+    A third, "mostly clear" picture is added only when it is newer than the
+    clearest and not the latest itself, so it shows something the other two don't.
+    """
     bbox, width, height = sentinel2.frame(ring)
     body = {k: v for k, v in old.items() if k in ("ice",)}
     body.update(bbox=[round(v, 5) for v in bbox], width=width, height=height)
@@ -337,7 +341,20 @@ def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest) -> di
         else:
             path.write_bytes(sentinel2.jpeg(client, bbox, width, height, found.day))
         body[kind] = entry
-    years = sorted({e["date"][:4] for e in (body.get("latest"), body.get("clearest")) if e})
+    clear_day = (body.get("clearest") or {}).get("date", "")
+    if mostly_clear and latest and mostly_clear.day != latest.day and mostly_clear.day.isoformat() > clear_day:
+        before = old.get("mostlyClear") if old_frame else None
+        entry = {
+            "date": mostly_clear.day.isoformat(),
+            "lakeCloud": round(mostly_clear.lake_cloud, 2),
+            "image": "satellite-mostly-clear.jpg",
+        }
+        path = folder / entry["image"]
+        if not (before and before.get("date") == entry["date"] and path.exists()):
+            path.write_bytes(sentinel2.jpeg(client, bbox, width, height, mostly_clear.day))
+        body["mostlyClear"] = entry
+    shown = (body.get("latest"), body.get("mostlyClear"), body.get("clearest"))
+    years = sorted({e["date"][:4] for e in shown if e})
     if years:
         body["attribution"] = f"Contains modified Copernicus Sentinel data {', '.join(years)}"
     (folder / "satellite.jpg").unlink(missing_ok=True)  # the single picture of the first version

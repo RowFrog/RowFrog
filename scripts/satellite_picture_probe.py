@@ -34,8 +34,8 @@ def main() -> int:
                 body = getattr(getattr(e, "response", None), "text", "")[:500]
                 print(f"  {days} days: statistics failed {e!r} {body}")
                 continue
-            latest, clearest = sentinel2.choose(passes)
-            print(f"  {days} days: {len(passes)} passes, latest {latest}, clearest {clearest}")
+            latest, mostly_clear, clearest = sentinel2.choose(passes)
+            print(f"  {days} days: {len(passes)} passes, latest {latest}, mostly clear {mostly_clear}, clearest {clearest}")
             print("   ", ", ".join(f"{p.day:%m-%d} {p.lake_cloud:.0%}" for p in passes[-12:]))
     print(f"Requests: {sentinel2.requests_made}")
     return 0

@@ -135,6 +135,7 @@ final class ModelDecodingTests: XCTestCase {
         """
         let picture = try APIClient.decoder.decode(SatellitePicture.self, from: Data(json.utf8))
         XCTAssertTrue(picture.hasChoice)
+        XCTAssertEqual(picture.kinds, [.latest, .clearest])
         XCTAssertEqual(picture.shot(.clearest)?.lakeCloud, 0.02)
         XCTAssertNil(picture.ice)
 
