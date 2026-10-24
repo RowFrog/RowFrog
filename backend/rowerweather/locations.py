@@ -12,6 +12,7 @@ DUPLICATE_M of a club from an earlier file, is left out as the same club.
 
 from __future__ import annotations
 
+import dataclasses
 import json
 import math
 from dataclasses import dataclass
@@ -21,6 +22,8 @@ from typing import Sequence
 DATA_DIR = Path(__file__).resolve().parents[2] / "data"
 DEFAULT_PATH = DATA_DIR / "locations.json"
 DEFAULT_CATALOG_PATHS = (DATA_DIR / "catalog-drv.json", DATA_DIR / "catalog.json")
+# Mean depths for lakes from the catalogs, which do not carry one; used by the ice estimate.
+DEPTHS_PATH = DATA_DIR / "lake-depths.json"
 DUPLICATE_M = 300.0
 
 
@@ -39,6 +42,9 @@ class Lake:
     length_km: float | None
     gkd_water_temperature_station: str | None
     storm_warning_service: bool
+    # "lake" or, for catalog waters, "river" or "unknown".
+    kind: str = "lake"
+    mean_depth_m: float | None = None
 
 
 @dataclass(frozen=True)
@@ -84,6 +90,8 @@ def _parse(raw: dict, lakes: dict[str, Lake], clubs: dict[str, Club], source: st
                 length_km=l.get("lengthKm"),
                 gkd_water_temperature_station=l.get("gkdWaterTemperatureStation"),
                 storm_warning_service=l.get("stormWarningService", False),
+                kind=l.get("kind", "lake"),
+                mean_depth_m=l.get("meanDepthM"),
             ),
         )
     for c in raw.get("clubs", []):
@@ -125,4 +133,9 @@ def load(path: Path = DEFAULT_PATH, catalog_paths: Sequence[Path] = DEFAULT_CATA
         used = {c.lake_id for c in clubs.values()}
         for lake_id in set(lakes) - before - used:
             del lakes[lake_id]
+    if DEPTHS_PATH.exists():
+        depths = json.loads(DEPTHS_PATH.read_text(encoding="utf-8"))["meanDepthM"]
+        for lake_id, depth in depths.items():
+            if lake_id in lakes and lakes[lake_id].mean_depth_m is None:
+                lakes[lake_id] = dataclasses.replace(lakes[lake_id], mean_depth_m=depth)
     return Locations(lakes=lakes, clubs=clubs)

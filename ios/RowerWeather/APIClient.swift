@@ -24,7 +24,8 @@ struct APIClient {
     }()
 
     func lakes() async throws -> [Lake] {
-        try await get("lakes")
+        // "lakes/index" rather than "lakes": the published files keep lakes/<id>/view beside it.
+        try await get("lakes/index")
     }
 
     func forecast(clubID: String) async throws -> ClubForecast {
@@ -36,10 +37,19 @@ struct APIClient {
     func lakeView(lakeID: String) async throws -> LakeView {
         try await get("lakes/\(lakeID)/view")
     }
+
+    /// The latest cloud-free satellite picture of the lake, where the backend has one.
+    func satellitePicture(lakeID: String) async throws -> SatellitePicture {
+        try await get("lakes/\(lakeID)/satellite")
+    }
+
+    func url(_ path: String) -> URL { baseURL.appending(path: path) }
 #endif
 
     private func get<T: Decodable>(_ path: String) async throws -> T {
-        let (data, response) = try await session.data(from: baseURL.appending(path: path))
+        // Published files are cached for minutes by GitHub Pages; never add a local cache on top.
+        let request = URLRequest(url: baseURL.appending(path: path), cachePolicy: .reloadIgnoringLocalCacheData)
+        let (data, response) = try await session.data(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
             throw URLError(.badServerResponse)
         }
