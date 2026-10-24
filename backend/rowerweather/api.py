@@ -5,6 +5,7 @@ Run locally:  uvicorn rowerweather.api:app --reload   (from the backend folder)
 
 from __future__ import annotations
 
+import asyncio
 import logging
 import os
 import time
@@ -55,6 +56,9 @@ _lake_samples: dict[str, int] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
+# The last good reading and history per GKD station, kept between runs by the
+# publishing job, so one failed fetch does not blank the water temperature.
+_last_water: dict[str, tuple[gkd.WaterTemperature, list[gkd.WaterTemperature]]] = {}
 # Satellite lake ice passes per lake, set by the publishing job (see sources.lake_ice_satellite).
 _satellite_ice: dict[str, list] = {}
 # Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
@@ -66,35 +70,75 @@ def _point(p: locations.Point) -> dict:
     return {"lat": p.lat, "lon": p.lon}
 
 
+def _lake_json(lake: locations.Lake, country: str | None = None) -> dict:
+    """A water with its clubs; with `country`, only the clubs in that country."""
+    return {
+        "id": lake.id,
+        "name": lake.name,
+        "country": lake.country,
+        "center": _point(lake.center),
+        # The lake view needs an outline (data/outlines).
+        "hasOutline": (outlines.DEFAULT_DIR / f"{lake.id}.geojson").exists(),
+        "clubs": [
+            {
+                "id": c.id,
+                "name": c.name,
+                "shortName": c.short_name,
+                "address": c.address,
+                "website": c.website,
+                "launchPoint": _point(c.launch_point),
+                "launchPointVerified": c.launch_point_verified,
+                "source": c.source,
+                "abbreviation": c.abbreviation,
+                "country": c.country,
+                "region": c.region,
+            }
+            for c in _locations.clubs_on(lake.id, country)
+        ],
+    }
+
+
 @app.get("/lakes")
 # The same list under a path that also works as a static file next to lakes/<id>/view.
 @app.get("/lakes/index")
 def list_lakes() -> list[dict]:
-    return [
-        {
-            "id": lake.id,
-            "name": lake.name,
-            "center": _point(lake.center),
-            # The lake view needs an outline (data/outlines).
-            "hasOutline": (outlines.DEFAULT_DIR / f"{lake.id}.geojson").exists(),
-            "clubs": [
-                {
-                    "id": c.id,
-                    "name": c.name,
-                    "shortName": c.short_name,
-                    "address": c.address,
-                    "website": c.website,
-                    "launchPoint": _point(c.launch_point),
-                    "launchPointVerified": c.launch_point_verified,
-                    "source": c.source,
-                    "abbreviation": c.abbreviation,
-                }
-                for c in _locations.clubs_on(lake.id)
-            ],
-        }
-        for lake in _locations.lakes.values()
-        if _locations.clubs_on(lake.id)
-    ]
+    """Every water with clubs, in all countries; for app versions before the country files."""
+    return [_lake_json(lake) for lake in _locations.lakes.values() if _locations.clubs_on(lake.id)]
+
+
+@app.get("/countries")
+@app.get("/countries/index")
+def list_countries() -> list[dict]:
+    """The countries the search covers, with how many clubs and where they lie.
+
+    The app loads its own country's file first and others when needed; the
+    box around a country's clubs tells it which countries are near the user.
+    """
+    out = []
+    for code in _locations.countries():
+        clubs = [c for c in _locations.clubs.values() if c.country == code]
+        lats = [c.launch_point.lat for c in clubs]
+        lons = [c.launch_point.lon for c in clubs]
+        name, name_de = locations.COUNTRIES.get(code, (code.upper(), code.upper()))
+        out.append({
+            "code": code,
+            "name": name,
+            "nameDe": name_de,
+            "clubs": len(clubs),
+            "bounds": {"south": min(lats), "west": min(lons), "north": max(lats), "east": max(lons)},
+        })
+    return out
+
+
+@app.get("/countries/{code}/lakes")
+def country_lakes(code: str) -> list[dict]:
+    """The waters with clubs in one country, with only that country's clubs.
+
+    A lake on a border (Lake Constance) is listed in each country with its own clubs.
+    """
+    if code not in _locations.countries():
+        raise HTTPException(status_code=404, detail="unknown country")
+    return [_lake_json(lake, code) for lake in _locations.lakes.values() if _locations.clubs_on(lake.id, code)]
 
 
 def _now() -> datetime:
@@ -319,6 +363,30 @@ def _offers_choices(club: locations.Club) -> bool:
     return club.source is None
 
 
+async def _water(
+    client: httpx.AsyncClient, station: str, now: datetime
+) -> tuple[gkd.WaterTemperature | None, list[gkd.WaterTemperature]]:
+    """The station's newest reading and hourly history. GKD sometimes fails a
+    request, so it is tried twice, then the last good reading stands in while
+    it is younger than gkd.MAX_AGE."""
+    for attempt in (1, 2):
+        try:
+            water, history = await gkd.fetch_recent(client, station, now)
+        except httpx.HTTPError as e:
+            logging.getLogger(__name__).warning("GKD failed for %s (try %d): %r", station, attempt, e)
+            if attempt == 1:
+                await asyncio.sleep(2)
+            continue
+        if water is not None:
+            _last_water[station] = (water, history)
+            return water, history
+        break  # the station has gone quiet; an older reading would be older still
+    saved = _last_water.get(station)
+    if saved and now - saved[0].time <= gkd.MAX_AGE:
+        return saved
+    return None, []
+
+
 @app.get("/clubs/{club_id}/forecast")
 async def club_forecast(club_id: str) -> dict:
     return await _club_forecast(club_id, None)
@@ -355,10 +423,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
                     raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
             water, water_history = None, []
             if lake.gkd_water_temperature_station:
-                try:
-                    water, water_history = await gkd.fetch_recent(client, lake.gkd_water_temperature_station, now)
-                except httpx.HTTPError:
-                    water = None  # the forecast is still useful without it
+                water, water_history = await _water(client, lake.gkd_water_temperature_station, now)
             # Yesterday and the next 7 days for the charts; the forecast works without it.
             if club_id in _primed_outlook:
                 outlook = _primed_outlook.pop(club_id)
@@ -445,10 +510,7 @@ async def lake_view_forecast(lake_id: str) -> dict:
         elif (primed := _primed_lake_weather.pop(lake_id, None)) is not None:
             weather, water = primed, None
             if lake.gkd_water_temperature_station:
-                try:
-                    water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
-                except httpx.HTTPError:
-                    water = None
+                water = (await _water(client, lake.gkd_water_temperature_station, now))[0]
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         else:
             try:
@@ -461,10 +523,7 @@ async def lake_view_forecast(lake_id: str) -> dict:
                 raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
             water = None
             if lake.gkd_water_temperature_station:
-                try:
-                    water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
-                except httpx.HTTPError:
-                    water = None
+                water = (await _water(client, lake.gkd_water_temperature_station, now))[0]
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         # DWD lake warnings are per lake area, so any club on the lake finds them.
         warnings = (await _warnings(client, clubs[0], now))[1] if clubs else []

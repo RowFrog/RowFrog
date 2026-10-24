@@ -56,10 +56,17 @@ struct LocationPageView: View {
                             }
                             VStack(alignment: .leading, spacing: 4) {
                                 ForEach(forecast.attribution, id: \.self) { Text(tr($0)) }
-                                if !club.launchPointVerified {
-                                    if club.source == "drv" {
+                                if club.isOwnPlace {
+                                    Text(tr("Your own place, kept on this iPhone. No waves, water temperature or warnings here."))
+                                } else if !club.launchPointVerified {
+                                    switch club.source {
+                                    case "drv":
                                         Text(tr("Club data: Deutscher Ruderverband e.V. (rudern.de). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
-                                    } else {
+                                    case "oerv":
+                                        Text(tr("Club data: Österreichischer Ruderverband (rudern.at). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
+                                    case "swissrowing":
+                                        Text(tr("Club data: Swiss Rowing (swissrowing.ch). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
+                                    default:
                                         Text(tr("Launch point from © OpenStreetMap contributors, ODbL"))
                                     }
                                 }

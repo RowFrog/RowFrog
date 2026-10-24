@@ -21,8 +21,16 @@ struct Club: Codable, Identifiable, Hashable {
     var source: String? = nil
     /// The DRV abbreviation, e.g. "BRG".
     var abbreviation: String? = nil
+    /// ISO country code in lower case, e.g. "at"; older backends send none (Germany).
+    var country: String? = nil
+    /// The state or canton where the source names one, e.g. "Wien".
+    var region: String? = nil
 
     var displayName: String { shortName ?? name }
+
+    /// A place the user put on the map, kept only on this iPhone (see OwnPlaces.swift).
+    var isOwnPlace: Bool { id.hasPrefix(OwnPlace.idPrefix) }
+    var countryCode: String { country ?? "de" }
 
     /// The town from the address, e.g. "Starnberg".
     var town: String? {
@@ -40,6 +48,45 @@ struct Lake: Codable, Identifiable, Hashable {
     let clubs: [Club]
     /// Whether the backend has the lake's outline, which the lake view needs; older backends send none.
     var hasOutline: Bool? = nil
+    var country: String? = nil
+}
+
+/// A country the club search covers (GET countries/index).
+struct Country: Codable, Identifiable, Hashable {
+    let code: String
+    let name: String
+    let nameDe: String
+    /// How many clubs the country's file holds.
+    let clubs: Int
+    /// The box around the country's clubs.
+    let bounds: Bounds
+
+    var id: String { code }
+
+    var localizedName: String { AppSettings.shared.resolvedLanguage == .german ? nameDe : name }
+
+    /// The flag emoji, from the two letters of the code.
+    var flag: String { Self.flag(code) }
+
+    static func flag(_ code: String) -> String {
+        String(code.uppercased().unicodeScalars.compactMap { UnicodeScalar(127_397 + $0.value) }.map(Character.init))
+    }
+
+    struct Bounds: Codable, Hashable {
+        let south: Double
+        let west: Double
+        let north: Double
+        let east: Double
+
+        /// Rough distance in km from `point` to the box, 0 inside it.
+        func distance(to point: Coordinate) -> Double {
+            let lat = min(max(point.lat, south), north)
+            let lon = min(max(point.lon, west), east)
+            let x = (point.lon - lon) * cos(point.lat * .pi / 180)
+            let y = point.lat - lat
+            return (x * x + y * y).squareRoot() * 111.2
+        }
+    }
 }
 
 enum Light: String, Codable, Comparable {

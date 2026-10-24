@@ -13,6 +13,8 @@ enum WidgetBridge {
             shared.set(saved.map(\.id), forKey: WidgetShared.savedKey)
             shared.set(Dictionary(saved.map { ($0.id, $0.displayName) }, uniquingKeysWith: { a, _ in a }), forKey: WidgetShared.namesKey)
         }
+        shared.set(Dictionary(locations.ownPlaces.map { ($0.id, [$0.coordinate.lat, $0.coordinate.lon]) }, uniquingKeysWith: { a, _ in a }),
+                   forKey: WidgetShared.ownPlacesKey)
         for key in AppSettings.Keys.all {
             shared.set(UserDefaults.standard.object(forKey: key), forKey: key)
         }

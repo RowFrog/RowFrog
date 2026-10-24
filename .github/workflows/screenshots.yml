@@ -232,15 +232,23 @@ jobs:
           shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3
           shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de
           # Where the forecast comes from: the line at the bottom of the page and its details.
-          shoot 71-forecast-source light -RWOpenClub mrc-1880 -RWScrollTo source
-          shoot 72-forecast-source-details light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES
-          shoot 73-forecast-source-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWLanguage de
+          # Clubs in several countries, browsing by country, and own places.
+          shoot 70-search-all-countries light -RWSearch "Zürich"
+          shoot 71-browse-countries light -RWShowList YES -RWBrowse YES
+          shoot_pages 72-browse-austria light -RWShowList YES -RWBrowse at
+          shoot 73-add-place light -RWShowList YES -RWAddPlace YES
+          shoot 74-add-place-german-dark dark -RWShowList YES -RWAddPlace YES -RWLanguage de
+          shoot_pages 75-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401"
+          shoot_pages 76-list-with-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401" -RWShowList YES
+          shoot 81-forecast-source light -RWOpenClub mrc-1880 -RWScrollTo source
+          shoot 82-forecast-source-details light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES
+          shoot 83-forecast-source-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWLanguage de
           # The hidden weather model picker (developer options): the picker, a picked model, German, and the settings section.
           ifs='<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'
-          shoot 74-model-picker light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES
-          shoot 75-model-picked light -RWOpenClub mrc-1880 -RWScrollTo source -RWDeveloperOptions YES -RWPickedModels "$ifs"
-          shoot 76-model-picker-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES -RWPickedModels "$ifs" -RWLanguage de
-          shoot 81-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 8
+          shoot 84-model-picker light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES
+          shoot 85-model-picked light -RWOpenClub mrc-1880 -RWScrollTo source -RWDeveloperOptions YES -RWPickedModels "$ifs"
+          shoot 86-model-picker-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES -RWPickedModels "$ifs" -RWLanguage de
+          shoot 87-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 8
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES
           shoot_pages 33-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de

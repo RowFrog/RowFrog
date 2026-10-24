@@ -9,6 +9,12 @@ struct APIClient {
         return APIClient(baseURL: URL(string: raw)!)
     }
 
+    /// The published files, also in Debug builds that talk to the backend on the Mac.
+    static func published(_ bundle: Bundle = .main) -> APIClient {
+        let raw = bundle.object(forInfoDictionaryKey: "RWPublishedBaseURL") as? String ?? "https://api.rowfrog.com/v1"
+        return APIClient(baseURL: URL(string: raw)!)
+    }
+
     static let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
@@ -26,6 +32,16 @@ struct APIClient {
     func lakes() async throws -> [Lake] {
         // "lakes/index" rather than "lakes": the published files keep lakes/<id>/view beside it.
         try await get("lakes/index")
+    }
+
+    /// The countries the club search covers; older backends have none (then `lakes()` holds every club).
+    func countries() async throws -> [Country] {
+        try await get("countries/index")
+    }
+
+    /// One country's waters with that country's clubs.
+    func lakes(country: String) async throws -> [Lake] {
+        try await get("countries/\(country)/lakes")
     }
 
     /// `model` is a model the user picked (developer options); nil = the automatic choice.

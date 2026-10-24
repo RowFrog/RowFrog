@@ -56,7 +56,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Usage counter | once after setting it up, and whenever `cloudflare/usage/` changes on main (it runs itself then) |
 | API check | to see whether api.rowfrog.com, the Cloudflare proxy and the usage counter answer |
 | Model check with archive_days | once for a quick first score (60 days); otherwise leave it at 0 |
-| App screenshots with `only` | to re-shoot some screens, e.g. `^7[1-6]-` |
+| App screenshots with `only` | to re-shoot some screens, e.g. `^8[1-7]-` |
 
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
 
