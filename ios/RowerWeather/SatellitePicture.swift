@@ -178,7 +178,7 @@ final class SatelliteLayers {
 /// is cloudy, a switch offers the clearest one. Shore, clubs, saved routes, wind,
 /// waves or the rowing light, and (in winter) the ice map can be drawn over it.
 /// Tap for full screen.
-/// Hidden when there is no picture.
+/// Hidden when there is no picture; the page loads it (see LocationPageView).
 struct SatellitePictureCard: View {
     let lakeID: String
     @MainActor private var store: SatellitePictureStore { .shared }
@@ -206,10 +206,9 @@ struct SatellitePictureCard: View {
                 }
             }
         }
-        .task {
-            await store.load(lakeID)
-            await LakeViewStore.shared.load(lakeID)
-        }
+        // Runs once the picture shows (LocationPageView loads the picture itself):
+        // the overlays need the lake view.
+        .task { await LakeViewStore.shared.load(lakeID) }
     }
 }
 

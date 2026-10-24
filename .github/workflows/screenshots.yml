@@ -7,12 +7,11 @@ name: App screenshots
 # so both warning states show; every other warning is live from DWD.
 # The lake view gets a made-up south wind (RW_SAMPLE_LAKE_WIND), marked
 # "Sample wind", so its screens show waves building along the lake.
-# Runs by hand from the Actions tab or when this file changes.
+# Runs only by hand from the Actions tab (owner rule, 24 Oct 2026): once per PR
+# when it is ready for review, for the screens that changed (input `only`), and
+# a full set only when the owner asks. It holds a Mac runner for a long time.
 
 on:
-  push:
-    paths:
-      - .github/workflows/screenshots.yml
   workflow_dispatch:
     inputs:
       only:

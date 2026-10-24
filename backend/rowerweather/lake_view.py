@@ -127,6 +127,16 @@ def _area_m2(ring: list[tuple[float, float]]) -> float:
     return abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(ring, ring[1:] + ring[:1]))) / 2
 
 
+def _water_area_m2(rings: list[list[tuple[float, float]]]) -> float:
+    """Water area by the same even-odd rule as _inside: a ring inside an even
+    number of others is a shore (water), inside an odd number an island."""
+    total = 0.0
+    for i, ring in enumerate(rings):
+        depth = sum(_inside(*ring[0], [other]) for j, other in enumerate(rings) if j != i)
+        total += _area_m2(ring) if depth % 2 == 0 else -_area_m2(ring)
+    return max(total, 1.0)
+
+
 def _inside(x: float, y: float, rings: list[list[tuple[float, float]]]) -> bool:
     inside = False
     for ring in rings:
@@ -179,11 +189,12 @@ def _zones(points_m: list[tuple[float, float]]) -> tuple[list[str], list[int]]:
 
 
 def build_grid(rings: Rings, target_cells: int = TARGET_CELLS, max_samples: int = MAX_SAMPLES) -> Grid:
-    lons = [x for x, _ in rings[0]]
-    lats = [y for _, y in rings[0]]
+    # Every ring counts: a lake in several parts (a MultiPolygon) has more than one shore.
+    lons = [x for ring in rings for x, _ in ring]
+    lats = [y for ring in rings for _, y in ring]
     lon0, lat0 = (min(lons) + max(lons)) / 2, (min(lats) + max(lats)) / 2
     rings_m = [[_local(x, y, lon0, lat0) for x, y in ring] for ring in rings]
-    area = _area_m2(rings_m[0]) - sum(_area_m2(r) for r in rings_m[1:])
+    area = _water_area_m2(rings_m)
     cell = min(MAX_CELL_M, max(MIN_CELL_M, math.sqrt(area / target_cells)))
     simple = [_simplify(r, cell / 6) for r in rings_m]
 
