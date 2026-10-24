@@ -90,7 +90,7 @@ struct RootView: View {
         }
         // A tap on the widget opens its club.
         .onOpenURL { url in
-            guard url.scheme == "rowerweather", url.host() == "club", let id = url.pathComponents.last,
+            guard url.scheme == "rowfrog", url.host() == "club", let id = url.pathComponents.last,
                   locations.saved.contains(where: { $0.id == id }) else { return }
             showingList = false
             selection = id

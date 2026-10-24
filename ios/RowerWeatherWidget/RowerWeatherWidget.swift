@@ -32,7 +32,7 @@ struct RowingWidgetEntryView: View {
             .containerBackground(for: .widget) {
                 WidgetSky(snapshot: entry.snapshot)
             }
-            .widgetURL(URL(string: "rowerweather://club/\(entry.clubID)"))
+            .widgetURL(URL(string: "rowfrog://club/\(entry.clubID)"))
     }
 }
 
