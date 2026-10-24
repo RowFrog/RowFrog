@@ -7,7 +7,7 @@ CDSE_CLIENT_SECRET; app users need none):
 1. one Statistical API request for the share of the lake under cloud on every
    day with a pass (scene classification band SCL), over the last SEARCH_DAYS,
 2. a true-colour JPEG of the lake and its shore (Process API) for the newest
-   pass that shows most of the lake ("latest") and the newest with at most
+   pass, clouds or not ("latest"), and the newest with at most
    CLEAR_MAX_LAKE_CLOUD of it under cloud ("clearest"), when they are new.
 A lake that has never had a picture is searched once over FIRST_SEARCH_DAYS.
 
@@ -36,10 +36,9 @@ SEARCH_DAYS = 30
 FIRST_SEARCH_DAYS = 365
 # Days per Statistical API request on the long first search.
 CHUNK_DAYS = 92
-# A pass counts when it saw nearly the whole lake (the swath edge can cut a lake) ...
+# A pass counts when it saw nearly the whole lake (the swath edge can cut a lake).
 MIN_SEEN = 0.9
-# ... and, for the latest picture, not too much of it is under cloud.
-LATEST_MAX_LAKE_CLOUD = 0.8
+# The latest picture is shown whatever the cloud; the clearest is the newest with at most this much.
 CLEAR_MAX_LAKE_CLOUD = 0.1
 MAX_PIXELS = 1280  # longer side of the picture
 METRES_PER_PIXEL = 10.0
@@ -146,8 +145,8 @@ def cloud_by_day(client: httpx.Client, ring, start: date, end: date) -> list[Pas
 
 
 def choose(passes: list[Pass]) -> tuple[Pass | None, Pass | None]:
-    """The latest pass that shows most of the lake, and the latest clear one."""
-    latest = next((p for p in reversed(passes) if p.lake_cloud <= LATEST_MAX_LAKE_CLOUD), None)
+    """The latest pass, and the latest clear one."""
+    latest = passes[-1] if passes else None
     clearest = next((p for p in reversed(passes) if p.lake_cloud <= CLEAR_MAX_LAKE_CLOUD), None)
     return latest, clearest
 

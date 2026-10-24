@@ -213,12 +213,27 @@ struct SatelliteCaption: View {
     let picture: SatellitePicture
     let shot: SatellitePicture.Shot
     @MainActor private var layers: SatelliteLayers { .shared }
+    @State private var explaining = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(line)
-                .font(.footnote)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(line)
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                Button { explaining = true } label: {
+                    Image(systemName: "info.circle")
+                        .font(.footnote)
+                }
+                .buttonStyle(.plain)
                 .foregroundStyle(.secondary)
+                .accessibilityLabel(tr("Why only every few days?"))
+            }
+            .alert(tr("Why only every few days?"), isPresented: $explaining) {
+                Button(tr("OK"), role: .cancel) {}
+            } message: {
+                Text(tr("Sentinel-2 photographs each lake from about 800 km up, every 2 to 5 days in the late morning, as its two satellites circle the Earth. It takes pictures in daylight like a camera and cannot see through clouds, so the latest picture may be cloudy and the clearest one older."))
+            }
             if layers.on.contains(.ice), let ice = picture.ice {
                 Text(tr("Satellite ice map, %@", SatellitePicture.parser.date(from: ice.date).map { Format.day($0) } ?? ice.date))
                     .font(.footnote)

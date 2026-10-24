@@ -42,10 +42,10 @@ def test_latest_and_clearest_pass():
     passes = [
         sentinel2.Pass(date(2026, 10, 3), 0.05),
         sentinel2.Pass(date(2026, 10, 8), 0.3),
-        sentinel2.Pass(date(2026, 10, 13), 0.95),  # lake hidden: no use even as the latest
+        sentinel2.Pass(date(2026, 10, 13), 0.95),  # the latest, however cloudy
     ]
     latest, clearest = sentinel2.choose(passes)
-    assert latest.day == date(2026, 10, 8) and clearest.day == date(2026, 10, 3)
+    assert latest.day == date(2026, 10, 13) and clearest.day == date(2026, 10, 3)
     assert sentinel2.choose([]) == (None, None)
 
 

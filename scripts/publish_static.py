@@ -75,8 +75,10 @@ ICE_MAP_LOOKS = (6, 18)
 
 # How often a lake is looked at for new Sentinel-2 pictures, and how many lakes one run looks at.
 PICTURE_REFRESH = {"used": timedelta(days=1), "other": timedelta(days=5)}
-# Bumped when the search changes, so every lake gets its long first search again.
-PICTURE_SEARCH_VERSION = 3
+# Bumped when the search changes, so every lake is looked at again on the next run.
+PICTURE_SEARCH_VERSION = 4
+# Lakes looked at with versions before this one get the long first search.
+PICTURE_FIRST_SEARCH_BEFORE = 3
 PICTURES_PER_RUN = 40
 
 
@@ -265,8 +267,9 @@ def publish_ice_map(out: Path, lake_ids: list[str], today: date) -> None:
 def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: datetime) -> None:
     """Looks for newer Sentinel-2 pictures of the lakes whose last look is old enough.
 
-    Two per lake: the latest pass that shows most of the lake, even with some
-    cloud, and the latest clear one. A lake looked at for the first time is
+    Two per lake: the latest pass, whatever the cloud, and the latest clear
+    one. Looks come at most 5 days apart and cover 30 days, so the clear one
+    kept from an earlier look is still the newest clear pass there is. A lake looked at for the first time is
     searched over a whole year, so every lake has a picture.
     """
     client = sentinel2.client()
@@ -279,8 +282,9 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
             rings = outlines.load(lake_id)
             meta_path = out / "lakes" / lake_id / "satellite"
             old = _read_json(meta_path)
-            first = old.get("searchVersion") != PICTURE_SEARCH_VERSION
-            checked = None if first or "checkedAt" not in old else datetime.fromisoformat(old["checkedAt"])
+            version = old.get("searchVersion", 0)
+            first = version < PICTURE_FIRST_SEARCH_BEFORE
+            checked = None if version != PICTURE_SEARCH_VERSION or "checkedAt" not in old else datetime.fromisoformat(old["checkedAt"])
             refresh = PICTURE_REFRESH["used" if lake_id in used else "other"]
             if not rings or (checked and now - checked < refresh) or looked >= PICTURES_PER_RUN:
                 continue
