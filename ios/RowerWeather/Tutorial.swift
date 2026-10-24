@@ -113,10 +113,10 @@ enum TourPage: Int, CaseIterable, Identifiable {
         ]
         case .homeBase, .moreClubs: []
         case .rowingLight: [
-            TourPoint(symbol: "text.bubble", text: tr("The line starting with \"Why\" names the conditions that set the light.")),
-            TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up. The daylight card shows the time left until sunset.")),
-            TourPoint(symbol: "clock", text: tr("The next 48 hours each have their own light, so you can plan your outing.")),
-            TourPoint(symbol: "umbrella", text: tr("The rain radar under the light shows rain at the launch point for the next two hours.")),
+            TourPoint(symbol: "text.bubble", text: tr("The \"Why\" line names what sets the light.")),
+            TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up.")),
+            TourPoint(symbol: "clock", text: tr("Each of the next 48 hours has its own light.")),
+            TourPoint(symbol: "umbrella", text: tr("The rain radar shows rain for the next two hours.")),
             TourPoint(symbol: "clock.badge.exclamationmark", text: tr("Grey instead of green: the forecast is more than 3 hours old. Pull down to refresh.")),
             TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide whether to go out, and when in doubt you stay ashore.")),
         ]
