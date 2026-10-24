@@ -1,0 +1,52 @@
+name: Usage limits
+
+# Once a day, compares the calls the jobs reported to the usage counter with
+# Open-Meteo's and Copernicus' free limits (scripts/budget_check.py). When a
+# limit comes within reach (70 % warning, 85 % alert) it comments on the
+# "Usage limits" issue, so GitHub e-mails the owner; on the 1st of each month
+# it posts the summary even when all is fine.
+
+on:
+  schedule:
+    - cron: "10 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Check the limits
+        id: check
+        env:
+          RW_USAGE_KEY: ${{ secrets.USAGE_KEY }}
+        run: |
+          set +e
+          python3 scripts/budget_check.py report.md
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+      - name: Tell the owner
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ steps.check.outputs.status }}" = "0" ] && [ "$(date -u +%d)" != "01" ] && [ "${{ github.event_name }}" != "workflow_dispatch" ]; then
+            echo "All within limits"; exit 0
+          fi
+          find_issue() {
+            gh issue list --state open --search "Usage limits in:title" --json number,title \
+              --jq '[.[] | select(.title == "Usage limits")][0].number'
+          }
+          number=$(find_issue)
+          if [ -z "$number" ]; then
+            gh issue create --title "Usage limits" \
+              --body "Warnings from the Usage limits workflow when Open-Meteo or Copernicus calls approach the free limits."
+            number=$(find_issue)
+          fi
+          gh issue comment "$number" --body-file report.md
