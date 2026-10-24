@@ -1,37 +1,37 @@
 {
   "version": 1,
-  "updated": "2026-10-18",
+  "updated": "2026-10-24",
   "source": "© OpenStreetMap contributors, ODbL",
   "lakes": [
     {
       "id": "forggensee",
       "name": "Forggensee",
-      "country": "de",
       "center": {
         "lat": 47.6168,
         "lon": 10.7353
       },
-      "osm": "relation/897899"
+      "osm": "relation/897899",
+      "country": "de"
     },
     {
       "id": "regattastrecke-oberschleissheim",
       "name": "Regattastrecke Oberschleißheim",
-      "country": "de",
       "center": {
         "lat": 48.2429,
         "lon": 11.5154
       },
-      "osm": "way/4083380"
+      "osm": "way/4083380",
+      "country": "de"
     },
     {
       "id": "simssee",
       "name": "Simssee",
-      "country": "de",
       "center": {
         "lat": 47.873,
         "lon": 12.2392
       },
-      "osm": "relation/3597692"
+      "osm": "relation/3597692",
+      "country": "de"
     }
   ],
   "clubs": [
