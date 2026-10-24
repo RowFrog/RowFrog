@@ -139,7 +139,9 @@ with the temperature and the weather symbol beside each other.
 - Units with icons (wind in m/s, km/h, knots, mph or Beaufort; °C or °F; waves in m, cm or ft), language
   (English or German), date and time formats.
 - Background pictures for all pages, single pages or single clubs: clear or
-  blurred, frosted or solid tiles, or your own photo.
+  blurred, frosted, solid or Liquid Glass tiles (iOS 26), or your own photo.
+  On club pages the picture fills the screen behind the status and page bars
+  and fades between clubs while swiping.
 - App icon: the coxed double "rowing light" icon in light, dark and tinted,
   plus 10 alternates.
 - Help: replay the tour. One-time tips point out features the first time they
