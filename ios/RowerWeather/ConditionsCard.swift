@@ -507,10 +507,8 @@ struct ConditionDetailView: View {
 private struct ConditionChart: View {
     let detail: ConditionDetail
     let data: ConditionData
-    /// Where the visible 24 hours start when the view opens: an hour before now.
-    private static let start = -1.0
     /// The hour at the left edge of the visible 24 hours.
-    @State private var scrollX = start
+    @State private var scrollX = -1.0
 
     private struct Arrow: Identifiable {
         let x: Double
@@ -559,24 +557,6 @@ private struct ConditionChart: View {
 
     var body: some View {
         scrolling(scaled(chart))
-            .overlay(alignment: .topTrailing) {
-                // Once dragged away from now, one tap brings the chart back.
-                if !detail.history && abs(scrollX - Self.start) > 0.5 {
-                    Button {
-                        withAnimation { scrollX = Self.start }
-                    } label: {
-                        Label(tr("Now"), systemImage: scrollX > Self.start ? "arrow.uturn.backward" : "arrow.uturn.forward")
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.regularMaterial, in: Capsule())
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.blue)
-                    .padding(.top, 22)
-                    .transition(.opacity)
-                }
-            }
     }
 
     private var chart: some View {
