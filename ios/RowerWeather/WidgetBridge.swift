@@ -76,7 +76,7 @@ struct WidgetGalleryView: View {
         )
         .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil || failed))
         .task {
-            do { forecast = try await api.forecast(clubID: homeID) } catch { failed = true }
+            do { forecast = try await api.forecast(clubID: homeID).applyingUserLimits() } catch { failed = true }
         }
     }
 
