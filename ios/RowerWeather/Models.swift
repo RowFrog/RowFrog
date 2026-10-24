@@ -89,7 +89,7 @@ struct Reason: Codable, Hashable {
         case "waves": tr("Waves at the launch point are too high.")
         case "fog": tr("Visibility is poor (fog or mist).")
         case "thunderstorm": tr("Thunderstorms are possible.")
-        case "ice": tr("There is ice on the water.")
+        case "ice": light == .red ? tr("Ice on the lake is likely (estimate).") : tr("Thin ice at the shore or drift ice is possible (estimate).")
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
         case "twilight": tr("Sunrise or sunset falls in this hour.")
         case "cold_water": tr("Water is below %@, so a capsize is dangerous.", Format.temperature(10))
@@ -209,6 +209,8 @@ struct ClubForecast: Codable, Hashable {
     let waterTemperature: WaterTemperature?
     /// Missing from older backends.
     var warnings: Warnings? = nil
+    /// Missing from older backends.
+    var ice: IceEstimate? = nil
     let attribution: [String]
     let daylight: [SunDay]?
     let hours: [ForecastHour]
@@ -246,6 +248,83 @@ struct ClubForecast: Codable, Hashable {
         }
         return nil
     }
+}
+
+/// The backend's ice estimate for the lake, from frost and water temperature
+/// (see backend/rowerweather/ice.py). It never says ice is safe to walk on.
+struct IceEstimate: Codable, Hashable {
+    /// "open", "edges" (thin ice at the shore possible), "forming", "frozen",
+    /// "drift_ice" (rivers) or "unavailable".
+    let status: String
+    let light: Light?
+    var thicknessCm: Double? = nil
+    /// Measured where the lake has a station, else modelled.
+    var waterTemperatureC: Double? = nil
+    /// "season" (no ice this month), "measured" (the water is too warm),
+    /// "satellite" (the satellite picture corrected the model) or "model".
+    var basis: String? = nil
+    var days: [IceDay]? = nil
+    /// The latest satellite picture that saw the lake (larger lakes only).
+    var satellite: IceSatellite? = nil
+
+    var title: String {
+        switch status {
+        case "open": tr("No ice")
+        case "edges": tr("Shore ice possible")
+        case "forming": tr("Ice forming")
+        case "frozen": tr("Ice cover likely")
+        case "drift_ice": tr("Drift ice possible")
+        default: tr("No data")
+        }
+    }
+
+    /// One line on how the estimate was made.
+    var detail: String {
+        if let cm = thicknessCm, cm > 0 {
+            return tr("About %@ cm, estimated", Format.number(cm))
+        }
+        if let satellite, basis == "satellite" || basis == "model" {
+            return satellite.summary
+        }
+        switch basis {
+        case "season": return tr("No ice this time of year")
+        case "measured": return tr("Water %@, too warm for ice", Format.temperature(waterTemperatureC, digits: 1))
+        case "model": return status == "edges" ? tr("Bays and harbours first") : tr("Estimated from frost")
+        default: return tr("Check the lake yourself")
+        }
+    }
+}
+
+/// Copernicus Lake Ice Extent: what a cloud-free satellite pass saw of the lake.
+struct IceSatellite: Codable, Hashable {
+    /// Local calendar day, "yyyy-MM-dd".
+    let date: String
+    /// Share of the lake that was seen (not under cloud), 0...1.
+    let seenShare: Double
+    /// Share of the seen part that was ice, 0...1.
+    let iceShare: Double
+
+    /// "Satellite, Today: open water" or "Satellite, Mon 20 Jan: 60 % ice".
+    var summary: String {
+        let day = Self.parser.date(from: date).map { Format.day($0) } ?? date
+        if iceShare < 0.1 { return tr("Satellite, %@: open water", day) }
+        return tr("Satellite, %@: %@ %% ice", day, Format.number(iceShare * 100))
+    }
+
+    private static let parser: DateFormatter = {
+        let f = DateFormatter()
+        f.calendar = Calendar(identifier: .gregorian)
+        f.locale = Locale(identifier: "en_US_POSIX")
+        f.dateFormat = "yyyy-MM-dd"
+        return f
+    }()
+}
+
+struct IceDay: Codable, Hashable {
+    /// Local calendar day, "yyyy-MM-dd".
+    let date: String
+    let status: String
+    var thicknessCm: Double? = nil
 }
 
 enum SunState: Hashable {

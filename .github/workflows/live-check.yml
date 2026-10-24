@@ -11,6 +11,7 @@ on:
       - data/locations.json
       - scripts/**
       - backend/rowerweather/sources/**
+      - backend/rowerweather/ice.py
       - .github/workflows/live-check.yml
   workflow_dispatch:
 
@@ -40,6 +41,12 @@ jobs:
       - name: Check launch points and live forecast
         if: always()
         run: python3 scripts/live_check.py
+      - name: Ice model on past winters
+        if: always()
+        run: python3 scripts/ice_backtest.py
+      - name: DWD rain radar at the launch points
+        if: always()
+        run: python3 scripts/radar_probe.py
       - name: Commit new outlines
         if: always()
         run: |

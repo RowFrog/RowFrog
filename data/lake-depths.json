@@ -1,0 +1,7 @@
+{
+  "note": "Mean depth in metres for waters from the club catalogs, used by the ice estimate. Approximate public figures; deeper lakes cool more slowly and freeze later. Waters not listed count as 5 m deep.",
+  "meanDepthM": {
+    "ammersee": 37.6,
+    "regattastrecke-oberschleissheim": 3.5
+  }
+}
