@@ -181,6 +181,7 @@ enum German {
         "Not yet confirmed by the club; taken from OpenStreetMap.": "Noch nicht vom Verein bestätigt; aus OpenStreetMap übernommen.",
         "%.5f° N, %.5f° E": "%.5f° N, %.5f° O",
         "Open in Maps": "In Karten öffnen",
+        "Back to the launch point": "Zurück zum Steg",
         "Directions to the club": "Route zum Verein",
         "Launch point on the map": "Steg auf der Karte",
 
