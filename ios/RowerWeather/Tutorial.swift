@@ -533,7 +533,7 @@ struct RainRadarTip: Tip {
 
 struct SatellitePictureTip: Tip {
     var title: Text { Text(tr("Satellite picture")) }
-    var message: Text? { Text(tr("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind or the ice map over it.")) }
+    var message: Text? { Text(tr("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind, the waves, the rowing light or the ice map over it.")) }
     var image: Image? { Image(systemName: "globe.europe.africa") }
 }
 
