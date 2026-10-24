@@ -26,6 +26,10 @@ def main() -> int:
     api = Path("backend/rowerweather/api.py").read_text()
     credits = re.search(r"ATTRIBUTION = \[(.*?)\]", api, re.S).group(1)
     keys |= set(re.findall(r'"([^"]+)"', credits))
+    # Notes on the weather models the user can pick, also shown through tr().
+    models = Path("backend/rowerweather/weather_models.py").read_text()
+    choices = re.search(r"^CHOICES = \{(.*?)^\}", models, re.S | re.M).group(1)
+    keys |= {t for t in re.findall(r'"([^"]+)"', choices) if " " in t}
 
     problems = []
     # A key twice in a Swift dictionary literal stops the app when the table is first read.

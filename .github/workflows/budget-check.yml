@@ -45,8 +45,9 @@ jobs:
           }
           number=$(find_issue)
           if [ -z "$number" ]; then
-            gh issue create --title "Usage limits" \
-              --body "Warnings from the Usage limits workflow when Open-Meteo or Copernicus calls approach the free limits."
-            number=$(find_issue)
+            # A new issue takes a while to show up in the search, so take its number from the address.
+            url=$(gh issue create --title "Usage limits" \
+              --body "Warnings from the Usage limits workflow when Open-Meteo or Copernicus calls approach the free limits.")
+            number=${url##*/}
           fi
           gh issue comment "$number" --body-file report.md

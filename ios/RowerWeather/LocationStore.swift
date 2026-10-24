@@ -152,12 +152,26 @@ final class ForecastStore {
     /// that read it many times per frame neither redo the work nor get a new value.
     @ObservationIgnored private var applied: [String: (limits: RowingLimits, forecast: ClubForecast)] = [:]
     private(set) var failed: Set<String> = []
+    /// Clubs whose picked model has no forecast yet, so the automatic one is shown.
+    private(set) var pickedModelMissing: Set<String> = []
     private let api: APIClient
 
     nonisolated init(api: APIClient) { self.api = api }
 
     func load(_ clubID: String, force: Bool = false) async {
         if !force, raw[clubID] != nil { return }
+        if let model = AppSettings.shared.pickedModel(for: clubID) {
+            if let forecast = try? await api.forecast(clubID: clubID, model: model) {
+                applied[clubID] = nil
+                raw[clubID] = forecast
+                failed.remove(clubID)
+                pickedModelMissing.remove(clubID)
+                return
+            }
+            pickedModelMissing.insert(clubID)
+        } else {
+            pickedModelMissing.remove(clubID)
+        }
         do {
             let forecast = try await api.forecast(clubID: clubID)
             applied[clubID] = nil

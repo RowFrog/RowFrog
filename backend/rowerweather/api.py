@@ -10,7 +10,7 @@ import os
 import time
 import xml.etree.ElementTree as ET
 import zipfile
-from dataclasses import replace
+from dataclasses import fields, replace
 from datetime import date, datetime, timedelta, timezone
 
 import httpx
@@ -300,8 +300,41 @@ async def _ice(client: httpx.AsyncClient, lake: locations.Lake, water_c: float |
     return ice.with_satellite(estimate, _satellite_ice.get(lake.id, []), today)
 
 
+def _filled(picked: list[open_meteo.ForecastHour], auto: list[open_meteo.ForecastHour]) -> list[open_meteo.ForecastHour]:
+    """The picked model's hours, with every value it does not give (past its reach,
+    or a variable it lacks) taken from the automatic chain."""
+    by_time = {h.time: h for h in picked}
+    out = []
+    for a in auto:
+        p = by_time.get(a.time)
+        if p is None:
+            out.append(a)
+            continue
+        out.append(replace(a, **{f.name: getattr(p, f.name) for f in fields(a) if getattr(p, f.name) is not None}))
+    return out
+
+
+def _offers_choices(club: locations.Club) -> bool:
+    # Only the confirmed clubs, because each model costs extra Open-Meteo calls.
+    return club.source is None
+
+
 @app.get("/clubs/{club_id}/forecast")
 async def club_forecast(club_id: str) -> dict:
+    return await _club_forecast(club_id, None)
+
+
+@app.get("/clubs/{club_id}/models/{model_id}/forecast")
+async def club_forecast_with_model(club_id: str, model_id: str) -> dict:
+    """The forecast with a model the user picked (a hidden test in the app)."""
+    club = _locations.clubs.get(club_id)
+    picked = None if club is None else weather_models.choice(club.launch_point.lat, club.launch_point.lon, model_id)
+    if club is None or picked is None or not _offers_choices(club):
+        raise HTTPException(status_code=404, detail="no such model for this club")
+    return await _club_forecast(club_id, picked)
+
+
+async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> dict:
     club = _locations.clubs.get(club_id)
     if club is None:
         raise HTTPException(status_code=404, detail="unknown club")
@@ -335,6 +368,20 @@ async def club_forecast(club_id: str) -> dict:
                 except httpx.HTTPError:
                     outlook = None
             _cache[club_id] = (time.monotonic(), (weather, water, water_history, outlook))
+        if picked is not None:
+            key = f"{club_id}@{picked.id}"
+            cached = _cache.get(key)
+            if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
+                weather = cached[1]
+            else:
+                other = _primed_weather.pop(key, None)
+                if other is None:
+                    try:
+                        other = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon, models=picked.id)
+                    except httpx.HTTPError:
+                        raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
+                weather = _filled(other, weather)
+                _cache[key] = (time.monotonic(), weather)
         warnings_block, warnings = await _warnings(client, club, now)
         ice_estimate = await _ice(client, lake, water.celsius if water else None, now)
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
@@ -345,6 +392,7 @@ async def club_forecast(club_id: str) -> dict:
     water_c = water.celsius if water else None
     hours = rowing_forecast(club, weather, rings, water_c, warnings, ice_by_day=ice_by_day)
     outlook_hours = rowing_forecast(club, outlook, rings, water_c, warnings, ice_by_day=ice_by_day) if outlook else None
+    chain = weather_models.chain_for(club.launch_point.lat, club.launch_point.lon)
     return {
         "clubId": club.id,
         "lakeId": club.lake_id,
@@ -360,9 +408,12 @@ async def club_forecast(club_id: str) -> dict:
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
         "attribution": ATTRIBUTION,
-        "forecastSource": weather_models.source_json(
-            weather_models.chain_for(club.launch_point.lat, club.launch_point.lon), len(hours)
-        ),
+        "forecastSource": weather_models.source_json(chain, len(hours))
+        if picked is None
+        else weather_models.picked_source_json(chain, picked, len(hours)),
+        "modelChoices": weather_models.choices_json(club.launch_point.lat, club.launch_point.lon)
+        if _offers_choices(club)
+        else [],
         "daylight": [
             {"date": d.day.isoformat(), "sunrise": _utc(d.sunrise), "sunset": _utc(d.sunset)}
             for d in sun_days(now, now + timedelta(hours=len(hours)), club.launch_point.lat, club.launch_point.lon)
