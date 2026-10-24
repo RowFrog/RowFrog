@@ -6,16 +6,18 @@ webcam pictures where they are available later on.
 For each club's launch point the app shows an hourly green / amber / red
 "can we row?" light for the next 48 hours, and the conditions behind it:
 wind, gusts, computed wave height, fog, thunderstorm risk, air and water
-temperature, rain radar, ice cover, official DWD warnings and daylight. It starts with the lakes
-south of Munich (Starnberger See first) and can show any club in the German
-Rowing Association's club list.
+temperature, rain radar, ice cover, official DWD warnings and daylight.
+It starts with the lakes south of Munich (Starnberger See first) and can
+show any club in the German Rowing Association's club list.
 
 The app is free. It is an iPhone app (iOS 17 or later) written in SwiftUI;
 Android may follow later.
 
-> **Name.** The app is called **Row Frog**. In the code on `main` the Xcode
-> project, targets, bundle IDs and the Python package are still called
-> `RowerWeather`; the rename is in progress (see [In progress](#in-progress)).
+> **Name.** The app is called **Row Frog** (working title until October 2026:
+> RowerWeather). The app and widget use the bundle IDs `com.rowfrog.RowFrog`
+> and `com.rowfrog.RowFrog.Widget`, the app group `group.com.rowfrog.RowFrog`
+> and links starting with `rowfrog://`. The Xcode project, targets and folders
+> and the Python package are still called `RowerWeather`.
 
 ## What the app does
 
@@ -208,7 +210,6 @@ Proposed for small boats (1x, 2x) and to be tuned with rowers; see
 
 Not on `main` yet, each in an open pull request:
 
-- The Row Frog name in the app, new bundle IDs and the `rowfrog://` link.
 - A compact current-conditions card with detail sheets, and rowing limits you
   can set per boat.
 - A per-region choice of weather model, with the forecast source shown in the
