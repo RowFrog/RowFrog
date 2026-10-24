@@ -47,7 +47,6 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Publish forecasts | every 30 min from main | api.rowfrog.com |
 | Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays) |
 | Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month |
-| App screenshots | when its workflow file changes, or by hand | docs/screenshots |
 
 ## By hand
 
@@ -56,7 +55,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Usage counter | once after setting it up, and whenever `cloudflare/usage/` changes on main (it runs itself then) |
 | API check | to see whether api.rowfrog.com, the Cloudflare proxy and the usage counter answer |
 | Model check with archive_days | once for a quick first score (60 days); otherwise leave it at 0 |
-| App screenshots with `only` | to re-shoot some screens, e.g. `^8[1-7]-` |
+| App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results land in docs/screenshots |
 
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
 

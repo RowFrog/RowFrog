@@ -249,7 +249,11 @@ def lake_weather(state: State, lake_ids: list[str], used: set[str], now: datetim
         if samples != lake_view.MAX_SAMPLES:
             api._lake_samples[lake_id] = samples
         loaded, points, _ = state.lakes.get(lake_id, (None, 0, None))
-        grid = api.lake_grid(lake_id, outlines.load(lake_id))
+        try:
+            grid = api.lake_grid(lake_id, outlines.load(lake_id))
+        except Exception as e:  # one broken outline must not stop every other lake
+            print(f"  lake grid {lake_id}: {e!r}")
+            continue
         hours, offset = (WEATHER_HOURS["used"], timedelta()) if lake_id in used else (LAKE_OTHER_HOURS, LAKE_OTHER_OFFSET)
         if points != len(grid.samples) or due(loaded, now, hours, offset):
             stale.append((lake_id, grid))
