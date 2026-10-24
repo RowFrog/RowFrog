@@ -95,8 +95,9 @@ Sentinel-2 picture of the lake, with a line such as "Sentinel-2 · 22 Oct ·
 comes only every 2 to 5 days. A switch chooses between the latest pass
 (clouds or not), the clearest one and, in cloudy weeks, a newer mostly clear
 one; every picture shows the same area. Chips draw the shore, clubs, saved
-routes, wind and, in winter, the satellite ice map over it. Tap for full
-screen with zoom.
+routes, wind and, in winter, the satellite ice map over it. Two more layers
+colour the water with the lake view's wave heights or rowing light for the
+chosen hour, one at a time. Tap for full screen with zoom.
 
 **Forecast source.** A small line at the bottom of each club page names the
 weather model the forecast comes from (today DWD's ICON models for every club,
