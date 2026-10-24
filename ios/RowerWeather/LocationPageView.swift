@@ -17,10 +17,12 @@ struct LocationPageView: View {
     @State private var showLakeViewTip = false
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
+    @State private var showSourceTip = false
     private let conditionsTip = ConditionsExtrasTip()
     private let lakeViewTip = LakeViewTip()
     private let rainRadarTip = RainRadarTip()
     private let satelliteTip = SatellitePictureTip()
+    private let sourceTip = ForecastSourceTip()
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
 
@@ -50,7 +52,7 @@ struct LocationPageView: View {
                                 HStack(alignment: .top, spacing: 16) {
                                     VStack(spacing: 16) {
                                         conditionCards(forecast, now: now)
-                                        if let source = forecast.forecastSource { ForecastSourceLine(source: source).id("source") }
+                                        sourceLine(forecast)
                                         LegendCard()
                                     }
                                     VStack(spacing: 16) {
@@ -60,7 +62,7 @@ struct LocationPageView: View {
                             } else {
                                 conditionCards(forecast, now: now)
                                 forecastCards(forecast)
-                                if let source = forecast.forecastSource { ForecastSourceLine(source: source).id("source") }
+                                sourceLine(forecast)
                                 LegendCard()
                             }
                             VStack(alignment: .leading, spacing: 4) {
@@ -99,6 +101,7 @@ struct LocationPageView: View {
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
                 .tipVisibility(rainRadarTip, $showRainRadarTip)
                 .tipVisibility(satelliteTip, $showSatelliteTip)
+                .tipVisibility(sourceTip, $showSourceTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
@@ -149,6 +152,19 @@ struct LocationPageView: View {
                 SatellitePictureCard(lakeID: forecast.lakeId)
             }
             .id("satellite")
+        }
+    }
+
+    @ViewBuilder
+    private func sourceLine(_ forecast: ClubForecast) -> some View {
+        if let source = forecast.forecastSource {
+            VStack(spacing: 16) {
+                if tourSeen && showSourceTip {
+                    TipView(sourceTip)
+                }
+                ForecastSourceLine(source: source)
+            }
+            .id("source")
         }
     }
 

@@ -119,6 +119,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "humidity", text: tr("Humidity, with the dew point underneath.")),
             TourPoint(symbol: "gauge.with.dots.needle.33percent", text: tr("Air pressure on a gauge, with its trend for the hours ahead.")),
             TourPoint(symbol: "snowflake", text: tr("In winter, the app estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.")),
+            TourPoint(symbol: "cloud.sun", text: tr("The forecast comes from the weather model that does best for your lake. The line above the Legend names it.")),
             TourPoint(symbol: "info.circle", text: tr("Open the Legend at the bottom of each page to see what every icon and colour means.")),
         ]
         case .warnings: [
@@ -511,6 +512,12 @@ struct SatellitePictureTip: Tip {
     var title: Text { Text(tr("Satellite picture")) }
     var message: Text? { Text(tr("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind or the ice map over it.")) }
     var image: Image? { Image(systemName: "globe.europe.africa") }
+}
+
+struct ForecastSourceTip: Tip {
+    var title: Text { Text(tr("Where the forecast comes from")) }
+    var message: Text? { Text(tr("The app picks the weather model that does best for this lake. Tap the line to see which one.")) }
+    var image: Image? { Image(systemName: "cloud.sun") }
 }
 
 struct RoutePlanningTip: Tip {
