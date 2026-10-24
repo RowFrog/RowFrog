@@ -35,12 +35,32 @@ struct LaunchPointMapCard: View {
                     .foregroundStyle(.secondary)
                     .textSelection(.enabled)
                 Spacer()
-                Button(tr("Open in Maps"), systemImage: "map") { openInMaps() }
-                    .font(.caption.weight(.semibold))
-                    .buttonStyle(.bordered)
+                Menu {
+                    Button(tr("Directions to the club"), systemImage: "car") { Task { await openClubInMaps() } }
+                    Button(tr("Launch point on the map"), systemImage: "mappin.and.ellipse") { openInMaps() }
+                } label: {
+                    Label(tr("Open in Maps"), systemImage: "map")
+                }
+                .font(.caption.weight(.semibold))
+                .buttonStyle(.bordered)
             }
         }
         .font(.subheadline)
+    }
+
+    /// Directions to the club's address, since the launch point at the water
+    /// has no address to drive to. Falls back to the launch point when Maps
+    /// can't find the address.
+    @MainActor private func openClubInMaps() async {
+        let request = MKLocalSearch.Request()
+        request.naturalLanguageQuery = club.address
+        request.region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 20_000, longitudinalMeters: 20_000)
+        guard let item = try? await MKLocalSearch(request: request).start().mapItems.first else {
+            openInMaps()
+            return
+        }
+        item.name = club.displayName
+        item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault])
     }
 
     private func openInMaps() {
