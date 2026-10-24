@@ -77,6 +77,7 @@ struct LakeViewCard: View {
             if hour.lakeWide.light > .green {
                 LakeWideBanner(lakeWide: hour.lakeWide)
             }
+            MapBoatNote()
             if view.zones.count > 1 {
                 ForEach(Array(zip(view.zones.indices, view.zones)), id: \.0) { i, zone in
                     if i < hour.zones.count {

@@ -13,8 +13,11 @@ name: Publish forecasts
 # USAGE_KEY (the usage counter, when it is set up).
 
 on:
-  # A change to the publisher publishes at once, from whichever branch it was pushed to.
+  # A change to the publisher publishes at once, but only from main: other
+  # branches would overwrite the live files with their own, older code.
+  # (Run it by hand to try a branch.)
   push:
+    branches: [main]
     paths:
       - scripts/publish_static.py
       - .github/workflows/publish-backend.yml

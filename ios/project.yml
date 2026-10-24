@@ -72,6 +72,7 @@ targets:
       - path: RowerWeather/AppSettings.swift
       - path: RowerWeather/Units.swift
       - path: RowerWeather/Conditions.swift
+      - path: RowerWeather/Limits.swift
       - path: RowerWeather/Sky.swift
       - path: RowerWeather/TrafficLightView.swift
       - path: RowerWeather/Backgrounds.swift

@@ -82,8 +82,8 @@ def test_mostly_clear_picture_only_when_it_adds_something(tmp_path, monkeypatch)
 
 
 def test_club_requests_stay_small():
-    # 12 variables count as 1.2 calls per club, a lake point as one.
-    assert open_meteo.params_weight(open_meteo.request_params(48, 11, 60)) == 1.2
+    # 14 variables count as 1.4 calls per club, a lake point as one.
+    assert open_meteo.params_weight(open_meteo.request_params(48, 11, 60)) == 1.4
     assert open_meteo.call_weight(len(open_meteo.LAKE_HOURLY), 15) == 15
 
 
@@ -101,3 +101,19 @@ def test_old_forecast_hours_are_left_out():
     weather = open_meteo.parse(payload)
     kept = api._from_now(weather, utc(18, 5, 40))
     assert [h.time.hour for h in kept] == [5, 6, 7, 8]
+
+
+def test_only_clubs_people_load_count_as_used(monkeypatch):
+    from types import SimpleNamespace
+
+    from rowerweather import locations
+
+    monkeypatch.setattr(publish, "usage", None)
+    clubs, _, counted = publish.usage_now()
+    assert not counted and clubs == set(locations.load(catalog_paths=()).clubs)
+
+    loaded = SimpleNamespace(used=lambda days: SimpleNamespace(clubs={"mrc-1880": 4}, lakes={"ammersee": 1}))
+    monkeypatch.setattr(publish, "usage", loaded)
+    clubs, lakes, counted = publish.usage_now()
+    assert counted and clubs == {"mrc-1880"}
+    assert lakes == {"starnberger-see", "ammersee"}

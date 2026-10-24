@@ -204,7 +204,7 @@ enum PlaceForecaster {
                 precipitationMm: at(h.precipitation, i), weatherCode: at(h.weather_code, i).map { Int($0) },
                 apparentTemperatureC: at(h.apparent_temperature, i),
                 humidityPct: at(h.relative_humidity_2m, i), dewPointC: at(h.dew_point_2m, i),
-                pressureHpa: at(h.pressure_msl, i)
+                pressureHpa: at(h.pressure_msl, i), capeJkg: at(h.cape, i)
             )
         }
         return ClubForecast(

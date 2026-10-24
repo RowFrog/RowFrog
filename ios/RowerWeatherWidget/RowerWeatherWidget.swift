@@ -160,9 +160,9 @@ struct RowingProvider: AppIntentTimelineProvider {
            let forecast = try? APIClient.decoder.decode(ClubForecast.self, from: result.0) {
             let data = result.0
             shared.set(data, forKey: WidgetShared.cacheKey(clubID))
-            return forecast
+            return forecast.applyingUserLimits()
         }
         guard let cached = shared.data(forKey: WidgetShared.cacheKey(clubID)) else { return nil }
-        return try? APIClient.decoder.decode(ClubForecast.self, from: cached)
+        return (try? APIClient.decoder.decode(ClubForecast.self, from: cached))?.applyingUserLimits()
     }
 }

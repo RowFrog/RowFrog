@@ -106,16 +106,41 @@ enum Light: String, Codable, Comparable {
 struct Reason: Codable, Hashable {
     let condition: String
     let light: Light
+    /// Set by the app when the user's own limit decided this reason.
+    var mine: Bool? = nil
 
     /// Short label shown under the traffic light.
     var label: String {
+        mine == true ? tr("%@ (your limit)", baseLabel) : baseLabel
+    }
+
+    /// One sentence saying why this condition changes the advice.
+    var explanation: String {
+        mine == true ? baseExplanation + " " + tr("You set this limit yourself.") : baseExplanation
+    }
+
+    /// For a note: the value is within the user's own limit but above the app's.
+    var noteText: String {
+        if condition == "cold_margin" {
+            return tr("Cold water: the app lowers its wind and gust limits by %@ below %@. Your own limits stay as you set them, so take extra care.",
+                      Format.wind(RowingLimits.coldWindMarginMs), Format.temperature(RowingLimits.coldWaterC))
+        }
+        return tr("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel, AppSettings.shared.selectedBoat.inSentence)
+    }
+
+    private var baseLabel: String {
         switch condition {
-        case "lake_warning": tr("DWD lake warning")
+        case "lake_warning": tr("DWD storm warning")
+        case "lake_strong_wind": tr("DWD strong-wind warning")
+        case "single_cold": tr("Single in cold water")
+        case "freezing_water": tr("Near-freezing water")
         case "weather_warning": tr("DWD weather warning")
         case "wind": tr("Wind")
         case "gusts": tr("Gusts")
         case "waves": tr("Waves")
         case "fog": tr("Fog")
+        case "heavy_rain": tr("Heavy rain")
+        case "hail": tr("Hail")
         case "thunderstorm": tr("Thunderstorm risk")
         case "ice": tr("Ice")
         case "daylight": tr("Sun down")
@@ -126,20 +151,24 @@ struct Reason: Codable, Hashable {
         }
     }
 
-    /// One sentence saying why this condition changes the advice.
-    var explanation: String {
+    private var baseExplanation: String {
         switch condition {
-        case "lake_warning": tr("DWD has issued a wind or storm warning for the lake.")
+        case "lake_warning": tr("DWD has issued a storm warning for the lake; its warning lights flash 90 times a minute.")
+        case "lake_strong_wind": tr("DWD has issued a strong-wind warning for the lake; its warning lights flash 40 times a minute.")
+        case "single_cold": tr("In a single, row with a coach boat or a partner boat while the water is this cold.")
+        case "freezing_water": tr("The water is below %@. You are strongly advised not to go out, at least not in a small boat.", Format.temperature(RowingLimits.freezingWaterC))
         case "weather_warning": tr("DWD has issued a weather warning for this place.")
         case "wind": tr("Mean wind is above the limit.")
         case "gusts": tr("Gusts are above the limit.")
         case "waves": tr("Waves at the launch point are too high.")
         case "fog": tr("Visibility is poor (fog or mist).")
+        case "heavy_rain": tr("Heavy rain of %@ or more in the hour.", Format.rain(4))
+        case "hail": tr("Hail is forecast with a thunderstorm.")
         case "thunderstorm": tr("Thunderstorms are possible.")
         case "ice": light == .red ? tr("Ice on the lake is likely (estimate).") : tr("Thin ice at the shore or drift ice is possible (estimate).")
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
         case "twilight": tr("Sunrise or sunset falls in this hour.")
-        case "cold_water": tr("Water is below %@, so a capsize is dangerous.", Format.temperature(10))
+        case "cold_water": tr("Water is below %@, so a capsize is dangerous.", Format.temperature(AppSettings.shared.limits.value(.lifeJacket)))
         case "cool_water": tr("Water is below %@. Take extra care.", Format.temperature(15))
         default: condition
         }
@@ -177,6 +206,16 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     var dewPointC: Double? = nil
     /// Air pressure at sea level, in hPa.
     var pressureHpa: Double? = nil
+    /// Low, middle and high cloud in % (all cloud is cloudCoverPct).
+    var cloudCoverLowPct: Double? = nil
+    var cloudCoverMidPct: Double? = nil
+    var cloudCoverHighPct: Double? = nil
+    /// WHO UV index.
+    var uvIndex: Double? = nil
+    /// Energy for thunderstorms (CAPE), in J/kg.
+    var capeJkg: Double? = nil
+    /// Set by the app: conditions above the app's usual limit but within the user's own.
+    var notes: [Reason]? = nil
 
     var id: Date { time }
 
@@ -188,7 +227,9 @@ struct ForecastHour: Codable, Identifiable, Hashable {
             temperatureC: temperatureC, cloudCoverPct: cloudCoverPct, sunUp: sunUp,
             precipitationMm: precipitationMm, weatherCode: weatherCode,
             apparentTemperatureC: apparentTemperatureC,
-            humidityPct: humidityPct, dewPointC: dewPointC, pressureHpa: pressureHpa
+            humidityPct: humidityPct, dewPointC: dewPointC, pressureHpa: pressureHpa,
+            cloudCoverLowPct: cloudCoverLowPct, cloudCoverMidPct: cloudCoverMidPct, cloudCoverHighPct: cloudCoverHighPct,
+            uvIndex: uvIndex, capeJkg: capeJkg, notes: notes
         )
     }
 
@@ -201,6 +242,13 @@ struct ForecastHour: Codable, Identifiable, Hashable {
 struct WaterTemperature: Codable, Hashable {
     let celsius: Double
     let measuredAt: Date
+    /// Earlier readings of the station, one per hour, oldest first.
+    var history: [WaterReading]? = nil
+}
+
+struct WaterReading: Codable, Hashable {
+    let time: Date
+    let celsius: Double
 }
 
 struct SunDay: Codable, Hashable {
@@ -249,6 +297,27 @@ struct Warnings: Codable, Hashable {
     var checked: Bool { status == "ok" }
 }
 
+/// Which weather models a forecast comes from: the best local model for the
+/// first hours, then longer-range ones (backend weather_models.py).
+struct ForecastSource: Codable, Hashable {
+    struct Part: Codable, Hashable {
+        let model: String
+        let provider: String
+        let resolutionKm: Double
+        let fromHour: Int
+        let toHour: Int
+
+        /// "DWD" from "Deutscher Wetterdienst (DWD)".
+        var providerShort: String {
+            guard let open = provider.lastIndex(of: "("), let close = provider.lastIndex(of: ")"), open < close else { return provider }
+            return String(provider[provider.index(after: open)..<close])
+        }
+    }
+
+    let region: String
+    let parts: [Part]
+}
+
 struct ClubForecast: Codable, Hashable {
     let clubId: String
     let lakeId: String
@@ -259,8 +328,12 @@ struct ClubForecast: Codable, Hashable {
     /// Missing from older backends.
     var ice: IceEstimate? = nil
     let attribution: [String]
+    /// Missing from older backends.
+    var forecastSource: ForecastSource? = nil
     let daylight: [SunDay]?
-    let hours: [ForecastHour]
+    var hours: [ForecastHour]
+    /// Yesterday and the next 7 days, for the charts behind the conditions tiles.
+    var outlook: [ForecastHour]? = nil
 
     /// The first forecast hour as it stands at `date`. That hour began up to
     /// an hour ago, so "sunrise or sunset within the hour" is replaced by
