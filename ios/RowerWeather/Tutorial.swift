@@ -118,7 +118,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "thermometer.variable.and.figure", text: tr("Feels like: colder with wind chill, warmer with humidity and heat.")),
             TourPoint(symbol: "humidity", text: tr("Humidity, with the dew point underneath.")),
             TourPoint(symbol: "gauge.with.dots.needle.33percent", text: tr("Air pressure on a gauge, with its trend for the hours ahead.")),
-            TourPoint(symbol: "snowflake", text: tr("In winter, the Ice value estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.")),
+            TourPoint(symbol: "snowflake", text: tr("In winter, the app estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.")),
             TourPoint(symbol: "info.circle", text: tr("Open the Legend at the bottom of each page to see what every icon and colour means.")),
         ]
         case .warnings: [
@@ -438,7 +438,7 @@ private struct TourPageView: View {
             }
         case .conditions:
             LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)], spacing: 12) {
-                ForEach([Condition.temperature, .feelsLike, .waterTemperature, .wind, .waves, .precipitation, .visibility, .daylight]) { condition in
+                ForEach(Condition.allCases) { condition in
                     HStack(spacing: 8) {
                         ConditionIcon(condition: condition)
                             .foregroundStyle(page.tint)
@@ -509,7 +509,7 @@ struct RainRadarTip: Tip {
 
 struct SatellitePictureTip: Tip {
     var title: Text { Text(tr("Satellite picture")) }
-    var message: Text? { Text(tr("The lake from space, as Sentinel-2 saw it last. New pictures come every 2 to 5 days, when the sky allows. Switch to the clearest picture, and draw the shore, clubs, your routes or the wind over it.")) }
+    var message: Text? { Text(tr("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind or the ice map over it.")) }
     var image: Image? { Image(systemName: "globe.europe.africa") }
 }
 
