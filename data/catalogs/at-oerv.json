@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-23",
+  "updated": "2026-10-24",
   "source": "Club data: Österreichischer Ruderverband (rudern.at). Positions and waters: © OpenStreetMap contributors, ODbL",
   "lakes": [
     {
@@ -58,8 +58,8 @@
       "name": "Hochwiesegraben",
       "country": "at",
       "center": {
-        "lat": 48.33,
-        "lon": 16.0286
+        "lat": 48.3299,
+        "lon": 16.0285
       },
       "osm": "way/642950869"
     },
@@ -895,9 +895,9 @@
       "country": "at",
       "lakeId": "hochwiesegraben",
       "launchPoint": {
-        "lat": 48.32714,
-        "lon": 16.02805,
-        "precision": "shore point of Hochwiesegraben nearest the geocoded club address, 272 m away",
+        "lat": 48.32698,
+        "lon": 16.02796,
+        "precision": "shore point of Hochwiesegraben nearest the geocoded club address, 264 m away",
         "verified": false
       }
     },
