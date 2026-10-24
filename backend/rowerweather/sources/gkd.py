@@ -54,10 +54,28 @@ def latest(page: str, now: datetime, max_age: timedelta = timedelta(hours=6)) ->
     return readings[0]
 
 
-async def fetch_latest(client: httpx.AsyncClient, station: str, now: datetime) -> WaterTemperature | None:
-    """`station` is the slug from the GKD page URL, e.g. "starnberg-16663002"."""
+async def _page(client: httpx.AsyncClient, station: str) -> str:
     resp = await client.get(PAGE_URL.format(station=station), headers=HEADERS, timeout=20, follow_redirects=True)
     resp.raise_for_status()
     if "Request Rejected" in resp.text:
         raise httpx.HTTPError("GKD firewall rejected the request")
-    return latest(resp.text, now)
+    return resp.text
+
+
+async def fetch_latest(client: httpx.AsyncClient, station: str, now: datetime) -> WaterTemperature | None:
+    """`station` is the slug from the GKD page URL, e.g. "starnberg-16663002"."""
+    return latest(await _page(client, station), now)
+
+
+def hourly(readings: list[WaterTemperature]) -> list[WaterTemperature]:
+    """One reading per hour (the first of each hour), oldest first, for a chart."""
+    by_hour: dict[datetime, WaterTemperature] = {}
+    for r in sorted(readings, key=lambda r: r.time):
+        by_hour.setdefault(r.time.replace(minute=0), r)
+    return list(by_hour.values())
+
+
+async def fetch_recent(client: httpx.AsyncClient, station: str, now: datetime) -> tuple[WaterTemperature | None, list[WaterTemperature]]:
+    """The newest measurement (as fetch_latest) and the page's history, hour by hour."""
+    page = await _page(client, station)
+    return latest(page, now), hourly(parse(page))
