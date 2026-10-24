@@ -1,6 +1,6 @@
-# Model check, 2026-10-24 16:15 UTC
+# Model check, 2026-10-24 17:02 UTC
 
-4 forecast runs stored (2026-10-23T20:00Z to 2026-10-24T16:00Z).
+5 forecast runs stored (2026-10-23T20:00Z to 2026-10-24T17:00Z).
 Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.
 "Light wrong" = how often wind and gusts alone would have given a different rowing light than measured.
 Stations are on land, where wind is usually weaker than on the lake, so the ranking matters more than the numbers.
@@ -37,15 +37,15 @@ Stations are on land, where wind is usually weaker than on the lake, so the rank
 
 ## icon_d2 vs best_match
 
-105 forecast hours differ by more than wind 2.0 m/s, gusts 3.0 m/s or air 2.0 °C.
+107 forecast hours differ by more than wind 2.0 m/s, gusts 3.0 m/s or air 2.0 °C.
 
 | Point | Hours |
 | --- | --- |
 | starnberger-see-south | 43 |
 | staffelsee | 28 |
 | starnberger-see-centre | 17 |
+| tegernsee | 8 |
 | kochelsee | 8 |
-| tegernsee | 6 |
 | tutzinger-rv | 3 |
 
 Latest:
