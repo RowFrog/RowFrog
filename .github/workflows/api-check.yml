@@ -27,8 +27,9 @@ jobs:
         env:
           USAGE_KEY: ${{ secrets.USAGE_KEY }}
         run: |
-          echo "== without key"; curl -sS -w '  (%{http_code})\n' https://api.rowfrog.com/usage || true
-          echo "== with key"; curl -sS -w '  (%{http_code})\n' -H "Authorization: Bearer $USAGE_KEY" "https://api.rowfrog.com/usage?days=1" || true
+          # 401 without the key and the counts with it once the Worker runs; 404 before it is deployed.
+          echo "== without key: $(curl -sS -o body -w '%{http_code}' https://api.rowfrog.com/usage) $(head -c 100 body)"
+          echo "== with key: $(curl -sS -o body -w '%{http_code}' -H "Authorization: Bearer $USAGE_KEY" "https://api.rowfrog.com/usage?days=1") $(head -c 300 body)"
       - name: Secrets present
         env:
           A: ${{ secrets.CLOUDFLARE_API_TOKEN }}
