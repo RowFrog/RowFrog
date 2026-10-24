@@ -92,9 +92,13 @@ struct LocationPageView: View {
                     await forecasts.load(club.id)
                     // Screenshot hook: `-RWScrollTo hourly` (or `launchpoint`, `lakeview`, `source`) scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
-                        // The lake view loads after the forecast and pushes the cards below it down, so wait for it.
-                        try? await Task.sleep(for: .milliseconds(["lakeview", "source"].contains(target) ? 2500 : 300))
-                        proxy.scrollTo(target, anchor: .top)
+                        // The lake view loads after the forecast and pushes the cards below it down,
+                        // so for cards below it scroll again once it has settled.
+                        let waits = ["lakeview", "source"].contains(target) ? [2500, 3000, 3000] : [300]
+                        for wait in waits {
+                            try? await Task.sleep(for: .milliseconds(wait))
+                            proxy.scrollTo(target, anchor: .top)
+                        }
                     }
                 }
             }
