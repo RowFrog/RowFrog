@@ -132,11 +132,11 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "light.beacon.max", text: tr("On the lake, also watch the storm warning lights on the shore. The warnings card explains what they mean.")),
         ]
         case .boats: [
-            TourPoint(symbol: "checkmark", text: tr("Small boats are ticked at first, with the strictest limits. Tick Big boats if you row a four or an eight.")),
-            TourPoint(symbol: "list.bullet", text: tr("Add My boats, such as the club's gig, each with its type and size. When it is too rough for your boat, the app names one of yours that would be fine.")),
-            TourPoint(symbol: "slider.horizontal.3", text: tr("The sliders next to a boat open its limits for wind, gusts and waves.")),
-            TourPoint(symbol: "map", text: tr("Pick the boat that colours the lake map. If the map is for a steadier boat than yours, it says so.")),
-            TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water, the app lowers its own wind and gust limits and advises a life jacket. In a single, take a coach or partner boat along.", Format.temperature(RowingLimits.coldWaterC))),
+            TourPoint(symbol: "checkmark", text: tr("Small boats are ticked at first. Tick Big boats if you row a four or an eight.")),
+            TourPoint(symbol: "list.bullet", text: tr("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
+            TourPoint(symbol: "slider.horizontal.3", text: tr("The sliders next to a boat open its limits.")),
+            TourPoint(symbol: "map", text: tr("Pick the boat that colours the lake map.")),
+            TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water the app is stricter and advises a life jacket.", Format.temperature(RowingLimits.coldWaterC))),
         ]
         case .lake: [
             TourPoint(symbol: "map", text: tr("The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.")),
