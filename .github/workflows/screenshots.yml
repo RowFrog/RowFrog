@@ -80,6 +80,12 @@ jobs:
         run: |
           set -x
           xcrun simctl bootstatus "$UDID" -b
+          # The build takes longer than the backend keeps DWD warnings; warm it again
+          # so the first shots do not catch a page still loading.
+          for club in mrc-1880 mrsv-bayern tutzinger-rv; do
+            curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/clubs/$club/forecast" || true
+          done
+          curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null http://localhost:8000/lakes/starnberger-see/view || true
           xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowerWeather.app
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4
           mkdir -p docs/screenshots
@@ -118,7 +124,7 @@ jobs:
             local name=$1 appearance=$2; shift 2
             wanted "$name" || return 0
             local page dir=docs/screenshots
-            for page in 1 2 3 4 5 6 7 8 9 10 11 12; do
+            for page in $(seq 1 26); do
               shoot "$name-p$page" "$appearance" "$@" -RWScrollPage $((page - 1))
               if [ "$page" -gt 1 ] && same "$dir/$name-p$page.png" "$dir/$name-p1.png"; then
                 echo "Page $page did not scroll; shooting it again."
@@ -150,6 +156,28 @@ jobs:
           shoot_pages 06-list-with-river-club light -RWShowList YES
           shoot_pages 07-home-dark dark
           shoot_pages 09-icons light -RWIconGallery YES
+          shoot_pages 39-conditions-proposal light -RWConditionsPreview YES
+          # The Current conditions card and the larger view behind each tile.
+          shoot 60-conditions-card light -RWOpenClub mrc-1880 -RWScrollTo conditions
+          for c in temperature feelsLike humidity wind waves waterTemperature precipitation visibility cloudCover pressure thunderstorm uvIndex ice daylight; do
+            shoot_pages "61-condition-$c" light -RWOpenClub mrc-1880 -RWOpenCondition "$c"
+          done
+          shoot 62-condition-wind-limits light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES
+          shoot 63-condition-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES -RWLanguage de
+          # Boats and rowing limits: small boats ticked with own limits, two boats of
+          # the user's own, the lake map coloured for big boats (so it warns).
+          BOATS=(-RWMyBoats '({id = b-anna; name = Anna; type = gig; class = "4x";}, {id = b-flash; name = Flash; type = training; class = "1x";})')
+          OWN=(-RWBoatLimits '{small = {windAmber = 2; gustAmber = 16; gustRed = 18;}; b-anna = {waveAmber = 0.4;};}')
+          shoot 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
+          shoot 64-settings-limits-map light -RWShowSettings YES -RWSettingsPage limits -RWLimitsScroll map "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
+          shoot 65-own-limits light -RWOpenClub mrc-1880 "${BOATS[@]}" "${OWN[@]}"
+          shoot 66-own-limits-wind light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES "${BOATS[@]}" "${OWN[@]}"
+          shoot 67-boat-limits light -RWShowSettings YES -RWSettingsPage boat:b-anna "${BOATS[@]}" "${OWN[@]}"
+          shoot 68-lake-card-map-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview "${BOATS[@]}" -RWMapBoat big
+          shoot 69-lake-map-boat light -RWOpenClub mrc-1880 -RWOpenLakeView YES "${BOATS[@]}" -RWMapBoat big
+          # The shore warning lights explained, at a club with a lake warning.
+          shoot 70-shore-lights light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES
+          shoot 70-shore-lights-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES -RWLanguage de
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES
@@ -158,8 +186,8 @@ jobs:
           shoot 43-home-landscape-off light -RWAllowsLandscape NO -RWLandscape YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
-          shoot_n 10-settings 6 light -RWShowSettings YES
-          shoot_n 11-settings-german-dark 6 dark -RWShowSettings YES -RWLanguage de
+          shoot_n 10-settings 7 light -RWShowSettings YES
+          shoot_n 11-settings-german-dark 7 dark -RWShowSettings YES -RWLanguage de
           shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
           shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
@@ -204,15 +232,15 @@ jobs:
           shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3
           shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de
           # Where the forecast comes from: the line at the bottom of the page and its details.
-          shoot 64-forecast-source light -RWOpenClub mrc-1880 -RWScrollTo source
-          shoot 65-forecast-source-details light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES
-          shoot 66-forecast-source-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWLanguage de
+          shoot 71-forecast-source light -RWOpenClub mrc-1880 -RWScrollTo source
+          shoot 72-forecast-source-details light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES
+          shoot 73-forecast-source-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWLanguage de
           # The hidden weather model picker (developer options): the picker, a picked model, German, and the settings section.
           ifs='<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'
-          shoot 67-model-picker light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES
-          shoot 68-model-picked light -RWOpenClub mrc-1880 -RWScrollTo source -RWDeveloperOptions YES -RWPickedModels "$ifs"
-          shoot 69-model-picker-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES -RWPickedModels "$ifs" -RWLanguage de
-          shoot 70-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 7
+          shoot 74-model-picker light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES
+          shoot 75-model-picked light -RWOpenClub mrc-1880 -RWScrollTo source -RWDeveloperOptions YES -RWPickedModels "$ifs"
+          shoot 76-model-picker-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES -RWPickedModels "$ifs" -RWLanguage de
+          shoot 77-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 8
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES
           shoot_pages 33-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de

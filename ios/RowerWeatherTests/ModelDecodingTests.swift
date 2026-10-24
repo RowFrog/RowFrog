@@ -121,7 +121,7 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertTrue(warning.isLake)
         XCTAssertNil(warning.expires)
         XCTAssertEqual(warning.shortLabel, "DWD lake warning")
-        XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD lake warning")
+        XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD storm warning")
     }
 
     func testDecodesEnglishWarningText() throws {

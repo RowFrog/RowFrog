@@ -27,6 +27,51 @@ final class AppSettings {
     var timeFormat: TimeFormat { didSet { defaults.set(timeFormat.rawValue, forKey: Keys.timeFormat) } }
     var dateFormat: DateFormat { didSet { defaults.set(dateFormat.rawValue, forKey: Keys.dateFormat) } }
 
+    /// The user's own boats, besides the small and big boat groups.
+    var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
+    /// The boat the rowing light is for; kept until the user picks another.
+    var boatID: String { didSet { defaults.set(boatID, forKey: Keys.boat) } }
+    /// Limits the user changed, per boat; a missing entry means the app's limit for the boat's type.
+    var boatLimits: [String: [RowingLimit: Double]] {
+        didSet {
+            let plain = boatLimits.filter { !$0.value.isEmpty }
+                .mapValues { Dictionary(uniqueKeysWithValues: $0.map { ($0.key.rawValue, $0.value) }) }
+            defaults.set(plain, forKey: Keys.boatLimits)
+        }
+    }
+    /// The boat the lake map is coloured for, or `Self.followBoat` for the ticked one.
+    var mapBoatID: String { didSet { defaults.set(mapBoatID, forKey: Keys.mapBoat) } }
+    static let followBoat = "follow"
+
+    /// Small boats, big boats, then the user's own.
+    var boats: [Boat] { Boat.groups + myBoats }
+    func boat(_ id: String) -> Boat? { boats.first { $0.id == id } }
+    var selectedBoat: Boat { boat(boatID) ?? .small }
+    func limits(for boat: Boat) -> RowingLimits { RowingLimits(boat: boat, custom: boatLimits[boat.id] ?? [:]) }
+    /// The limits the rowing light uses.
+    var limits: RowingLimits { limits(for: selectedBoat) }
+    var mapBoat: Boat { mapBoatID == Self.followBoat ? selectedBoat : boat(mapBoatID) ?? .small }
+    var mapLimits: RowingLimits { limits(for: mapBoat) }
+    /// The map is coloured for a boat that takes more wind or waves than the
+    /// ticked one, so it can look calmer than it is for the user.
+    var mapLooksCalmer: Bool { mapLimits.allowsMore(than: limits) }
+
+    /// Adds a boat and returns it.
+    @discardableResult
+    func addBoat(type: BoatType = .gig, boatClass: BoatClass = .quad) -> Boat {
+        let boat = Boat(id: UUID().uuidString, name: "", type: type, boatClass: boatClass)
+        myBoats.append(boat)
+        return boat
+    }
+
+    /// Removes one of the user's boats; the ticked boat and the map fall back to small boats.
+    func removeBoat(_ id: String) {
+        myBoats.removeAll { $0.id == id }
+        boatLimits[id] = nil
+        if boatID == id { boatID = Boat.small.id }
+        if mapBoatID == id { mapBoatID = Boat.small.id }
+    }
+
     /// The picture behind every page, unless a page or club has its own.
     var allPagesBackground: BackgroundChoice { didSet { defaults.set(allPagesBackground.rawValue, forKey: Keys.background) } }
     /// Pictures for one kind of page; a missing entry means "same as all pages".
@@ -71,11 +116,15 @@ final class AppSettings {
         static let blur = "RWBackgroundBlur"
         static let tileStyle = "RWTileStyle"
         static let userPictures = "RWUserPictures"
+        static let boat = "RWBoat"
+        static let myBoats = "RWMyBoats"
+        static let boatLimits = "RWBoatLimits"
+        static let mapBoat = "RWMapBoat"
         static let developer = "RWDeveloperOptions"
         static let pickedModels = "RWPickedModels"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
-                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures,
+                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
                           developer, pickedModels]
     }
 
@@ -94,6 +143,28 @@ final class AppSettings {
         distanceUnit = value(Keys.distance, .kilometers)
         timeFormat = value(Keys.timeFormat, .hours24)
         dateFormat = value(Keys.dateFormat, .device)
+        // Launch arguments give the limits' numbers as text, e.g. `-RWBoatLimits '{small = {windAmber = 7;};}'`.
+        if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
+            myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
+        } else {
+            // As a launch argument: `-RWMyBoats '({id = b1; name = Anna; type = gig; class = "4x";})'`.
+            myBoats = (defaults.array(forKey: Keys.myBoats) as? [[String: String]] ?? []).compactMap { raw in
+                guard let id = raw["id"], let type = raw["type"].flatMap(BoatType.init(rawValue:)),
+                      let boatClass = raw["class"].flatMap(BoatClass.init(rawValue:)) else { return nil }
+                return Boat(id: id, name: raw["name"] ?? "", type: type, boatClass: boatClass)
+            }
+        }
+        boatID = defaults.string(forKey: Keys.boat) ?? Boat.small.id
+        let saved = defaults.dictionary(forKey: Keys.boatLimits) ?? [:]
+        boatLimits = saved.compactMapValues { raw -> [RowingLimit: Double]? in
+            guard let limits = raw as? [String: Any] else { return nil }
+            return Dictionary(uniqueKeysWithValues: limits.compactMap { key, raw in
+                guard let limit = RowingLimit(rawValue: key),
+                      let number = (raw as? Double) ?? (raw as? String).flatMap(Double.init) else { return nil }
+                return (limit, number)
+            })
+        }
+        mapBoatID = defaults.string(forKey: Keys.mapBoat) ?? Boat.small.id
         allPagesBackground = defaults.string(forKey: Keys.background).flatMap(BackgroundChoice.init(rawValue:)) ?? .noPicture
         let pages = defaults.dictionary(forKey: Keys.pageBackgrounds) as? [String: String] ?? [:]
         pageBackgrounds = Dictionary(uniqueKeysWithValues: pages.compactMap { key, raw in
@@ -141,10 +212,12 @@ final class AppSettings {
         tileStyle = .frosted
     }
 
-    /// Factory settings: every preference back to its default and the user's pictures deleted.
+    /// Factory settings: every preference back to its default, small boats
+    /// ticked, every boat's limits back to the app's, and the user's pictures deleted.
     /// Saved locations and the home base are not settings and stay.
     func resetToFactorySettings() {
         for name in userPictures { BackgroundLibrary.deleteUserPicture(name) }
+        let boats = myBoats
         for key in Keys.all { defaults.removeObject(forKey: key) }
         appearance = .device
         language = .device
@@ -156,6 +229,9 @@ final class AppSettings {
         distanceUnit = .kilometers
         timeFormat = .hours24
         dateFormat = .device
+        boatID = Boat.small.id
+        boatLimits = [:]
+        mapBoatID = Boat.small.id
         removeAllBackgrounds()
         userPictures = []
         developerOptions = false
@@ -163,6 +239,8 @@ final class AppSettings {
         // The assignments above write the defaults back; remove them so a later
         // change of the app's defaults reaches users who never chose.
         for key in Keys.all { defaults.removeObject(forKey: key) }
+        // The user's boats are kept, like the saved locations.
+        myBoats = boats
     }
 
     /// A picture the user removed can no longer be shown anywhere.

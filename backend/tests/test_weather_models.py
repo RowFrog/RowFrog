@@ -55,12 +55,16 @@ def test_only_confirmed_clubs_offer_other_models(monkeypatch):
         return open_meteo.parse(PAYLOAD)
 
     async def no_water(*args, **kwargs):
+        return None, []
+
+    async def no_outlook(*args, **kwargs):
         return None
 
     import httpx
 
     monkeypatch.setattr(open_meteo, "fetch", fake_fetch)
-    monkeypatch.setattr(api.gkd, "fetch_latest", no_water)
+    monkeypatch.setattr(open_meteo, "fetch_outlook", no_outlook)
+    monkeypatch.setattr(api.gkd, "fetch_recent", no_water)
     monkeypatch.setattr(api.httpx, "AsyncClient", _serve(lambda request: httpx.Response(200, json={"features": []})))
     _reset()
     client = TestClient(api.app)

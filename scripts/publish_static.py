@@ -67,6 +67,10 @@ FETCH_HOURS = 60
 # about READY_AFTER later. Loading more often brings nothing new.
 READY_AFTER = timedelta(hours=2, minutes=30)
 WEATHER_HOURS = {"used": 3, "other": 6, "other with usage": 12}
+# The 8-day outlook for the conditions charts costs about 2.4 calls per club
+# (14 variables plus a UV call), so it is loaded for used clubs only, after
+# every model run (3 hours): about 19 calls a day per used club.
+OUTLOOK_HOURS = 3
 # Lakes nobody uses are loaded twice a day, at a different hour from the clubs
 # (04:00 and 16:00 UTC), so no single run takes too many calls.
 LAKE_OTHER_HOURS = 12
@@ -110,11 +114,13 @@ class State:
         self.clubs: dict[str, tuple[datetime, list]] = {}
         self.lakes: dict[str, tuple[datetime, int, list]] = {}  # loaded, points, weather per point
         self.ice_map: tuple[datetime | None, dict[str, list]] = (None, {})
+        self.outlooks: dict[str, tuple[datetime, list]] = {}
         self.models: dict[str, tuple[datetime, list]] = {}  # "<club>@<model>" -> loaded, weather
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
                 self.clubs, self.lakes, self.ice_map = saved["clubs"], saved["lakes"], saved["ice_map"]
+                self.outlooks = saved.get("outlooks", {})
                 self.models = saved.get("models", {})
                 api._ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
@@ -129,6 +135,7 @@ class State:
             "lakes": self.lakes,
             "ice_map": self.ice_map,
             "ice_temps": api._ice_temps,
+            "outlooks": self.outlooks,
             "models": self.models,
         }
         self.path.write_bytes(pickle.dumps(body))
@@ -172,6 +179,28 @@ def club_weather(state: State, clubs: list[locations.Club], used: set[str], with
     for club in clubs:
         if club.id in state.clubs:
             api._primed_weather[club.id] = state.clubs[club.id][1]
+
+
+def club_outlooks(state: State, clubs: list[locations.Club], used: set[str], now: datetime) -> None:
+    """Loads the 8-day outlooks that are due for used clubs and hands them to the API;
+    other clubs get none, and the app charts their next 48 hours instead."""
+
+    async def load(stale: list[locations.Club]) -> None:
+        async with httpx.AsyncClient() as client:
+            for club in stale:
+                try:
+                    hours = await open_meteo.fetch_outlook(client, club.launch_point.lat, club.launch_point.lon)
+                except (httpx.HTTPError, ValueError, KeyError) as e:
+                    print(f"  outlook {club.id}: {e!r}")
+                    continue
+                state.outlooks[club.id] = (now, hours)
+
+    stale = [c for c in clubs if c.id in used and due(state.outlooks.get(c.id, (None,))[0], now, OUTLOOK_HOURS)]
+    asyncio.run(load(stale))
+    print(f"  outlook loaded for {len(stale)} clubs")
+    for club in clubs:
+        saved = state.outlooks.get(club.id) if club.id in used else None
+        api._primed_outlook[club.id] = saved[1] if saved else None
 
 
 def model_weather(state: State, clubs: list[locations.Club], now: datetime) -> list[tuple[locations.Club, str]]:
@@ -452,6 +481,7 @@ def main() -> int:
     every = list(locations.load().clubs.values())
     clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
     club_weather(state, clubs, used_clubs, with_usage, now)
+    club_outlooks(state, clubs, used_clubs, now)
     model_pairs = model_weather(state, clubs, now)
     all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
     satellite_ice(state, all_lakes, now)

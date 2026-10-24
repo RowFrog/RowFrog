@@ -47,6 +47,9 @@ _cache: dict[str, tuple[float, tuple]] = {}
 _primed_weather: dict[str, list] = {}
 # The same for the lake view's sample points, per lake.
 _primed_lake_weather: dict[str, list] = {}
+# The same for the 8-day outlook behind the conditions charts; None means "none
+# this time" (the app then charts the next 48 hours), a missing club loads it.
+_primed_outlook: dict[str, list | None] = {}
 # Forecast points per lake where it differs from lake_view.MAX_SAMPLES (lakes people look at).
 _lake_samples: dict[str, int] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
@@ -130,6 +133,11 @@ def _hour_json(h: RowingHour) -> dict:
         "dewPointC": w.dew_point_c,
         "pressureHpa": w.pressure_hpa,
         "cloudCoverPct": w.cloud_cover_pct,
+        "cloudCoverLowPct": w.cloud_cover_low_pct,
+        "cloudCoverMidPct": w.cloud_cover_mid_pct,
+        "cloudCoverHighPct": w.cloud_cover_high_pct,
+        "uvIndex": w.uv_index,
+        "capeJkg": w.cape_jkg,
         "precipitationMm": w.precipitation_mm,
         "weatherCode": w.weather_code,
         "sunUp": h.sun_up,
@@ -336,7 +344,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
     async with httpx.AsyncClient() as client:
         cached = _cache.get(club_id)
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
-            weather, water = cached[1]
+            weather, water, water_history, outlook = cached[1]
         else:
             weather = _primed_weather.pop(club_id, None)
             if weather is None:
@@ -345,13 +353,21 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
                 except httpx.HTTPError as e:
                     logging.getLogger(__name__).warning("Open-Meteo unavailable for %s: %r", club_id, e)
                     raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
-            water = None
+            water, water_history = None, []
             if lake.gkd_water_temperature_station:
                 try:
-                    water = await gkd.fetch_latest(client, lake.gkd_water_temperature_station, now)
+                    water, water_history = await gkd.fetch_recent(client, lake.gkd_water_temperature_station, now)
                 except httpx.HTTPError:
                     water = None  # the forecast is still useful without it
-            _cache[club_id] = (time.monotonic(), (weather, water))
+            # Yesterday and the next 7 days for the charts; the forecast works without it.
+            if club_id in _primed_outlook:
+                outlook = _primed_outlook.pop(club_id)
+            else:
+                try:
+                    outlook = await open_meteo.fetch_outlook(client, club.launch_point.lat, club.launch_point.lon)
+                except httpx.HTTPError:
+                    outlook = None
+            _cache[club_id] = (time.monotonic(), (weather, water, water_history, outlook))
         if picked is not None:
             key = f"{club_id}@{picked.id}"
             cached = _cache.get(key)
@@ -372,9 +388,10 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
     weather = _from_now(weather, now)
     if not weather:
         raise HTTPException(status_code=503, detail="forecast too old, try again shortly")
-    hours = rowing_forecast(
-        club, weather, outlines.load(club.lake_id), water.celsius if water else None, warnings, ice_by_day=ice_by_day
-    )
+    rings = outlines.load(club.lake_id)
+    water_c = water.celsius if water else None
+    hours = rowing_forecast(club, weather, rings, water_c, warnings, ice_by_day=ice_by_day)
+    outlook_hours = rowing_forecast(club, outlook, rings, water_c, warnings, ice_by_day=ice_by_day) if outlook else None
     chain = weather_models.chain_for(club.launch_point.lat, club.launch_point.lon)
     return {
         "clubId": club.id,
@@ -382,7 +399,12 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         "generatedAt": now.replace(microsecond=0).isoformat(),
         "waterTemperature": None
         if water is None
-        else {"celsius": water.celsius, "measuredAt": water.time.astimezone(timezone.utc).isoformat()},
+        else {
+            "celsius": water.celsius,
+            "measuredAt": water.time.astimezone(timezone.utc).isoformat(),
+            # The station page's history, one value per hour, for the water temperature chart.
+            "history": [{"time": _utc(r.time), "celsius": r.celsius} for r in water_history],
+        },
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
         "attribution": ATTRIBUTION,
@@ -397,6 +419,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             for d in sun_days(now, now + timedelta(hours=len(hours)), club.launch_point.lat, club.launch_point.lon)
         ],
         "hours": [_hour_json(h) for h in hours],
+        "outlook": None if outlook_hours is None else [_hour_json(h) for h in outlook_hours],
     }
 
 
@@ -482,8 +505,10 @@ async def lake_view_forecast(lake_id: str) -> dict:
                 # One digit per water cell: 0 green, 1 amber, 2 red.
                 "lights": "".join(str(int(light)) for light in h.lights),
                 "wavesCm": [round(w * 100) for w in h.waves_m],
+                # "other": the light from fog and thunderstorms at the point, 0 green to 2 red.
                 "wind": [
-                    {"speedMs": w.wind_speed_ms, "gustMs": w.wind_gust_ms, "fromDeg": w.wind_from_deg} for w in h.wind
+                    {"speedMs": w.wind_speed_ms, "gustMs": w.wind_gust_ms, "fromDeg": w.wind_from_deg, "other": int(other)}
+                    for w, other in zip(h.wind, h.point_other or [Light.GREEN] * len(h.wind))
                 ],
                 "zones": [
                     {"light": light.name.lower(), "maxWaveM": round(wave, 2)}

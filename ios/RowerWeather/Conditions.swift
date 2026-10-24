@@ -4,7 +4,7 @@ import SwiftUI
 /// The same icons head the hourly table and label the current conditions,
 /// so the legend explains both.
 enum Condition: String, CaseIterable, Identifiable {
-    case temperature, feelsLike, humidity, wind, waves, waterTemperature, precipitation, visibility, cloudCover, pressure, thunderstorm, ice, daylight
+    case temperature, feelsLike, humidity, wind, waves, waterTemperature, precipitation, visibility, cloudCover, pressure, thunderstorm, uvIndex, ice, daylight
 
     var id: String { rawValue }
 
@@ -21,6 +21,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .visibility: "binoculars"
         case .cloudCover: "cloud"
         case .thunderstorm: "cloud.bolt"
+        case .uvIndex: "sun.max.trianglebadge.exclamationmark"
         case .ice: "snowflake"
         case .daylight: "sun.horizon"
         }
@@ -39,6 +40,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .visibility: tr("Visibility (fog)")
         case .cloudCover: tr("Cloud cover")
         case .thunderstorm: tr("Thunderstorm risk")
+        case .uvIndex: tr("UV index")
         case .ice: tr("Ice cover")
         case .daylight: tr("Daylight")
         }
@@ -55,7 +57,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .pressure: "hPa"
         case .visibility: AppSettings.shared.distanceUnit.symbol
         case .cloudCover: "%"
-        case .thunderstorm, .ice, .daylight: ""
+        case .thunderstorm, .uvIndex, .ice, .daylight: ""
         }
     }
 
@@ -72,6 +74,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .visibility: tr("How far you can see. Fog below %@ is amber, below %@ red.", Format.distance(1000), Format.distance(500))
         case .cloudCover: tr("Share of the sky covered by cloud.")
         case .thunderstorm: tr("Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings.")
+        case .uvIndex: tr("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")
         case .ice: tr("Estimated from the last weeks' frost and the water temperature, and on larger lakes checked against the Copernicus satellite ice map when clouds allow. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.")
         case .daylight: tr("Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red.")
         }
@@ -80,14 +83,15 @@ enum Condition: String, CaseIterable, Identifiable {
     /// Backend reason names that belong to this condition.
     var reasonNames: Set<String> {
         switch self {
-        case .wind: ["wind", "gusts", "lake_warning"]
+        case .wind: ["wind", "gusts", "lake_warning", "lake_strong_wind"]
         case .waves: ["waves"]
-        case .waterTemperature: ["cold_water", "cool_water"]
+        case .waterTemperature: ["cold_water", "cool_water", "single_cold", "freezing_water"]
         case .visibility: ["fog"]
+        case .precipitation: ["heavy_rain", "hail"]
         case .thunderstorm: ["thunderstorm"]
         case .ice: ["ice"]
         case .daylight: ["daylight", "twilight"]
-        case .temperature, .feelsLike, .humidity, .pressure, .cloudCover, .precipitation: []
+        case .temperature, .feelsLike, .humidity, .pressure, .cloudCover, .uvIndex: []
         }
     }
 }
