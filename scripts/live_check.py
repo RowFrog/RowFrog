@@ -110,6 +110,18 @@ def forecast_summary(client: TestClient, club_id: str) -> list[str]:
             f"from {h['windFromDeg']}°  waves {h['waveHeightM']} m  fetch {h['fetchM']} m  "
             f"vis {h['visibilityM']} m  {h['temperatureC']} °C"
         )
+    history = (body["waterTemperature"] or {}).get("history") or []
+    lines.append(f"  water history: {len(history)} hours" + (f" from {history[0]['time']}" if history else ""))
+    outlook = body.get("outlook")
+    if outlook is None:
+        lines.append("  outlook: missing")
+    else:
+        uv = [h["uvIndex"] for h in outlook if h.get("uvIndex") is not None]
+        layers = sum(1 for h in outlook if h.get("cloudCoverHighPct") is not None)
+        lines.append(
+            f"  outlook: {len(outlook)} hours from {outlook[0]['time']} to {outlook[-1]['time']}, "
+            f"UV in {len(uv)} hours (max {max(uv) if uv else None}), cloud layers in {layers} hours"
+        )
     return lines
 
 

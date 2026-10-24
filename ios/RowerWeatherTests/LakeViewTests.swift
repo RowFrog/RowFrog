@@ -57,7 +57,7 @@ final class LakeViewTests: XCTestCase {
 
     func testWaveColoursRiseWithTheLimits() {
         XCTAssertGreaterThan(LakeRaster.waveColor(0.3).r, LakeRaster.waveColor(0).r)
-        XCTAssertEqual(LakeRaster.waveColor(0.30).g, LakeRaster.red.g, accuracy: 0.5)
+        XCTAssertEqual(LakeRaster.waveColor(0.25).g, LakeRaster.red.g, accuracy: 0.5)
     }
 
     func testWindRelationToTheBoat() {

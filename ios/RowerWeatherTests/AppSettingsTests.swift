@@ -58,11 +58,63 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.temperatureUnit, .fahrenheit)
 
         settings.appearance = .dark
+        let gig = settings.addBoat(type: .gig)
+        settings.boatID = gig.id
+        settings.mapBoatID = Boat.big.id
+        settings.boatLimits[gig.id] = [.windAmber: 7]
+        settings.boatLimits[Boat.small.id] = [.waveRed: 0.5]
         settings.resetToFactorySettings()
+        XCTAssertEqual(settings.limits, .standard)
+        XCTAssertEqual(AppSettings(defaults: defaults).limits, .standard)
+        XCTAssertEqual(AppSettings(defaults: defaults).mapLimits, .standard)
+        XCTAssertEqual(AppSettings(defaults: defaults).myBoats, [gig], "the user's boats stay, like the locations")
+        XCTAssertEqual(AppSettings(defaults: defaults).limits(for: gig).custom, [:])
         XCTAssertEqual(settings.appearance, .device)
         XCTAssertEqual(settings.temperatureUnit, .celsius)
         XCTAssertNil(defaults.object(forKey: AppSettings.Keys.appearance))
         XCTAssertEqual(AppSettings(defaults: defaults).appearance, .device)
+    }
+
+    func testBoatsAndTheirLimitsAreKept() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertEqual(settings.selectedBoat, .small, "small boats, the strictest limits, at first start")
+        XCTAssertEqual(settings.mapBoat, .small)
+        var anna = settings.addBoat(type: .gig)
+        anna.name = "Anna"
+        settings.myBoats[0] = anna
+        settings.boatID = anna.id
+        settings.boatLimits[anna.id] = [.waveAmber: 0.4]
+        settings.boatLimits[Boat.big.id] = [.windAmber: 9]
+
+        let again = AppSettings(defaults: defaults)
+        XCTAssertEqual(again.selectedBoat, anna, "the last boat picked stays ticked")
+        XCTAssertEqual(again.limits.value(.waveAmber), 0.4)
+        XCTAssertEqual(again.limits.value(.waveRed), 0.5, "the gig's own limit where the user changed nothing")
+        XCTAssertEqual(again.limits(for: .big).value(.windAmber), 9)
+        XCTAssertEqual(again.limits(for: .small), .standard)
+    }
+
+    func testMapWarnsOnlyWhenItLooksCalmer() {
+        let settings = AppSettings(defaults: defaults)
+        settings.mapBoatID = Boat.big.id
+        XCTAssertTrue(settings.mapLooksCalmer, "big-boat colours hide what is rough for a small boat")
+        settings.boatID = Boat.big.id
+        settings.mapBoatID = Boat.small.id
+        XCTAssertFalse(settings.mapLooksCalmer, "small-boat colours are stricter, no warning")
+        settings.mapBoatID = AppSettings.followBoat
+        XCTAssertEqual(settings.mapBoat, .big)
+        XCTAssertFalse(settings.mapLooksCalmer)
+    }
+
+    func testRemovingTheTickedBoatFallsBackToSmallBoats() {
+        let settings = AppSettings(defaults: defaults)
+        let gig = settings.addBoat()
+        settings.boatID = gig.id
+        settings.mapBoatID = gig.id
+        settings.removeBoat(gig.id)
+        XCTAssertEqual(settings.selectedBoat, .small)
+        XCTAssertEqual(settings.mapBoat, .small)
+        XCTAssertTrue(settings.myBoats.isEmpty)
     }
 
     func testLandscapeIsOnUntilTurnedOff() {

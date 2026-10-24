@@ -35,3 +35,9 @@ def test_latest_ignores_stale_station():
 
 def test_page_without_values():
     assert gkd.latest("<p>Keine Daten</p>", datetime.now(timezone.utc)) is None
+
+
+def test_hourly_keeps_the_first_reading_of_each_hour_oldest_first():
+    readings = gkd.parse(PAGE.replace("18.10.2026 12:45", "18.10.2026 13:05"))
+    hours = gkd.hourly(readings)
+    assert [(r.time.hour, r.celsius) for r in hours] == [(12, 15.9), (13, 15.8)]
