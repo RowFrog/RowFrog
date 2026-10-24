@@ -5,7 +5,7 @@ import SwiftUI
 /// behind the button at the bottom, or beside the pages on a wide screen.
 struct RootView: View {
     let api: APIClient
-    @State private var locations = LocationStore.forLaunch()
+    @State private var locations: LocationStore
     @State private var forecasts: ForecastStore
     @State private var selection = ""
     @State private var showingList = false
@@ -16,7 +16,11 @@ struct RootView: View {
 
     init(api: APIClient) {
         self.api = api
-        _forecasts = State(initialValue: ForecastStore(api: api))
+        let store = LocationStore.forLaunch()
+        store.countryLoader = { try await api.lakes(country: $0) }
+        _locations = State(initialValue: store)
+        // Own places get their forecast on the phone; the store knows where they are.
+        _forecasts = State(initialValue: ForecastStore(api: api) { [weak store] id in store?.ownPlace(id) })
     }
 
     var body: some View {
@@ -125,9 +129,18 @@ struct RootView: View {
         }
     }
 
+    /// The countries of the saved clubs, the phone's and any near the user;
+    /// an older backend without country files sends every club at once.
     private func loadCatalog() async {
         do {
-            locations.setCatalog(try await api.lakes())
+            if let countries = try? await api.countries(), !countries.isEmpty {
+                locations.setCountries(countries)
+                for code in locations.countriesToLoad(near: KnownLocation.coordinate) {
+                    locations.addCountry(code, lakes: try await api.lakes(country: code))
+                }
+            } else {
+                locations.setCatalog(try await api.lakes())
+            }
             locations.catalogError = nil
             applyLaunchArguments()
             WidgetBridge.publish(locations)
@@ -151,7 +164,8 @@ struct RootView: View {
     /// Screenshot hooks: `-RWOpenClub <id>` opens that page (adding it from the
     /// catalog if needed), `-RWShowList YES` (or `-RWShowSettings YES`)
     /// opens the list, `-RWSearch <text>` opens it searching for the text and
-    /// `-RWLandscape YES` turns the phone on its side.
+    /// `-RWLandscape YES` turns the phone on its side. In the list, `-RWAddPlace YES`
+    /// and `-RWBrowse YES|<country>` open "Add a place" and browsing by country.
     private func applyLaunchArguments() {
         let args = UserDefaults.standard
         if args.bool(forKey: "RWLandscape") {
@@ -159,7 +173,16 @@ struct RootView: View {
                 scene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight))
             }
         }
-        if let id = args.string(forKey: "RWOpenClub"), let club = locations.catalog.first(where: { $0.id == id }) {
+        // `-RWOwnPlace "Name;lat;lon"` adds that own place (once) and opens it.
+        if let spec = args.string(forKey: "RWOwnPlace")?.split(separator: ";"), spec.count == 3,
+           let lat = Double(spec[1]), let lon = Double(spec[2]) {
+            let point = Coordinate(lat: lat, lon: lon)
+            let place = locations.ownPlaces.first { $0.name == String(spec[0]) } ?? OwnPlace(
+                name: String(spec[0]), kind: .boathouse, website: nil, coordinate: point,
+                waterName: locations.nearestLake(to: point)?.name, shared: false)
+            if locations.ownPlace(place.id) == nil { locations.addOwnPlace(place) }
+            selection = place.id
+        } else if let id = args.string(forKey: "RWOpenClub"), let club = locations.catalog.first(where: { $0.id == id }) {
             locations.add(club)
             selection = id
         } else {

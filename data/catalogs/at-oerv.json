@@ -1,0 +1,1121 @@
+{
+  "version": 1,
+  "updated": "2026-10-23",
+  "source": "Club data: Österreichischer Ruderverband (rudern.at). Positions and waters: © OpenStreetMap contributors, ODbL",
+  "lakes": [
+    {
+      "id": "altarm-thondorf",
+      "name": "Altarm Thondorf",
+      "country": "at",
+      "center": {
+        "lat": 47.0126,
+        "lon": 15.462
+      },
+      "osm": "way/267326375"
+    },
+    {
+      "id": "river-donau",
+      "name": "Donau",
+      "country": "at",
+      "center": {
+        "lat": 48.27693,
+        "lon": 16.35478
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-donaukanal",
+      "name": "Donaukanal",
+      "country": "at",
+      "center": {
+        "lat": 48.26075,
+        "lon": 16.36958
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-erla",
+      "name": "Erla",
+      "country": "at",
+      "center": {
+        "lat": 48.16437,
+        "lon": 14.70928
+      },
+      "kind": "river"
+    },
+    {
+      "id": "geschirrwasser",
+      "name": "Geschirrwasser",
+      "country": "at",
+      "center": {
+        "lat": 48.3278,
+        "lon": 16.3137
+      },
+      "osm": "relation/9684319"
+    },
+    {
+      "id": "hochwiesegraben",
+      "name": "Hochwiesegraben",
+      "country": "at",
+      "center": {
+        "lat": 48.33,
+        "lon": 16.0286
+      },
+      "osm": "way/642950869"
+    },
+    {
+      "id": "kleine-binn",
+      "name": "Kleine Binn",
+      "country": "at",
+      "center": {
+        "lat": 48.127,
+        "lon": 16.7035
+      },
+      "osm": "way/737325534"
+    },
+    {
+      "id": "river-melk",
+      "name": "Melk",
+      "country": "at",
+      "center": {
+        "lat": 48.20674,
+        "lon": 15.27844
+      },
+      "kind": "river"
+    },
+    {
+      "id": "millstaetter-see",
+      "name": "Millstätter See",
+      "country": "at",
+      "center": {
+        "lat": 46.7895,
+        "lon": 13.5781
+      },
+      "osm": "way/181070710"
+    },
+    {
+      "id": "mondsee",
+      "name": "Mondsee",
+      "country": "at",
+      "center": {
+        "lat": 47.8255,
+        "lon": 13.3956
+      },
+      "osm": "way/3868930"
+    },
+    {
+      "id": "river-neue-donau",
+      "name": "Neue Donau",
+      "country": "at",
+      "center": {
+        "lat": 48.21935,
+        "lon": 16.43232
+      },
+      "kind": "river"
+    },
+    {
+      "id": "ossiacher-see",
+      "name": "Ossiacher See",
+      "country": "at",
+      "center": {
+        "lat": 46.6725,
+        "lon": 13.9569
+      },
+      "osm": "way/27446051"
+    },
+    {
+      "id": "pionierhafen",
+      "name": "Pionierhafen",
+      "country": "at",
+      "center": {
+        "lat": 48.2358,
+        "lon": 15.3347
+      },
+      "osm": "way/850540754"
+    },
+    {
+      "id": "river-rodl",
+      "name": "Rodl",
+      "country": "at",
+      "center": {
+        "lat": 48.32754,
+        "lon": 14.16181
+      },
+      "kind": "river"
+    },
+    {
+      "id": "rodl",
+      "name": "Rodl",
+      "country": "at",
+      "center": {
+        "lat": 48.329,
+        "lon": 14.1679
+      },
+      "osm": "way/23444179"
+    },
+    {
+      "id": "stadtweiher",
+      "name": "Stadtweiher",
+      "country": "at",
+      "center": {
+        "lat": 48.2125,
+        "lon": 15.2008
+      },
+      "osm": "way/144589950"
+    },
+    {
+      "id": "river-traun",
+      "name": "Traun",
+      "country": "at",
+      "center": {
+        "lat": 48.15679,
+        "lon": 14.03594
+      },
+      "kind": "river"
+    },
+    {
+      "id": "traunsee",
+      "name": "Traunsee",
+      "country": "at",
+      "center": {
+        "lat": 47.8631,
+        "lon": 13.7909
+      },
+      "osm": "relation/67371"
+    },
+    {
+      "id": "voelkermarkter-stausee",
+      "name": "Völkermarkter Stausee",
+      "country": "at",
+      "center": {
+        "lat": 46.6328,
+        "lon": 14.6143
+      },
+      "osm": "relation/2896390"
+    },
+    {
+      "id": "wallersee",
+      "name": "Wallersee",
+      "country": "at",
+      "center": {
+        "lat": 47.9143,
+        "lon": 13.1757
+      },
+      "osm": "way/26602907"
+    },
+    {
+      "id": "near-anif",
+      "name": "Water near Anif",
+      "country": "at",
+      "center": {
+        "lat": 47.73748,
+        "lon": 13.06929
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-bregenz",
+      "name": "Water near Bregenz",
+      "country": "at",
+      "center": {
+        "lat": 47.50258,
+        "lon": 9.74729
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-breitenbrunn",
+      "name": "Water near Breitenbrunn",
+      "country": "at",
+      "center": {
+        "lat": 47.94635,
+        "lon": 16.73253
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-duernstein",
+      "name": "Water near Dürnstein",
+      "country": "at",
+      "center": {
+        "lat": 48.39323,
+        "lon": 15.52587
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-grundlsee",
+      "name": "Water near Grundlsee",
+      "country": "at",
+      "center": {
+        "lat": 47.62727,
+        "lon": 13.83793
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-klosterneuburg",
+      "name": "Water near Klosterneuburg",
+      "country": "at",
+      "center": {
+        "lat": 48.30499,
+        "lon": 16.32376
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-lochau",
+      "name": "Water near Lochau",
+      "country": "at",
+      "center": {
+        "lat": 47.52942,
+        "lon": 9.75339
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-seewalchen",
+      "name": "Water near Seewalchen",
+      "country": "at",
+      "center": {
+        "lat": 47.95464,
+        "lon": 13.58395
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "near-wien",
+      "name": "Water near Wien",
+      "country": "at",
+      "center": {
+        "lat": 48.23561,
+        "lon": 16.43203
+      },
+      "kind": "unknown"
+    },
+    {
+      "id": "winterhafen",
+      "name": "Winterhafen",
+      "country": "at",
+      "center": {
+        "lat": 48.3192,
+        "lon": 14.3115
+      },
+      "osm": "way/137884542"
+    },
+    {
+      "id": "wolfgangsee",
+      "name": "Wolfgangsee",
+      "country": "at",
+      "center": {
+        "lat": 47.7455,
+        "lon": 13.4268
+      },
+      "osm": "relation/1764080"
+    },
+    {
+      "id": "woerthersee",
+      "name": "Wörthersee",
+      "country": "at",
+      "center": {
+        "lat": 46.6215,
+        "lon": 14.1489
+      },
+      "osm": "relation/301560"
+    }
+  ],
+  "clubs": [
+    {
+      "id": "1-wassersportverein-orth-an-der-donau",
+      "name": "1. Wassersportverein Orth an der Donau",
+      "shortName": "1. Wassersportverein Orth an der Donau",
+      "abbreviation": "ORT",
+      "address": "Uferstraße 20, 2304 Orth an der Donau",
+      "website": "https://www.orth.at/1_Wassersportverein_Orth_an_der_Donau",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "kleine-binn",
+      "launchPoint": {
+        "lat": 48.12448,
+        "lon": 16.70835,
+        "precision": "shore point of Kleine Binn nearest the geocoded club address, 282 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "askoe-ruderverein-donau-linz",
+      "name": "ASKÖ Ruderverein Donau Linz",
+      "shortName": "ASKÖ Ruderverein Donau Linz",
+      "abbreviation": "DLI",
+      "address": "Heilhamerweg 2, 4040 Linz",
+      "website": "https://rudernlinz.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.31983,
+        "lon": 14.29465,
+        "precision": "geocoded club address, 276 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "erster-steirischer-ruderclub-ausseerland",
+      "name": "Erster Steirischer Ruderclub Ausseerland",
+      "shortName": "Erster Steirischer Ruderclub Ausseerland",
+      "abbreviation": "ERA",
+      "address": "Schachensiedlung, 8993 Grundlsee",
+      "website": "http://www.ruderclub-ausseerland.at/",
+      "region": "Steiermark",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-grundlsee",
+      "launchPoint": {
+        "lat": 47.62727,
+        "lon": 13.83793,
+        "precision": "geocoded club address (town level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "erster-wiener-ruderclub-lia",
+      "name": "Erster Wiener Ruderclub LIA",
+      "shortName": "Erster Wiener Ruderclub LIA",
+      "abbreviation": "LIA",
+      "address": "An der unteren Alten Donau 49, 1220 Wien",
+      "website": "https://www.lia.at/index.php",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-wien",
+      "launchPoint": {
+        "lat": 48.23299,
+        "lon": 16.43347,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "gmundner-ruderverein",
+      "name": "Gmundner Ruderverein",
+      "shortName": "Gmundner Ruderverein",
+      "abbreviation": "GMU",
+      "address": "Dr. Thomas Straße 15, 4810 Gmunden",
+      "website": "https://www.gmundner-ruderverein.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "traunsee",
+      "launchPoint": {
+        "lat": 47.90762,
+        "lon": 13.78344,
+        "precision": "shore point of Traunsee nearest the geocoded club address, 15 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "korneuburger-ruderverein-alemannia",
+      "name": "Korneuburger Ruderverein Alemannia",
+      "shortName": "Korneuburger Ruderverein Alemannia",
+      "abbreviation": "ALE",
+      "address": "Donaustraße 70, 2100 Korneuburg",
+      "website": "https://www.ruderverein-alemannia.at/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.33887,
+        "lon": 16.32183,
+        "precision": "geocoded club address, 275 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "landesruderverband-niederoesterreich",
+      "name": "Landesruderverband Niederösterreich",
+      "shortName": "Landesruderverband Niederösterreich",
+      "abbreviation": "NRV",
+      "address": "Melker Straße 38, 3393 Matzleinsdorf",
+      "website": "https://www.rudern-noe.at/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-melk",
+      "launchPoint": {
+        "lat": 48.20674,
+        "lon": 15.27844,
+        "precision": "geocoded club address, 200 m from the Melk",
+        "verified": false
+      }
+    },
+    {
+      "id": "landesruderverband-oberoesterreich",
+      "name": "Landesruderverband Oberösterreich",
+      "shortName": "Landesruderverband Oberösterreich",
+      "abbreviation": "OÖR",
+      "address": "Regattastraße 1, 4100 Ottensheim Österreich",
+      "website": "https://www.rudern-ooe.at",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-rodl",
+      "launchPoint": {
+        "lat": 48.32754,
+        "lon": 14.16181,
+        "precision": "geocoded club address, 373 m from the Rodl",
+        "verified": false
+      }
+    },
+    {
+      "id": "landesruderverband-wien",
+      "name": "Landesruderverband Wien",
+      "shortName": "Landesruderverband Wien",
+      "abbreviation": "WRV",
+      "address": "Florian-Berndl-Gasse 3, 1220 Wien",
+      "website": "http://www.ruderverband.wien",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-wien",
+      "launchPoint": {
+        "lat": 48.2385,
+        "lon": 16.43013,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "linzer-ruderverein-ister",
+      "name": "Linzer Ruderverein Ister",
+      "shortName": "Linzer Ruderverein Ister",
+      "abbreviation": "IST",
+      "address": "Am Winterhafen 19, 4020 Linz",
+      "website": "https://www.ister.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "winterhafen",
+      "launchPoint": {
+        "lat": 48.31985,
+        "lon": 14.30502,
+        "precision": "shore point of Winterhafen nearest the geocoded club address, 31 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruder-club-salzburg",
+      "name": "Ruder Club Salzburg",
+      "shortName": "Ruder Club Salzburg",
+      "abbreviation": "RCS",
+      "address": "Waldbadstraße, 5081 Anif",
+      "website": "https://www.ruderclub-salzburg.at/",
+      "region": "Salzburg",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-anif",
+      "launchPoint": {
+        "lat": 47.73748,
+        "lon": 13.06929,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruder-club-wolfgangsee",
+      "name": "Ruder Club Wolfgangsee",
+      "shortName": "Ruder Club Wolfgangsee",
+      "abbreviation": "RCW",
+      "address": "Mondseestraße 14, 5340 St. Gilgen",
+      "website": "http://www.ruderclub-wolfgangsee.at/",
+      "region": "Salzburg",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "wolfgangsee",
+      "launchPoint": {
+        "lat": 47.76941,
+        "lon": 13.3685,
+        "precision": "shore point of Wolfgangsee nearest the geocoded club address, 36 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruder-union-melk",
+      "name": "Ruder Union Melk",
+      "shortName": "Ruder Union Melk",
+      "abbreviation": "RUM",
+      "address": "Pionierstraße 7, 3390 Melk",
+      "website": "https://www.ruderunionmelk.at/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "pionierhafen",
+      "launchPoint": {
+        "lat": 48.23541,
+        "lon": 15.33419,
+        "precision": "shore point of Pionierhafen nearest the geocoded club address, 154 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-breitenbrunn",
+      "name": "Ruderclub Breitenbrunn",
+      "shortName": "Ruderclub Breitenbrunn",
+      "abbreviation": "BRB",
+      "address": "Seebad, 7091 Breitenbrunn",
+      "website": "https://rc-breitenbrunn.at/",
+      "region": "Burgenland",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-breitenbrunn",
+      "launchPoint": {
+        "lat": 47.94635,
+        "lon": 16.73253,
+        "precision": "geocoded club address (town level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-graz",
+      "name": "Ruderclub Graz",
+      "shortName": "Ruderclub Graz",
+      "abbreviation": "RCG",
+      "address": "Murfelder Straße 260, 8041 Graz",
+      "website": "https://www.ruderclub-graz.at/",
+      "region": "Steiermark",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "altarm-thondorf",
+      "launchPoint": {
+        "lat": 47.01379,
+        "lon": 15.46191,
+        "precision": "shore point of Altarm Thondorf nearest the geocoded club address, 246 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-lochau",
+      "name": "Ruderclub Lochau",
+      "shortName": "Ruderclub Lochau",
+      "abbreviation": "LOC",
+      "address": "Alte Fähre, 6911 Lochau",
+      "website": "https://de.wikipedia.org/wiki/Ruderclub_Lochau_am_Bodensee",
+      "region": "Vorarlberg",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-lochau",
+      "launchPoint": {
+        "lat": 47.52942,
+        "lon": 9.75339,
+        "precision": "geocoded club address (town level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-mondsee",
+      "name": "Ruderclub Mondsee",
+      "shortName": "Ruderclub Mondsee",
+      "abbreviation": "MON",
+      "address": "Robert Baum-Promenade 7, 5310 Mondsee",
+      "website": "https://rcmo.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "mondsee",
+      "launchPoint": {
+        "lat": 47.85051,
+        "lon": 13.35075,
+        "precision": "shore point of Mondsee nearest the geocoded club address, 28 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-wels",
+      "name": "Ruderclub Wels",
+      "shortName": "Ruderclub Wels",
+      "abbreviation": "WEL",
+      "address": "Prielstraße 2, 4600 Wels",
+      "website": "https://ruderclub-wels.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-traun",
+      "launchPoint": {
+        "lat": 48.15679,
+        "lon": 14.03594,
+        "precision": "geocoded club address, 84 m from the Traun",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-albatros-klagenfurt",
+      "name": "Ruderverein Albatros Klagenfurt",
+      "shortName": "Ruderverein Albatros Klagenfurt",
+      "abbreviation": "ALB",
+      "address": "Friedelstrand 11, 9020 Klagenfurt",
+      "website": "https://www.rv-albatros.at/",
+      "region": "Kärnten",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "woerthersee",
+      "launchPoint": {
+        "lat": 46.62351,
+        "lon": 14.24938,
+        "precision": "shore point of Wörthersee nearest the geocoded club address, 11 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-friesen",
+      "name": "Ruderverein Friesen",
+      "shortName": "Ruderverein Friesen",
+      "abbreviation": "FRI",
+      "address": "An der unteren Alten Donau 47, 1220 Wien",
+      "website": "https://rv-friesen-at.jimdofree.com/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-wien",
+      "launchPoint": {
+        "lat": 48.23325,
+        "lon": 16.43337,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-nautilus-v-1878-klagenfurt",
+      "name": "Ruderverein Nautilus v. 1878 Klagenfurt",
+      "shortName": "Ruderverein Nautilus v. 1878 Klagenfurt",
+      "abbreviation": "NAU",
+      "address": "Friedelstrand 21, 9020 Klagenfurt",
+      "website": "https://www.rv-nautilus.eu/",
+      "region": "Kärnten",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "woerthersee",
+      "launchPoint": {
+        "lat": 46.62394,
+        "lon": 14.24809,
+        "precision": "shore point of Wörthersee nearest the geocoded club address, 19 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-nibelungen",
+      "name": "Ruderverein Nibelungen",
+      "shortName": "Ruderverein Nibelungen",
+      "abbreviation": "NIB",
+      "address": "Nibelungenlände 10, 3400 Klosterneuburg",
+      "website": "https://rvnibelungen.com/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-klosterneuburg",
+      "launchPoint": {
+        "lat": 48.30499,
+        "lon": 16.32376,
+        "precision": "geocoded club address (town level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-normannen-klosterneuburg",
+      "name": "Ruderverein Normannen Klosterneuburg",
+      "shortName": "Ruderverein Normannen Klosterneuburg",
+      "abbreviation": "NOR",
+      "address": "Normannengasse 2, 3400 Klosterneuburg",
+      "website": "https://www.normannen.at/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "geschirrwasser",
+      "launchPoint": {
+        "lat": 48.29403,
+        "lon": 16.34354,
+        "precision": "shore point of Geschirrwasser nearest the geocoded club address, 48 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-staw",
+      "name": "Ruderverein STAW",
+      "shortName": "Ruderverein STAW",
+      "abbreviation": "STA",
+      "address": "Moissigasse 21, 1220 Wien",
+      "website": "http://www.ruderverein.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-wien",
+      "launchPoint": {
+        "lat": 48.22946,
+        "lon": 16.43038,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-seewalchen",
+      "name": "Ruderverein Seewalchen",
+      "shortName": "Ruderverein Seewalchen",
+      "abbreviation": "SEE",
+      "address": "Anton-Payr-Straße 5, 4863 Seewalchen",
+      "website": "https://www.rvseewalchen.com/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-seewalchen",
+      "launchPoint": {
+        "lat": 47.95464,
+        "lon": 13.58395,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-villach-von-1881",
+      "name": "Ruderverein Villach von 1881",
+      "shortName": "Ruderverein Villach von 1881",
+      "abbreviation": "VIL",
+      "address": "Ossiachersee-Süduferstraße 67, 9523 Landskron",
+      "website": "https://www.rvvillach.at/",
+      "region": "Kärnten",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "ossiacher-see",
+      "launchPoint": {
+        "lat": 46.65077,
+        "lon": 13.90097,
+        "precision": "shore point of Ossiacher See nearest the geocoded club address, 17 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-wiking-bregenz",
+      "name": "Ruderverein Wiking Bregenz",
+      "shortName": "Ruderverein Wiking Bregenz",
+      "abbreviation": "WIB",
+      "address": "Am Strandweg 40, 6900 Bregenz",
+      "website": "https://www.rv-wiking.at/",
+      "region": "Vorarlberg",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-bregenz",
+      "launchPoint": {
+        "lat": 47.50258,
+        "lon": 9.74729,
+        "precision": "geocoded club address (town level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-wiking-linz",
+      "name": "Ruderverein Wiking Linz",
+      "shortName": "Ruderverein Wiking Linz",
+      "abbreviation": "WLI",
+      "address": "Wilheringerstraße 10, 4048 Puchenau",
+      "website": "https://www.wikinglinz.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.31081,
+        "lon": 14.24183,
+        "precision": "geocoded club address, 221 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderverein-wiking-spittal",
+      "name": "Ruderverein Wiking Spittal",
+      "shortName": "Ruderverein Wiking Spittal",
+      "abbreviation": "WSP",
+      "address": "Seehofstraße 33, 9871 Seeboden",
+      "website": "http://www.wiking-spittal.at/",
+      "region": "Kärnten",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "millstaetter-see",
+      "launchPoint": {
+        "lat": 46.81391,
+        "lon": 13.51129,
+        "precision": "shore point of Millstätter See nearest the geocoded club address, 50 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "salzburger-ruderklub-moeve",
+      "name": "Salzburger Ruderklub Möve",
+      "shortName": "Salzburger Ruderklub Möve",
+      "abbreviation": "MÖW",
+      "address": "Rupertiweg 13, 5201 Seekirchen",
+      "website": "https://ruderklub-moeve.at/",
+      "region": "Salzburg",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "wallersee",
+      "launchPoint": {
+        "lat": 47.91467,
+        "lon": 13.15309,
+        "precision": "shore point of Wallersee nearest the geocoded club address, 9 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "steiner-ruder-club",
+      "name": "Steiner Ruder Club",
+      "shortName": "Steiner Ruder Club",
+      "abbreviation": "STE",
+      "address": "Sepp Puchinger Promenade, 3500 Krems-Stein",
+      "website": "https://steiner-ruder-club.at/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.3989,
+        "lon": 15.57387,
+        "precision": "geocoded club address, 173 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "tullner-ruderverein",
+      "name": "Tullner Ruderverein",
+      "shortName": "Tullner Ruderverein",
+      "abbreviation": "TUL",
+      "address": "Kronauer Straße 8, 3430 Tulln",
+      "website": "https://trv.at/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "hochwiesegraben",
+      "launchPoint": {
+        "lat": 48.32714,
+        "lon": 16.02805,
+        "precision": "shore point of Hochwiesegraben nearest the geocoded club address, 272 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "union-ruderverein-poechlarn",
+      "name": "Union Ruderverein Pöchlarn",
+      "shortName": "Union Ruderverein Pöchlarn",
+      "abbreviation": "PÖC",
+      "address": "Regensburgerstraße 16, 3380 Pöchlarn",
+      "website": "https://urv-poechlarn.at/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "stadtweiher",
+      "launchPoint": {
+        "lat": 48.21211,
+        "lon": 15.20623,
+        "precision": "shore point of Stadtweiher nearest the geocoded club address, 88 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "voelkermarkter-sport-und-turnverein-1868",
+      "name": "Völkermarkter Sport- und Turnverein 1868",
+      "shortName": "Völkermarkter Sport- und Turnverein 1868",
+      "abbreviation": "VST",
+      "address": "Drauweg 18, 9100 Völkermarkt",
+      "website": "https://www.rudern-voelkermarkt.at/",
+      "region": "Kärnten",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "voelkermarkter-stausee",
+      "launchPoint": {
+        "lat": 46.65537,
+        "lon": 14.63433,
+        "precision": "shore point of Völkermarkter Stausee nearest the geocoded club address, 24 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "wsw-ruderunion-duernstein",
+      "name": "WSW Ruderunion Dürnstein",
+      "shortName": "WSW Ruderunion Dürnstein",
+      "abbreviation": "WSW",
+      "address": "Dürnstein 51, 3601 Dürnstein",
+      "website": "https://sportunion.at/vereine/wasser-sport-wachau-ruderunion-duernstein/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-duernstein",
+      "launchPoint": {
+        "lat": 48.39323,
+        "lon": 15.52587,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "wassersportverein-ottensheim",
+      "name": "Wassersportverein Ottensheim",
+      "shortName": "Wassersportverein Ottensheim",
+      "abbreviation": "OTT",
+      "address": "Rodlstraße 21, 4100 Ottensheim",
+      "website": "https://www.wsv-ottensheim.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "rodl",
+      "launchPoint": {
+        "lat": 48.3291,
+        "lon": 14.16995,
+        "precision": "shore point of Rodl nearest the geocoded club address, 199 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruder-club-pirat",
+      "name": "Wiener Ruder Club Pirat",
+      "shortName": "Wiener Ruder Club Pirat",
+      "abbreviation": "PIR",
+      "address": "Dampfschiffhaufen 65, 1220 Wien",
+      "website": "https://wrc-pirat.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-neue-donau",
+      "launchPoint": {
+        "lat": 48.2169,
+        "lon": 16.43326,
+        "precision": "geocoded club address, 224 m from the Neue Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderclub-donaubund",
+      "name": "Wiener Ruderclub Donaubund",
+      "shortName": "Wiener Ruderclub Donaubund",
+      "abbreviation": "DBU",
+      "address": "Dampfschiffhaufen 41, 1220 Wien",
+      "website": "https://donaubund.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-neue-donau",
+      "launchPoint": {
+        "lat": 48.21935,
+        "lon": 16.43232,
+        "precision": "geocoded club address, 385 m from the Neue Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderklub-argonauten",
+      "name": "Wiener Ruderklub Argonauten",
+      "shortName": "Wiener Ruderklub Argonauten",
+      "abbreviation": "ARG",
+      "address": "An der unteren Alten Donau 21, 1220 Wien",
+      "website": "https://www.argowien.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-wien",
+      "launchPoint": {
+        "lat": 48.23561,
+        "lon": 16.43203,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderklub-donau",
+      "name": "Wiener Ruderklub Donau",
+      "shortName": "Wiener Ruderklub Donau",
+      "abbreviation": "DOW",
+      "address": "An der unteren Alten Donau 13, 1220 Wien",
+      "website": "https://wrkdonau.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-wien",
+      "launchPoint": {
+        "lat": 48.23652,
+        "lon": 16.43132,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderverein-austria",
+      "name": "Wiener Ruderverein Austria",
+      "shortName": "Wiener Ruderverein Austria",
+      "abbreviation": "AUS",
+      "address": "Kuchelauer Hafenstraße 4, 1190 Wien",
+      "website": "https://www.ruderverein-austria.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.27693,
+        "lon": 16.35478,
+        "precision": "geocoded club address, 260 m from the Donau",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderverein-donauhort",
+      "name": "Wiener Ruderverein Donauhort",
+      "shortName": "Wiener Ruderverein Donauhort",
+      "abbreviation": "DHO",
+      "address": "Brigittenauer Sporn 9, 1200 Wien",
+      "website": "https://www.donauhort.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donaukanal",
+      "launchPoint": {
+        "lat": 48.26075,
+        "lon": 16.36958,
+        "precision": "geocoded club address, 53 m from the Donaukanal",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruderverein-ellida",
+      "name": "Wiener Ruderverein Ellida",
+      "shortName": "Wiener Ruderverein Ellida",
+      "abbreviation": "ELL",
+      "address": "Florian Berndlgasse 10, 1220 Wien",
+      "website": "https://www.ellida.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "near-wien",
+      "launchPoint": {
+        "lat": 48.23499,
+        "lon": 16.43292,
+        "precision": "geocoded club address (street level); water not identified",
+        "verified": false
+      }
+    },
+    {
+      "id": "oesterr-sportunion-wallsee-sektion-rudern",
+      "name": "Österr. Sportunion Wallsee - Sektion Rudern",
+      "shortName": "Österr. Sportunion Wallsee - Sektion Rudern",
+      "abbreviation": "WAL",
+      "address": "Josefstraße 29, 3313 Wallsee",
+      "website": "https://rudernpaddeln.com/",
+      "region": "Niederösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-erla",
+      "launchPoint": {
+        "lat": 48.16437,
+        "lon": 14.70928,
+        "precision": "geocoded club address, 295 m from the Erla",
+        "verified": false
+      }
+    }
+  ]
+}

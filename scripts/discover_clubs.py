@@ -4,7 +4,7 @@
 Usage (from the repository root):
     python3 scripts/discover_clubs.py
 
-Writes data/catalog.json with every OSM feature tagged sport=rowing that lies
+Writes data/catalogs/de-osm.json with every OSM feature tagged sport=rowing that lies
 or is named like a rowing club ("Ruderclub", "Ruderverein", ...) and lies
 within 300 m of a named lake, plus that lake, and saves the lake outline to
 data/outlines/ when it is missing. The app offers these clubs in its search.
@@ -29,7 +29,7 @@ from fetch_lake_outline import overpass, stitch
 from live_check import nearest_shore
 
 ROOT = Path(__file__).resolve().parents[1]
-CATALOG = ROOT / "data" / "catalog.json"
+CATALOG = ROOT / "data" / "catalogs" / "de-osm.json"
 OUTLINES = ROOT / "data" / "outlines"
 # Upper Bavaria and the lakes south of Munich: south, west, north, east.
 BBOX = (47.40, 10.70, 48.60, 12.90)
@@ -181,6 +181,7 @@ def main() -> int:
                 "name": lake_name,
                 "center": {"lat": round((min(lats) + max(lats)) / 2, 4), "lon": round((min(lons) + max(lons)) / 2, 4)},
                 "osm": osm_id,
+                "country": "de",
             }
             outline = OUTLINES / f"{lake_id}.geojson"
             if not outline.exists():
@@ -203,6 +204,7 @@ def main() -> int:
             "id": club_id,
             "name": tags["name"],
             "shortName": tags.get("short_name") or tags["name"],
+            "country": "de",
             "lakeId": lake_id,
             "address": address(tags),
             "website": tags.get("website") or tags.get("contact:website"),

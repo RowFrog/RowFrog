@@ -25,6 +25,8 @@ import httpx
 PAGE_URL = "https://www.gkd.bayern.de/en/lakes/watertemperature/bayern/{station}/current-values/table"
 LOCAL = ZoneInfo("Europe/Berlin")
 HEADERS = {"User-Agent": "RowerWeather/0.1 (+https://github.com/RowFrog/RowFrog)"}
+# A reading older than this means the station has gone quiet.
+MAX_AGE = timedelta(hours=6)
 
 _TAG = re.compile(r"<[^>]+>")
 _ROW = re.compile(r"(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})\s+(-?\d+(?:[.,]\d+)?)")
@@ -46,7 +48,7 @@ def parse(page: str) -> list[WaterTemperature]:
     return [WaterTemperature(t, values[t]) for t in sorted(values, reverse=True)]
 
 
-def latest(page: str, now: datetime, max_age: timedelta = timedelta(hours=6)) -> WaterTemperature | None:
+def latest(page: str, now: datetime, max_age: timedelta = MAX_AGE) -> WaterTemperature | None:
     """The newest measurement, or None when the station has gone quiet."""
     readings = parse(page)
     if not readings or now - readings[0].time > max_age:

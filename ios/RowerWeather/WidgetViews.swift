@@ -13,6 +13,8 @@ enum WidgetShared {
     static let homeKey = "RWWidgetHome"
     static let savedKey = "RWWidgetSaved"
     static let namesKey = "RWWidgetClubNames"
+    /// Own places by id, as [lat, lon]: their forecast is worked out in the widget too.
+    static let ownPlacesKey = "RWWidgetOwnPlaces"
 
     static var defaults: UserDefaults { UserDefaults(suiteName: group) ?? .standard }
 
