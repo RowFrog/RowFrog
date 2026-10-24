@@ -64,6 +64,7 @@ class Choice:
     hours: int  # how far ahead the model reaches
     advice: str  # "ok" or "notAdvised"; the automatic chain is always the recommended one
     note: str  # English; the app translates it
+    credit: str  # the weather credit line with this model picked; English, translated by the app
 
 
 CHOICES = {
@@ -74,6 +75,7 @@ CHOICES = {
             33,
             "ok",
             "The finest grid near the Alps. It reaches 33 hours ahead; the hours after that come from the automatic choice.",
+            "Weather: MeteoSwiss and Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0",
         ),
         Choice(
             "geosphere_arome_austria",
@@ -81,6 +83,7 @@ CHOICES = {
             60,
             "ok",
             "Good with wind in the Alpine foothills. A little coarser than ICON-D2.",
+            "Weather: GeoSphere Austria and Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0",
         ),
         Choice(
             "ecmwf_ifs025",
@@ -88,6 +91,7 @@ CHOICES = {
             240,
             "notAdvised",
             "Very coarse grid: it does not see the lake or the hills, so the wind on the water is often wrong.",
+            "Weather: ECMWF and Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0",
         ),
     ),
 }
