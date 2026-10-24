@@ -121,13 +121,18 @@ class ForecastHour:
 
 
 def request_params(
-    lat: float, lon: float, hours: int = 48, past_hours: int = 0, hourly: list[str] = HOURLY
+    lat: float,
+    lon: float,
+    hours: int = 48,
+    past_hours: int = 0,
+    hourly: list[str] = HOURLY,
+    models: str = "icon_seamless",
 ) -> dict[str, str]:
     params = {
         "latitude": f"{lat:.4f}",
         "longitude": f"{lon:.4f}",
         "hourly": ",".join(hourly),
-        "models": "icon_seamless",
+        "models": models,
         "wind_speed_unit": "ms",
         "timezone": "GMT",
         "forecast_hours": str(hours),
@@ -236,8 +241,10 @@ async def _get(client: httpx.AsyncClient, url: str, params: dict[str, str]) -> d
     return resp.json()
 
 
-async def fetch(client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48) -> list[ForecastHour]:
-    return parse(await _get(client, BASE_URL, request_params(lat, lon, hours)))
+async def fetch(
+    client: httpx.AsyncClient, lat: float, lon: float, hours: int = 48, models: str = "icon_seamless"
+) -> list[ForecastHour]:
+    return parse(await _get(client, BASE_URL, request_params(lat, lon, hours, models=models)))
 
 
 OUTLOOK_PAST_HOURS = 24
@@ -268,11 +275,15 @@ async def fetch_outlook(client: httpx.AsyncClient, lat: float, lon: float) -> li
 
 
 async def fetch_many(
-    client: httpx.AsyncClient, points: list[tuple[float, float]], hours: int = 48, hourly: list[str] = HOURLY
+    client: httpx.AsyncClient,
+    points: list[tuple[float, float]],
+    hours: int = 48,
+    hourly: list[str] = HOURLY,
+    models: str = "icon_seamless",
 ) -> list[list[ForecastHour]]:
     """Forecasts for several points in one request (Open-Meteo takes comma-separated
     coordinates and answers with a list). Open-Meteo still counts calls per point."""
-    params = request_params(points[0][0], points[0][1], hours, hourly=hourly)
+    params = request_params(points[0][0], points[0][1], hours, hourly=hourly, models=models)
     params["latitude"] = ",".join(f"{lat:.4f}" for lat, _ in points)
     params["longitude"] = ",".join(f"{lon:.4f}" for _, lon in points)
     payload = await _get(client, BASE_URL, params)
