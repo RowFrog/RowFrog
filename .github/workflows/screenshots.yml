@@ -206,11 +206,11 @@ jobs:
           # in English with the location allowed (clubs near Starnberg), in German without.
           xcrun simctl privacy "$UDID" grant location com.rowfrog.RowFrog
           xcrun simctl location "$UDID" set 47.9990,11.3405
-          for page in 0 1 2 3 4 5 6 7 8 9; do
+          for page in 0 1 2 3 4 5 6 7 8 9 10; do
             GUIDE=1 shoot "26-tour-p$((page + 1))" light -RWNoTips YES -RWTutorialPage $page
           done
           xcrun simctl privacy "$UDID" revoke location com.rowfrog.RowFrog
-          for page in 0 1 2 3 4 5 6 7 8 9; do
+          for page in 0 1 2 3 4 5 6 7 8 9 10; do
             GUIDE=1 shoot "27-tour-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de
           done
           GUIDE=1 shoot 28-tip-hourly light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWScrollTo hourly
@@ -222,6 +222,8 @@ jobs:
           GUIDE=1 shoot 34-tip-rain-radar light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo radar
           GUIDE=1 shoot 35-tip-satellite light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo satellite
           GUIDE=1 shoot 36-tip-forecast-source light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo source
+          GUIDE=1 shoot 37-tip-my-boats light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage limits
+          GUIDE=1 shoot 38-tip-cold-water light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage boat:small
           # Lake view (sample wind from the south)
           shoot 50-lake-view-tile light -RWOpenClub mrc-1880 -RWScrollTo lakeview
           shoot 51-lake-view-map light -RWOpenClub mrc-1880 -RWOpenLakeView YES

@@ -39,7 +39,7 @@ enum Tutorial {
 
 /// The tour's pages, in order. The two choice pages only show while there is no home base.
 enum TourPage: Int, CaseIterable, Identifiable {
-    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, lake, locations, wideScreen, settings
+    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, boats, lake, locations, wideScreen, settings
     var id: Int { rawValue }
 
     var isChoice: Bool { self == .homeBase || self == .moreClubs }
@@ -52,6 +52,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: "light.beacon.max"
         case .conditions: "thermometer.and.liquid.waves"
         case .warnings: "exclamationmark.triangle.fill"
+        case .boats: "figure.rower"
         case .lake: "map.fill"
         case .locations: "list.bullet"
         case .wideScreen: "rectangle.split.2x1"
@@ -65,6 +66,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: .green
         case .conditions, .lake: .teal
         case .warnings: .orange
+        case .boats: .mint
         case .wideScreen: .indigo
         case .settings: .gray
         }
@@ -78,6 +80,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: tr("The rowing light")
         case .conditions: tr("Conditions at a glance")
         case .warnings: tr("DWD warnings")
+        case .boats: tr("Your boats and limits")
         case .lake: tr("Lake view and routes")
         case .locations: tr("Your locations")
         case .wideScreen: tr("Landscape and wide screens")
@@ -93,6 +96,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: tr("Every page starts with the rowing light for the hour ahead.")
         case .conditions: tr("Below the light you find what matters on the water.")
         case .warnings: tr("Warnings from the Deutscher Wetterdienst come right under the rowing light.")
+        case .boats: tr("The rowing light is worked out for one boat. Set it in Settings › Rowing limits.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")
         case .locations: tr("Keep all the places you row in one list.")
         case .wideScreen: tr("Turn your iPhone sideways, or use a wide screen, to see more at once.")
@@ -125,7 +129,14 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .warnings: [
             TourPoint(symbol: "water.waves", text: tr("Lake storm warnings for the lake and weather warnings for the town.")),
             TourPoint(symbol: "text.bubble", text: tr("A warning also appears in the Why line and on the location list.")),
-            TourPoint(symbol: "light.beacon.max", text: tr("On the lake, also watch the storm warning lights on the shore.")),
+            TourPoint(symbol: "light.beacon.max", text: tr("On the lake, also watch the storm warning lights on the shore. The warnings card explains what they mean.")),
+        ]
+        case .boats: [
+            TourPoint(symbol: "checkmark", text: tr("Small boats are ticked at first, with the strictest limits. Tick Big boats if you row a four or an eight.")),
+            TourPoint(symbol: "list.bullet", text: tr("Add My boats, such as the club's gig, each with its type and size. When it is too rough for your boat, the app names one of yours that would be fine.")),
+            TourPoint(symbol: "slider.horizontal.3", text: tr("The sliders next to a boat open its limits for wind, gusts and waves.")),
+            TourPoint(symbol: "map", text: tr("Pick the boat that colours the lake map. If the map is for a steadier boat than yours, it says so.")),
+            TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water, the app lowers its own wind and gust limits and advises a life jacket. In a single, take a coach or partner boat along.", Format.temperature(RowingLimits.coldWaterC))),
         ]
         case .lake: [
             TourPoint(symbol: "map", text: tr("The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.")),
@@ -452,7 +463,7 @@ private struct TourPageView: View {
             }
             .padding()
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-        case .homeBase, .moreClubs, .warnings, .lake, .locations, .wideScreen, .settings:
+        case .homeBase, .moreClubs, .warnings, .boats, .lake, .locations, .wideScreen, .settings:
             EmptyView()
         }
     }
@@ -518,6 +529,18 @@ struct ForecastSourceTip: Tip {
     var title: Text { Text(tr("Where the forecast comes from")) }
     var message: Text? { Text(tr("The app picks the weather model that does best for this lake. Tap the line to see which one.")) }
     var image: Image? { Image(systemName: "cloud.sun") }
+}
+
+struct MyBoatsTip: Tip {
+    var title: Text { Text(tr("Which boat do you row?")) }
+    var message: Text? { Text(tr("Tick the boat the rowing light is for. The sliders open its limits, and below you can add your own boats.")) }
+    var image: Image? { Image(systemName: "figure.rower") }
+}
+
+struct ColdWaterTip: Tip {
+    var title: Text { Text(tr("Cold water")) }
+    var message: Text? { Text(tr("A capsize in water below %@ gets dangerous within minutes. The app then lowers its own wind and gust limits by %@. Limits you set stay as they are, with a reminder on the rowing light.", Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs))) }
+    var image: Image? { Image(systemName: "thermometer.snowflake") }
 }
 
 struct RoutePlanningTip: Tip {
