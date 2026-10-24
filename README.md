@@ -6,7 +6,7 @@ webcam pictures where they are available later on.
 For each club's launch point the app shows an hourly green / amber / red
 "can we row?" light for the next 48 hours, and the conditions behind it:
 wind, gusts, computed wave height, fog, thunderstorm risk, air and water
-temperature, official DWD warnings and daylight. It starts with the lakes
+temperature, rain radar, ice cover, official DWD warnings and daylight. It starts with the lakes
 south of Munich (Starnberger See first) and can show any club in the German
 Rowing Association's club list.
 
@@ -48,6 +48,29 @@ for its details. "Plan a route" checks a route on the lake against the
 forecast for the time you start, rowed once or out and back, and shows
 where and when it gets rough. Routes are saved on the phone.
 
+**Rain radar.** Each location page has a card with DWD's rain radar and
+2-hour nowcast for the launch point, e.g. "Light rain from 21:30". The app
+reads it from DWD directly (`ios/RowerWeather/RainRadar.swift`).
+
+**Ice cover.** Every forecast carries an ice estimate per lake for today and
+the coming week: no ice, shore ice possible, ice forming, ice cover likely,
+or drift ice on rivers. Likely ice turns the hourly light red; possible shore
+or drift ice turns it amber. The estimate is a frost model over the last
+three months of air temperature plus the forecast week
+(`backend/rowerweather/ice.py`); a measured water temperature above 3 °C
+overrides it. On larger lakes the Copernicus Lake Ice Extent satellite map
+checks it, and the ice tile shows the latest pass, e.g. "Satellite, Today:
+open water".
+
+**Satellite pictures.** Below the lake view a card shows the latest
+Sentinel-2 picture of the lake, with a line such as "Sentinel-2 · 22 Oct ·
+25 % of the lake under cloud" and an "i" that explains why a new picture
+comes only every 2 to 5 days. A switch chooses between the latest pass
+(clouds or not), the clearest one and, in cloudy weeks, a newer mostly clear
+one; every picture shows the same area. Chips draw the shore, clubs, saved
+routes, wind and, in winter, the satellite ice map over it. Tap for full
+screen with zoom.
+
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
 point the forecast is for, with its coordinates and a button to open it in
 Maps.
@@ -82,6 +105,7 @@ layouts (two columns from 600 pt, a side list from 860 × 560 pt).
 | `data/catalog-drv.json` | Clubs from the German Rowing Association's club list (see [Club catalog](#club-catalog)). |
 | `data/catalog.json` | More clubs found in OpenStreetMap. |
 | `data/outlines/` | Lake outlines (GeoJSON) for the wave calculation and lake view, made with `scripts/fetch_lake_outline.py`. |
+| `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `docs/screenshots/` | App screenshots from the "App screenshots" workflow. |
 | `scripts/` | Catalog import, lake outlines, live data check, translation check and background drawing. |
 | `CREDITS.md` | Data sources, licences and the credits the app must show. |
@@ -128,10 +152,13 @@ python3 scripts/fetch_lake_outline.py starnberger-see "Starnberger See"
 ## Hosting
 
 There is no server yet. The "Publish forecasts" workflow runs the backend on
-GitHub every 30 minutes (confirmed clubs) and every 6 hours (all clubs) and
-publishes its answers as files on GitHub Pages, at
+GitHub every 30 minutes (confirmed clubs and clubs people use) and every 6
+hours (all clubs), and publishes its answers as files on GitHub Pages, at
 https://api.rowfrog.com/v1/ (same paths as the API:
-`lakes`, `clubs/<id>/forecast`). Release builds of the app read from there;
+`lakes/index`, `clubs/<id>/forecast`, `lakes/<id>/view`, and the satellite
+pictures). Weather is only loaded again after a weather model has a new run,
+which keeps the job within Open-Meteo's free limit; the last forecasts are
+kept between runs in the Actions cache. Release builds of the app read from there;
 Debug builds use a backend on the Mac at localhost. To move to a server of our
 own, run `uvicorn rowerweather.api:app` there and point the DNS record of
 `api.rowfrog.com` at it; the app keeps its address.
@@ -154,6 +181,8 @@ Run the backend first; the simulator reaches it at `http://localhost:8000`
 | --- | --- |
 | **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests only (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately). |
 | **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and saves screenshots of every screen to `docs/screenshots` on the same branch. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Run it from the Actions tab; the `only` input limits it to matching screens. |
+| **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
+| **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs when the club list or data sources change; new outlines are committed back. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalog-drv.json`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalog.json` from OpenStreetMap. |
@@ -172,6 +201,7 @@ Proposed for small boats (1x, 2x) and to be tuned with rowers; see
 | Water temperature | under 15 °C (never red on its own) | – |
 | DWD lake warning | strong wind | storm |
 | DWD weather warning for the place | minor (yellow) | moderate (orange) or above, or any thunderstorm |
+| Ice | shore ice possible, or drift ice on a river | ice cover likely |
 | Daylight | sunrise or sunset within the hour | sun down for the whole hour |
 
 ## In progress
@@ -179,9 +209,6 @@ Proposed for small boats (1x, 2x) and to be tuned with rowers; see
 Not on `main` yet, each in an open pull request:
 
 - The Row Frog name in the app, new bundle IDs and the `rowfrog://` link.
-- The forecast backend published every 30 minutes by GitHub Actions to GitHub
-  Pages at `https://api.rowfrog.com/v1`, and lake ice cover (estimate plus a
-  satellite check) with a rain radar.
 - A compact current-conditions card with detail sheets, and rowing limits you
   can set per boat.
 - A per-region choice of weather model, with the forecast source shown in the
