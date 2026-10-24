@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-23",
+  "updated": "2026-10-24",
   "source": "Club data: Österreichischer Ruderverband (rudern.at). Positions and waters: © OpenStreetMap contributors, ODbL",
   "lakes": [
     {
@@ -138,20 +138,10 @@
       "name": "Rodl",
       "country": "at",
       "center": {
-        "lat": 48.32754,
-        "lon": 14.16181
+        "lat": 48.33083,
+        "lon": 14.17062
       },
       "kind": "river"
-    },
-    {
-      "id": "rodl",
-      "name": "Rodl",
-      "country": "at",
-      "center": {
-        "lat": 48.329,
-        "lon": 14.1679
-      },
-      "osm": "way/23444179"
     },
     {
       "id": "stadtweiher",
@@ -965,11 +955,11 @@
       "region": "Oberösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "rodl",
+      "lakeId": "river-rodl",
       "launchPoint": {
-        "lat": 48.3291,
-        "lon": 14.16995,
-        "precision": "shore point of Rodl nearest the geocoded club address, 199 m away",
+        "lat": 48.33083,
+        "lon": 14.17062,
+        "precision": "geocoded club address, 199 m from the Rodl",
         "verified": false
       }
     },
