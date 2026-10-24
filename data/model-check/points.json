@@ -1,0 +1,15 @@
+{
+  "about": "Test points for the weather model comparison (scripts/model_check.py). Stage 1 = lakes south of Munich. Lake centres are approximate.",
+  "points": [
+    {"id": "mrc-1880", "name": "MRC 1880 launch point, Starnberg", "lat": 47.99667, "lon": 11.34745, "stage": 1},
+    {"id": "tutzinger-rv", "name": "Tutzinger RV launch point", "lat": 47.89578, "lon": 11.27525, "stage": 1},
+    {"id": "starnberger-see-centre", "name": "Starnberger See, centre", "lat": 47.9039, "lon": 11.3072, "stage": 1},
+    {"id": "starnberger-see-south", "name": "Starnberger See, south near Seeshaupt", "lat": 47.835, "lon": 11.325, "stage": 1},
+    {"id": "ammersee", "name": "Ammersee, centre", "lat": 48.0, "lon": 11.12, "stage": 1},
+    {"id": "woerthsee", "name": "Wörthsee, centre", "lat": 48.068, "lon": 11.17, "stage": 1},
+    {"id": "tegernsee", "name": "Tegernsee, centre", "lat": 47.725, "lon": 11.76, "stage": 1},
+    {"id": "kochelsee", "name": "Kochelsee, centre", "lat": 47.648, "lon": 11.35, "stage": 1},
+    {"id": "staffelsee", "name": "Staffelsee, centre", "lat": 47.693, "lon": 11.17, "stage": 1},
+    {"id": "regattastrecke-oberschleissheim", "name": "Olympic regatta course Oberschleißheim", "lat": 48.2437, "lon": 11.5152, "stage": 1}
+  ]
+}
