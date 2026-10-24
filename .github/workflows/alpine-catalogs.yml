@@ -8,10 +8,13 @@ name: Austria and Switzerland club catalogs
 # started by hand with "Import Swiss Rowing" ticked, once Swiss Rowing has
 # agreed; otherwise the job only reads three club pages to check the parsing.
 # Results, lake outlines and the geocoding cache are committed back to the
-# same branch. Runs by hand from the Actions tab or when the scripts change.
+# same branch. Runs by hand from the Actions tab, or when the scripts change on main.
 
 on:
+  # Only on main: a run commits the catalog back to its branch, and a bot
+  # commit on a pull request branch holds that PR's checks for approval.
   push:
+    branches: [main]
     paths:
       - scripts/import_oerv.py
       - scripts/import_osm_clubs.py
