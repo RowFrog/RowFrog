@@ -184,6 +184,11 @@ struct TutorialView: View {
     @State private var pages: [TourPage]
     @State private var page: TourPage
     @State private var here = DeviceLocation()
+    // The location question is a system alert. When it closes, the paged view can
+    // jump back to its first page while `page` still says otherwise, so the pager
+    // is rebuilt on the current page once the answer is in.
+    @State private var pagerID = 0
+    @Environment(\.scenePhase) private var scenePhase
 
     init(locations: LocationStore, reload: @escaping () async -> Void, finish: @escaping () -> Void) {
         self.locations = locations
@@ -224,6 +229,13 @@ struct TutorialView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .id(pagerID)
+            .onChange(of: scenePhase) { old, new in
+                if new == .active, old != .active, here.askedForPermission {
+                    here.askedForPermission = false
+                    pagerID += 1
+                }
+            }
             .task(id: page) {
                 // Ask for the location when choosing the home base, for clubs nearby.
                 if page == .homeBase { here.request() }
@@ -556,6 +568,8 @@ struct RoutePlanningTip: Tip {
 @Observable
 final class DeviceLocation: NSObject, CLLocationManagerDelegate {
     private(set) var coordinate: Coordinate?
+    /// Set when the system alert asking for the location was shown.
+    var askedForPermission = false
     @ObservationIgnored private let manager = CLLocationManager()
 
     override init() {
@@ -566,7 +580,9 @@ final class DeviceLocation: NSObject, CLLocationManagerDelegate {
 
     func request() {
         switch manager.authorizationStatus {
-        case .notDetermined: manager.requestWhenInUseAuthorization()
+        case .notDetermined:
+            askedForPermission = true
+            manager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse, .authorizedAlways: manager.requestLocation()
         default: break
         }
