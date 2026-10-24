@@ -101,3 +101,19 @@ def test_old_forecast_hours_are_left_out():
     weather = open_meteo.parse(payload)
     kept = api._from_now(weather, utc(18, 5, 40))
     assert [h.time.hour for h in kept] == [5, 6, 7, 8]
+
+
+def test_only_clubs_people_load_count_as_used(monkeypatch):
+    from types import SimpleNamespace
+
+    from rowerweather import locations
+
+    monkeypatch.setattr(publish, "usage", None)
+    clubs, _, counted = publish.usage_now()
+    assert not counted and clubs == set(locations.load(catalog_paths=()).clubs)
+
+    loaded = SimpleNamespace(used=lambda days: SimpleNamespace(clubs={"mrc-1880": 4}, lakes={"ammersee": 1}))
+    monkeypatch.setattr(publish, "usage", loaded)
+    clubs, lakes, counted = publish.usage_now()
+    assert counted and clubs == {"mrc-1880"}
+    assert lakes == {"starnberger-see", "ammersee"}
