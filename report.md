@@ -1,6 +1,6 @@
-# Model check, 2026-10-24 20:18 UTC
+# Model check, 2026-10-24 22:49 UTC
 
-7 forecast runs stored (2026-10-23T20:00Z to 2026-10-24T20:00Z).
+8 forecast runs stored (2026-10-23T20:00Z to 2026-10-24T22:00Z).
 Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.
 "Light wrong" = how often wind and gusts alone would have given a different rowing light than measured.
 Stations are on land, where wind is usually weaker than on the lake, so the ranking matters more than the numbers.
