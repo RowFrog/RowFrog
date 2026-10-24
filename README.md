@@ -20,6 +20,9 @@ Android may follow later.
 > and links starting with `rowfrog://`. The Xcode project, targets and folders
 > and the Python package are still called `RowerWeather`.
 
+Hidden switches, test steps, launch arguments, workflows and the secrets they
+need are in the **[handbook](docs/handbook.md)**.
+
 ## What the app does
 
 **Safety notice.** Before anything else, a first start shows a "Before you
@@ -162,6 +165,7 @@ layouts (two columns from 600 pt, a side list from 860 × 560 pt).
 | `data/outlines/` | Lake outlines (GeoJSON) for the wave calculation and lake view, made with `scripts/fetch_lake_outline.py`. |
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues. |
+| `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
 | `docs/screenshots/` | App screenshots from the "App screenshots" workflow. |
 | `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. |
 | `CREDITS.md` | Data sources, licences and the credits the app must show. |
@@ -253,6 +257,9 @@ Run the backend first; the simulator reaches it at `http://localhost:8000`
 
 ## Workflows
 
+More detail, including the secrets each one needs, is in the
+[handbook](docs/handbook.md).
+
 | Workflow | What it does |
 | --- | --- |
 | **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests only (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately). |
@@ -293,7 +300,8 @@ worked out on the phone (`ios/RowerWeather/Limits.swift`).
 Not on `main` yet:
 
 - Weather models chosen per region from the model check results, and a
-  model choice in Settings.
+  model choice in Settings for everyone. A test version of the picker is
+  hidden behind the developer options (see the handbook).
 
 Not built yet: webcams.
 
