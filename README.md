@@ -73,6 +73,11 @@ one; every picture shows the same area. Chips draw the shore, clubs, saved
 routes, wind and, in winter, the satellite ice map over it. Tap for full
 screen with zoom.
 
+**Forecast source.** A small line at the bottom of each club page names the
+weather model the forecast comes from (today DWD's ICON models for every club,
+`backend/rowerweather/weather_models.py`); tapping it explains the chain of
+models from the first hours to the end of the forecast.
+
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
 point the forecast is for, with its coordinates and a button to open it in
 Maps.
@@ -192,6 +197,10 @@ Run the backend first; the simulator reaches it at `http://localhost:8000`
 | **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and saves screenshots of every screen to `docs/screenshots` on the same branch. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Run it from the Actions tab; the `only` input limits it to matching screens. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
+| **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue. |
+| **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
+| **Usage limits** (`budget-check.yml`) | Once a day compares the calls with Open-Meteo's and Copernicus' free limits and comments on the "Usage limits" issue at 70 % (warning) and 85 % (alert), plus a monthly summary. |
+| **API check** (`api-check.yml`) | Shows how `api.rowfrog.com` answers (Cloudflare proxy, SSL mode, usage counter). Runs by hand. |
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs when the club list or data sources change; new outlines are committed back. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalog-drv.json`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalog.json` from OpenStreetMap. |
@@ -215,12 +224,12 @@ Proposed for small boats (1x, 2x) and to be tuned with rowers; see
 
 ## In progress
 
-Not on `main` yet, each in an open pull request:
+Not on `main` yet:
 
 - A compact current-conditions card with detail sheets, and rowing limits you
   can set per boat.
-- A per-region choice of weather model, with the forecast source shown in the
-  app.
+- Weather models chosen per region from the model check results, and a
+  model choice in Settings.
 
 Not built yet: webcams.
 
