@@ -117,3 +117,29 @@ def test_only_clubs_people_load_count_as_used(monkeypatch):
     clubs, lakes, counted = publish.usage_now()
     assert counted and clubs == {"mrc-1880"}
     assert lakes == {"starnberger-see", "ammersee"}
+
+
+def test_other_models_load_only_for_confirmed_clubs_once_per_run(monkeypatch):
+    from rowerweather import api, locations
+
+    asked = []
+
+    async def fake_many(client, points, hours=48, hourly=open_meteo.HOURLY, models="icon_seamless"):
+        asked.append((models, len(points)))
+        return [[] for _ in points]
+
+    monkeypatch.setattr(open_meteo, "fetch_many", fake_many)
+    every = list(locations.load().clubs.values())
+    confirmed = [c for c in every if c.source is None]
+    others = [c for c in every if c.source is not None][:5]
+    state = publish.State(None)
+    pairs = publish.model_weather(state, confirmed + others, utc(23, 14, 30))
+    assert len(asked) == 3, "one request per model"
+    assert all(n == len(confirmed) for _, n in asked)
+    assert {club.id for club, _ in pairs} == {c.id for c in confirmed}
+    asked.clear()
+    publish.model_weather(state, confirmed, utc(23, 15, 0))
+    assert asked == [], "nothing new until the next model run"
+    for key in list(api._primed_weather):
+        if "@" in key:
+            del api._primed_weather[key]

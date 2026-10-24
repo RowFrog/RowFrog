@@ -228,11 +228,15 @@ async def fetch(
 
 
 async def fetch_many(
-    client: httpx.AsyncClient, points: list[tuple[float, float]], hours: int = 48, hourly: list[str] = HOURLY
+    client: httpx.AsyncClient,
+    points: list[tuple[float, float]],
+    hours: int = 48,
+    hourly: list[str] = HOURLY,
+    models: str = "icon_seamless",
 ) -> list[list[ForecastHour]]:
     """Forecasts for several points in one request (Open-Meteo takes comma-separated
     coordinates and answers with a list). Open-Meteo still counts calls per point."""
-    params = request_params(points[0][0], points[0][1], hours, hourly)
+    params = request_params(points[0][0], points[0][1], hours, hourly, models)
     params["latitude"] = ",".join(f"{lat:.4f}" for lat, _ in points)
     params["longitude"] = ",".join(f"{lon:.4f}" for _, lon in points)
     payload = await _get(client, BASE_URL, params)

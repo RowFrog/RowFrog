@@ -358,10 +358,12 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
                 weather = cached[1]
             else:
-                try:
-                    other = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon, models=picked.id)
-                except httpx.HTTPError:
-                    raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
+                other = _primed_weather.pop(key, None)
+                if other is None:
+                    try:
+                        other = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon, models=picked.id)
+                    except httpx.HTTPError:
+                        raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
                 weather = _filled(other, weather)
                 _cache[key] = (time.monotonic(), weather)
         warnings_block, warnings = await _warnings(client, club, now)

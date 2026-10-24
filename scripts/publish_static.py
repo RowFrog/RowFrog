@@ -9,6 +9,8 @@ and writes each answer at its API path, without a file extension:
     OUT_DIR/lakes/index                 = GET /lakes/index (the lake list)
     OUT_DIR/lakes/<id>/view             = GET /lakes/<id>/view
     OUT_DIR/clubs/<id>/forecast         = GET /clubs/<id>/forecast
+    OUT_DIR/clubs/<id>/models/<m>/forecast  the same with another weather model,
+                                        for the confirmed clubs (hidden model picker)
 So the app reads the files with the same paths as from a live backend, and
 moving to a real server later only changes where api.rowfrog.com points.
 With the Copernicus account (CDSE_CLIENT_ID / CDSE_CLIENT_SECRET) it also
@@ -43,7 +45,7 @@ from pathlib import Path
 import httpx
 from fastapi.testclient import TestClient
 
-from rowerweather import api, ice, lake_view, locations, outlines
+from rowerweather import api, ice, lake_view, locations, outlines, weather_models
 from rowerweather.api import LOCAL, app
 from rowerweather.sources import lake_ice_satellite, open_meteo, sentinel2
 
@@ -108,10 +110,12 @@ class State:
         self.clubs: dict[str, tuple[datetime, list]] = {}
         self.lakes: dict[str, tuple[datetime, int, list]] = {}  # loaded, points, weather per point
         self.ice_map: tuple[datetime | None, dict[str, list]] = (None, {})
+        self.models: dict[str, tuple[datetime, list]] = {}  # "<club>@<model>" -> loaded, weather
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
                 self.clubs, self.lakes, self.ice_map = saved["clubs"], saved["lakes"], saved["ice_map"]
+                self.models = saved.get("models", {})
                 api._ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
                 print(f"  state not readable, starting afresh: {e!r}")
@@ -120,7 +124,13 @@ class State:
         if not self.path:
             return
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        body = {"clubs": self.clubs, "lakes": self.lakes, "ice_map": self.ice_map, "ice_temps": api._ice_temps}
+        body = {
+            "clubs": self.clubs,
+            "lakes": self.lakes,
+            "ice_map": self.ice_map,
+            "ice_temps": api._ice_temps,
+            "models": self.models,
+        }
         self.path.write_bytes(pickle.dumps(body))
 
 
@@ -162,6 +172,39 @@ def club_weather(state: State, clubs: list[locations.Club], used: set[str], with
     for club in clubs:
         if club.id in state.clubs:
             api._primed_weather[club.id] = state.clubs[club.id][1]
+
+
+def model_weather(state: State, clubs: list[locations.Club], now: datetime) -> list[tuple[locations.Club, str]]:
+    """The other weather models the confirmed clubs offer (the app's hidden model
+    picker), loaded every 3 hours with one request per model. Returns the
+    (club, model) pairs that have a forecast."""
+    confirmed = [c for c in clubs if api._offers_choices(c)]
+    by_model: dict[str, list[locations.Club]] = {}
+    for club in confirmed:
+        for choice in weather_models.choices_for(club.launch_point.lat, club.launch_point.lon):
+            by_model.setdefault(choice.id, []).append(club)
+
+    async def load(model: str, stale: list[locations.Club]) -> list[list] | None:
+        points = [(c.launch_point.lat, c.launch_point.lon) for c in stale]
+        async with httpx.AsyncClient() as client:
+            try:
+                return await open_meteo.fetch_many(client, points, FETCH_HOURS, models=model)
+            except (httpx.HTTPError, ValueError, KeyError) as e:
+                print(f"  model {model}: {e!r}")
+                return None
+
+    pairs = []
+    for model, model_clubs in by_model.items():
+        stale = [c for c in model_clubs if due(state.models.get(f"{c.id}@{model}", (None,))[0], now, WEATHER_HOURS["used"])]
+        if stale:
+            for club, weather in zip(stale, asyncio.run(load(model, stale)) or []):
+                state.models[f"{club.id}@{model}"] = (now, weather)
+        for club in model_clubs:
+            key = f"{club.id}@{model}"
+            if key in state.models:
+                api._primed_weather[key] = state.models[key][1]
+                pairs.append((club, model))
+    return pairs
 
 
 def lake_weather(state: State, lake_ids: list[str], used: set[str], now: datetime) -> list[str]:
@@ -409,6 +452,7 @@ def main() -> int:
     every = list(locations.load().clubs.values())
     clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
     club_weather(state, clubs, used_clubs, with_usage, now)
+    model_pairs = model_weather(state, clubs, now)
     all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
     satellite_ice(state, all_lakes, now)
     failed = []
@@ -426,6 +470,19 @@ def main() -> int:
             continue
         write(args.out / "clubs" / club.id / "forecast", resp.json())
     print(f"Wrote {len(clubs) - len(failed)} of {len(clubs)} forecasts to {args.out}")
+    written = 0
+    for club, model in model_pairs:
+        try:
+            resp = client.get(f"/clubs/{club.id}/models/{model}/forecast")
+        except Exception as e:
+            print(f"  {club.id} with {model}: {type(e).__name__}: {e}")
+            continue
+        if resp.status_code != 200:
+            print(f"  {club.id} with {model}: HTTP {resp.status_code} {resp.text[:120]}")
+            continue
+        write(args.out / "clubs" / club.id / "models" / model / "forecast", resp.json())
+        written += 1
+    print(f"Wrote {written} of {len(model_pairs)} forecasts with other weather models")
 
     # The lakes of this run's clubs, and any other lake whose forecast is due.
     run_lakes = {c.lake_id for c in clubs}
