@@ -1,0 +1,919 @@
+{
+  "version": 1,
+  "updated": "2026-10-23",
+  "source": "© OpenStreetMap contributors, ODbL",
+  "lakes": [
+    {
+      "id": "river-aare",
+      "name": "Aare",
+      "country": "ch",
+      "center": {
+        "lat": 47.20105,
+        "lon": 7.53076
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-alter-rhein",
+      "name": "Alter Rhein",
+      "country": "ch",
+      "center": {
+        "lat": 47.47918,
+        "lon": 9.58388
+      },
+      "kind": "river"
+    },
+    {
+      "id": "bodensee",
+      "name": "Bodensee",
+      "country": "ch",
+      "center": {
+        "lat": 47.6478,
+        "lon": 9.3063
+      },
+      "osm": "relation/1156846"
+    },
+    {
+      "id": "greifensee",
+      "name": "Greifensee",
+      "country": "ch",
+      "center": {
+        "lat": 47.3474,
+        "lon": 8.68
+      },
+      "osm": "relation/1678346"
+    },
+    {
+      "id": "river-la-sarine-saane",
+      "name": "La Sarine / Saane",
+      "country": "ch",
+      "center": {
+        "lat": 46.81202,
+        "lon": 7.16259
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-la-thiele",
+      "name": "La Thièle",
+      "country": "ch",
+      "center": {
+        "lat": 46.78659,
+        "lon": 6.64035
+      },
+      "kind": "river"
+    },
+    {
+      "id": "lago-di-lugano",
+      "name": "Lago di Lugano",
+      "country": "ch",
+      "center": {
+        "lat": 45.9696,
+        "lon": 8.992
+      },
+      "osm": "relation/1342576"
+    },
+    {
+      "id": "le-leman",
+      "name": "Le Léman",
+      "country": "ch",
+      "center": {
+        "lat": 46.3614,
+        "lon": 6.5395
+      },
+      "osm": "relation/332617"
+    },
+    {
+      "id": "river-limmat",
+      "name": "Limmat",
+      "country": "ch",
+      "center": {
+        "lat": 47.45653,
+        "lon": 8.3253
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-rhein",
+      "name": "Rhein",
+      "country": "ch",
+      "center": {
+        "lat": 47.57805,
+        "lon": 8.5118
+      },
+      "kind": "river"
+    },
+    {
+      "id": "rotsee",
+      "name": "Rotsee",
+      "country": "ch",
+      "center": {
+        "lat": 47.0697,
+        "lon": 8.3143
+      },
+      "osm": "relation/1676756"
+    },
+    {
+      "id": "sarnersee",
+      "name": "Sarnersee",
+      "country": "ch",
+      "center": {
+        "lat": 46.8677,
+        "lon": 8.2164
+      },
+      "osm": "way/136647452"
+    },
+    {
+      "id": "schiffenensee",
+      "name": "Schiffenensee",
+      "country": "ch",
+      "center": {
+        "lat": 46.8499,
+        "lon": 7.1676
+      },
+      "osm": "relation/1537206"
+    },
+    {
+      "id": "sempachersee",
+      "name": "Sempachersee",
+      "country": "ch",
+      "center": {
+        "lat": 47.1459,
+        "lon": 8.1567
+      },
+      "osm": "relation/2625908"
+    },
+    {
+      "id": "thunersee",
+      "name": "Thunersee",
+      "country": "ch",
+      "center": {
+        "lat": 46.7056,
+        "lon": 7.73
+      },
+      "osm": "relation/1117321"
+    },
+    {
+      "id": "vierwaldstaettersee",
+      "name": "Vierwaldstättersee",
+      "country": "ch",
+      "center": {
+        "lat": 46.9854,
+        "lon": 8.4519
+      },
+      "osm": "relation/1442399"
+    },
+    {
+      "id": "wohlensee",
+      "name": "Wohlensee",
+      "country": "ch",
+      "center": {
+        "lat": 46.966,
+        "lon": 7.3257
+      },
+      "osm": "relation/1722165"
+    },
+    {
+      "id": "zugersee",
+      "name": "Zugersee",
+      "country": "ch",
+      "center": {
+        "lat": 47.1222,
+        "lon": 8.4905
+      },
+      "osm": "relation/540344"
+    },
+    {
+      "id": "zuerichsee",
+      "name": "Zürichsee",
+      "country": "ch",
+      "center": {
+        "lat": 47.2791,
+        "lon": 8.7414
+      },
+      "osm": "relation/32362"
+    }
+  ],
+  "clubs": [
+    {
+      "id": "aviron-romand-zurich",
+      "name": "Aviron Romand Zurich",
+      "shortName": "Aviron Romand Zurich",
+      "address": "",
+      "website": "https://aviron-romand.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.35657,
+        "lon": 8.53665,
+        "precision": "shore point of Zürichsee nearest the node/11248381042 in OpenStreetMap, 34 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "basler-ruder-club",
+      "name": "Basler Ruder Club",
+      "shortName": "Basler Ruder Club",
+      "address": "Grenzacherstrasse 536, 4125 Riehen",
+      "website": "https://basler-ruder-club.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-rhein",
+      "launchPoint": {
+        "lat": 47.56231,
+        "lon": 7.63348,
+        "precision": "way/1393966328 in OpenStreetMap, 113 m from the Rhein",
+        "verified": false
+      }
+    },
+    {
+      "id": "belvoir-ruderclub",
+      "name": "Belvoir Ruderclub",
+      "shortName": "Belvoir Ruderclub",
+      "address": "",
+      "website": "https://www.belvoir-rc.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.35618,
+        "lon": 8.5366,
+        "precision": "shore point of Zürichsee nearest the node/3747206383 in OpenStreetMap, 27 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "club-aviron-ville-fribourg-ruderclub-freiburg",
+      "name": "Club aviron ville Fribourg / Ruderclub Freiburg",
+      "shortName": "Club aviron ville Fribourg / Ruderclub Freiburg",
+      "address": "",
+      "website": "https://www.avironfribourg.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-la-sarine-saane",
+      "launchPoint": {
+        "lat": 46.81202,
+        "lon": 7.16259,
+        "precision": "node/9274100406 in OpenStreetMap, 62 m from the La Sarine / Saane",
+        "verified": false
+      }
+    },
+    {
+      "id": "club-de-l-aviron-nyon",
+      "name": "Club de l'Aviron Nyon",
+      "shortName": "Club de l'Aviron Nyon",
+      "address": "Rue de Rive 11, 1260 Nyon",
+      "website": "https://www.avironnyon.com/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "le-leman",
+      "launchPoint": {
+        "lat": 46.38321,
+        "lon": 6.24466,
+        "precision": "shore point of Le Léman nearest the way/219393913 in OpenStreetMap, 45 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "limmat-club-baden",
+      "name": "Limmat-Club Baden",
+      "shortName": "Limmat-Club Baden",
+      "address": "Kanalstrasse 15, 5400 Baden",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-limmat",
+      "launchPoint": {
+        "lat": 47.46674,
+        "lon": 8.30878,
+        "precision": "way/113139563 in OpenStreetMap, 41 m from the Limmat",
+        "verified": false
+      }
+    },
+    {
+      "id": "nordiska-roddfoereningen-i-zuerich",
+      "name": "Nordiska Roddföreningen i Zürich",
+      "shortName": "Nordiska Roddföreningen i Zürich",
+      "address": "",
+      "website": "https://nordiska.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.35678,
+        "lon": 8.53664,
+        "precision": "shore point of Zürichsee nearest the node/11248381043 in OpenStreetMap, 31 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "polytechniker-ruderclub-prc",
+      "name": "Polytechniker Ruderclub (PRC)",
+      "shortName": "Polytechniker Ruderclub (PRC)",
+      "address": "",
+      "website": "http://www.prc.ethz.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.35763,
+        "lon": 8.53608,
+        "precision": "shore point of Zürichsee nearest the node/11248381045 in OpenStreetMap, 16 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "pontoniersportverein-laufenburg",
+      "name": "Pontoniersportverein Laufenburg",
+      "shortName": "Pontoniersportverein Laufenburg",
+      "address": "Spitalstrasse 10.5, 5080 Laufenburg",
+      "website": "https://pontoniere-laufenburg.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-rhein",
+      "launchPoint": {
+        "lat": 47.56287,
+        "lon": 8.06475,
+        "precision": "way/173456536 in OpenStreetMap, 90 m from the Rhein",
+        "verified": false
+      }
+    },
+    {
+      "id": "rowing-club-bern",
+      "name": "Rowing Club Bern",
+      "shortName": "Rowing Club Bern",
+      "address": "",
+      "website": "https://rowing.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-aare",
+      "launchPoint": {
+        "lat": 46.96573,
+        "lon": 7.38503,
+        "precision": "node/12084328812 in OpenStreetMap, 74 m from the Aare",
+        "verified": false
+      }
+    },
+    {
+      "id": "rowing-club-lausanne",
+      "name": "Rowing Club Lausanne",
+      "shortName": "Rowing Club Lausanne",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "le-leman",
+      "launchPoint": {
+        "lat": 46.51297,
+        "lon": 6.60056,
+        "precision": "shore point of Le Léman nearest the way/85323891 in OpenStreetMap, 54 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruder-club-thun",
+      "name": "Ruder-Club Thun",
+      "shortName": "Ruder-Club Thun",
+      "address": "Lachenweg 8, 3604 Thun",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "thunersee",
+      "launchPoint": {
+        "lat": 46.74094,
+        "lon": 7.62989,
+        "precision": "shore point of Thunersee nearest the way/213473008 in OpenStreetMap, 26 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-baden",
+      "name": "Ruderclub Baden",
+      "shortName": "Ruderclub Baden",
+      "address": "Seestrasse 19",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-limmat",
+      "launchPoint": {
+        "lat": 47.45653,
+        "lon": 8.3253,
+        "precision": "way/103439856 in OpenStreetMap, 96 m from the Limmat",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-blauweiss-basel",
+      "name": "Ruderclub Blauweiss Basel",
+      "shortName": "Ruderclub Blauweiss Basel",
+      "address": "Hofstrasse 94, 4127 Birsfelden",
+      "website": "https://www.rcblauweiss.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-rhein",
+      "launchPoint": {
+        "lat": 47.56004,
+        "lon": 7.63172,
+        "precision": "node/13136125953 in OpenStreetMap, 100 m from the Rhein",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-cham",
+      "name": "Ruderclub Cham",
+      "shortName": "Ruderclub Cham",
+      "address": "Seehofstrasse 16, 6330 Cham",
+      "website": "https://ruderclubcham.ch/de/index.html",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zugersee",
+      "launchPoint": {
+        "lat": 47.17987,
+        "lon": 8.46168,
+        "precision": "shore point of Zugersee nearest the way/341026788 in OpenStreetMap, 49 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-erlenbach",
+      "name": "Ruderclub Erlenbach",
+      "shortName": "Ruderclub Erlenbach",
+      "address": "Wydenstrasse 12, 8703 Erlenbach ZH",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.30611,
+        "lon": 8.5879,
+        "precision": "shore point of Zürichsee nearest the way/138785548 in OpenStreetMap, 21 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-immensee",
+      "name": "Ruderclub Immensee",
+      "shortName": "Ruderclub Immensee",
+      "address": "Staldenmattweg 27, 6405 Immensee",
+      "website": "https://ruderclubimmensee.clubdesk.com/home",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zugersee",
+      "launchPoint": {
+        "lat": 47.09349,
+        "lon": 8.46526,
+        "precision": "shore point of Zugersee nearest the way/1225753053 in OpenStreetMap, 5 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-kuessnacht",
+      "name": "Ruderclub Küssnacht",
+      "shortName": "Ruderclub Küssnacht",
+      "address": "Seeburgstrasse 18, 6403 Küssnacht",
+      "website": "https://www.rcrigi-kuessnacht.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "vierwaldstaettersee",
+      "launchPoint": {
+        "lat": 47.07399,
+        "lon": 8.43404,
+        "precision": "shore point of Vierwaldstättersee nearest the node/3623085411 in OpenStreetMap, 35 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-rapperswil-jona",
+      "name": "Ruderclub Rapperswil-Jona",
+      "shortName": "Ruderclub Rapperswil-Jona",
+      "address": "",
+      "website": "https://www.rcrj.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.22201,
+        "lon": 8.82398,
+        "precision": "shore point of Zürichsee nearest the node/6431512545 in OpenStreetMap, 44 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-reuss",
+      "name": "Ruderclub Reuss",
+      "shortName": "Ruderclub Reuss",
+      "address": "Alpenquai 31, 6005 Luzern",
+      "website": "https://rc-reuss.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "vierwaldstaettersee",
+      "launchPoint": {
+        "lat": 47.04531,
+        "lon": 8.32083,
+        "precision": "shore point of Vierwaldstättersee nearest the way/89589181 in OpenStreetMap, 33 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-sarnen",
+      "name": "Ruderclub Sarnen",
+      "shortName": "Ruderclub Sarnen",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "sarnersee",
+      "launchPoint": {
+        "lat": 46.88933,
+        "lon": 8.24132,
+        "precision": "shore point of Sarnersee nearest the node/12691125208 in OpenStreetMap, 87 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-schaffhausen",
+      "name": "Ruderclub Schaffhausen",
+      "shortName": "Ruderclub Schaffhausen",
+      "address": "Hauptstrasse 100, 8246 Langwiesen",
+      "website": "https://www.ruderclub-schaffhausen.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-rhein",
+      "launchPoint": {
+        "lat": 47.68805,
+        "lon": 8.65508,
+        "precision": "node/12030666737 in OpenStreetMap, 96 m from the Rhein",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-thalwil",
+      "name": "Ruderclub Thalwil",
+      "shortName": "Ruderclub Thalwil",
+      "address": "Seestrasse 178",
+      "website": "https://rcthalwil.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.30109,
+        "lon": 8.56306,
+        "precision": "shore point of Zürichsee nearest the way/90227735 in OpenStreetMap, 24 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-uster",
+      "name": "Ruderclub Uster",
+      "shortName": "Ruderclub Uster",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "greifensee",
+      "launchPoint": {
+        "lat": 47.34229,
+        "lon": 8.69078,
+        "precision": "shore point of Greifensee nearest the node/12944656622 in OpenStreetMap, 37 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderclub-wohlensee",
+      "name": "Ruderclub Wohlensee",
+      "shortName": "Ruderclub Wohlensee",
+      "address": "",
+      "website": "https://www.ruderclubwohlensee.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "wohlensee",
+      "launchPoint": {
+        "lat": 46.96282,
+        "lon": 7.37066,
+        "precision": "shore point of Wohlensee nearest the node/8736671544 in OpenStreetMap, 143 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "rudergemeinschaft-seeclub-zuerich",
+      "name": "Rudergemeinschaft Seeclub Zürich",
+      "shortName": "Rudergemeinschaft Seeclub Zürich",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-rhein",
+      "launchPoint": {
+        "lat": 47.57805,
+        "lon": 8.5118,
+        "precision": "node/2465000355 in OpenStreetMap, 83 m from the Rhein",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderklub-kaufleuten",
+      "name": "Ruderklub Kaufleuten",
+      "shortName": "Ruderklub Kaufleuten",
+      "address": "",
+      "website": "https://www.rck.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.3563,
+        "lon": 8.53662,
+        "precision": "shore point of Zürichsee nearest the node/8124096051 in OpenStreetMap, 31 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "ruderzentrum-luzern-rotsee",
+      "name": "Ruderzentrum Luzern - Rotsee",
+      "shortName": "Ruderzentrum Luzern - Rotsee",
+      "address": "Rotseestrasse 18, 6006 Luzern",
+      "website": "https://www.ruderzentrum.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "rotsee",
+      "launchPoint": {
+        "lat": 47.06773,
+        "lon": 8.31135,
+        "precision": "shore point of Rotsee nearest the way/86484042 in OpenStreetMap, 76 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "saf-societe-d-aviron-fribourg",
+      "name": "SAF Société d'Aviron Fribourg",
+      "shortName": "SAF Société d'Aviron Fribourg",
+      "address": "",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "schiffenensee",
+      "launchPoint": {
+        "lat": 46.84354,
+        "lon": 7.14189,
+        "precision": "shore point of Schiffenensee nearest the node/4798267622 in OpenStreetMap, 24 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "scvg-clublokal",
+      "name": "SCvG Clublokal",
+      "shortName": "SCvG Clublokal",
+      "address": "",
+      "website": "https://www.scvg.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "greifensee",
+      "launchPoint": {
+        "lat": 47.34262,
+        "lon": 8.69075,
+        "precision": "shore point of Greifensee nearest the node/2696176758 in OpenStreetMap, 38 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "see-club-thun",
+      "name": "See Club Thun",
+      "shortName": "See Club Thun",
+      "address": "Scherzligweg 28",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "thunersee",
+      "launchPoint": {
+        "lat": 46.75337,
+        "lon": 7.63294,
+        "precision": "shore point of Thunersee nearest the way/211460719 in OpenStreetMap, 28 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "see-club-zug",
+      "name": "See Club Zug",
+      "shortName": "See Club Zug",
+      "address": "",
+      "website": "https://www.scz.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zugersee",
+      "launchPoint": {
+        "lat": 47.17173,
+        "lon": 8.50673,
+        "precision": "shore point of Zugersee nearest the way/174994032 in OpenStreetMap, 21 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-luzern",
+      "name": "Seeclub Luzern",
+      "shortName": "Seeclub Luzern",
+      "address": "Alpenquai 33, 6005 Luzern",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "vierwaldstaettersee",
+      "launchPoint": {
+        "lat": 47.04505,
+        "lon": 8.32126,
+        "precision": "shore point of Vierwaldstättersee nearest the way/89589185 in OpenStreetMap, 35 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-richterswil",
+      "name": "Seeclub Richterswil",
+      "shortName": "Seeclub Richterswil",
+      "address": "Hornstrasse, 8805 Richterswil",
+      "website": "https://www.seeclub-richterswil.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.21196,
+        "lon": 8.70446,
+        "precision": "shore point of Zürichsee nearest the way/686170276 in OpenStreetMap, 62 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-rorschach",
+      "name": "Seeclub Rorschach",
+      "shortName": "SCR",
+      "address": "Seestrasse 62, 9403 Goldach",
+      "website": "https://www.seeclubrorschach.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "bodensee",
+      "launchPoint": {
+        "lat": 47.48607,
+        "lon": 9.47704,
+        "precision": "shore point of Bodensee nearest the way/325398629 in OpenStreetMap, 8 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-rorschach-arbon",
+      "name": "Seeclub Rorschach + Arbon",
+      "shortName": "Seeclub Rorschach + Arbon",
+      "address": "",
+      "website": "http://www.seeclubrorschach.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-alter-rhein",
+      "launchPoint": {
+        "lat": 47.47918,
+        "lon": 9.58388,
+        "precision": "way/161529993 in OpenStreetMap, 52 m from the Alter Rhein",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-sempach",
+      "name": "Seeclub Sempach",
+      "shortName": "Seeclub Sempach",
+      "address": "",
+      "website": "https://www.seeclub-sempach.ch/clubdesk/www",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "sempachersee",
+      "launchPoint": {
+        "lat": 47.17372,
+        "lon": 8.12584,
+        "precision": "shore point of Sempachersee nearest the way/193180686 in OpenStreetMap, 41 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-stansstad",
+      "name": "Seeclub Stansstad",
+      "shortName": "Seeclub Stansstad",
+      "address": "Kehrsitenstrasse 17, 6362 Stansstad",
+      "website": "https://seeclubstansstad.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "vierwaldstaettersee",
+      "launchPoint": {
+        "lat": 46.98104,
+        "lon": 8.34035,
+        "precision": "shore point of Vierwaldstättersee nearest the way/376574335 in OpenStreetMap, 28 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-staefa",
+      "name": "Seeclub Stäfa",
+      "shortName": "Seeclub Stäfa",
+      "address": "Seestrasse 2b, 8712 Stäfa",
+      "website": "https://seeclub-staefa.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.24414,
+        "lon": 8.71019,
+        "precision": "shore point of Zürichsee nearest the way/23702380 in OpenStreetMap, 34 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-waedenswil",
+      "name": "Seeclub Wädenswil",
+      "shortName": "Seeclub Wädenswil",
+      "address": "Giessen 20, 8820 Wädenswil",
+      "website": "https://seeclubwaedi.ch/clubdesk/www",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.22201,
+        "lon": 8.68702,
+        "precision": "shore point of Zürichsee nearest the way/224955898 in OpenStreetMap, 11 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "seeclub-zuerich",
+      "name": "Seeclub Zürich",
+      "shortName": "Seeclub Zürich",
+      "address": "",
+      "website": "https://seeclub.ch",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "zuerichsee",
+      "launchPoint": {
+        "lat": 47.35731,
+        "lon": 8.53627,
+        "precision": "shore point of Zürichsee nearest the node/11248381044 in OpenStreetMap, 25 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "societa-canottieri-ceresio",
+      "name": "Società Canottieri Ceresio",
+      "shortName": "Società Canottieri Ceresio",
+      "address": "",
+      "website": "https://www.scceresio.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "lago-di-lugano",
+      "launchPoint": {
+        "lat": 46.00265,
+        "lon": 8.99061,
+        "precision": "shore point of Lago di Lugano nearest the node/2260155650 in OpenStreetMap, 7 m away",
+        "verified": false
+      }
+    },
+    {
+      "id": "solothurner-ruderclub",
+      "name": "Solothurner Ruderclub",
+      "shortName": "Solothurner Ruderclub",
+      "address": "Römerstrasse 29",
+      "website": "https://solothurner-ruderclub.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-aare",
+      "launchPoint": {
+        "lat": 47.20105,
+        "lon": 7.53076,
+        "precision": "node/4549455377 in OpenStreetMap, 52 m from the Aare",
+        "verified": false
+      }
+    },
+    {
+      "id": "union-nautique-yverdon",
+      "name": "Union Nautique Yverdon",
+      "shortName": "Union Nautique Yverdon",
+      "address": "Quai de Nogent 6",
+      "website": null,
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-la-thiele",
+      "launchPoint": {
+        "lat": 46.78659,
+        "lon": 6.64035,
+        "precision": "way/80038507 in OpenStreetMap, 64 m from the La Thièle",
+        "verified": false
+      }
+    },
+    {
+      "id": "wasserfahrverein-birsfelden-wfvb",
+      "name": "Wasserfahrverein Birsfelden WFVB",
+      "shortName": "Wasserfahrverein Birsfelden WFVB",
+      "address": "Hofstrasse 98, 4127 Birsfelden",
+      "website": "https://wfvb.ch/",
+      "source": "osm",
+      "country": "ch",
+      "lakeId": "river-rhein",
+      "launchPoint": {
+        "lat": 47.55988,
+        "lon": 7.63311,
+        "precision": "node/5693229569 in OpenStreetMap, 79 m from the Rhein",
+        "verified": false
+      }
+    }
+  ]
+}

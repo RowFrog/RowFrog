@@ -7,8 +7,9 @@ For each club's launch point the app shows an hourly green / amber / red
 "can we row?" light for the next 48 hours, and the conditions behind it:
 wind, gusts, computed wave height, fog, thunderstorm risk, air and water
 temperature, rain radar, ice cover, official DWD warnings and daylight.
-It starts with the lakes south of Munich (Starnberger See first) and can
-show any club in the German Rowing Association's club list.
+It started with the lakes south of Munich (Starnberger See first) and can
+show rowing clubs across Germany, Austria and Switzerland, or a place of your
+own.
 
 The app is free. It is an iPhone app (iOS 17 or later) written in SwiftUI;
 Android may follow later.
@@ -24,10 +25,20 @@ Android may follow later.
 **Locations.** On first start the list is empty: a short tour explains the
 app, then the user picks a home base and more clubs. With location access
 ("While using") it suggests the 5 nearest clubs, otherwise 3 at random. The
-search covers every club in the catalog (see [Club catalog](#club-catalog)).
+search covers the clubs in Germany, Austria and Switzerland (see
+[Club catalog](#club-catalog)) in one box, with country chips to narrow it,
+and the clubs can also be browsed country by country.
 Pages swipe left and right between saved locations, like the iOS Weather
 app. The list shows each location's light and key numbers; swipe a row to
 remove it or make it the home base. The saved list stays on the phone.
+
+**Add a place.** A club, boathouse or spot on the water that no list has can
+be put on the map. It stays on the phone, and its forecast is worked out on
+the phone straight from Open-Meteo, since the published forecasts only cover
+listed clubs (`ios/RowerWeather/OwnPlaces.swift`). Only if the user turns it
+on, the place is suggested for everyone's list: the Row Frog suggestions
+service (a Cloudflare Worker in `cloudflare/suggestions/`) files it as a
+GitHub issue, so no GitHub account is needed.
 
 **Each location page** shows the rowing light, which boat it is for and why
 it has that colour, air and water temperature side by side, wave height, the
@@ -137,33 +148,43 @@ layouts (two columns from 600 pt, a side list from 860 × 560 pt).
 | `ios/` | SwiftUI iPhone app and widget. The Xcode project is generated from `project.yml` with XcodeGen. |
 | `backend/` | Python (FastAPI) service that fetches the forecast, computes waves, the lake view and the traffic light, and serves the app. |
 | `data/locations.json` | Lakes and clubs with confirmed launch points. Add a club or lake here; no code change is needed. |
-| `data/catalog-drv.json` | Clubs from the German Rowing Association's club list (see [Club catalog](#club-catalog)). |
-| `data/catalog.json` | More clubs found in OpenStreetMap. |
+| `data/catalogs/` | Clubs the app's search offers, one file per country and source (see [Club catalog](#club-catalog)). |
+| `data/geocode.json` | Cached geocoding results for the catalog imports. |
 | `data/outlines/` | Lake outlines (GeoJSON) for the wave calculation and lake view, made with `scripts/fetch_lake_outline.py`. |
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
+| `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues. |
 | `docs/screenshots/` | App screenshots from the "App screenshots" workflow. |
-| `scripts/` | Catalog import, lake outlines, live data check, translation check and background drawing. |
+| `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. |
 | `CREDITS.md` | Data sources, licences and the credits the app must show. |
 
 ## Club catalog
 
-The app's search offers about 470 clubs:
+The app's search offers clubs in Germany, Austria and Switzerland, about 670
+in all, from one file per country and source in `data/catalogs/`
+(`<country>-<source>.json`):
 
-- `data/catalog-drv.json`: 469 clubs from the DRV club search
-  (rudern.de/service/vereinssuche), written by `scripts/import_drv.py` via the
-  **DRV club catalog** workflow (about 45 minutes). Each boathouse is geocoded
-  (cached in `data/drv-geocode.json`) and matched to the lake or river it lies
-  on: 158 on lakes, 253 on rivers (no wave calculation), the rest marked
-  "Water near <town>". Only club facts are stored, no contact people, e-mail
-  addresses or phone numbers. The DRV is credited; permission is still to be
-  asked.
-- `data/catalog.json`: clubs found in OpenStreetMap by
-  `scripts/discover_clubs.py` via the **Club catalog** workflow.
+| File | Clubs | Source | Made by |
+| --- | --- | --- | --- |
+| `de-drv` | 469 | German Rowing Association (DRV) club search, rudern.de | `scripts/import_drv.py`, **DRV club catalog** workflow (about 45 minutes) |
+| `de-osm` | 3 | OpenStreetMap around the Bavarian lakes | `scripts/discover_clubs.py`, **Club catalog** workflow |
+| `at-oerv` | 44 | Austrian Rowing Federation (ÖRV) club list, rudern.at | `scripts/import_oerv.py` |
+| `at-osm` | 33 | OpenStreetMap, clubs the ÖRV list does not have | `scripts/import_osm_clubs.py` |
+| `ch-swissrowing` | 76 | Swiss Rowing's club directory | `scripts/import_swissrowing.py`, only when started by hand with "Import Swiss Rowing" ticked |
+| `ch-osm` | 45 | OpenStreetMap | `scripts/import_osm_clubs.py` |
+
+The last four run in the **Austria and Switzerland club catalogs** workflow.
+Each boathouse is geocoded (cached in `data/geocode.json`) and matched to the
+lake or river it lies on; clubs on rivers get no wave calculation. Only club
+facts are stored, no contact people, e-mail addresses or phone numbers. The
+federations are credited in `CREDITS.md`, which also notes where permission
+is still to be asked.
 
 Launch points from the catalogs are unconfirmed until a club is moved into
-`data/locations.json`. When loading, `locations.json` wins over
-`catalog-drv.json`, which wins over `catalog.json`; a catalog club within
-300 m of a club from an earlier file is dropped.
+`data/locations.json`. When loading, `locations.json` always wins, then the
+catalogs in the order above (a federation's list before OpenStreetMap); a
+catalog club with the same id as an earlier club, or within 300 m of a club
+from an earlier file, is left out as the same club. The app loads the clubs of
+one country at a time.
 
 ## Run the backend
 
@@ -194,7 +215,8 @@ Every 30 minutes it refreshes the clubs people actually load (until the
 usage counter is set up, the confirmed clubs in `data/locations.json` stand
 in); every 6 hours it refreshes all clubs. Weather is only loaded again after
 a weather model has a new run, which keeps the job within Open-Meteo's free
-limit. For clubs people use it also loads the 8-day outlook after each model
+limit. When the GKD water temperature fails to load, the last good reading
+stands in for up to 6 hours. For clubs people use it also loads the 8-day outlook after each model
 run (every 3 hours) for the charts in the condition details. The last
 forecasts are kept between runs in the Actions cache.
 
@@ -203,7 +225,8 @@ the workflow by hand, which overwrites the live files until `main` publishes
 again.
 
 Release builds of the app read from there; Debug builds use a backend on the
-Mac at localhost. To move to a server of our own, run
+Mac at localhost, except for the satellite pictures, which only the publishing
+job makes and every build loads from `api.rowfrog.com`. To move to a server of our own, run
 `uvicorn rowerweather.api:app` there and point the DNS record of
 `api.rowfrog.com` at it; the app keeps its address.
 
@@ -230,10 +253,12 @@ Run the backend first; the simulator reaches it at `http://localhost:8000`
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue. |
 | **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
 | **Usage limits** (`budget-check.yml`) | Once a day compares the calls with Open-Meteo's and Copernicus' free limits and comments on the "Usage limits" issue at 70 % (warning) and 85 % (alert), plus a monthly summary. |
+| **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). |
+| **Place suggestions** (`suggestions-worker.yml`) | Deploys the Cloudflare Worker that turns place suggestions into GitHub issues. Needs `SUGGESTIONS_GITHUB_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 | **API check** (`api-check.yml`) | Shows how `api.rowfrog.com` answers (Cloudflare proxy, SSL mode, usage counter). Runs by hand. |
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs when the club list or data sources change; new outlines are committed back. |
-| **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalog-drv.json`. |
-| **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalog.json` from OpenStreetMap. |
+| **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. |
+| **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. |
 
 ## Traffic light defaults
 

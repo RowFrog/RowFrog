@@ -7,6 +7,8 @@ Usage (from the repository root, after `pip install -e backend`):
 Calls the same FastAPI app the server would run (no network server needed)
 and writes each answer at its API path, without a file extension:
     OUT_DIR/lakes/index                 = GET /lakes/index (the lake list)
+    OUT_DIR/countries/index             = GET /countries/index (countries with clubs)
+    OUT_DIR/countries/<cc>/lakes        = GET /countries/<cc>/lakes (one country's waters and clubs)
     OUT_DIR/lakes/<id>/view             = GET /lakes/<id>/view
     OUT_DIR/clubs/<id>/forecast         = GET /clubs/<id>/forecast
 So the app reads the files with the same paths as from a live backend, and
@@ -105,7 +107,8 @@ def ice_map_due(checked: datetime | None, now: datetime) -> bool:
 
 
 class State:
-    """What one run leaves for the next: the last forecasts and satellite looks."""
+    """What one run leaves for the next: the last forecasts, satellite looks
+    and water temperatures."""
 
     def __init__(self, path: Path | None):
         self.path = path
@@ -118,6 +121,7 @@ class State:
                 saved = pickle.loads(path.read_bytes())
                 self.clubs, self.lakes, self.ice_map = saved["clubs"], saved["lakes"], saved["ice_map"]
                 self.outlooks = saved.get("outlooks", {})
+                api._last_water.update(saved.get("water", {}))
                 api._ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
                 print(f"  state not readable, starting afresh: {e!r}")
@@ -132,6 +136,7 @@ class State:
             "ice_map": self.ice_map,
             "ice_temps": api._ice_temps,
             "outlooks": self.outlooks,
+            "water": api._last_water,
         }
         self.path.write_bytes(pickle.dumps(body))
 
@@ -439,6 +444,13 @@ def main() -> int:
     resp = client.get("/lakes/index")
     resp.raise_for_status()
     write(args.out / "lakes" / "index", resp.json())
+    resp = client.get("/countries/index")
+    resp.raise_for_status()
+    write(args.out / "countries" / "index", resp.json())
+    for country in resp.json():
+        lakes = client.get(f"/countries/{country['code']}/lakes")
+        lakes.raise_for_status()
+        write(args.out / "countries" / country["code"] / "lakes", lakes.json())
 
     every = list(locations.load().clubs.values())
     clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
