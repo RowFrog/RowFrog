@@ -16,9 +16,10 @@ writes Sentinel-2 pictures of each lake and, in winter, the satellite ice map:
     OUT_DIR/lakes/<id>/satellite        dates, cloud, picture box, credit
     OUT_DIR/lakes/<id>/satellite-latest.jpg, satellite-clearest.jpg, ice.png
 
-"confirmed" rebuilds the clubs in data/locations.json and the clubs people
-use, "all" every club in the catalogs too. Warnings and water temperatures
-are fresh in every file, but weather is loaded only when the weather model
+"confirmed" rebuilds the clubs people use (until the usage counter is set up,
+the clubs in data/locations.json), "all" every club in the catalogs too.
+Warnings and water temperatures are fresh in every file, but weather is
+loaded only when the weather model
 has a new run for it (WEATHER_HOURS), to stay within Open-Meteo's free
 10,000 calls a day; between loads the --state file (kept by the workflow's
 cache) holds the last forecast. A club whose forecast fails keeps its
@@ -371,12 +372,17 @@ def write(path: Path, body) -> None:
 
 
 def usage_now() -> tuple[set[str], set[str], bool]:
-    """Club and lake ids in use, and whether the usage counter answered."""
-    confirmed = locations.load(catalog_paths=()).clubs.values()
-    clubs = {c.id for c in confirmed}
+    """Club and lake ids in use, and whether the usage counter answered.
+
+    Only clubs and lakes people actually load count as used, so entering a
+    club's launch point costs nothing until someone uses it. Until the
+    counter is set up, the confirmed clubs in data/locations.json stand in.
+    """
     counted = usage.used(7) if usage else None
-    if counted is not None:
-        clubs |= set(counted.clubs)
+    if counted is None:
+        clubs = {c.id for c in locations.load(catalog_paths=()).clubs.values()}
+    else:
+        clubs = set(counted.clubs)
     all_clubs = locations.load().clubs
     lakes = {all_clubs[c].lake_id for c in clubs if c in all_clubs}
     if counted is not None:
