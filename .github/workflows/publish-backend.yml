@@ -3,7 +3,7 @@ name: Publish forecasts
 # The app's backend while it has no server of its own: runs the backend code
 # on a schedule and publishes its answers as static files on GitHub Pages, at
 # https://api.rowfrog.com/v1/ (see scripts/publish_static.py).
-# The confirmed and used clubs are rebuilt every 30 minutes, all catalog clubs
+# The used clubs (the confirmed ones while there is no usage counter) are rebuilt every 30 minutes, all catalog clubs
 # every 6 hours; weather is loaded only after a new model run (see the script),
 # and the last forecasts are kept between runs in the Actions cache.
 # The files live on the gh-pages branch, kept as a single commit so

@@ -25,8 +25,9 @@ cache) holds the last forecast. A club whose forecast fails keeps its
 previous file, which still shows when it was made.
 
 Which clubs and lakes are "used" comes from the usage counter in front of
-api.rowfrog.com (rowerweather.usage, when it is set up); without it the
-confirmed clubs count as used and the rest follow the fixed schedule.
+api.rowfrog.com (rowerweather.usage, when it is set up): only clubs people
+open count, confirmed or not. Without the counter the confirmed clubs count
+as used and the rest follow the fixed schedule.
 """
 
 from __future__ import annotations
@@ -64,9 +65,10 @@ FETCH_HOURS = 60
 # about READY_AFTER later. Loading more often brings nothing new.
 READY_AFTER = timedelta(hours=2, minutes=30)
 WEATHER_HOURS = {"used": 3, "other": 6, "other with usage": 12}
-# The 8-day outlook for the conditions charts changes slowly and costs about two
-# calls per club, so it is loaded for used clubs only, every 6 hours.
-OUTLOOK_HOURS = 6
+# The 8-day outlook for the conditions charts costs about 2.4 calls per club
+# (14 variables plus a UV call), so it is loaded for used clubs only, after
+# every model run (3 hours): about 19 calls a day per used club.
+OUTLOOK_HOURS = 3
 # Lakes nobody uses are loaded twice a day, at a different hour from the clubs
 # (04:00 and 16:00 UTC), so no single run takes too many calls.
 LAKE_OTHER_HOURS = 12
@@ -405,11 +407,14 @@ def write(path: Path, body) -> None:
 
 def usage_now() -> tuple[set[str], set[str], bool]:
     """Club and lake ids in use, and whether the usage counter answered."""
-    confirmed = locations.load(catalog_paths=()).clubs.values()
-    clubs = {c.id for c in confirmed}
     counted = usage.used(7) if usage else None
     if counted is not None:
-        clubs |= set(counted.clubs)
+        # Only what people actually open counts (owner, 2026-10-24): a club entered
+        # in data/locations.json costs nothing until someone uses it.
+        clubs = set(counted.clubs)
+    else:
+        # Without the counter the confirmed clubs stand in for the used ones.
+        clubs = {c.id for c in locations.load(catalog_paths=()).clubs.values()}
     all_clubs = locations.load().clubs
     lakes = {all_clubs[c].lake_id for c in clubs if c in all_clubs}
     if counted is not None:
