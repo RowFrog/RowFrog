@@ -29,6 +29,12 @@ struct RouteSummary: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
+            if view.isStale {
+                Label(tr("Forecast out of date: from %@. Check the conditions yourself.", Format.dayTime(view.generatedAt)), systemImage: "clock.badge.exclamationmark")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+            }
+            AdviceOnlyNote()
         }
         .accessibilityElement(children: .combine)
     }
