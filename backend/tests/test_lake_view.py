@@ -52,6 +52,7 @@ def test_fog_colours_the_cells():
     grid = lake_view.build_grid(LAKE, target_cells=100)
     (h,) = lake_view.lake_hours(grid, [[hour(speed=1.0, gust=2.0, visibility=300.0)] for _ in grid.samples])
     assert set(h.lights) == {Light.RED}
+    assert set(h.point_other) == {Light.RED}, "the app needs fog per point to colour cells for other boats"
 
 
 def test_simplify_keeps_a_square():
@@ -81,6 +82,7 @@ def test_lake_view_endpoint(monkeypatch):
     assert len(first["lights"]) == len(first["wavesCm"]) == len(cells) == len(body["grid"]["cellPoint"])
     assert set(first["lights"]) <= {"0", "1", "2"}
     assert len(first["wind"]) == len(body["points"])
+    assert {w["other"] for w in first["wind"]} <= {0, 1, 2}
     assert body["zones"] == ["north", "middle", "south"]
     assert len(first["zones"]) == 3
     assert body["sample"] is False

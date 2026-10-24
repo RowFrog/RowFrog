@@ -212,7 +212,7 @@ private struct LocationSummaryRow: View {
             }
         }
         .padding(14)
-        .background { TintedCardBackground(tint: forecast?.current()?.light.color ?? .gray, cornerRadius: 16) }
+        .background { TintedCardBackground(tint: now?.light.color(stale: stale) ?? .gray, cornerRadius: 16) }
         .contentShape(RoundedRectangle(cornerRadius: 16))
     }
 }
