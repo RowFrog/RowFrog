@@ -1,0 +1,101 @@
+name: Publish forecasts
+
+# The app's backend while it has no server of its own: runs the backend code
+# on a schedule and publishes its answers as static files on GitHub Pages, at
+# https://api.rowfrog.com/v1/ (see scripts/publish_static.py).
+# The confirmed and used clubs are rebuilt every 30 minutes, all catalog clubs
+# every 6 hours; weather is loaded only after a new model run (see the script),
+# and the last forecasts are kept between runs in the Actions cache.
+# The files live on the gh-pages branch, kept as a single commit so
+# its history does not grow. Pages must be set to "Deploy from a branch",
+# gh-pages, / (root) in the repository settings.
+# Secrets: CDSE_CLIENT_ID / CDSE_CLIENT_SECRET (satellite pictures and ice),
+# USAGE_KEY (the usage counter, when it is set up).
+
+on:
+  # A change to the publisher publishes at once, from whichever branch it was pushed to.
+  push:
+    paths:
+      - scripts/publish_static.py
+      - .github/workflows/publish-backend.yml
+  schedule:
+    - cron: "*/30 * * * *"
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+    inputs:
+      clubs:
+        description: "Which clubs to refresh"
+        type: choice
+        options: [confirmed, all]
+        default: all
+
+permissions:
+  contents: write
+
+concurrency:
+  group: publish-forecasts
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e "backend[satellite]"
+      - name: Get the published files
+        # A separate worktree, so only the published files are committed, never the repository.
+        run: |
+          if git fetch --depth 1 origin gh-pages; then
+            git worktree add --detach site origin/gh-pages
+          else
+            git worktree add --orphan -b gh-pages-new site
+          fi
+      - name: Get the last forecasts
+        uses: actions/cache/restore@v4
+        with:
+          path: state
+          key: publish-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: publish-state-
+      - name: Run the backend and write the files
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
+          RW_USAGE_KEY: ${{ secrets.USAGE_KEY }}
+        run: |
+          CLUBS="${{ inputs.clubs }}"
+          if [ -z "$CLUBS" ]; then
+            if [ "${{ github.event.schedule }}" = "*/30 * * * *" ]; then CLUBS=confirmed; else CLUBS=all; fi
+          fi
+          python3 scripts/publish_static.py site/v1 --clubs "$CLUBS" --state state/publish.pickle
+          touch site/.nojekyll
+      - name: Keep the forecasts for the next run
+        if: always() && hashFiles('state/publish.pickle') != ''
+        uses: actions/cache/save@v4
+        with:
+          path: state
+          key: publish-state-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Publish to gh-pages as a single commit
+        run: |
+          cd site
+          git config user.name "github-actions[bot]"
+          git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+          git checkout -q --orphan publish
+          git add -A
+          # Never publish anything but the forecast files (and CNAME, which GitHub writes for a custom domain).
+          if git diff --cached --name-only | grep -qv -e '^v1/' -e '^\.nojekyll$' -e '^CNAME$'; then
+            echo "Unexpected files in the site:"; git diff --cached --name-only | grep -v -e '^v1/' -e '^\.nojekyll$' -e '^CNAME$' | head
+            exit 1
+          fi
+          git commit -q -m "Forecasts $(date -u +%Y-%m-%dT%H:%MZ)"
+          git push -f origin publish:gh-pages
+      - name: Check the published address
+        # GitHub Pages takes a minute or two to serve a new commit.
+        run: |
+          for i in 1 2 3 4 5 6; do
+            if curl -fsS -o /dev/null https://api.rowfrog.com/v1/lakes/index; then echo "api.rowfrog.com answers"; exit 0; fi
+            sleep 30
+          done
+          echo "::warning::https://api.rowfrog.com/v1/lakes/index does not answer"

@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import timedelta
+from datetime import date, timedelta
+from zoneinfo import ZoneInfo
 
 from .locations import Club
 from .outlines import Rings
@@ -17,6 +18,8 @@ from .waves import fetch_m, significant_wave_height
 CAPE_AMBER_JKG = 500.0
 CAPE_RED_JKG = 1000.0
 CONVECTIVE_RAIN_MM = 1.0
+# The ice estimate is per German calendar day.
+LOCAL = ZoneInfo("Europe/Berlin")
 
 
 @dataclass(frozen=True)
@@ -87,6 +90,7 @@ def rowing_forecast(
     water_temp_c: float | None = None,
     warnings: list[Warning] = (),
     thresholds: Thresholds = Thresholds(),
+    ice_by_day: dict[date, Light] | None = None,
 ) -> list[RowingHour]:
     hours = []
     p = club.launch_point
@@ -108,6 +112,7 @@ def rowing_forecast(
             daylight_name=daylight_name,
             lake_warning=_lake_warning(list(warnings), h.time, h.time + timedelta(hours=1)),
             weather_warning=_weather_warning(list(warnings), h.time, h.time + timedelta(hours=1)),
+            ice=(ice_by_day or {}).get(h.time.astimezone(LOCAL).date(), Light.GREEN),
         )
         hours.append(RowingHour(h, fetch, wave, assess(conditions, thresholds), sun_up))
     return hours
