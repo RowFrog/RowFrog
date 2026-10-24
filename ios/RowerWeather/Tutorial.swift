@@ -112,6 +112,8 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "text.bubble", text: tr("The line starting with \"Why\" names the conditions that set the light.")),
             TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up. The daylight card shows the time left until sunset.")),
             TourPoint(symbol: "clock", text: tr("The next 48 hours each have their own light, so you can plan your outing.")),
+            TourPoint(symbol: "clock.badge.exclamationmark", text: tr("Grey instead of green: the forecast is more than 3 hours old. Pull down to refresh.")),
+            TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide whether to go out, and when in doubt you stay ashore.")),
         ]
         case .conditions: [
             TourPoint(symbol: "thermometer.variable.and.figure", text: tr("Feels like: colder with wind chill, warmer with humidity and heat.")),
