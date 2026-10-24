@@ -1,6 +1,6 @@
-# Model check, 2026-10-24 15:58 UTC
+# Model check, 2026-10-24 16:07 UTC
 
-3 forecast runs stored (2026-10-23T20:00Z to 2026-10-24T15:00Z).
+4 forecast runs stored (2026-10-23T20:00Z to 2026-10-24T16:00Z).
 Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.
 "Light wrong" = how often wind and gusts alone would have given a different rowing light than measured.
 Stations are on land, where wind is usually weaker than on the lake, so the ranking matters more than the numbers.
@@ -20,30 +20,48 @@ Stations are on land, where wind is usually weaker than on the lake, so the rank
 | geosphere_arome_austria | 80 | 2.5 | +0.5 | 4.0 | 1.1 | 65 % |
 | meteoswiss_icon_ch1 | 80 | 2.5 | +2.0 | 3.8 | 1.5 | 55 % |
 
+## All points, archive
+
+| Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
+| --- | --- | --- | --- | --- | --- | --- |
+| icon_eu | 14385 | 0.8 | -0.0 | 1.7 | 1.2 | 9 % |
+| **icon_d2** (app today) | 14385 | 0.9 | +0.2 | 1.6 | 1.4 | 9 % |
+| best_match | 14385 | 0.9 | +0.2 | 1.6 | 1.4 | 9 % |
+| ecmwf_aifs025_single | 14385 | 0.9 | +0.1 | – | 1.4 | – |
+| knmi_harmonie_arome_europe | 14385 | 1.0 | +0.2 | 1.6 | 1.3 | 7 % |
+| ecmwf_ifs025 | 14385 | 1.0 | +0.3 | 1.8 | 1.2 | 10 % |
+| meteoswiss_icon_ch2 | 14385 | 1.0 | +0.4 | 2.0 | 1.5 | 11 % |
+| dmi_harmonie_arome_europe | 14385 | 1.1 | +0.3 | 1.8 | 1.3 | 9 % |
+| geosphere_arome_austria | 14385 | 1.1 | +0.4 | 1.6 | 1.7 | 9 % |
+| meteoswiss_icon_ch1 | 14385 | 1.1 | +0.5 | 1.9 | 1.6 | 10 % |
+
 ## icon_d2 vs best_match
 
-9 forecast hours differ by more than wind 2.0 m/s, gusts 3.0 m/s or air 2.0 °C.
+103 forecast hours differ by more than wind 2.0 m/s, gusts 3.0 m/s or air 2.0 °C.
 
 | Point | Hours |
 | --- | --- |
-| staffelsee | 3 |
-| starnberger-see-centre | 3 |
+| starnberger-see-south | 43 |
+| staffelsee | 28 |
+| starnberger-see-centre | 19 |
+| kochelsee | 8 |
+| tutzinger-rv | 3 |
 | tegernsee | 2 |
-| starnberger-see-south | 1 |
 
 Latest:
 
 | Run | Point | Hour | Differences |
 | --- | --- | --- | --- |
-| 2026-10-23T20:00Z | starnberger-see-south | 2026-10-25T17:00Z | gust +3.1 |
-| 2026-10-23T20:00Z | tegernsee | 2026-10-25T17:00Z | gust -3.1 |
-| 2026-10-23T20:00Z | tegernsee | 2026-10-25T18:00Z | gust -5.3 |
-| 2026-10-23T20:00Z | staffelsee | 2026-10-24T23:00Z | temp -2.3 |
-| 2026-10-23T20:00Z | staffelsee | 2026-10-25T05:00Z | temp -2.1 |
-| 2026-10-23T22:00Z | starnberger-see-centre | 2026-10-25T16:00Z | gust -3.2 |
-| 2026-10-23T22:00Z | staffelsee | 2026-10-25T05:00Z | temp -2.1 |
-| 2026-10-24T15:00Z | starnberger-see-centre | 2026-10-25T19:00Z | gust -3.4 |
-| 2026-10-24T15:00Z | starnberger-see-centre | 2026-10-25T20:00Z | gust -3.0 |
+| archive | staffelsee | 2026-10-03T00:00Z | temp +2.3 |
+| archive | staffelsee | 2026-10-03T01:00Z | temp +2.2 |
+| archive | staffelsee | 2026-10-04T00:00Z | temp -2.3 |
+| archive | staffelsee | 2026-10-05T18:00Z | temp -2.1 |
+| archive | staffelsee | 2026-10-07T00:00Z | temp -2.2 |
+| archive | staffelsee | 2026-10-07T18:00Z | temp -2.4 |
+| archive | staffelsee | 2026-10-12T18:00Z | temp -2.2 |
+| archive | staffelsee | 2026-10-12T22:00Z | temp -2.2 |
+| archive | staffelsee | 2026-10-13T04:00Z | temp -2.1 |
+| archive | staffelsee | 2026-10-13T19:00Z | temp -2.1 |
 
 ## Per point (day 1)
 
