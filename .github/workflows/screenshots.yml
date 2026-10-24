@@ -201,6 +201,8 @@ jobs:
           shoot 57-route-plan light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route"
           shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3
           shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de
+          shoot 60-route-follow-boat light -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75
+          shoot 61-route-follow-boat-german-dark dark -RWOpenClub mrc-1880 -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWLanguage de
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES
           shoot_pages 33-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de

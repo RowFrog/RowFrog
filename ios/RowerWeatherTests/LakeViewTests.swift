@@ -96,4 +96,13 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(Format.pace(135), "2:15")
         XCTAssertEqual(Format.pace(90), "1:30")
     }
+
+    func testRouteLegsSitSideBySide() {
+        // Out east and back west: on screen (y down) the way out sits below, the way back above.
+        let out = RouteLineRenderer.shifted([CGPoint(x: 0, y: 0), CGPoint(x: 10, y: 0)], by: 3)
+        let back = RouteLineRenderer.shifted([CGPoint(x: 10, y: 0), CGPoint(x: 0, y: 0)], by: 3)
+        XCTAssertEqual(out.map(\.y), [3, 3])
+        XCTAssertEqual(back.map(\.y), [-3, -3])
+        XCTAssertEqual(out.map(\.x), [0, 10])
+    }
 }
