@@ -154,15 +154,22 @@ python3 scripts/fetch_lake_outline.py starnberger-see "Starnberger See"
 ## Hosting
 
 There is no server yet. The "Publish forecasts" workflow runs the backend on
-GitHub every 30 minutes (confirmed clubs and clubs people use) and every 6
-hours (all clubs), and publishes its answers as files on GitHub Pages, at
-https://api.rowfrog.com/v1/ (same paths as the API:
-`lakes/index`, `clubs/<id>/forecast`, `lakes/<id>/view`, and the satellite
-pictures). Weather is only loaded again after a weather model has a new run,
-which keeps the job within Open-Meteo's free limit; the last forecasts are
-kept between runs in the Actions cache. Release builds of the app read from there;
-Debug builds use a backend on the Mac at localhost. To move to a server of our
-own, run `uvicorn rowerweather.api:app` there and point the DNS record of
+GitHub and publishes its answers as files on GitHub Pages, at
+https://api.rowfrog.com/v1/ (same paths as the API: `lakes/index`,
+`clubs/<id>/forecast`, `lakes/<id>/view`, and the satellite pictures).
+Every 30 minutes it refreshes the clubs people actually load (until the
+usage counter is set up, the confirmed clubs in `data/locations.json` stand
+in); every 6 hours it refreshes all clubs. Weather is only loaded again after
+a weather model has a new run, which keeps the job within Open-Meteo's free
+limit; the last forecasts are kept between runs in the Actions cache.
+
+Only `main` publishes to the live site. A branch can be published by running
+the workflow by hand, which overwrites the live files until `main` publishes
+again.
+
+Release builds of the app read from there; Debug builds use a backend on the
+Mac at localhost. To move to a server of our own, run
+`uvicorn rowerweather.api:app` there and point the DNS record of
 `api.rowfrog.com` at it; the app keeps its address.
 
 ## Run the app
