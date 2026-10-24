@@ -16,7 +16,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import ice, lake_view, locations, outlines
+from . import ice, lake_view, locations, outlines, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
 from .sources import dwd_warnings, gkd, open_meteo
@@ -338,6 +338,9 @@ async def club_forecast(club_id: str) -> dict:
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
         "attribution": ATTRIBUTION,
+        "forecastSource": weather_models.source_json(
+            weather_models.chain_for(club.launch_point.lat, club.launch_point.lon), len(hours)
+        ),
         "daylight": [
             {"date": d.day.isoformat(), "sunrise": _utc(d.sunrise), "sunset": _utc(d.sunset)}
             for d in sun_days(now, now + timedelta(hours=len(hours)), club.launch_point.lat, club.launch_point.lon)

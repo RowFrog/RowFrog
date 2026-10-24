@@ -1,0 +1,16 @@
+# Usage counter in front of api.rowfrog.com (see src/index.js).
+# Deployed by .github/workflows/usage-worker.yml, which fills in database_id.
+name = "rowfrog-usage"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+workers_dev = false
+routes = [{ pattern = "api.rowfrog.com/*", zone_name = "rowfrog.com" }]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rowfrog-usage"
+database_id = "DATABASE_ID"
+
+# Old daily counts are deleted once a day.
+[triggers]
+crons = ["17 3 * * *"]
