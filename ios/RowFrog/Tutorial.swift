@@ -669,6 +669,18 @@ struct ColdWaterTip: Tip {
     var image: Image? { Image(systemName: "thermometer.snowflake") }
 }
 
+struct TopTileTip: Tip {
+    var title: Text { Text(tr("Tap a value")) }
+    var message: Text? { Text(tr("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values.")) }
+    var image: Image? { Image(systemName: "hand.tap") }
+}
+
+struct ChartScrubTip: Tip {
+    var title: Text { Text(tr("Read any hour")) }
+    var message: Text? { Text(tr("Hold the chart, then slide along it to read the value at each hour.")) }
+    var image: Image? { Image(systemName: "hand.draw") }
+}
+
 struct RoutePlanningTip: Tip {
     var title: Text { Text(tr("Plan a route")) }
     var message: Text? { Text(tr("Tap here, then tap your turning points on the water. You see the light along the route and the best time to start.")) }
