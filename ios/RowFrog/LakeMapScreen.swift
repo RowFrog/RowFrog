@@ -1162,12 +1162,17 @@ struct LakeMapView: UIViewRepresentable {
 
         /// The turning point nearest to a touch, within reach of it; never the start.
         private func pin(near location: CGPoint, on map: MKMapView) -> RoutePin? {
-            routePins
-                .filter { !$0.isStart }
-                .map { ($0, map.convert($0.coordinate, toPointTo: map)) }
-                .filter { hypot($0.1.x - location.x, $0.1.y - location.y) < 30 }
-                .min { hypot($0.1.x - location.x, $0.1.y - location.y) < hypot($1.1.x - location.x, $1.1.y - location.y) }?
-                .0
+            var nearest: RoutePin?
+            var nearestDistance: CGFloat = 30
+            for pin in routePins where !pin.isStart {
+                let at: CGPoint = map.convert(pin.coordinate, toPointTo: map)
+                let distance: CGFloat = hypot(at.x - location.x, at.y - location.y)
+                if distance < nearestDistance {
+                    nearest = pin
+                    nearestDistance = distance
+                }
+            }
+            return nearest
         }
 
         func gestureRecognizer(_ gesture: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
