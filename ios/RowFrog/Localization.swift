@@ -648,7 +648,7 @@ enum German {
         "The way out and the way back lie side by side, each coloured for the time you row it.": "Hin- und Rückweg liegen nebeneinander, jeder in den Farben der Zeit, zu der du dort ruderst.",
         "Lake at the boat's time: move the boat along your route and see the lake when you get there.": "See zur Zeit des Boots: Schieb das Boot über deine Route und sieh den See zu der Zeit, wenn du dort bist.",
         "Row a loop: tap within 50 m of your club, or use Close loop.": "Rudere eine Runde: Tippe weniger als 50 m vor deinem Verein oder nutze „Runde schließen“.",
-        "Tap a turning point to delete just that one, or hold and drag it to move it.": "Tippe auf einen Wendepunkt, um nur diesen zu löschen, oder halte und zieh ihn, um ihn zu verschieben.",
+        "Tap a turning point to delete just that one, or drag it to move it.": "Tippe auf einen Wendepunkt, um nur diesen zu löschen, oder zieh ihn, um ihn zu verschieben.",
         "Open in Maps now gives directions to the club's address.": "„In Karten öffnen“ führt jetzt zur Adresse des Vereins.",
         "The panel under the lake map is smaller. Pull it up for the details.": "Das Feld unter der Seekarte ist kleiner. Zieh es nach oben für die Details.",
         "Continue": "Weiter",
