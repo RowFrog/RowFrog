@@ -19,7 +19,9 @@ final class DataSaver {
     /// Screenshot hook: `-RWSaveData YES` acts as if Low Data Mode were on.
     private let forced = UserDefaults.standard.bool(forKey: "RWSaveData")
 
-    var saving: Bool { forced || lowDataMode || (mobile && AppSettings.shared.saveMobileData) }
+    var saving: Bool { lowDataModeOn || (mobile && AppSettings.shared.saveMobileData) }
+    /// Low Data Mode, or the screenshot hook standing in for it.
+    var lowDataModeOn: Bool { forced || lowDataMode }
 
     private init() {
         monitor.pathUpdateHandler = { path in

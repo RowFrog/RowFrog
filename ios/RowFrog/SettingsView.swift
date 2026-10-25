@@ -173,7 +173,7 @@ struct SettingsView: View {
                             Label(tr("Save mobile data"), systemImage: "antenna.radiowaves.left.and.right")
                         }
                         if DataSaver.shared.saving {
-                            Label(DataSaver.shared.lowDataMode ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
+                            Label(DataSaver.shared.lowDataModeOn ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
                                   systemImage: "leaf")
                                 .font(.footnote)
                                 .foregroundStyle(.secondary)
