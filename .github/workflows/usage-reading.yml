@@ -1,0 +1,49 @@
+name: Usage reading (temporary)
+
+# One-off reading for the thread "Monitor server and data source usage":
+# calls per day, service and job from the usage counter, how many clubs and
+# lakes the app loaded, and the size of the published site. Prints totals only.
+
+on:
+  push:
+    paths: [.github/workflows/usage-reading.yml]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Usage counter
+        env:
+          KEY: ${{ secrets.USAGE_KEY }}
+        run: |
+          curl -fsS -H "Authorization: Bearer $KEY" "https://api.rowfrog.com/budget?days=35" > budget.json
+          curl -fsS -H "Authorization: Bearer $KEY" "https://api.rowfrog.com/usage?days=7" > usage.json
+          python3 - <<'PY'
+          import json, collections
+          b = json.load(open("budget.json"))
+          rows = b if isinstance(b, list) else b.get("rows", b)
+          print("== calls per day, service, job")
+          for r in rows:
+              print(r["day"], r["service"], r["job"], round(float(r["calls"]), 1))
+          u = json.load(open("usage.json"))
+          print("== usage (7 days), raw keys:", list(u)[:10] if isinstance(u, dict) else type(u))
+          items = u if isinstance(u, list) else u.get("rows", u.get("items", []))
+          if isinstance(u, dict) and not items:
+              for k, v in u.items():
+                  print(k, len(v) if hasattr(v, "__len__") else v)
+          else:
+              by = collections.Counter(); n = collections.Counter()
+              for r in items:
+                  by[r["kind"]] += int(r["n"]); n[r["kind"]] += 1
+              print("distinct places per kind:", dict(n)); print("hits per kind:", dict(by))
+          PY
+      - name: Published site size
+        run: |
+          git clone -q --depth 1 --branch gh-pages "https://github.com/${{ github.repository }}" site
+          du -sh site --exclude=.git; find site -path site/.git -prune -o -type f -print | wc -l
+          du -sh site/v1/* 2>/dev/null | sort -h | tail -5
+          find site/v1 -name '*.jpg' -o -name '*.png' | xargs du -ch 2>/dev/null | tail -1
