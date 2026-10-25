@@ -1,0 +1,25 @@
+name: DWD warn cell probe (temporary)
+
+# Checks whether DWD's GeoServer has the municipality warn cells as their own
+# layer, so the publish job can look each club's cell up once and then fetch all
+# local warnings in one query per run.
+
+on:
+  push:
+    paths: [.github/workflows/dwd-cells-probe.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          W="https://maps.dwd.de/geoserver/dwd/ows"
+          curl -fsS "$W?service=WFS&version=2.0.0&request=GetCapabilities" | grep -o '<Name>dwd:Warn[^<]*' | sort -u
+          echo "== Starnberg cell"
+          curl -fsS "$W?service=WFS&version=2.0.0&request=GetFeature&typeName=dwd:Warngebiete_Gemeinden&outputFormat=application/json&propertyName=WARNCELLID,NAME&CQL_FILTER=INTERSECTS(THE_GEOM,POINT(47.9988%2011.3439))" | head -c 600; echo
+          echo "== all local warnings without geometry"
+          curl -fsS -o all.json -w "%{http_code} %{size_download} bytes %{time_total}s\n" "$W?service=WFS&version=2.0.0&request=GetFeature&typeName=dwd:Warnungen_Gemeinden&outputFormat=application/json&propertyName=WARNCELLID,IDENTIFIER,EVENT"
+          python3 -c "import json; d=json.load(open('all.json')); print(len(d['features']), 'features'); print(d['features'][:1])"
