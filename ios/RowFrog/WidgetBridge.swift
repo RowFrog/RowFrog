@@ -3,8 +3,9 @@ import WidgetKit
 
 /// Copies what the widget needs into the shared app group and asks it to
 /// redraw: the home base, the saved clubs and their names, and the settings
-/// (units, language, time format). Only when something changed: every
-/// redraw makes each widget load its forecast again.
+/// (units, language, time format). Only when something changed, or for
+/// widgets that load only after the app was used: every redraw makes each
+/// widget load its forecast again.
 enum WidgetBridge {
     static func publish(_ locations: LocationStore) {
         BackgroundLibrary.lakeByClub = locations.lakesByClub.mapValues(\.id)
@@ -25,15 +26,21 @@ enum WidgetBridge {
         }
         // Sorted keys, so the same values always give the same bytes.
         let fingerprint = try? JSONSerialization.data(withJSONObject: values.compactMapValues(jsonSafe), options: [.sortedKeys])
-        if let fingerprint, fingerprint == shared.data(forKey: fingerprintKey) { return }
+        // Widgets that load only after the app was used get a new forecast as the
+        // user leaves it, at most every 15 minutes.
+        let lastReload = shared.object(forKey: reloadedKey) as? Date ?? .distantPast
+        let due = AppSettings.shared.widgetUpdates == .appOpen && Date.now.timeIntervalSince(lastReload) > 15 * 60
+        if let fingerprint, fingerprint == shared.data(forKey: fingerprintKey), !due { return }
         for (key, value) in values { shared.set(value, forKey: key) }
         for key in AppSettings.Keys.all where values[key] == nil { shared.removeObject(forKey: key) }
         if !saved.isEmpty, locations.homeID == nil { shared.removeObject(forKey: WidgetShared.homeKey) }
         shared.set(fingerprint, forKey: fingerprintKey)
+        shared.set(Date.now, forKey: reloadedKey)
         WidgetCenter.shared.reloadAllTimelines()
     }
 
     private static let fingerprintKey = "RWWidgetPublished"
+    private static let reloadedKey = "RWWidgetReloaded"
 
     /// Makes the small background pictures the widgets load, once per change:
     /// each saved club's picture (the one chosen for its widgets, else its club
@@ -88,7 +95,7 @@ enum WidgetBridge {
     private static func write(_ image: UIImage, to file: URL?) -> Bool {
         guard let file else { return false }
         var small = BackgroundLibrary.scaled(image, maxSide: 1200)
-        if AppSettings.shared.blurWidgetPicture { small = BackgroundLibrary.blurred(small, radius: 18) }
+        if AppSettings.shared.blurWidgetPicture { small = BackgroundLibrary.blurred(small) }
         guard let data = small.jpegData(compressionQuality: 0.8) else { return false }
         return (try? data.write(to: file, options: .atomic)) != nil
     }

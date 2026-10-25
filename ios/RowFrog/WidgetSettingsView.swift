@@ -2,7 +2,7 @@ import SwiftUI
 import WidgetKit
 
 /// Settings > Widgets: what the widgets show behind their content, for all
-/// widgets and per club. A widget can also have its own, in its edit menu.
+/// widgets and per club, and how often they load. A widget can also have its own, in its edit menu.
 struct WidgetSettingsView: View {
     let locations: LocationStore
     @Binding var path: [SettingsRoute]
@@ -59,12 +59,26 @@ struct WidgetSettingsView: View {
                     .surfaceRows()
                     .id("clubs")
                 }
+
+                Section {
+                    Picker(selection: $settings.widgetUpdates) {
+                        ForEach(WidgetUpdates.allCases) { Text($0.title).tag($0) }
+                    } label: {
+                        Label(tr("Widget updates"), systemImage: "apps.iphone")
+                    }
+                } header: {
+                    SectionTitle(tr("Updates"), symbol: "arrow.triangle.2.circlepath")
+                } footer: {
+                    SectionFooter(tr("Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Less often saves battery and data, but a new DWD warning reaches the widgets later. Only after using the app: the widgets load once as you leave the app."))
+                }
+                .surfaceRows()
+                .id("updates")
             }
             .scrollContentBackground(.hidden)
             .pageBackground(.settings)
             .navigationTitle(tr("Widgets"))
             .navigationBarTitleDisplayMode(.inline)
-            .screenshotSections(["preview", "all", "blur", "clubs"], proxy: proxy)
+            .screenshotSections(["preview", "all", "blur", "clubs", "updates"], proxy: proxy)
         }
         // The widgets show the change when the user is back on the home screen.
         .onChange(of: settings.widgetBackground) { WidgetBridge.publish(locations) }

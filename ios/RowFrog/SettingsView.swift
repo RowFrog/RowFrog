@@ -82,7 +82,7 @@ struct SettingsView: View {
                     } header: {
                         SectionTitle(tr("Appearance"), symbol: "circle.lefthalf.filled")
                     } footer: {
-                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page."))
+                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page. Dark uses less battery on iPhones with an OLED screen, which most models since the iPhone X have."))
                     }
                     .surfaceRows()
                     .id("appearance")
@@ -174,8 +174,8 @@ struct SettingsView: View {
                                 WidgetBackgroundSwatch(background: settings.widgetBackground)
                                     .frame(width: 36, height: 36)
                                 VStack(alignment: .leading, spacing: 2) {
-                                    Text(tr("Widget background"))
-                                    Text(settings.widgetBackground.title)
+                                    Text(tr("Widget background and updates"))
+                                    Text("\(settings.widgetBackground.title) · \(settings.widgetUpdates.title)")
                                         .font(.caption)
                                         .foregroundStyle(.secondary)
                                 }
@@ -1248,8 +1248,12 @@ extension View {
         task {
             let page = UserDefaults.standard.integer(forKey: "RWScrollPage")
             guard page > 0 else { return }
-            try? await Task.sleep(for: .seconds(2))
-            proxy.scrollTo(ids[min(page, ids.count - 1)], anchor: .top)
+            // Scrolled twice: on a slow simulator the first try can come before
+            // the form has laid out its rows and does nothing.
+            for _ in 0..<2 {
+                try? await Task.sleep(for: .seconds(2))
+                proxy.scrollTo(ids[min(page, ids.count - 1)], anchor: .top)
+            }
         }
     }
 }
