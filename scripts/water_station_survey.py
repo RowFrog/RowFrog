@@ -36,6 +36,7 @@ from rowfrog import locations, outlines
 GKD = "https://www.gkd.bayern.de/de/{kind}/wassertemperatur/bayern"
 PEGELONLINE = "https://www.pegelonline.wsv.de/webservices/rest-api/v2/stations.json"
 EXISTENZ = "https://api.existenz.ch/apiv1/hydro/locations"
+EXISTENZ_LATEST = "https://api.existenz.ch/apiv1/hydro/latest"
 HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; RowFrog/0.1; +https://github.com/RowFrog/RowFrog)"}
 # A station on the same river further than this from the launch point is listed as far.
 MAX_KM = {"lake": 25.0, "river": 30.0, "unknown": 15.0}
@@ -126,25 +127,23 @@ def pegelonline(client: httpx.Client) -> list[Station]:
 
 
 def bafu(client: httpx.Client) -> list[Station]:
-    resp = client.get(EXISTENZ, timeout=60)
-    resp.raise_for_status()
-    payload = resp.json().get("payload", {})
+    locs = client.get(EXISTENZ, params={"app": "rowfrog"}, timeout=60)
+    locs.raise_for_status()
+    places = locs.json().get("payload", {})
+    latest = client.get(EXISTENZ_LATEST, params={"app": "rowfrog", "parameters": "temperature"}, timeout=60)
+    latest.raise_for_status()
     found = []
-    sample = None
-    for number, loc in payload.items():
+    for v in latest.json().get("payload", []):
+        if v.get("par") != "temperature":
+            continue
+        loc = places.get(str(v.get("loc")), {})
         details = loc.get("details", loc)
-        params = " ".join(str(p) for p in (details.get("parameters") or loc.get("parameters") or []))
-        if sample is None:
-            sample = {k: details[k] for k in list(details)[:12]}
-        if "temperature" not in params and "temperatur" not in params.lower():
+        if details.get("lat") is None:
             continue
-        lat, lon = details.get("lat"), details.get("lon")
-        if lat is None or lon is None:
-            continue
-        water = details.get("water-body-name") or details.get("water_body_name") or ""
-        kind = "lake" if str(details.get("water-body-type", "")).lower() in ("lake", "see") else "river"
-        found.append(Station("bafu", str(number), details.get("name", ""), water, float(lat), float(lon), kind))
-    say(f"BAFU (Switzerland): {len(found)} stations with water temperature; sample record {sample}")
+        kind = "lake" if str(details.get("water-body-type", "")).lower() == "lake" else "river"
+        when = datetime.fromtimestamp(v["timestamp"], timezone.utc).isoformat() if v.get("timestamp") else None
+        found.append(Station("bafu", str(v["loc"]), details.get("name", ""), details.get("water-body-name", ""), float(details["lat"]), float(details["lon"]), kind, when))
+    say(f"BAFU (Switzerland): {len(found)} stations with water temperature")
     return found
 
 
@@ -213,10 +212,14 @@ def main(path: str | None) -> int:
     say()
     say(f"Clubs with a station on their water: {covered} of {total}; waters: {sum(1 for w in waters.values() if w['with'])} of {len(waters)}")
     say()
+    say("## Stations (TSV)")
+    for st in stations:
+        say("\t".join(str(x) for x in ("STATION", st.network, st.id, st.name, st.water, st.kind, st.lat, st.lon, st.latest)))
+    say()
     say("## Per club (TSV)")
     for r in rows:
         s = r["station"] or {}
-        say("\t".join(str(x) for x in (r["country"], r["waterId"], r["kind"], r["club"], s.get("network", "-"), s.get("id", "-"), s.get("name", "-"), s.get("water", "-"), r["distanceKm"], "far" if r["far"] else "", s.get("latest", ""))))
+        say("\t".join(str(x) for x in ("CLUB", r["country"], r["waterId"], r["kind"], r["club"], s.get("network", "-"), s.get("id", "-"), s.get("name", "-"), s.get("water", "-"), r["distanceKm"], "far" if r["far"] else "", s.get("latest", ""))))
     if path:
         with open(path, "w", encoding="utf-8") as f:
             json.dump({"stations": [asdict(s) for s in stations], "clubs": rows}, f, ensure_ascii=False, indent=1)
