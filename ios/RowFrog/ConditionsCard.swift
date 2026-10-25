@@ -1392,7 +1392,7 @@ extension ConditionDetail {
     /// The limits in use, after the explanation of the app's own.
     private static func inUse(_ pairs: [(String, RowingLimit, RowingLimit)]) -> String {
         let parts = pairs.map { tr("%@ amber from %@, red above %@", $0.0, $0.1.format(userLimits.value($0.1)), $0.2.format(userLimits.value($0.2))) }
-        return " " + tr("In use for %@: %@. You can change them under Settings, Rowing limits.", userLimits.boat.inSentence, parts.joined(separator: "; "))
+        return " " + tr("In use for %@: %@. You can change them under Settings, Boats and limits.", userLimits.boat.inSentence, parts.joined(separator: "; "))
     }
 
     private static func waves(_ d: ConditionData) -> ConditionDetail {

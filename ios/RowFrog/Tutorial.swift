@@ -69,7 +69,7 @@ enum WhatsNew {
             Point(symbol: "arrow.left.arrow.right", text: tr("The way out and the way back lie side by side, each coloured for the time you row it.")),
             Point(symbol: "figure.rower", text: tr("Lake at the boat's time: move the boat along your route and see the lake when you get there.")),
             Point(symbol: "arrow.triangle.capsulepath", text: tr("Row a loop: tap within 50 m of your club, or use Close loop.")),
-            Point(symbol: "hand.draw", text: tr("Tap a turning point to delete just that one, or hold and drag it to move it.")),
+            Point(symbol: "hand.draw", text: tr("Tap a turning point to delete just that one, or drag it to move it.")),
             Point(symbol: "map", text: tr("Open in Maps now gives directions to the club's address.")),
             Point(symbol: "rectangle.bottomhalf.inset.filled", text: tr("The panel under the lake map is smaller. Pull it up for the details.")),
         ]
@@ -185,7 +185,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: tr("Every page starts with the rowing light for the hour ahead.")
         case .conditions: tr("Below the light you find what matters on the water.")
         case .warnings: tr("Warnings from the Deutscher Wetterdienst come right under the rowing light.")
-        case .boats: tr("The rowing light is worked out for one boat. Set it in Settings › Rowing limits.")
+        case .boats: tr("The rowing light is worked out for one boat. Pick it at the top of the settings.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")
         case .locations: tr("Keep all the places you row in one list.")
         case .wideScreen: tr("Turn your iPhone sideways, or use a wide screen, to see more at once.")

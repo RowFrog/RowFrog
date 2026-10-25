@@ -22,6 +22,8 @@ def main() -> int:
         source = path.read_text()
         keys |= {unescape(k) for k in re.findall(r"\btr\(" + STRING, source)}
         keys |= {unescape(k) for k in re.findall(r"englishTitle: " + STRING, source)}
+        # The settings search shows its titles through tr().
+        keys |= {unescape(k) for k in re.findall(r"\bSettingsSearch\(" + STRING, source)}
         # tr("Clear", key: "Clear route"): the German comes from the key.
         keys |= {unescape(k) for k in re.findall(r"\btr\(" + STRING + r", key: " + STRING, source) for k in [k[1]]}
     # Credits the backend sends, shown through tr().
