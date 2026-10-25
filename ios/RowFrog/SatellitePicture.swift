@@ -475,16 +475,18 @@ struct SatelliteOverlay: View {
                         at: p, anchor: .center
                     )
                     let label = context.resolve(Text(club.shortName).font(.caption2.weight(.semibold)).foregroundStyle(.white))
-                    let size = label.measure(in: CGSize(width: 200, height: 40))
+                    let labelSize = label.measure(in: CGSize(width: 200, height: 40))
                     let spots: [(CGRect, UnitPoint)] = [
-                        (CGRect(x: p.x + 12, y: p.y - size.height / 2, width: size.width, height: size.height), .leading),
-                        (CGRect(x: p.x - 12 - size.width, y: p.y - size.height / 2, width: size.width, height: size.height), .trailing),
-                        (CGRect(x: p.x - size.width / 2, y: p.y - 11 - size.height, width: size.width, height: size.height), .bottom),
-                        (CGRect(x: p.x - size.width / 2, y: p.y + 11, width: size.width, height: size.height), .top),
+                        (CGRect(x: p.x + 12, y: p.y - labelSize.height / 2, width: labelSize.width, height: labelSize.height), .leading),
+                        (CGRect(x: p.x - 12 - labelSize.width, y: p.y - labelSize.height / 2, width: labelSize.width, height: labelSize.height), .trailing),
+                        (CGRect(x: p.x - labelSize.width / 2, y: p.y - 11 - labelSize.height, width: labelSize.width, height: labelSize.height), .bottom),
+                        (CGRect(x: p.x - labelSize.width / 2, y: p.y + 11, width: labelSize.width, height: labelSize.height), .top),
                     ]
                     guard let spot = spots.first(where: { rect, _ in
                         let padded = rect.insetBy(dx: -2, dy: -1)
-                        return !taken.contains { $0.intersects(padded) }
+                        // The pill must stay on the picture, not run off its edge.
+                        let inside = CGRect(origin: .zero, size: size).insetBy(dx: 5, dy: 2).contains(rect)
+                        return inside && !taken.contains { $0.intersects(padded) }
                     }) else { continue }
                     taken.append(spot.0)
                     let pill = Path(roundedRect: spot.0.insetBy(dx: -4, dy: -1), cornerRadius: 6)
