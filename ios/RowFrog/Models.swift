@@ -353,6 +353,8 @@ struct ClubForecast: Codable, Hashable {
     var hours: [ForecastHour]
     /// Yesterday and the next 7 days, for the charts behind the conditions tiles.
     var outlook: [ForecastHour]? = nil
+    /// DWD's rain radar at the launch point for the widget, for the clubs people use.
+    var radar: RainRadar? = nil
 
     /// The backend publishes every half hour; after this the forecast counts as out of date.
     static let staleAfter: TimeInterval = 3 * 3600
@@ -480,4 +482,58 @@ struct IceDay: Codable, Hashable {
 enum SunState: Hashable {
     case up(sunrise: Date, sunset: Date)
     case down(nextSunrise: Date, nextSunset: Date)
+}
+
+/// Rain at the launch point from DWD's radar: now and DWD's nowcast for the
+/// next two hours. The app reads it from DWD every 5 minutes while a club page
+/// is open (RadarClient); the backend adds it to the forecast files of the
+/// clubs people use every 30 minutes, for the widget's radar line.
+/// Source: WMS layer dwd:Niederschlagsradar (RV product, 1 km), read at the
+/// launch point with GetFeatureInfo; no rain comes back as a tiny negative value.
+struct RadarStep: Codable, Hashable {
+    let time: Date
+    let mmPerHour: Double
+}
+
+struct RainRadar: Codable, Hashable {
+    /// The radar picture the nowcast starts from.
+    let reference: Date
+    /// Now and every 15 minutes up to two hours ahead.
+    let steps: [RadarStep]
+
+    static let rainFrom = 0.1  // mm/h; less is noise or drizzle that does not count
+
+    var rainingNow: Bool { (steps.first?.mmPerHour ?? 0) >= Self.rainFrom }
+    var firstRain: RadarStep? { steps.first { $0.mmPerHour >= Self.rainFrom } }
+    var dryAgain: RadarStep? {
+        guard rainingNow else { return nil }
+        return steps.first { $0.mmPerHour < Self.rainFrom }
+    }
+    var peak: Double { steps.map(\.mmPerHour).max() ?? 0 }
+
+    /// The steps from `date` on, for the widget's later entries; none once
+    /// fewer than 30 minutes of the nowcast are left.
+    func ahead(of date: Date) -> RainRadar? {
+        let left = steps.filter { $0.time > date.addingTimeInterval(-7.5 * 60) }
+        guard left.count >= 3 else { return nil }
+        return RainRadar(reference: reference, steps: left)
+    }
+
+    /// One line, e.g. "Light rain from 21:30".
+    var summary: String {
+        guard let first = firstRain else { return tr("No rain in the next 2 hours") }
+        if rainingNow {
+            if let dry = dryAgain { return tr("%@ now, dry from %@", Self.intensity(peak), Format.time(dry.time)) }
+            return tr("%@ for the next 2 hours", Self.intensity(peak))
+        }
+        return tr("%@ from %@", Self.intensity(peak), Format.time(first.time))
+    }
+
+    static func intensity(_ mmPerHour: Double) -> String {
+        switch mmPerHour {
+        case ..<2.5: tr("Light rain")
+        case ..<10: tr("Rain")
+        default: tr("Heavy rain")
+        }
+    }
 }
