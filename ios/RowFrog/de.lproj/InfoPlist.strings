@@ -1,2 +1,4 @@
 /* Shown when the first-start tour asks for the location. */
 "NSLocationWhenInUseUsageDescription" = "Row Frog nutzt deinen Standort nur, um Rudervereine in deiner Nähe vorzuschlagen.";
+/* Shown when "Import a row" first reads Apple Health. */
+"NSHealthShareUsageDescription" = "Row Frog liest deine Rudertrainings und ihre GPS-Strecken, nur auf diesem iPhone, um Fahrten, die du auswählst, zu Routen zu machen.";
