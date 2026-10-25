@@ -1,3 +1,4 @@
+import CoreImage
 import SwiftUI
 import UIKit
 
@@ -75,6 +76,25 @@ enum BackgroundLibrary {
         try? FileManager.default.removeItem(at: url)
         cache.removeObject(forKey: "\(url.path)|true" as NSString)
         cache.removeObject(forKey: "\(url.path)|false" as NSString)
+    }
+
+    private static let blurredCache = NSCache<UIImage, UIImage>()
+    private static let ciContext = CIContext()
+
+    /// The picture blurred once and kept, so the screen does not blur it again
+    /// on every frame while pages swipe. Made smaller first: the blur hides
+    /// the detail anyway, and a small picture blurs fast and takes little memory.
+    static func blurred(_ image: UIImage) -> UIImage {
+        if let cached = blurredCache.object(forKey: image) { return cached }
+        let small = scaled(image, maxSide: 800)
+        guard let cg = small.cgImage else { return image }
+        let input = CIImage(cgImage: cg)
+        // About the 24 points the screen blurred with, at this size.
+        let output = input.clampedToExtent().applyingGaussianBlur(sigma: 22).cropped(to: input.extent)
+        guard let result = ciContext.createCGImage(output, from: input.extent) else { return image }
+        let picture = UIImage(cgImage: result, scale: small.scale, orientation: small.imageOrientation)
+        blurredCache.setObject(picture, forKey: image)
+        return picture
     }
 
     private static func scaled(_ image: UIImage, maxSide: CGFloat) -> UIImage {
@@ -283,10 +303,9 @@ struct BackgroundPicture: View {
     var body: some View {
         Color.clear
             .overlay {
-                Image(uiImage: image)
+                Image(uiImage: blurred ? BackgroundLibrary.blurred(image) : image)
                     .resizable()
                     .scaledToFill()
-                    .blur(radius: blurred ? 24 : 0, opaque: true)
             }
             .clipped()
             .overlay {
