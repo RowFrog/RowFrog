@@ -460,6 +460,10 @@ struct ConditionDetailView: View {
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
     private let scrubTip = ChartScrubTip()
     @State private var showScrubTip = false
+    /// The hour of the chart's blue line and of the map, kept while swiping.
+    @State private var time = DetailTime()
+    /// Compact height: a phone on its side, where the map sits beside the chart.
+    @Environment(\.verticalSizeClass) private var verticalSize
 
     /// The views the arrows and swipes go through: every condition, or only
     /// the values of the top tile when opened from there.
@@ -484,6 +488,8 @@ struct ConditionDetailView: View {
             }
             .coordinateSpace(name: Self.space)
             .simultaneousGesture(swipe)
+            // The new view's map card reports its own hours.
+            .onChange(of: condition) { time.mapHours = nil }
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
             .tipVisibility(scrubTip, $showScrubTip)
             .navigationTitle(condition.title)
@@ -503,37 +509,38 @@ struct ConditionDetailView: View {
 
     final class ChartFrame {
         var rect: CGRect = .zero
+        /// The map card, whose slider is dragged sideways too.
+        var map: CGRect = .zero
+    }
+
+    /// The map a view shows: the rain forecast for rain, else the value's own.
+    private func mapLayer(_ condition: Condition) -> WeatherMapLayer? {
+        condition == .precipitation ? .rain : WeatherMapLayer(condition: condition)
     }
 
     @ViewBuilder
     private func page(_ condition: Condition) -> some View {
         let detail = ConditionDetail(condition, data)
+        // The big number is the value at the chart's blue line; past
+        // measurements (water) keep the measured value.
+        let shown = detail.history || detail.lines.isEmpty ? data : data.at(time.hour)
+        let head = shown.now.time == data.now.time ? detail : ConditionDetail(condition, shown)
+        let hidden = hiddenLines[condition] ?? []
+        let layer = detail.history || detail.lines.isEmpty ? nil : mapLayer(condition)
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center, spacing: 8) {
-                Image(systemName: "chevron.compact.left").foregroundStyle(.tertiary)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(detail.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
-                    Text(detail.note).font(.subheadline).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                if let big = detail.big { big }
-                Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
-            }
-            .accessibilityElement(children: .contain)
-            if !detail.lines.isEmpty {
-                let hidden = hiddenLines[condition] ?? []
-                if tourSeen && showScrubTip {
-                    TipView(scrubTip)
-                }
-                ConditionChart(detail: detail, data: data, hidden: hidden)
-                    .background {
-                        GeometryReader { geo in
-                            Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
-                        }
+            if let club, let layer, verticalSize == .compact {
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        top(detail, head: head, shown: shown, hidden: hidden)
                     }
-                    .onPreferenceChange(ChartFrameKey.self) { chartFrame.rect = $0 }
-                if detail.lines.count > 1 {
-                    legend(detail, condition: condition, hidden: hidden)
+                    .frame(maxWidth: .infinity)
+                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: 230)
+                        .frame(maxWidth: .infinity)
+                }
+            } else {
+                top(detail, head: head, shown: shown, hidden: hidden)
+                if let club, let layer {
+                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: 220)
                 }
             }
             if let info = detail.limitInfo {
@@ -553,9 +560,6 @@ struct ConditionDetailView: View {
                     }
                 }
             }
-            if let club, let layer = WeatherMapLayer(condition: condition) {
-                WeatherMapButton(layer: layer, point: club.launchPoint, clubID: club.id, start: data.isNow ? nil : data.now.time)
-            }
             facts(detail)
             if condition == .waterTemperature, let water = data.water, let station = water.station, let place = station.coordinate {
                 WaterStationMap(station: station, place: place)
@@ -568,6 +572,52 @@ struct ConditionDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
+    }
+
+    /// The big number and the chart with its legend.
+    @ViewBuilder
+    private func top(_ detail: ConditionDetail, head: ConditionDetail, shown: ConditionData, hidden: Set<String>) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Image(systemName: "chevron.compact.left").foregroundStyle(.tertiary)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(head.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
+                    .contentTransition(.numericText())
+                Text(shown.now.time == data.now.time ? head.note : [Format.dayTime(shown.now.time), head.note].filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            if let big = head.big { big }
+            Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
+        }
+        .accessibilityElement(children: .contain)
+        if !detail.lines.isEmpty {
+            if tourSeen && showScrubTip {
+                TipView(scrubTip)
+            }
+            ConditionChart(detail: detail, data: data, time: time, hidden: hidden)
+                .background {
+                    GeometryReader { geo in
+                        Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
+                    }
+                }
+                .onPreferenceChange(ChartFrameKey.self) { chartFrame.rect = $0 }
+            if detail.lines.count > 1 {
+                legend(detail, condition: condition, hidden: hidden)
+            }
+        }
+    }
+
+    /// The weather map under (or beside) the chart, with the slim chart for its full-screen view.
+    private func mapCard(_ detail: ConditionDetail, layer: WeatherMapLayer, club: Club, hidden: Set<String>, height: CGFloat) -> some View {
+        DetailMapCard(layer: layer, club: club, data: data, time: time,
+                      slimChart: AnyView(ConditionChart(detail: detail, data: data, time: time, hidden: hidden, compact: true)),
+                      height: height)
+            .background {
+                GeometryReader { geo in
+                    Color.clear.preference(key: MapCardFrameKey.self, value: geo.frame(in: .named(Self.space)))
+                }
+            }
+            .onPreferenceChange(MapCardFrameKey.self) { chartFrame.map = $0 }
     }
 
     /// The chart's lines; a tap switches one off or on again. One stays on.
@@ -634,7 +684,7 @@ struct ConditionDetailView: View {
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > 60, abs(dx) > abs(dy) * 2 else { return }
                 // A chart that can't be dragged ignores it too, so a drag on any chart never changes the view.
-                if chartFrame.rect.contains(value.startLocation) { return }
+                if chartFrame.rect.contains(value.startLocation) || chartFrame.map.contains(value.startLocation) { return }
                 step(dx < 0 ? 1 : -1)
             }
     }
@@ -693,6 +743,14 @@ struct ConditionDetailView: View {
     }
 }
 
+private struct MapCardFrameKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if next != .zero { value = next }
+    }
+}
+
 private struct ChartFrameKey: PreferenceKey {
     static var defaultValue: CGRect = .zero
     static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
@@ -715,19 +773,95 @@ private struct TrailingIconLabelStyle: LabelStyle {
 /// yesterday to 7 days ahead, limits as dashed lines, and one arrow per
 /// 3 hours on top (rising, falling, steady; or where the wind blows to).
 /// The limit names stay at the left edge while the chart slides under them.
+///
+/// A blue line marks the hour of the big number above the chart. Hold, then
+/// slide moves it, and it stays where the finger lets go. A green badge at
+/// the bottom shows the map's hour (with a chain while linked, outlined under
+/// a dashed line while not), and a thin green band the hours that have maps.
 private struct ConditionChart: View {
     let detail: ConditionDetail
     let data: ConditionData
+    let time: DetailTime
     /// Lines switched off in the legend.
     var hidden: Set<String> = []
-    /// Where the visible 24 hours start when the view opens: an hour before now.
-    private static let start = -1.0
+    /// Slim, without the hint underneath: the time bar of the full-screen map.
+    var compact = false
+    private static let start = DetailTime.start
     /// The hour at the left edge of the visible 24 hours.
-    @State private var scrollX = start
+    @State private var scrollX: Double
     /// The hour under the finger while scrubbing (hold, then slide), as in the Stocks app.
     /// Screenshot hook: `-RWChartSelect 5` shows the scrub line five hours from now.
     @State private var selectedX: Double? = UserDefaults.standard.object(forKey: "RWChartSelect") != nil
         ? UserDefaults.standard.double(forKey: "RWChartSelect") : nil
+
+    init(detail: ConditionDetail, data: ConditionData, time: DetailTime, hidden: Set<String> = [], compact: Bool = false) {
+        self.detail = detail
+        self.data = data
+        self.time = time
+        self.hidden = hidden
+        self.compact = compact
+        _scrollX = State(initialValue: detail.history ? Self.start : time.scrollX)
+    }
+
+    /// The map's green, as on the map card.
+    static let mapGreen = Color(red: 0.24, green: 0.6, blue: 0.31)
+
+    /// The blue line and the map's marker. The map's badge sits at the bottom and
+    /// shows the link: linked, a filled pill with a chain that the blue line ends
+    /// on; unlinked, an outlined badge under a dashed full-height green line, so
+    /// both show even at the same hour.
+    @ViewBuilder
+    private func lines(plot: CGRect, mapX: Double?, onScreen: (Double) -> CGFloat?) -> some View {
+        let green = Self.mapGreen
+        let badgeTop = plot.maxY - 17
+        let joined = time.linked && mapX != nil
+        ZStack(alignment: .topLeading) {
+            if let x = markerX, let px = onScreen(x) {
+                Rectangle().fill(Color.blue)
+                    .frame(width: 1.5, height: max((joined ? badgeTop : plot.maxY) - plot.minY, 0))
+                    .offset(x: px - 0.75, y: plot.minY)
+            }
+            if let m = mapX, let px = onScreen(m) {
+                if !joined {
+                    Path { path in
+                        path.move(to: CGPoint(x: px, y: plot.minY))
+                        path.addLine(to: CGPoint(x: px, y: badgeTop))
+                    }
+                    .stroke(green, style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
+                }
+                Group {
+                    if joined {
+                        HStack(spacing: 1) {
+                            Image(systemName: "link")
+                            Image(systemName: "map.fill")
+                        }
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 25, height: 15)
+                        .background(green, in: Capsule())
+                    } else {
+                        Image(systemName: "map.fill")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundStyle(green)
+                            .frame(width: 17, height: 15)
+                            .background(Color(.systemBackground), in: Capsule())
+                            .overlay(Capsule().strokeBorder(green, lineWidth: 1.5))
+                    }
+                }
+                .fixedSize()
+                .frame(width: 25, height: 15)
+                .offset(x: px - 12.5, y: badgeTop)
+                .opacity(time.mapOutOfRange ? 0.5 : 1)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    /// The persistent blue line; past measurements only show it while touched.
+    private var markerX: Double? {
+        if let x = selectedX { return x.rounded() }
+        return detail.history ? nil : time.hour
+    }
 
     private struct Arrow: Identifiable {
         let x: Double
@@ -783,19 +917,36 @@ private struct ConditionChart: View {
                 .onChange(of: selectedX != nil) { _, on in if on { ChartScrubTip().invalidate(reason: .actionPerformed) } }
                 .chartOverlay { proxy in
                     GeometryReader { geo in
+                        markers(proxy: proxy, geo: geo)
                         limitLabels(proxy: proxy, geo: geo)
                     }
                     .allowsHitTesting(false)
                 }
-                .frame(height: 200)
+                .frame(height: compact ? 100 : 200)
                 .sensoryFeedback(.selection, trigger: selectedX == nil)
+                .onChange(of: selectedX) { _, x in
+                    if let x, !detail.history { time.setChart(x) }
+                }
+                .onChange(of: scrollX) { _, x in
+                    if !detail.history { time.scrollX = x }
+                }
+                // Moved from the map (play, slider, linking again): keep the line in view.
+                .onChange(of: time.hour) { _, x in
+                    guard !detail.history, selectedX == nil, x < scrollX + 0.5 || x > scrollX + 23.5 else { return }
+                    withAnimation { scrollX = min(max(x - 8, range.lowerBound), range.upperBound - 24) }
+                }
             // Under the chart, where it covers nothing: the hint, or once dragged
-            // away from now, one tap back.
-            if !detail.history && abs(scrollX - Self.start) > 0.5 {
+            // or scrubbed away from the opened hour, one tap back.
+            if compact {
+                EmptyView()
+            } else if !detail.history && (abs(scrollX - Self.start) > 0.5 || time.hour != 0) {
                 Button {
-                    withAnimation { scrollX = Self.start }
+                    withAnimation {
+                        time.back()
+                        scrollX = Self.start
+                    }
                 } label: {
-                    Label(data.isNow ? tr("Back to now") : tr("Back to %@", Format.dayTime(data.now.time)), systemImage: scrollX > Self.start ? "arrow.uturn.backward" : "arrow.uturn.forward")
+                    Label(data.isNow ? tr("Back to now") : tr("Back to %@", Format.dayTime(data.now.time)), systemImage: (time.hour != 0 ? time.hour : scrollX - Self.start) > 0 ? "arrow.uturn.backward" : "arrow.uturn.forward")
                         .font(.caption.weight(.semibold))
                 }
                 .buttonStyle(.plain)
@@ -874,13 +1025,17 @@ private struct ConditionChart: View {
                     }
                 }
             }
+            // The blue line itself is drawn by `markers`, so it can make room for
+            // the map's marker; this one only carries the label while touched.
             if let x = selectedX {
-                RuleMark(x: .value("Hour", x))
-                    .foregroundStyle(Color.primary.opacity(0.6))
-                    .lineStyle(StrokeStyle(lineWidth: 1))
+                // Zero width rather than clear: the label takes the mark's colour.
+                RuleMark(x: .value("Hour", x.rounded()))
+                    .lineStyle(StrokeStyle(lineWidth: 0))
                     .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                         callout(x)
                     }
+            }
+            if let x = markerX {
                 ForEach(shownLines.filter { $0.kind == .line }) { line in
                     if let p = nearest(line, to: x) {
                         PointMark(x: .value("Hour", p.x), y: .value("Value", p.y))
@@ -926,6 +1081,39 @@ private struct ConditionChart: View {
         RuleMark(y: .value("Limit", limit.value))
             .foregroundStyle(limit.color)
             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
+    }
+
+    /// The blue line at the big number's hour, the green marker at the map's
+    /// hour and the green band of hours with maps, drawn over the chart.
+    @ViewBuilder
+    private func markers(proxy: ChartProxy, geo: GeometryProxy) -> some View {
+        if let plotFrame = proxy.plotFrame {
+            let plot = geo[plotFrame]
+            let left = max(plot.minX, 0)
+            let visibleRight = proxy.position(forX: scrollX + 24).map { plot.minX + $0 } ?? plot.maxX
+            let right = min(plot.maxX, visibleRight, geo.size.width)
+            let onScreen = { (x: Double) -> CGFloat? in
+                guard let p = proxy.position(forX: x) else { return nil }
+                let px = plot.minX + p
+                return px >= left - 1 && px <= right + 1 ? px : nil
+            }
+            let green = Self.mapGreen
+            let mapX = detail.history ? nil : time.mapFrameHour
+            ZStack(alignment: .topLeading) {
+                if !detail.history, let hours = time.mapHours, let first = hours.first, let last = hours.last,
+                   let a = proxy.position(forX: first), let b = proxy.position(forX: last) {
+                    let from = max(plot.minX + a, left), to = min(plot.minX + b, right)
+                    if to > from {
+                        Capsule().fill(green.opacity(0.8))
+                            .frame(width: to - from, height: 3)
+                            .offset(x: from, y: plot.maxY - 3)
+                    }
+                }
+                lines(plot: plot, mapX: mapX, onScreen: onScreen)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            .accessibilityHidden(true)
+        }
     }
 
     /// One name per limit, just above its line, on the side away from "now":

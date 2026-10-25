@@ -324,6 +324,11 @@ jobs:
           GUIDE=1 WAIT=30 shoot 171-tip-chart-scrub light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind
           GUIDE=1 WAIT=30 shoot 172-tip-chart-scrub-german-dark dark -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLanguage de
           GUIDE=1 WAIT=30 shoot 173-tip-water-estimate light -RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub segler-und-ruderclub-simssee -RWScrollTo conditions
+          # Route tips for one-way routes and points on a stretch.
+          laterRoute=(-RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES)
+          GUIDE=1 WAIT=30 shoot 185-tip-one-way light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "47.99667,11.34745;47.983,11.338"
+          GUIDE=1 WAIT=30 shoot 186-tip-stretch-point light "${laterRoute[@]}" -RWRoute "47.99667,11.34745;47.983,11.338;47.965,11.331"
+          GUIDE=1 WAIT=30 shoot 187-tip-stretch-point-german-dark dark "${laterRoute[@]}" -RWRoute "47.99667,11.34745;47.983,11.338;47.965,11.331" -RWLanguage de
           WAIT=30 shoot 134-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
           WAIT=30 shoot 135-lake-legend light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLegend YES
           WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
@@ -351,6 +356,15 @@ jobs:
           WAIT=30 shoot 162-weather-map-rain light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap rain
           WAIT=30 shoot 163-weather-map-lightning light -RWOpenClub mrc-1880 -RWOpenCondition thunderstorm -RWOpenWeatherMap lightning
           WAIT=30 shoot 164-weather-map-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind -RWLanguage de
+          # Chart and map linked (PR #53): the map card under the chart at the blue line's hour,
+          # unlinked, past the maps' end, beside the chart in landscape, full screen with the
+          # slim chart, and German dark.
+          WAIT=30 shoot 180-detail-map-linked light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8
+          WAIT=30 shoot 181-detail-map-own-time light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8 -RWMapTimeLinked NO
+          WAIT=30 shoot 182-detail-map-past-end light -RWOpenClub mrc-1880 -RWOpenCondition temperature -RWChartSelect 60
+          WAIT=30 shoot 183-detail-map-landscape light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWLandscape YES
+          WAIT=30 shoot 184-detail-map-full light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWOpenWeatherMap wind
+          WAIT=30 shoot 190-detail-map-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWChartSelect 1 -RWLanguage de
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
