@@ -2,7 +2,8 @@ import MapKit
 import SwiftUI
 
 /// Where the forecast is for: the club's launch point on a map, with its
-/// coordinates and a button to open it in Apple Maps.
+/// coordinates and a button to open it in Apple Maps. The map is a still
+/// picture until tapped, since a live map on every club page costs battery.
 struct LaunchPointMapCard: View {
     let club: Club
 
@@ -11,6 +12,9 @@ struct LaunchPointMapCard: View {
     @State private var moved = false
     /// The club's own place in Apple Maps, when it has one.
     @State private var place: MKMapItem?
+    /// The live map after a tap; a still picture again once the page is swiped away.
+    @State private var live = UserDefaults.standard.bool(forKey: "RWLiveLaunchMap")
+    @Environment(\.isCurrentPage) private var isCurrentPage
 
     private var home: MKCoordinateRegion {
         MKCoordinateRegion(center: coordinate, latitudinalMeters: 1500, longitudinalMeters: 1500)
@@ -22,36 +26,21 @@ struct LaunchPointMapCard: View {
 
     var body: some View {
         Card(title: tr("Launch point"), symbol: "mappin.and.ellipse") {
-            // A drag on the map moves the map; outside it the page scrolls.
-            Map(position: $position, interactionModes: [.pan, .zoom]) {
-                Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: coordinate)
-                    .tint(.blue)
-            }
-            .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
-            .mapControls { MapCompass() }
-            .onMapCameraChange(frequency: .onEnd) { context in
-                moved = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
-                    .distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) > 30
-                    || abs(context.region.span.latitudeDelta - home.span.latitudeDelta) > home.span.latitudeDelta * 0.1
-                    || context.camera.heading.magnitude > 1
-            }
-            .overlay(alignment: .topLeading) {
-                if moved {
-                    Button { reset(animated: true) } label: {
-                        Image(systemName: "scope")
-                            .font(.footnote.weight(.semibold))
-                            .padding(8)
-                            .background(.regularMaterial, in: Circle())
+            Group {
+                if live {
+                    liveMap
+                } else {
+                    Button { live = true } label: {
+                        LaunchPointSnapshot(coordinate: coordinate, region: home, symbol: LocationStore.markSymbol(for: club.id))
                     }
                     .buttonStyle(.plain)
-                    .padding(8)
-                    .accessibilityLabel(tr("Back to the launch point"))
+                    .accessibilityHint(tr("Shows a map you can move"))
                 }
             }
             .frame(height: 220)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .onAppear { reset(animated: false) }
-            .onChange(of: club.id) { reset(animated: false) }
+            .onChange(of: isCurrentPage) { if !isCurrentPage { live = false } }
+            .onChange(of: club.id) { live = false }
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
             Text(tr("The forecast, waves and warnings are for this point."))
@@ -90,6 +79,37 @@ struct LaunchPointMapCard: View {
         }
     }
 
+    /// A drag on the map moves the map; outside it the page scrolls.
+    private var liveMap: some View {
+        Map(position: $position, interactionModes: [.pan, .zoom]) {
+            Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: coordinate)
+                .tint(.blue)
+        }
+        .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+        .mapControls { MapCompass() }
+        .onMapCameraChange(frequency: .onEnd) { context in
+            moved = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
+                .distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) > 30
+                || abs(context.region.span.latitudeDelta - home.span.latitudeDelta) > home.span.latitudeDelta * 0.1
+                || context.camera.heading.magnitude > 1
+        }
+        .overlay(alignment: .topLeading) {
+            if moved {
+                Button { reset(animated: true) } label: {
+                    Image(systemName: "scope")
+                        .font(.footnote.weight(.semibold))
+                        .padding(8)
+                        .background(.regularMaterial, in: Circle())
+                }
+                .buttonStyle(.plain)
+                .padding(8)
+                .accessibilityLabel(tr("Back to the launch point"))
+            }
+        }
+        .onAppear { reset(animated: false) }
+        .onChange(of: club.id) { reset(animated: false) }
+    }
+
     /// Directions to the club's address, since the launch point at the water
     /// has no address to drive to. Falls back to the launch point when Maps
     /// can't find the address.
@@ -123,5 +143,57 @@ struct LaunchPointMapCard: View {
         let item = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
         item.name = club.displayName
         item.openInMaps(launchOptions: [MKLaunchOptionsMapCenterKey: NSValue(mkCoordinate: coordinate)])
+    }
+}
+
+/// The launch point's map as a still picture, made once per club, size and
+/// light or dark look, with the club's pin in the middle.
+private struct LaunchPointSnapshot: View {
+    let coordinate: CLLocationCoordinate2D
+    let region: MKCoordinateRegion
+    /// The club mark used on every map (LocationStore.markSymbol).
+    let symbol: String
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.displayScale) private var displayScale
+    @State private var image: UIImage?
+
+    private static let cache = NSCache<NSString, UIImage>()
+
+    var body: some View {
+        GeometryReader { geometry in
+            let key = "\(coordinate.latitude),\(coordinate.longitude),\(Int(geometry.size.width)),\(colorScheme == .dark)" as NSString
+            ZStack {
+                if let image {
+                    Image(uiImage: image).resizable()
+                } else {
+                    Color(.secondarySystemBackground)
+                }
+                Image(systemName: symbol)
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 30, height: 30)
+                    .background(.blue, in: Circle())
+                    .overlay(Circle().stroke(.white, lineWidth: 2))
+            }
+            .frame(width: geometry.size.width, height: geometry.size.height)
+            .task(id: key) {
+                if let cached = Self.cache.object(forKey: key) {
+                    image = cached
+                    return
+                }
+                guard geometry.size.width > 0 else { return }
+                let options = MKMapSnapshotter.Options()
+                options.region = region
+                options.size = geometry.size
+                options.scale = displayScale
+                options.traitCollection = UITraitCollection(userInterfaceStyle: colorScheme == .dark ? .dark : .light)
+                options.preferredConfiguration = MKStandardMapConfiguration(elevationStyle: .flat)
+                options.pointOfInterestFilter = .excludingAll
+                if let snapshot = try? await MKMapSnapshotter(options: options).start() {
+                    Self.cache.setObject(snapshot.image, forKey: key)
+                    image = snapshot.image
+                }
+            }
+        }
     }
 }

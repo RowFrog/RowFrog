@@ -294,6 +294,9 @@ jobs:
           shoot 118-satellite-card-clubs light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSatelliteLayers '(clubs, shore)'
           shoot 119-satellite-full-clubs light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)'
           SAFETY=1 GUIDE=1 shoot 120-safety-notice-phone-german light -RWNoTips YES -AppleLanguages '(de)'
+          # Launch point card: a still map picture until tapped (battery), light and dark.
+          shoot 121-launch-point-still light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
+          shoot 122-launch-point-still-dark dark -RWOpenClub mrc-1880 -RWScrollTo launchpoint
           WAIT=30 shoot 132-route-plan-compact light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route"
           WAIT=30 shoot 133-chart-scrub light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5
           WAIT=30 shoot 134-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
