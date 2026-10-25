@@ -2,51 +2,10 @@ import MapKit
 import SwiftUI
 import TipKit
 
-/// Rain at the launch point from DWD's radar: now and DWD's nowcast for the
-/// next two hours. The app asks DWD directly (open data, no account), so the
-/// radar is as fresh as DWD's 5-minute updates whatever hosts the backend.
-/// Source: WMS layer dwd:Niederschlagsradar (RV product, 1 km), read at the
-/// launch point with GetFeatureInfo; no rain comes back as a tiny negative value.
-struct RadarStep: Hashable {
-    let time: Date
-    let mmPerHour: Double
-}
-
-struct RainRadar: Hashable {
-    /// The radar picture the nowcast starts from.
-    let reference: Date
-    /// Now and every 15 minutes up to two hours ahead.
-    let steps: [RadarStep]
-
-    static let rainFrom = 0.1  // mm/h; less is noise or drizzle that does not count
-
-    var rainingNow: Bool { (steps.first?.mmPerHour ?? 0) >= Self.rainFrom }
-    var firstRain: RadarStep? { steps.first { $0.mmPerHour >= Self.rainFrom } }
-    var dryAgain: RadarStep? {
-        guard rainingNow else { return nil }
-        return steps.first { $0.mmPerHour < Self.rainFrom }
-    }
-    var peak: Double { steps.map(\.mmPerHour).max() ?? 0 }
-
-    /// One line, e.g. "Light rain from 21:30".
-    var summary: String {
-        guard let first = firstRain else { return tr("No rain in the next 2 hours") }
-        if rainingNow {
-            if let dry = dryAgain { return tr("%@ now, dry from %@", Self.intensity(peak), Format.time(dry.time)) }
-            return tr("%@ for the next 2 hours", Self.intensity(peak))
-        }
-        return tr("%@ from %@", Self.intensity(peak), Format.time(first.time))
-    }
-
-    static func intensity(_ mmPerHour: Double) -> String {
-        switch mmPerHour {
-        case ..<2.5: tr("Light rain")
-        case ..<10: tr("Rain")
-        default: tr("Heavy rain")
-        }
-    }
-}
-
+/// Reads DWD's radar at the launch point for the rain radar card (see
+/// `RainRadar` in Models.swift). The app asks DWD directly (open data, no
+/// account), so the radar is as fresh as DWD's 5-minute updates whatever
+/// hosts the backend.
 struct RadarClient {
     static let wms = URL(string: "https://maps.dwd.de/geoserver/dwd/wms")!
     var session: URLSession = .shared
