@@ -35,6 +35,7 @@ final class DetailTime {
             ? UserDefaults.standard.double(forKey: "RWChartSelect").rounded() : 0
         hour = selected
         mapHour = selected
+        if selected > 20 { scrollX = selected - 8 }
         linked = UserDefaults.standard.object(forKey: Self.linkKey) as? Bool ?? true
     }
 

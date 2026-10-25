@@ -449,6 +449,8 @@ struct ConditionDetailView: View {
     @State private var menuTitles: [Condition: String] = [:]
     /// The hour of the chart's blue line and of the map, kept while swiping.
     @State private var time = DetailTime()
+    /// Compact height: a phone on its side, where the map sits beside the chart.
+    @Environment(\.verticalSizeClass) private var verticalSize
 
     /// The views the arrows and swipes go through: every condition, or only
     /// the values of the top tile when opened from there.
@@ -473,6 +475,8 @@ struct ConditionDetailView: View {
             }
             .coordinateSpace(name: Self.space)
             .simultaneousGesture(swipe)
+            // The new view's map card reports its own hours.
+            .onChange(of: condition) { time.mapHours = nil }
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
             .navigationTitle(condition.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -491,6 +495,13 @@ struct ConditionDetailView: View {
 
     final class ChartFrame {
         var rect: CGRect = .zero
+        /// The map card, whose slider is dragged sideways too.
+        var map: CGRect = .zero
+    }
+
+    /// The map a view shows: the rain forecast for rain, else the value's own.
+    private func mapLayer(_ condition: Condition) -> WeatherMapLayer? {
+        condition == .precipitation ? .rain : WeatherMapLayer(condition: condition)
     }
 
     @ViewBuilder
@@ -500,31 +511,22 @@ struct ConditionDetailView: View {
         // measurements (water) keep the measured value.
         let shown = detail.history || detail.lines.isEmpty ? data : data.at(time.hour)
         let head = shown.now.time == data.now.time ? detail : ConditionDetail(condition, shown)
+        let hidden = hiddenLines[condition] ?? []
+        let layer = detail.history || detail.lines.isEmpty ? nil : mapLayer(condition)
         VStack(alignment: .leading, spacing: 14) {
-            HStack(alignment: .center, spacing: 8) {
-                Image(systemName: "chevron.compact.left").foregroundStyle(.tertiary)
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(head.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
-                        .contentTransition(.numericText())
-                    Text(shown.now.time == data.now.time ? head.note : [Format.dayTime(shown.now.time), head.note].filter { !$0.isEmpty }.joined(separator: " · "))
-                        .font(.subheadline).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                if let big = head.big { big }
-                Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
-            }
-            .accessibilityElement(children: .contain)
-            if !detail.lines.isEmpty {
-                let hidden = hiddenLines[condition] ?? []
-                ConditionChart(detail: detail, data: data, time: time, hidden: hidden)
-                    .background {
-                        GeometryReader { geo in
-                            Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
-                        }
+            if let club, let layer, verticalSize == .compact {
+                HStack(alignment: .top, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        top(detail, head: head, shown: shown, hidden: hidden)
                     }
-                    .onPreferenceChange(ChartFrameKey.self) { chartFrame.rect = $0 }
-                if detail.lines.count > 1 {
-                    legend(detail, condition: condition, hidden: hidden)
+                    .frame(maxWidth: .infinity)
+                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: 230)
+                        .frame(maxWidth: .infinity)
+                }
+            } else {
+                top(detail, head: head, shown: shown, hidden: hidden)
+                if let club, let layer {
+                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: 220)
                 }
             }
             if let info = detail.limitInfo {
@@ -544,9 +546,6 @@ struct ConditionDetailView: View {
                     }
                 }
             }
-            if let club, let layer = WeatherMapLayer(condition: condition) {
-                WeatherMapButton(layer: layer, point: club.launchPoint, clubID: club.id, start: data.isNow ? nil : data.now.time)
-            }
             facts(detail)
             if condition == .waterTemperature, let water = data.water, let station = water.station, let place = station.coordinate {
                 WaterStationMap(station: station, place: place)
@@ -559,6 +558,49 @@ struct ConditionDetailView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
+    }
+
+    /// The big number and the chart with its legend.
+    @ViewBuilder
+    private func top(_ detail: ConditionDetail, head: ConditionDetail, shown: ConditionData, hidden: Set<String>) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Image(systemName: "chevron.compact.left").foregroundStyle(.tertiary)
+            VStack(alignment: .leading, spacing: 0) {
+                Text(head.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
+                    .contentTransition(.numericText())
+                Text(shown.now.time == data.now.time ? head.note : [Format.dayTime(shown.now.time), head.note].filter { !$0.isEmpty }.joined(separator: " · "))
+                    .font(.subheadline).foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 0)
+            if let big = head.big { big }
+            Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
+        }
+        .accessibilityElement(children: .contain)
+        if !detail.lines.isEmpty {
+            ConditionChart(detail: detail, data: data, time: time, hidden: hidden)
+                .background {
+                    GeometryReader { geo in
+                        Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
+                    }
+                }
+                .onPreferenceChange(ChartFrameKey.self) { chartFrame.rect = $0 }
+            if detail.lines.count > 1 {
+                legend(detail, condition: condition, hidden: hidden)
+            }
+        }
+    }
+
+    /// The weather map under (or beside) the chart, with the slim chart for its full-screen view.
+    private func mapCard(_ detail: ConditionDetail, layer: WeatherMapLayer, club: Club, hidden: Set<String>, height: CGFloat) -> some View {
+        DetailMapCard(layer: layer, club: club, data: data, time: time,
+                      slimChart: AnyView(ConditionChart(detail: detail, data: data, time: time, hidden: hidden, compact: true)),
+                      height: height)
+            .background {
+                GeometryReader { geo in
+                    Color.clear.preference(key: MapCardFrameKey.self, value: geo.frame(in: .named(Self.space)))
+                }
+            }
+            .onPreferenceChange(MapCardFrameKey.self) { chartFrame.map = $0 }
     }
 
     /// The chart's lines; a tap switches one off or on again. One stays on.
@@ -625,7 +667,7 @@ struct ConditionDetailView: View {
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > 60, abs(dx) > abs(dy) * 2 else { return }
                 // A chart that can't be dragged ignores it too, so a drag on any chart never changes the view.
-                if chartFrame.rect.contains(value.startLocation) { return }
+                if chartFrame.rect.contains(value.startLocation) || chartFrame.map.contains(value.startLocation) { return }
                 step(dx < 0 ? 1 : -1)
             }
     }
@@ -684,6 +726,14 @@ struct ConditionDetailView: View {
     }
 }
 
+private struct MapCardFrameKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if next != .zero { value = next }
+    }
+}
+
 private struct ChartFrameKey: PreferenceKey {
     static var defaultValue: CGRect = .zero
     static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
@@ -717,6 +767,8 @@ private struct ConditionChart: View {
     let time: DetailTime
     /// Lines switched off in the legend.
     var hidden: Set<String> = []
+    /// Slim, without the hint underneath: the time bar of the full-screen map.
+    var compact = false
     private static let start = DetailTime.start
     /// The hour at the left edge of the visible 24 hours.
     @State private var scrollX: Double
@@ -725,11 +777,12 @@ private struct ConditionChart: View {
     @State private var selectedX: Double? = UserDefaults.standard.object(forKey: "RWChartSelect") != nil
         ? UserDefaults.standard.double(forKey: "RWChartSelect") : nil
 
-    init(detail: ConditionDetail, data: ConditionData, time: DetailTime, hidden: Set<String> = []) {
+    init(detail: ConditionDetail, data: ConditionData, time: DetailTime, hidden: Set<String> = [], compact: Bool = false) {
         self.detail = detail
         self.data = data
         self.time = time
         self.hidden = hidden
+        self.compact = compact
         _scrollX = State(initialValue: detail.history ? Self.start : time.scrollX)
     }
 
@@ -802,7 +855,7 @@ private struct ConditionChart: View {
                     }
                     .allowsHitTesting(false)
                 }
-                .frame(height: 200)
+                .frame(height: compact ? 100 : 200)
                 .sensoryFeedback(.selection, trigger: selectedX == nil)
                 .onChange(of: selectedX) { _, x in
                     if let x, !detail.history { time.setChart(x) }
@@ -817,7 +870,9 @@ private struct ConditionChart: View {
                 }
             // Under the chart, where it covers nothing: the hint, or once dragged
             // or scrubbed away from the opened hour, one tap back.
-            if !detail.history && (abs(scrollX - Self.start) > 0.5 || time.hour != 0) {
+            if compact {
+                EmptyView()
+            } else if !detail.history && (abs(scrollX - Self.start) > 0.5 || time.hour != 0) {
                 Button {
                     withAnimation {
                         time.back()

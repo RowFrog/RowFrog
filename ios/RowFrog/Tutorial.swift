@@ -705,6 +705,12 @@ struct RowImportTip: Tip {
     var image: Image? { Image(systemName: "square.and.arrow.down.on.square") }
 }
 
+struct MapLinkTip: Tip {
+    var title: Text { Text(tr("Chart and map together")) }
+    var message: Text? { Text(tr("The map shows the hour of the chart's blue line. Tap the chain to give the map its own time, and again to link them.")) }
+    var image: Image? { Image(systemName: "link") }
+}
+
 // MARK: - Location for nearby clubs
 
 /// The device's location, asked for only while the app is in use and only to
