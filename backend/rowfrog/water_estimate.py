@@ -47,6 +47,16 @@ def carry(start: date, celsius: float, temps: list[ice.DayTemperature], until: d
     return water
 
 
+def from_air(temps: list[ice.DayTemperature], today: date) -> float | None:
+    """Without any reading: the month's typical water temperature at the first of
+    `temps` (about 92 days back), carried forward to today with the air. Less sure
+    than a reading (about 2-3 °C off), so the app marks it as worked out from the air."""
+    if not temps:
+        return None
+    first = temps[0]
+    return round(carry(first.day, ice.TYPICAL_WATER_C[first.day.month], temps, today), 1)
+
+
 def estimate(readings: list, temps: list[ice.DayTemperature], today: date) -> WaterEstimate | None:
     """From the newest reading (`readings` oldest first) carried forward to today; None without a recent one."""
     recent = [r for r in readings if 0 <= (today - r.day).days <= MAX_AGE_DAYS]

@@ -560,6 +560,11 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             today = now.astimezone(LOCAL).date()
             temps = await _air_days(client, lake, today)
             estimate = water_estimate.estimate(_satellite_water[lake.id], temps or [], today)
+        # Neither a station nor a recent satellite reading: worked out from the air alone, all year.
+        water_model_c = None
+        if water is None and estimate is None and lake.kind == "lake":
+            today = now.astimezone(LOCAL).date()
+            water_model_c = water_estimate.from_air(await _air_days(client, lake, today) or [], today)
         ice_estimate = await _ice(client, lake, water.celsius if water else None, now, estimate.celsius if estimate else None)
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
     weather = _from_now(weather, now)
@@ -585,6 +590,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         },
         # Without a station: the newest satellite reading carried forward to today (water_estimate.py).
         "waterEstimate": _water_estimate_json(estimate),
+        "waterModelC": water_model_c,
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.

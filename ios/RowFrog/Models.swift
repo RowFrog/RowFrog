@@ -367,12 +367,12 @@ struct ModelChoice: Codable, Hashable, Identifiable {
 
 extension ClubForecast {
     /// Without a station: the newest satellite reading carried forward to
-    /// today with the air temperatures, else the ice model's water
-    /// temperature (cold months only), worked out from the air temperatures
-    /// of the last weeks.
+    /// today with the air temperatures, else the water worked out from the air
+    /// temperatures of the last weeks (the backend's, or the ice model's).
     var estimatedWaterC: Double? {
         guard waterTemperature == nil else { return nil }
         if let waterEstimate { return waterEstimate.celsius }
+        if let waterModelC { return waterModelC }
         guard let ice, ice.basis == "model" || ice.basis == "satellite" else { return nil }
         return ice.waterTemperatureC
     }
@@ -447,6 +447,9 @@ struct ClubForecast: Codable, Hashable {
     var refresh: Refresh? = nil
     /// Without a station, for lakes the satellites see; missing from older backends.
     var waterEstimate: WaterEstimate? = nil
+    /// Without a station or a recent satellite reading: worked out from the air
+    /// temperatures alone, all year; missing from older backends.
+    var waterModelC: Double? = nil
 
     /// The backend publishes every half hour; after this the forecast counts as out of date.
     static let staleAfter: TimeInterval = 3 * 3600
