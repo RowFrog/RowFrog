@@ -32,7 +32,7 @@ async def _show_bafu(client: httpx.AsyncClient, station: str, now: datetime) -> 
     ):
         try:
             resp = await client.get(url, params=params, timeout=20)
-            print(f"  {resp.status_code} {resp.url}: {resp.text[:400]}", flush=True)
+            print(f"  {resp.status_code} {resp.url}: ...{resp.text[-600:]}", flush=True)
         except httpx.HTTPError as e:
             print(f"  {url}: {e!r}", flush=True)
 
