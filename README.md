@@ -28,7 +28,8 @@ need are in the **[handbook](docs/handbook.md)**.
 
 **Safety notice.** Before anything else, a first start shows a "Before you
 row" safety notice that has to be accepted; it cannot be skipped, and a new
-version of it is asked for again. Across the app, "Advice only, you decide"
+version of it is asked for again. It opens in the phone's language, with a
+picker for English or German. Across the app, "Advice only, you decide"
 lines remind rowers that the app only advises and they decide. A forecast
 older than 3 hours shows a grey light instead of green.
 
@@ -55,7 +56,8 @@ GitHub issue, so no GitHub account is needed.
 
 1. A top tile with the rowing light, which boat it is for and why it has that
    colour; air, water and wind; waves, rain and visibility (and ice when it
-   matters); a DWD warning status line and a daylight line.
+   matters); a DWD warning status line and a daylight line. Tapping a value
+   opens its chart.
 2. The DWD warnings card, only while a warning is issued (or the check failed).
 3. Current conditions.
 4. Rain radar.
@@ -74,8 +76,9 @@ get a better light, the page suggests it.
 **Current conditions.** A compact card of tiles in two columns, each with a
 small graphic: wind, gusts, waves, temperatures, rain, cloud, visibility,
 pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
-a detail view with a chart you can drag from yesterday to 7 days ahead (a
-"Now" button jumps back to the current hour), the limit lines, wind arrows
+a detail view with a chart you can drag from yesterday to 7 days ahead, with
+a line that shows the values at any time and dots for now ("Back to now"
+returns there), the limit lines (named on the side away from now), wind arrows
 every 3 hours, an "About the limits" note, advice for rowing and the data
 source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views
 or jump to another from the symbol at the top; tapping an entry in a chart's
@@ -90,19 +93,21 @@ when the map looks calmer than your boat. The phone works the light out
 again for the chosen boat on the club page, the lake map and the widget
 (`ios/RowFrog/Limits.swift`).
 
-**Cold water.** Below 10 °C water the app advises a life jacket, suggests a
-coach or partner boat for singles and lowers its own wind and gust limits by
-1 m/s (your own limits stay as set, with a note). Below 4 °C it warns of
-near-freezing water.
+**Cold water.** Below 15 °C water the app advises a life jacket against
+cold-water shock. Below 10 °C it warns of very cold water (stay near the shore,
+don't row alone), suggests a coach or partner boat for singles and lowers its
+own wind and gust limits by 1 m/s (your own limits stay as set, with a note).
+Below 4 °C it warns of near-freezing water.
 
 **Water temperature.** Each club reads the nearest measuring station on its
 own water, from GKD Bayern, the German federal PEGELONLINE network or the
 Swiss federal stations (BAFU, via api.existenz.ch); 85 clubs so far, listed
-in `data/water-stations.json`. For lakes without a station the
+in `data/water-stations.json`. The water temperature view shows where the
+station is on a map. For lakes without a station the
 backend works out a satellite estimate from Copernicus lake surface
 temperatures and Landsat (through Microsoft's Planetary Computer, no extra
-account), carried forward with the air temperatures; the app does not show
-this estimate yet.
+account), carried forward with the air temperatures; the top tile shows it
+in grey as "Estimated".
 
 **DWD warnings.** The page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
@@ -120,13 +125,17 @@ flashes a minute) and the season they run in.
 
 **Lake view and route planning.** A tile opens a map of the whole lake with
 waves, wind and the light for each part of the lake, and a spot you can tap
-for its details. "Plan a route" checks a route on the lake against the
+for its details. A legend lists what is on the map, a switch puts Apple's
+satellite pictures under the lake, and wind arrows get denser as you zoom in.
+"Plan a route" checks a route on the lake against the
 forecast for the time you start, rowed once or out and back, and shows
 where and when it gets rough. The way out and the way back are drawn side
 by side, and "Lake at the boat's time" adds a slider that shows the lake as
 it will be where the boat is at each moment. Turning points can be dragged or
 deleted, and a loop closes when it ends within 50 m of the start or with a
-button. Routes are saved on the phone.
+button. While planning, a compact panel shows only the route's result,
+start time, pace and out and back, so the map keeps the screen. Routes are
+saved on the phone.
 
 **Rain radar.** Each location page has a card with DWD's rain radar and
 2-hour nowcast for the launch point, e.g. "Light rain from 21:30"; tapping it
@@ -157,7 +166,9 @@ comes only every 2 to 5 days. A switch chooses between the latest pass
 one; every picture shows the same area. Chips draw the shore, clubs, saved
 routes, wind and, in winter, the satellite ice map over it. Two more layers
 colour the water with the lake view's wave heights or rowing light for the
-chosen hour, one at a time. Tap for full screen with zoom.
+chosen hour, one at a time; a legend explains them. Tap for full screen with
+zoom, opening around the club or all saved routes. Pictures are kept on the
+phone, so each pass loads only once.
 
 **Forecast source.** A small line at the end of each club page names the
 weather model the forecast comes from (today DWD's ICON models for every club,
@@ -169,14 +180,23 @@ picked in the hidden developer options, the credits line names its provider
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
 point the forecast is for, with its coordinates. It is a still picture until
 tapped; then it can be panned and zoomed, and it resets on each visit. "Open
-in Maps" also offers directions to the club's address.
+in Maps" also offers directions, and when Apple Maps knows the club as a
+place (with photos and opening hours), it opens that.
+
+**Maps** all mark clubs the same way: this page's club in blue, other clubs in
+grey, with a house for the home base and a rower for any other club.
+
+**When an update fails,** the page keeps the last forecast and says why under
+the club's name (no internet, server did not answer, no forecast for this
+club); a tap explains whose side it is on and offers "Try again".
 
 **Widgets.** Home-screen and lock-screen widgets show the rowing light first,
 with the temperature and the weather symbol beside each other. When the
 light is green but the rain radar sees rain coming within 2 hours, the widget
 adds a line such as "Light rain from 14:30".
 
-**Settings** (cog on the location list):
+**Settings** (cog in the page bar of the club pages and on the location
+list; the list goes back to the club page with a button named after the club):
 
 - Appearance (light, dark or as the phone is set) and a Landscape switch (on by default; off
   keeps the app upright).
@@ -344,7 +364,7 @@ worked out on the phone (`ios/RowFrog/Limits.swift`).
 | Wave height | 0.15 m | 0.25 m |
 | Visibility | 1 km or less | under 500 m |
 | Rain and hail | heavy rain, 4 mm per hour or more | hail |
-| Water temperature | under 15 °C; under 10 °C also a life jacket hint, a hint for singles and wind and gust limits 1 m/s lower; under 4 °C near-freezing water (never red on its own) | – |
+| Water temperature | under 15 °C with a life jacket hint; under 10 °C also "Very cold", a hint for singles and wind and gust limits 1 m/s lower; under 4 °C near-freezing water (never red on its own) | – |
 | Shore warning lights (DWD lake warning) | strong wind (40 flashes a minute) for all other boats | strong wind for small racing boats and training boats; storm (90 flashes a minute) for all |
 | DWD weather warning for the place | minor (yellow) | moderate (orange) or above, or any thunderstorm |
 | Ice | shore ice possible, or drift ice on a river | ice cover likely |
