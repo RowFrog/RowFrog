@@ -7,7 +7,10 @@ name: Model check
 # on the "Model check" issue, so the owner gets it by e-mail.
 
 on:
+  # Only on main: each run costs about 700 Open-Meteo calls and stores its
+  # forecasts on the model-check branch, so a feature branch must not add its own.
   push:
+    branches: [main]
     paths:
       - scripts/model_check.py
       - backend/rowfrog/model_check.py
