@@ -44,16 +44,6 @@
       "kind": "river"
     },
     {
-      "id": "fischerhafen",
-      "name": "Fischerhafen",
-      "country": "at",
-      "center": {
-        "lat": 47.5063,
-        "lon": 9.7301
-      },
-      "osm": "way/127395078"
-    },
-    {
       "id": "hochwiesegraben",
       "name": "Hochwiesegraben",
       "country": "at",
@@ -610,22 +600,6 @@
         "lat": 46.65076,
         "lon": 13.90096,
         "precision": "shore point of Ossiacher See nearest the way/509630183 in OpenStreetMap, 19 m away",
-        "verified": false
-      }
-    },
-    {
-      "id": "ruderverein-wiking-bregenz-e-v-1900",
-      "name": "Ruderverein Wiking Bregenz e.V. 1900",
-      "shortName": "Ruderverein Wiking Bregenz e.V. 1900",
-      "address": "Strandweg 40, 6900 Bregenz",
-      "website": "https://www.rv-wiking.at/home/",
-      "source": "osm",
-      "country": "at",
-      "lakeId": "fischerhafen",
-      "launchPoint": {
-        "lat": 47.50587,
-        "lon": 9.72926,
-        "precision": "shore point of Fischerhafen nearest the way/115624167 in OpenStreetMap, 29 m away",
         "verified": false
       }
     },

@@ -320,6 +320,8 @@ jobs:
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES
           shoot_pages 33-widgets-german-dark dark -RWWidgetGallery YES -RWLanguage de
+          # The radar line: rain on DWD's radar within two hours replaces the wind under a green light.
+          shoot 123-widgets-radar light -RWWidgetGallery YES -RWWidgetRadar YES
           # Without the backend the app shows its "no connection" screen.
           pkill -f uvicorn || true
           sleep 2

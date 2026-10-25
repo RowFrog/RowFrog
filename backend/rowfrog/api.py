@@ -20,7 +20,7 @@ from fastapi import FastAPI, HTTPException
 from . import ice, lake_view, locations, outlines, water_estimate, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
-from .sources import dwd_warnings, gkd, open_meteo, pegelonline
+from .sources import bafu, dwd_warnings, gkd, open_meteo, pegelonline
 from .sun import sun_days
 
 CACHE_SECONDS = 30 * 60
@@ -45,8 +45,11 @@ ATTRIBUTION = [
     "Lake outlines: © OpenStreetMap contributors, ODbL",
     "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 ]
-# Added to the credits when the club's station is a federal waterways gauge.
-PEGELONLINE_CREDIT = "Water temperature: PEGELONLINE, Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), DL-DE Zero 2.0"
+# Added to the credits when the club's station is not a GKD Bayern one.
+STATION_CREDIT = {
+    "pegelonline": "Water temperature: PEGELONLINE, Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), DL-DE Zero 2.0",
+    "bafu": "Water temperature: Bundesamt für Umwelt BAFU (Swiss Federal Office for the Environment), via api.existenz.ch",
+}
 
 app = FastAPI(title="RowFrog")
 _locations = locations.load()
@@ -450,6 +453,8 @@ async def _water(
         try:
             if station.network == "pegelonline":
                 water, history = await pegelonline.fetch_recent(client, station.id, now)
+            elif station.network == "bafu":
+                water, history = await bafu.fetch_recent(client, station.id, now)
             else:
                 water, history = await gkd.fetch_recent(client, station.id, now, station.kind)
         except (httpx.HTTPError, ValueError) as e:
@@ -563,7 +568,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         "ice": _ice_json(ice_estimate),
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.
         "attribution": (ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]])
-        + ([PEGELONLINE_CREDIT] if water is not None and station.network == "pegelonline" else [])
+        + ([STATION_CREDIT[station.network]] if water is not None and station.network in STATION_CREDIT else [])
         + ([] if estimate is None else [SATELLITE_WATER_CREDIT[estimate.reading.source]]),
         "forecastSource": weather_models.source_json(chain, len(hours))
         if picked is None

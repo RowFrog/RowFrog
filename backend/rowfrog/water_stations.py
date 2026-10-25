@@ -20,8 +20,8 @@ PATH = locations.DATA_DIR / "water-stations.json"
 
 @dataclass(frozen=True)
 class Station:
-    network: str  # "gkd" or "pegelonline"
-    id: str  # GKD page slug or PEGELONLINE uuid
+    network: str  # "gkd", "pegelonline" or "bafu"
+    id: str  # GKD page slug, PEGELONLINE uuid or BAFU station number
     kind: str = "lake"  # GKD keeps lake and river stations under different pages
     name: str | None = None
     lat: float | None = None
