@@ -52,7 +52,7 @@ COLS, ROWS = 150, 130
 # Hours from the run: each hour for a day, then every 3 hours.
 STEPS = list(range(0, 25)) + list(range(27, HOURS + 1, 3))
 # Wind arrows: one every ARROW_STEP pixels, the first at half a step.
-ARROW_STEP = 10
+ARROW_STEP = 5
 PARALLEL = 8
 MISSING = 255
 

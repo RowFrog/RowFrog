@@ -867,8 +867,8 @@ final class WeatherMapRenderer: MKOverlayRenderer {
             context.restoreGState()
         }
         guard !arrows.isEmpty else { return }
-        // About 20 points long on screen at any zoom.
-        let length = 20 / zoomScale
+        // About 16 points long on screen at any zoom.
+        let length = 16 / zoomScale
         context.setStrokeColor(UIColor.black.withAlphaComponent(0.7).cgColor)
         context.setLineWidth(2 / zoomScale)
         context.setLineCap(.round)
