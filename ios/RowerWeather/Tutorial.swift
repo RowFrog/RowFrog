@@ -117,8 +117,8 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up.")),
             TourPoint(symbol: "clock", text: tr("Each of the next 48 hours has its own light.")),
             TourPoint(symbol: "umbrella", text: tr("The rain radar shows rain for the next two hours.")),
-            TourPoint(symbol: "clock.badge.exclamationmark", text: tr("Grey instead of green: the forecast is more than 3 hours old. Pull down to refresh.")),
-            TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide whether to go out, and when in doubt you stay ashore.")),
+            TourPoint(symbol: "clock.badge.exclamationmark", text: tr("Grey instead of green: the forecast is over 3 hours old. Pull down to refresh.")),
+            TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide, and when in doubt you stay ashore.")),
         ]
         case .conditions: [
             TourPoint(symbol: "thermometer.variable.and.figure", text: tr("Feels like: colder with wind chill, warmer with humidity and heat.")),
@@ -412,7 +412,7 @@ private struct TourPageView: View {
                 }
                 .multilineTextAlignment(.center)
                 extra
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 10) {
                     ForEach(page.points, id: \.text) { point in
                         HStack(alignment: .top, spacing: 12) {
                             Image(systemName: point.symbol)
@@ -458,7 +458,7 @@ private struct TourPageView: View {
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 8)
                     .background(light.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
