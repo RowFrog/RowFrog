@@ -364,6 +364,7 @@ enum German {
         "Steady": "Gleichbleibend",
         "Steady next 3 h": "Gleichbleibend in den nächsten 3 h",
         "Updated %@ · Pull down to refresh": "Aktualisiert %@ · Zum Aktualisieren nach unten ziehen",
+        "Nobody opened this club lately, so it updates less often. From the next server run, within about 30 minutes, it updates every half hour.": "Diesen Verein hat in letzter Zeit niemand geöffnet, daher wird er seltener aktualisiert. Ab dem nächsten Serverlauf, in etwa 30 Minuten, wird er jede halbe Stunde aktualisiert.",
         "Warmer from humidity (heat index)": "Wärmer durch Luftfeuchtigkeit (Hitzeindex)",
         "Warmer in the sun": "Wärmer in der Sonne",
         "The icon on your home screen. iOS asks you to confirm the change.": "Das Symbol auf deinem Home-Bildschirm. iOS fragt vor dem Wechsel nach.",

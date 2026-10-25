@@ -86,3 +86,26 @@ def test_light():
     assert mc.light(6.0, 6.0) == 1
     assert mc.light(3.0, 13.0) == 2
     assert mc.light(None, 3.0) is None
+
+
+def test_schedule_effect_compares_both_runs_with_the_morning_run():
+    morning = datetime(2026, 10, 23, 4, tzinfo=UTC)
+    evening = datetime(2026, 10, 22, 16, tzinfo=UTC)
+    by_hand = datetime(2026, 10, 23, 12, tzinfo=UTC)
+    rows = mc.rows_from_payload(_payload([4.0, 8.0], [2.0, 2.0]), P, "icon_d2", morning)
+    rows += mc.rows_from_payload(_payload([6.0, 10.0], [2.0, 2.0]), P, "icon_d2", evening)
+    rows += mc.rows_from_payload(_payload([1.0, 1.0], [2.0, 2.0]), P, "icon_d2", by_hand)
+    rows += mc.rows_from_payload(_payload([5.0, 9.0], [2.0, 2.0]), P, "best_match", morning)
+    t10, t11 = datetime(2026, 10, 23, 10, tzinfo=UTC), datetime(2026, 10, 23, 11, tzinfo=UTC)
+    obs = {"a": {"wind": {t10: 4.0, t11: 8.0}}}
+    assert [mc.run_slot(x) for x in ("2026-10-23T04:00Z", "2026-10-23T17:00Z", "2026-10-23T12:00Z", "archive")] == [
+        "morning", "evening", None, None,
+    ]
+    effect = mc.schedule_effect(rows, obs)
+    twice, once = effect["icon_d2"]
+    assert twice.n == 4 and once.n == 2, "the run by hand is left out"
+    assert once.wind_err == [0.0, 0.0]
+    assert effect["best_match"][1].n == 2
+    text = "\n".join(mc._schedule_lines(effect))
+    assert "Once a day instead of twice?" in text
+    assert "Same order of the models with one run a day: **no**" in text

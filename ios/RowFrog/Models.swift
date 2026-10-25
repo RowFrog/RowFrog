@@ -382,6 +382,8 @@ struct ClubForecast: Codable, Hashable {
     var outlook: [ForecastHour]? = nil
     /// DWD's rain radar at the launch point for the widget, for the clubs people use.
     var radar: RainRadar? = nil
+    /// How often the backend renews this club; missing without the usage counter.
+    var refresh: Refresh? = nil
 
     /// The backend publishes every half hour; after this the forecast counts as out of date.
     static let staleAfter: TimeInterval = 3 * 3600
@@ -391,6 +393,13 @@ struct ClubForecast: Codable, Hashable {
     /// makes every forecast out of date, for screenshots.
     func isStale(at date: Date = .now) -> Bool {
         UserDefaults.standard.bool(forKey: "RWStaleForecast") || date.timeIntervalSince(generatedAt) > Self.staleAfter
+    }
+
+    /// True for a club nobody opened lately: its file comes every 6 hours and
+    /// its weather every 12 until the next half-hourly run takes it up.
+    /// `-RWSlowRefresh YES` shows it on every club, for screenshots.
+    var isSlowRefresh: Bool {
+        UserDefaults.standard.bool(forKey: "RWSlowRefresh") || refresh?.used == false
     }
 
     /// How much the pressure changes from this hour to `hours` later, in hPa.
@@ -520,6 +529,14 @@ enum SunState: Hashable {
 struct RadarStep: Codable, Hashable {
     let time: Date
     let mmPerHour: Double
+}
+
+/// The backend renews the clubs people opened in the last 7 days every half
+/// hour (weather after every model run, 3 hours), the others less often.
+struct Refresh: Codable, Hashable {
+    let used: Bool
+    let fileEveryHours: Double
+    let weatherEveryHours: Double
 }
 
 struct RainRadar: Codable, Hashable {

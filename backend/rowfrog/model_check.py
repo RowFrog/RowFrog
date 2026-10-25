@@ -403,6 +403,64 @@ def disagreements(rows: list[dict], model: str = CURRENT, reference: str = REFER
     return found
 
 
+def run_slot(issued: str) -> str | None:
+    """"morning" for the scheduled 04:40 run, "evening" for the 16:40 one (both may start late);
+    None for archive rows and runs at other hours (pushes, runs by hand)."""
+    if issued == "archive":
+        return None
+    hour = int(issued[11:13])
+    return "morning" if 3 <= hour <= 9 else "evening" if 15 <= hour <= 21 else None
+
+
+def schedule_effect(rows: list[dict], obs: dict) -> dict[str, tuple[Score | None, Score | None]]:
+    """Day-1 scores per model over all points: (both scheduled runs, morning runs only).
+
+    Shows what the check would lose if it ran once a day: fewer hours to
+    score and, for the evening hours, older forecasts. If the order of the
+    models stays the same, one run a day would be enough to choose a model.
+    """
+    twice = [r for r in rows if run_slot(r["issued"])]
+    once = [r for r in twice if run_slot(r["issued"]) == "morning"]
+    a, b = score(twice, obs), score(once, obs)
+    models = sorted({m for (p, m, bk) in list(a) + list(b) if p == "all" and bk == "day 1"})
+    return {m: (a.get(("all", m, "day 1")), b.get(("all", m, "day 1"))) for m in models}
+
+
+def _schedule_lines(effect: dict[str, tuple[Score | None, Score | None]]) -> list[str]:
+    def wind(s: Score | None) -> float | None:
+        return mean(abs(e) for e in s.wind_err) if s and s.wind_err else None
+
+    def wrong(s: Score | None) -> str:
+        return f"{100 * s.light_wrong / s.light_n:.0f} %" if s and s.light_n else "–"
+
+    rows = [(m, a, b) for m, (a, b) in effect.items() if wind(a) is not None]
+    if not rows:
+        return []
+    order_twice = [m for m, a, b in sorted(rows, key=lambda x: wind(x[1]))]
+    order_once = [m for m, a, b in sorted((r for r in rows if wind(r[2]) is not None), key=lambda x: wind(x[2]))]
+    same = order_twice[: len(order_once)] == order_once and len(order_once) == len(order_twice)
+    out = [
+        "## Once a day instead of twice?",
+        "",
+        "Day 1 over all points, from the two scheduled runs (04:40 and 16:40 UTC) and from the 04:40 run alone.",
+        "",
+        "| Model | Hours, twice | Hours, once | Wind error, twice | Wind error, once | Light wrong, twice | Light wrong, once |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+    ]
+    for m, a, b in sorted(rows, key=lambda x: wind(x[1])):
+        wb = wind(b)
+        out.append(
+            f"| {m} | {a.n} | {b.n if b else 0} | {wind(a):.2f} | {'–' if wb is None else f'{wb:.2f}'} | {wrong(a)} | {wrong(b)} |"
+        )
+    out += [
+        "",
+        "Same order of the models with one run a day: " + ("**yes**" if same else "**no**")
+        + (f" (twice: {', '.join(order_twice[:3])}; once: {', '.join(order_once[:3])})" if not same else "") + ".",
+        "",
+    ]
+    return out
+
+
 # --- Report ----------------------------------------------------------------
 
 
@@ -446,6 +504,7 @@ def report(points: list[Point], rows: list[dict], obs: dict, used: dict, now: da
         table = _table(scores, "all", buck)
         if table:
             lines += [f"## All points, {buck}", ""] + table + [""]
+    lines += _schedule_lines(schedule_effect(rows, obs))
     dis = disagreements(rows)
     if dis:
         per_point: dict[str, int] = {}
