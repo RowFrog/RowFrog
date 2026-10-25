@@ -92,6 +92,16 @@ final class AppSettings {
     /// Weather models picked per club id while the developer options are on; missing = automatic.
     var pickedModels: [String: String] { didSet { defaults.set(pickedModels, forKey: Keys.pickedModels) } }
 
+    /// The order of the cards on every club page, and the cards switched off.
+    var pageLayout: PageLayout { didSet { defaults.set(try? JSONEncoder().encode(pageLayout), forKey: Keys.pageLayout) } }
+    /// Clubs whose page has its own order; they keep it when the order for all clubs changes.
+    var clubPageLayouts: [String: PageLayout] {
+        didSet { defaults.set(try? JSONEncoder().encode(clubPageLayouts), forKey: Keys.clubPageLayouts) }
+    }
+
+    /// The card order for a club's page: its own, else the one for all clubs.
+    func pageLayout(for clubID: String) -> PageLayout { clubPageLayouts[clubID] ?? pageLayout }
+
     /// The model to load for a club, or nil for the automatic choice.
     func pickedModel(for clubID: String) -> String? {
         developerOptions ? pickedModels[clubID] : nil
@@ -122,10 +132,12 @@ final class AppSettings {
         static let mapBoat = "RWMapBoat"
         static let developer = "RWDeveloperOptions"
         static let pickedModels = "RWPickedModels"
+        static let pageLayout = "RWPageLayout"
+        static let clubPageLayouts = "RWClubPageLayouts"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
-                          developer, pickedModels]
+                          developer, pickedModels, pageLayout, clubPageLayouts]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -178,6 +190,11 @@ final class AppSettings {
         userPictures = defaults.stringArray(forKey: Keys.userPictures) ?? []
         developerOptions = defaults.bool(forKey: Keys.developer)
         pickedModels = defaults.dictionary(forKey: Keys.pickedModels) as? [String: String] ?? [:]
+        // As a launch argument the order is a comma-separated list, e.g. `-RWPageLayout "hourly,radar"`.
+        pageLayout = defaults.data(forKey: Keys.pageLayout).flatMap { try? JSONDecoder().decode(PageLayout.self, from: $0) }
+            ?? defaults.string(forKey: Keys.pageLayout).map(PageLayout.init(list:))
+            ?? .standard
+        clubPageLayouts = defaults.data(forKey: Keys.clubPageLayouts).flatMap { try? JSONDecoder().decode([String: PageLayout].self, from: $0) } ?? [:]
     }
 
     /// The language the app shows: the chosen one, or the phone's when it is German.
@@ -236,6 +253,8 @@ final class AppSettings {
         userPictures = []
         developerOptions = false
         pickedModels = [:]
+        pageLayout = .standard
+        clubPageLayouts = [:]
         // The assignments above write the defaults back; remove them so a later
         // change of the app's defaults reaches users who never chose.
         for key in Keys.all { defaults.removeObject(forKey: key) }
@@ -380,4 +399,75 @@ enum BackgroundChoice: Hashable {
         case .custom: tr("Your picture")
         }
     }
+}
+
+// The club page card order lives here because the widget builds AppSettings too.
+
+/// A card on a club page that the user can move or switch off. The rowing
+/// light stays first and DWD warnings, while one is issued, right under it;
+/// the forecast source and credits stay last.
+enum PageCard: String, CaseIterable, Codable, Identifiable {
+    case radar, conditions, lakeView, hourly, launchPoint, satellite
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .radar: tr("Rain radar")
+        case .conditions: tr("Current conditions")
+        case .lakeView: tr("Lake view")
+        case .hourly: tr("Next 48 hours")
+        case .launchPoint: tr("Launch point")
+        case .satellite: tr("Satellite picture")
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .radar: "umbrella"
+        case .conditions: "gauge.with.dots.needle.33percent"
+        case .lakeView: "map"
+        case .hourly: "clock"
+        case .launchPoint: "mappin.and.ellipse"
+        case .satellite: "globe.europe.africa"
+        }
+    }
+}
+
+/// The order of the cards on a club page and which are switched off.
+struct PageLayout: Codable, Hashable {
+    var order: [PageCard]
+    var hidden: Set<PageCard> = []
+
+    static let standard = PageLayout(order: [.radar, .conditions, .lakeView, .hourly, .launchPoint, .satellite])
+
+    /// From a launch argument such as "hourly,radar"; cards left out follow in the standard order.
+    init(list: String) {
+        self.init(order: list.split(separator: ",").compactMap { PageCard(rawValue: $0.trimmingCharacters(in: .whitespaces)) })
+    }
+
+    init(order: [PageCard], hidden: Set<PageCard> = []) {
+        // Every card once; cards added in a later version join at the end.
+        var seen = Set<PageCard>()
+        self.order = (order + PageCard.allCases).filter { seen.insert($0).inserted }
+        self.hidden = hidden
+    }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        // Unknown names (from a newer version) are skipped instead of failing.
+        let order = try c.decode([String].self, forKey: .order).compactMap(PageCard.init(rawValue:))
+        let hidden = try c.decodeIfPresent([String].self, forKey: .hidden)?.compactMap(PageCard.init(rawValue:)) ?? []
+        self.init(order: order, hidden: Set(hidden))
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.container(keyedBy: CodingKeys.self)
+        try c.encode(order.map(\.rawValue), forKey: .order)
+        try c.encode(hidden.map(\.rawValue).sorted(), forKey: .hidden)
+    }
+
+    private enum CodingKeys: String, CodingKey { case order, hidden }
+
+    var visible: [PageCard] { order.filter { !hidden.contains($0) } }
 }

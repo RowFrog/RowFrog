@@ -9,6 +9,8 @@ struct WarningsCard: View {
     let lakeName: String?
     let town: String?
     let checkedAt: Date
+    /// Opens the shore lights guide from the start, where the card is shown to explain them.
+    var guideOpen = false
 
     var body: some View {
         Card(title: tr("DWD warnings"), symbol: "exclamationmark.triangle") {
@@ -25,14 +27,14 @@ struct WarningsCard: View {
             } else {
                 // The shore lights explained right under the lake warning, before the weather warnings.
                 ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
-                if warnings.lakeArea != nil { ShoreLightsGuide() }
+                if warnings.lakeArea != nil { ShoreLightsGuide(startOpen: guideOpen) }
                 ForEach(warnings.items.filter { !$0.isLake }) { WarningRow(warning: $0) }
                 Text(coverage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
             if warnings.checked, warnings.items.isEmpty, warnings.lakeArea != nil {
-                ShoreLightsGuide()
+                ShoreLightsGuide(startOpen: guideOpen)
             }
         }
         .font(.subheadline)
@@ -118,7 +120,11 @@ private struct WarningRow: View {
 /// What the lake's shore warning lights mean, where DWD runs the lake warning
 /// service (Bavarian notice "Sturmwarndienst auf bayerischen Seen", AllMBl. 2010 S. 170).
 struct ShoreLightsGuide: View {
-    @State private var open = UserDefaults.standard.bool(forKey: "RWShoreLights")
+    @State private var open: Bool
+
+    init(startOpen: Bool = false) {
+        _open = State(initialValue: startOpen || UserDefaults.standard.bool(forKey: "RWShoreLights"))
+    }
 
     var body: some View {
         DisclosureGroup(isExpanded: $open) {

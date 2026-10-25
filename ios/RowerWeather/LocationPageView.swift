@@ -1,9 +1,10 @@
 import SwiftUI
 import TipKit
 
-/// One full-screen location page: rowing light now, daylight, current
-/// conditions, the hourly forecast, the launch point on a map, the icon
-/// legend, and the credits.
+/// One full-screen location page: the rowing light now (with wind and
+/// daylight), DWD warnings while one is issued, then the cards in the order
+/// the user arranged (rain radar, current conditions, lake view, the next
+/// 48 hours, launch point, satellite picture), the forecast source and credits.
 struct LocationPageView: View {
     let club: Club
     let lake: Lake?
@@ -15,6 +16,12 @@ struct LocationPageView: View {
     @State private var showLaunchPointTip = false
     @State private var showConditionsTip = false
     @State private var showLakeViewTip = false
+    @State private var arranging = UserDefaults.standard.bool(forKey: "RWArrange")
+    /// Where the hourly table and its day headers are on screen, for the header that stays at the top.
+    /// Screen coordinates: in landscape the scroll view's own space leaves out the side inset,
+    /// which put the header beside the table.
+    @State private var hourlyFrame: CGRect = .zero
+    @State private var dayTops: [Date: CGFloat] = [:]
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
     @State private var showSourceTip = false
@@ -37,57 +44,36 @@ struct LocationPageView: View {
                     VStack(spacing: 16) {
                         header
                         if let forecast, let now = forecast.current() {
-                            NowCard(hour: now, water: forecast.waterTemperature, stale: forecast.isStale())
-                            VStack(spacing: 16) {
-                                if tourSeen && showRainRadarTip {
-                                    TipView(rainRadarTip)
-                                }
-                                RainRadarCard(point: club.launchPoint)
-                            }
-                            .id("radar")
-                            if let warnings = forecast.warnings {
+                            NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.name, town: club.town)
+                            if let warnings = forecast.warnings, !warnings.checked || !warnings.items.isEmpty {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
                             }
-                            if twoColumns {
-                                HStack(alignment: .top, spacing: 16) {
-                                    VStack(spacing: 16) {
-                                        conditionCards(forecast, now: now)
-                                        sourceLine(forecast)
-                                        LegendCard()
+                            let cards = AppSettings.shared.pageLayout(for: club.id).visible
+                            Group {
+                                if twoColumns {
+                                    BalancedColumns {
+                                        ForEach(cards) { pageCard($0, forecast: forecast, now: now) }
                                     }
-                                    VStack(spacing: 16) {
-                                        forecastCards(forecast)
-                                    }
-                                }
-                            } else {
-                                conditionCards(forecast, now: now)
-                                forecastCards(forecast)
-                                sourceLine(forecast)
-                                LegendCard()
-                            }
-                            VStack(alignment: .leading, spacing: 4) {
-                                ForEach(forecast.attribution, id: \.self) { Text(tr($0)) }
-                                if club.isOwnPlace {
-                                    Text(tr("Your own place, kept on this iPhone. No waves, water temperature or warnings here."))
-                                } else if !club.launchPointVerified {
-                                    switch club.source {
-                                    case "drv":
-                                        Text(tr("Club data: Deutscher Ruderverband e.V. (rudern.de). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
-                                    case "oerv":
-                                        Text(tr("Club data: Österreichischer Ruderverband (rudern.at). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
-                                    case "swissrowing":
-                                        Text(tr("Club data: Swiss Rowing (swissrowing.ch). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
-                                    default:
-                                        Text(tr("Launch point from © OpenStreetMap contributors, ODbL"))
-                                    }
+                                } else {
+                                    ForEach(cards) { pageCard($0, forecast: forecast, now: now) }
                                 }
                             }
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(surface.hasPicture ? 12 : 0)
-                            .background(surface.label, in: RoundedRectangle(cornerRadius: 12))
+                            // The satellite card is empty until its picture has loaded, and an
+                            // empty view never runs its own .task, so the cards load it here.
+                            .task(id: forecast.lakeId) { await SatellitePictureStore.shared.load(forecast.lakeId) }
+                            sourceLine(forecast)
+                            Button {
+                                arranging = true
+                            } label: {
+                                Label(tr("Arrange this page"), systemImage: "arrow.up.arrow.down")
+                                    .font(.subheadline.weight(.semibold))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 8)
+                                    .cardBackground(surface, cornerRadius: 18)
+                            }
+                            .id("arrange")
+                            credits(forecast)
                         } else if forecasts.failed.contains(club.id) {
                             ContentUnavailableView {
                                 Label(tr("No forecast"), systemImage: "icloud.slash")
@@ -102,6 +88,11 @@ struct LocationPageView: View {
                     .padding(.bottom, 24)
                     .frame(maxWidth: Self.maxContentWidth)
                     .frame(maxWidth: .infinity)
+                    .onPreferenceChange(HourlyFrameKey.self) { hourlyFrame = $0 }
+                    .onPreferenceChange(DayTopKey.self) { dayTops = $0 }
+                }
+                .overlay(alignment: .top) {
+                    if let forecast { stickyHourlyHeader(forecast) }
                 }
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
                 .refreshable { await forecasts.load(club.id, force: true) }
@@ -112,14 +103,17 @@ struct LocationPageView: View {
                 .tipVisibility(sourceTip, $showSourceTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
+                .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
                 .task {
                     await forecasts.load(club.id)
-                    // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `conditions`, `radar`, `launchpoint`, `lakeview`, `satellite`, `source`) scrolls to that card.
+                    // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `radar`, `conditions`, `lakeview`,
+                    // `launchpoint`, `satellite`, `source`, `arrange`, or `hourly-1` for the table's second day)
+                    // scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast and pushes the cards below it down,
-                        // so for cards below it scroll again once it has settled.
-                        let waits = ["lakeview", "satellite", "radar", "source"].contains(target) ? [2500, 3000, 3000] : [300]
-                        for wait in waits {
+                        // so for cards that may be below it scroll again once it has settled.
+                        let early = ["warnings", "conditions"].contains(target)
+                        for wait in early ? [300] : [2500, 3000, 3000] {
                             try? await Task.sleep(for: .milliseconds(wait))
                             proxy.scrollTo(target, anchor: .top)
                         }
@@ -127,6 +121,110 @@ struct LocationPageView: View {
                 }
             }
         }
+    }
+
+    @ViewBuilder
+    private func pageCard(_ card: PageCard, forecast: ClubForecast, now: ForecastHour) -> some View {
+        switch card {
+        case .radar:
+            VStack(spacing: 16) {
+                if tourSeen && showRainRadarTip {
+                    TipView(rainRadarTip)
+                }
+                RainRadarCard(point: club.launchPoint)
+            }
+            .id("radar")
+        case .conditions:
+            VStack(spacing: 16) {
+                if tourSeen && showConditionsTip {
+                    TipView(conditionsTip)
+                }
+                ConditionsCard(forecast: forecast, hour: now)
+            }
+            .id("conditions")
+        case .lakeView:
+            if lake?.hasOutline != false {
+                VStack(spacing: 16) {
+                    if tourSeen && showLakeViewTip {
+                        TipView(lakeViewTip)
+                    }
+                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
+                }
+                .id("lakeview")
+            }
+        case .hourly:
+            // Each tip sits above its card and scrolls with it.
+            VStack(spacing: 16) {
+                if tourSeen && showHourlyTip {
+                    TipView(hourlyTip)
+                }
+                HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale())
+            }
+            .id("hourly")
+        case .launchPoint:
+            VStack(spacing: 16) {
+                if tourSeen && showLaunchPointTip {
+                    TipView(launchPointTip)
+                }
+                LaunchPointMapCard(club: club)
+            }
+            .id("launchpoint")
+        case .satellite:
+            if lake?.hasOutline != false {
+                VStack(spacing: 16) {
+                    if tourSeen && showSatelliteTip {
+                        TipView(satelliteTip)
+                    }
+                    SatellitePictureCard(lakeID: forecast.lakeId)
+                }
+                .id("satellite")
+            }
+        }
+    }
+
+    /// The hourly table's header, kept at the top of the screen while the
+    /// table is scrolled through, with the day being looked at.
+    @ViewBuilder
+    private func stickyHourlyHeader(_ forecast: ClubForecast) -> some View {
+        GeometryReader { geo in
+            let top = geo.frame(in: .global).minY
+            let height = HourlyStickyHeader.height
+            if hourlyFrame.height > 0, hourlyFrame.minY + 40 < top, hourlyFrame.maxY - height * 2 > top {
+                let day = dayTops.filter { $0.value <= top + height }.max { $0.value < $1.value }?.key
+                    ?? dayTops.keys.min()
+                HourlyStickyHeader(day: day)
+                    .frame(width: hourlyFrame.width)
+                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX)
+                    .transition(.opacity)
+            }
+        }
+        .frame(height: HourlyStickyHeader.height)
+        .allowsHitTesting(false)
+    }
+
+    private func credits(_ forecast: ClubForecast) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(forecast.attribution, id: \.self) { Text(tr($0)) }
+            if club.isOwnPlace {
+                Text(tr("Your own place, kept on this iPhone. No waves, water temperature or warnings here."))
+            } else if !club.launchPointVerified {
+                switch club.source {
+                case "drv":
+                    Text(tr("Club data: Deutscher Ruderverband e.V. (rudern.de). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
+                case "oerv":
+                    Text(tr("Club data: Österreichischer Ruderverband (rudern.at). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
+                case "swissrowing":
+                    Text(tr("Club data: Swiss Rowing (swissrowing.ch). Launch point geocoded with © OpenStreetMap contributors, ODbL"))
+                default:
+                    Text(tr("Launch point from © OpenStreetMap contributors, ODbL"))
+                }
+            }
+        }
+        .font(.footnote)
+        .foregroundStyle(.secondary)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(surface.hasPicture ? 12 : 0)
+        .background(surface.label, in: RoundedRectangle(cornerRadius: 12))
     }
 
     @ViewBuilder
@@ -154,58 +252,6 @@ struct LocationPageView: View {
     static let twoColumnWidth: CGFloat = 600
     /// Keeps lines readable on very wide screens.
     static let maxContentWidth: CGFloat = 1000
-
-    @ViewBuilder
-    private func conditionCards(_ forecast: ClubForecast, now: ForecastHour) -> some View {
-        if let sun = forecast.sunState(at: .now) {
-            DaylightCard(state: sun)
-        }
-        VStack(spacing: 16) {
-            if tourSeen && showConditionsTip {
-                TipView(conditionsTip)
-            }
-            ConditionsCard(forecast: forecast, hour: now)
-        }
-        .id("conditions")
-        // The satellite card further down is empty until its picture has loaded, and an
-        // empty view never runs its own .task, so this always-shown card loads it.
-        .task(id: forecast.lakeId) { await SatellitePictureStore.shared.load(forecast.lakeId) }
-        if lake?.hasOutline != false {
-            VStack(spacing: 16) {
-                if tourSeen && showLakeViewTip {
-                    TipView(lakeViewTip)
-                }
-                LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
-            }
-            .id("lakeview")
-            VStack(spacing: 16) {
-                if tourSeen && showSatelliteTip {
-                    TipView(satelliteTip)
-                }
-                SatellitePictureCard(lakeID: forecast.lakeId)
-            }
-            .id("satellite")
-        }
-    }
-
-    @ViewBuilder
-    private func forecastCards(_ forecast: ClubForecast) -> some View {
-        // Each tip sits above its card and scrolls with it.
-        VStack(spacing: 16) {
-            if tourSeen && showHourlyTip {
-                TipView(hourlyTip)
-            }
-            HourlyCard(forecast: forecast, stale: forecast.isStale())
-        }
-        .id("hourly")
-        VStack(spacing: 16) {
-            if tourSeen && showLaunchPointTip {
-                TipView(launchPointTip)
-            }
-            LaunchPointMapCard(club: club)
-        }
-        .id("launchpoint")
-    }
 
     private var header: some View {
         VStack(spacing: 4) {
@@ -253,36 +299,77 @@ struct LocationPageView: View {
 struct Card<Content: View>: View {
     var title: String?
     var symbol: String?
+    /// Shows an ⓘ in the title row that opens this part of the legend.
+    var legend: LegendPart? = nil
     @ViewBuilder var content: Content
     @Environment(\.surface) private var surface
+    @State private var showingLegend = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             if let title {
-                Label(title.uppercased(), systemImage: symbol ?? "")
-                    .labelStyle(.titleAndIcon)
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
+                HStack {
+                    Label(title.uppercased(), systemImage: symbol ?? "")
+                        .labelStyle(.titleAndIcon)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    if legend != nil {
+                        Spacer(minLength: 0)
+                        LegendButton(showing: $showingLegend)
+                    }
+                }
             }
             content
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .cardBackground(surface)
+        .sheet(isPresented: $showingLegend) {
+            if let legend { LegendSheet(part: legend) }
+        }
     }
 }
 
+/// The ⓘ that opens a card's part of the legend.
+struct LegendButton: View {
+    @Binding var showing: Bool
+
+    var body: some View {
+        Button { showing = true } label: {
+            Image(systemName: "info.circle").font(.subheadline)
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.tint)
+        .accessibilityLabel(tr("What the symbols mean"))
+    }
+}
+
+/// The rowing light now, why, and the values that matter most: air, water
+/// and wind big; waves, rain, visibility (and ice when it matters) small;
+/// whether DWD warns; and how much daylight is left.
 private struct NowCard: View {
     let hour: ForecastHour
-    let water: WaterTemperature?
+    let forecast: ClubForecast
     var stale = false
+    var lakeName: String?
+    var town: String?
+    /// A later hour shown from the hourly table: no warnings line, daylight at that time.
+    var at: Date?
+    @State private var showingLights = UserDefaults.standard.string(forKey: "RWLegend") == "lights"
+    @State private var showingWarnings = false
+    @State private var showingDaylight = false
+
+    private var water: WaterTemperature? { forecast.waterTemperature }
 
     var body: some View {
         Card {
             HStack(spacing: 14) {
                 TrafficLightDot(light: hour.light, size: 36, stale: stale)
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(hour.light.title(stale: stale)).font(.title2.bold())
+                    HStack(spacing: 6) {
+                        Text(hour.light.title(stale: stale)).font(.title2.bold())
+                        LegendButton(showing: $showingLights)
+                    }
                     Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -317,6 +404,7 @@ private struct NowCard: View {
                           systemImage: "figure.rower")
                         .foregroundStyle(.tint)
                 }
+                if at == nil { warningsLine }
             }
             .font(.subheadline)
             .symbolRenderingMode(.hierarchical)
@@ -336,18 +424,134 @@ private struct NowCard: View {
                 Spacer()
                 TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28)
                 Spacer()
-                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 28)
+                WindView(hour: hour, size: 28)
             }
             HStack(alignment: .top) {
-                MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17)
+                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17)
                 Spacer()
                 MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: precipitationText(hour) ?? tr("None"), size: 17)
                 Spacer()
-                MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: tr("No data"), size: 17)
-                    .foregroundStyle(.secondary)
+                MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17)
+                if let ice = iceValue {
+                    Spacer()
+                    MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: 17)
+                }
             }
             .symbolRenderingMode(.hierarchical)
+            daylightLine
         }
+        .sheet(isPresented: $showingLights) { LegendSheet(part: .lights) }
+        .sheet(isPresented: $showingWarnings) {
+            if let warnings = forecast.warnings {
+                NoWarningSheet(warnings: warnings, lakeName: lakeName, town: town, checkedAt: forecast.generatedAt)
+            }
+        }
+        .sheet(isPresented: $showingDaylight) {
+            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour))
+        }
+    }
+
+    /// Ice only when it matters: the estimate says more than open water, or
+    /// the water is cold enough to freeze.
+    private var iceValue: String? {
+        if let ice = forecast.ice, ice.status != "unavailable", ice.status != "open" { return ice.title }
+        if let c = water?.celsius, c < 8 { return forecast.ice.map(\.title) ?? tr("No data yet") }
+        return nil
+    }
+
+    /// While DWD has no warning, one line says so; the warnings card itself
+    /// only shows while a warning is issued or DWD could not be checked.
+    @ViewBuilder
+    private var warningsLine: some View {
+        if let warnings = forecast.warnings, warnings.checked, warnings.items.isEmpty {
+            Button { showingWarnings = true } label: {
+                HStack(spacing: 6) {
+                    Label(tr("No DWD warning"), systemImage: "checkmark.shield.fill")
+                        .foregroundStyle(.green)
+                    Text("· " + tr("checked %@", Format.time(forecast.generatedAt)))
+                        .foregroundStyle(.secondary)
+                    Image(systemName: "info.circle").foregroundStyle(.tint)
+                }
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(tr("Shows what was checked and what the shore warning lights mean"))
+        }
+    }
+
+    /// One line with a small sun path: daylight left, or when it comes back.
+    @ViewBuilder
+    private var daylightLine: some View {
+        if let sun = forecast.sunState(at: at ?? .now) {
+            Button { showingDaylight = true } label: {
+                HStack(spacing: 8) {
+                    switch sun {
+                    case let .up(sunrise, sunset):
+                        SunPath(sunrise: sunrise, sunset: sunset, lineWidth: 1.5).frame(width: 44, height: 20)
+                        Text(tr("Sunset %@ · %@ of daylight left", Format.time(sunset), Format.duration(from: at ?? .now, to: sunset)))
+                    case let .down(sunrise, _):
+                        Image(systemName: "moon.stars.fill").foregroundStyle(.secondary).frame(width: 44)
+                        Text(tr("Sun is down · rowing advised again from %@", Format.time(sunrise)))
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
+                }
+                .font(.subheadline)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(tr("Opens sunrise, sunset and daylight"))
+        }
+    }
+}
+
+/// Wind now as mean–gust with an arrow pointing where the wind blows.
+private struct WindView: View {
+    let hour: ForecastHour
+    var size: CGFloat
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Label(tr("Wind"), systemImage: Condition.wind.symbol)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            HStack(alignment: .firstTextBaseline, spacing: 4) {
+                Text(hour.windSpeedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(hour.windGustMs))" } ?? "–")
+                    .font(.system(size: size, weight: .light))
+                if let from = hour.windFromDeg {
+                    Image(systemName: "arrow.up")
+                        .font(.system(size: size * 0.6, weight: .semibold))
+                        .rotationEffect(.degrees(from + 180))
+                }
+            }
+            Text(AppSettings.shared.windUnit.symbol + (hour.windFromDeg.map { " · " + tr("from %@", Format.compass($0)) } ?? ""))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// What the "No DWD warning" line opens: what was checked and the shore lights.
+private struct NoWarningSheet: View {
+    let warnings: Warnings
+    let lakeName: String?
+    let town: String?
+    let checkedAt: Date
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                WarningsCard(warnings: warnings, lakeName: lakeName, town: town, checkedAt: checkedAt, guideOpen: true)
+                    .padding()
+            }
+            .navigationTitle(tr("DWD warnings"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+            }
+        }
+        .presentationDetents([.medium, .large])
     }
 }
 
@@ -401,42 +605,13 @@ struct MetricView: View {
     }
 }
 
-private struct DaylightCard: View {
-    let state: SunState
-
-    var body: some View {
-        Card(title: tr("Daylight"), symbol: Condition.daylight.symbol) {
-            switch state {
-            case let .up(sunrise, sunset):
-                sunTimes(sunrise: sunrise, sunset: sunset)
-                Label(tr("Sun is up. Rowing advised for %@ until sunset.", Format.duration(from: .now, to: sunset)), systemImage: "sun.max.fill")
-                    .foregroundStyle(.primary)
-            case let .down(nextSunrise, nextSunset):
-                sunTimes(sunrise: nextSunrise, sunset: nextSunset)
-                Label(tr("Sun is down. Rowing is advised again from sunrise at %@.", Format.time(nextSunrise)), systemImage: "moon.stars.fill")
-                    .foregroundStyle(.primary)
-            }
-        }
-        .font(.subheadline)
-    }
-
-    private func sunTimes(sunrise: Date, sunset: Date) -> some View {
-        HStack(spacing: 24) {
-            Label(Format.time(sunrise), systemImage: "sunrise.fill")
-            Label(Format.time(sunset), systemImage: "sunset.fill")
-            Spacer()
-        }
-        .font(.title3.weight(.semibold))
-        .symbolRenderingMode(.hierarchical)
-        .labelStyle(SunLabelStyle())
-    }
-}
-
 /// A small dial like the Weather app's pressure gauge: an arc from 960 to
 /// 1060 hPa with a mark at the current value and the trend arrow inside.
 struct PressureGauge: View {
     let hpa: Double?
     let trend: PressureTrend?
+    /// Bigger in the larger view, where the dial is bigger too.
+    var arrowFont: Font = .caption.weight(.bold)
     private let range = 960.0...1060.0
     private let sweep = 0.75  // share of the circle the arc covers
 
@@ -454,7 +629,7 @@ struct PressureGauge: View {
                     .rotationEffect(.degrees(135))
             }
             Image(systemName: trend?.symbol ?? "minus")
-                .font(.caption.weight(.bold))
+                .font(arrowFont)
                 .foregroundStyle(.secondary)
         }
         .padding(4)
@@ -471,16 +646,65 @@ private enum Column {
     static let sky: CGFloat = 24
 }
 
+/// Where the hourly table is on the page.
+private struct HourlyFrameKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if next != .zero { value = next }
+    }
+}
+
+/// Where each day of the hourly table starts on the page.
+private struct DayTopKey: PreferenceKey {
+    static var defaultValue: [Date: CGFloat] = [:]
+    static func reduce(value: inout [Date: CGFloat], nextValue: () -> [Date: CGFloat]) {
+        value.merge(nextValue()) { $1 }
+    }
+}
+
 private struct HourlyCard: View {
     let forecast: ClubForecast
+    let club: Club
+    let lake: Lake?
     var stale = false
+    @State private var openHour: ForecastHour?
 
     var body: some View {
-        Card(title: tr("Next 48 hours"), symbol: "clock") {
+        Card(title: tr("Next 48 hours"), symbol: "clock", legend: .hourly) {
             HourlyLegendHeader()
-            ForEach(days) { group in
+            ForEach(Array(days.enumerated()), id: \.element.id) { index, group in
                 DayHeader(day: group.day, sun: sunDay(on: group.day))
-                ForEach(group.hours) { HourRow(hour: $0, stale: stale) }
+                    // Screenshot hook: `-RWScrollTo hourly-1` scrolls to the second day.
+                    .id("hourly-\(index)")
+                    .background {
+                        GeometryReader { geo in
+                            Color.clear.preference(key: DayTopKey.self, value: [group.day: geo.frame(in: .global).minY])
+                        }
+                    }
+                ForEach(group.hours) { hour in
+                    Button { openHour = hour } label: {
+                        HourRow(hour: hour, stale: stale).contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint(tr("Opens this hour with all its values"))
+                }
+            }
+        }
+        .background {
+            GeometryReader { geo in
+                Color.clear.preference(key: HourlyFrameKey.self, value: geo.frame(in: .global))
+            }
+        }
+        .sheet(item: $openHour) { hour in
+            HourDetailSheet(forecast: forecast, club: club, lake: lake, hour: hour)
+        }
+        .task {
+            // Screenshot hook: `-RWOpenHour n` opens the n-th hour of the table.
+            let n = UserDefaults.standard.integer(forKey: "RWOpenHour")
+            if n > 0, forecast.hours.indices.contains(n) {
+                try? await Task.sleep(for: .milliseconds(800))
+                openHour = forecast.hours.sorted { $0.time < $1.time }[n]
             }
         }
     }
@@ -502,6 +726,28 @@ private struct HourlyCard: View {
     }
 }
 
+/// The hourly table's header as it stays at the top of the screen: the day
+/// being looked at over the column icons.
+struct HourlyStickyHeader: View {
+    let day: Date?
+    static let height: CGFloat = 74
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(day.map { Format.day($0) } ?? tr("Next 48 hours"))
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+            HourlyLegendHeader()
+        }
+        .padding(.horizontal, 14)
+        .padding(.top, 8)
+        .frame(height: Self.height, alignment: .top)
+        // Material reads over any background picture and over the rows sliding under it.
+        .background(.regularMaterial, in: UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12))
+        .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
+    }
+}
+
 /// The icon legend over the hourly table: one icon and unit per column.
 private struct HourlyLegendHeader: View {
     var body: some View {
@@ -513,11 +759,11 @@ private struct HourlyLegendHeader: View {
             Image(systemName: "cloud.sun").frame(width: Column.sky)
                 .accessibilityLabel(tr("Weather"))
             column(.temperature)
+            column(.feelsLike)
             column(.wind)
             column(.waves)
             column(.precipitation)
             column(.visibility)
-            column(.cloudCover)
         }
         .font(.subheadline)
         .foregroundStyle(.secondary)
@@ -531,6 +777,8 @@ private struct HourlyLegendHeader: View {
             Text(c.unit).font(.caption2)
         }
         .frame(maxWidth: .infinity, alignment: .trailing)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(c.title)
     }
 }
 
@@ -568,13 +816,14 @@ private struct HourRow: View {
                 .font(.callout)
                 .frame(width: Column.sky)
             cell(Format.degrees(hour.temperatureC).replacingOccurrences(of: "°", with: ""))
+            cell(Format.degrees(hour.apparentTemperatureC).replacingOccurrences(of: "°", with: ""))
+                .foregroundStyle(.secondary)
             cell(hour.windSpeedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(hour.windGustMs))" } ?? "–")
             cell(Format.wavesNumber(hour.waveHeightM))
             cell(Format.rainNumber(hour.precipitationMm))
                 .foregroundStyle((hour.precipitationMm ?? 0) >= 0.1 ? Color.blue : .primary)
             cell(Format.distanceNumber(hour.visibilityM))
                 .foregroundStyle(hour.light(for: ["fog"]).map(\.color) ?? .primary)
-            cell(Format.number(hour.cloudCoverPct))
         }
         .font(.subheadline.monospacedDigit())
         .lineLimit(1)
@@ -588,51 +837,157 @@ private struct HourRow: View {
     }
 }
 
-private struct LegendCard: View {
-    @State private var expanded = UserDefaults.standard.string(forKey: "RWScrollTo") == "hourly"
-        || UserDefaults.standard.integer(forKey: "RWScrollPage") > 0
+/// One hour from the table with everything known about it: the rowing light
+/// and main values, all the conditions tiles, the rain radar while the hour
+/// is within its 2 hours, and the lake map at that hour.
+private struct HourDetailSheet: View {
+    let forecast: ClubForecast
+    let club: Club
+    let lake: Lake?
+    let hour: ForecastHour
+    @Environment(\.dismiss) private var dismiss
+    @State private var showingLakeMap = false
+    @MainActor private var lakeViews: LakeViewStore { .shared }
 
     var body: some View {
-        Card {
-            DisclosureGroup(isExpanded: $expanded) {
-                VStack(alignment: .leading, spacing: 10) {
-                    ForEach([Light.green, .amber, .red], id: \.self) { light in
-                        HStack(alignment: .top, spacing: 10) {
-                            TrafficLightDot(light: light).frame(width: 24)
-                            Text(light.title).font(.subheadline)
-                        }
+        NavigationStack {
+            ScrollView {
+                VStack(spacing: 16) {
+                    NowCard(hour: hour, forecast: forecast, at: hour.time)
+                    // The radar reaches 2 hours ahead; later hours have the forecast rain in the tiles.
+                    if hour.time.timeIntervalSinceNow < 2 * 3600 {
+                        RainRadarCard(point: club.launchPoint)
                     }
-                    HStack(alignment: .top, spacing: 10) {
-                        TrafficLightDot(light: .green, stale: true).frame(width: 24)
-                        Text(tr("Forecast out of date: more than 3 hours old. Amber and red still show.")).font(.subheadline)
-                    }
-                    AdviceOnlyNote()
-                    Divider()
-                    Text(tr("Weather symbols")).font(.subheadline.weight(.semibold))
-                    LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 8) {
-                        ForEach(Sky.allCases, id: \.self) { sky in
-                            HStack(spacing: 8) {
-                                SkyIcon(sky: sky).frame(width: 24)
-                                Text(sky.title).font(.caption)
-                            }
+                    ConditionsCard(forecast: forecast, hour: hour)
+                    if lake?.hasOutline != false, lakeViews.views[forecast.lakeId] != nil {
+                        Button { showingLakeMap = true } label: {
+                            Label(tr("Lake map at %@", Format.dayTime(hour.time)), systemImage: "map")
+                                .font(.subheadline.weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
                         }
-                    }
-                    Text(tr("At night the sun becomes a moon and the row is dimmed.")).font(.caption).foregroundStyle(.secondary)
-                    Divider()
-                    ForEach(Condition.allCases) { c in
-                        HStack(alignment: .top, spacing: 10) {
-                            ConditionIcon(condition: c).frame(width: 24)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(c.unit.isEmpty ? c.title : "\(c.title) (\(c.unit))").font(.subheadline.weight(.semibold))
-                                Text(c.explanation).font(.caption).foregroundStyle(.secondary)
-                            }
-                        }
+                        .buttonStyle(.bordered)
                     }
                 }
-                .padding(.top, 8)
-            } label: {
-                Label(tr("Legend"), systemImage: "info.circle").font(.subheadline.weight(.semibold))
+                .padding()
             }
+            .navigationTitle(Format.dayTime(hour.time))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+            }
+            .fullScreenCover(isPresented: $showingLakeMap) {
+                if let view = lakeViews.views[forecast.lakeId] {
+                    LakeMapScreen(view: view, clubID: club.id, at: hour.time)
+                }
+            }
+        }
+    }
+}
+
+/// Which part of the legend a card's ⓘ opens; `.all` in the settings.
+enum LegendPart: String {
+    case lights, conditions, hourly, all
+}
+
+/// The legend, or the part of it one card needs.
+struct LegendSheet: View {
+    let part: LegendPart
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 12) {
+                    if part == .lights || part == .all { lights }
+                    if part == .all { Divider() }
+                    if part == .conditions || part == .all { symbols; conditionIcons(Condition.tileOrder) }
+                    if part == .all { Divider() }
+                    if part == .hourly || part == .all { columns }
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .navigationTitle(title)
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+            }
+        }
+        .presentationDetents(part == .all ? [.large] : [.medium, .large])
+    }
+
+    private var title: String {
+        switch part {
+        case .lights: tr("Rowing light")
+        case .conditions: tr("Weather symbols")
+        case .hourly: tr("The columns")
+        case .all: tr("Legend")
+        }
+    }
+
+    private var lights: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach([Light.green, .amber, .red], id: \.self) { light in
+                HStack(alignment: .top, spacing: 10) {
+                    TrafficLightDot(light: light).frame(width: 24)
+                    Text(light.title).font(.subheadline)
+                }
+            }
+            HStack(alignment: .top, spacing: 10) {
+                TrafficLightDot(light: .green, stale: true).frame(width: 24)
+                Text(tr("Forecast out of date: more than 3 hours old. Amber and red still show.")).font(.subheadline)
+            }
+            AdviceOnlyNote()
+        }
+    }
+
+    private var symbols: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(tr("Weather symbols")).font(.subheadline.weight(.semibold))
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 8) {
+                ForEach(Sky.allCases, id: \.self) { sky in
+                    HStack(spacing: 8) {
+                        SkyIcon(sky: sky).frame(width: 24)
+                        Text(sky.title).font(.caption)
+                    }
+                }
+            }
+            Text(tr("At night the sun becomes a moon and the row is dimmed.")).font(.caption).foregroundStyle(.secondary)
+        }
+    }
+
+    private func conditionIcons(_ conditions: [Condition]) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ForEach(conditions) { c in
+                HStack(alignment: .top, spacing: 10) {
+                    ConditionIcon(condition: c).frame(width: 24)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(c.unit.isEmpty ? c.title : "\(c.title) (\(c.unit))").font(.subheadline.weight(.semibold))
+                        Text(c.explanation).font(.caption).foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+    }
+
+    /// The hourly table's columns from left to right.
+    private var columns: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "clock").frame(width: 24)
+                Text(tr("Time; the hour starts here.")).font(.subheadline)
+            }
+            HStack(alignment: .top, spacing: 10) {
+                TrafficLightDot(light: .green, size: 12).frame(width: 24)
+                Text(tr("Rowing light for your boat in that hour.")).font(.subheadline)
+            }
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "cloud.sun").frame(width: 24)
+                Text(tr("Weather symbol; it also shows how cloudy it is.")).font(.subheadline)
+            }
+            conditionIcons([.temperature, .feelsLike, .wind, .waves, .precipitation, .visibility])
+            Text(tr("Hours after sunset are dimmed. Tap an hour to see all its values.")).font(.caption).foregroundStyle(.secondary)
         }
     }
 }
