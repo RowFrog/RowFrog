@@ -689,6 +689,12 @@ struct BoatTimeTip: Tip {
     var image: Image? { Image(systemName: "figure.rower") }
 }
 
+struct RowImportTip: Tip {
+    var title: Text { Text(tr("Import a row")) }
+    var message: Text? { Text(tr("Rowed it before? Bring in a row from Apple Health or a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) in the bookmark menu, and plan with your real route and pace.")) }
+    var image: Image? { Image(systemName: "square.and.arrow.down.on.square") }
+}
+
 // MARK: - Location for nearby clubs
 
 /// The device's location, asked for only while the app is in use and only to

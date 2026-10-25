@@ -51,6 +51,7 @@ struct PrivacySummaryView: View {
             ("location", tr("Your location is only used on your phone, to suggest clubs near you, and is never sent anywhere.")),
             ("iphone", tr("Your settings, clubs, boats, photos and your acceptance of the safety notice stay on your phone.")),
             ("server.rack", tr("Forecasts come from api.rowfrog.com (Cloudflare and GitHub). We only count per day how often each club and lake is loaded, never who loaded it.")),
+            ("heart.text.square", tr("Rows you import from Apple Health or a file are read on your phone only; Row Frog never writes to Health and sends nothing anywhere.")),
             ("cloud.rain", tr("The rain radar loads map pictures directly from the Deutscher Wetterdienst; maps come from Apple.")),
         ]
     }
