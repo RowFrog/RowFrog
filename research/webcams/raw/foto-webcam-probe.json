@@ -1,0 +1,8 @@
+[
+ {
+  "url": "https://www.foto-webcam.eu/webcam/include/metadata.php",
+  "status": 200,
+  "type": "application/json",
+  "head": "{\"cams\":[{\"id\":\"bardolino\",\"name\":\"Bardolino\",\"title\":\"Color Hotel - Bardolino - Lago di Garda\",\"keywords\":\"Bardolino,Gardasee,Lago di Garda,Italien\",\"offline\":false,\"hidden\":false,\"imgurl\":\"https:\\/\\/www.foto-webcam.eu\\/webcam\\/bardolino\\/current\\/400.jpg\",\"link\":\"https:\\/\\/www.foto-webcam.eu\\/webcam\\/bardolino\\/\",\"localLink\":\"\\/webcam\\/bardolino\\/\",\"modtime\":1792941596,\"details\":82,\"sortscore\":\""
+ }
+]

@@ -1,0 +1,8 @@
+[
+ {
+  "url": "https://api.panomax.com/1.0/maps/panomaxweb",
+  "status": 200,
+  "type": "application/json",
+  "head": "{\"id\":2,\"slug\":\"panomaxweb\",\"type\":\"roadmap\",\"minLatitude\":-52.163486,\"minLongitude\":-119.640964,\"maxLatitude\":71.345967,\"maxLongitude\":147.268539,\"instances\":{\"7\":{\"id\":7,\"name\":\"Gro\\u00dfglockner - Kaiser Franz Josefs H\\u00f6he\",\"cam\":{\"id\":7,\"name\":\"Kaiser Franz Josefs H\\u00f6he\",\"latitude\":47.075826,\"longitude\":12.750602,\"zeroDirection\":211.5,\"viewAngle\":235,\"iconUrl\":\"https:\\/\\/static.panomax"
+ }
+]
