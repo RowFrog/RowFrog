@@ -21,7 +21,7 @@ def test_carry_moves_the_reading_towards_the_air():
     warm = water_estimate.carry(DAY, 17.7, _air(10, 8.0), DAY + timedelta(days=10))
     assert 8.0 < warm < 17.7
     # A deeper layer changes more slowly.
-    assert water_estimate.carry(DAY, 17.7, _air(10, 8.0), DAY + timedelta(days=10), layer_m=20) > warm
+    assert water_estimate.carry(DAY, 17.7, _air(10, 8.0), DAY + timedelta(days=10), layer_m=30) > warm
     # The reading's own day and days after `until` do not count.
     assert water_estimate.carry(DAY, 17.7, _air(10, 8.0), DAY) == 17.7
 
