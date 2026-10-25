@@ -826,8 +826,8 @@ struct SatelliteLegend: View {
                         if on.contains(.shore) { row(line(.white), tr("Shore line")) }
                         if on.contains(.routes) { row(line(.yellow), tr("Your saved routes on this lake")) }
                         if on.contains(.clubs) {
-                            row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.blue), tr("This page's club; a house instead of the rower when it is your home base"))
-                            row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.gray), tr("Other clubs on the lake"))
+                            row(ClubMarkIcon(color: .blue), tr("This page's club; a house instead of the rower when it is your home base"))
+                            row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
                         }
                     }
                 }

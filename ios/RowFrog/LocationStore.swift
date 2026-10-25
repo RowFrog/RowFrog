@@ -34,8 +34,10 @@ final class LocationStore {
     /// a rower for any other club (as in the page bar). The page's club is blue,
     /// other clubs grey.
     static func markSymbol(for clubID: String?) -> String {
-        clubID != nil && clubID == UserDefaults.standard.string(forKey: homeKey) ? "house.fill" : "figure.rower"
+        clubID != nil && clubID == homeDefaults.string(forKey: homeKey) ? "house.fill" : "figure.rower"
     }
+    /// Where the home base is kept: the screenshots' demo list has its own.
+    private static var homeDefaults: UserDefaults = .standard
     private static let ownPlacesKey = "RWOwnPlaces"
     private static let savedCountriesKey = "RWSavedCountries"
     /// Countries whose clubs lie this close to the user load at start too, for places near a border.
@@ -58,6 +60,7 @@ final class LocationStore {
         defaults.removePersistentDomain(forName: suite)
         let store = LocationStore(defaults: defaults)
         store.seedsDemoClubs = true
+        homeDefaults = defaults
         return store
     }
 

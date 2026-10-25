@@ -333,6 +333,9 @@ struct LakeMapScreen: View {
         }
         .font(.subheadline)
         .labelStyle(.titleAndIcon)
+        // Longer German labels shrink a little instead of wrapping.
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
         .background(.regularMaterial, in: Capsule())
@@ -1394,8 +1397,8 @@ struct LakeMapLegend: View {
                     }
                 }
                 Section(tr("On the map")) {
-                    row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.blue), tr("This page's club; a house instead of the rower when it is your home base"))
-                    row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.gray), tr("Other clubs on the lake"))
+                    row(ClubMarkIcon(color: .blue), tr("This page's club; a house instead of the rower when it is your home base"))
+                    row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
                             tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones."))
@@ -1410,7 +1413,7 @@ struct LakeMapLegend: View {
                             row(HStack(spacing: 2) { ForEach([Light.green, .amber, .red], id: \.self) { Capsule().fill($0.color).frame(width: 8, height: 4) } },
                                 tr("The route in the light the boat meets there; out and back run side by side"))
                         }
-                        if boat { row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.indigo), tr("Where the boat is at the time shown")) }
+                        if boat { row(ClubMarkIcon(color: .indigo), tr("Where the boat is at the time shown")) }
                     }
                 }
             }
@@ -1428,5 +1431,18 @@ struct LakeMapLegend: View {
             symbol.frame(width: 28)
             Text(text).font(.subheadline)
         }
+    }
+}
+
+/// A club mark as the maps draw it, for the legends: a white rower in a coloured circle.
+struct ClubMarkIcon: View {
+    let color: Color
+
+    var body: some View {
+        Image(systemName: "figure.rower")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 22, height: 22)
+            .background(color, in: Circle())
     }
 }
