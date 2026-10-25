@@ -22,7 +22,9 @@ from zoneinfo import ZoneInfo
 
 import httpx
 
-PAGE_URL = "https://www.gkd.bayern.de/en/lakes/watertemperature/bayern/{station}/current-values/table"
+PAGE_URL = "https://www.gkd.bayern.de/en/{kind}/watertemperature/bayern/{station}/current-values/table"
+# Lake and river stations live under different pages.
+KINDS = {"lake": "lakes", "river": "rivers"}
 LOCAL = ZoneInfo("Europe/Berlin")
 HEADERS = {"User-Agent": "RowFrog/0.1 (+https://github.com/RowFrog/RowFrog)"}
 # A reading older than this means the station has gone quiet.
@@ -56,17 +58,17 @@ def latest(page: str, now: datetime, max_age: timedelta = MAX_AGE) -> WaterTempe
     return readings[0]
 
 
-async def _page(client: httpx.AsyncClient, station: str) -> str:
-    resp = await client.get(PAGE_URL.format(station=station), headers=HEADERS, timeout=20, follow_redirects=True)
+async def _page(client: httpx.AsyncClient, station: str, kind: str = "lake") -> str:
+    resp = await client.get(PAGE_URL.format(kind=KINDS.get(kind, "lakes"), station=station), headers=HEADERS, timeout=20, follow_redirects=True)
     resp.raise_for_status()
     if "Request Rejected" in resp.text:
         raise httpx.HTTPError("GKD firewall rejected the request")
     return resp.text
 
 
-async def fetch_latest(client: httpx.AsyncClient, station: str, now: datetime) -> WaterTemperature | None:
+async def fetch_latest(client: httpx.AsyncClient, station: str, now: datetime, kind: str = "lake") -> WaterTemperature | None:
     """`station` is the slug from the GKD page URL, e.g. "starnberg-16663002"."""
-    return latest(await _page(client, station), now)
+    return latest(await _page(client, station, kind), now)
 
 
 def hourly(readings: list[WaterTemperature]) -> list[WaterTemperature]:
@@ -77,7 +79,9 @@ def hourly(readings: list[WaterTemperature]) -> list[WaterTemperature]:
     return list(by_hour.values())
 
 
-async def fetch_recent(client: httpx.AsyncClient, station: str, now: datetime) -> tuple[WaterTemperature | None, list[WaterTemperature]]:
+async def fetch_recent(
+    client: httpx.AsyncClient, station: str, now: datetime, kind: str = "lake"
+) -> tuple[WaterTemperature | None, list[WaterTemperature]]:
     """The newest measurement (as fetch_latest) and the page's history, hour by hour."""
-    page = await _page(client, station)
+    page = await _page(client, station, kind)
     return latest(page, now), hourly(parse(page))
