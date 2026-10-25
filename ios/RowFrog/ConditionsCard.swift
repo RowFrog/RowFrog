@@ -790,6 +790,8 @@ private struct ConditionChart: View {
     static let mapGreen = Color(red: 0.24, green: 0.6, blue: 0.31)
     /// How far the green marker reaches up while linked.
     private static let mapMarkerHeight: CGFloat = 24
+    /// The chain between the blue line and the map's marker while linked.
+    private static let chainHeight: CGFloat = 14
 
     /// The persistent blue line; past measurements only show it while touched.
     private var markerX: Double? {
@@ -1045,23 +1047,36 @@ private struct ConditionChart: View {
                             .offset(x: from, y: plot.maxY - 3)
                     }
                 }
+                // Linked: one marker, the blue line joined by a chain to the map's
+                // green foot. Unlinked: two full lines, the map's dashed with its
+                // badge at the top, so both show even at the same hour.
+                if let x = markerX, let px = onScreen(x) {
+                    Rectangle().fill(Color.blue)
+                        .frame(width: 1.5, height: max(plot.height - (short ? Self.mapMarkerHeight + Self.chainHeight : 0), 0))
+                        .offset(x: px - 0.75, y: plot.minY)
+                    if short {
+                        Image(systemName: "link")
+                            .font(.system(size: 8, weight: .bold))
+                            .foregroundStyle(Color.blue)
+                            .rotationEffect(.degrees(-45))
+                            .frame(width: 12, height: Self.chainHeight)
+                            .offset(x: px - 6, y: plot.maxY - Self.mapMarkerHeight - Self.chainHeight)
+                    }
+                }
                 if let m = mapX, let px = onScreen(m) {
                     let top = short ? plot.maxY - Self.mapMarkerHeight : plot.minY
-                    Rectangle().fill(green)
-                        .frame(width: 2, height: max(plot.maxY - top, 0))
-                        .offset(x: px - 1, y: top)
+                    Path { path in
+                        path.move(to: CGPoint(x: px, y: top))
+                        path.addLine(to: CGPoint(x: px, y: plot.maxY))
+                    }
+                    .stroke(green, style: StrokeStyle(lineWidth: 2, dash: short ? [] : [4, 3]))
                     Image(systemName: "map.fill")
                         .font(.system(size: 7, weight: .bold))
                         .foregroundStyle(.white)
                         .frame(width: 13, height: 13)
                         .background(green, in: RoundedRectangle(cornerRadius: 3))
-                        .offset(x: px - 6.5, y: plot.maxY - 17)
+                        .offset(x: px - 6.5, y: short ? plot.maxY - 17 : plot.minY + 2)
                         .opacity(time.mapOutOfRange ? 0.5 : 1)
-                }
-                if let x = markerX, let px = onScreen(x) {
-                    Rectangle().fill(Color.blue)
-                        .frame(width: 1.5, height: max(plot.height - (short ? Self.mapMarkerHeight + 3 : 0), 0))
-                        .offset(x: px - 0.75, y: plot.minY)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)

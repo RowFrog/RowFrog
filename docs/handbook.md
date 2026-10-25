@@ -44,8 +44,9 @@ that someone opened in the last 7 days.
 3. Play the map: the blue line moves with it and the chart scrolls along.
 4. Drag the chart past the green band (about two days on): the map stays
    on its last hour, greyed, with "The maps end ...".
-5. Tap the chain ("Own time"): both lines run the full height, the map and
-   the chart move separately. Tap again: the chart jumps to the map's hour.
+5. Tap the chain ("Own time"): the chain between the blue line and the green
+   map marker goes, the map's line turns dashed and full height with its badge
+   at the top, and the map and the chart move separately. Tap again: the chart jumps to the map's hour.
 6. Tap the map: full screen, with the chart as a slim time bar above the
    slider. Swipe to Temperature: the hour stays.
 7. Pick an hour in the 48 hours and open a value: chart and map start
