@@ -82,6 +82,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
 - `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage safety|impressum|privacy|limits|boat:<id>|backgrounds|widgets` open those Settings pages (widgets = Settings > Widgets, the widget backgrounds)
+- Backend `RW_SAMPLE_SATELLITE_WATER=<lake ids>` gives those lakes a made-up Landsat reading from five days ago, so the water detail shows the satellite estimate (the screenshot workflow sets it for the Simssee, shots 152-153)
 
 ## What runs on its own (GitHub Actions)
 

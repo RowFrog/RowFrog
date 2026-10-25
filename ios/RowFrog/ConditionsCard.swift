@@ -90,10 +90,13 @@ struct ConditionData {
     var next24: [ForecastHour] { timeline.filter { (0..<24).contains(x($0.time)) } }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
     var water: WaterTemperature? { forecast.waterTemperature }
-    /// Without a lake station: the ice model's water temperature, worked out
-    /// from the air temperatures of the last weeks. Shown marked as estimated;
-    /// the rowing light's cold-water rules only use measurements.
+    /// Without a station: the satellite reading carried forward, else the ice
+    /// model's water temperature, worked out from the air temperatures of the
+    /// last weeks. Shown marked as estimated; the rowing light's cold-water
+    /// rules only use measurements.
     var estimatedWater: Double? { forecast.estimatedWaterC }
+    /// The satellite reading behind `estimatedWater`, when there is one.
+    var satelliteWater: SatelliteWaterReading? { water == nil ? forecast.waterEstimate?.reading : nil }
 
     func points(_ value: (ForecastHour) -> Double?) -> [ChartPoint] {
         timeline.compactMap { h in value(h).map { ChartPoint(x: x(h.time), y: $0) } }
@@ -226,7 +229,9 @@ private struct ConditionTile: View {
             guard let fetch = hour.fetchM else { return "" }
             return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
         case .waterTemperature:
-            if data.water == nil, data.estimatedWater != nil { return tr("Estimated, not measured") }
+            if data.water == nil, data.estimatedWater != nil {
+                return data.satelliteWater != nil ? tr("Satellite estimate") : tr("Estimated, not measured")
+            }
             return data.water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
         case .precipitation:
             if (hour.precipitationMm ?? 0) >= 0.1 { return Sky(hour: hour).precipitationKind ?? "" }
@@ -1249,10 +1254,25 @@ extension ConditionDetail {
             rowing = tr("No lake station: check the water yourself. Below %@ we advise a life jacket.", jacket)
         }
         let estimate = now == nil ? d.estimatedWater : nil
+        let satellite = d.satelliteWater
+        if let satellite {
+            facts.append((tr("Satellite"), tr("%@, %@: %@", satellite.satelliteName, satellite.when, Format.temperature(satellite.celsius, digits: 1))))
+        }
+        let source: String
+        if let satellite {
+            source = satellite.source == "landsat"
+                ? tr("Landsat surface temperature (U.S. Geological Survey, via Microsoft Planetary Computer), carried forward to today with the air temperatures.")
+                : tr("Copernicus Land Monitoring Service, Lake Surface Water Temperature (Sentinel-3), carried forward to today with the air temperatures.")
+        } else if now == nil, estimate != nil {
+            source = tr("Calculated by the app from the air temperatures of the last weeks, not measured.")
+        } else {
+            source = tr("%@, the nearest station on this water.", (now?.station ?? WaterStation()).operatorName)
+        }
         return ConditionDetail(
             value: estimate.map { "≈ " + Format.degrees($0, digits: 0) } ?? Format.degrees(now?.celsius, digits: 1),
             note: now.map { tr("Measured %@", Format.dayTime($0.measuredAt)) }
-                ?? (estimate != nil ? tr("Estimated from the air temperatures of the last weeks, not measured") : tr("No lake station")),
+                ?? (satellite.map { tr("Estimated from %@ (%@) and the air temperatures since, not measured", $0.satelliteName, $0.when) }
+                    ?? (estimate != nil ? tr("Estimated from the air temperatures of the last weeks, not measured") : tr("No lake station"))),
             unit: t.symbol,
             lines: history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })],
             limits: [
@@ -1265,7 +1285,7 @@ extension ConditionDetail {
             history: true,
             facts: facts,
             rowing: rowing,
-            source: tr("Gewässerkundlicher Dienst Bayern (LfU), the nearest lake station.")
+            source: source
         )
     }
 
