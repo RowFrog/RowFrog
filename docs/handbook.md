@@ -42,7 +42,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWOpenRadarMap YES` open the rain radar map; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
-- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip
+- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map and hour view tips, which otherwise wait until the rain radar and hourly tips are closed
 - `-RWResetTips YES` show the one-time tips again, as after Settings › Help
 - `-RWOpenForecastSource YES` open the forecast source sheet
 - `-RWDeveloperOptions YES` and `-RWPickedModels '<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'`

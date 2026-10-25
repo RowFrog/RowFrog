@@ -25,7 +25,8 @@ enum Tutorial {
         UserDefaults.standard.set(true, forKey: resetTipsKey)
     }
 
-    /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all.
+    /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all,
+    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view).
     static func configureTips() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: resetTipsKey) {
@@ -35,6 +36,10 @@ enum Tutorial {
         }
         if defaults.bool(forKey: "RWNoTips") { Tips.hideAllTipsForTesting() }
         if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
+        if defaults.bool(forKey: "RWLaterTips") {
+            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self])
+            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self])
+        }
         try? Tips.configure([.displayFrequency(.immediate)])
     }
 }
@@ -216,6 +221,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "water.waves", text: tr("Lake storm warnings for the lake and weather warnings for the town.")),
             TourPoint(symbol: "text.bubble", text: tr("A warning also appears in the Why line and on the location list.")),
             TourPoint(symbol: "light.beacon.max", text: tr("On the lake, also watch the storm warning lights on the shore. The warnings card explains what they mean.")),
+            TourPoint(symbol: "arrow.up.arrow.down", text: tr("The light and the warnings always stay on top. Arrange this page, at the end of each page, sorts or hides the other cards.")),
         ]
         case .boats: [
             TourPoint(symbol: "checkmark", text: tr("Small boats are ticked at first. Tick Big boats if you row a four or an eight.")),
@@ -615,6 +621,18 @@ struct RainRadarTip: Tip {
     var title: Text { Text(tr("Rain on the way?")) }
     var message: Text? { Text(tr("The radar of the Deutscher Wetterdienst shows rain at the launch point for the next two hours, in 15-minute steps. It updates every few minutes.")) }
     var image: Image? { Image(systemName: "umbrella") }
+}
+
+struct RadarMapTip: Tip {
+    var title: Text { Text(tr("Rain radar map")) }
+    var message: Text? { Text(tr("Tap the card for the radar map. Play it, or drag the slider from an hour ago to two hours ahead.")) }
+    var image: Image? { Image(systemName: "map") }
+}
+
+struct HourViewTip: Tip {
+    var title: Text { Text(tr("One hour in full")) }
+    var message: Text? { Text(tr("Tap an hour to see all its conditions and the lake map at that time.")) }
+    var image: Image? { Image(systemName: "hand.tap") }
 }
 
 struct SatellitePictureTip: Tip {

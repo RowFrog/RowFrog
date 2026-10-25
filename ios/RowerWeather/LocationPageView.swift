@@ -25,6 +25,10 @@ struct LocationPageView: View {
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
     @State private var showSourceTip = false
+    @State private var showRadarMapTip = false
+    @State private var showHourViewTip = false
+    private let radarMapTip = RadarMapTip()
+    private let hourViewTip = HourViewTip()
     private let conditionsTip = ConditionsExtrasTip()
     private let lakeViewTip = LakeViewTip()
     private let rainRadarTip = RainRadarTip()
@@ -103,6 +107,8 @@ struct LocationPageView: View {
                 .tipVisibility(sourceTip, $showSourceTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
+                .tipVisibility(radarMapTip, $showRadarMapTip)
+                .tipVisibility(hourViewTip, $showHourViewTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
                 .task {
                     await forecasts.load(club.id)
@@ -128,8 +134,11 @@ struct LocationPageView: View {
         switch card {
         case .radar:
             VStack(spacing: 16) {
+                // The map tip follows once the radar tip is closed.
                 if tourSeen && showRainRadarTip {
                     TipView(rainRadarTip)
+                } else if tourSeen && showRadarMapTip {
+                    TipView(radarMapTip)
                 }
                 RainRadarCard(point: club.launchPoint)
             }
@@ -157,6 +166,8 @@ struct LocationPageView: View {
             VStack(spacing: 16) {
                 if tourSeen && showHourlyTip {
                     TipView(hourlyTip)
+                } else if tourSeen && showHourViewTip {
+                    TipView(hourViewTip)
                 }
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale())
             }
@@ -699,6 +710,7 @@ private struct HourlyCard: View {
         .sheet(item: $openHour) { hour in
             HourDetailSheet(forecast: forecast, club: club, lake: lake, hour: hour)
         }
+        .onChange(of: openHour != nil) { _, open in if open { HourViewTip().invalidate(reason: .actionPerformed) } }
         .task {
             // Screenshot hook: `-RWOpenHour n` opens the n-th hour of the table.
             let n = UserDefaults.standard.integer(forKey: "RWOpenHour")

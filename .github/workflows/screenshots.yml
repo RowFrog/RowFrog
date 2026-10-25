@@ -264,6 +264,10 @@ jobs:
           GUIDE=1 shoot 113-tip-route-german-dark dark "${tips[@]}" -RWRoute "$short" -RWLanguage de
           NEWS=1 shoot 114-whats-new light
           NEWS=1 shoot 115-whats-new-german-dark dark -RWLanguage de
+          # The tips that follow the rain radar and hourly tips.
+          later=(-RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880)
+          GUIDE=1 shoot 116-tip-radar-map light "${later[@]}" -RWScrollTo radar
+          GUIDE=1 shoot 117-tip-hour-view light "${later[@]}" -RWScrollTo hourly
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
           shoot 90-route-loop light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop"
           shoot 91-route-edit-point light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop" -RWRoutePoint 2
