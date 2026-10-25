@@ -440,44 +440,6 @@ extension APIClient {
 }
 #endif
 
-/// A row in a detail view that opens the map of its value.
-struct WeatherMapButton: View {
-    let layer: WeatherMapLayer
-    let point: Coordinate
-    var clubID: String?
-    /// The hour the detail view shows; the map starts there.
-    var start: Date?
-    @State private var showing = UserDefaults.standard.string(forKey: "RWOpenWeatherMap") != nil
-
-    var body: some View {
-        Button { showing = true } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "map").font(.body.weight(.semibold)).frame(width: 24)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(tr("Show on the map")).font(.subheadline.weight(.semibold))
-                    Text(layer.title).font(.caption).foregroundStyle(.secondary)
-                }
-                Spacer(minLength: 0)
-                Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
-            .contentShape(Rectangle())
-        }
-        .buttonStyle(.plain)
-        .fullScreenCover(isPresented: $showing) {
-            WeatherMapScreen(point: point, clubID: clubID, layer: Self.hookLayer ?? layer, start: start)
-                .environment(\.locale, AppSettings.shared.locale)
-        }
-    }
-
-    /// Screenshot hook: `-RWOpenWeatherMap <layer>` opens the map with that layer.
-    private static var hookLayer: WeatherMapLayer? {
-        UserDefaults.standard.string(forKey: "RWOpenWeatherMap").flatMap(WeatherMapLayer.init(rawValue:))
-    }
-}
-
 /// The weather map, full screen: one value over the region around the club,
 /// played or slid through time like the rain radar. The model maps go hour by
 /// hour up to two days; lightning and fog show the last hours, UV three days.

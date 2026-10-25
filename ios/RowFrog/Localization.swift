@@ -1138,7 +1138,6 @@ enum German {
         "rowed %@": "gerudert %@",
         "rowed": "gerudert",
         // Weather maps
-        "Show on the map": "Auf der Karte zeigen",
         "Rain forecast": "Regenvorhersage",
         "/h": "/h",
         "Rain an hour from the weather model; after the first day, the average of every 3 hours.": "Regen pro Stunde aus dem Wettermodell; nach dem ersten Tag der Mittelwert über je 3 Stunden.",
@@ -1157,5 +1156,15 @@ enum German {
         "Satellite: EUMETSAT, Meteosat": "Satellit: EUMETSAT, Meteosat",
         "The day's highest UV index under the expected clouds.": "Der höchste UV-Index des Tages bei den erwarteten Wolken.",
         "The map could not be loaded.": "Die Karte konnte nicht geladen werden.",
+        // Map card in the detail views
+        "Live": "Live",
+        "Linked": "Verknüpft",
+        "Own time": "Eigene Zeit",
+        "Map follows the chart": "Karte folgt dem Diagramm",
+        "Opens the map full screen": "Öffnet die Karte im Vollbild",
+        "The maps end %@; the chart goes on.": "Die Karten enden %@, das Diagramm geht weiter.",
+        "The maps start %@.": "Die Karten beginnen %@.",
+        "Chart and map together": "Diagramm und Karte gemeinsam",
+        "The map shows the hour of the chart's blue line. Tap the chain to give the map its own time, and again to link them.": "Die Karte zeigt die Stunde der blauen Linie im Diagramm. Tippe auf die Kette, um der Karte eine eigene Zeit zu geben, und erneut, um beide zu verknüpfen.",
     ]
 }
