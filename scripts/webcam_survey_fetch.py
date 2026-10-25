@@ -63,31 +63,36 @@ def probe(c: httpx.Client, name: str, urls: list[str]) -> None:
 
 OVERPASS = ["https://overpass-api.de/api/interpreter", "https://overpass.kumi.systems/api/interpreter",
             "https://maps.mail.ru/osm/tools/overpass/api/interpreter"]
+# One query per country bounding box; whole-country area queries time out.
+BOXES = {"de": (47.2, 5.8, 55.1, 15.1), "at": (46.3, 9.5, 49.1, 17.2), "ch": (45.8, 5.9, 47.9, 10.5)}
 QUERY = """
-[out:json][timeout:300];
-(area["ISO3166-1"="DE"][admin_level=2];area["ISO3166-1"="AT"][admin_level=2];area["ISO3166-1"="CH"][admin_level=2];)->.a;
+[out:json][timeout:170];
 (
- nwr["contact:webcam"](area.a);
- nwr["webcam"](area.a);
- nwr["surveillance:type"="webcam"](area.a);
- nwr["surveillance"="webcam"](area.a);
- nwr["man_made"="surveillance"]["surveillance:type"="camera"]["url"](area.a);
- nwr["man_made"="surveillance"]["surveillance:type"="camera"]["website"](area.a);
+ nwr["contact:webcam"]({s},{w},{n},{e});
+ nwr["webcam"]({s},{w},{n},{e});
+ nwr["surveillance:type"="webcam"]({s},{w},{n},{e});
+ nwr["surveillance"="webcam"]({s},{w},{n},{e});
 );
 out center tags;
 """
 
 
 def osm(c: httpx.Client) -> None:
-    for url in OVERPASS:
-        try:
-            r = c.post(url, data={"data": QUERY}, timeout=360)
-            print("overpass", url, r.status_code, len(r.content))
-            if r.status_code == 200:
-                save("osm.json", r.json())
-                return
-        except (httpx.HTTPError, ValueError) as e:
-            print("overpass", url, "error", e)
+    elements = {}
+    for cc, (s, w, n, e) in BOXES.items():
+        for url in OVERPASS:
+            try:
+                r = c.post(url, data={"data": QUERY.format(s=s, w=w, n=n, e=e)}, timeout=200,
+                           headers={"User-Agent": "RowFrog/0.1"})
+                print("overpass", cc, url, r.status_code, len(r.content), r.text[:150].replace("\n", " "))
+                if r.status_code == 200:
+                    for el in r.json().get("elements", []):
+                        elements[f"{el['type']}/{el['id']}"] = el
+                    break
+            except (httpx.HTTPError, ValueError) as ex:
+                print("overpass", cc, url, "error", ex)
+            time.sleep(5)
+    save("osm.json", list(elements.values()))
 
 
 def windy(c: httpx.Client) -> None:
@@ -133,6 +138,24 @@ def addicted(c: httpx.Client) -> None:
         except httpx.HTTPError as e:
             pages[url] = {"error": str(e)}
     save("addicted-sports.json", pages)
+    spots = {}
+    links = sorted({l for v in pages.values() for l in v.get("links", []) if not l.rstrip("/").endswith("current")})
+    for link in links:
+        url = urljoin("https://www.addicted-sports.com", link)
+        try:
+            r = c.get(url)
+            text = r.text
+            spots[link] = {
+                "status": r.status_code,
+                "title": (re.search(r"<title>(.*?)</title>", text, re.S) or [None, ""])[1].strip(),
+                "coords": re.findall(r"(-?\d{1,2}\.\d{3,})\s*,\s*(-?\d{1,3}\.\d{3,})", text)[:20],
+                "geo": re.findall(r"(?:lat|latitude)[\"']?\s*[:=]\s*[\"']?(-?\d+\.\d+)[^0-9\-]{1,40}?(?:lng|lon|longitude)[\"']?\s*[:=]\s*[\"']?(-?\d+\.\d+)", text)[:5],
+                "meta": re.findall(r"<meta[^>]+(?:geo\.position|ICBM|place:location)[^>]+>", text)[:5],
+            }
+        except httpx.HTTPError as e:
+            spots[link] = {"error": str(e)}
+        time.sleep(1)
+    save("addicted-sports-spots.json", spots)
 
 
 def clubs() -> list[dict]:
@@ -160,6 +183,7 @@ def scan(club: dict) -> dict:
             plain = re.sub(r"<[^>]+>", " ", label)
             if re.search(r"web-?cam|live-?cam|seecam|panorama-?cam", href + " " + plain, re.I):
                 links.append({"href": urljoin(str(r.url), href), "label": " ".join(plain.split())[:80]})
+        text = re.sub(r"data:image/[^\"']+", "data:", text)
         imgs = re.findall(r"<img\b[^>]*src=[\"']([^\"']*(?:webcam|livecam|cam\d|current\.jpe?g)[^\"']*)[\"']", text, re.I)
         frames = re.findall(r"<iframe\b[^>]*src=[\"']([^\"']+)[\"']", text, re.I)
         result["webcamLinks"] = links[:10]
