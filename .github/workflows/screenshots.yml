@@ -356,6 +356,15 @@ jobs:
           WAIT=30 shoot 162-weather-map-rain light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap rain
           WAIT=30 shoot 163-weather-map-lightning light -RWOpenClub mrc-1880 -RWOpenCondition thunderstorm -RWOpenWeatherMap lightning
           WAIT=30 shoot 164-weather-map-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind -RWLanguage de
+          # Chart and map linked (PR #53): the map card under the chart at the blue line's hour,
+          # unlinked, past the maps' end, beside the chart in landscape, full screen with the
+          # slim chart, and German dark.
+          WAIT=30 shoot 180-detail-map-linked light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8
+          WAIT=30 shoot 181-detail-map-own-time light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8 -RWMapTimeLinked NO
+          WAIT=30 shoot 182-detail-map-past-end light -RWOpenClub mrc-1880 -RWOpenCondition temperature -RWChartSelect 60
+          WAIT=30 shoot 183-detail-map-landscape light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWLandscape YES
+          WAIT=30 shoot 184-detail-map-full light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWOpenWeatherMap wind
+          WAIT=30 shoot 190-detail-map-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWChartSelect 1 -RWLanguage de
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.

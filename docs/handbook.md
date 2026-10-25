@@ -17,6 +17,7 @@ secret or a manual step adds a line here.
 | Widget updates | Settings > Widgets > Updates | Every 30 minutes (default), every hour, every 2 hours, or only after using the app (`RWWidgetUpdates`: `halfHour`, `hour`, `twoHours`, `appOpen`; also a launch argument). With `appOpen` the widget timeline never reloads by itself; the app asks for one as the user leaves it, at most every 15 minutes. |
 | Battery saving in Low Power Mode | Turn on Low Power Mode in iOS Settings > Battery (or Control Center) | Tiles over a picture are drawn solid whatever the tile style, the radar map waits for the play button, and the radar card refreshes every 15 minutes instead of 5. Turning it off brings everything back. |
 | Saving data | Turn on Low Data Mode in iOS Settings > Mobile Data (or Wi-Fi > the network's (i) button), or switch on Settings > Battery and data > Save mobile data and use mobile data | Satellite pictures load only after a tap on the card (or opening it full screen), the radar map takes half-hour steps (7 pictures instead of 13) and the radar card refreshes every 15 minutes. Forecasts, warnings and the lake view always load. Launch argument `-RWSaveData YES` acts as if Low Data Mode were on. |
+| Chart and map linked | Any detail view with a map (wind, temperature, feels like, humidity, pressure, visibility, cloud, rain, UV; lightning is live and never linked): the chain button on the map card | Linked (default), the map shows the hour of the chart's blue line and playing the map moves the line. Unlinked ("Own time"), each keeps its own hour, and "Back to <hour>" moves only the chart. The choice is remembered (`RWMapTimeLinked`). A one-time tip (`MapLinkTip`) points at the chain the first time. |
 | Legal notice (Impressum) | Settings > About > Legal notice | The placeholders in `LegalInfo` in `Legal.swift` must be filled in before release. |
 
 ### Testing the model picker
@@ -32,6 +33,24 @@ secret or a manual step adds a line here.
 If a picked model says "not published yet", wait for the next publishing
 run: the other models are written every 3 hours, for the confirmed clubs
 that someone opened in the last 7 days.
+
+### Testing chart and map together
+
+1. Open MRC 1880 > Current conditions > Wind. The map card sits under the
+   chart (beside it with the phone on its side, when landscape is on).
+2. Hold, then slide on the chart: the blue line moves, the big number shows
+   that hour, and the map follows. The green marker at the bottom of the
+   chart is the map's hour; the thin green band shows the hours with maps.
+3. Play the map: the blue line moves with it and the chart scrolls along.
+4. Drag the chart past the green band (about two days on): the map stays
+   on its last hour, greyed, with "The maps end ...".
+5. Tap the chain ("Own time"): the map's badge at the bottom of the chart
+   loses its chain and turns outlined, a dashed green line runs the full
+   height above it, and the map and the chart move separately. Tap again: the chart jumps to the map's hour.
+6. Tap the map: full screen, with the chart as a slim time bar above the
+   slider. Swipe to Temperature: the hour stays.
+7. Pick an hour in the 48 hours and open a value: chart and map start
+   there, and "Back to <that hour>" returns both.
 
 ### Testing "Import a row"
 
@@ -63,13 +82,14 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order); `-RWArrange YES` opens "Arrange this page"
 - `-RWOpenRadarMap YES` open the rain radar map (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWOpenWeatherMap <layer>` open the weather map from the detail view opened with `-RWOpenCondition` (layers: `wind`, `gust`, `temperature`, `feelsLike`, `humidity`, `pressure`, `visibility`, `rain`, `uv`, `lightning`, `fog`)
+- `-RWMapTimeLinked NO` detail views open with the map on its own time (chain off)
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
 - `-RWRoute "lat,lon;lat,lon;…"` open route mode with these points (a new route goes one way); `-RWOutAndBack YES` rows it out and back
 - `-RWImportRows YES` open "Import a row" in the lake view with made-up Apple Health rows (Health is not asked); `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points (2:20 per 500 m, a week ago); `-RWShowTrack YES` shows the rowed track (the switch in the bookmark menu)
-- `-RWChartSelect 5` a detail chart opens with the scrub line five hours from now
+- `-RWChartSelect 5` a detail chart opens with the blue line (and the big number) five hours on, and its label shown
 - `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
 - `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map, hour view, water estimate and route stretch tips, which otherwise wait until the rain radar, hourly, conditions and close loop tips are closed
