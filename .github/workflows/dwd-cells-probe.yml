@@ -17,9 +17,10 @@ jobs:
     steps:
       - run: |
           W="https://maps.dwd.de/geoserver/dwd/ows"
-          curl -fsS "$W?service=WFS&version=2.0.0&request=GetCapabilities" | grep -o '<Name>dwd:Warn[^<]*' | sort -u
-          echo "== Starnberg cell"
-          curl -fsS "$W?service=WFS&version=2.0.0&request=GetFeature&typeName=dwd:Warngebiete_Gemeinden&outputFormat=application/json&propertyName=WARNCELLID,NAME&CQL_FILTER=INTERSECTS(THE_GEOM,POINT(47.9988%2011.3439))" | head -c 600; echo
-          echo "== all local warnings without geometry"
-          curl -fsS -o all.json -w "%{http_code} %{size_download} bytes %{time_total}s\n" "$W?service=WFS&version=2.0.0&request=GetFeature&typeName=dwd:Warnungen_Gemeinden&outputFormat=application/json&propertyName=WARNCELLID,IDENTIFIER,EVENT"
-          python3 -c "import json; d=json.load(open('all.json')); print(len(d['features']), 'features'); print(d['features'][:1])"
+          curl -fsS "$W?service=WFS&version=2.0.0&request=DescribeFeatureType&typeName=dwd:Warngebiete_Gemeinden" | grep -o 'name="[^"]*" [^/]*type="[^"]*"'
+          for G in THE_GEOM SHAPE GEOM; do
+            echo "== Starnberg cell via $G"
+            curl -sS "$W?service=WFS&version=2.0.0&request=GetFeature&typeName=dwd:Warngebiete_Gemeinden&outputFormat=application/json&propertyName=WARNCELLID,NAME&CQL_FILTER=INTERSECTS($G,POINT(47.9988%2011.3439))" | head -c 400; echo
+          done
+          echo "== full warnings for two cells"
+          curl -sS -w "\n%{http_code} %{size_download} bytes\n" "$W?service=WFS&version=2.0.0&request=GetFeature&typeName=dwd:Warnungen_Gemeinden&outputFormat=application/json&propertyName=WARNCELLID,EVENT,ONSET&CQL_FILTER=WARNCELLID%20IN%20(809276127,809188139)" | tail -c 600
