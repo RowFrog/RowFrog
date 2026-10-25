@@ -17,10 +17,10 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import ice, lake_view, locations, outlines, water_estimate, weather_models
+from . import ice, lake_view, locations, outlines, water_estimate, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
-from .sources import dwd_warnings, gkd, open_meteo
+from .sources import dwd_warnings, gkd, open_meteo, pegelonline
 from .sun import sun_days
 
 CACHE_SECONDS = 30 * 60
@@ -45,6 +45,8 @@ ATTRIBUTION = [
     "Lake outlines: © OpenStreetMap contributors, ODbL",
     "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 ]
+# Added to the credits when the club's station is a federal waterways gauge.
+PEGELONLINE_CREDIT = "Water temperature: PEGELONLINE, Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), DL-DE Zero 2.0"
 
 app = FastAPI(title="RowFrog")
 _locations = locations.load()
@@ -61,7 +63,7 @@ _lake_samples: dict[str, int] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
-# The last good reading and history per GKD station, kept between runs by the
+# The last good reading and history per station (water_stations.Station.key), kept between runs by the
 # publishing job, so one failed fetch does not blank the water temperature.
 _last_water: dict[str, tuple[gkd.WaterTemperature, list[gkd.WaterTemperature]]] = {}
 # Satellite lake ice passes per lake, set by the publishing job (see sources.lake_ice_satellite).
@@ -306,6 +308,13 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
     return result
 
 
+def _water_station_json(station: water_stations.Station | None) -> dict | None:
+    """Where the water temperature comes from, for the detail view; distance from the launch point."""
+    if station is None or station.name is None:
+        return None
+    return {"network": station.network, "name": station.name, "distanceKm": station.distance_km}
+
+
 def _water_estimate_json(e: water_estimate.WaterEstimate | None) -> dict | None:
     if e is None:
         return None
@@ -409,24 +418,27 @@ def _offers_choices(club: locations.Club) -> bool:
 
 
 async def _water(
-    client: httpx.AsyncClient, station: str, now: datetime
+    client: httpx.AsyncClient, station: water_stations.Station, now: datetime
 ) -> tuple[gkd.WaterTemperature | None, list[gkd.WaterTemperature]]:
     """The station's newest reading and hourly history. GKD sometimes fails a
     request, so it is tried twice, then the last good reading stands in while
     it is younger than gkd.MAX_AGE."""
     for attempt in (1, 2):
         try:
-            water, history = await gkd.fetch_recent(client, station, now)
-        except httpx.HTTPError as e:
-            logging.getLogger(__name__).warning("GKD failed for %s (try %d): %r", station, attempt, e)
+            if station.network == "pegelonline":
+                water, history = await pegelonline.fetch_recent(client, station.id, now)
+            else:
+                water, history = await gkd.fetch_recent(client, station.id, now, station.kind)
+        except (httpx.HTTPError, ValueError) as e:
+            logging.getLogger(__name__).warning("%s failed for %s (try %d): %r", station.network, station.id, attempt, e)
             if attempt == 1:
                 await asyncio.sleep(2)
             continue
         if water is not None:
-            _last_water[station] = (water, history)
+            _last_water[station.key] = (water, history)
             return water, history
         break  # the station has gone quiet; an older reading would be older still
-    saved = _last_water.get(station)
+    saved = _last_water.get(station.key)
     if saved and now - saved[0].time <= gkd.MAX_AGE:
         return saved
     return None, []
@@ -453,6 +465,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         raise HTTPException(status_code=404, detail="unknown club")
 
     lake = _locations.lakes[club.lake_id]
+    station = water_stations.for_club(club, lake)
     now = _now()
     async with httpx.AsyncClient() as client:
         cached = _cache.get(club_id)
@@ -467,8 +480,8 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
                     logging.getLogger(__name__).warning("Open-Meteo unavailable for %s: %r", club_id, e)
                     raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
             water, water_history = None, []
-            if lake.gkd_water_temperature_station:
-                water, water_history = await _water(client, lake.gkd_water_temperature_station, now)
+            if station:
+                water, water_history = await _water(client, station, now)
             # Yesterday and the next 7 days for the charts; the forecast works without it.
             if club_id in _primed_outlook:
                 outlook = _primed_outlook.pop(club_id)
@@ -519,6 +532,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             "measuredAt": water.time.astimezone(timezone.utc).isoformat(),
             # The station page's history, one value per hour, for the water temperature chart.
             "history": [{"time": _utc(r.time), "celsius": r.celsius} for r in water_history],
+            "station": _water_station_json(station),
         },
         # Without a station: the newest satellite reading carried forward to today (water_estimate.py).
         "waterEstimate": _water_estimate_json(estimate),
@@ -526,6 +540,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         "ice": _ice_json(ice_estimate),
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.
         "attribution": (ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]])
+        + ([PEGELONLINE_CREDIT] if water is not None and station.network == "pegelonline" else [])
         + ([] if estimate is None else [SATELLITE_WATER_CREDIT[estimate.reading.source]]),
         "forecastSource": weather_models.source_json(chain, len(hours))
         if picked is None
@@ -563,8 +578,8 @@ async def lake_view_forecast(lake_id: str) -> dict:
             weather, water = cached[1]
         elif (primed := _primed_lake_weather.pop(lake_id, None)) is not None:
             weather, water = primed, None
-            if lake.gkd_water_temperature_station:
-                water = (await _water(client, lake.gkd_water_temperature_station, now))[0]
+            if station := water_stations.for_lake(lake, clubs):
+                water = (await _water(client, station, now))[0]
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         else:
             try:
@@ -576,8 +591,8 @@ async def lake_view_forecast(lake_id: str) -> dict:
                 logging.getLogger(__name__).warning("Open-Meteo failed for lake view %s: %r %s", lake_id, e, body)
                 raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
             water = None
-            if lake.gkd_water_temperature_station:
-                water = (await _water(client, lake.gkd_water_temperature_station, now))[0]
+            if station := water_stations.for_lake(lake, clubs):
+                water = (await _water(client, station, now))[0]
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         # DWD lake warnings are per lake area, so any club on the lake finds them.
         warnings = (await _warnings(client, clubs[0], now))[1] if clubs else []

@@ -1,0 +1,755 @@
+{
+  "about": "Water temperature station per club, written by scripts/water_station_survey.py --write: the nearest station on the club's own water within reach.",
+  "clubs": {
+    "akademische-rudergesellschaft-zu-berlin": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 15.1
+    },
+    "akademischer-ruderclub-wuerzburg": {
+      "network": "gkd",
+      "id": "wuerzburg-24042000",
+      "name": "Würzburg",
+      "water": "Main",
+      "kind": "river",
+      "lat": 49.7961,
+      "lon": 9.9258,
+      "distanceKm": 1.7
+    },
+    "ammersee-ruderer": {
+      "network": "gkd",
+      "id": "stegen-16602008",
+      "name": "Stegen",
+      "water": "Ammersee",
+      "kind": "lake",
+      "lat": 48.0764,
+      "lon": 11.1309,
+      "distanceKm": 10.8
+    },
+    "bessel-ruder-club": {
+      "network": "pegelonline",
+      "id": "8bccd43b-ed6f-4ed8-ae6e-80ad7e330658",
+      "name": "Weser",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.303606,
+      "lon": 8.932229,
+      "distanceKm": 0.4
+    },
+    "donau-ruder-club-ingolstadt": {
+      "network": "gkd",
+      "id": "ingolstadt-luitpoldstr-10046105",
+      "name": "Ingolstadt Luitpoldstr.",
+      "water": "Donau",
+      "kind": "river",
+      "lat": 48.7566,
+      "lon": 11.4253,
+      "distanceKm": 0.7
+    },
+    "elmshorner-ruder-club-von-1909": {
+      "network": "pegelonline",
+      "id": "136febf6-1371-4118-a9b8-4275444bda5d",
+      "name": "Elmshorn Hafen",
+      "water": "Krückau",
+      "kind": "river",
+      "lat": 53.752182,
+      "lon": 9.653894,
+      "distanceKm": 1.2
+    },
+    "floersheimer-ruderverein-08": {
+      "network": "gkd",
+      "id": "raunheim-24095302",
+      "name": "Raunheim",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.016,
+      "lon": 8.4483,
+      "distanceKm": 1.3
+    },
+    "frankfurter-ruder-club-1884": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 0.1
+    },
+    "frankfurter-ruder-club-fechenheim-1887": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 4.5
+    },
+    "frankfurter-ruder-club-griesheim-1906": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 7.5
+    },
+    "frankfurter-ruder-gesellschaft-oberrad-1879": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 0.1
+    },
+    "frankfurter-ruder-und-kanusportverein-sachsenhausen-1898": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 0.1
+    },
+    "frankfurter-rudergesellschaft-borussia-1896": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 0.2
+    },
+    "frankfurter-rudergesellschaft-germania-1869": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 2.9
+    },
+    "frankfurter-rudergesellschaft-nied-1921": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 10.9
+    },
+    "frauen-ruderverein-freiweg-frankfurt-ev-1927": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 5.5
+    },
+    "giessener-ruderclub-hassia-1906": {
+      "network": "pegelonline",
+      "id": "32807065-b887-49f0-935a-80033e5f3cb0",
+      "name": "Leun Neu",
+      "water": "Lahn",
+      "kind": "river",
+      "lat": 50.54512,
+      "lon": 8.35523,
+      "distanceKm": 22.7
+    },
+    "giessener-rudergesellschaft-1877": {
+      "network": "pegelonline",
+      "id": "32807065-b887-49f0-935a-80033e5f3cb0",
+      "name": "Leun Neu",
+      "water": "Lahn",
+      "kind": "river",
+      "lat": 50.54512,
+      "lon": 8.35523,
+      "distanceKm": 22.7
+    },
+    "hallesche-ruder-vereinigung-boellberg-v-1884-u-nelson-v-1874-ev-im-sv-halle": {
+      "network": "pegelonline",
+      "id": "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",
+      "name": "Rischmühle Op",
+      "water": "Saale",
+      "kind": "river",
+      "lat": 51.350199,
+      "lon": 12.002255,
+      "distanceKm": 12.9
+    },
+    "hallescher-ruderclub-ev-im-universitaetssportverein-halle": {
+      "network": "pegelonline",
+      "id": "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",
+      "name": "Rischmühle Op",
+      "water": "Saale",
+      "kind": "river",
+      "lat": 51.350199,
+      "lon": 12.002255,
+      "distanceKm": 18.3
+    },
+    "hanauer-ruderclub-hassia": {
+      "network": "pegelonline",
+      "id": "27eed51b-c0a4-417e-926b-bb4194bfb341",
+      "name": "Krotzenburg",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.079717,
+      "lon": 8.953596,
+      "distanceKm": 6.0
+    },
+    "hanauer-rudergesellschaft-1879": {
+      "network": "pegelonline",
+      "id": "27eed51b-c0a4-417e-926b-bb4194bfb341",
+      "name": "Krotzenburg",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.079717,
+      "lon": 8.953596,
+      "distanceKm": 6.4
+    },
+    "limburger-club-fuer-wassersport-von-18951907": {
+      "network": "pegelonline",
+      "id": "32807065-b887-49f0-935a-80033e5f3cb0",
+      "name": "Leun Neu",
+      "water": "Lahn",
+      "kind": "river",
+      "lat": 50.54512,
+      "lon": 8.35523,
+      "distanceKm": 26.7
+    },
+    "merseburger-rudergesellschaft": {
+      "network": "pegelonline",
+      "id": "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",
+      "name": "Rischmühle Op",
+      "water": "Saale",
+      "kind": "river",
+      "lat": 51.350199,
+      "lon": 12.002255,
+      "distanceKm": 3.0
+    },
+    "miltenberger-ruder-club-von-1900": {
+      "network": "pegelonline",
+      "id": "355b02d2-c578-46d9-a56b-8046d470cb95",
+      "name": "Kleinheubach",
+      "water": "Main",
+      "kind": "river",
+      "lat": 49.716138,
+      "lon": 9.225244,
+      "distanceKm": 2.5
+    },
+    "mrc-1880": {
+      "network": "gkd",
+      "id": "starnberg-16663002",
+      "name": "Starnberg",
+      "water": "Starnberger See",
+      "kind": "lake",
+      "lat": 47.9973,
+      "lon": 11.3493,
+      "distanceKm": 0.2
+    },
+    "mrsv-bayern": {
+      "network": "gkd",
+      "id": "starnberg-16663002",
+      "name": "Starnberg",
+      "water": "Starnberger See",
+      "kind": "lake",
+      "lat": 47.9973,
+      "lon": 11.3493,
+      "distanceKm": 1.0
+    },
+    "muehlheimer-ruderverein-1911": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 9.0
+    },
+    "offenbacher-rudergesellschaft-undine-1876": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 3.3
+    },
+    "offenbacher-ruderverein-1874": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 3.7
+    },
+    "rendsburger-ruderverein": {
+      "network": "pegelonline",
+      "id": "7f01fbd8-653c-40ba-8ed0-57386a9b4557",
+      "name": "Lexfähre Unterwasser",
+      "water": "Eider",
+      "kind": "river",
+      "lat": 54.223219,
+      "lon": 9.435676,
+      "distanceKm": 18.2
+    },
+    "rr-am-helene-lange-gymnasium-rendsburg": {
+      "network": "pegelonline",
+      "id": "7f01fbd8-653c-40ba-8ed0-57386a9b4557",
+      "name": "Lexfähre Unterwasser",
+      "water": "Eider",
+      "kind": "river",
+      "lat": 54.223219,
+      "lon": 9.435676,
+      "distanceKm": 18.2
+    },
+    "rr-besselgymnasium-minden": {
+      "network": "pegelonline",
+      "id": "8bccd43b-ed6f-4ed8-ae6e-80ad7e330658",
+      "name": "Weser",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.303606,
+      "lon": 8.932229,
+      "distanceKm": 0.4
+    },
+    "rr-greselius-gymnasium-bramsche": {
+      "network": "pegelonline",
+      "id": "bec8a6a5-c3de-4322-856a-870ceb992fe4",
+      "name": "Bramsche",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.396167,
+      "lon": 7.978173,
+      "distanceKm": 1.3
+    },
+    "ruder-club-am-lech-kaufering": {
+      "network": "gkd",
+      "id": "augsburg-hochablass-12004002",
+      "name": "Augsburg Hochablaß",
+      "water": "Lech",
+      "kind": "river",
+      "lat": 48.3439,
+      "lon": 10.9353,
+      "distanceKm": 28.7
+    },
+    "ruder-club-aschaffenburg-von-1898": {
+      "network": "pegelonline",
+      "id": "3c7cfb10-c866-404b-b11c-0d79986f865a",
+      "name": "Obernau",
+      "water": "Main",
+      "kind": "river",
+      "lat": 49.9338,
+      "lon": 9.129075,
+      "distanceKm": 3.1
+    },
+    "ruder-club-holzminden": {
+      "network": "pegelonline",
+      "id": "314ef522-a060-4033-ba14-8169dd26bb8d",
+      "name": "Wahmbeck",
+      "water": "Weser",
+      "kind": "river",
+      "lat": 51.625616,
+      "lon": 9.519728,
+      "distanceKm": 23.9
+    },
+    "ruder-club-karlstadt-1928": {
+      "network": "gkd",
+      "id": "steinbach-24050009",
+      "name": "Steinbach",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.0099,
+      "lon": 9.6038,
+      "distanceKm": 12.9
+    },
+    "ruder-club-nassovia-hoechst-1881": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 10.7
+    },
+    "ruder-club-tegelort": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 22.5
+    },
+    "ruder-club-welle-bardowick-von-1894": {
+      "network": "pegelonline",
+      "id": "bb62b28f-9947-42b1-92e4-743a1e0c4a76",
+      "name": "Fahrenholz Up",
+      "water": "Ilmenau",
+      "kind": "river",
+      "lat": 53.360317,
+      "lon": 10.315493,
+      "distanceKm": 8.7
+    },
+    "ruder-union-arkona-berlin-1879": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 14.2
+    },
+    "ruder-vereinigung-preussen-saffonia": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 24.7
+    },
+    "ruderclub-koenigs-wusterhausen": {
+      "network": "pegelonline",
+      "id": "0e0dbcc9-0a7d-494a-bc92-52e56a7fffe2",
+      "name": "Neue Mühle Schleuse Op",
+      "water": "Dahme-Wasserstrasse",
+      "kind": "river",
+      "lat": 52.296816,
+      "lon": 13.651758,
+      "distanceKm": 0.6
+    },
+    "ruderclub-moeve-1919-ev-grossauheim": {
+      "network": "pegelonline",
+      "id": "27eed51b-c0a4-417e-926b-bb4194bfb341",
+      "name": "Krotzenburg",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.079717,
+      "lon": 8.953596,
+      "distanceKm": 2.4
+    },
+    "ruderclub-zellingen": {
+      "network": "gkd",
+      "id": "erlabrunn-messstation-24043800",
+      "name": "Erlabrunn Messstation",
+      "water": "Main",
+      "kind": "river",
+      "lat": 49.8551,
+      "lon": 9.8537,
+      "distanceKm": 5.1
+    },
+    "rudergesellschaft-marktheidenfeld": {
+      "network": "pegelonline",
+      "id": "0e065a22-9a0b-4f1d-b813-22fe6321bb1a",
+      "name": "Wertheim",
+      "water": "Main",
+      "kind": "river",
+      "lat": 49.760945,
+      "lon": 9.518304,
+      "distanceKm": 11.7
+    },
+    "rudergesellschaft-trier-1883": {
+      "network": "pegelonline",
+      "id": "abd34ee6-a578-4639-b73d-fa4e08f40345",
+      "name": "Ruwer",
+      "water": "Mosel",
+      "kind": "river",
+      "lat": 49.783052,
+      "lon": 6.704234,
+      "distanceKm": 5.0
+    },
+    "rudergesellschaft-wertheim-von-1902": {
+      "network": "pegelonline",
+      "id": "0e065a22-9a0b-4f1d-b813-22fe6321bb1a",
+      "name": "Wertheim",
+      "water": "Main",
+      "kind": "river",
+      "lat": 49.760945,
+      "lon": 9.518304,
+      "distanceKm": 1.1
+    },
+    "rudergesellschaft-wetzlar-1880": {
+      "network": "pegelonline",
+      "id": "32807065-b887-49f0-935a-80033e5f3cb0",
+      "name": "Leun Neu",
+      "water": "Lahn",
+      "kind": "river",
+      "lat": 50.54512,
+      "lon": 8.35523,
+      "distanceKm": 10.6
+    },
+    "ruderriege-schaumburgia-am-adolfinum-bueckeburg": {
+      "network": "pegelonline",
+      "id": "d2c8f60e-fda4-4744-9017-9c727fdcfe1f",
+      "name": "Berenbusch",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.294948,
+      "lon": 8.99063,
+      "distanceKm": 4.7
+    },
+    "ruderriege-schaumburgia-bueckeburg": {
+      "network": "pegelonline",
+      "id": "d2c8f60e-fda4-4744-9017-9c727fdcfe1f",
+      "name": "Berenbusch",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.294948,
+      "lon": 8.99063,
+      "distanceKm": 4.7
+    },
+    "ruderverbindung-rheno-franconia": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 5.5
+    },
+    "ruderverein-bodenwerder-von-1922": {
+      "network": "pegelonline",
+      "id": "fa886080-4271-4684-9999-1b6862a20ac1",
+      "name": "Hameln Wehrbergen",
+      "water": "Weser",
+      "kind": "river",
+      "lat": 52.123731,
+      "lon": 9.306544,
+      "distanceKm": 21.9
+    },
+    "ruderverein-collegia-1895": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 12.5
+    },
+    "ruderverein-fuer-das-grosse-freie-ev-lehrtesehnde": {
+      "network": "pegelonline",
+      "id": "bc20d819-1782-4588-885d-129f21a27cf9",
+      "name": "Anderten Ow",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.354677,
+      "lon": 9.869744,
+      "distanceKm": 8.6
+    },
+    "ruderverein-hoexter-von-1898": {
+      "network": "pegelonline",
+      "id": "314ef522-a060-4033-ba14-8169dd26bb8d",
+      "name": "Wahmbeck",
+      "water": "Weser",
+      "kind": "river",
+      "lat": 51.625616,
+      "lon": 9.519728,
+      "distanceKm": 18.5
+    },
+    "ruderverein-isenhagener-land": {
+      "network": "pegelonline",
+      "id": "9cf795ce-8bdf-494b-b8c6-ef1bfb89c08b",
+      "name": "Wittingen",
+      "water": "Elbeseitenkanal",
+      "kind": "river",
+      "lat": 52.727727,
+      "lon": 10.664477,
+      "distanceKm": 0.7
+    },
+    "ruderverein-treviris-1921": {
+      "network": "pegelonline",
+      "id": "abd34ee6-a578-4639-b73d-fa4e08f40345",
+      "name": "Ruwer",
+      "water": "Mosel",
+      "kind": "river",
+      "lat": 49.783052,
+      "lon": 6.704234,
+      "distanceKm": 7.2
+    },
+    "ruderverein-uelzen": {
+      "network": "pegelonline",
+      "id": "0d0082cf-0b4b-4c8b-8e97-5d37b511916b",
+      "name": "Uelzen Uw",
+      "water": "Elbeseitenkanal",
+      "kind": "river",
+      "lat": 52.914527,
+      "lon": 10.612311,
+      "distanceKm": 5.1
+    },
+    "ruderverein-weser-von-1885-ev-hameln": {
+      "network": "pegelonline",
+      "id": "fa886080-4271-4684-9999-1b6862a20ac1",
+      "name": "Hameln Wehrbergen",
+      "water": "Weser",
+      "kind": "river",
+      "lat": 52.123731,
+      "lon": 9.306544,
+      "distanceKm": 6.0
+    },
+    "rudervereinigung-hellas-titania-berlin": {
+      "network": "pegelonline",
+      "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
+      "name": "Potsdam",
+      "water": "Potsdamer Havel",
+      "kind": "river",
+      "lat": 52.399887,
+      "lon": 13.072071,
+      "distanceKm": 14.2
+    },
+    "schweinfurter-ruder-club-franken-von-1882": {
+      "network": "pegelonline",
+      "id": "42ecae60-eeb3-4b41-9721-46b3f12d04b8",
+      "name": "Schweinfurt Neuer Hafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.030983,
+      "lon": 10.221858,
+      "distanceKm": 2.3
+    },
+    "seeclub-arbon": {
+      "network": "gkd",
+      "id": "lindau-20001001",
+      "name": "Lindau",
+      "water": "Bodensee",
+      "kind": "lake",
+      "lat": 47.5446,
+      "lon": 9.685,
+      "distanceKm": 18.8
+    },
+    "seeclub-rorschach": {
+      "network": "gkd",
+      "id": "lindau-20001001",
+      "name": "Lindau",
+      "water": "Bodensee",
+      "kind": "lake",
+      "lat": 47.5446,
+      "lon": 9.685,
+      "distanceKm": 16.9
+    },
+    "sportverein-energie-berlin-ev-abt-rudern": {
+      "network": "pegelonline",
+      "id": "0e0dbcc9-0a7d-494a-bc92-52e56a7fffe2",
+      "name": "Neue Mühle Schleuse Op",
+      "water": "Dahme-Wasserstrasse",
+      "kind": "river",
+      "lat": 52.296816,
+      "lon": 13.651758,
+      "distanceKm": 17.4
+    },
+    "srr-goethe-schule-wetzlar": {
+      "network": "pegelonline",
+      "id": "32807065-b887-49f0-935a-80033e5f3cb0",
+      "name": "Leun Neu",
+      "water": "Lahn",
+      "kind": "river",
+      "lat": 50.54512,
+      "lon": 8.35523,
+      "distanceKm": 10.6
+    },
+    "tsv-herrsching-abt-wassersport": {
+      "network": "gkd",
+      "id": "stegen-16602008",
+      "name": "Stegen",
+      "water": "Ammersee",
+      "kind": "lake",
+      "lat": 48.0764,
+      "lon": 11.1309,
+      "distanceKm": 11.7
+    },
+    "turn-und-sportverein-bramsche-ev-ruderabteilung": {
+      "network": "pegelonline",
+      "id": "bec8a6a5-c3de-4322-856a-870ceb992fe4",
+      "name": "Bramsche",
+      "water": "Mittellandkanal",
+      "kind": "river",
+      "lat": 52.396167,
+      "lon": 7.978173,
+      "distanceKm": 1.3
+    },
+    "tutzinger-rv": {
+      "network": "gkd",
+      "id": "starnberg-16663002",
+      "name": "Starnberg",
+      "water": "Starnberger See",
+      "kind": "lake",
+      "lat": 47.9973,
+      "lon": 11.3493,
+      "distanceKm": 12.6
+    },
+    "wassersportfreunde-burg-ev-1924": {
+      "network": "pegelonline",
+      "id": "64c37072-db97-4e08-8981-c67f0282de5c",
+      "name": "Zerben Op",
+      "water": "Elbe-Havel-Kanal",
+      "kind": "river",
+      "lat": 52.339613,
+      "lon": 11.957395,
+      "distanceKm": 9.6
+    },
+    "wassersportverein-1926-ev-offenbach-am-main-buergel": {
+      "network": "pegelonline",
+      "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+      "name": "Frankfurt Osthafen",
+      "water": "Main",
+      "kind": "river",
+      "lat": 50.105737,
+      "lon": 8.714995,
+      "distanceKm": 4.8
+    },
+    "wassersportverein-hellas-1920-giessen": {
+      "network": "pegelonline",
+      "id": "32807065-b887-49f0-935a-80033e5f3cb0",
+      "name": "Leun Neu",
+      "water": "Lahn",
+      "kind": "river",
+      "lat": 50.54512,
+      "lon": 8.35523,
+      "distanceKm": 23.5
+    },
+    "weissenfelser-ruder-verein-1884": {
+      "network": "pegelonline",
+      "id": "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",
+      "name": "Rischmühle Op",
+      "water": "Saale",
+      "kind": "river",
+      "lat": 51.350199,
+      "lon": 12.002255,
+      "distanceKm": 16.6
+    },
+    "wuerzburger-ruderverein-bayern-von-18751905": {
+      "network": "gkd",
+      "id": "wuerzburg-24042000",
+      "name": "Würzburg",
+      "water": "Main",
+      "kind": "river",
+      "lat": 49.7961,
+      "lon": 9.9258,
+      "distanceKm": 3.0
+    }
+  }
+}

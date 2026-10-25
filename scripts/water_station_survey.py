@@ -2,7 +2,7 @@
 """Find the nearest water temperature station for every club's water.
 
 Usage (from the repository root, after `pip install -e backend`):
-    python3 scripts/water_station_survey.py [OUT.json]
+    python3 scripts/water_station_survey.py [OUT.json] [--write]
 
 Station lists, all public and free:
   - GKD Bayern lake and river stations (www.gkd.bayern.de, CC BY 4.0), from
@@ -16,6 +16,10 @@ lake inside its outline) and, of those, it is the nearest to the club's
 launch point; a station further than MAX_KM away is still listed, marked
 far. The report goes to the log and the job summary; with OUT.json the
 matches are also written as JSON.
+
+With --write, data/water-stations.json is rewritten from the matches: the
+station each club's forecast uses (backend/rowfrog/water_stations.py), from
+the networks in USED_NETWORKS only.
 """
 
 from __future__ import annotations
@@ -44,6 +48,9 @@ MAX_KM = {"lake": 25.0, "river": 30.0, "unknown": 15.0}
 STALE = timedelta(days=3)
 # Without a name match, a station this close to the launch point is taken as on the same water.
 NEAR_KM = 1.0
+# The networks the forecast reads (BAFU waits for the owner's OK on its source terms).
+USED_NETWORKS = ("gkd", "pegelonline")
+DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "water-stations.json")
 
 out: list[str] = []
 
@@ -147,7 +154,39 @@ def bafu(client: httpx.Client) -> list[Station]:
     return found
 
 
-def main(path: str | None) -> int:
+def club_stations(rows: list[dict], networks: tuple[str, ...] = USED_NETWORKS) -> dict:
+    """The data/water-stations.json content: per club the nearest station in reach."""
+    clubs = {}
+    for r in sorted(rows, key=lambda r: r["club"]):
+        s = r["station"]
+        if not s or r["far"] or s["network"] not in networks:
+            continue
+        # PEGELONLINE names are in capitals ("POTSDAM", "POTSDAMER HAVEL").
+        tidy = str.title if s["network"] == "pegelonline" else str
+        clubs[r["club"]] = {
+            "network": s["network"],
+            "id": s["id"],
+            "name": tidy(s["name"]),
+            "water": tidy(s["water"]),
+            "kind": s["kind"],
+            "lat": s["lat"],
+            "lon": s["lon"],
+            "distanceKm": r["distanceKm"],
+        }
+    return {
+        "about": "Water temperature station per club, written by scripts/water_station_survey.py --write: "
+        "the nearest station on the club's own water within reach.",
+        "clubs": clubs,
+    }
+
+
+def write(rows: list[dict]) -> None:
+    with open(DATA_PATH, "w", encoding="utf-8") as f:
+        json.dump(club_stations(rows), f, ensure_ascii=False, indent=2)
+        f.write("\n")
+
+
+def main(path: str | None, write_data: bool = False) -> int:
     data = locations.load()
     stations: list[Station] = []
     with httpx.Client(headers=HEADERS, follow_redirects=True) as client:
@@ -229,6 +268,9 @@ def main(path: str | None) -> int:
     if path:
         with open(path, "w", encoding="utf-8") as f:
             json.dump({"stations": [asdict(s) for s in stations], "clubs": rows}, f, ensure_ascii=False, indent=1)
+    if write_data:
+        write(rows)
+        say(f"Wrote {DATA_PATH}: {len(club_stations(rows)['clubs'])} clubs")
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
@@ -249,4 +291,5 @@ def _inside(x: float, y: float, ring: list[tuple[float, float]]) -> bool:
 
 
 if __name__ == "__main__":
-    sys.exit(main(sys.argv[1] if len(sys.argv) > 1 else None))
+    args = [a for a in sys.argv[1:] if a != "--write"]
+    sys.exit(main(args[0] if args else None, "--write" in sys.argv[1:]))
