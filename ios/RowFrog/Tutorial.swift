@@ -185,7 +185,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: tr("Every page starts with the rowing light for the hour ahead.")
         case .conditions: tr("Below the light you find what matters on the water.")
         case .warnings: tr("Warnings from the Deutscher Wetterdienst come right under the rowing light.")
-        case .boats: tr("The rowing light is worked out for one boat. Set it in Settings › Rowing limits.")
+        case .boats: tr("The rowing light is worked out for one boat. Pick it at the top of the settings.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")
         case .locations: tr("Keep all the places you row in one list.")
         case .wideScreen: tr("Turn your iPhone sideways, or use a wide screen, to see more at once.")
