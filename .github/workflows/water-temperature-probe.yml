@@ -1,0 +1,32 @@
+name: Satellite water temperature check
+
+# Compares satellite lake surface temperature (Copernicus LSWT, Sentinel-3
+# SLSTR, Landsat 8/9) with the GKD station on Starnberger See, for lakes
+# without a station. Uses the CDSE account in the repository secrets
+# CDSE_CLIENT_ID and CDSE_CLIENT_SECRET; Landsat needs no account. Runs when
+# the script changes, or by hand from the Actions tab. Nothing is stored.
+
+on:
+  push:
+    paths:
+      - scripts/water_temperature_probe.py
+      - .github/workflows/water-temperature-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e "backend[satellite]" netCDF4
+      - run: python3 scripts/water_temperature_probe.py
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
