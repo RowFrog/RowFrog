@@ -192,7 +192,7 @@ struct LocationPageView: View {
                     if tourSeen && showSatelliteTip {
                         TipView(satelliteTip)
                     }
-                    SatellitePictureCard(lakeID: forecast.lakeId)
+                    SatellitePictureCard(lakeID: forecast.lakeId, clubID: club.id)
                 }
                 .id("satellite")
             }
