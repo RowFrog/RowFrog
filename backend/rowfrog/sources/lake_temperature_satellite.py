@@ -35,6 +35,7 @@ import math
 import os
 import statistics
 import tempfile
+import time
 import zipfile
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
@@ -63,6 +64,8 @@ LANDSAT_SHORE_PIXELS = 4
 LANDSAT_BAD_BITS = 0b11011
 LANDSAT_WATER_BIT = 1 << 7
 LANDSAT_DAYS = 16
+# Seconds one look at Landsat may take, so a slow day does not hold up the publishing job; newest scenes first.
+LANDSAT_SECONDS = 480
 # Skin temperatures outside this range are clouds or errors.
 PLAUSIBLE_C = (-2.0, 35.0)
 
@@ -276,7 +279,11 @@ def fetch_landsat(client: httpx.Client, shores: dict[str, list[tuple[float, floa
     xs = [x for ring in shores.values() for x, _ in ring]
     ys = [y for ring in shores.values() for _, y in ring]
     readings: dict[str, list[Reading]] = {}
-    for scene in landsat_scenes(client, [min(xs), min(ys), max(xs), max(ys)], today - timedelta(days=days), today):
+    started = time.monotonic()
+    for scene in reversed(landsat_scenes(client, [min(xs), min(ys), max(xs), max(ys)], today - timedelta(days=days), today)):
+        if time.monotonic() - started > LANDSAT_SECONDS:
+            log.warning("Landsat look stopped after %s s; older scenes wait for the next day", LANDSAT_SECONDS)
+            break
         # Only lakes this scene's footprint can hold are read.
         lon0, lat0, lon1, lat1 = scene.get("bbox", [min(xs), min(ys), max(xs), max(ys)])
         here = {k: r for k, r in shores.items() if lon0 <= min(x for x, _ in r) and max(x for x, _ in r) <= lon1 and lat0 <= min(y for _, y in r) and max(y for _, y in r) <= lat1}
@@ -289,6 +296,8 @@ def fetch_landsat(client: httpx.Client, shores: dict[str, list[tuple[float, floa
                     readings.setdefault(lake_id, []).append(reading)
         except Exception as e:  # noqa: BLE001 - one bad scene must not stop the rest
             log.warning("Landsat scene %s unreadable: %r", scene.get("id"), e)
+    for found in readings.values():
+        found.sort(key=lambda r: r.time)
     return readings
 
 
