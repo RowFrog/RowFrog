@@ -239,7 +239,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         ]
         case .locations: [
             TourPoint(symbol: "hand.draw", text: tr("Swipe left and right to move between your clubs. The house marks your home base.")),
-            TourPoint(symbol: "magnifyingglass", text: tr("Search the list for any club in the DRV club directory and tap + to add it.")),
+            TourPoint(symbol: "magnifyingglass", text: tr("Search the list for any club in Germany, Austria or Switzerland and tap + to add it.")),
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("Touch and hold a club, then drag to reorder.")),
             TourPoint(symbol: "trash", text: tr("Swipe a club in the list to the left to remove it.")),
             TourPoint(symbol: "arrow.clockwise", text: tr("Pull a page or the list down to refresh.")),
@@ -423,7 +423,10 @@ private struct ClubChoicePage: View {
                     } header: {
                         if !suggestions.isEmpty { Text(near == nil ? tr("Suggestions") : tr("Near you")) }
                     } footer: {
-                        Text(tr("Search by club, lake or town to find any club in the DRV club directory."))
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(tr("Search by club, lake or town to find any club in Germany, Austria or Switzerland."))
+                            Text(tr("Clubs nobody has opened for a while update less often at first. After you add one, it is up to date within about 30 minutes."))
+                        }
                     }
                 } else {
                     let results = locations.search(search)
