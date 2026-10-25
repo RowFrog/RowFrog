@@ -304,6 +304,10 @@ jobs:
           WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
           WAIT=30 shoot 137-water-station light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWScrollPage 1
           shoot 138-launch-point-place light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
+          # Saving data (Low Data Mode or "Save mobile data" on mobile data): the
+          # satellite card waits for a tap; the settings' Data use section.
+          shoot 150-satellite-save-data light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSaveData YES
+          shoot 151-settings-data-use light -RWShowSettings YES -RWScrollPage 5 -RWSaveData YES
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.

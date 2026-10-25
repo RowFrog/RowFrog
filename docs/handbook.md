@@ -15,6 +15,7 @@ secret or a manual step adds a line here.
 | Safety notice | First start, before the tour; later Settings > Legal > Safety notice | Has to be read to the end and agreed to. The device stores the agreed version and date (`RWSafetyAcceptedVersion`, `RWSafetyAcceptedAt`); factory reset keeps them. Raising `SafetyNotice.version` in `SafetyNotice.swift` makes everyone agree again. |
 | What's new | Once after an update, to users who had already seen the tour | A sheet listing what changed (`WhatsNew` in `Tutorial.swift`). The device stores the version seen (`RWWhatsNewSeen`). For a new list: change `WhatsNew.points` and raise `WhatsNew.version`. New users finishing the tour do not get it. |
 | Battery saving in Low Power Mode | Turn on Low Power Mode in iOS Settings > Battery (or Control Center) | Tiles over a picture are drawn solid whatever the tile style, the radar map waits for the play button, and the radar card refreshes every 15 minutes instead of 5. Turning it off brings everything back. |
+| Saving data | Turn on Low Data Mode in iOS Settings > Mobile Data (or Wi-Fi > the network's (i) button), or switch on Settings > Data use > Save mobile data and use mobile data | Satellite pictures load only after a tap on the card (or opening it full screen), the radar map takes half-hour steps (7 pictures instead of 13) and the radar card refreshes every 15 minutes. Forecasts, warnings and the lake view always load. Launch argument `-RWSaveData YES` acts as if Low Data Mode were on. |
 | Legal notice (Impressum) | Settings > Legal | The placeholders in `LegalInfo` in `Legal.swift` must be filled in before release. |
 
 ### Testing the model picker
@@ -53,6 +54,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWOpenForecastSource YES` open the forecast source sheet
 - `-RWDeveloperOptions YES` and `-RWPickedModels '<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'`
 - `-RWShowSettings YES -RWScrollPage n` open the settings at section n
+- `-RWSaveData YES` saving data as in Low Data Mode (satellite pictures wait for a tap, half-hour radar steps)
 - `-RWLanguage de`, `-RWAppearance dark`, `-RWLandscape YES`
 - `-RWSafetyAccepted YES` skip the first-start safety notice (the screenshot workflow passes it to every shot except 77 and 78)
 - `-RWWhatsNewSeen 1000` keep the "What's new" sheet away (the screenshot workflow passes it to every shot except 114 and 115)

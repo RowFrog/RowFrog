@@ -164,6 +164,24 @@ struct SettingsView: View {
                     .id("background")
 
                     Section {
+                        Toggle(isOn: $settings.saveMobileData) {
+                            Label(tr("Save mobile data"), systemImage: "antenna.radiowaves.left.and.right")
+                        }
+                        if DataSaver.shared.saving {
+                            Label(DataSaver.shared.lowDataMode ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
+                                  systemImage: "leaf")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    } header: {
+                        SectionTitle(tr("Data use"), symbol: "arrow.up.arrow.down.circle")
+                    } footer: {
+                        SectionFooter(tr("On mobile data, satellite pictures load only when you tap them, the radar map shows half-hour steps and the rain radar updates every 15 minutes. Forecasts and warnings always load. In iOS Low Data Mode the app always saves data, also on Wi-Fi."))
+                    }
+                    .surfaceRows()
+                    .id("data")
+
+                    Section {
                         Button {
                             Tutorial.replay()
                             showingTour = true
@@ -292,7 +310,7 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
-                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "data", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
                 .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
