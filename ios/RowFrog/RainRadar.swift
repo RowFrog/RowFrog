@@ -120,6 +120,7 @@ struct RadarClient {
 /// opens the radar map.
 struct RainRadarCard: View {
     let point: Coordinate
+    var clubID: String?
     @State private var radar: RainRadar?
     @State private var failed = false
     @State private var showingMap = UserDefaults.standard.bool(forKey: "RWOpenRadarMap")
@@ -151,7 +152,7 @@ struct RainRadarCard: View {
         .buttonStyle(.plain)
         .accessibilityHint(tr("Opens the rain radar map"))
         .fullScreenCover(isPresented: $showingMap) {
-            RadarMapScreen(point: point, reference: radar?.reference)
+            RadarMapScreen(point: point, clubID: clubID, reference: radar?.reference)
         }
         .onChange(of: showingMap) { if showingMap { RadarMapTip().invalidate(reason: .actionPerformed) } }
         .task(id: [point.lat, point.lon, scenePhase == .active ? 1 : 0]) {
@@ -213,6 +214,7 @@ private struct TrailingIcon: LabelStyle {
 /// map tiles and the picture never drops out between steps.
 struct RadarMapScreen: View {
     let point: Coordinate
+    let clubID: String?
     /// The radar picture the nowcast starts from; now (to 5 minutes) when not known yet.
     let reference: Date?
     @Environment(\.dismiss) private var dismiss
@@ -225,8 +227,9 @@ struct RadarMapScreen: View {
     /// The frame for the latest radar picture.
     private let nowIndex: Int
 
-    init(point: Coordinate, reference: Date?) {
+    init(point: Coordinate, clubID: String? = nil, reference: Date?) {
         self.point = point
+        self.clubID = clubID
         self.reference = reference
         let base = reference ?? Date(timeIntervalSince1970: (Date.now.timeIntervalSince1970 / 300).rounded(.down) * 300)
         let frames = stride(from: -60, through: 120, by: 15).map { base.addingTimeInterval(Double($0) * 60) }
@@ -239,7 +242,7 @@ struct RadarMapScreen: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                RadarMapView(point: point, region: loader.region, image: loader.images[frames[index]])
+                RadarMapView(point: point, clubID: clubID, region: loader.region, image: loader.images[frames[index]])
                     .ignoresSafeArea(edges: .bottom)
                 controls
             }
@@ -550,6 +553,7 @@ struct RadarRegion: Hashable {
 /// The map with the launch point and one radar picture over the region.
 private struct RadarMapView: UIViewRepresentable {
     let point: Coordinate
+    var clubID: String?
     let region: RadarRegion
     let image: UIImage?
 
@@ -572,11 +576,14 @@ private struct RadarMapView: UIViewRepresentable {
         context.coordinator.renderer?.show(image)
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator() }
+    func makeCoordinator() -> Coordinator { Coordinator(symbol: LocationStore.markSymbol(for: clubID)) }
 
     final class Coordinator: NSObject, MKMapViewDelegate {
+        let symbol: String
         var renderer: RadarImageRenderer?
         var pending: UIImage?
+
+        init(symbol: String) { self.symbol = symbol }
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             guard let overlay = overlay as? RadarImageOverlay else { return MKOverlayRenderer(overlay: overlay) }
@@ -587,11 +594,11 @@ private struct RadarMapView: UIViewRepresentable {
             return renderer
         }
 
-        /// The club as on the lake view: a blue mark with a house.
+        /// The club as on the other maps: blue, with a house for the home base.
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
             guard annotation is MKPointAnnotation else { return nil }
             let view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: nil)
-            view.glyphImage = UIImage(systemName: "house.fill")
+            view.glyphImage = UIImage(systemName: symbol)
             view.markerTintColor = .systemBlue
             view.displayPriority = .required
             return view

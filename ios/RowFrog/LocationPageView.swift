@@ -150,7 +150,7 @@ struct LocationPageView: View {
                 } else if tourSeen && showRadarMapTip {
                     TipView(radarMapTip)
                 }
-                RainRadarCard(point: club.launchPoint)
+                RainRadarCard(point: club.launchPoint, clubID: club.id)
             }
             .id("radar")
         case .conditions:
@@ -961,7 +961,7 @@ private struct HourDetailSheet: View {
                     NowCard(hour: hour, forecast: forecast, at: hour.time)
                     // The radar reaches 2 hours ahead; later hours have the forecast rain in the tiles.
                     if hour.time.timeIntervalSinceNow < 2 * 3600 {
-                        RainRadarCard(point: club.launchPoint)
+                        RainRadarCard(point: club.launchPoint, clubID: club.id)
                     }
                     ConditionsCard(forecast: forecast, hour: hour)
                     if lake?.hasOutline != false, lakeViews.views[forecast.lakeId] != nil {

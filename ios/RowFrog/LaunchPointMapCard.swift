@@ -24,7 +24,7 @@ struct LaunchPointMapCard: View {
         Card(title: tr("Launch point"), symbol: "mappin.and.ellipse") {
             // A drag on the map moves the map; outside it the page scrolls.
             Map(position: $position, interactionModes: [.pan, .zoom]) {
-                Marker(club.displayName, systemImage: "figure.rower", coordinate: coordinate)
+                Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: coordinate)
                     .tint(.blue)
             }
             .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))

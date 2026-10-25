@@ -485,7 +485,7 @@ struct SatelliteOverlay: View {
                     context.fill(dot, with: .color(own ? .blue : Color(white: 0.45)))
                     context.stroke(dot, with: .color(.white), lineWidth: 1.5)
                     context.draw(
-                        Text(Image(systemName: own ? "house.fill" : "figure.rower")).font(.system(size: 10, weight: .bold)).foregroundStyle(.white),
+                        Text(Image(systemName: own ? LocationStore.markSymbol(for: club.id) : "figure.rower")).font(.system(size: 10, weight: .bold)).foregroundStyle(.white),
                         at: p, anchor: .center
                     )
                     let label = context.resolve(Text(club.shortName).font(.caption2.weight(.semibold)).foregroundStyle(.white))
@@ -760,7 +760,7 @@ struct SatelliteLegend: View {
                         if on.contains(.shore) { row(line(.white), tr("Shore line")) }
                         if on.contains(.routes) { row(line(.yellow), tr("Your saved routes on this lake")) }
                         if on.contains(.clubs) {
-                            row(Image(systemName: "house.circle.fill").foregroundStyle(.blue), tr("Your club (this page's launch point)"))
+                            row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.blue), tr("This page's club; a house instead of the rower when it is your home base"))
                             row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.gray), tr("Other clubs on the lake"))
                         }
                     }

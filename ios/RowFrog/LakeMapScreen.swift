@@ -856,6 +856,7 @@ struct LakeMapView: UIViewRepresentable {
             pin.coordinate = CLLocationCoordinate2D(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
             pin.title = club.shortName
             pin.isOwn = club.id == clubID
+            pin.clubID = club.id
             map.addAnnotation(pin)
         }
         map.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))
@@ -961,7 +962,7 @@ struct LakeMapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
             if let pin = annotation as? ClubPin {
                 let view = MKMarkerAnnotationView(annotation: pin, reuseIdentifier: nil)
-                view.glyphImage = UIImage(systemName: pin.isOwn ? "house.fill" : "figure.rower")
+                view.glyphImage = UIImage(systemName: pin.isOwn ? LocationStore.markSymbol(for: pin.clubID) : "figure.rower")
                 view.markerTintColor = pin.isOwn ? .systemBlue : .systemGray
                 view.displayPriority = .required
                 return view
@@ -1133,6 +1134,7 @@ struct LakeMapView: UIViewRepresentable {
 
 final class ClubPin: MKPointAnnotation {
     var isOwn = false
+    var clubID: String?
 }
 
 final class RoutePin: MKPointAnnotation {
@@ -1392,7 +1394,7 @@ struct LakeMapLegend: View {
                     }
                 }
                 Section(tr("On the map")) {
-                    row(Image(systemName: "house.circle.fill").foregroundStyle(.blue), tr("Your club (this page's launch point)"))
+                    row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.blue), tr("This page's club; a house instead of the rower when it is your home base"))
                     row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.gray), tr("Other clubs on the lake"))
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),

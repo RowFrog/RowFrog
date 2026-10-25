@@ -29,6 +29,13 @@ final class LocationStore {
     private let defaults: UserDefaults
     private static let savedKey = "RWSavedClubs"
     private static let homeKey = "RWHomeClub"
+
+    /// The mark of the page's club on every map: a house for the home base,
+    /// a rower for any other club (as in the page bar). The page's club is blue,
+    /// other clubs grey.
+    static func markSymbol(for clubID: String?) -> String {
+        clubID != nil && clubID == UserDefaults.standard.string(forKey: homeKey) ? "house.fill" : "figure.rower"
+    }
     private static let ownPlacesKey = "RWOwnPlaces"
     private static let savedCountriesKey = "RWSavedCountries"
     /// Countries whose clubs lie this close to the user load at start too, for places near a border.
