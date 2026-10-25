@@ -96,8 +96,9 @@ coach or partner boat for singles and lowers its own wind and gust limits by
 near-freezing water.
 
 **Water temperature.** Each club reads the nearest measuring station on its
-own water, from GKD Bayern or the federal PEGELONLINE network (70 clubs so
-far, listed in `data/water-stations.json`). For lakes without a station the
+own water, from GKD Bayern, the German federal PEGELONLINE network or the
+Swiss federal stations (BAFU, via api.existenz.ch); 85 clubs so far, listed
+in `data/water-stations.json`. For lakes without a station the
 backend works out a satellite estimate from Copernicus lake surface
 temperatures and Landsat (through Microsoft's Planetary Computer, no extra
 account), carried forward with the air temperatures; the app does not show
