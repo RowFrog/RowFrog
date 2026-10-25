@@ -156,12 +156,19 @@ struct RowingProvider: AppIntentTimelineProvider {
             guard let cached = shared.data(forKey: WidgetShared.cacheKey(clubID)) else { return nil }
             return try? APIClient.decoder.decode(ClubForecast.self, from: cached)
         }
+        // Several widgets of one club, or a redraw soon after the last one, share one download.
+        if let loaded = shared.object(forKey: WidgetShared.loadedKey(clubID)) as? Date, Date.now.timeIntervalSince(loaded) < 15 * 60,
+           let cached = shared.data(forKey: WidgetShared.cacheKey(clubID)),
+           let forecast = try? APIClient.decoder.decode(ClubForecast.self, from: cached) {
+            return forecast.applyingUserLimits()
+        }
         let url = APIClient.fromBundle().baseURL.appending(path: "clubs/\(clubID)/forecast")
         if let result = try? await URLSession.shared.data(from: url),
            (result.1 as? HTTPURLResponse)?.statusCode == 200,
            let forecast = try? APIClient.decoder.decode(ClubForecast.self, from: result.0) {
             let data = result.0
             shared.set(data, forKey: WidgetShared.cacheKey(clubID))
+            shared.set(Date.now, forKey: WidgetShared.loadedKey(clubID))
             return forecast.applyingUserLimits()
         }
         guard let cached = shared.data(forKey: WidgetShared.cacheKey(clubID)) else { return nil }

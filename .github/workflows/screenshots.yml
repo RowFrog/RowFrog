@@ -294,6 +294,9 @@ jobs:
           shoot 118-satellite-card-clubs light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSatelliteLayers '(clubs, shore)'
           shoot 119-satellite-full-clubs light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)'
           SAFETY=1 GUIDE=1 shoot 120-safety-notice-phone-german light -RWNoTips YES -AppleLanguages '(de)'
+          # Launch point card: a still map picture until tapped (battery), light and dark.
+          shoot 121-launch-point-still light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
+          shoot 122-launch-point-still-dark dark -RWOpenClub mrc-1880 -RWScrollTo launchpoint
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.

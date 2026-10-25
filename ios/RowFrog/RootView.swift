@@ -131,6 +131,7 @@ struct RootView: View {
             ForEach(saved) { club in
                 LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
                     .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
+                    .environment(\.isCurrentPage, club.id == selection)
                     .tag(club.id)
             }
         }
@@ -152,7 +153,7 @@ struct RootView: View {
             let settings = AppSettings.shared
             let picture = BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection))
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection, showList: showsListButton ? { showingList = true } : nil)
-                .environment(\.surface, picture == nil ? .plain : settings.tileStyle.surface)
+                .environment(\.surface, picture == nil ? .plain : settings.tileSurface)
         }
     }
 
