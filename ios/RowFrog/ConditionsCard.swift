@@ -424,7 +424,11 @@ struct ConditionDetailView: View {
     /// between views; a new sheet starts with every line on.
     @State private var hiddenLines: [Condition: Set<String>] = [:]
     /// Where the chart sits, so a drag on it moves the time instead of the view.
-    @State private var chartFrame: CGRect = .zero
+    /// Kept outside SwiftUI's state: it changes on every frame of scrolling,
+    /// and only a swipe's end reads it.
+    @State private var chartFrame = ChartFrame()
+    /// The jump menu's titles with each view's value, worked out once.
+    @State private var menuTitles: [Condition: String] = [:]
 
     init(condition: Condition, data: ConditionData) {
         self.data = data
@@ -459,6 +463,10 @@ struct ConditionDetailView: View {
 
     private static let space = "conditionDetail"
 
+    final class ChartFrame {
+        var rect: CGRect = .zero
+    }
+
     @ViewBuilder
     private func page(_ condition: Condition) -> some View {
         let detail = ConditionDetail(condition, data)
@@ -483,7 +491,7 @@ struct ConditionDetailView: View {
                             Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
                         }
                     }
-                    .onPreferenceChange(ChartFrameKey.self) { chartFrame = $0 }
+                    .onPreferenceChange(ChartFrameKey.self) { chartFrame.rect = $0 }
                 if detail.lines.count > 1 {
                     legend(detail, condition: condition, hidden: hidden)
                 }
@@ -582,7 +590,7 @@ struct ConditionDetailView: View {
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > 60, abs(dx) > abs(dy) * 2 else { return }
                 // A chart that can't be dragged ignores it too, so a drag on any chart never changes the view.
-                if chartFrame.contains(value.startLocation) { return }
+                if chartFrame.rect.contains(value.startLocation) { return }
                 step(dx < 0 ? 1 : -1)
             }
     }
@@ -595,7 +603,7 @@ struct ConditionDetailView: View {
                 withAnimation(.easeInOut(duration: 0.25)) { condition = new }
             })) {
                 ForEach(order) { c in
-                    Label(menuTitle(c), systemImage: c.symbol).tag(c)
+                    Label(menuTitles[c] ?? c.title, systemImage: c.symbol).tag(c)
                 }
             }
             .pickerStyle(.inline)
@@ -607,6 +615,7 @@ struct ConditionDetailView: View {
             .foregroundStyle(.blue)
             .accessibilityLabel(tr("Go to another value"))
         }
+        .task { if menuTitles.isEmpty { menuTitles = Dictionary(uniqueKeysWithValues: order.map { ($0, menuTitle($0)) }) } }
     }
 
     private func menuTitle(_ c: Condition) -> String {

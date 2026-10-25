@@ -19,6 +19,8 @@ enum WidgetShared {
     static var defaults: UserDefaults { UserDefaults(suiteName: group) ?? .standard }
 
     static func cacheKey(_ clubID: String) -> String { "RWWidgetForecast-\(clubID)" }
+    /// When the widget last downloaded that forecast.
+    static func loadedKey(_ clubID: String) -> String { "RWWidgetLoaded-\(clubID)" }
 }
 
 /// What the medium widget shows below the rowing light; the large one shows it first.

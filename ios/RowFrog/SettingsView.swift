@@ -595,7 +595,7 @@ struct BackgroundSettingsView: View {
                 } header: {
                     SectionTitle(tr("Look"), symbol: "slider.horizontal.3")
                 } footer: {
-                    SectionFooter(tr("Picture blurred: the picture shows through the tiles like frosted glass. No picture: the tiles stay solid and keep the full rowing-light shading."))
+                    SectionFooter(tr("Picture blurred: the picture shows through the tiles like frosted glass. No picture: the tiles stay solid and keep the full rowing-light shading. No picture also saves battery, as blurred and Liquid Glass tiles are drawn again while the page scrolls; in Low Power Mode the tiles are always solid."))
                 }
                 .surfaceRows()
                 .id("look")
