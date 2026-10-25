@@ -5,19 +5,27 @@ import SwiftUI
 struct RouteSummary: View {
     let view: LakeView
     let plan: RoutePlan
+    /// False where the light, distance and bar already show above (the planning panel).
+    var headline = true
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(tr("%@ · %@ · finished at %@", Format.distance(plan.distanceM), Format.duration(from: plan.start, to: plan.end), Format.time(plan.end)))
-                .font(.subheadline.weight(.semibold).monospacedDigit())
+            if headline {
+                Text(tr("%@ · %@ · finished at %@", Format.distance(plan.distanceM), Format.duration(from: plan.start, to: plan.end), Format.time(plan.end)))
+                    .font(.subheadline.weight(.semibold).monospacedDigit())
+            }
             HStack(spacing: 6) {
-                TrafficLightDot(light: plan.worstLight, size: 12)
-                Text(plan.worstLight.title).font(.subheadline.weight(.semibold))
+                if headline {
+                    TrafficLightDot(light: plan.worstLight, size: 12)
+                    Text(plan.worstLight.title).font(.subheadline.weight(.semibold))
+                }
                 Text(tr("Waves up to %@", Format.waves(plan.maxWaveM)))
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
             }
-            RouteBar(plan: plan).frame(height: 8)
+            if headline {
+                RouteBar(plan: plan).frame(height: 8)
+            }
             if let rough = plan.roughest, plan.worstLight > .green {
                 Text(roughText(rough))
                     .font(.caption)
