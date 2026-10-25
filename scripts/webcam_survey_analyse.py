@@ -187,6 +187,21 @@ def load_cams(clubs_by_id):
                      "lon": cam["longitude"], "url": f"https://www.panomax.com/ (instance {i['id']})", "image": "",
                      "online": True, "dir": None if va >= 360 or zero is None else (zero + va / 2) % 360,
                      "fov": va, "interval_min": 10})
+    windy = RAW / "windy.json"
+    if windy.exists():
+        known = [(c["lat"], c["lon"]) for c in cams]
+        for w in json.loads(windy.read_text()):
+            loc = w.get("location", {})
+            lat, lon = loc.get("latitude"), loc.get("longitude")
+            if lat is None or w.get("status") != "active":
+                continue
+            # Windy also lists many foto-webcam.eu and Panomax cameras: keep those under their own provider.
+            if any(abs(lat - a) < 0.001 and abs(lon - b) < 0.0015 and dist_m((lat, lon), (a, b)) < 75 for a, b in known):
+                continue
+            cams.append({"provider": "Windy", "id": str(w["webcamId"]), "name": w.get("title", "Webcam"), "lat": lat,
+                         "lon": lon, "url": f"https://www.windy.com/webcams/{w['webcamId']}", "image": "",
+                         "online": True, "dir": None, "fov": None, "interval_min": None,
+                         "lake": any(c.get("id") == "lake" for c in w.get("categories", []))})
     osm = RAW / "osm.json"
     if osm.exists():
         for el in json.loads(osm.read_text()):

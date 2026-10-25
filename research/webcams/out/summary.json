@@ -2,71 +2,60 @@
  "cams_by_provider": {
   "Club website": 25,
   "Linked on club website": 11,
-  "Panomax": 641,
-  "Roundshot (via OpenStreetMap)": 107,
-  "Single operators (via OpenStreetMap)": 1135,
-  "YouTube stream (via OpenStreetMap)": 26,
+  "Panomax": 640,
+  "Roundshot (via OpenStreetMap)": 55,
+  "Single operators (via OpenStreetMap)": 806,
+  "Windy": 10194,
+  "YouTube stream (via OpenStreetMap)": 24,
   "addicted-sports.com": 8,
-  "bergfex (via OpenStreetMap)": 55,
-  "feratel (via OpenStreetMap)": 56,
-  "foto-webcam.eu": 368,
+  "bergfex (via OpenStreetMap)": 45,
+  "feratel (via OpenStreetMap)": 24,
+  "foto-webcam.eu": 365,
   "foto-webcam.eu partner": 64,
-  "terra-hd.de (via OpenStreetMap)": 22,
-  "webcam-hd.com (via OpenStreetMap)": 50
+  "terra-hd.de (via OpenStreetMap)": 7,
+  "webcam-hd.com (via OpenStreetMap)": 32
  },
  "clubs": 617,
  "lakes": {
   "waters": 138,
-  "none": 84,
-  "one": 20,
-  "several": 34,
-  "at_water_none": 97,
-  "at_water_one": 17,
-  "at_water_several": 24
+  "none": 73,
+  "one": 12,
+  "several": 53,
+  "at_water_none": 76,
+  "at_water_one": 16,
+  "at_water_several": 46
  },
  "lakes_south_of_munich": {
   "waters": 5,
   "none": 1,
   "one": 1,
   "several": 3,
-  "at_water_none": 2,
+  "at_water_none": 1,
   "at_water_one": 2,
-  "at_water_several": 1
+  "at_water_several": 2
  },
  "rivers": {
   "waters": 100,
-  "none": 67,
-  "one": 26,
-  "several": 7,
-  "at_water_none": 67,
-  "at_water_one": 26,
-  "at_water_several": 7
+  "none": 53,
+  "one": 21,
+  "several": 26,
+  "at_water_none": 53,
+  "at_water_one": 21,
+  "at_water_several": 26
  },
  "other_waters": {
   "waters": 81,
-  "none": 54,
-  "one": 17,
-  "several": 10,
-  "at_water_none": 54,
-  "at_water_one": 17,
-  "at_water_several": 10
+  "none": 46,
+  "one": 16,
+  "several": 19,
+  "at_water_none": 46,
+  "at_water_one": 16,
+  "at_water_several": 19
  },
- "clubs_with_cam_within_1km": 116,
- "clubs_with_cam_within_5km": 321,
- "clubs_with_cam_for_their_water": 326,
+ "clubs_with_cam_within_1km": 189,
+ "clubs_with_cam_within_5km": 470,
+ "clubs_with_cam_for_their_water": 388,
  "lake_rows": [
-  {
-   "lake_id": "simssee",
-   "lake": "Simssee",
-   "kind": "lake",
-   "country": "de",
-   "region": "Lakes south of Munich",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 3,
-   "webcams_total": 3,
-   "providers": "foto-webcam.eu, terra-hd.de (via OpenStreetMap)"
-  },
   {
    "lake_id": "starnberger-see",
    "lake": "Starnberger See",
@@ -74,10 +63,10 @@
    "country": "de",
    "region": "Lakes south of Munich",
    "clubs": 3,
-   "webcams_at_water": 2,
+   "webcams_at_water": 14,
    "webcams_lake_in_view": 1,
-   "webcams_total": 3,
-   "providers": "Club website, Panomax, addicted-sports.com"
+   "webcams_total": 15,
+   "providers": "Club website, Panomax, Windy, addicted-sports.com"
   },
   {
    "lake_id": "ammersee",
@@ -86,10 +75,22 @@
    "country": "de",
    "region": "Lakes south of Munich",
    "clubs": 2,
-   "webcams_at_water": 1,
+   "webcams_at_water": 4,
    "webcams_lake_in_view": 1,
-   "webcams_total": 2,
-   "providers": "addicted-sports.com, foto-webcam.eu partner"
+   "webcams_total": 5,
+   "providers": "Windy, addicted-sports.com, foto-webcam.eu partner"
+  },
+  {
+   "lake_id": "simssee",
+   "lake": "Simssee",
+   "kind": "lake",
+   "country": "de",
+   "region": "Lakes south of Munich",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 2,
+   "webcams_total": 3,
+   "providers": "Windy, foto-webcam.eu"
   },
   {
    "lake_id": "near-babensham",
@@ -116,16 +117,16 @@
    "providers": ""
   },
   {
-   "lake_id": "wolfgangsee",
-   "lake": "Wolfgangsee",
+   "lake_id": "woerthersee",
+   "lake": "Wörthersee",
    "kind": "lake",
    "country": "at",
    "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 5,
-   "webcams_lake_in_view": 3,
-   "webcams_total": 8,
-   "providers": "Linked on club website, Panomax, addicted-sports.com"
+   "clubs": 2,
+   "webcams_at_water": 25,
+   "webcams_lake_in_view": 1,
+   "webcams_total": 26,
+   "providers": "Panomax, Windy, foto-webcam.eu"
   },
   {
    "lake_id": "attersee",
@@ -134,22 +135,22 @@
    "country": "at",
    "region": "Austria",
    "clubs": 1,
-   "webcams_at_water": 2,
+   "webcams_at_water": 6,
    "webcams_lake_in_view": 4,
-   "webcams_total": 6,
-   "providers": "Panomax, foto-webcam.eu, foto-webcam.eu partner"
+   "webcams_total": 10,
+   "providers": "Panomax, Windy, foto-webcam.eu, foto-webcam.eu partner"
   },
   {
-   "lake_id": "mondsee",
-   "lake": "Mondsee",
+   "lake_id": "wolfgangsee",
+   "lake": "Wolfgangsee",
    "kind": "lake",
    "country": "at",
    "region": "Austria",
    "clubs": 1,
-   "webcams_at_water": 1,
+   "webcams_at_water": 7,
    "webcams_lake_in_view": 3,
-   "webcams_total": 4,
-   "providers": "Panomax"
+   "webcams_total": 10,
+   "providers": "Linked on club website, Panomax, Windy, addicted-sports.com"
   },
   {
    "lake_id": "traunsee",
@@ -158,70 +159,10 @@
    "country": "at",
    "region": "Austria",
    "clubs": 1,
-   "webcams_at_water": 2,
+   "webcams_at_water": 7,
    "webcams_lake_in_view": 2,
-   "webcams_total": 4,
-   "providers": "Club website, Panomax, foto-webcam.eu"
-  },
-  {
-   "lake_id": "wallersee",
-   "lake": "Wallersee",
-   "kind": "lake",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 2,
-   "webcams_lake_in_view": 2,
-   "webcams_total": 4,
-   "providers": "Panomax"
-  },
-  {
-   "lake_id": "near-wien",
-   "lake": "Water near Wien",
-   "kind": "unknown",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 7,
-   "webcams_at_water": 2,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 2,
-   "providers": "Club website, foto-webcam.eu"
-  },
-  {
-   "lake_id": "woerthersee",
-   "lake": "Wörthersee",
-   "kind": "lake",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 2,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 1,
-   "webcams_total": 2,
-   "providers": "Panomax, foto-webcam.eu"
-  },
-  {
-   "lake_id": "river-donaukanal",
-   "lake": "Donaukanal",
-   "kind": "river",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "geschirrwasser",
-   "lake": "Geschirrwasser",
-   "kind": "lake",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 1,
-   "webcams_total": 1,
-   "providers": "Panomax"
+   "webcams_total": 9,
+   "providers": "Club website, Panomax, Windy, foto-webcam.eu"
   },
   {
    "lake_id": "river-neue-donau",
@@ -230,10 +171,22 @@
    "country": "at",
    "region": "Austria",
    "clubs": 3,
-   "webcams_at_water": 1,
+   "webcams_at_water": 8,
    "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Club website"
+   "webcams_total": 8,
+   "providers": "Club website, Windy"
+  },
+  {
+   "lake_id": "millstaetter-see",
+   "lake": "Millstätter See",
+   "kind": "lake",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 7,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 7,
+   "providers": "Windy"
   },
   {
    "lake_id": "ossiacher-see",
@@ -242,10 +195,94 @@
    "country": "at",
    "region": "Austria",
    "clubs": 1,
-   "webcams_at_water": 0,
+   "webcams_at_water": 6,
    "webcams_lake_in_view": 1,
+   "webcams_total": 7,
+   "providers": "Windy, foto-webcam.eu"
+  },
+  {
+   "lake_id": "mondsee",
+   "lake": "Mondsee",
+   "kind": "lake",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 3,
+   "webcams_lake_in_view": 3,
+   "webcams_total": 6,
+   "providers": "Panomax, Windy"
+  },
+  {
+   "lake_id": "wallersee",
+   "lake": "Wallersee",
+   "kind": "lake",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 3,
+   "webcams_lake_in_view": 2,
+   "webcams_total": 5,
+   "providers": "Panomax, Windy"
+  },
+  {
+   "lake_id": "near-wien",
+   "lake": "Water near Wien",
+   "kind": "unknown",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 7,
+   "webcams_at_water": 5,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 5,
+   "providers": "Club website, Windy, foto-webcam.eu"
+  },
+  {
+   "lake_id": "river-donaukanal",
+   "lake": "Donaukanal",
+   "kind": "river",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 4,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 4,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "geschirrwasser",
+   "lake": "Geschirrwasser",
+   "kind": "lake",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 1,
+   "webcams_total": 3,
+   "providers": "Panomax, Windy"
+  },
+  {
+   "lake_id": "near-seewalchen",
+   "lake": "Water near Seewalchen",
+   "kind": "unknown",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "river-melk",
+   "lake": "Melk",
+   "kind": "river",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "foto-webcam.eu"
+   "providers": "Windy"
   },
   {
    "lake_id": "river-traun",
@@ -258,6 +295,30 @@
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
    "providers": "Club website"
+  },
+  {
+   "lake_id": "near-anif",
+   "lake": "Water near Anif",
+   "kind": "unknown",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "near-grundlsee",
+   "lake": "Water near Grundlsee",
+   "kind": "unknown",
+   "country": "at",
+   "region": "Austria",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
   },
   {
    "lake_id": "altarm-thondorf",
@@ -320,30 +381,6 @@
    "providers": ""
   },
   {
-   "lake_id": "river-melk",
-   "lake": "Melk",
-   "kind": "river",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "millstaetter-see",
-   "lake": "Millstätter See",
-   "kind": "lake",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "pionierhafen",
    "lake": "Pionierhafen",
    "kind": "lake",
@@ -392,18 +429,6 @@
    "providers": ""
   },
   {
-   "lake_id": "near-anif",
-   "lake": "Water near Anif",
-   "kind": "unknown",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "near-breitenbrunn",
    "lake": "Water near Breitenbrunn",
    "kind": "unknown",
@@ -418,18 +443,6 @@
   {
    "lake_id": "near-duernstein",
    "lake": "Water near Dürnstein",
-   "kind": "unknown",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "near-grundlsee",
-   "lake": "Water near Grundlsee",
    "kind": "unknown",
    "country": "at",
    "region": "Austria",
@@ -464,28 +477,16 @@
    "providers": ""
   },
   {
-   "lake_id": "near-seewalchen",
-   "lake": "Water near Seewalchen",
-   "kind": "unknown",
-   "country": "at",
-   "region": "Austria",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "bodensee",
    "lake": "Bodensee",
    "kind": "lake",
    "country": "at/ch/de",
    "region": "Border lakes",
    "clubs": 10,
-   "webcams_at_water": 12,
-   "webcams_lake_in_view": 3,
-   "webcams_total": 15,
-   "providers": "Club website, Linked on club website, Panomax, Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap), YouTube stream (via OpenStreetMap), foto-webcam.eu"
+   "webcams_at_water": 66,
+   "webcams_lake_in_view": 2,
+   "webcams_total": 68,
+   "providers": "Club website, Linked on club website, Panomax, Single operators (via OpenStreetMap), Windy, YouTube stream (via OpenStreetMap), foto-webcam.eu"
   },
   {
    "lake_id": "river-donau",
@@ -494,10 +495,10 @@
    "country": "at/de",
    "region": "Border lakes",
    "clubs": 8,
-   "webcams_at_water": 1,
+   "webcams_at_water": 10,
    "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "webcams_total": 10,
+   "providers": "Windy"
   },
   {
    "lake_id": "river-inn",
@@ -506,10 +507,10 @@
    "country": "at/de",
    "region": "Border lakes",
    "clubs": 4,
-   "webcams_at_water": 1,
+   "webcams_at_water": 4,
    "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Club website"
+   "webcams_total": 4,
+   "providers": "Club website, Windy"
   },
   {
    "lake_id": "winterhafen",
@@ -524,16 +525,28 @@
    "providers": ""
   },
   {
+   "lake_id": "lago-maggiore",
+   "lake": "Lago Maggiore",
+   "kind": "lake",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 30,
+   "webcams_lake_in_view": 1,
+   "webcams_total": 31,
+   "providers": "Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap), Windy, feratel (via OpenStreetMap)"
+  },
+  {
    "lake_id": "le-leman",
    "lake": "Le Léman",
    "kind": "lake",
    "country": "ch",
    "region": "Switzerland",
    "clubs": 6,
-   "webcams_at_water": 15,
+   "webcams_at_water": 31,
    "webcams_lake_in_view": 0,
-   "webcams_total": 15,
-   "providers": "Linked on club website, Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap)"
+   "webcams_total": 31,
+   "providers": "Linked on club website, Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "zuerichsee",
@@ -542,10 +555,22 @@
    "country": "ch",
    "region": "Switzerland",
    "clubs": 18,
-   "webcams_at_water": 5,
-   "webcams_lake_in_view": 6,
-   "webcams_total": 11,
-   "providers": "Club website, Linked on club website, Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap)"
+   "webcams_at_water": 23,
+   "webcams_lake_in_view": 5,
+   "webcams_total": 28,
+   "providers": "Club website, Linked on club website, Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "vierwaldstaettersee",
+   "lake": "Vierwaldstättersee",
+   "kind": "lake",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 4,
+   "webcams_at_water": 16,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 16,
+   "providers": "Single operators (via OpenStreetMap), Windy, foto-webcam.eu"
   },
   {
    "lake_id": "lac-de-neuchatel",
@@ -554,10 +579,10 @@
    "country": "ch",
    "region": "Switzerland",
    "clubs": 1,
-   "webcams_at_water": 4,
+   "webcams_at_water": 15,
    "webcams_lake_in_view": 0,
-   "webcams_total": 4,
-   "providers": "Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap)"
+   "webcams_total": 15,
+   "providers": "Roundshot (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "lago-di-lugano",
@@ -566,46 +591,22 @@
    "country": "ch",
    "region": "Switzerland",
    "clubs": 4,
-   "webcams_at_water": 3,
+   "webcams_at_water": 13,
    "webcams_lake_in_view": 1,
-   "webcams_total": 4,
-   "providers": "Club website, Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap)"
+   "webcams_total": 14,
+   "providers": "Club website, Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap), Windy"
   },
   {
-   "lake_id": "lago-maggiore",
-   "lake": "Lago Maggiore",
+   "lake_id": "thunersee",
+   "lake": "Thunersee",
    "kind": "lake",
    "country": "ch",
    "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 2,
-   "webcams_lake_in_view": 1,
-   "webcams_total": 3,
-   "providers": "Roundshot (via OpenStreetMap), Single operators (via OpenStreetMap), feratel (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "near-biel-bienne",
-   "lake": "Water near Biel/Bienne",
-   "kind": "unknown",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 3,
+   "clubs": 2,
+   "webcams_at_water": 12,
    "webcams_lake_in_view": 0,
-   "webcams_total": 3,
-   "providers": "Club website, Linked on club website, Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "wohlensee",
-   "lake": "Wohlensee",
-   "kind": "lake",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 3,
-   "webcams_total": 3,
-   "providers": "Single operators (via OpenStreetMap)"
+   "webcams_total": 12,
+   "providers": "Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "bielersee-lac-de-bienne",
@@ -614,10 +615,22 @@
    "country": "ch",
    "region": "Switzerland",
    "clubs": 1,
-   "webcams_at_water": 2,
+   "webcams_at_water": 7,
    "webcams_lake_in_view": 0,
-   "webcams_total": 2,
-   "providers": "Club website, Single operators (via OpenStreetMap)"
+   "webcams_total": 7,
+   "providers": "Club website, Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "river-aare",
+   "lake": "Aare",
+   "kind": "river",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 4,
+   "webcams_at_water": 5,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 5,
+   "providers": "Windy"
   },
   {
    "lake_id": "greifensee",
@@ -626,10 +639,130 @@
    "country": "ch",
    "region": "Switzerland",
    "clubs": 2,
-   "webcams_at_water": 2,
+   "webcams_at_water": 5,
    "webcams_lake_in_view": 0,
-   "webcams_total": 2,
-   "providers": "Club website, Linked on club website"
+   "webcams_total": 5,
+   "providers": "Club website, Linked on club website, Windy"
+  },
+  {
+   "lake_id": "sihlsee",
+   "lake": "Sihlsee",
+   "kind": "lake",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 5,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 5,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "zugersee",
+   "lake": "Zugersee",
+   "kind": "lake",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 3,
+   "webcams_at_water": 5,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 5,
+   "providers": "Club website, Windy"
+  },
+  {
+   "lake_id": "sarnersee",
+   "lake": "Sarnersee",
+   "kind": "lake",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 4,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 4,
+   "providers": "Linked on club website, Windy"
+  },
+  {
+   "lake_id": "near-biel-bienne",
+   "lake": "Water near Biel/Bienne",
+   "kind": "unknown",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 4,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 4,
+   "providers": "Club website, Linked on club website, Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "near-lausanne",
+   "lake": "Water near Lausanne",
+   "kind": "unknown",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 3,
+   "webcams_at_water": 4,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 4,
+   "providers": "Linked on club website, Windy"
+  },
+  {
+   "lake_id": "near-sarnen",
+   "lake": "Water near Sarnen",
+   "kind": "unknown",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 4,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 4,
+   "providers": "Linked on club website, Windy"
+  },
+  {
+   "lake_id": "wohlensee",
+   "lake": "Wohlensee",
+   "kind": "lake",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 3,
+   "webcams_total": 4,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "river-aabach",
+   "lake": "Aabach",
+   "kind": "river",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 3,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 3,
+   "providers": "Club website, Windy"
+  },
+  {
+   "lake_id": "brienzersee",
+   "lake": "Brienzersee",
+   "kind": "lake",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 3,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 3,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "near-zug",
+   "lake": "Water near Zug",
+   "kind": "unknown",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 3,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 3,
+   "providers": "Club website, Windy"
   },
   {
    "lake_id": "river-la-thiele",
@@ -641,19 +774,31 @@
    "webcams_at_water": 2,
    "webcams_lake_in_view": 0,
    "webcams_total": 2,
-   "providers": "Roundshot (via OpenStreetMap)"
+   "providers": "Roundshot (via OpenStreetMap), Windy"
   },
   {
-   "lake_id": "vierwaldstaettersee",
-   "lake": "Vierwaldstättersee",
+   "lake_id": "rotsee",
+   "lake": "Rotsee",
    "kind": "lake",
    "country": "ch",
    "region": "Switzerland",
-   "clubs": 4,
+   "clubs": 1,
    "webcams_at_water": 2,
    "webcams_lake_in_view": 0,
    "webcams_total": 2,
-   "providers": "Single operators (via OpenStreetMap), foto-webcam.eu"
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "near-greifensee",
+   "lake": "Water near Greifensee",
+   "kind": "unknown",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Linked on club website, Windy"
   },
   {
    "lake_id": "near-la-tour-de-peilz",
@@ -665,11 +810,35 @@
    "webcams_at_water": 2,
    "webcams_lake_in_view": 0,
    "webcams_total": 2,
-   "providers": "Roundshot (via OpenStreetMap)"
+   "providers": "Windy"
   },
   {
-   "lake_id": "river-aabach",
-   "lake": "Aabach",
+   "lake_id": "near-neuchatel",
+   "lake": "Water near Neuchâtel",
+   "kind": "unknown",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "aegerisee",
+   "lake": "Ägerisee",
+   "kind": "lake",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Club website, Windy"
+  },
+  {
+   "lake_id": "river-alter-rhein",
+   "lake": "Alter Rhein",
    "kind": "river",
    "country": "ch",
    "region": "Switzerland",
@@ -677,23 +846,11 @@
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Club website"
+   "providers": "Windy"
   },
   {
-   "lake_id": "sarnersee",
-   "lake": "Sarnersee",
-   "kind": "lake",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Linked on club website"
-  },
-  {
-   "lake_id": "thunersee",
-   "lake": "Thunersee",
+   "lake_id": "sempachersee",
+   "lake": "Sempachersee",
    "kind": "lake",
    "country": "ch",
    "region": "Switzerland",
@@ -701,7 +858,7 @@
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
   },
   {
    "lake_id": "near-clarens",
@@ -713,11 +870,11 @@
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Roundshot (via OpenStreetMap)"
+   "providers": "Windy"
   },
   {
-   "lake_id": "near-greifensee",
-   "lake": "Water near Greifensee",
+   "lake_id": "near-flueelen",
+   "lake": "Water near Flüelen",
    "kind": "unknown",
    "country": "ch",
    "region": "Switzerland",
@@ -725,19 +882,31 @@
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Linked on club website"
+   "providers": "Windy"
   },
   {
-   "lake_id": "near-lausanne",
-   "lake": "Water near Lausanne",
+   "lake_id": "near-meisterschwanden",
+   "lake": "Water near Meisterschwanden",
    "kind": "unknown",
    "country": "ch",
    "region": "Switzerland",
-   "clubs": 3,
+   "clubs": 1,
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Linked on club website"
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "near-muntelier",
+   "lake": "Water near Muntelier",
+   "kind": "unknown",
+   "country": "ch",
+   "region": "Switzerland",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
   },
   {
    "lake_id": "near-nyon",
@@ -749,19 +918,7 @@
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Roundshot (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "near-sarnen",
-   "lake": "Water near Sarnen",
-   "kind": "unknown",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Linked on club website"
+   "providers": "Windy"
   },
   {
    "lake_id": "near-sursee",
@@ -774,78 +931,6 @@
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
    "providers": "Club website"
-  },
-  {
-   "lake_id": "near-zug",
-   "lake": "Water near Zug",
-   "kind": "unknown",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Club website"
-  },
-  {
-   "lake_id": "zugersee",
-   "lake": "Zugersee",
-   "kind": "lake",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 3,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Club website"
-  },
-  {
-   "lake_id": "aegerisee",
-   "lake": "Ägerisee",
-   "kind": "lake",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Club website"
-  },
-  {
-   "lake_id": "river-aare",
-   "lake": "Aare",
-   "kind": "river",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 4,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "river-alter-rhein",
-   "lake": "Alter Rhein",
-   "kind": "river",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "brienzersee",
-   "lake": "Brienzersee",
-   "kind": "lake",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
   },
   {
    "lake_id": "river-la-sarine-saane",
@@ -872,44 +957,8 @@
    "providers": ""
   },
   {
-   "lake_id": "rotsee",
-   "lake": "Rotsee",
-   "kind": "lake",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "schiffenensee",
    "lake": "Schiffenensee",
-   "kind": "lake",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "sempachersee",
-   "lake": "Sempachersee",
-   "kind": "lake",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 2,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "sihlsee",
-   "lake": "Sihlsee",
    "kind": "lake",
    "country": "ch",
    "region": "Switzerland",
@@ -944,56 +993,8 @@
    "providers": ""
   },
   {
-   "lake_id": "near-flueelen",
-   "lake": "Water near Flüelen",
-   "kind": "unknown",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "near-l-abbaye",
    "lake": "Water near L'Abbaye",
-   "kind": "unknown",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "near-meisterschwanden",
-   "lake": "Water near Meisterschwanden",
-   "kind": "unknown",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "near-muntelier",
-   "lake": "Water near Muntelier",
-   "kind": "unknown",
-   "country": "ch",
-   "region": "Switzerland",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "near-neuchatel",
-   "lake": "Water near Neuchâtel",
    "kind": "unknown",
    "country": "ch",
    "region": "Switzerland",
@@ -1046,10 +1047,10 @@
    "country": "ch/de",
    "region": "Border lakes",
    "clubs": 43,
-   "webcams_at_water": 4,
+   "webcams_at_water": 19,
    "webcams_lake_in_view": 0,
-   "webcams_total": 4,
-   "providers": "Club website, Single operators (via OpenStreetMap)"
+   "webcams_total": 19,
+   "providers": "Club website, Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "aussenalster",
@@ -1058,10 +1059,10 @@
    "country": "de",
    "region": "Germany",
    "clubs": 8,
-   "webcams_at_water": 7,
-   "webcams_lake_in_view": 4,
-   "webcams_total": 11,
-   "providers": "Club website, Panomax, Single operators (via OpenStreetMap)"
+   "webcams_at_water": 10,
+   "webcams_lake_in_view": 3,
+   "webcams_total": 13,
+   "providers": "Club website, Panomax, Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "near-hamburg",
@@ -1070,10 +1071,10 @@
    "country": "de",
    "region": "Germany",
    "clubs": 2,
-   "webcams_at_water": 9,
+   "webcams_at_water": 12,
    "webcams_lake_in_view": 0,
-   "webcams_total": 9,
-   "providers": "Club website, Single operators (via OpenStreetMap)"
+   "webcams_total": 12,
+   "providers": "Club website, Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "forggensee",
@@ -1082,27 +1083,99 @@
    "country": "de",
    "region": "Germany",
    "clubs": 1,
-   "webcams_at_water": 0,
+   "webcams_at_water": 4,
    "webcams_lake_in_view": 5,
-   "webcams_total": 5,
-   "providers": "Panomax, foto-webcam.eu"
+   "webcams_total": 9,
+   "providers": "Panomax, Windy, foto-webcam.eu"
   },
   {
-   "lake_id": "river-steinhuder-meerbach",
-   "lake": "Steinhuder Meerbach",
+   "lake_id": "river-main",
+   "lake": "Main",
    "kind": "river",
    "country": "de",
    "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 5,
+   "clubs": 28,
+   "webcams_at_water": 8,
    "webcams_lake_in_view": 0,
-   "webcams_total": 5,
-   "providers": "Single operators (via OpenStreetMap)"
+   "webcams_total": 8,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "schlei",
+   "lake": "Schlei",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 7,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 7,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "river-neckar",
+   "lake": "Neckar",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 11,
+   "webcams_at_water": 6,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 6,
+   "providers": "Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "near-nienburg",
    "lake": "Water near Nienburg",
    "kind": "unknown",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 6,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 6,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "baldeneysee",
+   "lake": "Baldeneysee",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 2,
+   "webcams_at_water": 5,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 5,
+   "providers": "Club website, Linked on club website, Windy"
+  },
+  {
+   "lake_id": "river-elbe",
+   "lake": "Elbe",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 12,
+   "webcams_at_water": 5,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 5,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "river-mosel",
+   "lake": "Mosel",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 5,
+   "webcams_at_water": 5,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 5,
+   "providers": "Windy, foto-webcam.eu partner"
+  },
+  {
+   "lake_id": "river-steinhuder-meerbach",
+   "lake": "Steinhuder Meerbach",
+   "kind": "river",
    "country": "de",
    "region": "Germany",
    "clubs": 1,
@@ -1124,6 +1197,18 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
+   "lake_id": "essen-werdener-ruder-club-von-1896-e-v",
+   "lake": "Essen-Werdener Ruder-Club von 1896 e.V.",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 4,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 4,
+   "providers": "Club website, Linked on club website, Windy"
+  },
+  {
    "lake_id": "grosser-dutzendteich",
    "lake": "Großer Dutzendteich",
    "kind": "lake",
@@ -1136,8 +1221,32 @@
    "providers": "Panomax, Single operators (via OpenStreetMap)"
   },
   {
-   "lake_id": "river-neckar",
-   "lake": "Neckar",
+   "lake_id": "river-muellermain",
+   "lake": "Müllermain",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 4,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 4,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "seehundbecken",
+   "lake": "Seehundbecken",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 4,
+   "webcams_at_water": 4,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 4,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "river-weser",
+   "lake": "Weser",
    "kind": "river",
    "country": "de",
    "region": "Germany",
@@ -1145,19 +1254,7 @@
    "webcams_at_water": 4,
    "webcams_lake_in_view": 0,
    "webcams_total": 4,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "baldeneysee",
-   "lake": "Baldeneysee",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 2,
-   "webcams_at_water": 3,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 3,
-   "providers": "Club website, Linked on club website"
+   "providers": "Club website, Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "bammelsburger-teich",
@@ -1169,19 +1266,7 @@
    "webcams_at_water": 3,
    "webcams_lake_in_view": 0,
    "webcams_total": 3,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "essen-werdener-ruder-club-von-1896-e-v",
-   "lake": "Essen-Werdener Ruder-Club von 1896 e.V.",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 3,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 3,
-   "providers": "Club website, Linked on club website"
+   "providers": "Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "grosser-eutiner-see",
@@ -1205,19 +1290,115 @@
    "webcams_at_water": 3,
    "webcams_lake_in_view": 0,
    "webcams_total": 3,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Single operators (via OpenStreetMap), Windy"
   },
   {
-   "lake_id": "river-weser",
-   "lake": "Weser",
+   "lake_id": "river-saar",
+   "lake": "Saar",
    "kind": "river",
    "country": "de",
    "region": "Germany",
-   "clubs": 11,
+   "clubs": 4,
    "webcams_at_water": 3,
    "webcams_lake_in_view": 0,
    "webcams_total": 3,
-   "providers": "Club website, Single operators (via OpenStreetMap)"
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "salzgittersee",
+   "lake": "Salzgittersee",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 3,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 3,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "near-minden",
+   "lake": "Water near Minden",
+   "kind": "unknown",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 3,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 3,
+   "providers": "Club website, Windy"
+  },
+  {
+   "lake_id": "near-muenster",
+   "lake": "Water near Münster",
+   "kind": "unknown",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 3,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 3,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "xantener-nordsee",
+   "lake": "Xantener Nordsee",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 1,
+   "webcams_total": 3,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "river-aller",
+   "lake": "Aller",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 3,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "river-dortmund-ems-kanal",
+   "lake": "Dortmund-Ems-Kanal",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 10,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "forellenbaechle",
+   "lake": "Forellenbächle",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 1,
+   "webcams_total": 2,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "grosser-ratzeburger-see",
+   "lake": "Großer Ratzeburger See",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Club website, Windy"
   },
   {
    "lake_id": "havel-4578498",
@@ -1229,7 +1410,19 @@
    "webcams_at_water": 2,
    "webcams_lake_in_view": 0,
    "webcams_total": 2,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "hennetalsperre",
+   "lake": "Hennetalsperre",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
   },
   {
    "lake_id": "hirschgraben",
@@ -1254,6 +1447,78 @@
    "webcams_lake_in_view": 2,
    "webcams_total": 2,
    "providers": "Panomax, Single operators (via OpenStreetMap)"
+  },
+  {
+   "lake_id": "kutzerweiher",
+   "lake": "Kutzerweiher",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "kuechensee",
+   "lake": "Küchensee",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Club website, Windy"
+  },
+  {
+   "lake_id": "river-lesum",
+   "lake": "Lesum",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "river-lippe",
+   "lake": "Lippe",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
+   "lake_id": "river-magnusgraben",
+   "lake": "Magnusgraben",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 2,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "river-neckarkanal",
+   "lake": "Neckarkanal",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
   },
   {
    "lake_id": "offenbacher-hafen",
@@ -1292,16 +1557,16 @@
    "providers": "Club website, foto-webcam.eu"
   },
   {
-   "lake_id": "salzgittersee",
-   "lake": "Salzgittersee",
-   "kind": "lake",
+   "lake_id": "river-saale",
+   "lake": "Saale",
+   "kind": "river",
    "country": "de",
    "region": "Germany",
-   "clubs": 1,
+   "clubs": 6,
    "webcams_at_water": 2,
    "webcams_lake_in_view": 0,
    "webcams_total": 2,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
   },
   {
    "lake_id": "templiner-see",
@@ -1328,6 +1593,18 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
+   "lake_id": "river-unterwarnow",
+   "lake": "Unterwarnow",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Single operators (via OpenStreetMap), Windy"
+  },
+  {
    "lake_id": "near-berlin",
    "lake": "Water near Berlin",
    "kind": "unknown",
@@ -1340,8 +1617,8 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
-   "lake_id": "near-minden",
-   "lake": "Water near Minden",
+   "lake_id": "near-emden",
+   "lake": "Water near Emden",
    "kind": "unknown",
    "country": "de",
    "region": "Germany",
@@ -1349,7 +1626,7 @@
    "webcams_at_water": 2,
    "webcams_lake_in_view": 0,
    "webcams_total": 2,
-   "providers": "Club website, Single operators (via OpenStreetMap)"
+   "providers": "Single operators (via OpenStreetMap), Windy"
   },
   {
    "lake_id": "near-olpe",
@@ -1373,19 +1650,31 @@
    "webcams_at_water": 2,
    "webcams_lake_in_view": 0,
    "webcams_total": 2,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Single operators (via OpenStreetMap), Windy"
   },
   {
-   "lake_id": "river-aller",
-   "lake": "Aller",
-   "kind": "river",
+   "lake_id": "near-waging-am-see",
+   "lake": "Water near Waging am See",
+   "kind": "unknown",
    "country": "de",
    "region": "Germany",
-   "clubs": 3,
-   "webcams_at_water": 1,
+   "clubs": 1,
+   "webcams_at_water": 2,
    "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "webcams_total": 2,
+   "providers": "Panomax, Windy"
+  },
+  {
+   "lake_id": "werratalsee",
+   "lake": "Werratalsee",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 2,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 2,
+   "providers": "Windy"
   },
   {
    "lake_id": "allersee",
@@ -1398,6 +1687,18 @@
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
    "providers": "Single operators (via OpenStreetMap)"
+  },
+  {
+   "lake_id": "alter-hafen",
+   "lake": "Alter Hafen",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
   },
   {
    "lake_id": "river-assmannkanal",
@@ -1436,18 +1737,6 @@
    "providers": "Club website"
   },
   {
-   "lake_id": "borsighafen",
-   "lake": "Borsighafen",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 1,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
    "lake_id": "river-eider",
    "lake": "Eider",
    "kind": "river",
@@ -1456,30 +1745,6 @@
    "clubs": 2,
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "river-elbe",
-   "lake": "Elbe",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 12,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "forellenbaechle",
-   "lake": "Forellenbächle",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 1,
    "webcams_total": 1,
    "providers": "Single operators (via OpenStreetMap)"
   },
@@ -1496,28 +1761,16 @@
    "providers": "addicted-sports.com"
   },
   {
-   "lake_id": "grosser-ratzeburger-see",
-   "lake": "Großer Ratzeburger See",
-   "kind": "lake",
+   "lake_id": "river-hase",
+   "lake": "Hase",
+   "kind": "river",
    "country": "de",
    "region": "Germany",
-   "clubs": 1,
+   "clubs": 2,
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Club website"
-  },
-  {
-   "lake_id": "hennetalsperre",
-   "lake": "Hennetalsperre",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
   },
   {
    "lake_id": "river-isebekkanal",
@@ -1544,6 +1797,18 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
+   "lake_id": "kleiner-see",
+   "lake": "Kleiner See",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
+  },
+  {
    "lake_id": "kleiner-wannsee",
    "lake": "Kleiner Wannsee",
    "kind": "lake",
@@ -1568,28 +1833,16 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
-   "lake_id": "kuechensee",
-   "lake": "Küchensee",
-   "kind": "lake",
+   "lake_id": "river-lahn",
+   "lake": "Lahn",
+   "kind": "river",
    "country": "de",
    "region": "Germany",
-   "clubs": 1,
+   "clubs": 7,
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Club website"
-  },
-  {
-   "lake_id": "langer-see",
-   "lake": "Langer See",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 10,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 1,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
   },
   {
    "lake_id": "river-leda",
@@ -1604,44 +1857,8 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
-   "lake_id": "river-lippe",
-   "lake": "Lippe",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "river-magnusgraben",
-   "lake": "Magnusgraben",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 2,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "river-main",
-   "lake": "Main",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 28,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
-   "lake_id": "river-mosel",
-   "lake": "Mosel",
+   "lake_id": "river-mittellandkanal",
+   "lake": "Mittellandkanal",
    "kind": "river",
    "country": "de",
    "region": "Germany",
@@ -1649,7 +1866,7 @@
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "foto-webcam.eu partner"
+   "providers": "Windy"
   },
   {
    "lake_id": "museumshafen",
@@ -1664,18 +1881,6 @@
    "providers": "foto-webcam.eu partner"
   },
   {
-   "lake_id": "river-muellermain",
-   "lake": "Müllermain",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
    "lake_id": "river-nahe",
    "lake": "Nahe",
    "kind": "river",
@@ -1688,6 +1893,30 @@
    "providers": "Panomax"
   },
   {
+   "lake_id": "river-norder-tief",
+   "lake": "Norder Tief",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "river-obergraben",
+   "lake": "Obergraben",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 2,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
+  },
+  {
    "lake_id": "river-osterbekkanal",
    "lake": "Osterbekkanal",
    "kind": "river",
@@ -1697,7 +1926,7 @@
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
   },
   {
    "lake_id": "river-peene",
@@ -1712,16 +1941,28 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
-   "lake_id": "river-saar",
-   "lake": "Saar",
+   "lake_id": "river-ruhr",
+   "lake": "Ruhr",
    "kind": "river",
    "country": "de",
    "region": "Germany",
-   "clubs": 4,
+   "clubs": 6,
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "schweriner-see-innensee",
+   "lake": "Schweriner See (Innensee)",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
   },
   {
    "lake_id": "river-sieg",
@@ -1736,16 +1977,28 @@
    "providers": "foto-webcam.eu"
   },
   {
-   "lake_id": "tegeler-hafen",
-   "lake": "Tegeler Hafen",
+   "lake_id": "sorpestalsperre",
+   "lake": "Sorpestalsperre",
    "kind": "lake",
    "country": "de",
    "region": "Germany",
    "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "river-stichkanal-hildesheim",
+   "lake": "Stichkanal Hildesheim",
+   "kind": "river",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
   },
   {
    "lake_id": "tegeler-see",
@@ -1757,19 +2010,31 @@
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
   },
   {
-   "lake_id": "river-unterwarnow",
-   "lake": "Unterwarnow",
-   "kind": "river",
+   "lake_id": "twistesee",
+   "lake": "Twistesee",
+   "kind": "lake",
    "country": "de",
    "region": "Germany",
    "clubs": 1,
    "webcams_at_water": 1,
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
+   "providers": "Windy"
+  },
+  {
+   "lake_id": "near-bonn",
+   "lake": "Water near Bonn",
+   "kind": "unknown",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 1,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 1,
+   "providers": "Windy"
   },
   {
    "lake_id": "near-elchesheim-illingen",
@@ -1782,18 +2047,6 @@
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
    "providers": "Club website"
-  },
-  {
-   "lake_id": "near-emden",
-   "lake": "Water near Emden",
-   "kind": "unknown",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
   },
   {
    "lake_id": "near-essen",
@@ -1832,18 +2085,6 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
-   "lake_id": "near-muenster",
-   "lake": "Water near Münster",
-   "kind": "unknown",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
-  },
-  {
    "lake_id": "near-reinfeld",
    "lake": "Water near Reinfeld",
    "kind": "unknown",
@@ -1856,18 +2097,6 @@
    "providers": "Single operators (via OpenStreetMap)"
   },
   {
-   "lake_id": "near-waging-am-see",
-   "lake": "Water near Waging am See",
-   "kind": "unknown",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 1,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 1,
-   "providers": "Panomax"
-  },
-  {
    "lake_id": "near-wolgast",
    "lake": "Water near Wolgast",
    "kind": "unknown",
@@ -1878,18 +2107,6 @@
    "webcams_lake_in_view": 0,
    "webcams_total": 1,
    "providers": "Panomax"
-  },
-  {
-   "lake_id": "xantener-nordsee",
-   "lake": "Xantener Nordsee",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 1,
-   "webcams_total": 1,
-   "providers": "Single operators (via OpenStreetMap)"
   },
   {
    "lake_id": "adolf-mittag-see",
@@ -1931,18 +2148,6 @@
    "lake_id": "river-alte-oder",
    "lake": "Alte Oder",
    "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "alter-hafen",
-   "lake": "Alter Hafen",
-   "kind": "lake",
    "country": "de",
    "region": "Germany",
    "clubs": 1,
@@ -2048,6 +2253,18 @@
    "providers": ""
   },
   {
+   "lake_id": "borsighafen",
+   "lake": "Borsighafen",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
+   "webcams_at_water": 0,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 0,
+   "providers": ""
+  },
+  {
    "lake_id": "bruch",
    "lake": "Bruch",
    "kind": "lake",
@@ -2126,18 +2343,6 @@
    "country": "de",
    "region": "Germany",
    "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "river-dortmund-ems-kanal",
-   "lake": "Dortmund-Ems-Kanal",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 10,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
@@ -2408,18 +2613,6 @@
    "providers": ""
   },
   {
-   "lake_id": "river-hase",
-   "lake": "Hase",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 2,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "river-havel",
    "lake": "Havel",
    "kind": "river",
@@ -2564,18 +2757,6 @@
    "providers": ""
   },
   {
-   "lake_id": "kleiner-see",
-   "lake": "Kleiner See",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "river-krueckau",
    "lake": "Krückau",
    "kind": "river",
@@ -2600,36 +2781,12 @@
    "providers": ""
   },
   {
-   "lake_id": "kutzerweiher",
-   "lake": "Kutzerweiher",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "river-kuestenkanal",
    "lake": "Küstenkanal",
    "kind": "river",
    "country": "de",
    "region": "Germany",
    "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "river-lahn",
-   "lake": "Lahn",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 7,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
@@ -2648,24 +2805,24 @@
    "providers": ""
   },
   {
-   "lake_id": "river-leine",
-   "lake": "Leine",
-   "kind": "river",
+   "lake_id": "langer-see",
+   "lake": "Langer See",
+   "kind": "lake",
    "country": "de",
    "region": "Germany",
-   "clubs": 3,
+   "clubs": 10,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
    "providers": ""
   },
   {
-   "lake_id": "river-lesum",
-   "lake": "Lesum",
+   "lake_id": "river-leine",
+   "lake": "Leine",
    "kind": "river",
    "country": "de",
    "region": "Germany",
-   "clubs": 1,
+   "clubs": 3,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
@@ -2702,18 +2859,6 @@
    "country": "de",
    "region": "Germany",
    "clubs": 4,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "river-mittellandkanal",
-   "lake": "Mittellandkanal",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 5,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
@@ -2786,42 +2931,6 @@
    "country": "de",
    "region": "Germany",
    "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "river-neckarkanal",
-   "lake": "Neckarkanal",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "river-norder-tief",
-   "lake": "Norder Tief",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "river-obergraben",
-   "lake": "Obergraben",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 2,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
@@ -2960,36 +3069,12 @@
    "providers": ""
   },
   {
-   "lake_id": "river-ruhr",
-   "lake": "Ruhr",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 6,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "ruppiner-see",
    "lake": "Ruppiner See",
    "kind": "lake",
    "country": "de",
    "region": "Germany",
    "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "river-saale",
-   "lake": "Saale",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 6,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
@@ -3032,18 +3117,6 @@
    "providers": ""
   },
   {
-   "lake_id": "schlei",
-   "lake": "Schlei",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "schulsee",
    "lake": "Schulsee",
    "kind": "lake",
@@ -3068,45 +3141,9 @@
    "providers": ""
   },
   {
-   "lake_id": "schweriner-see-innensee",
-   "lake": "Schweriner See (Innensee)",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "seehundbecken",
-   "lake": "Seehundbecken",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 4,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "river-siegburger-muehlengraben",
    "lake": "Siegburger Mühlengraben",
    "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "sorpestalsperre",
-   "lake": "Sorpestalsperre",
-   "kind": "lake",
    "country": "de",
    "region": "Germany",
    "clubs": 1,
@@ -3188,18 +3225,6 @@
    "providers": ""
   },
   {
-   "lake_id": "river-stichkanal-hildesheim",
-   "lake": "Stichkanal Hildesheim",
-   "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
    "lake_id": "river-stichkanal-osnabrueck",
    "lake": "Stichkanal Osnabrück",
    "kind": "river",
@@ -3218,6 +3243,18 @@
    "country": "de",
    "region": "Germany",
    "clubs": 3,
+   "webcams_at_water": 0,
+   "webcams_lake_in_view": 0,
+   "webcams_total": 0,
+   "providers": ""
+  },
+  {
+   "lake_id": "tegeler-hafen",
+   "lake": "Tegeler Hafen",
+   "kind": "lake",
+   "country": "de",
+   "region": "Germany",
+   "clubs": 1,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
@@ -3266,18 +3303,6 @@
    "country": "de",
    "region": "Germany",
    "clubs": 3,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "twistesee",
-   "lake": "Twistesee",
-   "kind": "lake",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
    "webcams_at_water": 0,
    "webcams_lake_in_view": 0,
    "webcams_total": 0,
@@ -3418,18 +3443,6 @@
   {
    "lake_id": "near-bernkastel-kues",
    "lake": "Water near Bernkastel-Kues",
-   "kind": "unknown",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "near-bonn",
-   "lake": "Water near Bonn",
    "kind": "unknown",
    "country": "de",
    "region": "Germany",
@@ -3803,18 +3816,6 @@
    "lake_id": "river-weisse-elster",
    "lake": "Weiße Elster",
    "kind": "river",
-   "country": "de",
-   "region": "Germany",
-   "clubs": 1,
-   "webcams_at_water": 0,
-   "webcams_lake_in_view": 0,
-   "webcams_total": 0,
-   "providers": ""
-  },
-  {
-   "lake_id": "werratalsee",
-   "lake": "Werratalsee",
-   "kind": "lake",
    "country": "de",
    "region": "Germany",
    "clubs": 1,
