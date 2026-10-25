@@ -109,6 +109,7 @@ struct SettingsView: View {
                         UnitRow(condition: .waves, title: tr("Waves"), selection: $settings.waveUnit)
                         UnitRow(condition: .precipitation, title: tr("Rain, hail, snow"), selection: $settings.rainUnit)
                         UnitRow(condition: .visibility, title: tr("Visibility and distances"), selection: $settings.distanceUnit)
+                        UnitRow(condition: .pressure, title: tr("Air pressure"), selection: $settings.pressureUnit)
                     } header: {
                         SectionTitle(tr("Units"), symbol: "ruler")
                     } footer: {
@@ -454,7 +455,7 @@ private struct AppearancePicker: View {
 }
 
 /// A value's icon and name, and a menu with the units it can be shown in.
-private struct UnitRow<Unit: Hashable & Identifiable & CaseIterable>: View where Unit.AllCases: RandomAccessCollection, Unit: UnitDisplay {
+struct UnitRow<Unit: Hashable & Identifiable & CaseIterable>: View where Unit.AllCases: RandomAccessCollection, Unit: UnitDisplay {
     let condition: Condition
     let title: String
     @Binding var selection: Unit
@@ -530,6 +531,7 @@ extension SpeedUnit: UnitDisplay {}
 extension WaveUnit: UnitDisplay {}
 extension RainUnit: UnitDisplay {}
 extension DistanceUnit: UnitDisplay {}
+extension PressureUnit: UnitDisplay {}
 
 // MARK: - Background pictures
 

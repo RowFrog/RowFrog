@@ -27,6 +27,7 @@ final class AppSettings {
     var waveUnit: WaveUnit { didSet { defaults.set(waveUnit.rawValue, forKey: Keys.waves) } }
     var rainUnit: RainUnit { didSet { defaults.set(rainUnit.rawValue, forKey: Keys.rain) } }
     var distanceUnit: DistanceUnit { didSet { defaults.set(distanceUnit.rawValue, forKey: Keys.distance) } }
+    var pressureUnit: PressureUnit { didSet { defaults.set(pressureUnit.rawValue, forKey: Keys.pressure) } }
     var timeFormat: TimeFormat { didSet { defaults.set(timeFormat.rawValue, forKey: Keys.timeFormat) } }
     var dateFormat: DateFormat { didSet { defaults.set(dateFormat.rawValue, forKey: Keys.dateFormat) } }
 
@@ -133,6 +134,7 @@ final class AppSettings {
         static let waves = "RWUnitWaves"
         static let rain = "RWUnitRain"
         static let distance = "RWUnitDistance"
+        static let pressure = "RWUnitPressure"
         static let timeFormat = "RWTimeFormat"
         static let dateFormat = "RWDateFormat"
         static let background = "RWBackground"
@@ -153,7 +155,7 @@ final class AppSettings {
         static let clubWidgetBackgrounds = "RWWidgetBackgroundClubs"
         static let widgetBlur = "RWWidgetBackgroundBlur"
 
-        static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
+        static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
                           developer, pickedModels, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur]
     }
@@ -171,6 +173,7 @@ final class AppSettings {
         waveUnit = value(Keys.waves, .meters)
         rainUnit = value(Keys.rain, .millimeters)
         distanceUnit = value(Keys.distance, .kilometers)
+        pressureUnit = value(Keys.pressure, .hectopascals)
         timeFormat = value(Keys.timeFormat, .hours24)
         dateFormat = value(Keys.dateFormat, .device)
         // Launch arguments give the limits' numbers as text, e.g. `-RWBoatLimits '{small = {windAmber = 7;};}'`.
@@ -277,6 +280,7 @@ final class AppSettings {
         waveUnit = .meters
         rainUnit = .millimeters
         distanceUnit = .kilometers
+        pressureUnit = .hectopascals
         timeFormat = .hours24
         dateFormat = .device
         boatID = Boat.small.id

@@ -200,7 +200,7 @@ private struct ConditionTile: View {
         case .precipitation: (hour.precipitationMm ?? 0) >= 0.1 ? Format.rain(hour.precipitationMm) : tr("Dry")
         case .visibility: Format.distance(hour.visibilityM)
         case .cloudCover: "\(Format.number(hour.cloudCoverPct)) %"
-        case .pressure: hour.pressureHpa.map { Format.number($0) } ?? "–"
+        case .pressure: Format.pressureNumber(hour.pressureHpa)
         case .thunderstorm: stormLevel(hour.light(for: condition.reasonNames))
         case .uvIndex: Format.number(hour.uvIndex)
         case .ice: iceGuess.value
@@ -238,8 +238,9 @@ private struct ConditionTile: View {
         case .cloudCover:
             return hour.cloudCoverLowPct.map { tr("Low cloud %@ %%", Format.number($0)) } ?? ""
         case .pressure:
-            guard let change = data.forecast.pressureChange(after: hour) else { return "hPa" }
-            return "hPa · " + PressureTrend(change: change).title.lowercased()
+            let unit = AppSettings.shared.pressureUnit.symbol
+            guard let change = data.forecast.pressureChange(after: hour) else { return unit }
+            return unit + " · " + PressureTrend(change: change).title.lowercased()
         case .thunderstorm:
             return data.warnings(["GEWITTER"]).isEmpty ? tr("No DWD warning") : tr("DWD warning")
         case .uvIndex:
@@ -537,6 +538,7 @@ struct ConditionDetailView: View {
             Label(detail.rowing, systemImage: "figure.rower")
                 .font(.subheadline)
             Text(detail.source).font(.caption2).foregroundStyle(.secondary)
+            DetailUnitRow(condition: condition)
             neighbours(of: condition)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1371,6 +1373,7 @@ extension ConditionDetail {
         let h = d.now
         let change = d.forecast.pressureChange(after: h)
         let trend = change.map(PressureTrend.init(change:))
+        let p = units.pressureUnit
         let values = d.timeline.compactMap(\.pressureHpa)
         let lo = values.min() ?? 1000, hi = values.max() ?? 1030
         var facts: [(String, String)] = []
@@ -1378,7 +1381,7 @@ extension ConditionDetail {
             facts.append((tr("Next 24 h"), next))
         }
         if let low = extreme(d.future, \.pressureHpa, highest: false) {
-            facts.append((tr("Lowest next 7 days"), tr("%@ hPa · %@", Format.number(low.pressureHpa), Format.dayTime(low.time))))
+            facts.append((tr("Lowest next 7 days"), tr("%@ · %@", Format.pressure(low.pressureHpa), Format.dayTime(low.time))))
         }
         // The level alone says little while the pressure moves fast; the trend wins.
         let high = (h.pressureHpa ?? 1013) >= 1013
@@ -1395,16 +1398,16 @@ extension ConditionDetail {
         default: tr("Steady: no change in the weather expected from the pressure.")
         }
         return ConditionDetail(
-            value: tr("%@ hPa", Format.number(h.pressureHpa)),
-            note: change.map { c in trend == .steady ? tr("Steady next 3 h") : tr("%@ %@ hPa in 3 h", PressureTrend(change: c).title, Format.number(abs(c), digits: 1)) } ?? "",
+            value: Format.pressure(h.pressureHpa),
+            note: change.map { c in trend == .steady ? tr("Steady next 3 h") : tr("%@ %@ in 3 h", PressureTrend(change: c).title, Format.pressureChange(abs(c))) } ?? "",
             big: AnyView(PressureGauge(hpa: h.pressureHpa, trend: trend, arrowFont: .title2.weight(.bold)).frame(width: 90, height: 90)),
-            unit: "hPa",
-            lines: [ChartLine(name: tr("Air pressure"), color: .purple, points: d.points(\.pressureHpa))],
+            unit: p.symbol,
+            lines: [ChartLine(name: tr("Air pressure"), color: .purple, points: d.points { $0.pressureHpa.map(p.convert) })],
             // A few hPa around the values, so the change is easy to see.
-            yDomain: (lo - 4).rounded(.down)...(hi + 6).rounded(.up),
-            trendStep: 0.25,
+            yDomain: p.convert((lo - 4).rounded(.down))...p.convert((hi + 6).rounded(.up)),
+            trendStep: p.convert(0.25),
             facts: facts,
-            rowing: (change ?? 0) <= -3 ? rowing : rowing + " " + tr("Falling 3 hPa or more in 3 hours often means wind soon."),
+            rowing: (change ?? 0) <= -3 ? rowing : rowing + " " + tr("Falling %@ or more in 3 hours often means wind soon.", Format.pressureChange(3)),
             source: tr("Air pressure at sea level, DWD via Open-Meteo.")
         )
     }
@@ -1419,11 +1422,11 @@ extension ConditionDetail {
         let fall = now - lo.pressureHpa!, rise = hi.pressureHpa! - now
         if max(fall, rise) < 1 { return tr("steady") }
         if fall >= rise {
-            let value = Format.number(lo.pressureHpa), at = Format.dayTime(lo.time)
-            return last - lo.pressureHpa! >= 1 ? tr("falls to %@ hPa by %@, then rises", value, at) : tr("falls to %@ hPa by %@", value, at)
+            let value = Format.pressure(lo.pressureHpa), at = Format.dayTime(lo.time)
+            return last - lo.pressureHpa! >= 1 ? tr("falls to %@ by %@, then rises", value, at) : tr("falls to %@ by %@", value, at)
         }
-        let value = Format.number(hi.pressureHpa), at = Format.dayTime(hi.time)
-        return hi.pressureHpa! - last >= 1 ? tr("rises to %@ hPa by %@, then falls", value, at) : tr("rises to %@ hPa by %@", value, at)
+        let value = Format.pressure(hi.pressureHpa), at = Format.dayTime(hi.time)
+        return hi.pressureHpa! - last >= 1 ? tr("rises to %@ by %@, then falls", value, at) : tr("rises to %@ by %@", value, at)
     }
 
     private static func thunderstorm(_ d: ConditionData) -> ConditionDetail {
@@ -1633,5 +1636,37 @@ enum StationAddress {
         let text = unique.isEmpty ? nil : unique.joined(separator: ", ")
         known[place] = text
         return text
+    }
+}
+
+/// At the bottom of a larger view, as in the Weather app: the unit of its
+/// value, the same setting as in Settings > Units, so every screen follows.
+private struct DetailUnitRow: View {
+    let condition: Condition
+
+    var body: some View {
+        let settings = AppSettings.shared
+        if [.temperature, .feelsLike, .waterTemperature, .wind, .waves, .precipitation, .visibility, .pressure].contains(condition) {
+            row(settings)
+                .font(.subheadline)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
+        }
+    }
+
+    @ViewBuilder
+    private func row(_ settings: AppSettings) -> some View {
+        @Bindable var settings = settings
+        switch condition {
+        case .temperature, .feelsLike, .waterTemperature:
+            UnitRow(condition: condition, title: tr("Units"), selection: $settings.temperatureUnit)
+        case .wind: UnitRow(condition: condition, title: tr("Units"), selection: $settings.windUnit)
+        case .waves: UnitRow(condition: condition, title: tr("Units"), selection: $settings.waveUnit)
+        case .precipitation: UnitRow(condition: condition, title: tr("Units"), selection: $settings.rainUnit)
+        case .visibility: UnitRow(condition: condition, title: tr("Units"), selection: $settings.distanceUnit)
+        case .pressure: UnitRow(condition: condition, title: tr("Units"), selection: $settings.pressureUnit)
+        default: EmptyView()
+        }
     }
 }
