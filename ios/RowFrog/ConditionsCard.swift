@@ -814,6 +814,17 @@ private struct ConditionChart: View {
 
     private var chart: some View {
         Chart {
+            // First, so switching a line off in the legend leaves the arrows where
+            // they are: the chart matches marks by their place, and arrows after
+            // the lines were taken for new ones, faded out and in again.
+            ForEach(arrows) { a in
+                PointMark(x: .value("Hour", a.x), y: .value("Value", arrowY))
+                    .symbolSize(0)
+                    .annotation(position: .overlay) {
+                        Image(systemName: a.symbol).font(.caption2.weight(.bold)).foregroundStyle(.secondary)
+                            .rotationEffect(.degrees(a.rotation))
+                    }
+            }
             ForEach(shownLines) { line in
                 ForEach(line.points) { p in
                     mark(line, p)
@@ -851,14 +862,6 @@ private struct ConditionChart: View {
                             .symbolSize(50)
                     }
                 }
-            }
-            ForEach(arrows) { a in
-                PointMark(x: .value("Hour", a.x), y: .value("Value", arrowY))
-                    .symbolSize(0)
-                    .annotation(position: .overlay) {
-                        Image(systemName: a.symbol).font(.caption2.weight(.bold)).foregroundStyle(.secondary)
-                            .rotationEffect(.degrees(a.rotation))
-                    }
             }
         }
         .chartXScale(domain: range)
