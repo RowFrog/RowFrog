@@ -258,10 +258,10 @@ jobs:
           tips=(-RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES)
           short="47.99667,11.34745;47.983,11.338;47.965,11.331"
           GUIDE=1 shoot 109-tip-route-panel light "${tips[@]}"
-          GUIDE=1 shoot 110-tip-close-loop light "${tips[@]}" -RWRoute "$short"
-          GUIDE=1 shoot 111-tip-turning-point light "${tips[@]}" -RWRoute "$short" -RWRoutePoint 1
-          GUIDE=1 shoot 112-tip-boat-time light "${tips[@]}" -RWRoute "$route" -RWPanel expanded
-          GUIDE=1 shoot 113-tip-route-german-dark dark "${tips[@]}" -RWRoute "$short" -RWLanguage de
+          GUIDE=1 WAIT=30 shoot 110-tip-close-loop light "${tips[@]}" -RWRoute "$short"
+          GUIDE=1 WAIT=30 shoot 111-tip-turning-point light "${tips[@]}" -RWRoute "$short" -RWRoutePoint 1
+          GUIDE=1 WAIT=30 shoot 112-tip-boat-time light "${tips[@]}" -RWRoute "$route" -RWPanel expanded
+          GUIDE=1 WAIT=30 shoot 113-tip-route-german-dark dark "${tips[@]}" -RWRoute "$short" -RWLanguage de
           NEWS=1 shoot 114-whats-new light
           NEWS=1 shoot 115-whats-new-german-dark dark -RWLanguage de
           # The tips that follow the rain radar and hourly tips.
