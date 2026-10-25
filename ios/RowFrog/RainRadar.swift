@@ -80,8 +80,8 @@ struct RadarClient {
 /// a time).
 @MainActor
 enum RadarCache {
-    /// DWD's 5 minutes; 15 in Low Power Mode.
-    static var refresh: TimeInterval { PowerState.shared.lowPower ? 900 : 300 }
+    /// DWD's 5 minutes; 15 in Low Power Mode and when saving data.
+    static var refresh: TimeInterval { PowerState.shared.lowPower || DataSaver.shared.saving ? 900 : 300 }
     private static var entries: [Coordinate: (radar: RainRadar, loaded: Date)] = [:]
 
     static func entry(at point: Coordinate) -> (radar: RainRadar, loaded: Date)? { entries[point] }
@@ -128,7 +128,7 @@ struct RainRadarCard: View {
         .buttonStyle(.plain)
         .accessibilityHint(tr("Opens the rain radar map"))
         .fullScreenCover(isPresented: $showingMap) {
-            RadarMapScreen(point: point, clubID: clubID, reference: radar?.reference)
+            RadarMapScreen(point: point, clubID: clubID, reference: radar?.reference, step: DataSaver.shared.saving ? 30 : 15)
         }
         .onChange(of: showingMap) { if showingMap { RadarMapTip().invalidate(reason: .actionPerformed) } }
         .task(id: [point.lat, point.lon, scenePhase == .active && isCurrentPage ? 1 : 0]) {
@@ -214,16 +214,17 @@ struct RadarMapScreen: View {
     /// The frame for the latest radar picture.
     private let nowIndex: Int
 
-    init(point: Coordinate, clubID: String? = nil, reference: Date?) {
+    /// `step`: minutes between pictures; 30 when saving data (7 pictures instead of 13).
+    init(point: Coordinate, clubID: String? = nil, reference: Date?, step: Int = 15) {
         self.point = point
         self.clubID = clubID
         self.reference = reference
         let base = reference ?? Date(timeIntervalSince1970: (Date.now.timeIntervalSince1970 / 300).rounded(.down) * 300)
-        let frames = stride(from: -60, through: 120, by: 15).map { base.addingTimeInterval(Double($0) * 60) }
+        let frames = stride(from: -60, through: 120, by: step).map { base.addingTimeInterval(Double($0) * 60) }
         self.frames = frames
-        nowIndex = 4
-        _index = State(initialValue: 4)
-        _loader = State(initialValue: RadarFrames(point: point, times: frames))
+        nowIndex = 60 / step
+        _index = State(initialValue: 60 / step)
+        _loader = State(initialValue: RadarFrames(point: point, times: frames, nowIndex: 60 / step))
     }
 
     var body: some View {
@@ -450,9 +451,13 @@ final class RadarFrames {
     private(set) var done = false
     var complete: Bool { images.count == times.count }
 
-    init(point: Coordinate, times: [Date]) {
+    /// The latest radar picture's place in `times`; loading starts there.
+    let nowIndex: Int
+
+    init(point: Coordinate, times: [Date], nowIndex: Int = 4) {
         region = RadarRegion(center: point)
         self.times = times
+        self.nowIndex = nowIndex
     }
 
     func load() async {
@@ -466,7 +471,7 @@ final class RadarFrames {
             Self.saved = (region, times, [:])
         }
         // The latest picture first, then outwards, so the map shows something at once.
-        let order = times.indices.sorted { abs($0 - 4) < abs($1 - 4) }.map { times[$0] }.filter { images[$0] == nil }
+        let order = times.indices.sorted { abs($0 - nowIndex) < abs($1 - nowIndex) }.map { times[$0] }.filter { images[$0] == nil }
         await withTaskGroup(of: (Date, Data?).self) { group in
             // DWD's server is slow with many parallel requests; three at a time.
             var next = 0
@@ -492,7 +497,7 @@ final class RadarFrames {
         done = true
     }
 
-    /// The last map's pictures as DWD sent them (about 2 MB).
+    /// The last map's pictures as DWD sent them (about 1 MB).
     private static var saved: (region: RadarRegion, times: [Date], data: [Date: Data])?
 
     private nonisolated static func fetch(_ url: URL) async -> Data? {
@@ -548,7 +553,8 @@ struct RadarRegion: Hashable {
             .init(name: "BBOX", value: "\(minX),\(minY),\(maxX),\(maxY)"),
             .init(name: "WIDTH", value: "\(Self.pixels)"),
             .init(name: "HEIGHT", value: "\(Self.pixels)"),
-            .init(name: "FORMAT", value: "image/png"),
+            // 8-bit PNG: DWD's radar has about 56 colours, so it looks the same at half the size.
+            .init(name: "FORMAT", value: "image/png8"),
             .init(name: "TRANSPARENT", value: "TRUE"),
             .init(name: "TIME", value: ISO8601DateFormatter().string(from: time)),
         ]

@@ -155,6 +155,11 @@ def choose(passes: list[Pass]) -> tuple[Pass | None, Pass | None, Pass | None]:
     return latest, mostly_clear, clearest
 
 
+# 75 looks the same on a phone as 85 and is about 45 % smaller (owner OK 2026-10-25).
+# Pictures already published keep their quality until the lake's next pass.
+JPEG_QUALITY = 75
+
+
 def jpeg(client: httpx.Client, bbox, width: int, height: int, day: date) -> bytes:
     request = {
         "input": {
@@ -172,7 +177,7 @@ def jpeg(client: httpx.Client, bbox, width: int, height: int, day: date) -> byte
         "output": {
             "width": width,
             "height": height,
-            "responses": [{"identifier": "default", "format": {"type": "image/jpeg", "quality": 85}}],
+            "responses": [{"identifier": "default", "format": {"type": "image/jpeg", "quality": JPEG_QUALITY}}],
         },
         "evalscript": PICTURE_SCRIPT,
     }

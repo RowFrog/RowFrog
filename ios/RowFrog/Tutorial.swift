@@ -611,6 +611,13 @@ struct AppIconTip: Tip {
     var image: Image? { Image(systemName: "app.badge") }
 }
 
+/// In the settings only, by the owner's wish: no tour step.
+struct SaveDataTip: Tip {
+    var title: Text { Text(tr("Out on mobile data?")) }
+    var message: Text? { Text(tr("Switch on Save mobile data: satellite pictures then load only when you tap them and the radar needs fewer downloads. Forecasts and warnings always load.")) }
+    var image: Image? { Image(systemName: "antenna.radiowaves.left.and.right") }
+}
+
 struct LakeViewTip: Tip {
     var title: Text { Text(tr("Look across the lake")) }
     var message: Text? { Text(tr("Tap the map to see the rowing light, waves and wind for the whole lake, hour by hour. Tap the water for the details of one spot.")) }
