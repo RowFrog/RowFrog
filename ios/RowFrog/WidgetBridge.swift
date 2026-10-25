@@ -3,8 +3,9 @@ import WidgetKit
 
 /// Copies what the widget needs into the shared app group and asks it to
 /// redraw: the home base, the saved clubs and their names, and the settings
-/// (units, language, time format). Only when something changed: every
-/// redraw makes each widget load its forecast again.
+/// (units, language, time format). Only when something changed, or for
+/// widgets that load only after the app was used: every redraw makes each
+/// widget load its forecast again.
 enum WidgetBridge {
     static func publish(_ locations: LocationStore) {
         let shared = WidgetShared.defaults
@@ -22,15 +23,21 @@ enum WidgetBridge {
         }
         // Sorted keys, so the same values always give the same bytes.
         let fingerprint = try? JSONSerialization.data(withJSONObject: values.compactMapValues(jsonSafe), options: [.sortedKeys])
-        if let fingerprint, fingerprint == shared.data(forKey: fingerprintKey) { return }
+        // Widgets that load only after the app was used get a new forecast as the
+        // user leaves it, at most every 15 minutes.
+        let lastReload = shared.object(forKey: reloadedKey) as? Date ?? .distantPast
+        let due = AppSettings.shared.widgetUpdates == .appOpen && Date.now.timeIntervalSince(lastReload) > 15 * 60
+        if let fingerprint, fingerprint == shared.data(forKey: fingerprintKey), !due { return }
         for (key, value) in values { shared.set(value, forKey: key) }
         for key in AppSettings.Keys.all where values[key] == nil { shared.removeObject(forKey: key) }
         if !saved.isEmpty, locations.homeID == nil { shared.removeObject(forKey: WidgetShared.homeKey) }
         shared.set(fingerprint, forKey: fingerprintKey)
+        shared.set(Date.now, forKey: reloadedKey)
         WidgetCenter.shared.reloadAllTimelines()
     }
 
     private static let fingerprintKey = "RWWidgetPublished"
+    private static let reloadedKey = "RWWidgetReloaded"
 
     /// A settings value as JSON can hold it; dates and data as text.
     private static func jsonSafe(_ value: Any) -> Any? {

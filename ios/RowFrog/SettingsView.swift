@@ -78,7 +78,7 @@ struct SettingsView: View {
                     } header: {
                         SectionTitle(tr("Appearance"), symbol: "circle.lefthalf.filled")
                     } footer: {
-                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page."))
+                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page. Dark uses less battery on iPhones with an OLED screen, which most models since the iPhone X have."))
                     }
                     .surfaceRows()
                     .id("appearance")
@@ -162,6 +162,20 @@ struct SettingsView: View {
                     }
                     .surfaceRows()
                     .id("background")
+
+                    Section {
+                        Picker(selection: $settings.widgetUpdates) {
+                            ForEach(WidgetUpdates.allCases) { Text($0.title).tag($0) }
+                        } label: {
+                            Label(tr("Widget updates"), systemImage: "apps.iphone")
+                        }
+                    } header: {
+                        SectionTitle(tr("Widgets and background"), symbol: "arrow.triangle.2.circlepath")
+                    } footer: {
+                        SectionFooter(tr("Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Less often saves battery and data, but a new DWD warning reaches the widgets later. Only after using the app: the widgets load once as you leave the app."))
+                    }
+                    .surfaceRows()
+                    .id("widgets")
 
                     Section {
                         Button {
