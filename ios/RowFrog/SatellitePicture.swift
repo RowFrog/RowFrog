@@ -185,7 +185,8 @@ struct SatellitePictureCard: View {
     var clubID: String?
     @MainActor private var store: SatellitePictureStore { .shared }
     @State private var kind: SatellitePicture.Kind = .latest
-    @State private var showingFull = false
+    /// Screenshot hook: `-RWOpenSatellite YES` opens the picture full screen.
+    @State private var showingFull = UserDefaults.standard.bool(forKey: "RWOpenSatellite")
 
     var body: some View {
         Group {

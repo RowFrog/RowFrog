@@ -39,7 +39,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWTutorialSeen YES -RWNoTips YES` skip the tour and tips
 - `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table)
 - `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order); `-RWArrange YES` opens "Arrange this page"
-- `-RWOpenRadarMap YES` open the rain radar map; `-RWOpenHour n` open the n-th hour of the 48-hour table
+- `-RWOpenRadarMap YES` open the rain radar map (`-RWRadarLoop NO` plays it once); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
 - `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map and hour view tips, which otherwise wait until the rain radar and hourly tips are closed
