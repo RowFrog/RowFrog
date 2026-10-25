@@ -87,6 +87,37 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertTrue(satellite.ice?.detail.hasSuffix(": open water") ?? false)
     }
 
+    func testDecodesSatelliteWaterEstimateAndStationNetwork() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "simssee", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": [],
+         "waterTemperature": null,
+         "ice": {"status": "open", "light": "green", "waterTemperatureC": 9.0, "basis": "model", "days": []},
+         "waterEstimate": {"celsius": 13.4, "basis": "satellite",
+                           "reading": {"source": "landsat", "platform": "landsat-9", "date": "2026-10-09",
+                                       "from": null, "to": null, "celsius": 15.1}}}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        // The satellite estimate wins over the ice model's water temperature.
+        XCTAssertEqual(forecast.estimatedWaterC, 13.4)
+        XCTAssertEqual(forecast.waterEstimate?.reading.satelliteName, "Landsat 9")
+
+        let lswt = SatelliteWaterReading(source: "copernicus-lswt", date: "2026-10-15", from: "2026-10-11", to: "2026-10-20", celsius: 12.0)
+        XCTAssertEqual(lswt.satelliteName, "Copernicus (Sentinel-3)")
+        XCTAssertTrue(lswt.when.contains(" – "))
+
+        let measured = """
+        {"clubId": "x", "lakeId": "river-main", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": [],
+         "waterTemperature": {"celsius": 12.7, "measuredAt": "2026-10-18T11:00:00+00:00",
+                              "station": {"network": "pegelonline", "name": "Frankfurt Osthafen", "distanceKm": 3.1, "distanceM": 3100}},
+         "waterEstimate": null}
+        """
+        let river = try APIClient.decoder.decode(ClubForecast.self, from: Data(measured.utf8))
+        XCTAssertNil(river.estimatedWaterC)
+        XCTAssertEqual(river.waterTemperature?.station?.network, "pegelonline")
+        XCTAssertTrue(river.waterTemperature?.station?.operatorName.hasPrefix("PEGELONLINE") ?? false)
+        XCTAssertTrue(WaterStation().operatorName.hasPrefix("Gewässerkundlicher Dienst"))
+    }
+
     func testDecodesForecastWithoutDaylight() throws {
         let json = """
         {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [],
