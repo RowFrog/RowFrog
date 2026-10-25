@@ -1204,9 +1204,12 @@ extension ConditionDetail {
         let jacket = Format.temperature(userLimits.value(.lifeJacket))
         facts.append((tr("Life jacket"), userLimits.isMine(.lifeJacket) ? tr("%@ (your limit)", tr("advised below %@", jacket)) : tr("advised below %@", jacket)))
         let rowing: String
+        let veryCold = Format.temperature(RowingLimits.coldWaterC)
         switch now?.celsius {
+        case let c? where c < RowingLimits.coldWaterC:
+            rowing = tr("Below %@ wear a life jacket, stay near the shore and row with a second boat or a safety boat nearby. Wear clothes that keep you warm when wet.", veryCold)
         case let c? where c < userLimits.value(.lifeJacket):
-            rowing = tr("Below %@ we advise wearing a life jacket and rowing with a second boat or a safety boat nearby. Wear clothes that keep you warm when wet.", jacket)
+            rowing = tr("Below %@ a capsize can cause cold-water shock: we advise a life jacket and clothes that keep you warm when wet.", jacket)
         case let c? where c < 15:
             rowing = tr("Below %@ wear clothes that keep you warm when wet. Below %@ we advise a life jacket.", Format.temperature(15), jacket)
         case .some:
@@ -1222,11 +1225,11 @@ extension ConditionDetail {
             unit: t.symbol,
             lines: history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })],
             limits: [
-                ChartLimit(value: t.convert(15), color: .orange, label: tr("Cold-water shock")),
-                line(.lifeJacket, t.convert, .red, tr("Life jacket")),
+                line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
+                ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
             ],
-            limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the light turns amber below %@ and the advice gets stricter below %@. Your club's own rules come first.",
-                          Format.temperature(15), Format.temperature(15), Format.temperature(10)),
+            limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A life jacket keeps your head above water through it, so the app advises one from %@ down. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the advice gets stricter below %@: stay near the shore and don't row alone. Your club's own rules come first.",
+                          Format.temperature(15), jacket, veryCold),
             yDomain: t.convert(0)...t.convert(max(20, (history.map(\.celsius).max() ?? 0) + 2)),
             history: true,
             facts: facts,
