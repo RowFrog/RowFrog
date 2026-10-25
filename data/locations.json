@@ -11,6 +11,7 @@
       "lengthKm": 19.45,
       "meanDepthM": 53.2,
       "gkdWaterTemperatureStation": "starnberg-16663002",
+      "gkdStationPlace": {"name": "Starnberg", "lat": 47.9973, "lon": 11.3492},
       "stormWarningService": true
     }
   ],
