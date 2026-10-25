@@ -120,7 +120,7 @@ enum WeatherMapLayer: String, CaseIterable, Identifiable {
         case .humidity: [20, 40, 60, 80, 100]
         case .pressure: [990, 1005, 1013, 1020, 1030]
         case .visibility: [0, 1, 3, 6, 10]
-        case .rain: [0, 1, 4, 8, 15, 25]
+        case .rain: [0, 5, 10, 15, 25]
         case .uv, .lightning, .fog: []
         }
     }
@@ -867,10 +867,10 @@ final class WeatherMapRenderer: MKOverlayRenderer {
             context.restoreGState()
         }
         guard !arrows.isEmpty else { return }
-        // About 14 points long on screen at any zoom.
-        let length = 14 / zoomScale
-        context.setStrokeColor(UIColor.black.withAlphaComponent(0.55).cgColor)
-        context.setLineWidth(1.6 / zoomScale)
+        // About 20 points long on screen at any zoom.
+        let length = 20 / zoomScale
+        context.setStrokeColor(UIColor.black.withAlphaComponent(0.7).cgColor)
+        context.setLineWidth(2 / zoomScale)
         context.setLineCap(.round)
         context.setLineJoin(.round)
         for arrow in arrows {
