@@ -180,6 +180,7 @@ struct LocationPageView: View {
                     TipView(hourViewTip)
                 }
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale())
+                    .modifier(StickyHourlyCut(sticky: sticky))
             }
             .id("hourly")
         case .launchPoint:
@@ -215,6 +216,26 @@ struct LocationPageView: View {
 private final class StickyHourly {
     var hourlyFrame: CGRect = .zero
     var dayTops: [Date: CGFloat] = [:]
+    /// Where the header stays on the screen, in global coordinates.
+    var top: CGFloat = 0
+
+    /// Whether the header is staying at the top.
+    func isShowing(at top: CGFloat) -> Bool {
+        hourlyFrame.height > 0 && hourlyFrame.minY + 40 < top && hourlyFrame.maxY > top
+    }
+}
+
+/// While the header stays, the tile ends at it: the rows scroll away under the
+/// header instead of showing beside its rounded corners, as in the Weather app.
+private struct StickyHourlyCut: ViewModifier {
+    let sticky: StickyHourly
+
+    func body(content: Content) -> some View {
+        let cut = sticky.isShowing(at: sticky.top) ? max(0, sticky.top - sticky.hourlyFrame.minY) : 0
+        content.mask(alignment: .top) {
+            Rectangle().padding(.top, cut)
+        }
+    }
 }
 
 /// The hourly table's header while the table is under the top of the screen.
@@ -226,7 +247,10 @@ private struct StickyHourlyHeader: View {
         GeometryReader { geo in
             let top = geo.frame(in: .global).minY
             let height = HourlyStickyHeader.height
-            if hourlyFrame.height > 0, hourlyFrame.minY + 40 < top, hourlyFrame.maxY > top {
+            Color.clear
+                .onAppear { sticky.top = top }
+                .onChange(of: top) { _, new in sticky.top = new }
+            if sticky.isShowing(at: top) {
                 let day = dayTops.filter { $0.value <= top + height }.max { $0.value < $1.value }?.key
                     ?? dayTops.keys.min()
                 // At the end of the table the last rows push the header up and away,
