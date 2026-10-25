@@ -459,8 +459,13 @@ private struct NowCard: View {
                 }
                 Spacer()
                 // With the time of the reading underneath, so it lines up with the wind's unit line.
-                TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28,
-                                caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
+                if water == nil, let estimate = forecast.estimatedWaterC {
+                    TemperatureView(condition: .waterTemperature, celsius: estimate, digits: 0, size: 28, caption: tr("Estimated"))
+                        .foregroundStyle(.secondary)
+                } else {
+                    TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28,
+                                    caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
+                }
                 Spacer()
                 WindView(hour: hour, size: 28)
             }

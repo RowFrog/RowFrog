@@ -13,6 +13,7 @@ struct LakeMapScreen: View {
     @State private var layer: LakeLayer
     @State private var spot: Int?
     @State private var showingInfo = false
+    @State private var showingLegend = UserDefaults.standard.bool(forKey: "RWLakeLegend")
     @State private var routeMode: Bool
     @State private var waypoints: [CLLocationCoordinate2D]
     @State private var outAndBack: Bool
@@ -30,6 +31,8 @@ struct LakeMapScreen: View {
     @State private var panelExpanded: Bool
     /// Seconds per 500 m.
     @AppStorage("RWRoutePace") private var pace = 150.0
+    /// Apple's satellite pictures under the lake instead of the map.
+    @AppStorage("RWLakeImagery") private var imagery = false
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
     private let panelTip = RoutePanelTip()
     private let loopTip = CloseLoopTip()
@@ -119,13 +122,30 @@ struct LakeMapScreen: View {
                     waypoints = RouteEdit.move(at: i, to: point, in: waypoints)
                     pointTip.invalidate(reason: .actionPerformed)
                 },
-                selectPoint: { selectedPoint = $0 }
+                selectPoint: { selectedPoint = $0 },
+                imagery: imagery
             )
             .ignoresSafeArea()
             topBar
         }
+        .overlay(alignment: .bottomLeading) {
+            Button { showingLegend = true } label: {
+                Label(tr("Legend"), systemImage: "list.bullet.rectangle")
+                    .font(.caption.weight(.semibold))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 6)
+                    .background(.regularMaterial, in: Capsule())
+            }
+            .buttonStyle(.plain)
+            .padding(10)
+        }
         .safeAreaInset(edge: .bottom, spacing: 0) { panel(plan: plan, boat: boat, shown: shown) }
         .sheet(isPresented: $showingInfo) { LakeViewInfo() }
+        .sheet(isPresented: $showingLegend) {
+            LakeMapLegend(layer: layer, striped: layer == .light && shown?.lakeWide.light == .red,
+                          routeMode: routeMode, hasRoute: (plan?.segments.isEmpty == false), boat: boat != nil,
+                          spot: spot != nil, hasWind: !(shown?.wind.isEmpty ?? true))
+        }
         .tipVisibility(panelTip, $showPanelTip)
         .tipVisibility(loopTip, $showLoopTip)
         .tipVisibility(pointTip, $showPointTip)
@@ -187,6 +207,13 @@ struct LakeMapScreen: View {
                     .padding(.vertical, 8)
                     .background(.regularMaterial, in: Capsule())
                 Spacer()
+                Button { imagery.toggle() } label: {
+                    Image(systemName: imagery ? "map" : "globe.europe.africa")
+                        .font(.body.weight(.semibold))
+                        .frame(width: 36, height: 36)
+                }
+                .background(.regularMaterial, in: Circle())
+                .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
                 routeButton
                     .background(routeMode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.regularMaterial), in: Circle())
                     .accessibilityLabel(routeMode ? tr("End route planning") : tr("Plan a route"))
@@ -693,6 +720,8 @@ struct LakeMapView: UIViewRepresentable {
     var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
     var movePoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
     var selectPoint: (Int?) -> Void = { _ in }
+    /// Apple's satellite pictures with roads and names instead of the plain map.
+    var imagery = false
 
     /// Room the pushed-down panel and the home indicator take at the bottom.
     static let panelHeight: CGFloat = 230
@@ -746,6 +775,20 @@ struct LakeMapView: UIViewRepresentable {
 
     func updateUIView(_ map: MKMapView, context: Context) {
         let c = context.coordinator
+        if c.imagery != imagery {
+            c.imagery = imagery
+            let config: MKMapConfiguration
+            if imagery {
+                let hybrid = MKHybridMapConfiguration(elevationStyle: .flat)
+                hybrid.pointOfInterestFilter = .excludingAll
+                config = hybrid
+            } else {
+                let standard = MKStandardMapConfiguration(emphasisStyle: .muted)
+                standard.pointOfInterestFilter = .excludingAll
+                config = standard
+            }
+            map.preferredConfiguration = config
+        }
         c.spot = $spot
         c.routeMode = routeMode
         c.addPoint = addPoint
@@ -773,7 +816,8 @@ struct LakeMapView: UIViewRepresentable {
     private func arrows(_ hour: LakeHour) -> [LakeRenderer.Arrow] {
         zip(view.points, hour.wind).compactMap { point, wind in
             guard let from = wind.fromDeg else { return nil }
-            return LakeRenderer.Arrow(point: MKMapPoint(CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)), towardDeg: from + 180)
+            return LakeRenderer.Arrow(point: MKMapPoint(CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)),
+                                      towardDeg: from + 180, speedMs: wind.speedMs ?? 0)
         }
     }
 
@@ -786,6 +830,7 @@ struct LakeMapView: UIViewRepresentable {
         var shown: String?
         var current: (image: CGImage?, arrows: [LakeRenderer.Arrow], striped: Bool) = (nil, [], false)
         var routeMode = false
+        var imagery = false
         /// Whether the lake was fitted below the editing bar of route mode.
         var fittedForRoute = false
         var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
@@ -1063,9 +1108,36 @@ final class LakeOverlay: NSObject, MKOverlay {
 /// Draws the cell picture smoothly scaled over the grid, clipped to the shore,
 /// and the wind arrows at the forecast points.
 final class LakeRenderer: MKOverlayRenderer {
+    /// The wind at a forecast point.
     struct Arrow {
         let point: MKMapPoint
         let towardDeg: Double
+        var speedMs: Double = 0
+    }
+
+    /// Screen points between arrows: more arrows as the map zooms in, fewer out.
+    static let arrowSpacing: CGFloat = 60
+
+    /// Arrow length on screen: longer in stronger wind.
+    static func arrowLength(_ speedMs: Double) -> CGFloat { 14 + CGFloat(min(max(speedMs, 0), 15)) * 1.6 }
+
+    /// The wind anywhere on the lake, from the forecast points weighted by
+    /// distance (nearer counts more), averaged as east and north parts so
+    /// opposite directions don't add up to a wrong one.
+    static func wind(at p: MKMapPoint, from arrows: [Arrow]) -> (towardDeg: Double, speedMs: Double)? {
+        guard !arrows.isEmpty else { return nil }
+        var east = 0.0, north = 0.0, speed = 0.0, total = 0.0
+        for a in arrows {
+            let d2 = max(pow(a.point.x - p.x, 2) + pow(a.point.y - p.y, 2), 1)
+            let w = 1 / d2
+            let r = a.towardDeg * .pi / 180
+            east += sin(r) * w
+            north += cos(r) * w
+            speed += a.speedMs * w
+            total += w
+        }
+        let toward = atan2(east, north) * 180 / .pi
+        return ((toward + 360).truncatingRemainder(dividingBy: 360), speed / total)
     }
 
     private let lock = NSLock()
@@ -1131,9 +1203,30 @@ final class LakeRenderer: MKOverlayRenderer {
         context.setLineWidth(1 / zoomScale)
         context.strokePath()
 
-        // Dark arrows with a light edge read on light and dark maps alike.
-        let length = 26 / zoomScale
-        let paths = arrows.map { LakeArrow.path(at: point(for: $0.point), towardDeg: $0.towardDeg, length: length).cgPath }
+        // Arrows on an even grid over the water, fixed to the map so the tiles
+        // agree; the grid gets finer as the map zooms in. Dark arrows with a
+        // light edge read on light and dark maps alike.
+        let spacing = Double(Self.arrowSpacing / zoomScale)
+        let margin = Double(Self.arrowLength(15) / zoomScale)
+        let area = mapRect.insetBy(dx: -margin, dy: -margin).intersection(lake.boundingMapRect)
+        var paths: [CGPath] = []
+        if !arrows.isEmpty, !area.isNull, spacing > 0 {
+            var y = (area.minY / spacing).rounded(.down) * spacing + spacing / 2
+            while y < area.maxY {
+                // Every other row shifted by half, so the arrows don't line up in columns.
+                let shift = Int((y / spacing).rounded(.down)) % 2 == 0 ? 0 : spacing / 2
+                var x = ((area.minX - shift) / spacing).rounded(.down) * spacing + shift + spacing / 2
+                while x < area.maxX {
+                    let p = MKMapPoint(x: x, y: y)
+                    let at = point(for: p)
+                    if shore.contains(at, using: .evenOdd), let wind = Self.wind(at: p, from: arrows) {
+                        paths.append(LakeArrow.path(at: at, towardDeg: wind.towardDeg, length: Self.arrowLength(wind.speedMs) / zoomScale).cgPath)
+                    }
+                    x += spacing
+                }
+                y += spacing
+            }
+        }
         context.setLineCap(.round)
         context.setLineJoin(.round)
         for (color, width) in [(UIColor(white: 1, alpha: 0.7), CGFloat(4)), (UIColor(white: 0.1, alpha: 0.75), CGFloat(2))] {
@@ -1168,6 +1261,67 @@ private struct CappedScroll<Content: View>: View {
             .scrollBounceBehavior(.basedOnSize)
         } else {
             content
+        }
+    }
+}
+
+/// What each symbol and colour on the lake map means, listing only what is on
+/// the map right now (layer, whole-lake stripes, route, boat, spot).
+struct LakeMapLegend: View {
+    let layer: LakeLayer
+    let striped: Bool
+    let routeMode: Bool
+    let hasRoute: Bool
+    let boat: Bool
+    let spot: Bool
+    let hasWind: Bool
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section(layer.title) {
+                    LakeLegend(layer: layer).padding(.vertical, 4)
+                    MapBoatNote()
+                    if striped {
+                        row(Image(systemName: "line.diagonal").foregroundStyle(.red),
+                            tr("Grey squares with red stripes: the whole lake is red (DWD warning, darkness or cold water), see the panel."))
+                    }
+                }
+                Section(tr("On the map")) {
+                    row(Image(systemName: "house.circle.fill").foregroundStyle(.blue), tr("Your club (this page's launch point)"))
+                    row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.gray), tr("Other clubs on the lake"))
+                    if hasWind {
+                        row(Image(systemName: "arrow.up.right").fontWeight(.bold),
+                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones."))
+                    }
+                    if spot { row(Image(systemName: "scope"), tr("The spot you tapped")) }
+                }
+                if routeMode {
+                    Section(tr("Route")) {
+                        row(Image(systemName: "circle.fill").foregroundStyle(.blue), tr("Start at your club"))
+                        row(Image(systemName: "circle").fontWeight(.bold), tr("Turning point: tap to select, hold and drag to move"))
+                        if hasRoute {
+                            row(HStack(spacing: 2) { ForEach([Light.green, .amber, .red], id: \.self) { Capsule().fill($0.color).frame(width: 8, height: 4) } },
+                                tr("The route in the light the boat meets there; out and back run side by side"))
+                        }
+                        if boat { row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.indigo), tr("Where the boat is at the time shown")) }
+                    }
+                }
+            }
+            .navigationTitle(tr("Legend"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func row(_ symbol: some View, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            symbol.frame(width: 28)
+            Text(text).font(.subheadline)
         }
     }
 }

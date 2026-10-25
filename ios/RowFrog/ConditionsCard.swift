@@ -1,4 +1,5 @@
 import Charts
+import MapKit
 import SwiftUI
 
 /// The "Current conditions" card on a club page: small tiles, each with its
@@ -80,6 +81,10 @@ struct ConditionData {
     var next24: [ForecastHour] { timeline.filter { (0..<24).contains(x($0.time)) } }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
     var water: WaterTemperature? { forecast.waterTemperature }
+    /// Without a lake station: the ice model's water temperature, worked out
+    /// from the air temperatures of the last weeks. Shown marked as estimated;
+    /// the rowing light's cold-water rules only use measurements.
+    var estimatedWater: Double? { forecast.estimatedWaterC }
 
     func points(_ value: (ForecastHour) -> Double?) -> [ChartPoint] {
         timeline.compactMap { h in value(h).map { ChartPoint(x: x(h.time), y: $0) } }
@@ -182,7 +187,8 @@ private struct ConditionTile: View {
         case .humidity: hour.humidityPct.map { "\(Format.number($0)) %" } ?? "–"
         case .wind: Format.wind(hour.windSpeedMs)
         case .waves: Format.waves(hour.waveHeightM)
-        case .waterTemperature: Format.degrees(data.water?.celsius, digits: 1)
+        case .waterTemperature:
+            if data.water == nil, let estimate = data.estimatedWater { "≈ " + Format.degrees(estimate, digits: 0) } else { Format.degrees(data.water?.celsius, digits: 1) }
         case .precipitation: (hour.precipitationMm ?? 0) >= 0.1 ? Format.rain(hour.precipitationMm) : tr("Dry")
         case .visibility: Format.distance(hour.visibilityM)
         case .cloudCover: "\(Format.number(hour.cloudCoverPct)) %"
@@ -211,6 +217,7 @@ private struct ConditionTile: View {
             guard let fetch = hour.fetchM else { return "" }
             return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
         case .waterTemperature:
+            if data.water == nil, data.estimatedWater != nil { return tr("Estimated, not measured") }
             return data.water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
         case .precipitation:
             if (hour.precipitationMm ?? 0) >= 0.1 { return Sky(hour: hour).precipitationKind ?? "" }
@@ -477,7 +484,6 @@ struct ConditionDetailView: View {
             if !detail.lines.isEmpty {
                 let hidden = hiddenLines[condition] ?? []
                 ConditionChart(detail: detail, data: data, hidden: hidden)
-                    .frame(height: 200)
                     .background {
                         GeometryReader { geo in
                             Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
@@ -487,9 +493,6 @@ struct ConditionDetailView: View {
                 if detail.lines.count > 1 {
                     legend(detail, condition: condition, hidden: hidden)
                 }
-                Text(detail.chartNote ?? (detail.history ? tr("Measurements of the last days.") : tr("Drag the chart: back to yesterday, forward up to 7 days.")))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
             }
             if let info = detail.limitInfo {
                 VStack(alignment: .leading, spacing: 6) {
@@ -509,6 +512,9 @@ struct ConditionDetailView: View {
                 }
             }
             facts(detail)
+            if condition == .waterTemperature, let water = data.water, let station = water.station, let place = station.coordinate {
+                WaterStationMap(station: station, place: place)
+            }
             Label(detail.rowing, systemImage: "figure.rower")
                 .font(.subheadline)
             Text(detail.source).font(.caption2).foregroundStyle(.secondary)
@@ -671,6 +677,8 @@ private struct ConditionChart: View {
     private static let start = -1.0
     /// The hour at the left edge of the visible 24 hours.
     @State private var scrollX = start
+    /// The hour under the finger while scrubbing (hold, then slide), as in the Stocks app.
+    @State private var selectedX: Double?
 
     private struct Arrow: Identifiable {
         let x: Double
@@ -720,31 +728,64 @@ private struct ConditionChart: View {
     private var shownLines: [ChartLine] { detail.lines.filter { !hidden.contains($0.name) } }
 
     var body: some View {
-        scrolling(scaled(chart))
-            .chartOverlay { proxy in
-                GeometryReader { geo in
-                    limitLabels(proxy: proxy, geo: geo)
-                }
-                .allowsHitTesting(false)
-            }
-            .overlay(alignment: .topTrailing) {
-                // Once dragged away from now, one tap brings the chart back.
-                if !detail.history && abs(scrollX - Self.start) > 0.5 {
-                    Button {
-                        withAnimation { scrollX = Self.start }
-                    } label: {
-                        Label(tr("Now"), systemImage: scrollX > Self.start ? "arrow.uturn.backward" : "arrow.uturn.forward")
-                            .font(.caption.weight(.semibold))
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(.regularMaterial, in: Capsule())
+        VStack(alignment: .leading, spacing: 6) {
+            scrolling(scaled(chart))
+                .chartXSelection(value: $selectedX)
+                .chartOverlay { proxy in
+                    GeometryReader { geo in
+                        limitLabels(proxy: proxy, geo: geo)
                     }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.blue)
-                    .padding(.top, 22)
-                    .transition(.opacity)
+                    .allowsHitTesting(false)
+                }
+                .frame(height: 200)
+                .sensoryFeedback(.selection, trigger: selectedX == nil)
+            // Under the chart, where it covers nothing: the hint, or once dragged
+            // away from now, one tap back.
+            if !detail.history && abs(scrollX - Self.start) > 0.5 {
+                Button {
+                    withAnimation { scrollX = Self.start }
+                } label: {
+                    Label(tr("Back to now"), systemImage: scrollX > Self.start ? "arrow.uturn.backward" : "arrow.uturn.forward")
+                        .font(.caption.weight(.semibold))
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.blue)
+                .transition(.opacity)
+            } else {
+                Text(detail.chartNote ?? (detail.history ? tr("Measurements of the last days. Touch the chart to read a value.") : tr("Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value.")))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+
+    /// The point of a line nearest to an hour.
+    private func nearest(_ line: ChartLine, to x: Double) -> ChartPoint? {
+        line.points.min { abs($0.x - x) < abs($1.x - x) }
+    }
+
+    /// A value with as many decimals as it needs to be read: 0.19, 5.2, 14.
+    private func valueText(_ y: Double) -> String {
+        let digits = abs(y) < 1 ? 2 : abs(y) < 10 ? 1 : 0
+        return Format.number(y, digits: digits) + (detail.unit.isEmpty ? "" : " " + detail.unit)
+    }
+
+    /// The scrub line's label: the hour and each shown line's value.
+    private func callout(_ x: Double) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(Format.dayTime(date(x.rounded()))).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+            ForEach(shownLines) { line in
+                if let p = nearest(line, to: x) {
+                    HStack(spacing: 4) {
+                        if shownLines.count > 1 { Circle().fill(line.color).frame(width: 6, height: 6) }
+                        Text(valueText(p.y)).font(.caption.weight(.semibold).monospacedDigit())
+                    }
                 }
             }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
     }
 
     private var chart: some View {
@@ -758,6 +799,35 @@ private struct ConditionChart: View {
                 limitRules(limit)
             }
             RuleMark(x: .value("Hour", 0.0)).foregroundStyle(.secondary.opacity(0.5))
+            // A dot where each line meets now, as in the Weather app: it marks
+            // the present and shows what can be held and slid.
+            if !detail.history {
+                ForEach(shownLines.filter { $0.kind == .line }) { line in
+                    if let p = nearest(line, to: 0), abs(p.x) < 0.75 {
+                        PointMark(x: .value("Hour", p.x), y: .value("Value", p.y))
+                            .foregroundStyle(line.color)
+                            .symbolSize(60)
+                        PointMark(x: .value("Hour", p.x), y: .value("Value", p.y))
+                            .foregroundStyle(.background)
+                            .symbolSize(18)
+                    }
+                }
+            }
+            if let x = selectedX {
+                RuleMark(x: .value("Hour", x))
+                    .foregroundStyle(Color.primary.opacity(0.6))
+                    .lineStyle(StrokeStyle(lineWidth: 1))
+                    .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                        callout(x)
+                    }
+                ForEach(shownLines.filter { $0.kind == .line }) { line in
+                    if let p = nearest(line, to: x) {
+                        PointMark(x: .value("Hour", p.x), y: .value("Value", p.y))
+                            .foregroundStyle(line.color)
+                            .symbolSize(50)
+                    }
+                }
+            }
             ForEach(arrows) { a in
                 PointMark(x: .value("Hour", a.x), y: .value("Value", arrowY))
                     .symbolSize(0)
@@ -1054,7 +1124,7 @@ extension ConditionDetail {
                           RowingLimit.windAmber.format(5.5), RowingLimit.windRed.format(8), RowingLimit.gustAmber.format(8), RowingLimit.gustRed.format(12.8))
                 + inUse([(tr("Wind"), .windAmber, .windRed), (tr("Gusts"), .gustAmber, .gustRed)]),
             windArrows: true,
-            chartNote: tr("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days."),
+            chartNote: tr("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value."),
             facts: facts,
             rowing: advice(d, Condition.wind.reasonNames,
                            red: tr("Too windy now: stay ashore."),
@@ -1133,9 +1203,11 @@ extension ConditionDetail {
         case nil:
             rowing = tr("No lake station: check the water yourself. Below %@ we advise a life jacket.", jacket)
         }
+        let estimate = now == nil ? d.estimatedWater : nil
         return ConditionDetail(
-            value: Format.degrees(now?.celsius, digits: 1),
-            note: now.map { tr("Measured %@", Format.dayTime($0.measuredAt)) } ?? tr("No lake station"),
+            value: estimate.map { "≈ " + Format.degrees($0, digits: 0) } ?? Format.degrees(now?.celsius, digits: 1),
+            note: now.map { tr("Measured %@", Format.dayTime($0.measuredAt)) }
+                ?? (estimate != nil ? tr("Estimated from the air temperatures of the last weeks, not measured") : tr("No lake station")),
             unit: t.symbol,
             lines: history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })],
             limits: [
@@ -1453,5 +1525,41 @@ extension ConditionDetail {
             rowing: tr("Rowing is advised from sunrise to sunset; in twilight carry lights."),
             source: tr("Calculated by the app from the launch point's position.")
         )
+    }
+}
+
+/// Where the water temperature is measured, with the distance from the
+/// launch point and a link to the station's page.
+struct WaterStationMap: View {
+    let station: WaterStation
+    let place: Coordinate
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Label(tr("Where it is measured"), systemImage: "mappin.and.ellipse")
+                .font(.subheadline.weight(.semibold))
+            Map(initialPosition: .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: place.lat, longitude: place.lon),
+                                                            latitudinalMeters: 4000, longitudinalMeters: 4000)),
+                interactionModes: [.pan, .zoom]) {
+                Marker(station.name ?? tr("Lake station"), systemImage: "thermometer.medium", coordinate: CLLocationCoordinate2D(latitude: place.lat, longitude: place.lon))
+                    .tint(.cyan)
+            }
+            .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+            .frame(height: 170)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            HStack {
+                if let distance = station.distanceM {
+                    Text(tr("%@, %@ from the launch point", station.name ?? tr("Lake station"), Format.distance(distance)))
+                } else if let name = station.name {
+                    Text(name)
+                }
+                Spacer(minLength: 0)
+                if let url = station.url {
+                    Link(tr("Station page"), destination: url)
+                }
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
+        }
     }
 }

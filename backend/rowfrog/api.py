@@ -299,6 +299,21 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
     return result
 
 
+def _station_json(lake: locations.Lake, club: locations.Club | None = None) -> dict | None:
+    """The water temperature station: its name, place, distance from the club's launch point and GKD page."""
+    slug = lake.gkd_water_temperature_station
+    if not slug:
+        return None
+    point = lake.gkd_station_point
+    return {
+        "name": lake.gkd_station_name,
+        "lat": None if point is None else point.lat,
+        "lon": None if point is None else point.lon,
+        "distanceM": None if point is None or club is None else round(locations._distance_m(club.launch_point, point)),
+        "url": gkd.PAGE_URL.format(station=slug).removesuffix("/table"),
+    }
+
+
 def _ice_json(e: ice.IceEstimate | None) -> dict:
     if e is None:
         return {"status": "unavailable", "light": None, "days": []}
@@ -469,6 +484,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             "measuredAt": water.time.astimezone(timezone.utc).isoformat(),
             # The station page's history, one value per hour, for the water temperature chart.
             "history": [{"time": _utc(r.time), "celsius": r.celsius} for r in water_history],
+            "station": _station_json(lake, club),
         },
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
