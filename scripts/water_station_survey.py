@@ -84,7 +84,7 @@ def norm(name: str) -> str:
     s = unicodedata.normalize("NFKD", name.lower()).encode("ascii", "ignore").decode()
     s = s.replace("ß", "ss")
     s = re.sub(r"\b(der|die|das|lac|lago|de|du|le|la|grosser|kleiner|gr|kl)\b", " ", s)
-    s = re.sub(r"(see|seen|sees|weiher|teich|stausee|speicher|kanal|canal)\b", "", s)
+    s = re.sub(r"(see|seen|sees|weiher|teich|stausee|speicher|kanal|canal|wasserstrasse)\b", "", s)
     s = re.sub(r"[^a-z]", "", s)
     return s
 
@@ -171,9 +171,15 @@ def main(path: str | None) -> int:
         key = norm(lake.name)
         on_water = []
         for s in stations:
-            same_name = len(key) >= 4 and (norm(s.water) == key or norm(s.name).startswith(key))
+            last_word = norm(re.split(r"[\s/-]+", s.water.strip())[-1]) if s.water.strip() else ""
+            same_name = len(key) >= 4 and (
+                norm(s.water) == key
+                or last_word == key  # "Potsdamer Havel" is on the Havel
+                or (s.kind == "lake" and norm(s.name).startswith(key))  # GKD lake stations named after the lake
+            )
             inside = ring is not None and lake.kind == "lake" and _inside(s.lon, s.lat, ring)
-            near = any(km(c.launch_point.lat, c.launch_point.lon, s.lat, s.lon) <= NEAR_KM for c in clubs)
+            # A river station next to a lake measures the river, so nearness only counts for the same kind of water.
+            near = lake.kind in (s.kind, "unknown") and any(km(c.launch_point.lat, c.launch_point.lon, s.lat, s.lon) <= NEAR_KM for c in clubs)
             if same_name or inside or near:
                 on_water.append(s)
         for club in clubs:
