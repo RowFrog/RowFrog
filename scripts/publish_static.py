@@ -22,7 +22,8 @@ writes Sentinel-2 pictures of each lake and, in winter, the satellite ice map:
 
 "confirmed" rebuilds the clubs people use (until the usage counter is set up,
 the clubs in data/locations.json), "all" every club in the catalogs too.
-Warnings and water temperatures are fresh in every file, but weather is
+Warnings, water temperatures and, for the clubs people use, DWD's rain
+radar (the widget's radar line) are fresh in every file, but weather is
 loaded only when the weather model
 has a new run for it (WEATHER_HOURS), to stay within Open-Meteo's free
 10,000 calls a day; between loads the --state file (kept by the workflow's
@@ -49,7 +50,7 @@ from fastapi.testclient import TestClient
 
 from rowfrog import api, ice, lake_view, locations, outlines, weather_models
 from rowfrog.api import LOCAL, app
-from rowfrog.sources import lake_ice_satellite, open_meteo, sentinel2
+from rowfrog.sources import dwd_radar, lake_ice_satellite, open_meteo, sentinel2
 
 try:  # the usage counter (PR #15) may not be part of this checkout yet
     from rowfrog import usage
@@ -501,6 +502,11 @@ def main() -> int:
     model_pairs = model_weather(state, clubs, now)
     all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
     satellite_ice(state, all_lakes, now)
+    # The radar line on the widget, for the clubs people use: 10 DWD requests a club.
+    radar = asyncio.run(
+        dwd_radar.nowcasts({c.id: (c.launch_point.lat, c.launch_point.lon) for c in clubs if c.id in used_clubs})
+    )
+    print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests")
     failed = []
     for club in clubs:
         if club.id not in api._primed_weather:
@@ -514,7 +520,10 @@ def main() -> int:
         if resp.status_code != 200:
             failed.append(f"{club.id}: HTTP {resp.status_code} {resp.text[:120]}")
             continue
-        write(args.out / "clubs" / club.id / "forecast", resp.json())
+        body = resp.json()
+        if club.id in radar:
+            body["radar"] = radar[club.id]
+        write(args.out / "clubs" / club.id / "forecast", body)
     print(f"Wrote {len(clubs) - len(failed)} of {len(clubs)} forecasts to {args.out}")
     written = 0
     for club, model in model_pairs:
