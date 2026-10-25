@@ -573,7 +573,7 @@ enum German {
         "Tap the water to add the turning points of your route. It starts at your club. Tap a point to delete it, or hold and drag it to move it. A point within 50 m of the start closes the loop.": "Tippe aufs Wasser, um die Wendepunkte deiner Route zu setzen. Sie beginnt an deinem Verein. Tippe auf einen Punkt, um ihn zu löschen, oder halte und zieh ihn, um ihn zu verschieben. Ein Punkt bis 50 m vom Start entfernt schließt die Runde.",
         "Turning point %d": "Wendepunkt %d",
         "Delete point": "Punkt löschen",
-        "Hold the point and drag it to move it.": "Halte den Punkt und zieh ihn, um ihn zu verschieben.",
+        "Drag the point to move it. It sits just above your finger.": "Zieh den Punkt, um ihn zu verschieben. Er sitzt knapp über deinem Finger.",
         "Close loop": "Runde schließen",
         "Show less": "Weniger zeigen",
         "Show more": "Mehr zeigen",
@@ -640,7 +640,7 @@ enum German {
         "Row a loop": "Eine Runde rudern",
         "Close the loop: tap within 50 m of your club, or use Close loop.": "Schließ die Runde: Tippe weniger als 50 m vor deinem Verein oder nutze „Runde schließen“.",
         "Change a turning point": "Wendepunkt ändern",
-        "Hold and drag a point to move it, or delete just this one.": "Halte und zieh einen Punkt, um ihn zu verschieben, oder lösche nur diesen einen.",
+        "Drag a point to move it, or delete just this one.": "Zieh einen Punkt, um ihn zu verschieben, oder lösche nur diesen einen.",
         "Move the boat along your route to see the lake at the time you get there.": "Schieb das Boot über deine Route und sieh den See zu der Zeit, wenn du dort ankommst.",
         // What's new
         "What's new": "Neu in Row Frog",
