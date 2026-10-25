@@ -306,7 +306,7 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
-                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "widgets", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
                 .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
@@ -1210,8 +1210,12 @@ private extension View {
         task {
             let page = UserDefaults.standard.integer(forKey: "RWScrollPage")
             guard page > 0 else { return }
-            try? await Task.sleep(for: .seconds(2))
-            proxy.scrollTo(ids[min(page, ids.count - 1)], anchor: .top)
+            // Scrolled twice: on a slow simulator the first try can come before
+            // the form has laid out its rows and does nothing.
+            for _ in 0..<2 {
+                try? await Task.sleep(for: .seconds(2))
+                proxy.scrollTo(ids[min(page, ids.count - 1)], anchor: .top)
+            }
         }
     }
 }
