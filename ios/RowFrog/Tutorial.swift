@@ -69,7 +69,7 @@ enum WhatsNew {
             Point(symbol: "arrow.left.arrow.right", text: tr("The way out and the way back lie side by side, each coloured for the time you row it.")),
             Point(symbol: "figure.rower", text: tr("Lake at the boat's time: move the boat along your route and see the lake when you get there.")),
             Point(symbol: "arrow.triangle.capsulepath", text: tr("Row a loop: tap within 50 m of your club, or use Close loop.")),
-            Point(symbol: "hand.draw", text: tr("Tap a turning point to delete just that one, or hold and drag it to move it.")),
+            Point(symbol: "hand.draw", text: tr("Tap a turning point to delete just that one, or drag it to move it.")),
             Point(symbol: "map", text: tr("Open in Maps now gives directions to the club's address.")),
             Point(symbol: "rectangle.bottomhalf.inset.filled", text: tr("The panel under the lake map is smaller. Pull it up for the details.")),
         ]
