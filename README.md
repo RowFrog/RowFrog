@@ -149,8 +149,10 @@ as a loop. The app reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
 **Battery.** The app keeps its battery use low: the radar only updates on the
 page in front, readings and map pictures are reused, widgets redraw only when
 something changed, and the launch point map stays a still picture until it is
-tapped. In Low Power Mode the tiles are drawn solid and the radar updates less
-often.
+tapped. A blurred background picture is blurred once, not on every frame, and
+Add a place looks up the water only once the map stops moving. In Low Power
+Mode the tiles are drawn solid and the radar updates less often. The app does
+nothing in the background; only the widgets load forecasts on their own.
 
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
 the coming week: no ice, shore ice possible, ice forming, ice cover likely,
@@ -202,14 +204,18 @@ adds a line such as "Light rain from 14:30".
 **Settings** (cog in the page bar of the club pages and on the location
 list; the list goes back to the club page with a button named after the club):
 
-- Appearance (light, dark or as the phone is set) and a Landscape switch (on by default; off
-  keeps the app upright).
+- Appearance (light, dark or as the phone is set; a note says dark saves
+  battery on OLED iPhones) and a Landscape switch (on by default; off keeps
+  the app upright).
 - Units with icons (wind in m/s, km/h, knots, mph or Beaufort; °C or °F; waves in m, cm or ft), language
   (English or German), date and time formats.
 - Background pictures for all pages, single pages or single clubs: clear or
   blurred, frosted, solid or Liquid Glass tiles (iOS 26), or your own photo.
   On club pages the picture fills the screen behind the status and page bars
   and fades between clubs while swiping.
+- Widget updates: every 30 minutes (default), every hour, every 2 hours, or
+  only after using the app. Less often saves battery and data, but a new DWD
+  warning reaches the widgets later.
 - App icon: the coxed double "rowing light" icon in light, dark and tinted,
   plus 10 alternates.
 - Help: the full legend of symbols, and replay the tour. One-time tips point
