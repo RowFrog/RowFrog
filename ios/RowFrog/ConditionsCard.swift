@@ -790,6 +790,8 @@ private struct ConditionChart: View {
     static let mapGreen = Color(red: 0.24, green: 0.6, blue: 0.31)
     /// How far the green marker reaches up while linked.
     private static let mapMarkerHeight: CGFloat = 24
+    /// For comparing (`-RWMapBadgeBottom YES`): the unlinked map's badge stays at the bottom.
+    private static let badgeAtBottom = UserDefaults.standard.bool(forKey: "RWMapBadgeBottom")
     /// The chain between the blue line and the map's marker while linked.
     private static let chainHeight: CGFloat = 14
 
@@ -1075,7 +1077,7 @@ private struct ConditionChart: View {
                         .foregroundStyle(.white)
                         .frame(width: 13, height: 13)
                         .background(green, in: RoundedRectangle(cornerRadius: 3))
-                        .offset(x: px - 6.5, y: short ? plot.maxY - 17 : plot.minY + 2)
+                        .offset(x: px - 6.5, y: short || Self.badgeAtBottom ? plot.maxY - 17 : plot.minY + 2)
                         .opacity(time.mapOutOfRange ? 0.5 : 1)
                 }
             }

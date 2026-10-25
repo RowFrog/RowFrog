@@ -83,6 +83,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWOpenRadarMap YES` open the rain radar map (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWOpenWeatherMap <layer>` open the weather map from the detail view opened with `-RWOpenCondition` (layers: `wind`, `gust`, `temperature`, `feelsLike`, `humidity`, `pressure`, `visibility`, `rain`, `uv`, `lightning`, `fog`)
 - `-RWMapTimeLinked NO` detail views open with the map on its own time (chain off)
+- `-RWMapBadgeBottom YES` the unlinked map's badge stays at the bottom of the chart instead of moving to the top (for comparing)
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
