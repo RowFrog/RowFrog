@@ -331,7 +331,11 @@ struct ListMetrics: View {
             }
             GridRow {
                 Label(Format.waves(hour.waveHeightM), systemImage: Condition.waves.symbol)
-                if let ice, ice.status != "unavailable" {
+                if IceSeason.isOff(ice) {
+                    Label(tr("Off season"), systemImage: Condition.ice.symbol)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(tr("Ice: off season"))
+                } else if let ice, ice.status != "unavailable" {
                     Label(ice.title, systemImage: Condition.ice.symbol)
                         .accessibilityLabel(tr("Ice: %@", ice.title))
                 } else {

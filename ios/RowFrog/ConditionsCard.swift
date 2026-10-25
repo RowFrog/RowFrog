@@ -151,6 +151,8 @@ private struct ConditionTile: View {
     @Environment(\.surface) private var surface
 
     private var hour: ForecastHour { data.now }
+    /// The ice tile outside November to April: greyed out, still opens its detail.
+    private var offSeason: Bool { condition == .ice && IceSeason.isOff(data.forecast.ice) }
 
     var body: some View {
         Group {
@@ -169,11 +171,12 @@ private struct ConditionTile: View {
                         accessory.frame(height: Self.graphicHeight)
                     }
                 }
+                .opacity(offSeason ? 0.45 : 1)
             }
         }
         .padding(8)
         .frame(maxWidth: .infinity, minHeight: 78, maxHeight: .infinity, alignment: .topLeading)
-        .background(surface.tile, in: RoundedRectangle(cornerRadius: 10))
+        .background(surface.tile.opacity(offSeason ? 0.5 : 1), in: RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
     }
 
@@ -315,6 +318,7 @@ private struct ConditionTile: View {
 
     /// Until the ice estimate is in the app: warm water cannot freeze over.
     private var iceGuess: (value: String, detail: String) {
+        if offSeason { return (tr("Off season"), tr("Nov–Apr")) }
         if let ice = data.forecast.ice, ice.status != "unavailable" {
             return (ice.title, ice.detail)
         }
@@ -1532,6 +1536,15 @@ extension ConditionDetail {
     }
 
     private static func ice(_ d: ConditionData) -> ConditionDetail {
+        if IceSeason.isOff(d.forecast.ice) {
+            return ConditionDetail(
+                value: tr("Off season"),
+                note: tr("Ice estimates run from November to April. There is no ice estimate at this time of year."),
+                facts: [(tr("Water"), Format.temperature(d.forecast.ice?.waterTemperatureC ?? d.water?.celsius, digits: 1))],
+                rowing: tr("Never go onto the ice because of this app. Never row between ice floes; thin ice cuts hulls."),
+                source: Condition.ice.explanation
+            )
+        }
         if let ice = d.forecast.ice, ice.status != "unavailable" {
             var facts: [(String, String)] = [(tr("Water"), Format.temperature(ice.waterTemperatureC ?? d.water?.celsius, digits: 1))]
             if let cm = ice.thicknessCm, cm > 0 { facts.append((tr("Ice"), tr("About %@ cm, estimated", Format.number(cm)))) }
