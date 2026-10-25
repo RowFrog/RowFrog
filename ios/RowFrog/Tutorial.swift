@@ -26,7 +26,7 @@ enum Tutorial {
     }
 
     /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all,
-    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view).
+    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view, water estimate).
     static func configureTips() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: resetTipsKey) {
@@ -37,8 +37,8 @@ enum Tutorial {
         if defaults.bool(forKey: "RWNoTips") { Tips.hideAllTipsForTesting() }
         if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
         if defaults.bool(forKey: "RWLaterTips") {
-            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self])
-            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self])
+            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self])
+            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self])
         }
         try? Tips.configure([.displayFrequency(.immediate)])
     }
