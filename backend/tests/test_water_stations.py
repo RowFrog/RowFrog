@@ -2,7 +2,7 @@ import asyncio
 from datetime import datetime, timezone
 
 from rowfrog import api, water_stations
-from rowfrog.sources import pegelonline
+from rowfrog.sources import bafu, pegelonline
 
 
 def test_each_club_reads_its_nearest_station():
@@ -11,10 +11,12 @@ def test_each_club_reads_its_nearest_station():
     herrsching = water_stations.for_club(data.clubs["tsv-herrsching-abt-wassersport"], data.lakes["ammersee"])
     assert (herrsching.network, herrsching.id, herrsching.kind) == ("gkd", "stegen-16602008", "lake")
     assert herrsching.distance_km == 11.7
-    # Bodensee: the Swiss clubs nearest to Lindau read it, the far western clubs do not.
+    # Bodensee: the clubs nearest to Lindau read it, the far western clubs do not.
     arbon = data.clubs["seeclub-arbon"]
     assert water_stations.for_club(arbon, data.lakes[arbon.lake_id]).id == "lindau-20001001"
-    far = [c for c in data.clubs_on(arbon.lake_id) if c.id not in ("seeclub-arbon", "seeclub-rorschach")]
+    near = ("seeclub-arbon", "seeclub-rorschach", "ruderverein-wiking-bregenz", "ruderverein-friedrichshafen")
+    assert all(water_stations.for_club(data.clubs[c], data.lakes["bodensee"]).id == "lindau-20001001" for c in near)
+    far = [c for c in data.clubs_on(arbon.lake_id) if c.id not in near]
     assert far and all(water_stations.for_club(c, data.lakes[c.lake_id]) is None for c in far)
     # A river station on the Main.
     wuerzburg = water_stations.for_club(data.clubs["akademischer-ruderclub-wuerzburg"], data.lakes["river-main"])
@@ -27,7 +29,7 @@ def test_each_club_reads_its_nearest_station():
 
 def test_only_used_networks_are_listed():
     networks = {s.network for s in water_stations._load().values()}
-    assert networks <= {"gkd", "pegelonline"}
+    assert networks == {"gkd", "pegelonline", "bafu"}
 
 
 def test_pegelonline_rows_newest_first():
@@ -53,3 +55,17 @@ def test_pegelonline_station_credit_and_place(monkeypatch):
     assert asyncio.run(api._water(None, station, datetime(2026, 10, 18, 6, tzinfo=timezone.utc)))[0] == reading
     assert api._water_station_json(station) == {"network": "pegelonline", "name": station.name, "distanceKm": station.distance_km}
     assert api._water_station_json(water_stations.Station("gkd", "starnberg-16663002")) is None
+
+
+def test_bafu_values_newest_first_and_credited(monkeypatch):
+    payload = [
+        {"timestamp": 1792922400, "loc": "2135", "par": "temperature", "val": 10.9},
+        {"timestamp": 1792923000, "loc": "2135", "par": "temperature", "val": 11.0},
+        {"timestamp": 1792923000, "loc": "2135", "par": "flow", "val": 120.0},
+    ]
+    found = bafu.parse(payload)
+    assert [r.celsius for r in found] == [11.0, 10.9]
+    bern = api._locations.clubs["rowing-club-bern"]
+    station = water_stations.for_club(bern, api._locations.lakes[bern.lake_id])
+    assert (station.network, station.id) == ("bafu", "2135")
+    assert api.STATION_CREDIT["bafu"].startswith("Water temperature: Bundesamt für Umwelt BAFU")

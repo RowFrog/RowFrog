@@ -31,6 +31,16 @@
       "lon": 11.1309,
       "distanceKm": 10.8
     },
+    "basler-ruder-club": {
+      "network": "bafu",
+      "id": "2613",
+      "name": "Weil, Palmrainbrücke",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.6014,
+      "lon": 7.5947,
+      "distanceKm": 5.3
+    },
     "bessel-ruder-club": {
       "network": "pegelonline",
       "id": "8bccd43b-ed6f-4ed8-ae6e-80ad7e330658",
@@ -201,6 +211,16 @@
       "lon": 8.35523,
       "distanceKm": 26.7
     },
+    "limmat-club-baden": {
+      "network": "bafu",
+      "id": "2243",
+      "name": "Baden, Limmatpromenade",
+      "water": "Limmat",
+      "kind": "river",
+      "lat": 47.4757,
+      "lon": 8.3094,
+      "distanceKm": 1.0
+    },
     "miltenberger-ruder-club-von-1900": {
       "network": "pegelonline",
       "id": "355b02d2-c578-46d9-a56b-8046d470cb95",
@@ -261,6 +281,16 @@
       "lon": 8.714995,
       "distanceKm": 3.7
     },
+    "pontoniersportverein-laufenburg": {
+      "network": "bafu",
+      "id": "2091",
+      "name": "Rheinfelden",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.5607,
+      "lon": 7.7999,
+      "distanceKm": 19.9
+    },
     "rendsburger-ruderverein": {
       "network": "pegelonline",
       "id": "7f01fbd8-653c-40ba-8ed0-57386a9b4557",
@@ -270,6 +300,16 @@
       "lat": 54.223219,
       "lon": 9.435676,
       "distanceKm": 18.2
+    },
+    "rowing-club-bern": {
+      "network": "bafu",
+      "id": "2135",
+      "name": "Bern, Schönau",
+      "water": "Aare",
+      "kind": "river",
+      "lat": 46.9331,
+      "lon": 7.448,
+      "distanceKm": 6.0
     },
     "rr-am-helene-lange-gymnasium-rendsburg": {
       "network": "pegelonline",
@@ -391,6 +431,36 @@
       "lon": 13.072071,
       "distanceKm": 24.7
     },
+    "ruderclub-bad-saeckingen": {
+      "network": "bafu",
+      "id": "2091",
+      "name": "Rheinfelden",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.5607,
+      "lon": 7.7999,
+      "distanceKm": 10.6
+    },
+    "ruderclub-baden": {
+      "network": "bafu",
+      "id": "2243",
+      "name": "Baden, Limmatpromenade",
+      "water": "Limmat",
+      "kind": "river",
+      "lat": 47.4757,
+      "lon": 8.3094,
+      "distanceKm": 2.4
+    },
+    "ruderclub-grenzach": {
+      "network": "bafu",
+      "id": "2613",
+      "name": "Weil, Palmrainbrücke",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.6014,
+      "lon": 7.5947,
+      "distanceKm": 8.8
+    },
     "ruderclub-koenigs-wusterhausen": {
       "network": "pegelonline",
       "id": "0e0dbcc9-0a7d-494a-bc92-52e56a7fffe2",
@@ -411,6 +481,36 @@
       "lon": 8.953596,
       "distanceKm": 2.4
     },
+    "ruderclub-olten": {
+      "network": "bafu",
+      "id": "2016",
+      "name": "Brugg",
+      "water": "Aare",
+      "kind": "river",
+      "lat": 47.4825,
+      "lon": 8.1949,
+      "distanceKm": 26.0
+    },
+    "ruderclub-rheinfeldenbaden": {
+      "network": "bafu",
+      "id": "2091",
+      "name": "Rheinfelden",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.5607,
+      "lon": 7.7999,
+      "distanceKm": 2.4
+    },
+    "ruderclub-schaffhausen": {
+      "network": "bafu",
+      "id": "2288",
+      "name": "Neuhausen, Flurlingerbrücke",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.6815,
+      "lon": 8.6263,
+      "distanceKm": 2.3
+    },
     "ruderclub-zellingen": {
       "network": "gkd",
       "id": "erlabrunn-messstation-24043800",
@@ -420,6 +520,16 @@
       "lat": 49.8551,
       "lon": 9.8537,
       "distanceKm": 5.1
+    },
+    "rudergemeinschaft-seeclub-zuerich": {
+      "network": "bafu",
+      "id": "2143",
+      "name": "Rekingen",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.5703,
+      "lon": 8.3298,
+      "distanceKm": 13.7
     },
     "rudergesellschaft-marktheidenfeld": {
       "network": "pegelonline",
@@ -511,6 +621,16 @@
       "lon": 13.072071,
       "distanceKm": 12.5
     },
+    "ruderverein-friedrichshafen": {
+      "network": "gkd",
+      "id": "lindau-20001001",
+      "name": "Lindau",
+      "water": "Bodensee",
+      "kind": "lake",
+      "lat": 47.5446,
+      "lon": 9.685,
+      "distanceKm": 19.0
+    },
     "ruderverein-fuer-das-grosse-freie-ev-lehrtesehnde": {
       "network": "pegelonline",
       "id": "bc20d819-1782-4588-885d-129f21a27cf9",
@@ -571,6 +691,16 @@
       "lon": 9.306544,
       "distanceKm": 6.0
     },
+    "ruderverein-wiking-bregenz": {
+      "network": "gkd",
+      "id": "lindau-20001001",
+      "name": "Lindau",
+      "water": "Bodensee",
+      "kind": "lake",
+      "lat": 47.5446,
+      "lon": 9.685,
+      "distanceKm": 5.3
+    },
     "rudervereinigung-hellas-titania-berlin": {
       "network": "pegelonline",
       "id": "5e10e1e7-9115-4bd7-ad57-e2062f516891",
@@ -610,6 +740,16 @@
       "lat": 47.5446,
       "lon": 9.685,
       "distanceKm": 16.9
+    },
+    "solothurner-ruderclub": {
+      "network": "bafu",
+      "id": "2029",
+      "name": "Brügg, Aegerten",
+      "water": "Aare",
+      "kind": "river",
+      "lat": 47.1221,
+      "lon": 7.2834,
+      "distanceKm": 20.6
     },
     "sportverein-energie-berlin-ev-abt-rudern": {
       "network": "pegelonline",
@@ -660,6 +800,16 @@
       "lat": 47.9973,
       "lon": 11.3493,
       "distanceKm": 12.6
+    },
+    "wassersport-verein-waldshut": {
+      "network": "bafu",
+      "id": "2143",
+      "name": "Rekingen",
+      "water": "Rhein",
+      "kind": "river",
+      "lat": 47.5703,
+      "lon": 8.3298,
+      "distanceKm": 11.1
     },
     "wassersportfreunde-burg-ev-1924": {
       "network": "pegelonline",
