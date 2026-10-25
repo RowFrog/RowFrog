@@ -7,7 +7,7 @@ from pathlib import Path
 from PIL import Image
 
 src = Path(sys.argv[1])
-dest = Path("ios/RowerWeather/Backgrounds")
+dest = Path("ios/RowFrog/Backgrounds")
 dest.mkdir(parents=True, exist_ok=True)
 for png in sorted(src.glob("*.png")):
     if png.stem in {"sheet", "crop"}:

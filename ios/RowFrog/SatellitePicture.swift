@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// Sentinel-2 pictures of a lake, published by the backend
-/// (backend/rowerweather/sources/sentinel2.py, scripts/publish_static.py) next to
+/// (backend/rowfrog/sources/sentinel2.py, scripts/publish_static.py) next to
 /// the lake view: lakes/<id>/satellite describes them, the pictures lie beside it.
 struct SatellitePicture: Decodable, Hashable {
     /// One picture: the day of the pass and how much of the lake was under cloud.

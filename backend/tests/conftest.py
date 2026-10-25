@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from rowerweather import api
+from rowfrog import api
 
 
 @pytest.fixture(autouse=True)

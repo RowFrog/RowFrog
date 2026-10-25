@@ -33,7 +33,7 @@ from collections import Counter
 
 import httpx
 
-from rowerweather import locations, outlines
+from rowfrog import locations, outlines
 
 TOKEN_URL = "https://identity.dataspace.copernicus.eu/auth/realms/CDSE/protocol/openid-connect/token"
 SH = "https://sh.dataspace.copernicus.eu"
@@ -279,7 +279,7 @@ def backend_check(locs) -> None:
     """The backend's own reader (sources.lake_ice_satellite), as on 8 March 2026."""
     from datetime import date
 
-    from rowerweather.sources import lake_ice_satellite
+    from rowfrog.sources import lake_ice_satellite
 
     say()
     say("## Backend reader, as on 2026-03-08 (passes from 2026-03-04 on)")

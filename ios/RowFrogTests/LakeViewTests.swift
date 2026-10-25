@@ -1,6 +1,6 @@
 import CoreLocation
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class LakeViewTests: XCTestCase {
     /// A 2 x 3 grid with four water cells, two forecast points and two parts.

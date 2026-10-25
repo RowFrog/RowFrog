@@ -15,7 +15,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from rowerweather import limits, usage
+from rowfrog import limits, usage
 
 
 def main() -> int:

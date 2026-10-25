@@ -1,6 +1,6 @@
 """HTTP API for the iPhone app.
 
-Run locally:  uvicorn rowerweather.api:app --reload   (from the backend folder)
+Run locally:  uvicorn rowfrog.api:app --reload   (from the backend folder)
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ ATTRIBUTION = [
     "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 ]
 
-app = FastAPI(title="RowerWeather")
+app = FastAPI(title="RowFrog")
 _locations = locations.load()
 _cache: dict[str, tuple[float, tuple]] = {}
 # Forecasts loaded ahead in bulk (scripts/publish_static.py), used once instead of a call per club.

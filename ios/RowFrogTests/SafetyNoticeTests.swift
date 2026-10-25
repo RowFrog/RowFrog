@@ -1,5 +1,5 @@
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class SafetyNoticeTests: XCTestCase {
     private var saved: (Any?, Any?)

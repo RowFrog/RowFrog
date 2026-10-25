@@ -1,5 +1,5 @@
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class CountriesAndOwnPlacesTests: XCTestCase {
     private var defaults: UserDefaults!
@@ -131,7 +131,7 @@ final class CountriesAndOwnPlacesTests: XCTestCase {
     }
 
     func testSunTimesMatchTheBackend() throws {
-        // backend/rowerweather/sun.py gives 05:37 and 16:21 UTC for Starnberg on 18 Oct 2026.
+        // backend/rowfrog/sun.py gives 05:37 and 16:21 UTC for Starnberg on 18 Oct 2026.
         let day = ISO8601DateFormatter().date(from: "2026-10-18T12:00:00Z")!
         let sun = try XCTUnwrap(Sun.day(day, lat: 47.99667, lon: 11.34745))
         let formatter = DateFormatter()

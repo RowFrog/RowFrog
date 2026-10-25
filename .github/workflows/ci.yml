@@ -42,7 +42,7 @@ jobs:
           DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
           echo "Using simulator: $DEVICE"
           xcodebuild test \
-            -project RowerWeather.xcodeproj \
-            -scheme RowerWeather \
+            -project RowFrog.xcodeproj \
+            -scheme RowFrog \
             -destination "platform=iOS Simulator,name=$DEVICE" \
             CODE_SIGNING_ALLOWED=NO

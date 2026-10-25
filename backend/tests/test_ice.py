@@ -1,11 +1,11 @@
 import asyncio
 from datetime import date, datetime, timedelta, timezone
 
-from rowerweather import api, ice
-from rowerweather.forecast import rowing_forecast
-from rowerweather.locations import Club, Lake, Point
-from rowerweather.score import Light
-from rowerweather.sources.open_meteo import ForecastHour
+from rowfrog import api, ice
+from rowfrog.forecast import rowing_forecast
+from rowfrog.locations import Club, Lake, Point
+from rowfrog.score import Light
+from rowfrog.sources.open_meteo import ForecastHour
 
 TODAY = date(2027, 1, 20)
 
@@ -120,7 +120,7 @@ def test_api_ice_json(monkeypatch):
 
 
 def _pass(day, ice_px, water_px, pixels=1000):
-    from rowerweather.sources.lake_ice_satellite import SatellitePass
+    from rowfrog.sources.lake_ice_satellite import SatellitePass
 
     return SatellitePass(day, pixels, ice_px, water_px)
 
@@ -153,7 +153,7 @@ def test_cloudy_or_old_satellite_passes_are_not_used():
 
 
 def test_satellite_pixel_count():
-    from rowerweather.sources.lake_ice_satellite import count, inside
+    from rowfrog.sources.lake_ice_satellite import count, inside
 
     p = count([0, 0, 1, 2, 3, 3, 3, 5], TODAY)
     assert (p.pixels, p.ice, p.water) == (8, 2, 3)

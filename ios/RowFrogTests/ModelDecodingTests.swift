@@ -1,5 +1,5 @@
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class ModelDecodingTests: XCTestCase {
     func testDecodesBackendForecast() throws {

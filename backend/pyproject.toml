@@ -1,7 +1,7 @@
 [project]
-name = "rowerweather"
+name = "rowfrog"
 version = "0.1.0"
-description = "Backend for RowerWeather: merges weather and lake data into a rowing forecast per launch point"
+description = "Backend for Row Frog: merges weather and lake data into a rowing forecast per launch point"
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.110",
@@ -19,7 +19,7 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
-include = ["rowerweather*"]
+include = ["rowfrog*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

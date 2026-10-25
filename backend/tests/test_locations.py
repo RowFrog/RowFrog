@@ -1,6 +1,6 @@
 import json
 
-from rowerweather import locations
+from rowfrog import locations
 
 
 def test_confirmed_clubs_have_short_names():
