@@ -315,7 +315,7 @@ private struct PageBar: View {
                 }
             }
             Spacer()
-            Spacer().frame(width: 44)
+            Spacer().frame(width: 56)
             if let showList {
                 Button(action: showList) {
                     Image(systemName: "list.bullet")
@@ -341,8 +341,9 @@ private struct PageBar: View {
                 Text(boat.shortName)
                     .font(.system(size: 9, weight: .medium))
                     .lineLimit(1)
+                    .truncationMode(.tail)
             }
-            .frame(width: 44, height: 44)
+            .frame(width: 56, height: 44)
         }
         .accessibilityLabel(tr("Boat: %@", boat.title))
         .accessibilityHint(tr("Picks another boat for the rowing light."))

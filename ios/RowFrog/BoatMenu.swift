@@ -55,12 +55,14 @@ struct BoatMenu<MenuLabel: View>: View {
 }
 
 extension Boat {
-    /// The boat's short name for the page bar: "Small", "Big" or its class, as "4x".
+    /// The boat's name for the page bar: "Small", "Big", its own name, or its
+    /// class, as "4x", when it has none. The bar cuts long names short.
     var shortName: String {
         switch id {
         case Self.small.id: tr("Small")
         case Self.big.id: tr("Big")
-        default: boatClass.rawValue
+        default:
+            name.trimmingCharacters(in: .whitespaces).isEmpty ? boatClass.rawValue : name.trimmingCharacters(in: .whitespaces)
         }
     }
 }
