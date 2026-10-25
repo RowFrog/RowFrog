@@ -66,7 +66,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .waves: AppSettings.shared.waveUnit.symbol
         case .precipitation: AppSettings.shared.rainUnit.symbol
         case .humidity: "%"
-        case .pressure: "hPa"
+        case .pressure: AppSettings.shared.pressureUnit.symbol
         case .visibility: AppSettings.shared.distanceUnit.symbol
         case .cloudCover: "%"
         case .thunderstorm, .uvIndex, .ice, .daylight: ""

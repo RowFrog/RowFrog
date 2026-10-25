@@ -226,16 +226,19 @@ private struct StickyHourlyHeader: View {
         GeometryReader { geo in
             let top = geo.frame(in: .global).minY
             let height = HourlyStickyHeader.height
-            if hourlyFrame.height > 0, hourlyFrame.minY + 40 < top, hourlyFrame.maxY - height * 2 > top {
+            if hourlyFrame.height > 0, hourlyFrame.minY + 40 < top, hourlyFrame.maxY > top {
                 let day = dayTops.filter { $0.value <= top + height }.max { $0.value < $1.value }?.key
                     ?? dayTops.keys.min()
                 HourlyStickyHeader(day: day)
                     .frame(width: hourlyFrame.width)
-                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX)
+                    // At the end of the table the last rows push the header up and away,
+                    // instead of it vanishing while rows are still under it.
+                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX, y: min(0, hourlyFrame.maxY - top - height))
                     .transition(.opacity)
             }
         }
         .frame(height: HourlyStickyHeader.height)
+        .clipped()
         .allowsHitTesting(false)
     }
 }
@@ -555,13 +558,7 @@ private struct NowCard: View {
             .accessibilityHint(tr("Opens a chart and more about this value"))
     }
 
-    /// Ice only when it matters: the estimate says more than open water, or
-    /// the water is cold enough to freeze.
-    private var iceValue: String? {
-        if let ice = forecast.ice, ice.status != "unavailable", ice.status != "open" { return ice.title }
-        if let c = water?.celsius, c < 8 { return forecast.ice.map(\.title) ?? tr("No data yet") }
-        return nil
-    }
+    private var iceValue: String? { forecast.iceValue }
 
     /// While DWD has no warning, one line says so; the warnings card itself
     /// only shows while a warning is issued or DWD could not be checked.
@@ -855,7 +852,9 @@ struct HourlyStickyHeader: View {
         .padding(.top, 8)
         .frame(height: Self.height, alignment: .top)
         // Material reads over any background picture and over the rows sliding under it.
-        .background(.regularMaterial, in: UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12))
+        // Rounded at the top like the tile, square at the bottom where the rows start,
+        // so the header keeps its shape when it starts to stay.
+        .background(.regularMaterial, in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
         .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
     }
 }

@@ -252,7 +252,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         ]
         case .settings: [
             TourPoint(symbol: "globe", text: tr("Language: English or German.")),
-            TourPoint(symbol: "ruler", text: tr("Units for temperature, wind, waves, rain and distances.")),
+            TourPoint(symbol: "ruler", text: tr("Units for temperature, wind, waves, rain, distances and air pressure.")),
             TourPoint(symbol: "circle.lefthalf.filled", text: tr("Light, dark or like your phone.")),
             TourPoint(symbol: "photo", text: tr("Background pictures, including your own photos.")),
             TourPoint(symbol: "app.badge", text: tr("Your choice of app icon.")),

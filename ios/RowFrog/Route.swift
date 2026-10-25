@@ -20,6 +20,15 @@ struct Route: Codable, Identifiable, Hashable {
         points.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) }
     }
 
+    /// The whole outing in metres, back to the start when rowed out and back.
+    var lengthM: Double {
+        let c = coordinates
+        let oneWay = zip(c, c.dropFirst()).reduce(0) { $0 + RoutePlanner.distance($1.0, $1.1) }
+        return outAndBack ? oneWay * 2 : oneWay
+    }
+
+    var isLoop: Bool { RouteEdit.isLoop(coordinates) }
+
     var trackCoordinates: [CLLocationCoordinate2D] {
         (track ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) }
     }
@@ -53,6 +62,35 @@ final class RouteStore {
 
     func delete(_ route: Route) {
         routes.removeAll { $0.id == route.id }
+        persist()
+    }
+
+    func rename(_ route: Route, to name: String) {
+        guard let i = routes.firstIndex(where: { $0.id == route.id }) else { return }
+        routes[i].name = name
+        persist()
+    }
+
+    /// A copy right after the route, named "… (copy)".
+    @discardableResult
+    func duplicate(_ route: Route) -> Route {
+        var copy = route
+        copy.id = UUID()
+        copy.name = tr("%@ (copy)", route.name)
+        let i = routes.firstIndex(where: { $0.id == route.id }).map { $0 + 1 } ?? routes.endIndex
+        routes.insert(copy, at: i)
+        persist()
+        return copy
+    }
+
+    /// Moves routes within one lake's list; other lakes' routes keep their places.
+    func move(on lakeID: String, from source: IndexSet, to destination: Int) {
+        let all = routes(on: lakeID)
+        let moving = source.map { all[$0] }
+        var lake = all.enumerated().filter { !source.contains($0.offset) }.map(\.element)
+        lake.insert(contentsOf: moving, at: destination - source.filter { $0 < destination }.count)
+        var next = lake.makeIterator()
+        routes = routes.map { $0.lakeId == lakeID ? next.next() ?? $0 : $0 }
         persist()
     }
 

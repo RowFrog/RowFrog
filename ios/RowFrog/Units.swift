@@ -107,6 +107,58 @@ enum RainUnit: String, CaseIterable, Identifiable {
     }
 }
 
+/// Air pressure; the backend sends hPa (the same as mbar).
+enum PressureUnit: String, CaseIterable, Identifiable {
+    case hectopascals, millibars, bars, inchesOfMercury, millimetersOfMercury
+    var id: String { rawValue }
+
+    var symbol: String {
+        switch self {
+        case .hectopascals: "hPa"
+        case .millibars: "mbar"
+        case .bars: "bar"
+        case .inchesOfMercury: "inHg"
+        case .millimetersOfMercury: "mmHg"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .hectopascals: tr("Hectopascals")
+        case .millibars: tr("Millibars")
+        case .bars: tr("Bars")
+        case .inchesOfMercury: tr("Inches of mercury")
+        case .millimetersOfMercury: tr("Millimetres of mercury")
+        }
+    }
+
+    /// Decimals for a level, and for a change over a few hours.
+    var digits: Int {
+        switch self {
+        case .hectopascals, .millibars, .millimetersOfMercury: 0
+        case .bars: 3
+        case .inchesOfMercury: 2
+        }
+    }
+
+    var changeDigits: Int {
+        switch self {
+        case .hectopascals, .millibars, .millimetersOfMercury: 1
+        case .bars: 4
+        case .inchesOfMercury: 2
+        }
+    }
+
+    func convert(_ hpa: Double) -> Double {
+        switch self {
+        case .hectopascals, .millibars: hpa
+        case .bars: hpa / 1000
+        case .inchesOfMercury: hpa / 33.8639
+        case .millimetersOfMercury: hpa * 0.750062
+        }
+    }
+}
+
 /// For visibility and the open water upwind.
 enum DistanceUnit: String, CaseIterable, Identifiable {
     case kilometers, miles, nauticalMiles
@@ -289,5 +341,21 @@ extension Format {
     static func distance(_ meters: Double?) -> String {
         guard meters != nil else { return "–" }
         return "\(distanceNumber(meters)) \(settings.distanceUnit.symbol)"
+    }
+
+    static func pressureNumber(_ hpa: Double?) -> String {
+        guard let hpa else { return "–" }
+        return number(settings.pressureUnit.convert(hpa), digits: settings.pressureUnit.digits)
+    }
+
+    /// "1013 hPa", "1.013 bar", "29.92 inHg".
+    static func pressure(_ hpa: Double?) -> String {
+        guard hpa != nil else { return "–" }
+        return "\(pressureNumber(hpa)) \(settings.pressureUnit.symbol)"
+    }
+
+    /// A change over some hours: "2.5 hPa", "0.07 inHg".
+    static func pressureChange(_ hpa: Double) -> String {
+        "\(number(settings.pressureUnit.convert(hpa), digits: settings.pressureUnit.changeDigits)) \(settings.pressureUnit.symbol)"
     }
 }
