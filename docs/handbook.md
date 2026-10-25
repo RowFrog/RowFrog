@@ -67,6 +67,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
+- `-RWRoute "lat,lon;lat,lon;…"` open route mode with these points (a new route goes one way); `-RWOutAndBack YES` rows it out and back
 - `-RWImportRows YES` open "Import a row" in the lake view with made-up Apple Health rows (Health is not asked); `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points (2:20 per 500 m, a week ago); `-RWShowTrack YES` shows the rowed track (the switch in the bookmark menu)
 - `-RWChartSelect 5` a detail chart opens with the scrub line five hours from now
 - `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
