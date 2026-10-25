@@ -41,7 +41,7 @@ search covers the clubs in Germany, Austria and Switzerland (see
 [Club catalog](#club-catalog)) in one box, with country chips to narrow it,
 and the clubs can also be browsed country by country.
 Pages swipe left and right between saved locations, like the iOS Weather
-app. The list shows each location's light and key numbers; swipe a row to
+app. The list shows each location's light and key numbers, with feels like under the temperature; swipe a row to
 remove it or make it the home base. The saved list stays on the phone.
 
 **Add a place.** A club, boathouse or spot on the water that no list has can
@@ -77,8 +77,9 @@ get a better light, the page suggests it.
 small graphic: wind, gusts, waves, temperatures, rain, cloud, visibility,
 pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
 a detail view with a chart you can drag from yesterday to 7 days ahead, with
-a line that shows the values at any time and dots for now ("Back to now"
-returns there), the limit lines (named on the side away from now), wind arrows
+a line that shows the values at any time and dots for now ("Back to now",
+or "Back to" the hour it was opened from, returns there), a unit switch at the
+bottom (air pressure in hPa, mbar, bar, inHg or mmHg), the limit lines (named on the side away from now), wind arrows
 every 3 hours, an "About the limits" note, advice for rowing and the data
 source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views
 or jump to another from the symbol at the top; tapping an entry in a chart's
@@ -102,12 +103,13 @@ Below 4 °C it warns of near-freezing water.
 **Water temperature.** Each club reads the nearest measuring station on its
 own water, from GKD Bayern, the German federal PEGELONLINE network or the
 Swiss federal stations (BAFU, via api.existenz.ch); 85 clubs so far, listed
-in `data/water-stations.json`. The water temperature view shows where the
-station is on a map. For lakes without a station the
+in `data/water-stations.json`. The water temperature view names the
+station's operator and shows the station on a still map with its address. For lakes without a station the
 backend works out a satellite estimate from Copernicus lake surface
 temperatures and Landsat (through Microsoft's Planetary Computer, no extra
 account), carried forward with the air temperatures; the top tile shows it
-in grey as "Estimated".
+in grey as "Estimated", and the detail view names the satellite and the date
+of the reading.
 
 **DWD warnings.** The page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
@@ -135,7 +137,8 @@ it will be where the boat is at each moment. Turning points can be dragged or
 deleted, and a loop closes when it ends within 50 m of the start or with a
 button. While planning, a compact panel shows only the route's result,
 start time, pace and out and back, so the map keeps the screen. Routes are
-saved on the phone. "Import a row" turns a row you already did into a
+saved on the phone; "Manage routes" lists them with their length and whether
+they are a loop, to rename, duplicate, delete or reorder. "Import a row" turns a row you already did into a
 route: a rowing workout from Apple Health or a GPX, TCX or FIT file from
 another app, with the real pace as the starting pace and the rowed track as
 an optional line on the map. Health access is asked for only for this, and
@@ -153,6 +156,12 @@ tapped. A blurred background picture is blurred once, not on every frame, and
 Add a place looks up the water only once the map stops moving. In Low Power
 Mode the tiles are drawn solid and the radar updates less often. The app does
 nothing in the background; only the widgets load forecasts on their own.
+
+**Data use.** Forecasts that have not changed are not downloaded again, and
+the club list is kept on the phone for a day. With "Save mobile data" on
+(while on mobile data) or in iOS Low Data Mode, satellite pictures load only
+when tapped, the radar map steps in half hours and the radar card updates
+every 15 minutes.
 
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
 the coming week: no ice, shore ice possible, ice forming, ice cover likely,
@@ -197,9 +206,13 @@ the club's name (no internet, server did not answer, no forecast for this
 club); a tap explains whose side it is on and offers "Try again".
 
 **Widgets.** Home-screen and lock-screen widgets show the rowing light first,
-with the temperature and the weather symbol beside each other. When the
-light is green but the rain radar sees rain coming within 2 hours, the widget
-adds a line such as "Light rain from 14:30".
+then the values in the top tile's order, each with its symbol: temperature
+and feels like beside the weather symbol, water, wind, waves, rain,
+visibility and daylight. When the light is green but the rain radar sees rain
+coming within 2 hours, the widget adds a line such as "Light rain from 14:30".
+Behind them goes a sky in the weather's colours (the default), the rowing
+light's colour, the club's app picture or another picture, the satellite
+picture of the lake, or plain white or black.
 
 **Settings** (cog in the page bar of the club pages and on the location
 list; the list goes back to the club page with a button named after the club):
@@ -211,11 +224,14 @@ list; the list goes back to the club page with a button named after the club):
   (English or German), date and time formats.
 - Background pictures for all pages, single pages or single clubs: clear or
   blurred, frosted, solid or Liquid Glass tiles (iOS 26), or your own photo.
-  On club pages the picture fills the screen behind the status and page bars
-  and fades between clubs while swiping.
-- Widget updates: every 30 minutes (default), every hour, every 2 hours, or
-  only after using the app. Less often saves battery and data, but a new DWD
+  The satellite picture of the club's lake can be a background too. On club
+  pages the picture fills the screen behind the status and page bars and
+  fades between clubs while swiping.
+- Widgets: the background for all widgets or per club (each widget can also
+  pick its own when you edit it), and how often they update: every 30 minutes
+  (default), every hour, every 2 hours, or only after using the app. Less often saves battery and data, but a new DWD
   warning reaches the widgets later.
+- Data use: "Save mobile data" (see above).
 - App icon: the coxed double "rowing light" icon in light, dark and tinted,
   plus 10 alternates.
 - Help: the full legend of symbols, and replay the tour. One-time tips point
