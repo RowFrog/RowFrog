@@ -586,6 +586,16 @@ private struct RadarMapView: UIViewRepresentable {
             self.renderer = renderer
             return renderer
         }
+
+        /// The club as on the lake view: a blue mark with a house.
+        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            guard annotation is MKPointAnnotation else { return nil }
+            let view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: nil)
+            view.glyphImage = UIImage(systemName: "house.fill")
+            view.markerTintColor = .systemBlue
+            view.displayPriority = .required
+            return view
+        }
     }
 }
 
