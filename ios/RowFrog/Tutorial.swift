@@ -26,7 +26,7 @@ enum Tutorial {
     }
 
     /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all,
-    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view, water estimate).
+    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view, water estimate, route stretch).
     static func configureTips() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: resetTipsKey) {
@@ -37,8 +37,8 @@ enum Tutorial {
         if defaults.bool(forKey: "RWNoTips") { Tips.hideAllTipsForTesting() }
         if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
         if defaults.bool(forKey: "RWLaterTips") {
-            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self])
-            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self])
+            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self])
+            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self])
         }
         try? Tips.configure([.displayFrequency(.immediate)])
     }
@@ -715,6 +715,18 @@ struct BoatTimeTip: Tip {
     var title: Text { Text(tr("Lake at the boat's time")) }
     var message: Text? { Text(tr("Move the boat along your route to see the lake at the time you get there.")) }
     var image: Image? { Image(systemName: "figure.rower") }
+}
+
+struct StretchPointTip: Tip {
+    var title: Text { Text(tr("Add a point on the way")) }
+    var message: Text? { Text(tr("Tap a stretch of your route to add a turning point there, or pull the stretch to add one and move it at once.")) }
+    var image: Image? { Image(systemName: "point.3.connected.trianglepath.dotted") }
+}
+
+struct OneWayTip: Tip {
+    var title: Text { Text(tr("One way or out and back")) }
+    var message: Text? { Text(tr("New routes go one way. Turn on Out and back to row the same way back.")) }
+    var image: Image? { Image(systemName: "arrow.uturn.backward") }
 }
 
 struct RowImportTip: Tip {
