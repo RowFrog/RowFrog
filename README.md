@@ -85,7 +85,7 @@ source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views
 or jump to another from the symbol at the top; tapping an entry in a chart's
 legend switches its line on or off.
 
-**Rowing limits.** Settings › Rowing limits chooses the limits the light
+**Rowing limits.** Settings › Boats and limits chooses the limits the light
 uses: *Small boats* (the default) or *Big boats*, or *My boats*, where each
 boat has a name, a type (racing, training, gig or coastal) and a size and
 rigging from 1x to 8+. Limits can be fine-tuned per group and per boat. A
@@ -130,11 +130,14 @@ waves, wind and the light for each part of the lake, and a spot you can tap
 for its details. A legend lists what is on the map, a switch puts Apple's
 satellite pictures under the lake, and wind arrows get denser as you zoom in.
 "Plan a route" checks a route on the lake against the
-forecast for the time you start, rowed once or out and back, and shows
+forecast for the time you start, rowed one way (the default) or out and
+back, and shows
 where and when it gets rough. The way out and the way back are drawn side
 by side, and "Lake at the boat's time" adds a slider that shows the lake as
-it will be where the boat is at each moment. Turning points can be dragged or
-deleted, and a loop closes when it ends within 50 m of the start or with a
+it will be where the boat is at each moment. Turning points move with a plain
+drag, sitting just above the finger with a magnifier and a dashed preview of
+the route; tapping or pulling a stretch of the route adds a point there.
+Points can be deleted, and a loop closes when it ends within 50 m of the start or with a
 button. While planning, a compact panel shows only the route's result,
 start time, pace and out and back, so the map keeps the screen. Routes are
 saved on the phone; "Manage routes" lists them with their length and whether
@@ -148,6 +151,14 @@ everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
 2-hour nowcast for the launch point, e.g. "Light rain from 21:30"; tapping it
 opens the radar map, with DWD's colour legend and a switch to play the radar
 as a loop. The app reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
+
+**Weather maps.** From the detail views a map opens for wind (with arrows),
+gusts, air temperature, feels like, humidity, air pressure, visibility and the
+rain forecast, made by the publishing job from DWD's ICON-D2 model (about 2 km)
+for each hour of the forecast, with no Open-Meteo calls. Lightning in the last
+hour and the UV index come live from DWD, fog and low cloud from the
+EUMETSAT satellite (`ios/RowFrog/WeatherMap.swift`,
+`backend/rowfrog/sources/icon_d2_maps.py`).
 
 **Battery.** The app keeps its battery use low: the radar only updates on the
 page in front, readings and map pictures are reused, widgets redraw only when
@@ -164,7 +175,8 @@ when tapped, the radar map steps in half hours and the radar card updates
 every 15 minutes.
 
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
-the coming week: no ice, shore ice possible, ice forming, ice cover likely,
+the coming week (from May to October the ice tile is greyed out as "Off
+season"): no ice, shore ice possible, ice forming, ice cover likely,
 or drift ice on rivers. Likely ice turns the hourly light red; possible shore
 or drift ice turns it amber. The estimate is a frost model over the last
 three months of air temperature plus the forecast week
@@ -215,34 +227,42 @@ light's colour, the club's app picture or another picture, the satellite
 picture of the lake, or plain white or black.
 
 **Settings** (cog in the page bar of the club pages and on the location
-list; the list goes back to the club page with a button named after the club):
+list; the list goes back to the club page with a button named after the club)
+works like the iOS Settings app: a "Rowing light for" boat picker at the top,
+then one page per topic, each row showing its current value, and a search
+field at the bottom.
 
-- Appearance (light, dark or as the phone is set; a note says dark saves
-  battery on OLED iPhones) and a Landscape switch (on by default; off keeps
-  the app upright).
-- Units with icons (wind in m/s, km/h, knots, mph or Beaufort; °C or °F; waves in m, cm or ft), language
-  (English or German), date and time formats.
-- Background pictures for all pages, single pages or single clubs: clear or
-  blurred, frosted, solid or Liquid Glass tiles (iOS 26), or your own photo.
-  The satellite picture of the club's lake can be a background too. On club
-  pages the picture fills the screen behind the status and page bars and
-  fades between clubs while swiping.
+- Boats and limits: the boat groups, My boats, the lake map colours and the
+  fine-tuned limits (see [Rowing limits](#what-the-app-does)).
+- Appearance: light, dark or as the phone is set (dark saves battery on OLED
+  iPhones), a Landscape switch (on by default; off keeps the app upright), and
+  the app icon: the coxed double "rowing light" icon in light, dark and
+  tinted, plus 10 alternates.
+- Club pages: the order of the cards for all clubs, and background pictures
+  for all pages, single pages or single clubs: clear or blurred, frosted,
+  solid or Liquid Glass tiles (iOS 26), your own photo or the satellite
+  picture of the club's lake. On club pages the picture fills the screen
+  behind the status and page bars and fades between clubs while swiping.
 - Widgets: the background for all widgets or per club (each widget can also
   pick its own when you edit it), and how often they update: every 30 minutes
-  (default), every hour, every 2 hours, or only after using the app. Less often saves battery and data, but a new DWD
-  warning reaches the widgets later.
-- Data use: "Save mobile data" (see above).
-- App icon: the coxed double "rowing light" icon in light, dark and tinted,
-  plus 10 alternates.
-- Help: the full legend of symbols, and replay the tour. One-time tips point
-  out features the first time they appear (among them the rain radar,
-  satellite picture, forecast source, rowing limits and cold water), and after an update a "What's new"
-  sheet shows once.
-- Rowing limits (see above).
-- Legal: the safety notice, a privacy summary and the legal notice
-  (Impressum, still with placeholders).
-- Factory reset (keeps saved locations, the home base and My boats; resets
-  the icon and the limits).
+  (default), every hour, every 2 hours, or only after using the app. Less
+  often saves battery and data, but a new DWD warning reaches the widgets
+  later.
+- Language and units: English or German; units (wind in m/s, km/h, knots, mph
+  or Beaufort; °C or °F; waves in m, cm or ft); date and time formats.
+- Battery and data: "Save mobile data" (see [Data use](#what-the-app-does))
+  and the widget updates.
+- Help: replay the tour, the full legend of symbols, and bring the one-time
+  tips back. Tips point out features the first time they appear, and after an
+  update a "What's new" sheet shows once.
+- About: the version, the safety notice, a privacy summary, the legal notice
+  (Impressum, still with placeholders) and Reset (keeps saved locations, the
+  home base and My boats; resets everything else, including the limits).
+- Developer: hidden options for testing (see the handbook).
+
+On a club page, the "For *boat*" line under the rowing light and the boat
+button next to the cog open the same boat picker; it shows the light each
+boat would get there now.
 
 **Wide screens.** Phones on their side and the unfolded iPhone Duo get wide
 layouts (two columns from 600 pt, a side list from 860 × 560 pt).
