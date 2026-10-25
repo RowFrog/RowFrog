@@ -497,7 +497,7 @@ final class RadarFrames {
         done = true
     }
 
-    /// The last map's pictures as DWD sent them (about 2 MB).
+    /// The last map's pictures as DWD sent them (about 1 MB).
     private static var saved: (region: RadarRegion, times: [Date], data: [Date: Data])?
 
     private nonisolated static func fetch(_ url: URL) async -> Data? {
@@ -553,7 +553,8 @@ struct RadarRegion: Hashable {
             .init(name: "BBOX", value: "\(minX),\(minY),\(maxX),\(maxY)"),
             .init(name: "WIDTH", value: "\(Self.pixels)"),
             .init(name: "HEIGHT", value: "\(Self.pixels)"),
-            .init(name: "FORMAT", value: "image/png"),
+            // 8-bit PNG: DWD's radar has about 56 colours, so it looks the same at half the size.
+            .init(name: "FORMAT", value: "image/png8"),
             .init(name: "TRANSPARENT", value: "TRUE"),
             .init(name: "TIME", value: ISO8601DateFormatter().string(from: time)),
         ]

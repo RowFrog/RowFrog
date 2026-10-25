@@ -59,6 +59,8 @@ struct SettingsView: View {
     }
     @State private var showAppIconTip = false
     private let appIconTip = AppIconTip()
+    @State private var showSaveDataTip = false
+    private let saveDataTip = SaveDataTip()
     @State private var appIcon = AppIcons.current
     @Environment(\.dismiss) private var dismiss
 
@@ -164,6 +166,9 @@ struct SettingsView: View {
                     .id("background")
 
                     Section {
+                        if showSaveDataTip {
+                            TipView(saveDataTip)
+                        }
                         Toggle(isOn: $settings.saveMobileData) {
                             Label(tr("Save mobile data"), systemImage: "antenna.radiowaves.left.and.right")
                         }
@@ -312,6 +317,8 @@ struct SettingsView: View {
                 }
                 .screenshotSections(["appearance", "units", "limits", "datetime", "background", "data", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
+                .tipVisibility(saveDataTip, $showSaveDataTip)
+                .onChange(of: settings.saveMobileData) { if settings.saveMobileData { saveDataTip.invalidate(reason: .actionPerformed) } }
                 .tipVisibility(resetTip, $showResetTip)
                 .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
                 .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }

@@ -30,6 +30,8 @@ enum German {
         "Low Data Mode is on: the app is saving data now.": "Der Datensparmodus ist an: Die App spart gerade Daten.",
         "On mobile data: the app is saving data now.": "Mobile Daten: Die App spart gerade Daten.",
         "On mobile data, satellite pictures load only when you tap them, the radar map shows half-hour steps and the rain radar updates every 15 minutes. Forecasts and warnings always load. In iOS Low Data Mode the app always saves data, also on Wi-Fi.": "Über mobile Daten laden Satellitenbilder erst, wenn du sie antippst, die Radarkarte zeigt Halbstundenschritte und das Regenradar aktualisiert sich alle 15 Minuten. Vorhersagen und Warnungen laden immer. Im iOS-Datensparmodus spart die App immer Daten, auch im WLAN.",
+        "Out on mobile data?": "Unterwegs mit mobilen Daten?",
+        "Switch on Save mobile data: satellite pictures then load only when you tap them and the radar needs fewer downloads. Forecasts and warnings always load.": "Schalte „Mobile Daten sparen“ ein: Satellitenbilder laden dann erst, wenn du sie antippst, und das Radar lädt weniger. Vorhersagen und Warnungen laden immer.",
         "Tap to load the picture": "Tippen, um das Bild zu laden",
         "Saving data: satellite pictures load only when asked for.": "Daten sparen: Satellitenbilder laden nur auf Wunsch.",
         "Row with care": "Mit Vorsicht rudern",
