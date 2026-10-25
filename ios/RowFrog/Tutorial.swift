@@ -689,7 +689,7 @@ struct CloseLoopTip: Tip {
 
 struct TurningPointTip: Tip {
     var title: Text { Text(tr("Change a turning point")) }
-    var message: Text? { Text(tr("Hold and drag a point to move it, or delete just this one.")) }
+    var message: Text? { Text(tr("Drag a point to move it, or delete just this one.")) }
     var image: Image? { Image(systemName: "hand.draw") }
 }
 
