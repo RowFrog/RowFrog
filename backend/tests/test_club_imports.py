@@ -42,3 +42,14 @@ def test_swiss_rowing_directory_and_club_page():
     assert club["founded"] == 1883
     assert club["website"] == "https://www.rcthun.ch"
     assert club["address"] == "Seestrasse 22, 3600 Thun"
+
+
+def test_a_harbour_basin_gives_way_to_the_lake_around_it():
+    from club_import import pick_lake
+
+    harbour = (29.0, "Fischerhafen")
+    lake = (148.0, "Bodensee")
+    assert pick_lake([harbour, lake]) == lake
+    assert pick_lake([harbour]) == harbour  # a harbour on a river stays
+    assert pick_lake([(80.0, "Wörthersee"), (20.0, "Lendkanal-Becken")])[1] == "Wörthersee"
+    assert pick_lake([]) is None

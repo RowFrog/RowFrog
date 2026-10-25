@@ -634,16 +634,6 @@
       "osm": "way/101700049"
     },
     {
-      "id": "hafen-friedrichshafen",
-      "name": "Hafen Friedrichshafen",
-      "country": "de",
-      "center": {
-        "lat": 47.6503,
-        "lon": 9.4841
-      },
-      "osm": "way/127496892"
-    },
-    {
       "id": "river-hafen-muehlberg",
       "name": "Hafen Mühlberg",
       "country": "de",
@@ -11309,11 +11299,11 @@
       "address": "Östliche Uferstr. 4, 88046 Friedrichshafen",
       "source": "drv",
       "country": "de",
-      "lakeId": "hafen-friedrichshafen",
+      "lakeId": "bodensee",
       "launchPoint": {
         "lat": 47.65134,
         "lon": 9.48661,
-        "precision": "shore point of Hafen Friedrichshafen nearest the geocoded boathouse, 51 m away",
+        "precision": "shore point of Bodensee nearest the geocoded boathouse, 51 m away",
         "verified": false
       }
     },
