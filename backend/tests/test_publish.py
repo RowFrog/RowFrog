@@ -143,3 +143,9 @@ def test_other_models_load_only_for_confirmed_clubs_once_per_run(monkeypatch):
     for key in list(api._primed_weather):
         if "@" in key:
             del api._primed_weather[key]
+
+
+def test_refresh_block_tells_the_app_how_often_a_club_is_renewed():
+    assert publish.refresh_block(True) == {"used": True, "fileEveryHours": 0.5, "weatherEveryHours": 3}
+    slow = publish.refresh_block(False)
+    assert slow["used"] is False and slow["fileEveryHours"] == 6 and slow["weatherEveryHours"] == 12
