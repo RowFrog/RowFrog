@@ -12,7 +12,7 @@ struct ConditionsCard: View {
 
     var body: some View {
         let data = ConditionData(forecast: forecast, now: hour)
-        Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent") {
+        Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent", legend: .conditions) {
             HStack(spacing: 10) {
                 SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 36))
                 VStack(alignment: .leading, spacing: 0) {
@@ -532,9 +532,15 @@ struct ConditionDetailView: View {
                     }
                     withAnimation(.easeInOut(duration: 0.2)) { hiddenLines[condition] = set }
                 } label: {
-                    Label(line.name, systemImage: off ? "circle" : "circle.fill")
-                        .foregroundStyle(off ? Color.secondary : line.color)
-                        .opacity(off ? 0.6 : 1)
+                    // A hidden line keeps its colour (a grey entry would look like the
+                    // grey "All cloud" line): an empty ring and struck-through name.
+                    Label {
+                        Text(line.name).strikethrough(off)
+                    } icon: {
+                        Image(systemName: off ? "circle" : "circle.fill")
+                    }
+                    .foregroundStyle(line.color)
+                    .opacity(off ? 0.45 : 1)
                 }
                 .buttonStyle(.plain)
                 .accessibilityValue(off ? tr("Hidden") : tr("Shown"))

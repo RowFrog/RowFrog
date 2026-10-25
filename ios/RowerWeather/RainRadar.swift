@@ -1,3 +1,4 @@
+import MapKit
 import SwiftUI
 
 /// Rain at the launch point from DWD's radar: now and DWD's nowcast for the
@@ -114,25 +115,41 @@ struct RadarClient {
     }
 }
 
-/// The rain radar card: a one-line summary and a bar per 15 minutes.
+/// The rain radar card: a one-line summary and a bar per 15 minutes. A tap
+/// opens the radar map.
 struct RainRadarCard: View {
     let point: Coordinate
     @State private var radar: RainRadar?
     @State private var failed = false
+    @State private var showingMap = UserDefaults.standard.bool(forKey: "RWOpenRadarMap")
 
     var body: some View {
-        Card(title: tr("Rain radar"), symbol: "umbrella") {
-            if let radar {
-                Text(radar.summary).font(.headline)
-                bars(radar)
-                Text(tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
-            } else if failed {
-                Text(tr("Radar not available right now")).foregroundStyle(.secondary)
-            } else {
-                ProgressView()
+        Button { showingMap = true } label: {
+            Card(title: tr("Rain radar"), symbol: "umbrella") {
+                if let radar {
+                    HStack {
+                        Text(radar.summary).font(.headline)
+                        Spacer(minLength: 0)
+                        Label(tr("Map"), systemImage: "chevron.right")
+                            .labelStyle(TrailingIcon())
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.tint)
+                    }
+                    bars(radar)
+                    Text(tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                } else if failed {
+                    Text(tr("Radar not available right now")).foregroundStyle(.secondary)
+                } else {
+                    ProgressView()
+                }
             }
+        }
+        .buttonStyle(.plain)
+        .accessibilityHint(tr("Opens the rain radar map"))
+        .fullScreenCover(isPresented: $showingMap) {
+            RadarMapScreen(point: point, reference: radar?.reference)
         }
         .task(id: point) {
             // DWD updates the radar every 5 minutes; follow it while the page is open.
@@ -172,5 +189,179 @@ struct RainRadarCard: View {
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
+    }
+}
+
+private struct TrailingIcon: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 3) {
+            configuration.title
+            configuration.icon
+        }
+    }
+}
+
+/// The rain radar as a map around the club: DWD's radar pictures from an
+/// hour ago to DWD's nowcast two hours ahead, every 15 minutes, with a
+/// slider and a play button. Pictures come straight from DWD's map server.
+struct RadarMapScreen: View {
+    let point: Coordinate
+    /// The radar picture the nowcast starts from; now (to 5 minutes) when not known yet.
+    let reference: Date?
+    @Environment(\.dismiss) private var dismiss
+    @State private var index: Int
+    @State private var playing = false
+    private let frames: [Date]
+    /// The frame for the latest radar picture.
+    private let nowIndex: Int
+
+    init(point: Coordinate, reference: Date?) {
+        self.point = point
+        self.reference = reference
+        let base = reference ?? Date(timeIntervalSince1970: (Date.now.timeIntervalSince1970 / 300).rounded(.down) * 300)
+        frames = stride(from: -60, through: 120, by: 15).map { base.addingTimeInterval(Double($0) * 60) }
+        nowIndex = 4
+        _index = State(initialValue: 4)
+    }
+
+    var body: some View {
+        NavigationStack {
+            ZStack(alignment: .bottom) {
+                RadarMapView(point: point, time: frames[index])
+                    .ignoresSafeArea(edges: .bottom)
+                controls
+            }
+            .navigationTitle(tr("Rain radar"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+            }
+            .task(id: playing) {
+                // Plays through every frame once, then stops on the latest picture.
+                guard playing else { return }
+                if index == frames.count - 1 { index = 0 }
+                while playing, !Task.isCancelled {
+                    try? await Task.sleep(for: .milliseconds(700))
+                    if index < frames.count - 1 { index += 1 } else { playing = false }
+                }
+            }
+        }
+    }
+
+    private var controls: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(Format.time(frames[index])).font(.headline.monospacedDigit())
+                Text(index < nowIndex ? tr("radar") : index == nowIndex ? tr("latest radar picture") : tr("forecast"))
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
+            HStack(spacing: 12) {
+                Button {
+                    playing.toggle()
+                } label: {
+                    Image(systemName: playing ? "pause.fill" : "play.fill").font(.title3)
+                }
+                .accessibilityLabel(playing ? tr("Pause") : tr("Play"))
+                Slider(value: Binding(get: { Double(index) }, set: { index = Int($0.rounded()); playing = false }),
+                       in: 0...Double(frames.count - 1), step: 1)
+            }
+            HStack {
+                Text("−1 h")
+                Spacer()
+                Text(tr("Now"))
+                Spacer()
+                Text("+1 h")
+                Spacer()
+                Text("+2 h")
+            }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
+            Text(tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"))
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+        }
+        .padding()
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 16))
+        .padding()
+    }
+}
+
+/// The map with the launch point and DWD's radar layer for one time.
+private struct RadarMapView: UIViewRepresentable {
+    let point: Coordinate
+    let time: Date
+
+    func makeUIView(context: Context) -> MKMapView {
+        let map = MKMapView()
+        map.delegate = context.coordinator
+        map.pointOfInterestFilter = .excludingAll
+        let center = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
+        map.setRegion(MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 1.2, longitudeDelta: 1.6)), animated: false)
+        let pin = MKPointAnnotation()
+        pin.coordinate = center
+        map.addAnnotation(pin)
+        return map
+    }
+
+    func updateUIView(_ map: MKMapView, context: Context) {
+        guard context.coordinator.time != time else { return }
+        context.coordinator.time = time
+        let old = map.overlays
+        map.addOverlay(RadarTileOverlay(time: time), level: .aboveRoads)
+        // Removing the old picture after adding the new one avoids a flash of the bare map.
+        map.removeOverlays(old)
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    final class Coordinator: NSObject, MKMapViewDelegate {
+        var time: Date?
+
+        func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
+            let renderer = MKTileOverlayRenderer(overlay: overlay)
+            renderer.alpha = 0.75
+            return renderer
+        }
+    }
+}
+
+/// DWD's radar layer (WMS GetMap) cut into map tiles.
+final class RadarTileOverlay: MKTileOverlay {
+    let time: Date
+
+    init(time: Date) {
+        self.time = time
+        super.init(urlTemplate: nil)
+        canReplaceMapContent = false
+        tileSize = CGSize(width: 256, height: 256)
+    }
+
+    override func url(forTilePath path: MKTileOverlayPath) -> URL {
+        Self.url(x: path.x, y: path.y, z: path.z, time: time)
+    }
+
+    /// The WMS request for one web-mercator tile.
+    static func url(x: Int, y: Int, z: Int, time: Date) -> URL {
+        let extent = 20_037_508.342789244
+        let size = 2 * extent / pow(2, Double(z))
+        let minX = -extent + Double(x) * size, maxY = extent - Double(y) * size
+        var components = URLComponents(url: RadarClient.wms, resolvingAgainstBaseURL: false)!
+        components.queryItems = [
+            .init(name: "SERVICE", value: "WMS"),
+            .init(name: "VERSION", value: "1.3.0"),
+            .init(name: "REQUEST", value: "GetMap"),
+            .init(name: "LAYERS", value: "dwd:Niederschlagsradar"),
+            .init(name: "STYLES", value: ""),
+            .init(name: "CRS", value: "EPSG:3857"),
+            .init(name: "BBOX", value: "\(minX),\(maxY - size),\(minX + size),\(maxY)"),
+            .init(name: "WIDTH", value: "256"),
+            .init(name: "HEIGHT", value: "256"),
+            .init(name: "FORMAT", value: "image/png"),
+            .init(name: "TRANSPARENT", value: "TRUE"),
+            .init(name: "TIME", value: ISO8601DateFormatter().string(from: time)),
+        ]
+        return components.url!
     }
 }

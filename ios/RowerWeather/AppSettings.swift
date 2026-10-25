@@ -92,6 +92,16 @@ final class AppSettings {
     /// Weather models picked per club id while the developer options are on; missing = automatic.
     var pickedModels: [String: String] { didSet { defaults.set(pickedModels, forKey: Keys.pickedModels) } }
 
+    /// The order of the cards on every club page, and the cards switched off.
+    var pageLayout: PageLayout { didSet { defaults.set(try? JSONEncoder().encode(pageLayout), forKey: Keys.pageLayout) } }
+    /// Clubs whose page has its own order; they keep it when the order for all clubs changes.
+    var clubPageLayouts: [String: PageLayout] {
+        didSet { defaults.set(try? JSONEncoder().encode(clubPageLayouts), forKey: Keys.clubPageLayouts) }
+    }
+
+    /// The card order for a club's page: its own, else the one for all clubs.
+    func pageLayout(for clubID: String) -> PageLayout { clubPageLayouts[clubID] ?? pageLayout }
+
     /// The model to load for a club, or nil for the automatic choice.
     func pickedModel(for clubID: String) -> String? {
         developerOptions ? pickedModels[clubID] : nil
@@ -122,10 +132,12 @@ final class AppSettings {
         static let mapBoat = "RWMapBoat"
         static let developer = "RWDeveloperOptions"
         static let pickedModels = "RWPickedModels"
+        static let pageLayout = "RWPageLayout"
+        static let clubPageLayouts = "RWClubPageLayouts"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
-                          developer, pickedModels]
+                          developer, pickedModels, pageLayout, clubPageLayouts]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -178,6 +190,11 @@ final class AppSettings {
         userPictures = defaults.stringArray(forKey: Keys.userPictures) ?? []
         developerOptions = defaults.bool(forKey: Keys.developer)
         pickedModels = defaults.dictionary(forKey: Keys.pickedModels) as? [String: String] ?? [:]
+        // As a launch argument the order is a comma-separated list, e.g. `-RWPageLayout "hourly,radar"`.
+        pageLayout = defaults.data(forKey: Keys.pageLayout).flatMap { try? JSONDecoder().decode(PageLayout.self, from: $0) }
+            ?? defaults.string(forKey: Keys.pageLayout).map(PageLayout.init(list:))
+            ?? .standard
+        clubPageLayouts = defaults.data(forKey: Keys.clubPageLayouts).flatMap { try? JSONDecoder().decode([String: PageLayout].self, from: $0) } ?? [:]
     }
 
     /// The language the app shows: the chosen one, or the phone's when it is German.
@@ -236,6 +253,8 @@ final class AppSettings {
         userPictures = []
         developerOptions = false
         pickedModels = [:]
+        pageLayout = .standard
+        clubPageLayouts = [:]
         // The assignments above write the defaults back; remove them so a later
         // change of the app's defaults reaches users who never chose.
         for key in Keys.all { defaults.removeObject(forKey: key) }

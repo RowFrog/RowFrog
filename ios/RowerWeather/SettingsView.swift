@@ -46,6 +46,8 @@ struct SettingsView: View {
     @State private var path = SettingsRoute.fromLaunchArguments()
     @State private var confirmingReset = false
     @State private var showingTour = false
+    @State private var showingLegend = false
+    @State private var arrangingPages = false
     @State private var showResetTip = false
     private let resetTip = FactoryResetTip()
 
@@ -70,10 +72,13 @@ struct SettingsView: View {
                         Toggle(isOn: $settings.allowsLandscape) {
                             Label(tr("Landscape"), systemImage: "rectangle.landscape.rotate")
                         }
+                        Button { arrangingPages = true } label: {
+                            Label(tr("Order of the club page cards"), systemImage: "arrow.up.arrow.down")
+                        }
                     } header: {
                         SectionTitle(tr("Appearance"), symbol: "circle.lefthalf.filled")
                     } footer: {
-                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright."))
+                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page."))
                     }
                     .surfaceRows()
                     .id("appearance")
@@ -164,6 +169,9 @@ struct SettingsView: View {
                             showingTour = true
                         } label: {
                             Label(tr("Show the tour again"), systemImage: "questionmark.circle")
+                        }
+                        Button { showingLegend = true } label: {
+                            Label(tr("Legend: what the symbols mean"), systemImage: "info.circle")
                         }
                     } header: {
                         SectionTitle(tr("Help"), symbol: "questionmark.circle")
@@ -282,11 +290,13 @@ struct SettingsView: View {
                     }
                     Button(tr("Cancel"), role: .cancel) {}
                 } message: {
-                    Text(tr("Appearance, units, language, background pictures and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
+                    Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
                 .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
+                .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
+                .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }
                 .fullScreenCover(isPresented: $showingTour) {
                     TutorialView(locations: locations, reload: {}) {
                         Tutorial.markSeen()
