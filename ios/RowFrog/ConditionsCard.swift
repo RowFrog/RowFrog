@@ -811,6 +811,58 @@ private struct ConditionChart: View {
     private static let badgeAtBottom = UserDefaults.standard.bool(forKey: "RWMapBadgeBottom")
     /// The chain between the blue line and the map's marker while linked.
     private static let chainHeight: CGFloat = 14
+    /// For comparing (`-RWMapBadgeStyle pill`): the map's badge always sits at the
+    /// bottom and shows the link itself: filled with a chain while linked,
+    /// outlined while the map has its own time.
+    private static let pillBadge = UserDefaults.standard.string(forKey: "RWMapBadgeStyle") == "pill"
+
+    /// The blue line and the map's marker with the badge at the bottom that shows the link.
+    @ViewBuilder
+    private func pillMarkers(plot: CGRect, mapX: Double?, onScreen: (Double) -> CGFloat?) -> some View {
+        let green = Self.mapGreen
+        let badgeTop = plot.maxY - 17
+        let joined = time.linked && mapX != nil
+        ZStack(alignment: .topLeading) {
+            if let x = markerX, let px = onScreen(x) {
+                Rectangle().fill(Color.blue)
+                    .frame(width: 1.5, height: max((joined ? badgeTop : plot.maxY) - plot.minY, 0))
+                    .offset(x: px - 0.75, y: plot.minY)
+            }
+            if let m = mapX, let px = onScreen(m) {
+                if !joined {
+                    Path { path in
+                        path.move(to: CGPoint(x: px, y: plot.minY))
+                        path.addLine(to: CGPoint(x: px, y: badgeTop))
+                    }
+                    .stroke(green, style: StrokeStyle(lineWidth: 2, dash: [4, 3]))
+                }
+                Group {
+                    if joined {
+                        HStack(spacing: 1) {
+                            Image(systemName: "link")
+                            Image(systemName: "map.fill")
+                        }
+                        .font(.system(size: 7, weight: .bold))
+                        .foregroundStyle(.white)
+                        .frame(width: 25, height: 15)
+                        .background(green, in: Capsule())
+                    } else {
+                        Image(systemName: "map.fill")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundStyle(green)
+                            .frame(width: 17, height: 15)
+                            .background(Color(.systemBackground), in: Capsule())
+                            .overlay(Capsule().strokeBorder(green, lineWidth: 1.5))
+                    }
+                }
+                .fixedSize()
+                .frame(width: 25, height: 15)
+                .offset(x: px - 12.5, y: badgeTop)
+                .opacity(time.mapOutOfRange ? 0.5 : 1)
+            }
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
 
     /// The persistent blue line; past measurements only show it while touched.
     private var markerX: Double? {
@@ -1067,36 +1119,40 @@ private struct ConditionChart: View {
                             .offset(x: from, y: plot.maxY - 3)
                     }
                 }
-                // Linked: one marker, the blue line joined by a chain to the map's
-                // green foot. Unlinked: two full lines, the map's dashed with its
-                // badge at the top, so both show even at the same hour.
-                if let x = markerX, let px = onScreen(x) {
-                    Rectangle().fill(Color.blue)
-                        .frame(width: 1.5, height: max(plot.height - (short ? Self.mapMarkerHeight + Self.chainHeight : 0), 0))
-                        .offset(x: px - 0.75, y: plot.minY)
-                    if short {
-                        Image(systemName: "link")
-                            .font(.system(size: 8, weight: .bold))
-                            .foregroundStyle(Color.blue)
-                            .rotationEffect(.degrees(-45))
-                            .frame(width: 12, height: Self.chainHeight)
-                            .offset(x: px - 6, y: plot.maxY - Self.mapMarkerHeight - Self.chainHeight)
+                if Self.pillBadge {
+                    pillMarkers(plot: plot, mapX: mapX, onScreen: onScreen)
+                } else {
+                    // Linked: one marker, the blue line joined by a chain to the map's
+                    // green foot. Unlinked: two full lines, the map's dashed with its
+                    // badge at the top, so both show even at the same hour.
+                    if let x = markerX, let px = onScreen(x) {
+                        Rectangle().fill(Color.blue)
+                            .frame(width: 1.5, height: max(plot.height - (short ? Self.mapMarkerHeight + Self.chainHeight : 0), 0))
+                            .offset(x: px - 0.75, y: plot.minY)
+                        if short {
+                            Image(systemName: "link")
+                                .font(.system(size: 8, weight: .bold))
+                                .foregroundStyle(Color.blue)
+                                .rotationEffect(.degrees(-45))
+                                .frame(width: 12, height: Self.chainHeight)
+                                .offset(x: px - 6, y: plot.maxY - Self.mapMarkerHeight - Self.chainHeight)
+                        }
                     }
-                }
-                if let m = mapX, let px = onScreen(m) {
-                    let top = short ? plot.maxY - Self.mapMarkerHeight : plot.minY
-                    Path { path in
-                        path.move(to: CGPoint(x: px, y: top))
-                        path.addLine(to: CGPoint(x: px, y: plot.maxY))
+                    if let m = mapX, let px = onScreen(m) {
+                        let top = short ? plot.maxY - Self.mapMarkerHeight : plot.minY
+                        Path { path in
+                            path.move(to: CGPoint(x: px, y: top))
+                            path.addLine(to: CGPoint(x: px, y: plot.maxY))
+                        }
+                        .stroke(green, style: StrokeStyle(lineWidth: 2, dash: short ? [] : [4, 3]))
+                        Image(systemName: "map.fill")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 13, height: 13)
+                            .background(green, in: RoundedRectangle(cornerRadius: 3))
+                            .offset(x: px - 6.5, y: short || Self.badgeAtBottom ? plot.maxY - 17 : plot.minY + 2)
+                            .opacity(time.mapOutOfRange ? 0.5 : 1)
                     }
-                    .stroke(green, style: StrokeStyle(lineWidth: 2, dash: short ? [] : [4, 3]))
-                    Image(systemName: "map.fill")
-                        .font(.system(size: 7, weight: .bold))
-                        .foregroundStyle(.white)
-                        .frame(width: 13, height: 13)
-                        .background(green, in: RoundedRectangle(cornerRadius: 3))
-                        .offset(x: px - 6.5, y: short || Self.badgeAtBottom ? plot.maxY - 17 : plot.minY + 2)
-                        .opacity(time.mapOutOfRange ? 0.5 : 1)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
