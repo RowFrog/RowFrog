@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-24",
+  "updated": "2026-10-25",
   "source": "Club data: Deutscher Ruderverband e.V. (rudern.de). Positions and waters: © OpenStreetMap contributors, ODbL",
   "lakes": [
     {
@@ -738,7 +738,7 @@
       "name": "Hirschgraben",
       "country": "de",
       "center": {
-        "lat": 51.3037,
+        "lat": 51.3038,
         "lon": 9.4985
       },
       "osm": "way/19576294"
@@ -7028,9 +7028,9 @@
       "country": "de",
       "lakeId": "templiner-see",
       "launchPoint": {
-        "lat": 52.37294,
-        "lon": 13.01526,
-        "precision": "shore point of Templiner See nearest the geocoded club address, 27 m away",
+        "lat": 52.37293,
+        "lon": 13.01528,
+        "precision": "shore point of Templiner See nearest the geocoded club address, 28 m away",
         "verified": false
       }
     },
@@ -9558,9 +9558,9 @@
       "country": "de",
       "lakeId": "schiedersee",
       "launchPoint": {
-        "lat": 51.9225,
-        "lon": 9.16551,
-        "precision": "shore point of Schiedersee nearest the geocoded boathouse, 94 m away",
+        "lat": 51.92247,
+        "lon": 9.16538,
+        "precision": "shore point of Schiedersee nearest the geocoded boathouse, 95 m away",
         "verified": false
       }
     },
@@ -9929,9 +9929,9 @@
       "country": "de",
       "lakeId": "schildkroetenteich",
       "launchPoint": {
-        "lat": 48.8248,
-        "lon": 9.33132,
-        "precision": "shore point of Schildkrötenteich nearest the geocoded boathouse, 224 m away",
+        "lat": 48.82482,
+        "lon": 9.33139,
+        "precision": "shore point of Schildkrötenteich nearest the geocoded boathouse, 228 m away",
         "verified": false
       }
     },
@@ -12302,7 +12302,7 @@
       "lakeId": "hirschgraben",
       "launchPoint": {
         "lat": 51.30546,
-        "lon": 9.49929,
+        "lon": 9.4993,
         "precision": "shore point of Hirschgraben nearest the geocoded boathouse, 127 m away",
         "verified": false
       }
