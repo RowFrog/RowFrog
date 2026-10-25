@@ -33,7 +33,8 @@ lines remind rowers that the app only advises and they decide. A forecast
 older than 3 hours shows a grey light instead of green.
 
 **Locations.** On first start the list is empty: a short tour explains the
-app, then the user picks a home base and more clubs. With location access
+app (11 pages, including your boats and rowing limits), then the user picks a
+home base and more clubs. With location access
 ("While using") it suggests the 5 nearest clubs, otherwise 3 at random. The
 search covers the clubs in Germany, Austria and Switzerland (see
 [Club catalog](#club-catalog)) in one box, with country chips to narrow it,
@@ -169,7 +170,8 @@ with the temperature and the weather symbol beside each other.
 - App icon: the coxed double "rowing light" icon in light, dark and tinted,
   plus 10 alternates.
 - Help: the full legend of symbols, and replay the tour. One-time tips point
-  out features the first time they appear, and after an update a "What's new"
+  out features the first time they appear (among them the rain radar,
+  satellite picture, forecast source, rowing limits and cold water), and after an update a "What's new"
   sheet shows once.
 - Rowing limits (see above).
 - Legal: the safety notice, a privacy summary and the legal notice
