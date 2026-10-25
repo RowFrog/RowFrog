@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 
-from rowerweather.sources import gkd
+from rowfrog.sources import gkd
 
 # Shape of the GKD "current values" table: a date cell and a value cell per row.
 PAGE = """
@@ -48,7 +48,7 @@ def test_failed_fetch_keeps_the_last_good_reading(monkeypatch):
 
     import httpx
 
-    from rowerweather import api
+    from rowfrog import api
 
     reading = gkd.WaterTemperature(datetime(2026, 10, 18, 5, 45, tzinfo=timezone.utc), 12.8)
     pages = iter([(reading, [reading])])

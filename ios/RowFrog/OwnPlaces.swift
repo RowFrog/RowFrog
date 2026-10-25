@@ -104,7 +104,7 @@ struct OwnPlace: Codable, Identifiable, Hashable {
 /// forecasts only cover the clubs in the lists, and an own place must not
 /// appear in public files. The phone asks Open-Meteo itself (the same DWD
 /// ICON models as the backend) and applies the backend's rowing-light rules
-/// for wind, gusts, fog, thunderstorms and daylight (backend/rowerweather/score.py).
+/// for wind, gusts, fog, thunderstorms and daylight (backend/rowfrog/score.py).
 /// Without a lake outline there are no waves, and there are no water
 /// temperature, ice or DWD warnings.
 enum PlaceForecaster {
@@ -240,7 +240,7 @@ enum PlaceForecaster {
     }
 }
 
-/// Sunrise and sunset, as backend/rowerweather/sun.py (NOAA's sunrise equation).
+/// Sunrise and sunset, as backend/rowfrog/sun.py (NOAA's sunrise equation).
 enum Sun {
     static func day(_ day: Date, lat: Double, lon: Double) -> SunDay? {
         var utc = Calendar(identifier: .gregorian)

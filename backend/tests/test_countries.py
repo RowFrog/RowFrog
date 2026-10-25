@@ -2,7 +2,7 @@ import json
 
 from fastapi.testclient import TestClient
 
-from rowerweather import api, locations
+from rowfrog import api, locations
 
 
 def test_catalog_file_name_gives_the_country(tmp_path):

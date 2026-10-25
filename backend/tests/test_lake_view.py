@@ -2,11 +2,11 @@ from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 
-from rowerweather import api, lake_view
-from rowerweather.score import Light
-from rowerweather.sources import open_meteo
-from rowerweather.sources.dwd_warnings import Warning
-from rowerweather.sources.open_meteo import ForecastHour
+from rowfrog import api, lake_view
+from rowfrog.score import Light
+from rowfrog.sources import open_meteo
+from rowfrog.sources.dwd_warnings import Warning
+from rowfrog.sources.open_meteo import ForecastHour
 
 from .test_forecast import PAYLOAD
 from .test_waves import LAKE

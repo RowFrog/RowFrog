@@ -1,8 +1,8 @@
 from fastapi.testclient import TestClient
 
-from rowerweather import outlines
-from rowerweather.api import app
-from rowerweather.sources import sentinel2
+from rowfrog import outlines
+from rowfrog.api import app
+from rowfrog.sources import sentinel2
 
 
 def test_picture_frame_keeps_the_lake_shape_within_the_size_limit():

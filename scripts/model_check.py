@@ -7,7 +7,7 @@ Usage (from the repository root, after `pip install -e backend`):
 DATA_DIR keeps the stored forecasts (forecasts/YYYY/MM/DD-HH.csv.gz) and gets
 report.md and stations.json; the workflow keeps it on the model-check branch.
 --archive-days N also loads N days of Open-Meteo's archived forecasts once,
-so a first score exists without waiting weeks. See backend/rowerweather/model_check.py.
+so a first score exists without waiting weeks. See backend/rowfrog/model_check.py.
 """
 
 from __future__ import annotations
@@ -20,8 +20,8 @@ from pathlib import Path
 
 import httpx
 
-from rowerweather import model_check as mc
-from rowerweather import usage
+from rowfrog import model_check as mc
+from rowfrog import usage
 
 ROOT = Path(__file__).resolve().parent.parent
 

@@ -27,9 +27,9 @@ from pathlib import Path
 
 from fastapi.testclient import TestClient
 
-from rowerweather import locations, outlines
-from rowerweather.api import app
-from rowerweather.waves import EARTH_RADIUS_M, _to_local_m
+from rowfrog import locations, outlines
+from rowfrog.api import app
+from rowfrog.waves import EARTH_RADIUS_M, _to_local_m
 
 from fetch_lake_outline import overpass
 

@@ -3,7 +3,7 @@ import SwiftUI
 import WidgetKit
 
 @main
-struct RowerWeatherWidgets: WidgetBundle {
+struct RowFrogWidgets: WidgetBundle {
     var body: some Widget {
         RowingLightWidget()
     }
