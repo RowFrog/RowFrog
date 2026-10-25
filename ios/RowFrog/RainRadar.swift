@@ -338,18 +338,48 @@ struct RadarMapScreen: View {
     }
 }
 
-/// DWD's colours for rain (RV product, mm per hour), light to heavy, as in
-/// its radar layer. Shown as a bar on the map and explained in the legend.
+/// One colour of DWD's radar layer and the rain it stands for, in mm per hour.
+struct RadarColour {
+    let hex: UInt32
+    let from: Double
+    let to: Double?
+
+    var color: Color {
+        Color(red: Double(hex >> 16 & 0xFF) / 255, green: Double(hex >> 8 & 0xFF) / 255, blue: Double(hex & 0xFF) / 255)
+    }
+
+    /// "0.4–1 mm/h", "≥ 150 mm/h".
+    var range: String {
+        let n = Self.number
+        guard let to else { return "≥ \(n(from)) mm/h" }
+        return "\(n(from))–\(n(to)) mm/h"
+    }
+
+    /// "0,1", "7,5", "10": a decimal only where there is one.
+    static func number(_ v: Double) -> String {
+        Format.number(v, digits: v.rounded() == v ? 0 : 1)
+    }
+}
+
+/// The colours of DWD's layer dwd:Niederschlagsradar, as its legend gives them
+/// (GetLegendGraphic, checked with scripts/radar_probe.py on 25 Oct 2026).
 enum RadarColours {
-    static let steps: [(mm: Double, color: Color)] = [
-        (0.1, Color(red: 0.70, green: 0.94, blue: 0.98)),
-        (0.5, Color(red: 0.36, green: 0.80, blue: 0.95)),
-        (1, Color(red: 0.13, green: 0.55, blue: 0.95)),
-        (2, Color(red: 0.12, green: 0.30, blue: 0.85)),
-        (5, Color(red: 0.98, green: 0.90, blue: 0.20)),
-        (10, Color(red: 0.98, green: 0.60, blue: 0.10)),
-        (20, Color(red: 0.92, green: 0.15, blue: 0.10)),
-        (50, Color(red: 0.75, green: 0.10, blue: 0.70)),
+    static let all: [RadarColour] = [
+        RadarColour(hex: 0x33FFFF, from: 0.1, to: 0.2),
+        RadarColour(hex: 0x1ACC9A, from: 0.2, to: 0.4),
+        RadarColour(hex: 0x019934, from: 0.4, to: 1),
+        RadarColour(hex: 0x4DB31B, from: 1, to: 2),
+        RadarColour(hex: 0x99CC01, from: 2, to: 3),
+        RadarColour(hex: 0xCCE601, from: 3, to: 5),
+        RadarColour(hex: 0xFFFF01, from: 5, to: 7.5),
+        RadarColour(hex: 0xFFC401, from: 7.5, to: 10),
+        RadarColour(hex: 0xFF8901, from: 10, to: 15),
+        RadarColour(hex: 0xFF4501, from: 15, to: 30),
+        RadarColour(hex: 0xFE0000, from: 30, to: 45),
+        RadarColour(hex: 0xE5004C, from: 45, to: 75),
+        RadarColour(hex: 0xCC0098, from: 75, to: 100),
+        RadarColour(hex: 0x6600CB, from: 100, to: 150),
+        RadarColour(hex: 0x0000FE, from: 150, to: nil),
     ]
 }
 
@@ -358,25 +388,27 @@ private struct RadarColourBar: View {
     var body: some View {
         VStack(spacing: 2) {
             HStack(spacing: 0) {
-                ForEach(RadarColours.steps.indices, id: \.self) { i in
-                    RadarColours.steps[i].color.frame(height: 6)
+                ForEach(RadarColours.all.indices, id: \.self) { i in
+                    RadarColours.all[i].color.frame(height: 6)
                 }
             }
             .clipShape(Capsule())
-            HStack {
-                Text(tr("light"))
-                Spacer()
-                Text(Format.rain(2))
-                Spacer()
-                Text(Format.rain(10))
-                Spacer()
-                Text(tr("heavy"))
+            // The numbers sit under the start of their colour.
+            GeometryReader { geo in
+                let step = geo.size.width / CGFloat(RadarColours.all.count)
+                ForEach([0, 4, 8, 11], id: \.self) { i in
+                    Text(RadarColour.number(RadarColours.all[i].from))
+                        .fixedSize()
+                        .position(x: step * CGFloat(i) + (i == 0 ? 8 : 0), y: 6)
+                }
+                Text("mm/h").fixedSize().position(x: geo.size.width - 14, y: 6)
             }
+            .frame(height: 12)
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(tr("Colours from light blue for light rain to red and purple for heavy rain"))
+        .accessibilityLabel(tr("Colours from light blue for light rain over green and yellow to red and purple for heavy rain"))
     }
 }
 
@@ -388,17 +420,17 @@ private struct RadarLegendSheet: View {
         NavigationStack {
             List {
                 Section {
-                    ForEach(RadarColours.steps.indices, id: \.self) { i in
-                        let step = RadarColours.steps[i]
+                    ForEach(RadarColours.all.indices, id: \.self) { i in
+                        let colour = RadarColours.all[i]
                         HStack(spacing: 12) {
-                            RoundedRectangle(cornerRadius: 4).fill(step.color).frame(width: 28, height: 18)
-                            Text(tr("from %@ per hour", Format.rain(step.mm)))
+                            RoundedRectangle(cornerRadius: 4).fill(colour.color).frame(width: 28, height: 18)
+                            Text(colour.range).monospacedDigit()
                             Spacer()
-                            Text(RainRadar.intensity(step.mm)).foregroundStyle(.secondary)
+                            Text(RainRadar.intensity(colour.from)).foregroundStyle(.secondary)
                         }
                     }
                 } footer: {
-                    Text(tr("Rain as measured by DWD's radar (past and latest picture) and as DWD expects it to move (forecast). Colours are close to DWD's own; snow and hail show as rain. Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"))
+                    Text(tr("Rain as measured by DWD's radar (past and latest picture) and as DWD expects it to move (forecast). Snow and hail show as rain. Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"))
                 }
             }
             .navigationTitle(tr("What the colours mean"))

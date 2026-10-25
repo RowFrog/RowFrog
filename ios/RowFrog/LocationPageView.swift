@@ -3,7 +3,7 @@ import TipKit
 
 /// One full-screen location page: the rowing light now (with wind and
 /// daylight), DWD warnings while one is issued, then the cards in the order
-/// the user arranged (rain radar, current conditions, lake view, the next
+/// the user arranged (current conditions, rain radar, lake view, the next
 /// 48 hours, launch point, satellite picture), the forecast source and credits.
 struct LocationPageView: View {
     let club: Club
