@@ -204,16 +204,6 @@
       "kind": "unknown"
     },
     {
-      "id": "near-bregenz",
-      "name": "Water near Bregenz",
-      "country": "at",
-      "center": {
-        "lat": 47.50258,
-        "lon": 9.74729
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "near-breitenbrunn",
       "name": "Water near Breitenbrunn",
       "country": "at",
@@ -793,11 +783,11 @@
       "region": "Vorarlberg",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-bregenz",
+      "lakeId": "bodensee",
       "launchPoint": {
-        "lat": 47.50258,
-        "lon": 9.74729,
-        "precision": "geocoded club address (town level); water not identified",
+        "lat": 47.50719,
+        "lon": 9.72955,
+        "precision": "shore point of Bodensee nearest the boathouse in OpenStreetMap (way/115624167), 148 m away",
         "verified": false
       }
     },

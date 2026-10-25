@@ -2,51 +2,10 @@ import MapKit
 import SwiftUI
 import TipKit
 
-/// Rain at the launch point from DWD's radar: now and DWD's nowcast for the
-/// next two hours. The app asks DWD directly (open data, no account), so the
-/// radar is as fresh as DWD's 5-minute updates whatever hosts the backend.
-/// Source: WMS layer dwd:Niederschlagsradar (RV product, 1 km), read at the
-/// launch point with GetFeatureInfo; no rain comes back as a tiny negative value.
-struct RadarStep: Hashable {
-    let time: Date
-    let mmPerHour: Double
-}
-
-struct RainRadar: Hashable {
-    /// The radar picture the nowcast starts from.
-    let reference: Date
-    /// Now and every 15 minutes up to two hours ahead.
-    let steps: [RadarStep]
-
-    static let rainFrom = 0.1  // mm/h; less is noise or drizzle that does not count
-
-    var rainingNow: Bool { (steps.first?.mmPerHour ?? 0) >= Self.rainFrom }
-    var firstRain: RadarStep? { steps.first { $0.mmPerHour >= Self.rainFrom } }
-    var dryAgain: RadarStep? {
-        guard rainingNow else { return nil }
-        return steps.first { $0.mmPerHour < Self.rainFrom }
-    }
-    var peak: Double { steps.map(\.mmPerHour).max() ?? 0 }
-
-    /// One line, e.g. "Light rain from 21:30".
-    var summary: String {
-        guard let first = firstRain else { return tr("No rain in the next 2 hours") }
-        if rainingNow {
-            if let dry = dryAgain { return tr("%@ now, dry from %@", Self.intensity(peak), Format.time(dry.time)) }
-            return tr("%@ for the next 2 hours", Self.intensity(peak))
-        }
-        return tr("%@ from %@", Self.intensity(peak), Format.time(first.time))
-    }
-
-    static func intensity(_ mmPerHour: Double) -> String {
-        switch mmPerHour {
-        case ..<2.5: tr("Light rain")
-        case ..<10: tr("Rain")
-        default: tr("Heavy rain")
-        }
-    }
-}
-
+/// Reads DWD's radar at the launch point for the rain radar card (see
+/// `RainRadar` in Models.swift). The app asks DWD directly (open data, no
+/// account), so the radar is as fresh as DWD's 5-minute updates whatever
+/// hosts the backend.
 struct RadarClient {
     static let wms = URL(string: "https://maps.dwd.de/geoserver/dwd/wms")!
     var session: URLSession = .shared
@@ -116,14 +75,32 @@ struct RadarClient {
     }
 }
 
+/// The last radar reading per launch point, so a page swiped back to, or the
+/// hour view opened over it, shows it without asking DWD again (10 requests
+/// a time).
+@MainActor
+enum RadarCache {
+    /// DWD's 5 minutes; 15 in Low Power Mode.
+    static var refresh: TimeInterval { PowerState.shared.lowPower ? 900 : 300 }
+    private static var entries: [Coordinate: (radar: RainRadar, loaded: Date)] = [:]
+
+    static func entry(at point: Coordinate) -> (radar: RainRadar, loaded: Date)? { entries[point] }
+
+    static func store(_ radar: RainRadar, at point: Coordinate) {
+        entries[point] = (radar, .now)
+    }
+}
+
 /// The rain radar card: a one-line summary and a bar per 15 minutes. A tap
 /// opens the radar map.
 struct RainRadarCard: View {
     let point: Coordinate
+    var clubID: String?
     @State private var radar: RainRadar?
     @State private var failed = false
     @State private var showingMap = UserDefaults.standard.bool(forKey: "RWOpenRadarMap")
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.isCurrentPage) private var isCurrentPage
 
     var body: some View {
         Button { showingMap = true } label: {
@@ -151,23 +128,32 @@ struct RainRadarCard: View {
         .buttonStyle(.plain)
         .accessibilityHint(tr("Opens the rain radar map"))
         .fullScreenCover(isPresented: $showingMap) {
-            RadarMapScreen(point: point, reference: radar?.reference)
+            RadarMapScreen(point: point, clubID: clubID, reference: radar?.reference)
         }
         .onChange(of: showingMap) { if showingMap { RadarMapTip().invalidate(reason: .actionPerformed) } }
-        .task(id: [point.lat, point.lon, scenePhase == .active ? 1 : 0]) {
-            // DWD updates the radar every 5 minutes; follow it while the page is open
-            // and the app is in front.
-            guard scenePhase == .active else { return }
+        .task(id: [point.lat, point.lon, scenePhase == .active && isCurrentPage ? 1 : 0]) {
+            // DWD updates the radar every 5 minutes; follow it while the page is in
+            // front and the app is open. A swiping TabView keeps the pages beside it
+            // alive too, and they wait, showing what was loaded last.
+            if let cached = RadarCache.entry(at: point) { radar = cached.radar }
+            guard scenePhase == .active, isCurrentPage else { return }
             while !Task.isCancelled {
+                // Back on a page within 5 minutes: no new requests until the 5 minutes are up.
+                if let age = RadarCache.entry(at: point).map({ Date.now.timeIntervalSince($0.loaded) }), age < RadarCache.refresh {
+                    try? await Task.sleep(for: .seconds(RadarCache.refresh - age))
+                    continue
+                }
                 do {
-                    radar = try await RadarClient().load(lat: point.lat, lon: point.lon)
+                    let loaded = try await RadarClient().load(lat: point.lat, lon: point.lon)
+                    radar = loaded
                     failed = false
+                    RadarCache.store(loaded, at: point)
                 } catch is CancellationError {
                     return
                 } catch {
                     failed = radar == nil
                 }
-                try? await Task.sleep(for: .seconds(300))
+                try? await Task.sleep(for: .seconds(RadarCache.refresh))
             }
         }
     }
@@ -213,6 +199,7 @@ private struct TrailingIcon: LabelStyle {
 /// map tiles and the picture never drops out between steps.
 struct RadarMapScreen: View {
     let point: Coordinate
+    let clubID: String?
     /// The radar picture the nowcast starts from; now (to 5 minutes) when not known yet.
     let reference: Date?
     @Environment(\.dismiss) private var dismiss
@@ -222,11 +209,14 @@ struct RadarMapScreen: View {
     @State private var showingLegend = false
     @AppStorage("RWRadarLoop") private var loops = true
     private let frames: [Date]
+    /// Rounds played with repeat on, about half a minute.
+    private static let rounds = 3
     /// The frame for the latest radar picture.
     private let nowIndex: Int
 
-    init(point: Coordinate, reference: Date?) {
+    init(point: Coordinate, clubID: String? = nil, reference: Date?) {
         self.point = point
+        self.clubID = clubID
         self.reference = reference
         let base = reference ?? Date(timeIntervalSince1970: (Date.now.timeIntervalSince1970 / 300).rounded(.down) * 300)
         let frames = stride(from: -60, through: 120, by: 15).map { base.addingTimeInterval(Double($0) * 60) }
@@ -239,7 +229,7 @@ struct RadarMapScreen: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                RadarMapView(point: point, region: loader.region, image: loader.images[frames[index]])
+                RadarMapView(point: point, clubID: clubID, region: loader.region, image: loader.images[frames[index]])
                     .ignoresSafeArea(edges: .bottom)
                 controls
             }
@@ -250,18 +240,22 @@ struct RadarMapScreen: View {
             }
             .sheet(isPresented: $showingLegend) { RadarLegendSheet() }
             .task { await loader.load() }
-            // Starts playing on its own once every picture is there.
-            .onChange(of: loader.complete) { _, complete in if complete { playing = true } }
+            // Starts playing on its own once every picture is there, except in Low Power Mode.
+            .onChange(of: loader.complete) { _, complete in if complete, !PowerState.shared.lowPower { playing = true } }
             .task(id: playing) {
                 guard playing else { return }
                 if index == frames.count - 1 { index = 0 }
+                // Repeating stops after a few rounds, back on the latest picture;
+                // the play button starts it again.
+                var rounds = 0
                 while playing, !Task.isCancelled {
                     // A little longer on the latest picture and at the end, so they can be read.
                     try? await Task.sleep(for: .milliseconds(index == nowIndex || index == frames.count - 1 ? 1400 : 600))
                     guard playing, !Task.isCancelled else { return }
                     if index < frames.count - 1 {
                         index += 1
-                    } else if loops {
+                    } else if loops, rounds < Self.rounds - 1 {
+                        rounds += 1
                         index = 0
                     } else {
                         playing = false
@@ -309,7 +303,7 @@ struct RadarMapScreen: View {
                         .padding(6)
                         .background(loops ? Color.accentColor.opacity(0.18) : .clear, in: RoundedRectangle(cornerRadius: 8))
                 }
-                .accessibilityLabel(tr("Keep playing"))
+                .accessibilityLabel(tr("Play 3 times"))
                 .accessibilityAddTraits(loops ? .isSelected : [])
             }
             HStack {
@@ -463,10 +457,17 @@ final class RadarFrames {
 
     func load() async {
         guard !done else { return }
-        // The latest picture first, then outwards, so the map shows something at once.
-        let order = times.indices.sorted { abs($0 - 4) < abs($1 - 4) }.map { times[$0] }
+        // Opened again for the same club before DWD's next radar picture:
+        // the pictures of the last opening, with nothing to load.
         let region = region
-        await withTaskGroup(of: (Date, UIImage?).self) { group in
+        if let saved = Self.saved, saved.region == region, saved.times == times {
+            for (time, data) in saved.data where images[time] == nil { images[time] = UIImage(data: data) }
+        } else {
+            Self.saved = (region, times, [:])
+        }
+        // The latest picture first, then outwards, so the map shows something at once.
+        let order = times.indices.sorted { abs($0 - 4) < abs($1 - 4) }.map { times[$0] }.filter { images[$0] == nil }
+        await withTaskGroup(of: (Date, Data?).self) { group in
             // DWD's server is slow with many parallel requests; three at a time.
             var next = 0
             while next < min(3, order.count) {
@@ -474,8 +475,13 @@ final class RadarFrames {
                 group.addTask { (time, await Self.fetch(region.url(time: time))) }
                 next += 1
             }
-            while let (time, image) = await group.next() {
-                if let image { images[time] = image } else { failedCount += 1 }
+            while let (time, data) = await group.next() {
+                if let data, let image = UIImage(data: data) {
+                    images[time] = image
+                    if Self.saved?.region == region, Self.saved?.times == times { Self.saved?.data[time] = data }
+                } else {
+                    failedCount += 1
+                }
                 if next < order.count {
                     let time = order[next]
                     group.addTask { (time, await Self.fetch(region.url(time: time))) }
@@ -486,15 +492,18 @@ final class RadarFrames {
         done = true
     }
 
-    private nonisolated static func fetch(_ url: URL) async -> UIImage? {
+    /// The last map's pictures as DWD sent them (about 2 MB).
+    private static var saved: (region: RadarRegion, times: [Date], data: [Date: Data])?
+
+    private nonisolated static func fetch(_ url: URL) async -> Data? {
         for attempt in 0..<3 {
             if attempt > 0 { try? await Task.sleep(for: .seconds(Double(attempt))) }
             var request = URLRequest(url: url)
             request.timeoutInterval = 20
             if let (data, response) = try? await URLSession.shared.data(for: request),
                (response as? HTTPURLResponse)?.statusCode == 200,
-               let image = UIImage(data: data) {
-                return image
+               UIImage(data: data) != nil {
+                return data
             }
             if Task.isCancelled { return nil }
         }
@@ -550,6 +559,7 @@ struct RadarRegion: Hashable {
 /// The map with the launch point and one radar picture over the region.
 private struct RadarMapView: UIViewRepresentable {
     let point: Coordinate
+    var clubID: String?
     let region: RadarRegion
     let image: UIImage?
 
@@ -572,11 +582,14 @@ private struct RadarMapView: UIViewRepresentable {
         context.coordinator.renderer?.show(image)
     }
 
-    func makeCoordinator() -> Coordinator { Coordinator() }
+    func makeCoordinator() -> Coordinator { Coordinator(symbol: LocationStore.markSymbol(for: clubID)) }
 
     final class Coordinator: NSObject, MKMapViewDelegate {
+        let symbol: String
         var renderer: RadarImageRenderer?
         var pending: UIImage?
+
+        init(symbol: String) { self.symbol = symbol }
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             guard let overlay = overlay as? RadarImageOverlay else { return MKOverlayRenderer(overlay: overlay) }
@@ -585,6 +598,16 @@ private struct RadarMapView: UIViewRepresentable {
             renderer.show(pending)
             self.renderer = renderer
             return renderer
+        }
+
+        /// The club as on the other maps: blue, with a house for the home base.
+        func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            guard annotation is MKPointAnnotation else { return nil }
+            let view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: nil)
+            view.glyphImage = UIImage(systemName: symbol)
+            view.markerTintColor = .systemBlue
+            view.displayPriority = .required
+            return view
         }
     }
 }

@@ -46,7 +46,9 @@ struct ConditionsCard: View {
         }
         .task {
             // Screenshot hook: `-RWOpenCondition wind` opens that view.
-            if let raw = UserDefaults.standard.string(forKey: "RWOpenCondition") {
+            // Only on the page `-RWOpenClub` opens: the pages beside it would race it for the sheet.
+            let page = UserDefaults.standard.string(forKey: "RWOpenClub")
+            if let raw = UserDefaults.standard.string(forKey: "RWOpenCondition"), page == nil || page == forecast.clubId {
                 try? await Task.sleep(for: .milliseconds(500))
                 open = Condition(rawValue: raw)
             }
@@ -431,7 +433,11 @@ struct ConditionDetailView: View {
     /// between views; a new sheet starts with every line on.
     @State private var hiddenLines: [Condition: Set<String>] = [:]
     /// Where the chart sits, so a drag on it moves the time instead of the view.
-    @State private var chartFrame: CGRect = .zero
+    /// Kept outside SwiftUI's state: it changes on every frame of scrolling,
+    /// and only a swipe's end reads it.
+    @State private var chartFrame = ChartFrame()
+    /// The jump menu's titles with each view's value, worked out once.
+    @State private var menuTitles: [Condition: String] = [:]
 
     /// The views the arrows and swipes go through: every condition, or only
     /// the values of the top tile when opened from there.
@@ -469,6 +475,10 @@ struct ConditionDetailView: View {
 
     private static let space = "conditionDetail"
 
+    final class ChartFrame {
+        var rect: CGRect = .zero
+    }
+
     @ViewBuilder
     private func page(_ condition: Condition) -> some View {
         let detail = ConditionDetail(condition, data)
@@ -492,7 +502,7 @@ struct ConditionDetailView: View {
                             Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
                         }
                     }
-                    .onPreferenceChange(ChartFrameKey.self) { chartFrame = $0 }
+                    .onPreferenceChange(ChartFrameKey.self) { chartFrame.rect = $0 }
                 if detail.lines.count > 1 {
                     legend(detail, condition: condition, hidden: hidden)
                 }
@@ -591,7 +601,7 @@ struct ConditionDetailView: View {
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > 60, abs(dx) > abs(dy) * 2 else { return }
                 // A chart that can't be dragged ignores it too, so a drag on any chart never changes the view.
-                if chartFrame.contains(value.startLocation) { return }
+                if chartFrame.rect.contains(value.startLocation) { return }
                 step(dx < 0 ? 1 : -1)
             }
     }
@@ -604,7 +614,7 @@ struct ConditionDetailView: View {
                 withAnimation(.easeInOut(duration: 0.25)) { condition = new }
             })) {
                 ForEach(order) { c in
-                    Label(menuTitle(c), systemImage: c.symbol).tag(c)
+                    Label(menuTitles[c] ?? c.title, systemImage: c.symbol).tag(c)
                 }
             }
             .pickerStyle(.inline)
@@ -616,6 +626,7 @@ struct ConditionDetailView: View {
             .foregroundStyle(.blue)
             .accessibilityLabel(tr("Go to another value"))
         }
+        .task { if menuTitles.isEmpty { menuTitles = Dictionary(uniqueKeysWithValues: order.map { ($0, menuTitle($0)) }) } }
     }
 
     private func menuTitle(_ c: Condition) -> String {
@@ -1204,9 +1215,12 @@ extension ConditionDetail {
         let jacket = Format.temperature(userLimits.value(.lifeJacket))
         facts.append((tr("Life jacket"), userLimits.isMine(.lifeJacket) ? tr("%@ (your limit)", tr("advised below %@", jacket)) : tr("advised below %@", jacket)))
         let rowing: String
+        let veryCold = Format.temperature(RowingLimits.coldWaterC)
         switch now?.celsius {
+        case let c? where c < RowingLimits.coldWaterC:
+            rowing = tr("Below %@ wear a life jacket, stay near the shore and row with a second boat or a safety boat nearby. Wear clothes that keep you warm when wet.", veryCold)
         case let c? where c < userLimits.value(.lifeJacket):
-            rowing = tr("Below %@ we advise wearing a life jacket and rowing with a second boat or a safety boat nearby. Wear clothes that keep you warm when wet.", jacket)
+            rowing = tr("Below %@ a capsize can cause cold-water shock: we advise a life jacket and clothes that keep you warm when wet.", jacket)
         case let c? where c < 15:
             rowing = tr("Below %@ wear clothes that keep you warm when wet. Below %@ we advise a life jacket.", Format.temperature(15), jacket)
         case .some:
@@ -1222,11 +1236,11 @@ extension ConditionDetail {
             unit: t.symbol,
             lines: history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })],
             limits: [
-                ChartLimit(value: t.convert(15), color: .orange, label: tr("Cold-water shock")),
-                line(.lifeJacket, t.convert, .red, tr("Life jacket")),
+                line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
+                ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
             ],
-            limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the light turns amber below %@ and the advice gets stricter below %@. Your club's own rules come first.",
-                          Format.temperature(15), Format.temperature(15), Format.temperature(10)),
+            limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A life jacket keeps your head above water through it, so the app advises one from %@ down. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the advice gets stricter below %@: stay near the shore and don't row alone. Your club's own rules come first.",
+                          Format.temperature(15), jacket, veryCold),
             yDomain: t.convert(0)...t.convert(max(20, (history.map(\.celsius).max() ?? 0) + 2)),
             history: true,
             facts: facts,

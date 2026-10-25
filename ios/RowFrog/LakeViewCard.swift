@@ -31,7 +31,9 @@ struct LakeViewCard: View {
     /// Screenshot hook: `-RWOpenLakeView YES` opens the full lake view once it has loaded.
     @MainActor private func load() async {
         await store.load(lakeID)
-        if UserDefaults.standard.bool(forKey: "RWOpenLakeView"), store.views[lakeID] != nil {
+        // Only on the page `-RWOpenClub` opens: clubs on the same lake would race it for the sheet.
+        let page = UserDefaults.standard.string(forKey: "RWOpenClub")
+        if UserDefaults.standard.bool(forKey: "RWOpenLakeView"), store.views[lakeID] != nil, page == nil || page == clubID {
             showingMap = true
         }
     }

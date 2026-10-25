@@ -3,22 +3,44 @@ import WidgetKit
 
 /// Copies what the widget needs into the shared app group and asks it to
 /// redraw: the home base, the saved clubs and their names, and the settings
-/// (units, language, time format).
+/// (units, language, time format). Only when something changed: every
+/// redraw makes each widget load its forecast again.
 enum WidgetBridge {
     static func publish(_ locations: LocationStore) {
         let shared = WidgetShared.defaults
         let saved = locations.saved
+        var values: [String: Any] = [:]
         if !saved.isEmpty {
-            shared.set(locations.homeID, forKey: WidgetShared.homeKey)
-            shared.set(saved.map(\.id), forKey: WidgetShared.savedKey)
-            shared.set(Dictionary(saved.map { ($0.id, $0.displayName) }, uniquingKeysWith: { a, _ in a }), forKey: WidgetShared.namesKey)
+            values[WidgetShared.homeKey] = locations.homeID
+            values[WidgetShared.savedKey] = saved.map(\.id)
+            values[WidgetShared.namesKey] = Dictionary(saved.map { ($0.id, $0.displayName) }, uniquingKeysWith: { a, _ in a })
         }
-        shared.set(Dictionary(locations.ownPlaces.map { ($0.id, [$0.coordinate.lat, $0.coordinate.lon]) }, uniquingKeysWith: { a, _ in a }),
-                   forKey: WidgetShared.ownPlacesKey)
+        values[WidgetShared.ownPlacesKey] = Dictionary(locations.ownPlaces.map { ($0.id, [$0.coordinate.lat, $0.coordinate.lon]) },
+                                                       uniquingKeysWith: { a, _ in a })
         for key in AppSettings.Keys.all {
-            shared.set(UserDefaults.standard.object(forKey: key), forKey: key)
+            values[key] = UserDefaults.standard.object(forKey: key)
         }
+        // Sorted keys, so the same values always give the same bytes.
+        let fingerprint = try? JSONSerialization.data(withJSONObject: values.compactMapValues(jsonSafe), options: [.sortedKeys])
+        if let fingerprint, fingerprint == shared.data(forKey: fingerprintKey) { return }
+        for (key, value) in values { shared.set(value, forKey: key) }
+        for key in AppSettings.Keys.all where values[key] == nil { shared.removeObject(forKey: key) }
+        if !saved.isEmpty, locations.homeID == nil { shared.removeObject(forKey: WidgetShared.homeKey) }
+        shared.set(fingerprint, forKey: fingerprintKey)
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    private static let fingerprintKey = "RWWidgetPublished"
+
+    /// A settings value as JSON can hold it; dates and data as text.
+    private static func jsonSafe(_ value: Any) -> Any? {
+        switch value {
+        case let date as Date: return date.timeIntervalSince1970
+        case let data as Data: return data.base64EncodedString()
+        case let array as [Any]: return array.compactMap(jsonSafe)
+        case let dictionary as [String: Any]: return dictionary.compactMapValues(jsonSafe)
+        default: return JSONSerialization.isValidJSONObject([value]) ? value : String(describing: value)
+        }
     }
 }
 
@@ -79,6 +101,13 @@ struct WidgetGalleryView: View {
         .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil || failed))
         .task {
             do { forecast = try await api.forecast(clubID: homeID).applyingUserLimits() } catch { failed = true }
+            // `-RWWidgetRadar YES`: light rain on the radar from 30 minutes on, for the radar line.
+            if UserDefaults.standard.bool(forKey: "RWWidgetRadar"), forecast != nil {
+                let now = Date.now
+                forecast?.radar = RainRadar(reference: now, steps: stride(from: 0, through: 120, by: 15).map {
+                    RadarStep(time: now.addingTimeInterval(Double($0) * 60), mmPerHour: $0 >= 30 && $0 <= 90 ? 1.2 : 0)
+                })
+            }
         }
     }
 

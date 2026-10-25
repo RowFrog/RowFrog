@@ -96,6 +96,12 @@ final class SatellitePictureStore {
             let picture = try await api.satellitePicture(lakeID: lakeID)
             if picture.latest != nil || picture.clearest != nil {
                 pictures[lakeID] = picture
+                // Fetch all of them now, so switching between them never waits.
+                for kind in picture.kinds {
+                    if let shot = picture.shot(kind), let url = url(lakeID, file: shot.image, date: shot.date) {
+                        Task { await image(url) }
+                    }
+                }
             } else {
                 missing.insert(lakeID)
             }
@@ -112,6 +118,66 @@ final class SatellitePictureStore {
         var components = URLComponents(url: api.url("lakes/\(lakeID)/\(file)"), resolvingAgainstBaseURL: false)
         components?.queryItems = [.init(name: "d", value: date)]
         return components?.url
+    }
+
+    /// Pictures already shown in this run of the app, by address.
+    private(set) var images: [URL: UIImage] = [:]
+    private var loading: Set<URL> = []
+
+    /// A picture from memory, from the phone's cache folder or, the first time
+    /// for that day's pass, from the server. A file's address names its day, so a
+    /// kept copy never goes stale: a new pass has a new address.
+    @discardableResult
+    func image(_ url: URL) async -> UIImage? {
+        if let image = images[url] { return image }
+        guard loading.insert(url).inserted else { return nil }
+        defer { loading.remove(url) }
+        let file = Self.cacheFile(for: url)
+        if let data = try? Data(contentsOf: file), let image = UIImage(data: data) {
+            images[url] = image
+            return image
+        }
+        guard let (data, response) = try? await URLSession.shared.data(from: url),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let image = UIImage(data: data) else { return nil }
+        images[url] = image
+        Self.store(data, at: file)
+        return image
+    }
+
+    /// Caches/Satellite/<lake>-<file>-<day>; the system may clear it when space runs low.
+    private static func cacheFile(for url: URL) -> URL {
+        let folder = URL.cachesDirectory.appending(path: "Satellite", directoryHint: .isDirectory)
+        let parts = url.pathComponents.suffix(2).joined(separator: "-")
+        let day = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first?.value ?? ""
+        return folder.appending(path: "\(parts)-\(day)")
+    }
+
+    /// Saves a picture and drops older passes of the same lake and file.
+    private static func store(_ data: Data, at file: URL) {
+        let folder = file.deletingLastPathComponent()
+        let manager = FileManager.default
+        try? manager.createDirectory(at: folder, withIntermediateDirectories: true)
+        // "<lake>-<file>-" without the day.
+        let prefix = String(file.lastPathComponent.dropLast(10))
+        for old in (try? manager.contentsOfDirectory(atPath: folder.path)) ?? [] where old.hasPrefix(prefix) {
+            try? manager.removeItem(at: folder.appending(path: old))
+        }
+        try? data.write(to: file, options: .atomic)
+    }
+}
+
+/// A satellite picture or ice map through SatellitePictureStore's caches.
+struct CachedSatelliteImage<Content: View>: View {
+    let url: URL?
+    @ViewBuilder let content: (UIImage?) -> Content
+    @MainActor private var store: SatellitePictureStore { .shared }
+
+    var body: some View {
+        content(url.flatMap { store.images[$0] })
+            .task(id: url) {
+                if let url { await store.image(url) }
+            }
     }
 }
 
@@ -361,16 +427,16 @@ struct SatelliteImage: View {
     @MainActor private var layers: SatelliteLayers { .shared }
 
     var body: some View {
-        AsyncImage(url: store.url(lakeID, file: shot.image, date: shot.date)) { phase in
-            if let image = phase.image {
-                image.resizable().scaledToFit()
+        CachedSatelliteImage(url: store.url(lakeID, file: shot.image, date: shot.date)) { image in
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
             } else {
                 Color.secondary.opacity(0.15).overlay { ProgressView() }
             }
         }
         .aspectRatio(picture.aspectRatio, contentMode: .fit)
         .overlay { iceOverlay }
-        .overlay { SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID) }
+        .overlay { SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID, cloudy: shot.lakeCloud >= 0.5) }
         .frame(maxWidth: .infinity)
     }
 
@@ -384,8 +450,8 @@ struct SatelliteImage: View {
                 let x1 = (ice.bbox[2] - box[0]) / (box[2] - box[0]) * w
                 let y0 = (box[3] - ice.bbox[3]) / (box[3] - box[1]) * h
                 let y1 = (box[3] - ice.bbox[1]) / (box[3] - box[1]) * h
-                AsyncImage(url: url) { phase in
-                    phase.image?.resizable().interpolation(.none)
+                CachedSatelliteImage(url: url) { image in
+                    if let image { Image(uiImage: image).resizable().interpolation(.none) }
                 }
                 .frame(width: x1 - x0, height: y1 - y0)
                 .position(x: (x0 + x1) / 2, y: (y0 + y1) / 2)
@@ -401,6 +467,8 @@ struct SatelliteOverlay: View {
     let picture: SatellitePicture
     let layers: Set<SatelliteLayer>
     var clubID: String?
+    /// Over mostly white cloud the shore is drawn dark with a light edge, over a clear lake light with a dark edge.
+    var cloudy = false
     @MainActor private var view: LakeView? { LakeViewStore.shared.views[lakeID] }
 
     var body: some View {
@@ -461,8 +529,11 @@ struct SatelliteOverlay: View {
                     path.addLines(ring.map { point($0[0], $0[1]) })
                     path.closeSubpath()
                 }
-                context.stroke(path, with: shadow, lineWidth: 3)
-                context.stroke(path, with: .color(.white), lineWidth: 1.5)
+                let (edge, core): (Color, Color) = cloudy
+                    ? (.white.opacity(0.85), Color(red: 0.05, green: 0.12, blue: 0.3))
+                    : (.black.opacity(0.7), .white)
+                context.stroke(path, with: .color(edge), lineWidth: 3.5)
+                context.stroke(path, with: .color(core), lineWidth: 1.5)
             }
             if layers.contains(.routes) {
                 for route in RouteStore.shared.routes(on: lakeID) where route.points.count > 1 {
@@ -485,7 +556,7 @@ struct SatelliteOverlay: View {
                     context.fill(dot, with: .color(own ? .blue : Color(white: 0.45)))
                     context.stroke(dot, with: .color(.white), lineWidth: 1.5)
                     context.draw(
-                        Text(Image(systemName: own ? "house.fill" : "figure.rower")).font(.system(size: 10, weight: .bold)).foregroundStyle(.white),
+                        Text(Image(systemName: own ? LocationStore.markSymbol(for: club.id) : "figure.rower")).font(.system(size: 10, weight: .bold)).foregroundStyle(.white),
                         at: p, anchor: .center
                     )
                     let label = context.resolve(Text(club.shortName).font(.caption2.weight(.semibold)).foregroundStyle(.white))
@@ -757,11 +828,11 @@ struct SatelliteLegend: View {
                 }
                 if !on.isDisjoint(with: [.shore, .clubs, .routes]) {
                     Section(tr("Lines and marks")) {
-                        if on.contains(.shore) { row(line(.white), tr("Shore line")) }
+                        if on.contains(.shore) { row(line(.white), tr("Shore line: white on a clear picture, dark blue on a cloudy one")) }
                         if on.contains(.routes) { row(line(.yellow), tr("Your saved routes on this lake")) }
                         if on.contains(.clubs) {
-                            row(Image(systemName: "house.circle.fill").foregroundStyle(.blue), tr("Your club (this page's launch point)"))
-                            row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.gray), tr("Other clubs on the lake"))
+                            row(ClubMarkIcon(color: .blue), tr("This page's club; a house instead of the rower when it is your home base"))
+                            row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
                         }
                     }
                 }

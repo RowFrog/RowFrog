@@ -386,12 +386,17 @@ struct LakeMapScreen: View {
                     savedRoute = nil
                     rowed = nil
                 }
+                // The bin alone, so Undo and Close loop keep their words in German too.
+                .labelStyle(.iconOnly)
                 .disabled(waypoints.count < 2)
                 routesMenu
             }
         }
         .font(.subheadline)
         .labelStyle(.titleAndIcon)
+        // Longer German labels shrink a little instead of wrapping.
+        .lineLimit(1)
+        .minimumScaleFactor(0.75)
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
         .background(.regularMaterial, in: Capsule())
@@ -920,6 +925,7 @@ struct LakeMapView: UIViewRepresentable {
             pin.coordinate = CLLocationCoordinate2D(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
             pin.title = club.shortName
             pin.isOwn = club.id == clubID
+            pin.clubID = club.id
             map.addAnnotation(pin)
         }
         map.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))
@@ -1035,7 +1041,7 @@ struct LakeMapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
             if let pin = annotation as? ClubPin {
                 let view = MKMarkerAnnotationView(annotation: pin, reuseIdentifier: nil)
-                view.glyphImage = UIImage(systemName: pin.isOwn ? "house.fill" : "figure.rower")
+                view.glyphImage = UIImage(systemName: pin.isOwn ? LocationStore.markSymbol(for: pin.clubID) : "figure.rower")
                 view.markerTintColor = pin.isOwn ? .systemBlue : .systemGray
                 view.displayPriority = .required
                 return view
@@ -1225,6 +1231,7 @@ struct LakeMapView: UIViewRepresentable {
 
 final class ClubPin: MKPointAnnotation {
     var isOwn = false
+    var clubID: String?
 }
 
 final class RoutePin: MKPointAnnotation {
@@ -1488,8 +1495,8 @@ struct LakeMapLegend: View {
                     }
                 }
                 Section(tr("On the map")) {
-                    row(Image(systemName: "house.circle.fill").foregroundStyle(.blue), tr("Your club (this page's launch point)"))
-                    row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.gray), tr("Other clubs on the lake"))
+                    row(ClubMarkIcon(color: .blue), tr("This page's club; a house instead of the rower when it is your home base"))
+                    row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
                             tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones."))
@@ -1504,7 +1511,7 @@ struct LakeMapLegend: View {
                             row(HStack(spacing: 2) { ForEach([Light.green, .amber, .red], id: \.self) { Capsule().fill($0.color).frame(width: 8, height: 4) } },
                                 tr("The route in the light the boat meets there; out and back run side by side"))
                         }
-                        if boat { row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.indigo), tr("Where the boat is at the time shown")) }
+                        if boat { row(ClubMarkIcon(color: .indigo), tr("Where the boat is at the time shown")) }
                         if track { row(Image(systemName: "scribble.variable").foregroundStyle(.secondary), tr("Dashed: the track as you rowed it (imported row)")) }
                     }
                 }
@@ -1523,5 +1530,18 @@ struct LakeMapLegend: View {
             symbol.frame(width: 28)
             Text(text).font(.subheadline)
         }
+    }
+}
+
+/// A club mark as the maps draw it, for the legends: a white rower in a coloured circle.
+struct ClubMarkIcon: View {
+    let color: Color
+
+    var body: some View {
+        Image(systemName: "figure.rower")
+            .font(.system(size: 11, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 22, height: 22)
+            .background(color, in: Circle())
     }
 }

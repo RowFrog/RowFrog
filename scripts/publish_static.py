@@ -22,7 +22,8 @@ writes Sentinel-2 pictures of each lake and, in winter, the satellite ice map:
 
 "confirmed" rebuilds the clubs people use (until the usage counter is set up,
 the clubs in data/locations.json), "all" every club in the catalogs too.
-Warnings and water temperatures are fresh in every file, but weather is
+Warnings, water temperatures and, for the clubs people use, DWD's rain
+radar (the widget's radar line) are fresh in every file, but weather is
 loaded only when the weather model
 has a new run for it (WEATHER_HOURS), to stay within Open-Meteo's free
 10,000 calls a day; between loads the --state file (kept by the workflow's
@@ -47,9 +48,9 @@ from pathlib import Path
 import httpx
 from fastapi.testclient import TestClient
 
-from rowfrog import api, ice, lake_view, locations, outlines, weather_models
+from rowfrog import api, ice, lake_view, locations, outlines, water_estimate, weather_models
 from rowfrog.api import LOCAL, app
-from rowfrog.sources import lake_ice_satellite, open_meteo, sentinel2
+from rowfrog.sources import dwd_radar, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
 
 try:  # the usage counter (PR #15) may not be part of this checkout yet
     from rowfrog import usage
@@ -81,6 +82,9 @@ LAKE_OTHER_OFFSET = timedelta(hours=1, minutes=30)
 # The satellite ice map comes once a day from an afternoon pass; it is looked
 # for in the morning and the evening (UTC).
 ICE_MAP_LOOKS = (6, 18)
+
+# Satellite lake temperatures (Copernicus LSWT, Landsat) are looked for once a day, from this hour (UTC).
+WATER_SATELLITE_HOUR = 6
 
 # How often a lake is looked at for new Sentinel-2 pictures, and how many lakes one run looks at.
 PICTURE_REFRESH = {"used": timedelta(days=1), "other": timedelta(days=5)}
@@ -119,12 +123,15 @@ class State:
         self.ice_map: tuple[datetime | None, dict[str, list]] = (None, {})
         self.outlooks: dict[str, tuple[datetime, list]] = {}
         self.models: dict[str, tuple[datetime, list]] = {}  # "<club>@<model>" -> loaded, weather
+        # Satellite lake temperature: day looked, LSWT files read (name -> readings per lake), readings per lake.
+        self.water_satellite: tuple[date | None, dict, dict[str, list]] = (None, {}, {})
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
                 self.clubs, self.lakes, self.ice_map = saved["clubs"], saved["lakes"], saved["ice_map"]
                 self.outlooks = saved.get("outlooks", {})
                 self.models = saved.get("models", {})
+                self.water_satellite = saved.get("water_satellite", (None, {}, {}))
                 api._last_water.update(saved.get("water", {}))
                 api._ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
@@ -141,6 +148,7 @@ class State:
             "ice_temps": api._ice_temps,
             "outlooks": self.outlooks,
             "models": self.models,
+            "water_satellite": self.water_satellite,
             "water": api._last_water,
         }
         self.path.write_bytes(pickle.dumps(body))
@@ -303,6 +311,30 @@ def satellite_ice(state: State, lake_ids: list[str], now: datetime) -> None:
             print(f"  satellite ice {lake_id}: {last.day} seen {last.seen_share:.0%} ice {last.ice_share:.0%}")
     api._satellite_ice.clear()
     api._satellite_ice.update(passes)
+
+
+def satellite_water(state: State, lake_ids: list[str], now: datetime) -> None:
+    """Looks once a day for satellite lake temperatures of the lakes without a GKD station and hands them to the API."""
+    today = now.astimezone(LOCAL).date()
+    looked, files, readings = state.water_satellite
+    if looked != today and now.hour >= WATER_SATELLITE_HOUR:
+        lakes = locations.load().lakes
+        shores = {}
+        for lake_id in lake_ids:
+            lake = lakes.get(lake_id)
+            rings = outlines.load(lake_id) if lake and lake.kind == "lake" and not lake.gkd_water_temperature_station else None
+            if rings:
+                shores[lake_id] = rings[0]
+        # Landsat scenes stay readable, so after the first look only the last days are searched.
+        days = 4 if readings else lake_temperature_satellite.LANDSAT_DAYS
+        found = lake_temperature_satellite.fetch(shores, today, files, days)
+        readings = lake_temperature_satellite.merge(readings, found, today, water_estimate.MAX_AGE_DAYS)
+        # The two newest LSWT files are all that is used.
+        files = {name: files[name] for name in sorted(files)[-2:]}
+        state.water_satellite = (today, files, readings)
+        print(f"  satellite water temperature: {len(readings)} of {len(shores)} lakes seen")
+    api._satellite_water.clear()
+    api._satellite_water.update(readings)
 
 
 def _read_json(path: Path) -> dict:
@@ -501,6 +533,12 @@ def main() -> int:
     model_pairs = model_weather(state, clubs, now)
     all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
     satellite_ice(state, all_lakes, now)
+    satellite_water(state, all_lakes, now)
+    # The radar line on the widget, for the clubs people use: 10 DWD requests a club.
+    radar = asyncio.run(
+        dwd_radar.nowcasts({c.id: (c.launch_point.lat, c.launch_point.lon) for c in clubs if c.id in used_clubs})
+    )
+    print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests")
     failed = []
     for club in clubs:
         if club.id not in api._primed_weather:
@@ -514,7 +552,10 @@ def main() -> int:
         if resp.status_code != 200:
             failed.append(f"{club.id}: HTTP {resp.status_code} {resp.text[:120]}")
             continue
-        write(args.out / "clubs" / club.id / "forecast", resp.json())
+        body = resp.json()
+        if club.id in radar:
+            body["radar"] = radar[club.id]
+        write(args.out / "clubs" / club.id / "forecast", body)
     print(f"Wrote {len(clubs) - len(failed)} of {len(clubs)} forecasts to {args.out}")
     written = 0
     for club, model in model_pairs:

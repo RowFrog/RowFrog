@@ -19,6 +19,8 @@ enum WidgetShared {
     static var defaults: UserDefaults { UserDefaults(suiteName: group) ?? .standard }
 
     static func cacheKey(_ clubID: String) -> String { "RWWidgetForecast-\(clubID)" }
+    /// When the widget last downloaded that forecast.
+    static func loadedKey(_ clubID: String) -> String { "RWWidgetLoaded-\(clubID)" }
 }
 
 /// What the medium widget shows below the rowing light; the large one shows it first.
@@ -51,6 +53,12 @@ struct RowingSnapshot {
     }
 
     var isNight: Bool { current?.sunUp == false }
+
+    /// DWD's radar from `date` on, when it brings rain within its two hours.
+    var rainAhead: RainRadar? {
+        guard let radar = forecast?.radar?.ahead(of: date), radar.firstRain != nil else { return nil }
+        return radar
+    }
 
     /// The forecast is too old at `date` to show green.
     var isStale: Bool { forecast?.isStale(at: date) ?? false }
@@ -243,11 +251,13 @@ struct RowingWidgetView: View {
                 .font(.caption.weight(.medium))
                 .opacity(0.9)
                 .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .padding(.leading, 4)
         }
     }
 
-    /// The main reason for amber or red, else wind and gusts.
+    /// The main reason for amber or red, else rain on DWD's radar within two
+    /// hours ("Light rain from 14:30"), else wind and gusts.
     private func detailLine(_ hour: ForecastHour) -> String {
         if snapshot.isStale, let forecast = snapshot.forecast {
             return tr("As of %@", Format.dayTime(forecast.generatedAt))
@@ -255,6 +265,7 @@ struct RowingWidgetView: View {
         if let reason = hour.reasons.filter({ $0.light == hour.light }).first, hour.light != .green {
             return reason.label
         }
+        if let radar = snapshot.rainAhead { return radar.summary }
         return "\(tr("Wind")) \(Format.windRange(hour.windSpeedMs, hour.windGustMs))"
     }
 

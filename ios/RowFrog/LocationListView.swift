@@ -7,6 +7,8 @@ struct LocationListView: View {
     let forecasts: ForecastStore
     /// The page on screen when the list sits beside the pages; nil when it is a full-screen cover.
     var selectedID: String?
+    /// The club page the full-screen list goes back to.
+    var returnTo: Club?
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
@@ -17,10 +19,12 @@ struct LocationListView: View {
     @State private var browseHook: String?
     @Environment(\.dismiss) private var dismiss
 
-    init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil, select: @escaping (Club) -> Void) {
+    init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil,
+         returnTo: Club? = nil, select: @escaping (Club) -> Void) {
         self.locations = locations
         self.forecasts = forecasts
         self.selectedID = selectedID
+        self.returnTo = returnTo
         self.select = select
         _search = State(initialValue: initialSearch)
     }
@@ -144,8 +148,19 @@ struct LocationListView: View {
                     if search.isEmpty { EditButton() }
                 }
                 if selectedID == nil {
+                    // Back to the club page it came from, named, rather than a "Done" that sounds like a finished task.
                     ToolbarItem(placement: .confirmationAction) {
-                        Button(tr("Done")) { dismiss() }
+                        Button { dismiss() } label: {
+                            if let returnTo {
+                                HStack(spacing: 4) {
+                                    Text(returnTo.displayName).lineLimit(1)
+                                    Image(systemName: "chevron.forward")
+                                }
+                            } else {
+                                Image(systemName: "xmark")
+                            }
+                        }
+                        .accessibilityLabel(returnTo.map { tr("Back to %@", $0.displayName) } ?? tr("Close"))
                     }
                 }
             }

@@ -73,6 +73,19 @@ def geocode(street: str, plz: str, town: str, cache: dict, country: str = "de") 
     return result
 
 
+# A harbour basin on a lake is its own OpenStreetMap water ("Fischerhafen" in
+# Bregenz); the club rows on the lake around it.
+HARBOUR = re.compile(r"(?i)hafen|harbou?r|\bport\b|\bporto\b|becken")
+
+
+def pick_lake(candidates: list[tuple]) -> tuple | None:
+    """The nearest lake of (distance, name, ...) candidates, a harbour basin only
+    when no other lake is within reach."""
+    if not candidates:
+        return None
+    return min(candidates, key=lambda c: (bool(HARBOUR.search(c[1])), c[0]))
+
+
 def query_waters(points: list[tuple[float, float]]) -> list[dict]:
     """Named lakes within LAKE_M and named rivers and canals within RIVER_M of the points.
 
@@ -131,14 +144,16 @@ def place(clubs: list[dict], country: str, report: list[str], id_prefix: str = "
 
         for c in batch:
             lat, lon = c["_pos"]["lat"], c["_pos"]["lon"]
-            lake = river = None
+            river = None
+            near_lakes = []
             if c in exact:
                 for kind, name, osm_id, rings in waters:
                     d, slon, slat = nearest_shore(lon, lat, rings)
-                    if kind == "lake" and d <= LAKE_M and (lake is None or d < lake[0]):
-                        lake = (d, name, osm_id, rings, slat, slon)
+                    if kind == "lake" and d <= LAKE_M:
+                        near_lakes.append((d, name, osm_id, rings, slat, slon))
                     if kind == "river" and d <= RIVER_M and (river is None or d < river[0]):
                         river = (d, name)
+            lake = pick_lake(near_lakes)
             where = c["_where"]
             if lake:
                 d, name, osm_id, rings, lat, lon = lake
