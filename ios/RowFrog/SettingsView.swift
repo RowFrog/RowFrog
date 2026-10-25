@@ -4,6 +4,13 @@ import TipKit
 
 /// Pages pushed inside the settings.
 enum SettingsRoute: Hashable {
+    case appearance
+    case clubPages
+    case language
+    case data
+    case help
+    case about
+    case developer
     case backgrounds
     case widgets
     case limits
@@ -13,23 +20,36 @@ enum SettingsRoute: Hashable {
     case impressum
     case privacy
 
-    /// Screenshot hook: `-RWSettingsPage backgrounds`, `safety`, `impressum`, `privacy`, `picker-all`,
-    /// `picker-page:list` or `picker-club:<id>` opens that page.
+    /// Screenshot hook: `-RWSettingsPage appearance`, `clubpages`, `language`, `data`, `help`,
+    /// `about`, `developer`, `backgrounds`, `widgets`, `limits`, `boat:<id>`, `safety`, `impressum`,
+    /// `privacy`, `picker-all`, `picker-page:list` or `picker-club:<id>` opens that page, with the
+    /// pages on the way to it. `-RWSettingsSearch <text>` fills the search field.
     static func fromLaunchArguments() -> [SettingsRoute] {
         guard let page = UserDefaults.standard.string(forKey: "RWSettingsPage") else { return [] }
-        if page == "backgrounds" { return [.backgrounds] }
-        if page == "widgets" { return [.widgets] }
-        if page == "safety" { return [.safety] }
-        if page == "impressum" { return [.impressum] }
-        if page == "privacy" { return [.privacy] }
-        if page == "limits" { return [.limits] }
+        let backgrounds: [SettingsRoute] = [.clubPages, .backgrounds]
+        switch page {
+        case "appearance": return [.appearance]
+        case "clubpages": return [.clubPages]
+        case "language": return [.language]
+        case "data": return [.data]
+        case "help": return [.help]
+        case "about": return [.about]
+        case "developer": return [.developer]
+        case "backgrounds": return backgrounds
+        case "widgets": return [.widgets]
+        case "safety": return [.about, .safety]
+        case "impressum": return [.about, .impressum]
+        case "privacy": return [.about, .privacy]
+        case "limits": return [.limits]
+        case "picker-all": return backgrounds + [.picker(.all)]
+        default: break
+        }
         if page.hasPrefix("boat:") { return [.limits, .boat(String(page.dropFirst("boat:".count)))] }
-        if page == "picker-all" { return [.backgrounds, .picker(.all)] }
         if page.hasPrefix("picker-page:"), let kind = PageKind(rawValue: String(page.dropFirst("picker-page:".count))) {
-            return [.backgrounds, .picker(.page(kind))]
+            return backgrounds + [.picker(.page(kind))]
         }
         if page.hasPrefix("picker-club:") {
-            return [.backgrounds, .picker(.club(String(page.dropFirst("picker-club:".count))))]
+            return backgrounds + [.picker(.club(String(page.dropFirst("picker-club:".count))))]
         }
         return []
     }
@@ -44,323 +64,450 @@ enum BackgroundTarget: Hashable {
     case widgets(String?)
 }
 
-/// The settings page, opened with the cog on the location list.
+/// The settings, opened with the cog, as in the iOS Settings app: a short list of topics, each
+/// opening its own page, with the boat for the rowing light right at the top
+/// and a search field at the bottom.
 struct SettingsView: View {
     let locations: LocationStore
     @State private var path = SettingsRoute.fromLaunchArguments()
-    @State private var confirmingReset = false
-    @State private var showingTour = false
-    @State private var showingLegend = false
-    @State private var arrangingPages = false
-    @State private var showResetTip = false
-    private let resetTip = FactoryResetTip()
-
-    private var limitsSummary: String {
-        let settings = AppSettings.shared
-        let boat = settings.selectedBoat
-        let changed = settings.limits.custom.count
-        return changed == 0 ? boat.title : tr("%@ · %@ changed", boat.title, "\(changed)")
-    }
-    @State private var showAppIconTip = false
-    private let appIconTip = AppIconTip()
-    @State private var showSaveDataTip = false
-    private let saveDataTip = SaveDataTip()
-    @State private var appIcon = AppIcons.current
+    @State private var search = UserDefaults.standard.string(forKey: "RWSettingsSearch") ?? ""
+    @FocusState private var searching: Bool
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
         NavigationStack(path: $path) {
-            ScrollViewReader { proxy in
-                Form {
-                    Section {
-                        AppearancePicker(selection: $settings.appearance)
-                        Toggle(isOn: $settings.allowsLandscape) {
-                            Label(tr("Landscape"), systemImage: "rectangle.landscape.rotate")
-                        }
-                        Button { arrangingPages = true } label: {
-                            Label(tr("Order of the club page cards"), systemImage: "arrow.up.arrow.down")
-                        }
-                    } header: {
-                        SectionTitle(tr("Appearance"), symbol: "circle.lefthalf.filled")
-                    } footer: {
-                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page. Dark uses less battery on iPhones with an OLED screen, which most models since the iPhone X have."))
-                    }
-                    .surfaceRows()
-                    .id("appearance")
-
-                    Section {
-                        Picker(selection: $settings.language) {
-                            ForEach(AppLanguage.allCases) { language in
-                                Text(language.title).tag(language)
-                            }
-                        } label: {
-                            EmptyView()
-                        }
-                        .pickerStyle(.inline)
-                        .labelsHidden()
-                    } header: {
-                        SectionTitle(tr("Language"), symbol: "globe")
-                    }
-                    .surfaceRows()
-                    .id("language")
-
-                    Section {
-                        UnitRow(condition: .temperature, title: tr("Air and water temperature"), selection: $settings.temperatureUnit)
-                        UnitRow(condition: .wind, title: tr("Wind and gusts"), selection: $settings.windUnit)
-                        UnitRow(condition: .waves, title: tr("Waves"), selection: $settings.waveUnit)
-                        UnitRow(condition: .precipitation, title: tr("Rain, hail, snow"), selection: $settings.rainUnit)
-                        UnitRow(condition: .visibility, title: tr("Visibility and distances"), selection: $settings.distanceUnit)
-                        UnitRow(condition: .pressure, title: tr("Air pressure"), selection: $settings.pressureUnit)
-                    } header: {
-                        SectionTitle(tr("Units"), symbol: "ruler")
-                    } footer: {
-                        SectionFooter(tr("Cloud cover stays in percent."))
-                    }
-                    .surfaceRows()
-                    .id("units")
-
-                    Section {
-                        NavigationLink(value: SettingsRoute.limits) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(tr("Your boat and limits"))
-                                Text(limitsSummary)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-                    } header: {
-                        SectionTitle(tr("Rowing limits"), symbol: "figure.rower")
-                    } footer: {
-                        SectionFooter(tr("When the rowing light turns amber or red. Big boats get higher wind and wave limits, and you can fine-tune each limit."))
-                    }
-                    .surfaceRows()
-                    .id("limits")
-
-                    Section {
-                        FormatRow(title: tr("Time"), symbol: "clock", selection: $settings.timeFormat) { format in
-                            format.string(from: Self.sampleTime)
-                        }
-                        FormatRow(title: tr("Date"), symbol: "calendar", selection: $settings.dateFormat) { format in
-                            format.string(from: .now, locale: AppSettings.shared.locale)
-                        }
-                    } header: {
-                        SectionTitle(tr("Date and time"), symbol: "calendar.badge.clock")
-                    } footer: {
-                        SectionFooter(tr("Device follows the phone's settings. Today and tomorrow are always written as words."))
-                    }
-                    .surfaceRows()
-                    .id("datetime")
-
-                    Section {
-                        NavigationLink(value: SettingsRoute.backgrounds) {
-                            HStack(spacing: 12) {
-                                BackgroundThumbnail(choice: settings.allPagesBackground, width: 36)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(tr("Background pictures"))
-                                    Text(backgroundSummary)
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    } header: {
-                        SectionTitle(tr("Background"), symbol: "photo")
-                    }
-                    .surfaceRows()
-                    .id("background")
-
-                    Section {
-                        NavigationLink(value: SettingsRoute.widgets) {
-                            HStack(spacing: 12) {
-                                WidgetBackgroundSwatch(background: settings.widgetBackground)
-                                    .frame(width: 36, height: 36)
-                                VStack(alignment: .leading, spacing: 2) {
-                                    Text(tr("Widget background and updates"))
-                                    Text("\(settings.widgetBackground.title) · \(settings.widgetUpdates.title)")
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                }
-                            }
-                        }
-                    } header: {
-                        SectionTitle(tr("Widgets"), symbol: "rectangle.3.group")
-                    }
-                    .surfaceRows()
-                    .id("widgets")
-
-                    Section {
-                        if showSaveDataTip {
-                            TipView(saveDataTip)
-                        }
-                        Toggle(isOn: $settings.saveMobileData) {
-                            Label(tr("Save mobile data"), systemImage: "antenna.radiowaves.left.and.right")
-                        }
-                        if DataSaver.shared.saving {
-                            Label(DataSaver.shared.lowDataModeOn ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
-                                  systemImage: "leaf")
-                                .font(.footnote)
-                                .foregroundStyle(.secondary)
-                        }
-                    } header: {
-                        SectionTitle(tr("Data use"), symbol: "arrow.up.arrow.down.circle")
-                    } footer: {
-                        SectionFooter(tr("On mobile data, satellite pictures load only when you tap them, the radar map shows half-hour steps and the rain radar updates every 15 minutes. Forecasts and warnings always load. In iOS Low Data Mode the app always saves data, also on Wi-Fi."))
-                    }
-                    .surfaceRows()
-                    .id("data")
-
-                    Section {
-                        Button {
-                            Tutorial.replay()
-                            showingTour = true
-                        } label: {
-                            Label(tr("Show the tour again"), systemImage: "questionmark.circle")
-                        }
-                        Button { showingLegend = true } label: {
-                            Label(tr("Legend: what the symbols mean"), systemImage: "info.circle")
-                        }
-                    } header: {
-                        SectionTitle(tr("Help"), symbol: "questionmark.circle")
-                    } footer: {
-                        SectionFooter(tr("The one-time tips come back the next time you open the app."))
-                    }
-                    .surfaceRows()
-                    .id("help")
-
-                    Section {
-                        NavigationLink(value: SettingsRoute.safety) {
-                            Label(tr("Safety notice"), systemImage: "exclamationmark.shield")
-                        }
-                        NavigationLink(value: SettingsRoute.privacy) {
-                            Label(tr("Privacy"), systemImage: "hand.raised")
-                        }
-                        NavigationLink(value: SettingsRoute.impressum) {
-                            Label(tr("Legal notice"), systemImage: "building.columns")
-                        }
-                    } header: {
-                        SectionTitle(tr("Legal"), symbol: "doc.text")
-                    }
-                    .surfaceRows()
-                    .id("legal")
-
-                    Section {
-                        if showAppIconTip {
-                            TipView(appIconTip)
-                        }
-                        AppIconPicker(selected: $appIcon)
-                    } header: {
-                        SectionTitle(tr("App icon"), symbol: "app.badge")
-                    } footer: {
-                        SectionFooter(tr("The icon on your home screen. iOS asks you to confirm the change."))
-                    }
-                    .surfaceRows()
-                    .id("appicon")
-
-                    Section {
-                        if showResetTip {
-                            TipView(resetTip)
-                        }
-                        Button(role: .destructive) {
-                            confirmingReset = true
-                        } label: {
-                            Label(tr("Reset to factory settings"), systemImage: "arrow.counterclockwise")
-                        }
-                    } footer: {
-                        SectionFooter(tr("Appearance, units, language, background pictures and the app icon go back to how the app came. Small boats are ticked again and every boat's limits go back to the app's. Your locations, home base and boats stay."))
-                    }
-                    .surfaceRows()
-                    .id("reset")
-
-                    if settings.developerOptions {
-                        Section {
-                            Toggle(isOn: $settings.developerOptions) {
-                                Label(tr("Developer options"), systemImage: "hammer")
-                            }
-                            Button {
-                                settings.pickedModels = [:]
-                            } label: {
-                                Label(tr("All clubs back to the automatic model"), systemImage: "arrow.uturn.backward")
-                            }
-                            .disabled(settings.pickedModels.isEmpty)
-                        } header: {
-                            SectionTitle(tr("Developer"), symbol: "hammer")
-                        } footer: {
-                            SectionFooter(tr("Test: on a confirmed club's page, tap the forecast line at the bottom to pick another weather model. Switched off, every club uses the automatic model again. Tap the version seven times to show this again."))
-                        }
-                        .surfaceRows()
-                        .id("developer")
-                    }
-
-                    Section {
-                        LabeledContent(tr("Version"), value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")
-                            .contentShape(Rectangle())
-                            // Hidden: seven taps show the developer options.
-                            .onTapGesture(count: 7) { settings.developerOptions = true }
-                    }
-                    .surfaceRows()
+            Form {
+                if search.trimmingCharacters(in: .whitespaces).isEmpty {
+                    topics
+                } else {
+                    results
                 }
-                .scrollContentBackground(.hidden)
-                .pageBackground(.settings)
-                .navigationTitle(tr("Settings"))
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(tr("Done")) { dismiss() }
-                    }
+            }
+            .scrollContentBackground(.hidden)
+            .pageBackground(.settings)
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                SettingsSearchField(text: $search, focused: $searching)
+            }
+            .navigationTitle(tr("Settings"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(tr("Done")) { dismiss() }
                 }
-                .navigationDestination(for: SettingsRoute.self) { route in
-                    switch route {
-                    case .backgrounds:
-                        BackgroundSettingsView(locations: locations)
-                    case .widgets:
-                        WidgetSettingsView(locations: locations, path: $path)
-                    case .limits:
-                        RowingLimitsView(path: $path)
-                    case let .boat(id):
-                        BoatLimitsView(boatID: id)
-                    case let .picker(target):
-                        BackgroundPickerView(target: target, locations: locations)
-                    case .safety:
-                        SafetyNoticeSettingsView()
-                    case .impressum:
-                        ImpressumView()
-                    case .privacy:
-                        PrivacySummaryView()
-                    }
-                }
-                .confirmationDialog(tr("Reset all settings?"), isPresented: $confirmingReset, titleVisibility: .visible) {
-                    Button(tr("Reset"), role: .destructive) {
-                        AppSettings.shared.resetToFactorySettings()
-                        Task {
-                            try? await AppIcons.select(AppIcons.primary)
-                            appIcon = AppIcons.current
-                        }
-                    }
-                    Button(tr("Cancel"), role: .cancel) {}
-                } message: {
-                    Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
-                }
-                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "widgets", "data", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
-                .tipVisibility(appIconTip, $showAppIconTip)
-                .tipVisibility(saveDataTip, $showSaveDataTip)
-                .onChange(of: settings.saveMobileData) { if settings.saveMobileData { saveDataTip.invalidate(reason: .actionPerformed) } }
-                .tipVisibility(resetTip, $showResetTip)
-                .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
-                .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }
-                .fullScreenCover(isPresented: $showingTour) {
-                    TutorialView(locations: locations, reload: {}) {
-                        Tutorial.markSeen()
-                        showingTour = false
-                    }
+            }
+            .navigationDestination(for: SettingsRoute.self) { route in
+                switch route {
+                case .appearance:
+                    AppearanceSettingsView()
+                case .clubPages:
+                    ClubPagesSettingsView()
+                case .language:
+                    LanguageSettingsView()
+                case .data:
+                    DataSettingsView()
+                case .help:
+                    HelpSettingsView(locations: locations)
+                case .about:
+                    AboutSettingsView()
+                case .developer:
+                    DeveloperSettingsView()
+                case .backgrounds:
+                    BackgroundSettingsView(locations: locations)
+                case .widgets:
+                    WidgetSettingsView(locations: locations, path: $path)
+                case .limits:
+                    RowingLimitsView(path: $path)
+                case let .boat(id):
+                    BoatLimitsView(boatID: id)
+                case let .picker(target):
+                    BackgroundPickerView(target: target, locations: locations)
+                case .safety:
+                    SafetyNoticeSettingsView()
+                case .impressum:
+                    ImpressumView()
+                case .privacy:
+                    PrivacySummaryView()
                 }
             }
         }
     }
 
-    /// 14:30 today, to show each time format.
-    private static var sampleTime: Date {
-        Calendar.current.date(bySettingHour: 14, minute: 30, second: 0, of: .now) ?? .now
+    @ViewBuilder
+    private var topics: some View {
+        @Bindable var settings = AppSettings.shared
+        Section {
+            Picker(selection: $settings.boatID) {
+                ForEach(settings.boats) { boat in
+                    Text(boat.title).tag(boat.id)
+                }
+            } label: {
+                HStack(spacing: 12) {
+                    SettingsIcon(symbol: "figure.rower", color: .green)
+                    Text(tr("Rowing light for"))
+                }
+            }
+            topic(.boats, value: limitsSummary)
+        } footer: {
+            SectionFooter(tr("The boat the rowing light is worked out for, on every club page and in the widgets."))
+        }
+        .surfaceRows()
+
+        Section {
+            topic(.appearance, value: settings.appearance.title)
+            topic(.clubPages, value: settings.allPagesBackground.title)
+            topic(.widgets, value: settings.widgetUpdates.title)
+        }
+        .surfaceRows()
+
+        Section {
+            topic(.language, value: "\(settings.resolvedLanguage.title) · \(settings.temperatureUnit.symbol) · \(settings.windUnit.symbol)")
+            topic(.data, value: DataSaver.shared.saving ? tr("Saving data") : nil)
+        }
+        .surfaceRows()
+
+        Section {
+            topic(.help)
+            topic(.about, value: SettingsTopic.version)
+            if settings.developerOptions {
+                topic(.developer)
+            }
+        }
+        .surfaceRows()
+    }
+
+    private func topic(_ topic: SettingsTopic, value: String? = nil) -> some View {
+        NavigationLink(value: topic.route) {
+            SettingsRow(topic: topic, value: value)
+        }
+    }
+
+    private var limitsSummary: String? {
+        let changed = AppSettings.shared.limits.custom.count
+        return changed == 0 ? nil : tr("%@ changed", "\(changed)")
+    }
+
+    /// Every setting whose name, or its page's, has the typed words, in both languages.
+    @ViewBuilder
+    private var results: some View {
+        let found = SettingsSearch.entries(developer: AppSettings.shared.developerOptions)
+            .filter { $0.matches(search) }
+        if found.isEmpty {
+            Section {
+                Text(tr("No settings found for “%@”.", search.trimmingCharacters(in: .whitespaces)))
+                    .foregroundStyle(.secondary)
+            }
+            .surfaceRows()
+        } else {
+            Section {
+                ForEach(found) { entry in
+                    Button {
+                        searching = false
+                        path = entry.path
+                    } label: {
+                        HStack(spacing: 12) {
+                            SettingsIcon(symbol: entry.topic.symbol, color: entry.topic.color)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tr(entry.title)).foregroundStyle(Color.primary)
+                                Text(entry.topic.title)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.tertiary)
+                        }
+                    }
+                }
+            }
+            .surfaceRows()
+        }
+    }
+}
+
+/// The topics on the first settings page, each with its own page.
+enum SettingsTopic: CaseIterable {
+    case boats, appearance, clubPages, widgets, language, data, help, about, developer
+
+    var title: String {
+        switch self {
+        case .boats: tr("Boats and limits")
+        case .appearance: tr("Appearance")
+        case .clubPages: tr("Club pages")
+        case .widgets: tr("Widgets")
+        case .language: tr("Language and units")
+        case .data: tr("Battery and data")
+        case .help: tr("Help")
+        case .about: tr("About")
+        case .developer: tr("Developer")
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .boats: "slider.horizontal.3"
+        case .appearance: "circle.lefthalf.filled"
+        case .clubPages: "rectangle.stack"
+        case .widgets: "rectangle.3.group"
+        case .language: "globe"
+        case .data: "battery.75percent"
+        case .help: "questionmark"
+        case .about: "info"
+        case .developer: "hammer"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .boats: .teal
+        case .appearance: .blue
+        case .clubPages: .indigo
+        case .widgets: .orange
+        case .language: .gray
+        case .data: .green
+        case .help: .blue
+        case .about: .gray
+        case .developer: .brown
+        }
+    }
+
+    var route: SettingsRoute {
+        switch self {
+        case .boats: .limits
+        case .appearance: .appearance
+        case .clubPages: .clubPages
+        case .widgets: .widgets
+        case .language: .language
+        case .data: .data
+        case .help: .help
+        case .about: .about
+        case .developer: .developer
+        }
+    }
+
+    static var version: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
+    }
+}
+
+/// A white symbol on a coloured square, as in the iOS Settings app.
+struct SettingsIcon: View {
+    let symbol: String
+    let color: Color
+
+    var body: some View {
+        Image(systemName: symbol)
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: 29, height: 29)
+            .background(color.gradient, in: RoundedRectangle(cornerRadius: 7))
+            .accessibilityHidden(true)
+    }
+}
+
+private struct SettingsRow: View {
+    let topic: SettingsTopic
+    let value: String?
+
+    var body: some View {
+        HStack(spacing: 12) {
+            SettingsIcon(symbol: topic.symbol, color: topic.color)
+            Text(topic.title)
+            Spacer(minLength: 8)
+            if let value {
+                Text(value)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+        }
+    }
+}
+
+/// The search field at the bottom of the first settings page, where iOS has it.
+private struct SettingsSearchField: View {
+    @Binding var text: String
+    var focused: FocusState<Bool>.Binding
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+            TextField(tr("Search"), text: $text)
+                .focused(focused)
+                .submitLabel(.search)
+                .autocorrectionDisabled()
+            if !text.isEmpty {
+                Button {
+                    text = ""
+                } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                }
+                .accessibilityLabel(tr("Clear"))
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 11)
+        .glass(in: Capsule())
+        .padding(.horizontal)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
+    }
+}
+
+/// What the settings search finds: every setting, with the pages to open for it.
+struct SettingsSearch: Identifiable {
+    /// English, shown through `tr`.
+    let title: String
+    let topic: SettingsTopic
+    var path: [SettingsRoute]
+    /// More words to find it by, in English and German.
+    var words: [String] = []
+
+    var id: String { title + topic.title }
+
+    init(_ title: String, _ topic: SettingsTopic, path: [SettingsRoute]? = nil, words: [String] = []) {
+        self.title = title
+        self.topic = topic
+        self.path = path ?? [topic.route]
+        self.words = words
+    }
+
+    func matches(_ query: String) -> Bool {
+        let parts = query.split(whereSeparator: \.isWhitespace).map(String.init)
+        guard !parts.isEmpty else { return false }
+        let haystack = ([title, German.table[title] ?? "", topic.title] + words).joined(separator: " ")
+        return parts.allSatisfy { haystack.range(of: $0, options: [.caseInsensitive, .diacriticInsensitive]) != nil }
+    }
+
+    static func entries(developer: Bool) -> [SettingsSearch] {
+        var all = [
+            SettingsSearch("Rowing light for", .boats, path: [], words: ["boat", "Boot", "Ampel"]),
+            SettingsSearch("Your boat", .boats, words: ["small", "big", "klein", "groß", "Boot"]),
+            SettingsSearch("My boats", .boats, words: ["Meine Boote", "gig", "add", "hinzufügen"]),
+            SettingsSearch("Fine-tune the limits", .boats, words: ["limit", "Grenze", "wind", "gusts", "Böen", "waves", "Wellen", "water temperature", "Wassertemperatur"]),
+            SettingsSearch("Lake map colours", .boats, words: ["lake view", "Seeansicht", "route", "Karte"]),
+            SettingsSearch("Appearance", .appearance, words: ["light", "dark", "hell", "dunkel", "mode", "Modus"]),
+            SettingsSearch("Landscape", .appearance, words: ["Querformat", "rotate", "drehen", "columns", "Spalten"]),
+            SettingsSearch("App icon", .appearance, words: ["App-Symbol", "home screen", "Home-Bildschirm"]),
+            SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
+            SettingsSearch("Background pictures", .clubPages, path: [.clubPages, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
+            SettingsSearch("In the tiles", .clubPages, path: [.clubPages, .backgrounds], words: ["tiles", "Kacheln", "frosted", "Liquid Glass", "blur", "unscharf", "solid"]),
+            SettingsSearch("Widget background", .widgets, words: ["sky", "Himmel", "picture", "Bild", "satellite", "Satellit"]),
+            SettingsSearch("Widget updates", .widgets, words: ["refresh", "aktualisieren", "battery", "Akku"]),
+            SettingsSearch("Language", .language, words: ["Sprache", "English", "Deutsch", "German", "Englisch"]),
+            SettingsSearch("Air and water temperature", .language, words: ["unit", "Einheit", "Celsius", "Fahrenheit"]),
+            SettingsSearch("Wind and gusts", .language, words: ["unit", "Einheit", "km/h", "knots", "Knoten", "Beaufort", "m/s"]),
+            SettingsSearch("Waves", .language, words: ["unit", "Einheit", "cm"]),
+            SettingsSearch("Rain, hail, snow", .language, words: ["unit", "Einheit", "mm", "Regen"]),
+            SettingsSearch("Visibility and distances", .language, words: ["unit", "Einheit", "km", "miles", "Meilen"]),
+            SettingsSearch("Air pressure", .language, words: ["unit", "Einheit", "hPa", "Luftdruck"]),
+            SettingsSearch("Time", .language, words: ["Uhrzeit", "12", "24", "format"]),
+            SettingsSearch("Date", .language, words: ["Datum", "format"]),
+            SettingsSearch("Save mobile data", .data, words: ["Low Data Mode", "Datensparmodus", "satellite", "radar"]),
+            SettingsSearch("Battery", .data, words: ["Akku", "Low Power Mode", "Stromsparmodus", "background", "Hintergrund"]),
+            SettingsSearch("Show the tour again", .help, words: ["tutorial", "Einführung", "tips", "Tipps"]),
+            SettingsSearch("Legend: what the symbols mean", .help, words: ["Legende", "symbols", "Symbole"]),
+            SettingsSearch("Version", .about),
+            SettingsSearch("Safety notice", .about, path: [.about, .safety], words: ["Sicherheit", "disclaimer"]),
+            SettingsSearch("Privacy", .about, path: [.about, .privacy], words: ["Datenschutz"]),
+            SettingsSearch("Legal notice", .about, path: [.about, .impressum], words: ["Impressum", "imprint"]),
+            SettingsSearch("Reset to factory settings", .about, words: ["reset", "zurücksetzen", "Werkseinstellungen"]),
+        ]
+        if developer {
+            all.append(SettingsSearch("Developer options", .developer, words: ["Entwickler", "weather model", "Wettermodell"]))
+        }
+        return all
+    }
+}
+
+/// Settings > Appearance: light or dark, landscape and the app icon.
+private struct AppearanceSettingsView: View {
+    @State private var appIcon = AppIcons.current
+    @State private var showAppIconTip = false
+    private let appIconTip = AppIconTip()
+
+    var body: some View {
+        @Bindable var settings = AppSettings.shared
+        ScrollViewReader { proxy in
+            Form {
+                Section {
+                    AppearancePicker(selection: $settings.appearance)
+                } footer: {
+                    SectionFooter(tr("Dark uses less battery on iPhones with an OLED screen, which most models since the iPhone X have."))
+                }
+                .surfaceRows()
+                .id("appearance")
+
+                Section {
+                    Toggle(isOn: $settings.allowsLandscape) {
+                        Label(tr("Landscape"), systemImage: "rectangle.landscape.rotate")
+                    }
+                } footer: {
+                    SectionFooter(tr("On: the app turns with the phone and shows the cards in two columns. Off: it stays upright."))
+                }
+                .surfaceRows()
+                .id("landscape")
+
+                Section {
+                    if showAppIconTip {
+                        TipView(appIconTip)
+                    }
+                    AppIconPicker(selected: $appIcon)
+                } header: {
+                    SectionTitle(tr("App icon"), symbol: "app.badge")
+                } footer: {
+                    SectionFooter(tr("The icon on your home screen. iOS asks you to confirm the change."))
+                }
+                .surfaceRows()
+                .id("appicon")
+            }
+            .scrollContentBackground(.hidden)
+            .pageBackground(.settings)
+            .navigationTitle(tr("Appearance"))
+            .tipVisibility(appIconTip, $showAppIconTip)
+            .onAppear { appIcon = AppIcons.current }
+            .screenshotSections(["appearance", "landscape", "appicon"], proxy: proxy)
+        }
+    }
+}
+
+/// Settings > Club pages: the order of the cards and the background pictures.
+private struct ClubPagesSettingsView: View {
+    @State private var arrangingPages = false
+
+    var body: some View {
+        let settings = AppSettings.shared
+        Form {
+            Section {
+                Button { arrangingPages = true } label: {
+                    Label(tr("Order of the club page cards"), systemImage: "arrow.up.arrow.down")
+                }
+            } footer: {
+                SectionFooter(tr("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))
+            }
+            .surfaceRows()
+
+            Section {
+                NavigationLink(value: SettingsRoute.backgrounds) {
+                    HStack(spacing: 12) {
+                        BackgroundThumbnail(choice: settings.allPagesBackground, width: 36)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tr("Background pictures"))
+                            Text(backgroundSummary)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+            } footer: {
+                SectionFooter(tr("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))
+            }
+            .surfaceRows()
+        }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
+        .navigationTitle(tr("Club pages"))
+        .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }
     }
 
     private var backgroundSummary: String {
@@ -368,6 +515,250 @@ struct SettingsView: View {
         let own = settings.pageBackgrounds.count + settings.clubBackgrounds.count
         let all = tr("All pages: %@", settings.allPagesBackground.title)
         return own == 0 ? all : all + " · " + tr("%@ with their own", String(own))
+    }
+}
+
+/// Settings > Language and units: language, units, date and time.
+private struct LanguageSettingsView: View {
+    var body: some View {
+        @Bindable var settings = AppSettings.shared
+        ScrollViewReader { proxy in
+            Form {
+                Section {
+                    Picker(selection: $settings.language) {
+                        ForEach(AppLanguage.allCases) { language in
+                            Text(language.title).tag(language)
+                        }
+                    } label: {
+                        EmptyView()
+                    }
+                    .pickerStyle(.inline)
+                    .labelsHidden()
+                } header: {
+                    SectionTitle(tr("Language"), symbol: "globe")
+                }
+                .surfaceRows()
+                .id("language")
+
+                Section {
+                    UnitRow(condition: .temperature, title: tr("Air and water temperature"), selection: $settings.temperatureUnit)
+                    UnitRow(condition: .wind, title: tr("Wind and gusts"), selection: $settings.windUnit)
+                    UnitRow(condition: .waves, title: tr("Waves"), selection: $settings.waveUnit)
+                    UnitRow(condition: .precipitation, title: tr("Rain, hail, snow"), selection: $settings.rainUnit)
+                    UnitRow(condition: .visibility, title: tr("Visibility and distances"), selection: $settings.distanceUnit)
+                    UnitRow(condition: .pressure, title: tr("Air pressure"), selection: $settings.pressureUnit)
+                } header: {
+                    SectionTitle(tr("Units"), symbol: "ruler")
+                } footer: {
+                    SectionFooter(tr("Cloud cover stays in percent."))
+                }
+                .surfaceRows()
+                .id("units")
+
+                Section {
+                    FormatRow(title: tr("Time"), symbol: "clock", selection: $settings.timeFormat) { format in
+                        format.string(from: Self.sampleTime)
+                    }
+                    FormatRow(title: tr("Date"), symbol: "calendar", selection: $settings.dateFormat) { format in
+                        format.string(from: .now, locale: AppSettings.shared.locale)
+                    }
+                } header: {
+                    SectionTitle(tr("Date and time"), symbol: "calendar.badge.clock")
+                } footer: {
+                    SectionFooter(tr("Device follows the phone's settings. Today and tomorrow are always written as words."))
+                }
+                .surfaceRows()
+                .id("datetime")
+            }
+            .scrollContentBackground(.hidden)
+            .pageBackground(.settings)
+            .navigationTitle(tr("Language and units"))
+            .screenshotSections(["language", "units", "datetime"], proxy: proxy)
+        }
+    }
+
+    /// 14:30 today, to show each time format.
+    private static var sampleTime: Date {
+        Calendar.current.date(bySettingHour: 14, minute: 30, second: 0, of: .now) ?? .now
+    }
+}
+
+/// Settings > Battery and data: saving mobile data, and what runs in the background.
+private struct DataSettingsView: View {
+    @State private var showSaveDataTip = false
+    private let saveDataTip = SaveDataTip()
+
+    var body: some View {
+        @Bindable var settings = AppSettings.shared
+        Form {
+            Section {
+                if showSaveDataTip {
+                    TipView(saveDataTip)
+                }
+                Toggle(isOn: $settings.saveMobileData) {
+                    Label(tr("Save mobile data"), systemImage: "antenna.radiowaves.left.and.right")
+                }
+                if DataSaver.shared.saving {
+                    Label(DataSaver.shared.lowDataModeOn ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
+                          systemImage: "leaf")
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            } header: {
+                SectionTitle(tr("Data use"), symbol: "arrow.up.arrow.down.circle")
+            } footer: {
+                SectionFooter(tr("On mobile data, satellite pictures load only when you tap them, the radar map shows half-hour steps and the rain radar updates every 15 minutes. Forecasts and warnings always load. In iOS Low Data Mode the app always saves data, also on Wi-Fi."))
+            }
+            .surfaceRows()
+
+            Section {
+                NavigationLink(value: SettingsRoute.widgets) {
+                    LabeledContent {
+                        Text(settings.widgetUpdates.title)
+                    } label: {
+                        Label(tr("Widget updates"), systemImage: "apps.iphone")
+                    }
+                }
+            } header: {
+                SectionTitle(tr("Battery"), symbol: "battery.75percent")
+            } footer: {
+                SectionFooter(tr("Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Dark appearance and club pages without a picture use less battery too; in Low Power Mode the tiles are always solid."))
+            }
+            .surfaceRows()
+        }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
+        .navigationTitle(tr("Battery and data"))
+        .tipVisibility(saveDataTip, $showSaveDataTip)
+        .onChange(of: settings.saveMobileData) { if settings.saveMobileData { saveDataTip.invalidate(reason: .actionPerformed) } }
+    }
+}
+
+/// Settings > Help: the tour and the legend.
+private struct HelpSettingsView: View {
+    let locations: LocationStore
+    @State private var showingTour = false
+    @State private var showingLegend = false
+
+    var body: some View {
+        Form {
+            Section {
+                Button {
+                    Tutorial.replay()
+                    showingTour = true
+                } label: {
+                    Label(tr("Show the tour again"), systemImage: "questionmark.circle")
+                }
+                Button { showingLegend = true } label: {
+                    Label(tr("Legend: what the symbols mean"), systemImage: "info.circle")
+                }
+            } footer: {
+                SectionFooter(tr("The one-time tips come back the next time you open the app."))
+            }
+            .surfaceRows()
+        }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
+        .navigationTitle(tr("Help"))
+        .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
+        .fullScreenCover(isPresented: $showingTour) {
+            TutorialView(locations: locations, reload: {}) {
+                Tutorial.markSeen()
+                showingTour = false
+            }
+        }
+    }
+}
+
+/// Settings > About: the version (seven taps show the developer options),
+/// the legal texts and the factory reset.
+private struct AboutSettingsView: View {
+    @State private var confirmingReset = false
+    @State private var showResetTip = false
+    private let resetTip = FactoryResetTip()
+
+    var body: some View {
+        @Bindable var settings = AppSettings.shared
+        Form {
+            Section {
+                LabeledContent(tr("Version"), value: SettingsTopic.version)
+                    .contentShape(Rectangle())
+                    // Hidden: seven taps show the developer options.
+                    .onTapGesture(count: 7) { settings.developerOptions = true }
+            }
+            .surfaceRows()
+
+            Section {
+                NavigationLink(value: SettingsRoute.safety) {
+                    Label(tr("Safety notice"), systemImage: "exclamationmark.shield")
+                }
+                NavigationLink(value: SettingsRoute.privacy) {
+                    Label(tr("Privacy"), systemImage: "hand.raised")
+                }
+                NavigationLink(value: SettingsRoute.impressum) {
+                    Label(tr("Legal notice"), systemImage: "building.columns")
+                }
+            } header: {
+                SectionTitle(tr("Legal"), symbol: "doc.text")
+            }
+            .surfaceRows()
+
+            Section {
+                if showResetTip {
+                    TipView(resetTip)
+                }
+                Button(role: .destructive) {
+                    confirmingReset = true
+                } label: {
+                    Label(tr("Reset to factory settings"), systemImage: "arrow.counterclockwise")
+                }
+            } footer: {
+                SectionFooter(tr("Appearance, units, language, background pictures and the app icon go back to how the app came. Small boats are ticked again and every boat's limits go back to the app's. Your locations, home base and boats stay."))
+            }
+            .surfaceRows()
+        }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
+        .navigationTitle(tr("About"))
+        .tipVisibility(resetTip, $showResetTip)
+        .confirmationDialog(tr("Reset all settings?"), isPresented: $confirmingReset, titleVisibility: .visible) {
+            Button(tr("Reset"), role: .destructive) {
+                AppSettings.shared.resetToFactorySettings()
+                Task { try? await AppIcons.select(AppIcons.primary) }
+            }
+            Button(tr("Cancel"), role: .cancel) {}
+        } message: {
+            Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
+        }
+    }
+}
+
+/// Settings > Developer, shown after seven taps on the version.
+private struct DeveloperSettingsView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        @Bindable var settings = AppSettings.shared
+        Form {
+            Section {
+                Toggle(isOn: $settings.developerOptions) {
+                    Label(tr("Developer options"), systemImage: "hammer")
+                }
+                Button {
+                    settings.pickedModels = [:]
+                } label: {
+                    Label(tr("All clubs back to the automatic model"), systemImage: "arrow.uturn.backward")
+                }
+                .disabled(settings.pickedModels.isEmpty)
+            } footer: {
+                SectionFooter(tr("Test: on a confirmed club's page, tap the forecast line at the bottom to pick another weather model. Switched off, every club uses the automatic model again. Tap the version seven times to show this again."))
+            }
+            .surfaceRows()
+        }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
+        .navigationTitle(tr("Developer"))
+        .onChange(of: settings.developerOptions) { if !settings.developerOptions { dismiss() } }
     }
 }
 

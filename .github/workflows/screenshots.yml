@@ -187,12 +187,21 @@ jobs:
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES
           # Landscape turned off in the settings: the app stays upright.
-          shoot 42-settings-landscape-off light -RWShowSettings YES -RWAllowsLandscape NO
+          shoot 42-settings-landscape-off light -RWShowSettings YES -RWSettingsPage appearance -RWAllowsLandscape NO
           shoot 43-home-landscape-off light -RWAllowsLandscape NO -RWLandscape YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
-          shoot_n 10-settings 9 light -RWShowSettings YES
-          shoot_n 11-settings-german-dark 9 dark -RWShowSettings YES -RWLanguage de
+          shoot 10-settings light -RWShowSettings YES
+          shoot 11-settings-german-dark dark -RWShowSettings YES -RWLanguage de
+          # The settings' own pages and the search field at the bottom.
+          shoot 160-settings-search light -RWShowSettings YES -RWSettingsSearch wind
+          shoot 160-settings-search-german-dark dark -RWShowSettings YES -RWSettingsSearch Wind -RWLanguage de
+          shoot_n 161-settings-appearance 2 light -RWShowSettings YES -RWSettingsPage appearance
+          shoot 162-settings-club-pages light -RWShowSettings YES -RWSettingsPage clubpages
+          shoot_n 163-settings-language 3 light -RWShowSettings YES -RWSettingsPage language
+          shoot 164-settings-battery-data light -RWShowSettings YES -RWSettingsPage data
+          shoot 165-settings-help light -RWShowSettings YES -RWSettingsPage help
+          shoot 166-settings-about light -RWShowSettings YES -RWSettingsPage about
           shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
           shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
@@ -293,7 +302,7 @@ jobs:
           shoot 84-model-picker light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES
           shoot 85-model-picked light -RWOpenClub mrc-1880 -RWScrollTo source -RWDeveloperOptions YES -RWPickedModels "$ifs"
           shoot 86-model-picker-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES -RWPickedModels "$ifs" -RWLanguage de
-          shoot 87-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 11
+          shoot 87-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWSettingsPage developer
           # Fixes from the iPhone test (PR #36): the satellite card and full screen with the
           # clubs, and the safety notice on a phone set to German (language picked from the phone).
           WAIT=30 shoot 118-satellite-card-clubs light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSatelliteLayers '(clubs, shore)'
@@ -319,7 +328,7 @@ jobs:
           # Saving data (Low Data Mode or "Save mobile data" on mobile data): the
           # satellite card waits for a tap; the settings' Data use section.
           shoot 150-satellite-save-data light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSaveData YES
-          shoot 151-settings-data-use light -RWShowSettings YES -RWScrollPage 6 -RWSaveData YES
+          shoot 151-settings-data-use light -RWShowSettings YES -RWSettingsPage data -RWSaveData YES
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
