@@ -439,9 +439,24 @@ private struct NowCard: View {
                         Text(hour.light.title(stale: stale)).font(.title2.bold())
                         LegendButton(showing: $showingLights)
                     }
-                    Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if at == nil {
+                        // Tapped: pick another boat, with the light each would get now.
+                        BoatMenu(hour: hour, waterC: water?.celsius) {
+                            HStack(spacing: 3) {
+                                Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
+                                Image(systemName: "chevron.up.chevron.down").imageScale(.small)
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .contentShape(Rectangle())
+                        }
+                        .accessibilityLabel(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
+                        .accessibilityHint(tr("Picks another boat for the rowing light."))
+                    } else {
+                        Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Spacer(minLength: 0)
                 VStack(spacing: 2) {

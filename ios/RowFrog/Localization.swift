@@ -25,6 +25,11 @@ enum German {
         // Rowing light and reasons
         "Good to row": "Gut zum Rudern",
         // Settings topics and search
+        "Boats and limits…": "Boote und Grenzwerte …",
+        "Small": "Klein",
+        "Big": "Groß",
+        "Boat: %@": "Boot: %@",
+        "Picks another boat for the rowing light.": "Wählt ein anderes Boot für die Ruderampel.",
         "Rowing light for": "Ruderampel für",
         "The boat the rowing light is worked out for, on every club page and in the widgets.": "Das Boot, für das die Ruderampel berechnet wird, auf jeder Vereinsseite und in den Widgets.",
         "%@ changed": "%@ geändert",

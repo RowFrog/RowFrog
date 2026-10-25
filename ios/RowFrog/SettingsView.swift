@@ -69,13 +69,18 @@ enum BackgroundTarget: Hashable {
 /// and a search field at the bottom.
 struct SettingsView: View {
     let locations: LocationStore
-    @State private var path = SettingsRoute.fromLaunchArguments()
+    @State private var path: [SettingsRoute]
     @State private var search = UserDefaults.standard.string(forKey: "RWSettingsSearch") ?? ""
     @FocusState private var searching: Bool
     @Environment(\.dismiss) private var dismiss
 
+    /// `path` opens a page at once, as Boats and limits from a club page's boat menu.
+    init(locations: LocationStore, path: [SettingsRoute] = []) {
+        self.locations = locations
+        _path = State(initialValue: path.isEmpty ? SettingsRoute.fromLaunchArguments() : path)
+    }
+
     var body: some View {
-        @Bindable var settings = AppSettings.shared
         NavigationStack(path: $path) {
             Form {
                 if search.trimmingCharacters(in: .whitespaces).isEmpty {

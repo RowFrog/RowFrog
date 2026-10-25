@@ -10,6 +10,8 @@ struct RootView: View {
     @State private var selection = ""
     @State private var showingList = false
     @State private var showingSettings = false
+    /// The settings page to open with, as Boats and limits from a club page's boat menu.
+    @State private var settingsPath: [SettingsRoute] = []
     @State private var initialSearch = ""
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingTour = !Tutorial.seen
@@ -106,8 +108,8 @@ struct RootView: View {
             }
             .environment(\.locale, AppSettings.shared.locale)
         }
-        .sheet(isPresented: $showingSettings) {
-            SettingsView(locations: locations)
+        .sheet(isPresented: $showingSettings, onDismiss: { settingsPath = [] }) {
+            SettingsView(locations: locations, path: settingsPath)
                 .environment(\.locale, AppSettings.shared.locale)
         }
         .onAppear { applyAppearance() }
@@ -156,6 +158,11 @@ struct RootView: View {
         }
     }
 
+    private func openBoatSettings() {
+        settingsPath = [.limits]
+        showingSettings = true
+    }
+
     static let sideListWidth: CGFloat = 320
     static let sideListMinWidth: CGFloat = 860
     static let sideListMinHeight: CGFloat = 560
@@ -166,6 +173,7 @@ struct RootView: View {
                 LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
                     .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
                     .environment(\.isCurrentPage, club.id == selection)
+                    .environment(\.openBoatSettings, openBoatSettings)
                     .tag(club.id)
             }
         }
@@ -186,10 +194,13 @@ struct RootView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             let settings = AppSettings.shared
             let picture = BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection)
+            let forecast = forecasts.forecasts[selection]
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
                     showList: showsListButton ? { showingList = true } : nil,
-                    showSettings: showsListButton ? { showingSettings = true } : nil)
+                    showSettings: showsListButton ? { showingSettings = true } : nil,
+                    now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius)
                 .environment(\.surface, picture == nil ? .plain : settings.tileSurface)
+                .environment(\.openBoatSettings, openBoatSettings)
         }
     }
 
@@ -271,6 +282,9 @@ private struct PageBar: View {
     let showList: (() -> Void)?
     /// Nil when the list, which has its own cog, is on screen.
     let showSettings: (() -> Void)?
+    /// The selected club's hour now, for the lights in the boat menu.
+    let now: ForecastHour?
+    let waterC: Double?
 
     var body: some View {
         HStack {
@@ -284,6 +298,7 @@ private struct PageBar: View {
             } else {
                 Spacer().frame(width: 44, height: 44)
             }
+            boatButton
             Spacer()
             HStack(spacing: 8) {
                 ForEach(clubs) { club in
@@ -300,6 +315,7 @@ private struct PageBar: View {
                 }
             }
             Spacer()
+            Spacer().frame(width: 44)
             if let showList {
                 Button(action: showList) {
                     Image(systemName: "list.bullet")
@@ -314,6 +330,22 @@ private struct PageBar: View {
         .padding(.horizontal)
         .padding(.top, 4)
         .background { PageBarBackground().ignoresSafeArea(edges: .bottom) }
+    }
+
+    /// The boat the rowing light is for, picked on the spot.
+    private var boatButton: some View {
+        let boat = AppSettings.shared.selectedBoat
+        return BoatMenu(hour: now, waterC: waterC) {
+            VStack(spacing: 0) {
+                Image(systemName: "figure.rower").font(.body)
+                Text(boat.shortName)
+                    .font(.system(size: 9, weight: .medium))
+                    .lineLimit(1)
+            }
+            .frame(width: 44, height: 44)
+        }
+        .accessibilityLabel(tr("Boat: %@", boat.title))
+        .accessibilityHint(tr("Picks another boat for the rowing light."))
     }
 }
 
