@@ -119,21 +119,22 @@ struct RootView: View {
         // A tap on the widget opens its club.
         .onOpenURL { url in
             // A GPX, TCX or FIT file shared from another app.
-            if url.isFileURL {
-                do {
-                    sharedRow = try TrackFile.read(contentsOf: url)
-                    importSharedRow()
-                } catch {
-                    rowNote = RowImportError.unreadable.message
-                }
-                return
-            }
+            if url.isFileURL { return openRowFile(url) }
             guard url.scheme == "rowfrog", url.host() == "club", let id = url.pathComponents.last,
                   locations.saved.contains(where: { $0.id == id }) else { return }
             showingList = false
             selection = id
         }
         .modifier(SharedRowNote(note: $rowNote, catalogCount: locations.catalog.count, catalogLoaded: importSharedRow))
+    }
+
+    private func openRowFile(_ url: URL) {
+        do {
+            sharedRow = try TrackFile.read(contentsOf: url)
+            importSharedRow()
+        } catch {
+            rowNote = RowImportError.unreadable.message
+        }
     }
 
     /// Saves the shared row as a route on its lake, once the lakes are known.
