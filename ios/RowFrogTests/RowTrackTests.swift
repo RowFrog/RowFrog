@@ -54,14 +54,27 @@ final class RowTrackTests: XCTestCase {
         func semicircles(_ degrees: Double) -> UInt32 { UInt32(bitPattern: Int32((degrees * 2_147_483_648 / 180).rounded())) }
         var records: [UInt8] = []
         // Definition of local message 0 = record (20): timestamp, position_lat, position_long.
-        records += [0x40, 0, 0] + le(20, 2) + [3, 253, 4, 0x86, 0, 4, 0x85, 1, 4, 0x85]
+        records += [0x40, 0, 0] as [UInt8]
+        records += le(20, 2)
+        records += [3, 253, 4, 0x86, 0, 4, 0x85, 1, 4, 0x85] as [UInt8]
         let t0: UInt32 = 1_100_000_000
-        for (k, (lat, lon)) in [(47.9967, 11.3475), (47.9900, 11.3440)].enumerated() {
-            records += [0x00] + le(t0 + UInt32(k) * 60, 4) + le(semicircles(lat), 4) + le(semicircles(lon), 4)
+        func record(_ time: UInt32, _ lat: UInt32, _ lon: UInt32) {
+            records.append(0x00)
+            records += le(time, 4)
+            records += le(lat, 4)
+            records += le(lon, 4)
         }
+        record(t0, semicircles(47.9967), semicircles(11.3475))
+        record(t0 + 60, semicircles(47.9900), semicircles(11.3440))
         // A record without a position (invalid value) is left out.
-        records += [0x00] + le(t0 + 120, 4) + le(0x7FFF_FFFF, 4) + le(0x7FFF_FFFF, 4)
-        let file = [14, 0x20] + le(2132, 2) + le(UInt32(records.count), 4) + Array(".FIT".utf8) + [0, 0] + records + [0, 0]
+        record(t0 + 120, 0x7FFF_FFFF, 0x7FFF_FFFF)
+        var file: [UInt8] = [14, 0x20]
+        file += le(2132, 2)
+        file += le(UInt32(records.count), 4)
+        file += Array(".FIT".utf8)
+        file += [0, 0] as [UInt8]
+        file += records
+        file += [0, 0] as [UInt8]
         XCTAssertTrue(TrackFile.isFIT(Data(file)))
         let track = try TrackFile.read(Data(file))
         XCTAssertEqual(track.points.count, 2)
