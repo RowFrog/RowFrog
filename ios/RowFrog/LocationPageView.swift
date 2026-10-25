@@ -229,11 +229,19 @@ private struct StickyHourlyHeader: View {
             if hourlyFrame.height > 0, hourlyFrame.minY + 40 < top, hourlyFrame.maxY > top {
                 let day = dayTops.filter { $0.value <= top + height }.max { $0.value < $1.value }?.key
                     ?? dayTops.keys.min()
+                // At the end of the table the last rows push the header up and away,
+                // instead of it vanishing while rows are still under it.
+                let push = min(0, hourlyFrame.maxY - top - height)
                 HourlyStickyHeader(day: day)
                     .frame(width: hourlyFrame.width)
-                    // At the end of the table the last rows push the header up and away,
-                    // instead of it vanishing while rows are still under it.
-                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX, y: min(0, hourlyFrame.maxY - top - height))
+                    // Cut to the tile's shape, so its square bottom corners round off
+                    // with the tile's own corners as it leaves.
+                    .mask(alignment: .top) {
+                        RoundedRectangle(cornerRadius: 16)
+                            .frame(height: hourlyFrame.height)
+                            .offset(y: hourlyFrame.minY - top - push)
+                    }
+                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX, y: push)
                     .transition(.opacity)
             }
         }
@@ -837,26 +845,35 @@ private struct HourlyCard: View {
     }
 }
 
-/// The hourly table's header as it stays at the top of the screen: the day
-/// being looked at over the column icons.
+/// The hourly table's header as it stays at the top of the screen: the tile's
+/// title and the day being looked at over the column icons.
 struct HourlyStickyHeader: View {
     let day: Date?
     static let height: CGFloat = 74
+    @Environment(\.surface) private var surface
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(day.map { Format.day($0) } ?? tr("Next 48 hours"))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+            HStack {
+                Label(tr("Next 48 hours").uppercased(), systemImage: "clock")
+                    .labelStyle(.titleAndIcon)
+                Spacer(minLength: 8)
+                if let day { Text(Format.day(day)) }
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             HourlyLegendHeader()
         }
         .padding(.horizontal, 14)
         .padding(.top, 8)
         .frame(height: Self.height, alignment: .top)
-        // Material reads over any background picture and over the rows sliding under it.
+        // The tile's own colour; material only where the tile itself is glass.
         // Rounded at the top like the tile, square at the bottom where the rows start,
         // so the header keeps its shape when it starts to stay.
-        .background(.regularMaterial, in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
+        .background(surface == .glass ? AnyShapeStyle(.regularMaterial) : surface.card,
+                    in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
         .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
     }
 }
