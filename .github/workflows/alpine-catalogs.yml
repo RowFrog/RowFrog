@@ -72,7 +72,7 @@ jobs:
       - name: Check the catalogs load
         run: |
           python3 -c '
-          from rowerweather import locations
+          from rowfrog import locations
           l = locations.load()
           for c in l.countries():
               print(c, sum(1 for x in l.clubs.values() if x.country == c), "clubs")'

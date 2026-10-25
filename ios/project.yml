@@ -1,5 +1,5 @@
 # Generate the Xcode project on a Mac with:  brew install xcodegen && xcodegen
-name: RowerWeather
+name: RowFrog
 options:
   bundleIdPrefix: com.rowfrog
   deploymentTarget:
@@ -10,14 +10,14 @@ settings:
     MARKETING_VERSION: "0.1.0"
     CURRENT_PROJECT_VERSION: "1"
 targets:
-  RowerWeather:
+  RowFrog:
     type: application
     platform: iOS
-    sources: [RowerWeather]
+    sources: [RowFrog]
     dependencies:
-      - target: RowerWeatherWidget
+      - target: RowFrogWidget
     entitlements:
-      path: RowerWeather/RowerWeather.entitlements
+      path: RowFrog/RowFrog.entitlements
       properties:
         com.apple.security.application-groups: [group.com.rowfrog.RowFrog]
     settings:
@@ -42,7 +42,7 @@ targets:
         Release:
           RW_API_BASE_URL: https://api.rowfrog.com/v1
     info:
-      path: RowerWeather/Info.plist
+      path: RowFrog/Info.plist
       properties:
         # Backend address, set per build configuration above.
         RWAPIBaseURL: $(RW_API_BASE_URL)
@@ -62,27 +62,27 @@ targets:
           - UIInterfaceOrientationPortrait
           - UIInterfaceOrientationLandscapeLeft
           - UIInterfaceOrientationLandscapeRight
-  RowerWeatherWidget:
+  RowFrogWidget:
     type: app-extension
     platform: iOS
     sources:
-      - RowerWeatherWidget
+      - RowFrogWidget
       # The app's models, settings and formatting, and the widget's views, which
       # the app also uses for its widget preview page.
-      - path: RowerWeather/Models.swift
-      - path: RowerWeather/APIClient.swift
-      - path: RowerWeather/Localization.swift
-      - path: RowerWeather/AppSettings.swift
-      - path: RowerWeather/Units.swift
-      - path: RowerWeather/Conditions.swift
-      - path: RowerWeather/Limits.swift
-      - path: RowerWeather/Sky.swift
-      - path: RowerWeather/TrafficLightView.swift
-      - path: RowerWeather/Backgrounds.swift
-      - path: RowerWeather/WidgetViews.swift
-      - path: RowerWeather/OwnPlaces.swift
+      - path: RowFrog/Models.swift
+      - path: RowFrog/APIClient.swift
+      - path: RowFrog/Localization.swift
+      - path: RowFrog/AppSettings.swift
+      - path: RowFrog/Units.swift
+      - path: RowFrog/Conditions.swift
+      - path: RowFrog/Limits.swift
+      - path: RowFrog/Sky.swift
+      - path: RowFrog/TrafficLightView.swift
+      - path: RowFrog/Backgrounds.swift
+      - path: RowFrog/WidgetViews.swift
+      - path: RowFrog/OwnPlaces.swift
     entitlements:
-      path: RowerWeatherWidget/RowerWeatherWidget.entitlements
+      path: RowFrogWidget/RowFrogWidget.entitlements
       properties:
         com.apple.security.application-groups: [group.com.rowfrog.RowFrog]
     settings:
@@ -99,23 +99,23 @@ targets:
         Release:
           RW_API_BASE_URL: https://api.rowfrog.com/v1
     info:
-      path: RowerWeatherWidget/Info.plist
+      path: RowFrogWidget/Info.plist
       properties:
         NSExtension:
           NSExtensionPointIdentifier: com.apple.widgetkit-extension
         RWAPIBaseURL: $(RW_API_BASE_URL)
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
-  RowerWeatherTests:
+  RowFrogTests:
     type: bundle.unit-test
     platform: iOS
-    sources: [RowerWeatherTests]
+    sources: [RowFrogTests]
     dependencies:
-      - target: RowerWeather
+      - target: RowFrog
 schemes:
-  RowerWeather:
+  RowFrog:
     build:
       targets:
-        RowerWeather: all
+        RowFrog: all
     test:
-      targets: [RowerWeatherTests]
+      targets: [RowFrogTests]

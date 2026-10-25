@@ -10,8 +10,8 @@ import logging
 import sys
 from datetime import datetime, timedelta, timezone
 
-from rowerweather import outlines
-from rowerweather.sources import sentinel2
+from rowfrog import outlines
+from rowfrog.sources import sentinel2
 
 LAKES = ["starnberger-see", "ammersee"]
 

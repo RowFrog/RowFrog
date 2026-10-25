@@ -14,11 +14,12 @@ own.
 The app is free. It is an iPhone app (iOS 17 or later) written in SwiftUI;
 Android may follow later.
 
-> **Name.** The app is called **Row Frog** (working title until October 2026:
-> RowerWeather). The app and widget use the bundle IDs `com.rowfrog.RowFrog`
-> and `com.rowfrog.RowFrog.Widget`, the app group `group.com.rowfrog.RowFrog`
-> and links starting with `rowfrog://`. The Xcode project, targets and folders
-> and the Python package are still called `RowerWeather`.
+> **Name.** The app is called **Row Frog**, formerly "RowerWeather" (renamed
+> in October 2026). The app and widget use the bundle IDs
+> `com.rowfrog.RowFrog` and `com.rowfrog.RowFrog.Widget`, the app group
+> `group.com.rowfrog.RowFrog` and links starting with `rowfrog://`. In the
+> code the Xcode project is `RowFrog.xcodeproj` (targets `RowFrog`,
+> `RowFrogWidget`, `RowFrogTests`) and the Python package is `rowfrog`.
 
 Hidden switches, test steps, launch arguments, workflows and the secrets they
 need are in the **[handbook](docs/handbook.md)**.
@@ -44,7 +45,7 @@ remove it or make it the home base. The saved list stays on the phone.
 **Add a place.** A club, boathouse or spot on the water that no list has can
 be put on the map. It stays on the phone, and its forecast is worked out on
 the phone straight from Open-Meteo, since the published forecasts only cover
-listed clubs (`ios/RowerWeather/OwnPlaces.swift`). Only if the user turns it
+listed clubs (`ios/RowFrog/OwnPlaces.swift`). Only if the user turns it
 on, the place is suggested for everyone's list: the Row Frog suggestions
 service (a Cloudflare Worker in `cloudflare/suggestions/`) files it as a
 GitHub issue, so no GitHub account is needed.
@@ -75,7 +76,7 @@ pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
 a detail view with a chart you can drag from yesterday to 7 days ahead (a
 "Now" button jumps back to the current hour), the limit lines, wind arrows
 every 3 hours, an "About the limits" note, advice for rowing and the data
-source (`ios/RowerWeather/ConditionsCard.swift`). Swipe between detail views
+source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views
 or jump to another from the symbol at the top; tapping an entry in a chart's
 legend switches its line on or off.
 
@@ -86,7 +87,7 @@ rigging from 1x to 8+. Limits can be fine-tuned per group and per boat. A
 separate choice sets which boat the lake map is coloured for, with a warning
 when the map looks calmer than your boat. The phone works the light out
 again for the chosen boat on the club page, the lake map and the widget
-(`ios/RowerWeather/Limits.swift`).
+(`ios/RowFrog/Limits.swift`).
 
 **Cold water.** Below 10 °C water the app advises a life jacket, suggests a
 coach or partner boat for singles and lowers its own wind and gust limits by
@@ -100,7 +101,7 @@ Ammersee and Chiemsee), and DWD's weather warnings for the municipality,
 which cover rivers and canals too. While one is issued it gets its own card
 under the top tile; otherwise the top tile's status line says there is none
 and when it was checked, or that DWD could not be reached.
-Warnings come from DWD's GeoServer (`backend/rowerweather/sources/dwd_warnings.py`)
+Warnings come from DWD's GeoServer (`backend/rowfrog/sources/dwd_warnings.py`)
 and also set the hourly light. In English the app shows DWD's own English
 text (from its English CAP files) with the German original below; where DWD
 has no English version, only the event and headline are translated.
@@ -120,14 +121,14 @@ button. Routes are saved on the phone.
 **Rain radar.** Each location page has a card with DWD's rain radar and
 2-hour nowcast for the launch point, e.g. "Light rain from 21:30"; tapping it
 opens the radar map. The app
-reads it from DWD directly (`ios/RowerWeather/RainRadar.swift`).
+reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
 
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
 the coming week: no ice, shore ice possible, ice forming, ice cover likely,
 or drift ice on rivers. Likely ice turns the hourly light red; possible shore
 or drift ice turns it amber. The estimate is a frost model over the last
 three months of air temperature plus the forecast week
-(`backend/rowerweather/ice.py`); a measured water temperature above 3 °C
+(`backend/rowfrog/ice.py`); a measured water temperature above 3 °C
 overrides it. On larger lakes the Copernicus Lake Ice Extent satellite map
 checks it, and the ice tile shows the latest pass, e.g. "Satellite, Today:
 open water".
@@ -144,7 +145,7 @@ chosen hour, one at a time. Tap for full screen with zoom.
 
 **Forecast source.** A small line at the end of each club page names the
 weather model the forecast comes from (today DWD's ICON models for every club,
-`backend/rowerweather/weather_models.py`); tapping it explains the chain of
+`backend/rowfrog/weather_models.py`); tapping it explains the chain of
 models from the first hours to the end of the forecast.
 
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
@@ -230,7 +231,7 @@ one country at a time.
 cd backend
 pip install -e ".[dev]"
 pytest
-uvicorn rowerweather.api:app --reload
+uvicorn rowfrog.api:app --reload
 ```
 
 Then open http://localhost:8000/lakes,
@@ -265,7 +266,7 @@ again.
 Release builds of the app read from there; Debug builds use a backend on the
 Mac at localhost, except for the satellite pictures, which only the publishing
 job makes and every build loads from `api.rowfrog.com`. To move to a server of our own, run
-`uvicorn rowerweather.api:app` there and point the DNS record of
+`uvicorn rowfrog.api:app` there and point the DNS record of
 `api.rowfrog.com` at it; the app keeps its address.
 
 ## Run the app
@@ -274,11 +275,15 @@ On a Mac with Xcode 15 or later, install XcodeGen (`sudo port install
 xcodegen` with MacPorts, or `brew install xcodegen`), then:
 
 ```sh
-cd ios && xcodegen && open RowerWeather.xcodeproj
+cd ios && xcodegen && open RowFrog.xcodeproj
 ```
 
 Run the backend first; the simulator reaches it at `http://localhost:8000`
 (set in `project.yml` as `RWAPIBaseURL`).
+
+A checkout from before the October 2026 rename needs `xcodegen` run again
+(the old `RowerWeather.xcodeproj` can be deleted) and the backend installed
+again with `pip install -e ".[dev]"`, since the package is now `rowfrog`.
 
 ## Workflows
 
@@ -304,8 +309,8 @@ More detail, including the secrets each one needs, is in the
 ## Traffic light defaults
 
 For small racing boats (1x, 2x, 2-), the app's starting boat; see
-`backend/rowerweather/score.py`. Other boats and limits the user changed are
-worked out on the phone (`ios/RowerWeather/Limits.swift`).
+`backend/rowfrog/score.py`. Other boats and limits the user changed are
+worked out on the phone (`ios/RowFrog/Limits.swift`).
 
 | Condition | Amber from | Red above |
 | --- | --- | --- |

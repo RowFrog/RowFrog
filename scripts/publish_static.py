@@ -30,7 +30,7 @@ cache) holds the last forecast. A club whose forecast fails keeps its
 previous file, which still shows when it was made.
 
 Which clubs and lakes are "used" comes from the usage counter in front of
-api.rowfrog.com (rowerweather.usage, when it is set up); without it the
+api.rowfrog.com (rowfrog.usage, when it is set up); without it the
 confirmed clubs count as used and the rest follow the fixed schedule.
 """
 
@@ -47,12 +47,12 @@ from pathlib import Path
 import httpx
 from fastapi.testclient import TestClient
 
-from rowerweather import api, ice, lake_view, locations, outlines, weather_models
-from rowerweather.api import LOCAL, app
-from rowerweather.sources import lake_ice_satellite, open_meteo, sentinel2
+from rowfrog import api, ice, lake_view, locations, outlines, weather_models
+from rowfrog.api import LOCAL, app
+from rowfrog.sources import lake_ice_satellite, open_meteo, sentinel2
 
 try:  # the usage counter (PR #15) may not be part of this checkout yet
-    from rowerweather import usage
+    from rowfrog import usage
 except ImportError:
     usage = None
 

@@ -1,5 +1,5 @@
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class WidgetSnapshotTests: XCTestCase {
     private let start = Date(timeIntervalSince1970: 1_800_000_000)

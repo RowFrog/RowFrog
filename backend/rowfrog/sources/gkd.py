@@ -24,7 +24,7 @@ import httpx
 
 PAGE_URL = "https://www.gkd.bayern.de/en/lakes/watertemperature/bayern/{station}/current-values/table"
 LOCAL = ZoneInfo("Europe/Berlin")
-HEADERS = {"User-Agent": "RowerWeather/0.1 (+https://github.com/RowFrog/RowFrog)"}
+HEADERS = {"User-Agent": "RowFrog/0.1 (+https://github.com/RowFrog/RowFrog)"}
 # A reading older than this means the station has gone quiet.
 MAX_AGE = timedelta(hours=6)
 

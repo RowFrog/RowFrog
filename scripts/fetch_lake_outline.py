@@ -33,7 +33,7 @@ def overpass(q: str, timeout: float = 90) -> dict:
     errors = []
     for attempt in range(2):
         for url in OVERPASS_SERVERS:
-            req = urllib.request.Request(url, data=data, headers={"User-Agent": "RowerWeather/0.1"})
+            req = urllib.request.Request(url, data=data, headers={"User-Agent": "RowFrog/0.1"})
             try:
                 with urllib.request.urlopen(req, timeout=timeout) as resp:
                     return json.load(resp)

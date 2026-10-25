@@ -10,7 +10,7 @@ on:
     paths:
       - scripts/satellite_ice_probe.py
       - scripts/satellite_picture_probe.py
-      - backend/rowerweather/sources/sentinel2.py
+      - backend/rowfrog/sources/sentinel2.py
       - .github/workflows/satellite-ice.yml
   workflow_dispatch:
 

@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
-from rowerweather import limits
-from rowerweather.usage import call_weight
+from rowfrog import limits
+from rowfrog.usage import call_weight
 
 TODAY = date(2026, 11, 20)
 

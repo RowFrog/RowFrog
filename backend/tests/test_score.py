@@ -1,4 +1,4 @@
-from rowerweather.score import HourConditions, LakeWarning, Light, Thresholds, assess
+from rowfrog.score import HourConditions, LakeWarning, Light, Thresholds, assess
 
 
 def test_calm_morning_is_green():
