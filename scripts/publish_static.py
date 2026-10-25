@@ -248,6 +248,16 @@ def local_warnings(state: State, clubs: list[locations.Club], now: datetime) -> 
     print(f"  local warnings for {primed} of {len(clubs)} clubs in {queries} DWD queries ({looked} warn cells looked up)")
 
 
+def refresh_block(used: bool) -> dict:
+    """How often this club's file and weather are renewed, for the app's tip on
+    clubs nobody opened lately: their file is rewritten only in the all-clubs
+    runs (every 6 hours) and their weather loaded every 12 hours. Opening the
+    club counts it as used, so the next half-hourly run takes it up."""
+    if used:
+        return {"used": True, "fileEveryHours": 0.5, "weatherEveryHours": WEATHER_HOURS["used"]}
+    return {"used": False, "fileEveryHours": 6, "weatherEveryHours": WEATHER_HOURS["other with usage"]}
+
+
 def club_outlooks(state: State, clubs: list[locations.Club], used: set[str], now: datetime) -> None:
     """Loads the 8-day outlooks that are due for used clubs and hands them to the API;
     other clubs get none, and the app charts their next 48 hours instead."""
@@ -610,6 +620,8 @@ def main() -> int:
         body = resp.json()
         if club.id in radar:
             body["radar"] = radar[club.id]
+        if with_usage:
+            body["refresh"] = refresh_block(club.id in used_clubs)
         write(args.out / "clubs" / club.id / "forecast", body)
     print(f"Wrote {len(clubs) - len(failed)} of {len(clubs)} forecasts to {args.out}")
     written = 0

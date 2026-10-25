@@ -189,3 +189,9 @@ def test_failed_bulk_warnings_leave_each_club_to_ask_itself(monkeypatch):
     api._primed_local_warnings.clear()
     publish.local_warnings(publish.State(None), list(locations.load().clubs.values())[:3], utc(25, 12))
     assert api._primed_local_warnings == {}
+
+
+def test_refresh_block_tells_the_app_how_often_a_club_is_renewed():
+    assert publish.refresh_block(True) == {"used": True, "fileEveryHours": 0.5, "weatherEveryHours": 3}
+    slow = publish.refresh_block(False)
+    assert slow["used"] is False and slow["fileEveryHours"] == 6 and slow["weatherEveryHours"] == 12

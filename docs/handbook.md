@@ -57,6 +57,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWSafetyAccepted YES` skip the first-start safety notice (the screenshot workflow passes it to every shot except 77 and 78)
 - `-RWWhatsNewSeen 1000` keep the "What's new" sheet away (the screenshot workflow passes it to every shot except 114 and 115)
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
+- `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage safety|impressum|privacy|limits|boat:<id>|backgrounds` open those Settings pages
 
 ## What runs on its own (GitHub Actions)
