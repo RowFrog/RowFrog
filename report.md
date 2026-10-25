@@ -1,6 +1,6 @@
-# Model check, 2026-10-25 13:31 UTC
+# Model check, 2026-10-25 14:48 UTC
 
-14 forecast runs stored (2026-10-23T20:00Z to 2026-10-25T13:00Z).
+15 forecast runs stored (2026-10-23T20:00Z to 2026-10-25T14:00Z).
 Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.
 "Light wrong" = how often wind and gusts alone would have given a different rowing light than measured.
 Stations are on land, where wind is usually weaker than on the lake, so the ranking matters more than the numbers.
@@ -50,18 +50,38 @@ Stations are on land, where wind is usually weaker than on the lake, so the rank
 | geosphere_arome_austria | 14385 | 1.1 | +0.4 | 1.6 | 1.7 | 10 % |
 | meteoswiss_icon_ch1 | 14385 | 1.1 | +0.5 | 1.9 | 1.6 | 11 % |
 
+## Once a day instead of twice?
+
+Day 1 over all points, from the two scheduled runs (04:40 and 16:40 UTC) and from the 04:40 run alone.
+
+| Model | Hours, twice | Hours, once | Wind error, twice | Wind error, once | Light wrong, twice | Light wrong, once |
+| --- | --- | --- | --- | --- | --- | --- |
+| icon_eu | 640 | 0 | 1.67 | – | 28 % | – |
+| ecmwf_aifs025_single | 640 | 0 | 1.70 | – | – | – |
+| best_match | 640 | 0 | 1.70 | – | 30 % | – |
+| icon_d2 | 640 | 0 | 1.70 | – | 30 % | – |
+| dmi_harmonie_arome_europe | 640 | 0 | 1.80 | – | 31 % | – |
+| knmi_harmonie_arome_europe | 640 | 0 | 1.80 | – | 27 % | – |
+| ecmwf_ifs025 | 640 | 0 | 2.05 | – | 36 % | – |
+| geosphere_arome_austria | 640 | 0 | 2.08 | – | 29 % | – |
+| meteoswiss_icon_ch2 | 640 | 0 | 2.13 | – | 33 % | – |
+| meteoswiss_icon_ch1 | 640 | 0 | 2.30 | – | 33 % | – |
+
+Same order of the models with one run a day: **no** (twice: icon_eu, ecmwf_aifs025_single, best_match; once: ).
+
 ## icon_d2 vs best_match
 
-114 forecast hours differ by more than wind 2.0 m/s, gusts 3.0 m/s or air 2.0 °C.
+117 forecast hours differ by more than wind 2.0 m/s, gusts 3.0 m/s or air 2.0 °C.
 
 | Point | Hours |
 | --- | --- |
 | starnberger-see-south | 43 |
-| staffelsee | 29 |
+| staffelsee | 30 |
 | starnberger-see-centre | 17 |
-| tegernsee | 13 |
+| tegernsee | 14 |
 | kochelsee | 9 |
 | tutzinger-rv | 3 |
+| ammersee | 1 |
 
 Latest:
 
