@@ -109,9 +109,12 @@ struct RowingProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: RowingWidgetIntent, in context: Context) async -> Timeline<RowingEntry> {
-        // A new forecast every half hour; until then the light moves on hour by hour.
+        // A new forecast as often as Settings > Widgets says (every half hour unless
+        // changed); until then the light moves on hour by hour. "Only after using the
+        // app" waits for the app, which asks for a new timeline as the user leaves it.
         let upcoming = await entries(for: configuration)
-        return Timeline(entries: upcoming, policy: .after(.now.addingTimeInterval(30 * 60)))
+        guard let interval = AppSettings.shared.widgetUpdates.interval else { return Timeline(entries: upcoming, policy: .never) }
+        return Timeline(entries: upcoming, policy: .after(.now.addingTimeInterval(interval)))
     }
 
     private func entries(for configuration: RowingWidgetIntent) async -> [RowingEntry] {
@@ -123,7 +126,9 @@ struct RowingProvider: AppIntentTimelineProvider {
         let names = shared.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
         let forecast = await loadForecast(clubID)
         let now = Date.now
-        let hourStarts = (0..<6).compactMap { offset -> Date? in
+        // Hours ahead: enough to last until the next load.
+        let count = AppSettings.shared.widgetUpdates.interval == nil ? 12 : 6
+        let hourStarts = (0..<count).compactMap { offset -> Date? in
             guard offset > 0 else { return now }
             let next = Calendar.current.dateInterval(of: .hour, for: now)?.end ?? now
             return next.addingTimeInterval(Double(offset - 1) * 3600)

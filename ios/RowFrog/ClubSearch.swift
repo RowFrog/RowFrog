@@ -177,7 +177,8 @@ struct AddPlaceView: View {
                     ZStack {
                         Map(position: $camera)
                             .mapStyle(satellite ? .imagery : .standard)
-                            .onMapCameraChange(frequency: .continuous) { context in
+                            // Once the map stops: the nearest water is looked up among every lake.
+                            .onMapCameraChange(frequency: .onEnd) { context in
                                 center = Coordinate(lat: context.region.center.latitude, lon: context.region.center.longitude)
                             }
                         // The pin stays in the middle; the map moves under it.
