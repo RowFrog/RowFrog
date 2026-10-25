@@ -52,6 +52,52 @@ final class RouteStore {
     }
 }
 
+/// Changes to a route's turning points. The first point is the launch point
+/// and stays; a route that ends where it started is a loop.
+enum RouteEdit {
+    /// A new point this close to the start closes the loop.
+    static let closeDistanceM = 50.0
+
+    static func isLoop(_ points: [CLLocationCoordinate2D]) -> Bool {
+        guard points.count >= 3, let first = points.first, let last = points.last else { return false }
+        return RoutePlanner.distance(first, last) < 1
+    }
+
+    /// Adds a point; one near the start, after at least two turning points, closes the loop.
+    /// A closed loop takes no more points.
+    static func add(_ point: CLLocationCoordinate2D, to points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
+        guard !isLoop(points) else { return points }
+        if points.count >= 3, RoutePlanner.distance(point, points[0]) <= closeDistanceM {
+            return points + [points[0]]
+        }
+        return points + [point]
+    }
+
+    /// Ends the route at the start.
+    static func close(_ points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
+        points.count >= 3 && !isLoop(points) ? points + [points[0]] : points
+    }
+
+    /// Removes one turning point; the start stays. A loop left with one
+    /// turning point opens again.
+    static func remove(at index: Int, from points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
+        guard index > 0, points.indices.contains(index) else { return points }
+        let loop = isLoop(points)
+        var out = points
+        out.remove(at: index)
+        if loop, out.count < 4 { out.removeLast() }
+        return out
+    }
+
+    /// Moves one turning point; the start stays where the club is.
+    static func move(at index: Int, to point: CLLocationCoordinate2D, in points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
+        guard index > 0, points.indices.contains(index) else { return points }
+        var out = points
+        out[index] = point
+        return out
+    }
+}
+
 /// How the wind (or the waves it makes) meets the boat.
 enum WindRelation: String, Hashable {
     case head, tail, cross

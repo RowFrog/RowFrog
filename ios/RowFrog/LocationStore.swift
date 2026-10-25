@@ -16,7 +16,8 @@ final class LocationStore {
     /// Every club loaded so far, used for the list and the search.
     private(set) var catalog: [Club] = []
     private(set) var lakesByClub: [String: Lake] = [:]
-    var catalogError: String?
+    /// Set when the catalog could not be loaded; the message is translated where it shows.
+    var catalogFailed = false
     /// The countries the search covers; empty with an older backend, whose one list has every club.
     private(set) var countries: [Country] = []
     private(set) var loadedCountries: Set<String> = []

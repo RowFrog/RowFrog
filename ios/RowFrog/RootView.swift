@@ -27,11 +27,11 @@ struct RootView: View {
         let saved = locations.saved
         Group {
             if saved.isEmpty {
-                if let error = locations.catalogError {
+                if locations.catalogFailed {
                     ContentUnavailableView {
                         Label(tr("No connection"), systemImage: "wifi.slash")
                     } description: {
-                        Text(error)
+                        Text(tr("Could not load the rowing locations."))
                     } actions: {
                         Button(tr("Try again")) { Task { await loadCatalog() } }
                     }
@@ -156,11 +156,11 @@ struct RootView: View {
             } else {
                 locations.setCatalog(try await api.lakes())
             }
-            locations.catalogError = nil
+            locations.catalogFailed = false
             applyLaunchArguments()
             WidgetBridge.publish(locations)
         } catch {
-            locations.catalogError = tr("Could not load the rowing locations.")
+            locations.catalogFailed = true
         }
     }
 

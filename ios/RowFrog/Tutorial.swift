@@ -39,7 +39,7 @@ enum Tutorial {
 
 /// The tour's pages, in order. The two choice pages only show while there is no home base.
 enum TourPage: Int, CaseIterable, Identifiable {
-    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, lake, locations, wideScreen, settings
+    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, boats, lake, locations, wideScreen, settings
     var id: Int { rawValue }
 
     var isChoice: Bool { self == .homeBase || self == .moreClubs }
@@ -52,6 +52,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: "light.beacon.max"
         case .conditions: "thermometer.and.liquid.waves"
         case .warnings: "exclamationmark.triangle.fill"
+        case .boats: "figure.rower"
         case .lake: "map.fill"
         case .locations: "list.bullet"
         case .wideScreen: "rectangle.split.2x1"
@@ -65,6 +66,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: .green
         case .conditions, .lake: .teal
         case .warnings: .orange
+        case .boats: .mint
         case .wideScreen: .indigo
         case .settings: .gray
         }
@@ -78,6 +80,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: tr("The rowing light")
         case .conditions: tr("Conditions at a glance")
         case .warnings: tr("DWD warnings")
+        case .boats: tr("Your boats and limits")
         case .lake: tr("Lake view and routes")
         case .locations: tr("Your locations")
         case .wideScreen: tr("Landscape and wide screens")
@@ -93,6 +96,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: tr("Every page starts with the rowing light for the hour ahead.")
         case .conditions: tr("Below the light you find what matters on the water.")
         case .warnings: tr("Warnings from the Deutscher Wetterdienst come right under the rowing light.")
+        case .boats: tr("The rowing light is worked out for one boat. Set it in Settings › Rowing limits.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")
         case .locations: tr("Keep all the places you row in one list.")
         case .wideScreen: tr("Turn your iPhone sideways, or use a wide screen, to see more at once.")
@@ -109,28 +113,39 @@ enum TourPage: Int, CaseIterable, Identifiable {
         ]
         case .homeBase, .moreClubs: []
         case .rowingLight: [
-            TourPoint(symbol: "text.bubble", text: tr("The line starting with \"Why\" names the conditions that set the light.")),
-            TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up. The daylight card shows the time left until sunset.")),
-            TourPoint(symbol: "clock", text: tr("The next 48 hours each have their own light, so you can plan your outing.")),
-            TourPoint(symbol: "clock.badge.exclamationmark", text: tr("Grey instead of green: the forecast is more than 3 hours old. Pull down to refresh.")),
-            TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide whether to go out, and when in doubt you stay ashore.")),
+            TourPoint(symbol: "text.bubble", text: tr("The \"Why\" line names what sets the light.")),
+            TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up.")),
+            TourPoint(symbol: "clock", text: tr("Each of the next 48 hours has its own light.")),
+            TourPoint(symbol: "umbrella", text: tr("The rain radar shows rain for the next two hours.")),
+            TourPoint(symbol: "clock.badge.exclamationmark", text: tr("Grey instead of green: the forecast is over 3 hours old. Pull down to refresh.")),
+            TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide, and when in doubt you stay ashore.")),
         ]
         case .conditions: [
             TourPoint(symbol: "thermometer.variable.and.figure", text: tr("Feels like: colder with wind chill, warmer with humidity and heat.")),
             TourPoint(symbol: "humidity", text: tr("Humidity, with the dew point underneath.")),
             TourPoint(symbol: "gauge.with.dots.needle.33percent", text: tr("Air pressure on a gauge, with its trend for the hours ahead.")),
+            TourPoint(symbol: "snowflake", text: tr("In winter, the app estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.")),
+            TourPoint(symbol: "cloud.sun", text: tr("The forecast comes from the weather model that does best for your lake. The line above the Legend names it.")),
             TourPoint(symbol: "info.circle", text: tr("Open the Legend at the bottom of each page to see what every icon and colour means.")),
         ]
         case .warnings: [
             TourPoint(symbol: "water.waves", text: tr("Lake storm warnings for the lake and weather warnings for the town.")),
             TourPoint(symbol: "text.bubble", text: tr("A warning also appears in the Why line and on the location list.")),
-            TourPoint(symbol: "light.beacon.max", text: tr("On the lake, also watch the storm warning lights on the shore.")),
+            TourPoint(symbol: "light.beacon.max", text: tr("On the lake, also watch the storm warning lights on the shore. The warnings card explains what they mean.")),
+        ]
+        case .boats: [
+            TourPoint(symbol: "checkmark", text: tr("Small boats are ticked at first. Tick Big boats if you row a four or an eight.")),
+            TourPoint(symbol: "list.bullet", text: tr("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
+            TourPoint(symbol: "slider.horizontal.3", text: tr("The sliders next to a boat open its limits.")),
+            TourPoint(symbol: "map", text: tr("Pick the boat that colours the lake map.")),
+            TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water the app is stricter and advises a life jacket.", Format.temperature(RowingLimits.coldWaterC))),
         ]
         case .lake: [
             TourPoint(symbol: "map", text: tr("The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.")),
             TourPoint(symbol: "clock", text: tr("On the map, move through the hours in the strip at the bottom and tap the water for one spot.")),
             TourPoint(symbol: "point.topleft.down.to.point.bottomright.curvepath", text: tr("Plan a route: tap your turning points to see the light along the way and the best time to start.")),
             TourPoint(symbol: "bookmark", text: tr("Save the routes you row often in the Routes menu.")),
+            TourPoint(symbol: "globe.europe.africa", text: tr("Below it, the latest satellite picture of the lake, with a switch to the clearest one.")),
         ]
         case .locations: [
             TourPoint(symbol: "hand.draw", text: tr("Swipe left and right to move between your clubs. The house marks your home base.")),
@@ -171,6 +186,11 @@ struct TutorialView: View {
     @State private var pages: [TourPage]
     @State private var page: TourPage
     @State private var here = DeviceLocation()
+    // The location question is a system alert. When it closes, the paged view can
+    // jump back to its first page while `page` still says otherwise, so the pager
+    // is rebuilt on the current page once the answer is in.
+    @State private var pagerID = 0
+    @Environment(\.scenePhase) private var scenePhase
 
     init(locations: LocationStore, reload: @escaping () async -> Void, finish: @escaping () -> Void) {
         self.locations = locations
@@ -211,6 +231,13 @@ struct TutorialView: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .always))
             .indexViewStyle(.page(backgroundDisplayMode: .always))
+            .id(pagerID)
+            .onChange(of: scenePhase) { old, new in
+                if new == .active, old != .active, here.askedForPermission {
+                    here.askedForPermission = false
+                    pagerID += 1
+                }
+            }
             .task(id: page) {
                 // Ask for the location when choosing the home base, for clubs nearby.
                 if page == .homeBase { here.request() }
@@ -283,11 +310,11 @@ private struct ClubChoicePage: View {
             .padding(.horizontal)
             List {
                 if locations.catalog.isEmpty {
-                    if let error = locations.catalogError {
+                    if locations.catalogFailed {
                         ContentUnavailableView {
                             Label(tr("No connection"), systemImage: "wifi.slash")
                         } description: {
-                            Text(error)
+                            Text(tr("Could not load the rowing locations."))
                         } actions: {
                             Button(tr("Try again")) { Task { await reload() } }
                         }
@@ -385,7 +412,7 @@ private struct TourPageView: View {
                 }
                 .multilineTextAlignment(.center)
                 extra
-                VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 10) {
                     ForEach(page.points, id: \.text) { point in
                         HStack(alignment: .top, spacing: 12) {
                             Image(systemName: point.symbol)
@@ -431,13 +458,13 @@ private struct TourPageView: View {
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
+                    .padding(.vertical, 8)
                     .background(light.color.opacity(0.15), in: RoundedRectangle(cornerRadius: 12))
                 }
             }
         case .conditions:
             LazyVGrid(columns: [GridItem(.flexible(), alignment: .leading), GridItem(.flexible(), alignment: .leading)], spacing: 12) {
-                ForEach([Condition.temperature, .feelsLike, .waterTemperature, .wind, .waves, .precipitation, .visibility, .daylight]) { condition in
+                ForEach(Condition.allCases) { condition in
                     HStack(spacing: 8) {
                         ConditionIcon(condition: condition)
                             .foregroundStyle(page.tint)
@@ -450,7 +477,7 @@ private struct TourPageView: View {
             }
             .padding()
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-        case .homeBase, .moreClubs, .warnings, .lake, .locations, .wideScreen, .settings:
+        case .homeBase, .moreClubs, .warnings, .boats, .lake, .locations, .wideScreen, .settings:
             EmptyView()
         }
     }
@@ -500,6 +527,36 @@ struct LakeViewTip: Tip {
     var image: Image? { Image(systemName: "map") }
 }
 
+struct RainRadarTip: Tip {
+    var title: Text { Text(tr("Rain on the way?")) }
+    var message: Text? { Text(tr("The radar of the Deutscher Wetterdienst shows rain at the launch point for the next two hours, in 15-minute steps. It updates every few minutes.")) }
+    var image: Image? { Image(systemName: "umbrella") }
+}
+
+struct SatellitePictureTip: Tip {
+    var title: Text { Text(tr("Satellite picture")) }
+    var message: Text? { Text(tr("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind, the waves, the rowing light or the ice map over it.")) }
+    var image: Image? { Image(systemName: "globe.europe.africa") }
+}
+
+struct ForecastSourceTip: Tip {
+    var title: Text { Text(tr("Where the forecast comes from")) }
+    var message: Text? { Text(tr("The app picks the weather model that does best for this lake. Tap the line to see which one.")) }
+    var image: Image? { Image(systemName: "cloud.sun") }
+}
+
+struct MyBoatsTip: Tip {
+    var title: Text { Text(tr("Which boat do you row?")) }
+    var message: Text? { Text(tr("Tick the boat the rowing light is for. The sliders open its limits, and below you can add your own boats.")) }
+    var image: Image? { Image(systemName: "figure.rower") }
+}
+
+struct ColdWaterTip: Tip {
+    var title: Text { Text(tr("Cold water")) }
+    var message: Text? { Text(tr("A capsize in water below %@ gets dangerous within minutes. The app then lowers its own wind and gust limits by %@. Limits you set stay as they are, with a reminder on the rowing light.", Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs))) }
+    var image: Image? { Image(systemName: "thermometer.snowflake") }
+}
+
 struct RoutePlanningTip: Tip {
     var title: Text { Text(tr("Plan a route")) }
     var message: Text? { Text(tr("Tap here, then tap your turning points on the water. You see the light along the route and the best time to start.")) }
@@ -513,6 +570,8 @@ struct RoutePlanningTip: Tip {
 @Observable
 final class DeviceLocation: NSObject, CLLocationManagerDelegate {
     private(set) var coordinate: Coordinate?
+    /// Set when the system alert asking for the location was shown.
+    var askedForPermission = false
     @ObservationIgnored private let manager = CLLocationManager()
 
     override init() {
@@ -523,7 +582,9 @@ final class DeviceLocation: NSObject, CLLocationManagerDelegate {
 
     func request() {
         switch manager.authorizationStatus {
-        case .notDetermined: manager.requestWhenInUseAuthorization()
+        case .notDetermined:
+            askedForPermission = true
+            manager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse, .authorizedAlways: manager.requestLocation()
         default: break
         }
