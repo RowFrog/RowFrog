@@ -738,7 +738,7 @@
       "name": "Hirschgraben",
       "country": "de",
       "center": {
-        "lat": 51.3038,
+        "lat": 51.3037,
         "lon": 9.4985
       },
       "osm": "way/19576294"
@@ -12302,7 +12302,7 @@
       "lakeId": "hirschgraben",
       "launchPoint": {
         "lat": 51.30546,
-        "lon": 9.4993,
+        "lon": 9.49929,
         "precision": "shore point of Hirschgraben nearest the geocoded boathouse, 127 m away",
         "verified": false
       }

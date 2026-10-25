@@ -917,12 +917,17 @@ struct BackgroundPickerView: View {
 /// user's own. Each has its own limits, behind the slider button.
 struct RowingLimitsView: View {
     @Binding var path: [SettingsRoute]
+    @State private var showBoatsTip = false
+    private let boatsTip = MyBoatsTip()
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
         ScrollViewReader { proxy in
             Form {
                 Section {
+                    if showBoatsTip {
+                        TipView(boatsTip)
+                    }
                     ForEach(Boat.groups) { boat in
                         BoatRow(boat: boat) { path.append(.boat(boat.id)) }
                     }
@@ -987,6 +992,7 @@ struct RowingLimitsView: View {
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
+        .tipVisibility(boatsTip, $showBoatsTip)
         .navigationTitle(tr("Rowing limits"))
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -1033,6 +1039,8 @@ private struct BoatRow: View {
 /// One boat's name, type and limits.
 struct BoatLimitsView: View {
     let boatID: String
+    @State private var showColdTip = false
+    private let coldTip = ColdWaterTip()
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1061,6 +1069,9 @@ struct BoatLimitsView: View {
             }
 
             Section {
+                if showColdTip {
+                    TipView(coldTip)
+                }
                 ForEach(RowingLimit.allCases) { limit in
                     LimitRow(limit: limit, boat: boat)
                 }
@@ -1088,6 +1099,7 @@ struct BoatLimitsView: View {
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
+        .tipVisibility(coldTip, $showColdTip)
         .navigationTitle(boat.title)
         .navigationBarTitleDisplayMode(.inline)
     }

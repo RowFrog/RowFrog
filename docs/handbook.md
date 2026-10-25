@@ -41,13 +41,15 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWOpenRadarMap YES` open the rain radar map; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
+- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip
+- `-RWResetTips YES` show the one-time tips again, as after Settings › Help
 - `-RWOpenForecastSource YES` open the forecast source sheet
 - `-RWDeveloperOptions YES` and `-RWPickedModels '<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'`
 - `-RWShowSettings YES -RWScrollPage n` open the settings at section n
 - `-RWLanguage de`, `-RWAppearance dark`, `-RWLandscape YES`
 - `-RWSafetyAccepted YES` skip the first-start safety notice (the screenshot workflow passes it to every shot except 77 and 78)
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
-- `-RWSettingsPage safety|impressum|privacy` open those Settings pages
+- `-RWSettingsPage safety|impressum|privacy|limits|boat:<id>|backgrounds` open those Settings pages
 
 ## What runs on its own (GitHub Actions)
 

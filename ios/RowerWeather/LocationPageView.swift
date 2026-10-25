@@ -22,8 +22,14 @@ struct LocationPageView: View {
     /// which put the header beside the table.
     @State private var hourlyFrame: CGRect = .zero
     @State private var dayTops: [Date: CGFloat] = [:]
+    @State private var showRainRadarTip = false
+    @State private var showSatelliteTip = false
+    @State private var showSourceTip = false
     private let conditionsTip = ConditionsExtrasTip()
     private let lakeViewTip = LakeViewTip()
+    private let rainRadarTip = RainRadarTip()
+    private let satelliteTip = SatellitePictureTip()
+    private let sourceTip = ForecastSourceTip()
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
 
@@ -92,6 +98,9 @@ struct LocationPageView: View {
                 .refreshable { await forecasts.load(club.id, force: true) }
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
+                .tipVisibility(rainRadarTip, $showRainRadarTip)
+                .tipVisibility(satelliteTip, $showSatelliteTip)
+                .tipVisibility(sourceTip, $showSourceTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
@@ -103,7 +112,7 @@ struct LocationPageView: View {
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast and pushes the cards below it down,
                         // so for cards that may be below it scroll again once it has settled.
-                        let early = ["warnings", "radar", "conditions"].contains(target)
+                        let early = ["warnings", "conditions"].contains(target)
                         for wait in early ? [300] : [2500, 3000, 3000] {
                             try? await Task.sleep(for: .milliseconds(wait))
                             proxy.scrollTo(target, anchor: .top)
@@ -118,8 +127,13 @@ struct LocationPageView: View {
     private func pageCard(_ card: PageCard, forecast: ClubForecast, now: ForecastHour) -> some View {
         switch card {
         case .radar:
-            RainRadarCard(point: club.launchPoint)
-                .id("radar")
+            VStack(spacing: 16) {
+                if tourSeen && showRainRadarTip {
+                    TipView(rainRadarTip)
+                }
+                RainRadarCard(point: club.launchPoint)
+            }
+            .id("radar")
         case .conditions:
             VStack(spacing: 16) {
                 if tourSeen && showConditionsTip {
@@ -157,8 +171,13 @@ struct LocationPageView: View {
             .id("launchpoint")
         case .satellite:
             if lake?.hasOutline != false {
-                SatellitePictureCard(lakeID: forecast.lakeId)
-                    .id("satellite")
+                VStack(spacing: 16) {
+                    if tourSeen && showSatelliteTip {
+                        TipView(satelliteTip)
+                    }
+                    SatellitePictureCard(lakeID: forecast.lakeId)
+                }
+                .id("satellite")
             }
         }
     }
@@ -211,14 +230,19 @@ struct LocationPageView: View {
     @ViewBuilder
     private func sourceLine(_ forecast: ClubForecast) -> some View {
         if let source = forecast.forecastSource {
-            ForecastSourceLine(
-                source: source,
-                choices: forecast.modelChoices ?? [],
-                selected: AppSettings.shared.pickedModel(for: club.id),
-                pickedModelMissing: forecasts.pickedModelMissing.contains(club.id)
-            ) { model in
-                AppSettings.shared.pickedModels[club.id] = model
-                await forecasts.load(club.id, force: true)
+            VStack(spacing: 16) {
+                if tourSeen && showSourceTip {
+                    TipView(sourceTip)
+                }
+                ForecastSourceLine(
+                    source: source,
+                    choices: forecast.modelChoices ?? [],
+                    selected: AppSettings.shared.pickedModel(for: club.id),
+                    pickedModelMissing: forecasts.pickedModelMissing.contains(club.id)
+                ) { model in
+                    AppSettings.shared.pickedModels[club.id] = model
+                    await forecasts.load(club.id, force: true)
+                }
             }
             .id("source")
         }
