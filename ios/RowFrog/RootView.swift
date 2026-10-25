@@ -109,6 +109,10 @@ struct RootView: View {
         .onChange(of: scenePhase) { _, phase in
             if phase != .active { WidgetBridge.publish(locations) }
         }
+        // A new language or units show on the widget straight away.
+        .onChange(of: AppSettings.shared.language) { WidgetBridge.publish(locations) }
+        .onChange(of: AppSettings.shared.temperatureUnit) { WidgetBridge.publish(locations) }
+        .onChange(of: AppSettings.shared.windUnit) { WidgetBridge.publish(locations) }
         // A tap on the widget opens its club.
         .onOpenURL { url in
             guard url.scheme == "rowfrog", url.host() == "club", let id = url.pathComponents.last,

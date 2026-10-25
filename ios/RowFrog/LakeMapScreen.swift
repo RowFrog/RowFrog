@@ -241,7 +241,7 @@ struct LakeMapScreen: View {
                 }
                 .disabled(waypoints.count < 3 || loop)
                 Spacer(minLength: 0)
-                Button(tr("Clear"), systemImage: "trash") {
+                Button(tr("Clear", key: "Clear route"), systemImage: "trash") {
                     waypoints = Array(waypoints.prefix(1))
                     savedRoute = nil
                 }

@@ -20,8 +20,10 @@ struct LocationPageView: View {
     /// Where the hourly table and its day headers are on screen, for the header that stays at the top.
     /// Screen coordinates: in landscape the scroll view's own space leaves out the side inset,
     /// which put the header beside the table.
-    @State private var hourlyFrame: CGRect = .zero
-    @State private var dayTops: [Date: CGFloat] = [:]
+    /// Where the hourly table is while the page scrolls. Kept in its own object
+    /// that only the sticky header reads, so scrolling redraws the header and
+    /// not the whole page on every frame (which drained the battery).
+    @State private var sticky = StickyHourly()
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
     @State private var showSourceTip = false
@@ -92,8 +94,12 @@ struct LocationPageView: View {
                     .padding(.bottom, 24)
                     .frame(maxWidth: Self.maxContentWidth)
                     .frame(maxWidth: .infinity)
-                    .onPreferenceChange(HourlyFrameKey.self) { hourlyFrame = $0 }
-                    .onPreferenceChange(DayTopKey.self) { dayTops = $0 }
+                    .onPreferenceChange(HourlyFrameKey.self) { frame in
+                        if sticky.hourlyFrame != frame { sticky.hourlyFrame = frame }
+                    }
+                    .onPreferenceChange(DayTopKey.self) { tops in
+                        if sticky.dayTops != tops { sticky.dayTops = tops }
+                    }
                 }
                 .overlay(alignment: .top) {
                     if let forecast { stickyHourlyHeader(forecast) }
@@ -195,8 +201,24 @@ struct LocationPageView: View {
 
     /// The hourly table's header, kept at the top of the screen while the
     /// table is scrolled through, with the day being looked at.
-    @ViewBuilder
     private func stickyHourlyHeader(_ forecast: ClubForecast) -> some View {
+        StickyHourlyHeader(sticky: sticky)
+    }
+}
+
+/// Where the hourly table and its days are on the screen.
+@Observable
+private final class StickyHourly {
+    var hourlyFrame: CGRect = .zero
+    var dayTops: [Date: CGFloat] = [:]
+}
+
+/// The hourly table's header while the table is under the top of the screen.
+private struct StickyHourlyHeader: View {
+    let sticky: StickyHourly
+
+    var body: some View {
+        let hourlyFrame = sticky.hourlyFrame, dayTops = sticky.dayTops
         GeometryReader { geo in
             let top = geo.frame(in: .global).minY
             let height = HourlyStickyHeader.height
@@ -212,6 +234,9 @@ struct LocationPageView: View {
         .frame(height: HourlyStickyHeader.height)
         .allowsHitTesting(false)
     }
+}
+
+private extension LocationPageView {
 
     private func credits(_ forecast: ClubForecast) -> some View {
         VStack(alignment: .leading, spacing: 4) {
@@ -433,7 +458,9 @@ private struct NowCard: View {
                     }
                 }
                 Spacer()
-                TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28)
+                // With the time of the reading underneath, so it lines up with the wind's unit line.
+                TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28,
+                                caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
                 Spacer()
                 WindView(hour: hour, size: 28)
             }
@@ -584,6 +611,8 @@ struct TemperatureView: View {
     let celsius: Double?
     var digits = 0
     var size: CGFloat
+    /// A small line under the value, such as when it was measured.
+    var caption: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -592,6 +621,11 @@ struct TemperatureView: View {
                 .foregroundStyle(.secondary)
             Text(Format.degrees(celsius, digits: digits))
                 .font(.system(size: size, weight: .light))
+            if let caption {
+                Text(caption)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .accessibilityElement(children: .combine)
     }

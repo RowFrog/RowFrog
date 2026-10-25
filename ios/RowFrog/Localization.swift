@@ -8,6 +8,13 @@ func tr(_ english: String) -> String {
     return German.table[english] ?? english
 }
 
+/// As `tr`, for a short English word whose German differs by place (the
+/// route's "Clear" is "Löschen", the sky's is "Klar"): German comes from `key`.
+func tr(_ english: String, key: String) -> String {
+    guard AppSettings.shared.resolvedLanguage == .german else { return english }
+    return German.table[key] ?? english
+}
+
 /// As `tr`, with `%@` placeholders filled from already formatted values.
 func tr(_ english: String, _ arguments: CVarArg...) -> String {
     String(format: tr(english), locale: AppSettings.shared.locale, arguments: arguments)
@@ -114,6 +121,7 @@ enum German {
 
         // Weather
         "Clear": "Klar",
+        "Clear route": "Löschen",
         "Mostly clear": "Überwiegend klar",
         "Partly cloudy": "Teilweise bewölkt",
         "Cloudy": "Bewölkt",
@@ -623,7 +631,7 @@ enum German {
         "Forecast out of date: from %@. Pull down to refresh, and check the conditions yourself.": "Vorhersage veraltet: Stand %@. Zum Aktualisieren nach unten ziehen und die Bedingungen selbst prüfen.",
         "The forecast is more than 3 hours old. Check the conditions yourself before you go out.": "Die Vorhersage ist älter als 3 Stunden. Prüf die Bedingungen selbst, bevor du ablegst.",
         "Forecast out of date: more than 3 hours old. Amber and red still show.": "Vorhersage veraltet: älter als 3 Stunden. Gelb und Rot werden weiter angezeigt.",
-        "Advice only. You decide whether to go out. When in doubt, ask experienced rowers or stay ashore.": "Nur eine Empfehlung. Ob du ablegst, entscheidest du. Im Zweifel frag erfahrene Ruderinnen und Ruderer oder bleib an Land.",
+        "Advice only. You decide whether to go out. When in doubt, ask experienced rowers or stay ashore.": "Die App gibt nur Hinweise, keine Freigabe. Ob du ablegst, entscheidest du. Im Zweifel frag erfahrene Ruderinnen und Ruderer oder bleib an Land.",
         "As of %@": "Stand %@",
         "Forecast out of date. Open Row Frog to update.": "Vorhersage veraltet. Öffne Row Frog zum Aktualisieren.",
         "Forecast out of date: from %@. Check the conditions yourself.": "Vorhersage veraltet: Stand %@. Prüf die Bedingungen selbst.",

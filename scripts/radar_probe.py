@@ -72,11 +72,46 @@ def main() -> int:
             when = (ref + timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
             resp = client.get(WMS, params=params(p.lat, p.lon, when), timeout=30)
             say(f"  +{minutes:3d} min {when}: HTTP {resp.status_code} {resp.text[:300]!r}")
+        legend_and_region(client, p.lat, p.lon, ref)
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
             f.write("### DWD rain radar\n```\n" + "\n".join(report) + "\n```\n")
     return 0
+
+
+def legend_and_region(client: httpx.Client, lat: float, lon: float, ref: datetime) -> None:
+    """The layer's colours (for the app's legend) and how long one picture
+    of the region the app's radar map loads per frame takes."""
+    import math
+    import time
+
+    resp = client.get(WMS, params={"SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetLegendGraphic",
+                                   "LAYER": LAYER, "FORMAT": "application/json"}, timeout=30)
+    say(f"## legend: HTTP {resp.status_code}")
+    try:
+        for legend in resp.json().get("Legend", []):
+            for rule in legend.get("rules", []):
+                for sym in rule.get("symbolizers", []):
+                    raster = sym.get("Raster", {})
+                    for entry in raster.get("colormap", {}).get("entries", []):
+                        say(f"  colour {entry.get('color')} quantity {entry.get('quantity')} label {entry.get('label')} opacity {entry.get('opacity')}")
+    except ValueError:
+        say(f"  {resp.text[:1500]!r}")
+    r = 6378137.0
+    x = math.radians(lon) * r
+    y = math.log(math.tan(math.pi / 4 + math.radians(lat) / 2)) * r
+    half = 300_000.0
+    for minutes in (-60, 0, 60, 120):
+        when = (ref + timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        started = time.monotonic()
+        resp = client.get(WMS, params={
+            "SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetMap", "LAYERS": LAYER, "STYLES": "",
+            "CRS": "EPSG:3857", "BBOX": f"{x - half},{y - half},{x + half},{y + half}",
+            "WIDTH": "1024", "HEIGHT": "1024", "FORMAT": "image/png", "TRANSPARENT": "TRUE", "TIME": when,
+        }, timeout=60)
+        say(f"  region {minutes:+4d} min: HTTP {resp.status_code} {resp.headers.get('content-type')} "
+            f"{len(resp.content)} bytes in {time.monotonic() - started:.1f} s")
 
 
 if __name__ == "__main__":
