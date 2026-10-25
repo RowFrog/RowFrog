@@ -136,6 +136,14 @@ enum RouteEdit {
         return out
     }
 
+    /// Adds a turning point on the stretch before the point at `index`; not before the start.
+    static func insert(_ point: CLLocationCoordinate2D, at index: Int, in points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
+        guard index > 0, index < points.count else { return points }
+        var out = points
+        out.insert(point, at: index)
+        return out
+    }
+
     /// Moves one turning point; the start stays where the club is.
     static func move(at index: Int, to point: CLLocationCoordinate2D, in points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
         guard index > 0, points.indices.contains(index) else { return points }

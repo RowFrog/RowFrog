@@ -255,18 +255,18 @@ jobs:
           shoot 55-lake-view-german-dark dark -RWOpenClub tutzinger-rv -RWScrollTo lakeview -RWOpenLakeView YES -RWLanguage de
           shoot 56-lake-view-tile-tutzing light -RWOpenClub tutzinger-rv -RWScrollTo lakeview
           route="47.99667,11.34745;47.983,11.338;47.965,11.331;47.945,11.325;47.925,11.318;47.905,11.305"
-          shoot 57-route-plan light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWPanel expanded
-          shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3 -RWPanel expanded
-          WAIT=30 shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de -RWPanel expanded
-          shoot 88-route-follow-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWPanel expanded
-          shoot 89-route-follow-boat-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWLanguage de -RWPanel expanded
+          shoot 57-route-plan light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWPanel expanded
+          shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWLakeHour 3 -RWPanel expanded
+          WAIT=30 shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWLanguage de -RWPanel expanded
+          shoot 88-route-follow-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWBoatAt 0.75 -RWPanel expanded
+          shoot 89-route-follow-boat-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWBoatAt 0.75 -RWLanguage de -RWPanel expanded
           # Route planning tips and the "What's new" sheet after an update.
           tips=(-RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES)
           short="47.99667,11.34745;47.983,11.338;47.965,11.331"
           GUIDE=1 shoot 109-tip-route-panel light "${tips[@]}"
           GUIDE=1 WAIT=30 shoot 110-tip-close-loop light "${tips[@]}" -RWRoute "$short"
           GUIDE=1 WAIT=30 shoot 111-tip-turning-point light "${tips[@]}" -RWRoute "$short" -RWRoutePoint 1
-          GUIDE=1 WAIT=30 shoot 112-tip-boat-time light "${tips[@]}" -RWRoute "$route" -RWPanel expanded
+          GUIDE=1 WAIT=30 shoot 112-tip-boat-time light "${tips[@]}" -RWRoute "$route" -RWOutAndBack YES -RWPanel expanded
           GUIDE=1 WAIT=30 shoot 113-tip-route-german-dark dark "${tips[@]}" -RWRoute "$short" -RWLanguage de
           NEWS=1 shoot 114-whats-new light
           NEWS=1 shoot 115-whats-new-german-dark dark -RWLanguage de
