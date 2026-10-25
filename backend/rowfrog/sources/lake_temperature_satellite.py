@@ -161,7 +161,7 @@ def read_lswt(temperature_path: str, quality_path: str, first: date, shores: dic
                 for c in range(data.shape[1]):
                     if missing[r, c] or quality[r, c] < LSWT_MIN_QUALITY:
                         continue
-                    lon, lat = t * (c + 0.5, r + 0.5)
+                    lon, lat = t @ (c + 0.5, r + 0.5)
                     if inside(lon, lat, ring) and shore_distance_m(lon, lat, ring) >= LSWT_SHORE_M:
                         celsius = float(data.data[r, c]) * ds.scales[0] + ds.offsets[0] - 273.15
                         if plausible(celsius):
@@ -299,11 +299,13 @@ def fetch(
     shores: dict[str, list[tuple[float, float]]],
     today: date,
     lswt_cache: dict[str, dict[str, Reading]] | None = None,
+    landsat_days: int = LANDSAT_DAYS,
 ) -> dict[str, list[Reading]]:
     """The newest readings per lake (oldest first) from both sources.
 
     `lswt_cache` maps LSWT file names already read to their readings, so each
-    ten-day file is downloaded once; new files are added to it.
+    ten-day file is downloaded once; new files are added to it. Landsat is
+    searched `landsat_days` back.
     """
     try:
         import rasterio  # noqa: F401
@@ -327,10 +329,23 @@ def fetch(
             except (httpx.HTTPError, KeyError, StopIteration, zipfile.BadZipFile) as e:
                 log.warning("Copernicus lake temperature unavailable: %r", e)
         try:
-            for lake_id, found in fetch_landsat(client, shores, today).items():
+            for lake_id, found in fetch_landsat(client, shores, today, landsat_days).items():
                 readings.setdefault(lake_id, []).extend(found)
         except httpx.HTTPError as e:
             log.warning("Landsat lake temperature unavailable: %r", e)
     for found in readings.values():
         found.sort(key=lambda r: r.time or datetime.combine(r.day, datetime.min.time(), tzinfo=timezone.utc))
     return readings
+
+
+def merge(old: dict[str, list[Reading]], new: dict[str, list[Reading]], today: date, max_age_days: int) -> dict[str, list[Reading]]:
+    """Old and new readings per lake, without doubles or readings older than `max_age_days`, oldest first."""
+    merged: dict[str, list[Reading]] = {}
+    for lake_id in set(old) | set(new):
+        seen = {}
+        for r in old.get(lake_id, []) + new.get(lake_id, []):
+            if (today - r.day).days <= max_age_days:
+                seen[(r.source, r.day, r.platform)] = r
+        if seen:
+            merged[lake_id] = sorted(seen.values(), key=lambda r: (r.day, r.source))
+    return merged

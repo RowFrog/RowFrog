@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import ice, lake_view, locations, outlines, weather_models
+from . import ice, lake_view, locations, outlines, water_estimate, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
 from .sources import dwd_warnings, gkd, open_meteo
@@ -61,6 +61,8 @@ _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
 _last_water: dict[str, tuple[gkd.WaterTemperature, list[gkd.WaterTemperature]]] = {}
 # Satellite lake ice passes per lake, set by the publishing job (see sources.lake_ice_satellite).
 _satellite_ice: dict[str, list] = {}
+# Satellite lake temperature readings per lake, set by the publishing job (see sources.lake_temperature_satellite).
+_satellite_water: dict[str, list] = {}
 # Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
 _ice_temps: dict[str, tuple[date, list[ice.DayTemperature]]] = {}
 _lake_view_cache: dict[str, tuple[float, tuple]] = {}
@@ -299,6 +301,26 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
     return result
 
 
+def _water_estimate_json(e: water_estimate.WaterEstimate | None) -> dict | None:
+    if e is None:
+        return None
+    r = e.reading
+    return {
+        "celsius": e.celsius,
+        "basis": "satellite",
+        "reading": {
+            "source": r.source,
+            # "landsat-8" / "landsat-9" for Landsat, None for Copernicus LSWT.
+            "platform": r.platform,
+            "date": r.day.isoformat(),
+            # The ten days an LSWT reading averages; None for Landsat.
+            "from": None if r.first is None else r.first.isoformat(),
+            "to": None if r.last is None else r.last.isoformat(),
+            "celsius": r.celsius,
+        },
+    }
+
+
 def _ice_json(e: ice.IceEstimate | None) -> dict:
     if e is None:
         return {"status": "unavailable", "light": None, "days": []}
@@ -320,27 +342,45 @@ def _ice_json(e: ice.IceEstimate | None) -> dict:
     }
 
 
-async def _ice(client: httpx.AsyncClient, lake: locations.Lake, water_c: float | None, now: datetime) -> ice.IceEstimate | None:
-    """The ice estimate for the lake; None when the air temperatures cannot be loaded."""
+async def _air_days(client: httpx.AsyncClient, lake: locations.Lake, today: date) -> list[ice.DayTemperature] | None:
+    """The lake's daily mean air temperatures (92 days back, 7 ahead), loaded once a day; None when unavailable."""
+    cached = _ice_temps.get(lake.id)
+    if cached and cached[0] == today:
+        return cached[1]
+    try:
+        daily = await open_meteo.fetch_daily_mean(client, lake.center.lat, lake.center.lon)
+    except (httpx.HTTPError, ValueError, KeyError) as e:
+        logging.getLogger(__name__).warning("Daily air temperatures unavailable for %s: %r", lake.id, e)
+        return None
+    temps = [ice.DayTemperature(d, t) for d, t in daily]
+    _ice_temps[lake.id] = (today, temps)
+    return temps
+
+
+async def _ice(
+    client: httpx.AsyncClient, lake: locations.Lake, water_c: float | None, now: datetime, estimated_water_c: float | None = None
+) -> ice.IceEstimate | None:
+    """The ice estimate for the lake; None when the air temperatures cannot be loaded.
+
+    Without a station, `estimated_water_c` (the satellite reading carried
+    forward) restarts the model today, like a measurement, but the estimate
+    stays marked "model".
+    """
     today = now.astimezone(LOCAL).date()
     if ice.out_of_season(today):
         return ice.IceEstimate(ice.OPEN, None, water_c, "season", None, [])
     if lake.kind != "river" and water_c is not None and water_c > ice.WARM_WATER_C:
         return ice.IceEstimate(ice.OPEN, None, water_c, "measured", None, [])
-    cached = _ice_temps.get(lake.id)
-    if cached and cached[0] == today:
-        temps = cached[1]
-    else:
-        try:
-            daily = await open_meteo.fetch_daily_mean(client, lake.center.lat, lake.center.lon)
-        except (httpx.HTTPError, ValueError, KeyError) as e:
-            logging.getLogger(__name__).warning("Air temperatures for the ice estimate unavailable for %s: %r", lake.id, e)
-            return None
-        temps = [ice.DayTemperature(d, t) for d, t in daily]
-        _ice_temps[lake.id] = (today, temps)
+    temps = await _air_days(client, lake, today)
+    if temps is None:
+        return None
     if lake.kind == "river":
         return ice.river(temps, today)
-    estimate = ice.simulate(temps, today, lake.mean_depth_m, water_c)
+    if water_c is None and estimated_water_c is not None:
+        estimate = ice.simulate(temps, today, lake.mean_depth_m, estimated_water_c)
+        estimate = replace(estimate, basis="model")
+    else:
+        estimate = ice.simulate(temps, today, lake.mean_depth_m, water_c)
     return ice.with_satellite(estimate, _satellite_ice.get(lake.id, []), today)
 
 
@@ -448,7 +488,12 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
                 weather = _filled(other, weather)
                 _cache[key] = (time.monotonic(), weather)
         warnings_block, warnings = await _warnings(client, club, now)
-        ice_estimate = await _ice(client, lake, water.celsius if water else None, now)
+        estimate = None
+        if water is None and _satellite_water.get(lake.id):
+            today = now.astimezone(LOCAL).date()
+            temps = await _air_days(client, lake, today)
+            estimate = water_estimate.estimate(_satellite_water[lake.id], temps or [], today)
+        ice_estimate = await _ice(client, lake, water.celsius if water else None, now, estimate.celsius if estimate else None)
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
     weather = _from_now(weather, now)
     if not weather:
@@ -470,6 +515,8 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             # The station page's history, one value per hour, for the water temperature chart.
             "history": [{"time": _utc(r.time), "celsius": r.celsius} for r in water_history],
         },
+        # Without a station: the newest satellite reading carried forward to today (water_estimate.py).
+        "waterEstimate": _water_estimate_json(estimate),
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.
