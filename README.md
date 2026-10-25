@@ -169,7 +169,8 @@ with the temperature and the weather symbol beside each other.
 - App icon: the coxed double "rowing light" icon in light, dark and tinted,
   plus 10 alternates.
 - Help: the full legend of symbols, and replay the tour. One-time tips point
-  out features the first time they appear.
+  out features the first time they appear, and after an update a "What's new"
+  sheet shows once.
 - Rowing limits (see above).
 - Legal: the safety notice, a privacy summary and the legal notice
   (Impressum, still with placeholders).
