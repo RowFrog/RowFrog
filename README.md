@@ -94,7 +94,11 @@ flashes a minute) and the season they run in.
 waves, wind and the light for each part of the lake, and a spot you can tap
 for its details. "Plan a route" checks a route on the lake against the
 forecast for the time you start, rowed once or out and back, and shows
-where and when it gets rough. Routes are saved on the phone.
+where and when it gets rough. The way out and the way back are drawn side
+by side, and "Lake at the boat's time" adds a slider that shows the lake as
+it will be where the boat is at each moment. Turning points can be dragged or
+deleted, and a loop closes when it ends within 50 m of the start or with a
+button. Routes are saved on the phone.
 
 **Rain radar.** Each location page has a card with DWD's rain radar and
 2-hour nowcast for the launch point, e.g. "Light rain from 21:30". The app
@@ -126,8 +130,9 @@ weather model the forecast comes from (today DWD's ICON models for every club,
 models from the first hours to the end of the forecast.
 
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
-point the forecast is for, with its coordinates and a button to open it in
-Maps.
+point the forecast is for, with its coordinates. It can be panned and zoomed
+and resets on each visit; "Open in Maps" also offers directions to the club's
+address.
 
 **Widgets.** Home-screen and lock-screen widgets show the rowing light first,
 with the temperature and the weather symbol beside each other.
