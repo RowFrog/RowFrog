@@ -5,7 +5,7 @@ import re
 import sys
 from pathlib import Path
 
-APP = Path("ios/RowerWeather")
+APP = Path("ios/RowFrog")
 STRING = r'"((?:[^"\\]|\\.)*)"'
 
 
@@ -23,11 +23,11 @@ def main() -> int:
         keys |= {unescape(k) for k in re.findall(r"\btr\(" + STRING, source)}
         keys |= {unescape(k) for k in re.findall(r"englishTitle: " + STRING, source)}
     # Credits the backend sends, shown through tr().
-    api = Path("backend/rowerweather/api.py").read_text()
+    api = Path("backend/rowfrog/api.py").read_text()
     credits = re.search(r"ATTRIBUTION = \[(.*?)\]", api, re.S).group(1)
     keys |= set(re.findall(r'"([^"]+)"', credits))
     # Notes on the weather models the user can pick, also shown through tr().
-    models = Path("backend/rowerweather/weather_models.py").read_text()
+    models = Path("backend/rowfrog/weather_models.py").read_text()
     choices = re.search(r"^CHOICES = \{(.*?)^\}", models, re.S | re.M).group(1)
     keys |= {t for t in re.findall(r'"([^"]+)"', choices) if " " in t}
 

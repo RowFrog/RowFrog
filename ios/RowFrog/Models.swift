@@ -1,6 +1,6 @@
 import Foundation
 
-/// Mirrors the backend's JSON (see backend/rowerweather/api.py).
+/// Mirrors the backend's JSON (see backend/rowfrog/api.py).
 
 struct Coordinate: Codable, Hashable {
     let lat: Double
@@ -401,7 +401,7 @@ struct ClubForecast: Codable, Hashable {
 }
 
 /// The backend's ice estimate for the lake, from frost and water temperature
-/// (see backend/rowerweather/ice.py). It never says ice is safe to walk on.
+/// (see backend/rowfrog/ice.py). It never says ice is safe to walk on.
 struct IceEstimate: Codable, Hashable {
     /// "open", "edges" (thin ice at the shore possible), "forming", "frozen",
     /// "drift_ice" (rivers) or "unavailable".

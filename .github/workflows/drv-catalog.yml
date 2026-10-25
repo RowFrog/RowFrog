@@ -40,7 +40,7 @@ jobs:
           python3 -u scripts/import_drv.py | tee drv-report.txt
           { echo '```'; tail -n 400 drv-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Check the catalog loads
-        run: python3 -c 'from rowerweather import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "waters")'
+        run: python3 -c 'from rowfrog import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "waters")'
       - name: Commit the catalog
         run: |
           git add data/catalogs/de-drv.json data/geocode.json data/outlines

@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from rowerweather import model_check as mc
+from rowfrog import model_check as mc
 
 UTC = timezone.utc
 P = [mc.Point("a", "A", 47.9, 11.3, 1), mc.Point("b", "B", 48.0, 11.1, 1)]

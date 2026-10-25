@@ -4,7 +4,7 @@ import importlib.util
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from rowerweather.sources import open_meteo, sentinel2
+from rowfrog.sources import open_meteo, sentinel2
 
 _spec = importlib.util.spec_from_file_location(
     "publish_static", Path(__file__).resolve().parents[2] / "scripts" / "publish_static.py"
@@ -95,7 +95,7 @@ def test_dew_point_and_feels_like_are_worked_out():
 
 
 def test_old_forecast_hours_are_left_out():
-    from rowerweather import api
+    from rowfrog import api
 
     payload = {"hourly": {"time": [f"2026-10-18T{h:02d}:00" for h in range(3, 9)]}}
     weather = open_meteo.parse(payload)
@@ -106,7 +106,7 @@ def test_old_forecast_hours_are_left_out():
 def test_only_clubs_people_load_count_as_used(monkeypatch):
     from types import SimpleNamespace
 
-    from rowerweather import locations
+    from rowfrog import locations
 
     monkeypatch.setattr(publish, "usage", None)
     clubs, _, counted = publish.usage_now()
@@ -120,7 +120,7 @@ def test_only_clubs_people_load_count_as_used(monkeypatch):
 
 
 def test_other_models_load_only_for_confirmed_clubs_once_per_run(monkeypatch):
-    from rowerweather import api, locations
+    from rowfrog import api, locations
 
     asked = []
 

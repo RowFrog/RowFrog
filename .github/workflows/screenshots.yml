@@ -37,7 +37,7 @@ jobs:
       - run: pip install -e backend pillow
       - name: Start the backend with live data
         run: |
-          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv RW_SAMPLE_LAKE_WIND=192,5.2,7.9 nohup uvicorn rowerweather.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv RW_SAMPLE_LAKE_WIND=192,5.2,7.9 nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
           # Warm the forecast and warning caches; Open-Meteo sometimes times out
           # on the first call and DWD's lake areas take a while to download.
@@ -70,8 +70,8 @@ jobs:
           echo "UDID=$UDID" >> "$GITHUB_ENV"
           xcrun simctl boot "$UDID"
           xcodebuild build \
-            -project RowerWeather.xcodeproj \
-            -scheme RowerWeather \
+            -project RowFrog.xcodeproj \
+            -scheme RowFrog \
             -destination "id=$UDID" \
             -derivedDataPath build \
             CODE_SIGNING_ALLOWED=NO
@@ -85,7 +85,7 @@ jobs:
             curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/clubs/$club/forecast" || true
           done
           curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null http://localhost:8000/lakes/starnberger-see/view || true
-          xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowerWeather.app
+          xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowFrog.app
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4
           mkdir -p docs/screenshots
           ONLY="${{ github.event.inputs.only }}"

@@ -1,10 +1,10 @@
 from datetime import date, datetime, timezone
 
-from rowerweather import locations
-from rowerweather.forecast import rowing_forecast
-from rowerweather.score import Light
-from rowerweather.sources.open_meteo import ForecastHour
-from rowerweather.sun import sun_day
+from rowfrog import locations
+from rowfrog.forecast import rowing_forecast
+from rowfrog.score import Light
+from rowfrog.sources.open_meteo import ForecastHour
+from rowfrog.sun import sun_day
 
 STARNBERG = (47.9967, 11.3475)
 

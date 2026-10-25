@@ -13,8 +13,8 @@ on:
     paths:
       - data/locations.json
       - scripts/**
-      - backend/rowerweather/sources/**
-      - backend/rowerweather/ice.py
+      - backend/rowfrog/sources/**
+      - backend/rowfrog/ice.py
       - .github/workflows/live-check.yml
   workflow_dispatch:
 

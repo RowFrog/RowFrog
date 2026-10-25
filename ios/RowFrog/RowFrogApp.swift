@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct RowerWeatherApp: App {
+struct RowFrogApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {

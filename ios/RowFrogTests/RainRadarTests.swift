@@ -1,5 +1,5 @@
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class RainRadarTests: XCTestCase {
     private func radar(_ values: [Double]) -> RainRadar {

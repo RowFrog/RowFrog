@@ -4,10 +4,10 @@ from dataclasses import replace
 import httpx
 from fastapi.testclient import TestClient
 
-from rowerweather import api, locations
-from rowerweather.forecast import rowing_forecast
-from rowerweather.score import Light
-from rowerweather.sources import open_meteo
+from rowfrog import api, locations
+from rowfrog.forecast import rowing_forecast
+from rowfrog.score import Light
+from rowfrog.sources import open_meteo
 
 from .test_waves import LAKE
 
@@ -160,7 +160,7 @@ def test_fetch_many_reads_one_forecast_per_point():
 
     import httpx
 
-    from rowerweather.sources import open_meteo
+    from rowfrog.sources import open_meteo
 
     one = {"hourly": {"time": ["2026-10-20T12:00"], "temperature_2m": [10.0]}}
     seen = {}
