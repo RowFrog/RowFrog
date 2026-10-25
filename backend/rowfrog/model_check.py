@@ -1,6 +1,6 @@
 """Compare weather models against measured wind and temperature.
 
-Used by scripts/model_check.py and the "Model check" workflow. Once a day it
+Used by scripts/model_check.py and the "Model check" workflow. Twice a day it
 stores every candidate model's forecast for the test points in
 data/model-check/points.json; the report then matches those forecasts with
 DWD 10-minute station measurements near each point and scores the models.

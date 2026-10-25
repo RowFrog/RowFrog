@@ -64,7 +64,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Workflow | When | Where you see it |
 |---|---|---|
 | Publish forecasts | every 30 min from main | api.rowfrog.com |
-| Model check | 04:40 UTC | weekly report on the "Model check" issue (Mondays) |
+| Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays) |
 | Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month |
 
 ## By hand
