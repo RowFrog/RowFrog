@@ -546,6 +546,17 @@ struct IceEstimate: Codable, Hashable {
     }
 }
 
+/// The months the backend works out ice for (ICE_MONTHS in backend/rowfrog/ice.py).
+enum IceSeason {
+    static let months: Set<Int> = [11, 12, 1, 2, 3, 4]
+
+    /// Out of season: the backend said so, or sent nothing in a month without ice.
+    static func isOff(_ ice: IceEstimate?, at date: Date = .now) -> Bool {
+        if let ice, ice.status != "unavailable" { return ice.basis == "season" }
+        return !months.contains(Calendar.current.component(.month, from: date))
+    }
+}
+
 /// Copernicus Lake Ice Extent: what a cloud-free satellite pass saw of the lake.
 struct IceSatellite: Codable, Hashable {
     /// Local calendar day, "yyyy-MM-dd".

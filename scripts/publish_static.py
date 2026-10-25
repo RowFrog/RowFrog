@@ -19,6 +19,9 @@ With the Copernicus account (CDSE_CLIENT_ID / CDSE_CLIENT_SECRET) it also
 writes Sentinel-2 pictures of each lake and, in winter, the satellite ice map:
     OUT_DIR/lakes/<id>/satellite        dates, cloud, picture box, credit
     OUT_DIR/lakes/<id>/satellite-latest.jpg, satellite-clearest.jpg, ice.png
+After each new ICON-D2 run (every 3 hours) it also writes the weather maps
+from DWD's open model data (rowfrog.sources.icon_d2_maps), no Open-Meteo calls:
+    OUT_DIR/maps/index, OUT_DIR/maps/<tile>/<value>
 
 "confirmed" rebuilds the clubs people use (until the usage counter is set up,
 the clubs in data/locations.json), "all" every club in the catalogs too.
@@ -133,6 +136,8 @@ class State:
         # Satellite lake temperature: day looked, LSWT files read (name -> readings per lake), readings per lake.
         self.water_satellite: tuple[date | None, dict, dict[str, list]] = (None, {}, {})
         self.warn_cells: dict[str, tuple[datetime, int | None]] = {}  # club -> looked up, DWD warn cell (None outside Germany)
+        # The ICON-D2 run the weather maps were last made from.
+        self.maps_run: datetime | None = None
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
@@ -141,6 +146,7 @@ class State:
                 self.models = saved.get("models", {})
                 self.water_satellite = saved.get("water_satellite", (None, {}, {}))
                 self.warn_cells = saved.get("warn_cells", {})
+                self.maps_run = saved.get("maps_run")
                 api._last_water.update(saved.get("water", {}))
                 api._ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
@@ -160,6 +166,7 @@ class State:
             "water_satellite": self.water_satellite,
             "water": api._last_water,
             "warn_cells": self.warn_cells,
+            "maps_run": self.maps_run,
         }
         self.path.write_bytes(pickle.dumps(body))
 
@@ -567,6 +574,22 @@ def usage_now() -> tuple[set[str], set[str], bool]:
     return clubs, lakes, counted is not None
 
 
+def weather_maps(state: State, out: Path, clubs: list[locations.Club], now: datetime) -> None:
+    """The weather maps around every club, once per ICON-D2 run."""
+    try:
+        from rowfrog.sources import icon_d2_maps  # needs numpy and eccodes (the satellite extra)
+
+        run = icon_d2_maps.build(out, [(c.launch_point.lat, c.launch_point.lon) for c in clubs], now, state.maps_run)
+    except Exception as e:  # the maps must never stop the forecasts
+        print(f"  weather maps failed: {type(e).__name__}: {e}")
+        return
+    if run:
+        state.maps_run = run
+        print(f"Weather maps from the ICON-D2 run of {run:%Y-%m-%d %H} UTC, {icon_d2_maps.requests_made} DWD requests")
+    else:
+        print("Weather maps: no newer ICON-D2 run")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("out", type=Path)
@@ -658,6 +681,9 @@ def main() -> int:
         write(args.out / "lakes" / lake_id / "view", resp.json())
         views += 1
     print(f"Wrote {views} of {len(lake_ids)} lake views")
+    state.save()
+
+    weather_maps(state, args.out, every, now)
     state.save()
 
     publish_ice_map(args.out, all_lakes, now.astimezone(LOCAL).date())
