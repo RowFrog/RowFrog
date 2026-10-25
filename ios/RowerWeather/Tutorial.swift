@@ -13,7 +13,11 @@ enum Tutorial {
 
     static var seen: Bool { UserDefaults.standard.bool(forKey: seenKey) }
 
-    static func markSeen() { UserDefaults.standard.set(true, forKey: seenKey) }
+    /// The tour covers what is new, so "What's new" is not shown after it.
+    static func markSeen() {
+        UserDefaults.standard.set(true, forKey: seenKey)
+        WhatsNew.markSeen()
+    }
 
     /// For "Show the tour again": the tour starts over and the tips return.
     static func replay() {
@@ -32,6 +36,86 @@ enum Tutorial {
         if defaults.bool(forKey: "RWNoTips") { Tips.hideAllTipsForTesting() }
         if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
         try? Tips.configure([.displayFrequency(.immediate)])
+    }
+}
+
+// MARK: - What's new
+
+/// A sheet shown once after an update, to users who saw the tour before.
+enum WhatsNew {
+    /// Raise with every new list of points.
+    static let version = 1
+    /// `-RWWhatsNewSeen 1000` keeps the sheet away in screenshots.
+    static let seenKey = "RWWhatsNewSeen"
+
+    static var needsShowing: Bool {
+        Tutorial.seen && UserDefaults.standard.integer(forKey: seenKey) < version
+    }
+
+    static func markSeen() { UserDefaults.standard.set(version, forKey: seenKey) }
+
+    struct Point: Hashable {
+        let symbol: String
+        let text: String
+    }
+
+    static var points: [Point] {
+        [
+            Point(symbol: "arrow.left.arrow.right", text: tr("The way out and the way back lie side by side, each coloured for the time you row it.")),
+            Point(symbol: "figure.rowing", text: tr("Lake at the boat's time: move the boat along your route and see the lake when you get there.")),
+            Point(symbol: "arrow.triangle.capsulepath", text: tr("Row a loop: tap within 50 m of your club, or use Close loop.")),
+            Point(symbol: "hand.draw", text: tr("Tap a turning point to delete just that one, or hold and drag it to move it.")),
+            Point(symbol: "map", text: tr("Open in Maps now gives directions to the club's address.")),
+            Point(symbol: "rectangle.bottomhalf.inset.filled", text: tr("The panel under the lake map is smaller. Pull it up for the details.")),
+        ]
+    }
+}
+
+struct WhatsNewView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 0) {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 18) {
+                    Image(systemName: "sparkles")
+                        .font(.system(size: 44))
+                        .foregroundStyle(.tint)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 28)
+                    Text(tr("What's new"))
+                        .font(.largeTitle.bold())
+                        .frame(maxWidth: .infinity)
+                    Text(tr("Route planning on the lake map got better."))
+                        .font(.headline)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                    ForEach(WhatsNew.points, id: \.self) { point in
+                        HStack(alignment: .top, spacing: 14) {
+                            Image(systemName: point.symbol)
+                                .font(.title3)
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(.tint)
+                                .frame(width: 30)
+                            Text(point.text)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
+            }
+            Button {
+                dismiss()
+            } label: {
+                Text(tr("Continue")).frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.borderedProminent)
+            .controlSize(.large)
+            .padding(.horizontal, 24)
+            .padding(.vertical, 12)
+        }
     }
 }
 
@@ -561,6 +645,30 @@ struct RoutePlanningTip: Tip {
     var title: Text { Text(tr("Plan a route")) }
     var message: Text? { Text(tr("Tap here, then tap your turning points on the water. You see the light along the route and the best time to start.")) }
     var image: Image? { Image(systemName: "point.topleft.down.to.point.bottomright.curvepath") }
+}
+
+struct RoutePanelTip: Tip {
+    var title: Text { Text(tr("More or less panel")) }
+    var message: Text? { Text(tr("Pull up for details, push down for more map.")) }
+    var image: Image? { Image(systemName: "rectangle.bottomhalf.inset.filled") }
+}
+
+struct CloseLoopTip: Tip {
+    var title: Text { Text(tr("Row a loop")) }
+    var message: Text? { Text(tr("Close the loop: tap within 50 m of your club, or use Close loop.")) }
+    var image: Image? { Image(systemName: "arrow.triangle.capsulepath") }
+}
+
+struct TurningPointTip: Tip {
+    var title: Text { Text(tr("Change a turning point")) }
+    var message: Text? { Text(tr("Hold and drag a point to move it, or delete just this one.")) }
+    var image: Image? { Image(systemName: "hand.draw") }
+}
+
+struct BoatTimeTip: Tip {
+    var title: Text { Text(tr("Lake at the boat's time")) }
+    var message: Text? { Text(tr("Move the boat along your route to see the lake at the time you get there.")) }
+    var image: Image? { Image(systemName: "figure.rowing") }
 }
 
 // MARK: - Location for nearby clubs

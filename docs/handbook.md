@@ -13,6 +13,7 @@ secret or a manual step adds a line here.
 | Weather model picker (test) | Developer options on, then on a confirmed club (MRC 1880, MRSV Bayern, Tutzinger RV) tap the grey **Forecast** line at the bottom of the page | Pick Automatic (recommended), ICON-CH1, AROME or ECMWF IFS (not advised). The line then says "(your choice)". The widget always uses the automatic model. |
 | Tour again | Settings > Help > Show the tour again | Replays the first-start tour; one-time tips come back on the next start. |
 | Safety notice | First start, before the tour; later Settings > Legal > Safety notice | Has to be read to the end and agreed to. The device stores the agreed version and date (`RWSafetyAcceptedVersion`, `RWSafetyAcceptedAt`); factory reset keeps them. Raising `SafetyNotice.version` in `SafetyNotice.swift` makes everyone agree again. |
+| What's new | Once after an update, to users who had already seen the tour | A sheet listing what changed (`WhatsNew` in `Tutorial.swift`). The device stores the version seen (`RWWhatsNewSeen`). For a new list: change `WhatsNew.points` and raise `WhatsNew.version`. New users finishing the tour do not get it. |
 | Legal notice (Impressum) | Settings > Legal | The placeholders in `LegalInfo` in `Legal.swift` must be filled in before release. |
 
 ### Testing the model picker
@@ -44,6 +45,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWShowSettings YES -RWScrollPage n` open the settings at section n
 - `-RWLanguage de`, `-RWAppearance dark`, `-RWLandscape YES`
 - `-RWSafetyAccepted YES` skip the first-start safety notice (the screenshot workflow passes it to every shot except 77 and 78)
+- `-RWWhatsNewSeen 1000` keep the "What's new" sheet away (the screenshot workflow passes it to every shot except 114 and 115)
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
 - `-RWSettingsPage safety|impressum|privacy|limits|boat:<id>|backgrounds` open those Settings pages
 

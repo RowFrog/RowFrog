@@ -30,6 +30,15 @@ struct LakeMapScreen: View {
     @State private var panelExpanded: Bool
     /// Seconds per 500 m.
     @AppStorage("RWRoutePace") private var pace = 150.0
+    @AppStorage(Tutorial.seenKey) private var tourSeen = false
+    private let panelTip = RoutePanelTip()
+    private let loopTip = CloseLoopTip()
+    private let pointTip = TurningPointTip()
+    private let boatTip = BoatTimeTip()
+    @State private var showPanelTip = false
+    @State private var showLoopTip = false
+    @State private var showPointTip = false
+    @State private var showBoatTip = false
     @Environment(\.dismiss) private var dismiss
     private let routes = RouteStore.shared
 
@@ -106,7 +115,10 @@ struct LakeMapScreen: View {
                     waypoints = new
                     savedRoute = nil
                 },
-                movePoint: { i, point in waypoints = RouteEdit.move(at: i, to: point, in: waypoints) },
+                movePoint: { i, point in
+                    waypoints = RouteEdit.move(at: i, to: point, in: waypoints)
+                    pointTip.invalidate(reason: .actionPerformed)
+                },
                 selectPoint: { selectedPoint = $0 }
             )
             .ignoresSafeArea()
@@ -114,6 +126,14 @@ struct LakeMapScreen: View {
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { panel(plan: plan, boat: boat, shown: shown) }
         .sheet(isPresented: $showingInfo) { LakeViewInfo() }
+        .tipVisibility(panelTip, $showPanelTip)
+        .tipVisibility(loopTip, $showLoopTip)
+        .tipVisibility(pointTip, $showPointTip)
+        .tipVisibility(boatTip, $showBoatTip)
+        // A tip goes once its feature was used.
+        .onChange(of: panelExpanded) { panelTip.invalidate(reason: .actionPerformed) }
+        .onChange(of: followBoat) { if followBoat { boatTip.invalidate(reason: .actionPerformed) } }
+        .onChange(of: RouteEdit.isLoop(waypoints)) { _, loop in if loop { loopTip.invalidate(reason: .actionPerformed) } }
         .alert(tr("Save route"), isPresented: $showingSave) {
             TextField(tr("Name"), text: $routeName)
             Button(tr("Save")) { saveRoute() }
@@ -203,6 +223,7 @@ struct LakeMapScreen: View {
                 Button(tr("Delete point"), systemImage: "trash", role: .destructive) {
                     waypoints = RouteEdit.remove(at: i, from: waypoints)
                     selectedPoint = nil
+                    pointTip.invalidate(reason: .actionPerformed)
                     savedRoute = nil
                 }
                 Button(tr("Done")) { selectedPoint = nil }
@@ -231,17 +252,27 @@ struct LakeMapScreen: View {
         .padding(.vertical, 9)
         .background(.regularMaterial, in: Capsule())
         if let i = selectedPoint, i > 0, i < waypoints.count {
-            Text(tr("Hold the point and drag it to move it."))
-                .font(.caption)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(.regularMaterial, in: Capsule())
+            if tourSeen && showPointTip {
+                TipView(pointTip)
+            } else {
+                Text(tr("Hold the point and drag it to move it."))
+                    .font(.caption)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 4)
+                    .background(.regularMaterial, in: Capsule())
+            }
+        } else if tourSeen && showLoopTip && waypoints.count >= 3 && !loop {
+            // After the second turning point.
+            TipView(loopTip)
         }
     }
 
     private func panel(plan: RoutePlan?, boat: RoutePlan.Stop?, shown: LakeHour?) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             grabber
+            if tourSeen && showPanelTip {
+                TipView(panelTip)
+            }
             if !panelExpanded, let hour = shown {
                 collapsedSummary(hour, plan: plan, boat: boat)
             } else if let hour = shown {
@@ -358,6 +389,9 @@ struct LakeMapScreen: View {
         let loop = RouteEdit.isLoop(waypoints)
         if let planner, let plan {
             RouteSummary(view: view, plan: plan)
+            if tourSeen && showBoatTip && !followBoat {
+                TipView(boatTip)
+            }
             HStack(spacing: 12) {
                 Toggle(isOn: $followBoat) {
                     Label(tr("Lake at the boat's time"), systemImage: "figure.rowing")
