@@ -26,7 +26,7 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install httpx
-      - run: python3 scripts/webcam_survey_fetch.py osm addicted
+      - run: python3 scripts/webcam_survey_fetch.py windy
         env:
           WINDY_WEBCAMS_KEY: ${{ secrets.WINDY_WEBCAMS_KEY }}
       - name: Commit raw answers

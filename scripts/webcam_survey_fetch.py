@@ -110,10 +110,15 @@ def windy(c: httpx.Client) -> None:
             while offset < 1000:
                 r = c.get("https://api.windy.com/webcams/api/v3/webcams", headers={"x-windy-api-key": key},
                           params={"bbox": f"{lat + .5},{lon + .5},{lat},{lon}", "limit": 50, "offset": offset,
-                                  "include": "location,categories,urls,player"})
+                                  "include": "location,categories,urls,player,images"})
                 if r.status_code != 200:
-                    print("windy", r.status_code, r.text[:200])
+                    print("windy", lat, lon, r.status_code, r.text[:300])
+                    if r.status_code in (401, 403):
+                        save("windy-error.json", {"status": r.status_code, "body": r.text[:2000]})
+                        return
                     break
+                if not cams and offset == 0:
+                    print("windy first answer", r.text[:600])
                 batch = r.json().get("webcams", [])
                 for w in batch:
                     cams[w["webcamId"]] = w
