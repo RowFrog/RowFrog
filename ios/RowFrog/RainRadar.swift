@@ -121,7 +121,8 @@ struct RadarClient {
 /// a time).
 @MainActor
 enum RadarCache {
-    static let refresh: TimeInterval = 300
+    /// DWD's 5 minutes; 15 in Low Power Mode.
+    static var refresh: TimeInterval { PowerState.shared.lowPower ? 900 : 300 }
     private static var entries: [Coordinate: (radar: RainRadar, loaded: Date)] = [:]
 
     static func entry(at point: Coordinate) -> (radar: RainRadar, loaded: Date)? { entries[point] }
@@ -247,6 +248,8 @@ struct RadarMapScreen: View {
     @State private var showingLegend = false
     @AppStorage("RWRadarLoop") private var loops = true
     private let frames: [Date]
+    /// Rounds played with repeat on, about half a minute.
+    private static let rounds = 3
     /// The frame for the latest radar picture.
     private let nowIndex: Int
 
@@ -275,18 +278,22 @@ struct RadarMapScreen: View {
             }
             .sheet(isPresented: $showingLegend) { RadarLegendSheet() }
             .task { await loader.load() }
-            // Starts playing on its own once every picture is there.
-            .onChange(of: loader.complete) { _, complete in if complete { playing = true } }
+            // Starts playing on its own once every picture is there, except in Low Power Mode.
+            .onChange(of: loader.complete) { _, complete in if complete, !PowerState.shared.lowPower { playing = true } }
             .task(id: playing) {
                 guard playing else { return }
                 if index == frames.count - 1 { index = 0 }
+                // Repeating stops after a few rounds, back on the latest picture;
+                // the play button starts it again.
+                var rounds = 0
                 while playing, !Task.isCancelled {
                     // A little longer on the latest picture and at the end, so they can be read.
                     try? await Task.sleep(for: .milliseconds(index == nowIndex || index == frames.count - 1 ? 1400 : 600))
                     guard playing, !Task.isCancelled else { return }
                     if index < frames.count - 1 {
                         index += 1
-                    } else if loops {
+                    } else if loops, rounds < Self.rounds - 1 {
+                        rounds += 1
                         index = 0
                     } else {
                         playing = false
@@ -334,7 +341,7 @@ struct RadarMapScreen: View {
                         .padding(6)
                         .background(loops ? Color.accentColor.opacity(0.18) : .clear, in: RoundedRectangle(cornerRadius: 8))
                 }
-                .accessibilityLabel(tr("Keep playing"))
+                .accessibilityLabel(tr("Play 3 times"))
                 .accessibilityAddTraits(loops ? .isSelected : [])
             }
             HStack {

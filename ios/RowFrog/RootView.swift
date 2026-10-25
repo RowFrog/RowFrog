@@ -153,7 +153,7 @@ struct RootView: View {
             let settings = AppSettings.shared
             let picture = BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection))
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection, showList: showsListButton ? { showingList = true } : nil)
-                .environment(\.surface, picture == nil ? .plain : settings.tileStyle.surface)
+                .environment(\.surface, picture == nil ? .plain : settings.tileSurface)
         }
     }
 

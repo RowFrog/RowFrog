@@ -100,6 +100,28 @@ private struct SurfaceKey: EnvironmentKey {
     static let defaultValue = Surface.plain
 }
 
+/// Whether iOS Low Power Mode is on. The app then draws its tiles solid, lets
+/// the radar map wait for a tap to play and refreshes the radar less often.
+@Observable
+@MainActor
+final class PowerState {
+    static let shared = PowerState()
+    private(set) var lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+    @ObservationIgnored private var observer: NSObjectProtocol?
+
+    private init() {
+        observer = NotificationCenter.default.addObserver(forName: .NSProcessInfoPowerStateDidChange, object: nil, queue: .main) { _ in
+            MainActor.assumeIsolated { PowerState.shared.lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled }
+        }
+    }
+}
+
+extension AppSettings {
+    /// The tiles over a picture as drawn: solid in Low Power Mode, since blurred
+    /// and Liquid Glass tiles are drawn again on every frame the page scrolls.
+    @MainActor var tileSurface: Surface { PowerState.shared.lowPower ? .solid : tileStyle.surface }
+}
+
 private struct CurrentPageKey: EnvironmentKey {
     static let defaultValue = true
 }
@@ -222,7 +244,7 @@ struct PageBackground: ViewModifier {
         let settings = AppSettings.shared
         let image = BackgroundLibrary.image(for: settings.background(for: page, clubID: clubID))
         content
-            .environment(\.surface, image == nil ? .plain : settings.tileStyle.surface)
+            .environment(\.surface, image == nil ? .plain : settings.tileSurface)
             .background {
                 if drawsPicture {
                     PagePicture(image: image, blurred: settings.blurBackground)
