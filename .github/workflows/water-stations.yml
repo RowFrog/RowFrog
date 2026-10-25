@@ -16,6 +16,7 @@ on:
       - backend/rowfrog/water_stations.py
       - backend/rowfrog/sources/gkd.py
       - backend/rowfrog/sources/pegelonline.py
+      - backend/rowfrog/sources/bafu.py
       - .github/workflows/water-stations.yml
   workflow_dispatch:
 
