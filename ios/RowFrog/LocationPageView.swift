@@ -235,6 +235,11 @@ private final class StickyHourly {
     func isShowing(at top: CGFloat) -> Bool {
         hourlyFrame.height > 0 && hourlyFrame.minY + 40 < top && hourlyFrame.maxY > top
     }
+
+    /// How far up the last rows have pushed the header (0 or less).
+    func push(at top: CGFloat) -> CGFloat {
+        min(0, hourlyFrame.maxY - top - HourlyStickyHeader.height)
+    }
 }
 
 /// While the header stays, the tile ends at it: the rows scroll away under the
@@ -243,9 +248,13 @@ private struct StickyHourlyCut: ViewModifier {
     let sticky: StickyHourly
 
     func body(content: Content) -> some View {
-        let cut = sticky.isShowing(at: sticky.top) ? max(0, sticky.top - sticky.hourlyFrame.minY) : 0
+        let showing = sticky.isShowing(at: sticky.top)
+        let cut = showing ? max(0, sticky.top + sticky.push(at: sticky.top) - sticky.hourlyFrame.minY) : 0
+        // Rounded at the cut like the header's top, so nothing of the tile shows
+        // beside the header's corners.
+        let radius: CGFloat = showing ? 16 : 0
         content.mask(alignment: .top) {
-            Rectangle().padding(.top, cut)
+            UnevenRoundedRectangle(topLeadingRadius: radius, topTrailingRadius: radius).padding(.top, cut)
         }
     }
 }
@@ -267,7 +276,7 @@ private struct StickyHourlyHeader: View {
                     ?? dayTops.keys.min()
                 // At the end of the table the last rows push the header up and away,
                 // instead of it vanishing while rows are still under it.
-                let push = min(0, hourlyFrame.maxY - top - height)
+                let push = sticky.push(at: top)
                 HourlyStickyHeader(day: day)
                     .frame(width: hourlyFrame.width)
                     // Cut to the tile's shape, so its square bottom corners round off
@@ -281,8 +290,9 @@ private struct StickyHourlyHeader: View {
                     .transition(.opacity)
             }
         }
+        // Not clipped: when the last rows push the header up, it slides on under
+        // the status bar together with the tile's cut edge.
         .frame(height: HourlyStickyHeader.height)
-        .clipped()
         .allowsHitTesting(false)
     }
 }
