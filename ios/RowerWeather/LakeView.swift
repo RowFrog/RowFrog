@@ -332,6 +332,13 @@ enum LakeRaster {
         }
     }
 
+    /// When the whole lake is red (dark, a warning), the squares stay readable
+    /// but faded to grey; the map draws red stripes over them.
+    static func greyed(_ c: RGB) -> RGB {
+        let grey = 0.3 * c.r + 0.59 * c.g + 0.11 * c.b
+        return (grey + (c.r - grey) * 0.25, grey + (c.g - grey) * 0.25, grey + (c.b - grey) * 0.25)
+    }
+
     /// Calm blue, yellow at the amber limit, red at the red limit, purple beyond.
     static func ramp(_ value: Double, amber: Double, red: Double) -> RGB {
         let stops: [(Double, RGB)] = [(0, calm), (amber, yellow), (red, LakeRaster.red), (red * 1.6, purple)]
@@ -362,7 +369,7 @@ enum LakeRaster {
         for (i, flat) in grid.cells.enumerated() where i < hour.lights.count {
             let color: RGB
             switch layer {
-            case .light: color = Self.color(hour.lights[i])
+            case .light: color = hour.lakeWide.light == .red ? Self.greyed(Self.color(hour.lights[i])) : Self.color(hour.lights[i])
             case .waves: color = waveColor(hour.wave(ofCell: i))
             case .wind:
                 let p = grid.cellPoint[i]

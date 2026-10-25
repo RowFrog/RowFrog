@@ -582,7 +582,7 @@ private struct LakeViewInfo: View {
         NavigationStack {
             List {
                 Text(tr("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))
-                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown above the map."))
+                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map; while they make the whole lake red, the squares turn grey with red stripes."))
                 Text(tr("Waves are an estimate: there are no wave measurements on these lakes, and shelter from steep shores or currents is not taken into account."))
                 Section(tr("Data")) {
                     Text(tr("Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0"))
@@ -685,8 +685,8 @@ struct LakeMapView: UIViewRepresentable {
         }
         if let hour, c.shown != "\(hour.time.timeIntervalSince1970) \(layer.rawValue)" {
             c.shown = "\(hour.time.timeIntervalSince1970) \(layer.rawValue)"
-            c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour))
-            c.renderer?.update(image: c.current.image, arrows: c.current.arrows)
+            c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour), layer == .light && hour.lakeWide.light == .red)
+            c.renderer?.update(image: c.current.image, arrows: c.current.arrows, striped: c.current.striped)
         }
         c.showSpot(spot.map { view.grid.coordinate(ofCell: $0) }, on: map)
         c.showBoat(boat, on: map)
@@ -706,7 +706,7 @@ struct LakeMapView: UIViewRepresentable {
         var grid: LakeGrid?
         /// The hour and layer drawn, and their picture and arrows.
         var shown: String?
-        var current: (image: CGImage?, arrows: [LakeRenderer.Arrow]) = (nil, [])
+        var current: (image: CGImage?, arrows: [LakeRenderer.Arrow], striped: Bool) = (nil, [], false)
         var routeMode = false
         /// Whether the lake was fitted below the editing bar of route mode.
         var fittedForRoute = false
@@ -727,7 +727,7 @@ struct LakeMapView: UIViewRepresentable {
             }
             guard let overlay = overlay as? LakeOverlay else { return MKOverlayRenderer(overlay: overlay) }
             let renderer = LakeRenderer(overlay: overlay)
-            renderer.update(image: current.image, arrows: current.arrows)
+            renderer.update(image: current.image, arrows: current.arrows, striped: current.striped)
             self.renderer = renderer
             return renderer
         }
@@ -944,11 +944,14 @@ final class LakeRenderer: MKOverlayRenderer {
     private let lock = NSLock()
     private var image: CGImage?
     private var arrows: [Arrow] = []
+    /// Red stripes over the water while the whole lake is red.
+    private var striped = false
 
-    func update(image: CGImage?, arrows: [Arrow]) {
+    func update(image: CGImage?, arrows: [Arrow], striped: Bool) {
         lock.lock()
         self.image = image
         self.arrows = arrows
+        self.striped = striped
         lock.unlock()
         setNeedsDisplay()
     }
@@ -956,7 +959,7 @@ final class LakeRenderer: MKOverlayRenderer {
     override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
         guard let lake = overlay as? LakeOverlay else { return }
         lock.lock()
-        let image = self.image, arrows = self.arrows
+        let image = self.image, arrows = self.arrows, striped = self.striped
         lock.unlock()
 
         let shore = CGMutablePath()
@@ -975,6 +978,25 @@ final class LakeRenderer: MKOverlayRenderer {
             context.translateBy(x: rect.minX, y: rect.maxY)
             context.scaleBy(x: 1, y: -1)
             context.draw(image, in: CGRect(origin: .zero, size: rect.size))
+            context.restoreGState()
+        }
+        if striped {
+            context.saveGState()
+            context.addPath(shore)
+            context.clip(using: .evenOdd)
+            // Lines x + y = k * gap, so the stripes run on across the map's tiles.
+            let tile = self.rect(for: mapRect), gap = 14 / zoomScale
+            let stripes = CGMutablePath()
+            var k = ((tile.minX + tile.minY) / gap).rounded(.down)
+            while k * gap <= tile.maxX + tile.maxY {
+                stripes.move(to: CGPoint(x: k * gap - tile.minY, y: tile.minY))
+                stripes.addLine(to: CGPoint(x: k * gap - tile.maxY, y: tile.maxY))
+                k += 1
+            }
+            context.addPath(stripes)
+            context.setStrokeColor(UIColor.systemRed.withAlphaComponent(0.55).cgColor)
+            context.setLineWidth(3 / zoomScale)
+            context.strokePath()
             context.restoreGState()
         }
         context.addPath(shore)
