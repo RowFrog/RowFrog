@@ -364,7 +364,7 @@ jobs:
           WAIT=30 shoot 182-detail-map-past-end light -RWOpenClub mrc-1880 -RWOpenCondition temperature -RWChartSelect 60
           WAIT=30 shoot 183-detail-map-landscape light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWLandscape YES
           WAIT=30 shoot 184-detail-map-full light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWOpenWeatherMap wind
-          WAIT=30 shoot 185-detail-map-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWChartSelect 1 -RWLanguage de
+          WAIT=30 shoot 190-detail-map-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWChartSelect 1 -RWLanguage de
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
