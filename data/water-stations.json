@@ -51,16 +51,6 @@
       "lon": 11.4253,
       "distanceKm": 0.7
     },
-    "elmshorner-ruder-club-von-1909": {
-      "network": "pegelonline",
-      "id": "136febf6-1371-4118-a9b8-4275444bda5d",
-      "name": "Elmshorn Hafen",
-      "water": "Krückau",
-      "kind": "river",
-      "lat": 53.752182,
-      "lon": 9.653894,
-      "distanceKm": 1.2
-    },
     "floersheimer-ruderverein-08": {
       "network": "gkd",
       "id": "raunheim-24095302",
@@ -181,26 +171,6 @@
       "lon": 8.35523,
       "distanceKm": 22.7
     },
-    "hallesche-ruder-vereinigung-boellberg-v-1884-u-nelson-v-1874-ev-im-sv-halle": {
-      "network": "pegelonline",
-      "id": "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",
-      "name": "Rischmühle Op",
-      "water": "Saale",
-      "kind": "river",
-      "lat": 51.350199,
-      "lon": 12.002255,
-      "distanceKm": 12.9
-    },
-    "hallescher-ruderclub-ev-im-universitaetssportverein-halle": {
-      "network": "pegelonline",
-      "id": "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",
-      "name": "Rischmühle Op",
-      "water": "Saale",
-      "kind": "river",
-      "lat": 51.350199,
-      "lon": 12.002255,
-      "distanceKm": 18.3
-    },
     "hanauer-ruderclub-hassia": {
       "network": "pegelonline",
       "id": "27eed51b-c0a4-417e-926b-bb4194bfb341",
@@ -230,16 +200,6 @@
       "lat": 50.54512,
       "lon": 8.35523,
       "distanceKm": 26.7
-    },
-    "merseburger-rudergesellschaft": {
-      "network": "pegelonline",
-      "id": "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",
-      "name": "Rischmühle Op",
-      "water": "Saale",
-      "kind": "river",
-      "lat": 51.350199,
-      "lon": 12.002255,
-      "distanceKm": 3.0
     },
     "miltenberger-ruder-club-von-1900": {
       "network": "pegelonline",
@@ -730,16 +690,6 @@
       "lat": 50.54512,
       "lon": 8.35523,
       "distanceKm": 23.5
-    },
-    "weissenfelser-ruder-verein-1884": {
-      "network": "pegelonline",
-      "id": "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",
-      "name": "Rischmühle Op",
-      "water": "Saale",
-      "kind": "river",
-      "lat": 51.350199,
-      "lon": 12.002255,
-      "distanceKm": 16.6
     },
     "wuerzburger-ruderverein-bayern-von-18751905": {
       "network": "gkd",

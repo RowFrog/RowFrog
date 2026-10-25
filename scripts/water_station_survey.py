@@ -50,6 +50,13 @@ STALE = timedelta(days=3)
 NEAR_KM = 1.0
 # The networks the forecast reads (BAFU waits for the owner's OK on its source terms).
 USED_NETWORKS = ("gkd", "pegelonline")
+# Stations that read far warmer than every other station (checked 25 Oct 2026:
+# 19.3 and 16.5 °C against 8-13 °C elsewhere), likely a harbour or a warm
+# inflow. Too warm a value hides the cold-water advice, so they are not used.
+DOUBTFUL = {
+    "136febf6-1371-4118-a9b8-4275444bda5d",  # PEGELONLINE Elmshorn Hafen (Krückau)
+    "31dfddc7-80a5-45ff-907b-7bf2c1d825c5",  # PEGELONLINE Rischmühle OP (Saale)
+}
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "water-stations.json")
 
 out: list[str] = []
@@ -159,7 +166,7 @@ def club_stations(rows: list[dict], networks: tuple[str, ...] = USED_NETWORKS) -
     clubs = {}
     for r in sorted(rows, key=lambda r: r["club"]):
         s = r["station"]
-        if not s or r["far"] or s["network"] not in networks:
+        if not s or r["far"] or s["network"] not in networks or s["id"] in DOUBTFUL:
             continue
         # PEGELONLINE names are in capitals ("POTSDAM", "POTSDAMER HAVEL").
         tidy = str.title if s["network"] == "pegelonline" else str
