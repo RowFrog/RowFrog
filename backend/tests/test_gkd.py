@@ -53,7 +53,7 @@ def test_failed_fetch_keeps_the_last_good_reading(monkeypatch):
     reading = gkd.WaterTemperature(datetime(2026, 10, 18, 5, 45, tzinfo=timezone.utc), 12.8)
     pages = iter([(reading, [reading])])
 
-    async def flaky(client, station, now):
+    async def flaky(client, station, now, kind="lake"):
         try:
             return next(pages)
         except StopIteration:
@@ -65,7 +65,7 @@ def test_failed_fetch_keeps_the_last_good_reading(monkeypatch):
     monkeypatch.setattr(api.gkd, "fetch_recent", flaky)
     monkeypatch.setattr(api.asyncio, "sleep", no_wait)
     now = datetime(2026, 10, 18, 6, tzinfo=timezone.utc)
-    assert asyncio.run(api._water(None, "starnberg-16663002", now))[0] == reading
+    assert asyncio.run(api._water(None, api.water_stations.Station("gkd", "starnberg-16663002"), now))[0] == reading
     # GKD fails twice: the reading from the last run stands in, until it is too old.
-    assert asyncio.run(api._water(None, "starnberg-16663002", now))[0] == reading
-    assert asyncio.run(api._water(None, "starnberg-16663002", now + timedelta(hours=7))) == (None, [])
+    assert asyncio.run(api._water(None, api.water_stations.Station("gkd", "starnberg-16663002"), now))[0] == reading
+    assert asyncio.run(api._water(None, api.water_stations.Station("gkd", "starnberg-16663002"), now + timedelta(hours=7))) == (None, [])

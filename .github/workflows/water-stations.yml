@@ -1,0 +1,42 @@
+name: Water temperature stations
+
+# Lists the water temperature stations (GKD Bayern, PEGELONLINE, Swiss BAFU)
+# and the nearest one on each club's water (scripts/water_station_survey.py),
+# shows how data/water-stations.json would change, and reads every station in
+# that file once (scripts/water_station_check.py). Runs when these change, or
+# by hand from the Actions tab. Nothing is stored: a changed station list is
+# copied into data/water-stations.json by hand (see docs/handbook.md).
+
+on:
+  push:
+    paths:
+      - scripts/water_station_survey.py
+      - scripts/water_station_check.py
+      - data/water-stations.json
+      - backend/rowfrog/water_stations.py
+      - backend/rowfrog/sources/gkd.py
+      - backend/rowfrog/sources/pegelonline.py
+      - .github/workflows/water-stations.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  survey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - run: python3 scripts/water_station_survey.py --write
+      - name: Changes to data/water-stations.json
+        run: git diff --stat data/water-stations.json && git diff data/water-stations.json | head -200
+      - name: Read every station once
+        if: always()
+        run: |
+          git checkout data/water-stations.json
+          python3 scripts/water_station_check.py

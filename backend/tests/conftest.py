@@ -17,3 +17,13 @@ def no_saved_water():
     api._last_water.clear()
     yield
     api._last_water.clear()
+
+
+@pytest.fixture(autouse=True)
+def no_pegelonline(monkeypatch):
+    """Clubs on federal waterways read PEGELONLINE; tests stay offline."""
+
+    async def quiet(client, station, now):
+        return None, []
+
+    monkeypatch.setattr(api.pegelonline, "fetch_recent", quiet)

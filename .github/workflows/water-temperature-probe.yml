@@ -1,0 +1,36 @@
+name: Satellite water temperature check
+
+# Compares satellite lake surface temperature (Copernicus LSWT, Landsat 8/9)
+# and the estimate carried forward from it with the GKD lake stations, for
+# lakes without a station (scripts/water_temperature_backtest.py; the older
+# scripts/water_temperature_probe.py also looked at raw Sentinel-3 swaths). Uses the CDSE account in the repository secrets
+# CDSE_CLIENT_ID and CDSE_CLIENT_SECRET; Landsat needs no account. Runs when
+# the script changes, or by hand from the Actions tab. Nothing is stored.
+
+on:
+  push:
+    paths:
+      - scripts/water_temperature_probe.py
+      - scripts/water_temperature_backtest.py
+      - backend/rowfrog/sources/lake_temperature_satellite.py
+      - backend/rowfrog/water_estimate.py
+      - .github/workflows/water-temperature-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e "backend[satellite]"
+      - run: python3 scripts/water_temperature_backtest.py
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
