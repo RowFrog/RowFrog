@@ -157,6 +157,12 @@ Add a place looks up the water only once the map stops moving. In Low Power
 Mode the tiles are drawn solid and the radar updates less often. The app does
 nothing in the background; only the widgets load forecasts on their own.
 
+**Data use.** Forecasts that have not changed are not downloaded again, and
+the club list is kept on the phone for a day. With "Save mobile data" on
+(while on mobile data) or in iOS Low Data Mode, satellite pictures load only
+when tapped, the radar map steps in half hours and the radar card updates
+every 15 minutes.
+
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
 the coming week: no ice, shore ice possible, ice forming, ice cover likely,
 or drift ice on rivers. Likely ice turns the hourly light red; possible shore
@@ -225,6 +231,7 @@ list; the list goes back to the club page with a button named after the club):
   pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less often saves battery and data, but a new DWD
   warning reaches the widgets later.
+- Data use: "Save mobile data" (see above).
 - App icon: the coxed double "rowing light" icon in light, dark and tinted,
   plus 10 alternates.
 - Help: the full legend of symbols, and replay the tour. One-time tips point
