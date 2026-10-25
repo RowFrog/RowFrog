@@ -53,7 +53,9 @@ def test_pegelonline_station_credit_and_place(monkeypatch):
     club = next(c for c, s in water_stations._load().items() if s.network == "pegelonline")
     station = water_stations._load()[club]
     assert asyncio.run(api._water(None, station, datetime(2026, 10, 18, 6, tzinfo=timezone.utc)))[0] == reading
-    assert api._water_station_json(station) == {"network": "pegelonline", "name": station.name, "distanceKm": station.distance_km}
+    block = api._water_station_json(station)
+    assert block["network"] == "pegelonline" and block["name"] == station.name and block["distanceKm"] == station.distance_km
+    assert block["url"] is None and block["lat"] == station.lat
     assert api._water_station_json(water_stations.Station("gkd", "starnberg-16663002")) is None
 
 
