@@ -436,7 +436,7 @@ struct SatelliteImage: View {
         }
         .aspectRatio(picture.aspectRatio, contentMode: .fit)
         .overlay { iceOverlay }
-        .overlay { SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID) }
+        .overlay { SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID, cloudy: shot.lakeCloud >= 0.5) }
         .frame(maxWidth: .infinity)
     }
 
@@ -467,6 +467,8 @@ struct SatelliteOverlay: View {
     let picture: SatellitePicture
     let layers: Set<SatelliteLayer>
     var clubID: String?
+    /// Over mostly white cloud the shore is drawn dark with a light edge, over a clear lake light with a dark edge.
+    var cloudy = false
     @MainActor private var view: LakeView? { LakeViewStore.shared.views[lakeID] }
 
     var body: some View {
@@ -527,8 +529,11 @@ struct SatelliteOverlay: View {
                     path.addLines(ring.map { point($0[0], $0[1]) })
                     path.closeSubpath()
                 }
-                context.stroke(path, with: shadow, lineWidth: 3)
-                context.stroke(path, with: .color(.white), lineWidth: 1.5)
+                let (edge, core): (Color, Color) = cloudy
+                    ? (.white.opacity(0.85), Color(red: 0.05, green: 0.12, blue: 0.3))
+                    : (.black.opacity(0.7), .white)
+                context.stroke(path, with: .color(edge), lineWidth: 3.5)
+                context.stroke(path, with: .color(core), lineWidth: 1.5)
             }
             if layers.contains(.routes) {
                 for route in RouteStore.shared.routes(on: lakeID) where route.points.count > 1 {
@@ -823,7 +828,7 @@ struct SatelliteLegend: View {
                 }
                 if !on.isDisjoint(with: [.shore, .clubs, .routes]) {
                     Section(tr("Lines and marks")) {
-                        if on.contains(.shore) { row(line(.white), tr("Shore line")) }
+                        if on.contains(.shore) { row(line(.white), tr("Shore line: white on a clear picture, dark blue on a cloudy one")) }
                         if on.contains(.routes) { row(line(.yellow), tr("Your saved routes on this lake")) }
                         if on.contains(.clubs) {
                             row(ClubMarkIcon(color: .blue), tr("This page's club; a house instead of the rower when it is your home base"))

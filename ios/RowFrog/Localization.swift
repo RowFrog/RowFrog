@@ -513,7 +513,7 @@ enum German {
         "Clear ice": "Klares Eis",
         "Open water": "Offenes Wasser",
         "Lines and marks": "Linien und Markierungen",
-        "Shore line": "Uferlinie",
+        "Shore line: white on a clear picture, dark blue on a cloudy one": "Uferlinie: weiß bei klarem Bild, dunkelblau bei bewölktem",
         "Your saved routes on this lake": "Deine gespeicherten Routen auf diesem See",
         "Switch layers on and off with the buttons under the picture.": "Ebenen schaltest du mit den Knöpfen unter dem Bild ein und aus.",
         "Start": "Start",
