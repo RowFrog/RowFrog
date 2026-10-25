@@ -5,6 +5,7 @@ name: App screenshots
 # Long pages are shot screen by screen (-p1, -p2, ...) down to the bottom.
 # Tutzinger RV gets a made-up lake storm warning, marked SAMPLE in the app,
 # so both warning states show; every other warning is live from DWD.
+# The Simssee gets a made-up Landsat reading (RW_SAMPLE_SATELLITE_WATER).
 # The lake view gets a made-up south wind (RW_SAMPLE_LAKE_WIND), marked
 # "Sample wind", so its screens show waves building along the lake.
 # Runs only by hand from the Actions tab (owner rule, 24 Oct 2026): once per PR
@@ -37,7 +38,7 @@ jobs:
       - run: pip install -e backend pillow
       - name: Start the backend with live data
         run: |
-          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv RW_SAMPLE_LAKE_WIND=192,5.2,7.9 nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
           # Warm the forecast and warning caches; Open-Meteo sometimes times out
           # on the first call and DWD's lake areas take a while to download.
@@ -304,6 +305,10 @@ jobs:
           WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
           WAIT=30 shoot 137-water-station light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWScrollPage 1
           shoot 138-launch-point-place light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
+          # Water temperature from a satellite (sample Landsat reading on the Simssee) and from a federal waterways gauge.
+          WAIT=30 shoot_pages 139-water-satellite light -RWOpenClub segler-und-ruderclub-simssee -RWOpenCondition waterTemperature
+          WAIT=30 shoot 140-water-satellite-german-dark dark -RWOpenClub segler-und-ruderclub-simssee -RWOpenCondition waterTemperature -RWScrollPage 1 -RWLanguage de
+          WAIT=30 shoot 141-water-pegelonline light -RWOpenClub frankfurter-ruder-und-kanusportverein-sachsenhausen-1898 -RWOpenCondition waterTemperature -RWScrollPage 1
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.

@@ -58,6 +58,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWWhatsNewSeen 1000` keep the "What's new" sheet away (the screenshot workflow passes it to every shot except 114 and 115)
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
 - `-RWSettingsPage safety|impressum|privacy|limits|boat:<id>|backgrounds` open those Settings pages
+- Backend `RW_SAMPLE_SATELLITE_WATER=<lake ids>` gives those lakes a made-up Landsat reading from five days ago, so the water detail shows the satellite estimate (the screenshot workflow sets it for the Simssee, shots 139-140)
 
 ## What runs on its own (GitHub Actions)
 

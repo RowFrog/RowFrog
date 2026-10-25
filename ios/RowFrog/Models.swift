@@ -248,8 +248,11 @@ struct WaterTemperature: Codable, Hashable {
     var station: WaterStation? = nil
 }
 
-/// The lake station that measures the water temperature.
+/// The station that measures the water temperature.
 struct WaterStation: Codable, Hashable {
+    /// "gkd" (Gewässerkundlicher Dienst Bayern), "pegelonline" (federal
+    /// waterways, Germany) or "bafu" (Swiss federal stations); older backends send none.
+    var network: String?
     var name: String?
     var lat: Double?
     var lon: Double?
@@ -257,6 +260,15 @@ struct WaterStation: Codable, Hashable {
     var distanceM: Double?
     /// The station's page at the Gewässerkundlicher Dienst Bayern.
     var url: URL?
+
+    /// Who runs the station, for the detail sheet's source line.
+    var operatorName: String {
+        switch network {
+        case "pegelonline": tr("PEGELONLINE, the federal waterways and shipping administration (WSV)")
+        case "bafu": tr("Swiss Federal Office for the Environment (BAFU)")
+        default: tr("Gewässerkundlicher Dienst Bayern (LfU)")
+        }
+    }
 
     var coordinate: Coordinate? {
         guard let lat, let lon else { return nil }
@@ -354,11 +366,52 @@ struct ModelChoice: Codable, Hashable, Identifiable {
 }
 
 extension ClubForecast {
-    /// Without a lake station: the ice model's water temperature (cold months
-    /// only), worked out from the air temperatures of the last weeks.
+    /// Without a station: the newest satellite reading carried forward to
+    /// today with the air temperatures, else the ice model's water
+    /// temperature (cold months only), worked out from the air temperatures
+    /// of the last weeks.
     var estimatedWaterC: Double? {
-        guard waterTemperature == nil, let ice, ice.basis == "model" || ice.basis == "satellite" else { return nil }
+        guard waterTemperature == nil else { return nil }
+        if let waterEstimate { return waterEstimate.celsius }
+        guard let ice, ice.basis == "model" || ice.basis == "satellite" else { return nil }
         return ice.waterTemperatureC
+    }
+}
+
+/// Without a station: a satellite reading of the lake's surface temperature
+/// carried forward to today with the daily air temperatures (backend water_estimate.py).
+struct WaterEstimate: Codable, Hashable {
+    let celsius: Double
+    /// "satellite".
+    let basis: String
+    let reading: SatelliteWaterReading
+}
+
+struct SatelliteWaterReading: Codable, Hashable {
+    /// "copernicus-lswt" (Sentinel-3, a 10-day mean) or "landsat" (one pass).
+    let source: String
+    /// "landsat-8" or "landsat-9"; none for Copernicus.
+    var platform: String? = nil
+    /// Local calendar day, "yyyy-MM-dd"; the middle of the period for Copernicus.
+    let date: String
+    /// The 10-day period of a Copernicus file, "yyyy-MM-dd".
+    var from: String? = nil
+    var to: String? = nil
+    let celsius: Double
+
+    /// "Landsat 9" or "Copernicus (Sentinel-3)".
+    var satelliteName: String {
+        if source == "landsat" {
+            return platform.map { $0.replacingOccurrences(of: "landsat-", with: "Landsat ") } ?? "Landsat"
+        }
+        return tr("Copernicus (Sentinel-3)")
+    }
+
+    /// "Wed 9 Oct", or for Copernicus "1 Oct – 10 Oct".
+    var when: String {
+        let day: (String) -> String = { text in IceSatellite.parser.date(from: text).map { Format.day($0) } ?? text }
+        if let from, let to { return day(from) + " – " + day(to) }
+        return day(date)
     }
 }
 
@@ -382,6 +435,8 @@ struct ClubForecast: Codable, Hashable {
     var outlook: [ForecastHour]? = nil
     /// DWD's rain radar at the launch point for the widget, for the clubs people use.
     var radar: RainRadar? = nil
+    /// Without a station, for lakes the satellites see; missing from older backends.
+    var waterEstimate: WaterEstimate? = nil
 
     /// The backend publishes every half hour; after this the forecast counts as out of date.
     static let staleAfter: TimeInterval = 3 * 3600
@@ -490,7 +545,7 @@ struct IceSatellite: Codable, Hashable {
         return tr("Satellite, %@: %@ %% ice", day, Format.number(iceShare * 100))
     }
 
-    private static let parser: DateFormatter = {
+    static let parser: DateFormatter = {
         let f = DateFormatter()
         f.calendar = Calendar(identifier: .gregorian)
         f.locale = Locale(identifier: "en_US_POSIX")
