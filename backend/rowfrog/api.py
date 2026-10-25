@@ -20,7 +20,7 @@ from fastapi import FastAPI, HTTPException
 from . import ice, lake_view, locations, outlines, water_estimate, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
-from .sources import bafu, dwd_warnings, gkd, open_meteo, pegelonline
+from .sources import bafu, dwd_warnings, gkd, lake_temperature_satellite, open_meteo, pegelonline
 from .sun import sun_days
 
 CACHE_SECONDS = 30 * 60
@@ -34,6 +34,9 @@ SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "")
 # "from,speed,gusts" (degrees, m/s) replaces the wind in the lake view, marked as a
 # sample, so screenshots show waves building across the lake on a calm day.
 SAMPLE_LAKE_WIND = os.environ.get("RW_SAMPLE_LAKE_WIND", "")
+# Lake ids that get a made-up Landsat reading from five days ago, for screenshots
+# of the satellite water estimate (the publishing job loads the real ones).
+SAMPLE_SATELLITE_WATER = {l for l in os.environ.get("RW_SAMPLE_SATELLITE_WATER", "").split(",") if l}
 # Added to the credits when the forecast carries a satellite water estimate.
 SATELLITE_WATER_CREDIT = {
     "copernicus-lswt": "Water temperature estimate: Copernicus Land Monitoring Service (Lake Surface Water Temperature)",
@@ -77,6 +80,11 @@ _last_water: dict[str, tuple[gkd.WaterTemperature, list[gkd.WaterTemperature]]] 
 _satellite_ice: dict[str, list] = {}
 # Satellite lake temperature readings per lake, set by the publishing job (see sources.lake_temperature_satellite).
 _satellite_water: dict[str, list] = {}
+for _lake_id in SAMPLE_SATELLITE_WATER:
+    _day = datetime.now(LOCAL).date() - timedelta(days=5)
+    _satellite_water[_lake_id] = [
+        lake_temperature_satellite.Reading(lake_temperature_satellite.LANDSAT, _day, 15.2, 800, platform="landsat-9")
+    ]
 # Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
 _ice_temps: dict[str, tuple[date, list[ice.DayTemperature]]] = {}
 _lake_view_cache: dict[str, tuple[float, tuple]] = {}
