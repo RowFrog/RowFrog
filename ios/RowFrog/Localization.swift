@@ -500,7 +500,7 @@ enum German {
         "Add the other places you row, or skip this and add clubs later in the list.": "Füge die anderen Orte hinzu, an denen du ruderst, oder überspringe das und füge Vereine später in der Liste hinzu.",
         "Suggestions": "Vorschläge",
         "Near you": "In deiner Nähe",
-        "Add a Row Frog widget to your home or lock screen to see the rowing light at a glance.": "Füge ein Row-Frog-Widget zu deinem Home- oder Sperrbildschirm hinzu, um die Ruderampel auf einen Blick zu sehen.",
+        "Add a Row Frog widget to your home or lock screen to see the rowing light at a glance, and rain on the radar in the next two hours.": "Füge ein Row-Frog-Widget zu deinem Home- oder Sperrbildschirm hinzu, um die Ruderampel auf einen Blick zu sehen, dazu Regen auf dem Radar in den nächsten zwei Stunden.",
         "Landscape and wide screens": "Querformat und breite Bildschirme",
         "Turn your iPhone sideways, or use a wide screen, to see more at once.": "Dreh dein iPhone quer oder nutze einen breiten Bildschirm, um mehr auf einmal zu sehen.",
         "The location list stays on the left, the club page on the right.": "Die Ortsliste bleibt links, die Vereinsseite steht rechts.",
