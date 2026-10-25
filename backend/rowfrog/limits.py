@@ -12,11 +12,16 @@ import calendar
 from dataclasses import dataclass
 from datetime import date, timedelta
 
-# Free limits: Open-Meteo's non-commercial API (open-meteo.com/en/pricing) and
-# the free Copernicus Data Space account (about 10,000 Sentinel Hub requests a month).
+# Free limits: Open-Meteo's non-commercial API (open-meteo.com/en/pricing),
+# the free Copernicus Data Space account (about 10,000 Sentinel Hub requests a
+# month) and Cloudflare's free Workers plan (100,000 Worker requests a day for
+# the whole account; D1 100,000 rows written and 5 million read a day).
 LIMITS = {
     "open-meteo": {"day": 10_000, "month": 300_000},
     "copernicus": {"month": 10_000},
+    "cloudflare-workers": {"day": 100_000},
+    "cloudflare-d1-writes": {"day": 100_000},
+    "cloudflare-d1-reads": {"day": 5_000_000},
 }
 WARN = 0.70
 ALERT = 0.85
@@ -47,6 +52,8 @@ def check(rows: list[dict], today: date) -> list[Finding]:
     findings = []
     for service, limits in LIMITS.items():
         totals = per_day(rows, service)
+        if service.startswith("cloudflare") and not totals:
+            continue  # read from Cloudflare, not reported by the jobs; budget_check says when it failed
         complete = [today - timedelta(days=i) for i in range(1, 8)]  # the last 7 full days
         last7 = [totals.get(d, 0.0) for d in complete]
         prev7 = [totals.get(today - timedelta(days=i), 0.0) for i in range(8, 15)]
@@ -91,6 +98,7 @@ def report(findings: list[Finding], today: date) -> str:
     lines += [
         "",
         f"Warning from {WARN:.0%} of a limit, alert from {ALERT:.0%}. Next steps when it rises: "
-        "refresh unused clubs less often, or take Open-Meteo's paid plan (see the regional weather models doc).",
+        "refresh unused clubs less often, or take Open-Meteo's paid plan (see the regional weather models doc); "
+        "for Cloudflare, count each club once an hour instead of on every load, or take Workers Paid.",
     ]
     return "\n".join(lines)

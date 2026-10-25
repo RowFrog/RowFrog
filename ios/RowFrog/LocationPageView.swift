@@ -337,6 +337,13 @@ private extension LocationPageView {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                if forecast.isSlowRefresh {
+                    // Opening the club counts it as used; the next server run renews it every half hour.
+                    Label(tr("Nobody opened this club lately, so it updates less often. From the next server run, within about 30 minutes, it updates every half hour."), systemImage: "hourglass")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                }
             }
         }
         .padding(.horizontal, surface.hasPicture ? 16 : 0)
