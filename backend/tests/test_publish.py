@@ -143,3 +143,49 @@ def test_other_models_load_only_for_confirmed_clubs_once_per_run(monkeypatch):
     for key in list(api._primed_weather):
         if "@" in key:
             del api._primed_weather[key]
+
+
+def test_warn_cells_are_looked_up_once_and_warnings_read_in_bulk(monkeypatch):
+    from rowfrog import api, locations
+    from rowfrog.sources import dwd_warnings
+
+    looked, bulk = [], []
+
+    async def fake_cell(client, lon, lat):
+        looked.append((lon, lat))
+        return None if lat < 47.5 else 800000000 + len(looked) % 3
+
+    async def fake_bulk(client, cells):
+        bulk.append(sorted(cells))
+        return {c: [] for c in cells}
+
+    monkeypatch.setattr(dwd_warnings, "fetch_warn_cell", fake_cell)
+    monkeypatch.setattr(dwd_warnings, "fetch_local_warnings_for_cells", fake_bulk)
+    clubs = list(locations.load().clubs.values())[:20]
+    state = publish.State(None)
+    api._primed_local_warnings.clear()
+    publish.local_warnings(state, clubs, utc(25, 12))
+    assert len(looked) == 20 and len(bulk) == 1
+    assert set(api._primed_local_warnings) == {c.id for c in clubs}
+    publish.local_warnings(state, clubs, utc(25, 12, 30))
+    assert len(looked) == 20, "cells are kept between runs"
+    publish.local_warnings(state, clubs, utc(25, 12) + timedelta(days=publish.WARN_CELL_DAYS + 1))
+    assert len(looked) == 40, "and looked up again after a while"
+    api._primed_local_warnings.clear()
+
+
+def test_failed_bulk_warnings_leave_each_club_to_ask_itself(monkeypatch):
+    from rowfrog import api, locations
+    from rowfrog.sources import dwd_warnings
+
+    async def fake_cell(client, lon, lat):
+        return 809188139
+
+    async def broken(client, cells):
+        raise dwd_warnings.httpx.HTTPError("down")
+
+    monkeypatch.setattr(dwd_warnings, "fetch_warn_cell", fake_cell)
+    monkeypatch.setattr(dwd_warnings, "fetch_local_warnings_for_cells", broken)
+    api._primed_local_warnings.clear()
+    publish.local_warnings(publish.State(None), list(locations.load().clubs.values())[:3], utc(25, 12))
+    assert api._primed_local_warnings == {}

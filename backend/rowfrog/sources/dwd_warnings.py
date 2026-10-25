@@ -10,7 +10,10 @@ Both come from DWD's GeoServer as WFS layers:
 
 - dwd:Warngebiete_Binnenseen: the lake warning areas (polygons, static),
 - dwd:Warnungen_Binnenseen: active lake warnings, by WARNCELLID,
-- dwd:Warnungen_Gemeinden: active weather warnings per municipality.
+- dwd:Warnungen_Gemeinden: active weather warnings per municipality,
+- dwd:Warngebiete_Gemeinden: the municipalities' warn cells (static), so the
+  publishing job looks each club's cell up once and then reads the warnings
+  of all its clubs in a few queries per run instead of one per club.
 
 Warnings are CAP messages: EVENT (e.g. "STURMBÖEN"), SEVERITY (Minor,
 Moderate, Severe, Extreme), HEADLINE, DESCRIPTION, INSTRUCTION, ONSET and
@@ -196,6 +199,48 @@ async def fetch_lake_warnings(client: httpx.AsyncClient) -> list[tuple[int, Warn
     )
     resp.raise_for_status()
     return parse_warnings(resp.json(), "lake")
+
+
+async def fetch_warn_cell(client: httpx.AsyncClient, lon: float, lat: float) -> int | None:
+    """The municipality warn cell the point lies in; None outside Germany. Cells rarely change."""
+    resp = await client.get(
+        WFS_URL,
+        params=_query(
+            typeName="dwd:Warngebiete_Gemeinden",
+            propertyName="WARNCELLID",
+            # The municipality polygons are in SHAPE here (THE_GEOM in the warnings layer).
+            CQL_FILTER=f"INTERSECTS(SHAPE,POINT({lat} {lon}))",
+        ),
+        timeout=30,
+    )
+    resp.raise_for_status()
+    features = resp.json().get("features") or []
+    return int(features[0]["properties"]["WARNCELLID"]) if features else None
+
+
+# Cells per query: keeps the address well under the length web servers accept.
+CELLS_PER_QUERY = 150
+
+
+async def fetch_local_warnings_for_cells(client: httpx.AsyncClient, cells: Iterable[int]) -> dict[int, list[Warning]]:
+    """Weather warnings for many municipality cells, a few queries in all; every cell asked for gets a list."""
+    ordered = sorted(set(cells))
+    out: dict[int, list[Warning]] = {cell: [] for cell in ordered}
+    for i in range(0, len(ordered), CELLS_PER_QUERY):
+        chunk = ordered[i : i + CELLS_PER_QUERY]
+        resp = await client.get(
+            WFS_URL,
+            params=_query(
+                typeName="dwd:Warnungen_Gemeinden",
+                propertyName=_PROPERTIES.replace("AREADESC", "NAME"),
+                CQL_FILTER=f"WARNCELLID IN ({','.join(map(str, chunk))})",
+            ),
+            timeout=60,
+        )
+        resp.raise_for_status()
+        for cell, w in parse_warnings(resp.json(), "local"):
+            out.setdefault(cell, []).append(w)
+    return out
 
 
 async def fetch_local_warnings(client: httpx.AsyncClient, lon: float, lat: float) -> list[Warning]:

@@ -1,7 +1,7 @@
 name: Model check
 
 # Compares weather models for the test points in data/model-check/points.json
-# against DWD station measurements (scripts/model_check.py). Twice a day it
+# against DWD station measurements (scripts/model_check.py). Once a day it
 # stores every model's forecast on the model-check branch and rewrites
 # report.md there. On Mondays (or by hand) the report is posted as a comment
 # on the "Model check" issue, so the owner gets it by e-mail.
@@ -14,9 +14,9 @@ on:
       - data/model-check/**
       - .github/workflows/model-check.yml
   schedule:
-    # After the 00 and 12 UTC model runs are out.
+    # After the 00 UTC model runs are out. Once a day keeps it at about 700
+    # Open-Meteo calls a day (a second run at 16:40 doubled that).
     - cron: "40 4 * * *"
-    - cron: "40 16 * * *"
   workflow_dispatch:
     inputs:
       archive_days:
