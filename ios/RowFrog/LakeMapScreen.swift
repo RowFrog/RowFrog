@@ -46,6 +46,10 @@ struct LakeMapScreen: View {
     private let pointTip = TurningPointTip()
     private let boatTip = BoatTimeTip()
     private let importTip = RowImportTip()
+    private let stretchTip = StretchPointTip()
+    private let oneWayTip = OneWayTip()
+    @State private var showStretchTip = false
+    @State private var showOneWayTip = false
     @State private var showImportTip = false
     @State private var showPanelTip = false
     @State private var showLoopTip = false
@@ -164,6 +168,7 @@ struct LakeMapScreen: View {
                 insertPoint: { i, point in
                     waypoints = RouteEdit.insert(point, at: i, in: waypoints)
                     selectedPoint = i
+                    stretchTip.invalidate(reason: .actionPerformed)
                     savedRoute = nil
                 },
                 selectPoint: { selectedPoint = $0 },
@@ -200,6 +205,9 @@ struct LakeMapScreen: View {
         .tipVisibility(pointTip, $showPointTip)
         .tipVisibility(boatTip, $showBoatTip)
         .tipVisibility(importTip, $showImportTip)
+        .tipVisibility(stretchTip, $showStretchTip)
+        .tipVisibility(oneWayTip, $showOneWayTip)
+        .onChange(of: outAndBack) { oneWayTip.invalidate(reason: .actionPerformed) }
         // A tip goes once its feature was used.
         .onChange(of: panelExpanded) { panelTip.invalidate(reason: .actionPerformed) }
         .onChange(of: followBoat) { if followBoat { boatTip.invalidate(reason: .actionPerformed) } }
@@ -445,6 +453,12 @@ struct LakeMapScreen: View {
         } else if tourSeen && showLoopTip && waypoints.count >= 3 && !loop {
             // After the second turning point.
             TipView(loopTip)
+        } else if tourSeen && showStretchTip && waypoints.count >= 3 {
+            // Once there are stretches between turning points.
+            TipView(stretchTip)
+        } else if tourSeen && showOneWayTip && waypoints.count == 2 && !outAndBack {
+            // After the first turning point.
+            TipView(oneWayTip)
         } else if tourSeen && showImportTip && waypoints.count < 2 {
             // Before the first turning point: draw the route, or bring in one already rowed.
             TipView(importTip)
