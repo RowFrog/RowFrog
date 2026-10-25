@@ -228,7 +228,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "list.bullet", text: tr("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
             TourPoint(symbol: "slider.horizontal.3", text: tr("The sliders next to a boat open its limits.")),
             TourPoint(symbol: "map", text: tr("Pick the boat that colours the lake map.")),
-            TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water the app is stricter and advises a life jacket.", Format.temperature(RowingLimits.coldWaterC))),
+            TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water the app advises a life jacket; below %@ it is stricter.", Format.temperature(RowingLimit.lifeJacket.standard(for: .small)), Format.temperature(RowingLimits.coldWaterC))),
         ]
         case .lake: [
             TourPoint(symbol: "map", text: tr("The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.")),
@@ -243,7 +243,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("Touch and hold a club, then drag to reorder.")),
             TourPoint(symbol: "trash", text: tr("Swipe a club in the list to the left to remove it.")),
             TourPoint(symbol: "arrow.clockwise", text: tr("Pull a page or the list down to refresh.")),
-            TourPoint(symbol: "apps.iphone", text: tr("Add a Row Frog widget to your home or lock screen to see the rowing light at a glance.")),
+            TourPoint(symbol: "apps.iphone", text: tr("A Row Frog widget on your home or lock screen shows the rowing light and rain on the radar in the next two hours.")),
         ]
         case .wideScreen: [
             TourPoint(symbol: "sidebar.left", text: tr("The location list stays on the left, the club page on the right.")),

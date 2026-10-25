@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Daily check of the outside services' call totals against their free limits.
 
-Usage (from the repository root, after `pip install -e backend`, with RW_USAGE_KEY set):
+Usage (from the repository root, after `pip install -e backend`, with RW_USAGE_KEY set,
+and CLOUDFLARE_API_TOKEN / CLOUDFLARE_ACCOUNT_ID for the Cloudflare figures):
     python3 scripts/budget_check.py OUT.md
 
 Writes the report to OUT.md (and the job summary on GitHub) and exits with
@@ -15,7 +16,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from rowfrog import limits, usage
+from rowfrog import cloudflare_usage, limits, usage
 
 
 def main() -> int:
@@ -26,7 +27,10 @@ def main() -> int:
         text = f"# Usage limits, {today.isoformat()}\n\nThe usage counter did not answer, or RW_USAGE_KEY is not set."
         level = "warn"
     else:
-        findings = limits.check(rows, today)
+        cloudflare = cloudflare_usage.daily(today)
+        findings = limits.check(rows + (cloudflare or []), today)
+        if cloudflare is None:
+            findings.append(limits.Finding("cloudflare", "warn", "cloudflare: Worker and D1 figures could not be read (token or analytics answer)."))
         text = limits.report(findings, today)
         level = limits.worst(findings)
     out.write_text(text + "\n", encoding="utf-8")

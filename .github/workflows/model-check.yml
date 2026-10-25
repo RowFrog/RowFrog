@@ -7,14 +7,19 @@ name: Model check
 # on the "Model check" issue, so the owner gets it by e-mail.
 
 on:
+  # Only on main: each run costs about 700 Open-Meteo calls and stores its
+  # forecasts on the model-check branch, so a feature branch must not add its own.
   push:
+    branches: [main]
     paths:
       - scripts/model_check.py
       - backend/rowfrog/model_check.py
       - data/model-check/**
       - .github/workflows/model-check.yml
   schedule:
-    # After the 00 and 12 UTC model runs are out.
+    # After the 00 and 12 UTC model runs are out. Each run costs about 700
+    # Open-Meteo calls; the report's "Once a day instead of twice?" section
+    # shows what dropping the 16:40 run would change.
     - cron: "40 4 * * *"
     - cron: "40 16 * * *"
   workflow_dispatch:

@@ -93,16 +93,18 @@ struct SafetyNoticeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // The settings can't be reached yet, so the language is chosen here.
+            // The settings can't be reached yet, so the language is chosen here:
+            // every choice the settings offer, the device's language first and preset.
             Picker(tr("Language"), selection: Binding(
-                get: { AppSettings.shared.resolvedLanguage },
+                get: { AppSettings.shared.language },
                 set: { AppSettings.shared.language = $0 }
             )) {
-                Text("English").tag(AppLanguage.english)
-                Text("Deutsch").tag(AppLanguage.german)
+                ForEach(AppLanguage.allCases) { language in
+                    Text(language == .device ? tr("Device") : language.title).tag(language)
+                }
             }
             .pickerStyle(.segmented)
-            .frame(maxWidth: 240)
+            .frame(maxWidth: 320)
             .padding(.top, 8)
             .padding(.horizontal)
             ScrollView {

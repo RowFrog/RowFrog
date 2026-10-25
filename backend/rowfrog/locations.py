@@ -60,6 +60,9 @@ class Lake:
     kind: str = "lake"
     mean_depth_m: float | None = None
     country: str = "de"
+    # Where the water temperature station is and what GKD calls it, for the app's map.
+    gkd_station_name: str | None = None
+    gkd_station_point: Point | None = None
 
 
 @dataclass(frozen=True)
@@ -116,6 +119,10 @@ def _parse(raw: dict, lakes: dict[str, Lake], clubs: dict[str, Club], source: st
                 kind=l.get("kind", "lake"),
                 mean_depth_m=l.get("meanDepthM"),
                 country=l.get("country", country),
+                gkd_station_name=(l.get("gkdStationPlace") or {}).get("name"),
+                gkd_station_point=Point(lat=l["gkdStationPlace"]["lat"], lon=l["gkdStationPlace"]["lon"])
+                if "lat" in (l.get("gkdStationPlace") or {})
+                else None,
             ),
         )
     for c in raw.get("clubs", []):

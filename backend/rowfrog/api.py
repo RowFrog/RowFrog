@@ -64,6 +64,10 @@ _primed_outlook: dict[str, list | None] = {}
 # Forecast points per lake where it differs from lake_view.MAX_SAMPLES (lakes people look at).
 _lake_samples: dict[str, int] = {}
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
+# Local warnings per club read ahead for many clubs at once (scripts/publish_static.py); a missing club asks DWD itself.
+_primed_local_warnings: dict[str, list[dwd_warnings.Warning]] = {}
+# All active lake warnings: one answer serves every lake club for a few minutes.
+_lake_warnings: tuple[float, list[tuple[int, dwd_warnings.Warning]]] | None = None
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
 # The last good reading and history per station (water_stations.Station.key), kept between runs by the
@@ -279,6 +283,13 @@ async def _lake_area(client: httpx.AsyncClient, club: locations.Club) -> dwd_war
     return dwd_warnings.lake_area_for(p.lon, p.lat, _lake_areas[1])
 
 
+async def _all_lake_warnings(client: httpx.AsyncClient) -> list[tuple[int, dwd_warnings.Warning]]:
+    global _lake_warnings
+    if _lake_warnings is None or time.monotonic() - _lake_warnings[0] > WARNINGS_CACHE_SECONDS:
+        _lake_warnings = (time.monotonic(), await dwd_warnings.fetch_lake_warnings(client))
+    return _lake_warnings[1]
+
+
 async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: datetime) -> tuple[dict, list]:
     """The warnings block for the app and the warnings that count for the hourly light.
 
@@ -292,8 +303,10 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         area = await _lake_area(client, club)
         lake = []
         if area is not None:
-            lake = [w for cell, w in await dwd_warnings.fetch_lake_warnings(client) if cell == area.warncell_id]
-        local = await dwd_warnings.fetch_local_warnings(client, club.launch_point.lon, club.launch_point.lat)
+            lake = [w for cell, w in await _all_lake_warnings(client) if cell == area.warncell_id]
+        local = _primed_local_warnings.get(club.id)
+        if local is None:
+            local = await dwd_warnings.fetch_local_warnings(client, club.launch_point.lon, club.launch_point.lat)
     except (httpx.HTTPError, ValueError, KeyError) as e:
         logging.getLogger(__name__).warning("DWD warnings unavailable for %s: %r", club.id, e)
         result = ({"status": "unavailable", "lakeArea": None, "items": []}, [])
@@ -311,11 +324,34 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
     return result
 
 
-def _water_station_json(station: water_stations.Station | None) -> dict | None:
-    """Where the water temperature comes from, for the detail view; distance from the launch point."""
-    if station is None or station.name is None:
+def _water_station_json(
+    station: water_stations.Station | None, lake: locations.Lake | None = None, club: locations.Club | None = None
+) -> dict | None:
+    """Where the water temperature comes from, for the detail view: name, place, distance from the launch point
+    and, for GKD, the station's page. The lake's own GKD station takes its place from locations.json."""
+    if station is None:
         return None
-    return {"network": station.network, "name": station.name, "distanceKm": station.distance_km}
+    name, lat, lon = station.name, station.lat, station.lon
+    if lake is not None and station.network == "gkd" and station.id == lake.gkd_water_temperature_station:
+        name = name or lake.gkd_station_name
+        if lat is None and lake.gkd_station_point is not None:
+            lat, lon = lake.gkd_station_point.lat, lake.gkd_station_point.lon
+    if name is None:
+        return None
+    point = None if lat is None or lon is None else locations.Point(lat=lat, lon=lon)
+    distance_m = None if point is None or club is None else round(locations._distance_m(club.launch_point, point))
+    url = None
+    if station.network == "gkd":
+        url = gkd.PAGE_URL.format(kind=gkd.KINDS.get(station.kind, "lakes"), station=station.id).removesuffix("/table")
+    return {
+        "network": station.network,
+        "name": name,
+        "lat": lat,
+        "lon": lon,
+        "distanceKm": station.distance_km if station.distance_km is not None else (None if distance_m is None else round(distance_m / 1000, 1)),
+        "distanceM": distance_m,
+        "url": url,
+    }
 
 
 def _water_estimate_json(e: water_estimate.WaterEstimate | None) -> dict | None:
@@ -537,7 +573,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             "measuredAt": water.time.astimezone(timezone.utc).isoformat(),
             # The station page's history, one value per hour, for the water temperature chart.
             "history": [{"time": _utc(r.time), "celsius": r.celsius} for r in water_history],
-            "station": _water_station_json(station),
+            "station": _water_station_json(station, lake, club),
         },
         # Without a station: the newest satellite reading carried forward to today (water_estimate.py).
         "waterEstimate": _water_estimate_json(estimate),
