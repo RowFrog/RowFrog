@@ -166,6 +166,9 @@ enum German {
         "Launch point from © OpenStreetMap contributors, ODbL": "Steg aus © OpenStreetMap-Mitwirkende, ODbL",
         // Credits sent by the backend
         "Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0": "Wetter: Deutscher Wetterdienst (DWD) über Open-Meteo, CC BY 4.0",
+        "Weather: MeteoSwiss and Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0": "Wetter: MeteoSchweiz und Deutscher Wetterdienst (DWD) über Open-Meteo, CC BY 4.0",
+        "Weather: GeoSphere Austria and Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0": "Wetter: GeoSphere Austria und Deutscher Wetterdienst (DWD) über Open-Meteo, CC BY 4.0",
+        "Weather: ECMWF and Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0": "Wetter: EZMW (ECMWF) und Deutscher Wetterdienst (DWD) über Open-Meteo, CC BY 4.0",
         "Warnings: Deutscher Wetterdienst (DWD), CC BY 4.0": "Warnungen: Deutscher Wetterdienst (DWD), CC BY 4.0",
         "Lake outlines: © OpenStreetMap contributors, ODbL": "Seeumrisse: © OpenStreetMap-Mitwirkende, ODbL",
         "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0": "Wassertemperatur: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
@@ -337,6 +340,7 @@ enum German {
         "Location list": "Ortsliste",
         "Picture blurred": "Bild unscharf",
         "No picture": "Kein Bild",
+        "Liquid Glass": "Liquid Glass",
         "Your picture": "Dein Bild",
         "Preview of the club pages with the picture for all pages.": "Vorschau der Vereinsseiten mit dem Bild für alle Seiten.",
         "Preview": "Vorschau",

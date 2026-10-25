@@ -472,7 +472,8 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         },
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
-        "attribution": ATTRIBUTION,
+        # A picked model gets its own weather credit; the hours past its reach stay DWD's.
+        "attribution": ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]],
         "forecastSource": weather_models.source_json(chain, len(hours))
         if picked is None
         else weather_models.picked_source_json(chain, picked, len(hours)),

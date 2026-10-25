@@ -75,6 +75,8 @@ def test_only_confirmed_clubs_offer_other_models(monkeypatch):
     assert picked["forecastSource"]["picked"] == "geosphere_arome_austria"
     assert picked["forecastSource"]["parts"][0]["model"] == "AROME"
     assert "geosphere_arome_austria" in asked
+    assert picked["attribution"][0].startswith("Weather: GeoSphere Austria and Deutscher Wetterdienst")
+    assert auto["attribution"][0] == api.ATTRIBUTION[0]
     assert client.get("/clubs/mrc-1880/models/icon_seamless/forecast").status_code == 404
     unconfirmed = next(c for c in api._locations.clubs.values() if c.source is not None)
     assert client.get(f"/clubs/{unconfirmed.id}/models/ecmwf_ifs025/forecast").status_code == 404

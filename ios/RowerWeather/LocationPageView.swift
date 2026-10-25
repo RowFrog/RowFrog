@@ -62,7 +62,7 @@ struct LocationPageView: View {
                                     .font(.subheadline.weight(.semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 8)
-                                    .background(surface.card, in: Capsule())
+                                    .cardBackground(surface, cornerRadius: 18)
                             }
                             .id("arrange")
                             credits(forecast)
@@ -297,7 +297,7 @@ struct Card<Content: View>: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(surface.card, in: RoundedRectangle(cornerRadius: 16))
+        .cardBackground(surface)
         .sheet(isPresented: $showingLegend) {
             if let legend { LegendSheet(part: legend) }
         }
@@ -707,7 +707,6 @@ private struct HourlyCard: View {
 /// being looked at over the column icons.
 struct HourlyStickyHeader: View {
     let day: Date?
-    @Environment(\.surface) private var surface
     static let height: CGFloat = 74
 
     var body: some View {
@@ -720,7 +719,8 @@ struct HourlyStickyHeader: View {
         .padding(.horizontal, 14)
         .padding(.top, 8)
         .frame(height: Self.height, alignment: .top)
-        .background(surface.card, in: UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12))
+        // Material reads over any background picture and over the rows sliding under it.
+        .background(.regularMaterial, in: UnevenRoundedRectangle(bottomLeadingRadius: 12, bottomTrailingRadius: 12))
         .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
     }
 }
