@@ -1,7 +1,8 @@
 name: Usage limits
 
 # Once a day, compares the calls the jobs reported to the usage counter with
-# Open-Meteo's and Copernicus' free limits (scripts/budget_check.py). When a
+# Open-Meteo's and Copernicus' free limits, and reads Cloudflare's Worker
+# requests and D1 rows against the free Workers plan (scripts/budget_check.py). When a
 # limit comes within reach (70 % warning, 85 % alert) it comments on the
 # "Usage limits" issue, so GitHub e-mails the owner; on the 1st of each month
 # it posts the summary even when all is fine.
@@ -28,6 +29,8 @@ jobs:
         id: check
         env:
           RW_USAGE_KEY: ${{ secrets.USAGE_KEY }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set +e
           python3 scripts/budget_check.py report.md

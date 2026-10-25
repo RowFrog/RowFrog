@@ -64,8 +64,8 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Workflow | When | Where you see it |
 |---|---|---|
 | Publish forecasts | every 30 min from main | api.rowfrog.com |
-| Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays) |
-| Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month |
+| Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays); its section "Once a day instead of twice?" shows whether the 04:40 run alone would rank the models the same (to decide later whether to drop the 16:40 run, about 700 Open-Meteo calls a day) |
+| Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month. Covers Open-Meteo, Copernicus and, read with the Cloudflare token, Worker requests (100,000 a day) and D1 rows written (100,000) and read (5 million) on the free Workers plan |
 
 ## By hand
 
