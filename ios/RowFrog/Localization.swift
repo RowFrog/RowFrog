@@ -533,6 +533,8 @@ enum German {
         "End route planning": "Routenplanung beenden",
         "Name": "Name",
         "Out and back": "Hin und zurück",
+        "Weather on the map": "Wetter auf der Karte",
+        "The map shows this weather around the lake. Press play to watch it move, or open it full screen with the arrows.": "Die Karte zeigt dieses Wetter rund um den See. Tippe auf Abspielen, um es ziehen zu sehen, oder öffne sie mit den Pfeilen im Vollbild.",
         "Add a point on the way": "Punkt unterwegs einfügen",
         "Tap a stretch of your route to add a turning point there, or pull the stretch to add one and move it at once.": "Tippe auf eine Strecke deiner Route, um dort einen Wendepunkt einzufügen, oder zieh an der Strecke, um ihn gleich zu verschieben.",
         "One way or out and back": "Eine Richtung oder hin und zurück",
