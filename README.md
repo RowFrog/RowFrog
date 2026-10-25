@@ -147,7 +147,9 @@ chosen hour, one at a time. Tap for full screen with zoom.
 **Forecast source.** A small line at the end of each club page names the
 weather model the forecast comes from (today DWD's ICON models for every club,
 `backend/rowfrog/weather_models.py`); tapping it explains the chain of
-models from the first hours to the end of the forecast.
+models from the first hours to the end of the forecast. When a model is
+picked in the hidden developer options, the credits line names its provider
+(MeteoSwiss, GeoSphere Austria or ECMWF) as well as DWD.
 
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
 point the forecast is for, with its coordinates. It can be panned and zoomed
