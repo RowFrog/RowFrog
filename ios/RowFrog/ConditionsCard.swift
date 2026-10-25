@@ -1,6 +1,7 @@
 import Charts
 import MapKit
 import SwiftUI
+import TipKit
 
 /// The "Current conditions" card on a club page: small tiles, each with its
 /// value, a short detail and a small graphic. Tapping a tile opens a larger
@@ -456,6 +457,9 @@ struct ConditionDetailView: View {
     @State private var chartFrame = ChartFrame()
     /// The jump menu's titles with each view's value, worked out once.
     @State private var menuTitles: [Condition: String] = [:]
+    @AppStorage(Tutorial.seenKey) private var tourSeen = false
+    private let scrubTip = ChartScrubTip()
+    @State private var showScrubTip = false
 
     /// The views the arrows and swipes go through: every condition, or only
     /// the values of the top tile when opened from there.
@@ -481,6 +485,7 @@ struct ConditionDetailView: View {
             .coordinateSpace(name: Self.space)
             .simultaneousGesture(swipe)
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
+            .tipVisibility(scrubTip, $showScrubTip)
             .navigationTitle(condition.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -517,6 +522,9 @@ struct ConditionDetailView: View {
             .accessibilityElement(children: .contain)
             if !detail.lines.isEmpty {
                 let hidden = hiddenLines[condition] ?? []
+                if tourSeen && showScrubTip {
+                    TipView(scrubTip)
+                }
                 ConditionChart(detail: detail, data: data, hidden: hidden)
                     .background {
                         GeometryReader { geo in
@@ -772,6 +780,7 @@ private struct ConditionChart: View {
         VStack(alignment: .leading, spacing: 6) {
             scrolling(scaled(chart))
                 .chartXSelection(value: $selectedX)
+                .onChange(of: selectedX != nil) { _, on in if on { ChartScrubTip().invalidate(reason: .actionPerformed) } }
                 .chartOverlay { proxy in
                     GeometryReader { geo in
                         limitLabels(proxy: proxy, geo: geo)

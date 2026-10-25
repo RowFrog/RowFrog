@@ -40,6 +40,10 @@ struct LocationPageView: View {
     private let sourceTip = ForecastSourceTip()
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
+    private let topTileTip = TopTileTip()
+    private let waterEstimateTip = WaterEstimateTip()
+    @State private var showWaterEstimateTip = false
+    @State private var showTopTileTip = false
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
@@ -53,6 +57,9 @@ struct LocationPageView: View {
                         header
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.name, town: club.town, club: club)
+                            if tourSeen && showTopTileTip {
+                                TipView(topTileTip)
+                            }
                             if let warnings = forecast.warnings, !warnings.checked || !warnings.items.isEmpty {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
@@ -117,6 +124,8 @@ struct LocationPageView: View {
                 .tipVisibility(sourceTip, $showSourceTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
+                .tipVisibility(topTileTip, $showTopTileTip)
+                .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(radarMapTip, $showRadarMapTip)
                 .tipVisibility(hourViewTip, $showHourViewTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
@@ -157,6 +166,9 @@ struct LocationPageView: View {
             VStack(spacing: 16) {
                 if tourSeen && showConditionsTip {
                     TipView(conditionsTip)
+                } else if tourSeen && showWaterEstimateTip && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil {
+                    // Only where no station measures the water.
+                    TipView(waterEstimateTip)
                 }
                 ConditionsCard(forecast: forecast, hour: now, club: club)
             }
@@ -574,6 +586,7 @@ private struct NowCard: View {
         .sheet(item: $openCondition) { condition in
             ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues, club: club)
         }
+        .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }
     }
 
     /// The values shown in this tile, in its order, for swiping between their views.
