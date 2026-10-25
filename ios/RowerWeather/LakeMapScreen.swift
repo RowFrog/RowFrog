@@ -267,6 +267,11 @@ struct LakeMapScreen: View {
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
+                    if let waves = view.waveSummary(for: hour) {
+                        Label(waves, systemImage: Condition.waves.symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     Text(tr("Tap the water to see the conditions there."))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -758,10 +763,29 @@ struct LakeMapView: UIViewRepresentable {
                 return view
             }
             if annotation === boatPin {
-                let view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: nil)
-                view.glyphImage = UIImage(systemName: "figure.rowing")
-                view.markerTintColor = .systemIndigo
+                // A round boat badge sitting on the route, not a pin above it.
+                let view = MKAnnotationView(annotation: annotation, reuseIdentifier: nil)
+                let size: CGFloat = 34
+                view.image = UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
+                    let circle = UIBezierPath(ovalIn: CGRect(x: 1.5, y: 1.5, width: size - 3, height: size - 3))
+                    UIColor.systemIndigo.setFill()
+                    circle.fill()
+                    UIColor.white.setStroke()
+                    circle.lineWidth = 2.5
+                    circle.stroke()
+                    let glyph = UIImage(systemName: "figure.rower", withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold))?
+                        .withTintColor(.white, renderingMode: .alwaysOriginal)
+                    if let glyph {
+                        glyph.draw(at: CGPoint(x: (size - glyph.size.width) / 2, y: (size - glyph.size.height) / 2))
+                    }
+                }
+                view.layer.shadowColor = UIColor.black.cgColor
+                view.layer.shadowOpacity = 0.3
+                view.layer.shadowRadius = 2
+                view.layer.shadowOffset = CGSize(width: 0, height: 1)
+                view.accessibilityLabel = tr("Where the boat is")
                 view.displayPriority = .required
+                view.zPriority = .max
                 return view
             }
             if annotation === spotPin {

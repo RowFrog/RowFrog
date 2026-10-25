@@ -263,6 +263,12 @@ extension LakeView {
         let from = hour.windFromDeg.map { " " + tr("from %@", Format.compass($0)) } ?? ""
         return speed + from + ", " + tr("gusts up to %@", Format.wind(range.gust))
     }
+
+    /// The highest waves anywhere on the lake this hour.
+    func waveSummary(for hour: LakeHour) -> String? {
+        guard let cm = hour.wavesCm.max() else { return nil }
+        return tr("Waves up to %@", Format.waves(Double(cm) / 100))
+    }
 }
 
 /// Caches lake views; they change with the forecast, every half hour.
