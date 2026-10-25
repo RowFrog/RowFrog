@@ -143,6 +143,8 @@ struct LakeMapScreen: View {
 
     private func toggleRouteMode() {
         routeMode.toggle()
+        // Its popover would cover the edit bar and the route tips.
+        RoutePlanningTip().invalidate(reason: .actionPerformed)
         spot = nil
         selectedPoint = nil
         // A new route starts at this page's launch point.
