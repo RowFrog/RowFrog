@@ -77,8 +77,14 @@ struct ConditionData {
         self.now = now
     }
 
-    /// Hours from now; negative is the past.
+    /// Hours from the shown hour (now, or the hour picked in the 48 hours); negative is earlier.
     func x(_ date: Date) -> Double { date.timeIntervalSince(now.time) / 3600 }
+
+    /// Whether the shown hour is the current one, not one picked further on.
+    var isNow: Bool { now.time <= .now && Date.now.timeIntervalSince(now.time) < 3600 }
+
+    /// "Now", or the picked hour: "Tomorrow 15:00".
+    var nowLabel: String { isNow ? tr("Now") : Format.dayTime(now.time) }
 
     var next24: [ForecastHour] { timeline.filter { (0..<24).contains(x($0.time)) } }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
@@ -761,7 +767,7 @@ private struct ConditionChart: View {
                 Button {
                     withAnimation { scrollX = Self.start }
                 } label: {
-                    Label(tr("Back to now"), systemImage: scrollX > Self.start ? "arrow.uturn.backward" : "arrow.uturn.forward")
+                    Label(data.isNow ? tr("Back to now") : tr("Back to %@", Format.dayTime(data.now.time)), systemImage: scrollX > Self.start ? "arrow.uturn.backward" : "arrow.uturn.forward")
                         .font(.caption.weight(.semibold))
                 }
                 .buttonStyle(.plain)
@@ -1026,7 +1032,7 @@ extension ConditionDetail {
 
     private static func temperature(_ d: ConditionData) -> ConditionDetail {
         let h = d.now
-        var facts: [(String, String)] = [(tr("Now"), Format.temperature(h.temperatureC))]
+        var facts: [(String, String)] = [(d.nowLabel, Format.temperature(h.temperatureC))]
         if let lo = extreme(d.next24, \.temperatureC, highest: false) {
             facts.append((tr("Lowest next 24 h"), tr("%@ · %@", Format.temperature(lo.temperatureC), Format.dayTime(lo.time))))
         }
@@ -1381,7 +1387,7 @@ extension ConditionDetail {
         case let c? where c >= 1: high ? tr("high pressure and rising: settled") : tr("low pressure, but rising: improving")
         default: high ? tr("high pressure: mostly settled") : tr("low pressure: changeable")
         }
-        facts.append((tr("Now"), state))
+        facts.append((d.nowLabel, state))
         let rowing: String = switch change {
         case let c? where c <= -3: tr("Falling fast: wind is likely soon.")
         case let c? where c <= -1: tr("Falling: wind and rain more likely in the next day or two.")
@@ -1459,7 +1465,7 @@ extension ConditionDetail {
         let top = extreme(d.next24, \.uvIndex, highest: true)
         let protect = d.firstRun(in: d.next24) { ($0.uvIndex ?? 0).rounded() >= 3 }
         let hot = d.future.first { ($0.apparentTemperatureC ?? 0) >= 25 }
-        var facts: [(String, String)] = [(tr("Now"), h.uvIndex.map { "\(Format.number($0)) (\(uvBand($0)))" } ?? "–")]
+        var facts: [(String, String)] = [(d.nowLabel, h.uvIndex.map { "\(Format.number($0)) (\(uvBand($0)))" } ?? "–")]
         if let top, let uv = top.uvIndex {
             facts.append((tr("Highest next 24 h"), tr("%@ (%@) · %@", Format.number(uv), uvBand(uv), Format.dayTime(top.time))))
         }
