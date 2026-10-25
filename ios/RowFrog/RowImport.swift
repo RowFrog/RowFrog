@@ -206,6 +206,24 @@ enum RowFileInbox {
     }
 }
 
+/// The note after a shared file was imported, and the import itself once the
+/// catalog has loaded (a file can open the app before the lakes are known).
+struct SharedRowNote: ViewModifier {
+    @Binding var note: String?
+    let catalogCount: Int
+    let catalogLoaded: () -> Void
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: catalogCount) { catalogLoaded() }
+            .alert(tr("Import a row"), isPresented: Binding(get: { note != nil }, set: { if !$0 { note = nil } })) {
+                Button(tr("OK")) {}
+            } message: {
+                Text(note ?? "")
+            }
+    }
+}
+
 enum RowImportError: Error {
     case unreadable, noLake, tooShort, notOnLake(String)
 

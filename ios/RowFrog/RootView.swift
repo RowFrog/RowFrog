@@ -133,12 +133,7 @@ struct RootView: View {
             showingList = false
             selection = id
         }
-        .onChange(of: locations.catalog.count) { importSharedRow() }
-        .alert(tr("Import a row"), isPresented: Binding(get: { rowNote != nil }, set: { if !$0 { rowNote = nil } })) {
-            Button(tr("OK")) {}
-        } message: {
-            Text(rowNote ?? "")
-        }
+        .modifier(SharedRowNote(note: $rowNote, catalogCount: locations.catalog.count, catalogLoaded: importSharedRow))
     }
 
     /// Saves the shared row as a route on its lake, once the lakes are known.
