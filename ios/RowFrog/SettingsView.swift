@@ -78,7 +78,7 @@ struct SettingsView: View {
                     } header: {
                         SectionTitle(tr("Appearance"), symbol: "circle.lefthalf.filled")
                     } footer: {
-                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page."))
+                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page. Dark uses less battery on iPhones with an OLED screen, which most models since the iPhone X have."))
                     }
                     .surfaceRows()
                     .id("appearance")
@@ -162,6 +162,20 @@ struct SettingsView: View {
                     }
                     .surfaceRows()
                     .id("background")
+
+                    Section {
+                        Picker(selection: $settings.widgetUpdates) {
+                            ForEach(WidgetUpdates.allCases) { Text($0.title).tag($0) }
+                        } label: {
+                            Label(tr("Widget updates"), systemImage: "apps.iphone")
+                        }
+                    } header: {
+                        SectionTitle(tr("Widgets and background"), symbol: "arrow.triangle.2.circlepath")
+                    } footer: {
+                        SectionFooter(tr("Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Less often saves battery and data, but a new DWD warning reaches the widgets later. Only after using the app: the widgets load once as you leave the app."))
+                    }
+                    .surfaceRows()
+                    .id("widgets")
 
                     Section {
                         Button {
@@ -292,7 +306,7 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
-                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "widgets", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
                 .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
@@ -1196,8 +1210,12 @@ private extension View {
         task {
             let page = UserDefaults.standard.integer(forKey: "RWScrollPage")
             guard page > 0 else { return }
-            try? await Task.sleep(for: .seconds(2))
-            proxy.scrollTo(ids[min(page, ids.count - 1)], anchor: .top)
+            // Scrolled twice: on a slow simulator the first try can come before
+            // the form has laid out its rows and does nothing.
+            for _ in 0..<2 {
+                try? await Task.sleep(for: .seconds(2))
+                proxy.scrollTo(ids[min(page, ids.count - 1)], anchor: .top)
+            }
         }
     }
 }

@@ -29,6 +29,8 @@ final class AppSettings {
     var distanceUnit: DistanceUnit { didSet { defaults.set(distanceUnit.rawValue, forKey: Keys.distance) } }
     var timeFormat: TimeFormat { didSet { defaults.set(timeFormat.rawValue, forKey: Keys.timeFormat) } }
     var dateFormat: DateFormat { didSet { defaults.set(dateFormat.rawValue, forKey: Keys.dateFormat) } }
+    /// How often the widgets load a new forecast on their own.
+    var widgetUpdates: WidgetUpdates { didSet { defaults.set(widgetUpdates.rawValue, forKey: Keys.widgetUpdates) } }
 
     /// The user's own boats, besides the small and big boat groups.
     var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
@@ -137,10 +139,11 @@ final class AppSettings {
         static let pickedModels = "RWPickedModels"
         static let pageLayout = "RWPageLayout"
         static let clubPageLayouts = "RWClubPageLayouts"
+        static let widgetUpdates = "RWWidgetUpdates"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
-                          developer, pickedModels, pageLayout, clubPageLayouts]
+                          developer, pickedModels, pageLayout, clubPageLayouts, widgetUpdates]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -158,6 +161,7 @@ final class AppSettings {
         distanceUnit = value(Keys.distance, .kilometers)
         timeFormat = value(Keys.timeFormat, .hours24)
         dateFormat = value(Keys.dateFormat, .device)
+        widgetUpdates = value(Keys.widgetUpdates, .halfHour)
         // Launch arguments give the limits' numbers as text, e.g. `-RWBoatLimits '{small = {windAmber = 7;};}'`.
         if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
             myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
@@ -260,6 +264,7 @@ final class AppSettings {
         distanceUnit = .kilometers
         timeFormat = .hours24
         dateFormat = .device
+        widgetUpdates = .halfHour
         boatID = Boat.small.id
         boatLimits = [:]
         mapBoatID = Boat.small.id
@@ -348,6 +353,34 @@ enum PageKind: String, CaseIterable, Identifiable {
         case .clubPages: "house"
         case .list: "list.bullet"
         case .settings: "gearshape"
+        }
+    }
+}
+
+/// How often the widgets load a new forecast on their own. Less often saves
+/// battery and data; a new DWD warning then reaches the widget later.
+enum WidgetUpdates: String, CaseIterable, Identifiable {
+    case halfHour, hour, twoHours
+    /// Only when the app was open: the widget loads once as the user leaves the app.
+    case appOpen
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .halfHour: tr("Every 30 minutes")
+        case .hour: tr("Every hour")
+        case .twoHours: tr("Every 2 hours")
+        case .appOpen: tr("Only after using the app")
+        }
+    }
+
+    /// The wait before the widget loads again on its own; nil for never.
+    var interval: TimeInterval? {
+        switch self {
+        case .halfHour: 30 * 60
+        case .hour: 3600
+        case .twoHours: 2 * 3600
+        case .appOpen: nil
         }
     }
 }
