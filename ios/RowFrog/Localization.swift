@@ -261,7 +261,6 @@ enum German {
         "Every 2 hours": "Alle 2 Stunden",
         "Only after using the app": "Nur nach Nutzung der App",
         "Widget updates": "Widget-Aktualisierung",
-        "Widgets and background": "Widgets und Hintergrund",
         "Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Less often saves battery and data, but a new DWD warning reaches the widgets later. Only after using the app: the widgets load once as you leave the app.": "Row Frog selbst arbeitet nicht im Hintergrund: iOS hält die App kurz nach dem Verlassen an, und sie verfolgt nie deinen Standort. Nur die Widgets laden von sich aus eine neue Vorhersage. Seltener schont Akku und Datenvolumen, aber eine neue DWD-Warnung erscheint dann später im Widget. Nur nach Nutzung der App: Die Widgets laden einmal, wenn du die App verlässt.",
         "Shows a map you can move": "Zeigt eine Karte zum Verschieben",
         "Loading the radar pictures": "Radarbilder werden geladen",
@@ -1050,7 +1049,6 @@ enum German {
         "%@ amber from %@, red above %@": "%@ gelb ab %@, rot über %@",
         // Widget backgrounds
         "Widgets": "Widgets",
-        "Widget background": "Widget-Hintergrund",
         "Widget background and updates": "Widget-Hintergrund und Aktualisierung",
         "Updates": "Aktualisierung",
         "All widgets": "Alle Widgets",
