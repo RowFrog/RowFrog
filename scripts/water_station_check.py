@@ -17,24 +17,10 @@ from datetime import datetime, timezone
 import httpx
 
 from rowfrog import api, water_stations
-from rowfrog.sources import bafu
 
 # Further than this from the median of all stations is worth a look (and maybe
 # an entry in water_station_survey.DOUBTFUL).
 DOUBTFUL_C = 4.0
-
-
-async def _show_bafu(client: httpx.AsyncClient, station: str, now: datetime) -> None:
-    """What the mirror answered, to see why a BAFU station gave no value."""
-    for url, params in (
-        (bafu.URL, {"locations": station, "parameters": "temperature", "startdate": now.date().isoformat(), "enddate": now.date().isoformat(), "app": "rowfrog"}),
-        ("https://api.existenz.ch/apiv1/hydro/latest", {"locations": station, "parameters": "temperature", "app": "rowfrog"}),
-    ):
-        try:
-            resp = await client.get(url, params=params, timeout=20)
-            print(f"  {resp.status_code} {resp.url}: ...{resp.text[-600:]}", flush=True)
-        except httpx.HTTPError as e:
-            print(f"  {url}: {e!r}", flush=True)
 
 
 async def main() -> int:
@@ -51,8 +37,6 @@ async def main() -> int:
                 readings[key] = water.celsius
             value = "no current value" if water is None else f"{water.celsius:.1f} °C at {water.time.isoformat()} ({len(history)} h of history)"
             print(f"{s.network}\t{s.name}\t{value}\t{', '.join(users[key])}", flush=True)
-            if water is None and s.network == "bafu":
-                await _show_bafu(client, s.id, now)
     print(f"\n{len(readings)} of {len(stations)} stations sent a current value.")
     # A station far off all the others is likely in a harbour or behind a warm inflow.
     if readings:
