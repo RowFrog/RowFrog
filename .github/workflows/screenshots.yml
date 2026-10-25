@@ -199,14 +199,14 @@ jobs:
           shoot 10-settings light -RWShowSettings YES
           shoot 11-settings-german-dark dark -RWShowSettings YES -RWLanguage de
           # The settings' own pages and the search field at the bottom.
-          shoot 160-settings-search light -RWShowSettings YES -RWSettingsSearch wind
-          shoot 160-settings-search-german-dark dark -RWShowSettings YES -RWSettingsSearch Wind -RWLanguage de
-          shoot_n 161-settings-appearance 2 light -RWShowSettings YES -RWSettingsPage appearance
-          shoot 162-settings-club-pages light -RWShowSettings YES -RWSettingsPage clubpages
-          shoot_n 163-settings-language 3 light -RWShowSettings YES -RWSettingsPage language
-          shoot 164-settings-battery-data light -RWShowSettings YES -RWSettingsPage data
-          shoot 165-settings-help light -RWShowSettings YES -RWSettingsPage help
-          shoot 166-settings-about light -RWShowSettings YES -RWSettingsPage about
+          WAIT=25 shoot 160-settings-search light -RWShowSettings YES -RWSettingsSearch wind
+          WAIT=25 shoot 160-settings-search-german-dark dark -RWShowSettings YES -RWSettingsSearch Wind -RWLanguage de
+          WAIT=25 shoot_n 161-settings-appearance 2 light -RWShowSettings YES -RWSettingsPage appearance
+          WAIT=25 shoot 162-settings-club-pages light -RWShowSettings YES -RWSettingsPage clubpages
+          WAIT=25 shoot_n 163-settings-language 3 light -RWShowSettings YES -RWSettingsPage language
+          WAIT=25 shoot 164-settings-battery-data light -RWShowSettings YES -RWSettingsPage data
+          WAIT=25 shoot 165-settings-help light -RWShowSettings YES -RWSettingsPage help
+          WAIT=25 shoot 166-settings-about light -RWShowSettings YES -RWSettingsPage about
           shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
           shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"

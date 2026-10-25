@@ -166,7 +166,7 @@ struct SettingsView: View {
         .surfaceRows()
 
         Section {
-            topic(.language, value: "\(settings.resolvedLanguage.title) · \(settings.temperatureUnit.symbol) · \(settings.windUnit.symbol)")
+            topic(.language, value: "\(settings.resolvedLanguage.title) · \(settings.temperatureUnit.symbol)")
             topic(.data, value: DataSaver.shared.saving ? tr("Saving data") : nil)
         }
         .surfaceRows()
@@ -216,12 +216,12 @@ struct SettingsView: View {
                                 Text(tr(entry.title)).foregroundStyle(Color.primary)
                                 Text(entry.topic.title)
                                     .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    .foregroundStyle(Color.secondary)
                             }
                             Spacer(minLength: 0)
                             Image(systemName: "chevron.right")
                                 .font(.footnote.weight(.semibold))
-                                .foregroundStyle(.tertiary)
+                                .foregroundStyle(Color(.tertiaryLabel))
                         }
                     }
                 }
@@ -469,6 +469,7 @@ private struct AppearanceSettingsView: View {
             .scrollContentBackground(.hidden)
             .pageBackground(.settings)
             .navigationTitle(tr("Appearance"))
+            .navigationBarTitleDisplayMode(.inline)
             .tipVisibility(appIconTip, $showAppIconTip)
             .onAppear { appIcon = AppIcons.current }
             .screenshotSections(["appearance", "landscape", "appicon"], proxy: proxy)
@@ -512,6 +513,7 @@ private struct ClubPagesSettingsView: View {
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
         .navigationTitle(tr("Club pages"))
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }
     }
 
@@ -578,6 +580,7 @@ private struct LanguageSettingsView: View {
             .scrollContentBackground(.hidden)
             .pageBackground(.settings)
             .navigationTitle(tr("Language and units"))
+            .navigationBarTitleDisplayMode(.inline)
             .screenshotSections(["language", "units", "datetime"], proxy: proxy)
         }
     }
@@ -634,6 +637,7 @@ private struct DataSettingsView: View {
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
         .navigationTitle(tr("Battery and data"))
+        .navigationBarTitleDisplayMode(.inline)
         .tipVisibility(saveDataTip, $showSaveDataTip)
         .onChange(of: settings.saveMobileData) { if settings.saveMobileData { saveDataTip.invalidate(reason: .actionPerformed) } }
     }
@@ -665,6 +669,7 @@ private struct HelpSettingsView: View {
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
         .navigationTitle(tr("Help"))
+        .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
         .fullScreenCover(isPresented: $showingTour) {
             TutorialView(locations: locations, reload: {}) {
@@ -725,6 +730,7 @@ private struct AboutSettingsView: View {
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
         .navigationTitle(tr("About"))
+        .navigationBarTitleDisplayMode(.inline)
         .tipVisibility(resetTip, $showResetTip)
         .confirmationDialog(tr("Reset all settings?"), isPresented: $confirmingReset, titleVisibility: .visible) {
             Button(tr("Reset"), role: .destructive) {
@@ -763,6 +769,7 @@ private struct DeveloperSettingsView: View {
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
         .navigationTitle(tr("Developer"))
+        .navigationBarTitleDisplayMode(.inline)
         .onChange(of: settings.developerOptions) { if !settings.developerOptions { dismiss() } }
     }
 }
