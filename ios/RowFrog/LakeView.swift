@@ -372,7 +372,23 @@ enum LakeRaster {
         return ramp(ms, amber: limits.value(.windAmber), red: limits.value(.windRed))
     }
 
+    /// The picture for an hour, kept once drawn: pages and maps ask for it on
+    /// every redraw, and drawing it means smoothing a thousand cells.
     static func image(_ view: LakeView, hour: LakeHour, layer: LakeLayer) -> CGImage? {
+        let key = "\(view.lakeId)|\(view.generatedAt.timeIntervalSince1970)|\(hour.hashValue)|\(layer)|\(AppSettings.shared.mapLimits)" as NSString
+        if let cached = cache.object(forKey: key) { return (cached as! CGImage) }
+        let image = render(view, hour: hour, layer: layer)
+        if let image { cache.setObject(image, forKey: key) }
+        return image
+    }
+
+    private static let cache: NSCache<NSString, AnyObject> = {
+        let cache = NSCache<NSString, AnyObject>()
+        cache.countLimit = 200
+        return cache
+    }()
+
+    private static func render(_ view: LakeView, hour: LakeHour, layer: LakeLayer) -> CGImage? {
         let grid = view.grid
         let w = grid.cols, h = grid.rows
         var pixels = [UInt8](repeating: 0, count: w * h * 4)

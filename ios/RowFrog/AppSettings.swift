@@ -9,7 +9,10 @@ import SwiftUI
 final class AppSettings {
 #if WIDGET_EXTENSION
     /// The widget reads the settings the app copies into the shared app group.
-    static let shared = AppSettings(defaults: WidgetShared.defaults)
+    /// Its process can live for days, so each new timeline reads them again (`reload`).
+    private(set) static var shared = AppSettings(defaults: WidgetShared.defaults)
+
+    static func reload() { shared = AppSettings(defaults: WidgetShared.defaults) }
 #else
     static let shared = AppSettings()
 #endif
@@ -200,9 +203,20 @@ final class AppSettings {
     /// The language the app shows: the chosen one, or the phone's when it is German.
     var resolvedLanguage: AppLanguage {
         switch language {
-        case .device: Locale.preferredLanguages.first?.hasPrefix("de") == true ? .german : .english
+        case .device: Self.deviceLanguage
         default: language
         }
+    }
+
+    /// German when the phone's first language the app knows is German. The
+    /// whole list is looked at (not only its first entry), and the language
+    /// iOS picked for the app, so a German phone also gets German on the very
+    /// first screen.
+    static var deviceLanguage: AppLanguage {
+        let known = Locale.preferredLanguages.first { $0.hasPrefix("de") || $0.hasPrefix("en") }
+            ?? Bundle.main.preferredLocalizations.first
+            ?? Locale.current.language.languageCode?.identifier
+        return known?.hasPrefix("de") == true ? .german : .english
     }
 
     /// Locale for numbers and dates in the chosen language; "Device" keeps the phone's.
@@ -439,7 +453,7 @@ struct PageLayout: Codable, Hashable {
     var order: [PageCard]
     var hidden: Set<PageCard> = []
 
-    static let standard = PageLayout(order: [.radar, .conditions, .lakeView, .hourly, .launchPoint, .satellite])
+    static let standard = PageLayout(order: [.conditions, .radar, .lakeView, .hourly, .launchPoint, .satellite])
 
     /// From a launch argument such as "hourly,radar"; cards left out follow in the standard order.
     init(list: String) {

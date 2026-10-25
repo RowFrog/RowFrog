@@ -424,7 +424,11 @@ struct ConditionDetailView: View {
     /// between views; a new sheet starts with every line on.
     @State private var hiddenLines: [Condition: Set<String>] = [:]
     /// Where the chart sits, so a drag on it moves the time instead of the view.
-    @State private var chartFrame: CGRect = .zero
+    /// Kept outside SwiftUI's state: it changes on every frame of scrolling,
+    /// and only a swipe's end reads it.
+    @State private var chartFrame = ChartFrame()
+    /// The jump menu's titles with each view's value, worked out once.
+    @State private var menuTitles: [Condition: String] = [:]
 
     init(condition: Condition, data: ConditionData) {
         self.data = data
@@ -459,6 +463,10 @@ struct ConditionDetailView: View {
 
     private static let space = "conditionDetail"
 
+    final class ChartFrame {
+        var rect: CGRect = .zero
+    }
+
     @ViewBuilder
     private func page(_ condition: Condition) -> some View {
         let detail = ConditionDetail(condition, data)
@@ -483,7 +491,7 @@ struct ConditionDetailView: View {
                             Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
                         }
                     }
-                    .onPreferenceChange(ChartFrameKey.self) { chartFrame = $0 }
+                    .onPreferenceChange(ChartFrameKey.self) { chartFrame.rect = $0 }
                 if detail.lines.count > 1 {
                     legend(detail, condition: condition, hidden: hidden)
                 }
@@ -581,8 +589,8 @@ struct ConditionDetailView: View {
             .onEnded { value in
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > 60, abs(dx) > abs(dy) * 2 else { return }
-                // On a chart that can be dragged, the drag moves the time.
-                if chartFrame.contains(value.startLocation) && !ConditionDetail(condition, data).history { return }
+                // A chart that can't be dragged ignores it too, so a drag on any chart never changes the view.
+                if chartFrame.rect.contains(value.startLocation) { return }
                 step(dx < 0 ? 1 : -1)
             }
     }
@@ -595,7 +603,7 @@ struct ConditionDetailView: View {
                 withAnimation(.easeInOut(duration: 0.25)) { condition = new }
             })) {
                 ForEach(order) { c in
-                    Label(menuTitle(c), systemImage: c.symbol).tag(c)
+                    Label(menuTitles[c] ?? c.title, systemImage: c.symbol).tag(c)
                 }
             }
             .pickerStyle(.inline)
@@ -607,6 +615,7 @@ struct ConditionDetailView: View {
             .foregroundStyle(.blue)
             .accessibilityLabel(tr("Go to another value"))
         }
+        .task { if menuTitles.isEmpty { menuTitles = Dictionary(uniqueKeysWithValues: order.map { ($0, menuTitle($0)) }) } }
     }
 
     private func menuTitle(_ c: Condition) -> String {
@@ -779,7 +788,8 @@ private struct ConditionChart: View {
                 }
             }
         }
-        .chartYAxisLabel(detail.unit)
+        // Over the values on the right; on the left a dragged chart cut it off.
+        .chartYAxisLabel(position: .topTrailing) { Text(detail.unit) }
         .chartPlotStyle { $0.padding(.horizontal, 16) }
     }
 
@@ -811,6 +821,9 @@ private struct ConditionChart: View {
     private func limitLabels(proxy: ChartProxy, geo: GeometryProxy) -> some View {
         if let plotFrame = proxy.plotFrame {
             let plot = geo[plotFrame]
+            // A chart that scrolls reports its whole plot, which starts off screen
+            // once dragged; the names stay at the visible left edge instead.
+            let left = max(plot.minX, 0)
             let placed = Self.spread(detail.limits.compactMap { limit -> (limit: ChartLimit, y: CGFloat)? in
                 guard let y = proxy.position(forY: limit.value), y >= 0, y <= plot.height else { return nil }
                 return (limit, plot.minY + y - Self.labelHeight / 2 - 2)
@@ -824,7 +837,7 @@ private struct ConditionChart: View {
                     .frame(height: Self.labelHeight)
                     .background(.regularMaterial, in: Capsule())
                     .fixedSize()
-                    .padding(.leading, plot.minX + 4)
+                    .padding(.leading, left + 4)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .offset(y: item.y - Self.labelHeight / 2)
             }
