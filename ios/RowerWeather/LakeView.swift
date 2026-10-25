@@ -23,6 +23,11 @@ struct LakeView: Decodable, Hashable {
     let clubs: [LakeClub]
     var hours: [LakeHour]
 
+    /// Older than a club forecast may be: the lights then turn grey instead of green.
+    var isStale: Bool {
+        UserDefaults.standard.bool(forKey: "RWStaleForecast") || Date.now.timeIntervalSince(generatedAt) > ClubForecast.staleAfter
+    }
+
     /// The hour that is running at `date`, else the first one.
     func hourIndex(at date: Date = .now) -> Int {
         hours.lastIndex { $0.time <= date } ?? 0

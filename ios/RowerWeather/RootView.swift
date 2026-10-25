@@ -12,6 +12,7 @@ struct RootView: View {
     @State private var initialSearch = ""
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingTour = !Tutorial.seen
+    @State private var showingSafety = SafetyNotice.needsAcceptance
 
     init(api: APIClient) {
         self.api = api
@@ -26,11 +27,11 @@ struct RootView: View {
         let saved = locations.saved
         Group {
             if saved.isEmpty {
-                if let error = locations.catalogError {
+                if locations.catalogFailed {
                     ContentUnavailableView {
                         Label(tr("No connection"), systemImage: "wifi.slash")
                     } description: {
-                        Text(error)
+                        Text(tr("Could not load the rowing locations."))
                     } actions: {
                         Button(tr("Try again")) { Task { await loadCatalog() } }
                     }
@@ -65,9 +66,17 @@ struct RootView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
+        .accessibilityHidden(showingSafety)
         .overlay {
-            // The first-start tour, over everything until it is finished or skipped.
-            if showingTour {
+            // The safety notice comes first, before the tour and before any
+            // question; it stays until it is accepted.
+            if showingSafety {
+                SafetyNoticeView {
+                    withAnimation { showingSafety = false }
+                }
+                .transition(.opacity)
+            } else if showingTour {
+                // The first-start tour, over everything until it is finished or skipped.
                 TutorialView(locations: locations, reload: loadCatalog) {
                     Tutorial.markSeen()
                     selection = locations.homeID ?? ""
@@ -109,14 +118,29 @@ struct RootView: View {
         TabView(selection: $selection) {
             ForEach(saved) { club in
                 LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
-                    .pageBackground(.clubPages, clubID: club.id)
+                    .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
                     .tag(club.id)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .background {
+            // Behind the pages, not on each one: a swiping TabView keeps its
+            // pages out of the status bar and the page bar, which left black bars.
+            let settings = AppSettings.shared
+            ZStack {
+                PagePicture(image: BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection)),
+                            blurred: settings.blurBackground)
+                    .id(selection)
+                    .transition(.opacity)
+            }
+            .animation(.easeInOut(duration: 0.35), value: selection)
+        }
         .onAppear { if selection.isEmpty { selection = saved[0].id } }
         .safeAreaInset(edge: .bottom, spacing: 0) {
+            let settings = AppSettings.shared
+            let picture = BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection))
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection, showList: showsListButton ? { showingList = true } : nil)
+                .environment(\.surface, picture == nil ? .plain : settings.tileStyle.surface)
         }
     }
 
@@ -132,11 +156,11 @@ struct RootView: View {
             } else {
                 locations.setCatalog(try await api.lakes())
             }
-            locations.catalogError = nil
+            locations.catalogFailed = false
             applyLaunchArguments()
             WidgetBridge.publish(locations)
         } catch {
-            locations.catalogError = tr("Could not load the rowing locations.")
+            locations.catalogFailed = true
         }
     }
 
@@ -228,6 +252,19 @@ private struct PageBar: View {
         }
         .padding(.horizontal)
         .padding(.top, 4)
-        .background(.bar)
+        .background { PageBarBackground().ignoresSafeArea(edges: .bottom) }
+    }
+}
+
+/// The page bar follows the tiles over a picture: frosted, Liquid Glass or solid.
+private struct PageBarBackground: View {
+    @Environment(\.surface) private var surface
+
+    var body: some View {
+        switch surface {
+        case .plain, .frosted: Rectangle().fill(.bar)
+        case .glass: Color.clear.glass(in: Rectangle())
+        case .solid: Rectangle().fill(Color(.secondarySystemGroupedBackground))
+        }
     }
 }

@@ -78,10 +78,10 @@ jobs:
           number=$(gh issue list --state open --search "Model check in:title" --json number,title \
             --jq '[.[] | select(.title == "Model check")][0].number')
           if [ -z "$number" ]; then
-            gh issue create --title "Model check" \
-              --body "Weekly weather model comparison from the Model check workflow. Data and the latest report: branch model-check."
-            number=$(gh issue list --state open --search "Model check in:title" --json number,title \
-              --jq '[.[] | select(.title == "Model check")][0].number')
+            # A new issue takes a while to show up in the search, so take its number from the address.
+            url=$(gh issue create --title "Model check" \
+              --body "Weekly weather model comparison from the Model check workflow. Data and the latest report: branch model-check.")
+            number=${url##*/}
           fi
           head -c 60000 store/report.md > comment.md
           gh issue comment "$number" --body-file comment.md

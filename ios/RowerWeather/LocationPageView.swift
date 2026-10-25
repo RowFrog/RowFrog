@@ -15,8 +15,14 @@ struct LocationPageView: View {
     @State private var showLaunchPointTip = false
     @State private var showConditionsTip = false
     @State private var showLakeViewTip = false
+    @State private var showRainRadarTip = false
+    @State private var showSatelliteTip = false
+    @State private var showSourceTip = false
     private let conditionsTip = ConditionsExtrasTip()
     private let lakeViewTip = LakeViewTip()
+    private let rainRadarTip = RainRadarTip()
+    private let satelliteTip = SatellitePictureTip()
+    private let sourceTip = ForecastSourceTip()
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
 
@@ -31,8 +37,14 @@ struct LocationPageView: View {
                     VStack(spacing: 16) {
                         header
                         if let forecast, let now = forecast.current() {
-                            NowCard(hour: now, water: forecast.waterTemperature)
-                            RainRadarCard(point: club.launchPoint)
+                            NowCard(hour: now, water: forecast.waterTemperature, stale: forecast.isStale())
+                            VStack(spacing: 16) {
+                                if tourSeen && showRainRadarTip {
+                                    TipView(rainRadarTip)
+                                }
+                                RainRadarCard(point: club.launchPoint)
+                            }
+                            .id("radar")
                             if let warnings = forecast.warnings {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
@@ -41,7 +53,7 @@ struct LocationPageView: View {
                                 HStack(alignment: .top, spacing: 16) {
                                     VStack(spacing: 16) {
                                         conditionCards(forecast, now: now)
-                                        if let source = forecast.forecastSource { ForecastSourceLine(source: source).id("source") }
+                                        sourceLine(forecast)
                                         LegendCard()
                                     }
                                     VStack(spacing: 16) {
@@ -51,7 +63,7 @@ struct LocationPageView: View {
                             } else {
                                 conditionCards(forecast, now: now)
                                 forecastCards(forecast)
-                                if let source = forecast.forecastSource { ForecastSourceLine(source: source).id("source") }
+                                sourceLine(forecast)
                                 LegendCard()
                             }
                             VStack(alignment: .leading, spacing: 4) {
@@ -95,15 +107,18 @@ struct LocationPageView: View {
                 .refreshable { await forecasts.load(club.id, force: true) }
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
+                .tipVisibility(rainRadarTip, $showRainRadarTip)
+                .tipVisibility(satelliteTip, $showSatelliteTip)
+                .tipVisibility(sourceTip, $showSourceTip)
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .task {
                     await forecasts.load(club.id)
-                    // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `conditions`, `launchpoint`, `lakeview`, `source`) scrolls to that card.
+                    // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `conditions`, `radar`, `launchpoint`, `lakeview`, `satellite`, `source`) scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast and pushes the cards below it down,
                         // so for cards below it scroll again once it has settled.
-                        let waits = ["lakeview", "source"].contains(target) ? [2500, 3000, 3000] : [300]
+                        let waits = ["lakeview", "satellite", "radar", "source"].contains(target) ? [2500, 3000, 3000] : [300]
                         for wait in waits {
                             try? await Task.sleep(for: .milliseconds(wait))
                             proxy.scrollTo(target, anchor: .top)
@@ -111,6 +126,27 @@ struct LocationPageView: View {
                     }
                 }
             }
+        }
+    }
+
+    @ViewBuilder
+    private func sourceLine(_ forecast: ClubForecast) -> some View {
+        if let source = forecast.forecastSource {
+            VStack(spacing: 16) {
+                if tourSeen && showSourceTip {
+                    TipView(sourceTip)
+                }
+                ForecastSourceLine(
+                    source: source,
+                    choices: forecast.modelChoices ?? [],
+                    selected: AppSettings.shared.pickedModel(for: club.id),
+                    pickedModelMissing: forecasts.pickedModelMissing.contains(club.id)
+                ) { model in
+                    AppSettings.shared.pickedModels[club.id] = model
+                    await forecasts.load(club.id, force: true)
+                }
+            }
+            .id("source")
         }
     }
 
@@ -131,6 +167,9 @@ struct LocationPageView: View {
             ConditionsCard(forecast: forecast, hour: now)
         }
         .id("conditions")
+        // The satellite card further down is empty until its picture has loaded, and an
+        // empty view never runs its own .task, so this always-shown card loads it.
+        .task(id: forecast.lakeId) { await SatellitePictureStore.shared.load(forecast.lakeId) }
         if lake?.hasOutline != false {
             VStack(spacing: 16) {
                 if tourSeen && showLakeViewTip {
@@ -139,7 +178,13 @@ struct LocationPageView: View {
                 LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
             }
             .id("lakeview")
-            SatellitePictureCard(lakeID: forecast.lakeId)
+            VStack(spacing: 16) {
+                if tourSeen && showSatelliteTip {
+                    TipView(satelliteTip)
+                }
+                SatellitePictureCard(lakeID: forecast.lakeId)
+            }
+            .id("satellite")
         }
     }
 
@@ -150,7 +195,7 @@ struct LocationPageView: View {
             if tourSeen && showHourlyTip {
                 TipView(hourlyTip)
             }
-            HourlyCard(forecast: forecast)
+            HourlyCard(forecast: forecast, stale: forecast.isStale())
         }
         .id("hourly")
         VStack(spacing: 16) {
@@ -179,8 +224,15 @@ struct LocationPageView: View {
                     .font(.caption)
                     .foregroundStyle(.orange)
             }
-            if let updated = forecasts.forecasts[club.id]?.generatedAt {
-                if forecasts.failed.contains(club.id) {
+            if let forecast = forecasts.forecasts[club.id] {
+                let updated = forecast.generatedAt
+                if forecast.isStale() {
+                    // Old data must not look current: say so plainly, with the day.
+                    Label(tr("Forecast out of date: from %@. Pull down to refresh, and check the conditions yourself.", Format.dayTime(updated)), systemImage: "clock.badge.exclamationmark")
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.orange)
+                        .multilineTextAlignment(.center)
+                } else if forecasts.failed.contains(club.id) {
                     Label(tr("Could not update. Showing data from %@.", Format.time(updated)), systemImage: "wifi.exclamationmark")
                         .font(.caption)
                         .foregroundStyle(.orange)
@@ -216,20 +268,21 @@ struct Card<Content: View>: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(surface.card, in: RoundedRectangle(cornerRadius: 16))
+        .cardBackground(surface)
     }
 }
 
 private struct NowCard: View {
     let hour: ForecastHour
     let water: WaterTemperature?
+    var stale = false
 
     var body: some View {
         Card {
             HStack(spacing: 14) {
-                TrafficLightDot(light: hour.light, size: 36)
+                TrafficLightDot(light: hour.light, size: 36, stale: stale)
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(hour.light.title).font(.title2.bold())
+                    Text(hour.light.title(stale: stale)).font(.title2.bold())
                     Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -241,6 +294,10 @@ private struct NowCard: View {
                 }
             }
             VStack(alignment: .leading, spacing: 6) {
+                if stale {
+                    Label(tr("The forecast is more than 3 hours old. Check the conditions yourself before you go out."), systemImage: "clock.badge.exclamationmark")
+                        .foregroundStyle(.orange)
+                }
                 if hour.reasons.isEmpty {
                     Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
                 } else {
@@ -264,6 +321,7 @@ private struct NowCard: View {
             .font(.subheadline)
             .symbolRenderingMode(.hierarchical)
             .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map(\.explanation).joined(separator: " ")))
+            AdviceOnlyNote()
             Divider()
             HStack(alignment: .lastTextBaseline) {
                 VStack(alignment: .leading, spacing: 0) {
@@ -290,6 +348,18 @@ private struct NowCard: View {
             }
             .symbolRenderingMode(.hierarchical)
         }
+    }
+}
+
+/// The reminder that the light is advice and the rower decides, wherever a
+/// decision to go out is made from the app.
+struct AdviceOnlyNote: View {
+    var body: some View {
+        Label(tr("Advice only. You decide whether to go out. When in doubt, ask experienced rowers or stay ashore."), systemImage: "person.fill.questionmark")
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .symbolRenderingMode(.hierarchical)
+            .fixedSize(horizontal: false, vertical: true)
     }
 }
 
@@ -403,13 +473,14 @@ private enum Column {
 
 private struct HourlyCard: View {
     let forecast: ClubForecast
+    var stale = false
 
     var body: some View {
         Card(title: tr("Next 48 hours"), symbol: "clock") {
             HourlyLegendHeader()
             ForEach(days) { group in
                 DayHeader(day: group.day, sun: sunDay(on: group.day))
-                ForEach(group.hours) { HourRow(hour: $0) }
+                ForEach(group.hours) { HourRow(hour: $0, stale: stale) }
             }
         }
     }
@@ -485,13 +556,14 @@ private struct DayHeader: View {
 
 private struct HourRow: View {
     let hour: ForecastHour
+    var stale = false
 
     var body: some View {
         let dark = hour.sunUp == false
         HStack(spacing: 6) {
             Text(Format.time(hour.time))
                 .frame(width: Column.time, alignment: .leading)
-            TrafficLightDot(light: hour.light, size: 12).frame(width: Column.light)
+            TrafficLightDot(light: hour.light, size: 12, stale: stale).frame(width: Column.light)
             SkyIcon(sky: Sky(hour: hour), night: dark)
                 .font(.callout)
                 .frame(width: Column.sky)
@@ -530,6 +602,11 @@ private struct LegendCard: View {
                             Text(light.title).font(.subheadline)
                         }
                     }
+                    HStack(alignment: .top, spacing: 10) {
+                        TrafficLightDot(light: .green, stale: true).frame(width: 24)
+                        Text(tr("Forecast out of date: more than 3 hours old. Amber and red still show.")).font(.subheadline)
+                    }
+                    AdviceOnlyNote()
                     Divider()
                     Text(tr("Weather symbols")).font(.subheadline.weight(.semibold))
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), alignment: .leading)], alignment: .leading, spacing: 8) {

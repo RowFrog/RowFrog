@@ -87,6 +87,16 @@ final class AppSettings {
     /// File names of the user's own pictures, newest first.
     var userPictures: [String] { didSet { defaults.set(userPictures, forKey: Keys.userPictures) } }
 
+    /// Hidden developer options, switched on by tapping the version in the settings seven times.
+    var developerOptions: Bool { didSet { defaults.set(developerOptions, forKey: Keys.developer) } }
+    /// Weather models picked per club id while the developer options are on; missing = automatic.
+    var pickedModels: [String: String] { didSet { defaults.set(pickedModels, forKey: Keys.pickedModels) } }
+
+    /// The model to load for a club, or nil for the automatic choice.
+    func pickedModel(for clubID: String) -> String? {
+        developerOptions ? pickedModels[clubID] : nil
+    }
+
     private let defaults: UserDefaults
 
     enum Keys {
@@ -110,9 +120,12 @@ final class AppSettings {
         static let myBoats = "RWMyBoats"
         static let boatLimits = "RWBoatLimits"
         static let mapBoat = "RWMapBoat"
+        static let developer = "RWDeveloperOptions"
+        static let pickedModels = "RWPickedModels"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
-                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat]
+                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
+                          developer, pickedModels]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -163,6 +176,8 @@ final class AppSettings {
         blurBackground = defaults.bool(forKey: Keys.blur)
         tileStyle = value(Keys.tileStyle, .frosted)
         userPictures = defaults.stringArray(forKey: Keys.userPictures) ?? []
+        developerOptions = defaults.bool(forKey: Keys.developer)
+        pickedModels = defaults.dictionary(forKey: Keys.pickedModels) as? [String: String] ?? [:]
     }
 
     /// The language the app shows: the chosen one, or the phone's when it is German.
@@ -219,6 +234,8 @@ final class AppSettings {
         mapBoatID = Boat.small.id
         removeAllBackgrounds()
         userPictures = []
+        developerOptions = false
+        pickedModels = [:]
         // The assignments above write the defaults back; remove them so a later
         // change of the app's defaults reaches users who never chose.
         for key in Keys.all { defaults.removeObject(forKey: key) }
@@ -306,6 +323,9 @@ enum PageKind: String, CaseIterable, Identifiable {
 enum TileStyle: String, CaseIterable, Identifiable {
     /// Frosted glass: the picture shows through, blurred, under a light rowing-light tint.
     case frosted
+    /// Liquid Glass (iOS 26): clear glass that bends the picture at its edges.
+    /// Earlier iOS versions show frosted glass instead.
+    case glass
     /// Solid: no picture in the cards, which keep their full rowing-light shading.
     case solid
     var id: String { rawValue }
@@ -313,7 +333,16 @@ enum TileStyle: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .frosted: tr("Picture blurred")
+        case .glass: tr("Liquid Glass")
         case .solid: tr("No picture")
+        }
+    }
+
+    var surface: Surface {
+        switch self {
+        case .frosted: .frosted
+        case .glass: .glass
+        case .solid: .solid
         }
     }
 }

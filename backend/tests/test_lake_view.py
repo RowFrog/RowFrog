@@ -27,6 +27,16 @@ def test_grid_covers_the_lake_with_about_the_target_number_of_cells():
     assert 1 <= len(grid.samples) <= lake_view.MAX_SAMPLES
 
 
+def test_grid_of_a_lake_in_two_parts():
+    # A MultiPolygon: a small part first, then a bigger one beside it (as OSM has Geschirrwasser).
+    (x0, y0), (x1, _), (_, y1), _ = LAKE[0]
+    small = [(x0, y0), (x0 + (x1 - x0) / 2, y0), (x0 + (x1 - x0) / 2, y0 + (y1 - y0) / 5), (x0, y0 + (y1 - y0) / 5)]
+    big = [(x + 2 * (x1 - x0), y) for x, y in LAKE[0]]
+    grid = lake_view.build_grid([small, big], target_cells=200)
+    lons = [lon for lon, _ in grid.points]
+    assert min(lons) < x1 < 2 * x1 - x0 < max(lons)  # cells in both parts
+
+
 def test_waves_build_downwind():
     grid = lake_view.build_grid(LAKE, target_cells=200)
     (h,) = lake_view.lake_hours(grid, [[hour(wind_from=180.0)] for _ in grid.samples])

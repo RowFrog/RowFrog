@@ -8,12 +8,18 @@ enum SettingsRoute: Hashable {
     case limits
     case boat(String)
     case picker(BackgroundTarget)
+    case safety
+    case impressum
+    case privacy
 
-    /// Screenshot hook: `-RWSettingsPage backgrounds`, `picker-all`,
+    /// Screenshot hook: `-RWSettingsPage backgrounds`, `safety`, `impressum`, `privacy`, `picker-all`,
     /// `picker-page:list` or `picker-club:<id>` opens that page.
     static func fromLaunchArguments() -> [SettingsRoute] {
         guard let page = UserDefaults.standard.string(forKey: "RWSettingsPage") else { return [] }
         if page == "backgrounds" { return [.backgrounds] }
+        if page == "safety" { return [.safety] }
+        if page == "impressum" { return [.impressum] }
+        if page == "privacy" { return [.privacy] }
         if page == "limits" { return [.limits] }
         if page.hasPrefix("boat:") { return [.limits, .boat(String(page.dropFirst("boat:".count)))] }
         if page == "picker-all" { return [.backgrounds, .picker(.all)] }
@@ -168,6 +174,22 @@ struct SettingsView: View {
                     .id("help")
 
                     Section {
+                        NavigationLink(value: SettingsRoute.safety) {
+                            Label(tr("Safety notice"), systemImage: "exclamationmark.shield")
+                        }
+                        NavigationLink(value: SettingsRoute.privacy) {
+                            Label(tr("Privacy"), systemImage: "hand.raised")
+                        }
+                        NavigationLink(value: SettingsRoute.impressum) {
+                            Label(tr("Legal notice"), systemImage: "building.columns")
+                        }
+                    } header: {
+                        SectionTitle(tr("Legal"), symbol: "doc.text")
+                    }
+                    .surfaceRows()
+                    .id("legal")
+
+                    Section {
                         if showAppIconTip {
                             TipView(appIconTip)
                         }
@@ -195,8 +217,31 @@ struct SettingsView: View {
                     .surfaceRows()
                     .id("reset")
 
+                    if settings.developerOptions {
+                        Section {
+                            Toggle(isOn: $settings.developerOptions) {
+                                Label(tr("Developer options"), systemImage: "hammer")
+                            }
+                            Button {
+                                settings.pickedModels = [:]
+                            } label: {
+                                Label(tr("All clubs back to the automatic model"), systemImage: "arrow.uturn.backward")
+                            }
+                            .disabled(settings.pickedModels.isEmpty)
+                        } header: {
+                            SectionTitle(tr("Developer"), symbol: "hammer")
+                        } footer: {
+                            SectionFooter(tr("Test: on a confirmed club's page, tap the forecast line at the bottom to pick another weather model. Switched off, every club uses the automatic model again. Tap the version seven times to show this again."))
+                        }
+                        .surfaceRows()
+                        .id("developer")
+                    }
+
                     Section {
                         LabeledContent(tr("Version"), value: Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")
+                            .contentShape(Rectangle())
+                            // Hidden: seven taps show the developer options.
+                            .onTapGesture(count: 7) { settings.developerOptions = true }
                     }
                     .surfaceRows()
                 }
@@ -219,6 +264,12 @@ struct SettingsView: View {
                         BoatLimitsView(boatID: id)
                     case let .picker(target):
                         BackgroundPickerView(target: target, locations: locations)
+                    case .safety:
+                        SafetyNoticeSettingsView()
+                    case .impressum:
+                        ImpressumView()
+                    case .privacy:
+                        PrivacySummaryView()
                     }
                 }
                 .confirmationDialog(tr("Reset all settings?"), isPresented: $confirmingReset, titleVisibility: .visible) {
@@ -233,7 +284,7 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
-                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "appicon", "reset"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
                 .tipVisibility(resetTip, $showResetTip)
                 .fullScreenCover(isPresented: $showingTour) {
@@ -623,7 +674,7 @@ private struct BackgroundPreview: View {
     var body: some View {
         let settings = AppSettings.shared
         let image = BackgroundLibrary.image(for: settings.background(for: .clubPages))
-        let surface: Surface = image == nil ? .plain : (settings.tileStyle == .frosted ? .frosted : .solid)
+        let surface: Surface = image == nil ? .plain : settings.tileStyle.surface
         VStack(spacing: 10) {
             Text("MRC 1880")
                 .font(.headline)
@@ -646,7 +697,7 @@ private struct BackgroundPreview: View {
                 .font(.caption)
             }
             .padding(10)
-            .background(surface.card, in: RoundedRectangle(cornerRadius: 12))
+            .cardBackground(surface, cornerRadius: 12)
         }
         .padding(16)
         .frame(maxWidth: .infinity)
@@ -856,12 +907,17 @@ struct BackgroundPickerView: View {
 /// user's own. Each has its own limits, behind the slider button.
 struct RowingLimitsView: View {
     @Binding var path: [SettingsRoute]
+    @State private var showBoatsTip = false
+    private let boatsTip = MyBoatsTip()
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
         ScrollViewReader { proxy in
             Form {
                 Section {
+                    if showBoatsTip {
+                        TipView(boatsTip)
+                    }
                     ForEach(Boat.groups) { boat in
                         BoatRow(boat: boat) { path.append(.boat(boat.id)) }
                     }
@@ -926,6 +982,7 @@ struct RowingLimitsView: View {
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
+        .tipVisibility(boatsTip, $showBoatsTip)
         .navigationTitle(tr("Rowing limits"))
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -972,6 +1029,8 @@ private struct BoatRow: View {
 /// One boat's name, type and limits.
 struct BoatLimitsView: View {
     let boatID: String
+    @State private var showColdTip = false
+    private let coldTip = ColdWaterTip()
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1000,6 +1059,9 @@ struct BoatLimitsView: View {
             }
 
             Section {
+                if showColdTip {
+                    TipView(coldTip)
+                }
                 ForEach(RowingLimit.allCases) { limit in
                     LimitRow(limit: limit, boat: boat)
                 }
@@ -1027,6 +1089,7 @@ struct BoatLimitsView: View {
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
+        .tipVisibility(coldTip, $showColdTip)
         .navigationTitle(boat.title)
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -1109,7 +1172,7 @@ private struct SurfaceRowBackground: View {
     @Environment(\.surface) private var surface
 
     var body: some View {
-        Rectangle().fill(surface == .frosted ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color(.secondarySystemGroupedBackground)))
+        Rectangle().fill(surface == .frosted || surface == .glass ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color(.secondarySystemGroupedBackground)))
     }
 }
 

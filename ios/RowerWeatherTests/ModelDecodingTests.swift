@@ -43,6 +43,20 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(forecast.current(at: after)?.reasons.first?.label, "Sun down")
     }
 
+    func testOlderForecastShowsTheHourNowAndIsOutOfDate() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T08:00:00+00:00", "attribution": [],
+         "hours": [{"time": "2026-10-18T08:00:00+00:00", "light": "green", "reasons": []},
+                   {"time": "2026-10-18T09:00:00+00:00", "light": "amber", "reasons": []},
+                   {"time": "2026-10-18T10:00:00+00:00", "light": "red", "reasons": []}]}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        let ten = ISO8601DateFormatter().date(from: "2026-10-18T10:30:00Z")!
+        XCTAssertEqual(forecast.current(at: ten)?.light, .red)
+        XCTAssertFalse(forecast.isStale(at: ten))
+        XCTAssertTrue(forecast.isStale(at: ten.addingTimeInterval(3600)))
+    }
+
     func testDecodesIceEstimate() throws {
         let json = """
         {"clubId": "x", "lakeId": "y", "generatedAt": "2027-01-20T11:20:00+00:00", "attribution": [], "hours": [],
@@ -93,6 +107,19 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(forecast.forecastSource?.parts.first?.model, "ICON-D2")
         XCTAssertEqual(forecast.forecastSource?.parts.first?.providerShort, "DWD")
         XCTAssertNil(try APIClient.decoder.decode(ClubForecast.self, from: Data(#"{"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": []}"#.utf8)).forecastSource)
+    }
+
+    func testDecodesPickedModelAndChoices() throws {
+        let json = """
+        {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": [],
+         "forecastSource": {"region": "germany", "picked": "ecmwf_ifs025",
+                            "parts": [{"model": "IFS", "provider": "ECMWF", "resolutionKm": 25, "fromHour": 0, "toHour": 48}]},
+         "modelChoices": [{"id": "ecmwf_ifs025", "model": "IFS", "provider": "ECMWF", "resolutionKm": 25, "hours": 240,
+                           "advice": "notAdvised", "note": "Very coarse grid."}]}
+        """
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
+        XCTAssertEqual(forecast.forecastSource?.picked, "ecmwf_ifs025")
+        XCTAssertEqual(forecast.modelChoices?.first?.notAdvised, true)
     }
 
     func testDecodesWarnings() throws {
