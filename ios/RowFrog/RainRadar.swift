@@ -1,5 +1,6 @@
 import MapKit
 import SwiftUI
+import TipKit
 
 /// Rain at the launch point from DWD's radar: now and DWD's nowcast for the
 /// next two hours. The app asks DWD directly (open data, no account), so the
@@ -151,6 +152,7 @@ struct RainRadarCard: View {
         .fullScreenCover(isPresented: $showingMap) {
             RadarMapScreen(point: point, reference: radar?.reference)
         }
+        .onChange(of: showingMap) { if showingMap { RadarMapTip().invalidate(reason: .actionPerformed) } }
         .task(id: point) {
             // DWD updates the radar every 5 minutes; follow it while the page is open.
             while !Task.isCancelled {

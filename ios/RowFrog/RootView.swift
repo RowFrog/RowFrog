@@ -13,6 +13,7 @@ struct RootView: View {
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingTour = !Tutorial.seen
     @State private var showingSafety = SafetyNotice.needsAcceptance
+    @State private var showingWhatsNew = WhatsNew.needsShowing
 
     init(api: APIClient) {
         self.api = api
@@ -86,6 +87,13 @@ struct RootView: View {
             }
         }
         .environment(\.locale, AppSettings.shared.locale)
+        // Once after an update, when the safety notice was accepted and there are clubs to show.
+        .sheet(isPresented: Binding(
+            get: { showingWhatsNew && !showingSafety && !showingTour && !locations.saved.isEmpty },
+            set: { if !$0 { showingWhatsNew = false; WhatsNew.markSeen() } }
+        )) {
+            WhatsNewView().environment(\.locale, AppSettings.shared.locale)
+        }
         .fullScreenCover(isPresented: $showingList) {
             LocationListView(locations: locations, forecasts: forecasts, initialSearch: initialSearch) { club in
                 selection = club.id
