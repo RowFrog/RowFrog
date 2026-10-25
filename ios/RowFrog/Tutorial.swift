@@ -26,7 +26,7 @@ enum Tutorial {
     }
 
     /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all,
-    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view).
+    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view, water estimate).
     static func configureTips() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: resetTipsKey) {
@@ -37,8 +37,8 @@ enum Tutorial {
         if defaults.bool(forKey: "RWNoTips") { Tips.hideAllTipsForTesting() }
         if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
         if defaults.bool(forKey: "RWLaterTips") {
-            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self])
-            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self])
+            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self])
+            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self])
         }
         try? Tips.configure([.displayFrequency(.immediate)])
     }
@@ -669,6 +669,24 @@ struct ColdWaterTip: Tip {
     var image: Image? { Image(systemName: "thermometer.snowflake") }
 }
 
+struct TopTileTip: Tip {
+    var title: Text { Text(tr("Tap a value")) }
+    var message: Text? { Text(tr("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values.")) }
+    var image: Image? { Image(systemName: "hand.tap") }
+}
+
+struct WaterEstimateTip: Tip {
+    var title: Text { Text(tr("Water temperature from space")) }
+    var message: Text? { Text(tr("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date.")) }
+    var image: Image? { Image(systemName: "thermometer.and.liquid.waves") }
+}
+
+struct ChartScrubTip: Tip {
+    var title: Text { Text(tr("Read any hour")) }
+    var message: Text? { Text(tr("Hold the chart, then slide along it to read the value at each hour.")) }
+    var image: Image? { Image(systemName: "hand.draw") }
+}
+
 struct RoutePlanningTip: Tip {
     var title: Text { Text(tr("Plan a route")) }
     var message: Text? { Text(tr("Tap here, then tap your turning points on the water. You see the light along the route and the best time to start.")) }
@@ -689,7 +707,7 @@ struct CloseLoopTip: Tip {
 
 struct TurningPointTip: Tip {
     var title: Text { Text(tr("Change a turning point")) }
-    var message: Text? { Text(tr("Hold and drag a point to move it, or delete just this one.")) }
+    var message: Text? { Text(tr("Drag a point to move it, or delete just this one.")) }
     var image: Image? { Image(systemName: "hand.draw") }
 }
 

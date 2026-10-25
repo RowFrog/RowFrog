@@ -92,7 +92,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWChartSelect 5` a detail chart opens with the blue line (and the big number) five hours on, and its label shown
 - `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
-- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map and hour view tips, which otherwise wait until the rain radar and hourly tips are closed
+- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map, hour view and water estimate tips, which otherwise wait until the rain radar, hourly and conditions tips are closed
 - `-RWResetTips YES` show the one-time tips again, as after Settings › Help
 - `-RWOpenForecastSource YES` open the forecast source sheet
 - `-RWDeveloperOptions YES` and `-RWPickedModels '<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'`
@@ -104,6 +104,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
 - `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage safety|impressum|privacy|limits|boat:<id>|backgrounds|widgets` open those Settings pages (widgets = Settings > Widgets, the widget backgrounds)
+- Backend `RW_SAMPLE_SATELLITE_WATER=<lake ids>` gives those lakes a made-up Landsat reading from five days ago, so the water detail shows the satellite estimate (the screenshot workflow sets it for the Simssee, shots 152-153)
 
 ## What runs on its own (GitHub Actions)
 

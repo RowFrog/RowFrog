@@ -1,6 +1,7 @@
 import Charts
 import MapKit
 import SwiftUI
+import TipKit
 
 /// The "Current conditions" card on a club page: small tiles, each with its
 /// value, a short detail and a small graphic. Tapping a tile opens a larger
@@ -91,10 +92,13 @@ struct ConditionData {
     var next24: [ForecastHour] { timeline.filter { (0..<24).contains(x($0.time)) } }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
     var water: WaterTemperature? { forecast.waterTemperature }
-    /// Without a lake station: the ice model's water temperature, worked out
-    /// from the air temperatures of the last weeks. Shown marked as estimated;
-    /// the rowing light's cold-water rules only use measurements.
+    /// Without a station: the satellite reading carried forward, else the ice
+    /// model's water temperature, worked out from the air temperatures of the
+    /// last weeks. Shown marked as estimated; the rowing light's cold-water
+    /// rules only use measurements.
     var estimatedWater: Double? { forecast.estimatedWaterC }
+    /// The satellite reading behind `estimatedWater`, when there is one.
+    var satelliteWater: SatelliteWaterReading? { water == nil ? forecast.waterEstimate?.reading : nil }
 
     func points(_ value: (ForecastHour) -> Double?) -> [ChartPoint] {
         timeline.compactMap { h in value(h).map { ChartPoint(x: x(h.time), y: $0) } }
@@ -148,6 +152,8 @@ private struct ConditionTile: View {
     @Environment(\.surface) private var surface
 
     private var hour: ForecastHour { data.now }
+    /// The ice tile outside November to April: greyed out, still opens its detail.
+    private var offSeason: Bool { condition == .ice && IceSeason.isOff(data.forecast.ice) }
 
     var body: some View {
         Group {
@@ -166,11 +172,12 @@ private struct ConditionTile: View {
                         accessory.frame(height: Self.graphicHeight)
                     }
                 }
+                .opacity(offSeason ? 0.45 : 1)
             }
         }
         .padding(8)
         .frame(maxWidth: .infinity, minHeight: 78, maxHeight: .infinity, alignment: .topLeading)
-        .background(surface.tile, in: RoundedRectangle(cornerRadius: 10))
+        .background(surface.tile.opacity(offSeason ? 0.5 : 1), in: RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
     }
 
@@ -227,7 +234,9 @@ private struct ConditionTile: View {
             guard let fetch = hour.fetchM else { return "" }
             return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
         case .waterTemperature:
-            if data.water == nil, data.estimatedWater != nil { return tr("Estimated, not measured") }
+            if data.water == nil, data.estimatedWater != nil {
+                return data.satelliteWater != nil ? tr("Satellite estimate") : tr("Estimated, not measured")
+            }
             return data.water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
         case .precipitation:
             if (hour.precipitationMm ?? 0) >= 0.1 { return Sky(hour: hour).precipitationKind ?? "" }
@@ -310,6 +319,7 @@ private struct ConditionTile: View {
 
     /// Until the ice estimate is in the app: warm water cannot freeze over.
     private var iceGuess: (value: String, detail: String) {
+        if offSeason { return (tr("Off season"), tr("Nov–Apr")) }
         if let ice = data.forecast.ice, ice.status != "unavailable" {
             return (ice.title, ice.detail)
         }
@@ -447,6 +457,9 @@ struct ConditionDetailView: View {
     @State private var chartFrame = ChartFrame()
     /// The jump menu's titles with each view's value, worked out once.
     @State private var menuTitles: [Condition: String] = [:]
+    @AppStorage(Tutorial.seenKey) private var tourSeen = false
+    private let scrubTip = ChartScrubTip()
+    @State private var showScrubTip = false
     /// The hour of the chart's blue line and of the map, kept while swiping.
     @State private var time = DetailTime()
     /// Compact height: a phone on its side, where the map sits beside the chart.
@@ -478,6 +491,7 @@ struct ConditionDetailView: View {
             // The new view's map card reports its own hours.
             .onChange(of: condition) { time.mapHours = nil }
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
+            .tipVisibility(scrubTip, $showScrubTip)
             .navigationTitle(condition.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -577,6 +591,9 @@ struct ConditionDetailView: View {
         }
         .accessibilityElement(children: .contain)
         if !detail.lines.isEmpty {
+            if tourSeen && showScrubTip {
+                TipView(scrubTip)
+            }
             ConditionChart(detail: detail, data: data, time: time, hidden: hidden)
                 .background {
                     GeometryReader { geo in
@@ -852,6 +869,7 @@ private struct ConditionChart: View {
         VStack(alignment: .leading, spacing: 6) {
             scrolling(scaled(chart))
                 .chartXSelection(value: $selectedX)
+                .onChange(of: selectedX != nil) { _, on in if on { ChartScrubTip().invalidate(reason: .actionPerformed) } }
                 .chartOverlay { proxy in
                     GeometryReader { geo in
                         markers(proxy: proxy, geo: geo)
@@ -1424,10 +1442,25 @@ extension ConditionDetail {
             rowing = tr("No lake station: check the water yourself. Below %@ we advise a life jacket.", jacket)
         }
         let estimate = now == nil ? d.estimatedWater : nil
+        let satellite = d.satelliteWater
+        if let satellite {
+            facts.append((tr("Satellite"), tr("%@, %@: %@", satellite.satelliteName, satellite.when, Format.temperature(satellite.celsius, digits: 1))))
+        }
+        let source: String
+        if let satellite {
+            source = satellite.source == "landsat"
+                ? tr("Landsat surface temperature (U.S. Geological Survey, via Microsoft Planetary Computer), carried forward to today with the air temperatures.")
+                : tr("Copernicus Land Monitoring Service, Lake Surface Water Temperature (Sentinel-3), carried forward to today with the air temperatures.")
+        } else if now == nil, estimate != nil {
+            source = tr("Calculated by the app from the air temperatures of the last weeks, not measured.")
+        } else {
+            source = tr("%@, the nearest station on this water.", (now?.station ?? WaterStation()).operatorName)
+        }
         return ConditionDetail(
             value: estimate.map { "≈ " + Format.degrees($0, digits: 0) } ?? Format.degrees(now?.celsius, digits: 1),
             note: now.map { tr("Measured %@", Format.dayTime($0.measuredAt)) }
-                ?? (estimate != nil ? tr("Estimated from the air temperatures of the last weeks, not measured") : tr("No lake station")),
+                ?? (satellite.map { tr("Estimated from %@ (%@) and the air temperatures since, not measured", $0.satelliteName, $0.when) }
+                    ?? (estimate != nil ? tr("Estimated from the air temperatures of the last weeks, not measured") : tr("No lake station"))),
             unit: t.symbol,
             lines: history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })],
             limits: [
@@ -1440,7 +1473,7 @@ extension ConditionDetail {
             history: true,
             facts: facts,
             rowing: rowing,
-            source: tr("Gewässerkundlicher Dienst Bayern (LfU), the nearest lake station.")
+            source: source
         )
     }
 
@@ -1688,6 +1721,15 @@ extension ConditionDetail {
     }
 
     private static func ice(_ d: ConditionData) -> ConditionDetail {
+        if IceSeason.isOff(d.forecast.ice) {
+            return ConditionDetail(
+                value: tr("Off season"),
+                note: tr("Ice estimates run from November to April. There is no ice estimate at this time of year."),
+                facts: [(tr("Water"), Format.temperature(d.forecast.ice?.waterTemperatureC ?? d.water?.celsius, digits: 1))],
+                rowing: tr("Never go onto the ice because of this app. Never row between ice floes; thin ice cuts hulls."),
+                source: Condition.ice.explanation
+            )
+        }
         if let ice = d.forecast.ice, ice.status != "unavailable" {
             var facts: [(String, String)] = [(tr("Water"), Format.temperature(ice.waterTemperatureC ?? d.water?.celsius, digits: 1))]
             if let cm = ice.thicknessCm, cm > 0 { facts.append((tr("Ice"), tr("About %@ cm, estimated", Format.number(cm)))) }
