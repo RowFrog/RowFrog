@@ -344,6 +344,7 @@ jobs:
           shoot 101-rowing-light-legend light -RWOpenClub mrc-1880 -RWLegend lights
           WAIT=30 shoot 102-radar-map light -RWOpenClub mrc-1880 -RWOpenRadarMap YES -RWRadarLoop NO
           shoot 103-hourly-header-stays light -RWOpenClub mrc-1880 -RWScrollTo hourly-1
+          shoot 165-hourly-header-stays-dark dark -RWOpenClub mrc-1880 -RWScrollTo hourly-1 -RWLanguage de
           shoot 104-hour-view light -RWOpenClub mrc-1880 -RWOpenHour 6
           shoot 105-arrange-page light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 106-arrange-page-german-dark dark -RWOpenClub mrc-1880 -RWArrange YES -RWLanguage de
