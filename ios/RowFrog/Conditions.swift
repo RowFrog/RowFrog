@@ -8,6 +8,18 @@ enum Condition: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    /// The order of the tiles in current conditions and of the larger views:
+    /// values that belong together side by side.
+    static let tileOrder: [Condition] = [
+        .temperature, .feelsLike,
+        .wind, .waves,
+        .waterTemperature, .ice,
+        .precipitation, .thunderstorm,
+        .visibility, .cloudCover,
+        .humidity, .pressure,
+        .uvIndex, .daylight,
+    ]
+
     var symbol: String {
         switch self {
         case .temperature: "thermometer.medium"
