@@ -196,10 +196,11 @@ struct SatellitePictureCard: View {
                         SatelliteKindPicker(picture: picture, kind: $kind)
                     }
                     Button { showingFull = true } label: {
-                        // A long lake standing upright would fill more than the screen; tap for all of it.
+                        // The whole card fits on one screen: the picture takes what the screen
+                        // leaves after the bars, the picker, the caption and the switches.
                         SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .frame(maxHeight: 380)
+                            .frame(maxHeight: max(300, UIScreen.main.bounds.height - 360))
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)

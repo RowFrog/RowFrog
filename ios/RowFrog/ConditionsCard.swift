@@ -678,7 +678,9 @@ private struct ConditionChart: View {
     /// The hour at the left edge of the visible 24 hours.
     @State private var scrollX = start
     /// The hour under the finger while scrubbing (hold, then slide), as in the Stocks app.
-    @State private var selectedX: Double?
+    /// Screenshot hook: `-RWChartSelect 5` shows the scrub line five hours from now.
+    @State private var selectedX: Double? = UserDefaults.standard.object(forKey: "RWChartSelect") != nil
+        ? UserDefaults.standard.double(forKey: "RWChartSelect") : nil
 
     private struct Arrow: Identifiable {
         let x: Double

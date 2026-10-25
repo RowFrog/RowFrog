@@ -218,19 +218,25 @@ struct LakeMapScreen: View {
                     .background(routeMode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.regularMaterial), in: Circle())
                     .accessibilityLabel(routeMode ? tr("End route planning") : tr("Plan a route"))
                     .popoverTip(RoutePlanningTip(), arrowEdge: .top)
-                Button { showingInfo = true } label: {
-                    Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
+                if !routeMode {
+                    Button { showingInfo = true } label: {
+                        Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
+                    }
+                    .background(.regularMaterial, in: Circle())
+                    .accessibilityLabel(tr("About the lake view"))
                 }
-                .background(.regularMaterial, in: Circle())
-                .accessibilityLabel(tr("About the lake view"))
             }
-            Picker(tr("Show"), selection: $layer) {
-                ForEach(LakeLayer.allCases) { Text($0.title).tag($0) }
+            // While planning only what the route needs: the editing bar takes the layer switch's place.
+            if routeMode {
+                editBar
+            } else {
+                Picker(tr("Show"), selection: $layer) {
+                    ForEach(LakeLayer.allCases) { Text($0.title).tag($0) }
+                }
+                .pickerStyle(.segmented)
+                .padding(4)
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
             }
-            .pickerStyle(.segmented)
-            .padding(4)
-            .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
-            if routeMode { editBar }
         }
         .padding(.horizontal)
         .padding(.top, 6)
@@ -346,8 +352,115 @@ struct LakeMapScreen: View {
         }
     }
 
-    private func panel(plan: RoutePlan?, boat: RoutePlan.Stop?, shown: LakeHour?) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    @ViewBuilder private func panel(plan: RoutePlan?, boat: RoutePlan.Stop?, shown: LakeHour?) -> some View {
+        if routeMode {
+            planningPanel(plan: plan, boat: boat, shown: shown)
+        } else {
+            viewingPanel(shown: shown)
+        }
+    }
+
+    /// While planning: the route's result in one line, start, pace and out and
+    /// back in another, and the details only when pulled up. No hour strip, so
+    /// the map keeps the screen.
+    private func planningPanel(plan: RoutePlan?, boat: RoutePlan.Stop?, shown: LakeHour?) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            grabber
+            if let plan {
+                HStack(spacing: 6) {
+                    TrafficLightDot(light: plan.worstLight, size: 10)
+                    Text(plan.worstLight.title).fontWeight(.semibold)
+                    Spacer(minLength: 4)
+                    Text(tr("%@ · %@ · back %@", Format.distance(plan.distanceM), Format.duration(from: plan.start, to: plan.end), Format.time(plan.end)))
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+                .font(.subheadline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                RouteBar(plan: plan).frame(height: 6)
+            } else {
+                Text(tr("Tap the water to add the turning points of your route."))
+                    .font(.subheadline.weight(.semibold))
+            }
+            if let lakeWide = shown?.lakeWide, lakeWide.light > .green {
+                LakeWideBanner(lakeWide: lakeWide).lineLimit(panelExpanded ? nil : 1)
+            }
+            planningControls
+            if panelExpanded {
+                CappedScroll(enabled: true, maxHeight: UIScreen.main.bounds.height * 0.3) {
+                    VStack(alignment: .leading, spacing: 10) {
+                        if view.sample {
+                            Label(tr("Sample wind"), systemImage: "exclamationmark.triangle")
+                                .font(.caption.weight(.semibold))
+                                .foregroundStyle(.orange)
+                        }
+                        routePanel(plan: plan, boat: boat)
+                    }
+                }
+            }
+        }
+        .padding(.horizontal)
+        .padding(.top, 6)
+        .padding(.bottom, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22)
+                .fill(.regularMaterial)
+                .ignoresSafeArea(edges: .bottom)
+        }
+        .gesture(DragGesture(minimumDistance: 20).onEnded { drag in
+            if drag.translation.height < -30 { withAnimation(.snappy) { panelExpanded = true } }
+            if drag.translation.height > 30 { withAnimation(.snappy) { panelExpanded = false } }
+        })
+    }
+
+    /// Start time (back and forward an hour, or a pick from the list), pace and out and back.
+    private var planningControls: some View {
+        HStack(spacing: 10) {
+            HStack(spacing: 2) {
+                Button { hourIndex = max(hourIndex - 1, 0) } label: { Image(systemName: "chevron.left").frame(width: 28, height: 28) }
+                    .disabled(hourIndex <= 0)
+                    .accessibilityLabel(tr("An hour earlier"))
+                Menu {
+                    Picker(tr("Start time"), selection: $hourIndex) {
+                        ForEach(Array(view.hours.enumerated()), id: \.1.id) { i, hour in
+                            Text(Format.dayTime(hour.time)).tag(i)
+                        }
+                    }
+                } label: {
+                    VStack(spacing: 0) {
+                        Text(tr("Start")).font(.caption2).foregroundStyle(.secondary)
+                        Text(hour.map { Format.time($0.time) } ?? "–").font(.subheadline.weight(.semibold).monospacedDigit())
+                    }
+                    .frame(minWidth: 48)
+                }
+                .accessibilityLabel(tr("Start time"))
+                .accessibilityValue(hour.map { Format.dayTime($0.time) } ?? "")
+                Button { hourIndex = min(hourIndex + 1, view.hours.count - 1) } label: { Image(systemName: "chevron.right").frame(width: 28, height: 28) }
+                    .disabled(hourIndex >= view.hours.count - 1)
+                    .accessibilityLabel(tr("An hour later"))
+            }
+            Spacer(minLength: 0)
+            Stepper(value: $pace, in: 90...240, step: 5) {
+                VStack(alignment: .trailing, spacing: 0) {
+                    Text(tr("Pace /500 m")).font(.caption2).foregroundStyle(.secondary)
+                    Text(Format.pace(pace)).font(.subheadline.weight(.semibold).monospacedDigit())
+                }
+            }
+            .fixedSize()
+            Toggle(isOn: $outAndBack) {
+                Image(systemName: "arrow.uturn.backward")
+            }
+            .toggleStyle(.button)
+            .disabled(RouteEdit.isLoop(waypoints))
+            .accessibilityLabel(tr("Out and back"))
+        }
+    }
+
+    private func viewingPanel(shown: LakeHour?) -> some View {
+        let plan: RoutePlan? = nil, boat: RoutePlan.Stop? = nil
+        return VStack(alignment: .leading, spacing: 10) {
             grabber
             if tourSeen && showPanelTip {
                 TipView(panelTip)
@@ -478,9 +591,8 @@ struct LakeMapScreen: View {
     }
 
     @ViewBuilder private func routePanel(plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
-        let loop = RouteEdit.isLoop(waypoints)
         if let planner, let plan {
-            RouteSummary(view: view, plan: plan)
+            RouteSummary(view: view, plan: plan, headline: false)
             if tourSeen && showBoatTip && !followBoat {
                 TipView(boatTip)
             }
@@ -515,15 +627,6 @@ struct LakeMapScreen: View {
             Text(tr("Tap the water to add the turning points of your route. It starts at your club. Tap a point to delete it, or hold and drag it to move it. A point within 50 m of the start closes the loop."))
                 .font(.subheadline)
                 .fixedSize(horizontal: false, vertical: true)
-        }
-        HStack(spacing: 12) {
-            Toggle(tr("Out and back"), isOn: $outAndBack)
-                .toggleStyle(.button)
-                .font(.subheadline)
-                .disabled(loop)
-            Stepper(value: $pace, in: 90...240, step: 5) {
-                Text(tr("Pace %@ /500 m", Format.pace(pace))).font(.subheadline.monospacedDigit())
-            }
         }
     }
 

@@ -294,6 +294,13 @@ jobs:
           shoot 118-satellite-card-clubs light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSatelliteLayers '(clubs, shore)'
           shoot 119-satellite-full-clubs light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)'
           SAFETY=1 GUIDE=1 shoot 120-safety-notice-phone-german light -RWNoTips YES -AppleLanguages '(de)'
+          shoot 121-route-plan-compact light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route"
+          shoot 122-chart-scrub light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5
+          shoot 123-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
+          shoot 124-lake-legend light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLegend YES
+          shoot 125-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
+          shoot 126-water-station light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWScrollPage 1
+          shoot 127-launch-point-place light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
