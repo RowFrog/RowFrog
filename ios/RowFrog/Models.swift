@@ -360,6 +360,14 @@ extension ClubForecast {
         guard waterTemperature == nil, let ice, ice.basis == "model" || ice.basis == "satellite" else { return nil }
         return ice.waterTemperatureC
     }
+
+    /// The ice value for the top tile and the widgets, only when it matters:
+    /// the estimate says more than open water, or the water is cold enough to freeze.
+    var iceValue: String? {
+        if let ice, ice.status != "unavailable", ice.status != "open" { return ice.title }
+        if let c = waterTemperature?.celsius, c < 8 { return ice.map(\.title) ?? tr("No data yet") }
+        return nil
+    }
 }
 
 struct ClubForecast: Codable, Hashable {

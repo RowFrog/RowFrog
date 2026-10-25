@@ -145,6 +145,33 @@ final class SatellitePictureStore {
         return image
     }
 
+    /// The picture for a background: the clearest pass (else the mostly clear
+    /// or latest one). Until the lake's list has loaded, the copy kept from an
+    /// earlier run, so a background shows at once. Starts the loading when
+    /// needed; views that call this redraw once the picture is in.
+    func backgroundImage(_ lakeID: String) -> UIImage? {
+        if let picture = pictures[lakeID] {
+            guard let shot = picture.clearest ?? picture.mostlyClear ?? picture.latest,
+                  let url = url(lakeID, file: shot.image, date: shot.date) else { return nil }
+            if let image = images[url] { return image }
+            Task { await image(url) }
+            return nil
+        }
+        if !missing.contains(lakeID) { Task { await load(lakeID) } }
+        return Self.keptImage(lakeID)
+    }
+
+    /// The newest kept copy of a lake's clearest picture, from an earlier run.
+    private static func keptImage(_ lakeID: String) -> UIImage? {
+        let folder = URL.cachesDirectory.appending(path: "Satellite", directoryHint: .isDirectory)
+        for file in ["satellite-clearest.jpg", "satellite-mostly-clear.jpg", "satellite-latest.jpg"] {
+            let prefix = "\(lakeID)-\(file)-"
+            let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path))?.filter { $0.hasPrefix(prefix) } ?? []
+            if let newest = names.max(), let image = UIImage(contentsOfFile: folder.appending(path: newest).path) { return image }
+        }
+        return nil
+    }
+
     /// Caches/Satellite/<lake>-<file>-<day>; the system may clear it when space runs low.
     private static func cacheFile(for url: URL) -> URL {
         let folder = URL.cachesDirectory.appending(path: "Satellite", directoryHint: .isDirectory)

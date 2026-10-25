@@ -7,6 +7,9 @@ import WidgetKit
 /// redraw makes each widget load its forecast again.
 enum WidgetBridge {
     static func publish(_ locations: LocationStore) {
+        BackgroundLibrary.lakeByClub = locations.lakesByClub.mapValues(\.id)
+        BackgroundLibrary.homeClubID = locations.homeID
+        Task { await preparePictures(locations) }
         let shared = WidgetShared.defaults
         let saved = locations.saved
         var values: [String: Any] = [:]
@@ -31,6 +34,64 @@ enum WidgetBridge {
     }
 
     private static let fingerprintKey = "RWWidgetPublished"
+
+    /// Makes the small background pictures the widgets load, once per change:
+    /// each saved club's picture (the one chosen for its widgets, else its club
+    /// page's) and its lake's satellite picture, scaled to the largest widget
+    /// and blurred once when the setting says so. Only for clubs whose widgets
+    /// show a picture, or whose widget asked for one in its own settings.
+    @MainActor
+    static func preparePictures(_ locations: LocationStore) async {
+        guard let folder = WidgetPictures.folder else { return }
+        try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        let settings = AppSettings.shared
+        let shared = WidgetShared.defaults
+        var changed = false
+        for club in locations.saved {
+            let background = settings.widgetBackground(for: club.id)
+            func wanted(_ kind: WidgetPictures.Kind) -> Bool { shared.bool(forKey: WidgetPictures.wantedKey(club.id, kind)) }
+
+            // The picture: a chosen one, else the club page's; the satellite choice goes through the satellite file.
+            var choice = settings.background(for: .clubPages, clubID: club.id)
+            if case let .picture(own) = background { choice = own }
+            if background.usesPicture && background != .satellite || wanted(.picture) {
+                let key = "\(choice.rawValue)|\(settings.blurWidgetPicture)"
+                if key != shared.string(forKey: WidgetPictures.sourceKey(club.id, .picture)),
+                   let image = BackgroundLibrary.image(for: choice, clubID: club.id) {
+                    changed = write(image, to: WidgetPictures.file(club.id, .picture)) || changed
+                    shared.set(key, forKey: WidgetPictures.sourceKey(club.id, .picture))
+                } else if choice == .noPicture, let file = WidgetPictures.file(club.id, .picture),
+                          FileManager.default.fileExists(atPath: file.path) {
+                    try? FileManager.default.removeItem(at: file)
+                    shared.removeObject(forKey: WidgetPictures.sourceKey(club.id, .picture))
+                    changed = true
+                }
+            }
+
+            if background == .satellite || wanted(.satellite), let lake = locations.lakesByClub[club.id]?.id {
+                let store = SatellitePictureStore.shared
+                await store.load(lake)
+                guard let picture = store.pictures[lake], let shot = picture.clearest ?? picture.mostlyClear ?? picture.latest,
+                      let url = store.url(lake, file: shot.image, date: shot.date) else { continue }
+                let key = "\(url.absoluteString)|\(settings.blurWidgetPicture)"
+                if key != shared.string(forKey: WidgetPictures.sourceKey(club.id, .satellite)), let image = await store.image(url) {
+                    changed = write(image, to: WidgetPictures.file(club.id, .satellite)) || changed
+                    shared.set(key, forKey: WidgetPictures.sourceKey(club.id, .satellite))
+                }
+            }
+        }
+        if changed { WidgetCenter.shared.reloadAllTimelines() }
+    }
+
+    /// Scaled to the largest widget (about 1100 × 1150 pixels on a big iPhone),
+    /// blurred when set, and saved as JPEG.
+    private static func write(_ image: UIImage, to file: URL?) -> Bool {
+        guard let file else { return false }
+        var small = BackgroundLibrary.scaled(image, maxSide: 1200)
+        if AppSettings.shared.blurWidgetPicture { small = BackgroundLibrary.blurred(small, radius: 18) }
+        guard let data = small.jpegData(compressionQuality: 0.8) else { return false }
+        return (try? data.write(to: file, options: .atomic)) != nil
+    }
 
     /// A settings value as JSON can hold it; dates and data as text.
     private static func jsonSafe(_ value: Any) -> Any? {
@@ -90,6 +151,11 @@ struct WidgetGalleryView: View {
                 accessory(snapshot, .accessoryInline, CGSize(width: 300, height: 26))
                 caption("Without a connection")
                 widget(RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: nil), .systemSmall, sizes[0].1)
+                // Settings > Widgets > Background: each choice on the medium widget.
+                ForEach(backgrounds, id: \.0) { item in
+                    caption("Background: " + item.1)
+                    widget(snapshot, .systemMedium, sizes[1].1, focus: .conditions, background: item.0)
+                }
             }
             .padding()
         }
@@ -115,11 +181,18 @@ struct WidgetGalleryView: View {
         Text(text).font(.subheadline.weight(.semibold)).foregroundStyle(.black.opacity(0.7))
     }
 
-    private func widget(_ snapshot: RowingSnapshot, _ family: WidgetFamily, _ size: CGSize, focus: WidgetFocus = .hourly) -> some View {
-        RowingWidgetView(snapshot: snapshot, family: family, focus: focus)
+    private var backgrounds: [(WidgetBackground, String)] {
+        [(.sky, "weather sky"), (.light, "rowing light colour"), (.picture(BackgroundLibrary.samples[3].choice), "picture"),
+         (.satellite, "satellite"), (.system, "plain")]
+    }
+
+    private func widget(_ snapshot: RowingSnapshot, _ family: WidgetFamily, _ size: CGSize, focus: WidgetFocus = .hourly,
+                        background: WidgetBackground = .sky) -> some View {
+        RowingWidgetView(snapshot: snapshot, family: family, focus: focus, plain: background == .system)
             .padding(16)
             .frame(width: size.width, height: size.height)
-            .background(WidgetSky(snapshot: snapshot))
+            .background(WidgetBackdrop(background: background, snapshot: snapshot,
+                                       picture: WidgetBackgroundSwatch.picture(for: background, clubID: homeID)))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
     }

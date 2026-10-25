@@ -20,6 +20,7 @@ struct LakeMapScreen: View {
     /// The saved route being shown, if any.
     @State private var savedRoute: Route?
     @State private var showingSave = false
+    @State private var showingRoutes = false
     @State private var routeName = ""
     /// Shows the lake at the time the boat reaches a point of the route, not at the start.
     @State private var followBoat: Bool
@@ -70,6 +71,20 @@ struct LakeMapScreen: View {
         _waypoints = State(initialValue: points)
         _routeMode = State(initialValue: !route.isEmpty)
         _outAndBack = State(initialValue: !RouteEdit.isLoop(points))
+        // Screenshot hook: `-RWSavedRoutes "Name=lat,lon;lat,lon|Name=…"` saves these routes on the
+        // lake when it has none (a name ending in "↔" is rowed out and back) and opens Manage routes.
+        if let saved = args.string(forKey: "RWSavedRoutes"), RouteStore.shared.routes(on: view.lakeId).isEmpty {
+            for spec in saved.split(separator: "|") {
+                let parts = spec.split(separator: "=", maxSplits: 1)
+                guard parts.count == 2 else { continue }
+                let coords = parts[1].split(separator: ";").map { $0.split(separator: ",").compactMap { Double($0) } }
+                    .filter { $0.count == 2 }.map { Coordinate(lat: $0[0], lon: $0[1]) }
+                let name = String(parts[0])
+                RouteStore.shared.save(Route(name: name.replacingOccurrences(of: " ↔", with: ""), lakeId: view.lakeId,
+                                             points: coords, outAndBack: name.hasSuffix("↔")))
+            }
+        }
+        _showingRoutes = State(initialValue: args.string(forKey: "RWSavedRoutes") != nil)
         // Screenshot hook: `-RWRoutePoint 2` selects that turning point.
         _selectedPoint = State(initialValue: args.object(forKey: "RWRoutePoint") != nil ? args.integer(forKey: "RWRoutePoint") : nil)
         // Screenshot hook: `-RWPanel expanded` opens the panel in full.
@@ -154,6 +169,13 @@ struct LakeMapScreen: View {
         .onChange(of: panelExpanded) { panelTip.invalidate(reason: .actionPerformed) }
         .onChange(of: followBoat) { if followBoat { boatTip.invalidate(reason: .actionPerformed) } }
         .onChange(of: RouteEdit.isLoop(waypoints)) { _, loop in if loop { loopTip.invalidate(reason: .actionPerformed) } }
+        .sheet(isPresented: $showingRoutes) {
+            ManageRoutesView(lakeID: view.lakeId, current: savedRoute?.id, open: load) { id in
+                // The open route was renamed or deleted: show it as it is now.
+                guard id == savedRoute?.id else { return }
+                savedRoute = routes.routes.first { $0.id == id }
+            }
+        }
         .alert(tr("Save route"), isPresented: $showingSave) {
             TextField(tr("Name"), text: $routeName)
             Button(tr("Save")) { saveRoute() }
@@ -262,6 +284,7 @@ struct LakeMapScreen: View {
                         Button(route.name) { load(route) }
                     }
                 }
+                Button(tr("Manage routes…"), systemImage: "list.bullet") { showingRoutes = true }
             } label: { icon }
         } else {
             Button { toggleRouteMode() } label: { icon }
@@ -283,6 +306,7 @@ struct LakeMapScreen: View {
                         Button(route.name) { load(route) }
                     }
                 }
+                Button(tr("Manage routes…"), systemImage: "list.bullet") { showingRoutes = true }
             }
             if let savedRoute {
                 Button(tr("Delete this route"), systemImage: "trash", role: .destructive) {

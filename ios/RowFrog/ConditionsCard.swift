@@ -1558,25 +1558,45 @@ extension ConditionDetail {
 struct WaterStationMap: View {
     let station: WaterStation
     let place: Coordinate
+    /// The live map after a tap; a still picture until then.
+    @State private var live = false
+    @State private var address: String?
+
+    private var coordinate: CLLocationCoordinate2D { CLLocationCoordinate2D(latitude: place.lat, longitude: place.lon) }
+    private var region: MKCoordinateRegion { MKCoordinateRegion(center: coordinate, latitudinalMeters: 4000, longitudinalMeters: 4000) }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Label(tr("Where it is measured"), systemImage: "mappin.and.ellipse")
                 .font(.subheadline.weight(.semibold))
-            Map(initialPosition: .region(MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: place.lat, longitude: place.lon),
-                                                            latitudinalMeters: 4000, longitudinalMeters: 4000)),
-                interactionModes: [.pan, .zoom]) {
-                Marker(station.name ?? tr("Lake station"), systemImage: "thermometer.medium", coordinate: CLLocationCoordinate2D(latitude: place.lat, longitude: place.lon))
-                    .tint(.cyan)
+            Group {
+                if live {
+                    Map(initialPosition: .region(region), interactionModes: [.pan, .zoom]) {
+                        Marker(station.name ?? tr("Lake station"), systemImage: "thermometer.medium", coordinate: coordinate)
+                            .tint(.cyan)
+                    }
+                    .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+                } else {
+                    Button { live = true } label: {
+                        LaunchPointSnapshot(coordinate: coordinate, region: region, symbol: "thermometer.medium", tint: .cyan)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityHint(tr("Shows a map you can move"))
+                }
             }
-            .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
             .frame(height: 170)
             .clipShape(RoundedRectangle(cornerRadius: 10))
-            HStack {
-                if let distance = station.distanceM {
-                    Text(tr("%@, %@ from the launch point", station.name ?? tr("Lake station"), Format.distance(distance)))
-                } else if let name = station.name {
-                    Text(name)
+            HStack(alignment: .firstTextBaseline) {
+                VStack(alignment: .leading, spacing: 2) {
+                    if let distance = station.distanceM {
+                        Text(tr("%@, %@ from the launch point", station.name ?? tr("Lake station"), Format.distance(distance)))
+                    } else if let name = station.name {
+                        Text(name)
+                    }
+                    if let address {
+                        Label(address, systemImage: "mappin")
+                            .labelStyle(.titleAndIcon)
+                    }
                 }
                 Spacer(minLength: 0)
                 if let url = station.url {
@@ -1586,5 +1606,26 @@ struct WaterStationMap: View {
             .font(.caption)
             .foregroundStyle(.secondary)
         }
+        .task(id: place) { address = await StationAddress.near(place) }
+    }
+}
+
+/// The street or place nearest a station, as the phone's maps know it
+/// ("Seepromenade, Starnberg"); stations have coordinates but no address.
+/// Asked once per station and app run.
+@MainActor
+enum StationAddress {
+    private static var known: [Coordinate: String] = [:]
+
+    static func near(_ place: Coordinate) async -> String? {
+        if let known = known[place] { return known }
+        let location = CLLocation(latitude: place.lat, longitude: place.lon)
+        guard let mark = try? await CLGeocoder().reverseGeocodeLocation(location, preferredLocale: AppSettings.shared.locale).first else { return nil }
+        let parts = [mark.thoroughfare ?? mark.name, mark.locality].compactMap { $0 }
+        // A place's name is often its town too.
+        let unique = parts.reduce(into: [String]()) { if !$0.contains($1) { $0.append($1) } }
+        let text = unique.isEmpty ? nil : unique.joined(separator: ", ")
+        known[place] = text
+        return text
     }
 }

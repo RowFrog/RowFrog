@@ -90,6 +90,18 @@ final class AppSettings {
     /// File names of the user's own pictures, newest first.
     var userPictures: [String] { didSet { defaults.set(userPictures, forKey: Keys.userPictures) } }
 
+    /// The widgets' background, unless a club or a widget has its own.
+    var widgetBackground: WidgetBackground { didSet { defaults.set(widgetBackground.rawValue, forKey: Keys.widgetBackground) } }
+    /// A club's widgets' background; a missing entry means "same as all widgets".
+    var clubWidgetBackgrounds: [String: WidgetBackground] {
+        didSet { defaults.set(clubWidgetBackgrounds.mapValues(\.rawValue), forKey: Keys.clubWidgetBackgrounds) }
+    }
+    /// Pictures behind the widgets blurred.
+    var blurWidgetPicture: Bool { didSet { defaults.set(blurWidgetPicture, forKey: Keys.widgetBlur) } }
+
+    /// A club's widget background: its own, else the one for all widgets.
+    func widgetBackground(for clubID: String) -> WidgetBackground { clubWidgetBackgrounds[clubID] ?? widgetBackground }
+
     /// Hidden developer options, switched on by tapping the version in the settings seven times.
     var developerOptions: Bool { didSet { defaults.set(developerOptions, forKey: Keys.developer) } }
     /// Weather models picked per club id while the developer options are on; missing = automatic.
@@ -137,10 +149,13 @@ final class AppSettings {
         static let pickedModels = "RWPickedModels"
         static let pageLayout = "RWPageLayout"
         static let clubPageLayouts = "RWClubPageLayouts"
+        static let widgetBackground = "RWWidgetBackground"
+        static let clubWidgetBackgrounds = "RWWidgetBackgroundClubs"
+        static let widgetBlur = "RWWidgetBackgroundBlur"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
-                          developer, pickedModels, pageLayout, clubPageLayouts]
+                          developer, pickedModels, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -191,6 +206,10 @@ final class AppSettings {
         blurBackground = defaults.bool(forKey: Keys.blur)
         tileStyle = value(Keys.tileStyle, .frosted)
         userPictures = defaults.stringArray(forKey: Keys.userPictures) ?? []
+        widgetBackground = defaults.string(forKey: Keys.widgetBackground).flatMap(WidgetBackground.init(rawValue:)) ?? .sky
+        clubWidgetBackgrounds = (defaults.dictionary(forKey: Keys.clubWidgetBackgrounds) as? [String: String] ?? [:])
+            .compactMapValues(WidgetBackground.init(rawValue:))
+        blurWidgetPicture = defaults.bool(forKey: Keys.widgetBlur)
         developerOptions = defaults.bool(forKey: Keys.developer)
         pickedModels = defaults.dictionary(forKey: Keys.pickedModels) as? [String: String] ?? [:]
         // As a launch argument the order is a comma-separated list, e.g. `-RWPageLayout "hourly,radar"`.
@@ -264,6 +283,9 @@ final class AppSettings {
         boatLimits = [:]
         mapBoatID = Boat.small.id
         removeAllBackgrounds()
+        widgetBackground = .sky
+        clubWidgetBackgrounds = [:]
+        blurWidgetPicture = false
         userPictures = []
         developerOptions = false
         pickedModels = [:]
@@ -282,6 +304,8 @@ final class AppSettings {
         if allPagesBackground == gone { allPagesBackground = .noPicture }
         pageBackgrounds = pageBackgrounds.filter { $0.value != gone }
         clubBackgrounds = clubBackgrounds.filter { $0.value != gone }
+        if widgetBackground == .picture(gone) { widgetBackground = .sky }
+        clubWidgetBackgrounds = clubWidgetBackgrounds.filter { $0.value != .picture(gone) }
         userPictures.removeAll { $0 == name }
         BackgroundLibrary.deleteUserPicture(name)
     }
@@ -382,6 +406,8 @@ enum TileStyle: String, CaseIterable, Identifiable {
 
 enum BackgroundChoice: Hashable {
     case noPicture
+    /// The newest clear Sentinel-2 picture of the club's lake (the home base's on other pages).
+    case satellite
     /// One of the pictures that come with the app, by id.
     case sample(String)
     /// A picture the user added, by file name.
@@ -389,6 +415,7 @@ enum BackgroundChoice: Hashable {
 
     init?(rawValue: String) {
         if rawValue == "none" { self = .noPicture; return }
+        if rawValue == "satellite" { self = .satellite; return }
         let parts = rawValue.split(separator: ":", maxSplits: 1).map(String.init)
         guard parts.count == 2 else { return nil }
         switch parts[0] {
@@ -401,6 +428,7 @@ enum BackgroundChoice: Hashable {
     var rawValue: String {
         switch self {
         case .noPicture: "none"
+        case .satellite: "satellite"
         case let .sample(id): "sample:\(id)"
         case let .custom(name): "custom:\(name)"
         }
@@ -409,8 +437,71 @@ enum BackgroundChoice: Hashable {
     var title: String {
         switch self {
         case .noPicture: tr("No picture")
+        case .satellite: tr("Satellite picture of the lake")
         case let .sample(id): BackgroundLibrary.sample(id)?.title ?? id
         case .custom: tr("Your picture")
+        }
+    }
+}
+
+/// What the widgets show behind their content.
+enum WidgetBackground: Hashable {
+    /// A sky in the colours of the weather and the time of day (the default).
+    case sky
+    /// Dark, washed in the rowing light's colour.
+    case light
+    /// The club page's picture from the app's background settings.
+    case appPicture
+    /// One of the sample pictures or the user's own.
+    case picture(BackgroundChoice)
+    /// The newest clear Sentinel-2 picture of the club's lake.
+    case satellite
+    /// Plain white or black, following light and dark mode.
+    case system
+
+    /// The choices that need no picture to be picked, in the order the settings list them.
+    static let simple: [WidgetBackground] = [.sky, .light, .appPicture, .satellite, .system]
+
+    init?(rawValue: String) {
+        switch rawValue {
+        case "sky": self = .sky
+        case "light": self = .light
+        case "app": self = .appPicture
+        case "satellite": self = .satellite
+        case "system": self = .system
+        default:
+            guard rawValue.hasPrefix("pic:"), let choice = BackgroundChoice(rawValue: String(rawValue.dropFirst(4))) else { return nil }
+            self = .picture(choice)
+        }
+    }
+
+    var rawValue: String {
+        switch self {
+        case .sky: "sky"
+        case .light: "light"
+        case .appPicture: "app"
+        case .satellite: "satellite"
+        case .system: "system"
+        case let .picture(choice): "pic:\(choice.rawValue)"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .sky: tr("Weather sky")
+        case .light: tr("Rowing light colour")
+        case .appPicture: tr("Club page picture")
+        case .satellite: tr("Satellite picture of the lake")
+        case .system: tr("Plain, light or dark")
+        case let .picture(choice): choice.title
+        }
+    }
+
+    /// Whether the widget draws a picture the app prepares for it.
+    var usesPicture: Bool {
+        switch self {
+        case .appPicture, .picture, .satellite: true
+        default: false
         }
     }
 }

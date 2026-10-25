@@ -548,13 +548,7 @@ private struct NowCard: View {
             .accessibilityHint(tr("Opens a chart and more about this value"))
     }
 
-    /// Ice only when it matters: the estimate says more than open water, or
-    /// the water is cold enough to freeze.
-    private var iceValue: String? {
-        if let ice = forecast.ice, ice.status != "unavailable", ice.status != "open" { return ice.title }
-        if let c = water?.celsius, c < 8 { return forecast.ice.map(\.title) ?? tr("No data yet") }
-        return nil
-    }
+    private var iceValue: String? { forecast.iceValue }
 
     /// While DWD has no warning, one line says so; the warnings card itself
     /// only shows while a warning is issued or DWD could not be checked.

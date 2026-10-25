@@ -1,3 +1,4 @@
+import CoreImage
 import SwiftUI
 import UIKit
 
@@ -34,12 +35,25 @@ enum BackgroundLibrary {
 
     private static let cache = NSCache<NSString, UIImage>()
 
+    /// Each saved club's lake and the home base, for the satellite picture;
+    /// kept up to date by WidgetBridge whenever the saved clubs change.
+    static var lakeByClub: [String: String] = [:]
+    static var homeClubID: String?
+
     /// The picture for a choice, or nil for "no picture" or a missing file.
-    /// Thumbnails are scaled down for the picker's grid.
-    static func image(for choice: BackgroundChoice, thumbnail: Bool = false) -> UIImage? {
+    /// The satellite picture is the club's lake's (the home base's without a
+    /// club) and nil until it has loaded. Thumbnails are scaled down for the picker's grid.
+    static func image(for choice: BackgroundChoice, clubID: String? = nil, thumbnail: Bool = false) -> UIImage? {
         let url: URL?
         switch choice {
         case .noPicture: return nil
+        case .satellite:
+#if WIDGET_EXTENSION
+            return nil
+#else
+            guard let club = clubID ?? homeClubID, let lake = lakeByClub[club] else { return nil }
+            return MainActor.assumeIsolated { SatellitePictureStore.shared.backgroundImage(lake) }
+#endif
         case let .sample(id): url = Bundle.main.url(forResource: "bg-\(id)", withExtension: "jpg")
         case let .custom(name): url = userDirectory.appending(path: name)
         }
@@ -77,7 +91,15 @@ enum BackgroundLibrary {
         cache.removeObject(forKey: "\(url.path)|false" as NSString)
     }
 
-    private static func scaled(_ image: UIImage, maxSide: CGFloat) -> UIImage {
+    /// A copy blurred once, for pictures that stay blurred (the widgets').
+    static func blurred(_ image: UIImage, radius: Double = 24) -> UIImage {
+        guard let input = CIImage(image: image) else { return image }
+        let blur = input.clampedToExtent().applyingGaussianBlur(sigma: radius).cropped(to: input.extent)
+        guard let cg = CIContext().createCGImage(blur, from: input.extent) else { return image }
+        return UIImage(cgImage: cg)
+    }
+
+    static func scaled(_ image: UIImage, maxSide: CGFloat) -> UIImage {
         let side = max(image.size.width, image.size.height)
         guard side > maxSide else { return image }
         let factor = maxSide / side
@@ -242,7 +264,7 @@ struct PageBackground: ViewModifier {
 
     func body(content: Content) -> some View {
         let settings = AppSettings.shared
-        let image = BackgroundLibrary.image(for: settings.background(for: page, clubID: clubID))
+        let image = BackgroundLibrary.image(for: settings.background(for: page, clubID: clubID), clubID: clubID)
         content
             .environment(\.surface, image == nil ? .plain : settings.tileSurface)
             .background {
