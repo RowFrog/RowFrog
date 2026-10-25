@@ -28,9 +28,9 @@ struct RowingWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        RowingWidgetView(snapshot: entry.snapshot, family: family, focus: entry.focus)
+        RowingWidgetView(snapshot: entry.snapshot, family: family, focus: entry.focus, plain: entry.background == .system)
             .containerBackground(for: .widget) {
-                WidgetSky(snapshot: entry.snapshot)
+                WidgetBackdrop(background: entry.background, snapshot: entry.snapshot, picture: entry.picture)
             }
             .widgetURL(URL(string: "rowfrog://club/\(entry.clubID)"))
     }
@@ -47,6 +47,36 @@ struct RowingWidgetIntent: WidgetConfigurationIntent {
 
     @Parameter(title: "Show", default: .hourly)
     var focus: FocusOption
+
+    @Parameter(title: "Background", default: .app)
+    var background: BackgroundOption
+}
+
+/// A widget's own background, or the one set in the app.
+enum BackgroundOption: String, AppEnum {
+    case app, sky, light, picture, satellite, system
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Background"
+    static var caseDisplayRepresentations: [BackgroundOption: DisplayRepresentation] = [
+        .app: "As set in the app",
+        .sky: "Weather sky",
+        .light: "Rowing light colour",
+        .picture: "Club page picture",
+        .satellite: "Satellite picture of the lake",
+        .system: "Plain, light or dark",
+    ]
+
+    /// nil for "as set in the app".
+    var background: WidgetBackground? {
+        switch self {
+        case .app: nil
+        case .sky: .sky
+        case .light: .light
+        case .picture: .appPicture
+        case .satellite: .satellite
+        case .system: .system
+        }
+    }
 }
 
 enum FocusOption: String, AppEnum {
@@ -97,6 +127,9 @@ struct RowingEntry: TimelineEntry {
     let clubID: String
     let snapshot: RowingSnapshot
     let focus: WidgetFocus
+    var background: WidgetBackground = .sky
+    /// The picture the app prepared for a picture background, at widget size.
+    var picture: UIImage?
 }
 
 struct RowingProvider: AppIntentTimelineProvider {
@@ -109,9 +142,12 @@ struct RowingProvider: AppIntentTimelineProvider {
     }
 
     func timeline(for configuration: RowingWidgetIntent, in context: Context) async -> Timeline<RowingEntry> {
-        // A new forecast every half hour; until then the light moves on hour by hour.
+        // A new forecast as often as Settings > Widgets says (every half hour unless
+        // changed); until then the light moves on hour by hour. "Only after using the
+        // app" waits for the app, which asks for a new timeline as the user leaves it.
         let upcoming = await entries(for: configuration)
-        return Timeline(entries: upcoming, policy: .after(.now.addingTimeInterval(30 * 60)))
+        guard let interval = AppSettings.shared.widgetUpdates.interval else { return Timeline(entries: upcoming, policy: .never) }
+        return Timeline(entries: upcoming, policy: .after(.now.addingTimeInterval(interval)))
     }
 
     private func entries(for configuration: RowingWidgetIntent) async -> [RowingEntry] {
@@ -122,8 +158,12 @@ struct RowingProvider: AppIntentTimelineProvider {
         let clubID = configuration.club?.id ?? homeID
         let names = shared.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
         let forecast = await loadForecast(clubID)
+        let background = configuration.background.background ?? AppSettings.shared.widgetBackground(for: clubID)
+        let picture = picture(for: background, clubID: clubID)
         let now = Date.now
-        let hourStarts = (0..<6).compactMap { offset -> Date? in
+        // Hours ahead: enough to last until the next load.
+        let count = AppSettings.shared.widgetUpdates.interval == nil ? 12 : 6
+        let hourStarts = (0..<count).compactMap { offset -> Date? in
             guard offset > 0 else { return now }
             let next = Calendar.current.dateInterval(of: .hour, for: now)?.end ?? now
             return next.addingTimeInterval(Double(offset - 1) * 3600)
@@ -132,9 +172,23 @@ struct RowingProvider: AppIntentTimelineProvider {
             RowingEntry(
                 date: date, clubID: clubID,
                 snapshot: RowingSnapshot(date: date, clubName: names[clubID] ?? clubID, isHome: clubID == homeID, forecast: forecast),
-                focus: configuration.focus.focus
+                focus: configuration.focus.focus, background: background, picture: picture
             )
         }
+    }
+
+    /// The small file the app made for this club; when it is missing, the app is
+    /// asked to make it the next time it runs, and the sky shows until then.
+    private func picture(for background: WidgetBackground, clubID: String) -> UIImage? {
+        let kind: WidgetPictures.Kind
+        switch background {
+        case .appPicture, .picture: kind = .picture
+        case .satellite: kind = .satellite
+        default: return nil
+        }
+        if let url = WidgetPictures.file(clubID, kind), let image = UIImage(contentsOfFile: url.path) { return image }
+        WidgetShared.defaults.set(true, forKey: WidgetPictures.wantedKey(clubID, kind))
+        return nil
     }
 
     /// The live forecast, or the last one fetched when the backend can't be reached.

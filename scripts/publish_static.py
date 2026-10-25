@@ -50,7 +50,7 @@ from fastapi.testclient import TestClient
 
 from rowfrog import api, ice, lake_view, locations, outlines, water_estimate, weather_models
 from rowfrog.api import LOCAL, app
-from rowfrog.sources import dwd_radar, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
+from rowfrog.sources import dwd_radar, dwd_warnings, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
 
 try:  # the usage counter (PR #15) may not be part of this checkout yet
     from rowfrog import usage
@@ -94,6 +94,13 @@ PICTURE_SEARCH_VERSION = 4
 PICTURE_FIRST_SEARCH_BEFORE = 3
 PICTURES_PER_RUN = 40
 
+# Each club's DWD warn cell (its municipality) is looked up once and again
+# after this many days; then a few queries read the local warnings of every
+# club, instead of one query per club and run.
+WARN_CELL_DAYS = 90
+# Cell lookups at the same time (only the first run looks up every club).
+WARN_CELL_LOOKUPS = 8
+
 
 def last_ready(now: datetime, every_hours: int, offset: timedelta = timedelta()) -> datetime:
     """When the newest forecast run (every `every_hours` from 00 UTC) became ready."""
@@ -125,6 +132,7 @@ class State:
         self.models: dict[str, tuple[datetime, list]] = {}  # "<club>@<model>" -> loaded, weather
         # Satellite lake temperature: day looked, LSWT files read (name -> readings per lake), readings per lake.
         self.water_satellite: tuple[date | None, dict, dict[str, list]] = (None, {}, {})
+        self.warn_cells: dict[str, tuple[datetime, int | None]] = {}  # club -> looked up, DWD warn cell (None outside Germany)
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
@@ -132,6 +140,7 @@ class State:
                 self.outlooks = saved.get("outlooks", {})
                 self.models = saved.get("models", {})
                 self.water_satellite = saved.get("water_satellite", (None, {}, {}))
+                self.warn_cells = saved.get("warn_cells", {})
                 api._last_water.update(saved.get("water", {}))
                 api._ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
@@ -150,6 +159,7 @@ class State:
             "models": self.models,
             "water_satellite": self.water_satellite,
             "water": api._last_water,
+            "warn_cells": self.warn_cells,
         }
         self.path.write_bytes(pickle.dumps(body))
 
@@ -192,6 +202,60 @@ def club_weather(state: State, clubs: list[locations.Club], used: set[str], with
     for club in clubs:
         if club.id in state.clubs:
             api._primed_weather[club.id] = state.clubs[club.id][1]
+
+
+def local_warnings(state: State, clubs: list[locations.Club], now: datetime) -> None:
+    """Reads the local DWD warnings of all `clubs` in a few queries and hands them to the API.
+
+    A club whose cell could not be looked up, or every club when the warnings
+    query fails, asks DWD itself as before.
+    """
+
+    async def load() -> tuple[int, dict[int, list] | None]:
+        due_ = [
+            c for c in clubs
+            if c.id not in state.warn_cells or now - state.warn_cells[c.id][0] > timedelta(days=WARN_CELL_DAYS)
+        ]
+        gate = asyncio.Semaphore(WARN_CELL_LOOKUPS)
+        async with httpx.AsyncClient() as client:
+
+            async def look_up(club: locations.Club) -> None:
+                async with gate:
+                    try:
+                        cell = await dwd_warnings.fetch_warn_cell(client, club.launch_point.lon, club.launch_point.lat)
+                    except (httpx.HTTPError, ValueError, KeyError):
+                        return
+                    state.warn_cells[club.id] = (now, cell)
+
+            await asyncio.gather(*(look_up(c) for c in due_))
+            cells = {state.warn_cells[c.id][1] for c in clubs if c.id in state.warn_cells} - {None}
+            try:
+                return len(due_), await dwd_warnings.fetch_local_warnings_for_cells(client, cells)
+            except (httpx.HTTPError, ValueError, KeyError) as e:
+                print(f"  local warnings for all clubs failed, each club asks DWD itself: {e!r}")
+                return len(due_), None
+
+    looked, by_cell = asyncio.run(load())
+    if by_cell is None:
+        return
+    primed = 0
+    for club in clubs:
+        if club.id in state.warn_cells:
+            cell = state.warn_cells[club.id][1]
+            api._primed_local_warnings[club.id] = [] if cell is None else by_cell.get(cell, [])
+            primed += 1
+    queries = -(-len(by_cell) // dwd_warnings.CELLS_PER_QUERY)
+    print(f"  local warnings for {primed} of {len(clubs)} clubs in {queries} DWD queries ({looked} warn cells looked up)")
+
+
+def refresh_block(used: bool) -> dict:
+    """How often this club's file and weather are renewed, for the app's tip on
+    clubs nobody opened lately: their file is rewritten only in the all-clubs
+    runs (every 6 hours) and their weather loaded every 12 hours. Opening the
+    club counts it as used, so the next half-hourly run takes it up."""
+    if used:
+        return {"used": True, "fileEveryHours": 0.5, "weatherEveryHours": WEATHER_HOURS["used"]}
+    return {"used": False, "fileEveryHours": 6, "weatherEveryHours": WEATHER_HOURS["other with usage"]}
 
 
 def club_outlooks(state: State, clubs: list[locations.Club], used: set[str], now: datetime) -> None:
@@ -531,6 +595,7 @@ def main() -> int:
     club_weather(state, clubs, used_clubs, with_usage, now)
     club_outlooks(state, clubs, used_clubs, now)
     model_pairs = model_weather(state, clubs, now)
+    local_warnings(state, clubs, now)
     all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
     satellite_ice(state, all_lakes, now)
     satellite_water(state, all_lakes, now)
@@ -555,6 +620,8 @@ def main() -> int:
         body = resp.json()
         if club.id in radar:
             body["radar"] = radar[club.id]
+        if with_usage:
+            body["refresh"] = refresh_block(club.id in used_clubs)
         write(args.out / "clubs" / club.id / "forecast", body)
     print(f"Wrote {len(clubs) - len(failed)} of {len(clubs)} forecasts to {args.out}")
     written = 0

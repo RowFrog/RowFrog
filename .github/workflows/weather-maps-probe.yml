@@ -1,0 +1,28 @@
+name: Weather maps data check
+
+# Looks for free map layers and model grids for wind, temperature, feels like,
+# humidity, pressure, UV, lightning and fog (scripts/weather_maps_probe.py):
+# DWD GeoServer, EUMETSAT View and DWD's ICON-D2 open data. Runs when the
+# script changes, or by hand from the Actions tab. Nothing is stored.
+
+on:
+  push:
+    paths:
+      - scripts/weather_maps_probe.py
+      - .github/workflows/weather-maps-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install httpx eccodes
+      - run: python3 scripts/weather_maps_probe.py

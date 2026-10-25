@@ -146,6 +146,9 @@ final class LocationStore {
         return (x * x + y * y).squareRoot() * 111.2
     }
 
+    /// Every lake of the loaded countries.
+    var lakes: [Lake] { Array(Set(lakesByClub.values)) }
+
     func lake(of club: Club) -> Lake? {
         if club.isOwnPlace { return ownPlace(club.id)?.lake }
         return lakesByClub[club.id]

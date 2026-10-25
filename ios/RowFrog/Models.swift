@@ -376,6 +376,14 @@ extension ClubForecast {
         guard let ice, ice.basis == "model" || ice.basis == "satellite" else { return nil }
         return ice.waterTemperatureC
     }
+
+    /// The ice value for the top tile and the widgets, only when it matters:
+    /// the estimate says more than open water, or the water is cold enough to freeze.
+    var iceValue: String? {
+        if let ice, ice.status != "unavailable", ice.status != "open" { return ice.title }
+        if let c = waterTemperature?.celsius, c < 8 { return ice.map(\.title) ?? tr("No data yet") }
+        return nil
+    }
 }
 
 /// Without a station: a satellite reading of the lake's surface temperature
@@ -435,6 +443,8 @@ struct ClubForecast: Codable, Hashable {
     var outlook: [ForecastHour]? = nil
     /// DWD's rain radar at the launch point for the widget, for the clubs people use.
     var radar: RainRadar? = nil
+    /// How often the backend renews this club; missing without the usage counter.
+    var refresh: Refresh? = nil
     /// Without a station, for lakes the satellites see; missing from older backends.
     var waterEstimate: WaterEstimate? = nil
 
@@ -446,6 +456,13 @@ struct ClubForecast: Codable, Hashable {
     /// makes every forecast out of date, for screenshots.
     func isStale(at date: Date = .now) -> Bool {
         UserDefaults.standard.bool(forKey: "RWStaleForecast") || date.timeIntervalSince(generatedAt) > Self.staleAfter
+    }
+
+    /// True for a club nobody opened lately: its file comes every 6 hours and
+    /// its weather every 12 until the next half-hourly run takes it up.
+    /// `-RWSlowRefresh YES` shows it on every club, for screenshots.
+    var isSlowRefresh: Bool {
+        UserDefaults.standard.bool(forKey: "RWSlowRefresh") || refresh?.used == false
     }
 
     /// How much the pressure changes from this hour to `hours` later, in hPa.
@@ -575,6 +592,14 @@ enum SunState: Hashable {
 struct RadarStep: Codable, Hashable {
     let time: Date
     let mmPerHour: Double
+}
+
+/// The backend renews the clubs people opened in the last 7 days every half
+/// hour (weather after every model run, 3 hours), the others less often.
+struct Refresh: Codable, Hashable {
+    let used: Bool
+    let fileEveryHours: Double
+    let weatherEveryHours: Double
 }
 
 struct RainRadar: Codable, Hashable {

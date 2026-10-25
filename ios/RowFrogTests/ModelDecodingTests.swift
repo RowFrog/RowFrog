@@ -140,6 +140,16 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertNil(try APIClient.decoder.decode(ClubForecast.self, from: Data(#"{"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": []}"#.utf8)).forecastSource)
     }
 
+    func testDecodesRefreshAndFlagsClubsNobodyOpened() throws {
+        let base = #"{"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": []"#
+        let slow = try APIClient.decoder.decode(ClubForecast.self, from: Data((base + #", "refresh": {"used": false, "fileEveryHours": 6, "weatherEveryHours": 12}}"#).utf8))
+        XCTAssertEqual(slow.refresh, Refresh(used: false, fileEveryHours: 6, weatherEveryHours: 12))
+        XCTAssertTrue(slow.isSlowRefresh)
+        let used = try APIClient.decoder.decode(ClubForecast.self, from: Data((base + #", "refresh": {"used": true, "fileEveryHours": 0.5, "weatherEveryHours": 3}}"#).utf8))
+        XCTAssertFalse(used.isSlowRefresh)
+        XCTAssertFalse(try APIClient.decoder.decode(ClubForecast.self, from: Data((base + "}").utf8)).isSlowRefresh, "no tip without the usage counter")
+    }
+
     func testDecodesPickedModelAndChoices() throws {
         let json = """
         {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T11:20:00+00:00", "attribution": [], "hours": [],

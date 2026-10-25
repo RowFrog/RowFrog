@@ -146,13 +146,15 @@ struct LaunchPointMapCard: View {
     }
 }
 
-/// The launch point's map as a still picture, made once per club, size and
-/// light or dark look, with the club's pin in the middle.
-private struct LaunchPointSnapshot: View {
+/// A map as a still picture, made once per place, size and light or dark
+/// look, with a mark in the middle: the launch point's (and the water station's).
+/// Still pictures cost no battery while the page scrolls; a tap shows the live map.
+struct LaunchPointSnapshot: View {
     let coordinate: CLLocationCoordinate2D
     let region: MKCoordinateRegion
-    /// The club mark used on every map (LocationStore.markSymbol).
+    /// The club mark used on every map (LocationStore.markSymbol), or another place's symbol.
     let symbol: String
+    var tint: Color = .blue
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.displayScale) private var displayScale
     @State private var image: UIImage?
@@ -161,7 +163,7 @@ private struct LaunchPointSnapshot: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let key = "\(coordinate.latitude),\(coordinate.longitude),\(Int(geometry.size.width)),\(colorScheme == .dark)" as NSString
+            let key = "\(coordinate.latitude),\(coordinate.longitude),\(region.span.latitudeDelta),\(Int(geometry.size.width)),\(colorScheme == .dark)" as NSString
             ZStack {
                 if let image {
                     Image(uiImage: image).resizable()
@@ -172,7 +174,7 @@ private struct LaunchPointSnapshot: View {
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.white)
                     .frame(width: 30, height: 30)
-                    .background(.blue, in: Circle())
+                    .background(tint, in: Circle())
                     .overlay(Circle().stroke(.white, lineWidth: 2))
             }
             .frame(width: geometry.size.width, height: geometry.size.height)

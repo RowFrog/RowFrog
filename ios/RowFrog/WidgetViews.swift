@@ -23,6 +23,27 @@ enum WidgetShared {
     static func loadedKey(_ clubID: String) -> String { "RWWidgetLoaded-\(clubID)" }
 }
 
+/// Pictures the app prepares for the widgets' backgrounds, at widget size, in
+/// the shared app group: <club>-picture.jpg (the club page's or a chosen picture)
+/// and <club>-satellite.jpg. The widget only loads these small files.
+enum WidgetPictures {
+    enum Kind: String { case picture, satellite }
+
+    static var folder: URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: WidgetShared.group)?
+            .appending(path: "WidgetBackgrounds", directoryHint: .isDirectory)
+    }
+
+    static func file(_ clubID: String, _ kind: Kind) -> URL? {
+        folder?.appending(path: "\(clubID)-\(kind.rawValue).jpg")
+    }
+
+    /// What the file was made from, so the app makes it again only after a change.
+    static func sourceKey(_ clubID: String, _ kind: Kind) -> String { "RWWidgetPictureSource-\(clubID)-\(kind.rawValue)" }
+    /// Set by the widget when a widget of its own asks for a picture the app has not made yet.
+    static func wantedKey(_ clubID: String, _ kind: Kind) -> String { "RWWidgetPictureWanted-\(clubID)-\(kind.rawValue)" }
+}
+
 /// What the medium widget shows below the rowing light; the large one shows it first.
 enum WidgetFocus: String, CaseIterable, Codable {
     case hourly, conditions, windows
@@ -105,6 +126,8 @@ struct RowingWidgetView: View {
     let snapshot: RowingSnapshot
     let family: WidgetFamily
     var focus: WidgetFocus = .hourly
+    /// On the plain light or dark background the text follows the system's colours instead of white.
+    var plain = false
 
     var body: some View {
         Group {
@@ -125,22 +148,23 @@ struct RowingWidgetView: View {
                 }
             }
         }
-        .foregroundStyle(family.isAccessory ? AnyShapeStyle(HierarchicalShapeStyle.primary) : AnyShapeStyle(Color.white))
+        .foregroundStyle(family.isAccessory || plain ? AnyShapeStyle(HierarchicalShapeStyle.primary) : AnyShapeStyle(Color.white))
         .environment(\.locale, AppSettings.shared.locale)
     }
 
     // MARK: Home screen
 
-    /// The light and why on top, temperature and sky below, the club at the bottom.
+    /// The light and why on top, temperature, feels like and sky below, the club at the bottom.
     private var small: some View {
-        VStack(alignment: .leading, spacing: 4) {
+        VStack(alignment: .leading, spacing: 3) {
             if let hour = snapshot.current {
                 lightAndWhy(hour)
                 Spacer(minLength: 0)
                 HStack(alignment: .center, spacing: 6) {
-                    temperature.font(.system(size: 38, weight: .light))
+                    temperature(hour, size: 34)
                     skyIcon(hour).font(.title2)
                 }
+                feelsLike(hour)
             }
             title
         }
@@ -158,9 +182,9 @@ struct RowingWidgetView: View {
     private var large: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
-            Divider().overlay(.white.opacity(0.35))
+            Divider().overlay(rule)
             ForEach(Array(orderedFocus.enumerated()), id: \.element) { index, section in
-                if index > 0 { Divider().overlay(.white.opacity(0.35)) }
+                if index > 0 { Divider().overlay(rule) }
                 focusSection(section, rows: section == .conditions ? 2 : 3)
             }
             Spacer(minLength: 0)
@@ -171,13 +195,13 @@ struct RowingWidgetView: View {
         HStack(alignment: .top, spacing: 20) {
             VStack(alignment: .leading, spacing: 10) {
                 header
-                Divider().overlay(.white.opacity(0.35))
+                Divider().overlay(rule)
                 focusSection(.conditions, rows: 2)
                 Spacer(minLength: 0)
             }
             VStack(alignment: .leading, spacing: 10) {
                 hourly(count: 8)
-                Divider().overlay(.white.opacity(0.35))
+                Divider().overlay(rule)
                 windows(limit: 4)
                 Spacer(minLength: 0)
             }
@@ -195,6 +219,8 @@ struct RowingWidgetView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
+
+    private var rule: Color { plain ? Color.secondary.opacity(0.4) : .white.opacity(0.35) }
 
     private var orderedFocus: [WidgetFocus] {
         [focus] + WidgetFocus.allCases.filter { $0 != focus }
@@ -222,11 +248,33 @@ struct RowingWidgetView: View {
         }
     }
 
-    private var temperature: Text {
-        Text(Format.degrees(snapshot.current?.temperatureC))
+    /// The air temperature large with its thermometer, as in the club page's top tile.
+    private func temperature(_ hour: ForecastHour, size: CGFloat) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
+            Image(systemName: Condition.temperature.symbol)
+                .symbolRenderingMode(.hierarchical)
+                .font(.system(size: size * 0.42))
+            Text(Format.degrees(hour.temperatureC))
+                .font(.system(size: size, weight: .light))
+        }
+        .accessibilityElement(children: .combine)
+        .accessibilityLabel(tr("Air temperature %@", Format.temperature(hour.temperatureC)))
     }
 
-    /// The light, why and club on the left; sky and temperature on the right.
+    /// "Feels like 9°" with its symbol, right under the temperature.
+    @ViewBuilder
+    private func feelsLike(_ hour: ForecastHour) -> some View {
+        if let feels = hour.apparentTemperatureC {
+            Label(tr("Feels like %@", Format.degrees(feels)), systemImage: Condition.feelsLike.symbol)
+                .font(.caption.weight(.medium))
+                .symbolRenderingMode(.hierarchical)
+                .opacity(0.9)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+        }
+    }
+
+    /// The light, why and club on the left; sky, temperature and feels like on the right.
     private var header: some View {
         HStack(alignment: .top) {
             if let hour = snapshot.current {
@@ -235,9 +283,12 @@ struct RowingWidgetView: View {
                     title
                 }
                 Spacer(minLength: 8)
-                HStack(alignment: .center, spacing: 6) {
-                    skyIcon(hour).font(.title)
-                    temperature.font(.system(size: 40, weight: .light))
+                VStack(alignment: .trailing, spacing: 0) {
+                    HStack(alignment: .center, spacing: 6) {
+                        skyIcon(hour).font(.title)
+                        temperature(hour, size: 38)
+                    }
+                    feelsLike(hour)
                 }
             }
         }
@@ -246,7 +297,7 @@ struct RowingWidgetView: View {
     /// The rowing light large, with the reason under it.
     private func lightAndWhy(_ hour: ForecastHour) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            LightPill(light: hour.light, compact: false, stale: snapshot.isStale)
+            LightPill(light: hour.light, compact: false, stale: snapshot.isStale, plain: plain)
             Text(detailLine(hour))
                 .font(.caption.weight(.medium))
                 .opacity(0.9)
@@ -299,19 +350,28 @@ struct RowingWidgetView: View {
         }
     }
 
+    /// The top tile's values in its order: water, wind, waves, then rain,
+    /// visibility and daylight (ice joins in winter, daylight then gets a line of its own).
     private func conditions(rows: Int) -> some View {
         let hour = snapshot.current
+        let forecast = snapshot.forecast
+        let water: String = {
+            if let measured = forecast?.waterTemperature?.celsius { return Format.temperature(measured, digits: 1) }
+            if let estimate = forecast?.estimatedWaterC { return "≈ " + Format.temperature(estimate) }
+            return "–"
+        }()
         var tiles: [ConditionTile] = [
+            ConditionTile(condition: .waterTemperature, value: water),
             ConditionTile(condition: .wind, value: Format.windRange(hour?.windSpeedMs, hour?.windGustMs)),
             ConditionTile(condition: .waves, value: Format.waves(hour?.waveHeightM)),
-            ConditionTile(condition: .waterTemperature, value: Format.temperature(snapshot.forecast?.waterTemperature?.celsius)),
         ]
         if rows > 1 {
             tiles += [
-                ConditionTile(condition: .feelsLike, value: Format.temperature(hour?.apparentTemperatureC)),
+                ConditionTile(condition: .precipitation, value: hour.flatMap(precipitationText) ?? tr("None")),
                 ConditionTile(condition: .visibility, value: Format.distance(hour?.visibilityM)),
-                ConditionTile(condition: .daylight, value: sunText),
             ]
+            if let ice = forecast?.iceValue { tiles.append(ConditionTile(condition: .ice, value: ice)) }
+            tiles.append(ConditionTile(condition: .daylight, value: sunText))
         }
         return Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 8) {
             ForEach(0..<(tiles.count + 2) / 3, id: \.self) { row in
@@ -427,6 +487,7 @@ struct LightPill: View {
     let light: Light
     let compact: Bool
     var stale = false
+    var plain = false
 
     var body: some View {
         HStack(spacing: 5) {
@@ -441,24 +502,85 @@ struct LightPill: View {
         }
         .padding(.horizontal, compact ? 8 : 10)
         .padding(.vertical, compact ? 3 : 5)
-        .background(.white.opacity(0.22), in: Capsule())
+        .background(plain ? Color.secondary.opacity(0.15) : .white.opacity(0.22), in: Capsule())
     }
 }
 
-/// The Weather widgets' sky: blue by day, dark blue at night, and a touch of
-/// the rowing light's colour when it is amber or red.
+/// A sky in the weather's colours, as in the iOS Weather widgets: blue when
+/// clear, grey-blue when cloudy, slate in rain, pale in fog, navy at night and
+/// warm around sunrise and sunset. Amber or red adds a glow of that colour.
 struct WidgetSky: View {
     let snapshot: RowingSnapshot
 
     var body: some View {
-        let colors: [Color] = snapshot.isNight
-            ? [Color(red: 0.05, green: 0.09, blue: 0.2), Color(red: 0.12, green: 0.2, blue: 0.36)]
-            : [Color(red: 0.2, green: 0.5, blue: 0.86), Color(red: 0.45, green: 0.7, blue: 0.95)]
         LinearGradient(colors: colors, startPoint: .top, endPoint: .bottom)
             .overlay {
                 if let light = snapshot.current?.light, light != .green {
                     LinearGradient(colors: [light.color.opacity(0.35), .clear], startPoint: .bottomTrailing, endPoint: .center)
                 }
             }
+    }
+
+    private var colors: [Color] {
+        func rgb(_ r: Double, _ g: Double, _ b: Double) -> Color { Color(red: r, green: g, blue: b) }
+        guard let hour = snapshot.current else { return [rgb(0.2, 0.5, 0.86), rgb(0.45, 0.7, 0.95)] }
+        let sky = Sky(hour: hour)
+        if snapshot.isNight {
+            switch sky {
+            case .clear, .mostlyClear, .partlyCloudy: return [rgb(0.04, 0.07, 0.18), rgb(0.12, 0.19, 0.35)]
+            default: return [rgb(0.1, 0.12, 0.17), rgb(0.2, 0.23, 0.3)]
+            }
+        }
+        // Within 45 minutes of sunrise or sunset: dawn and dusk colours.
+        if case let .up(sunrise, sunset)? = snapshot.forecast?.sunState(at: snapshot.date),
+           min(abs(snapshot.date.timeIntervalSince(sunrise)), abs(snapshot.date.timeIntervalSince(sunset))) < 45 * 60,
+           [.clear, .mostlyClear, .partlyCloudy].contains(sky) {
+            return [rgb(0.29, 0.36, 0.62), rgb(0.93, 0.6, 0.45)]
+        }
+        switch sky {
+        case .clear, .mostlyClear: return [rgb(0.2, 0.5, 0.86), rgb(0.45, 0.7, 0.95)]
+        case .partlyCloudy: return [rgb(0.3, 0.52, 0.78), rgb(0.6, 0.72, 0.86)]
+        case .cloudy: return [rgb(0.36, 0.42, 0.5), rgb(0.59, 0.64, 0.71)]
+        case .fog: return [rgb(0.55, 0.59, 0.64), rgb(0.74, 0.77, 0.8)]
+        case .drizzle, .rain, .showers, .freezingRain: return [rgb(0.26, 0.31, 0.39), rgb(0.43, 0.49, 0.57)]
+        case .heavyRain, .thunderstorm, .hail: return [rgb(0.17, 0.2, 0.27), rgb(0.32, 0.36, 0.44)]
+        case .snow: return [rgb(0.55, 0.62, 0.72), rgb(0.8, 0.84, 0.9)]
+        }
+    }
+}
+
+/// What a widget draws behind its content, for each background choice. A
+/// picture the app has not prepared yet falls back to the sky.
+struct WidgetBackdrop: View {
+    let background: WidgetBackground
+    let snapshot: RowingSnapshot
+    var picture: UIImage?
+
+    var body: some View {
+        switch background {
+        case .sky:
+            WidgetSky(snapshot: snapshot)
+        case .light:
+            let tint = snapshot.current?.light.color(stale: snapshot.isStale) ?? .gray
+            LinearGradient(colors: [Color(red: 0.11, green: 0.12, blue: 0.14), Color(red: 0.16, green: 0.16, blue: 0.2)],
+                           startPoint: .top, endPoint: .bottom)
+                .overlay {
+                    RadialGradient(colors: [tint.opacity(0.6), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 320)
+                }
+        case .appPicture, .picture, .satellite:
+            if let picture {
+                Color.clear
+                    .overlay { Image(uiImage: picture).resizable().scaledToFill() }
+                    .clipped()
+                    .overlay {
+                        // Darker towards the bottom, so the white text stays readable.
+                        LinearGradient(colors: [.black.opacity(0.3), .black.opacity(0.6)], startPoint: .top, endPoint: .bottom)
+                    }
+            } else {
+                WidgetSky(snapshot: snapshot)
+            }
+        case .system:
+            Color(.systemBackground)
+        }
     }
 }

@@ -239,11 +239,11 @@ enum TourPage: Int, CaseIterable, Identifiable {
         ]
         case .locations: [
             TourPoint(symbol: "hand.draw", text: tr("Swipe left and right to move between your clubs. The house marks your home base.")),
-            TourPoint(symbol: "magnifyingglass", text: tr("Search the list for any club in the DRV club directory and tap + to add it.")),
+            TourPoint(symbol: "magnifyingglass", text: tr("Search the list for any club in Germany, Austria or Switzerland and tap + to add it.")),
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("Touch and hold a club, then drag to reorder.")),
             TourPoint(symbol: "trash", text: tr("Swipe a club in the list to the left to remove it.")),
             TourPoint(symbol: "arrow.clockwise", text: tr("Pull a page or the list down to refresh.")),
-            TourPoint(symbol: "apps.iphone", text: tr("Add a Row Frog widget to your home or lock screen to see the rowing light at a glance.")),
+            TourPoint(symbol: "apps.iphone", text: tr("A Row Frog widget on your home or lock screen shows the rowing light and rain on the radar in the next two hours.")),
         ]
         case .wideScreen: [
             TourPoint(symbol: "sidebar.left", text: tr("The location list stays on the left, the club page on the right.")),
@@ -252,7 +252,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         ]
         case .settings: [
             TourPoint(symbol: "globe", text: tr("Language: English or German.")),
-            TourPoint(symbol: "ruler", text: tr("Units for temperature, wind, waves, rain and distances.")),
+            TourPoint(symbol: "ruler", text: tr("Units for temperature, wind, waves, rain, distances and air pressure.")),
             TourPoint(symbol: "circle.lefthalf.filled", text: tr("Light, dark or like your phone.")),
             TourPoint(symbol: "photo", text: tr("Background pictures, including your own photos.")),
             TourPoint(symbol: "app.badge", text: tr("Your choice of app icon.")),
@@ -423,7 +423,10 @@ private struct ClubChoicePage: View {
                     } header: {
                         if !suggestions.isEmpty { Text(near == nil ? tr("Suggestions") : tr("Near you")) }
                     } footer: {
-                        Text(tr("Search by club, lake or town to find any club in the DRV club directory."))
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text(tr("Search by club, lake or town to find any club in Germany, Austria or Switzerland."))
+                            Text(tr("Clubs nobody has opened for a while update less often at first. After you add one, it is up to date within about 30 minutes."))
+                        }
                     }
                 } else {
                     let results = locations.search(search)
@@ -611,6 +614,13 @@ struct AppIconTip: Tip {
     var image: Image? { Image(systemName: "app.badge") }
 }
 
+/// In the settings only, by the owner's wish: no tour step.
+struct SaveDataTip: Tip {
+    var title: Text { Text(tr("Out on mobile data?")) }
+    var message: Text? { Text(tr("Switch on Save mobile data: satellite pictures then load only when you tap them and the radar needs fewer downloads. Forecasts and warnings always load.")) }
+    var image: Image? { Image(systemName: "antenna.radiowaves.left.and.right") }
+}
+
 struct LakeViewTip: Tip {
     var title: Text { Text(tr("Look across the lake")) }
     var message: Text? { Text(tr("Tap the map to see the rowing light, waves and wind for the whole lake, hour by hour. Tap the water for the details of one spot.")) }
@@ -687,6 +697,12 @@ struct BoatTimeTip: Tip {
     var title: Text { Text(tr("Lake at the boat's time")) }
     var message: Text? { Text(tr("Move the boat along your route to see the lake at the time you get there.")) }
     var image: Image? { Image(systemName: "figure.rower") }
+}
+
+struct RowImportTip: Tip {
+    var title: Text { Text(tr("Import a row")) }
+    var message: Text? { Text(tr("Rowed it before? Bring in a row from Apple Health or a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) in the bookmark menu, and plan with your real route and pace.")) }
+    var image: Image? { Image(systemName: "square.and.arrow.down.on.square") }
 }
 
 // MARK: - Location for nearby clubs

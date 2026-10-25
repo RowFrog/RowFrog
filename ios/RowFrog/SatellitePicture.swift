@@ -96,8 +96,9 @@ final class SatellitePictureStore {
             let picture = try await api.satellitePicture(lakeID: lakeID)
             if picture.latest != nil || picture.clearest != nil {
                 pictures[lakeID] = picture
-                // Fetch all of them now, so switching between them never waits.
-                for kind in picture.kinds {
+                // Fetch all of them now, so switching between them never waits;
+                // when saving data, only the one asked for (see `mayDownload`).
+                for kind in picture.kinds where !DataSaver.shared.saving {
                     if let shot = picture.shot(kind), let url = url(lakeID, file: shot.image, date: shot.date) {
                         Task { await image(url) }
                     }
@@ -123,12 +124,28 @@ final class SatellitePictureStore {
     /// Pictures already shown in this run of the app, by address.
     private(set) var images: [URL: UIImage] = [:]
     private var loading: Set<URL> = []
+    /// Lakes whose pictures the user asked for while the app saves data.
+    private(set) var allowedLakes: Set<String> = []
+
+    /// Whether a picture may come from the server: always, unless the app saves
+    /// data (DataSaver) and the user has not tapped to load this lake's pictures.
+    func mayDownload(_ lakeID: String) -> Bool {
+        !DataSaver.shared.saving || allowedLakes.contains(lakeID)
+    }
+
+    func allowDownloads(_ lakeID: String) { allowedLakes.insert(lakeID) }
+
+    /// Whether the picture is here without a download: in memory or in the cache folder.
+    func isKept(_ url: URL) -> Bool {
+        images[url] != nil || FileManager.default.fileExists(atPath: Self.cacheFile(for: url).path)
+    }
 
     /// A picture from memory, from the phone's cache folder or, the first time
     /// for that day's pass, from the server. A file's address names its day, so a
     /// kept copy never goes stale: a new pass has a new address.
+    /// With `download` false only memory and the cache folder are looked at.
     @discardableResult
-    func image(_ url: URL) async -> UIImage? {
+    func image(_ url: URL, download: Bool = true) async -> UIImage? {
         if let image = images[url] { return image }
         guard loading.insert(url).inserted else { return nil }
         defer { loading.remove(url) }
@@ -137,12 +154,40 @@ final class SatellitePictureStore {
             images[url] = image
             return image
         }
+        guard download else { return nil }
         guard let (data, response) = try? await URLSession.shared.data(from: url),
               (response as? HTTPURLResponse)?.statusCode == 200,
               let image = UIImage(data: data) else { return nil }
         images[url] = image
         Self.store(data, at: file)
         return image
+    }
+
+    /// The picture for a background: the clearest pass (else the mostly clear
+    /// or latest one). Until the lake's list has loaded, the copy kept from an
+    /// earlier run, so a background shows at once. Starts the loading when
+    /// needed; views that call this redraw once the picture is in.
+    func backgroundImage(_ lakeID: String) -> UIImage? {
+        if let picture = pictures[lakeID] {
+            guard let shot = picture.clearest ?? picture.mostlyClear ?? picture.latest,
+                  let url = url(lakeID, file: shot.image, date: shot.date) else { return nil }
+            if let image = images[url] { return image }
+            Task { await image(url) }
+            return nil
+        }
+        if !missing.contains(lakeID) { Task { await load(lakeID) } }
+        return Self.keptImage(lakeID)
+    }
+
+    /// The newest kept copy of a lake's clearest picture, from an earlier run.
+    private static func keptImage(_ lakeID: String) -> UIImage? {
+        let folder = URL.cachesDirectory.appending(path: "Satellite", directoryHint: .isDirectory)
+        for file in ["satellite-clearest.jpg", "satellite-mostly-clear.jpg", "satellite-latest.jpg"] {
+            let prefix = "\(lakeID)-\(file)-"
+            let names = (try? FileManager.default.contentsOfDirectory(atPath: folder.path))?.filter { $0.hasPrefix(prefix) } ?? []
+            if let newest = names.max(), let image = UIImage(contentsOfFile: folder.appending(path: newest).path) { return image }
+        }
+        return nil
     }
 
     /// Caches/Satellite/<lake>-<file>-<day>; the system may clear it when space runs low.
@@ -170,13 +215,15 @@ final class SatellitePictureStore {
 /// A satellite picture or ice map through SatellitePictureStore's caches.
 struct CachedSatelliteImage<Content: View>: View {
     let url: URL?
+    /// False while the app saves data and the user has not asked for the picture.
+    var download = true
     @ViewBuilder let content: (UIImage?) -> Content
     @MainActor private var store: SatellitePictureStore { .shared }
 
     var body: some View {
         content(url.flatMap { store.images[$0] })
-            .task(id: url) {
-                if let url { await store.image(url) }
+            .task(id: "\(url?.absoluteString ?? "")|\(download)") {
+                if let url { await store.image(url, download: download) }
             }
     }
 }
@@ -262,7 +309,10 @@ struct SatellitePictureCard: View {
                     if picture.hasChoice {
                         SatelliteKindPicker(picture: picture, kind: $kind)
                     }
-                    Button { showingFull = true } label: {
+                    Button {
+                        // Saving data: the first tap loads the pictures, the next opens them.
+                        if waitsForTap(picture, shot) { store.allowDownloads(lakeID) } else { showingFull = true }
+                    } label: {
                         // The whole card fits on one screen: the picture takes what the screen
                         // leaves after the bars, the picker, the caption and the switches.
                         SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID)
@@ -283,6 +333,11 @@ struct SatellitePictureCard: View {
         // Runs once the picture shows (LocationPageView loads the picture itself):
         // the overlays need the lake view.
         .task { await LakeViewStore.shared.load(lakeID) }
+    }
+
+    private func waitsForTap(_ picture: SatellitePicture, _ shot: SatellitePicture.Shot) -> Bool {
+        guard !store.mayDownload(lakeID), let url = store.url(lakeID, file: shot.image, date: shot.date) else { return false }
+        return !store.isKept(url)
     }
 }
 
@@ -427,9 +482,22 @@ struct SatelliteImage: View {
     @MainActor private var layers: SatelliteLayers { .shared }
 
     var body: some View {
-        CachedSatelliteImage(url: store.url(lakeID, file: shot.image, date: shot.date)) { image in
+        CachedSatelliteImage(url: store.url(lakeID, file: shot.image, date: shot.date), download: store.mayDownload(lakeID)) { image in
             if let image {
                 Image(uiImage: image).resizable().scaledToFit()
+            } else if !store.mayDownload(lakeID) {
+                // Saving data and not on the phone yet: the card's tap loads it.
+                Color.secondary.opacity(0.15).overlay {
+                    VStack(spacing: 6) {
+                        Image(systemName: "arrow.down.circle").font(.title)
+                        Text(tr("Tap to load the picture")).font(.subheadline.weight(.semibold))
+                        Text(tr("Saving data: satellite pictures load only when asked for."))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .padding()
+                }
             } else {
                 Color.secondary.opacity(0.15).overlay { ProgressView() }
             }
@@ -630,6 +698,8 @@ struct SatellitePictureScreen: View {
                 }
             }
         }
+        // Opening the full view asks for the pictures, also when saving data.
+        .onAppear { SatellitePictureStore.shared.allowDownloads(lakeID) }
     }
 
     /// Where the picture opens: the saved routes on this lake, all of them in

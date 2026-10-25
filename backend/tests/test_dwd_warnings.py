@@ -116,7 +116,9 @@ def _reset():
     api._cache.clear()
     api._warnings_cache.clear()
     api._lake_areas = None
+    api._lake_warnings = None
     api._english = None
+    api._primed_local_warnings.clear()
 
 
 def _fake_weather(monkeypatch):
@@ -223,3 +225,58 @@ def test_forecast_warning_carries_english_and_german(monkeypatch):
     assert item["headline"] == "Amtliche WARNUNG vor WINDBÖEN"
     assert item["english"]["headline"] == "Official WARNING of WIND GUSTS"
     assert item["english"]["official"] is True
+
+
+def _local(cell: int, event: str) -> dict:
+    return {"properties": {"WARNCELLID": cell, "NAME": f"Gemeinde {cell}", "EVENT": event, "SEVERITY": "Minor", "IDENTIFIER": f"{cell}.{event}.DEU"}}
+
+
+def test_local_warnings_for_many_cells_take_a_few_queries(monkeypatch):
+    queries = []
+
+    def handler(request):
+        cql = request.url.params["CQL_FILTER"]
+        queries.append(cql)
+        asked = [int(x) for x in cql[cql.index("(") + 1 : -1].split(",")]
+        return httpx.Response(200, json={"features": [_local(c, "WINDBÖEN") for c in asked if c % 100 == 0]})
+
+    cells = list(range(1, 401))
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await dwd_warnings.fetch_local_warnings_for_cells(client, cells)
+
+    got = asyncio.run(run())
+    assert len(queries) == 3 and all(q.startswith("WARNCELLID IN (") for q in queries)
+    assert set(got) == set(cells), "every cell asked for gets a list"
+    assert [w.event for w in got[100]] == ["WINDBÖEN"] and got[101] == []
+
+
+def test_warn_cell_lookup_reads_the_municipality(monkeypatch):
+    def handler(request):
+        assert request.url.params["typeName"] == "dwd:Warngebiete_Gemeinden"
+        assert "INTERSECTS(SHAPE,POINT(47.99 11.34))" == request.url.params["CQL_FILTER"]
+        return httpx.Response(200, json={"features": [{"properties": {"WARNCELLID": 809188139}}]})
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await dwd_warnings.fetch_warn_cell(client, 11.34, 47.99)
+
+    assert asyncio.run(run()) == 809188139
+
+
+def test_primed_local_warnings_are_used_without_asking_dwd(monkeypatch):
+    _fake_weather(monkeypatch)
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.params["typeName"])
+        return httpx.Response(200, json={"features": []})
+
+    monkeypatch.setattr(api.httpx, "AsyncClient", _serve(handler))
+    _reset()
+    api._primed_local_warnings["mrc-1880"] = [w for _, w in dwd_warnings.parse_warnings({"features": [_local(809188139, "WINDBÖEN")]}, "local")]
+    body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
+    _reset()
+    assert [i["event"] for i in body["warnings"]["items"]] == ["WINDBÖEN"]
+    assert "dwd:Warnungen_Gemeinden" not in seen

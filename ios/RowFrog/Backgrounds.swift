@@ -1,3 +1,4 @@
+import CoreImage
 import SwiftUI
 import UIKit
 
@@ -34,12 +35,25 @@ enum BackgroundLibrary {
 
     private static let cache = NSCache<NSString, UIImage>()
 
+    /// Each saved club's lake and the home base, for the satellite picture;
+    /// kept up to date by WidgetBridge whenever the saved clubs change.
+    static var lakeByClub: [String: String] = [:]
+    static var homeClubID: String?
+
     /// The picture for a choice, or nil for "no picture" or a missing file.
-    /// Thumbnails are scaled down for the picker's grid.
-    static func image(for choice: BackgroundChoice, thumbnail: Bool = false) -> UIImage? {
+    /// The satellite picture is the club's lake's (the home base's without a
+    /// club) and nil until it has loaded. Thumbnails are scaled down for the picker's grid.
+    static func image(for choice: BackgroundChoice, clubID: String? = nil, thumbnail: Bool = false) -> UIImage? {
         let url: URL?
         switch choice {
         case .noPicture: return nil
+        case .satellite:
+#if WIDGET_EXTENSION
+            return nil
+#else
+            guard let club = clubID ?? homeClubID, let lake = lakeByClub[club] else { return nil }
+            return MainActor.assumeIsolated { SatellitePictureStore.shared.backgroundImage(lake) }
+#endif
         case let .sample(id): url = Bundle.main.url(forResource: "bg-\(id)", withExtension: "jpg")
         case let .custom(name): url = userDirectory.appending(path: name)
         }
@@ -77,7 +91,26 @@ enum BackgroundLibrary {
         cache.removeObject(forKey: "\(url.path)|false" as NSString)
     }
 
-    private static func scaled(_ image: UIImage, maxSide: CGFloat) -> UIImage {
+    private static let blurredCache = NSCache<UIImage, UIImage>()
+    private static let ciContext = CIContext()
+
+    /// The picture blurred once and kept, so the screen does not blur it again
+    /// on every frame while pages swipe. Made smaller first: the blur hides
+    /// the detail anyway, and a small picture blurs fast and takes little memory.
+    static func blurred(_ image: UIImage) -> UIImage {
+        if let cached = blurredCache.object(forKey: image) { return cached }
+        let small = scaled(image, maxSide: 800)
+        guard let cg = small.cgImage else { return image }
+        let input = CIImage(cgImage: cg)
+        // About the 24 points the screen blurred with, at this size.
+        let output = input.clampedToExtent().applyingGaussianBlur(sigma: 22).cropped(to: input.extent)
+        guard let result = ciContext.createCGImage(output, from: input.extent) else { return image }
+        let picture = UIImage(cgImage: result, scale: small.scale, orientation: small.imageOrientation)
+        blurredCache.setObject(picture, forKey: image)
+        return picture
+    }
+
+    static func scaled(_ image: UIImage, maxSide: CGFloat) -> UIImage {
         let side = max(image.size.width, image.size.height)
         guard side > maxSide else { return image }
         let factor = maxSide / side
@@ -242,7 +275,7 @@ struct PageBackground: ViewModifier {
 
     func body(content: Content) -> some View {
         let settings = AppSettings.shared
-        let image = BackgroundLibrary.image(for: settings.background(for: page, clubID: clubID))
+        let image = BackgroundLibrary.image(for: settings.background(for: page, clubID: clubID), clubID: clubID)
         content
             .environment(\.surface, image == nil ? .plain : settings.tileSurface)
             .background {
@@ -283,10 +316,9 @@ struct BackgroundPicture: View {
     var body: some View {
         Color.clear
             .overlay {
-                Image(uiImage: image)
+                Image(uiImage: blurred ? BackgroundLibrary.blurred(image) : image)
                     .resizable()
                     .scaledToFill()
-                    .blur(radius: blurred ? 24 : 0, opaque: true)
             }
             .clipped()
             .overlay {

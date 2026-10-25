@@ -240,14 +240,23 @@ private struct LocationSummaryRow: View {
                 }
                 Spacer()
                 if let now {
-                    HStack(spacing: 6) {
-                        TrafficLightDot(light: now.light, size: 18, stale: stale)
-                        SkyIcon(sky: Sky(hour: now), night: now.sunUp == false)
-                            .font(.title3)
-                        Image(systemName: Condition.temperature.symbol)
-                            .symbolRenderingMode(.hierarchical)
-                            .accessibilityLabel(tr("Air"))
-                        Text(Format.degrees(now.temperatureC)).font(.system(size: 36, weight: .light))
+                    VStack(alignment: .trailing, spacing: 0) {
+                        HStack(spacing: 6) {
+                            TrafficLightDot(light: now.light, size: 18, stale: stale)
+                            SkyIcon(sky: Sky(hour: now), night: now.sunUp == false)
+                                .font(.title3)
+                            Image(systemName: Condition.temperature.symbol)
+                                .symbolRenderingMode(.hierarchical)
+                                .accessibilityLabel(tr("Air"))
+                            Text(Format.degrees(now.temperatureC)).font(.system(size: 36, weight: .light))
+                        }
+                        // Right under the temperature, as on the club page and the widgets.
+                        if let feels = now.apparentTemperatureC {
+                            Label(tr("Feels like %@", Format.degrees(feels)), systemImage: Condition.feelsLike.symbol)
+                                .font(.caption)
+                                .symbolRenderingMode(.hierarchical)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 } else {
                     ProgressView()

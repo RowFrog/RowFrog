@@ -5,6 +5,7 @@ import TipKit
 /// Pages pushed inside the settings.
 enum SettingsRoute: Hashable {
     case backgrounds
+    case widgets
     case limits
     case boat(String)
     case picker(BackgroundTarget)
@@ -17,6 +18,7 @@ enum SettingsRoute: Hashable {
     static func fromLaunchArguments() -> [SettingsRoute] {
         guard let page = UserDefaults.standard.string(forKey: "RWSettingsPage") else { return [] }
         if page == "backgrounds" { return [.backgrounds] }
+        if page == "widgets" { return [.widgets] }
         if page == "safety" { return [.safety] }
         if page == "impressum" { return [.impressum] }
         if page == "privacy" { return [.privacy] }
@@ -38,6 +40,8 @@ enum BackgroundTarget: Hashable {
     case all
     case page(PageKind)
     case club(String)
+    /// The widgets' picture: for all widgets (nil) or one club's.
+    case widgets(String?)
 }
 
 /// The settings page, opened with the cog on the location list.
@@ -59,6 +63,8 @@ struct SettingsView: View {
     }
     @State private var showAppIconTip = false
     private let appIconTip = AppIconTip()
+    @State private var showSaveDataTip = false
+    private let saveDataTip = SaveDataTip()
     @State private var appIcon = AppIcons.current
     @Environment(\.dismiss) private var dismiss
 
@@ -78,7 +84,7 @@ struct SettingsView: View {
                     } header: {
                         SectionTitle(tr("Appearance"), symbol: "circle.lefthalf.filled")
                     } footer: {
-                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page."))
+                        SectionFooter(tr("Landscape on: the app turns with the phone and shows the cards in two columns. Off: it stays upright. The card order set here is for all clubs; a club can have its own from \"Arrange this page\" at the end of its page. Dark uses less battery on iPhones with an OLED screen, which most models since the iPhone X have."))
                     }
                     .surfaceRows()
                     .id("appearance")
@@ -105,6 +111,7 @@ struct SettingsView: View {
                         UnitRow(condition: .waves, title: tr("Waves"), selection: $settings.waveUnit)
                         UnitRow(condition: .precipitation, title: tr("Rain, hail, snow"), selection: $settings.rainUnit)
                         UnitRow(condition: .visibility, title: tr("Visibility and distances"), selection: $settings.distanceUnit)
+                        UnitRow(condition: .pressure, title: tr("Air pressure"), selection: $settings.pressureUnit)
                     } header: {
                         SectionTitle(tr("Units"), symbol: "ruler")
                     } footer: {
@@ -162,6 +169,46 @@ struct SettingsView: View {
                     }
                     .surfaceRows()
                     .id("background")
+
+                    Section {
+                        NavigationLink(value: SettingsRoute.widgets) {
+                            HStack(spacing: 12) {
+                                WidgetBackgroundSwatch(background: settings.widgetBackground)
+                                    .frame(width: 36, height: 36)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(tr("Widget background and updates"))
+                                    Text("\(settings.widgetBackground.title) · \(settings.widgetUpdates.title)")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    } header: {
+                        SectionTitle(tr("Widgets"), symbol: "rectangle.3.group")
+                    }
+                    .surfaceRows()
+                    .id("widgets")
+
+                    Section {
+                        if showSaveDataTip {
+                            TipView(saveDataTip)
+                        }
+                        Toggle(isOn: $settings.saveMobileData) {
+                            Label(tr("Save mobile data"), systemImage: "antenna.radiowaves.left.and.right")
+                        }
+                        if DataSaver.shared.saving {
+                            Label(DataSaver.shared.lowDataModeOn ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
+                                  systemImage: "leaf")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    } header: {
+                        SectionTitle(tr("Data use"), symbol: "arrow.up.arrow.down.circle")
+                    } footer: {
+                        SectionFooter(tr("On mobile data, satellite pictures load only when you tap them, the radar map shows half-hour steps and the rain radar updates every 15 minutes. Forecasts and warnings always load. In iOS Low Data Mode the app always saves data, also on Wi-Fi."))
+                    }
+                    .surfaceRows()
+                    .id("data")
 
                     Section {
                         Button {
@@ -266,6 +313,8 @@ struct SettingsView: View {
                     switch route {
                     case .backgrounds:
                         BackgroundSettingsView(locations: locations)
+                    case .widgets:
+                        WidgetSettingsView(locations: locations, path: $path)
                     case .limits:
                         RowingLimitsView(path: $path)
                     case let .boat(id):
@@ -292,8 +341,10 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
-                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "widgets", "data", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
+                .tipVisibility(saveDataTip, $showSaveDataTip)
+                .onChange(of: settings.saveMobileData) { if settings.saveMobileData { saveDataTip.invalidate(reason: .actionPerformed) } }
                 .tipVisibility(resetTip, $showResetTip)
                 .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
                 .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }
@@ -429,7 +480,7 @@ private struct AppearancePicker: View {
 }
 
 /// A value's icon and name, and a menu with the units it can be shown in.
-private struct UnitRow<Unit: Hashable & Identifiable & CaseIterable>: View where Unit.AllCases: RandomAccessCollection, Unit: UnitDisplay {
+struct UnitRow<Unit: Hashable & Identifiable & CaseIterable>: View where Unit.AllCases: RandomAccessCollection, Unit: UnitDisplay {
     let condition: Condition
     let title: String
     @Binding var selection: Unit
@@ -505,6 +556,7 @@ extension SpeedUnit: UnitDisplay {}
 extension WaveUnit: UnitDisplay {}
 extension RainUnit: UnitDisplay {}
 extension DistanceUnit: UnitDisplay {}
+extension PressureUnit: UnitDisplay {}
 
 // MARK: - Background pictures
 
@@ -757,7 +809,8 @@ struct BackgroundPickerView: View {
                     if let inherited = inheritedTitle {
                         option(nil, title: inherited)
                     }
-                    option(BackgroundChoice.noPicture, title: tr("No picture"))
+                    option(BackgroundChoice.noPicture, title: isWidgets ? tr("Weather sky") : tr("No picture"))
+                    option(BackgroundChoice.satellite, title: tr("Satellite picture of the lake"))
                     PhotosPicker(selection: $photo, matching: .images, photoLibrary: .shared()) {
                         VStack(spacing: 6) {
                             ZStack {
@@ -818,7 +871,12 @@ struct BackgroundPickerView: View {
         case .all: tr("All pages")
         case let .page(page): page.title
         case let .club(id): locations.catalog.first { $0.id == id }?.displayName ?? tr("Club")
+        case let .widgets(id): id.flatMap { id in locations.catalog.first { $0.id == id }?.displayName } ?? tr("Widgets")
         }
+    }
+
+    private var isWidgets: Bool {
+        if case .widgets = target { true } else { false }
     }
 
     /// "Same as …" for targets that can take the picture from the level above.
@@ -827,6 +885,7 @@ struct BackgroundPickerView: View {
         case .all: nil
         case .page: tr("Same as all pages")
         case .club: tr("Same as club pages")
+        case let .widgets(id): id == nil ? nil : tr("Same as all widgets")
         }
     }
 
@@ -836,6 +895,15 @@ struct BackgroundPickerView: View {
         case .all: return settings.allPagesBackground
         case let .page(page): return settings.pageBackgrounds[page]
         case let .club(id): return settings.clubBackgrounds[id]
+        case let .widgets(id):
+            guard let background = id.map({ settings.clubWidgetBackgrounds[$0] }) ?? settings.widgetBackground else { return nil }
+            switch background {
+            case let .picture(choice): return choice
+            case .sky: return .noPicture
+            case .satellite: return .satellite
+            // Picked on the widget page (light colour, club page picture, plain): no tile here is ticked.
+            default: return .custom("")
+            }
         }
     }
 
@@ -845,6 +913,14 @@ struct BackgroundPickerView: View {
         case .all: settings.allPagesBackground = choice ?? .noPicture
         case let .page(page): settings.pageBackgrounds[page] = choice
         case let .club(id): settings.clubBackgrounds[id] = choice
+        case let .widgets(id):
+            let background: WidgetBackground? = switch choice {
+            case nil: nil
+            case .noPicture?: .sky
+            case .satellite?: .satellite
+            case let other?: .picture(other)
+            }
+            if let id { settings.clubWidgetBackgrounds[id] = background } else { settings.widgetBackground = background ?? .sky }
         }
     }
 
@@ -891,6 +967,7 @@ struct BackgroundPickerView: View {
         case .all: return nil
         case .page: return settings.allPagesBackground
         case .club: return settings.background(for: .clubPages)
+        case .widgets: return nil
         }
     }
 
@@ -1144,7 +1221,7 @@ private struct LimitRow: View {
 }
 
 /// A section header that stays readable over a background picture.
-private struct SectionTitle: View {
+struct SectionTitle: View {
     let text: String
     let symbol: String
     @Environment(\.surface) private var surface
@@ -1162,7 +1239,7 @@ private struct SectionTitle: View {
     }
 }
 
-private struct SectionFooter: View {
+struct SectionFooter: View {
     let text: String
     @Environment(\.surface) private var surface
 
@@ -1186,7 +1263,7 @@ private struct SurfaceRowBackground: View {
     }
 }
 
-private extension View {
+extension View {
     /// Frosted rows when the page has a picture and the tiles are frosted.
     func surfaceRows() -> some View { listRowBackground(SurfaceRowBackground()) }
 
@@ -1196,8 +1273,12 @@ private extension View {
         task {
             let page = UserDefaults.standard.integer(forKey: "RWScrollPage")
             guard page > 0 else { return }
-            try? await Task.sleep(for: .seconds(2))
-            proxy.scrollTo(ids[min(page, ids.count - 1)], anchor: .top)
+            // Scrolled twice: on a slow simulator the first try can come before
+            // the form has laid out its rows and does nothing.
+            for _ in 0..<2 {
+                try? await Task.sleep(for: .seconds(2))
+                proxy.scrollTo(ids[min(page, ids.count - 1)], anchor: .top)
+            }
         }
     }
 }

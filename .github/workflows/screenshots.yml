@@ -192,8 +192,8 @@ jobs:
           shoot 43-home-landscape-off light -RWAllowsLandscape NO -RWLandscape YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
-          shoot_n 10-settings 7 light -RWShowSettings YES
-          shoot_n 11-settings-german-dark 7 dark -RWShowSettings YES -RWLanguage de
+          shoot_n 10-settings 9 light -RWShowSettings YES
+          shoot_n 11-settings-german-dark 9 dark -RWShowSettings YES -RWLanguage de
           shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
           shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
@@ -272,6 +272,11 @@ jobs:
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
           shoot 90-route-loop light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop"
           WAIT=30 shoot 91-route-edit-point light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop" -RWRoutePoint 2
+          # Import a row: the sheet (made-up Health rows), an imported row with its track, and the tip.
+          shoot 128-import-row light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "47.99667,11.34745" -RWImportRows YES
+          WAIT=30 shoot 129-imported-route light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWImportedRoute YES -RWShowTrack YES
+          WAIT=30 shoot 130-imported-loop-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop" -RWImportedRoute YES -RWShowTrack YES -RWLanguage de
+          GUIDE=1 WAIT=30 shoot 131-tip-import-row light "${tips[@]}" -RWRoute "47.99667,11.34745"
           # Where the forecast comes from: the line at the bottom of the page and its details.
           # Clubs in several countries, browsing by country, and own places.
           shoot 70-search-all-countries light -RWSearch "Zürich"
@@ -289,11 +294,11 @@ jobs:
           shoot 84-model-picker light -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES
           shoot 85-model-picked light -RWOpenClub mrc-1880 -RWScrollTo source -RWDeveloperOptions YES -RWPickedModels "$ifs"
           shoot 86-model-picker-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo source -RWOpenForecastSource YES -RWDeveloperOptions YES -RWPickedModels "$ifs" -RWLanguage de
-          shoot 87-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 9
+          shoot 87-settings-developer light -RWShowSettings YES -RWDeveloperOptions YES -RWScrollPage 11
           # Fixes from the iPhone test (PR #36): the satellite card and full screen with the
           # clubs, and the safety notice on a phone set to German (language picked from the phone).
-          shoot 118-satellite-card-clubs light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSatelliteLayers '(clubs, shore)'
-          shoot 119-satellite-full-clubs light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)'
+          WAIT=30 shoot 118-satellite-card-clubs light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSatelliteLayers '(clubs, shore)'
+          WAIT=30 shoot 119-satellite-full-clubs light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)'
           SAFETY=1 GUIDE=1 shoot 120-safety-notice-phone-german light -RWNoTips YES -AppleLanguages '(de)'
           # Launch point card: a still map picture until tapped (battery), light and dark.
           shoot 121-launch-point-still light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
@@ -305,10 +310,21 @@ jobs:
           WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
           WAIT=30 shoot 137-water-station light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWScrollPage 1
           shoot 138-launch-point-place light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
+          # Widget backgrounds (Settings > Widgets), the satellite picture behind a club page,
+          # and Manage routes from the route menus.
+          shoot_pages 139-settings-widgets light -RWShowSettings YES -RWSettingsPage widgets
+          shoot 140-settings-widgets-german-dark dark -RWShowSettings YES -RWSettingsPage widgets -RWLanguage de
+          WAIT=30 shoot 141-club-page-satellite-background light -RWOpenClub mrc-1880 -RWBackground satellite
+          WAIT=30 shoot 142-manage-routes light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWSavedRoutes "Possenhofen ↔=$route|Northern loop=$loop|Short out and back ↔=$short"
+          WAIT=30 shoot 143-manage-routes-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWSavedRoutes "Possenhofen ↔=$route|Northern loop=$loop|Short out and back ↔=$short" -RWLanguage de
+          # Saving data (Low Data Mode or "Save mobile data" on mobile data): the
+          # satellite card waits for a tap; the settings' Data use section.
+          shoot 150-satellite-save-data light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSaveData YES
+          shoot 151-settings-data-use light -RWShowSettings YES -RWScrollPage 6 -RWSaveData YES
           # Water temperature from a satellite (sample Landsat reading on the Simssee) and from a federal waterways gauge.
-          WAIT=30 shoot_pages 139-water-satellite light -RWOpenClub segler-und-ruderclub-simssee -RWOpenCondition waterTemperature
-          WAIT=30 shoot 140-water-satellite-german-dark dark -RWOpenClub segler-und-ruderclub-simssee -RWOpenCondition waterTemperature -RWScrollPage 1 -RWLanguage de
-          WAIT=30 shoot 141-water-pegelonline light -RWOpenClub frankfurter-ruder-und-kanusportverein-sachsenhausen-1898 -RWOpenCondition waterTemperature -RWScrollPage 1
+          WAIT=30 shoot_pages 152-water-satellite light -RWOpenClub segler-und-ruderclub-simssee -RWOpenCondition waterTemperature
+          WAIT=30 shoot 153-water-satellite-german-dark dark -RWOpenClub segler-und-ruderclub-simssee -RWOpenCondition waterTemperature -RWScrollPage 1 -RWLanguage de
+          WAIT=30 shoot 154-water-pegelonline light -RWOpenClub frankfurter-ruder-und-kanusportverein-sachsenhausen-1898 -RWOpenCondition waterTemperature -RWScrollPage 1
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
