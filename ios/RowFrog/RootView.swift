@@ -9,6 +9,7 @@ struct RootView: View {
     @State private var forecasts: ForecastStore
     @State private var selection = ""
     @State private var showingList = false
+    @State private var showingSettings = false
     @State private var initialSearch = ""
     @Environment(\.scenePhase) private var scenePhase
     @State private var showingTour = !Tutorial.seen
@@ -95,11 +96,16 @@ struct RootView: View {
             WhatsNewView().environment(\.locale, AppSettings.shared.locale)
         }
         .fullScreenCover(isPresented: $showingList) {
-            LocationListView(locations: locations, forecasts: forecasts, initialSearch: initialSearch) { club in
+            LocationListView(locations: locations, forecasts: forecasts, initialSearch: initialSearch,
+                             returnTo: locations.saved.first { $0.id == selection }) { club in
                 selection = club.id
                 showingList = false
             }
             .environment(\.locale, AppSettings.shared.locale)
+        }
+        .sheet(isPresented: $showingSettings) {
+            SettingsView(locations: locations)
+                .environment(\.locale, AppSettings.shared.locale)
         }
         .onAppear { applyAppearance() }
         .onChange(of: AppSettings.shared.appearance) { applyAppearance() }
@@ -152,7 +158,9 @@ struct RootView: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             let settings = AppSettings.shared
             let picture = BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection))
-            PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection, showList: showsListButton ? { showingList = true } : nil)
+            PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
+                    showList: showsListButton ? { showingList = true } : nil,
+                    showSettings: showsListButton ? { showingSettings = true } : nil)
                 .environment(\.surface, picture == nil ? .plain : settings.tileSurface)
         }
     }
@@ -225,17 +233,29 @@ struct RootView: View {
     }
 }
 
-/// Page dots with a house for the home base, and the list button.
+/// The settings cog, page dots with a house for the home base, and the list
+/// button, as the Weather app has its map and list at the two ends.
 private struct PageBar: View {
     let clubs: [Club]
     let homeID: String
     @Binding var selection: String
     /// Nil when the list is already on screen.
     let showList: (() -> Void)?
+    /// Nil when the list, which has its own cog, is on screen.
+    let showSettings: (() -> Void)?
 
     var body: some View {
         HStack {
-            Spacer().frame(width: 44)
+            if let showSettings {
+                Button(action: showSettings) {
+                    Image(systemName: "gearshape")
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel(tr("Settings"))
+            } else {
+                Spacer().frame(width: 44, height: 44)
+            }
             Spacer()
             HStack(spacing: 8) {
                 ForEach(clubs) { club in

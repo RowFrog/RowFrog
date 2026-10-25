@@ -119,7 +119,9 @@ enum RowingLimit: String, CaseIterable, Identifiable {
     /// experienced rowers before release.
     func standard(for boat: Boat) -> Double {
         switch (self, boat.type, boat.isBig) {
-        case (.lifeJacket, _, _): 10
+        // Cold-water shock starts at about 15 °C (owner decision 2026-10-25);
+        // the stricter rules stay at `RowingLimits.coldWaterC`.
+        case (.lifeJacket, _, _): 15
         // Small racing boats: ~7 cm of side.
         case (.windAmber, .racing, false): 5.5  // Beaufort 4, the first whitecaps
         case (.windRed, .racing, false): 8.0  // Beaufort 5
@@ -220,8 +222,9 @@ struct RowingLimits: Equatable {
 
     /// What the backend's rowing light already uses.
     static let standard = RowingLimits()
-    /// Below this water temperature: life jacket, singles with a coach or partner
+    /// Below this water temperature ("very cold"): singles with a coach or partner
     /// boat, and the app's wind and gust limits lowered by `coldWindMarginMs` (DRV).
+    /// The life jacket is advised from the `lifeJacket` limit (15 °C) down.
     static let coldWaterC = 10.0
     static let coldWindMarginMs = 1.0
     /// Below this, small boats are strongly advised to stay ashore.
@@ -302,12 +305,9 @@ extension ForecastHour {
         check("gusts", windGustMs, .gustAmber, .gustRed)
         check("waves", waveHeightM, .waveAmber, .waveRed)
         if let water = waterC, water < 15 {
-            let cold = water < limits.value(.lifeJacket)
-            reasons.append(Reason(condition: cold ? "cold_water" : "cool_water", light: .amber,
-                                  mine: cold && limits.isMine(.lifeJacket) ? true : nil))
-            if !cold && water < RowingLimit.lifeJacket.standard(for: limits.boat) {
-                notes.append(Reason(condition: "cold_water", light: .amber))
-            }
+            // Below 15 °C cold-water shock is possible (life jacket advised), below 10 °C the water is very cold.
+            let cold = water < RowingLimits.coldWaterC
+            reasons.append(Reason(condition: cold ? "cold_water" : "cool_water", light: .amber))
             if water < RowingLimits.coldWaterC {
                 if limits.maybeSingle { reasons.append(Reason(condition: "single_cold", light: .amber)) }
                 // The user's own wind limits do not drop with the water; say so.
