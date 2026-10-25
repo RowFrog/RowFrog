@@ -650,6 +650,8 @@ enum German {
         "Tap a value": "Tippe auf einen Wert",
         "Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values.": "Tippe auf einen Wert in der Kachel darüber, um seine Grafik zu öffnen. Wischen geht dort nur durch die Werte dieser Kachel.",
         "Read any hour": "Jede Stunde ablesen",
+        "Water temperature from space": "Wassertemperatur aus dem All",
+        "No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date.": "Hier misst keine Station das Wasser, darum nimmt die App die letzte Satellitenmessung des Sees und schreibt sie mit den Lufttemperaturen seitdem fort. Tippe auf die Kachel Wassertemperatur für Satellit und Datum.",
         "Hold the chart, then slide along it to read the value at each hour.": "Halte die Grafik gedrückt und fahre dann entlang, um den Wert zu jeder Stunde abzulesen.",
         "Rain radar map": "Regenradar-Karte",
         "Tap the card for the radar map. Play it, or drag the slider from an hour ago to two hours ahead.": "Tippe auf die Karte für die Radarkarte. Spiel sie ab oder zieh den Regler von vor einer Stunde bis zwei Stunden voraus.",

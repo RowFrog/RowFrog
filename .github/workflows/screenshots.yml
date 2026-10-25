@@ -314,6 +314,7 @@ jobs:
           GUIDE=1 shoot 170-tip-top-tile light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880
           GUIDE=1 WAIT=30 shoot 171-tip-chart-scrub light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind
           GUIDE=1 WAIT=30 shoot 172-tip-chart-scrub-german-dark dark -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLanguage de
+          GUIDE=1 WAIT=30 shoot 173-tip-water-estimate light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub segler-und-ruderclub-simssee -RWScrollTo conditions
           WAIT=30 shoot 134-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
           WAIT=30 shoot 135-lake-legend light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLegend YES
           WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind

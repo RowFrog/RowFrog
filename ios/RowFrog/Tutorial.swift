@@ -675,6 +675,12 @@ struct TopTileTip: Tip {
     var image: Image? { Image(systemName: "hand.tap") }
 }
 
+struct WaterEstimateTip: Tip {
+    var title: Text { Text(tr("Water temperature from space")) }
+    var message: Text? { Text(tr("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date.")) }
+    var image: Image? { Image(systemName: "thermometer.and.liquid.waves") }
+}
+
 struct ChartScrubTip: Tip {
     var title: Text { Text(tr("Read any hour")) }
     var message: Text? { Text(tr("Hold the chart, then slide along it to read the value at each hour.")) }

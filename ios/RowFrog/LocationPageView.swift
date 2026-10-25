@@ -41,6 +41,8 @@ struct LocationPageView: View {
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
     private let topTileTip = TopTileTip()
+    private let waterEstimateTip = WaterEstimateTip()
+    @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
 
     var body: some View {
@@ -123,6 +125,7 @@ struct LocationPageView: View {
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .tipVisibility(topTileTip, $showTopTileTip)
+                .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(radarMapTip, $showRadarMapTip)
                 .tipVisibility(hourViewTip, $showHourViewTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
@@ -163,6 +166,9 @@ struct LocationPageView: View {
             VStack(spacing: 16) {
                 if tourSeen && showConditionsTip {
                     TipView(conditionsTip)
+                } else if tourSeen && showWaterEstimateTip && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil {
+                    // Only where no station measures the water.
+                    TipView(waterEstimateTip)
                 }
                 ConditionsCard(forecast: forecast, hour: now)
             }
