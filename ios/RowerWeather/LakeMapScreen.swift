@@ -33,11 +33,12 @@ struct LakeMapScreen: View {
     @Environment(\.dismiss) private var dismiss
     private let routes = RouteStore.shared
 
-    init(view: LakeView, clubID: String?) {
+    /// `at` opens the map at a later hour, e.g. from an hour in the club page's table.
+    init(view: LakeView, clubID: String?, at date: Date = .now) {
         self.view = view
         self.clubID = clubID
         let args = UserDefaults.standard
-        let start = view.hourIndex() + args.integer(forKey: "RWLakeHour")
+        let start = view.hourIndex(at: date) + args.integer(forKey: "RWLakeHour")
         _hourIndex = State(initialValue: min(max(start, 0), max(view.hours.count - 1, 0)))
         _layer = State(initialValue: LakeLayer(rawValue: args.string(forKey: "RWLakeLayer") ?? "") ?? .light)
         var spot: Int?
