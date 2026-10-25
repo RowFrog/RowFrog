@@ -52,7 +52,7 @@ struct LocationPageView: View {
                     VStack(spacing: 16) {
                         header
                         if let forecast, let now = forecast.current() {
-                            NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.name, town: club.town)
+                            NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.name, town: club.town, club: club)
                             if let warnings = forecast.warnings, !warnings.checked || !warnings.items.isEmpty {
                                 WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
@@ -158,7 +158,7 @@ struct LocationPageView: View {
                 if tourSeen && showConditionsTip {
                     TipView(conditionsTip)
                 }
-                ConditionsCard(forecast: forecast, hour: now)
+                ConditionsCard(forecast: forecast, hour: now, club: club)
             }
             .id("conditions")
         case .lakeView:
@@ -422,6 +422,8 @@ private struct NowCard: View {
     var town: String?
     /// A later hour shown from the hourly table: no warnings line, daylight at that time.
     var at: Date?
+    /// The club, for the weather maps in the larger views.
+    var club: Club?
     @State private var showingLights = UserDefaults.standard.string(forKey: "RWLegend") == "lights"
     @State private var showingWarnings = false
     @State private var showingDaylight = false
@@ -535,10 +537,10 @@ private struct NowCard: View {
             }
         }
         .sheet(isPresented: $showingDaylight) {
-            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour))
+            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour), club: club)
         }
         .sheet(item: $openCondition) { condition in
-            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues)
+            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues, club: club)
         }
     }
 
@@ -964,12 +966,12 @@ private struct HourDetailSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    NowCard(hour: hour, forecast: forecast, at: hour.time)
+                    NowCard(hour: hour, forecast: forecast, at: hour.time, club: club)
                     // The radar reaches 2 hours ahead; later hours have the forecast rain in the tiles.
                     if hour.time.timeIntervalSinceNow < 2 * 3600 {
                         RainRadarCard(point: club.launchPoint, clubID: club.id)
                     }
-                    ConditionsCard(forecast: forecast, hour: hour)
+                    ConditionsCard(forecast: forecast, hour: hour, club: club)
                     if lake?.hasOutline != false, lakeViews.views[forecast.lakeId] != nil {
                         Button { showingLakeMap = true } label: {
                             Label(tr("Lake map at %@", Format.dayTime(hour.time)), systemImage: "map")

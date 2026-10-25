@@ -446,17 +446,22 @@ private struct RadarLegendSheet: View {
 final class RadarFrames {
     let region: RadarRegion
     let times: [Date]
+    /// The WMS layer and server: DWD's rain radar, or another live map (lightning, fog, UV).
+    let layer: String
+    let server: URL
     private(set) var images: [Date: UIImage] = [:]
     private(set) var failedCount = 0
     private(set) var done = false
     var complete: Bool { images.count == times.count }
 
-    /// The latest radar picture's place in `times`; loading starts there.
+    /// The latest picture's place in `times`; loading starts there.
     let nowIndex: Int
 
-    init(point: Coordinate, times: [Date], nowIndex: Int = 4) {
+    init(point: Coordinate, times: [Date], layer: String = RadarRegion.rainLayer, server: URL = RadarClient.wms, nowIndex: Int = 4) {
         region = RadarRegion(center: point)
         self.times = times
+        self.layer = layer
+        self.server = server
         self.nowIndex = nowIndex
     }
 
@@ -464,11 +469,11 @@ final class RadarFrames {
         guard !done else { return }
         // Opened again for the same club before DWD's next radar picture:
         // the pictures of the last opening, with nothing to load.
-        let region = region
-        if let saved = Self.saved, saved.region == region, saved.times == times {
+        let region = region, layer = layer, server = server
+        if let saved = Self.saved[layer], saved.region == region, saved.times == times {
             for (time, data) in saved.data where images[time] == nil { images[time] = UIImage(data: data) }
         } else {
-            Self.saved = (region, times, [:])
+            Self.saved[layer] = (region, times, [:])
         }
         // The latest picture first, then outwards, so the map shows something at once.
         let order = times.indices.sorted { abs($0 - nowIndex) < abs($1 - nowIndex) }.map { times[$0] }.filter { images[$0] == nil }
@@ -477,19 +482,19 @@ final class RadarFrames {
             var next = 0
             while next < min(3, order.count) {
                 let time = order[next]
-                group.addTask { (time, await Self.fetch(region.url(time: time))) }
+                group.addTask { (time, await Self.fetch(region.url(time: time, layer: layer, server: server))) }
                 next += 1
             }
             while let (time, data) = await group.next() {
                 if let data, let image = UIImage(data: data) {
                     images[time] = image
-                    if Self.saved?.region == region, Self.saved?.times == times { Self.saved?.data[time] = data }
+                    if Self.saved[layer]?.region == region, Self.saved[layer]?.times == times { Self.saved[layer]?.data[time] = data }
                 } else {
                     failedCount += 1
                 }
                 if next < order.count {
                     let time = order[next]
-                    group.addTask { (time, await Self.fetch(region.url(time: time))) }
+                    group.addTask { (time, await Self.fetch(region.url(time: time, layer: layer, server: server))) }
                     next += 1
                 }
             }
@@ -497,8 +502,8 @@ final class RadarFrames {
         done = true
     }
 
-    /// The last map's pictures as DWD sent them (about 1 MB).
-    private static var saved: (region: RadarRegion, times: [Date], data: [Date: Data])?
+    /// The last map's pictures per layer as the server sent them (about 2 MB for the radar).
+    private static var saved: [String: (region: RadarRegion, times: [Date], data: [Date: Data])] = [:]
 
     private nonisolated static func fetch(_ url: URL) async -> Data? {
         for attempt in 0..<3 {
@@ -521,6 +526,7 @@ final class RadarFrames {
 struct RadarRegion: Hashable {
     let minX: Double, minY: Double, maxX: Double, maxY: Double
     static let pixels = 1024
+    static let rainLayer = "dwd:Niederschlagsradar"
     private static let radius = 6_378_137.0
 
     init(center: Coordinate) {
@@ -541,20 +547,21 @@ struct RadarRegion: Hashable {
     }
 
     /// The WMS request for the whole region at one time.
-    func url(time: Date) -> URL {
-        var components = URLComponents(url: RadarClient.wms, resolvingAgainstBaseURL: false)!
+    func url(time: Date, layer: String = RadarRegion.rainLayer, server: URL = RadarClient.wms) -> URL {
+        var components = URLComponents(url: server, resolvingAgainstBaseURL: false)!
         components.queryItems = [
             .init(name: "SERVICE", value: "WMS"),
             .init(name: "VERSION", value: "1.3.0"),
             .init(name: "REQUEST", value: "GetMap"),
-            .init(name: "LAYERS", value: "dwd:Niederschlagsradar"),
+            .init(name: "LAYERS", value: layer),
             .init(name: "STYLES", value: ""),
             .init(name: "CRS", value: "EPSG:3857"),
             .init(name: "BBOX", value: "\(minX),\(minY),\(maxX),\(maxY)"),
             .init(name: "WIDTH", value: "\(Self.pixels)"),
             .init(name: "HEIGHT", value: "\(Self.pixels)"),
-            // 8-bit PNG: DWD's radar has about 56 colours, so it looks the same at half the size.
-            .init(name: "FORMAT", value: "image/png8"),
+            // 8-bit PNG: DWD's maps have few colours, so they look the same at half the size.
+            // The satellite's fog picture has many and stays full PNG.
+            .init(name: "FORMAT", value: server == RadarClient.wms ? "image/png8" : "image/png"),
             .init(name: "TRANSPARENT", value: "TRUE"),
             .init(name: "TIME", value: ISO8601DateFormatter().string(from: time)),
         ]

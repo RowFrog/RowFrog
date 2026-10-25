@@ -9,6 +9,8 @@ import SwiftUI
 struct ConditionsCard: View {
     let forecast: ClubForecast
     let hour: ForecastHour
+    /// The club, for the weather maps in the larger views.
+    var club: Club?
     @State private var open: Condition?
 
     var body: some View {
@@ -42,7 +44,7 @@ struct ConditionsCard: View {
             }
         }
         .sheet(item: $open) { condition in
-            ConditionDetailView(condition: condition, data: data)
+            ConditionDetailView(condition: condition, data: data, club: club)
         }
         .task {
             // Screenshot hook: `-RWOpenCondition wind` opens that view.
@@ -449,9 +451,12 @@ struct ConditionDetailView: View {
     /// The views the arrows and swipes go through: every condition, or only
     /// the values of the top tile when opened from there.
     private let order: [Condition]
+    /// The club, for the weather maps.
+    private let club: Club?
 
-    init(condition: Condition, data: ConditionData, order: [Condition] = Condition.tileOrder) {
+    init(condition: Condition, data: ConditionData, order: [Condition] = Condition.tileOrder, club: Club? = nil) {
         self.data = data
+        self.club = club
         self.order = order.contains(condition) ? order : Condition.tileOrder
         _condition = State(initialValue: condition)
     }
@@ -530,6 +535,9 @@ struct ConditionDetailView: View {
                             .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
                     }
                 }
+            }
+            if let club, let layer = WeatherMapLayer(condition: condition) {
+                WeatherMapButton(layer: layer, point: club.launchPoint, clubID: club.id, start: data.isNow ? nil : data.now.time)
             }
             facts(detail)
             if condition == .waterTemperature, let water = data.water, let station = water.station, let place = station.coordinate {
