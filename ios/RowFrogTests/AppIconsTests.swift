@@ -1,6 +1,6 @@
 import UIKit
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class AppIconsTests: XCTestCase {
     func testNumbersAndNamesAreUnique() {

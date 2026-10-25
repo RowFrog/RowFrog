@@ -2,7 +2,7 @@
 // style of the app icon concepts, and saves them as SVG and PNG.
 //   node scripts/draw_backgrounds.mjs <out-dir>
 // Needs Playwright with Chromium. scripts/backgrounds_to_jpeg.py then makes the
-// JPEGs in ios/RowerWeather/Backgrounds.
+// JPEGs in ios/RowFrog/Backgrounds.
 
 import { createRequire } from "node:module";
 import fs from "node:fs";

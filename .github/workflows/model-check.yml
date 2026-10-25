@@ -10,7 +10,7 @@ on:
   push:
     paths:
       - scripts/model_check.py
-      - backend/rowerweather/model_check.py
+      - backend/rowfrog/model_check.py
       - data/model-check/**
       - .github/workflows/model-check.yml
   schedule:

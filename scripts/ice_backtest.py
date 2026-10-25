@@ -21,8 +21,8 @@ from datetime import date
 
 import httpx
 
-from rowerweather import ice, locations
-from rowerweather.sources import open_meteo
+from rowfrog import ice, locations
+from rowfrog.sources import open_meteo
 
 EXTRA_LAKES = ["ammersee", "regattastrecke-oberschleissheim"]
 

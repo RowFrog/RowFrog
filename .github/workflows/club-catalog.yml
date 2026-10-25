@@ -33,7 +33,7 @@ jobs:
           python3 scripts/discover_clubs.py | tee catalog-report.txt
           { echo '```'; cat catalog-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Check the catalog loads
-        run: python3 -c 'from rowerweather import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "lakes")'
+        run: python3 -c 'from rowfrog import locations; l = locations.load(); print(len(l.clubs), "clubs on", len(l.lakes), "lakes")'
       - name: Commit the catalog
         run: |
           git add data/catalogs/de-osm.json data/outlines

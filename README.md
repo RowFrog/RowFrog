@@ -1,6 +1,6 @@
 # Row Frog
 
-Working title until 2026-10: RowerWeather (the repo, Xcode project and bundle IDs keep that name).
+Formerly "RowerWeather" (renamed to Row Frog in October 2026).
 
 Weather and conditions for rowers at different rowing locations, incl. weather and conditions forecast and web-cam footage if available.
 
@@ -26,7 +26,7 @@ The first lake is Starnberger See.
 cd backend
 pip install -e ".[dev]"
 pytest
-uvicorn rowerweather.api:app --reload
+uvicorn rowfrog.api:app --reload
 ```
 
 Then open http://localhost:8000/lakes or http://localhost:8000/clubs/mrc-1880/forecast.
@@ -45,7 +45,7 @@ publishes its answers as files on GitHub Pages, at
 https://api.rowfrog.com/v1/ (same paths as the API:
 `lakes`, `clubs/<id>/forecast`). Release builds of the app read from there;
 Debug builds use a backend on the Mac at localhost. To move to a server of our
-own, run `uvicorn rowerweather.api:app` there and point the DNS record of
+own, run `uvicorn rowfrog.api:app` there and point the DNS record of
 `api.rowfrog.com` at it; the app keeps its address.
 
 ## Run the app
@@ -54,7 +54,7 @@ On a Mac with Xcode 15 or later:
 
 ```sh
 brew install xcodegen
-cd ios && xcodegen && open RowerWeather.xcodeproj
+cd ios && xcodegen && open RowFrog.xcodeproj
 ```
 
 Run the backend first; the simulator reaches it at `http://localhost:8000`
@@ -63,7 +63,7 @@ Run the backend first; the simulator reaches it at `http://localhost:8000`
 ## Traffic light defaults
 
 Proposed for small boats (1x, 2x) and to be tuned with rowers; see
-`backend/rowerweather/score.py`.
+`backend/rowfrog/score.py`.
 
 | Condition | Amber from | Red above |
 | --- | --- | --- |
@@ -89,7 +89,7 @@ service (23 lakes, among them Starnberger See, Ammersee and Chiemsee), and
 DWD's weather warnings for the municipality, which cover rivers and canals
 too. When there is none the page says so and when it was checked; when DWD
 cannot be reached it says that instead. Warnings come from DWD's GeoServer
-(`backend/rowerweather/sources/dwd_warnings.py`) and also set the hourly light.
+(`backend/rowfrog/sources/dwd_warnings.py`) and also set the hourly light.
 When the app is in English, warnings show DWD's own English text (from its
 English CAP files on opendata.dwd.de) with the German original below; where DWD
 has no English version, only the event and headline are translated.

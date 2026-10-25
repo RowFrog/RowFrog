@@ -2,7 +2,7 @@ import math
 
 import pytest
 
-from rowerweather.waves import fetch_m, significant_wave_height
+from rowfrog.waves import fetch_m, significant_wave_height
 
 # A 10 km (north-south) by about 2 km rectangular lake around 11.30 E, 47.90 N.
 LAT0, LON0 = 47.90, 11.30

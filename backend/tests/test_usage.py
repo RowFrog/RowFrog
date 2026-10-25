@@ -2,7 +2,7 @@ import json
 
 import httpx
 
-from rowerweather import usage
+from rowfrog import usage
 
 
 def _client(handler):

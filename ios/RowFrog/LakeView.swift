@@ -4,7 +4,7 @@ import Foundation
 import Observation
 
 /// Conditions across a whole lake, hour by hour (backend: /lakes/{id}/view,
-/// see backend/rowerweather/lake_view.py). The lake is covered by a grid of
+/// see backend/rowfrog/lake_view.py). The lake is covered by a grid of
 /// square cells; each water cell has its own light and waves every hour.
 struct LakeView: Decodable, Hashable {
     let lakeId: String

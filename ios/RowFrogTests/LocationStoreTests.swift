@@ -1,5 +1,5 @@
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class LocationStoreTests: XCTestCase {
     private var defaults: UserDefaults!

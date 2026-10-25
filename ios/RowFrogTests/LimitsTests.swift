@@ -1,5 +1,5 @@
 import XCTest
-@testable import RowerWeather
+@testable import RowFrog
 
 final class LimitsTests: XCTestCase {
     private func hour(wind: Double, gust: Double, waves: Double, reasons: [Reason] = []) -> ForecastHour {

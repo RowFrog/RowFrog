@@ -1,5 +1,5 @@
-from rowerweather import weather_models as wm
-from rowerweather.sources import open_meteo
+from rowfrog import weather_models as wm
+from rowfrog.sources import open_meteo
 
 
 def test_the_backend_asks_open_meteo_for_the_chain_it_names():
@@ -29,7 +29,7 @@ def test_a_picked_model_comes_first_and_the_chain_fills_the_rest():
 def test_filled_takes_missing_values_from_the_automatic_chain():
     from datetime import datetime, timedelta, timezone
 
-    from rowerweather import api
+    from rowfrog import api
 
     t0 = datetime(2026, 10, 24, tzinfo=timezone.utc)
 
@@ -45,7 +45,7 @@ def test_filled_takes_missing_values_from_the_automatic_chain():
 def test_only_confirmed_clubs_offer_other_models(monkeypatch):
     from fastapi.testclient import TestClient
 
-    from rowerweather import api
+    from rowfrog import api
     from tests.test_dwd_warnings import PAYLOAD, _reset, _serve
 
     asked = []
