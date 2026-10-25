@@ -138,7 +138,7 @@ struct DetailMapCard: View {
         .buttonStyle(.plain)
         .accessibilityLabel(tr("Map follows the chart"))
         .accessibilityValue(time.linked ? tr("Linked") : tr("Own time"))
-        .popoverTip(linkTip ? MapLinkTip() as (any Tip)? : nil, arrowEdge: .top)
+        .modifier(LinkTipPopover(on: linkTip))
     }
 
     /// Past the maps' end or before their start: the map keeps its nearest picture, dimmed.
@@ -192,5 +192,19 @@ struct DetailMapCard: View {
     /// Screenshot hook: `-RWOpenWeatherMap <layer>` opens the map with that layer.
     private static var hookLayer: WeatherMapLayer? {
         UserDefaults.standard.string(forKey: "RWOpenWeatherMap").flatMap(WeatherMapLayer.init(rawValue:))
+    }
+}
+
+/// The chain's link tip as a popover, left off while another tip shows.
+/// (An optional tip in `popoverTip` needs iOS 18.4.)
+private struct LinkTipPopover: ViewModifier {
+    let on: Bool
+
+    @ViewBuilder func body(content: Content) -> some View {
+        if on {
+            content.popoverTip(MapLinkTip(), arrowEdge: .top)
+        } else {
+            content
+        }
     }
 }
