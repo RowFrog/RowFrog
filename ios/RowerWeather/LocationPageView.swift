@@ -268,7 +268,7 @@ struct Card<Content: View>: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(surface.card, in: RoundedRectangle(cornerRadius: 16))
+        .cardBackground(surface)
     }
 }
 
