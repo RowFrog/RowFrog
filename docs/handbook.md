@@ -68,7 +68,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
 - `-RWImportRows YES` open "Import a row" in the lake view with made-up Apple Health rows (Health is not asked); `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points (2:20 per 500 m, a week ago); `-RWShowTrack YES` shows the rowed track (the switch in the bookmark menu)
-- `-RWChartSelect 5` a detail chart opens with the scrub line five hours from now
+- `-RWChartSelect 5` a detail chart opens with the blue line (and the big number) five hours on, and its label shown
 - `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
 - `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map and hour view tips, which otherwise wait until the rain radar and hourly tips are closed
