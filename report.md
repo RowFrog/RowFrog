@@ -1,4 +1,4 @@
-# Model check, 2026-10-25 02:39 UTC
+# Model check, 2026-10-25 02:40 UTC
 
 11 forecast runs stored (2026-10-23T20:00Z to 2026-10-25T02:00Z).
 Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.
