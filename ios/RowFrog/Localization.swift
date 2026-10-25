@@ -851,8 +851,6 @@ enum German {
         "Gewässerkundlicher Dienst Bayern (LfU)": "Gewässerkundlicher Dienst Bayern (LfU)",
         "PEGELONLINE, the federal waterways and shipping administration (WSV)": "PEGELONLINE, Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV)",
         "Swiss Federal Office for the Environment (BAFU)": "Schweizer Bundesamt für Umwelt (BAFU)",
-        "Station": "Messstelle",
-        "%@, %@ away": "%@, %@ entfernt",
         "%@, %@: %@": "%@, %@: %@",
         "Satellite estimate": "Satellitenschätzung",
         "Copernicus (Sentinel-3)": "Copernicus (Sentinel-3)",

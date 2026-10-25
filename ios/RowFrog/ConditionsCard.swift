@@ -1238,9 +1238,6 @@ extension ConditionDetail {
         if let satellite {
             facts.append((tr("Satellite"), tr("%@, %@: %@", satellite.satelliteName, satellite.when, Format.temperature(satellite.celsius, digits: 1))))
         }
-        if let station = now?.station, let name = station.name {
-            facts.append((tr("Station"), station.distanceM.map { tr("%@, %@ away", name, Format.distance($0)) } ?? name))
-        }
         let source: String
         if let satellite {
             source = satellite.source == "landsat"
