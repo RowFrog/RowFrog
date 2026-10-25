@@ -115,6 +115,8 @@ struct RowingProvider: AppIntentTimelineProvider {
     }
 
     private func entries(for configuration: RowingWidgetIntent) async -> [RowingEntry] {
+        // Language, units and limits as the app last left them.
+        AppSettings.reload()
         let shared = WidgetShared.defaults
         let homeID = shared.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
         let clubID = configuration.club?.id ?? homeID

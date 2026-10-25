@@ -581,8 +581,8 @@ struct ConditionDetailView: View {
             .onEnded { value in
                 let dx = value.translation.width, dy = value.translation.height
                 guard abs(dx) > 60, abs(dx) > abs(dy) * 2 else { return }
-                // On a chart that can be dragged, the drag moves the time.
-                if chartFrame.contains(value.startLocation) && !ConditionDetail(condition, data).history { return }
+                // A chart that can't be dragged ignores it too, so a drag on any chart never changes the view.
+                if chartFrame.contains(value.startLocation) { return }
                 step(dx < 0 ? 1 : -1)
             }
     }
@@ -779,7 +779,8 @@ private struct ConditionChart: View {
                 }
             }
         }
-        .chartYAxisLabel(detail.unit)
+        // Over the values on the right; on the left a dragged chart cut it off.
+        .chartYAxisLabel(position: .topTrailing) { Text(detail.unit) }
         .chartPlotStyle { $0.padding(.horizontal, 16) }
     }
 
@@ -811,6 +812,9 @@ private struct ConditionChart: View {
     private func limitLabels(proxy: ChartProxy, geo: GeometryProxy) -> some View {
         if let plotFrame = proxy.plotFrame {
             let plot = geo[plotFrame]
+            // A chart that scrolls reports its whole plot, which starts off screen
+            // once dragged; the names stay at the visible left edge instead.
+            let left = max(plot.minX, 0)
             let placed = Self.spread(detail.limits.compactMap { limit -> (limit: ChartLimit, y: CGFloat)? in
                 guard let y = proxy.position(forY: limit.value), y >= 0, y <= plot.height else { return nil }
                 return (limit, plot.minY + y - Self.labelHeight / 2 - 2)
@@ -824,7 +828,7 @@ private struct ConditionChart: View {
                     .frame(height: Self.labelHeight)
                     .background(.regularMaterial, in: Capsule())
                     .fixedSize()
-                    .padding(.leading, plot.minX + 4)
+                    .padding(.leading, left + 4)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .offset(y: item.y - Self.labelHeight / 2)
             }

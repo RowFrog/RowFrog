@@ -187,15 +187,10 @@ struct LakeMapScreen: View {
                     .padding(.vertical, 8)
                     .background(.regularMaterial, in: Capsule())
                 Spacer()
-                Button { toggleRouteMode() } label: {
-                    Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
-                        .font(.body.weight(.semibold))
-                        .frame(width: 36, height: 36)
-                        .foregroundStyle(routeMode ? Color.white : Color.accentColor)
-                }
-                .background(routeMode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.regularMaterial), in: Circle())
-                .accessibilityLabel(routeMode ? tr("End route planning") : tr("Plan a route"))
-                .popoverTip(RoutePlanningTip(), arrowEdge: .top)
+                routeButton
+                    .background(routeMode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.regularMaterial), in: Circle())
+                    .accessibilityLabel(routeMode ? tr("End route planning") : tr("Plan a route"))
+                    .popoverTip(RoutePlanningTip(), arrowEdge: .top)
                 Button { showingInfo = true } label: {
                     Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
                 }
@@ -212,6 +207,60 @@ struct LakeMapScreen: View {
         }
         .padding(.horizontal)
         .padding(.top, 6)
+    }
+
+    /// Starts or ends route planning. With saved routes on this lake it first
+    /// asks: a new route, or one of the saved ones to look at or change.
+    @ViewBuilder private var routeButton: some View {
+        let icon = Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
+            .font(.body.weight(.semibold))
+            .frame(width: 36, height: 36)
+            .foregroundStyle(routeMode ? Color.white : Color.accentColor)
+        let saved = routes.routes(on: view.lakeId)
+        if !routeMode && !saved.isEmpty {
+            Menu {
+                Button(tr("New route"), systemImage: "plus") {
+                    waypoints = []
+                    savedRoute = nil
+                    toggleRouteMode()
+                }
+                Section(tr("Saved routes")) {
+                    ForEach(saved) { route in
+                        Button(route.name) { load(route) }
+                    }
+                }
+            } label: { icon }
+        } else {
+            Button { toggleRouteMode() } label: { icon }
+        }
+    }
+
+    /// Save, open or delete routes, from the editing bar.
+    private var routesMenu: some View {
+        let saved = routes.routes(on: view.lakeId)
+        return Menu {
+            Button(tr("Save route"), systemImage: "square.and.arrow.down") {
+                routeName = savedRoute?.name ?? ""
+                showingSave = true
+            }
+            .disabled(waypoints.count < 2)
+            if !saved.isEmpty {
+                Section(tr("Saved routes")) {
+                    ForEach(saved) { route in
+                        Button(route.name) { load(route) }
+                    }
+                }
+            }
+            if let savedRoute {
+                Button(tr("Delete this route"), systemImage: "trash", role: .destructive) {
+                    routes.delete(savedRoute)
+                    self.savedRoute = nil
+                }
+            }
+        } label: {
+            Image(systemName: savedRoute == nil ? "bookmark" : "bookmark.fill")
+        }
+        .accessibilityLabel(savedRoute?.name ?? tr("Routes"))
     }
 
     /// Changing the route, on the map where the points are: undo, close the
@@ -241,11 +290,12 @@ struct LakeMapScreen: View {
                 }
                 .disabled(waypoints.count < 3 || loop)
                 Spacer(minLength: 0)
-                Button(tr("Clear"), systemImage: "trash") {
+                Button(tr("Clear", key: "Clear route"), systemImage: "trash") {
                     waypoints = Array(waypoints.prefix(1))
                     savedRoute = nil
                 }
                 .disabled(waypoints.count < 2)
+                routesMenu
             }
         }
         .font(.subheadline)
@@ -278,41 +328,9 @@ struct LakeMapScreen: View {
             if !panelExpanded, let hour = shown {
                 collapsedSummary(hour, plan: plan, boat: boat)
             } else if let hour = shown {
-                HStack(alignment: .firstTextBaseline) {
-                    Text(boat == nil ? Format.dayTime(hour.time) : tr("%@ · at the boat", Format.dayTime(hour.time))).font(.headline)
-                    Spacer()
-                    if view.sample {
-                        Label(tr("Sample wind"), systemImage: "exclamationmark.triangle")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.orange)
-                    }
-                }
-                if hour.lakeWide.light > .green {
-                    LakeWideBanner(lakeWide: hour.lakeWide)
-                }
-                if routeMode {
-                    routePanel(plan: plan, boat: boat)
-                } else if let spot, spot < hour.lights.count {
-                    spotDetails(spot, hour)
-                } else {
-                    Text(view.headline(for: hour)).font(.subheadline.weight(.semibold))
-                    if let wind = view.windSummary(for: hour) {
-                        Label(wind, systemImage: Condition.wind.symbol)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    if let waves = view.waveSummary(for: hour) {
-                        Label(waves, systemImage: Condition.waves.symbol)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    Text(tr("Tap the water to see the conditions there."))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                if !routeMode {
-                    LakeLegend(layer: layer)
-                    MapBoatNote()
+                // While planning the content scrolls in a part of the screen, so the map keeps its room.
+                CappedScroll(enabled: routeMode, maxHeight: UIScreen.main.bounds.height * 0.3) {
+                    expandedContent(hour, plan: plan, boat: boat)
                 }
             }
             if routeMode {
@@ -334,6 +352,52 @@ struct LakeMapScreen: View {
             if drag.translation.height < -30 { withAnimation(.snappy) { panelExpanded = true } }
             if drag.translation.height > 30 { withAnimation(.snappy) { panelExpanded = false } }
         })
+    }
+
+    @ViewBuilder private func expandedContent(_ hour: LakeHour, plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            // While planning, the hour strip below names the start; the hour only shows for the boat.
+            if !routeMode || boat != nil || view.sample {
+                HStack(alignment: .firstTextBaseline) {
+                    if !routeMode || boat != nil {
+                        Text(boat == nil ? Format.dayTime(hour.time) : tr("%@ · at the boat", Format.dayTime(hour.time))).font(.headline)
+                    }
+                    Spacer()
+                    if view.sample {
+                        Label(tr("Sample wind"), systemImage: "exclamationmark.triangle")
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.orange)
+                    }
+                }
+            }
+            if hour.lakeWide.light > .green {
+                LakeWideBanner(lakeWide: hour.lakeWide)
+            }
+            if routeMode {
+                routePanel(plan: plan, boat: boat)
+            } else if let spot, spot < hour.lights.count {
+                spotDetails(spot, hour)
+            } else {
+                Text(view.headline(for: hour)).font(.subheadline.weight(.semibold))
+                if let wind = view.windSummary(for: hour) {
+                    Label(wind, systemImage: Condition.wind.symbol)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                if let waves = view.waveSummary(for: hour) {
+                    Label(waves, systemImage: Condition.waves.symbol)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Text(tr("Tap the water to see the conditions there."))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            if !routeMode {
+                LakeLegend(layer: layer)
+                MapBoatNote()
+            }
+        }
     }
 
     private var grabber: some View {
@@ -387,7 +451,6 @@ struct LakeMapScreen: View {
     }
 
     @ViewBuilder private func routePanel(plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
-        let saved = routes.routes(on: view.lakeId)
         let loop = RouteEdit.isLoop(waypoints)
         if let planner, let plan {
             RouteSummary(view: view, plan: plan)
@@ -435,33 +498,6 @@ struct LakeMapScreen: View {
                 Text(tr("Pace %@ /500 m", Format.pace(pace))).font(.subheadline.monospacedDigit())
             }
         }
-        HStack(spacing: 16) {
-            Spacer()
-            Menu {
-                Button(tr("Save route"), systemImage: "square.and.arrow.down") {
-                    routeName = savedRoute?.name ?? ""
-                    showingSave = true
-                }
-                .disabled(waypoints.count < 2)
-                if !saved.isEmpty {
-                    Section(tr("Saved routes")) {
-                        ForEach(saved) { route in
-                            Button(route.name) { load(route) }
-                        }
-                    }
-                }
-                if let savedRoute {
-                    Button(tr("Delete this route"), systemImage: "trash", role: .destructive) {
-                        routes.delete(savedRoute)
-                        self.savedRoute = nil
-                    }
-                }
-            } label: {
-                Label(savedRoute?.name ?? tr("Routes"), systemImage: "bookmark")
-            }
-        }
-        .font(.subheadline)
-        .labelStyle(.titleAndIcon)
     }
 
     /// "The boat at 10:35 after 6.2 km: Row with care, waves 0.25 m head sea".
@@ -784,16 +820,7 @@ struct LakeMapView: UIViewRepresentable {
             }
             if let pin = annotation as? RoutePin {
                 let view = MKAnnotationView(annotation: pin, reuseIdentifier: nil)
-                let size: CGFloat = pin.isStart || pin.isSelected ? 18 : 14
-                view.image = UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
-                    let rect = CGRect(x: 1.5, y: 1.5, width: size - 3, height: size - 3)
-                    let circle = UIBezierPath(ovalIn: rect)
-                    (pin.isStart ? UIColor.systemBlue : pin.isSelected ? UIColor.systemOrange : UIColor.white).setFill()
-                    circle.fill()
-                    UIColor(white: 0.15, alpha: 1).setStroke()
-                    circle.lineWidth = 2
-                    circle.stroke()
-                }
+                view.image = Self.image(for: pin)
                 // The start is the club's launch point; the turning points can be moved.
                 view.isDraggable = !pin.isStart
                 view.displayPriority = .required
@@ -835,18 +862,45 @@ struct LakeMapView: UIViewRepresentable {
             return nil
         }
 
+        /// A dot for a turning point: blue start, orange when tapped, white otherwise.
+        static func image(for pin: RoutePin) -> UIImage {
+            // A touch bigger than it looks, so it is easier to hold and drag.
+            let size: CGFloat = pin.isStart || pin.isSelected ? 22 : 18
+            return UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
+                let rect = CGRect(x: 1.5, y: 1.5, width: size - 3, height: size - 3)
+                let circle = UIBezierPath(ovalIn: rect)
+                (pin.isStart ? UIColor.systemBlue : pin.isSelected ? UIColor.systemOrange : UIColor.white).setFill()
+                circle.fill()
+                UIColor(white: 0.15, alpha: 1).setStroke()
+                circle.lineWidth = 2
+                circle.stroke()
+            }
+        }
+
+        /// While a point is held and dragged, the route's pins stay as they are:
+        /// replacing them would drop the point from under the finger.
+        private var dragging = false
+
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-            guard let pin = view.annotation as? RoutePin else { return }
-            mapView.deselectAnnotation(pin, animated: false)
-            if !pin.isStart { selectPoint(pin.index) }
+            // The point stays selected: MapKit only lets a selected point be dragged.
+            guard let pin = view.annotation as? RoutePin, !pin.isStart else { return }
+            selectPoint(pin.index)
         }
 
         func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, didChange newState: MKAnnotationView.DragState, fromOldState oldState: MKAnnotationView.DragState) {
-            guard newState == .ending || newState == .canceling else { return }
-            view.dragState = .none
-            if newState == .ending, let pin = view.annotation as? RoutePin {
-                selectPoint(pin.index)
-                movePoint(pin.index, pin.coordinate)
+            // A plain annotation view has to move through the drag states itself.
+            switch newState {
+            case .starting:
+                dragging = true
+                view.dragState = .dragging
+            case .ending, .canceling:
+                view.dragState = .none
+                dragging = false
+                if newState == .ending, let pin = view.annotation as? RoutePin {
+                    movePoint(pin.index, pin.coordinate)
+                }
+            default:
+                break
             }
         }
 
@@ -871,7 +925,19 @@ struct LakeMapView: UIViewRepresentable {
             let pinned = RouteEdit.isLoop(waypoints) ? Array(waypoints.dropLast()) : waypoints
             let points = routeMode ? pinned.map { Coordinate(lat: $0.latitude, lon: $0.longitude) } : []
             let lines = routeMode ? segments : []
-            if let shownRoute, shownRoute.0 == lines, shownRoute.1 == points, shownRoute.2 == selected { return }
+            if dragging { return }
+            if let shownRoute, shownRoute.0 == lines, shownRoute.1 == points {
+                guard shownRoute.2 != selected else { return }
+                // Only the tapped point changed: recolour the dots, keep the pins (and their selection).
+                self.shownRoute = (lines, points, selected)
+                for pin in routePins {
+                    pin.isSelected = pin.index == selected
+                    map.view(for: pin)?.image = Self.image(for: pin)
+                    // So the same point can be tapped again after "Done".
+                    if !pin.isSelected { map.deselectAnnotation(pin, animated: false) }
+                }
+                return
+            }
             shownRoute = (lines, points, selected)
             map.removeOverlays(routeOverlays)
             map.removeAnnotations(routePins)
@@ -1075,6 +1141,33 @@ final class LakeRenderer: MKOverlayRenderer {
             context.setStrokeColor(color.cgColor)
             context.setLineWidth(width / zoomScale)
             context.strokePath()
+        }
+    }
+}
+
+/// Its content as is, or (when enabled) in a scroll view no taller than
+/// `maxHeight`, and only as tall as the content when that is shorter.
+private struct CappedScroll<Content: View>: View {
+    let enabled: Bool
+    let maxHeight: CGFloat
+    @ViewBuilder let content: Content
+    @State private var height: CGFloat = 0
+
+    var body: some View {
+        if enabled {
+            ScrollView {
+                content.background {
+                    GeometryReader { geo in
+                        Color.clear
+                            .onAppear { height = geo.size.height }
+                            .onChange(of: geo.size.height) { _, new in height = new }
+                    }
+                }
+            }
+            .frame(height: min(max(height, 1), maxHeight))
+            .scrollBounceBehavior(.basedOnSize)
+        } else {
+            content
         }
     }
 }
