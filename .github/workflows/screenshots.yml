@@ -271,6 +271,11 @@ jobs:
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
           shoot 90-route-loop light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop"
           WAIT=30 shoot 91-route-edit-point light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop" -RWRoutePoint 2
+          # Import a row: the sheet (made-up Health rows), an imported row with its track, and the tip.
+          shoot 128-import-row light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "47.99667,11.34745" -RWImportRows YES
+          WAIT=30 shoot 129-imported-route light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWImportedRoute YES -RWShowTrack YES
+          WAIT=30 shoot 130-imported-loop-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop" -RWImportedRoute YES -RWShowTrack YES -RWLanguage de
+          GUIDE=1 WAIT=30 shoot 131-tip-import-row light "${tips[@]}" -RWRoute "47.99667,11.34745"
           # Where the forecast comes from: the line at the bottom of the page and its details.
           # Clubs in several countries, browsing by country, and own places.
           shoot 70-search-all-countries light -RWSearch "Zürich"

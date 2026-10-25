@@ -32,6 +32,25 @@ If a picked model says "not published yet", wait for the next publishing
 run: the other models are written every 3 hours, for the confirmed clubs
 that someone opened in the last 7 days.
 
+### Testing "Import a row"
+
+The Simulator has no real rows, so this needs the iPhone (Apple Health) or a
+real export file.
+
+1. Lake view > Plan a route > bookmark menu > **Import a row**. The first time,
+   iOS asks to let Row Frog read workouts and workout routes (read only).
+2. Apple Health lists rowing workouts of the last year that have a GPS route
+   (Apple Watch outdoor rowing, or apps that save rows with their route to
+   Health). Tap one: it becomes a saved route on this lake, the pace setting
+   takes the row's pace, and the bookmark menu offers **Show rowed track**.
+3. **Choose a file** takes a GPX, TCX or FIT file (CrewNerd, Garmin Connect,
+   Strava export). Sharing such a file from another app or from Files to Row
+   Frog saves it on the lake whose clubs are within 3 km of the row.
+4. A row not on this lake, or shorter than 200 m, is refused with a note.
+
+Health access can be changed later in the Health app > Sharing > Apps >
+Row Frog. Nothing read from Health or a file leaves the phone.
+
 ## Launch arguments (Simulator and screenshots)
 
 Every setting can be set at launch, e.g. `-RWLanguage de`. The screenshot
@@ -46,6 +65,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
+- `-RWImportRows YES` open "Import a row" in the lake view with made-up Apple Health rows (Health is not asked); `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points (2:20 per 500 m, a week ago); `-RWShowTrack YES` shows the rowed track (the switch in the bookmark menu)
 - `-RWChartSelect 5` a detail chart opens with the scrub line five hours from now
 - `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
@@ -59,6 +79,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWSafetyAccepted YES` skip the first-start safety notice (the screenshot workflow passes it to every shot except 77 and 78)
 - `-RWWhatsNewSeen 1000` keep the "What's new" sheet away (the screenshot workflow passes it to every shot except 114 and 115)
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
+- `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage safety|impressum|privacy|limits|boat:<id>|backgrounds` open those Settings pages
 
 ## What runs on its own (GitHub Actions)
@@ -66,8 +87,8 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Workflow | When | Where you see it |
 |---|---|---|
 | Publish forecasts | every 30 min from main | api.rowfrog.com |
-| Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays) |
-| Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month |
+| Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays); its section "Once a day instead of twice?" shows whether the 04:40 run alone would rank the models the same (to decide later whether to drop the 16:40 run, about 700 Open-Meteo calls a day) |
+| Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month. Covers Open-Meteo, Copernicus and, read with the Cloudflare token, Worker requests (100,000 a day) and D1 rows written (100,000) and read (5 million) on the free Workers plan |
 
 ## By hand
 
