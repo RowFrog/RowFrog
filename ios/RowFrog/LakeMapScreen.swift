@@ -327,6 +327,8 @@ struct LakeMapScreen: View {
                     waypoints = Array(waypoints.prefix(1))
                     savedRoute = nil
                 }
+                // The bin alone, so Undo and Close loop keep their words in German too.
+                .labelStyle(.iconOnly)
                 .disabled(waypoints.count < 2)
                 routesMenu
             }
