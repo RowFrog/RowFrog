@@ -46,7 +46,9 @@ struct ConditionsCard: View {
         }
         .task {
             // Screenshot hook: `-RWOpenCondition wind` opens that view.
-            if let raw = UserDefaults.standard.string(forKey: "RWOpenCondition") {
+            // Only on the page `-RWOpenClub` opens: the pages beside it would race it for the sheet.
+            let page = UserDefaults.standard.string(forKey: "RWOpenClub")
+            if let raw = UserDefaults.standard.string(forKey: "RWOpenCondition"), page == nil || page == forecast.clubId {
                 try? await Task.sleep(for: .milliseconds(500))
                 open = Condition(rawValue: raw)
             }

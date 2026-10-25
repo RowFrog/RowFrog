@@ -251,7 +251,7 @@ jobs:
           route="47.99667,11.34745;47.983,11.338;47.965,11.331;47.945,11.325;47.925,11.318;47.905,11.305"
           shoot 57-route-plan light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWPanel expanded
           shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWLakeHour 3 -RWPanel expanded
-          shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de -RWPanel expanded
+          WAIT=30 shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de -RWPanel expanded
           shoot 88-route-follow-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWPanel expanded
           shoot 89-route-follow-boat-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWLanguage de -RWPanel expanded
           # Route planning tips and the "What's new" sheet after an update.
@@ -270,7 +270,7 @@ jobs:
           GUIDE=1 shoot 117-tip-hour-view light "${later[@]}" -RWScrollTo hourly
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
           shoot 90-route-loop light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop"
-          shoot 91-route-edit-point light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop" -RWRoutePoint 2
+          WAIT=30 shoot 91-route-edit-point light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop" -RWRoutePoint 2
           # Where the forecast comes from: the line at the bottom of the page and its details.
           # Clubs in several countries, browsing by country, and own places.
           shoot 70-search-all-countries light -RWSearch "Zürich"
@@ -294,13 +294,13 @@ jobs:
           shoot 118-satellite-card-clubs light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSatelliteLayers '(clubs, shore)'
           shoot 119-satellite-full-clubs light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)'
           SAFETY=1 GUIDE=1 shoot 120-safety-notice-phone-german light -RWNoTips YES -AppleLanguages '(de)'
-          shoot 121-route-plan-compact light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route"
-          shoot 122-chart-scrub light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5
-          shoot 123-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
-          shoot 124-lake-legend light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLegend YES
-          shoot 125-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
-          shoot 126-water-station light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWScrollPage 1
-          shoot 127-launch-point-place light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
+          WAIT=30 shoot 132-route-plan-compact light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route"
+          WAIT=30 shoot 133-chart-scrub light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5
+          WAIT=30 shoot 134-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
+          WAIT=30 shoot 135-lake-legend light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLegend YES
+          WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
+          WAIT=30 shoot 137-water-station light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWScrollPage 1
+          shoot 138-launch-point-place light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
