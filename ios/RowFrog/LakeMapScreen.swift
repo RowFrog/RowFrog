@@ -260,10 +260,17 @@ struct LakeMapScreen: View {
                 }
                 .background(.regularMaterial, in: Circle())
                 .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
-                routeButton
-                    .background(routeMode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.regularMaterial), in: Circle())
-                    .accessibilityLabel(routeMode ? tr("End route planning") : tr("Plan a route"))
-                    .popoverTip(planningTip, arrowEdge: .top)
+                // Its popover would cover the editing bar and the route tips while planning.
+                if routeMode {
+                    routeButton
+                        .background(Color.accentColor, in: Circle())
+                        .accessibilityLabel(tr("End route planning"))
+                } else {
+                    routeButton
+                        .background(.regularMaterial, in: Circle())
+                        .accessibilityLabel(tr("Plan a route"))
+                        .popoverTip(RoutePlanningTip(), arrowEdge: .top)
+                }
                 if !routeMode {
                     Button { showingInfo = true } label: {
                         Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
@@ -286,11 +293,6 @@ struct LakeMapScreen: View {
         }
         .padding(.horizontal)
         .padding(.top, 6)
-    }
-
-    /// Its popover would cover the editing bar and the route tips while planning.
-    private var planningTip: (any Tip)? {
-        routeMode ? nil : RoutePlanningTip()
     }
 
     /// Starts or ends route planning. With saved routes on this lake it first
