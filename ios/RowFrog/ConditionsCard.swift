@@ -10,6 +10,8 @@ import TipKit
 struct ConditionsCard: View {
     let forecast: ClubForecast
     let hour: ForecastHour
+    /// The club, for the weather maps in the larger views.
+    var club: Club?
     @State private var open: Condition?
 
     var body: some View {
@@ -43,7 +45,7 @@ struct ConditionsCard: View {
             }
         }
         .sheet(item: $open) { condition in
-            ConditionDetailView(condition: condition, data: data)
+            ConditionDetailView(condition: condition, data: data, club: club)
         }
         .task {
             // Screenshot hook: `-RWOpenCondition wind` opens that view.
@@ -150,6 +152,8 @@ private struct ConditionTile: View {
     @Environment(\.surface) private var surface
 
     private var hour: ForecastHour { data.now }
+    /// The ice tile outside November to April: greyed out, still opens its detail.
+    private var offSeason: Bool { condition == .ice && IceSeason.isOff(data.forecast.ice) }
 
     var body: some View {
         Group {
@@ -168,11 +172,12 @@ private struct ConditionTile: View {
                         accessory.frame(height: Self.graphicHeight)
                     }
                 }
+                .opacity(offSeason ? 0.45 : 1)
             }
         }
         .padding(8)
         .frame(maxWidth: .infinity, minHeight: 78, maxHeight: .infinity, alignment: .topLeading)
-        .background(surface.tile, in: RoundedRectangle(cornerRadius: 10))
+        .background(surface.tile.opacity(offSeason ? 0.5 : 1), in: RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
     }
 
@@ -314,6 +319,7 @@ private struct ConditionTile: View {
 
     /// Until the ice estimate is in the app: warm water cannot freeze over.
     private var iceGuess: (value: String, detail: String) {
+        if offSeason { return (tr("Off season"), tr("Nov–Apr")) }
         if let ice = data.forecast.ice, ice.status != "unavailable" {
             return (ice.title, ice.detail)
         }
@@ -458,9 +464,12 @@ struct ConditionDetailView: View {
     /// The views the arrows and swipes go through: every condition, or only
     /// the values of the top tile when opened from there.
     private let order: [Condition]
+    /// The club, for the weather maps.
+    private let club: Club?
 
-    init(condition: Condition, data: ConditionData, order: [Condition] = Condition.tileOrder) {
+    init(condition: Condition, data: ConditionData, order: [Condition] = Condition.tileOrder, club: Club? = nil) {
         self.data = data
+        self.club = club
         self.order = order.contains(condition) ? order : Condition.tileOrder
         _condition = State(initialValue: condition)
     }
@@ -543,6 +552,9 @@ struct ConditionDetailView: View {
                             .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
                     }
                 }
+            }
+            if let club, let layer = WeatherMapLayer(condition: condition) {
+                WeatherMapButton(layer: layer, point: club.launchPoint, clubID: club.id, start: data.isNow ? nil : data.now.time)
             }
             facts(detail)
             if condition == .waterTemperature, let water = data.water, let station = water.station, let place = station.coordinate {
@@ -1533,6 +1545,15 @@ extension ConditionDetail {
     }
 
     private static func ice(_ d: ConditionData) -> ConditionDetail {
+        if IceSeason.isOff(d.forecast.ice) {
+            return ConditionDetail(
+                value: tr("Off season"),
+                note: tr("Ice estimates run from November to April. There is no ice estimate at this time of year."),
+                facts: [(tr("Water"), Format.temperature(d.forecast.ice?.waterTemperatureC ?? d.water?.celsius, digits: 1))],
+                rowing: tr("Never go onto the ice because of this app. Never row between ice floes; thin ice cuts hulls."),
+                source: Condition.ice.explanation
+            )
+        }
         if let ice = d.forecast.ice, ice.status != "unavailable" {
             var facts: [(String, String)] = [(tr("Water"), Format.temperature(ice.waterTemperatureC ?? d.water?.celsius, digits: 1))]
             if let cm = ice.thicknessCm, cm > 0 { facts.append((tr("Ice"), tr("About %@ cm, estimated", Format.number(cm)))) }

@@ -323,7 +323,7 @@ struct SatellitePictureCard: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(tr("Satellite picture of the lake"))
                     SatelliteCaption(picture: picture, shot: shot)
-                    SatelliteLayerChips(lakeID: lakeID, picture: picture)
+                    SatelliteLayerChips(lakeID: lakeID, picture: picture, clubID: clubID)
                 }
                 .fullScreenCover(isPresented: $showingFull) {
                     SatellitePictureScreen(lakeID: lakeID, picture: picture, kind: kind, clubID: clubID)
@@ -425,6 +425,7 @@ struct SatelliteCaption: View {
 struct SatelliteLayerChips: View {
     let lakeID: String
     let picture: SatellitePicture
+    var clubID: String? = nil
     @MainActor private var layers: SatelliteLayers { .shared }
     @State private var showingLegend = false
 
@@ -455,7 +456,7 @@ struct SatelliteLayerChips: View {
                 }
             }
         }
-        .sheet(isPresented: $showingLegend) { SatelliteLegend(lakeID: lakeID, picture: picture) }
+        .sheet(isPresented: $showingLegend) { SatelliteLegend(lakeID: lakeID, picture: picture, clubID: clubID) }
     }
 
     private var available: [SatelliteLayer] {
@@ -683,7 +684,7 @@ struct SatellitePictureScreen: View {
                 if let shot = picture.shot(kind) {
                     VStack(alignment: .leading, spacing: 8) {
                         SatelliteCaption(picture: picture, shot: shot)
-                        SatelliteLayerChips(lakeID: lakeID, picture: picture)
+                        SatelliteLayerChips(lakeID: lakeID, picture: picture, clubID: clubID)
                     }
                     .padding(.horizontal)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -865,6 +866,7 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
 struct SatelliteLegend: View {
     let lakeID: String
     let picture: SatellitePicture
+    var clubID: String? = nil
     @MainActor private var layers: SatelliteLayers { .shared }
     @Environment(\.dismiss) private var dismiss
 
@@ -901,7 +903,7 @@ struct SatelliteLegend: View {
                         if on.contains(.shore) { row(line(.white), tr("Shore line: white on a clear picture, dark blue on a cloudy one")) }
                         if on.contains(.routes) { row(line(.yellow), tr("Your saved routes on this lake")) }
                         if on.contains(.clubs) {
-                            row(ClubMarkIcon(color: .blue), tr("This page's club; a house instead of the rower when it is your home base"))
+                            row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
                             row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
                         }
                     }

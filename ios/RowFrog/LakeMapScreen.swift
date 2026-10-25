@@ -184,7 +184,7 @@ struct LakeMapScreen: View {
             LakeMapLegend(layer: layer, striped: layer == .light && shown?.lakeWide.light == .red,
                           routeMode: routeMode, hasRoute: (plan?.segments.isEmpty == false), boat: boat != nil,
                           spot: spot != nil, hasWind: !(shown?.wind.isEmpty ?? true),
-                          track: routeMode && showTrack && rowed?.track != nil)
+                          track: routeMode && showTrack && rowed?.track != nil, clubID: clubID)
         }
         .sheet(isPresented: $showingImport) {
             RowImportSheet(lakeName: view.name) { importRow($0) }
@@ -1603,6 +1603,7 @@ struct LakeMapLegend: View {
     let spot: Bool
     let hasWind: Bool
     var track = false
+    var clubID: String? = nil
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1617,7 +1618,7 @@ struct LakeMapLegend: View {
                     }
                 }
                 Section(tr("On the map")) {
-                    row(ClubMarkIcon(color: .blue), tr("This page's club; a house instead of the rower when it is your home base"))
+                    row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
                     row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
@@ -1658,9 +1659,15 @@ struct LakeMapLegend: View {
 /// A club mark as the maps draw it, for the legends: a white rower in a coloured circle.
 struct ClubMarkIcon: View {
     let color: Color
+    var symbol = "figure.rower"
+
+    /// The legend line for the page's club, as its mark is drawn on this map.
+    static func pageClubText(_ clubID: String?) -> String {
+        LocationStore.markSymbol(for: clubID) == "house.fill" ? tr("Your home base, the club of this page") : tr("The club of this page")
+    }
 
     var body: some View {
-        Image(systemName: "figure.rower")
+        Image(systemName: symbol)
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: 22, height: 22)

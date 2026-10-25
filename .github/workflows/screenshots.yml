@@ -335,6 +335,13 @@ jobs:
           WAIT=30 shoot_pages 152-water-satellite light -RWOpenClub segler-und-ruderclub-simssee -RWOpenCondition waterTemperature
           WAIT=30 shoot 153-water-satellite-german-dark dark -RWOpenClub segler-und-ruderclub-simssee -RWOpenCondition waterTemperature -RWScrollPage 1 -RWLanguage de
           WAIT=30 shoot 154-water-pegelonline light -RWOpenClub frankfurter-ruder-und-kanusportverein-sachsenhausen-1898 -RWOpenCondition waterTemperature -RWScrollPage 1
+          # Weather maps from a detail view: wind with arrows, temperature, the rain forecast,
+          # live lightning, and wind in German and dark.
+          WAIT=30 shoot 160-weather-map-wind light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind
+          WAIT=30 shoot 161-weather-map-temperature light -RWOpenClub mrc-1880 -RWOpenCondition temperature -RWOpenWeatherMap temperature
+          WAIT=30 shoot 162-weather-map-rain light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap rain
+          WAIT=30 shoot 163-weather-map-lightning light -RWOpenClub mrc-1880 -RWOpenCondition thunderstorm -RWOpenWeatherMap lightning
+          WAIT=30 shoot 164-weather-map-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind -RWLanguage de
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
@@ -343,6 +350,7 @@ jobs:
           shoot 101-rowing-light-legend light -RWOpenClub mrc-1880 -RWLegend lights
           WAIT=30 shoot 102-radar-map light -RWOpenClub mrc-1880 -RWOpenRadarMap YES -RWRadarLoop NO
           shoot 103-hourly-header-stays light -RWOpenClub mrc-1880 -RWScrollTo hourly-1
+          shoot 165-hourly-header-stays-dark dark -RWOpenClub mrc-1880 -RWScrollTo hourly-1 -RWLanguage de
           shoot 104-hour-view light -RWOpenClub mrc-1880 -RWOpenHour 6
           shoot 105-arrange-page light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 106-arrange-page-german-dark dark -RWOpenClub mrc-1880 -RWArrange YES -RWLanguage de
