@@ -96,6 +96,12 @@ final class SatellitePictureStore {
             let picture = try await api.satellitePicture(lakeID: lakeID)
             if picture.latest != nil || picture.clearest != nil {
                 pictures[lakeID] = picture
+                // Fetch all of them now, so switching between them never waits.
+                for kind in picture.kinds {
+                    if let shot = picture.shot(kind), let url = url(lakeID, file: shot.image, date: shot.date) {
+                        Task { await image(url) }
+                    }
+                }
             } else {
                 missing.insert(lakeID)
             }
@@ -112,6 +118,66 @@ final class SatellitePictureStore {
         var components = URLComponents(url: api.url("lakes/\(lakeID)/\(file)"), resolvingAgainstBaseURL: false)
         components?.queryItems = [.init(name: "d", value: date)]
         return components?.url
+    }
+
+    /// Pictures already shown in this run of the app, by address.
+    private(set) var images: [URL: UIImage] = [:]
+    private var loading: Set<URL> = []
+
+    /// A picture from memory, from the phone's cache folder or, the first time
+    /// for that day's pass, from the server. A file's address names its day, so a
+    /// kept copy never goes stale: a new pass has a new address.
+    @discardableResult
+    func image(_ url: URL) async -> UIImage? {
+        if let image = images[url] { return image }
+        guard loading.insert(url).inserted else { return nil }
+        defer { loading.remove(url) }
+        let file = Self.cacheFile(for: url)
+        if let data = try? Data(contentsOf: file), let image = UIImage(data: data) {
+            images[url] = image
+            return image
+        }
+        guard let (data, response) = try? await URLSession.shared.data(from: url),
+              (response as? HTTPURLResponse)?.statusCode == 200,
+              let image = UIImage(data: data) else { return nil }
+        images[url] = image
+        Self.store(data, at: file)
+        return image
+    }
+
+    /// Caches/Satellite/<lake>-<file>-<day>; the system may clear it when space runs low.
+    private static func cacheFile(for url: URL) -> URL {
+        let folder = URL.cachesDirectory.appending(path: "Satellite", directoryHint: .isDirectory)
+        let parts = url.pathComponents.suffix(2).joined(separator: "-")
+        let day = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first?.value ?? ""
+        return folder.appending(path: "\(parts)-\(day)")
+    }
+
+    /// Saves a picture and drops older passes of the same lake and file.
+    private static func store(_ data: Data, at file: URL) {
+        let folder = file.deletingLastPathComponent()
+        let manager = FileManager.default
+        try? manager.createDirectory(at: folder, withIntermediateDirectories: true)
+        // "<lake>-<file>-" without the day.
+        let prefix = String(file.lastPathComponent.dropLast(10))
+        for old in (try? manager.contentsOfDirectory(atPath: folder.path)) ?? [] where old.hasPrefix(prefix) {
+            try? manager.removeItem(at: folder.appending(path: old))
+        }
+        try? data.write(to: file, options: .atomic)
+    }
+}
+
+/// A satellite picture or ice map through SatellitePictureStore's caches.
+struct CachedSatelliteImage<Content: View>: View {
+    let url: URL?
+    @ViewBuilder let content: (UIImage?) -> Content
+    @MainActor private var store: SatellitePictureStore { .shared }
+
+    var body: some View {
+        content(url.flatMap { store.images[$0] })
+            .task(id: url) {
+                if let url { await store.image(url) }
+            }
     }
 }
 
@@ -361,9 +427,9 @@ struct SatelliteImage: View {
     @MainActor private var layers: SatelliteLayers { .shared }
 
     var body: some View {
-        AsyncImage(url: store.url(lakeID, file: shot.image, date: shot.date)) { phase in
-            if let image = phase.image {
-                image.resizable().scaledToFit()
+        CachedSatelliteImage(url: store.url(lakeID, file: shot.image, date: shot.date)) { image in
+            if let image {
+                Image(uiImage: image).resizable().scaledToFit()
             } else {
                 Color.secondary.opacity(0.15).overlay { ProgressView() }
             }
@@ -384,8 +450,8 @@ struct SatelliteImage: View {
                 let x1 = (ice.bbox[2] - box[0]) / (box[2] - box[0]) * w
                 let y0 = (box[3] - ice.bbox[3]) / (box[3] - box[1]) * h
                 let y1 = (box[3] - ice.bbox[1]) / (box[3] - box[1]) * h
-                AsyncImage(url: url) { phase in
-                    phase.image?.resizable().interpolation(.none)
+                CachedSatelliteImage(url: url) { image in
+                    if let image { Image(uiImage: image).resizable().interpolation(.none) }
                 }
                 .frame(width: x1 - x0, height: y1 - y0)
                 .position(x: (x0 + x1) / 2, y: (y0 + y1) / 2)
