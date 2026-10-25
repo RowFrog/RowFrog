@@ -243,7 +243,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("Touch and hold a club, then drag to reorder.")),
             TourPoint(symbol: "trash", text: tr("Swipe a club in the list to the left to remove it.")),
             TourPoint(symbol: "arrow.clockwise", text: tr("Pull a page or the list down to refresh.")),
-            TourPoint(symbol: "apps.iphone", text: tr("Add a Row Frog widget to your home or lock screen to see the rowing light at a glance.")),
+            TourPoint(symbol: "apps.iphone", text: tr("A Row Frog widget on your home or lock screen shows the rowing light and rain on the radar in the next two hours.")),
         ]
         case .wideScreen: [
             TourPoint(symbol: "sidebar.left", text: tr("The location list stays on the left, the club page on the right.")),
