@@ -742,6 +742,10 @@ struct WeatherMapTip: Tip {
 }
 
 struct MapLinkTip: Tip {
+    /// Set once the weather map tip above the card is closed, so the two don't show together.
+    @Parameter static var mapTipClosed: Bool = false
+
+    var rules: [Rule] { [#Rule(Self.$mapTipClosed) { $0 }] }
     var title: Text { Text(tr("Chart and map together")) }
     var message: Text? { Text(tr("The map shows the hour of the chart's blue line. Tap the chain to give the map its own time, and again to link them.")) }
     var image: Image? { Image(systemName: "link") }

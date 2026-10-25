@@ -14,8 +14,6 @@ struct DetailMapCard: View {
     /// The chart, slim, for the full-screen map.
     let slimChart: AnyView
     var height: CGFloat = 220
-    /// Off while the weather map tip shows above the card, so one tip shows at a time.
-    var linkTip = true
 
     @State private var full = Self.hookLayer != nil
     @State private var radar = false
@@ -138,7 +136,7 @@ struct DetailMapCard: View {
         .buttonStyle(.plain)
         .accessibilityLabel(tr("Map follows the chart"))
         .accessibilityValue(time.linked ? tr("Linked") : tr("Own time"))
-        .modifier(LinkTipPopover(on: linkTip))
+        .popoverTip(MapLinkTip(), arrowEdge: .top)
     }
 
     /// Past the maps' end or before their start: the map keeps its nearest picture, dimmed.
@@ -192,19 +190,5 @@ struct DetailMapCard: View {
     /// Screenshot hook: `-RWOpenWeatherMap <layer>` opens the map with that layer.
     private static var hookLayer: WeatherMapLayer? {
         UserDefaults.standard.string(forKey: "RWOpenWeatherMap").flatMap(WeatherMapLayer.init(rawValue:))
-    }
-}
-
-/// The chain's link tip as a popover, left off while another tip shows.
-/// (An optional tip in `popoverTip` needs iOS 18.4.)
-private struct LinkTipPopover: ViewModifier {
-    let on: Bool
-
-    @ViewBuilder func body(content: Content) -> some View {
-        if on {
-            content.popoverTip(MapLinkTip(), arrowEdge: .top)
-        } else {
-            content
-        }
     }
 }

@@ -495,6 +495,8 @@ struct ConditionDetailView: View {
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
             .tipVisibility(scrubTip, $showScrubTip)
             .tipVisibility(mapTip, $showMapTip)
+            // The chain's link tip follows once the map tip is closed.
+            .onChange(of: showMapTip) { was, now in if was && !now { MapLinkTip.mapTipClosed = true } }
             .navigationTitle(condition.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -623,7 +625,7 @@ struct ConditionDetailView: View {
     private func mapCard(_ detail: ConditionDetail, layer: WeatherMapLayer, club: Club, hidden: Set<String>, height: CGFloat) -> some View {
         DetailMapCard(layer: layer, club: club, data: data, time: time,
                       slimChart: AnyView(ConditionChart(detail: detail, data: data, time: time, hidden: hidden, compact: true)),
-                      height: height, linkTip: !mapTipShown)
+                      height: height)
             .background {
                 GeometryReader { geo in
                     Color.clear.preference(key: MapCardFrameKey.self, value: geo.frame(in: .named(Self.space)))
