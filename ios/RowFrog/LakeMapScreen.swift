@@ -19,8 +19,14 @@ struct LakeMapScreen: View {
     @State private var outAndBack: Bool
     /// The saved route being shown, if any.
     @State private var savedRoute: Route?
+    /// The imported row the route came from, kept while its route is changed.
+    @State private var rowed: Route?
     @State private var showingSave = false
     @State private var showingRoutes = false
+    /// "Import a row": from Apple Health or a GPX, TCX or FIT file.
+    @State private var showingImport: Bool
+    /// An imported route also shows the track as it was rowed.
+    @AppStorage("RWShowTrack") private var showTrack = false
     @State private var routeName = ""
     /// Shows the lake at the time the boat reaches a point of the route, not at the start.
     @State private var followBoat: Bool
@@ -39,6 +45,8 @@ struct LakeMapScreen: View {
     private let loopTip = CloseLoopTip()
     private let pointTip = TurningPointTip()
     private let boatTip = BoatTimeTip()
+    private let importTip = RowImportTip()
+    @State private var showImportTip = false
     @State private var showPanelTip = false
     @State private var showLoopTip = false
     @State private var showPointTip = false
@@ -92,6 +100,21 @@ struct LakeMapScreen: View {
         // Screenshot hook: `-RWBoatAt 0.6` shows the lake when the boat is 60 % along the route.
         _followBoat = State(initialValue: args.object(forKey: "RWBoatAt") != nil)
         _boatAt = State(initialValue: min(max(args.double(forKey: "RWBoatAt"), 0), 1))
+        // Screenshot hook: `-RWImportRows YES` opens "Import a row" with made-up Health rows.
+        _showingImport = State(initialValue: args.bool(forKey: "RWImportRows"))
+        // Screenshot hook: `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points.
+        var imported: Route?
+        if args.bool(forKey: "RWImportedRoute"), points.count >= 2 {
+            let track = RouteImport.sampleTrack(along: points, outAndBack: !RouteEdit.isLoop(points))
+            imported = RouteImport.route(from: track, lakeId: view.lakeId, launchPoints: view.clubs.map(\.launchPoint))
+        }
+        if let imported {
+            RouteStore.shared.save(imported)
+            _waypoints = State(initialValue: imported.coordinates)
+            _outAndBack = State(initialValue: imported.outAndBack)
+        }
+        _savedRoute = State(initialValue: imported)
+        _rowed = State(initialValue: imported)
     }
 
     private var planner: RoutePlanner? {
@@ -138,7 +161,8 @@ struct LakeMapScreen: View {
                     pointTip.invalidate(reason: .actionPerformed)
                 },
                 selectPoint: { selectedPoint = $0 },
-                imagery: imagery
+                imagery: imagery,
+                track: routeMode && showTrack ? rowed?.trackCoordinates ?? [] : []
             )
             .ignoresSafeArea()
             topBar
@@ -159,12 +183,17 @@ struct LakeMapScreen: View {
         .sheet(isPresented: $showingLegend) {
             LakeMapLegend(layer: layer, striped: layer == .light && shown?.lakeWide.light == .red,
                           routeMode: routeMode, hasRoute: (plan?.segments.isEmpty == false), boat: boat != nil,
-                          spot: spot != nil, hasWind: !(shown?.wind.isEmpty ?? true))
+                          spot: spot != nil, hasWind: !(shown?.wind.isEmpty ?? true),
+                          track: routeMode && showTrack && rowed?.track != nil)
+        }
+        .sheet(isPresented: $showingImport) {
+            RowImportSheet(lakeName: view.name) { importRow($0) }
         }
         .tipVisibility(panelTip, $showPanelTip)
         .tipVisibility(loopTip, $showLoopTip)
         .tipVisibility(pointTip, $showPointTip)
         .tipVisibility(boatTip, $showBoatTip)
+        .tipVisibility(importTip, $showImportTip)
         // A tip goes once its feature was used.
         .onChange(of: panelExpanded) { panelTip.invalidate(reason: .actionPerformed) }
         .onChange(of: followBoat) { if followBoat { boatTip.invalidate(reason: .actionPerformed) } }
@@ -197,7 +226,9 @@ struct LakeMapScreen: View {
 
     private func saveRoute() {
         let name = routeName.trimmingCharacters(in: .whitespaces)
-        var route = savedRoute ?? Route(name: name, lakeId: view.lakeId, points: [], outAndBack: outAndBack)
+        // A changed imported route saved as a new one keeps the row's track.
+        var route = savedRoute ?? Route(name: name, lakeId: view.lakeId, points: [], outAndBack: outAndBack,
+                                        track: rowed?.track, rowedAt: rowed?.rowedAt, importedFrom: rowed?.importedFrom)
         route.name = name.isEmpty ? tr("Route %@", Format.distance(planner?.distanceM)) : name
         route.points = waypoints.map { Coordinate(lat: $0.latitude, lon: $0.longitude) }
         route.outAndBack = outAndBack
@@ -205,10 +236,25 @@ struct LakeMapScreen: View {
         savedRoute = route
     }
 
+    /// Makes the picked row a saved route on this lake and opens it; an error
+    /// to show when the row was elsewhere or too short.
+    private func importRow(_ track: RowTrack) -> String? {
+        guard RouteImport.shareOnWater(track, grid: view.grid) >= 0.5 else { return RowImportError.notOnLake(view.name).message }
+        guard let route = RouteImport.route(from: track, lakeId: view.lakeId, launchPoints: view.clubs.map(\.launchPoint)) else {
+            return RowImportError.tooShort.message
+        }
+        routes.save(route)
+        load(route)
+        if let pace = track.cleaned.paceSecondsPer500 { RouteImport.usePace(pace) }
+        importTip.invalidate(reason: .actionPerformed)
+        return nil
+    }
+
     private func load(_ route: Route) {
         waypoints = route.coordinates
         outAndBack = route.outAndBack
         savedRoute = route
+        rowed = route.track == nil ? nil : route
         routeMode = true
         spot = nil
         selectedPoint = nil
@@ -236,10 +282,17 @@ struct LakeMapScreen: View {
                 }
                 .background(.regularMaterial, in: Circle())
                 .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
-                routeButton
-                    .background(routeMode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.regularMaterial), in: Circle())
-                    .accessibilityLabel(routeMode ? tr("End route planning") : tr("Plan a route"))
-                    .popoverTip(RoutePlanningTip(), arrowEdge: .top)
+                // Its popover would cover the editing bar and the route tips while planning.
+                if routeMode {
+                    routeButton
+                        .background(Color.accentColor, in: Circle())
+                        .accessibilityLabel(tr("End route planning"))
+                } else {
+                    routeButton
+                        .background(.regularMaterial, in: Circle())
+                        .accessibilityLabel(tr("Plan a route"))
+                        .popoverTip(RoutePlanningTip(), arrowEdge: .top)
+                }
                 if !routeMode {
                     Button { showingInfo = true } label: {
                         Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
@@ -277,8 +330,10 @@ struct LakeMapScreen: View {
                 Button(tr("New route"), systemImage: "plus") {
                     waypoints = []
                     savedRoute = nil
+                    rowed = nil
                     toggleRouteMode()
                 }
+                Button(tr("Import a row"), systemImage: "square.and.arrow.down.on.square") { showingImport = true }
                 Section(tr("Saved routes")) {
                     ForEach(saved) { route in
                         Button(route.name) { load(route) }
@@ -300,6 +355,10 @@ struct LakeMapScreen: View {
                 showingSave = true
             }
             .disabled(waypoints.count < 2)
+            Button(tr("Import a row"), systemImage: "square.and.arrow.down.on.square") { showingImport = true }
+            if rowed?.track != nil {
+                Toggle(tr("Show rowed track"), systemImage: "scribble.variable", isOn: $showTrack)
+            }
             if !saved.isEmpty {
                 Section(tr("Saved routes")) {
                     ForEach(saved) { route in
@@ -312,6 +371,7 @@ struct LakeMapScreen: View {
                 Button(tr("Delete this route"), systemImage: "trash", role: .destructive) {
                     routes.delete(savedRoute)
                     self.savedRoute = nil
+                    rowed = nil
                 }
             }
         } label: {
@@ -350,6 +410,7 @@ struct LakeMapScreen: View {
                 Button(tr("Clear", key: "Clear route"), systemImage: "trash") {
                     waypoints = Array(waypoints.prefix(1))
                     savedRoute = nil
+                    rowed = nil
                 }
                 // The bin alone, so Undo and Close loop keep their words in German too.
                 .labelStyle(.iconOnly)
@@ -378,6 +439,9 @@ struct LakeMapScreen: View {
         } else if tourSeen && showLoopTip && waypoints.count >= 3 && !loop {
             // After the second turning point.
             TipView(loopTip)
+        } else if tourSeen && showImportTip && waypoints.count < 2 {
+            // Before the first turning point: draw the route, or bring in one already rowed.
+            TipView(importTip)
         }
     }
 
@@ -854,6 +918,8 @@ struct LakeMapView: UIViewRepresentable {
     var selectPoint: (Int?) -> Void = { _ in }
     /// Apple's satellite pictures with roads and names instead of the plain map.
     var imagery = false
+    /// An imported route's track as it was rowed, drawn thin over the route.
+    var track: [CLLocationCoordinate2D] = []
 
     /// Room the pushed-down panel and the home indicator take at the bottom.
     static let panelHeight: CGFloat = 230
@@ -928,6 +994,7 @@ struct LakeMapView: UIViewRepresentable {
         c.movePoint = movePoint
         c.selectPoint = selectPoint
         c.showRoute(segments: segments, waypoints: waypoints, selected: selectedPoint, on: map)
+        c.showTrack(track, on: map)
         // The editing bar shows in route mode; move the lake down when the bar
         // would hide the start of the route.
         if !routeMode { c.fittedForRoute = false }
@@ -974,12 +1041,21 @@ struct LakeMapView: UIViewRepresentable {
         private var shownRoute: ([RoutePlan.Segment], [Coordinate], Int?)?
         private var routeOverlays: [RouteLine] = []
         private var routePins: [RoutePin] = []
+        private var trackLine: RowedTrackLine?
+        private var shownTrack: [Coordinate] = []
 
         init(spot: Binding<Int?>) { self.spot = spot }
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let line = overlay as? RouteLine {
                 return RouteLineRenderer(overlay: line)
+            }
+            if let track = overlay as? RowedTrackLine {
+                let renderer = MKPolylineRenderer(polyline: track)
+                renderer.strokeColor = UIColor.label.withAlphaComponent(0.8)
+                renderer.lineWidth = 1.5
+                renderer.lineDashPattern = [3, 3]
+                return renderer
             }
             guard let overlay = overlay as? LakeOverlay else { return MKOverlayRenderer(overlay: overlay) }
             let renderer = LakeRenderer(overlay: overlay)
@@ -1130,6 +1206,11 @@ struct LakeMapView: UIViewRepresentable {
                 }
             }
             map.addOverlays(routeOverlays, level: .aboveLabels)
+            // The rowed track stays on top of the route, or the route's line would hide it.
+            if let trackLine {
+                map.removeOverlay(trackLine)
+                map.addOverlay(trackLine, level: .aboveLabels)
+            }
             routePins = points.enumerated().map { i, p in
                 let pin = RoutePin()
                 pin.coordinate = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lon)
@@ -1139,6 +1220,19 @@ struct LakeMapView: UIViewRepresentable {
                 return pin
             }
             map.addAnnotations(routePins)
+        }
+
+        func showTrack(_ points: [CLLocationCoordinate2D], on map: MKMapView) {
+            let shown = points.map { Coordinate(lat: $0.latitude, lon: $0.longitude) }
+            guard shown != shownTrack else { return }
+            shownTrack = shown
+            if let trackLine { map.removeOverlay(trackLine) }
+            trackLine = nil
+            guard points.count > 1 else { return }
+            let line = RowedTrackLine(coordinates: points, count: points.count)
+            // Over the route, which is wider and would hide it.
+            map.addOverlay(line, level: .aboveLabels)
+            trackLine = line
         }
 
         func showBoat(_ coordinate: CLLocationCoordinate2D?, on map: MKMapView) {
@@ -1172,6 +1266,9 @@ final class RoutePin: MKPointAnnotation {
     /// Its index in the route's waypoints.
     var index = 0
 }
+
+/// An imported row's track as it was rowed.
+final class RowedTrackLine: MKPolyline {}
 
 /// One stretch of a planned route in the colour of its conditions; the casing
 /// is a wider white line under it.
@@ -1409,6 +1506,7 @@ struct LakeMapLegend: View {
     let boat: Bool
     let spot: Bool
     let hasWind: Bool
+    var track = false
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1440,6 +1538,7 @@ struct LakeMapLegend: View {
                                 tr("The route in the light the boat meets there; out and back run side by side"))
                         }
                         if boat { row(ClubMarkIcon(color: .indigo), tr("Where the boat is at the time shown")) }
+                        if track { row(Image(systemName: "scribble.variable").foregroundStyle(.secondary), tr("Dashed: the track as you rowed it (imported row)")) }
                     }
                 }
             }

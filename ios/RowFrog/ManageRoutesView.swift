@@ -71,7 +71,7 @@ struct ManageRoutesView: View {
 
     private func row(_ route: Route) -> some View {
         HStack(spacing: 12) {
-            Image(systemName: route.isLoop ? "arrow.triangle.capsulepath" : route.outAndBack ? "arrow.left.arrow.right" : "arrow.right")
+            Image(systemName: route.importedFrom != nil ? "figure.rower" : route.isLoop ? "arrow.triangle.capsulepath" : route.outAndBack ? "arrow.left.arrow.right" : "arrow.right")
                 .font(.body.weight(.semibold))
                 .foregroundStyle(.tint)
                 .frame(width: 28)
@@ -94,7 +94,12 @@ struct ManageRoutesView: View {
 
     private func details(_ route: Route) -> String {
         let shape = route.isLoop ? tr("Loop") : route.outAndBack ? tr("Out and back") : tr("One way")
-        return "\(Format.distance(route.lengthM)) · \(shape)"
+        var text = "\(Format.distance(route.lengthM)) · \(shape)"
+        // A row brought in from Apple Health or a file.
+        if route.importedFrom != nil {
+            text += " · " + (route.rowedAt.map { tr("rowed %@", Format.day($0)) } ?? tr("rowed"))
+        }
+        return text
     }
 
     private func startRenaming(_ route: Route) {

@@ -20,6 +20,9 @@ targets:
       path: RowFrog/RowFrog.entitlements
       properties:
         com.apple.security.application-groups: [group.com.rowfrog.RowFrog]
+        # Reads rowing workouts and their GPS routes for "Import a row"; never writes.
+        com.apple.developer.healthkit: true
+        com.apple.developer.healthkit.access: []
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.rowfrog.RowFrog
@@ -51,8 +54,36 @@ targets:
         RWPublishedBaseURL: https://api.rowfrog.com/v1
         # Shown when the first-start tour asks for the location (German in de.lproj/InfoPlist.strings).
         NSLocationWhenInUseUsageDescription: Row Frog uses your location only to suggest rowing clubs near you.
+        # Shown when "Import a row" first reads Apple Health (German in de.lproj/InfoPlist.strings).
+        NSHealthShareUsageDescription: Row Frog reads your rowing workouts and their GPS routes, only on this iPhone, to turn rows you choose into routes.
         NSAppTransportSecurity:
           NSAllowsLocalNetworking: true
+        # GPX, TCX and FIT files shared from other apps (CrewNerd, Garmin, Strava)
+        # open in Row Frog and become a saved route.
+        CFBundleDocumentTypes:
+          - CFBundleTypeName: GPS track
+            LSHandlerRank: Alternate
+            LSItemContentTypes: [com.topografix.gpx, com.garmin.tcx, com.garmin.fit]
+        LSSupportsOpeningDocumentsInPlace: false
+        UTImportedTypeDeclarations:
+          - UTTypeIdentifier: com.topografix.gpx
+            UTTypeDescription: GPX track
+            UTTypeConformsTo: [public.xml]
+            UTTypeTagSpecification:
+              public.filename-extension: [gpx]
+              public.mime-type: [application/gpx+xml]
+          - UTTypeIdentifier: com.garmin.tcx
+            UTTypeDescription: TCX activity
+            UTTypeConformsTo: [public.xml]
+            UTTypeTagSpecification:
+              public.filename-extension: [tcx]
+              public.mime-type: [application/vnd.garmin.tcx+xml]
+          - UTTypeIdentifier: com.garmin.fit
+            UTTypeDescription: FIT activity
+            UTTypeConformsTo: [public.data]
+            UTTypeTagSpecification:
+              public.filename-extension: [fit]
+              public.mime-type: [application/vnd.ant.fit]
         # A tap on the widget opens rowfrog://club/<id>.
         CFBundleURLTypes:
           - CFBundleURLName: com.rowfrog.RowFrog

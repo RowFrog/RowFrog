@@ -10,6 +10,11 @@ struct Route: Codable, Identifiable, Hashable {
     var lakeId: String
     var points: [Coordinate]
     var outAndBack: Bool
+    /// For a row brought in from Apple Health or a file: the track as rowed
+    /// (thinned to a few metres), when, and from where. Nil for drawn routes.
+    var track: [Coordinate]? = nil
+    var rowedAt: Date? = nil
+    var importedFrom: RowTrack.Source? = nil
 
     var coordinates: [CLLocationCoordinate2D] {
         points.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) }
@@ -23,6 +28,10 @@ struct Route: Codable, Identifiable, Hashable {
     }
 
     var isLoop: Bool { RouteEdit.isLoop(coordinates) }
+
+    var trackCoordinates: [CLLocationCoordinate2D] {
+        (track ?? []).map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) }
+    }
 }
 
 /// Saved routes, kept on the device.

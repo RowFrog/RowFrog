@@ -43,3 +43,37 @@ def test_missing_counts_warn():
     findings = limits.check(_rows(lambda i: 3000), TODAY)
     assert [f.level for f in findings if f.service == "copernicus"] == ["warn"]
     assert "no calls reported" in limits.report(findings, TODAY)
+
+
+def test_cloudflare_figures_warn_near_the_free_plan():
+    from rowfrog import cloudflare_usage
+
+    answer = {"data": {"viewer": {"accounts": [{
+        "workersInvocationsAdaptive": [
+            {"dimensions": {"date": (TODAY - timedelta(days=i)).isoformat()}, "sum": {"requests": 80_000 if i == 1 else 1000}} for i in range(8)
+        ],
+        "d1AnalyticsAdaptiveGroups": [
+            {"dimensions": {"date": (TODAY - timedelta(days=i)).isoformat()}, "sum": {"rowsWritten": 500, "rowsRead": 900}} for i in range(8)
+        ],
+    }]}}}
+    cf = cloudflare_usage.parse(answer)
+    rows = _rows(lambda i: 3000) + _rows(lambda i: 100, service="copernicus") + cf
+    findings = limits.check(rows, TODAY)
+    workers = [f for f in findings if f.service == "cloudflare-workers"]
+    assert workers[0].level == "warn" and "80%" in workers[0].text
+    assert [f.level for f in findings if f.service == "cloudflare-d1-writes"][0] == "ok"
+
+
+def test_cloudflare_is_left_out_when_not_read():
+    findings = limits.check(_rows(lambda i: 3000) + _rows(lambda i: 100, service="copernicus"), TODAY)
+    assert not [f for f in findings if f.service.startswith("cloudflare")]
+    assert limits.worst(findings) == "ok"
+
+
+def test_cloudflare_errors_raise():
+    import pytest
+
+    from rowfrog import cloudflare_usage
+
+    with pytest.raises(ValueError):
+        cloudflare_usage.parse({"errors": [{"message": "not authorized"}], "data": None})
