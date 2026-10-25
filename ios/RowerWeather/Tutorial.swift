@@ -209,8 +209,8 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "humidity", text: tr("Humidity, with the dew point underneath.")),
             TourPoint(symbol: "gauge.with.dots.needle.33percent", text: tr("Air pressure on a gauge, with its trend for the hours ahead.")),
             TourPoint(symbol: "snowflake", text: tr("In winter, the app estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.")),
-            TourPoint(symbol: "cloud.sun", text: tr("The forecast comes from the weather model that does best for your lake. The line above the Legend names it.")),
-            TourPoint(symbol: "info.circle", text: tr("Open the Legend at the bottom of each page to see what every icon and colour means.")),
+            TourPoint(symbol: "cloud.sun", text: tr("The forecast comes from the weather model that does best for your lake. The line near the end of each page names it.")),
+            TourPoint(symbol: "info.circle", text: tr("Tap ⓘ on a card to see what its icons and colours mean. Settings › Help has the full legend.")),
         ]
         case .warnings: [
             TourPoint(symbol: "water.waves", text: tr("Lake storm warnings for the lake and weather warnings for the town.")),
