@@ -961,8 +961,9 @@ private struct ConditionChart: View {
             // The blue line itself is drawn by `markers`, so it can make room for
             // the map's marker; this one only carries the label while touched.
             if let x = selectedX {
+                // Zero width rather than clear: the label takes the mark's colour.
                 RuleMark(x: .value("Hour", x.rounded()))
-                    .foregroundStyle(.clear)
+                    .lineStyle(StrokeStyle(lineWidth: 0))
                     .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
                         callout(x)
                     }

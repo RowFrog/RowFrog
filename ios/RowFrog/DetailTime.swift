@@ -36,7 +36,8 @@ final class DetailTime {
         hour = selected
         mapHour = selected
         if selected > 20 { scrollX = selected - 8 }
-        linked = UserDefaults.standard.object(forKey: Self.linkKey) as? Bool ?? true
+        // bool(forKey:) also reads a launch argument's "NO", which is a string.
+        linked = UserDefaults.standard.object(forKey: Self.linkKey) == nil || UserDefaults.standard.bool(forKey: Self.linkKey)
     }
 
     /// The hour the map shows.

@@ -88,14 +88,15 @@ struct DetailMapCard: View {
                 }
             }
             .font(.subheadline.weight(.semibold).monospacedDigit())
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             Spacer(minLength: 0)
             // The radar covers the last hour and the next two; the rain map is the forecast.
             if layer == .rain, (-3600.0...7200).contains(mapDate.timeIntervalSinceNow) {
                 Button { radar = true } label: {
-                    Label(tr("Rain radar"), systemImage: "dot.radiowaves.left.and.right")
+                    Image(systemName: "dot.radiowaves.left.and.right")
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.mini)
+                .accessibilityLabel(tr("Rain radar"))
             }
             if layer.links != .none {
                 chain
@@ -119,6 +120,8 @@ struct DetailMapCard: View {
         } label: {
             Label(time.linked ? tr("Linked") : tr("Own time"), systemImage: "link")
                 .font(.caption.weight(.semibold))
+                .lineLimit(1)
+                .fixedSize()
                 .padding(.horizontal, 7)
                 .padding(.vertical, 3)
                 .background(time.linked ? Color.accentColor.opacity(0.16) : .clear, in: RoundedRectangle(cornerRadius: 7))
