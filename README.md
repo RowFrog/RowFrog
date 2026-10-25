@@ -171,7 +171,9 @@ tapped; then it can be panned and zoomed, and it resets on each visit. "Open
 in Maps" also offers directions to the club's address.
 
 **Widgets.** Home-screen and lock-screen widgets show the rowing light first,
-with the temperature and the weather symbol beside each other.
+with the temperature and the weather symbol beside each other. When the
+light is green but the rain radar sees rain coming within 2 hours, the widget
+adds a line such as "Light rain from 14:30".
 
 **Settings** (cog on the location list):
 
