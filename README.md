@@ -57,8 +57,8 @@ GitHub issue, so no GitHub account is needed.
    colour; air, water and wind; waves, rain and visibility (and ice when it
    matters); a DWD warning status line and a daylight line.
 2. The DWD warnings card, only while a warning is issued (or the check failed).
-3. Rain radar.
-4. Current conditions.
+3. Current conditions.
+4. Rain radar.
 5. Lake view.
 6. Next 48 hours, with a feels-like column and a day header that stays in
    place while scrolling; tapping an hour opens that hour's view.
@@ -121,8 +121,14 @@ button. Routes are saved on the phone.
 
 **Rain radar.** Each location page has a card with DWD's rain radar and
 2-hour nowcast for the launch point, e.g. "Light rain from 21:30"; tapping it
-opens the radar map. The app
-reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
+opens the radar map, with DWD's colour legend and a switch to play the radar
+as a loop. The app reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
+
+**Battery.** The app keeps its battery use low: the radar only updates on the
+page in front, readings and map pictures are reused, widgets redraw only when
+something changed, and the launch point map stays a still picture until it is
+tapped. In Low Power Mode the tiles are drawn solid and the radar updates less
+often.
 
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
 the coming week: no ice, shore ice possible, ice forming, ice cover likely,
@@ -152,9 +158,9 @@ picked in the hidden developer options, the credits line names its provider
 (MeteoSwiss, GeoSphere Austria or ECMWF) as well as DWD.
 
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
-point the forecast is for, with its coordinates. It can be panned and zoomed
-and resets on each visit; "Open in Maps" also offers directions to the club's
-address.
+point the forecast is for, with its coordinates. It is a still picture until
+tapped; then it can be panned and zoomed, and it resets on each visit. "Open
+in Maps" also offers directions to the club's address.
 
 **Widgets.** Home-screen and lock-screen widgets show the rowing light first,
 with the temperature and the weather symbol beside each other.
