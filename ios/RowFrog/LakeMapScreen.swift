@@ -78,7 +78,8 @@ struct LakeMapScreen: View {
         }
         _waypoints = State(initialValue: points)
         _routeMode = State(initialValue: !route.isEmpty)
-        _outAndBack = State(initialValue: !RouteEdit.isLoop(points))
+        // A new route goes one way; `-RWOutAndBack YES` rows the screenshot routes back too.
+        _outAndBack = State(initialValue: args.bool(forKey: "RWOutAndBack") && !RouteEdit.isLoop(points))
         // Screenshot hook: `-RWSavedRoutes "Name=lat,lon;lat,lon|Name=…"` saves these routes on the
         // lake when it has none (a name ending in "↔" is rowed out and back) and opens Manage routes.
         if let saved = args.string(forKey: "RWSavedRoutes"), RouteStore.shared.routes(on: view.lakeId).isEmpty {
@@ -160,6 +161,11 @@ struct LakeMapScreen: View {
                     waypoints = RouteEdit.move(at: i, to: point, in: waypoints)
                     pointTip.invalidate(reason: .actionPerformed)
                 },
+                insertPoint: { i, point in
+                    waypoints = RouteEdit.insert(point, at: i, in: waypoints)
+                    selectedPoint = i
+                    savedRoute = nil
+                },
                 selectPoint: { selectedPoint = $0 },
                 imagery: imagery,
                 track: routeMode && showTrack ? rowed?.trackCoordinates ?? [] : []
@@ -184,7 +190,7 @@ struct LakeMapScreen: View {
             LakeMapLegend(layer: layer, striped: layer == .light && shown?.lakeWide.light == .red,
                           routeMode: routeMode, hasRoute: (plan?.segments.isEmpty == false), boat: boat != nil,
                           spot: spot != nil, hasWind: !(shown?.wind.isEmpty ?? true),
-                          track: routeMode && showTrack && rowed?.track != nil)
+                          track: routeMode && showTrack && rowed?.track != nil, clubID: clubID)
         }
         .sheet(isPresented: $showingImport) {
             RowImportSheet(lakeName: view.name) { importRow($0) }
@@ -430,7 +436,7 @@ struct LakeMapScreen: View {
             if tourSeen && showPointTip {
                 TipView(pointTip)
             } else {
-                Text(tr("Hold the point and drag it to move it."))
+                Text(tr("Drag the point to move it. The magnifier shows where it lands."))
                     .font(.caption)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 4)
@@ -717,7 +723,7 @@ struct LakeMapScreen: View {
                 }
             }
         } else {
-            Text(tr("Tap the water to add the turning points of your route. It starts at your club. Tap a point to delete it, or hold and drag it to move it. A point within 50 m of the start closes the loop."))
+            Text(tr("Tap the water to add the turning points of your route. It starts at your club and goes one way; turn on Out and back to row the same way back. Tap or pull a stretch to add a point there. Tap a point to delete it, or drag it to move it. A point within 50 m of the start closes the loop."))
                 .font(.subheadline)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -915,6 +921,8 @@ struct LakeMapView: UIViewRepresentable {
     var selectedPoint: Int?
     var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
     var movePoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
+    /// Adds a point on a stretch of the route, before the point at that index.
+    var insertPoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
     var selectPoint: (Int?) -> Void = { _ in }
     /// Apple's satellite pictures with roads and names instead of the plain map.
     var imagery = false
@@ -955,6 +963,11 @@ struct LakeMapView: UIViewRepresentable {
             map.addAnnotation(pin)
         }
         map.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))
+        // Turning points move at once under a drag, without MapKit's hold first.
+        let drag = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.dragged(_:)))
+        drag.delegate = context.coordinator
+        drag.maximumNumberOfTouches = 1
+        map.addGestureRecognizer(drag)
         map.setVisibleMapRect(overlay.boundingMapRect, animated: false)
         // Fit the lake once the map has its size, clear of the buttons at the top
         // and of the panel at the bottom, so the whole lake and every club show.
@@ -992,6 +1005,7 @@ struct LakeMapView: UIViewRepresentable {
         c.routeMode = routeMode
         c.addPoint = addPoint
         c.movePoint = movePoint
+        c.insertPoint = insertPoint
         c.selectPoint = selectPoint
         c.showRoute(segments: segments, waypoints: waypoints, selected: selectedPoint, on: map)
         c.showTrack(track, on: map)
@@ -1021,7 +1035,7 @@ struct LakeMapView: UIViewRepresentable {
         }
     }
 
-    final class Coordinator: NSObject, MKMapViewDelegate {
+    final class Coordinator: NSObject, MKMapViewDelegate, UIGestureRecognizerDelegate {
         var spot: Binding<Int?>
         var overlay: LakeOverlay?
         var renderer: LakeRenderer?
@@ -1035,6 +1049,7 @@ struct LakeMapView: UIViewRepresentable {
         var fittedForRoute = false
         var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
         var movePoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
+        var insertPoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
         var selectPoint: (Int?) -> Void = { _ in }
         private let spotPin = MKPointAnnotation()
         private let boatPin = MKPointAnnotation()
@@ -1049,6 +1064,13 @@ struct LakeMapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let line = overlay as? RouteLine {
                 return RouteLineRenderer(overlay: line)
+            }
+            if let line = overlay as? DragLine {
+                let renderer = MKPolylineRenderer(polyline: line)
+                renderer.strokeColor = UIColor.systemOrange
+                renderer.lineWidth = 3
+                renderer.lineDashPattern = [6, 4]
+                return renderer
             }
             if let track = overlay as? RowedTrackLine {
                 let renderer = MKPolylineRenderer(polyline: track)
@@ -1075,8 +1097,8 @@ struct LakeMapView: UIViewRepresentable {
             if let pin = annotation as? RoutePin {
                 let view = MKAnnotationView(annotation: pin, reuseIdentifier: nil)
                 view.image = Self.image(for: pin)
-                // The start is the club's launch point; the turning points can be moved.
-                view.isDraggable = !pin.isStart
+                // The start is the club's launch point; the turning points move
+                // with the drag gesture below, not MapKit's own hold-and-drag.
                 view.displayPriority = .required
                 return view
             }
@@ -1131,31 +1153,156 @@ struct LakeMapView: UIViewRepresentable {
             }
         }
 
-        /// While a point is held and dragged, the route's pins stay as they are:
+        /// While a point is dragged, the route's pins stay as they are:
         /// replacing them would drop the point from under the finger.
-        private var dragging = false
+        private var dragPin: RoutePin?
+        /// A point being added on a stretch, not yet part of the route.
+        private var dragIsNew = false
+        /// Where the dragged point was, for when the drag is cancelled.
+        private var dragOrigin: CLLocationCoordinate2D?
+        /// Where the drag started, to find the point under the finger.
+        private var touchStart: CGPoint?
+        /// From the finger to the point, so the point stays where it was grabbed.
+        private var grab = CGVector.zero
+        /// The dashed line from the point before to the point after the dragged one.
+        private var dragLine: DragLine?
+        /// Shows, above the finger, the map under the dragged point.
+        private lazy var loupe = Loupe()
+        /// The route's points as shown, a loop's last point being the start again.
+        private var shownWaypoints: [CLLocationCoordinate2D] = []
 
         func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-            // The point stays selected: MapKit only lets a selected point be dragged.
             guard let pin = view.annotation as? RoutePin, !pin.isStart else { return }
             selectPoint(pin.index)
         }
 
-        func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, didChange newState: MKAnnotationView.DragState, fromOldState oldState: MKAnnotationView.DragState) {
-            // A plain annotation view has to move through the drag states itself.
-            switch newState {
-            case .starting:
-                dragging = true
-                view.dragState = .dragging
-            case .ending, .canceling:
-                view.dragState = .none
-                dragging = false
-                if newState == .ending, let pin = view.annotation as? RoutePin {
-                    movePoint(pin.index, pin.coordinate)
+        /// The turning point nearest to a touch, within reach of it; never the start.
+        private func pin(near location: CGPoint, on map: MKMapView) -> RoutePin? {
+            var nearest: RoutePin?
+            var nearestDistance: CGFloat = 30
+            for pin in routePins where !pin.isStart {
+                let at: CGPoint = map.convert(pin.coordinate, toPointTo: map)
+                let distance: CGFloat = hypot(at.x - location.x, at.y - location.y)
+                if distance < nearestDistance {
+                    nearest = pin
+                    nearestDistance = distance
                 }
+            }
+            return nearest
+        }
+
+        /// The stretch of the route under a touch, as the index a new point there gets.
+        private func stretch(near location: CGPoint, on map: MKMapView) -> Int? {
+            guard shownWaypoints.count >= 2 else { return nil }
+            var nearest: Int?
+            var nearestDistance: CGFloat = 22
+            for i in 0..<(shownWaypoints.count - 1) {
+                let a: CGPoint = map.convert(shownWaypoints[i], toPointTo: map)
+                let b: CGPoint = map.convert(shownWaypoints[i + 1], toPointTo: map)
+                let distance = Self.distance(from: location, toSegment: a, b)
+                if distance < nearestDistance {
+                    nearest = i + 1
+                    nearestDistance = distance
+                }
+            }
+            return nearest
+        }
+
+        static func distance(from p: CGPoint, toSegment a: CGPoint, _ b: CGPoint) -> CGFloat {
+            let dx: CGFloat = b.x - a.x, dy: CGFloat = b.y - a.y
+            let length2: CGFloat = dx * dx + dy * dy
+            guard length2 > 0 else { return hypot(p.x - a.x, p.y - a.y) }
+            let t: CGFloat = max(0, min(1, ((p.x - a.x) * dx + (p.y - a.y) * dy) / length2))
+            return hypot(p.x - (a.x + t * dx), p.y - (a.y + t * dy))
+        }
+
+        func gestureRecognizer(_ gesture: UIGestureRecognizer, shouldReceive touch: UITouch) -> Bool {
+            touchStart = touch.location(in: gesture.view)
+            return true
+        }
+
+        func gestureRecognizerShouldBegin(_ gesture: UIGestureRecognizer) -> Bool {
+            guard routeMode, let map = gesture.view as? MKMapView, let touchStart else { return false }
+            return pin(near: touchStart, on: map) != nil || stretch(near: touchStart, on: map) != nil
+        }
+
+        /// The map's own panning waits until a drag has turned out not to start on the route.
+        func gestureRecognizer(_ gesture: UIGestureRecognizer, shouldBeRequiredToFailBy other: UIGestureRecognizer) -> Bool {
+            gesture is UIPanGestureRecognizer && other is UIPanGestureRecognizer
+        }
+
+        @objc func dragged(_ gesture: UIPanGestureRecognizer) {
+            guard let map = gesture.view as? MKMapView else { return }
+            let finger = gesture.location(in: map)
+            let point = CGPoint(x: finger.x + grab.dx, y: finger.y + grab.dy)
+            switch gesture.state {
+            case .began:
+                guard let touchStart else { return }
+                let pin: RoutePin
+                if let existing = self.pin(near: touchStart, on: map) {
+                    pin = existing
+                    dragIsNew = false
+                    let at: CGPoint = map.convert(pin.coordinate, toPointTo: map)
+                    grab = CGVector(dx: at.x - touchStart.x, dy: at.y - touchStart.y)
+                    selectPoint(pin.index)
+                } else if let index = stretch(near: touchStart, on: map) {
+                    // Pulling a stretch adds a point there.
+                    pin = RoutePin()
+                    pin.index = index
+                    pin.coordinate = map.convert(touchStart, toCoordinateFrom: map)
+                    dragIsNew = true
+                    grab = .zero
+                    map.addAnnotation(pin)
+                } else {
+                    return
+                }
+                dragPin = pin
+                dragOrigin = pin.coordinate
+                UIImpactFeedbackGenerator(style: .medium).impactOccurred()
+                pin.isSelected = true
+                map.view(for: pin)?.image = Self.image(for: pin)
+                showDragLine(for: pin, on: map)
+                loupe.show(at: pin.coordinate, finger: finger, on: map)
+            case .changed:
+                guard let pin = dragPin else { return }
+                pin.coordinate = map.convert(point, toCoordinateFrom: map)
+                showDragLine(for: pin, on: map)
+                loupe.show(at: pin.coordinate, finger: finger, on: map)
+            case .ended, .cancelled, .failed:
+                guard let pin = dragPin else { return }
+                loupe.hide()
+                if let dragLine { map.removeOverlay(dragLine) }
+                dragLine = nil
+                dragPin = nil
+                if dragIsNew {
+                    map.removeAnnotation(pin)
+                    if gesture.state == .ended { insertPoint(pin.index, pin.coordinate) }
+                } else if gesture.state == .ended {
+                    movePoint(pin.index, pin.coordinate)
+                } else if let dragOrigin {
+                    pin.coordinate = dragOrigin
+                }
+                dragOrigin = nil
+                dragIsNew = false
             default:
                 break
             }
+        }
+
+        /// The route's shape around the dragged point, drawn as the finger moves;
+        /// the colours of the route follow once the point is let go.
+        private func showDragLine(for pin: RoutePin, on map: MKMapView) {
+            let i = pin.index, points = shownWaypoints
+            // A new point sits between the points before and at its index.
+            let after = dragIsNew ? i : i + 1
+            var neighbours: [CLLocationCoordinate2D] = []
+            if i > 0, i - 1 < points.count { neighbours.append(points[i - 1]) }
+            neighbours.append(pin.coordinate)
+            if after < points.count { neighbours.append(points[after]) }
+            if let dragLine { map.removeOverlay(dragLine) }
+            let line = DragLine(coordinates: neighbours, count: neighbours.count)
+            map.addOverlay(line, level: .aboveLabels)
+            dragLine = line
         }
 
         @objc func tapped(_ gesture: UITapGestureRecognizer) {
@@ -1167,7 +1314,10 @@ struct LakeMapView: UIViewRepresentable {
                 return
             }
             let coordinate = map.convert(location, toCoordinateFrom: map)
-            if routeMode {
+            if routeMode, let index = stretch(near: location, on: map) {
+                // A tap on a stretch adds a point there, not at the end.
+                insertPoint(index, coordinate)
+            } else if routeMode {
                 addPoint(coordinate)
             } else {
                 spot.wrappedValue = grid.cell(at: coordinate)
@@ -1176,10 +1326,11 @@ struct LakeMapView: UIViewRepresentable {
 
         func showRoute(segments: [RoutePlan.Segment], waypoints: [CLLocationCoordinate2D], selected: Int?, on map: MKMapView) {
             // A loop's last point is the start again and gets no pin of its own.
+            shownWaypoints = routeMode ? waypoints : []
             let pinned = RouteEdit.isLoop(waypoints) ? Array(waypoints.dropLast()) : waypoints
             let points = routeMode ? pinned.map { Coordinate(lat: $0.latitude, lon: $0.longitude) } : []
             let lines = routeMode ? segments : []
-            if dragging { return }
+            if dragPin != nil { return }
             if let shownRoute, shownRoute.0 == lines, shownRoute.1 == points {
                 guard shownRoute.2 != selected else { return }
                 // Only the tapped point changed: recolour the dots, keep the pins (and their selection).
@@ -1265,6 +1416,68 @@ final class RoutePin: MKPointAnnotation {
     var isSelected = false
     /// Its index in the route's waypoints.
     var index = 0
+}
+
+/// The route around a turning point while it is dragged.
+final class DragLine: MKPolyline {}
+
+/// A round magnifier above the finger that shows the map under a dragged
+/// point, with cross hairs where the point will land.
+final class Loupe: UIView {
+    static let size: CGFloat = 116
+    private let map = MKMapView()
+
+    init() {
+        super.init(frame: CGRect(x: 0, y: 0, width: Self.size, height: Self.size))
+        isUserInteractionEnabled = false
+        layer.cornerRadius = Self.size / 2
+        layer.borderWidth = 3
+        layer.borderColor = UIColor.white.cgColor
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOpacity = 0.3
+        layer.shadowRadius = 6
+        map.frame = bounds
+        map.layer.cornerRadius = Self.size / 2
+        map.clipsToBounds = true
+        map.isUserInteractionEnabled = false
+        map.pointOfInterestFilter = .excludingAll
+        map.showsCompass = false
+        addSubview(map)
+        let cross = CAShapeLayer()
+        let path = UIBezierPath()
+        let c = Self.size / 2
+        for (from, to) in [(CGPoint(x: c - 14, y: c), CGPoint(x: c - 5, y: c)), (CGPoint(x: c + 5, y: c), CGPoint(x: c + 14, y: c)),
+                           (CGPoint(x: c, y: c - 14), CGPoint(x: c, y: c - 5)), (CGPoint(x: c, y: c + 5), CGPoint(x: c, y: c + 14))] {
+            path.move(to: from)
+            path.addLine(to: to)
+        }
+        path.append(UIBezierPath(ovalIn: CGRect(x: c - 3, y: c - 3, width: 6, height: 6)))
+        cross.path = path.cgPath
+        cross.strokeColor = UIColor.systemOrange.cgColor
+        cross.fillColor = UIColor.systemOrange.cgColor
+        cross.lineWidth = 2.5
+        layer.addSublayer(cross)
+    }
+
+    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
+
+    /// Shows `coordinate` magnified, above the finger, or below it near the top.
+    func show(at coordinate: CLLocationCoordinate2D, finger: CGPoint, on host: MKMapView) {
+        if superview !== host {
+            map.preferredConfiguration = host.preferredConfiguration
+            host.addSubview(self)
+        }
+        let span = MKCoordinateSpan(latitudeDelta: max(host.region.span.latitudeDelta / 8, 0.0008),
+                                    longitudeDelta: max(host.region.span.longitudeDelta / 8, 0.0008))
+        map.setRegion(MKCoordinateRegion(center: coordinate, span: span), animated: false)
+        let half = Self.size / 2, gap: CGFloat = 70
+        var y = finger.y - gap - half
+        if y - half < host.safeAreaInsets.top + 8 { y = finger.y + gap + half }
+        let x = min(max(finger.x, half + 8), host.bounds.width - half - 8)
+        center = CGPoint(x: x, y: y)
+    }
+
+    func hide() { removeFromSuperview() }
 }
 
 /// An imported row's track as it was rowed.
@@ -1507,6 +1720,7 @@ struct LakeMapLegend: View {
     let spot: Bool
     let hasWind: Bool
     var track = false
+    var clubID: String? = nil
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1521,7 +1735,7 @@ struct LakeMapLegend: View {
                     }
                 }
                 Section(tr("On the map")) {
-                    row(ClubMarkIcon(color: .blue), tr("This page's club; a house instead of the rower when it is your home base"))
+                    row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
                     row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
@@ -1562,9 +1776,15 @@ struct LakeMapLegend: View {
 /// A club mark as the maps draw it, for the legends: a white rower in a coloured circle.
 struct ClubMarkIcon: View {
     let color: Color
+    var symbol = "figure.rower"
+
+    /// The legend line for the page's club, as its mark is drawn on this map.
+    static func pageClubText(_ clubID: String?) -> String {
+        LocationStore.markSymbol(for: clubID) == "house.fill" ? tr("Your home base, the club of this page") : tr("The club of this page")
+    }
 
     var body: some View {
-        Image(systemName: "figure.rower")
+        Image(systemName: symbol)
             .font(.system(size: 11, weight: .semibold))
             .foregroundStyle(.white)
             .frame(width: 22, height: 22)

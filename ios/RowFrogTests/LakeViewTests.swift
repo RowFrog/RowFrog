@@ -1,3 +1,4 @@
+import CoreGraphics
 import CoreLocation
 import XCTest
 @testable import RowFrog
@@ -138,5 +139,24 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(RouteEdit.remove(at: 0, from: loop).count, 4)
         XCTAssertEqual(RouteEdit.move(at: 0, to: a, in: loop)[0].latitude, s.latitude)
         XCTAssertEqual(RouteEdit.move(at: 2, to: a, in: loop)[2].longitude, a.longitude)
+    }
+
+    func testRouteEditInsertOnAStretch() {
+        let s = CLLocationCoordinate2D(latitude: 47.99, longitude: 11.34)
+        let a = CLLocationCoordinate2D(latitude: 47.98, longitude: 11.34)
+        let b = CLLocationCoordinate2D(latitude: 47.98, longitude: 11.35)
+        let mid = CLLocationCoordinate2D(latitude: 47.985, longitude: 11.34)
+        let route = RouteEdit.insert(mid, at: 1, in: [s, a, b])
+        XCTAssertEqual(route.map(\.latitude), [s.latitude, mid.latitude, a.latitude, b.latitude])
+        // On a loop the stretch back to the start takes a point too, and it stays a loop.
+        let loop = RouteEdit.insert(mid, at: 3, in: RouteEdit.close([s, a, b]))
+        XCTAssertEqual(loop.count, 5)
+        XCTAssertTrue(RouteEdit.isLoop(loop))
+        // Nothing goes before the start or after the end.
+        XCTAssertEqual(RouteEdit.insert(mid, at: 0, in: [s, a]).count, 2)
+        XCTAssertEqual(RouteEdit.insert(mid, at: 2, in: [s, a]).count, 2)
+        // The distance from a touch to a drawn stretch.
+        XCTAssertEqual(LakeMapView.Coordinator.distance(from: CGPoint(x: 5, y: 3), toSegment: .zero, CGPoint(x: 10, y: 0)), 3, accuracy: 0.001)
+        XCTAssertEqual(LakeMapView.Coordinator.distance(from: CGPoint(x: 14, y: 3), toSegment: .zero, CGPoint(x: 10, y: 0)), 5, accuracy: 0.001)
     }
 }

@@ -62,15 +62,17 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table)
 - `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order); `-RWArrange YES` opens "Arrange this page"
 - `-RWOpenRadarMap YES` open the rain radar map (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
+- `-RWOpenWeatherMap <layer>` open the weather map from the detail view opened with `-RWOpenCondition` (layers: `wind`, `gust`, `temperature`, `feelsLike`, `humidity`, `pressure`, `visibility`, `rain`, `uv`, `lightning`, `fog`)
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
+- `-RWRoute "lat,lon;lat,lon;…"` open route mode with these points (a new route goes one way); `-RWOutAndBack YES` rows it out and back
 - `-RWImportRows YES` open "Import a row" in the lake view with made-up Apple Health rows (Health is not asked); `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points (2:20 per 500 m, a week ago); `-RWShowTrack YES` shows the rowed track (the switch in the bookmark menu)
 - `-RWChartSelect 5` a detail chart opens with the scrub line five hours from now
 - `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
-- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map and hour view tips, which otherwise wait until the rain radar and hourly tips are closed
+- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map, hour view and water estimate tips, which otherwise wait until the rain radar, hourly and conditions tips are closed
 - `-RWResetTips YES` show the one-time tips again, as after Settings › Help
 - `-RWOpenForecastSource YES` open the forecast source sheet
 - `-RWDeveloperOptions YES` and `-RWPickedModels '<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'`
@@ -89,7 +91,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 | Workflow | When | Where you see it |
 |---|---|---|
-| Publish forecasts | every 30 min from main | api.rowfrog.com |
+| Publish forecasts | every 30 min from main | api.rowfrog.com; the weather maps in `maps/` (index + one file per tile and value) are rebuilt only when DWD has a newer ICON-D2 run, every 3 hours, from DWD open data without Open-Meteo calls |
 | Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays); its section "Once a day instead of twice?" shows whether the 04:40 run alone would rank the models the same (to decide later whether to drop the 16:40 run, about 700 Open-Meteo calls a day) |
 | Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month. Covers Open-Meteo, Copernicus and, read with the Cloudflare token, Worker requests (100,000 a day) and D1 rows written (100,000) and read (5 million) on the free Workers plan |
 
