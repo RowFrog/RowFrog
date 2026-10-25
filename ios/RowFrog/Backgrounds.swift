@@ -100,7 +100,18 @@ private struct SurfaceKey: EnvironmentKey {
     static let defaultValue = Surface.plain
 }
 
+private struct CurrentPageKey: EnvironmentKey {
+    static let defaultValue = true
+}
+
 extension EnvironmentValues {
+    /// Whether this club page is the one in front. Pages beside it stay alive
+    /// in the swiping TabView and stop their timers.
+    var isCurrentPage: Bool {
+        get { self[CurrentPageKey.self] }
+        set { self[CurrentPageKey.self] = newValue }
+    }
+
     var surface: Surface {
         get { self[SurfaceKey.self] }
         set { self[SurfaceKey.self] = newValue }

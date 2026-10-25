@@ -116,6 +116,21 @@ struct RadarClient {
     }
 }
 
+/// The last radar reading per launch point, so a page swiped back to, or the
+/// hour view opened over it, shows it without asking DWD again (10 requests
+/// a time).
+@MainActor
+enum RadarCache {
+    static let refresh: TimeInterval = 300
+    private static var entries: [Coordinate: (radar: RainRadar, loaded: Date)] = [:]
+
+    static func entry(at point: Coordinate) -> (radar: RainRadar, loaded: Date)? { entries[point] }
+
+    static func store(_ radar: RainRadar, at point: Coordinate) {
+        entries[point] = (radar, .now)
+    }
+}
+
 /// The rain radar card: a one-line summary and a bar per 15 minutes. A tap
 /// opens the radar map.
 struct RainRadarCard: View {
@@ -124,6 +139,7 @@ struct RainRadarCard: View {
     @State private var failed = false
     @State private var showingMap = UserDefaults.standard.bool(forKey: "RWOpenRadarMap")
     @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.isCurrentPage) private var isCurrentPage
 
     var body: some View {
         Button { showingMap = true } label: {
@@ -154,20 +170,29 @@ struct RainRadarCard: View {
             RadarMapScreen(point: point, reference: radar?.reference)
         }
         .onChange(of: showingMap) { if showingMap { RadarMapTip().invalidate(reason: .actionPerformed) } }
-        .task(id: [point.lat, point.lon, scenePhase == .active ? 1 : 0]) {
-            // DWD updates the radar every 5 minutes; follow it while the page is open
-            // and the app is in front.
-            guard scenePhase == .active else { return }
+        .task(id: [point.lat, point.lon, scenePhase == .active && isCurrentPage ? 1 : 0]) {
+            // DWD updates the radar every 5 minutes; follow it while the page is in
+            // front and the app is open. A swiping TabView keeps the pages beside it
+            // alive too, and they wait, showing what was loaded last.
+            if let cached = RadarCache.entry(at: point) { radar = cached.radar }
+            guard scenePhase == .active, isCurrentPage else { return }
             while !Task.isCancelled {
+                // Back on a page within 5 minutes: no new requests until the 5 minutes are up.
+                if let age = RadarCache.entry(at: point).map({ Date.now.timeIntervalSince($0.loaded) }), age < RadarCache.refresh {
+                    try? await Task.sleep(for: .seconds(RadarCache.refresh - age))
+                    continue
+                }
                 do {
-                    radar = try await RadarClient().load(lat: point.lat, lon: point.lon)
+                    let loaded = try await RadarClient().load(lat: point.lat, lon: point.lon)
+                    radar = loaded
                     failed = false
+                    RadarCache.store(loaded, at: point)
                 } catch is CancellationError {
                     return
                 } catch {
                     failed = radar == nil
                 }
-                try? await Task.sleep(for: .seconds(300))
+                try? await Task.sleep(for: .seconds(RadarCache.refresh))
             }
         }
     }
@@ -463,10 +488,17 @@ final class RadarFrames {
 
     func load() async {
         guard !done else { return }
-        // The latest picture first, then outwards, so the map shows something at once.
-        let order = times.indices.sorted { abs($0 - 4) < abs($1 - 4) }.map { times[$0] }
+        // Opened again for the same club before DWD's next radar picture:
+        // the pictures of the last opening, with nothing to load.
         let region = region
-        await withTaskGroup(of: (Date, UIImage?).self) { group in
+        if let saved = Self.saved, saved.region == region, saved.times == times {
+            for (time, data) in saved.data where images[time] == nil { images[time] = UIImage(data: data) }
+        } else {
+            Self.saved = (region, times, [:])
+        }
+        // The latest picture first, then outwards, so the map shows something at once.
+        let order = times.indices.sorted { abs($0 - 4) < abs($1 - 4) }.map { times[$0] }.filter { images[$0] == nil }
+        await withTaskGroup(of: (Date, Data?).self) { group in
             // DWD's server is slow with many parallel requests; three at a time.
             var next = 0
             while next < min(3, order.count) {
@@ -474,8 +506,13 @@ final class RadarFrames {
                 group.addTask { (time, await Self.fetch(region.url(time: time))) }
                 next += 1
             }
-            while let (time, image) = await group.next() {
-                if let image { images[time] = image } else { failedCount += 1 }
+            while let (time, data) = await group.next() {
+                if let data, let image = UIImage(data: data) {
+                    images[time] = image
+                    if Self.saved?.region == region, Self.saved?.times == times { Self.saved?.data[time] = data }
+                } else {
+                    failedCount += 1
+                }
                 if next < order.count {
                     let time = order[next]
                     group.addTask { (time, await Self.fetch(region.url(time: time))) }
@@ -486,15 +523,18 @@ final class RadarFrames {
         done = true
     }
 
-    private nonisolated static func fetch(_ url: URL) async -> UIImage? {
+    /// The last map's pictures as DWD sent them (about 2 MB).
+    private static var saved: (region: RadarRegion, times: [Date], data: [Date: Data])?
+
+    private nonisolated static func fetch(_ url: URL) async -> Data? {
         for attempt in 0..<3 {
             if attempt > 0 { try? await Task.sleep(for: .seconds(Double(attempt))) }
             var request = URLRequest(url: url)
             request.timeoutInterval = 20
             if let (data, response) = try? await URLSession.shared.data(for: request),
                (response as? HTTPURLResponse)?.statusCode == 200,
-               let image = UIImage(data: data) {
-                return image
+               UIImage(data: data) != nil {
+                return data
             }
             if Task.isCancelled { return nil }
         }

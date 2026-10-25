@@ -131,6 +131,7 @@ struct RootView: View {
             ForEach(saved) { club in
                 LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
                     .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
+                    .environment(\.isCurrentPage, club.id == selection)
                     .tag(club.id)
             }
         }
