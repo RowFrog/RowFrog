@@ -17,7 +17,9 @@ struct LocationPageView: View {
     @State private var showConditionsTip = false
     @State private var showLakeViewTip = false
     @State private var arranging = UserDefaults.standard.bool(forKey: "RWArrange")
-    /// Where the hourly table and its day headers are, for the header that stays at the top.
+    /// Where the hourly table and its day headers are on screen, for the header that stays at the top.
+    /// Screen coordinates: in landscape the scroll view's own space leaves out the side inset,
+    /// which put the header beside the table.
     @State private var hourlyFrame: CGRect = .zero
     @State private var dayTops: [Date: CGFloat] = [:]
     private let conditionsTip = ConditionsExtrasTip()
@@ -83,7 +85,6 @@ struct LocationPageView: View {
                     .onPreferenceChange(HourlyFrameKey.self) { hourlyFrame = $0 }
                     .onPreferenceChange(DayTopKey.self) { dayTops = $0 }
                 }
-                .coordinateSpace(name: PageSpace.name)
                 .overlay(alignment: .top) {
                     if let forecast { stickyHourlyHeader(forecast) }
                 }
@@ -167,14 +168,14 @@ struct LocationPageView: View {
     @ViewBuilder
     private func stickyHourlyHeader(_ forecast: ClubForecast) -> some View {
         GeometryReader { geo in
-            let top = geo.frame(in: .named(PageSpace.name)).minY
+            let top = geo.frame(in: .global).minY
             let height = HourlyStickyHeader.height
             if hourlyFrame.height > 0, hourlyFrame.minY + 40 < top, hourlyFrame.maxY - height * 2 > top {
                 let day = dayTops.filter { $0.value <= top + height }.max { $0.value < $1.value }?.key
                     ?? dayTops.keys.min()
                 HourlyStickyHeader(day: day)
                     .frame(width: hourlyFrame.width)
-                    .offset(x: hourlyFrame.minX - geo.frame(in: .named(PageSpace.name)).minX)
+                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX)
                     .transition(.opacity)
             }
         }
@@ -621,11 +622,6 @@ private enum Column {
     static let sky: CGFloat = 24
 }
 
-/// The scroll view of a club page, for the header that stays at the top.
-enum PageSpace {
-    static let name = "clubPage"
-}
-
 /// Where the hourly table is on the page.
 private struct HourlyFrameKey: PreferenceKey {
     static var defaultValue: CGRect = .zero
@@ -659,7 +655,7 @@ private struct HourlyCard: View {
                     .id("hourly-\(index)")
                     .background {
                         GeometryReader { geo in
-                            Color.clear.preference(key: DayTopKey.self, value: [group.day: geo.frame(in: .named(PageSpace.name)).minY])
+                            Color.clear.preference(key: DayTopKey.self, value: [group.day: geo.frame(in: .global).minY])
                         }
                     }
                 ForEach(group.hours) { hour in
@@ -673,7 +669,7 @@ private struct HourlyCard: View {
         }
         .background {
             GeometryReader { geo in
-                Color.clear.preference(key: HourlyFrameKey.self, value: geo.frame(in: .named(PageSpace.name)))
+                Color.clear.preference(key: HourlyFrameKey.self, value: geo.frame(in: .global))
             }
         }
         .sheet(item: $openHour) { hour in
