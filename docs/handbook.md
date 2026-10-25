@@ -68,9 +68,11 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Usage counter | once after setting it up, and whenever `cloudflare/usage/` changes on main (it runs itself then) |
 | API check | to see whether api.rowfrog.com, the Cloudflare proxy and the usage counter answer |
 | Model check with archive_days | once for a quick first score (60 days); otherwise leave it at 0 |
+| Satellite water temperature check | after changing the satellite water temperature code (it runs itself on pushes that touch it): compares Copernicus LSWT, Landsat and the carried-forward estimate with GKD lake stations since 1 May; about 20 min |
 | App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results land in docs/screenshots |
 
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
 
 `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `USAGE_KEY` (usage counter),
-`CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET` (Copernicus satellite pictures).
+`CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET` (Copernicus satellite pictures, ice map and lake water temperature).
+Landsat water temperatures come from Microsoft's Planetary Computer and need no secret.

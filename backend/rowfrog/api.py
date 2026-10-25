@@ -34,6 +34,11 @@ SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "")
 # "from,speed,gusts" (degrees, m/s) replaces the wind in the lake view, marked as a
 # sample, so screenshots show waves building across the lake on a calm day.
 SAMPLE_LAKE_WIND = os.environ.get("RW_SAMPLE_LAKE_WIND", "")
+# Added to the credits when the forecast carries a satellite water estimate.
+SATELLITE_WATER_CREDIT = {
+    "copernicus-lswt": "Water temperature estimate: Copernicus Land Monitoring Service (Lake Surface Water Temperature)",
+    "landsat": "Water temperature estimate: Landsat courtesy of the U.S. Geological Survey",
+}
 ATTRIBUTION = [
     "Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0",
     "Warnings: Deutscher Wetterdienst (DWD), CC BY 4.0",
@@ -520,7 +525,8 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.
-        "attribution": ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]],
+        "attribution": (ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]])
+        + ([] if estimate is None else [SATELLITE_WATER_CREDIT[estimate.reading.source]]),
         "forecastSource": weather_models.source_json(chain, len(hours))
         if picked is None
         else weather_models.picked_source_json(chain, picked, len(hours)),
