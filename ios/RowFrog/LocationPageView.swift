@@ -24,6 +24,8 @@ struct LocationPageView: View {
     /// that only the sticky header reads, so scrolling redraws the header and
     /// not the whole page on every frame (which drained the battery).
     @State private var sticky = StickyHourly()
+    /// The refresh failure explained after a tap on its line.
+    @State private var showingFailure: RefreshFailure?
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
     @State private var showSourceTip = false
@@ -80,11 +82,13 @@ struct LocationPageView: View {
                             }
                             .id("arrange")
                             credits(forecast)
-                        } else if forecasts.failed.contains(club.id) {
+                        } else if let failure = forecasts.failures[club.id] {
                             ContentUnavailableView {
                                 Label(tr("No forecast"), systemImage: "icloud.slash")
                             } description: {
-                                Text(tr("Could not load the forecast. Pull to retry."))
+                                Text(failure.explanation)
+                            } actions: {
+                                Button(tr("Try again")) { Task { await forecasts.load(club.id, force: true) } }
                             }
                         } else {
                             ProgressView().padding(.top, 40)
@@ -314,10 +318,20 @@ private extension LocationPageView {
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.orange)
                         .multilineTextAlignment(.center)
-                } else if forecasts.failed.contains(club.id) {
-                    Label(tr("Could not update. Showing data from %@.", Format.time(updated)), systemImage: "wifi.exclamationmark")
+                } else if let failure = forecasts.failures[club.id] {
+                    // Tap for why, whose side it is on, and what helps.
+                    Button { showingFailure = failure } label: {
+                        Label {
+                            Text(tr("Could not update: %@. Showing data from %@.", failure.short, Format.time(updated)))
+                                + Text(" ") + Text(Image(systemName: "info.circle"))
+                        } icon: {
+                            Image(systemName: "wifi.exclamationmark")
+                        }
                         .font(.caption)
                         .foregroundStyle(.orange)
+                        .multilineTextAlignment(.center)
+                    }
+                    .buttonStyle(.plain)
                 } else {
                     Text(tr("Updated %@ · Pull down to refresh", Format.time(updated)))
                         .font(.caption)
@@ -329,6 +343,13 @@ private extension LocationPageView {
         .padding(.vertical, surface.hasPicture ? 10 : 0)
         .background(surface.label, in: RoundedRectangle(cornerRadius: 16))
         .padding(.top, 24)
+        .alert(tr("Could not update"), isPresented: Binding(get: { showingFailure != nil }, set: { if !$0 { showingFailure = nil } }),
+               presenting: showingFailure) { _ in
+            Button(tr("Try again")) { Task { await forecasts.load(club.id, force: true) } }
+            Button(tr("OK"), role: .cancel) {}
+        } message: { failure in
+            Text(failure.explanation)
+        }
     }
 }
 
