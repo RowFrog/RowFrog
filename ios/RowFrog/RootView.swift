@@ -14,6 +14,9 @@ struct RootView: View {
     @State private var showingTour = !Tutorial.seen
     @State private var showingSafety = SafetyNotice.needsAcceptance
     @State private var showingWhatsNew = WhatsNew.needsShowing
+    /// A row shared from another app, kept until the clubs and lakes have loaded.
+    @State private var sharedRow: RowTrack?
+    @State private var rowNote: String?
 
     init(api: APIClient) {
         self.api = api
@@ -115,10 +118,39 @@ struct RootView: View {
         .onChange(of: AppSettings.shared.windUnit) { WidgetBridge.publish(locations) }
         // A tap on the widget opens its club.
         .onOpenURL { url in
+            // A GPX, TCX or FIT file shared from another app.
+            if url.isFileURL {
+                do {
+                    sharedRow = try TrackFile.read(contentsOf: url)
+                    importSharedRow()
+                } catch {
+                    rowNote = RowImportError.unreadable.message
+                }
+                return
+            }
             guard url.scheme == "rowfrog", url.host() == "club", let id = url.pathComponents.last,
                   locations.saved.contains(where: { $0.id == id }) else { return }
             showingList = false
             selection = id
+        }
+        .onChange(of: locations.catalog.count) { importSharedRow() }
+        .alert(tr("Import a row"), isPresented: Binding(get: { rowNote != nil }, set: { if !$0 { rowNote = nil } })) {
+            Button(tr("OK")) {}
+        } message: {
+            Text(rowNote ?? "")
+        }
+    }
+
+    /// Saves the shared row as a route on its lake, once the lakes are known.
+    private func importSharedRow() {
+        guard let track = sharedRow, !locations.catalog.isEmpty else { return }
+        sharedRow = nil
+        switch RowFileInbox.importRow(track, lakes: locations.lakes) {
+        case .success(let (route, lake)):
+            if let pace = track.cleaned.paceSecondsPer500 { RouteImport.usePace(pace) }
+            rowNote = tr("Saved “%@” on %@. Open the lake view and pick it under Saved routes.", route.name, lake)
+        case .failure(let error):
+            rowNote = error.message
         }
     }
 
