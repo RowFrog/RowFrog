@@ -49,11 +49,25 @@ on, the place is suggested for everyone's list: the Row Frog suggestions
 service (a Cloudflare Worker in `cloudflare/suggestions/`) files it as a
 GitHub issue, so no GitHub account is needed.
 
-**Each location page** shows the rowing light, which boat it is for and why
-it has that colour, air and water temperature side by side, wave height, the
-hourly forecast for 48 hours, sunrise and sunset, and legends that explain
-every icon. When a steadier boat of your own would get a better light, the
-page suggests it.
+**Each location page** is a column of cards, in this order by default:
+
+1. A top tile with the rowing light, which boat it is for and why it has that
+   colour; air, water and wind; waves, rain and visibility (and ice when it
+   matters); a DWD warning status line and a daylight line.
+2. The DWD warnings card, only while a warning is issued (or the check failed).
+3. Rain radar.
+4. Current conditions.
+5. Lake view.
+6. Next 48 hours, with a feels-like column and a day header that stays in
+   place while scrolling; tapping an hour opens that hour's view.
+7. Launch point map.
+8. Satellite picture.
+9. Forecast source and credits.
+
+"Arrange this page" at the end of the page reorders or hides cards, for all
+clubs or only this one. Every card has an ⓘ button that explains its symbols;
+the full legend is in Settings › Help. When a steadier boat of your own would
+get a better light, the page suggests it.
 
 **Current conditions.** A compact card of tiles in two columns, each with a
 small graphic: wind, gusts, waves, temperatures, rain, cloud, visibility,
@@ -61,7 +75,9 @@ pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
 a detail view with a chart you can drag from yesterday to 7 days ahead (a
 "Now" button jumps back to the current hour), the limit lines, wind arrows
 every 3 hours, an "About the limits" note, advice for rowing and the data
-source (`ios/RowerWeather/ConditionsCard.swift`).
+source (`ios/RowerWeather/ConditionsCard.swift`). Swipe between detail views
+or jump to another from the symbol at the top; tapping an entry in a chart's
+legend switches its line on or off.
 
 **Rowing limits.** Settings › Rowing limits chooses the limits the light
 uses: *Small boats* (the default) or *Big boats*, or *My boats*, where each
@@ -77,12 +93,13 @@ coach or partner boat for singles and lowers its own wind and gust limits by
 1 m/s (your own limits stay as set, with a note). Below 4 °C it warns of
 near-freezing water.
 
-**DWD warnings.** Under the light the page shows the official DWD warnings:
+**DWD warnings.** The page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
 DWD runs its lake warning service (23 lakes, among them Starnberger See,
 Ammersee and Chiemsee), and DWD's weather warnings for the municipality,
-which cover rivers and canals too. When there is none the page says so and
-when it was checked; when DWD cannot be reached it says that instead.
+which cover rivers and canals too. While one is issued it gets its own card
+under the top tile; otherwise the top tile's status line says there is none
+and when it was checked, or that DWD could not be reached.
 Warnings come from DWD's GeoServer (`backend/rowerweather/sources/dwd_warnings.py`)
 and also set the hourly light. In English the app shows DWD's own English
 text (from its English CAP files) with the German original below; where DWD
@@ -101,7 +118,8 @@ deleted, and a loop closes when it ends within 50 m of the start or with a
 button. Routes are saved on the phone.
 
 **Rain radar.** Each location page has a card with DWD's rain radar and
-2-hour nowcast for the launch point, e.g. "Light rain from 21:30". The app
+2-hour nowcast for the launch point, e.g. "Light rain from 21:30"; tapping it
+opens the radar map. The app
 reads it from DWD directly (`ios/RowerWeather/RainRadar.swift`).
 
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
@@ -114,7 +132,7 @@ overrides it. On larger lakes the Copernicus Lake Ice Extent satellite map
 checks it, and the ice tile shows the latest pass, e.g. "Satellite, Today:
 open water".
 
-**Satellite pictures.** Below the lake view a card shows the latest
+**Satellite pictures.** A card near the end of the page shows the latest
 Sentinel-2 picture of the lake, with a line such as "Sentinel-2 · 22 Oct ·
 25 % of the lake under cloud" and an "i" that explains why a new picture
 comes only every 2 to 5 days. A switch chooses between the latest pass
@@ -124,7 +142,7 @@ routes, wind and, in winter, the satellite ice map over it. Two more layers
 colour the water with the lake view's wave heights or rowing light for the
 chosen hour, one at a time. Tap for full screen with zoom.
 
-**Forecast source.** A small line at the bottom of each club page names the
+**Forecast source.** A small line at the end of each club page names the
 weather model the forecast comes from (today DWD's ICON models for every club,
 `backend/rowerweather/weather_models.py`); tapping it explains the chain of
 models from the first hours to the end of the forecast.
@@ -149,8 +167,8 @@ with the temperature and the weather symbol beside each other.
   and fades between clubs while swiping.
 - App icon: the coxed double "rowing light" icon in light, dark and tinted,
   plus 10 alternates.
-- Help: replay the tour. One-time tips point out features the first time they
-  appear.
+- Help: the full legend of symbols, and replay the tour. One-time tips point
+  out features the first time they appear.
 - Rowing limits (see above).
 - Legal: the safety notice, a privacy summary and the legal notice
   (Impressum, still with placeholders).
