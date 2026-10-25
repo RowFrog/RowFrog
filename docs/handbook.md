@@ -44,9 +44,9 @@ that someone opened in the last 7 days.
 3. Play the map: the blue line moves with it and the chart scrolls along.
 4. Drag the chart past the green band (about two days on): the map stays
    on its last hour, greyed, with "The maps end ...".
-5. Tap the chain ("Own time"): the chain between the blue line and the green
-   map marker goes, the map's line turns dashed and full height with its badge
-   at the top, and the map and the chart move separately. Tap again: the chart jumps to the map's hour.
+5. Tap the chain ("Own time"): the map's badge at the bottom of the chart
+   loses its chain and turns outlined, a dashed green line runs the full
+   height above it, and the map and the chart move separately. Tap again: the chart jumps to the map's hour.
 6. Tap the map: full screen, with the chart as a slim time bar above the
    slider. Swipe to Temperature: the hour stays.
 7. Pick an hour in the 48 hours and open a value: chart and map start
@@ -83,8 +83,6 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWOpenRadarMap YES` open the rain radar map (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWOpenWeatherMap <layer>` open the weather map from the detail view opened with `-RWOpenCondition` (layers: `wind`, `gust`, `temperature`, `feelsLike`, `humidity`, `pressure`, `visibility`, `rain`, `uv`, `lightning`, `fog`)
 - `-RWMapTimeLinked NO` detail views open with the map on its own time (chain off)
-- `-RWMapBadgeBottom YES` the unlinked map's badge stays at the bottom of the chart instead of moving to the top (for comparing)
-- `-RWMapBadgeStyle pill` the map's badge always stays at the bottom and shows the link: filled green with a chain while linked, outlined while the map has its own time (for comparing)
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile

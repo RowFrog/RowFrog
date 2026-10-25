@@ -347,9 +347,6 @@ jobs:
           # slim chart, and German dark.
           WAIT=30 shoot 180-detail-map-linked light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8
           WAIT=30 shoot 181-detail-map-own-time light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8 -RWMapTimeLinked NO
-          WAIT=30 shoot 186-detail-map-own-time-badge-bottom light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8 -RWMapTimeLinked NO -RWMapBadgeBottom YES
-          WAIT=30 shoot 187-detail-map-linked-pill light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8 -RWMapBadgeStyle pill
-          WAIT=30 shoot 188-detail-map-own-time-pill light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 8 -RWMapTimeLinked NO -RWMapBadgeStyle pill
           WAIT=30 shoot 182-detail-map-past-end light -RWOpenClub mrc-1880 -RWOpenCondition temperature -RWChartSelect 60
           WAIT=30 shoot 183-detail-map-landscape light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWLandscape YES
           WAIT=30 shoot 184-detail-map-full light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWOpenWeatherMap wind
