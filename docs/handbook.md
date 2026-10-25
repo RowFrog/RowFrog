@@ -14,6 +14,7 @@ secret or a manual step adds a line here.
 | Tour again | Settings > Help > Show the tour again | Replays the first-start tour; one-time tips come back on the next start. |
 | Safety notice | First start, before the tour; later Settings > Legal > Safety notice | Has to be read to the end and agreed to. The device stores the agreed version and date (`RWSafetyAcceptedVersion`, `RWSafetyAcceptedAt`); factory reset keeps them. Raising `SafetyNotice.version` in `SafetyNotice.swift` makes everyone agree again. |
 | What's new | Once after an update, to users who had already seen the tour | A sheet listing what changed (`WhatsNew` in `Tutorial.swift`). The device stores the version seen (`RWWhatsNewSeen`). For a new list: change `WhatsNew.points` and raise `WhatsNew.version`. New users finishing the tour do not get it. |
+| Widget updates | Settings > Widgets and background | Every 30 minutes (default), every hour, every 2 hours, or only after using the app (`RWWidgetUpdates`: `halfHour`, `hour`, `twoHours`, `appOpen`; also a launch argument). With `appOpen` the widget timeline never reloads by itself; the app asks for one as the user leaves it, at most every 15 minutes. |
 | Battery saving in Low Power Mode | Turn on Low Power Mode in iOS Settings > Battery (or Control Center) | Tiles over a picture are drawn solid whatever the tile style, the radar map waits for the play button, and the radar card refreshes every 15 minutes instead of 5. Turning it off brings everything back. |
 | Legal notice (Impressum) | Settings > Legal | The placeholders in `LegalInfo` in `Legal.swift` must be filled in before release. |
 
@@ -31,6 +32,25 @@ If a picked model says "not published yet", wait for the next publishing
 run: the other models are written every 3 hours, for the confirmed clubs
 that someone opened in the last 7 days.
 
+### Testing "Import a row"
+
+The Simulator has no real rows, so this needs the iPhone (Apple Health) or a
+real export file.
+
+1. Lake view > Plan a route > bookmark menu > **Import a row**. The first time,
+   iOS asks to let Row Frog read workouts and workout routes (read only).
+2. Apple Health lists rowing workouts of the last year that have a GPS route
+   (Apple Watch outdoor rowing, or apps that save rows with their route to
+   Health). Tap one: it becomes a saved route on this lake, the pace setting
+   takes the row's pace, and the bookmark menu offers **Show rowed track**.
+3. **Choose a file** takes a GPX, TCX or FIT file (CrewNerd, Garmin Connect,
+   Strava export). Sharing such a file from another app or from Files to Row
+   Frog saves it on the lake whose clubs are within 3 km of the row.
+4. A row not on this lake, or shorter than 200 m, is refused with a note.
+
+Health access can be changed later in the Health app > Sharing > Apps >
+Row Frog. Nothing read from Health or a file leaves the phone.
+
 ## Launch arguments (Simulator and screenshots)
 
 Every setting can be set at launch, e.g. `-RWLanguage de`. The screenshot
@@ -45,6 +65,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
+- `-RWImportRows YES` open "Import a row" in the lake view with made-up Apple Health rows (Health is not asked); `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points (2:20 per 500 m, a week ago); `-RWShowTrack YES` shows the rowed track (the switch in the bookmark menu)
 - `-RWChartSelect 5` a detail chart opens with the scrub line five hours from now
 - `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
