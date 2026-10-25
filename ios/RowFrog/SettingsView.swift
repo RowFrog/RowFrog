@@ -63,6 +63,8 @@ struct SettingsView: View {
     }
     @State private var showAppIconTip = false
     private let appIconTip = AppIconTip()
+    @State private var showSaveDataTip = false
+    private let saveDataTip = SaveDataTip()
     @State private var appIcon = AppIcons.current
     @Environment(\.dismiss) private var dismiss
 
@@ -186,6 +188,27 @@ struct SettingsView: View {
                     }
                     .surfaceRows()
                     .id("widgets")
+
+                    Section {
+                        if showSaveDataTip {
+                            TipView(saveDataTip)
+                        }
+                        Toggle(isOn: $settings.saveMobileData) {
+                            Label(tr("Save mobile data"), systemImage: "antenna.radiowaves.left.and.right")
+                        }
+                        if DataSaver.shared.saving {
+                            Label(DataSaver.shared.lowDataModeOn ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
+                                  systemImage: "leaf")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
+                    } header: {
+                        SectionTitle(tr("Data use"), symbol: "arrow.up.arrow.down.circle")
+                    } footer: {
+                        SectionFooter(tr("On mobile data, satellite pictures load only when you tap them, the radar map shows half-hour steps and the rain radar updates every 15 minutes. Forecasts and warnings always load. In iOS Low Data Mode the app always saves data, also on Wi-Fi."))
+                    }
+                    .surfaceRows()
+                    .id("data")
 
                     Section {
                         Button {
@@ -318,8 +341,10 @@ struct SettingsView: View {
                 } message: {
                     Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
                 }
-                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "widgets", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
+                .screenshotSections(["appearance", "units", "limits", "datetime", "background", "widgets", "data", "help", "legal", "appicon", "reset", "developer"], proxy: proxy)
                 .tipVisibility(appIconTip, $showAppIconTip)
+                .tipVisibility(saveDataTip, $showSaveDataTip)
+                .onChange(of: settings.saveMobileData) { if settings.saveMobileData { saveDataTip.invalidate(reason: .actionPerformed) } }
                 .tipVisibility(resetTip, $showResetTip)
                 .sheet(isPresented: $showingLegend) { LegendSheet(part: .all) }
                 .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }

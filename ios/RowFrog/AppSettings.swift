@@ -120,6 +120,10 @@ final class AppSettings {
     /// The card order for a club's page: its own, else the one for all clubs.
     func pageLayout(for clubID: String) -> PageLayout { clubPageLayouts[clubID] ?? pageLayout }
 
+    /// On mobile data the app asks before loading satellite pictures and loads the
+    /// radar more sparingly, as in iOS Low Data Mode (which it always follows).
+    var saveMobileData: Bool { didSet { defaults.set(saveMobileData, forKey: Keys.saveMobileData) } }
+
     /// The model to load for a club, or nil for the automatic choice.
     func pickedModel(for clubID: String) -> String? {
         developerOptions ? pickedModels[clubID] : nil
@@ -156,11 +160,12 @@ final class AppSettings {
         static let widgetBackground = "RWWidgetBackground"
         static let clubWidgetBackgrounds = "RWWidgetBackgroundClubs"
         static let widgetBlur = "RWWidgetBackgroundBlur"
+        static let saveMobileData = "RWSaveMobileData"
         static let widgetUpdates = "RWWidgetUpdates"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
-                          developer, pickedModels, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur,
+                          developer, pickedModels, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
                           widgetUpdates]
     }
 
@@ -225,6 +230,7 @@ final class AppSettings {
             ?? defaults.string(forKey: Keys.pageLayout).map(PageLayout.init(list:))
             ?? .standard
         clubPageLayouts = defaults.data(forKey: Keys.clubPageLayouts).flatMap { try? JSONDecoder().decode([String: PageLayout].self, from: $0) } ?? [:]
+        saveMobileData = defaults.bool(forKey: Keys.saveMobileData)
     }
 
     /// The language the app shows: the chosen one, or the phone's when it is German.
@@ -301,6 +307,7 @@ final class AppSettings {
         pickedModels = [:]
         pageLayout = .standard
         clubPageLayouts = [:]
+        saveMobileData = false
         // The assignments above write the defaults back; remove them so a later
         // change of the app's defaults reaches users who never chose.
         for key in Keys.all { defaults.removeObject(forKey: key) }
