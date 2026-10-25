@@ -411,6 +411,8 @@ private struct DaylightCard: View {
 struct PressureGauge: View {
     let hpa: Double?
     let trend: PressureTrend?
+    /// Bigger in the larger view, where the dial is bigger too.
+    var arrowFont: Font = .caption.weight(.bold)
     private let range = 960.0...1060.0
     private let sweep = 0.75  // share of the circle the arc covers
 
@@ -428,7 +430,7 @@ struct PressureGauge: View {
                     .rotationEffect(.degrees(135))
             }
             Image(systemName: trend?.symbol ?? "minus")
-                .font(.caption.weight(.bold))
+                .font(arrowFont)
                 .foregroundStyle(.secondary)
         }
         .padding(4)

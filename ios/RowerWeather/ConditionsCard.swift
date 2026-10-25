@@ -23,15 +23,20 @@ struct ConditionsCard: View {
                 }
                 Spacer(minLength: 0)
             }
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
-                ForEach(Condition.allCases) { condition in
-                    Button {
-                        open = condition
-                    } label: {
-                        ConditionTile(condition: condition, data: data)
+            // Pairs that belong together share a row, and both tiles of a row are as tall.
+            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+                ForEach(Array(stride(from: 0, to: Condition.tileOrder.count, by: 2)), id: \.self) { i in
+                    GridRow {
+                        ForEach(Condition.tileOrder[i..<min(i + 2, Condition.tileOrder.count)]) { condition in
+                            Button {
+                                open = condition
+                            } label: {
+                                ConditionTile(condition: condition, data: data)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint(tr("Opens a chart and more about this value"))
+                        }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityHint(tr("Opens a chart and more about this value"))
                 }
             }
         }
@@ -142,16 +147,19 @@ private struct ConditionTile: View {
                             Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 0)
-                        accessory
+                        // Every graphic gets the same height, so all tiles are as tall.
+                        accessory.frame(height: Self.graphicHeight)
                     }
                 }
             }
         }
         .padding(8)
-        .frame(maxWidth: .infinity, minHeight: 64, alignment: .topLeading)
+        .frame(maxWidth: .infinity, minHeight: 78, maxHeight: .infinity, alignment: .topLeading)
         .background(surface.tile, in: RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
     }
+
+    static let graphicHeight: CGFloat = 44
 
     private func header(_ title: String) -> some View {
         HStack(spacing: 4) {
@@ -237,8 +245,8 @@ private struct ConditionTile: View {
         case .feelsLike:
             ScaleBar(fraction: ((hour.apparentTemperatureC ?? 0) + 10) / 45, colors: [.blue, .teal, .green, .orange, .red])
         case .humidity:
-            VStack(spacing: 0) {
-                SymbolFill(outline: "drop", filled: "drop.fill", fraction: (hour.humidityPct ?? 0) / 100, color: .teal, size: 20)
+            HStack(spacing: 0) {
+                SymbolFill(outline: "drop", filled: "drop.fill", fraction: (hour.humidityPct ?? 0) / 100, color: .teal, size: 18)
                 if let air = hour.temperatureC, let dew = hour.dewPointC {
                     DewGap(air: air, dewPoint: dew)
                 }
@@ -264,8 +272,8 @@ private struct ConditionTile: View {
             ScaleBar(fraction: log10(max(hour.visibilityM ?? 40_000, 100) / 100) / log10(400),
                      zones: [(0, .red), (0.27, .orange), (0.384, .green)])
         case .cloudCover:
-            VStack(spacing: 2) {
-                SymbolFill(outline: "cloud", filled: "cloud.fill", fraction: (hour.cloudCoverPct ?? 0) / 100, color: .gray, size: 20)
+            HStack(spacing: 0) {
+                SymbolFill(outline: "cloud", filled: "cloud.fill", fraction: (hour.cloudCoverPct ?? 0) / 100, color: .gray, size: 18)
                 if let high = hour.cloudCoverHighPct, let mid = hour.cloudCoverMidPct, let low = hour.cloudCoverLowPct {
                     CloudLayers(layers: [(tr("H"), high / 100), (tr("M"), mid / 100), (tr("L"), low / 100)])
                 }
@@ -298,12 +306,10 @@ private struct ConditionTile: View {
             switch data.forecast.sunState(at: .now) {
             case let .up(sunrise, sunset)?:
                 header(tr("Sunset"))
-                sunLine(Format.time(sunset), tr("Sunrise %@", Format.time(sunrise)))
-                SunPath(sunrise: sunrise, sunset: sunset, lineWidth: 2).frame(height: 28)
+                sunLine(Format.time(sunset), tr("Sunrise %@", Format.time(sunrise)), sunrise: sunrise, sunset: sunset)
             case let .down(sunrise, sunset)?:
                 header(tr("Sunrise"))
-                sunLine(Format.time(sunrise), tr("Sunset %@", Format.time(sunset)))
-                SunPath(sunrise: sunrise, sunset: sunset, lineWidth: 2).frame(height: 28)
+                sunLine(Format.time(sunrise), tr("Sunset %@", Format.time(sunset)), sunrise: sunrise, sunset: sunset)
             case nil:
                 header(condition.title)
                 Text("–").font(.title3.weight(.semibold))
@@ -311,11 +317,15 @@ private struct ConditionTile: View {
         }
     }
 
-    private func sunLine(_ value: String, _ detail: String) -> some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text(value).font(.title3.weight(.semibold))
+    /// Laid out like the other tiles: value and detail on the left, the sun path on the right.
+    private func sunLine(_ value: String, _ detail: String, sunrise: Date, sunset: Date) -> some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+            }
             Spacer(minLength: 0)
-            Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+            SunPath(sunrise: sunrise, sunset: sunset, lineWidth: 2).frame(width: 64, height: Self.graphicHeight)
         }
     }
 }
@@ -404,63 +414,35 @@ struct ConditionDetail {
 }
 
 struct ConditionDetailView: View {
-    let condition: Condition
     let data: ConditionData
     @Environment(\.dismiss) private var dismiss
+    @State private var condition: Condition
+    /// Which way the last change went, for the slide.
+    @State private var forward = true
     @State private var showLimits = UserDefaults.standard.bool(forKey: "RWLimitInfo")
+    /// Chart lines switched off from the legend, per view. Kept while swiping
+    /// between views; a new sheet starts with every line on.
+    @State private var hiddenLines: [Condition: Set<String>] = [:]
+    /// Where the chart sits, so a drag on it moves the time instead of the view.
+    @State private var chartFrame: CGRect = .zero
+
+    init(condition: Condition, data: ConditionData) {
+        self.data = data
+        _condition = State(initialValue: condition)
+    }
+
+    private var order: [Condition] { Condition.tileOrder }
 
     var body: some View {
-        let detail = ConditionDetail(condition, data)
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 14) {
-                    HStack(alignment: .center, spacing: 12) {
-                        VStack(alignment: .leading, spacing: 0) {
-                            Text(detail.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
-                            Text(detail.note).font(.subheadline).foregroundStyle(.secondary)
-                        }
-                        Spacer(minLength: 0)
-                        if let big = detail.big { big }
-                    }
-                    if !detail.lines.isEmpty {
-                        ConditionChart(detail: detail, data: data)
-                            .frame(height: 200)
-                        if detail.lines.count > 1 {
-                            HStack(spacing: 12) {
-                                ForEach(detail.lines) { line in
-                                    Label(line.name, systemImage: "circle.fill").foregroundStyle(line.color)
-                                }
-                            }
-                            .font(.caption2)
-                        }
-                        Text(detail.chartNote ?? (detail.history ? tr("Measurements of the last days.") : tr("Drag the chart: back to yesterday, forward up to 7 days.")))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
-                    if let info = detail.limitInfo {
-                        VStack(alignment: .leading, spacing: 6) {
-                            Button {
-                                withAnimation { showLimits.toggle() }
-                            } label: {
-                                Label(tr("About the limits"), systemImage: "info.circle")
-                                    .font(.subheadline)
-                            }
-                            if showLimits {
-                                Text(info)
-                                    .font(.footnote)
-                                    .padding(10)
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                                    .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
-                            }
-                        }
-                    }
-                    facts(detail)
-                    Label(detail.rowing, systemImage: "figure.rower")
-                        .font(.subheadline)
-                    Text(detail.source).font(.caption2).foregroundStyle(.secondary)
-                }
-                .padding()
+                page(condition)
+                    .id(condition)
+                    .transition(.push(from: forward ? .trailing : .leading))
+                    .padding()
             }
+            .coordinateSpace(name: Self.space)
+            .simultaneousGesture(swipe)
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
             .navigationTitle(condition.title)
             .navigationBarTitleDisplayMode(.inline)
@@ -469,10 +451,161 @@ struct ConditionDetailView: View {
                     Button(tr("Done")) { dismiss() }
                 }
                 ToolbarItem(placement: .topBarLeading) {
-                    ConditionIcon(condition: condition).foregroundStyle(.blue)
+                    jumpMenu
                 }
             }
         }
+    }
+
+    private static let space = "conditionDetail"
+
+    @ViewBuilder
+    private func page(_ condition: Condition) -> some View {
+        let detail = ConditionDetail(condition, data)
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: "chevron.compact.left").foregroundStyle(.tertiary)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(detail.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
+                    Text(detail.note).font(.subheadline).foregroundStyle(.secondary)
+                }
+                Spacer(minLength: 0)
+                if let big = detail.big { big }
+                Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
+            }
+            .accessibilityElement(children: .contain)
+            if !detail.lines.isEmpty {
+                let hidden = hiddenLines[condition] ?? []
+                ConditionChart(detail: detail, data: data, hidden: hidden)
+                    .frame(height: 200)
+                    .background {
+                        GeometryReader { geo in
+                            Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
+                        }
+                    }
+                    .onPreferenceChange(ChartFrameKey.self) { chartFrame = $0 }
+                if detail.lines.count > 1 {
+                    legend(detail, condition: condition, hidden: hidden)
+                }
+                Text(detail.chartNote ?? (detail.history ? tr("Measurements of the last days.") : tr("Drag the chart: back to yesterday, forward up to 7 days.")))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+            }
+            if let info = detail.limitInfo {
+                VStack(alignment: .leading, spacing: 6) {
+                    Button {
+                        withAnimation { showLimits.toggle() }
+                    } label: {
+                        Label(tr("About the limits"), systemImage: "info.circle")
+                            .font(.subheadline)
+                    }
+                    if showLimits {
+                        Text(info)
+                            .font(.footnote)
+                            .padding(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color(.tertiarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 10))
+                    }
+                }
+            }
+            facts(detail)
+            Label(detail.rowing, systemImage: "figure.rower")
+                .font(.subheadline)
+            Text(detail.source).font(.caption2).foregroundStyle(.secondary)
+            neighbours(of: condition)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
+    }
+
+    /// The chart's lines; a tap switches one off or on again. One stays on.
+    private func legend(_ detail: ConditionDetail, condition: Condition, hidden: Set<String>) -> some View {
+        HStack(spacing: 12) {
+            ForEach(detail.lines) { line in
+                let off = hidden.contains(line.name)
+                Button {
+                    var set = hidden
+                    if off {
+                        set.remove(line.name)
+                    } else if detail.lines.count - set.count > 1 {
+                        set.insert(line.name)
+                    }
+                    withAnimation(.easeInOut(duration: 0.2)) { hiddenLines[condition] = set }
+                } label: {
+                    Label(line.name, systemImage: off ? "circle" : "circle.fill")
+                        .foregroundStyle(off ? Color.secondary : line.color)
+                        .opacity(off ? 0.6 : 1)
+                }
+                .buttonStyle(.plain)
+                .accessibilityValue(off ? tr("Hidden") : tr("Shown"))
+                .accessibilityHint(tr("Shows or hides this line in the chart"))
+            }
+        }
+        .font(.caption2)
+    }
+
+    /// The names of the views before and after, which a swipe opens.
+    private func neighbours(of condition: Condition) -> some View {
+        HStack {
+            Button { step(-1) } label: { Label(neighbour(of: condition, by: -1).title, systemImage: "chevron.left") }
+            Spacer()
+            Button { step(1) } label: {
+                Label(neighbour(of: condition, by: 1).title, systemImage: "chevron.right").labelStyle(TrailingIconLabelStyle())
+            }
+        }
+        .font(.caption)
+        .foregroundStyle(.secondary)
+        .buttonStyle(.plain)
+        .padding(.top, 4)
+    }
+
+    private func neighbour(of condition: Condition, by offset: Int) -> Condition {
+        let i = order.firstIndex(of: condition) ?? 0
+        return order[(i + offset + order.count) % order.count]
+    }
+
+    private func step(_ offset: Int) {
+        forward = offset > 0
+        withAnimation(.easeInOut(duration: 0.25)) { condition = neighbour(of: condition, by: offset) }
+    }
+
+    /// A sideways swipe outside the chart opens the next or previous view.
+    private var swipe: some Gesture {
+        DragGesture(minimumDistance: 30, coordinateSpace: .named(Self.space))
+            .onEnded { value in
+                let dx = value.translation.width, dy = value.translation.height
+                guard abs(dx) > 60, abs(dx) > abs(dy) * 2 else { return }
+                // On a chart that can be dragged, the drag moves the time.
+                if chartFrame.contains(value.startLocation) && !ConditionDetail(condition, data).history { return }
+                step(dx < 0 ? 1 : -1)
+            }
+    }
+
+    /// The symbol in the corner: a tap lists every view with its value.
+    private var jumpMenu: some View {
+        Menu {
+            Picker(tr("Go to"), selection: Binding(get: { condition }, set: { new in
+                forward = (order.firstIndex(of: new) ?? 0) > (order.firstIndex(of: condition) ?? 0)
+                withAnimation(.easeInOut(duration: 0.25)) { condition = new }
+            })) {
+                ForEach(order) { c in
+                    Label(menuTitle(c), systemImage: c.symbol).tag(c)
+                }
+            }
+            .pickerStyle(.inline)
+        } label: {
+            HStack(spacing: 2) {
+                ConditionIcon(condition: condition)
+                Image(systemName: "chevron.down").font(.caption2.weight(.bold))
+            }
+            .foregroundStyle(.blue)
+            .accessibilityLabel(tr("Go to another value"))
+        }
+    }
+
+    private func menuTitle(_ c: Condition) -> String {
+        let value = ConditionDetail(c, data).value
+        return value.isEmpty ? c.title : "\(c.title) · \(value)"
     }
 
     @ViewBuilder
@@ -501,12 +634,33 @@ struct ConditionDetailView: View {
     }
 }
 
+private struct ChartFrameKey: PreferenceKey {
+    static var defaultValue: CGRect = .zero
+    static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
+        let next = nextValue()
+        if next != .zero { value = next }
+    }
+}
+
+/// Title first, icon after it: for the "next" button.
+private struct TrailingIconLabelStyle: LabelStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 4) {
+            configuration.title
+            configuration.icon
+        }
+    }
+}
+
 /// The chart of a larger view: 24 hours visible, dragged sideways from
 /// yesterday to 7 days ahead, limits as dashed lines, and one arrow per
 /// 3 hours on top (rising, falling, steady; or where the wind blows to).
+/// The limit names stay at the left edge while the chart slides under them.
 private struct ConditionChart: View {
     let detail: ConditionDetail
     let data: ConditionData
+    /// Lines switched off in the legend.
+    var hidden: Set<String> = []
     /// Where the visible 24 hours start when the view opens: an hour before now.
     private static let start = -1.0
     /// The hour at the left edge of the visible 24 hours.
@@ -557,8 +711,16 @@ private struct ConditionChart: View {
         }
     }
 
+    private var shownLines: [ChartLine] { detail.lines.filter { !hidden.contains($0.name) } }
+
     var body: some View {
         scrolling(scaled(chart))
+            .chartOverlay { proxy in
+                GeometryReader { geo in
+                    limitLabels(proxy: proxy, geo: geo)
+                }
+                .allowsHitTesting(false)
+            }
             .overlay(alignment: .topTrailing) {
                 // Once dragged away from now, one tap brings the chart back.
                 if !detail.history && abs(scrollX - Self.start) > 0.5 {
@@ -581,7 +743,7 @@ private struct ConditionChart: View {
 
     private var chart: some View {
         Chart {
-            ForEach(detail.lines) { line in
+            ForEach(shownLines) { line in
                 ForEach(line.points) { p in
                     mark(line, p)
                 }
@@ -628,18 +790,53 @@ private struct ConditionChart: View {
         }
     }
 
-    /// A limit line in day-long pieces, so its label shows again each day
-    /// when the chart is dragged.
+    /// A limit as one dashed line; its name is drawn over the chart by `limitLabels`.
     @ChartContentBuilder
     private func limitRules(_ limit: ChartLimit) -> some ChartContent {
-        ForEach(Array(stride(from: range.lowerBound, to: range.upperBound, by: 24)), id: \.self) { from in
-            RuleMark(xStart: .value("Hour", from), xEnd: .value("Hour", min(from + 24, range.upperBound)), y: .value("Limit", limit.value))
-                .foregroundStyle(limit.color)
-                .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
-                .annotation(position: .top, alignment: .leading) {
-                    Text(limit.label).font(.caption2).foregroundStyle(limit.color)
-                }
+        RuleMark(y: .value("Limit", limit.value))
+            .foregroundStyle(limit.color)
+            .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
+    }
+
+    /// One name per limit, just above its line at the left edge of the chart.
+    /// Names that would touch are moved apart, and a name whose line is off
+    /// the chart is left out.
+    @ViewBuilder
+    private func limitLabels(proxy: ChartProxy, geo: GeometryProxy) -> some View {
+        if let plotFrame = proxy.plotFrame {
+            let plot = geo[plotFrame]
+            let placed = Self.spread(detail.limits.compactMap { limit -> (limit: ChartLimit, y: CGFloat)? in
+                guard let y = proxy.position(forY: limit.value), y >= 0, y <= plot.height else { return nil }
+                return (limit, plot.minY + y - Self.labelHeight / 2 - 2)
+            }, top: plot.minY)
+            ForEach(Array(placed.enumerated()), id: \.offset) { _, item in
+                Text(item.limit.label)
+                    .font(.caption2)
+                    .foregroundStyle(item.limit.color)
+                    .lineLimit(1)
+                    .padding(.horizontal, 5)
+                    .frame(height: Self.labelHeight)
+                    .background(.regularMaterial, in: Capsule())
+                    .fixedSize()
+                    .padding(.leading, plot.minX + 4)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .offset(y: item.y - Self.labelHeight / 2)
+            }
         }
+    }
+
+    static let labelHeight: CGFloat = 15
+
+    /// Moves names down so no two overlap, keeping their order from top to bottom.
+    static func spread(_ items: [(limit: ChartLimit, y: CGFloat)], top: CGFloat) -> [(limit: ChartLimit, y: CGFloat)] {
+        var result: [(limit: ChartLimit, y: CGFloat)] = []
+        var next = top + labelHeight / 2
+        for item in items.sorted(by: { $0.y < $1.y }) {
+            let y = max(item.y, next)
+            result.append((item.limit, y))
+            next = y + labelHeight + 1
+        }
+        return result
     }
 
     @ViewBuilder
@@ -1064,14 +1261,20 @@ extension ConditionDetail {
         let values = d.timeline.compactMap(\.pressureHpa)
         let lo = values.min() ?? 1000, hi = values.max() ?? 1030
         var facts: [(String, String)] = []
-        if let now = h.pressureHpa, let later = d.next24.last?.pressureHpa {
-            let diff = later - now
-            facts.append((tr("Next 24 h"), abs(diff) < 1 ? tr("steady") : tr("%@ %@ hPa", diff < 0 ? tr("falling") : tr("rising"), Format.number(abs(diff)))))
+        if let now = h.pressureHpa, let next = Self.pressureNext24(now: now, hours: d.next24) {
+            facts.append((tr("Next 24 h"), next))
         }
         if let low = extreme(d.future, \.pressureHpa, highest: false) {
-            facts.append((tr("Lowest next 7 days"), tr("%@ hPa on %@", Format.number(low.pressureHpa), Format.day(low.time))))
+            facts.append((tr("Lowest next 7 days"), tr("%@ hPa · %@", Format.number(low.pressureHpa), Format.dayTime(low.time))))
         }
-        facts.append((tr("Now"), (h.pressureHpa ?? 1013) >= 1013 ? tr("high pressure: mostly settled") : tr("low pressure: changeable")))
+        // The level alone says little while the pressure moves fast; the trend wins.
+        let high = (h.pressureHpa ?? 1013) >= 1013
+        let state: String = switch change {
+        case let c? where c <= -1: high ? tr("high pressure, but falling: the weather is changing") : tr("low pressure and falling: unsettled")
+        case let c? where c >= 1: high ? tr("high pressure and rising: settled") : tr("low pressure, but rising: improving")
+        default: high ? tr("high pressure: mostly settled") : tr("low pressure: changeable")
+        }
+        facts.append((tr("Now"), state))
         let rowing: String = switch change {
         case let c? where c <= -3: tr("Falling fast: wind is likely soon.")
         case let c? where c <= -1: tr("Falling: wind and rain more likely in the next day or two.")
@@ -1081,16 +1284,33 @@ extension ConditionDetail {
         return ConditionDetail(
             value: tr("%@ hPa", Format.number(h.pressureHpa)),
             note: change.map { c in trend == .steady ? tr("Steady next 3 h") : tr("%@ %@ hPa in 3 h", PressureTrend(change: c).title, Format.number(abs(c), digits: 1)) } ?? "",
-            big: AnyView(PressureGauge(hpa: h.pressureHpa, trend: trend).frame(width: 90, height: 90)),
+            big: AnyView(PressureGauge(hpa: h.pressureHpa, trend: trend, arrowFont: .title2.weight(.bold)).frame(width: 90, height: 90)),
             unit: "hPa",
             lines: [ChartLine(name: tr("Air pressure"), color: .purple, points: d.points(\.pressureHpa))],
             // A few hPa around the values, so the change is easy to see.
             yDomain: (lo - 4).rounded(.down)...(hi + 6).rounded(.up),
             trendStep: 0.25,
             facts: facts,
-            rowing: rowing + " " + tr("Falling 3 hPa or more in 3 hours often means wind soon."),
+            rowing: (change ?? 0) <= -3 ? rowing : rowing + " " + tr("Falling 3 hPa or more in 3 hours often means wind soon."),
             source: tr("Air pressure at sea level, DWD via Open-Meteo.")
         )
+    }
+
+    /// The pressure over the next 24 hours by its biggest move, so a dip
+    /// that recovers by then is not called steady.
+    static func pressureNext24(now: Double, hours: [ForecastHour]) -> String? {
+        let known = hours.filter { $0.pressureHpa != nil }
+        guard let lo = known.min(by: { $0.pressureHpa! < $1.pressureHpa! }),
+              let hi = known.max(by: { $0.pressureHpa! < $1.pressureHpa! }),
+              let last = known.last?.pressureHpa else { return nil }
+        let fall = now - lo.pressureHpa!, rise = hi.pressureHpa! - now
+        if max(fall, rise) < 1 { return tr("steady") }
+        if fall >= rise {
+            let value = Format.number(lo.pressureHpa), at = Format.dayTime(lo.time)
+            return last - lo.pressureHpa! >= 1 ? tr("falls to %@ hPa by %@, then rises", value, at) : tr("falls to %@ hPa by %@", value, at)
+        }
+        let value = Format.number(hi.pressureHpa), at = Format.dayTime(hi.time)
+        return hi.pressureHpa! - last >= 1 ? tr("rises to %@ hPa by %@, then falls", value, at) : tr("rises to %@ hPa by %@", value, at)
     }
 
     private static func thunderstorm(_ d: ConditionData) -> ConditionDetail {
