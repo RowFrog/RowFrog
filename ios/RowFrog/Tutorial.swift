@@ -67,7 +67,7 @@ enum WhatsNew {
     static var points: [Point] {
         [
             Point(symbol: "arrow.left.arrow.right", text: tr("The way out and the way back lie side by side, each coloured for the time you row it.")),
-            Point(symbol: "figure.rowing", text: tr("Lake at the boat's time: move the boat along your route and see the lake when you get there.")),
+            Point(symbol: "figure.rower", text: tr("Lake at the boat's time: move the boat along your route and see the lake when you get there.")),
             Point(symbol: "arrow.triangle.capsulepath", text: tr("Row a loop: tap within 50 m of your club, or use Close loop.")),
             Point(symbol: "hand.draw", text: tr("Tap a turning point to delete just that one, or hold and drag it to move it.")),
             Point(symbol: "map", text: tr("Open in Maps now gives directions to the club's address.")),
@@ -686,7 +686,7 @@ struct TurningPointTip: Tip {
 struct BoatTimeTip: Tip {
     var title: Text { Text(tr("Lake at the boat's time")) }
     var message: Text? { Text(tr("Move the boat along your route to see the lake at the time you get there.")) }
-    var image: Image? { Image(systemName: "figure.rowing") }
+    var image: Image? { Image(systemName: "figure.rower") }
 }
 
 // MARK: - Location for nearby clubs

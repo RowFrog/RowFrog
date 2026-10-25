@@ -396,7 +396,7 @@ struct LakeMapScreen: View {
             }
             HStack(spacing: 12) {
                 Toggle(isOn: $followBoat) {
-                    Label(tr("Lake at the boat's time"), systemImage: "figure.rowing")
+                    Label(tr("Lake at the boat's time"), systemImage: "figure.rower")
                 }
                 .toggleStyle(.button)
                 .fixedSize()
@@ -777,7 +777,7 @@ struct LakeMapView: UIViewRepresentable {
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
             if let pin = annotation as? ClubPin {
                 let view = MKMarkerAnnotationView(annotation: pin, reuseIdentifier: nil)
-                view.glyphImage = UIImage(systemName: pin.isOwn ? "house.fill" : "figure.rowing")
+                view.glyphImage = UIImage(systemName: pin.isOwn ? "house.fill" : "figure.rower")
                 view.markerTintColor = pin.isOwn ? .systemBlue : .systemGray
                 view.displayPriority = .required
                 return view
