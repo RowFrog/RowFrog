@@ -380,7 +380,7 @@ final class ModelMapStore {
     /// tile and, for wind and gusts, the arrows.
     func overlay(_ layer: WeatherMapLayer, at point: Coordinate, time: Date) -> WeatherMapOverlayContent? {
         guard let value = layer.modelValue, let palette = layer.palette, let index, let tile = index.tile(for: point),
-              let grid = grid(tile: tile.id, value: value), let hour = index.hours.firstIndex(of: time) else { return nil }
+              let values = grid(tile: tile.id, value: value), let hour = index.hours.firstIndex(of: time) else { return nil }
         var arrows: [WeatherMapArrow] = []
         if layer == .wind || layer == .gust, let directions = grid(tile: tile.id, value: "windDirection") {
             for r in 0..<directions.rows {
@@ -394,7 +394,7 @@ final class ModelMapStore {
         return WeatherMapOverlayContent(id: "\(tile.id)|\(value)",
                                         northWest: CLLocationCoordinate2D(latitude: tile.north, longitude: tile.west),
                                         southEast: CLLocationCoordinate2D(latitude: tile.south, longitude: tile.east),
-                                        image: grid.image(hour: hour, palette: palette), smooth: true, arrows: arrows)
+                                        image: values.image(hour: hour, palette: palette), smooth: true, arrows: arrows)
     }
 
     func load(tile: String, value: String) async {
