@@ -100,11 +100,14 @@ jobs:
             # The safety notice is accepted for every shot except its own (SAFETY set).
             local safety=(-RWSafetyAccepted YES)
             [ -n "${SAFETY:-}" ] && safety=()
+            # "What's new" stays away except in its own shots (NEWS set).
+            local news=(-RWWhatsNewSeen 1000)
+            [ -n "${NEWS:-}" ] && news=()
             xcrun simctl ui "$UDID" appearance "$appearance"
             # A hung simulator once blocked here until the 6-hour job limit; give up after a minute.
             perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
-            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${safety[@]}" "${guide[@]}" "$@"
+            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${safety[@]}" "${news[@]}" "${guide[@]}" "$@"
             # The first launch after install, and the backend's first answers, are slower.
             if [ -z "${WARM:-}" ]; then sleep 30; WARM=1; else sleep "${WAIT:-12}"; fi
             xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
@@ -251,6 +254,20 @@ jobs:
           shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWLanguage de -RWPanel expanded
           shoot 88-route-follow-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWPanel expanded
           shoot 89-route-follow-boat-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWBoatAt 0.75 -RWLanguage de -RWPanel expanded
+          # Route planning tips and the "What's new" sheet after an update.
+          tips=(-RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES)
+          short="47.99667,11.34745;47.983,11.338;47.965,11.331"
+          GUIDE=1 shoot 109-tip-route-panel light "${tips[@]}"
+          GUIDE=1 WAIT=30 shoot 110-tip-close-loop light "${tips[@]}" -RWRoute "$short"
+          GUIDE=1 WAIT=30 shoot 111-tip-turning-point light "${tips[@]}" -RWRoute "$short" -RWRoutePoint 1
+          GUIDE=1 WAIT=30 shoot 112-tip-boat-time light "${tips[@]}" -RWRoute "$route" -RWPanel expanded
+          GUIDE=1 WAIT=30 shoot 113-tip-route-german-dark dark "${tips[@]}" -RWRoute "$short" -RWLanguage de
+          NEWS=1 shoot 114-whats-new light
+          NEWS=1 shoot 115-whats-new-german-dark dark -RWLanguage de
+          # The tips that follow the rain radar and hourly tips.
+          later=(-RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880)
+          GUIDE=1 shoot 116-tip-radar-map light "${later[@]}" -RWScrollTo radar
+          GUIDE=1 shoot 117-tip-hour-view light "${later[@]}" -RWScrollTo hourly
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
           shoot 90-route-loop light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop"
           shoot 91-route-edit-point light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop" -RWRoutePoint 2
