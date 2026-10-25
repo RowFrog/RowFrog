@@ -1,0 +1,38 @@
+name: Webcam survey
+
+# Research only (thread "Explore adding webcam footage"): downloads public
+# webcam lists and scans the clubs' websites for webcam links, then commits
+# the raw answers to research/webcams/raw/ on the branch it ran on. Runs on
+# push to the research branch when the script changes, or by hand.
+
+on:
+  push:
+    branches: [claude/project-thread-mrbcaz]
+    paths:
+      - scripts/webcam_survey_fetch.py
+      - .github/workflows/webcam-survey.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  survey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install httpx
+      - run: python3 scripts/webcam_survey_fetch.py
+        env:
+          WINDY_WEBCAMS_KEY: ${{ secrets.WINDY_WEBCAMS_KEY }}
+      - name: Commit raw answers
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add research/webcams/raw
+          git commit -m "Webcam survey raw data [skip actions]" || exit 0
+          git push
