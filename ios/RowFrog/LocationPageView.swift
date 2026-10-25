@@ -56,7 +56,7 @@ struct LocationPageView: View {
                     VStack(spacing: 16) {
                         header
                         if let forecast, let now = forecast.current() {
-                            NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.name, town: club.town)
+                            NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.name, town: club.town, club: club)
                             if tourSeen && showTopTileTip {
                                 TipView(topTileTip)
                             }
@@ -170,7 +170,7 @@ struct LocationPageView: View {
                     // Only where no station measures the water.
                     TipView(waterEstimateTip)
                 }
-                ConditionsCard(forecast: forecast, hour: now)
+                ConditionsCard(forecast: forecast, hour: now, club: club)
             }
             .id("conditions")
         case .lakeView:
@@ -192,6 +192,7 @@ struct LocationPageView: View {
                     TipView(hourViewTip)
                 }
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale())
+                    .modifier(StickyHourlyCut(sticky: sticky))
             }
             .id("hourly")
         case .launchPoint:
@@ -227,6 +228,35 @@ struct LocationPageView: View {
 private final class StickyHourly {
     var hourlyFrame: CGRect = .zero
     var dayTops: [Date: CGFloat] = [:]
+    /// Where the header stays on the screen, in global coordinates.
+    var top: CGFloat = 0
+
+    /// Whether the header is staying at the top.
+    func isShowing(at top: CGFloat) -> Bool {
+        hourlyFrame.height > 0 && hourlyFrame.minY + 40 < top && hourlyFrame.maxY > top
+    }
+
+    /// How far up the last rows have pushed the header (0 or less).
+    func push(at top: CGFloat) -> CGFloat {
+        min(0, hourlyFrame.maxY - top - HourlyStickyHeader.height)
+    }
+}
+
+/// While the header stays, the tile ends at it: the rows scroll away under the
+/// header instead of showing beside its rounded corners, as in the Weather app.
+private struct StickyHourlyCut: ViewModifier {
+    let sticky: StickyHourly
+
+    func body(content: Content) -> some View {
+        let showing = sticky.isShowing(at: sticky.top)
+        let cut = showing ? max(0, sticky.top + sticky.push(at: sticky.top) - sticky.hourlyFrame.minY) : 0
+        // Rounded at the cut like the header's top, so nothing of the tile shows
+        // beside the header's corners.
+        let radius: CGFloat = showing ? 16 : 0
+        content.mask(alignment: .top) {
+            UnevenRoundedRectangle(topLeadingRadius: radius, topTrailingRadius: radius).padding(.top, cut)
+        }
+    }
 }
 
 /// The hourly table's header while the table is under the top of the screen.
@@ -238,19 +268,31 @@ private struct StickyHourlyHeader: View {
         GeometryReader { geo in
             let top = geo.frame(in: .global).minY
             let height = HourlyStickyHeader.height
-            if hourlyFrame.height > 0, hourlyFrame.minY + 40 < top, hourlyFrame.maxY > top {
+            Color.clear
+                .onAppear { sticky.top = top }
+                .onChange(of: top) { _, new in sticky.top = new }
+            if sticky.isShowing(at: top) {
                 let day = dayTops.filter { $0.value <= top + height }.max { $0.value < $1.value }?.key
                     ?? dayTops.keys.min()
+                // At the end of the table the last rows push the header up and away,
+                // instead of it vanishing while rows are still under it.
+                let push = sticky.push(at: top)
                 HourlyStickyHeader(day: day)
                     .frame(width: hourlyFrame.width)
-                    // At the end of the table the last rows push the header up and away,
-                    // instead of it vanishing while rows are still under it.
-                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX, y: min(0, hourlyFrame.maxY - top - height))
+                    // Cut to the tile's shape, so its square bottom corners round off
+                    // with the tile's own corners as it leaves.
+                    .mask(alignment: .top) {
+                        RoundedRectangle(cornerRadius: 16)
+                            .frame(height: hourlyFrame.height)
+                            .offset(y: hourlyFrame.minY - top - push)
+                    }
+                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX, y: push)
                     .transition(.opacity)
             }
         }
+        // Not clipped: when the last rows push the header up, it slides on under
+        // the status bar together with the tile's cut edge.
         .frame(height: HourlyStickyHeader.height)
-        .clipped()
         .allowsHitTesting(false)
     }
 }
@@ -434,6 +476,8 @@ private struct NowCard: View {
     var town: String?
     /// A later hour shown from the hourly table: no warnings line, daylight at that time.
     var at: Date?
+    /// The club, for the weather maps in the larger views.
+    var club: Club?
     @State private var showingLights = UserDefaults.standard.string(forKey: "RWLegend") == "lights"
     @State private var showingWarnings = false
     @State private var showingDaylight = false
@@ -547,10 +591,10 @@ private struct NowCard: View {
             }
         }
         .sheet(isPresented: $showingDaylight) {
-            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour))
+            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour), club: club)
         }
         .sheet(item: $openCondition) { condition in
-            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues)
+            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues, club: club)
         }
         .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }
     }
@@ -848,26 +892,35 @@ private struct HourlyCard: View {
     }
 }
 
-/// The hourly table's header as it stays at the top of the screen: the day
-/// being looked at over the column icons.
+/// The hourly table's header as it stays at the top of the screen: the tile's
+/// title and the day being looked at over the column icons.
 struct HourlyStickyHeader: View {
     let day: Date?
     static let height: CGFloat = 74
+    @Environment(\.surface) private var surface
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(day.map { Format.day($0) } ?? tr("Next 48 hours"))
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
+            HStack {
+                Label(tr("Next 48 hours").uppercased(), systemImage: "clock")
+                    .labelStyle(.titleAndIcon)
+                Spacer(minLength: 8)
+                if let day { Text(Format.day(day)) }
+            }
+            .font(.caption.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
             HourlyLegendHeader()
         }
         .padding(.horizontal, 14)
         .padding(.top, 8)
         .frame(height: Self.height, alignment: .top)
-        // Material reads over any background picture and over the rows sliding under it.
+        // The tile's own colour; material only where the tile itself is glass.
         // Rounded at the top like the tile, square at the bottom where the rows start,
         // so the header keeps its shape when it starts to stay.
-        .background(.regularMaterial, in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
+        .background(surface == .glass ? AnyShapeStyle(.regularMaterial) : surface.card,
+                    in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
         .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
     }
 }
@@ -977,12 +1030,12 @@ private struct HourDetailSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
-                    NowCard(hour: hour, forecast: forecast, at: hour.time)
+                    NowCard(hour: hour, forecast: forecast, at: hour.time, club: club)
                     // The radar reaches 2 hours ahead; later hours have the forecast rain in the tiles.
                     if hour.time.timeIntervalSinceNow < 2 * 3600 {
                         RainRadarCard(point: club.launchPoint, clubID: club.id)
                     }
-                    ConditionsCard(forecast: forecast, hour: hour)
+                    ConditionsCard(forecast: forecast, hour: hour, club: club)
                     if lake?.hasOutline != false, lakeViews.views[forecast.lakeId] != nil {
                         Button { showingLakeMap = true } label: {
                             Label(tr("Lake map at %@", Format.dayTime(hour.time)), systemImage: "map")
