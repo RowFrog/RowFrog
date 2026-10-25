@@ -97,7 +97,8 @@ struct LocationPageView: View {
                 .task {
                     await forecasts.load(club.id)
                     // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `radar`, `conditions`, `lakeview`,
-                    // `launchpoint`, `satellite`, `source`, `arrange`) scrolls to that card.
+                    // `launchpoint`, `satellite`, `source`, `arrange`, or `hourly-1` for the table's second day)
+                    // scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast and pushes the cards below it down,
                         // so for cards that may be below it scroll again once it has settled.
@@ -652,8 +653,10 @@ private struct HourlyCard: View {
     var body: some View {
         Card(title: tr("Next 48 hours"), symbol: "clock", legend: .hourly) {
             HourlyLegendHeader()
-            ForEach(days) { group in
+            ForEach(Array(days.enumerated()), id: \.element.id) { index, group in
                 DayHeader(day: group.day, sun: sunDay(on: group.day))
+                    // Screenshot hook: `-RWScrollTo hourly-1` scrolls to the second day.
+                    .id("hourly-\(index)")
                     .background {
                         GeometryReader { geo in
                             Color.clear.preference(key: DayTopKey.self, value: [group.day: geo.frame(in: .named(PageSpace.name)).minY])

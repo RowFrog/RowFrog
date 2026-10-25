@@ -36,7 +36,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 - `-RWDemoClubs YES` the three confirmed clubs with MRC 1880 as home base
 - `-RWTutorialSeen YES -RWNoTips YES` skip the tour and tips
-- `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange`
+- `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table)
 - `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order); `-RWArrange YES` opens "Arrange this page"
 - `-RWOpenRadarMap YES` open the rain radar map; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWLegend lights` open the rowing light legend from the top tile
