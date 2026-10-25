@@ -145,8 +145,8 @@ struct Reason: Codable, Hashable {
         case "ice": tr("Ice")
         case "daylight": tr("Sun down")
         case "twilight": tr("Sunrise / sunset")
-        case "cold_water": tr("Cold water")
-        case "cool_water": tr("Cool water")
+        case "cold_water": tr("Very cold water")
+        case "cool_water": tr("Cold-water shock possible")
         default: condition
         }
     }
@@ -168,8 +168,8 @@ struct Reason: Codable, Hashable {
         case "ice": light == .red ? tr("Ice on the lake is likely (estimate).") : tr("Thin ice at the shore or drift ice is possible (estimate).")
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
         case "twilight": tr("Sunrise or sunset falls in this hour.")
-        case "cold_water": tr("Water is below %@, so a capsize is dangerous.", Format.temperature(AppSettings.shared.limits.value(.lifeJacket)))
-        case "cool_water": tr("Water is below %@. Take extra care.", Format.temperature(15))
+        case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
+        case "cool_water": tr("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", Format.temperature(15))
         default: condition
         }
     }
@@ -244,6 +244,24 @@ struct WaterTemperature: Codable, Hashable {
     let measuredAt: Date
     /// Earlier readings of the station, one per hour, oldest first.
     var history: [WaterReading]? = nil
+    /// Where the station is; older backends send none.
+    var station: WaterStation? = nil
+}
+
+/// The lake station that measures the water temperature.
+struct WaterStation: Codable, Hashable {
+    var name: String?
+    var lat: Double?
+    var lon: Double?
+    /// From the club's launch point, in metres.
+    var distanceM: Double?
+    /// The station's page at the Gewässerkundlicher Dienst Bayern.
+    var url: URL?
+
+    var coordinate: Coordinate? {
+        guard let lat, let lon else { return nil }
+        return Coordinate(lat: lat, lon: lon)
+    }
 }
 
 struct WaterReading: Codable, Hashable {
@@ -333,6 +351,15 @@ struct ModelChoice: Codable, Hashable, Identifiable {
     let note: String
 
     var notAdvised: Bool { advice == "notAdvised" }
+}
+
+extension ClubForecast {
+    /// Without a lake station: the ice model's water temperature (cold months
+    /// only), worked out from the air temperatures of the last weeks.
+    var estimatedWaterC: Double? {
+        guard waterTemperature == nil, let ice, ice.basis == "model" || ice.basis == "satellite" else { return nil }
+        return ice.waterTemperatureC
+    }
 }
 
 struct ClubForecast: Codable, Hashable {

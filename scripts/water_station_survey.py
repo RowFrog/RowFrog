@@ -48,8 +48,8 @@ MAX_KM = {"lake": 25.0, "river": 30.0, "unknown": 15.0}
 STALE = timedelta(days=3)
 # Without a name match, a station this close to the launch point is taken as on the same water.
 NEAR_KM = 1.0
-# The networks the forecast reads (BAFU waits for the owner's OK on its source terms).
-USED_NETWORKS = ("gkd", "pegelonline")
+# The networks the forecast reads (BAFU added with the owner's OK, 25 Oct 2026).
+USED_NETWORKS = ("gkd", "pegelonline", "bafu")
 # Stations that read far warmer than every other station (checked 25 Oct 2026:
 # 19.3 and 16.5 °C against 8-13 °C elsewhere), likely a harbour or a warm
 # inflow. Too warm a value hides the cold-water advice, so they are not used.

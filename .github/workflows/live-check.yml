@@ -50,6 +50,9 @@ jobs:
       - name: DWD rain radar at the launch points
         if: always()
         run: python3 scripts/radar_probe.py
+      - name: GKD water temperature stations
+        if: always()
+        run: python3 scripts/gkd_station_probe.py
       - name: Commit new outlines
         if: always()
         run: |

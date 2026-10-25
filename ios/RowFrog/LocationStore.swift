@@ -29,6 +29,15 @@ final class LocationStore {
     private let defaults: UserDefaults
     private static let savedKey = "RWSavedClubs"
     private static let homeKey = "RWHomeClub"
+
+    /// The mark of the page's club on every map: a house for the home base,
+    /// a rower for any other club (as in the page bar). The page's club is blue,
+    /// other clubs grey.
+    static func markSymbol(for clubID: String?) -> String {
+        clubID != nil && clubID == homeDefaults.string(forKey: homeKey) ? "house.fill" : "figure.rower"
+    }
+    /// Where the home base is kept: the screenshots' demo list has its own.
+    private static var homeDefaults: UserDefaults = .standard
     private static let ownPlacesKey = "RWOwnPlaces"
     private static let savedCountriesKey = "RWSavedCountries"
     /// Countries whose clubs lie this close to the user load at start too, for places near a border.
@@ -51,6 +60,7 @@ final class LocationStore {
         defaults.removePersistentDomain(forName: suite)
         let store = LocationStore(defaults: defaults)
         store.seedsDemoClubs = true
+        homeDefaults = defaults
         return store
     }
 
@@ -279,7 +289,9 @@ final class ForecastStore {
     /// The last forecast worked out per club and the limits it used, so pages
     /// that read it many times per frame neither redo the work nor get a new value.
     @ObservationIgnored private var applied: [String: (limits: RowingLimits, forecast: ClubForecast)] = [:]
-    private(set) var failed: Set<String> = []
+    /// Why the last refresh of a club failed; gone once one works.
+    private(set) var failures: [String: RefreshFailure] = [:]
+    var failed: Set<String> { Set(failures.keys) }
     /// Clubs whose picked model has no forecast yet, so the automatic one is shown.
     private(set) var pickedModelMissing: Set<String> = []
     private let api: APIClient
@@ -297,7 +309,7 @@ final class ForecastStore {
             if let forecast = try? await api.forecast(clubID: clubID, model: model) {
                 applied[clubID] = nil
                 raw[clubID] = forecast
-                failed.remove(clubID)
+                failures[clubID] = nil
                 pickedModelMissing.remove(clubID)
                 return
             }
@@ -315,9 +327,9 @@ final class ForecastStore {
             }
             applied[clubID] = nil
             raw[clubID] = forecast
-            failed.remove(clubID)
+            failures[clubID] = nil
         } catch {
-            failed.insert(clubID)
+            failures[clubID] = RefreshFailure(error, ownPlace: clubID.hasPrefix(OwnPlace.idPrefix))
         }
     }
 
@@ -337,6 +349,66 @@ final class ForecastStore {
             for id in clubIDs {
                 group.addTask { await self.load(id, force: true) }
             }
+        }
+    }
+}
+
+/// Why a forecast could not be loaded, in words: what happened, on whose
+/// side, and what helps.
+enum RefreshFailure: Equatable {
+    case offline, timeout, notFound, server(Int), unreadable, other(String)
+    /// An own place's forecast comes from Open-Meteo, not from our server.
+    case placeService
+
+    init(_ error: Error, ownPlace: Bool = false) {
+        if let url = error as? URLError {
+            switch url.code {
+            case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed, .internationalRoamingOff, .cannotFindHost, .dnsLookupFailed:
+                self = .offline
+            case .timedOut:
+                self = .timeout
+            default:
+                self = ownPlace ? .placeService : .other(url.localizedDescription)
+            }
+        } else if let http = error as? HTTPStatusError {
+            self = ownPlace ? .placeService : (http.code == 404 ? .notFound : .server(http.code))
+        } else if error is DecodingError {
+            self = .unreadable
+        } else {
+            self = ownPlace ? .placeService : .other(error.localizedDescription)
+        }
+    }
+
+    /// A few words for the line under the club's name.
+    var short: String {
+        switch self {
+        case .offline: tr("no internet connection")
+        case .timeout: tr("the server did not answer in time")
+        case .notFound: tr("no forecast for this club on the server")
+        case let .server(code): tr("server error %d", code)
+        case .unreadable: tr("the forecast could not be read")
+        case .placeService: tr("the weather service did not answer")
+        case .other: tr("unexpected error")
+        }
+    }
+
+    /// What happened, where, and what to do.
+    var explanation: String {
+        switch self {
+        case .offline:
+            tr("Your phone could not reach the internet, or the connection dropped during the download. Check Wi-Fi or mobile data, and in the iPhone settings whether Row Frog may use mobile data. Then pull down to refresh.")
+        case .timeout:
+            tr("The forecast server (api.rowfrog.com) did not answer in time. That is usually a slow connection or a short hiccup at the server. Pull down to try again in a minute.")
+        case .notFound:
+            tr("The server has no forecast file for this club. A newly added club gets one with the next forecast run, every 30 minutes. Nothing to fix on your phone.")
+        case let .server(code):
+            tr("The forecast server (api.rowfrog.com) answered with error %d. That is on our side, not your phone's, and usually fixes itself. Try again later.", code)
+        case .unreadable:
+            tr("The forecast arrived, but this version of the app could not read it. The server probably sends something newer than the app knows. Update the app; if that doesn't help, tell us.")
+        case .placeService:
+            tr("Your own places get their forecast straight from Open-Meteo, which did not answer properly. That is on their side and usually passes quickly. Try again later.")
+        case let .other(detail):
+            tr("Something unexpected went wrong (%@). Pull down to try again.", detail)
         }
     }
 }

@@ -44,6 +44,9 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
+- `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
+- `-RWChartSelect 5` a detail chart opens with the scrub line five hours from now
+- `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
 - `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map and hour view tips, which otherwise wait until the rain radar and hourly tips are closed
 - `-RWResetTips YES` show the one-time tips again, as after Settings › Help

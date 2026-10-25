@@ -10,6 +10,8 @@ struct LaunchPointMapCard: View {
     /// Back at the preset view whenever the page shows again or the club changes.
     @State private var position: MapCameraPosition = .automatic
     @State private var moved = false
+    /// The club's own place in Apple Maps, when it has one.
+    @State private var place: MKMapItem?
     /// The live map after a tap; a still picture again once the page is swiped away.
     @State private var live = UserDefaults.standard.bool(forKey: "RWLiveLaunchMap")
     @Environment(\.isCurrentPage) private var isCurrentPage
@@ -29,7 +31,7 @@ struct LaunchPointMapCard: View {
                     liveMap
                 } else {
                     Button { live = true } label: {
-                        LaunchPointSnapshot(coordinate: coordinate, region: home)
+                        LaunchPointSnapshot(coordinate: coordinate, region: home, symbol: LocationStore.markSymbol(for: club.id))
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Shows a map you can move"))
@@ -42,6 +44,11 @@ struct LaunchPointMapCard: View {
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
             Text(tr("The forecast, waves and warnings are for this point."))
+            if let name = place?.name {
+                Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
             if !club.launchPointVerified {
                 Label(club.source == "drv" ? tr("Not yet confirmed by the club; taken from the club's address.") : tr("Not yet confirmed by the club; taken from OpenStreetMap."), systemImage: "mappin.slash")
                     .font(.caption)
@@ -54,6 +61,9 @@ struct LaunchPointMapCard: View {
                     .textSelection(.enabled)
                 Spacer()
                 Menu {
+                    if place != nil {
+                        Button(tr("The club in Apple Maps"), systemImage: "building.2") { place?.openInMaps() }
+                    }
                     Button(tr("Directions to the club"), systemImage: "car") { Task { await openClubInMaps() } }
                     Button(tr("Launch point on the map"), systemImage: "mappin.and.ellipse") { openInMaps() }
                 } label: {
@@ -64,12 +74,15 @@ struct LaunchPointMapCard: View {
             }
         }
         .font(.subheadline)
+        .task(id: club.id) {
+            place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
+        }
     }
 
     /// A drag on the map moves the map; outside it the page scrolls.
     private var liveMap: some View {
         Map(position: $position, interactionModes: [.pan, .zoom]) {
-            Marker(club.displayName, systemImage: "figure.rower", coordinate: coordinate)
+            Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: coordinate)
                 .tint(.blue)
         }
         .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
@@ -101,6 +114,11 @@ struct LaunchPointMapCard: View {
     /// has no address to drive to. Falls back to the launch point when Maps
     /// can't find the address.
     @MainActor private func openClubInMaps() async {
+        // The club's own place in Apple Maps is the best target when there is one.
+        if let place {
+            place.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault])
+            return
+        }
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = club.address
         request.region = MKCoordinateRegion(center: coordinate, latitudinalMeters: 20_000, longitudinalMeters: 20_000)
@@ -133,6 +151,8 @@ struct LaunchPointMapCard: View {
 private struct LaunchPointSnapshot: View {
     let coordinate: CLLocationCoordinate2D
     let region: MKCoordinateRegion
+    /// The club mark used on every map (LocationStore.markSymbol).
+    let symbol: String
     @Environment(\.colorScheme) private var colorScheme
     @Environment(\.displayScale) private var displayScale
     @State private var image: UIImage?
@@ -148,7 +168,7 @@ private struct LaunchPointSnapshot: View {
                 } else {
                     Color(.secondarySystemBackground)
                 }
-                Image(systemName: "figure.rower")
+                Image(systemName: symbol)
                     .font(.footnote.weight(.semibold))
                     .foregroundStyle(.white)
                     .frame(width: 30, height: 30)

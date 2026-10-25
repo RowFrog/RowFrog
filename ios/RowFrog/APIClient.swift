@@ -1,5 +1,10 @@
 import Foundation
 
+/// The server answered, but not with the file: 404, 500 and so on.
+struct HTTPStatusError: Error {
+    let code: Int
+}
+
 struct APIClient {
     let baseURL: URL
     var session: URLSession = .shared
@@ -69,7 +74,7 @@ struct APIClient {
         let request = URLRequest(url: baseURL.appending(path: path), cachePolicy: .reloadIgnoringLocalCacheData)
         let (data, response) = try await session.data(for: request)
         if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
-            throw URLError(.badServerResponse)
+            throw HTTPStatusError(code: http.statusCode)
         }
         return try Self.decoder.decode(T.self, from: data)
     }
