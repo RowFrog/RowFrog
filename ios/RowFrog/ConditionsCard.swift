@@ -433,12 +433,15 @@ struct ConditionDetailView: View {
     /// Where the chart sits, so a drag on it moves the time instead of the view.
     @State private var chartFrame: CGRect = .zero
 
-    init(condition: Condition, data: ConditionData) {
+    /// The views the arrows and swipes go through: every condition, or only
+    /// the values of the top tile when opened from there.
+    private let order: [Condition]
+
+    init(condition: Condition, data: ConditionData, order: [Condition] = Condition.tileOrder) {
         self.data = data
+        self.order = order.contains(condition) ? order : Condition.tileOrder
         _condition = State(initialValue: condition)
     }
-
-    private var order: [Condition] { Condition.tileOrder }
 
     var body: some View {
         NavigationStack {
@@ -877,7 +880,9 @@ private struct ConditionChart: View {
             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
     }
 
-    /// One name per limit, just above its line at the left edge of the chart.
+    /// One name per limit, just above its line, on the side away from "now":
+    /// at the right edge of a forecast (now sits at the left) and at the left
+    /// edge of a history (now sits at the right), so names never cover it.
     /// Names that would touch are moved apart, and a name whose line is off
     /// the chart is left out.
     @ViewBuilder
@@ -887,6 +892,9 @@ private struct ConditionChart: View {
             // A chart that scrolls reports its whole plot, which starts off screen
             // once dragged; the names stay at the visible left edge instead.
             let left = max(plot.minX, 0)
+            let visibleRight = proxy.position(forX: scrollX + 24).map { plot.minX + $0 } ?? plot.maxX
+            let right = min(plot.maxX, visibleRight, geo.size.width)
+            let trailing = !detail.history
             let placed = Self.spread(detail.limits.compactMap { limit -> (limit: ChartLimit, y: CGFloat)? in
                 guard let y = proxy.position(forY: limit.value), y >= 0, y <= plot.height else { return nil }
                 return (limit, plot.minY + y - Self.labelHeight / 2 - 2)
@@ -900,8 +908,9 @@ private struct ConditionChart: View {
                     .frame(height: Self.labelHeight)
                     .background(.regularMaterial, in: Capsule())
                     .fixedSize()
-                    .padding(.leading, left + 4)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+                    .padding(.leading, trailing ? 0 : left + 4)
+                    .padding(.trailing, trailing ? max(geo.size.width - right, 0) + 4 : 0)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: trailing ? .topTrailing : .topLeading)
                     .offset(y: item.y - Self.labelHeight / 2)
             }
         }

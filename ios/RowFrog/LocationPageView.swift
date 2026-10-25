@@ -394,6 +394,8 @@ private struct NowCard: View {
     @State private var showingLights = UserDefaults.standard.string(forKey: "RWLegend") == "lights"
     @State private var showingWarnings = false
     @State private var showingDaylight = false
+    /// A value of the tile tapped for its chart; swiping there stays within the tile's values.
+    @State private var openCondition: Condition?
 
     private var water: WaterTemperature? { forecast.waterTemperature }
 
@@ -449,35 +451,47 @@ private struct NowCard: View {
             Divider()
             HStack(alignment: .lastTextBaseline) {
                 VStack(alignment: .leading, spacing: 0) {
-                    TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
+                    opens(.temperature) {
+                        TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
+                    }
                     if let feels = hour.apparentTemperatureC {
-                        Label(tr("Feels like %@", Format.degrees(feels)), systemImage: Condition.feelsLike.symbol)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .accessibilityLabel(tr("Feels like %@", Format.temperature(feels)) + ". " + (feelsLikeNote(hour) ?? ""))
+                        opens(.feelsLike) {
+                            Label(tr("Feels like %@", Format.degrees(feels)), systemImage: Condition.feelsLike.symbol)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .accessibilityLabel(tr("Feels like %@", Format.temperature(feels)) + ". " + (feelsLikeNote(hour) ?? ""))
+                        }
                     }
                 }
                 Spacer()
                 // With the time of the reading underneath, so it lines up with the wind's unit line.
-                if water == nil, let estimate = forecast.estimatedWaterC {
-                    TemperatureView(condition: .waterTemperature, celsius: estimate, digits: 0, size: 28, caption: tr("Estimated"))
-                        .foregroundStyle(.secondary)
-                } else {
-                    TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28,
-                                    caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
+                opens(.waterTemperature) {
+                    if water == nil, let estimate = forecast.estimatedWaterC {
+                        TemperatureView(condition: .waterTemperature, celsius: estimate, digits: 0, size: 28, caption: tr("Estimated"))
+                            .foregroundStyle(.secondary)
+                    } else {
+                        TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28,
+                                        caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
+                    }
                 }
                 Spacer()
-                WindView(hour: hour, size: 28)
+                opens(.wind) { WindView(hour: hour, size: 28) }
             }
             HStack(alignment: .top) {
-                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17)
+                opens(.waves) {
+                    MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17)
+                }
                 Spacer()
-                MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: precipitationText(hour) ?? tr("None"), size: 17)
+                opens(.precipitation) {
+                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: precipitationText(hour) ?? tr("None"), size: 17)
+                }
                 Spacer()
-                MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17)
+                opens(.visibility) {
+                    MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17)
+                }
                 if let ice = iceValue {
                     Spacer()
-                    MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: 17)
+                    opens(.ice) { MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: 17) }
                 }
             }
             .symbolRenderingMode(.hierarchical)
@@ -492,6 +506,25 @@ private struct NowCard: View {
         .sheet(isPresented: $showingDaylight) {
             ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour))
         }
+        .sheet(item: $openCondition) { condition in
+            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues)
+        }
+    }
+
+    /// The values shown in this tile, in its order, for swiping between their views.
+    private var tileValues: [Condition] {
+        var values: [Condition] = [.temperature]
+        if hour.apparentTemperatureC != nil { values.append(.feelsLike) }
+        values += [.waterTemperature, .wind, .waves, .precipitation, .visibility]
+        if iceValue != nil { values.append(.ice) }
+        return values
+    }
+
+    /// A value of the tile as a button that opens its chart and details.
+    private func opens(_ condition: Condition, @ViewBuilder _ content: () -> some View) -> some View {
+        Button { openCondition = condition } label: { content().contentShape(Rectangle()) }
+            .buttonStyle(.plain)
+            .accessibilityHint(tr("Opens a chart and more about this value"))
     }
 
     /// Ice only when it matters: the estimate says more than open water, or

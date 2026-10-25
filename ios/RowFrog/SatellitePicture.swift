@@ -117,7 +117,8 @@ final class SatellitePictureStore {
 
 /// What can be drawn over the picture.
 enum SatelliteLayer: String, CaseIterable, Identifiable {
-    case shore, clubs, routes, wind, waves, light, ice
+    // Shore, clubs and routes first, then as on the lake view: rowing light, waves, wind; ice last.
+    case shore, clubs, routes, light, waves, wind, ice
     var id: String { rawValue }
 
     /// Waves and rowing light both colour the water, so only one is on at a time.
@@ -304,10 +305,20 @@ struct SatelliteLayerChips: View {
     let lakeID: String
     let picture: SatellitePicture
     @MainActor private var layers: SatelliteLayers { .shared }
+    @State private var showingLegend = false
 
     var body: some View {
         ScrollView(.horizontal, showsIndicators: false) {
             HStack(spacing: 8) {
+                Button { showingLegend = true } label: {
+                    Image(systemName: "list.bullet.rectangle")
+                        .font(.footnote.weight(.medium))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 6)
+                        .background(Color.secondary.opacity(0.15), in: Capsule())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(tr("Legend"))
                 ForEach(available) { layer in
                     let on = layers.on.contains(layer)
                     Button { layers.toggle(layer) } label: {
@@ -323,6 +334,7 @@ struct SatelliteLayerChips: View {
                 }
             }
         }
+        .sheet(isPresented: $showingLegend) { SatelliteLegend(lakeID: lakeID, picture: picture) }
     }
 
     private var available: [SatelliteLayer] {
@@ -416,23 +428,7 @@ struct SatelliteOverlay: View {
                     in: CGRect(x: corner.x, y: corner.y, width: far.x - corner.x, height: far.y - corner.y)
                 )
             }
-            if layers.contains(.shore), let view {
-                var path = Path()
-                for ring in view.outline where ring.count > 1 {
-                    path.addLines(ring.map { point($0[0], $0[1]) })
-                    path.closeSubpath()
-                }
-                context.stroke(path, with: shadow, lineWidth: 3)
-                context.stroke(path, with: .color(.white), lineWidth: 1.5)
-            }
-            if layers.contains(.routes) {
-                for route in RouteStore.shared.routes(on: lakeID) where route.points.count > 1 {
-                    var path = Path()
-                    path.addLines(route.points.map { point($0.lon, $0.lat) })
-                    context.stroke(path, with: shadow, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-                    context.stroke(path, with: .color(.yellow), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
-                }
-            }
+            // Wind under the lines and marks, so shore, routes and clubs stay on top.
             if layers.contains(.wind), let view, !view.hours.isEmpty {
                 let hour = view.hours[view.hourIndex()]
                 for (p, wind) in zip(view.points, hour.wind) {
@@ -457,6 +453,23 @@ struct SatelliteOverlay: View {
                         Text(Format.windNumber(speed)).font(.caption2.weight(.bold)).foregroundStyle(.white),
                         at: CGPoint(x: tail.x, y: tail.y), anchor: .center
                     )
+                }
+            }
+            if layers.contains(.shore), let view {
+                var path = Path()
+                for ring in view.outline where ring.count > 1 {
+                    path.addLines(ring.map { point($0[0], $0[1]) })
+                    path.closeSubpath()
+                }
+                context.stroke(path, with: shadow, lineWidth: 3)
+                context.stroke(path, with: .color(.white), lineWidth: 1.5)
+            }
+            if layers.contains(.routes) {
+                for route in RouteStore.shared.routes(on: lakeID) where route.points.count > 1 {
+                    var path = Path()
+                    path.addLines(route.points.map { point($0.lon, $0.lat) })
+                    context.stroke(path, with: shadow, style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+                    context.stroke(path, with: .color(.yellow), style: StrokeStyle(lineWidth: 2.5, lineCap: .round, lineJoin: .round))
                 }
             }
             if layers.contains(.clubs), let view {
@@ -520,7 +533,8 @@ struct SatellitePictureScreen: View {
                     // The whole picture fits at first, however the lake lies.
                     let fit = min(geo.size.width, geo.size.height * picture.aspectRatio)
                     if let shot = picture.shot(kind) {
-                        ZoomableView(size: CGSize(width: fit, height: fit / picture.aspectRatio)) {
+                        let size = CGSize(width: fit, height: fit / picture.aspectRatio)
+                        ZoomableView(size: size, focus: focus(in: size)) {
                             SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID)
                                 .frame(width: fit, height: fit / picture.aspectRatio)
                         }
@@ -546,16 +560,54 @@ struct SatellitePictureScreen: View {
             }
         }
     }
+
+    /// Where the picture opens: the saved routes on this lake, all of them in
+    /// view; without routes the page's club, with the picture filling the width.
+    private func focus(in size: CGSize) -> ZoomFocus? {
+        guard let box = picture.bbox, box.count == 4 else { return nil }
+        func point(_ lon: Double, _ lat: Double) -> CGPoint {
+            CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * size.width, y: (box[3] - lat) / (box[3] - box[1]) * size.height)
+        }
+        let points = RouteStore.shared.routes(on: lakeID).flatMap(\.points).map { point($0.lon, $0.lat) }
+        if let minX = points.map(\.x).min(), let maxX = points.map(\.x).max(),
+           let minY = points.map(\.y).min(), let maxY = points.map(\.y).max() {
+            return .whole(CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY).insetBy(dx: -24, dy: -24))
+        }
+        let club = LakeViewStore.shared.views[lakeID]?.clubs.first { $0.id == clubID }
+        return .fillWidth(around: club.map { point($0.launchPoint.lon, $0.launchPoint.lat) })
+    }
+}
+
+/// How a zoomable picture first shows: one part of it whole, or filling the
+/// width around a point (the middle when there is none).
+enum ZoomFocus: Equatable {
+    case whole(CGRect)
+    case fillWidth(around: CGPoint?)
+}
+
+/// A scroll view that reports each layout pass.
+final class LayoutScrollView: UIScrollView {
+    var laidOut: ((UIScrollView) -> Void)?
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        laidOut?(self)
+    }
 }
 
 /// SwiftUI content in a UIKit scroll view, which zooms and pans like Photos.
 /// The content keeps its size; the scroll view scales it up to 6 times.
 struct ZoomableView<Content: View>: UIViewRepresentable {
     let size: CGSize
+    var focus: ZoomFocus?
     @ViewBuilder let content: Content
 
     func makeUIView(context: Context) -> UIScrollView {
-        let scroll = UIScrollView()
+        let scroll = LayoutScrollView()
+        // The scroll view only knows its size once laid out: centre and zoom then,
+        // also after a new picture or a turn of the phone.
+        let coordinator = context.coordinator
+        scroll.laidOut = { [weak coordinator] scroll in coordinator?.laidOut(scroll) }
         scroll.delegate = context.coordinator
         scroll.minimumZoomScale = 1
         scroll.maximumZoomScale = 6
@@ -576,13 +628,16 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
 
     func updateUIView(_ scroll: UIScrollView, context: Context) {
         context.coordinator.host.rootView = AnyView(content)
+        context.coordinator.focus = focus
         if context.coordinator.size != size {
             context.coordinator.size = size
             scroll.zoomScale = 1
             context.coordinator.host.view.frame = CGRect(origin: .zero, size: size)
             scroll.contentSize = size
+            context.coordinator.focused = false
         }
         context.coordinator.centre(scroll)
+        scroll.setNeedsLayout()
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(content: AnyView(content), size: size) }
@@ -590,6 +645,10 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
     final class Coordinator: NSObject, UIScrollViewDelegate {
         let host: UIHostingController<AnyView>
         var size: CGSize
+        var focus: ZoomFocus?
+        /// Whether the first view (zoom and position) was set for this size.
+        var focused = false
+        private var bounds = CGSize.zero
 
         init(content: AnyView, size: CGSize) {
             host = UIHostingController(rootView: content)
@@ -600,6 +659,41 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
 
         func viewForZooming(in scrollView: UIScrollView) -> UIView? { host.view }
 
+        func laidOut(_ scroll: UIScrollView) {
+            guard scroll.bounds.width > 0, scroll.bounds.height > 0 else { return }
+            if scroll.bounds.size != bounds {
+                bounds = scroll.bounds.size
+                focused = false
+            }
+            centre(scroll)
+            guard !focused else { return }
+            focused = true
+            applyFocus(scroll)
+        }
+
+        /// Zooms to the focus and puts it in the middle of the screen.
+        private func applyFocus(_ scroll: UIScrollView) {
+            guard let focus, size.width > 0, size.height > 0 else { return }
+            let view = scroll.bounds.size
+            let scale: CGFloat
+            let middle: CGPoint
+            switch focus {
+            case let .whole(rect):
+                scale = min(view.width / max(rect.width, 1), view.height / max(rect.height, 1))
+                middle = CGPoint(x: rect.midX, y: rect.midY)
+            case let .fillWidth(point):
+                scale = view.width / size.width
+                middle = point ?? CGPoint(x: size.width / 2, y: size.height / 2)
+            }
+            scroll.zoomScale = min(max(scale, scroll.minimumZoomScale), scroll.maximumZoomScale)
+            centre(scroll)
+            let z = scroll.zoomScale
+            let inset = scroll.contentInset
+            let x = min(max(middle.x * z - view.width / 2, -inset.left), scroll.contentSize.width + inset.right - view.width)
+            let y = min(max(middle.y * z - view.height / 2, -inset.top), scroll.contentSize.height + inset.bottom - view.height)
+            scroll.contentOffset = CGPoint(x: x, y: y)
+        }
+
         func scrollViewDidZoom(_ scrollView: UIScrollView) { centre(scrollView) }
 
         /// Keeps the picture in the middle while it is smaller than the screen.
@@ -607,7 +701,8 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
             let content = host.view.frame.size
             let dx = max(0, (scroll.bounds.width - content.width) / 2)
             let dy = max(0, (scroll.bounds.height - content.height) / 2)
-            scroll.contentInset = UIEdgeInsets(top: dy, left: dx, bottom: dy, right: dx)
+            let inset = UIEdgeInsets(top: dy, left: dx, bottom: dy, right: dx)
+            if scroll.contentInset != inset { scroll.contentInset = inset }
         }
 
         @objc func doubleTapped(_ gesture: UITapGestureRecognizer) {
@@ -620,6 +715,84 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
                 scroll.zoom(to: CGRect(x: point.x - zoomed.width / 2, y: point.y - zoomed.height / 2,
                                        width: zoomed.width, height: zoomed.height), animated: true)
             }
+        }
+    }
+}
+
+/// What the picture and the switched-on layers show. Layers that are off are
+/// left out, with a line pointing to the switches.
+struct SatelliteLegend: View {
+    let lakeID: String
+    let picture: SatellitePicture
+    @MainActor private var layers: SatelliteLayers { .shared }
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        let on = layers.on
+        NavigationStack {
+            List {
+                Section(tr("The picture")) {
+                    row(Image(systemName: "photo"), tr("A true-colour photo from the Sentinel-2 satellites, as a camera would see it from space."))
+                    row(Image(systemName: "cloud.fill").foregroundStyle(.white, .gray), tr("White and grey: clouds, haze, or snow and ice on the ground."))
+                    row(Image(systemName: "drop.fill").foregroundStyle(Color(red: 0.1, green: 0.2, blue: 0.3)), tr("Dark blue to black: open water."))
+                }
+                if on.contains(.light) {
+                    Section(tr("Rowing light")) { LakeLegend(layer: .light).padding(.vertical, 4); MapBoatNote() }
+                }
+                if on.contains(.waves) {
+                    Section(tr("Waves")) { LakeLegend(layer: .waves).padding(.vertical, 4) }
+                }
+                if on.contains(.wind) {
+                    Section(tr("Wind")) {
+                        row(Image(systemName: "arrow.up.right").fontWeight(.bold),
+                            tr("Points where the wind blows to, at the forecast points for the current hour; longer arrows mean stronger wind. The number is the wind speed."))
+                    }
+                }
+                if on.contains(.ice), picture.ice != nil {
+                    Section(tr("Ice map")) {
+                        row(swatch(Color(red: 1, green: 1, blue: 1)), tr("Snow-covered ice"))
+                        row(swatch(Color(red: 200 / 255, green: 235 / 255, blue: 1)), tr("Clear ice"))
+                        row(swatch(Color(red: 0, green: 90 / 255, blue: 200 / 255).opacity(0.5)), tr("Open water"))
+                    }
+                }
+                if !on.isDisjoint(with: [.shore, .clubs, .routes]) {
+                    Section(tr("Lines and marks")) {
+                        if on.contains(.shore) { row(line(.white), tr("Shore line")) }
+                        if on.contains(.routes) { row(line(.yellow), tr("Your saved routes on this lake")) }
+                        if on.contains(.clubs) {
+                            row(Image(systemName: "house.circle.fill").foregroundStyle(.blue), tr("Your club (this page's launch point)"))
+                            row(Image(systemName: "figure.rower.circle.fill").foregroundStyle(.gray), tr("Other clubs on the lake"))
+                        }
+                    }
+                }
+                Section {
+                    Text(tr("Switch layers on and off with the buttons under the picture."))
+                        .font(.footnote)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .navigationTitle(tr("Legend"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+            }
+        }
+        .presentationDetents([.medium, .large])
+    }
+
+    private func swatch(_ color: Color) -> some View {
+        RoundedRectangle(cornerRadius: 3).fill(color).frame(width: 22, height: 14)
+            .overlay(RoundedRectangle(cornerRadius: 3).stroke(.secondary.opacity(0.5), lineWidth: 0.5))
+    }
+
+    private func line(_ color: Color) -> some View {
+        Capsule().fill(color).frame(width: 22, height: 3).shadow(color: .black.opacity(0.6), radius: 1)
+    }
+
+    private func row(_ symbol: some View, _ text: String) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 12) {
+            symbol.frame(width: 28)
+            Text(text).font(.subheadline)
         }
     }
 }
