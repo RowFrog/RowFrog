@@ -95,6 +95,14 @@ coach or partner boat for singles and lowers its own wind and gust limits by
 1 m/s (your own limits stay as set, with a note). Below 4 °C it warns of
 near-freezing water.
 
+**Water temperature.** Each club reads the nearest measuring station on its
+own water, from GKD Bayern or the federal PEGELONLINE network (70 clubs so
+far, listed in `data/water-stations.json`). For lakes without a station the
+backend works out a satellite estimate from Copernicus lake surface
+temperatures and Landsat (through Microsoft's Planetary Computer, no extra
+account), carried forward with the air temperatures; the app does not show
+this estimate yet.
+
 **DWD warnings.** The page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
 DWD runs its lake warning service (23 lakes, among them Starnberger See,
@@ -200,6 +208,7 @@ layouts (two columns from 600 pt, a side list from 860 × 560 pt).
 | `data/catalogs/` | Clubs the app's search offers, one file per country and source (see [Club catalog](#club-catalog)). |
 | `data/geocode.json` | Cached geocoding results for the catalog imports. |
 | `data/outlines/` | Lake outlines (GeoJSON) for the wave calculation and lake view, made with `scripts/fetch_lake_outline.py`. |
+| `data/water-stations.json` | The water temperature station each club reads (nearest on its own water). |
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues. |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
@@ -265,7 +274,7 @@ Every 30 minutes it refreshes the clubs people actually load (until the
 usage counter is set up, the confirmed clubs in `data/locations.json` stand
 in); every 6 hours it refreshes all clubs. Weather is only loaded again after
 a weather model has a new run, which keeps the job within Open-Meteo's free
-limit. When the GKD water temperature fails to load, the last good reading
+limit. When a station's water temperature fails to load, the last good reading
 stands in for up to 6 hours. For clubs people use it also loads the 8-day outlook after each model
 run (every 3 hours) for the charts in the condition details. The last
 forecasts are kept between runs in the Actions cache.
@@ -314,6 +323,8 @@ More detail, including the secrets each one needs, is in the
 | **Place suggestions** (`suggestions-worker.yml`) | Deploys the Cloudflare Worker that turns place suggestions into GitHub issues. Needs `SUGGESTIONS_GITHUB_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 | **API check** (`api-check.yml`) | Shows how `api.rowfrog.com` answers (Cloudflare proxy, SSL mode, usage counter). Runs by hand. |
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs by hand, or when the club list or data sources change on `main`; new outlines are committed back. |
+| **Water temperature stations** (`water-stations.yml`) | Lists the GKD Bayern, PEGELONLINE and Swiss BAFU stations, shows how `data/water-stations.json` would change and reads every station in it once. Nothing is stored; a changed list is committed by hand (see the handbook). By hand, or when its files change. |
+| **Satellite water temperature check** (`water-temperature-probe.yml`) | Compares Copernicus, Landsat and the carried-forward estimate with GKD lake stations. By hand, or when the satellite water temperature code changes. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 
