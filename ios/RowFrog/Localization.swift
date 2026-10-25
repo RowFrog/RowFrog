@@ -640,7 +640,7 @@ enum German {
         "Tick the boat the rowing light is for. The sliders open its limits, and below you can add your own boats.": "Hake das Boot an, für das die Ruderampel gilt. Die Regler öffnen seine Grenzwerte, und darunter kannst du eigene Boote hinzufügen.",
         "A capsize in water below %@ gets dangerous within minutes. The app then lowers its own wind and gust limits by %@. Limits you set stay as they are, with a reminder on the rowing light.": "Kentern in Wasser unter %@ wird innerhalb von Minuten gefährlich. Die App senkt dann ihre eigenen Grenzwerte für Wind und Böen um %@. Deine eigenen Grenzwerte bleiben, mit einem Hinweis an der Ruderampel.",
         "Swipe left and right to move between your clubs. The house marks your home base.": "Wische nach links und rechts, um zwischen deinen Vereinen zu wechseln. Das Haus markiert deinen Heimatverein.",
-        "Search the list for any club in Germany, Austria or Switzerland and tap + to add it.": "Suche in der Liste nach einem Verein in Deutschland, Österreich oder der Schweiz und tippe auf +, um ihn hinzuzufügen.",
+        "Search the list for any club in Germany, Austria or Switzerland and tap + to add it.": "Suche nach Vereinen in Deutschland, Österreich und der Schweiz und tippe auf +.",
         "Touch and hold a club, then drag to reorder.": "Halte einen Verein gedrückt und ziehe ihn, um die Reihenfolge zu ändern.",
         "Swipe a club in the list to the left to remove it.": "Wische einen Verein in der Liste nach links, um ihn zu entfernen.",
         "Pull a page or the list down to refresh.": "Ziehe eine Seite oder die Liste nach unten, um sie zu aktualisieren.",
