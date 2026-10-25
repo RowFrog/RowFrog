@@ -132,3 +132,11 @@ def test_club_forecast_without_station_gets_the_satellite_estimate(monkeypatch):
     other = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
     assert other["waterEstimate"] is None
     _reset()
+
+
+def test_from_air_moves_the_typical_value_towards_the_air():
+    # Starts at the month's typical value and follows a cold spell down, never below 0 °C.
+    temps = _air(60, 2.0, date(2026, 10, 1))
+    water = water_estimate.from_air(temps, date(2026, 11, 30))
+    assert 2.0 < water < ice.TYPICAL_WATER_C[10]
+    assert water_estimate.from_air([], DAY) is None
