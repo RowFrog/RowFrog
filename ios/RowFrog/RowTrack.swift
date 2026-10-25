@@ -250,9 +250,12 @@ enum FITReader {
 
 /// Turns a rowed track into a route that plans and edits like one drawn by hand.
 enum RouteImport {
-    /// The turning points keep the route within this of the track.
-    static let toleranceM = 15.0
-    static let maxTurningPoints = 40
+    /// The turning points keep the route within this of the track: wider than
+    /// GPS noise and a boat's steering, so straight stretches stay one line.
+    static let toleranceM = 25.0
+    static let maxTurningPoints = 25
+    /// Turning points closer together than this are merged, so pins never pile up.
+    static let pointSpacingM = 100.0
     /// The track kept for showing on the map.
     static let trackToleranceM = 4.0
     static let maxTrackPoints = 1500
@@ -321,7 +324,15 @@ enum RouteImport {
 
     /// The turning points, fewer the longer the row, never more than `maxTurningPoints`.
     static func turningPoints(_ points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
-        thinned(points, tolerance: toleranceM, max: maxTurningPoints)
+        let thin = thinned(points, tolerance: toleranceM, max: maxTurningPoints)
+        guard thin.count > 2, let last = thin.last else { return thin }
+        var out = [thin[0]]
+        for p in thin.dropFirst().dropLast() where RoutePlanner.distance(p, out[out.count - 1]) >= pointSpacingM
+            && RoutePlanner.distance(p, last) >= pointSpacingM {
+            out.append(p)
+        }
+        out.append(last)
+        return out
     }
 
     static func keptTrack(_ points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
@@ -406,7 +417,7 @@ enum RouteImport {
             let steps = max(Int(d / 10), 1)
             for s in 0..<steps {
                 let t = Double(s) / Double(steps)
-                let wobble = sin(Double(out.count) / 9) * 0.00008
+                let wobble = sin(Double(out.count) / 9) * 0.00003
                 out.append(RowTrack.Point(lat: a.latitude + (b.latitude - a.latitude) * t + wobble,
                                           lon: a.longitude + (b.longitude - a.longitude) * t + wobble,
                                           time: time))

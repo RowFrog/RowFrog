@@ -263,7 +263,7 @@ struct LakeMapScreen: View {
                 routeButton
                     .background(routeMode ? AnyShapeStyle(Color.accentColor) : AnyShapeStyle(Material.regularMaterial), in: Circle())
                     .accessibilityLabel(routeMode ? tr("End route planning") : tr("Plan a route"))
-                    .popoverTip(RoutePlanningTip(), arrowEdge: .top)
+                    .popoverTip(routeMode ? nil : RoutePlanningTip(), arrowEdge: .top)
                 if !routeMode {
                     Button { showingInfo = true } label: {
                         Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
@@ -882,7 +882,7 @@ struct LakeMapView: UIViewRepresentable {
     var selectPoint: (Int?) -> Void = { _ in }
     /// Apple's satellite pictures with roads and names instead of the plain map.
     var imagery = false
-    /// An imported route's track as it was rowed, drawn thin under the route.
+    /// An imported route's track as it was rowed, drawn thin over the route.
     var track: [CLLocationCoordinate2D] = []
 
     /// Room the pushed-down panel and the home indicator take at the bottom.
@@ -1015,9 +1015,9 @@ struct LakeMapView: UIViewRepresentable {
             }
             if let track = overlay as? RowedTrackLine {
                 let renderer = MKPolylineRenderer(polyline: track)
-                renderer.strokeColor = UIColor.label.withAlphaComponent(0.55)
-                renderer.lineWidth = 2
-                renderer.lineDashPattern = [4, 3]
+                renderer.strokeColor = UIColor.label.withAlphaComponent(0.8)
+                renderer.lineWidth = 1.5
+                renderer.lineDashPattern = [3, 3]
                 return renderer
             }
             guard let overlay = overlay as? LakeOverlay else { return MKOverlayRenderer(overlay: overlay) }
@@ -1169,6 +1169,11 @@ struct LakeMapView: UIViewRepresentable {
                 }
             }
             map.addOverlays(routeOverlays, level: .aboveLabels)
+            // The rowed track stays on top of the route, or the route's line would hide it.
+            if let trackLine {
+                map.removeOverlay(trackLine)
+                map.addOverlay(trackLine, level: .aboveLabels)
+            }
             routePins = points.enumerated().map { i, p in
                 let pin = RoutePin()
                 pin.coordinate = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lon)
@@ -1188,8 +1193,8 @@ struct LakeMapView: UIViewRepresentable {
             trackLine = nil
             guard points.count > 1 else { return }
             let line = RowedTrackLine(coordinates: points, count: points.count)
-            // Over the lake's colours, under the route.
-            map.addOverlay(line, level: .aboveRoads)
+            // Over the route, which is wider and would hide it.
+            map.addOverlay(line, level: .aboveLabels)
             trackLine = line
         }
 
