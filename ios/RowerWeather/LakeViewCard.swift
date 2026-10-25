@@ -197,6 +197,16 @@ struct LakeMiniMap: View {
                 water.clip(to: shore, style: even)
                 water.opacity = 0.85
                 water.draw(Image(decorative: image, scale: 1).interpolation(.high), in: p.imageRect)
+                // The whole lake is red (dark, a warning): stripes over the greyed squares.
+                if layer == .light, hour.lakeWide.light == .red {
+                    var stripes = Path()
+                    for x in stride(from: -size.height, to: size.width, by: 8) {
+                        stripes.move(to: CGPoint(x: x, y: size.height))
+                        stripes.addLine(to: CGPoint(x: x + size.height, y: 0))
+                    }
+                    water.opacity = 1
+                    water.stroke(stripes, with: .color(.red.opacity(0.55)), lineWidth: 1.5)
+                }
             }
             ctx.stroke(shore, with: .color(.blue.opacity(0.4)), lineWidth: 0.7)
             for (point, wind) in zip(view.points, hour.wind) {

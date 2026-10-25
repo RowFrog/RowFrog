@@ -15,21 +15,30 @@ struct LakeMapScreen: View {
     @State private var showingInfo = false
     @State private var routeMode: Bool
     @State private var waypoints: [CLLocationCoordinate2D]
-    @State private var outAndBack = true
+    @State private var outAndBack: Bool
     /// The saved route being shown, if any.
     @State private var savedRoute: Route?
     @State private var showingSave = false
     @State private var routeName = ""
+    /// Shows the lake at the time the boat reaches a point of the route, not at the start.
+    @State private var followBoat: Bool
+    /// Where the boat is, as a share of the route from start (0) to finish (1).
+    @State private var boatAt: Double
+    /// The turning point tapped for changing, by its index in `waypoints`.
+    @State private var selectedPoint: Int?
+    /// The panel at the bottom shows everything, or only a summary and the hours.
+    @State private var panelExpanded: Bool
     /// Seconds per 500 m.
     @AppStorage("RWRoutePace") private var pace = 150.0
     @Environment(\.dismiss) private var dismiss
     private let routes = RouteStore.shared
 
-    init(view: LakeView, clubID: String?) {
+    /// `at` opens the map at a later hour, e.g. from an hour in the club page's table.
+    init(view: LakeView, clubID: String?, at date: Date = .now) {
         self.view = view
         self.clubID = clubID
         let args = UserDefaults.standard
-        let start = view.hourIndex() + args.integer(forKey: "RWLakeHour")
+        let start = view.hourIndex(at: date) + args.integer(forKey: "RWLakeHour")
         _hourIndex = State(initialValue: min(max(start, 0), max(view.hours.count - 1, 0)))
         _layer = State(initialValue: LakeLayer(rawValue: args.string(forKey: "RWLakeLayer") ?? "") ?? .light)
         var spot: Int?
@@ -43,8 +52,19 @@ struct LakeMapScreen: View {
             let parts = pair.split(separator: ",").compactMap { Double($0) }
             return parts.count == 2 ? CLLocationCoordinate2D(latitude: parts[0], longitude: parts[1]) : nil
         }
-        _waypoints = State(initialValue: route)
+        let points = route.reduce(into: [CLLocationCoordinate2D]()) { built, p in
+            built = built.isEmpty ? [p] : RouteEdit.add(p, to: built)
+        }
+        _waypoints = State(initialValue: points)
         _routeMode = State(initialValue: !route.isEmpty)
+        _outAndBack = State(initialValue: !RouteEdit.isLoop(points))
+        // Screenshot hook: `-RWRoutePoint 2` selects that turning point.
+        _selectedPoint = State(initialValue: args.object(forKey: "RWRoutePoint") != nil ? args.integer(forKey: "RWRoutePoint") : nil)
+        // Screenshot hook: `-RWPanel expanded` opens the panel in full.
+        _panelExpanded = State(initialValue: args.string(forKey: "RWPanel") == "expanded")
+        // Screenshot hook: `-RWBoatAt 0.6` shows the lake when the boat is 60 % along the route.
+        _followBoat = State(initialValue: args.object(forKey: "RWBoatAt") != nil)
+        _boatAt = State(initialValue: min(max(args.double(forKey: "RWBoatAt"), 0), 1))
     }
 
     private var planner: RoutePlanner? {
@@ -56,18 +76,43 @@ struct LakeMapScreen: View {
 
     private var hour: LakeHour? { view.hours.indices.contains(hourIndex) ? view.hours[hourIndex] : nil }
 
+    /// The stop nearest to where the boat is, when the lake follows the boat.
+    private func boatStop(_ plan: RoutePlan?) -> RoutePlan.Stop? {
+        guard followBoat, let plan, !plan.stops.isEmpty else { return nil }
+        let target = boatAt * plan.distanceM
+        return plan.stops.min { abs($0.distanceM - target) < abs($1.distanceM - target) }
+    }
+
+    /// The hour the map shows: the start hour, or the hour the boat is at that point.
+    private func shownHour(_ boat: RoutePlan.Stop?) -> LakeHour? {
+        guard let boat, let i = view.hours.lastIndex(where: { $0.time <= boat.time }) else { return hour }
+        return view.hours[i]
+    }
+
     var body: some View {
+        let plan = planner?.plan(start: startTime, paceSecondsPer500: pace)
+        let boat = boatStop(plan)
+        let shown = shownHour(boat)
         ZStack(alignment: .top) {
-            let plan = planner?.plan(start: startTime, paceSecondsPer500: pace)
             LakeMapView(
-                view: view, hour: hour, layer: layer, clubID: clubID, spot: $spot,
+                view: view, hour: shown, layer: layer, clubID: clubID, spot: $spot,
                 routeMode: routeMode, waypoints: waypoints, segments: plan?.segments ?? [],
-                addPoint: { waypoints.append($0); savedRoute = nil }
+                boat: boat.map { CLLocationCoordinate2D(latitude: $0.coordinate.lat, longitude: $0.coordinate.lon) },
+                selectedPoint: selectedPoint,
+                addPoint: { point in
+                    selectedPoint = nil
+                    let new = RouteEdit.add(point, to: waypoints)
+                    if RouteEdit.isLoop(new) { outAndBack = false }
+                    waypoints = new
+                    savedRoute = nil
+                },
+                movePoint: { i, point in waypoints = RouteEdit.move(at: i, to: point, in: waypoints) },
+                selectPoint: { selectedPoint = $0 }
             )
             .ignoresSafeArea()
             topBar
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) { panel }
+        .safeAreaInset(edge: .bottom, spacing: 0) { panel(plan: plan, boat: boat, shown: shown) }
         .sheet(isPresented: $showingInfo) { LakeViewInfo() }
         .alert(tr("Save route"), isPresented: $showingSave) {
             TextField(tr("Name"), text: $routeName)
@@ -79,6 +124,7 @@ struct LakeMapScreen: View {
     private func toggleRouteMode() {
         routeMode.toggle()
         spot = nil
+        selectedPoint = nil
         // A new route starts at this page's launch point.
         if routeMode, waypoints.isEmpty, let club = view.clubs.first(where: { $0.id == clubID }) {
             waypoints = [CLLocationCoordinate2D(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)]
@@ -101,6 +147,7 @@ struct LakeMapScreen: View {
         savedRoute = route
         routeMode = true
         spot = nil
+        selectedPoint = nil
     }
 
     private var topBar: some View {
@@ -139,16 +186,67 @@ struct LakeMapScreen: View {
             .pickerStyle(.segmented)
             .padding(4)
             .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+            if routeMode { editBar }
         }
         .padding(.horizontal)
         .padding(.top, 6)
     }
 
-    private var panel: some View {
+    /// Changing the route, on the map where the points are: undo, close the
+    /// loop, clear, and delete the turning point that is tapped.
+    @ViewBuilder private var editBar: some View {
+        let loop = RouteEdit.isLoop(waypoints)
+        HStack(spacing: 14) {
+            if let i = selectedPoint, i > 0, i < waypoints.count {
+                Text(tr("Turning point %d", i)).font(.subheadline.weight(.semibold))
+                Spacer(minLength: 0)
+                Button(tr("Delete point"), systemImage: "trash", role: .destructive) {
+                    waypoints = RouteEdit.remove(at: i, from: waypoints)
+                    selectedPoint = nil
+                    savedRoute = nil
+                }
+                Button(tr("Done")) { selectedPoint = nil }
+                    .fontWeight(.semibold)
+            } else {
+                Button(tr("Undo"), systemImage: "arrow.uturn.backward") {
+                    if waypoints.count > 1 { waypoints.removeLast() }
+                }
+                .disabled(waypoints.count < 2)
+                Button(tr("Close loop"), systemImage: "arrow.triangle.capsulepath") {
+                    waypoints = RouteEdit.close(waypoints)
+                    outAndBack = false
+                }
+                .disabled(waypoints.count < 3 || loop)
+                Spacer(minLength: 0)
+                Button(tr("Clear"), systemImage: "trash") {
+                    waypoints = Array(waypoints.prefix(1))
+                    savedRoute = nil
+                }
+                .disabled(waypoints.count < 2)
+            }
+        }
+        .font(.subheadline)
+        .labelStyle(.titleAndIcon)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 9)
+        .background(.regularMaterial, in: Capsule())
+        if let i = selectedPoint, i > 0, i < waypoints.count {
+            Text(tr("Hold the point and drag it to move it."))
+                .font(.caption)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(.regularMaterial, in: Capsule())
+        }
+    }
+
+    private func panel(plan: RoutePlan?, boat: RoutePlan.Stop?, shown: LakeHour?) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            if let hour {
+            grabber
+            if !panelExpanded, let hour = shown {
+                collapsedSummary(hour, plan: plan, boat: boat)
+            } else if let hour = shown {
                 HStack(alignment: .firstTextBaseline) {
-                    Text(Format.dayTime(hour.time)).font(.headline)
+                    Text(boat == nil ? Format.dayTime(hour.time) : tr("%@ · at the boat", Format.dayTime(hour.time))).font(.headline)
                     Spacer()
                     if view.sample {
                         Label(tr("Sample wind"), systemImage: "exclamationmark.triangle")
@@ -160,13 +258,18 @@ struct LakeMapScreen: View {
                     LakeWideBanner(lakeWide: hour.lakeWide)
                 }
                 if routeMode {
-                    routePanel
+                    routePanel(plan: plan, boat: boat)
                 } else if let spot, spot < hour.lights.count {
                     spotDetails(spot, hour)
                 } else {
                     Text(view.headline(for: hour)).font(.subheadline.weight(.semibold))
                     if let wind = view.windSummary(for: hour) {
                         Label(wind, systemImage: Condition.wind.symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    if let waves = view.waveSummary(for: hour) {
+                        Label(waves, systemImage: Condition.waves.symbol)
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }
@@ -185,7 +288,7 @@ struct LakeMapScreen: View {
             LakeHourStrip(hours: view.hours, selection: $hourIndex)
         }
         .padding(.horizontal)
-        .padding(.top, 14)
+        .padding(.top, 6)
         .padding(.bottom, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background {
@@ -193,13 +296,87 @@ struct LakeMapScreen: View {
                 .fill(.regularMaterial)
                 .ignoresSafeArea(edges: .bottom)
         }
+        // Pull up for everything, push down for the map.
+        .gesture(DragGesture(minimumDistance: 20).onEnded { drag in
+            if drag.translation.height < -30 { withAnimation(.snappy) { panelExpanded = true } }
+            if drag.translation.height > 30 { withAnimation(.snappy) { panelExpanded = false } }
+        })
     }
 
-    @ViewBuilder private var routePanel: some View {
+    private var grabber: some View {
+        Button { withAnimation(.snappy) { panelExpanded.toggle() } } label: {
+            Capsule()
+                .fill(.secondary.opacity(0.5))
+                .frame(width: 38, height: 5)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 4)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(panelExpanded ? tr("Show less") : tr("Show more"))
+    }
+
+    /// The panel when pushed down: the hour, one line on the conditions or
+    /// the route, and the hour strip.
+    @ViewBuilder private func collapsedSummary(_ hour: LakeHour, plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
+        HStack(alignment: .firstTextBaseline) {
+            Text(boat == nil ? Format.dayTime(hour.time) : tr("%@ · at the boat", Format.dayTime(hour.time))).font(.headline)
+            Spacer()
+            if view.sample {
+                Label(tr("Sample wind"), systemImage: "exclamationmark.triangle")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(.orange)
+            }
+        }
+        if hour.lakeWide.light > .green {
+            LakeWideBanner(lakeWide: hour.lakeWide).lineLimit(1)
+        }
+        Group {
+            if routeMode, let plan {
+                HStack(spacing: 6) {
+                    TrafficLightDot(light: plan.worstLight, size: 10)
+                    Text(tr("%@ · %@ · finished at %@", Format.distance(plan.distanceM), Format.duration(from: plan.start, to: plan.end), Format.time(plan.end)))
+                        .monospacedDigit()
+                }
+            } else if routeMode {
+                Text(tr("Tap the water to add the turning points of your route."))
+            } else if let spot, spot < hour.lights.count {
+                HStack(spacing: 6) {
+                    TrafficLightDot(light: hour.lights[spot], size: 10)
+                    Text(hour.lights[spot].title + " · " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: spot))))
+                }
+            } else {
+                Text(view.headline(for: hour))
+            }
+        }
+        .font(.subheadline.weight(.semibold))
+        .lineLimit(1)
+    }
+
+    @ViewBuilder private func routePanel(plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
         let saved = routes.routes(on: view.lakeId)
-        if let planner {
-            let plan = planner.plan(start: startTime, paceSecondsPer500: pace)
+        let loop = RouteEdit.isLoop(waypoints)
+        if let planner, let plan {
             RouteSummary(view: view, plan: plan)
+            HStack(spacing: 12) {
+                Toggle(isOn: $followBoat) {
+                    Label(tr("Lake at the boat's time"), systemImage: "figure.rowing")
+                }
+                .toggleStyle(.button)
+                .fixedSize()
+                if followBoat {
+                    Slider(value: $boatAt, in: 0...1)
+                        .accessibilityLabel(tr("Where the boat is"))
+                        .accessibilityValue(Format.distance(boat?.distanceM))
+                }
+            }
+            .font(.subheadline)
+            if let boat {
+                Text(boatText(boat))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if let best = planner.bestStart(paceSecondsPer500: pace),
                (best.worstLight, (best.maxWaveM * 100).rounded()) < (plan.worstLight, (plan.maxWaveM * 100).rounded()),
                let i = view.hours.lastIndex(where: { $0.time <= best.start }) {
@@ -209,7 +386,7 @@ struct LakeMapScreen: View {
                 }
             }
         } else {
-            Text(tr("Tap the water to add the turning points of your route. It starts at your club."))
+            Text(tr("Tap the water to add the turning points of your route. It starts at your club. Tap a point to delete it, or hold and drag it to move it. A point within 50 m of the start closes the loop."))
                 .font(.subheadline)
                 .fixedSize(horizontal: false, vertical: true)
         }
@@ -217,20 +394,12 @@ struct LakeMapScreen: View {
             Toggle(tr("Out and back"), isOn: $outAndBack)
                 .toggleStyle(.button)
                 .font(.subheadline)
+                .disabled(loop)
             Stepper(value: $pace, in: 90...240, step: 5) {
                 Text(tr("Pace %@ /500 m", Format.pace(pace))).font(.subheadline.monospacedDigit())
             }
         }
         HStack(spacing: 16) {
-            Button(tr("Undo"), systemImage: "arrow.uturn.backward") {
-                if !waypoints.isEmpty { waypoints.removeLast() }
-            }
-            .disabled(waypoints.count < 2)
-            Button(tr("Clear"), systemImage: "trash") {
-                waypoints = Array(waypoints.prefix(1))
-                savedRoute = nil
-            }
-            .disabled(waypoints.count < 2)
             Spacer()
             Menu {
                 Button(tr("Save route"), systemImage: "square.and.arrow.down") {
@@ -257,6 +426,12 @@ struct LakeMapScreen: View {
         }
         .font(.subheadline)
         .labelStyle(.titleAndIcon)
+    }
+
+    /// "The boat at 10:35 after 6.2 km: Row with care, waves 0.25 m head sea".
+    private func boatText(_ stop: RoutePlan.Stop) -> String {
+        let waves = Format.waves(stop.waveM) + (stop.relation.map { " " + $0.waves } ?? "")
+        return tr("The boat at %@ after %@: %@, waves %@", Format.time(stop.time), Format.distance(stop.distanceM), stop.light.title, waves)
     }
 
     private func spotDetails(_ i: Int, _ hour: LakeHour) -> some View {
@@ -413,7 +588,7 @@ private struct LakeViewInfo: View {
         NavigationStack {
             List {
                 Text(tr("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))
-                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown above the map."))
+                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map; while they make the whole lake red, the squares turn grey with red stripes."))
                 Text(tr("Waves are an estimate: there are no wave measurements on these lakes, and shelter from steep shores or currents is not taken into account."))
                 Section(tr("Data")) {
                     Text(tr("Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0"))
@@ -440,7 +615,15 @@ struct LakeMapView: UIViewRepresentable {
     var routeMode = false
     var waypoints: [CLLocationCoordinate2D] = []
     var segments: [RoutePlan.Segment] = []
+    /// Where the boat is, when the lake follows it.
+    var boat: CLLocationCoordinate2D?
+    var selectedPoint: Int?
     var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
+    var movePoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
+    var selectPoint: (Int?) -> Void = { _ in }
+
+    /// Room the pushed-down panel and the home indicator take at the bottom.
+    static let panelHeight: CGFloat = 230
 
     func makeCoordinator() -> Coordinator { Coordinator(spot: $spot) }
 
@@ -449,7 +632,17 @@ struct LakeMapView: UIViewRepresentable {
         map.delegate = context.coordinator
         map.pointOfInterestFilter = .excludingAll
         map.preferredConfiguration = MKStandardMapConfiguration(emphasisStyle: .muted)
-        map.showsCompass = true
+        // MapKit's own compass sits under the buttons at the top; this one sits
+        // on the right below the layer picker and the route bar.
+        map.showsCompass = false
+        let compass = MKCompassButton(mapView: map)
+        compass.compassVisibility = .adaptive
+        compass.translatesAutoresizingMaskIntoConstraints = false
+        map.addSubview(compass)
+        NSLayoutConstraint.activate([
+            compass.trailingAnchor.constraint(equalTo: map.safeAreaLayoutGuide.trailingAnchor, constant: -16),
+            compass.topAnchor.constraint(equalTo: map.safeAreaLayoutGuide.topAnchor, constant: 185),
+        ])
         let overlay = LakeOverlay(view: view)
         context.coordinator.overlay = overlay
         context.coordinator.grid = view.grid
@@ -463,11 +656,20 @@ struct LakeMapView: UIViewRepresentable {
         }
         map.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))
         map.setVisibleMapRect(overlay.boundingMapRect, animated: false)
-        // Fit the lake once the map has its size, clear of the buttons at the top.
-        DispatchQueue.main.async {
-            map.setVisibleMapRect(overlay.boundingMapRect, edgePadding: UIEdgeInsets(top: 130, left: 24, bottom: 30, right: 24), animated: false)
-        }
+        // Fit the lake once the map has its size, clear of the buttons at the top
+        // and of the panel at the bottom, so the whole lake and every club show.
+        let inRouteMode = routeMode
+        DispatchQueue.main.async { Self.fit(overlay, in: map, routeMode: inRouteMode, animated: false) }
+        context.coordinator.fittedForRoute = routeMode
         return map
+    }
+
+    /// Room the buttons at the top take; in route mode the editing bar adds a row.
+    static let routeTop: CGFloat = 215
+
+    static func fit(_ overlay: LakeOverlay, in map: MKMapView, routeMode: Bool, animated: Bool) {
+        let padding = UIEdgeInsets(top: routeMode ? routeTop : 130, left: 24, bottom: panelHeight, right: 24)
+        map.setVisibleMapRect(overlay.boundingMapRect, edgePadding: padding, animated: animated)
     }
 
     func updateUIView(_ map: MKMapView, context: Context) {
@@ -475,13 +677,25 @@ struct LakeMapView: UIViewRepresentable {
         c.spot = $spot
         c.routeMode = routeMode
         c.addPoint = addPoint
-        c.showRoute(segments: segments, waypoints: waypoints, on: map)
+        c.movePoint = movePoint
+        c.selectPoint = selectPoint
+        c.showRoute(segments: segments, waypoints: waypoints, selected: selectedPoint, on: map)
+        // The editing bar shows in route mode; move the lake down when the bar
+        // would hide the start of the route.
+        if !routeMode { c.fittedForRoute = false }
+        if routeMode, !c.fittedForRoute, let overlay = c.overlay, let start = waypoints.first {
+            c.fittedForRoute = true
+            if map.convert(start, toPointTo: map).y < Self.routeTop {
+                Self.fit(overlay, in: map, routeMode: true, animated: true)
+            }
+        }
         if let hour, c.shown != "\(hour.time.timeIntervalSince1970) \(layer.rawValue)" {
             c.shown = "\(hour.time.timeIntervalSince1970) \(layer.rawValue)"
-            c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour))
-            c.renderer?.update(image: c.current.image, arrows: c.current.arrows)
+            c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour), layer == .light && hour.lakeWide.light == .red)
+            c.renderer?.update(image: c.current.image, arrows: c.current.arrows, striped: c.current.striped)
         }
         c.showSpot(spot.map { view.grid.coordinate(ofCell: $0) }, on: map)
+        c.showBoat(boat, on: map)
     }
 
     private func arrows(_ hour: LakeHour) -> [LakeRenderer.Arrow] {
@@ -498,11 +712,16 @@ struct LakeMapView: UIViewRepresentable {
         var grid: LakeGrid?
         /// The hour and layer drawn, and their picture and arrows.
         var shown: String?
-        var current: (image: CGImage?, arrows: [LakeRenderer.Arrow]) = (nil, [])
+        var current: (image: CGImage?, arrows: [LakeRenderer.Arrow], striped: Bool) = (nil, [], false)
         var routeMode = false
+        /// Whether the lake was fitted below the editing bar of route mode.
+        var fittedForRoute = false
         var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
+        var movePoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
+        var selectPoint: (Int?) -> Void = { _ in }
         private let spotPin = MKPointAnnotation()
-        private var shownRoute: ([RoutePlan.Segment], [Coordinate])?
+        private let boatPin = MKPointAnnotation()
+        private var shownRoute: ([RoutePlan.Segment], [Coordinate], Int?)?
         private var routeOverlays: [RouteLine] = []
         private var routePins: [RoutePin] = []
 
@@ -510,16 +729,11 @@ struct LakeMapView: UIViewRepresentable {
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let line = overlay as? RouteLine {
-                let renderer = MKPolylineRenderer(polyline: line)
-                renderer.strokeColor = line.casing ? UIColor(white: 1, alpha: 0.9) : UIColor(line.light.color)
-                renderer.lineWidth = line.casing ? 9 : 5
-                renderer.lineCap = .round
-                renderer.lineJoin = .round
-                return renderer
+                return RouteLineRenderer(overlay: line)
             }
             guard let overlay = overlay as? LakeOverlay else { return MKOverlayRenderer(overlay: overlay) }
             let renderer = LakeRenderer(overlay: overlay)
-            renderer.update(image: current.image, arrows: current.arrows)
+            renderer.update(image: current.image, arrows: current.arrows, striped: current.striped)
             self.renderer = renderer
             return renderer
         }
@@ -534,17 +748,45 @@ struct LakeMapView: UIViewRepresentable {
             }
             if let pin = annotation as? RoutePin {
                 let view = MKAnnotationView(annotation: pin, reuseIdentifier: nil)
-                let size: CGFloat = pin.isStart ? 16 : 12
+                let size: CGFloat = pin.isStart || pin.isSelected ? 18 : 14
                 view.image = UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
                     let rect = CGRect(x: 1.5, y: 1.5, width: size - 3, height: size - 3)
                     let circle = UIBezierPath(ovalIn: rect)
-                    (pin.isStart ? UIColor.systemBlue : UIColor.white).setFill()
+                    (pin.isStart ? UIColor.systemBlue : pin.isSelected ? UIColor.systemOrange : UIColor.white).setFill()
                     circle.fill()
                     UIColor(white: 0.15, alpha: 1).setStroke()
                     circle.lineWidth = 2
                     circle.stroke()
                 }
+                // The start is the club's launch point; the turning points can be moved.
+                view.isDraggable = !pin.isStart
                 view.displayPriority = .required
+                return view
+            }
+            if annotation === boatPin {
+                // A round boat badge sitting on the route, not a pin above it.
+                let view = MKAnnotationView(annotation: annotation, reuseIdentifier: nil)
+                let size: CGFloat = 34
+                view.image = UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
+                    let circle = UIBezierPath(ovalIn: CGRect(x: 1.5, y: 1.5, width: size - 3, height: size - 3))
+                    UIColor.systemIndigo.setFill()
+                    circle.fill()
+                    UIColor.white.setStroke()
+                    circle.lineWidth = 2.5
+                    circle.stroke()
+                    let glyph = UIImage(systemName: "figure.rower", withConfiguration: UIImage.SymbolConfiguration(pointSize: 15, weight: .semibold))?
+                        .withTintColor(.white, renderingMode: .alwaysOriginal)
+                    if let glyph {
+                        glyph.draw(at: CGPoint(x: (size - glyph.size.width) / 2, y: (size - glyph.size.height) / 2))
+                    }
+                }
+                view.layer.shadowColor = UIColor.black.cgColor
+                view.layer.shadowOpacity = 0.3
+                view.layer.shadowRadius = 2
+                view.layer.shadowOffset = CGSize(width: 0, height: 1)
+                view.accessibilityLabel = tr("Where the boat is")
+                view.displayPriority = .required
+                view.zPriority = .max
                 return view
             }
             if annotation === spotPin {
@@ -557,9 +799,30 @@ struct LakeMapView: UIViewRepresentable {
             return nil
         }
 
+        func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
+            guard let pin = view.annotation as? RoutePin else { return }
+            mapView.deselectAnnotation(pin, animated: false)
+            if !pin.isStart { selectPoint(pin.index) }
+        }
+
+        func mapView(_ mapView: MKMapView, annotationView view: MKAnnotationView, didChange newState: MKAnnotationView.DragState, fromOldState oldState: MKAnnotationView.DragState) {
+            guard newState == .ending || newState == .canceling else { return }
+            view.dragState = .none
+            if newState == .ending, let pin = view.annotation as? RoutePin {
+                selectPoint(pin.index)
+                movePoint(pin.index, pin.coordinate)
+            }
+        }
+
         @objc func tapped(_ gesture: UITapGestureRecognizer) {
             guard let map = gesture.view as? MKMapView, let grid else { return }
-            let coordinate = map.convert(gesture.location(in: map), toCoordinateFrom: map)
+            let location = gesture.location(in: map)
+            // A tap on a pin selects it rather than adding a point under it.
+            if let hit = map.hitTest(location, with: nil),
+               sequence(first: hit, next: { $0.superview }).contains(where: { $0 is MKAnnotationView }) {
+                return
+            }
+            let coordinate = map.convert(location, toCoordinateFrom: map)
             if routeMode {
                 addPoint(coordinate)
             } else {
@@ -567,11 +830,13 @@ struct LakeMapView: UIViewRepresentable {
             }
         }
 
-        func showRoute(segments: [RoutePlan.Segment], waypoints: [CLLocationCoordinate2D], on map: MKMapView) {
-            let points = routeMode ? waypoints.map { Coordinate(lat: $0.latitude, lon: $0.longitude) } : []
+        func showRoute(segments: [RoutePlan.Segment], waypoints: [CLLocationCoordinate2D], selected: Int?, on map: MKMapView) {
+            // A loop's last point is the start again and gets no pin of its own.
+            let pinned = RouteEdit.isLoop(waypoints) ? Array(waypoints.dropLast()) : waypoints
+            let points = routeMode ? pinned.map { Coordinate(lat: $0.latitude, lon: $0.longitude) } : []
             let lines = routeMode ? segments : []
-            if let shownRoute, shownRoute.0 == lines, shownRoute.1 == points { return }
-            shownRoute = (lines, points)
+            if let shownRoute, shownRoute.0 == lines, shownRoute.1 == points, shownRoute.2 == selected { return }
+            shownRoute = (lines, points, selected)
             map.removeOverlays(routeOverlays)
             map.removeAnnotations(routePins)
             routeOverlays = []
@@ -589,9 +854,20 @@ struct LakeMapView: UIViewRepresentable {
                 let pin = RoutePin()
                 pin.coordinate = CLLocationCoordinate2D(latitude: p.lat, longitude: p.lon)
                 pin.isStart = i == 0
+                pin.index = i
+                pin.isSelected = i == selected
                 return pin
             }
             map.addAnnotations(routePins)
+        }
+
+        func showBoat(_ coordinate: CLLocationCoordinate2D?, on map: MKMapView) {
+            guard let coordinate else {
+                map.removeAnnotation(boatPin)
+                return
+            }
+            if !map.annotations.contains(where: { $0 === boatPin }) { map.addAnnotation(boatPin) }
+            boatPin.coordinate = coordinate
         }
 
         func showSpot(_ coordinate: CLLocationCoordinate2D?, on map: MKMapView) {
@@ -611,6 +887,9 @@ final class ClubPin: MKPointAnnotation {
 
 final class RoutePin: MKPointAnnotation {
     var isStart = false
+    var isSelected = false
+    /// Its index in the route's waypoints.
+    var index = 0
 }
 
 /// One stretch of a planned route in the colour of its conditions; the casing
@@ -618,6 +897,48 @@ final class RoutePin: MKPointAnnotation {
 final class RouteLine: MKPolyline {
     var light: Light = .green
     var casing = false
+
+    /// Room for the line drawn beside its points (about 2 km).
+    override var boundingMapRect: MKMapRect { super.boundingMapRect.insetBy(dx: -20_000, dy: -20_000) }
+}
+
+/// Draws a route stretch a few points to the right of the way the boat goes,
+/// so where a route is rowed out and back both trips show side by side, each
+/// in the colour of the time the boat is there.
+final class RouteLineRenderer: MKOverlayRenderer {
+    /// Screen points between the line's middle and the route.
+    static let offset: CGFloat = 3.5
+
+    override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
+        guard let line = overlay as? RouteLine, line.pointCount > 1 else { return }
+        let points = UnsafeBufferPointer(start: line.points(), count: line.pointCount).map { point(for: $0) }
+        let path = CGMutablePath()
+        path.addLines(between: Self.shifted(points, by: Self.offset / zoomScale))
+        context.addPath(path)
+        context.setStrokeColor((line.casing ? UIColor(white: 1, alpha: 0.9) : UIColor(line.light.color)).cgColor)
+        context.setLineWidth((line.casing ? 9 : 5) / zoomScale)
+        context.setLineCap(.round)
+        context.setLineJoin(.round)
+        context.strokePath()
+    }
+
+    /// The points moved `distance` to the right of the direction of travel, with y running down.
+    static func shifted(_ points: [CGPoint], by distance: CGFloat) -> [CGPoint] {
+        guard points.count > 1 else { return points }
+        let normals = zip(points, points.dropFirst()).map { a, b -> CGVector in
+            let dx = b.x - a.x, dy = b.y - a.y
+            let length = max(hypot(dx, dy), .ulpOfOne)
+            return CGVector(dx: -dy / length, dy: dx / length)
+        }
+        return points.indices.map { i in
+            let before = i > 0 ? normals[i - 1] : normals[0]
+            let after = i < normals.count ? normals[i] : normals[normals.count - 1]
+            var n = CGVector(dx: before.dx + after.dx, dy: before.dy + after.dy)
+            let length = hypot(n.dx, n.dy)
+            n = length > 0.01 ? CGVector(dx: n.dx / length, dy: n.dy / length) : after
+            return CGPoint(x: points[i].x + n.dx * distance, y: points[i].y + n.dy * distance)
+        }
+    }
 }
 
 /// The area of the lake's grid, as one map overlay.
@@ -648,11 +969,14 @@ final class LakeRenderer: MKOverlayRenderer {
     private let lock = NSLock()
     private var image: CGImage?
     private var arrows: [Arrow] = []
+    /// Red stripes over the water while the whole lake is red.
+    private var striped = false
 
-    func update(image: CGImage?, arrows: [Arrow]) {
+    func update(image: CGImage?, arrows: [Arrow], striped: Bool) {
         lock.lock()
         self.image = image
         self.arrows = arrows
+        self.striped = striped
         lock.unlock()
         setNeedsDisplay()
     }
@@ -660,7 +984,7 @@ final class LakeRenderer: MKOverlayRenderer {
     override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
         guard let lake = overlay as? LakeOverlay else { return }
         lock.lock()
-        let image = self.image, arrows = self.arrows
+        let image = self.image, arrows = self.arrows, striped = self.striped
         lock.unlock()
 
         let shore = CGMutablePath()
@@ -679,6 +1003,25 @@ final class LakeRenderer: MKOverlayRenderer {
             context.translateBy(x: rect.minX, y: rect.maxY)
             context.scaleBy(x: 1, y: -1)
             context.draw(image, in: CGRect(origin: .zero, size: rect.size))
+            context.restoreGState()
+        }
+        if striped {
+            context.saveGState()
+            context.addPath(shore)
+            context.clip(using: .evenOdd)
+            // Lines x + y = k * gap, so the stripes run on across the map's tiles.
+            let tile = self.rect(for: mapRect), gap = 14 / zoomScale
+            let stripes = CGMutablePath()
+            var k = ((tile.minX + tile.minY) / gap).rounded(.down)
+            while k * gap <= tile.maxX + tile.maxY {
+                stripes.move(to: CGPoint(x: k * gap - tile.minY, y: tile.minY))
+                stripes.addLine(to: CGPoint(x: k * gap - tile.maxY, y: tile.maxY))
+                k += 1
+            }
+            context.addPath(stripes)
+            context.setStrokeColor(UIColor.systemRed.withAlphaComponent(0.55).cgColor)
+            context.setLineWidth(3 / zoomScale)
+            context.strokePath()
             context.restoreGState()
         }
         context.addPath(shore)

@@ -96,4 +96,47 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(Format.pace(135), "2:15")
         XCTAssertEqual(Format.pace(90), "1:30")
     }
+
+    func testRouteLegsSitSideBySide() {
+        // Out east and back west: on screen (y down) the way out sits below, the way back above.
+        let out = RouteLineRenderer.shifted([CGPoint(x: 0, y: 0), CGPoint(x: 10, y: 0)], by: 3)
+        let back = RouteLineRenderer.shifted([CGPoint(x: 10, y: 0), CGPoint(x: 0, y: 0)], by: 3)
+        XCTAssertEqual(out.map(\.y), [3, 3])
+        XCTAssertEqual(back.map(\.y), [-3, -3])
+        XCTAssertEqual(out.map(\.x), [0, 10])
+    }
+
+    func testRouteLoopClosesNearTheStart() {
+        let start = CLLocationCoordinate2D(latitude: 47.99, longitude: 11.34)
+        var points = [start]
+        points = RouteEdit.add(CLLocationCoordinate2D(latitude: 47.98, longitude: 11.34), to: points)
+        // Only one turning point yet: a point near the start is just another point.
+        points = RouteEdit.add(CLLocationCoordinate2D(latitude: 47.9901, longitude: 11.3401), to: points)
+        XCTAssertFalse(RouteEdit.isLoop(points))
+        points.removeLast()
+        points = RouteEdit.add(CLLocationCoordinate2D(latitude: 47.98, longitude: 11.35), to: points)
+        // 30 m from the start closes the loop on the start itself.
+        points = RouteEdit.add(CLLocationCoordinate2D(latitude: 47.99027, longitude: 11.34), to: points)
+        XCTAssertTrue(RouteEdit.isLoop(points))
+        XCTAssertEqual(points.count, 4)
+        XCTAssertEqual(points.last?.latitude, start.latitude)
+        // A closed loop takes no more points.
+        XCTAssertEqual(RouteEdit.add(CLLocationCoordinate2D(latitude: 47.97, longitude: 11.34), to: points).count, 4)
+    }
+
+    func testRouteEditRemoveAndMove() {
+        let s = CLLocationCoordinate2D(latitude: 47.99, longitude: 11.34)
+        let a = CLLocationCoordinate2D(latitude: 47.98, longitude: 11.34)
+        let b = CLLocationCoordinate2D(latitude: 47.98, longitude: 11.35)
+        let loop = RouteEdit.close([s, a, b])
+        XCTAssertEqual(loop.count, 4)
+        // Removing a turning point from a triangle leaves an open route.
+        let open = RouteEdit.remove(at: 1, from: loop)
+        XCTAssertEqual(open.count, 2)
+        XCTAssertFalse(RouteEdit.isLoop(open))
+        // The start can't be removed or moved.
+        XCTAssertEqual(RouteEdit.remove(at: 0, from: loop).count, 4)
+        XCTAssertEqual(RouteEdit.move(at: 0, to: a, in: loop)[0].latitude, s.latitude)
+        XCTAssertEqual(RouteEdit.move(at: 2, to: a, in: loop)[2].longitude, a.longitude)
+    }
 }
