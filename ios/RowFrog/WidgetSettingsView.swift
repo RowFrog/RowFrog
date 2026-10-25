@@ -117,7 +117,7 @@ struct WidgetSettingsView: View {
                 }
             }
             Button(tr("Another picture") + "…") {
-                path.append(.picture(.widgets(club.id)))
+                path.append(.picker(.widgets(club.id)))
             }
         } label: {
             HStack(spacing: 12) {
