@@ -10,7 +10,7 @@ import { icon } from "./icons.js";
 import {
   API, ZONE, isStale, shownLight, currentHour, nextHours, windValue, WIND_UNITS, compass, searchClubs, town,
   overlayBox, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote,
-  pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState, BOATS, applyBoat, coldWaterKit,
+  pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState, BOATS, applyBoat, coldWaterKit, place, twilight,
 } from "./logic.js";
 
 const SAFETY_VERSION = 1;
@@ -155,6 +155,18 @@ function reasonLabel(condition) {
     ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunrise / sunset"), cold_water: t("Very cold water"),
     cool_water: t("Cold-water shock possible"),
   }[condition] ?? condition;
+}
+
+/** "Water near Aken" in the page's language (Lake.title). */
+const lakeTitle = (name) => (name?.startsWith("Water near ") ? t("Water near %@", name.slice("Water near ".length)) : name);
+
+/** A reason's sentence for an hour; "sunrise or sunset in this hour" says which, and when. */
+function hourExplanation(forecast, reason, hour) {
+  if (reason.condition === "twilight") {
+    const sun = twilight(forecast, hour);
+    if (sun) return sun.kind === "sunrise" ? t("Sunrise at %@ in this hour.", time(sun.time)) : t("Sunset at %@ in this hour.", time(sun.time));
+  }
+  return reasonExplanation(reason.condition, reason.light);
 }
 
 function reasonExplanation(condition, light) {
@@ -512,7 +524,7 @@ function rowSkeleton(club, isHome) {
   return `<div class="row-top">
       <div class="row-name">
         <strong>${isHome ? icon("house") : ""}${h(club.shortName || club.name)}</strong>
-        <small>${h([club.lakeName, town(club.address)].filter(Boolean).join(" · "))}</small>
+        <small>${h(place(club.lakeName, town(club.address), lakeTitle))}</small>
       </div>
       <div class="row-now"><span class="spinner"></span></div>
     </div>
@@ -592,7 +604,7 @@ function wireSearch() {
       <li><button class="result" data-club="${h(club.id)}" data-lake="${h(lake.id)}">
         <span class="flag">${flag(club.country ?? lake.country)}</span>
         <span class="result-text"><strong>${h(club.name)}</strong>
-        <small>${h([lake.name, town(club.address)].filter(Boolean).join(" · "))}</small>
+        <small>${h(place(lake.name, town(club.address), lakeTitle))}</small>
         ${club.launchPointVerified ? "" : `<small class="orange">${h(t("Launch point not yet confirmed"))}</small>`}</span>
         <span class="add ${ids.has(club.id) ? "in" : ""}">${icon(ids.has(club.id) ? "circle-check" : "plus")}</span>
       </button></li>`).join("") || (searching ? `<li class="hint">${h(t("No clubs found."))}</li>` : "");
@@ -715,7 +727,7 @@ function clubHeader(club, name, isHome, forecast, stale = false) {
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
     <h1>${h(name)}</h1>
-    <p class="sub">${h([club?.lakeName, town(club?.address)].filter(Boolean).join(" · "))}</p>
+    <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
     ${forecast ? (stale
       ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>`
@@ -812,7 +824,7 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
     <ul class="reasons">
       ${stale && !at ? `<li class="orange">${icon("clock")}<span>${h(t("The forecast is more than 3 hours old. Check the conditions yourself before you go out."))}</span></li>` : ""}
       ${reasons.length ? reasons.map((r) => {
-        const text = water == null && waterReasons.includes(r.condition) ? t("Estimated: %@", reasonExplanation(r.condition, r.light)) : reasonExplanation(r.condition, r.light);
+        const text = water == null && waterReasons.includes(r.condition) ? t("Estimated: %@", reasonExplanation(r.condition, r.light)) : hourExplanation(forecast, r, hour);
         return `<li class="${r.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[reasonCondition(r.condition)])}<span>${h(text)}</span></li>`;
       }).join("") : `<li>${icon("circle-check")}<span>${h(t("All conditions are within the limits."))}</span></li>`}
       ${!at && warnings?.status === "ok" && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${icon("shield-check")} ${h(t("No DWD warning"))}</span>
@@ -862,7 +874,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
   const placeText = place ? t("weather warnings for %@", place) : t("weather warnings for this place");
   const coverage = warnings.lakeArea
     ? t("Covers the DWD lake warning for %@ and %@.", warnings.lakeArea, placeText)
-    : t("DWD has no lake warning service %@. Covers %@.", club?.lakeName ? t("for %@", club.lakeName) : t("for this water"), placeText);
+    : t("DWD has no lake warning service %@. Covers %@.", club?.lakeName ? t("for %@", lakeTitle(club.lakeName)) : t("for this water"), placeText);
   const items = warnings.items ?? [];
   const guide = warnings.lakeArea ? shoreLights(guideOpen) : "";
   if (!items.length) {

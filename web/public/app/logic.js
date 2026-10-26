@@ -104,6 +104,38 @@ export function town(address) {
   return last.replace(/^\d{4,5}\s+/, "") || null;
 }
 
+const WATER_NEAR = "Water near ";
+
+/** The catalogs didn't name the club's water ("Water near <town>"). */
+export function waterUnknown(lakeName) {
+  return (lakeName ?? "").startsWith(WATER_NEAR);
+}
+
+/**
+ * The water and town as the app shows them (Lake.place): "Starnberger See ·
+ * Starnberg", or just the town when the water isn't known. `title` turns a
+ * "Water near <town>" name into the page's language.
+ */
+export function place(lakeName, townName, title = (name) => name) {
+  const water = waterUnknown(lakeName) && townName ? null : lakeName ? title(lakeName) : null;
+  return [water, townName].filter(Boolean).join(" · ");
+}
+
+/**
+ * For the "twilight" reason, whether the sun rises or sets in the hour and
+ * when (ClubForecast.explanation(_:in:)): { kind: "sunrise" | "sunset", time },
+ * or null when neither falls inside it.
+ */
+export function twilight(forecast, hour) {
+  const start = new Date(hour.time).getTime();
+  const inside = (t) => t >= start && t < start + 3600 * 1000;
+  for (const kind of ["sunrise", "sunset"]) {
+    const found = (forecast.daylight ?? []).map((d) => new Date(d[kind]).getTime()).find(inside);
+    if (found != null) return { kind, time: new Date(found) };
+  }
+  return null;
+}
+
 /** Where the ice picture sits on the satellite picture, in percent of its width and height. */
 export function overlayBox(pictureBbox, iceBbox) {
   const [w, s, e, n] = pictureBbox;
