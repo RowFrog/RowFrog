@@ -594,22 +594,28 @@ private struct NowCard: View {
                 Spacer()
                 opens(.wind) { WindView(hour: hour, size: 28) }
             }
-            HStack(alignment: .top) {
+            // The values share one line, whatever height each icon gives its title.
+            HStack(alignment: .metricValue) {
                 opens(.waves) {
-                    MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17)
+                    MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: metricSize,
+                               caption: allCaptions ? data.wavesDetail : nil)
                 }
                 Spacer()
                 opens(.precipitation) {
-                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rain.value, size: 17,
+                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rain.value, size: metricSize,
                                caption: rain.detail, mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
                 }
                 Spacer()
                 opens(.visibility) {
-                    MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17)
+                    MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: metricSize,
+                               caption: allCaptions ? data.visibilityDetail : nil)
                 }
                 if let ice = iceValue {
                     Spacer()
-                    opens(.ice) { MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: 17) }
+                    opens(.ice) {
+                        MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: metricSize,
+                                   caption: allCaptions ? iceDetail : nil)
+                    }
                 }
             }
             .symbolRenderingMode(.hierarchical)
@@ -646,12 +652,21 @@ private struct NowCard: View {
             .accessibilityHint(tr("Opens a chart and more about this value"))
     }
 
-    private var iceValue: String? { forecast.iceValue }
+    /// Screenshot hook: `-RWSampleIce YES` shows the winter ice value, to check the row's fit.
+    private var sampleIce: Bool { UserDefaults.standard.bool(forKey: "RWSampleIce") }
+    private var iceValue: String? { sampleIce ? tr("Shore ice possible") : forecast.iceValue }
+    private var iceDetail: String { sampleIce ? tr("Bays and harbours first") : forecast.ice?.detail ?? tr("Check the lake yourself") }
+
+    /// PREVIEW ONLY (owner to pick): `-RWTopRow A|B|C`. A: grey line under rain only;
+    /// B: grey lines under every value; C: as B with larger values.
+    private var topRow: String { UserDefaults.standard.string(forKey: "RWTopRow") ?? "A" }
+    private var allCaptions: Bool { topRow != "A" }
+    private var metricSize: CGFloat { topRow == "C" ? 22 : 17 }
+
+    private var data: ConditionData { ConditionData(forecast: forecast, now: hour, radar: radar) }
 
     /// The rain tile's two lines, so the top tile always says the same.
-    private var rain: (value: String, detail: String, fromRadar: Bool) {
-        ConditionData(forecast: forecast, now: hour, radar: radar).rainLines
-    }
+    private var rain: (value: String, detail: String, fromRadar: Bool) { data.rainLines }
 
     /// DWD's radar at the launch point, read while the page is open.
     private var radar: RainRadar? { club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) } }
@@ -790,6 +805,14 @@ struct TemperatureView: View {
     }
 }
 
+extension VerticalAlignment {
+    private enum MetricValue: AlignmentID {
+        static func defaultValue(in d: ViewDimensions) -> CGFloat { d[.firstTextBaseline] }
+    }
+    /// The baseline of a `MetricView`'s value, so a row of them reads level.
+    static let metricValue = VerticalAlignment(MetricValue.self)
+}
+
 /// A value with the icon and word that say what it is, matching TemperatureView.
 struct MetricView: View {
     let title: String
@@ -808,6 +831,9 @@ struct MetricView: View {
                 .foregroundStyle(.secondary)
             Text(value)
                 .font(.system(size: size, weight: .light))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .alignmentGuide(.metricValue) { $0[.firstTextBaseline] }
             if let caption, !caption.isEmpty {
                 Group {
                     if let mark { Text("\(Image(systemName: mark)) \(caption)") } else { Text(caption) }

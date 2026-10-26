@@ -432,6 +432,13 @@ jobs:
           WAIT=30 shoot 190-detail-map-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWChartSelect 1 -RWLanguage de
           # The radar in the rain tile (no radar card any more), with made-up rain from 30 minutes on.
           shoot 204-top-tile-rain-radar light -RWOpenClub mrc-1880 -RWSampleRadar YES
+          # PREVIEW ONLY (owner to pick A/B/C for the top tile's small values row; removed after the pick).
+          shoot 211-top-row-a light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow A
+          shoot 212-top-row-b light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B
+          shoot 213-top-row-c light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C
+          shoot 214-top-row-a-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow A -RWSampleIce YES
+          shoot 215-top-row-b-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B -RWSampleIce YES
+          shoot 216-top-row-c-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C -RWSampleIce YES
           shoot 205-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
           WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
           WAIT=30 shoot 199-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de

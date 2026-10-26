@@ -110,6 +110,19 @@ struct ConditionData {
     }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
 
+    /// The line under the waves value: where the wind comes from over the lake.
+    var wavesDetail: String {
+        guard let fetch = now.fetchM else { return "" }
+        return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
+    }
+
+    /// The line under the visibility value: fog now, or when it comes.
+    var visibilityDetail: String {
+        if (now.visibilityM ?? .infinity) < 1000 { return tr("Fog") }
+        guard let fog = next24.first(where: { ($0.visibilityM ?? .infinity) < 1000 }) else { return tr("No fog") }
+        return tr("Fog from %@", Format.time(fog.time))
+    }
+
     /// What falls at the shown moment and what comes next, as the rain tile
     /// and the top tile both show it: the radar for two hours, then the forecast.
     var rainLines: (value: String, detail: String, fromRadar: Bool) {
@@ -279,8 +292,7 @@ private struct ConditionTile: View {
             let gust = tr("Gusts %@", Format.windNumber(hour.windGustMs))
             return hour.windFromDeg.map { gust + " · " + tr("from %@", Format.compass($0)) } ?? gust
         case .waves:
-            guard let fetch = hour.fetchM else { return "" }
-            return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
+            return data.wavesDetail
         case .waterTemperature:
             if data.water == nil, data.estimatedWater != nil {
                 return data.satelliteWater != nil ? tr("Satellite estimate") : tr("Estimated, not measured")
@@ -289,9 +301,7 @@ private struct ConditionTile: View {
         case .precipitation:
             return data.rainLines.detail
         case .visibility:
-            if (hour.visibilityM ?? .infinity) < 1000 { return tr("Fog") }
-            guard let fog = data.next24.first(where: { ($0.visibilityM ?? .infinity) < 1000 }) else { return tr("No fog") }
-            return tr("Fog from %@", Format.time(fog.time))
+            return data.visibilityDetail
         case .cloudCover:
             return hour.cloudCoverLowPct.map { tr("Low cloud %@ %%", Format.number($0)) } ?? ""
         case .pressure:
