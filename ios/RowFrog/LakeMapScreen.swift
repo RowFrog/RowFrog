@@ -701,13 +701,17 @@ struct LakeMapScreen: View {
             } else if routeMode {
                 Text(tr("Tap the water to add the turning points of your route."))
             } else if let spot, spot < hour.lights.count {
-                // Two lines, so the spot's wind fits next to its waves.
-                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                // Symbols for waves and wind, as in the hourly table, so the line fits.
+                let waves = Format.waves(hour.wave(ofCell: spot)), wind = spotWind(spot, hour)
+                HStack(spacing: 6) {
                     TrafficLightDot(light: hour.lights[spot], size: 10)
-                    Text(hour.lights[spot].title + " · " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: spot)))
-                         + (spotWind(spot, hour).map { " · " + $0 } ?? ""))
+                    Text("\(hour.lights[spot].title) · \(Image(systemName: "water.waves")) \(waves)"
+                         + (wind.map { " · \(Image(systemName: "wind")) \($0)" } ?? ""))
+                        .minimumScaleFactor(0.8)
                 }
-                .lineLimit(2)
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(hour.lights[spot].title + ", " + tr("Waves up to %@", waves)
+                                    + (wind.map { ", " + tr("Wind") + " " + $0 } ?? ""))
             } else {
                 Text(view.headline(for: hour))
             }
@@ -766,7 +770,7 @@ struct LakeMapScreen: View {
     private func spotWind(_ i: Int, _ hour: LakeHour) -> String? {
         let p = view.grid.cellPoint[i]
         guard p < hour.wind.count, let speed = hour.wind[p].speedMs else { return nil }
-        return tr("Wind %@", Format.windRange(speed, hour.wind[p].gustMs))
+        return Format.windRange(speed, hour.wind[p].gustMs)
     }
 
     private func spotDetails(_ i: Int, _ hour: LakeHour) -> some View {
@@ -1573,14 +1577,13 @@ final class RouteLineRenderer: MKOverlayRenderer {
 /// The area of the lake's grid, as one map overlay.
 final class LakeOverlay: NSObject, MKOverlay {
     let coordinate: CLLocationCoordinate2D
-    /// The lake's grid; `boundingMapRect` adds the land where wind arrows are drawn.
+    /// The lake's grid; `boundingMapRect` is the whole world, as the wind arrows cover the map.
     let lakeRect: MKMapRect
-    let boundingMapRect: MKMapRect
+    let boundingMapRect = MKMapRect.world
     /// Shore and islands in map points, for clipping.
     let rings: [[MKMapPoint]]
-    /// The water, and the land up to WindArrows.ashoreM from it, in map points.
+    /// The water in map points, to tell arrows on it from those on land.
     let water: CGPath
-    let nearShore: CGPath
 
     init(view: LakeView) {
         let g = view.grid
@@ -1588,8 +1591,6 @@ final class LakeOverlay: NSObject, MKOverlay {
         let se = MKMapPoint(CLLocationCoordinate2D(latitude: g.southEdge, longitude: g.east))
         lakeRect = MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y)
         coordinate = CLLocationCoordinate2D(latitude: (g.north + g.southEdge) / 2, longitude: (g.westEdge + g.east) / 2)
-        let margin = WindArrows.ashoreM * MKMapPointsPerMeterAtLatitude(coordinate.latitude)
-        boundingMapRect = lakeRect.insetBy(dx: -margin, dy: -margin)
         rings = view.outline.map { ring in ring.map { MKMapPoint(CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0])) } }
         let water = CGMutablePath()
         for ring in rings where ring.count > 2 {
@@ -1597,12 +1598,11 @@ final class LakeOverlay: NSObject, MKOverlay {
             water.closeSubpath()
         }
         self.water = water
-        nearShore = WindArrows.nearShore(water, margin: CGFloat(margin))
     }
 }
 
 /// Draws the cell picture smoothly scaled over the grid, clipped to the shore,
-/// and the wind arrows over the water and the land near it.
+/// and the wind arrows over the whole map.
 final class LakeRenderer: MKOverlayRenderer {
     /// Screen points between arrows: more arrows as the map zooms in, fewer out.
     static let arrowSpacing = WindArrows.spacing
@@ -1687,14 +1687,14 @@ final class LakeRenderer: MKOverlayRenderer {
         context.setLineWidth((coldShore?.mapWidth ?? 1) / zoomScale)
         context.strokePath()
 
-        // Arrows on an even grid over the water and the land near it, fixed to
-        // the map so the tiles agree; the grid gets finer as the map zooms in.
+        // Arrows on an even grid over the whole map, as on the weather map, fixed
+        // to the map so the tiles agree; the grid gets finer as the map zooms in.
         // Dark arrows with a light edge read on light and dark maps alike;
         // those on land are fainter. Colours stay on the water.
         let margin = Double(WindArrows.length(15) / zoomScale)
-        let area = mapRect.insetBy(dx: -margin, dy: -margin).intersection(lake.boundingMapRect)
+        let area = mapRect.insetBy(dx: -margin, dy: -margin)
         let grid = WindArrows.arrows(in: CGRect(x: area.minX, y: area.minY, width: area.width, height: area.height),
-                                     spacing: WindArrows.spacing / zoomScale, water: lake.water, nearShore: lake.nearShore, from: arrows)
+                                     spacing: WindArrows.spacing / zoomScale, water: lake.water, from: arrows)
         context.setLineCap(.round)
         context.setLineJoin(.round)
         for ashore in [true, false] {
@@ -1784,7 +1784,7 @@ struct LakeMapLegend: View {
                     }
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. Fainter arrows on land show the wind up to 2 km from the shore."))
+                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. Fainter arrows on land carry the lake's wind across the map; away from the lake they are only a rough guide."))
                     }
                     if spot { row(Image(systemName: "scope"), tr("The spot you tapped")) }
                 }

@@ -141,27 +141,21 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(RouteEdit.move(at: 2, to: a, in: loop)[2].longitude, a.longitude)
     }
 
-    func testWindArrowsOnWaterAndNearTheShore() {
-        // A 100 x 100 lake, arrows 10 apart, land counted up to 20 from the shore.
+    func testWindArrowsOnWaterAndLand() {
+        // A 100 x 100 lake in a 300 x 300 area, arrows 10 apart: the whole area gets arrows.
         let water = CGPath(rect: CGRect(x: 0, y: 0, width: 100, height: 100), transform: nil)
-        let near = WindArrows.nearShore(water, margin: 20)
         let samples = [WindArrows.Sample(point: CGPoint(x: 50, y: 50), towardDeg: 90, speedMs: 4)]
         let arrows = WindArrows.arrows(in: CGRect(x: -100, y: -100, width: 300, height: 300), spacing: 10,
-                                       water: water, nearShore: near, from: samples)
-        XCTAssertTrue(arrows.contains { !$0.ashore })
-        XCTAssertTrue(arrows.contains { $0.ashore })
+                                       water: water, from: samples)
+        XCTAssertEqual(arrows.count, 900)
+        XCTAssertTrue(arrows.contains { a in a.at.x < -80 && a.at.y < -80 })
         for a in arrows {
             XCTAssertEqual(a.towardDeg, 90, accuracy: 0.001)
             // Points right on the shore line could count either way.
             if a.at.x == 0 || a.at.x == 100 { continue }
             let inside = a.at.x > 0 && a.at.x < 100 && a.at.y > 0 && a.at.y < 100
             XCTAssertEqual(a.ashore, !inside)
-            // Nothing farther out than the margin.
-            XCTAssertTrue(a.at.x > -21 && a.at.x < 121 && a.at.y > -21 && a.at.y < 121)
         }
-        // Without land, only the water.
-        XCTAssertTrue(WindArrows.arrows(in: CGRect(x: -100, y: -100, width: 300, height: 300), spacing: 10,
-                                        water: water, nearShore: nil, from: samples).allSatisfy { !$0.ashore })
         // Opposite winds of equal weight don't make a strong wind sideways.
         let two = [WindArrows.Sample(point: CGPoint(x: 0, y: 0), towardDeg: 0, speedMs: 5),
                    WindArrows.Sample(point: CGPoint(x: 10, y: 0), towardDeg: 10, speedMs: 5)]

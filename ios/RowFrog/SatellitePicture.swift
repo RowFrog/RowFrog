@@ -502,8 +502,8 @@ struct SatelliteImage: View {
     let picture: SatellitePicture
     let shot: SatellitePicture.Shot
     var clubID: String?
-    /// The full view draws the wind on the screen above the zoomed picture.
-    var windOnScreen = false
+    /// The full view draws shore, routes, clubs and wind on the screen above the zoomed picture.
+    var marksOnScreen = false
     @MainActor private var store: SatellitePictureStore { .shared }
     @MainActor private var layers: SatelliteLayers { .shared }
 
@@ -531,8 +531,9 @@ struct SatelliteImage: View {
         .aspectRatio(picture.aspectRatio, contentMode: .fit)
         .overlay { iceOverlay }
         .overlay {
-            SatelliteOverlay(lakeID: lakeID, picture: picture, layers: windOnScreen ? layers.on.subtracting([.wind]) : layers.on,
-                             clubID: clubID, cloudy: shot.lakeCloud >= 0.5)
+            if !marksOnScreen {
+                SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID, cloudy: shot.lakeCloud >= 0.5)
+            }
         }
         .frame(maxWidth: .infinity)
     }
@@ -566,13 +567,18 @@ struct SatelliteOverlay: View {
     var clubID: String?
     /// Over mostly white cloud the shore is drawn dark with a light edge, over a clear lake light with a dark edge.
     var cloudy = false
+    /// Drawn on the screen above a zoomable picture: the picture's size at zoom 1,
+    /// how far it is zoomed and moved. Lines, marks and names then keep their size.
+    var screen: (size: CGSize, zoom: CGFloat, offset: CGPoint)?
     @MainActor private var view: LakeView? { LakeViewStore.shared.views[lakeID] }
 
     var body: some View {
         Canvas { context, size in
             guard let box = picture.bbox, box.count == 4 else { return }
+            let full = screen?.size ?? size, zoom = screen?.zoom ?? 1, offset = screen?.offset ?? .zero
             func point(_ lon: Double, _ lat: Double) -> CGPoint {
-                CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * size.width, y: (box[3] - lat) / (box[3] - box[1]) * size.height)
+                CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * full.width * zoom - offset.x,
+                        y: (box[3] - lat) / (box[3] - box[1]) * full.height * zoom - offset.y)
             }
             let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))
             if let fill = layers.first(where: \.colorsWater), let view, !view.hours.isEmpty,
@@ -595,7 +601,7 @@ struct SatelliteOverlay: View {
             }
             // Wind under the lines and marks, so shore, routes and clubs stay on top.
             if layers.contains(.wind), let view {
-                SatelliteWind.draw(in: context, view: view, box: box, size: size, zoom: 1, offset: .zero, visible: size)
+                SatelliteWind.draw(in: context, view: view, box: box, size: full, zoom: zoom, offset: offset, visible: size)
             }
             if layers.contains(.shore), let view {
                 var path = Path()
@@ -660,8 +666,7 @@ struct SatelliteOverlay: View {
 
 /// The wind arrows on a satellite picture, as on the lake map: an even grid
 /// worked out between the forecast points, more arrows as the picture zooms
-/// in, the same size on screen, fainter on land up to WindArrows.ashoreM from
-/// the shore. The arrow nearest each forecast point carries its speed.
+/// in, the same size on screen, over the whole picture and fainter on land. The arrow nearest each forecast point carries its speed.
 enum SatelliteWind {
     /// Draws on `context`, whose points are the screen's: the picture is `size`
     /// at zoom 1 and shows `zoom` times larger, its corner `offset` above and
@@ -678,18 +683,15 @@ enum SatelliteWind {
             water.addLines(between: ring.map { point($0[0], $0[1]) })
             water.closeSubpath()
         }
-        let widthM = (box[2] - box[0]) * 111_320 * cos((box[1] + box[3]) / 2 * .pi / 180)
-        let nearShore = WindArrows.nearShore(water, margin: CGFloat(WindArrows.ashoreM / widthM) * size.width)
         let samples = zip(view.points, hour.wind).compactMap { p, wind -> WindArrows.Sample? in
             guard let from = wind.fromDeg, let speed = wind.speedMs else { return nil }
             return WindArrows.Sample(point: point(p.lon, p.lat), towardDeg: from + 180, speedMs: speed)
         }
-        // The part of the picture on screen, in its own points, with room for the arrows at the edges.
-        let margin = WindArrows.length(15) / zoom
+        // The part of the picture on screen, in its own points; arrows stay on the picture.
         let area = CGRect(x: offset.x / zoom, y: offset.y / zoom, width: visible.width / zoom, height: visible.height / zoom)
-            .insetBy(dx: -margin, dy: -margin)
+            .intersection(CGRect(origin: .zero, size: size))
         let spacing = WindArrows.spacing / zoom
-        let arrows = WindArrows.arrows(in: area, spacing: spacing, water: water, nearShore: nearShore, from: samples)
+        let arrows = WindArrows.arrows(in: area, spacing: spacing, water: water, from: samples)
         func screen(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * zoom - offset.x, y: p.y * zoom - offset.y) }
 
         let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))
@@ -759,20 +761,16 @@ struct SatellitePictureScreen: View {
                     if let shot = picture.shot(kind) {
                         let size = CGSize(width: fit, height: fit / picture.aspectRatio)
                         ZoomableView(size: size, focus: focus(in: size), tracker: zoom) {
-                            SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID, windOnScreen: true)
+                            SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID, marksOnScreen: true)
                                 .frame(width: fit, height: fit / picture.aspectRatio)
                         }
                         .id(kind)
                         .overlay {
-                            // On the screen rather than in the picture, so the arrows stay
-                            // sharp and the same size, with more of them when zoomed in.
-                            if layers.on.contains(.wind), let view = LakeViewStore.shared.views[lakeID], let box = picture.bbox {
-                                Canvas { context, visible in
-                                    SatelliteWind.draw(in: context, view: view, box: box, size: size,
-                                                       zoom: zoom.scale, offset: zoom.offset, visible: visible)
-                                }
-                                .allowsHitTesting(false)
-                            }
+                            // On the screen rather than in the picture, so lines, club marks,
+                            // names and arrows stay sharp and the same size when zoomed in,
+                            // with more arrows, as on the lake map.
+                            SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID,
+                                             cloudy: shot.lakeCloud >= 0.5, screen: (size, zoom.scale, zoom.offset))
                         }
                     }
                 }
@@ -1002,7 +1000,7 @@ struct SatelliteLegend: View {
                 if on.contains(.wind) {
                     Section(tr("Wind")) {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land show the wind up to 2 km from the shore."))
+                            tr("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land carry the lake's wind across the picture; away from the lake they are only a rough guide."))
                     }
                 }
                 if on.contains(.ice), picture.ice != nil {
