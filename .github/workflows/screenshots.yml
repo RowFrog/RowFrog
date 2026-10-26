@@ -434,8 +434,8 @@ jobs:
           shoot 193-top-tile-rain-radar light -RWOpenClub mrc-1880 -RWSampleRadar YES
           shoot 194-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
           WAIT=30 shoot 195-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
-          WAIT=30 shoot 196-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
-          shoot 197-arrange-radar-off light -RWOpenClub mrc-1880 -RWArrange YES
+          WAIT=30 shoot 199-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
+          shoot 200-arrange-radar-off light -RWOpenClub mrc-1880 -RWArrange YES
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
