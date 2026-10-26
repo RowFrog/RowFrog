@@ -26,7 +26,7 @@ enum Tutorial {
     }
 
     /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all,
-    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view, water estimate, route stretch).
+    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view, water estimate, route stretch, weather map).
     static func configureTips() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: resetTipsKey) {
@@ -37,8 +37,8 @@ enum Tutorial {
         if defaults.bool(forKey: "RWNoTips") { Tips.hideAllTipsForTesting() }
         if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
         if defaults.bool(forKey: "RWLaterTips") {
-            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self])
-            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self])
+            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
+            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
         }
         try? Tips.configure([.displayFrequency(.immediate)])
     }
@@ -735,7 +735,17 @@ struct RowImportTip: Tip {
     var image: Image? { Image(systemName: "square.and.arrow.down.on.square") }
 }
 
+struct WeatherMapTip: Tip {
+    var title: Text { Text(tr("Weather on the map")) }
+    var message: Text? { Text(tr("The map shows this weather around the lake. Press play to watch it move, or open it full screen with the arrows.")) }
+    var image: Image? { Image(systemName: "map") }
+}
+
 struct MapLinkTip: Tip {
+    /// Set once the weather map tip above the card is closed, so the two don't show together.
+    @Parameter static var mapTipClosed: Bool = false
+
+    var rules: [Rule] { [#Rule(Self.$mapTipClosed) { $0 }] }
     var title: Text { Text(tr("Chart and map together")) }
     var message: Text? { Text(tr("The map shows the hour of the chart's blue line. Tap the chain to give the map its own time, and again to link them.")) }
     var image: Image? { Image(systemName: "link") }

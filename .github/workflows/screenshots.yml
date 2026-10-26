@@ -329,6 +329,9 @@ jobs:
           GUIDE=1 WAIT=30 shoot 185-tip-one-way light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "47.99667,11.34745;47.983,11.338"
           GUIDE=1 WAIT=30 shoot 186-tip-stretch-point light "${laterRoute[@]}" -RWRoute "47.99667,11.34745;47.983,11.338;47.965,11.331"
           GUIDE=1 WAIT=30 shoot 187-tip-stretch-point-german-dark dark "${laterRoute[@]}" -RWRoute "47.99667,11.34745;47.983,11.338;47.965,11.331" -RWLanguage de
+          # The weather map tip above the detail view's map card.
+          GUIDE=1 WAIT=30 shoot 191-tip-weather-map light -RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind
+          GUIDE=1 WAIT=30 shoot 192-tip-weather-map-german-dark dark -RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLanguage de
           WAIT=30 shoot 134-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
           WAIT=30 shoot 135-lake-legend light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLegend YES
           WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind

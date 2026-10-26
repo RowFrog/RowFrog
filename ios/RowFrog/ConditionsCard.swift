@@ -460,6 +460,8 @@ struct ConditionDetailView: View {
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
     private let scrubTip = ChartScrubTip()
     @State private var showScrubTip = false
+    private let mapTip = WeatherMapTip()
+    @State private var showMapTip = false
     /// The hour of the chart's blue line and of the map, kept while swiping.
     @State private var time = DetailTime()
     /// Compact height: a phone on its side, where the map sits beside the chart.
@@ -492,6 +494,9 @@ struct ConditionDetailView: View {
             .onChange(of: condition) { time.mapHours = nil }
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
             .tipVisibility(scrubTip, $showScrubTip)
+            .tipVisibility(mapTip, $showMapTip)
+            // The chain's link tip follows once the map tip is closed.
+            .onChange(of: showMapTip) { was, now in if was && !now { MapLinkTip.mapTipClosed = true } }
             .navigationTitle(condition.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -540,6 +545,10 @@ struct ConditionDetailView: View {
             } else {
                 top(detail, head: head, shown: shown, hidden: hidden)
                 if let club, let layer {
+                    // After the chart's tip, so one tip shows at a time.
+                    if mapTipShown {
+                        TipView(mapTip)
+                    }
                     mapCard(detail, layer: layer, club: club, hidden: hidden, height: 220)
                 }
             }
@@ -605,6 +614,11 @@ struct ConditionDetailView: View {
                 legend(detail, condition: condition, hidden: hidden)
             }
         }
+    }
+
+    /// The weather map tip, above the map card in portrait once the chart's tip is closed.
+    private var mapTipShown: Bool {
+        tourSeen && showMapTip && !showScrubTip && verticalSize != .compact
     }
 
     /// The weather map under (or beside) the chart, with the slim chart for its full-screen view.
