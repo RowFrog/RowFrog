@@ -10,7 +10,7 @@ import { icon } from "./icons.js";
 import {
   API, ZONE, isStale, shownLight, currentHour, nextHours, windValue, WIND_UNITS, compass, searchClubs, town,
   overlayBox, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote,
-  pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState, BOATS, applyBoat,
+  pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState, BOATS, applyBoat, coldWaterKit,
 } from "./logic.js";
 
 const SAFETY_VERSION = 1;
@@ -178,6 +178,21 @@ function reasonExplanation(condition, light) {
     case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
     default: return condition;
   }
+}
+
+/** The badge's short text and full advice for what cold water calls for (ColdWaterKit). */
+function coldWaterText(kit) {
+  return {
+    lifeJacket: [t("Life jacket"), t("Cold water: a capsize can cause cold-water shock. Wear a life jacket and clothes that keep you warm when wet.")],
+    partnerBoat: [t("Life jacket · partner boat"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row a single only with a coach boat or a partner boat.", temperature(10))],
+    nearShore: [t("Life jacket · near the shore"), t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10))],
+  }[kit];
+}
+
+/** The blue badge under the rowing light: what to bring, not a warning (ColdWaterBadge). */
+function coldWaterBadge(kit, estimated) {
+  const [title, advice] = coldWaterText(kit);
+  return `<button class="kit" data-tile="waterTemperature" title="${h(estimated ? t("Estimated: %@", advice) : advice)}">${icon("life-buoy")} ${h(estimated ? `≈ ${title}` : title)}</button>`;
 }
 
 const flag = (code) => String.fromCodePoint(...[...(code ?? "de").toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)));
@@ -524,12 +539,14 @@ async function fillRow(row) {
   const warning = forecast.warnings?.items?.[0];
   const sun = sunState(forecast);
   const ice = forecast.ice;
+  const kit = coldWaterKit(water ?? estimate, store.boat);
   const iceText = iceOff(ice) ? t("Off season") : ice && ice.status !== "unavailable" ? t(ICE_TITLES[ice.status] ?? "No data") : "–";
   row.querySelector(".row-bottom").innerHTML = `
     <div class="row-why">
       <strong>${h(lightTitle(hour.light, stale))}</strong>
       ${stale ? `<small class="orange">${icon("clock")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
       <small class="why">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map((r) => reasonLabel(r.condition)).join(", ")) : t("All conditions within the limits"))}</small>
+      ${kit ? `<small class="kit-line" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")} ${h(coldWaterText(kit)[0])}</small>` : ""}
       ${warning ? `<small class="warn ${warning.severity === "minor" ? "orange" : "red"}">${icon("triangle-alert")} ${h(shortWarning(warning))}</small>` : ""}
       ${sun ? `<small class="sub">${icon(sun.up ? "sunset" : "sunrise")} ${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}</small>` : ""}
     </div>
@@ -778,6 +795,10 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
   const warnings = forecast.warnings;
   const sun = sunState(forecast, at ?? new Date());
   const waterReasons = REASONS.waterTemperature;
+  // The water at the shown hour: now the reading or estimate, later the water forecast.
+  const latest = water?.celsius ?? estimate;
+  const hourWater = at ? forecast.waterForecast?.find((d) => d.date === localDay(hour.time))?.celsius ?? latest : latest;
+  const kit = coldWaterKit(hourWater, store.boat);
   return `<section class="card now">
     <div class="now-head">
       ${dot(hour.light, 36, stale)}
@@ -787,6 +808,7 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
       </div>
       <div class="now-sky">${skySymbol(hour, "large")}<small class="sub">${h(t(SKY_TITLES[kind]))}</small></div>
     </div>
+    ${kit ? coldWaterBadge(kit, water == null) : ""}
     <ul class="reasons">
       ${stale && !at ? `<li class="orange">${icon("clock")}<span>${h(t("The forecast is more than 3 hours old. Check the conditions yourself before you go out."))}</span></li>` : ""}
       ${reasons.length ? reasons.map((r) => {
@@ -928,7 +950,8 @@ function conditionTile(condition, forecast, hour) {
       const value = water == null && estimate != null ? `≈ ${degrees(estimate)}` : degrees(water?.celsius, 1);
       const detail = water == null && estimate != null ? (forecast.waterEstimate ? t("Satellite estimate") : t("Estimated, not measured"))
         : water ? t("Measured %@", time(water.measuredAt)) : t("No lake station");
-      return tile(value, detail, water ? zoneBar(water.celsius / 25, [[0, C.red], [0.4, C.orange], [0.6, C.green]]) : "");
+      // Blues for cold water: it calls for a life jacket, not a warning colour.
+      return tile(value, detail, water ? zoneBar(water.celsius / 25, [[0, "var(--deep-water)"], [0.16, "var(--kit)"], [0.4, "var(--kit-light)"], [0.6, C.green]]) : "");
     }
     case "ice": {
       const ice = forecast.ice;
