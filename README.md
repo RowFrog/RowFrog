@@ -109,7 +109,8 @@ backend works out a satellite estimate from Copernicus lake surface
 temperatures and Landsat (through Microsoft's Planetary Computer, no extra
 account), carried forward with the air temperatures; the top tile shows it
 in grey as "Estimated", and the detail view names the satellite and the date
-of the reading.
+of the reading. Where there is no recent clear satellite view either, the
+water temperature is estimated from the air temperatures alone, all year.
 
 **DWD warnings.** The page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
@@ -152,13 +153,17 @@ everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
 opens the radar map, with DWD's colour legend and a switch to play the radar
 as a loop. The app reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
 
-**Weather maps.** From the detail views a map opens for wind (with arrows),
+**Weather maps.** From the detail views a map opens for wind (with arrows on
+an even grid that adds arrows as you zoom in, longer in stronger wind),
 gusts, air temperature, feels like, humidity, air pressure, visibility and the
 rain forecast, made by the publishing job from DWD's ICON-D2 model (about 2 km)
 for each hour of the forecast, with no Open-Meteo calls. Lightning in the last
 hour and the UV index come live from DWD, fog and low cloud from the
 EUMETSAT satellite (`ios/RowFrog/WeatherMap.swift`,
-`backend/rowfrog/sources/icon_d2_maps.py`).
+`backend/rowfrog/sources/icon_d2_maps.py`). In the detail view the map sits
+under the chart (beside it in landscape) and follows the hour of the chart's
+line; a chain button lets it keep its own time, and a tap opens it full
+screen with a slim chart.
 
 **Battery.** The app keeps its battery use low: the radar only updates on the
 page in front, readings and map pictures are reused, widgets redraw only when
@@ -385,6 +390,7 @@ More detail, including the secrets each one needs, is in the
 | Workflow | What it does |
 | --- | --- |
 | **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately). |
+| **App size** (`app-size.yml`) | Builds the app as for the App Store (Release archive, unsigned) and reports the installed size, the expected download and the largest files in the run summary (10.4 MB installed, about 10 MB to download in October 2026). Runs when iOS code lands on `main`, or by hand. |
 | **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |

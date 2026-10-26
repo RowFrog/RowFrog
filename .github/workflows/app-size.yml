@@ -1,0 +1,91 @@
+name: App size
+
+# Builds the app the way it goes to the App Store (Release archive, unsigned)
+# and reports how big it is: the installed .app, its parts, and the expected
+# download. Runs when iOS code lands on main, or by hand from the Actions tab.
+# The numbers feed the budgets overview (see docs/handbook.md).
+#
+# The download estimate zips the app like an .ipa, but counts the app and
+# widget code uncompressed, because the App Store encrypts it and encrypted
+# code does not compress. App Store thinning for one iPhone model can make
+# the real download a little smaller.
+
+on:
+  push:
+    # The thread branch lets changes to this workflow be tried before merging.
+    branches: [main, claude/project-thread-mdcsva]
+    paths:
+      - ios/**
+      - .github/workflows/app-size.yml
+  workflow_dispatch:
+
+concurrency:
+  group: app-size-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  size:
+    # Same runner as CI: Apple Silicon runners have not been assigned lately.
+    runs-on: macos-15-intel
+    defaults:
+      run:
+        working-directory: ios
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen
+      - name: Release archive (unsigned)
+        run: |
+          xcodebuild archive \
+            -project RowFrog.xcodeproj \
+            -scheme RowFrog \
+            -configuration Release \
+            -destination generic/platform=iOS \
+            -archivePath "$RUNNER_TEMP/RowFrog.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            | tail -n 20
+      - name: Measure
+        run: |
+          APP="$RUNNER_TEMP/RowFrog.xcarchive/Products/Applications/RowFrog.app"
+          kb() { du -sk "$1" 2>/dev/null | cut -f1; }
+          bytes() { stat -f%z "$1" 2>/dev/null || echo 0; }
+          WIDGET="$APP/PlugIns/RowFrogWidget.appex"
+          app_kb=$(kb "$APP")
+          bin_b=$(bytes "$APP/RowFrog")
+          widget_kb=$(kb "$WIDGET")
+          widget_bin_b=$(bytes "$WIDGET/RowFrogWidget")
+          assets_b=$(bytes "$APP/Assets.car")
+          backgrounds_kb=$(find "$APP" -maxdepth 1 -name 'bg-*.jpg' -exec du -sk {} + | awk '{s+=$1} END {print s+0}')
+          # .ipa-style zip of the whole app.
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+          cp -R "$APP" "$RUNNER_TEMP/ipa/Payload/"
+          (cd "$RUNNER_TEMP/ipa" && zip -qr -9 ../RowFrog.ipa Payload)
+          ipa_b=$(bytes "$RUNNER_TEMP/RowFrog.ipa")
+          # Code compressed on its own, to swap for its encrypted (uncompressed) size.
+          zip -q -9 "$RUNNER_TEMP/code.zip" "$APP/RowFrog" "$WIDGET/RowFrogWidget"
+          code_zip_b=$(bytes "$RUNNER_TEMP/code.zip")
+          download_b=$(( ipa_b - code_zip_b + bin_b + widget_bin_b ))
+          python3 - "$app_kb" "$bin_b" "$widget_kb" "$widget_bin_b" "$assets_b" "$backgrounds_kb" "$ipa_b" "$download_b" <<'EOF' | tee -a "$GITHUB_STEP_SUMMARY"
+          import json, sys
+          app_kb, bin_b, widget_kb, widget_bin_b, assets_b, bg_kb, ipa_b, dl_b = map(int, sys.argv[1:])
+          mb = lambda b: round(b / 1e6, 1)
+          r = {
+              "installed_mb": round(app_kb * 1024 / 1e6, 1),
+              "download_mb": mb(dl_b),
+              "ipa_zip_mb": mb(ipa_b),
+              "app_code_mb": mb(bin_b),
+              "widget_mb": round(widget_kb * 1024 / 1e6, 1),
+              "widget_code_mb": mb(widget_bin_b),
+              "asset_catalog_mb": mb(assets_b),
+              "backgrounds_mb": round(bg_kb * 1024 / 1e6, 1),
+          }
+          print("## App size\n")
+          print("| | MB |\n|---|---:|")
+          for k, v in r.items():
+              print(f"| {k} | {v} |")
+          print("\n```json\nAPP_SIZE " + json.dumps(r) + "\n```")
+          EOF
+      - name: Largest files in the app
+        run: |
+          APP="$RUNNER_TEMP/RowFrog.xcarchive/Products/Applications/RowFrog.app"
+          find "$APP" -type f -exec du -k {} + | sort -rn | head -25 | sed "s#$APP/##"
