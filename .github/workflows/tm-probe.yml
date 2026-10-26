@@ -1,0 +1,13 @@
+# Temporary: trademark screening for the mascot name. Remove after use.
+name: Trademark probe
+on:
+  push:
+    branches: [claude/project-thread-we8rqz]
+    paths: [tools/tm_probe.py, .github/workflows/tm-probe.yml]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 tools/tm_probe.py
