@@ -883,11 +883,23 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
         context.coordinator.focus = focus
         context.coordinator.tracker = tracker
         if context.coordinator.size != size {
+            let old = context.coordinator.size, zoom = scroll.zoomScale
+            // The part of the picture in the middle of the screen, as a share of it.
+            let middle = CGPoint(x: (scroll.contentOffset.x + scroll.bounds.width / 2) / max(old.width * zoom, 1),
+                                 y: (scroll.contentOffset.y + scroll.bounds.height / 2) / max(old.height * zoom, 1))
             context.coordinator.size = size
             scroll.zoomScale = 1
             context.coordinator.host.view.frame = CGRect(origin: .zero, size: size)
             scroll.contentSize = size
-            context.coordinator.focused = false
+            if context.coordinator.touched {
+                // Once the user has a view, a new fit (another caption, a turn) keeps it.
+                scroll.zoomScale = zoom
+                context.coordinator.centre(scroll)
+                scroll.contentOffset = CGPoint(x: middle.x * size.width * zoom - scroll.bounds.width / 2,
+                                               y: middle.y * size.height * zoom - scroll.bounds.height / 2)
+            } else {
+                context.coordinator.focused = false
+            }
         }
         context.coordinator.centre(scroll)
         scroll.setNeedsLayout()
@@ -902,6 +914,9 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
         var tracker: ZoomTracker?
         /// Whether the first view (zoom and position) was set for this size.
         var focused = false
+        /// Whether the user has moved or zoomed: then switching pictures or a
+        /// new size keeps their view.
+        var touched = false
         private var bounds = CGSize.zero
 
         init(content: AnyView, size: CGSize) {
@@ -917,7 +932,8 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
             guard scroll.bounds.width > 0, scroll.bounds.height > 0 else { return }
             if scroll.bounds.size != bounds {
                 bounds = scroll.bounds.size
-                focused = false
+                // Until the user moves or zooms, a new size opens on the focus again.
+                if !touched { focused = false }
             }
             centre(scroll)
             guard !focused else { return }
@@ -957,6 +973,10 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
 
         func scrollViewDidScroll(_ scrollView: UIScrollView) { report(scrollView) }
 
+        func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { touched = true }
+
+        func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { touched = true }
+
         /// Tells the tracker where the content now sits: its corner is the
         /// content offset above and left of the scroll view's corner.
         private func report(_ scroll: UIScrollView) {
@@ -976,6 +996,7 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
 
         @objc func doubleTapped(_ gesture: UITapGestureRecognizer) {
             guard let scroll = gesture.view as? UIScrollView else { return }
+            touched = true
             if scroll.zoomScale > 1.01 {
                 scroll.setZoomScale(1, animated: true)
             } else {
