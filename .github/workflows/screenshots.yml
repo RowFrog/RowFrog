@@ -436,7 +436,7 @@ jobs:
           shoot 208-top-tile-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWSampleIce YES -RWLanguage de
           shoot 205-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
           WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
-          WAIT=30 shoot 211-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
+          WAIT=30 shoot 242-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
           shoot 209-arrange-radar-off light -RWOpenClub mrc-1880 -RWArrange YES
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
