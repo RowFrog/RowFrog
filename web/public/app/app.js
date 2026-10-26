@@ -12,10 +12,9 @@ import {
   boatDetail, boatShort, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
-  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C, windDial, sparkBars,
-  levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly, footerLinks, mapBoat,
-  mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM, applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText,
-  dataSaving,
+  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, loadLeaflet, testing,
+  adviceOnly, footerLinks, mapBoat, mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM, applyAppearance, unitId, setUnit,
+  TIME_FORMATS, DATE_FORMATS, dateText, dataSaving,
 } from "./shared.js";
 import {
   isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon,
@@ -765,6 +764,7 @@ function conditionTile(condition, forecast, hour) {
   const i = forecast.hours.indexOf(hour);
   const next24 = forecast.hours.slice(Math.max(0, i), Math.max(0, i) + 24);
   const titles = conditionTexts();
+  const graphic = conditionGraphic(condition, forecast, hour);
   const light = REASONS[condition] ? lightFor(hour, REASONS[condition]) : null;
   const header = (title) => `<span class="tile-head">${conditionIcon(condition)}<span>${h(title)}</span>${light && light !== "green" ? dot(light, 8) : ""}${icon("chevron-right")}</span>`;
   const tile = (value, detail, graphic = "", off = false) => `<button class="tile ${off ? "off" : ""}" data-tile="${condition}">
@@ -775,30 +775,22 @@ function conditionTile(condition, forecast, hour) {
   const temps = next24.map((x) => x.temperatureC).filter((v) => v != null);
   switch (condition) {
     case "temperature":
-      return tile(degrees(hour.temperatureC), temps.length ? t("High %@ · low %@", degrees(Math.max(...temps)), degrees(Math.min(...temps))) : "",
-        scaleBar(((hour.temperatureC ?? 0) + 10) / 45, [C.blue, C.teal, C.green, C.orange, C.red]));
+      return tile(degrees(hour.temperatureC), temps.length ? t("High %@ · low %@", degrees(Math.max(...temps)), degrees(Math.min(...temps))) : "", graphic);
     case "feelsLike":
-      return tile(degrees(hour.apparentTemperatureC), feelsLikeNote(hour) ? t(feelsLikeNote(hour)) : "",
-        scaleBar(((hour.apparentTemperatureC ?? 0) + 10) / 45, [C.blue, C.teal, C.green, C.orange, C.red]));
+      return tile(degrees(hour.apparentTemperatureC), feelsLikeNote(hour) ? t(feelsLikeNote(hour)) : "", graphic);
     case "wind": {
       const gust = t("Gusts %@", windNumber(hour.windGustMs));
-      return tile(wind(hour.windSpeedMs), hour.windFromDeg != null ? `${gust} · ${t("from %@", compass(hour.windFromDeg))}` : gust, windDial(hour));
+      return tile(wind(hour.windSpeedMs), hour.windFromDeg != null ? `${gust} · ${t("from %@", compass(hour.windFromDeg))}` : gust, graphic);
     }
     case "waves": {
-      // The app's limits for the boat: amber and red zones up to a third past red.
-      const limits = currentLimits();
-      const [amber, red] = [limits.value("waveAmber"), limits.value("waveRed")];
-      const top = (red * 4) / 3;
       const fetch = hour.fetchM;
-      return tile(waves(hour.waveHeightM), fetch == null ? "" : fetch < 50 ? t("Wind blows off the shore") : t("%@ open water upwind", distance(fetch)),
-        zoneBar((hour.waveHeightM ?? 0) / top, [[0, C.green], [amber / top, C.orange], [red / top, C.red]]));
+      return tile(waves(hour.waveHeightM), fetch == null ? "" : fetch < 50 ? t("Wind blows off the shore") : t("%@ open water upwind", distance(fetch)), graphic);
     }
     case "waterTemperature": {
       const value = water == null && estimate != null ? `≈ ${degrees(estimate)}` : degrees(water?.celsius, 1);
       const detail = water == null && estimate != null ? (forecast.waterEstimate ? t("Satellite estimate") : t("Estimated, not measured"))
         : water ? t("Measured %@", time(water.measuredAt)) : t("No lake station");
-      // Blues for cold water: it calls for a life jacket, not a warning colour.
-      return tile(value, detail, water ? zoneBar(water.celsius / 25, [[0, "var(--deep-water)"], [0.16, "var(--kit)"], [0.4, "var(--kit-light)"], [0.6, C.green]]) : "");
+      return tile(value, detail, graphic);
     }
     case "ice": {
       const ice = forecast.ice;
@@ -817,8 +809,7 @@ function conditionTile(condition, forecast, hour) {
         const wet = next24.find((x) => (x.precipitationMm ?? 0) >= 0.1);
         detail = wet ? t("%@ from %@", t(precipitationKind(sky(wet.weatherCode)) ?? "Rain"), time(wet.time)) : t("Dry next 24 h");
       }
-      return tile((hour.precipitationMm ?? 0) >= 0.1 ? rain(hour.precipitationMm) : t("Dry"), detail,
-        sparkBars(forecast.hours.slice(Math.max(0, i), Math.max(0, i) + 8).map((x) => x.precipitationMm ?? 0)));
+      return tile((hour.precipitationMm ?? 0) >= 0.1 ? rain(hour.precipitationMm) : t("Dry"), detail, graphic);
     }
     case "thunderstorm": {
       const level = light === "red" ? 3 : light === "amber" ? 2 : 1;
@@ -826,7 +817,7 @@ function conditionTile(condition, forecast, hour) {
       const note = !localChecked(forecast.warnings) ? t("Warnings not checked")
         : !warningsIsDWD(forecast.warnings) ? (storm ? t("Official warning") : t("No official warning"))
         : storm ? t("DWD warning") : t("No DWD warning");
-      return tile({ 3: t("High"), 2: t("Possible"), 1: t("Low") }[level], note, levelSegments(level));
+      return tile({ 3: t("High"), 2: t("Possible"), 1: t("Low") }[level], note, graphic);
     }
     case "visibility": {
       let detail;
@@ -835,24 +826,21 @@ function conditionTile(condition, forecast, hour) {
         const fog = next24.find((x) => (x.visibilityM ?? Infinity) < 1000);
         detail = fog ? t("Fog from %@", time(fog.time)) : t("No fog");
       }
-      const f = Math.log10(Math.max(hour.visibilityM ?? 40000, 100) / 100) / Math.log10(400);
-      return tile(distance(hour.visibilityM), detail, zoneBar(f, [[0, C.red], [0.27, C.orange], [0.384, C.green]]));
+      return tile(distance(hour.visibilityM), detail, graphic);
     }
     case "cloudCover":
-      return tile(`${num(hour.cloudCoverPct)} %`, hour.cloudCoverLowPct != null ? t("Low cloud %@ %%", num(hour.cloudCoverLowPct)) : "", cloudLayers(hour));
+      return tile(`${num(hour.cloudCoverPct)} %`, hour.cloudCoverLowPct != null ? t("Low cloud %@ %%", num(hour.cloudCoverLowPct)) : "", graphic);
     case "humidity":
-      return tile(hour.humidityPct == null ? "–" : `${num(hour.humidityPct)} %`, hour.dewPointC != null ? t("Dew point %@", degrees(hour.dewPointC)) : "",
-        `<span class="drop" style="--f:${hour.humidityPct ?? 0}%">${icon("droplet")}</span>`);
+      return tile(hour.humidityPct == null ? "–" : `${num(hour.humidityPct)} %`, hour.dewPointC != null ? t("Dew point %@", degrees(hour.dewPointC)) : "", graphic);
     case "pressure": {
       const change = pressureChange(forecast.hours, hour);
       const trend = change == null ? null : pressureTrend(change);
-      return tile(pressureNumber(hour.pressureHpa), trend ? `${unitSymbol("pressure")} · ${t(trend).toLowerCase()}` : unitSymbol("pressure"), pressureGauge(hour.pressureHpa, trend));
+      return tile(pressureNumber(hour.pressureHpa), trend ? `${unitSymbol("pressure")} · ${t(trend).toLowerCase()}` : unitSymbol("pressure"), graphic);
     }
     case "uvIndex": {
       const withUv = next24.filter((x) => x.uvIndex != null);
       const top = withUv.length ? withUv.reduce((a, b) => (b.uvIndex > a.uvIndex ? b : a)) : null;
-      return tile(num(hour.uvIndex), top ? t("Max %@ · %@", num(top.uvIndex), dayLabel(top.time)) : "",
-        scaleBar((hour.uvIndex ?? 0) / 11, [C.green, C.yellow, C.orange, C.red, C.purple]));
+      return tile(num(hour.uvIndex), top ? t("Max %@ · %@", num(top.uvIndex), dayLabel(top.time)) : "", graphic);
     }
     case "daylight": {
       const at = new Date(hour.time) > new Date() ? new Date(hour.time) : new Date();

@@ -168,12 +168,19 @@ button.wide { margin-top: 0; }
 .layers small { font-size: 8px; width: 7px; color: var(--sub); }
 .layers .track { flex: 1; height: 4px; border-radius: 2px; background: var(--fill); overflow: hidden; }
 .layers .track span { display: block; height: 100%; background: var(--grey); }
-svg.filled { width: 26px; height: 26px; }
 svg.filled g { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
-svg.filled g.fill { fill: currentColor; stroke: none; opacity: .55; }
+svg.filled g.fill { fill: currentColor; stroke: none; }
 svg.filled.drop { color: var(--teal); }
 svg.filled.cloudy { color: var(--grey); }
-.cloud-big { display: flex; align-items: center; gap: 6px; }
+.cloud-big, .humid { display: flex; align-items: center; gap: 4px; }
+svg.filled { width: 22px; height: 22px; }
+.dewgap { display: flex; flex-direction: column; align-items: center; gap: 2px; width: 46px; }
+.dewgap small { font-size: 10px; font-weight: 600; color: var(--sub); }
+.dewgap .track { position: relative; width: 46px; height: 10px; }
+.dewgap .track::before { content: ""; position: absolute; left: 0; right: 0; top: 3px; height: 4px; border-radius: 2px; background: var(--fill); }
+.dewgap i { position: absolute; top: 0; width: 10px; height: 10px; border-radius: 50%; }
+.dewgap i.dew { left: 0; background: var(--teal); }
+.dewgap i.air { background: var(--orange); }
 .gauge { position: relative; width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--fill); border-bottom-color: transparent; display: flex; align-items: center; justify-content: center; }
 .gauge .needle { position: absolute; left: 50%; top: -3px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--text); transform-origin: 50% 23px; }
 .gauge .trend { font-size: 13px; color: var(--sub); display: flex; }
@@ -436,9 +443,9 @@ button.red { color: var(--red); }
 .value-big .dial { transform: scale(1.9); margin: 22px 26px; }
 .value-big .gauge { transform: scale(1.8); margin: 20px 22px; }
 .value-big .layers { transform: scale(1.6); margin: 10px 22px; }
-.value-big svg.filled { width: 52px; height: 52px; }
-.value-big .cloud-big .layers { margin: 10px 22px 10px 30px; }
-.value-big .cond svg { width: 48px; height: 48px; }
+/* The tile's graphics at 1.6 times, as in the app. */
+.value-big .cloud-big, .value-big .humid, .value-big .scale, .value-big .spark, .value-big .levels { transform: scale(1.6); transform-origin: right center; margin: 14px 4px; }
+.value-big .cloud-big .layers, .value-big .humid .layers { transform: none; margin: 0; }
 .value-big svg.sunpath { width: 120px; height: 60px; }
 .value-body { display: flex; flex-direction: column; gap: 14px; }
 @media (min-width: 900px) {

@@ -5,7 +5,7 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { currentHour } from "./logic.js";
-import { store, h, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks } from "./shared.js";
+import { store, h, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
@@ -122,8 +122,8 @@ function show(page) {
     const top = shown === data ? detail : conditionDetail(condition, shown);
     root.querySelector("#big-value").textContent = top.value;
     root.querySelector("#big-note").textContent = shown.now.time === data.now.time ? top.note : [dayTime(shown.now.time), top.note].filter(Boolean).join(" · ");
-    // Without a graphic of its own, the value shows its symbol, as the tile does.
-    root.querySelector("#big-graphic").innerHTML = top.big || conditionIcon(condition);
+    // The tile's graphic, larger, unless the page draws its own (wind dial, gauge, sun path).
+    root.querySelector("#big-graphic").innerHTML = top.big || conditionGraphic(condition, shown.forecast, shown.now);
   };
   head();
   const headListener = () => head();

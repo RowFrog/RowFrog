@@ -5,7 +5,7 @@
 import { t, num, locale } from "./i18n.js";
 import { icon, iconShape } from "./icons.js";
 import {
-  API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD,
+  API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
 } from "./logic.js";
 import { isOwn, loadOwnForecast } from "./ownplace.js";
 
@@ -450,6 +450,61 @@ export function sparkBars(values) {
 export function levelSegments(level) {
   const colours = [C.green, C.orange, C.red];
   return `<span class="levels">${colours.map((c, i) => `<span style="height:${40 + i * 30}%;background:${i < level ? c : "var(--fill)"}"></span>`).join("")}</span>`;
+}
+
+/**
+ * A condition's graphic, the same on its tile and at the top of its own page
+ * (the app's tile graphics). Daylight draws its sun path where it is shown; ice has none.
+ */
+export function conditionGraphic(condition, forecast, hour) {
+  const warm = [C.blue, C.teal, C.green, C.orange, C.red];
+  switch (condition) {
+    case "temperature": return scaleBar(((hour.temperatureC ?? 0) + 10) / 45, warm);
+    case "feelsLike": return scaleBar(((hour.apparentTemperatureC ?? 0) + 10) / 45, warm);
+    case "wind": return windDial(hour);
+    case "waves": {
+      // The limits for the boat: amber and red zones up to a third past red.
+      const limits = currentLimits();
+      const [amber, red] = [limits.value("waveAmber"), limits.value("waveRed")];
+      const top = (red * 4) / 3;
+      return zoneBar((hour.waveHeightM ?? 0) / top, [[0, C.green], [amber / top, C.orange], [red / top, C.red]]);
+    }
+    case "waterTemperature": {
+      const water = forecast.waterTemperature;
+      // Blues for cold water: it calls for a life jacket, not a warning colour.
+      return water ? zoneBar(water.celsius / 25, [[0, "var(--deep-water)"], [0.16, "var(--kit)"], [0.4, "var(--kit-light)"], [0.6, C.green]]) : "";
+    }
+    case "precipitation": {
+      const i = Math.max(0, forecast.hours.findIndex((x) => x.time === hour.time));
+      return sparkBars(forecast.hours.slice(i, i + 8).map((x) => x.precipitationMm ?? 0));
+    }
+    case "thunderstorm": {
+      const light = lightFor(hour, REASONS.thunderstorm);
+      return levelSegments(light === "red" ? 3 : light === "amber" ? 2 : 1);
+    }
+    case "visibility": {
+      const f = Math.log10(Math.max(hour.visibilityM ?? 40000, 100) / 100) / Math.log10(400);
+      return zoneBar(f, [[0, C.red], [0.27, C.orange], [0.384, C.green]]);
+    }
+    case "cloudCover": return cloudBig(hour);
+    case "humidity":
+      return `<span class="humid">${filledIcon("droplet", hour.humidityPct, 2.5, 22, "drop")}${hour.temperatureC != null && hour.dewPointC != null ? dewGap(hour.temperatureC, hour.dewPointC) : ""}</span>`;
+    case "pressure": {
+      const change = pressureChange(forecast.hours, hour);
+      return pressureGauge(hour.pressureHpa, change == null ? null : pressureTrend(change));
+    }
+    case "uvIndex": return scaleBar((hour.uvIndex ?? 0) / 11, [C.green, C.yellow, C.orange, C.red, C.purple]);
+    default: return "";
+  }
+}
+
+/** Air temperature and dew point as two dots with the gap between them (DewGap): mist when they touch. */
+export function dewGap(air, dewPoint) {
+  const gap = air - dewPoint;
+  // 0–8 degrees of gap across the bar.
+  const offset = (Math.min(Math.max(gap, 0), 8) / 8) * 34;
+  return `<span class="dewgap"><small>${num(Math.round(unitChange("temperature", gap)))}°</small>
+    <span class="track"><i class="dew"></i><i class="air" style="left:${offset}px"></i></span></span>`;
 }
 
 export function cloudLayers(hour) {

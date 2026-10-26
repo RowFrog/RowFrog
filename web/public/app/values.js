@@ -5,7 +5,7 @@ import { t, num } from "./i18n.js";
 import {
   time, dayLabel, dayTime, duration, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
   pressure, pressureChangeText, inUnit, unitSymbol, unitChange, unitId,
-  currentLimits, boatInSentence, selectedBoat, iceDetail, windDial, cloudBig, filledIcon, pressureGauge, sunPath,
+  currentLimits, boatInSentence, selectedBoat, iceDetail, windDial, pressureGauge, sunPath,
 } from "./shared.js";
 import {
   beaufort, beaufortScale, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
@@ -184,7 +184,6 @@ const BUILDERS = {
     const gap = x.temperatureC != null && x.dewPointC != null ? x.temperatureC - x.dewPointC : null;
     return base({
       value: pct(x.humidityPct), note: t("Dew point %@", degrees(x.dewPointC)),
-      big: filledIcon("droplet", x.humidityPct, 2.5, 22, "drop"),
       unit: "%", lines: [{ name: t("Humidity"), colour: COLOURS.teal, points: d.points((y) => y.humidityPct) }], yDomain: [0, 130], trendStep: 2.5,
       facts: [
         [t("Dew point"), temperature(x.dewPointC)],
@@ -388,7 +387,7 @@ const BUILDERS = {
     const x = d.now;
     const sunny = firstRun(d.next24, (y) => (y.cloudCoverPct ?? 100) < 40 && y.sunUp === true);
     return base({
-      value: pct(x.cloudCoverPct), note: t("Low cloud %@ %%", num(x.cloudCoverLowPct)), big: cloudBig(x), unit: "%",
+      value: pct(x.cloudCoverPct), note: t("Low cloud %@ %%", num(x.cloudCoverLowPct)), unit: "%",
       lines: [
         { name: t("All cloud"), colour: COLOURS.gray, points: d.points((y) => y.cloudCoverPct) },
         { name: t("High cloud"), colour: COLOURS.cyan, points: d.points((y) => y.cloudCoverHighPct) },
