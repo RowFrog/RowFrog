@@ -11608,9 +11608,9 @@
       "country": "de",
       "lakeId": "river-saale",
       "launchPoint": {
-        "lat": 51.15256,
-        "lon": 11.80992,
-        "precision": "geocoded boathouse (town level); on the Saale (checked by hand)",
+        "lat": 51.15811,
+        "lon": 11.8291,
+        "precision": "shore of the Saale nearest the town-level address, 1474 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11780,9 +11780,9 @@
       "country": "de",
       "lakeId": "stadtsee",
       "launchPoint": {
-        "lat": 47.92096,
-        "lon": 9.75428,
-        "precision": "geocoded boathouse (town level); on the Stadtsee (checked by hand)",
+        "lat": 47.92188,
+        "lon": 9.75441,
+        "precision": "shore of the Stadtsee nearest the town-level address, 102 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11935,9 +11935,9 @@
       "country": "de",
       "lakeId": "river-peenestrom",
       "launchPoint": {
-        "lat": 54.05365,
-        "lon": 13.77578,
-        "precision": "geocoded boathouse (town level); on the Peenestrom (checked by hand)",
+        "lat": 54.05466,
+        "lon": 13.78667,
+        "precision": "shore of the Peenestrom nearest the town-level address, 720 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -12326,9 +12326,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.48434,
-        "lon": 8.27863,
-        "precision": "geocoded boathouse (street level); on the Lahn (checked by hand)",
+        "lat": 50.48632,
+        "lon": 8.26882,
+        "precision": "shore of the Lahn nearest the town-level address, 729 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -12719,9 +12719,9 @@
       "country": "de",
       "lakeId": "river-trave",
       "launchPoint": {
-        "lat": 53.86644,
-        "lon": 10.68474,
-        "precision": "geocoded boathouse (town level); on the Trave (checked by hand)",
+        "lat": 53.85848,
+        "lon": 10.68532,
+        "precision": "shore of the Trave nearest the town-level address, 886 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13042,9 +13042,9 @@
       "country": "de",
       "lakeId": "river-elbe-seitenkanal",
       "launchPoint": {
-        "lat": 53.29291,
-        "lon": 10.50682,
-        "precision": "geocoded boathouse (town level); on the Elbe-Seitenkanal (checked by hand)",
+        "lat": 53.29297,
+        "lon": 10.48874,
+        "precision": "shore of the Elbe-Seitenkanal nearest the town-level address, 1201 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13349,9 +13349,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 52.54311,
-        "lon": 11.97225,
-        "precision": "geocoded boathouse (town level); on the Elbe (checked by hand)",
+        "lat": 52.54283,
+        "lon": 11.98094,
+        "precision": "shore of the Elbe nearest the town-level address, 589 m away (water checked by hand)",
         "verified": false
       }
     },
