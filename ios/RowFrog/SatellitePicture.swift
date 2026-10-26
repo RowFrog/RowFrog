@@ -360,7 +360,8 @@ struct SatelliteKindPicker: View {
         if picture.kinds.count > 2 {
             switch kind {
             case .latest: return tr("Latest")
-            case .mostlyClear: return tr("Mostly clear")
+            // "Fast klar": the sky's "Überwiegend klar" didn't fit its third.
+            case .mostlyClear: return tr("Mostly clear", key: "Mostly clear (picture)")
             case .clearest: return tr("Clearest")
             }
         }
