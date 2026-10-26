@@ -211,6 +211,7 @@ enum German {
         "Weather: ECMWF and Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0": "Wetter: EZMW (ECMWF) und Deutscher Wetterdienst (DWD) über Open-Meteo, CC BY 4.0",
         "Warnings: Deutscher Wetterdienst (DWD), CC BY 4.0": "Warnungen: Deutscher Wetterdienst (DWD), CC BY 4.0",
         "Warnings: GeoSphere Austria, CC BY 4.0": "Warnungen: GeoSphere Austria, CC BY 4.0",
+        "Warnings: MeteoSwiss, via MeteoAlarm (EUMETNET)": "Warnungen: MeteoSchweiz, über MeteoAlarm (EUMETNET)",
         "Lake outlines: © OpenStreetMap contributors, ODbL": "Seeumrisse: © OpenStreetMap-Mitwirkende, ODbL",
         "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0": "Wassertemperatur: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 
