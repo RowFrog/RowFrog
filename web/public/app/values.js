@@ -11,6 +11,7 @@ import {
   beaufort, beaufortScale, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
   precipitationKind, iceOff, ICE_TITLES, sunState, localDay, COLD, key,
 } from "./logic.js";
+import { radarAhead, rainOutlook, rainingNow, forecastRain, radarGraphic, radarEnd, peak, RADAR_CREDIT } from "./radar.js";
 
 const HOUR = 3600 * 1000;
 const FREEZING_WATER_C = 4;
@@ -25,7 +26,7 @@ export const COLOURS = {
  * The forecast seen from one hour (ConditionData): the timeline from
  * yesterday to 7 days ahead, with hours counted from `now`.
  */
-export function conditionData(forecast, now) {
+export function conditionData(forecast, now, radar = null) {
   const outlook = forecast.outlook ?? [];
   const timeline = (outlook.length ? outlook : forecast.hours).slice().sort((a, b) => new Date(a.time) - new Date(b.time));
   // The rowing hours have no UV index; the outlook has it for the same hour.
@@ -39,6 +40,8 @@ export function conditionData(forecast, now) {
   const isNow = start <= Date.now() && Date.now() - start < HOUR;
   return {
     forecast, now: hour, timeline, x, isNow,
+    // DWD's radar at the launch point, read while the club page is open.
+    radar,
     moment: isNow ? new Date() : new Date(hour.time),
     nowLabel: isNow ? t("Now") : dayTime(hour.time),
     next24: timeline.filter((x2) => x(x2.time) >= 0 && x(x2.time) < 24),
@@ -58,7 +61,7 @@ export function dataAt(d, x) {
   if (hour.time === d.now.time) return d;
   // The rowing hour, with the boat's reasons, when there is one.
   const rowing = d.forecast.hours.find((x2) => x2.time === hour.time);
-  return conditionData(d.forecast, rowing ?? hour);
+  return conditionData(d.forecast, rowing ?? hour, d.radar);
 }
 
 function extreme(hours, value, highest) {
@@ -345,20 +348,47 @@ const BUILDERS = {
     if (top && (top.precipitationMm ?? 0) >= 0.1) facts.push([t("Heaviest"), t("%@ · %@", rain(top.precipitationMm), dayTime(top.time))]);
     facts.push([warningsLabel(d), warningNames(d, ["REGEN", "HAGEL", "GEWITTER", "SCHNEE"])], [t("Rowing light now"), lightText]);
     const wet = (x.precipitationMm ?? 0) >= 0.1;
-    const first = d.next24.find((y) => (y.precipitationMm ?? 0) >= 0.1);
+    const first = forecastRain(d);
     const kind = precipitationKind(sky(x.weatherCode));
+    let value = wet ? rain(x.precipitationMm) : t("Dry");
+    let note = wet ? (kind ? t(kind) : "") : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h");
+    let big = "";
+    const lines = [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }];
+    let source = t("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.");
+    // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
+    const ahead = radarAhead(d);
+    if (ahead) {
+      const outlook = rainOutlook(ahead, d.timeline);
+      value = rainingNow(ahead) ? rain(ahead.steps[0].mm) : t("Dry");
+      if (outlook.now && outlook.next) {
+        note = outlook.next.fromRadar ? t("Radar: %@ · %@", outlook.now, outlook.next.text) : `${t("Radar: %@", outlook.now)} · ${outlook.next.text}`;
+      } else {
+        note = t("Radar: %@", outlook.summary);
+      }
+      facts.unshift([t("Radar, next 2 h"), outlook.summary]);
+      big = radarGraphic(d);
+    }
+    if (d.radar?.steps.length) {
+      lines[0].name = t("Forecast");
+      lines.push({
+        name: t("Radar"), colour: COLOURS.indigo, kind: "bars", barWidth: 2.5,
+        points: d.radar.steps.map((s) => ({ x: d.x(s.time), y: inUnit("rain", s.mm) })),
+        covers: [d.x(d.radar.steps[0].time) - 0.5, d.x(radarEnd(d.radar))],
+      });
+      source += ` ${t(RADAR_CREDIT)}`;
+    }
+    const highest = Math.max(0, ...d.timeline.map((y) => y.precipitationMm ?? 0), d.radar ? peak(d.radar) : 0);
     return base({
-      value: wet ? rain(x.precipitationMm) : t("Dry"),
-      note: wet ? (kind ? t(kind) : "") : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h"),
-      unit: unitSymbol("rain"), lines: [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }],
+      value, note, big,
+      unit: unitSymbol("rain"), lines,
       limits: [{ value: inUnit("rain", 4), colour: COLOURS.orange, label: t("Heavy rain") }],
       limitInfo: t("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official warnings for heavy rain or hail always make the light red or amber as well.", rain(4)),
-      yDomain: [0, inUnit("rain", Math.max(6, Math.max(0, ...d.timeline.map((y) => y.precipitationMm ?? 0)) * 1.2))], facts,
+      yDomain: [0, inUnit("rain", Math.max(6, highest * 1.2))], facts,
       rowing: advice(d, REASONS.precipitation, {
         red: t("Hail is forecast: stay ashore."), amber: t("Heavy rain now: you are soaked quickly and see less; keep the outing short."),
         later: key("Heavy rain or hail from %@: plan to be back before then."), calm: t("No heavy rain or hail in the next 24 hours."),
       }),
-      source: t("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings."),
+      source,
     });
   },
 

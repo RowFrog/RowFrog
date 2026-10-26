@@ -185,9 +185,12 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     }
     for (const l of lines) {
       if (l.kind === "bars") {
+        // Where another shown line's bars stand in (the radar's quarter hours over the forecast's hours), this line leaves them out.
+        const covered = lines.filter((o) => o !== l && o.covers).map((o) => o.covers);
+        const w = l.barWidth ?? 5;
         for (const p of l.points) {
-          if (p.y <= 0) continue;
-          parts.push(`<rect x="${px(p.x) - 2.5}" y="${py(p.y)}" width="5" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity=".7"/>`);
+          if (p.y <= 0 || covered.some(([a, b]) => p.x >= a && p.x <= b)) continue;
+          parts.push(`<rect x="${px(p.x) - w / 2}" y="${py(p.y)}" width="${w}" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity=".7"/>`);
         }
       } else {
         parts.push(`<path d="${path(l.points, px, py)}" fill="none" stroke="${l.colour}" stroke-width="2"${l.dashed ? ' stroke-dasharray="5 4"' : ""}/>`);
