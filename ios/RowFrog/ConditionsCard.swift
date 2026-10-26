@@ -263,16 +263,16 @@ private struct ConditionTile: View {
             }
             return data.water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
         case .precipitation:
-            // The radar for the next two hours, the forecast after them.
+            // The radar for the next two hours, the forecast after them; short, the tile is narrow.
             if let radar = data.radarAhead {
                 if radar.rainingNow {
-                    return radar.dryAgain.map { tr("Radar: dry from %@", Format.time($0.time)) } ?? tr("Radar: for the next 2 h")
+                    return radar.dryAgain.map { tr("Dry from %@ · radar", Format.time($0.time)) } ?? tr("Next 2 h · radar")
                 }
                 if let first = radar.firstRain {
-                    return tr("Radar: %@ from %@", RainRadar.intensity(radar.peak), Format.time(first.time))
+                    return tr("Rain %@ · radar", Format.time(first.time))
                 }
-                guard let wet = data.forecastRain else { return tr("Radar dry · dry next 24 h") }
-                return tr("Radar dry · %@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
+                guard let wet = data.forecastRain else { return tr("Dry next 24 h") }
+                return tr("%@ %@ · forecast", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
             }
             if (hour.precipitationMm ?? 0) >= 0.1 { return Sky(hour: hour).precipitationKind ?? "" }
             guard let wet = data.forecastRain else { return tr("Dry next 24 h") }

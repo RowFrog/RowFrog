@@ -60,8 +60,8 @@ Arrange this page); the rain tile in Current conditions reads DWD's radar for
 the next two hours and the forecast after that.
 
 1. Open a club on a day with showers nearby. The rain tile shows what the radar
-   sees now ("Dry", "Light rain") with a line such as "Radar: Light rain from
-   12:45" or "Radar dry · Rain from 18:00", and small bars: thin ones for the
+   sees now ("Dry", "Light rain") with a line such as "Rain 12:45 · radar"
+   or "Rain 18:00 · forecast", and small bars: thin ones for the
    radar's quarter hours, a line, then paler ones for the next forecast hours.
    The top tile's "Rain, hail" value says the same ("Rain from 12:45").
 2. Tap the tile: the chart starts with thin purple radar bars for two hours,
