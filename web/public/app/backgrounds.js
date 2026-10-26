@@ -7,6 +7,7 @@ import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
 import { store, h, load, save, getJSON, setTitle, testing, footerLinks, openSheet, savingData } from "./shared.js";
+import { tip, wireTips } from "./tour.js";
 
 /** The pictures that come with the app, in its order (BackgroundLibrary.samples). */
 export const SAMPLES = [
@@ -183,6 +184,7 @@ export function renderBackgrounds(root) {
   root.innerHTML = `${settingsNav()}${testing()}
     <main class="page">
       <h1 class="large">${h(t("Background pictures"))}</h1>
+      ${tip("backgrounds")}
       <h3 class="section">${icon("layers")} ${h(t("All pages"))}</h3>
       <section class="card group">${row("all", t("All pages"), "layers", b.all)}</section>
       <h3 class="section">${icon("copy")} ${h(t("Single pages"))}</h3>
@@ -203,6 +205,7 @@ export function renderBackgrounds(root) {
       <p class="footer">${h(t("Back to the factory setting: no picture on any page. Your own pictures stay available to pick again."))}</p>
       ${footerLinks()}
     </main>`;
+  wireTips(root.querySelector("main"));
   const again = () => {
     renderBackgrounds(root);
     showBackground("settings");

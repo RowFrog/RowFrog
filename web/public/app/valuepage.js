@@ -7,6 +7,7 @@ import { icon } from "./icons.js";
 import { currentHour } from "./logic.js";
 import { store, h, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
+import { tip, wireTips } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
 import { LAYERS, layerFor, weatherMap, frames, frameIndex, frameLabel, colourBar, layerOptions, loadIndex } from "./weathermap.js";
 
@@ -97,6 +98,8 @@ function show(page) {
           ${detail.lines.length ? `<div id="chart"></div>` : ""}
           ${detail.lines.length > 1 ? `<div class="chart-legend">${detail.lines.map((l) => `<button data-line="${h(l.name)}" class="${hidden.has(l.name) ? "off" : ""}" style="color:${l.colour}">
             <i class="${l.dashed ? "dashed" : ""}"></i><span>${h(l.name)}</span></button>`).join("")}</div>` : ""}
+          ${detail.lines.length ? tip("chartScrub") : ""}
+          ${layer ? tip("weatherMap") : ""}
         </div>
         ${layer ? `<section class="map-card" id="map-card"></section>` : ""}
       </div>
@@ -110,6 +113,7 @@ function show(page) {
       ${footerLinks()}
     </main>`;
   window.scrollTo(0, 0);
+  wireTips(root.querySelector("main"));
   const head = () => {
     // The big value at the chart's blue line; past measurements keep the measured value.
     const shown = detail.history || !detail.lines.length ? data : dataAt(data, time.hour);

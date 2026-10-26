@@ -31,6 +31,7 @@ import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderC
 import { renderValuePage } from "./valuepage.js";
 import { layoutFor, visibleCards, openArrange } from "./arrange.js";
 import { showBackground, renderBackgrounds, backgroundSummary } from "./backgrounds.js";
+import { renderTour, tourSeen, tip, withTip, wireTips, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 
 const SAFETY_VERSION = 1;
@@ -377,18 +378,21 @@ async function renderClub(id) {
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
   // The cards in the order chosen under "Arrange this page".
   const cards = {
-    conditions: () => conditionsCard(forecast, hour),
+    conditions: () => withTip(conditionsCard(forecast, hour), "conditionsExtras"),
     lakeView: () => (forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""),
-    hourly: () => hourlyCard(forecast, now, stale),
-    launchPoint: () => (club?.launchPoint ? launchPointCard(club) : ""),
+    hourly: () => withTip(hourlyCard(forecast, now, stale), "hourly"),
+    launchPoint: () => (club?.launchPoint ? withTip(launchPointCard(club), "launchPoint") : ""),
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
     ${clubHeader(club, name, isHome, forecast, stale)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, club })}
+    ${tip("topTile")}
+    ${(waterForHour(raw, hour) ?? 99) < COLD.waterC ? tip("coldWater") : ""}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
     <div class="cards">${visibleCards(layoutFor(id)).map((c) => cards[c]?.() ?? "").join("")}</div>
+    ${tip("source")}
     ${sourceLine(forecast)}
     <button class="pill" id="arrange">${icon("arrow-up-down")} ${h(t("Arrange this page"))}</button>
     ${credits(forecast, club)}
@@ -396,12 +400,18 @@ async function renderClub(id) {
   root.querySelector("nav.bottom").outerHTML = bottomBar(id, raw);
   wireBottomBar(raw);
   wireClubPage(id, club, raw, forecast, hour);
+  wireTips(root.querySelector("main"));
   balanceCards();
   if (root.querySelector("#launch-map")) showLaunchMap(club);
   const satelliteBox = root.querySelector("#satellite");
   if (forecast.lakeId && satelliteBox) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
   const lakeBox = root.querySelector("#lake-view");
-  if (lakeBox) fillLakeCard(lakeBox, forecast.lakeId, id, waterForHour(raw, hour)).then(balanceCards);
+  if (lakeBox) {
+    fillLakeCard(lakeBox, forecast.lakeId, id, waterForHour(raw, hour)).then(() => {
+      if (!lakeBox.hidden) lakeBox.querySelector(".card-title")?.insertAdjacentHTML("afterend", tip("lakeView"));
+      balanceCards();
+    });
+  }
 }
 
 // ---- Wide screens (iPad, Mac, PC), as in the app on iPad ------------------------------------
@@ -987,6 +997,13 @@ function renderSettings() {
         ${dataSaving() ? `<p class="row-setting green small">${icon("circle-check")} ${h(dataSaving() === "browser" ? t("Your browser asks to save data: the website is saving data now.") : t("On mobile data: the website is saving data now."))}</p>` : ""}
       </section>
       <p class="footer">${h(t("On mobile data, satellite pictures load only when you tap them; forecasts and warnings always load. When your browser or phone asks to save data, the website always does. Not every browser tells the website whether it is on mobile data."))}</p>
+      <h3 class="section">${icon("circle-help")} ${h(t("Help"))}</h3>
+      <section class="card group">
+        <a class="row-setting" href="#/tour"><span>${icon("circle-help")} ${h(t("Show the tour again"))}</span>${icon("chevron-right")}</a>
+        <button class="row-setting" id="tips-again"><span>${icon("lightbulb")} ${h(t("Show the tips again"))}</span></button>
+        <button class="row-setting" id="legend"><span>${icon("info")} ${h(t("Legend: what the symbols mean"))}</span>${icon("chevron-right")}</button>
+      </section>
+      <p class="footer" id="tips-note"></p>
       ${card(t("Safety notice"), "shield-check", `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`)}
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
@@ -994,6 +1011,12 @@ function renderSettings() {
     </main>`;
   wireLanguage(renderSettings);
   root.querySelectorAll("[data-unit]").forEach((select) => select.addEventListener("change", () => setUnit(select.dataset.unit, select.value)));
+  root.querySelector("#tips-again").addEventListener("click", () => {
+    replayTips();
+    root.querySelector("#tips-note").textContent = t("The tips are back.");
+  });
+  root.querySelector("#legend").addEventListener("click", () => openSheet(t("Legend"),
+    ["lights", "conditions", "hourly"].map((part) => `<h3 class="section">${h({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part])}</h3>${legendBody(part)}`).join("")));
   root.querySelector("#save-data").addEventListener("change", (e) => {
     store.saveData = e.target.checked;
     renderSettings();
@@ -1037,6 +1060,7 @@ function renderBoats() {
   root.innerHTML = `${settingsNav("#/settings")}${testing()}
     <main class="page">
       <h1 class="large">${h(t("Rowing limits"))}</h1>
+      ${tip("myBoats")}
       <h3 class="section">${icon("sailboat")} ${h(t("Your boat"))}</h3>
       <ul class="boats">${GROUPS.map(row).join("")}</ul>
       <p class="footer">${h(t("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))}</p>
@@ -1168,6 +1192,11 @@ function route(scroll = true) {
   document.body.classList.remove("locked");
   if (scroll) window.scrollTo(0, 0);
   if (!store.safety || store.safety.version < SAFETY_VERSION) return renderSafetyGate();
+  // The tour once, after the safety notice, and again from Settings › Help.
+  if (!tourSeen() || location.hash === "#/tour") {
+    showBackground(null);
+    return renderTour(root, { languagePicker, wireLanguage, done: () => (location.hash === "#/tour" ? (location.hash = "#/settings") : route()) });
+  }
   const hash = location.hash.replace(/^#/, "");
   pagePicture(hash);
   const value = hash.match(/^\/club\/([^/]+)\/value\/([a-zA-Z]+)(?:\/(.+))?$/);

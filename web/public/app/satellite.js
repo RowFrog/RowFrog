@@ -6,6 +6,7 @@ import { t, num } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
 import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData } from "./shared.js";
+import { tip } from "./tour.js";
 import { hourIndex, gridEdges } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote } from "./lakeview.js";
 
@@ -119,6 +120,7 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
       return;
     }
     box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
+      ${tip("satellite")}
       ${kindPicker(lake, kind)}
       <div class="picture" role="button" tabindex="0" aria-label="${h(t("Satellite picture"))}" data-ratio="${meta.width / meta.height}" style="aspect-ratio:${meta.width}/${meta.height}">${pictureHtml(lake, shot)}</div>
       ${caption(lake, shot)}
