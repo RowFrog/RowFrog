@@ -6,7 +6,7 @@ webcam pictures where they are available later on.
 For each club's launch point the app shows an hourly green / amber / red
 "can we row?" light for the next 48 hours, and the conditions behind it:
 wind, gusts, computed wave height, fog, thunderstorm risk, air and water
-temperature, rain radar, ice cover, official DWD warnings and daylight.
+temperature, rain radar, ice cover, official weather warnings and daylight.
 It started with the lakes south of Munich (Starnberger See first) and can
 show rowing clubs across Germany, Austria and Switzerland, or a place of your
 own.
@@ -132,6 +132,15 @@ text (from its English CAP files) with the German original below; where DWD
 has no English version, only the event and headline are translated.
 At lakes with shore warning lights the card explains both lights (40 and 90
 flashes a minute) and the season they run in.
+
+**Warnings in Austria and Switzerland.** Austrian clubs get GeoSphere
+Austria's official warnings for their municipality
+(`backend/rowfrog/sources/geosphere_warnings.py`), Swiss clubs MeteoSwiss's
+regional warnings through MeteoAlarm (`backend/rowfrog/sources/meteoalarm.py`),
+shown unaltered with their source. Both set the hourly light like DWD's.
+Clubs on Lake Constance also get DWD's lake warning. Where no service covers a
+place, the app says it cannot check the warnings there instead of saying there
+are none.
 
 **Lake view and route planning.** A tile opens a map of the whole lake with
 waves, wind and the light for each part of the lake, and a spot you can tap
@@ -289,9 +298,13 @@ screen, with the map beside the chart when the iPad is on its side.
 
 **Website.** [rowfrog.com/app](https://rowfrog.com/app) shows the forecasts
 in a browser, for Android phones and computers. It is password-locked while
-in testing. It follows the app's list, club page and look, with a small/big
-boat picker and a wide layout for iPads and desktop browsers. Own boats, the
-lake view and the rain radar are not on the website yet.
+in testing. It follows the app's list, club page and look, with a wide layout
+for iPads and desktop browsers, and has nearly everything the app has: own
+boats and limits, the lake view with route planning and row import (GPX, TCX
+or FIT), value pages with chart and weather map, the satellite picture with its
+layers, browsing by country and adding a place, Arrange this page, units,
+appearance, background pictures, the tour and the tips. Only the rain radar
+card is still missing. What a visitor picks stays in their browser.
 
 ## Layout
 
@@ -425,6 +438,7 @@ More detail, including the secrets each one needs, is in the
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs by hand, or when the club list or data sources change on `main`; new outlines are committed back. |
 | **Water temperature stations** (`water-stations.yml`) | Lists the GKD Bayern, PEGELONLINE and Swiss BAFU stations, shows how `data/water-stations.json` would change and reads every station in it once. Nothing is stored; a changed list is committed by hand (see the handbook). By hand, or when its files change. |
 | **Satellite water temperature check** (`water-temperature-probe.yml`) | Compares Copernicus, Landsat and the carried-forward estimate with GKD lake stations. By hand, or when the satellite water temperature code changes. |
+| **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
