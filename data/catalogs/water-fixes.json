@@ -1,5 +1,5 @@
 {
-  "comment": "Hand-checked waters for clubs the import could only place at town level (\"Water near <town>\"). club id -> [water name, lake|river]. Applied by club_import.apply_water_fixes on every import; scripts/fix_unknown_waters.py --snap moves their launch points to the shore.",
+  "comment": "Hand-checked waters for clubs the import could only place at town level (\"Water near <town>\"). club id -> water name and lake|river; optional \"id\" picks one water of that name, \"replace\" also moves a club the import put on a wrong water (pond, harbour basin, piece of river). Applied by club_import.apply_water_fixes on every import; scripts/fix_unknown_waters.py --snap moves their launch points to the shore.",
   "at": {
     "erster-steirischer-ruderclub-ausseerland": {
       "water": "Grundlsee",
@@ -336,6 +336,54 @@
     "wsc-wannseeloewe": {
       "water": "Großer Wannsee",
       "kind": "lake"
+    },
+    "ruderverein-esslingen": {
+      "water": "Neckar",
+      "kind": "river",
+      "id": "river-neckar",
+      "replace": true
+    },
+    "ruderclub-nuertingen-ev-1921": {
+      "water": "Neckar",
+      "kind": "river",
+      "id": "river-neckar",
+      "replace": true
+    },
+    "humboldt-oberschule-gymnasium-berlin": {
+      "water": "Tegeler See",
+      "kind": "lake",
+      "id": "tegeler-see",
+      "replace": true
+    },
+    "casseler-frauen-ruder-verein": {
+      "water": "Fulda",
+      "kind": "river",
+      "id": "river-fulda",
+      "replace": true
+    },
+    "rudergesellschaft-kassel-1927": {
+      "water": "Fulda",
+      "kind": "river",
+      "id": "river-fulda",
+      "replace": true
+    },
+    "ruderverein-kurhessen-cassel-18901911": {
+      "water": "Fulda",
+      "kind": "river",
+      "id": "river-fulda",
+      "replace": true
+    },
+    "ruderverein-wilhelmsgymnasium": {
+      "water": "Fulda",
+      "kind": "river",
+      "id": "river-fulda",
+      "replace": true
+    },
+    "ruderverein-der-jacob-grimm-schule-in-kassel": {
+      "water": "Fulda",
+      "kind": "river",
+      "id": "river-fulda",
+      "replace": true
     }
   }
 }
