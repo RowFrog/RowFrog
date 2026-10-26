@@ -1,0 +1,341 @@
+{
+  "comment": "Hand-checked waters for clubs the import could only place at town level (\"Water near <town>\"). club id -> [water name, lake|river]. Applied by club_import.apply_water_fixes on every import; scripts/fix_unknown_waters.py --snap moves their launch points to the shore.",
+  "at": {
+    "erster-steirischer-ruderclub-ausseerland": {
+      "water": "Grundlsee",
+      "kind": "lake"
+    },
+    "erster-wiener-ruderclub-lia": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "landesruderverband-wien": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "rc-argonauten": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "rc-ellida": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "rc-friesen": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "rc-lia": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "ruderclub-breitenbrunn": {
+      "water": "Neusiedler See",
+      "kind": "lake"
+    },
+    "ruderclub-lochau": {
+      "water": "Bodensee",
+      "kind": "lake"
+    },
+    "ruderverein-friesen": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "ruderverein-nibelungen": {
+      "water": "Donau",
+      "kind": "river"
+    },
+    "ruderverein-seewalchen": {
+      "water": "Attersee",
+      "kind": "lake"
+    },
+    "ruderverein-staw": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "wiener-ruderklub-argonauten": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "wiener-ruderklub-donau": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "wiener-ruderverein-ellida": {
+      "water": "Alte Donau",
+      "kind": "lake"
+    },
+    "wsw-ruderunion-duernstein": {
+      "water": "Donau",
+      "kind": "river"
+    }
+  },
+  "ch": {
+    "aviron-club-estavayer-le-lac": {
+      "water": "Lac de Neuchâtel",
+      "kind": "lake"
+    },
+    "centre-lausannois-de-l-aviron": {
+      "water": "Le Léman",
+      "kind": "lake"
+    },
+    "club-d-aviron-vallee-de-joux": {
+      "water": "Lac de Joux",
+      "kind": "lake"
+    },
+    "club-de-l-aviron-nyon": {
+      "water": "Le Léman",
+      "kind": "lake"
+    },
+    "club-nautique-montreux": {
+      "water": "Le Léman",
+      "kind": "lake"
+    },
+    "la-rame-ste-feminine-d-aviron": {
+      "water": "Le Léman",
+      "kind": "lake"
+    },
+    "lausanne-sports-section-aviron": {
+      "water": "Le Léman",
+      "kind": "lake"
+    },
+    "rowing-club-lausanne": {
+      "water": "Le Léman",
+      "kind": "lake"
+    },
+    "ruderclub-blauweiss-basel": {
+      "water": "Rhein",
+      "kind": "river"
+    },
+    "ruderclub-flueelen": {
+      "water": "Vierwaldstättersee",
+      "kind": "lake"
+    },
+    "ruderclub-greifensee": {
+      "water": "Greifensee",
+      "kind": "lake"
+    },
+    "ruderclub-hallwilersee": {
+      "water": "Hallwilersee",
+      "kind": "lake"
+    },
+    "ruderclub-murtensee": {
+      "water": "Murtensee",
+      "kind": "lake"
+    },
+    "ruderclub-sarnen": {
+      "water": "Sarnersee",
+      "kind": "lake"
+    },
+    "seeclub-biel": {
+      "water": "Bielersee / Lac de Bienne",
+      "kind": "lake"
+    },
+    "seeclub-sursee": {
+      "water": "Sempachersee",
+      "kind": "lake"
+    },
+    "seeclub-thun": {
+      "water": "Thunersee",
+      "kind": "lake"
+    },
+    "seeclub-waedenswil": {
+      "water": "Zürichsee",
+      "kind": "lake"
+    },
+    "seeclub-zug": {
+      "water": "Zugersee",
+      "kind": "lake"
+    },
+    "societe-nautique-neuchatel": {
+      "water": "Lac de Neuchâtel",
+      "kind": "lake"
+    }
+  },
+  "de": {
+    "akademischer-ruder-club-zu-muenster": {
+      "water": "Dortmund-Ems-Kanal",
+      "kind": "river"
+    },
+    "alt-ruppiner-ruderclub-1928": {
+      "water": "Ruppiner See",
+      "kind": "lake"
+    },
+    "bernkasteler-ruderverein-1874": {
+      "water": "Mosel",
+      "kind": "river"
+    },
+    "bonner-ruder-gesellschaft": {
+      "water": "Rhein",
+      "kind": "river"
+    },
+    "crefelder-ruder-club-1883": {
+      "water": "Rhein",
+      "kind": "river"
+    },
+    "donau-ruder-club-ingolstadt": {
+      "water": "Donau",
+      "kind": "river"
+    },
+    "foerderverein-fuer-freizeit-und-sport-am-kopernikus-gymnasium-rheine": {
+      "water": "Ems",
+      "kind": "river"
+    },
+    "hersfelder-ruderverein-1977": {
+      "water": "Fulda",
+      "kind": "river"
+    },
+    "luebecker-ruder-gesellschaft-von-1885": {
+      "water": "Kanal-Trave",
+      "kind": "river"
+    },
+    "lueneburger-ruder-club-wiking-v1875": {
+      "water": "Ilmenau",
+      "kind": "river"
+    },
+    "mindener-ruder-verein-von-1905": {
+      "water": "Weser",
+      "kind": "river"
+    },
+    "nordenhamer-ruderclub-von-1908": {
+      "water": "Weser",
+      "kind": "river"
+    },
+    "post-und-telekom-sportgemeinschaft-luebbecke": {
+      "water": "Mittellandkanal",
+      "kind": "river"
+    },
+    "ribnitzer-sportverein-1919": {
+      "water": "Ribnitzer See",
+      "kind": "lake"
+    },
+    "rr-am-schulsportzentrum-obersberg-bad-hersfeld": {
+      "water": "Fulda",
+      "kind": "river"
+    },
+    "rr-mark-am-helmholtz-gymnasium-essen": {
+      "water": "Baldeneysee",
+      "kind": "lake"
+    },
+    "ruder-club-aken": {
+      "water": "Elbe",
+      "kind": "river"
+    },
+    "ruder-club-biggesee": {
+      "water": "Biggesee",
+      "kind": "lake"
+    },
+    "ruder-u-tennis-klub-germania-ev-koeln": {
+      "water": "Rhein",
+      "kind": "river"
+    },
+    "ruder-verein-osterholz-scharmbeck-von-1901": {
+      "water": "Hamme",
+      "kind": "river"
+    },
+    "ruderclub-amicitia-bad-hersfeld": {
+      "water": "Fulda",
+      "kind": "river"
+    },
+    "ruderclub-lindau-bodensee": {
+      "water": "Bodensee",
+      "kind": "lake"
+    },
+    "ruderclub-oberhavel-hennigsdorf": {
+      "water": "Havel",
+      "kind": "river"
+    },
+    "ruderclub-rossleben": {
+      "water": "Unstrut",
+      "kind": "river"
+    },
+    "ruderclub-titisee": {
+      "water": "Titisee",
+      "kind": "lake"
+    },
+    "ruderer-vereinigung-nordharz": {
+      "water": "Okerstausee",
+      "kind": "lake"
+    },
+    "rudergesellschaft-zeltingen": {
+      "water": "Mosel",
+      "kind": "river"
+    },
+    "ruderklub-flensburg": {
+      "water": "Flensburger Förde",
+      "kind": "lake"
+    },
+    "ruderverein-babensham-wasserburg-von-1981": {
+      "water": "Inn",
+      "kind": "river"
+    },
+    "ruderverein-monheim": {
+      "water": "Rhein",
+      "kind": "river"
+    },
+    "ruderverein-rheinsberg-1910": {
+      "water": "Grienericksee",
+      "kind": "lake"
+    },
+    "ruderverein-rot-weiss-naumburg-von-1908": {
+      "water": "Saale",
+      "kind": "river"
+    },
+    "ruderverein-waldsee-1900": {
+      "water": "Stadtsee",
+      "kind": "lake"
+    },
+    "ruderverein-wolgast": {
+      "water": "Peenestrom",
+      "kind": "river"
+    },
+    "schueler-ruder-riege-im-vdf-des-leibniz-gymnasiums-in-bad-schwartau": {
+      "water": "Trave",
+      "kind": "river"
+    },
+    "sportvereinigung-scharnebeck-ev-ruderabteilung": {
+      "water": "Elbe-Seitenkanal",
+      "kind": "river"
+    },
+    "srr-albert-schweitzer-schule-nienburg": {
+      "water": "Weser",
+      "kind": "river"
+    },
+    "srr-gymnasium-philippinum-weilburg": {
+      "water": "Lahn",
+      "kind": "river"
+    },
+    "srv-albatros-harburg-des-friedrich-ebert-gymnasium": {
+      "water": "Süderelbe",
+      "kind": "river"
+    },
+    "tangermuender-ruderclub-von-1906": {
+      "water": "Elbe",
+      "kind": "river"
+    },
+    "waginger-ruderverein": {
+      "water": "Waginger See",
+      "kind": "lake"
+    },
+    "wassersportverein-belau": {
+      "water": "Belauer See",
+      "kind": "lake"
+    },
+    "wassersportverein-geisenheim-1912": {
+      "water": "Rhein",
+      "kind": "river"
+    },
+    "wassersportverein-st-goar-1924": {
+      "water": "Rhein",
+      "kind": "river"
+    },
+    "weilburger-ruderverein-1905": {
+      "water": "Lahn",
+      "kind": "river"
+    },
+    "wsc-wannseeloewe": {
+      "water": "Großer Wannsee",
+      "kind": "lake"
+    }
+  }
+}

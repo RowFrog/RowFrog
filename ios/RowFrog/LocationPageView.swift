@@ -540,7 +540,7 @@ private struct NowCard: View {
                     ForEach(hour.reasons, id: \.self) { reason in
                         // Without a station the water is estimated, and the advice says so.
                         Label(water == nil && Condition.waterTemperature.reasonNames.contains(reason.condition)
-                              ? tr("Estimated: %@", reason.explanation) : reason.explanation, systemImage: reason.symbol)
+                              ? tr("Estimated: %@", reason.explanation) : forecast.explanation(reason, in: hour), systemImage: reason.symbol)
                             .foregroundStyle(reason.light == .red ? Color.red : Color.orange)
                     }
                 }
@@ -559,7 +559,7 @@ private struct NowCard: View {
             }
             .font(.subheadline)
             .symbolRenderingMode(.hierarchical)
-            .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map(\.explanation).joined(separator: " ")))
+            .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
             AdviceOnlyNote()
             Divider()
             HStack(alignment: .lastTextBaseline) {

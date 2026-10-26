@@ -14,6 +14,36 @@
       "osm": "way/267326375"
     },
     {
+      "id": "alte-donau",
+      "name": "Alte Donau",
+      "country": "at",
+      "center": {
+        "lat": 48.23299,
+        "lon": 16.43347
+      },
+      "kind": "lake"
+    },
+    {
+      "id": "attersee",
+      "name": "Attersee",
+      "country": "at",
+      "center": {
+        "lat": 47.95464,
+        "lon": 13.58395
+      },
+      "kind": "lake"
+    },
+    {
+      "id": "bodensee",
+      "name": "Bodensee",
+      "country": "at",
+      "center": {
+        "lat": 47.52942,
+        "lon": 9.75339
+      },
+      "kind": "lake"
+    },
+    {
       "id": "river-donau",
       "name": "Donau",
       "country": "at",
@@ -52,6 +82,16 @@
         "lon": 16.3137
       },
       "osm": "relation/9684319"
+    },
+    {
+      "id": "grundlsee",
+      "name": "Grundlsee",
+      "country": "at",
+      "center": {
+        "lat": 47.62727,
+        "lon": 13.83793
+      },
+      "kind": "lake"
     },
     {
       "id": "hochwiesegraben",
@@ -112,6 +152,16 @@
         "lon": 16.43232
       },
       "kind": "river"
+    },
+    {
+      "id": "neusiedler-see",
+      "name": "Neusiedler See",
+      "country": "at",
+      "center": {
+        "lat": 47.94635,
+        "lon": 16.73253
+      },
+      "kind": "lake"
     },
     {
       "id": "ossiacher-see",
@@ -204,76 +254,6 @@
       "kind": "unknown"
     },
     {
-      "id": "near-breitenbrunn",
-      "name": "Water near Breitenbrunn",
-      "country": "at",
-      "center": {
-        "lat": 47.94635,
-        "lon": 16.73253
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-duernstein",
-      "name": "Water near Dürnstein",
-      "country": "at",
-      "center": {
-        "lat": 48.39323,
-        "lon": 15.52587
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-grundlsee",
-      "name": "Water near Grundlsee",
-      "country": "at",
-      "center": {
-        "lat": 47.62727,
-        "lon": 13.83793
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-klosterneuburg",
-      "name": "Water near Klosterneuburg",
-      "country": "at",
-      "center": {
-        "lat": 48.30499,
-        "lon": 16.32376
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-lochau",
-      "name": "Water near Lochau",
-      "country": "at",
-      "center": {
-        "lat": 47.52942,
-        "lon": 9.75339
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-seewalchen",
-      "name": "Water near Seewalchen",
-      "country": "at",
-      "center": {
-        "lat": 47.95464,
-        "lon": 13.58395
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-wien",
-      "name": "Water near Wien",
-      "country": "at",
-      "center": {
-        "lat": 48.23561,
-        "lon": 16.43203
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "winterhafen",
       "name": "Winterhafen",
       "country": "at",
@@ -351,11 +331,11 @@
       "region": "Steiermark",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-grundlsee",
+      "lakeId": "grundlsee",
       "launchPoint": {
         "lat": 47.62727,
         "lon": 13.83793,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Grundlsee (checked by hand)",
         "verified": false
       }
     },
@@ -369,11 +349,11 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-wien",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.23299,
         "lon": 16.43347,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -459,11 +439,11 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-wien",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.2385,
         "lon": 16.43013,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -549,11 +529,11 @@
       "region": "Burgenland",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-breitenbrunn",
+      "lakeId": "neusiedler-see",
       "launchPoint": {
         "lat": 47.94635,
         "lon": 16.73253,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Neusiedler See (checked by hand)",
         "verified": false
       }
     },
@@ -585,11 +565,11 @@
       "region": "Vorarlberg",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-lochau",
+      "lakeId": "bodensee",
       "launchPoint": {
         "lat": 47.52942,
         "lon": 9.75339,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Bodensee (checked by hand)",
         "verified": false
       }
     },
@@ -657,11 +637,11 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-wien",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.23325,
         "lon": 16.43337,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -693,11 +673,11 @@
       "region": "Niederösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-klosterneuburg",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.30499,
         "lon": 16.32376,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Donau (checked by hand)",
         "verified": false
       }
     },
@@ -729,11 +709,11 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-wien",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.22946,
         "lon": 16.43038,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -747,11 +727,11 @@
       "region": "Oberösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-seewalchen",
+      "lakeId": "attersee",
       "launchPoint": {
         "lat": 47.95464,
         "lon": 13.58395,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Attersee (checked by hand)",
         "verified": false
       }
     },
@@ -927,11 +907,11 @@
       "region": "Niederösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-duernstein",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.39323,
         "lon": 15.52587,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Donau (checked by hand)",
         "verified": false
       }
     },
@@ -999,11 +979,11 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-wien",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.23561,
         "lon": 16.43203,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -1017,11 +997,11 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-wien",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.23652,
         "lon": 16.43132,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -1071,11 +1051,11 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-wien",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.23499,
         "lon": 16.43292,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },

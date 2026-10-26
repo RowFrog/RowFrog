@@ -54,6 +54,26 @@
       "osm": "relation/1671617"
     },
     {
+      "id": "greifensee",
+      "name": "Greifensee",
+      "country": "ch",
+      "center": {
+        "lat": 47.36625,
+        "lon": 8.67867
+      },
+      "kind": "lake"
+    },
+    {
+      "id": "hallwilersee",
+      "name": "Hallwilersee",
+      "country": "ch",
+      "center": {
+        "lat": 47.29498,
+        "lon": 8.22772
+      },
+      "kind": "lake"
+    },
+    {
       "id": "river-la-sarine-saane",
       "name": "La Sarine / Saane",
       "country": "ch",
@@ -72,6 +92,16 @@
         "lon": 6.64035
       },
       "kind": "river"
+    },
+    {
+      "id": "lac-de-joux",
+      "name": "Lac de Joux",
+      "country": "ch",
+      "center": {
+        "lat": 46.64927,
+        "lon": 6.31862
+      },
+      "kind": "lake"
     },
     {
       "id": "lac-de-neuchatel",
@@ -124,6 +154,16 @@
       "kind": "river"
     },
     {
+      "id": "murtensee",
+      "name": "Murtensee",
+      "country": "ch",
+      "center": {
+        "lat": 46.93863,
+        "lon": 7.13059
+      },
+      "kind": "lake"
+    },
+    {
       "id": "river-rhein",
       "name": "Rhein",
       "country": "ch",
@@ -142,6 +182,16 @@
         "lon": 8.3143
       },
       "osm": "relation/1676756"
+    },
+    {
+      "id": "sarnersee",
+      "name": "Sarnersee",
+      "country": "ch",
+      "center": {
+        "lat": 46.89567,
+        "lon": 8.24615
+      },
+      "kind": "lake"
     },
     {
       "id": "schiffenensee",
@@ -194,192 +244,12 @@
       "osm": "relation/1442399"
     },
     {
-      "id": "near-biel-bienne",
-      "name": "Water near Biel/Bienne",
-      "country": "ch",
-      "center": {
-        "lat": 47.14021,
-        "lon": 7.2439
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-birsfelden",
-      "name": "Water near Birsfelden",
-      "country": "ch",
-      "center": {
-        "lat": 47.55422,
-        "lon": 7.63047
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-clarens",
-      "name": "Water near Clarens",
-      "country": "ch",
-      "center": {
-        "lat": 46.44111,
-        "lon": 6.89306
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-estavayer-le-lac",
-      "name": "Water near Estavayer-le-Lac",
-      "country": "ch",
-      "center": {
-        "lat": 46.84964,
-        "lon": 6.84774
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-flueelen",
-      "name": "Water near Flüelen",
-      "country": "ch",
-      "center": {
-        "lat": 46.90272,
-        "lon": 8.62535
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-greifensee",
-      "name": "Water near Greifensee",
-      "country": "ch",
-      "center": {
-        "lat": 47.36625,
-        "lon": 8.67867
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-l-abbaye",
-      "name": "Water near L'Abbaye",
-      "country": "ch",
-      "center": {
-        "lat": 46.64927,
-        "lon": 6.31862
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-la-tour-de-peilz",
-      "name": "Water near La-Tour-de-Peilz",
-      "country": "ch",
-      "center": {
-        "lat": 46.45375,
-        "lon": 6.85691
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-lausanne",
-      "name": "Water near Lausanne",
-      "country": "ch",
-      "center": {
-        "lat": 46.52183,
-        "lon": 6.6327
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-meisterschwanden",
-      "name": "Water near Meisterschwanden",
-      "country": "ch",
-      "center": {
-        "lat": 47.29498,
-        "lon": 8.22772
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-muntelier",
-      "name": "Water near Muntelier",
-      "country": "ch",
-      "center": {
-        "lat": 46.93863,
-        "lon": 7.13059
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-neuchatel",
-      "name": "Water near Neuchâtel",
-      "country": "ch",
-      "center": {
-        "lat": 46.98958,
-        "lon": 6.92926
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-nyon",
-      "name": "Water near Nyon",
-      "country": "ch",
-      "center": {
-        "lat": 46.38206,
-        "lon": 6.24028
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-sarnen",
-      "name": "Water near Sarnen",
-      "country": "ch",
-      "center": {
-        "lat": 46.89567,
-        "lon": 8.24615
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "near-suhr",
       "name": "Water near Suhr",
       "country": "ch",
       "center": {
         "lat": 47.37317,
         "lon": 8.07953
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-sursee",
-      "name": "Water near Sursee",
-      "country": "ch",
-      "center": {
-        "lat": 47.17253,
-        "lon": 8.10678
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-thun",
-      "name": "Water near Thun",
-      "country": "ch",
-      "center": {
-        "lat": 46.75828,
-        "lon": 7.62809
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-waedenswil",
-      "name": "Water near Wädenswil",
-      "country": "ch",
-      "center": {
-        "lat": 47.2279,
-        "lon": 8.67014
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-zug",
-      "name": "Water near Zug",
-      "country": "ch",
-      "center": {
-        "lat": 47.16799,
-        "lon": 8.51737
       },
       "kind": "unknown"
     },
@@ -434,11 +304,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-estavayer-le-lac",
+      "lakeId": "lac-de-neuchatel",
       "launchPoint": {
         "lat": 46.84964,
         "lon": 6.84774,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Lac de Neuchâtel (checked by hand)",
         "verified": false
       }
     },
@@ -502,11 +372,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-lausanne",
+      "lakeId": "le-leman",
       "launchPoint": {
         "lat": 46.52183,
         "lon": 6.6327,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
         "verified": false
       }
     },
@@ -604,11 +474,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-clarens",
+      "lakeId": "le-leman",
       "launchPoint": {
         "lat": 46.44111,
         "lon": 6.89306,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
         "verified": false
       }
     },
@@ -621,11 +491,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-l-abbaye",
+      "lakeId": "lac-de-joux",
       "launchPoint": {
         "lat": 46.64927,
         "lon": 6.31862,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Lac de Joux (checked by hand)",
         "verified": false
       }
     },
@@ -655,11 +525,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-nyon",
+      "lakeId": "le-leman",
       "launchPoint": {
         "lat": 46.38206,
         "lon": 6.24028,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
         "verified": false
       }
     },
@@ -723,11 +593,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-la-tour-de-peilz",
+      "lakeId": "le-leman",
       "launchPoint": {
         "lat": 46.45375,
         "lon": 6.85691,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
         "verified": false
       }
     },
@@ -740,11 +610,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-lausanne",
+      "lakeId": "le-leman",
       "launchPoint": {
         "lat": 46.52183,
         "lon": 6.6327,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
         "verified": false
       }
     },
@@ -808,11 +678,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-lausanne",
+      "lakeId": "le-leman",
       "launchPoint": {
         "lat": 46.52183,
         "lon": 6.6327,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
         "verified": false
       }
     },
@@ -893,11 +763,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-birsfelden",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 47.55422,
         "lon": 7.63047,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Rhein (checked by hand)",
         "verified": false
       }
     },
@@ -944,11 +814,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-flueelen",
+      "lakeId": "vierwaldstaettersee",
       "launchPoint": {
         "lat": 46.90272,
         "lon": 8.62535,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Vierwaldstättersee (checked by hand)",
         "verified": false
       }
     },
@@ -961,11 +831,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-greifensee",
+      "lakeId": "greifensee",
       "launchPoint": {
         "lat": 47.36625,
         "lon": 8.67867,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Greifensee (checked by hand)",
         "verified": false
       }
     },
@@ -978,11 +848,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-meisterschwanden",
+      "lakeId": "hallwilersee",
       "launchPoint": {
         "lat": 47.29498,
         "lon": 8.22772,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Hallwilersee (checked by hand)",
         "verified": false
       }
     },
@@ -1029,11 +899,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-muntelier",
+      "lakeId": "murtensee",
       "launchPoint": {
         "lat": 46.93863,
         "lon": 7.13059,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Murtensee (checked by hand)",
         "verified": false
       }
     },
@@ -1114,11 +984,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-sarnen",
+      "lakeId": "sarnersee",
       "launchPoint": {
         "lat": 46.89567,
         "lon": 8.24615,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Sarnersee (checked by hand)",
         "verified": false
       }
     },
@@ -1335,11 +1205,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-biel-bienne",
+      "lakeId": "bielersee-lac-de-bienne",
       "launchPoint": {
         "lat": 47.14021,
         "lon": 7.2439,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Bielersee / Lac de Bienne (checked by hand)",
         "verified": false
       }
     },
@@ -1505,11 +1375,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-sursee",
+      "lakeId": "sempachersee",
       "launchPoint": {
         "lat": 47.17253,
         "lon": 8.10678,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Sempachersee (checked by hand)",
         "verified": false
       }
     },
@@ -1522,11 +1392,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-thun",
+      "lakeId": "thunersee",
       "launchPoint": {
         "lat": 46.75828,
         "lon": 7.62809,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Thunersee (checked by hand)",
         "verified": false
       }
     },
@@ -1539,11 +1409,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-waedenswil",
+      "lakeId": "zuerichsee",
       "launchPoint": {
         "lat": 47.2279,
         "lon": 8.67014,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Zürichsee (checked by hand)",
         "verified": false
       }
     },
@@ -1556,11 +1426,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-zug",
+      "lakeId": "zugersee",
       "launchPoint": {
         "lat": 47.16799,
         "lon": 8.51737,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Zugersee (checked by hand)",
         "verified": false
       }
     },
@@ -1641,11 +1511,11 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-neuchatel",
+      "lakeId": "lac-de-neuchatel",
       "launchPoint": {
         "lat": 46.98958,
         "lon": 6.92926,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Lac de Neuchâtel (checked by hand)",
         "verified": false
       }
     },

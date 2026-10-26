@@ -95,6 +95,8 @@ enum German {
         "Thunderstorms are possible.": "Gewitter sind möglich.",
         "The sun is down. Rowing is only advised in daylight.": "Die Sonne ist untergegangen. Rudern wird nur bei Tageslicht empfohlen.",
         "Sunrise or sunset falls in this hour.": "In dieser Stunde geht die Sonne auf oder unter.",
+        "Sunrise at %@ in this hour.": "In dieser Stunde geht die Sonne um %@ auf.",
+        "Sunset at %@ in this hour.": "In dieser Stunde geht die Sonne um %@ unter.",
 
         // Conditions and legend
         "Air temperature": "Lufttemperatur",
@@ -766,7 +768,11 @@ enum German {
         "Club data: Swiss Rowing (swissrowing.ch). Launch point geocoded with © OpenStreetMap contributors, ODbL": "Vereinsdaten: Swiss Rowing (swissrowing.ch). Steg geokodiert mit © OpenStreetMap-Mitwirkende, ODbL",
         "Club data: Österreichischer Ruderverband (rudern.at). Launch point geocoded with © OpenStreetMap contributors, ODbL": "Vereinsdaten: Österreichischer Ruderverband (rudern.at). Steg geokodiert mit © OpenStreetMap-Mitwirkende, ODbL",
         "Countries": "Länder",
-        "Lake or river": "See oder Fluss",
+        "Lake, river, club or town": "See, Fluss, Verein oder Ort",
+        "Water not yet known": "Gewässer noch nicht zugeordnet",
+        "List by": "Liste nach",
+        "By water": "Nach Gewässer",
+        "By town": "Nach Ort",
         "Move the map until the pin sits where you launch": "Verschiebe die Karte, bis die Nadel an deinem Steg sitzt",
         "Near %@.": "In der Nähe: %@.",
         "Not in the list? Add a place": "Nicht in der Liste? Ort hinzufügen",
