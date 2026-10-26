@@ -8,7 +8,7 @@
 import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  store, savedClub, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence, boatDetail, boatShort,
+  store, savedClub, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence, boatDetail, boatShort,
   limitText, forBoat, getJSON, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration, degrees,
   temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
@@ -22,6 +22,8 @@ import {
   applyLimits, steadierBoat, COLD, waterForHour, allowsMore,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap } from "./lakeview.js";
+import { renderValuePage } from "./valuepage.js";
+import { MAP_ZOOMS } from "./weathermap.js";
 
 const SAFETY_VERSION = 1;
 const root = document.getElementById("root");
@@ -116,25 +118,6 @@ function legendBody(part) {
   return symbols + explain(TILE_ORDER.map((c) => rows[c]));
 }
 
-function conditionTexts() {
-  const r = (c, title, unit, text) => [c, title, unit, text];
-  return {
-    temperature: r("temperature", t("Air temperature"), "°C", t("Air temperature at 2 m.")),
-    feelsLike: r("feelsLike", t("Feels like"), "°C", t("How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index).")),
-    humidity: r("humidity", t("Humidity"), "%", t("Relative humidity. The dew point is the temperature at which the air turns to mist or dew.")),
-    pressure: r("pressure", t("Air pressure"), "hPa", t("Air pressure at sea level and where it goes in the next 3 hours. Falling fast often means wind and rain ahead.")),
-    wind: r("wind", t("Wind and gusts"), windUnit(), t("Mean wind – strongest gust, in %@. The arrow points where the wind blows to.", windUnit())),
-    waves: r("waves", t("Waves"), "m", t("Estimated wave height at the launch point, from wind and open water upwind.")),
-    waterTemperature: r("waterTemperature", t("Water temperature"), "°C", t("Latest lake measurement. Below %@, extra care; below %@, cold water.", temperature(15), temperature(10))),
-    precipitation: r("precipitation", t("Rain, hail, snow"), "mm", t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", "mm")),
-    visibility: r("visibility", t("Visibility (fog)"), "km", t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
-    cloudCover: r("cloudCover", t("Cloud cover"), "%", t("Share of the sky covered by cloud.")),
-    thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings.")),
-    uvIndex: r("uvIndex", t("UV index"), "", t("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")),
-    ice: r("ice", t("Ice cover"), "", t("Estimated from the last weeks' frost and the water temperature, and on larger lakes checked against the Copernicus satellite ice map when clouds allow. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.")),
-    daylight: r("daylight", t("Daylight"), "", t("Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red.")),
-  };
-}
 
 
 /** Picks the boat for the rowing light, with the light each boat gets now (BoatMenu). */
@@ -341,7 +324,6 @@ function wireSearch() {
 
 // ---- Club page (LocationPageView) ------------------------------------------------------------
 
-const TILE_ORDER = ["temperature", "feelsLike", "wind", "waves", "waterTemperature", "ice", "precipitation", "thunderstorm", "visibility", "cloudCover", "humidity", "pressure", "uvIndex", "daylight"];
 
 async function renderClub(id) {
   let club = store.clubs.find((c) => c.id === id);
@@ -506,12 +488,16 @@ function wireClubPage(id, club, raw, forecast, hour) {
     openSheet(t("DWD warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
   });
   root.querySelectorAll("[data-tile]").forEach((b) => b.addEventListener("click", () => {
-    const [c, title, unit, text] = conditionTexts()[b.dataset.tile];
-    openSheet(title, `<p>${conditionIcon(c)} ${h(text)}</p>${unit ? `<p class="sub">${h(unit)}</p>` : ""}`);
+    location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
   }));
   root.querySelectorAll("[data-hour]").forEach((b) => b.addEventListener("click", () => {
     const at = forecast.hours.find((x) => x.time === b.dataset.hour);
-    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast) }) + conditionsCard(forecast, at));
+    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast) }) + conditionsCard(forecast, at), (sheet) => {
+      // A value from a later hour opens its page at that hour.
+      sheet.querySelectorAll("[data-tile]").forEach((t2) => t2.addEventListener("click", () => {
+        location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
+      }));
+    });
   }));
 }
 
@@ -791,13 +777,6 @@ function conditionTile(condition, forecast, hour) {
   }
 }
 
-function iceDetail(ice) {
-  if (ice.thicknessCm > 0) return t("About %@ cm, estimated", num(ice.thicknessCm));
-  if (ice.basis === "season") return t("No ice this time of year");
-  if (ice.basis === "measured") return t("Water %@, too warm for ice", temperature(ice.waterTemperatureC, 1));
-  if (ice.basis === "model") return ice.status === "edges" ? t("Bays and harbours first") : t("Estimated from frost");
-  return t("Check the lake yourself");
-}
 
 /** The next 48 hours, a row an hour under a day header with sunrise and sunset (HourlyCard). */
 function hourlyCard(forecast, now, stale) {
@@ -942,6 +921,14 @@ function renderSettings() {
         <a class="row-setting" href="#/settings/boats"><span>${icon("sailboat")} ${h(t("Boats and limits"))}</span>
           <span class="sub">${h(boatTitle(selectedBoat()))} ${icon("chevron-right")}</span></a>
       </section>
+      <h3 class="section">${icon("map")} ${h(t("Weather maps"))}</h3>
+      <section class="card group">
+        <div class="row-setting"><span>${h(t("Maps start"))}</span>
+          <span class="segmented small" id="map-zoom">${[["close", lang() === "de" ? t("Close (map zoom)") : "Close"], ["normal", t("Normal")], ["wide", t("Wide")]]
+            .map(([k, label]) => `<button data-zoom="${k}" class="${store.mapZoom === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>
+      </section>
+      <p class="footer">${h(t("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.",
+        distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))}</p>
       ${card(t("Safety notice"), "shield-check", `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`)}
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
@@ -949,6 +936,10 @@ function renderSettings() {
     </main>`;
   wireLanguage(renderSettings);
   root.querySelector("#wind").addEventListener("change", (e) => (store.wind = e.target.value));
+  root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
+    store.mapZoom = b.dataset.zoom;
+    renderSettings();
+  }));
   root.querySelector("#reset").addEventListener("click", () => {
     if (!confirm(t("Delete your clubs, settings and the accepted safety notice from this browser?"))) return;
     try {
@@ -1093,9 +1084,13 @@ function renderBoat(id) {
 function route(scroll = true) {
   swipeOff?.();
   document.querySelector("dialog.sheet")?.remove();
+  document.querySelector(".wm-full")?.remove();
+  document.body.classList.remove("locked");
   if (scroll) window.scrollTo(0, 0);
   if (!store.safety || store.safety.version < SAFETY_VERSION) return renderSafetyGate();
   const hash = location.hash.replace(/^#/, "");
+  const value = hash.match(/^\/club\/([^/]+)\/value\/([a-zA-Z]+)(?:\/(.+))?$/);
+  if (value) return renderValuePage(root, decodeURIComponent(value[1]), value[2], value[3] ? decodeURIComponent(value[3]) : null);
   const club = hash.match(/^\/club\/(.+)$/);
   if (club) return renderClub(decodeURIComponent(club[1]));
   const lake = hash.match(/^\/lake\/([^/]+)(?:\/(.+))?$/);

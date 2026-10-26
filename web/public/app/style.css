@@ -184,7 +184,7 @@ button.wide { margin-top: 0; }
 .dayhead .i { color: var(--sun); }
 
 /* Launch point (LaunchPointMapCard). */
-.map { height: 240px; border-radius: 12px; overflow: hidden; background: var(--tile); }
+.map { height: 240px; border-radius: 12px; overflow: hidden; background: var(--tile); isolation: isolate; }
 .map-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
 .pill { display: inline-flex; align-items: center; gap: 6px; background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 6px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; }
 .pin { color: #fff; background: var(--accent); border-radius: 50%; display: flex !important; align-items: center; justify-content: center; font-size: 16px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
@@ -348,7 +348,7 @@ button.red { color: var(--red); }
 .lake-screen { display: flex; flex-direction: column; height: 100dvh; }
 .lake-screen .nav { position: static; }
 .lake-page { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.lake-map { flex: 1 1 55%; min-height: 220px; background: var(--tile); }
+.lake-map { flex: 1 1 55%; min-height: 220px; background: var(--tile); isolation: isolate; }
 .lake-panel { flex: 0 1 auto; max-height: 48%; overflow-y: auto; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
 .lake-panel p { margin: 6px 0; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
@@ -405,3 +405,99 @@ button.red { color: var(--red); }
 .club-mark.boat { background: #5856d6; border-color: #fff; box-shadow: 0 0 0 1px #5856d6; }
 .shore-mark { display: inline-block; width: 18px; height: 4px; border-radius: 2px; margin-top: 7px; }
 .turn-mark { display: inline-flex; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #007aff; color: #007aff; font-size: 11px; font-weight: 600; align-items: center; justify-content: center; }
+
+/* ---- Value pages (ConditionDetailView) and weather maps ---- */
+.value-nav { background: var(--card); gap: 12px; }
+.nav-title { flex: 1; text-align: center; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.jump { position: relative; display: inline-flex; align-items: center; gap: 2px; color: var(--accent); font-size: 18px; }
+.jump select { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
+.jump .cond { font-size: 18px; }
+.value-page { padding-top: 8px; }
+.value-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.value-top .tool { color: var(--sub); font-size: 22px; }
+.value-head { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.big-value { font-size: 40px; font-weight: 300; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.value-big { display: flex; align-items: center; }
+.value-big .dial { transform: scale(1.9); margin: 22px 26px; }
+.value-big .gauge { transform: scale(1.8); margin: 20px 22px; }
+.value-big .layers { transform: scale(1.6); margin: 10px 22px; }
+.value-big .drop { font-size: 44px; }
+.value-big svg.sunpath { width: 120px; height: 60px; }
+.value-body { display: flex; flex-direction: column; gap: 14px; }
+@media (min-width: 900px) {
+  .value-body.with-map { flex-direction: row; align-items: flex-start; }
+  .value-body.with-map > * { flex: 1 1 0; min-width: 0; }
+  .value-body.with-map .wm { height: 300px; }
+}
+.vchart-wrap { position: relative; }
+.vchart-scroll { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; touch-action: pan-x pan-y; cursor: crosshair; -webkit-user-select: none; user-select: none; }
+.vchart-scroll svg { display: block; }
+.vchart-scroll .grid { stroke: var(--line); }
+.vchart-scroll .axis { fill: var(--sub); font-size: 11px; }
+.vchart-scroll .trend { fill: var(--sub); font-size: 11px; font-weight: 700; }
+.vchart-scroll .now { stroke: var(--sub); opacity: .5; }
+.vchart-over { position: absolute; inset: 0; pointer-events: none; }
+.vchart-over .unit { position: absolute; top: -16px; right: 4px; font-size: 11px; color: var(--sub); }
+.vchart-over .limit { position: absolute; font-size: 11px; line-height: 15px; padding: 0 5px; border-radius: 8px; white-space: nowrap;
+  background: color-mix(in srgb, var(--card) 85%, transparent); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
+.vchart-over .callout { position: absolute; top: 2px; display: flex; flex-direction: column; gap: 1px; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 600;
+  background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); box-shadow: 0 1px 4px rgba(0,0,0,.15); white-space: nowrap; }
+.vchart-over .callout small { color: var(--sub); font-size: 11px; }
+.vchart-over .callout span { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
+.vchart-over .callout i { width: 6px; height: 6px; border-radius: 50%; box-sizing: border-box; }
+.vchart-over .map-badge { position: absolute; width: 25px; height: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 1px;
+  font-size: 8px; color: #3d9a4f; background: var(--card); box-shadow: inset 0 0 0 1.5px #3d9a4f; }
+.vchart-over .map-badge.joined { color: #fff; background: #3d9a4f; box-shadow: none; }
+.vchart-note { min-height: 20px; margin-top: 4px; }
+.vchart-note small { font-size: 12px; }
+.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-top: 6px; }
+.chart-legend button { display: inline-flex; align-items: center; gap: 4px; }
+.chart-legend i { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
+.chart-legend i.dashed { background: none; border: 1.5px dashed currentColor; box-sizing: border-box; }
+.chart-legend .off { opacity: .45; }
+.chart-legend .off span { text-decoration: line-through; }
+.chart-legend .off i { background: none; border: 1.5px solid currentColor; box-sizing: border-box; }
+.map-card { background: var(--card); border-radius: 14px; overflow: hidden; }
+.map-head { display: flex; align-items: center; gap: 8px; padding: 7px 10px; font-size: 13px; }
+.map-head strong { font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-head .spacer { flex: 1; }
+.map-head .tool { font-size: 16px; }
+.chain { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 600; padding: 3px 7px; border-radius: 7px; color: var(--sub); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sub) 45%, transparent); white-space: nowrap; }
+.chain.on { color: var(--accent); background: color-mix(in srgb, var(--accent) 16%, transparent); box-shadow: none; }
+.map-frame { position: relative; cursor: zoom-in; }
+.map-frame.out .wm { filter: saturate(.2); opacity: .6; }
+.map-note { position: absolute; left: 8px; right: 8px; bottom: 8px; margin: 0; padding: 6px 9px; border-radius: 9px; font-size: 12px; color: #fff; background: rgba(0,0,0,.75); z-index: 900; text-align: center; }
+.wm { height: 220px; background: var(--tile); isolation: isolate; }
+.wm-canvas { position: absolute; left: 0; top: 0; z-index: 450; pointer-events: none; }
+.map-controls { display: flex; align-items: center; gap: 10px; padding: 8px 10px; }
+.map-controls input[type=range] { flex: 1; }
+.map-controls .tool { font-size: 20px; }
+.map-controls .tool.on { background: color-mix(in srgb, var(--accent) 18%, transparent); border-radius: 8px; padding: 3px; }
+.limit-info { margin: 14px 0 6px; }
+.boxed { background: var(--tile); border-radius: 10px; padding: 10px; }
+dl.facts { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; font-size: 15px; margin: 14px 0; }
+dl.facts dt { color: var(--sub); }
+dl.facts dd { margin: 0; font-weight: 600; }
+.facts.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 14px 0; }
+.facts.two > div { display: flex; flex-direction: column; }
+.facts.two small { font-size: 12px; }
+.rowing { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; }
+.neighbours { display: flex; justify-content: space-between; font-size: 13px; }
+.neighbours button { display: inline-flex; align-items: center; gap: 4px; }
+body.locked { overflow: hidden; }
+.wm-full { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: var(--bg); }
+.wm-full .nav { position: static; background: var(--card); gap: 12px; }
+.wm-full .wm { flex: 1; height: auto; }
+.wm-panel { position: absolute; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 1000; max-width: 560px; margin: 0 auto; padding: 12px 14px;
+  border-radius: 16px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 2px 12px rgba(0,0,0,.15); }
+.wm-panel p { margin: 4px 0; }
+.wm-panel .map-controls { padding: 4px 0; }
+.wm-line { display: flex; gap: 10px; align-items: baseline; }
+.wm-line strong { font-size: 17px; font-variant-numeric: tabular-nums; }
+.colour-bar { position: relative; margin: 6px 0 2px; }
+.colour-bar .bar { display: block; height: 8px; border-radius: 4px; }
+.colour-bar .labels { position: relative; display: block; height: 14px; margin: 0 10px; }
+.colour-bar .labels small { position: absolute; transform: translateX(-50%); font-size: 11px; color: var(--sub); font-variant-numeric: tabular-nums; }
+.colour-bar .unit { display: block; text-align: right; font-size: 11px; color: var(--sub); }
+.segmented.small { margin: 0; }
+.segmented.small button { padding: 4px 10px; }

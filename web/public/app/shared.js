@@ -46,6 +46,18 @@ export const store = {
   /** Saved routes: { id, name, lakeId, points: [{ lat, lon }], outAndBack }. */
   get routes() { return load("rf.routes", []); },
   set routes(list) { save("rf.routes", list); },
+  /** Whether a value page's map follows its chart (DetailTime.linked). */
+  get mapLinked() { return load("rf.mapLinked", true); },
+  set mapLinked(on) { save("rf.mapLinked", on); },
+  /** How much map the weather maps open with: "close", "normal" or "wide". */
+  get mapZoom() { return load("rf.mapZoom", "normal"); },
+  set mapZoom(zoom) { save("rf.mapZoom", zoom); },
+  /** The full-screen map plays 3 times round. */
+  get mapLoop() { return load("rf.mapLoop", true); },
+  set mapLoop(on) { save("rf.mapLoop", on); },
+  /** "About the limits" open on value pages. */
+  get limitInfo() { return load("rf.limitInfo", false); },
+  set limitInfo(on) { save("rf.limitInfo", on); },
   get safety() { return load("rf.safety", null); },
   set safety(value) { save("rf.safety", value); },
 };
@@ -411,3 +423,38 @@ export function footerLinks() {
   </footer>`;
 }
 
+
+// ---- Conditions (Condition in the app) --------------------------------------------
+
+/** The tiles of Current conditions, in order (Condition.tileOrder). */
+export const TILE_ORDER = ["temperature", "feelsLike", "wind", "waves", "waterTemperature", "ice", "precipitation", "thunderstorm", "visibility", "cloudCover", "humidity", "pressure", "uvIndex", "daylight"];
+
+/** Each condition's icon key, title, unit and explanation. */
+export function conditionTexts() {
+  const r = (c, title, unit, text) => [c, title, unit, text];
+  return {
+    temperature: r("temperature", t("Air temperature"), "°C", t("Air temperature at 2 m.")),
+    feelsLike: r("feelsLike", t("Feels like"), "°C", t("How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index).")),
+    humidity: r("humidity", t("Humidity"), "%", t("Relative humidity. The dew point is the temperature at which the air turns to mist or dew.")),
+    pressure: r("pressure", t("Air pressure"), "hPa", t("Air pressure at sea level and where it goes in the next 3 hours. Falling fast often means wind and rain ahead.")),
+    wind: r("wind", t("Wind and gusts"), windUnit(), t("Mean wind – strongest gust, in %@. The arrow points where the wind blows to.", windUnit())),
+    waves: r("waves", t("Waves"), "m", t("Estimated wave height at the launch point, from wind and open water upwind.")),
+    waterTemperature: r("waterTemperature", t("Water temperature"), "°C", t("Latest lake measurement. Below %@, extra care; below %@, cold water.", temperature(15), temperature(10))),
+    precipitation: r("precipitation", t("Rain, hail, snow"), "mm", t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", "mm")),
+    visibility: r("visibility", t("Visibility (fog)"), "km", t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
+    cloudCover: r("cloudCover", t("Cloud cover"), "%", t("Share of the sky covered by cloud.")),
+    thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings.")),
+    uvIndex: r("uvIndex", t("UV index"), "", t("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")),
+    ice: r("ice", t("Ice cover"), "", t("Estimated from the last weeks' frost and the water temperature, and on larger lakes checked against the Copernicus satellite ice map when clouds allow. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.")),
+    daylight: r("daylight", t("Daylight"), "", t("Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red.")),
+  };
+}
+
+/** The ice tile's second line. */
+export function iceDetail(ice) {
+  if (ice.thicknessCm > 0) return t("About %@ cm, estimated", num(ice.thicknessCm));
+  if (ice.basis === "season") return t("No ice this time of year");
+  if (ice.basis === "measured") return t("Water %@, too warm for ice", temperature(ice.waterTemperatureC, 1));
+  if (ice.basis === "model") return ice.status === "edges" ? t("Bays and harbours first") : t("Estimated from frost");
+  return t("Check the lake yourself");
+}
