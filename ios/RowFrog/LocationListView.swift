@@ -196,7 +196,7 @@ struct LocationListView: View {
                     .environment(\.locale, AppSettings.shared.locale)
             }
             // Pull down to reload every saved location at once, as in Mail.
-            .refreshable { await forecasts.reload(locations.saved.map(\.id)) }
+            .refreshable { await forecasts.refresh(locations.saved.map(\.id)) }
             .task {
                 // Screenshot hook: `-RWShowSettings YES` opens the settings once the list is up.
                 guard UserDefaults.standard.bool(forKey: "RWShowSettings") else { return }
@@ -233,7 +233,7 @@ private struct LocationSummaryRow: View {
                         }
                         Text(club.displayName).font(.title3.bold()).lineLimit(1)
                     }
-                    Text([lake?.name, club.town].compactMap { $0 }.joined(separator: " · "))
+                    Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -365,7 +365,7 @@ struct SearchResultRow: View {
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(club.name)
-                Text([lake?.name, club.town].compactMap { $0 }.joined(separator: " · "))
+                Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if !club.launchPointVerified {

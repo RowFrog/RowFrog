@@ -16,7 +16,7 @@ model's water temperature, in the cold months only, as before.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date
+from datetime import date, timedelta
 
 from . import ice
 
@@ -55,6 +55,18 @@ def from_air(temps: list[ice.DayTemperature], today: date) -> float | None:
         return None
     first = temps[0]
     return round(carry(first.day, ice.TYPICAL_WATER_C[first.day.month], temps, today), 1)
+
+
+def forecast(celsius: float, temps: list[ice.DayTemperature], today: date) -> list[tuple[date, float]]:
+    """Today's water (`celsius`, measured or estimated) carried on with the forecast
+    air of each coming day in `temps`: one value per day, today first. Water
+    changes slowly, so a few days ahead stay about as close as the estimate itself."""
+    days = [(today, round(celsius, 1))]
+    water = celsius
+    for t in sorted((t for t in temps if t.day > today), key=lambda t: t.day):
+        water = carry(t.day - timedelta(days=1), water, [t], t.day)
+        days.append((t.day, round(water, 1)))
+    return days
 
 
 def estimate(readings: list, temps: list[ice.DayTemperature], today: date) -> WaterEstimate | None:

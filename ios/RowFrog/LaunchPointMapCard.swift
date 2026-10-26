@@ -61,10 +61,13 @@ struct LaunchPointMapCard: View {
                     .textSelection(.enabled)
                 Spacer()
                 Menu {
+                    // Apple Maps' own page of the club offers the route with one tap,
+                    // so the extra row is only there when the club has no such page.
                     if place != nil {
                         Button(tr("The club in Apple Maps"), systemImage: "building.2") { place?.openInMaps() }
+                    } else {
+                        Button(tr("Directions to the club"), systemImage: "car") { Task { await openClubInMaps() } }
                     }
-                    Button(tr("Directions to the club"), systemImage: "car") { Task { await openClubInMaps() } }
                     Button(tr("Launch point on the map"), systemImage: "mappin.and.ellipse") { openInMaps() }
                 } label: {
                     Label(tr("Open in Maps"), systemImage: "map")

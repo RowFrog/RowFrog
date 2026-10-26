@@ -86,6 +86,9 @@ struct ConditionData {
     /// Whether the shown hour is the current one, not one picked further on.
     var isNow: Bool { now.time <= .now && Date.now.timeIntervalSince(now.time) < 3600 }
 
+    /// The moment the card is about: the clock now, or the picked hour.
+    var moment: Date { isNow ? .now : now.time }
+
     /// "Now", or the picked hour: "Tomorrow 15:00".
     var nowLabel: String { isNow ? tr("Now") : Format.dayTime(now.time) }
 
@@ -331,13 +334,13 @@ private struct ConditionTile: View {
 
     private var sunTile: some View {
         VStack(alignment: .leading, spacing: 2) {
-            switch data.forecast.sunState(at: .now) {
+            switch data.forecast.sunState(at: data.moment) {
             case let .up(sunrise, sunset)?:
                 header(tr("Sunset"))
-                sunLine(Format.time(sunset), tr("Sunrise %@", Format.time(sunrise)), sunrise: sunrise, sunset: sunset)
+                sunLine(Format.time(sunset), tr("Sunrise %@", Format.time(sunrise)), sunrise: sunrise, sunset: sunset, at: data.moment)
             case let .down(sunrise, sunset)?:
                 header(tr("Sunrise"))
-                sunLine(Format.time(sunrise), tr("Sunset %@", Format.time(sunset)), sunrise: sunrise, sunset: sunset)
+                sunLine(Format.time(sunrise), tr("Sunset %@", Format.time(sunset)), sunrise: sunrise, sunset: sunset, at: data.moment)
             case nil:
                 header(condition.title)
                 Text("–").font(.title3.weight(.semibold))
@@ -346,14 +349,14 @@ private struct ConditionTile: View {
     }
 
     /// Laid out like the other tiles: value and detail on the left, the sun path on the right.
-    private func sunLine(_ value: String, _ detail: String, sunrise: Date, sunset: Date) -> some View {
+    private func sunLine(_ value: String, _ detail: String, sunrise: Date, sunset: Date, at: Date) -> some View {
         HStack(alignment: .center) {
             VStack(alignment: .leading, spacing: 0) {
                 Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
                 Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
             }
             Spacer(minLength: 0)
-            SunPath(sunrise: sunrise, sunset: sunset, lineWidth: 2).frame(width: 64, height: Self.graphicHeight)
+            SunPath(sunrise: sunrise, sunset: sunset, at: at, lineWidth: 2).frame(width: 64, height: Self.graphicHeight)
         }
     }
 }
@@ -376,15 +379,17 @@ private func stormLevel(_ light: Light?) -> String {
     }
 }
 
-/// The sun path for one day from its sunrise and sunset, with the sun now.
+/// The sun path for one day from its sunrise and sunset, with the sun at
+/// the shown time: now, or the hour picked in the 48 hours.
 struct SunPath: View {
     let sunrise: Date, sunset: Date
+    var at: Date = .now
     var lineWidth: CGFloat = 3
 
     var body: some View {
         let rise = clock(sunrise), down = clock(sunset)
         SunPathGraph(firstLight: rise, sunrise: rise, noon: (rise + down) / 2, sunset: down, lastLight: down,
-                     now: clock(.now), lineWidth: lineWidth)
+                     now: clock(at), lineWidth: lineWidth)
     }
 
     private func clock(_ date: Date) -> Double {
@@ -407,6 +412,8 @@ struct ChartLine: Identifiable {
     let color: Color
     var kind: Kind = .line
     let points: [ChartPoint]
+    /// Dashed, for a forecast after measurements.
+    var dashed = false
     var id: String { name }
 }
 
@@ -871,10 +878,12 @@ private struct ConditionChart: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    /// The persistent blue line; past measurements only show it while touched.
+    /// The persistent blue line; past measurements only show it while touched,
+    /// or at the picked hour when the detail was opened from the 48 hours.
     private var markerX: Double? {
         if let x = selectedX { return x.rounded() }
-        return detail.history ? nil : time.hour
+        if detail.history { return data.isNow ? nil : 0 }
+        return time.hour
     }
 
     private struct Arrow: Identifiable {
@@ -886,7 +895,10 @@ private struct ConditionChart: View {
 
     private var range: ClosedRange<Double> {
         let xs = detail.lines.flatMap { $0.points.map(\.x) }
-        let lo = xs.min() ?? 0, hi = xs.max() ?? 24
+        var lo = xs.min() ?? 0, hi = xs.max() ?? 24
+        // Measurements end now; opened at a later hour, the chart reaches on to
+        // it, so its blue line sits inside the chart after the last measurement.
+        if detail.history, !data.isNow { hi = max(hi, 0); lo = min(lo, 0) }
         return lo...max(hi, lo + 1)
     }
 
@@ -947,29 +959,37 @@ private struct ConditionChart: View {
                 // Moved from the map (play, slider, linking again): keep the line in view.
                 .onChange(of: time.hour) { _, x in
                     guard !detail.history, selectedX == nil, x < scrollX + 0.5 || x > scrollX + 23.5 else { return }
-                    withAnimation { scrollX = min(max(x - 8, range.lowerBound), range.upperBound - 24) }
+                    // Without animation: the green band and the lines on top follow
+                    // the chart's place at once, and an animated scroll left them
+                    // stretching past the chart's edge and shrinking back.
+                    scrollX = min(max(x - 8, range.lowerBound), range.upperBound - 24)
                 }
             // Under the chart, where it covers nothing: the hint, or once dragged
             // or scrubbed away from the opened hour, one tap back.
-            if compact {
-                EmptyView()
-            } else if !detail.history && (abs(scrollX - Self.start) > 0.5 || time.hour != 0) {
-                Button {
-                    withAnimation {
-                        time.back()
-                        scrollX = Self.start
+            // Both take the same place, the hint kept hidden under the button,
+            // so the map card below never moves up or down.
+            if !compact {
+                let away = !detail.history && (abs(scrollX - Self.start) > 0.5 || time.hour != 0)
+                ZStack(alignment: .topLeading) {
+                    Text(detail.chartNote ?? (detail.history ? tr("Measurements of the last days. Touch the chart to read a value.") : tr("Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value.")))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                        .opacity(away ? 0 : 1)
+                        .accessibilityHidden(away)
+                    if away {
+                        Button {
+                            withAnimation { time.back() }
+                            scrollX = Self.start
+                        } label: {
+                            Label(data.isNow ? tr("Back to now") : tr("Back to %@", Format.dayTime(data.now.time)), systemImage: (time.hour != 0 ? time.hour : scrollX - Self.start) > 0 ? "arrow.uturn.backward" : "arrow.uturn.forward")
+                                .font(.caption.weight(.semibold))
+                        }
+                        .buttonStyle(.plain)
+                        .foregroundStyle(.blue)
+                        .transition(.opacity)
                     }
-                } label: {
-                    Label(data.isNow ? tr("Back to now") : tr("Back to %@", Format.dayTime(data.now.time)), systemImage: (time.hour != 0 ? time.hour : scrollX - Self.start) > 0 ? "arrow.uturn.backward" : "arrow.uturn.forward")
-                        .font(.caption.weight(.semibold))
                 }
-                .buttonStyle(.plain)
-                .foregroundStyle(.blue)
-                .transition(.opacity)
-            } else {
-                Text(detail.chartNote ?? (detail.history ? tr("Measurements of the last days. Touch the chart to read a value.") : tr("Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value.")))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
     }
@@ -1041,11 +1061,14 @@ private struct ConditionChart: View {
             }
             // The blue line itself is drawn by `markers`, so it can make room for
             // the map's marker; this one only carries the label while touched.
-            if let x = selectedX {
+            // Forecasts show the scrubbed hour and value in the big number above;
+            // a label over the chart was cut off by the scrolling chart's edge and
+            // left only a dark bar. Past measurements get it, inside the plot.
+            if detail.history, let x = selectedX {
                 // Zero width rather than clear: the label takes the mark's colour.
                 RuleMark(x: .value("Hour", x.rounded()))
                     .lineStyle(StrokeStyle(lineWidth: 0))
-                    .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .disabled)) {
+                    .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .plot))) {
                         callout(x)
                     }
             }
@@ -1082,6 +1105,7 @@ private struct ConditionChart: View {
         case .line:
             LineMark(x: .value("Hour", p.x), y: .value("Value", p.y), series: .value("Series", line.name))
                 .foregroundStyle(line.color)
+                .lineStyle(StrokeStyle(lineWidth: 2, dash: line.dashed ? [5, 4] : []))
                 .interpolationMethod(.monotone)
         case .bars:
             BarMark(x: .value("Hour", p.x), y: .value("Value", p.y), width: .fixed(5))
@@ -1126,6 +1150,8 @@ private struct ConditionChart: View {
                 lines(plot: plot, mapX: mapX, onScreen: onScreen)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+            // Placed from the chart's current scroll, so never animated on their own.
+            .transaction { $0.animation = nil }
             .accessibilityHidden(true)
         }
     }
@@ -1469,6 +1495,22 @@ extension ConditionDetail {
         }
         let estimate = now == nil ? d.estimatedWater : nil
         let satellite = d.satelliteWater
+        // Today's water carried on with the forecast air, dashed after the
+        // measurements; a picked later hour reads its value from it.
+        let forecastDays = (d.forecast.waterForecast ?? []).compactMap { day in day.day.map { ($0, day.celsius) } }
+        let ahead = forecastDays.filter { $0.0 > .now }
+        var forecastPoints: [ChartPoint] = []
+        if !ahead.isEmpty {
+            if let last = history.last { forecastPoints.append(ChartPoint(x: d.x(last.time), y: t.convert(last.celsius))) }
+            else if let today = forecastDays.first { forecastPoints.append(ChartPoint(x: d.x(.now), y: t.convert(today.1))) }
+            forecastPoints += ahead.map { ChartPoint(x: d.x($0.0), y: t.convert($0.1)) }
+        }
+        let picked = d.isNow ? nil : d.forecast.waterForecastC(on: d.now.time).flatMap { c in
+            Calendar.current.isDateInToday(d.now.time) ? nil : c
+        }
+        if let picked {
+            facts.insert((tr("Forecast %@", Format.day(d.now.time)), Format.temperature(picked, digits: 1)), at: 0)
+        }
         if let satellite {
             facts.append((tr("Satellite"), tr("%@, %@: %@", satellite.satelliteName, satellite.when, Format.temperature(satellite.celsius, digits: 1))))
         }
@@ -1484,21 +1526,45 @@ extension ConditionDetail {
         } else {
             source = tr("No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.")
         }
+        var lines: [ChartLine] = history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })]
+        if forecastPoints.count > 1 {
+            lines.append(ChartLine(name: tr("Forecast"), color: .cyan, points: forecastPoints, dashed: true))
+        }
+        let highest = (history.map(\.celsius) + forecastDays.map { $0.1 }).max() ?? 0
+        if let picked {
+            return ConditionDetail(
+                value: "≈ " + Format.degrees(picked, digits: 1),
+                note: tr("Forecast for %@, from today's water and the forecast air temperatures", Format.day(d.now.time)),
+                unit: t.symbol,
+                lines: lines,
+                limits: [
+                    line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
+                    ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
+                ],
+                yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
+                history: true,
+                chartNote: tr("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value."),
+                facts: facts,
+                rowing: rowing,
+                source: source
+            )
+        }
         return ConditionDetail(
             value: estimate.map { "≈ " + Format.degrees($0, digits: 0) } ?? Format.degrees(now?.celsius, digits: 1),
             note: now.map { tr("Measured %@", Format.dayTime($0.measuredAt)) }
                 ?? (satellite.map { tr("Estimated from %@ (%@) and the air temperatures since, not measured", $0.satelliteName, $0.when) }
                     ?? (estimate != nil ? tr("Estimated from the air temperatures of the last weeks, not measured") : tr("No lake station"))),
             unit: t.symbol,
-            lines: history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })],
+            lines: lines,
             limits: [
                 line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
                 ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
             ],
             limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A life jacket keeps your head above water through it, so the app advises one from %@ down. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the advice gets stricter below %@: stay near the shore and don't row alone. Your club's own rules come first.",
                           Format.temperature(15), jacket, veryCold),
-            yDomain: t.convert(0)...t.convert(max(20, (history.map(\.celsius).max() ?? 0) + 2)),
+            yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
             history: true,
+            chartNote: forecastPoints.count > 1 ? tr("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value.") : nil,
             facts: facts,
             rowing: rowing,
             source: source
@@ -1782,9 +1848,11 @@ extension ConditionDetail {
 
     private static func daylight(_ d: ConditionData) -> ConditionDetail {
         let days = (d.forecast.daylight ?? []).sorted { $0.sunrise < $1.sunrise }
-        let state = d.forecast.sunState(at: .now)
-        let today = days.first { Calendar.current.isDateInToday($0.sunrise) } ?? days.first
-        let tomorrow = days.first { Calendar.current.isDateInTomorrow($0.sunrise) }
+        let moment = d.moment
+        let state = d.forecast.sunState(at: moment)
+        let calendar = Calendar.current
+        let today = days.first { calendar.isDate($0.sunrise, inSameDayAs: moment) } ?? days.first
+        let tomorrow = calendar.date(byAdding: .day, value: 1, to: moment).flatMap { next in days.first { calendar.isDate($0.sunrise, inSameDayAs: next) } }
         var facts: [(String, String)] = []
         if let today {
             facts += [(tr("Sunrise"), Format.time(today.sunrise)), (tr("Sunset"), Format.time(today.sunset)),
@@ -1799,7 +1867,7 @@ extension ConditionDetail {
         switch state {
         case let .up(_, sunset)?:
             value = tr("Sunset %@", Format.time(sunset))
-            note = tr("Sun is up. Rowing advised for %@ until sunset.", Format.duration(from: .now, to: sunset))
+            note = tr("Sun is up. Rowing advised for %@ until sunset.", Format.duration(from: moment, to: sunset))
         case let .down(sunrise, _)?:
             value = tr("Sunrise %@", Format.time(sunrise))
             note = tr("Sun is down. Rowing is advised again from sunrise at %@.", Format.time(sunrise))
@@ -1810,7 +1878,7 @@ extension ConditionDetail {
         return ConditionDetail(
             value: value,
             note: note,
-            big: today.map { AnyView(SunPath(sunrise: $0.sunrise, sunset: $0.sunset).frame(width: 120, height: 60)) },
+            big: today.map { AnyView(SunPath(sunrise: $0.sunrise, sunset: $0.sunset, at: moment).frame(width: 120, height: 60)) },
             facts: facts,
             twoColumnFacts: true,
             rowing: tr("Rowing is advised from sunrise to sunset; in twilight carry lights."),

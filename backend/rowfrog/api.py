@@ -566,14 +566,24 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             today = now.astimezone(LOCAL).date()
             water_model_c = water_estimate.from_air(await _air_days(client, lake, today) or [], today)
         ice_estimate = await _ice(client, lake, water.celsius if water else None, now, estimate.celsius if estimate else None)
+        # For the water forecast; lakes only, since a river's water comes from upstream.
+        air_days = await _air_days(client, lake, now.astimezone(LOCAL).date()) if lake.kind == "lake" else None
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
     weather = _from_now(weather, now)
     if not weather:
         raise HTTPException(status_code=503, detail="forecast too old, try again shortly")
     rings = outlines.load(club.lake_id)
-    water_c = water.celsius if water else None
-    hours = rowing_forecast(club, weather, rings, water_c, warnings, ice_by_day=ice_by_day)
-    outlook_hours = rowing_forecast(club, outlook, rings, water_c, warnings, ice_by_day=ice_by_day) if outlook else None
+    # The light follows the water as measured, else as estimated (satellite or
+    # air), so two clubs with water below 15 °C get the same advice.
+    water_c = water.celsius if water else estimate.celsius if estimate else water_model_c
+    water_forecast = water_by_day = None
+    if water_c is not None and air_days:
+        water_forecast = water_estimate.forecast(water_c, air_days, now.astimezone(LOCAL).date())
+        water_by_day = dict(water_forecast)
+    hours = rowing_forecast(club, weather, rings, water_c, warnings, ice_by_day=ice_by_day, water_by_day=water_by_day)
+    outlook_hours = (
+        rowing_forecast(club, outlook, rings, water_c, warnings, ice_by_day=ice_by_day, water_by_day=water_by_day) if outlook else None
+    )
     chain = weather_models.chain_for(club.launch_point.lat, club.launch_point.lon)
     return {
         "clubId": club.id,
@@ -591,6 +601,8 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         # Without a station: the newest satellite reading carried forward to today (water_estimate.py).
         "waterEstimate": _water_estimate_json(estimate),
         "waterModelC": water_model_c,
+        # Today's water carried on with the forecast air, one value per day (lakes only).
+        "waterForecast": None if water_forecast is None else [{"date": d.isoformat(), "celsius": c} for d, c in water_forecast],
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.

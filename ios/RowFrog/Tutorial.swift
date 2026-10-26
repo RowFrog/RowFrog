@@ -25,6 +25,14 @@ enum Tutorial {
         UserDefaults.standard.set(true, forKey: resetTipsKey)
     }
 
+    /// "Show the tips again": only the closed one-time tips return, at the next
+    /// start, since TipKit forgets them only before it is configured.
+    static func replayTips() {
+        UserDefaults.standard.set(true, forKey: resetTipsKey)
+    }
+
+    static var tipsComingBack: Bool { UserDefaults.standard.bool(forKey: resetTipsKey) }
+
     /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all,
     /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view, water estimate, route stretch, weather map).
     static func configureTips() {
@@ -218,7 +226,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "info.circle", text: tr("Tap ⓘ on a card to see what its icons and colours mean. Settings › Help has the full legend.")),
         ]
         case .warnings: [
-            TourPoint(symbol: "water.waves", text: tr("Lake storm warnings for the lake and weather warnings for the town.")),
+            TourPoint(symbol: "water.waves", text: tr("Storm warnings for the lake and weather warnings for the town.")),
             TourPoint(symbol: "text.bubble", text: tr("A warning also appears in the Why line and on the location list.")),
             TourPoint(symbol: "light.beacon.max", text: tr("On the lake, also watch the storm warning lights on the shore. The warnings card explains what they mean.")),
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("The light and the warnings always stay on top. Arrange this page, at the end of each page, sorts or hides the other cards.")),

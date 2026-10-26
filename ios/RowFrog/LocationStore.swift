@@ -332,8 +332,18 @@ final class ForecastStore {
             raw[clubID] = forecast
             failures[clubID] = nil
         } catch {
+            // Called off (the view that asked went away): not a failure, the
+            // forecast already shown stays and the next load fetches it.
+            if error is CancellationError || (error as? URLError)?.code == .cancelled { return }
             failures[clubID] = RefreshFailure(error, ownPlace: clubID.hasPrefix(OwnPlace.idPrefix))
         }
+    }
+
+    /// Pull to refresh: loads in a task of its own. SwiftUI cancels the pull's
+    /// task when the page redraws during the download, which called off every
+    /// refresh ("cancelled") before the forecast arrived.
+    func refresh(_ clubIDs: [String]) async {
+        await Task { await reload(clubIDs) }.value
     }
 
     /// The forecast for a club with the user's boat and limits.
@@ -411,7 +421,7 @@ enum RefreshFailure: Equatable {
         case .placeService:
             tr("Your own places get their forecast straight from Open-Meteo, which did not answer properly. That is on their side and usually passes quickly. Try again later.")
         case let .other(detail):
-            tr("Something unexpected went wrong (%@). Pull down to try again.", detail)
+            tr("Loading the forecast failed on your phone for an unexpected reason (%@). The forecast shown stays. Pull down to try again; if it keeps failing, please tell us.", detail)
         }
     }
 }

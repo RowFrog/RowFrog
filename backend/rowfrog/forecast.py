@@ -91,6 +91,7 @@ def rowing_forecast(
     warnings: list[Warning] = (),
     thresholds: Thresholds = Thresholds(),
     ice_by_day: dict[date, Light] | None = None,
+    water_by_day: dict[date, float] | None = None,
 ) -> list[RowingHour]:
     hours = []
     p = club.launch_point
@@ -106,7 +107,8 @@ def rowing_forecast(
             wind_gust_ms=h.wind_gust_ms or 0.0,
             wave_height_m=wave,
             visibility_m=h.visibility_m,
-            water_temp_c=water_temp_c,
+            # The water forecast for the hour's day where there is one, else today's water.
+            water_temp_c=(water_by_day or {}).get(h.time.astimezone(LOCAL).date(), water_temp_c),
             thunderstorm=_thunderstorm(h),
             daylight=daylight,
             daylight_name=daylight_name,

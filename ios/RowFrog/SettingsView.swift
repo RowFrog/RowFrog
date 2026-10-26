@@ -411,6 +411,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Save mobile data", .data, words: ["Low Data Mode", "Datensparmodus", "satellite", "radar"]),
             SettingsSearch("Battery", .data, words: ["Akku", "Low Power Mode", "Stromsparmodus", "background", "Hintergrund"]),
             SettingsSearch("Show the tour again", .help, words: ["tutorial", "Einführung", "tips", "Tipps"]),
+            SettingsSearch("Show the tips again", .help, words: ["Tipps", "hints", "Hinweise"]),
             SettingsSearch("Legend: what the symbols mean", .help, words: ["Legende", "symbols", "Symbole"]),
             SettingsSearch("Version", .about),
             SettingsSearch("Safety notice", .about, path: [.about, .safety], words: ["Sicherheit", "disclaimer"]),
@@ -648,6 +649,7 @@ private struct HelpSettingsView: View {
     let locations: LocationStore
     @State private var showingTour = false
     @State private var showingLegend = false
+    @State private var tipsComingBack = Tutorial.tipsComingBack
 
     var body: some View {
         Form {
@@ -658,6 +660,14 @@ private struct HelpSettingsView: View {
                 } label: {
                     Label(tr("Show the tour again"), systemImage: "questionmark.circle")
                 }
+                Button {
+                    Tutorial.replayTips()
+                    tipsComingBack = true
+                } label: {
+                    Label(tipsComingBack ? tr("Tips come back next time you open the app") : tr("Show the tips again"),
+                          systemImage: tipsComingBack ? "checkmark.circle" : "lightbulb")
+                }
+                .disabled(tipsComingBack)
                 Button { showingLegend = true } label: {
                     Label(tr("Legend: what the symbols mean"), systemImage: "info.circle")
                 }
