@@ -687,11 +687,13 @@ enum SatelliteWind {
         func point(_ lon: Double, _ lat: Double) -> CGPoint {
             CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * size.width, y: (box[3] - lat) / (box[3] - box[1]) * size.height)
         }
+        let rings = view.outline.filter { $0.count > 2 }.map { ring in ring.map { point($0[0], $0[1]) } }
         let water = CGMutablePath()
-        for ring in view.outline where ring.count > 2 {
-            water.addLines(between: ring.map { point($0[0], $0[1]) })
+        for ring in rings {
+            water.addLines(between: ring)
             water.closeSubpath()
         }
+        let widthM = (box[2] - box[0]) * 111_320 * cos((box[1] + box[3]) / 2 * .pi / 180)
         let samples = zip(view.points, hour.wind).compactMap { p, wind -> WindArrows.Sample? in
             guard let from = wind.fromDeg, let speed = wind.speedMs else { return nil }
             return WindArrows.Sample(point: point(p.lon, p.lat), towardDeg: from + 180, speedMs: speed)
@@ -704,7 +706,7 @@ enum SatelliteWind {
         let arrows = WindArrows.arrows(in: area, spacing: spacing, water: water, from: samples, land: land.map { land in { p in
             land.at(MKMapPoint(CLLocationCoordinate2D(latitude: box[3] - Double(p.y / size.height) * (box[3] - box[1]),
                                                       longitude: box[0] + Double(p.x / size.width) * (box[2] - box[0]))))
-        } })
+        } }, shore: WindArrows.Shore(rings: rings), blend: CGFloat(WindArrows.blendM / widthM) * size.width)
         func screen(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * zoom - offset.x, y: p.y * zoom - offset.y) }
 
         let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))

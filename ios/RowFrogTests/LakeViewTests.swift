@@ -159,6 +159,19 @@ final class LakeViewTests: XCTestCase {
         }
         // Without it, only the water.
         XCTAssertTrue(WindArrows.arrows(in: area, spacing: 10, water: water, from: samples).allSatisfy { !$0.ashore })
+        // Near the shore the land's wind fades in from the lake's: halfway at half the blend distance.
+        let shore = WindArrows.Shore(rings: [[CGPoint(x: 0, y: 0), CGPoint(x: 100, y: 0), CGPoint(x: 100, y: 100), CGPoint(x: 0, y: 100)]])
+        XCTAssertEqual(shore.distance(to: CGPoint(x: -10, y: 50), within: 20) ?? 0, 10, accuracy: 0.001)
+        XCTAssertNil(shore.distance(to: CGPoint(x: -30, y: 50), within: 20))
+        let half = WindArrows.mix((90, 4), (0, 2), 0.5)
+        XCTAssertEqual(half.towardDeg, 45, accuracy: 0.001)
+        XCTAssertEqual(half.speedMs, 3, accuracy: 0.001)
+        let blended = WindArrows.arrows(in: area, spacing: 10, water: water, from: samples, land: { _ in (0, 3) },
+                                        shore: shore, blend: 20)
+        for a in blended where a.ashore {
+            guard let d = shore.distance(to: a.at, within: 20) else { XCTAssertEqual(a.towardDeg, 0, accuracy: 0.001); continue }
+            XCTAssertEqual(a.speedMs, 4 + (3 - 4) * Double(d / 20), accuracy: 0.001)
+        }
         // Opposite winds of equal weight don't make a strong wind sideways.
         let two = [WindArrows.Sample(point: CGPoint(x: 0, y: 0), towardDeg: 0, speedMs: 5),
                    WindArrows.Sample(point: CGPoint(x: 10, y: 0), towardDeg: 10, speedMs: 5)]

@@ -1589,6 +1589,9 @@ final class LakeOverlay: NSObject, MKOverlay {
     let rings: [[MKMapPoint]]
     /// The water in map points, to tell arrows on it from those on land.
     let water: CGPath
+    /// The shore in map points, and how far from it the land's wind fades in.
+    let shore: WindArrows.Shore
+    let blend: CGFloat
 
     init(view: LakeView) {
         let g = view.grid
@@ -1603,6 +1606,8 @@ final class LakeOverlay: NSObject, MKOverlay {
             water.closeSubpath()
         }
         self.water = water
+        shore = WindArrows.Shore(rings: rings.map { $0.map { CGPoint(x: $0.x, y: $0.y) } })
+        blend = CGFloat(WindArrows.blendM * MKMapPointsPerMeterAtLatitude(coordinate.latitude))
     }
 }
 
@@ -1696,14 +1701,16 @@ final class LakeRenderer: MKOverlayRenderer {
 
         // Arrows on an even grid over the whole map, as on the weather map, fixed
         // to the map so the tiles agree; the grid gets finer as the map zooms in.
-        // On land the wind is the wind map's own forecast.
+        // On land the wind is the wind map's own forecast, faded in from the
+        // lake's over the first kilometre.
         // Dark arrows with a light edge read on light and dark maps alike;
         // those on land are fainter. Colours stay on the water.
         let margin = Double(WindArrows.length(15) / zoomScale)
         let area = mapRect.insetBy(dx: -margin, dy: -margin)
         let grid = WindArrows.arrows(in: CGRect(x: area.minX, y: area.minY, width: area.width, height: area.height),
                                      spacing: WindArrows.spacing / zoomScale, water: lake.water, from: arrows,
-                                     land: land.map { land in { land.at(MKMapPoint(x: $0.x, y: $0.y)) } })
+                                     land: land.map { land in { land.at(MKMapPoint(x: $0.x, y: $0.y)) } },
+                                     shore: lake.shore, blend: lake.blend)
         context.setLineCap(.round)
         context.setLineJoin(.round)
         for ashore in [true, false] {
