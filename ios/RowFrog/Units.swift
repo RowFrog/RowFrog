@@ -49,6 +49,17 @@ enum SpeedUnit: String, CaseIterable, Identifiable {
         }
     }
 
+    /// For a chart: like `convert`, but Beaufort runs on through each force (4.0 at
+    /// its lower limit, 4.5 halfway to 5), so a line and a limit compare as in
+    /// every other unit: a gust just past the amber limit is drawn above it.
+    func chartValue(_ ms: Double) -> Double {
+        guard self == .beaufort else { return convert(ms) }
+        let force = Self.beaufort(ms)
+        let lower = force == 0 ? 0 : Self.beaufortLimits[force - 1]
+        let upper = force < Self.beaufortLimits.count ? Self.beaufortLimits[force] : lower + 4.2
+        return min(Double(force) + (ms - lower) / (upper - lower), 12.99)
+    }
+
     /// Upper limits of Beaufort 0 to 11 in m/s; above the last is 12.
     private static let beaufortLimits = [0.3, 1.6, 3.4, 5.5, 8.0, 10.8, 13.9, 17.2, 20.8, 24.5, 28.5, 32.7]
 

@@ -179,7 +179,7 @@ private struct ConditionTile: View {
                         }
                         Spacer(minLength: 0)
                         // Every graphic gets the same height, so all tiles are as tall.
-                        accessory.frame(height: Self.graphicHeight)
+                        ConditionGraphic(condition: condition, data: data).frame(height: Self.graphicHeight)
                     }
                 }
                 .opacity(offSeason ? 0.45 : 1)
@@ -276,8 +276,55 @@ private struct ConditionTile: View {
         }
     }
 
-    @ViewBuilder
-    private var accessory: some View {
+    /// Until the ice estimate is in the app: warm water cannot freeze over.
+    private var iceGuess: (value: String, detail: String) {
+        if offSeason { return (tr("Off season"), tr("Nov–Apr")) }
+        if let ice = data.forecast.ice, ice.status != "unavailable" {
+            return (ice.title, ice.detail)
+        }
+        if let c = data.water?.celsius, c >= 8 {
+            return (tr("No ice"), tr("Water too warm"))
+        }
+        return (tr("No data yet"), tr("Check the lake yourself"))
+    }
+
+    private var sunTile: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            switch data.forecast.sunState(at: data.moment) {
+            case let .up(sunrise, sunset)?:
+                header(tr("Sunset"))
+                sunLine(Format.time(sunset), tr("Sunrise %@", Format.time(sunrise)), sunrise: sunrise, sunset: sunset, at: data.moment)
+            case let .down(sunrise, sunset)?:
+                header(tr("Sunrise"))
+                sunLine(Format.time(sunrise), tr("Sunset %@", Format.time(sunset)), sunrise: sunrise, sunset: sunset, at: data.moment)
+            case nil:
+                header(condition.title)
+                Text("–").font(.title3.weight(.semibold))
+            }
+        }
+    }
+
+    /// Laid out like the other tiles: value and detail on the left, the sun path on the right.
+    private func sunLine(_ value: String, _ detail: String, sunrise: Date, sunset: Date, at: Date) -> some View {
+        HStack(alignment: .center) {
+            VStack(alignment: .leading, spacing: 0) {
+                Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+            }
+            Spacer(minLength: 0)
+            SunPath(sunrise: sunrise, sunset: sunset, at: at, lineWidth: 2).frame(width: 64, height: Self.graphicHeight)
+        }
+    }
+}
+
+/// A value's small graphic: on its tile, and larger at the top of its detail view.
+struct ConditionGraphic: View {
+    let condition: Condition
+    let data: ConditionData
+
+    private var hour: ForecastHour { data.now }
+
+    var body: some View {
         switch condition {
         case .temperature:
             ScaleBar(fraction: ((hour.temperatureC ?? 0) + 10) / 45, colors: [.blue, .teal, .green, .orange, .red])
@@ -328,46 +375,6 @@ private struct ConditionTile: View {
             ScaleBar(fraction: (hour.uvIndex ?? 0) / 11, colors: uvColors)
         case .ice, .daylight:
             EmptyView()
-        }
-    }
-
-    /// Until the ice estimate is in the app: warm water cannot freeze over.
-    private var iceGuess: (value: String, detail: String) {
-        if offSeason { return (tr("Off season"), tr("Nov–Apr")) }
-        if let ice = data.forecast.ice, ice.status != "unavailable" {
-            return (ice.title, ice.detail)
-        }
-        if let c = data.water?.celsius, c >= 8 {
-            return (tr("No ice"), tr("Water too warm"))
-        }
-        return (tr("No data yet"), tr("Check the lake yourself"))
-    }
-
-    private var sunTile: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            switch data.forecast.sunState(at: data.moment) {
-            case let .up(sunrise, sunset)?:
-                header(tr("Sunset"))
-                sunLine(Format.time(sunset), tr("Sunrise %@", Format.time(sunrise)), sunrise: sunrise, sunset: sunset, at: data.moment)
-            case let .down(sunrise, sunset)?:
-                header(tr("Sunrise"))
-                sunLine(Format.time(sunrise), tr("Sunset %@", Format.time(sunset)), sunrise: sunrise, sunset: sunset, at: data.moment)
-            case nil:
-                header(condition.title)
-                Text("–").font(.title3.weight(.semibold))
-            }
-        }
-    }
-
-    /// Laid out like the other tiles: value and detail on the left, the sun path on the right.
-    private func sunLine(_ value: String, _ detail: String, sunrise: Date, sunset: Date, at: Date) -> some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 0) {
-                Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
-                Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
-            }
-            Spacer(minLength: 0)
-            SunPath(sunrise: sunrise, sunset: sunset, at: at, lineWidth: 2).frame(width: 64, height: Self.graphicHeight)
         }
     }
 }
@@ -584,7 +591,7 @@ struct ConditionDetailView: View {
             if let club, let layer, sideBySide {
                 HStack(alignment: .top, spacing: 16) {
                     VStack(alignment: .leading, spacing: 14) {
-                        top(detail, head: head, shown: shown, hidden: hidden)
+                        top(condition, detail, head: head, shown: shown, hidden: hidden)
                     }
                     .frame(maxWidth: .infinity)
                     // As tall as the chart beside it on the iPad.
@@ -592,7 +599,7 @@ struct ConditionDetailView: View {
                         .frame(maxWidth: .infinity)
                 }
             } else {
-                top(detail, head: head, shown: shown, hidden: hidden)
+                top(condition, detail, head: head, shown: shown, hidden: hidden)
                 if let club, let layer {
                     // After the chart's tip, so one tip shows at a time.
                     if mapTipShown {
@@ -634,17 +641,29 @@ struct ConditionDetailView: View {
 
     /// The big number and the chart with its legend.
     @ViewBuilder
-    private func top(_ detail: ConditionDetail, head: ConditionDetail, shown: ConditionData, hidden: Set<String>) -> some View {
+    private func top(_ condition: Condition, _ detail: ConditionDetail, head: ConditionDetail, shown: ConditionData, hidden: Set<String>) -> some View {
         HStack(alignment: .center, spacing: 8) {
             Image(systemName: "chevron.compact.left").foregroundStyle(.tertiary)
             VStack(alignment: .leading, spacing: 0) {
                 Text(head.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
                     .contentTransition(.numericText())
-                Text(shown.now.time == data.now.time ? head.note : [Format.dayTime(shown.now.time), head.note].filter { !$0.isEmpty }.joined(separator: " · "))
+                Text(Self.unbroken(shown.now.time == data.now.time ? head.note : [Format.dayTime(shown.now.time), head.note].filter { !$0.isEmpty }.joined(separator: " · ")))
                     .font(.subheadline).foregroundStyle(.secondary)
+                    // Two lines kept free, so scrubbing never makes the chart jump.
+                    .lineLimit(2...5, reservesSpace: true)
             }
             Spacer(minLength: 0)
-            if let big = head.big { big }
+            // The tile's graphic, larger, where the value has no bigger one of its own.
+            if let big = head.big {
+                big
+            } else if condition != .ice {
+                // Scaling does not change the space a view takes, so it gets its scaled size.
+                let width: CGFloat = condition == .humidity || condition == .cloudCover ? 78 : 46
+                ConditionGraphic(condition: condition, data: shown)
+                    .frame(width: width, height: ConditionTile.graphicHeight)
+                    .scaleEffect(1.6)
+                    .frame(width: width * 1.6, height: ConditionTile.graphicHeight * 1.6)
+            }
             Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
         }
         .accessibilityElement(children: .contain)
@@ -663,6 +682,15 @@ struct ConditionDetailView: View {
                 legend(detail, condition: condition, hidden: hidden)
             }
         }
+    }
+
+    /// A note that breaks only between its parts ("Gusts 3 m/s · from SW"), never
+    /// inside one, so the break does not move with each digit or wind direction.
+    /// Sentences (ice, water forecast) still break where they need to.
+    static func unbroken(_ note: String) -> String {
+        note.components(separatedBy: " · ")
+            .map { $0.count > 24 ? $0 : $0.replacingOccurrences(of: " ", with: "\u{00A0}") }
+            .joined(separator: " · ")
     }
 
     /// The weather map tip, above the map card in portrait once the chart's tip is closed.
@@ -1057,6 +1085,8 @@ private struct ConditionChart: View {
 
     /// A value with as many decimals as it needs to be read: 0.19, 5.2, 14.
     private func valueText(_ y: Double) -> String {
+        // Beaufort is drawn running on through each force (`chartValue`) but read whole.
+        if detail.unit == SpeedUnit.beaufort.symbol { return "\(Int(y)) \(detail.unit)" }
         let digits = abs(y) < 1 ? 2 : abs(y) < 10 ? 1 : 0
         return Format.number(y, digits: digits) + (detail.unit.isEmpty ? "" : " " + detail.unit)
     }
@@ -1434,7 +1464,6 @@ extension ConditionDetail {
         return ConditionDetail(
             value: h.humidityPct.map { "\(Format.number($0)) %" } ?? "–",
             note: tr("Dew point %@", Format.degrees(h.dewPointC)),
-            big: h.temperatureC.flatMap { air in h.dewPointC.map { AnyView(DewGap(air: air, dewPoint: $0).scaleEffect(1.6).frame(width: 80, height: 60)) } },
             unit: "%",
             lines: [ChartLine(name: tr("Humidity"), color: .teal, points: d.points(\.humidityPct))],
             yDomain: 0...130,
@@ -1481,12 +1510,12 @@ extension ConditionDetail {
             big: h.windFromDeg.map { AnyView(WindDial(speed: Format.windNumber(h.windSpeedMs), fromDeg: $0, unit: w.symbol).frame(width: 100, height: 100)) },
             unit: w.symbol,
             lines: [
-                ChartLine(name: tr("Wind"), color: .blue, points: d.points { $0.windSpeedMs.map(w.convert) }),
-                ChartLine(name: tr("Gusts"), color: .purple, points: d.points { $0.windGustMs.map(w.convert) }),
+                ChartLine(name: tr("Wind"), color: .blue, points: d.points { $0.windSpeedMs.map(w.chartValue) }),
+                ChartLine(name: tr("Gusts"), color: .purple, points: d.points { $0.windGustMs.map(w.chartValue) }),
             ],
             limits: [
-                line(.windAmber, w.convert, .orange, tr("Wind: row with care")),
-                line(.windRed, w.convert, .red, tr("Wind: stay ashore")),
+                line(.windAmber, w.chartValue, .orange, tr("Wind: row with care")),
+                line(.windRed, w.chartValue, .red, tr("Wind: stay ashore")),
             ],
             limitInfo: tr("Amber from %@ (Beaufort 4, the first whitecaps) and red from %@ (Beaufort 5, many whitecaps): in a single or double the boat gets hard to steer and water comes over the side. Gusts have their own limits: amber from %@ and red from %@ (46 km/h), the level at which DWD issues a strong-wind warning and the lake's warning lights start flashing. These are the app's starting values for small boats.",
                           RowingLimit.windAmber.format(5.5), RowingLimit.windRed.format(8), RowingLimit.gustAmber.format(8), RowingLimit.gustRed.format(12.8))
@@ -1743,9 +1772,6 @@ extension ConditionDetail {
         return ConditionDetail(
             value: pct(h.cloudCoverPct),
             note: tr("Low cloud %@ %%", Format.number(h.cloudCoverLowPct)),
-            big: h.cloudCoverHighPct.flatMap { high in h.cloudCoverMidPct.flatMap { mid in h.cloudCoverLowPct.map { low in
-                AnyView(CloudLayers(layers: [(tr("H"), high / 100), (tr("M"), mid / 100), (tr("L"), low / 100)]).scaleEffect(1.6).frame(width: 80, height: 60))
-            } } },
             unit: "%",
             lines: [
                 ChartLine(name: tr("All cloud"), color: .gray, points: d.points(\.cloudCoverPct)),

@@ -447,6 +447,13 @@ jobs:
           WAIT=30 shoot 194-water-scrub-forecast-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWChartSelect 50 -RWLanguage de
           WAIT=30 shoot 195-satellite-tabs-german light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWLanguage de
           shoot 196-old-order-radar-first light -RWOpenClub mrc-1880 -RWPageLayout "radar,conditions,lakeView,hourly,launchPoint,satellite" -RWPageLayoutVersion 1
+          # Detail views (owner's iPad test, 2026-10-26): Beaufort drawn running on through
+          # each force, the tile's graphic at the top right, the line under the number kept
+          # at two lines while scrubbing.
+          WAIT=30 shoot 211-detail-wind-beaufort light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWUnitWind beaufort -RWChartSelect 8
+          WAIT=30 shoot 212-detail-cloud light -RWOpenClub mrc-1880 -RWOpenCondition cloudCover
+          WAIT=30 shoot 213-detail-humidity-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition humidity -RWLanguage de
+          WAIT=30 shoot 214-detail-waves light -RWOpenClub mrc-1880 -RWOpenCondition waves -RWChartSelect 8
           shoot 105-arrange-page light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 106-arrange-page-german-dark dark -RWOpenClub mrc-1880 -RWArrange YES -RWLanguage de
           shoot_n 107-club-page-landscape 7 light -RWOpenClub mrc-1880 -RWLandscape YES
