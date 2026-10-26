@@ -101,7 +101,10 @@ struct DetailMapCard: View {
             if layer.links != .none {
                 chain
             }
-            Button { full = true } label: {
+            Button {
+                full = true
+                WeatherMapTip().invalidate(reason: .actionPerformed)
+            } label: {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
             }
             .accessibilityLabel(tr("Opens the map full screen"))
@@ -153,7 +156,10 @@ struct DetailMapCard: View {
 
     private var controls: some View {
         HStack(spacing: 10) {
-            Button { playing.toggle() } label: {
+            Button {
+                playing.toggle()
+                WeatherMapTip().invalidate(reason: .actionPerformed)
+            } label: {
                 Image(systemName: playing ? "pause.fill" : "play.fill")
             }
             .accessibilityLabel(playing ? tr("Pause") : tr("Play"))
