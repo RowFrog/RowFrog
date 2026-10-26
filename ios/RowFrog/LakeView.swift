@@ -136,6 +136,16 @@ struct LakeHour: Decodable, Hashable, Identifiable {
 struct LakeWide: Decodable, Hashable {
     var light: Light
     var reasons: [Reason]
+
+    /// The stripes the maps draw over the squares: red while the whole lake is
+    /// red, amber in the sunrise or sunset hour or under an amber warning. Cold
+    /// water stays in the panel only: it lasts for months and is the same all
+    /// over the lake, so it never tells where to row.
+    var stripes: Light? {
+        if light == .red { return .red }
+        let cold = Condition.waterTemperature.reasonNames
+        return reasons.contains { $0.light == .amber && !cold.contains($0.condition) } ? .amber : nil
+    }
 }
 
 struct LakeWind: Decodable, Hashable {
@@ -295,7 +305,18 @@ final class LakeViewStore {
     func load(_ lakeID: String, force: Bool = false) async {
         if !force, let view = raw[lakeID], view.generatedAt > .now.addingTimeInterval(-30 * 60) { return }
         do {
-            let view = try await api.lakeView(lakeID: lakeID)
+            var view = try await api.lakeView(lakeID: lakeID)
+            // Screenshots: -RWLakeWide twilight|cold|dark sets the whole-lake light of every hour.
+            if let wide = UserDefaults.standard.string(forKey: "RWLakeWide") {
+                let reasons: [Reason] = switch wide {
+                case "dark": [Reason(condition: "daylight", light: .red)]
+                case "cold": [Reason(condition: "cold_water", light: .amber)]
+                default: [Reason(condition: "twilight", light: .amber), Reason(condition: "cold_water", light: .amber)]
+                }
+                for i in view.hours.indices {
+                    view.hours[i].lakeWide = LakeWide(light: reasons.map(\.light).max() ?? .green, reasons: reasons)
+                }
+            }
             applied[lakeID] = nil
             raw[lakeID] = view
             failed.remove(lakeID)
