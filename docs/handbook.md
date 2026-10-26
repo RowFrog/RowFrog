@@ -110,7 +110,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWChartSelect 5` a detail chart opens with the blue line (and the big number) five hours on, and its label shown
 - `-AppleLanguages '(de)'` start as on a phone set to German (the app picks German from the phone's languages)
 - `-RWOpenCondition <name>` open a detail view (swipe or the symbol menu moves to the others)
-- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map, hour view, water estimate, route stretch and weather map tips, which otherwise wait until the rain radar, hourly, conditions, close loop and chart scrub tips are closed
+- `-RWTutorialPage n` open the first-start tour at page n (0 = welcome); `-RWShowTips YES` show every one-time tip; `-RWLaterTips YES` show the radar map, hour view, water estimate, route stretch and weather map tips, which otherwise wait until the rain radar, hourly, conditions, close loop and chart scrub tips are closed; `-RWTourAutoHome YES` on the home base page (`-RWTutorialPage 1`) picks the first suggested club, to check the tour stays on that page
 - `-RWResetTips YES` show the one-time tips again, as after Settings › Help
 - `-RWOpenForecastSource YES` open the forecast source sheet
 - `-RWDeveloperOptions YES` and `-RWPickedModels '<dict><key>mrc-1880</key><string>ecmwf_ifs025</string></dict>'`
