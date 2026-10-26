@@ -95,6 +95,8 @@ enum German {
         "Thunderstorms are possible.": "Gewitter sind möglich.",
         "The sun is down. Rowing is only advised in daylight.": "Die Sonne ist untergegangen. Rudern wird nur bei Tageslicht empfohlen.",
         "Sunrise or sunset falls in this hour.": "In dieser Stunde geht die Sonne auf oder unter.",
+        "Sunrise at %@ in this hour.": "In dieser Stunde geht die Sonne um %@ auf.",
+        "Sunset at %@ in this hour.": "In dieser Stunde geht die Sonne um %@ unter.",
 
         // Conditions and legend
         "Air temperature": "Lufttemperatur",

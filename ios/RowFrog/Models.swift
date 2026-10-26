@@ -533,6 +533,20 @@ struct ClubForecast: Codable, Hashable {
         return first.with(reasons: reasons, sunUp: sunUp)
     }
 
+    /// A reason's sentence for `hour`; "sunrise or sunset in this hour" says
+    /// which, and when.
+    func explanation(_ reason: Reason, in hour: ForecastHour) -> String {
+        guard reason.condition == "twilight", let days = daylight else { return reason.explanation }
+        let end = hour.time.addingTimeInterval(3600)
+        if let rise = days.map(\.sunrise).first(where: { $0 >= hour.time && $0 < end }) {
+            return tr("Sunrise at %@ in this hour.", Format.time(rise))
+        }
+        if let set = days.map(\.sunset).first(where: { $0 >= hour.time && $0 < end }) {
+            return tr("Sunset at %@ in this hour.", Format.time(set))
+        }
+        return reason.explanation
+    }
+
     /// Where the sun stands at `date`: up until sunset, or down until the next sunrise.
     func sunState(at date: Date) -> SunState? {
         guard let days = daylight?.sorted(by: { $0.sunrise < $1.sunrise }) else { return nil }
