@@ -50,6 +50,11 @@ MOSTLY_CLEAR_MAX_LAKE_CLOUD = 0.3
 MAX_PIXELS = 1280  # longer side of the picture
 METRES_PER_PIXEL = 10.0
 MARGIN = 0.08  # shore around the lake, as a share of its size
+# Small waters show at least this much around them, so the picture has the town
+# and the neighbouring river or lake instead of a few blurred pixels (owner's
+# pick 2026-10-26, "option C").
+MIN_WIDTH_M = 4000
+MIN_HEIGHT_M = 3000
 # Lakes too big for 10 m in MAX_PIXELS also get the picture at 10 m, cut into
 # tiles for the full-screen view (the Process API gives at most 2500 px a side).
 TILE_PIXELS = 1024
@@ -116,6 +121,12 @@ def frame(ring: list[tuple[float, float]]) -> tuple[tuple[float, float, float, f
     mid_lat = math.radians((south + north) / 2)
     width_m = (east - west) * 111_320 * math.cos(mid_lat)
     height_m = (north - south) * 110_540
+    if width_m < MIN_WIDTH_M:
+        grow = (MIN_WIDTH_M - width_m) / 2 / (111_320 * math.cos(mid_lat))
+        west, east, width_m = west - grow, east + grow, MIN_WIDTH_M
+    if height_m < MIN_HEIGHT_M:
+        grow = (MIN_HEIGHT_M - height_m) / 2 / 110_540
+        south, north, height_m = south - grow, north + grow, MIN_HEIGHT_M
     scale = max(METRES_PER_PIXEL, max(width_m, height_m) / MAX_PIXELS)
     return (west, south, east, north), max(1, round(width_m / scale)), max(1, round(height_m / scale))
 
