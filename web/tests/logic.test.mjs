@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   isStale, shownLight, currentHour, nextHours, beaufort, windValue, compass, searchClubs, fold, town, overlayBox,
   sky, skyIcon, precipitationKind, lightFor, feelsLikeNote, pressureTrend, estimatedWater, iceOff, iceValue, sunState,
-  applyBoat, applyBoatToHour, coldWaterKit,
+  applyBoat, applyBoatToHour, coldWaterKit, place, twilight,
 } from "../public/app/logic.js";
 
 const forecast = JSON.parse(readFileSync(new URL("fixtures/forecast.json", import.meta.url)));
@@ -116,4 +116,14 @@ test("cold water: what to bring, as the app's badge", () => {
   assert.equal(coldWaterKit(12.7), "lifeJacket");
   assert.equal(coldWaterKit(8, "small"), "partnerBoat");
   assert.equal(coldWaterKit(8, "big"), "nearShore");
+});
+
+test("place reads like the app's, and twilight says sunrise or sunset", () => {
+  assert.equal(place("Starnberger See", "Starnberg"), "Starnberger See · Starnberg");
+  assert.equal(place("Water near Aken", "Aken"), "Aken");
+  assert.equal(place("Water near Aken", null), "Water near Aken");
+  const f = { daylight: [{ date: "2026-10-26", sunrise: "2026-10-26T05:49:00Z", sunset: "2026-10-26T16:07:00Z" }] };
+  assert.equal(twilight(f, { time: "2026-10-26T16:00:00Z" }).kind, "sunset");
+  assert.equal(twilight(f, { time: "2026-10-26T05:00:00Z" }).time.toISOString(), "2026-10-26T05:49:00.000Z");
+  assert.equal(twilight(f, { time: "2026-10-26T12:00:00Z" }), null);
 });
