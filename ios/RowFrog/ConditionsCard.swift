@@ -647,10 +647,13 @@ struct ConditionDetailView: View {
             VStack(alignment: .leading, spacing: 0) {
                 Text(head.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
                     .contentTransition(.numericText())
-                Text(Self.unbroken(shown.now.time == data.now.time ? head.note : [Format.dayTime(shown.now.time), head.note].filter { !$0.isEmpty }.joined(separator: " · ")))
-                    .font(.subheadline).foregroundStyle(.secondary)
-                    // Two lines kept free, so scrubbing never makes the chart jump.
-                    .lineLimit(2...5, reservesSpace: true)
+                // Two lines kept free (the hidden text), so scrubbing never makes the chart jump.
+                ZStack(alignment: .topLeading) {
+                    Text(verbatim: " \n ").hidden()
+                    Text(Self.unbroken(shown.now.time == data.now.time ? head.note : [Format.dayTime(shown.now.time), head.note].filter { !$0.isEmpty }.joined(separator: " · ")))
+                        .foregroundStyle(.secondary)
+                }
+                .font(.subheadline)
             }
             Spacer(minLength: 0)
             // The tile's graphic, larger, where the value has no bigger one of its own.
