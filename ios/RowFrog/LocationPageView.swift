@@ -890,10 +890,13 @@ struct MetricView: View {
             Label(title, systemImage: symbol)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            // Two lines rather than cut off, when four values share the row.
             Text(value)
                 .font(.system(size: size, weight: .light))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
                 .alignmentGuide(.metricValue) { $0[.firstTextBaseline] }
             if let caption, !caption.isEmpty {
                 Group {
@@ -901,8 +904,8 @@ struct MetricView: View {
                 }
                 .font(.caption2)
                 .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
             }
         }
         .accessibilityElement(children: .combine)
