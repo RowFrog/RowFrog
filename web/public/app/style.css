@@ -5,6 +5,7 @@
   --bg: #f2f2f7; --card: #ffffff; --tile: #f2f2f7; --text: #000000; --sub: #8a8a8e; --line: #e5e5ea; --fill: #e3e3e8;
   --accent: #007aff; --blue: #007aff; --teal: #30b0c7; --green: #34c759; --amber: #ff9500; --orange: #ff9500;
   --red: #ff3b30; --yellow: #ffcc00; --purple: #af52de; --grey: #8e8e93; --extreme: #8c004d;
+  --kit: #2e80d1; --kit-light: color-mix(in srgb, #2e80d1 45%, var(--card)); --deep-water: #1c4d8c;
   --sun: #ff9f0a; --moon: #8e8ef0; --cloud: #a2a2a8; --rain: #32ade6; --ice: #64d2ff;
   color-scheme: light dark;
 }
@@ -112,6 +113,10 @@ button.wide { margin-top: 0; }
 .now-metrics span { font-size: 17px; }
 .daylight { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 15px; }
 .daylight .moon { width: 44px; text-align: center; color: var(--sub); font-size: 18px; }
+
+.kit { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 10px; border-radius: 999px; font-size: 15px; font-weight: 600;
+  color: var(--kit); background: color-mix(in srgb, var(--kit) 18%, transparent); }
+.kit-line { color: var(--kit); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Warnings card. */
 .warning { border-left: 4px solid var(--w); border-radius: 2px; padding: 2px 0 2px 10px; margin: 8px 0; font-size: 15px; }

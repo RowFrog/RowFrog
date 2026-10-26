@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   isStale, shownLight, currentHour, nextHours, beaufort, windValue, compass, searchClubs, fold, town, overlayBox,
   sky, skyIcon, precipitationKind, lightFor, feelsLikeNote, pressureTrend, estimatedWater, iceOff, iceValue, sunState,
-  applyBoat, applyBoatToHour,
+  applyBoat, applyBoatToHour, coldWaterKit,
 } from "../public/app/logic.js";
 
 const forecast = JSON.parse(readFileSync(new URL("fixtures/forecast.json", import.meta.url)));
@@ -95,12 +95,12 @@ test("big boats get the app's looser limits; small boats keep the backend's ligh
   // Gusts 11 m/s: amber from 10.8 for big boats; the lake's strong-wind light is amber for them.
   assert.deepEqual(warm.reasons, [{ condition: "lake_strong_wind", light: "amber" }, { condition: "gusts", light: "amber" }]);
   assert.equal(warm.light, "amber");
-  // Very cold water: wind limits 1 m/s lower, a life jacket, and no single advice for big boats.
+  // Very cold water: wind limits 1 m/s lower; cold water itself shows as the badge, not in the light.
   const cold = applyBoatToHour(hour, "big", 8);
   assert.equal(cold.light, "red", "the sun is still down");
-  assert.ok(cold.reasons.some((r) => r.condition === "cold_water"));
-  assert.ok(!cold.reasons.some((r) => r.condition === "single_cold"));
+  assert.ok(!cold.reasons.some((r) => ["cold_water", "cool_water", "single_cold"].includes(r.condition)));
   assert.equal(cold.reasons.find((r) => r.condition === "gusts").light, "amber");
+  assert.ok(applyBoatToHour(hour, "big", 3).reasons.some((r) => r.condition === "freezing_water" && r.light === "amber"));
 });
 
 test("town from an address and the ice picture's place", () => {
@@ -108,4 +108,12 @@ test("town from an address and the ice picture's place", () => {
   assert.equal(town(null), null);
   const box = overlayBox([11, 47, 12, 48], [11.5, 47, 12, 47.5]);
   assert.deepEqual(box, { left: 50, top: 50, width: 50, height: 50 });
+});
+
+test("cold water: what to bring, as the app's badge", () => {
+  assert.equal(coldWaterKit(16), null);
+  assert.equal(coldWaterKit(null), null);
+  assert.equal(coldWaterKit(12.7), "lifeJacket");
+  assert.equal(coldWaterKit(8, "small"), "partnerBoat");
+  assert.equal(coldWaterKit(8, "big"), "nearShore");
 });

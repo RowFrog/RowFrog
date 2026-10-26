@@ -278,6 +278,8 @@ const LIMITS = {
 };
 
 const COLD_WATER_C = 10;
+/** Below this the app advises a life jacket (RowingLimit.lifeJacket). */
+const LIFE_JACKET_C = 15;
 const COLD_WIND_MARGIN_MS = 1;
 const FREEZING_WATER_C = 4;
 const LIMIT_REASONS = new Set(["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water"]);
@@ -302,10 +304,9 @@ export function applyBoatToHour(hour, boat, waterC) {
   add("wind", check(hour.windSpeedMs, base.windAmber - margin, base.windRed - margin));
   add("gusts", check(hour.windGustMs, base.gustAmber - margin, base.gustRed - margin));
   add("waves", check(hour.waveHeightM, base.waveAmber, base.waveRed));
-  if (waterC != null && waterC < 15) {
-    reasons.push({ condition: waterC < COLD_WATER_C ? "cold_water" : "cool_water", light: "amber" });
-    if (waterC < FREEZING_WATER_C) reasons.push({ condition: "freezing_water", light: "amber" });
-  }
+  // Cold water shows as the life-jacket badge (coldWaterKit), not in the
+  // light; only near-freezing water stays amber, as in score.py.
+  if (waterC != null && waterC < FREEZING_WATER_C) reasons.push({ condition: "freezing_water", light: "amber" });
   reasons.sort((a, b) => RANK[b.light] - RANK[a.light]);
   const light = reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green");
   return { ...hour, reasons, light };
@@ -318,4 +319,15 @@ export function applyBoat(forecast, boat, zone = ZONE) {
   const byDay = new Map((forecast.waterForecast ?? []).map((d) => [d.date, d.celsius]));
   const apply = (h) => applyBoatToHour(h, boat, byDay.get(localDay(h.time, zone)) ?? water);
   return { ...forecast, hours: forecast.hours.map(apply), outlook: forecast.outlook?.map(apply) };
+}
+
+/**
+ * What cold water calls for, as ColdWaterKit in the app: a life jacket below
+ * 15 °C, and below 10 °C also a partner boat (boats that may be singles) or
+ * staying near the shore (the others). Null in warmer water.
+ */
+export function coldWaterKit(waterC, boat = "small") {
+  if (waterC == null || waterC >= LIFE_JACKET_C) return null;
+  if (waterC >= COLD_WATER_C) return "lifeJacket";
+  return boat === "small" ? "partnerBoat" : "nearShore";
 }
