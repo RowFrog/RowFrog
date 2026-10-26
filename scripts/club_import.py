@@ -204,9 +204,50 @@ def place(clubs: list[dict], country: str, report: list[str], id_prefix: str = "
     return [*rivers.values(), *lakes.values()], out
 
 
+WATER_FIXES = ROOT / "data" / "catalogs" / "water-fixes.json"
+
+
+def apply_water_fixes(country: str, waters: list[dict], clubs: list[dict]) -> int:
+    """Moves clubs the import left under "Water near <town>" to the water named
+    for them in water-fixes.json (checked by hand), reusing a water of that
+    name in the catalog, and drops "Water near" entries no club is left on.
+    Their launch points stay until scripts/fix_unknown_waters.py --snap moves
+    them to the shore. Returns how many clubs moved."""
+    fixes = json.loads(WATER_FIXES.read_text(encoding="utf-8")).get(country, {}) if WATER_FIXES.exists() else {}
+    by_id = {w["id"]: w for w in waters}
+    by_name: dict[str, dict] = {}
+    for w in waters:
+        if w.get("kind") != "unknown":
+            by_name.setdefault(w["name"], w)
+    moved = 0
+    for club in clubs:
+        fix = fixes.get(club["id"])
+        if not fix or by_id.get(club["lakeId"], {}).get("kind") != "unknown":
+            continue
+        water = by_name.get(fix["water"])
+        if water is None:
+            water_id = ("river-" if fix["kind"] == "river" else "") + slug(fix["water"])
+            while water_id in by_id:
+                water_id += "-x"
+            point = club["launchPoint"]
+            water = {"id": water_id, "name": fix["water"], "country": country,
+                     "center": {"lat": point["lat"], "lon": point["lon"]}, "kind": fix["kind"]}
+            waters.append(water)
+            by_id[water_id] = by_name[fix["water"]] = water
+        club["lakeId"] = water["id"]
+        precision = club["launchPoint"]["precision"]
+        if "water not identified" in precision:
+            club["launchPoint"]["precision"] = precision.replace("water not identified", f"on the {fix['water']} (checked by hand)")
+        moved += 1
+    used = {c["lakeId"] for c in clubs}
+    waters[:] = [w for w in waters if w.get("kind") != "unknown" or w["id"] in used]
+    return moved
+
+
 def write_catalog(name: str, source: str, waters: list[dict], clubs: list[dict]) -> Path:
     """Saves data/catalogs/<name>.json, e.g. name "at-oerv"."""
     CATALOGS.mkdir(exist_ok=True)
+    apply_water_fixes(name.split("-")[0], waters, clubs)
     path = CATALOGS / f"{name}.json"
     catalog = {
         "version": 1,
