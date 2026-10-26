@@ -7,7 +7,9 @@ shore of that water in OpenStreetMap within SNAP_M; that needs Overpass, so it
 runs as the "Fix unknown waters" workflow. Only the water near each club is
 fetched (big rivers like the Rhein are huge relations), the catalog is saved
 after every club, and a run stops after SNAP_BUDGET_S, so running it again
-carries on with the clubs not yet snapped.
+carries on with the clubs not yet snapped. Catalogs and clubs go in random
+order and the server that answered last is asked first, so a busy server or a
+club whose lookup keeps failing does not use up every run on the same clubs.
 
     python scripts/fix_unknown_waters.py [--snap]
 """
@@ -16,16 +18,41 @@ from __future__ import annotations
 
 import json
 import math
+import random
 import sys
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 
 from club_import import CATALOGS, WATER_FIXES, apply_water_fixes
-from fetch_lake_outline import overpass
+from fetch_lake_outline import OVERPASS_SERVERS
 from live_check import nearest_shore
 
 FILES = ("de-drv", "de-osm", "at-oerv", "at-osm", "ch-swissrowing", "ch-osm")
 SNAP_M = 6000.0
 SNAP_BUDGET_S = 45 * 60
+
+
+_servers = list(OVERPASS_SERVERS)
+
+
+def overpass(q: str, timeout: float) -> dict:
+    """Asks each server once, the one that answered last first."""
+    data = urllib.parse.urlencode({"data": q}).encode()
+    errors = []
+    for url in list(_servers):
+        req = urllib.request.Request(url, data=data, headers={"User-Agent": "RowFrog/0.1"})
+        try:
+            with urllib.request.urlopen(req, timeout=timeout) as resp:
+                result = json.load(resp)
+        except (urllib.error.URLError, TimeoutError, json.JSONDecodeError) as e:
+            errors.append(f"{url}: {e}")
+            continue
+        _servers.remove(url)
+        _servers.insert(0, url)
+        return result
+    raise OSError("all Overpass servers failed: " + "; ".join(errors))
 
 
 def lines(e: dict) -> list[list[tuple[float, float]]]:
@@ -85,7 +112,7 @@ def main() -> int:
     fixes = json.loads(WATER_FIXES.read_text(encoding="utf-8"))
     deadline = time.monotonic() + SNAP_BUDGET_S
     out_of_time = False
-    for name in FILES:
+    for name in random.sample(FILES, len(FILES)):
         path = CATALOGS / f"{name}.json"
         catalog = json.loads(path.read_text(encoding="utf-8"))
         country = name.split("-")[0]
@@ -93,7 +120,7 @@ def main() -> int:
         snapped = 0
         if snap:
             waters = {w["id"]: w for w in catalog["lakes"]}
-            for club in catalog["clubs"]:
+            for club in random.sample(catalog["clubs"], len(catalog["clubs"])):
                 point = club["launchPoint"]
                 if club["id"] not in fixes.get(country, {}) or "checked by hand" not in point["precision"]:
                     continue
