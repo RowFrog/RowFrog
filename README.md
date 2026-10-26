@@ -109,7 +109,8 @@ backend works out a satellite estimate from Copernicus lake surface
 temperatures and Landsat (through Microsoft's Planetary Computer, no extra
 account), carried forward with the air temperatures; the top tile shows it
 in grey as "Estimated", and the detail view names the satellite and the date
-of the reading.
+of the reading. Where there is no recent clear satellite view either, the
+water temperature is estimated from the air temperatures alone, all year.
 
 **DWD warnings.** The page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
@@ -152,13 +153,17 @@ everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
 opens the radar map, with DWD's colour legend and a switch to play the radar
 as a loop. The app reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
 
-**Weather maps.** From the detail views a map opens for wind (with arrows),
+**Weather maps.** From the detail views a map opens for wind (with arrows on
+an even grid that adds arrows as you zoom in, longer in stronger wind),
 gusts, air temperature, feels like, humidity, air pressure, visibility and the
 rain forecast, made by the publishing job from DWD's ICON-D2 model (about 2 km)
 for each hour of the forecast, with no Open-Meteo calls. Lightning in the last
 hour and the UV index come live from DWD, fog and low cloud from the
 EUMETSAT satellite (`ios/RowFrog/WeatherMap.swift`,
-`backend/rowfrog/sources/icon_d2_maps.py`).
+`backend/rowfrog/sources/icon_d2_maps.py`). In the detail view the map sits
+under the chart (beside it in landscape) and follows the hour of the chart's
+line; a chain button lets it keep its own time, and a tap opens it full
+screen with a slim chart.
 
 **Battery.** The app keeps its battery use low: the radar only updates on the
 page in front, readings and map pictures are reused, widgets redraw only when
