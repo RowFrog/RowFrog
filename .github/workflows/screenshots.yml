@@ -393,6 +393,13 @@ jobs:
           shoot 103-hourly-header-stays light -RWOpenClub mrc-1880 -RWScrollTo hourly-1
           shoot 165-hourly-header-stays-dark dark -RWOpenClub mrc-1880 -RWScrollTo hourly-1 -RWLanguage de
           shoot 104-hour-view light -RWOpenClub mrc-1880 -RWOpenHour 6
+          # iPhone test round 4 (PR #72): one value where measurement and dashed forecast meet,
+          # the forecast scrubbed, the satellite tabs in German, an old saved order with the
+          # radar first (current conditions moves above it once).
+          WAIT=30 shoot 193-water-scrub-junction light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWChartSelect 0
+          WAIT=30 shoot 194-water-scrub-forecast-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWChartSelect 50 -RWLanguage de
+          WAIT=30 shoot 195-satellite-tabs-german light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWLanguage de
+          shoot 196-old-order-radar-first light -RWOpenClub mrc-1880 -RWPageLayout "radar,conditions,lakeView,hourly,launchPoint,satellite"
           shoot 105-arrange-page light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 106-arrange-page-german-dark dark -RWOpenClub mrc-1880 -RWArrange YES -RWLanguage de
           shoot_n 107-club-page-landscape 7 light -RWOpenClub mrc-1880 -RWLandscape YES
