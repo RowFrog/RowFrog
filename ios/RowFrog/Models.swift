@@ -56,6 +56,20 @@ struct Lake: Codable, Identifiable, Hashable {
         let prefix = "Water near "
         return name.hasPrefix(prefix) ? tr("Water near %@", String(name.dropFirst(prefix.count))) : name
     }
+
+    /// The catalogs didn't name the club's water ("Water near <town>").
+    var waterUnknown: Bool { name.hasPrefix("Water near ") }
+
+    /// The country list's name: the water, or the town when the water isn't known,
+    /// so such a club sorts under its town's letter.
+    var listTitle: String { waterUnknown ? String(name.dropFirst("Water near ".count)) : name }
+
+    /// "Starnberger See · Starnberg"; just the town when the water isn't known,
+    /// rather than "Water near Aken · Aken".
+    static func place(_ lake: Lake?, town: String?) -> String {
+        let water = lake?.waterUnknown == true && town != nil ? nil : lake?.title
+        return [water, town].compactMap { $0 }.joined(separator: " · ")
+    }
 }
 
 /// A country the club search covers (GET countries/index).
@@ -517,6 +531,20 @@ struct ClubForecast: Codable, Hashable {
             reasons.insert(Reason(condition: "daylight", light: .red), at: 0)
         }
         return first.with(reasons: reasons, sunUp: sunUp)
+    }
+
+    /// A reason's sentence for `hour`; "sunrise or sunset in this hour" says
+    /// which, and when.
+    func explanation(_ reason: Reason, in hour: ForecastHour) -> String {
+        guard reason.condition == "twilight", let days = daylight else { return reason.explanation }
+        let end = hour.time.addingTimeInterval(3600)
+        if let rise = days.map(\.sunrise).first(where: { $0 >= hour.time && $0 < end }) {
+            return tr("Sunrise at %@ in this hour.", Format.time(rise))
+        }
+        if let set = days.map(\.sunset).first(where: { $0 >= hour.time && $0 < end }) {
+            return tr("Sunset at %@ in this hour.", Format.time(set))
+        }
+        return reason.explanation
     }
 
     /// Where the sun stands at `date`: up until sunset, or down until the next sunrise.

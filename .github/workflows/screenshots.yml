@@ -280,6 +280,8 @@ jobs:
           for page in 0 1 2 3 4 5 6 7 8 9 10; do
             GUIDE=1 shoot "26-tour-p$((page + 1))" light -RWNoTips YES -RWTutorialPage $page
           done
+          # The home base page after a club is picked there: the tour must stay on it.
+          GUIDE=1 WAIT=25 shoot 210-tour-home-picked light -RWNoTips YES -RWTutorialPage 1 -RWTourAutoHome YES
           xcrun simctl privacy "$UDID" revoke location com.rowfrog.RowFrog
           for page in 0 1 2 3 4 5 6 7 8 9 10; do
             GUIDE=1 shoot "27-tour-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de
@@ -347,6 +349,12 @@ jobs:
           shoot 70-search-all-countries light -RWSearch "Zürich"
           shoot 71-browse-countries light -RWShowList YES -RWBrowse YES
           shoot_pages 72-browse-austria light -RWShowList YES -RWBrowse at
+          # Country lists (PR on repeated waters): one Havel row, a search by club name,
+          # Germany by town, and a club whose water is still unknown under its town.
+          shoot 197-browse-germany-havel light -RWShowList YES -RWBrowse de -RWCountryFilter Havel
+          shoot 198-browse-germany-club-search light -RWShowList YES -RWBrowse de -RWCountryFilter Collegia
+          shoot 199-browse-germany-by-town-german-dark dark -RWShowList YES -RWBrowse de -RWCountryListByTown YES -RWLanguage de
+          shoot 200-browse-germany-unknown-water light -RWShowList YES -RWBrowse de -RWCountryFilter Hemmoor
           shoot 73-add-place light -RWShowList YES -RWAddPlace YES
           shoot 74-add-place-german-dark dark -RWShowList YES -RWAddPlace YES -RWLanguage de
           shoot_pages 75-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401"

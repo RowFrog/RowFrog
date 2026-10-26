@@ -1,0 +1,49 @@
+name: Fix unknown waters
+# By hand only: puts clubs the import left under "Water near <town>" on the
+# water named for them in data/catalogs/water-fixes.json and moves their
+# launch points (town level) to that water's nearest shore in OpenStreetMap.
+# Run it on main: a bot commit on a pull request branch holds its checks.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fix-unknown-waters-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Move the clubs and snap their launch points
+        run: |
+          set -o pipefail
+          python3 -u scripts/fix_unknown_waters.py --snap | tee report.txt
+          { echo '### Unknown waters'; echo '```'; tail -n 200 report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Check the catalogs load
+        run: |
+          python3 -c '
+          from rowfrog import locations
+          l = locations.load()
+          for c in l.countries():
+              print(c, sum(1 for x in l.clubs.values() if x.country == c), "clubs")'
+      - name: Commit the catalogs
+        run: |
+          git add data/catalogs
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Launch points of hand-checked waters moved to the shore"
+            git pull --rebase
+            git push
+          fi

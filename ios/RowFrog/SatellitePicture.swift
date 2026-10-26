@@ -299,8 +299,24 @@ struct SatellitePictureCard: View {
     var clubID: String?
     @MainActor private var store: SatellitePictureStore { .shared }
     @State private var kind: SatellitePicture.Kind = .latest
+    /// The page's visible height, which follows turning the device and resizing the window.
+    @Environment(\.pageHeight) private var pageHeight
+    /// The card's height without the picture: title, picker, caption and switches.
+    @State private var cardHeight: CGFloat = 0
+    @State private var pictureHeight: CGFloat = 0
     /// Screenshot hook: `-RWOpenSatellite YES` opens the picture full screen.
     @State private var showingFull = UserDefaults.standard.bool(forKey: "RWOpenSatellite")
+
+    /// The tallest the picture may be so the card fits the page with a margin above and below.
+    private var pictureLimit: CGFloat {
+        guard let pageHeight, cardHeight > 0 else { return max(300, UIScreen.main.bounds.height - 360) }
+        return max(240, pageHeight - (cardHeight - pictureHeight) - 32)
+    }
+
+    /// Where the page's visible height comes from (LocationPageView).
+    struct PageHeightKey: EnvironmentKey {
+        static let defaultValue: CGFloat? = nil
+    }
 
     var body: some View {
         Group {
@@ -313,11 +329,13 @@ struct SatellitePictureCard: View {
                         // Saving data: the first tap loads the pictures, the next opens them.
                         if waitsForTap(picture, shot) { store.allowDownloads(lakeID) } else { showingFull = true }
                     } label: {
-                        // The whole card fits on one screen: the picture takes what the screen
-                        // leaves after the bars, the picker, the caption and the switches.
+                        // The whole card fits on one screen: the picture takes what the page
+                        // leaves after the picker, the caption and the switches, never wider
+                        // than the card. Measured again on every turn or window resize.
                         SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID)
                             .clipShape(RoundedRectangle(cornerRadius: 10))
-                            .frame(maxHeight: max(300, UIScreen.main.bounds.height - 360))
+                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { pictureHeight = $0 }
+                            .frame(maxHeight: pictureLimit)
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)
@@ -325,6 +343,7 @@ struct SatellitePictureCard: View {
                     SatelliteCaption(picture: picture, shot: shot)
                     SatelliteLayerChips(lakeID: lakeID, picture: picture, clubID: clubID)
                 }
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { cardHeight = $0 }
                 .fullScreenCover(isPresented: $showingFull) {
                     SatellitePictureScreen(lakeID: lakeID, picture: picture, kind: kind, clubID: clubID)
                 }
@@ -941,5 +960,13 @@ struct SatelliteLegend: View {
             symbol.frame(width: 28)
             Text(text).font(.subheadline)
         }
+    }
+}
+
+extension EnvironmentValues {
+    /// The club page's visible height, between the status bar and the page bar.
+    var pageHeight: CGFloat? {
+        get { self[SatellitePictureCard.PageHeightKey.self] }
+        set { self[SatellitePictureCard.PageHeightKey.self] = newValue }
     }
 }

@@ -174,6 +174,16 @@
       "kind": "river"
     },
     {
+      "id": "belauer-see",
+      "name": "Belauer See",
+      "country": "de",
+      "center": {
+        "lat": 54.09745,
+        "lon": 10.25948
+      },
+      "kind": "lake"
+    },
+    {
       "id": "river-berlin-spandauer-schifffahrtskanal",
       "name": "Berlin-Spandauer Schifffahrtskanal",
       "country": "de",
@@ -202,6 +212,16 @@
         "lon": 7.3052
       },
       "osm": "relation/933501"
+    },
+    {
+      "id": "biggesee",
+      "name": "Biggesee",
+      "country": "de",
+      "center": {
+        "lat": 51.02948,
+        "lon": 7.84353
+      },
+      "kind": "lake"
     },
     {
       "id": "river-bille",
@@ -474,6 +494,16 @@
       "kind": "river"
     },
     {
+      "id": "flensburger-foerde",
+      "name": "Flensburger Förde",
+      "country": "de",
+      "center": {
+        "lat": 54.8109,
+        "lon": 9.43186
+      },
+      "kind": "lake"
+    },
+    {
       "id": "forellenbaechle",
       "name": "Forellenbächle",
       "country": "de",
@@ -512,6 +542,16 @@
         "lon": 14.05491
       },
       "kind": "river"
+    },
+    {
+      "id": "grienericksee",
+      "name": "Grienericksee",
+      "country": "de",
+      "center": {
+        "lat": 53.11505,
+        "lon": 12.91544
+      },
+      "kind": "lake"
     },
     {
       "id": "grimnitzsee",
@@ -640,6 +680,16 @@
       "center": {
         "lat": 51.43245,
         "lon": 13.20992
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-hamme",
+      "name": "Hamme",
+      "country": "de",
+      "center": {
+        "lat": 53.22818,
+        "lon": 8.79482
       },
       "kind": "river"
     },
@@ -1224,6 +1274,16 @@
       "osm": "way/4526411"
     },
     {
+      "id": "okerstausee",
+      "name": "Okerstausee",
+      "country": "de",
+      "center": {
+        "lat": 51.83472,
+        "lon": 10.43425
+      },
+      "kind": "lake"
+    },
+    {
       "id": "river-olpe",
       "name": "Olpe",
       "country": "de",
@@ -1250,6 +1310,16 @@
       "center": {
         "lat": 53.8606,
         "lon": 13.69139
+      },
+      "kind": "river"
+    },
+    {
+      "id": "river-peenestrom",
+      "name": "Peenestrom",
+      "country": "de",
+      "center": {
+        "lat": 54.05365,
+        "lon": 13.77578
       },
       "kind": "river"
     },
@@ -1352,6 +1422,16 @@
         "lon": 6.6706
       },
       "osm": "way/98044495"
+    },
+    {
+      "id": "ribnitzer-see",
+      "name": "Ribnitzer See",
+      "country": "de",
+      "center": {
+        "lat": 54.24736,
+        "lon": 12.46086
+      },
+      "kind": "lake"
     },
     {
       "id": "rohrbruchteich",
@@ -1574,6 +1654,16 @@
       "kind": "river"
     },
     {
+      "id": "stadtsee",
+      "name": "Stadtsee",
+      "country": "de",
+      "center": {
+        "lat": 47.92096,
+        "lon": 9.75428
+      },
+      "kind": "lake"
+    },
+    {
       "id": "stadtteich",
       "name": "Stadtteich",
       "country": "de",
@@ -1644,6 +1734,16 @@
       "osm": "way/20447324"
     },
     {
+      "id": "river-suederelbe",
+      "name": "Süderelbe",
+      "country": "de",
+      "center": {
+        "lat": 53.55017,
+        "lon": 10.00132
+      },
+      "kind": "river"
+    },
+    {
       "id": "tegeler-hafen",
       "name": "Tegeler Hafen",
       "country": "de",
@@ -1684,6 +1784,16 @@
       "osm": "relation/173245"
     },
     {
+      "id": "titisee",
+      "name": "Titisee",
+      "country": "de",
+      "center": {
+        "lat": 47.91734,
+        "lon": 8.17352
+      },
+      "kind": "lake"
+    },
+    {
       "id": "tonteiche",
       "name": "Tonteiche",
       "country": "de",
@@ -1692,6 +1802,16 @@
         "lon": 13.6588
       },
       "osm": "way/24335123"
+    },
+    {
+      "id": "river-trave",
+      "name": "Trave",
+      "country": "de",
+      "center": {
+        "lat": 53.86644,
+        "lon": 10.68474
+      },
+      "kind": "river"
     },
     {
       "id": "river-treene",
@@ -1732,6 +1852,16 @@
         "lon": 9.0604
       },
       "osm": "way/156975174"
+    },
+    {
+      "id": "river-unstrut",
+      "name": "Unstrut",
+      "country": "de",
+      "center": {
+        "lat": 51.29142,
+        "lon": 11.39655
+      },
+      "kind": "river"
     },
     {
       "id": "unterhafen-spandau",
@@ -1784,6 +1914,16 @@
       "osm": "relation/183575"
     },
     {
+      "id": "waginger-see",
+      "name": "Waginger See",
+      "country": "de",
+      "center": {
+        "lat": 47.94322,
+        "lon": 12.74122
+      },
+      "kind": "lake"
+    },
+    {
       "id": "waldhofbecken",
       "name": "Waldhofbecken",
       "country": "de",
@@ -1802,96 +1942,6 @@
         "lon": 12.17263
       },
       "kind": "river"
-    },
-    {
-      "id": "near-aken",
-      "name": "Water near Aken",
-      "country": "de",
-      "center": {
-        "lat": 51.85,
-        "lon": 12.05
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-alt-ruppin",
-      "name": "Water near Alt Ruppin",
-      "country": "de",
-      "center": {
-        "lat": 52.94615,
-        "lon": 12.84991
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-babensham",
-      "name": "Water near Babensham",
-      "country": "de",
-      "center": {
-        "lat": 48.07111,
-        "lon": 12.23305
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-bad-hersfeld",
-      "name": "Water near Bad Hersfeld",
-      "country": "de",
-      "center": {
-        "lat": 50.86042,
-        "lon": 9.67677
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-bad-waldsee",
-      "name": "Water near Bad Waldsee",
-      "country": "de",
-      "center": {
-        "lat": 47.92096,
-        "lon": 9.75428
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-belau",
-      "name": "Water near Belau",
-      "country": "de",
-      "center": {
-        "lat": 54.09745,
-        "lon": 10.25948
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-berlin",
-      "name": "Water near Berlin",
-      "country": "de",
-      "center": {
-        "lat": 52.3895,
-        "lon": 13.1297
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-bernkastel-kues",
-      "name": "Water near Bernkastel-Kues",
-      "country": "de",
-      "center": {
-        "lat": 49.91574,
-        "lon": 7.07082
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-bonn",
-      "name": "Water near Bonn",
-      "country": "de",
-      "center": {
-        "lat": 50.72657,
-        "lon": 7.12391
-      },
-      "kind": "unknown"
     },
     {
       "id": "near-bremerhaven",
@@ -1924,36 +1974,6 @@
       "kind": "unknown"
     },
     {
-      "id": "near-essen",
-      "name": "Water near Essen",
-      "country": "de",
-      "center": {
-        "lat": 51.45822,
-        "lon": 7.01582
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-flensburg",
-      "name": "Water near Flensburg",
-      "country": "de",
-      "center": {
-        "lat": 54.8109,
-        "lon": 9.43186
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-geisenheim",
-      "name": "Water near Geisenheim",
-      "country": "de",
-      "center": {
-        "lat": 50.03922,
-        "lon": 7.94145
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "near-hamburg",
       "name": "Water near Hamburg",
       "country": "de",
@@ -1974,26 +1994,6 @@
       "kind": "unknown"
     },
     {
-      "id": "near-hennigsdorf",
-      "name": "Water near Hennigsdorf",
-      "country": "de",
-      "center": {
-        "lat": 52.63569,
-        "lon": 13.20821
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-hersfeld",
-      "name": "Water near Hersfeld",
-      "country": "de",
-      "center": {
-        "lat": 50.86042,
-        "lon": 9.67677
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "near-huerth",
       "name": "Water near Hürth",
       "country": "de",
@@ -2004,162 +2004,12 @@
       "kind": "unknown"
     },
     {
-      "id": "near-ingolstadt",
-      "name": "Water near Ingolstadt",
-      "country": "de",
-      "center": {
-        "lat": 48.76302,
-        "lon": 11.42504
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-krefeld",
-      "name": "Water near Krefeld",
-      "country": "de",
-      "center": {
-        "lat": 51.33312,
-        "lon": 6.56233
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-koeln",
-      "name": "Water near Köln",
-      "country": "de",
-      "center": {
-        "lat": 50.91139,
-        "lon": 6.98456
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-lindau",
-      "name": "Water near Lindau",
-      "country": "de",
-      "center": {
-        "lat": 47.57287,
-        "lon": 9.69619
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-luebbecke",
-      "name": "Water near Lübbecke",
-      "country": "de",
-      "center": {
-        "lat": 52.30272,
-        "lon": 8.61831
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-luebeck",
-      "name": "Water near Lübeck",
-      "country": "de",
-      "center": {
-        "lat": 53.86644,
-        "lon": 10.68474
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-lueneburg",
-      "name": "Water near Lüneburg",
-      "country": "de",
-      "center": {
-        "lat": 53.24871,
-        "lon": 10.40785
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "near-magdeburg",
       "name": "Water near Magdeburg",
       "country": "de",
       "center": {
         "lat": 52.1498,
         "lon": 11.60094
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-minden",
-      "name": "Water near Minden",
-      "country": "de",
-      "center": {
-        "lat": 52.2881,
-        "lon": 8.91689
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-monheim",
-      "name": "Water near Monheim",
-      "country": "de",
-      "center": {
-        "lat": 48.84825,
-        "lon": 10.95049
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-muenster",
-      "name": "Water near Münster",
-      "country": "de",
-      "center": {
-        "lat": 51.96251,
-        "lon": 7.62519
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-naumburg",
-      "name": "Water near Naumburg",
-      "country": "de",
-      "center": {
-        "lat": 51.15256,
-        "lon": 11.80992
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-nienburg",
-      "name": "Water near Nienburg",
-      "country": "de",
-      "center": {
-        "lat": 52.63862,
-        "lon": 9.20561
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-nordenham",
-      "name": "Water near Nordenham",
-      "country": "de",
-      "center": {
-        "lat": 53.48178,
-        "lon": 8.48683
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-olpe",
-      "name": "Water near Olpe",
-      "country": "de",
-      "center": {
-        "lat": 51.02948,
-        "lon": 7.84353
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-osterholz-scharmbeck",
-      "name": "Water near Osterholz-Scharmbeck",
-      "country": "de",
-      "center": {
-        "lat": 53.22818,
-        "lon": 8.79482
       },
       "kind": "unknown"
     },
@@ -2184,36 +2034,6 @@
       "kind": "unknown"
     },
     {
-      "id": "near-rheine",
-      "name": "Water near Rheine",
-      "country": "de",
-      "center": {
-        "lat": 52.27977,
-        "lon": 7.43736
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-rheinsberg",
-      "name": "Water near Rheinsberg",
-      "country": "de",
-      "center": {
-        "lat": 53.11505,
-        "lon": 12.91544
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-ribnitz-damgarten",
-      "name": "Water near Ribnitz-Damgarten",
-      "country": "de",
-      "center": {
-        "lat": 54.24736,
-        "lon": 12.46086
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "near-riedstadt",
       "name": "Water near Riedstadt",
       "country": "de",
@@ -2224,112 +2044,12 @@
       "kind": "unknown"
     },
     {
-      "id": "near-rossleben-wiehe",
-      "name": "Water near Roßleben-Wiehe",
-      "country": "de",
-      "center": {
-        "lat": 51.29142,
-        "lon": 11.39655
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-scharnebeck",
-      "name": "Water near Scharnebeck",
-      "country": "de",
-      "center": {
-        "lat": 53.29291,
-        "lon": 10.50682
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-schulenberg",
-      "name": "Water near Schulenberg",
-      "country": "de",
-      "center": {
-        "lat": 51.83472,
-        "lon": 10.43425
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-st-goar",
-      "name": "Water near St. Goar",
-      "country": "de",
-      "center": {
-        "lat": 50.15,
-        "lon": 7.71667
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "near-stralsund",
       "name": "Water near Stralsund",
       "country": "de",
       "center": {
         "lat": 54.32243,
         "lon": 13.08607
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-tangermuende",
-      "name": "Water near Tangermünde",
-      "country": "de",
-      "center": {
-        "lat": 52.54311,
-        "lon": 11.97225
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-titisee-neustadt",
-      "name": "Water near Titisee-Neustadt",
-      "country": "de",
-      "center": {
-        "lat": 47.91734,
-        "lon": 8.17352
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-waging-am-see",
-      "name": "Water near Waging am See",
-      "country": "de",
-      "center": {
-        "lat": 47.94322,
-        "lon": 12.74122
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-weilburg",
-      "name": "Water near Weilburg",
-      "country": "de",
-      "center": {
-        "lat": 50.48434,
-        "lon": 8.27863
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-wolgast",
-      "name": "Water near Wolgast",
-      "country": "de",
-      "center": {
-        "lat": 54.05365,
-        "lon": 13.77578
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-zeltingen",
-      "name": "Water near Zeltingen",
-      "country": "de",
-      "center": {
-        "lat": 49.95268,
-        "lon": 7.01873
       },
       "kind": "unknown"
     },
@@ -2588,11 +2308,11 @@
       "address": "11 06, 48001 Münster",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-muenster",
+      "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
         "lat": 51.96251,
         "lon": 7.62519,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Dortmund-Ems-Kanal (checked by hand)",
         "verified": false
       }
     },
@@ -2783,11 +2503,11 @@
       "address": "16827 Alt Ruppin",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-alt-ruppin",
+      "lakeId": "ruppiner-see",
       "launchPoint": {
         "lat": 52.94615,
         "lon": 12.84991,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Ruppiner See (checked by hand)",
         "verified": false
       }
     },
@@ -3210,11 +2930,11 @@
       "address": "Bernkasteler RV 1874, 54470 Bernkastel-Kues",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-bernkastel-kues",
+      "lakeId": "river-mosel",
       "launchPoint": {
         "lat": 49.91574,
         "lon": 7.07082,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Mosel (checked by hand)",
         "verified": false
       }
     },
@@ -3303,11 +3023,11 @@
       "address": "Elsa-Brändström-Str. 74, 53227 Bonn",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-bonn",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 50.72657,
         "lon": 7.12391,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Rhein (checked by hand)",
         "verified": false
       }
     },
@@ -3731,11 +3451,11 @@
       "address": "47720 Krefeld",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-krefeld",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 51.33312,
         "lon": 6.56233,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Rhein (checked by hand)",
         "verified": false
       }
     },
@@ -3901,11 +3621,11 @@
       "address": "85049 Ingolstadt",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-ingolstadt",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.76302,
         "lon": 11.42504,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Donau (checked by hand)",
         "verified": false
       }
     },
@@ -4685,11 +4405,11 @@
       "address": "Timmermannufer 105, 48429 Rheine",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-rheine",
+      "lakeId": "river-ems",
       "launchPoint": {
         "lat": 52.27977,
         "lon": 7.43736,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Ems (checked by hand)",
         "verified": false
       }
     },
@@ -5265,11 +4985,11 @@
       "address": "36251 Bad Hersfeld",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-bad-hersfeld",
+      "lakeId": "river-fulda",
       "launchPoint": {
         "lat": 50.86042,
         "lon": 9.67677,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Fulda (checked by hand)",
         "verified": false
       }
     },
@@ -5920,11 +5640,11 @@
       "address": "Hüxtertoralle 4, 23564 Lübeck",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-luebeck",
+      "lakeId": "river-kanal-trave",
       "launchPoint": {
         "lat": 53.86644,
         "lon": 10.68474,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Kanal-Trave (checked by hand)",
         "verified": false
       }
     },
@@ -5982,11 +5702,11 @@
       "address": "Willi-Brandt-Str., 21335 Lüneburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-lueneburg",
+      "lakeId": "river-ilmenau",
       "launchPoint": {
         "lat": 53.24871,
         "lon": 10.40785,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Ilmenau (checked by hand)",
         "verified": false
       }
     },
@@ -6343,11 +6063,11 @@
       "address": "Weserpromenade 10 (am Sommerbad), 32423 Minden",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-minden",
+      "lakeId": "river-weser",
       "launchPoint": {
         "lat": 52.2881,
         "lon": 8.91689,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Weser (checked by hand)",
         "verified": false
       }
     },
@@ -6637,11 +6357,11 @@
       "address": "Strandallee 1, 26954 Nordenham",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-nordenham",
+      "lakeId": "river-weser",
       "launchPoint": {
         "lat": 53.48178,
         "lon": 8.48683,
-        "precision": "geocoded boathouse (street level); water not identified",
+        "precision": "geocoded boathouse (street level); on the Weser (checked by hand)",
         "verified": false
       }
     },
@@ -6919,11 +6639,11 @@
       "address": "32312 Lübbecke",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-luebbecke",
+      "lakeId": "river-mittellandkanal",
       "launchPoint": {
         "lat": 52.30272,
         "lon": 8.61831,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Mittellandkanal (checked by hand)",
         "verified": false
       }
     },
@@ -7079,11 +6799,11 @@
       "address": "Freiherr-von-Stein-Str. 206 d, 45239 Essen",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-essen",
+      "lakeId": "baldeneysee",
       "launchPoint": {
         "lat": 51.45822,
         "lon": 7.01582,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Baldeneysee (checked by hand)",
         "verified": false
       }
     },
@@ -7273,11 +6993,11 @@
       "address": "36251 Hersfeld",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-hersfeld",
+      "lakeId": "river-fulda",
       "launchPoint": {
         "lat": 50.86042,
         "lon": 9.67677,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Fulda (checked by hand)",
         "verified": false
       }
     },
@@ -7626,11 +7346,11 @@
       "address": "Wanderruderstützpunkt - Damgarten-Hafen, 18311 Ribnitz-Damgarten",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-ribnitz-damgarten",
+      "lakeId": "ribnitzer-see",
       "launchPoint": {
         "lat": 54.24736,
         "lon": 12.46086,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Ribnitzer See (checked by hand)",
         "verified": false
       }
     },
@@ -7794,11 +7514,11 @@
       "address": "Alfred-Schütte-Allee 163, 51105 Köln",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-koeln",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 50.91139,
         "lon": 6.98456,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Rhein (checked by hand)",
         "verified": false
       }
     },
@@ -7974,11 +7694,11 @@
       "address": "06385 Aken",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-aken",
+      "lakeId": "river-elbe",
       "launchPoint": {
         "lat": 51.85,
         "lon": 12.05,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Elbe (checked by hand)",
         "verified": false
       }
     },
@@ -8051,11 +7771,11 @@
       "address": "Kirchesohl 1, 57462 Olpe",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-olpe",
+      "lakeId": "biggesee",
       "launchPoint": {
         "lat": 51.02948,
         "lon": 7.84353,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Biggesee (checked by hand)",
         "verified": false
       }
     },
@@ -8742,11 +8462,11 @@
       "address": "Tietjen's Hütte 3, 27711 Osterholz-Scharmbeck",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-osterholz-scharmbeck",
+      "lakeId": "river-hamme",
       "launchPoint": {
         "lat": 53.22818,
         "lon": 8.79482,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Hamme (checked by hand)",
         "verified": false
       }
     },
@@ -8887,11 +8607,11 @@
       "address": "36228 Bad Hersfeld",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-bad-hersfeld",
+      "lakeId": "river-fulda",
       "launchPoint": {
         "lat": 50.86042,
         "lon": 9.67677,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Fulda (checked by hand)",
         "verified": false
       }
     },
@@ -9240,11 +8960,11 @@
       "address": "88107 Lindau",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-lindau",
+      "lakeId": "bodensee",
       "launchPoint": {
         "lat": 47.57287,
         "lon": 9.69619,
-        "precision": "geocoded club address (town level); water not identified",
+        "precision": "geocoded club address (town level); on the Bodensee (checked by hand)",
         "verified": false
       }
     },
@@ -9421,11 +9141,11 @@
       "address": "Hafenstr. 32 - 34, 16761 Hennigsdorf",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-hennigsdorf",
+      "lakeId": "river-havel",
       "launchPoint": {
         "lat": 52.63569,
         "lon": 13.20821,
-        "precision": "geocoded boathouse (street level); water not identified",
+        "precision": "geocoded boathouse (street level); on the Havel (checked by hand)",
         "verified": false
       }
     },
@@ -9517,11 +9237,11 @@
       "address": "06571 Roßleben-Wiehe",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-rossleben-wiehe",
+      "lakeId": "river-unstrut",
       "launchPoint": {
         "lat": 51.29142,
         "lon": 11.39655,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Unstrut (checked by hand)",
         "verified": false
       }
     },
@@ -9625,11 +9345,11 @@
       "address": "79822 Titisee-Neustadt",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-titisee-neustadt",
+      "lakeId": "titisee",
       "launchPoint": {
         "lat": 47.91734,
         "lon": 8.17352,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Titisee (checked by hand)",
         "verified": false
       }
     },
@@ -9802,11 +9522,11 @@
       "address": "Okerstausee an der B 498, 38707 Schulenberg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-schulenberg",
+      "lakeId": "okerstausee",
       "launchPoint": {
         "lat": 51.83472,
         "lon": 10.43425,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Okerstausee (checked by hand)",
         "verified": false
       }
     },
@@ -10350,11 +10070,11 @@
       "address": "Moselufer unterhalb der Brücke, 54492 Zeltingen",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-zeltingen",
+      "lakeId": "river-mosel",
       "launchPoint": {
         "lat": 49.95268,
         "lon": 7.01873,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Mosel (checked by hand)",
         "verified": false
       }
     },
@@ -10411,11 +10131,11 @@
       "address": "Am Ostseebad 8, 24939 Flensburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-flensburg",
+      "lakeId": "flensburger-foerde",
       "launchPoint": {
         "lat": 54.8109,
         "lon": 9.43186,
-        "precision": "geocoded boathouse (street level); water not identified",
+        "precision": "geocoded boathouse (street level); on the Flensburger Förde (checked by hand)",
         "verified": false
       }
     },
@@ -10827,11 +10547,11 @@
       "address": "Odelshamer Au 2, 83547 Babensham",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-babensham",
+      "lakeId": "river-inn",
       "launchPoint": {
         "lat": 48.07111,
         "lon": 12.23305,
-        "precision": "geocoded club address (street level); water not identified",
+        "precision": "geocoded club address (street level); on the Inn (checked by hand)",
         "verified": false
       }
     },
@@ -11634,11 +11354,11 @@
       "address": "Kapellenstr., 40789 Monheim",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-monheim",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 48.84825,
         "lon": 10.95049,
-        "precision": "geocoded boathouse (street level); water not identified",
+        "precision": "geocoded boathouse (street level); on the Rhein (checked by hand)",
         "verified": false
       }
     },
@@ -11816,11 +11536,11 @@
       "address": "Ufersteig 1, 16831 Rheinsberg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-rheinsberg",
+      "lakeId": "grienericksee",
       "launchPoint": {
         "lat": 53.11505,
         "lon": 12.91544,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Grienericksee (checked by hand)",
         "verified": false
       }
     },
@@ -11886,11 +11606,11 @@
       "address": "Am Klingenberg 9, 06618 Naumburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-naumburg",
+      "lakeId": "river-saale",
       "launchPoint": {
         "lat": 51.15256,
         "lon": 11.80992,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Saale (checked by hand)",
         "verified": false
       }
     },
@@ -12058,11 +11778,11 @@
       "address": "Seestr. 15, 88339 Bad Waldsee",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-bad-waldsee",
+      "lakeId": "stadtsee",
       "launchPoint": {
         "lat": 47.92096,
         "lon": 9.75428,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Stadtsee (checked by hand)",
         "verified": false
       }
     },
@@ -12213,11 +11933,11 @@
       "address": "Am Fährbahnhof 2, 17438 Wolgast",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-wolgast",
+      "lakeId": "river-peenestrom",
       "launchPoint": {
         "lat": 54.05365,
         "lon": 13.77578,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Peenestrom (checked by hand)",
         "verified": false
       }
     },
@@ -12534,11 +12254,11 @@
       "address": "Am Mühlentorsweg 2 A, 31582 Nienburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-nienburg",
+      "lakeId": "river-weser",
       "launchPoint": {
         "lat": 52.63862,
         "lon": 9.20561,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Weser (checked by hand)",
         "verified": false
       }
     },
@@ -12604,11 +12324,11 @@
       "address": "Zevenaar-Str. 3, 35781 Weilburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-weilburg",
+      "lakeId": "river-lahn",
       "launchPoint": {
         "lat": 50.48434,
         "lon": 8.27863,
-        "precision": "geocoded boathouse (street level); water not identified",
+        "precision": "geocoded boathouse (street level); on the Lahn (checked by hand)",
         "verified": false
       }
     },
@@ -12694,11 +12414,11 @@
       "address": "Schweensandhauptdeich 5, 21079 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-hamburg",
+      "lakeId": "river-suederelbe",
       "launchPoint": {
         "lat": 53.55017,
         "lon": 10.00132,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Süderelbe (checked by hand)",
         "verified": false
       }
     },
@@ -12997,11 +12717,11 @@
       "address": "Zur Teerhofinsel 5 e, 23554 Lübeck",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-luebeck",
+      "lakeId": "river-trave",
       "launchPoint": {
         "lat": 53.86644,
         "lon": 10.68474,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Trave (checked by hand)",
         "verified": false
       }
     },
@@ -13320,11 +13040,11 @@
       "address": "Am Unterhafen, 21379 Scharnebeck",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-scharnebeck",
+      "lakeId": "river-elbe-seitenkanal",
       "launchPoint": {
         "lat": 53.29291,
         "lon": 10.50682,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Elbe-Seitenkanal (checked by hand)",
         "verified": false
       }
     },
@@ -13627,11 +13347,11 @@
       "address": "Boootshaus am Hafen, 39590 Tangermünde",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-tangermuende",
+      "lakeId": "river-elbe",
       "launchPoint": {
         "lat": 52.54311,
         "lon": 11.97225,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Elbe (checked by hand)",
         "verified": false
       }
     },
@@ -14039,11 +13759,11 @@
       "address": "14109 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-berlin",
+      "lakeId": "grosser-wannsee",
       "launchPoint": {
         "lat": 52.3895,
         "lon": 13.1297,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Großer Wannsee (checked by hand)",
         "verified": false
       }
     },
@@ -14068,11 +13788,11 @@
       "address": "Zum Seeteufel 45, 83329 Waging am See",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-waging-am-see",
+      "lakeId": "waginger-see",
       "launchPoint": {
         "lat": 47.94322,
         "lon": 12.74122,
-        "precision": "geocoded boathouse (street level); water not identified",
+        "precision": "geocoded boathouse (street level); on the Waginger See (checked by hand)",
         "verified": false
       }
     },
@@ -14326,11 +14046,11 @@
       "address": "24601 Belau",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-belau",
+      "lakeId": "belauer-see",
       "launchPoint": {
         "lat": 54.09745,
         "lon": 10.25948,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Belauer See (checked by hand)",
         "verified": false
       }
     },
@@ -14373,11 +14093,11 @@
       "address": "Am Rheinufer 2, 65366 Geisenheim",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-geisenheim",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 50.03922,
         "lon": 7.94145,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Rhein (checked by hand)",
         "verified": false
       }
     },
@@ -14596,11 +14316,11 @@
       "address": "56329 St. Goar",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-st-goar",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 50.15,
         "lon": 7.71667,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Rhein (checked by hand)",
         "verified": false
       }
     },
@@ -14652,11 +14372,11 @@
       "address": "35781 Weilburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-weilburg",
+      "lakeId": "river-lahn",
       "launchPoint": {
         "lat": 50.48474,
         "lon": 8.26592,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "precision": "geocoded boathouse (town level); on the Lahn (checked by hand)",
         "verified": false
       }
     },
