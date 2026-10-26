@@ -86,7 +86,9 @@ def geosphere(client: httpx.Client) -> None:
                 print("  info:", json.dumps(spec.get("info", {}), ensure_ascii=False)[:800])
                 for p, ops in spec.get("paths", {}).items():
                     for m, op in ops.items():
-                        params = [x.get("name") for x in op.get("parameters", [])]
+                        if not isinstance(op, dict):
+                            continue
+                        params = [x.get("name") if isinstance(x, dict) else x for x in op.get("parameters", [])]
                         print(f"   {m.upper()} {p} params={params} :: {op.get('summary') or ''}")
             except ValueError:
                 show(r)
@@ -164,6 +166,7 @@ def meteoswiss(client: httpx.Client) -> None:
             try:
                 v = r.json()
                 print(f"  {base}: {len(v)} products")
+                print("  all keys:", sorted(v))
                 for k in v:
                     if any(s in k.lower() for s in ("warn", "lake", "see", "gefahr", "hazard")):
                         print(f"   {k}: {v[k]}")
@@ -178,6 +181,22 @@ def meteoswiss(client: httpx.Client) -> None:
             break
         elif r is not None:
             print(f"  {base}: HTTP {r.status_code}")
+
+    head("MeteoSwiss website: lake and airfield warning products")
+    base = "https://www.meteoschweiz.admin.ch"
+    r = get(client, base + "/product/output/versions.json")
+    if r is not None and r.status_code == 200:
+        v = r.json()
+        for key in [k for k in v if any(s in k.lower() for s in ("lake", "airfield", "warn", "hazard", "gefahr", "see"))]:
+            for path in (f"/product/output/{key}/version__{v[key]}/de/overview.json",
+                         f"/product/output/{key}/version__{v[key]}/en/overview.json",
+                         f"/product/output/{key}/version__{v[key]}/overview.json",
+                         f"/product/output/{key}/version__{v[key]}/de/lakes.json",
+                         f"/product/output/{key}/version__{v[key]}/de.json",
+                         f"/product/output/{key}/version__{v[key]}/en.json"):
+                rr = get(client, base + path)
+                if rr is not None and rr.status_code == 200:
+                    print(f"   GET {path}: {rr.text[:1500]!r}")
 
     head("MeteoSwiss app API (not open data, to see what exists)")
     for name, (lat, lon, plz) in CH_POINTS.items():
@@ -215,7 +234,22 @@ def meteoalarm(client: httpx.Client) -> None:
             show(r, 600)
             continue
         ws = d.get("warnings", [])
-        print(f"  {len(ws)} warnings now")
+        from datetime import datetime, timezone
+        now = datetime.now(timezone.utc)
+        def live(w):
+            exp = [i.get("expires") for i in w.get("alert", {}).get("info", []) if i.get("expires")]
+            return any(datetime.fromisoformat(e) > now for e in exp)
+        print(f"  {len(ws)} warnings in feed, {sum(map(live, ws))} not yet expired")
+        lakeish = set()
+        for w in ws:
+            for i in w.get("alert", {}).get("info", []):
+                for a in i.get("area", []):
+                    d_ = a.get("areaDesc") or ""
+                    if any(k in d_.lower() for k in ("see", "lac", "lago", "lake", "leman")):
+                        lakeish.add(d_)
+                for ec in i.get("eventCode", []) or []:
+                    events[("code", ec.get("valueName"), ec.get("value"))] = 0
+        print("  lake-like area names:", sorted(lakeish))
         events = {}
         areas = set()
         for w in ws:
