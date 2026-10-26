@@ -566,7 +566,7 @@ private struct NowCard: View {
             .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
             AdviceOnlyNote()
             Divider()
-            // Air, water and wind set the columns; the small values below start under them.
+            // Equal thirds: the small values start under air, water and wind.
             TopTileGrid {
                 VStack(alignment: .leading, spacing: 0) {
                     opens(.temperature) {
@@ -812,9 +812,8 @@ struct TemperatureView: View {
     }
 }
 
-/// The top tile's values: the first three (air, water, wind) spread like an
-/// HStack with spacers and set the columns; the three small values below start
-/// under them. Each row reads level.
+/// The top tile's values in two rows of equal thirds: air, water, wind above,
+/// the three small values below, each starting at its third. Each row reads level.
 struct TopTileGrid: Layout {
     var rowSpacing: CGFloat = 10
     var gap: CGFloat = 8
@@ -834,15 +833,14 @@ struct TopTileGrid: Layout {
     private func frames(width: CGFloat, _ subviews: Subviews) -> [CGRect] {
         let top = Array(subviews.prefix(3)), bottom = Array(subviews.dropFirst(3))
         guard top.count == 3 else { return [] }
-        // First row: left, centred in the room left over, right; on the last baseline.
+        // First row: at their own size, each at the start of its third; on the last baseline.
         let sizes = top.map { $0.sizeThatFits(.unspecified) }
-        let free = max(0, width - sizes.reduce(0) { $0 + $1.width }) / 2
-        let xs = [0, sizes[0].width + free, width - sizes[2].width]
+        let xs = [0, width / 3, width * 2 / 3]
         let baselines = top.map { $0.dimensions(in: .unspecified)[.lastTextBaseline] }
         let line = baselines.max() ?? 0
         var result = (0..<3).map { CGRect(x: xs[$0], y: line - baselines[$0], width: sizes[$0].width, height: sizes[$0].height) }
         let below = (result.map(\.maxY).max() ?? 0) + rowSpacing
-        // Second row: under the first row's columns.
+        // Second row: the same thirds.
         let columns: [(x: CGFloat, width: CGFloat)] = [(0, xs[1] - gap), (xs[1], xs[2] - xs[1] - gap), (xs[2], width - xs[2])]
         let dims = zip(bottom, columns).map { $0.dimensions(in: ProposedViewSize(width: $1.width, height: nil)) }
         let valueLine = dims.map { $0[VerticalAlignment.metricValue] }.max() ?? 0
