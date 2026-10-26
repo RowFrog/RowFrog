@@ -21,5 +21,10 @@
   "Move up": "Nach oben",
   "Move down": "Nach unten",
   "Device follows the browser's settings. Today and tomorrow are always written as words.": "Gerät folgt den Einstellungen des Browsers. Heute und morgen stehen immer als Wort da.",
-  "Device follows the light or dark setting of your computer or phone.": "Gerät folgt der Hell- oder Dunkel-Einstellung deines Computers oder Handys."
+  "Device follows the light or dark setting of your computer or phone.": "Gerät folgt der Hell- oder Dunkel-Einstellung deines Computers oder Handys.",
+  "Your browser asks to save data: the website is saving data now.": "Dein Browser bittet ums Datensparen: Die Website spart gerade Daten.",
+  "On mobile data: the website is saving data now.": "Mobile Daten: Die Website spart gerade Daten.",
+  "On mobile data, satellite pictures load only when you tap them; forecasts and warnings always load. When your browser or phone asks to save data, the website always does. Not every browser tells the website whether it is on mobile data.": "Mit mobilen Daten laden Satellitenbilder erst, wenn du sie antippst; Vorhersagen und Warnungen laden immer. Bittet dein Browser oder Handy ums Datensparen, spart die Website immer. Nicht jeder Browser verrät der Website, ob sie über mobile Daten läuft.",
+  "Picture blurred: the picture shows through the tiles like frosted glass. Liquid Glass: clearer glass. No picture: the tiles stay solid and keep the full rowing-light shading.": "Bild verschwommen: Das Bild scheint wie durch Milchglas durch die Kacheln. Liquid Glass: klareres Glas. Kein Bild: Die Kacheln bleiben deckend und behalten die volle Ampelfärbung.",
+  "Your own pictures stay in this browser.": "Deine eigenen Bilder bleiben in diesem Browser."
 }

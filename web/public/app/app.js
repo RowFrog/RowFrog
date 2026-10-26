@@ -15,6 +15,7 @@ import {
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C, windDial, sparkBars,
   levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly, footerLinks, mapBoat,
   mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM, applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText,
+  dataSaving,
 } from "./shared.js";
 import {
   isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon,
@@ -29,6 +30,7 @@ import { isOwn } from "./ownplace.js";
 import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
 import { layoutFor, visibleCards, openArrange } from "./arrange.js";
+import { showBackground, renderBackgrounds, backgroundSummary } from "./backgrounds.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 
 const SAFETY_VERSION = 1;
@@ -945,6 +947,10 @@ function renderSettings() {
         <button class="row-setting" id="arrange"><span>${h(t("Order of the club page cards"))}</span>${icon("chevron-right")}</button>
       </section>
       <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
+      <section class="card group">
+        <a class="row-setting" href="#/settings/backgrounds"><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span>${icon("chevron-right")}</a>
+      </section>
+      <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
       <h3 class="section">${icon("map")} ${h(t("Weather maps"))}</h3>
       <section class="card group">
         <div class="row-setting"><span>${h(t("Maps start"))}</span>
@@ -953,6 +959,12 @@ function renderSettings() {
       </section>
       <p class="footer">${h(t("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.",
         distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))}</p>
+      <h3 class="section">${icon("arrow-up-down")} ${h(t("Data use"))}</h3>
+      <section class="card group">
+        <label class="row-setting"><span>${icon("radio-tower")} ${h(t("Save mobile data"))}</span><input type="checkbox" class="switch" id="save-data" ${store.saveData ? "checked" : ""}></label>
+        ${dataSaving() ? `<p class="row-setting green small">${icon("circle-check")} ${h(dataSaving() === "browser" ? t("Your browser asks to save data: the website is saving data now.") : t("On mobile data: the website is saving data now."))}</p>` : ""}
+      </section>
+      <p class="footer">${h(t("On mobile data, satellite pictures load only when you tap them; forecasts and warnings always load. When your browser or phone asks to save data, the website always does. Not every browser tells the website whether it is on mobile data."))}</p>
       ${card(t("Safety notice"), "shield-check", `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`)}
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
@@ -960,6 +972,10 @@ function renderSettings() {
     </main>`;
   wireLanguage(renderSettings);
   root.querySelectorAll("[data-unit]").forEach((select) => select.addEventListener("change", () => setUnit(select.dataset.unit, select.value)));
+  root.querySelector("#save-data").addEventListener("change", (e) => {
+    store.saveData = e.target.checked;
+    renderSettings();
+  });
   root.querySelector("#time-format").addEventListener("change", (e) => (store.timeFormat = e.target.value));
   root.querySelector("#date-format").addEventListener("change", (e) => (store.dateFormat = e.target.value));
   root.querySelectorAll("[data-appearance]").forEach((b) => b.addEventListener("click", () => {
@@ -1113,6 +1129,16 @@ function renderBoat(id) {
 // ---- Routing -------------------------------------------------------------------------
 
 /** As the app opens: the home base's page, or the list while there is no club yet. */
+/** The background picture for the page the hash opens: club pages, the list and the settings have one. */
+function pagePicture(hash) {
+  const club = hash.match(/^\/club\/([^/]+)$/);
+  if (club) return showBackground("clubPages", decodeURIComponent(club[1]));
+  if (hash.startsWith("/settings")) return showBackground("settings");
+  if (hash === "/list" || !store.clubs.length) return showBackground("list");
+  if (!hash || hash === "/") return showBackground("clubPages", store.clubs[0].id);
+  return showBackground(null);
+}
+
 function route(scroll = true) {
   swipeOff?.();
   document.querySelector("dialog.sheet")?.remove();
@@ -1121,6 +1147,7 @@ function route(scroll = true) {
   if (scroll) window.scrollTo(0, 0);
   if (!store.safety || store.safety.version < SAFETY_VERSION) return renderSafetyGate();
   const hash = location.hash.replace(/^#/, "");
+  pagePicture(hash);
   const value = hash.match(/^\/club\/([^/]+)\/value\/([a-zA-Z]+)(?:\/(.+))?$/);
   if (value) return renderValuePage(root, decodeURIComponent(value[1]), value[2], value[3] ? decodeURIComponent(value[3]) : null);
   const club = hash.match(/^\/club\/(.+)$/);
@@ -1139,6 +1166,7 @@ function route(scroll = true) {
   if (country) return renderCountry(root, country[1], country[2] ? decodeURIComponent(country[2]) : "");
   if (hash === "/settings") return renderSettings();
   if (hash === "/settings/boats") return renderBoats();
+  if (hash === "/settings/backgrounds") return renderBackgrounds(root);
   const boat = hash.match(/^\/settings\/boat\/(.+)$/);
   if (boat) return renderBoat(decodeURIComponent(boat[1]));
   if (hash === "/list" || !store.clubs.length) return renderList();

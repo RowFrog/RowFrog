@@ -5,7 +5,7 @@
 import { t, num } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
-import { store, getJSON, h, dayLabel, windNumber, openSheet } from "./shared.js";
+import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData } from "./shared.js";
 import { hourIndex, gridEdges } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote } from "./lakeview.js";
 
@@ -106,6 +106,18 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
   let kind = lake.kinds[0][0];
   const show = () => {
     const shot = meta[kind];
+    // Saving data: the picture loads only when tapped (SatellitePictureStore.mayDownload).
+    if (savingData() && !tapped.has(lakeId)) {
+      box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
+        <button class="picture tap-to-load" style="aspect-ratio:${meta.width}/${meta.height}">${icon("satellite")}<span>${h(t("Tap to load the picture"))}</span></button>
+        <p class="sub small">${h(meta.attribution)}</p>`;
+      box.querySelector(".tap-to-load").addEventListener("click", () => {
+        tapped.add(lakeId);
+        show();
+      });
+      changed?.();
+      return;
+    }
     box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
       ${kindPicker(lake, kind)}
       <div class="picture" role="button" tabindex="0" aria-label="${h(t("Satellite picture"))}" data-ratio="${meta.width / meta.height}" style="aspect-ratio:${meta.width}/${meta.height}">${pictureHtml(lake, shot)}</div>
@@ -126,6 +138,9 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
   box.hidden = false;
   show();
 }
+
+/** Lakes whose picture was tapped to load while saving data, for this visit. */
+const tapped = new Set();
 
 const sizeWatch = new WeakMap();
 
