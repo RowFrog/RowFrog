@@ -192,7 +192,7 @@ struct LakeMapScreen: View {
         .safeAreaInset(edge: .bottom, spacing: 0) { panel(plan: plan, boat: boat, shown: shown) }
         .sheet(isPresented: $showingInfo) { LakeViewInfo() }
         .sheet(isPresented: $showingLegend) {
-            LakeMapLegend(layer: layer, striped: layer == .light && shown?.lakeWide.light == .red,
+            LakeMapLegend(layer: layer, stripes: layer == .light ? shown?.lakeWide.stripes : nil,
                           routeMode: routeMode, hasRoute: (plan?.segments.isEmpty == false), boat: boat != nil,
                           spot: spot != nil, hasWind: !(shown?.wind.isEmpty ?? true),
                           track: routeMode && showTrack && rowed?.track != nil, clubID: clubID)
@@ -903,7 +903,7 @@ private struct LakeViewInfo: View {
         NavigationStack {
             List {
                 Text(tr("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))
-                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map; while they make the whole lake red, the squares turn grey with red stripes."))
+                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber DWD warning, fainter amber stripes are drawn over the squares. Cold water shows in the panel only."))
                 Text(tr("Waves are an estimate: there are no wave measurements on these lakes, and shelter from steep shores or currents is not taken into account."))
                 Section(tr("Data")) {
                     Text(tr("Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0"))
@@ -1034,8 +1034,8 @@ struct LakeMapView: UIViewRepresentable {
         }
         if let hour, c.shown != "\(hour.time.timeIntervalSince1970) \(layer.rawValue)" {
             c.shown = "\(hour.time.timeIntervalSince1970) \(layer.rawValue)"
-            c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour), layer == .light && hour.lakeWide.light == .red)
-            c.renderer?.update(image: c.current.image, arrows: c.current.arrows, striped: c.current.striped)
+            c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour), layer == .light ? hour.lakeWide.stripes : nil)
+            c.renderer?.update(image: c.current.image, arrows: c.current.arrows, stripes: c.current.stripes)
         }
         c.showSpot(spot.map { view.grid.coordinate(ofCell: $0) }, on: map)
         c.showBoat(boat, on: map)
@@ -1056,7 +1056,7 @@ struct LakeMapView: UIViewRepresentable {
         var grid: LakeGrid?
         /// The hour and layer drawn, and their picture and arrows.
         var shown: String?
-        var current: (image: CGImage?, arrows: [LakeRenderer.Arrow], striped: Bool) = (nil, [], false)
+        var current: (image: CGImage?, arrows: [LakeRenderer.Arrow], stripes: Light?) = (nil, [], nil)
         var routeMode = false
         var imagery = false
         /// Whether the lake was fitted below the editing bar of route mode.
@@ -1095,7 +1095,7 @@ struct LakeMapView: UIViewRepresentable {
             }
             guard let overlay = overlay as? LakeOverlay else { return MKOverlayRenderer(overlay: overlay) }
             let renderer = LakeRenderer(overlay: overlay)
-            renderer.update(image: current.image, arrows: current.arrows, striped: current.striped)
+            renderer.update(image: current.image, arrows: current.arrows, stripes: current.stripes)
             self.renderer = renderer
             return renderer
         }
@@ -1601,14 +1601,14 @@ final class LakeRenderer: MKOverlayRenderer {
     private let lock = NSLock()
     private var image: CGImage?
     private var arrows: [Arrow] = []
-    /// Red stripes over the water while the whole lake is red.
-    private var striped = false
+    /// Stripes over the water while the whole lake is red or amber (see LakeWide.stripes).
+    private var stripes: Light?
 
-    func update(image: CGImage?, arrows: [Arrow], striped: Bool) {
+    func update(image: CGImage?, arrows: [Arrow], stripes: Light?) {
         lock.lock()
         self.image = image
         self.arrows = arrows
-        self.striped = striped
+        self.stripes = stripes
         lock.unlock()
         setNeedsDisplay()
     }
@@ -1616,7 +1616,7 @@ final class LakeRenderer: MKOverlayRenderer {
     override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
         guard let lake = overlay as? LakeOverlay else { return }
         lock.lock()
-        let image = self.image, arrows = self.arrows, striped = self.striped
+        let image = self.image, arrows = self.arrows, stripes = self.stripes
         lock.unlock()
 
         let shore = CGMutablePath()
@@ -1637,22 +1637,25 @@ final class LakeRenderer: MKOverlayRenderer {
             context.draw(image, in: CGRect(origin: .zero, size: rect.size))
             context.restoreGState()
         }
-        if striped {
+        if let stripes {
+            // Amber stripes are wider apart and fainter than red ones.
+            let red = stripes == .red
             context.saveGState()
             context.addPath(shore)
             context.clip(using: .evenOdd)
             // Lines x + y = k * gap, so the stripes run on across the map's tiles.
-            let tile = self.rect(for: mapRect), gap = 14 / zoomScale
-            let stripes = CGMutablePath()
+            let tile = self.rect(for: mapRect), gap = (red ? 14 : 24) / zoomScale
+            let lines = CGMutablePath()
             var k = ((tile.minX + tile.minY) / gap).rounded(.down)
             while k * gap <= tile.maxX + tile.maxY {
-                stripes.move(to: CGPoint(x: k * gap - tile.minY, y: tile.minY))
-                stripes.addLine(to: CGPoint(x: k * gap - tile.maxY, y: tile.maxY))
+                lines.move(to: CGPoint(x: k * gap - tile.minY, y: tile.minY))
+                lines.addLine(to: CGPoint(x: k * gap - tile.maxY, y: tile.maxY))
                 k += 1
             }
-            context.addPath(stripes)
-            context.setStrokeColor(UIColor.systemRed.withAlphaComponent(0.55).cgColor)
-            context.setLineWidth(3 / zoomScale)
+            context.addPath(lines)
+            let color = red ? UIColor.systemRed.withAlphaComponent(0.55) : UIColor.systemOrange.withAlphaComponent(0.5)
+            context.setStrokeColor(color.cgColor)
+            context.setLineWidth((red ? 3 : 2) / zoomScale)
             context.strokePath()
             context.restoreGState()
         }
@@ -1727,7 +1730,7 @@ private struct CappedScroll<Content: View>: View {
 /// the map right now (layer, whole-lake stripes, route, boat, spot).
 struct LakeMapLegend: View {
     let layer: LakeLayer
-    let striped: Bool
+    let stripes: Light?
     let routeMode: Bool
     let hasRoute: Bool
     let boat: Bool
@@ -1743,9 +1746,12 @@ struct LakeMapLegend: View {
                 Section(layer.title) {
                     LakeLegend(layer: layer).padding(.vertical, 4)
                     MapBoatNote()
-                    if striped {
+                    if stripes == .red {
                         row(Image(systemName: "line.diagonal").foregroundStyle(.red),
-                            tr("Grey squares with red stripes: the whole lake is red (DWD warning, darkness or cold water), see the panel."))
+                            tr("Grey squares with red stripes: the whole lake is red (DWD warning or darkness), see the panel."))
+                    } else if stripes == .amber {
+                        row(Image(systemName: "line.diagonal").foregroundStyle(.orange),
+                            tr("Amber stripes: the whole lake is amber (sunrise or sunset, DWD warning), see the panel. The squares keep their own colours."))
                     }
                 }
                 Section(tr("On the map")) {

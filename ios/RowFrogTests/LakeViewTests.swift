@@ -141,6 +141,21 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(RouteEdit.move(at: 2, to: a, in: loop)[2].longitude, a.longitude)
     }
 
+    func testWholeLakeStripes() {
+        func wide(_ reasons: [(String, Light)]) -> LakeWide {
+            let r = reasons.map { Reason(condition: $0.0, light: $0.1) }
+            return LakeWide(light: r.map(\.light).max() ?? .green, reasons: r)
+        }
+        XCTAssertNil(wide([]).stripes)
+        XCTAssertEqual(wide([("daylight", .red)]).stripes, .red)
+        XCTAssertEqual(wide([("twilight", .amber)]).stripes, .amber)
+        XCTAssertEqual(wide([("lake_strong_wind", .amber)]).stripes, .amber)
+        XCTAssertEqual(wide([("weather_warning", .amber), ("cold_water", .amber)]).stripes, .amber)
+        // Cold water alone stays in the panel: no stripes for months on end.
+        XCTAssertNil(wide([("cool_water", .amber)]).stripes)
+        XCTAssertNil(wide([("cold_water", .amber), ("single_cold", .amber), ("freezing_water", .amber)]).stripes)
+    }
+
     func testRouteEditInsertOnAStretch() {
         let s = CLLocationCoordinate2D(latitude: 47.99, longitude: 11.34)
         let a = CLLocationCoordinate2D(latitude: 47.98, longitude: 11.34)
