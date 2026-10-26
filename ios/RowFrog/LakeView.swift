@@ -22,6 +22,8 @@ struct LakeView: Decodable, Hashable {
     let points: [Coordinate]
     let clubs: [LakeClub]
     var hours: [LakeHour]
+    /// The measured water the lights used; missing without a lake station or from older backends.
+    var waterC: Double? = nil
 
     /// Older than a club forecast may be: the lights then turn grey instead of green.
     var isStale: Bool {
@@ -166,8 +168,9 @@ extension LakeView {
         var copy = self
         copy.hours = hours.map { original in
             var hour = original
-            // The backend says when the water is cold; then the app's wind limits drop.
-            let cold = original.lakeWide.reasons.contains { $0.condition == "cold_water" }
+            // In cold water the app's wind limits drop, as on the backend.
+            let cold = waterC.map { $0 < RowingLimits.coldWaterC }
+                ?? original.lakeWide.reasons.contains { $0.condition == "cold_water" }  // older backends
             let forBoat = limits.forWater(cold ? 0 : nil)
             hour.lakeWide.reasons = forBoat.boatReasons(original.lakeWide.reasons).sorted { $0.light > $1.light }
             hour.lakeWide.light = hour.lakeWide.reasons.map(\.light).max() ?? .green

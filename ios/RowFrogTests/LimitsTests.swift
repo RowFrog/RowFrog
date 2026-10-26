@@ -16,7 +16,7 @@ final class LimitsTests: XCTestCase {
         XCTAssertEqual(calm.light, .green)
         let windy = hour(wind: 6, gust: 9, waves: 0.35).applying(limits, waterC: 12)
         XCTAssertEqual(windy.light, .red)
-        XCTAssertEqual(Set(windy.reasons.map(\.condition)), ["wind", "gusts", "waves", "cool_water"])
+        XCTAssertEqual(Set(windy.reasons.map(\.condition)), ["wind", "gusts", "waves"])
         XCTAssertNil(windy.notes)
     }
 
@@ -73,12 +73,12 @@ final class LimitsTests: XCTestCase {
 
     func testColdWaterLowersTheAppsWindLimitsButNotTheUsers() {
         let warm = hour(wind: 5, gust: 7.5, waves: 0.05).applying(RowingLimits.standard, waterC: 12)
-        XCTAssertEqual(warm.reasons.map(\.condition), ["cool_water"])
+        XCTAssertEqual(warm.reasons, [], "cool water shows as the life-jacket badge, not in the light")
         let cold = hour(wind: 5, gust: 7.5, waves: 0.05).applying(RowingLimits(boat: .big), waterC: 8)
-        XCTAssertEqual(cold.light, .amber)
+        XCTAssertEqual(cold.light, .green)
         XCTAssertFalse(cold.reasons.contains { $0.condition == "wind" }, "7 m/s is still fine for big boats")
         let small = hour(wind: 5, gust: 7.5, waves: 0.05).applying(RowingLimits(boat: Boat(id: "s", name: "", type: .racing, boatClass: .double)), waterC: 8)
-        XCTAssertEqual(Set(small.reasons.map(\.condition)), ["wind", "gusts", "cold_water"], "a double needs no partner boat")
+        XCTAssertEqual(Set(small.reasons.map(\.condition)), ["wind", "gusts"], "the limits are 1 m/s lower in cold water")
 
         let mine = RowingLimits(custom: [.windAmber: 5.2])
         let h = hour(wind: 5, gust: 2, waves: 0.05).applying(mine, waterC: 8)
@@ -86,13 +86,26 @@ final class LimitsTests: XCTestCase {
         XCTAssertEqual(h.notes?.map(\.condition), ["wind", "cold_margin"])
     }
 
-    func testSinglesAndNearFreezingWater() {
+    func testOnlyNearFreezingWaterChangesTheLight() {
         let quad = RowingLimits(boat: Boat(id: "q", name: "", type: .gig, boatClass: .quad))
         let h = hour(wind: 1, gust: 2, waves: 0).applying(quad, waterC: 3)
-        XCTAssertEqual(Set(h.reasons.map(\.condition)), ["cold_water", "freezing_water"])
+        XCTAssertEqual(h.reasons.map(\.condition), ["freezing_water"])
         XCTAssertEqual(h.light, .amber, "near-freezing water is a strong warning, not red for all")
         let single = hour(wind: 1, gust: 2, waves: 0).applying(RowingLimits(boat: .small), waterC: 9)
-        XCTAssertEqual(Set(single.reasons.map(\.condition)), ["cold_water", "single_cold"])
+        XCTAssertEqual(single.light, .green)
+    }
+
+    func testColdWaterKitSaysWhatToBring() {
+        let single = RowingLimits(boat: .small)
+        let quad = RowingLimits(boat: Boat(id: "q", name: "", type: .gig, boatClass: .quad))
+        XCTAssertNil(ColdWaterKit(waterC: 16, limits: single))
+        XCTAssertNil(ColdWaterKit(waterC: nil, limits: single))
+        XCTAssertEqual(ColdWaterKit(waterC: 12, limits: single), .lifeJacket)
+        XCTAssertEqual(ColdWaterKit(waterC: 8, limits: single), .partnerBoat)
+        XCTAssertEqual(ColdWaterKit(waterC: 8, limits: quad), .nearShore)
+        // The badge follows the user's own life-jacket limit.
+        XCTAssertNil(ColdWaterKit(waterC: 12, limits: RowingLimits(custom: [.lifeJacket: 11])))
+        XCTAssertEqual(ColdWaterKit(waterC: 15.5, limits: RowingLimits(custom: [.lifeJacket: 16])), .lifeJacket)
     }
 
     func testStrongWindLightIsRedOnlyForSmallRacingAndTrainingBoats() {

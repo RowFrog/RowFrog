@@ -297,7 +297,18 @@ struct RowingWidgetView: View {
     /// The rowing light large, with the reason under it.
     private func lightAndWhy(_ hour: ForecastHour) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            LightPill(light: hour.light, compact: false, stale: snapshot.isStale, plain: plain)
+            HStack(spacing: 5) {
+                LightPill(light: hour.light, compact: false, stale: snapshot.isStale, plain: plain)
+                // Cold water: what to bring, beside the light rather than in it.
+                if let kit = ColdWaterKit(waterC: snapshot.forecast?.waterTemperature?.celsius ?? snapshot.forecast?.estimatedWaterC) {
+                    Image(systemName: ColdWaterKit.symbol)
+                        .font(.caption.weight(.bold))
+                        .foregroundStyle(plain ? AnyShapeStyle(ColdWaterKit.color) : AnyShapeStyle(Color.white))
+                        .padding(5)
+                        .background(plain ? ColdWaterKit.color.opacity(0.15) : ColdWaterKit.color.opacity(0.75), in: Circle())
+                        .accessibilityLabel(kit.title)
+                }
+            }
             Text(detailLine(hour))
                 .font(.caption.weight(.medium))
                 .opacity(0.9)
