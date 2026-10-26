@@ -18,6 +18,8 @@ struct DetailMapCard: View {
     @State private var full = Self.hookLayer != nil
     @State private var radar = false
     @State private var playing = false
+    /// The same repeat switch as the full-screen maps': on, playing goes round 3 times.
+    @AppStorage("RWRadarLoop") private var loops = true
     private let store = ModelMapStore.shared
 
     /// The hours the card's slider goes through.
@@ -93,7 +95,9 @@ struct DetailMapCard: View {
                 } else if showsRadar, let frame = RadarWindow.nearest(panelDate, in: RadarWindow.frames(step: RadarWindow.step)) {
                     Text(tr("Radar %@", Format.time(frame)))
                 } else if let i = frameIndex {
-                    Text(layer.links == .day ? Format.day(frames[i]) : Format.dayTime(frames[i]))
+                    // Past the radar's two hours the rain map is the forecast, and says so.
+                    Text(layer == .rain ? tr("Forecast %@", Format.dayTime(frames[i]))
+                         : layer.links == .day ? Format.day(frames[i]) : Format.dayTime(frames[i]))
                 }
             }
             .font(.subheadline.weight(.semibold).monospacedDigit())
@@ -181,21 +185,45 @@ struct DetailMapCard: View {
                 if frames.indices.contains(i) { time.setMap(data.x(frames[i]).rounded()) }
             }), in: 0...Double(frames.count - 1), step: 1)
             .opacity(time.mapOutOfRange ? 0.4 : 1)
+            Button {
+                loops.toggle()
+            } label: {
+                Image(systemName: "repeat")
+                    .font(.caption.weight(.semibold))
+                    .foregroundStyle(loops ? Color.accentColor : .secondary)
+                    .padding(5)
+                    .background(loops ? Color.accentColor.opacity(0.18) : .clear, in: RoundedRectangle(cornerRadius: 7))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(tr("Play 3 times"))
+            .accessibilityAddTraits(loops ? .isSelected : [])
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
     }
 
     /// Plays through the maps from the shown one; linked, the chart follows.
+    /// With repeat on it goes round 3 times, as the full-screen maps do, then
+    /// stops on the hour it started from.
     private func play() async {
         guard playing else { return }
         var i = frameIndex ?? 0
         if time.mapOutOfRange || i >= frames.count - 1 { i = 0 }
+        let from = i
+        var rounds = 0
         while playing, !Task.isCancelled, frames.indices.contains(i) {
             time.setMap(data.x(frames[i]).rounded())
-            try? await Task.sleep(for: .milliseconds(700))
+            try? await Task.sleep(for: .milliseconds(i == frames.count - 1 ? 1400 : 700))
             guard playing, !Task.isCancelled else { return }
-            if i < frames.count - 1 { i += 1 } else { playing = false }
+            if i < frames.count - 1 {
+                i += 1
+            } else if loops, rounds < 2 {
+                rounds += 1
+                i = 0
+            } else {
+                playing = false
+                if loops { time.setMap(data.x(frames[from]).rounded()) }
+            }
         }
     }
 

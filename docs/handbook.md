@@ -60,14 +60,18 @@ Arrange this page); the rain tile in Current conditions reads DWD's radar for
 the next two hours and the forecast after that.
 
 1. Open a club on a day with showers nearby. The rain tile shows what the radar
-   sees now ("Dry", "Light rain") with a line such as "Rain 12:45 · radar"
-   or "Rain 18:00 · forecast", and small bars: thin ones for the
+   sees now ("Dry", "Light rain") with a line such as "Rain from 12:45"
+   after a small radar symbol (from the radar), or "Rain from 18:00" without
+   it (from the forecast), and small bars: thin ones for the
    radar's quarter hours, a line, then paler ones for the next forecast hours.
    The top tile's "Rain, hail" value says the same ("Rain from 12:45").
 2. Tap the tile: the chart starts with thin purple radar bars for two hours,
    then the blue forecast hours; the legend turns either off. The map card
    says "Radar 12:45" and shows the radar picture; a tap opens the radar map.
-   Slide the chart past two hours: the map turns into the rain forecast.
+   Slide the chart past two hours: the big number, the chart and the map
+   turn to the forecast, and the map's header to "Forecast <hour>".
+   The repeat button beside the map's slider (every detail map) plays it
+   3 times, as the full-screen maps do.
 3. Pick an hour in the 48 hours less than two hours ahead: its tiles use the
    radar too. Later hours use the forecast only.
 4. Arrange this page: "Rain radar" is switched off; switched on, the old card

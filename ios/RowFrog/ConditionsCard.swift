@@ -188,7 +188,7 @@ private struct ConditionTile: View {
                     HStack(alignment: .center) {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
-                            Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                            detailLine.font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 0)
                         // Every graphic gets the same height, so all tiles are as tall.
@@ -241,6 +241,12 @@ private struct ConditionTile: View {
         }
     }
 
+    /// The short line under the value; rain read from the radar starts with the radar's symbol.
+    private var detailLine: Text {
+        guard condition == .precipitation, let radar = data.radarAhead, radar.rainingNow || radar.firstRain != nil else { return Text(detail) }
+        return Text("\(Image(systemName: "dot.radiowaves.left.and.right")) \(detail)")
+    }
+
     private var detail: String {
         switch condition {
         case .temperature:
@@ -265,14 +271,15 @@ private struct ConditionTile: View {
         case .precipitation:
             // The radar for the next two hours, the forecast after them; short, the tile is narrow.
             if let radar = data.radarAhead {
+                // Lines from the radar start with its symbol (see `detailLine`).
                 if radar.rainingNow {
-                    return radar.dryAgain.map { tr("Dry from %@ · radar", Format.time($0.time)) } ?? tr("Next 2 h · radar")
+                    return radar.dryAgain.map { tr("Dry from %@", Format.time($0.time)) } ?? tr("Next 2 h")
                 }
                 if let first = radar.firstRain {
-                    return tr("Rain %@ · radar", Format.time(first.time))
+                    return tr("Rain from %@", Format.time(first.time))
                 }
                 guard let wet = data.forecastRain else { return tr("Dry next 24 h") }
-                return tr("%@ %@ · forecast", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
+                return tr("%@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
             }
             if (hour.precipitationMm ?? 0) >= 0.1 { return Sky(hour: hour).precipitationKind ?? "" }
             guard let wet = data.forecastRain else { return tr("Dry next 24 h") }
