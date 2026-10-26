@@ -434,6 +434,13 @@ jobs:
           shoot 204-top-tile-rain-radar light -RWOpenClub mrc-1880 -RWSampleRadar YES
           shoot 207-top-tile-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWSampleIce YES
           shoot 208-top-tile-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWSampleIce YES -RWLanguage de
+          # PREVIEW ONLY (owner to pick where the middle column goes; removed after the pick).
+          shoot 212-top-columns-gaps light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopColumns gaps
+          shoot 213-top-columns-gaps-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopColumns gaps -RWLanguage de
+          shoot 214-top-columns-centre light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopColumns centre
+          shoot 215-top-columns-centre-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopColumns centre -RWLanguage de
+          shoot 216-top-columns-thirds light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopColumns thirds
+          shoot 217-top-columns-thirds-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopColumns thirds -RWLanguage de
           shoot 205-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
           WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
           WAIT=30 shoot 211-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de

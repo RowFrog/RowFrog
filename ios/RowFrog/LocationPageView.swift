@@ -578,6 +578,7 @@ private struct NowCard: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .accessibilityLabel(tr("Feels like %@", Format.temperature(feels)) + ". " + (feelsLikeNote(hour) ?? ""))
+                                .greyLine()
                         }
                     }
                 }
@@ -745,6 +746,7 @@ private struct WindView: View {
             Text(AppSettings.shared.windUnit.symbol + (hour.windFromDeg.map { " · " + tr("from %@", Format.compass($0)) } ?? ""))
                 .font(.caption)
                 .foregroundStyle(.secondary)
+                .greyLine()
         }
         .accessibilityElement(children: .combine)
     }
@@ -806,14 +808,38 @@ struct TemperatureView: View {
                 Text(caption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .greyLine()
             }
         }
         .accessibilityElement(children: .combine)
     }
 }
 
-/// The top tile's values in two rows of equal thirds: air, water, wind above,
-/// the three small values below, each starting at its third. Each row reads level.
+/// A grey line under a value that does not widen its column: it wraps within
+/// the width the column is given, but counts as nothing when the column is measured.
+private struct GreyLineLayout: Layout {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let line = subviews.first else { return .zero }
+        guard let width = proposal.width, width.isFinite else {
+            return CGSize(width: 0, height: line.sizeThatFits(.unspecified).height)
+        }
+        return line.sizeThatFits(ProposedViewSize(width: width, height: nil))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(width: bounds.width, height: nil))
+    }
+}
+
+extension View {
+    /// See `GreyLineLayout`.
+    func greyLine() -> some View { GreyLineLayout { self } }
+}
+
+/// The top tile's values in three columns: air, water, wind above, the three
+/// small values below. Each column is as wide as its titles and values (the
+/// grey lines don't count): the left one starts at the left edge, the right one
+/// ends at the right edge. Each row reads level.
 struct TopTileGrid: Layout {
     var rowSpacing: CGFloat = 10
     var gap: CGFloat = 8
@@ -833,15 +859,23 @@ struct TopTileGrid: Layout {
     private func frames(width: CGFloat, _ subviews: Subviews) -> [CGRect] {
         let top = Array(subviews.prefix(3)), bottom = Array(subviews.dropFirst(3))
         guard top.count == 3 else { return [] }
-        // First row: at their own size, each at the start of its third; on the last baseline.
-        let sizes = top.map { $0.sizeThatFits(.unspecified) }
-        let xs = [0, width / 3, width * 2 / 3]
-        let baselines = top.map { $0.dimensions(in: .unspecified)[.lastTextBaseline] }
-        let line = baselines.max() ?? 0
-        var result = (0..<3).map { CGRect(x: xs[$0], y: line - baselines[$0], width: sizes[$0].width, height: sizes[$0].height) }
-        let below = (result.map(\.maxY).max() ?? 0) + rowSpacing
-        // Second row: the same thirds.
+        // Each column's width from its titles and values, in both rows.
+        let core = (0..<3).map { i in
+            [top[i], i < bottom.count ? bottom[i] : nil].compactMap { $0 }.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
+        }
+        let right = width - core[2]
+        let middle: CGFloat = switch Self.mode {
+        case "centre": (width - core[1]) / 2
+        case "thirds": width / 3
+        default: core[0] + (right - core[0] - core[1]) / 2  // equal gaps
+        }
+        let xs = [0, middle, Self.mode == "thirds" ? width * 2 / 3 : right]
         let columns: [(x: CGFloat, width: CGFloat)] = [(0, xs[1] - gap), (xs[1], xs[2] - xs[1] - gap), (xs[2], width - xs[2])]
+        // First row on the last baseline.
+        let topDims = zip(top, columns).map { $0.dimensions(in: ProposedViewSize(width: $1.width, height: nil)) }
+        let line = topDims.map { $0[.lastTextBaseline] }.max() ?? 0
+        var result = zip(columns, topDims).map { CGRect(x: $0.x, y: line - $1[.lastTextBaseline], width: $0.width, height: $1.height) }
+        let below = (result.map(\.maxY).max() ?? 0) + rowSpacing
         let dims = zip(bottom, columns).map { $0.dimensions(in: ProposedViewSize(width: $1.width, height: nil)) }
         let valueLine = dims.map { $0[VerticalAlignment.metricValue] }.max() ?? 0
         for (column, d) in zip(columns, dims) {
@@ -849,6 +883,9 @@ struct TopTileGrid: Layout {
         }
         return result
     }
+
+    /// PREVIEW ONLY (owner to pick): `-RWTopColumns gaps|centre|thirds`, where the middle column goes.
+    static var mode: String { UserDefaults.standard.string(forKey: "RWTopColumns") ?? "gaps" }
 }
 
 extension VerticalAlignment {
@@ -891,6 +928,7 @@ struct MetricView: View {
                 .foregroundStyle(.secondary)
                 .lineLimit(2)
                 .minimumScaleFactor(0.85)
+                .greyLine()
             }
         }
         .accessibilityElement(children: .combine)
