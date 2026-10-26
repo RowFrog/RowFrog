@@ -354,8 +354,11 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     el.querySelector("#sat-done").addEventListener("click", close);
     wireControls(el, lake, (k) => { kind = k; render(); });
     wireGestures(el.querySelector(".sat-stage"));
-    layout(true);
+    // Another picture or layer keeps the zoom and the place on the lake; only opening sets them.
+    layout(opened ? "again" : true);
+    opened = true;
   }
+  let opened = false;
 
   /** The whole picture fits at first; `fresh` also sets where it opens. */
   function layout(fresh) {
@@ -366,6 +369,11 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     const H = stage.clientHeight;
     const fit = Math.min(W, H * ratio);
     const changed = Math.abs(fit - zoom.fit) > 0.5;
+    if (changed && zoom.fit) {
+      // The same spot of the picture stays in the middle when its fitted size changes.
+      zoom.x = W / 2 - ((W / 2 - zoom.x) / zoom.fit) * fit;
+      zoom.y = H / 2 - ((H / 2 - zoom.y) / zoom.fit) * fit;
+    }
     zoom.fit = fit;
     content.style.width = `${fit}px`;
     content.style.height = `${fit / ratio}px`;
