@@ -65,7 +65,10 @@ the next two hours and the forecast after that.
    it (from the forecast), and small bars: thin ones for the
    radar's quarter hours, a line, then paler ones for the next forecast hours.
    The top tile's "Rain, hail" cell shows the same two lines: the value, and
-   the grey line under it with the same symbol.
+   the grey line under it with the same symbol. The top tile's small values
+   (waves, rain, visibility) start under Air, Water and Wind; their grey lines
+   use shorter words than the tiles ("1.0 km open water", "Dry for 24 h").
+   When ice matters it gets its own line under them (`-RWSampleIce YES`).
    Snow, hail and drizzle are named from the forecast's weather code (the
    radar only measures how much falls). While it rains, the line says what
    comes next: "Dry from 14:15", "Heavier from 14:30" (radar) or "Until about
@@ -135,6 +138,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWLakeWide twilight|cold|dark` sets the whole-lake light of every lake hour (twilight with cold water: amber stripes; cold water alone: no stripes; dark: grey with red stripes)
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
 - `-RWSampleRadar YES` made-up rain on the radar from 30 minutes on (light, then rain, dry again after an hour), to show the rain tile, the top tile's rain value and the rain chart while DWD's radar is dry
+- `-RWSampleIce YES` the top tile shows a made-up "Shore ice possible" line, to check the winter layout outside the ice season
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
