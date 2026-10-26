@@ -19,6 +19,8 @@ With the Copernicus account (CDSE_CLIENT_ID / CDSE_CLIENT_SECRET) it also
 writes Sentinel-2 pictures of each lake and, in winter, the satellite ice map:
     OUT_DIR/lakes/<id>/satellite        dates, cloud, picture box, credit
     OUT_DIR/lakes/<id>/satellite-latest.jpg, satellite-clearest.jpg, ice.png
+    OUT_DIR/lakes/<id>/satellite-<kind>-tiles/<row>-<col>.jpg   10 m tiles of lakes too big for one picture
+    OUT_DIR/lakes/<id>/satellite-<kind>-overview.jpg            2500 px overview of the biggest ones
 After each new ICON-D2 run (every 3 hours) it also writes the weather maps
 from DWD's open model data (rowfrog.sources.icon_d2_maps), no Open-Meteo calls:
     OUT_DIR/maps/index, OUT_DIR/maps/<tile>/<value>
@@ -44,6 +46,7 @@ import argparse
 import asyncio
 import json
 import pickle
+import shutil
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -96,6 +99,11 @@ PICTURE_SEARCH_VERSION = 4
 # Lakes looked at with versions before this one get the long first search.
 PICTURE_FIRST_SEARCH_BEFORE = 3
 PICTURES_PER_RUN = 40
+# Requests for sharp tiles per run (Bodensee takes 40 a picture), so the first
+# run after they came, or a run with many new passes, doesn't run too long.
+# Pictures left without tiles get them in the next runs.
+SHARP_TILES_PER_RUN = 100
+SHARP_RETRY = timedelta(hours=3)
 
 # Each club's DWD warn cell (its municipality) is looked up once and again
 # after this many days; then a few queries read the local warnings of every
@@ -474,6 +482,8 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
             first = version < PICTURE_FIRST_SEARCH_BEFORE
             checked = None if version != PICTURE_SEARCH_VERSION or "checkedAt" not in old else datetime.fromisoformat(old["checkedAt"])
             refresh = PICTURE_REFRESH["used" if lake_id in used else "other"]
+            if rings and checked and now - checked >= SHARP_RETRY and _lacks_sharp(old, rings[0]):
+                checked = None  # look again until every picture has its tiles
             if not rings or (checked and now - checked < refresh) or looked >= PICTURES_PER_RUN:
                 continue
             looked += 1
@@ -503,16 +513,38 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
             client.close()
 
 
+def _lacks_sharp(old: dict, ring) -> bool:
+    """Whether a picture shown for a lake that gets sharp tiles has none yet."""
+    if not sentinel2.sharp_size(sentinel2.frame(ring)[0]):
+        return False
+    return any(e and "tiles" not in e for e in (old.get(k) for k in ("latest", "clearest", "mostlyClear")))
+
+
 def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostly_clear=None) -> dict:
     """The satellite file's picture part, rendering the pictures that are new.
 
     A third, "mostly clear" picture is added only when it is newer than the
     clearest and not the latest itself, so it shows something the other two don't.
+    Lakes too big for 10 m in one picture also get each picture at 10 m in
+    tiles, and the biggest an overview, for the full-screen view ("sharp").
     """
     bbox, width, height = sentinel2.frame(ring)
+    sharp = sentinel2.sharp_size(bbox)
     body = {k: v for k, v in old.items() if k in ("ice",)}
     body.update(bbox=[round(v, 5) for v in bbox], width=width, height=height)
-    old_frame = old.get("bbox") == body["bbox"] and old.get("width") == width
+    if sharp:
+        grid = sentinel2.tiles(bbox, *sharp)
+        body["sharp"] = {
+            "width": sharp[0],
+            "height": sharp[1],
+            "tile": sentinel2.TILE_PIXELS,
+            "rows": grid[-1][0] + 1,
+            "columns": grid[-1][1] + 1,
+        }
+    # Pictures from before the sharp tiles keep their frame (no "sharp" yet).
+    old_frame = (
+        old.get("bbox") == body["bbox"] and old.get("width") == width and old.get("sharp", body.get("sharp")) == body.get("sharp")
+    )
     for kind, found in (("latest", latest), ("clearest", clearest)):
         before = old.get(kind) if old_frame else None
         if found is None:  # nothing new: keep showing the last one
@@ -528,6 +560,9 @@ def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostl
             path.write_bytes((folder / "satellite-latest.jpg").read_bytes())  # the same pass
         else:
             path.write_bytes(sentinel2.jpeg(client, bbox, width, height, found.day))
+        if sharp:
+            same = body["latest"] if kind == "clearest" and latest is not None and found.day == latest.day else None
+            entry.update(_sharp(client, folder, kind, bbox, sharp, found.day, before, same))
         body[kind] = entry
     clear_day = (body.get("clearest") or {}).get("date", "")
     if mostly_clear and latest and mostly_clear.day != latest.day and mostly_clear.day.isoformat() > clear_day:
@@ -540,13 +575,68 @@ def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostl
         path = folder / entry["image"]
         if not (before and before.get("date") == entry["date"] and path.exists()):
             path.write_bytes(sentinel2.jpeg(client, bbox, width, height, mostly_clear.day))
+        if sharp:
+            entry.update(_sharp(client, folder, "mostly-clear", bbox, sharp, mostly_clear.day, before))
         body["mostlyClear"] = entry
     shown = (body.get("latest"), body.get("mostlyClear"), body.get("clearest"))
     years = sorted({e["date"][:4] for e in shown if e})
     if years:
         body["attribution"] = f"Contains modified Copernicus Sentinel data {', '.join(years)}"
     (folder / "satellite.jpg").unlink(missing_ok=True)  # the single picture of the first version
+    # Sharp files of pictures no longer shown, or of a lake that no longer needs them.
+    kept = {e.get(k) for e in shown if e for k in ("tiles", "overview")}
+    for kind in ("latest", "clearest", "mostly-clear"):
+        if f"satellite-{kind}-tiles" not in kept and (folder / f"satellite-{kind}-tiles").exists():
+            shutil.rmtree(folder / f"satellite-{kind}-tiles")
+        if f"satellite-{kind}-overview.jpg" not in kept:
+            (folder / f"satellite-{kind}-overview.jpg").unlink(missing_ok=True)
     return body
+
+
+sharp_tiles_left = SHARP_TILES_PER_RUN
+
+
+def _sharp(client, folder: Path, kind: str, bbox, size, day, before: dict | None, same: dict | None = None) -> dict:
+    """Renders one picture at 10 m in tiles (and an overview for the biggest lakes) unless it is already there.
+
+    `same` is the entry of another picture of the same pass, whose files are copied.
+    Tiles are written to a fresh folder that replaces the old one once complete,
+    so a failed run leaves the old tiles beside the old satellite file.
+    """
+    global sharp_tiles_left
+    tiles_dir = f"satellite-{kind}-tiles"
+    grid = sentinel2.tiles(bbox, *size)
+    overview = sentinel2.overview_size(*size)
+    fields = {"tiles": tiles_dir}
+    if overview:
+        fields["overview"] = f"satellite-{kind}-overview.jpg"
+    complete = all((folder / tiles_dir / f"{row}-{col}.jpg").exists() for row, col, *_ in grid) and (
+        not overview or (folder / fields["overview"]).exists()
+    )
+    if before and before.get("date") == day.isoformat() and before.get("tiles") == tiles_dir and complete:
+        return fields
+    copy = same if same and same.get("tiles") and (not overview or same.get("overview")) else None
+    if not copy and sharp_tiles_left < len(grid):
+        return {}  # in a later run
+    if not copy:
+        sharp_tiles_left -= len(grid)
+    new = folder / f"{tiles_dir}.new"
+    shutil.rmtree(new, ignore_errors=True)
+    new.mkdir(parents=True)
+    if copy:
+        shutil.copytree(folder / copy["tiles"], new, dirs_exist_ok=True)
+    else:
+        for row, col, box, w, h in grid:
+            (new / f"{row}-{col}.jpg").write_bytes(sentinel2.jpeg(client, box, w, h, day))
+    if overview:
+        if copy:
+            data = (folder / copy["overview"]).read_bytes()
+        else:
+            data = sentinel2.jpeg(client, bbox, *overview, day)
+        (folder / fields["overview"]).write_bytes(data)
+    shutil.rmtree(folder / tiles_dir, ignore_errors=True)
+    new.rename(folder / tiles_dir)
+    return fields
 
 
 def write(path: Path, body) -> None:
