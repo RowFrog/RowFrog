@@ -44,11 +44,11 @@ export function locale() {
   return language === "de" ? "de-DE" : "en-GB";
 }
 
-/** The text in the chosen language, with each %@ replaced by the next argument in turn. */
+/** The text in the chosen language, with each %@ replaced by the next argument in turn and %% by %. */
 export function t(english, ...args) {
   const text = language === "de" ? german[english] ?? english : english;
   let i = 0;
-  return text.replace(/%@/g, () => String(args[i++] ?? ""));
+  return text.replace(/%@|%%/g, (m) => (m === "%%" ? "%" : String(args[i++] ?? "")));
 }
 
 /** A number in the page's language: 12.7 or 12,7. */
