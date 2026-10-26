@@ -294,9 +294,15 @@ struct TutorialView: View {
     init(locations: LocationStore, reload: @escaping () async -> Void, finish: @escaping () -> Void) {
         self.locations = locations
         self.reload = reload
-        self.finish = finish
-        let pages = TourPage.allCases.filter { locations.homeID == nil || !$0.isChoice }
-        let start = TourPage(rawValue: UserDefaults.standard.integer(forKey: "RWTutorialPage")) ?? .welcome
+        self.finish = {
+            TourProgress.clear()
+            finish()
+        }
+        // A tour already running goes on where it was: on a first start the view
+        // behind it changes once the home base is picked, which builds it again.
+        let pages = TourProgress.pages ?? TourPage.allCases.filter { locations.homeID == nil || !$0.isChoice }
+        let start = TourProgress.page ?? TourPage(rawValue: UserDefaults.standard.integer(forKey: "RWTutorialPage")) ?? .welcome
+        TourProgress.pages = pages
         _pages = State(initialValue: pages)
         _page = State(initialValue: pages.contains(start) ? start : pages[0])
     }
@@ -337,11 +343,14 @@ struct TutorialView: View {
                     pagerID += 1
                 }
             }
+            // On an iPad the app can stay active under the location question.
+            .onChange(of: here.answers) { pagerID += 1 }
             .task(id: page) {
                 // Ask for the location when choosing the home base, for clubs nearby.
                 if page == .homeBase { here.request() }
             }
             .onChange(of: page) {
+                TourProgress.page = page
                 // No swiping past the home base choice without one.
                 if locations.homeID == nil, page.rawValue > TourPage.homeBase.rawValue {
                     withAnimation { page = .homeBase }
@@ -452,6 +461,22 @@ private struct ClubChoicePage: View {
             .padding(.bottom, 36)
         }
         .padding(.top, 8)
+        // Again once the location is in, so the pick is one of the clubs shown.
+        .task(id: near == nil) { await autoPickHome() }
+    }
+
+    /// Screenshot hook: `-RWTourAutoHome YES` picks the first suggestion as home
+    /// base once the clubs are in, as a tap on it would.
+    private func autoPickHome() async {
+        guard page == .homeBase, UserDefaults.standard.bool(forKey: "RWTourAutoHome") else { return }
+        for _ in 0..<60 {
+            if let first = locations.suggestions(near: near).first {
+                try? await Task.sleep(for: .seconds(2))
+                locations.replaceHome(with: first)
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(500))
+        }
     }
 
     private func row(_ club: Club) -> some View {
@@ -762,6 +787,18 @@ struct MapLinkTip: Tip {
 
 // MARK: - Location for nearby clubs
 
+/// Where a running tour is, kept outside the view so the tour goes on where it
+/// was when it is built again.
+private enum TourProgress {
+    static var pages: [TourPage]?
+    static var page: TourPage?
+
+    static func clear() {
+        pages = nil
+        page = nil
+    }
+}
+
 /// The device's location, asked for only while the app is in use and only to
 /// suggest clubs nearby. Stays nil when the user says no.
 @Observable
@@ -769,6 +806,9 @@ final class DeviceLocation: NSObject, CLLocationManagerDelegate {
     private(set) var coordinate: Coordinate?
     /// Set when the system alert asking for the location was shown.
     var askedForPermission = false
+    /// Counts the answers to that alert.
+    private(set) var answers = 0
+    @ObservationIgnored private var waitingForAnswer = false
     @ObservationIgnored private let manager = CLLocationManager()
 
     override init() {
@@ -781,6 +821,7 @@ final class DeviceLocation: NSObject, CLLocationManagerDelegate {
         switch manager.authorizationStatus {
         case .notDetermined:
             askedForPermission = true
+            waitingForAnswer = true
             manager.requestWhenInUseAuthorization()
         case .authorizedWhenInUse, .authorizedAlways: manager.requestLocation()
         default: break
@@ -788,6 +829,10 @@ final class DeviceLocation: NSObject, CLLocationManagerDelegate {
     }
 
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
+        if waitingForAnswer, manager.authorizationStatus != .notDetermined {
+            waitingForAnswer = false
+            answers += 1
+        }
         if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
             manager.requestLocation()
         }
