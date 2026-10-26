@@ -298,68 +298,193 @@ export function sunState(forecast, at = new Date()) {
 
 // ---- Boats and limits (Limits.swift) ----------------------------------------------
 
+/** How a boat is built (BoatType): freeboard and width decide how much wind and wave it takes. */
+export const BOAT_TYPES = {
+  racing: { title: key("Racing boat"), detail: key("Narrow and low, with the least side above the water") },
+  training: { title: key("Training boat"), detail: key("Wider and steadier than a racing boat") },
+  gig: { title: key("Gig boat"), detail: key("Gig and touring boats, higher sides") },
+  coastal: { title: key("Coastal boat"), detail: key("Coastal boats that drain themselves") },
+};
+
+/** Size and rigging (BoatClass). */
+export const BOAT_CLASSES = {
+  "1x": key("Single (1x)"), "2x": key("Double (2x)"), "2-": key("Pair (2-)"), "4x": key("Quad (4x)"),
+  "4-": key("Four (4-)"), "4+": key("Coxed four (4+)"), "8x": key("Octuple (8x)"), "8+": key("Eight (8+)"),
+};
+
+/** Fours and eights: longer, heavier and steadier. */
+export const isBigClass = (boatClass) => !["1x", "2x", "2-"].includes(boatClass);
+
+/** The two groups every user has (Boat.small, Boat.big). */
+export const GROUPS = [
+  { id: "small", name: "", type: "racing", class: "1x" },
+  { id: "big", name: "", type: "racing", class: "8+" },
+];
+
 /** The app's two boat groups; the backend's light is for small boats. */
 export const BOATS = {
-  small: { title: key("Small boats"), inSentence: key("small boats"), detail: key("Singles, doubles and pairs (1x, 2x, 2-)") },
-  big: { title: key("Big boats"), inSentence: key("big boats"), detail: key("Fours and eights (4x, 4-, 4+, 8x, 8+)") },
+  small: { title: key("Small boats"), inSentence: key("small boats"), short: key("Small"), detail: key("Singles, doubles and pairs (1x, 2x, 2-)") },
+  big: { title: key("Big boats"), inSentence: key("big boats"), short: key("Big"), detail: key("Fours and eights (4x, 4-, 4+, 8x, 8+)") },
 };
 
-/** The app's limits for racing boats, small and big (RowingLimit.standard). */
-const LIMITS = {
-  big: { windAmber: 8.0, windRed: 10.8, gustAmber: 10.8, gustRed: 12.8, waveAmber: 0.25, waveRed: 0.40 },
+export const isGroup = (boat) => boat.id === "small" || boat.id === "big";
+
+/** The limits a user can fine-tune (RowingLimit), with their step and range; metric values. */
+export const LIMITS = {
+  windAmber: { title: key("Wind: row with care from"), condition: "wind", step: 0.5, range: [2, 15] },
+  windRed: { title: key("Wind: stay ashore above"), condition: "wind", step: 0.5, range: [2, 15] },
+  gustAmber: { title: key("Gusts: row with care from"), condition: "wind", step: 0.5, range: [4, 20] },
+  gustRed: { title: key("Gusts: stay ashore above"), condition: "wind", step: 0.5, range: [4, 20] },
+  waveAmber: { title: key("Waves: row with care from"), condition: "waves", step: 0.05, range: [0.05, 1.5] },
+  waveRed: { title: key("Waves: stay ashore above"), condition: "waves", step: 0.05, range: [0.05, 1.5] },
+  lifeJacket: { title: key("Life jacket below"), condition: "waterTemperature", step: 1, range: [4, 20] },
 };
+
+const WIND_LIMITS = ["windAmber", "windRed", "gustAmber", "gustRed"];
+const BOAT_DEPENDENT = [...WIND_LIMITS, "waveAmber", "waveRed"];
+
+// The app's limits by type and size (RowingLimit.standard): wind amber, wind red,
+// gust amber, gust red, wave amber, wave red. From the research approved on 2026-10-23.
+const STANDARD = {
+  "racing small": [5.5, 8.0, 8.0, 10.3, 0.15, 0.25],
+  "racing big": [8.0, 10.8, 10.8, 12.8, 0.25, 0.40],
+  "training small": [6.5, 9.0, 9.0, 11.0, 0.20, 0.35],
+  "training big": [8.0, 10.8, 10.8, 12.8, 0.25, 0.40],
+  gig: [8.0, 10.8, 10.8, 12.8, 0.30, 0.50],
+  coastal: [8.0, 12.0, 10.8, 12.8, 0.50, 1.0],
+};
+
+/** The app's limit for a boat. */
+export function standardLimit(limit, boat) {
+  if (limit === "lifeJacket") return 15;
+  const size = isBigClass(boat.class) ? "big" : "small";
+  const row = STANDARD[`${boat.type} ${size}`] ?? STANDARD[boat.type] ?? STANDARD["racing small"];
+  return row[BOAT_DEPENDENT.indexOf(limit)];
+}
 
 const COLD_WATER_C = 10;
-/** Below this the app advises a life jacket (RowingLimit.lifeJacket). */
-const LIFE_JACKET_C = 15;
 const COLD_WIND_MARGIN_MS = 1;
 const FREEZING_WATER_C = 4;
+export const COLD = { waterC: COLD_WATER_C, marginMs: COLD_WIND_MARGIN_MS };
 const LIMIT_REASONS = new Set(["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water"]);
+
+/**
+ * The limits for one boat (RowingLimits): the app's for its type with the
+ * user's own changes in `custom`, and in water below 10 °C the app's wind
+ * and gust limits lowered by 1 m/s.
+ */
+export function limitsFor(boat, custom = {}, waterC = null) {
+  const margin = (waterC ?? 99) < COLD_WATER_C ? COLD_WIND_MARGIN_MS : 0;
+  const maybeSingle = boat.id === "small" || boat.class === "1x";
+  return {
+    boat,
+    custom,
+    value: (limit) => custom[limit] ?? standardLimit(limit, boat) - (WIND_LIMITS.includes(limit) ? margin : 0),
+    isMine: (limit) => custom[limit] != null,
+    maybeSingle,
+    // The lake's strong-wind light: red for small racing and training boats, amber for the rest.
+    strongWindLight: !isBigClass(boat.class) && ["racing", "training"].includes(boat.type) ? "red" : "amber",
+  };
+}
+
+/** The same limits and rules as the backend's small boats, whatever the boat is called. */
+export function matchesStandard(limits) {
+  const usual = limitsFor(GROUPS[0]);
+  return Object.keys(LIMITS).every((l) => limits.value(l) === usual.value(l)) && limits.maybeSingle && limits.strongWindLight === "red";
+}
+
+/** Whether these limits let any wind, gust or wave pass that `other` already flags. */
+export function allowsMore(limits, other) {
+  return BOAT_DEPENDENT.some((l) => limits.value(l) > other.value(l) + 1e-9);
+}
 
 function check(value, amber, red) {
   if (value == null) return "green";
   return value > red ? "red" : value >= amber ? "amber" : "green";
 }
 
-/** One hour checked again for big boats, as ForecastHour.applying in the app. */
-export function applyBoatToHour(hour, boat, waterC) {
-  const base = LIMITS[boat];
-  if (!base) return hour;
-  const margin = (waterC ?? 99) < COLD_WATER_C ? COLD_WIND_MARGIN_MS : 0;
+/**
+ * One hour checked again for a boat's limits, as ForecastHour.applying in the
+ * app. Where the user's own limit is looser than the app's, a note says the
+ * value is above the app's usual limit, so the advice is never lost.
+ */
+export function applyLimitsToHour(hour, chosen, waterC) {
+  const limits = limitsFor(chosen.boat, chosen.custom, waterC);
+  const usual = limitsFor(chosen.boat, {}, waterC);
   const reasons = [];
+  const notes = [];
   for (const r of hour.reasons ?? []) {
     if (LIMIT_REASONS.has(r.condition)) continue;
-    // The lake's strong-wind light is amber for big boats.
-    reasons.push(r.condition === "lake_strong_wind" ? { ...r, light: "amber" } : r);
+    reasons.push(r.condition === "lake_strong_wind" ? { ...r, light: limits.strongWindLight } : r);
   }
-  const add = (name, light) => light !== "green" && reasons.push({ condition: name, light });
-  add("wind", check(hour.windSpeedMs, base.windAmber - margin, base.windRed - margin));
-  add("gusts", check(hour.windGustMs, base.gustAmber - margin, base.gustRed - margin));
-  add("waves", check(hour.waveHeightM, base.waveAmber, base.waveRed));
+  const add = (name, value, amber, red) => {
+    const light = check(value, limits.value(amber), limits.value(red));
+    if (light !== "green") reasons.push({ condition: name, light, ...(limits.isMine(light === "red" ? red : amber) ? { mine: true } : {}) });
+    const was = check(value, usual.value(amber), usual.value(red));
+    if (RANK[was] > RANK[light]) notes.push({ condition: name, light: was });
+  };
+  add("wind", hour.windSpeedMs, "windAmber", "windRed");
+  add("gusts", hour.windGustMs, "gustAmber", "gustRed");
+  add("waves", hour.waveHeightM, "waveAmber", "waveRed");
   // Cold water shows as the life-jacket badge (coldWaterKit), not in the
   // light; only near-freezing water stays amber, as in score.py.
-  if (waterC != null && waterC < FREEZING_WATER_C) reasons.push({ condition: "freezing_water", light: "amber" });
+  if (waterC != null && waterC < COLD_WATER_C) {
+    // The user's own wind limits do not drop with the water; say so.
+    if (WIND_LIMITS.some((l) => limits.isMine(l))) notes.push({ condition: "cold_margin", light: "amber" });
+    if (waterC < FREEZING_WATER_C) reasons.push({ condition: "freezing_water", light: "amber" });
+  }
   reasons.sort((a, b) => RANK[b.light] - RANK[a.light]);
   const light = reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green");
-  return { ...hour, reasons, light };
+  return { ...hour, reasons, light, notes: notes.length ? notes : undefined };
 }
 
-/** The forecast with the boat's limits; unchanged for small boats. */
-export function applyBoat(forecast, boat, zone = ZONE) {
-  if (!LIMITS[boat]) return forecast;
-  const water = forecast.waterTemperature?.celsius ?? estimatedWater(forecast);
-  const byDay = new Map((forecast.waterForecast ?? []).map((d) => [d.date, d.celsius]));
-  const apply = (h) => applyBoatToHour(h, boat, byDay.get(localDay(h.time, zone)) ?? water);
+/** The water the server judges an hour by: that day's water forecast, else the reading or estimate. */
+export function waterForHour(forecast, hour, zone = ZONE) {
+  const day = (forecast.waterForecast ?? []).find((d) => d.date === localDay(hour.time, zone));
+  return day?.celsius ?? forecast.waterTemperature?.celsius ?? estimatedWater(forecast);
+}
+
+/** The forecast with a boat's limits; unchanged with the backend's own. */
+export function applyLimits(forecast, limits, zone = ZONE) {
+  if (matchesStandard(limits)) return forecast;
+  const apply = (h) => applyLimitsToHour(h, limits, waterForHour(forecast, h, zone));
   return { ...forecast, hours: forecast.hours.map(apply), outlook: forecast.outlook?.map(apply) };
+}
+
+/** For a boat group id ("small" or "big"), as before own boats existed. */
+export function applyBoatToHour(hour, boat, waterC) {
+  const group = GROUPS.find((g) => g.id === boat);
+  return group ? applyLimitsToHour(hour, limitsFor(group), waterC) : hour;
+}
+
+export function applyBoat(forecast, boat, zone = ZONE) {
+  const group = GROUPS.find((g) => g.id === boat);
+  return group ? applyLimits(forecast, limitsFor(group), zone) : forecast;
 }
 
 /**
  * What cold water calls for, as ColdWaterKit in the app: a life jacket below
- * 15 °C, and below 10 °C also a partner boat (boats that may be singles) or
- * staying near the shore (the others). Null in warmer water.
+ * the life-jacket limit (15 °C), and below 10 °C also a partner boat (boats
+ * that may be singles) or staying near the shore (the others). Null in warmer water.
  */
-export function coldWaterKit(waterC, boat = "small") {
-  if (waterC == null || waterC >= LIFE_JACKET_C) return null;
+export function coldWaterKit(waterC, limits = limitsFor(GROUPS[0])) {
+  if (typeof limits === "string") limits = limitsFor(GROUPS.find((g) => g.id === limits) ?? GROUPS[0]);
+  if (waterC == null || !(waterC < limits.value("lifeJacket") || waterC < COLD_WATER_C)) return null;
   if (waterC >= COLD_WATER_C) return "lifeJacket";
-  return boat === "small" ? "partnerBoat" : "nearShore";
+  return limits.maybeSingle ? "partnerBoat" : "nearShore";
+}
+
+/**
+ * One of the user's own boats that would get better advice than the ticked one
+ * this hour (SteadierBoat): { boat, light }, or null.
+ */
+export function steadierBoat(hour, waterC, boats, chosenId, limitsOf) {
+  if (hour.light === "green") return null;
+  let best = null;
+  for (const boat of boats) {
+    if (boat.id === chosenId) continue;
+    const light = applyLimitsToHour(hour, limitsOf(boat), waterC).light;
+    if (RANK[light] < RANK[hour.light] && (!best || RANK[light] < RANK[best.light])) best = { boat, light };
+  }
+  return best;
 }
