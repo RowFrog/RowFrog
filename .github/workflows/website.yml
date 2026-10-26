@@ -1,0 +1,108 @@
+name: Website
+
+# Builds and tests the website in web/ (forecasts in the browser at
+# rowfrog.com/app, plus the start and legal pages) and, on main, deploys it to
+# Cloudflare Pages (project rowfrog-web). While in testing the whole site is
+# behind a password (web/functions/_middleware.js).
+# Needs the secrets CLOUDFLARE_API_TOKEN (with "Cloudflare Pages: Edit"),
+# CLOUDFLARE_ACCOUNT_ID, SITE_USER and SITE_PASSWORD (see docs/handbook.md).
+
+on:
+  pull_request:
+    paths:
+      - web/**
+      - scripts/build_web.py
+      - ios/RowFrog/Localization.swift
+      - .github/workflows/website.yml
+  push:
+    branches: [main]
+    paths:
+      - web/**
+      - scripts/build_web.py
+      - ios/RowFrog/Localization.swift
+      - .github/workflows/website.yml
+  workflow_dispatch:
+
+concurrency:
+  group: website-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install pillow==11.3.0
+      - name: Tests
+        run: node --test web/tests/*.test.mjs
+      - name: Build (fails on a text without German)
+        run: python scripts/build_web.py
+      - uses: actions/upload-artifact@v4
+        with:
+          name: website
+          path: web/dist
+          retention-days: 7
+
+  deploy:
+    needs: build
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+      SITE_USER: ${{ secrets.SITE_USER }}
+      SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+      WRANGLER: npx --yes wrangler@4.20.0
+      PROJECT: rowfrog-web
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: actions/download-artifact@v4
+        with:
+          name: website
+          path: web/dist
+      - name: Check the secrets
+        run: |
+          missing=""
+          for name in CLOUDFLARE_API_TOKEN CLOUDFLARE_ACCOUNT_ID SITE_USER SITE_PASSWORD; do
+            [ -n "${!name}" ] || missing="$missing $name"
+          done
+          if [ -n "$missing" ]; then echo "::error::Missing secrets:$missing"; exit 1; fi
+      - name: Create the Pages project if needed
+        run: |
+          if ! $WRANGLER pages project list | grep -q "\b$PROJECT\b"; then
+            $WRANGLER pages project create "$PROJECT" --production-branch main
+          fi
+      - name: Set the password
+        run: |
+          printf '%s' "$SITE_USER" | $WRANGLER pages secret put SITE_USER --project-name "$PROJECT"
+          printf '%s' "$SITE_PASSWORD" | $WRANGLER pages secret put SITE_PASSWORD --project-name "$PROJECT"
+      - name: Deploy
+        # Run from web/ so wrangler finds web/functions (the password check).
+        run: $WRANGLER pages deploy dist --project-name "$PROJECT" --branch main --commit-dirty=true
+      - name: Check the site is locked
+        run: |
+          base="https://$PROJECT.pages.dev"
+          sleep 20
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$base/app/")
+          echo "Without password: $code"
+          [ "$code" = 401 ] || { echo "::error::The site answered $code without a password"; exit 1; }
+          code=$(curl -s -o /dev/null -w '%{http_code}' -u "$SITE_USER:$SITE_PASSWORD" "$base/app/")
+          echo "With password: $code"
+          [ "$code" = 200 ] || { echo "::error::The site answered $code with the password"; exit 1; }
+          curl -sI "$base/app/" | grep -i '^x-robots-tag: noindex' || { echo "::error::noindex header missing"; exit 1; }
+          for site in https://rowfrog.com https://www.rowfrog.com; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "$site/app/" || true)
+            echo "$site without password: $code (401 once the domain is attached)"
+          done

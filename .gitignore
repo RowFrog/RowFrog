@@ -11,3 +11,6 @@ ios/RowFrogWidget/Info.plist
 ios/RowFrog/RowFrog.entitlements
 ios/RowFrogWidget/RowFrogWidget.entitlements
 docs/screenshots/
+
+# Website build
+web/dist/
