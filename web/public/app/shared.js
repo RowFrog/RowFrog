@@ -7,6 +7,7 @@ import { icon } from "./icons.js";
 import {
   API, ZONE, shownLight, windValue, WIND_UNITS, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD,
 } from "./logic.js";
+import { isOwn, loadOwnForecast } from "./ownplace.js";
 
 // ---- Stored in the browser -------------------------------------------------
 
@@ -150,7 +151,8 @@ export const forecasts = new Map();
 export async function loadForecast(id, fresh = false) {
   const kept = forecasts.get(id);
   if (kept && !fresh && Date.now() - kept.at < 5 * 60 * 1000) return kept.forecast;
-  const forecast = await getJSON(`clubs/${encodeURIComponent(id)}/forecast`);
+  const own = isOwn(id) ? store.clubs.find((c) => c.id === id) : null;
+  const forecast = own ? await loadOwnForecast(own) : await getJSON(`clubs/${encodeURIComponent(id)}/forecast`);
   forecasts.set(id, { at: Date.now(), forecast });
   return forecast;
 }

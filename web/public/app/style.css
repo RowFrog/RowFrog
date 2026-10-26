@@ -527,3 +527,28 @@ body.locked { overflow: hidden; }
 .sat-panel { padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); max-width: 760px; width: 100%; margin: 0 auto; }
 .sat-panel p { margin: 4px 0; }
 .legend li > .club-mark { width: 12px; height: 12px; flex: none; margin: 4px 6px 0; }
+
+/* ---- Browse clubs by country (CountryListView, CountryWatersView) ---- */
+.nav-side { min-width: 60px; }
+.nav .link .i { vertical-align: -3px; }
+a.result { color: inherit; text-decoration: none; }
+a.result > .i { color: var(--sub); flex: none; }
+.country-chips { margin-top: 10px; }
+.spinner-line { text-align: center; padding: 30px 0; }
+
+
+/* ---- Add a place (AddPlaceView) ---- */
+.pin-map { position: relative; height: 300px; border-radius: 12px; overflow: hidden; background: var(--tile); isolation: isolate; }
+#place-map { position: absolute; inset: 0; }
+.center-pin { position: absolute; left: 50%; top: 50%; z-index: 500; transform: translate(-50%, -100%); color: #ff3b30; pointer-events: none; filter: drop-shadow(0 1px 2px rgba(0,0,0,.5)); }
+.center-pin .i { width: 36px; height: 36px; fill: #fff; }
+.add-place .row-setting input[type=text], .add-place .row-setting input[type=url] { flex: 1; min-width: 0; text-align: right; border: 0; background: transparent; font: inherit; color: inherit; outline: none; }
+.add-place .row-setting input::placeholder { color: var(--sub); }
+input.switch { appearance: none; -webkit-appearance: none; width: 51px; height: 31px; border-radius: 16px; background: var(--tile); position: relative; flex: none; cursor: pointer; transition: background .2s; margin: 0; }
+input.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s; }
+input.switch:checked { background: var(--green); }
+input.switch:checked::after { transform: translateX(20px); }
+.own-note { margin: 4px 0 0; }
+.list-links { display: flex; flex-direction: column; gap: 12px; margin: 18px 4px 0; }
+.list-links .link[hidden] { display: none; }
+.add-own { display: flex; flex-direction: column; gap: 2px; margin: 14px 4px 0; }
