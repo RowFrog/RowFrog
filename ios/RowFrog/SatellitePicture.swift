@@ -572,11 +572,14 @@ struct SatelliteOverlay: View {
     /// how far it is zoomed and moved. Lines, marks and names then keep their size.
     var screen: (size: CGSize, zoom: CGFloat, offset: CGPoint)?
     @MainActor private var view: LakeView? { LakeViewStore.shared.views[lakeID] }
+    /// The wind map's wind, for the arrows on land.
+    @MainActor private var land: LandWind? {
+        guard let view, !view.hours.isEmpty else { return nil }
+        return ModelMapStore.shared.landWind(at: view.grid.centre, time: view.hours[view.hourIndex()].time)
+    }
 
     var body: some View {
-        let view = self.view
-        // The wind map's wind, for the arrows on land.
-        let land = view.flatMap { v in v.hours.isEmpty ? nil : ModelMapStore.shared.landWind(at: v.grid.centre, time: v.hours[v.hourIndex()].time) }
+        let view = self.view, land = self.land
         Canvas { context, size in
             guard let box = picture.bbox, box.count == 4 else { return }
             let full = screen?.size ?? size, zoom = screen?.zoom ?? 1, offset = screen?.offset ?? .zero
@@ -703,10 +706,17 @@ enum SatelliteWind {
             .intersection(CGRect(origin: .zero, size: size))
         let spacing = WindArrows.spacing / zoom
         // On land the wind map's forecast, at the place the picture shows.
-        let arrows = WindArrows.arrows(in: area, spacing: spacing, water: water, from: samples, land: land.map { land in { p in
-            land.at(MKMapPoint(CLLocationCoordinate2D(latitude: box[3] - Double(p.y / size.height) * (box[3] - box[1]),
-                                                      longitude: box[0] + Double(p.x / size.width) * (box[2] - box[0]))))
-        } }, shore: WindArrows.Shore(rings: rings), blend: CGFloat(WindArrows.blendM / widthM) * size.width)
+        var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
+        if let land {
+            onLand = { p in
+                let lat = box[3] - Double(p.y / size.height) * (box[3] - box[1])
+                let lon = box[0] + Double(p.x / size.width) * (box[2] - box[0])
+                return land.at(MKMapPoint(CLLocationCoordinate2D(latitude: lat, longitude: lon)))
+            }
+        }
+        let blend = CGFloat(WindArrows.blendM / widthM) * size.width
+        let arrows = WindArrows.arrows(in: area, spacing: spacing, water: water, from: samples,
+                                       land: onLand, shore: WindArrows.Shore(rings: rings), blend: blend)
         func screen(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * zoom - offset.x, y: p.y * zoom - offset.y) }
 
         let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))

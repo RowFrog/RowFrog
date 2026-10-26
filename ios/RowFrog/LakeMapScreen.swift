@@ -148,6 +148,8 @@ struct LakeMapScreen: View {
         let plan = planner?.plan(start: startTime, paceSecondsPer500: pace)
         let boat = boatStop(plan)
         let shown = shownHour(boat)
+        // The weather map's wind, for the arrows on land.
+        let land: LandWind? = shown.flatMap { hour in ModelMapStore.shared.landWind(at: view.grid.centre, time: hour.time) }
         ZStack(alignment: .top) {
             LakeMapView(
                 view: view, hour: shown, layer: layer, clubID: clubID, spot: $spot,
@@ -174,7 +176,7 @@ struct LakeMapScreen: View {
                 selectPoint: { selectedPoint = $0 },
                 imagery: imagery,
                 track: routeMode && showTrack ? rowed?.trackCoordinates ?? [] : [],
-                land: shown.flatMap { ModelMapStore.shared.landWind(at: view.grid.centre, time: $0.time) }
+                land: land
             )
             .ignoresSafeArea()
             // The wind map's wind, for the arrows on land.
@@ -704,17 +706,13 @@ struct LakeMapScreen: View {
             } else if routeMode {
                 Text(tr("Tap the water to add the turning points of your route."))
             } else if let spot, spot < hour.lights.count {
-                // Symbols for waves and wind, as in the hourly table, so the line fits.
-                let waves = Format.waves(hour.wave(ofCell: spot)), wind = spotWind(spot, hour)
                 HStack(spacing: 6) {
                     TrafficLightDot(light: hour.lights[spot], size: 10)
-                    Text("\(hour.lights[spot].title) · \(Image(systemName: "water.waves")) \(waves)"
-                         + (wind.map { " · \(Image(systemName: "wind")) \($0)" } ?? ""))
+                    spotLine(spot, hour)
                         .minimumScaleFactor(0.8)
                 }
                 .accessibilityElement(children: .combine)
-                .accessibilityLabel(hour.lights[spot].title + ", " + tr("Waves up to %@", waves)
-                                    + (wind.map { ", " + tr("Wind") + " " + $0 } ?? ""))
+                .accessibilityLabel(spotLabel(spot, hour))
             } else {
                 Text(view.headline(for: hour))
             }
@@ -770,6 +768,25 @@ struct LakeMapScreen: View {
     }
 
     /// The wind at a tapped spot, from its forecast point as its colour is: "Wind 3–6 m/s".
+    /// The tapped spot in one line: light, then waves and wind with their
+    /// symbols, as in the hourly table, so it fits.
+    private func spotLine(_ i: Int, _ hour: LakeHour) -> Text {
+        let waves: Text = Text(Image(systemName: "water.waves")) + Text(" " + Format.waves(hour.wave(ofCell: i)))
+        var line: Text = Text(hour.lights[i].title + " · ") + waves
+        if let wind = spotWind(i, hour) {
+            let part: Text = Text(" · ") + Text(Image(systemName: "wind")) + Text(" " + wind)
+            line = line + part
+        }
+        return line
+    }
+
+    /// The same in words, for VoiceOver.
+    private func spotLabel(_ i: Int, _ hour: LakeHour) -> String {
+        var label = hour.lights[i].title + ", " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: i)))
+        if let wind = spotWind(i, hour) { label += ", " + tr("Wind") + " " + wind }
+        return label
+    }
+
     private func spotWind(_ i: Int, _ hour: LakeHour) -> String? {
         let p = view.grid.cellPoint[i]
         guard p < hour.wind.count, let speed = hour.wind[p].speedMs else { return nil }
@@ -1707,10 +1724,13 @@ final class LakeRenderer: MKOverlayRenderer {
         // those on land are fainter. Colours stay on the water.
         let margin = Double(WindArrows.length(15) / zoomScale)
         let area = mapRect.insetBy(dx: -margin, dy: -margin)
+        var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
+        if let land {
+            onLand = { p in land.at(MKMapPoint(x: Double(p.x), y: Double(p.y))) }
+        }
         let grid = WindArrows.arrows(in: CGRect(x: area.minX, y: area.minY, width: area.width, height: area.height),
                                      spacing: WindArrows.spacing / zoomScale, water: lake.water, from: arrows,
-                                     land: land.map { land in { land.at(MKMapPoint(x: $0.x, y: $0.y)) } },
-                                     shore: lake.shore, blend: lake.blend)
+                                     land: onLand, shore: lake.shore, blend: lake.blend)
         context.setLineCap(.round)
         context.setLineJoin(.round)
         for ashore in [true, false] {

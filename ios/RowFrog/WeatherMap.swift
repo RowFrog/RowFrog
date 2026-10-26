@@ -940,8 +940,8 @@ struct LandWind {
     /// Where the wind blows to (degrees) and its speed (m/s); nil off the tile.
     func at(_ p: MKMapPoint) -> (towardDeg: Double, speedMs: Double)? {
         guard rect.contains(p), rect.width > 0, rect.height > 0 else { return nil }
-        return field.sample(x: (p.x - rect.minX) / rect.width, y: (p.y - rect.minY) / rect.height)
-            .map { ($0.towards, $0.speed) }
+        guard let wind = field.sample(x: (p.x - rect.minX) / rect.width, y: (p.y - rect.minY) / rect.height) else { return nil }
+        return (towardDeg: wind.towards, speedMs: wind.speed)
     }
 }
 
