@@ -148,6 +148,13 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Satellite water temperature check | after changing the satellite water temperature code (it runs itself on pushes that touch it): compares Copernicus LSWT, Landsat and the carried-forward estimate with GKD lake stations since 1 May; about 20 min |
 | Water temperature stations | every few months, or when clubs are added: lists the GKD Bayern, PEGELONLINE and Swiss BAFU stations, shows how `data/water-stations.json` (the station each club reads, nearest on its own water) would change, and reads every station in it once. To take a changed list, run `python3 scripts/water_station_survey.py --write` locally and commit the file |
 | Fix unknown waters | on main, after `data/catalogs/water-fixes.json` changes: puts clubs the import left under "Water near <town>" on the water checked by hand for them and moves their town-level launch points to that water's nearest shore (OpenStreetMap, within 6 km). The importers apply the same list on every run, so a re-import keeps the waters; locally `python3 scripts/fix_unknown_waters.py` (without `--snap`) only moves the clubs. A run stops after 45 minutes and saves what it has; run it again until the report no longer says "run the workflow again" |
+| DRV club catalog | to refresh `data/catalogs/de-drv.json` from the DRV club search (about 45 minutes); it runs itself when `scripts/import_drv.py` changes on main |
+| Club catalog | to refresh `data/catalogs/de-osm.json` from OpenStreetMap; it runs itself when `scripts/discover_clubs.py` changes on main |
+| Austria and Switzerland club catalogs | to refresh the `at-*` and `ch-*` catalogs; tick `swissrowing` only once Swiss Rowing has agreed. It runs itself when its import scripts change on main |
+| Live data check | after adding clubs or lakes: downloads missing lake outlines, checks launch points against them and runs the forecast with live data; new outlines are committed back. It runs itself when `data/locations.json`, `scripts/` or the data sources change on main |
+| Satellite ice check | to see whether the Copernicus ice maps and Sentinel-2 pictures answer for our lakes; it runs itself when its scripts change |
+| Place suggestions | with `deploy` ticked, to deploy the Worker in `cloudflare/suggestions/` that turns place suggestions into GitHub issues; unticked it only checks the GitHub token and the label. It runs itself when `cloudflare/suggestions/` changes (deploying only from main) |
+| Weather maps data check | to see what DWD (ICON-D2, GeoServer) and EUMETSAT offer for the weather maps; it runs itself when `scripts/weather_maps_probe.py` changes |
 | App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run. Input `device` = `iPad` shoots on an 11-inch iPad Pro Simulator instead; those shots go to an `ipad/` folder in the same set |
 
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
@@ -155,6 +162,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 `CLOUDFLARE_API_TOKEN` (also needs "Cloudflare Pages: Edit" for the website), `CLOUDFLARE_ACCOUNT_ID`, `USAGE_KEY` (usage counter),
 `SITE_USER`, `SITE_PASSWORD` (the website's password while it is in testing; change them and re-run the Website workflow to change the password),
 `CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET` (Copernicus satellite pictures, ice map and lake water temperature).
+`SUGGESTIONS_GITHUB_TOKEN` (fine-grained token with Issues read and write on this repo, for the place-suggestions Worker).
 Landsat water temperatures come from Microsoft's Planetary Computer and need no secret.
 
 ## Website (rowfrog.com, in testing)
