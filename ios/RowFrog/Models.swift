@@ -56,6 +56,20 @@ struct Lake: Codable, Identifiable, Hashable {
         let prefix = "Water near "
         return name.hasPrefix(prefix) ? tr("Water near %@", String(name.dropFirst(prefix.count))) : name
     }
+
+    /// The catalogs didn't name the club's water ("Water near <town>").
+    var waterUnknown: Bool { name.hasPrefix("Water near ") }
+
+    /// The country list's name: the water, or the town when the water isn't known,
+    /// so such a club sorts under its town's letter.
+    var listTitle: String { waterUnknown ? String(name.dropFirst("Water near ".count)) : name }
+
+    /// "Starnberger See · Starnberg"; just the town when the water isn't known,
+    /// rather than "Water near Aken · Aken".
+    static func place(_ lake: Lake?, town: String?) -> String {
+        let water = lake?.waterUnknown == true && town != nil ? nil : lake?.title
+        return [water, town].compactMap { $0 }.joined(separator: " · ")
+    }
 }
 
 /// A country the club search covers (GET countries/index).

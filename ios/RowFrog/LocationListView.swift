@@ -236,7 +236,7 @@ private struct LocationSummaryRow: View {
                         }
                         Text(club.displayName).font(.title3.bold()).lineLimit(1)
                     }
-                    Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
+                    Text(Lake.place(lake, town: club.town))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .lineLimit(1)
@@ -376,7 +376,7 @@ struct SearchResultRow: View {
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(club.name)
-                Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
+                Text(Lake.place(lake, town: club.town))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 if !club.launchPointVerified {

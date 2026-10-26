@@ -78,25 +78,39 @@ struct CountryWatersView: View {
     let country: Country
     @State private var filter = ""
 
+    /// One row: a water with its clubs. Pieces of one river or lake that the
+    /// map data keeps apart (the Havel in Spandau, Tegel and Potsdam) share a
+    /// row; each club keeps its own lake and forecast point.
     private struct Water: Identifiable {
-        let lake: Lake
+        let title: String
+        let unknown: Bool
         let clubs: [Club]
-        var id: String { lake.id }
+        var id: String { (unknown ? "near:" : "") + title }
     }
 
     var body: some View {
         let clubs = locations.catalog.filter { $0.countryCode == country.code }
-        let waters = Dictionary(grouping: clubs) { locations.lake(of: $0)?.id ?? "" }
-            .values
-            .compactMap { clubs -> Water? in
-                guard let lake = locations.lake(of: clubs[0]) else { return nil }
-                return Water(lake: lake, clubs: clubs.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending })
+        let query = LocationStore.fold(filter)
+        let waters = Dictionary(grouping: clubs) { club -> String in
+            guard let lake = locations.lake(of: club) else { return "" }
+            return (lake.waterUnknown ? "near:" : "") + LocationStore.fold(lake.listTitle)
+        }
+            .compactMap { key, clubs -> Water? in
+                guard !key.isEmpty, let lake = locations.lake(of: clubs[0]) else { return nil }
+                return Water(title: lake.listTitle, unknown: lake.waterUnknown,
+                             clubs: clubs.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending })
             }
-            .filter { filter.isEmpty || LocationStore.fold($0.lake.title).contains(LocationStore.fold(filter)) }
-            .sorted { $0.lake.title.localizedStandardCompare($1.lake.title) == .orderedAscending }
+            // The water, or one of its clubs by name or town.
+            .filter { water in
+                query.isEmpty || LocationStore.fold(water.title).contains(query) || water.clubs.contains { club in
+                    [club.name, club.shortName, club.abbreviation, club.town].compactMap { $0 }
+                        .contains { LocationStore.fold($0).contains(query) }
+                }
+            }
+            .sorted { $0.title.localizedStandardCompare($1.title) == .orderedAscending }
         let byRegion = clubs.contains { $0.region != nil }
         let groups = Dictionary(grouping: waters) { water -> String in
-            byRegion ? (water.clubs.first?.region ?? tr("Other")) : LocationStore.fold(String(water.lake.title.prefix(1))).uppercased()
+            byRegion ? (water.clubs.first?.region ?? tr("Other")) : LocationStore.fold(String(water.title.prefix(1))).uppercased()
         }
         List {
             if clubs.isEmpty {
@@ -107,10 +121,15 @@ struct CountryWatersView: View {
                 Section(key) {
                     ForEach(groups[key] ?? []) { water in
                         NavigationLink {
-                            WaterClubsView(locations: locations, lake: water.lake, clubs: water.clubs)
+                            WaterClubsView(locations: locations, title: water.title, clubs: water.clubs)
                         } label: {
                             HStack {
-                                Text(water.lake.title)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(water.title)
+                                    if water.unknown {
+                                        Text(tr("Water not yet known")).font(.caption).foregroundStyle(.secondary)
+                                    }
+                                }
                                 Spacer()
                                 Text("\(water.clubs.count)").foregroundStyle(.secondary)
                             }
@@ -119,7 +138,7 @@ struct CountryWatersView: View {
                 }
             }
         }
-        .searchable(text: $filter, prompt: Text(tr("Lake or river")))
+        .searchable(text: $filter, prompt: Text(tr("Lake, river, club or town")))
         .navigationTitle("\(country.flag) \(country.localizedName)")
         .task { await locations.ensureLoaded([country.code]) }
     }
@@ -127,14 +146,14 @@ struct CountryWatersView: View {
 
 struct WaterClubsView: View {
     let locations: LocationStore
-    let lake: Lake
+    let title: String
     let clubs: [Club]
 
     var body: some View {
         List(clubs) { club in
-            SearchResultRow(club: club, lake: lake, saved: locations.isSaved(club)) { locations.add(club) }
+            SearchResultRow(club: club, lake: locations.lake(of: club), saved: locations.isSaved(club)) { locations.add(club) }
         }
-        .navigationTitle(lake.title)
+        .navigationTitle(title)
     }
 }
 
