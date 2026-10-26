@@ -179,7 +179,7 @@ struct LocationPageView: View {
                     if tourSeen && showLakeViewTip {
                         TipView(lakeViewTip)
                     }
-                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
+                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC)
                 }
                 .id("lakeview")
             }
@@ -485,6 +485,11 @@ private struct NowCard: View {
     @State private var openCondition: Condition?
 
     private var water: WaterTemperature? { forecast.waterTemperature }
+    /// The water at the shown hour: now the reading or estimate, later the water forecast.
+    private var hourWaterC: Double? {
+        let latest = water?.celsius ?? forecast.estimatedWaterC
+        return at == nil ? latest : forecast.waterForecastC(on: hour.time) ?? latest
+    }
 
     var body: some View {
         Card {
@@ -519,6 +524,10 @@ private struct NowCard: View {
                     SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 34))
                     Text(Sky(hour: hour).title).font(.caption).foregroundStyle(.secondary)
                 }
+            }
+            if let kit = ColdWaterKit(waterC: hourWaterC) {
+                opens(.waterTemperature) { ColdWaterBadge(kit: kit, estimated: water == nil) }
+                    .frame(maxWidth: .infinity, alignment: .leading)
             }
             VStack(alignment: .leading, spacing: 6) {
                 if stale {
@@ -607,10 +616,10 @@ private struct NowCard: View {
                 NoWarningSheet(warnings: warnings, lakeName: lakeName, town: town, checkedAt: forecast.generatedAt)
             }
         }
-        .sheet(isPresented: $showingDaylight) {
+        .detailCover(isPresented: $showingDaylight) {
             ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour), club: club)
         }
-        .sheet(item: $openCondition) { condition in
+        .detailCover(item: $openCondition) { condition in
             ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues, club: club)
         }
         .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }

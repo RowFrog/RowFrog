@@ -1,0 +1,106 @@
+[
+{
+"id": "starnberger-see",
+"name": "Starnberger See",
+"country": "de",
+"center": {
+"lat": 47.9039,
+"lon": 11.3072
+},
+"hasOutline": true,
+"clubs": [
+{
+"id": "mrc-1880",
+"name": "M\u00fcnchener Ruder-Club von 1880 e.V.",
+"shortName": "MRC 1880",
+"address": "Dampfschiffstra\u00dfe 6, 82319 Starnberg",
+"website": "https://www.mrc1880.de",
+"launchPoint": {
+"lat": 47.99667,
+"lon": 11.34745
+},
+"launchPointVerified": true,
+"source": null,
+"abbreviation": null,
+"country": "de",
+"region": null
+},
+{
+"id": "mrsv-bayern",
+"name": "M\u00fcnchener Ruder- und Segel-Verein \"Bayern\" von 1910 e.V.",
+"shortName": "MRSV Bayern",
+"address": "Seepromenade 2, 82319 Starnberg",
+"website": "http://www.mrsv-bayern.de",
+"launchPoint": {
+"lat": 47.99156,
+"lon": 11.33901
+},
+"launchPointVerified": true,
+"source": null,
+"abbreviation": null,
+"country": "de",
+"region": null
+},
+{
+"id": "tutzinger-rv",
+"name": "Tutzinger Ruderverein 1983 e.V.",
+"shortName": "Tutzinger RV",
+"address": "Seestra\u00dfe 22, 82327 Tutzing",
+"website": "https://www.tutzinger-ruderverein.de",
+"launchPoint": {
+"lat": 47.89578,
+"lon": 11.27525
+},
+"launchPointVerified": true,
+"source": null,
+"abbreviation": null,
+"country": "de",
+"region": null
+}
+]
+},
+{
+"id": "ammersee",
+"name": "Ammersee",
+"country": "de",
+"center": {
+"lat": 48.0063,
+"lon": 11.1331
+},
+"hasOutline": true,
+"clubs": [
+{
+"id": "ammersee-ruderer",
+"name": "Ammersee-Ruderer e.V.",
+"shortName": "Ammersee-Ruderer",
+"address": "Seeweg-S\u00fcd, 86911 Die\u00dfen am Ammersee",
+"website": null,
+"launchPoint": {
+"lat": 47.98155,
+"lon": 11.09902
+},
+"launchPointVerified": false,
+"source": "drv",
+"abbreviation": "ASR",
+"country": "de",
+"region": null
+},
+{
+"id": "tsv-herrsching-abt-wassersport",
+"name": "TSV Herrsching - Abt. Wassersport",
+"shortName": "TSV Herrsching",
+"address": "Wartaweil 27, 82211 Herrsching",
+"website": "https://www.tsvh-wassersport.de",
+"launchPoint": {
+"lat": 47.97208,
+"lon": 11.14927
+},
+"launchPointVerified": false,
+"source": "drv",
+"abbreviation": "TSVH",
+"country": "de",
+"region": null
+}
+]
+}
+]

@@ -38,3 +38,36 @@ struct TrafficLightDot: View {
             .accessibilityLabel(light.title(stale: stale))
     }
 }
+
+extension ColdWaterKit {
+    /// The badge's blue: its own colour, so it never reads as a warning light.
+    static let color = Color(red: 0.18, green: 0.5, blue: 0.82)
+}
+
+/// The blue cold-water badge under the rowing light: what to bring, not a warning.
+struct ColdWaterBadge: View {
+    let kit: ColdWaterKit
+    /// Estimated water, not measured: the badge says so.
+    var estimated = false
+
+    var body: some View {
+        Label(estimated ? "≈ " + kit.title : kit.title, systemImage: ColdWaterKit.symbol)
+            .font(.subheadline.weight(.semibold))
+            .padding(.vertical, 4)
+            .padding(.horizontal, 10)
+            .background(ColdWaterKit.color.opacity(0.18), in: Capsule())
+            .foregroundStyle(ColdWaterKit.color)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(estimated ? tr("Estimated: %@", kit.explanation) : kit.explanation)
+    }
+}
+
+/// Just the symbol, for the list row and the widget.
+struct ColdWaterGlyph: View {
+    let kit: ColdWaterKit
+    var body: some View {
+        Image(systemName: ColdWaterKit.symbol)
+            .foregroundStyle(ColdWaterKit.color)
+            .accessibilityLabel(kit.title)
+    }
+}

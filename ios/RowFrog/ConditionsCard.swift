@@ -44,7 +44,7 @@ struct ConditionsCard: View {
                 }
             }
         }
-        .sheet(item: $open) { condition in
+        .detailCover(item: $open) { condition in
             ConditionDetailView(condition: condition, data: data, club: club)
         }
         .task {
@@ -293,7 +293,9 @@ private struct ConditionTile: View {
                      zones: [(0, .green), (userLimits.value(.waveAmber) / top, .orange), (userLimits.value(.waveRed) / top, .red)])
         case .waterTemperature:
             if let c = data.water?.celsius {
-                ScaleBar(fraction: c / 25, zones: [(0, .red), (0.4, .orange), (0.6, .green)])
+                // Blues for cold water: it calls for a life jacket, not a warning colour.
+                ScaleBar(fraction: c / 25, zones: [(0, Color(red: 0.11, green: 0.3, blue: 0.55)), (0.16, ColdWaterKit.color),
+                                                   (0.4, ColdWaterKit.color.opacity(0.45)), (0.6, .green)])
             }
         case .precipitation:
             SparkBars(values: data.future.prefix(8).map { $0.precipitationMm ?? 0 })
@@ -448,6 +450,28 @@ struct ConditionDetail {
     var source: String
 }
 
+extension View {
+    /// A value's view: a sheet on the iPhone, full screen on the iPad, where a
+    /// sheet was too small to show the chart and the map together.
+    @ViewBuilder
+    func detailCover<Item: Identifiable, Content: View>(item: Binding<Item?>, @ViewBuilder content: @escaping (Item) -> Content) -> some View {
+        if Orientation.isPad {
+            fullScreenCover(item: item, content: content)
+        } else {
+            sheet(item: item, content: content)
+        }
+    }
+
+    @ViewBuilder
+    func detailCover<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
+        if Orientation.isPad {
+            fullScreenCover(isPresented: isPresented, content: content)
+        } else {
+            sheet(isPresented: isPresented, content: content)
+        }
+    }
+}
+
 struct ConditionDetailView: View {
     let data: ConditionData
     @Environment(\.dismiss) private var dismiss
@@ -473,6 +497,13 @@ struct ConditionDetailView: View {
     @State private var time = DetailTime()
     /// Compact height: a phone on its side, where the map sits beside the chart.
     @Environment(\.verticalSizeClass) private var verticalSize
+    /// The view's size: the iPad shows it full screen, with the map beside the chart in landscape.
+    @State private var size: CGSize = .zero
+
+    /// The map beside the chart: a phone on its side, or a wide screen (iPad in landscape).
+    private var sideBySide: Bool {
+        verticalSize == .compact || (size.width > size.height && size.width >= 900)
+    }
 
     /// The views the arrows and swipes go through: every condition, or only
     /// the values of the top tile when opened from there.
@@ -496,6 +527,7 @@ struct ConditionDetailView: View {
                     .padding()
             }
             .coordinateSpace(name: Self.space)
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
             .simultaneousGesture(swipe)
             // The new view's map card reports its own hours.
             .onChange(of: condition) { time.mapHours = nil }
@@ -540,13 +572,14 @@ struct ConditionDetailView: View {
         let hidden = hiddenLines[condition] ?? []
         let layer = detail.history || detail.lines.isEmpty ? nil : mapLayer(condition)
         VStack(alignment: .leading, spacing: 14) {
-            if let club, let layer, verticalSize == .compact {
+            if let club, let layer, sideBySide {
                 HStack(alignment: .top, spacing: 16) {
                     VStack(alignment: .leading, spacing: 14) {
                         top(detail, head: head, shown: shown, hidden: hidden)
                     }
                     .frame(maxWidth: .infinity)
-                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: 230)
+                    // As tall as the chart beside it on the iPad.
+                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: verticalSize == .compact ? 230 : 300)
                         .frame(maxWidth: .infinity)
                 }
             } else {
@@ -625,7 +658,7 @@ struct ConditionDetailView: View {
 
     /// The weather map tip, above the map card in portrait once the chart's tip is closed.
     private var mapTipShown: Bool {
-        tourSeen && showMapTip && !showScrubTip && verticalSize != .compact
+        tourSeen && showMapTip && !showScrubTip && !sideBySide
     }
 
     /// The weather map under (or beside) the chart, with the slim chart for its full-screen view.
@@ -1577,8 +1610,8 @@ extension ConditionDetail {
                 unit: t.symbol,
                 lines: lines,
                 limits: [
-                    line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
-                    ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
+                    line(.lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
+                    ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: Color(red: 0.11, green: 0.3, blue: 0.55), label: tr("Very cold")),
                 ],
                 yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
                 history: true,
@@ -1596,11 +1629,13 @@ extension ConditionDetail {
             unit: t.symbol,
             lines: lines,
             limits: [
-                line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
-                ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
+                line(.lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
+                ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: Color(red: 0.11, green: 0.3, blue: 0.55), label: tr("Very cold")),
             ],
             limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A life jacket keeps your head above water through it, so the app advises one from %@ down. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the advice gets stricter below %@: stay near the shore and don't row alone. Your club's own rules come first.",
-                          Format.temperature(15), jacket, veryCold),
+                          Format.temperature(15), jacket, veryCold)
+                + " " + tr("Cold water does not change the rowing light: the blue life-jacket badge under it shows what to bring. Below %@ the app's wind and gust limits are %@ lower, and below %@ small boats get an amber warning.",
+                           veryCold, Format.wind(RowingLimits.coldWindMarginMs), Format.temperature(RowingLimits.freezingWaterC)),
             yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
             history: true,
             chartNote: forecastPoints.count > 1 ? tr("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value.") : nil,
