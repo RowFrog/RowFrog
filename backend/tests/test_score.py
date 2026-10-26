@@ -25,13 +25,15 @@ def test_fog_thresholds():
     assert assess(HourConditions(0, 0, visibility_m=300)).light == Light.RED
 
 
-def test_cold_water_is_a_warning_not_a_closure():
+def test_cold_water_does_not_colour_the_light():
+    # The app shows a life-jacket badge instead; the light stays about the weather.
+    assert assess(HourConditions(0, 0, water_temp_c=12)) == assess(HourConditions(0, 0, water_temp_c=18))
     a = assess(HourConditions(0, 0, water_temp_c=6))
-    assert a.light == Light.AMBER
-    assert a.reasons == [("cold_water", Light.AMBER), ("single_cold", Light.AMBER)]
+    assert a.light == Light.GREEN
+    assert a.reasons == []
     a = assess(HourConditions(0, 0, water_temp_c=3))
     assert a.light == Light.AMBER, "near-freezing water is a strong warning, the rower decides"
-    assert ("freezing_water", Light.AMBER) in a.reasons
+    assert a.reasons == [("freezing_water", Light.AMBER)]
 
 
 def test_cold_water_lowers_the_wind_limits_by_one_metre_per_second():

@@ -279,6 +279,46 @@ struct RowingLimits: Equatable {
     }
 }
 
+/// What to bring in cold water, shown as a blue badge beside the rowing light.
+/// The light itself only shows the weather (owner decision 2026-10-26), so
+/// green on a calm November morning means a good day, with a life jacket.
+enum ColdWaterKit: Equatable {
+    /// Below the life-jacket limit (15 °C unless the user changed it).
+    case lifeJacket
+    /// Below `RowingLimits.coldWaterC`: singles also need a coach or partner boat.
+    case partnerBoat
+    /// Below `RowingLimits.coldWaterC` in a bigger boat: stay near the shore.
+    case nearShore
+
+    static let symbol = "lifepreserver"
+
+    init?(waterC: Double?, limits: RowingLimits = AppSettings.shared.limits) {
+        guard let c = waterC, c < limits.value(.lifeJacket) || c < RowingLimits.coldWaterC else { return nil }
+        if c >= RowingLimits.coldWaterC { self = .lifeJacket } else { self = limits.maybeSingle ? .partnerBoat : .nearShore }
+    }
+
+    /// Short text on the badge.
+    var title: String {
+        switch self {
+        case .lifeJacket: tr("Life jacket")
+        case .partnerBoat: tr("Life jacket · partner boat")
+        case .nearShore: tr("Life jacket · near the shore")
+        }
+    }
+
+    /// The advice in full, for the badge's accessibility label and the water sheet.
+    var explanation: String {
+        switch self {
+        case .lifeJacket:
+            tr("Cold water: a capsize can cause cold-water shock. Wear a life jacket and clothes that keep you warm when wet.")
+        case .partnerBoat:
+            tr("Very cold water, below %@: wear a life jacket, stay near the shore and row a single only with a coach boat or a partner boat.", Format.temperature(RowingLimits.coldWaterC))
+        case .nearShore:
+            tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
+        }
+    }
+}
+
 extension ForecastHour {
     /// Reasons the app works out again for the user's boat and limits.
     static let limitReasons: Set<String> = ["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water"]
@@ -304,16 +344,12 @@ extension ForecastHour {
         check("wind", windSpeedMs, .windAmber, .windRed)
         check("gusts", windGustMs, .gustAmber, .gustRed)
         check("waves", waveHeightM, .waveAmber, .waveRed)
-        if let water = waterC, water < 15 {
-            // Below 15 °C cold-water shock is possible (life jacket advised), below 10 °C the water is very cold.
-            let cold = water < RowingLimits.coldWaterC
-            reasons.append(Reason(condition: cold ? "cold_water" : "cool_water", light: .amber))
-            if water < RowingLimits.coldWaterC {
-                if limits.maybeSingle { reasons.append(Reason(condition: "single_cold", light: .amber)) }
-                // The user's own wind limits do not drop with the water; say so.
-                if [RowingLimit.windAmber, .windRed, .gustAmber, .gustRed].contains(where: limits.isMine) {
-                    notes.append(Reason(condition: "cold_margin", light: .amber))
-                }
+        // Cold water shows as the life-jacket badge (ColdWaterKit), not in the
+        // light; only near-freezing water stays amber, as in score.py.
+        if let water = waterC, water < RowingLimits.coldWaterC {
+            // The user's own wind limits do not drop with the water; say so.
+            if [RowingLimit.windAmber, .windRed, .gustAmber, .gustRed].contains(where: limits.isMine) {
+                notes.append(Reason(condition: "cold_margin", light: .amber))
             }
             if water < RowingLimits.freezingWaterC {
                 reasons.append(Reason(condition: "freezing_water", light: .amber))
