@@ -69,7 +69,7 @@ struct WidgetSettingsView: View {
                 } header: {
                     SectionTitle(tr("Updates"), symbol: "arrow.triangle.2.circlepath")
                 } footer: {
-                    SectionFooter(tr("Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Less often saves battery and data, but a new DWD warning reaches the widgets later. Only after using the app: the widgets load once as you leave the app."))
+                    SectionFooter(tr("Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Less often saves battery and data, but a new official warning reaches the widgets later. Only after using the app: the widgets load once as you leave the app."))
                 }
                 .surfaceRows()
                 .id("updates")

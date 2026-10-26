@@ -118,7 +118,7 @@ private struct WarningRow: View {
                             .padding(.horizontal, 5)
                             .padding(.vertical, 1)
                             .background(Color.secondary.opacity(0.2), in: Capsule())
-                            .accessibilityLabel(tr("Sample warning for the preview, not from DWD"))
+                            .accessibilityLabel(tr("Sample warning for the preview, not an official warning"))
                     }
                 }
                 if warningsInEnglish, let english = warning.english {

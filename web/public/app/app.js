@@ -1146,7 +1146,7 @@ function renderBoat(id) {
       <h3 class="section">${icon("sliders-horizontal")} ${h(t("Fine-tune the limits"))}</h3>
       <section class="card group">${Object.keys(LIMITS).map(limitRow).join("")}
         ${changed ? `<button id="reset-limits" class="link">${h(t("Use the app's limits again"))}</button>` : ""}</section>
-      <p class="footer">${h(`${t("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. DWD warnings, thunderstorms, fog, hail and darkness always count.")} ${t("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.", temperature(COLD.waterC), wind(COLD.marginMs))}`)}</p>
+      <p class="footer">${h(`${t("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. Official warnings, thunderstorms, fog, hail and darkness always count.")} ${t("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.", temperature(COLD.waterC), wind(COLD.marginMs))}`)}</p>
       ${isGroup(boat) ? "" : `<button id="remove-boat" class="quiet red">${h(t("Remove this boat"))}</button>`}
       ${footerLinks()}
     </main>`;

@@ -317,7 +317,7 @@ export function reasonLabel(reason) {
 export function baseLabel(condition) {
   return {
     lake_warning: t("DWD storm warning"), lake_strong_wind: t("DWD strong-wind warning"), single_cold: t("Single in cold water"),
-    freezing_water: t("Near-freezing water"), weather_warning: t("DWD weather warning"), wind: t("Wind"), gusts: t("Gusts"),
+    freezing_water: t("Near-freezing water"), weather_warning: t("Official weather warning"), wind: t("Wind"), gusts: t("Gusts"),
     waves: t("Waves"), fog: t("Fog"), heavy_rain: t("Heavy rain"), hail: t("Hail"), thunderstorm: t("Thunderstorm risk"),
     ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunrise / sunset"), cold_water: t("Very cold water"),
     cool_water: t("Cold-water shock possible"),
@@ -351,7 +351,7 @@ export function reasonExplanation(condition, light) {
     case "lake_strong_wind": return t("DWD has issued a strong-wind warning for the lake; its warning lights flash 40 times a minute.");
     case "single_cold": return t("In a single, row with a coach boat or a partner boat while the water is this cold.");
     case "freezing_water": return t("The water is below %@. You are strongly advised not to go out, at least not in a small boat.", temperature(4));
-    case "weather_warning": return t("DWD has issued a weather warning for this place.");
+    case "weather_warning": return t("An official weather warning is out for this place.");
     case "wind": return t("Mean wind is above the limit.");
     case "gusts": return t("Gusts are above the limit.");
     case "waves": return t("Waves at the launch point are too high.");
@@ -645,7 +645,7 @@ export function conditionTexts() {
     precipitation: r("precipitation", t("Rain, hail, snow"), unitSymbol("rain"), t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unitSymbol("rain"))),
     visibility: r("visibility", t("Visibility (fog)"), unitSymbol("distance"), t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
     cloudCover: r("cloudCover", t("Cloud cover"), "%", t("Share of the sky covered by cloud.")),
-    thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings.")),
+    thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. Official thunderstorm warnings for the place appear under the warnings.")),
     uvIndex: r("uvIndex", t("UV index"), "", t("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")),
     ice: r("ice", t("Ice cover"), "", t("Estimated from the last weeks' frost and the water temperature, and on larger lakes checked against the Copernicus satellite ice map when clouds allow. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.")),
     daylight: r("daylight", t("Daylight"), "", t("Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red.")),
