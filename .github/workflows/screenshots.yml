@@ -115,6 +115,9 @@ jobs:
         run: |
           set -x
           xcrun simctl bootstatus "$UDID" -b
+          # The iPad is turned through the Simulator app's menu keys, so open its window
+          # now; a window still opening missed the first turn.
+          if [ "$SHOTS" != docs/screenshots ]; then open -a Simulator --args -CurrentDeviceUDID "$UDID"; sleep 20; fi
           # The build takes longer than the backend keeps DWD warnings; warm it again
           # so the first shots do not catch a page still loading.
           for club in mrc-1880 mrsv-bayern tutzinger-rv; do
@@ -147,9 +150,9 @@ jobs:
               if [[ " $* " == *" -RWLandscape YES "* && -z "${SIDEWAYS:-}" ]]; then turn=124; SIDEWAYS=1
               elif [[ " $* " != *" -RWLandscape YES "* && -n "${SIDEWAYS:-}" ]]; then turn=123; SIDEWAYS=""; fi
               if [ -n "$turn" ]; then
-                osascript -e 'tell application "Simulator" to activate' \
+                osascript -e 'tell application "Simulator" to activate' -e 'delay 2' \
                   -e "tell application \"System Events\" to key code $turn using command down" || echo "Could not turn the Simulator"
-                sleep 3
+                sleep 5
               fi
             fi
             # A hung simulator once blocked here until the 6-hour job limit; give up after a minute.
