@@ -8,20 +8,22 @@
 import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  store, savedClub, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence, boatDetail, boatShort,
-  limitText, forBoat, getJSON, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration, degrees,
-  temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
-  precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
-  coldWaterBadge, flag, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C, windDial, sparkBars,
-  levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly, footerLinks, mapBoat, mapLimits,
+  store, savedClub, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle,
+  boatInSentence, boatDetail, boatShort, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel,
+  dayTime, duration, degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain,
+  distanceNumber, distance, precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation,
+  coldWaterText, coldWaterBadge, flag, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C,
+  windDial, sparkBars, levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly,
+  footerLinks, mapBoat, mapLimits,
 } from "./shared.js";
 import {
-  API, isStale, shownLight, currentHour, nextHours, WIND_UNITS, compass, searchClubs, town, overlayBox, localDay, sky, SKY_TITLES,
-  skyIcon, precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater,
-  iceOff, ICE_TITLES, iceValue, sunState, coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit,
+  isStale, shownLight, currentHour, nextHours, WIND_UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon,
+  precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff,
+  ICE_TITLES, iceValue, sunState, coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit,
   applyLimits, steadierBoat, COLD, waterForHour, allowsMore,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap } from "./lakeview.js";
+import { satelliteCard } from "./satellite.js";
 import { renderValuePage } from "./valuepage.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 
@@ -377,7 +379,8 @@ async function renderClub(id) {
   wireClubPage(id, club, raw, forecast, hour);
   balanceCards();
   if (club?.launchPoint) showLaunchMap(club);
-  satelliteCard(forecast.lakeId).then(balanceCards);
+  const satelliteBox = root.querySelector("#satellite");
+  if (forecast.lakeId) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
   const lakeBox = root.querySelector("#lake-view");
   if (lakeBox) fillLakeCard(lakeBox, forecast.lakeId, id, waterForHour(raw, hour)).then(balanceCards);
 }
@@ -837,37 +840,6 @@ async function showLaunchMap(club) {
   }).addTo(map);
 }
 
-/** The Sentinel-2 pictures of the lake: latest, mostly clear and clearest (SatellitePictureCard). */
-async function satelliteCard(lakeId) {
-  const box = root.querySelector("#satellite");
-  let meta;
-  try {
-    meta = await getJSON(`lakes/${encodeURIComponent(lakeId)}/satellite`);
-  } catch {
-    return;
-  }
-  const kinds = [["latest", t("Latest")], ["mostlyClear", t("Mostly clear")], ["clearest", t("Clearest")]].filter(([k]) => meta[k]?.image);
-  if (!kinds.length || !box) return;
-  const ice = meta.ice?.image && meta.ice.bbox ? overlayBox(meta.bbox, meta.ice.bbox) : null;
-  const show = (kind) => {
-    const pick = meta[kind];
-    const cloud = (pick.lakeCloud ?? 0) * 100;
-    box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
-      <div class="segmented">${kinds.map(([k, label]) => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${h(label)}</button>`).join("")}</div>
-      <div class="picture" data-ratio="${meta.width / meta.height}" style="aspect-ratio:${meta.width}/${meta.height}">
-        <img src="${API}/lakes/${encodeURIComponent(lakeId)}/${h(pick.image)}" alt="${h(t("Satellite picture of the lake"))}" loading="lazy">
-        ${ice ? `<img class="overlay" src="${API}/lakes/${encodeURIComponent(lakeId)}/${h(meta.ice.image)}" alt="" style="left:${ice.left}%;top:${ice.top}%;width:${ice.width}%;height:${ice.height}%">` : ""}
-      </div>
-      <p class="sub small">${h(cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(pick.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(pick.date), num(cloud)))}</p>
-      ${ice ? `<p class="sub small">${h(t("Satellite ice map, %@", dayLabel(meta.ice.date)))}</p>` : ""}
-      <p class="sub small">${h(meta.attribution)}${meta.ice ? ` · ${h(meta.ice.attribution)}` : ""}</p>`;
-    box.querySelectorAll(".segmented button").forEach((b) => b.addEventListener("click", () => show(b.dataset.kind)));
-    fitSatellite();
-  };
-  box.hidden = false;
-  show(kinds[0][0]);
-}
-
 /**
  * Sizes the satellite picture so its whole card fits the window above the
  * bottom bar, never wider than the card. Runs again on every resize or turn.
@@ -1084,7 +1056,7 @@ function renderBoat(id) {
 function route(scroll = true) {
   swipeOff?.();
   document.querySelector("dialog.sheet")?.remove();
-  document.querySelector(".wm-full")?.remove();
+  document.querySelectorAll(".wm-full, .sat-full").forEach((x) => x.remove());
   document.body.classList.remove("locked");
   if (scroll) window.scrollTo(0, 0);
   if (!store.safety || store.safety.version < SAFETY_VERSION) return renderSafetyGate();

@@ -58,6 +58,9 @@ export const store = {
   /** "About the limits" open on value pages. */
   get limitInfo() { return load("rf.limitInfo", false); },
   set limitInfo(on) { save("rf.limitInfo", on); },
+  /** The layers drawn over the satellite picture (SatelliteLayers). */
+  get satLayers() { const on = load("rf.satLayers", []); return Array.isArray(on) ? on : []; },
+  set satLayers(list) { save("rf.satLayers", list); },
   get safety() { return load("rf.safety", null); },
   set safety(value) { save("rf.safety", value); },
 };
