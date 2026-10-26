@@ -1034,9 +1034,13 @@ final class StartingMapView: MKMapView {
         super.layoutSubviews()
         guard !applied, let start, let bottomInset, bounds.height > bottomInset + 80 else { return }
         applied = true
-        // The Apple Maps logo and Legal link move up with the free part.
-        layoutMargins.bottom = bottomInset
-        setVisibleMapRect(start, edgePadding: UIEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0), animated: false)
+        // Fit the start area into the free part, its middle on the free part's middle,
+        // and give the map the whole view at that scale.
+        let free = CGSize(width: bounds.width, height: bounds.height - bottomInset)
+        let scale = max(start.width / free.width, start.height / free.height)
+        let shown = MKMapRect(x: start.midX - free.width / 2 * scale, y: start.midY - free.height / 2 * scale,
+                              width: bounds.width * scale, height: bounds.height * scale)
+        setVisibleMapRect(shown, animated: false)
     }
 }
 
