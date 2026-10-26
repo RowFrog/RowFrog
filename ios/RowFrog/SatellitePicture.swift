@@ -779,7 +779,7 @@ struct SatellitePictureScreen: View {
                             SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID, marksOnScreen: true)
                                 .frame(width: fit, height: fit / picture.aspectRatio)
                         }
-                        .id(kind)
+                        // No .id(kind): switching pictures keeps the zoom and position.
                         .overlay {
                             // On the screen rather than in the picture, so lines, club marks,
                             // names and arrows stay sharp and the same size when zoomed in,
