@@ -66,7 +66,7 @@ the next two hours and the forecast after that.
    radar's quarter hours, a line, then paler ones for the next forecast hours.
    The top tile's "Rain, hail" cell shows the same two lines: the value, and
    the grey line under it with the same symbol. The top tile's small values
-   (waves, rain, visibility) start under Air, Water and Wind, in equal thirds; their grey lines
+   (waves, rain, visibility) start under Air, Water and Wind (left column at the left edge, right column ending at the right edge, middle column with equal gaps; grey lines don't set the widths); their grey lines
    use shorter words than the tiles ("1.0 km open water", "Dry for 24 h").
    When ice matters it gets its own line under them (`-RWSampleIce YES`).
    Snow, hail and drizzle are named from the forecast's weather code (the

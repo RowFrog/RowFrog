@@ -566,7 +566,7 @@ private struct NowCard: View {
             .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
             AdviceOnlyNote()
             Divider()
-            // Equal thirds: the small values start under air, water and wind.
+            // Three columns: the small values start under air, water and wind.
             TopTileGrid {
                 VStack(alignment: .leading, spacing: 0) {
                     opens(.temperature) {
@@ -743,12 +743,22 @@ private struct WindView: View {
                         .rotationEffect(.degrees(from + 180))
                 }
             }
-            Text(AppSettings.shared.windUnit.symbol + (hour.windFromDeg.map { " · " + tr("from %@", Format.compass($0)) } ?? ""))
-                .font(.caption)
-                .foregroundStyle(.secondary)
-                .greyLine()
+            // As wide as its longest direction ("from NW"), so the column keeps one
+            // width whatever the wind does and the line never wraps.
+            ZStack(alignment: .leading) {
+                ForEach(0..<8, id: \.self) { step in
+                    Text(unitLine(from: Double(step) * 45)).hidden()
+                }
+                Text(unitLine(from: hour.windFromDeg))
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private func unitLine(from degrees: Double?) -> String {
+        AppSettings.shared.windUnit.symbol + (degrees.map { " · " + tr("from %@", Format.compass($0)) } ?? "")
     }
 }
 
@@ -839,7 +849,7 @@ extension View {
 /// The top tile's values in three columns: air, water, wind above, the three
 /// small values below. Each column is as wide as its titles and values (the
 /// grey lines don't count): the left one starts at the left edge, the right one
-/// ends at the right edge. Each row reads level.
+/// ends at the right edge, the middle one has equal gaps to both. Each row reads level.
 struct TopTileGrid: Layout {
     var rowSpacing: CGFloat = 10
     var gap: CGFloat = 8
@@ -863,13 +873,9 @@ struct TopTileGrid: Layout {
         let core = (0..<3).map { i in
             [top[i], i < bottom.count ? bottom[i] : nil].compactMap { $0 }.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
         }
+        // The middle column with equal gaps to its neighbours.
         let right = width - core[2]
-        let middle: CGFloat = switch Self.mode {
-        case "centre": (width - core[1]) / 2
-        case "thirds": width / 3
-        default: core[0] + (right - core[0] - core[1]) / 2  // equal gaps
-        }
-        let xs = [0, middle, Self.mode == "thirds" ? width * 2 / 3 : right]
+        let xs = [0, core[0] + (right - core[0] - core[1]) / 2, right]
         let columns: [(x: CGFloat, width: CGFloat)] = [(0, xs[1] - gap), (xs[1], xs[2] - xs[1] - gap), (xs[2], width - xs[2])]
         // First row on the last baseline.
         let topDims = zip(top, columns).map { $0.dimensions(in: ProposedViewSize(width: $1.width, height: nil)) }
@@ -883,9 +889,6 @@ struct TopTileGrid: Layout {
         }
         return result
     }
-
-    /// PREVIEW ONLY (owner to pick): `-RWTopColumns gaps|centre|thirds`, where the middle column goes.
-    static var mode: String { UserDefaults.standard.string(forKey: "RWTopColumns") ?? "gaps" }
 }
 
 extension VerticalAlignment {

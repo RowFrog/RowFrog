@@ -347,7 +347,7 @@ enum German {
         "Bays and harbours first": "Zuerst in Buchten und Häfen",
         "Bays first": "Zuerst Buchten",
         "Offshore wind": "Ablandiger Wind",
-        "%@ open water": "%@ offenes Wasser",
+        "%@ open water": "%@ Freiwasser",
         "Dry for 24 h": "24 h trocken",
         "Estimated from frost": "Aus dem Frost geschätzt",
         "Satellite": "Satellit",
