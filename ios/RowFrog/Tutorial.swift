@@ -236,7 +236,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "list.bullet", text: tr("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
             TourPoint(symbol: "slider.horizontal.3", text: tr("The sliders next to a boat open its limits.")),
             TourPoint(symbol: "map", text: tr("Pick the boat that colours the lake map.")),
-            TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water the app advises a life jacket; below %@ it is stricter.", Format.temperature(RowingLimit.lifeJacket.standard(for: .small)), Format.temperature(RowingLimits.coldWaterC))),
+            TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water the app advises a life jacket; below %@ it is stricter.", Format.temperature(RowingLimit.lifeJacket.standard(for: .small)), Format.temperature(RowingLimits.coldWaterC)) + " " + tr("A blue life-jacket badge then shows under the rowing light and the lake's shore turns blue; the light itself stays about the weather.")),
         ]
         case .lake: [
             TourPoint(symbol: "map", text: tr("The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.")),

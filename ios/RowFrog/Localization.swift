@@ -582,6 +582,7 @@ enum German {
         "Cold-water shock possible": "Kälteschock möglich",
         "Cold-water shock: life jacket": "Kälteschock: Rettungsweste",
         "Life jacket · partner boat": "Rettungsweste · Begleitboot",
+        "A blue life-jacket badge then shows under the rowing light and the lake's shore turns blue; the light itself stays about the weather.": "Dann erscheint unter der Ruderampel ein blaues Rettungswesten-Zeichen und das Seeufer wird blau; die Ampel selbst zeigt weiter nur das Wetter.",
         "Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.": "Blaues Ufer: Das Wasser ist kalt. Nimm eine Rettungsweste mit; hellblau unter %@, dunkler blau unter %@.",
         "Life jacket · near the shore": "Rettungsweste · in Ufernähe",
         "Cold water: a capsize can cause cold-water shock. Wear a life jacket and clothes that keep you warm when wet.": "Kaltes Wasser: Ein Kentern kann einen Kälteschock auslösen. Trage eine Rettungsweste und Kleidung, die auch nass warm hält.",
