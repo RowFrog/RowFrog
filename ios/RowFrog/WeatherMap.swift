@@ -49,6 +49,15 @@ enum WeatherMapLayer: String, CaseIterable, Identifiable {
         }
     }
 
+    /// How much map a view opens with, in km across: the lake and its shores for
+    /// the values there; more for rain and lightning, to see them coming from upwind.
+    var startSpanKm: Double {
+        switch self {
+        case .rain, .lightning: 120
+        default: 50
+        }
+    }
+
     /// How the map follows a chart's time: the model maps hour by hour, UV by
     /// day; lightning and fog show the past and keep their own time.
     enum Link { case hour, day, none }
@@ -237,6 +246,42 @@ struct MapPalette {
     }
 }
 
+/// A part of the map between two longitudes and two latitudes.
+struct MapArea: Hashable {
+    var west: Double, east: Double, south: Double, north: Double
+
+    init(west: Double, east: Double, south: Double, north: Double) {
+        self.west = west; self.east = east
+        // Mercator ends short of the poles.
+        self.south = max(south, -85); self.north = min(north, 85)
+    }
+
+    /// What a map shows.
+    init(_ region: MKCoordinateRegion) {
+        self.init(west: region.center.longitude - region.span.longitudeDelta / 2,
+                  east: region.center.longitude + region.span.longitudeDelta / 2,
+                  south: region.center.latitude - region.span.latitudeDelta / 2,
+                  north: region.center.latitude + region.span.latitudeDelta / 2)
+    }
+
+    /// About `km` across around a place.
+    init(around p: Coordinate, km: Double) {
+        let lat = km / 111 / 2, lon = km / (111 * max(cos(p.lat * .pi / 180), 0.2)) / 2
+        self.init(west: p.lon - lon, east: p.lon + lon, south: p.lat - lat, north: p.lat + lat)
+    }
+
+    var region: MKCoordinateRegion {
+        MKCoordinateRegion(center: CLLocationCoordinate2D(latitude: (south + north) / 2, longitude: (west + east) / 2),
+                           span: MKCoordinateSpan(latitudeDelta: north - south, longitudeDelta: east - west))
+    }
+
+    var mapRect: MKMapRect {
+        let nw = MKMapPoint(CLLocationCoordinate2D(latitude: north, longitude: west))
+        let se = MKMapPoint(CLLocationCoordinate2D(latitude: south, longitude: east))
+        return MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y)
+    }
+}
+
 /// maps/index: the model run, its hours and the tiles.
 struct WeatherMapIndex: Decodable {
     let run: Date
@@ -253,6 +298,10 @@ struct WeatherMapIndex: Decodable {
         let west: Double, east: Double, south: Double, north: Double
 
         func contains(_ p: Coordinate) -> Bool { p.lon > west && p.lon < east && p.lat > south && p.lat < north }
+
+        func holds(_ a: MapArea) -> Bool {
+            west <= a.west + 1e-6 && east >= a.east - 1e-6 && south <= a.south + 1e-6 && north >= a.north - 1e-6
+        }
 
         func distance(to p: Coordinate) -> Double {
             hypot((west + east) / 2 - p.lon, (south + north) / 2 - p.lat)
@@ -277,6 +326,36 @@ struct WeatherMapIndex: Decodable {
     /// The tile a place lies most central in.
     func tile(for p: Coordinate) -> Tile? {
         tiles.filter { $0.contains(p) }.min { $0.distance(to: p) < $1.distance(to: p) }
+    }
+
+    /// The tiles that draw a visible area, each with the patches it draws. The tiles
+    /// overlap by half (6° × 4°, every 3° × 2°), so the area is cut into 1.5° × 1°
+    /// patches and each goes to the tile, of those holding it whole, whose centre is
+    /// nearest: nothing is drawn twice, and a patch with no tile stays empty. At most
+    /// `limit` tiles, those nearest the middle, so zooming far out stays light.
+    func cover(_ area: MapArea, limit: Int = 9) -> [(tile: Tile, patches: [MapArea])] {
+        // Far out, only the middle 15° × 10° is filled.
+        let mid = Coordinate(lat: (area.south + area.north) / 2, lon: (area.west + area.east) / 2)
+        let west = max(area.west, mid.lon - 7.5), east = min(area.east, mid.lon + 7.5)
+        let south = max(area.south, mid.lat - 5), north = min(area.north, mid.lat + 5)
+        var patches: [String: [MapArea]] = [:]
+        var lon = (west / 1.5).rounded(.down) * 1.5
+        while lon < east {
+            var lat = south.rounded(.down)
+            while lat < north {
+                let patch = MapArea(west: lon, east: lon + 1.5, south: lat, north: lat + 1)
+                let centre = Coordinate(lat: lat + 0.5, lon: lon + 0.75)
+                if let best = tiles.filter({ $0.holds(patch) }).min(by: { $0.distance(to: centre) < $1.distance(to: centre) }) {
+                    patches[best.id, default: []].append(patch)
+                }
+                lat += 1
+            }
+            lon += 1.5
+        }
+        return tiles.filter { patches[$0.id] != nil }
+            .sorted { $0.distance(to: mid) < $1.distance(to: mid) }
+            .prefix(limit)
+            .map { ($0, patches[$0.id] ?? []) }
     }
 }
 
@@ -367,29 +446,44 @@ final class ModelMapStore {
         return grids[Self.key(index, tile, value)]
     }
 
-    /// Loads what a model layer needs around a point: the index, the value's
-    /// file and, for wind and gusts, the arrows.
-    func prepare(_ layer: WeatherMapLayer, at point: Coordinate) async {
+    /// Loads what a model layer needs for the area on screen: the index, the
+    /// value's file of each tile there (the club's first) and, for wind and
+    /// gusts, the arrows. Zooming out or moving loads the next tiles only then.
+    func prepare(_ layer: WeatherMapLayer, at point: Coordinate, area: MapArea) async {
         await loadIndex()
-        guard let value = layer.modelValue, let tile = index?.tile(for: point) else { return }
-        await load(tile: tile.id, value: value)
-        if layer == .wind || layer == .gust { await load(tile: tile.id, value: "windDirection") }
+        guard let value = layer.modelValue, let index else { return }
+        var ids = index.cover(area).map(\.tile.id)
+        if let own = index.tile(for: point)?.id {
+            ids.removeAll { $0 == own }
+            ids.insert(own, at: 0)
+        }
+        let values = layer == .wind || layer == .gust ? [value, "windDirection"] : [value]
+        for id in ids {
+            for v in values { await load(tile: id, value: v) }
+        }
     }
 
-    /// What the map draws for a model layer at one of its hours: the coloured
-    /// tile and, for wind and gusts, the arrows.
-    func overlay(_ layer: WeatherMapLayer, at point: Coordinate, time: Date) -> WeatherMapOverlayContent? {
-        guard let value = layer.modelValue, let palette = layer.palette, let index, let tile = index.tile(for: point),
-              let values = grid(tile: tile.id, value: value), let hour = index.hours.firstIndex(of: time) else { return nil }
-        var wind: WindField?
-        if layer == .wind || layer == .gust, let directions = grid(tile: tile.id, value: "windDirection") {
-            // The arrows' length follows the layer shown: wind, or gusts.
-            wind = WindField(directions: directions, speeds: values, hour: hour)
+    /// The tiles a model layer needs for an area, to load again when they change.
+    func tileIDs(for area: MapArea) -> [String] { index?.cover(area).map(\.tile.id) ?? [] }
+
+    /// What the map draws for a model layer at one of its hours: each loaded tile
+    /// coloured over its patches and, for wind and gusts, the arrows.
+    func overlays(_ layer: WeatherMapLayer, area: MapArea, time: Date) -> [WeatherMapOverlayContent] {
+        guard let value = layer.modelValue, let palette = layer.palette, let index,
+              let hour = index.hours.firstIndex(of: time) else { return [] }
+        return index.cover(area).compactMap { tile, patches in
+            guard let values = grid(tile: tile.id, value: value) else { return nil }
+            var wind: WindField?
+            if layer == .wind || layer == .gust, let directions = grid(tile: tile.id, value: "windDirection") {
+                // The arrows' length follows the layer shown: wind, or gusts.
+                wind = WindField(directions: directions, speeds: values, hour: hour)
+            }
+            return WeatherMapOverlayContent(id: "\(tile.id)|\(value)",
+                                            northWest: CLLocationCoordinate2D(latitude: tile.north, longitude: tile.west),
+                                            southEast: CLLocationCoordinate2D(latitude: tile.south, longitude: tile.east),
+                                            image: values.image(hour: hour, palette: palette), smooth: true, wind: wind,
+                                            clip: patches)
         }
-        return WeatherMapOverlayContent(id: "\(tile.id)|\(value)",
-                                        northWest: CLLocationCoordinate2D(latitude: tile.north, longitude: tile.west),
-                                        southEast: CLLocationCoordinate2D(latitude: tile.south, longitude: tile.east),
-                                        image: values.image(hour: hour, palette: palette), smooth: true, wind: wind)
     }
 
     func load(tile: String, value: String) async {
@@ -455,6 +549,9 @@ struct WeatherMapScreen: View {
     private let start: Date?
     /// Shown above the map's controls, e.g. a slim chart that moves with the map.
     private let chart: AnyView?
+    /// The area it opens with, and the area on screen now.
+    private let startArea: MapArea
+    @State private var area: MapArea
 
     init(point: Coordinate, clubID: String? = nil, layer: WeatherMapLayer, start: Date? = nil, time: Binding<Date?>? = nil,
          chart: AnyView? = nil) {
@@ -464,6 +561,8 @@ struct WeatherMapScreen: View {
         self.time = time
         self.chart = chart
         _layer = State(initialValue: layer)
+        startArea = MapArea(around: point, km: layer.startSpanKm)
+        _area = State(initialValue: startArea)
     }
 
     /// The hours or pictures the slider goes through.
@@ -476,7 +575,7 @@ struct WeatherMapScreen: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                WeatherMapView(point: point, clubID: clubID, overlay: overlay)
+                WeatherMapView(point: point, clubID: clubID, overlays: overlays, start: startArea) { area = $0 }
                     .ignoresSafeArea(edges: .bottom)
                 controls
             }
@@ -487,6 +586,11 @@ struct WeatherMapScreen: View {
                 ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
             }
             .task(id: layer) { await load() }
+            // Zoomed out or moved: the tiles or the wider picture it needs now.
+            .task(id: "\(layer.rawValue)|\(store.tileIDs(for: area))") {
+                if layer.modelValue != nil { await store.prepare(layer, at: point, area: area) }
+            }
+            .task(id: area) { await widenLive() }
             .onChange(of: index) { _, i in
                 if layer.links != .none, frames.indices.contains(i) { time?.wrappedValue = frames[i] }
             }
@@ -524,23 +628,33 @@ struct WeatherMapScreen: View {
             live = nil
             await store.loadIndex()
             index = nearest(to: time?.wrappedValue ?? start ?? .now) ?? 0
-            await store.prepare(layer, at: point)
+            await store.prepare(layer, at: point, area: area)
         } else if let source = layer.live {
             let (times, first) = layer.liveTimes()
-            let frames = RadarFrames(point: point, times: times, layer: source.layer, server: source.server, nowIndex: first)
+            let frames = RadarFrames(point: point, times: times, layer: source.layer, server: source.server, nowIndex: first,
+                                     region: RadarRegion.around(point, showing: area))
             live = frames
             index = first
             await frames.load()
         }
     }
 
+    /// A live layer zoomed out or moved past its pictures: pictures of the area on screen.
+    private func widenLive() async {
+        guard let live, let source = layer.live, !live.region.covers(area) else { return }
+        let frames = RadarFrames(point: point, times: live.times, layer: source.layer, server: source.server,
+                                 nowIndex: live.nowIndex, region: RadarRegion(covering: area))
+        self.live = frames
+        await frames.load()
+    }
+
     private func nearest(to date: Date) -> Int? { layer.frame(in: frames, for: date) }
 
-    /// What the map draws: the coloured tile and arrows, or the live picture.
-    private var overlay: WeatherMapOverlayContent? {
-        guard frames.indices.contains(index) else { return nil }
-        if layer.modelValue != nil { return store.overlay(layer, at: point, time: frames[index]) }
-        return live?.overlay(at: frames[index])
+    /// What the map draws: the coloured tiles and arrows, or the live picture.
+    private var overlays: [WeatherMapOverlayContent] {
+        guard frames.indices.contains(index) else { return [] }
+        if layer.modelValue != nil { return store.overlays(layer, area: area, time: frames[index]) }
+        return live.map { [$0.overlay(at: frames[index])] } ?? []
     }
 
     private var layerMenu: some View {
@@ -644,7 +758,8 @@ struct WeatherMapScreen: View {
 extension RadarFrames {
     /// A live layer's picture at one of its times, for the weather map.
     func overlay(at time: Date) -> WeatherMapOverlayContent {
-        WeatherMapOverlayContent(id: layer, northWest: region.northWest, southEast: region.southEast,
+        // A wider picture is a new overlay.
+        WeatherMapOverlayContent(id: "\(layer)|\(region.minX)|\(region.maxX)", northWest: region.northWest, southEast: region.southEast,
                                  image: images[time]?.cgImage, smooth: false)
     }
 }
@@ -659,12 +774,17 @@ struct WeatherMapPanel: View {
     let time: Date
     @State private var live: RadarFrames?
     private let store = ModelMapStore.shared
+    /// The area it opens with, and the area on screen now.
+    private let startArea: MapArea
+    @State private var area: MapArea
 
     init(point: Coordinate, clubID: String? = nil, layer: WeatherMapLayer, time: Date) {
         self.point = point
         self.clubID = clubID
         self.layer = layer
         self.time = time
+        startArea = MapArea(around: point, km: layer.startSpanKm)
+        _area = State(initialValue: startArea)
     }
 
     /// The frame shown: the one nearest `time`, or the latest for layers that do not follow it.
@@ -675,19 +795,31 @@ struct WeatherMapPanel: View {
     }
 
     var body: some View {
-        WeatherMapView(point: point, clubID: clubID, overlay: shown.flatMap { date in
-            layer.modelValue != nil ? store.overlay(layer, at: point, time: date) : live?.overlay(at: date)
-        })
+        WeatherMapView(point: point, clubID: clubID, overlays: shown.map { date in
+            layer.modelValue != nil ? store.overlays(layer, area: area, time: date) : live.map { [$0.overlay(at: date)] } ?? []
+        } ?? [], start: startArea) { area = $0 }
         .task(id: layer) {
             if layer.modelValue != nil {
                 live = nil
-                await store.prepare(layer, at: point)
             } else if let source = layer.live {
                 let (times, first) = layer.liveTimes()
-                let frames = RadarFrames(point: point, times: times, layer: source.layer, server: source.server, nowIndex: first)
+                let frames = RadarFrames(point: point, times: times, layer: source.layer, server: source.server, nowIndex: first,
+                                         region: RadarRegion.around(point, showing: area))
                 live = frames
                 await frames.load()
             }
+        }
+        // The club's tile first, then the tiles a zoom or move brings in.
+        .task(id: "\(layer.rawValue)|\(store.tileIDs(for: area))") {
+            if layer.modelValue != nil { await store.prepare(layer, at: point, area: area) }
+        }
+        .task(id: area) {
+            // A live layer zoomed out or moved past its pictures: pictures of the area on screen.
+            guard let live, let source = layer.live, !live.region.covers(area) else { return }
+            let frames = RadarFrames(point: point, times: live.times, layer: source.layer, server: source.server,
+                                     nowIndex: live.nowIndex, region: RadarRegion(covering: area))
+            self.live = frames
+            await frames.load()
         }
         .accessibilityLabel(layer.title)
     }
@@ -738,6 +870,8 @@ struct WeatherMapOverlayContent {
     /// Smoothed between grid points (model maps), or sharp (pictures from a map server).
     let smooth: Bool
     var wind: WindField? = nil
+    /// The patches drawn (where tiles overlap); empty draws the whole picture.
+    var clip: [MapArea] = []
 }
 
 /// The wind of one hour over a tile, for arrows at any zoom: directions at the
@@ -782,33 +916,42 @@ struct WindField {
 private struct WeatherMapView: UIViewRepresentable {
     let point: Coordinate
     var clubID: String?
-    let overlay: WeatherMapOverlayContent?
+    let overlays: [WeatherMapOverlayContent]
+    /// The area it opens with (`WeatherMapLayer.startSpanKm` around the club).
+    let start: MapArea
+    /// The area on screen after each zoom or move, to load what it needs.
+    var onArea: ((MapArea) -> Void)?
 
     func makeUIView(context: Context) -> MKMapView {
         let map = MKMapView()
         map.delegate = context.coordinator
         map.pointOfInterestFilter = .excludingAll
-        let center = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
-        map.setRegion(MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 1.6, longitudeDelta: 2.2)), animated: false)
+        map.setRegion(start.region, animated: false)
         let pin = MKPointAnnotation()
-        pin.coordinate = center
+        pin.coordinate = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
         map.addAnnotation(pin)
         return map
     }
 
     func updateUIView(_ map: MKMapView, context: Context) {
         let coordinator = context.coordinator
-        coordinator.pending = overlay
-        if overlay?.id != coordinator.shownID {
-            // Another value or area: a new overlay; the same one only changes its picture.
-            map.removeOverlays(map.overlays)
-            coordinator.renderer = nil
-            coordinator.shownID = overlay?.id
-            if let overlay {
-                map.addOverlay(WeatherMapArea(northWest: overlay.northWest, southEast: overlay.southEast), level: .aboveRoads)
+        coordinator.onArea = onArea
+        coordinator.pending = Dictionary(overlays.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+        // A tile or picture no longer wanted goes; a new one gets its overlay;
+        // one already there only changes its picture, so nothing flashes.
+        for (id, area) in coordinator.areas where coordinator.pending[id] == nil {
+            map.removeOverlay(area)
+            coordinator.areas[id] = nil
+            coordinator.renderers[id] = nil
+        }
+        for overlay in overlays {
+            if let renderer = coordinator.renderers[overlay.id] {
+                renderer.show(overlay)
+            } else if coordinator.areas[overlay.id] == nil {
+                let area = WeatherMapArea(id: overlay.id, northWest: overlay.northWest, southEast: overlay.southEast)
+                coordinator.areas[overlay.id] = area
+                map.addOverlay(area, level: .aboveRoads)
             }
-        } else if let overlay {
-            coordinator.renderer?.show(overlay)
         }
     }
 
@@ -816,18 +959,23 @@ private struct WeatherMapView: UIViewRepresentable {
 
     final class Coordinator: NSObject, MKMapViewDelegate {
         let symbol: String
-        var renderer: WeatherMapRenderer?
-        var pending: WeatherMapOverlayContent?
-        var shownID: String?
+        var areas: [String: WeatherMapArea] = [:]
+        var renderers: [String: WeatherMapRenderer] = [:]
+        var pending: [String: WeatherMapOverlayContent] = [:]
+        var onArea: ((MapArea) -> Void)?
 
         init(symbol: String) { self.symbol = symbol }
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             guard let overlay = overlay as? WeatherMapArea else { return MKOverlayRenderer(overlay: overlay) }
             let renderer = WeatherMapRenderer(overlay: overlay)
-            if let pending { renderer.show(pending) }
-            self.renderer = renderer
+            if let content = pending[overlay.id] { renderer.show(content) }
+            renderers[overlay.id] = renderer
             return renderer
+        }
+
+        func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            onArea?(MapArea(mapView.region))
         }
 
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
@@ -843,10 +991,12 @@ private struct WeatherMapView: UIViewRepresentable {
 
 /// Where a weather map's picture lies.
 final class WeatherMapArea: NSObject, MKOverlay {
+    let id: String
     let boundingMapRect: MKMapRect
     let coordinate: CLLocationCoordinate2D
 
-    init(northWest: CLLocationCoordinate2D, southEast: CLLocationCoordinate2D) {
+    init(id: String, northWest: CLLocationCoordinate2D, southEast: CLLocationCoordinate2D) {
+        self.id = id
         let nw = MKMapPoint(northWest), se = MKMapPoint(southEast)
         boundingMapRect = MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y)
         coordinate = MKMapPoint(x: boundingMapRect.midX, y: boundingMapRect.midY).coordinate
@@ -858,10 +1008,12 @@ final class WeatherMapRenderer: MKOverlayRenderer {
     private var image: CGImage?
     private var smooth = false
     private var wind: WindField?
+    private var clip: [MapArea] = []
 
     func show(_ content: WeatherMapOverlayContent) {
+        clip = content.clip
         // A frame still loading keeps the last picture rather than an empty map.
-        if content.image == nil, image != nil { return }
+        if content.image == nil, image != nil { setNeedsDisplay(); return }
         image = content.image
         smooth = content.smooth
         wind = content.wind
@@ -870,6 +1022,13 @@ final class WeatherMapRenderer: MKOverlayRenderer {
 
     override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
         let rect = self.rect(for: overlay.boundingMapRect)
+        // Only its own patches, where tiles overlap.
+        context.saveGState()
+        defer { context.restoreGState() }
+        if !clip.isEmpty {
+            for patch in clip { context.addRect(self.rect(for: patch.mapRect)) }
+            context.clip()
+        }
         if let image {
             // Core Graphics draws images upside down in the map's flipped context.
             context.saveGState()
