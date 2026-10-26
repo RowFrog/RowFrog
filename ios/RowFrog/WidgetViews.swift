@@ -294,17 +294,40 @@ struct RowingWidgetView: View {
         }
     }
 
-    /// The rowing light large, with the reason under it.
+    /// The rowing light large, with the reason under it. In cold water the
+    /// life-jacket symbol sits beside the light, or in front of the reason on
+    /// the small widget, where the light's words need the whole width.
     private func lightAndWhy(_ hour: ForecastHour) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
-            LightPill(light: hour.light, compact: false, stale: snapshot.isStale, plain: plain)
-            Text(detailLine(hour))
-                .font(.caption.weight(.medium))
-                .opacity(0.9)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-                .padding(.leading, 4)
+        let kit = ColdWaterKit(waterC: snapshot.forecast?.waterTemperature?.celsius ?? snapshot.forecast?.estimatedWaterC)
+        let small = family == .systemSmall
+        return VStack(alignment: .leading, spacing: 3) {
+            HStack(spacing: 5) {
+                LightPill(light: hour.light, compact: false, stale: snapshot.isStale, plain: plain)
+                if let kit, !small { coldWaterSymbol(kit) }
+            }
+            HStack(spacing: 4) {
+                if let kit, small {
+                    Image(systemName: ColdWaterKit.symbol)
+                        .font(.caption.weight(.bold))
+                        .accessibilityLabel(kit.title)
+                }
+                Text(detailLine(hour))
+                    .font(.caption.weight(.medium))
+                    .opacity(0.9)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+            .padding(.leading, 4)
         }
+    }
+
+    private func coldWaterSymbol(_ kit: ColdWaterKit) -> some View {
+        Image(systemName: ColdWaterKit.symbol)
+            .font(.caption.weight(.bold))
+            .foregroundStyle(plain ? AnyShapeStyle(ColdWaterKit.color) : AnyShapeStyle(Color.white))
+            .padding(5)
+            .background(plain ? ColdWaterKit.color.opacity(0.15) : ColdWaterKit.color.opacity(0.75), in: Circle())
+            .accessibilityLabel(kit.title)
     }
 
     /// The main reason for amber or red, else rain on DWD's radar within two

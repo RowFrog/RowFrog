@@ -674,6 +674,9 @@ async def lake_view_forecast(lake_id: str) -> dict:
         "generatedAt": now.replace(microsecond=0).isoformat(),
         "sample": sample,
         "attribution": ATTRIBUTION,
+        # The measured water the lights used; the app lowers its own wind limits
+        # with it and draws the shore blue in cold water.
+        "waterC": round(water.celsius, 1) if water else None,
         "grid": {
             "south": round(grid.south, 6),
             "west": round(grid.west, 6),

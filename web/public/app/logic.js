@@ -12,6 +12,9 @@ export const STALE_AFTER_MS = 3 * 3600 * 1000;
 
 export const ZONE = "Europe/Berlin";
 
+/** Marks an English text that the page shows through t(), so the build finds it and adds its German. */
+export const key = (english) => english;
+
 export function isStale(forecast, now = new Date()) {
   return now - new Date(forecast.generatedAt) > STALE_AFTER_MS;
 }
@@ -42,64 +45,6 @@ export function localDay(time, zone = ZONE) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(time));
 }
 
-/**
- * One line per day from the outlook (or the hours when there is none): the
- * light of every daylight hour, the lowest and highest temperature, the
- * strongest gust and the rain. Days before today are left out.
- */
-export function days(forecast, now = new Date(), zone = ZONE) {
-  const hours = forecast.outlook?.length ? forecast.outlook : forecast.hours;
-  const today = localDay(now, zone);
-  const byDay = new Map();
-  for (const h of hours) {
-    const day = localDay(h.time, zone);
-    if (day < today) continue;
-    if (!byDay.has(day)) byDay.set(day, []);
-    byDay.get(day).push(h);
-  }
-  return [...byDay.entries()].map(([day, list]) => {
-    const temps = list.map((h) => h.temperatureC).filter((v) => v != null);
-    const gusts = list.map((h) => h.windGustMs).filter((v) => v != null);
-    const daylight = list.filter((h) => h.sunUp);
-    return {
-      day,
-      lights: daylight.map((h) => ({ time: h.time, light: h.light })),
-      green: daylight.filter((h) => h.light === "green").length,
-      minC: temps.length ? Math.min(...temps) : null,
-      maxC: temps.length ? Math.max(...temps) : null,
-      maxGustMs: gusts.length ? Math.max(...gusts) : null,
-      rainMm: list.reduce((sum, h) => sum + (h.precipitationMm ?? 0), 0),
-      weatherCode: dayCode(daylight.length ? daylight : list),
-    };
-  });
-}
-
-/** The day's weather symbol: the most common code in daylight, rain and storms first. */
-function dayCode(list) {
-  const codes = list.map((h) => h.weatherCode).filter((c) => c != null);
-  if (!codes.length) return null;
-  const worst = Math.max(...codes);
-  if (worst >= 51) return worst;
-  const counts = new Map();
-  for (const c of codes) counts.set(c, (counts.get(c) ?? 0) + 1);
-  return [...counts.entries()].sort((a, b) => b[1] - a[1] || b[0] - a[0])[0][0];
-}
-
-/** A symbol for a WMO weather code (Open-Meteo's weather_code). */
-export function weatherSymbol(code, sunUp = true) {
-  if (code == null) return "·";
-  if (code === 0) return sunUp ? "☀️" : "🌙";
-  if (code === 1) return sunUp ? "🌤️" : "🌙";
-  if (code === 2) return sunUp ? "⛅" : "☁️";
-  if (code === 3) return "☁️";
-  if (code === 45 || code === 48) return "🌫️";
-  if (code >= 51 && code <= 57) return "🌦️";
-  if ((code >= 61 && code <= 67) || (code >= 80 && code <= 82)) return "🌧️";
-  if ((code >= 71 && code <= 77) || code === 85 || code === 86) return "🌨️";
-  if (code >= 95) return "⛈️";
-  return "☁️";
-}
-
 const BEAUFORT = [0.3, 1.6, 3.4, 5.5, 8.0, 10.8, 13.9, 17.2, 20.8, 24.5, 28.5, 32.7];
 
 export function beaufort(ms) {
@@ -114,9 +59,9 @@ export const WIND_UNITS = {
   bft: { label: "Bft", from: (ms) => beaufort(ms) },
 };
 
-export function windValue(ms, unit = "kmh") {
+export function windValue(ms, unit = "ms") {
   if (ms == null) return null;
-  return Math.round((WIND_UNITS[unit] ?? WIND_UNITS.kmh).from(ms));
+  return Math.round((WIND_UNITS[unit] ?? WIND_UNITS.ms).from(ms));
 }
 
 /** Where the wind comes from, as N, NE, E … */
@@ -152,14 +97,6 @@ export function searchClubs(lakes, query, limit = 40) {
   return found.slice(0, limit).map(({ club, lake }) => ({ club, lake }));
 }
 
-/** The water temperature the light used: measured, from satellite, or from the air. */
-export function waterTemperature(forecast) {
-  if (forecast.waterTemperature) return { celsius: forecast.waterTemperature.celsius, basis: "measured" };
-  if (forecast.waterEstimate) return { celsius: forecast.waterEstimate.celsius, basis: "satellite" };
-  if (forecast.waterModelC != null) return { celsius: forecast.waterModelC, basis: "air" };
-  return null;
-}
-
 /** The town from an address like "Street 6, 82319 Starnberg". */
 export function town(address) {
   if (!address) return null;
@@ -177,4 +114,220 @@ export function overlayBox(pictureBbox, iceBbox) {
     width: ((ie - iw) / (e - w)) * 100,
     height: ((inn - is) / (n - s)) * 100,
   };
+}
+
+// ---- The sky (Sky.swift) -----------------------------------------------------
+
+/** The kind of sky for a WMO weather code, as Sky in the app. */
+export function sky(code) {
+  switch (code) {
+    case 0: return "clear";
+    case 1: return "mostlyClear";
+    case 2: return "partlyCloudy";
+    case 3: return "cloudy";
+    case 45: case 48: return "fog";
+    case 51: case 53: case 55: return "drizzle";
+    case 56: case 57: case 66: case 67: return "freezingRain";
+    case 61: case 63: return "rain";
+    case 80: case 81: return "showers";
+    case 65: case 82: return "heavyRain";
+    case 71: case 73: case 75: case 77: case 85: case 86: return "snow";
+    case 95: return "thunderstorm";
+    case 96: case 99: return "hail";
+    default: return "cloudy";
+  }
+}
+
+/** The English title (the key of its German text). */
+export const SKY_TITLES = {
+  clear: key("Clear"), mostlyClear: key("Mostly clear"), partlyCloudy: key("Partly cloudy"), cloudy: key("Cloudy"), fog: key("Fog"),
+  drizzle: key("Drizzle"), rain: key("Rain"), showers: key("Showers"), heavyRain: key("Heavy rain"), freezingRain: key("Freezing rain"),
+  snow: key("Snow"), thunderstorm: key("Thunderstorm"), hail: key("Thunderstorm with hail"),
+};
+
+/** What falls from this sky, or null when nothing does. */
+export function precipitationKind(kind) {
+  return { drizzle: key("Drizzle"), rain: key("Rain"), showers: key("Rain"), heavyRain: key("Rain"), thunderstorm: key("Rain"), freezingRain: key("Freezing rain"), snow: key("Snow"), hail: key("Hail") }[kind] ?? null;
+}
+
+/** The icon and its colour class for a sky, by day or by night. */
+export function skyIcon(kind, night = false) {
+  switch (kind) {
+    case "clear": return night ? ["moon-star", "moon"] : ["sun", "sun"];
+    case "mostlyClear": return night ? ["moon", "moon"] : ["sun", "sun"];
+    case "partlyCloudy": return night ? ["cloud-moon", "moon"] : ["cloud-sun", "sun"];
+    case "cloudy": return ["cloud", "cloud"];
+    case "fog": return ["cloud-fog", "cloud"];
+    case "drizzle": return ["cloud-drizzle", "rain"];
+    case "rain": case "showers": return ["cloud-rain", "rain"];
+    case "heavyRain": return ["cloud-rain", "rain"];
+    case "freezingRain": return ["cloud-hail", "ice"];
+    case "snow": return ["cloud-snow", "ice"];
+    case "thunderstorm": return ["cloud-lightning", "storm"];
+    case "hail": return ["cloud-hail", "ice"];
+    default: return ["cloud", "cloud"];
+  }
+}
+
+// ---- Conditions (Conditions.swift) ---------------------------------------------
+
+/** The backend's reasons behind each condition, for the light on its tile. */
+export const REASONS = {
+  wind: ["wind", "gusts", "lake_warning", "lake_strong_wind"],
+  waves: ["waves"],
+  waterTemperature: ["cold_water", "cool_water", "single_cold", "freezing_water"],
+  visibility: ["fog"],
+  precipitation: ["heavy_rain", "hail"],
+  thunderstorm: ["thunderstorm"],
+  ice: ["ice"],
+  daylight: ["daylight", "twilight"],
+};
+
+const RANK = { green: 0, amber: 1, red: 2 };
+
+/** The worst light among these reasons in the hour, or null when they are all fine. */
+export function lightFor(hour, names) {
+  let worst = null;
+  for (const r of hour.reasons ?? []) {
+    if (names.includes(r.condition) && (worst == null || RANK[r.light] > RANK[worst])) worst = r.light;
+  }
+  return worst;
+}
+
+/** Which condition's icon stands for a reason. */
+export function reasonCondition(name) {
+  if (name.endsWith("_warning")) return "warning";
+  return Object.keys(REASONS).find((c) => REASONS[c].includes(name)) ?? "wind";
+}
+
+/** Why it feels warmer or colder than the air, in English. */
+export function feelsLikeNote(hour) {
+  const feels = hour.apparentTemperatureC;
+  const air = hour.temperatureC;
+  if (feels == null || air == null) return null;
+  if (feels <= air - 2) return (hour.windSpeedMs ?? 0) >= 3 ? key("Colder from wind chill") : key("Colder than the air");
+  if (feels >= air + 2) return (hour.humidityPct ?? 0) >= 60 ? key("Warmer from humidity (heat index)") : key("Warmer in the sun");
+  return key("About the air temperature");
+}
+
+/** How much the pressure changes in the 3 hours after `hour`, in hPa. */
+export function pressureChange(hours, hour) {
+  const later = hours.find((h) => new Date(h.time) - new Date(hour.time) === 3 * 3600 * 1000);
+  if (later?.pressureHpa == null || hour.pressureHpa == null) return null;
+  return later.pressureHpa - hour.pressureHpa;
+}
+
+export function pressureTrend(change) {
+  return change >= 1 ? key("Rising") : change <= -1 ? key("Falling") : key("Steady");
+}
+
+/** Without a station: the satellite estimate, the air-based one or the ice estimate's water. */
+export function estimatedWater(forecast) {
+  if (forecast.waterTemperature) return null;
+  if (forecast.waterEstimate) return forecast.waterEstimate.celsius;
+  if (forecast.waterModelC != null) return forecast.waterModelC;
+  const ice = forecast.ice;
+  if (ice && (ice.basis === "model" || ice.basis === "satellite")) return ice.waterTemperatureC ?? null;
+  return null;
+}
+
+const ICE_MONTHS = new Set([11, 12, 1, 2, 3, 4]);
+
+/** The ice tile out of season: the backend said so, or sent nothing in a month without ice. */
+export function iceOff(ice, now = new Date()) {
+  if (ice && ice.status !== "unavailable") return ice.basis === "season";
+  return !ICE_MONTHS.has(now.getMonth() + 1);
+}
+
+export const ICE_TITLES = {
+  open: key("No ice"), edges: key("Shore ice possible"), forming: key("Ice forming"), frozen: key("Ice cover likely"), drift_ice: key("Drift ice possible"),
+};
+
+/** The ice for the top tile, only when it matters (English key), else null. */
+export function iceValue(forecast) {
+  const ice = forecast.ice;
+  if (ice && ice.status !== "unavailable" && ice.status !== "open") return ICE_TITLES[ice.status] ?? key("No data");
+  const c = forecast.waterTemperature?.celsius;
+  if (c != null && c < 8) return ice ? ICE_TITLES[ice.status] ?? key("No data") : key("No data yet");
+  return null;
+}
+
+/**
+ * Whether the sun is up at `at`: { up: true, sunrise, sunset } for today's
+ * sun, or { up: false, sunrise } with the next sunrise.
+ */
+export function sunState(forecast, at = new Date()) {
+  const days = (forecast.daylight ?? []).map((d) => ({ sunrise: new Date(d.sunrise), sunset: new Date(d.sunset) }));
+  const today = days.find((d) => d.sunrise <= at && at < d.sunset);
+  if (today) return { up: true, ...today };
+  const next = days.find((d) => d.sunrise > at);
+  return next ? { up: false, ...next } : null;
+}
+
+// ---- Boats and limits (Limits.swift) ----------------------------------------------
+
+/** The app's two boat groups; the backend's light is for small boats. */
+export const BOATS = {
+  small: { title: key("Small boats"), inSentence: key("small boats"), detail: key("Singles, doubles and pairs (1x, 2x, 2-)") },
+  big: { title: key("Big boats"), inSentence: key("big boats"), detail: key("Fours and eights (4x, 4-, 4+, 8x, 8+)") },
+};
+
+/** The app's limits for racing boats, small and big (RowingLimit.standard). */
+const LIMITS = {
+  big: { windAmber: 8.0, windRed: 10.8, gustAmber: 10.8, gustRed: 12.8, waveAmber: 0.25, waveRed: 0.40 },
+};
+
+const COLD_WATER_C = 10;
+/** Below this the app advises a life jacket (RowingLimit.lifeJacket). */
+const LIFE_JACKET_C = 15;
+const COLD_WIND_MARGIN_MS = 1;
+const FREEZING_WATER_C = 4;
+const LIMIT_REASONS = new Set(["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water"]);
+
+function check(value, amber, red) {
+  if (value == null) return "green";
+  return value > red ? "red" : value >= amber ? "amber" : "green";
+}
+
+/** One hour checked again for big boats, as ForecastHour.applying in the app. */
+export function applyBoatToHour(hour, boat, waterC) {
+  const base = LIMITS[boat];
+  if (!base) return hour;
+  const margin = (waterC ?? 99) < COLD_WATER_C ? COLD_WIND_MARGIN_MS : 0;
+  const reasons = [];
+  for (const r of hour.reasons ?? []) {
+    if (LIMIT_REASONS.has(r.condition)) continue;
+    // The lake's strong-wind light is amber for big boats.
+    reasons.push(r.condition === "lake_strong_wind" ? { ...r, light: "amber" } : r);
+  }
+  const add = (name, light) => light !== "green" && reasons.push({ condition: name, light });
+  add("wind", check(hour.windSpeedMs, base.windAmber - margin, base.windRed - margin));
+  add("gusts", check(hour.windGustMs, base.gustAmber - margin, base.gustRed - margin));
+  add("waves", check(hour.waveHeightM, base.waveAmber, base.waveRed));
+  // Cold water shows as the life-jacket badge (coldWaterKit), not in the
+  // light; only near-freezing water stays amber, as in score.py.
+  if (waterC != null && waterC < FREEZING_WATER_C) reasons.push({ condition: "freezing_water", light: "amber" });
+  reasons.sort((a, b) => RANK[b.light] - RANK[a.light]);
+  const light = reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green");
+  return { ...hour, reasons, light };
+}
+
+/** The forecast with the boat's limits; unchanged for small boats. */
+export function applyBoat(forecast, boat, zone = ZONE) {
+  if (!LIMITS[boat]) return forecast;
+  const water = forecast.waterTemperature?.celsius ?? estimatedWater(forecast);
+  const byDay = new Map((forecast.waterForecast ?? []).map((d) => [d.date, d.celsius]));
+  const apply = (h) => applyBoatToHour(h, boat, byDay.get(localDay(h.time, zone)) ?? water);
+  return { ...forecast, hours: forecast.hours.map(apply), outlook: forecast.outlook?.map(apply) };
+}
+
+/**
+ * What cold water calls for, as ColdWaterKit in the app: a life jacket below
+ * 15 °C, and below 10 °C also a partner boat (boats that may be singles) or
+ * staying near the shore (the others). Null in warmer water.
+ */
+export function coldWaterKit(waterC, boat = "small") {
+  if (waterC == null || waterC >= LIFE_JACKET_C) return null;
+  if (waterC >= COLD_WATER_C) return "lifeJacket";
+  return boat === "small" ? "partnerBoat" : "nearShore";
 }

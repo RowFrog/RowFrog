@@ -293,7 +293,9 @@ private struct ConditionTile: View {
                      zones: [(0, .green), (userLimits.value(.waveAmber) / top, .orange), (userLimits.value(.waveRed) / top, .red)])
         case .waterTemperature:
             if let c = data.water?.celsius {
-                ScaleBar(fraction: c / 25, zones: [(0, .red), (0.4, .orange), (0.6, .green)])
+                // Blues for cold water: it calls for a life jacket, not a warning colour.
+                ScaleBar(fraction: c / 25, zones: [(0, Color(red: 0.11, green: 0.3, blue: 0.55)), (0.16, ColdWaterKit.color),
+                                                   (0.4, ColdWaterKit.color.opacity(0.45)), (0.6, .green)])
             }
         case .precipitation:
             SparkBars(values: data.future.prefix(8).map { $0.precipitationMm ?? 0 })
@@ -1608,8 +1610,8 @@ extension ConditionDetail {
                 unit: t.symbol,
                 lines: lines,
                 limits: [
-                    line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
-                    ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
+                    line(.lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
+                    ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: Color(red: 0.11, green: 0.3, blue: 0.55), label: tr("Very cold")),
                 ],
                 yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
                 history: true,
@@ -1627,11 +1629,13 @@ extension ConditionDetail {
             unit: t.symbol,
             lines: lines,
             limits: [
-                line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
-                ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
+                line(.lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
+                ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: Color(red: 0.11, green: 0.3, blue: 0.55), label: tr("Very cold")),
             ],
             limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A life jacket keeps your head above water through it, so the app advises one from %@ down. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the advice gets stricter below %@: stay near the shore and don't row alone. Your club's own rules come first.",
-                          Format.temperature(15), jacket, veryCold),
+                          Format.temperature(15), jacket, veryCold)
+                + " " + tr("Cold water does not change the rowing light: the blue life-jacket badge under it shows what to bring. Below %@ the app's wind and gust limits are %@ lower, and below %@ small boats get an amber warning.",
+                           veryCold, Format.wind(RowingLimits.coldWindMarginMs), Format.temperature(RowingLimits.freezingWaterC)),
             yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
             history: true,
             chartNote: forecastPoints.count > 1 ? tr("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value.") : nil,

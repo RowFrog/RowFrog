@@ -42,8 +42,8 @@ class Thresholds:
     wave_red_m: float = 0.25  # a racing single has only ~7 cm of side
     visibility_amber_m: float = 1000.0
     visibility_red_m: float = 500.0
-    water_temp_amber_c: float = 15.0
-    water_temp_cold_c: float = 10.0  # life jacket advised below this
+    # Below this the wind and gust limits drop (the app shows the life-jacket badge from 15 °C).
+    water_temp_cold_c: float = 10.0
     water_temp_freezing_c: float = 4.0  # small boats strongly advised to stay ashore
     # Below the cold-water temperature the wind and gust limits drop by this much (DRV advice).
     cold_wind_margin_ms: float = 1.0
@@ -51,8 +51,6 @@ class Thresholds:
     # Light for the lakes' strong-wind warning (40 flashes/min): red for small racing
     # and training boats, amber for the others. The storm warning is red for all.
     strong_wind_light: Light = Light.RED
-    # Singles below the cold-water temperature: row with a coach or partner boat.
-    singles: bool = True
 
     def for_water(self, water_temp_c: float | None) -> "Thresholds":
         """These limits, with the cold-water margin on wind and gusts when it applies."""
@@ -133,14 +131,12 @@ def assess(c: HourConditions, t: Thresholds = Thresholds()) -> Assessment:
         checks.append(("hail", Light.RED))
     elif c.precipitation_mm is not None and c.precipitation_mm >= t.rain_amber_mm:
         checks.append(("heavy_rain", Light.AMBER))
-    if c.water_temp_c is not None and c.water_temp_c < t.water_temp_amber_c:
-        # Cold water calls for extra care but never closes the lake on its own.
-        name = "cold_water" if c.water_temp_c < t.water_temp_cold_c else "cool_water"
-        checks.append((name, Light.AMBER))
-        if c.water_temp_c < t.water_temp_cold_c and t.singles:
-            checks.append(("single_cold", Light.AMBER))
-        if c.water_temp_c < t.water_temp_freezing_c:
-            checks.append(("freezing_water", Light.AMBER))
+    # Cold water no longer colours the light (owner decision 2026-10-26): the
+    # app shows a life-jacket badge below 15 °C instead, and below 10 °C the
+    # wind and gust limits above are already lower. Only near-freezing water,
+    # a few weeks a year, stays a strong warning for small boats.
+    if c.water_temp_c is not None and c.water_temp_c < t.water_temp_freezing_c:
+        checks.append(("freezing_water", Light.AMBER))
 
     reasons = [(name, light) for name, light in checks if light > Light.GREEN]
     worst = max((light for _, light in reasons), default=Light.GREEN)
