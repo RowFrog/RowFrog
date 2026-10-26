@@ -231,10 +231,11 @@ final class AppSettings {
             ?? defaults.string(forKey: Keys.pageLayout).map(PageLayout.init(list:))
             ?? .standard
         clubPageLayouts = defaults.data(forKey: Keys.clubPageLayouts).flatMap { try? JSONDecoder().decode([String: PageLayout].self, from: $0) } ?? [:]
+        saveMobileData = defaults.bool(forKey: Keys.saveMobileData)
         // Orders saved before the current conditions moved above the rain radar
         // (Oct 2026) kept the radar on top; they take the new place once.
         if defaults.integer(forKey: Keys.pageLayoutVersion) < 2 {
-            // Saved here by hand: observers don't run inside init.
+            // Saved here as well, in case the observers stay quiet inside init.
             pageLayout = pageLayout.conditionsBeforeRadar
             clubPageLayouts = clubPageLayouts.mapValues(\.conditionsBeforeRadar)
             if defaults.object(forKey: Keys.pageLayout) != nil {
@@ -245,7 +246,6 @@ final class AppSettings {
             }
             defaults.set(2, forKey: Keys.pageLayoutVersion)
         }
-        saveMobileData = defaults.bool(forKey: Keys.saveMobileData)
     }
 
     /// The language the app shows: the chosen one, or the phone's when it is German.
