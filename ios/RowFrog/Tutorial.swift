@@ -452,6 +452,21 @@ private struct ClubChoicePage: View {
             .padding(.bottom, 36)
         }
         .padding(.top, 8)
+        .task { await autoPickHome() }
+    }
+
+    /// Screenshot hook: `-RWTourAutoHome YES` picks the first suggestion as home
+    /// base once the clubs are in, as a tap on it would.
+    private func autoPickHome() async {
+        guard page == .homeBase, UserDefaults.standard.bool(forKey: "RWTourAutoHome") else { return }
+        for _ in 0..<60 {
+            if let first = locations.suggestions(near: near).first {
+                try? await Task.sleep(for: .seconds(2))
+                locations.replaceHome(with: first)
+                return
+            }
+            try? await Task.sleep(for: .milliseconds(500))
+        }
     }
 
     private func row(_ club: Club) -> some View {
