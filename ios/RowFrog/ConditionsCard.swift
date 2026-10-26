@@ -1479,8 +1479,10 @@ extension ConditionDetail {
                 : tr("Copernicus Land Monitoring Service, Lake Surface Water Temperature (Sentinel-3), carried forward to today with the air temperatures.")
         } else if now == nil, estimate != nil {
             source = tr("Calculated by the app from the air temperatures of the last weeks, not measured.")
+        } else if let now {
+            source = tr("%@, the nearest station on this water.", (now.station ?? WaterStation()).operatorName)
         } else {
-            source = tr("%@, the nearest station on this water.", (now?.station ?? WaterStation()).operatorName)
+            source = tr("No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.")
         }
         return ConditionDetail(
             value: estimate.map { "≈ " + Format.degrees($0, digits: 0) } ?? Format.degrees(now?.celsius, digits: 1),

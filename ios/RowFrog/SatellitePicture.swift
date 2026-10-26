@@ -384,9 +384,12 @@ struct SatelliteCaption: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
+                // Always two lines high, so the picture above keeps its size when
+                // switching between pictures whose line wraps and whose doesn't.
                 Text(line)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
+                    .lineLimit(2, reservesSpace: true)
                 Button { explaining = true } label: {
                     Image(systemName: "info.circle")
                         .font(.footnote)

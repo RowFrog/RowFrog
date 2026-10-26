@@ -192,6 +192,7 @@ enum German {
         "Dry": "Trocken",
         "Measured %@": "Gemessen %@",
         "No lake station": "Keine Messstation im See",
+        "No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.": "Keine Messstelle misst das Wasser dieses Sees, und kein Satellit hat ihn in den letzten 30 Tagen klar gesehen.",
         "No fog": "Kein Nebel",
         "Next 48 hours": "Nächste 48 Stunden",
         "Time": "Uhrzeit",

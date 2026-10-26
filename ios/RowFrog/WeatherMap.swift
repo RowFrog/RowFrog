@@ -381,20 +381,15 @@ final class ModelMapStore {
     func overlay(_ layer: WeatherMapLayer, at point: Coordinate, time: Date) -> WeatherMapOverlayContent? {
         guard let value = layer.modelValue, let palette = layer.palette, let index, let tile = index.tile(for: point),
               let values = grid(tile: tile.id, value: value), let hour = index.hours.firstIndex(of: time) else { return nil }
-        var arrows: [WeatherMapArrow] = []
+        var wind: WindField?
         if layer == .wind || layer == .gust, let directions = grid(tile: tile.id, value: "windDirection") {
-            for r in 0..<directions.rows {
-                for c in 0..<directions.columns {
-                    guard let from = directions.value(hour: hour, row: r, column: c) else { continue }
-                    arrows.append(WeatherMapArrow(x: (Double(c) + 0.5) / Double(directions.columns),
-                                                  y: (Double(r) + 0.5) / Double(directions.rows), towards: from + 180))
-                }
-            }
+            // The arrows' length follows the layer shown: wind, or gusts.
+            wind = WindField(directions: directions, speeds: values, hour: hour)
         }
         return WeatherMapOverlayContent(id: "\(tile.id)|\(value)",
                                         northWest: CLLocationCoordinate2D(latitude: tile.north, longitude: tile.west),
                                         southEast: CLLocationCoordinate2D(latitude: tile.south, longitude: tile.east),
-                                        image: values.image(hour: hour, palette: palette), smooth: true, arrows: arrows)
+                                        image: values.image(hour: hour, palette: palette), smooth: true, wind: wind)
     }
 
     func load(tile: String, value: String) async {
@@ -625,7 +620,7 @@ extension RadarFrames {
     /// A live layer's picture at one of its times, for the weather map.
     func overlay(at time: Date) -> WeatherMapOverlayContent {
         WeatherMapOverlayContent(id: layer, northWest: region.northWest, southEast: region.southEast,
-                                 image: images[time]?.cgImage, smooth: false, arrows: [])
+                                 image: images[time]?.cgImage, smooth: false)
     }
 }
 
@@ -717,14 +712,46 @@ struct WeatherMapOverlayContent {
     let image: CGImage?
     /// Smoothed between grid points (model maps), or sharp (pictures from a map server).
     let smooth: Bool
-    let arrows: [WeatherMapArrow]
+    var wind: WindField? = nil
 }
 
-/// An arrow where the wind blows to, at a share of the picture's width and height.
-struct WeatherMapArrow {
-    let x: Double
-    let y: Double
-    let towards: Double
+/// The wind of one hour over a tile, for arrows at any zoom: directions at the
+/// arrow points (every arrowStep pixels) and speeds at every pixel, blended
+/// between the grid points.
+struct WindField {
+    let directions: ModelMapGrid
+    let speeds: ModelMapGrid
+    let hour: Int
+
+    /// Where the wind blows to (degrees) and its speed (m/s), at a share of the tile's width and height.
+    func sample(x: Double, y: Double) -> (towards: Double, speed: Double)? {
+        // Directions are blended as east and north parts, so opposite ones don't add up to a wrong one.
+        let parts = blend(directions, x, y) { from in
+            let r = (from + 180) * .pi / 180
+            return (sin(r), cos(r))
+        }
+        guard let parts, parts.0 != 0 || parts.1 != 0,
+              let speed = blend(speeds, x, y, { ($0, 0) })?.0 else { return nil }
+        return (atan2(parts.0, parts.1) * 180 / .pi, speed)
+    }
+
+    private func blend(_ grid: ModelMapGrid, _ x: Double, _ y: Double, _ parts: (Double) -> (Double, Double)) -> (Double, Double)? {
+        let gx = x * Double(grid.columns) - 0.5, gy = y * Double(grid.rows) - 0.5
+        let c0 = Int(gx.rounded(.down)), r0 = Int(gy.rounded(.down))
+        let tx = gx - Double(c0), ty = gy - Double(r0)
+        var sum = (0.0, 0.0), total = 0.0
+        for (dr, wy) in [(0, 1 - ty), (1, ty)] {
+            for (dc, wx) in [(0, 1 - tx), (1, tx)] {
+                let r = min(max(r0 + dr, 0), grid.rows - 1), c = min(max(c0 + dc, 0), grid.columns - 1)
+                guard let value = grid.value(hour: hour, row: r, column: c) else { continue }
+                let w = wx * wy, p = parts(value)
+                sum.0 += w * p.0
+                sum.1 += w * p.1
+                total += w
+            }
+        }
+        return total > 0 ? (sum.0 / total, sum.1 / total) : nil
+    }
 }
 
 private struct WeatherMapView: UIViewRepresentable {
@@ -805,14 +832,14 @@ final class WeatherMapArea: NSObject, MKOverlay {
 final class WeatherMapRenderer: MKOverlayRenderer {
     private var image: CGImage?
     private var smooth = false
-    private var arrows: [WeatherMapArrow] = []
+    private var wind: WindField?
 
     func show(_ content: WeatherMapOverlayContent) {
         // A frame still loading keeps the last picture rather than an empty map.
         if content.image == nil, image != nil { return }
         image = content.image
         smooth = content.smooth
-        arrows = content.arrows
+        wind = content.wind
         setNeedsDisplay()
     }
 
@@ -828,28 +855,40 @@ final class WeatherMapRenderer: MKOverlayRenderer {
             context.draw(image, in: CGRect(origin: .zero, size: rect.size))
             context.restoreGState()
         }
-        guard !arrows.isEmpty else { return }
-        // About 16 points long on screen at any zoom.
-        let length = 16 / zoomScale
+        guard let wind else { return }
+        // Arrows on an even grid fixed to the map, as on the lake map: more as the map
+        // zooms in, fewer out, each from the wind blended between the model's points.
+        let spacing = LakeRenderer.arrowSpacing / zoomScale
+        let margin = LakeRenderer.arrowLength(15) / zoomScale
+        let area = rect.intersection(self.rect(for: mapRect).insetBy(dx: -margin, dy: -margin))
+        guard !area.isNull, rect.width > 0, rect.height > 0 else { return }
         context.setStrokeColor(UIColor.black.withAlphaComponent(0.7).cgColor)
         context.setLineWidth(2 / zoomScale)
         context.setLineCap(.round)
         context.setLineJoin(.round)
-        for arrow in arrows {
-            let center = CGPoint(x: rect.minX + arrow.x * rect.width, y: rect.minY + arrow.y * rect.height)
-            let angle = arrow.towards * .pi / 180
-            // North is up: the arrow points along (sin, −cos).
-            let dx = sin(angle) * length / 2, dy = -cos(angle) * length / 2
-            let tip = CGPoint(x: center.x + dx, y: center.y + dy)
-            let tail = CGPoint(x: center.x - dx, y: center.y - dy)
-            context.move(to: tail)
-            context.addLine(to: tip)
-            let head = length * 0.35
-            for side in [-1.0, 1.0] {
-                let a = angle + .pi + side * 0.5
-                context.move(to: tip)
-                context.addLine(to: CGPoint(x: tip.x + sin(a) * head, y: tip.y - cos(a) * head))
+        var gx = (area.minX / spacing).rounded(.up) * spacing
+        while gx <= area.maxX {
+            var gy = (area.minY / spacing).rounded(.up) * spacing
+            while gy <= area.maxY {
+                defer { gy += spacing }
+                guard let sample = wind.sample(x: (gx - rect.minX) / rect.width, y: (gy - rect.minY) / rect.height),
+                      sample.speed >= 0.5 else { continue }
+                // Longer in stronger wind, as on the lake map.
+                let length = LakeRenderer.arrowLength(sample.speed) / zoomScale
+                let angle = sample.towards * .pi / 180
+                // North is up: the arrow points along (sin, −cos).
+                let dx = sin(angle) * length / 2, dy = -cos(angle) * length / 2
+                let tip = CGPoint(x: gx + dx, y: gy + dy)
+                context.move(to: CGPoint(x: gx - dx, y: gy - dy))
+                context.addLine(to: tip)
+                let head = min(length * 0.35, 8 / zoomScale)
+                for side in [-1.0, 1.0] {
+                    let a = angle + .pi + side * 0.5
+                    context.move(to: tip)
+                    context.addLine(to: CGPoint(x: tip.x + sin(a) * head, y: tip.y - cos(a) * head))
+                }
             }
+            gx += spacing
         }
         context.strokePath()
     }
