@@ -64,11 +64,12 @@ the next two hours and the forecast after that.
    after a small radar symbol (from the radar), or "Rain from 18:00" without
    it (from the forecast), and small bars: thin ones for the
    radar's quarter hours, a line, then paler ones for the next forecast hours.
-   The top tile's "Rain, hail" value says the same, with the radar symbol.
+   The top tile's "Rain, hail" cell shows the same two lines: the value, and
+   the grey line under it with the same symbol.
    Snow, hail and drizzle are named from the forecast's weather code (the
    radar only measures how much falls). While it rains, the line says what
    comes next: "Dry from 14:15", "Heavier from 14:30" (radar) or "Until about
-   17:00" (forecast, no symbol); the top tile "Light rain to 14:15".
+   17:00" (forecast, no symbol), in the tile and the top tile alike.
 2. Tap the tile: the chart starts with thin purple radar bars for two hours,
    then the blue forecast hours; the legend turns either off. The map card
    says "Radar 12:45" and shows the radar picture; a tap opens the radar map.

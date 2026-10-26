@@ -898,8 +898,6 @@ enum German {
         "Heavier from %@": "Stärker ab %@",
         "Until about %@": "Bis etwa %@",
         "No end in sight": "Kein Ende in Sicht",
-        "%@ to %@": "%@ bis %@",
-        "%@ to about %@": "%@ bis etwa %@",
         "Radar: %@ · %@": "Radar: %@ · %@",
         "Radar: %@": "Radar: %@",
         "Radar, next 2 h": "Radar, nächste 2 h",

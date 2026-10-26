@@ -63,7 +63,6 @@ final class RainRadarTests: XCTestCase {
         let ends = RainOutlook(radar: radar([0.5, 0.8, 0, 0]), hours: rain)
         XCTAssertEqual(ends.now, "Light rain")
         XCTAssertTrue(ends.next!.text.hasPrefix("Dry from "))
-        XCTAssertTrue(ends.next!.short.hasPrefix("Light rain to "))
         // Gets heavier first.
         let heavier = RainOutlook(radar: radar([0.5, 4, 4, 0]), hours: rain)
         XCTAssertTrue(heavier.next!.text.hasPrefix("Heavier from "))

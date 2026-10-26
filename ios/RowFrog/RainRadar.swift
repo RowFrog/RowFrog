@@ -811,24 +811,23 @@ struct RainOutlook {
     }
 
     /// The next change: what comes, when, and whether the radar says so (else the forecast).
-    var next: (text: String, short: String, fromRadar: Bool)? {
+    var next: (text: String, fromRadar: Bool)? {
         if let now, let first = radar.steps.first {
             // Raining: it ends, or gets heavier, whichever comes first; else the forecast's end.
             let heavier = radar.steps.first { Self.level($0.mmPerHour) > Self.level(first.mmPerHour) }
             if let dry = radar.dryAgain, heavier.map({ dry.time < $0.time }) ?? true {
-                return (tr("Dry from %@", Format.time(dry.time)), tr("%@ to %@", now, Format.time(dry.time)), true)
+                return (tr("Dry from %@", Format.time(dry.time)), true)
             }
             if let heavier {
-                return (tr("Heavier from %@", Format.time(heavier.time)), now, true)
+                return (tr("Heavier from %@", Format.time(heavier.time)), true)
             }
             if let dry = hours.first(where: { $0.time >= radar.end && ($0.precipitationMm ?? 0) < 0.1 }) {
-                return (tr("Until about %@", Format.time(dry.time)), tr("%@ to about %@", now, Format.time(dry.time)), false)
+                return (tr("Until about %@", Format.time(dry.time)), false)
             }
-            return (tr("No end in sight"), now, false)
+            return (tr("No end in sight"), false)
         }
         if let first = radar.firstRain {
-            let text = tr("%@ from %@", kind(at: first.time), Format.time(first.time))
-            return (text, text, true)
+            return (tr("%@ from %@", kind(at: first.time), Format.time(first.time)), true)
         }
         return nil
     }

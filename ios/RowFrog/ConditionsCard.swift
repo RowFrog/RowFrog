@@ -109,6 +109,22 @@ struct ConditionData {
         return next24.first { hour in (hour.precipitationMm ?? 0) >= 0.1 && hour.time >= (after ?? .distantPast) }
     }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
+
+    /// What falls at the shown moment and what comes next, as the rain tile
+    /// and the top tile both show it: the radar for two hours, then the forecast.
+    var rainLines: (value: String, detail: String, fromRadar: Bool) {
+        func later() -> String {
+            guard let wet = forecastRain else { return tr("Dry next 24 h") }
+            return tr("%@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
+        }
+        if let outlook = rainOutlook {
+            // While it rains, what comes next.
+            if let next = outlook.next { return (outlook.now ?? tr("Dry"), next.text, next.fromRadar) }
+            return (outlook.now ?? tr("Dry"), later(), false)
+        }
+        if (now.precipitationMm ?? 0) >= 0.1 { return (Format.rain(now.precipitationMm), Sky(hour: now).precipitationKind ?? "", false) }
+        return (tr("Dry"), later(), false)
+    }
     var water: WaterTemperature? { forecast.waterTemperature }
     /// Without a station: the satellite reading carried forward, else the ice
     /// model's water temperature, worked out from the air temperatures of the
@@ -232,7 +248,7 @@ private struct ConditionTile: View {
         case .waterTemperature:
             if data.water == nil, let estimate = data.estimatedWater { "≈ " + Format.degrees(estimate, digits: 0) } else { Format.degrees(data.water?.celsius, digits: 1) }
         case .precipitation:
-            if let outlook = data.rainOutlook { outlook.now ?? tr("Dry") } else { (hour.precipitationMm ?? 0) >= 0.1 ? Format.rain(hour.precipitationMm) : tr("Dry") }
+            data.rainLines.value
         case .visibility: Format.distance(hour.visibilityM)
         case .cloudCover: "\(Format.number(hour.cloudCoverPct)) %"
         case .pressure: Format.pressureNumber(hour.pressureHpa)
@@ -245,7 +261,7 @@ private struct ConditionTile: View {
 
     /// The short line under the value; rain read from the radar starts with the radar's symbol.
     private var detailLine: Text {
-        guard condition == .precipitation, data.rainOutlook?.next?.fromRadar == true else { return Text(detail) }
+        guard condition == .precipitation, data.rainLines.fromRadar else { return Text(detail) }
         return Text("\(Image(systemName: "dot.radiowaves.left.and.right")) \(detail)")
     }
 
@@ -271,16 +287,7 @@ private struct ConditionTile: View {
             }
             return data.water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
         case .precipitation:
-            // The radar for the next two hours, the forecast after them; short, the tile is narrow.
-            if let outlook = data.rainOutlook {
-                // While it rains, what comes next; lines from the radar start with its symbol (see `detailLine`).
-                if let next = outlook.next { return next.text }
-                guard let wet = data.forecastRain else { return tr("Dry next 24 h") }
-                return tr("%@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
-            }
-            if (hour.precipitationMm ?? 0) >= 0.1 { return Sky(hour: hour).precipitationKind ?? "" }
-            guard let wet = data.forecastRain else { return tr("Dry next 24 h") }
-            return tr("%@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
+            return data.rainLines.detail
         case .visibility:
             if (hour.visibilityM ?? .infinity) < 1000 { return tr("Fog") }
             guard let fog = data.next24.first(where: { ($0.visibilityM ?? .infinity) < 1000 }) else { return tr("No fog") }

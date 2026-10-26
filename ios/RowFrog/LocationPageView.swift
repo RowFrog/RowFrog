@@ -600,8 +600,8 @@ private struct NowCard: View {
                 }
                 Spacer()
                 opens(.precipitation) {
-                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rainValue.text, size: 17,
-                               mark: rainValue.fromRadar ? "dot.radiowaves.left.and.right" : nil)
+                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rain.value, size: 17,
+                               caption: rain.detail, mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
                 }
                 Spacer()
                 opens(.visibility) {
@@ -648,18 +648,13 @@ private struct NowCard: View {
 
     private var iceValue: String? { forecast.iceValue }
 
+    /// The rain tile's two lines, so the top tile always says the same.
+    private var rain: (value: String, detail: String, fromRadar: Bool) {
+        ConditionData(forecast: forecast, now: hour, radar: radar).rainLines
+    }
+
     /// DWD's radar at the launch point, read while the page is open.
     private var radar: RainRadar? { club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) } }
-
-    /// Rain from the radar for the next two hours, as the rain tile shows it; later from the forecast.
-    private var rainValue: (text: String, fromRadar: Bool) {
-        if let ahead = radar?.ahead(of: at ?? .now) {
-            let outlook = RainOutlook(radar: ahead, hours: forecast.hours)
-            if let next = outlook.next { return (next.short, true) }
-            return (tr("None"), false)
-        }
-        return (precipitationText(hour) ?? tr("None"), false)
-    }
 
     /// While DWD has no warning, one line says so; the warnings card itself
     /// only shows while a warning is issued or DWD could not be checked.
@@ -801,7 +796,9 @@ struct MetricView: View {
     let symbol: String
     let value: String
     var size: CGFloat
-    /// A symbol in front of the value, such as the radar's.
+    /// A grey line under the value, as the tiles have.
+    var caption: String? = nil
+    /// A symbol in front of the caption, such as the radar's.
     var mark: String? = nil
 
     var body: some View {
@@ -809,10 +806,17 @@ struct MetricView: View {
             Label(title, systemImage: symbol)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            Group {
-                if let mark { Text("\(Image(systemName: mark)) \(value)") } else { Text(value) }
+            Text(value)
+                .font(.system(size: size, weight: .light))
+            if let caption, !caption.isEmpty {
+                Group {
+                    if let mark { Text("\(Image(systemName: mark)) \(caption)") } else { Text(caption) }
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
             }
-            .font(.system(size: size, weight: .light))
         }
         .accessibilityElement(children: .combine)
     }
