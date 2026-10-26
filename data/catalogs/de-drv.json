@@ -2310,9 +2310,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.96251,
-        "lon": 7.62519,
-        "precision": "geocoded club address (town level); on the Dortmund-Ems-Kanal (checked by hand)",
+        "lat": 51.95037,
+        "lon": 7.64921,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the town-level address, 2129 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -2505,9 +2505,9 @@
       "country": "de",
       "lakeId": "ruppiner-see",
       "launchPoint": {
-        "lat": 52.94615,
-        "lon": 12.84991,
-        "precision": "geocoded club address (town level); on the Ruppiner See (checked by hand)",
+        "lat": 52.94442,
+        "lon": 12.84527,
+        "precision": "shore of the Ruppiner See nearest the town-level address, 366 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -2932,9 +2932,9 @@
       "country": "de",
       "lakeId": "river-mosel",
       "launchPoint": {
-        "lat": 49.91574,
-        "lon": 7.07082,
-        "precision": "geocoded boathouse (town level); on the Mosel (checked by hand)",
+        "lat": 49.91571,
+        "lon": 7.07302,
+        "precision": "shore of the Mosel nearest the town-level address, 157 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -3025,9 +3025,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.72657,
-        "lon": 7.12391,
-        "precision": "geocoded club address (street level); on the Rhein (checked by hand)",
+        "lat": 50.72376,
+        "lon": 7.1202,
+        "precision": "shore of the Rhein nearest the town-level address, 407 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -3623,9 +3623,9 @@
       "country": "de",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.76302,
-        "lon": 11.42504,
-        "precision": "geocoded boathouse (town level); on the Donau (checked by hand)",
+        "lat": 48.76116,
+        "lon": 11.42892,
+        "precision": "shore of the Donau nearest the town-level address, 352 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -4407,9 +4407,9 @@
       "country": "de",
       "lakeId": "river-ems",
       "launchPoint": {
-        "lat": 52.27977,
-        "lon": 7.43736,
-        "precision": "geocoded boathouse (town level); on the Ems (checked by hand)",
+        "lat": 52.28063,
+        "lon": 7.43952,
+        "precision": "shore of the Ems nearest the town-level address, 175 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -4987,9 +4987,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 50.86042,
-        "lon": 9.67677,
-        "precision": "geocoded boathouse (town level); on the Fulda (checked by hand)",
+        "lat": 50.85419,
+        "lon": 9.69582,
+        "precision": "shore of the Fulda nearest the town-level address, 1506 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -5642,9 +5642,9 @@
       "country": "de",
       "lakeId": "river-kanal-trave",
       "launchPoint": {
-        "lat": 53.86644,
-        "lon": 10.68474,
-        "precision": "geocoded club address (town level); on the Kanal-Trave (checked by hand)",
+        "lat": 53.86395,
+        "lon": 10.6947,
+        "precision": "shore of the Kanal-Trave nearest the town-level address, 709 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -5704,9 +5704,9 @@
       "country": "de",
       "lakeId": "river-ilmenau",
       "launchPoint": {
-        "lat": 53.24871,
-        "lon": 10.40785,
-        "precision": "geocoded boathouse (town level); on the Ilmenau (checked by hand)",
+        "lat": 53.25006,
+        "lon": 10.41289,
+        "precision": "shore of the Ilmenau nearest the town-level address, 367 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -6065,9 +6065,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.2881,
-        "lon": 8.91689,
-        "precision": "geocoded boathouse (town level); on the Weser (checked by hand)",
+        "lat": 52.28689,
+        "lon": 8.92238,
+        "precision": "shore of the Weser nearest the town-level address, 397 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -6359,9 +6359,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 53.48178,
-        "lon": 8.48683,
-        "precision": "geocoded boathouse (street level); on the Weser (checked by hand)",
+        "lat": 53.48113,
+        "lon": 8.495,
+        "precision": "shore of the Weser nearest the town-level address, 545 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -6641,9 +6641,9 @@
       "country": "de",
       "lakeId": "river-mittellandkanal",
       "launchPoint": {
-        "lat": 52.30272,
-        "lon": 8.61831,
-        "precision": "geocoded boathouse (town level); on the Mittellandkanal (checked by hand)",
+        "lat": 52.33419,
+        "lon": 8.62399,
+        "precision": "shore of the Mittellandkanal nearest the town-level address, 3521 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -6801,9 +6801,9 @@
       "country": "de",
       "lakeId": "baldeneysee",
       "launchPoint": {
-        "lat": 51.45822,
-        "lon": 7.01582,
-        "precision": "geocoded boathouse (town level); on the Baldeneysee (checked by hand)",
+        "lat": 51.40789,
+        "lon": 7.02662,
+        "precision": "shore of the Baldeneysee nearest the town-level address, 5646 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -6995,9 +6995,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 50.86042,
-        "lon": 9.67677,
-        "precision": "geocoded boathouse (town level); on the Fulda (checked by hand)",
+        "lat": 50.85419,
+        "lon": 9.69582,
+        "precision": "shore of the Fulda nearest the town-level address, 1506 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7516,9 +7516,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.91139,
-        "lon": 6.98456,
-        "precision": "geocoded club address (street level); on the Rhein (checked by hand)",
+        "lat": 50.90943,
+        "lon": 6.97853,
+        "precision": "shore of the Rhein nearest the town-level address, 475 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7696,9 +7696,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.85,
-        "lon": 12.05,
-        "precision": "geocoded boathouse (town level); on the Elbe (checked by hand)",
+        "lat": 51.85856,
+        "lon": 12.05083,
+        "precision": "shore of the Elbe nearest the town-level address, 953 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7773,9 +7773,9 @@
       "country": "de",
       "lakeId": "biggesee",
       "launchPoint": {
-        "lat": 51.02948,
-        "lon": 7.84353,
-        "precision": "geocoded boathouse (town level); on the Biggesee (checked by hand)",
+        "lat": 51.02913,
+        "lon": 7.84168,
+        "precision": "shore of the Biggesee nearest the town-level address, 135 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -8464,9 +8464,9 @@
       "country": "de",
       "lakeId": "river-hamme",
       "launchPoint": {
-        "lat": 53.22818,
-        "lon": 8.79482,
-        "precision": "geocoded boathouse (town level); on the Hamme (checked by hand)",
+        "lat": 53.20364,
+        "lon": 8.81803,
+        "precision": "shore of the Hamme nearest the town-level address, 3136 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -8609,9 +8609,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 50.86042,
-        "lon": 9.67677,
-        "precision": "geocoded club address (town level); on the Fulda (checked by hand)",
+        "lat": 50.85419,
+        "lon": 9.69582,
+        "precision": "shore of the Fulda nearest the town-level address, 1506 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -8962,9 +8962,9 @@
       "country": "de",
       "lakeId": "bodensee",
       "launchPoint": {
-        "lat": 47.57287,
-        "lon": 9.69619,
-        "precision": "geocoded club address (town level); on the Bodensee (checked by hand)",
+        "lat": 47.55685,
+        "lon": 9.67941,
+        "precision": "shore of the Bodensee nearest the town-level address, 2181 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9143,9 +9143,9 @@
       "country": "de",
       "lakeId": "river-havel",
       "launchPoint": {
-        "lat": 52.63569,
-        "lon": 13.20821,
-        "precision": "geocoded boathouse (street level); on the Havel (checked by hand)",
+        "lat": 52.63584,
+        "lon": 13.21582,
+        "precision": "shore of the Havel nearest the town-level address, 514 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9239,9 +9239,9 @@
       "country": "de",
       "lakeId": "river-unstrut",
       "launchPoint": {
-        "lat": 51.29142,
-        "lon": 11.39655,
-        "precision": "geocoded boathouse (town level); on the Unstrut (checked by hand)",
+        "lat": 51.30095,
+        "lon": 11.40383,
+        "precision": "shore of the Unstrut nearest the town-level address, 1174 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9347,9 +9347,9 @@
       "country": "de",
       "lakeId": "titisee",
       "launchPoint": {
-        "lat": 47.91734,
-        "lon": 8.17352,
-        "precision": "geocoded boathouse (town level); on the Titisee (checked by hand)",
+        "lat": 47.89891,
+        "lon": 8.15373,
+        "precision": "shore of the Titisee nearest the town-level address, 2525 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9524,9 +9524,9 @@
       "country": "de",
       "lakeId": "okerstausee",
       "launchPoint": {
-        "lat": 51.83472,
-        "lon": 10.43425,
-        "precision": "geocoded boathouse (town level); on the Okerstausee (checked by hand)",
+        "lat": 51.83197,
+        "lon": 10.43698,
+        "precision": "shore of the Okerstausee nearest the town-level address, 358 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -10072,9 +10072,9 @@
       "country": "de",
       "lakeId": "river-mosel",
       "launchPoint": {
-        "lat": 49.95268,
-        "lon": 7.01873,
-        "precision": "geocoded boathouse (town level); on the Mosel (checked by hand)",
+        "lat": 49.95095,
+        "lon": 7.01768,
+        "precision": "shore of the Mosel nearest the town-level address, 207 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -10549,9 +10549,9 @@
       "country": "de",
       "lakeId": "river-inn",
       "launchPoint": {
-        "lat": 48.07111,
-        "lon": 12.23305,
-        "precision": "geocoded club address (street level); on the Inn (checked by hand)",
+        "lat": 48.06583,
+        "lon": 12.23425,
+        "precision": "shore of the Inn nearest the town-level address, 594 m away (water checked by hand)",
         "verified": false
       }
     },
