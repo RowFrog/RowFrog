@@ -555,6 +555,10 @@ struct WeatherMapScreen: View {
     /// The area it opens with, and the area on screen now.
     private let startArea: MapArea
     @State private var area: MapArea
+    /// The map's height and where the controls start on it, so the club
+    /// opens in the middle of the map they leave free.
+    @State private var mapHeight: CGFloat?
+    @State private var controlsTop: CGFloat?
 
     init(point: Coordinate, clubID: String? = nil, layer: WeatherMapLayer, start: Date? = nil, time: Binding<Date?>? = nil,
          chart: AnyView? = nil) {
@@ -568,6 +572,12 @@ struct WeatherMapScreen: View {
         _area = State(initialValue: startArea)
     }
 
+    /// How much of the map's bottom the controls cover; nil until both are measured.
+    private var bottomInset: CGFloat? {
+        guard let mapHeight, let controlsTop else { return nil }
+        return max(0, mapHeight - controlsTop)
+    }
+
     /// The hours or pictures the slider goes through.
     private var frames: [Date] {
         layer.modelValue != nil ? store.frames(for: layer) : live?.times ?? []
@@ -578,10 +588,14 @@ struct WeatherMapScreen: View {
     var body: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                WeatherMapView(point: point, clubID: clubID, overlays: overlays, start: startArea) { area = $0 }
+                WeatherMapView(point: point, clubID: clubID, overlays: overlays, start: startArea, bottomInset: bottomInset) { area = $0 }
                     .ignoresSafeArea(edges: .bottom)
                 controls
+                    .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named("weatherMap")).minY } action: { controlsTop = $0 }
             }
+            .coordinateSpace(.named("weatherMap"))
+            // The map reaches under the home indicator; the stack stops above it.
+            .onGeometryChange(for: CGFloat.self) { $0.size.height + $0.safeAreaInsets.bottom } action: { mapHeight = $0 }
             .navigationTitle(layer.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -800,7 +814,7 @@ struct WeatherMapPanel: View {
     var body: some View {
         WeatherMapView(point: point, clubID: clubID, overlays: shown.map { date in
             layer.modelValue != nil ? store.overlays(layer, area: area, time: date) : live.map { [$0.overlay(at: date)] } ?? []
-        } ?? [], start: startArea) { area = $0 }
+        } ?? [], start: startArea, bottomInset: 0) { area = $0 }
         .task(id: layer) {
             if layer.modelValue != nil {
                 live = nil
@@ -922,21 +936,27 @@ private struct WeatherMapView: UIViewRepresentable {
     let overlays: [WeatherMapOverlayContent]
     /// The area it opens with (`WeatherMapLayer.startSpanKm` around the club).
     let start: MapArea
+    /// How much of the map's bottom is covered (the full-screen map's controls);
+    /// the start area is centred in the part above. Nil waits until it is known.
+    var bottomInset: CGFloat?
     /// The area on screen after each zoom or move, to load what it needs.
     var onArea: ((MapArea) -> Void)?
 
-    func makeUIView(context: Context) -> MKMapView {
-        let map = MKMapView()
+    func makeUIView(context: Context) -> StartingMapView {
+        let map = StartingMapView()
         map.delegate = context.coordinator
         map.pointOfInterestFilter = .excludingAll
         map.setRegion(start.region, animated: false)
+        map.start = start.mapRect
+        map.bottomInset = bottomInset
         let pin = MKPointAnnotation()
         pin.coordinate = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
         map.addAnnotation(pin)
         return map
     }
 
-    func updateUIView(_ map: MKMapView, context: Context) {
+    func updateUIView(_ map: StartingMapView, context: Context) {
+        map.bottomInset = bottomInset
         let coordinator = context.coordinator
         coordinator.onArea = onArea
         coordinator.pending = Dictionary(overlays.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
@@ -977,7 +997,15 @@ private struct WeatherMapView: UIViewRepresentable {
             return renderer
         }
 
+        func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
+            // Once the user pans or zooms, a late change of the controls' height leaves the map be.
+            let touched = mapView.subviews.first?.gestureRecognizers?.contains { $0.state == .began || $0.state == .changed } ?? false
+            if touched { (mapView as? StartingMapView)?.start = nil }
+        }
+
         func mapView(_ mapView: MKMapView, regionDidChangeAnimated animated: Bool) {
+            // Before the start area is set the region is MapKit's guess for a map with no size yet.
+            if let map = mapView as? StartingMapView, map.start != nil, !map.applied { return }
             onArea?(MapArea(mapView.region))
         }
 
@@ -989,6 +1017,26 @@ private struct WeatherMapView: UIViewRepresentable {
             view.displayPriority = .required
             return view
         }
+    }
+}
+
+/// A map that opens on its start area, centred in the part not covered at the
+/// bottom. It sets it again while the covered height still changes (the
+/// controls fill in as the hours load), until the user moves the map.
+final class StartingMapView: MKMapView {
+    var start: MKMapRect?
+    var bottomInset: CGFloat? {
+        didSet { if bottomInset != oldValue { applied = false; setNeedsLayout() } }
+    }
+    private(set) var applied = false
+
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        guard !applied, let start, let bottomInset, bounds.height > bottomInset + 80 else { return }
+        applied = true
+        // The Apple Maps logo and Legal link move up with the free part.
+        layoutMargins.bottom = bottomInset
+        setVisibleMapRect(start, edgePadding: UIEdgeInsets(top: 0, left: 0, bottom: bottomInset, right: 0), animated: false)
     }
 }
 
