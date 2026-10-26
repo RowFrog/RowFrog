@@ -913,7 +913,7 @@ private struct LakeViewInfo: View {
         NavigationStack {
             List {
                 Text(tr("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))
-                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber DWD warning, fainter amber stripes are drawn over the squares. Cold water draws the shore blue and adds the life-jacket badge to the panel."))
+                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. Official warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber official warning, fainter amber stripes are drawn over the squares. Cold water draws the shore blue and adds the life-jacket badge to the panel."))
                 Text(tr("Waves are an estimate: there are no wave measurements on these lakes, and shelter from steep shores or currents is not taken into account."))
                 Section(tr("Data")) {
                     Text(tr("Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0"))
@@ -1774,10 +1774,10 @@ struct LakeMapLegend: View {
                     MapBoatNote()
                     if stripes == .red {
                         row(Image(systemName: "line.diagonal").foregroundStyle(.red),
-                            tr("Grey squares with red stripes: the whole lake is red (DWD warning or darkness), see the panel."))
+                            tr("Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel."))
                     } else if stripes == .amber {
                         row(Image(systemName: "line.diagonal").foregroundStyle(.orange),
-                            tr("Amber stripes: the whole lake is amber (sunrise or sunset, DWD warning), see the panel. The squares keep their own colours."))
+                            tr("Amber stripes: the whole lake is amber (sunrise or sunset, official warning), see the panel. The squares keep their own colours."))
                     }
                 }
                 Section(tr("On the map")) {

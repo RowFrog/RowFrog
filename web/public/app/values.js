@@ -82,6 +82,18 @@ function warnings(d, words) {
     && words.some((word) => (w.event ?? "").toUpperCase().includes(word)));
 }
 
+/** The place's warnings come from DWD (Germany, older files); else labels say "official" (ConditionsCard warningsAreDWD). */
+function warningsAreDWD(d) {
+  return (d.forecast.warnings?.local?.source ?? "dwd") === "dwd";
+}
+
+/** False where no warning service was read: then "no warning" must not be said. */
+function warningsChecked(d) {
+  return d.forecast.warnings?.local?.checked !== false;
+}
+
+const warningsLabel = (d) => (warningsAreDWD(d) ? t("DWD warnings") : t("Official warnings"));
+
 function warningNames(d, words) {
   const found = warnings(d, words);
   if (!found.length) return t("None");
@@ -331,7 +343,7 @@ const BUILDERS = {
     const lightText = light === "red" ? t("red: hail") : light === "amber" ? t("amber: heavy rain") : t("green: under %@ per hour", rain(4));
     const facts = [[t("Next 24 h"), t("%@ in total", rain(total))], [t("Kind"), kinds.length ? kinds.join(", ") : t("dry")]];
     if (top && (top.precipitationMm ?? 0) >= 0.1) facts.push([t("Heaviest"), t("%@ · %@", rain(top.precipitationMm), dayTime(top.time))]);
-    facts.push([t("DWD warnings"), warningNames(d, ["REGEN", "HAGEL", "GEWITTER", "SCHNEE"])], [t("Rowing light now"), lightText]);
+    facts.push([warningsLabel(d), warningNames(d, ["REGEN", "HAGEL", "GEWITTER", "SCHNEE"])], [t("Rowing light now"), lightText]);
     const wet = (x.precipitationMm ?? 0) >= 0.1;
     const first = d.next24.find((y) => (y.precipitationMm ?? 0) >= 0.1);
     const kind = precipitationKind(sky(x.weatherCode));
@@ -340,13 +352,13 @@ const BUILDERS = {
       note: wet ? (kind ? t(kind) : "") : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h"),
       unit: unitSymbol("rain"), lines: [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }],
       limits: [{ value: inUnit("rain", 4), colour: COLOURS.orange, label: t("Heavy rain") }],
-      limitInfo: t("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official DWD warnings for heavy rain or hail always make the light red or amber as well.", rain(4)),
+      limitInfo: t("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official warnings for heavy rain or hail always make the light red or amber as well.", rain(4)),
       yDomain: [0, inUnit("rain", Math.max(6, Math.max(0, ...d.timeline.map((y) => y.precipitationMm ?? 0)) * 1.2))], facts,
       rowing: advice(d, REASONS.precipitation, {
         red: t("Hail is forecast: stay ashore."), amber: t("Heavy rain now: you are soaked quickly and see less; keep the outing short."),
         later: key("Heavy rain or hail from %@: plan to be back before then."), calm: t("No heavy rain or hail in the next 24 hours."),
       }),
-      source: t("Precipitation per hour and weather code, DWD via Open-Meteo. DWD warnings appear under DWD warnings."),
+      source: t("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings."),
     });
   },
 
@@ -362,7 +374,7 @@ const BUILDERS = {
       const clear = d.future.find((y) => new Date(y.time) >= fog.end && (y.visibilityM ?? Infinity) >= 1000 && y.sunUp !== false);
       facts.push([t("Rowing possible"), clear ? t("from about %@ by visibility", dayTime(clear.time)) : t("not in the forecast")]);
     } else facts.push([t("Fog"), t("not in the next 24 h")]);
-    facts.push([t("Mist"), mist ? span(mist) : t("not in the next 24 h")], [t("DWD fog warning"), warningNames(d, ["NEBEL"])],
+    facts.push([t("Mist"), mist ? span(mist) : t("not in the next 24 h")], [warningsAreDWD(d) ? t("DWD fog warning") : t("Official fog warning"), warningNames(d, ["NEBEL"])],
       [t("Lake view"), t("fog shows as a banner over the whole lake")]);
     return base({
       value: distance(x.visibilityM), note: fogHour(x) ? t("Fog now") : fog ? t("Fog expected %@", span(fog)) : t("No fog in the next 24 h"), unit: unitSymbol("distance"),
@@ -441,17 +453,20 @@ const BUILDERS = {
     const top = extreme(d.next24, (y) => y.capeJkg, true);
     const facts = [];
     if (top && (top.capeJkg ?? 0) > 0) facts.push([t("Most energy next 24 h"), t("%@ J/kg · %@", num(top.capeJkg), dayTime(top.time))]);
-    facts.push([t("DWD warnings"), warningNames(d, ["GEWITTER"])]);
+    facts.push([warningsLabel(d), warningNames(d, ["GEWITTER"])]);
     const light = lightFor(d.now, REASONS.thunderstorm);
     return base({
       value: light === "red" ? t("High") : light === "amber" ? t("Possible") : t("Low"),
-      note: warnings(d, ["GEWITTER"]).length ? t("DWD thunderstorm warning") : t("No DWD thunderstorm warning"), unit: "J/kg",
+      note: !warningsChecked(d) ? t("Warnings not checked")
+        : !warningsAreDWD(d) ? (warnings(d, ["GEWITTER"]).length ? t("Official thunderstorm warning") : t("No official thunderstorm warning"))
+        : warnings(d, ["GEWITTER"]).length ? t("DWD thunderstorm warning") : t("No DWD thunderstorm warning"),
+      unit: "J/kg",
       lines: [{ name: t("Energy for storms (CAPE)"), colour: COLOURS.yellow, kind: "bars", points: d.points((y) => y.capeJkg) }],
       limits: [{ value: 500, colour: COLOURS.orange, label: t("Possible") }, { value: 1000, colour: COLOURS.red, label: t("Likely") }],
-      limitInfo: t("CAPE is the energy the air has for rising, in J/kg. From 500 J/kg thunderstorms are possible if something sets them off (amber); from 1000 J/kg together with rain they are likely (red). This is the app's own estimate; an official DWD thunderstorm warning always makes the light red."),
+      limitInfo: t("CAPE is the energy the air has for rising, in J/kg. From 500 J/kg thunderstorms are possible if something sets them off (amber); from 1000 J/kg together with rain they are likely (red). This is the app's own estimate; an official thunderstorm warning always makes the light red."),
       yDomain: [0, Math.max(1300, Math.max(0, ...d.timeline.map((y) => y.capeJkg ?? 0)) * 1.1)], facts,
       rowing: t("If you hear thunder, head for the shore at once: lightning can strike 10 km ahead of a storm."),
-      source: t("Estimated from DWD forecast (CAPE); official DWD warnings appear under DWD warnings."),
+      source: t("Estimated from the forecast (CAPE); official warnings appear under the warnings."),
     });
   },
 

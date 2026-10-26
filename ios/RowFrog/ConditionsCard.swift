@@ -1713,7 +1713,7 @@ extension ConditionDetail {
             unit: r.symbol,
             lines: [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) })],
             limits: [ChartLimit(value: r.convert(4), color: .orange, label: tr("Heavy rain"))],
-            limitInfo: tr("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official DWD warnings for heavy rain or hail always make the light red or amber as well.", Format.rain(4)),
+            limitInfo: tr("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official warnings for heavy rain or hail always make the light red or amber as well.", Format.rain(4)),
             yDomain: 0...max(r.convert(6), r.convert(d.timeline.compactMap(\.precipitationMm).max() ?? 0) * 1.2),
             facts: facts,
             rowing: advice(d, Condition.precipitation.reasonNames,
@@ -1721,7 +1721,7 @@ extension ConditionDetail {
                            amber: tr("Heavy rain now: you are soaked quickly and see less; keep the outing short."),
                            later: tr("Heavy rain or hail from %@: plan to be back before then."),
                            calm: tr("No heavy rain or hail in the next 24 hours.")),
-            source: tr("Precipitation per hour and weather code, DWD via Open-Meteo. DWD warnings appear under DWD warnings.")
+            source: tr("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.")
         )
     }
 
@@ -1873,11 +1873,11 @@ extension ConditionDetail {
                 ChartLimit(value: 500, color: .orange, label: tr("Possible")),
                 ChartLimit(value: 1000, color: .red, label: tr("Likely")),
             ],
-            limitInfo: tr("CAPE is the energy the air has for rising, in J/kg. From 500 J/kg thunderstorms are possible if something sets them off (amber); from 1000 J/kg together with rain they are likely (red). This is the app's own estimate; an official DWD thunderstorm warning always makes the light red."),
+            limitInfo: tr("CAPE is the energy the air has for rising, in J/kg. From 500 J/kg thunderstorms are possible if something sets them off (amber); from 1000 J/kg together with rain they are likely (red). This is the app's own estimate; an official thunderstorm warning always makes the light red."),
             yDomain: 0...max(1300, (d.timeline.compactMap(\.capeJkg).max() ?? 0) * 1.1),
             facts: facts,
             rowing: tr("If you hear thunder, head for the shore at once: lightning can strike 10 km ahead of a storm."),
-            source: tr("Estimated from DWD forecast (CAPE); official DWD warnings appear under DWD warnings.")
+            source: tr("Estimated from the forecast (CAPE); official warnings appear under the warnings.")
         )
     }
 

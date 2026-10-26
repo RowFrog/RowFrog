@@ -791,8 +791,8 @@ function legendSheet() {
   const cold = coldShore(page.view.shoreWaterC, mapLimits());
   return `<h3>${h(t("Rowing light"))}</h3><ul class="legend">
       ${["green", "amber", "red"].map((l) => row(dot(l, 14), lightTitle(l))).join("")}
-      ${row(`<span class="stripes red"></span>`, t("Grey squares with red stripes: the whole lake is red (DWD warning or darkness), see the panel."))}
-      ${row(`<span class="stripes amber"></span>`, t("Amber stripes: the whole lake is amber (sunrise or sunset, DWD warning), see the panel. The squares keep their own colours."))}</ul>
+      ${row(`<span class="stripes red"></span>`, t("Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel."))}
+      ${row(`<span class="stripes amber"></span>`, t("Amber stripes: the whole lake is amber (sunrise or sunset, official warning), see the panel. The squares keep their own colours."))}</ul>
     <h3>${h(t("On the map"))}</h3><ul class="legend">
       ${row(`<span class="club-mark own"></span>`, t("The club of this page"))}
       ${row(`<span class="club-mark"></span>`, t("Other clubs on the lake"))}
@@ -807,7 +807,7 @@ function legendSheet() {
 
 function aboutSheet() {
   return `<p>${h(t("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))}</p>
-    <p>${h(t("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber DWD warning, fainter amber stripes are drawn over the squares. Cold water draws the shore blue and adds the life-jacket badge to the panel."))}</p>
+    <p>${h(t("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. Official warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber official warning, fainter amber stripes are drawn over the squares. Cold water draws the shore blue and adds the life-jacket badge to the panel."))}</p>
     <p>${h(t("Waves are an estimate: there are no wave measurements on these lakes, and shelter from steep shores or currents is not taken into account."))}</p>
     <h3>${h(t("Data"))}</h3>
     ${(page.view.attribution ?? []).map((a) => `<p class="sub small">${h(t(a))}</p>`).join("")}`;

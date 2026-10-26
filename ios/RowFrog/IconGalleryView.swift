@@ -18,7 +18,7 @@ struct IconGalleryView: View {
     /// Other icons in the app and where they appear.
     private let otherIcons: [(symbol: String, meaning: String)] = [
         ("house.fill", "Home base"),
-        ("exclamationmark.triangle.fill", "DWD weather warning"),
+        ("exclamationmark.triangle.fill", "Official weather warning"),
         ("light.beacon.max.fill", "DWD lake warning"),
         ("checkmark.shield.fill", "No warning"),
         ("sunrise.fill", "Sunrise"),
