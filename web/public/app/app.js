@@ -422,10 +422,14 @@ function sideRows(currentId) {
 function balanceCards() {
   const box = root.querySelector(".cards");
   if (!box) return;
+  // Always in page order, never in the columns' order from the last sorting.
   const cards = [...box.querySelectorAll(".card")];
+  cards.forEach((card, i) => (card.dataset.order ??= i));
+  cards.sort((a, b) => a.dataset.order - b.dataset.order);
   box.replaceChildren();
   box.classList.toggle("two", box.clientWidth >= TWO_COLUMNS);
   if (!box.classList.contains("two")) {
+    cardWatch?.disconnect();
     box.append(...cards);
     return fitSatellite();
   }
@@ -438,6 +442,29 @@ function balanceCards() {
   }
   // The columns set the card's width, and with it the caption's lines.
   fitSatellite();
+  watchCards(cards);
+}
+
+let cardWatch = null;
+let rebalance = 0;
+
+/**
+ * Sorts the cards again whenever one changes height (a picture or the lake
+ * view finishing loading), so the columns always follow the cards' final
+ * heights in page order, as the app's layout does, and never the order in
+ * which their data happened to arrive.
+ */
+function watchCards(cards) {
+  cardWatch?.disconnect();
+  // The heights the columns were sorted by.
+  const heights = new Map(cards.map((card) => [card, card.offsetHeight]));
+  cardWatch = new ResizeObserver((entries) => {
+    if (!entries.some(({ target }) => heights.get(target) !== target.offsetHeight)) return;
+    if (!cards[0]?.isConnected) return cardWatch.disconnect();
+    cancelAnimationFrame(rebalance);
+    rebalance = requestAnimationFrame(balanceCards);
+  });
+  cards.forEach((card) => cardWatch.observe(card));
 }
 
 let resizeTimer = null;
