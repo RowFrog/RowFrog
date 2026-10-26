@@ -1,0 +1,27 @@
+name: Tiny picture mock-up (temporary)
+
+on:
+  push:
+    branches: [claude/project-thread-68g20o]
+    paths: [.github/workflows/tiny-picture-mockup.yml, scripts/tiny_picture_mockup.py]
+
+permissions:
+  contents: write
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e "backend[satellite]"
+      - run: python3 scripts/tiny_picture_mockup.py
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mockups && git commit -m "Mock-up pictures" && git push
