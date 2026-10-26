@@ -16,6 +16,19 @@ def test_tiles_are_shared_by_nearby_clubs():
     assert maps.tile_for(47.99, 11.35) == maps.tile_for(47.85, 11.15)
 
 
+def test_the_tiles_around_a_club_reach_past_an_ipads_map():
+    tiles = maps.tiles_around([(47.9, 11.3)])  # Starnberger See
+    assert len(tiles) == 9
+    west = min(t.west for t in tiles)
+    east = max(t.east for t in tiles)
+    assert west <= 11.3 - 4.5 and east >= 11.3 + 4.5
+
+
+def test_no_tiles_outside_the_model_area():
+    tiles = maps.tiles_around([(54.4, -2.0)])  # far west of the domain's edge
+    assert all(t.east > maps.DOMAIN_WEST for t in tiles)
+
+
 def test_values_fit_a_byte_and_missing_stays_missing():
     enc = maps.VALUES["temperature"]
     out = maps._encode(np.array([-50.0, -40.0, 0.0, 20.2, 80.0, np.nan]), enc)
