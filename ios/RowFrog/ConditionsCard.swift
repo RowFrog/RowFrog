@@ -44,7 +44,7 @@ struct ConditionsCard: View {
                 }
             }
         }
-        .sheet(item: $open) { condition in
+        .detailCover(item: $open) { condition in
             ConditionDetailView(condition: condition, data: data, club: club)
         }
         .task {
@@ -448,6 +448,28 @@ struct ConditionDetail {
     var source: String
 }
 
+extension View {
+    /// A value's view: a sheet on the iPhone, full screen on the iPad, where a
+    /// sheet was too small to show the chart and the map together.
+    @ViewBuilder
+    func detailCover<Item: Identifiable, Content: View>(item: Binding<Item?>, @ViewBuilder content: @escaping (Item) -> Content) -> some View {
+        if Orientation.isPad {
+            fullScreenCover(item: item, content: content)
+        } else {
+            sheet(item: item, content: content)
+        }
+    }
+
+    @ViewBuilder
+    func detailCover<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
+        if Orientation.isPad {
+            fullScreenCover(isPresented: isPresented, content: content)
+        } else {
+            sheet(isPresented: isPresented, content: content)
+        }
+    }
+}
+
 struct ConditionDetailView: View {
     let data: ConditionData
     @Environment(\.dismiss) private var dismiss
@@ -473,6 +495,13 @@ struct ConditionDetailView: View {
     @State private var time = DetailTime()
     /// Compact height: a phone on its side, where the map sits beside the chart.
     @Environment(\.verticalSizeClass) private var verticalSize
+    /// The view's size: the iPad shows it full screen, with the map beside the chart in landscape.
+    @State private var size: CGSize = .zero
+
+    /// The map beside the chart: a phone on its side, or a wide screen (iPad in landscape).
+    private var sideBySide: Bool {
+        verticalSize == .compact || (size.width > size.height && size.width >= 900)
+    }
 
     /// The views the arrows and swipes go through: every condition, or only
     /// the values of the top tile when opened from there.
@@ -496,6 +525,7 @@ struct ConditionDetailView: View {
                     .padding()
             }
             .coordinateSpace(name: Self.space)
+            .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
             .simultaneousGesture(swipe)
             // The new view's map card reports its own hours.
             .onChange(of: condition) { time.mapHours = nil }
@@ -540,13 +570,14 @@ struct ConditionDetailView: View {
         let hidden = hiddenLines[condition] ?? []
         let layer = detail.history || detail.lines.isEmpty ? nil : mapLayer(condition)
         VStack(alignment: .leading, spacing: 14) {
-            if let club, let layer, verticalSize == .compact {
+            if let club, let layer, sideBySide {
                 HStack(alignment: .top, spacing: 16) {
                     VStack(alignment: .leading, spacing: 14) {
                         top(detail, head: head, shown: shown, hidden: hidden)
                     }
                     .frame(maxWidth: .infinity)
-                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: 230)
+                    // As tall as the chart beside it on the iPad.
+                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: verticalSize == .compact ? 230 : 300)
                         .frame(maxWidth: .infinity)
                 }
             } else {
@@ -625,7 +656,7 @@ struct ConditionDetailView: View {
 
     /// The weather map tip, above the map card in portrait once the chart's tip is closed.
     private var mapTipShown: Bool {
-        tourSeen && showMapTip && !showScrubTip && verticalSize != .compact
+        tourSeen && showMapTip && !showScrubTip && !sideBySide
     }
 
     /// The weather map under (or beside) the chart, with the slim chart for its full-screen view.
