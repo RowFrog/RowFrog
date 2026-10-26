@@ -185,9 +185,12 @@ svg.filled { width: 22px; height: 22px; }
 .gauge .needle { position: absolute; left: 50%; top: -3px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--text); transform-origin: 50% 23px; }
 .gauge .trend { font-size: 13px; color: var(--sub); display: flex; }
 .gauge .trend.down { transform: rotate(180deg); }
-.sunpath line { stroke: var(--line); stroke-width: 1; }
-.sunpath path { fill: none; stroke: var(--sun); stroke-width: 2; stroke-dasharray: 3 2; }
-.sunpath circle { fill: var(--sun); }
+.sunpath { overflow: visible; }
+.sunpath line { stroke: var(--sub); stroke-width: 1; }
+.sunpath polyline { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.sunpath polyline.day { stroke: var(--sun); }
+.sunpath polyline.night { stroke: var(--sub); opacity: .5; }
+.sunpath circle { fill: #ffd60a; stroke: var(--sun); stroke-width: 1.5; }
 
 /* Next 48 hours (HourlyCard). */
 .hourly { font-variant-numeric: tabular-nums; }

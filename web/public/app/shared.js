@@ -537,15 +537,44 @@ export function pressureGauge(hpa, trend) {
 }
 
 /** The sun's path over the day with the sun at `at` (SunPath). */
+/** Hours of the day (0–24) of a time on the lakes' clock. */
+function clockHours(value) {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: ZONE, hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date(value));
+  const part = (type) => Number(parts.find((x) => x.type === type)?.value ?? 0);
+  return part("hour") + part("minute") / 60;
+}
+
+let sunPaths = 0;
+
+/**
+ * The day's sun path as in the Weather app (SunPath / SunPathGraph): the
+ * whole 24 hours, bright above the horizon and faint below it, with the sun
+ * where it is at `at`, by day or by night.
+ */
 export function sunPath(sunrise, sunset, at, width = 64, height = 32) {
-  const f = Math.min(1, Math.max(0, (at - sunrise) / (sunset - sunrise)));
-  const x = 4 + f * (width - 8);
-  const y = height - 4 - Math.sin(f * Math.PI) * (height - 10);
-  const up = at >= sunrise && at < sunset;
+  const rise = clockHours(sunrise);
+  const down = clockHours(sunset);
+  const noon = (rise + down) / 2;
+  const lineWidth = height >= 48 ? 3 : 2;
+  // Sun height through the day, 0 at sunrise and sunset; noon touches the top, midnight the bottom.
+  const sunHeight = (h) => Math.cos((2 * Math.PI * (h - noon)) / 24) - Math.cos((2 * Math.PI * (down - noon)) / 24);
+  const top = sunHeight(noon);
+  const bottom = sunHeight(noon + 12);
+  const inset = lineWidth * 2 + 2;
+  const y = (h) => ((top - sunHeight(h)) / (top - bottom)) * (height - 2 * inset) + inset;
+  const x = (h) => (h / 24) * width;
+  const points = Array.from({ length: 97 }, (_, i) => `${x(i / 4).toFixed(1)},${y(i / 4).toFixed(1)}`).join(" ");
+  const horizon = y(rise);
+  const now = clockHours(at);
+  const r = lineWidth * 2 + 1;
+  const id = `sun${++sunPaths}`;
   return `<svg class="sunpath" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" aria-hidden="true">
-    <line x1="0" y1="${height - 4}" x2="${width}" y2="${height - 4}" />
-    <path d="M4 ${height - 4} Q ${width / 2} ${-height + 14} ${width - 4} ${height - 4}" />
-    ${up ? `<circle cx="${x}" cy="${y}" r="4" />` : ""}</svg>`;
+    <defs><clipPath id="${id}-day"><rect width="${width}" height="${horizon}" /></clipPath>
+      <clipPath id="${id}-night"><rect y="${horizon}" width="${width}" height="${height - horizon}" /></clipPath></defs>
+    <polyline class="day" points="${points}" clip-path="url(#${id}-day)" stroke-width="${lineWidth}" />
+    <polyline class="night" points="${points}" clip-path="url(#${id}-night)" stroke-width="${Math.max(1, lineWidth - 1)}" />
+    <line x1="0" y1="${horizon}" x2="${width}" y2="${horizon}" />
+    <circle cx="${x(now).toFixed(1)}" cy="${y(now).toFixed(1)}" r="${r}" /></svg>`;
 }
 
 
