@@ -602,10 +602,15 @@ async function renderClub(id) {
   const name = club ? club.shortName || club.name : id;
   setTitle(name);
   const isHome = store.clubs[0]?.id === id;
-  root.innerHTML = `${testing()}<main class="page club">
-      ${clubHeader(club, name, isHome, null)}
-      <section class="card loading"><p>${h(t("Loading the forecast…"))}</p></section>
-    </main>${bottomBar(id, null)}`;
+  const side = sideList.matches;
+  root.innerHTML = `${testing()}<div class="split">
+      ${side ? `<aside class="side">${sideRows(id)}</aside>` : ""}
+      <main class="page club">
+        ${clubHeader(club, name, isHome, null)}
+        <section class="card loading"><p>${h(t("Loading the forecast…"))}</p></section>
+      </main>
+    </div>${bottomBar(id, null)}`;
+  if (side) root.querySelectorAll(".side .row").forEach(fillRow);
   wireBottomBar(null);
   wireSwipe(id);
   let raw;
@@ -627,19 +632,66 @@ async function renderClub(id) {
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, club })}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
-    ${conditionsCard(forecast, hour)}
-    ${hourlyCard(forecast, now, stale)}
-    ${club?.launchPoint ? launchPointCard(club) : ""}
-    <section class="card" id="satellite" hidden></section>
+    <div class="cards">
+      ${conditionsCard(forecast, hour)}
+      ${hourlyCard(forecast, now, stale)}
+      ${club?.launchPoint ? launchPointCard(club) : ""}
+      <section class="card" id="satellite" hidden></section>
+    </div>
     ${sourceLine(forecast)}
     ${credits(forecast, club)}
     ${footerLinks()}`;
   root.querySelector("nav.bottom").outerHTML = bottomBar(id, raw);
   wireBottomBar(raw);
   wireClubPage(id, club, raw, forecast, hour);
+  balanceCards();
   if (club?.launchPoint) showLaunchMap(club);
-  satelliteCard(forecast.lakeId);
+  satelliteCard(forecast.lakeId).then(balanceCards);
 }
+
+// ---- Wide screens (iPad, Mac, PC), as in the app on iPad ------------------------------------
+
+/** The list beside the club page from this size on (RootView's side list). */
+const sideList = matchMedia("(min-width: 860px) and (min-height: 560px)");
+sideList.addEventListener("change", () => location.hash.startsWith("#/club/") && route(false));
+
+/** From this width the page's cards go into two columns (LocationPageView.twoColumnWidth). */
+const TWO_COLUMNS = 600;
+
+/** The saved clubs as rows beside the page, the shown one marked. */
+function sideRows(currentId) {
+  return `<header class="side-head"><h2>${h(t("Locations"))}</h2><a class="link" href="#/list">${h(t("Edit"))}</a></header>
+    <ul class="rows">${store.clubs.map((c, i) => `<li><a class="row ${c.id === currentId ? "current" : ""}" href="#/club/${encodeURIComponent(c.id)}" data-id="${h(c.id)}">${rowSkeleton(c, i === 0)}</a></li>`).join("")}</ul>`;
+}
+
+/**
+ * The cards in two columns on a wide page, each going to the shorter column
+ * in turn (BalancedColumns in the app); one column on a narrow one.
+ */
+function balanceCards() {
+  const box = root.querySelector(".cards");
+  if (!box) return;
+  const cards = [...box.querySelectorAll(".card")];
+  box.replaceChildren();
+  box.classList.toggle("two", box.clientWidth >= TWO_COLUMNS);
+  if (!box.classList.contains("two")) return box.append(...cards);
+  const columns = [document.createElement("div"), document.createElement("div")];
+  columns.forEach((c) => (c.className = "col"));
+  box.append(...columns);
+  for (const card of cards) {
+    const shorter = columns[1].offsetHeight < columns[0].offsetHeight ? columns[1] : columns[0];
+    shorter.append(card);
+  }
+}
+
+let resizeTimer = null;
+window.addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    const box = root.querySelector(".cards");
+    if (box && box.classList.contains("two") !== box.clientWidth >= TWO_COLUMNS) balanceCards();
+  }, 150);
+});
 
 function clubHeader(club, name, isHome, forecast, stale = false) {
   const slow = forecast?.refresh && forecast.refresh.used === false;
@@ -696,7 +748,7 @@ function wireSwipe(id) {
     if (!start || !e.changedTouches?.[0]) return;
     const dx = e.changedTouches[0].clientX - start[0];
     const dy = e.changedTouches[0].clientY - start[1];
-    if (Math.abs(dx) > 70 && Math.abs(dx) > 2 * Math.abs(dy) && !e.target.closest(".hourly, .map")) go(dx < 0 ? 1 : -1);
+    if (Math.abs(dx) > 70 && Math.abs(dx) > 2 * Math.abs(dy) && !e.target.closest(".hourly, .map, .side")) go(dx < 0 ? 1 : -1);
     start = null;
   };
   const key = (e) => {
