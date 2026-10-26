@@ -182,8 +182,28 @@ def uv(client: httpx.Client) -> None:
         say(f"{url}: {listing(client, url)[:40]}")
 
 
+def cors(client: httpx.Client) -> None:
+    """Whether a browser page on rowfrog.com may read the live layers (the website asks them directly)."""
+    say("## Browser access (CORS) for the website")
+    radar = ("https://maps.dwd.de/geoserver/dwd/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetFeatureInfo"
+             "&LAYERS=dwd:Niederschlagsradar&QUERY_LAYERS=dwd:Niederschlagsradar&CRS=EPSG:4326"
+             "&BBOX=47.99,11.34,48.01,11.36&WIDTH=101&HEIGHT=101&I=50&J=50&INFO_FORMAT=application/json")
+    picture = ("https://maps.dwd.de/geoserver/dwd/wms?SERVICE=WMS&VERSION=1.3.0&REQUEST=GetMap"
+               "&LAYERS=dwd:Niederschlagsradar&CRS=EPSG:3857&BBOX=1100000,5900000,1400000,6200000"
+               "&WIDTH=64&HEIGHT=64&FORMAT=image/png&TRANSPARENT=true")
+    for label, url in [("radar reading", radar), ("radar picture", picture)]:
+        try:
+            r = client.get(url, headers={"Origin": "https://rowfrog.com"}, timeout=30)
+            say(f"{label}: HTTP {r.status_code}, Access-Control-Allow-Origin: "
+                f"{r.headers.get('access-control-allow-origin', 'none')}, {r.text[:300] if 'json' in r.headers.get('content-type', '') else r.headers.get('content-type')}")
+        except httpx.HTTPError as e:
+            say(f"{label}: failed: {type(e).__name__}: {e}")
+    say()
+
+
 def main() -> None:
     with httpx.Client(headers=UA, follow_redirects=True) as client:
+        cors(client)
         scan_wms(client, "https://maps.dwd.de/geoserver/dwd/wms", "DWD GeoServer (maps.dwd.de)")
         scan_wms(client, "https://view.eumetsat.int/geoserver/ows", "EUMETSAT View", max_maps=30)
         icon_d2(client)
