@@ -84,6 +84,9 @@ def geosphere(client: httpx.Client) -> None:
                 spec = r.json()
                 print("  paths:", list(spec.get("paths", {}).keys()))
                 print("  info:", json.dumps(spec.get("info", {}), ensure_ascii=False)[:800])
+                for path in ("/getWarningsForCoords", "/getWarnstatus"):
+                    print(f"  {path} responses:", json.dumps(spec["paths"][path]["get"].get("responses"), ensure_ascii=False)[:6000])
+                print("  components:", json.dumps(spec.get("components", {}), ensure_ascii=False)[:9000])
                 for p, ops in spec.get("paths", {}).items():
                     for m, op in ops.items():
                         if not isinstance(op, dict):
