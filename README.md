@@ -281,7 +281,7 @@ layouts (two columns from 600 pt, a side list from 860 × 560 pt).
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues. |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
-| `docs/screenshots/` | App screenshots from the "App screenshots" workflow. |
+| `docs/screenshots/` | Not in git: the "App screenshots" workflow writes here on the runner and keeps each branch's set under `refs/screenshots/<branch>` (see the handbook). |
 | `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. |
 | `CREDITS.md` | Data sources, licences and the credits the app must show. |
 
@@ -385,7 +385,7 @@ More detail, including the secrets each one needs, is in the
 | Workflow | What it does |
 | --- | --- |
 | **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately). |
-| **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and saves screenshots to `docs/screenshots` on the same branch. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. |
+| **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue, with a section on whether one run a day would be enough. Changes to its scripts start it only on `main`. |
