@@ -210,9 +210,12 @@ WATER_FIXES = ROOT / "data" / "catalogs" / "water-fixes.json"
 def apply_water_fixes(country: str, waters: list[dict], clubs: list[dict]) -> int:
     """Moves clubs the import left under "Water near <town>" to the water named
     for them in water-fixes.json (checked by hand), reusing a water of that
-    name in the catalog, and drops "Water near" entries no club is left on.
-    Their launch points stay until scripts/fix_unknown_waters.py --snap moves
-    them to the shore. Returns how many clubs moved."""
+    name in the catalog (or the one its "id" names), and drops "Water near"
+    entries no club is left on. A fix with "replace" also moves a club the
+    import put on the wrong water (a pond, a harbour basin, a piece of river)
+    and drops that water once no club is left on it. Launch points stay until
+    scripts/fix_unknown_waters.py --snap moves them to the shore. Returns how
+    many clubs moved."""
     fixes = json.loads(WATER_FIXES.read_text(encoding="utf-8")).get(country, {}) if WATER_FIXES.exists() else {}
     by_id = {w["id"]: w for w in waters}
     by_name: dict[str, dict] = {}
@@ -220,11 +223,17 @@ def apply_water_fixes(country: str, waters: list[dict], clubs: list[dict]) -> in
         if w.get("kind") != "unknown":
             by_name.setdefault(w["name"], w)
     moved = 0
+    replaced: set[str] = set()
     for club in clubs:
         fix = fixes.get(club["id"])
-        if not fix or by_id.get(club["lakeId"], {}).get("kind") != "unknown":
+        if not fix:
             continue
-        water = by_name.get(fix["water"])
+        current = by_id.get(club["lakeId"], {})
+        if current.get("kind") != "unknown" and not fix.get("replace"):
+            continue
+        water = by_id.get(fix["id"]) if fix.get("id") else by_name.get(fix["water"])
+        if water is not None and water["id"] == club["lakeId"]:
+            continue
         if water is None:
             water_id = ("river-" if fix["kind"] == "river" else "") + slug(fix["water"])
             while water_id in by_id:
@@ -238,9 +247,12 @@ def apply_water_fixes(country: str, waters: list[dict], clubs: list[dict]) -> in
         precision = club["launchPoint"]["precision"]
         if "water not identified" in precision:
             club["launchPoint"]["precision"] = precision.replace("water not identified", f"on the {fix['water']} (checked by hand)")
+        elif current.get("kind") != "unknown":
+            replaced.add(current.get("id", ""))
+            club["launchPoint"]["precision"] = f"on the {fix['water']} (checked by hand), first matched to {current.get('name', '?')}"
         moved += 1
     used = {c["lakeId"] for c in clubs}
-    waters[:] = [w for w in waters if w.get("kind") != "unknown" or w["id"] in used]
+    waters[:] = [w for w in waters if (w.get("kind") != "unknown" and w["id"] not in replaced) or w["id"] in used]
     return moved
 
 
