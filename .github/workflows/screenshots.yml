@@ -431,9 +431,9 @@ jobs:
           WAIT=30 shoot 184-detail-map-full light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWOpenWeatherMap wind
           WAIT=30 shoot 190-detail-map-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWChartSelect 1 -RWLanguage de
           # The radar in the rain tile (no radar card any more), with made-up rain from 30 minutes on.
-          shoot 193-top-tile-rain-radar light -RWOpenClub mrc-1880 -RWSampleRadar YES
-          shoot 194-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
-          WAIT=30 shoot 195-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
+          shoot 204-top-tile-rain-radar light -RWOpenClub mrc-1880 -RWSampleRadar YES
+          shoot 205-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
+          WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
           WAIT=30 shoot 199-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
           shoot 200-arrange-radar-off light -RWOpenClub mrc-1880 -RWArrange YES
           # Club page order (PR #33): the page in its new order, the warnings card while a
