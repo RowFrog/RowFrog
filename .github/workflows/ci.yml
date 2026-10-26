@@ -6,6 +6,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+# A newer push to the same PR cancels the run still going for the older one
+# (382 CI runs in 3 days, Oct 2026), so the macOS runners are free sooner.
+# Runs on main always finish.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   backend:
     runs-on: ubuntu-latest
