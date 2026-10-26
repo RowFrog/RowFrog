@@ -396,6 +396,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
             SettingsSearch("Background pictures", .clubPages, path: [.clubPages, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
             SettingsSearch("In the tiles", .clubPages, path: [.clubPages, .backgrounds], words: ["tiles", "Kacheln", "frosted", "Liquid Glass", "blur", "unscharf", "solid"]),
+            SettingsSearch("Maps start", .clubPages, words: ["map zoom", "Kartenzoom", "weather map", "Wetterkarte", "close", "nah", "wide", "weit"]),
             SettingsSearch("Widget background", .widgets, words: ["sky", "Himmel", "picture", "Bild", "satellite", "Satellit"]),
             SettingsSearch("Widget updates", .widgets, words: ["refresh", "aktualisieren", "battery", "Akku"]),
             SettingsSearch("Language", .language, words: ["Sprache", "English", "Deutsch", "German", "Englisch"]),
@@ -488,7 +489,7 @@ private struct ClubPagesSettingsView: View {
     @State private var arrangingPages = false
 
     var body: some View {
-        let settings = AppSettings.shared
+        @Bindable var settings = AppSettings.shared
         Form {
             Section {
                 Button { arrangingPages = true } label: {
@@ -515,12 +516,35 @@ private struct ClubPagesSettingsView: View {
                 SectionFooter(tr("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))
             }
             .surfaceRows()
+
+            Section {
+                LabeledContent(tr("Maps start")) {
+                    Picker(tr("Maps start"), selection: $settings.mapStartZoom) {
+                        ForEach(MapStartZoom.allCases) { Text($0.title).tag($0) }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
+                    .fixedSize()
+                }
+            } header: {
+                SectionTitle(tr("Weather maps"), symbol: "map")
+            } footer: {
+                SectionFooter(mapZoomFooter)
+            }
+            .surfaceRows()
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
         .navigationTitle(tr("Club pages"))
         .navigationBarTitleDisplayMode(.inline)
         .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }
+    }
+
+    /// The spans the maps open with, e.g. "50 km around the club; rain and lightning 120 km."
+    private var mapZoomFooter: String {
+        let local = Format.distance(WeatherMapLayer.wind.startSpanKm * 1000)
+        let wide = Format.distance(WeatherMapLayer.rain.startSpanKm * 1000)
+        return tr("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.", local, wide)
     }
 
     private var backgroundSummary: String {

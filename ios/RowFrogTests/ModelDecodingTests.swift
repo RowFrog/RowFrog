@@ -179,6 +179,18 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(Reason(condition: "lake_warning", light: .red).label, "DWD storm warning")
     }
 
+    func testWarningsOutsideGermanyAreNotChecked() throws {
+        let json = """
+        {"status": "ok", "lakeArea": null, "items": [],
+         "local": {"service": "MeteoSwiss", "url": "https://www.meteoswiss.admin.ch/weather/hazards/hazard-map.html", "checked": false}}
+        """
+        let warnings = try APIClient.decoder.decode(Warnings.self, from: Data(json.utf8))
+        XCTAssertFalse(warnings.localChecked)
+        XCTAssertEqual(warnings.local?.service, "MeteoSwiss")
+        let older = try APIClient.decoder.decode(Warnings.self, from: Data(#"{"status": "ok", "lakeArea": null, "items": []}"#.utf8))
+        XCTAssertTrue(older.localChecked, "older backends checked DWD for every club")
+    }
+
     func testDecodesEnglishWarningText() throws {
         let json = """
         {"kind": "local", "area": "Starnberg", "event": "WINDBÖEN", "severity": "minor",
