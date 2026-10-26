@@ -60,7 +60,7 @@ struct LocationPageView: View {
                             if tourSeen && showTopTileTip {
                                 TipView(topTileTip)
                             }
-                            if let warnings = forecast.warnings, !warnings.checked || !warnings.items.isEmpty {
+                            if let warnings = forecast.warnings, !warnings.checked || !warnings.localChecked || !warnings.items.isEmpty {
                                 WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
                             }
@@ -648,7 +648,7 @@ private struct NowCard: View {
     /// only shows while a warning is issued or DWD could not be checked.
     @ViewBuilder
     private var warningsLine: some View {
-        if let warnings = forecast.warnings, warnings.checked, warnings.items.isEmpty {
+        if let warnings = forecast.warnings, warnings.checked, warnings.localChecked, warnings.items.isEmpty {
             Button { showingWarnings = true } label: {
                 HStack(spacing: 6) {
                     Label(tr("No DWD warning"), systemImage: "checkmark.shield.fill")

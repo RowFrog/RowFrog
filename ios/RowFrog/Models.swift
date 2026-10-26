@@ -357,8 +357,20 @@ struct Warnings: Codable, Hashable {
     /// DWD's lake warning area for this launch point, nil when the water is not covered.
     let lakeArea: String?
     let items: [DWDWarning]
+    /// Whose weather warnings count for the place and whether they were checked;
+    /// missing from older backends, which checked DWD for every club.
+    var local: LocalWarnings? = nil
 
     var checked: Bool { status == "ok" }
+    /// False outside Germany: DWD does not warn there, so "no warning" must not be said.
+    var localChecked: Bool { local?.checked ?? true }
+}
+
+/// The weather service that warns for a place (DWD, GeoSphere Austria, MeteoSwiss).
+struct LocalWarnings: Codable, Hashable {
+    let service: String?
+    let url: String?
+    let checked: Bool
 }
 
 /// Which weather models a forecast comes from: the best local model for the

@@ -161,7 +161,7 @@ def test_warn_cells_are_looked_up_once_and_warnings_read_in_bulk(monkeypatch):
 
     monkeypatch.setattr(dwd_warnings, "fetch_warn_cell", fake_cell)
     monkeypatch.setattr(dwd_warnings, "fetch_local_warnings_for_cells", fake_bulk)
-    clubs = list(locations.load().clubs.values())[:20]
+    clubs = [c for c in locations.load().clubs.values() if c.country == "de"][:20]
     state = publish.State(None)
     api._primed_local_warnings.clear()
     publish.local_warnings(state, clubs, utc(25, 12))
@@ -195,3 +195,27 @@ def test_refresh_block_tells_the_app_how_often_a_club_is_renewed():
     assert publish.refresh_block(True) == {"used": True, "fileEveryHours": 0.5, "weatherEveryHours": 3}
     slow = publish.refresh_block(False)
     assert slow["used"] is False and slow["fileEveryHours"] == 6 and slow["weatherEveryHours"] == 12
+
+
+def test_local_warnings_skip_clubs_outside_germany(monkeypatch):
+    from rowfrog import api, locations
+    from rowfrog.sources import dwd_warnings
+
+    looked = []
+
+    async def fake_cell(client, lon, lat):
+        looked.append((lon, lat))
+        return 809188139
+
+    async def fake_bulk(client, cells):
+        return {c: [] for c in cells}
+
+    monkeypatch.setattr(dwd_warnings, "fetch_warn_cell", fake_cell)
+    monkeypatch.setattr(dwd_warnings, "fetch_local_warnings_for_cells", fake_bulk)
+    every = locations.load().clubs.values()
+    clubs = [c for c in every if c.country == "de"][:2] + [c for c in every if c.country != "de"][:3]
+    api._primed_local_warnings.clear()
+    publish.local_warnings(publish.State(None), clubs, utc(25, 12))
+    assert len(looked) == 2
+    assert set(api._primed_local_warnings) == {c.id for c in clubs[:2]}
+    api._primed_local_warnings.clear()

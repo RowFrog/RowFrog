@@ -218,6 +218,9 @@ def local_warnings(state: State, clubs: list[locations.Club], now: datetime) -> 
     query fails, asks DWD itself as before.
     """
 
+    # DWD's warn cells cover Germany only; the API skips local warnings elsewhere.
+    clubs = [c for c in clubs if c.country == "de"]
+
     async def load() -> tuple[int, dict[int, list] | None]:
         due_ = [
             c for c in clubs

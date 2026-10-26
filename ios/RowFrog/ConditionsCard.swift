@@ -114,7 +114,11 @@ struct ConditionData {
         }
     }
 
+    /// False outside Germany, where DWD's warnings do not reach (see Warnings.localChecked).
+    var warningsChecked: Bool { forecast.warnings?.localChecked ?? true }
+
     func warningNames(_ words: [String]) -> String {
+        guard warningsChecked else { return tr("Not checked here") }
         let found = warnings(words)
         guard !found.isEmpty else { return tr("None") }
         let german = AppSettings.shared.resolvedLanguage == .german
@@ -256,6 +260,7 @@ private struct ConditionTile: View {
             guard let change = data.forecast.pressureChange(after: hour) else { return unit }
             return unit + " · " + PressureTrend(change: change).title.lowercased()
         case .thunderstorm:
+            guard data.warningsChecked else { return tr("Warnings not checked") }
             return data.warnings(["GEWITTER"]).isEmpty ? tr("No DWD warning") : tr("DWD warning")
         case .uvIndex:
             guard let top = data.next24.filter({ $0.uvIndex != nil }).max(by: { $0.uvIndex! < $1.uvIndex! }) else { return "" }
@@ -1826,7 +1831,7 @@ extension ConditionDetail {
         facts.append((tr("DWD warnings"), d.warningNames(["GEWITTER"])))
         return ConditionDetail(
             value: stormLevel(d.now.light(for: Condition.thunderstorm.reasonNames)),
-            note: d.warnings(["GEWITTER"]).isEmpty ? tr("No DWD thunderstorm warning") : tr("DWD thunderstorm warning"),
+            note: !d.warningsChecked ? tr("Warnings not checked") : d.warnings(["GEWITTER"]).isEmpty ? tr("No DWD thunderstorm warning") : tr("DWD thunderstorm warning"),
             unit: "J/kg",
             lines: [ChartLine(name: tr("Energy for storms (CAPE)"), color: .yellow, kind: .bars, points: d.points(\.capeJkg))],
             limits: [

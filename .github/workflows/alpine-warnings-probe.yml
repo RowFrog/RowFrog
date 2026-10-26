@@ -1,0 +1,28 @@
+name: Austrian and Swiss warnings check
+
+# Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what
+# warnings they publish for a few Austrian and Swiss club launch points
+# (scripts/alpine_warnings_probe.py). Runs when the script changes, or by hand
+# from the Actions tab. Nothing is stored.
+
+on:
+  push:
+    paths:
+      - scripts/alpine_warnings_probe.py
+      - .github/workflows/alpine-warnings-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install httpx
+      - run: python3 scripts/alpine_warnings_probe.py
