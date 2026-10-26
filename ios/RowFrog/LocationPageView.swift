@@ -610,7 +610,7 @@ private struct NowCard: View {
                     MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: metricSize,
                                caption: allCaptions ? data.visibilityDetail : nil)
                 }
-                if let ice = iceValue {
+                if let ice = iceValue, topRow != "D" {
                     Spacer()
                     opens(.ice) {
                         MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: metricSize,
@@ -619,6 +619,20 @@ private struct NowCard: View {
                 }
             }
             .symbolRenderingMode(.hierarchical)
+            // D: in winter the ice gets its own line under the row, the width of the card.
+            if topRow == "D", let ice = iceValue {
+                opens(.ice) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Label(tr("Ice"), systemImage: Condition.ice.symbol)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Text(ice).font(.system(size: metricSize, weight: .light))
+                        Text(iceDetail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                        Spacer(minLength: 0)
+                    }
+                }
+                .symbolRenderingMode(.hierarchical)
+            }
             daylightLine
         }
         .sheet(isPresented: $showingLights) { LegendSheet(part: .lights) }
@@ -658,7 +672,7 @@ private struct NowCard: View {
     private var iceDetail: String { sampleIce ? tr("Bays and harbours first") : forecast.ice?.detail ?? tr("Check the lake yourself") }
 
     /// PREVIEW ONLY (owner to pick): `-RWTopRow A|B|C`. A: grey line under rain only;
-    /// B: grey lines under every value; C: as B with larger values.
+    /// B: grey lines under every value; C: as B with larger values; D: as B, ice on its own line.
     private var topRow: String { UserDefaults.standard.string(forKey: "RWTopRow") ?? "A" }
     private var allCaptions: Bool { topRow != "A" }
     private var metricSize: CGFloat { topRow == "C" ? 22 : 17 }

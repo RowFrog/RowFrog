@@ -439,6 +439,9 @@ jobs:
           shoot 214-top-row-a-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow A -RWSampleIce YES
           shoot 215-top-row-b-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B -RWSampleIce YES
           shoot 216-top-row-c-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C -RWSampleIce YES
+          shoot 217-top-row-d-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow D -RWSampleIce YES
+          shoot 218-top-row-b-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B -RWLanguage de
+          shoot 219-top-row-d-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow D -RWSampleIce YES -RWLanguage de
           shoot 205-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
           WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
           WAIT=30 shoot 199-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
