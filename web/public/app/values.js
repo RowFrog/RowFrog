@@ -3,11 +3,12 @@
 
 import { t, num } from "./i18n.js";
 import {
-  store, time, dayLabel, dayTime, duration, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
+  time, dayLabel, dayTime, duration, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
+  pressure, pressureChangeText, inUnit, unitSymbol, unitChange,
   currentLimits, boatInSentence, selectedBoat, iceDetail, windDial, cloudLayers, pressureGauge, sunPath,
 } from "./shared.js";
 import {
-  windValue, beaufort, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
+  beaufort, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
   precipitationKind, iceOff, ICE_TITLES, sunState, localDay, COLD, key,
 } from "./logic.js";
 import { icon } from "./icons.js";
@@ -90,7 +91,9 @@ function warningNames(d, words) {
 }
 
 const pct = (v) => (v == null ? "–" : `${num(v)} %`);
-const windIn = (ms) => (ms == null ? null : windValue(ms, store.wind));
+const windIn = (ms) => (ms == null ? null : Math.round(inUnit("wind", ms)));
+const degreesIn = (c) => inUnit("temperature", c);
+const wavesIn = (m) => inUnit("waves", m);
 
 /** A limit line, marked when it is the user's own. */
 function limitLine(limit, colour, label, convert = (v) => v) {
@@ -136,8 +139,8 @@ function base(overrides) {
 
 function temperatureLines(d) {
   return [
-    { name: t("Air"), colour: COLOURS.orange, points: d.points((x) => x.temperatureC) },
-    { name: t("Feels like"), colour: COLOURS.blue, points: d.points((x) => x.apparentTemperatureC) },
+    { name: t("Air"), colour: COLOURS.orange, points: d.points((x) => degreesIn(x.temperatureC)) },
+    { name: t("Feels like"), colour: COLOURS.blue, points: d.points((x) => degreesIn(x.apparentTemperatureC)) },
   ];
 }
 
@@ -153,7 +156,7 @@ const BUILDERS = {
     if (pastHi) facts.push([t("Last 24 h"), t("highest %@", temperature(pastHi.temperatureC))]);
     return base({
       value: degrees(x.temperatureC), note: t("%@ · feels like %@", t(SKY_TITLES[sky(x.weatherCode)]), degrees(x.apparentTemperatureC)),
-      unit: "°C", lines: temperatureLines(d), trendStep: 0.5, facts, rowing: clothingAdvice(x.apparentTemperatureC),
+      unit: unitSymbol("temperature"), lines: temperatureLines(d), trendStep: unitChange("temperature", 0.5), facts, rowing: clothingAdvice(x.apparentTemperatureC),
       source: t("Deutscher Wetterdienst (DWD) via Open-Meteo, 2 m above ground."),
     });
   },
@@ -163,13 +166,13 @@ const BUILDERS = {
     const facts = [];
     if (x.apparentTemperatureC != null && x.temperatureC != null) {
       const diff = x.apparentTemperatureC - x.temperatureC;
-      facts.push([t("Compared with the air"), t("%@° %@", num(Math.abs(diff)), diff < 0 ? t("colder") : t("warmer"))]);
+      facts.push([t("Compared with the air"), t("%@° %@", num(Math.abs(unitChange("temperature", diff))), diff < 0 ? t("colder") : t("warmer"))]);
     }
     facts.push([t("Wind"), windRange(x.windSpeedMs, x.windGustMs)], [t("Humidity"), pct(x.humidityPct)],
       [t("Sun"), x.sunUp === false ? t("down") : t("up")], [t("On the water"), t("the boat's speed adds wind chill")]);
     const note = feelsLikeNote(x);
     return base({
-      value: degrees(x.apparentTemperatureC), note: note ? t(note) : "", unit: "°C", lines: temperatureLines(d), trendStep: 0.5, facts,
+      value: degrees(x.apparentTemperatureC), note: note ? t(note) : "", unit: unitSymbol("temperature"), lines: temperatureLines(d), trendStep: unitChange("temperature", 0.5), facts,
       rowing: clothingAdvice(x.apparentTemperatureC), source: t("Apparent temperature from air temperature, wind, humidity and sun (DWD via Open-Meteo)."),
     });
   },
@@ -185,7 +188,7 @@ const BUILDERS = {
       unit: "%", lines: [{ name: t("Humidity"), colour: COLOURS.teal, points: d.points((y) => y.humidityPct) }], yDomain: [0, 130], trendStep: 2.5,
       facts: [
         [t("Dew point"), temperature(x.dewPointC)],
-        [t("Air minus dew point"), t("%@° (mist forms near 0–1°)", gap == null ? "–" : num(gap))],
+        [t("Air minus dew point"), t("%@° (mist forms near 0–1°)", gap == null ? "–" : num(unitChange("temperature", gap)))],
         [t("Mist likely"), mist ? span(mist) : t("not in the next 24 h")],
       ],
       rowing: mist ? t("When air and dew point meet, mist forms over the water: check visibility before going out early.")
@@ -201,7 +204,7 @@ const BUILDERS = {
     if (x.windFromDeg != null) facts.push([t("From"), `${compass(x.windFromDeg)} (${num(x.windFromDeg)}°)`]);
     if (x.fetchM != null) facts.push([t("Open water upwind"), distance(x.fetchM)]);
     if (gust) facts.push([t("Strongest gust next 24 h"), t("%@ · %@", wind(gust.windGustMs), dayTime(gust.time))]);
-    const convert = (v) => windValue(v, store.wind);
+    const convert = (v) => inUnit("wind", v);
     return base({
       value: wind(x.windSpeedMs),
       note: t("Gusts %@", wind(x.windGustMs)) + (x.windFromDeg != null ? ` · ${t("from %@", compass(x.windFromDeg))}` : ""),
@@ -234,12 +237,12 @@ const BUILDERS = {
     if (top) facts.push([t("Highest next 24 h"), t("%@ · %@", waves(top.waveHeightM), dayTime(top.time))]);
     const highest = Math.max(0, ...d.timeline.map((y) => y.waveHeightM ?? 0));
     return base({
-      value: waves(x.waveHeightM), note: (x.fetchM ?? 100) < 50 ? t("Wind blows off the shore") : t("At the launch point"), unit: "m",
-      lines: [{ name: t("Waves"), colour: COLOURS.blue, points: d.points((y) => y.waveHeightM) }],
-      limits: [limitLine("waveAmber", COLOURS.orange, t("Row with care")), limitLine("waveRed", COLOURS.red, t("Stay ashore"))],
+      value: waves(x.waveHeightM), note: (x.fetchM ?? 100) < 50 ? t("Wind blows off the shore") : t("At the launch point"), unit: unitSymbol("waves"),
+      lines: [{ name: t("Waves"), colour: COLOURS.blue, points: d.points((y) => inUnit("waves", y.waveHeightM)) }],
+      limits: [limitLine("waveAmber", COLOURS.orange, t("Row with care"), wavesIn), limitLine("waveRed", COLOURS.red, t("Stay ashore"), wavesIn)],
       limitInfo: t("Amber from %@ and red from %@ wave height. A racing single sits only about 10–15 cm above the water at its side, so from about 15 cm waves start to wash in; from about 30 cm the boat fills and capsizing becomes likely. The waves are calculated from the wind and the open water upwind, not measured.",
         waves(0.15), waves(0.3)) + inUse([[t("Waves"), "waveAmber", "waveRed"]]),
-      yDomain: [0, Math.max((limits.value("waveRed") * 4) / 3, highest * 1.3)], trendStep: 0.015, facts,
+      yDomain: [0, wavesIn(Math.max((limits.value("waveRed") * 4) / 3, highest * 1.3))], trendStep: unitChange("waves", 0.015), facts,
       rowing: advice(d, ["waves"], {
         red: t("Waves are too high now: stay ashore."), amber: t("Waves now: row with care; small boats take on water."),
         later: key("Flat enough now; the waves reach the limit from %@."), calm: t("Flat enough for the next 24 hours."),
@@ -255,7 +258,7 @@ const BUILDERS = {
     const facts = [];
     if (history.length > 1) {
       const change = history[history.length - 1].celsius - history[0].celsius;
-      facts.push([t("Trend"), t("%@° since %@", (change >= 0 ? "+" : "−") + num(Math.abs(change), 1), dayLabel(history[0].time))]);
+      facts.push([t("Trend"), t("%@° since %@", (change >= 0 ? "+" : "−") + num(Math.abs(unitChange("temperature", change)), 1), dayLabel(history[0].time))]);
     }
     const jacket = temperature(limits.value("lifeJacket"));
     facts.push([t("Life jacket"), limits.isMine("lifeJacket") ? t("%@ (your limit)", t("advised below %@", jacket)) : t("advised below %@", jacket)]);
@@ -275,9 +278,9 @@ const BUILDERS = {
     const forecastPoints = [];
     if (ahead.length) {
       const last = history[history.length - 1];
-      if (last) forecastPoints.push({ x: d.x(last.time), y: last.celsius });
-      else if (days[0]) forecastPoints.push({ x: d.x(new Date()), y: days[0][1] });
-      forecastPoints.push(...ahead.map(([at, v]) => ({ x: d.x(at), y: v })));
+      if (last) forecastPoints.push({ x: d.x(last.time), y: degreesIn(last.celsius) });
+      else if (days[0]) forecastPoints.push({ x: d.x(new Date()), y: degreesIn(days[0][1]) });
+      forecastPoints.push(...ahead.map(([at, v]) => ({ x: d.x(at), y: degreesIn(v) })));
     }
     const today = localDay(new Date().toISOString());
     const pickedDay = localDay(d.now.time);
@@ -292,15 +295,15 @@ const BUILDERS = {
     } else if (!now && estimate != null) source = t("Calculated by the app from the air temperatures of the last weeks, not measured.");
     else if (now) source = t("%@, the nearest station on this water.", now.station?.operatorName ?? now.station?.operator ?? "");
     else source = t("No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.");
-    const lines = history.length ? [{ name: t("Water"), colour: COLOURS.cyan, points: history.map((p) => ({ x: d.x(p.time), y: p.celsius })) }] : [];
+    const lines = history.length ? [{ name: t("Water"), colour: COLOURS.cyan, points: history.map((p) => ({ x: d.x(p.time), y: degreesIn(p.celsius) })) }] : [];
     if (forecastPoints.length > 1) lines.push({ name: t("Forecast"), colour: COLOURS.cyan, points: forecastPoints, dashed: true });
     const highest = Math.max(0, ...history.map((p) => p.celsius), ...days.map(([, v]) => v));
     const chartLimits = [
-      limitLine("lifeJacket", COLOURS.kit, t("Cold-water shock: life jacket")),
-      { value: COLD.waterC, colour: COLOURS.deep, label: t("Very cold") },
+      limitLine("lifeJacket", COLOURS.kit, t("Cold-water shock: life jacket"), degreesIn),
+      { value: degreesIn(COLD.waterC), colour: COLOURS.deep, label: t("Very cold") },
     ];
     const common = {
-      unit: "°C", lines, limits: chartLimits, yDomain: [0, Math.max(20, highest + 2)], history: true, facts, rowing, source,
+      unit: unitSymbol("temperature"), lines, limits: chartLimits, yDomain: [degreesIn(0), degreesIn(Math.max(20, highest + 2))], history: true, facts, rowing, source,
       chartNote: forecastPoints.length > 1 ? t("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value.") : null,
     };
     if (picked != null) {
@@ -335,10 +338,10 @@ const BUILDERS = {
     return base({
       value: wet ? rain(x.precipitationMm) : t("Dry"),
       note: wet ? (kind ? t(kind) : "") : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h"),
-      unit: "mm", lines: [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => y.precipitationMm) }],
-      limits: [{ value: 4, colour: COLOURS.orange, label: t("Heavy rain") }],
+      unit: unitSymbol("rain"), lines: [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }],
+      limits: [{ value: inUnit("rain", 4), colour: COLOURS.orange, label: t("Heavy rain") }],
       limitInfo: t("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official DWD warnings for heavy rain or hail always make the light red or amber as well.", rain(4)),
-      yDomain: [0, Math.max(6, Math.max(0, ...d.timeline.map((y) => y.precipitationMm ?? 0)) * 1.2)], facts,
+      yDomain: [0, inUnit("rain", Math.max(6, Math.max(0, ...d.timeline.map((y) => y.precipitationMm ?? 0)) * 1.2))], facts,
       rowing: advice(d, REASONS.precipitation, {
         red: t("Hail is forecast: stay ashore."), amber: t("Heavy rain now: you are soaked quickly and see less; keep the outing short."),
         later: key("Heavy rain or hail from %@: plan to be back before then."), calm: t("No heavy rain or hail in the next 24 hours."),
@@ -362,16 +365,16 @@ const BUILDERS = {
     facts.push([t("Mist"), mist ? span(mist) : t("not in the next 24 h")], [t("DWD fog warning"), warningNames(d, ["NEBEL"])],
       [t("Lake view"), t("fog shows as a banner over the whole lake")]);
     return base({
-      value: distance(x.visibilityM), note: fogHour(x) ? t("Fog now") : fog ? t("Fog expected %@", span(fog)) : t("No fog in the next 24 h"), unit: "km",
-      lines: [{ name: t("Visibility"), colour: COLOURS.gray, points: d.points((y) => (y.visibilityM == null ? null : Math.max(y.visibilityM, 50) / 1000)) }],
+      value: distance(x.visibilityM), note: fogHour(x) ? t("Fog now") : fog ? t("Fog expected %@", span(fog)) : t("No fog in the next 24 h"), unit: unitSymbol("distance"),
+      lines: [{ name: t("Visibility"), colour: COLOURS.gray, points: d.points((y) => (y.visibilityM == null ? null : inUnit("distance", Math.max(y.visibilityM, 50)))) }],
       limits: [
-        { value: 5, colour: COLOURS.secondary, label: t("Mist") },
-        { value: 1, colour: COLOURS.orange, label: t("Fog: row with care") },
-        { value: 0.5, colour: COLOURS.red, label: t("Stay ashore") },
+        { value: inUnit("distance", 5000), colour: COLOURS.secondary, label: t("Mist") },
+        { value: inUnit("distance", 1000), colour: COLOURS.orange, label: t("Fog: row with care") },
+        { value: inUnit("distance", 500), colour: COLOURS.red, label: t("Stay ashore") },
       ],
       limitInfo: t("Fog means visibility under %@ (the WMO definition): amber. Under %@ you see another boat or a passenger ship only about 2 minutes ahead at rowing speed, and you lose sight of the shore: red. Mist (up to %@) has no limit, but the app mentions it because it often thickens into fog. The scale is stretched at the bottom so short distances are easy to read.",
         distance(1000), distance(500), distance(5000)),
-      yDomain: [0.05, 80], logScale: true, trendStep: 1, facts,
+      yDomain: [inUnit("distance", 50), inUnit("distance", 80000)], logScale: true, trendStep: unitChange("distance", 1000), facts,
       rowing: advice(d, ["fog"], {
         red: t("Thick fog now: stay ashore."), amber: t("Fog now: row with care, close to the shore, and carry a light."),
         later: key("Clear now; fog from %@."), calm: t("No fog in the next 24 hours."),
@@ -411,7 +414,7 @@ const BUILDERS = {
     const next = x.pressureHpa == null ? null : pressureNext24(x.pressureHpa, d.next24);
     if (next) facts.push([t("Next 24 h"), next]);
     const low = extreme(d.future, (y) => y.pressureHpa, false);
-    if (low) facts.push([t("Lowest next 7 days"), t("%@ · %@", hpa(low.pressureHpa), dayTime(low.time))]);
+    if (low) facts.push([t("Lowest next 7 days"), t("%@ · %@", pressure(low.pressureHpa), dayTime(low.time))]);
     const high = (x.pressureHpa ?? 1013) >= 1013;
     let state;
     if (change != null && change <= -1) state = high ? t("high pressure, but falling: the weather is changing") : t("low pressure and falling: unsettled");
@@ -424,12 +427,12 @@ const BUILDERS = {
     else if (change != null && change >= 1) rowing = t("Rising: the weather is settling.");
     else rowing = t("Steady: no change in the weather expected from the pressure.");
     return base({
-      value: hpa(x.pressureHpa),
-      note: change == null ? "" : trend === "Steady" ? t("Steady next 3 h") : t("%@ %@ in 3 h", t(trend), `${num(Math.abs(change), 1)} hPa`),
-      big: pressureGauge(x.pressureHpa, trend), unit: "hPa",
-      lines: [{ name: t("Air pressure"), colour: COLOURS.purple, points: d.points((y) => y.pressureHpa) }],
-      yDomain: [Math.floor(lo - 4), Math.ceil(hi + 6)], trendStep: 0.25, facts,
-      rowing: (change ?? 0) <= -3 ? rowing : `${rowing} ${t("Falling %@ or more in 3 hours often means wind soon.", "3 hPa")}`,
+      value: pressure(x.pressureHpa),
+      note: change == null ? "" : trend === "Steady" ? t("Steady next 3 h") : t("%@ %@ in 3 h", t(trend), pressureChangeText(Math.abs(change))),
+      big: pressureGauge(x.pressureHpa, trend), unit: unitSymbol("pressure"),
+      lines: [{ name: t("Air pressure"), colour: COLOURS.purple, points: d.points((y) => inUnit("pressure", y.pressureHpa)) }],
+      yDomain: [inUnit("pressure", Math.floor(lo - 4)), inUnit("pressure", Math.ceil(hi + 6))], trendStep: unitChange("pressure", 0.25), facts,
+      rowing: (change ?? 0) <= -3 ? rowing : `${rowing} ${t("Falling %@ or more in 3 hours often means wind soon.", pressureChangeText(3))}`,
       source: t("Air pressure at sea level, DWD via Open-Meteo."),
     });
   },
@@ -538,7 +541,6 @@ const BUILDERS = {
   },
 };
 
-const hpa = (v) => (v == null ? "–" : `${num(v)} hPa`);
 
 function uvBand(uv) {
   const r = Math.round(uv);
@@ -560,9 +562,9 @@ export function pressureNext24(now, hours) {
   const rise = hi.pressureHpa - now;
   if (Math.max(fall, rise) < 1) return t("steady");
   if (fall >= rise) {
-    return last - lo.pressureHpa >= 1 ? t("falls to %@ by %@, then rises", hpa(lo.pressureHpa), dayTime(lo.time)) : t("falls to %@ by %@", hpa(lo.pressureHpa), dayTime(lo.time));
+    return last - lo.pressureHpa >= 1 ? t("falls to %@ by %@, then rises", pressure(lo.pressureHpa), dayTime(lo.time)) : t("falls to %@ by %@", pressure(lo.pressureHpa), dayTime(lo.time));
   }
-  return hi.pressureHpa - last >= 1 ? t("rises to %@ by %@, then falls", hpa(hi.pressureHpa), dayTime(hi.time)) : t("rises to %@ by %@", hpa(hi.pressureHpa), dayTime(hi.time));
+  return hi.pressureHpa - last >= 1 ? t("rises to %@ by %@, then falls", pressure(hi.pressureHpa), dayTime(hi.time)) : t("rises to %@ by %@", pressure(hi.pressureHpa), dayTime(hi.time));
 }
 
 /** What a value's page shows for the data. */

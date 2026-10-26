@@ -53,11 +53,64 @@ export function beaufort(ms) {
 }
 
 export const WIND_UNITS = {
-  kmh: { label: "km/h", from: (ms) => ms * 3.6 },
-  ms: { label: "m/s", from: (ms) => ms },
-  kn: { label: "kn", from: (ms) => ms * 1.943844 },
-  bft: { label: "Bft", from: (ms) => beaufort(ms) },
+  ms: { label: "m/s", title: key("Metres per second"), from: (ms) => ms },
+  kmh: { label: "km/h", title: key("Kilometres per hour"), from: (ms) => ms * 3.6 },
+  kn: { label: "kn", title: key("Knots"), from: (ms) => ms * 1.943844 },
+  mph: { label: "mph", title: key("Miles per hour"), from: (ms) => (ms * 3600) / 1609.344 },
+  bft: { label: "Bft", title: key("Beaufort"), from: (ms) => beaufort(ms) },
 };
+
+/**
+ * The units the user can pick for each value (Units.swift). The backend
+ * always sends metric values (°C, m/s, m, mm, m, hPa); they are converted
+ * only for display. `digits` are the decimals a value is shown with.
+ */
+export const UNITS = {
+  temperature: {
+    standard: "celsius",
+    options: {
+      celsius: { label: "°C", title: key("Celsius"), from: (c) => c },
+      fahrenheit: { label: "°F", title: key("Fahrenheit"), from: (c) => (c * 9) / 5 + 32 },
+    },
+  },
+  wind: { standard: "ms", options: WIND_UNITS },
+  waves: {
+    standard: "m",
+    options: {
+      m: { label: "m", title: key("Metres"), digits: 2, from: (m) => m },
+      cm: { label: "cm", title: key("Centimetres"), digits: 0, from: (m) => m * 100 },
+      ft: { label: "ft", title: key("Feet"), digits: 1, from: (m) => m / 0.3048 },
+    },
+  },
+  rain: {
+    standard: "mm",
+    options: {
+      mm: { label: "mm", title: key("Millimetres"), digits: 1, from: (mm) => mm },
+      in: { label: "in", title: key("Inches"), digits: 2, from: (mm) => mm / 25.4 },
+    },
+  },
+  distance: {
+    standard: "km",
+    options: {
+      km: { label: "km", title: key("Kilometres"), from: (m) => m / 1000 },
+      mi: { label: "mi", title: key("Miles"), from: (m) => m / 1609.344 },
+      nm: { label: key("NM"), title: key("Nautical miles"), from: (m) => m / 1852 },
+    },
+  },
+  pressure: {
+    standard: "hpa",
+    options: {
+      hpa: { label: "hPa", title: key("Hectopascals"), digits: 0, changeDigits: 1, from: (v) => v },
+      mbar: { label: "mbar", title: key("Millibars"), digits: 0, changeDigits: 1, from: (v) => v },
+      bar: { label: "bar", title: key("Bars"), digits: 3, changeDigits: 4, from: (v) => v / 1000 },
+      inhg: { label: "inHg", title: key("Inches of mercury"), digits: 2, changeDigits: 2, from: (v) => v / 33.8639 },
+      mmhg: { label: "mmHg", title: key("Millimetres of mercury"), digits: 0, changeDigits: 1, from: (v) => v * 0.750062 },
+    },
+  },
+};
+
+/** A change of `value` (metric) in a unit, for trend steps and differences: °C to °F scales without the 32. */
+export const unitStep = (unit, value) => unit.from(value) - unit.from(0);
 
 export function windValue(ms, unit = "ms") {
   if (ms == null) return null;

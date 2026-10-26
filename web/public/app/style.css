@@ -9,13 +9,21 @@
   --sun: #ff9f0a; --moon: #8e8ef0; --cloud: #a2a2a8; --rain: #32ade6; --ice: #64d2ff;
   color-scheme: light dark;
 }
+/* Dark: the browser's setting, unless Settings › Appearance picks light or dark. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #000000; --card: #1c1c1e; --tile: #2c2c2e; --text: #ffffff; --sub: #98989f; --line: #38383a; --fill: #3a3a3c;
     --accent: #0a84ff; --blue: #0a84ff; --green: #30d158; --amber: #ff9f0a; --orange: #ff9f0a; --red: #ff453a; --yellow: #ffd60a;
     --purple: #bf5af2; --cloud: #8e8e93;
   }
 }
+:root[data-theme="dark"] {
+  --bg: #000000; --card: #1c1c1e; --tile: #2c2c2e; --text: #ffffff; --sub: #98989f; --line: #38383a; --fill: #3a3a3c;
+  --accent: #0a84ff; --blue: #0a84ff; --green: #30d158; --amber: #ff9f0a; --orange: #ff9f0a; --red: #ff453a; --yellow: #ffd60a;
+  --purple: #bf5af2; --cloud: #8e8e93;
+}
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="dark"] { color-scheme: dark; }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
 body {
@@ -573,3 +581,8 @@ input.switch:checked::after { transform: translateX(20px); }
 .arrange-list .step:disabled { opacity: .25; }
 .arrange #arrange-reset, .arrange #arrange-follow { display: block; margin: 0 auto; }
 .arrange #arrange-reset { color: var(--red); }
+.hourly.ampm .hrow { grid-template-columns: 64px 16px 26px repeat(6, minmax(0, 1fr)); }
+/* Settings: unit and format menus shrink to fit beside their name on a phone. */
+.row-setting > span:first-child { flex: 0 1 auto; min-width: 0; }
+.row-setting select { flex: 0 1 auto; min-width: 0; max-width: 60%; text-overflow: ellipsis; }
+.row-setting .segmented.wide { flex: 1; margin: 0; }

@@ -19,5 +19,7 @@
   "The forecast for your own place is worked out in this browser: wind, gusts, rain, fog, thunderstorms and daylight. Waves, water temperature and warnings are not available for it.": "Die Vorhersage für deinen eigenen Ort wird in diesem Browser berechnet: Wind, Böen, Regen, Nebel, Gewitter und Tageslicht. Wellen, Wassertemperatur und Warnungen gibt es dafür nicht.",
   "Your own place, kept in this browser. No waves, water temperature or warnings here.": "Dein eigener Ort, nur in diesem Browser gespeichert. Hier gibt es keine Wellen, Wassertemperatur oder Warnungen.",
   "Move up": "Nach oben",
-  "Move down": "Nach unten"
+  "Move down": "Nach unten",
+  "Device follows the browser's settings. Today and tomorrow are always written as words.": "Gerät folgt den Einstellungen des Browsers. Heute und morgen stehen immer als Wort da.",
+  "Device follows the light or dark setting of your computer or phone.": "Gerät folgt der Hell- oder Dunkel-Einstellung deines Computers oder Handys."
 }
