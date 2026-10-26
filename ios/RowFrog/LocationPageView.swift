@@ -566,7 +566,9 @@ private struct NowCard: View {
             .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
             AdviceOnlyNote()
             Divider()
-            HStack(alignment: .lastTextBaseline) {
+            // Air, water and wind set the columns; the small values below start
+            // under them, or share the width equally when the ice makes four.
+            TopTileGrid {
                 VStack(alignment: .leading, spacing: 0) {
                     opens(.temperature) {
                         TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
@@ -580,7 +582,6 @@ private struct NowCard: View {
                         }
                     }
                 }
-                Spacer()
                 // With the time of the reading underneath, so it lines up with the wind's unit line.
                 opens(.waterTemperature) {
                     if water == nil, let estimate = forecast.estimatedWaterC {
@@ -591,36 +592,28 @@ private struct NowCard: View {
                                         caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
                     }
                 }
-                Spacer()
                 opens(.wind) { WindView(hour: hour, size: 28) }
-            }
-            // The values share one line, whatever height each icon gives its title.
-            HStack(alignment: .metricValue) {
                 opens(.waves) {
                     MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: metricSize,
-                               caption: allCaptions ? data.wavesDetail : nil)
+                               caption: wavesCaption)
                 }
-                Spacer()
                 opens(.precipitation) {
                     MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rain.value, size: metricSize,
-                               caption: rain.detail, mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
+                               caption: shortWords && rain.detail == tr("Dry next 24 h") ? tr("Dry for 24 h") : rain.detail, mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
                 }
-                Spacer()
                 opens(.visibility) {
                     MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: metricSize,
-                               caption: allCaptions ? data.visibilityDetail : nil)
+                               caption: data.visibilityDetail)
                 }
-                if let ice = iceValue, topRow != "D" {
-                    Spacer()
+                if let ice = iceValue, topRow.first != "D" {
                     opens(.ice) {
-                        MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: metricSize,
-                                   caption: allCaptions ? iceDetail : nil)
+                        MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: metricSize, caption: iceDetail)
                     }
                 }
             }
             .symbolRenderingMode(.hierarchical)
             // D: in winter the ice gets its own line under the row, the width of the card.
-            if topRow == "D", let ice = iceValue {
+            if topRow.first == "D", let ice = iceValue {
                 opens(.ice) {
                     HStack(alignment: .firstTextBaseline, spacing: 6) {
                         Label(tr("Ice"), systemImage: Condition.ice.symbol)
@@ -669,13 +662,21 @@ private struct NowCard: View {
     /// Screenshot hook: `-RWSampleIce YES` shows the winter ice value, to check the row's fit.
     private var sampleIce: Bool { UserDefaults.standard.bool(forKey: "RWSampleIce") }
     private var iceValue: String? { sampleIce ? tr("Shore ice possible") : forecast.iceValue }
-    private var iceDetail: String { sampleIce ? tr("Bays and harbours first") : forecast.ice?.detail ?? tr("Check the lake yourself") }
+    private var iceDetail: String {
+        if shortWords { return tr("Bays first") }
+        return sampleIce ? tr("Bays and harbours first") : forecast.ice?.detail ?? tr("Check the lake yourself")
+    }
 
-    /// PREVIEW ONLY (owner to pick): `-RWTopRow A|B|C`. A: grey line under rain only;
-    /// B: grey lines under every value; C: as B with larger values; D: as B, ice on its own line.
-    private var topRow: String { UserDefaults.standard.string(forKey: "RWTopRow") ?? "A" }
-    private var allCaptions: Bool { topRow != "A" }
+    /// PREVIEW ONLY (owner to pick): `-RWTopRow B|C|D|Bs|Ds`. B: grey lines under every value;
+    /// C: as B with larger values; D: as B, ice on its own line; "s": shorter grey lines.
+    private var topRow: String { UserDefaults.standard.string(forKey: "RWTopRow") ?? "B" }
+    private var shortWords: Bool { topRow.hasSuffix("s") }
     private var metricSize: CGFloat { topRow == "C" ? 22 : 17 }
+
+    private var wavesCaption: String {
+        guard shortWords, let fetch = hour.fetchM else { return data.wavesDetail }
+        return fetch < 50 ? tr("Offshore wind") : tr("%@ open water", Format.distance(fetch))
+    }
 
     private var data: ConditionData { ConditionData(forecast: forecast, now: hour, radar: radar) }
 
@@ -816,6 +817,52 @@ struct TemperatureView: View {
             }
         }
         .accessibilityElement(children: .combine)
+    }
+}
+
+/// The top tile's values: the first three (air, water, wind) spread like an
+/// HStack with spacers and set the columns; the small values below start under
+/// them, or, four of them, share the width equally. Each row reads level.
+struct TopTileGrid: Layout {
+    var rowSpacing: CGFloat = 10
+    var gap: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? subviews.prefix(3).reduce(0) { $0 + $1.sizeThatFits(.unspecified).width } + 2 * gap
+        return CGSize(width: width, height: frames(width: width, subviews).map(\.maxY).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        for (view, frame) in zip(subviews, frames(width: bounds.width, subviews)) {
+            view.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
+                       proposal: ProposedViewSize(width: frame.width, height: frame.height))
+        }
+    }
+
+    private func frames(width: CGFloat, _ subviews: Subviews) -> [CGRect] {
+        let top = Array(subviews.prefix(3)), bottom = Array(subviews.dropFirst(3))
+        guard top.count == 3 else { return [] }
+        // First row: left, centred in the room left over, right; on the last baseline.
+        let sizes = top.map { $0.sizeThatFits(.unspecified) }
+        let free = max(0, width - sizes.reduce(0) { $0 + $1.width }) / 2
+        let xs = [0, sizes[0].width + free, width - sizes[2].width]
+        let baselines = top.map { $0.dimensions(in: .unspecified)[.lastTextBaseline] }
+        let line = baselines.max() ?? 0
+        var result = (0..<3).map { CGRect(x: xs[$0], y: line - baselines[$0], width: sizes[$0].width, height: sizes[$0].height) }
+        let below = (result.map(\.maxY).max() ?? 0) + rowSpacing
+        // Second row: under the first row's columns, or equal shares for four.
+        let columns: [(x: CGFloat, width: CGFloat)] = bottom.count == 3
+            ? [(0, xs[1] - gap), (xs[1], xs[2] - xs[1] - gap), (xs[2], width - xs[2])]
+            : (0..<bottom.count).map { i in
+                let share = width / CGFloat(bottom.count)
+                return (CGFloat(i) * share, share - (i == bottom.count - 1 ? 0 : gap))
+            }
+        let dims = zip(bottom, columns).map { $0.dimensions(in: ProposedViewSize(width: $1.width, height: nil)) }
+        let valueLine = dims.map { $0[VerticalAlignment.metricValue] }.max() ?? 0
+        for (column, d) in zip(columns, dims) {
+            result.append(CGRect(x: column.x, y: below + valueLine - d[VerticalAlignment.metricValue], width: column.width, height: d.height))
+        }
+        return result
     }
 }
 

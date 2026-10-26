@@ -432,16 +432,23 @@ jobs:
           WAIT=30 shoot 190-detail-map-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWChartSelect 1 -RWLanguage de
           # The radar in the rain tile (no radar card any more), with made-up rain from 30 minutes on.
           shoot 204-top-tile-rain-radar light -RWOpenClub mrc-1880 -RWSampleRadar YES
-          # PREVIEW ONLY (owner to pick A/B/C for the top tile's small values row; removed after the pick).
-          shoot 211-top-row-a light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow A
-          shoot 212-top-row-b light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B
-          shoot 213-top-row-c light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C
-          shoot 214-top-row-a-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow A -RWSampleIce YES
-          shoot 215-top-row-b-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B -RWSampleIce YES
-          shoot 216-top-row-c-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C -RWSampleIce YES
-          shoot 217-top-row-d-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow D -RWSampleIce YES
-          shoot 218-top-row-b-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B -RWLanguage de
-          shoot 219-top-row-d-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow D -RWSampleIce YES -RWLanguage de
+          # PREVIEW ONLY (owner to pick B/C/D, short wording; removed after the pick).
+          shoot 220-top-row-b light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B
+          shoot 221-top-row-c light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C
+          shoot 222-top-row-b-short light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow Bs
+          shoot 223-top-row-b-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B -RWSampleIce YES
+          shoot 224-top-row-c-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C -RWSampleIce YES
+          shoot 225-top-row-d-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow D -RWSampleIce YES
+          shoot 226-top-row-b-short-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow Bs -RWSampleIce YES
+          shoot 227-top-row-d-short-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow Ds -RWSampleIce YES
+          shoot 228-top-row-b-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B -RWLanguage de
+          shoot 229-top-row-c-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C -RWLanguage de
+          shoot 230-top-row-b-short-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow Bs -RWLanguage de
+          shoot 231-top-row-b-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow B -RWSampleIce YES -RWLanguage de
+          shoot 232-top-row-c-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow C -RWSampleIce YES -RWLanguage de
+          shoot 233-top-row-d-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow D -RWSampleIce YES -RWLanguage de
+          shoot 234-top-row-b-short-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow Bs -RWSampleIce YES -RWLanguage de
+          shoot 235-top-row-d-short-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWTopRow Ds -RWSampleIce YES -RWLanguage de
           shoot 205-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
           WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
           WAIT=30 shoot 199-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
