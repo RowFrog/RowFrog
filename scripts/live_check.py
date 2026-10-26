@@ -95,6 +95,9 @@ def rowing_features(lat: float, lon: float) -> list[dict]:
 def forecast_summary(client: TestClient, club_id: str) -> list[str]:
     try:
         resp = client.get(f"/clubs/{club_id}/forecast")
+        if resp.status_code == 503:  # Open-Meteo sometimes refuses for a moment
+            time.sleep(20)
+            resp = client.get(f"/clubs/{club_id}/forecast")
     except Exception as e:  # the server's own exception, so the report says what broke
         return [f"forecast: HTTP 500 {type(e).__name__}: {e}"]
     if resp.status_code != 200:

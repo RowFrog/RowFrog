@@ -15,6 +15,7 @@ import json
 import os
 import re
 import sys
+import time
 from datetime import datetime, timedelta
 
 import httpx
@@ -25,6 +26,19 @@ from rowfrog import locations  # noqa: E402
 WMS = "https://maps.dwd.de/geoserver/dwd/wms"
 LAYER = "dwd:Niederschlagsradar"
 report: list[str] = []
+
+
+class RetryClient(httpx.Client):
+    """Asks once more when DWD's server is slow or drops the connection, so one
+    slow answer does not turn the whole check red."""
+
+    def get(self, *args, **kwargs):  # type: ignore[override]
+        try:
+            return super().get(*args, **kwargs)
+        except httpx.TransportError as e:
+            print(f"  (retrying after {type(e).__name__})", flush=True)
+            time.sleep(10)
+            return super().get(*args, **kwargs)
 
 
 def say(line: str = "") -> None:
@@ -54,7 +68,7 @@ def params(lat: float, lon: float, when: str | None) -> dict[str, str]:
 
 
 def main() -> int:
-    with httpx.Client(headers={"User-Agent": "RowFrog/0.1 (+https://github.com/RowFrog/RowFrog)"}) as client:
+    with RetryClient(headers={"User-Agent": "RowFrog/0.1 (+https://github.com/RowFrog/RowFrog)"}) as client:
         caps = client.get(WMS, params={"SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetCapabilities"}, timeout=60).text
         at = caps.find("<Name>Niederschlagsradar</Name>")
         block = caps[at : caps.find("</Layer>", at)] if at >= 0 else ""
@@ -80,11 +94,10 @@ def main() -> int:
     return 0
 
 
-def legend_and_region(client: httpx.Client, lat: float, lon: float, ref: datetime) -> None:
+def legend_and_region(client: RetryClient, lat: float, lon: float, ref: datetime) -> None:
     """The layer's colours (for the app's legend) and how long one picture
     of the region the app's radar map loads per frame takes."""
     import math
-    import time
 
     resp = client.get(WMS, params={"SERVICE": "WMS", "VERSION": "1.3.0", "REQUEST": "GetLegendGraphic",
                                    "LAYER": LAYER, "FORMAT": "application/json"}, timeout=30)
