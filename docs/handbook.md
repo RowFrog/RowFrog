@@ -134,6 +134,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Publish forecasts | every 30 min from main | api.rowfrog.com; the weather maps in `maps/` (index + one file per tile and value) are rebuilt only when DWD has a newer ICON-D2 run, every 3 hours, from DWD open data without Open-Meteo calls |
 | Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays); its section "Once a day instead of twice?" shows whether the 04:40 run alone would rank the models the same (to decide later whether to drop the 16:40 run, about 700 Open-Meteo calls a day) |
 | Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month. Covers Open-Meteo, Copernicus and, read with the Cloudflare token, Worker requests (100,000 a day) and D1 rows written (100,000) and read (5 million) on the free Workers plan |
+| Website | when `web/`, `scripts/build_web.py` or the app's German table change on main (tests only on PRs) | Cloudflare Pages project `rowfrog-web` (rowfrog.com once the domain is attached, else rowfrog-web.pages.dev). The run checks that the site refuses visitors without the password |
 | App size | when iOS code lands on main, or by hand | job summary of the run: installed size, expected App Store download, and the largest files (Release archive, unsigned, about 15 macOS minutes) |
 
 ## By hand
@@ -149,6 +150,16 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
 
-`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `USAGE_KEY` (usage counter),
+`CLOUDFLARE_API_TOKEN` (also needs "Cloudflare Pages: Edit" for the website), `CLOUDFLARE_ACCOUNT_ID`, `USAGE_KEY` (usage counter),
+`SITE_USER`, `SITE_PASSWORD` (the website's password while it is in testing; change them and re-run the Website workflow to change the password),
 `CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET` (Copernicus satellite pictures, ice map and lake water temperature).
 Landsat water temperatures come from Microsoft's Planetary Computer and need no secret.
+
+## Website (rowfrog.com, in testing)
+
+- Source in `web/`: `public/` (start page, `app/` = forecasts in the browser, legal pages), `functions/_middleware.js` (password on every page, `noindex` and no-AI headers on every answer; only `robots.txt` is open), `strings-de.json` (German for texts only the website has; everything else comes from the app's table in `ios/RowFrog/Localization.swift`).
+- Build: `python scripts/build_web.py` writes `web/dist` and stops on any text without German. Tests: `node --test web/tests/*.test.mjs`.
+- Try it locally against sample files: put a published `v1/` folder (e.g. `git archive origin/gh-pages v1/clubs/mrc-1880 v1/countries v1/lakes/starnberger-see | tar -x`) next to the contents of `web/dist`, serve that folder (`python3 -m http.server 8765`) and set `globalThis.RF_API = "http://localhost:8765/v1"` before the page loads (the browser tests do this with Playwright's addInitScript). Without it the page reads https://api.rowfrog.com/v1.
+- The light shown is the backend's, for small racing boats; boat types and own limits are not on the website yet.
+- Everything the visitor picks stays in the browser (localStorage keys `rf.clubs`, `rf.wind`, `rf.language`, `rf.safety`, `rf.catalog`). The safety notice has the app's text and version (1); raise `SAFETY_VERSION` in `web/public/app/app.js` together with the app's.
+- Before opening the site to others: fill in the Impressum (`web/public/impressum/`), the full privacy policy, and remove the password check and the testing banner.
