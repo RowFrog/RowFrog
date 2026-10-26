@@ -41,7 +41,7 @@ function switchLayer(id) {
 /** The lake's pictures and its lake view (for the layers), loaded once per page. */
 async function loadLake(lakeId) {
   const meta = await getJSON(`lakes/${encodeURIComponent(lakeId)}/satellite`);
-  const view = await viewForMap(lakeId).catch(() => null);
+  const view = lakeId.startsWith("club-") ? null : await viewForMap(lakeId).catch(() => null);
   return { lakeId, meta, view, kinds: KINDS.filter(([k]) => meta[k]?.image) };
 }
 
@@ -98,7 +98,9 @@ const pictureHtml = (lake, shot) => `<img src="${fileUrl(lake, shot.image)}" alt
 export async function satelliteCard(box, lakeId, clubId, changed) {
   let lake;
   try {
-    lake = await loadLake(lakeId);
+    // Water without an outline (rivers) has no lake picture, only the 4 x 3 km
+    // around the club, "club-<id>" (LocationPageView.satelliteID).
+    lake = await loadLake(lakeId).catch(() => loadLake(`club-${clubId}`));
   } catch {
     return;
   }
