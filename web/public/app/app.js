@@ -441,6 +441,15 @@ function balanceCards() {
   const cards = [...box.querySelectorAll(".card")];
   cards.forEach((card, i) => (card.dataset.order ??= i));
   cards.sort((a, b) => a.dataset.order - b.dataset.order);
+  // Keep the page's height while the cards move: emptied, it would be shorter
+  // than the window and Safari, which has no scroll anchoring, jumps to the top.
+  const scroller = document.scrollingElement;
+  const y = scroller.scrollTop;
+  box.style.minHeight = `${box.offsetHeight}px`;
+  requestAnimationFrame(() => {
+    box.style.minHeight = "";
+    if (scroller.scrollTop !== y) scroller.scrollTop = y;
+  });
   box.replaceChildren();
   box.classList.toggle("two", box.clientWidth >= TWO_COLUMNS);
   if (!box.classList.contains("two")) {

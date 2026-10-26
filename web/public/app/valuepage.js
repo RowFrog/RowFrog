@@ -16,7 +16,9 @@ let current = null;
 /** The page for `condition` of a club, opened at now or at a picked hour. */
 export async function renderValuePage(root, clubId, condition, at) {
   current?.cleanup();
-  const club = store.clubs.find((c) => c.id === clubId) ?? (await findClub(clubId));
+  // Clubs saved by an early version of the website have no launch point; the catalog has it.
+  let club = store.clubs.find((c) => c.id === clubId);
+  if (!club?.launchPoint) club = (await findClub(clubId)) ?? club;
   let raw;
   try {
     raw = await loadForecast(clubId);
@@ -120,7 +122,8 @@ function show(page) {
     const top = shown === data ? detail : conditionDetail(condition, shown);
     root.querySelector("#big-value").textContent = top.value;
     root.querySelector("#big-note").textContent = shown.now.time === data.now.time ? top.note : [dayTime(shown.now.time), top.note].filter(Boolean).join(" · ");
-    root.querySelector("#big-graphic").innerHTML = top.big;
+    // Without a graphic of its own, the value shows its symbol, as the tile does.
+    root.querySelector("#big-graphic").innerHTML = top.big || conditionIcon(condition);
   };
   head();
   const headListener = () => head();

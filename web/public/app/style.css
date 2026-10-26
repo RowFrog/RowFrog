@@ -168,7 +168,12 @@ button.wide { margin-top: 0; }
 .layers small { font-size: 8px; width: 7px; color: var(--sub); }
 .layers .track { flex: 1; height: 4px; border-radius: 2px; background: var(--fill); overflow: hidden; }
 .layers .track span { display: block; height: 100%; background: var(--grey); }
-.drop { font-size: 26px; color: var(--teal); background: linear-gradient(to top, var(--teal) var(--f), transparent var(--f)); -webkit-background-clip: text; }
+svg.filled { width: 26px; height: 26px; }
+svg.filled g { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+svg.filled g.fill { fill: currentColor; stroke: none; opacity: .55; }
+svg.filled.drop { color: var(--teal); }
+svg.filled.cloudy { color: var(--grey); }
+.cloud-big { display: flex; align-items: center; gap: 6px; }
 .gauge { position: relative; width: 40px; height: 40px; border-radius: 50%; border: 3px solid var(--fill); border-bottom-color: transparent; display: flex; align-items: center; justify-content: center; }
 .gauge .needle { position: absolute; left: 50%; top: -3px; width: 7px; height: 7px; margin-left: -3.5px; border-radius: 50%; background: var(--text); transform-origin: 50% 23px; }
 .gauge .trend { font-size: 13px; color: var(--sub); display: flex; }
@@ -424,12 +429,16 @@ button.red { color: var(--red); }
 .value-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .value-top .tool { color: var(--sub); font-size: 22px; }
 .value-head { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+/* Two lines kept for the note on a phone, so the chart does not jump while the note's length changes during scrubbing. */
+@media (max-width: 599px) { #big-note { min-height: 2.7em; } }
 .big-value { font-size: 40px; font-weight: 300; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .value-big { display: flex; align-items: center; }
 .value-big .dial { transform: scale(1.9); margin: 22px 26px; }
 .value-big .gauge { transform: scale(1.8); margin: 20px 22px; }
 .value-big .layers { transform: scale(1.6); margin: 10px 22px; }
-.value-big .drop { font-size: 44px; }
+.value-big svg.filled { width: 52px; height: 52px; }
+.value-big .cloud-big .layers { margin: 10px 22px 10px 30px; }
+.value-big .cond svg { width: 48px; height: 48px; }
 .value-big svg.sunpath { width: 120px; height: 60px; }
 .value-body { display: flex; flex-direction: column; gap: 14px; }
 @media (min-width: 900px) {

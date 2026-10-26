@@ -27,3 +27,16 @@ test("a difference converts without the offset", () => {
 test("every kind has its standard unit among its options", () => {
   for (const kind of Object.values(UNITS)) assert.ok(kind.options[kind.standard]);
 });
+
+test("the Beaufort chart scale keeps the order of line and limits and rounds to the force", async () => {
+  const { beaufort, beaufortScale } = await import("../public/app/logic.js");
+  let last = -1;
+  for (let ms = 0; ms <= 40; ms += 0.05) {
+    const b = beaufortScale(ms);
+    assert.ok(b >= last, `not rising at ${ms}`);
+    last = b;
+    if (Math.abs(b - Math.round(b) - 0.5) > 1e-6) assert.equal(Math.round(b), beaufort(ms), `at ${ms} m/s`);
+  }
+  close(beaufortScale(5.5), 3.5);
+  assert.ok(beaufortScale(5.9) > beaufortScale(5.5));
+});

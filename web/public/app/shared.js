@@ -3,7 +3,7 @@
 // small pieces such as the rowing light's dot and the sheets.
 
 import { t, num, locale } from "./i18n.js";
-import { icon } from "./icons.js";
+import { icon, iconShape } from "./icons.js";
 import {
   API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD,
 } from "./logic.js";
@@ -457,6 +457,21 @@ export function cloudLayers(hour) {
   const rows = [[t("H"), hour.cloudCoverHighPct], [t("M"), hour.cloudCoverMidPct], [t("L"), hour.cloudCoverLowPct]];
   return `<span class="layers">${rows.map(([name, pct]) => `<span><small>${h(name)}</small><span class="track"><span style="width:${pct ?? 0}%"></span></span></span>`).join("")}</span>`;
 }
+
+/**
+ * An outlined icon filled from the bottom to `pct` (the humidity drop, the
+ * cloud cover); `top` and `bottom` are where the shape starts and ends in its 24-unit box.
+ */
+export function filledIcon(name, pct, top, bottom, cls) {
+  const shape = iconShape(name);
+  const level = bottom - ((bottom - top) * Math.min(100, Math.max(0, pct ?? 0))) / 100;
+  const id = `fill-${name}`;
+  return `<svg class="filled ${cls}" viewBox="0 0 24 24" aria-hidden="true"><defs><clipPath id="${id}"><rect x="0" y="${level.toFixed(2)}" width="24" height="24" /></clipPath></defs>
+    <g class="fill" clip-path="url(#${id})">${shape}</g><g class="outline">${shape}</g></svg>`;
+}
+
+/** The cloud filling with the cover and the three layers beside it. */
+export const cloudBig = (hour) => `<span class="cloud-big">${filledIcon("cloud", hour.cloudCoverPct, 3, 19, "cloudy")}${cloudLayers(hour)}</span>`;
 
 export function pressureGauge(hpa, trend) {
   // 960 hPa at the left end of the arc, 1060 hPa at the right.

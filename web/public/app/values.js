@@ -4,14 +4,13 @@
 import { t, num } from "./i18n.js";
 import {
   time, dayLabel, dayTime, duration, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
-  pressure, pressureChangeText, inUnit, unitSymbol, unitChange,
-  currentLimits, boatInSentence, selectedBoat, iceDetail, windDial, cloudLayers, pressureGauge, sunPath,
+  pressure, pressureChangeText, inUnit, unitSymbol, unitChange, unitId,
+  currentLimits, boatInSentence, selectedBoat, iceDetail, windDial, cloudBig, filledIcon, pressureGauge, sunPath,
 } from "./shared.js";
 import {
-  beaufort, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
+  beaufort, beaufortScale, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
   precipitationKind, iceOff, ICE_TITLES, sunState, localDay, COLD, key,
 } from "./logic.js";
-import { icon } from "./icons.js";
 
 const HOUR = 3600 * 1000;
 const FREEZING_WATER_C = 4;
@@ -91,7 +90,8 @@ function warningNames(d, words) {
 }
 
 const pct = (v) => (v == null ? "–" : `${num(v)} %`);
-const windIn = (ms) => (ms == null ? null : Math.round(inUnit("wind", ms)));
+// Unrounded, and Beaufort without its steps, so a line above a limit stays above it in every unit.
+const windIn = (ms) => (ms == null ? null : unitId("wind") === "bft" ? beaufortScale(ms) : inUnit("wind", ms));
 const degreesIn = (c) => inUnit("temperature", c);
 const wavesIn = (m) => inUnit("waves", m);
 
@@ -184,7 +184,7 @@ const BUILDERS = {
     const gap = x.temperatureC != null && x.dewPointC != null ? x.temperatureC - x.dewPointC : null;
     return base({
       value: pct(x.humidityPct), note: t("Dew point %@", degrees(x.dewPointC)),
-      big: `<span class="drop" style="--f:${x.humidityPct ?? 0}%">${icon("droplet")}</span>`,
+      big: filledIcon("droplet", x.humidityPct, 2.5, 22, "drop"),
       unit: "%", lines: [{ name: t("Humidity"), colour: COLOURS.teal, points: d.points((y) => y.humidityPct) }], yDomain: [0, 130], trendStep: 2.5,
       facts: [
         [t("Dew point"), temperature(x.dewPointC)],
@@ -204,7 +204,6 @@ const BUILDERS = {
     if (x.windFromDeg != null) facts.push([t("From"), `${compass(x.windFromDeg)} (${num(x.windFromDeg)}°)`]);
     if (x.fetchM != null) facts.push([t("Open water upwind"), distance(x.fetchM)]);
     if (gust) facts.push([t("Strongest gust next 24 h"), t("%@ · %@", wind(gust.windGustMs), dayTime(gust.time))]);
-    const convert = (v) => inUnit("wind", v);
     return base({
       value: wind(x.windSpeedMs),
       note: t("Gusts %@", wind(x.windGustMs)) + (x.windFromDeg != null ? ` · ${t("from %@", compass(x.windFromDeg))}` : ""),
@@ -213,11 +212,13 @@ const BUILDERS = {
         { name: t("Wind"), colour: COLOURS.blue, points: d.points((y) => windIn(y.windSpeedMs)) },
         { name: t("Gusts"), colour: COLOURS.purple, points: d.points((y) => windIn(y.windGustMs)) },
       ],
-      limits: [limitLine("windAmber", COLOURS.orange, t("Wind: row with care"), convert), limitLine("windRed", COLOURS.red, t("Wind: stay ashore"), convert)],
+      limits: [limitLine("windAmber", COLOURS.orange, t("Wind: row with care"), windIn), limitLine("windRed", COLOURS.red, t("Wind: stay ashore"), windIn)],
       limitInfo: t("Amber from %@ (Beaufort 4, the first whitecaps) and red from %@ (Beaufort 5, many whitecaps): in a single or double the boat gets hard to steer and water comes over the side. Gusts have their own limits: amber from %@ and red from %@ (46 km/h), the level at which DWD issues a strong-wind warning and the lake's warning lights start flashing. These are the app's starting values for small boats.",
         limitText("windAmber", 5.5), limitText("windRed", 8), limitText("gustAmber", 8), limitText("gustRed", 12.8))
         + inUse([[t("Wind"), "windAmber", "windRed"], [t("Gusts"), "gustAmber", "gustRed"]]),
       windArrows: true,
+      // The scrub label names whole forces, as the big value does.
+      valueText: unitId("wind") === "bft" ? (y) => `${Math.round(y)} Bft` : null,
       chartNote: t("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value."),
       facts,
       rowing: advice(d, REASONS.wind, {
@@ -387,7 +388,7 @@ const BUILDERS = {
     const x = d.now;
     const sunny = firstRun(d.next24, (y) => (y.cloudCoverPct ?? 100) < 40 && y.sunUp === true);
     return base({
-      value: pct(x.cloudCoverPct), note: t("Low cloud %@ %%", num(x.cloudCoverLowPct)), big: cloudLayers(x), unit: "%",
+      value: pct(x.cloudCoverPct), note: t("Low cloud %@ %%", num(x.cloudCoverLowPct)), big: cloudBig(x), unit: "%",
       lines: [
         { name: t("All cloud"), colour: COLOURS.gray, points: d.points((y) => y.cloudCoverPct) },
         { name: t("High cloud"), colour: COLOURS.cyan, points: d.points((y) => y.cloudCoverHighPct) },
