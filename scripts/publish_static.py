@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import math
 import pickle
 import shutil
 import sys
@@ -460,8 +461,10 @@ def publish_ice_map(out: Path, lake_ids: list[str], today: date) -> None:
         write(meta_path, meta)
 
 
-def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: datetime) -> None:
+def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: datetime, places: dict | None = None) -> None:
     """Looks for newer Sentinel-2 pictures of the lakes whose last look is old enough.
+
+    `places` are pictures without a lake outline (see club_places), by id with their ring.
 
     Two per lake: the latest pass, whatever the cloud, and the latest clear
     one. Looks come at most 5 days apart and cover 30 days, so the clear one
@@ -475,7 +478,7 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
     looked = 0
     try:
         for lake_id in sorted(lake_ids, key=lambda i: (i not in used, i)):
-            rings = outlines.load(lake_id)
+            rings = (places or {}).get(lake_id) or outlines.load(lake_id)
             meta_path = out / "lakes" / lake_id / "satellite"
             old = _read_json(meta_path)
             version = old.get("searchVersion", 0)
@@ -511,6 +514,29 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
     finally:
         if client is not None:
             client.close()
+
+
+# Half the side of the square around a club's launch point whose cloud counts.
+CLUB_PLACE_M = 500
+
+
+def club_places(clubs) -> dict[str, list[list[tuple[float, float]]]]:
+    """Picture places of clubs on water without an outline (rivers, for now), "club-<id>".
+
+    Until rivers have sections of their own, such a club gets a picture of at
+    least 4 x 3 km around its launch point (sentinel2.MIN_WIDTH_M); clouds are
+    counted over the square kilometre around it.
+    """
+    places = {}
+    for club in clubs:
+        if outlines.load(club.lake_id):
+            continue
+        lat, lon = club.launch_point.lat, club.launch_point.lon
+        dlat = CLUB_PLACE_M / 110_540
+        dlon = CLUB_PLACE_M / (111_320 * math.cos(math.radians(lat)))
+        ring = [(lon - dlon, lat - dlat), (lon + dlon, lat - dlat), (lon + dlon, lat + dlat), (lon - dlon, lat + dlat)]
+        places[f"club-{club.id}"] = [ring]
+    return places
 
 
 def _lacks_sharp(old: dict, ring) -> bool:
@@ -780,7 +806,9 @@ def main() -> int:
     state.save()
 
     publish_ice_map(args.out, all_lakes, now.astimezone(LOCAL).date())
-    publish_pictures(args.out, all_lakes, used_lakes, now)
+    # River clubs only when used: about 340 of them would take a third of the free Copernicus requests.
+    places = club_places(c for c in every if c.id in used_clubs)
+    publish_pictures(args.out, all_lakes + sorted(places), used_lakes | set(places), now, places)
     calls = round(open_meteo.calls_counted, 1)
     copernicus = sentinel2.requests_made + lake_ice_satellite.requests_made
     print(f"Open-Meteo calls: {calls}, Copernicus requests: {copernicus}")

@@ -272,3 +272,16 @@ def test_small_lakes_get_no_sharp_files(tmp_path, monkeypatch):
     day = sentinel2.Pass(date(2026, 10, 8), 0.05)
     body = publish._picture_meta(None, tmp_path, ring, {}, day, day)
     assert "sharp" not in body and "tiles" not in body["latest"] and not publish._lacks_sharp(body, ring)
+
+
+def test_river_clubs_get_a_place_around_their_launch_point():
+    from rowfrog import locations
+
+    clubs = locations.load().clubs.values()
+    river = next(c for c in clubs if c.lake_id.startswith("river-"))
+    lake = next(c for c in clubs if c.lake_id == "starnberger-see")
+    places = publish.club_places([river, lake])
+    assert list(places) == [f"club-{river.id}"]
+    (west, south, east, north), width, height = sentinel2.frame(places[f"club-{river.id}"][0])
+    assert (width, height) == (400, 300)
+    assert west < river.launch_point.lon < east and south < river.launch_point.lat < north
