@@ -485,7 +485,8 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
             first = version < PICTURE_FIRST_SEARCH_BEFORE
             checked = None if version != PICTURE_SEARCH_VERSION or "checkedAt" not in old else datetime.fromisoformat(old["checkedAt"])
             refresh = PICTURE_REFRESH["used" if lake_id in used else "other"]
-            if rings and checked and now - checked >= SHARP_RETRY and _lacks_sharp(old, rings[0]):
+            sharp_ok = lake_id in used
+            if sharp_ok and rings and checked and now - checked >= SHARP_RETRY and _lacks_sharp(old, rings[0]):
                 checked = None  # look again until every picture has its tiles
             if not rings or (checked and now - checked < refresh) or looked >= PICTURES_PER_RUN:
                 continue
@@ -495,7 +496,7 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
                 latest, mostly_clear, clearest = sentinel2.choose(
                     sentinel2.cloud_by_day(client, rings[0], today - timedelta(days=days), today)
                 )
-                body = _picture_meta(client, out / "lakes" / lake_id, rings[0], old, latest, clearest, mostly_clear)
+                body = _picture_meta(client, out / "lakes" / lake_id, rings[0], old, latest, clearest, mostly_clear, sharp_ok)
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 401:  # the sign-in lasts minutes; renew it once
                     client.close()
@@ -546,16 +547,18 @@ def _lacks_sharp(old: dict, ring) -> bool:
     return any(e and "tiles" not in e for e in (old.get(k) for k in ("latest", "clearest", "mostlyClear")))
 
 
-def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostly_clear=None) -> dict:
+def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostly_clear=None, sharp_ok: bool = True) -> dict:
     """The satellite file's picture part, rendering the pictures that are new.
 
     A third, "mostly clear" picture is added only when it is newer than the
     clearest and not the latest itself, so it shows something the other two don't.
     Lakes too big for 10 m in one picture also get each picture at 10 m in
-    tiles, and the biggest an overview, for the full-screen view ("sharp").
+    tiles, and the biggest an overview, for the full-screen view ("sharp"),
+    while someone uses them (`sharp_ok`): for all 19 they would take about
+    44 % of the free Copernicus processing units (owner's pick 2026-10-26).
     """
     bbox, width, height = sentinel2.frame(ring)
-    sharp = sentinel2.sharp_size(bbox)
+    sharp = sentinel2.sharp_size(bbox) if sharp_ok else None
     body = {k: v for k, v in old.items() if k in ("ice",)}
     body.update(bbox=[round(v, 5) for v in bbox], width=width, height=height)
     if sharp:
@@ -567,15 +570,13 @@ def _picture_meta(client, folder: Path, ring, old: dict, latest, clearest, mostl
             "rows": grid[-1][0] + 1,
             "columns": grid[-1][1] + 1,
         }
-    # Pictures from before the sharp tiles keep their frame (no "sharp" yet).
-    old_frame = (
-        old.get("bbox") == body["bbox"] and old.get("width") == width and old.get("sharp", body.get("sharp")) == body.get("sharp")
-    )
+    # The tiles follow from the frame, so gaining or losing them keeps the pictures.
+    old_frame = old.get("bbox") == body["bbox"] and old.get("width") == width
     for kind, found in (("latest", latest), ("clearest", clearest)):
         before = old.get(kind) if old_frame else None
         if found is None:  # nothing new: keep showing the last one
             if before:
-                body[kind] = before
+                body[kind] = before if sharp else {k: v for k, v in before.items() if k not in ("tiles", "overview")}
             continue
         entry = {"date": found.day.isoformat(), "lakeCloud": round(found.lake_cloud, 2), "image": f"satellite-{kind}.jpg"}
         path = folder / entry["image"]

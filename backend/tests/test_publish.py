@@ -285,3 +285,16 @@ def test_river_clubs_get_a_place_around_their_launch_point():
     (west, south, east, north), width, height = sentinel2.frame(places[f"club-{river.id}"][0])
     assert (width, height) == (400, 300)
     assert west < river.launch_point.lon < east and south < river.launch_point.lat < north
+
+
+def test_big_lakes_nobody_uses_get_no_tiles(tmp_path, monkeypatch):
+    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    monkeypatch.setattr(publish, "sharp_tiles_left", 1000)
+    ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
+    day = sentinel2.Pass(date(2026, 10, 8), 0.05)
+    used = publish._picture_meta(None, tmp_path, ring, {}, day, day)
+    assert (tmp_path / "satellite-latest-tiles").exists()
+    # No longer used: the tiles go, the pictures stay.
+    body = publish._picture_meta(None, tmp_path, ring, used, None, None, sharp_ok=False)
+    assert "sharp" not in body and "tiles" not in body["latest"] and body["latest"]["date"] == "2026-10-08"
+    assert not (tmp_path / "satellite-latest-tiles").exists() and (tmp_path / "satellite-latest.jpg").exists()
