@@ -31,7 +31,7 @@ const clubWater = new Map();
 export const noteWater = (lakeId, celsius) => celsius != null && clubWater.set(lakeId, celsius);
 
 /** The lake coloured for the map's boat, with the water the shore is drawn by. */
-async function viewForMap(lakeId) {
+export async function viewForMap(lakeId) {
   const raw = await loadView(lakeId);
   const limits = mapLimits();
   const view = applyLakeLimits(raw, limits, matchesStandard(limits));
@@ -42,7 +42,7 @@ const rgb = (c, a = 1) => `rgba(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math
 const COLD_SHORE = { cool: "rgb(92, 168, 242)", cold: "rgb(20, 84, 194)" };
 
 /** The hour's lights (or waves, wind) as a small picture, one pixel per cell, for smooth scaling. */
-function rasterCanvas(view, hour, layer) {
+export function rasterCanvas(view, hour, layer) {
   const { width, height, data } = rasterPixels(view, cellColours(view, hour, layer, mapLimits()));
   const canvas = document.createElement("canvas");
   canvas.width = width;
@@ -163,7 +163,7 @@ function lakeWideBanner(lakeWide) {
 }
 
 /** Which boat the lake is coloured for, with a warning when it takes more wind or waves than the ticked one (MapBoatNote). */
-function mapBoatNote() {
+export function mapBoatNote() {
   const boat = mapBoat();
   if (allowsMore(mapLimits(), boatLimits(selectedBoat()))) {
     return `<p class="small orange strong">${icon("triangle-alert")} ${h(t("Coloured for %@, not for %@: the lake may look calmer than it is for you.", boatInSentence(boat), boatInSentence(selectedBoat())))}</p>`;
@@ -440,12 +440,15 @@ function hourStrip() {
   }).join("")}</div>`;
 }
 
-function legendLine() {
+const legendLine = () => layerLegend(page.layer);
+
+/** The colours of a layer: the three lights, or the ramp for waves or wind up to the map boat's limits. */
+export function layerLegend(layer) {
   const limits = mapLimits();
-  if (page.layer === "light") {
+  if (layer === "light") {
     return `<p class="legend-line">${["green", "amber", "red"].map((l) => `<span>${dot(l, 9)} ${h(lightTitle(l))}</span>`).join("")}</p>`;
   }
-  const [amber, red, fmt] = page.layer === "waves"
+  const [amber, red, fmt] = layer === "waves"
     ? [limits.value("waveAmber"), limits.value("waveRed"), waves]
     : [limits.value("windAmber"), limits.value("windRed"), wind];
   const top = red * 1.6;
