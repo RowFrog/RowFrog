@@ -1,6 +1,6 @@
-# Model check, 2026-10-25 17:03 UTC
+# Model check, 2026-10-26 05:15 UTC
 
-16 forecast runs stored (2026-10-23T20:00Z to 2026-10-25T17:00Z).
+17 forecast runs stored (2026-10-23T20:00Z to 2026-10-26T05:00Z).
 Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.
 "Light wrong" = how often wind and gusts alone would have given a different rowing light than measured.
 Stations are on land, where wind is usually weaker than on the lake, so the ranking matters more than the numbers.
@@ -9,31 +9,31 @@ Stations are on land, where wind is usually weaker than on the lake, so the rank
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| icon_eu | 950 | 1.6 | +0.3 | 3.1 | 1.0 | 31 % |
-| ecmwf_aifs025_single | 950 | 1.7 | +0.2 | – | 1.0 | – |
-| best_match | 950 | 1.7 | +0.3 | 2.9 | 1.3 | 32 % |
-| **icon_d2** (app today) | 950 | 1.7 | +0.3 | 2.9 | 1.3 | 32 % |
-| dmi_harmonie_arome_europe | 950 | 1.8 | +0.5 | 3.1 | 1.2 | 34 % |
-| knmi_harmonie_arome_europe | 950 | 1.8 | +0.2 | 2.9 | 1.3 | 28 % |
-| ecmwf_ifs025 | 950 | 2.1 | +1.0 | 3.5 | 1.2 | 41 % |
-| meteoswiss_icon_ch2 | 950 | 2.1 | +0.9 | 3.6 | 1.5 | 35 % |
-| geosphere_arome_austria | 950 | 2.1 | +0.8 | 2.9 | 1.5 | 29 % |
-| meteoswiss_icon_ch1 | 950 | 2.3 | +1.3 | 3.4 | 1.5 | 35 % |
+| icon_eu | 3380 | 2.0 | +0.3 | 3.7 | 1.2 | 43 % |
+| best_match | 3380 | 2.2 | +0.4 | 3.7 | 1.4 | 41 % |
+| **icon_d2** (app today) | 3380 | 2.2 | +0.4 | 3.7 | 1.4 | 41 % |
+| ecmwf_aifs025_single | 3380 | 2.2 | +0.6 | – | 1.0 | – |
+| knmi_harmonie_arome_europe | 3380 | 2.4 | +0.9 | 3.9 | 1.2 | 44 % |
+| ecmwf_ifs025 | 3380 | 2.4 | +1.2 | 3.8 | 1.1 | 50 % |
+| dmi_harmonie_arome_europe | 3380 | 2.4 | +1.2 | 4.2 | 1.2 | 49 % |
+| meteoswiss_icon_ch2 | 3380 | 2.6 | +1.3 | 4.3 | 1.7 | 47 % |
+| meteoswiss_icon_ch1 | 3380 | 2.8 | +1.7 | 4.2 | 1.5 | 49 % |
+| geosphere_arome_austria | 3380 | 2.9 | +1.7 | 4.0 | 1.6 | 46 % |
 
 ## All points, day 2
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| icon_eu | 60 | 1.2 | +0.3 | 2.3 | 1.3 | 5 % |
-| **icon_d2** (app today) | 60 | 1.4 | +0.5 | 2.6 | 1.4 | 15 % |
-| best_match | 60 | 1.4 | +0.5 | 2.6 | 1.5 | 15 % |
-| ecmwf_aifs025_single | 60 | 1.4 | +0.6 | – | 1.4 | – |
-| meteoswiss_icon_ch2 | 60 | 1.7 | +0.9 | 3.4 | 1.8 | 12 % |
-| ecmwf_ifs025 | 60 | 1.7 | +0.7 | 3.3 | 1.2 | 8 % |
-| dmi_harmonie_arome_europe | 60 | 1.8 | +1.1 | 3.6 | 1.5 | 8 % |
-| meteoswiss_icon_ch1 | 60 | 1.8 | +1.2 | 3.2 | 1.2 | 15 % |
-| knmi_harmonie_arome_europe | 60 | 1.8 | +1.0 | 3.5 | 1.5 | 8 % |
-| geosphere_arome_austria | 60 | 2.0 | +0.8 | 2.9 | 1.8 | 10 % |
+| icon_eu | 830 | 2.1 | +0.3 | 3.5 | 1.2 | 48 % |
+| **icon_d2** (app today) | 820 | 2.2 | +0.6 | 3.6 | 1.4 | 47 % |
+| best_match | 830 | 2.2 | +0.6 | 3.6 | 1.5 | 48 % |
+| ecmwf_aifs025_single | 830 | 2.3 | +0.8 | – | 1.0 | – |
+| knmi_harmonie_arome_europe | 830 | 2.4 | +1.0 | 3.7 | 1.1 | 49 % |
+| meteoswiss_icon_ch1 | 430 | 2.4 | +1.7 | 2.9 | 1.5 | 43 % |
+| dmi_harmonie_arome_europe | 830 | 2.4 | +1.2 | 3.9 | 1.2 | 50 % |
+| ecmwf_ifs025 | 830 | 2.4 | +1.3 | 3.2 | 1.0 | 52 % |
+| meteoswiss_icon_ch2 | 830 | 2.5 | +1.3 | 3.8 | 1.7 | 53 % |
+| geosphere_arome_austria | 830 | 2.8 | +1.6 | 3.8 | 1.6 | 49 % |
 
 ## All points, archive
 
@@ -56,18 +56,18 @@ Day 1 over all points, from the two scheduled runs (04:40 and 16:40 UTC) and fro
 
 | Model | Hours, twice | Hours, once | Wind error, twice | Wind error, once | Light wrong, twice | Light wrong, once |
 | --- | --- | --- | --- | --- | --- | --- |
-| icon_eu | 640 | 0 | 1.67 | – | 28 % | – |
-| ecmwf_aifs025_single | 640 | 0 | 1.70 | – | – | – |
-| best_match | 640 | 0 | 1.70 | – | 30 % | – |
-| icon_d2 | 640 | 0 | 1.70 | – | 30 % | – |
-| dmi_harmonie_arome_europe | 640 | 0 | 1.80 | – | 31 % | – |
-| knmi_harmonie_arome_europe | 640 | 0 | 1.80 | – | 27 % | – |
-| ecmwf_ifs025 | 640 | 0 | 2.05 | – | 36 % | – |
-| geosphere_arome_austria | 640 | 0 | 2.08 | – | 29 % | – |
-| meteoswiss_icon_ch2 | 640 | 0 | 2.13 | – | 33 % | – |
-| meteoswiss_icon_ch1 | 640 | 0 | 2.30 | – | 33 % | – |
+| icon_eu | 1780 | 200 | 2.03 | 2.34 | 39 % | 54 % |
+| best_match | 1780 | 200 | 2.14 | 2.55 | 38 % | 50 % |
+| icon_d2 | 1780 | 200 | 2.14 | 2.55 | 38 % | 50 % |
+| ecmwf_aifs025_single | 1780 | 200 | 2.17 | 2.46 | – | – |
+| knmi_harmonie_arome_europe | 1780 | 200 | 2.34 | 2.66 | 42 % | 53 % |
+| ecmwf_ifs025 | 1780 | 200 | 2.37 | 2.74 | 47 % | 66 % |
+| dmi_harmonie_arome_europe | 1780 | 200 | 2.38 | 2.74 | 47 % | 59 % |
+| meteoswiss_icon_ch2 | 1780 | 200 | 2.56 | 2.88 | 45 % | 64 % |
+| meteoswiss_icon_ch1 | 1780 | 200 | 2.78 | 3.21 | 47 % | 66 % |
+| geosphere_arome_austria | 1780 | 200 | 2.86 | 3.27 | 44 % | 60 % |
 
-Same order of the models with one run a day: **no** (twice: icon_eu, ecmwf_aifs025_single, best_match; once: ).
+Same order of the models with one run a day: **no** (twice: icon_eu, best_match, icon_d2; once: icon_eu, ecmwf_aifs025_single, best_match).
 
 ## icon_d2 vs best_match
 
@@ -106,16 +106,16 @@ Stations: wind: Wielenbach (Demollstr.) (19.0 km), gust: Wielenbach (Demollstr.)
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| knmi_harmonie_arome_europe | 95 | 1.3 | +0.6 | 2.3 | 0.9 | 18 % |
-| best_match | 95 | 1.4 | +1.0 | 2.0 | 1.0 | 18 % |
-| **icon_d2** (app today) | 95 | 1.4 | +1.0 | 2.0 | 1.0 | 18 % |
-| icon_eu | 95 | 1.4 | +1.0 | 3.3 | 0.7 | 25 % |
-| dmi_harmonie_arome_europe | 95 | 1.5 | +1.1 | 2.4 | 0.7 | 18 % |
-| ecmwf_aifs025_single | 95 | 1.5 | +1.2 | – | 0.8 | – |
-| geosphere_arome_austria | 95 | 1.6 | +1.4 | 2.2 | 0.8 | 18 % |
-| meteoswiss_icon_ch2 | 95 | 1.8 | +1.7 | 2.8 | 1.2 | 22 % |
-| ecmwf_ifs025 | 95 | 2.0 | +1.9 | 3.8 | 0.8 | 34 % |
-| meteoswiss_icon_ch1 | 95 | 2.0 | +2.0 | 3.8 | 1.2 | 32 % |
+| icon_eu | 338 | 1.9 | +1.4 | 3.8 | 1.2 | 47 % |
+| best_match | 338 | 1.9 | +1.5 | 2.6 | 1.4 | 31 % |
+| **icon_d2** (app today) | 338 | 1.9 | +1.5 | 2.6 | 1.4 | 31 % |
+| knmi_harmonie_arome_europe | 338 | 2.0 | +1.5 | 3.6 | 0.9 | 44 % |
+| ecmwf_aifs025_single | 338 | 2.2 | +1.8 | – | 0.9 | – |
+| dmi_harmonie_arome_europe | 338 | 2.4 | +2.1 | 3.4 | 1.1 | 43 % |
+| meteoswiss_icon_ch2 | 338 | 2.4 | +2.2 | 3.2 | 1.4 | 34 % |
+| ecmwf_ifs025 | 338 | 2.5 | +2.3 | 4.0 | 0.8 | 51 % |
+| meteoswiss_icon_ch1 | 338 | 2.6 | +2.3 | 4.1 | 1.4 | 49 % |
+| geosphere_arome_austria | 338 | 2.7 | +2.4 | 3.7 | 1.5 | 37 % |
 
 ### Tutzinger RV launch point
 
@@ -123,16 +123,16 @@ Stations: wind: Wielenbach (Demollstr.) (8.9 km), gust: Wielenbach (Demollstr.) 
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| best_match | 95 | 0.9 | +0.3 | 1.4 | 0.7 | 26 % |
-| **icon_d2** (app today) | 95 | 0.9 | +0.3 | 1.4 | 0.7 | 26 % |
-| geosphere_arome_austria | 95 | 1.0 | +0.3 | 2.0 | 1.2 | 21 % |
-| icon_eu | 95 | 1.1 | +0.8 | 2.4 | 0.7 | 26 % |
-| knmi_harmonie_arome_europe | 95 | 1.1 | -0.1 | 1.5 | 1.4 | 22 % |
-| dmi_harmonie_arome_europe | 95 | 1.3 | +0.5 | 2.3 | 1.0 | 26 % |
-| ecmwf_aifs025_single | 95 | 1.5 | +1.2 | – | 0.8 | – |
-| meteoswiss_icon_ch2 | 95 | 1.5 | +1.3 | 2.1 | 1.2 | 22 % |
-| meteoswiss_icon_ch1 | 95 | 1.5 | +1.5 | 1.9 | 0.9 | 20 % |
-| ecmwf_ifs025 | 95 | 2.0 | +1.9 | 3.8 | 0.8 | 34 % |
+| best_match | 338 | 1.1 | +0.3 | 1.8 | 1.1 | 28 % |
+| **icon_d2** (app today) | 338 | 1.1 | +0.3 | 1.8 | 1.1 | 28 % |
+| icon_eu | 338 | 1.4 | +0.9 | 2.6 | 1.1 | 35 % |
+| knmi_harmonie_arome_europe | 338 | 1.5 | +0.4 | 2.4 | 1.0 | 29 % |
+| geosphere_arome_austria | 338 | 1.5 | +0.8 | 3.1 | 1.7 | 39 % |
+| dmi_harmonie_arome_europe | 338 | 1.7 | +1.0 | 3.2 | 0.8 | 40 % |
+| meteoswiss_icon_ch2 | 338 | 1.9 | +1.5 | 2.6 | 1.7 | 30 % |
+| meteoswiss_icon_ch1 | 338 | 2.0 | +1.7 | 2.6 | 1.4 | 35 % |
+| ecmwf_aifs025_single | 338 | 2.2 | +1.8 | – | 0.9 | – |
+| ecmwf_ifs025 | 338 | 2.5 | +2.3 | 4.0 | 0.8 | 51 % |
 
 ### Starnberger See, centre
 
@@ -140,16 +140,16 @@ Stations: wind: Wielenbach (Demollstr.) (11.4 km), gust: Wielenbach (Demollstr.)
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| icon_eu | 95 | 1.4 | +1.3 | 1.7 | 0.7 | 24 % |
-| ecmwf_aifs025_single | 95 | 1.5 | +1.2 | – | 0.8 | – |
-| best_match | 95 | 1.5 | +1.4 | 2.7 | 1.0 | 28 % |
-| **icon_d2** (app today) | 95 | 1.5 | +1.4 | 2.7 | 1.0 | 28 % |
-| knmi_harmonie_arome_europe | 95 | 1.6 | +1.3 | 2.8 | 0.8 | 20 % |
-| dmi_harmonie_arome_europe | 95 | 1.9 | +1.9 | 3.6 | 0.7 | 32 % |
-| ecmwf_ifs025 | 95 | 2.0 | +1.9 | 3.8 | 0.8 | 34 % |
-| meteoswiss_icon_ch2 | 95 | 2.1 | +2.0 | 3.7 | 1.4 | 34 % |
-| geosphere_arome_austria | 95 | 2.2 | +2.1 | 2.2 | 0.8 | 21 % |
-| meteoswiss_icon_ch1 | 95 | 4.0 | +4.0 | 3.7 | 1.8 | 36 % |
+| icon_eu | 338 | 1.7 | +1.3 | 2.1 | 1.2 | 34 % |
+| best_match | 338 | 1.8 | +1.5 | 2.6 | 1.3 | 32 % |
+| **icon_d2** (app today) | 338 | 1.8 | +1.5 | 2.6 | 1.3 | 32 % |
+| ecmwf_aifs025_single | 338 | 2.2 | +1.8 | – | 0.9 | – |
+| ecmwf_ifs025 | 338 | 2.5 | +2.3 | 4.0 | 0.8 | 51 % |
+| knmi_harmonie_arome_europe | 338 | 2.5 | +2.2 | 3.9 | 1.2 | 46 % |
+| meteoswiss_icon_ch2 | 338 | 2.5 | +2.4 | 4.0 | 1.8 | 46 % |
+| dmi_harmonie_arome_europe | 338 | 2.8 | +2.7 | 4.6 | 1.3 | 51 % |
+| geosphere_arome_austria | 338 | 3.1 | +3.1 | 3.3 | 1.5 | 38 % |
+| meteoswiss_icon_ch1 | 338 | 4.1 | +4.0 | 3.8 | 1.3 | 50 % |
 
 ### Starnberger See, south near Seeshaupt
 
@@ -157,16 +157,16 @@ Stations: wind: Wielenbach (Demollstr.) (13.6 km), gust: Wielenbach (Demollstr.)
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| icon_eu | 95 | 0.7 | -0.0 | 1.2 | 0.7 | 25 % |
-| best_match | 95 | 0.8 | +0.2 | 1.2 | 0.8 | 29 % |
-| **icon_d2** (app today) | 95 | 0.8 | +0.2 | 1.2 | 0.8 | 29 % |
-| ecmwf_ifs025 | 95 | 0.9 | +0.2 | 2.1 | 1.3 | 39 % |
-| ecmwf_aifs025_single | 95 | 1.1 | -0.4 | – | 0.7 | – |
-| dmi_harmonie_arome_europe | 95 | 1.1 | +0.3 | 1.7 | 0.8 | 26 % |
-| meteoswiss_icon_ch1 | 95 | 1.2 | +0.8 | 1.9 | 0.9 | 32 % |
-| knmi_harmonie_arome_europe | 95 | 1.3 | -0.1 | 1.8 | 1.1 | 25 % |
-| geosphere_arome_austria | 95 | 1.5 | +1.4 | 1.4 | 1.1 | 18 % |
-| meteoswiss_icon_ch2 | 95 | 2.0 | +1.9 | 3.1 | 1.7 | 30 % |
+| best_match | 338 | 1.1 | +0.1 | 1.9 | 1.2 | 33 % |
+| **icon_d2** (app today) | 338 | 1.1 | +0.1 | 1.9 | 1.2 | 33 % |
+| icon_eu | 338 | 1.2 | -0.1 | 2.2 | 1.2 | 33 % |
+| dmi_harmonie_arome_europe | 338 | 1.5 | +0.8 | 2.8 | 1.0 | 35 % |
+| knmi_harmonie_arome_europe | 338 | 1.6 | +0.4 | 2.8 | 0.9 | 32 % |
+| meteoswiss_icon_ch1 | 338 | 1.6 | +1.1 | 2.5 | 1.3 | 34 % |
+| ecmwf_aifs025_single | 338 | 1.7 | +0.4 | – | 0.8 | – |
+| ecmwf_ifs025 | 338 | 1.9 | +1.0 | 3.4 | 1.1 | 52 % |
+| geosphere_arome_austria | 338 | 2.4 | +2.3 | 2.4 | 1.6 | 32 % |
+| meteoswiss_icon_ch2 | 338 | 2.4 | +2.2 | 3.4 | 2.2 | 48 % |
 
 ### Ammersee, centre
 
@@ -174,16 +174,16 @@ Stations: wind: Wielenbach (Demollstr.) (13.3 km), gust: Wielenbach (Demollstr.)
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| **icon_d2** (app today) | 95 | 1.8 | +1.6 | 2.1 | 1.6 | 16 % |
-| best_match | 95 | 1.8 | +1.6 | 2.1 | 1.6 | 16 % |
-| ecmwf_aifs025_single | 95 | 1.8 | +1.7 | – | 1.5 | – |
-| dmi_harmonie_arome_europe | 95 | 1.9 | +1.6 | 4.6 | 1.5 | 46 % |
-| meteoswiss_icon_ch2 | 95 | 1.9 | +1.8 | 3.7 | 1.5 | 28 % |
-| icon_eu | 95 | 2.0 | +1.8 | 3.1 | 1.5 | 21 % |
-| knmi_harmonie_arome_europe | 95 | 2.2 | +2.1 | 3.7 | 1.7 | 29 % |
-| ecmwf_ifs025 | 95 | 2.7 | +2.7 | 4.5 | 1.4 | 60 % |
-| geosphere_arome_austria | 95 | 3.4 | +3.4 | 3.3 | 1.8 | 32 % |
-| meteoswiss_icon_ch1 | 95 | 3.4 | +3.4 | 3.5 | 2.1 | 26 % |
+| ecmwf_aifs025_single | 338 | 2.7 | +2.4 | – | 1.7 | – |
+| icon_eu | 338 | 2.7 | +2.4 | 3.8 | 1.7 | 46 % |
+| best_match | 338 | 2.8 | +2.6 | 3.1 | 1.7 | 38 % |
+| **icon_d2** (app today) | 338 | 2.8 | +2.6 | 3.1 | 1.7 | 38 % |
+| meteoswiss_icon_ch2 | 338 | 2.8 | +2.6 | 4.5 | 1.7 | 49 % |
+| dmi_harmonie_arome_europe | 338 | 3.0 | +2.7 | 6.4 | 2.0 | 62 % |
+| ecmwf_ifs025 | 338 | 3.1 | +3.0 | 4.8 | 1.4 | 60 % |
+| knmi_harmonie_arome_europe | 338 | 3.6 | +3.5 | 5.5 | 2.1 | 56 % |
+| meteoswiss_icon_ch1 | 338 | 4.2 | +4.1 | 4.0 | 2.2 | 52 % |
+| geosphere_arome_austria | 338 | 5.1 | +5.1 | 5.4 | 1.8 | 55 % |
 
 ### Wörthsee, centre
 
@@ -191,16 +191,16 @@ Stations: wind: Wielenbach (Demollstr.) (20.6 km), gust: Wielenbach (Demollstr.)
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| ecmwf_aifs025_single | 95 | 1.5 | +1.2 | – | 0.7 | – |
-| knmi_harmonie_arome_europe | 95 | 1.6 | +1.3 | 2.5 | 0.9 | 20 % |
-| **icon_d2** (app today) | 95 | 1.8 | +1.7 | 2.3 | 1.1 | 15 % |
-| best_match | 95 | 1.8 | +1.7 | 2.3 | 1.2 | 15 % |
-| icon_eu | 95 | 2.0 | +1.8 | 3.8 | 0.9 | 26 % |
-| ecmwf_ifs025 | 95 | 2.0 | +1.9 | 3.8 | 0.8 | 34 % |
-| meteoswiss_icon_ch2 | 95 | 2.1 | +2.0 | 3.5 | 0.8 | 26 % |
-| geosphere_arome_austria | 95 | 2.1 | +2.1 | 3.5 | 0.8 | 30 % |
-| dmi_harmonie_arome_europe | 95 | 2.1 | +2.1 | 3.0 | 0.8 | 24 % |
-| meteoswiss_icon_ch1 | 95 | 2.3 | +2.2 | 3.6 | 0.9 | 28 % |
+| ecmwf_aifs025_single | 338 | 2.2 | +1.8 | – | 0.7 | – |
+| ecmwf_ifs025 | 338 | 2.5 | +2.3 | 4.0 | 1.1 | 51 % |
+| best_match | 338 | 2.5 | +2.2 | 3.1 | 1.1 | 37 % |
+| **icon_d2** (app today) | 338 | 2.5 | +2.2 | 3.1 | 1.1 | 37 % |
+| knmi_harmonie_arome_europe | 338 | 2.6 | +2.4 | 4.1 | 0.9 | 44 % |
+| icon_eu | 338 | 2.7 | +2.3 | 4.3 | 1.0 | 49 % |
+| meteoswiss_icon_ch2 | 338 | 3.1 | +2.9 | 4.4 | 0.7 | 50 % |
+| meteoswiss_icon_ch1 | 338 | 3.3 | +3.1 | 4.6 | 0.9 | 50 % |
+| dmi_harmonie_arome_europe | 338 | 3.3 | +3.2 | 4.4 | 0.8 | 48 % |
+| geosphere_arome_austria | 338 | 3.4 | +3.2 | 5.4 | 0.8 | 51 % |
 
 ### Tegernsee, centre
 
@@ -208,16 +208,16 @@ Stations: wind: Kreuth (9.0 km), gust: Bichl (25.7 km), temp: Kreuth (9.0 km)
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| ecmwf_aifs025_single | 95 | 1.3 | +1.0 | – | 1.4 | – |
-| icon_eu | 95 | 1.5 | +1.2 | 4.8 | 1.6 | 33 % |
-| dmi_harmonie_arome_europe | 95 | 2.1 | +2.1 | 3.1 | 2.1 | 41 % |
-| knmi_harmonie_arome_europe | 95 | 2.2 | +2.2 | 3.4 | 1.6 | 32 % |
-| geosphere_arome_austria | 95 | 2.4 | +2.0 | 2.9 | 2.8 | 36 % |
-| ecmwf_ifs025 | 95 | 2.4 | +2.4 | 3.2 | 2.3 | 33 % |
-| **icon_d2** (app today) | 95 | 2.6 | +2.6 | 6.4 | 1.4 | 83 % |
-| best_match | 95 | 2.6 | +2.6 | 6.4 | 1.4 | 83 % |
-| meteoswiss_icon_ch2 | 95 | 2.9 | +2.9 | 6.4 | 1.6 | 76 % |
-| meteoswiss_icon_ch1 | 95 | 3.1 | +3.1 | 6.8 | 1.8 | 80 % |
+| ecmwf_aifs025_single | 338 | 1.3 | +1.2 | – | 1.3 | – |
+| icon_eu | 338 | 1.4 | +1.0 | 6.1 | 0.9 | 58 % |
+| dmi_harmonie_arome_europe | 338 | 2.4 | +2.4 | 5.0 | 1.1 | 55 % |
+| best_match | 338 | 2.7 | +2.6 | 8.7 | 1.2 | 79 % |
+| **icon_d2** (app today) | 338 | 2.7 | +2.6 | 8.7 | 1.2 | 79 % |
+| ecmwf_ifs025 | 338 | 2.7 | +2.7 | 3.9 | 1.8 | 48 % |
+| knmi_harmonie_arome_europe | 338 | 2.7 | +2.7 | 5.2 | 1.0 | 55 % |
+| geosphere_arome_austria | 338 | 2.7 | +2.4 | 4.5 | 1.6 | 48 % |
+| meteoswiss_icon_ch2 | 338 | 3.3 | +3.3 | 8.7 | 1.1 | 78 % |
+| meteoswiss_icon_ch1 | 338 | 3.7 | +3.7 | 9.5 | 1.2 | 79 % |
 
 ### Kochelsee, centre
 
@@ -225,16 +225,16 @@ Stations: wind: Bichl (8.9 km), gust: Bichl (8.9 km), temp: Bichl (8.9 km)
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| ecmwf_aifs025_single | 95 | 1.2 | -0.2 | – | 0.8 | – |
-| **icon_d2** (app today) | 95 | 1.3 | -0.7 | 2.4 | 1.6 | 24 % |
-| best_match | 95 | 1.3 | -0.7 | 2.4 | 1.6 | 24 % |
-| knmi_harmonie_arome_europe | 95 | 1.3 | -0.1 | 2.5 | 1.7 | 24 % |
-| ecmwf_ifs025 | 95 | 1.3 | +0.4 | 2.4 | 1.1 | 45 % |
-| dmi_harmonie_arome_europe | 95 | 1.3 | -0.2 | 2.3 | 1.2 | 30 % |
-| icon_eu | 95 | 1.3 | -0.3 | 2.2 | 0.9 | 33 % |
-| meteoswiss_icon_ch2 | 95 | 1.4 | -0.3 | 2.8 | 1.9 | 30 % |
-| geosphere_arome_austria | 95 | 1.4 | -1.0 | 3.0 | 2.4 | 25 % |
-| meteoswiss_icon_ch1 | 95 | 1.6 | -0.7 | 2.5 | 1.2 | 31 % |
+| ecmwf_ifs025 | 338 | 1.2 | -0.0 | 1.9 | 1.6 | 29 % |
+| ecmwf_aifs025_single | 338 | 1.4 | -0.6 | – | 1.3 | – |
+| meteoswiss_icon_ch2 | 338 | 1.5 | -0.2 | 2.9 | 2.2 | 38 % |
+| knmi_harmonie_arome_europe | 338 | 1.6 | -0.1 | 2.5 | 1.2 | 39 % |
+| best_match | 338 | 1.7 | -1.1 | 2.7 | 1.5 | 35 % |
+| **icon_d2** (app today) | 338 | 1.7 | -1.1 | 2.7 | 1.5 | 35 % |
+| geosphere_arome_austria | 338 | 1.7 | -0.2 | 3.3 | 2.0 | 52 % |
+| dmi_harmonie_arome_europe | 338 | 1.7 | +0.4 | 3.0 | 1.4 | 54 % |
+| meteoswiss_icon_ch1 | 338 | 1.8 | -0.3 | 3.0 | 1.4 | 53 % |
+| icon_eu | 338 | 1.8 | -1.3 | 2.5 | 0.9 | 37 % |
 
 ### Staffelsee, centre
 
@@ -242,16 +242,16 @@ Stations: wind: Hohenpeißenberg (16.9 km), gust: Hohenpeißenberg (16.9 km), te
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| meteoswiss_icon_ch1 | 95 | 3.5 | -3.4 | 4.8 | 3.1 | 52 % |
-| dmi_harmonie_arome_europe | 95 | 4.0 | -4.0 | 6.8 | 1.7 | 78 % |
-| meteoswiss_icon_ch2 | 95 | 4.2 | -4.2 | 6.3 | 3.3 | 67 % |
-| icon_eu | 95 | 4.3 | -4.3 | 7.5 | 2.0 | 77 % |
-| ecmwf_ifs025 | 95 | 4.3 | -4.3 | 6.3 | 1.5 | 70 % |
-| geosphere_arome_austria | 95 | 4.5 | -4.5 | 7.0 | 1.7 | 78 % |
-| best_match | 95 | 4.6 | -4.6 | 7.3 | 3.2 | 70 % |
-| **icon_d2** (app today) | 95 | 4.6 | -4.6 | 7.3 | 3.2 | 70 % |
-| knmi_harmonie_arome_europe | 95 | 4.7 | -4.7 | 7.3 | 1.7 | 78 % |
-| ecmwf_aifs025_single | 95 | 5.0 | -5.0 | – | 1.9 | – |
+| meteoswiss_icon_ch1 | 338 | 3.7 | -3.6 | 5.7 | 2.6 | 51 % |
+| dmi_harmonie_arome_europe | 338 | 4.2 | -4.1 | 7.2 | 1.6 | 69 % |
+| geosphere_arome_austria | 338 | 4.3 | -4.2 | 6.9 | 2.3 | 67 % |
+| ecmwf_ifs025 | 338 | 4.4 | -4.4 | 6.8 | 1.0 | 69 % |
+| meteoswiss_icon_ch2 | 338 | 4.5 | -4.5 | 7.2 | 2.8 | 64 % |
+| knmi_harmonie_arome_europe | 338 | 4.6 | -4.5 | 7.2 | 1.4 | 64 % |
+| icon_eu | 338 | 4.9 | -4.9 | 8.5 | 1.7 | 75 % |
+| ecmwf_aifs025_single | 338 | 5.0 | -5.0 | – | 0.9 | – |
+| **icon_d2** (app today) | 338 | 5.4 | -5.4 | 9.1 | 2.7 | 71 % |
+| best_match | 338 | 5.4 | -5.4 | 9.1 | 2.7 | 72 % |
 
 ### Olympic regatta course Oberschleißheim
 
@@ -259,15 +259,15 @@ Stations: wind: München-Stadt (9.2 km), gust: München-Stadt (9.2 km), temp: M�
 
 | Model | Hours | Wind error m/s | Wind bias | Gust error m/s | Air temp error °C | Light wrong |
 | --- | --- | --- | --- | --- | --- | --- |
-| **icon_d2** (app today) | 95 | 0.7 | -0.1 | 1.0 | 0.5 | 11 % |
-| best_match | 95 | 0.7 | -0.1 | 1.0 | 0.5 | 11 % |
-| dmi_harmonie_arome_europe | 95 | 0.7 | -0.0 | 1.3 | 1.1 | 13 % |
-| ecmwf_aifs025_single | 95 | 0.7 | +0.2 | – | 0.6 | – |
-| knmi_harmonie_arome_europe | 95 | 0.7 | -0.1 | 1.3 | 1.0 | 14 % |
-| icon_eu | 95 | 0.8 | -0.3 | 1.3 | 0.6 | 20 % |
-| meteoswiss_icon_ch1 | 95 | 0.8 | +0.5 | 1.3 | 0.7 | 11 % |
-| ecmwf_ifs025 | 95 | 0.9 | +0.5 | 1.6 | 0.6 | 21 % |
-| meteoswiss_icon_ch2 | 95 | 1.0 | +0.1 | 1.4 | 0.7 | 11 % |
-| geosphere_arome_austria | 95 | 1.0 | +0.8 | 1.1 | 1.3 | 10 % |
+| icon_eu | 338 | 0.8 | +0.3 | 1.2 | 0.7 | 18 % |
+| best_match | 338 | 0.8 | +0.2 | 1.6 | 0.7 | 26 % |
+| **icon_d2** (app today) | 338 | 0.8 | +0.2 | 1.6 | 0.7 | 26 % |
+| ecmwf_ifs025 | 338 | 1.1 | +0.9 | 1.8 | 0.9 | 34 % |
+| ecmwf_aifs025_single | 338 | 1.1 | +0.8 | – | 0.8 | – |
+| knmi_harmonie_arome_europe | 338 | 1.1 | +0.8 | 2.1 | 1.0 | 31 % |
+| meteoswiss_icon_ch2 | 338 | 1.1 | +0.7 | 1.9 | 0.8 | 35 % |
+| dmi_harmonie_arome_europe | 338 | 1.2 | +0.9 | 2.1 | 1.0 | 35 % |
+| meteoswiss_icon_ch1 | 338 | 1.3 | +1.1 | 2.3 | 1.0 | 38 % |
+| geosphere_arome_austria | 338 | 2.1 | +2.0 | 2.5 | 1.3 | 36 % |
 
 Data: Open-Meteo; measurements Deutscher Wetterdienst (CC BY 4.0).
