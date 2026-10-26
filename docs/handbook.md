@@ -114,6 +114,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Publish forecasts | every 30 min from main | api.rowfrog.com; the weather maps in `maps/` (index + one file per tile and value) are rebuilt only when DWD has a newer ICON-D2 run, every 3 hours, from DWD open data without Open-Meteo calls |
 | Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays); its section "Once a day instead of twice?" shows whether the 04:40 run alone would rank the models the same (to decide later whether to drop the 16:40 run, about 700 Open-Meteo calls a day) |
 | Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month. Covers Open-Meteo, Copernicus and, read with the Cloudflare token, Worker requests (100,000 a day) and D1 rows written (100,000) and read (5 million) on the free Workers plan |
+| App size | when iOS code lands on main, or by hand | job summary of the run: installed size, expected App Store download, and the largest files (Release archive, unsigned, about 15 macOS minutes) |
 
 ## By hand
 
