@@ -41,7 +41,7 @@ search covers the clubs in Germany, Austria and Switzerland (see
 [Club catalog](#club-catalog)) in one box, with country chips to narrow it,
 and the clubs can also be browsed country by country.
 Pages swipe left and right between saved locations, like the iOS Weather
-app. The list shows each location's light and key numbers, with feels like under the temperature; swipe a row to
+app. The list shows each location's light and key numbers, with feels like under the temperature and an estimated water temperature in grey with ≈; swipe a row to
 remove it or make it the home base. The saved list stays on the phone.
 
 **Add a place.** A club, boathouse or spot on the water that no list has can
@@ -111,6 +111,9 @@ account), carried forward with the air temperatures; the top tile shows it
 in grey as "Estimated", and the detail view names the satellite and the date
 of the reading. Where there is no recent clear satellite view either, the
 water temperature is estimated from the air temperatures alone, all year.
+Where no station measures, the rowing light uses the estimate. A 7-day water
+temperature forecast shows as a dashed line in the water chart, and the light
+uses it for the later hours.
 
 **DWD warnings.** The page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
@@ -163,7 +166,7 @@ EUMETSAT satellite (`ios/RowFrog/WeatherMap.swift`,
 `backend/rowfrog/sources/icon_d2_maps.py`). In the detail view the map sits
 under the chart (beside it in landscape) and follows the hour of the chart's
 line; a chain button lets it keep its own time, and a tap opens it full
-screen with a slim chart.
+screen with a slim chart and a switch to play the hours as a loop.
 
 **Battery.** The app keeps its battery use low: the radar only updates on the
 page in front, readings and map pictures are reused, widgets redraw only when
