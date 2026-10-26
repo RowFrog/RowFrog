@@ -868,7 +868,7 @@ function conditionTile(condition, forecast, hour, radar = null) {
       const level = light === "red" ? 3 : light === "amber" ? 2 : 1;
       const storm = (forecast.warnings?.items ?? []).some((w) => /GEWITTER/i.test(w.event ?? ""));
       const note = !localChecked(forecast.warnings) ? t("Warnings not checked")
-        : !warningsIsDWD(forecast.warnings) ? (storm ? t("Official warning") : t("No official warning"))
+        : !warningsIsDWD(forecast.warnings) ? (storm ? t("Official warning") : t("No warning"))
         : storm ? t("DWD warning") : t("No DWD warning");
       return tile({ 3: t("High"), 2: t("Possible"), 1: t("Low") }[level], note, graphic);
     }

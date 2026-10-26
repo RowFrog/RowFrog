@@ -40,7 +40,7 @@ export function tourPages() {
       ],
     },
     {
-      id: "warnings", icon: "triangle-alert", tint: "orange", title: key("Official warnings"), intro: key("Official weather warnings come right under the rowing light: from DWD in Germany, GeoSphere Austria in Austria and MeteoSwiss in Switzerland."),
+      id: "warnings", icon: "triangle-alert", tint: "orange", title: key("Official warnings"), intro: key("Official warnings come right under the rowing light."),
       points: [
         p("waves", key("Storm warnings for the lake and weather warnings for the town.")), p("message-square-text", key("A warning also appears in the Why line and on the location list.")),
         p("siren", key("On the lake, also watch the storm warning lights on the shore. The warnings card explains what they mean.")),

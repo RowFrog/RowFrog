@@ -78,7 +78,7 @@ struct ArrangePageSheet: View {
                 }
                 Section {
                     fixedRow(tr("Rowing light"), symbol: "circle.fill", note: tr("always first"))
-                    fixedRow(tr("Official warnings"), symbol: "exclamationmark.triangle", note: tr("right under it, while one is issued"))
+                    fixedRow(tr("Warnings"), symbol: "exclamationmark.triangle", note: tr("right under it, while one is issued"))
                     ForEach(layout.order) { card in
                         Toggle(isOn: Binding(
                             get: { !layout.hidden.contains(card) },
