@@ -104,7 +104,7 @@ struct ConditionData {
     /// the shown hour without radar), within the next 24 hours.
     var forecastRain: ForecastHour? {
         let after = radarAhead?.end
-        return next24.first { ($0.precipitationMm ?? 0) >= 0.1 && (after.map { end in $0.time >= end } ?? true) }
+        return next24.first { hour in (hour.precipitationMm ?? 0) >= 0.1 && hour.time >= (after ?? .distantPast) }
     }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
     var water: WaterTemperature? { forecast.waterTemperature }
@@ -1222,7 +1222,7 @@ private struct ConditionChart: View {
     private func drawn(_ line: ChartLine) -> [ChartPoint] {
         let covered = shownLines.filter { $0.id != line.id }.compactMap(\.covers)
         guard line.kind == .bars, !covered.isEmpty else { return line.points }
-        return line.points.filter { p in !covered.contains { $0.contains(p.x) } }
+        return line.points.filter { p in !covered.contains { range in range.contains(p.x) } }
     }
 
     @ChartContentBuilder
