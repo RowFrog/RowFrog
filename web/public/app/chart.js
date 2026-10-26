@@ -248,7 +248,7 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
         const p = valueAt(l, x);
         if (!p) return "";
         const dotMark = shown().length > 1 ? `<i style="${l.dashed ? `border:1.5px solid ${l.colour}` : `background:${l.colour}`}"></i>` : "";
-        return `<span>${dotMark}${h(valueText(p.y, detail.unit))}</span>`;
+        return `<span>${dotMark}${h(detail.valueText ? detail.valueText(p.y) : valueText(p.y, detail.unit))}</span>`;
       }).join("");
       const at = px(x) - scroller.scrollLeft;
       const before = at > scroller.clientWidth / 2;

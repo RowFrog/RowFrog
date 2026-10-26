@@ -52,6 +52,19 @@ export function beaufort(ms) {
   return i < 0 ? 12 : i;
 }
 
+/**
+ * Beaufort without the steps, for charts: each force spans from half a force
+ * below to half above, so the line and the limits keep their order in every
+ * unit, and rounding gives the force that beaufort() names.
+ */
+export function beaufortScale(ms) {
+  if (ms == null) return null;
+  const i = BEAUFORT.findIndex((limit) => ms < limit);
+  if (i === 0) return (ms / BEAUFORT[0]) * 0.5;
+  if (i < 0) return 11.5 + Math.min(0.5, (ms - BEAUFORT[11]) / 8);
+  return i - 0.5 + (ms - BEAUFORT[i - 1]) / (BEAUFORT[i] - BEAUFORT[i - 1]);
+}
+
 export const WIND_UNITS = {
   ms: { label: "m/s", title: key("Metres per second"), from: (ms) => ms },
   kmh: { label: "km/h", title: key("Kilometres per hour"), from: (ms) => ms * 3.6 },

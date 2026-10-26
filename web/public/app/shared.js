@@ -3,9 +3,9 @@
 // small pieces such as the rowing light's dot and the sheets.
 
 import { t, num, locale } from "./i18n.js";
-import { icon } from "./icons.js";
+import { icon, iconShape } from "./icons.js";
 import {
-  API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD,
+  API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
 } from "./logic.js";
 import { isOwn, loadOwnForecast } from "./ownplace.js";
 
@@ -452,11 +452,81 @@ export function levelSegments(level) {
   return `<span class="levels">${colours.map((c, i) => `<span style="height:${40 + i * 30}%;background:${i < level ? c : "var(--fill)"}"></span>`).join("")}</span>`;
 }
 
+/**
+ * A condition's graphic, the same on its tile and at the top of its own page
+ * (the app's tile graphics). Daylight draws its sun path where it is shown; ice has none.
+ */
+export function conditionGraphic(condition, forecast, hour) {
+  const warm = [C.blue, C.teal, C.green, C.orange, C.red];
+  switch (condition) {
+    case "temperature": return scaleBar(((hour.temperatureC ?? 0) + 10) / 45, warm);
+    case "feelsLike": return scaleBar(((hour.apparentTemperatureC ?? 0) + 10) / 45, warm);
+    case "wind": return windDial(hour);
+    case "waves": {
+      // The limits for the boat: amber and red zones up to a third past red.
+      const limits = currentLimits();
+      const [amber, red] = [limits.value("waveAmber"), limits.value("waveRed")];
+      const top = (red * 4) / 3;
+      return zoneBar((hour.waveHeightM ?? 0) / top, [[0, C.green], [amber / top, C.orange], [red / top, C.red]]);
+    }
+    case "waterTemperature": {
+      const water = forecast.waterTemperature;
+      // Blues for cold water: it calls for a life jacket, not a warning colour.
+      return water ? zoneBar(water.celsius / 25, [[0, "var(--deep-water)"], [0.16, "var(--kit)"], [0.4, "var(--kit-light)"], [0.6, C.green]]) : "";
+    }
+    case "precipitation": {
+      const i = Math.max(0, forecast.hours.findIndex((x) => x.time === hour.time));
+      return sparkBars(forecast.hours.slice(i, i + 8).map((x) => x.precipitationMm ?? 0));
+    }
+    case "thunderstorm": {
+      const light = lightFor(hour, REASONS.thunderstorm);
+      return levelSegments(light === "red" ? 3 : light === "amber" ? 2 : 1);
+    }
+    case "visibility": {
+      const f = Math.log10(Math.max(hour.visibilityM ?? 40000, 100) / 100) / Math.log10(400);
+      return zoneBar(f, [[0, C.red], [0.27, C.orange], [0.384, C.green]]);
+    }
+    case "cloudCover": return cloudBig(hour);
+    case "humidity":
+      return `<span class="humid">${filledIcon("droplet", hour.humidityPct, 2.5, 22, "drop")}${hour.temperatureC != null && hour.dewPointC != null ? dewGap(hour.temperatureC, hour.dewPointC) : ""}</span>`;
+    case "pressure": {
+      const change = pressureChange(forecast.hours, hour);
+      return pressureGauge(hour.pressureHpa, change == null ? null : pressureTrend(change));
+    }
+    case "uvIndex": return scaleBar((hour.uvIndex ?? 0) / 11, [C.green, C.yellow, C.orange, C.red, C.purple]);
+    default: return "";
+  }
+}
+
+/** Air temperature and dew point as two dots with the gap between them (DewGap): mist when they touch. */
+export function dewGap(air, dewPoint) {
+  const gap = air - dewPoint;
+  // 0–8 degrees of gap across the bar.
+  const offset = (Math.min(Math.max(gap, 0), 8) / 8) * 34;
+  return `<span class="dewgap"><small>${num(Math.round(unitChange("temperature", gap)))}°</small>
+    <span class="track"><i class="dew"></i><i class="air" style="left:${offset}px"></i></span></span>`;
+}
+
 export function cloudLayers(hour) {
   if (hour.cloudCoverHighPct == null) return "";
   const rows = [[t("H"), hour.cloudCoverHighPct], [t("M"), hour.cloudCoverMidPct], [t("L"), hour.cloudCoverLowPct]];
   return `<span class="layers">${rows.map(([name, pct]) => `<span><small>${h(name)}</small><span class="track"><span style="width:${pct ?? 0}%"></span></span></span>`).join("")}</span>`;
 }
+
+/**
+ * An outlined icon filled from the bottom to `pct` (the humidity drop, the
+ * cloud cover); `top` and `bottom` are where the shape starts and ends in its 24-unit box.
+ */
+export function filledIcon(name, pct, top, bottom, cls) {
+  const shape = iconShape(name);
+  const level = bottom - ((bottom - top) * Math.min(100, Math.max(0, pct ?? 0))) / 100;
+  const id = `fill-${name}`;
+  return `<svg class="filled ${cls}" viewBox="0 0 24 24" aria-hidden="true"><defs><clipPath id="${id}"><rect x="0" y="${level.toFixed(2)}" width="24" height="24" /></clipPath></defs>
+    <g class="fill" clip-path="url(#${id})">${shape}</g><g class="outline">${shape}</g></svg>`;
+}
+
+/** The cloud filling with the cover and the three layers beside it. */
+export const cloudBig = (hour) => `<span class="cloud-big">${filledIcon("cloud", hour.cloudCoverPct, 3, 19, "cloudy")}${cloudLayers(hour)}</span>`;
 
 export function pressureGauge(hpa, trend) {
   // 960 hPa at the left end of the arc, 1060 hPa at the right.
