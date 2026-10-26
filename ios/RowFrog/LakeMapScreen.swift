@@ -701,11 +701,13 @@ struct LakeMapScreen: View {
             } else if routeMode {
                 Text(tr("Tap the water to add the turning points of your route."))
             } else if let spot, spot < hour.lights.count {
-                HStack(spacing: 6) {
+                // Two lines, so the spot's wind fits next to its waves.
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
                     TrafficLightDot(light: hour.lights[spot], size: 10)
                     Text(hour.lights[spot].title + " · " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: spot)))
                          + (spotWind(spot, hour).map { " · " + $0 } ?? ""))
                 }
+                .lineLimit(2)
             } else {
                 Text(view.headline(for: hour))
             }
