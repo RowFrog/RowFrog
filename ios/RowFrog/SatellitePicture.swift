@@ -1,3 +1,4 @@
+import MapKit
 import SwiftUI
 
 /// Sentinel-2 pictures of a lake, published by the backend
@@ -573,6 +574,9 @@ struct SatelliteOverlay: View {
     @MainActor private var view: LakeView? { LakeViewStore.shared.views[lakeID] }
 
     var body: some View {
+        let view = self.view
+        // The wind map's wind, for the arrows on land.
+        let land = view.flatMap { v in v.hours.isEmpty ? nil : ModelMapStore.shared.landWind(at: v.grid.centre, time: v.hours[v.hourIndex()].time) }
         Canvas { context, size in
             guard let box = picture.bbox, box.count == 4 else { return }
             let full = screen?.size ?? size, zoom = screen?.zoom ?? 1, offset = screen?.offset ?? .zero
@@ -601,7 +605,7 @@ struct SatelliteOverlay: View {
             }
             // Wind under the lines and marks, so shore, routes and clubs stay on top.
             if layers.contains(.wind), let view {
-                SatelliteWind.draw(in: context, view: view, box: box, size: full, zoom: zoom, offset: offset, visible: size)
+                SatelliteWind.draw(in: context, view: view, land: land, box: box, size: full, zoom: zoom, offset: offset, visible: size)
             }
             if layers.contains(.shore), let view {
                 var path = Path()
@@ -661,17 +665,22 @@ struct SatelliteOverlay: View {
             }
         }
         .allowsHitTesting(false)
+        .task(id: layers.contains(.wind)) {
+            if layers.contains(.wind), let view { await ModelMapStore.shared.loadLandWind(at: view.grid.centre) }
+        }
     }
 }
 
 /// The wind arrows on a satellite picture, as on the lake map: an even grid
-/// worked out between the forecast points, more arrows as the picture zooms
-/// in, the same size on screen, over the whole picture and fainter on land. The arrow nearest each forecast point carries its speed.
+/// over the whole picture, more arrows as it zooms in, the same size on screen.
+/// On the water the wind is worked out between the lake's forecast points, on
+/// land it is the wind map's, drawn fainter. The arrow nearest each forecast
+/// point carries its speed.
 enum SatelliteWind {
     /// Draws on `context`, whose points are the screen's: the picture is `size`
     /// at zoom 1 and shows `zoom` times larger, its corner `offset` above and
     /// left of the drawing's corner; `visible` is the size drawn on.
-    static func draw(in context: GraphicsContext, view: LakeView, box: [Double], size: CGSize,
+    static func draw(in context: GraphicsContext, view: LakeView, land: LandWind?, box: [Double], size: CGSize,
                      zoom: CGFloat, offset: CGPoint, visible: CGSize) {
         guard !view.hours.isEmpty, box.count == 4, size.width > 0, size.height > 0, zoom > 0 else { return }
         let hour = view.hours[view.hourIndex()]
@@ -691,7 +700,11 @@ enum SatelliteWind {
         let area = CGRect(x: offset.x / zoom, y: offset.y / zoom, width: visible.width / zoom, height: visible.height / zoom)
             .intersection(CGRect(origin: .zero, size: size))
         let spacing = WindArrows.spacing / zoom
-        let arrows = WindArrows.arrows(in: area, spacing: spacing, water: water, from: samples)
+        // On land the wind map's forecast, at the place the picture shows.
+        let arrows = WindArrows.arrows(in: area, spacing: spacing, water: water, from: samples, land: land.map { land in { p in
+            land.at(MKMapPoint(CLLocationCoordinate2D(latitude: box[3] - Double(p.y / size.height) * (box[3] - box[1]),
+                                                      longitude: box[0] + Double(p.x / size.width) * (box[2] - box[0]))))
+        } })
         func screen(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * zoom - offset.x, y: p.y * zoom - offset.y) }
 
         let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))
@@ -1000,7 +1013,7 @@ struct SatelliteLegend: View {
                 if on.contains(.wind) {
                     Section(tr("Wind")) {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land carry the lake's wind across the picture; away from the lake they are only a rough guide."))
+                            tr("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land show the weather map's wind forecast for each place."))
                     }
                 }
                 if on.contains(.ice), picture.ice != nil {

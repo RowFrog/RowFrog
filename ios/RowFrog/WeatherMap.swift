@@ -930,6 +930,45 @@ struct WindField {
     }
 }
 
+/// The wind map's wind over one tile, for the arrows on land on the lake map
+/// and the satellite picture: a forecast of each place's own, as on the wind map.
+struct LandWind {
+    let field: WindField
+    /// The tile in map points.
+    let rect: MKMapRect
+
+    /// Where the wind blows to (degrees) and its speed (m/s); nil off the tile.
+    func at(_ p: MKMapPoint) -> (towardDeg: Double, speedMs: Double)? {
+        guard rect.contains(p), rect.width > 0, rect.height > 0 else { return nil }
+        return field.sample(x: (p.x - rect.minX) / rect.width, y: (p.y - rect.minY) / rect.height)
+            .map { ($0.towards, $0.speed) }
+    }
+}
+
+extension ModelMapStore {
+    /// The wind map's wind around a place at a time, once loaded: the model
+    /// hour nearest the time, if within an hour and a half.
+    func landWind(at p: Coordinate, time: Date) -> LandWind? {
+        guard let index, let tile = index.tile(for: p),
+              let hour = index.hours.indices.min(by: { abs(index.hours[$0].timeIntervalSince(time)) < abs(index.hours[$1].timeIntervalSince(time)) }),
+              abs(index.hours[hour].timeIntervalSince(time)) <= 90 * 60,
+              let speeds = grid(tile: tile.id, value: WeatherMapLayer.wind.rawValue),
+              let directions = grid(tile: tile.id, value: "windDirection") else { return nil }
+        let nw = MKMapPoint(CLLocationCoordinate2D(latitude: tile.north, longitude: tile.west))
+        let se = MKMapPoint(CLLocationCoordinate2D(latitude: tile.south, longitude: tile.east))
+        return LandWind(field: WindField(directions: directions, speeds: speeds, hour: hour),
+                        rect: MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y))
+    }
+
+    /// Loads the wind map's wind for the tile around a place: the same two files the wind map uses.
+    func loadLandWind(at p: Coordinate) async {
+        await loadIndex()
+        guard let tile = index?.tile(for: p) else { return }
+        await load(tile: tile.id, value: WeatherMapLayer.wind.rawValue)
+        await load(tile: tile.id, value: "windDirection")
+    }
+}
+
 private struct WeatherMapView: UIViewRepresentable {
     let point: Coordinate
     var clubID: String?

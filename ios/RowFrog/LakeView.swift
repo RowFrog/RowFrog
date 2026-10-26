@@ -77,6 +77,8 @@ struct LakeGrid: Decodable, Hashable {
     var southEdge: Double { south - dLat / 2 }
     var westEdge: Double { west - dLon / 2 }
     var east: Double { west + Double(cols - 1) * dLon + dLon / 2 }
+    /// The middle of the grid.
+    var centre: Coordinate { Coordinate(lat: (north + southEdge) / 2, lon: (westEdge + east) / 2) }
 }
 
 struct LakeClub: Decodable, Hashable, Identifiable {
@@ -530,8 +532,11 @@ enum WindArrows {
 
     /// The arrows in `area`, `spacing` apart in the drawing's units and fixed to
     /// its coordinates, so map tiles and redraws agree; every other row is
-    /// shifted by half, so the arrows don't line up in columns.
-    static func arrows(in area: CGRect, spacing: CGFloat, water: CGPath, from samples: [Sample]) -> [Arrow] {
+    /// shifted by half, so the arrows don't line up in columns. On the water the
+    /// wind comes from the lake's forecast points, on land from `land` (the wind
+    /// map's forecast); without it, land gets no arrows.
+    static func arrows(in area: CGRect, spacing: CGFloat, water: CGPath, from samples: [Sample],
+                       land: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)? = nil) -> [Arrow] {
         guard !samples.isEmpty, !area.isNull, !area.isEmpty, spacing > 0 else { return [] }
         var out: [Arrow] = []
         var y = (area.minY / spacing).rounded(.down) * spacing + spacing / 2
@@ -541,7 +546,7 @@ enum WindArrows {
             while x < area.maxX {
                 let p = CGPoint(x: x, y: y)
                 let onWater = water.contains(p, using: .evenOdd)
-                if let wind = wind(at: p, from: samples) {
+                if let wind = onWater ? wind(at: p, from: samples) : land?(p) {
                     out.append(Arrow(at: p, towardDeg: wind.towardDeg, speedMs: wind.speedMs, ashore: !onWater))
                 }
                 x += spacing
@@ -551,7 +556,7 @@ enum WindArrows {
         return out
     }
 
-    /// The wind anywhere, from the forecast points weighted by
+    /// The wind on the lake, from the forecast points weighted by
     /// distance (nearer counts more), averaged as east and north parts so
     /// opposite directions don't add up to a wrong one.
     static func wind(at p: CGPoint, from samples: [Sample]) -> (towardDeg: Double, speedMs: Double)? {

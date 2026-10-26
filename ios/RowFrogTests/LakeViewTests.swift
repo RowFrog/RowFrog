@@ -142,20 +142,23 @@ final class LakeViewTests: XCTestCase {
     }
 
     func testWindArrowsOnWaterAndLand() {
-        // A 100 x 100 lake in a 300 x 300 area, arrows 10 apart: the whole area gets arrows.
+        // A 100 x 100 lake in a 300 x 300 area, arrows 10 apart.
         let water = CGPath(rect: CGRect(x: 0, y: 0, width: 100, height: 100), transform: nil)
         let samples = [WindArrows.Sample(point: CGPoint(x: 50, y: 50), towardDeg: 90, speedMs: 4)]
-        let arrows = WindArrows.arrows(in: CGRect(x: -100, y: -100, width: 300, height: 300), spacing: 10,
-                                       water: water, from: samples)
+        let area = CGRect(x: -100, y: -100, width: 300, height: 300)
+        // With the weather map's wind on land, the whole area gets arrows: the lake's on the water, the map's on land.
+        let arrows = WindArrows.arrows(in: area, spacing: 10, water: water, from: samples, land: { _ in (0, 3) })
         XCTAssertEqual(arrows.count, 900)
         XCTAssertTrue(arrows.contains { a in a.at.x < -80 && a.at.y < -80 })
         for a in arrows {
-            XCTAssertEqual(a.towardDeg, 90, accuracy: 0.001)
             // Points right on the shore line could count either way.
             if a.at.x == 0 || a.at.x == 100 { continue }
             let inside = a.at.x > 0 && a.at.x < 100 && a.at.y > 0 && a.at.y < 100
             XCTAssertEqual(a.ashore, !inside)
+            XCTAssertEqual(a.towardDeg, inside ? 90 : 0, accuracy: 0.001)
         }
+        // Without it, only the water.
+        XCTAssertTrue(WindArrows.arrows(in: area, spacing: 10, water: water, from: samples).allSatisfy { !$0.ashore })
         // Opposite winds of equal weight don't make a strong wind sideways.
         let two = [WindArrows.Sample(point: CGPoint(x: 0, y: 0), towardDeg: 0, speedMs: 5),
                    WindArrows.Sample(point: CGPoint(x: 10, y: 0), towardDeg: 10, speedMs: 5)]
