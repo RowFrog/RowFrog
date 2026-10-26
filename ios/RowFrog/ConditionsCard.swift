@@ -1138,7 +1138,7 @@ private struct ConditionChart: View {
         if let plotFrame = proxy.plotFrame {
             let plot = geo[plotFrame]
             let left = max(plot.minX, 0)
-            let visibleRight = visibleRight(proxy: proxy, plot: plot)
+            let visibleRight = rightEdge(proxy: proxy, plot: plot)
             let right = min(plot.maxX, visibleRight, geo.size.width)
             let onScreen = { (x: Double) -> CGFloat? in
                 guard let p = proxy.position(forX: x) else { return nil }
@@ -1178,7 +1178,7 @@ private struct ConditionChart: View {
             // A chart that scrolls reports its whole plot, which starts off screen
             // once dragged; the names stay at the visible left edge instead.
             let left = max(plot.minX, 0)
-            let visibleRight = visibleRight(proxy: proxy, plot: plot)
+            let visibleRight = rightEdge(proxy: proxy, plot: plot)
             let right = min(plot.maxX, visibleRight, geo.size.width)
             let trailing = !detail.history
             let placed = Self.spread(detail.limits.compactMap { limit -> (limit: ChartLimit, y: CGFloat)? in
@@ -1206,7 +1206,7 @@ private struct ConditionChart: View {
 
     /// The right edge of what is on screen: the visible 24 hours of a forecast;
     /// a history's whole plot, which reaches on into the water forecast.
-    private func visibleRight(proxy: ChartProxy, plot: CGRect) -> CGFloat {
+    private func rightEdge(proxy: ChartProxy, plot: CGRect) -> CGFloat {
         if detail.history { return plot.maxX }
         return proxy.position(forX: scrollX + 24).map { plot.minX + $0 } ?? plot.maxX
     }
@@ -1219,7 +1219,7 @@ private struct ConditionChart: View {
         if let x = selectedX, let plotFrame = proxy.plotFrame, let p = proxy.position(forX: x.rounded()) {
             let plot = geo[plotFrame]
             let left = max(plot.minX, 0)
-            let visibleRight = visibleRight(proxy: proxy, plot: plot)
+            let visibleRight = rightEdge(proxy: proxy, plot: plot)
             let right = min(plot.maxX, visibleRight, geo.size.width)
             let px = plot.minX + p
             let before = px > (left + right) / 2
