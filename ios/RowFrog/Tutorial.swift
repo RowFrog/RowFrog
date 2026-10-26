@@ -256,8 +256,9 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .wideScreen: [
             TourPoint(symbol: "sidebar.left", text: tr("The location list stays on the left, the club page on the right.")),
             TourPoint(symbol: "square.grid.2x2", text: tr("The cards on the club page sit in two columns.")),
+        ] + (Orientation.isPad ? [] : [
             TourPoint(symbol: "gearshape", text: tr("Prefer portrait only? Switch landscape off in the settings.")),
-        ]
+        ])
         case .settings: [
             TourPoint(symbol: "globe", text: tr("Language: English or German.")),
             TourPoint(symbol: "ruler", text: tr("Units for temperature, wind, waves, rain, distances and air pressure.")),

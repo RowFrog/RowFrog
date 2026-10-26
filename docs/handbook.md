@@ -71,6 +71,23 @@ real export file.
 Health access can be changed later in the Health app > Sharing > Apps >
 Row Frog. Nothing read from Health or a file leaves the phone.
 
+### Testing on an iPad
+
+The app runs natively on the iPad (iPhone and iPad in `TARGETED_DEVICE_FAMILY`).
+Install it like on the iPhone: cable, Trust, Developer Mode on the iPad
+(Settings > Privacy & Security), Personal Team, Run scheme on Release, pick the
+iPad in Xcode, then trust the developer under Settings > General > VPN & Device
+Management.
+
+1. In landscape, and in portrait on the larger iPads, the location list stays
+   on the left and the club page sits on the right with the cards in two columns.
+2. Turn the iPad every way, including upside down; resize the window (Stage
+   Manager, or the window handle on iPadOS 26): narrow windows fall back to the
+   iPhone layout.
+3. Settings > Appearance has no Landscape switch on the iPad: iPadOS ignores an
+   orientation lock for apps in windows.
+4. The widget offers every size, including extra large.
+
 ## Launch arguments (Simulator and screenshots)
 
 Every setting can be set at launch, e.g. `-RWLanguage de`. The screenshot
@@ -125,7 +142,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Model check with archive_days | once for a quick first score (60 days); otherwise leave it at 0 |
 | Satellite water temperature check | after changing the satellite water temperature code (it runs itself on pushes that touch it): compares Copernicus LSWT, Landsat and the carried-forward estimate with GKD lake stations since 1 May; about 20 min |
 | Water temperature stations | every few months, or when clubs are added: lists the GKD Bayern, PEGELONLINE and Swiss BAFU stations, shows how `data/water-stations.json` (the station each club reads, nearest on its own water) would change, and reads every station in it once. To take a changed list, run `python3 scripts/water_station_survey.py --write` locally and commit the file |
-| App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run |
+| App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run. Input `device` = `iPad` shoots on an 11-inch iPad Pro Simulator instead; those shots go to an `ipad/` folder in the same set |
 
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
 
