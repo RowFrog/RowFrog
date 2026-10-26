@@ -461,7 +461,8 @@ private struct ClubChoicePage: View {
             .padding(.bottom, 36)
         }
         .padding(.top, 8)
-        .task { await autoPickHome() }
+        // Again once the location is in, so the pick is one of the clubs shown.
+        .task(id: near == nil) { await autoPickHome() }
     }
 
     /// Screenshot hook: `-RWTourAutoHome YES` picks the first suggestion as home
