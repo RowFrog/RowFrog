@@ -372,6 +372,8 @@ jobs:
           # clubs, and the safety notice on a phone set to German (language picked from the phone).
           WAIT=30 shoot 118-satellite-card-clubs light -RWOpenClub mrc-1880 -RWScrollTo satellite -RWSatelliteLayers '(clubs, shore)'
           WAIT=30 shoot 119-satellite-full-clubs light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)'
+          WAIT=30 shoot 240-satellite-full-wind light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore, wind)'
+          WAIT=30 shoot 241-satellite-full-wind-zoomed light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore, wind)' -RWSatelliteZoom 3
           SAFETY=1 GUIDE=1 shoot 120-safety-notice-phone-german light -RWNoTips YES -AppleLanguages '(de)'
           # Launch point card: a still map picture until tapped (battery), light and dark.
           shoot 121-launch-point-still light -RWOpenClub mrc-1880 -RWScrollTo launchpoint

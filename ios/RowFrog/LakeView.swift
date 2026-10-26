@@ -500,3 +500,81 @@ enum LakeRaster {
         )
     }
 }
+
+/// Wind arrows on an even grid, as the lake map and the satellite picture draw
+/// them: worked out between the lake's forecast points, more of them as the view
+/// zooms in, the same size on screen, and on land up to `ashoreM` from the shore.
+enum WindArrows {
+    /// A forecast point's wind, in the drawing's own coordinates.
+    struct Sample {
+        let point: CGPoint
+        let towardDeg: Double
+        let speedMs: Double
+    }
+
+    /// An arrow to draw, and whether it stands on land.
+    struct Arrow {
+        let at: CGPoint
+        let towardDeg: Double
+        let speedMs: Double
+        let ashore: Bool
+    }
+
+    /// Screen points between arrows: more arrows as the view zooms in, fewer out.
+    static let spacing: CGFloat = 60
+    /// How far past the shore arrows go: about the distance between forecast
+    /// points, which are all on the water; farther out would only be a guess.
+    static let ashoreM = 2000.0
+    /// Arrows on land are fainter, so the lake stays in front.
+    static let ashoreOpacity = 0.6
+
+    /// Arrow length on screen: longer in stronger wind.
+    static func length(_ speedMs: Double) -> CGFloat { 14 + CGFloat(min(max(speedMs, 0), 15)) * 1.6 }
+
+    /// The land within `margin` of the shore (and of islands), to test points against.
+    static func nearShore(_ water: CGPath, margin: CGFloat) -> CGPath {
+        water.copy(strokingWithWidth: margin * 2, lineCap: .round, lineJoin: .round, miterLimit: 1)
+    }
+
+    /// The arrows in `area`, `spacing` apart in the drawing's units and fixed to
+    /// its coordinates, so map tiles and redraws agree; every other row is
+    /// shifted by half, so the arrows don't line up in columns.
+    static func arrows(in area: CGRect, spacing: CGFloat, water: CGPath, nearShore: CGPath?, from samples: [Sample]) -> [Arrow] {
+        guard !samples.isEmpty, !area.isNull, !area.isEmpty, spacing > 0 else { return [] }
+        var out: [Arrow] = []
+        var y = (area.minY / spacing).rounded(.down) * spacing + spacing / 2
+        while y < area.maxY {
+            let shift: CGFloat = Int((y / spacing).rounded(.down)) % 2 == 0 ? 0 : spacing / 2
+            var x = ((area.minX - shift) / spacing).rounded(.down) * spacing + shift + spacing / 2
+            while x < area.maxX {
+                let p = CGPoint(x: x, y: y)
+                let onWater = water.contains(p, using: .evenOdd)
+                if onWater || nearShore?.contains(p) == true, let wind = wind(at: p, from: samples) {
+                    out.append(Arrow(at: p, towardDeg: wind.towardDeg, speedMs: wind.speedMs, ashore: !onWater))
+                }
+                x += spacing
+            }
+            y += spacing
+        }
+        return out
+    }
+
+    /// The wind anywhere near the lake, from the forecast points weighted by
+    /// distance (nearer counts more), averaged as east and north parts so
+    /// opposite directions don't add up to a wrong one.
+    static func wind(at p: CGPoint, from samples: [Sample]) -> (towardDeg: Double, speedMs: Double)? {
+        guard !samples.isEmpty else { return nil }
+        var east = 0.0, north = 0.0, speed = 0.0, total = 0.0
+        for s in samples {
+            let dx = Double(s.point.x - p.x), dy = Double(s.point.y - p.y)
+            let w = 1 / max(dx * dx + dy * dy, 1)
+            let r = s.towardDeg * .pi / 180
+            east += sin(r) * w
+            north += cos(r) * w
+            speed += s.speedMs * w
+            total += w
+        }
+        let toward = atan2(east, north) * 180 / .pi
+        return ((toward + 360).truncatingRemainder(dividingBy: 360), speed / total)
+    }
+}
