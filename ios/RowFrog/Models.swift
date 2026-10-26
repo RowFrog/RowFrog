@@ -338,8 +338,13 @@ struct DWDWarning: Codable, Hashable, Identifiable {
     /// The warning in English: DWD's own English text where it publishes one
     /// (official), else only the event and headline translated.
     var english: EnglishWarningText? = nil
+    /// "dwd" or "geosphere"; missing from older backends, which had DWD only.
+    var source: String? = nil
 
     var id: String { [kind, area, event, onset?.description ?? "", headline].joined(separator: "|") }
+    var isDWD: Bool { (source ?? "dwd") == "dwd" }
+    /// Short name of the service that issued it, for labels.
+    var serviceShort: String { warningServiceShort(source) }
     var isLake: Bool { kind == "lake" }
 }
 
@@ -362,15 +367,29 @@ struct Warnings: Codable, Hashable {
     var local: LocalWarnings? = nil
 
     var checked: Bool { status == "ok" }
-    /// False outside Germany: DWD does not warn there, so "no warning" must not be said.
+    /// False where the app reads no warning service for the place (Switzerland
+    /// for now), so "no warning" must not be said.
     var localChecked: Bool { local?.checked ?? true }
+    /// True while the place's warnings are DWD's (Germany, and older backends).
+    var isDWD: Bool { (local?.source ?? "dwd") == "dwd" }
 }
 
 /// The weather service that warns for a place (DWD, GeoSphere Austria, MeteoSwiss).
 struct LocalWarnings: Codable, Hashable {
+    /// "dwd", "geosphere" or "meteoswiss"; missing from the first backends with `local`.
+    var source: String? = nil
     let service: String?
     let url: String?
     let checked: Bool
+}
+
+/// "DWD", "GeoSphere" or "MeteoSwiss", for labels such as "GeoSphere warning: Wind".
+func warningServiceShort(_ source: String?) -> String {
+    switch source {
+    case "geosphere": "GeoSphere"
+    case "meteoswiss": "MeteoSwiss"
+    default: "DWD"
+    }
 }
 
 /// Which weather models a forecast comes from: the best local model for the

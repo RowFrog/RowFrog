@@ -76,6 +76,8 @@ class Warning:
     expires: datetime | None
     # CAP identifier without the language suffix (.DEU/.ENG), to find the English text.
     identifier: str = ""
+    # Who issued it: "dwd", or "geosphere" for Austria (geosphere_warnings.py).
+    source: str = "dwd"
 
     @property
     def level(self) -> int:

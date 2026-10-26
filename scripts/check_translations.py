@@ -30,6 +30,8 @@ def main() -> int:
     api = Path("backend/rowfrog/api.py").read_text()
     credits = re.search(r"ATTRIBUTION = \[(.*?)\]", api, re.S).group(1)
     keys |= set(re.findall(r'"([^"]+)"', credits))
+    warning_credits = re.search(r"^WARNING_CREDIT = \{(.*?)\}", api, re.S | re.M).group(1)
+    keys |= {t for t in re.findall(r'"([^"]+)"', warning_credits) if " " in t}
     # Notes on the weather models the user can pick, also shown through tr().
     models = Path("backend/rowfrog/weather_models.py").read_text()
     choices = re.search(r"^CHOICES = \{(.*?)^\}", models, re.S | re.M).group(1)
