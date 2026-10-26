@@ -265,6 +265,9 @@ def meteoalarm(client: httpx.Client) -> None:
         print("  sample areas:", sorted(a for a in areas if a)[:60])
         if ws:
             keys_tree(ws[0], maxdepth=4)
+            area = ws[0]["alert"]["info"][0].get("area", [{}])[0]
+            print("  first area:", json.dumps(area, ensure_ascii=False)[:600])
+            print("  first info parameters:", json.dumps(ws[0]["alert"]["info"][0].get("parameter"), ensure_ascii=False))
     r = get(client, "https://feeds.meteoalarm.org/feeds/meteoalarm-legacy-atom-switzerland")
     if r is not None:
         print("\n legacy atom switzerland:", r.status_code, r.text[:400].replace("\n", " "))
