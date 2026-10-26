@@ -307,3 +307,23 @@ dialog.sheet .done { color: var(--accent); font-weight: 600; }
 .side .row-name strong { font-size: 18px; }
 .side .big-temp { font-size: 30px; }
 .side .row.current { outline: 2px solid var(--accent); }
+
+/* Boats and limits (RowingLimitsView, BoatLimitsView). */
+a.row-setting { color: var(--text); }
+h3.section { display: flex; align-items: center; gap: 6px; margin: 22px 4px 6px; font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--sub); }
+p.footer { margin: 6px 4px 0; font-size: 13px; color: var(--sub); }
+.boat-row { display: flex; align-items: center; border-bottom: .5px solid var(--line); }
+.boat-row button { border-bottom: 0 !important; }
+.boat-row .round { margin-right: 10px; color: var(--accent); display: flex; padding: 6px; }
+.boats h3 { margin: 0; }
+.limit-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: .5px solid var(--line); }
+.limit-row:last-of-type { border-bottom: 0; }
+.limit-name { display: flex; gap: 8px; align-items: flex-start; }
+.limit-name > span:last-child { display: flex; flex-direction: column; }
+.limit-name small { font-size: 12px; }
+.stepper { display: inline-flex; background: var(--fill); border-radius: 8px; overflow: hidden; }
+.stepper button { width: 40px; height: 32px; font-size: 20px; line-height: 1; }
+.stepper button + button { border-left: .5px solid var(--line); }
+#boat-name { width: 100%; border: 0; background: none; font-size: 17px; color: var(--text); outline: none; }
+button.red { color: var(--red); }
+.reasons li.sub { color: var(--sub); }

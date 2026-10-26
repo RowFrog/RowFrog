@@ -10,7 +10,8 @@ import { icon } from "./icons.js";
 import {
   API, ZONE, isStale, shownLight, currentHour, nextHours, windValue, WIND_UNITS, compass, searchClubs, town,
   overlayBox, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote,
-  pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState, BOATS, applyBoat, coldWaterKit, place, twilight,
+  pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState, BOATS, coldWaterKit, place, twilight,
+  GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, limitsFor, applyLimits, waterForHour, steadierBoat, beaufort, COLD,
 } from "./logic.js";
 
 const SAFETY_VERSION = 1;
@@ -39,8 +40,15 @@ const store = {
   // m/s and small boats, as the app starts.
   get wind() { return WIND_UNITS[load("rf.wind", "ms")] ? load("rf.wind", "ms") : "ms"; },
   set wind(unit) { save("rf.wind", unit); },
-  get boat() { return BOATS[load("rf.boat", "small")] ? load("rf.boat", "small") : "small"; },
+  // The boat the rowing light is for: a group or one of the user's own boats.
+  get boat() { const id = load("rf.boat", "small"); return allBoats().some((b) => b.id === id) ? id : "small"; },
   set boat(id) { save("rf.boat", id); },
+  /** The user's own boats, besides the small and big boat groups: { id, name, type, class }. */
+  get boats() { return load("rf.boats", []); },
+  set boats(list) { save("rf.boats", list); },
+  /** Limits the user changed, per boat id; a missing entry means the app's limit for the boat's type. */
+  get limits() { return load("rf.limits", {}); },
+  set limits(value) { save("rf.limits", value); },
   get safety() { return load("rf.safety", null); },
   set safety(value) { save("rf.safety", value); },
 };
@@ -51,6 +59,43 @@ function savedClub(club, lake) {
     country: club.country ?? lake.country, launchPoint: club.launchPoint, launchPointVerified: club.launchPointVerified, source: club.source,
   };
 }
+
+// ---- Boats (AppSettings.boats) ------------------------------------------------
+
+/** Small boats, big boats, then the user's own. */
+function allBoats() {
+  return [...GROUPS, ...store.boats];
+}
+
+const boatById = (id) => allBoats().find((b) => b.id === id) ?? GROUPS[0];
+const selectedBoat = () => boatById(store.boat);
+const boatLimits = (boat) => limitsFor(boat, store.limits[boat.id] ?? {});
+/** The limits the rowing light uses. */
+const currentLimits = () => boatLimits(selectedBoat());
+
+function boatTitle(boat) {
+  if (isGroup(boat)) return t(BOATS[boat.id].title);
+  return boat.name?.trim() || `${t(BOAT_TYPES[boat.type].title)} ${boat.class}`;
+}
+
+/** The boat inside a sentence: "for small boats", "for Anna". */
+const boatInSentence = (boat) => (isGroup(boat) ? t(BOATS[boat.id].inSentence) : boatTitle(boat));
+const boatDetail = (boat) => (isGroup(boat) ? t(BOATS[boat.id].detail) : t("%@ · %@", t(BOAT_TYPES[boat.type].title), boat.class));
+/** For the bottom bar: "Small", "Big", its own name, or its class. */
+const boatShort = (boat) => (isGroup(boat) ? t(BOATS[boat.id].short) : boat.name?.trim() || boat.class);
+
+/** A limit's value in the user's units; wind keeps its decimal so 5.5 m/s does not read as 6. */
+function limitText(limit, value) {
+  const { condition } = LIMITS[limit];
+  if (condition === "waves") return waves(value);
+  if (condition === "waterTemperature") return temperature(value);
+  if (store.wind === "bft") return `${beaufort(value)} Bft`;
+  const v = WIND_UNITS[store.wind].from(value);
+  return `${num(v, Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1)} ${windUnit()}`;
+}
+
+/** The forecast for the ticked boat. */
+const forBoat = (raw) => applyLimits(raw, currentLimits());
 
 // ---- Loading ---------------------------------------------------------------
 
@@ -147,7 +192,13 @@ function lightTitle(light, stale = false) {
   return { green: t("Good to row"), amber: t("Row with care"), red: t("Stay ashore"), grey: t("Forecast out of date") }[light];
 }
 
-function reasonLabel(condition) {
+/** A reason's short label; "(your limit)" when the user's own limit decided it. */
+function reasonLabel(reason) {
+  const base = baseLabel(reason.condition ?? reason);
+  return reason.mine ? t("%@ (your limit)", base) : base;
+}
+
+function baseLabel(condition) {
   return {
     lake_warning: t("DWD storm warning"), lake_strong_wind: t("DWD strong-wind warning"), single_cold: t("Single in cold water"),
     freezing_water: t("Near-freezing water"), weather_warning: t("DWD weather warning"), wind: t("Wind"), gusts: t("Gusts"),
@@ -166,7 +217,16 @@ function hourExplanation(forecast, reason, hour) {
     const sun = twilight(forecast, hour);
     if (sun) return sun.kind === "sunrise" ? t("Sunrise at %@ in this hour.", time(sun.time)) : t("Sunset at %@ in this hour.", time(sun.time));
   }
-  return reasonExplanation(reason.condition, reason.light);
+  const text = reasonExplanation(reason.condition, reason.light);
+  return reason.mine ? `${text} ${t("You set this limit yourself.")}` : text;
+}
+
+/** A note under the reasons: a value within the user's own limit but above the app's (Reason.noteText). */
+function noteText(note) {
+  if (note.condition === "cold_margin") {
+    return t("Cold water: the app lowers its wind and gust limits by %@ below %@. Your own limits stay as you set them, so take extra care.", wind(COLD.marginMs), temperature(COLD.waterC));
+  }
+  return t("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel(note.condition), boatInSentence(selectedBoat()));
 }
 
 function reasonExplanation(condition, light) {
@@ -431,19 +491,29 @@ const adviceOnly = () => `<p class="advice">${icon("user-round-search")}<span>${
 /** Picks the boat for the rowing light, with the light each boat gets now (BoatMenu). */
 function openBoatMenu(raw) {
   const now = raw ? new Date() : null;
-  const body = `<ul class="boats">${Object.entries(BOATS).map(([id, boat]) => {
-    const light = raw ? currentHour(applyBoat(raw, id).hours, now).light : null;
-    return `<li><button data-boat="${id}" class="${store.boat === id ? "on" : ""}">
+  const row = (boat) => {
+    let light = null;
+    if (raw) {
+      const hour = currentHour(applyLimits(raw, boatLimits(boat)).hours, now);
+      light = hour.light;
+    }
+    const on = store.boat === boat.id;
+    return `<li><button data-boat="${h(boat.id)}" class="${on ? "on" : ""}">
       ${light ? dot(light, 16, isStale(raw)) : icon("sailboat")}
-      <span><strong>${h(t(boat.title))}</strong><small>${h(t(boat.detail))}</small></span>
-      ${store.boat === id ? icon("check") : ""}</button></li>`;
-  }).join("")}</ul><p class="sub">${h(t("Picks another boat for the rowing light."))}</p>`;
+      <span><strong>${h(boatTitle(boat))}</strong><small>${h(light ? lightTitle(light, isStale(raw)) : boatDetail(boat))}</small></span>
+      ${on ? icon("check") : ""}</button></li>`;
+  };
+  const mine = store.boats;
+  const body = `<h3>${h(t("Rowing light for"))}</h3><ul class="boats">${GROUPS.map(row).join("")}</ul>
+    ${mine.length ? `<h3>${h(t("My boats"))}</h3><ul class="boats">${mine.map(row).join("")}</ul>` : ""}
+    <a class="pill" href="#/settings/boats">${icon("sliders-horizontal")} ${h(t("Boats and limits…"))}</a>`;
   openSheet(t("Boat"), body, (dialog) => {
     dialog.querySelectorAll("[data-boat]").forEach((b) => b.addEventListener("click", () => {
       store.boat = b.dataset.boat;
       dialog.close();
       route(false);
     }));
+    dialog.querySelector("a.pill").addEventListener("click", () => dialog.close());
   });
 }
 
@@ -454,7 +524,7 @@ function bottomBar(currentId, raw) {
   const clubs = store.clubs;
   return `<nav class="bottom">
     <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
-    <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", t(BOATS[store.boat].inSentence)))}">${icon("sailboat")}<small>${h(store.boat === "big" ? t("Big") : t("Small"))}</small></button>
+    <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${icon("sailboat")}<small>${h(boatShort(selectedBoat()))}</small></button>
     <span class="dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
     <a href="#/list" class="tool" aria-label="${h(t("Locations"))}">${icon("list")}</a>
   </nav>`;
@@ -539,7 +609,7 @@ async function fillRow(row) {
     row.querySelector(".row-now").innerHTML = `<span class="sub">${h(t("No forecast"))}</span>`;
     return null;
   }
-  const forecast = applyBoat(raw, store.boat);
+  const forecast = forBoat(raw);
   const stale = isStale(forecast);
   const hour = currentHour(forecast.hours);
   const water = forecast.waterTemperature?.celsius;
@@ -551,13 +621,13 @@ async function fillRow(row) {
   const warning = forecast.warnings?.items?.[0];
   const sun = sunState(forecast);
   const ice = forecast.ice;
-  const kit = coldWaterKit(water ?? estimate, store.boat);
+  const kit = coldWaterKit(water ?? estimate, currentLimits());
   const iceText = iceOff(ice) ? t("Off season") : ice && ice.status !== "unavailable" ? t(ICE_TITLES[ice.status] ?? "No data") : "–";
   row.querySelector(".row-bottom").innerHTML = `
     <div class="row-why">
       <strong>${h(lightTitle(hour.light, stale))}</strong>
       ${stale ? `<small class="orange">${icon("clock")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
-      <small class="why">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map((r) => reasonLabel(r.condition)).join(", ")) : t("All conditions within the limits"))}</small>
+      <small class="why">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All conditions within the limits"))}</small>
       ${kit ? `<small class="kit-line" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")} ${h(coldWaterText(kit)[0])}</small>` : ""}
       ${warning ? `<small class="warn ${warning.severity === "minor" ? "orange" : "red"}">${icon("triangle-alert")} ${h(shortWarning(warning))}</small>` : ""}
       ${sun ? `<small class="sub">${icon(sun.up ? "sunset" : "sunrise")} ${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}</small>` : ""}
@@ -650,7 +720,7 @@ async function renderClub(id) {
     root.querySelector("#retry").addEventListener("click", () => renderClub(id));
     return;
   }
-  const forecast = applyBoat(raw, store.boat);
+  const forecast = forBoat(raw);
   const now = new Date();
   const stale = isStale(forecast, now);
   const hour = currentHour(forecast.hours, now);
@@ -807,7 +877,7 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
   const kind = sky(hour.weatherCode);
-  const boat = t("For %@", t(BOATS[store.boat].inSentence));
+  const boat = t("For %@", boatInSentence(selectedBoat()));
   const reasons = hour.reasons ?? [];
   const ice = iceValue(forecast);
   const warnings = forecast.warnings;
@@ -816,7 +886,8 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
   // The water at the shown hour: now the reading or estimate, later the water forecast.
   const latest = water?.celsius ?? estimate;
   const hourWater = at ? forecast.waterForecast?.find((d) => d.date === localDay(hour.time))?.celsius ?? latest : latest;
-  const kit = coldWaterKit(hourWater, store.boat);
+  const kit = coldWaterKit(hourWater, currentLimits());
+  const steadier = steadierBoat(hour, hourWater, store.boats, store.boat, boatLimits);
   return `<section class="card now">
     <div class="now-head">
       ${dot(hour.light, 36, stale)}
@@ -833,6 +904,10 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
         const text = water == null && waterReasons.includes(r.condition) ? t("Estimated: %@", reasonExplanation(r.condition, r.light)) : hourExplanation(forecast, r, hour);
         return `<li class="${r.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[reasonCondition(r.condition)])}<span>${h(text)}</span></li>`;
       }).join("") : `<li>${icon("circle-check")}<span>${h(t("All conditions are within the limits."))}</span></li>`}
+      ${(hour.notes ?? []).map((n) => `<li class="sub">${icon("info")}<span>${h(noteText(n))}</span></li>`).join("")}
+      ${steadier ? `<li class="tint">${icon("sailboat")}<span>${h(steadier.light === "green"
+        ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
+        : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
       ${!at && warnings?.status === "ok" && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${icon("shield-check")} ${h(t("No DWD warning"))}</span>
         <span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></button></li>` : ""}
     </ul>
@@ -958,7 +1033,8 @@ function conditionTile(condition, forecast, hour) {
     }
     case "waves": {
       // The app's limits for the boat: amber and red zones up to a third past red.
-      const [amber, red] = store.boat === "big" ? [0.25, 0.4] : [0.15, 0.25];
+      const limits = currentLimits();
+      const [amber, red] = [limits.value("waveAmber"), limits.value("waveRed")];
       const top = (red * 4) / 3;
       const fetch = hour.fetchM;
       return tile(waves(hour.waveHeightM), fetch == null ? "" : fetch < 50 ? t("Wind blows off the shore") : t("%@ open water upwind", distance(fetch)),
@@ -1202,8 +1278,8 @@ function renderSettings() {
         ${languagePicker()}
         <label class="row-setting"><span>${icon("wind")} ${h(t("Wind"))}</span>
           <select id="wind">${Object.entries(WIND_UNITS).map(([k, u]) => `<option value="${k}" ${k === unit ? "selected" : ""}>${h(u.label)}</option>`).join("")}</select></label>
-        <label class="row-setting"><span>${icon("sailboat")} ${h(t("Boat"))}</span>
-          <select id="boat">${Object.entries(BOATS).map(([k, b]) => `<option value="${k}" ${k === store.boat ? "selected" : ""}>${h(t(b.title))}</option>`).join("")}</select></label>
+        <a class="row-setting" href="#/settings/boats"><span>${icon("sailboat")} ${h(t("Boats and limits"))}</span>
+          <span class="sub">${h(boatTitle(selectedBoat()))} ${icon("chevron-right")}</span></a>
       </section>
       ${card(t("Safety notice"), "shield-check", `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`)}
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
@@ -1212,7 +1288,6 @@ function renderSettings() {
     </main>`;
   wireLanguage(renderSettings);
   root.querySelector("#wind").addEventListener("change", (e) => (store.wind = e.target.value));
-  root.querySelector("#boat").addEventListener("change", (e) => (store.boat = e.target.value));
   root.querySelector("#reset").addEventListener("click", () => {
     if (!confirm(t("Delete your clubs, settings and the accepted safety notice from this browser?"))) return;
     try {
@@ -1220,6 +1295,123 @@ function renderSettings() {
     } catch {}
     location.hash = "#/";
     route();
+  });
+}
+
+// ---- Boats and limits (RowingLimitsView, BoatLimitsView) -------------------------------
+
+const settingsNav = (back) => `<header class="nav"><a class="link" href="${back}">${icon("chevron-left")} ${h(t("Settings"))}</a><span class="spacer"></span></header>`;
+
+function renderBoats() {
+  setTitle(t("Rowing limits"));
+  const row = (boat) => {
+    const changed = Object.keys(store.limits[boat.id] ?? {}).length > 0;
+    const on = store.boat === boat.id;
+    return `<li class="boat-row"><button data-tick="${h(boat.id)}">
+        <span><strong>${h(boatTitle(boat))}</strong><small class="${changed ? "orange" : ""}">${h(changed ? t("%@ · your limits", boatDetail(boat)) : boatDetail(boat))}</small></span>
+        ${on ? icon("check") : ""}</button>
+      <a class="round" href="#/settings/boat/${encodeURIComponent(boat.id)}" aria-label="${h(t("Limits for %@", boatTitle(boat)))}">${icon("sliders-horizontal")}</a></li>`;
+  };
+  root.innerHTML = `${settingsNav("#/settings")}${testing()}
+    <main class="page">
+      <h1 class="large">${h(t("Rowing limits"))}</h1>
+      <h3 class="section">${icon("sailboat")} ${h(t("Your boat"))}</h3>
+      <ul class="boats">${GROUPS.map(row).join("")}</ul>
+      <p class="footer">${h(t("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))}</p>
+      <h3 class="section">${icon("list")} ${h(t("My boats"))}</h3>
+      <ul class="boats">${store.boats.map(row).join("")}
+        <li><button id="add-boat" class="tint">${icon("circle-plus")} <span>${h(t("Add a boat"))}</span></button></li></ul>
+      <p class="footer">${h(t("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))}</p>
+      ${footerLinks()}
+    </main>`;
+  root.querySelectorAll("[data-tick]").forEach((b) => b.addEventListener("click", () => {
+    store.boat = b.dataset.tick;
+    renderBoats();
+  }));
+  root.querySelector("#add-boat").addEventListener("click", () => {
+    const boat = { id: crypto.randomUUID?.() ?? `b${Date.now()}`, name: "", type: "gig", class: "4x" };
+    store.boats = [...store.boats, boat];
+    location.hash = `#/settings/boat/${encodeURIComponent(boat.id)}`;
+  });
+}
+
+function renderBoat(id) {
+  const boat = allBoats().find((b) => b.id === id);
+  if (!boat) {
+    location.hash = "#/settings/boats";
+    return;
+  }
+  setTitle(boatTitle(boat));
+  const limits = boatLimits(boat);
+  const changed = Object.keys(store.limits[boat.id] ?? {}).length > 0;
+  const option = (value, label, chosen) => `<option value="${h(value)}" ${value === chosen ? "selected" : ""}>${h(label)}</option>`;
+  const limitRow = (limit) => {
+    const mine = limits.isMine(limit);
+    const usual = standardLimit(limit, boat);
+    return `<div class="limit-row">
+      <span class="limit-name">${conditionIcon(LIMITS[limit].condition)}<span><span>${h(t(LIMITS[limit].title))}</span>
+        <small class="${mine ? "orange" : "sub"}">${h(mine ? t("Your limit · the app's: %@", limitText(limit, usual)) : t("The app's limit"))}</small></span></span>
+      <strong class="num">${h(limitText(limit, limits.value(limit)))}</strong>
+      <span class="stepper"><button data-step="${limit}" data-by="-1" aria-label="−">−</button><button data-step="${limit}" data-by="1" aria-label="+">+</button></span>
+    </div>`;
+  };
+  root.innerHTML = `<header class="nav"><a class="link" href="#/settings/boats">${icon("chevron-left")} ${h(t("Rowing limits"))}</a><span class="spacer"></span></header>${testing()}
+    <main class="page">
+      <h1 class="large">${h(boatTitle(boat))}</h1>
+      ${isGroup(boat) ? "" : `<h3 class="section">${icon("sailboat")} ${h(t("Boat"))}</h3>
+        <section class="card group">
+          <label class="row-setting"><input id="boat-name" type="text" value="${h(boat.name)}" placeholder="${h(t("Name, e.g. the boat's name"))}"></label>
+          <label class="row-setting"><span>${h(t("Type"))}</span><select id="boat-type">${Object.entries(BOAT_TYPES).map(([k, v]) => option(k, t(v.title), boat.type)).join("")}</select></label>
+          <label class="row-setting"><span>${h(t("Size and rigging"))}</span><select id="boat-class">${Object.entries(BOAT_CLASSES).map(([k, v]) => option(k, t(v), boat.class)).join("")}</select></label>
+        </section>
+        <p class="footer">${h(t(BOAT_TYPES[boat.type].detail))}</p>`}
+      <h3 class="section">${icon("sliders-horizontal")} ${h(t("Fine-tune the limits"))}</h3>
+      <section class="card group">${Object.keys(LIMITS).map(limitRow).join("")}
+        ${changed ? `<button id="reset-limits" class="link">${h(t("Use the app's limits again"))}</button>` : ""}</section>
+      <p class="footer">${h(`${t("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. DWD warnings, thunderstorms, fog, hail and darkness always count.")} ${t("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.", temperature(COLD.waterC), wind(COLD.marginMs))}`)}</p>
+      ${isGroup(boat) ? "" : `<button id="remove-boat" class="quiet red">${h(t("Remove this boat"))}</button>`}
+      ${footerLinks()}
+    </main>`;
+  const update = (change) => {
+    store.boats = store.boats.map((b) => (b.id === id ? { ...b, ...change } : b));
+  };
+  root.querySelector("#boat-name")?.addEventListener("input", (e) => update({ name: e.target.value }));
+  root.querySelector("#boat-type")?.addEventListener("change", (e) => {
+    update({ type: e.target.value });
+    renderBoat(id);
+  });
+  root.querySelector("#boat-class")?.addEventListener("change", (e) => {
+    update({ class: e.target.value });
+    renderBoat(id);
+  });
+  root.querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => {
+    const limit = b.dataset.step;
+    const { step, range } = LIMITS[limit];
+    const raw = limits.value(limit) + Number(b.dataset.by) * step;
+    const clamped = Math.min(Math.max(Math.round(raw / step) * step, range[0]), range[1]);
+    const all = store.limits;
+    const custom = { ...(all[id] ?? {}) };
+    // Back on the app's value: no longer the user's own.
+    if (Math.abs(clamped - standardLimit(limit, boat)) < step / 2) delete custom[limit];
+    else custom[limit] = Number(clamped.toFixed(2));
+    if (Object.keys(custom).length) all[id] = custom;
+    else delete all[id];
+    store.limits = all;
+    renderBoat(id);
+  }));
+  root.querySelector("#reset-limits")?.addEventListener("click", () => {
+    const all = store.limits;
+    delete all[id];
+    store.limits = all;
+    renderBoat(id);
+  });
+  root.querySelector("#remove-boat")?.addEventListener("click", () => {
+    store.boats = store.boats.filter((b) => b.id !== id);
+    const all = store.limits;
+    delete all[id];
+    store.limits = all;
+    if (store.boat === id) store.boat = "small";
+    location.hash = "#/settings/boats";
   });
 }
 
@@ -1241,6 +1433,9 @@ function route(scroll = true) {
   const club = hash.match(/^\/club\/(.+)$/);
   if (club) return renderClub(decodeURIComponent(club[1]));
   if (hash === "/settings") return renderSettings();
+  if (hash === "/settings/boats") return renderBoats();
+  const boat = hash.match(/^\/settings\/boat\/(.+)$/);
+  if (boat) return renderBoat(decodeURIComponent(boat[1]));
   if (hash === "/list" || !store.clubs.length) return renderList();
   return renderClub(store.clubs[0].id);
 }
