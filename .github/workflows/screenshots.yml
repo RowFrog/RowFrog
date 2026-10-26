@@ -28,6 +28,12 @@ on:
         description: Mac runner image (macos-latest when Apple Silicon runners are available again)
         required: false
         default: macos-15-intel
+      device:
+        description: Simulator to shoot on; iPad shots go to an ipad/ folder inside the same set
+        required: false
+        type: choice
+        options: [iPhone, iPad]
+        default: iPhone
 
 permissions:
   contents: write
@@ -74,16 +80,25 @@ jobs:
                 list(zip(d["zones"], [z["light"] for z in d["hours"][0]["zones"]])))'
       - name: Build the app
         working-directory: ios
+        env:
+          DEVICE: ${{ github.event.inputs.device }}
         run: |
           brew install xcodegen
           xcodegen
-          UDID=$(xcrun simctl list devices available -j | python3 -c '
-          import json, sys
-          phones = [d for runtime, devices in json.load(sys.stdin)["devices"].items() if "iOS" in runtime
-                    for d in devices if d["name"].startswith("iPhone")]
-          pro = [d for d in phones if d["name"].endswith(" Pro")]
-          print((pro or phones)[-1]["udid"])')
+          # The newest iPhone Pro, or with device iPad the newest 11-inch iPad Pro (iPad Air as fallback).
+          UDID=$(xcrun simctl list devices available -j | DEVICE="$DEVICE" python3 -c '
+          import json, os, sys
+          family = os.environ["DEVICE"] or "iPhone"
+          found = [d for runtime, devices in json.load(sys.stdin)["devices"].items() if "iOS" in runtime
+                   for d in devices if d["name"].startswith(family)]
+          if family == "iPad":
+              best = [d for d in found if d["name"].startswith("iPad Pro 11")] or [d for d in found if d["name"].startswith("iPad Air")]
+          else:
+              best = [d for d in found if d["name"].endswith(" Pro")]
+          print((best or found)[-1]["udid"])')
           echo "UDID=$UDID" >> "$GITHUB_ENV"
+          # iPad shots live in an ipad/ folder of the same set, so the iPhone shots stay.
+          if [ "$DEVICE" = iPad ]; then echo "SHOTS=docs/screenshots/ipad" >> "$GITHUB_ENV"; else echo "SHOTS=docs/screenshots" >> "$GITHUB_ENV"; fi
           xcrun simctl boot "$UDID"
           xcodebuild build \
             -project RowFrog.xcodeproj \
@@ -100,6 +115,9 @@ jobs:
         run: |
           set -x
           xcrun simctl bootstatus "$UDID" -b
+          # The iPad is turned through the Simulator app's menu keys, so open its window
+          # now; a window still opening missed the first turn.
+          if [ "$SHOTS" != docs/screenshots ]; then open -a Simulator --args -CurrentDeviceUDID "$UDID"; sleep 20; fi
           # The build takes longer than the backend keeps DWD warnings; warm it again
           # so the first shots do not catch a page still loading.
           for club in mrc-1880 mrsv-bayern tutzinger-rv; do
@@ -108,7 +126,7 @@ jobs:
           curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null http://localhost:8000/lakes/starnberger-see/view || true
           xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowFrog.app
           xcrun simctl status_bar "$UDID" override --time 9:41 --batteryState charged --batteryLevel 100 --cellularBars 4
-          mkdir -p docs/screenshots
+          mkdir -p "$SHOTS"
           ONLY="${ONLY_INPUT:-}"
           wanted() { [ -z "$ONLY" ] || [[ "$1" =~ $ONLY ]]; }
           shoot() {  # name, appearance, launch arguments...
@@ -125,17 +143,32 @@ jobs:
             local news=(-RWWhatsNewSeen 1000)
             [ -n "${NEWS:-}" ] && news=()
             xcrun simctl ui "$UDID" appearance "$appearance"
+            # iPadOS ignores the app's own turn (-RWLandscape) for apps in windows, so the
+            # iPad Simulator itself is turned with Rotate Right / Rotate Left (Cmd+arrow).
+            if [ "$SHOTS" != docs/screenshots ]; then
+              local turn=""
+              if [[ " $* " == *" -RWLandscape YES "* && -z "${SIDEWAYS:-}" ]]; then turn=124; SIDEWAYS=1
+              elif [[ " $* " != *" -RWLandscape YES "* && -n "${SIDEWAYS:-}" ]]; then turn=123; SIDEWAYS=""; fi
+              if [ -n "$turn" ]; then
+                osascript -e 'tell application "Simulator" to activate' -e 'delay 2' \
+                  -e "tell application \"System Events\" to key code $turn using command down" || echo "Could not turn the Simulator"
+                sleep 5
+              fi
+            fi
             # A hung simulator once blocked here until the 6-hour job limit; give up after a minute.
             perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
             SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${safety[@]}" "${news[@]}" "${guide[@]}" "$@"
             # The first launch after install, and the backend's first answers, are slower.
             if [ -z "${WARM:-}" ]; then sleep 30; WARM=1; else sleep "${WAIT:-12}"; fi
-            xcrun simctl io "$UDID" screenshot "docs/screenshots/$name.png"
+            xcrun simctl io "$UDID" screenshot "$SHOTS/$name.png"
             # The simulator saves landscape shots sideways; turn them upright.
             # With landscape off the app stays upright, so the shot already is.
+            # The iPad, turned with Rotate Right, lies the other way round.
             if [[ " $* " == *" -RWLandscape YES "* && " $* " != *" -RWAllowsLandscape NO "* ]]; then
-              python3 -c 'import sys; from PIL import Image; p = sys.argv[1]; Image.open(p).rotate(90, expand=True).save(p)' "docs/screenshots/$name.png"
+              local angle=90
+              [ "$SHOTS" != docs/screenshots ] && angle=-90
+              python3 -c 'import sys; from PIL import Image; p = sys.argv[1]; Image.open(p).rotate(int(sys.argv[2]), expand=True).save(p)' "$SHOTS/$name.png" "$angle"
             fi
           }
           # Compares two screenshots below the navigation bar, whose glass
@@ -149,7 +182,7 @@ jobs:
           shoot_pages() {  # name, appearance, launch arguments...: one screenshot per screen until the bottom
             local name=$1 appearance=$2; shift 2
             wanted "$name" || return 0
-            local page dir=docs/screenshots
+            local page dir=$SHOTS
             for page in $(seq 1 26); do
               shoot "$name-p$page" "$appearance" "$@" -RWScrollPage $((page - 1))
               if [ "$page" -gt 1 ] && same "$dir/$name-p$page.png" "$dir/$name-p1.png"; then
@@ -171,7 +204,7 @@ jobs:
               shoot "$name-p$page" "$appearance" "$@" -RWScrollPage $((page - 1))
             done
           }
-          for f in docs/screenshots/*.png; do
+          for f in "$SHOTS"/*.png; do
             if [ -e "$f" ] && wanted "$(basename "$f" .png)"; then rm "$f"; fi
           done
           shoot_pages 01-home light
@@ -416,7 +449,7 @@ jobs:
           pkill -f uvicorn || true
           sleep 2
           shoot 08-no-connection light
-          ls docs/screenshots
+          ls "$SHOTS"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

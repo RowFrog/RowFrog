@@ -392,7 +392,6 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Fine-tune the limits", .boats, words: ["limit", "Grenze", "wind", "gusts", "Böen", "waves", "Wellen", "water temperature", "Wassertemperatur"]),
             SettingsSearch("Lake map colours", .boats, words: ["lake view", "Seeansicht", "route", "Karte"]),
             SettingsSearch("Appearance", .appearance, words: ["light", "dark", "hell", "dunkel", "mode", "Modus"]),
-            SettingsSearch("Landscape", .appearance, words: ["Querformat", "rotate", "drehen", "columns", "Spalten"]),
             SettingsSearch("App icon", .appearance, words: ["App-Symbol", "home screen", "Home-Bildschirm"]),
             SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
             SettingsSearch("Background pictures", .clubPages, path: [.clubPages, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
@@ -419,6 +418,10 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Legal notice", .about, path: [.about, .impressum], words: ["Impressum", "imprint"]),
             SettingsSearch("Reset to factory settings", .about, words: ["reset", "zurücksetzen", "Werkseinstellungen"]),
         ]
+        // The iPad has no Landscape setting.
+        if !Orientation.isPad, let appearance = all.firstIndex(where: { $0.title == "Appearance" }) {
+            all.insert(SettingsSearch("Landscape", .appearance, words: ["Querformat", "rotate", "drehen", "columns", "Spalten"]), at: appearance + 1)
+        }
         if developer {
             all.append(SettingsSearch("Developer options", .developer, words: ["Entwickler", "weather model", "Wettermodell"]))
         }
@@ -444,15 +447,17 @@ private struct AppearanceSettingsView: View {
                 .surfaceRows()
                 .id("appearance")
 
-                Section {
-                    Toggle(isOn: $settings.allowsLandscape) {
-                        Label(tr("Landscape"), systemImage: "rectangle.landscape.rotate")
+                if !Orientation.isPad {
+                    Section {
+                        Toggle(isOn: $settings.allowsLandscape) {
+                            Label(tr("Landscape"), systemImage: "rectangle.landscape.rotate")
+                        }
+                    } footer: {
+                        SectionFooter(tr("On: the app turns with the phone and shows the cards in two columns. Off: it stays upright."))
                     }
-                } footer: {
-                    SectionFooter(tr("On: the app turns with the phone and shows the cards in two columns. Off: it stays upright."))
+                    .surfaceRows()
+                    .id("landscape")
                 }
-                .surfaceRows()
-                .id("landscape")
 
                 Section {
                     if showAppIconTip {
