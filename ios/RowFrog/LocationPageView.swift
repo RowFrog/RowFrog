@@ -115,6 +115,7 @@ struct LocationPageView: View {
                 .overlay(alignment: .top) {
                     if let forecast { stickyHourlyHeader(forecast) }
                 }
+                .environment(\.pageHeight, geometry.size.height)
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
                 .refreshable { await forecasts.refresh([club.id]) }
                 .tipVisibility(conditionsTip, $showConditionsTip)
