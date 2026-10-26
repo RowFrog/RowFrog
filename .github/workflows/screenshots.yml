@@ -140,6 +140,18 @@ jobs:
             local news=(-RWWhatsNewSeen 1000)
             [ -n "${NEWS:-}" ] && news=()
             xcrun simctl ui "$UDID" appearance "$appearance"
+            # iPadOS ignores the app's own turn (-RWLandscape) for apps in windows, so the
+            # iPad Simulator itself is turned with Rotate Right / Rotate Left (Cmd+arrow).
+            if [ "$SHOTS" != docs/screenshots ]; then
+              local turn=""
+              if [[ " $* " == *" -RWLandscape YES "* && -z "${SIDEWAYS:-}" ]]; then turn=124; SIDEWAYS=1
+              elif [[ " $* " != *" -RWLandscape YES "* && -n "${SIDEWAYS:-}" ]]; then turn=123; SIDEWAYS=""; fi
+              if [ -n "$turn" ]; then
+                osascript -e 'tell application "Simulator" to activate' \
+                  -e "tell application \"System Events\" to key code $turn using command down" || echo "Could not turn the Simulator"
+                sleep 3
+              fi
+            fi
             # A hung simulator once blocked here until the 6-hour job limit; give up after a minute.
             perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
