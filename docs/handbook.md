@@ -87,6 +87,8 @@ Management.
 3. Settings > Appearance has no Landscape switch on the iPad: iPadOS ignores an
    orientation lock for apps in windows.
 4. The widget offers every size, including extra large.
+5. A value's view (tap a tile) opens full screen on the iPad: chart and map
+   one under the other in portrait, side by side in landscape.
 
 ## Launch arguments (Simulator and screenshots)
 
