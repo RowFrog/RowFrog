@@ -97,6 +97,9 @@ const PATHS = {
   "circle": `<circle cx="12" cy="12" r="10" />`,
   "umbrella": `<path d="M22 12a10.06 10.06 1 0 0-20 0Z" /> <path d="M12 12v8a2 2 0 0 0 4 0" /> <path d="M12 2v1" />`,
   "chevron-up": `<path d="m18 15-6-6-6 6" />`,
+  "sun-moon": `<path d="M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4" /> <path d="M12 2v2" /> <path d="M12 20v2" /> <path d="m4.9 4.9 1.4 1.4" /> <path d="m17.7 17.7 1.4 1.4" /> <path d="M2 12h2" /> <path d="M20 12h2" /> <path d="m6.3 17.7-1.4 1.4" /> <path d="m19.1 4.9-1.4 1.4" />`,
+  "calendar-clock": `<path d="M21 7.5V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3.5" /> <path d="M16 2v4" /> <path d="M8 2v4" /> <path d="M3 10h5" /> <path d="M17.5 17.5 16 16.3V14" /> <circle cx="16" cy="16" r="6" />`,
+  "calendar": `<path d="M8 2v4" /> <path d="M16 2v4" /> <rect width="18" height="18" x="3" y="4" rx="2" /> <path d="M3 10h18" />`,
 };
 
 /** An inline SVG icon drawn in the text colour, sized by the font (1em). */

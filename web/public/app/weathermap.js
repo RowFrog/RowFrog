@@ -4,7 +4,7 @@
 
 import { t, num } from "./i18n.js";
 import { API, key } from "./logic.js";
-import { store, h, dayTime, dayLabel, wind, windNumber, windUnit, temperature, degrees, distance, distanceNumber, rain, rainNumber, loadLeaflet } from "./shared.js";
+import { store, h, dayTime, dayLabel, wind, windNumber, temperature, degrees, distance, distanceNumber, rain, rainNumber, pressure, pressureNumber, unitSymbol, loadLeaflet } from "./shared.js";
 
 const HOUR = 3600 * 1000;
 const DWD_WMS = "https://maps.dwd.de/geoserver/dwd/wms";
@@ -87,15 +87,18 @@ export function valueText(layer, value, unit = true) {
     case "temperature": case "feelsLike": return unit ? temperature(value) : degrees(value);
     case "wind": case "gust": return unit ? wind(value) : windNumber(value);
     case "humidity": return unit ? `${num(value)} %` : num(value);
-    case "pressure": return unit ? `${num(value)} hPa` : num(value);
+    case "pressure": return unit ? pressure(value) : pressureNumber(value);
     case "visibility": return unit ? distance(value * 1000) : distanceNumber(value * 1000);
     case "rain": return unit ? rain(value) + t("/h") : rainNumber(value);
     default: return num(value);
   }
 }
 
-function unitSymbol(layer) {
-  return { temperature: "°C", feelsLike: "°C", wind: windUnit(), gust: windUnit(), humidity: "%", pressure: "hPa", visibility: "km", rain: `mm${t("/h")}` }[layer.id] ?? "";
+function layerUnit(layer) {
+  const kind = { temperature: "temperature", feelsLike: "temperature", wind: "wind", gust: "wind", pressure: "pressure", visibility: "distance", rain: "rain" }[layer.id];
+  if (layer.id === "humidity") return "%";
+  if (!kind) return "";
+  return layer.id === "rain" ? `${unitSymbol(kind)}${t("/h")}` : unitSymbol(kind);
 }
 
 function stopAt(palette, value) {
@@ -492,7 +495,7 @@ export function colourBar(layer) {
   return `<div class="colour-bar" aria-label="${h(t("Colours from %@ to %@", valueText(layer, lo), valueText(layer, hi)))}">
     <span class="bar" style="background:linear-gradient(90deg, ${stops.join(", ")})"></span>
     <span class="labels">${values.map((v) => `<small style="left:${((v - lo) / (hi - lo)) * 100}%">${h(valueText(layer, v, false))}</small>`).join("")}</span>
-    <small class="unit">${h(unitSymbol(layer))}</small></div>`;
+    <small class="unit">${h(layerUnit(layer))}</small></div>`;
 }
 
 /** The label of a frame: the day for UV, else the day and hour. */

@@ -14,13 +14,13 @@ import {
   precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C, windDial, sparkBars,
   levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly, footerLinks, mapBoat,
-  mapLimits,
+  mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM, applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText,
 } from "./shared.js";
 import {
-  isStale, shownLight, currentHour, nextHours, WIND_UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon,
+  isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon,
   precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff,
   ICE_TITLES, iceValue, sunState, coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit,
-  applyLimits, steadierBoat, COLD, waterForHour, allowsMore,
+  applyLimits, steadierBoat, COLD, waterForHour, allowsMore, key,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap } from "./lakeview.js";
 import { satelliteCard } from "./satellite.js";
@@ -777,7 +777,7 @@ function conditionTile(condition, forecast, hour) {
     case "pressure": {
       const change = pressureChange(forecast.hours, hour);
       const trend = change == null ? null : pressureTrend(change);
-      return tile(hour.pressureHpa == null ? "–" : num(hour.pressureHpa), trend ? `hPa · ${t(trend).toLowerCase()}` : "hPa", pressureGauge(hour.pressureHpa, trend));
+      return tile(pressureNumber(hour.pressureHpa), trend ? `${unitSymbol("pressure")} · ${t(trend).toLowerCase()}` : unitSymbol("pressure"), pressureGauge(hour.pressureHpa, trend));
     }
     case "uvIndex": {
       const withUv = next24.filter((x) => x.uvIndex != null);
@@ -805,7 +805,8 @@ function hourlyCard(forecast, now, stale) {
   const list = nextHours(forecast.hours, now, 48);
   const head = `<div class="hrow hhead">
     <span>${icon("clock")}</span><span>${dot("grey", 8)}</span><span>${icon("cloud-sun")}</span>
-    ${[["temperature", "°C"], ["feelsLike", "°C"], ["wind", windUnit()], ["waves", "m"], ["precipitation", "mm"], ["visibility", "km"]]
+    ${[["temperature", unitSymbol("temperature")], ["feelsLike", unitSymbol("temperature")], ["wind", windUnit()], ["waves", unitSymbol("waves")],
+      ["precipitation", unitSymbol("rain")], ["visibility", unitSymbol("distance")]]
       .map(([c, unit]) => `<span class="num">${icon(CONDITION_ICONS[c])}<small>${h(unit)}</small></span>`).join("")}</div>`;
   let lastDay = null;
   const rows = list.map((x) => {
@@ -819,15 +820,15 @@ function hourlyCard(forecast, now, stale) {
     const fog = lightFor(x, ["fog"]);
     return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""}" data-hour="${h(x.time)}">
       <span>${h(time(x.time))}</span><span>${dot(x.light, 12, stale)}</span><span>${skySymbol(x)}</span>
-      <span class="num">${h(num(x.temperatureC))}</span>
-      <span class="num sub">${h(num(x.apparentTemperatureC))}</span>
+      <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
+      <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>
       <span class="num">${h(windRange(x.windSpeedMs, x.windGustMs))}</span>
       <span class="num">${h(wavesNumber(x.waveHeightM))}</span>
       <span class="num ${(x.precipitationMm ?? 0) >= 0.1 ? "blue" : ""}">${h(rainNumber(x.precipitationMm))}</span>
       <span class="num ${fog && fog !== "green" ? (fog === "red" ? "red" : "orange") : ""}">${h(distanceNumber(x.visibilityM))}</span>
     </button>`;
   }).join("");
-  return card(t("Next 48 hours"), "clock", `<div class="hourly">${head}${rows}</div>`, { legend: "hourly", cls: "hourly-card" });
+  return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}${rows}</div>`, { legend: "hourly", cls: "hourly-card" });
 }
 
 /** The launch point on a map, with what it stands for (LaunchPointMapCard). */
@@ -895,9 +896,18 @@ function credits(forecast, club) {
 
 // ---- Settings ----------------------------------------------------------------------
 
+/** Settings › Language and units › Units, with each value's icon. */
+const UNIT_ROWS = [
+  ["temperature", "temperature", key("Air and water temperature")], ["wind", "wind", key("Wind and gusts")], ["waves", "waves", key("Waves")],
+  ["rain", "precipitation", key("Rain, hail, snow")], ["distance", "visibility", key("Visibility and distances")], ["pressure", "pressure", key("Air pressure")],
+];
+const TIME_TITLES = { device: key("Device"), h24: key("24-hour"), h12: key("12-hour") };
+const DATE_TITLES = { device: key("Device"), long: key("Long"), short: key("Short"), dmy: key("Day.Month.Year"), mdy: key("Month/Day/Year") };
+// 18:30 in the lakes' time zone, to show each time format.
+const SAMPLE_TIME = Date.UTC(2026, 0, 15, 17, 30);
+
 function renderSettings() {
   setTitle(t("Settings"));
-  const unit = store.wind;
   const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
   const back = store.clubs[0] ? `#/club/${encodeURIComponent(store.clubs[0].id)}` : "#/list";
   root.innerHTML = `
@@ -906,12 +916,30 @@ function renderSettings() {
     <main class="page">
       <h1 class="large">${h(t("Settings"))}</h1>
       <section class="card group">
-        ${languagePicker()}
-        <label class="row-setting"><span>${icon("wind")} ${h(t("Wind"))}</span>
-          <select id="wind">${Object.entries(WIND_UNITS).map(([k, u]) => `<option value="${k}" ${k === unit ? "selected" : ""}>${h(u.label)}</option>`).join("")}</select></label>
         <a class="row-setting" href="#/settings/boats"><span>${icon("sailboat")} ${h(t("Boats and limits"))}</span>
           <span class="sub">${h(boatTitle(selectedBoat()))} ${icon("chevron-right")}</span></a>
       </section>
+      <h3 class="section">${icon("sun-moon")} ${h(t("Appearance"))}</h3>
+      <section class="card group">
+        <div class="row-setting"><span class="segmented wide" id="appearance">${[["device", t("Device")], ["light", t("Light")], ["dark", t("Dark")]]
+          .map(([k, label]) => `<button data-appearance="${k}" class="${store.appearance === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>
+      </section>
+      <p class="footer">${h(t("Device follows the light or dark setting of your computer or phone."))}</p>
+      <h3 class="section">${icon("languages")} ${h(t("Language"))}</h3>
+      <section class="card group">${languagePicker()}</section>
+      <h3 class="section">${icon("ruler")} ${h(t("Units"))}</h3>
+      <section class="card group">${UNIT_ROWS.map(([kind, condition, title]) => `<label class="row-setting"><span>${conditionIcon(condition)} ${h(t(title))}</span>
+          <select data-unit="${kind}">${Object.entries(UNITS[kind].options).map(([id, u]) => `<option value="${id}" ${id === unitId(kind) ? "selected" : ""}>${h(`${t(u.label)} · ${t(u.title)}`)}</option>`).join("")}</select></label>`).join("")}
+      </section>
+      <p class="footer">${h(t("Cloud cover stays in percent."))}</p>
+      <h3 class="section">${icon("calendar-clock")} ${h(t("Date and time"))}</h3>
+      <section class="card group">
+        <label class="row-setting"><span>${icon("clock")} ${h(t("Time"))}</span>
+          <select id="time-format">${TIME_FORMATS.map((f) => `<option value="${f}" ${f === store.timeFormat ? "selected" : ""}>${h(`${t(TIME_TITLES[f])} · ${time(SAMPLE_TIME, f)}`)}</option>`).join("")}</select></label>
+        <label class="row-setting"><span>${icon("calendar")} ${h(t("Date"))}</span>
+          <select id="date-format">${DATE_FORMATS.map((f) => `<option value="${f}" ${f === store.dateFormat ? "selected" : ""}>${h(`${f === "iso" ? "ISO 8601" : t(DATE_TITLES[f])} · ${dateText(localDay(new Date()), f)}`)}</option>`).join("")}</select></label>
+      </section>
+      <p class="footer">${h(t("Device follows the browser's settings. Today and tomorrow are always written as words."))}</p>
       <h3 class="section">${icon("arrow-up-down")} ${h(t("Club pages"))}</h3>
       <section class="card group">
         <button class="row-setting" id="arrange"><span>${h(t("Order of the club page cards"))}</span>${icon("chevron-right")}</button>
@@ -931,7 +959,14 @@ function renderSettings() {
       ${footerLinks()}
     </main>`;
   wireLanguage(renderSettings);
-  root.querySelector("#wind").addEventListener("change", (e) => (store.wind = e.target.value));
+  root.querySelectorAll("[data-unit]").forEach((select) => select.addEventListener("change", () => setUnit(select.dataset.unit, select.value)));
+  root.querySelector("#time-format").addEventListener("change", (e) => (store.timeFormat = e.target.value));
+  root.querySelector("#date-format").addEventListener("change", (e) => (store.dateFormat = e.target.value));
+  root.querySelectorAll("[data-appearance]").forEach((b) => b.addEventListener("click", () => {
+    store.appearance = b.dataset.appearance;
+    applyAppearance();
+    renderSettings();
+  }));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(null));
   root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     store.mapZoom = b.dataset.zoom;
@@ -1116,5 +1151,6 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") forecasts.clear();
 });
 
+applyAppearance();
 await setLanguage(savedLanguage());
 route();

@@ -5,7 +5,7 @@
 import { t, num, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  API, ZONE, shownLight, windValue, WIND_UNITS, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD,
+  API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD,
 } from "./logic.js";
 import { isOwn, loadOwnForecast } from "./ownplace.js";
 
@@ -30,8 +30,17 @@ export const store = {
   get clubs() { return load("rf.clubs", []); },
   set clubs(list) { save("rf.clubs", list); },
   // m/s and small boats, as the app starts.
-  get wind() { return WIND_UNITS[load("rf.wind", "ms")] ? load("rf.wind", "ms") : "ms"; },
+  get wind() { return unitId("wind"); },
   set wind(unit) { save("rf.wind", unit); },
+  /** "device", "h24" or "h12" (TimeFormat). */
+  get timeFormat() { return TIME_FORMATS.includes(load("rf.timeFormat")) ? load("rf.timeFormat") : "device"; },
+  set timeFormat(value) { save("rf.timeFormat", value); },
+  /** "device", "long", "short", "dmy", "mdy" or "iso" (DateFormat). */
+  get dateFormat() { return DATE_FORMATS.includes(load("rf.dateFormat")) ? load("rf.dateFormat") : "device"; },
+  set dateFormat(value) { save("rf.dateFormat", value); },
+  /** "device", "light" or "dark". */
+  get appearance() { return ["light", "dark"].includes(load("rf.appearance")) ? load("rf.appearance") : "device"; },
+  set appearance(value) { save("rf.appearance", value); },
   // The boat the rowing light is for: a group or one of the user's own boats.
   get boat() { const id = load("rf.boat", "small"); return allBoats().some((b) => b.id === id) ? id : "small"; },
   set boat(id) { save("rf.boat", id); },
@@ -107,7 +116,7 @@ export function limitText(limit, value) {
   if (condition === "waves") return waves(value);
   if (condition === "waterTemperature") return temperature(value);
   if (store.wind === "bft") return `${beaufort(value)} Bft`;
-  const v = WIND_UNITS[store.wind].from(value);
+  const v = inUnit("wind", value);
   return `${num(v, Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1)} ${windUnit()}`;
 }
 
@@ -157,26 +166,88 @@ export async function loadForecast(id, fresh = false) {
   return forecast;
 }
 
+// ---- Units, as AppSettings in the app ----------------------------------------------
+
+/** Where each unit is kept (rf.temperature, rf.wind, rf.waves, rf.rain, rf.distance, rf.pressure). */
+const unitKey = (kind) => `rf.${kind}`;
+
+/** The id of the unit picked for a kind of value, else the standard one. */
+export function unitId(kind) {
+  const id = load(unitKey(kind), UNITS[kind].standard);
+  return UNITS[kind].options[id] ? id : UNITS[kind].standard;
+}
+
+export const setUnit = (kind, id) => save(unitKey(kind), id);
+
+/** The picked unit: { label, title, from, digits }. */
+export const unit = (kind) => UNITS[kind].options[unitId(kind)];
+
+/** The unit's symbol as shown ("°C", "km/h", "NM" in English, "sm" in German). */
+export const unitSymbol = (kind) => t(unit(kind).label);
+
+/** A metric value in the picked unit, for charts and limits. */
+export const inUnit = (kind, value) => (value == null ? null : unit(kind).from(value));
+
+/** A metric change (a difference, a trend step) in the picked unit. */
+export const unitChange = (kind, value) => unitStep(unit(kind), value);
+
+export const TIME_FORMATS = ["device", "h24", "h12"];
+export const DATE_FORMATS = ["device", "long", "short", "dmy", "mdy", "iso"];
+
+/** Sets the colours: the browser's light or dark, or the one picked. */
+export function applyAppearance() {
+  const root = document.documentElement;
+  if (store.appearance === "device") delete root.dataset.theme;
+  else root.dataset.theme = store.appearance;
+}
+
 // ---- Formatting, as Format in the app ---------------------------------------------
 
 export function h(text) {
   return String(text ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
-export function time(value) {
-  return new Intl.DateTimeFormat(locale(), { timeZone: ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(value));
+/** A clock time in the picked format: the browser's own, "18:05" or "6:05 PM" (TimeFormat). */
+export function time(value, format = store.timeFormat) {
+  if (format === "h12") return new Intl.DateTimeFormat("en-US", { timeZone: ZONE, hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(value));
+  if (format === "h24") return new Intl.DateTimeFormat("en-GB", { timeZone: ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(value));
+  return new Intl.DateTimeFormat(navigator.language || locale(), { timeZone: ZONE, hour: "numeric", minute: "2-digit" }).format(new Date(value));
 }
 
-/** "Today", "Tomorrow" or "Tuesday, 27 Oct". */
+/** Whether times carry AM or PM, so take more room. */
+export const usesAMPM = () => /[AP]M/i.test(time(Date.UTC(2026, 0, 1, 18)));
+
+/** A day in the picked format (DateFormat), without "Today" or "Tomorrow". */
+export function dateText(day, format = store.dateFormat) {
+  const date = new Date(`${day}T12:00:00Z`);
+  const f = (options) => new Intl.DateTimeFormat(locale(), { timeZone: "UTC", ...options }).format(date);
+  const [y, m, d] = day.split("-");
+  switch (format) {
+    case "long": return f({ weekday: "long", day: "numeric", month: "long" });
+    case "short": return f({ weekday: "short", day: "numeric", month: "short" });
+    case "dmy": return `${f({ weekday: "short" })} ${d}.${m}.${y}`;
+    case "mdy": return `${f({ weekday: "short" })} ${m}/${d}/${y}`;
+    case "iso": return `${f({ weekday: "short" })} ${day}`;
+    default: return f({ weekday: "long", day: "numeric", month: "short" });
+  }
+}
+
+/** "Today", "Tomorrow" or the day in the picked format, e.g. "Tuesday, 27 Oct". */
 export function dayLabel(value) {
   const day = typeof value === "string" && value.length === 10 ? value : localDay(value);
   if (day === localDay(new Date())) return t("Today");
   if (day === localDay(new Date(Date.now() + 86400000))) return t("Tomorrow");
-  return new Intl.DateTimeFormat(locale(), { timeZone: "UTC", weekday: "long", day: "numeric", month: "short" }).format(new Date(`${day}T12:00:00Z`));
+  return dateText(day);
 }
 
+/** "Today 21:00", "Tomorrow 03:00" or "Mon 21:00". */
 export function dayTime(value) {
-  return new Intl.DateTimeFormat(locale(), { timeZone: ZONE, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(value));
+  const day = localDay(value);
+  let label;
+  if (day === localDay(new Date())) label = t("Today");
+  else if (day === localDay(new Date(Date.now() + 86400000))) label = t("Tomorrow");
+  else label = new Intl.DateTimeFormat(locale(), { timeZone: ZONE, weekday: "short" }).format(new Date(value));
+  return `${label} ${time(value)}`;
 }
 
 export function duration(from, to) {
@@ -184,18 +255,28 @@ export function duration(from, to) {
   return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
 }
 
-export const degrees = (c, digits = 0) => (c == null ? "–" : `${num(c, digits)}°`);
-export const temperature = (c, digits = 0) => (c == null ? "–" : `${num(c, digits)} °C`);
-export const windUnit = () => WIND_UNITS[store.wind].label;
-export const windNumber = (ms) => (ms == null ? "–" : num(windValue(ms, store.wind)));
+export const degrees = (c, digits = 0) => (c == null ? "–" : `${num(inUnit("temperature", c), digits)}°`);
+export const temperature = (c, digits = 0) => (c == null ? "–" : `${num(inUnit("temperature", c), digits)} ${unitSymbol("temperature")}`);
+export const windUnit = () => unitSymbol("wind");
+export const windNumber = (ms) => (ms == null ? "–" : num(Math.round(inUnit("wind", ms))));
 export const wind = (ms) => (ms == null ? "–" : `${windNumber(ms)} ${windUnit()}`);
 export const windRange = (ms, gust) => (ms == null ? "–" : `${windNumber(ms)}–${windNumber(gust)}`);
-export const wavesNumber = (m) => (m == null ? "–" : num(m, 2));
-export const waves = (m) => (m == null ? "–" : `${wavesNumber(m)} m`);
-export const rainNumber = (mm) => (mm == null ? "–" : num(mm, 1));
-export const rain = (mm) => (mm == null ? "–" : `${rainNumber(mm)} mm`);
-export const distanceNumber = (m) => (m == null ? "–" : num(m / 1000, m < 10000 ? 1 : 0));
-export const distance = (m) => (m == null ? "–" : `${distanceNumber(m)} km`);
+export const wavesNumber = (m) => (m == null ? "–" : num(inUnit("waves", m), unit("waves").digits));
+export const waves = (m) => (m == null ? "–" : `${wavesNumber(m)} ${unitSymbol("waves")}`);
+export const rainNumber = (mm) => (mm == null ? "–" : num(inUnit("rain", mm), unit("rain").digits));
+export const rain = (mm) => (mm == null ? "–" : `${rainNumber(mm)} ${unitSymbol("rain")}`);
+/** One decimal below 10, e.g. "2.4 km", "12 km". */
+export function distanceNumber(m) {
+  if (m == null) return "–";
+  const value = inUnit("distance", m);
+  return num(value, value < 10 ? 1 : 0);
+}
+export const distance = (m) => (m == null ? "–" : `${distanceNumber(m)} ${unitSymbol("distance")}`);
+export const pressureNumber = (hpa) => (hpa == null ? "–" : num(inUnit("pressure", hpa), unit("pressure").digits));
+/** "1013 hPa", "1.013 bar", "29.92 inHg". */
+export const pressure = (hpa) => (hpa == null ? "–" : `${pressureNumber(hpa)} ${unitSymbol("pressure")}`);
+/** A change over some hours: "2.5 hPa", "0.07 inHg". */
+export const pressureChangeText = (hpa) => `${num(unitChange("pressure", hpa), unit("pressure").changeDigits)} ${unitSymbol("pressure")}`;
 
 /** "Rain 3.1 mm", or null when nothing falls. */
 export function precipitationText(hour) {
@@ -438,15 +519,15 @@ export const TILE_ORDER = ["temperature", "feelsLike", "wind", "waves", "waterTe
 export function conditionTexts() {
   const r = (c, title, unit, text) => [c, title, unit, text];
   return {
-    temperature: r("temperature", t("Air temperature"), "°C", t("Air temperature at 2 m.")),
-    feelsLike: r("feelsLike", t("Feels like"), "°C", t("How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index).")),
+    temperature: r("temperature", t("Air temperature"), unitSymbol("temperature"), t("Air temperature at 2 m.")),
+    feelsLike: r("feelsLike", t("Feels like"), unitSymbol("temperature"), t("How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index).")),
     humidity: r("humidity", t("Humidity"), "%", t("Relative humidity. The dew point is the temperature at which the air turns to mist or dew.")),
-    pressure: r("pressure", t("Air pressure"), "hPa", t("Air pressure at sea level and where it goes in the next 3 hours. Falling fast often means wind and rain ahead.")),
+    pressure: r("pressure", t("Air pressure"), unitSymbol("pressure"), t("Air pressure at sea level and where it goes in the next 3 hours. Falling fast often means wind and rain ahead.")),
     wind: r("wind", t("Wind and gusts"), windUnit(), t("Mean wind – strongest gust, in %@. The arrow points where the wind blows to.", windUnit())),
-    waves: r("waves", t("Waves"), "m", t("Estimated wave height at the launch point, from wind and open water upwind.")),
-    waterTemperature: r("waterTemperature", t("Water temperature"), "°C", t("Latest lake measurement. Below %@, extra care; below %@, cold water.", temperature(15), temperature(10))),
-    precipitation: r("precipitation", t("Rain, hail, snow"), "mm", t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", "mm")),
-    visibility: r("visibility", t("Visibility (fog)"), "km", t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
+    waves: r("waves", t("Waves"), unitSymbol("waves"), t("Estimated wave height at the launch point, from wind and open water upwind.")),
+    waterTemperature: r("waterTemperature", t("Water temperature"), unitSymbol("temperature"), t("Latest lake measurement. Below %@, extra care; below %@, cold water.", temperature(15), temperature(10))),
+    precipitation: r("precipitation", t("Rain, hail, snow"), unitSymbol("rain"), t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unitSymbol("rain"))),
+    visibility: r("visibility", t("Visibility (fog)"), unitSymbol("distance"), t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
     cloudCover: r("cloudCover", t("Cloud cover"), "%", t("Share of the sky covered by cloud.")),
     thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings.")),
     uvIndex: r("uvIndex", t("UV index"), "", t("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")),
