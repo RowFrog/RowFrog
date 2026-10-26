@@ -138,11 +138,14 @@ struct LocationListView: View {
             .navigationTitle(tr("Locations"))
             .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(tr("Search clubs, lakes or towns")))
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { showingSettings = true } label: {
-                        Image(systemName: "gearshape")
+                // As a side list (iPad) the cog stays in the page bar instead.
+                if selectedID == nil {
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button { showingSettings = true } label: {
+                            Image(systemName: "gearshape")
+                        }
+                        .accessibilityLabel(tr("Settings"))
                     }
-                    .accessibilityLabel(tr("Settings"))
                 }
                 ToolbarItem(placement: .topBarLeading) {
                     if search.isEmpty { EditButton() }

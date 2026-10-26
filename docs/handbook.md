@@ -71,6 +71,25 @@ real export file.
 Health access can be changed later in the Health app > Sharing > Apps >
 Row Frog. Nothing read from Health or a file leaves the phone.
 
+### Testing on an iPad
+
+The app runs natively on the iPad (iPhone and iPad in `TARGETED_DEVICE_FAMILY`).
+Install it like on the iPhone: cable, Trust, Developer Mode on the iPad
+(Settings > Privacy & Security), Personal Team, Run scheme on Release, pick the
+iPad in Xcode, then trust the developer under Settings > General > VPN & Device
+Management.
+
+1. In landscape, and in portrait on the larger iPads, the location list stays
+   on the left and the club page sits on the right with the cards in two columns.
+2. Turn the iPad every way, including upside down; resize the window (Stage
+   Manager, or the window handle on iPadOS 26): narrow windows fall back to the
+   iPhone layout.
+3. Settings > Appearance has no Landscape switch on the iPad: iPadOS ignores an
+   orientation lock for apps in windows.
+4. The widget offers every size, including extra large.
+5. A value's view (tap a tile) opens full screen on the iPad: chart and map
+   one under the other in portrait, side by side in landscape.
+
 ## Launch arguments (Simulator and screenshots)
 
 Every setting can be set at launch, e.g. `-RWLanguage de`. The screenshot
@@ -115,6 +134,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Publish forecasts | every 30 min from main | api.rowfrog.com; the weather maps in `maps/` (index + one file per tile and value) are rebuilt only when DWD has a newer ICON-D2 run, every 3 hours, from DWD open data without Open-Meteo calls |
 | Model check | 04:40 and 16:40 UTC | weekly report on the "Model check" issue (Mondays); its section "Once a day instead of twice?" shows whether the 04:40 run alone would rank the models the same (to decide later whether to drop the 16:40 run, about 700 Open-Meteo calls a day) |
 | Usage limits | daily 06:10 UTC | comment on the "Usage limits" issue from 70 % of a limit, and on the 1st of the month. Covers Open-Meteo, Copernicus and, read with the Cloudflare token, Worker requests (100,000 a day) and D1 rows written (100,000) and read (5 million) on the free Workers plan |
+| Website | when `web/`, `scripts/build_web.py` or the app's German table change on main (tests only on PRs) | Cloudflare Pages project `rowfrog-web` (rowfrog.com once the domain is attached, else rowfrog-web.pages.dev). The run checks that the site refuses visitors without the password |
 | App size | when iOS code lands on main, or by hand | job summary of the run: installed size, expected App Store download, and the largest files (Release archive, unsigned, about 15 macOS minutes) |
 
 ## By hand
@@ -126,10 +146,20 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Model check with archive_days | once for a quick first score (60 days); otherwise leave it at 0 |
 | Satellite water temperature check | after changing the satellite water temperature code (it runs itself on pushes that touch it): compares Copernicus LSWT, Landsat and the carried-forward estimate with GKD lake stations since 1 May; about 20 min |
 | Water temperature stations | every few months, or when clubs are added: lists the GKD Bayern, PEGELONLINE and Swiss BAFU stations, shows how `data/water-stations.json` (the station each club reads, nearest on its own water) would change, and reads every station in it once. To take a changed list, run `python3 scripts/water_station_survey.py --write` locally and commit the file |
-| App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run |
+| App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run. Input `device` = `iPad` shoots on an 11-inch iPad Pro Simulator instead; those shots go to an `ipad/` folder in the same set |
 
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
 
-`CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `USAGE_KEY` (usage counter),
+`CLOUDFLARE_API_TOKEN` (also needs "Cloudflare Pages: Edit" for the website), `CLOUDFLARE_ACCOUNT_ID`, `USAGE_KEY` (usage counter),
+`SITE_USER`, `SITE_PASSWORD` (the website's password while it is in testing; change them and re-run the Website workflow to change the password),
 `CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET` (Copernicus satellite pictures, ice map and lake water temperature).
 Landsat water temperatures come from Microsoft's Planetary Computer and need no secret.
+
+## Website (rowfrog.com, in testing)
+
+- Source in `web/`: `public/` (start page, `app/` = forecasts in the browser, legal pages), `functions/_middleware.js` (password on every page, `noindex` and no-AI headers on every answer; only `robots.txt` is open), `strings-de.json` (German for texts only the website has; everything else comes from the app's table in `ios/RowFrog/Localization.swift`).
+- Build: `python scripts/build_web.py` writes `web/dist` and stops on any text without German. Tests: `node --test web/tests/*.test.mjs`.
+- Try it locally against sample files: put a published `v1/` folder (e.g. `git archive origin/gh-pages v1/clubs/mrc-1880 v1/countries v1/lakes/starnberger-see | tar -x`) next to the contents of `web/dist`, serve that folder (`python3 -m http.server 8765`) and set `globalThis.RF_API = "http://localhost:8765/v1"` before the page loads (the browser tests do this with Playwright's addInitScript). Without it the page reads https://api.rowfrog.com/v1.
+- The light shown is the backend's, for small racing boats; boat types and own limits are not on the website yet.
+- Everything the visitor picks stays in the browser (localStorage keys `rf.clubs`, `rf.wind`, `rf.language`, `rf.safety`, `rf.catalog`). The safety notice has the app's text and version (1); raise `SAFETY_VERSION` in `web/public/app/app.js` together with the app's.
+- Before opening the site to others: fill in the Impressum (`web/public/impressum/`), the full privacy policy, and remove the password check and the testing banner.

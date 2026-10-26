@@ -616,10 +616,10 @@ private struct NowCard: View {
                 NoWarningSheet(warnings: warnings, lakeName: lakeName, town: town, checkedAt: forecast.generatedAt)
             }
         }
-        .sheet(isPresented: $showingDaylight) {
+        .detailCover(isPresented: $showingDaylight) {
             ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour), club: club)
         }
-        .sheet(item: $openCondition) { condition in
+        .detailCover(item: $openCondition) { condition in
             ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues, club: club)
         }
         .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }

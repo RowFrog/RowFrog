@@ -23,7 +23,7 @@ struct RowFrogApp: App {
     }
 }
 
-/// Lets the app turn sideways only while landscape is on in the settings.
+/// Lets the app turn sideways only while landscape is on in the settings (iPhone only).
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
         Orientation.allowed
@@ -32,8 +32,13 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 
 enum Orientation {
     static var allowed: UIInterfaceOrientationMask {
-        AppSettings.shared.allowsLandscape ? .allButUpsideDown : .portrait
+        if isPad { return .all }
+        return AppSettings.shared.allowsLandscape ? .allButUpsideDown : .portrait
     }
+
+    /// On the iPad the app runs in a resizable window, where iPadOS ignores an
+    /// orientation lock, so the Landscape setting is hidden there.
+    static var isPad: Bool { UIDevice.current.userInterfaceIdiom == .pad }
 
     /// Applies a change of the setting at once; turning landscape off brings the app upright.
     static func apply() {
