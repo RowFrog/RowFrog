@@ -1653,9 +1653,9 @@ final class LakeRenderer: MKOverlayRenderer {
                 k += 1
             }
             context.addPath(lines)
-            let color = red ? UIColor.systemRed.withAlphaComponent(0.55) : UIColor.systemOrange.withAlphaComponent(0.5)
+            let color = red ? UIColor.systemRed.withAlphaComponent(0.55) : UIColor.systemOrange.withAlphaComponent(0.75)
             context.setStrokeColor(color.cgColor)
-            context.setLineWidth((red ? 3 : 2) / zoomScale)
+            context.setLineWidth((red ? 3 : 2.5) / zoomScale)
             context.strokePath()
             context.restoreGState()
         }

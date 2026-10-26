@@ -209,7 +209,7 @@ struct LakeMiniMap: View {
                         lines.addLine(to: CGPoint(x: x + size.height, y: 0))
                     }
                     water.opacity = 1
-                    water.stroke(lines, with: .color(red ? .red.opacity(0.55) : .orange.opacity(0.5)), lineWidth: red ? 1.5 : 1)
+                    water.stroke(lines, with: .color(red ? .red.opacity(0.55) : .orange.opacity(0.75)), lineWidth: red ? 1.5 : 1.2)
                 }
             }
             ctx.stroke(shore, with: .color(.blue.opacity(0.4)), lineWidth: 0.7)
