@@ -170,7 +170,9 @@ EUMETSAT satellite (`ios/RowFrog/WeatherMap.swift`,
 `backend/rowfrog/sources/icon_d2_maps.py`). In the detail view the map sits
 under the chart (beside it in landscape) and follows the hour of the chart's
 line; a chain button lets it keep its own time, and a tap opens it full
-screen with a slim chart and a switch to play the hours as a loop.
+screen with a slim chart and a switch to play the hours as a loop. Maps open
+about 50 km across around the club (rain and lightning 120 km) and load more
+area as you zoom out.
 
 **Battery.** The app keeps its battery use low: the radar only updates on the
 page in front, readings and map pictures are reused, widgets redraw only when
@@ -250,7 +252,8 @@ field at the bottom.
   iPhones), a Landscape switch (on by default; off keeps the app upright), and
   the app icon: the coxed double "rowing light" icon in light, dark and
   tinted, plus 10 alternates.
-- Club pages: the order of the cards for all clubs, and background pictures
+- Club pages: how much area the weather maps open with ("Maps start": Close,
+  Normal or Wide), the order of the cards for all clubs, and background pictures
   for all pages, single pages or single clubs: clear or blurred, frosted,
   solid or Liquid Glass tiles (iOS 26), your own photo or the satellite
   picture of the club's lake. On club pages the picture fills the screen
