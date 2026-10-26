@@ -195,7 +195,7 @@ struct LakeMapScreen: View {
             LakeMapLegend(layer: layer, stripes: layer == .light ? shown?.lakeWide.stripes : nil,
                           routeMode: routeMode, hasRoute: (plan?.segments.isEmpty == false), boat: boat != nil,
                           spot: spot != nil, hasWind: !(shown?.wind.isEmpty ?? true),
-                          track: routeMode && showTrack && rowed?.track != nil, clubID: clubID)
+                          track: routeMode && showTrack && rowed?.track != nil, clubID: clubID, coldShore: view.coldShore)
         }
         .sheet(isPresented: $showingImport) {
             RowImportSheet(lakeName: view.name) { importRow($0) }
@@ -465,6 +465,13 @@ struct LakeMapScreen: View {
         }
     }
 
+    /// What to bring in cold water, as on the club page; the route's light stays about the weather.
+    @ViewBuilder private var coldWaterBadge: some View {
+        if let kit = view.coldWaterKit {
+            ColdWaterBadge(kit: kit, estimated: view.waterC == nil)
+        }
+    }
+
     @ViewBuilder private func panel(plan: RoutePlan?, boat: RoutePlan.Stop?, shown: LakeHour?) -> some View {
         if routeMode {
             planningPanel(plan: plan, boat: boat, shown: shown)
@@ -499,6 +506,7 @@ struct LakeMapScreen: View {
             if let lakeWide = shown?.lakeWide, lakeWide.light > .green {
                 LakeWideBanner(lakeWide: lakeWide).lineLimit(panelExpanded ? nil : 1)
             }
+            coldWaterBadge
             planningControls
             if panelExpanded {
                 CappedScroll(enabled: true, maxHeight: UIScreen.main.bounds.height * 0.3) {
@@ -626,6 +634,7 @@ struct LakeMapScreen: View {
             if hour.lakeWide.light > .green {
                 LakeWideBanner(lakeWide: hour.lakeWide)
             }
+            coldWaterBadge
             if routeMode {
                 routePanel(plan: plan, boat: boat)
             } else if let spot, spot < hour.lights.count {
@@ -681,6 +690,7 @@ struct LakeMapScreen: View {
         if hour.lakeWide.light > .green {
             LakeWideBanner(lakeWide: hour.lakeWide).lineLimit(1)
         }
+        coldWaterBadge
         Group {
             if routeMode, let plan {
                 HStack(spacing: 6) {
@@ -903,7 +913,7 @@ private struct LakeViewInfo: View {
         NavigationStack {
             List {
                 Text(tr("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))
-                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber DWD warning, fainter amber stripes are drawn over the squares. Cold water shows in the panel only."))
+                Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. DWD warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber DWD warning, fainter amber stripes are drawn over the squares. Cold water draws the shore blue and adds the life-jacket badge to the panel."))
                 Text(tr("Waves are an estimate: there are no wave measurements on these lakes, and shelter from steep shores or currents is not taken into account."))
                 Section(tr("Data")) {
                     Text(tr("Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0"))
@@ -1037,6 +1047,8 @@ struct LakeMapView: UIViewRepresentable {
             c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour), layer == .light ? hour.lakeWide.stripes : nil)
             c.renderer?.update(image: c.current.image, arrows: c.current.arrows, stripes: c.current.stripes)
         }
+        c.coldShore = view.coldShore
+        c.renderer?.setColdShore(c.coldShore)
         c.showSpot(spot.map { view.grid.coordinate(ofCell: $0) }, on: map)
         c.showBoat(boat, on: map)
     }
@@ -1057,6 +1069,7 @@ struct LakeMapView: UIViewRepresentable {
         /// The hour and layer drawn, and their picture and arrows.
         var shown: String?
         var current: (image: CGImage?, arrows: [LakeRenderer.Arrow], stripes: Light?) = (nil, [], nil)
+        var coldShore: ColdShore?
         var routeMode = false
         var imagery = false
         /// Whether the lake was fitted below the editing bar of route mode.
@@ -1096,6 +1109,7 @@ struct LakeMapView: UIViewRepresentable {
             guard let overlay = overlay as? LakeOverlay else { return MKOverlayRenderer(overlay: overlay) }
             let renderer = LakeRenderer(overlay: overlay)
             renderer.update(image: current.image, arrows: current.arrows, stripes: current.stripes)
+            renderer.setColdShore(coldShore)
             self.renderer = renderer
             return renderer
         }
@@ -1603,6 +1617,16 @@ final class LakeRenderer: MKOverlayRenderer {
     private var arrows: [Arrow] = []
     /// Stripes over the water while the whole lake is red or amber (see LakeWide.stripes).
     private var stripes: Light?
+    /// A blue shore while the water is cold.
+    private var coldShore: ColdShore?
+
+    func setColdShore(_ shore: ColdShore?) {
+        lock.lock()
+        let changed = coldShore != shore
+        coldShore = shore
+        lock.unlock()
+        if changed { setNeedsDisplay() }
+    }
 
     func update(image: CGImage?, arrows: [Arrow], stripes: Light?) {
         lock.lock()
@@ -1616,7 +1640,7 @@ final class LakeRenderer: MKOverlayRenderer {
     override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
         guard let lake = overlay as? LakeOverlay else { return }
         lock.lock()
-        let image = self.image, arrows = self.arrows, stripes = self.stripes
+        let image = self.image, arrows = self.arrows, stripes = self.stripes, coldShore = self.coldShore
         lock.unlock()
 
         let shore = CGMutablePath()
@@ -1660,8 +1684,9 @@ final class LakeRenderer: MKOverlayRenderer {
             context.restoreGState()
         }
         context.addPath(shore)
-        context.setStrokeColor(UIColor.systemBlue.withAlphaComponent(0.45).cgColor)
-        context.setLineWidth(1 / zoomScale)
+        // Cold water: the shore turns blue and thicker, the squares keep their colours.
+        context.setStrokeColor(coldShore.map { UIColor($0.color) }?.cgColor ?? UIColor.systemBlue.withAlphaComponent(0.45).cgColor)
+        context.setLineWidth((coldShore?.mapWidth ?? 1) / zoomScale)
         context.strokePath()
 
         // Arrows on an even grid over the water, fixed to the map so the tiles
@@ -1738,6 +1763,7 @@ struct LakeMapLegend: View {
     let hasWind: Bool
     var track = false
     var clubID: String? = nil
+    var coldShore: ColdShore? = nil
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -1757,6 +1783,11 @@ struct LakeMapLegend: View {
                 Section(tr("On the map")) {
                     row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
                     row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
+                    if let coldShore {
+                        row(Capsule().fill(coldShore.color).frame(width: 18, height: 4),
+                            tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
+                               Format.temperature(AppSettings.shared.mapLimits.value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
+                    }
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
                             tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones."))

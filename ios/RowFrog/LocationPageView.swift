@@ -179,7 +179,7 @@ struct LocationPageView: View {
                     if tourSeen && showLakeViewTip {
                         TipView(lakeViewTip)
                     }
-                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id)
+                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC)
                 }
                 .id("lakeview")
             }

@@ -24,6 +24,13 @@ struct LakeView: Decodable, Hashable {
     var hours: [LakeHour]
     /// The measured water the lights used; missing without a lake station or from older backends.
     var waterC: Double? = nil
+    /// Set by the app: the measured water, else the estimate of the club page that showed the lake.
+    var shoreWaterC: Double? = nil
+
+    /// Cold water draws the shore blue on the maps, for the map's boat.
+    var coldShore: ColdShore? { ColdShore(waterC: shoreWaterC, limits: AppSettings.shared.mapLimits) }
+    /// What to bring in cold water, for the map's boat.
+    var coldWaterKit: ColdWaterKit? { ColdWaterKit(waterC: shoreWaterC, limits: AppSettings.shared.mapLimits) }
 
     /// Older than a club forecast may be: the lights then turn grey instead of green.
     var isStale: Bool {
@@ -133,6 +140,23 @@ struct LakeHour: Decodable, Hashable, Identifiable {
         let x = vectors.map(\.0).reduce(0, +), y = vectors.map(\.1).reduce(0, +)
         return (atan2(x, y) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
     }
+}
+
+/// The shore on the lake maps while the water is cold: light blue from the
+/// life-jacket limit down, deeper blue below 10 °C. The whole lake reads as
+/// cold without colouring the squares, which keep showing where to row
+/// (owner's pick, 2026-10-26).
+enum ColdShore: Equatable {
+    case cool, cold
+
+    init?(waterC: Double?, limits: RowingLimits) {
+        guard let kit = ColdWaterKit(waterC: waterC, limits: limits) else { return nil }
+        self = kit == .lifeJacket ? .cool : .cold
+    }
+
+    /// Line width in screen points on the full map and on the club page's tile.
+    var mapWidth: CGFloat { self == .cool ? 2.5 : 3.5 }
+    var tileWidth: CGFloat { self == .cool ? 1.6 : 2.2 }
 }
 
 struct LakeWide: Decodable, Hashable {
@@ -301,6 +325,8 @@ final class LakeViewStore {
     var views: LakeViews { LakeViews(store: self) }
     @ObservationIgnored private var applied: [String: (limits: RowingLimits, view: LakeView)] = [:]
     private(set) var failed: Set<String> = []
+    /// The water of the club page that last showed each lake, for lakes without a station.
+    private var clubWater: [String: Double] = [:]
     private let api: APIClient
 
     nonisolated init(api: APIClient) { self.api = api }
@@ -332,10 +358,20 @@ final class LakeViewStore {
     func view(_ lakeID: String) -> LakeView? {
         guard let base = raw[lakeID] else { return nil }
         let limits = AppSettings.shared.mapLimits
-        if let cached = applied[lakeID], cached.limits == limits { return cached.view }
-        let view = base.applying(limits)
-        applied[lakeID] = (limits, view)
+        var view: LakeView
+        if let cached = applied[lakeID], cached.limits == limits {
+            view = cached.view
+        } else {
+            view = base.applying(limits)
+            applied[lakeID] = (limits, view)
+        }
+        view.shoreWaterC = view.waterC ?? clubWater[lakeID]
         return view
+    }
+
+    /// The water a club page shows (measured or estimated), for the cold shore.
+    func noteWater(_ celsius: Double?, lake lakeID: String) {
+        if let celsius, clubWater[lakeID] != celsius { clubWater[lakeID] = celsius }
     }
 }
 

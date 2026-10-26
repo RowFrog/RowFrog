@@ -7,6 +7,8 @@ struct LakeViewCard: View {
     let lakeID: String
     /// The club whose page this is; its launch point is marked.
     let clubID: String
+    /// The club's water, measured or estimated: the shore turns blue when it is cold.
+    var waterC: Double? = nil
     @MainActor private var store: LakeViewStore { .shared }
     @State private var showingMap = false
 
@@ -30,6 +32,7 @@ struct LakeViewCard: View {
 
     /// Screenshot hook: `-RWOpenLakeView YES` opens the full lake view once it has loaded.
     @MainActor private func load() async {
+        store.noteWater(waterC, lake: lakeID)
         await store.load(lakeID)
         // Only on the page `-RWOpenClub` opens: clubs on the same lake would race it for the sheet.
         let page = UserDefaults.standard.string(forKey: "RWOpenClub")
@@ -189,6 +192,7 @@ struct LakeMiniMap: View {
 
     var body: some View {
         let image = LakeRaster.image(view, hour: hour, layer: layer)
+        let coldShore = view.coldShore
         Canvas { ctx, size in
             let p = LakeProjection(grid: view.grid, size: size)
             let shore = p.outline(view.outline)
@@ -212,7 +216,12 @@ struct LakeMiniMap: View {
                     water.stroke(lines, with: .color(red ? .red.opacity(0.55) : .orange.opacity(0.75)), lineWidth: red ? 1.5 : 1.2)
                 }
             }
-            ctx.stroke(shore, with: .color(.blue.opacity(0.4)), lineWidth: 0.7)
+            // Cold water: the shore turns blue, the squares keep their colours.
+            if let cold = coldShore {
+                ctx.stroke(shore, with: .color(cold.color), lineWidth: cold.tileWidth)
+            } else {
+                ctx.stroke(shore, with: .color(.blue.opacity(0.4)), lineWidth: 0.7)
+            }
             for (point, wind) in zip(view.points, hour.wind) {
                 guard let from = wind.fromDeg else { continue }
                 let at = p.point(lon: point.lon, lat: point.lat)
@@ -250,5 +259,11 @@ enum LakeArrow {
             path.addLine(to: CGPoint(x: tip.x + CGFloat(sin(a)) * head, y: tip.y - CGFloat(cos(a)) * head))
         }
         return path
+    }
+}
+
+extension ColdShore {
+    var color: Color {
+        self == .cool ? Color(red: 0.36, green: 0.66, blue: 0.95) : Color(red: 0.08, green: 0.33, blue: 0.76)
     }
 }
