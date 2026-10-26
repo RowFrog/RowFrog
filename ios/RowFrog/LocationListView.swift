@@ -296,7 +296,7 @@ private struct LocationSummaryRow: View {
                 Spacer(minLength: 8)
                 if let now {
                     // Numbers first, e.g. "12–17 m/s" in full; the text on the left wraps instead.
-                    ListMetrics(hour: now, water: forecast?.waterTemperature, ice: forecast?.ice)
+                    ListMetrics(hour: now, water: forecast?.waterTemperature, estimatedWater: forecast?.estimatedWaterC, ice: forecast?.ice)
                         .layoutPriority(1)
                 }
             }
@@ -312,6 +312,8 @@ private struct LocationSummaryRow: View {
 struct ListMetrics: View {
     let hour: ForecastHour
     let water: WaterTemperature?
+    /// Without a station, the estimate the club page shows: grey with "≈".
+    var estimatedWater: Double? = nil
     var ice: IceEstimate? = nil
     var visibilitySymbol = Condition.visibility.symbol
 
@@ -319,8 +321,14 @@ struct ListMetrics: View {
         let rain = precipitationText(hour)
         Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 6) {
             GridRow {
-                Label(Format.degrees(water?.celsius, digits: 1), systemImage: Condition.waterTemperature.symbol)
-                    .accessibilityLabel(tr("Water: %@", water.map { Format.temperature($0.celsius, digits: 1) } ?? tr("no data")))
+                if water == nil, let estimatedWater {
+                    Label("≈ " + Format.degrees(estimatedWater, digits: 1), systemImage: Condition.waterTemperature.symbol)
+                        .foregroundStyle(.secondary)
+                        .accessibilityLabel(tr("Water: %@", tr("Estimated: %@", Format.temperature(estimatedWater, digits: 1))))
+                } else {
+                    Label(Format.degrees(water?.celsius, digits: 1), systemImage: Condition.waterTemperature.symbol)
+                        .accessibilityLabel(tr("Water: %@", water.map { Format.temperature($0.celsius, digits: 1) } ?? tr("no data")))
+                }
                 Label(Format.distance(hour.visibilityM), systemImage: visibilitySymbol)
                     .accessibilityLabel(tr("Visibility: %@", Format.distance(hour.visibilityM)))
             }

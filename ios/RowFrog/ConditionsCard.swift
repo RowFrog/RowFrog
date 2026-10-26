@@ -660,7 +660,9 @@ struct ConditionDetailView: View {
                     Label {
                         Text(line.name).strikethrough(off)
                     } icon: {
-                        Image(systemName: off ? "circle" : "circle.fill")
+                        // The dashed forecast gets a dashed dot, so it reads apart
+                        // from the measured line of the same colour.
+                        Image(systemName: line.dashed ? (off ? "circle.dashed" : "circle.dashed.inset.filled") : (off ? "circle" : "circle.fill"))
                     }
                     .foregroundStyle(line.color)
                     .opacity(off ? 0.45 : 1)
@@ -945,6 +947,7 @@ private struct ConditionChart: View {
                     GeometryReader { geo in
                         markers(proxy: proxy, geo: geo)
                         limitLabels(proxy: proxy, geo: geo)
+                        scrubLabel(proxy: proxy, geo: geo)
                     }
                     .allowsHitTesting(false)
                 }
@@ -999,6 +1002,17 @@ private struct ConditionChart: View {
         line.points.min { abs($0.x - x) < abs($1.x - x) }
     }
 
+    /// The point a line has at an hour, or nil where the line doesn't reach:
+    /// measurements end now and a forecast starts there, so only one of them
+    /// answers. A dashed forecast starts on the last measurement, which then
+    /// speaks for both.
+    private func value(_ line: ChartLine, at x: Double) -> ChartPoint? {
+        guard let first = line.points.first, let last = line.points.last else { return nil }
+        let start = line.dashed && line.points.count > 1 ? first.x + 0.5 : first.x - 0.75
+        guard x >= start, x <= last.x + 0.75 else { return nil }
+        return nearest(line, to: x)
+    }
+
     /// A value with as many decimals as it needs to be read: 0.19, 5.2, 14.
     private func valueText(_ y: Double) -> String {
         let digits = abs(y) < 1 ? 2 : abs(y) < 10 ? 1 : 0
@@ -1010,9 +1024,15 @@ private struct ConditionChart: View {
         VStack(alignment: .leading, spacing: 2) {
             Text(Format.dayTime(date(x.rounded()))).font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
             ForEach(shownLines) { line in
-                if let p = nearest(line, to: x) {
+                if let p = value(line, at: x) {
                     HStack(spacing: 4) {
-                        if shownLines.count > 1 { Circle().fill(line.color).frame(width: 6, height: 6) }
+                        if shownLines.count > 1 {
+                            if line.dashed {
+                                Circle().strokeBorder(line.color, lineWidth: 1.5).frame(width: 6, height: 6)
+                            } else {
+                                Circle().fill(line.color).frame(width: 6, height: 6)
+                            }
+                        }
                         Text(valueText(p.y)).font(.caption.weight(.semibold).monospacedDigit())
                     }
                 }
@@ -1059,22 +1079,12 @@ private struct ConditionChart: View {
                     }
                 }
             }
-            // The blue line itself is drawn by `markers`, so it can make room for
-            // the map's marker; this one only carries the label while touched.
-            // Forecasts show the scrubbed hour and value in the big number above;
-            // a label over the chart was cut off by the scrolling chart's edge and
-            // left only a dark bar. Past measurements get it, inside the plot.
-            if detail.history, let x = selectedX {
-                // Zero width rather than clear: the label takes the mark's colour.
-                RuleMark(x: .value("Hour", x.rounded()))
-                    .lineStyle(StrokeStyle(lineWidth: 0))
-                    .annotation(position: .top, spacing: 0, overflowResolution: .init(x: .fit(to: .chart), y: .fit(to: .plot))) {
-                        callout(x)
-                    }
-            }
+            // The blue line and the touched value's label are drawn over the
+            // chart (`markers`, `scrubLabel`): a label inside a scrolling chart
+            // was cut off at its edge and left only a dark bar.
             if let x = markerX {
                 ForEach(shownLines.filter { $0.kind == .line }) { line in
-                    if let p = nearest(line, to: x) {
+                    if let p = value(line, at: x) {
                         PointMark(x: .value("Hour", p.x), y: .value("Value", p.y))
                             .foregroundStyle(line.color)
                             .symbolSize(50)
@@ -1128,7 +1138,7 @@ private struct ConditionChart: View {
         if let plotFrame = proxy.plotFrame {
             let plot = geo[plotFrame]
             let left = max(plot.minX, 0)
-            let visibleRight = proxy.position(forX: scrollX + 24).map { plot.minX + $0 } ?? plot.maxX
+            let visibleRight = rightEdge(proxy: proxy, plot: plot)
             let right = min(plot.maxX, visibleRight, geo.size.width)
             let onScreen = { (x: Double) -> CGFloat? in
                 guard let p = proxy.position(forX: x) else { return nil }
@@ -1168,7 +1178,7 @@ private struct ConditionChart: View {
             // A chart that scrolls reports its whole plot, which starts off screen
             // once dragged; the names stay at the visible left edge instead.
             let left = max(plot.minX, 0)
-            let visibleRight = proxy.position(forX: scrollX + 24).map { plot.minX + $0 } ?? plot.maxX
+            let visibleRight = rightEdge(proxy: proxy, plot: plot)
             let right = min(plot.maxX, visibleRight, geo.size.width)
             let trailing = !detail.history
             let placed = Self.spread(detail.limits.compactMap { limit -> (limit: ChartLimit, y: CGFloat)? in
@@ -1193,6 +1203,35 @@ private struct ConditionChart: View {
     }
 
     static let labelHeight: CGFloat = 15
+
+    /// The right edge of what is on screen: the visible 24 hours of a forecast;
+    /// a history's whole plot, which reaches on into the water forecast.
+    private func rightEdge(proxy: ChartProxy, plot: CGRect) -> CGFloat {
+        if detail.history { return plot.maxX }
+        return proxy.position(forX: scrollX + 24).map { plot.minX + $0 } ?? plot.maxX
+    }
+
+    /// While touched, the hour and values at the top of the plot, beside the
+    /// blue line on the side with more room, so it never covers the line or
+    /// runs past the visible edge (the big number above changes as well).
+    @ViewBuilder
+    private func scrubLabel(proxy: ChartProxy, geo: GeometryProxy) -> some View {
+        if let x = selectedX, let plotFrame = proxy.plotFrame, let p = proxy.position(forX: x.rounded()) {
+            let plot = geo[plotFrame]
+            let left = max(plot.minX, 0)
+            let visibleRight = rightEdge(proxy: proxy, plot: plot)
+            let right = min(plot.maxX, visibleRight, geo.size.width)
+            let px = plot.minX + p
+            let before = px > (left + right) / 2
+            callout(x)
+                .fixedSize()
+                .padding(.leading, before ? 0 : px + 6)
+                .padding(.trailing, before ? max(geo.size.width - px, 0) + 6 : 0)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: before ? .topTrailing : .topLeading)
+                .offset(y: plot.minY + 2)
+                .transaction { $0.animation = nil }
+        }
+    }
 
     /// Moves names down so no two overlap, keeping their order from top to bottom.
     static func spread(_ items: [(limit: ChartLimit, y: CGFloat)], top: CGFloat) -> [(limit: ChartLimit, y: CGFloat)] {

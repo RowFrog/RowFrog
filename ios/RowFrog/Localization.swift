@@ -328,6 +328,7 @@ enum German {
         "Latest, %@": "Neuestes, %@",
         "Clearest, %@": "Klarstes, %@",
         "Mostly clear, %@": "Fast klar, %@",
+        "Mostly clear (picture)": "Fast klar",
         "Latest": "Neuestes",
         "Clearest": "Klarstes",
         "Sentinel-2 · %@ · no cloud over the lake": "Sentinel-2 · %@ · keine Wolken über dem See",
