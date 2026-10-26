@@ -786,3 +786,62 @@ struct RadarSparkBars: View {
             .frame(width: width, height: max(2, 28 * min(v, top) / top))
     }
 }
+
+/// Rain from a moment on in the words the rain tile, the top tile and the
+/// rain view share: the radar for its two hours, the forecast after them.
+/// The radar measures how much falls, not what, so snow, hail and drizzle
+/// are named from the forecast's weather code for that hour.
+struct RainOutlook {
+    /// The radar from the moment on (`RainRadar.ahead(of:)`).
+    let radar: RainRadar
+    /// The forecast hours, in order.
+    let hours: [ForecastHour]
+
+    /// The forecast's kind for the hour around `date`; "Rain" when it has none.
+    func kind(at date: Date) -> String {
+        let hour = hours.last { $0.time <= date } ?? hours.first
+        return hour.flatMap { Sky(hour: $0).precipitationKind } ?? tr("Rain")
+    }
+
+    /// What falls now, e.g. "Light rain" or "Snow"; nil while dry.
+    var now: String? {
+        guard let first = radar.steps.first, radar.rainingNow else { return nil }
+        let kind = kind(at: first.time)
+        return kind == tr("Rain") ? RainRadar.intensity(first.mmPerHour) : kind
+    }
+
+    /// The next change: what comes, when, and whether the radar says so (else the forecast).
+    var next: (text: String, short: String, fromRadar: Bool)? {
+        if let now, let first = radar.steps.first {
+            // Raining: it ends, or gets heavier, whichever comes first; else the forecast's end.
+            let heavier = radar.steps.first { Self.level($0.mmPerHour) > Self.level(first.mmPerHour) }
+            if let dry = radar.dryAgain, heavier.map({ dry.time < $0.time }) ?? true {
+                return (tr("Dry from %@", Format.time(dry.time)), tr("%@ to %@", now, Format.time(dry.time)), true)
+            }
+            if let heavier {
+                return (tr("Heavier from %@", Format.time(heavier.time)), now, true)
+            }
+            if let dry = hours.first(where: { $0.time >= radar.end && ($0.precipitationMm ?? 0) < 0.1 }) {
+                return (tr("Until about %@", Format.time(dry.time)), tr("%@ to about %@", now, Format.time(dry.time)), false)
+            }
+            return (tr("No end in sight"), now, false)
+        }
+        if let first = radar.firstRain {
+            let text = tr("%@ from %@", kind(at: first.time), Format.time(first.time))
+            return (text, text, true)
+        }
+        return nil
+    }
+
+    /// One line for the radar's two hours, e.g. "Snow from 15:20".
+    var summary: String {
+        if let now { return radar.dryAgain.map { tr("%@ now, dry from %@", now, Format.time($0.time)) } ?? tr("%@ for the next 2 hours", now) }
+        if let first = radar.firstRain { return tr("%@ from %@", kind(at: first.time), Format.time(first.time)) }
+        return tr("No rain in the next 2 hours")
+    }
+
+    /// Light, moderate, heavy: as `RainRadar.intensity`.
+    private static func level(_ mmPerHour: Double) -> Int {
+        mmPerHour < RainRadar.rainFrom ? -1 : mmPerHour < 2.5 ? 0 : mmPerHour < 10 ? 1 : 2
+    }
+}

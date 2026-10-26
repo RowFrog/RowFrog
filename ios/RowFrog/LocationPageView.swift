@@ -600,7 +600,8 @@ private struct NowCard: View {
                 }
                 Spacer()
                 opens(.precipitation) {
-                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rainValue, size: 17)
+                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rainValue.text, size: 17,
+                               mark: rainValue.fromRadar ? "dot.radiowaves.left.and.right" : nil)
                 }
                 Spacer()
                 opens(.visibility) {
@@ -651,13 +652,13 @@ private struct NowCard: View {
     private var radar: RainRadar? { club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) } }
 
     /// Rain from the radar for the next two hours, as the rain tile shows it; later from the forecast.
-    private var rainValue: String {
+    private var rainValue: (text: String, fromRadar: Bool) {
         if let ahead = radar?.ahead(of: at ?? .now) {
-            if let now = ahead.rainNow { return now }
-            if let first = ahead.firstRain { return tr("Rain from %@", Format.time(first.time)) }
-            return tr("None")
+            let outlook = RainOutlook(radar: ahead, hours: forecast.hours)
+            if let next = outlook.next { return (next.short, true) }
+            return (tr("None"), false)
         }
-        return precipitationText(hour) ?? tr("None")
+        return (precipitationText(hour) ?? tr("None"), false)
     }
 
     /// While DWD has no warning, one line says so; the warnings card itself
@@ -800,14 +801,18 @@ struct MetricView: View {
     let symbol: String
     let value: String
     var size: CGFloat
+    /// A symbol in front of the value, such as the radar's.
+    var mark: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Label(title, systemImage: symbol)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
-            Text(value)
-                .font(.system(size: size, weight: .light))
+            Group {
+                if let mark { Text("\(Image(systemName: mark)) \(value)") } else { Text(value) }
+            }
+            .font(.system(size: size, weight: .light))
         }
         .accessibilityElement(children: .combine)
     }

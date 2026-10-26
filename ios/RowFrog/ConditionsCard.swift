@@ -99,6 +99,8 @@ struct ConditionData {
     /// The radar from the shown moment on, while its nowcast still reaches at
     /// least half an hour ahead; rain then comes from the radar, later from the forecast.
     var radarAhead: RainRadar? { radar?.ahead(of: moment) }
+    /// The radar's words for rain from the shown moment on, while it reaches.
+    var rainOutlook: RainOutlook? { radarAhead.map { RainOutlook(radar: $0, hours: timeline) } }
 
     /// The first forecast hour with rain after the radar's two hours (or from
     /// the shown hour without radar), within the next 24 hours.
@@ -230,7 +232,7 @@ private struct ConditionTile: View {
         case .waterTemperature:
             if data.water == nil, let estimate = data.estimatedWater { "≈ " + Format.degrees(estimate, digits: 0) } else { Format.degrees(data.water?.celsius, digits: 1) }
         case .precipitation:
-            if let radar = data.radarAhead { radar.rainNow ?? tr("Dry") } else { (hour.precipitationMm ?? 0) >= 0.1 ? Format.rain(hour.precipitationMm) : tr("Dry") }
+            if let outlook = data.rainOutlook { outlook.now ?? tr("Dry") } else { (hour.precipitationMm ?? 0) >= 0.1 ? Format.rain(hour.precipitationMm) : tr("Dry") }
         case .visibility: Format.distance(hour.visibilityM)
         case .cloudCover: "\(Format.number(hour.cloudCoverPct)) %"
         case .pressure: Format.pressureNumber(hour.pressureHpa)
@@ -243,7 +245,7 @@ private struct ConditionTile: View {
 
     /// The short line under the value; rain read from the radar starts with the radar's symbol.
     private var detailLine: Text {
-        guard condition == .precipitation, let radar = data.radarAhead, radar.rainingNow || radar.firstRain != nil else { return Text(detail) }
+        guard condition == .precipitation, data.rainOutlook?.next?.fromRadar == true else { return Text(detail) }
         return Text("\(Image(systemName: "dot.radiowaves.left.and.right")) \(detail)")
     }
 
@@ -270,14 +272,9 @@ private struct ConditionTile: View {
             return data.water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
         case .precipitation:
             // The radar for the next two hours, the forecast after them; short, the tile is narrow.
-            if let radar = data.radarAhead {
-                // Lines from the radar start with its symbol (see `detailLine`).
-                if radar.rainingNow {
-                    return radar.dryAgain.map { tr("Dry from %@", Format.time($0.time)) } ?? tr("Next 2 h")
-                }
-                if let first = radar.firstRain {
-                    return tr("Rain from %@", Format.time(first.time))
-                }
+            if let outlook = data.rainOutlook {
+                // While it rains, what comes next; lines from the radar start with its symbol (see `detailLine`).
+                if let next = outlook.next { return next.text }
                 guard let wet = data.forecastRain else { return tr("Dry next 24 h") }
                 return tr("%@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
             }
@@ -1760,10 +1757,14 @@ extension ConditionDetail {
         var lines = [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) })]
         var source = tr("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.")
         // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
-        if let ahead = d.radarAhead {
+        if let ahead = d.radarAhead, let outlook = d.rainOutlook {
             value = ahead.rainingNow ? Format.rain(ahead.steps.first?.mmPerHour) : tr("Dry")
-            note = tr("Radar: %@", ahead.summary)
-            facts.insert((tr("Radar, next 2 h"), ahead.summary), at: 0)
+            if let now = outlook.now, let next = outlook.next {
+                note = next.fromRadar ? tr("Radar: %@ · %@", now, next.text) : tr("Radar: %@", now) + " · " + next.text
+            } else {
+                note = tr("Radar: %@", outlook.summary)
+            }
+            facts.insert((tr("Radar, next 2 h"), outlook.summary), at: 0)
         }
         if let radar = d.radar, let first = radar.steps.first {
             let points = radar.steps.map { ChartPoint(x: d.x($0.time), y: r.convert($0.mmPerHour)) }
