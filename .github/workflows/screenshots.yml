@@ -161,8 +161,11 @@ jobs:
             xcrun simctl io "$UDID" screenshot "$SHOTS/$name.png"
             # The simulator saves landscape shots sideways; turn them upright.
             # With landscape off the app stays upright, so the shot already is.
+            # The iPad, turned with Rotate Right, lies the other way round.
             if [[ " $* " == *" -RWLandscape YES "* && " $* " != *" -RWAllowsLandscape NO "* ]]; then
-              python3 -c 'import sys; from PIL import Image; p = sys.argv[1]; Image.open(p).rotate(90, expand=True).save(p)' "$SHOTS/$name.png"
+              local angle=90
+              [ "$SHOTS" != docs/screenshots ] && angle=-90
+              python3 -c 'import sys; from PIL import Image; p = sys.argv[1]; Image.open(p).rotate(int(sys.argv[2]), expand=True).save(p)' "$SHOTS/$name.png" "$angle"
             fi
           }
           # Compares two screenshots below the navigation bar, whose glass

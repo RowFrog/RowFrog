@@ -163,7 +163,8 @@ struct RootView: View {
         showingSettings = true
     }
 
-    static let sideListWidth: CGFloat = 320
+    /// As wide as an iPhone's list, so a row's numbers and text fit side by side (iPad).
+    static let sideListWidth: CGFloat = 400
     static let sideListMinWidth: CGFloat = 860
     static let sideListMinHeight: CGFloat = 560
 
