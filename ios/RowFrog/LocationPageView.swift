@@ -28,6 +28,12 @@ struct LocationPageView: View {
     @State private var showingFailure: RefreshFailure?
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
+
+    /// Whose satellite picture the page shows: the lake's, or for water without an
+    /// outline (rivers, until they have sections) the 4 x 3 km around the club ("club-<id>").
+    private func satelliteID(_ forecast: ClubForecast) -> String {
+        lake?.hasOutline == false ? "club-\(club.id)" : forecast.lakeId
+    }
     @State private var showSourceTip = false
     @State private var showRadarMapTip = false
     @State private var showHourViewTip = false
@@ -76,7 +82,7 @@ struct LocationPageView: View {
                             }
                             // The satellite card is empty until its picture has loaded, and an
                             // empty view never runs its own .task, so the cards load it here.
-                            .task(id: forecast.lakeId) { await SatellitePictureStore.shared.load(forecast.lakeId) }
+                            .task(id: satelliteID(forecast)) { await SatellitePictureStore.shared.load(satelliteID(forecast)) }
                             sourceLine(forecast)
                             Button {
                                 arranging = true
@@ -205,15 +211,13 @@ struct LocationPageView: View {
             }
             .id("launchpoint")
         case .satellite:
-            if lake?.hasOutline != false {
-                VStack(spacing: 16) {
-                    if tourSeen && showSatelliteTip {
-                        TipView(satelliteTip)
-                    }
-                    SatellitePictureCard(lakeID: forecast.lakeId, clubID: club.id)
+            VStack(spacing: 16) {
+                if tourSeen && showSatelliteTip {
+                    TipView(satelliteTip)
                 }
-                .id("satellite")
+                SatellitePictureCard(lakeID: satelliteID(forecast), clubID: club.id)
             }
+            .id("satellite")
         }
     }
 

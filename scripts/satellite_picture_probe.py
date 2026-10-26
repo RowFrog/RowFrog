@@ -27,6 +27,7 @@ def main() -> int:
         ring = outlines.load(lake_id)[0]
         bbox, width, height = sentinel2.frame(ring)
         print(f"## {lake_id}: box {bbox}, {width} x {height} px")
+        latest = None
         for days in (sentinel2.SEARCH_DAYS, sentinel2.FIRST_SEARCH_DAYS):
             try:
                 passes = sentinel2.cloud_by_day(client, ring, today - timedelta(days=days), today)
@@ -37,6 +38,15 @@ def main() -> int:
             latest, mostly_clear, clearest = sentinel2.choose(passes)
             print(f"  {days} days: {len(passes)} passes, latest {latest}, mostly clear {mostly_clear}, clearest {clearest}")
             print("   ", ", ".join(f"{p.day:%m-%d} {p.lake_cloud:.0%}" for p in passes[-12:]))
+        sharp = sentinel2.sharp_size(bbox)
+        if sharp and latest:
+            grid = sentinel2.tiles(bbox, *sharp)
+            row, col, box, w, h = grid[len(grid) // 2]
+            try:
+                tile = sentinel2.jpeg(client, box, w, h, latest.day)
+                print(f"  sharp {sharp[0]} x {sharp[1]} px in {len(grid)} tiles; tile {row}-{col} {w} x {h} px, {len(tile) // 1024} KB")
+            except Exception as e:
+                print(f"  sharp tile failed {e!r} {getattr(getattr(e, 'response', None), 'text', '')[:300]}")
     print(f"Requests: {sentinel2.requests_made}")
     return 0
 

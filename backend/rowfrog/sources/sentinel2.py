@@ -12,8 +12,13 @@ CDSE_CLIENT_SECRET; app users need none):
    CLEAR_MAX_LAKE_CLOUD of it under cloud ("clearest"), when they are new.
 A lake that has never had a picture is searched once over FIRST_SEARCH_DAYS.
 
-The free account allows about 10,000 requests a month; a look at a lake takes
-one request plus one per new picture.
+Lakes too big for 10 m in one picture (19, from Ammersee to Bodensee) also get
+each new picture at 10 m in tiles for the full-screen view while someone uses
+the lake, one request per tile (171 for all of them), and the three biggest a
+2500 px overview.
+
+The free account allows about 10,000 requests and 10,000 processing units a
+month; a look at a lake takes one request plus one per new picture or tile.
 
 Data: "Contains modified Copernicus Sentinel data <year>".
 """
@@ -46,6 +51,19 @@ MOSTLY_CLEAR_MAX_LAKE_CLOUD = 0.3
 MAX_PIXELS = 1280  # longer side of the picture
 METRES_PER_PIXEL = 10.0
 MARGIN = 0.08  # shore around the lake, as a share of its size
+# Small waters show at least this much around them, so the picture has the town
+# and the neighbouring river or lake instead of a few blurred pixels (owner's
+# pick 2026-10-26, "option C").
+MIN_WIDTH_M = 4000
+MIN_HEIGHT_M = 3000
+# Lakes too big for 10 m in MAX_PIXELS also get the picture at 10 m, cut into
+# tiles for the full-screen view (the Process API gives at most 2500 px a side).
+TILE_PIXELS = 1024
+# Above this many pixels on the longer side the full-screen view starts from an
+# overview of OVERVIEW_PIXELS and loads only the tiles in sight when zoomed in
+# (Bodensee, Lac Léman, Lago Maggiore); smaller ones load all their tiles.
+OVERVIEW_ABOVE = 4000
+OVERVIEW_PIXELS = 2500
 
 # The free account allows only a few requests a minute: pause between requests, and wait out a refusal.
 PAUSE_SECONDS = 2.0
@@ -104,8 +122,53 @@ def frame(ring: list[tuple[float, float]]) -> tuple[tuple[float, float, float, f
     mid_lat = math.radians((south + north) / 2)
     width_m = (east - west) * 111_320 * math.cos(mid_lat)
     height_m = (north - south) * 110_540
+    if width_m < MIN_WIDTH_M:
+        grow = (MIN_WIDTH_M - width_m) / 2 / (111_320 * math.cos(mid_lat))
+        west, east, width_m = west - grow, east + grow, MIN_WIDTH_M
+    if height_m < MIN_HEIGHT_M:
+        grow = (MIN_HEIGHT_M - height_m) / 2 / 110_540
+        south, north, height_m = south - grow, north + grow, MIN_HEIGHT_M
     scale = max(METRES_PER_PIXEL, max(width_m, height_m) / MAX_PIXELS)
     return (west, south, east, north), max(1, round(width_m / scale)), max(1, round(height_m / scale))
+
+
+def sharp_size(bbox) -> tuple[int, int] | None:
+    """The picture's size at 10 m, or None when the normal picture is already that sharp."""
+    west, south, east, north = bbox
+    mid_lat = math.radians((south + north) / 2)
+    width = round((east - west) * 111_320 * math.cos(mid_lat) / METRES_PER_PIXEL)
+    height = round((north - south) * 110_540 / METRES_PER_PIXEL)
+    return (width, height) if max(width, height) > MAX_PIXELS else None
+
+
+def tiles(bbox, width: int, height: int) -> list[tuple[int, int, tuple[float, float, float, float], int, int]]:
+    """(row, column, box, width, height) of each tile of a `width` x `height` picture of `bbox`, top left first.
+
+    Tiles are TILE_PIXELS square except along the right and bottom edges; each
+    box is the tile's share of `bbox`, so the tiles line up with the picture.
+    """
+    west, south, east, north = bbox
+    out = []
+    for row in range(math.ceil(height / TILE_PIXELS)):
+        for col in range(math.ceil(width / TILE_PIXELS)):
+            x0, y0 = col * TILE_PIXELS, row * TILE_PIXELS
+            x1, y1 = min(width, x0 + TILE_PIXELS), min(height, y0 + TILE_PIXELS)
+            box = (
+                west + (east - west) * x0 / width,
+                north - (north - south) * y1 / height,
+                west + (east - west) * x1 / width,
+                north - (north - south) * y0 / height,
+            )
+            out.append((row, col, box, x1 - x0, y1 - y0))
+    return out
+
+
+def overview_size(width: int, height: int) -> tuple[int, int] | None:
+    """The overview's size for a sharp picture this big, or None when the view loads all tiles."""
+    if max(width, height) <= OVERVIEW_ABOVE:
+        return None
+    scale = OVERVIEW_PIXELS / max(width, height)
+    return max(1, round(width * scale)), max(1, round(height * scale))
 
 
 def _polygon(ring: list[tuple[float, float]], max_points: int = 300) -> dict:

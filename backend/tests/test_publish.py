@@ -219,3 +219,82 @@ def test_local_warnings_skip_clubs_outside_germany(monkeypatch):
     assert len(looked) == 2
     assert set(api._primed_local_warnings) == {c.id for c in clubs[:2]}
     api._primed_local_warnings.clear()
+
+
+def test_big_lakes_get_sharp_tiles_once_per_pass(tmp_path, monkeypatch):
+    rendered = []
+    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: rendered.append((w, h)) or b"jpg")
+    monkeypatch.setattr(publish, "sharp_tiles_left", 1000)
+    # About 30 x 20 km: 1280 px wide in the card, about 3300 px at 10 m, so tiles but no overview.
+    ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
+    day = sentinel2.Pass(date(2026, 10, 8), 0.05)
+    body = publish._picture_meta(None, tmp_path, ring, {}, day, day)
+    sharp = body["sharp"]
+    assert 3000 < sharp["width"] < 4000 and sharp["columns"] == 4 and sharp["rows"] == 3
+    tiles = sharp["rows"] * sharp["columns"]
+    assert len(rendered) == 1 + tiles, "the card's picture and the tiles of the latest; the clearest copies them"
+    assert body["latest"]["tiles"] == "satellite-latest-tiles" and "overview" not in body["latest"]
+    assert len(list((tmp_path / "satellite-clearest-tiles").iterdir())) == tiles
+    # Nothing new: nothing rendered again.
+    body = publish._picture_meta(None, tmp_path, ring, body, None, None)
+    assert len(rendered) == 1 + tiles and body["clearest"]["tiles"] == "satellite-clearest-tiles"
+
+
+def test_tiles_line_up_with_the_picture():
+    box = (11.0, 48.0, 11.3, 48.1)
+    grid = sentinel2.tiles(box, 2500, 1100)
+    assert len(grid) == 3 * 2
+    assert grid[0][2][0] == 11.0 and grid[0][2][3] == 48.1  # top left
+    assert abs(grid[-1][2][2] - 11.3) < 1e-9 and abs(grid[-1][2][1] - 48.0) < 1e-9  # bottom right
+    assert (grid[-1][3], grid[-1][4]) == (2500 - 2048, 1100 - 1024)
+
+
+def test_only_the_biggest_lakes_get_an_overview():
+    assert sentinel2.overview_size(3600, 2900) is None
+    assert sentinel2.overview_size(7800, 4350) == (2500, 1394)
+
+
+def test_tiles_wait_for_a_later_run_when_the_run_has_used_its_share(tmp_path, monkeypatch):
+    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    monkeypatch.setattr(publish, "sharp_tiles_left", 3)
+    ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
+    day = sentinel2.Pass(date(2026, 10, 8), 0.05)
+    body = publish._picture_meta(None, tmp_path, ring, {}, day, day)
+    assert "tiles" not in body["latest"] and publish._lacks_sharp(body, ring)
+    monkeypatch.setattr(publish, "sharp_tiles_left", 100)
+    body = publish._picture_meta(None, tmp_path, ring, body, day, day)
+    assert body["latest"]["tiles"] and not publish._lacks_sharp(body, ring)
+
+
+def test_small_lakes_get_no_sharp_files(tmp_path, monkeypatch):
+    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    ring = [(11.0, 48.0), (11.01, 48.0), (11.01, 48.005), (11.0, 48.005)]
+    day = sentinel2.Pass(date(2026, 10, 8), 0.05)
+    body = publish._picture_meta(None, tmp_path, ring, {}, day, day)
+    assert "sharp" not in body and "tiles" not in body["latest"] and not publish._lacks_sharp(body, ring)
+
+
+def test_river_clubs_get_a_place_around_their_launch_point():
+    from rowfrog import locations
+
+    clubs = locations.load().clubs.values()
+    river = next(c for c in clubs if c.lake_id.startswith("river-"))
+    lake = next(c for c in clubs if c.lake_id == "starnberger-see")
+    places = publish.club_places([river, lake])
+    assert list(places) == [f"club-{river.id}"]
+    (west, south, east, north), width, height = sentinel2.frame(places[f"club-{river.id}"][0])
+    assert (width, height) == (400, 300)
+    assert west < river.launch_point.lon < east and south < river.launch_point.lat < north
+
+
+def test_big_lakes_nobody_uses_get_no_tiles(tmp_path, monkeypatch):
+    monkeypatch.setattr(sentinel2, "jpeg", lambda client, bbox, w, h, day: b"jpg")
+    monkeypatch.setattr(publish, "sharp_tiles_left", 1000)
+    ring = [(11.0, 48.0), (11.4, 48.0), (11.4, 48.17), (11.0, 48.17)]
+    day = sentinel2.Pass(date(2026, 10, 8), 0.05)
+    used = publish._picture_meta(None, tmp_path, ring, {}, day, day)
+    assert (tmp_path / "satellite-latest-tiles").exists()
+    # No longer used: the tiles go, the pictures stay.
+    body = publish._picture_meta(None, tmp_path, ring, used, None, None, sharp_ok=False)
+    assert "sharp" not in body and "tiles" not in body["latest"] and body["latest"]["date"] == "2026-10-08"
+    assert not (tmp_path / "satellite-latest-tiles").exists() and (tmp_path / "satellite-latest.jpg").exists()
