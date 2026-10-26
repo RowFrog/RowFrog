@@ -14,6 +14,8 @@ import {
   gridEdges, cellAt, cellColours, rasterPixels, windAt, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
   roughest, RELATION_WIND, RELATION_WAVES, pace as paceText,
 } from "./lake.js";
+import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
+import { tip, wireTips } from "./tour.js";
 
 const views = new Map();
 
@@ -242,7 +244,7 @@ export async function renderLakeMap(root, lakeId, clubId, back) {
   page = {
     root, view, club, lakeId, hour: hourIndex(view), layer: "light", spot: null,
     routeMode: false, points: club ? [club.launchPoint] : [], undo: [], outAndBack: false, pace: 135,
-    selected: null, followBoat: false, boatAt: 0, savedId: null, map: null, layers: {},
+    selected: null, followBoat: false, boatAt: 0, savedId: null, map: null, layers: {}, rowed: null, showTrack: true,
   };
   root.querySelector("#route-mode").addEventListener("click", toggleRouteMode);
   root.querySelector("#legend").addEventListener("click", () => openSheet(t("Legend"), legendSheet()));
@@ -535,7 +537,11 @@ function planningPanel(hour) {
       <button class="pill" id="close-loop" ${page.points.length >= 3 && !isLoop ? "" : "disabled"}>${icon("rotate-ccw")} ${h(t("Close loop"))}</button>
       <button class="pill" id="clear" ${page.points.length > 1 ? "" : "disabled"}>${icon("trash-2")} ${h(t("Clear route"))}</button>
       <button class="pill" id="save-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("check")} ${h(t("Save route"))}</button>
+      <label class="pill" id="import-row" title="${h(t("GPX, TCX or FIT files from CrewNerd, Garmin Connect, Strava and other apps."))}">${icon("upload")} ${h(t("Import a row"))}
+        <input type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden></label>
+      ${page.rowed?.track ? `<label class="tick inline"><input type="checkbox" id="show-track" ${page.showTrack ? "checked" : ""}> ${icon("spline")} ${h(t("Show rowed track"))}</label>` : ""}
     </div>
+    ${tip("rowImport")}
     ${lakeWideBanner(hour.lakeWide)}
     ${kitBadge(view)}
     <div class="route-controls">
@@ -578,6 +584,11 @@ function drawRoute() {
     }
     const stop = boatStop(found.plan);
     if (stop) L.circleMarker([stop.coordinate.lat, stop.coordinate.lon], { radius: 8, color: "#fff", weight: 2, fillColor: "#5856d6", fillOpacity: 1 }).addTo(group);
+  }
+  // The imported row as it was rowed, thin over the route (RowedTrackLine).
+  if (page.rowed?.track && page.showTrack) {
+    L.polyline(page.rowed.track.map((p) => [p.lat, p.lon]), { color: "#fff", weight: 3.5, opacity: 0.8, interactive: false }).addTo(group);
+    L.polyline(page.rowed.track.map((p) => [p.lat, p.lon]), { color: "#5856d6", weight: 2, interactive: false }).addTo(group);
   }
   // A thin line to tap: a tap on a stretch adds a turning point there.
   page.points.forEach((p, i) => {
@@ -640,7 +651,10 @@ function wirePanel() {
     update();
   });
   on("#close-loop", "click", edit((p) => RouteEdit.close(p)));
-  on("#clear", "click", edit((p) => p.slice(0, 1)));
+  on("#clear", "click", edit((p) => {
+    page.rowed = null;
+    return p.slice(0, 1);
+  }));
   on("#delete-point", "click", edit((p) => RouteEdit.remove(page.selected, p)));
   on("#point-done", "click", () => {
     page.selected = null;
@@ -687,6 +701,12 @@ function wirePanel() {
   });
   on("#boat-at", "change", () => update());
   on("#save-route", "click", saveRoute);
+  on("#import-row input", "change", (e) => importRow(e.target.files?.[0]));
+  on("#show-track", "change", (e) => {
+    page.showTrack = e.target.checked;
+    drawRoute();
+  });
+  wireTips(panel);
   panel.querySelectorAll("[data-route]").forEach((b) => b.addEventListener("click", () => {
     const r = store.routes.find((x) => x.id === b.dataset.route);
     if (!r) return;
@@ -694,6 +714,7 @@ function wirePanel() {
     page.points = r.points;
     page.outAndBack = r.outAndBack;
     page.savedId = r.id;
+    page.rowed = r.track ? r : null;
     update();
   }));
   panel.querySelectorAll("[data-delete-route]").forEach((b) => b.addEventListener("click", () => {
@@ -711,12 +732,50 @@ function saveRoute() {
   const name = prompt(t("Save route"), existing?.name ?? fallback);
   if (name == null) return;
   const route = { id: existing?.id ?? crypto.randomUUID?.() ?? `r${Date.now()}`, name: name.trim() || fallback, lakeId: page.lakeId, points: page.points, outAndBack: page.outAndBack };
+  // A changed imported route keeps the row's track.
+  if (page.rowed) Object.assign(route, { track: page.rowed.track, rowedAt: page.rowed.rowedAt, importedFrom: page.rowed.importedFrom });
   const list = store.routes;
   const i = list.findIndex((r) => r.id === route.id);
   if (i >= 0) list[i] = route;
   else list.push(route);
   store.routes = list;
   page.savedId = route.id;
+  update();
+}
+
+/** A GPX, TCX or FIT file becomes a saved route on this lake, planned at the pace it was rowed (LakeMapScreen.importRow). */
+async function importRow(file) {
+  if (!file) return;
+  let points;
+  try {
+    points = readTrack(await file.arrayBuffer());
+  } catch {
+    alert(t("Row Frog could not read a GPS track in this file."));
+    return;
+  }
+  const { view } = page;
+  if (shareOnWater(points, view.grid) < 0.5) {
+    alert(t("This row was not on %@.", view.name));
+    return;
+  }
+  const row = routeFromTrack(points, view.clubs.map((c) => c.launchPoint));
+  if (!row) {
+    alert(t("This row is too short to make a route of."));
+    return;
+  }
+  const date = new Intl.DateTimeFormat(document.documentElement.lang || "en", { day: "numeric", month: "short" }).format(row.rowedAt ? new Date(row.rowedAt) : new Date());
+  const route = {
+    id: crypto.randomUUID?.() ?? `r${Date.now()}`, name: t("Rowed %@, %@", date, distance(row.distanceM)), lakeId: page.lakeId,
+    points: row.points, outAndBack: row.outAndBack, track: row.track, rowedAt: row.rowedAt, importedFrom: "file",
+  };
+  store.routes = [...store.routes, route];
+  if (row.pace) page.pace = plannedPace(row.pace);
+  page.undo.push(page.points);
+  page.points = route.points;
+  page.outAndBack = route.outAndBack;
+  page.savedId = route.id;
+  page.rowed = route;
+  page.showTrack = true;
   update();
 }
 
