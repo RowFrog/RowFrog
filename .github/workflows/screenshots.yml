@@ -410,6 +410,9 @@ jobs:
           WAIT=30 shoot 162-weather-map-rain light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap rain
           WAIT=30 shoot 163-weather-map-lightning light -RWOpenClub mrc-1880 -RWOpenCondition thunderstorm -RWOpenWeatherMap lightning
           WAIT=30 shoot 164-weather-map-wind-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind -RWLanguage de
+          # Settings › Club pages › Maps start: Close and Wide.
+          WAIT=30 shoot 167-weather-map-wind-close light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind -RWMapStartZoom close
+          WAIT=30 shoot 168-weather-map-rain-wide light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap rain -RWMapStartZoom wide
           # Chart and map linked (PR #53): the map card under the chart at the blue line's hour,
           # unlinked, past the maps' end, beside the chart in landscape, full screen with the
           # slim chart, and German dark.
