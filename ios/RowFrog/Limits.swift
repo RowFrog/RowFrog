@@ -332,8 +332,9 @@ extension ClubForecast {
         var copy = self
         // As on the server: measured water, else the estimate.
         let water = waterTemperature?.celsius ?? estimatedWaterC
-        copy.hours = hours.map { $0.applying(limits, waterC: water) }
-        copy.outlook = outlook?.map { $0.applying(limits, waterC: water) }
+        // Each hour with the water forecast for its day, as on the server.
+        copy.hours = hours.map { $0.applying(limits, waterC: waterForecastC(on: $0.time) ?? water) }
+        copy.outlook = outlook?.map { $0.applying(limits, waterC: waterForecastC(on: $0.time) ?? water) }
         return copy
     }
 

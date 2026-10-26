@@ -412,6 +412,8 @@ struct ChartLine: Identifiable {
     let color: Color
     var kind: Kind = .line
     let points: [ChartPoint]
+    /// Dashed, for a forecast after measurements.
+    var dashed = false
     var id: String { name }
 }
 
@@ -1103,6 +1105,7 @@ private struct ConditionChart: View {
         case .line:
             LineMark(x: .value("Hour", p.x), y: .value("Value", p.y), series: .value("Series", line.name))
                 .foregroundStyle(line.color)
+                .lineStyle(StrokeStyle(lineWidth: 2, dash: line.dashed ? [5, 4] : []))
                 .interpolationMethod(.monotone)
         case .bars:
             BarMark(x: .value("Hour", p.x), y: .value("Value", p.y), width: .fixed(5))
@@ -1492,6 +1495,22 @@ extension ConditionDetail {
         }
         let estimate = now == nil ? d.estimatedWater : nil
         let satellite = d.satelliteWater
+        // Today's water carried on with the forecast air, dashed after the
+        // measurements; a picked later hour reads its value from it.
+        let forecastDays = (d.forecast.waterForecast ?? []).compactMap { day in day.day.map { ($0, day.celsius) } }
+        let ahead = forecastDays.filter { $0.0 > .now }
+        var forecastPoints: [ChartPoint] = []
+        if !ahead.isEmpty {
+            if let last = history.last { forecastPoints.append(ChartPoint(x: d.x(last.time), y: t.convert(last.celsius))) }
+            else if let today = forecastDays.first { forecastPoints.append(ChartPoint(x: d.x(.now), y: t.convert(today.1))) }
+            forecastPoints += ahead.map { ChartPoint(x: d.x($0.0), y: t.convert($0.1)) }
+        }
+        let picked = d.isNow ? nil : d.forecast.waterForecastC(on: d.now.time).flatMap { c in
+            Calendar.current.isDateInToday(d.now.time) ? nil : c
+        }
+        if let picked {
+            facts.insert((tr("Forecast %@", Format.day(d.now.time)), Format.temperature(picked, digits: 1)), at: 0)
+        }
         if let satellite {
             facts.append((tr("Satellite"), tr("%@, %@: %@", satellite.satelliteName, satellite.when, Format.temperature(satellite.celsius, digits: 1))))
         }
@@ -1507,21 +1526,45 @@ extension ConditionDetail {
         } else {
             source = tr("No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.")
         }
+        var lines: [ChartLine] = history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })]
+        if forecastPoints.count > 1 {
+            lines.append(ChartLine(name: tr("Forecast"), color: .cyan, points: forecastPoints, dashed: true))
+        }
+        let highest = (history.map(\.celsius) + forecastDays.map { $0.1 }).max() ?? 0
+        if let picked {
+            return ConditionDetail(
+                value: "≈ " + Format.degrees(picked, digits: 1),
+                note: tr("Forecast for %@, from today's water and the forecast air temperatures", Format.day(d.now.time)),
+                unit: t.symbol,
+                lines: lines,
+                limits: [
+                    line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
+                    ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
+                ],
+                yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
+                history: true,
+                chartNote: tr("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value."),
+                facts: facts,
+                rowing: rowing,
+                source: source
+            )
+        }
         return ConditionDetail(
             value: estimate.map { "≈ " + Format.degrees($0, digits: 0) } ?? Format.degrees(now?.celsius, digits: 1),
             note: now.map { tr("Measured %@", Format.dayTime($0.measuredAt)) }
                 ?? (satellite.map { tr("Estimated from %@ (%@) and the air temperatures since, not measured", $0.satelliteName, $0.when) }
                     ?? (estimate != nil ? tr("Estimated from the air temperatures of the last weeks, not measured") : tr("No lake station"))),
             unit: t.symbol,
-            lines: history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })],
+            lines: lines,
             limits: [
                 line(.lifeJacket, t.convert, .orange, tr("Cold-water shock: life jacket")),
                 ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: .red, label: tr("Very cold")),
             ],
             limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A life jacket keeps your head above water through it, so the app advises one from %@ down. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the advice gets stricter below %@: stay near the shore and don't row alone. Your club's own rules come first.",
                           Format.temperature(15), jacket, veryCold),
-            yDomain: t.convert(0)...t.convert(max(20, (history.map(\.celsius).max() ?? 0) + 2)),
+            yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
             history: true,
+            chartNote: forecastPoints.count > 1 ? tr("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value.") : nil,
             facts: facts,
             rowing: rowing,
             source: source

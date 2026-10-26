@@ -140,3 +140,15 @@ def test_from_air_moves_the_typical_value_towards_the_air():
     water = water_estimate.from_air(temps, date(2026, 11, 30))
     assert 2.0 < water < ice.TYPICAL_WATER_C[10]
     assert water_estimate.from_air([], DAY) is None
+
+
+def test_forecast_carries_todays_water_on_with_the_coming_air():
+    today = date(2026, 10, 26)
+    temps = [ice.DayTemperature(today + timedelta(days=i), 2.0) for i in range(-3, 8)]
+    days = water_estimate.forecast(12.0, temps, today)
+    assert days[0] == (today, 12.0)
+    assert [d for d, _ in days] == [today + timedelta(days=i) for i in range(8)]
+    values = [c for _, c in days]
+    # Cold air: the water cools a little each day, never below the air.
+    assert all(a > b for a, b in zip(values, values[1:]))
+    assert values[-1] > 2.0

@@ -288,6 +288,19 @@ struct WaterReading: Codable, Hashable {
     let celsius: Double
 }
 
+/// One day of the water forecast: the date as the backend writes it ("2026-10-27").
+struct WaterDay: Codable, Hashable {
+    let date: String
+    let celsius: Double
+
+    /// Midday of that day in the phone's time zone, so it sits inside the day anywhere nearby.
+    var day: Date? {
+        let parts = date.split(separator: "-").compactMap { Int($0) }
+        guard parts.count == 3 else { return nil }
+        return Calendar.current.date(from: DateComponents(year: parts[0], month: parts[1], day: parts[2], hour: 12))
+    }
+}
+
 struct SunDay: Codable, Hashable {
     let sunrise: Date
     let sunset: Date
@@ -457,6 +470,14 @@ struct ClubForecast: Codable, Hashable {
     /// Without a station or a recent satellite reading: worked out from the air
     /// temperatures alone, all year; missing from older backends.
     var waterModelC: Double? = nil
+    /// Today's water carried on with the forecast air, one value per day (lakes
+    /// only); missing from older backends.
+    var waterForecast: [WaterDay]? = nil
+
+    /// The forecast water for the day of `date`, nil past the forecast.
+    func waterForecastC(on date: Date) -> Double? {
+        waterForecast?.first { $0.day.map { Calendar.current.isDate($0, inSameDayAs: date) } ?? false }?.celsius
+    }
 
     /// The backend publishes every half hour; after this the forecast counts as out of date.
     static let staleAfter: TimeInterval = 3 * 3600
