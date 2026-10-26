@@ -48,6 +48,13 @@ ATTRIBUTION = [
     "Lake outlines: © OpenStreetMap contributors, ODbL",
     "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 ]
+# Who issues the weather warnings for a place, by country. DWD's cover Germany
+# only; elsewhere the app cannot check them yet and says so instead of "no warning".
+LOCAL_WARNING_SERVICES = {
+    "de": ("Deutscher Wetterdienst (DWD)", "https://www.wettergefahren.de/"),
+    "at": ("GeoSphere Austria", "https://warnungen.zamg.at/"),
+    "ch": ("MeteoSwiss", "https://www.meteoswiss.admin.ch/weather/hazards/hazard-map.html"),
+}
 # Added to the credits when the club's station is not a GKD Bayern one.
 STATION_CREDIT = {
     "pegelonline": "Water temperature: PEGELONLINE, Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), DL-DE Zero 2.0",
@@ -298,11 +305,19 @@ async def _all_lake_warnings(client: httpx.AsyncClient) -> list[tuple[int, dwd_w
     return _lake_warnings[1]
 
 
+def _local_service(club: locations.Club) -> dict:
+    """Whose weather warnings count for the club's place, and whether the app checked them."""
+    name, url = LOCAL_WARNING_SERVICES.get(club.country, (None, None))
+    return {"service": name, "url": url, "checked": club.country == "de"}
+
+
 async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: datetime) -> tuple[dict, list]:
     """The warnings block for the app and the warnings that count for the hourly light.
 
     If DWD cannot be reached the block says so ("unavailable"), so the app never
-    shows "no warning" without having checked.
+    shows "no warning" without having checked. Outside Germany DWD has no local
+    warnings, so only the lake warning (Lake Constance) is read and `local` says
+    the place's own service was not checked.
     """
     cached = _warnings_cache.get(club.id)
     if cached and time.monotonic() - cached[0] < WARNINGS_CACHE_SECONDS:
@@ -312,12 +327,12 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         lake = []
         if area is not None:
             lake = [w for cell, w in await _all_lake_warnings(client) if cell == area.warncell_id]
-        local = _primed_local_warnings.get(club.id)
+        local = [] if club.country != "de" else _primed_local_warnings.get(club.id)
         if local is None:
             local = await dwd_warnings.fetch_local_warnings(client, club.launch_point.lon, club.launch_point.lat)
     except (httpx.HTTPError, ValueError, KeyError) as e:
         logging.getLogger(__name__).warning("DWD warnings unavailable for %s: %r", club.id, e)
-        result = ({"status": "unavailable", "lakeArea": None, "items": []}, [])
+        result = ({"status": "unavailable", "lakeArea": None, "items": [], "local": _local_service(club)}, [])
         _warnings_cache[club.id] = (time.monotonic() - WARNINGS_CACHE_SECONDS + 60, result)  # retry in a minute
         return result
     english = await _english_texts(client) if lake or local else {}
@@ -327,7 +342,8 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         lake.append(sample)
         items.insert(0, _warning_json(sample, _SAMPLE_ENGLISH, sample=True))
     current = [w for w in lake + local if w.expires is None or w.expires > now]
-    result = ({"status": "ok", "lakeArea": None if area is None else area.name, "items": items}, current)
+    block = {"status": "ok", "lakeArea": None if area is None else area.name, "items": items, "local": _local_service(club)}
+    result = (block, current)
     _warnings_cache[club.id] = (time.monotonic(), result)
     return result
 

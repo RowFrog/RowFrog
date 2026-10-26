@@ -156,7 +156,12 @@ def test_forecast_says_no_warning_after_checking(monkeypatch):
     _reset()
     body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
     _reset()
-    assert body["warnings"] == {"status": "ok", "lakeArea": "Starnberger See", "items": []}
+    assert body["warnings"] == {
+        "status": "ok",
+        "lakeArea": "Starnberger See",
+        "items": [],
+        "local": {"service": "Deutscher Wetterdienst (DWD)", "url": "https://www.wettergefahren.de/", "checked": True},
+    }
     assert "dwd:Warnungen_Binnenseen" in seen and "dwd:Warnungen_Gemeinden" in seen
 
 
@@ -280,3 +285,25 @@ def test_primed_local_warnings_are_used_without_asking_dwd(monkeypatch):
     _reset()
     assert [i["event"] for i in body["warnings"]["items"]] == ["WINDBÖEN"]
     assert "dwd:Warnungen_Gemeinden" not in seen
+
+
+def test_clubs_outside_germany_do_not_claim_no_warning(monkeypatch):
+    _fake_weather(monkeypatch)
+    seen = []
+
+    def handler(request):
+        seen.append(request.url.params.get("typeName"))
+        return httpx.Response(200, json={"features": []})
+
+    monkeypatch.setattr(api.httpx, "AsyncClient", _serve(handler))
+    _reset()
+    body = TestClient(api.app).get("/clubs/seeclub-zuerich/forecast").json()
+    mrc = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
+    _reset()
+    assert body["warnings"]["local"] == {
+        "service": "MeteoSwiss",
+        "url": "https://www.meteoswiss.admin.ch/weather/hazards/hazard-map.html",
+        "checked": False,
+    }
+    assert seen.count("dwd:Warnungen_Gemeinden") == 1, "DWD is asked for the German club only"
+    assert mrc["warnings"]["local"]["checked"] is True

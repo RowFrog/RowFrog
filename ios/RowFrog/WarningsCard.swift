@@ -3,7 +3,8 @@ import SwiftUI
 /// Official DWD warnings for the location: the lake warning (strong wind or
 /// storm, as the shore lights show it) where DWD covers the lake, and the
 /// weather warnings for the place. Says plainly when there is none, and when
-/// DWD could not be checked.
+/// DWD could not be checked. Outside Germany DWD does not warn for the place,
+/// so the card names the country's own service instead of saying "no warning".
 struct WarningsCard: View {
     let warnings: Warnings
     let lakeName: String?
@@ -13,10 +14,17 @@ struct WarningsCard: View {
     var guideOpen = false
 
     var body: some View {
-        Card(title: tr("DWD warnings"), symbol: "exclamationmark.triangle") {
+        Card(title: warnings.localChecked ? tr("DWD warnings") : tr("Official warnings"), symbol: "exclamationmark.triangle") {
             if !warnings.checked {
                 Label(tr("Warnings could not be loaded. Check dwd.de or the shore lights before going out."), systemImage: "wifi.exclamationmark")
                     .foregroundStyle(.orange)
+            } else if !warnings.localChecked {
+                ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
+                NotCheckedNote(local: warnings.local)
+                Text(coverage)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if warnings.lakeArea != nil { ShoreLightsGuide(startOpen: guideOpen) }
             } else if warnings.items.isEmpty {
                 Label(tr("No warning right now"), systemImage: "checkmark.shield.fill")
                     .font(.headline)
@@ -33,7 +41,7 @@ struct WarningsCard: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            if warnings.checked, warnings.items.isEmpty, warnings.lakeArea != nil {
+            if warnings.checked, warnings.localChecked, warnings.items.isEmpty, warnings.lakeArea != nil {
                 ShoreLightsGuide(startOpen: guideOpen)
             }
         }
@@ -42,12 +50,39 @@ struct WarningsCard: View {
 
     /// What was checked: the lake warning service where DWD runs one, and the place.
     private var coverage: String {
+        if !warnings.localChecked {
+            let place = town ?? tr("this place")
+            if let area = warnings.lakeArea {
+                return tr("Covers the DWD lake warning for %@. Weather warnings for %@ are not checked yet.", area, place)
+            }
+            return tr("Lake and weather warnings for %@ are not checked yet.", place)
+        }
         let place = town.map { tr("weather warnings for %@", $0) } ?? tr("weather warnings for this place")
         if let area = warnings.lakeArea {
             return tr("Covers the DWD lake warning for %@ and %@.", area, place)
         }
         let water = lakeName.map { tr("for %@", $0) } ?? tr("for this water")
         return tr("DWD has no lake warning service %@. Covers %@.", water, place)
+    }
+}
+
+/// Outside Germany: the place's own weather service warns, and Row Frog does not read it yet.
+private struct NotCheckedNote: View {
+    let local: LocalWarnings?
+
+    var body: some View {
+        let service = local?.service ?? tr("the national weather service")
+        VStack(alignment: .leading, spacing: 6) {
+            Label(tr("Row Frog cannot check the weather warnings for this place yet. Check %@ before going out.", service), systemImage: "exclamationmark.shield.fill")
+                .foregroundStyle(.orange)
+                .fixedSize(horizontal: false, vertical: true)
+            if let link = local?.url.flatMap(URL.init(string:)) {
+                Link(destination: link) {
+                    Label(tr("Open the warnings of %@", service), systemImage: "arrow.up.right.square")
+                }
+                .font(.subheadline.weight(.semibold))
+            }
+        }
     }
 }
 
