@@ -12256,9 +12256,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.63862,
-        "lon": 9.20561,
-        "precision": "geocoded boathouse (town level); on the Weser (checked by hand)",
+        "lat": 52.6379,
+        "lon": 9.20278,
+        "precision": "shore of the Weser nearest the town-level address, 207 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13761,9 +13761,9 @@
       "country": "de",
       "lakeId": "grosser-wannsee",
       "launchPoint": {
-        "lat": 52.3895,
-        "lon": 13.1297,
-        "precision": "geocoded boathouse (town level); on the Großer Wannsee (checked by hand)",
+        "lat": 52.423,
+        "lon": 13.16375,
+        "precision": "shore of the Großer Wannsee nearest the town-level address, 4384 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13790,9 +13790,9 @@
       "country": "de",
       "lakeId": "waginger-see",
       "launchPoint": {
-        "lat": 47.94322,
-        "lon": 12.74122,
-        "precision": "geocoded boathouse (street level); on the Waginger See (checked by hand)",
+        "lat": 47.94613,
+        "lon": 12.73929,
+        "precision": "shore of the Waginger See nearest the town-level address, 354 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14048,9 +14048,9 @@
       "country": "de",
       "lakeId": "belauer-see",
       "launchPoint": {
-        "lat": 54.09745,
-        "lon": 10.25948,
-        "precision": "geocoded boathouse (town level); on the Belauer See (checked by hand)",
+        "lat": 54.09779,
+        "lon": 10.25804,
+        "precision": "shore of the Belauer See nearest the town-level address, 101 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14318,9 +14318,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.15,
-        "lon": 7.71667,
-        "precision": "geocoded boathouse (town level); on the Rhein (checked by hand)",
+        "lat": 50.15181,
+        "lon": 7.71841,
+        "precision": "shore of the Rhein nearest the town-level address, 237 m away (water checked by hand)",
         "verified": false
       }
     },
