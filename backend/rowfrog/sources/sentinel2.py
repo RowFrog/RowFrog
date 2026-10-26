@@ -14,8 +14,8 @@ A lake that has never had a picture is searched once over FIRST_SEARCH_DAYS.
 
 Lakes too big for 10 m in one picture (19, from Ammersee to Bodensee) also get
 each new picture at 10 m in tiles for the full-screen view while someone uses
-the lake, one request per
-tile (171 for all of them), and the three biggest a 2500 px overview.
+the lake, one request per tile (171 for all of them), and the three biggest a
+2500 px overview.
 
 The free account allows about 10,000 requests and 10,000 processing units a
 month; a look at a lake takes one request plus one per new picture or tile.
