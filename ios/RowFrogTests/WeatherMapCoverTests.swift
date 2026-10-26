@@ -34,4 +34,11 @@ final class WeatherMapCoverTests: XCTestCase {
         }
         XCTAssertEqual(cover.first { $0.patches.contains { $0.west <= 11.3 && $0.east > 11.3 && $0.south <= 47.9 && $0.north > 47.9 } }?.tile.id, "e9n46")
     }
+
+    func testMapStartZoomHalvesOrDoublesTheNormalSpan() {
+        XCTAssertEqual(WeatherMapLayer.wind.normalSpanKm * MapStartZoom.close.factor, 25)
+        XCTAssertEqual(WeatherMapLayer.rain.normalSpanKm * MapStartZoom.close.factor, 60)
+        XCTAssertEqual(WeatherMapLayer.wind.normalSpanKm * MapStartZoom.wide.factor, 100)
+        XCTAssertEqual(WeatherMapLayer.lightning.normalSpanKm * MapStartZoom.wide.factor, 240)
+    }
 }

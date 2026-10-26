@@ -51,7 +51,10 @@ enum WeatherMapLayer: String, CaseIterable, Identifiable {
 
     /// How much map a view opens with, in km across: the lake and its shores for
     /// the values there; more for rain and lightning, to see them coming from upwind.
-    var startSpanKm: Double {
+    /// Settings › Club pages › Maps start halves or doubles it.
+    var startSpanKm: Double { normalSpanKm * AppSettings.shared.mapStartZoom.factor }
+
+    var normalSpanKm: Double {
         switch self {
         case .rain, .lightning: 120
         default: 50

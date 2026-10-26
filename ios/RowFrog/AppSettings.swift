@@ -32,6 +32,8 @@ final class AppSettings {
     var dateFormat: DateFormat { didSet { defaults.set(dateFormat.rawValue, forKey: Keys.dateFormat) } }
     /// How often the widgets load a new forecast on their own.
     var widgetUpdates: WidgetUpdates { didSet { defaults.set(widgetUpdates.rawValue, forKey: Keys.widgetUpdates) } }
+    /// How close the weather maps in the detail views open around the club.
+    var mapStartZoom: MapStartZoom { didSet { defaults.set(mapStartZoom.rawValue, forKey: Keys.mapStartZoom) } }
 
     /// The user's own boats, besides the small and big boat groups.
     var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
@@ -163,11 +165,12 @@ final class AppSettings {
         static let widgetBlur = "RWWidgetBackgroundBlur"
         static let saveMobileData = "RWSaveMobileData"
         static let widgetUpdates = "RWWidgetUpdates"
+        static let mapStartZoom = "RWMapStartZoom"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
                           developer, pickedModels, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
-                          widgetUpdates]
+                          widgetUpdates, mapStartZoom]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -187,6 +190,7 @@ final class AppSettings {
         timeFormat = value(Keys.timeFormat, .hours24)
         dateFormat = value(Keys.dateFormat, .device)
         widgetUpdates = value(Keys.widgetUpdates, .halfHour)
+        mapStartZoom = value(Keys.mapStartZoom, .normal)
         // Launch arguments give the limits' numbers as text, e.g. `-RWBoatLimits '{small = {windAmber = 7;};}'`.
         if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
             myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
@@ -310,6 +314,7 @@ final class AppSettings {
         timeFormat = .hours24
         dateFormat = .device
         widgetUpdates = .halfHour
+        mapStartZoom = .normal
         boatID = Boat.small.id
         boatLimits = [:]
         mapBoatID = Boat.small.id
@@ -432,6 +437,28 @@ enum WidgetUpdates: String, CaseIterable, Identifiable {
         case .hour: 3600
         case .twoHours: 2 * 3600
         case .appOpen: nil
+        }
+    }
+}
+
+/// How close the weather maps open: half or twice the normal span around the club.
+enum MapStartZoom: String, CaseIterable, Identifiable {
+    case close, normal, wide
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .close: tr("Close", key: "Close (map zoom)")
+        case .normal: tr("Normal")
+        case .wide: tr("Wide")
+        }
+    }
+
+    var factor: Double {
+        switch self {
+        case .close: 0.5
+        case .normal: 1
+        case .wide: 2
         }
     }
 }
