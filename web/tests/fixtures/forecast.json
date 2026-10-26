@@ -1,0 +1,4883 @@
+{
+"clubId": "mrc-1880",
+"lakeId": "starnberger-see",
+"generatedAt": "2026-10-26T13:53:15+00:00",
+"waterTemperature": {
+"celsius": 12.7,
+"measuredAt": "2026-10-26T13:45:00+00:00",
+"history": [
+{
+"time": "2026-10-26T11:00:00+00:00",
+"celsius": 12.7
+},
+{
+"time": "2026-10-26T12:00:00+00:00",
+"celsius": 12.8
+},
+{
+"time": "2026-10-26T13:00:00+00:00",
+"celsius": 12.8
+}
+],
+"station": {
+"network": "gkd",
+"name": "Starnberg",
+"lat": 47.9973,
+"lon": 11.3493,
+"distanceKm": 0.2,
+"distanceM": 154,
+"url": "https://www.gkd.bayern.de/en/lakes/watertemperature/bayern/starnberg-16663002/current-values"
+}
+},
+"waterEstimate": null,
+"waterModelC": null,
+"waterForecast": [
+{
+"date": "2026-10-26",
+"celsius": 12.7
+},
+{
+"date": "2026-10-27",
+"celsius": 12.6
+},
+{
+"date": "2026-10-28",
+"celsius": 12.5
+},
+{
+"date": "2026-10-29",
+"celsius": 12.3
+},
+{
+"date": "2026-10-30",
+"celsius": 12.0
+},
+{
+"date": "2026-10-31",
+"celsius": 11.8
+},
+{
+"date": "2026-11-01",
+"celsius": 11.5
+}
+],
+"warnings": {
+"status": "ok",
+"lakeArea": "Starnberger See",
+"items": []
+},
+"ice": {
+"status": "open",
+"light": "green",
+"thicknessCm": null,
+"waterTemperatureC": 12.7,
+"basis": "season",
+"frostDegreeDays7": null,
+"satellite": null,
+"days": []
+},
+"attribution": [
+"Weather: Deutscher Wetterdienst (DWD) via Open-Meteo, CC BY 4.0",
+"Warnings: Deutscher Wetterdienst (DWD), CC BY 4.0",
+"Lake outlines: \u00a9 OpenStreetMap contributors, ODbL",
+"Water temperature: Gew\u00e4sserkundlicher Dienst Bayern (LfU), CC BY 4.0"
+],
+"forecastSource": {
+"region": "germany",
+"parts": [
+{
+"model": "ICON-D2",
+"provider": "Deutscher Wetterdienst (DWD)",
+"resolutionKm": 2.2,
+"fromHour": 0,
+"toHour": 48
+}
+]
+},
+"modelChoices": [
+{
+"id": "meteoswiss_icon_ch1",
+"model": "ICON-CH1",
+"provider": "MeteoSwiss",
+"resolutionKm": 1.1,
+"hours": 33,
+"advice": "ok",
+"note": "The finest grid near the Alps. It reaches 33 hours ahead; the hours after that come from the automatic choice."
+},
+{
+"id": "geosphere_arome_austria",
+"model": "AROME",
+"provider": "GeoSphere Austria",
+"resolutionKm": 2.5,
+"hours": 60,
+"advice": "ok",
+"note": "Good with wind in the Alpine foothills. A little coarser than ICON-D2."
+},
+{
+"id": "ecmwf_ifs025",
+"model": "IFS",
+"provider": "ECMWF",
+"resolutionKm": 25.0,
+"hours": 240,
+"advice": "notAdvised",
+"note": "Very coarse grid: it does not see the lake or the hills, so the wind on the water is often wrong."
+}
+],
+"daylight": [
+{
+"date": "2026-10-25",
+"sunrise": "2026-10-25T05:48:07+00:00",
+"sunset": "2026-10-25T16:09:03+00:00"
+},
+{
+"date": "2026-10-26",
+"sunrise": "2026-10-26T05:49:38+00:00",
+"sunset": "2026-10-26T16:07:19+00:00"
+},
+{
+"date": "2026-10-27",
+"sunrise": "2026-10-27T05:51:10+00:00",
+"sunset": "2026-10-27T16:05:37+00:00"
+},
+{
+"date": "2026-10-28",
+"sunrise": "2026-10-28T05:52:42+00:00",
+"sunset": "2026-10-28T16:03:55+00:00"
+},
+{
+"date": "2026-10-29",
+"sunrise": "2026-10-29T05:54:15+00:00",
+"sunset": "2026-10-29T16:02:15+00:00"
+}
+],
+"hours": [
+{
+"time": "2026-10-26T13:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.32,
+"windGustMs": 5.5,
+"windFromDeg": 277,
+"waveHeightM": 0.01,
+"fetchM": 24,
+"visibilityM": 39600.0,
+"temperatureC": 10.8,
+"apparentTemperatureC": 7.9,
+"humidityPct": 63,
+"dewPointC": 4.0,
+"pressureHpa": 1022.1,
+"cloudCoverPct": 88,
+"cloudCoverLowPct": 44,
+"cloudCoverMidPct": 67,
+"cloudCoverHighPct": 26,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T14:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.55,
+"windGustMs": 4.8,
+"windFromDeg": 285,
+"waveHeightM": 0.0,
+"fetchM": 20,
+"visibilityM": 39300.0,
+"temperatureC": 10.8,
+"apparentTemperatureC": 8.5,
+"humidityPct": 65,
+"dewPointC": 4.5,
+"pressureHpa": 1021.9,
+"cloudCoverPct": 84,
+"cloudCoverLowPct": 40,
+"cloudCoverMidPct": 67,
+"cloudCoverHighPct": 12,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T15:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.22,
+"windGustMs": 3.4,
+"windFromDeg": 279,
+"waveHeightM": 0.0,
+"fetchM": 23,
+"visibilityM": 38640.0,
+"temperatureC": 10.4,
+"apparentTemperatureC": 8.4,
+"humidityPct": 68,
+"dewPointC": 4.7,
+"pressureHpa": 1021.4,
+"cloudCoverPct": 77,
+"cloudCoverLowPct": 8,
+"cloudCoverMidPct": 67,
+"cloudCoverHighPct": 18,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-26T16:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.0,
+"windGustMs": 1.8,
+"windFromDeg": 270,
+"waveHeightM": 0.0,
+"fetchM": 30,
+"visibilityM": 38040.0,
+"temperatureC": 9.7,
+"apparentTemperatureC": 8.6,
+"humidityPct": 73,
+"dewPointC": 5.1,
+"pressureHpa": 1021.5,
+"cloudCoverPct": 92,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 87,
+"cloudCoverHighPct": 76,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T17:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.64,
+"windGustMs": 1.1,
+"windFromDeg": 129,
+"waveHeightM": 0.01,
+"fetchM": 1017,
+"visibilityM": 37220.0,
+"temperatureC": 9.3,
+"apparentTemperatureC": 7.7,
+"humidityPct": 75,
+"dewPointC": 5.1,
+"pressureHpa": 1021.7,
+"cloudCoverPct": 91,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 90,
+"cloudCoverHighPct": 19,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T18:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.71,
+"windGustMs": 1.2,
+"windFromDeg": 82,
+"waveHeightM": 0.0,
+"fetchM": 70,
+"visibilityM": 32920.0,
+"temperatureC": 8.3,
+"apparentTemperatureC": 6.7,
+"humidityPct": 81,
+"dewPointC": 5.2,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T19:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.28,
+"windGustMs": 1.3,
+"windFromDeg": 135,
+"waveHeightM": 0.0,
+"fetchM": 1143,
+"visibilityM": 26300.0,
+"temperatureC": 7.5,
+"apparentTemperatureC": 6.3,
+"humidityPct": 88,
+"dewPointC": 5.6,
+"pressureHpa": 1022.4,
+"cloudCoverPct": 94,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 94,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T20:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.14,
+"windGustMs": 0.6,
+"windFromDeg": 225,
+"waveHeightM": 0.0,
+"fetchM": 998,
+"visibilityM": 27340.0,
+"temperatureC": 7.3,
+"apparentTemperatureC": 6.1,
+"humidityPct": 87,
+"dewPointC": 5.3,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 82,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 73,
+"cloudCoverHighPct": 50,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T21:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.4,
+"windGustMs": 0.4,
+"windFromDeg": 90,
+"waveHeightM": 0.0,
+"fetchM": 693,
+"visibilityM": 28640.0,
+"temperatureC": 7.3,
+"apparentTemperatureC": 6.0,
+"humidityPct": 87,
+"dewPointC": 5.3,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T22:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.67,
+"windGustMs": 1.0,
+"windFromDeg": 207,
+"waveHeightM": 0.01,
+"fetchM": 6502,
+"visibilityM": 30120.0,
+"temperatureC": 7.5,
+"apparentTemperatureC": 5.9,
+"humidityPct": 85,
+"dewPointC": 5.1,
+"pressureHpa": 1022.2,
+"cloudCoverPct": 96,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 96,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T23:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.72,
+"windGustMs": 1.6,
+"windFromDeg": 214,
+"waveHeightM": 0.01,
+"fetchM": 1731,
+"visibilityM": 24360.0,
+"temperatureC": 7.5,
+"apparentTemperatureC": 6.0,
+"humidityPct": 89,
+"dewPointC": 5.8,
+"pressureHpa": 1022.2,
+"cloudCoverPct": 99,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 99,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T00:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.6,
+"windGustMs": 1.6,
+"windFromDeg": 180,
+"waveHeightM": 0.01,
+"fetchM": 3591,
+"visibilityM": 24380.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 6.2,
+"humidityPct": 89,
+"dewPointC": 5.9,
+"pressureHpa": 1022.4,
+"cloudCoverPct": 87,
+"cloudCoverLowPct": 9,
+"cloudCoverMidPct": 83,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T01:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.63,
+"windGustMs": 2.0,
+"windFromDeg": 162,
+"waveHeightM": 0.01,
+"fetchM": 2192,
+"visibilityM": 23900.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 6.2,
+"humidityPct": 89,
+"dewPointC": 5.9,
+"pressureHpa": 1022.4,
+"cloudCoverPct": 93,
+"cloudCoverLowPct": 18,
+"cloudCoverMidPct": 88,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T02:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.2,
+"windGustMs": 1.0,
+"windFromDeg": 90,
+"waveHeightM": 0.0,
+"fetchM": 693,
+"visibilityM": 29400.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 6.4,
+"humidityPct": 85,
+"dewPointC": 5.2,
+"pressureHpa": 1022.4,
+"cloudCoverPct": 95,
+"cloudCoverLowPct": 23,
+"cloudCoverMidPct": 91,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T03:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.14,
+"windGustMs": 1.3,
+"windFromDeg": 135,
+"waveHeightM": 0.0,
+"fetchM": 1143,
+"visibilityM": 32780.0,
+"temperatureC": 7.9,
+"apparentTemperatureC": 6.7,
+"humidityPct": 82,
+"dewPointC": 5.0,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 10,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T04:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.14,
+"windGustMs": 0.5,
+"windFromDeg": 225,
+"waveHeightM": 0.0,
+"fetchM": 998,
+"visibilityM": 35780.0,
+"temperatureC": 8.1,
+"apparentTemperatureC": 6.8,
+"humidityPct": 78,
+"dewPointC": 4.5,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 96,
+"cloudCoverLowPct": 23,
+"cloudCoverMidPct": 92,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T05:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.85,
+"windGustMs": 2.2,
+"windFromDeg": 225,
+"waveHeightM": 0.01,
+"fetchM": 998,
+"visibilityM": 26960.0,
+"temperatureC": 7.9,
+"apparentTemperatureC": 6.4,
+"humidityPct": 87,
+"dewPointC": 5.9,
+"pressureHpa": 1022.6,
+"cloudCoverPct": 93,
+"cloudCoverLowPct": 33,
+"cloudCoverMidPct": 87,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T06:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.3,
+"windGustMs": 1.4,
+"windFromDeg": 180,
+"waveHeightM": 0.0,
+"fetchM": 3591,
+"visibilityM": 24180.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 6.5,
+"humidityPct": 89,
+"dewPointC": 5.9,
+"pressureHpa": 1022.9,
+"cloudCoverPct": 70,
+"cloudCoverLowPct": 53,
+"cloudCoverMidPct": 59,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-27T07:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.36,
+"windGustMs": 0.4,
+"windFromDeg": 236,
+"waveHeightM": 0.0,
+"fetchM": 108,
+"visibilityM": 33220.0,
+"temperatureC": 8.3,
+"apparentTemperatureC": 7.0,
+"humidityPct": 82,
+"dewPointC": 5.4,
+"pressureHpa": 1022.8,
+"cloudCoverPct": 45,
+"cloudCoverLowPct": 3,
+"cloudCoverMidPct": 44,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-27T08:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.76,
+"windGustMs": 1.5,
+"windFromDeg": 203,
+"waveHeightM": 0.01,
+"fetchM": 13589,
+"visibilityM": 32640.0,
+"temperatureC": 9.7,
+"apparentTemperatureC": 8.3,
+"humidityPct": 80,
+"dewPointC": 6.4,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 8,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 8,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": true
+},
+{
+"time": "2026-10-27T09:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.22,
+"windGustMs": 1.6,
+"windFromDeg": 297,
+"waveHeightM": 0.0,
+"fetchM": 16,
+"visibilityM": 38860.0,
+"temperatureC": 12.0,
+"apparentTemperatureC": 10.9,
+"humidityPct": 66,
+"dewPointC": 5.8,
+"pressureHpa": 1021.3,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T10:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.63,
+"windGustMs": 1.6,
+"windFromDeg": 72,
+"waveHeightM": 0.0,
+"fetchM": 53,
+"visibilityM": 39960.0,
+"temperatureC": 14.0,
+"apparentTemperatureC": 12.8,
+"humidityPct": 62,
+"dewPointC": 6.8,
+"pressureHpa": 1020.6,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T11:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.0,
+"windGustMs": 2.3,
+"windFromDeg": 84,
+"waveHeightM": 0.0,
+"fetchM": 74,
+"visibilityM": 41620.0,
+"temperatureC": 15.7,
+"apparentTemperatureC": 14.0,
+"humidityPct": 51,
+"dewPointC": 5.6,
+"pressureHpa": 1019.9,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T12:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.41,
+"windGustMs": 3.1,
+"windFromDeg": 82,
+"waveHeightM": 0.01,
+"fetchM": 70,
+"visibilityM": 41120.0,
+"temperatureC": 16.5,
+"apparentTemperatureC": 14.9,
+"humidityPct": 54,
+"dewPointC": 7.2,
+"pressureHpa": 1019.3,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T13:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.94,
+"windGustMs": 4.0,
+"windFromDeg": 78,
+"waveHeightM": 0.01,
+"fetchM": 62,
+"visibilityM": 41320.0,
+"temperatureC": 16.6,
+"apparentTemperatureC": 14.5,
+"humidityPct": 53,
+"dewPointC": 7.0,
+"pressureHpa": 1018.6,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T14:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.14,
+"windGustMs": 4.38,
+"windFromDeg": 72,
+"waveHeightM": 0.01,
+"fetchM": 53,
+"visibilityM": 40500.0,
+"temperatureC": 16.0,
+"apparentTemperatureC": 14.0,
+"humidityPct": 59,
+"dewPointC": 8.0,
+"pressureHpa": 1018.2,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T15:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.81,
+"windGustMs": 4.45,
+"windFromDeg": 76,
+"waveHeightM": 0.01,
+"fetchM": 59,
+"visibilityM": 39200.0,
+"temperatureC": 14.7,
+"apparentTemperatureC": 13.1,
+"humidityPct": 66,
+"dewPointC": 8.4,
+"pressureHpa": 1018.2,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T16:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.03,
+"windGustMs": 3.5,
+"windFromDeg": 71,
+"waveHeightM": 0.0,
+"fetchM": 52,
+"visibilityM": 36325.0,
+"temperatureC": 13.1,
+"apparentTemperatureC": 12.1,
+"humidityPct": 74,
+"dewPointC": 8.6,
+"pressureHpa": 1018.7,
+"cloudCoverPct": 55,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 55,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-27T17:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.61,
+"windGustMs": 1.9,
+"windFromDeg": 81,
+"waveHeightM": 0.0,
+"fetchM": 68,
+"visibilityM": 26180.0,
+"temperatureC": 11.5,
+"apparentTemperatureC": 10.7,
+"humidityPct": 82,
+"dewPointC": 8.5,
+"pressureHpa": 1019.6,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": false
+},
+{
+"time": "2026-10-27T18:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.28,
+"windGustMs": 1.0,
+"windFromDeg": 135,
+"waveHeightM": 0.0,
+"fetchM": 1143,
+"visibilityM": 20300.0,
+"temperatureC": 10.2,
+"apparentTemperatureC": 9.5,
+"humidityPct": 86,
+"dewPointC": 8.0,
+"pressureHpa": 1020.2,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": false
+},
+{
+"time": "2026-10-27T19:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.5,
+"windGustMs": 0.7,
+"windFromDeg": 180,
+"waveHeightM": 0.01,
+"fetchM": 3591,
+"visibilityM": 17940.0,
+"temperatureC": 9.1,
+"apparentTemperatureC": 8.1,
+"humidityPct": 88,
+"dewPointC": 7.2,
+"pressureHpa": 1020.5,
+"cloudCoverPct": 37,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 37,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": false
+},
+{
+"time": "2026-10-27T20:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.73,
+"windGustMs": 1.1,
+"windFromDeg": 196,
+"waveHeightM": 0.01,
+"fetchM": 14677,
+"visibilityM": 22680.0,
+"temperatureC": 9.3,
+"apparentTemperatureC": 8.1,
+"humidityPct": 86,
+"dewPointC": 7.1,
+"pressureHpa": 1020.5,
+"cloudCoverPct": 60,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 60,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-27T21:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.17,
+"windGustMs": 2.0,
+"windFromDeg": 200,
+"waveHeightM": 0.03,
+"fetchM": 13507,
+"visibilityM": 23260.0,
+"temperatureC": 9.3,
+"apparentTemperatureC": 7.8,
+"humidityPct": 87,
+"dewPointC": 7.2,
+"pressureHpa": 1020.6,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T22:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.25,
+"windGustMs": 2.3,
+"windFromDeg": 209,
+"waveHeightM": 0.03,
+"fetchM": 2806,
+"visibilityM": 23660.0,
+"temperatureC": 8.9,
+"apparentTemperatureC": 7.4,
+"humidityPct": 89,
+"dewPointC": 7.2,
+"pressureHpa": 1021.2,
+"cloudCoverPct": 84,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 84,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-27T23:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.12,
+"windGustMs": 2.3,
+"windFromDeg": 207,
+"waveHeightM": 0.03,
+"fetchM": 6502,
+"visibilityM": 23420.0,
+"temperatureC": 9.1,
+"apparentTemperatureC": 7.7,
+"humidityPct": 90,
+"dewPointC": 7.5,
+"pressureHpa": 1021.5,
+"cloudCoverPct": 44,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 44,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": false
+},
+{
+"time": "2026-10-28T00:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.36,
+"windGustMs": 2.4,
+"windFromDeg": 216,
+"waveHeightM": 0.03,
+"fetchM": 1511,
+"visibilityM": 28240.0,
+"temperatureC": 9.4,
+"apparentTemperatureC": 7.8,
+"humidityPct": 86,
+"dewPointC": 7.2,
+"pressureHpa": 1021.8,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": false
+},
+{
+"time": "2026-10-28T01:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.49,
+"windGustMs": 2.7,
+"windFromDeg": 222,
+"waveHeightM": 0.03,
+"fetchM": 1107,
+"visibilityM": 34360.0,
+"temperatureC": 9.5,
+"apparentTemperatureC": 7.5,
+"humidityPct": 79,
+"dewPointC": 6.0,
+"pressureHpa": 1022.2,
+"cloudCoverPct": 44,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 44,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T02:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.5,
+"windGustMs": 2.9,
+"windFromDeg": 233,
+"waveHeightM": 0.01,
+"fetchM": 153,
+"visibilityM": 34260.0,
+"temperatureC": 9.3,
+"apparentTemperatureC": 7.3,
+"humidityPct": 79,
+"dewPointC": 5.8,
+"pressureHpa": 1022.6,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-28T03:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.61,
+"windGustMs": 3.1,
+"windFromDeg": 240,
+"waveHeightM": 0.01,
+"fetchM": 102,
+"visibilityM": 35060.0,
+"temperatureC": 9.8,
+"apparentTemperatureC": 7.8,
+"humidityPct": 78,
+"dewPointC": 6.1,
+"pressureHpa": 1022.7,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-28T04:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.34,
+"windGustMs": 2.8,
+"windFromDeg": 207,
+"waveHeightM": 0.04,
+"fetchM": 6502,
+"visibilityM": 29940.0,
+"temperatureC": 9.1,
+"apparentTemperatureC": 7.4,
+"humidityPct": 84,
+"dewPointC": 6.5,
+"pressureHpa": 1023.2,
+"cloudCoverPct": 68,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 68,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T05:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.33,
+"windGustMs": 2.7,
+"windFromDeg": 193,
+"waveHeightM": 0.04,
+"fetchM": 15428,
+"visibilityM": 25380.0,
+"temperatureC": 9.1,
+"apparentTemperatureC": 7.5,
+"humidityPct": 88,
+"dewPointC": 7.2,
+"pressureHpa": 1023.5,
+"cloudCoverPct": 99,
+"cloudCoverLowPct": 64,
+"cloudCoverMidPct": 93,
+"cloudCoverHighPct": 58,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-28T06:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.1,
+"windGustMs": 2.4,
+"windFromDeg": 175,
+"waveHeightM": 0.03,
+"fetchM": 2744,
+"visibilityM": 22260.0,
+"temperatureC": 8.9,
+"apparentTemperatureC": 7.5,
+"humidityPct": 90,
+"dewPointC": 7.3,
+"pressureHpa": 1023.8,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 50,
+"cloudCoverMidPct": 34,
+"cloudCoverHighPct": 100,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-28T07:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.67,
+"windGustMs": 1.8,
+"windFromDeg": 243,
+"waveHeightM": 0.0,
+"fetchM": 92,
+"visibilityM": 21740.0,
+"temperatureC": 9.7,
+"apparentTemperatureC": 8.8,
+"humidityPct": 91,
+"dewPointC": 8.3,
+"pressureHpa": 1024.2,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 78,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 100,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-28T08:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.09,
+"windGustMs": 5.8,
+"windFromDeg": 299,
+"waveHeightM": 0.01,
+"fetchM": 15,
+"visibilityM": 23240.0,
+"temperatureC": 11.1,
+"apparentTemperatureC": 8.8,
+"humidityPct": 88,
+"dewPointC": 9.2,
+"pressureHpa": 1024.6,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 82,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 100,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 0.3,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T09:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.09,
+"windGustMs": 6.2,
+"windFromDeg": 299,
+"waveHeightM": 0.01,
+"fetchM": 15,
+"visibilityM": 7540.0,
+"temperatureC": 10.6,
+"apparentTemperatureC": 8.4,
+"humidityPct": 93,
+"dewPointC": 9.5,
+"pressureHpa": 1025.5,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 100,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 100,
+"uvIndex": null,
+"capeJkg": 0.0,
+"precipitationMm": 1.08,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T10:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.47,
+"windGustMs": 7.73,
+"windFromDeg": 317,
+"waveHeightM": 0.01,
+"fetchM": 13,
+"visibilityM": 10145.0,
+"temperatureC": 10.1,
+"apparentTemperatureC": 7.5,
+"humidityPct": 93,
+"dewPointC": 9.0,
+"pressureHpa": 1026.9,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 91,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 75,
+"uvIndex": null,
+"capeJkg": 2.5,
+"precipitationMm": 1.39,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T11:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.97,
+"windGustMs": 6.85,
+"windFromDeg": 298,
+"waveHeightM": 0.01,
+"fetchM": 16,
+"visibilityM": 6730.0,
+"temperatureC": 10.2,
+"apparentTemperatureC": 7.9,
+"humidityPct": 93,
+"dewPointC": 9.1,
+"pressureHpa": 1027.8,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 89,
+"cloudCoverMidPct": 99,
+"cloudCoverHighPct": 50,
+"uvIndex": null,
+"capeJkg": 20.0,
+"precipitationMm": 1.11,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T12:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.93,
+"windGustMs": 6.88,
+"windFromDeg": 292,
+"waveHeightM": 0.01,
+"fetchM": 17,
+"visibilityM": 23740.0,
+"temperatureC": 10.5,
+"apparentTemperatureC": 8.1,
+"humidityPct": 87,
+"dewPointC": 8.4,
+"pressureHpa": 1028.1,
+"cloudCoverPct": 96,
+"cloudCoverLowPct": 78,
+"cloudCoverMidPct": 85,
+"cloudCoverHighPct": 0,
+"uvIndex": null,
+"capeJkg": 22.5,
+"precipitationMm": 0.3,
+"weatherCode": 61,
+"sunUp": true
+}
+],
+"outlook": [
+{
+"time": "2026-10-25T13:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "gusts",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 5.46,
+"windGustMs": 10.9,
+"windFromDeg": 244,
+"waveHeightM": 0.03,
+"fetchM": 88,
+"visibilityM": 20640.0,
+"temperatureC": 12.8,
+"apparentTemperatureC": 8.9,
+"humidityPct": 80,
+"dewPointC": 9.4,
+"pressureHpa": 1004.2,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 94,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.25,
+"capeJkg": 0.0,
+"precipitationMm": 0.5,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-25T14:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "gusts",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 5.47,
+"windGustMs": 10.6,
+"windFromDeg": 239,
+"waveHeightM": 0.03,
+"fetchM": 104,
+"visibilityM": 14280.0,
+"temperatureC": 12.8,
+"apparentTemperatureC": 9.1,
+"humidityPct": 84,
+"dewPointC": 10.2,
+"pressureHpa": 1004.0,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 94,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.15,
+"capeJkg": 0.0,
+"precipitationMm": 0.3,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-25T15:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "gusts",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 5.42,
+"windGustMs": 11.3,
+"windFromDeg": 240,
+"waveHeightM": 0.03,
+"fetchM": 102,
+"visibilityM": 17640.0,
+"temperatureC": 12.6,
+"apparentTemperatureC": 8.9,
+"humidityPct": 86,
+"dewPointC": 10.3,
+"pressureHpa": 1005.4,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 91,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.1,
+"capeJkg": 10.0,
+"precipitationMm": 0.7,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-25T16:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "gusts",
+"light": "red"
+},
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 4.68,
+"windGustMs": 10.8,
+"windFromDeg": 312,
+"waveHeightM": 0.01,
+"fetchM": 13,
+"visibilityM": 3320.0,
+"temperatureC": 10.4,
+"apparentTemperatureC": 6.7,
+"humidityPct": 85,
+"dewPointC": 8.0,
+"pressureHpa": 1007.8,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 100,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 1.2,
+"weatherCode": 61,
+"sunUp": false
+},
+{
+"time": "2026-10-25T17:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "gusts",
+"light": "red"
+},
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "wind",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 5.51,
+"windGustMs": 10.9,
+"windFromDeg": 282,
+"waveHeightM": 0.01,
+"fetchM": 21,
+"visibilityM": 33540.0,
+"temperatureC": 8.6,
+"apparentTemperatureC": 3.6,
+"humidityPct": 78,
+"dewPointC": 5.0,
+"pressureHpa": 1011.4,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 95,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 1.6,
+"weatherCode": 61,
+"sunUp": false
+},
+{
+"time": "2026-10-25T18:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "gusts",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 4.03,
+"windGustMs": 9.0,
+"windFromDeg": 240,
+"waveHeightM": 0.02,
+"fetchM": 102,
+"visibilityM": 26180.0,
+"temperatureC": 8.2,
+"apparentTemperatureC": 4.5,
+"humidityPct": 86,
+"dewPointC": 6.0,
+"pressureHpa": 1014.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 100,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 10.0,
+"precipitationMm": 0.3,
+"weatherCode": 80,
+"sunUp": false
+},
+{
+"time": "2026-10-25T19:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "gusts",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 5.06,
+"windGustMs": 9.9,
+"windFromDeg": 252,
+"waveHeightM": 0.02,
+"fetchM": 64,
+"visibilityM": 29580.0,
+"temperatureC": 8.3,
+"apparentTemperatureC": 3.8,
+"humidityPct": 83,
+"dewPointC": 5.6,
+"pressureHpa": 1016.7,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 100,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 20.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-25T20:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "gusts",
+"light": "red"
+},
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "wind",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 6.93,
+"windGustMs": 14.1,
+"windFromDeg": 252,
+"waveHeightM": 0.03,
+"fetchM": 64,
+"visibilityM": 37160.0,
+"temperatureC": 7.4,
+"apparentTemperatureC": 1.0,
+"humidityPct": 72,
+"dewPointC": 2.7,
+"pressureHpa": 1016.9,
+"cloudCoverPct": 93,
+"cloudCoverLowPct": 42,
+"cloudCoverMidPct": 87,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.2,
+"weatherCode": 61,
+"sunUp": false
+},
+{
+"time": "2026-10-25T21:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "gusts",
+"light": "red"
+},
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 4.12,
+"windGustMs": 12.3,
+"windFromDeg": 247,
+"waveHeightM": 0.02,
+"fetchM": 75,
+"visibilityM": 29900.0,
+"temperatureC": 7.7,
+"apparentTemperatureC": 3.7,
+"humidityPct": 83,
+"dewPointC": 5.0,
+"pressureHpa": 1018.2,
+"cloudCoverPct": 99,
+"cloudCoverLowPct": 4,
+"cloudCoverMidPct": 99,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 61,
+"sunUp": false
+},
+{
+"time": "2026-10-25T22:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "gusts",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 4.55,
+"windGustMs": 9.0,
+"windFromDeg": 251,
+"waveHeightM": 0.02,
+"fetchM": 65,
+"visibilityM": 33200.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 3.2,
+"humidityPct": 80,
+"dewPointC": 4.4,
+"pressureHpa": 1018.9,
+"cloudCoverPct": 91,
+"cloudCoverLowPct": 4,
+"cloudCoverMidPct": 89,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.7,
+"weatherCode": 61,
+"sunUp": false
+},
+{
+"time": "2026-10-25T23:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "gusts",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.76,
+"windGustMs": 9.7,
+"windFromDeg": 245,
+"waveHeightM": 0.02,
+"fetchM": 84,
+"visibilityM": 27700.0,
+"temperatureC": 7.1,
+"apparentTemperatureC": 3.3,
+"humidityPct": 85,
+"dewPointC": 4.7,
+"pressureHpa": 1019.2,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 39,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 30.0,
+"precipitationMm": 0.0,
+"weatherCode": 61,
+"sunUp": false
+},
+{
+"time": "2026-10-26T00:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "gusts",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 5.0,
+"windGustMs": 9.3,
+"windFromDeg": 254,
+"waveHeightM": 0.02,
+"fetchM": 61,
+"visibilityM": 30680.0,
+"temperatureC": 7.0,
+"apparentTemperatureC": 2.2,
+"humidityPct": 82,
+"dewPointC": 4.1,
+"pressureHpa": 1019.6,
+"cloudCoverPct": 84,
+"cloudCoverLowPct": 77,
+"cloudCoverMidPct": 75,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 80,
+"sunUp": false
+},
+{
+"time": "2026-10-26T01:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "gusts",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.64,
+"windGustMs": 9.9,
+"windFromDeg": 249,
+"waveHeightM": 0.02,
+"fetchM": 68,
+"visibilityM": 28680.0,
+"temperatureC": 6.6,
+"apparentTemperatureC": 2.8,
+"humidityPct": 84,
+"dewPointC": 4.1,
+"pressureHpa": 1020.1,
+"cloudCoverPct": 45,
+"cloudCoverLowPct": 25,
+"cloudCoverMidPct": 30,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-26T02:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.0,
+"windGustMs": 6.8,
+"windFromDeg": 240,
+"waveHeightM": 0.02,
+"fetchM": 102,
+"visibilityM": 28500.0,
+"temperatureC": 6.3,
+"apparentTemperatureC": 2.9,
+"humidityPct": 85,
+"dewPointC": 4.0,
+"pressureHpa": 1020.4,
+"cloudCoverPct": 95,
+"cloudCoverLowPct": 69,
+"cloudCoverMidPct": 85,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T03:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.92,
+"windGustMs": 5.9,
+"windFromDeg": 239,
+"waveHeightM": 0.02,
+"fetchM": 104,
+"visibilityM": 27920.0,
+"temperatureC": 6.5,
+"apparentTemperatureC": 3.2,
+"humidityPct": 85,
+"dewPointC": 4.2,
+"pressureHpa": 1020.4,
+"cloudCoverPct": 86,
+"cloudCoverLowPct": 85,
+"cloudCoverMidPct": 74,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T04:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.12,
+"windGustMs": 5.5,
+"windFromDeg": 262,
+"waveHeightM": 0.01,
+"fetchM": 39,
+"visibilityM": 26780.0,
+"temperatureC": 6.6,
+"apparentTemperatureC": 3.9,
+"humidityPct": 86,
+"dewPointC": 4.4,
+"pressureHpa": 1021.8,
+"cloudCoverPct": 98,
+"cloudCoverLowPct": 86,
+"cloudCoverMidPct": 94,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 20.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T05:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.88,
+"windGustMs": 5.5,
+"windFromDeg": 250,
+"waveHeightM": 0.01,
+"fetchM": 66,
+"visibilityM": 26220.0,
+"temperatureC": 6.6,
+"apparentTemperatureC": 3.4,
+"humidityPct": 87,
+"dewPointC": 4.6,
+"pressureHpa": 1022.0,
+"cloudCoverPct": 52,
+"cloudCoverLowPct": 52,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 10.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-26T06:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.46,
+"windGustMs": 5.9,
+"windFromDeg": 243,
+"waveHeightM": 0.01,
+"fetchM": 92,
+"visibilityM": 26960.0,
+"temperatureC": 6.5,
+"apparentTemperatureC": 3.5,
+"humidityPct": 86,
+"dewPointC": 4.3,
+"pressureHpa": 1023.1,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 51,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.0,
+"capeJkg": 10.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T07:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.36,
+"windGustMs": 5.1,
+"windFromDeg": 234,
+"waveHeightM": 0.01,
+"fetchM": 149,
+"visibilityM": 28400.0,
+"temperatureC": 6.6,
+"apparentTemperatureC": 3.7,
+"humidityPct": 85,
+"dewPointC": 4.3,
+"pressureHpa": 1023.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 42,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.2,
+"capeJkg": 10.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T08:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.87,
+"windGustMs": 6.1,
+"windFromDeg": 241,
+"waveHeightM": 0.01,
+"fetchM": 99,
+"visibilityM": 33280.0,
+"temperatureC": 7.9,
+"apparentTemperatureC": 4.7,
+"humidityPct": 79,
+"dewPointC": 4.5,
+"pressureHpa": 1023.2,
+"cloudCoverPct": 86,
+"cloudCoverLowPct": 68,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 66,
+"uvIndex": 0.85,
+"capeJkg": 10.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T09:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.23,
+"windGustMs": 6.7,
+"windFromDeg": 248,
+"waveHeightM": 0.01,
+"fetchM": 71,
+"visibilityM": 37600.0,
+"temperatureC": 9.0,
+"apparentTemperatureC": 5.4,
+"humidityPct": 70,
+"dewPointC": 3.8,
+"pressureHpa": 1023.6,
+"cloudCoverPct": 84,
+"cloudCoverLowPct": 41,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 63,
+"uvIndex": 1.5,
+"capeJkg": 10.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T10:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.31,
+"windGustMs": 6.7,
+"windFromDeg": 267,
+"waveHeightM": 0.01,
+"fetchM": 34,
+"visibilityM": 39840.0,
+"temperatureC": 10.0,
+"apparentTemperatureC": 6.2,
+"humidityPct": 62,
+"dewPointC": 3.0,
+"pressureHpa": 1023.0,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 30,
+"cloudCoverMidPct": 73,
+"cloudCoverHighPct": 100,
+"uvIndex": 2.15,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T11:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.84,
+"windGustMs": 6.6,
+"windFromDeg": 280,
+"waveHeightM": 0.01,
+"fetchM": 22,
+"visibilityM": 39940.0,
+"temperatureC": 10.5,
+"apparentTemperatureC": 7.1,
+"humidityPct": 62,
+"dewPointC": 3.5,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 42,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 90,
+"uvIndex": 2.3,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T12:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.7,
+"windGustMs": 5.7,
+"windFromDeg": 270,
+"waveHeightM": 0.01,
+"fetchM": 30,
+"visibilityM": 40180.0,
+"temperatureC": 10.8,
+"apparentTemperatureC": 7.5,
+"humidityPct": 60,
+"dewPointC": 3.3,
+"pressureHpa": 1022.6,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 28,
+"cloudCoverMidPct": 91,
+"cloudCoverHighPct": 100,
+"uvIndex": 2.25,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T13:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.32,
+"windGustMs": 5.5,
+"windFromDeg": 277,
+"waveHeightM": 0.01,
+"fetchM": 24,
+"visibilityM": 39600.0,
+"temperatureC": 10.8,
+"apparentTemperatureC": 7.9,
+"humidityPct": 63,
+"dewPointC": 4.0,
+"pressureHpa": 1022.1,
+"cloudCoverPct": 88,
+"cloudCoverLowPct": 44,
+"cloudCoverMidPct": 67,
+"cloudCoverHighPct": 26,
+"uvIndex": 2.1,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T14:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.55,
+"windGustMs": 4.8,
+"windFromDeg": 285,
+"waveHeightM": 0.0,
+"fetchM": 20,
+"visibilityM": 39300.0,
+"temperatureC": 10.8,
+"apparentTemperatureC": 8.5,
+"humidityPct": 65,
+"dewPointC": 4.5,
+"pressureHpa": 1021.9,
+"cloudCoverPct": 84,
+"cloudCoverLowPct": 40,
+"cloudCoverMidPct": 67,
+"cloudCoverHighPct": 12,
+"uvIndex": 1.45,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-26T15:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.22,
+"windGustMs": 3.4,
+"windFromDeg": 279,
+"waveHeightM": 0.0,
+"fetchM": 23,
+"visibilityM": 38640.0,
+"temperatureC": 10.4,
+"apparentTemperatureC": 8.4,
+"humidityPct": 68,
+"dewPointC": 4.7,
+"pressureHpa": 1021.4,
+"cloudCoverPct": 77,
+"cloudCoverLowPct": 8,
+"cloudCoverMidPct": 67,
+"cloudCoverHighPct": 18,
+"uvIndex": 0.75,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-26T16:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.0,
+"windGustMs": 1.8,
+"windFromDeg": 270,
+"waveHeightM": 0.0,
+"fetchM": 30,
+"visibilityM": 38040.0,
+"temperatureC": 9.7,
+"apparentTemperatureC": 8.6,
+"humidityPct": 73,
+"dewPointC": 5.1,
+"pressureHpa": 1021.5,
+"cloudCoverPct": 92,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 87,
+"cloudCoverHighPct": 76,
+"uvIndex": 0.2,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T17:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.64,
+"windGustMs": 1.1,
+"windFromDeg": 129,
+"waveHeightM": 0.01,
+"fetchM": 1017,
+"visibilityM": 37220.0,
+"temperatureC": 9.3,
+"apparentTemperatureC": 7.7,
+"humidityPct": 75,
+"dewPointC": 5.1,
+"pressureHpa": 1021.7,
+"cloudCoverPct": 91,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 90,
+"cloudCoverHighPct": 19,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T18:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.71,
+"windGustMs": 1.2,
+"windFromDeg": 82,
+"waveHeightM": 0.0,
+"fetchM": 70,
+"visibilityM": 32920.0,
+"temperatureC": 8.3,
+"apparentTemperatureC": 6.7,
+"humidityPct": 81,
+"dewPointC": 5.2,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T19:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.28,
+"windGustMs": 1.3,
+"windFromDeg": 135,
+"waveHeightM": 0.0,
+"fetchM": 1143,
+"visibilityM": 26300.0,
+"temperatureC": 7.5,
+"apparentTemperatureC": 6.3,
+"humidityPct": 88,
+"dewPointC": 5.6,
+"pressureHpa": 1022.4,
+"cloudCoverPct": 94,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 94,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T20:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.14,
+"windGustMs": 0.6,
+"windFromDeg": 225,
+"waveHeightM": 0.0,
+"fetchM": 998,
+"visibilityM": 27340.0,
+"temperatureC": 7.3,
+"apparentTemperatureC": 6.1,
+"humidityPct": 87,
+"dewPointC": 5.3,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 82,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 73,
+"cloudCoverHighPct": 50,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T21:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.4,
+"windGustMs": 0.4,
+"windFromDeg": 90,
+"waveHeightM": 0.0,
+"fetchM": 693,
+"visibilityM": 28640.0,
+"temperatureC": 7.3,
+"apparentTemperatureC": 6.0,
+"humidityPct": 87,
+"dewPointC": 5.3,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T22:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.67,
+"windGustMs": 1.0,
+"windFromDeg": 207,
+"waveHeightM": 0.01,
+"fetchM": 6502,
+"visibilityM": 30120.0,
+"temperatureC": 7.5,
+"apparentTemperatureC": 5.9,
+"humidityPct": 85,
+"dewPointC": 5.1,
+"pressureHpa": 1022.2,
+"cloudCoverPct": 96,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 96,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-26T23:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.72,
+"windGustMs": 1.6,
+"windFromDeg": 214,
+"waveHeightM": 0.01,
+"fetchM": 1731,
+"visibilityM": 24360.0,
+"temperatureC": 7.5,
+"apparentTemperatureC": 6.0,
+"humidityPct": 89,
+"dewPointC": 5.8,
+"pressureHpa": 1022.2,
+"cloudCoverPct": 99,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 99,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T00:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.6,
+"windGustMs": 1.6,
+"windFromDeg": 180,
+"waveHeightM": 0.01,
+"fetchM": 3591,
+"visibilityM": 24380.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 6.2,
+"humidityPct": 89,
+"dewPointC": 5.9,
+"pressureHpa": 1022.4,
+"cloudCoverPct": 87,
+"cloudCoverLowPct": 9,
+"cloudCoverMidPct": 83,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T01:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.63,
+"windGustMs": 2.0,
+"windFromDeg": 162,
+"waveHeightM": 0.01,
+"fetchM": 2192,
+"visibilityM": 23900.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 6.2,
+"humidityPct": 89,
+"dewPointC": 5.9,
+"pressureHpa": 1022.4,
+"cloudCoverPct": 93,
+"cloudCoverLowPct": 18,
+"cloudCoverMidPct": 88,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T02:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.2,
+"windGustMs": 1.0,
+"windFromDeg": 90,
+"waveHeightM": 0.0,
+"fetchM": 693,
+"visibilityM": 29400.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 6.4,
+"humidityPct": 85,
+"dewPointC": 5.2,
+"pressureHpa": 1022.4,
+"cloudCoverPct": 95,
+"cloudCoverLowPct": 23,
+"cloudCoverMidPct": 91,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T03:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.14,
+"windGustMs": 1.3,
+"windFromDeg": 135,
+"waveHeightM": 0.0,
+"fetchM": 1143,
+"visibilityM": 32780.0,
+"temperatureC": 7.9,
+"apparentTemperatureC": 6.7,
+"humidityPct": 82,
+"dewPointC": 5.0,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 10,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T04:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.14,
+"windGustMs": 0.5,
+"windFromDeg": 225,
+"waveHeightM": 0.0,
+"fetchM": 998,
+"visibilityM": 35780.0,
+"temperatureC": 8.1,
+"apparentTemperatureC": 6.8,
+"humidityPct": 78,
+"dewPointC": 4.5,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 96,
+"cloudCoverLowPct": 23,
+"cloudCoverMidPct": 92,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T05:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.85,
+"windGustMs": 2.2,
+"windFromDeg": 225,
+"waveHeightM": 0.01,
+"fetchM": 998,
+"visibilityM": 26960.0,
+"temperatureC": 7.9,
+"apparentTemperatureC": 6.4,
+"humidityPct": 87,
+"dewPointC": 5.9,
+"pressureHpa": 1022.6,
+"cloudCoverPct": 93,
+"cloudCoverLowPct": 33,
+"cloudCoverMidPct": 87,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T06:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.3,
+"windGustMs": 1.4,
+"windFromDeg": 180,
+"waveHeightM": 0.0,
+"fetchM": 3591,
+"visibilityM": 24180.0,
+"temperatureC": 7.6,
+"apparentTemperatureC": 6.5,
+"humidityPct": 89,
+"dewPointC": 5.9,
+"pressureHpa": 1022.9,
+"cloudCoverPct": 70,
+"cloudCoverLowPct": 53,
+"cloudCoverMidPct": 59,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-27T07:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.36,
+"windGustMs": 0.4,
+"windFromDeg": 236,
+"waveHeightM": 0.0,
+"fetchM": 108,
+"visibilityM": 33220.0,
+"temperatureC": 8.3,
+"apparentTemperatureC": 7.0,
+"humidityPct": 82,
+"dewPointC": 5.4,
+"pressureHpa": 1022.8,
+"cloudCoverPct": 45,
+"cloudCoverLowPct": 3,
+"cloudCoverMidPct": 44,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.25,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-27T08:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.76,
+"windGustMs": 1.5,
+"windFromDeg": 203,
+"waveHeightM": 0.01,
+"fetchM": 13589,
+"visibilityM": 32640.0,
+"temperatureC": 9.7,
+"apparentTemperatureC": 8.3,
+"humidityPct": 80,
+"dewPointC": 6.4,
+"pressureHpa": 1022.3,
+"cloudCoverPct": 8,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 8,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.9,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": true
+},
+{
+"time": "2026-10-27T09:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.22,
+"windGustMs": 1.6,
+"windFromDeg": 297,
+"waveHeightM": 0.0,
+"fetchM": 16,
+"visibilityM": 38860.0,
+"temperatureC": 12.0,
+"apparentTemperatureC": 10.9,
+"humidityPct": 66,
+"dewPointC": 5.8,
+"pressureHpa": 1021.3,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 1.7,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T10:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.63,
+"windGustMs": 1.6,
+"windFromDeg": 72,
+"waveHeightM": 0.0,
+"fetchM": 53,
+"visibilityM": 39960.0,
+"temperatureC": 14.0,
+"apparentTemperatureC": 12.8,
+"humidityPct": 62,
+"dewPointC": 6.8,
+"pressureHpa": 1020.6,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 2.4,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T11:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.0,
+"windGustMs": 2.3,
+"windFromDeg": 84,
+"waveHeightM": 0.0,
+"fetchM": 74,
+"visibilityM": 41620.0,
+"temperatureC": 15.7,
+"apparentTemperatureC": 14.0,
+"humidityPct": 51,
+"dewPointC": 5.6,
+"pressureHpa": 1019.9,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 2.8,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T12:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.41,
+"windGustMs": 3.1,
+"windFromDeg": 82,
+"waveHeightM": 0.01,
+"fetchM": 70,
+"visibilityM": 41120.0,
+"temperatureC": 16.5,
+"apparentTemperatureC": 14.9,
+"humidityPct": 54,
+"dewPointC": 7.2,
+"pressureHpa": 1019.3,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 2.8,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T13:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.94,
+"windGustMs": 4.0,
+"windFromDeg": 78,
+"waveHeightM": 0.01,
+"fetchM": 62,
+"visibilityM": 41320.0,
+"temperatureC": 16.6,
+"apparentTemperatureC": 14.5,
+"humidityPct": 53,
+"dewPointC": 7.0,
+"pressureHpa": 1018.6,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 2.4,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T14:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.14,
+"windGustMs": 4.38,
+"windFromDeg": 72,
+"waveHeightM": 0.01,
+"fetchM": 53,
+"visibilityM": 40500.0,
+"temperatureC": 16.0,
+"apparentTemperatureC": 14.0,
+"humidityPct": 59,
+"dewPointC": 8.0,
+"pressureHpa": 1018.2,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 1.7,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T15:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.81,
+"windGustMs": 4.45,
+"windFromDeg": 76,
+"waveHeightM": 0.01,
+"fetchM": 59,
+"visibilityM": 39200.0,
+"temperatureC": 14.7,
+"apparentTemperatureC": 13.1,
+"humidityPct": 66,
+"dewPointC": 8.4,
+"pressureHpa": 1018.2,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.9,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": true
+},
+{
+"time": "2026-10-27T16:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.03,
+"windGustMs": 3.5,
+"windFromDeg": 71,
+"waveHeightM": 0.0,
+"fetchM": 52,
+"visibilityM": 36325.0,
+"temperatureC": 13.1,
+"apparentTemperatureC": 12.1,
+"humidityPct": 74,
+"dewPointC": 8.6,
+"pressureHpa": 1018.7,
+"cloudCoverPct": 55,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 55,
+"uvIndex": 0.2,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-27T17:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.61,
+"windGustMs": 1.9,
+"windFromDeg": 81,
+"waveHeightM": 0.0,
+"fetchM": 68,
+"visibilityM": 26180.0,
+"temperatureC": 11.5,
+"apparentTemperatureC": 10.7,
+"humidityPct": 82,
+"dewPointC": 8.5,
+"pressureHpa": 1019.6,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": false
+},
+{
+"time": "2026-10-27T18:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.28,
+"windGustMs": 1.0,
+"windFromDeg": 135,
+"waveHeightM": 0.0,
+"fetchM": 1143,
+"visibilityM": 20300.0,
+"temperatureC": 10.2,
+"apparentTemperatureC": 9.5,
+"humidityPct": 86,
+"dewPointC": 8.0,
+"pressureHpa": 1020.2,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": false
+},
+{
+"time": "2026-10-27T19:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.5,
+"windGustMs": 0.7,
+"windFromDeg": 180,
+"waveHeightM": 0.01,
+"fetchM": 3591,
+"visibilityM": 17940.0,
+"temperatureC": 9.1,
+"apparentTemperatureC": 8.1,
+"humidityPct": 88,
+"dewPointC": 7.2,
+"pressureHpa": 1020.5,
+"cloudCoverPct": 37,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 37,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": false
+},
+{
+"time": "2026-10-27T20:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.73,
+"windGustMs": 1.1,
+"windFromDeg": 196,
+"waveHeightM": 0.01,
+"fetchM": 14677,
+"visibilityM": 22680.0,
+"temperatureC": 9.3,
+"apparentTemperatureC": 8.1,
+"humidityPct": 86,
+"dewPointC": 7.1,
+"pressureHpa": 1020.5,
+"cloudCoverPct": 60,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 60,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-27T21:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.17,
+"windGustMs": 2.0,
+"windFromDeg": 200,
+"waveHeightM": 0.03,
+"fetchM": 13507,
+"visibilityM": 23260.0,
+"temperatureC": 9.3,
+"apparentTemperatureC": 7.8,
+"humidityPct": 87,
+"dewPointC": 7.2,
+"pressureHpa": 1020.6,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-27T22:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.25,
+"windGustMs": 2.3,
+"windFromDeg": 209,
+"waveHeightM": 0.03,
+"fetchM": 2806,
+"visibilityM": 23660.0,
+"temperatureC": 8.9,
+"apparentTemperatureC": 7.4,
+"humidityPct": 89,
+"dewPointC": 7.2,
+"pressureHpa": 1021.2,
+"cloudCoverPct": 84,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 84,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-27T23:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.12,
+"windGustMs": 2.3,
+"windFromDeg": 207,
+"waveHeightM": 0.03,
+"fetchM": 6502,
+"visibilityM": 23420.0,
+"temperatureC": 9.1,
+"apparentTemperatureC": 7.7,
+"humidityPct": 90,
+"dewPointC": 7.5,
+"pressureHpa": 1021.5,
+"cloudCoverPct": 44,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 44,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": false
+},
+{
+"time": "2026-10-28T00:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.36,
+"windGustMs": 2.4,
+"windFromDeg": 216,
+"waveHeightM": 0.03,
+"fetchM": 1511,
+"visibilityM": 28240.0,
+"temperatureC": 9.4,
+"apparentTemperatureC": 7.8,
+"humidityPct": 86,
+"dewPointC": 7.2,
+"pressureHpa": 1021.8,
+"cloudCoverPct": 0,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": false
+},
+{
+"time": "2026-10-28T01:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.49,
+"windGustMs": 2.7,
+"windFromDeg": 222,
+"waveHeightM": 0.03,
+"fetchM": 1107,
+"visibilityM": 34360.0,
+"temperatureC": 9.5,
+"apparentTemperatureC": 7.5,
+"humidityPct": 79,
+"dewPointC": 6.0,
+"pressureHpa": 1022.2,
+"cloudCoverPct": 44,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 44,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T02:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.5,
+"windGustMs": 2.9,
+"windFromDeg": 233,
+"waveHeightM": 0.01,
+"fetchM": 153,
+"visibilityM": 34260.0,
+"temperatureC": 9.3,
+"apparentTemperatureC": 7.3,
+"humidityPct": 79,
+"dewPointC": 5.8,
+"pressureHpa": 1022.6,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-28T03:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.61,
+"windGustMs": 3.1,
+"windFromDeg": 240,
+"waveHeightM": 0.01,
+"fetchM": 102,
+"visibilityM": 35060.0,
+"temperatureC": 9.8,
+"apparentTemperatureC": 7.8,
+"humidityPct": 78,
+"dewPointC": 6.1,
+"pressureHpa": 1022.7,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-28T04:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.34,
+"windGustMs": 2.8,
+"windFromDeg": 207,
+"waveHeightM": 0.04,
+"fetchM": 6502,
+"visibilityM": 29940.0,
+"temperatureC": 9.1,
+"apparentTemperatureC": 7.4,
+"humidityPct": 84,
+"dewPointC": 6.5,
+"pressureHpa": 1023.2,
+"cloudCoverPct": 68,
+"cloudCoverLowPct": 0,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 68,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T05:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.33,
+"windGustMs": 2.7,
+"windFromDeg": 193,
+"waveHeightM": 0.04,
+"fetchM": 15428,
+"visibilityM": 25380.0,
+"temperatureC": 9.1,
+"apparentTemperatureC": 7.5,
+"humidityPct": 88,
+"dewPointC": 7.2,
+"pressureHpa": 1023.5,
+"cloudCoverPct": 99,
+"cloudCoverLowPct": 64,
+"cloudCoverMidPct": 93,
+"cloudCoverHighPct": 58,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": false
+},
+{
+"time": "2026-10-28T06:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.1,
+"windGustMs": 2.4,
+"windFromDeg": 175,
+"waveHeightM": 0.03,
+"fetchM": 2744,
+"visibilityM": 22260.0,
+"temperatureC": 8.9,
+"apparentTemperatureC": 7.5,
+"humidityPct": 90,
+"dewPointC": 7.3,
+"pressureHpa": 1023.8,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 50,
+"cloudCoverMidPct": 34,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-28T07:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.67,
+"windGustMs": 1.8,
+"windFromDeg": 243,
+"waveHeightM": 0.0,
+"fetchM": 92,
+"visibilityM": 21740.0,
+"temperatureC": 9.7,
+"apparentTemperatureC": 8.8,
+"humidityPct": 91,
+"dewPointC": 8.3,
+"pressureHpa": 1024.2,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 78,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.05,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-28T08:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.09,
+"windGustMs": 5.8,
+"windFromDeg": 299,
+"waveHeightM": 0.01,
+"fetchM": 15,
+"visibilityM": 23240.0,
+"temperatureC": 11.1,
+"apparentTemperatureC": 8.8,
+"humidityPct": 88,
+"dewPointC": 9.2,
+"pressureHpa": 1024.6,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 82,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.45,
+"capeJkg": 0.0,
+"precipitationMm": 0.3,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T09:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.09,
+"windGustMs": 6.2,
+"windFromDeg": 299,
+"waveHeightM": 0.01,
+"fetchM": 15,
+"visibilityM": 7540.0,
+"temperatureC": 10.6,
+"apparentTemperatureC": 8.4,
+"humidityPct": 93,
+"dewPointC": 9.5,
+"pressureHpa": 1025.5,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 100,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.45,
+"capeJkg": 0.0,
+"precipitationMm": 1.08,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T10:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 3.47,
+"windGustMs": 7.73,
+"windFromDeg": 317,
+"waveHeightM": 0.01,
+"fetchM": 13,
+"visibilityM": 10145.0,
+"temperatureC": 10.1,
+"apparentTemperatureC": 7.5,
+"humidityPct": 93,
+"dewPointC": 9.0,
+"pressureHpa": 1026.9,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 91,
+"cloudCoverMidPct": 100,
+"cloudCoverHighPct": 75,
+"uvIndex": 0.3,
+"capeJkg": 2.5,
+"precipitationMm": 1.39,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T11:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.97,
+"windGustMs": 6.85,
+"windFromDeg": 298,
+"waveHeightM": 0.01,
+"fetchM": 16,
+"visibilityM": 6730.0,
+"temperatureC": 10.2,
+"apparentTemperatureC": 7.9,
+"humidityPct": 93,
+"dewPointC": 9.1,
+"pressureHpa": 1027.8,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 89,
+"cloudCoverMidPct": 99,
+"cloudCoverHighPct": 50,
+"uvIndex": 0.35,
+"capeJkg": 20.0,
+"precipitationMm": 1.11,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T12:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.93,
+"windGustMs": 6.88,
+"windFromDeg": 292,
+"waveHeightM": 0.01,
+"fetchM": 17,
+"visibilityM": 23740.0,
+"temperatureC": 10.5,
+"apparentTemperatureC": 8.1,
+"humidityPct": 87,
+"dewPointC": 8.4,
+"pressureHpa": 1028.1,
+"cloudCoverPct": 96,
+"cloudCoverLowPct": 78,
+"cloudCoverMidPct": 85,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.15,
+"capeJkg": 22.5,
+"precipitationMm": 0.3,
+"weatherCode": 61,
+"sunUp": true
+},
+{
+"time": "2026-10-28T13:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.8,
+"windGustMs": 7.0,
+"windFromDeg": 305,
+"waveHeightM": 0.01,
+"fetchM": 14,
+"visibilityM": 33080.0,
+"temperatureC": 10.7,
+"apparentTemperatureC": 8.1,
+"humidityPct": 80,
+"dewPointC": 7.4,
+"pressureHpa": 1028.4,
+"cloudCoverPct": 85,
+"cloudCoverLowPct": 66,
+"cloudCoverMidPct": 58,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.1,
+"capeJkg": 10.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-28T14:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.48,
+"windGustMs": 6.9,
+"windFromDeg": 313,
+"waveHeightM": 0.0,
+"fetchM": 13,
+"visibilityM": 35360.0,
+"temperatureC": 10.4,
+"apparentTemperatureC": 7.8,
+"humidityPct": 76,
+"dewPointC": 6.3,
+"pressureHpa": 1028.7,
+"cloudCoverPct": 58,
+"cloudCoverLowPct": 54,
+"cloudCoverMidPct": 8,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.15,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-28T15:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.44,
+"windGustMs": 6.0,
+"windFromDeg": 304,
+"waveHeightM": 0.0,
+"fetchM": 14,
+"visibilityM": 34760.0,
+"temperatureC": 9.9,
+"apparentTemperatureC": 8.1,
+"humidityPct": 79,
+"dewPointC": 6.4,
+"pressureHpa": 1029.0,
+"cloudCoverPct": 36,
+"cloudCoverLowPct": 36,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.25,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": true
+},
+{
+"time": "2026-10-28T16:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.82,
+"windGustMs": 3.4,
+"windFromDeg": 284,
+"waveHeightM": 0.0,
+"fetchM": 20,
+"visibilityM": 31700.0,
+"temperatureC": 8.6,
+"apparentTemperatureC": 7.2,
+"humidityPct": 85,
+"dewPointC": 6.2,
+"pressureHpa": 1029.4,
+"cloudCoverPct": 26,
+"cloudCoverLowPct": 26,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.05,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": false
+},
+{
+"time": "2026-10-28T17:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.71,
+"windGustMs": 1.5,
+"windFromDeg": 262,
+"waveHeightM": 0.0,
+"fetchM": 39,
+"visibilityM": 29900.0,
+"temperatureC": 7.5,
+"apparentTemperatureC": 6.0,
+"humidityPct": 87,
+"dewPointC": 5.5,
+"pressureHpa": 1030.1,
+"cloudCoverPct": 43,
+"cloudCoverLowPct": 43,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T18:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.7,
+"windGustMs": 1.2,
+"windFromDeg": 270,
+"waveHeightM": 0.0,
+"fetchM": 30,
+"visibilityM": 29140.0,
+"temperatureC": 7.0,
+"apparentTemperatureC": 5.4,
+"humidityPct": 88,
+"dewPointC": 5.1,
+"pressureHpa": 1030.7,
+"cloudCoverPct": 60,
+"cloudCoverLowPct": 60,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T19:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.61,
+"windGustMs": 1.3,
+"windFromDeg": 261,
+"waveHeightM": 0.0,
+"fetchM": 40,
+"visibilityM": 25200.0,
+"temperatureC": 6.7,
+"apparentTemperatureC": 5.2,
+"humidityPct": 90,
+"dewPointC": 5.2,
+"pressureHpa": 1031.1,
+"cloudCoverPct": 57,
+"cloudCoverLowPct": 57,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T20:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.57,
+"windGustMs": 1.0,
+"windFromDeg": 225,
+"waveHeightM": 0.01,
+"fetchM": 998,
+"visibilityM": 21560.0,
+"temperatureC": 6.2,
+"apparentTemperatureC": 4.7,
+"humidityPct": 92,
+"dewPointC": 5.0,
+"pressureHpa": 1031.4,
+"cloudCoverPct": 50,
+"cloudCoverLowPct": 50,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T21:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.42,
+"windGustMs": 0.8,
+"windFromDeg": 225,
+"waveHeightM": 0.0,
+"fetchM": 998,
+"visibilityM": 17460.0,
+"temperatureC": 5.8,
+"apparentTemperatureC": 4.4,
+"humidityPct": 95,
+"dewPointC": 5.1,
+"pressureHpa": 1031.5,
+"cloudCoverPct": 50,
+"cloudCoverLowPct": 50,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T22:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.14,
+"windGustMs": 0.7,
+"windFromDeg": 45,
+"waveHeightM": 0.0,
+"fetchM": 35,
+"visibilityM": 15680.0,
+"temperatureC": 5.6,
+"apparentTemperatureC": 4.4,
+"humidityPct": 95,
+"dewPointC": 4.9,
+"pressureHpa": 1031.3,
+"cloudCoverPct": 67,
+"cloudCoverLowPct": 67,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-28T23:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.64,
+"windGustMs": 0.7,
+"windFromDeg": 39,
+"waveHeightM": 0.0,
+"fetchM": 34,
+"visibilityM": 16420.0,
+"temperatureC": 5.6,
+"apparentTemperatureC": 4.0,
+"humidityPct": 94,
+"dewPointC": 4.7,
+"pressureHpa": 1031.1,
+"cloudCoverPct": 70,
+"cloudCoverLowPct": 70,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-29T00:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 0.92,
+"windGustMs": 1.6,
+"windFromDeg": 49,
+"waveHeightM": 0.0,
+"fetchM": 36,
+"visibilityM": 20580.0,
+"temperatureC": 5.5,
+"apparentTemperatureC": 3.6,
+"humidityPct": 92,
+"dewPointC": 4.3,
+"pressureHpa": 1030.8,
+"cloudCoverPct": 75,
+"cloudCoverLowPct": 75,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-29T01:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.22,
+"windGustMs": 2.0,
+"windFromDeg": 55,
+"waveHeightM": 0.0,
+"fetchM": 39,
+"visibilityM": 21620.0,
+"temperatureC": 5.5,
+"apparentTemperatureC": 3.4,
+"humidityPct": 92,
+"dewPointC": 4.3,
+"pressureHpa": 1030.8,
+"cloudCoverPct": 71,
+"cloudCoverLowPct": 71,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-29T02:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.2,
+"windGustMs": 2.1,
+"windFromDeg": 48,
+"waveHeightM": 0.0,
+"fetchM": 36,
+"visibilityM": 21320.0,
+"temperatureC": 5.3,
+"apparentTemperatureC": 3.2,
+"humidityPct": 92,
+"dewPointC": 4.1,
+"pressureHpa": 1030.4,
+"cloudCoverPct": 61,
+"cloudCoverLowPct": 61,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-29T03:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.25,
+"windGustMs": 2.2,
+"windFromDeg": 61,
+"waveHeightM": 0.0,
+"fetchM": 43,
+"visibilityM": 20240.0,
+"temperatureC": 5.0,
+"apparentTemperatureC": 2.8,
+"humidityPct": 93,
+"dewPointC": 4.0,
+"pressureHpa": 1030.1,
+"cloudCoverPct": 41,
+"cloudCoverLowPct": 41,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": false
+},
+{
+"time": "2026-10-29T04:00:00+00:00",
+"light": "red",
+"reasons": [
+{
+"condition": "daylight",
+"light": "red"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.14,
+"windGustMs": 2.2,
+"windFromDeg": 75,
+"waveHeightM": 0.0,
+"fetchM": 58,
+"visibilityM": 17140.0,
+"temperatureC": 4.4,
+"apparentTemperatureC": 2.2,
+"humidityPct": 94,
+"dewPointC": 3.5,
+"pressureHpa": 1030.0,
+"cloudCoverPct": 14,
+"cloudCoverLowPct": 14,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 0,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 0,
+"sunUp": false
+},
+{
+"time": "2026-10-29T05:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "twilight",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.08,
+"windGustMs": 2.0,
+"windFromDeg": 68,
+"waveHeightM": 0.0,
+"fetchM": 49,
+"visibilityM": 16000.0,
+"temperatureC": 4.0,
+"apparentTemperatureC": 1.8,
+"humidityPct": 95,
+"dewPointC": 3.3,
+"pressureHpa": 1030.0,
+"cloudCoverPct": 53,
+"cloudCoverLowPct": 10,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 45,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": false
+},
+{
+"time": "2026-10-29T06:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.25,
+"windGustMs": 2.1,
+"windFromDeg": 61,
+"waveHeightM": 0.0,
+"fetchM": 43,
+"visibilityM": 3120.0,
+"temperatureC": 3.4,
+"apparentTemperatureC": 1.1,
+"humidityPct": 99,
+"dewPointC": 3.3,
+"pressureHpa": 1030.6,
+"cloudCoverPct": 100,
+"cloudCoverLowPct": 41,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 100,
+"uvIndex": 0.0,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 45,
+"sunUp": true
+},
+{
+"time": "2026-10-29T07:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "fog",
+"light": "amber"
+},
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.22,
+"windGustMs": 2.3,
+"windFromDeg": 55,
+"waveHeightM": 0.0,
+"fetchM": 39,
+"visibilityM": 580.0,
+"temperatureC": 4.0,
+"apparentTemperatureC": 1.8,
+"humidityPct": 99,
+"dewPointC": 3.9,
+"pressureHpa": 1031.1,
+"cloudCoverPct": 98,
+"cloudCoverLowPct": 47,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 98,
+"uvIndex": 0.2,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 45,
+"sunUp": true
+},
+{
+"time": "2026-10-29T08:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.17,
+"windGustMs": 3.3,
+"windFromDeg": 59,
+"waveHeightM": 0.0,
+"fetchM": 42,
+"visibilityM": 2380.0,
+"temperatureC": 6.3,
+"apparentTemperatureC": 4.5,
+"humidityPct": 95,
+"dewPointC": 5.6,
+"pressureHpa": 1030.7,
+"cloudCoverPct": 96,
+"cloudCoverLowPct": 40,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 91,
+"uvIndex": 0.85,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 3,
+"sunUp": true
+},
+{
+"time": "2026-10-29T09:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 1.96,
+"windGustMs": 5.2,
+"windFromDeg": 75,
+"waveHeightM": 0.01,
+"fetchM": 58,
+"visibilityM": 23260.0,
+"temperatureC": 8.1,
+"apparentTemperatureC": 5.8,
+"humidityPct": 86,
+"dewPointC": 5.9,
+"pressureHpa": 1030.2,
+"cloudCoverPct": 53,
+"cloudCoverLowPct": 35,
+"cloudCoverMidPct": 12,
+"cloudCoverHighPct": 21,
+"uvIndex": 1.6,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-29T10:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.35,
+"windGustMs": 6.3,
+"windFromDeg": 78,
+"waveHeightM": 0.01,
+"fetchM": 62,
+"visibilityM": 30540.0,
+"temperatureC": 9.5,
+"apparentTemperatureC": 6.9,
+"humidityPct": 79,
+"dewPointC": 6.0,
+"pressureHpa": 1029.5,
+"cloudCoverPct": 51,
+"cloudCoverLowPct": 46,
+"cloudCoverMidPct": 5,
+"cloudCoverHighPct": 4,
+"uvIndex": 2.25,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 2,
+"sunUp": true
+},
+{
+"time": "2026-10-29T11:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.47,
+"windGustMs": 6.7,
+"windFromDeg": 76,
+"waveHeightM": 0.01,
+"fetchM": 59,
+"visibilityM": 35220.0,
+"temperatureC": 10.4,
+"apparentTemperatureC": 7.7,
+"humidityPct": 72,
+"dewPointC": 5.6,
+"pressureHpa": 1029.0,
+"cloudCoverPct": 42,
+"cloudCoverLowPct": 40,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 5,
+"uvIndex": 2.55,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": true
+},
+{
+"time": "2026-10-29T12:00:00+00:00",
+"light": "amber",
+"reasons": [
+{
+"condition": "cool_water",
+"light": "amber"
+}
+],
+"windSpeedMs": 2.38,
+"windGustMs": 6.7,
+"windFromDeg": 75,
+"waveHeightM": 0.01,
+"fetchM": 58,
+"visibilityM": 38300.0,
+"temperatureC": 10.9,
+"apparentTemperatureC": 8.1,
+"humidityPct": 66,
+"dewPointC": 4.8,
+"pressureHpa": 1028.4,
+"cloudCoverPct": 41,
+"cloudCoverLowPct": 37,
+"cloudCoverMidPct": 0,
+"cloudCoverHighPct": 5,
+"uvIndex": 2.4,
+"capeJkg": 0.0,
+"precipitationMm": 0.0,
+"weatherCode": 1,
+"sunUp": true
+}
+],
+"radar": null,
+"refresh": {
+"used": true,
+"fileEveryHours": 0.5,
+"weatherEveryHours": 3
+}
+}
