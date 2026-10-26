@@ -8,13 +8,13 @@
 import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  store, savedClub, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle,
-  boatInSentence, boatDetail, boatShort, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel,
-  dayTime, duration, degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain,
-  distanceNumber, distance, precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation,
-  coldWaterText, coldWaterBadge, flag, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C,
-  windDial, sparkBars, levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly,
-  footerLinks, mapBoat, mapLimits,
+  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence,
+  boatDetail, boatShort, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
+  degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
+  precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
+  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C, windDial, sparkBars,
+  levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly, footerLinks, mapBoat,
+  mapLimits,
 } from "./shared.js";
 import {
   isStale, shownLight, currentHour, nextHours, WIND_UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon,
@@ -24,6 +24,9 @@ import {
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap } from "./lakeview.js";
 import { satelliteCard } from "./satellite.js";
+import { renderAddPlace } from "./addplace.js";
+import { isOwn } from "./ownplace.js";
+import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 
@@ -187,7 +190,10 @@ async function renderList() {
       <h1 class="large">${h(t("Locations"))}</h1>
       <label class="search">${icon("search")}
         <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+      <div id="chips" hidden></div>
       <ul id="results" class="results" hidden></ul>
+      <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Not in the list? Add a place"))}</a>
+        <small class="sub">${h(t("Put your club, boathouse or spot on the map yourself."))}</small></p>
       <div id="saved">
         ${clubs.length ? "" : `<p class="empty">${h(t("Pick your home club first, then any others you row at."))}</p>`}
         <ul class="rows">${clubs.map((c, i) => `
@@ -197,6 +203,8 @@ async function renderList() {
             ${editing && i > 0 ? `<button class="round" data-home="${h(c.id)}" aria-label="${h(t("Home base"))}">${icon("house")}</button>` : ""}
           </li>`).join("")}</ul>
         <p class="footnote" id="updated"></p>
+        <p class="list-links"><a class="link" id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
+          <a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a></p>
       </div>
       ${footerLinks()}
     </main>`;
@@ -286,8 +294,16 @@ function shortWarning(w) {
 function wireSearch() {
   const input = root.querySelector("#query");
   const results = root.querySelector("#results");
+  const chips = root.querySelector("#chips");
   const saved = root.querySelector("#saved");
   let lakes = null;
+  let countries = [];
+  let country = null;
+  // The country list and chips only when the search covers more than one country.
+  loadCountries().then((list) => {
+    countries = list;
+    root.querySelector("#browse")?.toggleAttribute("hidden", list.length < 2);
+  }).catch(() => {});
   input.addEventListener("focus", async () => {
     try {
       lakes = await loadCatalog();
@@ -296,32 +312,29 @@ function wireSearch() {
       results.innerHTML = `<li class="hint">${h(t("Could not load the club list."))}</li>`;
     }
   }, { once: true });
-  input.addEventListener("input", async () => {
+  const show = async () => {
     lakes ??= await loadCatalog().catch(() => null);
     if (!lakes) return;
     const searching = input.value.trim() !== "";
     results.hidden = !searching;
+    chips.hidden = !searching || countries.length < 2;
     saved.hidden = searching;
-    const found = searchClubs(lakes, input.value);
-    const ids = new Set(store.clubs.map((c) => c.id));
-    results.innerHTML = found.map(({ club, lake }) => `
-      <li><button class="result" data-club="${h(club.id)}" data-lake="${h(lake.id)}">
-        <span class="flag">${flag(club.country ?? lake.country)}</span>
-        <span class="result-text"><strong>${h(club.name)}</strong>
-        <small>${h(place(lake.name, town(club.address), lakeTitle))}</small>
-        ${club.launchPointVerified ? "" : `<small class="orange">${h(t("Launch point not yet confirmed"))}</small>`}</span>
-        <span class="add ${ids.has(club.id) ? "in" : ""}">${icon(ids.has(club.id) ? "circle-check" : "plus")}</span>
-      </button></li>`).join("") || (searching ? `<li class="hint">${h(t("No clubs found."))}</li>` : "");
+    const addOwn = root.querySelector("#add-own");
+    addOwn.hidden = !searching;
+    addOwn.querySelector("a").href = `#/add-place?name=${encodeURIComponent(input.value.trim())}`;
+    chips.innerHTML = countryChips(countries, country);
+    const shown = country ? inCountry(lakes, country) : lakes;
+    results.innerHTML = searchClubs(shown, input.value).map(({ club, lake }) => resultRow(club, lake, { showFlag: !country })).join("")
+      || (searching ? `<li class="hint">${h(t("No clubs found."))}</li>` : "");
+  };
+  input.addEventListener("input", show);
+  chips.addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-country]");
+    if (!chip) return;
+    country = chip.dataset.country || null;
+    show();
   });
-  results.addEventListener("click", (e) => {
-    const button = e.target.closest(".result");
-    if (!button) return;
-    const lake = lakes.find((l) => l.id === button.dataset.lake);
-    const club = lake.clubs.find((c) => c.id === button.dataset.club);
-    const list = store.clubs;
-    if (!list.some((c) => c.id === club.id)) store.clubs = [...list, savedClub(club, lake)];
-    location.hash = `#/club/${encodeURIComponent(club.id)}`;
-  });
+  wireResults(results, { find: (f) => lakes?.find(f) });
 }
 
 // ---- Club page (LocationPageView) ------------------------------------------------------------
@@ -469,6 +482,7 @@ function clubHeader(club, name, isHome, forecast, stale = false) {
     <h1>${h(name)}</h1>
     <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
+    ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
     ${forecast ? (stale
       ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>`
       : `<p class="sub small">${h(t("Updated %@", time(forecast.generatedAt)))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`) : ""}
@@ -1070,6 +1084,13 @@ function route(scroll = true) {
     const clubId = lake[2] ? decodeURIComponent(lake[2]) : null;
     return renderLakeMap(root, decodeURIComponent(lake[1]), clubId, clubId ? `#/club/${encodeURIComponent(clubId)}` : "#/");
   }
+  const add = hash.match(/^\/add-place(?:\?name=(.*))?$/);
+  if (add) return renderAddPlace(root, add[1] ? decodeURIComponent(add[1]) : "");
+  if (hash === "/countries") return renderCountries(root);
+  const water = hash.match(/^\/countries\/([a-z]{2})\/(.+)$/);
+  if (water) return renderWater(root, water[1], decodeURIComponent(water[2]));
+  const country = hash.match(/^\/countries\/([a-z]{2})(?:\?q=(.*))?$/);
+  if (country) return renderCountry(root, country[1], country[2] ? decodeURIComponent(country[2]) : "");
   if (hash === "/settings") return renderSettings();
   if (hash === "/settings/boats") return renderBoats();
   const boat = hash.match(/^\/settings\/boat\/(.+)$/);
