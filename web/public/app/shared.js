@@ -38,6 +38,9 @@ export const store = {
   /** "device", "long", "short", "dmy", "mdy" or "iso" (DateFormat). */
   get dateFormat() { return DATE_FORMATS.includes(load("rf.dateFormat")) ? load("rf.dateFormat") : "device"; },
   set dateFormat(value) { save("rf.dateFormat", value); },
+  /** On mobile data, satellite pictures load only when tapped (AppSettings.saveMobileData). */
+  get saveData() { return load("rf.saveData", false) === true; },
+  set saveData(on) { save("rf.saveData", on); },
   /** "device", "light" or "dark". */
   get appearance() { return ["light", "dark"].includes(load("rf.appearance")) ? load("rf.appearance") : "device"; },
   set appearance(value) { save("rf.appearance", value); },
@@ -200,6 +203,20 @@ export function applyAppearance() {
   if (store.appearance === "device") delete root.dataset.theme;
   else root.dataset.theme = store.appearance;
 }
+
+/**
+ * Why the website is saving data now (DataSaver): "browser" when the browser
+ * or phone asks to save data, "mobile" on mobile data with Save mobile data on,
+ * else null. Only some browsers tell the website either.
+ */
+export function dataSaving() {
+  const connection = navigator.connection;
+  if (connection?.saveData) return "browser";
+  if (store.saveData && connection?.type === "cellular") return "mobile";
+  return null;
+}
+
+export const savingData = () => dataSaving() != null;
 
 // ---- Formatting, as Format in the app ---------------------------------------------
 
