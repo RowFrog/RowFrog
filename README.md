@@ -11,7 +11,7 @@ It started with the lakes south of Munich (Starnberger See first) and can
 show rowing clubs across Germany, Austria and Switzerland, or a place of your
 own.
 
-The app is free. It is an iPhone app (iOS 17 or later) written in SwiftUI;
+The app is free. It is an iPhone and iPad app (iOS 17 or later) written in SwiftUI;
 Android may follow later.
 
 > **Name.** The app is called **Row Frog**, formerly "RowerWeather" (renamed
@@ -39,7 +39,9 @@ home base and more clubs. With location access
 ("While using") it suggests the 5 nearest clubs, otherwise 3 at random. The
 search covers the clubs in Germany, Austria and Switzerland (see
 [Club catalog](#club-catalog)) in one box, with country chips to narrow it,
-and the clubs can also be browsed country by country.
+and the clubs can also be browsed country by country, by water or by town.
+The search also finds waters and towns, waters with the same name share one
+row, and clubs whose water is not known are listed under their town.
 Pages swipe left and right between saved locations, like the iOS Weather
 app. The list shows each location's light and key numbers, with feels like under the temperature and an estimated water temperature in grey with ≈; swipe a row to
 remove it or make it the home base. The saved list stays on the phone.
@@ -94,11 +96,13 @@ when the map looks calmer than your boat. The phone works the light out
 again for the chosen boat on the club page, the lake map and the widget
 (`ios/RowFrog/Limits.swift`).
 
-**Cold water.** Below 15 °C water the app advises a life jacket against
-cold-water shock. Below 10 °C it warns of very cold water (stay near the shore,
-don't row alone), suggests a coach or partner boat for singles and lowers its
-own wind and gust limits by 1 m/s (your own limits stay as set, with a note).
-Below 4 °C it warns of near-freezing water.
+**Cold water.** Cold water does not change the rowing light; the light shows
+the weather. Instead a blue badge says what to bring: "Life jacket" below
+15 °C water, against cold-water shock, and below 10 °C also "partner boat"
+(singles) or "near the shore". Below 10 °C the app's own wind and gust limits
+are 1 m/s lower (your own limits stay as set, with a note), and below 4 °C
+small boats get amber for near-freezing water. Lake maps draw the shore light
+blue below the life-jacket limit and deeper blue below 10 °C.
 
 **Water temperature.** Each club reads the nearest measuring station on its
 own water, from GKD Bayern, the German federal PEGELONLINE network or the
@@ -235,7 +239,7 @@ light's colour, the club's app picture or another picture, the satellite
 picture of the lake, or plain white or black.
 
 **Settings** (cog in the page bar of the club pages and on the location
-list; the list goes back to the club page with a button named after the club)
+list; on iPad always in the page bar, next to the boat button; the list goes back to the club page with a button named after the club)
 works like the iOS Settings app: a "Rowing light for" boat picker at the top,
 then one page per topic, each row showing its current value, and a search
 field at the bottom.
@@ -275,11 +279,22 @@ boat would get there now.
 **Wide screens.** Phones on their side and the unfolded iPhone Duo get wide
 layouts (two columns from 600 pt, a side list from 860 × 560 pt).
 
+**iPad.** The app runs natively on iPad in all four orientations, with the
+same wide layouts (side list 400 pt wide). The Landscape setting is hidden
+there, since iPadOS turns apps anyway. A value's detail view opens full
+screen, with the map beside the chart when the iPad is on its side.
+
+**Website.** [rowfrog.com/app](https://rowfrog.com/app) shows the forecasts
+in a browser, for Android phones and computers. It is password-locked while
+in testing. It follows the app's list, club page and look, with a small/big
+boat picker and a wide layout for iPads and desktop browsers. Own boats, the
+lake view and the rain radar are not on the website yet.
+
 ## Layout
 
 | Path | What it is |
 | --- | --- |
-| `ios/` | SwiftUI iPhone app and widget. The Xcode project is generated from `project.yml` with XcodeGen. |
+| `ios/` | SwiftUI iPhone and iPad app and widget. The Xcode project is generated from `project.yml` with XcodeGen. |
 | `backend/` | Python (FastAPI) service that fetches the forecast, computes waves, the lake view and the traffic light, and serves the app. |
 | `data/locations.json` | Lakes and clubs with confirmed launch points. Add a club or lake here; no code change is needed. |
 | `data/catalogs/` | Clubs the app's search offers, one file per country and source (see [Club catalog](#club-catalog)). |
@@ -287,6 +302,7 @@ layouts (two columns from 600 pt, a side list from 860 × 560 pt).
 | `data/outlines/` | Lake outlines (GeoJSON) for the wave calculation and lake view, made with `scripts/fetch_lake_outline.py`. |
 | `data/water-stations.json` | The water temperature station each club reads (nearest on its own water). |
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
+| `web/` | The website: start page, `app/` (the forecasts in the browser), legal pages and the password check (`functions/_middleware.js`). `scripts/build_web.py` builds it. |
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues. |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
 | `docs/screenshots/` | Not in git: the "App screenshots" workflow writes here on the runner and keeps each branch's set under `refs/screenshots/<branch>` (see the handbook). |
@@ -394,7 +410,7 @@ More detail, including the secrets each one needs, is in the
 | --- | --- |
 | **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately). |
 | **App size** (`app-size.yml`) | Builds the app as for the App Store (Release archive, unsigned) and reports the installed size, the expected download and the largest files in the run summary (10.4 MB installed, about 10 MB to download in October 2026). Runs when iOS code lands on `main`, or by hand. |
-| **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. |
+| **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning and the lake view a made-up south wind, both marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. Input `device` = `iPad` shoots on an iPad Simulator instead. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue, with a section on whether one run a day would be enough. Changes to its scripts start it only on `main`. |
@@ -408,6 +424,8 @@ More detail, including the secrets each one needs, is in the
 | **Satellite water temperature check** (`water-temperature-probe.yml`) | Compares Copernicus, Landsat and the carried-forward estimate with GKD lake stations. By hand, or when the satellite water temperature code changes. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
+| **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
+| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Runs when `web/`, `scripts/build_web.py` or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 
 ## Traffic light defaults
 
@@ -422,7 +440,7 @@ worked out on the phone (`ios/RowFrog/Limits.swift`).
 | Wave height | 0.15 m | 0.25 m |
 | Visibility | 1 km or less | under 500 m |
 | Rain and hail | heavy rain, 4 mm per hour or more | hail |
-| Water temperature | under 15 °C with a life jacket hint; under 10 °C also "Very cold", a hint for singles and wind and gust limits 1 m/s lower; under 4 °C near-freezing water (never red on its own) | – |
+| Water temperature | no change to the light under 15 °C (a blue life-jacket badge instead); under 10 °C wind and gust limits 1 m/s lower; under 4 °C amber for small boats (never red on its own) | – |
 | Shore warning lights (DWD lake warning) | strong wind (40 flashes a minute) for all other boats | strong wind for small racing boats and training boats; storm (90 flashes a minute) for all |
 | DWD weather warning for the place | minor (yellow) | moderate (orange) or above, or any thunderstorm |
 | Ice | shore ice possible, or drift ice on a river | ice cover likely |
