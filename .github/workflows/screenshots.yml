@@ -272,9 +272,9 @@ jobs:
           # Lake view (sample wind from the south)
           shoot 50-lake-view-tile light -RWOpenClub mrc-1880 -RWScrollTo lakeview
           shoot 51-lake-view-map light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES
-          shoot 196-lake-map-twilight light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide twilight
-          WAIT=30 shoot 197-lake-view-tile-twilight light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWLakeWide twilight
-          shoot 198-lake-map-cold-water light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide cold
+          shoot 201-lake-map-twilight light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide twilight
+          WAIT=30 shoot 202-lake-view-tile-twilight light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWLakeWide twilight
+          shoot 203-lake-map-cold-water light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide cold
           shoot 92-lake-view-panel-expanded light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWPanel expanded
           shoot 52-lake-view-waves light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer waves
           shoot 53-lake-view-wind light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer wind
