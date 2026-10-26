@@ -1085,8 +1085,8 @@ private struct ConditionChart: View {
 
     /// A value with as many decimals as it needs to be read: 0.19, 5.2, 14.
     private func valueText(_ y: Double) -> String {
-        // Beaufort is drawn running on through each force (`chartValue`) but read whole.
-        if detail.unit == SpeedUnit.beaufort.symbol { return "\(Int(y)) \(detail.unit)" }
+        // Beaufort is drawn without steps (`chartValue`) but read as whole forces.
+        if detail.unit == SpeedUnit.beaufort.symbol { return "\(Int(y.rounded())) \(detail.unit)" }
         let digits = abs(y) < 1 ? 2 : abs(y) < 10 ? 1 : 0
         return Format.number(y, digits: digits) + (detail.unit.isEmpty ? "" : " " + detail.unit)
     }
