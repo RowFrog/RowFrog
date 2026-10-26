@@ -330,7 +330,8 @@ extension ClubForecast {
     func applying(_ limits: RowingLimits) -> ClubForecast {
         guard !limits.matchesStandard else { return self }
         var copy = self
-        let water = waterTemperature?.celsius
+        // As on the server: measured water, else the estimate.
+        let water = waterTemperature?.celsius ?? estimatedWaterC
         copy.hours = hours.map { $0.applying(limits, waterC: water) }
         copy.outlook = outlook?.map { $0.applying(limits, waterC: water) }
         return copy

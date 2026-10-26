@@ -92,24 +92,25 @@ struct CountryWatersView: View {
                 guard let lake = locations.lake(of: clubs[0]) else { return nil }
                 return Water(lake: lake, clubs: clubs.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending })
             }
-            .filter { filter.isEmpty || LocationStore.fold($0.lake.name).contains(LocationStore.fold(filter)) }
-            .sorted { $0.lake.name.localizedStandardCompare($1.lake.name) == .orderedAscending }
+            .filter { filter.isEmpty || LocationStore.fold($0.lake.title).contains(LocationStore.fold(filter)) }
+            .sorted { $0.lake.title.localizedStandardCompare($1.lake.title) == .orderedAscending }
         let byRegion = clubs.contains { $0.region != nil }
         let groups = Dictionary(grouping: waters) { water -> String in
-            byRegion ? (water.clubs.first?.region ?? tr("Other")) : String(water.lake.name.prefix(1)).uppercased()
+            byRegion ? (water.clubs.first?.region ?? tr("Other")) : LocationStore.fold(String(water.lake.title.prefix(1))).uppercased()
         }
         List {
             if clubs.isEmpty {
                 ProgressView().frame(maxWidth: .infinity)
             }
-            ForEach(groups.keys.sorted(), id: \.self) { key in
+            // Ä under A, Ö under O, Ü under U, as in a dictionary.
+            ForEach(groups.keys.sorted { $0.localizedStandardCompare($1) == .orderedAscending }, id: \.self) { key in
                 Section(key) {
                     ForEach(groups[key] ?? []) { water in
                         NavigationLink {
                             WaterClubsView(locations: locations, lake: water.lake, clubs: water.clubs)
                         } label: {
                             HStack {
-                                Text(water.lake.name)
+                                Text(water.lake.title)
                                 Spacer()
                                 Text("\(water.clubs.count)").foregroundStyle(.secondary)
                             }
@@ -133,7 +134,7 @@ struct WaterClubsView: View {
         List(clubs) { club in
             SearchResultRow(club: club, lake: lake, saved: locations.isSaved(club)) { locations.add(club) }
         }
-        .navigationTitle(lake.name)
+        .navigationTitle(lake.title)
     }
 }
 

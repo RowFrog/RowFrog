@@ -56,12 +56,12 @@ struct LocationPageView: View {
                     VStack(spacing: 16) {
                         header
                         if let forecast, let now = forecast.current() {
-                            NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.name, town: club.town, club: club)
+                            NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
                             if tourSeen && showTopTileTip {
                                 TipView(topTileTip)
                             }
                             if let warnings = forecast.warnings, !warnings.checked || !warnings.items.isEmpty {
-                                WarningsCard(warnings: warnings, lakeName: lake?.name, town: club.town, checkedAt: forecast.generatedAt)
+                                WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
                             }
                             let cards = AppSettings.shared.pageLayout(for: club.id).visible
@@ -98,7 +98,7 @@ struct LocationPageView: View {
                                 Button(tr("Try again")) { Task { await forecasts.load(club.id, force: true) } }
                             }
                         } else {
-                            ProgressView().padding(.top, 40)
+                            LoadingCards(cards: AppSettings.shared.pageLayout(for: club.id).visible)
                         }
                     }
                     .padding(.horizontal)
@@ -116,7 +116,7 @@ struct LocationPageView: View {
                     if let forecast { stickyHourlyHeader(forecast) }
                 }
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
-                .refreshable { await forecasts.load(club.id, force: true) }
+                .refreshable { await forecasts.refresh([club.id]) }
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
                 .tipVisibility(rainRadarTip, $showRainRadarTip)
@@ -360,7 +360,7 @@ private extension LocationPageView {
             Text(club.displayName)
                 .font(.largeTitle.bold())
                 .multilineTextAlignment(.center)
-            Text([lake?.name, club.town].compactMap { $0 }.joined(separator: " · "))
+            Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             if !club.launchPointVerified {
                 Label(tr("Launch point not yet confirmed"), systemImage: "mappin.slash")
@@ -396,7 +396,7 @@ private extension LocationPageView {
                 }
                 if forecast.isSlowRefresh {
                     // Opening the club counts it as used; the next server run renews it every half hour.
-                    Label(tr("Nobody opened this club lately, so it updates less often. From the next server run, within about 30 minutes, it updates every half hour."), systemImage: "hourglass")
+                    Label(tr("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."), systemImage: "hourglass")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -529,7 +529,9 @@ private struct NowCard: View {
                     Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
                 } else {
                     ForEach(hour.reasons, id: \.self) { reason in
-                        Label(reason.explanation, systemImage: reason.symbol)
+                        // Without a station the water is estimated, and the advice says so.
+                        Label(water == nil && Condition.waterTemperature.reasonNames.contains(reason.condition)
+                              ? tr("Estimated: %@", reason.explanation) : reason.explanation, systemImage: reason.symbol)
                             .foregroundStyle(reason.light == .red ? Color.red : Color.orange)
                     }
                 }
@@ -537,7 +539,7 @@ private struct NowCard: View {
                     Label(note.noteText, systemImage: "info.circle")
                         .foregroundStyle(.secondary)
                 }
-                if let steadier = SteadierBoat.suggestion(for: hour, water: water?.celsius) {
+                if let steadier = SteadierBoat.suggestion(for: hour, water: water?.celsius ?? forecast.estimatedWaterC) {
                     Label(steadier.light == .green
                           ? tr("A steadier boat helps: %@ would be green now.", steadier.boat.title)
                           : tr("A steadier boat helps: %@ would only need care now.", steadier.boat.title),
@@ -659,7 +661,7 @@ private struct NowCard: View {
                 HStack(spacing: 8) {
                     switch sun {
                     case let .up(sunrise, sunset):
-                        SunPath(sunrise: sunrise, sunset: sunset, lineWidth: 1.5).frame(width: 44, height: 20)
+                        SunPath(sunrise: sunrise, sunset: sunset, at: at ?? .now, lineWidth: 1.5).frame(width: 44, height: 20)
                         Text(tr("Sunset %@ · %@ of daylight left", Format.time(sunset), Format.duration(from: at ?? .now, to: sunset)))
                     case let .down(sunrise, _):
                         Image(systemName: "moon.stars.fill").foregroundStyle(.secondary).frame(width: 44)
@@ -1242,6 +1244,58 @@ struct SunLabelStyle: LabelStyle {
         HStack(spacing: 6) {
             configuration.icon.foregroundStyle(.orange)
             configuration.title
+        }
+    }
+}
+
+/// While the first forecast loads: the page's cards in their places, values
+/// as dashes and the cards dimmed, so the page is there at once and fills in.
+private struct LoadingCards: View {
+    let cards: [PageCard]
+    @Environment(\.surface) private var surface
+
+    var body: some View {
+        VStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 12) {
+                    Circle().fill(.quaternary).frame(width: 52, height: 52)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(tr("Loading the forecast…")).font(.title3.weight(.semibold))
+                        ProgressView().controlSize(.small)
+                    }
+                    Spacer()
+                }
+                Divider()
+                HStack(alignment: .top) {
+                    value(tr("Air"), Condition.temperature.symbol, "–°")
+                    Spacer()
+                    value(tr("Water"), Condition.waterTemperature.symbol, "–°")
+                    Spacer()
+                    value(tr("Wind"), Condition.wind.symbol, "–")
+                }
+            }
+            .padding()
+            .cardBackground(surface)
+            ForEach(cards) { card in
+                VStack(alignment: .leading, spacing: 10) {
+                    Label(card.title.uppercased(), systemImage: card.symbol)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    RoundedRectangle(cornerRadius: 10).fill(.quaternary).frame(height: 60)
+                }
+                .padding()
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .cardBackground(surface)
+            }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(tr("Loading the forecast…"))
+    }
+
+    private func value(_ title: String, _ symbol: String, _ dash: String) -> some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
+            Text(dash).font(.system(size: 40, weight: .light)).foregroundStyle(.secondary)
         }
     }
 }

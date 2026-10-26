@@ -571,7 +571,9 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
     if not weather:
         raise HTTPException(status_code=503, detail="forecast too old, try again shortly")
     rings = outlines.load(club.lake_id)
-    water_c = water.celsius if water else None
+    # The light follows the water as measured, else as estimated (satellite or
+    # air), so two clubs with water below 15 °C get the same advice.
+    water_c = water.celsius if water else estimate.celsius if estimate else water_model_c
     hours = rowing_forecast(club, weather, rings, water_c, warnings, ice_by_day=ice_by_day)
     outlook_hours = rowing_forecast(club, outlook, rings, water_c, warnings, ice_by_day=ice_by_day) if outlook else None
     chain = weather_models.chain_for(club.launch_point.lat, club.launch_point.lon)

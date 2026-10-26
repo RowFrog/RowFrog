@@ -202,7 +202,7 @@ enum RowFileInbox {
             return .failure(.tooShort)
         }
         store.save(route)
-        return .success((route, lake.name))
+        return .success((route, lake.title))
     }
 }
 

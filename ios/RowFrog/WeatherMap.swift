@@ -448,6 +448,8 @@ struct WeatherMapScreen: View {
     @State private var index = 0
     @State private var playing = false
     @State private var live: RadarFrames?
+    /// The same repeat switch as the rain radar's: on, playing goes round 3 times.
+    @AppStorage("RWRadarLoop") private var loops = true
     @Environment(\.dismiss) private var dismiss
     private let store = ModelMapStore.shared
     private let start: Date?
@@ -495,10 +497,22 @@ struct WeatherMapScreen: View {
             .task(id: playing) {
                 guard playing else { return }
                 if index >= frames.count - 1 { index = 0 }
+                // With repeat on it goes round 3 times, as the rain radar does,
+                // then stops on the hour it started from.
+                let from = index
+                var rounds = 0
                 while playing, !Task.isCancelled {
-                    try? await Task.sleep(for: .milliseconds(700))
+                    try? await Task.sleep(for: .milliseconds(index == frames.count - 1 ? 1400 : 700))
                     guard playing, !Task.isCancelled else { return }
-                    if index < frames.count - 1 { index += 1 } else { playing = false }
+                    if index < frames.count - 1 {
+                        index += 1
+                    } else if loops, rounds < 2 {
+                        rounds += 1
+                        index = 0
+                    } else {
+                        playing = false
+                        if loops { index = from }
+                    }
                 }
             }
         }
@@ -606,6 +620,17 @@ struct WeatherMapScreen: View {
                     .accessibilityLabel(playing ? tr("Pause") : tr("Play"))
                     Slider(value: Binding(get: { Double(index) }, set: { index = Int($0.rounded()); playing = false }),
                            in: 0...Double(frames.count - 1), step: 1)
+                    Button {
+                        loops.toggle()
+                    } label: {
+                        Image(systemName: "repeat")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(loops ? Color.accentColor : .secondary)
+                            .padding(6)
+                            .background(loops ? Color.accentColor.opacity(0.18) : .clear, in: RoundedRectangle(cornerRadius: 8))
+                    }
+                    .accessibilityLabel(tr("Play 3 times"))
+                    .accessibilityAddTraits(loops ? .isSelected : [])
                 }
             }
             Text(layer.credit).font(.caption2).foregroundStyle(.secondary)

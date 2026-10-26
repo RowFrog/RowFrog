@@ -49,6 +49,13 @@ struct Lake: Codable, Identifiable, Hashable {
     /// Whether the backend has the lake's outline, which the lake view needs; older backends send none.
     var hasOutline: Bool? = nil
     var country: String? = nil
+
+    /// The name to show. Clubs whose water the catalogs don't name sit under
+    /// "Water near <town>", which reads in the app's language.
+    var title: String {
+        let prefix = "Water near "
+        return name.hasPrefix(prefix) ? tr("Water near %@", String(name.dropFirst(prefix.count))) : name
+    }
 }
 
 /// A country the club search covers (GET countries/index).
