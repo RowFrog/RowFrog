@@ -126,9 +126,13 @@ async function satelliteUrl(clubId) {
   if (savingData()) return null;
   const club = store.clubs.find((c) => c.id === clubId) ?? store.clubs[0];
   if (!club?.lakeId) return null;
-  const meta = await getJSON(`lakes/${encodeURIComponent(club.lakeId)}/satellite`).catch(() => null);
-  const shot = meta?.clearest ?? meta?.mostlyClear ?? meta?.latest;
-  return shot?.image ? `${API}/lakes/${encodeURIComponent(club.lakeId)}/${encodeURIComponent(shot.image)}` : null;
+  // A river club's picture is the one around the club (satelliteCard).
+  for (const place of [club.lakeId, `club-${club.id}`]) {
+    const meta = await getJSON(`lakes/${encodeURIComponent(place)}/satellite`).catch(() => null);
+    const shot = meta?.clearest ?? meta?.mostlyClear ?? meta?.latest;
+    if (shot?.image) return `${API}/lakes/${encodeURIComponent(place)}/${encodeURIComponent(shot.image)}`;
+  }
+  return null;
 }
 
 async function pictureUrl(choice, clubId) {
