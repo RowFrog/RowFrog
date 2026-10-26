@@ -75,34 +75,124 @@ struct RadarClient {
     }
 }
 
-/// The last radar reading per launch point, so a page swiped back to, or the
-/// hour view opened over it, shows it without asking DWD again (10 requests
-/// a time).
+/// DWD's radar at each launch point, read once for everything on a club page
+/// that shows it: the rain tile, the top tile's rain value, the hour view and
+/// the radar card (when switched on). A page swiped back to, or a view opened
+/// over it, shows the last reading without asking DWD again (10 requests a time).
+@Observable
 @MainActor
-enum RadarCache {
+final class RadarStore {
+    static let shared = RadarStore()
     /// DWD's 5 minutes; 15 in Low Power Mode and when saving data.
     static var refresh: TimeInterval { PowerState.shared.lowPower || DataSaver.shared.saving ? 900 : 300 }
-    private static var entries: [Coordinate: (radar: RainRadar, loaded: Date)] = [:]
 
-    static func entry(at point: Coordinate) -> (radar: RainRadar, loaded: Date)? { entries[point] }
+    private(set) var readings: [Coordinate: RainRadar] = [:]
+    /// Launch points whose radar could not be read and that have no older reading.
+    private(set) var failed: Set<Coordinate> = []
+    @ObservationIgnored private var loaded: [Coordinate: Date] = [:]
+    @ObservationIgnored private var loading: Set<Coordinate> = []
 
-    static func store(_ radar: RainRadar, at point: Coordinate) {
-        entries[point] = (radar, .now)
+    func radar(at point: Coordinate) -> RainRadar? { readings[point] }
+
+    /// Keeps the reading at `point` fresh for as long as the calling task runs.
+    func follow(_ point: Coordinate) async {
+        // Screenshot hook: `-RWSampleRadar YES` puts made-up rain on the radar from
+        // 30 minutes on, to show the rain tile while DWD's radar is dry.
+        if UserDefaults.standard.bool(forKey: "RWSampleRadar") {
+            let now = RadarWindow.base(nil)
+            let values = [0, 0, 0.6, 1.8, 3.2, 1.1, 0, 0, 0]
+            readings[point] = RainRadar(reference: now, steps: values.enumerated().map {
+                RadarStep(time: now.addingTimeInterval(Double($0.offset) * 900), mmPerHour: $0.element)
+            })
+            return
+        }
+        while !Task.isCancelled {
+            // Back within 5 minutes: no new requests until the 5 minutes are up.
+            if let at = loaded[point], Date.now.timeIntervalSince(at) < Self.refresh {
+                try? await Task.sleep(for: .seconds(Self.refresh - Date.now.timeIntervalSince(at)))
+                continue
+            }
+            // Another view of the same page is reading it already.
+            if loading.contains(point) {
+                try? await Task.sleep(for: .seconds(2))
+                continue
+            }
+            loading.insert(point)
+            do {
+                let radar = try await RadarClient().load(lat: point.lat, lon: point.lon)
+                readings[point] = radar
+                loaded[point] = .now
+                failed.remove(point)
+                loading.remove(point)
+            } catch {
+                loading.remove(point)
+                if Task.isCancelled { return }
+                if readings[point] == nil { failed.insert(point) }
+                try? await Task.sleep(for: .seconds(Self.refresh))
+            }
+        }
+    }
+}
+
+/// Follows DWD's radar at a launch point while its page is in front and the
+/// app is open. A swiping TabView keeps the pages beside it alive too, and
+/// they wait, showing what was loaded last.
+private struct FollowsRadar: ViewModifier {
+    let point: Coordinate
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.isCurrentPage) private var isCurrentPage
+
+    func body(content: Content) -> some View {
+        content.task(id: [point.lat, point.lon, scenePhase == .active && isCurrentPage ? 1 : 0]) {
+            guard scenePhase == .active, isCurrentPage else { return }
+            await RadarStore.shared.follow(point)
+        }
+    }
+}
+
+extension View {
+    func followsRadar(_ point: Coordinate) -> some View { modifier(FollowsRadar(point: point)) }
+}
+
+/// The radar map's frames: from an hour ago to DWD's nowcast two hours ahead.
+@MainActor
+enum RadarWindow {
+    /// The latest radar picture's time when not known yet: now, to 5 minutes.
+    static func base(_ reference: Date?) -> Date {
+        reference ?? Date(timeIntervalSince1970: (Date.now.timeIntervalSince1970 / 300).rounded(.down) * 300)
+    }
+
+    /// Every `step` minutes; 30 when saving data.
+    static func frames(reference: Date? = nil, step: Int) -> [Date] {
+        let base = base(reference)
+        return stride(from: -60, through: 120, by: step).map { base.addingTimeInterval(Double($0) * 60) }
+    }
+
+    static var step: Int { DataSaver.shared.saving ? 30 : 15 }
+
+    /// Whether the radar has a picture for `date`.
+    static func covers(_ date: Date) -> Bool {
+        (-3600.0...7200).contains(date.timeIntervalSinceNow)
+    }
+
+    /// The frame nearest `date`, while the radar covers it.
+    static func nearest(_ date: Date, in frames: [Date]) -> Date? {
+        guard covers(date) else { return nil }
+        return frames.min { abs($0.timeIntervalSince(date)) < abs($1.timeIntervalSince(date)) }
     }
 }
 
 /// The rain radar card: a one-line summary and a bar per 15 minutes. A tap
-/// opens the radar map.
+/// opens the radar map. Off by default: the rain tile in Current conditions
+/// shows the radar; "Arrange this page" switches the card on.
 struct RainRadarCard: View {
     let point: Coordinate
     var clubID: String?
-    @State private var radar: RainRadar?
-    @State private var failed = false
     @State private var showingMap = UserDefaults.standard.bool(forKey: "RWOpenRadarMap")
-    @Environment(\.scenePhase) private var scenePhase
-    @Environment(\.isCurrentPage) private var isCurrentPage
+    private var store: RadarStore { .shared }
 
     var body: some View {
+        let radar = store.radar(at: point)
         Button { showingMap = true } label: {
             Card(title: tr("Rain radar"), symbol: "umbrella") {
                 if let radar {
@@ -118,7 +208,7 @@ struct RainRadarCard: View {
                     Text(tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                } else if failed {
+                } else if store.failed.contains(point) {
                     Text(tr("Radar not available right now")).foregroundStyle(.secondary)
                 } else {
                     ProgressView()
@@ -128,34 +218,9 @@ struct RainRadarCard: View {
         .buttonStyle(.plain)
         .accessibilityHint(tr("Opens the rain radar map"))
         .fullScreenCover(isPresented: $showingMap) {
-            RadarMapScreen(point: point, clubID: clubID, reference: radar?.reference, step: DataSaver.shared.saving ? 30 : 15)
+            RadarMapScreen(point: point, clubID: clubID, reference: radar?.reference, step: RadarWindow.step)
         }
         .onChange(of: showingMap) { if showingMap { RadarMapTip().invalidate(reason: .actionPerformed) } }
-        .task(id: [point.lat, point.lon, scenePhase == .active && isCurrentPage ? 1 : 0]) {
-            // DWD updates the radar every 5 minutes; follow it while the page is in
-            // front and the app is open. A swiping TabView keeps the pages beside it
-            // alive too, and they wait, showing what was loaded last.
-            if let cached = RadarCache.entry(at: point) { radar = cached.radar }
-            guard scenePhase == .active, isCurrentPage else { return }
-            while !Task.isCancelled {
-                // Back on a page within 5 minutes: no new requests until the 5 minutes are up.
-                if let age = RadarCache.entry(at: point).map({ Date.now.timeIntervalSince($0.loaded) }), age < RadarCache.refresh {
-                    try? await Task.sleep(for: .seconds(RadarCache.refresh - age))
-                    continue
-                }
-                do {
-                    let loaded = try await RadarClient().load(lat: point.lat, lon: point.lon)
-                    radar = loaded
-                    failed = false
-                    RadarCache.store(loaded, at: point)
-                } catch is CancellationError {
-                    return
-                } catch {
-                    failed = radar == nil
-                }
-                try? await Task.sleep(for: .seconds(RadarCache.refresh))
-            }
-        }
     }
 
     private func bars(_ radar: RainRadar) -> some View {
@@ -219,8 +284,7 @@ struct RadarMapScreen: View {
         self.point = point
         self.clubID = clubID
         self.reference = reference
-        let base = reference ?? Date(timeIntervalSince1970: (Date.now.timeIntervalSince1970 / 300).rounded(.down) * 300)
-        let frames = stride(from: -60, through: 120, by: step).map { base.addingTimeInterval(Double($0) * 60) }
+        let frames = RadarWindow.frames(reference: reference, step: step)
         self.frames = frames
         nowIndex = 60 / step
         _index = State(initialValue: 60 / step)
@@ -687,5 +751,38 @@ final class RadarImageRenderer: MKOverlayRenderer {
         context.interpolationQuality = .none
         context.draw(image, in: CGRect(origin: .zero, size: rect.size))
         context.restoreGState()
+    }
+}
+
+/// The rain tile's small graphic while the radar is read: thin bars for the
+/// radar's quarter hours, a line, then wider, paler bars for the forecast's
+/// next hours. One scale for both, in mm per hour.
+struct RadarSparkBars: View {
+    let radar: [Double]
+    let forecast: [Double]
+
+    var body: some View {
+        let top = max((radar + forecast).max() ?? 1, 0.1)
+        HStack(alignment: .bottom, spacing: 3) {
+            HStack(alignment: .bottom, spacing: 1) {
+                ForEach(Array(radar.enumerated()), id: \.offset) { _, v in
+                    bar(v, top: top, width: 2, wet: v >= RainRadar.rainFrom)
+                }
+            }
+            Rectangle().fill(.secondary.opacity(0.5)).frame(width: 1, height: 30)
+            HStack(alignment: .bottom, spacing: 2) {
+                ForEach(Array(forecast.enumerated()), id: \.offset) { _, v in
+                    bar(v, top: top, width: 4, wet: v >= 0.1).opacity(0.55)
+                }
+            }
+        }
+        .frame(height: 36, alignment: .bottom)
+        .accessibilityHidden(true)
+    }
+
+    private func bar(_ v: Double, top: Double, width: CGFloat, wet: Bool) -> some View {
+        RoundedRectangle(cornerRadius: 1)
+            .fill(wet ? Color.blue : Color.secondary.opacity(0.3))
+            .frame(width: width, height: max(2, 28 * min(v, top) / top))
     }
 }

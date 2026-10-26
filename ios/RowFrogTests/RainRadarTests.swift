@@ -26,4 +26,13 @@ final class RainRadarTests: XCTestCase {
         XCTAssertNotNil(r.dryAgain)
         XCTAssertTrue(r.summary.hasPrefix("Light rain now, dry from "))
     }
+
+    func testWhatFallsNowAndWhereTheNowcastEnds() {
+        XCTAssertNil(radar([0, 0, 1.2]).rainNow)
+        XCTAssertEqual(radar([0.5, 0.8, 0]).rainNow, "Light rain")
+        XCTAssertEqual(radar([12, 3, 0]).rainNow, "Heavy rain")
+        let r = radar([0, 0, 0, 0, 0, 0, 0, 0, 0])
+        XCTAssertEqual(r.end, r.steps.last?.time)
+        XCTAssertEqual(r.end.timeIntervalSince(r.reference), 2 * 3600)
+    }
 }

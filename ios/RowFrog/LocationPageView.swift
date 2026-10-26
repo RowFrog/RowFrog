@@ -3,8 +3,9 @@ import TipKit
 
 /// One full-screen location page: the rowing light now (with wind and
 /// daylight), DWD warnings while one is issued, then the cards in the order
-/// the user arranged (current conditions, rain radar, lake view, the next
-/// 48 hours, launch point, satellite picture), the forecast source and credits.
+/// the user arranged (current conditions, lake view, the next 48 hours, launch
+/// point, satellite picture, and the rain radar card when switched on), the
+/// forecast source and credits.
 struct LocationPageView: View {
     let club: Club
     let lake: Lake?
@@ -124,6 +125,7 @@ struct LocationPageView: View {
                 .environment(\.pageHeight, geometry.size.height)
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
                 .refreshable { await forecasts.refresh([club.id]) }
+                .followsRadar(club.launchPoint)
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
                 .tipVisibility(rainRadarTip, $showRainRadarTip)
@@ -159,20 +161,17 @@ struct LocationPageView: View {
     private func pageCard(_ card: PageCard, forecast: ClubForecast, now: ForecastHour) -> some View {
         switch card {
         case .radar:
+            RainRadarCard(point: club.launchPoint, clubID: club.id)
+                .id("radar")
+        case .conditions:
             VStack(spacing: 16) {
-                // The map tip follows once the radar tip is closed.
-                if tourSeen && showRainRadarTip {
+                // One tip at a time: the radar's two follow the first.
+                if tourSeen && showConditionsTip {
+                    TipView(conditionsTip)
+                } else if tourSeen && showRainRadarTip {
                     TipView(rainRadarTip)
                 } else if tourSeen && showRadarMapTip {
                     TipView(radarMapTip)
-                }
-                RainRadarCard(point: club.launchPoint, clubID: club.id)
-            }
-            .id("radar")
-        case .conditions:
-            VStack(spacing: 16) {
-                if tourSeen && showConditionsTip {
-                    TipView(conditionsTip)
                 } else if tourSeen && showWaterEstimateTip && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil {
                     // Only where no station measures the water.
                     TipView(waterEstimateTip)
@@ -601,7 +600,7 @@ private struct NowCard: View {
                 }
                 Spacer()
                 opens(.precipitation) {
-                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: precipitationText(hour) ?? tr("None"), size: 17)
+                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rainValue, size: 17)
                 }
                 Spacer()
                 opens(.visibility) {
@@ -622,10 +621,10 @@ private struct NowCard: View {
             }
         }
         .detailCover(isPresented: $showingDaylight) {
-            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour), club: club)
+            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour, radar: radar), club: club)
         }
         .detailCover(item: $openCondition) { condition in
-            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues, club: club)
+            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour, radar: radar), order: tileValues, club: club)
         }
         .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }
     }
@@ -647,6 +646,19 @@ private struct NowCard: View {
     }
 
     private var iceValue: String? { forecast.iceValue }
+
+    /// DWD's radar at the launch point, read while the page is open.
+    private var radar: RainRadar? { club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) } }
+
+    /// Rain from the radar for the next two hours, as the rain tile shows it; later from the forecast.
+    private var rainValue: String {
+        if let ahead = radar?.ahead(of: at ?? .now) {
+            if let now = ahead.rainNow { return now }
+            if let first = ahead.firstRain { return tr("Rain from %@", Format.time(first.time)) }
+            return tr("None")
+        }
+        return precipitationText(hour) ?? tr("None")
+    }
 
     /// While DWD has no warning, one line says so; the warnings card itself
     /// only shows while a warning is issued or DWD could not be checked.
@@ -1046,8 +1058,8 @@ private struct HourRow: View {
 }
 
 /// One hour from the table with everything known about it: the rowing light
-/// and main values, all the conditions tiles, the rain radar while the hour
-/// is within its 2 hours, and the lake map at that hour.
+/// and main values, all the conditions tiles (rain from the radar while the
+/// hour is within its 2 hours), and the lake map at that hour.
 private struct HourDetailSheet: View {
     let forecast: ClubForecast
     let club: Club
@@ -1061,11 +1073,8 @@ private struct HourDetailSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+                    // Within the radar's 2 hours the rain values come from the radar, later from the forecast.
                     NowCard(hour: hour, forecast: forecast, at: hour.time, club: club)
-                    // The radar reaches 2 hours ahead; later hours have the forecast rain in the tiles.
-                    if hour.time.timeIntervalSinceNow < 2 * 3600 {
-                        RainRadarCard(point: club.launchPoint, clubID: club.id)
-                    }
                     ConditionsCard(forecast: forecast, hour: hour, club: club)
                     if lake?.hasOutline != false, lakeViews.views[forecast.lakeId] != nil {
                         Button { showingLakeMap = true } label: {

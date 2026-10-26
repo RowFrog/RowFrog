@@ -39,10 +39,18 @@ struct DetailMapCard: View {
         }
     }
 
+    /// The time the panel shows: for rain at the first hour, the latest radar picture.
+    private var panelDate: Date {
+        layer == .rain && data.isNow && time.shownMapHour == 0 ? .now : mapDate
+    }
+
+    /// Whether the rain map shows DWD's radar (an hour back to two ahead) instead of the forecast.
+    private var showsRadar: Bool { layer == .rain && RadarWindow.covers(panelDate) }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             header
-            WeatherMapPanel(point: club.launchPoint, clubID: club.id, layer: layer, time: mapDate)
+            WeatherMapPanel(point: club.launchPoint, clubID: club.id, layer: layer, time: panelDate)
                 .allowsHitTesting(false)
                 .saturation(time.mapOutOfRange ? 0.2 : 1)
                 .opacity(time.mapOutOfRange ? 0.6 : 1)
@@ -51,7 +59,7 @@ struct DetailMapCard: View {
                 .frame(height: height)
                 .clipped()
                 .contentShape(Rectangle())
-                .onTapGesture { full = true }
+                .onTapGesture { open() }
                 .accessibilityAddTraits(.isButton)
                 .accessibilityHint(tr("Opens the map full screen"))
             if frames.count > 1 {
@@ -71,8 +79,7 @@ struct DetailMapCard: View {
                 .environment(\.locale, AppSettings.shared.locale)
         }
         .fullScreenCover(isPresented: $radar) {
-            RadarMapScreen(point: club.launchPoint, clubID: club.id, reference: nil,
-                           step: DataSaver.shared.saving ? 30 : 15)
+            RadarMapScreen(point: club.launchPoint, clubID: club.id, reference: nil, step: RadarWindow.step)
                 .environment(\.locale, AppSettings.shared.locale)
         }
     }
@@ -83,6 +90,8 @@ struct DetailMapCard: View {
             Group {
                 if layer.links == .none {
                     Text(tr("Live"))
+                } else if showsRadar, let frame = RadarWindow.nearest(panelDate, in: RadarWindow.frames(step: RadarWindow.step)) {
+                    Text(tr("Radar %@", Format.time(frame)))
                 } else if let i = frameIndex {
                     Text(layer.links == .day ? Format.day(frames[i]) : Format.dayTime(frames[i]))
                 }
@@ -91,18 +100,11 @@ struct DetailMapCard: View {
             .lineLimit(1)
             .minimumScaleFactor(0.8)
             Spacer(minLength: 0)
-            // The radar covers the last hour and the next two; the rain map is the forecast.
-            if layer == .rain, (-3600.0...7200).contains(mapDate.timeIntervalSinceNow) {
-                Button { radar = true } label: {
-                    Image(systemName: "dot.radiowaves.left.and.right")
-                }
-                .accessibilityLabel(tr("Rain radar"))
-            }
             if layer.links != .none {
                 chain
             }
             Button {
-                full = true
+                open()
                 WeatherMapTip().invalidate(reason: .actionPerformed)
             } label: {
                 Image(systemName: "arrow.up.left.and.arrow.down.right")
@@ -112,6 +114,16 @@ struct DetailMapCard: View {
         .font(.caption)
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
+    }
+
+    /// Full screen: the radar map while the card shows the radar, else the weather map.
+    private func open() {
+        if showsRadar {
+            radar = true
+            RadarMapTip().invalidate(reason: .actionPerformed)
+        } else {
+            full = true
+        }
     }
 
     /// Linked: the map follows the chart's blue line. Unlinked: its own time.
