@@ -15,7 +15,7 @@ struct ConditionsCard: View {
     @State private var open: Condition?
 
     var body: some View {
-        let data = ConditionData(forecast: forecast, now: hour)
+        let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) })
         Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent", legend: .conditions) {
             HStack(spacing: 10) {
                 SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 36))
@@ -65,9 +65,12 @@ struct ConditionData {
     let now: ForecastHour
     /// Yesterday to 7 days ahead when the backend sends it, else the next 48 hours.
     let timeline: [ForecastHour]
+    /// DWD's radar at the launch point, read while the club page is open.
+    let radar: RainRadar?
 
-    init(forecast: ClubForecast, now: ForecastHour) {
+    init(forecast: ClubForecast, now: ForecastHour, radar: RainRadar? = nil) {
         self.forecast = forecast
+        self.radar = radar
         let outlook = forecast.outlook ?? []
         timeline = (outlook.isEmpty ? forecast.hours : outlook).sorted { $0.time < $1.time }
         // The rowing hours have no UV index; the outlook has it for the same hour.
@@ -93,7 +96,48 @@ struct ConditionData {
     var nowLabel: String { isNow ? tr("Now") : Format.dayTime(now.time) }
 
     var next24: [ForecastHour] { timeline.filter { (0..<24).contains(x($0.time)) } }
+    /// The radar from the shown moment on, while its nowcast still reaches at
+    /// least half an hour ahead; rain then comes from the radar, later from the forecast.
+    var radarAhead: RainRadar? { radar?.ahead(of: moment) }
+    /// The radar's words for rain from the shown moment on, while it reaches.
+    var rainOutlook: RainOutlook? { radarAhead.map { RainOutlook(radar: $0, hours: timeline) } }
+
+    /// The first forecast hour with rain after the radar's two hours (or from
+    /// the shown hour without radar), within the next 24 hours.
+    var forecastRain: ForecastHour? {
+        let after = radarAhead?.end
+        return next24.first { hour in (hour.precipitationMm ?? 0) >= 0.1 && hour.time >= (after ?? .distantPast) }
+    }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
+
+    /// The line under the waves value: where the wind comes from over the lake.
+    var wavesDetail: String {
+        guard let fetch = now.fetchM else { return "" }
+        return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
+    }
+
+    /// The line under the visibility value: fog now, or when it comes.
+    var visibilityDetail: String {
+        if (now.visibilityM ?? .infinity) < 1000 { return tr("Fog") }
+        guard let fog = next24.first(where: { ($0.visibilityM ?? .infinity) < 1000 }) else { return tr("No fog") }
+        return tr("Fog from %@", Format.time(fog.time))
+    }
+
+    /// What falls at the shown moment and what comes next, as the rain tile
+    /// and the top tile both show it: the radar for two hours, then the forecast.
+    var rainLines: (value: String, detail: String, fromRadar: Bool) {
+        func later() -> String {
+            guard let wet = forecastRain else { return tr("Dry next 24 h") }
+            return tr("%@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
+        }
+        if let outlook = rainOutlook {
+            // While it rains, what comes next.
+            if let next = outlook.next { return (outlook.now ?? tr("Dry"), next.text, next.fromRadar) }
+            return (outlook.now ?? tr("Dry"), later(), false)
+        }
+        if (now.precipitationMm ?? 0) >= 0.1 { return (Format.rain(now.precipitationMm), Sky(hour: now).precipitationKind ?? "", false) }
+        return (tr("Dry"), later(), false)
+    }
     var water: WaterTemperature? { forecast.waterTemperature }
     /// Without a station: the satellite reading carried forward, else the ice
     /// model's water temperature, worked out from the air temperatures of the
@@ -175,7 +219,7 @@ private struct ConditionTile: View {
                     HStack(alignment: .center) {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
-                            Text(detail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                            detailLine.font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 0)
                         // Every graphic gets the same height, so all tiles are as tall.
@@ -216,7 +260,8 @@ private struct ConditionTile: View {
         case .waves: Format.waves(hour.waveHeightM)
         case .waterTemperature:
             if data.water == nil, let estimate = data.estimatedWater { "≈ " + Format.degrees(estimate, digits: 0) } else { Format.degrees(data.water?.celsius, digits: 1) }
-        case .precipitation: (hour.precipitationMm ?? 0) >= 0.1 ? Format.rain(hour.precipitationMm) : tr("Dry")
+        case .precipitation:
+            data.rainLines.value
         case .visibility: Format.distance(hour.visibilityM)
         case .cloudCover: "\(Format.number(hour.cloudCoverPct)) %"
         case .pressure: Format.pressureNumber(hour.pressureHpa)
@@ -225,6 +270,12 @@ private struct ConditionTile: View {
         case .ice: iceGuess.value
         case .daylight: ""
         }
+    }
+
+    /// The short line under the value; rain read from the radar starts with the radar's symbol.
+    private var detailLine: Text {
+        guard condition == .precipitation, data.rainLines.fromRadar else { return Text(detail) }
+        return Text("\(Image(systemName: "dot.radiowaves.left.and.right")) \(detail)")
     }
 
     private var detail: String {
@@ -241,21 +292,16 @@ private struct ConditionTile: View {
             let gust = tr("Gusts %@", Format.windNumber(hour.windGustMs))
             return hour.windFromDeg.map { gust + " · " + tr("from %@", Format.compass($0)) } ?? gust
         case .waves:
-            guard let fetch = hour.fetchM else { return "" }
-            return fetch < 50 ? tr("Wind blows off the shore") : tr("%@ open water upwind", Format.distance(fetch))
+            return data.wavesDetail
         case .waterTemperature:
             if data.water == nil, data.estimatedWater != nil {
                 return data.satelliteWater != nil ? tr("Satellite estimate") : tr("Estimated, not measured")
             }
             return data.water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? tr("No lake station")
         case .precipitation:
-            if (hour.precipitationMm ?? 0) >= 0.1 { return Sky(hour: hour).precipitationKind ?? "" }
-            guard let wet = data.next24.first(where: { ($0.precipitationMm ?? 0) >= 0.1 }) else { return tr("Dry next 24 h") }
-            return tr("%@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
+            return data.rainLines.detail
         case .visibility:
-            if (hour.visibilityM ?? .infinity) < 1000 { return tr("Fog") }
-            guard let fog = data.next24.first(where: { ($0.visibilityM ?? .infinity) < 1000 }) else { return tr("No fog") }
-            return tr("Fog from %@", Format.time(fog.time))
+            return data.visibilityDetail
         case .cloudCover:
             return hour.cloudCoverLowPct.map { tr("Low cloud %@ %%", Format.number($0)) } ?? ""
         case .pressure:
@@ -354,7 +400,12 @@ struct ConditionGraphic: View {
                                                    (0.4, ColdWaterKit.color.opacity(0.45)), (0.6, .green)])
             }
         case .precipitation:
-            SparkBars(values: data.future.prefix(8).map { $0.precipitationMm ?? 0 })
+            if let radar = data.radarAhead {
+                RadarSparkBars(radar: radar.steps.map(\.mmPerHour),
+                               forecast: data.future.filter { $0.time >= radar.end }.prefix(4).map { $0.precipitationMm ?? 0 })
+            } else {
+                SparkBars(values: data.future.prefix(8).map { $0.precipitationMm ?? 0 })
+            }
         case .visibility:
             // 100 m at the left to 40 km at the right, stretched at the bottom.
             ScaleBar(fraction: log10(max(hour.visibilityM ?? 40_000, 100) / 100) / log10(400),
@@ -432,6 +483,10 @@ struct ChartLine: Identifiable {
     let points: [ChartPoint]
     /// Dashed, for a forecast after measurements.
     var dashed = false
+    /// Bars only: their width, and the hours where they stand in for the
+    /// other bars (the radar's quarter hours over the forecast's hours).
+    var barWidth: CGFloat = 5
+    var covers: ClosedRange<Double>? = nil
     var id: String { name }
 }
 
@@ -1132,7 +1187,7 @@ private struct ConditionChart: View {
                     }
             }
             ForEach(shownLines) { line in
-                ForEach(line.points) { p in
+                ForEach(drawn(line)) { p in
                     mark(line, p)
                 }
             }
@@ -1184,6 +1239,13 @@ private struct ConditionChart: View {
         .chartPlotStyle { $0.padding(.horizontal, 16) }
     }
 
+    /// A line's points, without bars where another shown line's bars stand in for them.
+    private func drawn(_ line: ChartLine) -> [ChartPoint] {
+        let covered = shownLines.filter { $0.id != line.id }.compactMap(\.covers)
+        guard line.kind == .bars, !covered.isEmpty else { return line.points }
+        return line.points.filter { p in !covered.contains { range in range.contains(p.x) } }
+    }
+
     @ChartContentBuilder
     private func mark(_ line: ChartLine, _ p: ChartPoint) -> some ChartContent {
         switch line.kind {
@@ -1193,7 +1255,7 @@ private struct ConditionChart: View {
                 .lineStyle(StrokeStyle(lineWidth: 2, dash: line.dashed ? [5, 4] : []))
                 .interpolationMethod(.monotone)
         case .bars:
-            BarMark(x: .value("Hour", p.x), y: .value("Value", p.y), width: .fixed(5))
+            BarMark(x: .value("Hour", p.x), y: .value("Value", p.y), width: .fixed(line.barWidth))
                 .foregroundStyle(line.color.opacity(0.7))
         }
     }
@@ -1707,21 +1769,43 @@ extension ConditionDetail {
         facts.append((d.warningsLabel, d.warningNames(rainWords)))
         facts.append((tr("Rowing light now"), light))
         let wet = (h.precipitationMm ?? 0) >= 0.1
+        var value = wet ? Format.rain(h.precipitationMm) : tr("Dry")
+        var note = wet ? (Sky(hour: h).precipitationKind ?? "") : (d.forecastRain.map { tr("Expected from %@", Format.dayTime($0.time)) } ?? tr("Dry next 24 h"))
+        var lines = [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) })]
+        var source = tr("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.")
+        // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
+        if let ahead = d.radarAhead, let outlook = d.rainOutlook {
+            value = ahead.rainingNow ? Format.rain(ahead.steps.first?.mmPerHour) : tr("Dry")
+            if let now = outlook.now, let next = outlook.next {
+                note = next.fromRadar ? tr("Radar: %@ · %@", now, next.text) : tr("Radar: %@", now) + " · " + next.text
+            } else {
+                note = tr("Radar: %@", outlook.summary)
+            }
+            facts.insert((tr("Radar, next 2 h"), outlook.summary), at: 0)
+        }
+        if let radar = d.radar, let first = radar.steps.first {
+            let points = radar.steps.map { ChartPoint(x: d.x($0.time), y: r.convert($0.mmPerHour)) }
+            lines[0] = ChartLine(name: tr("Forecast"), color: .blue, kind: .bars, points: lines[0].points)
+            lines.append(ChartLine(name: tr("Radar"), color: .indigo, kind: .bars, points: points, barWidth: 2.5,
+                                   covers: (d.x(first.time) - 0.5)...d.x(radar.end)))
+            source += " " + tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0")
+        }
+        let highest = max(d.timeline.compactMap(\.precipitationMm).max() ?? 0, d.radar?.peak ?? 0)
         return ConditionDetail(
-            value: wet ? Format.rain(h.precipitationMm) : tr("Dry"),
-            note: wet ? (Sky(hour: h).precipitationKind ?? "") : (d.next24.first { ($0.precipitationMm ?? 0) >= 0.1 }.map { tr("Expected from %@", Format.dayTime($0.time)) } ?? tr("Dry next 24 h")),
+            value: value,
+            note: note,
             unit: r.symbol,
-            lines: [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) })],
+            lines: lines,
             limits: [ChartLimit(value: r.convert(4), color: .orange, label: tr("Heavy rain"))],
             limitInfo: tr("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official warnings for heavy rain or hail always make the light red or amber as well.", Format.rain(4)),
-            yDomain: 0...max(r.convert(6), r.convert(d.timeline.compactMap(\.precipitationMm).max() ?? 0) * 1.2),
+            yDomain: 0...max(r.convert(6), r.convert(highest) * 1.2),
             facts: facts,
             rowing: advice(d, Condition.precipitation.reasonNames,
                            red: tr("Hail is forecast: stay ashore."),
                            amber: tr("Heavy rain now: you are soaked quickly and see less; keep the outing short."),
                            later: tr("Heavy rain or hail from %@: plan to be back before then."),
                            calm: tr("No heavy rain or hail in the next 24 hours.")),
-            source: tr("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.")
+            source: source
         )
     }
 

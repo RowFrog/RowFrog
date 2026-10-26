@@ -631,11 +631,15 @@ struct PageLayout: Codable, Hashable {
     var order: [PageCard]
     var hidden: Set<PageCard> = []
 
-    static let standard = PageLayout(order: [.conditions, .radar, .lakeView, .hourly, .launchPoint, .satellite])
+    /// The rain radar card is off: the rain tile in Current conditions shows the
+    /// radar. Switched on, it sits under Current conditions.
+    static let standard = PageLayout(order: [.conditions, .radar, .lakeView, .hourly, .launchPoint, .satellite], hidden: [.radar])
 
-    /// From a launch argument such as "hourly,radar"; cards left out follow in the standard order.
+    /// From a launch argument such as "hourly,radar"; cards left out follow in
+    /// the standard order, and the radar card only shows when named.
     init(list: String) {
-        self.init(order: list.split(separator: ",").compactMap { PageCard(rawValue: $0.trimmingCharacters(in: .whitespaces)) })
+        let order = list.split(separator: ",").compactMap { PageCard(rawValue: $0.trimmingCharacters(in: .whitespaces)) }
+        self.init(order: order, hidden: order.contains(.radar) ? [] : [.radar])
     }
 
     init(order: [PageCard], hidden: Set<PageCard> = []) {
@@ -649,17 +653,21 @@ struct PageLayout: Codable, Hashable {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         // Unknown names (from a newer version) are skipped instead of failing.
         let order = try c.decode([String].self, forKey: .order).compactMap(PageCard.init(rawValue:))
-        let hidden = try c.decodeIfPresent([String].self, forKey: .hidden)?.compactMap(PageCard.init(rawValue:)) ?? []
-        self.init(order: order, hidden: Set(hidden))
+        var hidden = Set(try c.decodeIfPresent([String].self, forKey: .hidden)?.compactMap(PageCard.init(rawValue:)) ?? [])
+        // Orders saved before the rain tile took over the radar switch its card
+        // off once; switched on again later, it stays on.
+        if try c.decodeIfPresent(Bool.self, forKey: .radarInTile) != true { hidden.insert(.radar) }
+        self.init(order: order, hidden: hidden)
     }
 
     func encode(to encoder: Encoder) throws {
         var c = encoder.container(keyedBy: CodingKeys.self)
         try c.encode(order.map(\.rawValue), forKey: .order)
         try c.encode(hidden.map(\.rawValue).sorted(), forKey: .hidden)
+        try c.encode(true, forKey: .radarInTile)
     }
 
-    private enum CodingKeys: String, CodingKey { case order, hidden }
+    private enum CodingKeys: String, CodingKey { case order, hidden, radarInTile }
 
     /// The same order with the current conditions just above the rain radar
     /// when the radar came first.

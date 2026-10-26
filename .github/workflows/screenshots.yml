@@ -292,7 +292,7 @@ jobs:
           GUIDE=1 shoot 31-tip-backgrounds light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage backgrounds
           GUIDE=1 shoot 32-tip-lake-view light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview
           GUIDE=1 shoot 33-tip-route light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES
-          GUIDE=1 shoot 34-tip-rain-radar light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo radar
+          GUIDE=1 shoot 34-tip-rain-radar light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo conditions
           GUIDE=1 shoot 35-tip-satellite light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo satellite
           GUIDE=1 shoot 36-tip-forecast-source light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo source
           GUIDE=1 shoot 37-tip-my-boats light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage limits
@@ -334,7 +334,7 @@ jobs:
           NEWS=1 shoot 115-whats-new-german-dark dark -RWLanguage de
           # The tips that follow the rain radar and hourly tips.
           later=(-RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880)
-          GUIDE=1 shoot 116-tip-radar-map light "${later[@]}" -RWScrollTo radar
+          GUIDE=1 shoot 116-tip-radar-map light "${later[@]}" -RWScrollTo conditions
           GUIDE=1 shoot 117-tip-hour-view light "${later[@]}" -RWScrollTo hourly
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
           shoot 90-route-loop light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop"
@@ -430,13 +430,21 @@ jobs:
           WAIT=30 shoot 183-detail-map-landscape light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWLandscape YES
           WAIT=30 shoot 184-detail-map-full light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWChartSelect 5 -RWOpenWeatherMap wind
           WAIT=30 shoot 190-detail-map-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWChartSelect 1 -RWLanguage de
+          # The radar in the rain tile (no radar card any more), with made-up rain from 30 minutes on.
+          shoot 204-top-tile-rain-radar light -RWOpenClub mrc-1880 -RWSampleRadar YES
+          shoot 207-top-tile-ice light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWSampleIce YES
+          shoot 208-top-tile-ice-german light -RWOpenClub mrc-1880 -RWSampleRadar YES -RWSampleIce YES -RWLanguage de
+          shoot 205-rain-tile-radar light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWSampleRadar YES
+          WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
+          WAIT=30 shoot 242-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
+          shoot 209-arrange-radar-off light -RWOpenClub mrc-1880 -RWArrange YES
           # Club page order (PR #33): the page in its new order, the warnings card while a
           # warning is issued, the legend from the top tile, the radar map, an hour from the
           # table, "Arrange this page", and two columns on a phone on its side.
           shoot_pages 99-club-page light -RWOpenClub mrc-1880
           WAIT=30 shoot 100-club-page-warning light -RWOpenClub tutzinger-rv
           shoot 101-rowing-light-legend light -RWOpenClub mrc-1880 -RWLegend lights
-          WAIT=30 shoot 102-radar-map light -RWOpenClub mrc-1880 -RWOpenRadarMap YES -RWRadarLoop NO
+          WAIT=30 shoot 102-radar-map light -RWOpenClub mrc-1880 -RWPageLayout "conditions,radar" -RWOpenRadarMap YES -RWRadarLoop NO
           shoot 103-hourly-header-stays light -RWOpenClub mrc-1880 -RWScrollTo hourly-1
           shoot 165-hourly-header-stays-dark dark -RWOpenClub mrc-1880 -RWScrollTo hourly-1 -RWLanguage de
           shoot 104-hour-view light -RWOpenClub mrc-1880 -RWOpenHour 6

@@ -784,12 +784,15 @@ extension RadarFrames {
 /// The weather map without controls, at the frame nearest a given time: for a
 /// card whose chart moves the map. Model maps follow the hour, UV the day;
 /// lightning and fog stay on their latest picture (`WeatherMapLayer.links`).
+/// The rain map shows DWD's radar instead while the radar covers the time
+/// (an hour back to two ahead), and the forecast after that.
 struct WeatherMapPanel: View {
     let point: Coordinate
     var clubID: String?
     let layer: WeatherMapLayer
     let time: Date
     @State private var live: RadarFrames?
+    @State private var radar: RadarFrames?
     private let store = ModelMapStore.shared
     /// The area it opens with, and the area on screen now.
     private let startArea: MapArea
@@ -811,10 +814,25 @@ struct WeatherMapPanel: View {
         return layer.frame(in: frames, for: time).map { frames[$0] }
     }
 
+    /// The radar picture shown instead of the rain forecast, once it has loaded.
+    private var radarFrame: Date? {
+        guard layer == .rain, let radar, let frame = RadarWindow.nearest(time, in: radar.times),
+              radar.images[frame] != nil else { return nil }
+        return frame
+    }
+
     var body: some View {
-        WeatherMapView(point: point, clubID: clubID, overlays: shown.map { date in
+        WeatherMapView(point: point, clubID: clubID, overlays: radarFrame.flatMap { radar?.overlay(at: $0) }.map { [$0] } ?? shown.map { date in
             layer.modelValue != nil ? store.overlays(layer, area: area, time: date) : live.map { [$0.overlay(at: date)] } ?? []
         } ?? [], start: startArea, bottomInset: 0) { area = $0 }
+        // The radar's pictures load once the time is within its reach.
+        .task(id: layer == .rain && RadarWindow.covers(time)) {
+            guard layer == .rain, RadarWindow.covers(time), radar == nil else { return }
+            let step = RadarWindow.step
+            let frames = RadarFrames(point: point, times: RadarWindow.frames(step: step), nowIndex: 60 / step)
+            radar = frames
+            await frames.load()
+        }
         .task(id: layer) {
             if layer.modelValue != nil {
                 live = nil

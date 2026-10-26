@@ -718,6 +718,10 @@ struct RainRadar: Codable, Hashable {
         return steps.first { $0.mmPerHour < Self.rainFrom }
     }
     var peak: Double { steps.map(\.mmPerHour).max() ?? 0 }
+    /// What falls right now, e.g. "Light rain"; nil while dry.
+    var rainNow: String? { rainingNow ? Self.intensity(steps.first?.mmPerHour ?? 0) : nil }
+    /// Where the nowcast ends, two hours ahead.
+    var end: Date { steps.last?.time ?? reference }
 
     /// The steps from `date` on, for the widget's later entries; none once
     /// fewer than 30 minutes of the nowcast are left.

@@ -91,6 +91,6 @@ extension ConditionData {
               let hour = timeline.min(by: { abs(self.x($0.time) - x) < abs(self.x($1.time) - x) }),
               hour.time != now.time
         else { return self }
-        return ConditionData(forecast: forecast, now: hour)
+        return ConditionData(forecast: forecast, now: hour, radar: radar)
     }
 }

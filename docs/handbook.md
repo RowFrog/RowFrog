@@ -16,8 +16,8 @@ secret or a manual step adds a line here.
 | What's new | Once after an update, to users who had already seen the tour | A sheet listing what changed (`WhatsNew` in `Tutorial.swift`). The device stores the version seen (`RWWhatsNewSeen`). For a new list: change `WhatsNew.points` and raise `WhatsNew.version`. New users finishing the tour do not get it. |
 | Widget updates | Settings > Widgets > Updates | Every 30 minutes (default), every hour, every 2 hours, or only after using the app (`RWWidgetUpdates`: `halfHour`, `hour`, `twoHours`, `appOpen`; also a launch argument). With `appOpen` the widget timeline never reloads by itself; the app asks for one as the user leaves it, at most every 15 minutes. |
 | Map zoom | Settings > Club pages > Weather maps > Maps start | Close, Normal (default) or Wide: how much map the weather maps in the detail views (card and full screen) open with around the club. Normal is 50 km across, rain and lightning 120 km; Close halves it, Wide doubles it. Zooming out loads more tiles; zooming by hand works as before (`RWMapStartZoom`: `close`, `normal`, `wide`; also a launch argument). |
-| Battery saving in Low Power Mode | Turn on Low Power Mode in iOS Settings > Battery (or Control Center) | Tiles over a picture are drawn solid whatever the tile style, the radar map waits for the play button, and the radar card refreshes every 15 minutes instead of 5. Turning it off brings everything back. |
-| Saving data | Turn on Low Data Mode in iOS Settings > Mobile Data (or Wi-Fi > the network's (i) button), or switch on Settings > Battery and data > Save mobile data and use mobile data | Satellite pictures load only after a tap on the card (or opening it full screen), the radar map takes half-hour steps (7 pictures instead of 13) and the radar card refreshes every 15 minutes. Forecasts, warnings and the lake view always load. Launch argument `-RWSaveData YES` acts as if Low Data Mode were on. |
+| Battery saving in Low Power Mode | Turn on Low Power Mode in iOS Settings > Battery (or Control Center) | Tiles over a picture are drawn solid whatever the tile style, the radar map waits for the play button, and the radar (rain tile, top tile, radar card) refreshes every 15 minutes instead of 5. Turning it off brings everything back. |
+| Saving data | Turn on Low Data Mode in iOS Settings > Mobile Data (or Wi-Fi > the network's (i) button), or switch on Settings > Battery and data > Save mobile data and use mobile data | Satellite pictures load only after a tap on the card (or opening it full screen), the radar map and the rain map's radar pictures take half-hour steps (7 pictures instead of 13) and the radar refreshes every 15 minutes. Forecasts, warnings and the lake view always load. Launch argument `-RWSaveData YES` acts as if Low Data Mode were on. |
 | Chart and map linked | Any detail view with a map (wind, temperature, feels like, humidity, pressure, visibility, cloud, rain, UV; lightning is live and never linked): the chain button on the map card | Linked (default), the map shows the hour of the chart's blue line and playing the map moves the line. Unlinked ("Own time"), each keeps its own hour, and "Back to <hour>" moves only the chart. The choice is remembered (`RWMapTimeLinked`). A one-time tip (`MapLinkTip`) points at the chain the first time. |
 | Legal notice (Impressum) | Settings > About > Legal notice | The placeholders in `LegalInfo` in `Legal.swift` must be filled in before release. |
 
@@ -52,6 +52,38 @@ that someone opened in the last 7 days.
    slider. Swipe to Temperature: the hour stays.
 7. Pick an hour in the 48 hours and open a value: chart and map start
    there, and "Back to <that hour>" returns both.
+
+### Testing the rain tile with the radar
+
+The club page has no rain radar card any more (it can be switched on under
+Arrange this page); the rain tile in Current conditions reads DWD's radar for
+the next two hours and the forecast after that.
+
+1. Open a club on a day with showers nearby. The rain tile shows what the radar
+   sees now ("Dry", "Light rain") with a line such as "Rain from 12:45"
+   after a small radar symbol (from the radar), or "Rain from 18:00" without
+   it (from the forecast), and small bars: thin ones for the
+   radar's quarter hours, a line, then paler ones for the next forecast hours.
+   The top tile's "Rain, hail" cell shows the same two lines: the value, and
+   the grey line under it with the same symbol. The top tile's small values
+   (waves, rain, visibility) start under Air, Water and Wind (left column at the left edge, right column ending at the right edge, middle column with equal gaps; grey lines don't set the widths); their grey lines
+   use shorter words than the tiles ("1.0 km open water", "Dry for 24 h").
+   When ice matters it gets its own line under them (`-RWSampleIce YES`).
+   Snow, hail and drizzle are named from the forecast's weather code (the
+   radar only measures how much falls). While it rains, the line says what
+   comes next: "Dry from 14:15", "Heavier from 14:30" (radar) or "Until about
+   17:00" (forecast, no symbol), in the tile and the top tile alike.
+2. Tap the tile: the chart starts with thin purple radar bars for two hours,
+   then the blue forecast hours; the legend turns either off. The map card
+   says "Radar 12:45" and shows the radar picture; a tap opens the radar map.
+   Slide the chart past two hours: the big number, the chart and the map
+   turn to the forecast, and the map's header to "Forecast <hour>".
+   The repeat button beside the map's slider (every detail map) plays it
+   3 times, as the full-screen maps do.
+3. Pick an hour in the 48 hours less than two hours ahead: its tiles use the
+   radar too. Later hours use the forecast only.
+4. Arrange this page: "Rain radar" is switched off; switched on, the old card
+   comes back under Current conditions.
 
 ### Testing "Import a row"
 
@@ -99,12 +131,14 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWDemoClubs YES` the three confirmed clubs with MRC 1880 as home base
 - `-RWTutorialSeen YES -RWNoTips YES` skip the tour and tips
 - `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table)
-- `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order); `-RWArrange YES` opens "Arrange this page"
-- `-RWOpenRadarMap YES` open the rain radar map (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
+- `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order; the rain radar card is off unless named, since the rain tile shows the radar); `-RWArrange YES` opens "Arrange this page"
+- `-RWOpenRadarMap YES` open the rain radar map from the radar card, so name `radar` in `-RWPageLayout` too (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWOpenWeatherMap <layer>` open the weather map from the detail view opened with `-RWOpenCondition` (layers: `wind`, `gust`, `temperature`, `feelsLike`, `humidity`, `pressure`, `visibility`, `rain`, `uv`, `lightning`, `fog`)
 - `-RWMapTimeLinked NO` detail views open with the map on its own time (chain off)
 - `-RWLakeWide twilight|cold|dark` sets the whole-lake light of every lake hour (twilight with cold water: amber stripes; cold water alone: no stripes; dark: grey with red stripes)
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
+- `-RWSampleRadar YES` made-up rain on the radar from 30 minutes on (light, then rain, dry again after an hour), to show the rain tile, the top tile's rain value and the rain chart while DWD's radar is dry
+- `-RWSampleIce YES` the top tile shows a made-up "Shore ice possible" line, to check the winter layout outside the ice season
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
 - `-RWLegend lights` open the rowing light legend from the top tile
 - `-RWOpenLakeView YES` open the lake view; `-RWLakeLegend YES` with its legend open; `-RWLakeImagery YES` Apple's satellite pictures under the lake (the switch in the lake view's top bar)
