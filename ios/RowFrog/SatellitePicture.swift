@@ -668,7 +668,8 @@ struct SatelliteOverlay: View {
             }
         }
         .allowsHitTesting(false)
-        .task(id: layers.contains(.wind)) {
+        // Again once the lake has loaded, which can be after the picture.
+        .task(id: "\(layers.contains(.wind)) \(view != nil)") {
             if layers.contains(.wind), let view { await ModelMapStore.shared.loadLandWind(at: view.grid.centre) }
         }
     }
