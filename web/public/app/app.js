@@ -8,359 +8,23 @@
 import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  API, ZONE, isStale, shownLight, currentHour, nextHours, windValue, WIND_UNITS, compass, searchClubs, town,
-  overlayBox, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote,
-  pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState, BOATS, coldWaterKit, place, twilight,
-  GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, limitsFor, applyLimits, waterForHour, steadierBoat, beaufort, COLD,
+  store, savedClub, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence, boatDetail, boatShort,
+  limitText, forBoat, getJSON, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration, degrees,
+  temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
+  precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
+  coldWaterBadge, flag, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C, windDial, sparkBars,
+  levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly, footerLinks, mapBoat, mapLimits,
+} from "./shared.js";
+import {
+  API, isStale, shownLight, currentHour, nextHours, WIND_UNITS, compass, searchClubs, town, overlayBox, localDay, sky, SKY_TITLES,
+  skyIcon, precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater,
+  iceOff, ICE_TITLES, iceValue, sunState, coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit,
+  applyLimits, steadierBoat, COLD, waterForHour, allowsMore,
 } from "./logic.js";
+import { fillLakeCard, renderLakeMap } from "./lakeview.js";
 
 const SAFETY_VERSION = 1;
 const root = document.getElementById("root");
-
-// ---- Stored in the browser -------------------------------------------------
-
-function load(name, fallback) {
-  try {
-    const raw = localStorage.getItem(name);
-    return raw == null ? fallback : JSON.parse(raw);
-  } catch {
-    return fallback;
-  }
-}
-
-function save(name, value) {
-  try {
-    localStorage.setItem(name, JSON.stringify(value));
-  } catch {}
-}
-
-const store = {
-  get clubs() { return load("rf.clubs", []); },
-  set clubs(list) { save("rf.clubs", list); },
-  // m/s and small boats, as the app starts.
-  get wind() { return WIND_UNITS[load("rf.wind", "ms")] ? load("rf.wind", "ms") : "ms"; },
-  set wind(unit) { save("rf.wind", unit); },
-  // The boat the rowing light is for: a group or one of the user's own boats.
-  get boat() { const id = load("rf.boat", "small"); return allBoats().some((b) => b.id === id) ? id : "small"; },
-  set boat(id) { save("rf.boat", id); },
-  /** The user's own boats, besides the small and big boat groups: { id, name, type, class }. */
-  get boats() { return load("rf.boats", []); },
-  set boats(list) { save("rf.boats", list); },
-  /** Limits the user changed, per boat id; a missing entry means the app's limit for the boat's type. */
-  get limits() { return load("rf.limits", {}); },
-  set limits(value) { save("rf.limits", value); },
-  get safety() { return load("rf.safety", null); },
-  set safety(value) { save("rf.safety", value); },
-};
-
-function savedClub(club, lake) {
-  return {
-    id: club.id, name: club.name, shortName: club.shortName, address: club.address, lakeId: lake.id, lakeName: lake.name,
-    country: club.country ?? lake.country, launchPoint: club.launchPoint, launchPointVerified: club.launchPointVerified, source: club.source,
-  };
-}
-
-// ---- Boats (AppSettings.boats) ------------------------------------------------
-
-/** Small boats, big boats, then the user's own. */
-function allBoats() {
-  return [...GROUPS, ...store.boats];
-}
-
-const boatById = (id) => allBoats().find((b) => b.id === id) ?? GROUPS[0];
-const selectedBoat = () => boatById(store.boat);
-const boatLimits = (boat) => limitsFor(boat, store.limits[boat.id] ?? {});
-/** The limits the rowing light uses. */
-const currentLimits = () => boatLimits(selectedBoat());
-
-function boatTitle(boat) {
-  if (isGroup(boat)) return t(BOATS[boat.id].title);
-  return boat.name?.trim() || `${t(BOAT_TYPES[boat.type].title)} ${boat.class}`;
-}
-
-/** The boat inside a sentence: "for small boats", "for Anna". */
-const boatInSentence = (boat) => (isGroup(boat) ? t(BOATS[boat.id].inSentence) : boatTitle(boat));
-const boatDetail = (boat) => (isGroup(boat) ? t(BOATS[boat.id].detail) : t("%@ · %@", t(BOAT_TYPES[boat.type].title), boat.class));
-/** For the bottom bar: "Small", "Big", its own name, or its class. */
-const boatShort = (boat) => (isGroup(boat) ? t(BOATS[boat.id].short) : boat.name?.trim() || boat.class);
-
-/** A limit's value in the user's units; wind keeps its decimal so 5.5 m/s does not read as 6. */
-function limitText(limit, value) {
-  const { condition } = LIMITS[limit];
-  if (condition === "waves") return waves(value);
-  if (condition === "waterTemperature") return temperature(value);
-  if (store.wind === "bft") return `${beaufort(value)} Bft`;
-  const v = WIND_UNITS[store.wind].from(value);
-  return `${num(v, Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1)} ${windUnit()}`;
-}
-
-/** The forecast for the ticked boat. */
-const forBoat = (raw) => applyLimits(raw, currentLimits());
-
-// ---- Loading ---------------------------------------------------------------
-
-async function getJSON(path) {
-  const response = await fetch(`${API}/${path}`, { cache: "no-cache" });
-  if (!response.ok) throw new Error(`${response.status} ${path}`);
-  return response.json();
-}
-
-let catalog = null;
-
-/** Every water with its clubs, in all countries the search covers. */
-async function loadCatalog() {
-  if (catalog) return catalog;
-  const kept = load("rf.catalog", null);
-  if (kept && Date.now() - kept.at < 24 * 3600 * 1000) return (catalog = kept.lakes);
-  const countries = await getJSON("countries/index");
-  const lists = await Promise.all(countries.map((c) => getJSON(`countries/${c.code}/lakes`)));
-  catalog = lists.flat();
-  save("rf.catalog", { at: Date.now(), lakes: catalog });
-  return catalog;
-}
-
-/** The club with its lake from the catalog, for clubs saved before the launch point was kept. */
-async function findClub(id) {
-  const lakes = await loadCatalog().catch(() => []);
-  for (const lake of lakes) {
-    const club = lake.clubs.find((c) => c.id === id);
-    if (club) return savedClub(club, lake);
-  }
-  return null;
-}
-
-const forecasts = new Map();
-
-async function loadForecast(id, fresh = false) {
-  const kept = forecasts.get(id);
-  if (kept && !fresh && Date.now() - kept.at < 5 * 60 * 1000) return kept.forecast;
-  const forecast = await getJSON(`clubs/${encodeURIComponent(id)}/forecast`);
-  forecasts.set(id, { at: Date.now(), forecast });
-  return forecast;
-}
-
-// ---- Formatting, as Format in the app ---------------------------------------------
-
-function h(text) {
-  return String(text ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
-}
-
-function time(value) {
-  return new Intl.DateTimeFormat(locale(), { timeZone: ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(value));
-}
-
-/** "Today", "Tomorrow" or "Tuesday, 27 Oct". */
-function dayLabel(value) {
-  const day = typeof value === "string" && value.length === 10 ? value : localDay(value);
-  if (day === localDay(new Date())) return t("Today");
-  if (day === localDay(new Date(Date.now() + 86400000))) return t("Tomorrow");
-  return new Intl.DateTimeFormat(locale(), { timeZone: "UTC", weekday: "long", day: "numeric", month: "short" }).format(new Date(`${day}T12:00:00Z`));
-}
-
-function dayTime(value) {
-  return new Intl.DateTimeFormat(locale(), { timeZone: ZONE, weekday: "short", hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(value));
-}
-
-function duration(from, to) {
-  const minutes = Math.max(0, Math.floor((to - from) / 60000));
-  return minutes >= 60 ? `${Math.floor(minutes / 60)} h ${minutes % 60} min` : `${minutes} min`;
-}
-
-const degrees = (c, digits = 0) => (c == null ? "–" : `${num(c, digits)}°`);
-const temperature = (c, digits = 0) => (c == null ? "–" : `${num(c, digits)} °C`);
-const windUnit = () => WIND_UNITS[store.wind].label;
-const windNumber = (ms) => (ms == null ? "–" : num(windValue(ms, store.wind)));
-const wind = (ms) => (ms == null ? "–" : `${windNumber(ms)} ${windUnit()}`);
-const windRange = (ms, gust) => (ms == null ? "–" : `${windNumber(ms)}–${windNumber(gust)}`);
-const wavesNumber = (m) => (m == null ? "–" : num(m, 2));
-const waves = (m) => (m == null ? "–" : `${wavesNumber(m)} m`);
-const rainNumber = (mm) => (mm == null ? "–" : num(mm, 1));
-const rain = (mm) => (mm == null ? "–" : `${rainNumber(mm)} mm`);
-const distanceNumber = (m) => (m == null ? "–" : num(m / 1000, m < 10000 ? 1 : 0));
-const distance = (m) => (m == null ? "–" : `${distanceNumber(m)} km`);
-
-/** "Rain 3.1 mm", or null when nothing falls. */
-function precipitationText(hour) {
-  const kind = precipitationKind(sky(hour.weatherCode));
-  if (hour.precipitationMm == null) return kind ? t(kind) : "–";
-  if (hour.precipitationMm < 0.05 && !kind) return null;
-  return `${t(kind ?? "Rain")} ${rain(hour.precipitationMm)}`;
-}
-
-function lightTitle(light, stale = false) {
-  if (stale && light === "green") return t("Forecast out of date");
-  return { green: t("Good to row"), amber: t("Row with care"), red: t("Stay ashore"), grey: t("Forecast out of date") }[light];
-}
-
-/** A reason's short label; "(your limit)" when the user's own limit decided it. */
-function reasonLabel(reason) {
-  const base = baseLabel(reason.condition ?? reason);
-  return reason.mine ? t("%@ (your limit)", base) : base;
-}
-
-function baseLabel(condition) {
-  return {
-    lake_warning: t("DWD storm warning"), lake_strong_wind: t("DWD strong-wind warning"), single_cold: t("Single in cold water"),
-    freezing_water: t("Near-freezing water"), weather_warning: t("DWD weather warning"), wind: t("Wind"), gusts: t("Gusts"),
-    waves: t("Waves"), fog: t("Fog"), heavy_rain: t("Heavy rain"), hail: t("Hail"), thunderstorm: t("Thunderstorm risk"),
-    ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunrise / sunset"), cold_water: t("Very cold water"),
-    cool_water: t("Cold-water shock possible"),
-  }[condition] ?? condition;
-}
-
-/** "Water near Aken" in the page's language (Lake.title). */
-const lakeTitle = (name) => (name?.startsWith("Water near ") ? t("Water near %@", name.slice("Water near ".length)) : name);
-
-/** A reason's sentence for an hour; "sunrise or sunset in this hour" says which, and when. */
-function hourExplanation(forecast, reason, hour) {
-  if (reason.condition === "twilight") {
-    const sun = twilight(forecast, hour);
-    if (sun) return sun.kind === "sunrise" ? t("Sunrise at %@ in this hour.", time(sun.time)) : t("Sunset at %@ in this hour.", time(sun.time));
-  }
-  const text = reasonExplanation(reason.condition, reason.light);
-  return reason.mine ? `${text} ${t("You set this limit yourself.")}` : text;
-}
-
-/** A note under the reasons: a value within the user's own limit but above the app's (Reason.noteText). */
-function noteText(note) {
-  if (note.condition === "cold_margin") {
-    return t("Cold water: the app lowers its wind and gust limits by %@ below %@. Your own limits stay as you set them, so take extra care.", wind(COLD.marginMs), temperature(COLD.waterC));
-  }
-  return t("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel(note.condition), boatInSentence(selectedBoat()));
-}
-
-function reasonExplanation(condition, light) {
-  switch (condition) {
-    case "lake_warning": return t("DWD has issued a storm warning for the lake; its warning lights flash 90 times a minute.");
-    case "lake_strong_wind": return t("DWD has issued a strong-wind warning for the lake; its warning lights flash 40 times a minute.");
-    case "single_cold": return t("In a single, row with a coach boat or a partner boat while the water is this cold.");
-    case "freezing_water": return t("The water is below %@. You are strongly advised not to go out, at least not in a small boat.", temperature(4));
-    case "weather_warning": return t("DWD has issued a weather warning for this place.");
-    case "wind": return t("Mean wind is above the limit.");
-    case "gusts": return t("Gusts are above the limit.");
-    case "waves": return t("Waves at the launch point are too high.");
-    case "fog": return t("Visibility is poor (fog or mist).");
-    case "heavy_rain": return t("Heavy rain of %@ or more in the hour.", rain(4));
-    case "hail": return t("Hail is forecast with a thunderstorm.");
-    case "thunderstorm": return t("Thunderstorms are possible.");
-    case "ice": return light === "red" ? t("Ice on the lake is likely (estimate).") : t("Thin ice at the shore or drift ice is possible (estimate).");
-    case "daylight": return t("The sun is down. Rowing is only advised in daylight.");
-    case "twilight": return t("Sunrise or sunset falls in this hour.");
-    case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10));
-    case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
-    default: return condition;
-  }
-}
-
-/** The badge's short text and full advice for what cold water calls for (ColdWaterKit). */
-function coldWaterText(kit) {
-  return {
-    lifeJacket: [t("Life jacket"), t("Cold water: a capsize can cause cold-water shock. Wear a life jacket and clothes that keep you warm when wet.")],
-    partnerBoat: [t("Life jacket · partner boat"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row a single only with a coach boat or a partner boat.", temperature(10))],
-    nearShore: [t("Life jacket · near the shore"), t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10))],
-  }[kit];
-}
-
-/** The blue badge under the rowing light: what to bring, not a warning (ColdWaterBadge). */
-function coldWaterBadge(kit, estimated) {
-  const [title, advice] = coldWaterText(kit);
-  return `<button class="kit" data-tile="waterTemperature" title="${h(estimated ? t("Estimated: %@", advice) : advice)}">${icon("life-buoy")} ${h(estimated ? `≈ ${title}` : title)}</button>`;
-}
-
-const flag = (code) => String.fromCodePoint(...[...(code ?? "de").toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)));
-
-function setTitle(text) {
-  document.title = text ? `${text} · Row Frog` : "Row Frog";
-}
-
-// ---- Small pieces, as in the app ---------------------------------------------------
-
-/** The rowing light as a dot; green turns grey on an old forecast. */
-function dot(light, size = 14, stale = false) {
-  return `<span class="dot ${h(shownLight(light, stale))}" style="--s:${size}px" aria-hidden="true"></span>`;
-}
-
-/** The weather symbol for an hour, coloured like the app's multicolour symbols. */
-function skySymbol(hour, cls = "") {
-  const [name, colour] = skyIcon(sky(hour.weatherCode), hour.sunUp === false);
-  return `<span class="sky ${colour} ${cls}" title="${h(t(SKY_TITLES[sky(hour.weatherCode)]))}">${icon(name)}</span>`;
-}
-
-const CONDITION_ICONS = {
-  temperature: "thermometer", feelsLike: "person-standing", humidity: "droplets", pressure: "gauge", wind: "wind", waves: "waves",
-  waterTemperature: "thermometer-snowflake", precipitation: "cloud-rain", visibility: "binoculars", cloudCover: "cloud",
-  thunderstorm: "cloud-lightning", uvIndex: "sun", ice: "snowflake", daylight: "sunrise", warning: "triangle-alert",
-};
-
-function conditionIcon(condition) {
-  return `<span class="cond ${condition}">${icon(CONDITION_ICONS[condition] ?? "info")}</span>`;
-}
-
-/** A card with an uppercase caption and an icon, like Card in the app. */
-function card(title, iconName, body, { legend = null, id = "", cls = "" } = {}) {
-  return `<section class="card ${cls}" ${id ? `id="${id}"` : ""}>
-    <header class="card-title">${icon(iconName)}<span>${h(title)}</span>
-      ${legend ? `<button class="info" data-legend="${legend}" aria-label="${h(t("What the symbols mean"))}">${icon("info")}</button>` : ""}</header>
-    ${body}</section>`;
-}
-
-/** A coloured bar with a dot where the value sits (ScaleBar). */
-function scaleBar(fraction, colours) {
-  const f = Math.min(1, Math.max(0, fraction ?? 0));
-  return `<span class="scale" style="--bar:linear-gradient(90deg, ${colours.join(", ")})"><span class="knob" style="left:${f * 100}%"></span></span>`;
-}
-
-/** Colour zones from a list of [start, colour] (ScaleBar with zones). */
-function zoneBar(fraction, zones) {
-  const stops = zones.map(([start, colour], i) => {
-    const end = i + 1 < zones.length ? zones[i + 1][0] : 1;
-    return `${colour} ${start * 100}% ${end * 100}%`;
-  });
-  return scaleBar(fraction, stops);
-}
-
-const C = { blue: "var(--blue)", teal: "var(--teal)", green: "var(--green)", orange: "var(--orange)", red: "var(--red)", yellow: "var(--yellow)", purple: "var(--purple)" };
-
-function windDial(hour) {
-  if (hour.windFromDeg == null) return "";
-  return `<span class="dial"><span class="needle" style="transform:rotate(${hour.windFromDeg + 180}deg)"></span><span class="hub">${h(windNumber(hour.windSpeedMs))}</span></span>`;
-}
-
-function sparkBars(values) {
-  const top = Math.max(1, ...values);
-  return `<span class="spark">${values.map((v) => `<span style="height:${Math.max(6, (v / top) * 100)}%" class="${v >= 0.1 ? "wet" : ""}"></span>`).join("")}</span>`;
-}
-
-function levelSegments(level) {
-  const colours = [C.green, C.orange, C.red];
-  return `<span class="levels">${colours.map((c, i) => `<span style="height:${40 + i * 30}%;background:${i < level ? c : "var(--fill)"}"></span>`).join("")}</span>`;
-}
-
-function cloudLayers(hour) {
-  if (hour.cloudCoverHighPct == null) return "";
-  const rows = [[t("H"), hour.cloudCoverHighPct], [t("M"), hour.cloudCoverMidPct], [t("L"), hour.cloudCoverLowPct]];
-  return `<span class="layers">${rows.map(([name, pct]) => `<span><small>${h(name)}</small><span class="track"><span style="width:${pct ?? 0}%"></span></span></span>`).join("")}</span>`;
-}
-
-function pressureGauge(hpa, trend) {
-  // 960 hPa at the left end of the arc, 1060 hPa at the right.
-  const angle = -120 + Math.min(1, Math.max(0, ((hpa ?? 1013) - 960) / 100)) * 240;
-  const arrow = trend === "Rising" ? "arrow-up" : trend === "Falling" ? "arrow-up" : null;
-  return `<span class="gauge"><span class="needle" style="transform:rotate(${angle}deg)"></span>
-    ${arrow ? `<span class="trend ${trend === "Falling" ? "down" : ""}">${icon(arrow)}</span>` : `<span class="trend">=</span>`}</span>`;
-}
-
-/** The sun's path over the day with the sun at `at` (SunPath). */
-function sunPath(sunrise, sunset, at, width = 64, height = 32) {
-  const f = Math.min(1, Math.max(0, (at - sunrise) / (sunset - sunrise)));
-  const x = 4 + f * (width - 8);
-  const y = height - 4 - Math.sin(f * Math.PI) * (height - 10);
-  const up = at >= sunrise && at < sunset;
-  return `<svg class="sunpath" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" aria-hidden="true">
-    <line x1="0" y1="${height - 4}" x2="${width}" y2="${height - 4}" />
-    <path d="M4 ${height - 4} Q ${width / 2} ${-height + 14} ${width - 4} ${height - 4}" />
-    ${up ? `<circle cx="${x}" cy="${y}" r="4" />` : ""}</svg>`;
-}
 
 // ---- Safety notice -----------------------------------------------------------
 
@@ -426,22 +90,8 @@ function wireLanguage(again) {
   });
 }
 
-const testing = () => `<p class="testing">${h(t("Test version: only for you, hidden from search engines."))}</p>`;
 
 // ---- Dialogs (the app's sheets) -------------------------------------------------------
-
-function openSheet(title, body, wire) {
-  document.querySelector("dialog.sheet")?.remove();
-  const dialog = document.createElement("dialog");
-  dialog.className = "sheet";
-  dialog.innerHTML = `<header><strong>${h(title)}</strong><button class="done">${h(t("Done"))}</button></header><div class="sheet-body">${body}</div>`;
-  document.body.append(dialog);
-  dialog.querySelector(".done").addEventListener("click", () => dialog.close());
-  dialog.addEventListener("click", (e) => e.target === dialog && dialog.close());
-  dialog.addEventListener("close", () => dialog.remove());
-  wire?.(dialog);
-  dialog.showModal();
-}
 
 function legendBody(part) {
   if (part === "lights") {
@@ -486,7 +136,6 @@ function conditionTexts() {
   };
 }
 
-const adviceOnly = () => `<p class="advice">${icon("user-round-search")}<span>${h(t("Advice only. You decide whether to go out. When in doubt, ask experienced rowers or stay ashore."))}</span></p>`;
 
 /** Picks the boat for the rowing light, with the light each boat gets now (BoatMenu). */
 function openBoatMenu(raw) {
@@ -733,6 +382,7 @@ async function renderClub(id) {
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
     <div class="cards">
       ${conditionsCard(forecast, hour)}
+      ${forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""}
       ${hourlyCard(forecast, now, stale)}
       ${club?.launchPoint ? launchPointCard(club) : ""}
       <section class="card" id="satellite" hidden></section>
@@ -746,6 +396,8 @@ async function renderClub(id) {
   balanceCards();
   if (club?.launchPoint) showLaunchMap(club);
   satelliteCard(forecast.lakeId).then(balanceCards);
+  const lakeBox = root.querySelector("#lake-view");
+  if (lakeBox) fillLakeCard(lakeBox, forecast.lakeId, id, waterForHour(raw, hour)).then(balanceCards);
 }
 
 // ---- Wide screens (iPad, Mac, PC), as in the app on iPad ------------------------------------
@@ -1163,24 +815,6 @@ function launchPointCard(club) {
       <a class="pill" href="https://www.openstreetmap.org/directions?to=${lat}%2C${lon}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a></div>`);
 }
 
-let leaflet = null;
-
-/** Leaflet (in vendor/) with OpenStreetMap's tiles, loaded only when a launch point is shown. */
-function loadLeaflet() {
-  leaflet ??= new Promise((resolve, reject) => {
-    const css = document.createElement("link");
-    css.rel = "stylesheet";
-    css.href = new URL("vendor/leaflet/leaflet.css", import.meta.url).href;
-    document.head.append(css);
-    const script = document.createElement("script");
-    script.src = new URL("vendor/leaflet/leaflet.js", import.meta.url).href;
-    script.onload = () => resolve(window.L);
-    script.onerror = reject;
-    document.head.append(script);
-  });
-  return leaflet;
-}
-
 async function showLaunchMap(club) {
   const L = await loadLeaflet().catch(() => null);
   const box = root.querySelector("#launch-map");
@@ -1322,10 +956,19 @@ function renderBoats() {
       <ul class="boats">${store.boats.map(row).join("")}
         <li><button id="add-boat" class="tint">${icon("circle-plus")} <span>${h(t("Add a boat"))}</span></button></li></ul>
       <p class="footer">${h(t("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))}</p>
+      <h3 class="section">${icon("map")} ${h(t("Lake map colours"))}</h3>
+      <ul class="boats">${[["follow", t("Same as the ticked boat")], ...allBoats().map((b) => [b.id, boatTitle(b)])].map(([id, title]) => `<li class="boat-row"><button data-map-boat="${h(id)}">
+        <span><strong>${h(title)}</strong></span>${store.mapBoat === id ? icon("check") : ""}</button></li>`).join("")}</ul>
+      ${allowsMore(mapLimits(), currentLimits()) ? `<p class="footer orange">${icon("triangle-alert")} ${h(t("The map uses the limits for %@, which are higher than those for %@. The map points this out too.", boatInSentence(mapBoat()), boatInSentence(selectedBoat())))}</p>` : ""}
+      <p class="footer">${h(t("The boat whose limits colour the lake view and route planning."))}</p>
       ${footerLinks()}
     </main>`;
   root.querySelectorAll("[data-tick]").forEach((b) => b.addEventListener("click", () => {
     store.boat = b.dataset.tick;
+    renderBoats();
+  }));
+  root.querySelectorAll("[data-map-boat]").forEach((b) => b.addEventListener("click", () => {
+    store.mapBoat = b.dataset.mapBoat;
     renderBoats();
   }));
   root.querySelector("#add-boat").addEventListener("click", () => {
@@ -1411,15 +1054,11 @@ function renderBoat(id) {
     delete all[id];
     store.limits = all;
     if (store.boat === id) store.boat = "small";
+    if (store.mapBoat === id) store.mapBoat = "small";
     location.hash = "#/settings/boats";
   });
 }
 
-function footerLinks() {
-  return `<footer class="links">
-    <a href="/impressum/">${h(t("Legal notice"))}</a> · <a href="/privacy/">${h(t("Privacy"))}</a> · <a href="/credits/">${h(t("Data sources"))}</a>
-  </footer>`;
-}
 
 // ---- Routing -------------------------------------------------------------------------
 
@@ -1432,6 +1071,11 @@ function route(scroll = true) {
   const hash = location.hash.replace(/^#/, "");
   const club = hash.match(/^\/club\/(.+)$/);
   if (club) return renderClub(decodeURIComponent(club[1]));
+  const lake = hash.match(/^\/lake\/([^/]+)(?:\/(.+))?$/);
+  if (lake) {
+    const clubId = lake[2] ? decodeURIComponent(lake[2]) : null;
+    return renderLakeMap(root, decodeURIComponent(lake[1]), clubId, clubId ? `#/club/${encodeURIComponent(clubId)}` : "#/");
+  }
   if (hash === "/settings") return renderSettings();
   if (hash === "/settings/boats") return renderBoats();
   const boat = hash.match(/^\/settings\/boat\/(.+)$/);
