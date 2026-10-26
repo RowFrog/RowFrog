@@ -28,6 +28,7 @@ import { renderAddPlace } from "./addplace.js";
 import { isOwn } from "./ownplace.js";
 import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
+import { layoutFor, visibleCards, openArrange } from "./arrange.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 
 const SAFETY_VERSION = 1;
@@ -372,28 +373,31 @@ async function renderClub(id) {
   const hour = currentHour(forecast.hours, now);
   const warnings = forecast.warnings;
   const showWarnings = warnings && (warnings.status !== "ok" || warnings.items?.length);
+  // The cards in the order chosen under "Arrange this page".
+  const cards = {
+    conditions: () => conditionsCard(forecast, hour),
+    lakeView: () => (forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""),
+    hourly: () => hourlyCard(forecast, now, stale),
+    launchPoint: () => (club?.launchPoint ? launchPointCard(club) : ""),
+    satellite: () => `<section class="card" id="satellite" hidden></section>`,
+  };
   root.querySelector("main").innerHTML = `
     ${clubHeader(club, name, isHome, forecast, stale)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, club })}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
-    <div class="cards">
-      ${conditionsCard(forecast, hour)}
-      ${forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""}
-      ${hourlyCard(forecast, now, stale)}
-      ${club?.launchPoint ? launchPointCard(club) : ""}
-      <section class="card" id="satellite" hidden></section>
-    </div>
+    <div class="cards">${visibleCards(layoutFor(id)).map((c) => cards[c]?.() ?? "").join("")}</div>
     ${sourceLine(forecast)}
+    <button class="pill" id="arrange">${icon("arrow-up-down")} ${h(t("Arrange this page"))}</button>
     ${credits(forecast, club)}
     ${footerLinks()}`;
   root.querySelector("nav.bottom").outerHTML = bottomBar(id, raw);
   wireBottomBar(raw);
   wireClubPage(id, club, raw, forecast, hour);
   balanceCards();
-  if (club?.launchPoint) showLaunchMap(club);
+  if (root.querySelector("#launch-map")) showLaunchMap(club);
   const satelliteBox = root.querySelector("#satellite");
-  if (forecast.lakeId) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
+  if (forecast.lakeId && satelliteBox) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
   const lakeBox = root.querySelector("#lake-view");
   if (lakeBox) fillLakeCard(lakeBox, forecast.lakeId, id, waterForHour(raw, hour)).then(balanceCards);
 }
@@ -492,6 +496,7 @@ function clubHeader(club, name, isHome, forecast, stale = false) {
 
 function wireClubPage(id, club, raw, forecast, hour) {
   root.querySelector("#refresh")?.addEventListener("click", () => renderClub(id));
+  root.querySelector("#arrange").addEventListener("click", () => openArrange(club ?? { id }, () => renderClub(id)));
   root.querySelector("#add")?.addEventListener("click", () => {
     store.clubs = [...store.clubs, club];
     renderClub(id);
@@ -907,6 +912,11 @@ function renderSettings() {
         <a class="row-setting" href="#/settings/boats"><span>${icon("sailboat")} ${h(t("Boats and limits"))}</span>
           <span class="sub">${h(boatTitle(selectedBoat()))} ${icon("chevron-right")}</span></a>
       </section>
+      <h3 class="section">${icon("arrow-up-down")} ${h(t("Club pages"))}</h3>
+      <section class="card group">
+        <button class="row-setting" id="arrange"><span>${h(t("Order of the club page cards"))}</span>${icon("chevron-right")}</button>
+      </section>
+      <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
       <h3 class="section">${icon("map")} ${h(t("Weather maps"))}</h3>
       <section class="card group">
         <div class="row-setting"><span>${h(t("Maps start"))}</span>
@@ -922,6 +932,7 @@ function renderSettings() {
     </main>`;
   wireLanguage(renderSettings);
   root.querySelector("#wind").addEventListener("change", (e) => (store.wind = e.target.value));
+  root.querySelector("#arrange").addEventListener("click", () => openArrange(null));
   root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     store.mapZoom = b.dataset.zoom;
     renderSettings();

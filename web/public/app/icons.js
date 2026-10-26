@@ -93,6 +93,10 @@ const PATHS = {
   "chevron-down": `<path d="m6 9 6 6 6-6" />`,
   "repeat": `<path d="m17 2 4 4-4 4" /> <path d="M3 11v-1a4 4 0 0 1 4-4h14" /> <path d="m7 22-4-4 4-4" /> <path d="M21 13v1a4 4 0 0 1-4 4H3" />`,
   "signature": `<path d="m21 17-2.156-1.868A.5.5 0 0 0 18 15.5v.5a1 1 0 0 1-1 1h-2a1 1 0 0 1-1-1c0-2.545-3.991-3.97-8.5-4a1 1 0 0 0 0 5c4.153 0 4.745-11.295 5.708-13.5a2.5 2.5 0 1 1 3.31 3.284" /> <path d="M3 21h18" />`,
+  "lock": `<rect width="18" height="11" x="3" y="11" rx="2" ry="2" /> <path d="M7 11V7a5 5 0 0 1 10 0v4" />`,
+  "circle": `<circle cx="12" cy="12" r="10" />`,
+  "umbrella": `<path d="M22 12a10.06 10.06 1 0 0-20 0Z" /> <path d="M12 12v8a2 2 0 0 0 4 0" /> <path d="M12 2v1" />`,
+  "chevron-up": `<path d="m18 15-6-6-6 6" />`,
 };
 
 /** An inline SVG icon drawn in the text colour, sized by the font (1em). */

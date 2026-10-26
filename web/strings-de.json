@@ -17,5 +17,7 @@
   "Chart": "Diagramm",
   "The place stays in this browser and nobody else sees it.": "Der Ort bleibt in diesem Browser, niemand sonst sieht ihn.",
   "The forecast for your own place is worked out in this browser: wind, gusts, rain, fog, thunderstorms and daylight. Waves, water temperature and warnings are not available for it.": "Die Vorhersage für deinen eigenen Ort wird in diesem Browser berechnet: Wind, Böen, Regen, Nebel, Gewitter und Tageslicht. Wellen, Wassertemperatur und Warnungen gibt es dafür nicht.",
-  "Your own place, kept in this browser. No waves, water temperature or warnings here.": "Dein eigener Ort, nur in diesem Browser gespeichert. Hier gibt es keine Wellen, Wassertemperatur oder Warnungen."
+  "Your own place, kept in this browser. No waves, water temperature or warnings here.": "Dein eigener Ort, nur in diesem Browser gespeichert. Hier gibt es keine Wellen, Wassertemperatur oder Warnungen.",
+  "Move up": "Nach oben",
+  "Move down": "Nach unten"
 }
