@@ -6,6 +6,7 @@ The app must show these credits wherever their data appears.
 | --- | --- | --- | --- |
 | Deutscher Wetterdienst (DWD), via Open-Meteo | Wind, gusts, temperature, cloud, visibility, CAPE | CC BY 4.0; Open-Meteo free tier is non-commercial only | "Deutscher Wetterdienst (DWD) via Open-Meteo" |
 | Deutscher Wetterdienst (DWD), GeoServer maps.dwd.de | Lake warnings (Binnenseen) and weather warnings per municipality; rain radar and 2-hour nowcast (layer dwd:Niederschlagsradar, read by the app directly) | CC BY 4.0 | "Deutscher Wetterdienst" |
+| GeoSphere Austria, Warn API (warnungen.zamg.at) | Official weather warnings per Austrian municipality (wind, rain, snow, black ice, thunderstorm, heat, cold), German and English texts | CC BY 4.0 | "GeoSphere Austria" |
 | OpenStreetMap | Lake outlines for the wave calculation; club positions (Nominatim geocoding) | ODbL | "© OpenStreetMap contributors" |
 | Deutscher Ruderverband e.V. (rudern.de) | Club list in the search: names, short names, website, boathouse address, kinds of rowing | No open licence; imported with the owner's OK, permission to be asked | "Deutscher Ruderverband e.V." |
 | Österreichischer Ruderverband (rudern.at) | Austrian clubs in the search: names, abbreviations, website, address, state (not the e-mail addresses on the list) | No open licence; imported with the owner's OK, permission to be asked (letter drafted 2026-10-23) | "Österreichischer Ruderverband" |

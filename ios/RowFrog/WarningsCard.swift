@@ -14,9 +14,12 @@ struct WarningsCard: View {
     var guideOpen = false
 
     var body: some View {
-        Card(title: warnings.localChecked ? tr("DWD warnings") : tr("Official warnings"), symbol: "exclamationmark.triangle") {
+        Card(title: warnings.localChecked && warnings.isDWD ? tr("DWD warnings") : tr("Official warnings"), symbol: "exclamationmark.triangle") {
             if !warnings.checked {
-                Label(tr("Warnings could not be loaded. Check dwd.de or the shore lights before going out."), systemImage: "wifi.exclamationmark")
+                Label(warnings.isDWD
+                      ? tr("Warnings could not be loaded. Check dwd.de or the shore lights before going out.")
+                      : tr("Warnings could not be loaded. Check %@ or the shore lights before going out.", warnings.local?.service ?? "DWD"),
+                      systemImage: "wifi.exclamationmark")
                     .foregroundStyle(.orange)
             } else if !warnings.localChecked {
                 ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
@@ -56,6 +59,14 @@ struct WarningsCard: View {
                 return tr("Covers the DWD lake warning for %@. Weather warnings for %@ are not checked yet.", area, place)
             }
             return tr("Lake and weather warnings for %@ are not checked yet.", place)
+        }
+        if !warnings.isDWD {
+            let service = warnings.local?.service ?? ""
+            let place = town ?? tr("this place")
+            if let area = warnings.lakeArea {
+                return tr("Covers the DWD lake warning for %@ and the warnings of %@ for %@.", area, service, place)
+            }
+            return tr("Covers the warnings of %@ for %@. Lake warnings for this water are not published for apps.", service, place)
         }
         let place = town.map { tr("weather warnings for %@", $0) } ?? tr("weather warnings for this place")
         if let area = warnings.lakeArea {
@@ -115,7 +126,9 @@ private struct WarningRow: View {
                     if let period = period {
                         Label(period, systemImage: "clock").font(.caption)
                     }
-                    Text(english.description ?? tr("DWD publishes the details of this warning in German only; see the original below."))
+                    Text(english.description ?? (warning.isDWD
+                        ? tr("DWD publishes the details of this warning in German only; see the original below.")
+                        : tr("The details of this warning are in German only; see the original below.")))
                         .fixedSize(horizontal: false, vertical: true)
                     if let instruction = english.instruction, !instruction.isEmpty {
                         Text(instruction)
@@ -200,7 +213,7 @@ private struct GermanOriginal: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 3) {
-            Label(tr("Original from DWD (German)"), systemImage: "character.book.closed")
+            Label(warning.isDWD ? tr("Original from DWD (German)") : tr("Original from %@ (German)", warning.serviceShort), systemImage: "character.book.closed")
                 .font(.caption2.weight(.semibold))
             Text(warning.headline).font(.caption.weight(.semibold))
             Text(warning.description).font(.caption)
@@ -235,9 +248,9 @@ extension DWDWarning {
     /// Short label for the location list, e.g. "DWD lake warning" or "DWD warning: Wind gusts".
     var shortLabel: String {
         if isLake { return tr("DWD lake warning") }
-        if warningsInEnglish, let english {
-            return tr("DWD warning: %@", english.event.prefix(1).uppercased() + english.event.dropFirst())
-        }
-        return tr("DWD warning: %@", event.capitalized(with: Locale(identifier: "de_DE")))
+        let name = warningsInEnglish && english != nil
+            ? english!.event.prefix(1).uppercased() + english!.event.dropFirst()
+            : event.capitalized(with: Locale(identifier: "de_DE"))
+        return isDWD ? tr("DWD warning: %@", name) : tr("%@ warning: %@", serviceShort, name)
     }
 }

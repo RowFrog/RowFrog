@@ -292,7 +292,8 @@ async function fillRow(row) {
 function shortWarning(w) {
   if (w.kind === "lake") return t("DWD lake warning");
   const event = lang() === "en" && w.english ? w.english.event : w.event;
-  return t("DWD warning: %@", event ? event[0].toUpperCase() + event.slice(1).toLowerCase() : "");
+  const name = event ? event[0].toUpperCase() + event.slice(1).toLowerCase() : "";
+  return isDWD(w) ? t("DWD warning: %@", name) : t("%@ warning: %@", serviceShort(w.source), name);
 }
 
 function wireSearch() {
@@ -519,7 +520,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
   }));
   root.querySelector("#boat-line")?.addEventListener("click", () => openBoatMenu(raw));
   root.querySelector("#no-warning")?.addEventListener("click", () => {
-    openSheet(t("DWD warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
+    openSheet(warningsIsDWD(forecast.warnings) ? t("DWD warnings") : t("Official warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
   });
   root.querySelectorAll("[data-tile]").forEach((b) => b.addEventListener("click", () => {
     location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
@@ -607,7 +608,7 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
       ${steadier ? `<li class="tint">${icon("sailboat")}<span>${h(steadier.light === "green"
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
-      ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${icon("shield-check")} ${h(t("No DWD warning"))}</span>
+      ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${icon("shield-check")} ${h(warningsIsDWD(warnings) ? t("No DWD warning") : t("No official warning"))}</span>
         <span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></button></li>` : ""}
     </ul>
     ${adviceOnly()}
@@ -643,13 +644,27 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
 
 /** The DWD warnings card, shown while a warning is out or DWD could not be checked (WarningsCard). */
 function warningsCard(warnings, club, checkedAt) {
-  const title = localChecked(warnings) ? t("DWD warnings") : t("Official warnings");
+  const title = localChecked(warnings) && warningsIsDWD(warnings) ? t("DWD warnings") : t("Official warnings");
   return card(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false), { cls: "warnings" });
 }
 
 /** False outside Germany, where DWD does not warn: then "no warning" must not be said. Older files lack `local`. */
 function localChecked(warnings) {
   return warnings?.local?.checked !== false;
+}
+
+/** True while the place's warnings are DWD's (Germany, and older files); else labels say "official". */
+function warningsIsDWD(warnings) {
+  return (warnings?.local?.source ?? "dwd") === "dwd";
+}
+
+function isDWD(w) {
+  return (w.source ?? "dwd") === "dwd";
+}
+
+/** "DWD", "GeoSphere" or "MeteoSwiss", for labels such as "GeoSphere warning: Wind". */
+function serviceShort(source) {
+  return { geosphere: "GeoSphere", meteoswiss: "MeteoSwiss" }[source] ?? "DWD";
 }
 
 /** Outside Germany: the place's own weather service warns, and Row Frog does not read it yet. */
@@ -661,7 +676,9 @@ function notCheckedNote(local) {
 
 function warningsBody(warnings, club, checkedAt, guideOpen) {
   if (warnings.status !== "ok") {
-    return `<p class="orange">${icon("wifi-off")} ${h(t("Warnings could not be loaded. Check dwd.de or the shore lights before going out."))}</p>`;
+    return `<p class="orange">${icon("wifi-off")} ${h(warningsIsDWD(warnings)
+      ? t("Warnings could not be loaded. Check dwd.de or the shore lights before going out.")
+      : t("Warnings could not be loaded. Check %@ or the shore lights before going out.", warnings.local?.service ?? "DWD"))}</p>`;
   }
   const place = town(club?.address);
   if (!localChecked(warnings)) {
@@ -673,9 +690,14 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
     return `${lakeRows}${notCheckedNote(warnings.local)}<p class="sub small">${h(note)}</p>${warnings.lakeArea ? shoreLights(guideOpen) : ""}`;
   }
   const placeText = place ? t("weather warnings for %@", place) : t("weather warnings for this place");
-  const coverage = warnings.lakeArea
-    ? t("Covers the DWD lake warning for %@ and %@.", warnings.lakeArea, placeText)
-    : t("DWD has no lake warning service %@. Covers %@.", club?.lakeName ? t("for %@", lakeTitle(club.lakeName)) : t("for this water"), placeText);
+  const service = warnings.local?.service ?? "";
+  const coverage = !warningsIsDWD(warnings)
+    ? warnings.lakeArea
+      ? t("Covers the DWD lake warning for %@ and the warnings of %@ for %@.", warnings.lakeArea, service, place ?? t("this place"))
+      : t("Covers the warnings of %@ for %@. Lake warnings for this water are not published for apps.", service, place ?? t("this place"))
+    : warnings.lakeArea
+      ? t("Covers the DWD lake warning for %@ and %@.", warnings.lakeArea, placeText)
+      : t("DWD has no lake warning service %@. Covers %@.", club?.lakeName ? t("for %@", lakeTitle(club.lakeName)) : t("for this water"), placeText);
   const items = warnings.items ?? [];
   const guide = warnings.lakeArea ? shoreLights(guideOpen) : "";
   if (!items.length) {
@@ -701,8 +723,10 @@ function warningRow(w) {
     <p class="sub small strong"><span style="color:${colour}">${icon(w.kind === "lake" ? "siren" : "triangle-alert")}</span>
       ${h(`${w.kind === "lake" ? t("Lake warning") : t("Weather warning")} · ${w.area ?? ""}`)}
       ${w.sample ? `<span class="tag">${h(t("SAMPLE"))}</span>` : ""}</p>
-    ${english ? text(w.english.headline, w.english.description ?? t("DWD publishes the details of this warning in German only; see the original below."), w.english.instruction)
-      + `<div class="original" lang="de"><p class="strong">${h(t("Original from DWD (German)"))}</p><p class="strong">${h(w.headline)}</p><p>${h(w.description)}</p>${w.instruction ? `<p>${h(w.instruction)}</p>` : ""}</div>`
+    ${english ? text(w.english.headline, w.english.description ?? (isDWD(w)
+        ? t("DWD publishes the details of this warning in German only; see the original below.")
+        : t("The details of this warning are in German only; see the original below.")), w.english.instruction)
+      + `<div class="original" lang="de"><p class="strong">${h(isDWD(w) ? t("Original from DWD (German)") : t("Original from %@ (German)", serviceShort(w.source)))}</p><p class="strong">${h(w.headline)}</p><p>${h(w.description)}</p>${w.instruction ? `<p>${h(w.instruction)}</p>` : ""}</div>`
       : text(w.headline, w.description, w.instruction)}
   </div>`;
 }
@@ -790,7 +814,9 @@ function conditionTile(condition, forecast, hour) {
     case "thunderstorm": {
       const level = light === "red" ? 3 : light === "amber" ? 2 : 1;
       const storm = (forecast.warnings?.items ?? []).some((w) => /GEWITTER/i.test(w.event ?? ""));
-      const note = !localChecked(forecast.warnings) ? t("Warnings not checked") : storm ? t("DWD warning") : t("No DWD warning");
+      const note = !localChecked(forecast.warnings) ? t("Warnings not checked")
+        : !warningsIsDWD(forecast.warnings) ? (storm ? t("Official warning") : t("No official warning"))
+        : storm ? t("DWD warning") : t("No DWD warning");
       return tile({ 3: t("High"), 2: t("Possible"), 1: t("Low") }[level], note, levelSegments(level));
     }
     case "visibility": {

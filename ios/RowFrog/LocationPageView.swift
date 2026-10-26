@@ -651,7 +651,7 @@ private struct NowCard: View {
         if let warnings = forecast.warnings, warnings.checked, warnings.localChecked, warnings.items.isEmpty {
             Button { showingWarnings = true } label: {
                 HStack(spacing: 6) {
-                    Label(tr("No DWD warning"), systemImage: "checkmark.shield.fill")
+                    Label(warnings.isDWD ? tr("No DWD warning") : tr("No official warning"), systemImage: "checkmark.shield.fill")
                         .foregroundStyle(.green)
                     Text("· " + tr("checked %@", Format.time(forecast.generatedAt)))
                         .foregroundStyle(.secondary)
@@ -730,7 +730,7 @@ private struct NoWarningSheet: View {
                 WarningsCard(warnings: warnings, lakeName: lakeName, town: town, checkedAt: checkedAt, guideOpen: true)
                     .padding()
             }
-            .navigationTitle(tr("DWD warnings"))
+            .navigationTitle(warnings.isDWD ? tr("DWD warnings") : tr("Official warnings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }

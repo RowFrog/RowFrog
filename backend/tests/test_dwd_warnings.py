@@ -160,7 +160,7 @@ def test_forecast_says_no_warning_after_checking(monkeypatch):
         "status": "ok",
         "lakeArea": "Starnberger See",
         "items": [],
-        "local": {"service": "Deutscher Wetterdienst (DWD)", "url": "https://www.wettergefahren.de/", "checked": True},
+        "local": {"source": "dwd", "service": "Deutscher Wetterdienst (DWD)", "url": "https://www.wettergefahren.de/", "checked": True},
     }
     assert "dwd:Warnungen_Binnenseen" in seen and "dwd:Warnungen_Gemeinden" in seen
 
@@ -301,6 +301,7 @@ def test_clubs_outside_germany_do_not_claim_no_warning(monkeypatch):
     mrc = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
     _reset()
     assert body["warnings"]["local"] == {
+        "source": "meteoswiss",
         "service": "MeteoSwiss",
         "url": "https://www.meteoswiss.admin.ch/weather/hazards/hazard-map.html",
         "checked": False,

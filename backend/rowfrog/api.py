@@ -20,7 +20,7 @@ from fastapi import FastAPI, HTTPException
 from . import ice, lake_view, locations, outlines, water_estimate, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
-from .sources import bafu, dwd_warnings, gkd, lake_temperature_satellite, open_meteo, pegelonline
+from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, lake_temperature_satellite, open_meteo, pegelonline
 from .sun import sun_days
 
 CACHE_SECONDS = 30 * 60
@@ -48,13 +48,17 @@ ATTRIBUTION = [
     "Lake outlines: © OpenStreetMap contributors, ODbL",
     "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 ]
-# Who issues the weather warnings for a place, by country. DWD's cover Germany
-# only; elsewhere the app cannot check them yet and says so instead of "no warning".
+# Who issues the weather warnings for a place, by country: (source, name, page).
+# DWD's cover Germany only and GeoSphere's Austria; where the app reads no
+# service yet it says so instead of "no warning".
 LOCAL_WARNING_SERVICES = {
-    "de": ("Deutscher Wetterdienst (DWD)", "https://www.wettergefahren.de/"),
-    "at": ("GeoSphere Austria", "https://warnungen.zamg.at/"),
-    "ch": ("MeteoSwiss", "https://www.meteoswiss.admin.ch/weather/hazards/hazard-map.html"),
+    "de": ("dwd", "Deutscher Wetterdienst (DWD)", "https://www.wettergefahren.de/"),
+    "at": ("geosphere", "GeoSphere Austria", "https://warnungen.zamg.at/"),
+    "ch": ("meteoswiss", "MeteoSwiss", "https://www.meteoswiss.admin.ch/weather/hazards/hazard-map.html"),
 }
+CHECKED_COUNTRIES = {"de", "at"}
+# Added to the credits for clubs whose warnings come from another service than DWD.
+WARNING_CREDIT = {"at": "Warnings: GeoSphere Austria, CC BY 4.0"}
 # Added to the credits when the club's station is not a GKD Bayern one.
 STATION_CREDIT = {
     "pegelonline": "Water temperature: PEGELONLINE, Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), DL-DE Zero 2.0",
@@ -234,6 +238,7 @@ def _english_json(e: dwd_warnings.EnglishText | None) -> dict | None:
 def _warning_json(w: dwd_warnings.Warning, english: dwd_warnings.EnglishText | None = None, sample: bool = False) -> dict:
     return {
         "kind": w.kind,
+        "source": w.source,
         "area": w.area,
         "event": w.event,
         "severity": w.severity.lower(),
@@ -307,17 +312,34 @@ async def _all_lake_warnings(client: httpx.AsyncClient) -> list[tuple[int, dwd_w
 
 def _local_service(club: locations.Club) -> dict:
     """Whose weather warnings count for the club's place, and whether the app checked them."""
-    name, url = LOCAL_WARNING_SERVICES.get(club.country, (None, None))
-    return {"service": name, "url": url, "checked": club.country == "de"}
+    source, name, url = LOCAL_WARNING_SERVICES.get(club.country, (None, None, None))
+    return {"source": source, "service": name, "url": url, "checked": club.country in CHECKED_COUNTRIES}
+
+
+async def _local_warnings(
+    client: httpx.AsyncClient, club: locations.Club
+) -> tuple[list[dwd_warnings.Warning], dict[str, dwd_warnings.EnglishText]]:
+    """The weather warnings for the club's place from its country's service, with
+    English texts where that service sends them (DWD's are looked up later)."""
+    p = club.launch_point
+    if club.country == "at":
+        return await geosphere_warnings.fetch(client, p.lon, p.lat)
+    if club.country != "de":
+        return [], {}
+    local = _primed_local_warnings.get(club.id)
+    if local is None:
+        local = await dwd_warnings.fetch_local_warnings(client, p.lon, p.lat)
+    return local, {}
 
 
 async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: datetime) -> tuple[dict, list]:
     """The warnings block for the app and the warnings that count for the hourly light.
 
-    If DWD cannot be reached the block says so ("unavailable"), so the app never
-    shows "no warning" without having checked. Outside Germany DWD has no local
-    warnings, so only the lake warning (Lake Constance) is read and `local` says
-    the place's own service was not checked.
+    If DWD (or GeoSphere) cannot be reached the block says so ("unavailable"), so
+    the app never shows "no warning" without having checked. Outside Germany DWD
+    has no local warnings: Austrian places get GeoSphere's, elsewhere only the
+    lake warning (Lake Constance) is read and `local` says the place's own
+    service was not checked.
     """
     cached = _warnings_cache.get(club.id)
     if cached and time.monotonic() - cached[0] < WARNINGS_CACHE_SECONDS:
@@ -327,15 +349,14 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         lake = []
         if area is not None:
             lake = [w for cell, w in await _all_lake_warnings(client) if cell == area.warncell_id]
-        local = [] if club.country != "de" else _primed_local_warnings.get(club.id)
-        if local is None:
-            local = await dwd_warnings.fetch_local_warnings(client, club.launch_point.lon, club.launch_point.lat)
+        local, own_english = await _local_warnings(client, club)
     except (httpx.HTTPError, ValueError, KeyError) as e:
-        logging.getLogger(__name__).warning("DWD warnings unavailable for %s: %r", club.id, e)
+        logging.getLogger(__name__).warning("Warnings unavailable for %s: %r", club.id, e)
         result = ({"status": "unavailable", "lakeArea": None, "items": [], "local": _local_service(club)}, [])
         _warnings_cache[club.id] = (time.monotonic() - WARNINGS_CACHE_SECONDS + 60, result)  # retry in a minute
         return result
-    english = await _english_texts(client) if lake or local else {}
+    english = await _english_texts(client) if lake or any(w.source == "dwd" for w in local) else {}
+    english = {**english, **own_english}
     items = [_warning_json(w, _english_for(w, english)) for w in lake + local]
     if club.id in SAMPLE_WARNING_CLUBS and area is not None:
         sample = _sample_warning(area.name, now)
@@ -624,6 +645,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.
         "attribution": (ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]])
         + ([STATION_CREDIT[station.network]] if water is not None and station.network in STATION_CREDIT else [])
+        + ([WARNING_CREDIT[club.country]] if club.country in WARNING_CREDIT else [])
         + ([] if estimate is None else [SATELLITE_WATER_CREDIT[estimate.reading.source]]),
         "forecastSource": weather_models.source_json(chain, len(hours))
         if picked is None
