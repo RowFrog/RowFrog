@@ -457,8 +457,9 @@ final class RadarFrames {
     /// The latest picture's place in `times`; loading starts there.
     let nowIndex: Int
 
-    init(point: Coordinate, times: [Date], layer: String = RadarRegion.rainLayer, server: URL = RadarClient.wms, nowIndex: Int = 4) {
-        region = RadarRegion(center: point)
+    init(point: Coordinate, times: [Date], layer: String = RadarRegion.rainLayer, server: URL = RadarClient.wms, nowIndex: Int = 4,
+         region: RadarRegion? = nil) {
+        self.region = region ?? RadarRegion(center: point)
         self.times = times
         self.layer = layer
         self.server = server
@@ -530,13 +531,39 @@ struct RadarRegion: Hashable {
     private static let radius = 6_378_137.0
 
     init(center: Coordinate) {
-        let x = center.lon * .pi / 180 * Self.radius
-        let y = log(tan(.pi / 4 + center.lat * .pi / 360)) * Self.radius
+        let x = Self.x(lon: center.lon), y = Self.y(lat: center.lat)
         // 200 km of map each way; mercator stretches it to about 300 km at 47° N.
-        let half = 300_000.0
+        let half = Self.defaultHalf
         minX = x - half; maxX = x + half
         minY = y - half; maxY = y + half
     }
+
+    /// A square around a map's visible area, when it is zoomed out or moved past
+    /// the first one: at least as big, and at most about 2,000 km across.
+    init(covering area: MapArea) {
+        let x0 = Self.x(lon: area.west), x1 = Self.x(lon: area.east)
+        let y0 = Self.y(lat: area.south), y1 = Self.y(lat: area.north)
+        let half = min(max(Self.defaultHalf, max(x1 - x0, y1 - y0) / 2 * 1.25), 1_500_000)
+        let x = (x0 + x1) / 2, y = (y0 + y1) / 2
+        minX = x - half; maxX = x + half
+        minY = y - half; maxY = y + half
+    }
+
+    /// The usual square around the club, or a wider one when the area on screen reaches past it.
+    static func around(_ point: Coordinate, showing area: MapArea) -> RadarRegion {
+        let usual = RadarRegion(center: point)
+        return usual.covers(area) ? usual : RadarRegion(covering: area)
+    }
+
+    /// Whether the pictures already cover a visible area.
+    func covers(_ area: MapArea) -> Bool {
+        minX <= Self.x(lon: area.west) && maxX >= Self.x(lon: area.east)
+            && minY <= Self.y(lat: area.south) && maxY >= Self.y(lat: area.north)
+    }
+
+    private static let defaultHalf = 300_000.0
+    private static func x(lon: Double) -> Double { lon * .pi / 180 * radius }
+    private static func y(lat: Double) -> Double { log(tan(.pi / 4 + lat * .pi / 360)) * radius }
 
     /// The corners as map coordinates, for the overlay.
     var northWest: CLLocationCoordinate2D { Self.coordinate(x: minX, y: maxY) }
