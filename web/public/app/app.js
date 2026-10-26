@@ -703,7 +703,10 @@ function balanceCards() {
   const cards = [...box.querySelectorAll(".card")];
   box.replaceChildren();
   box.classList.toggle("two", box.clientWidth >= TWO_COLUMNS);
-  if (!box.classList.contains("two")) return box.append(...cards);
+  if (!box.classList.contains("two")) {
+    box.append(...cards);
+    return fitSatellite();
+  }
   const columns = [document.createElement("div"), document.createElement("div")];
   columns.forEach((c) => (c.className = "col"));
   box.append(...columns);
@@ -711,12 +714,15 @@ function balanceCards() {
     const shorter = columns[1].offsetHeight < columns[0].offsetHeight ? columns[1] : columns[0];
     shorter.append(card);
   }
+  // The columns set the card's width, and with it the caption's lines.
+  fitSatellite();
 }
 
 let resizeTimer = null;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
+    fitSatellite();
     const box = root.querySelector(".cards");
     if (box && box.classList.contains("two") !== box.clientWidth >= TWO_COLUMNS) balanceCards();
   }, 150);
@@ -1132,7 +1138,7 @@ async function satelliteCard(lakeId) {
     const cloud = (pick.lakeCloud ?? 0) * 100;
     box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
       <div class="segmented">${kinds.map(([k, label]) => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${h(label)}</button>`).join("")}</div>
-      <div class="picture" style="aspect-ratio:${meta.width}/${meta.height};width:min(100%, calc(60vh * ${meta.width / meta.height}))">
+      <div class="picture" data-ratio="${meta.width / meta.height}" style="aspect-ratio:${meta.width}/${meta.height}">
         <img src="${API}/lakes/${encodeURIComponent(lakeId)}/${h(pick.image)}" alt="${h(t("Satellite picture of the lake"))}" loading="lazy">
         ${ice ? `<img class="overlay" src="${API}/lakes/${encodeURIComponent(lakeId)}/${h(meta.ice.image)}" alt="" style="left:${ice.left}%;top:${ice.top}%;width:${ice.width}%;height:${ice.height}%">` : ""}
       </div>
@@ -1140,9 +1146,24 @@ async function satelliteCard(lakeId) {
       ${ice ? `<p class="sub small">${h(t("Satellite ice map, %@", dayLabel(meta.ice.date)))}</p>` : ""}
       <p class="sub small">${h(meta.attribution)}${meta.ice ? ` · ${h(meta.ice.attribution)}` : ""}</p>`;
     box.querySelectorAll(".segmented button").forEach((b) => b.addEventListener("click", () => show(b.dataset.kind)));
+    fitSatellite();
   };
   box.hidden = false;
   show(kinds[0][0]);
+}
+
+/**
+ * Sizes the satellite picture so its whole card fits the window above the
+ * bottom bar, never wider than the card. Runs again on every resize or turn.
+ */
+function fitSatellite() {
+  const picture = root.querySelector("#satellite .picture");
+  if (!picture) return;
+  const card = picture.closest(".card");
+  const chrome = card.offsetHeight - picture.offsetHeight;
+  const bar = document.querySelector(".bottom")?.offsetHeight ?? 0;
+  const height = Math.max(240, window.innerHeight - bar - chrome - 32);
+  picture.style.width = `min(100%, ${Math.round(height * Number(picture.dataset.ratio))}px)`;
 }
 
 /** Which weather model the forecast comes from (ForecastSourceLine). */
