@@ -198,7 +198,7 @@ struct RootView: View {
             let forecast = forecasts.forecasts[selection]
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
                     showList: showsListButton ? { showingList = true } : nil,
-                    showSettings: showsListButton ? { showingSettings = true } : nil,
+                    showSettings: { showingSettings = true },
                     now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius)
                 .environment(\.surface, picture == nil ? .plain : settings.tileSurface)
                 .environment(\.openBoatSettings, openBoatSettings)
@@ -281,7 +281,8 @@ private struct PageBar: View {
     @Binding var selection: String
     /// Nil when the list is already on screen.
     let showList: (() -> Void)?
-    /// Nil when the list, which has its own cog, is on screen.
+    /// Always set: the cog stays here, beside the boat, also while the side
+    /// list is on screen, so it does not move when the iPad turns.
     let showSettings: (() -> Void)?
     /// The selected club's hour now, for the lights in the boat menu.
     let now: ForecastHour?
