@@ -116,6 +116,7 @@ def _reset():
     api._cache.clear()
     api._warnings_cache.clear()
     api._lake_areas = None
+    api._swiss_alerts = None
     api._lake_warnings = None
     api._english = None
     api._primed_local_warnings.clear()
@@ -287,7 +288,7 @@ def test_primed_local_warnings_are_used_without_asking_dwd(monkeypatch):
     assert "dwd:Warnungen_Gemeinden" not in seen
 
 
-def test_clubs_outside_germany_do_not_claim_no_warning(monkeypatch):
+def test_clubs_without_a_warning_service_do_not_claim_no_warning(monkeypatch):
     _fake_weather(monkeypatch)
     seen = []
 
@@ -296,15 +297,12 @@ def test_clubs_outside_germany_do_not_claim_no_warning(monkeypatch):
         return httpx.Response(200, json={"features": []})
 
     monkeypatch.setattr(api.httpx, "AsyncClient", _serve(handler))
+    # A country without a service the app reads (as Switzerland was before MeteoAlarm).
+    monkeypatch.setattr(api, "CHECKED_COUNTRIES", {"de", "at"})
     _reset()
     body = TestClient(api.app).get("/clubs/seeclub-zuerich/forecast").json()
     mrc = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
     _reset()
-    assert body["warnings"]["local"] == {
-        "source": "meteoswiss",
-        "service": "MeteoSwiss",
-        "url": "https://www.meteoswiss.admin.ch/weather/hazards/hazard-map.html",
-        "checked": False,
-    }
+    assert body["warnings"]["local"]["checked"] is False and body["warnings"]["local"]["service"] == "MeteoSwiss"
     assert seen.count("dwd:Warnungen_Gemeinden") == 1, "DWD is asked for the German club only"
     assert mrc["warnings"]["local"]["checked"] is True

@@ -20,7 +20,7 @@ from fastapi import FastAPI, HTTPException
 from . import ice, lake_view, locations, outlines, water_estimate, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
-from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, lake_temperature_satellite, open_meteo, pegelonline
+from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, meteoalarm, lake_temperature_satellite, open_meteo, pegelonline
 from .sun import sun_days
 
 CACHE_SECONDS = 30 * 60
@@ -49,16 +49,19 @@ ATTRIBUTION = [
     "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 ]
 # Who issues the weather warnings for a place, by country: (source, name, page).
-# DWD's cover Germany only and GeoSphere's Austria; where the app reads no
-# service yet it says so instead of "no warning".
+# DWD's cover Germany only, GeoSphere's Austria and MeteoSwiss's (via MeteoAlarm)
+# Switzerland; where the app reads no service it says so instead of "no warning".
 LOCAL_WARNING_SERVICES = {
     "de": ("dwd", "Deutscher Wetterdienst (DWD)", "https://www.wettergefahren.de/"),
     "at": ("geosphere", "GeoSphere Austria", "https://warnungen.zamg.at/"),
     "ch": ("meteoswiss", "MeteoSwiss", "https://www.meteoswiss.admin.ch/weather/hazards/hazard-map.html"),
 }
-CHECKED_COUNTRIES = {"de", "at"}
+CHECKED_COUNTRIES = {"de", "at", "ch"}
 # Added to the credits for clubs whose warnings come from another service than DWD.
-WARNING_CREDIT = {"at": "Warnings: GeoSphere Austria, CC BY 4.0"}
+WARNING_CREDIT = {
+    "at": "Warnings: GeoSphere Austria, CC BY 4.0",
+    "ch": "Warnings: MeteoSwiss, via MeteoAlarm (EUMETNET)",
+}
 # Added to the credits when the club's station is not a GKD Bayern one.
 STATION_CREDIT = {
     "pegelonline": "Water temperature: PEGELONLINE, Wasserstraßen- und Schifffahrtsverwaltung des Bundes (WSV), DL-DE Zero 2.0",
@@ -84,6 +87,8 @@ _primed_local_warnings: dict[str, list[dwd_warnings.Warning]] = {}
 _lake_warnings: tuple[float, list[tuple[int, dwd_warnings.Warning]]] | None = None
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
+# All running Swiss warnings from MeteoAlarm: one answer serves every Swiss club for a few minutes.
+_swiss_alerts: tuple[float, list[meteoalarm.Alert]] | None = None
 # The last good reading and history per station (water_stations.Station.key), kept between runs by the
 # publishing job, so one failed fetch does not blank the water temperature.
 _last_water: dict[str, tuple[gkd.WaterTemperature, list[gkd.WaterTemperature]]] = {}
@@ -321,11 +326,17 @@ async def _local_warnings(
 ) -> tuple[list[dwd_warnings.Warning], dict[str, dwd_warnings.EnglishText]]:
     """The weather warnings for the club's place from its country's service, with
     English texts where that service sends them (DWD's are looked up later)."""
+    global _swiss_alerts
     p = club.launch_point
+    if club.country not in CHECKED_COUNTRIES:
+        return [], {}
     if club.country == "at":
         return await geosphere_warnings.fetch(client, p.lon, p.lat)
-    if club.country != "de":
-        return [], {}
+    if club.country == "ch":
+        if _swiss_alerts is None or time.monotonic() - _swiss_alerts[0] > WARNINGS_CACHE_SECONDS:
+            _swiss_alerts = (time.monotonic(), await meteoalarm.fetch(client, _now()))
+        found = meteoalarm.for_point(_swiss_alerts[1], p.lon, p.lat)
+        return [a.warning for a in found], {a.warning.identifier: a.english for a in found if a.english}
     local = _primed_local_warnings.get(club.id)
     if local is None:
         local = await dwd_warnings.fetch_local_warnings(client, p.lon, p.lat)
