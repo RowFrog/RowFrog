@@ -156,6 +156,7 @@ final class AppSettings {
         static let developer = "RWDeveloperOptions"
         static let pickedModels = "RWPickedModels"
         static let pageLayout = "RWPageLayout"
+        static let pageLayoutVersion = "RWPageLayoutVersion"
         static let clubPageLayouts = "RWClubPageLayouts"
         static let widgetBackground = "RWWidgetBackground"
         static let clubWidgetBackgrounds = "RWWidgetBackgroundClubs"
@@ -231,6 +232,20 @@ final class AppSettings {
             ?? .standard
         clubPageLayouts = defaults.data(forKey: Keys.clubPageLayouts).flatMap { try? JSONDecoder().decode([String: PageLayout].self, from: $0) } ?? [:]
         saveMobileData = defaults.bool(forKey: Keys.saveMobileData)
+        // Orders saved before the current conditions moved above the rain radar
+        // (Oct 2026) kept the radar on top; they take the new place once.
+        if defaults.integer(forKey: Keys.pageLayoutVersion) < 2 {
+            // Saved here as well, in case the observers stay quiet inside init.
+            pageLayout = pageLayout.conditionsBeforeRadar
+            clubPageLayouts = clubPageLayouts.mapValues(\.conditionsBeforeRadar)
+            if defaults.object(forKey: Keys.pageLayout) != nil {
+                defaults.set(try? JSONEncoder().encode(pageLayout), forKey: Keys.pageLayout)
+            }
+            if !clubPageLayouts.isEmpty {
+                defaults.set(try? JSONEncoder().encode(clubPageLayouts), forKey: Keys.clubPageLayouts)
+            }
+            defaults.set(2, forKey: Keys.pageLayoutVersion)
+        }
     }
 
     /// The language the app shows: the chosen one, or the phone's when it is German.
@@ -618,6 +633,16 @@ struct PageLayout: Codable, Hashable {
     }
 
     private enum CodingKeys: String, CodingKey { case order, hidden }
+
+    /// The same order with the current conditions just above the rain radar
+    /// when the radar came first.
+    var conditionsBeforeRadar: PageLayout {
+        guard let radar = order.firstIndex(of: .radar), let conditions = order.firstIndex(of: .conditions), radar < conditions else { return self }
+        var order = order
+        order.remove(at: conditions)
+        order.insert(.conditions, at: radar)
+        return PageLayout(order: order, hidden: hidden)
+    }
 
     var visible: [PageCard] { order.filter { !hidden.contains($0) } }
 }
