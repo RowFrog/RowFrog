@@ -1,6 +1,6 @@
-# Model check, 2026-10-26 05:15 UTC
+# Model check, 2026-10-26 07:08 UTC
 
-17 forecast runs stored (2026-10-23T20:00Z to 2026-10-26T05:00Z).
+18 forecast runs stored (2026-10-23T20:00Z to 2026-10-26T07:00Z).
 Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.
 "Light wrong" = how often wind and gusts alone would have given a different rowing light than measured.
 Stations are on land, where wind is usually weaker than on the lake, so the ranking matters more than the numbers.
@@ -49,25 +49,6 @@ Stations are on land, where wind is usually weaker than on the lake, so the rank
 | dmi_harmonie_arome_europe | 14385 | 1.1 | +0.3 | 1.8 | 1.3 | 10 % |
 | geosphere_arome_austria | 14385 | 1.1 | +0.4 | 1.6 | 1.7 | 10 % |
 | meteoswiss_icon_ch1 | 14385 | 1.1 | +0.5 | 1.9 | 1.6 | 11 % |
-
-## Once a day instead of twice?
-
-Day 1 over all points, from the two scheduled runs (04:40 and 16:40 UTC) and from the 04:40 run alone.
-
-| Model | Hours, twice | Hours, once | Wind error, twice | Wind error, once | Light wrong, twice | Light wrong, once |
-| --- | --- | --- | --- | --- | --- | --- |
-| icon_eu | 1780 | 200 | 2.03 | 2.34 | 39 % | 54 % |
-| best_match | 1780 | 200 | 2.14 | 2.55 | 38 % | 50 % |
-| icon_d2 | 1780 | 200 | 2.14 | 2.55 | 38 % | 50 % |
-| ecmwf_aifs025_single | 1780 | 200 | 2.17 | 2.46 | – | – |
-| knmi_harmonie_arome_europe | 1780 | 200 | 2.34 | 2.66 | 42 % | 53 % |
-| ecmwf_ifs025 | 1780 | 200 | 2.37 | 2.74 | 47 % | 66 % |
-| dmi_harmonie_arome_europe | 1780 | 200 | 2.38 | 2.74 | 47 % | 59 % |
-| meteoswiss_icon_ch2 | 1780 | 200 | 2.56 | 2.88 | 45 % | 64 % |
-| meteoswiss_icon_ch1 | 1780 | 200 | 2.78 | 3.21 | 47 % | 66 % |
-| geosphere_arome_austria | 1780 | 200 | 2.86 | 3.27 | 44 % | 60 % |
-
-Same order of the models with one run a day: **no** (twice: icon_eu, best_match, icon_d2; once: icon_eu, ecmwf_aifs025_single, best_match).
 
 ## icon_d2 vs best_match
 
