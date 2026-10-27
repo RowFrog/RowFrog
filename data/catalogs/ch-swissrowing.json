@@ -901,9 +901,9 @@
       "country": "ch",
       "lakeId": "murtensee",
       "launchPoint": {
-        "lat": 46.93863,
-        "lon": 7.13059,
-        "precision": "geocoded club address (town level); on the Murtensee (checked by hand)",
+        "lat": 46.94014,
+        "lon": 7.12903,
+        "precision": "shore of the Murtensee nearest the town-level address, 205 m away (water checked by hand)",
         "verified": false
       }
     },

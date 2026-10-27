@@ -291,9 +291,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23567,
-        "lon": 16.43218,
-        "precision": "way/226565647 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
+        "lat": 48.23544,
+        "lon": 16.43163,
+        "precision": "shore of the Alte Donau nearest the town-level address, 48 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -307,9 +307,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23725,
-        "lon": 16.4307,
-        "precision": "way/226565646 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
+        "lat": 48.23708,
+        "lon": 16.43033,
+        "precision": "shore of the Alte Donau nearest the town-level address, 33 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -323,9 +323,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.2333,
-        "lon": 16.43352,
-        "precision": "way/236617895 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
+        "lat": 48.23309,
+        "lon": 16.43284,
+        "precision": "shore of the Alte Donau nearest the town-level address, 55 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -675,9 +675,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23649,
-        "lon": 16.43128,
-        "precision": "way/226565648 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
+        "lat": 48.23634,
+        "lon": 16.43085,
+        "precision": "shore of the Alte Donau nearest the town-level address, 36 m away (water checked by hand)",
         "verified": false
       }
     },

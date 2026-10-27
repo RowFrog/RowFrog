@@ -351,9 +351,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23299,
-        "lon": 16.43347,
-        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
+        "lat": 48.23285,
+        "lon": 16.43301,
+        "precision": "shore of the Alte Donau nearest the town-level address, 38 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -441,9 +441,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.2385,
-        "lon": 16.43013,
-        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
+        "lat": 48.2382,
+        "lon": 16.42945,
+        "precision": "shore of the Alte Donau nearest the town-level address, 61 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -531,9 +531,9 @@
       "country": "at",
       "lakeId": "neusiedler-see",
       "launchPoint": {
-        "lat": 47.94635,
-        "lon": 16.73253,
-        "precision": "geocoded club address (town level); on the Neusiedler See (checked by hand)",
+        "lat": 47.92063,
+        "lon": 16.7599,
+        "precision": "shore of the Neusiedler See nearest the town-level address, 3512 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -639,9 +639,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23325,
-        "lon": 16.43337,
-        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
+        "lat": 48.23309,
+        "lon": 16.43284,
+        "precision": "shore of the Alte Donau nearest the town-level address, 43 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -711,9 +711,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.22946,
-        "lon": 16.43038,
-        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
+        "lat": 48.23005,
+        "lon": 16.42783,
+        "precision": "shore of the Alte Donau nearest the town-level address, 199 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -1053,9 +1053,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23499,
-        "lon": 16.43292,
-        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
+        "lat": 48.23483,
+        "lon": 16.43202,
+        "precision": "shore of the Alte Donau nearest the town-level address, 69 m away (water checked by hand)",
         "verified": false
       }
     },

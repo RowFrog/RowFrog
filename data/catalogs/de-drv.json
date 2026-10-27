@@ -3413,9 +3413,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.33312,
-        "lon": 6.56233,
-        "precision": "geocoded club address (town level); on the Rhein (checked by hand)",
+        "lat": 51.34571,
+        "lon": 6.67155,
+        "precision": "shore of the Rhein near Krefeld-Uerdingen, 1275 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7308,9 +7308,9 @@
       "country": "de",
       "lakeId": "ribnitzer-see",
       "launchPoint": {
-        "lat": 54.24736,
-        "lon": 12.46086,
-        "precision": "geocoded boathouse (town level); on the Ribnitzer See (checked by hand)",
+        "lat": 54.24805,
+        "lon": 12.45991,
+        "precision": "shore of the Ribnitzer See nearest the town-level address, 98 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11316,9 +11316,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 48.84825,
-        "lon": 10.95049,
-        "precision": "geocoded boathouse (street level); on the Rhein (checked by hand)",
+        "lat": 51.0985,
+        "lon": 6.87967,
+        "precision": "shore of the Rhein near Monheim am Rhein (the import placed it in Monheim, Bavaria), 1130 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14055,9 +14055,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.03922,
-        "lon": 7.94145,
-        "precision": "geocoded boathouse (town level); on the Rhein (checked by hand)",
+        "lat": 49.97915,
+        "lon": 7.96988,
+        "precision": "shore of the Rhein near Geisenheim, 614 m away (water checked by hand)",
         "verified": false
       }
     },
