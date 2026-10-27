@@ -13,6 +13,10 @@ struct SatellitePicture: Decodable, Hashable {
         let lakeCloud: Double
         /// File name beside the description, e.g. "satellite-latest.jpg".
         let image: String
+        /// Big lakes in use: the folder of this pass's 10 m tiles ("<row>-<col>.jpg").
+        var tiles: String?
+        /// The three biggest lakes: a 2500 px picture for the full view, before the tiles.
+        var overview: String?
 
         var day: Date? { SatellitePicture.parser.date(from: date) }
     }
@@ -27,6 +31,23 @@ struct SatellitePicture: Decodable, Hashable {
         let image: String
     }
 
+    /// Big lakes in use: the picture at Sentinel-2's own 10 m, as tiles over
+    /// the same box, `tile` pixels square (smaller along the right and bottom).
+    struct Sharp: Decodable, Hashable {
+        let width: Int
+        let height: Int
+        let tile: Int
+        let rows: Int
+        let columns: Int
+
+        /// Where tile (row, column) lies in a picture of `size`.
+        func rect(row: Int, column: Int, in size: CGSize) -> CGRect {
+            let x0 = CGFloat(column * tile) / CGFloat(width), x1 = CGFloat(min(width, (column + 1) * tile)) / CGFloat(width)
+            let y0 = CGFloat(row * tile) / CGFloat(height), y1 = CGFloat(min(height, (row + 1) * tile)) / CGFloat(height)
+            return CGRect(x: x0 * size.width, y: y0 * size.height, width: (x1 - x0) * size.width, height: (y1 - y0) * size.height)
+        }
+    }
+
     /// The area both pictures show: west, south, east, north.
     var bbox: [Double]?
     var width: Int?
@@ -39,6 +60,7 @@ struct SatellitePicture: Decodable, Hashable {
     var clearest: Shot?
     var ice: IceMap?
     var attribution: String?
+    var sharp: Sharp?
 
     var aspectRatio: CGFloat {
         guard let width, let height, width > 0, height > 0 else { return 1.6 }
@@ -128,6 +150,45 @@ final class SatellitePictureStore {
     /// Lakes whose pictures the user asked for while the app saves data.
     private(set) var allowedLakes: Set<String> = []
 
+    /// Decoded tiles, which take 4 MB each: only as many as the cache holds,
+    /// so panning around Bodensee doesn't fill the memory.
+    private let tiles: NSCache<NSURL, UIImage> = {
+        let cache = NSCache<NSURL, UIImage>()
+        cache.totalCostLimit = 96 << 20
+        return cache
+    }()
+    private var tileLoads: [URL: Task<UIImage?, Never>] = [:]
+
+    /// A tile's address.
+    func tileURL(_ lakeID: String, shot: SatellitePicture.Shot, row: Int, column: Int) -> URL? {
+        guard let folder = shot.tiles else { return nil }
+        return url(lakeID, file: "\(folder)/\(row)-\(column).jpg", date: shot.date)
+    }
+
+    /// A 10 m tile, from memory, the cache folder or the server, decoded for drawing.
+    func tile(_ url: URL) async -> UIImage? {
+        if let image = tiles.object(forKey: url as NSURL) { return image }
+        if let load = tileLoads[url] { return await load.value }
+        let file = Self.cacheFile(for: url)
+        let load = Task<UIImage?, Never> {
+            var data = try? Data(contentsOf: file)
+            if data == nil, let (fetched, response) = try? await URLSession.shared.data(from: url),
+               (response as? HTTPURLResponse)?.statusCode == 200 {
+                Self.store(fetched, at: file)
+                data = fetched
+            }
+            guard let data, let image = UIImage(data: data) else { return nil }
+            return await image.byPreparingForDisplay() ?? image
+        }
+        tileLoads[url] = load
+        let image = await load.value
+        tileLoads[url] = nil
+        if let image {
+            tiles.setObject(image, forKey: url as NSURL, cost: Int(image.size.width * image.size.height * image.scale * image.scale * 4))
+        }
+        return image
+    }
+
     /// Whether a picture may come from the server: always, unless the app saves
     /// data (DataSaver) and the user has not tapped to load this lake's pictures.
     func mayDownload(_ lakeID: String) -> Bool {
@@ -191,10 +252,12 @@ final class SatellitePictureStore {
         return nil
     }
 
-    /// Caches/Satellite/<lake>-<file>-<day>; the system may clear it when space runs low.
+    /// Caches/Satellite/<lake>-<file>-<day>, a tile's as <lake>-<folder>-<row>-<col>.jpg-<day>;
+    /// the system may clear it when space runs low.
     private static func cacheFile(for url: URL) -> URL {
         let folder = URL.cachesDirectory.appending(path: "Satellite", directoryHint: .isDirectory)
-        let parts = url.pathComponents.suffix(2).joined(separator: "-")
+        let path = url.pathComponents
+        let parts = path[((path.lastIndex(of: "lakes") ?? path.count - 3) + 1)...].joined(separator: "-")
         let day = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first?.value ?? ""
         return folder.appending(path: "\(parts)-\(day)")
     }
@@ -505,6 +568,8 @@ struct SatelliteImage: View {
     var clubID: String?
     /// The full view draws shore, routes, clubs and wind on the screen above the zoomed picture.
     var marksOnScreen = false
+    /// The full view's zoom, for the 10 m tiles of big lakes.
+    var zoom: ZoomTracker?
     @MainActor private var store: SatellitePictureStore { .shared }
     @MainActor private var layers: SatelliteLayers { .shared }
 
@@ -530,6 +595,7 @@ struct SatelliteImage: View {
             }
         }
         .aspectRatio(picture.aspectRatio, contentMode: .fit)
+        .overlay { sharpOverlay }
         .overlay { iceOverlay }
         .overlay {
             if !marksOnScreen {
@@ -537,6 +603,26 @@ struct SatelliteImage: View {
             }
         }
         .frame(maxWidth: .infinity)
+    }
+
+    /// Full view only: the overview (the three biggest lakes), then the 10 m tiles
+    /// in sight once zoomed in further than the picture below them is sharp.
+    @ViewBuilder
+    private var sharpOverlay: some View {
+        if marksOnScreen, let zoom, let sharp = picture.sharp, shot.tiles != nil {
+            ZStack {
+                if let overview = shot.overview {
+                    CachedSatelliteImage(url: store.url(lakeID, file: overview, date: shot.date)) { image in
+                        if let image { Image(uiImage: image).resizable() }
+                    }
+                }
+                // The overview is 2500 px on its longer side, the card's picture `width` wide.
+                let overviewWidth = CGFloat(sharp.width) * 2500 / CGFloat(max(sharp.width, sharp.height, 1))
+                SharpTiles(lakeID: lakeID, shot: shot, sharp: sharp, zoom: zoom,
+                           below: shot.overview == nil ? CGFloat(picture.width ?? 0) : overviewWidth)
+            }
+            .allowsHitTesting(false)
+        }
     }
 
     @ViewBuilder
@@ -761,6 +847,13 @@ enum SatelliteWind {
 final class ZoomTracker {
     var scale: CGFloat = 1
     var offset: CGPoint = .zero
+    /// The scroll view's size on screen.
+    var viewSize: CGSize = .zero
+
+    /// The part of the content in sight, in the content's own points.
+    var visible: CGRect {
+        CGRect(x: offset.x / scale, y: offset.y / scale, width: viewSize.width / scale, height: viewSize.height / scale)
+    }
 }
 
 /// The picture on its own, filling the screen, with pinch to zoom, drag to
@@ -772,6 +865,7 @@ struct SatellitePictureScreen: View {
     var clubID: String?
     @State private var zoom = ZoomTracker()
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.displayScale) private var displayScale
     @MainActor private var layers: SatelliteLayers { .shared }
 
     var body: some View {
@@ -786,8 +880,8 @@ struct SatellitePictureScreen: View {
                     let fit = min(geo.size.width, geo.size.height * picture.aspectRatio)
                     if let shot = picture.shot(kind) {
                         let size = CGSize(width: fit, height: fit / picture.aspectRatio)
-                        ZoomableView(size: size, focus: focus(in: size), tracker: zoom) {
-                            SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID, marksOnScreen: true)
+                        ZoomableView(size: size, focus: focus(in: size), tracker: zoom, maxZoom: maxZoom(fit: fit)) {
+                            SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID, marksOnScreen: true, zoom: zoom)
                                 .frame(width: fit, height: fit / picture.aspectRatio)
                         }
                         // No .id(kind): switching pictures keeps the zoom and position.
@@ -820,6 +914,24 @@ struct SatellitePictureScreen: View {
         }
         // Opening the full view asks for the pictures, also when saving data.
         .onAppear { SatellitePictureStore.shared.allowDownloads(lakeID) }
+        // Lakes up to about 37 km load all their tiles at once, so zooming in is
+        // sharp straight away; the three biggest only the tiles in sight (SharpTiles).
+        .task(id: kind) {
+            guard let sharp = picture.sharp, let shot = picture.shot(kind), shot.overview == nil else { return }
+            for row in 0..<sharp.rows {
+                for column in 0..<sharp.columns {
+                    if let url = SatellitePictureStore.shared.tileURL(lakeID, shot: shot, row: row, column: column) {
+                        _ = await SatellitePictureStore.shared.tile(url)
+                    }
+                }
+            }
+        }
+    }
+
+    /// Big lakes with 10 m tiles zoom until a tile pixel is two screen pixels.
+    private func maxZoom(fit: CGFloat) -> CGFloat {
+        guard let sharp = picture.sharp, picture.shot(kind)?.tiles != nil, fit > 0 else { return 6 }
+        return max(6, CGFloat(sharp.width) / (fit * displayScale) * 2)
     }
 
     /// Where the picture opens: the saved routes on this lake, all of them in
@@ -836,6 +948,63 @@ struct SatellitePictureScreen: View {
         }
         let club = LakeViewStore.shared.views[lakeID]?.clubs.first { $0.id == clubID }
         return .fillWidth(around: club.map { point($0.launchPoint.lon, $0.launchPoint.lat) })
+    }
+}
+
+/// The 10 m tiles in sight, once the picture is zoomed in further than the one
+/// below them (`below`, its width in pixels) is sharp.
+struct SharpTiles: View {
+    let lakeID: String
+    let shot: SatellitePicture.Shot
+    let sharp: SatellitePicture.Sharp
+    let zoom: ZoomTracker
+    let below: CGFloat
+    @Environment(\.displayScale) private var displayScale
+
+    var body: some View {
+        GeometryReader { geo in
+            let size = geo.size
+            if size.width * zoom.scale * displayScale > below * 1.1 {
+                // A little beyond the screen, so tiles are there before they come into sight.
+                let visible = zoom.visible.insetBy(dx: -size.width * 0.05, dy: -size.height * 0.05)
+                ForEach(cells(in: visible, size: size), id: \.self) { cell in
+                    let rect = sharp.rect(row: cell[0], column: cell[1], in: size)
+                    SharpTile(url: SatellitePictureStore.shared.tileURL(lakeID, shot: shot, row: cell[0], column: cell[1]))
+                        .frame(width: rect.width, height: rect.height)
+                        .position(x: rect.midX, y: rect.midY)
+                }
+            }
+        }
+    }
+
+    private func cells(in visible: CGRect, size: CGSize) -> [[Int]] {
+        var out: [[Int]] = []
+        for row in 0..<sharp.rows {
+            for column in 0..<sharp.columns where sharp.rect(row: row, column: column, in: size).intersects(visible) {
+                out.append([row, column])
+            }
+        }
+        return out
+    }
+}
+
+/// One tile; clear until it has loaded, so the picture below shows meanwhile.
+struct SharpTile: View {
+    let url: URL?
+    @State private var image: UIImage?
+
+    var body: some View {
+        Group {
+            if let image {
+                Image(uiImage: image).resizable()
+            } else {
+                Color.clear
+            }
+        }
+        .task(id: url) {
+            image = nil
+            if let url { image = await SatellitePictureStore.shared.tile(url) }
+        }
     }
 }
 
@@ -863,6 +1032,8 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
     var focus: ZoomFocus?
     /// Told the zoom and position after every move, for layers drawn above.
     var tracker: ZoomTracker?
+    /// How close the picture may be zoomed: 6 times, more for the 10 m tiles of big lakes.
+    var maxZoom: CGFloat = 6
     @ViewBuilder let content: Content
 
     func makeUIView(context: Context) -> UIScrollView {
@@ -893,6 +1064,7 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
         context.coordinator.host.rootView = AnyView(content)
         context.coordinator.focus = focus
         context.coordinator.tracker = tracker
+        if scroll.maximumZoomScale != maxZoom { scroll.maximumZoomScale = maxZoom }
         if context.coordinator.size != size {
             let old = context.coordinator.size, zoom = scroll.zoomScale
             // The part of the picture in the middle of the screen, as a share of it.
@@ -941,6 +1113,7 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
 
         func laidOut(_ scroll: UIScrollView) {
             guard scroll.bounds.width > 0, scroll.bounds.height > 0 else { return }
+            report(scroll)
             if scroll.bounds.size != bounds {
                 bounds = scroll.bounds.size
                 // Until the user moves or zooms, a new size opens on the focus again.
@@ -994,6 +1167,7 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
             guard let tracker else { return }
             if tracker.scale != scroll.zoomScale { tracker.scale = scroll.zoomScale }
             if tracker.offset != scroll.contentOffset { tracker.offset = scroll.contentOffset }
+            if tracker.viewSize != scroll.bounds.size { tracker.viewSize = scroll.bounds.size }
         }
 
         /// Keeps the picture in the middle while it is smaller than the screen.

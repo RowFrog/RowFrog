@@ -237,4 +237,26 @@ final class ModelDecodingTests: XCTestCase {
         """
         XCTAssertFalse(try APIClient.decoder.decode(SatellitePicture.self, from: Data(one.utf8)).hasChoice)
     }
+
+    func testDecodesSharpTilesAndPlacesThem() throws {
+        let json = """
+        {"bbox": [9.0, 47.4, 9.8, 47.8], "width": 1280, "height": 716,
+         "sharp": {"width": 2500, "height": 1100, "tile": 1024, "rows": 2, "columns": 3},
+         "latest": {"date": "2026-10-21", "lakeCloud": 0.1, "image": "satellite-latest.jpg",
+                    "tiles": "satellite-latest-tiles", "overview": "satellite-latest-overview.jpg"},
+         "clearest": {"date": "2026-10-12", "lakeCloud": 0.0, "image": "satellite-clearest.jpg"}}
+        """
+        let picture = try APIClient.decoder.decode(SatellitePicture.self, from: Data(json.utf8))
+        XCTAssertEqual(picture.latest?.tiles, "satellite-latest-tiles")
+        XCTAssertEqual(picture.latest?.overview, "satellite-latest-overview.jpg")
+        XCTAssertNil(picture.clearest?.tiles)
+        let sharp = try XCTUnwrap(picture.sharp)
+        let size = CGSize(width: 250, height: 110)
+        XCTAssertEqual(sharp.rect(row: 0, column: 0, in: size), CGRect(x: 0, y: 0, width: 102.4, height: 102.4))
+        // The last tile is cut off at the picture's right and bottom edges.
+        let last = sharp.rect(row: 1, column: 2, in: size)
+        XCTAssertEqual(last.maxX, 250, accuracy: 0.001)
+        XCTAssertEqual(last.maxY, 110, accuracy: 0.001)
+        XCTAssertEqual(last.minX, 204.8, accuracy: 0.001)
+    }
 }
