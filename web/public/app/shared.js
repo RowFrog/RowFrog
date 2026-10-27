@@ -158,6 +158,27 @@ export async function findClub(id) {
   return null;
 }
 
+/**
+ * The saved clubs brought up to date with the catalog, as the app looks each
+ * one up by id (LocationStore.lake(of:)): a club moved to the water it rows
+ * on, or renamed, shows its new water and name. True when something changed.
+ */
+export async function refreshSavedClubs() {
+  const lakes = await loadCatalog().catch(() => null);
+  if (!lakes) return false;
+  const fresh = new Map();
+  for (const lake of lakes) for (const club of lake.clubs) fresh.set(club.id, savedClub(club, lake));
+  let changed = false;
+  const clubs = store.clubs.map((club) => {
+    const now = fresh.get(club.id);
+    if (!now || Object.keys(now).every((k) => JSON.stringify(now[k]) === JSON.stringify(club[k]))) return club;
+    changed = true;
+    return { ...club, ...now };
+  });
+  if (changed) store.clubs = clubs;
+  return changed;
+}
+
 export const forecasts = new Map();
 
 export async function loadForecast(id, fresh = false) {
