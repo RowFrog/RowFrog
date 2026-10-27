@@ -211,7 +211,9 @@ struct RootView: View {
         do {
             if let countries = try? await api.countries(), !countries.isEmpty {
                 locations.setCountries(countries)
-                for code in locations.countriesToLoad(near: KnownLocation.coordinate) {
+                // Screenshot hook `-RWOpenClub` may name a club abroad: then every country loads.
+                let all = UserDefaults.standard.string(forKey: "RWOpenClub") != nil
+                for code in all ? countries.map(\.code) : locations.countriesToLoad(near: KnownLocation.coordinate) {
                     locations.addCountry(code, lakes: try await api.lakes(country: code))
                 }
             } else {

@@ -155,7 +155,7 @@ struct Reason: Codable, Hashable {
         case "lake_strong_wind": tr("DWD strong-wind warning")
         case "single_cold": tr("Single in cold water")
         case "freezing_water": tr("Near-freezing water")
-        case "weather_warning": tr("Official weather warning")
+        case "weather_warning": tr("Weather warning")
         case "wind": tr("Wind")
         case "gusts": tr("Gusts")
         case "waves": tr("Waves")

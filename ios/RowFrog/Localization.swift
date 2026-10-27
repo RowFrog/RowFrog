@@ -60,7 +60,6 @@ enum German {
         "Row with care": "Mit Vorsicht rudern",
         "Stay ashore": "An Land bleiben",
         "DWD lake warning": "DWD-Seewarnung",
-        "Official weather warning": "Amtliche Wetterwarnung",
         "Wind": "Wind",
         "Gusts": "Böen",
         "Waves": "Wellen",
