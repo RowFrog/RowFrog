@@ -10,7 +10,7 @@ import { tip } from "./tour.js";
 import { hourIndex, gridEdges, coldShore } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote, kitBadge, COLD_SHORE } from "./lakeview.js";
 import { loadLandWind, landWind } from "./weathermap.js";
-import { SPACING, ASHORE_OPACITY, BLEND_M, arrowLength, arrowLines, windArrows } from "./windarrows.js";
+import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows } from "./windarrows.js";
 
 /** What can be drawn over the picture: shore, clubs and routes, then as on the lake view; ice last. */
 const LAYERS = [
@@ -37,6 +37,7 @@ const redraws = new Set();
 
 function switchLayer(id) {
   store.satLayers = toggleLayer(store.satLayers, id);
+  for (const badge of document.querySelectorAll(".sat-kit")) badge.style.display = shoreOn() ? "" : "none";
   for (const f of redraws) f();
 }
 
@@ -90,8 +91,10 @@ function wireControls(el, lake, setKind) {
 /** The picture with an empty layer for the overlay, which is drawn once its size is known. */
 const pictureHtml = (lake, shot) => `<img src="${fileUrl(lake, shot.image)}" alt="${h(t("Satellite picture of the lake"))}" draggable="false"><div class="sat-over"></div>`;
 
-/** The lake view's life-jacket badge in the picture's corner while the water is cold, as on the lake map (SatelliteColdBadge). */
-const coldBadge = (lake) => (lake.view ? kitBadge(lake.view).replace('class="kit"', 'class="kit sat-kit"') : "");
+/** The lake view's life-jacket badge in the picture's corner while the water is cold, as on the lake map
+ * (SatelliteColdBadge); it explains the blue shore, so it shows only with the shore line. */
+const coldBadge = (lake) => (lake.view ? kitBadge(lake.view).replace('class="kit"', `class="kit sat-kit"${shoreOn() ? "" : ' style="display:none"'}`) : "");
+const shoreOn = () => store.satLayers.includes("shore");
 
 /** The cold water's shore colour, if the water is cold (the lake view's blue shore). */
 const shoreCold = (view) => (view ? coldShore(view.shoreWaterC, mapLimits()) : null);
@@ -275,7 +278,7 @@ function rasterUrl(view, hour, fill) {
  * The wind arrows as on the lake map: an even grid over the whole picture,
  * more arrows as it zooms in, the same size on screen. On the water the wind
  * is worked out between the lake's forecast points, on land it is the weather
- * map's, drawn fainter. The arrow nearest each forecast point carries its
+ * map's. The arrow nearest each forecast point carries its
  * speed (SatelliteWind). The picture is `size` at zoom 1, its corner at
  * `offset` on a screen of `visible`.
  */
@@ -304,7 +307,7 @@ function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt]) {
     const d = arrows.filter((a) => a.ashore === ashore)
       .flatMap((a) => arrowLines(...screen(a.x, a.y), a.towardDeg, arrowLength(a.speedMs)))
       .map(([from, to]) => `M${f(from[0])} ${f(from[1])}L${f(to[0])} ${f(to[1])}`).join("");
-    if (d) out.push(`<g fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="${ashore ? ASHORE_OPACITY : 1}"><path d="${d}" stroke="rgba(0,0,0,.6)" stroke-width="3.5"/><path d="${d}" stroke="#fff" stroke-width="2"/></g>`);
+    if (d) out.push(`<g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${d}" stroke="rgba(0,0,0,.6)" stroke-width="3.5"/><path d="${d}" stroke="#fff" stroke-width="2"/></g>`);
   }
   // Each forecast point's speed, at the tail of the arrow nearest it.
   const labels = samples.flatMap((s) => {
@@ -382,7 +385,7 @@ function legend(lake) {
   if (on.has("light")) body += `<h3>${h(t("Rowing light"))}</h3>${layerLegend("light")}${mapBoatNote()}`;
   if (on.has("waves")) body += `<h3>${h(t("Waves"))}</h3>${layerLegend("waves")}`;
   if (on.has("wind")) {
-    body += `<h3>${h(t("Wind"))}</h3><ul class="legend">${row(icon("arrow-up"), t("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land show the weather map's wind forecast for each place."))}</ul>`;
+    body += `<h3>${h(t("Wind"))}</h3><ul class="legend">${row(icon("arrow-up"), t("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. On land the arrows show the weather map's wind forecast for each place."))}</ul>`;
   }
   if (on.has("ice")) {
     body += `<h3>${h(t("Ice map"))}</h3><ul class="legend">

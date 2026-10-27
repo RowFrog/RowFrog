@@ -1720,8 +1720,8 @@ final class LakeRenderer: MKOverlayRenderer {
         // to the map so the tiles agree; the grid gets finer as the map zooms in.
         // On land the wind is the wind map's own forecast, faded in from the
         // lake's over the first kilometre.
-        // Dark arrows with a light edge read on light and dark maps alike;
-        // those on land are fainter. Colours stay on the water.
+        // Dark arrows with a light edge read on light and dark maps alike,
+        // on land as on the water. Colours stay on the water.
         let margin = Double(WindArrows.length(15) / zoomScale)
         let area = mapRect.insetBy(dx: -margin, dy: -margin)
         var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
@@ -1733,23 +1733,17 @@ final class LakeRenderer: MKOverlayRenderer {
                                      land: onLand, shore: lake.shore, blend: lake.blend)
         context.setLineCap(.round)
         context.setLineJoin(.round)
-        for ashore in [true, false] {
-            let paths = grid.filter { $0.ashore == ashore }.map {
-                LakeArrow.path(at: point(for: MKMapPoint(x: $0.at.x, y: $0.at.y)), towardDeg: $0.towardDeg,
-                               length: WindArrows.length($0.speedMs) / zoomScale).cgPath
-            }
-            guard !paths.isEmpty else { continue }
-            context.saveGState()
-            context.setAlpha(ashore ? WindArrows.ashoreOpacity : 1)
-            context.beginTransparencyLayer(auxiliaryInfo: nil)
-            for (color, width) in [(UIColor(white: 1, alpha: 0.7), CGFloat(4)), (UIColor(white: 0.1, alpha: 0.75), CGFloat(2))] {
-                paths.forEach { context.addPath($0) }
-                context.setStrokeColor(color.cgColor)
-                context.setLineWidth(width / zoomScale)
-                context.strokePath()
-            }
-            context.endTransparencyLayer()
-            context.restoreGState()
+        // On land as on the water, at full strength.
+        let paths = grid.map {
+            LakeArrow.path(at: point(for: MKMapPoint(x: $0.at.x, y: $0.at.y)), towardDeg: $0.towardDeg,
+                           length: WindArrows.length($0.speedMs) / zoomScale).cgPath
+        }
+        guard !paths.isEmpty else { return }
+        for (color, width) in [(UIColor(white: 1, alpha: 0.7), CGFloat(4)), (UIColor(white: 0.1, alpha: 0.75), CGFloat(2))] {
+            paths.forEach { context.addPath($0) }
+            context.setStrokeColor(color.cgColor)
+            context.setLineWidth(width / zoomScale)
+            context.strokePath()
         }
     }
 }
@@ -1820,7 +1814,7 @@ struct LakeMapLegend: View {
                     }
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. Fainter arrows on land show the weather map's wind forecast for each place."))
+                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. On land the arrows show the weather map's wind forecast for each place."))
                     }
                     if spot { row(Image(systemName: "scope"), tr("The spot you tapped")) }
                 }

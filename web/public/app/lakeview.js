@@ -17,7 +17,7 @@ import {
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips } from "./tour.js";
 import { loadLandWind, landWind } from "./weathermap.js";
-import { SPACING, ASHORE_OPACITY, BLEND_M, arrowLength, arrowLines, windArrows, inside } from "./windarrows.js";
+import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows, inside } from "./windarrows.js";
 
 const views = new Map();
 
@@ -269,8 +269,6 @@ async function buildMap() {
   }).addTo(map);
   const rings = page.view.outline.map((ring) => ring.map(([lon, lat]) => [lat, lon]));
   page.layers.shore = L.polygon(rings, { fill: false, weight: 1, color: "rgba(0, 122, 255, .45)", interactive: false }).addTo(map);
-  // Arrows on land in a pane of their own, drawn fainter as a whole.
-  map.createPane("landArrows").style.opacity = ASHORE_OPACITY;
   page.layers.arrows = L.layerGroup().addTo(map);
   page.layers.route = L.layerGroup().addTo(map);
   page.layers.marks = L.layerGroup().addTo(map);
@@ -369,7 +367,7 @@ function drawOverlay(hour) {
  * Arrows on an even grid over the whole map, finer as the map zooms in, fixed
  * to the map so they stay put while it moves; where the wind blows to, longer
  * in stronger wind. On land the wind is the weather map's own forecast, faded
- * in from the lake's over the first kilometre, and the arrows are fainter.
+ * in from the lake's over the first kilometre.
  */
 function drawArrows() {
   const { L, map, view } = page;
@@ -402,14 +400,11 @@ function drawArrows() {
       return fromLand({ lat: ll.lat, lon: ll.lng });
     }),
   });
-  for (const ashore of [true, false]) {
-    const paths = arrows.filter((a) => a.ashore === ashore)
-      .flatMap((a) => arrowLines(a.x, a.y, a.towardDeg, arrowLength(a.speedMs)).map((line) => line.map(back)));
-    if (!paths.length) continue;
-    const pane = ashore ? "landArrows" : "overlayPane";
-    L.polyline(paths, { pane, color: "rgba(255, 255, 255, .7)", weight: 4, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
-    L.polyline(paths, { pane, color: "rgba(26, 26, 26, .75)", weight: 2, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
-  }
+  // On land as on the water, at full strength.
+  const paths = arrows.flatMap((a) => arrowLines(a.x, a.y, a.towardDeg, arrowLength(a.speedMs)).map((line) => line.map(back)));
+  if (!paths.length) return;
+  L.polyline(paths, { color: "rgba(255, 255, 255, .7)", weight: 4, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
+  L.polyline(paths, { color: "rgba(26, 26, 26, .75)", weight: 2, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
 }
 
 /** Even-odd test against the shore and islands. */
@@ -811,7 +806,7 @@ function legendSheet() {
       ${row(`<span class="club-mark own"></span>`, t("The club of this page"))}
       ${row(`<span class="club-mark"></span>`, t("Other clubs on the lake"))}
       ${cold ? row(`<span class="shore-mark" style="background:${COLD_SHORE[cold]}"></span>`, t("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.", temperature(mapLimits().value("lifeJacket")), temperature(10))) : ""}
-      ${row(icon("arrow-up"), t("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. Fainter arrows on land show the weather map's wind forecast for each place."))}</ul>
+      ${row(icon("arrow-up"), t("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. On land the arrows show the weather map's wind forecast for each place."))}</ul>
     <h3>${h(t("Route"))}</h3><ul class="legend">
       ${row(`<span class="club-mark own"></span>`, t("Start at your club"))}
       ${row(`<span class="turn-mark">1</span>`, t("Turning point: tap to select, hold and drag to move"))}
