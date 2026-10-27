@@ -1,0 +1,27 @@
+name: Water kind check
+
+# Research only: how OpenStreetMap tags each club water (reservoir, lake,
+# river, basin), to see how reservoir clubs are counted
+# (scripts/water_kind_probe.py). Runs when the script changes, or by hand.
+# Nothing is stored.
+
+on:
+  push:
+    paths:
+      - scripts/water_kind_probe.py
+      - .github/workflows/water-kind-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python3 scripts/water_kind_probe.py
