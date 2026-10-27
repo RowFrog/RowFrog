@@ -9,7 +9,9 @@ name: App screenshots
 # They are also attached to the run as the "screenshots" download.
 # Long pages are shot screen by screen (-p1, -p2, ...) down to the bottom.
 # Tutzinger RV gets a made-up lake storm warning, marked SAMPLE in the app,
-# so both warning states show; every other warning is live from DWD.
+# so both warning states show; every other warning is live.
+# Seeclub Zürich and RV Albatros Klagenfurt get a made-up thunderstorm warning
+# from MeteoSwiss and GeoSphere Austria, also marked SAMPLE.
 # The Simssee gets a made-up Landsat reading (RW_SAMPLE_SATELLITE_WATER).
 # The lake view gets a made-up south wind (RW_SAMPLE_LAKE_WIND), marked
 # "Sample wind", so its screens show waves building along the lake.
@@ -59,11 +61,11 @@ jobs:
       - run: pip install -e backend pillow
       - name: Start the backend with live data
         run: |
-          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
           # Warm the forecast and warning caches; Open-Meteo sometimes times out
           # on the first call and DWD's lake areas take a while to download.
-          for club in mrc-1880 mrsv-bayern tutzinger-rv akademischer-ruderclub-wuerzburg; do
+          for club in mrc-1880 mrsv-bayern tutzinger-rv akademischer-ruderclub-wuerzburg seeclub-zuerich ruderverein-albatros-klagenfurt; do
             curl -sS -f -m 200 --retry 3 --retry-all-errors --retry-delay 5 "http://localhost:8000/clubs/$club/forecast" \
               | python3 -c '
           import json, sys
@@ -237,6 +239,14 @@ jobs:
           # The shore warning lights explained, at a club with a lake warning.
           shoot 70-shore-lights light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES
           shoot 70-shore-lights-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES -RWLanguage de
+          # Austria and Switzerland: their own services' warnings (a made-up thunderstorm warning, marked SAMPLE).
+          shoot_pages 220-warnings-zurich light -RWOpenClub seeclub-zuerich
+          shoot_pages 221-warnings-zurich-german-dark dark -RWOpenClub seeclub-zuerich -RWLanguage de
+          shoot_pages 222-warnings-klagenfurt light -RWOpenClub ruderverein-albatros-klagenfurt
+          shoot_pages 223-thunderstorm-zurich light -RWOpenClub seeclub-zuerich -RWOpenCondition thunderstorm
+          shoot_pages 224-thunderstorm-zurich-german-dark dark -RWOpenClub seeclub-zuerich -RWOpenCondition thunderstorm -RWLanguage de
+          shoot_pages 225-widgets-zurich light -RWWidgetGallery YES -RWHomeClub seeclub-zuerich
+          shoot_pages 226-widgets-zurich-german-dark dark -RWWidgetGallery YES -RWHomeClub seeclub-zuerich -RWLanguage de
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES

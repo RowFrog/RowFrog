@@ -192,7 +192,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .moreClubs: tr("Add the other places you row, or skip this and add clubs later in the list.")
         case .rowingLight: tr("Every page starts with the rowing light for the hour ahead.")
         case .conditions: tr("Below the light you find what matters on the water.")
-        case .warnings: tr("Official weather warnings come right under the rowing light: from DWD in Germany, GeoSphere Austria in Austria and MeteoSwiss in Switzerland.")
+        case .warnings: tr("Official warnings come right under the rowing light.")
         case .boats: tr("The rowing light is worked out for one boat. Pick it at the top of the settings.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")
         case .locations: tr("Keep all the places you row in one list.")

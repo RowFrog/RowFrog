@@ -115,7 +115,7 @@ export function openArrange(club, done) {
         <h3 class="section">${h(t("Drag the handles to change the order"))}</h3>
         <ul class="card group arrange-list">
           ${fixedRow(t("Rowing light"), "circle", t("always first"))}
-          ${fixedRow(t("Official warnings"), "triangle-alert", t("right under it, while one is issued"))}
+          ${fixedRow(t("Warnings"), "triangle-alert", t("right under it, while one is issued"))}
           ${shown().map(cardRow).join("")}
         </ul>
         <p class="footer">${h(`${t("Switched-off cards are left out of the page. The forecast source and credits stay at the end.")} ${t("The rain radar card starts switched off: the rain tile in Current conditions shows the radar.")}`)}</p>

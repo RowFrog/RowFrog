@@ -29,7 +29,8 @@ WARNINGS_CACHE_SECONDS = 5 * 60
 LAKE_AREAS_CACHE_SECONDS = 24 * 3600
 # Hours of forecast the app gets, from the current hour.
 FORECAST_HOURS = 48
-# Club ids that get a made-up lake storm warning, marked as a sample, for screenshots.
+# Club ids that get a made-up warning, marked as a sample, for screenshots: a lake storm warning
+# where DWD has a lake area, else a thunderstorm warning from the place's own service.
 SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "").split(",") if c}
 # "from,speed,gusts" (degrees, m/s) replaces the wind in the lake view, marked as a
 # sample, so screenshots show waves building across the lake on a calm day.
@@ -282,6 +283,32 @@ _SAMPLE_ENGLISH = dwd_warnings.EnglishText(
 )
 
 
+def _sample_local_warning(club: locations.Club, now: datetime) -> dwd_warnings.Warning:
+    start = now.replace(minute=0, second=0, microsecond=0)
+    return dwd_warnings.Warning(
+        kind="local",
+        area=club.name,
+        event="GEWITTER",
+        severity="Moderate",
+        headline="Gewitterwarnung",
+        description="Es treten Gewitter mit Starkregen und Sturmböen um 70 km/h auf.",
+        instruction="Gewässer meiden und Schutz in Gebäuden suchen.",
+        onset=start,
+        expires=start + timedelta(hours=3),
+        identifier=f"sample-{club.id}",
+        source=LOCAL_WARNING_SERVICES[club.country][0],
+    )
+
+
+_SAMPLE_LOCAL_ENGLISH = dwd_warnings.EnglishText(
+    event="thunderstorms",
+    headline="Thunderstorm warning",
+    description="Thunderstorms with heavy rain and gusts around 70 km/h.",
+    instruction="Stay off the water and seek shelter in a building.",
+    official=True,
+)
+
+
 async def _english_texts(client: httpx.AsyncClient) -> dict[str, dwd_warnings.EnglishText]:
     """DWD's English warnings, cached like the warnings; empty when they cannot be loaded."""
     global _english
@@ -373,6 +400,11 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         sample = _sample_warning(area.name, now)
         lake.append(sample)
         items.insert(0, _warning_json(sample, _SAMPLE_ENGLISH, sample=True))
+    elif club.id in SAMPLE_WARNING_CLUBS and club.country in CHECKED_COUNTRIES:
+        # Without a DWD lake area (Austria, Switzerland): a made-up thunderstorm warning from the place's own service.
+        sample = _sample_local_warning(club, now)
+        local.append(sample)
+        items.insert(0, _warning_json(sample, _SAMPLE_LOCAL_ENGLISH, sample=True))
     current = [w for w in lake + local if w.expires is None or w.expires > now]
     block = {"status": "ok", "lakeArea": None if area is None else area.name, "items": items, "local": _local_service(club)}
     result = (block, current)

@@ -102,3 +102,16 @@ def test_swiss_club_gets_meteoswiss_warnings_from_one_feed_call(monkeypatch):
     assert w["items"][0]["english"]["headline"] == "Gale force wind"
     assert "Warnings: MeteoSwiss, via MeteoAlarm (EUMETNET)" in body["attribution"]
     assert calls == ["/api/v1/warnings/feeds-switzerland"], "one feed call serves both clubs"
+
+
+def test_sample_warning_club_without_lake_area_gets_a_sample_from_its_own_service(monkeypatch):
+    _fake_weather(monkeypatch)
+    monkeypatch.setattr(api.httpx, "AsyncClient", _serve(lambda request: httpx.Response(200, json={"warnings": [], "features": []})))
+    monkeypatch.setattr(api, "_now", lambda: NOW)
+    monkeypatch.setattr(api, "SAMPLE_WARNING_CLUBS", {"seeclub-zuerich"})
+    _reset()
+    body = TestClient(api.app).get("/clubs/seeclub-zuerich/forecast").json()
+    _reset()
+    [item] = body["warnings"]["items"]
+    assert (item["source"], item["event"], item["sample"]) == ("meteoswiss", "GEWITTER", True)
+    assert "weather_warning" in [r["condition"] for r in body["hours"][0]["reasons"]]

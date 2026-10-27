@@ -317,7 +317,7 @@ export function reasonLabel(reason) {
 export function baseLabel(condition) {
   return {
     lake_warning: t("DWD storm warning"), lake_strong_wind: t("DWD strong-wind warning"), single_cold: t("Single in cold water"),
-    freezing_water: t("Near-freezing water"), weather_warning: t("Official weather warning"), wind: t("Wind"), gusts: t("Gusts"),
+    freezing_water: t("Near-freezing water"), weather_warning: t("Weather warning"), wind: t("Wind"), gusts: t("Gusts"),
     waves: t("Waves"), fog: t("Fog"), heavy_rain: t("Heavy rain"), hail: t("Hail"), thunderstorm: t("Thunderstorm risk"),
     ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunrise / sunset"), cold_water: t("Very cold water"),
     cool_water: t("Cold-water shock possible"),

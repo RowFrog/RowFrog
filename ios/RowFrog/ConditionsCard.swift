@@ -310,7 +310,7 @@ private struct ConditionTile: View {
             return unit + " · " + PressureTrend(change: change).title.lowercased()
         case .thunderstorm:
             guard data.warningsChecked else { return tr("Warnings not checked") }
-            if !data.warningsAreDWD { return data.warnings(["GEWITTER"]).isEmpty ? tr("No official warning") : tr("Official warning") }
+            if !data.warningsAreDWD { return data.warnings(["GEWITTER"]).isEmpty ? tr("No warning") : tr("Official warning") }
             return data.warnings(["GEWITTER"]).isEmpty ? tr("No DWD warning") : tr("DWD warning")
         case .uvIndex:
             guard let top = data.next24.filter({ $0.uvIndex != nil }).max(by: { $0.uvIndex! < $1.uvIndex! }) else { return "" }
