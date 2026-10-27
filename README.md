@@ -105,8 +105,9 @@ the weather. Instead a blue badge says what to bring: "Life jacket" below
 15 °C water, against cold-water shock, and below 10 °C also "partner boat"
 (singles) or "near the shore". Below 10 °C the app's own wind and gust limits
 are 1 m/s lower (your own limits stay as set, with a note), and below 4 °C
-small boats get amber for near-freezing water. Lake maps draw the shore light
-blue below the life-jacket limit and deeper blue below 10 °C.
+small boats get amber for near-freezing water. Lake maps and the satellite
+picture draw the shore light blue below the life-jacket limit and deeper blue
+below 10 °C, and the satellite picture shows the badge too.
 
 **Water temperature.** Each club reads the nearest measuring station on its
 own water, from GKD Bayern, the German federal PEGELONLINE network or the
@@ -231,7 +232,8 @@ one; every picture shows the same area. Chips draw the shore, clubs, saved
 routes, wind and, in winter, the satellite ice map over it. Two more layers
 colour the water with the lake view's wave heights or rowing light for the
 chosen hour, one at a time; a legend explains them. Tap for full screen with
-zoom, opening around the club or all saved routes. Pictures are kept on the
+zoom, opening around the club or all saved routes; zoomed in, it loads
+sharper 10 m tiles for that part of the lake. Pictures are kept on the
 phone, so each pass loads only once.
 
 **Forecast source.** A small line at the end of each club page names the
