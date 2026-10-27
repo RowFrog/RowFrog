@@ -254,6 +254,21 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertTrue(map.isBright(around: CGPoint(x: -0.2, y: 1.3), radius: 0.01))
     }
 
+    func testFrameKeyChangesWithTheFrame() throws {
+        func picture(_ bbox: String, _ width: Int) throws -> SatellitePicture {
+            let json = """
+            {"bbox": [\(bbox)], "width": \(width), "height": 300,
+             "latest": {"date": "2026-10-26", "lakeCloud": 1.0, "image": "satellite-latest.jpg"}}
+            """
+            return try APIClient.decoder.decode(SatellitePicture.self, from: Data(json.utf8))
+        }
+        let wide = try picture("11.48839, 48.22931, 11.54234, 48.25645", 400)
+        XCTAssertEqual(wide.frameKey, try picture("11.48839, 48.22931, 11.54234, 48.25645", 400).frameKey)
+        XCTAssertEqual(wide.frameKey?.count, 8)
+        // The narrower frame from before 4 x 3 km pictures: a different key, so a kept copy isn't reused.
+        XCTAssertNotEqual(wide.frameKey, try picture("11.50000, 48.23500, 11.53000, 48.25000", 220).frameKey)
+    }
+
     func testDecodesSharpTilesAndPlacesThem() throws {
         let json = """
         {"bbox": [9.0, 47.4, 9.8, 47.8], "width": 1280, "height": 716,
