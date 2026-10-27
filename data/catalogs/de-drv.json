@@ -3412,9 +3412,9 @@
       "country": "de",
       "lakeId": "regattabahn",
       "launchPoint": {
-        "lat": 51.40949,
-        "lon": 6.78567,
-        "precision": "on the Regattabahn (checked by hand), first matched to Bertasee",
+        "lat": 51.40974,
+        "lon": 6.78665,
+        "precision": "shore of the Regattabahn nearest the town-level address, 74 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -3587,9 +3587,9 @@
       "country": "de",
       "lakeId": "river-main-donau-kanal",
       "launchPoint": {
-        "lat": 49.58534,
-        "lon": 10.97054,
-        "precision": "on the Main-Donau-Kanal (checked by hand), first matched to Hafen Erlangen",
+        "lat": 49.58533,
+        "lon": 10.97144,
+        "precision": "shore of the Main-Donau-Kanal nearest the town-level address, 65 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -3680,7 +3680,7 @@
       "launchPoint": {
         "lat": 51.39942,
         "lon": 7.00847,
-        "precision": "on the Baldeneysee (checked by hand), first matched to Essen-Werdener Ruder-Club von 1896 e.V.",
+        "precision": "shore of the Baldeneysee nearest the town-level address, 0 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -4275,9 +4275,9 @@
       "country": "de",
       "lakeId": "river-ryck",
       "launchPoint": {
-        "lat": 54.09918,
-        "lon": 13.38057,
-        "precision": "on the Ryck (checked by hand), first matched to Museumshafen",
+        "lat": 54.09905,
+        "lon": 13.38059,
+        "precision": "shore of the Ryck nearest the town-level address, 15 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -4754,9 +4754,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.45523,
-        "lon": 6.71769,
-        "precision": "on the Rhein (checked by hand), first matched to Eisenbahnhafen",
+        "lat": 51.45394,
+        "lon": 6.72233,
+        "precision": "shore of the Rhein nearest the town-level address, 352 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -5798,9 +5798,9 @@
       "country": "de",
       "lakeId": "spandauer-see",
       "launchPoint": {
-        "lat": 52.55234,
-        "lon": 13.23566,
-        "precision": "on the Spandauer See (checked by hand), first matched to Rohrbruchteich",
+        "lat": 52.55339,
+        "lon": 13.22375,
+        "precision": "shore of the Spandauer See nearest the town-level address, 814 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -8374,9 +8374,9 @@
       "country": "de",
       "lakeId": "river-spree",
       "launchPoint": {
-        "lat": 52.16749,
-        "lon": 14.25178,
-        "precision": "on the Spree (checked by hand), first matched to Bahrensdorfer See",
+        "lat": 52.16779,
+        "lon": 14.25153,
+        "precision": "shore of the Spree nearest the town-level address, 38 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9598,9 +9598,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.32095,
-        "lon": 8.44846,
-        "precision": "on the Rhein (checked by hand), first matched to Alter Hafen",
+        "lat": 49.32105,
+        "lon": 8.44989,
+        "precision": "shore of the Rhein nearest the town-level address, 105 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9759,9 +9759,9 @@
       "country": "de",
       "lakeId": "river-teltowkanal",
       "launchPoint": {
-        "lat": 52.45981,
-        "lon": 13.455,
-        "precision": "on the Teltowkanal (checked by hand), first matched to Hafen Britz Ost",
+        "lat": 52.45937,
+        "lon": 13.45484,
+        "precision": "shore of the Teltowkanal nearest the town-level address, 50 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -10025,9 +10025,9 @@
       "country": "de",
       "lakeId": "tegeler-see",
       "launchPoint": {
-        "lat": 52.58397,
-        "lon": 13.27675,
-        "precision": "on the Tegeler See (checked by hand), first matched to Borsighafen",
+        "lat": 52.58402,
+        "lon": 13.2749,
+        "precision": "shore of the Tegeler See nearest the town-level address, 125 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11992,9 +11992,9 @@
       "country": "de",
       "lakeId": "schlei",
       "launchPoint": {
-        "lat": 53.63201,
-        "lon": 10.69924,
-        "precision": "on the Schlei (checked by hand), first matched to Schulsee",
+        "lat": 54.51169,
+        "lon": 9.56183,
+        "precision": "shore of the Schlei near Schleswig (the import placed it at the Schulsee in Mölln), 15 m away (water checked by hand)",
         "verified": false
       }
     },
