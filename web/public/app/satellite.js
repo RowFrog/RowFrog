@@ -60,9 +60,30 @@ function available(lake) {
   });
 }
 
-/** A file's address; the day it shows (as the app's `d`) keeps kept copies and caches from showing an older one under the same name. */
-const fileUrl = (lake, file, date) =>
-  `${API}/lakes/${encodeURIComponent(lake.lakeId)}/${file.split("/").map(encodeURIComponent).join("/")}${date ? `?d=${encodeURIComponent(date)}` : ""}`;
+/**
+ * The picture's frame, short (SatellitePicture.frameKey): it changes when the
+ * frame does (a small water shown wider, a corrected outline), so a copy kept
+ * for the same day but the old frame never shows under the new shore line.
+ */
+export function frameKey(meta) {
+  const { bbox, width, height } = meta ?? {};
+  if (!bbox || width == null || height == null) return null;
+  const text = `${bbox.map((v) => v.toFixed(5)).join(",")}|${width}x${height}`;
+  // FNV-1a, as the app, so both name the same frame alike.
+  let hash = 2166136261;
+  for (const byte of new TextEncoder().encode(text)) hash = Math.imul(hash ^ byte, 16777619) >>> 0;
+  return hash.toString(16).padStart(8, "0");
+}
+
+/** A file's address; the day it shows and the picture's frame (as the app's `d` and `f`) keep kept copies and caches from showing an older one under the same name. */
+function fileUrl(lake, file, date) {
+  const query = new URLSearchParams();
+  if (date) query.set("d", date);
+  const frame = frameKey(lake.meta);
+  if (frame) query.set("f", frame);
+  const search = query.toString();
+  return `${API}/lakes/${encodeURIComponent(lake.lakeId)}/${file.split("/").map(encodeURIComponent).join("/")}${search ? `?${search}` : ""}`;
+}
 
 function caption(lake, shot) {
   const { meta } = lake;
