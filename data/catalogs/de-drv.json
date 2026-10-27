@@ -10093,9 +10093,9 @@
       "country": "de",
       "lakeId": "flensburger-foerde",
       "launchPoint": {
-        "lat": 54.8109,
-        "lon": 9.43186,
-        "precision": "geocoded boathouse (street level); on the Flensburger Förde (checked by hand)",
+        "lat": 54.81092,
+        "lon": 9.43247,
+        "precision": "shore of the Flensburger Förde nearest the town-level address, 39 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -12376,9 +12376,9 @@
       "country": "de",
       "lakeId": "river-suederelbe",
       "launchPoint": {
-        "lat": 53.55017,
-        "lon": 10.00132,
-        "precision": "geocoded boathouse (town level); on the Süderelbe (checked by hand)",
+        "lat": 53.4807,
+        "lon": 9.96721,
+        "precision": "shore of the Süderelbe near Schweensand, Hamburg-Harburg, 794 m away (water checked by hand)",
         "verified": false
       }
     },
