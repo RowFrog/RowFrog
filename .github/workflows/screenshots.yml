@@ -398,6 +398,7 @@ jobs:
           WAIT=30 shoot 134-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
           WAIT=30 shoot 135-lake-legend light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLegend YES
           WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
+          WAIT=30 shoot 244-lake-view-wind-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer wind
           WAIT=30 shoot 137-water-station light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWScrollPage 1
           shoot 138-launch-point-place light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
           # Widget backgrounds (Settings > Widgets), the satellite picture behind a club page,
