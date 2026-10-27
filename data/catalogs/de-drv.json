@@ -4,16 +4,6 @@
   "source": "Club data: Deutscher Ruderverband e.V. (rudern.de). Positions and waters: © OpenStreetMap contributors, ODbL",
   "lakes": [
     {
-      "id": "adolf-mittag-see",
-      "name": "Adolf-Mittag-See",
-      "country": "de",
-      "center": {
-        "lat": 52.1188,
-        "lon": 11.6449
-      },
-      "osm": "relation/87094"
-    },
-    {
       "id": "river-aller",
       "name": "Aller",
       "country": "de",
@@ -32,6 +22,16 @@
         "lon": 10.8188
       },
       "osm": "way/24976381"
+    },
+    {
+      "id": "river-alster",
+      "name": "Alster",
+      "country": "de",
+      "center": {
+        "lat": 53.60269,
+        "lon": 9.99221
+      },
+      "kind": "river"
     },
     {
       "id": "river-alte-donau",
@@ -62,16 +62,6 @@
         "lon": 14.55683
       },
       "kind": "river"
-    },
-    {
-      "id": "alter-hafen",
-      "name": "Alter Hafen",
-      "country": "de",
-      "center": {
-        "lat": 49.3211,
-        "lon": 8.4476
-      },
-      "osm": "way/24708784"
     },
     {
       "id": "altwarmbuechener-see",
@@ -124,16 +114,6 @@
       "kind": "river"
     },
     {
-      "id": "bahrensdorfer-see",
-      "name": "Bahrensdorfer See",
-      "country": "de",
-      "center": {
-        "lat": 52.1671,
-        "lon": 14.2524
-      },
-      "osm": "relation/1402791"
-    },
-    {
       "id": "baldeneysee",
       "name": "Baldeneysee",
       "country": "de",
@@ -142,16 +122,6 @@
         "lon": 7.0401
       },
       "osm": "relation/12686910"
-    },
-    {
-      "id": "bammelsburger-teich",
-      "name": "Bammelsburger Teich",
-      "country": "de",
-      "center": {
-        "lat": 52.2704,
-        "lon": 10.5168
-      },
-      "osm": "way/7970609"
     },
     {
       "id": "river-becken-i",
@@ -194,16 +164,6 @@
       "kind": "river"
     },
     {
-      "id": "bertasee",
-      "name": "Bertasee",
-      "country": "de",
-      "center": {
-        "lat": 51.4086,
-        "lon": 6.7849
-      },
-      "osm": "way/4798813"
-    },
-    {
       "id": "beyenburger-stausee",
       "name": "Beyenburger Stausee",
       "country": "de",
@@ -244,36 +204,6 @@
       "osm": "relation/1156846"
     },
     {
-      "id": "bootsportverein-vilshofen",
-      "name": "Bootsportverein - Vilshofen",
-      "country": "de",
-      "center": {
-        "lat": 48.6381,
-        "lon": 13.1866
-      },
-      "osm": "way/227704881"
-    },
-    {
-      "id": "borsighafen",
-      "name": "Borsighafen",
-      "country": "de",
-      "center": {
-        "lat": 52.5818,
-        "lon": 13.2761
-      },
-      "osm": "way/4796540"
-    },
-    {
-      "id": "bruch",
-      "name": "Bruch",
-      "country": "de",
-      "center": {
-        "lat": 51.3478,
-        "lon": 12.7342
-      },
-      "osm": "way/130164249"
-    },
-    {
       "id": "bugasee",
       "name": "Bugasee",
       "country": "de",
@@ -312,16 +242,6 @@
         "lon": 10.00168
       },
       "kind": "river"
-    },
-    {
-      "id": "die-anger",
-      "name": "Die Anger",
-      "country": "de",
-      "center": {
-        "lat": 51.4093,
-        "lon": 6.8884
-      },
-      "osm": "way/23273808"
     },
     {
       "id": "doktorsee",
@@ -394,16 +314,6 @@
       "osm": "relation/1566191"
     },
     {
-      "id": "eisenbahnhafen",
-      "name": "Eisenbahnhafen",
-      "country": "de",
-      "center": {
-        "lat": 51.4564,
-        "lon": 6.7187
-      },
-      "osm": "way/35587432"
-    },
-    {
       "id": "river-elbe",
       "name": "Elbe",
       "country": "de",
@@ -464,26 +374,6 @@
       "kind": "river"
     },
     {
-      "id": "essen-werdener-ruder-club-von-1896-e-v",
-      "name": "Essen-Werdener Ruder-Club von 1896 e.V.",
-      "country": "de",
-      "center": {
-        "lat": 51.3995,
-        "lon": 7.0085
-      },
-      "osm": "way/1059440503"
-    },
-    {
-      "id": "europaweiher",
-      "name": "Europaweiher",
-      "country": "de",
-      "center": {
-        "lat": 48.0201,
-        "lon": 7.5919
-      },
-      "osm": "way/760394105"
-    },
-    {
       "id": "river-flaumbach",
       "name": "Flaumbach",
       "country": "de",
@@ -502,16 +392,6 @@
         "lon": 9.43186
       },
       "kind": "lake"
-    },
-    {
-      "id": "forellenbaechle",
-      "name": "Forellenbächle",
-      "country": "de",
-      "center": {
-        "lat": 48.3896,
-        "lon": 9.992
-      },
-      "osm": "way/70881808"
     },
     {
       "id": "river-fulda",
@@ -552,16 +432,6 @@
         "lon": 12.91544
       },
       "kind": "lake"
-    },
-    {
-      "id": "grimnitzsee",
-      "name": "Grimnitzsee",
-      "country": "de",
-      "center": {
-        "lat": 52.5148,
-        "lon": 13.2001
-      },
-      "osm": "way/4556663"
     },
     {
       "id": "river-grosse-isar",
@@ -654,26 +524,6 @@
       "osm": "way/178601427"
     },
     {
-      "id": "hafen-britz-ost",
-      "name": "Hafen Britz Ost",
-      "country": "de",
-      "center": {
-        "lat": 52.4602,
-        "lon": 13.454
-      },
-      "osm": "way/1307435392"
-    },
-    {
-      "id": "hafen-erlangen",
-      "name": "Hafen Erlangen",
-      "country": "de",
-      "center": {
-        "lat": 49.5829,
-        "lon": 10.9708
-      },
-      "osm": "way/101700049"
-    },
-    {
       "id": "river-hafen-muehlberg",
       "name": "Hafen Mühlberg",
       "country": "de",
@@ -764,16 +614,6 @@
       "osm": "way/10309342"
     },
     {
-      "id": "henrichsteich",
-      "name": "Henrichsteich",
-      "country": "de",
-      "center": {
-        "lat": 51.4034,
-        "lon": 7.18
-      },
-      "osm": "way/25894913"
-    },
-    {
       "id": "hirschgraben",
       "name": "Hirschgraben",
       "country": "de",
@@ -824,16 +664,6 @@
       "kind": "river"
     },
     {
-      "id": "inselkanal",
-      "name": "Inselkanal",
-      "country": "de",
-      "center": {
-        "lat": 53.6047,
-        "lon": 9.9926
-      },
-      "osm": "way/504138525"
-    },
-    {
       "id": "river-isebekkanal",
       "name": "Isebekkanal",
       "country": "de",
@@ -864,16 +694,6 @@
       "kind": "river"
     },
     {
-      "id": "karpfenteich",
-      "name": "Karpfenteich",
-      "country": "de",
-      "center": {
-        "lat": 52.6059,
-        "lon": 12.3251
-      },
-      "osm": "relation/12227427"
-    },
-    {
       "id": "kettwiger-stausee",
       "name": "Kettwiger Stausee",
       "country": "de",
@@ -882,6 +702,16 @@
         "lon": 6.9448
       },
       "osm": "way/25332287"
+    },
+    {
+      "id": "kieler-foerde",
+      "name": "Kieler Förde",
+      "country": "de",
+      "center": {
+        "lat": 54.32963,
+        "lon": 10.14873
+      },
+      "kind": "lake"
     },
     {
       "id": "klein-koeriser-see",
@@ -902,16 +732,6 @@
         "lon": 13.1639
       },
       "osm": "way/4423275"
-    },
-    {
-      "id": "kraehenteich",
-      "name": "Krähenteich",
-      "country": "de",
-      "center": {
-        "lat": 53.8622,
-        "lon": 10.6916
-      },
-      "osm": "way/4243377"
     },
     {
       "id": "river-krueckau",
@@ -1124,16 +944,6 @@
       "kind": "river"
     },
     {
-      "id": "museumshafen",
-      "name": "Museumshafen",
-      "country": "de",
-      "center": {
-        "lat": 54.0994,
-        "lon": 13.3835
-      },
-      "osm": "way/23990614"
-    },
-    {
       "id": "river-mueggelspree",
       "name": "Müggelspree",
       "country": "de",
@@ -1254,6 +1064,16 @@
       "osm": "way/4526411"
     },
     {
+      "id": "river-oker",
+      "name": "Oker",
+      "country": "de",
+      "center": {
+        "lat": 52.27061,
+        "lon": 10.51668
+      },
+      "kind": "river"
+    },
+    {
       "id": "okerstausee",
       "name": "Okerstausee",
       "country": "de",
@@ -1344,6 +1164,16 @@
       "osm": "way/32620921"
     },
     {
+      "id": "regattabahn",
+      "name": "Regattabahn",
+      "country": "de",
+      "center": {
+        "lat": 51.40949,
+        "lon": 6.78567
+      },
+      "kind": "lake"
+    },
+    {
       "id": "regattastrecke-oberschleissheim",
       "name": "Regattastrecke Oberschleißheim",
       "country": "de",
@@ -1352,6 +1182,16 @@
         "lon": 11.5154
       },
       "osm": "way/4083380"
+    },
+    {
+      "id": "river-rems",
+      "name": "Rems",
+      "country": "de",
+      "center": {
+        "lat": 48.82482,
+        "lon": 9.33139
+      },
+      "kind": "river"
     },
     {
       "id": "river-rhein",
@@ -1404,26 +1244,6 @@
       "kind": "lake"
     },
     {
-      "id": "rohrbruchteich",
-      "name": "Rohrbruchteich",
-      "country": "de",
-      "center": {
-        "lat": 52.5521,
-        "lon": 13.2345
-      },
-      "osm": "relation/9298146"
-    },
-    {
-      "id": "rosslauer-werft",
-      "name": "Roßlauer Werft",
-      "country": "de",
-      "center": {
-        "lat": 51.8812,
-        "lon": 12.2296
-      },
-      "osm": "way/25691116"
-    },
-    {
       "id": "river-ruhr",
       "name": "Ruhr",
       "country": "de",
@@ -1442,6 +1262,16 @@
         "lon": 12.8443
       },
       "osm": "relation/151954"
+    },
+    {
+      "id": "river-ryck",
+      "name": "Ryck",
+      "country": "de",
+      "center": {
+        "lat": 54.09918,
+        "lon": 13.38057
+      },
+      "kind": "river"
     },
     {
       "id": "river-saale",
@@ -1494,16 +1324,6 @@
       "osm": "relation/5459143"
     },
     {
-      "id": "schildkroetenteich",
-      "name": "Schildkrötenteich",
-      "country": "de",
-      "center": {
-        "lat": 48.8246,
-        "lon": 9.3319
-      },
-      "osm": "way/381300247"
-    },
-    {
       "id": "schlei",
       "name": "Schlei",
       "country": "de",
@@ -1512,16 +1332,6 @@
         "lon": 9.7901
       },
       "osm": "relation/2340930"
-    },
-    {
-      "id": "schulsee",
-      "name": "Schulsee",
-      "country": "de",
-      "center": {
-        "lat": 53.6305,
-        "lon": 10.6966
-      },
-      "osm": "way/4315503"
     },
     {
       "id": "schwentine",
@@ -1542,16 +1352,6 @@
         "lon": 11.4614
       },
       "osm": "relation/21142"
-    },
-    {
-      "id": "seehundbecken",
-      "name": "Seehundbecken",
-      "country": "de",
-      "center": {
-        "lat": 54.3297,
-        "lon": 10.1489
-      },
-      "osm": "way/116692403"
     },
     {
       "id": "river-sieg",
@@ -1594,24 +1394,14 @@
       "osm": "relation/4026"
     },
     {
-      "id": "sporthafen",
-      "name": "Sporthafen",
+      "id": "river-spree",
+      "name": "Spree",
       "country": "de",
       "center": {
-        "lat": 51.6622,
-        "lon": 6.5869
+        "lat": 52.16749,
+        "lon": 14.25178
       },
-      "osm": "way/28298539"
-    },
-    {
-      "id": "sporthafen-neuss",
-      "name": "Sporthafen Neuss",
-      "country": "de",
-      "center": {
-        "lat": 51.1851,
-        "lon": 6.7283
-      },
-      "osm": "way/7709182"
+      "kind": "river"
     },
     {
       "id": "river-stadthafen-1",
@@ -1754,16 +1544,6 @@
       "kind": "lake"
     },
     {
-      "id": "tonteiche",
-      "name": "Tonteiche",
-      "country": "de",
-      "center": {
-        "lat": 52.2975,
-        "lon": 13.6588
-      },
-      "osm": "way/24335123"
-    },
-    {
       "id": "river-trave",
       "name": "Trave",
       "country": "de",
@@ -1852,16 +1632,6 @@
         "lon": 7.0798
       },
       "osm": "way/23440881"
-    },
-    {
-      "id": "viereckweiher",
-      "name": "Viereckweiher",
-      "country": "de",
-      "center": {
-        "lat": 51.1579,
-        "lon": 6.8613
-      },
-      "osm": "way/23979710"
     },
     {
       "id": "voerder-see",
@@ -2074,16 +1844,6 @@
       "osm": "way/5076518"
     },
     {
-      "id": "winterhafen",
-      "name": "Winterhafen",
-      "country": "de",
-      "center": {
-        "lat": 49.63,
-        "lon": 8.3775
-      },
-      "osm": "way/365635109"
-    },
-    {
       "id": "xantener-nordsee",
       "name": "Xantener Nordsee",
       "country": "de",
@@ -2112,16 +1872,6 @@
         "lon": 13.0366
       },
       "osm": "relation/11998622"
-    },
-    {
-      "id": "oelhafen-koenig-wilhelm",
-      "name": "Ölhafen König Wilhelm",
-      "country": "de",
-      "center": {
-        "lat": 51.498,
-        "lon": 6.9411
-      },
-      "osm": "way/945877933"
     }
   ],
   "clubs": [
@@ -2194,11 +1944,11 @@
       "address": "Deelbögenkamp 1, 22299 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "inselkanal",
+      "lakeId": "river-alster",
       "launchPoint": {
         "lat": 53.60269,
         "lon": 9.99221,
-        "precision": "shore point of Inselkanal nearest the geocoded boathouse, 112 m away",
+        "precision": "on the Alster (checked by hand), first matched to Inselkanal",
         "verified": false
       }
     },
@@ -2356,11 +2106,11 @@
       "address": "Düsternbrooker Weg 2, 24105 Kiel",
       "source": "drv",
       "country": "de",
-      "lakeId": "seehundbecken",
+      "lakeId": "kieler-foerde",
       "launchPoint": {
         "lat": 54.32963,
         "lon": 10.14873,
-        "precision": "shore point of Seehundbecken nearest the geocoded club address, 226 m away",
+        "precision": "on the Kieler Förde (checked by hand), first matched to Seehundbecken",
         "verified": false
       }
     },
@@ -3063,11 +2813,11 @@
       "address": "Rheinuferstr. 14, 79206 Breisach",
       "source": "drv",
       "country": "de",
-      "lakeId": "europaweiher",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 48.0197,
         "lon": 7.58886,
-        "precision": "shore point of Europaweiher nearest the geocoded club address, 85 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Europaweiher",
         "verified": false
       }
     },
@@ -3552,11 +3302,11 @@
       "address": "Am Luisenbad 1b, 24837 Schleswig",
       "source": "drv",
       "country": "de",
-      "lakeId": "schulsee",
+      "lakeId": "schlei",
       "launchPoint": {
         "lat": 53.63201,
         "lon": 10.69924,
-        "precision": "shore point of Schulsee nearest the geocoded boathouse, 31 m away",
+        "precision": "on the Schlei (checked by hand), first matched to Schulsee",
         "verified": false
       }
     },
@@ -3660,11 +3410,11 @@
       "address": "Kruppstr. 28 a, 47055 Duisburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "bertasee",
+      "lakeId": "regattabahn",
       "launchPoint": {
         "lat": 51.40949,
         "lon": 6.78567,
-        "precision": "shore point of Bertasee nearest the geocoded boathouse, 33 m away",
+        "precision": "on the Regattabahn (checked by hand), first matched to Bertasee",
         "verified": false
       }
     },
@@ -3835,11 +3585,11 @@
       "address": "Frauenauracher Straße 43, 91056 Erlangen",
       "source": "drv",
       "country": "de",
-      "lakeId": "hafen-erlangen",
+      "lakeId": "river-main-donau-kanal",
       "launchPoint": {
         "lat": 49.58534,
         "lon": 10.97054,
-        "precision": "shore point of Hafen Erlangen nearest the geocoded club address, 17 m away",
+        "precision": "on the Main-Donau-Kanal (checked by hand), first matched to Hafen Erlangen",
         "verified": false
       }
     },
@@ -3866,11 +3616,11 @@
       "address": "Düsternbrooker Weg 16, 24105 Kiel",
       "source": "drv",
       "country": "de",
-      "lakeId": "seehundbecken",
+      "lakeId": "kieler-foerde",
       "launchPoint": {
         "lat": 54.32963,
         "lon": 10.14873,
-        "precision": "shore point of Seehundbecken nearest the geocoded club address, 53 m away",
+        "precision": "on the Kieler Förde (checked by hand), first matched to Seehundbecken",
         "verified": false
       }
     },
@@ -3926,11 +3676,11 @@
       "address": "Hardenbergufer 121, 45239 Essen",
       "source": "drv",
       "country": "de",
-      "lakeId": "essen-werdener-ruder-club-von-1896-e-v",
+      "lakeId": "baldeneysee",
       "launchPoint": {
         "lat": 51.39942,
         "lon": 7.00847,
-        "precision": "shore point of Essen-Werdener Ruder-Club von 1896 e.V. nearest the geocoded club address, 25 m away",
+        "precision": "on the Baldeneysee (checked by hand), first matched to Essen-Werdener Ruder-Club von 1896 e.V.",
         "verified": false
       }
     },
@@ -4523,11 +4273,11 @@
       "address": "Salinenstr., 17489 Greifswald",
       "source": "drv",
       "country": "de",
-      "lakeId": "museumshafen",
+      "lakeId": "river-ryck",
       "launchPoint": {
         "lat": 54.09918,
         "lon": 13.38057,
-        "precision": "shore point of Museumshafen nearest the geocoded boathouse, 28 m away",
+        "precision": "on the Ryck (checked by hand), first matched to Museumshafen",
         "verified": false
       }
     },
@@ -4821,11 +4571,11 @@
       "address": "Cliff 10, 45525 Hattingen",
       "source": "drv",
       "country": "de",
-      "lakeId": "henrichsteich",
+      "lakeId": "river-ruhr",
       "launchPoint": {
         "lat": 51.40232,
         "lon": 7.17682,
-        "precision": "shore point of Henrichsteich nearest the geocoded boathouse, 232 m away",
+        "precision": "on the Ruhr (checked by hand), first matched to Henrichsteich",
         "verified": false
       }
     },
@@ -5002,11 +4752,11 @@
       "address": "Rheinanlagen 13, 47198 Duisburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "eisenbahnhafen",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 51.45523,
         "lon": 6.71769,
-        "precision": "shore point of Eisenbahnhafen nearest the geocoded club address, 36 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Eisenbahnhafen",
         "verified": false
       }
     },
@@ -5581,11 +5331,11 @@
       "address": "Hüxtertorallee 4, 23564 Lübeck",
       "source": "drv",
       "country": "de",
-      "lakeId": "kraehenteich",
+      "lakeId": "river-kanal-trave",
       "launchPoint": {
         "lat": 53.86263,
         "lon": 10.69301,
-        "precision": "shore point of Krähenteich nearest the geocoded boathouse, 142 m away",
+        "precision": "on the Kanal-Trave (checked by hand), first matched to Krähenteich",
         "verified": false
       }
     },
@@ -6046,11 +5796,11 @@
       "address": "Bootshausweg 5, 13599 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "rohrbruchteich",
+      "lakeId": "spandauer-see",
       "launchPoint": {
         "lat": 52.55234,
         "lon": 13.23566,
-        "precision": "shore point of Rohrbruchteich nearest the geocoded club address, 85 m away",
+        "precision": "on the Spandauer See (checked by hand), first matched to Rohrbruchteich",
         "verified": false
       }
     },
@@ -6138,11 +5888,11 @@
       "address": "Mendener Str. 74, 45470 Mülheim an der Ruhr",
       "source": "drv",
       "country": "de",
-      "lakeId": "die-anger",
+      "lakeId": "river-ruhr",
       "launchPoint": {
         "lat": 51.40791,
         "lon": 6.89074,
-        "precision": "shore point of Die Anger nearest the geocoded club address, 284 m away",
+        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
         "verified": false
       }
     },
@@ -6279,11 +6029,11 @@
       "address": "Grimlinghauser Brücke 54, 41468 Neuss",
       "source": "drv",
       "country": "de",
-      "lakeId": "sporthafen-neuss",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 51.18459,
         "lon": 6.72973,
-        "precision": "shore point of Sporthafen Neuss nearest the geocoded boathouse, 42 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Sporthafen Neuss",
         "verified": false
       }
     },
@@ -7067,11 +6817,11 @@
       "address": "Mühlendamm 20, 14712 Rathenow",
       "source": "drv",
       "country": "de",
-      "lakeId": "karpfenteich",
+      "lakeId": "river-havel",
       "launchPoint": {
         "lat": 52.60651,
         "lon": 12.326,
-        "precision": "shore point of Karpfenteich nearest the geocoded club address, 174 m away",
+        "precision": "on the Havel (checked by hand), first matched to Karpfenteich",
         "verified": false
       }
     },
@@ -7276,11 +7026,11 @@
       "address": "Mendener Str. 74, 45470 Mülheim",
       "source": "drv",
       "country": "de",
-      "lakeId": "die-anger",
+      "lakeId": "river-ruhr",
       "launchPoint": {
         "lat": 51.40791,
         "lon": 6.89074,
-        "precision": "shore point of Die Anger nearest the geocoded club address, 284 m away",
+        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
         "verified": false
       }
     },
@@ -7386,11 +7136,11 @@
       "address": "Sachsenbergstr., 06862 Roßlau",
       "source": "drv",
       "country": "de",
-      "lakeId": "rosslauer-werft",
+      "lakeId": "river-elbe",
       "launchPoint": {
         "lat": 51.88218,
         "lon": 12.23152,
-        "precision": "shore point of Roßlauer Werft nearest the geocoded boathouse, 277 m away",
+        "precision": "on the Elbe (checked by hand), first matched to Roßlauer Werft",
         "verified": false
       }
     },
@@ -7526,11 +7276,11 @@
       "address": "Am Yachthafen 7, 46487 Wesel",
       "source": "drv",
       "country": "de",
-      "lakeId": "sporthafen",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 51.66308,
         "lon": 6.586,
-        "precision": "shore point of Sporthafen nearest the geocoded boathouse, 49 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Sporthafen",
         "verified": false
       }
     },
@@ -8194,11 +7944,11 @@
       "address": "Benrather Schloßufer 35, 40597 Düsseldorf",
       "source": "drv",
       "country": "de",
-      "lakeId": "viereckweiher",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 51.15699,
         "lon": 6.86113,
-        "precision": "shore point of Viereckweiher nearest the geocoded boathouse, 37 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Viereckweiher",
         "verified": false
       }
     },
@@ -8310,11 +8060,11 @@
       "address": "Maschplatz 15, 38114 Braunschweig",
       "source": "drv",
       "country": "de",
-      "lakeId": "bammelsburger-teich",
+      "lakeId": "river-oker",
       "launchPoint": {
         "lat": 52.27061,
         "lon": 10.51668,
-        "precision": "shore point of Bammelsburger Teich nearest the geocoded club address, 293 m away",
+        "precision": "on the Oker (checked by hand), first matched to Bammelsburger Teich",
         "verified": false
       }
     },
@@ -8622,11 +8372,11 @@
       "address": "Uferstraße 18 d, 15848 Beeskow",
       "source": "drv",
       "country": "de",
-      "lakeId": "bahrensdorfer-see",
+      "lakeId": "river-spree",
       "launchPoint": {
         "lat": 52.16749,
         "lon": 14.25178,
-        "precision": "shore point of Bahrensdorfer See nearest the geocoded club address, 106 m away",
+        "precision": "on the Spree (checked by hand), first matched to Bahrensdorfer See",
         "verified": false
       }
     },
@@ -9001,11 +8751,11 @@
       "address": "Mendener Str. 6, 45470 Mülheim an der Ruhr",
       "source": "drv",
       "country": "de",
-      "lakeId": "die-anger",
+      "lakeId": "river-ruhr",
       "launchPoint": {
         "lat": 51.41063,
         "lon": 6.88735,
-        "precision": "shore point of Die Anger nearest the geocoded boathouse, 168 m away",
+        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
         "verified": false
       }
     },
@@ -9362,11 +9112,11 @@
       "address": "Am Flugplatz 5, 94474 Vilshofen an der Donau",
       "source": "drv",
       "country": "de",
-      "lakeId": "bootsportverein-vilshofen",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.63781,
         "lon": 13.18729,
-        "precision": "shore point of Bootsportverein - Vilshofen nearest the geocoded boathouse, 90 m away",
+        "precision": "on the Donau (checked by hand), first matched to Bootsportverein - Vilshofen",
         "verified": false
       }
     },
@@ -9538,11 +9288,11 @@
       "address": "Am Rhein-Herne-Kanal 13, 46242 Bottrop",
       "source": "drv",
       "country": "de",
-      "lakeId": "oelhafen-koenig-wilhelm",
+      "lakeId": "river-rhein-herne-kanal",
       "launchPoint": {
         "lat": 51.49803,
         "lon": 6.94029,
-        "precision": "shore point of Ölhafen König Wilhelm nearest the geocoded boathouse, 253 m away",
+        "precision": "on the Rhein-Herne-Kanal (checked by hand), first matched to Ölhafen König Wilhelm",
         "verified": false
       }
     },
@@ -9597,11 +9347,11 @@
       "address": "Oberer Ring 2, 71332 Waiblingen",
       "source": "drv",
       "country": "de",
-      "lakeId": "schildkroetenteich",
+      "lakeId": "river-rems",
       "launchPoint": {
         "lat": 48.82482,
         "lon": 9.33139,
-        "precision": "shore point of Schildkrötenteich nearest the geocoded boathouse, 228 m away",
+        "precision": "on the Rems (checked by hand), first matched to Schildkrötenteich",
         "verified": false
       }
     },
@@ -9626,11 +9376,11 @@
       "address": "Düsternbrooker Weg 42, 24105 Kiel",
       "source": "drv",
       "country": "de",
-      "lakeId": "seehundbecken",
+      "lakeId": "kieler-foerde",
       "launchPoint": {
         "lat": 54.32987,
         "lon": 10.14889,
-        "precision": "shore point of Seehundbecken nearest the geocoded club address, 231 m away",
+        "precision": "on the Kieler Förde (checked by hand), first matched to Seehundbecken",
         "verified": false
       }
     },
@@ -9846,11 +9596,11 @@
       "address": "Im Hafenbecken 11, 67346 Speyer",
       "source": "drv",
       "country": "de",
-      "lakeId": "alter-hafen",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.32095,
         "lon": 8.44846,
-        "precision": "shore point of Alter Hafen nearest the geocoded club address, 18 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Alter Hafen",
         "verified": false
       }
     },
@@ -10007,11 +9757,11 @@
       "address": "Haarlemer Str. 45 E, 12359 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "hafen-britz-ost",
+      "lakeId": "river-teltowkanal",
       "launchPoint": {
         "lat": 52.45981,
         "lon": 13.455,
-        "precision": "shore point of Hafen Britz Ost nearest the geocoded club address, 165 m away",
+        "precision": "on the Teltowkanal (checked by hand), first matched to Hafen Britz Ost",
         "verified": false
       }
     },
@@ -10273,11 +10023,11 @@
       "address": "Eisenhammerweg 22 - 24, 13507 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "borsighafen",
+      "lakeId": "tegeler-see",
       "launchPoint": {
         "lat": 52.58397,
         "lon": 13.27675,
-        "precision": "shore point of Borsighafen nearest the geocoded boathouse, 27 m away",
+        "precision": "on the Tegeler See (checked by hand), first matched to Borsighafen",
         "verified": false
       }
     },
@@ -11798,11 +11548,11 @@
       "address": "Alsterkrugchaussee 224, 22297 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "inselkanal",
+      "lakeId": "river-alster",
       "launchPoint": {
         "lat": 53.6068,
         "lon": 9.99335,
-        "precision": "shore point of Inselkanal nearest the geocoded club address, 260 m away",
+        "precision": "on the Alster (checked by hand), first matched to Inselkanal",
         "verified": false
       }
     },
@@ -11942,11 +11692,11 @@
       "address": "Alsterkrugchaussee 222, 22297 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "inselkanal",
+      "lakeId": "river-alster",
       "launchPoint": {
         "lat": 53.6068,
         "lon": 9.99335,
-        "precision": "shore point of Inselkanal nearest the geocoded boathouse, 236 m away",
+        "precision": "on the Alster (checked by hand), first matched to Inselkanal",
         "verified": false
       }
     },
@@ -12195,11 +11945,11 @@
       "address": "Seilerweg 23, 39114 Magdeburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "adolf-mittag-see",
+      "lakeId": "river-elbe",
       "launchPoint": {
         "lat": 52.12065,
         "lon": 11.64353,
-        "precision": "shore point of Adolf-Mittag-See nearest the geocoded club address, 81 m away",
+        "precision": "on the Elbe (checked by hand), first matched to Adolf-Mittag-See",
         "verified": false
       }
     },
@@ -12240,11 +11990,11 @@
       "address": "Am Luisenbad 1b, 24837 Schleswig",
       "source": "drv",
       "country": "de",
-      "lakeId": "schulsee",
+      "lakeId": "schlei",
       "launchPoint": {
         "lat": 53.63201,
         "lon": 10.69924,
-        "precision": "shore point of Schulsee nearest the geocoded boathouse, 31 m away",
+        "precision": "on the Schlei (checked by hand), first matched to Schulsee",
         "verified": false
       }
     },
@@ -12452,11 +12202,11 @@
       "address": "Mendener Str. 6, 45468 Mülheim",
       "source": "drv",
       "country": "de",
-      "lakeId": "die-anger",
+      "lakeId": "river-ruhr",
       "launchPoint": {
         "lat": 51.41063,
         "lon": 6.88735,
-        "precision": "shore point of Die Anger nearest the geocoded boathouse, 168 m away",
+        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
         "verified": false
       }
     },
@@ -12738,11 +12488,11 @@
       "address": "Mahnkopfweg 6, 13595 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "grimnitzsee",
+      "lakeId": "river-havel",
       "launchPoint": {
         "lat": 52.51321,
         "lon": 13.20074,
-        "precision": "shore point of Grimnitzsee nearest the geocoded club address, 97 m away",
+        "precision": "on the Havel (checked by hand), first matched to Grimnitzsee",
         "verified": false
       }
     },
@@ -13021,11 +12771,11 @@
       "address": "Kiellinie 7, 24105 Kiel",
       "source": "drv",
       "country": "de",
-      "lakeId": "seehundbecken",
+      "lakeId": "kieler-foerde",
       "launchPoint": {
         "lat": 54.32963,
         "lon": 10.14873,
-        "precision": "shore point of Seehundbecken nearest the geocoded boathouse, 122 m away",
+        "precision": "on the Kieler Förde (checked by hand), first matched to Seehundbecken",
         "verified": false
       }
     },
@@ -13505,11 +13255,11 @@
       "address": "Bootshausstraße 7, 89231 Neu-Ulm",
       "source": "drv",
       "country": "de",
-      "lakeId": "forellenbaechle",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.38963,
         "lon": 9.99187,
-        "precision": "shore point of Forellenbächle nearest the geocoded boathouse, 286 m away",
+        "precision": "on the Donau (checked by hand), first matched to Forellenbächle",
         "verified": false
       }
     },
@@ -14194,11 +13944,11 @@
       "address": "Küchenmeisterallee 14 a, 15711 Königs Wusterhausen",
       "source": "drv",
       "country": "de",
-      "lakeId": "tonteiche",
+      "lakeId": "river-dahme",
       "launchPoint": {
         "lat": 52.2972,
         "lon": 13.65772,
-        "precision": "shore point of Tonteiche nearest the geocoded boathouse, 174 m away",
+        "precision": "on the Dahme (checked by hand), first matched to Tonteiche",
         "verified": false
       }
     },
@@ -14257,11 +14007,11 @@
       "address": "Mendener Str. 68, 45470 Mülheim",
       "source": "drv",
       "country": "de",
-      "lakeId": "die-anger",
+      "lakeId": "river-ruhr",
       "launchPoint": {
         "lat": 51.40791,
         "lon": 6.89074,
-        "precision": "shore point of Die Anger nearest the geocoded club address, 246 m away",
+        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
         "verified": false
       }
     },
@@ -14472,11 +14222,11 @@
       "address": "Am Rhein 5, 67547 Worms",
       "source": "drv",
       "country": "de",
-      "lakeId": "winterhafen",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.63049,
         "lon": 8.3778,
-        "precision": "shore point of Winterhafen nearest the geocoded club address, 254 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Winterhafen",
         "verified": false
       }
     },
@@ -14502,11 +14252,11 @@
       "address": "Am Steinbruch 15, 04828 Schmölen",
       "source": "drv",
       "country": "de",
-      "lakeId": "bruch",
+      "lakeId": "river-mulde",
       "launchPoint": {
         "lat": 51.34812,
         "lon": 12.7334,
-        "precision": "shore point of Bruch nearest the geocoded boathouse, 228 m away",
+        "precision": "on the Mulde (checked by hand), first matched to Bruch",
         "verified": false
       }
     },

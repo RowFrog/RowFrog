@@ -4,16 +4,6 @@
   "source": "Club data: Österreichischer Ruderverband (rudern.at). Positions and waters: © OpenStreetMap contributors, ODbL",
   "lakes": [
     {
-      "id": "altarm-thondorf",
-      "name": "Altarm Thondorf",
-      "country": "at",
-      "center": {
-        "lat": 47.0126,
-        "lon": 15.462
-      },
-      "osm": "way/267326375"
-    },
-    {
       "id": "alte-donau",
       "name": "Alte Donau",
       "country": "at",
@@ -94,16 +84,6 @@
       "kind": "lake"
     },
     {
-      "id": "hochwiesegraben",
-      "name": "Hochwiesegraben",
-      "country": "at",
-      "center": {
-        "lat": 48.33,
-        "lon": 16.0286
-      },
-      "osm": "way/642950869"
-    },
-    {
       "id": "kleine-binn",
       "name": "Kleine Binn",
       "country": "at",
@@ -144,6 +124,16 @@
       "osm": "way/3868930"
     },
     {
+      "id": "river-mur",
+      "name": "Mur",
+      "country": "at",
+      "center": {
+        "lat": 47.01379,
+        "lon": 15.46191
+      },
+      "kind": "river"
+    },
+    {
       "id": "river-neue-donau",
       "name": "Neue Donau",
       "country": "at",
@@ -172,16 +162,6 @@
         "lon": 13.9569
       },
       "osm": "way/27446051"
-    },
-    {
-      "id": "pionierhafen",
-      "name": "Pionierhafen",
-      "country": "at",
-      "center": {
-        "lat": 48.2358,
-        "lon": 15.3347
-      },
-      "osm": "way/850540754"
     },
     {
       "id": "river-rodl",
@@ -252,16 +232,6 @@
         "lon": 13.06929
       },
       "kind": "unknown"
-    },
-    {
-      "id": "winterhafen",
-      "name": "Winterhafen",
-      "country": "at",
-      "center": {
-        "lat": 48.3192,
-        "lon": 14.3115
-      },
-      "osm": "way/137884542"
     },
     {
       "id": "wolfgangsee",
@@ -457,11 +427,11 @@
       "region": "Oberösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "winterhafen",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.31985,
         "lon": 14.30502,
-        "precision": "shore point of Winterhafen nearest the geocoded club address, 31 m away",
+        "precision": "on the Donau (checked by hand), first matched to Winterhafen",
         "verified": false
       }
     },
@@ -511,11 +481,11 @@
       "region": "Niederösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "pionierhafen",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.23541,
         "lon": 15.33419,
-        "precision": "shore point of Pionierhafen nearest the geocoded club address, 154 m away",
+        "precision": "on the Donau (checked by hand), first matched to Pionierhafen",
         "verified": false
       }
     },
@@ -547,11 +517,11 @@
       "region": "Steiermark",
       "source": "oerv",
       "country": "at",
-      "lakeId": "altarm-thondorf",
+      "lakeId": "river-mur",
       "launchPoint": {
         "lat": 47.01379,
         "lon": 15.46191,
-        "precision": "shore point of Altarm Thondorf nearest the geocoded club address, 246 m away",
+        "precision": "on the Mur (checked by hand), first matched to Altarm Thondorf",
         "verified": false
       }
     },
@@ -853,11 +823,11 @@
       "region": "Niederösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "hochwiesegraben",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.32714,
         "lon": 16.02805,
-        "precision": "shore point of Hochwiesegraben nearest the geocoded club address, 272 m away",
+        "precision": "on the Donau (checked by hand), first matched to Hochwiesegraben",
         "verified": false
       }
     },
