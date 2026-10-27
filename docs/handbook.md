@@ -161,6 +161,8 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage appearance|clubpages|language|data|help|about|developer|limits|boat:<id>|backgrounds|widgets|safety|impressum|privacy` open those Settings pages, with the pages on the way (backgrounds = Settings > Club pages > Background pictures, widgets = Settings > Widgets)
 - `-RWSettingsSearch <text>` open the settings with the search field filled in
+- Backend `RW_SAMPLE_WARNING_CLUBS=<club ids>` gives those clubs a made-up warning, marked as a sample: a lake storm warning where DWD has a lake area, else a thunderstorm warning from the place's own service (GeoSphere Austria or MeteoSwiss). The screenshot workflow sets it for Tutzinger RV, Seeclub Zürich and RV Albatros Klagenfurt
+- Backend `RW_SAMPLE_LAKE_WIND=from,speed,gusts` (degrees, m/s) replaces the wind in the lake view with a made-up one, marked as a sample, so screenshots show waves building across the lake on a calm day (the screenshot workflow sets `192,5.2,7.9`, a south wind)
 - Backend `RW_SAMPLE_SATELLITE_WATER=<lake ids>` gives those lakes a made-up Landsat reading from five days ago, so the water detail shows the satellite estimate (the screenshot workflow sets it for the Simssee, shots 152-153)
 
 ## What runs on its own (GitHub Actions)
