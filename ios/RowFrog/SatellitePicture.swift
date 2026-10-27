@@ -597,6 +597,10 @@ struct SatelliteImage: View {
         .aspectRatio(picture.aspectRatio, contentMode: .fit)
         .overlay { sharpOverlay }
         .overlay { iceOverlay }
+        .overlay(alignment: .topLeading) {
+            // The full view puts it on the screen, where it doesn't zoom.
+            if !marksOnScreen { SatelliteColdBadge(lakeID: lakeID) }
+        }
         .overlay {
             if !marksOnScreen {
                 SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID, cloudy: shot.lakeCloud >= 0.5)
@@ -899,6 +903,7 @@ struct SatellitePictureScreen: View {
                             SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID,
                                              cloudy: shot.lakeCloud >= 0.5, screen: (size, zoom.scale, zoom.offset))
                         }
+                        .overlay(alignment: .topLeading) { SatelliteColdBadge(lakeID: lakeID) }
                     }
                 }
                 if let shot = picture.shot(kind) {
@@ -955,6 +960,21 @@ struct SatellitePictureScreen: View {
         }
         let club = LakeViewStore.shared.views[lakeID]?.clubs.first { $0.id == clubID }
         return .fillWidth(around: club.map { point($0.launchPoint.lon, $0.launchPoint.lat) })
+    }
+}
+
+/// The lake view's life-jacket badge in the picture's corner while the water is
+/// cold, as on the lake map (owner's pick 2026-10-27), with the blue shore line.
+struct SatelliteColdBadge: View {
+    let lakeID: String
+
+    var body: some View {
+        if let view = LakeViewStore.shared.views[lakeID], let kit = view.coldWaterKit {
+            ColdWaterBadge(kit: kit, estimated: view.waterC == nil)
+                .background(.regularMaterial, in: Capsule())
+                .padding(8)
+                .allowsHitTesting(false)
+        }
     }
 }
 
