@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fetch_lake_outline import overpass  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
-MAX_KM = 40.0
+MAX_KM = 25.0
 CLUSTER_KM = 3.0
 GAP_M = 40.0  # line ends this close to another line of the same river are joined
 BARRIERS = ("weir", "dam", "lock_gate", "waterfall")
@@ -64,23 +64,56 @@ def clusters() -> list[dict]:
 
 
 def query(lat: float, lon: float) -> dict:
-    r = int(MAX_KM * 1000 + 3000)
-    return overpass(
+    """Two light queries instead of one wide one: first the waters near the
+    launch point (for the river's name, its width and river kilometres), then
+    only that river's lines, the waterways they touch and the weirs and locks
+    in a box MAX_KM around the club."""
+    near = overpass(
         f"""
-        [out:json][timeout:240];
+        [out:json][timeout:120];
         (
-          way["waterway"~"^(river|canal)$"](around:{r},{lat},{lon});
-          node["waterway"~"^({'|'.join(BARRIERS)})$"](around:{r},{lat},{lon});
-          way["waterway"~"^({'|'.join(BARRIERS)})$"](around:{r},{lat},{lon});
-          way["lock"="yes"](around:{r},{lat},{lon});
+          way["waterway"~"^(river|canal)$"](around:1500,{lat},{lon});
           node["waterway"="milestone"](around:2000,{lat},{lon});
           way["natural"="water"]["water"~"^(river|canal)$"](around:1500,{lat},{lon});
           way["waterway"="riverbank"](around:1500,{lat},{lon});
         );
         out body geom;
         """,
+        timeout=180,
+    )
+    lines = [e for e in near["elements"] if e["type"] == "way" and e.get("tags", {}).get("waterway") in ("river", "canal") and e.get("geometry")]
+    if not lines:
+        return near
+    k = math.cos(math.radians(lat))
+    d = lambda p: math.hypot((p["lat"] - lat) * 110.574, (p["lon"] - lon) * 111.32 * k)  # noqa: E731
+    name = min(lines, key=lambda w: min(d(p) for p in w["geometry"]))["tags"].get("name", "")
+    if not name:
+        return near
+    dlat, dlon = (MAX_KM + 2) / 110.574, (MAX_KM + 2) / (111.32 * k)
+    box = f"{lat - dlat},{lon - dlon},{lat + dlat},{lon + dlon}"
+    esc = name.replace("\\", "\\\\").replace('"', '\\"')
+    far = overpass(
+        f"""
+        [out:json][timeout:240];
+        way["waterway"~"^(river|canal)$"]["name"="{esc}"]({box})->.r;
+        node(w.r)->.n;
+        (
+          .r;
+          way(bn.n)["waterway"~"^(river|canal)$"];
+          node["waterway"~"^({'|'.join(BARRIERS)})$"]({box});
+          way["waterway"~"^({'|'.join(BARRIERS)})$"]({box});
+          way["lock"="yes"]({box});
+        );
+        out body geom;
+        """,
         timeout=300,
     )
+    seen, els = set(), []
+    for e in near["elements"] + far["elements"]:
+        if (e["type"], e["id"]) not in seen:
+            seen.add((e["type"], e["id"]))
+            els.append(e)
+    return {"elements": els}
 
 
 def survey(g: dict, data: dict) -> dict:
@@ -91,7 +124,7 @@ def survey(g: dict, data: dict) -> dict:
     ways = [e for e in els if e["type"] == "way" and e.get("tags", {}).get("waterway") in ("river", "canal") and e.get("geometry")]
     if not ways:
         return {"error": "no river line found"}
-    # The river: the name of the line nearest the launch point.
+    # The river: the name of the line nearest the launch point (as in query()).
     def way_dist(w):
         pts = [to_m(p["lon"], p["lat"]) for p in w["geometry"]]
         return LineString(pts).distance(Point(0, 0)) if len(pts) > 1 else 1e9
@@ -189,7 +222,7 @@ def survey(g: dict, data: dict) -> dict:
                     continue
                 nd = d + w
                 if nd > MAX_KM * 1000:
-                    stops.append((MAX_KM * 1000, "none within 40 km"))
+                    stops.append((MAX_KM * 1000, "none within 25 km"))
                     continue
                 if nd < dist.get(m, math.inf):
                     dist[m] = nd
