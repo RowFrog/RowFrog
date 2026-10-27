@@ -2108,9 +2108,9 @@
       "country": "de",
       "lakeId": "kieler-foerde",
       "launchPoint": {
-        "lat": 54.32963,
-        "lon": 10.14873,
-        "precision": "on the Kieler Förde (checked by hand), first matched to Seehundbecken",
+        "lat": 54.32955,
+        "lon": 10.14894,
+        "precision": "shore of the Kieler Förde nearest the town-level address, 17 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -3304,9 +3304,9 @@
       "country": "de",
       "lakeId": "schlei",
       "launchPoint": {
-        "lat": 53.63201,
-        "lon": 10.69924,
-        "precision": "on the Schlei (checked by hand), first matched to Schulsee",
+        "lat": 54.51169,
+        "lon": 9.56183,
+        "precision": "shore of the Schlei near Schleswig (the import placed it at the Schulsee in Mölln), 15 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -3618,9 +3618,9 @@
       "country": "de",
       "lakeId": "kieler-foerde",
       "launchPoint": {
-        "lat": 54.32963,
-        "lon": 10.14873,
-        "precision": "on the Kieler Förde (checked by hand), first matched to Seehundbecken",
+        "lat": 54.32955,
+        "lon": 10.14894,
+        "precision": "shore of the Kieler Förde nearest the town-level address, 17 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -6031,9 +6031,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.18459,
-        "lon": 6.72973,
-        "precision": "on the Rhein (checked by hand), first matched to Sporthafen Neuss",
+        "lat": 51.18617,
+        "lon": 6.73308,
+        "precision": "shore of the Rhein nearest the town-level address, 292 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -6819,9 +6819,9 @@
       "country": "de",
       "lakeId": "river-havel",
       "launchPoint": {
-        "lat": 52.60651,
-        "lon": 12.326,
-        "precision": "on the Havel (checked by hand), first matched to Karpfenteich",
+        "lat": 52.61105,
+        "lon": 12.31628,
+        "precision": "shore of the Havel nearest the town-level address, 828 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7028,9 +7028,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.40791,
-        "lon": 6.89074,
-        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
+        "lat": 51.40888,
+        "lon": 6.89259,
+        "precision": "shore of the Ruhr nearest the town-level address, 167 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7946,9 +7946,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.15699,
-        "lon": 6.86113,
-        "precision": "on the Rhein (checked by hand), first matched to Viereckweiher",
+        "lat": 51.15663,
+        "lon": 6.85739,
+        "precision": "shore of the Rhein nearest the town-level address, 264 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -8062,9 +8062,9 @@
       "country": "de",
       "lakeId": "river-oker",
       "launchPoint": {
-        "lat": 52.27061,
-        "lon": 10.51668,
-        "precision": "on the Oker (checked by hand), first matched to Bammelsburger Teich",
+        "lat": 52.27069,
+        "lon": 10.51586,
+        "precision": "shore of the Oker nearest the town-level address, 56 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -8753,9 +8753,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.41063,
-        "lon": 6.88735,
-        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
+        "lat": 51.4114,
+        "lon": 6.88819,
+        "precision": "shore of the Ruhr nearest the town-level address, 104 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9290,9 +9290,9 @@
       "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "launchPoint": {
-        "lat": 51.49803,
-        "lon": 6.94029,
-        "precision": "on the Rhein-Herne-Kanal (checked by hand), first matched to Ölhafen König Wilhelm",
+        "lat": 51.49825,
+        "lon": 6.94023,
+        "precision": "shore of the Rhein-Herne-Kanal nearest the town-level address, 24 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11947,9 +11947,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 52.12065,
-        "lon": 11.64353,
-        "precision": "on the Elbe (checked by hand), first matched to Adolf-Mittag-See",
+        "lat": 52.10507,
+        "lon": 11.66072,
+        "precision": "shore of the Elbe nearest the town-level address, 2093 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -12204,9 +12204,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.41063,
-        "lon": 6.88735,
-        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
+        "lat": 51.4114,
+        "lon": 6.88819,
+        "precision": "shore of the Ruhr nearest the town-level address, 104 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -12490,9 +12490,9 @@
       "country": "de",
       "lakeId": "river-havel",
       "launchPoint": {
-        "lat": 52.51321,
-        "lon": 13.20074,
-        "precision": "on the Havel (checked by hand), first matched to Grimnitzsee",
+        "lat": 52.51288,
+        "lon": 13.2035,
+        "precision": "shore of the Havel nearest the town-level address, 190 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -12773,9 +12773,9 @@
       "country": "de",
       "lakeId": "kieler-foerde",
       "launchPoint": {
-        "lat": 54.32963,
-        "lon": 10.14873,
-        "precision": "on the Kieler Förde (checked by hand), first matched to Seehundbecken",
+        "lat": 54.32955,
+        "lon": 10.14894,
+        "precision": "shore of the Kieler Förde nearest the town-level address, 17 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14009,9 +14009,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.40791,
-        "lon": 6.89074,
-        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
+        "lat": 51.40888,
+        "lon": 6.89259,
+        "precision": "shore of the Ruhr nearest the town-level address, 167 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14254,9 +14254,9 @@
       "country": "de",
       "lakeId": "river-mulde",
       "launchPoint": {
-        "lat": 51.34812,
-        "lon": 12.7334,
-        "precision": "on the Mulde (checked by hand), first matched to Bruch",
+        "lat": 51.34738,
+        "lon": 12.73198,
+        "precision": "shore of the Mulde nearest the town-level address, 129 m away (water checked by hand)",
         "verified": false
       }
     },
