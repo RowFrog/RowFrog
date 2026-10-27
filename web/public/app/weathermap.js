@@ -266,6 +266,40 @@ function windSample(directions, speeds, hour, x, y) {
   return { towards: (Math.atan2(parts[0], parts[1]) * 180) / Math.PI, speed: speed[0] };
 }
 
+/** Loads the weather map's wind for the tile around a place, for the arrows on land: the same two files the wind map uses. */
+export async function loadLandWind(p) {
+  const index = await loadIndex();
+  const tile = tileFor(index, p);
+  if (!tile) return;
+  await Promise.all([loadGrid(index, tile.id, LAYERS.wind.model), loadGrid(index, tile.id, "windDirection")]);
+}
+
+/**
+ * The weather map's wind around a place at a time, once loaded: the model
+ * hour nearest the time, if within an hour and a half, as a function of a
+ * place giving where the wind blows to and its speed (LandWind).
+ */
+export function landWind(p, time) {
+  const index = cache.index;
+  const tile = index && tileFor(index, p);
+  if (!tile) return null;
+  const at = new Date(time).getTime();
+  let hour = -1;
+  index.hours.forEach((x, i) => {
+    if (hour < 0 || Math.abs(new Date(x) - at) < Math.abs(new Date(index.hours[hour]) - at)) hour = i;
+  });
+  if (hour < 0 || Math.abs(new Date(index.hours[hour]) - at) > 90 * 60 * 1000) return null;
+  const speeds = cache.grids.get(gridKey(index, tile.id, LAYERS.wind.model));
+  const directions = cache.grids.get(gridKey(index, tile.id, "windDirection"));
+  if (!speeds || !directions) return null;
+  const top = mercY(tile.north);
+  return ({ lat, lon }) => {
+    if (!contains(tile, { lat, lon })) return null;
+    const wind = windSample(directions, speeds, hour, (lon - tile.west) / (tile.east - tile.west), (top - mercY(lat)) / (top - mercY(tile.south)));
+    return wind && { towardDeg: (wind.towards + 360) % 360, speedMs: wind.speed };
+  };
+}
+
 /** The times a layer has maps for: the model run's hours from the hour now on, or the live layer's pictures. */
 export function frames(layer, index, now = new Date()) {
   if (layer.model) return (index?.hours ?? []).map((x) => new Date(x)).filter((x) => x > now - HOUR);

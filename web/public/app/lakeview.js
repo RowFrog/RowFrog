@@ -11,11 +11,13 @@ import {
 import { compass, matchesStandard, allowsMore, coldWaterKit, reasonCondition } from "./logic.js";
 import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
-  gridEdges, cellAt, cellColours, rasterPixels, windAt, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
+  gridEdges, cellAt, cellColours, rasterPixels, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
   roughest, RELATION_WIND, RELATION_WAVES, pace as paceText,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips } from "./tour.js";
+import { loadLandWind, landWind } from "./weathermap.js";
+import { SPACING, ASHORE_OPACITY, BLEND_M, arrowLength, arrowLines, windArrows, inside } from "./windarrows.js";
 
 const views = new Map();
 
@@ -267,6 +269,8 @@ async function buildMap() {
   }).addTo(map);
   const rings = page.view.outline.map((ring) => ring.map(([lon, lat]) => [lat, lon]));
   page.layers.shore = L.polygon(rings, { fill: false, weight: 1, color: "rgba(0, 122, 255, .45)", interactive: false }).addTo(map);
+  // Arrows on land in a pane of their own, drawn fainter as a whole.
+  map.createPane("landArrows").style.opacity = ASHORE_OPACITY;
   page.layers.arrows = L.layerGroup().addTo(map);
   page.layers.route = L.layerGroup().addTo(map);
   page.layers.marks = L.layerGroup().addTo(map);
@@ -277,6 +281,8 @@ async function buildMap() {
   }
   map.on("click", (ev) => tapped({ lat: ev.latlng.lat, lon: ev.latlng.lng }));
   map.on("zoomend moveend", drawArrows);
+  // The weather map's wind, for the arrows on land.
+  loadLandWind(gridCentre(page.view)).then(() => map === page.map && drawArrows()).catch(() => {});
 }
 
 function shownHour() {
@@ -359,52 +365,60 @@ function drawOverlay(hour) {
   page.layers.shore.bringToFront();
 }
 
-/** Even-odd test against the shore and islands. */
-function onWater(lat, lon) {
-  let inside = false;
-  for (const ring of page.view.outline) {
-    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-      const [xi, yi] = ring[i];
-      const [xj, yj] = ring[j];
-      if (yi > lat !== yj > lat && lon < ((xj - xi) * (lat - yi)) / (yj - yi) + xi) inside = !inside;
-    }
-  }
-  return inside;
-}
-
-/** Arrows on an even grid over the water, finer as the map zooms in; where the wind blows to, longer in stronger wind. */
+/**
+ * Arrows on an even grid over the whole map, finer as the map zooms in, fixed
+ * to the map so they stay put while it moves; where the wind blows to, longer
+ * in stronger wind. On land the wind is the weather map's own forecast, faded
+ * in from the lake's over the first kilometre, and the arrows are fainter.
+ */
 function drawArrows() {
   const { L, map, view } = page;
   if (!map) return;
   const hour = shownHour();
-  const group = page.layers.arrows;
-  group.clearLayers();
-  const size = map.getSize();
-  const spacing = 60;
-  const paths = [];
-  for (let py = spacing / 2; py < size.y; py += spacing) {
-    const shift = Math.floor(py / spacing) % 2 ? spacing / 2 : 0;
-    for (let px = spacing / 2 + shift; px < size.x; px += spacing) {
-      const ll = map.containerPointToLatLng([px, py]);
-      if (!onWater(ll.lat, ll.lng)) continue;
-      const w = windAt(view, hour, { lat: ll.lat, lon: ll.lng });
-      if (!w) continue;
-      const length = 14 + Math.min(Math.max(w.speedMs, 0), 15) * 1.6;
-      const r = (w.towardDeg * Math.PI) / 180;
-      const dx = Math.sin(r);
-      const dy = -Math.cos(r);
-      const at = (fx, fy) => map.containerPointToLatLng([fx, fy]);
-      const tip = [px + (dx * length) / 2, py + (dy * length) / 2];
-      const line = [at(px - (dx * length) / 2, py - (dy * length) / 2), at(...tip)];
-      const heads = [-1, 1].map((side) => {
-        const a = r + Math.PI + side * 0.5;
-        return [at(...tip), at(tip[0] + Math.sin(a) * length * 0.35, tip[1] - Math.cos(a) * length * 0.35)];
-      });
-      paths.push(line, ...heads);
-    }
+  page.layers.arrows.clearLayers();
+  const zoom = map.getZoom();
+  const project = (lat, lon) => {
+    const p = map.project([lat, lon], zoom);
+    return [p.x, p.y];
+  };
+  const back = ([x, y]) => map.unproject([x, y], zoom);
+  const bounds = map.getPixelBounds();
+  const margin = arrowLength(15);
+  const samples = view.points.flatMap((p, i) => {
+    const w = hour.wind[i];
+    if (w?.fromDeg == null) return [];
+    const [x, y] = project(p.lat, p.lon);
+    return [{ x, y, towardDeg: (w.fromDeg + 180) % 360, speedMs: w.speedMs ?? 0 }];
+  });
+  const rings = view.outline.filter((r) => r.length > 2).map((r) => r.map(([lon, lat]) => project(lat, lon)));
+  const centre = map.getCenter();
+  const fromLand = landWind(gridCentre(view), hour.time);
+  const metresPerPixel = (40075016.686 * Math.cos((centre.lat * Math.PI) / 180)) / (256 * 2 ** zoom);
+  const arrows = windArrows({
+    area: [bounds.min.x - margin, bounds.min.y - margin, bounds.max.x + margin, bounds.max.y + margin],
+    spacing: SPACING, rings, samples, blend: BLEND_M / metresPerPixel,
+    land: fromLand && ((p) => {
+      const ll = back(p);
+      return fromLand({ lat: ll.lat, lon: ll.lng });
+    }),
+  });
+  for (const ashore of [true, false]) {
+    const paths = arrows.filter((a) => a.ashore === ashore)
+      .flatMap((a) => arrowLines(a.x, a.y, a.towardDeg, arrowLength(a.speedMs)).map((line) => line.map(back)));
+    if (!paths.length) continue;
+    const pane = ashore ? "landArrows" : "overlayPane";
+    L.polyline(paths, { pane, color: "rgba(255, 255, 255, .7)", weight: 4, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
+    L.polyline(paths, { pane, color: "rgba(26, 26, 26, .75)", weight: 2, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
   }
-  L.polyline(paths, { color: "rgba(255, 255, 255, .7)", weight: 4, interactive: false, lineCap: "round" }).addTo(group);
-  L.polyline(paths, { color: "rgba(26, 26, 26, .75)", weight: 2, interactive: false, lineCap: "round" }).addTo(group);
+}
+
+/** Even-odd test against the shore and islands. */
+const onWater = (lat, lon) => inside(page.view.outline, [lon, lat]);
+
+/** The middle of the lake's grid. */
+function gridCentre(view) {
+  const e = gridEdges(view.grid);
+  return { lat: (e.north + e.south) / 2, lon: (e.west + e.east) / 2 };
 }
 
 function drawSpot() {
@@ -797,7 +811,7 @@ function legendSheet() {
       ${row(`<span class="club-mark own"></span>`, t("The club of this page"))}
       ${row(`<span class="club-mark"></span>`, t("Other clubs on the lake"))}
       ${cold ? row(`<span class="shore-mark" style="background:${COLD_SHORE[cold]}"></span>`, t("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.", temperature(mapLimits().value("lifeJacket")), temperature(10))) : ""}
-      ${row(icon("arrow-up"), t("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones."))}</ul>
+      ${row(icon("arrow-up"), t("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. Fainter arrows on land show the weather map's wind forecast for each place."))}</ul>
     <h3>${h(t("Route"))}</h3><ul class="legend">
       ${row(`<span class="club-mark own"></span>`, t("Start at your club"))}
       ${row(`<span class="turn-mark">1</span>`, t("Turning point: tap to select, hold and drag to move"))}

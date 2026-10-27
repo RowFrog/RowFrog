@@ -276,31 +276,6 @@ export function rasterPixels(view, colours) {
   return { width: w, height: h, data: px };
 }
 
-/**
- * The wind anywhere on the lake from the forecast points, weighted by
- * distance and averaged as east and north parts (LakeRenderer.wind).
- */
-export function windAt(view, hour, { lat, lon }) {
-  let east = 0;
-  let north = 0;
-  let speed = 0;
-  let total = 0;
-  const k = Math.cos((lat * Math.PI) / 180);
-  view.points.forEach((p, i) => {
-    const w = hour.wind[i];
-    if (w?.fromDeg == null) return;
-    const d2 = Math.max(((p.lon - lon) * k) ** 2 + (p.lat - lat) ** 2, 1e-10);
-    const weight = 1 / d2;
-    const r = ((w.fromDeg + 180) * Math.PI) / 180;
-    east += Math.sin(r) * weight;
-    north += Math.cos(r) * weight;
-    speed += (w.speedMs ?? 0) * weight;
-    total += weight;
-  });
-  if (!total) return null;
-  return { towardDeg: ((Math.atan2(east, north) * 180) / Math.PI + 360) % 360, speedMs: speed / total };
-}
-
 // ---- Routes (Route.swift) ------------------------------------------------------------
 
 /** Metres between two coordinates. */
