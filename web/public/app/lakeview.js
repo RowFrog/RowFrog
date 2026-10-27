@@ -43,7 +43,7 @@ export async function viewForMap(lakeId) {
 }
 
 const rgb = (c, a = 1) => `rgba(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])}, ${a})`;
-const COLD_SHORE = { cool: "rgb(92, 168, 242)", cold: "rgb(20, 84, 194)" };
+export const COLD_SHORE = { cool: "rgb(92, 168, 242)", cold: "rgb(20, 84, 194)" };
 
 /** The hour's lights (or waves, wind) as a small picture, one pixel per cell, for smooth scaling. */
 export function rasterCanvas(view, hour, layer) {
@@ -175,7 +175,7 @@ export function mapBoatNote() {
   return `<p class="small sub">${icon("sailboat")} ${h(t("Coloured for %@", boatInSentence(boat)))}</p>`;
 }
 
-function kitBadge(view) {
+export function kitBadge(view) {
   const kit = coldWaterKit(view.shoreWaterC, mapLimits());
   if (!kit) return "";
   const [title, advice] = coldWaterText(kit);
