@@ -339,9 +339,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23304,
-        "lon": 16.43377,
-        "precision": "way/226565650 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
+        "lat": 48.23281,
+        "lon": 16.43303,
+        "precision": "shore of the Alte Donau nearest the town-level address, 60 m away (water checked by hand)",
         "verified": false
       }
     },
