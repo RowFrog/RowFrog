@@ -47,9 +47,10 @@ enum WidgetBridge {
     /// page's) and its lake's satellite picture, scaled to the largest widget
     /// and blurred once when the setting says so. Only for clubs whose widgets
     /// show a picture, or whose widget asked for one in its own settings.
+    /// Nothing while no widget is on the home or lock screen.
     @MainActor
     static func preparePictures(_ locations: LocationStore) async {
-        guard let folder = WidgetPictures.folder else { return }
+        guard let folder = WidgetPictures.folder, await hasWidgets() else { return }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let settings = AppSettings.shared
         let shared = WidgetShared.defaults
@@ -88,6 +89,15 @@ enum WidgetBridge {
             }
         }
         if changed { WidgetCenter.shared.reloadAllTimelines() }
+    }
+
+    /// Whether any Row Frog widget is on the home or lock screen.
+    private static func hasWidgets() async -> Bool {
+        await withCheckedContinuation { done in
+            WidgetCenter.shared.getCurrentConfigurations { result in
+                done.resume(returning: !((try? result.get()) ?? []).isEmpty)
+            }
+        }
     }
 
     /// Scaled to the largest widget (about 1100 × 1150 pixels on a big iPhone),

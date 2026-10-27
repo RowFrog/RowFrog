@@ -117,8 +117,9 @@ struct RootView: View {
         .onChange(of: AppSettings.shared.allowsLandscape) { Orientation.apply() }
         .task { await loadCatalog() }
         // The widget picks up the home base, clubs and settings when the user leaves the app.
+        // Only on leaving, not on every pull-down of Control Center or the app switcher.
         .onChange(of: scenePhase) { _, phase in
-            if phase != .active { WidgetBridge.publish(locations) }
+            if phase == .background { WidgetBridge.publish(locations) }
         }
         // A new language or units show on the widget straight away.
         .onChange(of: AppSettings.shared.language) { WidgetBridge.publish(locations) }
