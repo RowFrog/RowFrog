@@ -1,6 +1,7 @@
 """DWD radar readings for the widget's radar line (sources/dwd_radar.py)."""
 
 import asyncio
+import ssl
 from datetime import datetime, timedelta, timezone
 
 import httpx
@@ -46,3 +47,22 @@ def test_nowcast_reads_two_hours_from_the_reference():
     assert block["steps"][0] == {"time": REFERENCE.isoformat(), "mmPerHour": 0.0}
     assert block["steps"][2]["mmPerHour"] == 1.5
     assert block["steps"][-1]["time"] == (REFERENCE + timedelta(hours=2)).isoformat()
+
+
+def test_a_dropped_connection_skips_only_that_club(monkeypatch):
+    async def reading(client, lat, lon, time):
+        await asyncio.sleep(0)
+        if lat == 2:
+            # As on 27 Oct 2026: a raw TLS error, not wrapped in an httpx error.
+            raise ssl.SSLError("record layer failure")
+        if lat == 3 and time is not None:
+            # One step fails at once, a sibling later: both must end inside nowcast.
+            if time == REFERENCE:
+                raise httpx.ReadError("read")
+            await asyncio.sleep(0.01)
+            raise ssl.SSLError("record layer failure")
+        return (time or REFERENCE), 0.0, REFERENCE
+
+    monkeypatch.setattr(dwd_radar, "_reading", reading)
+    blocks = asyncio.run(dwd_radar.nowcasts({"a": (1, 1), "b": (2, 2), "c": (3, 3)}))
+    assert list(blocks) == ["a"]
