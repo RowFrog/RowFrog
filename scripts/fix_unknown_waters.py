@@ -10,6 +10,10 @@ after every club, and a run stops after SNAP_BUDGET_S, so running it again
 carries on with the clubs not yet snapped. Catalogs and clubs go in random
 order and the server that answered last is asked first, so a busy server or a
 club whose lookup keeps failing does not use up every run on the same clubs.
+A water whose OpenStreetMap name is longer ("Untere Alte Donau", "Murtensee /
+Lac de Morat") is found too, but only when no water has the exact name, and
+bays count (Flensburger Förde). A fix with "near" {lat, lon, place} searches
+from there instead, for clubs the import geocoded to the wrong town.
 
     python scripts/fix_unknown_waters.py [--snap]
 """
@@ -71,18 +75,23 @@ def lines(e: dict) -> list[list[tuple[float, float]]]:
 
 
 def shore_of(name: str, lat: float, lon: float) -> tuple[float, float, float] | None:
-    """(distance, lat, lon) of the nearest shore or river line called `name` within SNAP_M."""
-    quoted = name.replace('"', '\\"')
+    """(distance, lat, lon) of the nearest shore or river line called `name`
+    within SNAP_M; a longer name that holds `name` as whole words counts only
+    when nothing with the exact name is that close."""
+    # Regex specials get a backslash, doubled for the Overpass string.
+    escaped = "".join("\\\\" + c if c in ".^$*+?()[]{}|\\" else c for c in name).replace('"', '\\"')
+    pattern = f"(^|[ /(]){escaped}($|[ /),])"
     dlat = SNAP_M / 111_000 * 1.1
     dlon = dlat / max(0.2, math.cos(math.radians(lat)))
+    around = f"around:{SNAP_M:.0f},{lat},{lon}"
     result = overpass(
         f"""
         [out:json][timeout:90];
         (
-          way(around:{SNAP_M:.0f},{lat},{lon})["natural"="water"]["name"="{quoted}"];
-          rel(around:{SNAP_M:.0f},{lat},{lon})["natural"="water"]["name"="{quoted}"];
-          way(around:{SNAP_M:.0f},{lat},{lon})["landuse"="reservoir"]["name"="{quoted}"];
-          way(around:{SNAP_M:.0f},{lat},{lon})["waterway"~"^(river|canal)$"]["name"="{quoted}"];
+          way({around})["natural"~"^(water|bay)$"]["name"~"{pattern}"];
+          rel({around})["natural"~"^(water|bay)$"]["name"~"{pattern}"];
+          way({around})["landuse"="reservoir"]["name"~"{pattern}"];
+          way({around})["waterway"~"^(river|canal)$"]["name"~"{pattern}"];
         );
         out geom({lat - dlat:.5f},{lon - dlon:.5f},{lat + dlat:.5f},{lon + dlon:.5f});
         """,
@@ -91,6 +100,11 @@ def shore_of(name: str, lat: float, lon: float) -> tuple[float, float, float] | 
     if "remark" in result:  # Overpass reports timeouts here, with a partial result
         raise OSError(f"Overpass: {result['remark']}")
     elements = result["elements"]
+    exact = [e for e in elements if e.get("tags", {}).get("name") == name]
+    return nearest(exact, lat, lon) or nearest(elements, lat, lon)
+
+
+def nearest(elements: list[dict], lat: float, lon: float) -> tuple[float, float, float] | None:
     best = None
     for e in elements:
         for line in lines(e):
@@ -130,8 +144,11 @@ def main() -> int:
                     out_of_time = True
                     break
                 water = waters[club["lakeId"]]["name"]
+                near = fixes[country][club["id"]].get("near")
+                start = near or point
+                origin = f"near {near['place']}" if near else "nearest the town-level address"
                 try:
-                    found = shore_of(water, point["lat"], point["lon"])
+                    found = shore_of(water, start["lat"], start["lon"])
                 except OSError as err:
                     print(f"  {club['id']}: Overpass failed ({err}), kept")
                     continue
@@ -142,7 +159,7 @@ def main() -> int:
                 d, lat, lon = found
                 club["launchPoint"] = {
                     "lat": round(lat, 5), "lon": round(lon, 5),
-                    "precision": f"shore of the {water} nearest the town-level address, {d:.0f} m away (water checked by hand)",
+                    "precision": f"shore of the {water} {origin}, {d:.0f} m away (water checked by hand)",
                     "verified": False,
                 }
                 snapped += 1

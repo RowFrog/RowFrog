@@ -1,5 +1,5 @@
 {
-  "comment": "Hand-checked waters for clubs the import could only place at town level (\"Water near <town>\"). club id -> water name and lake|river; optional \"id\" picks one water of that name, \"replace\" also moves a club the import put on a wrong water (pond, harbour basin, piece of river). Applied by club_import.apply_water_fixes on every import; scripts/fix_unknown_waters.py --snap moves their launch points to the shore.",
+  "comment": "Hand-checked waters for clubs the import could only place at town level (\"Water near <town>\"). club id -> water name and lake|river; optional \"id\" picks one water of that name, \"replace\" also moves a club the import put on a wrong water (pond, harbour basin, piece of river), \"near\" {lat, lon, place} is where --snap searches from when the import geocoded the club to the wrong town. Applied by club_import.apply_water_fixes on every import; scripts/fix_unknown_waters.py --snap moves their launch points to the shore.",
   "at": {
     "erster-steirischer-ruderclub-ausseerland": {
       "water": "Grundlsee",
@@ -171,7 +171,12 @@
     },
     "crefelder-ruder-club-1883": {
       "water": "Rhein",
-      "kind": "river"
+      "kind": "river",
+      "near": {
+        "lat": 51.335,
+        "lon": 6.665,
+        "place": "Krefeld-Uerdingen"
+      }
     },
     "donau-ruder-club-ingolstadt": {
       "water": "Donau",
@@ -271,7 +276,12 @@
     },
     "ruderverein-monheim": {
       "water": "Rhein",
-      "kind": "river"
+      "kind": "river",
+      "near": {
+        "lat": 51.0917,
+        "lon": 6.8917,
+        "place": "Monheim am Rhein (the import placed it in Monheim, Bavaria)"
+      }
     },
     "ruderverein-rheinsberg-1910": {
       "water": "Grienericksee",
@@ -307,7 +317,12 @@
     },
     "srv-albatros-harburg-des-friedrich-ebert-gymnasium": {
       "water": "Süderelbe",
-      "kind": "river"
+      "kind": "river",
+      "near": {
+        "lat": 53.475,
+        "lon": 9.96,
+        "place": "Schweensand, Hamburg-Harburg"
+      }
     },
     "tangermuender-ruderclub-von-1906": {
       "water": "Elbe",
@@ -323,7 +338,12 @@
     },
     "wassersportverein-geisenheim-1912": {
       "water": "Rhein",
-      "kind": "river"
+      "kind": "river",
+      "near": {
+        "lat": 49.9844,
+        "lon": 7.9672,
+        "place": "Geisenheim"
+      }
     },
     "wassersportverein-st-goar-1924": {
       "water": "Rhein",
