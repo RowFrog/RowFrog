@@ -60,7 +60,9 @@ function available(lake) {
   });
 }
 
-const fileUrl = (lake, file) => `${API}/lakes/${encodeURIComponent(lake.lakeId)}/${file.split("/").map(encodeURIComponent).join("/")}`;
+/** A file's address; the day it shows (as the app's `d`) keeps kept copies and caches from showing an older one under the same name. */
+const fileUrl = (lake, file, date) =>
+  `${API}/lakes/${encodeURIComponent(lake.lakeId)}/${file.split("/").map(encodeURIComponent).join("/")}${date ? `?d=${encodeURIComponent(date)}` : ""}`;
 
 function caption(lake, shot) {
   const { meta } = lake;
@@ -89,7 +91,7 @@ function wireControls(el, lake, setKind) {
 }
 
 /** The picture with an empty layer for the overlay, which is drawn once its size is known. */
-const pictureHtml = (lake, shot) => `<img data-picture="${h(fileUrl(lake, shot.image))}" alt="${h(t("Satellite picture of the lake"))}" draggable="false"><div class="sat-over"></div>`;
+const pictureHtml = (lake, shot) => `<img data-picture="${h(fileUrl(lake, shot.image, shot.date))}" alt="${h(t("Satellite picture of the lake"))}" draggable="false"><div class="sat-over"></div>`;
 
 /**
  * The pictures loaded this visit, by address, as local copies: switching
@@ -238,7 +240,7 @@ function drawOver(el, lake, shot, clubId) {
   layer.innerHTML = overlaySvg(lake, shot, clubId, el.clientWidth, el.clientHeight);
   const again = () => el.isConnected && drawOver(el, lake, shot, clubId);
   whenLandWind(lake, again);
-  if (store.satLayers.includes("wind")) whenBrightness(fileUrl(lake, shot.image), again);
+  if (store.satLayers.includes("wind")) whenBrightness(fileUrl(lake, shot.image, shot.date), again);
 }
 
 const gridCentre = (view) => {
@@ -278,7 +280,7 @@ export function overlaySvg(lake, shot, clubId, w, hgt, screen = null) {
     const ice = meta.ice.bbox;
     const [x0, y0] = pt(ice[0], ice[3]);
     const [x1, y1] = pt(ice[2], ice[1]);
-    parts.push(`<image href="${fileUrl(lake, meta.ice.image)}" x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" preserveAspectRatio="none" style="image-rendering:pixelated"/>`);
+    parts.push(`<image href="${fileUrl(lake, meta.ice.image, meta.ice.date)}" x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" preserveAspectRatio="none" style="image-rendering:pixelated"/>`);
   }
   const hour = view?.hours?.length ? view.hours[hourIndex(view)] : null;
   const fill = ["light", "waves"].find((x) => on.has(x));
@@ -292,7 +294,7 @@ export function overlaySvg(lake, shot, clubId, w, hgt, screen = null) {
       <image href="${rasterUrl(view, hour, fill)}" x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" preserveAspectRatio="none" opacity=".55" clip-path="url(#${id})"/>`);
   }
   // Wind under the lines and marks, so shore, routes and clubs stay on top.
-  if (on.has("wind") && hour) parts.push(windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightnessOf(fileUrl(lake, shot.image))));
+  if (on.has("wind") && hour) parts.push(windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightnessOf(fileUrl(lake, shot.image, shot.date))));
   if (on.has("shore")) {
     // Over mostly white cloud the shore is dark with a light edge, over a clear lake light with a dark edge.
     // Cold water: the lake view's blue shore, with an edge that stands out from dark water (white) or from cloud (dark).
@@ -643,7 +645,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     if (!stage || !over) return;
     over.innerHTML = overlaySvg(lake, meta[kind], clubId, stage.clientWidth, stage.clientHeight, { size: [zoom.fit, zoom.fit / ratio], zoom: zoom.s, x: zoom.x, y: zoom.y });
     whenLandWind(lake, redrawMarks);
-    if (store.satLayers.includes("wind")) whenBrightness(fileUrl(lake, meta[kind].image), redrawMarks);
+    if (store.satLayers.includes("wind")) whenBrightness(fileUrl(lake, meta[kind].image, meta[kind].date), redrawMarks);
     sharpTiles(stage);
   }
 
@@ -667,7 +669,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     if (!sharp || !shot?.tiles || !layer) return;
     const below = shot.overview ? (sharp.width * 2500) / Math.max(sharp.width, sharp.height, 1) : meta.width;
     if (zoom.fit * zoom.s * devicePixelRatio <= below * 1.1) return;
-    if (shot.overview && !layer.querySelector(".overview")) layer.insertAdjacentHTML("afterbegin", `<img class="overview" src="${fileUrl(lake, shot.overview)}" alt="" draggable="false">`);
+    if (shot.overview && !layer.querySelector(".overview")) layer.insertAdjacentHTML("afterbegin", `<img class="overview" src="${fileUrl(lake, shot.overview, shot.date)}" alt="" draggable="false">`);
     // The part in sight, a little beyond the screen so tiles are there before they come into sight, as shares of the picture.
     const w = zoom.fit * zoom.s;
     const hh = (zoom.fit / ratio) * zoom.s;
@@ -687,7 +689,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
         img.draggable = false;
         img.style.cssText = `left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%;opacity:0`;
         img.onload = () => (img.style.opacity = 1);
-        img.src = fileUrl(lake, `${shot.tiles}/${id}.jpg`);
+        img.src = fileUrl(lake, `${shot.tiles}/${id}.jpg`, shot.date);
         layer.append(img);
       }
     }
