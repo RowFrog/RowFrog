@@ -14,7 +14,7 @@ import {
   precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
   loadLeaflet, testing, adviceOnly, footerLinks, mapBoat, mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM,
-  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving,
+  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml,
 } from "./shared.js";
 import {
   isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon, REASONS,
@@ -237,10 +237,28 @@ async function renderList() {
   }
 }
 
+/**
+ * Club names on one line: the long name with the short one in brackets
+ * where it fits, else the short name (ViewThatFits in ClubTitle). Checked
+ * whenever a name appears or its space changes size.
+ */
+const nameWatch = new ResizeObserver((entries) => {
+  for (const { target } of entries) {
+    target.classList.remove("short");
+    target.classList.toggle("short", target.scrollWidth > target.clientWidth + 1);
+  }
+});
+new MutationObserver(() => {
+  for (const el of document.querySelectorAll(".fit-name:not([data-fit])")) {
+    el.dataset.fit = "";
+    nameWatch.observe(el);
+  }
+}).observe(document.body, { childList: true, subtree: true });
+
 function rowSkeleton(club, isHome) {
   return `<div class="row-top">
       <div class="row-name">
-        <strong>${isHome ? icon("house") : ""}${h(club.shortName || club.name)}</strong>
+        <strong>${isHome ? icon("house") : ""}${clubNameHtml(club)}</strong>
         <small>${h(place(club.lakeName, town(club.address), lakeTitle))}</small>
       </div>
       <div class="row-now"><span class="spinner"></span></div>
@@ -534,7 +552,7 @@ function clubHeader(club, name, isHome, forecast, stale = false) {
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
-    <h1>${h(name)}</h1>
+    <h1>${clubNameHtml(club, name)}</h1>
     <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}

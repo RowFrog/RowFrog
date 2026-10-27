@@ -73,6 +73,9 @@ h1.large { font-size: 34px; font-weight: 700; margin: 4px 0 12px; }
 .club-head { text-align: center; margin: 14px 0 10px; }
 .club-head h1 { font-size: 34px; font-weight: 700; margin: 0; }
 .club-head p { margin: 2px 0; }
+.fit-name, .fit-one { display: block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fit-name .fit-short, .fit-name.short .fit-long { display: none; }
+.fit-name.short .fit-short { display: inline; }
 .club-head > .sub:not(.small) { font-size: 17px; }
 .club-head .home { font-size: 13px; font-weight: 600; color: var(--sub); margin-bottom: 0; }
 button.wide { margin-top: 0; }

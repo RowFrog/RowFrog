@@ -224,6 +224,18 @@ export function h(text) {
   return String(text ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
+/**
+ * A club's name for a title on one line (ClubTitle in the app): the long name
+ * with the short one in brackets where it fits, else the short name alone.
+ * fitNames (app.js) picks which of the two shows.
+ */
+export function clubNameHtml(club, fallback = "") {
+  const name = club?.name?.trim();
+  const short = club?.shortName?.trim();
+  if (!name || !short || name === short) return `<span class="fit-one">${h(short || name || fallback)}</span>`;
+  return `<span class="fit-name"><span class="fit-long">${h(`${name} (${short})`)}</span><span class="fit-short">${h(short)}</span></span>`;
+}
+
 /** A clock time in the picked format: the browser's own, "18:05" or "6:05 PM" (TimeFormat). */
 export function time(value, format = store.timeFormat) {
   if (format === "h12") return new Intl.DateTimeFormat("en-US", { timeZone: ZONE, hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(value));

@@ -234,7 +234,7 @@ private struct LocationSummaryRow: View {
                         if isHome {
                             Image(systemName: "house.fill").font(.footnote)
                         }
-                        Text(club.displayName).font(.title3.bold()).lineLimit(1)
+                        ClubTitle(club: club).font(.title3.bold())
                     }
                     Text(Lake.place(lake, town: club.town))
                         .font(.subheadline)
