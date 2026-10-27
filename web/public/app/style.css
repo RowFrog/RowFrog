@@ -596,6 +596,8 @@ body.locked { overflow: hidden; }
 .sat-zoom img { display: block; width: 100%; height: 100%; user-select: none; -webkit-user-drag: none; }
 .sat-sharp, .sat-sharp img { position: absolute; pointer-events: none; }
 .sat-sharp { inset: 0; }
+.sat-retry { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 12px; background: var(--tile); color: var(--sub); font-size: 14px; text-align: center; cursor: pointer; }
+.sat-retry .link { color: var(--accent); font-weight: 600; }
 .sat-sharp .overview { inset: 0; }
 .sat-sharp img { transition: opacity .2s; }
 .sat-kit { position: absolute; left: 8px; top: 8px; margin: 0; pointer-events: none; background: color-mix(in srgb, var(--card) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }

@@ -89,7 +89,53 @@ function wireControls(el, lake, setKind) {
 }
 
 /** The picture with an empty layer for the overlay, which is drawn once its size is known. */
-const pictureHtml = (lake, shot) => `<img src="${fileUrl(lake, shot.image)}" alt="${h(t("Satellite picture of the lake"))}" draggable="false"><div class="sat-over"></div>`;
+const pictureHtml = (lake, shot) => `<img data-picture="${h(fileUrl(lake, shot.image))}" alt="${h(t("Satellite picture of the lake"))}" draggable="false"><div class="sat-over"></div>`;
+
+/**
+ * The pictures loaded this visit, by address, as local copies: switching
+ * between the latest, mostly clear and clearest picture shows them again
+ * without asking the server, as the app keeps them in its cache folder.
+ * A failed load is tried twice more, then forgotten so the next try asks again.
+ */
+const pictures = new Map();
+function loadPicture(url) {
+  let kept = pictures.get(url);
+  if (!kept) {
+    kept = (async () => {
+      for (const wait of [0, 1500, 4000]) {
+        if (wait) await new Promise((done) => setTimeout(done, wait));
+        try {
+          const response = await fetch(url, { cache: wait ? "reload" : "default" });
+          if (response.ok) return URL.createObjectURL(await response.blob());
+        } catch {
+          // Offline for a moment, or the server didn't answer: try again.
+        }
+      }
+      throw new Error(`picture ${url}`);
+    })();
+    kept.catch(() => pictures.delete(url));
+    pictures.set(url, kept);
+  }
+  return kept;
+}
+
+/** Fills the pictures in `root` from the local copies; one that can't be loaded offers to try again. */
+function showPictures(root) {
+  for (const img of root.querySelectorAll("img[data-picture]")) {
+    const url = img.dataset.picture;
+    img.parentElement.querySelector(".sat-retry")?.remove();
+    loadPicture(url).then((src) => {
+      img.src = src;
+    }, () => {
+      if (!img.isConnected) return;
+      img.insertAdjacentHTML("afterend", `<button class="sat-retry">${icon("rotate-ccw")}<span>${h(t("The picture could not be loaded."))}</span><span class="link">${h(t("Try again"))}</span></button>`);
+      img.parentElement.querySelector(".sat-retry").addEventListener("click", (e) => {
+        e.stopPropagation();
+        showPictures(img.parentElement);
+      });
+    });
+  }
+}
 
 /** The lake view's life-jacket badge in the picture's corner while the water is cold, as on the lake map
  * (SatelliteColdBadge); it explains the blue shore, so it shows only with the shore line. */
@@ -139,6 +185,7 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
       ${caption(lake, shot)}
       ${chips(lake)}`;
     const picture = box.querySelector(".picture");
+    showPictures(picture);
     const open = () => openSatelliteScreen(lake, clubId, kind, (k) => { kind = k; show(); });
     picture.addEventListener("click", open);
     picture.addEventListener("keydown", (e) => (e.key === "Enter" || e.key === " ") && (e.preventDefault(), open()));
@@ -290,7 +337,6 @@ function brightnessOf(url) {
   brightness.set(url, entry);
   entry.ready = new Promise((done) => {
     const img = new Image();
-    img.crossOrigin = "anonymous";
     img.onload = () => {
       try {
         const scale = 128 / Math.max(img.naturalWidth, img.naturalHeight);
@@ -303,12 +349,15 @@ function brightnessOf(url) {
         for (let i = 0; i < values.length; i++) values[i] = 0.299 * rgba[i * 4] + 0.587 * rgba[i * 4 + 1] + 0.114 * rgba[i * 4 + 2];
         entry.map = { width, height, values };
       } catch {
-        // A picture from another address without leave to read it: arrows stay white.
+        // A picture that can't be read: arrows stay white.
       }
       done();
     };
     img.onerror = done;
-    img.src = url;
+    // The local copy is the page's own, so its pixels can be read.
+    loadPicture(url).then((src) => {
+      img.src = src;
+    }, done);
   });
   return null;
 }
@@ -510,6 +559,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
       <div class="sat-stage"><div class="sat-zoom">${pictureHtml(lake, shot)}<div class="sat-sharp"></div></div><div class="sat-over sat-screen"></div>${coldBadge(lake)}</div>
       <div class="sat-panel">${caption(lake, shot)}${chips(lake)}</div>`;
     el.querySelector("#sat-done").addEventListener("click", close);
+    showPictures(el.querySelector(".sat-zoom"));
     wireControls(el, lake, (k) => { kind = k; render(); });
     wireGestures(el.querySelector(".sat-stage"));
     // Another picture or layer keeps the zoom and the place on the lake; only opening sets them.
