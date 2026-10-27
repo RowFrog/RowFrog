@@ -844,7 +844,7 @@ struct SatelliteOverlay: View {
 /// The wind arrows on a satellite picture, as on the lake map: an even grid
 /// over the whole picture, more arrows as it zooms in, the same size on screen.
 /// On the water the wind is worked out between the lake's forecast points, on
-/// land it is the wind map's, drawn fainter. The arrow nearest each forecast
+/// land it is the wind map's. The arrow nearest each forecast
 /// point carries its speed.
 enum SatelliteWind {
     /// Draws on `context`, whose points are the screen's: the picture is `size`
@@ -898,23 +898,18 @@ enum SatelliteWind {
             bright ? (.white.opacity(0.9), .black) : (.black.opacity(0.6), .white)
         }
         let style = StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
-        for ashore in [true, false] {
-            for light in [false, true] {
-                var path = Path()
-                for a in arrows where a.ashore == ashore {
-                    let length = WindArrows.length(a.speedMs)
-                    guard bright(a.at, reach: length / 2) == light else { continue }
-                    path.addPath(LakeArrow.path(at: screen(a.at), towardDeg: a.towardDeg, length: length))
-                }
-                guard !path.isEmpty else { continue }
-                let (edge, core) = colors(bright: light)
-                var layer = context
-                layer.opacity = ashore ? WindArrows.ashoreOpacity : 1
-                layer.drawLayer { inner in
-                    inner.stroke(path, with: .color(edge), style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
-                    inner.stroke(path, with: .color(core), style: style)
-                }
+        // On land as on the water, at full strength: only black or white, by what lies under each arrow.
+        for light in [false, true] {
+            var path = Path()
+            for a in arrows {
+                let length = WindArrows.length(a.speedMs)
+                guard bright(a.at, reach: length / 2) == light else { continue }
+                path.addPath(LakeArrow.path(at: screen(a.at), towardDeg: a.towardDeg, length: length))
             }
+            guard !path.isEmpty else { continue }
+            let (edge, core) = colors(bright: light)
+            context.stroke(path, with: .color(edge), style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+            context.stroke(path, with: .color(core), style: style)
         }
         // Each forecast point's speed, at the tail of the arrow nearest it, with a
         // halo in the edge colour so it reads on cloud and on dark water alike.
@@ -1338,7 +1333,7 @@ struct SatelliteLegend: View {
                 if on.contains(.wind) {
                     Section(tr("Wind")) {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land show the weather map's wind forecast for each place."))
+                            tr("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. On land the arrows show the weather map's wind forecast for each place."))
                     }
                 }
                 if on.contains(.ice), picture.ice != nil {

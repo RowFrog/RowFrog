@@ -629,7 +629,7 @@ enum German {
         "A true-colour photo from the Sentinel-2 satellites, as a camera would see it from space.": "Ein Foto in natürlichen Farben von den Sentinel-2-Satelliten, wie eine Kamera es aus dem All sieht.",
         "White and grey: clouds, haze, or snow and ice on the ground.": "Weiß und grau: Wolken, Dunst oder Schnee und Eis am Boden.",
         "Dark blue to black: open water.": "Dunkelblau bis schwarz: offenes Wasser.",
-        "Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land show the weather map's wind forecast for each place.": "Zeigt, wohin der Wind in der aktuellen Stunde weht, zwischen den Vorhersagepunkten geschätzt, mit mehr Pfeilen beim Hineinzoomen; längere Pfeile bedeuten stärkeren Wind. Die Zahl ist die Windgeschwindigkeit an einem Vorhersagepunkt. Hellere Pfeile an Land zeigen die Windvorhersage der Wetterkarte für jeden Ort.",
+        "Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. On land the arrows show the weather map's wind forecast for each place.": "Zeigt, wohin der Wind in der aktuellen Stunde weht, zwischen den Vorhersagepunkten geschätzt, mit mehr Pfeilen beim Hineinzoomen; längere Pfeile bedeuten stärkeren Wind. Die Zahl ist die Windgeschwindigkeit an einem Vorhersagepunkt. An Land zeigen die Pfeile die Windvorhersage der Wetterkarte für jeden Ort.",
         "Snow-covered ice": "Eis mit Schnee",
         "Clear ice": "Klares Eis",
         "Open water": "Offenes Wasser",
