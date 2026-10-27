@@ -702,11 +702,18 @@ struct SatelliteOverlay: View {
                     path.addLines(ring.map { point($0[0], $0[1]) })
                     path.closeSubpath()
                 }
-                let (edge, core): (Color, Color) = cloudy
-                    ? (.white.opacity(0.85), Color(red: 0.05, green: 0.12, blue: 0.3))
-                    : (.black.opacity(0.7), .white)
-                context.stroke(path, with: .color(edge), lineWidth: 3.5)
-                context.stroke(path, with: .color(core), lineWidth: 1.5)
+                // Cold water: the lake view's blue shore, with an edge that stands out from
+                // dark water (white) or from cloud (dark). Otherwise white, or dark over cloud.
+                let cold = view.coldShore
+                let (edge, core): (Color, Color) = switch (cold, cloudy) {
+                case let (cold?, false): (.white.opacity(0.9), cold.color)
+                case let (cold?, true): (.black.opacity(0.7), cold.color)
+                case (nil, true): (.white.opacity(0.85), Color(red: 0.05, green: 0.12, blue: 0.3))
+                case (nil, false): (.black.opacity(0.7), .white)
+                }
+                let width: CGFloat = cold == .cold ? 2.2 : 1.5
+                context.stroke(path, with: .color(edge), lineWidth: width + 2)
+                context.stroke(path, with: .color(core), lineWidth: width)
             }
             if layers.contains(.routes) {
                 for route in RouteStore.shared.routes(on: lakeID) where route.points.count > 1 {
@@ -1233,7 +1240,15 @@ struct SatelliteLegend: View {
                 }
                 if !on.isDisjoint(with: [.shore, .clubs, .routes]) {
                     Section(tr("Lines and marks")) {
-                        if on.contains(.shore) { row(line(.white), tr("Shore line: white on a clear picture, dark blue on a cloudy one")) }
+                        if on.contains(.shore) {
+                            if let cold = LakeViewStore.shared.views[lakeID]?.coldShore {
+                                row(line(cold.color),
+                                    tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
+                                       Format.temperature(AppSettings.shared.mapLimits.value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
+                            } else {
+                                row(line(.white), tr("Shore line: white on a clear picture, dark blue on a cloudy one"))
+                            }
+                        }
                         if on.contains(.routes) { row(line(.yellow), tr("Your saved routes on this lake")) }
                         if on.contains(.clubs) {
                             row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
