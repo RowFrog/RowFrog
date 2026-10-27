@@ -41,7 +41,7 @@ function switchLayer(id) {
 /** The lake's pictures and its lake view (for the layers), loaded once per page. */
 async function loadLake(lakeId) {
   const meta = await getJSON(`lakes/${encodeURIComponent(lakeId)}/satellite`);
-  const view = await viewForMap(lakeId).catch(() => null);
+  const view = lakeId.startsWith("club-") ? null : await viewForMap(lakeId).catch(() => null);
   return { lakeId, meta, view, kinds: KINDS.filter(([k]) => meta[k]?.image) };
 }
 
@@ -98,7 +98,9 @@ const pictureHtml = (lake, shot) => `<img src="${fileUrl(lake, shot.image)}" alt
 export async function satelliteCard(box, lakeId, clubId, changed) {
   let lake;
   try {
-    lake = await loadLake(lakeId);
+    // Water without an outline (rivers) has no lake picture, only the 4 x 3 km
+    // around the club, "club-<id>" (LocationPageView.satelliteID).
+    lake = await loadLake(lakeId).catch(() => loadLake(`club-${clubId}`));
   } catch {
     return;
   }
@@ -354,8 +356,11 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     el.querySelector("#sat-done").addEventListener("click", close);
     wireControls(el, lake, (k) => { kind = k; render(); });
     wireGestures(el.querySelector(".sat-stage"));
-    layout(true);
+    // Another picture or layer keeps the zoom and the place on the lake; only opening sets them.
+    layout(opened ? "again" : true);
+    opened = true;
   }
+  let opened = false;
 
   /** The whole picture fits at first; `fresh` also sets where it opens. */
   function layout(fresh) {
@@ -366,6 +371,11 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     const H = stage.clientHeight;
     const fit = Math.min(W, H * ratio);
     const changed = Math.abs(fit - zoom.fit) > 0.5;
+    if (changed && zoom.fit) {
+      // The same spot of the picture stays in the middle when its fitted size changes.
+      zoom.x = W / 2 - ((W / 2 - zoom.x) / zoom.fit) * fit;
+      zoom.y = H / 2 - ((H / 2 - zoom.y) / zoom.fit) * fit;
+    }
     zoom.fit = fit;
     content.style.width = `${fit}px`;
     content.style.height = `${fit / ratio}px`;

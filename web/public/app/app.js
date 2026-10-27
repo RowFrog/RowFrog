@@ -10,18 +10,17 @@ import { icon } from "./icons.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatShort, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
-  degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
+  degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
-  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, card, scaleBar, zoneBar, C, windDial, sparkBars,
-  levelSegments, cloudLayers, pressureGauge, sunPath, openSheet, loadLeaflet, testing, adviceOnly, footerLinks, mapBoat,
-  mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM, applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText,
-  dataSaving,
+  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
+  loadLeaflet, testing, adviceOnly, footerLinks, mapBoat, mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM,
+  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving,
 } from "./shared.js";
 import {
-  isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon,
-  precipitationKind, REASONS, lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff,
-  ICE_TITLES, iceValue, sunState, coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit,
-  applyLimits, steadierBoat, COLD, waterForHour, allowsMore, key,
+  isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon, REASONS,
+  lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
+  coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
+  waterForHour, allowsMore, key,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap } from "./lakeview.js";
 import { satelliteCard } from "./satellite.js";
@@ -33,6 +32,8 @@ import { layoutFor, visibleCards, openArrange } from "./arrange.js";
 import { showBackground, renderBackgrounds, backgroundSummary } from "./backgrounds.js";
 import { renderTour, tourSeen, tip, withTip, wireTips, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
+import { conditionData } from "./values.js";
+import { radarAt, followRadar, rainLines, radarGraphic, radarMark, radarCard, radarCardBody, wireRadarCard } from "./radar.js";
 
 const SAFETY_VERSION = 1;
 const root = document.getElementById("root");
@@ -345,7 +346,11 @@ function wireSearch() {
 // ---- Club page (LocationPageView) ------------------------------------------------------------
 
 
+/** Counts club page renders, so the radar of a page left behind stops refreshing. */
+let clubRenders = 0;
+
 async function renderClub(id) {
+  const shown = ++clubRenders;
   let club = store.clubs.find((c) => c.id === id);
   if (!club?.launchPoint) club = (await findClub(id)) ?? club;
   const saved = store.clubs.some((c) => c.id === id);
@@ -379,7 +384,9 @@ async function renderClub(id) {
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
   // The cards in the order chosen under "Arrange this page".
   const cards = {
-    conditions: () => withTip(conditionsCard(forecast, hour), "conditionsExtras"),
+    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint)), "conditionsExtras"),
+    // Off by default: the rain tile shows the radar; "Arrange this page" switches the card on.
+    radar: () => (club?.launchPoint ? radarCard(club.launchPoint) : ""),
     lakeView: () => (forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""),
     hourly: () => withTip(hourlyCard(forecast, now, stale), "hourly"),
     launchPoint: () => (club?.launchPoint ? withTip(launchPointCard(club), "launchPoint") : ""),
@@ -388,7 +395,7 @@ async function renderClub(id) {
   root.querySelector("main").innerHTML = `
     ${clubHeader(club, name, isHome, forecast, stale)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
-    ${nowCard(forecast, hour, { stale, club })}
+    ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint) })}
     ${tip("topTile")}
     ${(waterForHour(raw, hour) ?? 99) < COLD.waterC ? tip("coldWater") : ""}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
@@ -404,6 +411,8 @@ async function renderClub(id) {
   wireTips(root.querySelector("main"));
   balanceCards();
   if (root.querySelector("#launch-map")) showLaunchMap(club);
+  wireRadarCard(root.querySelector("#radar"), club?.launchPoint);
+  followRadar(club?.launchPoint, () => shown === clubRenders && root.querySelector("main.club") != null, () => showRadar(club, forecast, hour));
   const satelliteBox = root.querySelector("#satellite");
   if (forecast.lakeId && satelliteBox) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
   const lakeBox = root.querySelector("#lake-view");
@@ -413,6 +422,26 @@ async function renderClub(id) {
       balanceCards();
     });
   }
+}
+
+/** A new radar reading: the rain tile, the top tile's rain value and the radar card follow it (RadarStore). */
+function showRadar(club, forecast, hour) {
+  const radar = radarAt(club?.launchPoint);
+  const replace = (el, html) => {
+    if (!el) return;
+    const fresh = document.createElement("div");
+    fresh.innerHTML = html;
+    el.innerHTML = fresh.firstElementChild.innerHTML;
+  };
+  replace(root.querySelector('.card:not(.now) [data-tile="precipitation"]'), conditionTile("precipitation", forecast, hour, radar));
+  const cell = root.querySelector(".card.now .now-rain");
+  if (cell) cell.innerHTML = rainCell(conditionData(forecast, hour, radar));
+  const box = root.querySelector("#radar");
+  if (box && club?.launchPoint) {
+    box.innerHTML = radarCardBody(club.launchPoint);
+    wireRadarCard(box, club.launchPoint);
+  }
+  balanceCards();
 }
 
 // ---- Wide screens (iPad, Mac, PC), as in the app on iPad ------------------------------------
@@ -441,6 +470,15 @@ function balanceCards() {
   const cards = [...box.querySelectorAll(".card")];
   cards.forEach((card, i) => (card.dataset.order ??= i));
   cards.sort((a, b) => a.dataset.order - b.dataset.order);
+  // Keep the page's height while the cards move: emptied, it would be shorter
+  // than the window and Safari, which has no scroll anchoring, jumps to the top.
+  const scroller = document.scrollingElement;
+  const y = scroller.scrollTop;
+  box.style.minHeight = `${box.offsetHeight}px`;
+  requestAnimationFrame(() => {
+    box.style.minHeight = "";
+    if (scroller.scrollTop !== y) scroller.scrollTop = y;
+  });
   box.replaceChildren();
   box.classList.toggle("two", box.clientWidth >= TWO_COLUMNS);
   if (!box.classList.contains("two")) {
@@ -527,7 +565,9 @@ function wireClubPage(id, club, raw, forecast, hour) {
   }));
   root.querySelectorAll("[data-hour]").forEach((b) => b.addEventListener("click", () => {
     const at = forecast.hours.find((x) => x.time === b.dataset.hour);
-    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast) }) + conditionsCard(forecast, at), (sheet) => {
+    // Within the radar's 2 hours the rain values come from the radar, later from the forecast.
+    const radar = radarAt(club?.launchPoint);
+    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar }) + conditionsCard(forecast, at, radar), (sheet) => {
       // A value from a later hour opens its page at that hour.
       sheet.querySelectorAll("[data-tile]").forEach((t2) => t2.addEventListener("click", () => {
         location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
@@ -573,7 +613,7 @@ function wireSwipe(id) {
 }
 
 /** The top tile: the rowing light, why, the main values and the daylight (NowCard). */
-function nowCard(forecast, hour, { stale = false, at = null } = {}) {
+function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}) {
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
   const kind = sky(hour.weatherCode);
@@ -588,6 +628,16 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
   const hourWater = at ? forecast.waterForecast?.find((d) => d.date === localDay(hour.time))?.celsius ?? latest : latest;
   const kit = coldWaterKit(hourWater, currentLimits());
   const steadier = steadierBoat(hour, hourWater, store.boats, store.boat, boatLimits);
+  const d = conditionData(forecast, hour, radar);
+  // The waves line in fewer words than the tile's, so it fits under the value in German too.
+  const fetch = hour.fetchM;
+  const wavesCaption = fetch == null ? "" : fetch < 50 ? t("Offshore wind") : t("%@ open water", distance(fetch));
+  const fogNow = (hour.visibilityM ?? Infinity) < 1000;
+  const fog = d.next24.find((x) => (x.visibilityM ?? Infinity) < 1000);
+  const visibilityCaption = fogNow ? t("Fog") : fog ? t("Fog from %@", time(fog.time)) : t("No fog");
+  const iceLine = forecast.ice ? iceDetail(forecast.ice) : t("Check the lake yourself");
+  // As wide as its longest direction ("from NW"), so the column keeps one width whatever the wind does.
+  const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg))}` : "");
   return `<section class="card now">
     <div class="now-head">
       ${dot(hour.light, 36, stale)}
@@ -613,33 +663,46 @@ function nowCard(forecast, hour, { stale = false, at = null } = {}) {
     </ul>
     ${adviceOnly()}
     <hr>
-    <div class="now-values">
+    <div class="now-grid">
       <div class="air">
         <small class="label">${conditionIcon("temperature")} ${h(t("Air"))}</small>
         <span class="v44">${h(degrees(hour.temperatureC))}</span>
-        ${hour.apparentTemperatureC != null ? `<small class="sub">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
+        ${hour.apparentTemperatureC != null ? `<small class="sub grey">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
       </div>
       <div class="${water == null && estimate != null ? "secondary" : ""}">
         <small class="label">${conditionIcon("waterTemperature")} ${h(t("Water"))}</small>
         <span class="v28">${h(water == null && estimate != null ? degrees(estimate) : degrees(water?.celsius, 1))}</span>
-        <small class="sub">${h(water ? t("Measured %@", time(water.measuredAt)) : estimate != null ? t("Estimated") : " ")}</small>
+        <small class="sub grey">${h(water ? t("Measured %@", time(water.measuredAt)) : estimate != null ? t("Estimated") : " ")}</small>
       </div>
       <div>
         <small class="label">${conditionIcon("wind")} ${h(t("Wind"))}</small>
         <span class="v28">${h(windRange(hour.windSpeedMs, hour.windGustMs))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
-        <small class="sub">${h(windUnit() + (hour.windFromDeg != null ? ` · ${t("from %@", compass(hour.windFromDeg))}` : ""))}</small>
+        <small class="sub stack">${[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => `<span aria-hidden="true">${h(unitLine(deg))}</span>`).join("")}<span>${h(unitLine(hour.windFromDeg))}</span></small>
+      </div>
+      <div>
+        <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17">${h(waves(hour.waveHeightM))}</span>
+        ${wavesCaption ? `<small class="sub grey">${h(wavesCaption)}</small>` : ""}
+      </div>
+      <div class="now-rain">${rainCell(d)}</div>
+      <div>
+        <small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span class="v17">${h(distance(hour.visibilityM))}</span>
+        <small class="sub grey">${h(visibilityCaption)}</small>
       </div>
     </div>
-    <div class="now-metrics">
-      <div><small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.waveHeightM))}</span></div>
-      <div><small class="label">${conditionIcon("precipitation")} ${h(t("Rain, hail"))}</small><span>${h(precipitationText(hour) ?? t("None"))}</span></div>
-      <div><small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span>${h(distance(hour.visibilityM))}</span></div>
-      ${ice ? `<div><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span>${h(t(ice))}</span></div>` : ""}
-    </div>
+    ${ice ? `<p class="ice-line"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17">${h(t(ice))}</span>
+      <small class="sub">${h(iceLine === t("Bays and harbours first") ? t("Bays first") : iceLine)}</small></p>` : ""}
     ${sun ? `<p class="daylight">${sun.up
       ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span>${h(t("Sunset %@ · %@ of daylight left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}</span>`
       : `<span class="moon">${icon("moon-star")}</span><span>${h(t("Sun is down · rowing advised again from %@", time(sun.sunrise)))}</span>`}</p>` : ""}
   </section>`;
+}
+
+/** The top tile's rain value with the rain tile's line under it, so both always say the same. */
+function rainCell(d) {
+  const lines = rainLines(d);
+  const caption = lines.detail === t("Dry next 24 h") ? t("Dry for 24 h") : lines.detail;
+  return `<small class="label">${conditionIcon("precipitation")} ${h(t("Rain, hail"))}</small><span class="v17">${h(lines.value)}</span>
+    ${caption ? `<small class="sub grey">${lines.fromRadar ? radarMark() : ""}${h(caption)}</small>` : ""}`;
 }
 
 /** The DWD warnings card, shown while a warning is out or DWD could not be checked (WarningsCard). */
@@ -744,52 +807,46 @@ function shoreLights(open) {
 }
 
 /** The current conditions: the sky, then two tiles a row in the app's order (ConditionsCard). */
-function conditionsCard(forecast, hour) {
+function conditionsCard(forecast, hour, radar = null) {
   const kind = sky(hour.weatherCode);
   const head = `<div class="cc-head">${skySymbol(hour, "large")}<div><strong>${h(t(SKY_TITLES[kind]))}</strong>
     <small class="sub">${h(t("%@ · feels like %@", degrees(hour.temperatureC), degrees(hour.apparentTemperatureC)))}</small></div></div>`;
-  const tiles = TILE_ORDER.map((c) => conditionTile(c, forecast, hour)).join("");
+  const tiles = TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar)).join("");
   return card(t("Current conditions"), "gauge", `${head}<div class="tiles">${tiles}</div>`, { legend: "conditions" });
 }
 
-function conditionTile(condition, forecast, hour) {
+function conditionTile(condition, forecast, hour, radar = null) {
   const i = forecast.hours.indexOf(hour);
   const next24 = forecast.hours.slice(Math.max(0, i), Math.max(0, i) + 24);
   const titles = conditionTexts();
+  const graphic = conditionGraphic(condition, forecast, hour);
   const light = REASONS[condition] ? lightFor(hour, REASONS[condition]) : null;
   const header = (title) => `<span class="tile-head">${conditionIcon(condition)}<span>${h(title)}</span>${light && light !== "green" ? dot(light, 8) : ""}${icon("chevron-right")}</span>`;
-  const tile = (value, detail, graphic = "", off = false) => `<button class="tile ${off ? "off" : ""}" data-tile="${condition}">
+  // `mark`: rain read from the radar starts its line with the radar's symbol.
+  const tile = (value, detail, graphic = "", off = false, mark = "") => `<button class="tile ${off ? "off" : ""}" data-tile="${condition}">
     ${header(titles[condition][1])}
-    <span class="tile-body"><span><strong>${h(value)}</strong><small>${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
+    <span class="tile-body"><span><strong>${h(value)}</strong><small>${mark}${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
   const temps = next24.map((x) => x.temperatureC).filter((v) => v != null);
   switch (condition) {
     case "temperature":
-      return tile(degrees(hour.temperatureC), temps.length ? t("High %@ · low %@", degrees(Math.max(...temps)), degrees(Math.min(...temps))) : "",
-        scaleBar(((hour.temperatureC ?? 0) + 10) / 45, [C.blue, C.teal, C.green, C.orange, C.red]));
+      return tile(degrees(hour.temperatureC), temps.length ? t("High %@ · low %@", degrees(Math.max(...temps)), degrees(Math.min(...temps))) : "", graphic);
     case "feelsLike":
-      return tile(degrees(hour.apparentTemperatureC), feelsLikeNote(hour) ? t(feelsLikeNote(hour)) : "",
-        scaleBar(((hour.apparentTemperatureC ?? 0) + 10) / 45, [C.blue, C.teal, C.green, C.orange, C.red]));
+      return tile(degrees(hour.apparentTemperatureC), feelsLikeNote(hour) ? t(feelsLikeNote(hour)) : "", graphic);
     case "wind": {
       const gust = t("Gusts %@", windNumber(hour.windGustMs));
-      return tile(wind(hour.windSpeedMs), hour.windFromDeg != null ? `${gust} · ${t("from %@", compass(hour.windFromDeg))}` : gust, windDial(hour));
+      return tile(wind(hour.windSpeedMs), hour.windFromDeg != null ? `${gust} · ${t("from %@", compass(hour.windFromDeg))}` : gust, graphic);
     }
     case "waves": {
-      // The app's limits for the boat: amber and red zones up to a third past red.
-      const limits = currentLimits();
-      const [amber, red] = [limits.value("waveAmber"), limits.value("waveRed")];
-      const top = (red * 4) / 3;
       const fetch = hour.fetchM;
-      return tile(waves(hour.waveHeightM), fetch == null ? "" : fetch < 50 ? t("Wind blows off the shore") : t("%@ open water upwind", distance(fetch)),
-        zoneBar((hour.waveHeightM ?? 0) / top, [[0, C.green], [amber / top, C.orange], [red / top, C.red]]));
+      return tile(waves(hour.waveHeightM), fetch == null ? "" : fetch < 50 ? t("Wind blows off the shore") : t("%@ open water upwind", distance(fetch)), graphic);
     }
     case "waterTemperature": {
       const value = water == null && estimate != null ? `≈ ${degrees(estimate)}` : degrees(water?.celsius, 1);
       const detail = water == null && estimate != null ? (forecast.waterEstimate ? t("Satellite estimate") : t("Estimated, not measured"))
         : water ? t("Measured %@", time(water.measuredAt)) : t("No lake station");
-      // Blues for cold water: it calls for a life jacket, not a warning colour.
-      return tile(value, detail, water ? zoneBar(water.celsius / 25, [[0, "var(--deep-water)"], [0.16, "var(--kit)"], [0.4, "var(--kit-light)"], [0.6, C.green]]) : "");
+      return tile(value, detail, graphic);
     }
     case "ice": {
       const ice = forecast.ice;
@@ -802,14 +859,10 @@ function conditionTile(condition, forecast, hour) {
       return tile(value, detail, "", off);
     }
     case "precipitation": {
-      let detail;
-      if ((hour.precipitationMm ?? 0) >= 0.1) detail = t(precipitationKind(sky(hour.weatherCode)) ?? "Rain");
-      else {
-        const wet = next24.find((x) => (x.precipitationMm ?? 0) >= 0.1);
-        detail = wet ? t("%@ from %@", t(precipitationKind(sky(wet.weatherCode)) ?? "Rain"), time(wet.time)) : t("Dry next 24 h");
-      }
-      return tile((hour.precipitationMm ?? 0) >= 0.1 ? rain(hour.precipitationMm) : t("Dry"), detail,
-        sparkBars(forecast.hours.slice(Math.max(0, i), Math.max(0, i) + 8).map((x) => x.precipitationMm ?? 0)));
+      // DWD's radar for the next two hours, then the forecast.
+      const d = conditionData(forecast, hour, radar);
+      const lines = rainLines(d);
+      return tile(lines.value, lines.detail, radarGraphic(d) ?? graphic, false, lines.fromRadar ? radarMark() : "");
     }
     case "thunderstorm": {
       const level = light === "red" ? 3 : light === "amber" ? 2 : 1;
@@ -817,7 +870,7 @@ function conditionTile(condition, forecast, hour) {
       const note = !localChecked(forecast.warnings) ? t("Warnings not checked")
         : !warningsIsDWD(forecast.warnings) ? (storm ? t("Official warning") : t("No official warning"))
         : storm ? t("DWD warning") : t("No DWD warning");
-      return tile({ 3: t("High"), 2: t("Possible"), 1: t("Low") }[level], note, levelSegments(level));
+      return tile({ 3: t("High"), 2: t("Possible"), 1: t("Low") }[level], note, graphic);
     }
     case "visibility": {
       let detail;
@@ -826,24 +879,21 @@ function conditionTile(condition, forecast, hour) {
         const fog = next24.find((x) => (x.visibilityM ?? Infinity) < 1000);
         detail = fog ? t("Fog from %@", time(fog.time)) : t("No fog");
       }
-      const f = Math.log10(Math.max(hour.visibilityM ?? 40000, 100) / 100) / Math.log10(400);
-      return tile(distance(hour.visibilityM), detail, zoneBar(f, [[0, C.red], [0.27, C.orange], [0.384, C.green]]));
+      return tile(distance(hour.visibilityM), detail, graphic);
     }
     case "cloudCover":
-      return tile(`${num(hour.cloudCoverPct)} %`, hour.cloudCoverLowPct != null ? t("Low cloud %@ %%", num(hour.cloudCoverLowPct)) : "", cloudLayers(hour));
+      return tile(`${num(hour.cloudCoverPct)} %`, hour.cloudCoverLowPct != null ? t("Low cloud %@ %%", num(hour.cloudCoverLowPct)) : "", graphic);
     case "humidity":
-      return tile(hour.humidityPct == null ? "–" : `${num(hour.humidityPct)} %`, hour.dewPointC != null ? t("Dew point %@", degrees(hour.dewPointC)) : "",
-        `<span class="drop" style="--f:${hour.humidityPct ?? 0}%">${icon("droplet")}</span>`);
+      return tile(hour.humidityPct == null ? "–" : `${num(hour.humidityPct)} %`, hour.dewPointC != null ? t("Dew point %@", degrees(hour.dewPointC)) : "", graphic);
     case "pressure": {
       const change = pressureChange(forecast.hours, hour);
       const trend = change == null ? null : pressureTrend(change);
-      return tile(pressureNumber(hour.pressureHpa), trend ? `${unitSymbol("pressure")} · ${t(trend).toLowerCase()}` : unitSymbol("pressure"), pressureGauge(hour.pressureHpa, trend));
+      return tile(pressureNumber(hour.pressureHpa), trend ? `${unitSymbol("pressure")} · ${t(trend).toLowerCase()}` : unitSymbol("pressure"), graphic);
     }
     case "uvIndex": {
       const withUv = next24.filter((x) => x.uvIndex != null);
       const top = withUv.length ? withUv.reduce((a, b) => (b.uvIndex > a.uvIndex ? b : a)) : null;
-      return tile(num(hour.uvIndex), top ? t("Max %@ · %@", num(top.uvIndex), dayLabel(top.time)) : "",
-        scaleBar((hour.uvIndex ?? 0) / 11, [C.green, C.yellow, C.orange, C.red, C.purple]));
+      return tile(num(hour.uvIndex), top ? t("Max %@ · %@", num(top.uvIndex), dayLabel(top.time)) : "", graphic);
     }
     case "daylight": {
       const at = new Date(hour.time) > new Date() ? new Date(hour.time) : new Date();
@@ -1149,7 +1199,7 @@ function renderBoat(id) {
       <h3 class="section">${icon("sliders-horizontal")} ${h(t("Fine-tune the limits"))}</h3>
       <section class="card group">${Object.keys(LIMITS).map(limitRow).join("")}
         ${changed ? `<button id="reset-limits" class="link">${h(t("Use the app's limits again"))}</button>` : ""}</section>
-      <p class="footer">${h(`${t("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. DWD warnings, thunderstorms, fog, hail and darkness always count.")} ${t("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.", temperature(COLD.waterC), wind(COLD.marginMs))}`)}</p>
+      <p class="footer">${h(`${t("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. Official warnings, thunderstorms, fog, hail and darkness always count.")} ${t("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.", temperature(COLD.waterC), wind(COLD.marginMs))}`)}</p>
       ${isGroup(boat) ? "" : `<button id="remove-boat" class="quiet red">${h(t("Remove this boat"))}</button>`}
       ${footerLinks()}
     </main>`;

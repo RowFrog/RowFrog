@@ -675,9 +675,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.30499,
-        "lon": 16.32376,
-        "precision": "geocoded club address (town level); on the Donau (checked by hand)",
+        "lat": 48.306,
+        "lon": 16.34255,
+        "precision": "shore of the Donau nearest the town-level address, 1394 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -729,9 +729,9 @@
       "country": "at",
       "lakeId": "attersee",
       "launchPoint": {
-        "lat": 47.95464,
-        "lon": 13.58395,
-        "precision": "geocoded club address (street level); on the Attersee (checked by hand)",
+        "lat": 47.95059,
+        "lon": 13.58425,
+        "precision": "shore of the Attersee nearest the town-level address, 451 m away (water checked by hand)",
         "verified": false
       }
     },

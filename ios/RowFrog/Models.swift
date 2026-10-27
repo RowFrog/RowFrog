@@ -155,7 +155,7 @@ struct Reason: Codable, Hashable {
         case "lake_strong_wind": tr("DWD strong-wind warning")
         case "single_cold": tr("Single in cold water")
         case "freezing_water": tr("Near-freezing water")
-        case "weather_warning": tr("DWD weather warning")
+        case "weather_warning": tr("Official weather warning")
         case "wind": tr("Wind")
         case "gusts": tr("Gusts")
         case "waves": tr("Waves")
@@ -178,7 +178,7 @@ struct Reason: Codable, Hashable {
         case "lake_strong_wind": tr("DWD has issued a strong-wind warning for the lake; its warning lights flash 40 times a minute.")
         case "single_cold": tr("In a single, row with a coach boat or a partner boat while the water is this cold.")
         case "freezing_water": tr("The water is below %@. You are strongly advised not to go out, at least not in a small boat.", Format.temperature(RowingLimits.freezingWaterC))
-        case "weather_warning": tr("DWD has issued a weather warning for this place.")
+        case "weather_warning": tr("An official weather warning is out for this place.")
         case "wind": tr("Mean wind is above the limit.")
         case "gusts": tr("Gusts are above the limit.")
         case "waves": tr("Waves at the launch point are too high.")
@@ -718,6 +718,10 @@ struct RainRadar: Codable, Hashable {
         return steps.first { $0.mmPerHour < Self.rainFrom }
     }
     var peak: Double { steps.map(\.mmPerHour).max() ?? 0 }
+    /// What falls right now, e.g. "Light rain"; nil while dry.
+    var rainNow: String? { rainingNow ? Self.intensity(steps.first?.mmPerHour ?? 0) : nil }
+    /// Where the nowcast ends, two hours ahead.
+    var end: Date { steps.last?.time ?? reference }
 
     /// The steps from `date` on, for the widget's later entries; none once
     /// fewer than 30 minutes of the nowcast are left.

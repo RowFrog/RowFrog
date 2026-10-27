@@ -5,18 +5,21 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { currentHour } from "./logic.js";
-import { store, h, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks } from "./shared.js";
+import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
 import { LAYERS, layerFor, weatherMap, frames, frameIndex, frameLabel, colourBar, layerOptions, loadIndex } from "./weathermap.js";
+import { radarAt, readRadar, radarOverlay, radarFrames, radarCovers, nearestFrame, openRadarMap } from "./radar.js";
 
 let current = null;
 
 /** The page for `condition` of a club, opened at now or at a picked hour. */
 export async function renderValuePage(root, clubId, condition, at) {
   current?.cleanup();
-  const club = store.clubs.find((c) => c.id === clubId) ?? (await findClub(clubId));
+  // Clubs saved by an early version of the website have no launch point; the catalog has it.
+  let club = store.clubs.find((c) => c.id === clubId);
+  if (!club?.launchPoint) club = (await findClub(clubId)) ?? club;
   let raw;
   try {
     raw = await loadForecast(clubId);
@@ -26,7 +29,9 @@ export async function renderValuePage(root, clubId, condition, at) {
   }
   const forecast = forBoat(raw);
   const hour = (at && forecast.hours.find((x) => x.time === at)) ?? currentHour(forecast.hours);
-  const data = conditionData(forecast, hour);
+  // DWD's radar at the launch point, as the club page read it; read now when it has not.
+  const radar = radarAt(club?.launchPoint);
+  const data = conditionData(forecast, hour, radar);
   const time = detailTime(store.mapLinked);
   const hidden = new Map();
   const page = { root, club, clubId, data, time, hidden, condition, map: null, playing: null, showLimits: store.limitInfo };
@@ -50,6 +55,13 @@ export async function renderValuePage(root, clubId, condition, at) {
     if (store.mapLinked !== time.linked) store.mapLinked = time.linked;
   });
   show(page);
+  if (!radar && club?.launchPoint) {
+    readRadar(club.launchPoint).then((read) => {
+      if (!read || current !== page || !root.querySelector(".value-page")) return;
+      page.data = conditionData(forecast, hour, read);
+      if (page.condition === "precipitation") show(page);
+    });
+  }
 }
 
 function neighbour(condition, by) {
@@ -120,7 +132,8 @@ function show(page) {
     const top = shown === data ? detail : conditionDetail(condition, shown);
     root.querySelector("#big-value").textContent = top.value;
     root.querySelector("#big-note").textContent = shown.now.time === data.now.time ? top.note : [dayTime(shown.now.time), top.note].filter(Boolean).join(" · ");
-    root.querySelector("#big-graphic").innerHTML = top.big;
+    // The tile's graphic, larger, unless the page draws its own (wind dial, gauge, sun path).
+    root.querySelector("#big-graphic").innerHTML = top.big || conditionGraphic(condition, shown.forecast, shown.now);
   };
   head();
   const headListener = () => head();
@@ -188,22 +201,41 @@ async function mapCard(page, layerId, detail, hidden) {
   }
   const mapDate = () => new Date(start + time.shownMapHour * 3600000);
   const current = () => (layer.links === "none" ? list.length - 1 : frameIndex(layer, list, mapDate()));
+  // The rain map shows DWD's radar while it covers the time (an hour back to two ahead), at the first hour the latest picture.
+  const panelDate = () => (layerId === "rain" && data.isNow && time.shownMapHour === 0 ? Date.now() : mapDate().getTime());
+  const showsRadar = () => layerId === "rain" && radarCovers(panelDate());
   box.innerHTML = `<header class="map-head">${icon(layer.icon)}<strong id="map-time"></strong><span class="spacer"></span>
       ${layer.links !== "none" ? `<button class="chain" id="chain"></button>` : ""}
       <button class="tool" id="map-full" aria-label="${h(t("Opens the map full screen"))}">${icon("maximize-2")}</button></header>
     <div class="map-frame"><div class="wm" id="wm"></div><p class="map-note" id="map-note" hidden></p></div>
     ${list.length > 1 && layer.links !== "none" ? `<div class="map-controls"><button class="tool" id="play" aria-label="${h(t("Play"))}">${icon("play")}</button>
-      <input type="range" id="slider" min="0" max="${list.length - 1}" step="1" aria-label="${h(t("Time"))}"></div>` : ""}`;
+      <input type="range" id="slider" min="0" max="${list.length - 1}" step="1" aria-label="${h(t("Time"))}">
+      <button class="tool ${store.mapLoop ? "on" : ""}" id="loop" aria-label="${h(t("Play 3 times"))}">${icon("repeat")}</button></div>` : ""}`;
   const wm = await weatherMap(box.querySelector("#wm"), point, layerId, { interactive: false });
   page.map = wm;
-  box.querySelector(".map-frame").addEventListener("click", () => openFull(page, layerId, detail, hidden));
-  box.querySelector("#map-full").addEventListener("click", () => openFull(page, layerId, detail, hidden));
+  const radar = layerId === "rain" ? radarOverlay(await loadLeaflet(), wm.map, point) : null;
+  // Full screen: the radar map while the card shows the radar, else the weather map.
+  const open = () => (showsRadar() ? openRadarMap(point, radarAt(point)?.reference) : openFull(page, layerId, detail, hidden));
+  box.querySelector(".map-frame").addEventListener("click", open);
+  box.querySelector("#map-full").addEventListener("click", open);
   const update = () => {
     if (!box.isConnected) return;
+    const label = box.querySelector("#map-time");
+    if (radar && showsRadar()) {
+      const frame = nearestFrame(panelDate(), radarFrames(radarAt(point)?.reference));
+      wm.show(null);
+      radar.show(frame);
+      label.textContent = t("Radar %@", clock(frame));
+    } else {
+      radar?.remove();
+    }
     const i = current();
     if (i == null) return;
-    wm.show(list[i]);
-    box.querySelector("#map-time").textContent = layer.links === "none" ? t("Live") : frameLabel(layer, list[i]);
+    if (!radar || !showsRadar()) {
+      wm.show(list[i]);
+      // Past the radar's two hours the rain map is the forecast, and says so.
+      label.textContent = layer.links === "none" ? t("Live") : layerId === "rain" ? t("Forecast %@", dayTime(list[i])) : frameLabel(layer, list[i]);
+    }
     const chain = box.querySelector("#chain");
     if (chain) {
       chain.className = `chain ${time.linked ? "on" : ""}`;
@@ -230,17 +262,31 @@ async function mapCard(page, layerId, detail, hidden) {
     stop(page);
     time.setMap(Math.round(x(list[Number(e.target.value)])));
   });
+  // With repeat on it goes round 3 times, as the full-screen maps do, then stops on the hour it started from.
   box.querySelector("#play")?.addEventListener("click", () => {
     if (page.playing) return stop(page);
     let i = current() ?? 0;
     if (time.mapOutOfRange || i >= list.length - 1) i = 0;
+    const from = i;
+    let rounds = 0;
     box.querySelector("#play").innerHTML = icon("pause");
     time.setMap(Math.round(x(list[i])));
     page.playing = setInterval(() => {
-      if (i >= list.length - 1) return stop(page);
-      i++;
+      if (i < list.length - 1) i++;
+      else if (store.mapLoop && rounds < 2) {
+        rounds++;
+        i = 0;
+      } else {
+        stop(page);
+        if (store.mapLoop) time.setMap(Math.round(x(list[from])));
+        return;
+      }
       time.setMap(Math.round(x(list[i])));
     }, 700);
+  });
+  box.querySelector("#loop")?.addEventListener("click", (e) => {
+    store.mapLoop = !store.mapLoop;
+    e.currentTarget.classList.toggle("on", store.mapLoop);
   });
 }
 

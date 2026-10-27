@@ -894,16 +894,6 @@
       "osm": "relation/57566"
     },
     {
-      "id": "kleiner-see",
-      "name": "Kleiner See",
-      "country": "de",
-      "center": {
-        "lat": 48.7242,
-        "lon": 9.3337
-      },
-      "osm": "way/1083203397"
-    },
-    {
       "id": "kleiner-wannsee",
       "name": "Kleiner Wannsee",
       "country": "de",
@@ -1214,16 +1204,6 @@
       "kind": "river"
     },
     {
-      "id": "neckar",
-      "name": "Neckar",
-      "country": "de",
-      "center": {
-        "lat": 48.6264,
-        "lon": 9.3323
-      },
-      "osm": "way/449577613"
-    },
-    {
       "id": "river-neckarkanal",
       "name": "Neckarkanal",
       "country": "de",
@@ -1362,16 +1342,6 @@
         "lon": 13.4906
       },
       "osm": "way/32620921"
-    },
-    {
-      "id": "regattastrecke",
-      "name": "Regattastrecke",
-      "country": "de",
-      "center": {
-        "lat": 51.2952,
-        "lon": 9.5008
-      },
-      "osm": "way/39698689"
     },
     {
       "id": "regattastrecke-oberschleissheim",
@@ -1742,16 +1712,6 @@
         "lon": 10.00132
       },
       "kind": "river"
-    },
-    {
-      "id": "tegeler-hafen",
-      "name": "Tegeler Hafen",
-      "country": "de",
-      "center": {
-        "lat": 52.591,
-        "lon": 13.2791
-      },
-      "osm": "way/10196647"
     },
     {
       "id": "tegeler-see",
@@ -3362,11 +3322,11 @@
       "address": "Auedamm 35, 34121 Kassel",
       "source": "drv",
       "country": "de",
-      "lakeId": "regattastrecke",
+      "lakeId": "river-fulda",
       "launchPoint": {
         "lat": 51.29556,
         "lon": 9.49991,
-        "precision": "shore point of Regattastrecke nearest the geocoded boathouse, 275 m away",
+        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
         "verified": false
       }
     },
@@ -5063,11 +5023,11 @@
       "address": "Gabrielenstr. 69 e, 13507 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "tegeler-hafen",
+      "lakeId": "tegeler-see",
       "launchPoint": {
         "lat": 52.59064,
         "lon": 13.27725,
-        "precision": "shore point of Tegeler Hafen nearest the geocoded boathouse, 228 m away",
+        "precision": "on the Tegeler See (checked by hand), first matched to Tegeler Hafen",
         "verified": false
       }
     },
@@ -9122,11 +9082,11 @@
       "address": "Wörthstr. 20, 72622 Nürtingen",
       "source": "drv",
       "country": "de",
-      "lakeId": "neckar",
+      "lakeId": "river-neckar",
       "launchPoint": {
         "lat": 48.62593,
         "lon": 9.33182,
-        "precision": "shore point of Neckar nearest the geocoded boathouse, 181 m away",
+        "precision": "on the Neckar (checked by hand), first matched to Neckar",
         "verified": false
       }
     },
@@ -9730,11 +9690,11 @@
       "address": "Auedamm 33, 34121 Kassel",
       "source": "drv",
       "country": "de",
-      "lakeId": "regattastrecke",
+      "lakeId": "river-fulda",
       "launchPoint": {
         "lat": 51.29556,
         "lon": 9.49991,
-        "precision": "shore point of Regattastrecke nearest the geocoded boathouse, 251 m away",
+        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
         "verified": false
       }
     },
@@ -10962,11 +10922,11 @@
       "address": "Nymphaeaweg 14, 73730 Esslingen",
       "source": "drv",
       "country": "de",
-      "lakeId": "kleiner-see",
+      "lakeId": "river-neckar",
       "launchPoint": {
         "lat": 48.72426,
         "lon": 9.33362,
-        "precision": "shore point of Kleiner See nearest the geocoded boathouse, 33 m away",
+        "precision": "on the Neckar (checked by hand), first matched to Kleiner See",
         "verified": false
       }
     },
@@ -11245,11 +11205,11 @@
       "address": "Auedamm 27, 34121 Kassel",
       "source": "drv",
       "country": "de",
-      "lakeId": "regattastrecke",
+      "lakeId": "river-fulda",
       "launchPoint": {
         "lat": 51.29718,
         "lon": 9.5009,
-        "precision": "shore point of Regattastrecke nearest the geocoded club address, 141 m away",
+        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
         "verified": false
       }
     },
@@ -11906,11 +11866,11 @@
       "address": "Auedamm 25, 34121 Kassel",
       "source": "drv",
       "country": "de",
-      "lakeId": "regattastrecke",
+      "lakeId": "river-fulda",
       "launchPoint": {
         "lat": 51.2972,
         "lon": 9.50095,
-        "precision": "shore point of Regattastrecke nearest the geocoded boathouse, 136 m away",
+        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
         "verified": false
       }
     },
@@ -12028,11 +11988,11 @@
       "address": "Auedamm 29, 34121 Kassel",
       "source": "drv",
       "country": "de",
-      "lakeId": "regattastrecke",
+      "lakeId": "river-fulda",
       "launchPoint": {
         "lat": 51.29718,
         "lon": 9.5009,
-        "precision": "shore point of Regattastrecke nearest the geocoded boathouse, 204 m away",
+        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
         "verified": false
       }
     },
@@ -12256,9 +12216,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.63862,
-        "lon": 9.20561,
-        "precision": "geocoded boathouse (town level); on the Weser (checked by hand)",
+        "lat": 52.6379,
+        "lon": 9.20278,
+        "precision": "shore of the Weser nearest the town-level address, 207 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13761,9 +13721,9 @@
       "country": "de",
       "lakeId": "grosser-wannsee",
       "launchPoint": {
-        "lat": 52.3895,
-        "lon": 13.1297,
-        "precision": "geocoded boathouse (town level); on the Großer Wannsee (checked by hand)",
+        "lat": 52.423,
+        "lon": 13.16375,
+        "precision": "shore of the Großer Wannsee nearest the town-level address, 4384 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13790,9 +13750,9 @@
       "country": "de",
       "lakeId": "waginger-see",
       "launchPoint": {
-        "lat": 47.94322,
-        "lon": 12.74122,
-        "precision": "geocoded boathouse (street level); on the Waginger See (checked by hand)",
+        "lat": 47.94613,
+        "lon": 12.73929,
+        "precision": "shore of the Waginger See nearest the town-level address, 354 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14048,9 +14008,9 @@
       "country": "de",
       "lakeId": "belauer-see",
       "launchPoint": {
-        "lat": 54.09745,
-        "lon": 10.25948,
-        "precision": "geocoded boathouse (town level); on the Belauer See (checked by hand)",
+        "lat": 54.09779,
+        "lon": 10.25804,
+        "precision": "shore of the Belauer See nearest the town-level address, 101 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14318,9 +14278,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.15,
-        "lon": 7.71667,
-        "precision": "geocoded boathouse (town level); on the Rhein (checked by hand)",
+        "lat": 50.15181,
+        "lon": 7.71841,
+        "precision": "shore of the Rhein nearest the town-level address, 237 m away (water checked by hand)",
         "verified": false
       }
     },

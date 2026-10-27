@@ -6,7 +6,7 @@ webcam pictures where they are available later on.
 For each club's launch point the app shows an hourly green / amber / red
 "can we row?" light for the next 48 hours, and the conditions behind it:
 wind, gusts, computed wave height, fog, thunderstorm risk, air and water
-temperature, rain radar, ice cover, official DWD warnings and daylight.
+temperature, rain radar, ice cover, official weather warnings and daylight.
 It started with the lakes south of Munich (Starnberger See first) and can
 show rowing clubs across Germany, Austria and Switzerland, or a place of your
 own.
@@ -57,18 +57,22 @@ GitHub issue, so no GitHub account is needed.
 **Each location page** is a column of cards, in this order by default:
 
 1. A top tile with the rowing light, which boat it is for and why it has that
-   colour; air, water and wind; waves, rain and visibility (and ice when it
-   matters); a DWD warning status line and a daylight line. Tapping a value
-   opens its chart.
-2. The DWD warnings card, only while a warning is issued (or the check failed).
+   colour; air, water and wind, with waves, rain and visibility in the same
+   three columns below, each with a short grey line ("Dry for 24 h"); in
+   winter a line for ice when it matters; an official warnings status line
+   and a daylight line. Tapping a value opens its chart.
+2. The official warnings card, only while a warning is issued (or the check
+   failed).
 3. Current conditions.
-4. Rain radar.
-5. Lake view.
-6. Next 48 hours, with a feels-like column and a day header that stays in
+4. Lake view.
+5. Next 48 hours, with a feels-like column and a day header that stays in
    place while scrolling; tapping an hour opens that hour's view.
-7. Launch point map.
-8. Satellite picture.
-9. Forecast source and credits.
+6. Launch point map.
+7. Satellite picture.
+8. Forecast source and credits.
+
+The rain radar card is off by default (see Rain radar) and can be switched
+on in Arrange this page.
 
 "Arrange this page" at the end of the page reorders or hides cards, for all
 clubs or only this one. Every card has an ⓘ button that explains its symbols;
@@ -119,7 +123,7 @@ Where no station measures, the rowing light uses the estimate. A 7-day water
 temperature forecast shows as a dashed line in the water chart, and the light
 uses it for the later hours.
 
-**DWD warnings.** The page shows the official DWD warnings:
+**Official warnings.** In Germany the page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
 DWD runs its lake warning service (23 lakes, among them Starnberger See,
 Ammersee and Chiemsee), and DWD's weather warnings for the municipality,
@@ -132,6 +136,15 @@ text (from its English CAP files) with the German original below; where DWD
 has no English version, only the event and headline are translated.
 At lakes with shore warning lights the card explains both lights (40 and 90
 flashes a minute) and the season they run in.
+
+**Warnings in Austria and Switzerland.** Austrian clubs get GeoSphere
+Austria's official warnings for their municipality
+(`backend/rowfrog/sources/geosphere_warnings.py`), Swiss clubs MeteoSwiss's
+regional warnings through MeteoAlarm (`backend/rowfrog/sources/meteoalarm.py`),
+shown unaltered with their source. Both set the hourly light like DWD's.
+Clubs on Lake Constance also get DWD's lake warning. Where no service covers a
+place, the app says it cannot check the warnings there instead of saying there
+are none.
 
 **Lake view and route planning.** A tile opens a map of the whole lake with
 waves, wind and the light for each part of the lake, and a spot you can tap
@@ -155,10 +168,17 @@ another app, with the real pace as the starting pace and the rowed track as
 an optional line on the map. Health access is asked for only for this, and
 everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
 
-**Rain radar.** Each location page has a card with DWD's rain radar and
-2-hour nowcast for the launch point, e.g. "Light rain from 21:30"; tapping it
-opens the radar map, with DWD's colour legend and a switch to play the radar
-as a loop. The app reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
+**Rain radar.** The rain tile, the top tile's rain value and the rain detail
+view read DWD's rain radar and 2-hour nowcast for the launch point, then the
+forecast: "Light rain" now, with a line such as "Rain from 12:45" (a small
+radar symbol marks the radar, no symbol the forecast) and small bars, thin for
+the radar's quarter hours and paler for the forecast hours. Snow, hail and
+drizzle are named from the forecast. The detail chart starts with two hours of
+radar bars, and its map shows the radar picture; a tap opens the radar map,
+with DWD's colour legend and a switch to play the radar as a loop. Hours in the
+48 hours less than two hours ahead use the radar too. The old rain radar card
+can still be switched on in Arrange this page. The app reads the radar from DWD
+directly (`ios/RowFrog/RainRadar.swift`).
 
 **Weather maps.** From the detail views a map opens for wind (with arrows on
 an even grid that adds arrows as you zoom in, longer in stronger wind),
@@ -185,8 +205,8 @@ nothing in the background; only the widgets load forecasts on their own.
 **Data use.** Forecasts that have not changed are not downloaded again, and
 the club list is kept on the phone for a day. With "Save mobile data" on
 (while on mobile data) or in iOS Low Data Mode, satellite pictures load only
-when tapped, the radar map steps in half hours and the radar card updates
-every 15 minutes.
+when tapped, the radar map steps in half hours and the radar (rain tile, top tile and
+radar card) updates every 15 minutes.
 
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
 the coming week (from May to October the ice tile is greyed out as "Off
@@ -261,7 +281,7 @@ field at the bottom.
 - Widgets: the background for all widgets or per club (each widget can also
   pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
-  often saves battery and data, but a new DWD warning reaches the widgets
+  often saves battery and data, but a new official warning reaches the widgets
   later.
 - Language and units: English or German; units (wind in m/s, km/h, knots, mph
   or Beaufort; °C or °F; waves in m, cm or ft); date and time formats.
@@ -289,9 +309,13 @@ screen, with the map beside the chart when the iPad is on its side.
 
 **Website.** [rowfrog.com/app](https://rowfrog.com/app) shows the forecasts
 in a browser, for Android phones and computers. It is password-locked while
-in testing. It follows the app's list, club page and look, with a small/big
-boat picker and a wide layout for iPads and desktop browsers. Own boats, the
-lake view and the rain radar are not on the website yet.
+in testing. It follows the app's list, club page and look, with a wide layout
+for iPads and desktop browsers, and has nearly everything the app has: own
+boats and limits, the lake view with route planning and row import (GPX, TCX
+or FIT), value pages with chart and weather map, the satellite picture with its
+layers, browsing by country and adding a place, Arrange this page, units,
+appearance, background pictures, the tour and the tips. Only the rain radar
+card is still missing. What a visitor picks stays in their browser.
 
 ## Layout
 
@@ -425,6 +449,7 @@ More detail, including the secrets each one needs, is in the
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs by hand, or when the club list or data sources change on `main`; new outlines are committed back. |
 | **Water temperature stations** (`water-stations.yml`) | Lists the GKD Bayern, PEGELONLINE and Swiss BAFU stations, shows how `data/water-stations.json` would change and reads every station in it once. Nothing is stored; a changed list is committed by hand (see the handbook). By hand, or when its files change. |
 | **Satellite water temperature check** (`water-temperature-probe.yml`) | Compares Copernicus, Landsat and the carried-forward estimate with GKD lake stations. By hand, or when the satellite water temperature code changes. |
+| **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |

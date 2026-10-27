@@ -185,9 +185,12 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     }
     for (const l of lines) {
       if (l.kind === "bars") {
+        // Where another shown line's bars stand in (the radar's quarter hours over the forecast's hours), this line leaves them out.
+        const covered = lines.filter((o) => o !== l && o.covers).map((o) => o.covers);
+        const w = l.barWidth ?? 5;
         for (const p of l.points) {
-          if (p.y <= 0) continue;
-          parts.push(`<rect x="${px(p.x) - 2.5}" y="${py(p.y)}" width="5" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity=".7"/>`);
+          if (p.y <= 0 || covered.some(([a, b]) => p.x >= a && p.x <= b)) continue;
+          parts.push(`<rect x="${px(p.x) - w / 2}" y="${py(p.y)}" width="${w}" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity=".7"/>`);
         }
       } else {
         parts.push(`<path d="${path(l.points, px, py)}" fill="none" stroke="${l.colour}" stroke-width="2"${l.dashed ? ' stroke-dasharray="5 4"' : ""}/>`);
@@ -248,7 +251,7 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
         const p = valueAt(l, x);
         if (!p) return "";
         const dotMark = shown().length > 1 ? `<i style="${l.dashed ? `border:1.5px solid ${l.colour}` : `background:${l.colour}`}"></i>` : "";
-        return `<span>${dotMark}${h(valueText(p.y, detail.unit))}</span>`;
+        return `<span>${dotMark}${h(detail.valueText ? detail.valueText(p.y) : valueText(p.y, detail.unit))}</span>`;
       }).join("");
       const at = px(x) - scroller.scrollLeft;
       const before = at > scroller.clientWidth / 2;

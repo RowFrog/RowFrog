@@ -3,8 +3,9 @@ import TipKit
 
 /// One full-screen location page: the rowing light now (with wind and
 /// daylight), DWD warnings while one is issued, then the cards in the order
-/// the user arranged (current conditions, rain radar, lake view, the next
-/// 48 hours, launch point, satellite picture), the forecast source and credits.
+/// the user arranged (current conditions, lake view, the next 48 hours, launch
+/// point, satellite picture, and the rain radar card when switched on), the
+/// forecast source and credits.
 struct LocationPageView: View {
     let club: Club
     let lake: Lake?
@@ -28,6 +29,12 @@ struct LocationPageView: View {
     @State private var showingFailure: RefreshFailure?
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
+
+    /// Whose satellite picture the page shows: the lake's, or for water without an
+    /// outline (rivers, until they have sections) the 4 x 3 km around the club ("club-<id>").
+    private func satelliteID(_ forecast: ClubForecast) -> String {
+        lake?.hasOutline == false ? "club-\(club.id)" : forecast.lakeId
+    }
     @State private var showSourceTip = false
     @State private var showRadarMapTip = false
     @State private var showHourViewTip = false
@@ -76,7 +83,7 @@ struct LocationPageView: View {
                             }
                             // The satellite card is empty until its picture has loaded, and an
                             // empty view never runs its own .task, so the cards load it here.
-                            .task(id: forecast.lakeId) { await SatellitePictureStore.shared.load(forecast.lakeId) }
+                            .task(id: satelliteID(forecast)) { await SatellitePictureStore.shared.load(satelliteID(forecast)) }
                             sourceLine(forecast)
                             Button {
                                 arranging = true
@@ -118,6 +125,7 @@ struct LocationPageView: View {
                 .environment(\.pageHeight, geometry.size.height)
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
                 .refreshable { await forecasts.refresh([club.id]) }
+                .followsRadar(club.launchPoint)
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
                 .tipVisibility(rainRadarTip, $showRainRadarTip)
@@ -153,20 +161,17 @@ struct LocationPageView: View {
     private func pageCard(_ card: PageCard, forecast: ClubForecast, now: ForecastHour) -> some View {
         switch card {
         case .radar:
+            RainRadarCard(point: club.launchPoint, clubID: club.id)
+                .id("radar")
+        case .conditions:
             VStack(spacing: 16) {
-                // The map tip follows once the radar tip is closed.
-                if tourSeen && showRainRadarTip {
+                // One tip at a time: the radar's two follow the first.
+                if tourSeen && showConditionsTip {
+                    TipView(conditionsTip)
+                } else if tourSeen && showRainRadarTip {
                     TipView(rainRadarTip)
                 } else if tourSeen && showRadarMapTip {
                     TipView(radarMapTip)
-                }
-                RainRadarCard(point: club.launchPoint, clubID: club.id)
-            }
-            .id("radar")
-        case .conditions:
-            VStack(spacing: 16) {
-                if tourSeen && showConditionsTip {
-                    TipView(conditionsTip)
                 } else if tourSeen && showWaterEstimateTip && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil {
                     // Only where no station measures the water.
                     TipView(waterEstimateTip)
@@ -205,15 +210,13 @@ struct LocationPageView: View {
             }
             .id("launchpoint")
         case .satellite:
-            if lake?.hasOutline != false {
-                VStack(spacing: 16) {
-                    if tourSeen && showSatelliteTip {
-                        TipView(satelliteTip)
-                    }
-                    SatellitePictureCard(lakeID: forecast.lakeId, clubID: club.id)
+            VStack(spacing: 16) {
+                if tourSeen && showSatelliteTip {
+                    TipView(satelliteTip)
                 }
-                .id("satellite")
+                SatellitePictureCard(lakeID: satelliteID(forecast), clubID: club.id)
             }
+            .id("satellite")
         }
     }
 
@@ -563,7 +566,8 @@ private struct NowCard: View {
             .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
             AdviceOnlyNote()
             Divider()
-            HStack(alignment: .lastTextBaseline) {
+            // Three columns: the small values start under air, water and wind.
+            TopTileGrid {
                 VStack(alignment: .leading, spacing: 0) {
                     opens(.temperature) {
                         TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
@@ -574,10 +578,10 @@ private struct NowCard: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .accessibilityLabel(tr("Feels like %@", Format.temperature(feels)) + ". " + (feelsLikeNote(hour) ?? ""))
+                                .greyLine()
                         }
                     }
                 }
-                Spacer()
                 // With the time of the reading underneath, so it lines up with the wind's unit line.
                 opens(.waterTemperature) {
                     if water == nil, let estimate = forecast.estimatedWaterC {
@@ -588,27 +592,37 @@ private struct NowCard: View {
                                         caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
                     }
                 }
-                Spacer()
                 opens(.wind) { WindView(hour: hour, size: 28) }
-            }
-            HStack(alignment: .top) {
                 opens(.waves) {
-                    MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17)
+                    MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17,
+                               caption: wavesCaption)
                 }
-                Spacer()
                 opens(.precipitation) {
-                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: precipitationText(hour) ?? tr("None"), size: 17)
+                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rain.value, size: 17,
+                               caption: rain.detail == tr("Dry next 24 h") ? tr("Dry for 24 h") : rain.detail,
+                               mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
                 }
-                Spacer()
                 opens(.visibility) {
-                    MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17)
-                }
-                if let ice = iceValue {
-                    Spacer()
-                    opens(.ice) { MetricView(title: tr("Ice"), symbol: Condition.ice.symbol, value: ice, size: 17) }
+                    MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17,
+                               caption: data.visibilityDetail)
                 }
             }
             .symbolRenderingMode(.hierarchical)
+            // When ice matters (mostly mid-winter), it gets its own line under the row,
+            // so the row keeps its three columns under air, water and wind.
+            if let ice = iceValue {
+                opens(.ice) {
+                    HStack(alignment: .firstTextBaseline, spacing: 6) {
+                        Label(tr("Ice"), systemImage: Condition.ice.symbol)
+                            .font(.caption.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                        Text(ice).font(.system(size: 17, weight: .light))
+                        Text(iceDetail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                        Spacer(minLength: 0)
+                    }
+                }
+                .symbolRenderingMode(.hierarchical)
+            }
             daylightLine
         }
         .sheet(isPresented: $showingLights) { LegendSheet(part: .lights) }
@@ -618,10 +632,10 @@ private struct NowCard: View {
             }
         }
         .detailCover(isPresented: $showingDaylight) {
-            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour), club: club)
+            ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour, radar: radar), club: club)
         }
         .detailCover(item: $openCondition) { condition in
-            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour), order: tileValues, club: club)
+            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour, radar: radar), order: tileValues, club: club)
         }
         .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }
     }
@@ -642,7 +656,28 @@ private struct NowCard: View {
             .accessibilityHint(tr("Opens a chart and more about this value"))
     }
 
-    private var iceValue: String? { forecast.iceValue }
+    /// Screenshot hook: `-RWSampleIce YES` shows the winter ice value, to check the row's fit.
+    private var sampleIce: Bool { UserDefaults.standard.bool(forKey: "RWSampleIce") }
+    private var iceValue: String? { sampleIce ? tr("Shore ice possible") : forecast.iceValue }
+    /// The ice line's reason, shortened where the tile's words are long.
+    private var iceDetail: String {
+        let detail = sampleIce ? tr("Bays and harbours first") : forecast.ice?.detail ?? tr("Check the lake yourself")
+        return detail == tr("Bays and harbours first") ? tr("Bays first") : detail
+    }
+
+    /// The waves line in fewer words than the tile's, so it fits under the value in German too.
+    private var wavesCaption: String {
+        guard let fetch = hour.fetchM else { return "" }
+        return fetch < 50 ? tr("Offshore wind") : tr("%@ open water", Format.distance(fetch))
+    }
+
+    private var data: ConditionData { ConditionData(forecast: forecast, now: hour, radar: radar) }
+
+    /// The rain tile's two lines, so the top tile always says the same.
+    private var rain: (value: String, detail: String, fromRadar: Bool) { data.rainLines }
+
+    /// DWD's radar at the launch point, read while the page is open.
+    private var radar: RainRadar? { club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) } }
 
     /// While DWD has no warning, one line says so; the warnings card itself
     /// only shows while a warning is issued or DWD could not be checked.
@@ -708,11 +743,22 @@ private struct WindView: View {
                         .rotationEffect(.degrees(from + 180))
                 }
             }
-            Text(AppSettings.shared.windUnit.symbol + (hour.windFromDeg.map { " · " + tr("from %@", Format.compass($0)) } ?? ""))
-                .font(.caption)
-                .foregroundStyle(.secondary)
+            // As wide as its longest direction ("from NW"), so the column keeps one
+            // width whatever the wind does and the line never wraps.
+            ZStack(alignment: .leading) {
+                ForEach(0..<8, id: \.self) { step in
+                    Text(unitLine(from: Double(step) * 45)).hidden()
+                }
+                Text(unitLine(from: hour.windFromDeg))
+            }
+            .font(.caption)
+            .foregroundStyle(.secondary)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    private func unitLine(from degrees: Double?) -> String {
+        AppSettings.shared.windUnit.symbol + (degrees.map { " · " + tr("from %@", Format.compass($0)) } ?? "")
     }
 }
 
@@ -772,10 +818,85 @@ struct TemperatureView: View {
                 Text(caption)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                    .greyLine()
             }
         }
         .accessibilityElement(children: .combine)
     }
+}
+
+/// A grey line under a value that does not widen its column: it wraps within
+/// the width the column is given, but counts as nothing when the column is measured.
+private struct GreyLineLayout: Layout {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        guard let line = subviews.first else { return .zero }
+        guard let width = proposal.width, width.isFinite else {
+            return CGSize(width: 0, height: line.sizeThatFits(.unspecified).height)
+        }
+        return line.sizeThatFits(ProposedViewSize(width: width, height: nil))
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        subviews.first?.place(at: bounds.origin, proposal: ProposedViewSize(width: bounds.width, height: nil))
+    }
+}
+
+extension View {
+    /// See `GreyLineLayout`.
+    func greyLine() -> some View { GreyLineLayout { self } }
+}
+
+/// The top tile's values in three columns: air, water, wind above, the three
+/// small values below. Each column is as wide as its titles and values (the
+/// grey lines don't count): the left one starts at the left edge, the right one
+/// ends at the right edge, the middle one has equal gaps to both. Each row reads level.
+struct TopTileGrid: Layout {
+    var rowSpacing: CGFloat = 10
+    var gap: CGFloat = 8
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? subviews.prefix(3).reduce(0) { $0 + $1.sizeThatFits(.unspecified).width } + 2 * gap
+        return CGSize(width: width, height: frames(width: width, subviews).map(\.maxY).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        for (view, frame) in zip(subviews, frames(width: bounds.width, subviews)) {
+            view.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
+                       proposal: ProposedViewSize(width: frame.width, height: frame.height))
+        }
+    }
+
+    private func frames(width: CGFloat, _ subviews: Subviews) -> [CGRect] {
+        let top = Array(subviews.prefix(3)), bottom = Array(subviews.dropFirst(3))
+        guard top.count == 3 else { return [] }
+        // Each column's width from its titles and values, in both rows.
+        let core = (0..<3).map { i in
+            [top[i], i < bottom.count ? bottom[i] : nil].compactMap { $0 }.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
+        }
+        // The middle column with equal gaps to its neighbours.
+        let right = width - core[2]
+        let xs = [0, core[0] + (right - core[0] - core[1]) / 2, right]
+        let columns: [(x: CGFloat, width: CGFloat)] = [(0, xs[1] - gap), (xs[1], xs[2] - xs[1] - gap), (xs[2], width - xs[2])]
+        // First row on the last baseline.
+        let topDims = zip(top, columns).map { $0.dimensions(in: ProposedViewSize(width: $1.width, height: nil)) }
+        let line = topDims.map { $0[.lastTextBaseline] }.max() ?? 0
+        var result = zip(columns, topDims).map { CGRect(x: $0.x, y: line - $1[.lastTextBaseline], width: $0.width, height: $1.height) }
+        let below = (result.map(\.maxY).max() ?? 0) + rowSpacing
+        let dims = zip(bottom, columns).map { $0.dimensions(in: ProposedViewSize(width: $1.width, height: nil)) }
+        let valueLine = dims.map { $0[VerticalAlignment.metricValue] }.max() ?? 0
+        for (column, d) in zip(columns, dims) {
+            result.append(CGRect(x: column.x, y: below + valueLine - d[VerticalAlignment.metricValue], width: column.width, height: d.height))
+        }
+        return result
+    }
+}
+
+extension VerticalAlignment {
+    private enum MetricValue: AlignmentID {
+        static func defaultValue(in d: ViewDimensions) -> CGFloat { d[.firstTextBaseline] }
+    }
+    /// The baseline of a `MetricView`'s value, so a row of them reads level.
+    static let metricValue = VerticalAlignment(MetricValue.self)
 }
 
 /// A value with the icon and word that say what it is, matching TemperatureView.
@@ -784,14 +905,34 @@ struct MetricView: View {
     let symbol: String
     let value: String
     var size: CGFloat
+    /// A grey line under the value, as the tiles have.
+    var caption: String? = nil
+    /// A symbol in front of the caption, such as the radar's.
+    var mark: String? = nil
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Label(title, systemImage: symbol)
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+            // Two lines rather than cut off, should a value outgrow its column.
             Text(value)
                 .font(.system(size: size, weight: .light))
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .alignmentGuide(.metricValue) { $0[.firstTextBaseline] }
+            if let caption, !caption.isEmpty {
+                Group {
+                    if let mark { Text("\(Image(systemName: mark)) \(caption)") } else { Text(caption) }
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+                .lineLimit(2)
+                .minimumScaleFactor(0.85)
+                .greyLine()
+            }
         }
         .accessibilityElement(children: .combine)
     }
@@ -1042,8 +1183,8 @@ private struct HourRow: View {
 }
 
 /// One hour from the table with everything known about it: the rowing light
-/// and main values, all the conditions tiles, the rain radar while the hour
-/// is within its 2 hours, and the lake map at that hour.
+/// and main values, all the conditions tiles (rain from the radar while the
+/// hour is within its 2 hours), and the lake map at that hour.
 private struct HourDetailSheet: View {
     let forecast: ClubForecast
     let club: Club
@@ -1057,11 +1198,8 @@ private struct HourDetailSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 16) {
+                    // Within the radar's 2 hours the rain values come from the radar, later from the forecast.
                     NowCard(hour: hour, forecast: forecast, at: hour.time, club: club)
-                    // The radar reaches 2 hours ahead; later hours have the forecast rain in the tiles.
-                    if hour.time.timeIntervalSinceNow < 2 * 3600 {
-                        RainRadarCard(point: club.launchPoint, clubID: club.id)
-                    }
                     ConditionsCard(forecast: forecast, hour: hour, club: club)
                     if lake?.hasOutline != false, lakeViews.views[forecast.lakeId] != nil {
                         Button { showingLakeMap = true } label: {

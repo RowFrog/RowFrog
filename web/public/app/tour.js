@@ -24,6 +24,7 @@ export function tourPages() {
       points: [
         p("message-square-text", key("The \"Why\" line names what sets the light.")), p("sunrise", key("Rowing is only advised while the sun is up.")),
         p("clock", key("Each of the next 48 hours has its own light.")),
+        p("umbrella", key("The rain tile shows DWD's radar for the next two hours, then the forecast.")),
         p("clock-alert", key("Grey instead of green: the forecast is over 3 hours old. Tap Refresh under the club's name.")),
         p("user-round-search", key("The light is advice. You decide, and when in doubt you stay ashore.")),
       ],
@@ -39,7 +40,7 @@ export function tourPages() {
       ],
     },
     {
-      id: "warnings", icon: "triangle-alert", tint: "orange", title: key("DWD warnings"), intro: key("Warnings from the Deutscher Wetterdienst come right under the rowing light."),
+      id: "warnings", icon: "triangle-alert", tint: "orange", title: key("Official warnings"), intro: key("Official weather warnings come right under the rowing light: from DWD in Germany, GeoSphere Austria in Austria and MeteoSwiss in Switzerland."),
       points: [
         p("waves", key("Storm warnings for the lake and weather warnings for the town.")), p("message-square-text", key("A warning also appears in the Why line and on the location list.")),
         p("siren", key("On the lake, also watch the storm warning lights on the shore. The warnings card explains what they mean.")),
@@ -162,7 +163,9 @@ export function renderTour(root, { languagePicker, wireLanguage, done }) {
 /** The tips: title, message, icon, and the tip that follows once this one is closed. */
 const TIPS = {
   topTile: [key("Tap a value"), key("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values."), "pointer"],
-  conditionsExtras: [key("More on the air"), key("Feels like now covers wind chill and heat. Humidity shows the dew point underneath, and the gauge shows the air pressure and where it is heading."), "gauge"],
+  conditionsExtras: [key("More on the air"), key("Feels like now covers wind chill and heat. Humidity shows the dew point underneath, and the gauge shows the air pressure and where it is heading."), "gauge", "rainRadar"],
+  rainRadar: [key("Rain on the way?"), key("For the next two hours the rain tile reads the radar of the Deutscher Wetterdienst at the launch point, in 15-minute steps, and the forecast after that. The radar updates every few minutes."), "umbrella", "radarMap"],
+  radarMap: [key("Rain radar map"), key("Open the rain tile: for the next two hours its map shows the radar. Tap the map to play it, or drag the slider from an hour ago to two hours ahead."), "map"],
   hourly: [key("Plan your outing"), key("Each hour has its own rowing light. The icons on top name the columns, and rows after dark are dimmed."), "clock", "hourView"],
   hourView: [key("One hour in full"), key("Tap an hour to see all its conditions and the lake map at that time."), "pointer"],
   launchPoint: [key("Where the forecast is for"), key("Wind, waves and warnings are worked out for this launch point. Tap Directions to the club for the way there."), "map-pin"],
@@ -187,12 +190,13 @@ const closed = () => {
 
 const waitsFor = (id) => Object.keys(TIPS).find((k) => TIPS[k][3] === id);
 
-/** A tip's box, or nothing once it was closed (or while the tip before it is still open). */
+/** A tip's box, or once it was closed the tip that follows it; nothing while the tip before it is still open. */
 export function tip(id) {
   const spec = TIPS[id];
   const shut = closed();
   const before = waitsFor(id);
-  if (!spec || shut.includes(id) || (before && !shut.includes(before))) return "";
+  if (spec && shut.includes(id)) return spec[3] ? tip(spec[3]) : "";
+  if (!spec || (before && !shut.includes(before))) return "";
   const [title, message, iconName] = spec;
   const args = id === "coldWater" ? [temperature(COLD.waterC), wind(COLD.marginMs)] : [];
   return `<aside class="tip" data-tip="${id}">${icon(iconName)}<div><strong>${h(t(title))}</strong><p>${h(t(message, ...args))}</p></div>

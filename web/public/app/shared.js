@@ -3,9 +3,9 @@
 // small pieces such as the rowing light's dot and the sheets.
 
 import { t, num, locale } from "./i18n.js";
-import { icon } from "./icons.js";
+import { icon, iconShape } from "./icons.js";
 import {
-  API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD,
+  API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
 } from "./logic.js";
 import { isOwn, loadOwnForecast } from "./ownplace.js";
 
@@ -317,7 +317,7 @@ export function reasonLabel(reason) {
 export function baseLabel(condition) {
   return {
     lake_warning: t("DWD storm warning"), lake_strong_wind: t("DWD strong-wind warning"), single_cold: t("Single in cold water"),
-    freezing_water: t("Near-freezing water"), weather_warning: t("DWD weather warning"), wind: t("Wind"), gusts: t("Gusts"),
+    freezing_water: t("Near-freezing water"), weather_warning: t("Official weather warning"), wind: t("Wind"), gusts: t("Gusts"),
     waves: t("Waves"), fog: t("Fog"), heavy_rain: t("Heavy rain"), hail: t("Hail"), thunderstorm: t("Thunderstorm risk"),
     ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunrise / sunset"), cold_water: t("Very cold water"),
     cool_water: t("Cold-water shock possible"),
@@ -351,7 +351,7 @@ export function reasonExplanation(condition, light) {
     case "lake_strong_wind": return t("DWD has issued a strong-wind warning for the lake; its warning lights flash 40 times a minute.");
     case "single_cold": return t("In a single, row with a coach boat or a partner boat while the water is this cold.");
     case "freezing_water": return t("The water is below %@. You are strongly advised not to go out, at least not in a small boat.", temperature(4));
-    case "weather_warning": return t("DWD has issued a weather warning for this place.");
+    case "weather_warning": return t("An official weather warning is out for this place.");
     case "wind": return t("Mean wind is above the limit.");
     case "gusts": return t("Gusts are above the limit.");
     case "waves": return t("Waves at the launch point are too high.");
@@ -452,11 +452,81 @@ export function levelSegments(level) {
   return `<span class="levels">${colours.map((c, i) => `<span style="height:${40 + i * 30}%;background:${i < level ? c : "var(--fill)"}"></span>`).join("")}</span>`;
 }
 
+/**
+ * A condition's graphic, the same on its tile and at the top of its own page
+ * (the app's tile graphics). Daylight draws its sun path where it is shown; ice has none.
+ */
+export function conditionGraphic(condition, forecast, hour) {
+  const warm = [C.blue, C.teal, C.green, C.orange, C.red];
+  switch (condition) {
+    case "temperature": return scaleBar(((hour.temperatureC ?? 0) + 10) / 45, warm);
+    case "feelsLike": return scaleBar(((hour.apparentTemperatureC ?? 0) + 10) / 45, warm);
+    case "wind": return windDial(hour);
+    case "waves": {
+      // The limits for the boat: amber and red zones up to a third past red.
+      const limits = currentLimits();
+      const [amber, red] = [limits.value("waveAmber"), limits.value("waveRed")];
+      const top = (red * 4) / 3;
+      return zoneBar((hour.waveHeightM ?? 0) / top, [[0, C.green], [amber / top, C.orange], [red / top, C.red]]);
+    }
+    case "waterTemperature": {
+      const water = forecast.waterTemperature;
+      // Blues for cold water: it calls for a life jacket, not a warning colour.
+      return water ? zoneBar(water.celsius / 25, [[0, "var(--deep-water)"], [0.16, "var(--kit)"], [0.4, "var(--kit-light)"], [0.6, C.green]]) : "";
+    }
+    case "precipitation": {
+      const i = Math.max(0, forecast.hours.findIndex((x) => x.time === hour.time));
+      return sparkBars(forecast.hours.slice(i, i + 8).map((x) => x.precipitationMm ?? 0));
+    }
+    case "thunderstorm": {
+      const light = lightFor(hour, REASONS.thunderstorm);
+      return levelSegments(light === "red" ? 3 : light === "amber" ? 2 : 1);
+    }
+    case "visibility": {
+      const f = Math.log10(Math.max(hour.visibilityM ?? 40000, 100) / 100) / Math.log10(400);
+      return zoneBar(f, [[0, C.red], [0.27, C.orange], [0.384, C.green]]);
+    }
+    case "cloudCover": return cloudBig(hour);
+    case "humidity":
+      return `<span class="humid">${filledIcon("droplet", hour.humidityPct, 2.5, 22, "drop")}${hour.temperatureC != null && hour.dewPointC != null ? dewGap(hour.temperatureC, hour.dewPointC) : ""}</span>`;
+    case "pressure": {
+      const change = pressureChange(forecast.hours, hour);
+      return pressureGauge(hour.pressureHpa, change == null ? null : pressureTrend(change));
+    }
+    case "uvIndex": return scaleBar((hour.uvIndex ?? 0) / 11, [C.green, C.yellow, C.orange, C.red, C.purple]);
+    default: return "";
+  }
+}
+
+/** Air temperature and dew point as two dots with the gap between them (DewGap): mist when they touch. */
+export function dewGap(air, dewPoint) {
+  const gap = air - dewPoint;
+  // 0–8 degrees of gap across the bar.
+  const offset = (Math.min(Math.max(gap, 0), 8) / 8) * 34;
+  return `<span class="dewgap"><small>${num(Math.round(unitChange("temperature", gap)))}°</small>
+    <span class="track"><i class="dew"></i><i class="air" style="left:${offset}px"></i></span></span>`;
+}
+
 export function cloudLayers(hour) {
   if (hour.cloudCoverHighPct == null) return "";
   const rows = [[t("H"), hour.cloudCoverHighPct], [t("M"), hour.cloudCoverMidPct], [t("L"), hour.cloudCoverLowPct]];
   return `<span class="layers">${rows.map(([name, pct]) => `<span><small>${h(name)}</small><span class="track"><span style="width:${pct ?? 0}%"></span></span></span>`).join("")}</span>`;
 }
+
+/**
+ * An outlined icon filled from the bottom to `pct` (the humidity drop, the
+ * cloud cover); `top` and `bottom` are where the shape starts and ends in its 24-unit box.
+ */
+export function filledIcon(name, pct, top, bottom, cls) {
+  const shape = iconShape(name);
+  const level = bottom - ((bottom - top) * Math.min(100, Math.max(0, pct ?? 0))) / 100;
+  const id = `fill-${name}`;
+  return `<svg class="filled ${cls}" viewBox="0 0 24 24" aria-hidden="true"><defs><clipPath id="${id}"><rect x="0" y="${level.toFixed(2)}" width="24" height="24" /></clipPath></defs>
+    <g class="fill" clip-path="url(#${id})">${shape}</g><g class="outline">${shape}</g></svg>`;
+}
+
+/** The cloud filling with the cover and the three layers beside it. */
+export const cloudBig = (hour) => `<span class="cloud-big">${filledIcon("cloud", hour.cloudCoverPct, 3, 19, "cloudy")}${cloudLayers(hour)}</span>`;
 
 export function pressureGauge(hpa, trend) {
   // 960 hPa at the left end of the arc, 1060 hPa at the right.
@@ -467,15 +537,44 @@ export function pressureGauge(hpa, trend) {
 }
 
 /** The sun's path over the day with the sun at `at` (SunPath). */
+/** Hours of the day (0–24) of a time on the lakes' clock. */
+function clockHours(value) {
+  const parts = new Intl.DateTimeFormat("en-GB", { timeZone: ZONE, hour: "numeric", minute: "numeric", hourCycle: "h23" }).formatToParts(new Date(value));
+  const part = (type) => Number(parts.find((x) => x.type === type)?.value ?? 0);
+  return part("hour") + part("minute") / 60;
+}
+
+let sunPaths = 0;
+
+/**
+ * The day's sun path as in the Weather app (SunPath / SunPathGraph): the
+ * whole 24 hours, bright above the horizon and faint below it, with the sun
+ * where it is at `at`, by day or by night.
+ */
 export function sunPath(sunrise, sunset, at, width = 64, height = 32) {
-  const f = Math.min(1, Math.max(0, (at - sunrise) / (sunset - sunrise)));
-  const x = 4 + f * (width - 8);
-  const y = height - 4 - Math.sin(f * Math.PI) * (height - 10);
-  const up = at >= sunrise && at < sunset;
+  const rise = clockHours(sunrise);
+  const down = clockHours(sunset);
+  const noon = (rise + down) / 2;
+  const lineWidth = height >= 48 ? 3 : 2;
+  // Sun height through the day, 0 at sunrise and sunset; noon touches the top, midnight the bottom.
+  const sunHeight = (h) => Math.cos((2 * Math.PI * (h - noon)) / 24) - Math.cos((2 * Math.PI * (down - noon)) / 24);
+  const top = sunHeight(noon);
+  const bottom = sunHeight(noon + 12);
+  const inset = lineWidth * 2 + 2;
+  const y = (h) => ((top - sunHeight(h)) / (top - bottom)) * (height - 2 * inset) + inset;
+  const x = (h) => (h / 24) * width;
+  const points = Array.from({ length: 97 }, (_, i) => `${x(i / 4).toFixed(1)},${y(i / 4).toFixed(1)}`).join(" ");
+  const horizon = y(rise);
+  const now = clockHours(at);
+  const r = lineWidth * 2 + 1;
+  const id = `sun${++sunPaths}`;
   return `<svg class="sunpath" viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" aria-hidden="true">
-    <line x1="0" y1="${height - 4}" x2="${width}" y2="${height - 4}" />
-    <path d="M4 ${height - 4} Q ${width / 2} ${-height + 14} ${width - 4} ${height - 4}" />
-    ${up ? `<circle cx="${x}" cy="${y}" r="4" />` : ""}</svg>`;
+    <defs><clipPath id="${id}-day"><rect width="${width}" height="${horizon}" /></clipPath>
+      <clipPath id="${id}-night"><rect y="${horizon}" width="${width}" height="${height - horizon}" /></clipPath></defs>
+    <polyline class="day" points="${points}" clip-path="url(#${id}-day)" stroke-width="${lineWidth}" />
+    <polyline class="night" points="${points}" clip-path="url(#${id}-night)" stroke-width="${Math.max(1, lineWidth - 1)}" />
+    <line x1="0" y1="${horizon}" x2="${width}" y2="${horizon}" />
+    <circle cx="${x(now).toFixed(1)}" cy="${y(now).toFixed(1)}" r="${r}" /></svg>`;
 }
 
 
@@ -546,7 +645,7 @@ export function conditionTexts() {
     precipitation: r("precipitation", t("Rain, hail, snow"), unitSymbol("rain"), t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unitSymbol("rain"))),
     visibility: r("visibility", t("Visibility (fog)"), unitSymbol("distance"), t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
     cloudCover: r("cloudCover", t("Cloud cover"), "%", t("Share of the sky covered by cloud.")),
-    thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. DWD thunderstorm warnings for the place appear under DWD warnings.")),
+    thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. Official thunderstorm warnings for the place appear under the warnings.")),
     uvIndex: r("uvIndex", t("UV index"), "", t("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")),
     ice: r("ice", t("Ice cover"), "", t("Estimated from the last weeks' frost and the water temperature, and on larger lakes checked against the Copernicus satellite ice map when clouds allow. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.")),
     daylight: r("daylight", t("Daylight"), "", t("Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red.")),
