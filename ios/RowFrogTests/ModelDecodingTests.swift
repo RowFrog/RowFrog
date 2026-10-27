@@ -1,3 +1,4 @@
+import UIKit
 import XCTest
 @testable import RowFrog
 
@@ -236,6 +237,21 @@ final class ModelDecodingTests: XCTestCase {
          "clearest": {"date": "2026-10-21", "lakeCloud": 0.0, "image": "satellite-clearest.jpg"}}
         """
         XCTAssertFalse(try APIClient.decoder.decode(SatellitePicture.self, from: Data(one.utf8)).hasChoice)
+    }
+
+    func testPictureBrightnessTellsCloudFromWater() throws {
+        // Left half white (cloud), right half black (water).
+        let image = UIGraphicsImageRenderer(size: CGSize(width: 200, height: 100)).image { context in
+            UIColor.black.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 200, height: 100))
+            UIColor.white.setFill()
+            context.fill(CGRect(x: 0, y: 0, width: 100, height: 100))
+        }
+        let map = try XCTUnwrap(PictureBrightness(image))
+        XCTAssertTrue(map.isBright(around: CGPoint(x: 0.25, y: 0.5), radius: 0.05))
+        XCTAssertFalse(map.isBright(around: CGPoint(x: 0.75, y: 0.5), radius: 0.05))
+        // Off the picture's edge it looks at the nearest part.
+        XCTAssertTrue(map.isBright(around: CGPoint(x: -0.2, y: 1.3), radius: 0.01))
     }
 
     func testDecodesSharpTilesAndPlacesThem() throws {
