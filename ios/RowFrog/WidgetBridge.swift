@@ -47,9 +47,11 @@ enum WidgetBridge {
     /// page's) and its lake's satellite picture, scaled to the largest widget
     /// and blurred once when the setting says so. Only for clubs whose widgets
     /// show a picture, or whose widget asked for one in its own settings.
+    /// Nothing while no widget is on the home or lock screen.
     @MainActor
     static func preparePictures(_ locations: LocationStore) async {
-        guard let folder = WidgetPictures.folder else { return }
+        guard let folder = WidgetPictures.folder,
+              let widgets = try? await WidgetCenter.shared.currentConfigurations(), !widgets.isEmpty else { return }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let settings = AppSettings.shared
         let shared = WidgetShared.defaults
