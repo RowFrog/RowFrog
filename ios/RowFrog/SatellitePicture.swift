@@ -150,6 +150,17 @@ final class SatellitePictureStore {
     /// Lakes whose pictures the user asked for while the app saves data.
     private(set) var allowedLakes: Set<String> = []
 
+    /// How bright each part of a shown picture is, for marks that must stand out from it.
+    @ObservationIgnored private var brightnessMaps: [URL: PictureBrightness] = [:]
+
+    /// The brightness of a picture already in memory; nil until it has loaded.
+    func brightness(_ url: URL) -> PictureBrightness? {
+        if let map = brightnessMaps[url] { return map }
+        guard let image = images[url], let map = PictureBrightness(image) else { return nil }
+        brightnessMaps[url] = map
+        return map
+    }
+
     /// Decoded tiles, which take 4 MB each: only as many as the cache holds,
     /// so panning around Bodensee doesn't fill the memory.
     private let tiles: NSCache<NSURL, UIImage> = {
@@ -273,6 +284,55 @@ final class SatellitePictureStore {
             try? manager.removeItem(at: folder.appending(path: old))
         }
         try? data.write(to: file, options: .atomic)
+    }
+}
+
+/// A satellite picture shrunk to a small grey grid, to tell white cloud (and snow)
+/// from dark water and land under each mark drawn on it.
+struct PictureBrightness {
+    let width: Int
+    let height: Int
+    /// 0 (black) to 255 (white), row by row from the top.
+    let values: [UInt8]
+
+    init?(_ image: UIImage, longSide: Int = 128) {
+        guard let cg = image.cgImage, cg.width > 0, cg.height > 0 else { return nil }
+        let scale = Double(longSide) / Double(max(cg.width, cg.height))
+        let w = max(1, Int((Double(cg.width) * scale).rounded())), h = max(1, Int((Double(cg.height) * scale).rounded()))
+        var values = [UInt8](repeating: 0, count: w * h)
+        let drawn = values.withUnsafeMutableBytes { buffer -> Bool in
+            guard let context = CGContext(data: buffer.baseAddress, width: w, height: h, bitsPerComponent: 8, bytesPerRow: w,
+                                          space: CGColorSpaceCreateDeviceGray(), bitmapInfo: CGImageAlphaInfo.none.rawValue)
+            else { return false }
+            context.interpolationQuality = .medium
+            context.draw(cg, in: CGRect(x: 0, y: 0, width: w, height: h))
+            return true
+        }
+        guard drawn else { return nil }
+        width = w
+        height = h
+        self.values = values
+    }
+
+    /// Mean brightness, 0...1, over `rect` in the picture's unit square (0...1, y down).
+    func mean(in rect: CGRect) -> Double {
+        let x0 = min(max(Int(rect.minX * CGFloat(width)), 0), width - 1)
+        let x1 = min(max(Int(rect.maxX * CGFloat(width)), x0), width - 1)
+        let y0 = min(max(Int(rect.minY * CGFloat(height)), 0), height - 1)
+        let y1 = min(max(Int(rect.maxY * CGFloat(height)), y0), height - 1)
+        var sum = 0, count = 0
+        for y in y0...y1 {
+            for x in x0...x1 {
+                sum += Int(values[y * width + x])
+                count += 1
+            }
+        }
+        return Double(sum) / Double(count * 255)
+    }
+
+    /// Whether the picture is mostly white (cloud, snow) around `point`, in the unit square.
+    func isBright(around point: CGPoint, radius: CGFloat) -> Bool {
+        mean(in: CGRect(x: point.x - radius, y: point.y - radius, width: radius * 2, height: radius * 2)) > 0.5
     }
 }
 
@@ -603,7 +663,7 @@ struct SatelliteImage: View {
         }
         .overlay {
             if !marksOnScreen {
-                SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID, cloudy: shot.lakeCloud >= 0.5)
+                SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID, cloudy: shot.lakeCloud >= 0.5, shot: shot)
             }
         }
         .frame(maxWidth: .infinity)
@@ -658,6 +718,8 @@ struct SatelliteOverlay: View {
     var clubID: String?
     /// Over mostly white cloud the shore is drawn dark with a light edge, over a clear lake light with a dark edge.
     var cloudy = false
+    /// The pass shown, so wind arrows can be dark where the picture under them is white.
+    var shot: SatellitePicture.Shot?
     /// Drawn on the screen above a zoomable picture: the picture's size at zoom 1,
     /// how far it is zoomed and moved. Lines, marks and names then keep their size.
     var screen: (size: CGSize, zoom: CGFloat, offset: CGPoint)?
@@ -668,8 +730,14 @@ struct SatelliteOverlay: View {
         return ModelMapStore.shared.landWind(at: view.grid.centre, time: view.hours[view.hourIndex()].time)
     }
 
+    @MainActor private var brightness: PictureBrightness? {
+        let store = SatellitePictureStore.shared
+        guard let shot, let url = store.url(lakeID, file: shot.image, date: shot.date) else { return nil }
+        return store.brightness(url)
+    }
+
     var body: some View {
-        let view = self.view, land = self.land
+        let view = self.view, land = self.land, brightness = self.brightness
         Canvas { context, size in
             guard let box = picture.bbox, box.count == 4 else { return }
             let full = screen?.size ?? size, zoom = screen?.zoom ?? 1, offset = screen?.offset ?? .zero
@@ -699,7 +767,7 @@ struct SatelliteOverlay: View {
             // Wind under the lines and marks, so shore, routes and clubs stay on top.
             if layers.contains(.wind), let view {
                 SatelliteWind.draw(in: context, view: view, land: land, box: box, size: full, zoom: zoom, offset: offset, visible: size,
-                                   cloudy: cloudy)
+                                   brightness: brightness)
             }
             if layers.contains(.shore), let view {
                 var path = Path()
@@ -781,10 +849,11 @@ struct SatelliteOverlay: View {
 enum SatelliteWind {
     /// Draws on `context`, whose points are the screen's: the picture is `size`
     /// at zoom 1 and shows `zoom` times larger, its corner `offset` above and
-    /// left of the drawing's corner; `visible` is the size drawn on. On a cloudy
-    /// picture the arrows and numbers turn dark with a white edge, like the shore.
+    /// left of the drawing's corner; `visible` is the size drawn on. Each arrow and
+    /// number is white with a dark edge, or black with a white edge where the
+    /// picture under it is white (cloud, snow), judged from `brightness`.
     static func draw(in context: GraphicsContext, view: LakeView, land: LandWind?, box: [Double], size: CGSize,
-                     zoom: CGFloat, offset: CGPoint, visible: CGSize, cloudy: Bool = false) {
+                     zoom: CGFloat, offset: CGPoint, visible: CGSize, brightness: PictureBrightness? = nil) {
         guard !view.hours.isEmpty, box.count == 4, size.width > 0, size.height > 0, zoom > 0 else { return }
         let hour = view.hours[view.hourIndex()]
         func point(_ lon: Double, _ lat: Double) -> CGPoint {
@@ -819,28 +888,36 @@ enum SatelliteWind {
                                        land: onLand, shore: WindArrows.Shore(rings: rings), blend: blend)
         func screen(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * zoom - offset.x, y: p.y * zoom - offset.y) }
 
-        let (edge, core): (Color, Color) = cloudy
-            ? (.white.opacity(0.9), Color(red: 0.05, green: 0.12, blue: 0.3))
-            : (.black.opacity(0.6), .white)
+        // Whether the picture is white under a point of the picture, within `reach` screen points.
+        func bright(_ p: CGPoint, reach: CGFloat) -> Bool {
+            guard let brightness else { return false }
+            return brightness.isBright(around: CGPoint(x: p.x / size.width, y: p.y / size.height),
+                                       radius: reach / zoom / max(size.width, size.height))
+        }
+        func colors(bright: Bool) -> (edge: Color, core: Color) {
+            bright ? (.white.opacity(0.9), .black) : (.black.opacity(0.6), .white)
+        }
         let style = StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
         for ashore in [true, false] {
-            var path = Path()
-            for a in arrows where a.ashore == ashore {
-                path.addPath(LakeArrow.path(at: screen(a.at), towardDeg: a.towardDeg, length: WindArrows.length(a.speedMs)))
-            }
-            guard !path.isEmpty else { continue }
-            var layer = context
-            layer.opacity = ashore ? WindArrows.ashoreOpacity : 1
-            layer.drawLayer { inner in
-                inner.stroke(path, with: .color(edge), style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
-                inner.stroke(path, with: .color(core), style: style)
+            for light in [false, true] {
+                var path = Path()
+                for a in arrows where a.ashore == ashore {
+                    let length = WindArrows.length(a.speedMs)
+                    guard bright(a.at, reach: length / 2) == light else { continue }
+                    path.addPath(LakeArrow.path(at: screen(a.at), towardDeg: a.towardDeg, length: length))
+                }
+                guard !path.isEmpty else { continue }
+                let (edge, core) = colors(bright: light)
+                var layer = context
+                layer.opacity = ashore ? WindArrows.ashoreOpacity : 1
+                layer.drawLayer { inner in
+                    inner.stroke(path, with: .color(edge), style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+                    inner.stroke(path, with: .color(core), style: style)
+                }
             }
         }
         // Each forecast point's speed, at the tail of the arrow nearest it, with a
         // halo in the edge colour so it reads on cloud and on dark water alike.
-        var numbers = context
-        numbers.addFilter(.shadow(color: edge, radius: 1))
-        numbers.addFilter(.shadow(color: edge, radius: 1))
         for s in samples {
             var best: WindArrows.Arrow?
             var bestD = Double(spacing * spacing)
@@ -852,10 +929,15 @@ enum SatelliteWind {
             guard let best else { continue }
             let r = best.towardDeg * .pi / 180
             let half = WindArrows.length(best.speedMs) / 2 + 6
+            let offsetX = -CGFloat(sin(r)) * half, offsetY = CGFloat(cos(r)) * half
+            let (edge, core) = colors(bright: bright(CGPoint(x: best.at.x + offsetX / zoom, y: best.at.y + offsetY / zoom), reach: 6))
             let at = screen(best.at)
-            numbers.draw(
+            var number = context
+            number.addFilter(.shadow(color: edge, radius: 1))
+            number.addFilter(.shadow(color: edge, radius: 1))
+            number.draw(
                 Text(Format.windNumber(s.speedMs)).font(.caption2.weight(.bold)).foregroundStyle(core),
-                at: CGPoint(x: at.x - CGFloat(sin(r)) * half, y: at.y + CGFloat(cos(r)) * half), anchor: .center
+                at: CGPoint(x: at.x + offsetX, y: at.y + offsetY), anchor: .center
             )
         }
     }
@@ -909,7 +991,7 @@ struct SatellitePictureScreen: View {
                             // names and arrows stay sharp and the same size when zoomed in,
                             // with more arrows, as on the lake map.
                             SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID,
-                                             cloudy: shot.lakeCloud >= 0.5, screen: (size, zoom.scale, zoom.offset))
+                                             cloudy: shot.lakeCloud >= 0.5, shot: shot, screen: (size, zoom.scale, zoom.offset))
                         }
                         .overlay(alignment: .topLeading) { SatelliteColdBadge(lakeID: lakeID) }
                     }
