@@ -22,6 +22,7 @@ import sys
 import time
 from pathlib import Path
 
+from shapely import STRtree
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 
@@ -99,22 +100,28 @@ def survey(g: dict, data: dict) -> dict:
     river = [w for w in ways if name and w["tags"].get("name", "") == name] or [nearest]
     others = [w for w in ways if w not in river]
 
-    coords, graph = {}, {}
+    coords, graph, way_of = {}, {}, {}
     lock_ways = {e["id"] for e in els if e["type"] == "way" and e.get("tags", {}).get("lock") == "yes"}
     for w in river:
         for nid, p in zip(w["nodes"], w["geometry"]):
             coords[nid] = to_m(p["lon"], p["lat"])
+            way_of.setdefault(nid, set()).add(w["id"])
         for a, b in zip(w["nodes"], w["nodes"][1:]):
             d = math.dist(coords[a], coords[b])
             graph.setdefault(a, []).append((b, d, True, w["id"] in lock_ways))
             graph.setdefault(b, []).append((a, d, False, w["id"] in lock_ways))
     # Join gaps: a line end close to another node of the same river.
     ends = [n for n, e in graph.items() if len(e) == 1]
+    cells: dict[tuple[int, int], list[int]] = {}
+    for n in graph:
+        cells.setdefault((int(coords[n][0] // GAP_M), int(coords[n][1] // GAP_M)), []).append(n)
     bridged = 0
     for n in ends:
         best = None
-        for m in graph:
-            if m != n and all(x[0] != m for x in graph[n]):
+        x, y = coords[n]
+        near = [m for i in (-1, 0, 1) for j in (-1, 0, 1) for m in cells.get((int(x // GAP_M) + i, int(y // GAP_M) + j), [])]
+        for m in near:
+            if not (way_of[m] & way_of[n]):
                 d = math.dist(coords[n], coords[m])
                 if d < GAP_M and (best is None or d < best[1]):
                     best = (m, d)
@@ -143,15 +150,16 @@ def survey(g: dict, data: dict) -> dict:
             for nid in e.get("nodes", []):
                 barrier_nodes.setdefault(nid, (label, None))
 
+    shapes = [(label, pt) for label, pt in barrier_nodes.values() if pt is not None] + barrier_lines
+    tree = STRtree([g for _, g in shapes])
+
     def crosses(a, b):
         if b in barrier_nodes:
             return barrier_nodes[b][0]
         seg = LineString([coords[a], coords[b]])
-        for label, pt in barrier_nodes.values():
-            if pt is not None and seg.distance(pt) < 25:
-                return label
-        for label, line in barrier_lines:
-            if seg.intersects(line):
+        for i in tree.query(seg, predicate="dwithin", distance=25):
+            label, shape = shapes[i]
+            if shape.geom_type == "Point" or seg.intersects(shape):
                 return label
         return None
 
@@ -231,6 +239,7 @@ def main() -> None:
         row = {**g, **r}
         rows.append(row)
         print(json.dumps(row, ensure_ascii=False), flush=True)
+        Path(out).write_text(json.dumps(rows, ensure_ascii=False))
         time.sleep(3)
     Path(out).write_text(json.dumps(rows, ensure_ascii=False))
 
