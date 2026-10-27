@@ -275,7 +275,7 @@ function rasterUrl(view, hour, fill) {
  * The wind arrows as on the lake map: an even grid over the whole picture,
  * more arrows as it zooms in, the same size on screen. On the water the wind
  * is worked out between the lake's forecast points, on land it is the weather
- * map's, drawn fainter. The arrow nearest each forecast point carries its
+ * map's. The arrow nearest each forecast point carries its
  * speed (SatelliteWind). The picture is `size` at zoom 1, its corner at
  * `offset` on a screen of `visible`.
  */

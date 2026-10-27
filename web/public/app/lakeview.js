@@ -367,7 +367,7 @@ function drawOverlay(hour) {
  * Arrows on an even grid over the whole map, finer as the map zooms in, fixed
  * to the map so they stay put while it moves; where the wind blows to, longer
  * in stronger wind. On land the wind is the weather map's own forecast, faded
- * in from the lake's over the first kilometre, and the arrows are fainter.
+ * in from the lake's over the first kilometre.
  */
 function drawArrows() {
   const { L, map, view } = page;

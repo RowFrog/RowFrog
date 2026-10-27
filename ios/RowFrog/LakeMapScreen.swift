@@ -1720,8 +1720,8 @@ final class LakeRenderer: MKOverlayRenderer {
         // to the map so the tiles agree; the grid gets finer as the map zooms in.
         // On land the wind is the wind map's own forecast, faded in from the
         // lake's over the first kilometre.
-        // Dark arrows with a light edge read on light and dark maps alike;
-        // those on land are fainter. Colours stay on the water.
+        // Dark arrows with a light edge read on light and dark maps alike,
+        // on land as on the water. Colours stay on the water.
         let margin = Double(WindArrows.length(15) / zoomScale)
         let area = mapRect.insetBy(dx: -margin, dy: -margin)
         var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
