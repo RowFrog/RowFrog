@@ -107,6 +107,24 @@ def tile_for(lat: float, lon: float) -> Tile:
     return Tile(f"{'e' if west >= 0 else 'w'}{abs(west):g}n{south:g}", west, south)
 
 
+# The model's area (ICON-D2), roughly: tiles wholly outside it are not written.
+DOMAIN_WEST, DOMAIN_EAST, DOMAIN_SOUTH, DOMAIN_NORTH = -3.9, 20.3, 43.2, 58.1
+
+
+def tiles_around(points: list[tuple[float, float]]) -> list[Tile]:
+    """Each point's tile and the eight around it, so a map as wide as an iPad's,
+    or zoomed out, is filled to its edges (about 4.5° east and west of a club and
+    3° north and south) instead of only the club's own tile."""
+    tiles = set()
+    for lat, lon in points:
+        for dlat in (-STEP_LAT, 0, STEP_LAT):
+            for dlon in (-STEP_LON, 0, STEP_LON):
+                t = tile_for(lat + dlat, lon + dlon)
+                if t.east > DOMAIN_WEST and t.west < DOMAIN_EAST and t.north > DOMAIN_SOUTH and t.south < DOMAIN_NORTH:
+                    tiles.add(t)
+    return sorted(tiles, key=lambda t: t.id)
+
+
 def latest_run(client: httpx.Client, now: datetime) -> datetime | None:
     """The newest run whose last hour is there for every value."""
     for back in range(0, 13, 3):
@@ -234,7 +252,7 @@ def build(out: Path, points: list[tuple[float, float]], now: datetime | None = N
     """Writes the maps of the newest run for the tiles around `points`.
     Returns the run written, or None when there is nothing newer than `last_run`."""
     now = now or datetime.now(timezone.utc)
-    tiles = sorted({tile_for(lat, lon) for lat, lon in points}, key=lambda t: t.id)
+    tiles = tiles_around(points)
     with httpx.Client(headers={"User-Agent": "RowFrog/0.1 (+https://github.com/RowFrog/RowFrog)"},
                       follow_redirects=True) as client:
         run = latest_run(client, now)

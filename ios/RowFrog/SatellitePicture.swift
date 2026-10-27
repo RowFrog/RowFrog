@@ -1,3 +1,4 @@
+import MapKit
 import SwiftUI
 
 /// Sentinel-2 pictures of a lake, published by the backend
@@ -502,6 +503,8 @@ struct SatelliteImage: View {
     let picture: SatellitePicture
     let shot: SatellitePicture.Shot
     var clubID: String?
+    /// The full view draws shore, routes, clubs and wind on the screen above the zoomed picture.
+    var marksOnScreen = false
     @MainActor private var store: SatellitePictureStore { .shared }
     @MainActor private var layers: SatelliteLayers { .shared }
 
@@ -528,7 +531,11 @@ struct SatelliteImage: View {
         }
         .aspectRatio(picture.aspectRatio, contentMode: .fit)
         .overlay { iceOverlay }
-        .overlay { SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID, cloudy: shot.lakeCloud >= 0.5) }
+        .overlay {
+            if !marksOnScreen {
+                SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID, cloudy: shot.lakeCloud >= 0.5)
+            }
+        }
         .frame(maxWidth: .infinity)
     }
 
@@ -561,13 +568,24 @@ struct SatelliteOverlay: View {
     var clubID: String?
     /// Over mostly white cloud the shore is drawn dark with a light edge, over a clear lake light with a dark edge.
     var cloudy = false
+    /// Drawn on the screen above a zoomable picture: the picture's size at zoom 1,
+    /// how far it is zoomed and moved. Lines, marks and names then keep their size.
+    var screen: (size: CGSize, zoom: CGFloat, offset: CGPoint)?
     @MainActor private var view: LakeView? { LakeViewStore.shared.views[lakeID] }
+    /// The wind map's wind, for the arrows on land.
+    @MainActor private var land: LandWind? {
+        guard let view, !view.hours.isEmpty else { return nil }
+        return ModelMapStore.shared.landWind(at: view.grid.centre, time: view.hours[view.hourIndex()].time)
+    }
 
     var body: some View {
+        let view = self.view, land = self.land
         Canvas { context, size in
             guard let box = picture.bbox, box.count == 4 else { return }
+            let full = screen?.size ?? size, zoom = screen?.zoom ?? 1, offset = screen?.offset ?? .zero
             func point(_ lon: Double, _ lat: Double) -> CGPoint {
-                CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * size.width, y: (box[3] - lat) / (box[3] - box[1]) * size.height)
+                CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * full.width * zoom - offset.x,
+                        y: (box[3] - lat) / (box[3] - box[1]) * full.height * zoom - offset.y)
             }
             let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))
             if let fill = layers.first(where: \.colorsWater), let view, !view.hours.isEmpty,
@@ -589,31 +607,8 @@ struct SatelliteOverlay: View {
                 )
             }
             // Wind under the lines and marks, so shore, routes and clubs stay on top.
-            if layers.contains(.wind), let view, !view.hours.isEmpty {
-                let hour = view.hours[view.hourIndex()]
-                for (p, wind) in zip(view.points, hour.wind) {
-                    guard let from = wind.fromDeg, let speed = wind.speedMs else { continue }
-                    let centre = point(p.lon, p.lat)
-                    let toward = (from + 180) * .pi / 180
-                    let length = 10 + min(speed, 15) * 1.6
-                    let dx = sin(toward) * length / 2, dy = -cos(toward) * length / 2
-                    let tail = CGPoint(x: centre.x - dx, y: centre.y - dy)
-                    let tip = CGPoint(x: centre.x + dx, y: centre.y + dy)
-                    var arrow = Path()
-                    arrow.move(to: tail)
-                    arrow.addLine(to: tip)
-                    for side in [-0.5, 0.5] {
-                        let a = toward + .pi + side
-                        arrow.move(to: tip)
-                        arrow.addLine(to: CGPoint(x: tip.x + sin(a) * 6, y: tip.y - cos(a) * 6))
-                    }
-                    context.stroke(arrow, with: shadow, style: StrokeStyle(lineWidth: 3.5, lineCap: .round))
-                    context.stroke(arrow, with: .color(.white), style: StrokeStyle(lineWidth: 2, lineCap: .round))
-                    context.draw(
-                        Text(Format.windNumber(speed)).font(.caption2.weight(.bold)).foregroundStyle(.white),
-                        at: CGPoint(x: tail.x, y: tail.y), anchor: .center
-                    )
-                }
+            if layers.contains(.wind), let view {
+                SatelliteWind.draw(in: context, view: view, land: land, box: box, size: full, zoom: zoom, offset: offset, visible: size)
             }
             if layers.contains(.shore), let view {
                 var path = Path()
@@ -673,7 +668,99 @@ struct SatelliteOverlay: View {
             }
         }
         .allowsHitTesting(false)
+        // Again once the lake has loaded, which can be after the picture.
+        .task(id: "\(layers.contains(.wind)) \(view != nil)") {
+            if layers.contains(.wind), let view { await ModelMapStore.shared.loadLandWind(at: view.grid.centre) }
+        }
     }
+}
+
+/// The wind arrows on a satellite picture, as on the lake map: an even grid
+/// over the whole picture, more arrows as it zooms in, the same size on screen.
+/// On the water the wind is worked out between the lake's forecast points, on
+/// land it is the wind map's, drawn fainter. The arrow nearest each forecast
+/// point carries its speed.
+enum SatelliteWind {
+    /// Draws on `context`, whose points are the screen's: the picture is `size`
+    /// at zoom 1 and shows `zoom` times larger, its corner `offset` above and
+    /// left of the drawing's corner; `visible` is the size drawn on.
+    static func draw(in context: GraphicsContext, view: LakeView, land: LandWind?, box: [Double], size: CGSize,
+                     zoom: CGFloat, offset: CGPoint, visible: CGSize) {
+        guard !view.hours.isEmpty, box.count == 4, size.width > 0, size.height > 0, zoom > 0 else { return }
+        let hour = view.hours[view.hourIndex()]
+        func point(_ lon: Double, _ lat: Double) -> CGPoint {
+            CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * size.width, y: (box[3] - lat) / (box[3] - box[1]) * size.height)
+        }
+        let rings = view.outline.filter { $0.count > 2 }.map { ring in ring.map { point($0[0], $0[1]) } }
+        let water = CGMutablePath()
+        for ring in rings {
+            water.addLines(between: ring)
+            water.closeSubpath()
+        }
+        let widthM = (box[2] - box[0]) * 111_320 * cos((box[1] + box[3]) / 2 * .pi / 180)
+        let samples = zip(view.points, hour.wind).compactMap { p, wind -> WindArrows.Sample? in
+            guard let from = wind.fromDeg, let speed = wind.speedMs else { return nil }
+            return WindArrows.Sample(point: point(p.lon, p.lat), towardDeg: from + 180, speedMs: speed)
+        }
+        // The part of the picture on screen, in its own points; arrows stay on the picture.
+        let area = CGRect(x: offset.x / zoom, y: offset.y / zoom, width: visible.width / zoom, height: visible.height / zoom)
+            .intersection(CGRect(origin: .zero, size: size))
+        let spacing = WindArrows.spacing / zoom
+        // On land the wind map's forecast, at the place the picture shows.
+        var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
+        if let land {
+            onLand = { p in
+                let lat = box[3] - Double(p.y / size.height) * (box[3] - box[1])
+                let lon = box[0] + Double(p.x / size.width) * (box[2] - box[0])
+                return land.at(MKMapPoint(CLLocationCoordinate2D(latitude: lat, longitude: lon)))
+            }
+        }
+        let blend = CGFloat(WindArrows.blendM / widthM) * size.width
+        let arrows = WindArrows.arrows(in: area, spacing: spacing, water: water, from: samples,
+                                       land: onLand, shore: WindArrows.Shore(rings: rings), blend: blend)
+        func screen(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * zoom - offset.x, y: p.y * zoom - offset.y) }
+
+        let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))
+        let style = StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
+        for ashore in [true, false] {
+            var path = Path()
+            for a in arrows where a.ashore == ashore {
+                path.addPath(LakeArrow.path(at: screen(a.at), towardDeg: a.towardDeg, length: WindArrows.length(a.speedMs)))
+            }
+            guard !path.isEmpty else { continue }
+            var layer = context
+            layer.opacity = ashore ? WindArrows.ashoreOpacity : 1
+            layer.drawLayer { inner in
+                inner.stroke(path, with: shadow, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+                inner.stroke(path, with: .color(.white), style: style)
+            }
+        }
+        // Each forecast point's speed, at the tail of the arrow nearest it.
+        for s in samples {
+            var best: WindArrows.Arrow?
+            var bestD = Double(spacing * spacing)
+            for a in arrows {
+                let dx = Double(a.at.x - s.point.x), dy = Double(a.at.y - s.point.y)
+                let d = dx * dx + dy * dy
+                if d <= bestD { best = a; bestD = d }
+            }
+            guard let best else { continue }
+            let r = best.towardDeg * .pi / 180
+            let half = WindArrows.length(best.speedMs) / 2 + 6
+            let at = screen(best.at)
+            context.draw(
+                Text(Format.windNumber(s.speedMs)).font(.caption2.weight(.bold)).foregroundStyle(.white),
+                at: CGPoint(x: at.x - CGFloat(sin(r)) * half, y: at.y + CGFloat(cos(r)) * half), anchor: .center
+            )
+        }
+    }
+}
+
+/// How far a zoomable view is zoomed and moved, for layers drawn on the screen above it.
+@Observable
+final class ZoomTracker {
+    var scale: CGFloat = 1
+    var offset: CGPoint = .zero
 }
 
 /// The picture on its own, filling the screen, with pinch to zoom, drag to
@@ -683,7 +770,9 @@ struct SatellitePictureScreen: View {
     let picture: SatellitePicture
     @State var kind: SatellitePicture.Kind
     var clubID: String?
+    @State private var zoom = ZoomTracker()
     @Environment(\.dismiss) private var dismiss
+    @MainActor private var layers: SatelliteLayers { .shared }
 
     var body: some View {
         NavigationStack {
@@ -697,11 +786,18 @@ struct SatellitePictureScreen: View {
                     let fit = min(geo.size.width, geo.size.height * picture.aspectRatio)
                     if let shot = picture.shot(kind) {
                         let size = CGSize(width: fit, height: fit / picture.aspectRatio)
-                        ZoomableView(size: size, focus: focus(in: size)) {
-                            SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID)
+                        ZoomableView(size: size, focus: focus(in: size), tracker: zoom) {
+                            SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID, marksOnScreen: true)
                                 .frame(width: fit, height: fit / picture.aspectRatio)
                         }
-                        .id(kind)
+                        // No .id(kind): switching pictures keeps the zoom and position.
+                        .overlay {
+                            // On the screen rather than in the picture, so lines, club marks,
+                            // names and arrows stay sharp and the same size when zoomed in,
+                            // with more arrows, as on the lake map.
+                            SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID,
+                                             cloudy: shot.lakeCloud >= 0.5, screen: (size, zoom.scale, zoom.offset))
+                        }
                     }
                 }
                 if let shot = picture.shot(kind) {
@@ -765,6 +861,8 @@ final class LayoutScrollView: UIScrollView {
 struct ZoomableView<Content: View>: UIViewRepresentable {
     let size: CGSize
     var focus: ZoomFocus?
+    /// Told the zoom and position after every move, for layers drawn above.
+    var tracker: ZoomTracker?
     @ViewBuilder let content: Content
 
     func makeUIView(context: Context) -> UIScrollView {
@@ -794,12 +892,25 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
     func updateUIView(_ scroll: UIScrollView, context: Context) {
         context.coordinator.host.rootView = AnyView(content)
         context.coordinator.focus = focus
+        context.coordinator.tracker = tracker
         if context.coordinator.size != size {
+            let old = context.coordinator.size, zoom = scroll.zoomScale
+            // The part of the picture in the middle of the screen, as a share of it.
+            let middle = CGPoint(x: (scroll.contentOffset.x + scroll.bounds.width / 2) / max(old.width * zoom, 1),
+                                 y: (scroll.contentOffset.y + scroll.bounds.height / 2) / max(old.height * zoom, 1))
             context.coordinator.size = size
             scroll.zoomScale = 1
             context.coordinator.host.view.frame = CGRect(origin: .zero, size: size)
             scroll.contentSize = size
-            context.coordinator.focused = false
+            if context.coordinator.touched {
+                // Once the user has a view, a new fit (another caption, a turn) keeps it.
+                scroll.zoomScale = zoom
+                context.coordinator.centre(scroll)
+                scroll.contentOffset = CGPoint(x: middle.x * size.width * zoom - scroll.bounds.width / 2,
+                                               y: middle.y * size.height * zoom - scroll.bounds.height / 2)
+            } else {
+                context.coordinator.focused = false
+            }
         }
         context.coordinator.centre(scroll)
         scroll.setNeedsLayout()
@@ -811,8 +922,12 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
         let host: UIHostingController<AnyView>
         var size: CGSize
         var focus: ZoomFocus?
+        var tracker: ZoomTracker?
         /// Whether the first view (zoom and position) was set for this size.
         var focused = false
+        /// Whether the user has moved or zoomed: then switching pictures or a
+        /// new size keeps their view.
+        var touched = false
         private var bounds = CGSize.zero
 
         init(content: AnyView, size: CGSize) {
@@ -828,7 +943,8 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
             guard scroll.bounds.width > 0, scroll.bounds.height > 0 else { return }
             if scroll.bounds.size != bounds {
                 bounds = scroll.bounds.size
-                focused = false
+                // Until the user moves or zooms, a new size opens on the focus again.
+                if !touched { focused = false }
             }
             centre(scroll)
             guard !focused else { return }
@@ -850,7 +966,9 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
                 scale = view.width / size.width
                 middle = point ?? CGPoint(x: size.width / 2, y: size.height / 2)
             }
-            scroll.zoomScale = min(max(scale, scroll.minimumZoomScale), scroll.maximumZoomScale)
+            // Screenshots: -RWSatelliteZoom n opens n times closer.
+            let extra = max(UserDefaults.standard.double(forKey: "RWSatelliteZoom"), 1)
+            scroll.zoomScale = min(max(scale * extra, scroll.minimumZoomScale), scroll.maximumZoomScale)
             centre(scroll)
             let z = scroll.zoomScale
             let inset = scroll.contentInset
@@ -859,7 +977,24 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
             scroll.contentOffset = CGPoint(x: x, y: y)
         }
 
-        func scrollViewDidZoom(_ scrollView: UIScrollView) { centre(scrollView) }
+        func scrollViewDidZoom(_ scrollView: UIScrollView) {
+            centre(scrollView)
+            report(scrollView)
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) { report(scrollView) }
+
+        func scrollViewWillBeginDragging(_ scrollView: UIScrollView) { touched = true }
+
+        func scrollViewWillBeginZooming(_ scrollView: UIScrollView, with view: UIView?) { touched = true }
+
+        /// Tells the tracker where the content now sits: its corner is the
+        /// content offset above and left of the scroll view's corner.
+        private func report(_ scroll: UIScrollView) {
+            guard let tracker else { return }
+            if tracker.scale != scroll.zoomScale { tracker.scale = scroll.zoomScale }
+            if tracker.offset != scroll.contentOffset { tracker.offset = scroll.contentOffset }
+        }
 
         /// Keeps the picture in the middle while it is smaller than the screen.
         func centre(_ scroll: UIScrollView) {
@@ -872,6 +1007,7 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
 
         @objc func doubleTapped(_ gesture: UITapGestureRecognizer) {
             guard let scroll = gesture.view as? UIScrollView else { return }
+            touched = true
             if scroll.zoomScale > 1.01 {
                 scroll.setZoomScale(1, animated: true)
             } else {
@@ -911,7 +1047,7 @@ struct SatelliteLegend: View {
                 if on.contains(.wind) {
                     Section(tr("Wind")) {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Points where the wind blows to, at the forecast points for the current hour; longer arrows mean stronger wind. The number is the wind speed."))
+                            tr("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land show the weather map's wind forecast for each place."))
                     }
                 }
                 if on.contains(.ice), picture.ice != nil {

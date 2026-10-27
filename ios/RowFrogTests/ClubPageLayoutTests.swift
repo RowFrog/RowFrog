@@ -13,8 +13,25 @@ final class ClubPageLayoutTests: XCTestCase {
         let layout = try JSONDecoder().decode(PageLayout.self, from: Data(json.utf8))
         XCTAssertEqual(layout.order.prefix(2), [.radar, .hourly])
         XCTAssertEqual(layout.order.count, PageCard.allCases.count)
-        XCTAssertEqual(layout.hidden, [.satellite])
+        // Saved before the rain tile showed the radar: its card is switched off too.
+        XCTAssertEqual(layout.hidden, [.satellite, .radar])
         XCTAssertFalse(layout.visible.contains(.satellite))
+    }
+
+    func testTheRadarCardIsOffUnlessSwitchedOnAgain() throws {
+        XCTAssertFalse(PageLayout.standard.visible.contains(.radar))
+        XCTAssertEqual(PageLayout.standard.visible.first, .conditions)
+        // An order saved before: the card goes off once.
+        let old = try JSONDecoder().decode(PageLayout.self, from: Data(#"{"order": ["radar", "conditions"], "hidden": []}"#.utf8))
+        XCTAssertFalse(old.visible.contains(.radar))
+        // Switched on again, it stays on.
+        var on = old
+        on.hidden.remove(.radar)
+        let back = try JSONDecoder().decode(PageLayout.self, from: JSONEncoder().encode(on))
+        XCTAssertEqual(back.visible.first, .radar)
+        // Launch arguments: only when named.
+        XCTAssertFalse(PageLayout(list: "hourly").visible.contains(.radar))
+        XCTAssertTrue(PageLayout(list: "hourly,radar").visible.contains(.radar))
     }
 
     func testRoundTrip() throws {

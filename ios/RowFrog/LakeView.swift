@@ -77,6 +77,8 @@ struct LakeGrid: Decodable, Hashable {
     var southEdge: Double { south - dLat / 2 }
     var westEdge: Double { west - dLon / 2 }
     var east: Double { west + Double(cols - 1) * dLon + dLon / 2 }
+    /// The middle of the grid.
+    var centre: Coordinate { Coordinate(lat: (north + southEdge) / 2, lon: (westEdge + east) / 2) }
 }
 
 struct LakeClub: Decodable, Hashable, Identifiable {
@@ -498,5 +500,127 @@ enum LakeRaster {
             bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
             provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent
         )
+    }
+}
+
+/// Wind arrows on an even grid, as the lake map and the satellite picture draw
+/// them: worked out between the lake's forecast points, more of them as the view
+/// zooms in, the same size on screen, and on land up to `ashoreM` from the shore.
+enum WindArrows {
+    /// A forecast point's wind, in the drawing's own coordinates.
+    struct Sample {
+        let point: CGPoint
+        let towardDeg: Double
+        let speedMs: Double
+    }
+
+    /// An arrow to draw, and whether it stands on land.
+    struct Arrow {
+        let at: CGPoint
+        let towardDeg: Double
+        let speedMs: Double
+        let ashore: Bool
+    }
+
+    /// Screen points between arrows: more arrows as the view zooms in, fewer out.
+    static let spacing: CGFloat = 60
+    /// Arrows on land are fainter, so the lake stays in front.
+    static let ashoreOpacity = 0.6
+    /// Over this much land past the shore the lake's wind fades into the land's,
+    /// so the two forecasts meet without a step.
+    static let blendM = 1000.0
+
+    /// The shore as line pieces, to tell how far a point on land lies from it.
+    struct Shore {
+        let segments: [(CGPoint, CGPoint)]
+        let bounds: CGRect
+
+        init(rings: [[CGPoint]]) {
+            segments = rings.flatMap { ring in zip(ring, ring.dropFirst() + ring.prefix(1)).map { ($0, $1) } }
+            bounds = segments.reduce(CGRect.null) { $0.union(CGRect(origin: $1.0, size: .zero)).union(CGRect(origin: $1.1, size: .zero)) }
+        }
+
+        /// How far `p` is from the shore, or nil when farther than `limit`.
+        func distance(to p: CGPoint, within limit: CGFloat) -> CGFloat? {
+            guard bounds.insetBy(dx: -limit, dy: -limit).contains(p) else { return nil }
+            var best = limit * limit
+            var found = false
+            for (a, b) in segments {
+                let dx = b.x - a.x, dy = b.y - a.y
+                let length = dx * dx + dy * dy
+                let t = length > 0 ? min(max(((p.x - a.x) * dx + (p.y - a.y) * dy) / length, 0), 1) : 0
+                let ex = a.x + t * dx - p.x, ey = a.y + t * dy - p.y
+                let d = ex * ex + ey * ey
+                if d <= best { best = d; found = true }
+            }
+            return found ? best.squareRoot() : nil
+        }
+    }
+
+    /// Arrow length on screen: longer in stronger wind.
+    static func length(_ speedMs: Double) -> CGFloat { 14 + CGFloat(min(max(speedMs, 0), 15)) * 1.6 }
+
+    /// The arrows in `area`, `spacing` apart in the drawing's units and fixed to
+    /// its coordinates, so map tiles and redraws agree; every other row is
+    /// shifted by half, so the arrows don't line up in columns. On the water the
+    /// wind comes from the lake's forecast points, on land from `land` (the wind
+    /// map's forecast); without it, land gets no arrows. Within `blend` of the
+    /// `shore` the land's wind fades in from the lake's.
+    static func arrows(in area: CGRect, spacing: CGFloat, water: CGPath, from samples: [Sample],
+                       land: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)? = nil,
+                       shore: Shore? = nil, blend: CGFloat = 0) -> [Arrow] {
+        guard !samples.isEmpty, !area.isNull, !area.isEmpty, spacing > 0 else { return [] }
+        var out: [Arrow] = []
+        var y = (area.minY / spacing).rounded(.down) * spacing + spacing / 2
+        while y < area.maxY {
+            let shift: CGFloat = Int((y / spacing).rounded(.down)) % 2 == 0 ? 0 : spacing / 2
+            var x = ((area.minX - shift) / spacing).rounded(.down) * spacing + shift + spacing / 2
+            while x < area.maxX {
+                let p = CGPoint(x: x, y: y)
+                let onWater = water.contains(p, using: .evenOdd)
+                if let wind = onWater ? wind(at: p, from: samples) : landWind(at: p, land, shore, blend, samples) {
+                    out.append(Arrow(at: p, towardDeg: wind.towardDeg, speedMs: wind.speedMs, ashore: !onWater))
+                }
+                x += spacing
+            }
+            y += spacing
+        }
+        return out
+    }
+
+    /// The land's wind at `p`, faded in from the lake's over `blend` from the shore.
+    private static func landWind(at p: CGPoint, _ land: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?,
+                                 _ shore: Shore?, _ blend: CGFloat, _ samples: [Sample]) -> (towardDeg: Double, speedMs: Double)? {
+        guard let far = land?(p) else { return nil }
+        guard blend > 0, let d = shore?.distance(to: p, within: blend), let lake = wind(at: p, from: samples) else { return far }
+        return mix(lake, far, Double(d / blend))
+    }
+
+    /// `a` and `b` mixed, `t` of the way to `b`: directions as east and north parts, speeds in between.
+    static func mix(_ a: (towardDeg: Double, speedMs: Double), _ b: (towardDeg: Double, speedMs: Double), _ t: Double)
+        -> (towardDeg: Double, speedMs: Double) {
+        let ra = a.towardDeg * .pi / 180, rb = b.towardDeg * .pi / 180
+        let east = sin(ra) * (1 - t) + sin(rb) * t, north = cos(ra) * (1 - t) + cos(rb) * t
+        let toward = east == 0 && north == 0 ? b.towardDeg : atan2(east, north) * 180 / .pi
+        return ((toward + 360).truncatingRemainder(dividingBy: 360), a.speedMs * (1 - t) + b.speedMs * t)
+    }
+
+    /// The wind on the lake, from the forecast points weighted by
+    /// distance (nearer counts more), averaged as east and north parts so
+    /// opposite directions don't add up to a wrong one.
+    static func wind(at p: CGPoint, from samples: [Sample]) -> (towardDeg: Double, speedMs: Double)? {
+        guard !samples.isEmpty else { return nil }
+        var east = 0.0, north = 0.0, speed = 0.0, total = 0.0
+        for s in samples {
+            let dx = Double(s.point.x - p.x), dy = Double(s.point.y - p.y)
+            let w = 1 / max(dx * dx + dy * dy, 1)
+            let r = s.towardDeg * .pi / 180
+            east += sin(r) * w
+            north += cos(r) * w
+            speed += s.speedMs * w
+            total += w
+        }
+        let toward = atan2(east, north) * 180 / .pi
+        return ((toward + 360).truncatingRemainder(dividingBy: 360), speed / total)
     }
 }

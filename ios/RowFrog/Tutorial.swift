@@ -176,7 +176,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .moreClubs: tr("Add more clubs")
         case .rowingLight: tr("The rowing light")
         case .conditions: tr("Conditions at a glance")
-        case .warnings: tr("DWD warnings")
+        case .warnings: tr("Official warnings")
         case .boats: tr("Your boats and limits")
         case .lake: tr("Lake view and routes")
         case .locations: tr("Your locations")
@@ -192,7 +192,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .moreClubs: tr("Add the other places you row, or skip this and add clubs later in the list.")
         case .rowingLight: tr("Every page starts with the rowing light for the hour ahead.")
         case .conditions: tr("Below the light you find what matters on the water.")
-        case .warnings: tr("Warnings from the Deutscher Wetterdienst come right under the rowing light.")
+        case .warnings: tr("Official weather warnings come right under the rowing light: from DWD in Germany, GeoSphere Austria in Austria and MeteoSwiss in Switzerland.")
         case .boats: tr("The rowing light is worked out for one boat. Pick it at the top of the settings.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")
         case .locations: tr("Keep all the places you row in one list.")
@@ -213,7 +213,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "text.bubble", text: tr("The \"Why\" line names what sets the light.")),
             TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up.")),
             TourPoint(symbol: "clock", text: tr("Each of the next 48 hours has its own light.")),
-            TourPoint(symbol: "umbrella", text: tr("The rain radar shows rain for the next two hours.")),
+            TourPoint(symbol: "umbrella", text: tr("The rain tile shows DWD's radar for the next two hours, then the forecast.")),
             TourPoint(symbol: "clock.badge.exclamationmark", text: tr("Grey instead of green: the forecast is over 3 hours old. Pull down to refresh.")),
             TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide, and when in doubt you stay ashore.")),
         ]
@@ -663,13 +663,13 @@ struct LakeViewTip: Tip {
 
 struct RainRadarTip: Tip {
     var title: Text { Text(tr("Rain on the way?")) }
-    var message: Text? { Text(tr("The radar of the Deutscher Wetterdienst shows rain at the launch point for the next two hours, in 15-minute steps. It updates every few minutes.")) }
+    var message: Text? { Text(tr("For the next two hours the rain tile reads the radar of the Deutscher Wetterdienst at the launch point, in 15-minute steps, and the forecast after that. The radar updates every few minutes.")) }
     var image: Image? { Image(systemName: "umbrella") }
 }
 
 struct RadarMapTip: Tip {
     var title: Text { Text(tr("Rain radar map")) }
-    var message: Text? { Text(tr("Tap the card for the radar map. Play it, or drag the slider from an hour ago to two hours ahead.")) }
+    var message: Text? { Text(tr("Open the rain tile: for the next two hours its map shows the radar. Tap the map to play it, or drag the slider from an hour ago to two hours ahead.")) }
     var image: Image? { Image(systemName: "map") }
 }
 

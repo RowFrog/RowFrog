@@ -5,7 +5,7 @@ import { normalized, moved, visibleCards, STANDARD } from "../public/app/arrange
 test("an order keeps every card once and drops unknown ones", () => {
   const layout = normalized({ order: ["hourly", "future", "hourly", "radar"], hidden: ["future", "satellite"] });
   assert.deepEqual(layout.order, ["hourly", "radar", "conditions", "lakeView", "launchPoint", "satellite"]);
-  assert.deepEqual(layout.hidden, ["satellite"]);
+  assert.deepEqual(layout.hidden, ["satellite", "radar"]);
   assert.deepEqual(normalized(null), STANDARD);
 });
 
@@ -14,8 +14,16 @@ test("the rain radar card starts switched off", () => {
 });
 
 test("switched-off cards are left out, the rest keep their order", () => {
-  const layout = normalized({ order: ["satellite", "hourly"], hidden: ["lakeView"] });
-  assert.deepEqual(visibleCards(layout), ["satellite", "hourly", "conditions", "launchPoint"]);
+  const layout = normalized({ order: ["satellite", "hourly"], hidden: ["lakeView"], radarInTile: true });
+  assert.deepEqual(visibleCards(layout), ["satellite", "hourly", "conditions", "radar", "launchPoint"]);
+});
+
+test("orders saved before the rain tile read the radar switch its card off once", () => {
+  const old = normalized({ order: ["radar", "hourly"], hidden: [] });
+  assert.deepEqual(old.hidden, ["radar"]);
+  assert.equal(old.radarInTile, true);
+  // Switched on again, it stays on.
+  assert.deepEqual(normalized({ ...old, hidden: [] }).hidden, []);
 });
 
 test("moving a card puts it at the new place", () => {

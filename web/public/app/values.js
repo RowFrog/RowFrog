@@ -11,6 +11,7 @@ import {
   beaufort, beaufortScale, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
   precipitationKind, iceOff, ICE_TITLES, sunState, localDay, COLD, key,
 } from "./logic.js";
+import { radarAhead, rainOutlook, rainingNow, forecastRain, radarGraphic, radarEnd, peak, RADAR_CREDIT } from "./radar.js";
 
 const HOUR = 3600 * 1000;
 const FREEZING_WATER_C = 4;
@@ -25,7 +26,7 @@ export const COLOURS = {
  * The forecast seen from one hour (ConditionData): the timeline from
  * yesterday to 7 days ahead, with hours counted from `now`.
  */
-export function conditionData(forecast, now) {
+export function conditionData(forecast, now, radar = null) {
   const outlook = forecast.outlook ?? [];
   const timeline = (outlook.length ? outlook : forecast.hours).slice().sort((a, b) => new Date(a.time) - new Date(b.time));
   // The rowing hours have no UV index; the outlook has it for the same hour.
@@ -39,6 +40,8 @@ export function conditionData(forecast, now) {
   const isNow = start <= Date.now() && Date.now() - start < HOUR;
   return {
     forecast, now: hour, timeline, x, isNow,
+    // DWD's radar at the launch point, read while the club page is open.
+    radar,
     moment: isNow ? new Date() : new Date(hour.time),
     nowLabel: isNow ? t("Now") : dayTime(hour.time),
     next24: timeline.filter((x2) => x(x2.time) >= 0 && x(x2.time) < 24),
@@ -58,7 +61,7 @@ export function dataAt(d, x) {
   if (hour.time === d.now.time) return d;
   // The rowing hour, with the boat's reasons, when there is one.
   const rowing = d.forecast.hours.find((x2) => x2.time === hour.time);
-  return conditionData(d.forecast, rowing ?? hour);
+  return conditionData(d.forecast, rowing ?? hour, d.radar);
 }
 
 function extreme(hours, value, highest) {
@@ -81,6 +84,18 @@ function warnings(d, words) {
   return (d.forecast.warnings?.items ?? []).filter((w) => !w.isLake && (w.expires == null || new Date(w.expires) > new Date(d.now.time))
     && words.some((word) => (w.event ?? "").toUpperCase().includes(word)));
 }
+
+/** The place's warnings come from DWD (Germany, older files); else labels say "official" (ConditionsCard warningsAreDWD). */
+function warningsAreDWD(d) {
+  return (d.forecast.warnings?.local?.source ?? "dwd") === "dwd";
+}
+
+/** False where no warning service was read: then "no warning" must not be said. */
+function warningsChecked(d) {
+  return d.forecast.warnings?.local?.checked !== false;
+}
+
+const warningsLabel = (d) => (warningsAreDWD(d) ? t("DWD warnings") : t("Official warnings"));
 
 function warningNames(d, words) {
   const found = warnings(d, words);
@@ -331,22 +346,49 @@ const BUILDERS = {
     const lightText = light === "red" ? t("red: hail") : light === "amber" ? t("amber: heavy rain") : t("green: under %@ per hour", rain(4));
     const facts = [[t("Next 24 h"), t("%@ in total", rain(total))], [t("Kind"), kinds.length ? kinds.join(", ") : t("dry")]];
     if (top && (top.precipitationMm ?? 0) >= 0.1) facts.push([t("Heaviest"), t("%@ · %@", rain(top.precipitationMm), dayTime(top.time))]);
-    facts.push([t("DWD warnings"), warningNames(d, ["REGEN", "HAGEL", "GEWITTER", "SCHNEE"])], [t("Rowing light now"), lightText]);
+    facts.push([warningsLabel(d), warningNames(d, ["REGEN", "HAGEL", "GEWITTER", "SCHNEE"])], [t("Rowing light now"), lightText]);
     const wet = (x.precipitationMm ?? 0) >= 0.1;
-    const first = d.next24.find((y) => (y.precipitationMm ?? 0) >= 0.1);
+    const first = forecastRain(d);
     const kind = precipitationKind(sky(x.weatherCode));
+    let value = wet ? rain(x.precipitationMm) : t("Dry");
+    let note = wet ? (kind ? t(kind) : "") : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h");
+    let big = "";
+    const lines = [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }];
+    let source = t("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.");
+    // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
+    const ahead = radarAhead(d);
+    if (ahead) {
+      const outlook = rainOutlook(ahead, d.timeline);
+      value = rainingNow(ahead) ? rain(ahead.steps[0].mm) : t("Dry");
+      if (outlook.now && outlook.next) {
+        note = outlook.next.fromRadar ? t("Radar: %@ · %@", outlook.now, outlook.next.text) : `${t("Radar: %@", outlook.now)} · ${outlook.next.text}`;
+      } else {
+        note = t("Radar: %@", outlook.summary);
+      }
+      facts.unshift([t("Radar, next 2 h"), outlook.summary]);
+      big = radarGraphic(d);
+    }
+    if (d.radar?.steps.length) {
+      lines[0].name = t("Forecast");
+      lines.push({
+        name: t("Radar"), colour: COLOURS.indigo, kind: "bars", barWidth: 2.5,
+        points: d.radar.steps.map((s) => ({ x: d.x(s.time), y: inUnit("rain", s.mm) })),
+        covers: [d.x(d.radar.steps[0].time) - 0.5, d.x(radarEnd(d.radar))],
+      });
+      source += ` ${t(RADAR_CREDIT)}`;
+    }
+    const highest = Math.max(0, ...d.timeline.map((y) => y.precipitationMm ?? 0), d.radar ? peak(d.radar) : 0);
     return base({
-      value: wet ? rain(x.precipitationMm) : t("Dry"),
-      note: wet ? (kind ? t(kind) : "") : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h"),
-      unit: unitSymbol("rain"), lines: [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }],
+      value, note, big,
+      unit: unitSymbol("rain"), lines,
       limits: [{ value: inUnit("rain", 4), colour: COLOURS.orange, label: t("Heavy rain") }],
-      limitInfo: t("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official DWD warnings for heavy rain or hail always make the light red or amber as well.", rain(4)),
-      yDomain: [0, inUnit("rain", Math.max(6, Math.max(0, ...d.timeline.map((y) => y.precipitationMm ?? 0)) * 1.2))], facts,
+      limitInfo: t("%@ per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water: amber. Hail always counts as red. Official warnings for heavy rain or hail always make the light red or amber as well.", rain(4)),
+      yDomain: [0, inUnit("rain", Math.max(6, highest * 1.2))], facts,
       rowing: advice(d, REASONS.precipitation, {
         red: t("Hail is forecast: stay ashore."), amber: t("Heavy rain now: you are soaked quickly and see less; keep the outing short."),
         later: key("Heavy rain or hail from %@: plan to be back before then."), calm: t("No heavy rain or hail in the next 24 hours."),
       }),
-      source: t("Precipitation per hour and weather code, DWD via Open-Meteo. DWD warnings appear under DWD warnings."),
+      source,
     });
   },
 
@@ -362,7 +404,7 @@ const BUILDERS = {
       const clear = d.future.find((y) => new Date(y.time) >= fog.end && (y.visibilityM ?? Infinity) >= 1000 && y.sunUp !== false);
       facts.push([t("Rowing possible"), clear ? t("from about %@ by visibility", dayTime(clear.time)) : t("not in the forecast")]);
     } else facts.push([t("Fog"), t("not in the next 24 h")]);
-    facts.push([t("Mist"), mist ? span(mist) : t("not in the next 24 h")], [t("DWD fog warning"), warningNames(d, ["NEBEL"])],
+    facts.push([t("Mist"), mist ? span(mist) : t("not in the next 24 h")], [warningsAreDWD(d) ? t("DWD fog warning") : t("Official fog warning"), warningNames(d, ["NEBEL"])],
       [t("Lake view"), t("fog shows as a banner over the whole lake")]);
     return base({
       value: distance(x.visibilityM), note: fogHour(x) ? t("Fog now") : fog ? t("Fog expected %@", span(fog)) : t("No fog in the next 24 h"), unit: unitSymbol("distance"),
@@ -441,17 +483,20 @@ const BUILDERS = {
     const top = extreme(d.next24, (y) => y.capeJkg, true);
     const facts = [];
     if (top && (top.capeJkg ?? 0) > 0) facts.push([t("Most energy next 24 h"), t("%@ J/kg · %@", num(top.capeJkg), dayTime(top.time))]);
-    facts.push([t("DWD warnings"), warningNames(d, ["GEWITTER"])]);
+    facts.push([warningsLabel(d), warningNames(d, ["GEWITTER"])]);
     const light = lightFor(d.now, REASONS.thunderstorm);
     return base({
       value: light === "red" ? t("High") : light === "amber" ? t("Possible") : t("Low"),
-      note: warnings(d, ["GEWITTER"]).length ? t("DWD thunderstorm warning") : t("No DWD thunderstorm warning"), unit: "J/kg",
+      note: !warningsChecked(d) ? t("Warnings not checked")
+        : !warningsAreDWD(d) ? (warnings(d, ["GEWITTER"]).length ? t("Official thunderstorm warning") : t("No official thunderstorm warning"))
+        : warnings(d, ["GEWITTER"]).length ? t("DWD thunderstorm warning") : t("No DWD thunderstorm warning"),
+      unit: "J/kg",
       lines: [{ name: t("Energy for storms (CAPE)"), colour: COLOURS.yellow, kind: "bars", points: d.points((y) => y.capeJkg) }],
       limits: [{ value: 500, colour: COLOURS.orange, label: t("Possible") }, { value: 1000, colour: COLOURS.red, label: t("Likely") }],
-      limitInfo: t("CAPE is the energy the air has for rising, in J/kg. From 500 J/kg thunderstorms are possible if something sets them off (amber); from 1000 J/kg together with rain they are likely (red). This is the app's own estimate; an official DWD thunderstorm warning always makes the light red."),
+      limitInfo: t("CAPE is the energy the air has for rising, in J/kg. From 500 J/kg thunderstorms are possible if something sets them off (amber); from 1000 J/kg together with rain they are likely (red). This is the app's own estimate; an official thunderstorm warning always makes the light red."),
       yDomain: [0, Math.max(1300, Math.max(0, ...d.timeline.map((y) => y.capeJkg ?? 0)) * 1.1)], facts,
       rowing: t("If you hear thunder, head for the shore at once: lightning can strike 10 km ahead of a storm."),
-      source: t("Estimated from DWD forecast (CAPE); official DWD warnings appear under DWD warnings."),
+      source: t("Estimated from the forecast (CAPE); official warnings appear under the warnings."),
     });
   },
 

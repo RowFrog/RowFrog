@@ -78,7 +78,7 @@ struct ArrangePageSheet: View {
                 }
                 Section {
                     fixedRow(tr("Rowing light"), symbol: "circle.fill", note: tr("always first"))
-                    fixedRow(tr("DWD warnings"), symbol: "exclamationmark.triangle", note: tr("right under it, while one is issued"))
+                    fixedRow(tr("Official warnings"), symbol: "exclamationmark.triangle", note: tr("right under it, while one is issued"))
                     ForEach(layout.order) { card in
                         Toggle(isOn: Binding(
                             get: { !layout.hidden.contains(card) },
@@ -92,7 +92,8 @@ struct ArrangePageSheet: View {
                 } header: {
                     Text(tr("Drag the handles to change the order"))
                 } footer: {
-                    Text(tr("Switched-off cards are left out of the page. The forecast source and credits stay at the end."))
+                    Text(tr("Switched-off cards are left out of the page. The forecast source and credits stay at the end.") + " "
+                         + tr("The rain radar card starts switched off: the rain tile in Current conditions shows the radar."))
                 }
                 Section {
                     if onlyThisClub {

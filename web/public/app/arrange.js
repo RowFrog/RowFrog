@@ -18,17 +18,23 @@ export const CARDS = {
   satellite: { title: key("Satellite picture"), icon: "globe" },
 };
 
-/** The cards this website draws; the rain radar card follows with the radar. */
-const ON_WEBSITE = ["conditions", "lakeView", "hourly", "launchPoint", "satellite"];
+/** The cards this website draws (all of the app's). */
+const ON_WEBSITE = ["conditions", "radar", "lakeView", "hourly", "launchPoint", "satellite"];
 
 // The rain radar card starts switched off: the rain tile shows the radar.
-export const STANDARD = { order: ["conditions", "radar", "lakeView", "hourly", "launchPoint", "satellite"], hidden: ["radar"] };
+export const STANDARD = { order: ["conditions", "radar", "lakeView", "hourly", "launchPoint", "satellite"], hidden: ["radar"], radarInTile: true };
 
-/** Every card once, unknown names dropped; cards added in a later version join at the end. */
+/**
+ * Every card once, unknown names dropped; cards added in a later version join at the end.
+ * Orders saved before the rain tile took over the radar switch its card off once
+ * (`radarInTile`, as PageLayout in the app); switched on again later, it stays on.
+ */
 export function normalized(layout) {
   const known = (list) => (Array.isArray(list) ? list : []).filter((c) => c in CARDS);
   const order = [...new Set([...known(layout?.order), ...STANDARD.order])];
-  return { order, hidden: [...new Set(known(layout?.hidden ?? STANDARD.hidden))] };
+  const hidden = known(layout?.hidden ?? STANDARD.hidden);
+  if (layout?.radarInTile !== true) hidden.push("radar");
+  return { order, hidden: [...new Set(hidden)], radarInTile: true };
 }
 
 const clubLayouts = () => {
@@ -109,10 +115,10 @@ export function openArrange(club, done) {
         <h3 class="section">${h(t("Drag the handles to change the order"))}</h3>
         <ul class="card group arrange-list">
           ${fixedRow(t("Rowing light"), "circle", t("always first"))}
-          ${fixedRow(t("DWD warnings"), "triangle-alert", t("right under it, while one is issued"))}
+          ${fixedRow(t("Official warnings"), "triangle-alert", t("right under it, while one is issued"))}
           ${shown().map(cardRow).join("")}
         </ul>
-        <p class="footer">${h(t("Switched-off cards are left out of the page. The forecast source and credits stay at the end."))}</p>
+        <p class="footer">${h(`${t("Switched-off cards are left out of the page. The forecast source and credits stay at the end.")} ${t("The rain radar card starts switched off: the rain tile in Current conditions shows the radar.")}`)}</p>
         ${onlyThisClub ? `<button class="quiet" id="arrange-follow">${h(t("Use the order for all clubs"))}</button>`
           : `<button class="quiet" id="arrange-reset">${h(t("Reset to the standard order"))}</button>`}
       </div>`;

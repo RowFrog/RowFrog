@@ -784,12 +784,15 @@ extension RadarFrames {
 /// The weather map without controls, at the frame nearest a given time: for a
 /// card whose chart moves the map. Model maps follow the hour, UV the day;
 /// lightning and fog stay on their latest picture (`WeatherMapLayer.links`).
+/// The rain map shows DWD's radar instead while the radar covers the time
+/// (an hour back to two ahead), and the forecast after that.
 struct WeatherMapPanel: View {
     let point: Coordinate
     var clubID: String?
     let layer: WeatherMapLayer
     let time: Date
     @State private var live: RadarFrames?
+    @State private var radar: RadarFrames?
     private let store = ModelMapStore.shared
     /// The area it opens with, and the area on screen now.
     private let startArea: MapArea
@@ -811,10 +814,25 @@ struct WeatherMapPanel: View {
         return layer.frame(in: frames, for: time).map { frames[$0] }
     }
 
+    /// The radar picture shown instead of the rain forecast, once it has loaded.
+    private var radarFrame: Date? {
+        guard layer == .rain, let radar, let frame = RadarWindow.nearest(time, in: radar.times),
+              radar.images[frame] != nil else { return nil }
+        return frame
+    }
+
     var body: some View {
-        WeatherMapView(point: point, clubID: clubID, overlays: shown.map { date in
+        WeatherMapView(point: point, clubID: clubID, overlays: radarFrame.flatMap { radar?.overlay(at: $0) }.map { [$0] } ?? shown.map { date in
             layer.modelValue != nil ? store.overlays(layer, area: area, time: date) : live.map { [$0.overlay(at: date)] } ?? []
         } ?? [], start: startArea, bottomInset: 0) { area = $0 }
+        // The radar's pictures load once the time is within its reach.
+        .task(id: layer == .rain && RadarWindow.covers(time)) {
+            guard layer == .rain, RadarWindow.covers(time), radar == nil else { return }
+            let step = RadarWindow.step
+            let frames = RadarFrames(point: point, times: RadarWindow.frames(step: step), nowIndex: 60 / step)
+            radar = frames
+            await frames.load()
+        }
         .task(id: layer) {
             if layer.modelValue != nil {
                 live = nil
@@ -927,6 +945,45 @@ struct WindField {
             }
         }
         return total > 0 ? (sum.0 / total, sum.1 / total) : nil
+    }
+}
+
+/// The wind map's wind over one tile, for the arrows on land on the lake map
+/// and the satellite picture: a forecast of each place's own, as on the wind map.
+struct LandWind {
+    let field: WindField
+    /// The tile in map points.
+    let rect: MKMapRect
+
+    /// Where the wind blows to (degrees) and its speed (m/s); nil off the tile.
+    func at(_ p: MKMapPoint) -> (towardDeg: Double, speedMs: Double)? {
+        guard rect.contains(p), rect.width > 0, rect.height > 0 else { return nil }
+        guard let wind = field.sample(x: (p.x - rect.minX) / rect.width, y: (p.y - rect.minY) / rect.height) else { return nil }
+        return (towardDeg: wind.towards, speedMs: wind.speed)
+    }
+}
+
+extension ModelMapStore {
+    /// The wind map's wind around a place at a time, once loaded: the model
+    /// hour nearest the time, if within an hour and a half.
+    func landWind(at p: Coordinate, time: Date) -> LandWind? {
+        guard let index, let tile = index.tile(for: p),
+              let hour = index.hours.indices.min(by: { abs(index.hours[$0].timeIntervalSince(time)) < abs(index.hours[$1].timeIntervalSince(time)) }),
+              abs(index.hours[hour].timeIntervalSince(time)) <= 90 * 60,
+              let speeds = grid(tile: tile.id, value: WeatherMapLayer.wind.rawValue),
+              let directions = grid(tile: tile.id, value: "windDirection") else { return nil }
+        let nw = MKMapPoint(CLLocationCoordinate2D(latitude: tile.north, longitude: tile.west))
+        let se = MKMapPoint(CLLocationCoordinate2D(latitude: tile.south, longitude: tile.east))
+        return LandWind(field: WindField(directions: directions, speeds: speeds, hour: hour),
+                        rect: MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y))
+    }
+
+    /// Loads the wind map's wind for the tile around a place: the same two files the wind map uses.
+    func loadLandWind(at p: Coordinate) async {
+        await loadIndex()
+        guard let tile = index?.tile(for: p) else { return }
+        await load(tile: tile.id, value: WeatherMapLayer.wind.rawValue)
+        await load(tile: tile.id, value: "windDirection")
     }
 }
 

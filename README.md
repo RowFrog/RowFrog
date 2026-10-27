@@ -57,18 +57,22 @@ GitHub issue, so no GitHub account is needed.
 **Each location page** is a column of cards, in this order by default:
 
 1. A top tile with the rowing light, which boat it is for and why it has that
-   colour; air, water and wind; waves, rain and visibility (and ice when it
-   matters); a DWD warning status line and a daylight line. Tapping a value
-   opens its chart.
-2. The DWD warnings card, only while a warning is issued (or the check failed).
+   colour; air, water and wind, with waves, rain and visibility in the same
+   three columns below, each with a short grey line ("Dry for 24 h"); in
+   winter a line for ice when it matters; an official warnings status line
+   and a daylight line. Tapping a value opens its chart.
+2. The official warnings card, only while a warning is issued (or the check
+   failed).
 3. Current conditions.
-4. Rain radar.
-5. Lake view.
-6. Next 48 hours, with a feels-like column and a day header that stays in
+4. Lake view.
+5. Next 48 hours, with a feels-like column and a day header that stays in
    place while scrolling; tapping an hour opens that hour's view.
-7. Launch point map.
-8. Satellite picture.
-9. Forecast source and credits.
+6. Launch point map.
+7. Satellite picture.
+8. Forecast source and credits.
+
+The rain radar card is off by default (see Rain radar) and can be switched
+on in Arrange this page.
 
 "Arrange this page" at the end of the page reorders or hides cards, for all
 clubs or only this one. Every card has an ⓘ button that explains its symbols;
@@ -119,7 +123,7 @@ Where no station measures, the rowing light uses the estimate. A 7-day water
 temperature forecast shows as a dashed line in the water chart, and the light
 uses it for the later hours.
 
-**DWD warnings.** The page shows the official DWD warnings:
+**Official warnings.** In Germany the page shows the official DWD warnings:
 the lake warning (strong wind or storm, as the shore lights show it) where
 DWD runs its lake warning service (23 lakes, among them Starnberger See,
 Ammersee and Chiemsee), and DWD's weather warnings for the municipality,
@@ -164,10 +168,17 @@ another app, with the real pace as the starting pace and the rowed track as
 an optional line on the map. Health access is asked for only for this, and
 everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
 
-**Rain radar.** Each location page has a card with DWD's rain radar and
-2-hour nowcast for the launch point, e.g. "Light rain from 21:30"; tapping it
-opens the radar map, with DWD's colour legend and a switch to play the radar
-as a loop. The app reads it from DWD directly (`ios/RowFrog/RainRadar.swift`).
+**Rain radar.** The rain tile, the top tile's rain value and the rain detail
+view read DWD's rain radar and 2-hour nowcast for the launch point, then the
+forecast: "Light rain" now, with a line such as "Rain from 12:45" (a small
+radar symbol marks the radar, no symbol the forecast) and small bars, thin for
+the radar's quarter hours and paler for the forecast hours. Snow, hail and
+drizzle are named from the forecast. The detail chart starts with two hours of
+radar bars, and its map shows the radar picture; a tap opens the radar map,
+with DWD's colour legend and a switch to play the radar as a loop. Hours in the
+48 hours less than two hours ahead use the radar too. The old rain radar card
+can still be switched on in Arrange this page. The app reads the radar from DWD
+directly (`ios/RowFrog/RainRadar.swift`).
 
 **Weather maps.** From the detail views a map opens for wind (with arrows on
 an even grid that adds arrows as you zoom in, longer in stronger wind),
@@ -194,8 +205,8 @@ nothing in the background; only the widgets load forecasts on their own.
 **Data use.** Forecasts that have not changed are not downloaded again, and
 the club list is kept on the phone for a day. With "Save mobile data" on
 (while on mobile data) or in iOS Low Data Mode, satellite pictures load only
-when tapped, the radar map steps in half hours and the radar card updates
-every 15 minutes.
+when tapped, the radar map steps in half hours and the radar (rain tile, top tile and
+radar card) updates every 15 minutes.
 
 **Ice cover.** Every forecast carries an ice estimate per lake for today and
 the coming week (from May to October the ice tile is greyed out as "Off
@@ -270,7 +281,7 @@ field at the bottom.
 - Widgets: the background for all widgets or per club (each widget can also
   pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
-  often saves battery and data, but a new DWD warning reaches the widgets
+  often saves battery and data, but a new official warning reaches the widgets
   later.
 - Language and units: English or German; units (wind in m/s, km/h, knots, mph
   or Beaufort; °C or °F; waves in m, cm or ft); date and time formats.
