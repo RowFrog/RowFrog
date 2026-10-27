@@ -5,10 +5,10 @@
 import { t, num } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
-import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData } from "./shared.js";
+import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature } from "./shared.js";
 import { tip } from "./tour.js";
-import { hourIndex, gridEdges } from "./lake.js";
-import { viewForMap, rasterCanvas, layerLegend, mapBoatNote } from "./lakeview.js";
+import { hourIndex, gridEdges, coldShore } from "./lake.js";
+import { viewForMap, rasterCanvas, layerLegend, mapBoatNote, kitBadge, COLD_SHORE } from "./lakeview.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, ASHORE_OPACITY, BLEND_M, arrowLength, arrowLines, windArrows } from "./windarrows.js";
 
@@ -59,7 +59,7 @@ function available(lake) {
   });
 }
 
-const fileUrl = (lake, file) => `${API}/lakes/${encodeURIComponent(lake.lakeId)}/${encodeURIComponent(file)}`;
+const fileUrl = (lake, file) => `${API}/lakes/${encodeURIComponent(lake.lakeId)}/${file.split("/").map(encodeURIComponent).join("/")}`;
 
 function caption(lake, shot) {
   const { meta } = lake;
@@ -89,6 +89,12 @@ function wireControls(el, lake, setKind) {
 
 /** The picture with an empty layer for the overlay, which is drawn once its size is known. */
 const pictureHtml = (lake, shot) => `<img src="${fileUrl(lake, shot.image)}" alt="${h(t("Satellite picture of the lake"))}" draggable="false"><div class="sat-over"></div>`;
+
+/** The lake view's life-jacket badge in the picture's corner while the water is cold, as on the lake map (SatelliteColdBadge). */
+const coldBadge = (lake) => (lake.view ? kitBadge(lake.view).replace('class="kit"', 'class="kit sat-kit"') : "");
+
+/** The cold water's shore colour, if the water is cold (the lake view's blue shore). */
+const shoreCold = (view) => (view ? coldShore(view.shoreWaterC, mapLimits()) : null);
 
 // ---- The card --------------------------------------------------------------------------
 
@@ -126,7 +132,7 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
     box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
       ${tip("satellite")}
       ${kindPicker(lake, kind)}
-      <div class="picture" role="button" tabindex="0" aria-label="${h(t("Satellite picture"))}" data-ratio="${meta.width / meta.height}" style="aspect-ratio:${meta.width}/${meta.height}">${pictureHtml(lake, shot)}</div>
+      <div class="picture" role="button" tabindex="0" aria-label="${h(t("Satellite picture"))}" data-ratio="${meta.width / meta.height}" style="aspect-ratio:${meta.width}/${meta.height}">${pictureHtml(lake, shot)}${coldBadge(lake)}</div>
       ${caption(lake, shot)}
       ${chips(lake)}`;
     const picture = box.querySelector(".picture");
@@ -237,10 +243,15 @@ export function overlaySvg(lake, shot, clubId, w, hgt, screen = null) {
   if (on.has("wind") && hour) parts.push(windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt]));
   if (on.has("shore")) {
     // Over mostly white cloud the shore is dark with a light edge, over a clear lake light with a dark edge.
+    // Cold water: the lake view's blue shore, with an edge that stands out from dark water (white) or from cloud (dark).
     const cloudy = (shot.lakeCloud ?? 0) >= 0.5;
-    const [edge, core] = cloudy ? ["rgba(255,255,255,.85)", "rgb(13,31,77)"] : ["rgba(0,0,0,.7)", "#fff"];
+    const cold = shoreCold(view);
+    const [edge, core] = cold
+      ? [cloudy ? "rgba(0,0,0,.7)" : "rgba(255,255,255,.9)", COLD_SHORE[cold]]
+      : cloudy ? ["rgba(255,255,255,.85)", "rgb(13,31,77)"] : ["rgba(0,0,0,.7)", "#fff"];
+    const width = cold === "cold" ? 2.2 : 1.5;
     const d = ringsPath();
-    parts.push(`<g fill="none" stroke-linejoin="round"><path d="${d}" stroke="${edge}" stroke-width="3.5"/><path d="${d}" stroke="${core}" stroke-width="1.5"/></g>`);
+    parts.push(`<g fill="none" stroke-linejoin="round"><path d="${d}" stroke="${edge}" stroke-width="${width + 2}"/><path d="${d}" stroke="${core}" stroke-width="${width}"/></g>`);
   }
   if (on.has("routes")) {
     const d = store.routes.filter((r) => r.lakeId === lake.lakeId && r.points.length > 1)
@@ -352,6 +363,12 @@ function clubMarks(view, pt, clubId, w, hgt) {
 
 // ---- The legend ---------------------------------------------------------------------------
 
+function shoreRow(lake, row, line) {
+  const cold = shoreCold(lake.view);
+  if (!cold) return row(line("#fff"), t("Shore line: white on a clear picture, dark blue on a cloudy one"));
+  return row(line(COLD_SHORE[cold]), t("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.", temperature(mapLimits().value("lifeJacket")), temperature(10)));
+}
+
 function legend(lake) {
   const on = new Set(store.satLayers.filter((id) => available(lake).some((l) => l.id === id)));
   const row = (sym, text) => `<li>${sym}<span>${h(text)}</span></li>`;
@@ -373,7 +390,7 @@ function legend(lake) {
   }
   if (on.has("shore") || on.has("routes") || on.has("clubs")) {
     body += `<h3>${h(t("Lines and marks"))}</h3><ul class="legend">
-      ${on.has("shore") ? row(line("#fff"), t("Shore line: white on a clear picture, dark blue on a cloudy one")) : ""}
+      ${on.has("shore") ? shoreRow(lake, row, line) : ""}
       ${on.has("routes") ? row(line("#ffcc00"), t("Your saved routes on this lake")) : ""}
       ${on.has("clubs") ? row(`<span class="club-mark own"></span>`, own ? t("Your home base, the club of this page") : t("The club of this page")) + row(`<span class="club-mark other"></span>`, t("Other clubs on the lake")) : ""}</ul>`;
   }
@@ -415,7 +432,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     const shot = meta[kind];
     el.innerHTML = `<header class="nav value-nav"><span class="spacer"></span><strong class="nav-title">${h(t("Satellite picture"))}</strong><button class="link strong" id="sat-done">${h(t("Done"))}</button></header>
       ${kindPicker(lake, kind)}
-      <div class="sat-stage"><div class="sat-zoom">${pictureHtml(lake, shot)}</div><div class="sat-over sat-screen"></div></div>
+      <div class="sat-stage"><div class="sat-zoom">${pictureHtml(lake, shot)}<div class="sat-sharp"></div></div><div class="sat-over sat-screen"></div>${coldBadge(lake)}</div>
       <div class="sat-panel">${caption(lake, shot)}${chips(lake)}</div>`;
     el.querySelector("#sat-done").addEventListener("click", close);
     wireControls(el, lake, (k) => { kind = k; render(); });
@@ -501,12 +518,59 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     if (!stage || !over) return;
     over.innerHTML = overlaySvg(lake, meta[kind], clubId, stage.clientWidth, stage.clientHeight, { size: [zoom.fit, zoom.fit / ratio], zoom: zoom.s, x: zoom.x, y: zoom.y });
     whenLandWind(lake, redrawMarks);
+    sharpTiles(stage);
+  }
+
+  /** Big lakes with 10 m tiles zoom until a tile pixel is two screen pixels. */
+  function maxZoom() {
+    const sharp = meta.sharp;
+    if (!sharp || !meta[kind]?.tiles || !zoom.fit) return 6;
+    return Math.max(6, (sharp.width / (zoom.fit * devicePixelRatio)) * 2);
+  }
+
+  /**
+   * Big lakes: once zoomed in further than the picture is sharp, the overview
+   * (the three biggest lakes), then Sentinel-2's own 10 m tiles over it; on
+   * lakes without an overview all tiles at once, on those with one only the
+   * tiles in sight (SharpTiles). Clear until loaded, so the picture shows meanwhile.
+   */
+  function sharpTiles(stage) {
+    const sharp = meta.sharp;
+    const shot = meta[kind];
+    const layer = el.querySelector(".sat-sharp");
+    if (!sharp || !shot?.tiles || !layer) return;
+    const below = shot.overview ? (sharp.width * 2500) / Math.max(sharp.width, sharp.height, 1) : meta.width;
+    if (zoom.fit * zoom.s * devicePixelRatio <= below * 1.1) return;
+    if (shot.overview && !layer.querySelector(".overview")) layer.insertAdjacentHTML("afterbegin", `<img class="overview" src="${fileUrl(lake, shot.overview)}" alt="" draggable="false">`);
+    // The part in sight, a little beyond the screen so tiles are there before they come into sight, as shares of the picture.
+    const w = zoom.fit * zoom.s;
+    const hh = (zoom.fit / ratio) * zoom.s;
+    const view = [(-zoom.x - stage.clientWidth * 0.05) / w, (-zoom.y - stage.clientHeight * 0.05) / hh, (stage.clientWidth * 1.1 - zoom.x) / w, (stage.clientHeight * 1.1 - zoom.y) / hh];
+    for (let row = 0; row < sharp.rows; row++) {
+      for (let column = 0; column < sharp.columns; column++) {
+        const x0 = (column * sharp.tile) / sharp.width;
+        const x1 = Math.min(sharp.width, (column + 1) * sharp.tile) / sharp.width;
+        const y0 = (row * sharp.tile) / sharp.height;
+        const y1 = Math.min(sharp.height, (row + 1) * sharp.tile) / sharp.height;
+        if (shot.overview && (x1 < view[0] || x0 > view[2] || y1 < view[1] || y0 > view[3])) continue;
+        const id = `${row}-${column}`;
+        if (layer.querySelector(`[data-tile="${id}"]`)) continue;
+        const img = new Image();
+        img.dataset.tile = id;
+        img.alt = "";
+        img.draggable = false;
+        img.style.cssText = `left:${x0 * 100}%;top:${y0 * 100}%;width:${(x1 - x0) * 100}%;height:${(y1 - y0) * 100}%;opacity:0`;
+        img.onload = () => (img.style.opacity = 1);
+        img.src = fileUrl(lake, `${shot.tiles}/${id}.jpg`);
+        layer.append(img);
+      }
+    }
   }
   const redrawMarks = () => el.isConnected && drawMarks();
 
   /** Zooms by a factor around a point of the stage. */
   function zoomAt(factor, px, py) {
-    const s = clamp(zoom.s * factor, 1, 6);
+    const s = clamp(zoom.s * factor, 1, maxZoom());
     zoom.x = px - ((px - zoom.x) * s) / zoom.s;
     zoom.y = py - ((py - zoom.y) * s) / zoom.s;
     zoom.s = s;
