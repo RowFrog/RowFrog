@@ -698,7 +698,8 @@ struct SatelliteOverlay: View {
             }
             // Wind under the lines and marks, so shore, routes and clubs stay on top.
             if layers.contains(.wind), let view {
-                SatelliteWind.draw(in: context, view: view, land: land, box: box, size: full, zoom: zoom, offset: offset, visible: size)
+                SatelliteWind.draw(in: context, view: view, land: land, box: box, size: full, zoom: zoom, offset: offset, visible: size,
+                                   cloudy: cloudy)
             }
             if layers.contains(.shore), let view {
                 var path = Path()
@@ -780,9 +781,10 @@ struct SatelliteOverlay: View {
 enum SatelliteWind {
     /// Draws on `context`, whose points are the screen's: the picture is `size`
     /// at zoom 1 and shows `zoom` times larger, its corner `offset` above and
-    /// left of the drawing's corner; `visible` is the size drawn on.
+    /// left of the drawing's corner; `visible` is the size drawn on. On a cloudy
+    /// picture the arrows and numbers turn dark with a white edge, like the shore.
     static func draw(in context: GraphicsContext, view: LakeView, land: LandWind?, box: [Double], size: CGSize,
-                     zoom: CGFloat, offset: CGPoint, visible: CGSize) {
+                     zoom: CGFloat, offset: CGPoint, visible: CGSize, cloudy: Bool = false) {
         guard !view.hours.isEmpty, box.count == 4, size.width > 0, size.height > 0, zoom > 0 else { return }
         let hour = view.hours[view.hourIndex()]
         func point(_ lon: Double, _ lat: Double) -> CGPoint {
@@ -817,7 +819,9 @@ enum SatelliteWind {
                                        land: onLand, shore: WindArrows.Shore(rings: rings), blend: blend)
         func screen(_ p: CGPoint) -> CGPoint { CGPoint(x: p.x * zoom - offset.x, y: p.y * zoom - offset.y) }
 
-        let shadow = GraphicsContext.Shading.color(.black.opacity(0.6))
+        let (edge, core): (Color, Color) = cloudy
+            ? (.white.opacity(0.9), Color(red: 0.05, green: 0.12, blue: 0.3))
+            : (.black.opacity(0.6), .white)
         let style = StrokeStyle(lineWidth: 2, lineCap: .round, lineJoin: .round)
         for ashore in [true, false] {
             var path = Path()
@@ -828,11 +832,15 @@ enum SatelliteWind {
             var layer = context
             layer.opacity = ashore ? WindArrows.ashoreOpacity : 1
             layer.drawLayer { inner in
-                inner.stroke(path, with: shadow, style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
-                inner.stroke(path, with: .color(.white), style: style)
+                inner.stroke(path, with: .color(edge), style: StrokeStyle(lineWidth: 3.5, lineCap: .round, lineJoin: .round))
+                inner.stroke(path, with: .color(core), style: style)
             }
         }
-        // Each forecast point's speed, at the tail of the arrow nearest it.
+        // Each forecast point's speed, at the tail of the arrow nearest it, with a
+        // halo in the edge colour so it reads on cloud and on dark water alike.
+        var numbers = context
+        numbers.addFilter(.shadow(color: edge, radius: 1))
+        numbers.addFilter(.shadow(color: edge, radius: 1))
         for s in samples {
             var best: WindArrows.Arrow?
             var bestD = Double(spacing * spacing)
@@ -845,8 +853,8 @@ enum SatelliteWind {
             let r = best.towardDeg * .pi / 180
             let half = WindArrows.length(best.speedMs) / 2 + 6
             let at = screen(best.at)
-            context.draw(
-                Text(Format.windNumber(s.speedMs)).font(.caption2.weight(.bold)).foregroundStyle(.white),
+            numbers.draw(
+                Text(Format.windNumber(s.speedMs)).font(.caption2.weight(.bold)).foregroundStyle(core),
                 at: CGPoint(x: at.x - CGFloat(sin(r)) * half, y: at.y + CGFloat(cos(r)) * half), anchor: .center
             )
         }
