@@ -576,6 +576,9 @@ body.locked { overflow: hidden; }
 .sat-wind text { fill: #fff; font: 700 10px -apple-system, system-ui, sans-serif; text-anchor: middle; dominant-baseline: central; paint-order: stroke; stroke: rgba(0,0,0,.5); stroke-width: 2px; }
 .sat-name { fill: #fff; font: 600 11px -apple-system, system-ui, sans-serif; }
 .chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 0 2px; scrollbar-width: none; }
+/* With a mouse or trackpad the row can't be swiped, so the buttons wrap onto more lines instead,
+   reflowing as the window is resized; touch screens keep the one swipeable row, as in the app. */
+@media (pointer: fine) { .chips { flex-wrap: wrap; overflow-x: visible; } }
 .chip { display: inline-flex; align-items: center; gap: 5px; flex: none; padding: 6px 10px; border-radius: 999px; background: var(--tile); font-size: 13px; font-weight: 500; }
 .chip .i { width: 15px; height: 15px; }
 .chip.on { background: var(--accent); color: #fff; }
