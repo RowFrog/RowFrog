@@ -374,6 +374,8 @@ jobs:
           WAIT=30 shoot 119-satellite-full-clubs light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)'
           WAIT=30 shoot 240-satellite-full-wind light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore, wind)'
           WAIT=30 shoot 241-satellite-full-wind-zoomed light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore, wind)' -RWSatelliteZoom 3
+          # Zoomed in far enough for the 10 m tiles of a big lake in use (Starnberger See).
+          WAIT=40 shoot 243-satellite-full-sharp light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs)' -RWSatelliteZoom 6
           SAFETY=1 GUIDE=1 shoot 120-safety-notice-phone-german light -RWNoTips YES -AppleLanguages '(de)'
           # Launch point card: a still map picture until tapped (battery), light and dark.
           shoot 121-launch-point-still light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
