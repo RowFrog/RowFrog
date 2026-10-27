@@ -189,7 +189,9 @@ function drawOver(el, lake, shot, clubId) {
   const layer = el.querySelector(".sat-over");
   if (!layer) return;
   layer.innerHTML = overlaySvg(lake, shot, clubId, el.clientWidth, el.clientHeight);
-  whenLandWind(lake, () => el.isConnected && drawOver(el, lake, shot, clubId));
+  const again = () => el.isConnected && drawOver(el, lake, shot, clubId);
+  whenLandWind(lake, again);
+  if (store.satLayers.includes("wind")) whenBrightness(fileUrl(lake, shot.image), again);
 }
 
 const gridCentre = (view) => {
@@ -243,7 +245,7 @@ export function overlaySvg(lake, shot, clubId, w, hgt, screen = null) {
       <image href="${rasterUrl(view, hour, fill)}" x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" preserveAspectRatio="none" opacity=".55" clip-path="url(#${id})"/>`);
   }
   // Wind under the lines and marks, so shore, routes and clubs stay on top.
-  if (on.has("wind") && hour) parts.push(windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt]));
+  if (on.has("wind") && hour) parts.push(windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightnessOf(fileUrl(lake, shot.image))));
   if (on.has("shore")) {
     // Over mostly white cloud the shore is dark with a light edge, over a clear lake light with a dark edge.
     // Cold water: the lake view's blue shore, with an edge that stands out from dark water (white) or from cloud (dark).
@@ -275,14 +277,77 @@ function rasterUrl(view, hour, fill) {
 }
 
 /**
+ * How bright each part of a shown picture is, shrunk to a grey grid 128
+ * pixels on its long side, to tell white cloud (and snow) from dark water and
+ * land under each mark (PictureBrightness); null until loaded, or when the
+ * picture can't be read. `brightnessReady` draws again once it is in.
+ */
+const brightness = new Map();
+function brightnessOf(url) {
+  const kept = brightness.get(url);
+  if (kept) return kept.map;
+  const entry = { map: null, ready: null };
+  brightness.set(url, entry);
+  entry.ready = new Promise((done) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const scale = 128 / Math.max(img.naturalWidth, img.naturalHeight);
+        const width = Math.max(1, Math.round(img.naturalWidth * scale));
+        const height = Math.max(1, Math.round(img.naturalHeight * scale));
+        const ctx = Object.assign(document.createElement("canvas"), { width, height }).getContext("2d", { willReadFrequently: true });
+        ctx.drawImage(img, 0, 0, width, height);
+        const rgba = ctx.getImageData(0, 0, width, height).data;
+        const values = new Uint8Array(width * height);
+        for (let i = 0; i < values.length; i++) values[i] = 0.299 * rgba[i * 4] + 0.587 * rgba[i * 4 + 1] + 0.114 * rgba[i * 4 + 2];
+        entry.map = { width, height, values };
+      } catch {
+        // A picture from another address without leave to read it: arrows stay white.
+      }
+      done();
+    };
+    img.onerror = done;
+    img.src = url;
+  });
+  return null;
+}
+
+/** Draws again once the shown picture's brightness is in, if it wasn't when drawn. */
+function whenBrightness(url, redraw) {
+  const entry = brightness.get(url);
+  if (entry && !entry.map) entry.ready.then(() => entry.map && redraw());
+}
+
+/** Whether the picture is mostly white (mean over 0.5) within `radius` of a point, all in shares of the picture. */
+export function isBright({ width, height, values }, x, y, radius) {
+  const clampTo = (v, lo, hi) => Math.min(Math.max(v, lo), hi);
+  const x0 = clampTo(Math.floor((x - radius) * width), 0, width - 1);
+  const x1 = clampTo(Math.floor((x + radius) * width), x0, width - 1);
+  const y0 = clampTo(Math.floor((y - radius) * height), 0, height - 1);
+  const y1 = clampTo(Math.floor((y + radius) * height), y0, height - 1);
+  let sum = 0;
+  let count = 0;
+  for (let row = y0; row <= y1; row++) {
+    for (let column = x0; column <= x1; column++) {
+      sum += values[row * width + column];
+      count++;
+    }
+  }
+  return sum / (count * 255) > 0.5;
+}
+
+/**
  * The wind arrows as on the lake map: an even grid over the whole picture,
  * more arrows as it zooms in, the same size on screen. On the water the wind
  * is worked out between the lake's forecast points, on land it is the weather
- * map's. The arrow nearest each forecast point carries its
- * speed (SatelliteWind). The picture is `size` at zoom 1, its corner at
- * `offset` on a screen of `visible`.
+ * map's. The arrow nearest each forecast point carries its speed
+ * (SatelliteWind). The picture is `size` at zoom 1, its corner at `offset` on
+ * a screen of `visible`. Each arrow and number is white with a dark edge, or
+ * black with a white edge where the picture under it is white (cloud, snow),
+ * judged from `brightness`.
  */
-function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt]) {
+function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightness) {
   const f = (v) => v.toFixed(1);
   const point = (lon, lat) => [((lon - box[0]) / (box[2] - box[0])) * fw, ((box[3] - lat) / (box[3] - box[1])) * fh];
   const samples = view.points.flatMap((p, i) => {
@@ -302,14 +367,19 @@ function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt]) {
     land: fromLand && (([x, y]) => fromLand({ lat: box[3] - (y / fh) * (box[3] - box[1]), lon: box[0] + (x / fw) * (box[2] - box[0]) })),
   });
   const screen = (x, y) => [x * zoom + ox, y * zoom + oy];
+  // Whether the picture is white under a point of the picture, within `reach` screen pixels.
+  const bright = (x, y, reach) => brightness != null && isBright(brightness, x / fw, y / fh, reach / zoom / Math.max(fw, fh));
+  const colours = (light) => (light ? ["rgba(255,255,255,.9)", "#000"] : ["rgba(0,0,0,.6)", "#fff"]);
   const out = [];
-  for (const ashore of [true, false]) {
-    const d = arrows.filter((a) => a.ashore === ashore)
+  for (const light of [false, true]) {
+    const d = arrows.filter((a) => bright(a.x, a.y, arrowLength(a.speedMs) / 2) === light)
       .flatMap((a) => arrowLines(...screen(a.x, a.y), a.towardDeg, arrowLength(a.speedMs)))
       .map(([from, to]) => `M${f(from[0])} ${f(from[1])}L${f(to[0])} ${f(to[1])}`).join("");
-    if (d) out.push(`<g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${d}" stroke="rgba(0,0,0,.6)" stroke-width="3.5"/><path d="${d}" stroke="#fff" stroke-width="2"/></g>`);
+    const [edge, core] = colours(light);
+    if (d) out.push(`<g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="${d}" stroke="${edge}" stroke-width="3.5"/><path d="${d}" stroke="${core}" stroke-width="2"/></g>`);
   }
-  // Each forecast point's speed, at the tail of the arrow nearest it.
+  // Each forecast point's speed, at the tail of the arrow nearest it, with a
+  // halo in the edge colour so it reads on cloud and on dark water alike.
   const labels = samples.flatMap((s) => {
     let best = null;
     let bestD = spacing * spacing;
@@ -323,8 +393,10 @@ function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt]) {
     if (!best) return [];
     const r = (best.towardDeg * Math.PI) / 180;
     const half = arrowLength(best.speedMs) / 2 + 6;
+    const [dx, dy] = [-Math.sin(r) * half, Math.cos(r) * half];
     const [x, y] = screen(best.x, best.y);
-    return [`<text x="${f(x - Math.sin(r) * half)}" y="${f(y + Math.cos(r) * half)}">${h(windNumber(s.speedMs))}</text>`];
+    const [edge, core] = colours(bright(best.x + dx / zoom, best.y + dy / zoom, 6));
+    return [`<text x="${f(x + dx)}" y="${f(y + dy)}" style="fill:${core};stroke:${edge}">${h(windNumber(s.speedMs))}</text>`];
   });
   return `${out.join("")}<g class="sat-wind">${labels.join("")}</g>`;
 }
@@ -521,6 +593,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     if (!stage || !over) return;
     over.innerHTML = overlaySvg(lake, meta[kind], clubId, stage.clientWidth, stage.clientHeight, { size: [zoom.fit, zoom.fit / ratio], zoom: zoom.s, x: zoom.x, y: zoom.y });
     whenLandWind(lake, redrawMarks);
+    if (store.satLayers.includes("wind")) whenBrightness(fileUrl(lake, meta[kind].image), redrawMarks);
     sharpTiles(stage);
   }
 
