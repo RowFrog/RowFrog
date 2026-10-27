@@ -86,6 +86,29 @@ def main() -> None:
             print(f"  {cid} ({water}): {s['longname']} {dist:.1f} km, series {sorted(series)}, now {cur}, values {chars}", flush=True)
     print(f"German river clubs: {len(de)}; with a federal gauge on their river within 15 km: {counts}", flush=True)
 
+    # Gauges that measure flow speed (VA), to check a speed estimated from discharge and width.
+    for s in stations:
+        series = {t["shortname"]: t for t in s.get("timeseries", [])}
+        if "VA" in series:
+            cur = {k: (series[k].get("currentMeasurement") or {}).get("value") for k in series}
+            print(f"  VA gauge {s['longname']} ({s.get('water', {}).get('longname')}) at {s.get('latitude')},{s.get('longitude')}: now {cur}, units {{k: series[k].get('unit') for k in series}}", flush=True)
+    # Every gauge with discharge near a club: the data a flow speed estimate would use.
+    seen = set()
+    for _, cid, water, lat, lon in de:
+        for dist, s in sorted(
+            (km((lat, lon), (s["latitude"], s["longitude"])), s)
+            for s in stations
+            if s.get("latitude") and norm(water).split()[0] in norm(s.get("water", {}).get("longname", ""))
+            and any(t["shortname"] == "Q" for t in s.get("timeseries", []))
+        )[:1]:
+            if dist > 15 or s["uuid"] in seen:
+                continue
+            seen.add(s["uuid"])
+            series = {t["shortname"]: t for t in s.get("timeseries", [])}
+            cur = {k: (series[k].get("currentMeasurement") or {}).get("value") for k in ("W", "Q") if k in series}
+            chars = {c["shortname"]: c.get("value") for t in s.get("timeseries", []) for c in t.get("characteristicValues", []) or []}
+            print(f"  Q gauge {s['longname']} ({water}) for {cid} {dist:.1f} km: now {cur}, MW {chars.get('MW')}, HSW {chars.get('HSW')}", flush=True)
+
     for _, cid, water, lat, lon in [c for c in clubs if c[1] in (
         "frankfurter-rudergesellschaft-germania-1869", "heidelberger-ruderklub-1872", "giessener-rudergesellschaft-1877",
         "koelner-ruderverein-von-1877", "askoe-ruderverein-donau-linz", "ruderclub-baden", "passauer-ruderverein-von-1874")]:

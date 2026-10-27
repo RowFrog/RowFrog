@@ -1,0 +1,51 @@
+name: River section survey
+
+# Research only: for every river club, how far the next weir or lock is up-
+# and downstream (scripts/river_section_survey.py), in four parallel parts so
+# each gets its own Overpass allowance, then one summary. Runs when the script
+# changes, or by hand from the Actions tab. Nothing is stored in the repo.
+
+on:
+  push:
+    paths:
+      - scripts/river_section_survey.py
+      - scripts/river_section_summary.py
+      - .github/workflows/river-section-survey.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  survey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install shapely
+      - run: python3 scripts/river_section_survey.py ${{ matrix.shard }} 4 survey-${{ matrix.shard }}.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: survey-${{ matrix.shard }}
+          path: survey-${{ matrix.shard }}.json
+          if-no-files-found: ignore
+
+  summary:
+    needs: survey
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          path: parts
+          merge-multiple: true
+      - run: python3 scripts/river_section_summary.py parts/*.json
