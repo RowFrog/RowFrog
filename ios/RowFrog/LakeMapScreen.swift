@@ -1061,6 +1061,11 @@ struct LakeMapView: UIViewRepresentable {
             }
             map.preferredConfiguration = config
         }
+        let darkBase = imagery || context.environment.colorScheme == .dark
+        if c.darkBase != darkBase {
+            c.darkBase = darkBase
+            c.renderer?.setDarkBase(darkBase)
+        }
         c.spot = $spot
         c.routeMode = routeMode
         c.addPoint = addPoint
@@ -1108,6 +1113,8 @@ struct LakeMapView: UIViewRepresentable {
         var coldShore: ColdShore?
         var routeMode = false
         var imagery = false
+        /// Apple's satellite pictures or dark mode: light wind arrows on land.
+        var darkBase = false
         /// Whether the lake was fitted below the editing bar of route mode.
         var fittedForRoute = false
         var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
@@ -1146,6 +1153,7 @@ struct LakeMapView: UIViewRepresentable {
             let renderer = LakeRenderer(overlay: overlay)
             renderer.update(image: current.image, arrows: current.arrows, land: current.land, stripes: current.stripes)
             renderer.setColdShore(coldShore)
+            renderer.setDarkBase(darkBase)
             self.renderer = renderer
             return renderer
         }
@@ -1645,6 +1653,16 @@ final class LakeRenderer: MKOverlayRenderer {
     private var stripes: Light?
     /// A blue shore while the water is cold.
     private var coldShore: ColdShore?
+    /// Whether the map under the arrows is dark: Apple's satellite pictures or the map in dark mode.
+    private var darkBase = false
+
+    func setDarkBase(_ dark: Bool) {
+        lock.lock()
+        let changed = darkBase != dark
+        darkBase = dark
+        lock.unlock()
+        if changed { setNeedsDisplay() }
+    }
 
     func setColdShore(_ shore: ColdShore?) {
         lock.lock()
@@ -1668,6 +1686,7 @@ final class LakeRenderer: MKOverlayRenderer {
         guard let lake = overlay as? LakeOverlay else { return }
         lock.lock()
         let image = self.image, arrows = self.arrows, land = self.land, stripes = self.stripes, coldShore = self.coldShore
+        let darkBase = self.darkBase
         lock.unlock()
 
         let shore = CGMutablePath()
@@ -1720,8 +1739,9 @@ final class LakeRenderer: MKOverlayRenderer {
         // to the map so the tiles agree; the grid gets finer as the map zooms in.
         // On land the wind is the wind map's own forecast, faded in from the
         // lake's over the first kilometre.
-        // Dark arrows with a light edge read on light and dark maps alike,
-        // on land as on the water. Colours stay on the water.
+        // As on the Sentinel pictures, each arrow stands out from what lies under
+        // it: dark with a light edge over the lake's colours and a light map, white
+        // with a dark edge over Apple's satellite pictures and the map in dark mode.
         let margin = Double(WindArrows.length(15) / zoomScale)
         let area = mapRect.insetBy(dx: -margin, dy: -margin)
         var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
@@ -1733,17 +1753,24 @@ final class LakeRenderer: MKOverlayRenderer {
                                      land: onLand, shore: lake.shore, blend: lake.blend)
         context.setLineCap(.round)
         context.setLineJoin(.round)
-        // On land as on the water, at full strength.
-        let paths = grid.map {
-            LakeArrow.path(at: point(for: MKMapPoint(x: $0.at.x, y: $0.at.y)), towardDeg: $0.towardDeg,
-                           length: WindArrows.length($0.speedMs) / zoomScale).cgPath
-        }
-        guard !paths.isEmpty else { return }
-        for (color, width) in [(UIColor(white: 1, alpha: 0.7), CGFloat(4)), (UIColor(white: 0.1, alpha: 0.75), CGFloat(2))] {
-            paths.forEach { context.addPath($0) }
-            context.setStrokeColor(color.cgColor)
-            context.setLineWidth(width / zoomScale)
-            context.strokePath()
+        // Light arrows where a dark map shows through: on land, and on the water
+        // when no colours are drawn over it.
+        func isLight(_ arrow: WindArrows.Arrow) -> Bool { darkBase && (arrow.ashore || image == nil) }
+        for light in [false, true] {
+            let paths = grid.filter { isLight($0) == light }.map {
+                LakeArrow.path(at: point(for: MKMapPoint(x: $0.at.x, y: $0.at.y)), towardDeg: $0.towardDeg,
+                               length: WindArrows.length($0.speedMs) / zoomScale).cgPath
+            }
+            guard !paths.isEmpty else { continue }
+            let (edge, core) = light
+                ? (UIColor(white: 0, alpha: 0.6), UIColor.white)
+                : (UIColor(white: 1, alpha: 0.7), UIColor(white: 0.1, alpha: 0.75))
+            for (color, width) in [(edge, CGFloat(light ? 3.5 : 4)), (core, CGFloat(2))] {
+                paths.forEach { context.addPath($0) }
+                context.setStrokeColor(color.cgColor)
+                context.setLineWidth(width / zoomScale)
+                context.strokePath()
+            }
         }
     }
 }
