@@ -141,6 +141,43 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(RouteEdit.move(at: 2, to: a, in: loop)[2].longitude, a.longitude)
     }
 
+    func testWindArrowsOnWaterAndLand() {
+        // A 100 x 100 lake in a 300 x 300 area, arrows 10 apart.
+        let water = CGPath(rect: CGRect(x: 0, y: 0, width: 100, height: 100), transform: nil)
+        let samples = [WindArrows.Sample(point: CGPoint(x: 50, y: 50), towardDeg: 90, speedMs: 4)]
+        let area = CGRect(x: -100, y: -100, width: 300, height: 300)
+        // With the weather map's wind on land, the whole area gets arrows: the lake's on the water, the map's on land.
+        let arrows = WindArrows.arrows(in: area, spacing: 10, water: water, from: samples, land: { _ in (0, 3) })
+        XCTAssertEqual(arrows.count, 900)
+        XCTAssertTrue(arrows.contains { a in a.at.x < -80 && a.at.y < -80 })
+        for a in arrows {
+            // Points right on the shore line could count either way.
+            if a.at.x == 0 || a.at.x == 100 { continue }
+            let inside = a.at.x > 0 && a.at.x < 100 && a.at.y > 0 && a.at.y < 100
+            XCTAssertEqual(a.ashore, !inside)
+            XCTAssertEqual(a.towardDeg, inside ? 90 : 0, accuracy: 0.001)
+        }
+        // Without it, only the water.
+        XCTAssertTrue(WindArrows.arrows(in: area, spacing: 10, water: water, from: samples).allSatisfy { !$0.ashore })
+        // Near the shore the land's wind fades in from the lake's: halfway at half the blend distance.
+        let shore = WindArrows.Shore(rings: [[CGPoint(x: 0, y: 0), CGPoint(x: 100, y: 0), CGPoint(x: 100, y: 100), CGPoint(x: 0, y: 100)]])
+        XCTAssertEqual(shore.distance(to: CGPoint(x: -10, y: 50), within: 20) ?? 0, 10, accuracy: 0.001)
+        XCTAssertNil(shore.distance(to: CGPoint(x: -30, y: 50), within: 20))
+        let half = WindArrows.mix((90, 4), (0, 2), 0.5)
+        XCTAssertEqual(half.towardDeg, 45, accuracy: 0.001)
+        XCTAssertEqual(half.speedMs, 3, accuracy: 0.001)
+        let blended = WindArrows.arrows(in: area, spacing: 10, water: water, from: samples, land: { _ in (0, 3) },
+                                        shore: shore, blend: 20)
+        for a in blended where a.ashore {
+            guard let d = shore.distance(to: a.at, within: 20) else { XCTAssertEqual(a.towardDeg, 0, accuracy: 0.001); continue }
+            XCTAssertEqual(a.speedMs, 4 + (3 - 4) * Double(d / 20), accuracy: 0.001)
+        }
+        // Opposite winds of equal weight don't make a strong wind sideways.
+        let two = [WindArrows.Sample(point: CGPoint(x: 0, y: 0), towardDeg: 0, speedMs: 5),
+                   WindArrows.Sample(point: CGPoint(x: 10, y: 0), towardDeg: 10, speedMs: 5)]
+        XCTAssertEqual(WindArrows.wind(at: CGPoint(x: 5, y: 0), from: two)?.towardDeg ?? 0, 5, accuracy: 0.01)
+    }
+
     func testWholeLakeStripes() {
         func wide(_ reasons: [(String, Light)]) -> LakeWide {
             let r = reasons.map { Reason(condition: $0.0, light: $0.1) }

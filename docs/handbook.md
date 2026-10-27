@@ -135,6 +135,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWOpenRadarMap YES` open the rain radar map from the radar card, so name `radar` in `-RWPageLayout` too (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWOpenWeatherMap <layer>` open the weather map from the detail view opened with `-RWOpenCondition` (layers: `wind`, `gust`, `temperature`, `feelsLike`, `humidity`, `pressure`, `visibility`, `rain`, `uv`, `lightning`, `fog`)
 - `-RWMapTimeLinked NO` detail views open with the map on its own time (chain off)
+- `-RWSatelliteZoom n` opens the full satellite picture n times closer than usual (with `-RWOpenSatellite YES`)
 - `-RWLakeWide twilight|cold|dark` sets the whole-lake light of every lake hour (twilight with cold water: amber stripes; cold water alone: no stripes; dark: grey with red stripes)
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
 - `-RWSampleRadar YES` made-up rain on the radar from 30 minutes on (light, then rain, dry again after an hour), to show the rain tile, the top tile's rain value and the rain chart while DWD's radar is dry

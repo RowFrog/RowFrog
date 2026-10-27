@@ -148,6 +148,8 @@ struct LakeMapScreen: View {
         let plan = planner?.plan(start: startTime, paceSecondsPer500: pace)
         let boat = boatStop(plan)
         let shown = shownHour(boat)
+        // The weather map's wind, for the arrows on land.
+        let land: LandWind? = shown.flatMap { hour in ModelMapStore.shared.landWind(at: view.grid.centre, time: hour.time) }
         ZStack(alignment: .top) {
             LakeMapView(
                 view: view, hour: shown, layer: layer, clubID: clubID, spot: $spot,
@@ -173,9 +175,12 @@ struct LakeMapScreen: View {
                 },
                 selectPoint: { selectedPoint = $0 },
                 imagery: imagery,
-                track: routeMode && showTrack ? rowed?.trackCoordinates ?? [] : []
+                track: routeMode && showTrack ? rowed?.trackCoordinates ?? [] : [],
+                land: land
             )
             .ignoresSafeArea()
+            // The wind map's wind, for the arrows on land.
+            .task { await ModelMapStore.shared.loadLandWind(at: view.grid.centre) }
             topBar
         }
         .overlay(alignment: .bottomLeading) {
@@ -703,8 +708,11 @@ struct LakeMapScreen: View {
             } else if let spot, spot < hour.lights.count {
                 HStack(spacing: 6) {
                     TrafficLightDot(light: hour.lights[spot], size: 10)
-                    Text(hour.lights[spot].title + " · " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: spot))))
+                    spotLine(spot, hour)
+                        .minimumScaleFactor(0.8)
                 }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(spotLabel(spot, hour))
             } else {
                 Text(view.headline(for: hour))
             }
@@ -757,6 +765,32 @@ struct LakeMapScreen: View {
     private func boatText(_ stop: RoutePlan.Stop) -> String {
         let waves = Format.waves(stop.waveM) + (stop.relation.map { " " + $0.waves } ?? "")
         return tr("The boat at %@ after %@: %@, waves %@", Format.time(stop.time), Format.distance(stop.distanceM), stop.light.title, waves)
+    }
+
+    /// The wind at a tapped spot, from its forecast point as its colour is: "Wind 3–6 m/s".
+    /// The tapped spot in one line: light, then waves and wind with their
+    /// symbols, as in the hourly table, so it fits.
+    private func spotLine(_ i: Int, _ hour: LakeHour) -> Text {
+        let waves: Text = Text(Image(systemName: "water.waves")) + Text(" " + Format.waves(hour.wave(ofCell: i)))
+        var line: Text = Text(hour.lights[i].title + " · ") + waves
+        if let wind = spotWind(i, hour) {
+            let part: Text = Text(" · ") + Text(Image(systemName: "wind")) + Text(" " + wind)
+            line = line + part
+        }
+        return line
+    }
+
+    /// The same in words, for VoiceOver.
+    private func spotLabel(_ i: Int, _ hour: LakeHour) -> String {
+        var label = hour.lights[i].title + ", " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: i)))
+        if let wind = spotWind(i, hour) { label += ", " + tr("Wind") + " " + wind }
+        return label
+    }
+
+    private func spotWind(_ i: Int, _ hour: LakeHour) -> String? {
+        let p = view.grid.cellPoint[i]
+        guard p < hour.wind.count, let speed = hour.wind[p].speedMs else { return nil }
+        return Format.windRange(speed, hour.wind[p].gustMs)
     }
 
     private func spotDetails(_ i: Int, _ hour: LakeHour) -> some View {
@@ -952,6 +986,8 @@ struct LakeMapView: UIViewRepresentable {
     var imagery = false
     /// An imported route's track as it was rowed, drawn thin over the route.
     var track: [CLLocationCoordinate2D] = []
+    /// The wind map's wind, for the arrows on land; without it only the water has arrows.
+    var land: LandWind?
 
     /// Room the pushed-down panel and the home indicator take at the bottom.
     static let panelHeight: CGFloat = 230
@@ -992,7 +1028,7 @@ struct LakeMapView: UIViewRepresentable {
         drag.delegate = context.coordinator
         drag.maximumNumberOfTouches = 1
         map.addGestureRecognizer(drag)
-        map.setVisibleMapRect(overlay.boundingMapRect, animated: false)
+        map.setVisibleMapRect(overlay.lakeRect, animated: false)
         // Fit the lake once the map has its size, clear of the buttons at the top
         // and of the panel at the bottom, so the whole lake and every club show.
         let inRouteMode = routeMode
@@ -1006,7 +1042,7 @@ struct LakeMapView: UIViewRepresentable {
 
     static func fit(_ overlay: LakeOverlay, in map: MKMapView, routeMode: Bool, animated: Bool) {
         let padding = UIEdgeInsets(top: routeMode ? routeTop : 130, left: 24, bottom: panelHeight, right: 24)
-        map.setVisibleMapRect(overlay.boundingMapRect, edgePadding: padding, animated: animated)
+        map.setVisibleMapRect(overlay.lakeRect, edgePadding: padding, animated: animated)
     }
 
     func updateUIView(_ map: MKMapView, context: Context) {
@@ -1042,10 +1078,10 @@ struct LakeMapView: UIViewRepresentable {
                 Self.fit(overlay, in: map, routeMode: true, animated: true)
             }
         }
-        if let hour, c.shown != "\(hour.time.timeIntervalSince1970) \(layer.rawValue)" {
-            c.shown = "\(hour.time.timeIntervalSince1970) \(layer.rawValue)"
-            c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour), layer == .light ? hour.lakeWide.stripes : nil)
-            c.renderer?.update(image: c.current.image, arrows: c.current.arrows, stripes: c.current.stripes)
+        if let hour, c.shown != "\(hour.time.timeIntervalSince1970) \(layer.rawValue) \(land != nil)" {
+            c.shown = "\(hour.time.timeIntervalSince1970) \(layer.rawValue) \(land != nil)"
+            c.current = (LakeRaster.image(view, hour: hour, layer: layer), arrows(hour), land, layer == .light ? hour.lakeWide.stripes : nil)
+            c.renderer?.update(image: c.current.image, arrows: c.current.arrows, land: c.current.land, stripes: c.current.stripes)
         }
         c.coldShore = view.coldShore
         c.renderer?.setColdShore(c.coldShore)
@@ -1053,11 +1089,11 @@ struct LakeMapView: UIViewRepresentable {
         c.showBoat(boat, on: map)
     }
 
-    private func arrows(_ hour: LakeHour) -> [LakeRenderer.Arrow] {
+    private func arrows(_ hour: LakeHour) -> [WindArrows.Sample] {
         zip(view.points, hour.wind).compactMap { point, wind in
             guard let from = wind.fromDeg else { return nil }
-            return LakeRenderer.Arrow(point: MKMapPoint(CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)),
-                                      towardDeg: from + 180, speedMs: wind.speedMs ?? 0)
+            let p = MKMapPoint(CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon))
+            return WindArrows.Sample(point: CGPoint(x: p.x, y: p.y), towardDeg: from + 180, speedMs: wind.speedMs ?? 0)
         }
     }
 
@@ -1068,7 +1104,7 @@ struct LakeMapView: UIViewRepresentable {
         var grid: LakeGrid?
         /// The hour and layer drawn, and their picture and arrows.
         var shown: String?
-        var current: (image: CGImage?, arrows: [LakeRenderer.Arrow], stripes: Light?) = (nil, [], nil)
+        var current: (image: CGImage?, arrows: [WindArrows.Sample], land: LandWind?, stripes: Light?) = (nil, [], nil, nil)
         var coldShore: ColdShore?
         var routeMode = false
         var imagery = false
@@ -1108,7 +1144,7 @@ struct LakeMapView: UIViewRepresentable {
             }
             guard let overlay = overlay as? LakeOverlay else { return MKOverlayRenderer(overlay: overlay) }
             let renderer = LakeRenderer(overlay: overlay)
-            renderer.update(image: current.image, arrows: current.arrows, stripes: current.stripes)
+            renderer.update(image: current.image, arrows: current.arrows, land: current.land, stripes: current.stripes)
             renderer.setColdShore(coldShore)
             self.renderer = renderer
             return renderer
@@ -1563,58 +1599,48 @@ final class RouteLineRenderer: MKOverlayRenderer {
 /// The area of the lake's grid, as one map overlay.
 final class LakeOverlay: NSObject, MKOverlay {
     let coordinate: CLLocationCoordinate2D
-    let boundingMapRect: MKMapRect
+    /// The lake's grid; `boundingMapRect` is the whole world, as the wind arrows cover the map.
+    let lakeRect: MKMapRect
+    let boundingMapRect = MKMapRect.world
     /// Shore and islands in map points, for clipping.
     let rings: [[MKMapPoint]]
+    /// The water in map points, to tell arrows on it from those on land.
+    let water: CGPath
+    /// The shore in map points, and how far from it the land's wind fades in.
+    let shore: WindArrows.Shore
+    let blend: CGFloat
 
     init(view: LakeView) {
         let g = view.grid
         let nw = MKMapPoint(CLLocationCoordinate2D(latitude: g.north, longitude: g.westEdge))
         let se = MKMapPoint(CLLocationCoordinate2D(latitude: g.southEdge, longitude: g.east))
-        boundingMapRect = MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y)
+        lakeRect = MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y)
         coordinate = CLLocationCoordinate2D(latitude: (g.north + g.southEdge) / 2, longitude: (g.westEdge + g.east) / 2)
         rings = view.outline.map { ring in ring.map { MKMapPoint(CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0])) } }
+        let water = CGMutablePath()
+        for ring in rings where ring.count > 2 {
+            water.addLines(between: ring.map { CGPoint(x: $0.x, y: $0.y) })
+            water.closeSubpath()
+        }
+        self.water = water
+        shore = WindArrows.Shore(rings: rings.map { $0.map { CGPoint(x: $0.x, y: $0.y) } })
+        blend = CGFloat(WindArrows.blendM * MKMapPointsPerMeterAtLatitude(coordinate.latitude))
     }
 }
 
 /// Draws the cell picture smoothly scaled over the grid, clipped to the shore,
-/// and the wind arrows at the forecast points.
+/// and the wind arrows over the whole map.
 final class LakeRenderer: MKOverlayRenderer {
-    /// The wind at a forecast point.
-    struct Arrow {
-        let point: MKMapPoint
-        let towardDeg: Double
-        var speedMs: Double = 0
-    }
-
     /// Screen points between arrows: more arrows as the map zooms in, fewer out.
-    static let arrowSpacing: CGFloat = 60
+    static let arrowSpacing = WindArrows.spacing
 
     /// Arrow length on screen: longer in stronger wind.
-    static func arrowLength(_ speedMs: Double) -> CGFloat { 14 + CGFloat(min(max(speedMs, 0), 15)) * 1.6 }
-
-    /// The wind anywhere on the lake, from the forecast points weighted by
-    /// distance (nearer counts more), averaged as east and north parts so
-    /// opposite directions don't add up to a wrong one.
-    static func wind(at p: MKMapPoint, from arrows: [Arrow]) -> (towardDeg: Double, speedMs: Double)? {
-        guard !arrows.isEmpty else { return nil }
-        var east = 0.0, north = 0.0, speed = 0.0, total = 0.0
-        for a in arrows {
-            let d2 = max(pow(a.point.x - p.x, 2) + pow(a.point.y - p.y, 2), 1)
-            let w = 1 / d2
-            let r = a.towardDeg * .pi / 180
-            east += sin(r) * w
-            north += cos(r) * w
-            speed += a.speedMs * w
-            total += w
-        }
-        let toward = atan2(east, north) * 180 / .pi
-        return ((toward + 360).truncatingRemainder(dividingBy: 360), speed / total)
-    }
+    static func arrowLength(_ speedMs: Double) -> CGFloat { WindArrows.length(speedMs) }
 
     private let lock = NSLock()
     private var image: CGImage?
-    private var arrows: [Arrow] = []
+    private var arrows: [WindArrows.Sample] = []
+    private var land: LandWind?
     /// Stripes over the water while the whole lake is red or amber (see LakeWide.stripes).
     private var stripes: Light?
     /// A blue shore while the water is cold.
@@ -1628,10 +1654,11 @@ final class LakeRenderer: MKOverlayRenderer {
         if changed { setNeedsDisplay() }
     }
 
-    func update(image: CGImage?, arrows: [Arrow], stripes: Light?) {
+    func update(image: CGImage?, arrows: [WindArrows.Sample], land: LandWind?, stripes: Light?) {
         lock.lock()
         self.image = image
         self.arrows = arrows
+        self.land = land
         self.stripes = stripes
         lock.unlock()
         setNeedsDisplay()
@@ -1640,7 +1667,7 @@ final class LakeRenderer: MKOverlayRenderer {
     override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
         guard let lake = overlay as? LakeOverlay else { return }
         lock.lock()
-        let image = self.image, arrows = self.arrows, stripes = self.stripes, coldShore = self.coldShore
+        let image = self.image, arrows = self.arrows, land = self.land, stripes = self.stripes, coldShore = self.coldShore
         lock.unlock()
 
         let shore = CGMutablePath()
@@ -1649,7 +1676,7 @@ final class LakeRenderer: MKOverlayRenderer {
             shore.closeSubpath()
         }
         if let image {
-            let rect = self.rect(for: lake.boundingMapRect)
+            let rect = self.rect(for: lake.lakeRect)
             context.saveGState()
             context.addPath(shore)
             context.clip(using: .evenOdd)
@@ -1689,37 +1716,40 @@ final class LakeRenderer: MKOverlayRenderer {
         context.setLineWidth((coldShore?.mapWidth ?? 1) / zoomScale)
         context.strokePath()
 
-        // Arrows on an even grid over the water, fixed to the map so the tiles
-        // agree; the grid gets finer as the map zooms in. Dark arrows with a
-        // light edge read on light and dark maps alike.
-        let spacing = Double(Self.arrowSpacing / zoomScale)
-        let margin = Double(Self.arrowLength(15) / zoomScale)
-        let area = mapRect.insetBy(dx: -margin, dy: -margin).intersection(lake.boundingMapRect)
-        var paths: [CGPath] = []
-        if !arrows.isEmpty, !area.isNull, spacing > 0 {
-            var y = (area.minY / spacing).rounded(.down) * spacing + spacing / 2
-            while y < area.maxY {
-                // Every other row shifted by half, so the arrows don't line up in columns.
-                let shift = Int((y / spacing).rounded(.down)) % 2 == 0 ? 0 : spacing / 2
-                var x = ((area.minX - shift) / spacing).rounded(.down) * spacing + shift + spacing / 2
-                while x < area.maxX {
-                    let p = MKMapPoint(x: x, y: y)
-                    let at = point(for: p)
-                    if shore.contains(at, using: .evenOdd), let wind = Self.wind(at: p, from: arrows) {
-                        paths.append(LakeArrow.path(at: at, towardDeg: wind.towardDeg, length: Self.arrowLength(wind.speedMs) / zoomScale).cgPath)
-                    }
-                    x += spacing
-                }
-                y += spacing
-            }
+        // Arrows on an even grid over the whole map, as on the weather map, fixed
+        // to the map so the tiles agree; the grid gets finer as the map zooms in.
+        // On land the wind is the wind map's own forecast, faded in from the
+        // lake's over the first kilometre.
+        // Dark arrows with a light edge read on light and dark maps alike;
+        // those on land are fainter. Colours stay on the water.
+        let margin = Double(WindArrows.length(15) / zoomScale)
+        let area = mapRect.insetBy(dx: -margin, dy: -margin)
+        var onLand: ((CGPoint) -> (towardDeg: Double, speedMs: Double)?)?
+        if let land {
+            onLand = { p in land.at(MKMapPoint(x: Double(p.x), y: Double(p.y))) }
         }
+        let grid = WindArrows.arrows(in: CGRect(x: area.minX, y: area.minY, width: area.width, height: area.height),
+                                     spacing: WindArrows.spacing / zoomScale, water: lake.water, from: arrows,
+                                     land: onLand, shore: lake.shore, blend: lake.blend)
         context.setLineCap(.round)
         context.setLineJoin(.round)
-        for (color, width) in [(UIColor(white: 1, alpha: 0.7), CGFloat(4)), (UIColor(white: 0.1, alpha: 0.75), CGFloat(2))] {
-            paths.forEach { context.addPath($0) }
-            context.setStrokeColor(color.cgColor)
-            context.setLineWidth(width / zoomScale)
-            context.strokePath()
+        for ashore in [true, false] {
+            let paths = grid.filter { $0.ashore == ashore }.map {
+                LakeArrow.path(at: point(for: MKMapPoint(x: $0.at.x, y: $0.at.y)), towardDeg: $0.towardDeg,
+                               length: WindArrows.length($0.speedMs) / zoomScale).cgPath
+            }
+            guard !paths.isEmpty else { continue }
+            context.saveGState()
+            context.setAlpha(ashore ? WindArrows.ashoreOpacity : 1)
+            context.beginTransparencyLayer(auxiliaryInfo: nil)
+            for (color, width) in [(UIColor(white: 1, alpha: 0.7), CGFloat(4)), (UIColor(white: 0.1, alpha: 0.75), CGFloat(2))] {
+                paths.forEach { context.addPath($0) }
+                context.setStrokeColor(color.cgColor)
+                context.setLineWidth(width / zoomScale)
+                context.strokePath()
+            }
+            context.endTransparencyLayer()
+            context.restoreGState()
         }
     }
 }
@@ -1790,7 +1820,7 @@ struct LakeMapLegend: View {
                     }
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones."))
+                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. Fainter arrows on land show the weather map's wind forecast for each place."))
                     }
                     if spot { row(Image(systemName: "scope"), tr("The spot you tapped")) }
                 }

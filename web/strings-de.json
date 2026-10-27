@@ -39,5 +39,7 @@
   "Tour": "Tour",
   "Wind, waves and warnings are worked out for this launch point. Tap Directions to the club for the way there.": "Wind, Wellen und Warnungen gelten für diesen Steg. Tippe auf „Route zum Verein“ für den Weg dorthin.",
   "GPX, TCX or FIT files from CrewNerd, Garmin Connect, Strava and other apps.": "GPX-, TCX- oder FIT-Dateien aus CrewNerd, Garmin Connect, Strava und anderen Apps.",
-  "Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace.": "Schon mal gerudert? Hol dir mit „Ruderfahrt importieren“ eine GPX-, TCX- oder FIT-Datei (CrewNerd, Garmin, Strava) und plane mit deiner echten Strecke und deinem Tempo."
+  "Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace.": "Schon mal gerudert? Hol dir mit „Ruderfahrt importieren“ eine GPX-, TCX- oder FIT-Datei (CrewNerd, Garmin, Strava) und plane mit deiner echten Strecke und deinem Tempo.",
+  "Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones.": "Wind: zeigt, wohin der Wind weht; längere Pfeile bedeuten stärkeren Wind. Zwischen den Vorhersagepunkten wird der Wind aus den nächsten Punkten geschätzt.",
+  "Points where the wind blows to, at the forecast points for the current hour; longer arrows mean stronger wind. The number is the wind speed.": "Zeigt, wohin der Wind weht, an den Vorhersagepunkten für die aktuelle Stunde; längere Pfeile bedeuten stärkeren Wind. Die Zahl ist die Windgeschwindigkeit."
 }
