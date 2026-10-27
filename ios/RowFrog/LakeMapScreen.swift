@@ -1733,23 +1733,17 @@ final class LakeRenderer: MKOverlayRenderer {
                                      land: onLand, shore: lake.shore, blend: lake.blend)
         context.setLineCap(.round)
         context.setLineJoin(.round)
-        for ashore in [true, false] {
-            let paths = grid.filter { $0.ashore == ashore }.map {
-                LakeArrow.path(at: point(for: MKMapPoint(x: $0.at.x, y: $0.at.y)), towardDeg: $0.towardDeg,
-                               length: WindArrows.length($0.speedMs) / zoomScale).cgPath
-            }
-            guard !paths.isEmpty else { continue }
-            context.saveGState()
-            context.setAlpha(ashore ? WindArrows.ashoreOpacity : 1)
-            context.beginTransparencyLayer(auxiliaryInfo: nil)
-            for (color, width) in [(UIColor(white: 1, alpha: 0.7), CGFloat(4)), (UIColor(white: 0.1, alpha: 0.75), CGFloat(2))] {
-                paths.forEach { context.addPath($0) }
-                context.setStrokeColor(color.cgColor)
-                context.setLineWidth(width / zoomScale)
-                context.strokePath()
-            }
-            context.endTransparencyLayer()
-            context.restoreGState()
+        // On land as on the water, at full strength.
+        let paths = grid.map {
+            LakeArrow.path(at: point(for: MKMapPoint(x: $0.at.x, y: $0.at.y)), towardDeg: $0.towardDeg,
+                           length: WindArrows.length($0.speedMs) / zoomScale).cgPath
+        }
+        guard !paths.isEmpty else { return }
+        for (color, width) in [(UIColor(white: 1, alpha: 0.7), CGFloat(4)), (UIColor(white: 0.1, alpha: 0.75), CGFloat(2))] {
+            paths.forEach { context.addPath($0) }
+            context.setStrokeColor(color.cgColor)
+            context.setLineWidth(width / zoomScale)
+            context.strokePath()
         }
     }
 }
@@ -1820,7 +1814,7 @@ struct LakeMapLegend: View {
                     }
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. Fainter arrows on land show the weather map's wind forecast for each place."))
+                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. On land the arrows show the weather map's wind forecast for each place."))
                     }
                     if spot { row(Image(systemName: "scope"), tr("The spot you tapped")) }
                 }

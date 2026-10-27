@@ -302,7 +302,7 @@ enum German {
         "Amber stripes: the whole lake is amber (sunrise or sunset, official warning), see the panel. The squares keep their own colours.": "Gelbe Streifen: Der ganze See ist gelb (Sonnenaufgang oder -untergang, amtliche Warnung), siehe unten. Die Felder behalten ihre eigenen Farben.",
         "On the map": "Auf der Karte",
         "Other clubs on the lake": "Andere Vereine am See",
-        "Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. Fainter arrows on land show the weather map's wind forecast for each place.": "Wind: zeigt, wohin der Wind weht; längere Pfeile bedeuten stärkeren Wind. Zwischen den Vorhersagepunkten wird der Wind aus den nächsten Punkten geschätzt. Hellere Pfeile an Land zeigen die Windvorhersage der Wetterkarte für jeden Ort.",
+        "Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. On land the arrows show the weather map's wind forecast for each place.": "Wind: zeigt, wohin der Wind weht; längere Pfeile bedeuten stärkeren Wind. Zwischen den Vorhersagepunkten wird der Wind aus den nächsten Punkten geschätzt. An Land zeigen die Pfeile die Windvorhersage der Wetterkarte für jeden Ort.",
         "The spot you tapped": "Die angetippte Stelle",
         "Route": "Route",
         "Start at your club": "Start an deinem Verein",

@@ -5,8 +5,6 @@
 
 /** Screen pixels between arrows: more arrows as the view zooms in, fewer out. */
 export const SPACING = 60;
-/** Arrows on land are fainter, so the lake stays in front. */
-export const ASHORE_OPACITY = 0.6;
 /** Over this much land past the shore the lake's wind fades into the land's, so the two forecasts meet without a step. */
 export const BLEND_M = 1000;
 

@@ -524,8 +524,6 @@ enum WindArrows {
 
     /// Screen points between arrows: more arrows as the view zooms in, fewer out.
     static let spacing: CGFloat = 60
-    /// Arrows on land are fainter, so the lake stays in front.
-    static let ashoreOpacity = 0.6
     /// Over this much land past the shore the lake's wind fades into the land's,
     /// so the two forecasts meet without a step.
     static let blendM = 1000.0
