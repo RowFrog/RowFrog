@@ -1054,7 +1054,8 @@ struct SatelliteColdBadge: View {
     let lakeID: String
 
     var body: some View {
-        if let view = LakeViewStore.shared.views[lakeID], let kit = view.coldWaterKit {
+        // It explains the blue shore, so it shows only with the shore line.
+        if SatelliteLayers.shared.on.contains(.shore), let view = LakeViewStore.shared.views[lakeID], let kit = view.coldWaterKit {
             ColdWaterBadge(kit: kit, estimated: view.waterC == nil)
                 .background(.regularMaterial, in: Capsule())
                 .padding(8)

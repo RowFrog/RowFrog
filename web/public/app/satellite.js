@@ -37,6 +37,7 @@ const redraws = new Set();
 
 function switchLayer(id) {
   store.satLayers = toggleLayer(store.satLayers, id);
+  for (const badge of document.querySelectorAll(".sat-kit")) badge.style.display = shoreOn() ? "" : "none";
   for (const f of redraws) f();
 }
 
@@ -90,8 +91,10 @@ function wireControls(el, lake, setKind) {
 /** The picture with an empty layer for the overlay, which is drawn once its size is known. */
 const pictureHtml = (lake, shot) => `<img src="${fileUrl(lake, shot.image)}" alt="${h(t("Satellite picture of the lake"))}" draggable="false"><div class="sat-over"></div>`;
 
-/** The lake view's life-jacket badge in the picture's corner while the water is cold, as on the lake map (SatelliteColdBadge). */
-const coldBadge = (lake) => (lake.view ? kitBadge(lake.view).replace('class="kit"', 'class="kit sat-kit"') : "");
+/** The lake view's life-jacket badge in the picture's corner while the water is cold, as on the lake map
+ * (SatelliteColdBadge); it explains the blue shore, so it shows only with the shore line. */
+const coldBadge = (lake) => (lake.view ? kitBadge(lake.view).replace('class="kit"', `class="kit sat-kit"${shoreOn() ? "" : ' style="display:none"'}`) : "");
+const shoreOn = () => store.satLayers.includes("shore");
 
 /** The cold water's shore colour, if the water is cold (the lake view's blue shore). */
 const shoreCold = (view) => (view ? coldShore(view.shoreWaterC, mapLimits()) : null);
