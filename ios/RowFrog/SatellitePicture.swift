@@ -115,6 +115,18 @@ final class SatellitePictureStore {
 
     func load(_ lakeID: String) async {
         guard pictures[lakeID] == nil, !missing.contains(lakeID) else { return }
+        await fetch(lakeID)
+    }
+
+    /// Pull to refresh: asks again for the lake's list of passes. Only the pictures
+    /// of a new pass download; one already here keeps its address (its day) and so
+    /// comes from memory or the cache folder.
+    func refresh(_ lakeID: String) async {
+        missing.remove(lakeID)
+        await fetch(lakeID)
+    }
+
+    private func fetch(_ lakeID: String) async {
         do {
             let picture = try await api.satellitePicture(lakeID: lakeID)
             if picture.latest != nil || picture.clearest != nil {
@@ -126,14 +138,15 @@ final class SatellitePictureStore {
                         Task { await image(url) }
                     }
                 }
-            } else {
+            } else if pictures[lakeID] == nil {
                 missing.insert(lakeID)
             }
         } catch let error as URLError where error.code != .badServerResponse {
             // Offline or a timeout: try again the next time the page opens. A lake
             // without pictures answers 404 (badServerResponse) and stays missing.
         } catch {
-            missing.insert(lakeID)
+            // A refresh that fails keeps the pictures already shown.
+            if pictures[lakeID] == nil { missing.insert(lakeID) }
         }
     }
 
