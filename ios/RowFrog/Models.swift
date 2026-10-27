@@ -28,6 +28,14 @@ struct Club: Codable, Identifiable, Hashable {
 
     var displayName: String { shortName ?? name }
 
+    /// The long name with the short one in brackets, e.g. "Münchener Ruder-Club
+    /// von 1880 e.V. (MRC 1880)", for titles with room for it (ClubTitle);
+    /// nil when the club has no separate short name.
+    var fullTitle: String? {
+        guard let short = shortName?.trimmingCharacters(in: .whitespaces), !short.isEmpty, short != name else { return nil }
+        return "\(name) (\(short))"
+    }
+
     /// A place the user put on the map, kept only on this iPhone (see OwnPlaces.swift).
     var isOwnPlace: Bool { id.hasPrefix(OwnPlace.idPrefix) }
     var countryCode: String { country ?? "de" }

@@ -275,4 +275,15 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertEqual(last.maxY, 110, accuracy: 0.001)
         XCTAssertEqual(last.minX, 204.8, accuracy: 0.001)
     }
+
+    func testFullTitleNamesTheShortNameInBrackets() {
+        func club(_ name: String, _ short: String?) -> Club {
+            Club(id: "x", name: name, shortName: short, address: "", website: nil,
+                 launchPoint: Coordinate(lat: 48, lon: 11), launchPointVerified: true)
+        }
+        XCTAssertEqual(club("Münchener Ruder-Club von 1880 e.V.", "MRC 1880").fullTitle, "Münchener Ruder-Club von 1880 e.V. (MRC 1880)")
+        XCTAssertNil(club("Seeclub", "Seeclub").fullTitle)
+        XCTAssertNil(club("Seeclub", nil).fullTitle)
+        XCTAssertNil(club("Seeclub", " ").fullTitle)
+    }
 }

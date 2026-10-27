@@ -371,9 +371,8 @@ private extension LocationPageView {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
             }
-            Text(club.displayName)
+            ClubTitle(club: club)
                 .font(.largeTitle.bold())
-                .multilineTextAlignment(.center)
             Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             if !club.launchPointVerified {
