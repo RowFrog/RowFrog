@@ -35,6 +35,12 @@ struct LocationPageView: View {
     private func satelliteID(_ forecast: ClubForecast) -> String {
         lake?.hasOutline == false ? "club-\(club.id)" : forecast.lakeId
     }
+
+    /// Pull to refresh also looks for new satellite passes; only their pictures download.
+    private func refreshSatellite() async {
+        guard let forecast = forecasts.forecasts[club.id] else { return }
+        await SatellitePictureStore.shared.refresh(satelliteID(forecast))
+    }
     @State private var showSourceTip = false
     @State private var showRadarMapTip = false
     @State private var showHourViewTip = false
@@ -124,7 +130,11 @@ struct LocationPageView: View {
                 }
                 .environment(\.pageHeight, geometry.size.height)
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
-                .refreshable { await forecasts.refresh([club.id]) }
+                .refreshable {
+                    async let pictures: Void = refreshSatellite()
+                    await forecasts.refresh([club.id])
+                    await pictures
+                }
                 .followsRadar(club.launchPoint)
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
