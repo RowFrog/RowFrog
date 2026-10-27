@@ -77,7 +77,12 @@ async def nowcast(client: httpx.AsyncClient, lat: float, lon: float) -> dict:
     15 minutes from it, two hours ahead."""
     _, _, reference = await _reading(client, lat, lon, None)
     times = [reference + timedelta(minutes=m) for m in range(0, AHEAD_MINUTES + 1, STEP_MINUTES)]
-    readings = await asyncio.gather(*(_reading(client, lat, lon, t) for t in times))
+    # Every reading finishes before an error is raised, so none is left running
+    # to fail later outside the caller's handler.
+    readings = await asyncio.gather(*(_reading(client, lat, lon, t) for t in times), return_exceptions=True)
+    for reading in readings:
+        if isinstance(reading, BaseException):
+            raise reading
     steps = sorted((at, mm) for at, mm, _ in readings)
     return {
         "reference": reference.isoformat(),
@@ -95,7 +100,9 @@ async def nowcasts(points: dict[str, tuple[float, float]]) -> dict[str, dict]:
             async with limit:
                 try:
                     results[club_id] = await nowcast(client, lat, lon)
-                except (httpx.HTTPError, KeyError, IndexError, ValueError) as e:
+                # OSError covers a connection the TLS layer drops (ssl.SSLError),
+                # which httpx doesn't always wrap in an HTTPError.
+                except (httpx.HTTPError, OSError, KeyError, IndexError, ValueError) as e:
                     print(f"  radar {club_id}: {type(e).__name__}: {e}")
 
         await asyncio.gather(*(one(i, lat, lon) for i, (lat, lon) in points.items()))
