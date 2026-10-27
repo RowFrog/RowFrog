@@ -62,6 +62,18 @@ struct SatellitePicture: Decodable, Hashable {
     var attribution: String?
     var sharp: Sharp?
 
+    /// The picture's frame, short: it changes when the frame does (a small water
+    /// shown wider, a corrected outline), so a copy kept for the same day but the
+    /// old frame is never shown under the new frame's shore line.
+    var frameKey: String? {
+        guard let bbox, let width, let height else { return nil }
+        let text = bbox.map { String(format: "%.5f", $0) }.joined(separator: ",") + "|\(width)x\(height)"
+        // FNV-1a: the same on every run, unlike hashValue.
+        var hash: UInt32 = 2_166_136_261
+        for byte in text.utf8 { hash = (hash ^ UInt32(byte)) &* 16_777_619 }
+        return String(format: "%08x", hash)
+    }
+
     var aspectRatio: CGFloat {
         guard let width, let height, width > 0, height > 0 else { return 1.6 }
         return CGFloat(width) / CGFloat(height)
@@ -150,10 +162,12 @@ final class SatellitePictureStore {
         }
     }
 
-    /// A file's address; the day it shows keeps caches from showing an older one.
+    /// A file's address; the day it shows and the picture's frame keep caches
+    /// from showing an older one.
     func url(_ lakeID: String, file: String, date: String) -> URL? {
         var components = URLComponents(url: api.url("lakes/\(lakeID)/\(file)"), resolvingAgainstBaseURL: false)
         components?.queryItems = [.init(name: "d", value: date)]
+        if let frame = pictures[lakeID]?.frameKey { components?.queryItems?.append(.init(name: "f", value: frame)) }
         return components?.url
     }
 
@@ -276,14 +290,14 @@ final class SatellitePictureStore {
         return nil
     }
 
-    /// Caches/Satellite/<lake>-<file>-<day>, a tile's as <lake>-<folder>-<row>-<col>.jpg-<day>;
-    /// the system may clear it when space runs low.
+    /// Caches/Satellite/<lake>-<file>-<day>-<frame>, a tile's as
+    /// <lake>-<folder>-<row>-<col>.jpg-<day>-<frame>; the system may clear it when space runs low.
     private static func cacheFile(for url: URL) -> URL {
         let folder = URL.cachesDirectory.appending(path: "Satellite", directoryHint: .isDirectory)
         let path = url.pathComponents
         let parts = path[((path.lastIndex(of: "lakes") ?? path.count - 3) + 1)...].joined(separator: "-")
-        let day = URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems?.first?.value ?? ""
-        return folder.appending(path: "\(parts)-\(day)")
+        let version = (URLComponents(url: url, resolvingAgainstBaseURL: false)?.queryItems ?? []).compactMap(\.value)
+        return folder.appending(path: "\(parts)-\(version.joined(separator: "-"))")
     }
 
     /// Saves a picture and drops older passes of the same lake and file.
@@ -291,10 +305,14 @@ final class SatellitePictureStore {
         let folder = file.deletingLastPathComponent()
         let manager = FileManager.default
         try? manager.createDirectory(at: folder, withIntermediateDirectories: true)
-        // "<lake>-<file>-" without the day.
-        let prefix = String(file.lastPathComponent.dropLast(10))
-        for old in (try? manager.contentsOfDirectory(atPath: folder.path)) ?? [] where old.hasPrefix(prefix) {
-            try? manager.removeItem(at: folder.appending(path: old))
+        // "<lake>-<file>-" without the day and frame, which have no dot: up to the
+        // first "-" after the file's extension.
+        let name = file.lastPathComponent
+        if let dot = name.lastIndex(of: "."), let dash = name[dot...].firstIndex(of: "-") {
+            let prefix = String(name[...dash])
+            for old in (try? manager.contentsOfDirectory(atPath: folder.path)) ?? [] where old.hasPrefix(prefix) {
+                try? manager.removeItem(at: folder.appending(path: old))
+            }
         }
         try? data.write(to: file, options: .atomic)
     }
