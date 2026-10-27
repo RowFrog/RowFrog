@@ -595,9 +595,9 @@
       "country": "ch",
       "lakeId": "le-leman",
       "launchPoint": {
-        "lat": 46.45375,
-        "lon": 6.85691,
-        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
+        "lat": 46.45209,
+        "lon": 6.85574,
+        "precision": "shore of the Le Léman nearest the town-level address, 205 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -612,9 +612,9 @@
       "country": "ch",
       "lakeId": "le-leman",
       "launchPoint": {
-        "lat": 46.52183,
-        "lon": 6.6327,
-        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
+        "lat": 46.50715,
+        "lon": 6.63243,
+        "precision": "shore of the Le Léman nearest the town-level address, 1633 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -680,9 +680,9 @@
       "country": "ch",
       "lakeId": "le-leman",
       "launchPoint": {
-        "lat": 46.52183,
-        "lon": 6.6327,
-        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
+        "lat": 46.50715,
+        "lon": 6.63243,
+        "precision": "shore of the Le Léman nearest the town-level address, 1633 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -765,9 +765,9 @@
       "country": "ch",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.55422,
-        "lon": 7.63047,
-        "precision": "geocoded club address (town level); on the Rhein (checked by hand)",
+        "lat": 47.55883,
+        "lon": 7.62981,
+        "precision": "shore of the Rhein nearest the town-level address, 515 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -816,9 +816,9 @@
       "country": "ch",
       "lakeId": "vierwaldstaettersee",
       "launchPoint": {
-        "lat": 46.90272,
-        "lon": 8.62535,
-        "precision": "geocoded club address (town level); on the Vierwaldstättersee (checked by hand)",
+        "lat": 46.90323,
+        "lon": 8.62435,
+        "precision": "shore of the Vierwaldstättersee nearest the town-level address, 95 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -833,9 +833,9 @@
       "country": "ch",
       "lakeId": "greifensee",
       "launchPoint": {
-        "lat": 47.36625,
-        "lon": 8.67867,
-        "precision": "geocoded club address (town level); on the Greifensee (checked by hand)",
+        "lat": 47.3642,
+        "lon": 8.67547,
+        "precision": "shore of the Greifensee nearest the town-level address, 332 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -986,9 +986,9 @@
       "country": "ch",
       "lakeId": "sarnersee",
       "launchPoint": {
-        "lat": 46.89567,
-        "lon": 8.24615,
-        "precision": "geocoded club address (town level); on the Sarnersee (checked by hand)",
+        "lat": 46.88984,
+        "lon": 8.24103,
+        "precision": "shore of the Sarnersee nearest the town-level address, 756 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -1411,9 +1411,9 @@
       "country": "ch",
       "lakeId": "zuerichsee",
       "launchPoint": {
-        "lat": 47.2279,
-        "lon": 8.67014,
-        "precision": "geocoded club address (town level); on the Zürichsee (checked by hand)",
+        "lat": 47.22885,
+        "lon": 8.67593,
+        "precision": "shore of the Zürichsee nearest the town-level address, 450 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -1428,9 +1428,9 @@
       "country": "ch",
       "lakeId": "zugersee",
       "launchPoint": {
-        "lat": 47.16799,
-        "lon": 8.51737,
-        "precision": "geocoded club address (town level); on the Zugersee (checked by hand)",
+        "lat": 47.16796,
+        "lon": 8.5143,
+        "precision": "shore of the Zugersee nearest the town-level address, 232 m away (water checked by hand)",
         "verified": false
       }
     },

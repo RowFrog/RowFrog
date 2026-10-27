@@ -3324,9 +3324,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.29556,
-        "lon": 9.49991,
-        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
+        "lat": 51.29625,
+        "lon": 9.49895,
+        "precision": "shore of the Fulda nearest the town-level address, 102 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -5025,9 +5025,9 @@
       "country": "de",
       "lakeId": "tegeler-see",
       "launchPoint": {
-        "lat": 52.59064,
-        "lon": 13.27725,
-        "precision": "on the Tegeler See (checked by hand), first matched to Tegeler Hafen",
+        "lat": 52.58923,
+        "lon": 13.27244,
+        "precision": "shore of the Tegeler See nearest the town-level address, 361 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9086,7 +9086,7 @@
       "launchPoint": {
         "lat": 48.62593,
         "lon": 9.33182,
-        "precision": "on the Neckar (checked by hand), first matched to Neckar",
+        "precision": "shore of the Neckar nearest the town-level address, 0 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -10924,9 +10924,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 48.72426,
-        "lon": 9.33362,
-        "precision": "on the Neckar (checked by hand), first matched to Kleiner See",
+        "lat": 48.72491,
+        "lon": 9.33407,
+        "precision": "shore of the Neckar nearest the town-level address, 80 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11207,9 +11207,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.29718,
-        "lon": 9.5009,
-        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
+        "lat": 51.29725,
+        "lon": 9.5008,
+        "precision": "shore of the Fulda nearest the town-level address, 10 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11498,9 +11498,9 @@
       "country": "de",
       "lakeId": "grienericksee",
       "launchPoint": {
-        "lat": 53.11505,
-        "lon": 12.91544,
-        "precision": "geocoded boathouse (town level); on the Grienericksee (checked by hand)",
+        "lat": 53.11214,
+        "lon": 12.89192,
+        "precision": "shore of the Grienericksee nearest the town-level address, 1603 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11868,9 +11868,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.2972,
-        "lon": 9.50095,
-        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
+        "lat": 51.29727,
+        "lon": 9.50085,
+        "precision": "shore of the Fulda nearest the town-level address, 11 m away (water checked by hand)",
         "verified": false
       }
     },
