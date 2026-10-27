@@ -306,9 +306,9 @@
       "country": "ch",
       "lakeId": "lac-de-neuchatel",
       "launchPoint": {
-        "lat": 46.84964,
-        "lon": 6.84774,
-        "precision": "geocoded club address (town level); on the Lac de Neuchâtel (checked by hand)",
+        "lat": 46.85227,
+        "lon": 6.84411,
+        "precision": "shore of the Lac de Neuchâtel nearest the town-level address, 403 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -374,9 +374,9 @@
       "country": "ch",
       "lakeId": "le-leman",
       "launchPoint": {
-        "lat": 46.52183,
-        "lon": 6.6327,
-        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
+        "lat": 46.50715,
+        "lon": 6.63243,
+        "precision": "shore of the Le Léman nearest the town-level address, 1633 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -476,9 +476,9 @@
       "country": "ch",
       "lakeId": "le-leman",
       "launchPoint": {
-        "lat": 46.44111,
-        "lon": 6.89306,
-        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
+        "lat": 46.43943,
+        "lon": 6.89383,
+        "precision": "shore of the Le Léman nearest the town-level address, 196 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -493,9 +493,9 @@
       "country": "ch",
       "lakeId": "lac-de-joux",
       "launchPoint": {
-        "lat": 46.64927,
-        "lon": 6.31862,
-        "precision": "geocoded club address (town level); on the Lac de Joux (checked by hand)",
+        "lat": 46.64956,
+        "lon": 6.31715,
+        "precision": "shore of the Lac de Joux nearest the town-level address, 117 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -527,9 +527,9 @@
       "country": "ch",
       "lakeId": "le-leman",
       "launchPoint": {
-        "lat": 46.38206,
-        "lon": 6.24028,
-        "precision": "geocoded club address (town level); on the Le Léman (checked by hand)",
+        "lat": 46.38108,
+        "lon": 6.24247,
+        "precision": "shore of the Le Léman nearest the town-level address, 200 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -850,9 +850,9 @@
       "country": "ch",
       "lakeId": "hallwilersee",
       "launchPoint": {
-        "lat": 47.29498,
-        "lon": 8.22772,
-        "precision": "geocoded club address (town level); on the Hallwilersee (checked by hand)",
+        "lat": 47.29311,
+        "lon": 8.22131,
+        "precision": "shore of the Hallwilersee nearest the town-level address, 527 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -1207,9 +1207,9 @@
       "country": "ch",
       "lakeId": "bielersee-lac-de-bienne",
       "launchPoint": {
-        "lat": 47.14021,
-        "lon": 7.2439,
-        "precision": "geocoded club address (town level); on the Bielersee / Lac de Bienne (checked by hand)",
+        "lat": 47.13457,
+        "lon": 7.23281,
+        "precision": "shore of the Bielersee / Lac de Bienne nearest the town-level address, 1048 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -1378,8 +1378,8 @@
       "lakeId": "sempachersee",
       "launchPoint": {
         "lat": 47.17253,
-        "lon": 8.10678,
-        "precision": "geocoded club address (town level); on the Sempachersee (checked by hand)",
+        "lon": 8.12209,
+        "precision": "shore of the Sempachersee nearest the town-level address, 1158 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -1394,9 +1394,9 @@
       "country": "ch",
       "lakeId": "thunersee",
       "launchPoint": {
-        "lat": 46.75828,
-        "lon": 7.62809,
-        "precision": "geocoded club address (town level); on the Thunersee (checked by hand)",
+        "lat": 46.75689,
+        "lon": 7.63284,
+        "precision": "shore of the Thunersee nearest the town-level address, 394 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -1513,9 +1513,9 @@
       "country": "ch",
       "lakeId": "lac-de-neuchatel",
       "launchPoint": {
-        "lat": 46.98958,
-        "lon": 6.92926,
-        "precision": "geocoded club address (town level); on the Lac de Neuchâtel (checked by hand)",
+        "lat": 46.98863,
+        "lon": 6.92935,
+        "precision": "shore of the Lac de Neuchâtel nearest the town-level address, 105 m away (water checked by hand)",
         "verified": false
       }
     },

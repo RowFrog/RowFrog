@@ -333,9 +333,9 @@
       "country": "at",
       "lakeId": "grundlsee",
       "launchPoint": {
-        "lat": 47.62727,
-        "lon": 13.83793,
-        "precision": "geocoded club address (town level); on the Grundlsee (checked by hand)",
+        "lat": 47.62621,
+        "lon": 13.83854,
+        "precision": "shore of the Grundlsee nearest the town-level address, 127 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -567,9 +567,9 @@
       "country": "at",
       "lakeId": "bodensee",
       "launchPoint": {
-        "lat": 47.52942,
-        "lon": 9.75339,
-        "precision": "geocoded club address (town level); on the Bodensee (checked by hand)",
+        "lat": 47.525,
+        "lon": 9.74685,
+        "precision": "shore of the Bodensee nearest the town-level address, 695 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -909,9 +909,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.39323,
-        "lon": 15.52587,
-        "precision": "geocoded club address (street level); on the Donau (checked by hand)",
+        "lat": 48.39098,
+        "lon": 15.51899,
+        "precision": "shore of the Donau nearest the town-level address, 566 m away (water checked by hand)",
         "verified": false
       }
     },

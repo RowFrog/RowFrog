@@ -9692,9 +9692,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.29556,
-        "lon": 9.49991,
-        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
+        "lat": 51.29625,
+        "lon": 9.49895,
+        "precision": "shore of the Fulda nearest the town-level address, 102 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11990,9 +11990,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.29718,
-        "lon": 9.5009,
-        "precision": "on the Fulda (checked by hand), first matched to Regattastrecke",
+        "lat": 51.29725,
+        "lon": 9.5008,
+        "precision": "shore of the Fulda nearest the town-level address, 10 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14334,9 +14334,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.48474,
-        "lon": 8.26592,
-        "precision": "geocoded boathouse (town level); on the Lahn (checked by hand)",
+        "lat": 50.48436,
+        "lon": 8.26613,
+        "precision": "shore of the Lahn nearest the town-level address, 45 m away (water checked by hand)",
         "verified": false
       }
     },
