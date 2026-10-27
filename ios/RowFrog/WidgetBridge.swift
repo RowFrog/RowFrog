@@ -50,8 +50,7 @@ enum WidgetBridge {
     /// Nothing while no widget is on the home or lock screen.
     @MainActor
     static func preparePictures(_ locations: LocationStore) async {
-        guard let folder = WidgetPictures.folder,
-              let widgets = try? await WidgetCenter.shared.currentConfigurations(), !widgets.isEmpty else { return }
+        guard let folder = WidgetPictures.folder, await hasWidgets() else { return }
         try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
         let settings = AppSettings.shared
         let shared = WidgetShared.defaults
@@ -90,6 +89,15 @@ enum WidgetBridge {
             }
         }
         if changed { WidgetCenter.shared.reloadAllTimelines() }
+    }
+
+    /// Whether any Row Frog widget is on the home or lock screen.
+    private static func hasWidgets() async -> Bool {
+        await withCheckedContinuation { done in
+            WidgetCenter.shared.getCurrentConfigurations { result in
+                done.resume(returning: !((try? result.get()) ?? []).isEmpty)
+            }
+        }
     }
 
     /// Scaled to the largest widget (about 1100 × 1150 pixels on a big iPhone),
