@@ -150,6 +150,9 @@ are none.
 waves, wind and the light for each part of the lake, and a spot you can tap
 for its details. A legend lists what is on the map, a switch puts Apple's
 satellite pictures under the lake, and wind arrows get denser as you zoom in.
+The arrows cover the whole map, on the satellite picture too: over land they
+come from the weather map's wind, drawn fainter and blended into the lake's
+arrows over the last kilometre to the shore.
 "Plan a route" checks a route on the lake against the
 forecast for the time you start, rowed one way (the default) or out and
 back, and shows
@@ -314,8 +317,8 @@ for iPads and desktop browsers, and has nearly everything the app has: own
 boats and limits, the lake view with route planning and row import (GPX, TCX
 or FIT), value pages with chart and weather map, the satellite picture with its
 layers, browsing by country and adding a place, Arrange this page, units,
-appearance, background pictures, the tour and the tips. Only the rain radar
-card is still missing. What a visitor picks stays in their browser.
+appearance, background pictures, the tour and the tips, and the rain radar in
+the rain tile (the radar card is off by default, as in the app). What a visitor picks stays in their browser.
 
 ## Layout
 
