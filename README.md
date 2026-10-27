@@ -107,7 +107,8 @@ the weather. Instead a blue badge says what to bring: "Life jacket" below
 are 1 m/s lower (your own limits stay as set, with a note), and below 4 °C
 small boats get amber for near-freezing water. Lake maps and the satellite
 picture draw the shore light blue below the life-jacket limit and deeper blue
-below 10 °C, and the satellite picture shows the badge too.
+below 10 °C; the satellite picture shows the badge too while its shore line
+is on.
 
 **Water temperature.** Each club reads the nearest measuring station on its
 own water, from GKD Bayern, the German federal PEGELONLINE network or the
@@ -152,8 +153,8 @@ waves, wind and the light for each part of the lake, and a spot you can tap
 for its details. A legend lists what is on the map, a switch puts Apple's
 satellite pictures under the lake, and wind arrows get denser as you zoom in.
 The arrows cover the whole map, on the satellite picture too: over land they
-come from the weather map's wind, drawn fainter and blended into the lake's
-arrows over the last kilometre to the shore.
+come from the weather map's wind, blended into the lake's arrows over the last
+kilometre to the shore.
 "Plan a route" checks a route on the lake against the
 forecast for the time you start, rowed one way (the default) or out and
 back, and shows
