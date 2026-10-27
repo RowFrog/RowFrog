@@ -68,6 +68,40 @@
     "wsw-ruderunion-duernstein": {
       "water": "Donau",
       "kind": "river"
+    },
+    "linzer-ruderverein-ister": {
+      "water": "Donau",
+      "kind": "river",
+      "id": "river-donau",
+      "replace": true
+    },
+    "ruder-union-melk": {
+      "water": "Donau",
+      "kind": "river",
+      "id": "river-donau",
+      "replace": true
+    },
+    "ruderverein-ister": {
+      "water": "Donau",
+      "kind": "river",
+      "id": "river-donau",
+      "replace": true
+    },
+    "ruderclub-graz": {
+      "water": "Mur",
+      "kind": "river",
+      "replace": true
+    },
+    "tullner-ruderverein": {
+      "water": "Donau",
+      "kind": "river",
+      "id": "river-donau",
+      "replace": true
+    },
+    "ruder-club-graz": {
+      "water": "Mur",
+      "kind": "river",
+      "replace": true
     }
   },
   "ch": {
@@ -403,6 +437,256 @@
       "water": "Fulda",
       "kind": "river",
       "id": "river-fulda",
+      "replace": true
+    },
+    "akademische-ruderverbindung-alania-zu-hamburg": {
+      "water": "Alster",
+      "kind": "river",
+      "replace": true
+    },
+    "akademischer-ruderverein-ev-kiel": {
+      "water": "Kieler Förde",
+      "kind": "lake",
+      "replace": true
+    },
+    "domschulruderclub-schleswig": {
+      "water": "Schlei",
+      "kind": "lake",
+      "id": "schlei",
+      "replace": true,
+      "near": {
+        "lat": 54.5118,
+        "lon": 9.5617,
+        "place": "Schleswig (the import placed it at the Schulsee in Mölln)"
+      }
+    },
+    "erster-kieler-ruder-club-von-1862": {
+      "water": "Kieler Förde",
+      "kind": "lake",
+      "replace": true
+    },
+    "greifswalder-ruderclub-hilda-1892": {
+      "water": "Ryck",
+      "kind": "river",
+      "replace": true
+    },
+    "luebecker-frauen-ruder-gesellschaft-von-1907": {
+      "water": "Kanal-Trave",
+      "kind": "river",
+      "id": "river-kanal-trave",
+      "replace": true
+    },
+    "maerkischer-wassersport": {
+      "water": "Spandauer See",
+      "kind": "lake",
+      "id": "spandauer-see",
+      "replace": true
+    },
+    "neusser-ruderverein": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "rathenower-ruder-club-wiking": {
+      "water": "Havel",
+      "kind": "river",
+      "id": "river-havel",
+      "replace": true
+    },
+    "rosslauer-rudergesellschaft": {
+      "water": "Elbe",
+      "kind": "river",
+      "id": "river-elbe",
+      "replace": true
+    },
+    "ruder-und-tennisgesellschaft-wesel-1907": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "ruder-gesellschaft-benrath": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "ruder-klub-normannia": {
+      "water": "Oker",
+      "kind": "river",
+      "replace": true
+    },
+    "rudergemeinschaft-bottrop": {
+      "water": "Rhein-Herne-Kanal",
+      "kind": "river",
+      "id": "river-rhein-herne-kanal",
+      "replace": true
+    },
+    "rudergesellschaft-ghibellinia-waiblingen-1920": {
+      "water": "Rems",
+      "kind": "river",
+      "replace": true
+    },
+    "rudergesellschaft-germania-kiel-von-1882": {
+      "water": "Kieler Förde",
+      "kind": "lake",
+      "replace": true
+    },
+    "ruderverein-wandsbek": {
+      "water": "Alster",
+      "kind": "river",
+      "replace": true
+    },
+    "ruderverein-an-den-teichwiesen": {
+      "water": "Alster",
+      "kind": "river",
+      "replace": true
+    },
+    "srr-domschulruderclub-schleswig": {
+      "water": "Schlei",
+      "kind": "lake",
+      "id": "schlei",
+      "replace": true,
+      "near": {
+        "lat": 54.5118,
+        "lon": 9.5617,
+        "place": "Schleswig (the import placed it at the Schulsee in Mölln)"
+      }
+    },
+    "sportzentrum-der-christian-albrechts-universitaet-zu-kiel": {
+      "water": "Kieler Förde",
+      "kind": "lake",
+      "replace": true
+    },
+    "wassersportverein-koenigs-wusterhausen": {
+      "water": "Dahme",
+      "kind": "river",
+      "id": "river-dahme",
+      "replace": true
+    },
+    "wormser-ruderclub-blau-weiss-von-1883": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "breisacher-ruderverein": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "duisburger-ruderverein-ev-18971910": {
+      "water": "Regattabahn",
+      "kind": "lake",
+      "replace": true
+    },
+    "erlanger-wanderrudergesellschaft-franken": {
+      "water": "Main-Donau-Kanal",
+      "kind": "river",
+      "id": "river-main-donau-kanal",
+      "replace": true
+    },
+    "essen-werdener-ruder-club-von-1896": {
+      "water": "Baldeneysee",
+      "kind": "lake",
+      "id": "baldeneysee",
+      "replace": true
+    },
+    "hattinger-ruderverein-ev-1923": {
+      "water": "Ruhr",
+      "kind": "river",
+      "id": "river-ruhr",
+      "replace": true
+    },
+    "homberger-ruderklub-germania": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "muelheimer-ruder-gesellschaft": {
+      "water": "Ruhr",
+      "kind": "river",
+      "id": "river-ruhr",
+      "replace": true
+    },
+    "renn-ruder-gemeinschaft-muelheim": {
+      "water": "Ruhr",
+      "kind": "river",
+      "id": "river-ruhr",
+      "replace": true
+    },
+    "ruderclub-beeskow-1920": {
+      "water": "Spree",
+      "kind": "river",
+      "replace": true
+    },
+    "ruderclub-muelheim-a-d-ruhr-von-1977": {
+      "water": "Ruhr",
+      "kind": "river",
+      "id": "river-ruhr",
+      "replace": true
+    },
+    "ruderclub-vilshofen-1913": {
+      "water": "Donau",
+      "kind": "river",
+      "id": "river-donau",
+      "replace": true
+    },
+    "rudergesellschaft-speyer-1883": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "rudergesellschaft-wiking-ev-berlin": {
+      "water": "Teltowkanal",
+      "kind": "river",
+      "id": "river-teltowkanal",
+      "replace": true
+    },
+    "ruderriege-tv-waidmannslust": {
+      "water": "Tegeler See",
+      "kind": "lake",
+      "id": "tegeler-see",
+      "replace": true
+    },
+    "sc-magdeburg-ev-abteilung-rudern": {
+      "water": "Elbe",
+      "kind": "river",
+      "id": "river-elbe",
+      "replace": true
+    },
+    "srv-karl-ziegler-schule": {
+      "water": "Ruhr",
+      "kind": "river",
+      "id": "river-ruhr",
+      "replace": true
+    },
+    "spandauer-ruder-club-friesen": {
+      "water": "Havel",
+      "kind": "river",
+      "id": "river-havel",
+      "replace": true
+    },
+    "ulmer-ruderclub-donau": {
+      "water": "Donau",
+      "kind": "river",
+      "id": "river-donau",
+      "replace": true
+    },
+    "wassersportverein-muelheim-ruhr": {
+      "water": "Ruhr",
+      "kind": "river",
+      "id": "river-ruhr",
+      "replace": true
+    },
+    "wurzener-rudervereinigung-schwarz-gelb": {
+      "water": "Mulde",
+      "kind": "river",
+      "id": "river-mulde",
       "replace": true
     }
   }
