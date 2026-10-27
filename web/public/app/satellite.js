@@ -9,6 +9,8 @@ import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData } from "
 import { tip } from "./tour.js";
 import { hourIndex, gridEdges } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote } from "./lakeview.js";
+import { loadLandWind, landWind } from "./weathermap.js";
+import { SPACING, ASHORE_OPACITY, BLEND_M, arrowLength, arrowLines, windArrows } from "./windarrows.js";
 
 /** What can be drawn over the picture: shore, clubs and routes, then as on the lake view; ice last. */
 const LAYERS = [
@@ -178,18 +180,39 @@ function drawOver(el, lake, shot, clubId) {
   const layer = el.querySelector(".sat-over");
   if (!layer) return;
   layer.innerHTML = overlaySvg(lake, shot, clubId, el.clientWidth, el.clientHeight);
+  whenLandWind(lake, () => el.isConnected && drawOver(el, lake, shot, clubId));
+}
+
+const gridCentre = (view) => {
+  const e = gridEdges(view.grid);
+  return { lat: (e.north + e.south) / 2, lon: (e.west + e.east) / 2 };
+};
+
+/** Loads the weather map's wind for the arrows on land once the wind is on, and draws again when it is in. */
+function whenLandWind(lake, redraw) {
+  if (!lake.view || !store.satLayers.includes("wind")) return;
+  // Once loaded, every drawing has it; only those drawn while it loads draw again.
+  if (lake.landLoaded) return;
+  lake.landWind ??= loadLandWind(gridCentre(lake.view)).catch(() => {}).then(() => {
+    lake.landLoaded = true;
+  });
+  lake.landWind.then(redraw);
 }
 
 /**
  * Shore, clubs, routes, wind, the coloured water and the ice map in the
- * picture's own lon/lat box, sized in screen pixels (SatelliteOverlay).
+ * picture's own lon/lat box, sized in screen pixels (SatelliteOverlay). With
+ * `screen` ({ size: [width, height] at zoom 1, zoom, x, y: where the picture's
+ * corner sits}) it is drawn on the screen above a zoomed picture, `w` × `hgt`
+ * being the screen, so lines, marks and names keep their size.
  */
-export function overlaySvg(lake, shot, clubId, w, hgt) {
+export function overlaySvg(lake, shot, clubId, w, hgt, screen = null) {
   const { meta, view } = lake;
   const on = new Set(store.satLayers.filter((id) => available(lake).some((l) => l.id === id)));
   const box = meta.bbox;
   if (!on.size || box?.length !== 4 || !w || !hgt) return "";
-  const pt = (lon, lat) => [((lon - box[0]) / (box[2] - box[0])) * w, ((box[3] - lat) / (box[3] - box[1])) * hgt];
+  const { size: [fw, fh] = [w, hgt], zoom = 1, x: ox = 0, y: oy = 0 } = screen ?? {};
+  const pt = (lon, lat) => [((lon - box[0]) / (box[2] - box[0])) * fw * zoom + ox, ((box[3] - lat) / (box[3] - box[1])) * fh * zoom + oy];
   const f = (v) => v.toFixed(1);
   const ringsPath = () => view.outline.filter((r) => r.length > 1).map((r) => `M${r.map(([lon, lat]) => pt(lon, lat).map(f).join(" ")).join("L")}Z`).join("");
   const parts = [];
@@ -208,33 +231,10 @@ export function overlaySvg(lake, shot, clubId, w, hgt) {
     const [x0, y0] = pt(g.west, g.north);
     const [x1, y1] = pt(g.east, g.south);
     parts.push(`<clipPath id="${id}"><path d="${ringsPath()}" clip-rule="evenodd"/></clipPath>
-      <image href="${rasterCanvas(view, hour, fill).toDataURL()}" x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" preserveAspectRatio="none" opacity=".55" clip-path="url(#${id})"/>`);
+      <image href="${rasterUrl(view, hour, fill)}" x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" preserveAspectRatio="none" opacity=".55" clip-path="url(#${id})"/>`);
   }
   // Wind under the lines and marks, so shore, routes and clubs stay on top.
-  if (on.has("wind") && hour) {
-    const arrows = [];
-    const labels = [];
-    view.points.forEach((p, i) => {
-      const wnd = hour.wind[i];
-      if (wnd?.fromDeg == null || wnd.speedMs == null) return;
-      const [cx, cy] = pt(p.lon, p.lat);
-      const toward = ((wnd.fromDeg + 180) * Math.PI) / 180;
-      const length = 10 + Math.min(wnd.speedMs, 15) * 1.6;
-      const dx = (Math.sin(toward) * length) / 2;
-      const dy = (-Math.cos(toward) * length) / 2;
-      const tip = [cx + dx, cy + dy];
-      let d = `M${f(cx - dx)} ${f(cy - dy)}L${f(tip[0])} ${f(tip[1])}`;
-      for (const side of [-0.5, 0.5]) {
-        const a = toward + Math.PI + side;
-        d += `M${f(tip[0])} ${f(tip[1])}L${f(tip[0] + Math.sin(a) * 6)} ${f(tip[1] - Math.cos(a) * 6)}`;
-      }
-      arrows.push(d);
-      labels.push(`<text x="${f(cx - dx)}" y="${f(cy - dy)}">${h(windNumber(wnd.speedMs))}</text>`);
-    });
-    const d = arrows.join("");
-    parts.push(`<g fill="none" stroke-linecap="round"><path d="${d}" stroke="rgba(0,0,0,.6)" stroke-width="3.5"/><path d="${d}" stroke="#fff" stroke-width="2"/></g>
-      <g class="sat-wind">${labels.join("")}</g>`);
-  }
+  if (on.has("wind") && hour) parts.push(windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt]));
   if (on.has("shore")) {
     // Over mostly white cloud the shore is dark with a light edge, over a clear lake light with a dark edge.
     const cloudy = (shot.lakeCloud ?? 0) >= 0.5;
@@ -249,6 +249,70 @@ export function overlaySvg(lake, shot, clubId, w, hgt) {
   }
   if (on.has("clubs")) parts.push(clubMarks(view, pt, clubId, w, hgt));
   return `<svg viewBox="0 0 ${f(w)} ${f(hgt)}" width="${f(w)}" height="${f(hgt)}" aria-hidden="true">${parts.join("")}</svg>`;
+}
+
+/** The hour's coloured water as a picture, kept while the hour is shown, as the full view draws it on every move. */
+const rasters = new WeakMap();
+function rasterUrl(view, hour, fill) {
+  const kept = rasters.get(hour) ?? {};
+  kept[fill] ??= rasterCanvas(view, hour, fill).toDataURL();
+  rasters.set(hour, kept);
+  return kept[fill];
+}
+
+/**
+ * The wind arrows as on the lake map: an even grid over the whole picture,
+ * more arrows as it zooms in, the same size on screen. On the water the wind
+ * is worked out between the lake's forecast points, on land it is the weather
+ * map's, drawn fainter. The arrow nearest each forecast point carries its
+ * speed (SatelliteWind). The picture is `size` at zoom 1, its corner at
+ * `offset` on a screen of `visible`.
+ */
+function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt]) {
+  const f = (v) => v.toFixed(1);
+  const point = (lon, lat) => [((lon - box[0]) / (box[2] - box[0])) * fw, ((box[3] - lat) / (box[3] - box[1])) * fh];
+  const samples = view.points.flatMap((p, i) => {
+    const wnd = hour.wind[i];
+    if (wnd?.fromDeg == null || wnd.speedMs == null) return [];
+    const [x, y] = point(p.lon, p.lat);
+    return [{ x, y, towardDeg: (wnd.fromDeg + 180) % 360, speedMs: wnd.speedMs }];
+  });
+  const rings = view.outline.filter((r) => r.length > 2).map((r) => r.map(([lon, lat]) => point(lon, lat)));
+  // The part of the picture on screen, in its own pixels; arrows stay on the picture.
+  const area = [Math.max(-ox / zoom, 0), Math.max(-oy / zoom, 0), Math.min((w - ox) / zoom, fw), Math.min((hgt - oy) / zoom, fh)];
+  const fromLand = landWind(gridCentre(view), hour.time);
+  const widthM = (box[2] - box[0]) * 111320 * Math.cos((((box[1] + box[3]) / 2) * Math.PI) / 180);
+  const spacing = SPACING / zoom;
+  const arrows = windArrows({
+    area, spacing, rings, samples, blend: (BLEND_M / widthM) * fw,
+    land: fromLand && (([x, y]) => fromLand({ lat: box[3] - (y / fh) * (box[3] - box[1]), lon: box[0] + (x / fw) * (box[2] - box[0]) })),
+  });
+  const screen = (x, y) => [x * zoom + ox, y * zoom + oy];
+  const out = [];
+  for (const ashore of [true, false]) {
+    const d = arrows.filter((a) => a.ashore === ashore)
+      .flatMap((a) => arrowLines(...screen(a.x, a.y), a.towardDeg, arrowLength(a.speedMs)))
+      .map(([from, to]) => `M${f(from[0])} ${f(from[1])}L${f(to[0])} ${f(to[1])}`).join("");
+    if (d) out.push(`<g fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="${ashore ? ASHORE_OPACITY : 1}"><path d="${d}" stroke="rgba(0,0,0,.6)" stroke-width="3.5"/><path d="${d}" stroke="#fff" stroke-width="2"/></g>`);
+  }
+  // Each forecast point's speed, at the tail of the arrow nearest it.
+  const labels = samples.flatMap((s) => {
+    let best = null;
+    let bestD = spacing * spacing;
+    for (const a of arrows) {
+      const d = (a.x - s.x) ** 2 + (a.y - s.y) ** 2;
+      if (d <= bestD) {
+        best = a;
+        bestD = d;
+      }
+    }
+    if (!best) return [];
+    const r = (best.towardDeg * Math.PI) / 180;
+    const half = arrowLength(best.speedMs) / 2 + 6;
+    const [x, y] = screen(best.x, best.y);
+    return [`<text x="${f(x - Math.sin(r) * half)}" y="${f(y + Math.cos(r) * half)}">${h(windNumber(s.speedMs))}</text>`];
+  });
+  return `${out.join("")}<g class="sat-wind">${labels.join("")}</g>`;
 }
 
 /**
@@ -301,7 +365,7 @@ function legend(lake) {
   if (on.has("light")) body += `<h3>${h(t("Rowing light"))}</h3>${layerLegend("light")}${mapBoatNote()}`;
   if (on.has("waves")) body += `<h3>${h(t("Waves"))}</h3>${layerLegend("waves")}`;
   if (on.has("wind")) {
-    body += `<h3>${h(t("Wind"))}</h3><ul class="legend">${row(icon("arrow-up"), t("Points where the wind blows to, at the forecast points for the current hour; longer arrows mean stronger wind. The number is the wind speed."))}</ul>`;
+    body += `<h3>${h(t("Wind"))}</h3><ul class="legend">${row(icon("arrow-up"), t("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. Fainter arrows on land show the weather map's wind forecast for each place."))}</ul>`;
   }
   if (on.has("ice")) {
     body += `<h3>${h(t("Ice map"))}</h3><ul class="legend">
@@ -351,7 +415,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     const shot = meta[kind];
     el.innerHTML = `<header class="nav value-nav"><span class="spacer"></span><strong class="nav-title">${h(t("Satellite picture"))}</strong><button class="link strong" id="sat-done">${h(t("Done"))}</button></header>
       ${kindPicker(lake, kind)}
-      <div class="sat-stage"><div class="sat-zoom">${pictureHtml(lake, shot)}</div></div>
+      <div class="sat-stage"><div class="sat-zoom">${pictureHtml(lake, shot)}</div><div class="sat-over sat-screen"></div></div>
       <div class="sat-panel">${caption(lake, shot)}${chips(lake)}</div>`;
     el.querySelector("#sat-done").addEventListener("click", close);
     wireControls(el, lake, (k) => { kind = k; render(); });
@@ -379,7 +443,6 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     zoom.fit = fit;
     content.style.width = `${fit}px`;
     content.style.height = `${fit / ratio}px`;
-    if (changed || fresh) content.querySelector(".sat-over").innerHTML = overlaySvg(lake, meta[kind], clubId, fit, fit / ratio);
     if (fresh === true) focus(W, H, fit, fit / ratio);
     apply();
   }
@@ -422,7 +485,24 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     zoom.x = w <= W ? (W - w) / 2 : clamp(zoom.x, W - w, 0);
     zoom.y = hh <= H ? (H - hh) / 2 : clamp(zoom.y, H - hh, 0);
     content.style.transform = `translate(${zoom.x}px, ${zoom.y}px) scale(${zoom.s})`;
+    if (!frame) frame = requestAnimationFrame(drawMarks);
   }
+  let frame = 0;
+
+  /**
+   * Shore, routes, clubs and wind on the screen above the zoomed picture
+   * rather than in it, so lines, marks, names and arrows stay sharp and the
+   * same size when zoomed in, with more arrows, as on the lake map.
+   */
+  function drawMarks() {
+    frame = 0;
+    const stage = el.querySelector(".sat-stage");
+    const over = el.querySelector(".sat-screen");
+    if (!stage || !over) return;
+    over.innerHTML = overlaySvg(lake, meta[kind], clubId, stage.clientWidth, stage.clientHeight, { size: [zoom.fit, zoom.fit / ratio], zoom: zoom.s, x: zoom.x, y: zoom.y });
+    whenLandWind(lake, redrawMarks);
+  }
+  const redrawMarks = () => el.isConnected && drawMarks();
 
   /** Zooms by a factor around a point of the stage. */
   function zoomAt(factor, px, py) {
