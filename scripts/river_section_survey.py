@@ -255,6 +255,21 @@ def survey(g: dict, data: dict) -> dict:
 
 
 def main() -> None:
+    if sys.argv[1] == "--extract":
+        # river_section_survey.py --extract lines.osm.pbf water.geojsonseq OUT.json
+        from osm_extract import Extract
+
+        ex = Extract(sys.argv[2], sys.argv[3])
+        out, rows, groups = sys.argv[4], [], clusters()
+        for g in groups:
+            try:
+                r = survey(g, ex.query(*g["at"], MAX_KM))
+            except Exception as e:  # research survey: note and go on
+                r = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
+            rows.append({**g, **r})
+            print(json.dumps(rows[-1], ensure_ascii=False), flush=True)
+        Path(out).write_text(json.dumps(rows, ensure_ascii=False))
+        return
     shard, shards, out = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]
     groups = clusters()
     mine = groups[shard::shards]

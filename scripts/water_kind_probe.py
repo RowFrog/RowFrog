@@ -47,7 +47,38 @@ def esc(s: str) -> str:
     return s.replace("\\", "\\\\").replace('"', '\\"')
 
 
+def from_extract(path: str) -> None:
+    """water_kind_probe.py --extract water.geojsonseq [lines-tags.json]: the same
+    answer from a downloaded extract. Prints one line per water."""
+    from shapely.geometry import Point, shape
+
+    from osm_extract import read_water
+
+    rows = waters()
+    by_name: dict[str, list[dict]] = {}
+    for w in rows:
+        by_name.setdefault(w["name"], []).append(w)
+    found: dict[str, Counter] = {w["id"]: Counter() for w in rows}
+    for f in read_water(path):
+        t = f["properties"]
+        ws = by_name.get(t.get("name", ""))
+        if not ws:
+            continue
+        g = shape(f["geometry"])
+        for w in ws:
+            c = w["center"]
+            d = g.distance(Point(c["lon"], c["lat"])) * 111
+            if d <= 4:
+                key = ",".join(f"{k}={t[k]}" for k in ("natural", "water", "landuse", "waterway", "reservoir_type", "basin") if k in t)
+                found[w["id"]][key] += 1
+    for w in rows:
+        print(json.dumps({"id": w["id"], "name": w["name"], "kind": w["kind"], "clubs": w["clubs"], "osm": dict(found[w["id"]])}, ensure_ascii=False), flush=True)
+
+
 def main() -> None:
+    if len(sys.argv) > 2 and sys.argv[1] == "--extract":
+        from_extract(sys.argv[2])
+        return
     rows = waters()
     print(f"{len(rows)} waters with clubs", flush=True)
     for i in range(0, len(rows), 40):
