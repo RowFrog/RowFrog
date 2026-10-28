@@ -165,10 +165,6 @@ class River:
         self.kind = Counter()
         lock_ways = {e["id"] for e in els if e["type"] == "way" and e.get("tags", {}).get("lock") == "yes"}
         river = [w for w in ways if w["tags"].get("name", "") == name]
-        # Unnamed pieces between two named ones (bridges, short stretches the mappers left unnamed).
-        named_all = {n for w in river for n in w["nodes"]}
-        river += [w for w in ways if not w["tags"].get("name") and w["tags"]["waterway"] in ("river", "canal")
-                  and w["nodes"][0] in named_all and w["nodes"][-1] in named_all and len(w["nodes"]) > 1]
         for w in river:
             self.kind[w["tags"]["waterway"]] += len(w["nodes"])
             for nid, p in zip(w["nodes"], w["geometry"]):
@@ -403,6 +399,15 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
     own = [w for w in ways if same_water(w["tags"].get("name", ""), g["water"]) and way_dist(w) < 1500]
     extra = [w for w in ways if w["tags"].get("name") in include and way_dist(w) < 1500]
     named = [w for w in ways if w["tags"].get("name") and way_dist(w) < 1500]
+    if not own and not extra:
+        # The launch point is off its water: say where the water is, for a hand fix.
+        far = [w for w in ways if same_water(w["tags"].get("name", ""), g["water"])]
+        if far:
+            w = min(far, key=way_dist)
+            line = LineString([frame.m(p["lon"], p["lat"]) for p in w["geometry"]])
+            at = line.interpolate(line.project(Point(0, 0)))
+            lon_, lat_ = frame.deg(at.x, at.y)
+            return {"error": f"launch point {way_dist(w) / 1000:.1f} km from the {g['water']}; nearest point of it {lat_:.5f}, {lon_:.5f}"}
     nearest = min(own or extra or named or ways, key=way_dist)
     if VERBOSE:
         near = sorted({(round(way_dist(w)), w["tags"].get("name", ""), w["tags"]["waterway"]) for w in ways if way_dist(w) < 1000})[:8]
