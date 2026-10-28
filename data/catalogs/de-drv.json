@@ -2468,9 +2468,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.30095,
-        "lon": 8.92767,
-        "precision": "on the Weser (checked by hand), first matched to Pumpwerkskanal",
+        "lat": 52.30062,
+        "lon": 8.93178,
+        "precision": "shore of the Weser nearest the town-level address, 282 m away (water checked by hand)",
         "verified": false
       }
     },
