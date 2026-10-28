@@ -399,7 +399,7 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
     own = [w for w in ways if same_water(w["tags"].get("name", ""), g["water"]) and way_dist(w) < 1500]
     extra = [w for w in ways if w["tags"].get("name") in include and way_dist(w) < 1500]
     named = [w for w in ways if w["tags"].get("name") and way_dist(w) < 1500]
-    if not own and not extra:
+    if not (own or extra or named):
         # The launch point is off its water: say where the water is, for a hand fix.
         far = [w for w in ways if same_water(w["tags"].get("name", ""), g["water"])]
         if far:
