@@ -480,6 +480,8 @@ jobs:
           shoot 105-arrange-page light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 106-arrange-page-german-dark dark -RWOpenClub mrc-1880 -RWArrange YES -RWLanguage de
           shoot_n 107-club-page-landscape 7 light -RWOpenClub mrc-1880 -RWLandscape YES
+          # Two columns ending level: the 48 hours opened past their first 24 (folded in 107).
+          shoot_n 245-club-page-landscape-table-open 7 light -RWOpenClub mrc-1880 -RWLandscape YES -RWHourlyOpen YES
           shoot_n 108-club-page-german-dark 3 dark -RWOpenClub mrc-1880 -RWLanguage de
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES
