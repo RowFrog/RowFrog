@@ -63,6 +63,12 @@ MIN_KM, OPEN_KM = 3.0, 15.0
 BIG_KM, BIG_HARBOUR_KM2 = 40, 0.1
 CAP_UP_KM, CAP_DOWN_KM, CAP_CANAL_KM = 12.0, 8.0, 10.0
 KM_SIGN_M = 1000.0
+# A weir, mouth or line end on a side arm: the walk goes on past it this far along another arm of the same name.
+BYPASS_M = 1000.0
+WATERWAY_KINDS = ("river", "canal", "stream", "ditch", "drain", "weir", "dam", "lock_gate")
+VERBOSE = False
+# A side shorter than this that ends where the river joins another named water walks on into that water.
+JOIN_ON_KM = 1.0
 # Search box for the big rivers joining (their length is counted in it).
 QUERY_KM = 80.0
 GAP_M = 40.0  # line ends this close to another line of the same river are joined
@@ -283,8 +289,10 @@ class River:
 
 def side_limit(river: River, walk: dict, lengths: dict, harbours: list, cap_km: float, km_signs: list) -> tuple[float, str, str]:
     """Where one side of the section ends: (km, kind, what)."""
-    barrier = next(((d, label) for d, kind, label in walk["stops"] if kind == "barrier"), None)
     reach = max(walk["dist"].values()) / 1000
+    # Stops on side arms do not end the side while the main arm goes on.
+    stops = [st for st in walk["stops"] if st[0] + BYPASS_M >= reach * 1000]
+    barrier = next(((d, label) for d, kind, label in stops if kind == "barrier"), None)
     if barrier and barrier[0] <= REACH_KM * 1000:
         return round(barrier[0] / 1000, 2), "weir/lock", barrier[1]
     hard = []
@@ -294,13 +302,13 @@ def side_limit(river: River, walk: dict, lengths: dict, harbours: list, cap_km: 
     for d, label, area in harbours:
         if MIN_KM * 1000 <= d <= OPEN_KM * 1000 and area >= BIG_HARBOUR_KM2:
             hard.append((d / 1000, "harbour", label))
-    for d, kind, label in walk["stops"]:
+    for d, kind, label in stops:
         if kind == "mouth" and MIN_KM * 1000 <= d <= OPEN_KM * 1000:
             hard.append((d / 1000, "mouth", f"joins {label}"))
     if hard:
         d, kind, label = min(hard)
         return round(d, 2), kind, label
-    end = next(((d, kind, label) for d, kind, label in walk["stops"] if kind in ("mouth", "line end")), None)
+    end = next(((d, kind, label) for d, kind, label in stops if kind in ("mouth", "line end")), None)
     if end and end[0] / 1000 < cap_km:
         return round(end[0] / 1000, 2), end[1], end[2]
     cap = min(cap_km, reach)
@@ -400,6 +408,7 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
     allowed = [COMPASS[w] for w in re.split(r"\s+and\s+|,\s*", override.get("direction", "")) if w in COMPASS]
     rivers = [name] + [n for n in include if n != name]
     lines, sides, canal = [], {}, False
+    carry = {}  # joined water -> the side it carries on
     for i, river_name in enumerate(rivers):
         river_ways = ways if i == 0 else ex.lines_named(river_name, lat, lon, REACH_KM + 2)
         if not any(w["tags"].get("name") == river_name for w in river_ways):
@@ -420,8 +429,17 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
             key = "down" if downstream else "up"
             cap = CAP_CANAL_KM if river.is_canal else (CAP_DOWN_KM if downstream else CAP_UP_KM)
             limit = side_limit(river, walk, lengths, harbours_along(river, walk, harbour_polys), cap, km_signs)
+            if VERBOSE:
+                print(f"  {river_name} {key}: reach {max(walk['dist'].values()) / 1000:.2f} km, stops "
+                      + "; ".join(f"{d / 1000:.2f} {kind} {label}".strip() for d, kind, label in walk["stops"][:12]), flush=True)
+            # Ends right where it runs into another named water (an arm with its own name): walk on in that one.
+            joined = limit[2] if limit[1] == "mouth" else ""
+            if (limit[0] < JOIN_ON_KM and joined and joined not in rivers and joined not in WATERWAY_KINDS
+                    and len(rivers) < len(include) + 3):
+                rivers.append(joined)
+                carry[joined] = key
             lines += river.lines(walk, limit[0] * 1000)
-            if i == 0:
+            if i == 0 or carry.get(river_name) == key:
                 end = next((n for n in walk["dist"] if abs(walk["dist"][n] - limit[0] * 1000) < 1), None)
                 end = end or min(walk["dist"], key=lambda n: abs(walk["dist"][n] - limit[0] * 1000))
                 sides[key] = {"km": limit[0], "end": limit[1], "what": limit[2],
@@ -451,7 +469,10 @@ def main() -> None:
     ap.add_argument("lines")
     ap.add_argument("water")
     ap.add_argument("--only", default="", help="comma-separated club ids: rebuild only their sections")
+    ap.add_argument("--verbose", action="store_true", help="print each side's walk")
     args = ap.parse_args()
+    global VERBOSE
+    VERBOSE = args.verbose
     overrides = {cid: o for country in json.loads(OVERRIDES.read_text(encoding="utf-8")).values() if isinstance(country, dict) for cid, o in country.items()}
     ex = Extract(args.lines, args.water, lakes=True)
     ex.all_milestones = True
