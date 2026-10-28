@@ -44,26 +44,6 @@
       "kind": "river"
     },
     {
-      "id": "river-alte-fahrt",
-      "name": "Alte Fahrt",
-      "country": "de",
-      "center": {
-        "lat": 51.77859,
-        "lon": 7.4095
-      },
-      "kind": "river"
-    },
-    {
-      "id": "river-alte-oder",
-      "name": "Alte Oder",
-      "country": "de",
-      "center": {
-        "lat": 52.33754,
-        "lon": 14.55683
-      },
-      "kind": "river"
-    },
-    {
       "id": "altrheinhafen",
       "name": "Altrheinhafen",
       "country": "de",
@@ -92,16 +72,6 @@
         "lon": 11.1331
       },
       "osm": "relation/168893"
-    },
-    {
-      "id": "river-an-der-alten-werft",
-      "name": "An der Alten Werft",
-      "country": "de",
-      "center": {
-        "lat": 53.0866,
-        "lon": 7.38469
-      },
-      "kind": "river"
     },
     {
       "id": "aussenalster",
@@ -974,12 +944,12 @@
       "kind": "river"
     },
     {
-      "id": "river-obergraben",
-      "name": "Obergraben",
+      "id": "river-oder",
+      "name": "Oder",
       "country": "de",
       "center": {
-        "lat": 51.38034,
-        "lon": 7.39654
+        "lat": 52.33754,
+        "lon": 14.55683
       },
       "kind": "river"
     },
@@ -1072,16 +1042,6 @@
         "lon": 11.6689
       },
       "osm": "relation/12712656"
-    },
-    {
-      "id": "river-pumpwerkskanal",
-      "name": "Pumpwerkskanal",
-      "country": "de",
-      "center": {
-        "lat": 52.30095,
-        "lon": 8.92767
-      },
-      "kind": "river"
     },
     {
       "id": "regattabahn",
@@ -2506,11 +2466,11 @@
       "address": "Am Pumpwerk 2, 32423 Minden",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-pumpwerkskanal",
+      "lakeId": "river-weser",
       "launchPoint": {
         "lat": 52.30095,
         "lon": 8.92767,
-        "precision": "geocoded boathouse, 39 m from the Pumpwerkskanal",
+        "precision": "on the Weser (checked by hand), first matched to Pumpwerkskanal",
         "verified": false
       }
     },
@@ -3681,12 +3641,12 @@
       "address": "Lehmgasse 11, 15230 Frankfurt (Oder)",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-alte-oder",
+      "lakeId": "river-oder",
       "launchPoint": {
         "lat": 52.33754,
         "lon": 14.55683,
-        "precision": "geocoded club address, 61 m from the Alte Oder",
-        "verified": false
+        "precision": "shore of the Alte Oder at the boathouse, which the club rows out from (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -4711,9 +4671,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.02001,
-        "lon": 8.30049,
-        "precision": "shore of the Rhein nearest the town-level address, 3055 m away (water checked by hand)",
+        "lat": 49.01744,
+        "lon": 8.34219,
+        "precision": "shore of the Rheinhafen (Becken I) at the geocoded boathouse, as before the river move",
         "verified": false
       }
     },
@@ -4745,10 +4705,10 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.01625,
-        "lon": 8.29928,
-        "precision": "shore of the Rhein nearest the town-level address, 2700 m away (water checked by hand)",
-        "verified": false
+        "lat": 49.01013,
+        "lon": 8.33499,
+        "precision": "shore of the Rheinhafen at the boathouse, Hansastr. 18 b (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -5352,8 +5312,8 @@
       "launchPoint": {
         "lat": 49.48895,
         "lon": 8.45191,
-        "precision": "on the Rhein (checked by hand), first matched to Mühlauhafen",
-        "verified": false
+        "precision": "shore of the Mühlauhafen at the boathouse (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -6082,12 +6042,12 @@
       "address": "Ölmühlenweg 23, 26871 Papenburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-an-der-alten-werft",
+      "lakeId": "river-ems",
       "launchPoint": {
         "lat": 53.0866,
         "lon": 7.38469,
-        "precision": "geocoded boathouse, 26 m from the An der Alten Werft",
-        "verified": false
+        "precision": "shore of the Papenburg canals (An der Alten Werft) at the boathouse, which the club rows out from (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -6368,11 +6328,11 @@
       "address": "Am Pumpwerk 2, 32425 Minden",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-pumpwerkskanal",
+      "lakeId": "river-weser",
       "launchPoint": {
         "lat": 52.30095,
         "lon": 8.92767,
-        "precision": "geocoded boathouse, 39 m from the Pumpwerkskanal",
+        "precision": "on the Weser (checked by hand), first matched to Pumpwerkskanal",
         "verified": false
       }
     },
@@ -7187,12 +7147,12 @@
       "address": "Am Obergraben 6, 58300 Wetter",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-obergraben",
+      "lakeId": "river-ruhr",
       "launchPoint": {
         "lat": 51.38034,
         "lon": 7.39654,
-        "precision": "geocoded club address, 56 m from the Obergraben",
-        "verified": false
+        "precision": "shore of the Obergraben at the boathouse, which the club rows out from (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -7586,8 +7546,8 @@
       "launchPoint": {
         "lat": 53.47078,
         "lon": 10.00168,
-        "precision": "on the Süderelbe (checked by hand), first matched to Diamantgraben",
-        "verified": false
+        "precision": "shore of the Diamantgraben at the boathouse (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -9936,10 +9896,10 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.01625,
-        "lon": 8.29928,
-        "precision": "shore of the Rhein nearest the town-level address, 2700 m away (water checked by hand)",
-        "verified": false
+        "lat": 49.01013,
+        "lon": 8.33499,
+        "precision": "shore of the Rheinhafen at the boathouse, Hansastr. 18 b (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -10885,12 +10845,12 @@
       "address": "Berenbrock 22, 59348 Lüdinghausen",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-alte-fahrt",
+      "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
         "lat": 51.77859,
         "lon": 7.4095,
-        "precision": "geocoded boathouse, 38 m from the Alte Fahrt",
-        "verified": false
+        "precision": "shore of the Alte Fahrt at the boathouse, which the club rows out from (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -12302,8 +12262,8 @@
       "launchPoint": {
         "lat": 50.78905,
         "lon": 7.22651,
-        "precision": "on the Sieg (checked by hand), first matched to Siegburger Mühlengraben",
-        "verified": false
+        "precision": "shore of the Siegburger Mühlengraben at the boathouse (checked by the owner)",
+        "verified": true
       }
     },
     {
@@ -12441,12 +12401,12 @@
       "address": "Am Obergraben 3, 58300 Wetter",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-obergraben",
+      "lakeId": "river-ruhr",
       "launchPoint": {
         "lat": 51.38075,
         "lon": 7.39712,
-        "precision": "geocoded boathouse, 74 m from the Obergraben",
-        "verified": false
+        "precision": "shore of the Obergraben at the boathouse, which the club rows out from (checked by the owner)",
+        "verified": true
       }
     },
     {

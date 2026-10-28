@@ -1,0 +1,52 @@
+{
+  "comment": "Hand-checked rowing stretches for river clubs, answered by the owner on 2026-10-28. Read by the river section builder (not built yet) on top of the general rule: to the next weir or lock up to 25 km each way; on open rivers to a river mouth, a big tributary or a big harbour 3-15 km away, else 12 km upstream and 8 km downstream (10 and 10 on canals). club id -> \"bounds\" (what ends the stretch, in words), \"include\" (extra waters that belong to the stretch), \"direction\" (compass side of the boathouse the club rows on, where a lock or weir sits right at it), \"note\".",
+  "de": {
+    "ruder-club-mark": {
+      "include": ["Obergraben", "Harkortsee", "Ruhr"],
+      "bounds": "the three weirs around the boathouse: on the Obergraben just past the launch point, on the Ruhr below the Harkortsee, and on the parallel Ruhr arm next to the Obergraben",
+      "note": "rows from the Obergraben into the Harkortsee, which is the Ruhr there"
+    },
+    "sportgemeinschaft-demag-ev-wetter": {
+      "include": ["Obergraben", "Harkortsee", "Ruhr"],
+      "bounds": "same three weirs as ruder-club-mark"
+    },
+    "bessel-ruder-club": {
+      "include": ["Weser"],
+      "note": "Weser only; the Mittellandkanal needs a lock"
+    },
+    "rr-besselgymnasium-minden": {
+      "include": ["Weser"],
+      "note": "same as bessel-ruder-club"
+    },
+    "wilhelmsburger-ruder-club-von-1895": {
+      "include": ["Aßmannkanal", "Elbe"],
+      "note": "rows on the Wilhelmsburg canals and the Elbe"
+    },
+    "papenburger-ruderclub": {
+      "include": ["An der Alten Werft", "Ems"],
+      "note": "mainly the Ems, also the Papenburg canals"
+    },
+    "ruderverein-luedinghausen-1925": {
+      "include": ["Alte Fahrt", "Dortmund-Ems-Kanal"],
+      "note": "the Alte Fahrt is short, include all of it"
+    },
+    "frankfurter-ruder-club-von-1882": {
+      "include": ["Alte Oder", "Oder/Odra"],
+      "bounds": "on the Alte Oder from the weir near the boathouse to the Oder; on the Oder both ways by the general rule",
+      "note": "rows the Alte Oder out to the Oder"
+    },
+    "lueneburger-ruder-club-wiking-v1875": {
+      "include": ["Ilmenau"],
+      "note": "three boathouses: two on the Ilmenau, one on the Elbe-Seitenkanal (second place to add when its address is known)"
+    },
+    "limburger-club-fuer-wassersport-von-18951907": {"direction": "east"},
+    "sportvereinigung-scharnebeck-ev-ruderabteilung": {"direction": "north"},
+    "ruderclub-kleinmachnow-stahnsdorf-teltow": {"direction": "west"},
+    "wassersportverein-herne-1920": {"direction": "east"},
+    "ruder-club-bergedorf": {"direction": "west and south"},
+    "karlsruher-ruder-verein-wiking-von-1879": {
+      "include": ["Rheinhafen", "Rhein"],
+      "note": "launch point at the boathouse in the Rheinhafen (Hansastr. 18 b), rows out onto the Rhine"
+    }
+  }
+}
