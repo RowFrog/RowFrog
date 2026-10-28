@@ -6,7 +6,8 @@ name: River section survey
 # Works on the Geofabrik extracts of Germany, Austria and Switzerland
 # (scripts/osm_extract.py), filtered with osmium, so the busy public Overpass
 # servers are not needed. Runs when these scripts change, or by hand from the
-# Actions tab. Nothing is stored in the repo.
+# Actions tab. Nothing is stored in the repo. The water kind check
+# (water_kind_probe.py) can be added back as a step when needed.
 
 on:
   push:
@@ -24,7 +25,7 @@ permissions:
 jobs:
   survey:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 170
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -39,13 +40,13 @@ jobs:
             name=$(basename $area)
             curl -sSfL -o $name.pbf https://download.geofabrik.de/$area-latest.osm.pbf
             osmium tags-filter $name.pbf w/waterway=river,canal,weir,dam,lock_gate w/lock=yes n/waterway=weir,dam,lock_gate,waterfall,milestone -o lines-$name.pbf
-            osmium tags-filter $name.pbf nwr/natural=water nwr/landuse=reservoir wr/waterway=riverbank -o water-$name.pbf
+            osmium tags-filter $name.pbf nwr/natural=water nwr/landuse=reservoir,harbour wr/waterway=riverbank -o water-$name.pbf
             osmium export water-$name.pbf -f geojsonseq --geometry-types=polygon -o water-$name.geojsonseq
             rm $name.pbf water-$name.pbf
           done
           osmium merge lines-*.pbf -o lines.osm.pbf
           cat water-*.geojsonseq > water.geojsonseq
           ls -la
-      - run: python3 scripts/water_kind_probe.py --extract osm/water.geojsonseq
-      - run: python3 scripts/river_section_survey.py --extract osm/lines.osm.pbf osm/water.geojsonseq survey.json
-      - run: python3 scripts/river_section_summary.py survey.json
+      # 80 km reach: where the next weir or lock is beyond 25 km, and which
+      # rivers join and which harbours lie along the way (possible ends).
+      - run: python3 scripts/river_section_survey.py --extract osm/lines.osm.pbf osm/water.geojsonseq survey.json 80

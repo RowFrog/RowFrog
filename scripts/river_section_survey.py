@@ -116,7 +116,9 @@ def query(lat: float, lon: float) -> dict:
     return {"elements": els}
 
 
-def survey(g: dict, data: dict) -> dict:
+def survey(g: dict, data: dict, max_km: float = MAX_KM) -> dict:
+    """With max_km beyond MAX_KM (the ends survey) it also lists, per
+    direction, the rivers joining or branching off and the harbours passed."""
     lat0, lon0 = g["at"]
     k = math.cos(math.radians(lat0))
     to_m = lambda lon, lat: ((lon - lon0) * 111_320 * k, (lat - lat0) * 110_574)  # noqa: E731
@@ -164,10 +166,23 @@ def survey(g: dict, data: dict) -> dict:
             graph[n].append((m, d, down, False))
             graph[m].append((n, d, not down, False))
             bridged += 1
-    other_nodes = {}
+    other_nodes, side_rivers = {}, {}
     for w in others:
         for nid, p in zip(w["nodes"], w["geometry"]):
             other_nodes[nid] = w["tags"].get("name", "") or w["tags"]["waterway"]
+        if w["tags"].get("name") and w["tags"]["name"] != name:
+            for nid, how in ((w["nodes"][-1], "joins"), (w["nodes"][0], "branches off")):
+                if nid in coords:
+                    side_rivers.setdefault(nid, []).append((w["tags"]["waterway"], w["tags"]["name"], how))
+    lengths = data.get("lengths", {})
+    harbours = []
+    for e in els:
+        t = e.get("tags", {})
+        if e.get("harbour") and e.get("geometry"):
+            pts = [to_m(p["lon"], p["lat"]) for p in e["geometry"]]
+            if len(pts) >= 4:
+                harbours.append((t.get("name") or t.get("water") or t.get("landuse"), Polygon(pts).buffer(0)))
+    harbour_tree = STRtree([h for _, h in harbours])
 
     barrier_nodes, barrier_lines = {}, []
     for e in els:
@@ -199,16 +214,26 @@ def survey(g: dict, data: dict) -> dict:
     start = min(coords, key=lambda n: math.hypot(*coords[n]))
     result = {"river": name, "snapM": round(math.hypot(*coords[start])), "bridged": bridged}
     for downstream in (True, False):
-        dist, heap, stops = {start: 0.0}, [(0.0, start)], []
+        dist, heap, stops, events, seen_ev = {start: 0.0}, [(0.0, start)], [], [], set()
         while heap:
             d, n = heapq.heappop(heap)
             if d > dist.get(n, math.inf):
                 continue
+            for kind, other, how in side_rivers.get(n, ()):
+                if (other, how) not in seen_ev:
+                    seen_ev.add((other, how))
+                    events.append((d, f"{kind} {other} {how}", lengths.get(other)))
+            if harbours:
+                for i in harbour_tree.query(Point(coords[n]), predicate="dwithin", distance=150):
+                    label = "harbour " + str(harbours[i][0])
+                    if label not in seen_ev:
+                        seen_ev.add(label)
+                        events.append((d, label, None))
             moves = [x for x in graph.get(n, []) if x[2] == downstream]
             if not moves:
                 if n in other_nodes:
                     stops.append((d, "joins " + other_nodes[n]))
-                elif d < MAX_KM * 1000 - 3000:
+                elif d < max_km * 1000 - 3000:
                     stops.append((d, "line ends"))
                 else:
                     stops.append((d, "search edge"))
@@ -221,8 +246,8 @@ def survey(g: dict, data: dict) -> dict:
                     stops.append((d + w / 2, label))
                     continue
                 nd = d + w
-                if nd > MAX_KM * 1000:
-                    stops.append((MAX_KM * 1000, "none within 25 km"))
+                if nd > max_km * 1000:
+                    stops.append((max_km * 1000, f"none within {max_km:g} km"))
                     continue
                 if nd < dist.get(m, math.inf):
                     dist[m] = nd
@@ -233,6 +258,9 @@ def survey(g: dict, data: dict) -> dict:
         result[key + "Barrier"] = [round(barrier[0] / 1000, 1), barrier[1]] if barrier else None
         result[key + "Reach"] = round(max(dist.values()) / 1000, 1)
         result[key + "Stops"] = [[round(d / 1000, 1), r] for d, r in stops[:3]]
+        if max_km > MAX_KM:
+            events.sort(key=lambda e: e[0])
+            result[key + "Events"] = [[round(d / 1000, 1), r, ln] for d, r, ln in events[:25]]
 
     ms = [e for e in els if e["type"] == "node" and e.get("tags", {}).get("waterway") == "milestone"]
     if ms:
@@ -261,9 +289,10 @@ def main() -> None:
 
         ex = Extract(sys.argv[2], sys.argv[3])
         out, rows, groups = sys.argv[4], [], clusters()
+        reach = float(sys.argv[5]) if len(sys.argv) > 5 else MAX_KM
         for g in groups:
             try:
-                r = survey(g, ex.query(*g["at"], MAX_KM))
+                r = survey(g, ex.query(*g["at"], reach), reach)
             except Exception as e:  # research survey: note and go on
                 r = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
             rows.append({**g, **r})

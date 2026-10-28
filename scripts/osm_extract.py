@@ -67,12 +67,12 @@ class Extract:
                     self.ways_of_node[nid].append(w["id"])
         for n in self.nodes.values():
             self.node_grid[next(_cells(n["lat"], n["lon"], n["lat"], n["lon"]))].add(n["id"])
-        self.water = []  # (bounds, tags, geometry) of river/canal areas, for widths
+        self.water = []  # (tags, geometry) of river/canal areas (widths) and harbours
         self.water_grid = defaultdict(list)
         if water_seq:
             for f in read_water(water_seq):
                 t = f["properties"]
-                if t.get("waterway") == "riverbank" or t.get("water") in ("river", "canal"):
+                if t.get("waterway") == "riverbank" or t.get("water") in ("river", "canal", "harbour", "basin") or t.get("landuse") == "harbour":
                     g = shape(f["geometry"])
                     k = len(self.water)
                     self.water.append((t, g))
@@ -124,10 +124,33 @@ class Extract:
         for c in _cells(lat - nd, lon - nd / k, lat + nd, lon + nd / k):
             for i in self.water_grid[c]:
                 t, g = self.water[i]
+                if t.get("water") in ("harbour", "basin") or t.get("landuse") == "harbour":
+                    continue
                 for j, poly in enumerate(getattr(g, "geoms", [g])):
                     ring = [{"lat": y, "lon": x} for x, y in poly.exterior.coords]
                     els[("area", i, j)] = {"type": "way", "id": -i, "tags": t, "nodes": [], "geometry": ring}
-        return {"elements": list(els.values())}
+        # Harbours along the whole reach, and how long each touching river is
+        # (km of its named lines in the box), to tell big tributaries from brooks.
+        for c in box:
+            for i in self.water_grid[c]:
+                t, g = self.water[i]
+                if (t.get("water") in ("harbour", "basin") or t.get("landuse") == "harbour") and ("harbour", i) not in els:
+                    for j, poly in enumerate(getattr(g, "geoms", [g])):
+                        ring = [{"lat": y, "lon": x} for x, y in poly.exterior.coords]
+                        els[("harbour", i, j)] = {"type": "area", "id": -i, "tags": t, "harbour": True, "geometry": ring}
+                    els[("harbour", i)] = {"type": "marker", "tags": {}}
+        names = {w["tags"].get("name") for w in els.values() if w["type"] == "way" and w["tags"].get("waterway") in ("river", "canal")}
+        lengths = defaultdict(float)
+        counted = set()
+        for c in box:
+            for wid in self.way_grid[c]:
+                w = self.ways[wid]
+                n = w["tags"].get("name")
+                if n in names and wid not in counted and w["tags"].get("waterway") in ("river", "canal"):
+                    counted.add(wid)
+                    g = w["geometry"]
+                    lengths[n] += sum(math.hypot((a["lat"] - b["lat"]) * 110.574, (a["lon"] - b["lon"]) * 111.32 * k) for a, b in zip(g, g[1:]))
+        return {"elements": [e for e in els.values() if e["type"] != "marker"], "lengths": {n: round(v) for n, v in lengths.items()}}
 
 
 def read_water(path: str):
