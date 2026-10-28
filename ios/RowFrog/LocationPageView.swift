@@ -534,8 +534,8 @@ private struct NowCard: View {
                 }
                 Spacer(minLength: 0)
                 VStack(spacing: 2) {
-                    SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 34))
-                    Text(Sky(hour: hour).title).font(.caption).foregroundStyle(.secondary)
+                    SkyIcon(sky: data.sky, night: hour.sunUp == false).font(.system(size: 34))
+                    Text(data.sky.title).font(.caption).foregroundStyle(.secondary)
                 }
             }
             if let kit = ColdWaterKit(waterC: hourWaterC) {

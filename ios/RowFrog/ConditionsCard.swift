@@ -18,9 +18,9 @@ struct ConditionsCard: View {
         let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) })
         Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent", legend: .conditions) {
             HStack(spacing: 10) {
-                SkyIcon(sky: Sky(hour: hour), night: hour.sunUp == false).font(.system(size: 36))
+                SkyIcon(sky: data.sky, night: hour.sunUp == false).font(.system(size: 36))
                 VStack(alignment: .leading, spacing: 0) {
-                    Text(Sky(hour: hour).title).font(.headline)
+                    Text(data.sky.title).font(.headline)
                     Text(tr("%@ · feels like %@", Format.degrees(hour.temperatureC), Format.degrees(hour.apparentTemperatureC)))
                         .font(.caption)
                         .foregroundStyle(.secondary)
@@ -137,6 +137,22 @@ struct ConditionData {
         }
         if (now.precipitationMm ?? 0) >= 0.1 { return (Format.rain(now.precipitationMm), Sky(hour: now).precipitationKind ?? "", false) }
         return (tr("Dry"), later(), false)
+    }
+
+    /// The sky word and symbol for the shown moment, matched to the rain tile:
+    /// while the radar covers the moment it decides whether anything falls, so
+    /// the headline never says "Rain" over a "Dry" rain tile, or the other way
+    /// round. The forecast still names how cloudy it is and what falls.
+    var sky: Sky {
+        let model = Sky(hour: now)
+        guard let ahead = radarAhead else { return model }
+        let wet = model.precipitationKind != nil
+        if ahead.rainingNow {
+            if wet { return model }
+            if (now.temperatureC ?? 10) <= 0 { return .snow }
+            return (ahead.steps.first?.mmPerHour ?? 0) >= 10 ? .heavyRain : .rain
+        }
+        return wet ? Sky(code: nil, cloudCoverPct: now.cloudCoverPct, precipitationMm: 0) : model
     }
     var water: WaterTemperature? { forecast.waterTemperature }
     /// Without a station: the satellite reading carried forward, else the ice
