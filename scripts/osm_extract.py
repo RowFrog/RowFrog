@@ -81,7 +81,7 @@ class Extract:
                         self.water_grid[c].append(k)
         print(f"extract: {len(self.ways)} lines, {len(self.nodes)} barrier/km nodes, {len(self.water)} river areas", flush=True)
 
-    def query(self, lat: float, lon: float, max_km: float) -> dict:
+    def query(self, lat: float, lon: float, max_km: float, prefer: str = "") -> dict:
         """Like river_section_survey.query(): the waters near the point, the
         named river and the lines touching it, and weirs/locks in a box."""
         k = math.cos(math.radians(lat))
@@ -97,7 +97,10 @@ class Extract:
         dlat, dlon = (max_km + 2) / 110.574, (max_km + 2) / (111.32 * k)
         box = list(_cells(lat - dlat, lon - dlon, lat + dlat, lon + dlon))
         if lines:
-            nearest = min(lines, key=lambda w: min(dist_km(p) for p in w["geometry"]))
+            # The club's own water when its line is near, else the nearest named line.
+            own = [w for w in lines if prefer and w["tags"].get("name") == prefer]
+            named = [w for w in lines if w["tags"].get("name")]
+            nearest = min(own or named or lines, key=lambda w: min(dist_km(p) for p in w["geometry"]))
             name = nearest["tags"].get("name", "")
             if name:
                 for c in box:

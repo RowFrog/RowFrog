@@ -130,7 +130,9 @@ def survey(g: dict, data: dict, max_km: float = MAX_KM) -> dict:
     def way_dist(w):
         pts = [to_m(p["lon"], p["lat"]) for p in w["geometry"]]
         return LineString(pts).distance(Point(0, 0)) if len(pts) > 1 else 1e9
-    nearest = min(ways, key=way_dist)
+    own = [w for w in ways if w["tags"].get("name") == g.get("water") and way_dist(w) < 1500]
+    named = [w for w in ways if w["tags"].get("name") and way_dist(w) < 1500]
+    nearest = min(own or named or ways, key=way_dist)
     name = nearest["tags"].get("name", "")
     river = [w for w in ways if name and w["tags"].get("name", "") == name] or [nearest]
     others = [w for w in ways if w not in river]
@@ -292,7 +294,7 @@ def main() -> None:
         reach = float(sys.argv[5]) if len(sys.argv) > 5 else MAX_KM
         for g in groups:
             try:
-                r = survey(g, ex.query(*g["at"], reach), reach)
+                r = survey(g, ex.query(*g["at"], reach, g["water"]), reach)
             except Exception as e:  # research survey: note and go on
                 r = {"error": f"{type(e).__name__}: {str(e)[:200]}"}
             rows.append({**g, **r})
