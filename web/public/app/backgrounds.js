@@ -117,6 +117,13 @@ async function forgetOwnPicture(name) {
   objectUrls.delete(name);
 }
 
+/** Deletes all the visitor's own pictures, for the factory reset (BackgroundLibrary.deleteUserPicture). */
+export async function forgetOwnPictures() {
+  await pictures("readwrite", (s) => s.clear()).catch(() => {});
+  for (const url of objectUrls.values()) URL.revokeObjectURL(url);
+  objectUrls.clear();
+}
+
 // ---- Drawing the picture behind the page -------------------------------------------------
 
 const sampleUrl = (id) => `backgrounds/bg-${id}.jpg`;

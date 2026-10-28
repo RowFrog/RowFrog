@@ -14,7 +14,7 @@ import {
   precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
   loadLeaflet, testing, adviceOnly, footerLinks, mapBoat, mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM,
-  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs,
+  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, keptForecast,
 } from "./shared.js";
 import {
   isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
@@ -29,7 +29,7 @@ import { isOwn } from "./ownplace.js";
 import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
 import { layoutFor, visibleCards, openArrange } from "./arrange.js";
-import { showBackground, renderBackgrounds, backgroundSummary } from "./backgrounds.js";
+import { showBackground, renderBackgrounds, backgroundSummary, forgetOwnPictures } from "./backgrounds.js";
 import { renderTour, tourSeen, tip, withTip, wireTips, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
@@ -387,12 +387,19 @@ async function renderClub(id) {
   wireBottomBar(null);
   wireSwipe(id);
   let raw;
+  let failure = null;
   try {
     raw = await loadForecast(id, true);
-  } catch {
-    root.querySelector(".loading").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong></p><button class="primary" id="retry">${h(t("Try again"))}</button>`;
-    root.querySelector("#retry").addEventListener("click", () => renderClub(id));
-    return;
+  } catch (error) {
+    // The forecast loaded before stays, with why the update failed (LocationPageView.failure).
+    failure = refreshFailure(error, isOwn(id));
+    raw = keptForecast(id);
+    if (!raw) {
+      root.querySelector(".loading").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
+        <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button>`;
+      root.querySelector("#retry").addEventListener("click", () => renderClub(id));
+      return;
+    }
   }
   const forecast = forBoat(raw);
   const now = new Date();
@@ -402,7 +409,9 @@ async function renderClub(id) {
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
   // The cards in the order chosen under "Arrange this page".
   const cards = {
-    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint)), "conditionsExtras"),
+    // One tip at a time; the water estimate's only where no station measures the water.
+    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint)),
+      tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate"),
     // Off by default: the rain tile shows the radar; "Arrange this page" switches the card on.
     radar: () => (club?.launchPoint ? radarCard(club.launchPoint) : ""),
     lakeView: () => (forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""),
@@ -411,7 +420,7 @@ async function renderClub(id) {
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
-    ${clubHeader(club, name, isHome, forecast, stale)}
+    ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint) })}
     ${tip("topTile")}
@@ -548,7 +557,7 @@ window.addEventListener("resize", () => {
   }, 150);
 });
 
-function clubHeader(club, name, isHome, forecast, stale = false) {
+function clubHeader(club, name, isHome, forecast, stale = false, failure = null) {
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
@@ -556,7 +565,8 @@ function clubHeader(club, name, isHome, forecast, stale = false) {
     <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
-    ${forecast ? (stale
+    ${forecast && failure ? `<p class="orange small"><button class="link failed" id="failed" data-why="${h(failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", failure[0], time(forecast.generatedAt)))} ${icon("info")}</button></p>`
+      : forecast ? (stale
       ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>`
       : `<p class="sub small">${h(t("Updated %@", time(forecast.generatedAt)))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`) : ""}
     ${slow ? `<p class="sub small">${icon("hourglass")} ${h(t("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."))}</p>` : ""}
@@ -565,6 +575,8 @@ function clubHeader(club, name, isHome, forecast, stale = false) {
 
 function wireClubPage(id, club, raw, forecast, hour) {
   root.querySelector("#refresh")?.addEventListener("click", () => renderClub(id));
+  root.querySelector("#failed")?.addEventListener("click", (e) => openSheet(t("Could not update"), `<p>${h(e.currentTarget.dataset.why)}</p>
+    <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(club ?? { id }, () => renderClub(id)));
   root.querySelector("#add")?.addEventListener("click", () => {
     store.clubs = [...store.clubs, club];
@@ -582,11 +594,16 @@ function wireClubPage(id, club, raw, forecast, hour) {
     location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
   }));
   wireTopTile(root.querySelector(".card.now"), id);
+  root.querySelector("#source-line")?.addEventListener("click", () => openSheet(t("Where the forecast comes from"), sourceBody(forecast.forecastSource)));
   root.querySelectorAll("[data-hour]").forEach((b) => b.addEventListener("click", () => {
     const at = forecast.hours.find((x) => x.time === b.dataset.hour);
     // Within the radar's 2 hours the rain values come from the radar, later from the forecast.
     const radar = radarAt(club?.launchPoint);
-    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar }) + conditionsCard(forecast, at, radar), (sheet) => {
+    // The lake map at this hour, when the page has a lake view (HourDetailView).
+    const lakeMap = root.querySelector("#lake-view .lake-card")
+      ? `<a class="pill wide" href="#/lake/${encodeURIComponent(forecast.lakeId)}/${encodeURIComponent(id)}?at=${encodeURIComponent(at.time)}">${icon("map")} ${h(t("Lake map at %@", dayTime(at.time)))}</a>`
+      : "";
+    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar }) + conditionsCard(forecast, at, radar) + lakeMap, (sheet) => {
       // A value from a later hour opens its page at that hour.
       sheet.querySelectorAll("[data-tile]").forEach((t2) => t2.addEventListener("click", () => {
         location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
@@ -712,9 +729,9 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
     </div>
     ${ice ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17">${h(t(ice))}</span>
       <small class="sub">${h(iceLine === t("Bays and harbours first") ? t("Bays first") : iceLine)}</small></p>` : ""}
-    ${sun ? `<p class="daylight">${sun.up
+    ${sun ? `<p class="daylight" data-top="daylight" data-order="all" role="button" tabindex="0" aria-description="${h(t("Opens sunrise, sunset and daylight"))}">${sun.up
       ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span>${h(t("Sunset %@ · %@ of daylight left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}</span>`
-      : `<span class="moon">${icon("moon-star")}</span><span>${h(t("Sun is down · rowing advised again from %@", time(sun.sunrise)))}</span>`}</p>` : ""}
+      : `<span class="moon">${icon("moon-star")}</span><span>${h(t("Sun is down · rowing advised again from %@", time(sun.sunrise)))}</span>`}<span class="chev">${icon("chevron-right")}</span></p>` : ""}
   </section>`;
 }
 
@@ -727,7 +744,7 @@ function wireTopTile(card, id, at = null) {
   for (const el of card?.querySelectorAll("[data-top]") ?? []) {
     const open = (e) => {
       e.stopPropagation();
-      location.hash = `#/club/${encodeURIComponent(id)}/value/${el.dataset.top}${at ? `/${encodeURIComponent(at)}` : ""}?order=top`;
+      location.hash = `#/club/${encodeURIComponent(id)}/value/${el.dataset.top}${at ? `/${encodeURIComponent(at)}` : ""}${el.dataset.order === "all" ? "" : "?order=top"}`;
     };
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => {
@@ -1030,7 +1047,22 @@ function sourceLine(forecast) {
   const part = forecast.forecastSource?.parts?.[0];
   if (!part) return "";
   const short = part.provider.match(/\(([^)]+)\)\s*$/)?.[1] ?? part.provider;
-  return `<p class="source">${icon("info")} ${h(t("Forecast: %@", `${short} ${part.model}, ${t("%@ km grid", num(part.resolutionKm, part.resolutionKm % 1 ? 1 : 0))}`))}</p>`;
+  return `<p class="source"><button class="link" id="source-line">${icon("info")} ${h(t("Forecast: %@", `${short} ${part.model}, ${gridText(part.resolutionKm)}`))}</button></p>`;
+}
+
+const gridText = (km) => t("%@ km grid", num(km, km % 1 ? 1 : 0));
+
+/** Which weather models the forecast comes from, for which hours (ForecastSourceSheet). */
+function sourceBody(source) {
+  const parts = source.parts.map((part) => `<li><strong>${h(part.model)}</strong><span>${h(part.provider)}</span>
+    <small class="sub">${h(t("Hours %@ to %@ · %@", String(part.fromHour), String(part.toHour), gridText(part.resolutionKm)))}</small></li>`).join("");
+  return `<ul class="source-parts">${parts}</ul>
+    <p class="small sub">${h(t("Weather models are computer forecasts from national weather services. A finer grid shows more of the lake and the hills around it."))}</p>
+    <ul class="legend">
+      ${source.picked == null ? `<li>${icon("badge-check")}<span>${h(t("The app picks the weather model that does best for this region."))}</span></li>` : ""}
+      <li>${icon("gauge")}<span>${h(t("The choice is checked regularly against measured wind and temperature."))}</span></li>
+      <li>${icon("radio-tower")}<span>${h(t("Data via Open-Meteo."))}</span></li>
+    </ul>`;
 }
 
 function credits(forecast, club) {
@@ -1057,6 +1089,9 @@ const DATE_TITLES = { device: key("Device"), long: key("Long"), short: key("Shor
 // 18:30 in the lakes' time zone, to show each time format.
 const SAMPLE_TIME = Date.UTC(2026, 0, 15, 17, 30);
 
+/** What a factory reset keeps: the visitor's clubs, own boats and routes, and what they have already seen (AppSettings.resetToFactorySettings). */
+const FACTORY_KEEPS = ["rf.clubs", "rf.boats", "rf.routes", "rf.safety", "rf.catalog", "rf.tourSeen", "rf.tourPage", "rf.tipsClosed", "rf.countryByTown"];
+
 function renderSettings() {
   setTitle(t("Settings"));
   const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
@@ -1066,6 +1101,8 @@ function renderSettings() {
     ${testing()}
     <main class="page">
       <h1 class="large">${h(t("Settings"))}</h1>
+      <label class="search settings-search">${icon("search")}<input type="search" id="settings-search" placeholder="${h(t("Search"))}" aria-label="${h(t("Search the settings"))}"></label>
+      <p class="sub" id="settings-none" hidden></p>
       <section class="card group">
         <a class="row-setting" href="#/settings/boats"><span>${icon("sailboat")} ${h(t("Boats and limits"))}</span>
           <span class="sub">${h(boatTitle(selectedBoat()))} ${icon("chevron-right")}</span></a>
@@ -1114,6 +1151,7 @@ function renderSettings() {
         ${dataSaving() ? `<p class="row-setting green small">${icon("circle-check")} ${h(dataSaving() === "browser" ? t("Your browser asks to save data: the website is saving data now.") : t("On mobile data: the website is saving data now."))}</p>` : ""}
       </section>
       <p class="footer">${h(t("On mobile data, satellite pictures load only when you tap them; forecasts and warnings always load. When your browser or phone asks to save data, the website always does. Not every browser tells the website whether it is on mobile data."))}</p>
+      ${tip("saveData")}
       <h3 class="section">${icon("circle-help")} ${h(t("Help"))}</h3>
       <section class="card group">
         <a class="row-setting" href="#/tour"><span>${icon("circle-help")} ${h(t("Show the tour again"))}</span>${icon("chevron-right")}</a>
@@ -1123,10 +1161,15 @@ function renderSettings() {
       <p class="footer" id="tips-note"></p>
       ${card(t("Safety notice"), "shield-check", `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`)}
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
+        ${tip("factoryReset")}
+        <button id="factory" class="quiet">${icon("rotate-ccw")} ${h(t("Reset to factory settings"))}</button>
+        <p class="small sub">${h(t("Appearance, units, language, background pictures and the order of the club page cards go back to how the website came, and your own pictures are deleted. The boat for the rowing light is Small boats again and every boat's limits go back to the standard ones. Your clubs, home base, own boats and routes stay."))}</p>
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
       ${footerLinks()}
     </main>`;
   wireLanguage(renderSettings);
+  wireSettingsSearch(root.querySelector("main"));
+  wireTips(root.querySelector("main"));
   root.querySelectorAll("[data-unit]").forEach((select) => select.addEventListener("change", () => setUnit(select.dataset.unit, select.value)));
   root.querySelector("#tips-again").addEventListener("click", () => {
     replayTips();
@@ -1150,6 +1193,14 @@ function renderSettings() {
     store.mapZoom = b.dataset.zoom;
     renderSettings();
   }));
+  root.querySelector("#factory").addEventListener("click", async () => {
+    if (!confirm(t("Reset all settings?"))) return;
+    await forgetOwnPictures();
+    try {
+      for (const name of Object.keys(localStorage)) if (name.startsWith("rf.") && !FACTORY_KEEPS.includes(name)) localStorage.removeItem(name);
+    } catch {}
+    location.reload();
+  });
   root.querySelector("#reset").addEventListener("click", () => {
     if (!confirm(t("Delete your clubs, settings and the accepted safety notice from this browser?"))) return;
     try {
@@ -1157,6 +1208,31 @@ function renderSettings() {
     } catch {}
     location.hash = "#/";
     route();
+  });
+}
+
+/** Filters the settings to the cards whose title, rows or footer hold the words typed (SettingsSearch). */
+function wireSettingsSearch(main) {
+  const input = main.querySelector("#settings-search");
+  const none = main.querySelector("#settings-none");
+  const groups = [...main.querySelectorAll(":scope > section.card")].map((card) => {
+    const parts = [card];
+    const before = card.previousElementSibling;
+    if (before?.matches("h3.section")) parts.unshift(before);
+    const after = card.nextElementSibling;
+    if (after?.matches("p.footer")) parts.push(after);
+    return { parts, text: parts.map((p) => p.textContent).join(" ").toLowerCase() };
+  });
+  input.addEventListener("input", () => {
+    const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    let found = 0;
+    for (const g of groups) {
+      const show = words.every((w) => g.text.includes(w));
+      if (show) found++;
+      g.parts.forEach((p) => (p.hidden = !show));
+    }
+    none.hidden = found > 0;
+    none.textContent = found ? "" : t("No settings found for “%@”.", input.value.trim());
   });
 }
 
@@ -1320,10 +1396,11 @@ function route(scroll = true) {
   if (value) return renderValuePage(root, decodeURIComponent(value[1]), value[2], value[3] ? decodeURIComponent(value[3]) : null, value[4] ?? null);
   const club = hash.match(/^\/club\/(.+)$/);
   if (club) return renderClub(decodeURIComponent(club[1]));
-  const lake = hash.match(/^\/lake\/([^/]+)(?:\/(.+))?$/);
+  const lake = hash.match(/^\/lake\/([^/?]+)(?:\/([^?]+))?(?:\?at=(.+))?$/);
   if (lake) {
     const clubId = lake[2] ? decodeURIComponent(lake[2]) : null;
-    return renderLakeMap(root, decodeURIComponent(lake[1]), clubId, clubId ? `#/club/${encodeURIComponent(clubId)}` : "#/");
+    const at = lake[3] ? new Date(decodeURIComponent(lake[3])) : null;
+    return renderLakeMap(root, decodeURIComponent(lake[1]), clubId, clubId ? `#/club/${encodeURIComponent(clubId)}` : "#/", at);
   }
   const add = hash.match(/^\/add-place(?:\?name=(.*))?$/);
   if (add) return renderAddPlace(root, add[1] ? decodeURIComponent(add[1]) : "");

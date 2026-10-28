@@ -89,7 +89,7 @@ function caption(lake, shot) {
   const { meta } = lake;
   const cloud = (shot.lakeCloud ?? 0) * 100;
   const ice = store.satLayers.includes("ice") && available(lake).some((l) => l.id === "ice");
-  return `<p class="sub small">${h(cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(shot.date), num(cloud)))}</p>
+  return `<p class="sub small">${h(cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(shot.date), num(cloud)))} <button class="link sub sat-why" data-sat-why aria-label="${h(t("Why only every few days?"))}">${icon("info")}</button></p>
     ${ice ? `<p class="sub small">${h(t("Satellite ice map, %@", dayLabel(meta.ice.date)))}</p>` : ""}
     <p class="sub small">${h(meta.attribution)}${ice && meta.ice.attribution ? ` · ${h(meta.ice.attribution)}` : ""}</p>`;
 }
@@ -109,6 +109,8 @@ function wireControls(el, lake, setKind) {
   el.querySelectorAll("[data-kind]").forEach((b) => b.addEventListener("click", () => setKind(b.dataset.kind)));
   el.querySelectorAll("[data-layer]").forEach((b) => b.addEventListener("click", () => switchLayer(b.dataset.layer)));
   el.querySelector("[data-sat-legend]")?.addEventListener("click", () => openSheet(t("Legend"), legend(lake)));
+  el.querySelectorAll("[data-sat-why]").forEach((b) => b.addEventListener("click", () => openSheet(t("Why only every few days?"),
+    `<p>${h(t("Sentinel-2 photographs each lake from about 800 km up, every 2 to 5 days in the late morning, as its two satellites circle the Earth. It takes pictures in daylight like a camera and cannot see through clouds, so the latest picture may be cloudy and the clearest one older."))}</p>`)));
 }
 
 /** The picture with an empty layer for the overlay, which is drawn once its size is known. */

@@ -179,6 +179,14 @@ const TIPS = {
   weatherMap: [key("Weather on the map"), key("The map shows this weather around the lake. Press play to watch it move, or open it full screen with the arrows."), "map", "mapLink"],
   mapLink: [key("Chart and map together"), key("The map shows the hour of the chart's blue line. Tap the chain to give the map its own time, and again to link them."), "link"],
   rowImport: [key("Import a row"), key("Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace."), "upload"],
+  saveData: [key("Out on mobile data?"), key("Switch on Save mobile data: satellite pictures then load only when you tap them and the radar needs fewer downloads. Forecasts and warnings always load."), "radio-tower"],
+  factoryReset: [key("What a reset does"), key("Appearance, units, language and background pictures go back to how the app came, and your own pictures are deleted. Your locations and home base stay."), "rotate-ccw"],
+  waterEstimate: [key("Water temperature from space"), key("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date."), "satellite"],
+  closeLoop: [key("Row a loop"), key("Close the loop: tap within 50 m of your club, or use Close loop."), "repeat"],
+  turningPoint: [key("Change a turning point"), key("Drag a point to move it, or delete just this one."), "move"],
+  boatTime: [key("Lake at the boat's time"), key("Move the boat along your route to see the lake at the time you get there."), "sailboat"],
+  stretchPoint: [key("Add a point on the way"), key("Tap a stretch of your route to add a turning point there, or pull the stretch to add one and move it at once."), "spline"],
+  oneWay: [key("One way or out and back"), key("New routes go one way. Turn on Out and back to row the same way back."), "arrow-up-down"],
   routePlanning: [key("Plan a route"), key("Tap here, then tap your turning points on the water. You see the light along the route and the best time to start."), "route"],
 };
 
