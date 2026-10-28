@@ -274,9 +274,17 @@ private struct LocationSummaryRow: View {
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(.orange)
                         }
-                        Text(now.reasons.isEmpty ? tr("All conditions within the limits") : tr("Why: %@", now.reasons.map(\.label).joined(separator: ", ")))
-                            .font(.caption)
-                            .lineLimit(2)
+                        if now.reasons.isEmpty {
+                            // Short enough for one line beside the widest numbers; shrinks a little rather than wrap.
+                            Text(tr("All within the limits"))
+                                .font(.caption)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
+                        } else {
+                            Text(tr("Why: %@", now.reasons.map(\.label).joined(separator: ", ")))
+                                .font(.caption)
+                                .lineLimit(2)
+                        }
                         if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC) {
                             Label(kit.title, systemImage: ColdWaterKit.symbol)
                                 .font(.caption.weight(.semibold))
