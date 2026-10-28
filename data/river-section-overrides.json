@@ -1,5 +1,5 @@
 {
-  "comment": "Hand-checked rowing stretches for river clubs, answered by the owner on 2026-10-28. Read by scripts/build_river_sections.py on top of the general rule: to the next weir or lock up to 25 km each way; on open rivers to a river mouth, a big tributary or a big harbour 3-15 km away, else 12 km upstream and 8 km downstream (10 and 10 on canals). club id -> \"bounds\" (what ends the stretch, in words), \"include\" (extra waters that belong to the stretch), \"direction\" (compass side of the boathouse the club rows on, where a lock or weir sits right at it), \"note\".",
+  "comment": "Hand-checked rowing stretches for river clubs, answered by the owner on 2026-10-28. Read by scripts/build_river_sections.py on top of the general rule: to the next weir or lock up to 25 km each way; on open rivers to a river mouth, a big tributary or a big harbour 3-15 km away, else 12 km upstream and 8 km downstream (10 and 10 on canals). club id -> \"bounds\" (what ends the stretch, in words), \"include\" (extra waters that belong to the stretch), \"direction\" (compass side of the boathouse the club rows on, where a lock or weir sits right at it), \"behindKm\" (how far the other side still counts, for the water in front of the boathouse), \"note\".",
   "de": {
     "ruder-club-mark": {
       "include": ["Obergraben", "Harkortsee", "Ruhr"],
@@ -37,7 +37,9 @@
     },
     "lueneburger-ruder-club-wiking-v1875": {
       "include": ["Ilmenau", "Lösegraben"],
-      "note": "three boathouses: Willy-Brandt-Straße 15 on the Ilmenau, Am Schifferwall 6 on the Lösegraben (an Ilmenau arm; place lueneburger-ruder-club-wiking-v1875-loesegraben) and Elso-Klöver-Straße on the Elbe-Seitenkanal (place lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal)"
+      "direction": "north",
+      "behindKm": 0.5,
+      "note": "rows north toward Bardowick, plus the water right in front of the Willy-Brandt-Straße boathouse (owner 2026-10-28). Three boathouses: Willy-Brandt-Straße 15 on the Ilmenau, Am Schifferwall 6 on the Lösegraben (an Ilmenau arm; place lueneburger-ruder-club-wiking-v1875-loesegraben) and Elso-Klöver-Straße on the Elbe-Seitenkanal (place lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal)"
     },
     "limburger-club-fuer-wassersport-von-18951907": {"direction": "east"},
     "sportvereinigung-scharnebeck-ev-ruderabteilung": {"direction": "north"},

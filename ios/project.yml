@@ -119,6 +119,7 @@ targets:
       - path: RowFrog/Backgrounds.swift
       - path: RowFrog/WidgetViews.swift
       - path: RowFrog/OwnPlaces.swift
+      - path: RowFrog/RiverModels.swift
     entitlements:
       path: RowFrogWidget/RowFrogWidget.entitlements
       properties:
