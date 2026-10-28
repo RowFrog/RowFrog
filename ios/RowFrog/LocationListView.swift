@@ -77,9 +77,12 @@ struct LocationListView: View {
                         offsets.map { saved[$0] }.forEach(locations.remove)
                     }
                     if let updated = locations.saved.compactMap({ forecasts.forecasts[$0.id]?.generatedAt }).min() {
-                        Text(tr("Updated %@ · Pull down to refresh", Format.time(updated)))
+                        // The oldest forecast, and the oldest load: what the whole list is at least as new as.
+                        let loaded = locations.saved.map { forecasts.loadedAt[$0.id] }
+                        Text(LocationPageView.updatedLine(forecast: updated, loaded: loaded.contains(nil) ? nil : loaded.compactMap { $0 }.min()))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
                             .frame(maxWidth: .infinity)
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)

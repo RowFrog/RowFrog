@@ -17,3 +17,12 @@ test("the frame key changes with the frame and matches the app's", async () => {
   assert.notEqual(frameKey(meta), frameKey({ ...meta, width: 436 }));
   assert.equal(frameKey({}), null);
 });
+
+test("the satellite view stripes the lake while the whole lake is red or amber", async () => {
+  const { stripeSvg } = await import("../public/app/satellite.js");
+  assert.equal(stripeSvg(null, 300, 400, "c"), "");
+  const red = stripeSvg("red", 300, 400, "c");
+  assert.match(red, /rgba\(255,59,48/);
+  assert.match(red, /clip-path="url\(#c\)"/);
+  assert.match(stripeSvg("amber", 300, 400, "c"), /rgba\(255,149,0/);
+});

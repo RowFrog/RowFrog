@@ -22,7 +22,7 @@ import {
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, allowsMore, key,
 } from "./logic.js";
-import { fillLakeCard, renderLakeMap } from "./lakeview.js";
+import { fillLakeCard, renderLakeMap, forgetView } from "./lakeview.js";
 import { satelliteCard } from "./satellite.js";
 import { renderAddPlace } from "./addplace.js";
 import { isOwn } from "./ownplace.js";
@@ -233,7 +233,9 @@ async function renderList() {
     if (at) updated.push(at);
   }));
   if (updated.length) {
-    root.querySelector("#updated").textContent = t("Updated %@", time(Math.min(...updated.map((d) => new Date(d)))));
+    const loaded = store.clubs.map((c) => forecasts.get(c.id)?.at);
+    root.querySelector("#updated").textContent = updatedLine(Math.min(...updated.map((d) => new Date(d))),
+      loaded.includes(undefined) ? null : Math.min(...loaded));
   }
 }
 
@@ -609,6 +611,54 @@ window.addEventListener("resize", () => {
   }, 150);
 });
 
+/** When the forecast was made and, if another minute, when this browser loaded it (LocationPageView.updatedLine). */
+function updatedLine(made, loaded) {
+  return loaded == null || time(loaded) === time(made)
+    ? t("Forecast from %@", time(made))
+    : t("Forecast from %@ · loaded %@", time(made), time(loaded));
+}
+
+/** Clubs loaded longer ago than this are loaded again on coming back (ForecastStore.reloadAfter). */
+const RELOAD_AFTER = 10 * 60 * 1000;
+const due = (id) => {
+  const kept = forecasts.get(id);
+  return !kept || Date.now() - kept.at > RELOAD_AFTER;
+};
+
+/** The other saved clubs after the one in front, so a swipe already has new data; all of them, or only those due. */
+function reloadOthers(except, onlyDue) {
+  for (const c of store.clubs) {
+    if (c.id !== except && (!onlyDue || due(c.id))) loadForecast(c.id, true).catch(() => {});
+  }
+}
+
+/** The "Refresh" button: this club with its lake view first, then all other clubs (ForecastStore.refresh). */
+async function refreshClub(id, lakeId) {
+  const line = root.querySelector("#updated-line");
+  if (line) line.textContent = t("Updating…");
+  if (lakeId) forgetView(lakeId);
+  await renderClub(id);
+  reloadOthers(id, false);
+}
+
+/**
+ * Back in the tab: the club page or the list in front loads again first, its
+ * lake view too, then the other saved clubs; clubs loaded in the last ten
+ * minutes stay as they are (ForecastStore.refreshOnReturn).
+ */
+function refreshOnReturn() {
+  const hash = location.hash.replace(/^#/, "");
+  const club = hash.match(/^\/club\/([^/?]+)$/);
+  const onList = hash === "/list" || hash === "" || hash === "/";
+  const shown = club ? decodeURIComponent(club[1]) : !onList ? null : hash === "/list" || !store.clubs.length ? null : store.clubs[0].id;
+  const inFront = shown ? [shown] : onList ? store.clubs.map((c) => c.id) : [];
+  const first = inFront.filter(due);
+  const lakeId = shown ? forecasts.get(shown)?.forecast?.lakeId : null;
+  if (!first.length) return reloadOthers(shown, true);
+  if (lakeId) forgetView(lakeId);
+  Promise.resolve(route(false)).finally(() => reloadOthers(shown, true));
+}
+
 function clubHeader(club, name, isHome, forecast, stale = false, failure = null) {
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
@@ -620,13 +670,13 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
     ${forecast && failure ? `<p class="orange small"><button class="link failed" id="failed" data-why="${h(failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", failure[0], time(forecast.generatedAt)))} ${icon("info")}</button></p>`
       : forecast ? (stale
       ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>`
-      : `<p class="sub small">${h(t("Updated %@", time(forecast.generatedAt)))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`) : ""}
+      : `<p class="sub small" id="updated-line">${h(updatedLine(forecast.generatedAt, forecasts.get(club?.id)?.at))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`) : ""}
     ${slow ? `<p class="sub small">${icon("hourglass")} ${h(t("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."))}</p>` : ""}
   </header>`;
 }
 
 function wireClubPage(id, club, raw, forecast, hour) {
-  root.querySelector("#refresh")?.addEventListener("click", () => renderClub(id));
+  root.querySelector("#refresh")?.addEventListener("click", () => refreshClub(id, forecast.lakeId));
   root.querySelector("#failed")?.addEventListener("click", (e) => openSheet(t("Could not update"), `<p>${h(e.currentTarget.dataset.why)}</p>
     <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(club ?? { id }, () => renderClub(id)));
@@ -1508,7 +1558,7 @@ function route(scroll = true) {
 window.addEventListener("hashchange", () => route());
 // Back on the page after a while: show fresh numbers.
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") forecasts.clear();
+  if (document.visibilityState === "visible") refreshOnReturn();
 });
 
 applyAppearance();

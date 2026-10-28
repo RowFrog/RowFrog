@@ -25,10 +25,15 @@ const views = new Map();
 async function loadView(lakeId) {
   const kept = views.get(lakeId);
   if (kept && Date.now() - kept.at < 30 * 60 * 1000) return kept.view;
-  const view = decodeView(await getJSON(`lakes/${encodeURIComponent(lakeId)}/view`));
+  // The lake card and the satellite card ask at once: one download for both.
+  const view = getJSON(`lakes/${encodeURIComponent(lakeId)}/view`).then(decodeView);
   views.set(lakeId, { at: Date.now(), view });
+  view.catch(() => views.get(lakeId)?.view === view && views.delete(lakeId));
   return view;
 }
+
+/** Pull to refresh and coming back renew the lake view (LocationPageView.refreshLakeView). */
+export const forgetView = (lakeId) => views.delete(lakeId);
 
 /** The water of the club page that last showed each lake, for lakes without a station. */
 const clubWater = new Map();
