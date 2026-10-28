@@ -109,7 +109,7 @@ struct RiverSection: Codable, Hashable {
 struct SectionEnd: Codable, Hashable {
     /// From the clubs, along the river.
     let km: Double
-    /// "weir/lock", "river", "harbour", "mouth", "line end", "km sign" or "cap".
+    /// "weir/lock", "river", "harbour", "mouth", "line end", "km sign", "cap" or "in front" (of the boathouse).
     let end: String
     /// What OpenStreetMap calls it, e.g. "lock Offenbach", "Main joins", "river km 42".
     let what: String

@@ -442,11 +442,17 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
             # Where a weir or lock sits right at the boathouse, the owner named the side the club rows on.
             walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0)
             bearing = river.bearing(walk)
+            behind = None
             if allowed and bearing is not None and not any(abs((bearing - a + 180) % 360 - 180) <= 67.5 for a in allowed):
-                continue
+                # The other side counts only for the water right in front of the boathouse, where the owner asked for it.
+                behind = override.get("behindKm")
+                if not behind:
+                    continue
             key = "down" if downstream else "up"
             cap = CAP_CANAL_KM if river.is_canal else (CAP_DOWN_KM if downstream else CAP_UP_KM)
             limit = side_limit(river, walk, lengths, harbours_along(river, walk, harbour_polys), cap, km_signs)
+            if behind and limit[0] > behind:
+                limit = (behind, "in front", "in front of the boathouse")
             if VERBOSE:
                 print(f"  {river_name} {key}: reach {max(walk['dist'].values()) / 1000:.2f} km, stops "
                       + "; ".join(f"{d / 1000:.2f} {kind} {label}".strip() for d, kind, label in walk["stops"][:12]), flush=True)
