@@ -14227,10 +14227,10 @@
       "country": "de",
       "lakeId": "river-ilmenau",
       "launchPoint": {
-        "lat": 53.25006,
-        "lon": 10.41289,
-        "precision": "provisional: the Ilmenau boathouse's point until the Lösegraben boathouse (Am Schifferwall 6) is pinned",
-        "verified": false
+        "lat": 53.253943,
+        "lon": 10.413725,
+        "precision": "shore of the Lösegraben at the boathouse, Am Schifferwall 6 (checked by the owner)",
+        "verified": true
       }
     }
   ]
