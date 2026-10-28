@@ -26,3 +26,12 @@ test("the satellite view stripes the lake while the whole lake is red or amber",
   assert.match(red, /clip-path="url\(#c\)"/);
   assert.match(stripeSvg("amber", 300, 400, "c"), /rgba\(255,149,0/);
 });
+
+test("a clearest picture from the latest day is not offered twice", async () => {
+  const { pictureKinds } = await import("../public/app/satellite.js");
+  const shot = (date) => ({ image: `${date}.jpg`, date });
+  const kinds = (meta) => pictureKinds(meta).map(([k]) => k);
+  assert.deepEqual(kinds({ latest: shot("2026-10-27"), clearest: shot("2026-10-27") }), ["latest"]);
+  assert.deepEqual(kinds({ latest: shot("2026-10-27"), mostlyClear: shot("2026-10-22"), clearest: shot("2026-10-16") }), ["latest", "mostlyClear", "clearest"]);
+  assert.deepEqual(kinds({ clearest: shot("2026-10-16") }), ["clearest"]);
+});

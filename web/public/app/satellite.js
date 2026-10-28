@@ -45,7 +45,18 @@ function switchLayer(id) {
 async function loadLake(lakeId) {
   const meta = await getJSON(`lakes/${encodeURIComponent(lakeId)}/satellite`);
   const view = lakeId.startsWith("club-") ? null : await viewForMap(lakeId).catch(() => null);
-  return { lakeId, meta, view, kinds: KINDS.filter(([k]) => meta[k]?.image) };
+  return { lakeId, meta, view, kinds: pictureKinds(meta) };
+}
+
+/** The pictures to pick from, one per day: a clearest pass from the latest day is the latest picture (SatellitePicture.kinds). */
+export function pictureKinds(meta) {
+  const dates = new Set();
+  return KINDS.filter(([k]) => {
+    const shot = meta[k];
+    if (!shot?.image || dates.has(shot.date)) return false;
+    dates.add(shot.date);
+    return true;
+  });
 }
 
 /** The layers with something to show on this lake. */
