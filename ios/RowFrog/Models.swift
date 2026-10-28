@@ -310,7 +310,7 @@ struct Reason: Codable, Hashable {
     /// The condition whose icon stands for this reason.
     var symbol: String {
         if condition.hasSuffix("_warning") { return "exclamationmark.triangle.fill" }
-        if ["shipping_stopped", "high_water", "current"].contains(condition) { return CurrentTile.symbol }
+        if ["shipping_stopped", "high_water", "current"].contains(condition) { return RiverConditions.symbol }
         return (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
     }
 }
