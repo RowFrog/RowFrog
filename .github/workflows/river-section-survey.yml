@@ -5,19 +5,10 @@ name: River section survey
 # tags every club water, e.g. reservoirs (scripts/water_kind_probe.py).
 # Works on the Geofabrik extracts of Germany, Austria and Switzerland
 # (scripts/osm_extract.py), filtered with osmium, so the busy public Overpass
-# servers are not needed. Runs when these scripts change, or by hand from the
-# Actions tab. Nothing is stored in the repo. The water kind check
+# servers are not needed. Runs by hand from the Actions tab. Nothing is stored in the repo. The water kind check
 # (water_kind_probe.py) can be added back as a step when needed.
 
 on:
-  push:
-    paths:
-      - scripts/river_section_survey.py
-      - scripts/river_section_summary.py
-      - scripts/water_kind_probe.py
-      - scripts/osm_extract.py
-      - scripts/river_section_ends.py
-      - .github/workflows/river-section-survey.yml
   workflow_dispatch:
 
 permissions:
