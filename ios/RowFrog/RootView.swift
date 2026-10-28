@@ -392,8 +392,10 @@ private struct PageBar: View {
         .foregroundStyle(.primary)
         .padding(.horizontal)
         .padding(.bottom, 4)
-        // Bars keep their size at the largest text sizes, as the system's do.
-        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        // The bar keeps its size at larger text sizes, as the system's bars do
+        // (its pieces are 44 pt high); a long press shows a piece enlarged.
+        .dynamicTypeSize(...DynamicTypeSize.large)
+        .accessibilityShowsLargeContentViewer()
     }
 
     /// The boat the rowing light is for, picked on the spot.
