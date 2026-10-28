@@ -804,6 +804,14 @@ private struct DeveloperSettingsView: View {
                 SectionFooter(tr("Test: on a confirmed club's page, tap the forecast line at the bottom to pick another weather model. Switched off, every club uses the automatic model again. Tap the version seven times to show this again."))
             }
             .surfaceRows()
+            Section {
+                Picker(tr("Club page columns"), selection: $settings.columnFill) {
+                    ForEach(ColumnFill.allCases) { Text($0.title).tag($0) }
+                }
+            } footer: {
+                SectionFooter(tr("On wide screens, how the two columns of a club page end level. Fold the 48 hours: the table shows 24 hours until opened. Always 48 hours: the whole table, so columns may end further apart. Switching the developer options off goes back to folding."))
+            }
+            .surfaceRows()
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)

@@ -433,11 +433,13 @@ async function renderClub(id) {
     ${(waterForHour(raw, hour) ?? 99) < COLD.waterC ? tip("coldWater") : ""}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
     <div class="cards">${visibleCards(layoutFor(id)).map((c) => cards[c]?.() ?? "").join("")}</div>
-    ${tip("source")}
-    ${sourceLine(forecast)}
-    <button class="pill" id="arrange">${icon("arrow-up-down")} ${h(t("Arrange this page"))}</button>
-    ${credits(forecast, club)}
-    ${footerLinks()}`;
+    <div class="page-end">
+      ${tip("source")}
+      ${sourceLine(forecast)}
+      <button class="pill" id="arrange">${icon("arrow-up-down")} ${h(t("Arrange this page"))}</button>
+      ${credits(forecast, club)}
+      ${footerLinks()}
+    </div>`;
   root.querySelector("nav.bottom").outerHTML = bottomBar(id, raw);
   wireBottomBar(raw);
   wireClubPage(id, club, raw, forecast, hour);
@@ -494,7 +496,10 @@ function sideRows(currentId) {
 
 /**
  * The cards in two columns on a wide page, each going to the shorter column
- * in turn (BalancedColumns in the app); one column on a narrow one.
+ * in turn (BalancedColumns in the app); one column on a narrow one. In two
+ * columns the page's end (source, Arrange, credits) goes into the shorter
+ * column too, and the lake view and launch point maps there grow until both
+ * columns end level, each card at most one window tall.
  */
 function balanceCards() {
   const box = root.querySelector(".cards");
@@ -503,32 +508,79 @@ function balanceCards() {
   const cards = [...box.querySelectorAll(".card")];
   cards.forEach((card, i) => (card.dataset.order ??= i));
   cards.sort((a, b) => a.dataset.order - b.dataset.order);
+  const end = root.querySelector(".page-end");
   // Keep the page's height while the cards move: emptied, it would be shorter
   // than the window and Safari, which has no scroll anchoring, jumps to the top.
   const scroller = document.scrollingElement;
   const y = scroller.scrollTop;
-  box.style.minHeight = `${box.offsetHeight}px`;
+  box.style.minHeight = `${box.offsetHeight + (end?.offsetHeight ?? 0)}px`;
   requestAnimationFrame(() => {
     box.style.minHeight = "";
     if (scroller.scrollTop !== y) scroller.scrollTop = y;
   });
+  unfill(cards);
   box.replaceChildren();
   box.classList.toggle("two", box.clientWidth >= TWO_COLUMNS);
   if (!box.classList.contains("two")) {
     cardWatch?.disconnect();
     box.append(...cards);
+    if (end) box.after(end);
     return fitSatellite();
   }
   const columns = [document.createElement("div"), document.createElement("div")];
   columns.forEach((c) => (c.className = "col"));
   box.append(...columns);
-  for (const card of cards) {
-    const shorter = columns[1].offsetHeight < columns[0].offsetHeight ? columns[1] : columns[0];
-    shorter.append(card);
+  // An opened 48 hours count with their folded height, so opening them moves
+  // and grows nothing else.
+  const extra = [0, 0];
+  const counted = (i) => columns[i].offsetHeight - extra[i];
+  const shorter = () => (counted(1) < counted(0) ? 1 : 0);
+  for (const item of end ? [...cards, end] : cards) {
+    const i = shorter();
+    columns[i].append(item);
+    if (item.classList.contains("open")) extra[i] += Math.max(0, item.offsetHeight - Number(item.dataset.folded || item.offsetHeight));
+    else if (item.classList.contains("folds")) item.dataset.folded = item.offsetHeight;
   }
   // The columns set the card's width, and with it the caption's lines.
   fitSatellite();
+  fill(columns[shorter()], Math.abs(counted(0) - counted(1)));
   watchCards(cards);
+}
+
+/** The maps that may grow to fill a column, by card. */
+function fillerMap(card) {
+  return card.querySelector("#launch-map, .lake-card canvas.mini");
+}
+
+/** Every map back at its own height. */
+function unfill(cards) {
+  for (const card of cards) {
+    const map = fillerMap(card);
+    if (map?.dataset.base != null) map.style.height = map.dataset.base;
+  }
+}
+
+/** The maps in the shorter column share out what it lacks, each card up to one window. */
+function fill(column, missing) {
+  const bar = document.querySelector(".bottom")?.offsetHeight ?? 0;
+  const tallest = window.innerHeight - bar - 32;
+  let open = [...column.querySelectorAll(".card")].filter((card) => fillerMap(card) && card.offsetHeight < tallest);
+  const grow = new Map(open.map((card) => [card, 0]));
+  while (missing > 0.5 && open.length) {
+    const share = missing / open.length;
+    for (const card of open) {
+      const more = Math.min(share, tallest - card.offsetHeight - grow.get(card));
+      grow.set(card, grow.get(card) + more);
+      missing -= more;
+    }
+    open = open.filter((card) => card.offsetHeight + grow.get(card) < tallest - 0.5);
+  }
+  for (const [card, more] of grow) {
+    if (more < 1) continue;
+    const map = fillerMap(card);
+    map.dataset.base ??= map.style.height;
+    map.style.height = `${map.offsetHeight + Math.round(more)}px`;
+  }
 }
 
 let cardWatch = null;
@@ -558,8 +610,8 @@ window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     fitSatellite();
-    const box = root.querySelector(".cards");
-    if (box && box.classList.contains("two") !== box.clientWidth >= TWO_COLUMNS) balanceCards();
+    // The columns, and how far the maps grow, follow the window's width and height.
+    if (root.querySelector(".cards")) balanceCards();
   }, 150);
 });
 
@@ -632,6 +684,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
   root.querySelector("#failed")?.addEventListener("click", (e) => openSheet(t("Could not update"), `<p>${h(e.currentTarget.dataset.why)}</p>
     <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(club ?? { id }, () => renderClub(id)));
+  root.querySelector(".hourly-card .fold")?.addEventListener("click", (e) => foldHourly(e.currentTarget));
   root.querySelector("#add")?.addEventListener("click", () => {
     store.clubs = [...store.clubs, club];
     renderClub(id);
@@ -1040,16 +1093,18 @@ function hourlyCard(forecast, now, stale) {
       ["precipitation", unitSymbol("rain")], ["visibility", unitSymbol("distance")]]
       .map(([c, unit]) => `<span class="num">${icon(CONDITION_ICONS[c])}<small>${h(unit)}</small></span>`).join("")}</div>`;
   let lastDay = null;
-  const rows = list.map((x) => {
+  const rows = list.map((x, i) => {
     const day = localDay(x.time);
+    // Past the first 24 hours: hidden while the table is folded in two columns.
+    const later = i >= FOLDED_HOURS ? "later" : "";
     let header = "";
     if (day !== lastDay) {
       const sun = forecast.daylight?.find((d) => d.date === day);
-      header = `<div class="dayhead"><strong>${h(dayLabel(day))}</strong>${sun ? `<span>${icon("sunrise")} ${h(time(sun.sunrise))} ${icon("sunset")} ${h(time(sun.sunset))}</span>` : ""}</div>`;
+      header = `<div class="dayhead ${later}"><strong>${h(dayLabel(day))}</strong>${sun ? `<span>${icon("sunrise")} ${h(time(sun.sunrise))} ${icon("sunset")} ${h(time(sun.sunset))}</span>` : ""}</div>`;
       lastDay = day;
     }
     const fog = lightFor(x, ["fog"]);
-    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""}" data-hour="${h(x.time)}">
+    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later}" data-hour="${h(x.time)}">
       <span>${h(time(x.time))}</span><span>${dot(x.light, 12, stale)}</span><span>${skySymbol(x)}</span>
       <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
       <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>
@@ -1059,7 +1114,37 @@ function hourlyCard(forecast, now, stale) {
       <span class="num ${fog && fog !== "green" ? (fog === "red" ? "red" : "orange") : ""}">${h(distanceNumber(x.visibilityM))}</span>
     </button>`;
   }).join("");
-  return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}${rows}</div>`, { legend: "hourly", cls: "hourly-card" });
+  const fold = FOLD_HOURLY && list.length > FOLDED_HOURS ? `<button class="fold" type="button" aria-expanded="false">${foldLabel(false)}</button>` : "";
+  return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}${rows}</div>${fold}`,
+    { legend: "hourly", cls: `hourly-card ${fold ? "folds" : ""}` });
+}
+
+/**
+ * In two columns the 48 hours show the first 24 until opened, so the columns
+ * end level (ColumnFill.fold in the app). False keeps the whole table, the
+ * app's developer choice "Always 48 hours".
+ */
+const FOLD_HOURLY = true;
+const FOLDED_HOURS = 24;
+
+function foldLabel(open) {
+  return `${icon(open ? "chevron-up" : "chevron-down")} <span>${h(open ? t("Show fewer hours") : t("Show 24 more hours"))}</span>`;
+}
+
+/**
+ * Opens the rest of the table or folds it back. Its folded height stays what
+ * the columns count with (balanceCards), so no other card moves or grows; folding
+ * keeps the button where it was in the window.
+ */
+function foldHourly(button) {
+  const box = button.closest(".hourly-card");
+  const open = !box.classList.contains("open");
+  const before = button.getBoundingClientRect().top;
+  if (open) box.dataset.folded = box.offsetHeight;
+  box.classList.toggle("open", open);
+  button.setAttribute("aria-expanded", String(open));
+  button.innerHTML = foldLabel(open);
+  if (!open) document.scrollingElement.scrollTop += button.getBoundingClientRect().top - before;
 }
 
 /** The launch point on a map, with what it stands for (LaunchPointMapCard). */
@@ -1089,6 +1174,8 @@ async function showLaunchMap(club) {
     icon: L.divIcon({ className: "pin", html: icon(store.clubs[0]?.id === club.id ? "house" : "map-pin"), iconSize: [30, 30], iconAnchor: [15, 15] }),
     keyboard: false,
   }).addTo(map);
+  // Grown or shrunk to fill its column (balanceCards).
+  new ResizeObserver(() => map.invalidateSize()).observe(box);
 }
 
 /**

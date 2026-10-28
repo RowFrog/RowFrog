@@ -53,14 +53,16 @@ struct LakeViewCard: View {
                     if aspect >= 1.3 {
                         HStack(alignment: .top, spacing: 14) {
                             LakeMiniMap(view: view, hour: hour, clubID: clubID)
-                                .frame(width: 120, height: min(320, max(170, 120 * aspect)))
+                                // Taller when the club page's columns need it filled (BalancedColumns).
+                                .frame(width: 120)
+                                .frame(minHeight: min(320, max(170, 120 * aspect)), idealHeight: min(320, max(170, 120 * aspect)), maxHeight: .infinity)
                             summary(view, hour)
                         }
                     } else {
                         VStack(alignment: .leading, spacing: 12) {
                             LakeMiniMap(view: view, hour: hour, clubID: clubID)
                                 .frame(maxWidth: .infinity)
-                                .frame(height: 180)
+                                .frame(minHeight: 180, idealHeight: 180, maxHeight: .infinity)
                             summary(view, hour)
                         }
                     }
