@@ -758,8 +758,9 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         "waterForecast": None if water_forecast is None else [{"date": d.isoformat(), "celsius": c} for d, c in water_forecast],
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
-        # Rivers with a gauge: level, trend and current now, for the Current tile (river.py).
-        "river": river.to_json(river_now, gauge) if gauge else None,
+        # Rivers: level, trend and current now from the gauge, for the Current tile (river.py);
+        # without a gauge an empty block, so the app still shows the tile instead of the ice tile.
+        "river": river.to_json(river_now, gauge) if gauge else {"gauge": None, "now": None} if lake.kind == "river" else None,
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.
         "attribution": (ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]])
         + ([STATION_CREDIT[station.network]] if water is not None and station.network in STATION_CREDIT else [])

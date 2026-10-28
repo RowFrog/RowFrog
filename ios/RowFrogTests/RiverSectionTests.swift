@@ -33,4 +33,25 @@ final class RiverSectionTests: XCTestCase {
         XCTAssertTrue(SectionEnd(km: 7.3, end: "weir/lock", what: "lock", at: at).isBarrier)
         XCTAssertFalse(SectionEnd(km: 12, end: "cap", what: "", at: at).isBarrier)
     }
+
+    func testRiverBlockDecodesAndPaceFollowsTheCurrent() throws {
+        let json = """
+        {"gauge": {"name": "Köln", "water": "Rhein", "riverKm": 688.0, "lat": 50.94, "lon": 6.96, "distanceKm": 1.9,
+                   "meanCm": 300, "meanHighCm": 700, "shippingStopsCm": 830, "meanDischarge": 2100},
+         "limits": {"currentAmberMs": 1.5, "currentRedMs": 2.5}, "attribution": "WSV PEGELONLINE, DL-DE Zero 2.0",
+         "now": {"time": "2026-10-28T16:15:00+01:00", "levelCm": 850, "trend": "rising", "state": "shipping_stopped",
+                 "discharge": 6200, "speedMs": 2.1, "speedMeasured": false, "light": "red",
+                 "history": [{"time": "2026-10-28T15:00:00+01:00", "levelCm": 845}, {"time": "2026-10-28T16:00:00+01:00", "levelCm": 850}]}}
+        """
+        let river = try APIClient.decoder.decode(RiverConditions.self, from: Data(json.utf8))
+        XCTAssertEqual(river.now?.light, .red)
+        XCTAssertEqual(river.now?.stateTitle, tr("Shipping stopped"))
+        XCTAssertEqual(river.gauge?.shippingStopsCm, 830)
+        // 2:30 /500 m is 3.33 m/s in still water; 1 m/s against makes 2.33 m/s over ground.
+        XCTAssertEqual(RiverFormat.pace(150, current: 1.0, downstream: false)!, 500 / (500.0 / 150 - 1), accuracy: 0.01)
+        XCTAssertEqual(RiverFormat.pace(150, current: 1.0, downstream: true)!, 500 / (500.0 / 150 + 1), accuracy: 0.01)
+        XCTAssertNil(RiverFormat.pace(150, current: 3.4, downstream: false), "no headway against a current faster than the boat")
+        let none = try APIClient.decoder.decode(RiverConditions.self, from: Data(#"{"gauge": null, "now": null}"#.utf8))
+        XCTAssertNil(none.gauge)
+    }
 }

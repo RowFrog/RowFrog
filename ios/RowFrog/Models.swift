@@ -274,6 +274,9 @@ struct Reason: Codable, Hashable {
         case "twilight": tr("Sunrise / sunset")
         case "cold_water": tr("Very cold water")
         case "cool_water": tr("Cold-water shock possible")
+        case "shipping_stopped": tr("Shipping stopped")
+        case "high_water": tr("High water")
+        case "current": tr("Strong current")
         default: condition
         }
     }
@@ -297,6 +300,9 @@ struct Reason: Codable, Hashable {
         case "twilight": tr("Sunrise or sunset falls in this hour.")
         case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
         case "cool_water": tr("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", Format.temperature(15))
+        case "shipping_stopped": tr("The river is above the gauge's shipping mark: even motor ships stay in.")
+        case "high_water": tr("The river is at or above mean high water: strong current, flotsam and flooded banks.")
+        case "current": tr("The current is strong (from the nearest gauge).")
         default: condition
         }
     }
@@ -304,6 +310,7 @@ struct Reason: Codable, Hashable {
     /// The condition whose icon stands for this reason.
     var symbol: String {
         if condition.hasSuffix("_warning") { return "exclamationmark.triangle.fill" }
+        if ["shipping_stopped", "high_water", "current"].contains(condition) { return CurrentTile.symbol }
         return (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
     }
 }
@@ -603,6 +610,9 @@ struct ClubForecast: Codable, Hashable {
     var warnings: Warnings? = nil
     /// Missing from older backends.
     var ice: IceEstimate? = nil
+    /// River clubs only: the gauge's level and the current, for the Current tile
+    /// that takes the ice tile's place. Missing on lakes and from older backends.
+    var river: RiverConditions? = nil
     let attribution: [String]
     /// Missing from older backends.
     var forecastSource: ForecastSource? = nil
