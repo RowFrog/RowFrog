@@ -729,6 +729,132 @@
         "lon": 13.18248,
         "place": "the Gatow site, Kladower Damm 45"
       }
+    },
+    "berliner-ruder-club-hevella": {
+      "water": "Havel",
+      "kind": "river",
+      "id": "river-havel",
+      "replace": true
+    },
+    "berliner-ruder-gesellschaft": {
+      "water": "Havel",
+      "kind": "river",
+      "id": "river-havel",
+      "replace": true
+    },
+    "pichelsberger-rudergesellschaft-1914": {
+      "water": "Havel",
+      "kind": "river",
+      "id": "river-havel",
+      "replace": true
+    },
+    "ruderverein-hellas-offenbach": {
+      "water": "Main",
+      "kind": "river",
+      "id": "river-main",
+      "replace": true
+    },
+    "srr-leibnizgymnasium-offenbach": {
+      "water": "Main",
+      "kind": "river",
+      "id": "river-main",
+      "replace": true
+    },
+    "sportgemeinschaft-wiking-1903": {
+      "water": "Main",
+      "kind": "river",
+      "id": "river-main",
+      "replace": true
+    },
+    "mannheimer-regatta-verein": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "mannheimer-rudergesellschaft-rheinau-1909": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "frankfurter-ruderverein-von-1865": {
+      "water": "Main",
+      "kind": "river",
+      "id": "river-main",
+      "replace": true
+    },
+    "celler-ruderverein": {
+      "water": "Aller",
+      "kind": "river",
+      "id": "river-aller",
+      "replace": true
+    },
+    "hermann-billung-celle": {
+      "water": "Aller",
+      "kind": "river",
+      "id": "river-aller",
+      "replace": true
+    },
+    "ruderverein-muenster-von-1882": {
+      "water": "Dortmund-Ems-Kanal",
+      "kind": "river",
+      "id": "river-dortmund-ems-kanal",
+      "replace": true
+    },
+    "rudergesellschaft-treis-karden-1969": {
+      "water": "Mosel",
+      "kind": "river",
+      "id": "river-mosel",
+      "replace": true
+    },
+    "ruderverein-muehlberg": {
+      "water": "Elbe",
+      "kind": "river",
+      "id": "river-elbe",
+      "replace": true
+    },
+    "siegburger-ruderverein-1910": {
+      "water": "Sieg",
+      "kind": "river",
+      "id": "river-sieg",
+      "replace": true
+    },
+    "ruder-verein-nienburg": {
+      "water": "Weser",
+      "kind": "river",
+      "id": "river-weser",
+      "replace": true
+    },
+    "ruder-club-havel-brandenburg": {
+      "water": "Havel",
+      "kind": "river",
+      "id": "river-havel",
+      "replace": true
+    },
+    "karlsruher-rheinklub-alemannia": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "karlsruher-ruder-verein-wiking-von-1879": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "ruderriege-des-karlsruher-institut-fuer-technologie": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "ruder-club-suederelbe-von-1892-ev-hamburg": {
+      "water": "Süderelbe",
+      "kind": "river",
+      "id": "river-suederelbe",
+      "replace": true
     }
   }
 }
