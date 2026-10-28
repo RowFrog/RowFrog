@@ -181,6 +181,26 @@ export function rainOutlook(r, hours) {
 /** The radar from the shown moment on, while it still reaches half an hour ahead. */
 export const radarAhead = (d) => ahead(d.radar, d.moment.getTime());
 
+/**
+ * The sky word and symbol for the shown moment, matched to the rain tile
+ * (ConditionData.sky): while the radar covers the moment it decides whether
+ * anything falls, so the headline never says "Rain" over a "Dry" rain tile, or
+ * the other way round. The forecast still names how cloudy it is and what falls.
+ */
+export function skyNow(d) {
+  const hour = d.now;
+  const model = sky(hour.weatherCode, hour.cloudCoverPct, hour.precipitationMm);
+  const a = radarAhead(d);
+  if (!a) return model;
+  const wet = precipitationKind(model) != null;
+  if (rainingNow(a)) {
+    if (wet) return model;
+    if ((hour.temperatureC ?? 10) <= 0) return "snow";
+    return (a.steps[0]?.mm ?? 0) >= 10 ? "heavyRain" : "rain";
+  }
+  return wet ? sky(null, hour.cloudCoverPct, 0) : model;
+}
+
 /** The first forecast hour with rain after the radar's two hours (or from the shown hour without radar). */
 export function forecastRain(d) {
   const a = radarAhead(d);
