@@ -234,7 +234,7 @@
     ]
    },
    "down": {
-    "km": 0.8,
+    "km": 0.81,
     "end": "weir/lock",
     "what": "weir",
     "at": [
@@ -557,7 +557,7 @@
    "clubs": [
     "sportverein-energie-berlin-ev-abt-rudern"
    ],
-   "lengthKm": 32.6,
+   "lengthKm": 32.5,
    "up": {
     "km": 0.12,
     "end": "mouth",
@@ -599,7 +599,7 @@
     "ruderclub-koenigs-wusterhausen",
     "wassersportverein-koenigs-wusterhausen"
    ],
-   "lengthKm": 9.9,
+   "lengthKm": 9.8,
    "up": {
     "km": 0.47,
     "end": "weir/lock",
@@ -723,7 +723,7 @@
     "wsw-ruderunion-duernstein",
     "wasser-sportunion-wachau"
    ],
-   "lengthKm": 23.7,
+   "lengthKm": 20.0,
    "up": {
     "km": 12.0,
     "end": "cap",
@@ -744,7 +744,7 @@
    },
    "pictureBox": [
     15.45421,
-    48.35107,
+    48.35371,
     15.58948,
     48.41022
    ]
@@ -889,14 +889,14 @@
     "steiner-ruder-club",
     "steiner-ruder-club-1867"
    ],
-   "lengthKm": 38.2,
+   "lengthKm": 34.5,
    "up": {
     "km": 12.0,
     "end": "cap",
     "what": "",
     "at": [
-     48.38014,
-     15.45792
+     48.38197,
+     15.46017
     ]
    },
    "down": {
@@ -1015,7 +1015,7 @@
    "clubs": [
     "ruder-union-melk"
    ],
-   "lengthKm": 13.6,
+   "lengthKm": 10.3,
    "up": {
     "km": 2.42,
     "end": "weir/lock",
@@ -2717,15 +2717,15 @@
     "end": "weir/lock",
     "what": "weir Strom für Bad Hersfeld",
     "at": [
-     50.86195,
-     9.70831
+     50.86168,
+     9.70823
     ]
    },
    "pictureBox": [
     9.68088,
     50.84079,
-    9.7088,
-    50.8619
+    9.70846,
+    50.86173
    ]
   },
   {
@@ -2743,7 +2743,7 @@
    "clubs": [
     "georg-august-universitaet-goettingen-zentrale-einrichtung-hochschulsport"
    ],
-   "lengthKm": 8.2,
+   "lengthKm": 7.9,
    "up": {
     "km": 6.4,
     "end": "weir/lock",
@@ -3776,7 +3776,7 @@
     "club-aviron-ville-fribourg",
     "club-aviron-ville-fribourg-ruderclub-freiburg"
    ],
-   "lengthKm": 4.5,
+   "lengthKm": 4.2,
    "up": {
     "km": 3.51,
     "end": "mouth",
@@ -4017,7 +4017,7 @@
     "srr-gymnasium-philippinum-weilburg",
     "weilburger-ruderverein-1905"
    ],
-   "lengthKm": 4.7,
+   "lengthKm": 3.3,
    "up": {
     "km": 2.75,
     "end": "weir/lock",
@@ -4028,17 +4028,17 @@
     ]
    },
    "down": {
-    "km": 1.98,
+    "km": 0.56,
     "end": "weir/lock",
     "what": "weir",
     "at": [
-     50.48233,
-     8.2621
+     50.48604,
+     8.26323
     ]
    },
    "pictureBox": [
-    8.25667,
-    50.48205,
+    8.26284,
+    50.48346,
     8.27394,
     50.50837
    ]
@@ -4061,12 +4061,12 @@
    ],
    "lengthKm": 4.0,
    "up": {
-    "km": 3.6,
+    "km": 3.69,
     "end": "weir/lock",
     "what": "weir",
     "at": [
-     50.57979,
-     8.52514
+     50.58023,
+     8.52582
     ]
    },
    "down": {
@@ -4082,7 +4082,7 @@
     8.5007,
     50.55847,
     8.5266,
-    50.57983
+    50.5804
    ]
   },
   {
@@ -5318,8 +5318,8 @@
     "end": "weir/lock",
     "what": "lock_gate Unterwasser Wintrich",
     "at": [
-     49.88043,
-     6.94678
+     49.88034,
+     6.94697
     ]
    },
    "down": {
@@ -5333,7 +5333,7 @@
    },
    "pictureBox": [
     7.00327,
-    49.88008,
+    49.88041,
     7.07442,
     49.95033
    ]
@@ -5602,7 +5602,7 @@
    "clubs": [
     "ruderclub-eilenburg"
    ],
-   "lengthKm": 11.7,
+   "lengthKm": 11.0,
    "up": {
     "km": 7.65,
     "end": "mouth",
@@ -5684,14 +5684,14 @@
    "clubs": [
     "wurzener-rudervereinigung-schwarz-gelb"
    ],
-   "lengthKm": 11.4,
+   "lengthKm": 11.2,
    "up": {
     "km": 10.06,
     "end": "weir/lock",
     "what": "weir",
     "at": [
      51.27983,
-     12.77134
+     12.77071
     ]
    },
    "down": {
@@ -5809,14 +5809,14 @@
     "binger-rudergesellschaft-1911",
     "trv-rhenania-bingen-1897"
    ],
-   "lengthKm": 6.6,
+   "lengthKm": 5.8,
    "up": {
     "km": 3.56,
     "end": "weir/lock",
     "what": "weir",
     "at": [
-     49.9245,
-     7.89962
+     49.92429,
+     7.89864
     ]
    },
    "down": {
@@ -6262,7 +6262,7 @@
    "clubs": [
     "tuebinger-ruderverein-fidelia-18771911"
    ],
-   "lengthKm": 3.8,
+   "lengthKm": 3.7,
    "up": {
     "km": 1.18,
     "end": "weir/lock",
@@ -6922,14 +6922,14 @@
    "clubs": [
     "wassersportverein-honnef"
    ],
-   "lengthKm": 34.5,
+   "lengthKm": 20.4,
    "up": {
-    "km": 24.95,
-    "end": "weir/lock",
-    "what": "weir",
+    "km": 12.43,
+    "end": "river",
+    "what": "Ahr joins",
     "at": [
-     50.46194,
-     7.36031
+     50.55992,
+     7.27928
     ]
    },
    "down": {
@@ -6944,7 +6944,7 @@
    "pictureBox": [
     7.15967,
     50.59927,
-    7.2869,
+    7.28061,
     50.68971
    ]
   },
@@ -7765,49 +7765,6 @@
     49.96997,
     8.09134,
     50.03699
-   ]
-  },
-  {
-   "id": "river-rhein-karlsruhe",
-   "water": "river-rhein",
-   "name": "Rhein",
-   "river": "Becken III",
-   "waterway": "canal",
-   "country": "de",
-   "place": "Karlsruhe",
-   "center": {
-    "lat": 49.01257,
-    "lon": 8.33739
-   },
-   "clubs": [
-    "karlsruher-rheinklub-alemannia",
-    "karlsruher-ruder-verein-wiking-von-1879",
-    "ruderriege-des-karlsruher-institut-fuer-technologie"
-   ],
-   "lengthKm": 18.6,
-   "up": {
-    "km": 1.3,
-    "end": "weir/lock",
-    "what": "lock_gate",
-    "at": [
-     49.01604,
-     8.31363
-    ]
-   },
-   "down": {
-    "km": 0.0,
-    "end": "line end",
-    "what": "",
-    "at": [
-     49.01733,
-     8.34145
-    ]
-   },
-   "pictureBox": [
-    8.26891,
-    48.96735,
-    8.34156,
-    49.05779
    ]
   },
   {
@@ -8828,14 +8785,14 @@
     "srv-karl-ziegler-schule",
     "wassersportverein-muelheim-ruhr"
    ],
-   "lengthKm": 15.7,
+   "lengthKm": 7.9,
    "up": {
-    "km": 14.23,
+    "km": 6.56,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir",
     "at": [
-     51.39654,
-     7.00072
+     51.36164,
+     6.9363
     ]
    },
    "down": {
@@ -8850,7 +8807,7 @@
    "pictureBox": [
     6.87772,
     51.36467,
-    6.96284,
+    6.93687,
     51.41339
    ]
   },
@@ -8995,7 +8952,7 @@
    "clubs": [
     "bernburger-ruderclub"
    ],
-   "lengthKm": 31.4,
+   "lengthKm": 14.4,
    "up": {
     "km": 13.42,
     "end": "weir/lock",
@@ -9006,19 +8963,19 @@
     ]
    },
    "down": {
-    "km": 16.72,
+    "km": 0.5,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Wehr Bernburg",
     "at": [
-     51.89954,
-     11.77714
+     51.79523,
+     11.73262
     ]
    },
    "pictureBox": [
     11.66818,
     51.74648,
-    11.78948,
-    51.83692
+    11.734,
+    51.79574
    ]
   },
   {
@@ -10518,14 +10475,14 @@
     "ruderclub-stolzenau-von-1986",
     "srr-gymnasium-stolzenau"
    ],
-   "lengthKm": 20.6,
+   "lengthKm": 15.1,
    "up": {
-    "km": 12.0,
-    "end": "cap",
-    "what": "",
+    "km": 6.78,
+    "end": "weir/lock",
+    "what": "weir Staustufe Schlüsselburg",
     "at": [
-     52.48111,
-     9.03398
+     52.48201,
+     9.08225
     ]
    },
    "down": {
@@ -10538,8 +10495,8 @@
     ]
    },
    "pictureBox": [
-    9.03206,
-    52.47273,
+    9.0665,
+    52.4818,
     9.11292,
     52.56317
    ]
