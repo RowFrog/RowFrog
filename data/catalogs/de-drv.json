@@ -4745,9 +4745,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.01016,
-        "lon": 8.33511,
-        "precision": "on the Rhein (checked by hand), first matched to Becken IV",
+        "lat": 49.01625,
+        "lon": 8.29928,
+        "precision": "shore of the Rhein nearest the town-level address, 2700 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7748,9 +7748,9 @@
       "country": "de",
       "lakeId": "river-havel",
       "launchPoint": {
-        "lat": 52.41266,
-        "lon": 12.56215,
-        "precision": "on the Havel (checked by hand), first matched to Triebwerkskanal Neustädtischer Streng (Näthewinde)",
+        "lat": 52.42305,
+        "lon": 12.56914,
+        "precision": "shore of the Havel nearest the town-level address, 1249 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -10666,9 +10666,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.11276,
-        "lon": 8.74098,
-        "precision": "on the Main (checked by hand), first matched to Offenbacher Hafen",
+        "lat": 50.11342,
+        "lon": 8.74034,
+        "precision": "shore of the Main nearest the town-level address, 86 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -12501,9 +12501,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.11276,
-        "lon": 8.74098,
-        "precision": "on the Main (checked by hand), first matched to Offenbacher Hafen",
+        "lat": 50.11342,
+        "lon": 8.74034,
+        "precision": "shore of the Main nearest the town-level address, 86 m away (water checked by hand)",
         "verified": false
       }
     },
