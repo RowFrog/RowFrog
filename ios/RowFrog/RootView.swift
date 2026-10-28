@@ -67,7 +67,7 @@ struct RootView: View {
                             .frame(width: Self.sideListWidth)
                             Divider().ignoresSafeArea()
                         }
-                        pages(saved, showsListButton: !sideList)
+                        pages(saved, showsListButton: !sideList, insets: geometry.safeAreaInsets)
                     }
                 }
             }
@@ -169,17 +169,22 @@ struct RootView: View {
     static let sideListMinWidth: CGFloat = 860
     static let sideListMinHeight: CGFloat = 560
 
-    private func pages(_ saved: [Club], showsListButton: Bool) -> some View {
-        TabView(selection: $selection) {
+    private func pages(_ saved: [Club], showsListButton: Bool, insets: EdgeInsets) -> some View {
+        // Each page keeps clear of the clock and the floating buttons with its own
+        // margins, while the cards scroll on under both (Apple's guide).
+        let margins = EdgeInsets(top: insets.top, leading: 0, bottom: insets.bottom + PageBar.height, trailing: 0)
+        return TabView(selection: $selection) {
             ForEach(saved) { club in
                 LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
                     .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
                     .environment(\.isCurrentPage, club.id == selection)
                     .environment(\.openBoatSettings, openBoatSettings)
+                    .environment(\.pageMargins, margins)
                     .tag(club.id)
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .ignoresSafeArea(edges: [.top, .bottom])
         .background {
             // Behind the pages, not on each one: a swiping TabView keeps its
             // pages out of the status bar and the page bar, which left black bars.
@@ -192,18 +197,20 @@ struct RootView: View {
             }
             .animation(.easeInOut(duration: 0.35), value: selection)
         }
-        .onAppear { if selection.isEmpty { selection = saved[0].id } }
-        .safeAreaInset(edge: .bottom, spacing: 0) {
-            let settings = AppSettings.shared
-            let picture = BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection)
+        .overlay(alignment: .top) {
+            TopEdgeFade(statusBar: insets.top)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .ignoresSafeArea(edges: .top)
+        }
+        .overlay(alignment: .bottom) {
             let forecast = forecasts.forecasts[selection]
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
                     showList: showsListButton ? { showingList = true } : nil,
                     showSettings: { showingSettings = true },
                     now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius)
-                .environment(\.surface, picture == nil ? .plain : settings.tileSurface)
                 .environment(\.openBoatSettings, openBoatSettings)
         }
+        .onAppear { if selection.isEmpty { selection = saved[0].id } }
     }
 
     /// The countries of the saved clubs, the phone's and any near the user;
@@ -276,8 +283,40 @@ struct RootView: View {
     }
 }
 
-/// The settings cog, page dots with a house for the home base, and the list
-/// button, as the Weather app has its map and list at the two ends.
+/// Behind the clock and the signal icons: the cards blur and fade out as they
+/// scroll under, as Apple's guide asks for the status bar; a plain strip in
+/// Low Power Mode, which draws nothing live.
+private struct TopEdgeFade: View {
+    let statusBar: CGFloat
+    /// How far the fade reaches below the status bar.
+    static let tail: CGFloat = 14
+
+    var body: some View {
+        Group {
+            if PowerState.shared.lowPower {
+                Rectangle().fill(Color(.systemGroupedBackground))
+                    .frame(height: statusBar)
+            } else {
+                let height = statusBar + Self.tail
+                Rectangle().fill(.regularMaterial)
+                    .mask {
+                        LinearGradient(stops: [.init(color: .black, location: 0),
+                                               .init(color: .black, location: statusBar * 0.6 / max(height, 1)),
+                                               .init(color: .clear, location: 1)],
+                                       startPoint: .top, endPoint: .bottom)
+                    }
+                    .frame(height: height)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+/// The settings cog with the boat, the page dots with a house for the home base,
+/// and the list button, as the Weather app has its map and list at the two ends.
+/// Each group floats on its own piece of glass, all as tall as the bar, with
+/// the symbols in one colour over the picture (Apple's guide for toolbars).
 private struct PageBar: View {
     let clubs: [Club]
     let homeID: String
@@ -291,50 +330,70 @@ private struct PageBar: View {
     let now: ForecastHour?
     let waterC: Double?
 
+    /// The buttons' height, which every piece shares.
+    static let buttonHeight: CGFloat = 44
+    /// What the pages keep free above the home indicator: the buttons and a gap.
+    static let height: CGFloat = buttonHeight + 12
+    /// The cog and the boat with their piece's inner margins; the list's side
+    /// is as wide, so the dots stay in the middle.
+    private static let sideWidth: CGFloat = 44 + 56 + 8
+
     var body: some View {
-        HStack {
-            if let showSettings {
-                Button(action: showSettings) {
-                    Image(systemName: "gearshape")
-                        .font(.title3)
-                        .frame(width: 44, height: 44)
+        HStack(spacing: 0) {
+            HStack(spacing: 0) {
+                if let showSettings {
+                    Button(action: showSettings) {
+                        Image(systemName: "gearshape")
+                            .font(.title3)
+                            .frame(width: 44, height: Self.buttonHeight)
+                    }
+                    .accessibilityLabel(tr("Settings"))
                 }
-                .accessibilityLabel(tr("Settings"))
-            } else {
-                Spacer().frame(width: 44, height: 44)
+                boatButton
             }
-            boatButton
-            Spacer()
-            HStack(spacing: 8) {
+            .padding(.horizontal, 4)
+            .barPiece(Capsule())
+            .frame(width: Self.sideWidth, alignment: .leading)
+            Spacer(minLength: 8)
+            HStack(spacing: 0) {
                 ForEach(clubs) { club in
                     Group {
                         if club.id == homeID {
-                            Image(systemName: "house.fill").font(.system(size: 9))
+                            Image(systemName: "house.fill").font(.caption2)
                         } else {
                             Circle().frame(width: 7, height: 7)
                         }
                     }
                     .foregroundStyle(club.id == selection ? Color.primary : Color.secondary.opacity(0.5))
+                    // Wider than the dot and as tall as the bar, so it is easier to hit.
+                    .frame(width: 16, height: Self.buttonHeight)
+                    .contentShape(Rectangle())
                     .onTapGesture { withAnimation { selection = club.id } }
                     .accessibilityLabel(club.displayName)
                 }
             }
-            Spacer()
-            Spacer().frame(width: 56)
-            if let showList {
-                Button(action: showList) {
-                    Image(systemName: "list.bullet")
-                        .font(.title3)
-                        .frame(width: 44, height: 44)
+            .padding(.horizontal, 8)
+            .barPiece(Capsule())
+            Spacer(minLength: 8)
+            Group {
+                if let showList {
+                    Button(action: showList) {
+                        Image(systemName: "list.bullet")
+                            .font(.title3)
+                            .frame(width: Self.buttonHeight, height: Self.buttonHeight)
+                    }
+                    .barPiece(Circle())
+                    .accessibilityLabel(tr("All locations"))
                 }
-                .accessibilityLabel(tr("All locations"))
-            } else {
-                Spacer().frame(width: 44, height: 44)
             }
+            .frame(width: Self.sideWidth, alignment: .trailing)
         }
+        .tint(.primary)
+        .foregroundStyle(.primary)
         .padding(.horizontal)
-        .padding(.top, 4)
-        .background { PageBarBackground().ignoresSafeArea(edges: .bottom) }
+        .padding(.bottom, 4)
+        // Bars keep their size at the largest text sizes, as the system's do.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 
     /// The boat the rowing light is for, picked on the spot.
@@ -344,26 +403,26 @@ private struct PageBar: View {
             VStack(spacing: 0) {
                 Image(systemName: "figure.rower").font(.body)
                 Text(boat.shortName)
-                    .font(.system(size: 9, weight: .medium))
+                    .font(.caption2.weight(.medium))
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
-            .frame(width: 56, height: 44)
+            .frame(width: 56, height: Self.buttonHeight)
         }
         .accessibilityLabel(tr("Boat: %@", boat.title))
         .accessibilityHint(tr("Picks another boat for the rowing light."))
     }
 }
 
-/// The page bar follows the tiles over a picture: frosted, Liquid Glass or solid.
-private struct PageBarBackground: View {
-    @Environment(\.surface) private var surface
-
-    var body: some View {
-        switch surface {
-        case .plain, .frosted: Rectangle().fill(.bar)
-        case .glass: Color.clear.glass(in: Rectangle())
-        case .solid: Rectangle().fill(Color(.secondarySystemGroupedBackground))
+private extension View {
+    /// A floating piece of the page bar: Liquid Glass (frosted before iOS 26),
+    /// solid in Low Power Mode, which draws nothing live.
+    @ViewBuilder
+    func barPiece(_ shape: some Shape) -> some View {
+        if PowerState.shared.lowPower {
+            background(shape.fill(Color(.secondarySystemGroupedBackground)).shadow(color: .black.opacity(0.15), radius: 6, y: 2))
+        } else {
+            glass(in: shape)
         }
     }
 }

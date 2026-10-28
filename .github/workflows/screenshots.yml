@@ -276,9 +276,14 @@ jobs:
           shoot_n 19-list-picture-solid 2 light -RWShowList YES -RWBackground sample:sunny-day -RWTileStyle solid
           shoot 20-tutzing-own-picture light -RWOpenClub tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
           shoot_pages 21-home-dark-picture dark -RWBackground sample:night-lake
-          # Liquid Glass tiles (frosted glass when the runner's Xcode has no iOS 26 SDK).
-          shoot_pages 95-home-picture-glass light -RWBackground sample:cloud-shell -RWTileStyle glass
-          shoot_n 96-list-picture-glass 2 light -RWShowList YES -RWBackground sample:sunny-day -RWTileStyle glass
+          # Larger text sizes, to see that numbers and words keep their lines, and
+          # Low Power Mode (-RWLowPower), where tiles and bars turn solid.
+          shoot_pages 280-home-larger-text light -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          shoot_n 281-list-larger-text 2 light -RWShowList YES -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          shoot_pages 282-home-largest-text light -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
+          WAIT=30 shoot 283-detail-larger-text light -RWOpenClub mrc-1880 -RWOpenCondition wind -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          shoot_pages 284-home-picture-low-power light -RWBackground sample:cloud-shell -RWLowPower YES
+          shoot_n 285-list-picture-low-power 2 light -RWShowList YES -RWBackground sample:sunny-day -RWLowPower YES
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
           shoot 24-hourly-12h-long-date light -RWScrollTo hourly -RWTimeFormat hours12 -RWDateFormat long

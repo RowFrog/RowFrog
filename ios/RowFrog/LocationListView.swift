@@ -251,7 +251,7 @@ private struct LocationSummaryRow: View {
                             Image(systemName: Condition.temperature.symbol)
                                 .symbolRenderingMode(.hierarchical)
                                 .accessibilityLabel(tr("Air"))
-                            Text(Format.degrees(now.temperatureC)).font(.system(size: 36, weight: .light))
+                            Text(Format.degrees(now.temperatureC)).valueFont(size: 36)
                         }
                         // Right under the temperature, as on the club page and the widgets.
                         if let feels = now.apparentTemperatureC {
