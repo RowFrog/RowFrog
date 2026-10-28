@@ -896,6 +896,16 @@
       "water": "Oder",
       "kind": "river",
       "replace": true
+    },
+    "lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal": {
+      "water": "Elbe-Seitenkanal",
+      "kind": "river",
+      "id": "river-elbe-seitenkanal",
+      "near": {
+        "lat": 53.263,
+        "lon": 10.45,
+        "place": "the Elbe-Seitenkanal site, Elso-Klöver-Straße, Lüneburg"
+      }
     }
   }
 }

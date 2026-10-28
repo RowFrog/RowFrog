@@ -21,6 +21,27 @@
         "precision": "shore of the Havel near the Gatow site, Kladower Damm 45, 83 m away (water checked by hand)",
         "verified": false
       }
+    },
+    "lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal": {
+      "of": "lueneburger-ruder-club-wiking-v1875",
+      "site": "Elbe-Seitenkanal",
+      "address": "Elso-Klöver-Straße, 21337 Lüneburg",
+      "water": {
+        "id": "river-elbe-seitenkanal",
+        "name": "Elbe-Seitenkanal",
+        "country": "de",
+        "center": {
+          "lat": 52.73372,
+          "lon": 10.66408
+        },
+        "kind": "river"
+      },
+      "launchPoint": {
+        "lat": 53.263,
+        "lon": 10.45,
+        "precision": "near the Elbe-Seitenkanal site, Elso-Klöver-Straße (approximate, water checked by hand)",
+        "verified": false
+      }
     }
   }
 }
