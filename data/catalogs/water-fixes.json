@@ -688,6 +688,37 @@
       "kind": "river",
       "id": "river-mulde",
       "replace": true
+    },
+    "pro-sport-berlin-24": {
+      "water": "Langer See",
+      "kind": "lake",
+      "id": "langer-see",
+      "replace": true,
+      "near": {
+        "lat": 52.41935,
+        "lon": 13.58784,
+        "place": "Köpenick, Wendenschloßstr. 420 (the import placed it at a rain basin in Hohenschönhausen; the club also rows in Gatow on the Havel)"
+      }
+    },
+    "bad-lobensteiner-ruderverein-1932": {
+      "water": "Bleilochtalsperre",
+      "kind": "lake",
+      "replace": true,
+      "near": {
+        "lat": 50.45829,
+        "lon": 11.69984,
+        "place": "the boathouse near Saaldorf (the import placed it at the Stadtteich in Bad Lobenstein)"
+      }
+    },
+    "volkstuemlicher-wassersport-mannheim": {
+      "water": "Altrheinhafen",
+      "kind": "lake",
+      "replace": true,
+      "near": {
+        "lat": 49.51993,
+        "lon": 8.4719,
+        "place": "the boathouse at Sandhofer Str. 51-53 (the import placed it on the Waldhofbecken)"
+      }
     }
   }
 }
