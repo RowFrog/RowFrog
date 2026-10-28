@@ -64,6 +64,16 @@
       "kind": "river"
     },
     {
+      "id": "altrheinhafen",
+      "name": "Altrheinhafen",
+      "country": "de",
+      "center": {
+        "lat": 49.51939,
+        "lon": 8.47144
+      },
+      "kind": "lake"
+    },
+    {
       "id": "altwarmbuechener-see",
       "name": "Altwarmbüchener See",
       "country": "de",
@@ -192,6 +202,16 @@
         "lon": 10.05424
       },
       "kind": "river"
+    },
+    {
+      "id": "bleilochtalsperre",
+      "name": "Bleilochtalsperre",
+      "country": "de",
+      "center": {
+        "lat": 50.44732,
+        "lon": 11.64232
+      },
+      "kind": "lake"
     },
     {
       "id": "bodensee",
@@ -1154,16 +1174,6 @@
       "kind": "river"
     },
     {
-      "id": "rhb-doberaner-strasse",
-      "name": "RHB Doberaner Straße",
-      "country": "de",
-      "center": {
-        "lat": 52.5686,
-        "lon": 13.4906
-      },
-      "osm": "way/32620921"
-    },
-    {
       "id": "regattabahn",
       "name": "Regattabahn",
       "country": "de",
@@ -1424,16 +1434,6 @@
       "kind": "lake"
     },
     {
-      "id": "stadtteich",
-      "name": "Stadtteich",
-      "country": "de",
-      "center": {
-        "lat": 50.4481,
-        "lon": 11.6425
-      },
-      "osm": "way/26692083"
-    },
-    {
       "id": "starnberger-see",
       "name": "Starnberger See",
       "country": "de",
@@ -1652,16 +1652,6 @@
         "lon": 12.74122
       },
       "kind": "lake"
-    },
-    {
-      "id": "waldhofbecken",
-      "name": "Waldhofbecken",
-      "country": "de",
-      "center": {
-        "lat": 49.5178,
-        "lon": 8.4724
-      },
-      "osm": "way/386427499"
     },
     {
       "id": "river-warnow",
@@ -2381,11 +2371,11 @@
       "address": "Hain 34, 07356 Bad Lobenstein",
       "source": "drv",
       "country": "de",
-      "lakeId": "stadtteich",
+      "lakeId": "bleilochtalsperre",
       "launchPoint": {
         "lat": 50.44732,
         "lon": 11.64232,
-        "precision": "shore point of Stadtteich nearest the geocoded club address, 242 m away",
+        "precision": "on the Bleilochtalsperre (checked by hand), first matched to Stadtteich",
         "verified": false
       }
     },
@@ -6490,11 +6480,11 @@
       "address": "Barther Straße 80, 13051 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "rhb-doberaner-strasse",
+      "lakeId": "langer-see",
       "launchPoint": {
         "lat": 52.56854,
         "lon": 13.49118,
-        "precision": "shore point of RHB Doberaner Straße nearest the geocoded club address, 260 m away",
+        "precision": "on the Langer See (checked by hand), first matched to RHB Doberaner Straße",
         "verified": false
       }
     },
@@ -13447,11 +13437,11 @@
       "address": "Sandhofer Str. 51-53, 68305 Mannheim",
       "source": "drv",
       "country": "de",
-      "lakeId": "waldhofbecken",
+      "lakeId": "altrheinhafen",
       "launchPoint": {
         "lat": 49.51939,
         "lon": 8.47144,
-        "precision": "shore point of Waldhofbecken nearest the geocoded club address, 57 m away",
+        "precision": "on the Altrheinhafen (checked by hand), first matched to Waldhofbecken",
         "verified": false
       }
     },
