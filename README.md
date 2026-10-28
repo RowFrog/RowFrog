@@ -64,7 +64,7 @@ GitHub issue, so no GitHub account is needed.
 2. The official warnings card, only while a warning is issued (or the check
    failed).
 3. Current conditions.
-4. Lake view.
+4. Lake view (River or Canal view for river and canal clubs).
 5. Next 48 hours, with a feels-like column and a day header that stays in
    place while scrolling; tapping an hour opens that hour's view.
 6. Launch point map.
@@ -172,6 +172,16 @@ route: a rowing workout from Apple Health or a GPX, TCX or FIT file from
 another app, with the real pace as the starting pace and the rowed track as
 an optional line on the map. Health access is asked for only for this, and
 everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
+
+**River and canal clubs.** River and canal clubs row on their own stretch
+(256 sections cut out of OpenStreetMap, up to the next weir or lock), so the
+lake view becomes a River or Canal view with pins at the stretch's ends, and
+the satellite picture shows that stretch. In place of the ice tile a Current
+tile shows the flow speed and the water level from the nearest PEGELONLINE
+gauge, with a level chart and the pace upstream and downstream. Shipping
+stopped turns the light red, high water amber; the current turns it amber
+from 1.5 m/s and red above 2.5 m/s (`backend/rowfrog/river.py`,
+`ios/RowFrog/RiverCurrent.swift`).
 
 **Rain radar.** The rain tile, the top tile's rain value and the rain detail
 view read DWD's rain radar and 2-hour nowcast for the launch point, then the
@@ -469,6 +479,7 @@ More detail, including the secrets each one needs, is in the
 | **Satellite water temperature check** (`water-temperature-probe.yml`) | Compares Copernicus, Landsat and the carried-forward estimate with GKD lake stations. By hand, or when the satellite water temperature code changes. |
 | **Weather maps data check** (`weather-maps-probe.yml`) | Research only: what DWD (ICON-D2, GeoServer) and EUMETSAT offer for the weather maps. Nothing is stored. By hand, or when its script changes. |
 | **River sections** (`river-sections.yml`) | Cuts each river and canal club's stretch out of OpenStreetMap (Geofabrik extracts of Germany, Austria and Switzerland) and commits `data/river-sections.json` and the section outlines. By hand, after river clubs or `data/river-section-overrides.json` change; takes about 40 minutes. |
+| **River gauges** (`river-gauges.yml`) | Finds the PEGELONLINE gauge on each German river club's river (within 15 km) and commits `data/river-gauges.json` for the Current tile. By hand, after river clubs change. |
 | **River section survey** (`river-section-survey.yml`) | Research only: for every river club, how far the next weir or lock is up- and downstream, from the Geofabrik extracts of Germany, Austria and Switzerland (filtered with osmium, no Overpass). Nothing is stored. By hand. |
 | **River gauge check** (`river-gauge-probe.yml`) | Research only: which river gauges (PEGELONLINE, BAFU) and flow forecasts (Open-Meteo Flood API) could tell river clubs about current and high water. Nothing is stored. By hand. |
 | **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |
