@@ -5333,9 +5333,9 @@
       "country": "de",
       "lakeId": "river-kanal-trave",
       "launchPoint": {
-        "lat": 53.86263,
-        "lon": 10.69301,
-        "precision": "on the Kanal-Trave (checked by hand), first matched to Krähenteich",
+        "lat": 53.86248,
+        "lon": 10.69355,
+        "precision": "shore of the Kanal-Trave nearest the town-level address, 39 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11550,9 +11550,9 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.6068,
-        "lon": 9.99335,
-        "precision": "on the Alster (checked by hand), first matched to Inselkanal",
+        "lat": 53.60665,
+        "lon": 9.99523,
+        "precision": "shore of the Alster nearest the town-level address, 125 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -14224,9 +14224,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.63049,
-        "lon": 8.3778,
-        "precision": "on the Rhein (checked by hand), first matched to Winterhafen",
+        "lat": 49.63081,
+        "lon": 8.37981,
+        "precision": "shore of the Rhein nearest the town-level address, 149 m away (water checked by hand)",
         "verified": false
       }
     },

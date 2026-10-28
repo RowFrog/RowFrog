@@ -429,9 +429,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.31985,
-        "lon": 14.30502,
-        "precision": "on the Donau (checked by hand), first matched to Winterhafen",
+        "lat": 48.32142,
+        "lon": 14.30415,
+        "precision": "shore of the Donau nearest the town-level address, 186 m away (water checked by hand)",
         "verified": false
       }
     },
