@@ -284,6 +284,10 @@ jobs:
           WAIT=30 shoot 283-detail-larger-text light -RWOpenClub mrc-1880 -RWOpenCondition wind -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           shoot_pages 284-home-picture-low-power light -RWBackground sample:cloud-shell -RWLowPower YES
           shoot_n 285-list-picture-low-power 2 light -RWShowList YES -RWBackground sample:sunny-day -RWLowPower YES
+          shoot 286-lake-map-larger-text light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          shoot 287-lake-map-low-power light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLowPower YES
+          WAIT=30 shoot 288-weather-map-larger-text light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          WAIT=30 shoot 289-satellite-full-larger-text light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)' -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
           shoot 24-hourly-12h-long-date light -RWScrollTo hourly -RWTimeFormat hours12 -RWDateFormat long
