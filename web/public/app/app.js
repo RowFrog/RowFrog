@@ -165,11 +165,14 @@ function openBoatMenu(raw) {
 /** Settings and boat on the left, a dot per club page, the list on the right (RootView). */
 function bottomBar(currentId, raw) {
   const clubs = store.clubs;
+  // Three floating pieces of glass, all 44 px high: cog and boat, the page dots, the list (RootView.PageBar).
   return `<nav class="bottom">
-    <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
-    <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${icon("sailboat")}<small>${h(boatShort(selectedBoat()))}</small></button>
-    <span class="dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
-    <a href="#/list" class="tool" aria-label="${h(t("Locations"))}">${icon("list")}</a>
+    <span class="bar-side"><span class="glass piece">
+      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+      <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${icon("sailboat")}<small>${h(boatShort(selectedBoat()))}</small></button>
+    </span></span>
+    <span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
+    <span class="bar-side end"><a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a></span>
   </nav>`;
 }
 
