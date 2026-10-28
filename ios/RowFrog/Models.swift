@@ -57,6 +57,12 @@ struct Lake: Codable, Identifiable, Hashable {
     /// Whether the backend has the lake's outline, which the lake view needs; older backends send none.
     var hasOutline: Bool? = nil
     var country: String? = nil
+    /// "lake" or "river"; missing from older backends.
+    var kind: String? = nil
+    /// River sections only (a club's stretch of its river or canal); the lake view is then the River view.
+    var section: RiverSection? = nil
+
+    var water: WaterKind { WaterKind(kind: kind, waterway: section?.waterway) }
 
     /// The name to show. Clubs whose water the catalogs don't name sit under
     /// "Water near <town>", which reads in the app's language.
@@ -70,13 +76,105 @@ struct Lake: Codable, Identifiable, Hashable {
 
     /// The country list's name: the water, or the town when the water isn't known,
     /// so such a club sorts under its town's letter.
-    var listTitle: String { waterUnknown ? String(name.dropFirst("Water near ".count)) : name }
+    /// A river section adds its place, as one river has several: "Main · Offenbach".
+    var listTitle: String {
+        if waterUnknown { return String(name.dropFirst("Water near ".count)) }
+        if let place = section?.place { return name + " · " + place }
+        return name
+    }
 
     /// "Starnberger See · Starnberg"; just the town when the water isn't known,
     /// rather than "Water near Aken · Aken".
     static func place(_ lake: Lake?, town: String?) -> String {
         let water = lake?.waterUnknown == true && town != nil ? nil : lake?.title
         return [water, town].compactMap { $0 }.joined(separator: " · ")
+    }
+}
+
+/// A club's stretch of its river or canal (backend: data/river-sections.json):
+/// from the next weir or lock, a river mouth or a fixed length each way.
+struct RiverSection: Codable, Hashable {
+    /// The town the stretch is named after, e.g. "Offenbach".
+    let place: String
+    /// "river" or "canal".
+    let waterway: String
+    let lengthKm: Double
+    /// Only in the lake view: where the stretch ends upstream and downstream.
+    var up: SectionEnd? = nil
+    var down: SectionEnd? = nil
+    /// Only in the lake view: the river line as [lon, lat] pairs, pointing downstream.
+    var flow: [[[Double]]]? = nil
+}
+
+struct SectionEnd: Codable, Hashable {
+    /// From the clubs, along the river.
+    let km: Double
+    /// "weir/lock", "river", "harbour", "mouth", "line end", "km sign" or "cap".
+    let end: String
+    /// What OpenStreetMap calls it, e.g. "lock Offenbach", "Main joins", "river km 42".
+    let what: String
+    let at: Coordinate
+
+    /// "Lock", "Weir", "Mouth of the Main" ... for the map's end markers.
+    var title: String {
+        let words = what.split(separator: " ", maxSplits: 1).map(String.init)
+        switch end {
+        case "weir/lock":
+            let name = words.count > 1 ? " " + words[1] : ""
+            switch words.first {
+            case "lock", "lock_gate": return tr("Lock") + name
+            case "dam": return tr("Dam") + name
+            case "waterfall": return tr("Waterfall") + name
+            default: return tr("Weir") + name
+            }
+        case "river":
+            return tr("%@ joins", what.replacingOccurrences(of: " joins", with: "").replacingOccurrences(of: " branches off", with: ""))
+        case "mouth": return tr("River mouth")
+        case "harbour": return tr("Harbour")
+        case "km sign": return tr("River km %@", what.replacingOccurrences(of: "river km ", with: ""))
+        default: return tr("End of the stretch")
+        }
+    }
+
+    /// A weir or lock ends the stretch for good; the other ends are where rowers usually turn.
+    var isBarrier: Bool { end == "weir/lock" }
+}
+
+/// What kind of water a club rows on, for the names of its views.
+enum WaterKind: Hashable {
+    case lake, river, canal
+
+    init(kind: String?, waterway: String?) {
+        if kind == "river" {
+            self = waterway == "canal" ? .canal : .river
+        } else {
+            self = .lake
+        }
+    }
+
+    /// "Lake view", "River view", "Canal view".
+    var viewTitle: String {
+        switch self {
+        case .lake: tr("Lake view")
+        case .river: tr("River view")
+        case .canal: tr("Canal view")
+        }
+    }
+
+    var opensHint: String {
+        switch self {
+        case .lake: tr("Opens the lake view")
+        case .river: tr("Opens the river view")
+        case .canal: tr("Opens the canal view")
+        }
+    }
+
+    var aboutTitle: String {
+        switch self {
+        case .lake: tr("About the lake view")
+        case .river: tr("About the river view")
+        case .canal: tr("About the canal view")
+        }
     }
 }
 

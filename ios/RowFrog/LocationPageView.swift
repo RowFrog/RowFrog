@@ -30,8 +30,8 @@ struct LocationPageView: View {
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
 
-    /// Whose satellite picture the page shows: the lake's, or for water without an
-    /// outline (rivers, until they have sections) the 4 x 3 km around the club ("club-<id>").
+    /// Whose satellite picture the page shows: the lake's or river section's, or for water
+    /// without an outline (own places, rivers without a section) the 4 x 3 km around the club ("club-<id>").
     private func satelliteID(_ forecast: ClubForecast) -> String {
         lake?.hasOutline == false ? "club-\(club.id)" : forecast.lakeId
     }
@@ -195,7 +195,7 @@ struct LocationPageView: View {
                     if tourSeen && showLakeViewTip {
                         TipView(lakeViewTip)
                     }
-                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC)
+                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC, water: lake?.water ?? .lake)
                 }
                 .id("lakeview")
             }
@@ -224,7 +224,7 @@ struct LocationPageView: View {
                 if tourSeen && showSatelliteTip {
                     TipView(satelliteTip)
                 }
-                SatellitePictureCard(lakeID: satelliteID(forecast), clubID: club.id)
+                SatellitePictureCard(lakeID: satelliteID(forecast), clubID: club.id, water: lake?.water ?? .lake)
             }
             .id("satellite")
         }

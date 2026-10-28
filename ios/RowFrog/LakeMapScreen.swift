@@ -195,7 +195,7 @@ struct LakeMapScreen: View {
             .padding(10)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { panel(plan: plan, boat: boat, shown: shown) }
-        .sheet(isPresented: $showingInfo) { LakeViewInfo() }
+        .sheet(isPresented: $showingInfo) { LakeViewInfo(water: view.water) }
         .sheet(isPresented: $showingLegend) {
             LakeMapLegend(layer: layer, stripes: layer == .light ? shown?.lakeWide.stripes : nil,
                           routeMode: routeMode, hasRoute: (plan?.segments.isEmpty == false), boat: boat != nil,
@@ -317,7 +317,7 @@ struct LakeMapScreen: View {
                         Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
                     }
                     .background(.regularMaterial, in: Circle())
-                    .accessibilityLabel(tr("About the lake view"))
+                    .accessibilityLabel(view.water.aboutTitle)
                 }
             }
             // While planning only what the route needs: the editing bar takes the layer switch's place.
@@ -806,7 +806,7 @@ struct LakeMapScreen: View {
                     .accessibilityLabel(tr("Close"))
             }
             if view.zones.count > 1, zone < view.zones.count {
-                Text(tr("Selected spot · %@", LakeZoneName.title(view.zones[zone])))
+                Text(tr("Selected spot · %@", LakeZoneName.title(view.zones[zone], water: view.water)))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -941,11 +941,15 @@ private struct ShareBar: View {
 
 /// How the lake view works, from the info button.
 private struct LakeViewInfo: View {
+    var water: WaterKind = .lake
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         NavigationStack {
             List {
+                if water != .lake {
+                    Text(tr("The view shows your club's stretch of the river: to the next weir or lock each way, or where a bigger river joins, else about 12 km upstream and 8 km downstream (10 km each way on canals). Markers show where it ends. It opens on the 10 km around your club."))
+                }
                 Text(tr("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))
                 Text(tr("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. Official warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber official warning, fainter amber stripes are drawn over the squares. Cold water draws the shore blue and adds the life-jacket badge to the panel."))
                 Text(tr("Waves are an estimate: there are no wave measurements on these lakes, and shelter from steep shores or currents is not taken into account."))
@@ -954,7 +958,7 @@ private struct LakeViewInfo: View {
                     Text(tr("Lake outlines: © OpenStreetMap contributors, ODbL"))
                 }
             }
-            .navigationTitle(tr("About the lake view"))
+            .navigationTitle(water.aboutTitle)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar { Button(tr("Done")) { dismiss() } }
         }
@@ -1010,7 +1014,12 @@ struct LakeMapView: UIViewRepresentable {
             compass.trailingAnchor.constraint(equalTo: map.safeAreaLayoutGuide.trailingAnchor, constant: -16),
             compass.topAnchor.constraint(equalTo: map.safeAreaLayoutGuide.topAnchor, constant: 185),
         ])
-        let overlay = LakeOverlay(view: view)
+        // A river opens on the 10 km around the page's club, not on its whole stretch.
+        var focus: CLLocationCoordinate2D?
+        if view.section != nil, let club = view.clubs.first(where: { $0.id == clubID }) {
+            focus = CLLocationCoordinate2D(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
+        }
+        let overlay = LakeOverlay(view: view, focus: focus)
         context.coordinator.overlay = overlay
         context.coordinator.grid = view.grid
         map.addOverlay(overlay, level: .aboveRoads)
@@ -1022,13 +1031,20 @@ struct LakeMapView: UIViewRepresentable {
             pin.clubID = club.id
             map.addAnnotation(pin)
         }
+        for end in [view.section?.up, view.section?.down].compactMap({ $0 }) {
+            let pin = SectionEndPin()
+            pin.coordinate = CLLocationCoordinate2D(latitude: end.at.lat, longitude: end.at.lon)
+            pin.title = end.title
+            pin.isBarrier = end.isBarrier
+            map.addAnnotation(pin)
+        }
         map.addGestureRecognizer(UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:))))
         // Turning points move at once under a drag, without MapKit's hold first.
         let drag = UIPanGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.dragged(_:)))
         drag.delegate = context.coordinator
         drag.maximumNumberOfTouches = 1
         map.addGestureRecognizer(drag)
-        map.setVisibleMapRect(overlay.lakeRect, animated: false)
+        map.setVisibleMapRect(overlay.openRect, animated: false)
         // Fit the lake once the map has its size, clear of the buttons at the top
         // and of the panel at the bottom, so the whole lake and every club show.
         let inRouteMode = routeMode
@@ -1042,7 +1058,7 @@ struct LakeMapView: UIViewRepresentable {
 
     static func fit(_ overlay: LakeOverlay, in map: MKMapView, routeMode: Bool, animated: Bool) {
         let padding = UIEdgeInsets(top: routeMode ? routeTop : 130, left: 24, bottom: panelHeight, right: 24)
-        map.setVisibleMapRect(overlay.lakeRect, edgePadding: padding, animated: animated)
+        map.setVisibleMapRect(overlay.openRect, edgePadding: padding, animated: animated)
     }
 
     func updateUIView(_ map: MKMapView, context: Context) {
@@ -1164,6 +1180,14 @@ struct LakeMapView: UIViewRepresentable {
                 view.glyphImage = UIImage(systemName: pin.isOwn ? LocationStore.markSymbol(for: pin.clubID) : "figure.rower")
                 view.markerTintColor = pin.isOwn ? .systemBlue : .systemGray
                 view.displayPriority = .required
+                return view
+            }
+            if let pin = annotation as? SectionEndPin {
+                // Where the club's stretch of the river ends: a weir or lock, or where rowers turn.
+                let view = MKMarkerAnnotationView(annotation: pin, reuseIdentifier: nil)
+                view.glyphImage = UIImage(systemName: pin.isBarrier ? "xmark" : "flag.fill")
+                view.markerTintColor = pin.isBarrier ? .systemOrange : .systemTeal
+                view.displayPriority = .defaultHigh
                 return view
             }
             if let pin = annotation as? RoutePin {
@@ -1483,6 +1507,11 @@ final class ClubPin: MKPointAnnotation {
     var clubID: String?
 }
 
+/// One end of a river section's stretch.
+final class SectionEndPin: MKPointAnnotation {
+    var isBarrier = false
+}
+
 final class RoutePin: MKPointAnnotation {
     var isStart = false
     var isSelected = false
@@ -1609,6 +1638,8 @@ final class LakeOverlay: NSObject, MKOverlay {
     let coordinate: CLLocationCoordinate2D
     /// The lake's grid; `boundingMapRect` is the whole world, as the wind arrows cover the map.
     let lakeRect: MKMapRect
+    /// What the map shows when it opens: the whole lake, or on a river the 10 km around the club.
+    let openRect: MKMapRect
     let boundingMapRect = MKMapRect.world
     /// Shore and islands in map points, for clipping.
     let rings: [[MKMapPoint]]
@@ -1618,11 +1649,21 @@ final class LakeOverlay: NSObject, MKOverlay {
     let shore: WindArrows.Shore
     let blend: CGFloat
 
-    init(view: LakeView) {
+    init(view: LakeView, focus: CLLocationCoordinate2D? = nil) {
         let g = view.grid
         let nw = MKMapPoint(CLLocationCoordinate2D(latitude: g.north, longitude: g.westEdge))
         let se = MKMapPoint(CLLocationCoordinate2D(latitude: g.southEdge, longitude: g.east))
-        lakeRect = MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y)
+        let whole = MKMapRect(x: nw.x, y: nw.y, width: se.x - nw.x, height: se.y - nw.y)
+        lakeRect = whole
+        if let focus {
+            let side = 10_000 * MKMapPointsPerMeterAtLatitude(focus.latitude)
+            let centre = MKMapPoint(focus)
+            let around = MKMapRect(x: centre.x - side / 2, y: centre.y - side / 2, width: side, height: side)
+            let both = around.intersection(whole)
+            openRect = both.isNull || both.isEmpty ? whole : both
+        } else {
+            openRect = whole
+        }
         coordinate = CLLocationCoordinate2D(latitude: (g.north + g.southEdge) / 2, longitude: (g.westEdge + g.east) / 2)
         rings = view.outline.map { ring in ring.map { MKMapPoint(CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0])) } }
         let water = CGMutablePath()

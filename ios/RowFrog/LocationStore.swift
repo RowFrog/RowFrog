@@ -197,7 +197,7 @@ final class LocationStore {
     func addCountry(_ code: String, lakes: [Lake]) {
         let others = catalog.filter { $0.countryCode != code }
         let otherLakes = Dictionary(grouping: others, by: { lakesByClub[$0.id] }).compactMap { lake, clubs in
-            lake.map { Lake(id: $0.id, name: $0.name, center: $0.center, clubs: clubs, hasOutline: $0.hasOutline, country: $0.country) }
+            lake.map { Lake(id: $0.id, name: $0.name, center: $0.center, clubs: clubs, hasOutline: $0.hasOutline, country: $0.country, kind: $0.kind, section: $0.section) }
         }
         loadedCountries.insert(code)
         apply(otherLakes + lakes)

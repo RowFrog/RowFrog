@@ -452,6 +452,10 @@ struct SatellitePictureCard: View {
     let lakeID: String
     /// The page's club, marked like on the lake view.
     var clubID: String?
+    /// Lake, river or canal, for the wording.
+    var water: WaterKind = .lake
+    /// A lake's picture covers the lake; a river section's or a club place's ("club-<id>") the area around the club.
+    private var overLake: Bool { water == .lake && !lakeID.hasPrefix("club-") }
     @MainActor private var store: SatellitePictureStore { .shared }
     @State private var kind: SatellitePicture.Kind = .latest
     /// The page's visible height, which follows turning the device and resizing the window.
@@ -494,13 +498,13 @@ struct SatellitePictureCard: View {
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(tr("Satellite picture of the lake"))
-                    SatelliteCaption(picture: picture, shot: shot)
+                    .accessibilityLabel(overLake ? tr("Satellite picture of the lake") : tr("Satellite picture of the water around the club"))
+                    SatelliteCaption(picture: picture, shot: shot, overLake: overLake)
                     SatelliteLayerChips(lakeID: lakeID, picture: picture, clubID: clubID)
                 }
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { cardHeight = $0 }
                 .fullScreenCover(isPresented: $showingFull) {
-                    SatellitePictureScreen(lakeID: lakeID, picture: picture, kind: kind, clubID: clubID)
+                    SatellitePictureScreen(lakeID: lakeID, picture: picture, kind: kind, clubID: clubID, overLake: overLake)
                 }
             }
         }
@@ -553,6 +557,8 @@ struct SatelliteKindPicker: View {
 struct SatelliteCaption: View {
     let picture: SatellitePicture
     let shot: SatellitePicture.Shot
+    /// Whether the cloud share is the lake's; on rivers it is the picture's box around the club.
+    var overLake = true
     @MainActor private var layers: SatelliteLayers { .shared }
     @State private var explaining = false
 
@@ -594,6 +600,10 @@ struct SatelliteCaption: View {
     private var line: String {
         let day = shot.day.map { Format.day($0) } ?? shot.date
         let cloud = (shot.lakeCloud * 100).rounded()
+        if !overLake {
+            if cloud < 1 { return tr("Sentinel-2 · %@ · no cloud", day) }
+            return tr("Sentinel-2 · %@ · %@ %% under cloud", day, Format.number(cloud))
+        }
         if cloud < 1 { return tr("Sentinel-2 · %@ · no cloud over the lake", day) }
         return tr("Sentinel-2 · %@ · %@ %% of the lake under cloud", day, Format.number(cloud))
     }
@@ -990,6 +1000,7 @@ struct SatellitePictureScreen: View {
     let picture: SatellitePicture
     @State var kind: SatellitePicture.Kind
     var clubID: String?
+    var overLake = true
     @State private var zoom = ZoomTracker()
     @Environment(\.dismiss) private var dismiss
     @Environment(\.displayScale) private var displayScale
@@ -1024,7 +1035,7 @@ struct SatellitePictureScreen: View {
                 }
                 if let shot = picture.shot(kind) {
                     VStack(alignment: .leading, spacing: 8) {
-                        SatelliteCaption(picture: picture, shot: shot)
+                        SatelliteCaption(picture: picture, shot: shot, overLake: overLake)
                         SatelliteLayerChips(lakeID: lakeID, picture: picture, clubID: clubID)
                     }
                     .padding(.horizontal)
