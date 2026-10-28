@@ -25,10 +25,15 @@ const views = new Map();
 async function loadView(lakeId) {
   const kept = views.get(lakeId);
   if (kept && Date.now() - kept.at < 30 * 60 * 1000) return kept.view;
-  const view = decodeView(await getJSON(`lakes/${encodeURIComponent(lakeId)}/view`));
+  // The lake card and the satellite card ask at once: one download for both.
+  const view = getJSON(`lakes/${encodeURIComponent(lakeId)}/view`).then(decodeView);
   views.set(lakeId, { at: Date.now(), view });
+  view.catch(() => views.get(lakeId)?.view === view && views.delete(lakeId));
   return view;
 }
+
+/** Pull to refresh and coming back renew the lake view (LocationPageView.refreshLakeView). */
+export const forgetView = (lakeId) => views.delete(lakeId);
 
 /** The water of the club page that last showed each lake, for lakes without a station. */
 const clubWater = new Map();
@@ -225,7 +230,7 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
 let page = null;
 
 /** The lake map page: map on top, the panel with the hours and the details below. */
-export async function renderLakeMap(root, lakeId, clubId, back) {
+export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
   page?.map?.remove();
   root.innerHTML = `<div class="lake-screen"><header class="nav lake-nav"><a class="link" href="${h(back)}">${icon("chevron-left")} ${h(t("Back"))}</a>
       <span class="spacer"></span>
@@ -244,7 +249,7 @@ export async function renderLakeMap(root, lakeId, clubId, back) {
   setTitle(`${t("Lake view")} · ${view.name}`);
   const club = view.clubs.find((c) => c.id === clubId) ?? view.clubs[0];
   page = {
-    root, view, club, lakeId, hour: hourIndex(view), layer: "light", spot: null,
+    root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()), layer: "light", spot: null,
     routeMode: false, points: club ? [club.launchPoint] : [], undo: [], outAndBack: false, pace: 135,
     selected: null, followBoat: false, boatAt: 0, savedId: null, map: null, layers: {}, rowed: null, showTrack: true,
   };
@@ -531,6 +536,7 @@ function planningPanel(hour) {
       ${plan.beyondForecast ? `<p class="small orange">${icon("clock")} ${h(t("The forecast ends before you are back."))}</p>` : ""}
       ${viewStale(view) ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
       ${adviceOnly()}
+      ${page.followBoat ? "" : tip("boatTime")}
       <p class="boat-follow"><label class="tick inline"><input type="checkbox" id="follow" ${page.followBoat ? "checked" : ""}> ${icon("sailboat")} ${h(t("Lake at the boat's time"))}</label>
         ${page.followBoat ? `<input type="range" id="boat-at" min="0" max="1" step="0.01" value="${page.boatAt}" aria-label="${h(t("Where the boat is"))}">` : ""}</p>
       ${stop ? `<p class="small sub">${h(t("The boat at %@ after %@: %@, waves %@", time(stop.time), distance(stop.distanceM), lightTitle(stop.light), waves(stop.waveM) + (stop.relation ? ` ${t(RELATION_WAVES[stop.relation])}` : "")))}</p>` : ""}
@@ -550,7 +556,7 @@ function planningPanel(hour) {
         <input type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden></label>
       ${page.rowed?.track ? `<label class="tick inline"><input type="checkbox" id="show-track" ${page.showTrack ? "checked" : ""}> ${icon("spline")} ${h(t("Show rowed track"))}</label>` : ""}
     </div>
-    ${tip("rowImport")}
+    ${routeTip(isLoop)}
     ${lakeWideBanner(hour.lakeWide)}
     ${kitBadge(view)}
     <div class="route-controls">
@@ -564,7 +570,19 @@ function planningPanel(hour) {
     ${summary}
     ${saved.length ? `<h3 class="section">${icon("list")} ${h(t("Saved routes"))}</h3><ul class="saved-routes">${saved.map((r) => `<li class="${r.id === page.savedId ? "on" : ""}">
         <button data-route="${h(r.id)}">${icon("route")} <span>${h(r.name)}</span><small class="sub">${h(distance(routeLength(r.points, r.outAndBack)))}</small></button>
+        <button class="tool" data-rename-route="${h(r.id)}" aria-label="${h(t("Rename"))}" title="${h(t("Rename"))}">${icon("signature")}</button>
+        <button class="tool" data-copy-route="${h(r.id)}" aria-label="${h(t("Duplicate"))}" title="${h(t("Duplicate"))}">${icon("copy")}</button>
         <button class="tool" data-delete-route="${h(r.id)}" aria-label="${h(t("Delete this route"))}">${icon("trash-2")}</button></li>`).join("")}</ul>` : ""}`;
+}
+
+/** The one tip that fits the route drawn so far, in the app's order (LakeMapScreen.routeHint). */
+function routeTip(isLoop) {
+  const n = page.points.length;
+  if (page.selected != null) return tip("turningPoint");
+  if (n >= 3 && !isLoop && tip("closeLoop")) return tip("closeLoop");
+  if (n >= 3) return tip("stretchPoint");
+  if (n === 2 && !page.outAndBack) return tip("oneWay");
+  return n < 2 ? tip("rowImport") : "";
 }
 
 /** The route from start to finish as a bar, coloured by the light at each stretch (RouteBar). */
@@ -724,6 +742,23 @@ function wirePanel() {
     page.outAndBack = r.outAndBack;
     page.savedId = r.id;
     page.rowed = r.track ? r : null;
+    update();
+  }));
+  // Rename and duplicate, as under Manage routes in the app (ManageRoutesView).
+  panel.querySelectorAll("[data-rename-route]").forEach((b) => b.addEventListener("click", () => {
+    const r = store.routes.find((x) => x.id === b.dataset.renameRoute);
+    const name = r && prompt(t("Rename route"), r.name);
+    if (!name?.trim()) return;
+    store.routes = store.routes.map((x) => (x.id === r.id ? { ...x, name: name.trim() } : x));
+    update();
+  }));
+  panel.querySelectorAll("[data-copy-route]").forEach((b) => b.addEventListener("click", () => {
+    const r = store.routes.find((x) => x.id === b.dataset.copyRoute);
+    if (!r) return;
+    const copy = { ...r, id: crypto.randomUUID?.() ?? `r${Date.now()}`, name: t("%@ (copy)", r.name) };
+    const all = [...store.routes];
+    all.splice(all.indexOf(r) + 1, 0, copy);
+    store.routes = all;
     update();
   }));
   panel.querySelectorAll("[data-delete-route]").forEach((b) => b.addEventListener("click", () => {

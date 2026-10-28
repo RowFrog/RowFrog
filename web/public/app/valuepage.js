@@ -4,8 +4,8 @@
 
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
-import { currentHour } from "./logic.js";
-import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet } from "./shared.js";
+import { currentHour, iceValue } from "./logic.js";
+import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
@@ -15,7 +15,7 @@ import { radarAt, readRadar, radarOverlay, radarFrames, radarCovers, nearestFram
 let current = null;
 
 /** The page for `condition` of a club, opened at now or at a picked hour. */
-export async function renderValuePage(root, clubId, condition, at) {
+export async function renderValuePage(root, clubId, condition, at, orderName = null) {
   current?.cleanup();
   // Clubs saved by an early version of the website have no launch point; the catalog has it.
   let club = store.clubs.find((c) => c.id === clubId);
@@ -34,7 +34,10 @@ export async function renderValuePage(root, clubId, condition, at) {
   const data = conditionData(forecast, hour, radar);
   const time = detailTime(store.mapLinked);
   const hidden = new Map();
-  const page = { root, club, clubId, data, time, hidden, condition, map: null, playing: null, showLimits: store.limitInfo };
+  // Opened from the top tile, the arrows, the menu and a swipe go through its values only.
+  const top = orderName === "top" ? topTileValues(forecast, hour) : null;
+  const order = top?.includes(condition) ? top : TILE_ORDER;
+  const page = { root, club, clubId, data, time, hidden, condition, order, orderName: order === top ? "top" : null, at, map: null, playing: null, showLimits: store.limitInfo };
   current = page;
   page.cleanup = () => {
     clearInterval(page.playing);
@@ -64,15 +67,45 @@ export async function renderValuePage(root, clubId, condition, at) {
   }
 }
 
-function neighbour(condition, by) {
-  const i = TILE_ORDER.indexOf(condition);
-  return TILE_ORDER[(i + by + TILE_ORDER.length) % TILE_ORDER.length];
+/** The top tile's values in its order (NowCard.tileValues). */
+export function topTileValues(forecast, hour) {
+  return [
+    "temperature", ...(hour.apparentTemperatureC != null ? ["feelsLike"] : []),
+    "waterTemperature", "wind", "waves", "precipitation", "visibility", ...(iceValue(forecast) ? ["ice"] : []),
+  ];
+}
+
+function neighbour(page, by) {
+  const { order } = page;
+  const i = order.indexOf(page.condition);
+  return order[(i + by + order.length) % order.length];
+}
+
+function pageHash(page) {
+  return `#/club/${encodeURIComponent(page.clubId)}/value/${page.condition}${page.at ? `/${encodeURIComponent(page.at)}` : ""}${page.orderName ? `?order=${page.orderName}` : ""}`;
 }
 
 function go(page, by) {
-  page.condition = neighbour(page.condition, by);
-  history.replaceState(null, "", `#/club/${encodeURIComponent(page.clubId)}/value/${page.condition}`);
+  page.condition = neighbour(page, by);
+  history.replaceState(null, "", pageHash(page));
   show(page);
+}
+
+/** A sideways swipe moves to the next or previous value; not on the chart or the map, where a drag scrubs or pans. */
+function wireSwipe(page, main) {
+  let start = null;
+  main.addEventListener("touchstart", (e) => {
+    const touch = e.touches[0];
+    start = e.touches.length === 1 && !e.target.closest("#chart, .map-card, .wm-full, input, select") ? { x: touch.clientX, y: touch.clientY } : null;
+  }, { passive: true });
+  main.addEventListener("touchend", (e) => {
+    if (!start) return;
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - start.x;
+    const dy = touch.clientY - start.y;
+    start = null;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 1.5 * Math.abs(dy)) go(page, dx < 0 ? 1 : -1);
+  }, { passive: true });
 }
 
 function show(page) {
@@ -89,7 +122,7 @@ function show(page) {
   const detail = conditionDetail(condition, data);
   const hidden = page.hidden.get(condition) ?? new Set();
   const layer = detail.history || !detail.lines.length ? null : layerFor(condition);
-  const menu = TILE_ORDER.map((c) => {
+  const menu = page.order.map((c) => {
     const value = conditionDetail(c, data).value;
     return `<option value="${c}" ${c === condition ? "selected" : ""}>${h(value ? `${titles[c][1]} · ${value}` : titles[c][1])}</option>`;
   }).join("");
@@ -100,10 +133,10 @@ function show(page) {
     ${testing()}
     <main class="page value-page">
       <div class="value-top">
-        <button class="tool" id="prev" aria-label="${h(t(titles[neighbour(condition, -1)][1]))}">${icon("chevron-left")}</button>
+        <button class="tool" id="prev" aria-label="${h(t(titles[neighbour(page, -1)][1]))}">${icon("chevron-left")}</button>
         <div class="value-head"><span class="big-value" id="big-value"></span><small class="sub" id="big-note"></small></div>
         <span class="value-big" id="big-graphic"></span>
-        <button class="tool" id="next" aria-label="${h(t(titles[neighbour(condition, 1)][1]))}">${icon("chevron-right")}</button>
+        <button class="tool" id="next" aria-label="${h(t(titles[neighbour(page, 1)][1]))}">${icon("chevron-right")}</button>
       </div>
       <div class="value-body ${layer ? "with-map" : ""}">
         <div class="value-chart">
@@ -118,14 +151,17 @@ function show(page) {
       ${detail.limitInfo ? `<div class="limit-info"><button class="link" id="limit-info">${icon("info")} ${h(t("About the limits"))}</button>
         <p class="small boxed" id="limit-text" ${page.showLimits ? "" : "hidden"}>${h(detail.limitInfo)}</p></div>` : ""}
       ${facts(detail)}
+      ${stationCard(condition, data)}
       <p class="rowing">${icon("sailboat")}<span>${h(detail.rowing)}</span></p>
       <p class="sub small">${h(detail.source)}</p>
-      <p class="neighbours"><button class="link sub" id="prev-name">${icon("chevron-left")} ${h(titles[neighbour(condition, -1)][1])}</button>
-        <button class="link sub" id="next-name">${h(titles[neighbour(condition, 1)][1])} ${icon("chevron-right")}</button></p>
+      <p class="neighbours"><button class="link sub" id="prev-name">${icon("chevron-left")} ${h(titles[neighbour(page, -1)][1])}</button>
+        <button class="link sub" id="next-name">${h(titles[neighbour(page, 1)][1])} ${icon("chevron-right")}</button></p>
       ${footerLinks()}
     </main>`;
   window.scrollTo(0, 0);
+  showStationMap(root.querySelector("#station-map"), data.water?.station);
   wireTips(root.querySelector("main"));
+  wireSwipe(page, root.querySelector("main"));
   const head = () => {
     // The big value at the chart's blue line; past measurements keep the measured value.
     const shown = detail.history || !detail.lines.length ? data : dataAt(data, time.hour);
@@ -152,7 +188,7 @@ function show(page) {
   }));
   root.querySelector("#jump").addEventListener("change", (e) => {
     page.condition = e.target.value;
-    history.replaceState(null, "", `#/club/${encodeURIComponent(page.clubId)}/value/${page.condition}`);
+    history.replaceState(null, "", pageHash(page));
     show(page);
   });
   for (const [sel, by] of [["#prev", -1], ["#next", 1], ["#prev-name", -1], ["#next-name", 1]]) root.querySelector(sel).addEventListener("click", () => go(page, by));
@@ -428,3 +464,31 @@ async function openFull(page, layerId, detail, hidden) {
   load(layerId);
 }
 
+
+/** Where the water temperature is measured, with the distance from the launch point and the station's page (WaterStationMap). */
+function stationCard(condition, data) {
+  const station = data.water?.station;
+  if (condition !== "waterTemperature" || station?.lat == null || station?.lon == null) return "";
+  const name = station.name ?? t("Lake station");
+  return `<section class="station">
+    <h3 class="section">${icon("map-pin")} ${h(t("Where it is measured"))}</h3>
+    <div class="map" id="station-map" role="img" aria-label="${h(name)}"></div>
+    <p class="small sub station-line"><span>${h(station.distanceM != null ? t("%@, %@ from the launch point", name, distance(station.distanceM)) : name)}</span>
+      ${/^https:\/\//.test(station.url ?? "") ? `<a class="link" href="${h(station.url)}" target="_blank" rel="noopener noreferrer">${h(t("Station page"))}</a>` : ""}</p>
+  </section>`;
+}
+
+async function showStationMap(box, station) {
+  if (!box) return;
+  const L = await loadLeaflet().catch(() => null);
+  if (!L || !box.isConnected) return;
+  const map = L.map(box, { scrollWheelZoom: false, attributionControl: true }).setView([station.lat, station.lon], 14);
+  // OpenStreetMap asks for the site in the Referer; the page itself sends none.
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+  }).addTo(map);
+  L.marker([station.lat, station.lon], {
+    icon: L.divIcon({ className: "pin station-pin", html: icon("thermometer"), iconSize: [30, 30], iconAnchor: [15, 15] }),
+    keyboard: false,
+  }).addTo(map);
+}

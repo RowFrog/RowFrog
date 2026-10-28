@@ -804,6 +804,18 @@ struct SatelliteOverlay: View {
                     Image(decorative: image, scale: 1).interpolation(.high),
                     in: CGRect(x: corner.x, y: corner.y, width: far.x - corner.x, height: far.y - corner.y)
                 )
+                // Darkness or an official warning for the whole lake: stripes, as on the lake map.
+                if fill == .light, let stripes = view.hours[view.hourIndex()].lakeWide.stripes {
+                    let red = stripes == .red, gap: CGFloat = red ? 8 : 14
+                    var lines = Path()
+                    for x in stride(from: -size.height, to: size.width, by: gap) {
+                        lines.move(to: CGPoint(x: x, y: size.height))
+                        lines.addLine(to: CGPoint(x: x + size.height, y: 0))
+                    }
+                    var striped = context
+                    striped.clip(to: shore, style: FillStyle(eoFill: true))
+                    striped.stroke(lines, with: .color(red ? .red.opacity(0.75) : .orange.opacity(0.8)), lineWidth: red ? 1.5 : 1.2)
+                }
             }
             // Wind under the lines and marks, so shore, routes and clubs stay on top.
             if layers.contains(.wind), let view {
@@ -1357,9 +1369,14 @@ struct SatelliteLegend: View {
     var clubID: String? = nil
     @MainActor private var layers: SatelliteLayers { .shared }
     @Environment(\.dismiss) private var dismiss
+    /// Stripes on the water now, while the whole lake is red or amber.
+    @MainActor private var stripes: Light? {
+        guard let view = LakeViewStore.shared.views[lakeID], !view.hours.isEmpty else { return nil }
+        return view.hours[view.hourIndex()].lakeWide.stripes
+    }
 
     var body: some View {
-        let on = layers.on
+        let on = layers.on, stripes = self.stripes
         NavigationStack {
             List {
                 Section(tr("The picture")) {
@@ -1368,7 +1385,17 @@ struct SatelliteLegend: View {
                     row(Image(systemName: "drop.fill").foregroundStyle(Color(red: 0.1, green: 0.2, blue: 0.3)), tr("Dark blue to black: open water."))
                 }
                 if on.contains(.light) {
-                    Section(tr("Rowing light")) { LakeLegend(layer: .light).padding(.vertical, 4); MapBoatNote() }
+                    Section(tr("Rowing light")) {
+                        LakeLegend(layer: .light).padding(.vertical, 4)
+                        if stripes == .red {
+                            row(Image(systemName: "line.diagonal").foregroundStyle(.red),
+                                tr("Grey with red stripes: the whole lake is red now (official warning or darkness)."))
+                        } else if stripes == .amber {
+                            row(Image(systemName: "line.diagonal").foregroundStyle(.orange),
+                                tr("Amber stripes: the whole lake is amber now (sunrise or sunset, official warning)."))
+                        }
+                        MapBoatNote()
+                    }
                 }
                 if on.contains(.waves) {
                     Section(tr("Waves")) { LakeLegend(layer: .waves).padding(.vertical, 4) }

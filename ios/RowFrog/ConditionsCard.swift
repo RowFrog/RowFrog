@@ -1733,7 +1733,7 @@ extension ConditionDetail {
         } else {
             source = tr("No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.")
         }
-        var lines: [ChartLine] = history.isEmpty ? [] : [ChartLine(name: tr("Water"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })]
+        var lines: [ChartLine] = history.isEmpty ? [] : [ChartLine(name: tr("Measurement"), color: .cyan, points: history.map { ChartPoint(x: d.x($0.time), y: t.convert($0.celsius)) })]
         if forecastPoints.count > 1 {
             lines.append(ChartLine(name: tr("Forecast"), color: .cyan, points: forecastPoints, dashed: true))
         }

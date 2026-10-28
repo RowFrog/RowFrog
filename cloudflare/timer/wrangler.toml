@@ -1,0 +1,11 @@
+# Starts the forecast run every half hour (see src/index.js).
+# Deployed by .github/workflows/timer-worker.yml.
+name = "rowfrog-timer"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+workers_dev = false
+
+# GitHub's own timer for the run is late or skipped when GitHub is busy
+# (on 2026-10-28 it ran about once an hour); Cloudflare's runs on the minute.
+[triggers]
+crons = ["0,30 * * * *"]
