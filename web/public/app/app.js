@@ -292,7 +292,7 @@ async function fillRow(row) {
     <div class="row-why">
       <strong>${h(lightTitle(hour.light, stale))}</strong>
       ${stale ? `<small class="orange">${icon("clock")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
-      <small class="why">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
+      <small class="why${hour.reasons.length ? "" : " one-line"}">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
       ${kit ? `<small class="kit-line" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")} ${h(coldWaterText(kit)[0])}</small>` : ""}
       ${warning ? `<small class="warn ${warning.severity === "minor" ? "orange" : "red"}">${icon("triangle-alert")} ${h(shortWarning(warning))}</small>` : ""}
       ${sun ? `<small class="sub">${icon(sun.up ? "sunset" : "sunrise")} ${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}</small>` : ""}
