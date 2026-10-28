@@ -277,7 +277,7 @@ enum German {
         "Remove": "Entfernen",
         "Search clubs, lakes or towns": "Vereine, Seen oder Orte suchen",
         "Done": "Fertig",
-        "All conditions within the limits": "Alle Bedingungen innerhalb der Grenzwerte",
+        "All within the limits": "Alle Werte im Rahmen",
         "Sunset %@": "Sonnenuntergang %@",
         "Sunrise %@": "Sonnenaufgang %@",
         "Water: %@": "Wasser: %@",
