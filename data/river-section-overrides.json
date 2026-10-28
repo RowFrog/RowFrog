@@ -36,8 +36,8 @@
       "note": "rows the Alte Oder out to the Oder"
     },
     "lueneburger-ruder-club-wiking-v1875": {
-      "include": ["Ilmenau"],
-      "note": "three boathouses: two on the Ilmenau, one on the Elbe-Seitenkanal (second place lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal, Elso-Klöver-Straße)"
+      "include": ["Ilmenau", "Lösegraben"],
+      "note": "three boathouses: Willy-Brandt-Straße 15 on the Ilmenau, Am Schifferwall 6 on the Lösegraben (an Ilmenau arm; place lueneburger-ruder-club-wiking-v1875-loesegraben) and Elso-Klöver-Straße on the Elbe-Seitenkanal (place lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal)"
     },
     "limburger-club-fuer-wassersport-von-18951907": {"direction": "east"},
     "sportvereinigung-scharnebeck-ev-ruderabteilung": {"direction": "north"},

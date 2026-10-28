@@ -42,6 +42,27 @@
         "precision": "near the Elbe-Seitenkanal site, Elso-Klöver-Straße (approximate, water checked by hand)",
         "verified": false
       }
+    },
+    "lueneburger-ruder-club-wiking-v1875-loesegraben": {
+      "of": "lueneburger-ruder-club-wiking-v1875",
+      "site": "Lösegraben",
+      "address": "Am Schifferwall 6, 21335 Lüneburg",
+      "water": {
+        "id": "river-ilmenau",
+        "name": "Ilmenau",
+        "country": "de",
+        "center": {
+          "lat": 53.25006,
+          "lon": 10.41289
+        },
+        "kind": "river"
+      },
+      "launchPoint": {
+        "lat": 53.25006,
+        "lon": 10.41289,
+        "precision": "provisional: the Ilmenau boathouse's point until the Lösegraben boathouse (Am Schifferwall 6) is pinned",
+        "verified": false
+      }
     }
   }
 }

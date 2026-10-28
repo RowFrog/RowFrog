@@ -14201,6 +14201,37 @@
         "precision": "near the Elbe-Seitenkanal site, Elso-Klöver-Straße (approximate, water checked by hand)",
         "verified": false
       }
+    },
+    {
+      "drvId": "11836",
+      "name": "Lüneburger Ruder-Club Wiking v.1875 e.V. (Lösegraben)",
+      "shortName": "LRC Wiking v.1875 (Lösegraben)",
+      "abbreviation": "LRCW",
+      "website": "https://www.rc-wiking.de",
+      "sports": [
+        "Wanderrudern",
+        "Wettkampfrudern",
+        "Ergometerrudern",
+        "Jugendausbildung (15 bis 18 Jahre)",
+        "Jugendausbildung (14 Jahre und jünger)",
+        "Erwachsenenausbildung",
+        "Leistungssport",
+        "Mastersrudern",
+        "Freizeitrudern",
+        "Hochschulrudern",
+        "Schulrudern"
+      ],
+      "id": "lueneburger-ruder-club-wiking-v1875-loesegraben",
+      "address": "Am Schifferwall 6, 21335 Lüneburg",
+      "source": "drv",
+      "country": "de",
+      "lakeId": "river-ilmenau",
+      "launchPoint": {
+        "lat": 53.25006,
+        "lon": 10.41289,
+        "precision": "provisional: the Ilmenau boathouse's point until the Lösegraben boathouse (Am Schifferwall 6) is pinned",
+        "verified": false
+      }
     }
   ]
 }
