@@ -2373,9 +2373,9 @@
       "country": "de",
       "lakeId": "bleilochtalsperre",
       "launchPoint": {
-        "lat": 50.44732,
-        "lon": 11.64232,
-        "precision": "on the Bleilochtalsperre (checked by hand), first matched to Stadtteich",
+        "lat": 50.45829,
+        "lon": 11.69984,
+        "precision": "shore of the Bleilochtalsperre at the boathouse near Saaldorf, from the owner's map pin (water checked by hand)",
         "verified": false
       }
     },
