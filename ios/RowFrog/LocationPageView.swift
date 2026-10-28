@@ -26,7 +26,7 @@ struct LocationPageView: View {
     /// not the whole page on every frame (which drained the battery).
     @State private var sticky = StickyHourly()
     /// The 48 hours opened past the first 24 (only folded in two columns).
-    @State private var hourlyOpen = UserDefaults.standard.bool(forKey: "RWHourlyOpen")
+    @State private var hourlyOpen = false
     /// The 48 hours' height while folded, which the columns keep counting with when opened.
     @State private var foldedHourlyHeight: CGFloat?
     /// The refresh failure explained after a tap on its line.
@@ -150,8 +150,15 @@ struct LocationPageView: View {
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
                 .task {
                     await forecasts.load(club.id)
+                    // Screenshot hook: `-RWHourlyOpen YES` opens the folded 48 hours, once
+                    // their folded height is known, as a tap would.
+                    if UserDefaults.standard.bool(forKey: "RWHourlyOpen") {
+                        try? await Task.sleep(for: .milliseconds(1500))
+                        hourlyOpen = true
+                    }
                     // Screenshot hook: `-RWScrollTo hourly` (or `warnings`, `radar`, `conditions`, `lakeview`,
-                    // `launchpoint`, `satellite`, `source`, `arrange`, or `hourly-1` for the table's second day)
+                    // `launchpoint`, `satellite`, `source`, `arrange`, `hourly-1` for the table's second day,
+                    // or `bottom` for the page's end)
                     // scrolls to that card.
                     if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
                         // The lake view loads after the forecast and pushes the cards below it down,
