@@ -483,9 +483,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.23541,
-        "lon": 15.33419,
-        "precision": "on the Donau (checked by hand), first matched to Pionierhafen",
+        "lat": 48.23715,
+        "lon": 15.33242,
+        "precision": "shore of the Donau nearest the town-level address, 233 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -519,9 +519,9 @@
       "country": "at",
       "lakeId": "river-mur",
       "launchPoint": {
-        "lat": 47.01379,
-        "lon": 15.46191,
-        "precision": "on the Mur (checked by hand), first matched to Altarm Thondorf",
+        "lat": 47.01357,
+        "lon": 15.4607,
+        "precision": "shore of the Mur nearest the town-level address, 95 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -825,9 +825,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.32714,
-        "lon": 16.02805,
-        "precision": "on the Donau (checked by hand), first matched to Hochwiesegraben",
+        "lat": 48.33483,
+        "lon": 16.02774,
+        "precision": "shore of the Donau nearest the town-level address, 856 m away (water checked by hand)",
         "verified": false
       }
     },

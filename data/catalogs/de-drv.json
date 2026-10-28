@@ -1946,9 +1946,9 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.60269,
-        "lon": 9.99221,
-        "precision": "on the Alster (checked by hand), first matched to Inselkanal",
+        "lat": 53.60233,
+        "lon": 9.99305,
+        "precision": "shore of the Alster nearest the town-level address, 69 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -2815,9 +2815,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 48.0197,
-        "lon": 7.58886,
-        "precision": "on the Rhein (checked by hand), first matched to Europaweiher",
+        "lat": 48.02195,
+        "lon": 7.58432,
+        "precision": "shore of the Rhein nearest the town-level address, 420 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -4573,9 +4573,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.40232,
-        "lon": 7.17682,
-        "precision": "on the Ruhr (checked by hand), first matched to Henrichsteich",
+        "lat": 51.40333,
+        "lon": 7.17319,
+        "precision": "shore of the Ruhr nearest the town-level address, 276 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -5890,9 +5890,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.40791,
-        "lon": 6.89074,
-        "precision": "on the Ruhr (checked by hand), first matched to Die Anger",
+        "lat": 51.40888,
+        "lon": 6.89259,
+        "precision": "shore of the Ruhr nearest the town-level address, 167 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7138,9 +7138,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.88218,
-        "lon": 12.23152,
-        "precision": "on the Elbe (checked by hand), first matched to Roßlauer Werft",
+        "lat": 51.88077,
+        "lon": 12.23258,
+        "precision": "shore of the Elbe nearest the town-level address, 173 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7278,9 +7278,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.66308,
-        "lon": 6.586,
-        "precision": "on the Rhein (checked by hand), first matched to Sporthafen",
+        "lat": 51.6594,
+        "lon": 6.58433,
+        "precision": "shore of the Rhein nearest the town-level address, 425 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9114,9 +9114,9 @@
       "country": "de",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.63781,
-        "lon": 13.18729,
-        "precision": "on the Donau (checked by hand), first matched to Bootsportverein - Vilshofen",
+        "lat": 48.63669,
+        "lon": 13.18634,
+        "precision": "shore of the Donau nearest the town-level address, 143 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9349,9 +9349,9 @@
       "country": "de",
       "lakeId": "river-rems",
       "launchPoint": {
-        "lat": 48.82482,
-        "lon": 9.33139,
-        "precision": "on the Rems (checked by hand), first matched to Schildkrötenteich",
+        "lat": 48.82506,
+        "lon": 9.33163,
+        "precision": "shore of the Rems nearest the town-level address, 32 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9378,9 +9378,9 @@
       "country": "de",
       "lakeId": "kieler-foerde",
       "launchPoint": {
-        "lat": 54.32987,
-        "lon": 10.14889,
-        "precision": "on the Kieler Förde (checked by hand), first matched to Seehundbecken",
+        "lat": 54.32976,
+        "lon": 10.14918,
+        "precision": "shore of the Kieler Förde nearest the town-level address, 23 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11694,9 +11694,9 @@
       "country": "de",
       "lakeId": "river-alster",
       "launchPoint": {
-        "lat": 53.6068,
-        "lon": 9.99335,
-        "precision": "on the Alster (checked by hand), first matched to Inselkanal",
+        "lat": 53.60665,
+        "lon": 9.99523,
+        "precision": "shore of the Alster nearest the town-level address, 125 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13257,9 +13257,9 @@
       "country": "de",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.38963,
-        "lon": 9.99187,
-        "precision": "on the Donau (checked by hand), first matched to Forellenbächle",
+        "lat": 48.39068,
+        "lon": 9.9872,
+        "precision": "shore of the Donau nearest the town-level address, 364 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13946,9 +13946,9 @@
       "country": "de",
       "lakeId": "river-dahme",
       "launchPoint": {
-        "lat": 52.2972,
-        "lon": 13.65772,
-        "precision": "on the Dahme (checked by hand), first matched to Tonteiche",
+        "lat": 52.2953,
+        "lon": 13.65544,
+        "precision": "shore of the Dahme nearest the town-level address, 262 m away (water checked by hand)",
         "verified": false
       }
     },

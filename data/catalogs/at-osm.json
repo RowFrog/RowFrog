@@ -341,9 +341,9 @@
       "country": "at",
       "lakeId": "river-mur",
       "launchPoint": {
-        "lat": 47.01379,
-        "lon": 15.46191,
-        "precision": "on the Mur (checked by hand), first matched to Altarm Thondorf",
+        "lat": 47.01357,
+        "lon": 15.4607,
+        "precision": "shore of the Mur nearest the town-level address, 95 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -357,9 +357,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.23541,
-        "lon": 15.33419,
-        "precision": "on the Donau (checked by hand), first matched to Pionierhafen",
+        "lat": 48.23715,
+        "lon": 15.33242,
+        "precision": "shore of the Donau nearest the town-level address, 233 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -469,9 +469,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.31985,
-        "lon": 14.30502,
-        "precision": "on the Donau (checked by hand), first matched to Winterhafen",
+        "lat": 48.32142,
+        "lon": 14.30415,
+        "precision": "shore of the Donau nearest the town-level address, 186 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -501,9 +501,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.22904,
-        "lon": 16.42746,
-        "precision": "way/226565645 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
+        "lat": 48.22918,
+        "lon": 16.42741,
+        "precision": "shore of the Alte Donau nearest the town-level address, 16 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -565,9 +565,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.32714,
-        "lon": 16.02805,
-        "precision": "on the Donau (checked by hand), first matched to Hochwiesegraben",
+        "lat": 48.33483,
+        "lon": 16.02774,
+        "precision": "shore of the Donau nearest the town-level address, 856 m away (water checked by hand)",
         "verified": false
       }
     },
