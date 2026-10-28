@@ -855,6 +855,47 @@
       "kind": "river",
       "id": "river-suederelbe",
       "replace": true
+    },
+    "bessel-ruder-club": {
+      "water": "Weser",
+      "kind": "river",
+      "id": "river-weser",
+      "replace": true
+    },
+    "rr-besselgymnasium-minden": {
+      "water": "Weser",
+      "kind": "river",
+      "id": "river-weser",
+      "replace": true
+    },
+    "ruder-club-mark": {
+      "water": "Ruhr",
+      "kind": "river",
+      "id": "river-ruhr",
+      "replace": true
+    },
+    "sportgemeinschaft-demag-ev-wetter": {
+      "water": "Ruhr",
+      "kind": "river",
+      "id": "river-ruhr",
+      "replace": true
+    },
+    "papenburger-ruderclub": {
+      "water": "Ems",
+      "kind": "river",
+      "id": "river-ems",
+      "replace": true
+    },
+    "ruderverein-luedinghausen-1925": {
+      "water": "Dortmund-Ems-Kanal",
+      "kind": "river",
+      "id": "river-dortmund-ems-kanal",
+      "replace": true
+    },
+    "frankfurter-ruder-club-von-1882": {
+      "water": "Oder",
+      "kind": "river",
+      "replace": true
     }
   }
 }
