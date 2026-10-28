@@ -114,6 +114,8 @@ struct LocationPageView: View {
                     }
                     .padding(.horizontal)
                     .padding(.bottom, 24)
+                    // Screenshot hook: `-RWScrollTo bottom` scrolls to the page's end.
+                    .overlay(alignment: .bottom) { Color.clear.frame(height: 1).id("bottom") }
                     .frame(maxWidth: Self.maxContentWidth)
                     .frame(maxWidth: .infinity)
                     .onPreferenceChange(HourlyFrameKey.self) { frame in
@@ -157,7 +159,7 @@ struct LocationPageView: View {
                         let early = ["warnings", "conditions"].contains(target)
                         for wait in early ? [300] : [2500, 3000, 3000] {
                             try? await Task.sleep(for: .milliseconds(wait))
-                            proxy.scrollTo(target, anchor: .top)
+                            proxy.scrollTo(target, anchor: target == "bottom" ? .bottom : .top)
                         }
                     }
                 }

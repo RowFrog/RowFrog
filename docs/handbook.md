@@ -131,7 +131,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 - `-RWDemoClubs YES` the three confirmed clubs with MRC 1880 as home base
 - `-RWTutorialSeen YES -RWNoTips YES` skip the tour and tips
-- `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table)
+- `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table, `bottom` = the page's end)
 - `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order; the rain radar card is off unless named, since the rain tile shows the radar); `-RWArrange YES` opens "Arrange this page"
 - `-RWHourlyOpen YES` opens the folded 48-hour table on a page in two columns; `-RWColumnFill fill` with `-RWDeveloperOptions YES` keeps it whole (see Club page columns)
 - `-RWOpenRadarMap YES` open the rain radar map from the radar card, so name `radar` in `-RWPageLayout` too (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
