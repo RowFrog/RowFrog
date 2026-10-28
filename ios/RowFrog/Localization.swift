@@ -300,6 +300,8 @@ enum German {
         "Show satellite pictures": "Satellitenbilder zeigen",
         "In Apple Maps as \u{201C}%@\u{201D}": "In Apple Karten als \u{201E}%@\u{201C}",
         "The club in Apple Maps": "Der Verein in Apple Karten",
+        "Grey with red stripes: the whole lake is red now (official warning or darkness).": "Grau mit roten Streifen: Der ganze See ist gerade rot (amtliche Warnung oder Dunkelheit).",
+        "Amber stripes: the whole lake is amber now (sunrise or sunset, official warning).": "Gelbe Streifen: Der ganze See ist gerade gelb (Sonnenaufgang oder -untergang, amtliche Warnung).",
         "Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel.": "Graue Felder mit roten Streifen: Der ganze See ist rot (amtliche Warnung oder Dunkelheit), siehe unten.",
         "Amber stripes: the whole lake is amber (sunrise or sunset, official warning), see the panel. The squares keep their own colours.": "Gelbe Streifen: Der ganze See ist gelb (Sonnenaufgang oder -untergang, amtliche Warnung), siehe unten. Die Felder behalten ihre eigenen Farben.",
         "On the map": "Auf der Karte",
