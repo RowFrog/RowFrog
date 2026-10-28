@@ -134,26 +134,6 @@
       "osm": "relation/12686910"
     },
     {
-      "id": "river-becken-i",
-      "name": "Becken I",
-      "country": "de",
-      "center": {
-        "lat": 49.01744,
-        "lon": 8.34219
-      },
-      "kind": "river"
-    },
-    {
-      "id": "river-becken-iv",
-      "name": "Becken IV",
-      "country": "de",
-      "center": {
-        "lat": 49.01016,
-        "lon": 8.33511
-      },
-      "kind": "river"
-    },
-    {
       "id": "belauer-see",
       "name": "Belauer See",
       "country": "de",
@@ -250,16 +230,6 @@
       "center": {
         "lat": 51.63513,
         "lon": 7.40182
-      },
-      "kind": "river"
-    },
-    {
-      "id": "river-diamantgraben",
-      "name": "Diamantgraben",
-      "country": "de",
-      "center": {
-        "lat": 53.47078,
-        "lon": 10.00168
       },
       "kind": "river"
     },
@@ -390,16 +360,6 @@
       "center": {
         "lat": 53.46362,
         "lon": 7.47241
-      },
-      "kind": "river"
-    },
-    {
-      "id": "river-flaumbach",
-      "name": "Flaumbach",
-      "country": "de",
-      "center": {
-        "lat": 50.17358,
-        "lon": 7.29884
       },
       "kind": "river"
     },
@@ -542,16 +502,6 @@
         "lon": 7.5993
       },
       "osm": "way/178601427"
-    },
-    {
-      "id": "river-hafen-muehlberg",
-      "name": "Hafen Mühlberg",
-      "country": "de",
-      "center": {
-        "lat": 51.43245,
-        "lon": 13.20992
-      },
-      "kind": "river"
     },
     {
       "id": "river-hamme",
@@ -894,16 +844,6 @@
       "kind": "river"
     },
     {
-      "id": "river-magnusgraben",
-      "name": "Magnusgraben",
-      "country": "de",
-      "center": {
-        "lat": 52.62471,
-        "lon": 10.09037
-      },
-      "kind": "river"
-    },
-    {
       "id": "river-main",
       "name": "Main",
       "country": "de",
@@ -974,16 +914,6 @@
       "kind": "river"
     },
     {
-      "id": "muehlauhafen",
-      "name": "Mühlauhafen",
-      "country": "de",
-      "center": {
-        "lat": 49.4976,
-        "lon": 8.4463
-      },
-      "osm": "relation/21189561"
-    },
-    {
       "id": "muehlenteich",
       "name": "Mühlenteich",
       "country": "de",
@@ -1000,16 +930,6 @@
       "center": {
         "lat": 51.4534,
         "lon": 12.63024
-      },
-      "kind": "river"
-    },
-    {
-      "id": "river-muellermain",
-      "name": "Müllermain",
-      "country": "de",
-      "center": {
-        "lat": 50.10801,
-        "lon": 8.68731
       },
       "kind": "river"
     },
@@ -1072,16 +992,6 @@
         "lon": 14.63975
       },
       "kind": "river"
-    },
-    {
-      "id": "offenbacher-hafen",
-      "name": "Offenbacher Hafen",
-      "country": "de",
-      "center": {
-        "lat": 50.1134,
-        "lon": 8.7472
-      },
-      "osm": "way/4526411"
     },
     {
       "id": "river-oker",
@@ -1224,16 +1134,6 @@
       "kind": "river"
     },
     {
-      "id": "rheinauhafen-hafenbecken-21",
-      "name": "Rheinauhafen (Hafenbecken 21)",
-      "country": "de",
-      "center": {
-        "lat": 49.434,
-        "lon": 8.515
-      },
-      "osm": "way/161482154"
-    },
-    {
       "id": "rheinhafen",
       "name": "Rheinhafen",
       "country": "de",
@@ -1374,16 +1274,6 @@
       "kind": "river"
     },
     {
-      "id": "river-siegburger-muehlengraben",
-      "name": "Siegburger Mühlengraben",
-      "country": "de",
-      "center": {
-        "lat": 50.78905,
-        "lon": 7.22651
-      },
-      "kind": "river"
-    },
-    {
       "id": "sorpestalsperre",
       "name": "Sorpestalsperre",
       "country": "de",
@@ -1414,16 +1304,6 @@
       "kind": "river"
     },
     {
-      "id": "river-stadthafen-1",
-      "name": "Stadthafen 1",
-      "country": "de",
-      "center": {
-        "lat": 51.95082,
-        "lon": 7.64448
-      },
-      "kind": "river"
-    },
-    {
       "id": "stadtsee",
       "name": "Stadtsee",
       "country": "de",
@@ -1442,16 +1322,6 @@
         "lon": 11.3145
       },
       "osm": "relation/168892"
-    },
-    {
-      "id": "river-steinhuder-meerbach",
-      "name": "Steinhuder Meerbach",
-      "country": "de",
-      "center": {
-        "lat": 52.63599,
-        "lon": 9.20574
-      },
-      "kind": "river"
     },
     {
       "id": "river-stichkanal-hannover-linden",
@@ -1574,16 +1444,6 @@
       "kind": "river"
     },
     {
-      "id": "river-triebwerkskanal-neustaedtischer-streng-naethewin",
-      "name": "Triebwerkskanal Neustädtischer Streng (Näthewinde)",
-      "country": "de",
-      "center": {
-        "lat": 52.41266,
-        "lon": 12.56215
-      },
-      "kind": "river"
-    },
-    {
       "id": "twistesee",
       "name": "Twistesee",
       "country": "de",
@@ -1602,16 +1462,6 @@
         "lon": 11.39655
       },
       "kind": "river"
-    },
-    {
-      "id": "unterhafen-spandau",
-      "name": "Unterhafen Spandau",
-      "country": "de",
-      "center": {
-        "lat": 52.522,
-        "lon": 13.2083
-      },
-      "osm": "way/9966329"
     },
     {
       "id": "river-unterwarnow",
@@ -2430,11 +2280,11 @@
       "address": "Dorfstraße 23, 13597 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "unterhafen-spandau",
+      "lakeId": "river-havel",
       "launchPoint": {
         "lat": 52.52055,
         "lon": 13.20894,
-        "precision": "shore point of Unterhafen Spandau nearest the geocoded boathouse, 84 m away",
+        "precision": "on the Havel (checked by hand), first matched to Unterhafen Spandau",
         "verified": false
       }
     },
@@ -2517,11 +2367,11 @@
       "address": "Dorfstr. 25 f, 13597 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "unterhafen-spandau",
+      "lakeId": "river-havel",
       "launchPoint": {
         "lat": 52.51918,
         "lon": 13.20698,
-        "precision": "shore point of Unterhafen Spandau nearest the geocoded boathouse, 21 m away",
+        "precision": "on the Havel (checked by hand), first matched to Unterhafen Spandau",
         "verified": false
       }
     },
@@ -3094,11 +2944,11 @@
       "address": "Zur Ziegeninsel 5, 29221 Celle",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-magnusgraben",
+      "lakeId": "river-aller",
       "launchPoint": {
         "lat": 52.62471,
         "lon": 10.09037,
-        "precision": "geocoded boathouse, 47 m from the Magnusgraben",
+        "precision": "on the Aller (checked by hand), first matched to Magnusgraben",
         "verified": false
       }
     },
@@ -3978,11 +3828,11 @@
       "address": "Alte Brücke 2, 60594 Frankfurt",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-muellermain",
+      "lakeId": "river-main",
       "launchPoint": {
         "lat": 50.10801,
         "lon": 8.68731,
-        "precision": "geocoded boathouse, 36 m from the Müllermain",
+        "precision": "on the Main (checked by hand), first matched to Müllermain",
         "verified": false
       }
     },
@@ -4656,11 +4506,11 @@
       "address": "Fritzenwiese 113, 29221 Celle",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-magnusgraben",
+      "lakeId": "river-aller",
       "launchPoint": {
         "lat": 52.62442,
         "lon": 10.08899,
-        "precision": "geocoded boathouse, 51 m from the Magnusgraben",
+        "precision": "on the Aller (checked by hand), first matched to Magnusgraben",
         "verified": false
       }
     },
@@ -4859,11 +4709,11 @@
       "address": "Werftstr. 8 b, 76189 Karlsruhe",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-becken-i",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.01744,
         "lon": 8.34219,
-        "precision": "geocoded boathouse, 55 m from the Becken I",
+        "precision": "on the Rhein (checked by hand), first matched to Becken I",
         "verified": false
       }
     },
@@ -4893,11 +4743,11 @@
       "address": "Hansastr. 18 b, 76189 Karlsruhe",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-becken-iv",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.01016,
         "lon": 8.33511,
-        "precision": "geocoded boathouse, 117 m from the Becken IV",
+        "precision": "on the Rhein (checked by hand), first matched to Becken IV",
         "verified": false
       }
     },
@@ -5498,11 +5348,11 @@
       "address": "Fruchtbahnhofstraße 43, 68159 Mannheim",
       "source": "drv",
       "country": "de",
-      "lakeId": "muehlauhafen",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.48895,
         "lon": 8.45191,
-        "precision": "shore point of Mühlauhafen nearest the geocoded boathouse, 186 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Mühlauhafen",
         "verified": false
       }
     },
@@ -5622,11 +5472,11 @@
       "address": "Bergiusstr. 11, 68219 Mannheim",
       "source": "drv",
       "country": "de",
-      "lakeId": "rheinauhafen-hafenbecken-21",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.43323,
         "lon": 8.52039,
-        "precision": "shore point of Rheinauhafen (Hafenbecken 21) nearest the geocoded boathouse, 78 m away",
+        "precision": "on the Rhein (checked by hand), first matched to Rheinauhafen (Hafenbecken 21)",
         "verified": false
       }
     },
@@ -6282,11 +6132,11 @@
       "address": "Tiefwerderweg 19, 13597 Berlin",
       "source": "drv",
       "country": "de",
-      "lakeId": "unterhafen-spandau",
+      "lakeId": "river-havel",
       "launchPoint": {
         "lat": 52.52381,
         "lon": 13.20963,
-        "precision": "shore point of Unterhafen Spandau nearest the geocoded boathouse, 23 m away",
+        "precision": "on the Havel (checked by hand), first matched to Unterhafen Spandau",
         "verified": false
       }
     },
@@ -7732,11 +7582,11 @@
       "address": "Schweenssand-Hauptdeich 7, 21079 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-diamantgraben",
+      "lakeId": "river-suederelbe",
       "launchPoint": {
         "lat": 53.47078,
         "lon": 10.00168,
-        "precision": "geocoded club address, 94 m from the Diamantgraben",
+        "precision": "on the Süderelbe (checked by hand), first matched to Diamantgraben",
         "verified": false
       }
     },
@@ -7896,11 +7746,11 @@
       "address": "Hammerstr. 5, 14776 Brandenburg an der Havel",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-triebwerkskanal-neustaedtischer-streng-naethewin",
+      "lakeId": "river-havel",
       "launchPoint": {
         "lat": 52.41266,
         "lon": 12.56215,
-        "precision": "geocoded club address, 55 m from the Triebwerkskanal Neustädtischer Streng (Näthewinde)",
+        "precision": "on the Havel (checked by hand), first matched to Triebwerkskanal Neustädtischer Streng (Näthewinde)",
         "verified": false
       }
     },
@@ -8135,11 +7985,11 @@
       "address": "Mühlentorsweg 2, 31582 Nienburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-steinhuder-meerbach",
+      "lakeId": "river-weser",
       "launchPoint": {
         "lat": 52.63599,
         "lon": 9.20574,
-        "precision": "geocoded club address, 23 m from the Steinhuder Meerbach",
+        "precision": "on the Weser (checked by hand), first matched to Steinhuder Meerbach",
         "verified": false
       }
     },
@@ -9605,11 +9455,11 @@
       "address": "Moselallee 44, 56253 Treis-Karden",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-flaumbach",
+      "lakeId": "river-mosel",
       "launchPoint": {
         "lat": 50.17358,
         "lon": 7.29884,
-        "precision": "geocoded club address, 106 m from the Flaumbach",
+        "precision": "on the Mosel (checked by hand), first matched to Flaumbach",
         "verified": false
       }
     },
@@ -10084,11 +9934,11 @@
       "address": "Hansastraße 18b, 76189 Karlsruhe",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-becken-iv",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.01016,
         "lon": 8.33511,
-        "precision": "geocoded boathouse, 117 m from the Becken IV",
+        "precision": "on the Rhein (checked by hand), first matched to Becken IV",
         "verified": false
       }
     },
@@ -10814,11 +10664,11 @@
       "address": "Nordring 129a, 63067 Offenbach",
       "source": "drv",
       "country": "de",
-      "lakeId": "offenbacher-hafen",
+      "lakeId": "river-main",
       "launchPoint": {
         "lat": 50.11276,
         "lon": 8.74098,
-        "precision": "shore point of Offenbacher Hafen nearest the geocoded boathouse, 105 m away",
+        "precision": "on the Main (checked by hand), first matched to Offenbacher Hafen",
         "verified": false
       }
     },
@@ -11084,11 +10934,11 @@
       "address": "Am Hafen 3, 04931 Mühlberg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-hafen-muehlberg",
+      "lakeId": "river-elbe",
       "launchPoint": {
         "lat": 51.43245,
         "lon": 13.20992,
-        "precision": "geocoded boathouse, 70 m from the Hafen Mühlberg",
+        "precision": "on the Elbe (checked by hand), first matched to Hafen Mühlberg",
         "verified": false
       }
     },
@@ -11115,11 +10965,11 @@
       "address": "Am Mittelhafen 40, 48155 Münster",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-stadthafen-1",
+      "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
         "lat": 51.95082,
         "lon": 7.64448,
-        "precision": "geocoded club address, 57 m from the Stadthafen 1",
+        "precision": "on the Dortmund-Ems-Kanal (checked by hand), first matched to Stadthafen 1",
         "verified": false
       }
     },
@@ -12071,11 +11921,11 @@
       "address": "Nordring 131, 63067 Offenbach",
       "source": "drv",
       "country": "de",
-      "lakeId": "offenbacher-hafen",
+      "lakeId": "river-main",
       "launchPoint": {
         "lat": 50.11276,
         "lon": 8.74098,
-        "precision": "shore point of Offenbacher Hafen nearest the geocoded boathouse, 178 m away",
+        "precision": "on the Main (checked by hand), first matched to Offenbacher Hafen",
         "verified": false
       }
     },
@@ -12448,11 +12298,11 @@
       "address": "Wahnbachtalstraße 15, 53721 Siegburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-siegburger-muehlengraben",
+      "lakeId": "river-sieg",
       "launchPoint": {
         "lat": 50.78905,
         "lon": 7.22651,
-        "precision": "geocoded club address, 20 m from the Siegburger Mühlengraben",
+        "precision": "on the Sieg (checked by hand), first matched to Siegburger Mühlengraben",
         "verified": false
       }
     },
@@ -12649,11 +12499,11 @@
       "address": "Nordring 131, 63067 Offenbach",
       "source": "drv",
       "country": "de",
-      "lakeId": "offenbacher-hafen",
+      "lakeId": "river-main",
       "launchPoint": {
         "lat": 50.11276,
         "lon": 8.74098,
-        "precision": "shore point of Offenbacher Hafen nearest the geocoded club address, 178 m away",
+        "precision": "on the Main (checked by hand), first matched to Offenbacher Hafen",
         "verified": false
       }
     },
