@@ -215,7 +215,12 @@ struct RootView: View {
             .animation(.easeInOut(duration: 0.35), value: selection)
         }
         .overlay(alignment: .top) {
-            TopEdgeFade(statusBar: insets.top)
+            let scroll = PageScroll.shared
+            let club = saved.first { $0.id == selection }
+            let forecast = forecasts.forecasts[selection]
+            TopEdgeFade(statusBar: insets.top, scrolled: scroll.scrolled.contains(selection),
+                        title: scroll.titleGone.contains(selection) ? club : nil,
+                        light: forecast?.current()?.light, stale: forecast?.isStale() ?? false)
                 .frame(maxHeight: .infinity, alignment: .top)
                 .ignoresSafeArea(edges: .top)
         }
@@ -305,28 +310,63 @@ struct RootView: View {
 /// Low Power Mode, which draws nothing live.
 private struct TopEdgeFade: View {
     let statusBar: CGFloat
-    /// How far the fade reaches below the status bar.
+    /// Whether cards are under the clock; at the top of a page nothing is drawn.
+    let scrolled: Bool
+    /// The club whose name the bar shows once its big title has scrolled away.
+    let title: Club?
+    let light: Light?
+    let stale: Bool
+    /// How far the fade reaches below the bar.
     static let tail: CGFloat = 14
 
     var body: some View {
-        Group {
+        let bar = statusBar + (title == nil ? 0 : InlineClubTitle.height)
+        ZStack(alignment: .bottom) {
             if PowerState.shared.lowPower {
                 Rectangle().fill(Color(.systemGroupedBackground))
-                    .frame(height: statusBar)
+                    .frame(height: bar)
             } else {
-                let height = statusBar + Self.tail
+                let height = bar + Self.tail
                 Rectangle().fill(.regularMaterial)
                     .mask {
                         LinearGradient(stops: [.init(color: .black, location: 0),
-                                               .init(color: .black, location: statusBar * 0.6 / max(height, 1)),
+                                               .init(color: .black, location: (bar - statusBar * 0.4) / max(height, 1)),
                                                .init(color: .clear, location: 1)],
                                        startPoint: .top, endPoint: .bottom)
                     }
                     .frame(height: height)
             }
+            if let title {
+                InlineClubTitle(club: title, light: light, stale: stale)
+                    .padding(.bottom, PowerState.shared.lowPower ? 0 : Self.tail)
+                    .transition(.opacity)
+            }
         }
+        .frame(maxHeight: .infinity, alignment: .top)
+        .opacity(scrolled ? 1 : 0)
+        .animation(.easeInOut(duration: 0.2), value: scrolled)
+        .animation(.easeInOut(duration: 0.2), value: title?.id)
         .allowsHitTesting(false)
         .accessibilityHidden(true)
+    }
+}
+
+/// The club's name with its rowing light, small in the top bar once the big
+/// title has scrolled away, as iOS's navigation bars do with theirs.
+struct InlineClubTitle: View {
+    let club: Club
+    let light: Light?
+    let stale: Bool
+    static let height: CGFloat = 44
+
+    var body: some View {
+        HStack(spacing: 8) {
+            if let light { TrafficLightDot(light: light, size: 12, stale: stale) }
+            Text(club.displayName).font(.headline).lineLimit(1)
+        }
+        .padding(.horizontal, 60)
+        .frame(height: Self.height)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 }
 
