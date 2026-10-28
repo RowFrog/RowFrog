@@ -214,7 +214,7 @@ page in front, readings and map pictures are reused, widgets redraw only when
 something changed, and the launch point map stays a still picture until it is
 tapped. A blurred background picture is blurred once, not on every frame, and
 Add a place looks up the water only once the map stops moving. In Low Power
-Mode the tiles are drawn solid and the radar updates less often. The app does
+Mode the tiles, the page bar and the clock strip are drawn solid and the radar updates less often. The app does
 nothing in the background; only the widgets load forecasts on their own.
 
 **Refresh on return.** Coming back to the app after more than 10 minutes
@@ -297,10 +297,12 @@ field at the bottom.
   tinted, plus 10 alternates.
 - Club pages: how much area the weather maps open with ("Maps start": Close,
   Normal or Wide), the order of the cards for all clubs, and background pictures
-  for all pages, single pages or single clubs: clear or blurred, frosted,
-  solid or Liquid Glass tiles (iOS 26), your own photo or the satellite
+  for all pages, single pages or single clubs: clear or blurred, frosted
+  or solid tiles, your own photo or the satellite
   picture of the club's lake. On club pages the picture fills the screen
   behind the status and page bars and fades between clubs while swiping.
+  Pages reach under a soft blurred fade behind the clock, and the page bar
+  floats as three Liquid Glass groups; the lake map buttons look the same.
 - Widgets: the background for all widgets or per club (each widget can also
   pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
@@ -337,7 +339,7 @@ for iPads and desktop browsers, and has nearly everything the app has: own
 boats and limits, the lake view with route planning and row import (GPX, TCX
 or FIT), value pages with chart and weather map, the satellite picture with its
 layers, browsing by country and adding a place, Arrange this page, units,
-appearance, background pictures, the tour and the tips, and the rain radar in
+appearance, background pictures, the tour and the tips, the River and Canal view with the Current tile, and the rain radar in
 the rain tile (the radar card is off by default, as in the app). What a visitor picks stays in their browser.
 
 ## Layout
