@@ -2201,6 +2201,47 @@
    ]
   },
   {
+   "id": "river-elbe-seitenkanal-luneburg",
+   "water": "river-elbe-seitenkanal",
+   "name": "Elbe-Seitenkanal",
+   "river": "Elbe-Seitenkanal",
+   "waterway": "canal",
+   "country": "de",
+   "place": "Lüneburg",
+   "center": {
+    "lat": 53.24811,
+    "lon": 10.48538
+   },
+   "clubs": [
+    "lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal"
+   ],
+   "lengthKm": 14.6,
+   "up": {
+    "km": 10.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     53.16599,
+     10.5312
+    ]
+   },
+   "down": {
+    "km": 4.61,
+    "end": "weir/lock",
+    "what": "lock_gate",
+    "at": [
+     53.29114,
+     10.48795
+    ]
+   },
+   "pictureBox": [
+    10.48236,
+    53.20289,
+    10.52962,
+    53.29115
+   ]
+  },
+  {
    "id": "river-elbe-seitenkanal-scharnebeck",
    "water": "river-elbe-seitenkanal",
    "name": "Elbe-Seitenkanal",
@@ -3410,8 +3451,16 @@
     "lueneburger-ruder-club-wiking-v1875",
     "lueneburger-ruder-club-wiking-v1875-loesegraben"
    ],
-   "lengthKm": 5.9,
-   "up": null,
+   "lengthKm": 6.9,
+   "up": {
+    "km": 0.5,
+    "end": "in front",
+    "what": "in front of the boathouse",
+    "at": [
+     53.2461,
+     10.41414
+    ]
+   },
    "down": {
     "km": 5.51,
     "end": "weir/lock",
@@ -3423,7 +3472,7 @@
    },
    "pictureBox": [
     10.401,
-    53.25003,
+    53.24613,
     10.42352,
     53.28985
    ]
