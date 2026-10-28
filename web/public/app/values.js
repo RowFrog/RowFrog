@@ -310,7 +310,7 @@ const BUILDERS = {
     } else if (!now && estimate != null) source = t("Calculated by the app from the air temperatures of the last weeks, not measured.");
     else if (now) source = t("%@, the nearest station on this water.", now.station?.operatorName ?? now.station?.operator ?? "");
     else source = t("No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.");
-    const lines = history.length ? [{ name: t("Water"), colour: COLOURS.cyan, points: history.map((p) => ({ x: d.x(p.time), y: degreesIn(p.celsius) })) }] : [];
+    const lines = history.length ? [{ name: t("Measurement"), colour: COLOURS.cyan, points: history.map((p) => ({ x: d.x(p.time), y: degreesIn(p.celsius) })) }] : [];
     if (forecastPoints.length > 1) lines.push({ name: t("Forecast"), colour: COLOURS.cyan, points: forecastPoints, dashed: true });
     const highest = Math.max(0, ...history.map((p) => p.celsius), ...days.map(([, v]) => v));
     const chartLimits = [

@@ -180,6 +180,7 @@ enum German {
         "No data yet": "Noch keine Daten",
         "Air": "Luft",
         "Water": "Wasser",
+        "Measurement": "Messung",
         "Sun is up. Rowing advised for %@ until sunset.": "Die Sonne ist aufgegangen. Rudern wird noch %@ bis Sonnenuntergang empfohlen.",
         "Sun is down. Rowing is advised again from sunrise at %@.": "Die Sonne ist untergegangen. Rudern wird wieder ab Sonnenaufgang um %@ empfohlen.",
         "Current conditions": "Aktuelle Bedingungen",
