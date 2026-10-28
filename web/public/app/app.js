@@ -581,6 +581,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
   root.querySelectorAll("[data-tile]").forEach((b) => b.addEventListener("click", () => {
     location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
   }));
+  wireTopTile(root.querySelector(".card.now"), id);
   root.querySelectorAll("[data-hour]").forEach((b) => b.addEventListener("click", () => {
     const at = forecast.hours.find((x) => x.time === b.dataset.hour);
     // Within the radar's 2 hours the rain values come from the radar, later from the forecast.
@@ -590,6 +591,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
       sheet.querySelectorAll("[data-tile]").forEach((t2) => t2.addEventListener("click", () => {
         location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
       }));
+      wireTopTile(sheet.querySelector(".card.now"), id, at.time);
     });
   }));
 }
@@ -683,32 +685,32 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
     ${adviceOnly()}
     <hr>
     <div class="now-grid">
-      <div class="air">
+      <div class="air" data-top="temperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("temperature")} ${h(t("Air"))}</small>
         <span class="v44">${h(degrees(hour.temperatureC))}</span>
-        ${hour.apparentTemperatureC != null ? `<small class="sub grey">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
+        ${hour.apparentTemperatureC != null ? `<small class="sub grey" data-top="feelsLike" role="button" tabindex="0">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
       </div>
-      <div class="${water == null && estimate != null ? "secondary" : ""}">
+      <div class="${water == null && estimate != null ? "secondary" : ""}" data-top="waterTemperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("waterTemperature")} ${h(t("Water"))}</small>
         <span class="v28">${h(water == null && estimate != null ? degrees(estimate) : degrees(water?.celsius, 1))}</span>
         <small class="sub grey">${h(water ? t("Measured %@", time(water.measuredAt)) : estimate != null ? t("Estimated") : " ")}</small>
       </div>
-      <div>
+      <div data-top="wind" role="button" tabindex="0">
         <small class="label">${conditionIcon("wind")} ${h(t("Wind"))}</small>
         <span class="v28">${h(windRange(hour.windSpeedMs, hour.windGustMs))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
         <small class="sub stack">${[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => `<span aria-hidden="true">${h(unitLine(deg))}</span>`).join("")}<span>${h(unitLine(hour.windFromDeg))}</span></small>
       </div>
-      <div>
+      <div data-top="waves" role="button" tabindex="0">
         <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17">${h(waves(hour.waveHeightM))}</span>
         ${wavesCaption ? `<small class="sub grey">${h(wavesCaption)}</small>` : ""}
       </div>
-      <div class="now-rain">${rainCell(d)}</div>
-      <div>
+      <div class="now-rain" data-top="precipitation" role="button" tabindex="0">${rainCell(d)}</div>
+      <div data-top="visibility" role="button" tabindex="0">
         <small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span class="v17">${h(distance(hour.visibilityM))}</span>
         <small class="sub grey">${h(visibilityCaption)}</small>
       </div>
     </div>
-    ${ice ? `<p class="ice-line"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17">${h(t(ice))}</span>
+    ${ice ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17">${h(t(ice))}</span>
       <small class="sub">${h(iceLine === t("Bays and harbours first") ? t("Bays first") : iceLine)}</small></p>` : ""}
     ${sun ? `<p class="daylight">${sun.up
       ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span>${h(t("Sunset %@ · %@ of daylight left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}</span>`
@@ -717,6 +719,26 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
 }
 
 /** The top tile's rain value with the rain tile's line under it, so both always say the same. */
+/**
+ * The top tile's values open their own pages, and swiping there moves through
+ * the tile's values in its order (NowCard.tileValues), as in the app.
+ */
+function wireTopTile(card, id, at = null) {
+  for (const el of card?.querySelectorAll("[data-top]") ?? []) {
+    const open = (e) => {
+      e.stopPropagation();
+      location.hash = `#/club/${encodeURIComponent(id)}/value/${el.dataset.top}${at ? `/${encodeURIComponent(at)}` : ""}?order=top`;
+    };
+    el.addEventListener("click", open);
+    el.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        open(e);
+      }
+    });
+  }
+}
+
 function rainCell(d) {
   const lines = rainLines(d);
   const caption = lines.detail === t("Dry next 24 h") ? t("Dry for 24 h") : lines.detail;
@@ -1294,8 +1316,8 @@ function route(scroll = true) {
   }
   const hash = location.hash.replace(/^#/, "");
   pagePicture(hash);
-  const value = hash.match(/^\/club\/([^/]+)\/value\/([a-zA-Z]+)(?:\/(.+))?$/);
-  if (value) return renderValuePage(root, decodeURIComponent(value[1]), value[2], value[3] ? decodeURIComponent(value[3]) : null);
+  const value = hash.match(/^\/club\/([^/]+)\/value\/([a-zA-Z]+)(?:\/([^?]+))?(?:\?order=(\w+))?$/);
+  if (value) return renderValuePage(root, decodeURIComponent(value[1]), value[2], value[3] ? decodeURIComponent(value[3]) : null, value[4] ?? null);
   const club = hash.match(/^\/club\/(.+)$/);
   if (club) return renderClub(decodeURIComponent(club[1]));
   const lake = hash.match(/^\/lake\/([^/]+)(?:\/(.+))?$/);
