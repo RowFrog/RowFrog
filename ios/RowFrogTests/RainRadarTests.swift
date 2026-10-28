@@ -71,4 +71,24 @@ final class RainRadarTests: XCTestCase {
         XCTAssertTrue(long.next!.text.hasPrefix("Until about "), long.next!.text)
         XCTAssertFalse(long.next!.fromRadar)
     }
+
+    func testTheHeadlineFollowsTheRadarLikeTheRainTile() {
+        func data(code: Int, mm: Double, radar values: [Double]) -> ConditionData {
+            let hours = hours(code: code, mm: [mm, mm, mm])
+            let forecast = ClubForecast(
+                clubId: "mrc-1880", lakeId: "starnberger-see", generatedAt: hours[0].time, waterTemperature: nil,
+                attribution: [], daylight: nil, hours: hours
+            )
+            return ConditionData(forecast: forecast, now: hours[0], radar: radar(values))
+        }
+        // The model says rain, the radar sees none: cloudy, as the rain tile says dry.
+        let dry = data(code: 61, mm: 0.3, radar: [0, 0, 0, 1.2])
+        XCTAssertEqual(dry.rainLines.value, "Dry")
+        XCTAssertEqual(dry.sky, .cloudy)
+        // The model is dry, the radar sees rain: rain (snow when it freezes; these hours are at 1 °C).
+        XCTAssertEqual(data(code: 3, mm: 0, radar: [0.8, 0.8, 0]).sky, .rain)
+        // Both agree: the model's own word stays.
+        XCTAssertEqual(data(code: 73, mm: 1, radar: [0.8, 0.8, 0]).sky, .snow)
+        XCTAssertEqual(data(code: 2, mm: 0, radar: [0, 0, 0]).sky, .partlyCloudy)
+    }
 }
