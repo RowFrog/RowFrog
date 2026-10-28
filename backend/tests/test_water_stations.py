@@ -18,8 +18,9 @@ def test_each_club_reads_its_nearest_station():
     assert all(water_stations.for_club(data.clubs[c], data.lakes["bodensee"]).id == "lindau-20001001" for c in near)
     far = [c for c in data.clubs_on(arbon.lake_id) if c.id not in near]
     assert far and all(water_stations.for_club(c, data.lakes[c.lake_id]) is None for c in far)
-    # A river station on the Main.
-    wuerzburg = water_stations.for_club(data.clubs["akademischer-ruderclub-wuerzburg"], data.lakes["river-main"])
+    # A river station on the Main (the club rows on its section of the Main).
+    arc = data.clubs["akademischer-ruderclub-wuerzburg"]
+    wuerzburg = water_stations.for_club(arc, data.lakes[arc.lake_id])
     assert (wuerzburg.network, wuerzburg.kind) == ("gkd", "river")
     # The lake view of the Ammersee uses the lake station a club reads.
     lake_station = water_stations.for_lake(data.lakes["ammersee"], data.clubs_on("ammersee"))

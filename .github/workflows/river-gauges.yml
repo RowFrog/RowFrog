@@ -1,0 +1,38 @@
+name: River gauges
+
+# By hand: finds the PEGELONLINE gauge (water level, discharge) on each river
+# club's river (scripts/river_gauge_survey.py) and commits
+# data/river-gauges.json to the branch it runs on, for the Current tile.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  survey:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Find the gauges
+        run: |
+          set -o pipefail
+          python3 -u scripts/river_gauge_survey.py --write | tee report.txt
+          { echo '### River gauges'; echo '```'; tail -n 300 report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Commit the gauge list
+        run: |
+          git add data/river-gauges.json
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "River gauges found on PEGELONLINE"
+            git pull --rebase
+            git push
+          fi

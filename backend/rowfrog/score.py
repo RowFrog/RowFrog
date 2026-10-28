@@ -85,6 +85,9 @@ class HourConditions:
     precipitation_mm: float | None = None
     # WMO weather code; 96 and 99 are thunderstorms with hail.
     weather_code: int | None = None
+    # Rivers: the gauge's level or current ("shipping_stopped", "high_water", "current"), see river.py.
+    river_name: str = "current"
+    river: Light = Light.GREEN
 
 
 @dataclass(frozen=True)
@@ -119,6 +122,7 @@ def assess(c: HourConditions, t: Thresholds = Thresholds()) -> Assessment:
         ("thunderstorm", c.thunderstorm),
         ("ice", c.ice),
         (c.daylight_name, c.daylight),
+        (c.river_name, c.river),
     ]
     if c.wave_height_m is not None:
         checks.append(("waves", _rising(c.wave_height_m, t.wave_amber_m, t.wave_red_m)))

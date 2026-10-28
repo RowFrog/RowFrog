@@ -1,0 +1,5482 @@
+{
+ "about": "River gauge per river club, written by scripts/river_gauge_survey.py --write: the nearest PEGELONLINE gauge with a water level on the club's river within 15 km. values: the gauge's characteristic values per series (W in cm, Q in m³/s). Data: WSV PEGELONLINE, DL-DE Zero 2.0.",
+ "clubs": {
+  "akademische-rudergesellschaft-zu-berlin": {
+   "network": "pegelonline",
+   "id": "2c68509c-bf1e-4866-9ec4-b26b231e5e04",
+   "name": "Berlin-Spandau Up",
+   "water": "Havel-Oder-Wasserstrasse",
+   "riverKm": 0.55,
+   "lat": 52.540064,
+   "lon": 13.209346,
+   "distanceKm": 3.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 309.0,
+     "NNW": 83.0,
+     "MNW": 126.0,
+     "MW": 149.0,
+     "MHW": 199.0
+    }
+   }
+  },
+  "akademische-turnverbindung-hannover": {
+   "network": "pegelonline",
+   "id": "8134af78-3100-4679-bf1d-be82410df429",
+   "name": "Herrenhausen",
+   "water": "Leine",
+   "riverKm": 25.12,
+   "lat": 52.388068,
+   "lon": 9.676062,
+   "distanceKm": 3.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 644.0,
+     "NNW": 38.0,
+     "M_II": 420.0,
+     "M_I": 380.0,
+     "MNW": 70.0,
+     "MW": 180.0,
+     "MHW": 516.0,
+     "M_III": 480.0
+    }
+   }
+  },
+  "akademischer-ruder-club-zu-muenster": {
+   "network": "pegelonline",
+   "id": "ccd3e8f1-39e9-4e09-aa41-625afda84460",
+   "name": "Münster Ow",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 70.315,
+   "lat": 51.968942,
+   "lon": 7.664374,
+   "distanceKm": 2.3,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "akademischer-ruderclub-wuerzburg": {
+   "network": "pegelonline",
+   "id": "915d76e1-3bf9-4e37-9a9a-4d144cd771cc",
+   "name": "Würzburg",
+   "water": "Main",
+   "riverKm": 251.97,
+   "lat": 49.796209,
+   "lon": 9.925969,
+   "distanceKm": 1.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 270.0,
+     "NNW": 116.0,
+     "HHW": 1030.0,
+     "MNW": 140.0,
+     "ZS_I": 123.0,
+     "NW": 134.0,
+     "MW": 174.0,
+     "MHW": 515.0,
+     "HSW": 340.0,
+     "HW": 648.0
+    }
+   }
+  },
+  "akademischer-ruderverein-westfalen-muenster": {
+   "network": "pegelonline",
+   "id": "ccd3e8f1-39e9-4e09-aa41-625afda84460",
+   "name": "Münster Ow",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 70.315,
+   "lat": 51.968942,
+   "lon": 7.664374,
+   "distanceKm": 2.2,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "alte-herren-rr-am-gymnasial-ruder-und-leichtathletik-verein": {
+   "network": "pegelonline",
+   "id": "827b2685-47ec-44df-a90f-980f5e0c1591",
+   "name": "Heidelberg Up",
+   "water": "Neckar",
+   "riverKm": 26.1,
+   "lat": 49.414688,
+   "lon": 8.717737,
+   "distanceKm": 0.8,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 661.0,
+     "MNW": 207.0,
+     "NW": 199.0,
+     "ZS_I": 200.0,
+     "MW": 220.0,
+     "MHW": 401.0,
+     "HSW": 260.0,
+     "HW": 531.0
+    }
+   }
+  },
+  "anklamer-ruderklub": {
+   "network": "pegelonline",
+   "id": "22fd01e0-090b-476b-80aa-f4586e259785",
+   "name": "Anklam",
+   "water": "Peene",
+   "riverKm": 89.8,
+   "lat": 53.862755,
+   "lon": 13.704278,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 609.0,
+     "MNW": 465.0,
+     "NW": 432.0,
+     "MW": 519.0,
+     "MHW": 581.0,
+     "HW": 603.0
+    }
+   }
+  },
+  "argonauten-ruderclub-e-v-meppen": {
+   "network": "pegelonline",
+   "id": "04572010-1db2-4338-8562-b3dca5e715c5",
+   "name": "Hasehubbrücke",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 166.42,
+   "lat": 52.694191,
+   "lon": 7.292912,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 482.0,
+     "MNW": 91.0,
+     "NW": 87.0,
+     "MW": 109.0,
+     "MHW": 225.0,
+     "HSW": 329.0,
+     "HW": 372.0
+    }
+   }
+  },
+  "bacharacher-ruder-verein-1884": {
+   "network": "pegelonline",
+   "id": "1d26e504-7f9e-480a-b52c-5932be6549ab",
+   "name": "Kaub",
+   "water": "Rhein",
+   "riverKm": 546.23,
+   "lat": 50.085438,
+   "lon": 7.764962,
+   "distanceKm": 3.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 190.0,
+     "NW": 25.0,
+     "MW": 208.0,
+     "HSW": 640.0,
+     "HW": 719.0,
+     "GlW": 77.0,
+     "M_I": 460.0,
+     "NNW": 25.0,
+     "HHW": 825.0,
+     "M_II": 640.0,
+     "MNW": 65.0,
+     "MHW": 544.0
+    }
+   }
+  },
+  "berliner-ruder-club-hevella": {
+   "network": "pegelonline",
+   "id": "2c68509c-bf1e-4866-9ec4-b26b231e5e04",
+   "name": "Berlin-Spandau Up",
+   "water": "Havel-Oder-Wasserstrasse",
+   "riverKm": 0.55,
+   "lat": 52.540064,
+   "lon": 13.209346,
+   "distanceKm": 2.2,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 309.0,
+     "NNW": 83.0,
+     "MNW": 126.0,
+     "MW": 149.0,
+     "MHW": 199.0
+    }
+   }
+  },
+  "berliner-ruder-gesellschaft": {
+   "network": "pegelonline",
+   "id": "2c68509c-bf1e-4866-9ec4-b26b231e5e04",
+   "name": "Berlin-Spandau Up",
+   "water": "Havel-Oder-Wasserstrasse",
+   "riverKm": 0.55,
+   "lat": 52.540064,
+   "lon": 13.209346,
+   "distanceKm": 2.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 309.0,
+     "NNW": 83.0,
+     "MNW": 126.0,
+     "MW": 149.0,
+     "MHW": 199.0
+    }
+   }
+  },
+  "bernburger-ruderclub": {
+   "network": "pegelonline",
+   "id": "e7f52bd2-f0cb-4194-aa85-4ad76a3a0671",
+   "name": "Bernburg Op",
+   "water": "Saale",
+   "riverKm": 36.2,
+   "lat": 51.795845,
+   "lon": 11.733834,
+   "distanceKm": 0.6,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 710.0,
+     "NNW": 300.0,
+     "MNW": 471.0,
+     "MW": 490.0,
+     "MHW": 566.0
+    }
+   }
+  },
+  "bernkasteler-ruderverein-1874": {
+   "network": "pegelonline",
+   "id": "8b802863-402e-4bb9-8d39-976d27519796",
+   "name": "Zeltingen Op",
+   "water": "Mosel",
+   "riverKm": 124.1,
+   "lat": 49.948424,
+   "lon": 7.027701,
+   "distanceKm": 4.9,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "bessel-ruder-club": {
+   "network": "pegelonline",
+   "id": "6b1b5c70-a23f-46de-954d-02bdc5bf2ecc",
+   "name": "Porta",
+   "water": "Weser",
+   "riverKm": 198.4,
+   "lat": 52.248709,
+   "lon": 8.922041,
+   "distanceKm": 5.8,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 790.0,
+     "NNW": 84.0,
+     "M_II": 500.0,
+     "M_I": 450.0,
+     "MNW": 125.0,
+     "MW": 223.0,
+     "MHW": 539.0,
+     "HSW": 480.0,
+     "M_III": 550.0
+    }
+   }
+  },
+  "bonner-ruder-gesellschaft": {
+   "network": "pegelonline",
+   "id": "593647aa-9fea-43ec-a7d6-6476a76ae868",
+   "name": "Bonn",
+   "water": "Rhein",
+   "riverKm": 654.8,
+   "lat": 50.736398,
+   "lon": 7.108045,
+   "distanceKm": 1.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 142.0,
+     "TuGLW": 250.0,
+     "HHW": 1013.0,
+     "NNW": 81.0,
+     "MNW": 121.0,
+     "MW": 290.0,
+     "MHW": 680.0
+    }
+   }
+  },
+  "bonner-ruder-verein-1882": {
+   "network": "pegelonline",
+   "id": "593647aa-9fea-43ec-a7d6-6476a76ae868",
+   "name": "Bonn",
+   "water": "Rhein",
+   "riverKm": 654.8,
+   "lat": 50.736398,
+   "lon": 7.108045,
+   "distanceKm": 1.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 142.0,
+     "TuGLW": 250.0,
+     "HHW": 1013.0,
+     "NNW": 81.0,
+     "MNW": 121.0,
+     "MW": 290.0,
+     "MHW": 680.0
+    }
+   }
+  },
+  "breisacher-ruderverein": {
+   "network": "pegelonline",
+   "id": "9da1ad2b-88db-4cbb-8132-eddfab07d5ba",
+   "name": "Breisach",
+   "water": "Rhein",
+   "riverKm": 227.6,
+   "lat": 48.043211,
+   "lon": 7.57257,
+   "distanceKm": 2.5,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "bremer-ruder-club-hansa-187983": {
+   "network": "pegelonline",
+   "id": "b26bfc88-eb8a-45b9-9dd0-0e41949a2648",
+   "name": "Grosse Weserbrücke",
+   "water": "Weser",
+   "riverKm": 0.04,
+   "lat": 53.073097,
+   "lon": 8.803636,
+   "distanceKm": 0.8,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 758.0,
+     "MTnw": 335.0,
+     "HThw": 1024.0,
+     "NTnw": 233.0
+    }
+   }
+  },
+  "bremer-ruderverein-von-1882": {
+   "network": "pegelonline",
+   "id": "b26bfc88-eb8a-45b9-9dd0-0e41949a2648",
+   "name": "Grosse Weserbrücke",
+   "water": "Weser",
+   "riverKm": 0.04,
+   "lat": 53.073097,
+   "lon": 8.803636,
+   "distanceKm": 0.7,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 758.0,
+     "MTnw": 335.0,
+     "HThw": 1024.0,
+     "NTnw": 233.0
+    }
+   }
+  },
+  "bremer-sport-club-ev-ruderabteilung": {
+   "network": "pegelonline",
+   "id": "b26bfc88-eb8a-45b9-9dd0-0e41949a2648",
+   "name": "Grosse Weserbrücke",
+   "water": "Weser",
+   "riverKm": 0.04,
+   "lat": 53.073097,
+   "lon": 8.803636,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 758.0,
+     "MTnw": 335.0,
+     "HThw": 1024.0,
+     "NTnw": 233.0
+    }
+   }
+  },
+  "bundesstuetzpunkt-berlin": {
+   "network": "pegelonline",
+   "id": "ee52ce62-212c-4735-b438-26fbdc37e3e2",
+   "name": "Berlin-Plötzensee Op",
+   "water": "Berlin-Spandauer-Schifffahrtskanal",
+   "riverKm": 7.4,
+   "lat": 52.5437,
+   "lon": 13.323142,
+   "distanceKm": 3.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 284.0,
+     "HHW": 371.0,
+     "MNW": 319.0,
+     "MW": 339.0,
+     "MHW": 356.0
+    }
+   }
+  },
+  "bundesstuetzpunkt-dortmund": {
+   "network": "pegelonline",
+   "id": "7bbdb421-2cbd-49c5-a145-c26352561f04",
+   "name": "Groppenbruch",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 10.546,
+   "lat": 51.604722,
+   "lon": 7.384185,
+   "distanceKm": 8.0,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "bundesstuetzpunkt-dresden": {
+   "network": "pegelonline",
+   "id": "70272185-b2b3-4178-96b8-43bea330dcae",
+   "name": "Dresden",
+   "water": "Elbe",
+   "riverKm": 55.63,
+   "lat": 51.05446,
+   "lon": 13.738832,
+   "distanceKm": 3.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 940.0,
+     "NNW": 21.0,
+     "MNW": 67.0,
+     "MW": 156.0,
+     "MHW": 458.0,
+     "HSW": 500.0
+    }
+   }
+  },
+  "bundesstuetzpunkt-rostock": {
+   "network": "pegelonline",
+   "id": "ca0e4a68-bd50-494c-bd45-abb33c5e1b0a",
+   "name": "Rostock Mühlendamm Ow",
+   "water": "Warnow",
+   "riverKm": 141.5,
+   "lat": 54.082438,
+   "lon": 12.154273,
+   "distanceKm": 2.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 611.0,
+     "MNW": 523.0,
+     "NW": 504.0,
+     "MW": 534.0,
+     "MHW": 587.0,
+     "HW": 610.0
+    }
+   }
+  },
+  "casseler-frauen-ruder-verein": {
+   "network": "pegelonline",
+   "id": "213a585d-d665-4be7-96a4-78a992b9614d",
+   "name": "Guntershausen",
+   "water": "Fulda",
+   "riverKm": 43.99,
+   "lat": 51.22658,
+   "lon": 9.469333,
+   "distanceKm": 8.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 83.0,
+     "HHW": 584.0,
+     "MNW": 107.0,
+     "MW": 154.0,
+     "HSW": 290.0,
+     "MHW": 357.0
+    }
+   }
+  },
+  "celler-ruderverein": {
+   "network": "pegelonline",
+   "id": "b475386c-30cc-453a-b3b7-1d17ace13595",
+   "name": "Celle",
+   "water": "Aller",
+   "riverKm": 1.74,
+   "lat": 52.622706,
+   "lon": 10.062164,
+   "distanceKm": 2.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 300.0,
+     "HHW": 528.0,
+     "M_II": 340.0,
+     "NNW": 50.0,
+     "MNW": 117.0,
+     "MW": 192.0,
+     "HSW": 310.0,
+     "MHW": 412.0,
+     "M_III": 400.0
+    }
+   }
+  },
+  "club-fuer-wassersport-porz-ev-1926": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 9.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "crefelder-ruder-club-1883": {
+   "network": "pegelonline",
+   "id": "c0f51e35-d0e8-4318-afaf-c5fcbc29f4c1",
+   "name": "Duisburg-Ruhrort",
+   "water": "Rhein",
+   "riverKm": 780.8,
+   "lat": 51.455345,
+   "lon": 6.727927,
+   "distanceKm": 12.8,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 227.0,
+     "TuGLW": 280.0,
+     "M_I": 930.0,
+     "M_II": 1130.0,
+     "NNW": 153.0,
+     "HHW": 1300.0,
+     "MNW": 201.0,
+     "MW": 394.0,
+     "MHW": 835.0,
+     "HSW": 1130.0
+    }
+   }
+  },
+  "donau-ruder-club-ingolstadt": {
+   "network": "pegelonline",
+   "id": "824a046b-9ca3-4db8-993d-e755122854e0",
+   "name": "Ingolstadt Luitpoldstrasse",
+   "water": "Donau",
+   "riverKm": 2458.3,
+   "lat": 48.757414,
+   "lon": 11.426054,
+   "distanceKm": 0.5,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "dresdner-ruderverein": {
+   "network": "pegelonline",
+   "id": "70272185-b2b3-4178-96b8-43bea330dcae",
+   "name": "Dresden",
+   "water": "Elbe",
+   "riverKm": 55.63,
+   "lat": 51.05446,
+   "lon": 13.738832,
+   "distanceKm": 5.4,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 940.0,
+     "NNW": 21.0,
+     "MNW": 67.0,
+     "MW": 156.0,
+     "MHW": 458.0,
+     "HSW": 500.0
+    }
+   }
+  },
+  "duesseldorfer-ruderverein-1880": {
+   "network": "pegelonline",
+   "id": "8f7e5f92-1153-4f93-acba-ca48670c8ca9",
+   "name": "Düsseldorf",
+   "water": "Rhein",
+   "riverKm": 744.2,
+   "lat": 51.225498,
+   "lon": 6.769891,
+   "distanceKm": 3.4,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 91.0,
+     "TuGLW": 250.0,
+     "HHW": 1110.0,
+     "M_I": 710.0,
+     "NNW": 23.0,
+     "M_II": 880.0,
+     "MNW": 70.0,
+     "MW": 257.0,
+     "MHW": 684.0,
+     "HSW": 880.0
+    }
+   }
+  },
+  "elmshorner-ruder-club-von-1909": {
+   "network": "pegelonline",
+   "id": "136febf6-1371-4118-a9b8-4275444bda5d",
+   "name": "Elmshorn Hafen",
+   "water": "Krückau",
+   "riverKm": 0.028,
+   "lat": 53.752182,
+   "lon": 9.653894,
+   "distanceKm": 1.2,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HThw": 744.0,
+     "NTnw": 496.0
+    }
+   }
+  },
+  "floersheimer-ruderverein-08": {
+   "network": "pegelonline",
+   "id": "db1684c1-7ffc-4e8a-b8cf-8240a0d03519",
+   "name": "Raunheim",
+   "water": "Main",
+   "riverKm": 12.213,
+   "lat": 50.016157,
+   "lon": 8.448287,
+   "distanceKm": 1.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 300.0,
+     "HHW": 563.0,
+     "NNW": 111.0,
+     "MNW": 118.0,
+     "ZS_I": 102.0,
+     "NW": 113.0,
+     "MW": 145.0,
+     "HSW": 400.0,
+     "MHW": 374.0,
+     "HW": 540.0
+    }
+   }
+  },
+  "foerderverein-fuer-freizeit-und-sport-am-kopernikus-gymnasium-rheine": {
+   "network": "pegelonline",
+   "id": "50a449ba-af4c-42c7-b2c4-9a3eda37e1e3",
+   "name": "Rheine Unterschleuse",
+   "water": "Ems",
+   "riverKm": 153.03,
+   "lat": 52.288026,
+   "lon": 7.434078,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 1013.0,
+     "MNW": 180.0,
+     "NW": 172.0,
+     "MW": 253.0,
+     "MHW": 544.0,
+     "HW": 816.0
+    }
+   }
+  },
+  "frankfurter-ruder-club-1884": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 0.1,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frankfurter-ruder-club-fechenheim-1887": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 4.5,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frankfurter-ruder-club-griesheim-1906": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 7.5,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frankfurter-ruder-club-von-1882": {
+   "network": "pegelonline",
+   "id": "bffdf7f2-6200-42a2-a4bc-a8111e27e043",
+   "name": "Frankfurt1 (Oder)",
+   "water": "Oder",
+   "riverKm": 585.3,
+   "lat": 52.357806,
+   "lon": 14.551732,
+   "distanceKm": 2.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 583.0,
+     "M_I": 435.0,
+     "M_II": 480.0,
+     "NNW": 81.0,
+     "MNW": 133.0,
+     "MW": 237.0,
+     "MHW": 424.0,
+     "HSW": 480.0
+    }
+   }
+  },
+  "frankfurter-ruder-gesellschaft-oberrad-1879": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 0.1,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frankfurter-ruder-und-kanusportverein-sachsenhausen-1898": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 0.1,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frankfurter-rudergesellschaft-borussia-1896": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 0.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frankfurter-rudergesellschaft-germania-1869": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 2.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frankfurter-rudergesellschaft-nied-1921": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 10.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frankfurter-ruderverein-von-1865": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 2.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "frauen-ruderverein-freiweg-frankfurt-ev-1927": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 5.5,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "friedrichstaedter-rudergesellschaft": {
+   "network": "pegelonline",
+   "id": "795ce865-3ac4-43b8-88d5-049a34e4359e",
+   "name": "Friedrichstadt Treene",
+   "water": "Treene",
+   "riverKm": 0.0,
+   "lat": 54.373651,
+   "lon": 9.083813,
+   "distanceKm": 0.3,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "georg-august-universitaet-goettingen-zentrale-einrichtung-hochschulsport": {
+   "network": "pegelonline",
+   "id": "23721dfd-9b89-4b69-af80-063229917f27",
+   "name": "Bonaforth",
+   "water": "Fulda",
+   "riverKm": 3.61,
+   "lat": 51.403492,
+   "lon": 9.632042,
+   "distanceKm": 4.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 716.0,
+     "NNW": 196.0,
+     "MNW": 214.0,
+     "MW": 255.0,
+     "HSW": 390.0,
+     "MHW": 499.0
+    }
+   }
+  },
+  "giessener-ruderclub-hassia-1906": {
+   "network": "pegelonline",
+   "id": "4b386a6a-996e-4a4a-a440-15d6b40226d4",
+   "name": "Giessen Klärwerk",
+   "water": "Lahn",
+   "riverKm": -3.2,
+   "lat": 50.575038,
+   "lon": 8.648602,
+   "distanceKm": 2.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 119.0,
+     "HHW": 705.0,
+     "MNW": 225.0,
+     "NW": 219.0,
+     "MW": 274.0,
+     "MHW": 610.0,
+     "HW": 656.0
+    }
+   }
+  },
+  "giessener-rudergesellschaft-1877": {
+   "network": "pegelonline",
+   "id": "4b386a6a-996e-4a4a-a440-15d6b40226d4",
+   "name": "Giessen Klärwerk",
+   "water": "Lahn",
+   "riverKm": -3.2,
+   "lat": 50.575038,
+   "lon": 8.648602,
+   "distanceKm": 2.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 119.0,
+     "HHW": 705.0,
+     "MNW": 225.0,
+     "NW": 219.0,
+     "MW": 274.0,
+     "MHW": 610.0,
+     "HW": 656.0
+    }
+   }
+  },
+  "grv-am-beethoven-gymnasium-bonn": {
+   "network": "pegelonline",
+   "id": "593647aa-9fea-43ec-a7d6-6476a76ae868",
+   "name": "Bonn",
+   "water": "Rhein",
+   "riverKm": 654.8,
+   "lat": 50.736398,
+   "lon": 7.108045,
+   "distanceKm": 0.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 142.0,
+     "TuGLW": 250.0,
+     "HHW": 1013.0,
+     "NNW": 81.0,
+     "MNW": 121.0,
+     "MW": 290.0,
+     "MHW": 680.0
+    }
+   }
+  },
+  "gymnasial-turn-ruder-verein-neuwied-1882": {
+   "network": "pegelonline",
+   "id": "dc407f1e-e25f-4995-9feb-5bacc8658149",
+   "name": "Neuwied Stadt",
+   "water": "Rhein",
+   "riverKm": 608.04,
+   "lat": 50.424277,
+   "lon": 7.457453,
+   "distanceKm": 0.4,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "hallesche-ruder-vereinigung-boellberg-v-1884-u-nelson-v-1874-ev-im-sv-halle": {
+   "network": "pegelonline",
+   "id": "4626f6bc-494b-4a51-8c10-b47a32e87790",
+   "name": "Röpzig",
+   "water": "Saale",
+   "riverKm": 101.9,
+   "lat": 51.435071,
+   "lon": 11.944652,
+   "distanceKm": 2.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 400.0,
+     "NNW": 15.0,
+     "MNW": 34.0,
+     "MW": 71.0,
+     "MHW": 215.0
+    }
+   }
+  },
+  "hallescher-ruderclub-ev-im-universitaetssportverein-halle": {
+   "network": "pegelonline",
+   "id": "ea6870dc-507e-4ec4-a38c-cd8a5e8b7025",
+   "name": "Trotha Op",
+   "water": "Saale",
+   "riverKm": 89.22,
+   "lat": 51.513686,
+   "lon": 11.954885,
+   "distanceKm": 0.2,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 639.0,
+     "NNW": 138.0,
+     "MNW": 230.0,
+     "MW": 254.0,
+     "MHW": 363.0
+    }
+   }
+  },
+  "hanauer-ruderclub-hassia": {
+   "network": "pegelonline",
+   "id": "27eed51b-c0a4-417e-926b-bb4194bfb341",
+   "name": "Krotzenburg",
+   "water": "Main",
+   "riverKm": 63.23,
+   "lat": 50.079717,
+   "lon": 8.953596,
+   "distanceKm": 6.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 85.0,
+     "HHW": 626.0,
+     "MNW": 102.0,
+     "ZS_I": 84.0,
+     "NW": 101.0,
+     "MW": 137.0,
+     "MHW": 409.0,
+     "HW": 610.0
+    }
+   }
+  },
+  "hanauer-rudergesellschaft-1879": {
+   "network": "pegelonline",
+   "id": "27eed51b-c0a4-417e-926b-bb4194bfb341",
+   "name": "Krotzenburg",
+   "water": "Main",
+   "riverKm": 63.23,
+   "lat": 50.079717,
+   "lon": 8.953596,
+   "distanceKm": 6.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 85.0,
+     "HHW": 626.0,
+     "MNW": 102.0,
+     "ZS_I": 84.0,
+     "NW": 101.0,
+     "MW": 137.0,
+     "MHW": 409.0,
+     "HW": 610.0
+    }
+   }
+  },
+  "hattinger-ruderverein-ev-1923": {
+   "network": "pegelonline",
+   "id": "c0594fb5-77ff-4287-9b8d-7ff326afe9ff",
+   "name": "Hattingen",
+   "water": "Ruhr",
+   "riverKm": 56.9,
+   "lat": 51.39975,
+   "lon": 7.161034,
+   "distanceKm": 0.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {}
+  },
+  "heidelberger-ruderklub-1872": {
+   "network": "pegelonline",
+   "id": "827b2685-47ec-44df-a90f-980f5e0c1591",
+   "name": "Heidelberg Up",
+   "water": "Neckar",
+   "riverKm": 26.1,
+   "lat": 49.414688,
+   "lon": 8.717737,
+   "distanceKm": 1.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 661.0,
+     "MNW": 207.0,
+     "NW": 199.0,
+     "ZS_I": 200.0,
+     "MW": 220.0,
+     "MHW": 401.0,
+     "HSW": 260.0,
+     "HW": 531.0
+    }
+   }
+  },
+  "heilbronner-rudergesellschaft-schwaben-von-1879": {
+   "network": "pegelonline",
+   "id": "d9b441a5-a585-4ac4-ae65-351a5fce3aa5",
+   "name": "Horkheim Wehr Up",
+   "water": "Neckar",
+   "riverKm": 119.8,
+   "lat": 49.099646,
+   "lon": 9.152703,
+   "distanceKm": 5.1,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "hermann-billung-celle": {
+   "network": "pegelonline",
+   "id": "b475386c-30cc-453a-b3b7-1d17ace13595",
+   "name": "Celle",
+   "water": "Aller",
+   "riverKm": 1.74,
+   "lat": 52.622706,
+   "lon": 10.062164,
+   "distanceKm": 1.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 300.0,
+     "HHW": 528.0,
+     "M_II": 340.0,
+     "NNW": 50.0,
+     "MNW": 117.0,
+     "MW": 192.0,
+     "HSW": 310.0,
+     "MHW": 412.0,
+     "M_III": 400.0
+    }
+   }
+  },
+  "homberger-ruderklub-germania": {
+   "network": "pegelonline",
+   "id": "c0f51e35-d0e8-4318-afaf-c5fcbc29f4c1",
+   "name": "Duisburg-Ruhrort",
+   "water": "Rhein",
+   "riverKm": 780.8,
+   "lat": 51.455345,
+   "lon": 6.727927,
+   "distanceKm": 0.4,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 227.0,
+     "TuGLW": 280.0,
+     "M_I": 930.0,
+     "M_II": 1130.0,
+     "NNW": 153.0,
+     "HHW": 1300.0,
+     "MNW": 201.0,
+     "MW": 394.0,
+     "MHW": 835.0,
+     "HSW": 1130.0
+    }
+   }
+  },
+  "karlsruher-rheinklub-alemannia": {
+   "network": "pegelonline",
+   "id": "b6c6d5c8-e2d5-4469-8dd8-fa972ef7eaea",
+   "name": "Maxau",
+   "water": "Rhein",
+   "riverKm": 362.327,
+   "lat": 49.038977,
+   "lon": 8.305564,
+   "distanceKm": 3.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 311.0,
+     "MW": 496.0,
+     "HSW": 750.0,
+     "HW": 870.0,
+     "GlW": 372.0,
+     "M_II": 750.0,
+     "NNW": 231.0,
+     "M_I": 620.0,
+     "HHW": 884.0,
+     "MNW": 353.0,
+     "MHW": 785.0
+    }
+   }
+  },
+  "karlsruher-ruder-verein-wiking-von-1879": {
+   "network": "pegelonline",
+   "id": "b6c6d5c8-e2d5-4469-8dd8-fa972ef7eaea",
+   "name": "Maxau",
+   "water": "Rhein",
+   "riverKm": 362.327,
+   "lat": 49.038977,
+   "lon": 8.305564,
+   "distanceKm": 3.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 311.0,
+     "MW": 496.0,
+     "HSW": 750.0,
+     "HW": 870.0,
+     "GlW": 372.0,
+     "M_II": 750.0,
+     "NNW": 231.0,
+     "M_I": 620.0,
+     "HHW": 884.0,
+     "MNW": 353.0,
+     "MHW": 785.0
+    }
+   }
+  },
+  "kasteler-ruder-und-kanu-gesellschaft-1880": {
+   "network": "pegelonline",
+   "id": "a37a9aa3-45e9-4d90-9df6-109f3a28a5af",
+   "name": "Mainz",
+   "water": "Rhein",
+   "riverKm": 498.27,
+   "lat": 50.003995,
+   "lon": 8.275319,
+   "distanceKm": 0.8,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 122.0,
+     "MW": 288.0,
+     "HSW": 630.0,
+     "HW": 682.0,
+     "GlW": 171.0,
+     "M_II": 630.0,
+     "M_I": 475.0,
+     "NNW": 110.0,
+     "HHW": 795.0,
+     "MNW": 159.0,
+     "MHW": 547.0
+    }
+   }
+  },
+  "koblenzer-ruderclub-rhenania-18771921": {
+   "network": "pegelonline",
+   "id": "3f64ff08-ca37-4567-ba64-a387a9358d0c",
+   "name": "Koblenz Op",
+   "water": "Mosel",
+   "riverKm": 2.111,
+   "lat": 50.367912,
+   "lon": 7.58074,
+   "distanceKm": 1.2,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "koelner-club-fuer-wassersport": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 3.8,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "koelner-rudergesellschaft-1891": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 5.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "koelner-ruderverein-von-1877": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 5.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "landesruderverband-berlin": {
+   "network": "pegelonline",
+   "id": "ee52ce62-212c-4735-b438-26fbdc37e3e2",
+   "name": "Berlin-Plötzensee Op",
+   "water": "Berlin-Spandauer-Schifffahrtskanal",
+   "riverKm": 7.4,
+   "lat": 52.5437,
+   "lon": 13.323142,
+   "distanceKm": 3.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 284.0,
+     "HHW": 371.0,
+     "MNW": 319.0,
+     "MW": 339.0,
+     "MHW": 356.0
+    }
+   }
+  },
+  "laubegaster-ruderverein-dresden": {
+   "network": "pegelonline",
+   "id": "70272185-b2b3-4178-96b8-43bea330dcae",
+   "name": "Dresden",
+   "water": "Elbe",
+   "riverKm": 55.63,
+   "lat": 51.05446,
+   "lon": 13.738832,
+   "distanceKm": 7.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 940.0,
+     "NNW": 21.0,
+     "MNW": 67.0,
+     "MW": 156.0,
+     "MHW": 458.0,
+     "HSW": 500.0
+    }
+   }
+  },
+  "lauffener-ruderclub-neckar-ev-1931": {
+   "network": "pegelonline",
+   "id": "8559d1a0-4a03-410a-8910-44a089a07df8",
+   "name": "Lauffen",
+   "water": "Neckar",
+   "riverKm": 125.43,
+   "lat": 49.072331,
+   "lon": 9.159787,
+   "distanceKm": 0.4,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 725.0,
+     "MNW": 219.0,
+     "NW": 214.0,
+     "MW": 259.0,
+     "MHW": 532.0,
+     "HW": 611.0
+    }
+   }
+  },
+  "limburger-club-fuer-wassersport-von-18951907": {
+   "network": "pegelonline",
+   "id": "89038b42-8181-48df-a0cd-2ca3913f2d68",
+   "name": "Limburg Schleuse Up",
+   "water": "Lahn",
+   "riverKm": 76.6,
+   "lat": 50.391513,
+   "lon": 8.065189,
+   "distanceKm": 0.5,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ludwigshafener-ruderverein-von-1878": {
+   "network": "pegelonline",
+   "id": "57090802-c51a-4d09-8340-b4453cd0e1f5",
+   "name": "Mannheim",
+   "water": "Rhein",
+   "riverKm": 424.733,
+   "lat": 49.48394,
+   "lon": 8.455165,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 85.0,
+     "MW": 293.0,
+     "HSW": 760.0,
+     "HW": 836.0,
+     "GlW": 155.0,
+     "NNW": 85.0,
+     "HHW": 917.0,
+     "M_I": 650.0,
+     "M_II": 760.0,
+     "MNW": 132.0,
+     "MHW": 644.0
+    }
+   }
+  },
+  "lueneburger-ruder-club-wiking-v1875": {
+   "network": "pegelonline",
+   "id": "d7a8df36-2978-45b8-99d1-76d84cf34c01",
+   "name": "Lüne",
+   "water": "Ilmenau",
+   "riverKm": 1.501,
+   "lat": 53.261043,
+   "lon": 10.41986,
+   "distanceKm": 1.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 34.0,
+     "HHW": 409.0,
+     "MNW": 72.0,
+     "MW": 105.0,
+     "MHW": 204.0
+    }
+   }
+  },
+  "lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal": {
+   "network": "pegelonline",
+   "id": "d9289367-c8aa-4b6a-b1ad-857fec94c6bb",
+   "name": "Hohnstorf",
+   "water": "Elbe",
+   "riverKm": 568.987,
+   "lat": 53.366264,
+   "lon": 10.558836,
+   "distanceKm": 14.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 988.0,
+     "NNW": 398.0,
+     "MNW": 417.0,
+     "MW": 478.0,
+     "MHW": 683.0,
+     "HSW": 820.0
+    }
+   }
+  },
+  "lueneburger-ruder-club-wiking-v1875-loesegraben": {
+   "network": "pegelonline",
+   "id": "d7a8df36-2978-45b8-99d1-76d84cf34c01",
+   "name": "Lüne",
+   "water": "Ilmenau",
+   "riverKm": 1.501,
+   "lat": 53.261043,
+   "lon": 10.41986,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 34.0,
+     "HHW": 409.0,
+     "MNW": 72.0,
+     "MW": 105.0,
+     "MHW": 204.0
+    }
+   }
+  },
+  "mainzer-ruder-gesellschaft-1898": {
+   "network": "pegelonline",
+   "id": "a37a9aa3-45e9-4d90-9df6-109f3a28a5af",
+   "name": "Mainz",
+   "water": "Rhein",
+   "riverKm": 498.27,
+   "lat": 50.003995,
+   "lon": 8.275319,
+   "distanceKm": 4.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 122.0,
+     "MW": 288.0,
+     "HSW": 630.0,
+     "HW": 682.0,
+     "GlW": 171.0,
+     "M_II": 630.0,
+     "M_I": 475.0,
+     "NNW": 110.0,
+     "HHW": 795.0,
+     "MNW": 159.0,
+     "MHW": 547.0
+    }
+   }
+  },
+  "mainzer-ruder-verein-1878": {
+   "network": "pegelonline",
+   "id": "a37a9aa3-45e9-4d90-9df6-109f3a28a5af",
+   "name": "Mainz",
+   "water": "Rhein",
+   "riverKm": 498.27,
+   "lat": 50.003995,
+   "lon": 8.275319,
+   "distanceKm": 1.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 122.0,
+     "MW": 288.0,
+     "HSW": 630.0,
+     "HW": 682.0,
+     "GlW": 171.0,
+     "M_II": 630.0,
+     "M_I": 475.0,
+     "NNW": 110.0,
+     "HHW": 795.0,
+     "MNW": 159.0,
+     "MHW": 547.0
+    }
+   }
+  },
+  "mannheimer-regatta-verein": {
+   "network": "pegelonline",
+   "id": "57090802-c51a-4d09-8340-b4453cd0e1f5",
+   "name": "Mannheim",
+   "water": "Rhein",
+   "riverKm": 424.733,
+   "lat": 49.48394,
+   "lon": 8.455165,
+   "distanceKm": 0.6,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 85.0,
+     "MW": 293.0,
+     "HSW": 760.0,
+     "HW": 836.0,
+     "GlW": 155.0,
+     "NNW": 85.0,
+     "HHW": 917.0,
+     "M_I": 650.0,
+     "M_II": 760.0,
+     "MNW": 132.0,
+     "MHW": 644.0
+    }
+   }
+  },
+  "mannheimer-ruder-club-von-1875": {
+   "network": "pegelonline",
+   "id": "57090802-c51a-4d09-8340-b4453cd0e1f5",
+   "name": "Mannheim",
+   "water": "Rhein",
+   "riverKm": 424.733,
+   "lat": 49.48394,
+   "lon": 8.455165,
+   "distanceKm": 0.7,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 85.0,
+     "MW": 293.0,
+     "HSW": 760.0,
+     "HW": 836.0,
+     "GlW": 155.0,
+     "NNW": 85.0,
+     "HHW": 917.0,
+     "M_I": 650.0,
+     "M_II": 760.0,
+     "MNW": 132.0,
+     "MHW": 644.0
+    }
+   }
+  },
+  "mannheimer-rudergesellschaft-rheinau-1909": {
+   "network": "pegelonline",
+   "id": "57090802-c51a-4d09-8340-b4453cd0e1f5",
+   "name": "Mannheim",
+   "water": "Rhein",
+   "riverKm": 424.733,
+   "lat": 49.48394,
+   "lon": 8.455165,
+   "distanceKm": 6.8,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 85.0,
+     "MW": 293.0,
+     "HSW": 760.0,
+     "HW": 836.0,
+     "GlW": 155.0,
+     "NNW": 85.0,
+     "HHW": 917.0,
+     "M_I": 650.0,
+     "M_II": 760.0,
+     "MNW": 132.0,
+     "MHW": 644.0
+    }
+   }
+  },
+  "marbacher-ruderverein-von-1920": {
+   "network": "pegelonline",
+   "id": "456974a8-8cc8-4349-ba9f-b272ee6dcf3b",
+   "name": "Marbach Schleuse Up",
+   "water": "Neckar",
+   "riverKm": 157.5,
+   "lat": 48.937097,
+   "lon": 9.250082,
+   "distanceKm": 0.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HSW": 285.0
+    }
+   }
+  },
+  "meissner-ruderclub-neptun-1882": {
+   "network": "pegelonline",
+   "id": "24440872-5bd2-4fb3-8554-907b49816c49",
+   "name": "Meissen",
+   "water": "Elbe",
+   "riverKm": 82.2,
+   "lat": 51.164406,
+   "lon": 13.475468,
+   "distanceKm": 1.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 1051.0,
+     "NNW": 58.0,
+     "MNW": 118.0,
+     "MW": 210.0,
+     "MHW": 524.0
+    }
+   }
+  },
+  "merseburger-rudergesellschaft": {
+   "network": "pegelonline",
+   "id": "cde0f9b6-6b13-4de9-adfe-cad1fe085e30",
+   "name": "Rischmühle Up",
+   "water": "Saale",
+   "riverKm": 115.19,
+   "lat": 51.350595,
+   "lon": 12.003389,
+   "distanceKm": 3.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 102.0,
+     "HHW": 510.0,
+     "MNW": 194.0,
+     "MW": 226.0,
+     "MHW": 345.0
+    }
+   }
+  },
+  "miltenberger-ruder-club-von-1900": {
+   "network": "pegelonline",
+   "id": "355b02d2-c578-46d9-a56b-8046d470cb95",
+   "name": "Kleinheubach",
+   "water": "Main",
+   "riverKm": 121.7,
+   "lat": 49.716138,
+   "lon": 9.225244,
+   "distanceKm": 2.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 80.0,
+     "HHW": 622.0,
+     "M_I": 300.0,
+     "MNW": 107.0,
+     "ZS_I": 89.0,
+     "NW": 92.0,
+     "MW": 150.0,
+     "MHW": 425.0,
+     "HSW": 370.0,
+     "HW": 602.0
+    }
+   }
+  },
+  "mindener-ruder-verein-von-1905": {
+   "network": "pegelonline",
+   "id": "6b1b5c70-a23f-46de-954d-02bdc5bf2ecc",
+   "name": "Porta",
+   "water": "Weser",
+   "riverKm": 198.4,
+   "lat": 52.248709,
+   "lon": 8.922041,
+   "distanceKm": 4.2,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 790.0,
+     "NNW": 84.0,
+     "M_II": 500.0,
+     "M_I": 450.0,
+     "MNW": 125.0,
+     "MW": 223.0,
+     "MHW": 539.0,
+     "HSW": 480.0,
+     "M_III": 550.0
+    }
+   }
+  },
+  "muehlheimer-ruderverein-1911": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 9.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "muelheimer-ruder-gesellschaft": {
+   "network": "pegelonline",
+   "id": "36fb2c81-5fc0-4f2c-8f37-347c822a4b59",
+   "name": "Schlossbrücke Mülheim",
+   "water": "Ruhr",
+   "riverKm": 12.183,
+   "lat": 51.426761,
+   "lon": 6.875965,
+   "distanceKm": 2.3,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "muelheimer-wassersport-ev-koeln": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 4.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "muendener-ruderverein": {
+   "network": "pegelonline",
+   "id": "23721dfd-9b89-4b69-af80-063229917f27",
+   "name": "Bonaforth",
+   "water": "Fulda",
+   "riverKm": 3.61,
+   "lat": 51.403492,
+   "lon": 9.632042,
+   "distanceKm": 1.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 716.0,
+     "NNW": 196.0,
+     "MNW": 214.0,
+     "MW": 255.0,
+     "HSW": 390.0,
+     "MHW": 499.0
+    }
+   }
+  },
+  "neusser-ruderverein": {
+   "network": "pegelonline",
+   "id": "8f7e5f92-1153-4f93-acba-ca48670c8ca9",
+   "name": "Düsseldorf",
+   "water": "Rhein",
+   "riverKm": 744.2,
+   "lat": 51.225498,
+   "lon": 6.769891,
+   "distanceKm": 5.1,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 91.0,
+     "TuGLW": 250.0,
+     "HHW": 1110.0,
+     "M_I": 710.0,
+     "NNW": 23.0,
+     "M_II": 880.0,
+     "MNW": 70.0,
+     "MW": 257.0,
+     "MHW": 684.0,
+     "HSW": 880.0
+    }
+   }
+  },
+  "neuwieder-ruder-gesellschaft-1883": {
+   "network": "pegelonline",
+   "id": "dc407f1e-e25f-4995-9feb-5bacc8658149",
+   "name": "Neuwied Stadt",
+   "water": "Rhein",
+   "riverKm": 608.04,
+   "lat": 50.424277,
+   "lon": 7.457453,
+   "distanceKm": 0.1,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "nordenhamer-ruderclub-von-1908": {
+   "network": "pegelonline",
+   "id": "06e6b715-eb03-46ce-adf4-6cafca6368eb",
+   "name": "Nordenham",
+   "water": "Weser",
+   "riverKm": 55.811,
+   "lat": 53.464497,
+   "lon": 8.488052,
+   "distanceKm": 1.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 696.0,
+     "MTnw": 298.0,
+     "HThw": 996.0,
+     "NTnw": 173.0
+    }
+   }
+  },
+  "offenbacher-rudergesellschaft-undine-1876": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 3.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "offenbacher-ruderverein-1874": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 3.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "oldenburger-ruderverein": {
+   "network": "pegelonline",
+   "id": "1b51e55e-088a-44c3-a633-b1bee44422d7",
+   "name": "Oldenburg-Drielake",
+   "water": "Hunte",
+   "riverKm": 0.547,
+   "lat": 53.140229,
+   "lon": 8.234081,
+   "distanceKm": 3.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 722.0,
+     "MTnw": 447.0,
+     "HThw": 821.0,
+     "NTnw": 351.0
+    }
+   }
+  },
+  "papenburger-ruderclub": {
+   "network": "pegelonline",
+   "id": "ec4a598d-773d-44c1-935e-2053b54e45a3",
+   "name": "Papenburg",
+   "water": "Ems",
+   "riverKm": 0.39,
+   "lat": 53.108191,
+   "lon": 7.365595,
+   "distanceKm": 2.7,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 692.0,
+     "MTnw": 325.0,
+     "HThw": 880.0,
+     "NTnw": 226.0
+    }
+   }
+  },
+  "pichelsberger-rudergesellschaft-1914": {
+   "network": "pegelonline",
+   "id": "2c68509c-bf1e-4866-9ec4-b26b231e5e04",
+   "name": "Berlin-Spandau Up",
+   "water": "Havel-Oder-Wasserstrasse",
+   "riverKm": 0.55,
+   "lat": 52.540064,
+   "lon": 13.209346,
+   "distanceKm": 1.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 309.0,
+     "NNW": 83.0,
+     "MNW": 126.0,
+     "MW": 149.0,
+     "MHW": 199.0
+    }
+   }
+  },
+  "pirnaer-ruderverein-1872": {
+   "network": "pegelonline",
+   "id": "85d686f1-55b2-4d36-8dba-3207b50901a7",
+   "name": "Pirna",
+   "water": "Elbe",
+   "riverKm": 34.67,
+   "lat": 50.964585,
+   "lon": 13.929755,
+   "distanceKm": 0.2,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 1045.0,
+     "MNW": 104.0,
+     "MW": 193.0,
+     "MHW": 507.0
+    }
+   }
+  },
+  "post-sportverein-ev-koblenz": {
+   "network": "pegelonline",
+   "id": "3f64ff08-ca37-4567-ba64-a387a9358d0c",
+   "name": "Koblenz Op",
+   "water": "Mosel",
+   "riverKm": 2.111,
+   "lat": 50.367912,
+   "lon": 7.58074,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "post-und-telekom-sportgemeinschaft-luebbecke": {
+   "network": "pegelonline",
+   "id": "c2aa9164-1073-4271-82ef-44344fbe456e",
+   "name": "Lübbecke",
+   "water": "Mittellandkanal",
+   "riverKm": 80.1,
+   "lat": 52.334961,
+   "lon": 8.617141,
+   "distanceKm": 0.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "OBW": 50.35,
+     "UBW": 50.23
+    }
+   }
+  },
+  "postsportverein-oldenburg-ev-ruderabteilung": {
+   "network": "pegelonline",
+   "id": "cf6ac249-f20a-400b-8543-31f2d2fe23f0",
+   "name": "Hundsmühlen",
+   "water": "Küstenkanal",
+   "riverKm": 5.188,
+   "lat": 53.108847,
+   "lon": 8.17307,
+   "distanceKm": 1.8,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "renn-ruder-gemeinschaft-muelheim": {
+   "network": "pegelonline",
+   "id": "36fb2c81-5fc0-4f2c-8f37-347c822a4b59",
+   "name": "Schlossbrücke Mülheim",
+   "water": "Ruhr",
+   "riverKm": 12.183,
+   "lat": 51.426761,
+   "lon": 6.875965,
+   "distanceKm": 2.3,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "rosslauer-rudergesellschaft": {
+   "network": "pegelonline",
+   "id": "e97116a4-7d30-4671-8ba1-cdce0a153d1d",
+   "name": "Rosslau",
+   "water": "Elbe",
+   "riverKm": 257.84,
+   "lat": 51.881407,
+   "lon": 12.236541,
+   "distanceKm": 0.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 32.0,
+     "HHW": 694.0,
+     "MNW": 66.0,
+     "MW": 170.0,
+     "MHW": 440.0
+    }
+   }
+  },
+  "rr-am-kaiserin-auguste-viktoria-gymnasium-celle": {
+   "network": "pegelonline",
+   "id": "b475386c-30cc-453a-b3b7-1d17ace13595",
+   "name": "Celle",
+   "water": "Aller",
+   "riverKm": 1.74,
+   "lat": 52.622706,
+   "lon": 10.062164,
+   "distanceKm": 2.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 300.0,
+     "HHW": 528.0,
+     "M_II": 340.0,
+     "NNW": 50.0,
+     "MNW": 117.0,
+     "MW": 192.0,
+     "HSW": 310.0,
+     "MHW": 412.0,
+     "M_III": 400.0
+    }
+   }
+  },
+  "rr-am-ratsgymnasium-minden": {
+   "network": "pegelonline",
+   "id": "6b1b5c70-a23f-46de-954d-02bdc5bf2ecc",
+   "name": "Porta",
+   "water": "Weser",
+   "riverKm": 198.4,
+   "lat": 52.248709,
+   "lon": 8.922041,
+   "distanceKm": 3.7,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 790.0,
+     "NNW": 84.0,
+     "M_II": 500.0,
+     "M_I": 450.0,
+     "MNW": 125.0,
+     "MW": 223.0,
+     "MHW": 539.0,
+     "HSW": 480.0,
+     "M_III": 550.0
+    }
+   }
+  },
+  "rr-besselgymnasium-minden": {
+   "network": "pegelonline",
+   "id": "6b1b5c70-a23f-46de-954d-02bdc5bf2ecc",
+   "name": "Porta",
+   "water": "Weser",
+   "riverKm": 198.4,
+   "lat": 52.248709,
+   "lon": 8.922041,
+   "distanceKm": 5.8,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 790.0,
+     "NNW": 84.0,
+     "M_II": 500.0,
+     "M_I": 450.0,
+     "MNW": 125.0,
+     "MW": 223.0,
+     "MHW": 539.0,
+     "HSW": 480.0,
+     "M_III": 550.0
+    }
+   }
+  },
+  "rr-domgymnasium-verden": {
+   "network": "pegelonline",
+   "id": "47174d8f-1b8e-4599-8a59-b580dd55bc87",
+   "name": "Eitze",
+   "water": "Aller",
+   "riverKm": 107.75,
+   "lat": 52.904065,
+   "lon": 9.276769,
+   "distanceKm": 3.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 216.0,
+     "M_I": 460.0,
+     "HHW": 659.0,
+     "M_II": 500.0,
+     "MNW": 234.0,
+     "MW": 327.0,
+     "MHW": 556.0,
+     "M_III": 560.0
+    }
+   }
+  },
+  "rr-greselius-gymnasium-bramsche": {
+   "network": "pegelonline",
+   "id": "bec8a6a5-c3de-4322-856a-870ceb992fe4",
+   "name": "Bramsche",
+   "water": "Mittellandkanal",
+   "riverKm": 31.95,
+   "lat": 52.396167,
+   "lon": 7.978173,
+   "distanceKm": 1.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "OBW": 50.35,
+     "UBW": 50.23
+    }
+   }
+  },
+  "rr-schillergymnasium-muenster": {
+   "network": "pegelonline",
+   "id": "ccd3e8f1-39e9-4e09-aa41-625afda84460",
+   "name": "Münster Ow",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 70.315,
+   "lat": 51.968942,
+   "lon": 7.664374,
+   "distanceKm": 1.9,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "rthc-ruder-tennis-hockey-club-bayer-leverkusen-ruder-abteilung": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 5.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "ruder-club-aken": {
+   "network": "pegelonline",
+   "id": "094b96e5-caeb-46d3-a8ee-d44182add069",
+   "name": "Aken",
+   "water": "Elbe",
+   "riverKm": 274.8,
+   "lat": 51.857867,
+   "lon": 12.058859,
+   "distanceKm": 0.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 791.0,
+     "NNW": 26.0,
+     "MNW": 63.0,
+     "MW": 173.0,
+     "MHW": 466.0
+    }
+   }
+  },
+  "ruder-club-aschaffenburg-von-1898": {
+   "network": "pegelonline",
+   "id": "3c7cfb10-c866-404b-b11c-0d79986f865a",
+   "name": "Obernau",
+   "water": "Main",
+   "riverKm": 92.385,
+   "lat": 49.9338,
+   "lon": 9.129075,
+   "distanceKm": 3.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 83.0,
+     "M_I": 300.0,
+     "HHW": 641.0,
+     "MNW": 93.0,
+     "ZS_I": 71.0,
+     "NW": 88.0,
+     "MW": 137.0,
+     "MHW": 433.0,
+     "HSW": 380.0,
+     "HW": 612.0
+    }
+   }
+  },
+  "ruder-club-holzminden": {
+   "network": "pegelonline",
+   "id": "763633e7-3b4b-470a-978e-f9e456e4df7c",
+   "name": "Höxter",
+   "water": "Weser",
+   "riverKm": 69.62,
+   "lat": 51.775801,
+   "lon": 9.40047,
+   "distanceKm": 7.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_II": 500.0,
+     "NNW": -25.0,
+     "HHW": 747.0,
+     "M_I": 440.0,
+     "MNW": 95.0,
+     "MW": 187.0,
+     "HSW": 450.0,
+     "MHW": 533.0,
+     "M_III": 600.0
+    }
+   }
+  },
+  "ruder-club-karlstadt-1928": {
+   "network": "pegelonline",
+   "id": "1ed983c3-114c-4fcc-a1db-61d336cf045f",
+   "name": "Steinbach",
+   "water": "Main",
+   "riverKm": 200.52,
+   "lat": 50.01105,
+   "lon": 9.602081,
+   "distanceKm": 13.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 300.0,
+     "HHW": 659.0,
+     "NNW": 99.0,
+     "MNW": 115.0,
+     "ZS_I": 96.0,
+     "NW": 109.0,
+     "MW": 155.0,
+     "HSW": 370.0,
+     "MHW": 457.0,
+     "HW": 617.0
+    }
+   }
+  },
+  "ruder-club-leer": {
+   "network": "pegelonline",
+   "id": "5e6ae93a-7856-4005-bc77-fc6e4f5ad630",
+   "name": "Ledasperrwerk Up",
+   "water": "Leda",
+   "riverKm": 21.125,
+   "lat": 53.213549,
+   "lon": 7.473236,
+   "distanceKm": 1.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 678.0,
+     "MTnw": 343.0,
+     "HThw": 894.0,
+     "NTnw": 234.0
+    }
+   }
+  },
+  "ruder-club-nassovia-hoechst-1881": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 10.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "ruder-club-saar-1885": {
+   "network": "pegelonline",
+   "id": "a9ca43e9-ef92-4f1c-ac02-a6c8ccad7b9f",
+   "name": "Sankt Arnual",
+   "water": "Saar",
+   "riverKm": 90.906,
+   "lat": 49.214872,
+   "lon": 7.022665,
+   "distanceKm": 1.7,
+   "series": [
+    "Q",
+    "VA",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 230.0,
+     "M_II": 290.0,
+     "HHW": 824.0,
+     "MNW": 189.0,
+     "HSW2": 290.0,
+     "NW": 173.0,
+     "ZS_I": 200.0,
+     "MW": 205.0,
+     "HSW": 230.0,
+     "MHW": 342.0,
+     "HW": 495.0
+    }
+   }
+  },
+  "ruder-club-traben-trarbach-1881": {
+   "network": "pegelonline",
+   "id": "ee861944-647f-4242-bf61-60f9b9d75fb7",
+   "name": "Enkirch Up",
+   "water": "Mosel",
+   "riverKm": 102.6,
+   "lat": 49.978067,
+   "lon": 7.122932,
+   "distanceKm": 3.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HSW": 780.0
+    }
+   }
+  },
+  "ruder-club-welle-bardowick-von-1894": {
+   "network": "pegelonline",
+   "id": "a238b70f-1198-4b2f-8c03-41f3503e5389",
+   "name": "Bardowick Up",
+   "water": "Ilmenau",
+   "riverKm": 5.687,
+   "lat": 53.291656,
+   "lon": 10.401067,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 446.0,
+     "HHW": 770.0,
+     "MNW": 497.0,
+     "MW": 528.0,
+     "MHW": 633.0
+    }
+   }
+  },
+  "ruder-club-witten": {
+   "network": "pegelonline",
+   "id": "c0594fb5-77ff-4287-9b8d-7ff326afe9ff",
+   "name": "Hattingen",
+   "water": "Ruhr",
+   "riverKm": 56.9,
+   "lat": 51.39975,
+   "lon": 7.161034,
+   "distanceKm": 13.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {}
+  },
+  "ruder-club-wittenberg": {
+   "network": "pegelonline",
+   "id": "070b1eb4-3872-4e07-b2e5-e25fd9251b93",
+   "name": "Wittenberg",
+   "water": "Elbe",
+   "riverKm": 214.14,
+   "lat": 51.856529,
+   "lon": 12.646311,
+   "distanceKm": 1.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 706.0,
+     "NNW": 67.0,
+     "MNW": 103.0,
+     "MW": 214.0,
+     "MHW": 478.0,
+     "HSW": 550.0
+    }
+   }
+  },
+  "ruder-gesellschaft-benrath": {
+   "network": "pegelonline",
+   "id": "8f7e5f92-1153-4f93-acba-ca48670c8ca9",
+   "name": "Düsseldorf",
+   "water": "Rhein",
+   "riverKm": 744.2,
+   "lat": 51.225498,
+   "lon": 6.769891,
+   "distanceKm": 9.8,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 91.0,
+     "TuGLW": 250.0,
+     "HHW": 1110.0,
+     "M_I": 710.0,
+     "NNW": 23.0,
+     "M_II": 880.0,
+     "MNW": 70.0,
+     "MW": 257.0,
+     "MHW": 684.0,
+     "HSW": 880.0
+    }
+   }
+  },
+  "ruder-gesellschaft-lauenburg": {
+   "network": "pegelonline",
+   "id": "d9289367-c8aa-4b6a-b1ad-857fec94c6bb",
+   "name": "Hohnstorf",
+   "water": "Elbe",
+   "riverKm": 568.987,
+   "lat": 53.366264,
+   "lon": 10.558836,
+   "distanceKm": 1.2,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 988.0,
+     "NNW": 398.0,
+     "MNW": 417.0,
+     "MW": 478.0,
+     "MHW": 683.0,
+     "HSW": 820.0
+    }
+   }
+  },
+  "ruder-gesellschaft-remagen": {
+   "network": "pegelonline",
+   "id": "b45359df-c020-4314-adb1-d1921db642da",
+   "name": "Oberwinter",
+   "water": "Rhein",
+   "riverKm": 638.19,
+   "lat": 50.61369,
+   "lon": 7.210222,
+   "distanceKm": 4.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 250.0,
+     "M_II": 680.0,
+     "NNW": 7.0,
+     "M_I": 490.0,
+     "MNW": 50.0,
+     "NW": 7.0,
+     "MW": 218.0,
+     "HSW": 680.0,
+     "MHW": 597.0,
+     "HW": 746.0
+    }
+   }
+  },
+  "ruder-hockey-und-tanzsport-club-von-1901": {
+   "network": "pegelonline",
+   "id": "50a449ba-af4c-42c7-b2c4-9a3eda37e1e3",
+   "name": "Rheine Unterschleuse",
+   "water": "Ems",
+   "riverKm": 153.03,
+   "lat": 52.288026,
+   "lon": 7.434078,
+   "distanceKm": 1.6,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 1013.0,
+     "MNW": 180.0,
+     "NW": 172.0,
+     "MW": 253.0,
+     "MHW": 544.0,
+     "HW": 816.0
+    }
+   }
+  },
+  "ruder-u-tennis-klub-germania-ev-koeln": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 3.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "ruder-und-tennisgesellschaft-wesel-1907": {
+   "network": "pegelonline",
+   "id": "f33c3cc9-dc4b-4b77-baa9-5a5f10704398",
+   "name": "Wesel",
+   "water": "Rhein",
+   "riverKm": 814.0,
+   "lat": 51.646143,
+   "lon": 6.60682,
+   "distanceKm": 2.1,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 174.0,
+     "TuGLW": 280.0,
+     "M_II": 1060.0,
+     "HHW": 1231.0,
+     "NNW": 88.0,
+     "M_I": 870.0,
+     "MNW": 144.0,
+     "MW": 348.0,
+     "HSW": 1060.0,
+     "MHW": 804.0
+    }
+   }
+  },
+  "ruder-verein-nienburg": {
+   "network": "pegelonline",
+   "id": "38497786-6c29-47f4-93de-d96001629496",
+   "name": "Nienburg",
+   "water": "Weser",
+   "riverKm": 268.18,
+   "lat": 52.644153,
+   "lon": 9.204659,
+   "distanceKm": 0.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 773.0,
+     "M_I": 550.0,
+     "NNW": 168.0,
+     "M_II": 600.0,
+     "MNW": 366.0,
+     "MW": 402.0,
+     "HSW": 600.0,
+     "MHW": 628.0,
+     "M_III": 650.0
+    }
+   }
+  },
+  "ruder-verein-osterholz-scharmbeck-von-1901": {
+   "network": "pegelonline",
+   "id": "f49855d8-371f-4bdf-8ade-ed6b475e6b27",
+   "name": "Ritterhude",
+   "water": "Hamme",
+   "riverKm": 25.45,
+   "lat": 53.181928,
+   "lon": 8.763345,
+   "distanceKm": 4.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 723.0,
+     "MTnw": 433.0,
+     "HThw": 769.0,
+     "NTnw": 318.0
+    }
+   }
+  },
+  "ruderclub-germania-boppard": {
+   "network": "pegelonline",
+   "id": "2ff6379d-d168-4022-8da0-16846d45ef9b",
+   "name": "Boppard",
+   "water": "Rhein",
+   "riverKm": 570.45,
+   "lat": 50.232914,
+   "lon": 7.592132,
+   "distanceKm": 0.8,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 870.0,
+     "NNW": -24.0,
+     "MNW": 77.0,
+     "NW": 30.0,
+     "MW": 239.0,
+     "MHW": 573.0,
+     "HW": 718.0
+    }
+   }
+  },
+  "ruderclub-germania-duesseldorf-1904": {
+   "network": "pegelonline",
+   "id": "8f7e5f92-1153-4f93-acba-ca48670c8ca9",
+   "name": "Düsseldorf",
+   "water": "Rhein",
+   "riverKm": 744.2,
+   "lat": 51.225498,
+   "lon": 6.769891,
+   "distanceKm": 3.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 91.0,
+     "TuGLW": 250.0,
+     "HHW": 1110.0,
+     "M_I": 710.0,
+     "NNW": 23.0,
+     "M_II": 880.0,
+     "MNW": 70.0,
+     "MW": 257.0,
+     "MHW": 684.0,
+     "HSW": 880.0
+    }
+   }
+  },
+  "ruderclub-germania-von-1929-ev-dortmund": {
+   "network": "pegelonline",
+   "id": "7bbdb421-2cbd-49c5-a145-c26352561f04",
+   "name": "Groppenbruch",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 10.546,
+   "lat": 51.604722,
+   "lon": 7.384185,
+   "distanceKm": 7.9,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderclub-grenzach": {
+   "network": "pegelonline",
+   "id": "94f6eff1-4f3f-4850-82e0-a086198e9ffd",
+   "name": "Basel-Rheinhalle",
+   "water": "Rhein",
+   "riverKm": 164.3,
+   "lat": 47.559486,
+   "lon": 7.616666,
+   "distanceKm": 4.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 501.0,
+     "M_II": 820.0,
+     "M_I": 700.0,
+     "HSW": 820.0
+    }
+   }
+  },
+  "ruderclub-hansa-von-1898-ev-dortmund": {
+   "network": "pegelonline",
+   "id": "7bbdb421-2cbd-49c5-a145-c26352561f04",
+   "name": "Groppenbruch",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 10.546,
+   "lat": 51.604722,
+   "lon": 7.384185,
+   "distanceKm": 8.0,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderclub-kleinmachnow-stahnsdorf-teltow": {
+   "network": "pegelonline",
+   "id": "38414157-862e-428a-ae2c-77ff79871227",
+   "name": "Kleinmachnow Up",
+   "water": "Teltowkanal",
+   "riverKm": 8.28,
+   "lat": 52.395529,
+   "lon": 13.207976,
+   "distanceKm": 0.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 186.0,
+     "HHW": 388.0,
+     "MNW": 228.0,
+     "MW": 247.0,
+     "MHW": 287.0
+    }
+   }
+  },
+  "ruderclub-koenigs-wusterhausen": {
+   "network": "pegelonline",
+   "id": "c9a6c3bf-02d4-4945-83e8-b7c6cf9701fa",
+   "name": "Neue Mühle Schleuse Up",
+   "water": "Dahme-Wasserstrasse",
+   "riverKm": 9.4,
+   "lat": 52.297475,
+   "lon": 13.649641,
+   "distanceKm": 0.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 215.0,
+     "NNW": 90.0,
+     "MNW": 120.0,
+     "MW": 126.0,
+     "MHW": 140.0
+    }
+   }
+  },
+  "ruderclub-moeve-1919-ev-grossauheim": {
+   "network": "pegelonline",
+   "id": "27eed51b-c0a4-417e-926b-bb4194bfb341",
+   "name": "Krotzenburg",
+   "water": "Main",
+   "riverKm": 63.23,
+   "lat": 50.079717,
+   "lon": 8.953596,
+   "distanceKm": 2.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 85.0,
+     "HHW": 626.0,
+     "MNW": 102.0,
+     "ZS_I": 84.0,
+     "NW": 101.0,
+     "MW": 137.0,
+     "MHW": 409.0,
+     "HW": 610.0
+    }
+   }
+  },
+  "ruderclub-muelheim-a-d-ruhr-von-1977": {
+   "network": "pegelonline",
+   "id": "36fb2c81-5fc0-4f2c-8f37-347c822a4b59",
+   "name": "Schlossbrücke Mülheim",
+   "water": "Ruhr",
+   "riverKm": 12.183,
+   "lat": 51.426761,
+   "lon": 6.875965,
+   "distanceKm": 1.9,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderclub-neptun-neckarelz": {
+   "network": "pegelonline",
+   "id": "fc1072e4-61d4-4e89-bc70-c7e8860fd208",
+   "name": "Gundelsheim Up",
+   "water": "Neckar",
+   "riverKm": 93.8,
+   "lat": 49.281399,
+   "lon": 9.153622,
+   "distanceKm": 7.6,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 895.0,
+     "MNW": 211.0,
+     "NW": 208.0,
+     "ZS_I": 200.0,
+     "MW": 234.0,
+     "HSW": 380.0,
+     "MHW": 584.0,
+     "HW": 776.0
+    }
+   }
+  },
+  "ruderclub-nuertingen-ev-1921": {
+   "network": "pegelonline",
+   "id": "9de0843a-2b79-40e5-b312-31d86e91ce4d",
+   "name": "Oberesslingen Wehr Up",
+   "water": "Neckar",
+   "riverKm": 196.5,
+   "lat": 48.721795,
+   "lon": 9.341293,
+   "distanceKm": 10.7,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderclub-oberhavel-hennigsdorf": {
+   "network": "pegelonline",
+   "id": "1b2e2996-c2ef-4d9c-9052-ced8cb7bc226",
+   "name": "Borgsdorf",
+   "water": "Havel-Oder-Wasserstrasse",
+   "riverKm": 20.3,
+   "lat": 52.700485,
+   "lon": 13.251248,
+   "distanceKm": 7.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 286.0,
+     "NNW": 199.0,
+     "MNW": 230.0,
+     "MW": 249.0,
+     "MHW": 273.0
+    }
+   }
+  },
+  "ruderclub-rheinfeldenbaden": {
+   "network": "pegelonline",
+   "id": "94f6eff1-4f3f-4850-82e0-a086198e9ffd",
+   "name": "Basel-Rheinhalle",
+   "water": "Rhein",
+   "riverKm": 164.3,
+   "lat": 47.559486,
+   "lon": 7.616666,
+   "distanceKm": 11.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 501.0,
+     "M_II": 820.0,
+     "M_I": 700.0,
+     "HSW": 820.0
+    }
+   }
+  },
+  "ruderclub-stolzenau-von-1986": {
+   "network": "pegelonline",
+   "id": "edfa125a-1e46-4c7e-9f3a-568ae013a4df",
+   "name": "Stolzenau",
+   "water": "Weser",
+   "riverKm": 243.39,
+   "lat": 52.51825,
+   "lon": 9.077735,
+   "distanceKm": 0.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 500.0,
+     "NNW": 261.0,
+     "M_II": 560.0,
+     "HHW": 694.0,
+     "MNW": 297.0,
+     "MW": 335.0,
+     "HSW": 550.0,
+     "MHW": 546.0,
+     "M_III": 590.0
+    }
+   }
+  },
+  "ruderclub-vilshofen-1913": {
+   "network": "pegelonline",
+   "id": "e6d68ab7-5c27-4f25-896f-11dbf04056cd",
+   "name": "Vilshofen",
+   "water": "Donau",
+   "riverKm": 2249.5,
+   "lat": 48.637297,
+   "lon": 13.182429,
+   "distanceKm": 0.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 287.0,
+     "HHW": 808.0,
+     "MNW": 298.0,
+     "ZS_I": 273.0,
+     "NW": 288.0,
+     "MW": 345.0,
+     "MHW": 547.0,
+     "HW": 653.0
+    }
+   }
+  },
+  "ruderclub-zellingen": {
+   "network": "pegelonline",
+   "id": "915d76e1-3bf9-4e37-9a9a-4d144cd771cc",
+   "name": "Würzburg",
+   "water": "Main",
+   "riverKm": 251.97,
+   "lat": 49.796209,
+   "lon": 9.925969,
+   "distanceKm": 13.4,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 270.0,
+     "NNW": 116.0,
+     "HHW": 1030.0,
+     "MNW": 140.0,
+     "ZS_I": 123.0,
+     "NW": 134.0,
+     "MW": 174.0,
+     "MHW": 515.0,
+     "HSW": 340.0,
+     "HW": 648.0
+    }
+   }
+  },
+  "rudergemeinschaft-angaria": {
+   "network": "pegelonline",
+   "id": "8134af78-3100-4679-bf1d-be82410df429",
+   "name": "Herrenhausen",
+   "water": "Leine",
+   "riverKm": 25.12,
+   "lat": 52.388068,
+   "lon": 9.676062,
+   "distanceKm": 2.9,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 644.0,
+     "NNW": 38.0,
+     "M_II": 420.0,
+     "M_I": 380.0,
+     "MNW": 70.0,
+     "MW": 180.0,
+     "MHW": 516.0,
+     "M_III": 480.0
+    }
+   }
+  },
+  "rudergemeinschaft-bottrop": {
+   "network": "pegelonline",
+   "id": "e251f943-ce2f-4003-b208-e2797aa72202",
+   "name": "Oberhausen Schleuse Ow",
+   "water": "Rhein-Herne-Kanal",
+   "riverKm": 5.734,
+   "lat": 51.482137,
+   "lon": 6.821447,
+   "distanceKm": 8.4,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "rudergesellschaft-heidelberg-1898": {
+   "network": "pegelonline",
+   "id": "827b2685-47ec-44df-a90f-980f5e0c1591",
+   "name": "Heidelberg Up",
+   "water": "Neckar",
+   "riverKm": 26.1,
+   "lat": 49.414688,
+   "lon": 8.717737,
+   "distanceKm": 2.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 661.0,
+     "MNW": 207.0,
+     "NW": 199.0,
+     "ZS_I": 200.0,
+     "MW": 220.0,
+     "MHW": 401.0,
+     "HSW": 260.0,
+     "HW": 531.0
+    }
+   }
+  },
+  "rudergesellschaft-kassel-1927": {
+   "network": "pegelonline",
+   "id": "213a585d-d665-4be7-96a4-78a992b9614d",
+   "name": "Guntershausen",
+   "water": "Fulda",
+   "riverKm": 43.99,
+   "lat": 51.22658,
+   "lon": 9.469333,
+   "distanceKm": 8.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 83.0,
+     "HHW": 584.0,
+     "MNW": 107.0,
+     "MW": 154.0,
+     "HSW": 290.0,
+     "MHW": 357.0
+    }
+   }
+  },
+  "rudergesellschaft-linden-dahlhausen": {
+   "network": "pegelonline",
+   "id": "c0594fb5-77ff-4287-9b8d-7ff326afe9ff",
+   "name": "Hattingen",
+   "water": "Ruhr",
+   "riverKm": 56.9,
+   "lat": 51.39975,
+   "lon": 7.161034,
+   "distanceKm": 3.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {}
+  },
+  "rudergesellschaft-marktheidenfeld": {
+   "network": "pegelonline",
+   "id": "0e065a22-9a0b-4f1d-b813-22fe6321bb1a",
+   "name": "Wertheim",
+   "water": "Main",
+   "riverKm": 156.96,
+   "lat": 49.760945,
+   "lon": 9.518304,
+   "distanceKm": 11.7,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 82.0,
+     "HHW": 610.0,
+     "ZS_I": 67.0
+    }
+   }
+  },
+  "rudergesellschaft-speyer-1883": {
+   "network": "pegelonline",
+   "id": "2cb8ae5b-c5c9-4fa8-bac0-bb724f2754f4",
+   "name": "Speyer",
+   "water": "Rhein",
+   "riverKm": 400.61,
+   "lat": 49.323807,
+   "lon": 8.448705,
+   "distanceKm": 0.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 167.0,
+     "MW": 361.0,
+     "HSW": 730.0,
+     "HW": 840.0,
+     "GlW": 237.0,
+     "M_II": 730.0,
+     "M_I": 620.0,
+     "NNW": 152.0,
+     "HHW": 886.0,
+     "MNW": 214.0,
+     "MHW": 699.0
+    }
+   }
+  },
+  "rudergesellschaft-treis-karden-1969": {
+   "network": "pegelonline",
+   "id": "a5c880a3-c4cb-41c6-a8be-ca9c3f23a295",
+   "name": "Müden Op",
+   "water": "Mosel",
+   "riverKm": 37.47,
+   "lat": 50.184151,
+   "lon": 7.327187,
+   "distanceKm": 2.4,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "rudergesellschaft-trier-1883": {
+   "network": "pegelonline",
+   "id": "3bec53ca-444e-4014-a7b0-07b3591e954b",
+   "name": "Trier Up",
+   "water": "Mosel",
+   "riverKm": 195.3,
+   "lat": 49.732189,
+   "lon": 6.626853,
+   "distanceKm": 4.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 520.0,
+     "M_II": 580.0,
+     "HHW": 1128.0,
+     "NNW": 196.0,
+     "MNW": 219.0,
+     "ZS_I": 200.0,
+     "MW": 304.0,
+     "HSW": 695.0,
+     "MHW": 730.0,
+     "M_III": 695.0
+    }
+   }
+  },
+  "rudergesellschaft-wertheim-von-1902": {
+   "network": "pegelonline",
+   "id": "0e065a22-9a0b-4f1d-b813-22fe6321bb1a",
+   "name": "Wertheim",
+   "water": "Main",
+   "riverKm": 156.96,
+   "lat": 49.760945,
+   "lon": 9.518304,
+   "distanceKm": 1.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 82.0,
+     "HHW": 610.0,
+     "ZS_I": 67.0
+    }
+   }
+  },
+  "rudergesellschaft-wetzlar-1880": {
+   "network": "pegelonline",
+   "id": "57c8e437-560c-4a5b-a9a0-b8e109804546",
+   "name": "Niederbiel Schleuse Kanal Op",
+   "water": "Lahn",
+   "riverKm": 19.3,
+   "lat": 50.5471,
+   "lon": 8.425671,
+   "distanceKm": 5.7,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "rudergesellschaft-wiesbaden-biebrich-1888": {
+   "network": "pegelonline",
+   "id": "a37a9aa3-45e9-4d90-9df6-109f3a28a5af",
+   "name": "Mainz",
+   "water": "Rhein",
+   "riverKm": 498.27,
+   "lat": 50.003995,
+   "lon": 8.275319,
+   "distanceKm": 5.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 122.0,
+     "MW": 288.0,
+     "HSW": 630.0,
+     "HW": 682.0,
+     "GlW": 171.0,
+     "M_II": 630.0,
+     "M_I": 475.0,
+     "NNW": 110.0,
+     "HHW": 795.0,
+     "MNW": 159.0,
+     "MHW": 547.0
+    }
+   }
+  },
+  "rudergesellschaft-zeltingen": {
+   "network": "pegelonline",
+   "id": "d867e7e9-feb9-4d36-8757-4afd865e697b",
+   "name": "Zeltingen Up",
+   "water": "Mosel",
+   "riverKm": 123.4,
+   "lat": 49.95018,
+   "lon": 7.016038,
+   "distanceKm": 0.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 1173.0,
+     "MNW": 228.0,
+     "NW": 220.0,
+     "MW": 313.0,
+     "MHW": 780.0,
+     "HSW": 695.0,
+     "M_III": 695.0,
+     "HW": 940.0
+    }
+   }
+  },
+  "rudergruppe-geesthacht-von-1912": {
+   "network": "pegelonline",
+   "id": "44f7e955-c97d-45c8-9ed7-19406806fb4c",
+   "name": "Geesthacht",
+   "water": "Elbe",
+   "riverKm": 583.393,
+   "lat": 53.426505,
+   "lon": 10.374522,
+   "distanceKm": 0.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 353.0,
+     "HHW": 736.0,
+     "MNW": 399.0,
+     "MW": 415.0,
+     "MHW": 556.0
+    }
+   }
+  },
+  "ruderriege-des-karlsruher-institut-fuer-technologie": {
+   "network": "pegelonline",
+   "id": "b6c6d5c8-e2d5-4469-8dd8-fa972ef7eaea",
+   "name": "Maxau",
+   "water": "Rhein",
+   "riverKm": 362.327,
+   "lat": 49.038977,
+   "lon": 8.305564,
+   "distanceKm": 3.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 311.0,
+     "MW": 496.0,
+     "HSW": 750.0,
+     "HW": 870.0,
+     "GlW": 372.0,
+     "M_II": 750.0,
+     "NNW": 231.0,
+     "M_I": 620.0,
+     "HHW": 884.0,
+     "MNW": 353.0,
+     "MHW": 785.0
+    }
+   }
+  },
+  "ruderriege-grotefend-gymnasium-muenden": {
+   "network": "pegelonline",
+   "id": "23721dfd-9b89-4b69-af80-063229917f27",
+   "name": "Bonaforth",
+   "water": "Fulda",
+   "riverKm": 3.61,
+   "lat": 51.403492,
+   "lon": 9.632042,
+   "distanceKm": 1.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 716.0,
+     "NNW": 196.0,
+     "MNW": 214.0,
+     "MW": 255.0,
+     "HSW": 390.0,
+     "MHW": 499.0
+    }
+   }
+  },
+  "ruderriege-schaumburgia-am-adolfinum-bueckeburg": {
+   "network": "pegelonline",
+   "id": "2f1080ba-97a2-40b3-af4e-3ac3d53d27de",
+   "name": "Warber Graben",
+   "water": "Mittellandkanal",
+   "riverKm": 111.75,
+   "lat": 52.311117,
+   "lon": 9.053354,
+   "distanceKm": 0.1,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderriege-schaumburgia-bueckeburg": {
+   "network": "pegelonline",
+   "id": "2f1080ba-97a2-40b3-af4e-3ac3d53d27de",
+   "name": "Warber Graben",
+   "water": "Mittellandkanal",
+   "riverKm": 111.75,
+   "lat": 52.311117,
+   "lon": 9.053354,
+   "distanceKm": 0.1,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderriege-von-1899-am-max-planck-gymnasium-dortmund": {
+   "network": "pegelonline",
+   "id": "7bbdb421-2cbd-49c5-a145-c26352561f04",
+   "name": "Groppenbruch",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 10.546,
+   "lat": 51.604722,
+   "lon": 7.384185,
+   "distanceKm": 7.9,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverbindung-rheno-franconia": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 5.5,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "ruderverein-bad-ems": {
+   "network": "pegelonline",
+   "id": "f2295e77-acc0-4c24-b762-90391a38059d",
+   "name": "Bad Ems Wehr Op",
+   "water": "Lahn",
+   "riverKm": 125.9,
+   "lat": 50.331878,
+   "lon": 7.710901,
+   "distanceKm": 1.3,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-bad-wimpfen": {
+   "network": "pegelonline",
+   "id": "8f695e71-5747-4fba-8962-c3873f549b89",
+   "name": "Kochendorf Schleuse Up",
+   "water": "Neckar",
+   "riverKm": 103.8,
+   "lat": 49.22565,
+   "lon": 9.215439,
+   "distanceKm": 3.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HSW": 400.0
+    }
+   }
+  },
+  "ruderverein-blankenstein-ruhr": {
+   "network": "pegelonline",
+   "id": "c0594fb5-77ff-4287-9b8d-7ff326afe9ff",
+   "name": "Hattingen",
+   "water": "Ruhr",
+   "riverKm": 56.9,
+   "lat": 51.39975,
+   "lon": 7.161034,
+   "distanceKm": 4.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-bochum-von-1920": {
+   "network": "pegelonline",
+   "id": "c0594fb5-77ff-4287-9b8d-7ff326afe9ff",
+   "name": "Hattingen",
+   "water": "Ruhr",
+   "riverKm": 56.9,
+   "lat": 51.39975,
+   "lon": 7.161034,
+   "distanceKm": 13.5,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-bodenwerder-von-1922": {
+   "network": "pegelonline",
+   "id": "5310aed3-784c-4290-bfff-806c75b831d9",
+   "name": "Bodenwerder",
+   "water": "Weser",
+   "riverKm": 110.72,
+   "lat": 51.973727,
+   "lon": 9.515736,
+   "distanceKm": 0.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 76.0,
+     "M_I": 440.0,
+     "M_II": 470.0,
+     "HHW": 729.0,
+     "MNW": 116.0,
+     "MW": 205.0,
+     "HSW": 450.0,
+     "MHW": 514.0,
+     "M_III": 530.0
+    }
+   }
+  },
+  "ruderverein-datteln-von-1928": {
+   "network": "pegelonline",
+   "id": "e6b68bc2-6814-4bbf-b37e-44a0b7807c2d",
+   "name": "Henrichenburg Uw",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 15.9,
+   "lat": 51.621118,
+   "lon": 7.329425,
+   "distanceKm": 4.7,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-der-jacob-grimm-schule-in-kassel": {
+   "network": "pegelonline",
+   "id": "213a585d-d665-4be7-96a4-78a992b9614d",
+   "name": "Guntershausen",
+   "water": "Fulda",
+   "riverKm": 43.99,
+   "lat": 51.22658,
+   "lon": 9.469333,
+   "distanceKm": 8.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 83.0,
+     "HHW": 584.0,
+     "MNW": 107.0,
+     "MW": 154.0,
+     "HSW": 290.0,
+     "MHW": 357.0
+    }
+   }
+  },
+  "ruderverein-dorsten": {
+   "network": "pegelonline",
+   "id": "5db8ab4b-315b-466e-b9d5-5ba5a19f5f08",
+   "name": "Dorsten Schleuse Uw",
+   "water": "Wesel-Datteln-Kanal",
+   "riverKm": 30.016,
+   "lat": 51.663001,
+   "lon": 6.998495,
+   "distanceKm": 4.9,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-eltville-1919": {
+   "network": "pegelonline",
+   "id": "665be0fe-5e38-43f6-8b04-02a93bdbeeb4",
+   "name": "Oestrich",
+   "water": "Rhein",
+   "riverKm": 518.08,
+   "lat": 50.002866,
+   "lon": 8.030048,
+   "distanceKm": 7.2,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 92.0,
+     "TuGLW": 190.0,
+     "HHW": 594.0,
+     "NNW": 31.0,
+     "MNW": 79.0,
+     "NW": 49.0,
+     "MW": 186.0,
+     "MHW": 412.0,
+     "HW": 535.0
+    }
+   }
+  },
+  "ruderverein-emscher-wanne-eickel-herten": {
+   "network": "pegelonline",
+   "id": "05ca0e33-5c71-4368-b824-2243fcff656c",
+   "name": "Wanne Eickel Schleuse Ow",
+   "water": "Rhein-Herne-Kanal",
+   "riverKm": 31.47,
+   "lat": 51.54816,
+   "lon": 7.165994,
+   "distanceKm": 1.0,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-esslingen": {
+   "network": "pegelonline",
+   "id": "9de0843a-2b79-40e5-b312-31d86e91ce4d",
+   "name": "Oberesslingen Wehr Up",
+   "water": "Neckar",
+   "riverKm": 196.5,
+   "lat": 48.721795,
+   "lon": 9.341293,
+   "distanceKm": 0.6,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-friedrichsgymnasium-kassel": {
+   "network": "pegelonline",
+   "id": "213a585d-d665-4be7-96a4-78a992b9614d",
+   "name": "Guntershausen",
+   "water": "Fulda",
+   "riverKm": 43.99,
+   "lat": 51.22658,
+   "lon": 9.469333,
+   "distanceKm": 7.1,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 83.0,
+     "HHW": 584.0,
+     "MNW": 107.0,
+     "MW": 154.0,
+     "HSW": 290.0,
+     "MHW": 357.0
+    }
+   }
+  },
+  "ruderverein-fuer-das-grosse-freie-ev-lehrtesehnde": {
+   "network": "pegelonline",
+   "id": "ab0d9117-83f3-412d-bce5-b3e698246c0b",
+   "name": "Sehnde",
+   "water": "Mittellandkanal",
+   "riverKm": 183.58,
+   "lat": 52.306049,
+   "lon": 9.962091,
+   "distanceKm": 0.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "OBW": 65.15,
+     "UBW": 64.95
+    }
+   }
+  },
+  "ruderverein-fuerstenbergo-1910": {
+   "network": "pegelonline",
+   "id": "8675aa70-cfbc-471a-8566-dcc851f201d3",
+   "name": "Eisenhüttenstadt",
+   "water": "Oder",
+   "riverKm": 554.1,
+   "lat": 52.153171,
+   "lon": 14.687929,
+   "distanceKm": 3.4,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 490.0,
+     "NNW": 135.0,
+     "M_II": 535.0,
+     "HHW": 717.0,
+     "MNW": 190.0,
+     "MW": 297.0,
+     "HSW": 535.0,
+     "MHW": 494.0
+    }
+   }
+  },
+  "ruderverein-gelsenkirchen": {
+   "network": "pegelonline",
+   "id": "5b9f8134-8bf0-4b51-a548-72a36303bbc2",
+   "name": "Gelsenkirchen Schleuse Ow",
+   "water": "Rhein-Herne-Kanal",
+   "riverKm": 23.566,
+   "lat": 51.532228,
+   "lon": 7.059888,
+   "distanceKm": 0.7,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-hellas-offenbach": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 2.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "ruderverein-hoexter-von-1898": {
+   "network": "pegelonline",
+   "id": "763633e7-3b4b-470a-978e-f9e456e4df7c",
+   "name": "Höxter",
+   "water": "Weser",
+   "riverKm": 69.62,
+   "lat": 51.775801,
+   "lon": 9.40047,
+   "distanceKm": 1.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_II": 500.0,
+     "NNW": -25.0,
+     "HHW": 747.0,
+     "M_I": 440.0,
+     "MNW": 95.0,
+     "MW": 187.0,
+     "HSW": 450.0,
+     "MHW": 533.0,
+     "M_III": 600.0
+    }
+   }
+  },
+  "ruderverein-hoya-von-1926": {
+   "network": "pegelonline",
+   "id": "86f66699-29b6-4b94-85cb-d241e832230a",
+   "name": "Hoya",
+   "water": "Weser",
+   "riverKm": 298.4,
+   "lat": 52.800984,
+   "lon": 9.146924,
+   "distanceKm": 0.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 812.0,
+     "NNW": 339.0,
+     "M_II": 600.0,
+     "M_I": 550.0,
+     "MNW": 350.0,
+     "MW": 383.0,
+     "HSW": 590.0,
+     "MHW": 620.0,
+     "M_III": 650.0
+    }
+   }
+  },
+  "ruderverein-ingelheim-1920": {
+   "network": "pegelonline",
+   "id": "665be0fe-5e38-43f6-8b04-02a93bdbeeb4",
+   "name": "Oestrich",
+   "water": "Rhein",
+   "riverKm": 518.08,
+   "lat": 50.002866,
+   "lon": 8.030048,
+   "distanceKm": 1.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 92.0,
+     "TuGLW": 190.0,
+     "HHW": 594.0,
+     "NNW": 31.0,
+     "MNW": 79.0,
+     "NW": 49.0,
+     "MW": 186.0,
+     "MHW": 412.0,
+     "HW": 535.0
+    }
+   }
+  },
+  "ruderverein-kurhessen-cassel-18901911": {
+   "network": "pegelonline",
+   "id": "213a585d-d665-4be7-96a4-78a992b9614d",
+   "name": "Guntershausen",
+   "water": "Fulda",
+   "riverKm": 43.99,
+   "lat": 51.22658,
+   "lon": 9.469333,
+   "distanceKm": 8.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 83.0,
+     "HHW": 584.0,
+     "MNW": 107.0,
+     "MW": 154.0,
+     "HSW": 290.0,
+     "MHW": 357.0
+    }
+   }
+  },
+  "ruderverein-leer-von-1903": {
+   "network": "pegelonline",
+   "id": "5e6ae93a-7856-4005-bc77-fc6e4f5ad630",
+   "name": "Ledasperrwerk Up",
+   "water": "Leda",
+   "riverKm": 21.125,
+   "lat": 53.213549,
+   "lon": 7.473236,
+   "distanceKm": 2.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 678.0,
+     "MTnw": 343.0,
+     "HThw": 894.0,
+     "NTnw": 234.0
+    }
+   }
+  },
+  "ruderverein-linden-von-1911": {
+   "network": "pegelonline",
+   "id": "8134af78-3100-4679-bf1d-be82410df429",
+   "name": "Herrenhausen",
+   "water": "Leine",
+   "riverKm": 25.12,
+   "lat": 52.388068,
+   "lon": 9.676062,
+   "distanceKm": 1.8,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 644.0,
+     "NNW": 38.0,
+     "M_II": 420.0,
+     "M_I": 380.0,
+     "MNW": 70.0,
+     "MW": 180.0,
+     "MHW": 516.0,
+     "M_III": 480.0
+    }
+   }
+  },
+  "ruderverein-luedinghausen-1925": {
+   "network": "pegelonline",
+   "id": "f5bc4a51-004f-4e5e-99b9-e6ae888d57de",
+   "name": "Lüdinghausen",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 39.32,
+   "lat": 51.798113,
+   "lon": 7.401947,
+   "distanceKm": 2.2,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-muehlberg": {
+   "network": "pegelonline",
+   "id": "16b9b4e7-be14-41fd-941e-6755c97276cc",
+   "name": "Mühlberg",
+   "water": "Elbe",
+   "riverKm": 128.02,
+   "lat": 51.43735,
+   "lon": 13.191762,
+   "distanceKm": 1.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 1011.0,
+     "NNW": 110.0,
+     "MNW": 158.0,
+     "MW": 258.0,
+     "MHW": 576.0
+    }
+   }
+  },
+  "ruderverein-muenster-von-1882": {
+   "network": "pegelonline",
+   "id": "ccd3e8f1-39e9-4e09-aa41-625afda84460",
+   "name": "Münster Ow",
+   "water": "Dortmund-Ems-Kanal",
+   "riverKm": 70.315,
+   "lat": 51.968942,
+   "lon": 7.664374,
+   "distanceKm": 2.5,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-oberhausen": {
+   "network": "pegelonline",
+   "id": "e251f943-ce2f-4003-b208-e2797aa72202",
+   "name": "Oberhausen Schleuse Ow",
+   "water": "Rhein-Herne-Kanal",
+   "riverKm": 5.734,
+   "lat": 51.482137,
+   "lon": 6.821447,
+   "distanceKm": 3.2,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-rhenania-germersheim": {
+   "network": "pegelonline",
+   "id": "88e972e1-88a0-4eb9-847c-0925e5999a46",
+   "name": "Philippsburg",
+   "water": "Rhein",
+   "riverKm": 389.33,
+   "lat": 49.255274,
+   "lon": 8.428827,
+   "distanceKm": 5.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 172.0,
+     "HHW": 871.0,
+     "MNW": 254.0,
+     "NW": 214.0,
+     "MW": 398.0,
+     "MHW": 718.0,
+     "HW": 830.0
+    }
+   }
+  },
+  "ruderverein-rhenus-ev-andernach": {
+   "network": "pegelonline",
+   "id": "5735892a-ec65-4b29-97c5-50939aa9584e",
+   "name": "Andernach",
+   "water": "Rhein",
+   "riverKm": 613.78,
+   "lat": 50.44339,
+   "lon": 7.392056,
+   "distanceKm": 0.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 250.0,
+     "NW": 24.0,
+     "MW": 258.0,
+     "HSW": 760.0,
+     "HW": 837.0,
+     "GlW": 91.0,
+     "M_I": 550.0,
+     "NNW": 24.0,
+     "HHW": 1051.0,
+     "M_II": 760.0,
+     "MNW": 71.0,
+     "MHW": 672.0
+    }
+   }
+  },
+  "ruderverein-saarbruecken": {
+   "network": "pegelonline",
+   "id": "a9ca43e9-ef92-4f1c-ac02-a6c8ccad7b9f",
+   "name": "Sankt Arnual",
+   "water": "Saar",
+   "riverKm": 90.906,
+   "lat": 49.214872,
+   "lon": 7.022665,
+   "distanceKm": 1.4,
+   "series": [
+    "Q",
+    "VA",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 230.0,
+     "M_II": 290.0,
+     "HHW": 824.0,
+     "MNW": 189.0,
+     "HSW2": 290.0,
+     "NW": 173.0,
+     "ZS_I": 200.0,
+     "MW": 205.0,
+     "HSW": 230.0,
+     "MHW": 342.0,
+     "HW": 495.0
+    }
+   }
+  },
+  "ruderverein-treviris-1921": {
+   "network": "pegelonline",
+   "id": "3bec53ca-444e-4014-a7b0-07b3591e954b",
+   "name": "Trier Up",
+   "water": "Mosel",
+   "riverKm": 195.3,
+   "lat": 49.732189,
+   "lon": 6.626853,
+   "distanceKm": 1.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 520.0,
+     "M_II": 580.0,
+     "HHW": 1128.0,
+     "NNW": 196.0,
+     "MNW": 219.0,
+     "ZS_I": 200.0,
+     "MW": 304.0,
+     "HSW": 695.0,
+     "MHW": 730.0,
+     "M_III": 695.0
+    }
+   }
+  },
+  "ruderverein-waltrop-von-1928": {
+   "network": "pegelonline",
+   "id": "facc5c16-f700-4248-9893-a395bffaf2e4",
+   "name": "Waltrop",
+   "water": "Datteln-Hamm-Kanal",
+   "riverKm": 2.144,
+   "lat": 51.639741,
+   "lon": 7.380201,
+   "distanceKm": 1.6,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "ruderverein-weser-von-1885-ev-hameln": {
+   "network": "pegelonline",
+   "id": "fa886080-4271-4684-9999-1b6862a20ac1",
+   "name": "Hameln Wehrbergen",
+   "water": "Weser",
+   "riverKm": 139.68,
+   "lat": 52.123731,
+   "lon": 9.306544,
+   "distanceKm": 6.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_II": 500.0,
+     "NNW": 28.0,
+     "M_I": 450.0,
+     "HHW": 770.0,
+     "MNW": 88.0,
+     "MW": 190.0,
+     "MHW": 542.0,
+     "HSW": 465.0,
+     "M_III": 550.0
+    }
+   }
+  },
+  "ruderverein-wilhelmsgymnasium": {
+   "network": "pegelonline",
+   "id": "213a585d-d665-4be7-96a4-78a992b9614d",
+   "name": "Guntershausen",
+   "water": "Fulda",
+   "riverKm": 43.99,
+   "lat": 51.22658,
+   "lon": 9.469333,
+   "distanceKm": 8.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 83.0,
+     "HHW": 584.0,
+     "MNW": 107.0,
+     "MW": 154.0,
+     "HSW": 290.0,
+     "MHW": 357.0
+    }
+   }
+  },
+  "saarbruecker-rudergesellschaft-undine": {
+   "network": "pegelonline",
+   "id": "a9ca43e9-ef92-4f1c-ac02-a6c8ccad7b9f",
+   "name": "Sankt Arnual",
+   "water": "Saar",
+   "riverKm": 90.906,
+   "lat": 49.214872,
+   "lon": 7.022665,
+   "distanceKm": 1.4,
+   "series": [
+    "Q",
+    "VA",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 230.0,
+     "M_II": 290.0,
+     "HHW": 824.0,
+     "MNW": 189.0,
+     "HSW2": 290.0,
+     "NW": 173.0,
+     "ZS_I": 200.0,
+     "MW": 205.0,
+     "HSW": 230.0,
+     "MHW": 342.0,
+     "HW": 495.0
+    }
+   }
+  },
+  "saarburger-ruderclub-1925": {
+   "network": "pegelonline",
+   "id": "efccb5e1-4f8b-4c26-a5d4-a7c02bd93c0d",
+   "name": "Schoden Ska",
+   "water": "Saar",
+   "riverKm": 7.19,
+   "lat": 49.63852,
+   "lon": 6.574561,
+   "distanceKm": 3.5,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "sc-magdeburg-ev-abteilung-rudern": {
+   "network": "pegelonline",
+   "id": "b8567c1e-8610-4c2b-a240-65e8a74919fa",
+   "name": "Magdeburg-Buckau",
+   "water": "Elbe",
+   "riverKm": 325.39,
+   "lat": 52.119271,
+   "lon": 11.634986,
+   "distanceKm": 2.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 74.0,
+     "HHW": 752.0,
+     "MNW": 108.0,
+     "MW": 193.0,
+     "MHW": 421.0
+    }
+   }
+  },
+  "schueler-ruder-riege-im-vdf-des-leibniz-gymnasiums-in-bad-schwartau": {
+   "network": "pegelonline",
+   "id": "f4f9f7fb-eeff-46dc-9727-04d8aa56240a",
+   "name": "Lübeck-Bauhof",
+   "water": "Trave",
+   "riverKm": 7.79,
+   "lat": 53.893008,
+   "lon": 10.703065,
+   "distanceKm": 4.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MNW": 387.0,
+     "NW": 327.0,
+     "MW": 511.0,
+     "MHW": 638.0,
+     "HW": 681.0
+    }
+   }
+  },
+  "schweinfurter-ruder-club-franken-von-1882": {
+   "network": "pegelonline",
+   "id": "42ecae60-eeb3-4b41-9721-46b3f12d04b8",
+   "name": "Schweinfurt Neuer Hafen",
+   "water": "Main",
+   "riverKm": 330.78,
+   "lat": 50.030983,
+   "lon": 10.221858,
+   "distanceKm": 2.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 141.0,
+     "HHW": 697.0,
+     "M_I": 300.0,
+     "MNW": 196.0,
+     "NW": 141.0,
+     "ZS_I": 184.0,
+     "MW": 227.0,
+     "MHW": 479.0,
+     "HSW": 370.0,
+     "HW": 672.0
+    }
+   }
+  },
+  "spandauer-ruder-club-friesen": {
+   "network": "pegelonline",
+   "id": "2c68509c-bf1e-4866-9ec4-b26b231e5e04",
+   "name": "Berlin-Spandau Up",
+   "water": "Havel-Oder-Wasserstrasse",
+   "riverKm": 0.55,
+   "lat": 52.540064,
+   "lon": 13.209346,
+   "distanceKm": 3.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 309.0,
+     "NNW": 83.0,
+     "MNW": 126.0,
+     "MW": 149.0,
+     "MHW": 199.0
+    }
+   }
+  },
+  "spiel-und-sportverein-planeta-radebeul": {
+   "network": "pegelonline",
+   "id": "70272185-b2b3-4178-96b8-43bea330dcae",
+   "name": "Dresden",
+   "water": "Elbe",
+   "riverKm": 55.63,
+   "lat": 51.05446,
+   "lon": 13.738832,
+   "distanceKm": 9.7,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 940.0,
+     "NNW": 21.0,
+     "MNW": 67.0,
+     "MW": 156.0,
+     "MHW": 458.0,
+     "HSW": 500.0
+    }
+   }
+  },
+  "sportgemeinschaft-wiking-1903": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 2.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "sportverein-energie-berlin-ev-abt-rudern": {
+   "network": "pegelonline",
+   "id": "6b595707-8c47-4bc7-a803-dbc327775c26",
+   "name": "Berlin-Schmöckwitz",
+   "water": "Dahme-Wasserstrasse",
+   "riverKm": 0.3,
+   "lat": 52.374398,
+   "lon": 13.653581,
+   "distanceKm": 9.7,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 28.0,
+     "HHW": 63.0,
+     "MNW": 35.0,
+     "MW": 39.0,
+     "MHW": 50.0
+    }
+   }
+  },
+  "sportvereinigung-scharnebeck-ev-ruderabteilung": {
+   "network": "pegelonline",
+   "id": "b3492c68-8373-4769-9b29-22f66635a478",
+   "name": "Artlenburg",
+   "water": "Elbe",
+   "riverKm": 573.86,
+   "lat": 53.376174,
+   "lon": 10.489216,
+   "distanceKm": 9.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 380.0,
+     "HHW": 907.0,
+     "MNW": 409.0,
+     "MW": 452.0,
+     "MHW": 632.0
+    }
+   }
+  },
+  "srr-albert-schweitzer-schule-nienburg": {
+   "network": "pegelonline",
+   "id": "38497786-6c29-47f4-93de-d96001629496",
+   "name": "Nienburg",
+   "water": "Weser",
+   "riverKm": 268.18,
+   "lat": 52.644153,
+   "lon": 9.204659,
+   "distanceKm": 0.7,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 773.0,
+     "M_I": 550.0,
+     "NNW": 168.0,
+     "M_II": 600.0,
+     "MNW": 366.0,
+     "MW": 402.0,
+     "HSW": 600.0,
+     "MHW": 628.0,
+     "M_III": 650.0
+    }
+   }
+  },
+  "srr-goethe-schule-wetzlar": {
+   "network": "pegelonline",
+   "id": "57c8e437-560c-4a5b-a9a0-b8e109804546",
+   "name": "Niederbiel Schleuse Kanal Op",
+   "water": "Lahn",
+   "riverKm": 19.3,
+   "lat": 50.5471,
+   "lon": 8.425671,
+   "distanceKm": 5.7,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "srr-gymnasium-philippinum-weilburg": {
+   "network": "pegelonline",
+   "id": "34af0fca-d2c6-4243-a924-9ce1b3b6452d",
+   "name": "Fürfurt Schleuse Up",
+   "water": "Lahn",
+   "riverKm": 51.2,
+   "lat": 50.426976,
+   "lon": 8.251936,
+   "distanceKm": 6.7,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "srr-gymnasium-stolzenau": {
+   "network": "pegelonline",
+   "id": "edfa125a-1e46-4c7e-9f3a-568ae013a4df",
+   "name": "Stolzenau",
+   "water": "Weser",
+   "riverKm": 243.39,
+   "lat": 52.51825,
+   "lon": 9.077735,
+   "distanceKm": 0.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 500.0,
+     "NNW": 261.0,
+     "M_II": 560.0,
+     "HHW": 694.0,
+     "MNW": 297.0,
+     "MW": 335.0,
+     "HSW": 550.0,
+     "MHW": 546.0,
+     "M_III": 590.0
+    }
+   }
+  },
+  "srr-leibnizgymnasium-offenbach": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 2.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "srv-friedrich-wilhelm-gymnasium-koeln-von-1921": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 5.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "srv-gymnasial-turn-ruder-verein-neuwied-1882": {
+   "network": "pegelonline",
+   "id": "dc407f1e-e25f-4995-9feb-5bacc8658149",
+   "name": "Neuwied Stadt",
+   "water": "Rhein",
+   "riverKm": 608.04,
+   "lat": 50.424277,
+   "lon": 7.457453,
+   "distanceKm": 0.4,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "srv-karl-ziegler-schule": {
+   "network": "pegelonline",
+   "id": "36fb2c81-5fc0-4f2c-8f37-347c822a4b59",
+   "name": "Schlossbrücke Mülheim",
+   "water": "Ruhr",
+   "riverKm": 12.183,
+   "lat": 51.426761,
+   "lon": 6.875965,
+   "distanceKm": 1.9,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "steeler-ruder-verein-ev-1904": {
+   "network": "pegelonline",
+   "id": "c0594fb5-77ff-4287-9b8d-7ff326afe9ff",
+   "name": "Hattingen",
+   "water": "Ruhr",
+   "riverKm": 56.9,
+   "lat": 51.39975,
+   "lon": 7.161034,
+   "distanceKm": 7.6,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {}
+  },
+  "stuttgart-cannstatter-ruderclub-von-1910": {
+   "network": "pegelonline",
+   "id": "cf2af1a4-41a9-4a48-871b-f241daad04cc",
+   "name": "Hofen Schleuse Up",
+   "water": "Neckar",
+   "riverKm": 176.0,
+   "lat": 48.838965,
+   "lon": 9.225975,
+   "distanceKm": 1.5,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HSW": 290.0
+    }
+   }
+  },
+  "stuttgarter-rudergesellschaft-von-1899": {
+   "network": "pegelonline",
+   "id": "a5ca02fb-9a83-4da5-80f0-0e7007350af8",
+   "name": "Untertürkheim Schleuse Up",
+   "water": "Neckar",
+   "riverKm": 186.2,
+   "lat": 48.778013,
+   "lon": 9.243163,
+   "distanceKm": 0.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HSW": 240.0
+    }
+   }
+  },
+  "tangermuender-ruderclub-von-1906": {
+   "network": "pegelonline",
+   "id": "13e91b77-90f3-41a5-a320-641748e9c311",
+   "name": "Tangermünde",
+   "water": "Elbe",
+   "riverKm": 388.26,
+   "lat": 52.541306,
+   "lon": 11.978056,
+   "distanceKm": 0.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 838.0,
+     "NNW": 86.0,
+     "MNW": 139.0,
+     "MW": 255.0,
+     "HSW": 620.0,
+     "MHW": 536.0
+    }
+   }
+  },
+  "torgauer-ruderverein": {
+   "network": "pegelonline",
+   "id": "83bbaedb-5d81-4bc6-9f66-3bd700c99c1f",
+   "name": "Torgau",
+   "water": "Elbe",
+   "riverKm": 154.15,
+   "lat": 51.553685,
+   "lon": 13.010131,
+   "distanceKm": 1.1,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 949.0,
+     "NNW": 20.0,
+     "MNW": 60.0,
+     "MW": 164.0,
+     "MHW": 503.0,
+     "HSW": 620.0
+    }
+   }
+  },
+  "tpsk-von-1925": {
+   "network": "pegelonline",
+   "id": "a6ee8177-107b-47dd-bcfd-30960ccc6e9c",
+   "name": "Köln",
+   "water": "Rhein",
+   "riverKm": 688.0,
+   "lat": 50.936949,
+   "lon": 6.9633,
+   "distanceKm": 9.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 139.0,
+     "TuGLW": 250.0,
+     "M_II": 830.0,
+     "M_I": 620.0,
+     "HHW": 1069.0,
+     "NNW": 69.0,
+     "MNW": 114.0,
+     "MW": 297.0,
+     "MHW": 725.0,
+     "HSW": 830.0
+    }
+   }
+  },
+  "turn-und-sportverein-bramsche-ev-ruderabteilung": {
+   "network": "pegelonline",
+   "id": "bec8a6a5-c3de-4322-856a-870ceb992fe4",
+   "name": "Bramsche",
+   "water": "Mittellandkanal",
+   "riverKm": 31.95,
+   "lat": 52.396167,
+   "lon": 7.978173,
+   "distanceKm": 1.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "OBW": 50.35,
+     "UBW": 50.23
+    }
+   }
+  },
+  "union-1861-schoenebeck": {
+   "network": "pegelonline",
+   "id": "90bcb315-f080-41a8-a0ac-6122331bb4cf",
+   "name": "Schönebeck",
+   "water": "Elbe",
+   "riverKm": 311.76,
+   "lat": 52.024534,
+   "lon": 11.738802,
+   "distanceKm": 2.2,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 58.0,
+     "HHW": 762.0,
+     "MNW": 92.0,
+     "MW": 204.0,
+     "MHW": 481.0
+    }
+   }
+  },
+  "universitaetssportverein-tu-dresden-ev-abt-rudern": {
+   "network": "pegelonline",
+   "id": "70272185-b2b3-4178-96b8-43bea330dcae",
+   "name": "Dresden",
+   "water": "Elbe",
+   "riverKm": 55.63,
+   "lat": 51.05446,
+   "lon": 13.738832,
+   "distanceKm": 5.3,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 940.0,
+     "NNW": 21.0,
+     "MNW": 67.0,
+     "MW": 156.0,
+     "MHW": 458.0,
+     "HSW": 500.0
+    }
+   }
+  },
+  "vegesacker-ruderverein": {
+   "network": "pegelonline",
+   "id": "76844306-4c37-4a6f-aac4-9e518e96306f",
+   "name": "Wasserhorst",
+   "water": "Lesum",
+   "riverKm": 2.3,
+   "lat": 53.162825,
+   "lon": 8.718208,
+   "distanceKm": 5.6,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "MThw": 724.0,
+     "MTnw": 414.0,
+     "HThw": 773.0,
+     "NTnw": 295.0
+    }
+   }
+  },
+  "verdener-ruderverein": {
+   "network": "pegelonline",
+   "id": "47174d8f-1b8e-4599-8a59-b580dd55bc87",
+   "name": "Eitze",
+   "water": "Aller",
+   "riverKm": 107.75,
+   "lat": 52.904065,
+   "lon": 9.276769,
+   "distanceKm": 3.1,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 216.0,
+     "M_I": 460.0,
+     "HHW": 659.0,
+     "M_II": 500.0,
+     "MNW": 234.0,
+     "MW": 327.0,
+     "MHW": 556.0,
+     "M_III": 560.0
+    }
+   }
+  },
+  "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893": {
+   "network": "pegelonline",
+   "id": "8f7e5f92-1153-4f93-acba-ca48670c8ca9",
+   "name": "Düsseldorf",
+   "water": "Rhein",
+   "riverKm": 744.2,
+   "lat": 51.225498,
+   "lon": 6.769891,
+   "distanceKm": 2.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 91.0,
+     "TuGLW": 250.0,
+     "HHW": 1110.0,
+     "M_I": 710.0,
+     "NNW": 23.0,
+     "M_II": 880.0,
+     "MNW": 70.0,
+     "MW": 257.0,
+     "MHW": 684.0,
+     "HSW": 880.0
+    }
+   }
+  },
+  "wassersportfreunde-burg-ev-1924": {
+   "network": "pegelonline",
+   "id": "831ad501-d2fe-4782-ab83-4f1c8e0b15ff",
+   "name": "Burg",
+   "water": "Elbe-Havel-Kanal",
+   "riverKm": 332.54,
+   "lat": 52.276738,
+   "lon": 11.832027,
+   "distanceKm": 1.4,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "wassersportverein-1926-ev-offenbach-am-main-buergel": {
+   "network": "pegelonline",
+   "id": "66ff3eb4-513b-478b-abd2-2f5126ea66fd",
+   "name": "Frankfurt Osthafen",
+   "water": "Main",
+   "riverKm": 37.591,
+   "lat": 50.105737,
+   "lon": 8.714995,
+   "distanceKm": 4.8,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 142.0,
+     "HHW": 547.0,
+     "M_I": 300.0,
+     "MNW": 154.0,
+     "NW": 153.0,
+     "ZS_I": 137.0,
+     "MW": 177.0,
+     "HSW": 370.0,
+     "MHW": 361.0,
+     "HW": 519.0
+    }
+   }
+  },
+  "wassersportverein-geisenheim-1912": {
+   "network": "pegelonline",
+   "id": "665be0fe-5e38-43f6-8b04-02a93bdbeeb4",
+   "name": "Oestrich",
+   "water": "Rhein",
+   "riverKm": 518.08,
+   "lat": 50.002866,
+   "lon": 8.030048,
+   "distanceKm": 5.0,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 92.0,
+     "TuGLW": 190.0,
+     "HHW": 594.0,
+     "NNW": 31.0,
+     "MNW": 79.0,
+     "NW": 49.0,
+     "MW": 186.0,
+     "MHW": 412.0,
+     "HW": 535.0
+    }
+   }
+  },
+  "wassersportverein-godesberg-190911": {
+   "network": "pegelonline",
+   "id": "593647aa-9fea-43ec-a7d6-6476a76ae868",
+   "name": "Bonn",
+   "water": "Rhein",
+   "riverKm": 654.8,
+   "lat": 50.736398,
+   "lon": 7.108045,
+   "distanceKm": 7.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "GlW": 142.0,
+     "TuGLW": 250.0,
+     "HHW": 1013.0,
+     "NNW": 81.0,
+     "MNW": 121.0,
+     "MW": 290.0,
+     "MHW": 680.0
+    }
+   }
+  },
+  "wassersportverein-hellas-1920-giessen": {
+   "network": "pegelonline",
+   "id": "4b386a6a-996e-4a4a-a440-15d6b40226d4",
+   "name": "Giessen Klärwerk",
+   "water": "Lahn",
+   "riverKm": -3.2,
+   "lat": 50.575038,
+   "lon": 8.648602,
+   "distanceKm": 3.9,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 119.0,
+     "HHW": 705.0,
+     "MNW": 225.0,
+     "NW": 219.0,
+     "MW": 274.0,
+     "MHW": 610.0,
+     "HW": 656.0
+    }
+   }
+  },
+  "wassersportverein-herne-1920": {
+   "network": "pegelonline",
+   "id": "ac6c4362-1fb1-4b7a-9406-016bed804804",
+   "name": "Herne Ow",
+   "water": "Rhein-Herne-Kanal",
+   "riverKm": 37.35,
+   "lat": 51.5646,
+   "lon": 7.245824,
+   "distanceKm": 0.1,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "wassersportverein-honnef": {
+   "network": "pegelonline",
+   "id": "b45359df-c020-4314-adb1-d1921db642da",
+   "name": "Oberwinter",
+   "water": "Rhein",
+   "riverKm": 638.19,
+   "lat": 50.61369,
+   "lon": 7.210222,
+   "distanceKm": 3.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 250.0,
+     "M_II": 680.0,
+     "NNW": 7.0,
+     "M_I": 490.0,
+     "MNW": 50.0,
+     "NW": 7.0,
+     "MW": 218.0,
+     "HSW": 680.0,
+     "MHW": 597.0,
+     "HW": 746.0
+    }
+   }
+  },
+  "wassersportverein-koenigs-wusterhausen": {
+   "network": "pegelonline",
+   "id": "0e0dbcc9-0a7d-494a-bc92-52e56a7fffe2",
+   "name": "Neue Mühle Schleuse Op",
+   "water": "Dahme-Wasserstrasse",
+   "riverKm": 9.56,
+   "lat": 52.296816,
+   "lon": 13.651758,
+   "distanceKm": 0.3,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "HHW": 298.0,
+     "NNW": 202.0,
+     "MNW": 257.0,
+     "MW": 265.0,
+     "MHW": 275.0
+    }
+   }
+  },
+  "wassersportverein-muelheim-ruhr": {
+   "network": "pegelonline",
+   "id": "36fb2c81-5fc0-4f2c-8f37-347c822a4b59",
+   "name": "Schlossbrücke Mülheim",
+   "water": "Ruhr",
+   "riverKm": 12.183,
+   "lat": 51.426761,
+   "lon": 6.875965,
+   "distanceKm": 2.3,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "wassersportverein-st-goar-1924": {
+   "network": "pegelonline",
+   "id": "550eb7e9-172e-48e4-ae1e-d1b761b42223",
+   "name": "Sankt Goar",
+   "water": "Rhein",
+   "riverKm": 556.43,
+   "lat": 50.152557,
+   "lon": 7.712615,
+   "distanceKm": 0.4,
+   "series": [
+    "W"
+   ],
+   "values": {
+    "W": {
+     "NNW": 61.0,
+     "HHW": 925.0,
+     "MNW": 152.0,
+     "NW": 108.0,
+     "MW": 311.0,
+     "MHW": 652.0,
+     "HW": 813.0
+    }
+   }
+  },
+  "weilburger-ruderverein-1905": {
+   "network": "pegelonline",
+   "id": "34af0fca-d2c6-4243-a924-9ce1b3b6452d",
+   "name": "Fürfurt Schleuse Up",
+   "water": "Lahn",
+   "riverKm": 51.2,
+   "lat": 50.426976,
+   "lon": 8.251936,
+   "distanceKm": 6.5,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "weisenauer-ruderverein-1913": {
+   "network": "pegelonline",
+   "id": "f6be7857-56b3-4db3-84e5-89e0c45985ed",
+   "name": "Bodenheim",
+   "water": "Rhein",
+   "riverKm": 489.0,
+   "lat": 49.93565,
+   "lon": 8.342776,
+   "distanceKm": 4.4,
+   "series": [
+    "W"
+   ],
+   "values": {}
+  },
+  "wormser-ruderclub-blau-weiss-von-1883": {
+   "network": "pegelonline",
+   "id": "844a620f-f3b8-4b6b-8e3c-783ae2aa232a",
+   "name": "Worms",
+   "water": "Rhein",
+   "riverKm": 443.37,
+   "lat": 49.631837,
+   "lon": 8.377519,
+   "distanceKm": 0.2,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "TuGLW": 210.0,
+     "NW": 2.0,
+     "MW": 195.0,
+     "HSW": 650.0,
+     "HW": 708.0,
+     "GlW": 68.0,
+     "M_II": 650.0,
+     "NNW": 2.0,
+     "HHW": 822.0,
+     "M_I": 440.0,
+     "MNW": 46.0,
+     "MHW": 529.0
+    }
+   }
+  },
+  "wuerzburger-ruderverein-bayern-von-18751905": {
+   "network": "pegelonline",
+   "id": "915d76e1-3bf9-4e37-9a9a-4d144cd771cc",
+   "name": "Würzburg",
+   "water": "Main",
+   "riverKm": 251.97,
+   "lat": 49.796209,
+   "lon": 9.925969,
+   "distanceKm": 3.0,
+   "series": [
+    "Q",
+    "W"
+   ],
+   "values": {
+    "W": {
+     "M_I": 270.0,
+     "NNW": 116.0,
+     "HHW": 1030.0,
+     "MNW": 140.0,
+     "ZS_I": 123.0,
+     "NW": 134.0,
+     "MW": 174.0,
+     "MHW": 515.0,
+     "HSW": 340.0,
+     "HW": 648.0
+    }
+   }
+  }
+ }
+}

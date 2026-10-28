@@ -14196,9 +14196,9 @@
       "country": "de",
       "lakeId": "river-elbe-seitenkanal",
       "launchPoint": {
-        "lat": 53.263,
-        "lon": 10.45,
-        "precision": "near the Elbe-Seitenkanal site, Elso-Klöver-Straße (approximate, water checked by hand)",
+        "lat": 53.248108,
+        "lon": 10.485377,
+        "precision": "shore of the Elbe-Seitenkanal at the boathouse, Elso-Klöver-Straße (checked by the owner)",
         "verified": false
       }
     },
