@@ -25,6 +25,10 @@ struct LocationPageView: View {
     /// that only the sticky header reads, so scrolling redraws the header and
     /// not the whole page on every frame (which drained the battery).
     @State private var sticky = StickyHourly()
+    /// The 48 hours opened past the first 24 (only folded in two columns).
+    @State private var hourlyOpen = UserDefaults.standard.bool(forKey: "RWHourlyOpen")
+    /// The 48 hours' height while folded, which the columns keep counting with when opened.
+    @State private var foldedHourlyHeight: CGFloat?
     /// The refresh failure explained after a tap on its line.
     @State private var showingFailure: RefreshFailure?
     @State private var showRainRadarTip = false
@@ -80,28 +84,22 @@ struct LocationPageView: View {
                             let cards = AppSettings.shared.pageLayout(for: club.id).visible
                             Group {
                                 if twoColumns {
-                                    BalancedColumns {
-                                        ForEach(cards) { pageCard($0, forecast: forecast, now: now) }
+                                    // The page's end goes into the shorter column too, and the maps
+                                    // there grow, so both columns end level (BalancedColumns).
+                                    BalancedColumns(tallestCard: geometry.size.height - 32) {
+                                        ForEach(cards) { pageCard($0, forecast: forecast, now: now, twoColumns: true) }
+                                        pageEnd(forecast)
                                     }
                                 } else {
-                                    ForEach(cards) { pageCard($0, forecast: forecast, now: now) }
+                                    ForEach(cards) { pageCard($0, forecast: forecast, now: now, twoColumns: false) }
                                 }
                             }
                             // The satellite card is empty until its picture has loaded, and an
                             // empty view never runs its own .task, so the cards load it here.
                             .task(id: satelliteID(forecast)) { await SatellitePictureStore.shared.load(satelliteID(forecast)) }
-                            sourceLine(forecast)
-                            Button {
-                                arranging = true
-                            } label: {
-                                Label(tr("Arrange this page"), systemImage: "arrow.up.arrow.down")
-                                    .font(.subheadline.weight(.semibold))
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 8)
-                                    .cardBackground(surface, cornerRadius: 18)
+                            if !twoColumns {
+                                pageEnd(forecast)
                             }
-                            .id("arrange")
-                            credits(forecast)
                         } else if let failure = forecasts.failures[club.id] {
                             ContentUnavailableView {
                                 Label(tr("No forecast"), systemImage: "icloud.slash")
@@ -167,8 +165,27 @@ struct LocationPageView: View {
         }
     }
 
+    /// The forecast source, "Arrange this page" and the credits, at the page's end.
+    private func pageEnd(_ forecast: ClubForecast) -> some View {
+        VStack(spacing: 16) {
+            sourceLine(forecast)
+            Button {
+                arranging = true
+            } label: {
+                Label(tr("Arrange this page"), systemImage: "arrow.up.arrow.down")
+                    .font(.subheadline.weight(.semibold))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                    .cardBackground(surface, cornerRadius: 18)
+            }
+            .id("arrange")
+            credits(forecast)
+        }
+        .frame(maxWidth: .infinity)
+    }
+
     @ViewBuilder
-    private func pageCard(_ card: PageCard, forecast: ClubForecast, now: ForecastHour) -> some View {
+    private func pageCard(_ card: PageCard, forecast: ClubForecast, now: ForecastHour, twoColumns: Bool) -> some View {
         switch card {
         case .radar:
             RainRadarCard(point: club.launchPoint, clubID: club.id)
@@ -198,6 +215,7 @@ struct LocationPageView: View {
                     LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC)
                 }
                 .id("lakeview")
+                .layoutValue(key: ColumnFiller.self, value: true)
             }
         case .hourly:
             // Each tip sits above its card and scrolls with it.
@@ -207,10 +225,18 @@ struct LocationPageView: View {
                 } else if tourSeen && showHourViewTip {
                     TipView(hourViewTip)
                 }
-                HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale())
+                // In two columns the table shows 24 hours until opened (ColumnFill.fold).
+                let folds = twoColumns && AppSettings.shared.activeColumnFill == .fold
+                HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale(),
+                           folds: folds, open: $hourlyOpen)
                     .modifier(StickyHourlyCut(sticky: sticky))
             }
             .id("hourly")
+            // Opened, the table still counts with its folded height, so no other card moves or grows.
+            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                if !hourlyOpen { foldedHourlyHeight = height }
+            }
+            .layoutValue(key: ColumnSortHeight.self, value: hourlyOpen ? foldedHourlyHeight : nil)
         case .launchPoint:
             VStack(spacing: 16) {
                 if tourSeen && showLaunchPointTip {
@@ -219,6 +245,7 @@ struct LocationPageView: View {
                 LaunchPointMapCard(club: club)
             }
             .id("launchpoint")
+            .layoutValue(key: ColumnFiller.self, value: true)
         case .satellite:
             VStack(spacing: 16) {
                 if tourSeen && showSatelliteTip {
@@ -1010,9 +1037,21 @@ private struct HourlyCard: View {
     let club: Club
     let lake: Lake?
     var stale = false
+    /// Two columns: the table shows the first 24 hours and a button for the rest.
+    var folds = false
+    @Binding var open: Bool
     @State private var openHour: ForecastHour?
 
+    /// How many hours a folded table shows.
+    static let foldedHours = 24
+
     var body: some View {
+        ScrollViewReader { proxy in
+            table(proxy)
+        }
+    }
+
+    private func table(_ proxy: ScrollViewProxy) -> some View {
         Card(title: tr("Next 48 hours"), symbol: "clock", legend: .hourly) {
             HourlyLegendHeader()
             ForEach(Array(days.enumerated()), id: \.element.id) { index, group in
@@ -1031,6 +1070,9 @@ private struct HourlyCard: View {
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Opens this hour with all its values"))
                 }
+            }
+            if folds && hiddenHours > 0 {
+                foldButton(proxy)
             }
         }
         .background {
@@ -1058,9 +1100,39 @@ private struct HourlyCard: View {
         var id: Date { day }
     }
 
+    /// Opens the rest of the table, or folds it back to the first 24 hours. Folding
+    /// keeps the button where it was on the screen, so the page does not jump on.
+    private func foldButton(_ proxy: ScrollViewProxy) -> some View {
+        Button {
+            withAnimation(.snappy) { open.toggle() }
+            if !open {
+                Task { @MainActor in proxy.scrollTo("hourly-fold", anchor: .bottom) }
+            }
+        } label: {
+            Label(open ? tr("Show fewer hours") : tr("Show 24 more hours"),
+                  systemImage: open ? "chevron.up" : "chevron.down")
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .foregroundStyle(.tint)
+        .id("hourly-fold")
+    }
+
+    /// The hours past the first 24, left out while folded.
+    private var hiddenHours: Int { max(0, forecast.hours.count - Self.foldedHours) }
+
+    /// The hours the table shows: all, or the first 24 while folded.
+    private var shownHours: [ForecastHour] {
+        let hours = forecast.hours.sorted { $0.time < $1.time }
+        return folds && !open ? Array(hours.prefix(Self.foldedHours)) : hours
+    }
+
     private var days: [DayGroup] {
         let calendar = Calendar.current
-        let grouped = Dictionary(grouping: forecast.hours) { calendar.startOfDay(for: $0.time) }
+        let grouped = Dictionary(grouping: shownHours) { calendar.startOfDay(for: $0.time) }
         return grouped.keys.sorted().map { DayGroup(day: $0, hours: grouped[$0]!.sorted { $0.time < $1.time }) }
     }
 

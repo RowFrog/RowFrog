@@ -217,7 +217,15 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
         <span class="tint">${h(t("Open lake view"))} ${icon("chevron-right")}</span>
       </div></a>`;
   box.hidden = false;
-  drawMiniMap(box.querySelector("canvas"), view, hour, clubId);
+  const canvas = box.querySelector("canvas");
+  drawMiniMap(canvas, view, hour, clubId);
+  // Drawn again when it grows to fill its column (balanceCards in app.js).
+  let size = `${canvas.clientWidth}x${canvas.clientHeight}`;
+  new ResizeObserver(() => {
+    const now = `${canvas.clientWidth}x${canvas.clientHeight}`;
+    if (now !== size && canvas.isConnected) drawMiniMap(canvas, view, hour, clubId);
+    size = now;
+  }).observe(canvas);
 }
 
 // ---- The full lake map ----------------------------------------------------------------

@@ -111,6 +111,10 @@ final class AppSettings {
     var developerOptions: Bool { didSet { defaults.set(developerOptions, forKey: Keys.developer) } }
     /// Weather models picked per club id while the developer options are on; missing = automatic.
     var pickedModels: [String: String] { didSet { defaults.set(pickedModels, forKey: Keys.pickedModels) } }
+    /// How club pages in two columns even out their columns, picked in the developer options.
+    var columnFill: ColumnFill { didSet { defaults.set(columnFill.rawValue, forKey: Keys.columnFill) } }
+    /// The column rule in use: the developer options' pick while they are on, else folding.
+    var activeColumnFill: ColumnFill { developerOptions ? columnFill : .fold }
 
     /// The order of the cards on every club page, and the cards switched off.
     var pageLayout: PageLayout { didSet { defaults.set(try? JSONEncoder().encode(pageLayout), forKey: Keys.pageLayout) } }
@@ -157,6 +161,7 @@ final class AppSettings {
         static let mapBoat = "RWMapBoat"
         static let developer = "RWDeveloperOptions"
         static let pickedModels = "RWPickedModels"
+        static let columnFill = "RWColumnFill"
         static let pageLayout = "RWPageLayout"
         static let pageLayoutVersion = "RWPageLayoutVersion"
         static let clubPageLayouts = "RWClubPageLayouts"
@@ -169,7 +174,7 @@ final class AppSettings {
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
-                          developer, pickedModels, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
+                          developer, pickedModels, columnFill, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
                           widgetUpdates, mapStartZoom]
     }
 
@@ -230,6 +235,7 @@ final class AppSettings {
         blurWidgetPicture = defaults.bool(forKey: Keys.widgetBlur)
         developerOptions = defaults.bool(forKey: Keys.developer)
         pickedModels = defaults.dictionary(forKey: Keys.pickedModels) as? [String: String] ?? [:]
+        columnFill = value(Keys.columnFill, .fold)
         // As a launch argument the order is a comma-separated list, e.g. `-RWPageLayout "hourly,radar"`.
         pageLayout = defaults.data(forKey: Keys.pageLayout).flatMap { try? JSONDecoder().decode(PageLayout.self, from: $0) }
             ?? defaults.string(forKey: Keys.pageLayout).map(PageLayout.init(list:))
@@ -325,6 +331,7 @@ final class AppSettings {
         userPictures = []
         developerOptions = false
         pickedModels = [:]
+        columnFill = .fold
         pageLayout = .standard
         clubPageLayouts = [:]
         saveMobileData = false
@@ -594,6 +601,24 @@ enum WidgetBackground: Hashable {
 }
 
 // The club page card order lives here because the widget builds AppSettings too.
+
+/// How a club page in two columns evens out its columns. The 48 hours folded
+/// to 24 is the app's way; the other stays as a developer option.
+enum ColumnFill: String, CaseIterable, Identifiable {
+    /// The 48 hours show 24 until opened; the page end and the maps fill the shorter column.
+    case fold
+    /// The 48 hours always whole; the page end and the maps fill the shorter column.
+    case fill
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .fold: tr("Fold the 48 hours")
+        case .fill: tr("Always 48 hours")
+        }
+    }
+}
 
 /// A card on a club page that the user can move or switch off. The rowing
 /// light stays first and DWD warnings, while one is issued, right under it;
