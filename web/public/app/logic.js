@@ -216,8 +216,11 @@ export function overlayBox(pictureBbox, iceBbox) {
 
 // ---- The sky (Sky.swift) -----------------------------------------------------
 
-/** The kind of sky for a WMO weather code, as Sky in the app. */
-export function sky(code) {
+/**
+ * The kind of sky for a WMO weather code, as Sky in the app; without a code,
+ * from the rain and cloud cover when given (Sky(code: nil, ...)).
+ */
+export function sky(code, cloudCoverPct = null, precipitationMm = null) {
   switch (code) {
     case 0: return "clear";
     case 1: return "mostlyClear";
@@ -232,7 +235,14 @@ export function sky(code) {
     case 71: case 73: case 75: case 77: case 85: case 86: return "snow";
     case 95: return "thunderstorm";
     case 96: case 99: return "hail";
-    default: return "cloudy";
+    default: {
+      if (cloudCoverPct == null && precipitationMm == null) return "cloudy";
+      const rain = precipitationMm ?? 0;
+      const cloud = cloudCoverPct ?? 0;
+      if (rain >= 4) return "heavyRain";
+      if (rain >= 0.1) return "rain";
+      return cloud >= 80 ? "cloudy" : cloud >= 40 ? "partlyCloudy" : cloud >= 15 ? "mostlyClear" : "clear";
+    }
   }
 }
 

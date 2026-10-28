@@ -430,9 +430,9 @@ export function dot(light, size = 14, stale = false) {
 }
 
 /** The weather symbol for an hour, coloured like the app's multicolour symbols. */
-export function skySymbol(hour, cls = "") {
-  const [name, colour] = skyIcon(sky(hour.weatherCode), hour.sunUp === false);
-  return `<span class="sky ${colour} ${cls}" title="${h(t(SKY_TITLES[sky(hour.weatherCode)]))}">${icon(name)}</span>`;
+export function skySymbol(hour, cls = "", kind = sky(hour.weatherCode)) {
+  const [name, colour] = skyIcon(kind, hour.sunUp === false);
+  return `<span class="sky ${colour} ${cls}" title="${h(t(SKY_TITLES[kind]))}">${icon(name)}</span>`;
 }
 
 export const CONDITION_ICONS = {

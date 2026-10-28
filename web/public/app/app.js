@@ -17,7 +17,7 @@ import {
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs,
 } from "./shared.js";
 import {
-  isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, sky, SKY_TITLES, skyIcon, REASONS,
+  isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, allowsMore, key,
@@ -33,7 +33,7 @@ import { showBackground, renderBackgrounds, backgroundSummary } from "./backgrou
 import { renderTour, tourSeen, tip, withTip, wireTips, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
-import { radarAt, followRadar, rainLines, radarGraphic, radarMark, radarCard, radarCardBody, wireRadarCard } from "./radar.js";
+import { radarAt, followRadar, rainLines, skyNow, radarGraphic, radarMark, radarCard, radarCardBody, wireRadarCard } from "./radar.js";
 
 const SAFETY_VERSION = 1;
 const root = document.getElementById("root");
@@ -634,7 +634,6 @@ function wireSwipe(id) {
 function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}) {
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
-  const kind = sky(hour.weatherCode);
   const boat = t("For %@", boatInSentence(selectedBoat()));
   const reasons = hour.reasons ?? [];
   const ice = iceValue(forecast);
@@ -647,6 +646,8 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
   const kit = coldWaterKit(hourWater, currentLimits());
   const steadier = steadierBoat(hour, hourWater, store.boats, store.boat, boatLimits);
   const d = conditionData(forecast, hour, radar);
+  // The sky as the rain tile sees it: the radar decides whether anything falls.
+  const kind = skyNow(d);
   // The waves line in fewer words than the tile's, so it fits under the value in German too.
   const fetch = hour.fetchM;
   const wavesCaption = fetch == null ? "" : fetch < 50 ? t("Offshore wind") : t("%@ open water", distance(fetch));
@@ -663,7 +664,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
         <h2>${h(lightTitle(hour.light, stale))} ${at ? "" : `<button class="info" data-legend="lights" aria-label="${h(t("What the symbols mean"))}">${icon("info")}</button>`}</h2>
         ${at ? `<small class="sub">${h(boat)}</small>` : `<button class="boat-line" id="boat-line">${h(boat)} ${icon("chevrons-up-down")}</button>`}
       </div>
-      <div class="now-sky">${skySymbol(hour, "large")}<small class="sub">${h(t(SKY_TITLES[kind]))}</small></div>
+      <div class="now-sky">${skySymbol(hour, "large", kind)}<small class="sub">${h(t(SKY_TITLES[kind]))}</small></div>
     </div>
     ${kit ? coldWaterBadge(kit, water == null) : ""}
     <ul class="reasons">
@@ -826,8 +827,8 @@ function shoreLights(open) {
 
 /** The current conditions: the sky, then two tiles a row in the app's order (ConditionsCard). */
 function conditionsCard(forecast, hour, radar = null) {
-  const kind = sky(hour.weatherCode);
-  const head = `<div class="cc-head">${skySymbol(hour, "large")}<div><strong>${h(t(SKY_TITLES[kind]))}</strong>
+  const kind = skyNow(conditionData(forecast, hour, radar));
+  const head = `<div class="cc-head">${skySymbol(hour, "large", kind)}<div><strong>${h(t(SKY_TITLES[kind]))}</strong>
     <small class="sub">${h(t("%@ · feels like %@", degrees(hour.temperatureC), degrees(hour.apparentTemperatureC)))}</small></div></div>`;
   const tiles = TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar)).join("");
   return card(t("Current conditions"), "gauge", `${head}<div class="tiles">${tiles}</div>`, { legend: "conditions" });

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ahead, rainOutlook, rainLines, radarSummary, radarFrames, radarRegion, nearestFrame, radarCovers } from "../public/app/radar.js";
+import { ahead, rainOutlook, rainLines, skyNow, radarSummary, radarFrames, radarRegion, nearestFrame, radarCovers } from "../public/app/radar.js";
 import { conditionData } from "../public/app/values.js";
 
 const MIN = 60000;
@@ -69,4 +69,21 @@ test("the radar map: frames from an hour ago to two ahead, and its square around
   assert.ok(south < 47.95 && north > 47.95 && west < 11.35 && east > 11.35);
   // 600 km of web-mercator map: about 400 km of real ground at 48° N.
   assert.ok(Math.abs((east - west) * 111.32 * Math.cos((47.95 * Math.PI) / 180) - 402) < 10);
+});
+
+test("the sky follows the radar while it covers the moment (ConditionData.sky)", () => {
+  const at = (h, r) => skyNow(conditionData({ hours: [h] }, h, r));
+  const rainy = { ...hour(0, 1.2, 61), cloudCoverPct: 90, temperatureC: 8 };
+  // The model says rain, the radar is dry: the sky from the cloud cover alone.
+  assert.equal(at(rainy, radar([0, 0, 0, 0, 0, 0, 0, 0, 0])), "cloudy");
+  assert.equal(at({ ...rainy, cloudCoverPct: 50 }, radar([0, 0, 0, 0, 0, 0, 0, 0, 0])), "partlyCloudy");
+  // The model is dry, the radar wet: rain, heavy rain from 10 mm/h, snow at 0 °C or below.
+  const dry = { ...hour(0, 0, 2), cloudCoverPct: 50, temperatureC: 8 };
+  assert.equal(at(dry, radar([2, 2, 0, 0, 0, 0, 0, 0, 0])), "rain");
+  assert.equal(at(dry, radar([12, 2, 0, 0, 0, 0, 0, 0, 0])), "heavyRain");
+  assert.equal(at({ ...dry, temperatureC: -1 }, radar([2, 2, 0, 0, 0, 0, 0, 0, 0])), "snow");
+  // Both agree, or no radar: the model's sky.
+  assert.equal(at(rainy, radar([2, 2, 0, 0, 0, 0, 0, 0, 0])), "rain");
+  assert.equal(at(rainy), "rain");
+  assert.equal(at(dry), "partlyCloudy");
 });
