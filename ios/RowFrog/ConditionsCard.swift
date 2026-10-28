@@ -278,6 +278,15 @@ private struct ConditionTile: View {
             ConditionIcon(condition: condition).frame(width: 16)
             Text(title).lineLimit(1).minimumScaleFactor(0.8)
             Spacer(minLength: 0)
+            if condition == .precipitation {
+                // Whether the bars below come from the radar. Only for now: a picked
+                // later hour is past the radar's two hours anyway.
+                if data.radarAhead != nil {
+                    RadarMark(missing: false)
+                } else if data.radarMissing && data.isNow {
+                    RadarMark(missing: true)
+                }
+            }
             if let light = hour.light(for: condition.reasonNames) {
                 TrafficLightDot(light: light, size: 8)
             }
@@ -441,10 +450,6 @@ struct ConditionGraphic: View {
                                forecast: data.future.filter { $0.time >= radar.end }.prefix(4).map { $0.precipitationMm ?? 0 })
             } else {
                 SparkBars(values: data.future.prefix(8).map { $0.precipitationMm ?? 0 })
-                    .overlay(alignment: .topLeading) {
-                        // Only for now: a picked later hour is past the radar's two hours anyway.
-                        if data.radarMissing && data.isNow { RadarMark(missing: true) }
-                    }
             }
         case .visibility:
             // 100 m at the left to 40 km at the right, stretched at the bottom.

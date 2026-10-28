@@ -356,7 +356,7 @@ struct ListMetrics: View {
             GridRow {
                 Label(Format.windRange(hour.windSpeedMs, hour.windGustMs), systemImage: Condition.wind.symbol)
                 Label(rain ?? tr("Dry"), systemImage: Condition.precipitation.symbol)
-                    .accessibilityLabel(tr("Rain, hail, snow: %@", rain ?? tr("None")))
+                    .accessibilityLabel(tr("Precipitation: %@", rain ?? tr("None")))
             }
             GridRow {
                 Label(Format.waves(hour.waveHeightM), systemImage: Condition.waves.symbol)

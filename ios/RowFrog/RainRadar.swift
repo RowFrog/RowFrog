@@ -823,7 +823,6 @@ struct RadarSparkBars: View {
             }
         }
         .frame(height: 36, alignment: .bottom)
-        .overlay(alignment: .topLeading) { RadarMark(missing: false) }
         .accessibilityHidden(true)
     }
 
@@ -834,15 +833,15 @@ struct RadarSparkBars: View {
     }
 }
 
-/// The small radar symbol over the rain tile's bars: the radar's bars are
-/// there, or (struck through) the radar could not be read and the bars are
-/// the forecast's only. A symbol rather than words, so the tile's lines keep their length.
+/// The small radar symbol in the precipitation tile's title line: the bars come
+/// from the radar, or (struck through) the radar could not be read and the bars
+/// are the forecast's only. A symbol rather than words, so the tile's lines keep their length.
 struct RadarMark: View {
     let missing: Bool
 
     var body: some View {
         Image(systemName: "dot.radiowaves.left.and.right")
-            .font(.system(size: 8, weight: .semibold))
+            .font(.caption2.weight(.semibold))
             .foregroundStyle(.secondary)
             .overlay {
                 if missing {

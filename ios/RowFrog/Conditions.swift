@@ -48,7 +48,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .wind: tr("Wind and gusts")
         case .waves: tr("Waves")
         case .waterTemperature: tr("Water temperature")
-        case .precipitation: tr("Rain, hail, snow")
+        case .precipitation: tr("Precipitation")
         case .visibility: tr("Visibility (fog)")
         case .cloudCover: tr("Cloud cover")
         case .thunderstorm: tr("Thunderstorm risk")
