@@ -256,9 +256,44 @@ def apply_water_fixes(country: str, waters: list[dict], clubs: list[dict]) -> in
     return moved
 
 
+EXTRA_SITES = ROOT / "data" / "catalogs" / "extra-sites.json"
+
+
+def apply_extra_sites(country: str, waters: list[dict], clubs: list[dict]) -> int:
+    """Adds a second place for clubs that row at more than one site, from
+    extra-sites.json (checked by hand): a copy of the club's entry with the
+    site's name, address, water and launch point. The water comes along when
+    the catalog has none of that id. Returns how many sites were added."""
+    sites = json.loads(EXTRA_SITES.read_text(encoding="utf-8")).get(country, {}) if EXTRA_SITES.exists() else {}
+    by_id = {c["id"]: c for c in clubs}
+    water_ids = {w["id"] for w in waters}
+    added = 0
+    for site_id, site in sites.items():
+        base = by_id.get(site["of"])
+        if base is None or site_id in by_id:
+            continue
+        club = dict(base)
+        club.update({
+            "id": site_id,
+            "name": f"{base['name']} ({site['site']})",
+            "shortName": f"{base.get('shortName') or base['name']} ({site['site']})",
+            "address": site["address"],
+            "lakeId": site["water"]["id"],
+            "launchPoint": dict(site["launchPoint"]),
+        })
+        if site["water"]["id"] not in water_ids:
+            waters.append(dict(site["water"]))
+            water_ids.add(site["water"]["id"])
+        clubs.append(club)
+        by_id[site_id] = club
+        added += 1
+    return added
+
+
 def write_catalog(name: str, source: str, waters: list[dict], clubs: list[dict]) -> Path:
     """Saves data/catalogs/<name>.json, e.g. name "at-oerv"."""
     CATALOGS.mkdir(exist_ok=True)
+    apply_extra_sites(name.split("-")[0], waters, clubs)
     apply_water_fixes(name.split("-")[0], waters, clubs)
     path = CATALOGS / f"{name}.json"
     catalog = {

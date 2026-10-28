@@ -53,3 +53,21 @@ def test_a_harbour_basin_gives_way_to_the_lake_around_it():
     assert pick_lake([harbour]) == harbour  # a harbour on a river stays
     assert pick_lake([(80.0, "Wörthersee"), (20.0, "Lendkanal-Becken")])[1] == "Wörthersee"
     assert pick_lake([]) is None
+
+
+def test_a_club_rowing_at_two_sites_gets_a_second_entry(tmp_path, monkeypatch):
+    sites = tmp_path / "extra-sites.json"
+    sites.write_text('''{"de": {"club-b": {"of": "club", "site": "B", "address": "Weg 1, 10000 B",
+        "water": {"id": "lake-b", "name": "B-See", "country": "de", "center": {"lat": 1, "lon": 2}},
+        "launchPoint": {"lat": 1, "lon": 2, "precision": "site B", "verified": false}}}}''', encoding="utf-8")
+    monkeypatch.setattr(club_import, "EXTRA_SITES", sites)
+    waters = [{"id": "lake-a", "name": "A-See"}]
+    clubs = [{"id": "club", "name": "Club e.V.", "shortName": "Club", "website": "https://club.de", "lakeId": "lake-a",
+              "address": "Weg 2, 20000 A", "launchPoint": {"lat": 5, "lon": 6}}]
+    assert club_import.apply_extra_sites("de", waters, clubs) == 1
+    site = clubs[1]
+    assert (site["id"], site["name"], site["shortName"], site["lakeId"]) == ("club-b", "Club e.V. (B)", "Club (B)", "lake-b")
+    assert site["website"] == "https://club.de" and site["address"] == "Weg 1, 10000 B"
+    assert [w["id"] for w in waters] == ["lake-a", "lake-b"]
+    assert clubs[0]["lakeId"] == "lake-a", "the club's own entry stays"
+    assert club_import.apply_extra_sites("de", waters, clubs) == 0, "a second run adds nothing"

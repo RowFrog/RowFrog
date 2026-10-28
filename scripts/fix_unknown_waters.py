@@ -29,7 +29,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from club_import import CATALOGS, WATER_FIXES, apply_water_fixes
+from club_import import CATALOGS, WATER_FIXES, apply_extra_sites, apply_water_fixes
 from fetch_lake_outline import OVERPASS_SERVERS
 from live_check import nearest_shore
 
@@ -130,6 +130,7 @@ def main() -> int:
         path = CATALOGS / f"{name}.json"
         catalog = json.loads(path.read_text(encoding="utf-8"))
         country = name.split("-")[0]
+        apply_extra_sites(country, catalog["lakes"], catalog["clubs"])
         moved = apply_water_fixes(country, catalog["lakes"], catalog["clubs"])
         snapped = 0
         if snap:

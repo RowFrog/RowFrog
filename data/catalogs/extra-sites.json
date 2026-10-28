@@ -1,0 +1,26 @@
+{
+  "comment": "Second places of clubs that row at more than one site, checked by hand. new club id -> \"of\" (the club's id in the import), \"site\" (added to its name), address, water (catalog entry, added when missing) and launchPoint. Applied by club_import.apply_extra_sites on every import and by scripts/fix_unknown_waters.py; a matching water-fixes.json entry with \"near\" lets the snap move the launch point to the shore.",
+  "de": {
+    "pro-sport-berlin-24-gatow": {
+      "of": "pro-sport-berlin-24",
+      "site": "Gatow",
+      "address": "Kladower Damm 45, 14089 Berlin",
+      "water": {
+        "id": "havel-4578498",
+        "name": "Havel",
+        "country": "de",
+        "center": {
+          "lat": 52.4633,
+          "lon": 13.1698
+        },
+        "osm": "relation/4578498"
+      },
+      "launchPoint": {
+        "lat": 52.47934,
+        "lon": 13.18248,
+        "precision": "Gatow sports ground, Kladower Damm 45 (water checked by hand), not yet on the shore",
+        "verified": false
+      }
+    }
+  }
+}
