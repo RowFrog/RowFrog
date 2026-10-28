@@ -16,6 +16,7 @@ on:
       - scripts/river_section_summary.py
       - scripts/water_kind_probe.py
       - scripts/osm_extract.py
+      - scripts/river_section_ends.py
       - .github/workflows/river-section-survey.yml
   workflow_dispatch:
 
@@ -49,4 +50,5 @@ jobs:
           ls -la
       # 80 km reach: where the next weir or lock is beyond 25 km, and which
       # rivers join and which harbours lie along the way (possible ends).
-      - run: python3 scripts/river_section_survey.py --extract osm/lines.osm.pbf osm/water.geojsonseq survey.json 80
+      - run: python3 scripts/river_section_survey.py --extract osm/lines.osm.pbf osm/water.geojsonseq survey.json 80 > survey.log
+      - run: python3 scripts/river_section_ends.py survey.json

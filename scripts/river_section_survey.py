@@ -230,7 +230,7 @@ def survey(g: dict, data: dict, max_km: float = MAX_KM) -> dict:
                     label = "harbour " + str(harbours[i][0])
                     if label not in seen_ev:
                         seen_ev.add(label)
-                        events.append((d, label, None))
+                        events.append((d, label, round(harbours[i][1].area / 1e6, 3)))
             moves = [x for x in graph.get(n, []) if x[2] == downstream]
             if not moves:
                 if n in other_nodes:
