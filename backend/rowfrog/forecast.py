@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
 from .locations import Club
@@ -92,7 +92,10 @@ def rowing_forecast(
     thresholds: Thresholds = Thresholds(),
     ice_by_day: dict[date, Light] | None = None,
     water_by_day: dict[date, float] | None = None,
+    river: tuple[str, Light] | None = None,
+    river_until: datetime | None = None,
 ) -> list[RowingHour]:
+    """`river` is the gauge's reason and light (river.py), for the hours before `river_until`."""
     hours = []
     p = club.launch_point
     days = sun_days(weather[0].time, weather[-1].time, p.lat, p.lon) if weather else []
@@ -117,6 +120,7 @@ def rowing_forecast(
             lake_warning=_lake_warning(list(warnings), h.time, h.time + timedelta(hours=1)),
             weather_warning=_weather_warning(list(warnings), h.time, h.time + timedelta(hours=1)),
             ice=(ice_by_day or {}).get(h.time.astimezone(LOCAL).date(), Light.GREEN),
+            **({"river_name": river[0], "river": river[1]} if river and river_until and h.time < river_until else {}),
         )
         hours.append(RowingHour(h, fetch, wave, assess(conditions, thresholds), sun_up))
     return hours

@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import ice, lake_view, locations, outlines, water_estimate, water_stations, weather_models
+from . import ice, lake_view, locations, outlines, river, water_estimate, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
 from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, meteoalarm, lake_temperature_satellite, open_meteo, pegelonline
@@ -72,6 +72,8 @@ STATION_CREDIT = {
 app = FastAPI(title="RowFrog")
 _locations = locations.load()
 _cache: dict[str, tuple[float, tuple]] = {}
+# River gauge readings per gauge (level, discharge, speed), shared by the clubs near it.
+_gauge_cache: dict[str, tuple[float, tuple]] = {}
 # Forecasts loaded ahead in bulk (scripts/publish_static.py), used once instead of a call per club.
 _primed_weather: dict[str, list] = {}
 # The same for the lake view's sample points, per lake.
@@ -200,6 +202,38 @@ def lake_grid(lake_id: str, rings) -> lake_view.Grid:
     if lake is not None and lake.section is not None:
         return lake_view.grid_for(lake_id, rings, lake_view.river_samples(lake.section.length_km), narrow=True)
     return lake_view.grid_for(lake_id, rings, _lake_samples.get(lake_id, lake_view.MAX_SAMPLES))
+
+
+async def _gauge_readings(client: httpx.AsyncClient, gauge: river.Gauge):
+    """The gauge's level, discharge and speed of the last two days, cached for clubs sharing it."""
+    cached = _gauge_cache.get(gauge.id)
+    if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
+        return cached[1]
+    found = []
+    for series in ("W", "Q", "VA"):
+        if series not in gauge.series:
+            found.append([])
+            continue
+        try:
+            found.append([river.Reading(t, v) for t, v in await pegelonline.fetch_series(client, gauge.id, series)])
+        except (httpx.HTTPError, ValueError, KeyError) as e:
+            logging.getLogger(__name__).warning("PEGELONLINE %s %s failed: %r", gauge.name, series, e)
+            if series == "W":
+                return None
+            found.append([])
+    _gauge_cache[gauge.id] = (time.monotonic(), tuple(found))
+    return tuple(found)
+
+
+def _section_width_m(lake: locations.Lake, rings) -> float | None:
+    """A river section's mean width: its water area over its length."""
+    if lake.section is None or not rings or not lake.section.length_km:
+        return None
+    lons = [x for ring in rings for x, _ in ring]
+    lats = [y for ring in rings for _, y in ring]
+    lon0, lat0 = (min(lons) + max(lons)) / 2, (min(lats) + max(lats)) / 2
+    area = lake_view._water_area_m2([[lake_view._local(x, y, lon0, lat0) for x, y in ring] for ring in rings])
+    return area / (lake.section.length_km * 1000)
 
 
 def _end_json(end: locations.SectionEnd | None) -> dict | None:
@@ -676,11 +710,18 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         ice_estimate = await _ice(client, lake, water.celsius if water else None, now, estimate.celsius if estimate else None)
         # For the water forecast; lakes only, since a river's water comes from upstream.
         air_days = await _air_days(client, lake, now.astimezone(LOCAL).date()) if lake.kind == "lake" else None
+        gauge = river.gauge_for(club.id) if lake.kind == "river" else None
+        readings = await _gauge_readings(client, gauge) if gauge else None
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
     weather = _from_now(weather, now)
     if not weather:
         raise HTTPException(status_code=503, detail="forecast too old, try again shortly")
     rings = outlines.load(club.lake_id)
+    river_now = None
+    if gauge and readings:
+        river_now = river.now_at(gauge, *readings, _section_width_m(lake, rings), lake.name, now)
+    river_reason = river_now.light if river_now else None
+    river_until = now + timedelta(hours=river.GAUGE_HOURS)
     # The light follows the water as measured, else as estimated (satellite or
     # air), so two clubs with water below 15 °C get the same advice.
     water_c = water.celsius if water else estimate.celsius if estimate else water_model_c
@@ -688,9 +729,13 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
     if water_c is not None and air_days:
         water_forecast = water_estimate.forecast(water_c, air_days, now.astimezone(LOCAL).date())
         water_by_day = dict(water_forecast)
-    hours = rowing_forecast(club, weather, rings, water_c, warnings, ice_by_day=ice_by_day, water_by_day=water_by_day)
+    hours = rowing_forecast(club, weather, rings, water_c, warnings, ice_by_day=ice_by_day, water_by_day=water_by_day,
+                            river=river_reason, river_until=river_until)
     outlook_hours = (
-        rowing_forecast(club, outlook, rings, water_c, warnings, ice_by_day=ice_by_day, water_by_day=water_by_day) if outlook else None
+        rowing_forecast(club, outlook, rings, water_c, warnings, ice_by_day=ice_by_day, water_by_day=water_by_day,
+                        river=river_reason, river_until=river_until)
+        if outlook
+        else None
     )
     chain = weather_models.chain_for(club.launch_point.lat, club.launch_point.lon)
     return {
@@ -713,11 +758,14 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         "waterForecast": None if water_forecast is None else [{"date": d.isoformat(), "celsius": c} for d, c in water_forecast],
         "warnings": warnings_block,
         "ice": _ice_json(ice_estimate),
+        # Rivers with a gauge: level, trend and current now, for the Current tile (river.py).
+        "river": river.to_json(river_now, gauge) if gauge else None,
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.
         "attribution": (ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]])
         + ([STATION_CREDIT[station.network]] if water is not None and station.network in STATION_CREDIT else [])
         + ([WARNING_CREDIT[club.country]] if club.country in WARNING_CREDIT else [])
-        + ([] if estimate is None else [SATELLITE_WATER_CREDIT[estimate.reading.source]]),
+        + ([] if estimate is None else [SATELLITE_WATER_CREDIT[estimate.reading.source]])
+        + (["River level: WSV PEGELONLINE, DL-DE Zero 2.0"] if river_now is not None else []),
         "forecastSource": weather_models.source_json(chain, len(hours))
         if picked is None
         else weather_models.picked_source_json(chain, picked, len(hours)),
