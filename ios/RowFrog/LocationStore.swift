@@ -292,6 +292,12 @@ final class ForecastStore {
     /// The last forecast worked out per club and the limits it used, so pages
     /// that read it many times per frame neither redo the work nor get a new value.
     @ObservationIgnored private var applied: [String: (limits: RowingLimits, forecast: ClubForecast)] = [:]
+    /// When the phone last got an answer for a club, new or unchanged. The
+    /// forecast's own time is when the server worked it out, which can be
+    /// half an hour or more earlier.
+    private(set) var loadedAt: [String: Date] = [:]
+    /// Clubs being loaded right now, so the page can say it is updating.
+    private(set) var loading: Set<String> = []
     /// Why the last refresh of a club failed; gone once one works.
     private(set) var failures: [String: RefreshFailure] = [:]
     var failed: Set<String> { Set(failures.keys) }
@@ -308,10 +314,13 @@ final class ForecastStore {
 
     func load(_ clubID: String, force: Bool = false) async {
         if !force, raw[clubID] != nil { return }
+        loading.insert(clubID)
+        defer { loading.remove(clubID) }
         if let model = AppSettings.shared.pickedModel(for: clubID) {
             if let forecast = try? await api.forecast(clubID: clubID, model: model) {
                 applied[clubID] = nil
                 raw[clubID] = forecast
+                loadedAt[clubID] = .now
                 failures[clubID] = nil
                 pickedModelMissing.remove(clubID)
                 return
@@ -330,6 +339,7 @@ final class ForecastStore {
             }
             applied[clubID] = nil
             raw[clubID] = forecast
+            loadedAt[clubID] = .now
             failures[clubID] = nil
         } catch {
             // Called off (the view that asked went away): not a failure, the
@@ -337,6 +347,37 @@ final class ForecastStore {
             if error is CancellationError || (error as? URLError)?.code == .cancelled { return }
             failures[clubID] = RefreshFailure(error, ownPlace: clubID.hasPrefix(OwnPlace.idPrefix))
         }
+    }
+
+    /// Counts the returns to the app, so the page in front renews its lake view and pictures too.
+    private(set) var returns = 0
+
+    /// How old a load may be before coming back to the app loads again.
+    static let reloadAfter: TimeInterval = 10 * 60
+
+    /// Back in the app: the clubs on screen first, then all the others, so a
+    /// swipe or the list already has new data. Clubs loaded in the last ten
+    /// minutes are left as they are; unchanged files cost only a short answer.
+    func refreshOnReturn(first: [String], then others: [String]) async {
+        returns += 1
+        let due = { (id: String) in
+            guard let loaded = self.loadedAt[id] else { return true }
+            return Date.now.timeIntervalSince(loaded) > Self.reloadAfter
+        }
+        let firstDue = first.filter(due)
+        let othersDue = others.filter { !first.contains($0) && due($0) }
+        await Task {
+            await reload(firstDue)
+            await reload(othersDue)
+        }.value
+    }
+
+    /// Pull to refresh on a club page: that club first, the others right
+    /// after, without making the pull wait for them.
+    func refresh(_ clubID: String, then others: [String]) async {
+        await refresh([clubID])
+        let rest = others.filter { $0 != clubID }
+        Task { await reload(rest) }
     }
 
     /// Pull to refresh: loads in a task of its own. SwiftUI cancels the pull's
