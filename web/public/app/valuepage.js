@@ -5,7 +5,7 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { currentHour, iceValue } from "./logic.js";
-import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet } from "./shared.js";
+import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
@@ -151,6 +151,7 @@ function show(page) {
       ${detail.limitInfo ? `<div class="limit-info"><button class="link" id="limit-info">${icon("info")} ${h(t("About the limits"))}</button>
         <p class="small boxed" id="limit-text" ${page.showLimits ? "" : "hidden"}>${h(detail.limitInfo)}</p></div>` : ""}
       ${facts(detail)}
+      ${stationCard(condition, data)}
       <p class="rowing">${icon("sailboat")}<span>${h(detail.rowing)}</span></p>
       <p class="sub small">${h(detail.source)}</p>
       <p class="neighbours"><button class="link sub" id="prev-name">${icon("chevron-left")} ${h(titles[neighbour(page, -1)][1])}</button>
@@ -158,6 +159,7 @@ function show(page) {
       ${footerLinks()}
     </main>`;
   window.scrollTo(0, 0);
+  showStationMap(root.querySelector("#station-map"), data.water?.station);
   wireTips(root.querySelector("main"));
   wireSwipe(page, root.querySelector("main"));
   const head = () => {
@@ -462,3 +464,31 @@ async function openFull(page, layerId, detail, hidden) {
   load(layerId);
 }
 
+
+/** Where the water temperature is measured, with the distance from the launch point and the station's page (WaterStationMap). */
+function stationCard(condition, data) {
+  const station = data.water?.station;
+  if (condition !== "waterTemperature" || station?.lat == null || station?.lon == null) return "";
+  const name = station.name ?? t("Lake station");
+  return `<section class="station">
+    <h3 class="section">${icon("map-pin")} ${h(t("Where it is measured"))}</h3>
+    <div class="map" id="station-map" role="img" aria-label="${h(name)}"></div>
+    <p class="small sub station-line"><span>${h(station.distanceM != null ? t("%@, %@ from the launch point", name, distance(station.distanceM)) : name)}</span>
+      ${/^https:\/\//.test(station.url ?? "") ? `<a class="link" href="${h(station.url)}" target="_blank" rel="noopener noreferrer">${h(t("Station page"))}</a>` : ""}</p>
+  </section>`;
+}
+
+async function showStationMap(box, station) {
+  if (!box) return;
+  const L = await loadLeaflet().catch(() => null);
+  if (!L || !box.isConnected) return;
+  const map = L.map(box, { scrollWheelZoom: false, attributionControl: true }).setView([station.lat, station.lon], 14);
+  // OpenStreetMap asks for the site in the Referer; the page itself sends none.
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+  }).addTo(map);
+  L.marker([station.lat, station.lon], {
+    icon: L.divIcon({ className: "pin station-pin", html: icon("thermometer"), iconSize: [30, 30], iconAnchor: [15, 15] }),
+    keyboard: false,
+  }).addTo(map);
+}
