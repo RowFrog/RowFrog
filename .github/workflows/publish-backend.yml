@@ -3,8 +3,9 @@ name: Publish forecasts
 # The app's backend while it has no server of its own: runs the backend code
 # on a schedule and publishes its answers as static files on GitHub Pages, at
 # https://api.rowfrog.com/v1/ (see scripts/publish_static.py).
-# The confirmed and used clubs are rebuilt every 30 minutes, all catalog clubs
-# every 6 hours; weather is loaded only after a new model run (see the script),
+# The confirmed and used clubs are rebuilt every 30 minutes (started by the
+# Cloudflare timer in cloudflare/timer/, GitHub's timer as backup), all catalog
+# clubs every 6 hours; weather is loaded only after a new model run (see the script),
 # and the last forecasts are kept between runs in the Actions cache.
 # The files live on the gh-pages branch, kept as a single commit so
 # its history does not grow. Pages must be set to "Deploy from a branch",
@@ -40,7 +41,34 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # The half-hourly runs are started on time by the Cloudflare timer
+  # (cloudflare/timer/). GitHub's own "*/30" timer is the backup: it often
+  # fires late or not at all, and while the published files are younger than
+  # 40 minutes (the timer is working) its run stops here.
+  due:
+    runs-on: ubuntu-latest
+    outputs:
+      run: ${{ steps.age.outputs.run }}
+    steps:
+      - id: age
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ "${{ github.event.schedule }}" != "*/30 * * * *" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          published=$(gh api "repos/${{ github.repository }}/commits/gh-pages" --jq .commit.committer.date || echo "")
+          if [ -z "$published" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; exit 0; fi
+          age=$(( $(date -u +%s) - $(date -u -d "$published" +%s) ))
+          echo "Last published $published, $((age / 60)) minutes ago"
+          if [ "$age" -lt 2400 ]; then
+            echo "The Cloudflare timer is keeping the files fresh; this backup run stops here."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
   publish:
+    needs: due
+    if: needs.due.outputs.run == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

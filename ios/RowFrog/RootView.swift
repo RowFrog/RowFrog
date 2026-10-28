@@ -14,6 +14,8 @@ struct RootView: View {
     @State private var settingsPath: [SettingsRoute] = []
     @State private var initialSearch = ""
     @Environment(\.scenePhase) private var scenePhase
+    /// Set on leaving the app, so coming back loads new forecasts (not a pull-down of Control Center).
+    @State private var wasInBackground = false
     @State private var showingTour = !Tutorial.seen
     @State private var showingSafety = SafetyNotice.needsAcceptance
     @State private var showingWhatsNew = WhatsNew.needsShowing
@@ -119,7 +121,13 @@ struct RootView: View {
         // The widget picks up the home base, clubs and settings when the user leaves the app.
         // Only on leaving, not on every pull-down of Control Center or the app switcher.
         .onChange(of: scenePhase) { _, phase in
-            if phase == .background { WidgetBridge.publish(locations) }
+            if phase == .background {
+                WidgetBridge.publish(locations)
+                wasInBackground = true
+            } else if phase == .active, wasInBackground {
+                wasInBackground = false
+                Task { await refreshOnReturn() }
+            }
         }
         // A new language or units show on the widget straight away.
         .onChange(of: AppSettings.shared.language) { WidgetBridge.publish(locations) }
@@ -135,6 +143,14 @@ struct RootView: View {
             selection = id
         }
         .modifier(SharedRowNote(note: $rowNote, catalogCount: locations.catalog.count, catalogLoaded: importSharedRow))
+    }
+
+    /// Back in the app: what is on screen loads first, the list top to
+    /// bottom or the club page shown, then every other saved club.
+    private func refreshOnReturn() async {
+        let ids = locations.saved.map(\.id)
+        let first = showingList || !ids.contains(selection) ? ids : [selection]
+        await forecasts.refreshOnReturn(first: first, then: ids)
     }
 
     private func openRowFile(_ url: URL) {
@@ -175,7 +191,8 @@ struct RootView: View {
         let margins = EdgeInsets(top: insets.top, leading: 0, bottom: insets.bottom + PageBar.height, trailing: 0)
         return TabView(selection: $selection) {
             ForEach(saved) { club in
-                LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts)
+                LocationPageView(club: club, lake: locations.lake(of: club), isHome: club.id == locations.homeID, forecasts: forecasts,
+                                 savedIDs: saved.map(\.id))
                     .pageBackground(.clubPages, clubID: club.id, drawsPicture: false)
                     .environment(\.isCurrentPage, club.id == selection)
                     .environment(\.openBoatSettings, openBoatSettings)

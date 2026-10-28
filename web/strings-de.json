@@ -49,5 +49,7 @@
   "The forecast server (api.rowfrog.com) did not answer in time. That is usually a slow connection or a short hiccup at the server. Try again in a minute.": "Der Vorhersage-Server (api.rowfrog.com) hat nicht rechtzeitig geantwortet. Meist ist die Verbindung langsam oder der Server hakt kurz. Versuche es in einer Minute noch einmal.",
   "The server has no forecast file for this club. A newly added club gets one with the next forecast run, every 30 minutes. Nothing to fix on your side.": "Der Server hat keine Vorhersage für diesen Verein. Ein neu aufgenommener Verein bekommt eine mit dem nächsten Vorhersagelauf, alle 30 Minuten. Bei dir ist nichts zu tun.",
   "Your browser could not reach the internet, or the connection dropped during the download. Check your connection, then try again.": "Dein Browser hat das Internet nicht erreicht, oder die Verbindung ist beim Laden abgebrochen. Prüfe deine Verbindung und versuche es dann noch einmal.",
-  "server error %@": "Serverfehler %@"
+  "server error %@": "Serverfehler %@",
+  "Forecast from %@": "Vorhersage von %@",
+  "Forecast from %@ · loaded %@": "Vorhersage von %@ · geladen %@"
 }

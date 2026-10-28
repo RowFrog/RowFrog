@@ -11,6 +11,9 @@ struct LocationPageView: View {
     let lake: Lake?
     let isHome: Bool
     let forecasts: ForecastStore
+    @Environment(\.isCurrentPage) private var isCurrentPage
+    /// All saved clubs, so a pull here refreshes the others too, after this one.
+    var savedIDs: [String] = []
     @Environment(\.surface) private var surface
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
     @State private var showHourlyTip = false
@@ -30,6 +33,15 @@ struct LocationPageView: View {
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
 
+    /// "Forecast from 14:51 · loaded 15:39 · Pull down to refresh", or only the
+    /// forecast's time when both are the same minute or nothing loaded yet.
+    static func updatedLine(forecast: Date, loaded: Date?) -> String {
+        guard let loaded, Format.time(loaded) != Format.time(forecast) else {
+            return tr("Forecast from %@ · Pull down to refresh", Format.time(forecast))
+        }
+        return tr("Forecast from %@ · loaded %@ · Pull down to refresh", Format.time(forecast), Format.time(loaded))
+    }
+
     /// Whose satellite picture the page shows: the lake's, or for water without an
     /// outline (rivers, until they have sections) the 4 x 3 km around the club ("club-<id>").
     private func satelliteID(_ forecast: ClubForecast) -> String {
@@ -40,6 +52,13 @@ struct LocationPageView: View {
     private func refreshSatellite() async {
         guard let forecast = forecasts.forecasts[club.id] else { return }
         await SatellitePictureStore.shared.refresh(satelliteID(forecast))
+    }
+
+    /// Pull to refresh and coming back to the app also renew the lake view;
+    /// an unchanged file costs only a short answer.
+    private func refreshLakeView() async {
+        guard lake?.hasOutline != false, let forecast = forecasts.forecasts[club.id] else { return }
+        await LakeViewStore.shared.load(forecast.lakeId, force: true)
     }
     @State private var showSourceTip = false
     @State private var showRadarMapTip = false
@@ -133,10 +152,21 @@ struct LocationPageView: View {
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
                 .refreshable {
                     async let pictures: Void = refreshSatellite()
-                    await forecasts.refresh([club.id])
+                    async let lakeView: Void = refreshLakeView()
+                    await forecasts.refresh(club.id, then: savedIDs)
                     await pictures
+                    await lakeView
                 }
                 .followsRadar(club.launchPoint)
+                // Back in the app: the page in front renews its lake view and satellite passes too.
+                .onChange(of: forecasts.returns) {
+                    guard isCurrentPage else { return }
+                    Task {
+                        async let pictures: Void = refreshSatellite()
+                        await refreshLakeView()
+                        await pictures
+                    }
+                }
                 .tipVisibility(conditionsTip, $showConditionsTip)
                 .tipVisibility(lakeViewTip, $showLakeViewTip)
                 .tipVisibility(rainRadarTip, $showRainRadarTip)
@@ -407,10 +437,16 @@ private extension LocationPageView {
                         .multilineTextAlignment(.center)
                     }
                     .buttonStyle(.plain)
-                } else {
-                    Text(tr("Updated %@ · Pull down to refresh", Format.time(updated)))
+                } else if forecasts.loading.contains(club.id) {
+                    Label(tr("Updating…"), systemImage: "arrow.triangle.2.circlepath")
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                } else {
+                    // The forecast's time is when the server worked it out; the load time is when it reached the phone.
+                    Text(Self.updatedLine(forecast: updated, loaded: forecasts.loadedAt[club.id]))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
                 }
                 if forecast.isSlowRefresh {
                     // Opening the club counts it as used; the next server run renews it every half hour.
