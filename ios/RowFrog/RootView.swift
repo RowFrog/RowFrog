@@ -352,7 +352,7 @@ private struct PageBar: View {
                 boatButton
             }
             .padding(.horizontal, 4)
-            .barPiece(Capsule())
+            .floatingControl(Capsule())
             .frame(width: Self.sideWidth, alignment: .leading)
             Spacer(minLength: 8)
             HStack(spacing: 0) {
@@ -373,7 +373,7 @@ private struct PageBar: View {
                 }
             }
             .padding(.horizontal, 8)
-            .barPiece(Capsule())
+            .floatingControl(Capsule())
             Spacer(minLength: 8)
             Group {
                 if let showList {
@@ -382,7 +382,7 @@ private struct PageBar: View {
                             .font(.title3)
                             .frame(width: Self.buttonHeight, height: Self.buttonHeight)
                     }
-                    .barPiece(Circle())
+                    .floatingControl(Circle())
                     .accessibilityLabel(tr("All locations"))
                 }
             }
@@ -414,15 +414,3 @@ private struct PageBar: View {
     }
 }
 
-private extension View {
-    /// A floating piece of the page bar: Liquid Glass (frosted before iOS 26),
-    /// solid in Low Power Mode, which draws nothing live.
-    @ViewBuilder
-    func barPiece(_ shape: some Shape) -> some View {
-        if PowerState.shared.lowPower {
-            background(shape.fill(Color(.secondarySystemGroupedBackground)).shadow(color: .black.opacity(0.15), radius: 6, y: 2))
-        } else {
-            glass(in: shape)
-        }
-    }
-}

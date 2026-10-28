@@ -330,3 +330,17 @@ struct BackgroundPicture: View {
             .accessibilityHidden(true)
     }
 }
+
+extension View {
+    /// A button floating over a picture or a map (the page bar, the lake map's
+    /// buttons): Liquid Glass (frosted before iOS 26), as Apple's guide keeps
+    /// glass for controls, and solid in Low Power Mode, which draws nothing live.
+    @ViewBuilder
+    func floatingControl(_ shape: some Shape) -> some View {
+        if PowerState.shared.lowPower {
+            background(shape.fill(Color(.secondarySystemGroupedBackground)).shadow(color: .black.opacity(0.15), radius: 6, y: 2))
+        } else {
+            glass(in: shape)
+        }
+    }
+}
