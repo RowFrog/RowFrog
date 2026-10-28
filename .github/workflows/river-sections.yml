@@ -6,7 +6,9 @@ name: River sections
 # data/river-sections.json and the section outlines (data/outlines) to the
 # branch it runs on. Run it on main; on a pull request branch the bot commit
 # holds the checks until the next push. "only" rebuilds just the sections of
-# the given club ids (comma-separated) and keeps the rest.
+# the given club ids (comma-separated) and keeps the rest; "verbose" prints
+# each side's walk. The filtered extracts are cached for the day, so a second
+# run on the same day skips the 20-minute download.
 on:
   workflow_dispatch:
     inputs:
@@ -14,6 +16,10 @@ on:
         description: "Club ids whose sections to rebuild (comma-separated; empty = all)"
         required: false
         default: ""
+      verbose:
+        description: "Print each side's walk (weirs, mouths, line ends)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -33,7 +39,19 @@ jobs:
           python-version: "3.12"
       - run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
       - run: pip install shapely osmium && pip install -e backend
+      - name: Today's date
+        id: day
+        run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
+      - name: Cached extracts
+        id: cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            osm/lines.osm.pbf
+            osm/water.geojsonseq
+          key: river-sections-osm-${{ steps.day.outputs.day }}
       - name: Download and filter the extracts
+        if: steps.cache.outputs.cache-hit != 'true'
         run: |
           mkdir -p osm && cd osm
           for area in europe/germany europe/austria europe/switzerland; do
@@ -50,9 +68,10 @@ jobs:
       - name: Build the sections
         env:
           ONLY: ${{ inputs.only }}
+          VERBOSE: ${{ inputs.verbose && '--verbose' || '' }}
         run: |
           set -o pipefail
-          python3 -u scripts/build_river_sections.py osm/lines.osm.pbf osm/water.geojsonseq --only "$ONLY" | tee report.txt
+          python3 -u scripts/build_river_sections.py osm/lines.osm.pbf osm/water.geojsonseq --only "$ONLY" $VERBOSE | tee report.txt
           { echo '### River sections'; echo '```'; grep -v '^extract:' report.txt | tail -n 400; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Check the clubs load on their sections
         run: |

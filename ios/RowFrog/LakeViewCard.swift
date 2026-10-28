@@ -9,6 +9,8 @@ struct LakeViewCard: View {
     let clubID: String
     /// The club's water, measured or estimated: the shore turns blue when it is cold.
     var waterC: Double? = nil
+    /// Lake, river or canal, for the title while the view loads.
+    var water: WaterKind = .lake
     @MainActor private var store: LakeViewStore { .shared }
     @State private var showingMap = false
 
@@ -17,7 +19,7 @@ struct LakeViewCard: View {
             if let view = store.views[lakeID] {
                 card(view)
             } else if !store.failed.contains(lakeID) {
-                Card(title: tr("Lake view"), symbol: "map") {
+                Card(title: water.viewTitle, symbol: "map") {
                     ProgressView().frame(maxWidth: .infinity, minHeight: 80)
                 }
             }
@@ -45,7 +47,7 @@ struct LakeViewCard: View {
         let index = view.hourIndex()
         let hour = view.hours.isEmpty ? nil : view.hours[index]
         let aspect = LakeProjection.aspect(of: view.grid)
-        return Card(title: tr("Lake view") + " · " + view.name, symbol: "map") {
+        return Card(title: view.water.viewTitle + " · " + view.name, symbol: "map") {
             Button { showingMap = true } label: {
                 if let hour {
                     if aspect >= 1.3 {
@@ -69,7 +71,7 @@ struct LakeViewCard: View {
                 }
             }
             .buttonStyle(.plain)
-            .accessibilityHint(tr("Opens the lake view"))
+            .accessibilityHint(view.water.opensHint)
         }
     }
 

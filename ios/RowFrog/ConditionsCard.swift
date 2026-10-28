@@ -13,6 +13,7 @@ struct ConditionsCard: View {
     /// The club, for the weather maps in the larger views.
     var club: Club?
     @State private var open: Condition?
+    @State private var showingCurrent = false
 
     var body: some View {
         let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) })
@@ -32,20 +33,35 @@ struct ConditionsCard: View {
                 ForEach(Array(stride(from: 0, to: Condition.tileOrder.count, by: 2)), id: \.self) { i in
                     GridRow {
                         ForEach(Condition.tileOrder[i..<min(i + 2, Condition.tileOrder.count)]) { condition in
-                            Button {
-                                open = condition
-                            } label: {
-                                ConditionTile(condition: condition, data: data)
+                            // On a river the Current tile takes the ice tile's place.
+                            if condition == .ice, let river = forecast.river {
+                                Button {
+                                    showingCurrent = true
+                                } label: {
+                                    CurrentTile(river: river)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityHint(tr("Opens the water level and current"))
+                            } else {
+                                Button {
+                                    open = condition
+                                } label: {
+                                    ConditionTile(condition: condition, data: data)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityHint(tr("Opens a chart and more about this value"))
                             }
-                            .buttonStyle(.plain)
-                            .accessibilityHint(tr("Opens a chart and more about this value"))
                         }
                     }
                 }
             }
         }
         .detailCover(item: $open) { condition in
-            ConditionDetailView(condition: condition, data: data, club: club)
+            ConditionDetailView(condition: condition, data: data,
+                                order: forecast.river == nil ? Condition.tileOrder : Condition.tileOrder.filter { $0 != .ice }, club: club)
+        }
+        .detailCover(isPresented: $showingCurrent) {
+            if let river = forecast.river { CurrentDetailView(river: river) }
         }
         .task {
             // Screenshot hook: `-RWOpenCondition wind` opens that view.

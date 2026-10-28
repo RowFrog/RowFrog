@@ -26,6 +26,12 @@ struct LakeView: Decodable, Hashable {
     var waterC: Double? = nil
     /// Set by the app: the measured water, else the estimate of the club page that showed the lake.
     var shoreWaterC: Double? = nil
+    /// "lake" or "river"; missing from older backends.
+    var kind: String? = nil
+    /// River sections only: where the stretch ends each way and the river line.
+    var section: RiverSection? = nil
+
+    var water: WaterKind { WaterKind(kind: kind, waterway: section?.waterway) }
 
     /// Cold water draws the shore blue on the maps, for the map's boat.
     var coldShore: ColdShore? { ColdShore(waterC: shoreWaterC, limits: AppSettings.shared.mapLimits) }
@@ -266,6 +272,11 @@ enum LakeZoneName {
         }
     }
 
+    /// The same for a river section's single part.
+    static func title(_ key: String, water: WaterKind) -> String {
+        water == .lake || key != "whole" ? title(key) : tr("Whole stretch")
+    }
+
     /// For sentences: "in the north", "in the middle".
     static func phrase(_ key: String) -> String {
         switch key {
@@ -286,14 +297,15 @@ enum LakeZoneName {
 extension LakeView {
     /// One line for the hour, such as "Calmest in the south, roughest in the north".
     func headline(for hour: LakeHour) -> String {
-        if hour.lakeWide.light == .red { return tr("Stay ashore on the whole lake") }
+        let lake = water == .lake
+        if hour.lakeWide.light == .red { return lake ? tr("Stay ashore on the whole lake") : tr("Stay ashore on the whole stretch") }
         let ranked = zip(zones, hour.zones).sorted { ($0.1.light, $0.1.maxWaveM) < ($1.1.light, $1.1.maxWaveM) }
         guard let best = ranked.first, let worst = ranked.last else { return "" }
         if best.1.light == worst.1.light || zones.count < 2 {
             switch worst.1.light {
-            case .green: return tr("Good to row on the whole lake")
-            case .amber: return tr("Row with care on the whole lake")
-            case .red: return tr("Stay ashore on the whole lake")
+            case .green: return lake ? tr("Good to row on the whole lake") : tr("Good to row on the whole stretch")
+            case .amber: return lake ? tr("Row with care on the whole lake") : tr("Row with care on the whole stretch")
+            case .red: return lake ? tr("Stay ashore on the whole lake") : tr("Stay ashore on the whole stretch")
             }
         }
         return tr("Calmest %@, roughest %@", LakeZoneName.phrase(best.0), LakeZoneName.phrase(worst.0))
