@@ -580,6 +580,7 @@ enum German {
         "Waves up to %@": "Wellen bis %@",
         "gusts up to %@": "Böen bis %@",
         "Whole lake: %@": "Ganzer See: %@",
+        "Whole stretch: %@": "Ganze Strecke: %@",
         "Sample wind": "Beispielwind",
         "Selected spot · %@": "Gewählte Stelle · %@",
         "Show": "Anzeigen",

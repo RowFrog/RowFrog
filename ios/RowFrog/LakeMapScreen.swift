@@ -509,7 +509,7 @@ struct LakeMapScreen: View {
                     .font(.subheadline.weight(.semibold))
             }
             if let lakeWide = shown?.lakeWide, lakeWide.light > .green {
-                LakeWideBanner(lakeWide: lakeWide).lineLimit(panelExpanded ? nil : 1)
+                LakeWideBanner(lakeWide: lakeWide, water: view.water).lineLimit(panelExpanded ? nil : 1)
             }
             coldWaterBadge
             planningControls
@@ -637,7 +637,7 @@ struct LakeMapScreen: View {
                 }
             }
             if hour.lakeWide.light > .green {
-                LakeWideBanner(lakeWide: hour.lakeWide)
+                LakeWideBanner(lakeWide: hour.lakeWide, water: view.water)
             }
             coldWaterBadge
             if routeMode {
@@ -693,7 +693,7 @@ struct LakeMapScreen: View {
             }
         }
         if hour.lakeWide.light > .green {
-            LakeWideBanner(lakeWide: hour.lakeWide).lineLimit(1)
+            LakeWideBanner(lakeWide: hour.lakeWide, water: view.water).lineLimit(1)
         }
         coldWaterBadge
         Group {
