@@ -376,7 +376,8 @@ export function baseLabel(condition) {
     freezing_water: t("Near-freezing water"), weather_warning: t("Weather warning"), wind: t("Wind"), gusts: t("Gusts"),
     waves: t("Waves"), fog: t("Fog"), heavy_rain: t("Heavy rain"), hail: t("Hail"), thunderstorm: t("Thunderstorm risk"),
     ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunrise / sunset"), cold_water: t("Very cold water"),
-    cool_water: t("Cold-water shock possible"),
+    cool_water: t("Cold-water shock possible"), shipping_stopped: t("Shipping stopped"), high_water: t("High water"),
+    current: t("Strong current"),
   }[condition] ?? condition;
 }
 
@@ -420,6 +421,9 @@ export function reasonExplanation(condition, light) {
     case "twilight": return t("Sunrise or sunset falls in this hour.");
     case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10));
     case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
+    case "shipping_stopped": return t("The river is above the gauge's shipping mark: even motor ships stay in.");
+    case "high_water": return t("The river is at or above mean high water: strong current, flotsam and flooded banks.");
+    case "current": return t("The current is strong (from the nearest gauge).");
     default: return condition;
   }
 }
@@ -462,6 +466,7 @@ export const CONDITION_ICONS = {
   temperature: "thermometer", feelsLike: "person-standing", humidity: "droplets", pressure: "gauge", wind: "wind", waves: "waves",
   waterTemperature: "thermometer-snowflake", precipitation: "cloud-rain", visibility: "binoculars", cloudCover: "cloud",
   thunderstorm: "cloud-lightning", uvIndex: "sun", ice: "snowflake", daylight: "sunrise", warning: "triangle-alert",
+  current: "circle-arrow-right",
 };
 
 export function conditionIcon(condition) {

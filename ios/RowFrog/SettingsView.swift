@@ -395,7 +395,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("App icon", .appearance, words: ["App-Symbol", "home screen", "Home-Bildschirm"]),
             SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
             SettingsSearch("Background pictures", .clubPages, path: [.clubPages, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
-            SettingsSearch("In the tiles", .clubPages, path: [.clubPages, .backgrounds], words: ["tiles", "Kacheln", "frosted", "Liquid Glass", "blur", "unscharf", "solid"]),
+            SettingsSearch("In the tiles", .clubPages, path: [.clubPages, .backgrounds], words: ["tiles", "Kacheln", "frosted", "blur", "unscharf", "solid"]),
             SettingsSearch("Maps start", .clubPages, words: ["map zoom", "Kartenzoom", "weather map", "Wetterkarte", "close", "nah", "wide", "weit"]),
             SettingsSearch("Widget background", .widgets, words: ["sky", "Himmel", "picture", "Bild", "satellite", "Satellit"]),
             SettingsSearch("Widget updates", .widgets, words: ["refresh", "aktualisieren", "battery", "Akku"]),
@@ -1097,7 +1097,7 @@ struct BackgroundSettingsView: View {
                 } header: {
                     SectionTitle(tr("Look"), symbol: "slider.horizontal.3")
                 } footer: {
-                    SectionFooter(tr("Picture blurred: the picture shows through the tiles like frosted glass. No picture: the tiles stay solid and keep the full rowing-light shading. No picture also saves battery, as blurred and Liquid Glass tiles are drawn again while the page scrolls; in Low Power Mode the tiles are always solid."))
+                    SectionFooter(tr("Picture blurred: the picture shows through the tiles like frosted glass. No picture: the tiles stay solid and keep the full rowing-light shading. No picture also saves battery, as blurred tiles are drawn again while the page scrolls; in Low Power Mode the tiles are always solid."))
                 }
                 .surfaceRows()
                 .id("look")
@@ -1709,7 +1709,7 @@ private struct SurfaceRowBackground: View {
     @Environment(\.surface) private var surface
 
     var body: some View {
-        Rectangle().fill(surface == .frosted || surface == .glass ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color(.secondarySystemGroupedBackground)))
+        Rectangle().fill(surface == .frosted ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color(.secondarySystemGroupedBackground)))
     }
 }
 

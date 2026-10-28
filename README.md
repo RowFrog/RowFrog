@@ -64,7 +64,7 @@ GitHub issue, so no GitHub account is needed.
 2. The official warnings card, only while a warning is issued (or the check
    failed).
 3. Current conditions.
-4. Lake view.
+4. Lake view (River or Canal view for river and canal clubs).
 5. Next 48 hours, with a feels-like column and a day header that stays in
    place while scrolling; tapping an hour opens that hour's view.
 6. Launch point map.
@@ -173,6 +173,16 @@ another app, with the real pace as the starting pace and the rowed track as
 an optional line on the map. Health access is asked for only for this, and
 everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
 
+**River and canal clubs.** River and canal clubs row on their own stretch
+(256 sections cut out of OpenStreetMap, up to the next weir or lock), so the
+lake view becomes a River or Canal view with pins at the stretch's ends, and
+the satellite picture shows that stretch. In place of the ice tile a Current
+tile shows the flow speed and the water level from the nearest PEGELONLINE
+gauge, with a level chart and the pace upstream and downstream. Shipping
+stopped turns the light red, high water amber; the current turns it amber
+from 1.5 m/s and red above 2.5 m/s (`backend/rowfrog/river.py`,
+`ios/RowFrog/RiverCurrent.swift`).
+
 **Rain radar.** The rain tile, the top tile's rain value and the rain detail
 view read DWD's rain radar and 2-hour nowcast for the launch point, then the
 forecast: "Light rain" now, with a line such as "Rain from 12:45" (a small
@@ -204,7 +214,7 @@ page in front, readings and map pictures are reused, widgets redraw only when
 something changed, and the launch point map stays a still picture until it is
 tapped. A blurred background picture is blurred once, not on every frame, and
 Add a place looks up the water only once the map stops moving. In Low Power
-Mode the tiles are drawn solid and the radar updates less often. The app does
+Mode the tiles, the page bar and the clock strip are drawn solid and the radar updates less often. The app does
 nothing in the background; only the widgets load forecasts on their own.
 
 **Refresh on return.** Coming back to the app after more than 10 minutes
@@ -287,10 +297,12 @@ field at the bottom.
   tinted, plus 10 alternates.
 - Club pages: how much area the weather maps open with ("Maps start": Close,
   Normal or Wide), the order of the cards for all clubs, and background pictures
-  for all pages, single pages or single clubs: clear or blurred, frosted,
-  solid or Liquid Glass tiles (iOS 26), your own photo or the satellite
+  for all pages, single pages or single clubs: clear or blurred, frosted
+  or solid tiles, your own photo or the satellite
   picture of the club's lake. On club pages the picture fills the screen
   behind the status and page bars and fades between clubs while swiping.
+  Pages reach under a soft blurred fade behind the clock, and the page bar
+  floats as three Liquid Glass groups; the lake map buttons look the same.
 - Widgets: the background for all widgets or per club (each widget can also
   pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
@@ -327,7 +339,7 @@ for iPads and desktop browsers, and has nearly everything the app has: own
 boats and limits, the lake view with route planning and row import (GPX, TCX
 or FIT), value pages with chart and weather map, the satellite picture with its
 layers, browsing by country and adding a place, Arrange this page, units,
-appearance, background pictures, the tour and the tips, and the rain radar in
+appearance, background pictures, the tour and the tips, the River and Canal view with the Current tile, and the rain radar in
 the rain tile (the radar card is off by default, as in the app). What a visitor picks stays in their browser.
 
 ## Layout
@@ -469,6 +481,7 @@ More detail, including the secrets each one needs, is in the
 | **Satellite water temperature check** (`water-temperature-probe.yml`) | Compares Copernicus, Landsat and the carried-forward estimate with GKD lake stations. By hand, or when the satellite water temperature code changes. |
 | **Weather maps data check** (`weather-maps-probe.yml`) | Research only: what DWD (ICON-D2, GeoServer) and EUMETSAT offer for the weather maps. Nothing is stored. By hand, or when its script changes. |
 | **River sections** (`river-sections.yml`) | Cuts each river and canal club's stretch out of OpenStreetMap (Geofabrik extracts of Germany, Austria and Switzerland) and commits `data/river-sections.json` and the section outlines. By hand, after river clubs or `data/river-section-overrides.json` change; takes about 40 minutes. |
+| **River gauges** (`river-gauges.yml`) | Finds the PEGELONLINE gauge on each German river club's river (within 15 km) and commits `data/river-gauges.json` for the Current tile. By hand, after river clubs change. |
 | **River section survey** (`river-section-survey.yml`) | Research only: for every river club, how far the next weir or lock is up- and downstream, from the Geofabrik extracts of Germany, Austria and Switzerland (filtered with osmium, no Overpass). Nothing is stored. By hand. |
 | **River gauge check** (`river-gauge-probe.yml`) | Research only: which river gauges (PEGELONLINE, BAFU) and flow forecasts (Open-Meteo Flood API) could tell river clubs about current and high water. Nothing is stored. By hand. |
 | **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |

@@ -23,6 +23,7 @@ import {
   waterForHour, allowsMore, key,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView } from "./lakeview.js";
+import { currentTile, currentBody } from "./river.js";
 import { satelliteCard } from "./satellite.js";
 import { renderAddPlace } from "./addplace.js";
 import { isOwn } from "./ownplace.js";
@@ -164,11 +165,14 @@ function openBoatMenu(raw) {
 /** Settings and boat on the left, a dot per club page, the list on the right (RootView). */
 function bottomBar(currentId, raw) {
   const clubs = store.clubs;
+  // Three floating pieces of glass, all 44 px high: cog and boat, the page dots, the list (RootView.PageBar).
   return `<nav class="bottom">
-    <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
-    <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${icon("sailboat")}<small>${h(boatShort(selectedBoat()))}</small></button>
-    <span class="dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
-    <a href="#/list" class="tool" aria-label="${h(t("Locations"))}">${icon("list")}</a>
+    <span class="bar-side"><span class="glass piece">
+      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+      <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${icon("sailboat")}<small>${h(boatShort(selectedBoat()))}</small></button>
+    </span></span>
+    <span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
+    <span class="bar-side end"><a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a></span>
   </nav>`;
 }
 
@@ -697,6 +701,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
     location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
   }));
   wireTopTile(root.querySelector(".card.now"), id);
+  wireCurrent(root, forecast);
   root.querySelector("#source-line")?.addEventListener("click", () => openSheet(t("Where the forecast comes from"), sourceBody(forecast.forecastSource)));
   root.querySelectorAll("[data-hour]").forEach((b) => b.addEventListener("click", () => {
     const at = forecast.hours.find((x) => x.time === b.dataset.hour);
@@ -712,6 +717,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
         location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
       }));
       wireTopTile(sheet.querySelector(".card.now"), id, at.time);
+      wireCurrent(sheet, forecast);
     });
   }));
 }
@@ -843,6 +849,11 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
  * The top tile's values open their own pages, and swiping there moves through
  * the tile's values in its order (NowCard.tileValues), as in the app.
  */
+/** The Current tile opens the water level and current (CurrentDetailView). */
+function wireCurrent(box, forecast) {
+  box.querySelectorAll("[data-current]").forEach((b) => b.addEventListener("click", () => openSheet(t("Current"), currentBody(forecast.river))));
+}
+
 function wireTopTile(card, id, at = null) {
   for (const el of card?.querySelectorAll("[data-top]") ?? []) {
     const open = (e) => {
@@ -1010,6 +1021,8 @@ function conditionTile(condition, forecast, hour, radar = null) {
       return tile(value, detail, graphic);
     }
     case "ice": {
+      // On a river the Current tile takes the ice tile's place (ConditionsCard).
+      if (forecast.river) return currentTile(forecast.river);
       const ice = forecast.ice;
       const off = iceOff(ice);
       let value, detail;

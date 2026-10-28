@@ -36,7 +36,8 @@ export async function renderValuePage(root, clubId, condition, at, orderName = n
   const hidden = new Map();
   // Opened from the top tile, the arrows, the menu and a swipe go through its values only.
   const top = orderName === "top" ? topTileValues(forecast, hour) : null;
-  const order = top?.includes(condition) ? top : TILE_ORDER;
+  // On a river the Current tile, not the ice tile, sits in the ice slot; it has no page here.
+  const order = top?.includes(condition) ? top : forecast.river ? TILE_ORDER.filter((c) => c !== "ice") : TILE_ORDER;
   const page = { root, club, clubId, data, time, hidden, condition, order, orderName: order === top ? "top" : null, at, map: null, playing: null, showLimits: store.limitInfo };
   current = page;
   page.cleanup = () => {

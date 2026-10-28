@@ -7,7 +7,7 @@ import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
 import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature } from "./shared.js";
 import { tip } from "./tour.js";
-import { hourIndex, gridEdges, coldShore, stripes } from "./lake.js";
+import { hourIndex, gridEdges, coldShore, stripes, waterKind } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote, kitBadge, COLD_SHORE } from "./lakeview.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows } from "./windarrows.js";
@@ -45,7 +45,18 @@ function switchLayer(id) {
 async function loadLake(lakeId) {
   const meta = await getJSON(`lakes/${encodeURIComponent(lakeId)}/satellite`);
   const view = lakeId.startsWith("club-") ? null : await viewForMap(lakeId).catch(() => null);
-  return { lakeId, meta, view, kinds: KINDS.filter(([k]) => meta[k]?.image) };
+  return { lakeId, meta, view, kinds: pictureKinds(meta) };
+}
+
+/** The pictures to pick from, one per day: a clearest pass from the latest day is the latest picture (SatellitePicture.kinds). */
+export function pictureKinds(meta) {
+  const dates = new Set();
+  return KINDS.filter(([k]) => {
+    const shot = meta[k];
+    if (!shot?.image || dates.has(shot.date)) return false;
+    dates.add(shot.date);
+    return true;
+  });
 }
 
 /** The layers with something to show on this lake. */
@@ -89,7 +100,7 @@ function caption(lake, shot) {
   const { meta } = lake;
   const cloud = (shot.lakeCloud ?? 0) * 100;
   const ice = store.satLayers.includes("ice") && available(lake).some((l) => l.id === "ice");
-  return `<p class="sub small">${h(cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(shot.date), num(cloud)))} <button class="link sub sat-why" data-sat-why aria-label="${h(t("Why only every few days?"))}">${icon("info")}</button></p>
+  return `<p class="sub small">${h(overLake(lake) ? (cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(shot.date), num(cloud))) : (cloud < 1 ? t("Sentinel-2 · %@ · no cloud", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% under cloud", dayLabel(shot.date), num(cloud))))} <button class="link sub sat-why" data-sat-why aria-label="${h(t("Why only every few days?"))}">${icon("info")}</button></p>
     ${ice ? `<p class="sub small">${h(t("Satellite ice map, %@", dayLabel(meta.ice.date)))}</p>` : ""}
     <p class="sub small">${h(meta.attribution)}${ice && meta.ice.attribution ? ` · ${h(meta.ice.attribution)}` : ""}</p>`;
 }
@@ -114,7 +125,10 @@ function wireControls(el, lake, setKind) {
 }
 
 /** The picture with an empty layer for the overlay, which is drawn once its size is known. */
-const pictureHtml = (lake, shot) => `<img data-picture="${h(fileUrl(lake, shot.image, shot.date))}" alt="${h(t("Satellite picture of the lake"))}" draggable="false"><div class="sat-over"></div>`;
+/** A lake's picture covers the lake; a river section's or a club place's ("club-<id>") the area around the club. */
+const overLake = (lake) => !lake.lakeId.startsWith("club-") && waterKind(lake.view) === "lake";
+
+const pictureHtml = (lake, shot) => `<img data-picture="${h(fileUrl(lake, shot.image, shot.date))}" alt="${h(overLake(lake) ? t("Satellite picture of the lake") : t("Satellite picture of the water around the club"))}" draggable="false"><div class="sat-over"></div>`;
 
 /**
  * The pictures loaded this visit, by address, as local copies: switching

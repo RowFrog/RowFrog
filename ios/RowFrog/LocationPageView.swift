@@ -80,6 +80,7 @@ struct LocationPageView: View {
     private let waterEstimateTip = WaterEstimateTip()
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
+    @Environment(\.pageMargins) private var pageMargins
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
@@ -201,6 +202,10 @@ struct LocationPageView: View {
                     }
                 }
             }
+            // On the swiping club pages the cards scroll on under the clock and the
+            // floating buttons; keep clear of whichever the page is not already clear of.
+            .safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))
+            .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
         }
     }
 
@@ -697,7 +702,7 @@ private struct NowCard: View {
                         Label(tr("Ice"), systemImage: Condition.ice.symbol)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.secondary)
-                        Text(ice).font(.system(size: 17, weight: .light))
+                        Text(ice).valueFont(size: 17)
                         Text(iceDetail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
                         Spacer(minLength: 0)
                     }
@@ -817,10 +822,10 @@ private struct WindView: View {
                 .foregroundStyle(.secondary)
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(hour.windSpeedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(hour.windGustMs))" } ?? "–")
-                    .font(.system(size: size, weight: .light))
+                    .valueFont(size: size)
                 if let from = hour.windFromDeg {
                     Image(systemName: "arrow.up")
-                        .font(.system(size: size * 0.6, weight: .semibold))
+                        .scaledSystemFont(size: size * 0.6, weight: .semibold, relativeTo: .title2, maxGrowth: 1.35)
                         .rotationEffect(.degrees(from + 180))
                 }
             }
@@ -894,7 +899,7 @@ struct TemperatureView: View {
                 .font(.caption.weight(.semibold))
                 .foregroundStyle(.secondary)
             Text(Format.degrees(celsius, digits: digits))
-                .font(.system(size: size, weight: .light))
+                .valueFont(size: size)
             if let caption {
                 Text(caption)
                     .font(.caption)
@@ -1000,7 +1005,7 @@ struct MetricView: View {
                 .minimumScaleFactor(0.75)
             // Two lines rather than cut off, should a value outgrow its column.
             Text(value)
-                .font(.system(size: size, weight: .light))
+                .valueFont(size: size)
                 .lineLimit(2)
                 .minimumScaleFactor(0.85)
                 .alignmentGuide(.metricValue) { $0[.firstTextBaseline] }
@@ -1210,11 +1215,9 @@ struct HourlyStickyHeader: View {
         .padding(.horizontal, 14)
         .padding(.top, 8)
         .frame(height: Self.height, alignment: .top)
-        // The tile's own colour; material only where the tile itself is glass.
-        // Rounded at the top like the tile, square at the bottom where the rows start,
-        // so the header keeps its shape when it starts to stay.
-        .background(surface == .glass ? AnyShapeStyle(.regularMaterial) : surface.card,
-                    in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
+        // The tile's own colour. Rounded at the top like the tile, square at the
+        // bottom where the rows start, so the header keeps its shape when it starts to stay.
+        .background(surface.card, in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
         .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
     }
 }
@@ -1569,7 +1572,7 @@ private struct LoadingCards: View {
     private func value(_ title: String, _ symbol: String, _ dash: String) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
-            Text(dash).font(.system(size: 40, weight: .light)).foregroundStyle(.secondary)
+            Text(dash).valueFont(size: 40).foregroundStyle(.secondary)
         }
     }
 }

@@ -11,6 +11,7 @@ import {
 import { compass, matchesStandard, allowsMore, coldWaterKit, reasonCondition } from "./logic.js";
 import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
+  waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
   roughest, RELATION_WIND, RELATION_WAVES, pace as paceText,
 } from "./lake.js";
@@ -204,11 +205,12 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
   const e = gridEdges(view.grid);
   const aspect = (e.north - e.south) / ((e.east - e.west) * Math.cos((((e.north + e.south) / 2) * Math.PI) / 180));
   const stale = viewStale(view);
-  const zones = view.zones.length > 1 ? view.zones.map((z, i) => hour.zones[i] ? `<li>${dot(hour.zones[i].light, 10, stale)}<span><strong>${h(t(zoneTitle(z)))}</strong>
+  const zones = view.zones.length > 1 ? view.zones.map((z, i) => hour.zones[i] ? `<li>${dot(hour.zones[i].light, 10, stale)}<span><strong>${h(t(zoneTitle(z, waterKind(view))))}</strong>
     <small class="sub">${h(t("Waves up to %@", waves(hour.zones[i].maxWaveM)))}</small></span></li>` : "").join("") : "";
   const windLine = windText(hour);
-  box.innerHTML = `<header class="card-title">${icon("map")}<span>${h(`${t("Lake view")} · ${view.name}`)}</span></header>
-    <a class="lake-card ${aspect >= 1.3 ? "tall" : ""}" href="#/lake/${encodeURIComponent(lakeId)}/${encodeURIComponent(clubId)}" aria-label="${h(t("Opens the lake view"))}">
+  const water = WATER_TEXTS[waterKind(view)];
+  box.innerHTML = `<header class="card-title">${icon("map")}<span>${h(`${t(water.view)} · ${view.name}`)}</span></header>
+    <a class="lake-card ${aspect >= 1.3 ? "tall" : ""}" href="#/lake/${encodeURIComponent(lakeId)}/${encodeURIComponent(clubId)}" aria-label="${h(t(water.opens))}">
       <canvas class="mini" style="${aspect >= 1.3 ? `height:${Math.min(320, Math.max(170, 120 * aspect))}px` : ""}" role="img" aria-label="${h(t("Map of %@ coloured by the rowing light", view.name))}"></canvas>
       <div class="lake-summary">
         <small class="sub">${h(t("Now, %@", time(hour.time)))}</small>
@@ -254,7 +256,9 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
     root.querySelector("#lake-panel").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong></p>`;
     return;
   }
-  setTitle(`${t("Lake view")} · ${view.name}`);
+  const water = WATER_TEXTS[waterKind(view)];
+  setTitle(`${t(water.view)} · ${view.name}`);
+  root.querySelector("#about").setAttribute("aria-label", t(water.about));
   const club = view.clubs.find((c) => c.id === clubId) ?? view.clubs[0];
   page = {
     root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()), layer: "light", spot: null,
@@ -263,7 +267,7 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
   };
   root.querySelector("#route-mode").addEventListener("click", toggleRouteMode);
   root.querySelector("#legend").addEventListener("click", () => openSheet(t("Legend"), legendSheet()));
-  root.querySelector("#about").addEventListener("click", () => openSheet(t("About the lake view"), aboutSheet()));
+  root.querySelector("#about").addEventListener("click", () => openSheet(t(water.about), aboutSheet()));
   await buildMap();
   update();
 }
@@ -272,11 +276,11 @@ async function buildMap() {
   const L = await loadLeaflet().catch(() => null);
   const box = page.root.querySelector("#lake-map");
   if (!L || !box) return;
-  const e = gridEdges(page.view.grid);
   const map = L.map(box, { zoomSnap: 0.25, attributionControl: true });
   page.map = map;
   page.L = L;
-  map.fitBounds([[e.south, e.west], [e.north, e.east]], { padding: [12, 12] });
+  const open = openBounds(page.view, page.club);
+  map.fitBounds([[open.south, open.west], [open.north, open.east]], { padding: [12, 12] });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
@@ -289,6 +293,15 @@ async function buildMap() {
     const own = c.id === page.club?.id;
     L.circleMarker([c.launchPoint.lat, c.launchPoint.lon], { radius: own ? 7 : 5, color: own ? "#fff" : "#007aff", weight: 2, fillColor: own ? "#007aff" : "#fff", fillOpacity: 1 })
       .bindTooltip(c.shortName).addTo(page.layers.marks);
+  }
+  // Where the club's stretch of the river ends: a weir or lock, or where rowers turn (SectionEndPin).
+  for (const end of [page.view.section?.up, page.view.section?.down].filter(Boolean)) {
+    const barrier = end.end === "weir/lock";
+    const [text, ...args] = sectionEndTitle(end);
+    L.marker([end.at.lat, end.at.lon], {
+      icon: L.divIcon({ className: `pin end-pin ${barrier ? "barrier" : ""}`, html: icon(barrier ? "x" : "flag"), iconSize: [26, 26], iconAnchor: [13, 13] }),
+      keyboard: false,
+    }).bindTooltip(barrier ? t(text) + args[0] : t(text, ...args)).addTo(page.layers.marks);
   }
   map.on("click", (ev) => tapped({ lat: ev.latlng.lat, lon: ev.latlng.lng }));
   map.on("zoomend moveend", drawArrows);
@@ -494,7 +507,7 @@ function viewingPanel(hour) {
     const zone = view.grid.cellZone[i];
     details = `<div class="spot"><p class="spot-head">${dot(spotLight, 14, stale)} <strong>${h(lightTitle(spotLight, stale))}</strong>
         <button class="tool" id="spot-close" aria-label="${h(t("Close"))}">${icon("x")}</button></p>
-      ${view.zones.length > 1 && view.zones[zone] ? `<small class="sub">${h(t("Selected spot · %@", t(zoneTitle(view.zones[zone]))))}</small>` : ""}
+      ${view.zones.length > 1 && view.zones[zone] ? `<small class="sub">${h(t("Selected spot · %@", t(zoneTitle(view.zones[zone], waterKind(view)))))}</small>` : ""}
       <div class="now-metrics"><div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesCm[i] / 100))}</span></div>
         <div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
         ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg))}</span></div>` : ""}</div></div>`;
@@ -531,7 +544,7 @@ function planningPanel(hour) {
       const parts = [waves(rough.waveM) + (rough.relation ? ` ${t(RELATION_WAVES[rough.relation])}` : "")];
       if (rough.windMs != null) parts.push(`${windRange(rough.windMs, rough.gustMs)} ${windUnit()}${rough.relation ? ` ${t(RELATION_WIND[rough.relation])}` : ""}`);
       const zone = view.grid.cellZone[rough.cell] ?? 0;
-      const place = view.zones.length > 1 && view.zones[zone] ? `, ${t(zoneTitle(view.zones[zone]))}` : "";
+      const place = view.zones.length > 1 && view.zones[zone] ? `, ${t(zoneTitle(view.zones[zone], waterKind(view)))}` : "";
       return `${t("Roughest at %@", time(rough.time))}${place}: ${parts.join(", ")}`;
     })() : null;
     const better = bestStart(found.planner, page.pace);
@@ -858,7 +871,10 @@ function legendSheet() {
 }
 
 function aboutSheet() {
-  return `<p>${h(t("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))}</p>
+  const river = waterKind(page.view) !== "lake"
+    ? `<p>${h(t("The view shows your club's stretch of the river: to the next weir or lock each way, or where a bigger river joins, else about 12 km upstream and 8 km downstream (10 km each way on canals). Markers show where it ends. It opens on the 10 km around your club."))}</p>`
+    : "";
+  return `${river}<p>${h(t("The lake is divided into small squares. For each square and hour, the app takes the wind from the nearest forecast point and works out the waves from how much open water the wind has crossed to get there."))}</p>
     <p>${h(t("Each square gets the same rowing light as a club page, from wind, gusts, waves, fog and thunderstorm risk at that square. Official warnings, darkness and cold water apply to the whole lake and are shown in the panel below the map. While they make the whole lake red, the squares turn grey with red stripes; at sunrise or sunset and under an amber official warning, fainter amber stripes are drawn over the squares. Cold water draws the shore blue and adds the life-jacket badge to the panel."))}</p>
     <p>${h(t("Waves are an estimate: there are no wave measurements on these lakes, and shelter from steep shores or currents is not taken into account."))}</p>
     <h3>${h(t("Data"))}</h3>
