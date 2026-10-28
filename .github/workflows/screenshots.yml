@@ -248,6 +248,10 @@ jobs:
           shoot_pages 07-home-dark dark
           shoot_pages 09-icons light -RWIconGallery YES
           shoot_pages 39-conditions-proposal light -RWConditionsPreview YES
+          for size in default:UICTContentSizeCategoryL xxxl:UICTContentSizeCategoryXXXL accessibility-l:UICTContentSizeCategoryAccessibilityL; do
+            shoot_pages "260-headline-preview-${size%%:*}" light -RWHeadlinePreview YES -UIPreferredContentSizeCategoryName "${size#*:}"
+            shoot_pages "261-headline-preview-german-${size%%:*}" light -RWHeadlinePreview YES -RWLanguage de -UIPreferredContentSizeCategoryName "${size#*:}"
+          done
           # The Current conditions card and the larger view behind each tile.
           shoot 60-conditions-card light -RWOpenClub mrc-1880 -RWScrollTo conditions
           for c in temperature feelsLike humidity wind waves waterTemperature precipitation visibility cloudCover pressure thunderstorm uvIndex ice daylight; do
