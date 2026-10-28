@@ -6482,9 +6482,9 @@
       "country": "de",
       "lakeId": "langer-see",
       "launchPoint": {
-        "lat": 52.56854,
-        "lon": 13.49118,
-        "precision": "on the Langer See (checked by hand), first matched to RHB Doberaner Straße",
+        "lat": 52.41926,
+        "lon": 13.58717,
+        "precision": "shore of the Langer See near Köpenick, Wendenschloßstr. 420 (the import placed it at a rain basin in Hohenschönhausen; the club also rows in Gatow on the Havel), 46 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -13439,9 +13439,9 @@
       "country": "de",
       "lakeId": "altrheinhafen",
       "launchPoint": {
-        "lat": 49.51939,
-        "lon": 8.47144,
-        "precision": "on the Altrheinhafen (checked by hand), first matched to Waldhofbecken",
+        "lat": 49.51992,
+        "lon": 8.47152,
+        "precision": "shore of the Altrheinhafen near the boathouse at Sandhofer Str. 51-53 (the import placed it on the Waldhofbecken), 27 m away (water checked by hand)",
         "verified": false
       }
     },
