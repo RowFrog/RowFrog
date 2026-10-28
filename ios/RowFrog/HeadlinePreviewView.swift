@@ -6,7 +6,7 @@ import SwiftUI
 /// (`-UIPreferredContentSizeCategoryName`). Preview only, not reachable from the app's UI.
 struct HeadlinePreviewView: View {
     private enum Option: CaseIterable {
-        case today, both, fitted, fittedShort
+        case today, both, fitted, fittedShort, adaptive
 
         var title: String {
             switch self {
@@ -14,6 +14,7 @@ struct HeadlinePreviewView: View {
             case .both: "Option 3: weather word on two lines + shorter German"
             case .fitted: "Option 4: tighter row, verdict one text style smaller when needed"
             case .fittedShort: "Option 5: as 4 with shorter German verdicts"
+            case .adaptive: "Option 6: weather under the verdict when one line does not fit; shorter verdicts"
             }
         }
 
@@ -22,19 +23,28 @@ struct HeadlinePreviewView: View {
             case .today: .today
             case .both: .twoLineWord
             case .fitted, .fittedShort: .fitted
+            case .adaptive: .adaptive
             }
         }
 
-        var shortWords: Bool { self == .both || self == .fittedShort }
+        var shortWords: Bool { self == .both || self == .fittedShort || self == .adaptive }
     }
 
-    /// Light, the sky shown with it, and the short German verdict (nil = unchanged).
+    /// Light, the sky shown with it, and the short German verdict (nil = unchanged);
+    /// option 6 also shortens the English "Forecast out of date".
     private let rows: [(light: Light, sky: Sky, stale: Bool, short: String?)] = [
         (.green, .partlyCloudy, false, nil),
         (.amber, .freezingRain, false, "Vorsichtig rudern"),
         (.red, .hail, false, "Nicht rudern"),
         (.green, .partlyCloudy, true, "Veraltet"),
     ]
+
+    private func headline(_ row: (light: Light, sky: Sky, stale: Bool, short: String?), _ option: Option) -> String {
+        let title = row.light.title(stale: row.stale)
+        guard option.shortWords else { return title }
+        if german { return row.short ?? title }
+        return option == .adaptive && row.stale ? "Out of date" : title
+    }
 
     private var german: Bool { AppSettings.shared.resolvedLanguage == .german }
     @Environment(\.dynamicTypeSize) private var typeSize
@@ -58,11 +68,9 @@ struct HeadlinePreviewView: View {
                     Text(option.title).font(.headline).padding(.top, 8)
                     ForEach(rows.indices, id: \.self) { i in
                         let row = rows[i]
-                        let title = row.light.title(stale: row.stale)
                         Card {
                             Headline(light: row.light, stale: row.stale, sky: row.sky,
-                                     title: option.shortWords && german ? row.short ?? title : title,
-                                     style: option.style)
+                                     title: headline(row, option), style: option.style)
                         }
                     }
                 }
@@ -75,7 +83,7 @@ struct HeadlinePreviewView: View {
 
     /// As NowCard's top row.
     fileprivate struct Headline: View {
-        enum Style { case today, twoLineWord, fitted }
+        enum Style { case today, twoLineWord, fitted, adaptive }
 
         let light: Light
         let stale: Bool
@@ -87,10 +95,44 @@ struct HeadlinePreviewView: View {
         @ScaledMetric(relativeTo: .caption) private var wordWidth: CGFloat = 88
 
         var body: some View {
-            if style == .fitted && typeSize.isAccessibilitySize {
+            if style == .adaptive {
+                // The row while the verdict fits on one line (at title 2, else title 3),
+                // otherwise the weather moves under the verdict.
+                ViewThatFits(in: .horizontal) {
+                    oneLineRow(.title2.bold())
+                    oneLineRow(.title3.bold())
+                    stacked
+                }
+            } else if style == .fitted && typeSize.isAccessibilitySize {
                 stacked
             } else {
                 row
+            }
+        }
+
+        private func oneLineRow(_ font: Font) -> some View {
+            HStack(spacing: 10) {
+                TrafficLightDot(light: light, size: 36, stale: stale)
+                VStack(alignment: .leading, spacing: 0) {
+                    HStack(spacing: 6) {
+                        Text(title).font(font).lineLimit(1).fixedSize()
+                        info
+                    }
+                    boat
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                weather
+            }
+        }
+
+        private var weather: some View {
+            VStack(spacing: 2) {
+                SkyIcon(sky: sky).font(.system(size: 34))
+                Text(sky.title).font(.caption).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .frame(width: wordWidth)
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
 
