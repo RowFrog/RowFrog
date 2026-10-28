@@ -63,3 +63,33 @@ def test_clubs_sharing_a_boathouse_in_one_catalog_are_all_kept(tmp_path):
     (tmp_path / "drv.json").write_text(json.dumps(drv))
     locs = locations.load(catalog_paths=[tmp_path / "drv.json"])
     assert {"club-0", "club-1"} <= set(locs.clubs)
+
+
+def test_river_clubs_move_onto_their_sections(tmp_path):
+    catalog = {
+        "lakes": [{"id": "river-main", "name": "Main", "kind": "river", "center": {"lat": 50.1, "lon": 8.7}}],
+        "clubs": [
+            {"id": "rc-offenbach", "name": "RC Offenbach", "lakeId": "river-main", "launchPoint": {"lat": 50.10, "lon": 8.76}},
+            {"id": "rc-frankfurt", "name": "RC Frankfurt", "lakeId": "river-main", "launchPoint": {"lat": 50.10, "lon": 8.68}},
+            {"id": "rc-wuerzburg", "name": "RC Würzburg", "lakeId": "river-main", "launchPoint": {"lat": 49.79, "lon": 9.93}},
+        ],
+    }
+    end = {"km": 7.3, "end": "weir/lock", "what": "lock Offenbach", "at": [50.1, 8.8]}
+    sections = {"sections": [
+        {"id": "river-main-offenbach", "water": "river-main", "name": "Main", "river": "Main", "waterway": "river",
+         "country": "de", "place": "Offenbach", "center": {"lat": 50.1, "lon": 8.72}, "clubs": ["rc-offenbach", "rc-frankfurt"],
+         "lengthKm": 14.5, "up": end, "down": None, "pictureBox": [8.65, 50.06, 8.79, 50.15]},
+        {"id": "river-main-gone", "water": "river-main", "name": "Main", "river": "Main", "waterway": "river",
+         "country": "de", "place": "Gone", "center": {"lat": 50.0, "lon": 9.0}, "clubs": ["rc-moved-away"],
+         "lengthKm": 10, "up": None, "down": None, "pictureBox": [8.9, 49.9, 9.1, 50.1]},
+    ]}
+    (tmp_path / "de-drv.json").write_text(json.dumps(catalog))
+    (tmp_path / "sections.json").write_text(json.dumps(sections))
+    locs = locations.load(catalog_paths=[tmp_path / "de-drv.json"], sections_path=tmp_path / "sections.json")
+    assert locs.clubs["rc-offenbach"].lake_id == locs.clubs["rc-frankfurt"].lake_id == "river-main-offenbach"
+    section = locs.lakes["river-main-offenbach"]
+    assert (section.kind, section.name, section.section.place) == ("river", "Main", "Offenbach")
+    assert section.section.up.what == "lock Offenbach" and section.section.down is None
+    # A club without a section stays on the whole river, and sections without clubs are left out.
+    assert locs.clubs["rc-wuerzburg"].lake_id == "river-main"
+    assert "river-main-gone" not in locs.lakes
