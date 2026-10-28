@@ -91,4 +91,12 @@ final class RainRadarTests: XCTestCase {
         XCTAssertEqual(data(code: 73, mm: 1, radar: [0.8, 0.8, 0]).sky, .snow)
         XCTAssertEqual(data(code: 2, mm: 0, radar: [0, 0, 0]).sky, .partlyCloudy)
     }
+
+    @MainActor
+    func testAFailedRadarReadIsTriedAgainSoonThenAtTheUsualPace() {
+        XCTAssertEqual(RadarStore.retryDelay(after: 1), 30)
+        XCTAssertEqual(RadarStore.retryDelay(after: 2), 60)
+        XCTAssertEqual(RadarStore.retryDelay(after: 3), 120)
+        XCTAssertEqual(RadarStore.retryDelay(after: 4), RadarStore.refresh)
+    }
 }

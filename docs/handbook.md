@@ -86,6 +86,13 @@ the next two hours and the forecast after that.
    radar too. Later hours use the forecast only.
 4. Arrange this page: "Rain radar" is switched off; switched on, the old card
    comes back under Current conditions.
+5. The tile's bars carry a small radar symbol while they come from the radar.
+   When DWD's radar could not be read, the bars are the forecast's only and the
+   symbol is struck through (`-RWRadarFailed YES` acts as if DWD did not answer).
+   After a failed read the app tries again after 30 seconds, 1 minute and
+   2 minutes, then every 5 (15 in Low Power Mode or when saving data).
+   Pulling down on the club page reads the radar again too, unless it was read
+   less than a minute ago.
 
 ### Testing "Import a row"
 
@@ -141,6 +148,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWSatelliteZoom n` opens the full satellite picture n times closer than usual (with `-RWOpenSatellite YES`)
 - `-RWLakeWide twilight|cold|dark` sets the whole-lake light of every lake hour (twilight with cold water: amber stripes; cold water alone: no stripes; dark: grey with red stripes)
 - `-RWLiveLaunchMap YES` show the launch point card's live map instead of its still picture
+- `-RWRadarFailed YES` the radar cannot be read: the rain tile's bars come from the forecast and the radar symbol over them is struck through
 - `-RWSampleRadar YES` made-up rain on the radar from 30 minutes on (light, then rain, dry again after an hour), to show the rain tile, the top tile's rain value and the rain chart while DWD's radar is dry
 - `-RWSampleIce YES` the top tile shows a made-up "Shore ice possible" line, to check the winter layout outside the ice season
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line

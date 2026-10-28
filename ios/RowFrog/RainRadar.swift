@@ -87,12 +87,24 @@ final class RadarStore {
     static var refresh: TimeInterval { PowerState.shared.lowPower || DataSaver.shared.saving ? 900 : 300 }
 
     private(set) var readings: [Coordinate: RainRadar] = [:]
-    /// Launch points whose radar could not be read and that have no older reading.
+    /// Launch points whose radar could not be read and that have no reading still worth showing.
     private(set) var failed: Set<Coordinate> = []
     @ObservationIgnored private var loaded: [Coordinate: Date] = [:]
     @ObservationIgnored private var loading: Set<Coordinate> = []
+    /// Failed reads in a row per launch point, for the quicker retries.
+    @ObservationIgnored private var failures: [Coordinate: Int] = [:]
+
+    /// After a failed read: again after 30 seconds, 1 minute and 2 minutes, then at the usual pace.
+    static let retries: [TimeInterval] = [30, 60, 120]
+    /// A pull-down skips the radar when it was read this recently.
+    static let pullGap: TimeInterval = 60
 
     func radar(at point: Coordinate) -> RainRadar? { readings[point] }
+
+    /// The wait before the next try after `count` failed reads in a row.
+    static func retryDelay(after count: Int) -> TimeInterval {
+        count >= 1 && count <= retries.count ? min(retries[count - 1], refresh) : refresh
+    }
 
     /// Keeps the reading at `point` fresh for as long as the calling task runs.
     func follow(_ point: Coordinate) async {
@@ -106,32 +118,66 @@ final class RadarStore {
             })
             return
         }
+        // Screenshot hook: `-RWRadarFailed YES` acts as if DWD did not answer.
+        if UserDefaults.standard.bool(forKey: "RWRadarFailed") {
+            readings[point] = nil
+            failed.insert(point)
+            return
+        }
         while !Task.isCancelled {
             // Back within 5 minutes: no new requests until the 5 minutes are up.
             if let at = loaded[point], Date.now.timeIntervalSince(at) < Self.refresh {
                 try? await Task.sleep(for: .seconds(Self.refresh - Date.now.timeIntervalSince(at)))
                 continue
             }
-            // Another view of the same page is reading it already.
+            // Another view of the same page (or a pull-down) is reading it already.
             if loading.contains(point) {
                 try? await Task.sleep(for: .seconds(2))
                 continue
             }
-            loading.insert(point)
-            do {
-                let radar = try await RadarClient().load(lat: point.lat, lon: point.lon)
-                readings[point] = radar
-                loaded[point] = .now
-                failed.remove(point)
-                loading.remove(point)
-            } catch {
-                loading.remove(point)
-                if Task.isCancelled { return }
-                if readings[point] == nil { failed.insert(point) }
-                try? await Task.sleep(for: .seconds(Self.refresh))
-            }
+            if await read(point) { continue }
+            if Task.isCancelled { return }
+            try? await Task.sleep(for: .seconds(Self.retryDelay(after: failures[point] ?? 1)))
         }
     }
+
+    /// Pull-down on a club page: reads the radar again unless it was read
+    /// less than a minute ago (DWD makes a new picture every 5 minutes).
+    func reload(_ point: Coordinate) async {
+        if UserDefaults.standard.bool(forKey: "RWSampleRadar") || UserDefaults.standard.bool(forKey: "RWRadarFailed") { return }
+        if !failed.contains(point), let at = loaded[point], Date.now.timeIntervalSince(at) < Self.pullGap { return }
+        while loading.contains(point) {
+            try? await Task.sleep(for: .milliseconds(250))
+            if Task.isCancelled { return }
+        }
+        if let at = loaded[point], Date.now.timeIntervalSince(at) < Self.pullGap { return }
+        await read(point)
+    }
+
+    /// One read of DWD's radar at `point`; true when it worked.
+    @discardableResult
+    private func read(_ point: Coordinate) async -> Bool {
+        loading.insert(point)
+        defer { loading.remove(point) }
+        do {
+            let radar = try await RadarClient().load(lat: point.lat, lon: point.lon)
+            readings[point] = radar
+            loaded[point] = .now
+            failed.remove(point)
+            failures[point] = nil
+            return true
+        } catch {
+            if Task.isCancelled { return false }
+            failures[point, default: 0] += 1
+            // No reading, or one too old to show: the rain tile says the radar is missing.
+            if readings[point]?.ahead(of: .now) == nil { failed.insert(point) }
+            return false
+        }
+    }
+
+    /// Whether the radar at `point` is missing because it could not be read,
+    /// not because it is still loading.
+    func unavailable(at point: Coordinate) -> Bool { failed.contains(point) }
 }
 
 /// Follows DWD's radar at a launch point while its page is in front and the
@@ -777,6 +823,7 @@ struct RadarSparkBars: View {
             }
         }
         .frame(height: 36, alignment: .bottom)
+        .overlay(alignment: .topLeading) { RadarMark(missing: false) }
         .accessibilityHidden(true)
     }
 
@@ -784,6 +831,27 @@ struct RadarSparkBars: View {
         RoundedRectangle(cornerRadius: 1)
             .fill(wet ? Color.blue : Color.secondary.opacity(0.3))
             .frame(width: width, height: max(2, 28 * min(v, top) / top))
+    }
+}
+
+/// The small radar symbol over the rain tile's bars: the radar's bars are
+/// there, or (struck through) the radar could not be read and the bars are
+/// the forecast's only. A symbol rather than words, so the tile's lines keep their length.
+struct RadarMark: View {
+    let missing: Bool
+
+    var body: some View {
+        Image(systemName: "dot.radiowaves.left.and.right")
+            .font(.system(size: 8, weight: .semibold))
+            .foregroundStyle(.secondary)
+            .overlay {
+                if missing {
+                    Capsule().frame(width: 1.5).frame(maxHeight: .infinity)
+                        .rotationEffect(.degrees(-45))
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .accessibilityLabel(missing ? tr("Radar not available right now") : tr("Radar"))
     }
 }
 

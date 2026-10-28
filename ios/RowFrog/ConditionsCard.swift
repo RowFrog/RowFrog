@@ -16,7 +16,8 @@ struct ConditionsCard: View {
     @State private var showingCurrent = false
 
     var body: some View {
-        let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) })
+        let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) },
+                                 radarMissing: club.map { RadarStore.shared.unavailable(at: $0.launchPoint) } ?? false)
         Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent", legend: .conditions) {
             HStack(spacing: 10) {
                 SkyIcon(sky: data.sky, night: hour.sunUp == false).font(.system(size: 36))
@@ -83,10 +84,13 @@ struct ConditionData {
     let timeline: [ForecastHour]
     /// DWD's radar at the launch point, read while the club page is open.
     let radar: RainRadar?
+    /// The radar could not be read (not just still loading), so the rain tile marks it.
+    let radarMissing: Bool
 
-    init(forecast: ClubForecast, now: ForecastHour, radar: RainRadar? = nil) {
+    init(forecast: ClubForecast, now: ForecastHour, radar: RainRadar? = nil, radarMissing: Bool = false) {
         self.forecast = forecast
         self.radar = radar
+        self.radarMissing = radarMissing
         let outlook = forecast.outlook ?? []
         timeline = (outlook.isEmpty ? forecast.hours : outlook).sorted { $0.time < $1.time }
         // The rowing hours have no UV index; the outlook has it for the same hour.
@@ -437,6 +441,10 @@ struct ConditionGraphic: View {
                                forecast: data.future.filter { $0.time >= radar.end }.prefix(4).map { $0.precipitationMm ?? 0 })
             } else {
                 SparkBars(values: data.future.prefix(8).map { $0.precipitationMm ?? 0 })
+                    .overlay(alignment: .topLeading) {
+                        // Only for now: a picked later hour is past the radar's two hours anyway.
+                        if data.radarMissing && data.isNow { RadarMark(missing: true) }
+                    }
             }
         case .visibility:
             // 100 m at the left to 40 km at the right, stretched at the bottom.
