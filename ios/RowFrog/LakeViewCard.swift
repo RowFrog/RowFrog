@@ -87,7 +87,7 @@ struct LakeViewCard: View {
                     .foregroundStyle(.orange)
             }
             if hour.lakeWide.light > .green {
-                LakeWideBanner(lakeWide: hour.lakeWide)
+                LakeWideBanner(lakeWide: hour.lakeWide, water: water)
             }
             MapBoatNote()
             if view.zones.count > 1 {
@@ -129,13 +129,16 @@ struct LakeViewCard: View {
     }
 }
 
-/// What holds for the whole lake this hour, such as a DWD storm warning or darkness.
+/// What holds for the whole lake (or river stretch) this hour, such as a DWD storm warning or darkness.
 struct LakeWideBanner: View {
     let lakeWide: LakeWide
+    var water: WaterKind = .lake
+
+    private var reasons: String { lakeWide.reasons.map(\.label).joined(separator: ", ") }
 
     var body: some View {
         Label {
-            Text(tr("Whole lake: %@", lakeWide.reasons.map(\.label).joined(separator: ", ")))
+            Text(water == .lake ? tr("Whole lake: %@", reasons) : tr("Whole stretch: %@", reasons))
                 .fixedSize(horizontal: false, vertical: true)
         } icon: {
             Image(systemName: lakeWide.reasons.first?.symbol ?? "exclamationmark.triangle.fill")
