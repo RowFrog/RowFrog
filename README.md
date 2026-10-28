@@ -207,6 +207,11 @@ Add a place looks up the water only once the map stops moving. In Low Power
 Mode the tiles are drawn solid and the radar updates less often. The app does
 nothing in the background; only the widgets load forecasts on their own.
 
+**Refresh on return.** Coming back to the app after more than 10 minutes
+loads the club page in front first, then every other saved club; a pull on a
+club page does the same. The header says when the server made the forecast
+and when the phone loaded it.
+
 **Data use.** Forecasts that have not changed are not downloaded again, and
 the club list is kept on the phone for a day. With "Save mobile data" on
 (while on mobile data) or in iOS Low Data Mode, satellite pictures load only
@@ -232,7 +237,9 @@ comes only every 2 to 5 days. A switch chooses between the latest pass
 one; every picture shows the same area. Chips draw the shore, clubs, saved
 routes, wind and, in winter, the satellite ice map over it. Two more layers
 colour the water with the lake view's wave heights or rowing light for the
-chosen hour, one at a time; a legend explains them. Tap for full screen with
+chosen hour, one at a time; a legend explains them. While the whole lake is
+red (official warning or darkness) or amber (sunrise, sunset, warning), the
+rowing light layer turns grey with red stripes, or shows amber stripes. Tap for full screen with
 zoom, opening around the club or all saved routes; zoomed in, it loads
 sharper 10 m tiles for that part of the lake. Pictures are kept on the
 phone, so each pass loads only once.
@@ -336,7 +343,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `data/water-stations.json` | The water temperature station each club reads (nearest on its own water). |
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `web/` | The website: start page, `app/` (the forecasts in the browser), legal pages and the password check (`functions/_middleware.js`). `scripts/build_web.py` builds it. |
-| `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues. |
+| `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues, `timer/` starts the forecast run on time. |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
 | `docs/screenshots/` | Not in git: the "App screenshots" workflow writes here on the runner and keeps each branch's set under `refs/screenshots/<branch>` (see the handbook). |
 | `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. |
@@ -403,7 +410,8 @@ Every 30 minutes it refreshes the clubs people actually load (until the
 usage counter is set up, the confirmed clubs in `data/locations.json` stand
 in); every 6 hours it refreshes all clubs. A club nobody opened lately is
 refreshed less often and its page says so; once opened, it is back to every
-half hour from the next run. DWD's local warnings for all clubs come in a couple of
+half hour from the next run. A Cloudflare Worker (`cloudflare/timer/`) starts
+the run at :00 and :30; GitHub's own half-hour timer is only a backup. DWD's local warnings for all clubs come in a couple of
 bulk queries per run. Weather is only loaded again after
 a weather model has a new run, which keeps the job within Open-Meteo's free
 limit. When a station's water temperature fails to load, the last good reading
@@ -453,6 +461,7 @@ More detail, including the secrets each one needs, is in the
 | **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
 | **Usage limits** (`budget-check.yml`) | Once a day compares the calls with Open-Meteo's and Copernicus' free limits and Cloudflare's free Worker and database limits and comments on the "Usage limits" issue at 70 % (warning) and 85 % (alert), plus a monthly summary. |
 | **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). By hand, or when its scripts change on `main`. |
+| **Forecast timer** (`timer-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/timer/` that starts Publish forecasts at :00 and :30. By hand with `deploy` ticked, and by itself when `cloudflare/timer/` changes on `main`. Needs `PUBLISH_TIMER_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 | **Place suggestions** (`suggestions-worker.yml`) | Deploys the Cloudflare Worker that turns place suggestions into GitHub issues. Needs `SUGGESTIONS_GITHUB_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 | **API check** (`api-check.yml`) | Shows how `api.rowfrog.com` answers (Cloudflare proxy, SSL mode, usage counter). Runs by hand. |
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs by hand, or when the club list or data sources change on `main`; new outlines are committed back. |
