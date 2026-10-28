@@ -359,7 +359,10 @@ in all, from one file per country and source in `data/catalogs/`
 
 The last four run in the **Austria and Switzerland club catalogs** workflow.
 Each boathouse is geocoded (cached in `data/geocode.json`) and matched to the
-lake or river it lies on; clubs on rivers get no wave calculation. Only club
+lake or river it lies on; clubs on rivers get no wave calculation. Clubs
+that row at more than one place get an extra entry per site from
+`data/catalogs/extra-sites.json` (e.g. Pro Sport Berlin 24 (Gatow)), which
+the imports keep on every run. Only club
 facts are stored, no contact people, e-mail addresses or phone numbers. The
 federations are credited in `CREDITS.md`, which also notes where permission
 is still to be asked.
@@ -455,6 +458,9 @@ More detail, including the secrets each one needs, is in the
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs by hand, or when the club list or data sources change on `main`; new outlines are committed back. |
 | **Water temperature stations** (`water-stations.yml`) | Lists the GKD Bayern, PEGELONLINE and Swiss BAFU stations, shows how `data/water-stations.json` would change and reads every station in it once. Nothing is stored; a changed list is committed by hand (see the handbook). By hand, or when its files change. |
 | **Satellite water temperature check** (`water-temperature-probe.yml`) | Compares Copernicus, Landsat and the carried-forward estimate with GKD lake stations. By hand, or when the satellite water temperature code changes. |
+| **Weather maps data check** (`weather-maps-probe.yml`) | Research only: what DWD (ICON-D2, GeoServer) and EUMETSAT offer for the weather maps. Nothing is stored. By hand, or when its script changes. |
+| **River section survey** (`river-section-survey.yml`) | Research only: for every river club, how far the next weir or lock is up- and downstream, from the Geofabrik extracts of Germany, Austria and Switzerland (filtered with osmium, no Overpass). Nothing is stored. By hand. |
+| **River gauge check** (`river-gauge-probe.yml`) | Research only: which river gauges (PEGELONLINE, BAFU) and flow forecasts (Open-Meteo Flood API) could tell river clubs about current and high water. Nothing is stored. By hand. |
 | **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
