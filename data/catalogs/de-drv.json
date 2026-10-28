@@ -2282,9 +2282,9 @@
       "country": "de",
       "lakeId": "river-havel",
       "launchPoint": {
-        "lat": 52.52055,
-        "lon": 13.20894,
-        "precision": "on the Havel (checked by hand), first matched to Unterhafen Spandau",
+        "lat": 52.52045,
+        "lon": 13.20615,
+        "precision": "shore of the Havel nearest the town-level address, 189 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -2369,9 +2369,9 @@
       "country": "de",
       "lakeId": "river-havel",
       "launchPoint": {
-        "lat": 52.51918,
-        "lon": 13.20698,
-        "precision": "on the Havel (checked by hand), first matched to Unterhafen Spandau",
+        "lat": 52.51926,
+        "lon": 13.20609,
+        "precision": "shore of the Havel nearest the town-level address, 61 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -2946,9 +2946,9 @@
       "country": "de",
       "lakeId": "river-aller",
       "launchPoint": {
-        "lat": 52.62471,
-        "lon": 10.09037,
-        "precision": "on the Aller (checked by hand), first matched to Magnusgraben",
+        "lat": 52.62539,
+        "lon": 10.09084,
+        "precision": "shore of the Aller nearest the town-level address, 82 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -3830,9 +3830,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.10801,
-        "lon": 8.68731,
-        "precision": "on the Main (checked by hand), first matched to Müllermain",
+        "lat": 50.10868,
+        "lon": 8.68732,
+        "precision": "shore of the Main nearest the town-level address, 74 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -4508,9 +4508,9 @@
       "country": "de",
       "lakeId": "river-aller",
       "launchPoint": {
-        "lat": 52.62442,
-        "lon": 10.08899,
-        "precision": "on the Aller (checked by hand), first matched to Magnusgraben",
+        "lat": 52.62563,
+        "lon": 10.09005,
+        "precision": "shore of the Aller nearest the town-level address, 153 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -4711,9 +4711,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.01744,
-        "lon": 8.34219,
-        "precision": "on the Rhein (checked by hand), first matched to Becken I",
+        "lat": 49.02001,
+        "lon": 8.30049,
+        "precision": "shore of the Rhein nearest the town-level address, 3055 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -5474,9 +5474,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.43323,
-        "lon": 8.52039,
-        "precision": "on the Rhein (checked by hand), first matched to Rheinauhafen (Hafenbecken 21)",
+        "lat": 49.43381,
+        "lon": 8.50896,
+        "precision": "shore of the Rhein nearest the town-level address, 829 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -6134,9 +6134,9 @@
       "country": "de",
       "lakeId": "river-havel",
       "launchPoint": {
-        "lat": 52.52381,
-        "lon": 13.20963,
-        "precision": "on the Havel (checked by hand), first matched to Unterhafen Spandau",
+        "lat": 52.52308,
+        "lon": 13.20527,
+        "precision": "shore of the Havel nearest the town-level address, 306 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -7987,9 +7987,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.63599,
-        "lon": 9.20574,
-        "precision": "on the Weser (checked by hand), first matched to Steinhuder Meerbach",
+        "lat": 52.63587,
+        "lon": 9.20397,
+        "precision": "shore of the Weser nearest the town-level address, 120 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9457,9 +9457,9 @@
       "country": "de",
       "lakeId": "river-mosel",
       "launchPoint": {
-        "lat": 50.17358,
-        "lon": 7.29884,
-        "precision": "on the Mosel (checked by hand), first matched to Flaumbach",
+        "lat": 50.17464,
+        "lon": 7.29687,
+        "precision": "shore of the Mosel nearest the town-level address, 183 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9936,9 +9936,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.01016,
-        "lon": 8.33511,
-        "precision": "on the Rhein (checked by hand), first matched to Becken IV",
+        "lat": 49.01625,
+        "lon": 8.29928,
+        "precision": "shore of the Rhein nearest the town-level address, 2700 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -10936,9 +10936,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.43245,
-        "lon": 13.20992,
-        "precision": "on the Elbe (checked by hand), first matched to Hafen Mühlberg",
+        "lat": 51.43036,
+        "lon": 13.20324,
+        "precision": "shore of the Elbe nearest the town-level address, 518 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -10967,9 +10967,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.95082,
-        "lon": 7.64448,
-        "precision": "on the Dortmund-Ems-Kanal (checked by hand), first matched to Stadthafen 1",
+        "lat": 51.94921,
+        "lon": 7.64767,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the town-level address, 283 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -11923,9 +11923,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.11276,
-        "lon": 8.74098,
-        "precision": "on the Main (checked by hand), first matched to Offenbacher Hafen",
+        "lat": 50.11342,
+        "lon": 8.74034,
+        "precision": "shore of the Main nearest the town-level address, 86 m away (water checked by hand)",
         "verified": false
       }
     },
