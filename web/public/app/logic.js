@@ -289,6 +289,8 @@ export const REASONS = {
   thunderstorm: ["thunderstorm"],
   ice: ["ice"],
   daylight: ["daylight", "twilight"],
+  // River clubs: the Current tile, in the ice tile's place.
+  current: ["shipping_stopped", "high_water", "current"],
 };
 
 const RANK = { green: 0, amber: 1, red: 2 };

@@ -745,3 +745,17 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .station-pin { background: #32ade6; }
 .sat-why { color: var(--sub); padding: 0 2px; vertical-align: -2px; }
 .settings-search { margin: 0 0 14px; }
+/* Where a river section ends: orange for a weir or lock, teal where rowers turn (SectionEndPin). */
+.end-pin { background: #30b0c7; font-size: 13px; }
+.end-pin.barrier { background: var(--orange); }
+/* The Current tile and its sheet on river clubs (CurrentTile, LevelBar, CurrentDetailView). */
+.level-bar { position: relative; display: flex; align-items: flex-end; width: 10px; height: 44px; margin: 0 17px; border-radius: 5px; background: color-mix(in srgb, var(--sub) 20%, transparent); overflow: hidden; }
+.level-bar i { display: block; width: 100%; border-radius: 5px; }
+.cond.current { color: #30b0c7; }
+.current-big { display: flex; align-items: center; gap: 10px; margin: 0; }
+.current-big strong { font-size: 34px; font-weight: 600; }
+.level-chart { width: 100%; height: auto; overflow: visible; }
+.pace-table { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0 0 6px; }
+.pace-table dt { color: var(--text); }
+.pace-table dd { margin: 0; font-weight: 600; }
+.current-notes p { margin: 2px 0; }

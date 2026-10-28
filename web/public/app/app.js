@@ -23,6 +23,7 @@ import {
   waterForHour, allowsMore, key,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView } from "./lakeview.js";
+import { currentTile, currentBody } from "./river.js";
 import { satelliteCard } from "./satellite.js";
 import { renderAddPlace } from "./addplace.js";
 import { isOwn } from "./ownplace.js";
@@ -644,6 +645,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
     location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
   }));
   wireTopTile(root.querySelector(".card.now"), id);
+  wireCurrent(root, forecast);
   root.querySelector("#source-line")?.addEventListener("click", () => openSheet(t("Where the forecast comes from"), sourceBody(forecast.forecastSource)));
   root.querySelectorAll("[data-hour]").forEach((b) => b.addEventListener("click", () => {
     const at = forecast.hours.find((x) => x.time === b.dataset.hour);
@@ -659,6 +661,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
         location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
       }));
       wireTopTile(sheet.querySelector(".card.now"), id, at.time);
+      wireCurrent(sheet, forecast);
     });
   }));
 }
@@ -790,6 +793,11 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
  * The top tile's values open their own pages, and swiping there moves through
  * the tile's values in its order (NowCard.tileValues), as in the app.
  */
+/** The Current tile opens the water level and current (CurrentDetailView). */
+function wireCurrent(box, forecast) {
+  box.querySelectorAll("[data-current]").forEach((b) => b.addEventListener("click", () => openSheet(t("Current"), currentBody(forecast.river))));
+}
+
 function wireTopTile(card, id, at = null) {
   for (const el of card?.querySelectorAll("[data-top]") ?? []) {
     const open = (e) => {
@@ -957,6 +965,8 @@ function conditionTile(condition, forecast, hour, radar = null) {
       return tile(value, detail, graphic);
     }
     case "ice": {
+      // On a river the Current tile takes the ice tile's place (ConditionsCard).
+      if (forecast.river) return currentTile(forecast.river);
       const ice = forecast.ice;
       const off = iceOff(ice);
       let value, detail;

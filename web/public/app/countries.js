@@ -81,8 +81,8 @@ export async function renderCountries(root) {
       <span class="sub">${h(t("%@ clubs", String(c.clubs)))}</span>${icon("chevron-right")}</a></li>`).join("")}</ul>${footerLinks()}`;
 }
 
-/** The list title of a club's water: the town when the catalogs don't know the water (Lake.listTitle). */
-const listTitle = (lake) => (waterUnknown(lake.name) ? lake.name.slice("Water near ".length) : lake.name);
+/** The list title of a club's water: the town when the catalogs don't know the water; a river section adds its place, as one river has several: "Main · Offenbach" (Lake.listTitle). */
+const listTitle = (lake) => (waterUnknown(lake.name) ? lake.name.slice("Water near ".length) : lake.section?.place ? `${lake.name} · ${lake.section.place}` : lake.name);
 
 /**
  * One row per water (or per town), with its clubs: pieces of one river or

@@ -105,7 +105,43 @@ export const ZONE_PHRASES = {
   south: key("in the south"), southwest: key("in the southwest"), west: key("in the west"), northwest: key("in the northwest"),
   middle: key("in the middle"),
 };
-export const zoneTitle = (name) => ZONE_TITLES[name] ?? key("Whole lake");
+export const zoneTitle = (name, water = "lake") => ZONE_TITLES[name] ?? (water === "lake" ? key("Whole lake") : key("Whole stretch"));
+
+/** "lake", "river" or "canal": a river section is a club's stretch of its river or canal (WaterKind). */
+export const waterKind = (view) => (view?.kind !== "river" ? "lake" : view.section?.waterway === "canal" ? "canal" : "river");
+
+/** The view's names by water (WaterKind.viewTitle, opensHint, aboutTitle). */
+export const WATER_TEXTS = {
+  lake: { view: key("Lake view"), opens: key("Opens the lake view"), about: key("About the lake view") },
+  river: { view: key("River view"), opens: key("Opens the river view"), about: key("About the river view") },
+  canal: { view: key("Canal view"), opens: key("Opens the canal view"), about: key("About the canal view") },
+};
+
+/** Where a river section ends, for the map's pins: [English text, ...arguments] (SectionEnd.title). */
+export function sectionEndTitle(end) {
+  const [first, ...rest] = (end.what ?? "").split(" ");
+  const name = rest.length ? ` ${rest.join(" ")}` : "";
+  switch (end.end) {
+    case "weir/lock":
+      return [{ lock: key("Lock"), lock_gate: key("Lock"), dam: key("Dam"), waterfall: key("Waterfall") }[first] ?? key("Weir"), name];
+    case "river": return [key("%@ joins"), end.what.replace(" joins", "").replace(" branches off", "")];
+    case "mouth": return [key("River mouth")];
+    case "harbour": return [key("Harbour")];
+    case "km sign": return [key("River km %@"), end.what.replace("river km ", "")];
+    default: return [key("End of the stretch")];
+  }
+}
+
+/** A river opens on the 10 km around the page's club, not on its whole stretch (LakeOverlay.openRect). */
+export function openBounds(view, club) {
+  const e = gridEdges(view.grid);
+  if (!view.section || !club?.launchPoint) return e;
+  const { lat, lon } = club.launchPoint;
+  const dLat = 5000 / 111320;
+  const dLon = 5000 / (111320 * Math.cos((lat * Math.PI) / 180));
+  const box = { south: Math.max(e.south, lat - dLat), north: Math.min(e.north, lat + dLat), west: Math.max(e.west, lon - dLon), east: Math.min(e.east, lon + dLon) };
+  return box.south < box.north && box.west < box.east ? box : e;
+}
 export const zonePhrase = (name) => ZONE_PHRASES[name] ?? key("on the whole lake");
 
 /**
@@ -113,14 +149,20 @@ export const zonePhrase = (name) => ZONE_PHRASES[name] ?? key("on the whole lake
  * as ["Calmest %@, roughest %@", "in the south", "in the north"].
  */
 export function headline(view, hour) {
-  if (hour.lakeWide.light === "red") return [key("Stay ashore on the whole lake")];
+  const lake = waterKind(view) === "lake";
+  const all = {
+    green: lake ? key("Good to row on the whole lake") : key("Good to row on the whole stretch"),
+    amber: lake ? key("Row with care on the whole lake") : key("Row with care on the whole stretch"),
+    red: lake ? key("Stay ashore on the whole lake") : key("Stay ashore on the whole stretch"),
+  };
+  if (hour.lakeWide.light === "red") return [all.red];
   const ranked = view.zones.map((z, i) => [z, hour.zones[i]]).filter(([, z]) => z)
     .sort((a, b) => RANK[a[1].light] - RANK[b[1].light] || a[1].maxWaveM - b[1].maxWaveM);
   if (!ranked.length) return [""];
   const best = ranked[0];
   const worst = ranked[ranked.length - 1];
   if (best[1].light === worst[1].light || view.zones.length < 2) {
-    return [{ green: key("Good to row on the whole lake"), amber: key("Row with care on the whole lake"), red: key("Stay ashore on the whole lake") }[worst[1].light]];
+    return [all[worst[1].light]];
   }
   return [key("Calmest %@, roughest %@"), zonePhrase(best[0]), zonePhrase(worst[0])];
 }
