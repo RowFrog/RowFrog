@@ -2375,7 +2375,7 @@
       "launchPoint": {
         "lat": 50.45829,
         "lon": 11.69984,
-        "precision": "shore of the Bleilochtalsperre at the boathouse near Saaldorf, from the owner's map pin (water checked by hand)",
+        "precision": "boathouse on the Bleilochtalsperre near Saaldorf, from the owner's map pin (water checked by hand), not yet on the shore",
         "verified": false
       }
     },
@@ -14333,6 +14333,31 @@
         "lat": 47.76005,
         "lon": 9.17268,
         "precision": "shore point of Bodensee nearest the geocoded boathouse, 48 m away",
+        "verified": false
+      }
+    },
+    {
+      "drvId": "11220",
+      "name": "Pro Sport Berlin 24 e.V. (Gatow)",
+      "shortName": "Pro Sport Berlin 24 e.V. (Gatow)",
+      "abbreviation": "PSB 24",
+      "website": "https://www.pro-sport-berlin24.de",
+      "sports": [
+        "Wanderrudern",
+        "Jugendausbildung (15 bis 18 Jahre)",
+        "Erwachsenenausbildung",
+        "Freizeitrudern",
+        "Marathonrudern"
+      ],
+      "id": "pro-sport-berlin-24-gatow",
+      "address": "Kladower Damm 45, 14089 Berlin",
+      "source": "drv",
+      "country": "de",
+      "lakeId": "havel-4578498",
+      "launchPoint": {
+        "lat": 52.47934,
+        "lon": 13.18248,
+        "precision": "Gatow sports ground, Kladower Damm 45 (water checked by hand), not yet on the shore",
         "verified": false
       }
     }

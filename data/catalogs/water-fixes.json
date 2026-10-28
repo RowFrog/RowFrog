@@ -719,6 +719,16 @@
         "lon": 8.4719,
         "place": "the boathouse at Sandhofer Str. 51-53 (the import placed it on the Waldhofbecken)"
       }
+    },
+    "pro-sport-berlin-24-gatow": {
+      "water": "Havel",
+      "kind": "lake",
+      "id": "havel-4578498",
+      "near": {
+        "lat": 52.47934,
+        "lon": 13.18248,
+        "place": "the Gatow site, Kladower Damm 45"
+      }
     }
   }
 }
