@@ -37,6 +37,7 @@
     },
     "lueneburger-ruder-club-wiking-v1875": {
       "include": ["Ilmenau", "Lösegraben"],
+      "direction": "north",
       "note": "three boathouses: Willy-Brandt-Straße 15 on the Ilmenau, Am Schifferwall 6 on the Lösegraben (an Ilmenau arm; place lueneburger-ruder-club-wiking-v1875-loesegraben) and Elso-Klöver-Straße on the Elbe-Seitenkanal (place lueneburger-ruder-club-wiking-v1875-elbe-seitenkanal)"
     },
     "limburger-club-fuer-wassersport-von-18951907": {"direction": "east"},

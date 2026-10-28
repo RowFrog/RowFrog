@@ -92,6 +92,12 @@ def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
 
 
+def same_water(osm_name: str, water: str) -> bool:
+    """"Elbeseitenkanal" is the Elbe-Seitenkanal, "Vieux Rhin / Rhein" the Rhein."""
+    key = slug(water).replace("-", "")
+    return any(slug(part).replace("-", "") == key for part in [osm_name, *osm_name.split("/")] if part.strip())
+
+
 def town(address: str) -> str:
     last = address.split(",")[-1].strip()
     return " ".join(w for w in last.split() if not w.isdigit()) or last
@@ -159,6 +165,10 @@ class River:
         self.kind = Counter()
         lock_ways = {e["id"] for e in els if e["type"] == "way" and e.get("tags", {}).get("lock") == "yes"}
         river = [w for w in ways if w["tags"].get("name", "") == name]
+        # Unnamed pieces between two named ones (bridges, short stretches the mappers left unnamed).
+        named_all = {n for w in river for n in w["nodes"]}
+        river += [w for w in ways if not w["tags"].get("name") and w["tags"]["waterway"] in ("river", "canal")
+                  and w["nodes"][0] in named_all and w["nodes"][-1] in named_all and len(w["nodes"]) > 1]
         for w in river:
             self.kind[w["tags"]["waterway"]] += len(w["nodes"])
             for nid, p in zip(w["nodes"], w["geometry"]):
@@ -390,10 +400,13 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
         return LineString(pts).distance(Point(0, 0)) if len(pts) > 1 else 1e9
 
     include = override.get("include") or []
-    own = [w for w in ways if w["tags"].get("name") == g["water"] and way_dist(w) < 1500]
+    own = [w for w in ways if same_water(w["tags"].get("name", ""), g["water"]) and way_dist(w) < 1500]
     extra = [w for w in ways if w["tags"].get("name") in include and way_dist(w) < 1500]
     named = [w for w in ways if w["tags"].get("name") and way_dist(w) < 1500]
     nearest = min(own or extra or named or ways, key=way_dist)
+    if VERBOSE:
+        near = sorted({(round(way_dist(w)), w["tags"].get("name", ""), w["tags"]["waterway"]) for w in ways if way_dist(w) < 1000})[:8]
+        print(f"  {g['water']}: lines within 1 km {near}", flush=True)
     name = nearest["tags"].get("name", "")
     if not name:
         return {"error": "the nearest river line has no name"}
