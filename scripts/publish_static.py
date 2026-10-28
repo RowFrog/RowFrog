@@ -522,9 +522,9 @@ CLUB_PLACE_M = 500
 
 
 def club_places(clubs) -> dict[str, list[list[tuple[float, float]]]]:
-    """Picture places of clubs on water without an outline (rivers, for now), "club-<id>".
+    """Picture places of clubs on water without an outline, "club-<id>".
 
-    Until rivers have sections of their own, such a club gets a picture of at
+    A club on a river without a section (or on an unknown water) gets a picture of at
     least 4 x 3 km around its launch point (sentinel2.MIN_WIDTH_M); clouds are
     counted over the square kilometre around it.
     """
@@ -537,6 +537,18 @@ def club_places(clubs) -> dict[str, list[list[tuple[float, float]]]]:
         dlon = CLUB_PLACE_M / (111_320 * math.cos(math.radians(lat)))
         ring = [(lon - dlon, lat - dlat), (lon + dlon, lat - dlat), (lon + dlon, lat + dlat), (lon - dlon, lat + dlat)]
         places[f"club-{club.id}"] = [ring]
+    return places
+
+
+def river_places(lakes: dict, lake_ids: list[str]) -> dict[str, list[list[tuple[float, float]]]]:
+    """Picture places of the river sections: the box of about 10 km around
+    their clubs (builder's pictureBox), not the whole stretch."""
+    places = {}
+    for lake_id in lake_ids:
+        lake = lakes.get(lake_id)
+        if lake is not None and lake.section is not None:
+            w, s, e, n = lake.section.picture_box
+            places[lake_id] = [[(w, s), (e, s), (e, n), (w, n)]]
     return places
 
 
@@ -807,9 +819,13 @@ def main() -> int:
     state.save()
 
     publish_ice_map(args.out, all_lakes, now.astimezone(LOCAL).date())
-    # River clubs only when used: about 340 of them would take a third of the free Copernicus requests.
+    # River sections and clubs without an outline only when used: about 340
+    # river clubs would take a third of the free Copernicus requests.
     places = club_places(c for c in every if c.id in used_clubs)
-    publish_pictures(args.out, all_lakes + sorted(places), used_lakes | set(places), now, places)
+    sections = river_places(locations.load().lakes, all_lakes)
+    places.update({i: ring for i, ring in sections.items() if i in used_lakes})
+    lakes_only = [i for i in all_lakes if i not in sections]
+    publish_pictures(args.out, lakes_only + sorted(places), used_lakes | set(places), now, places)
     calls = round(open_meteo.calls_counted, 1)
     copernicus = sentinel2.requests_made + lake_ice_satellite.requests_made
     print(f"Open-Meteo calls: {calls}, Copernicus requests: {copernicus}")

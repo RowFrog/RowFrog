@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Research only: answers the river and water questions from downloaded
-OpenStreetMap extracts instead of the busy public Overpass servers.
+"""Answers the river and water questions from downloaded OpenStreetMap
+extracts instead of the busy public Overpass servers (the river section
+survey, and build_river_sections.py for the river sections the app uses).
 
 The workflow (river-section-survey.yml) downloads the Geofabrik extracts for
 Germany, Austria and Switzerland and filters them with osmium into
   lines.osm.pbf        river and canal lines, weirs, dams, locks, waterfalls, river km signs
   water.geojsonseq     water areas (natural=water, landuse=reservoir, riverbank)
 This module loads them and hands river_section_survey.survey() the same kind
-of elements an Overpass query would. Data © OpenStreetMap contributors, ODbL.
+of elements an Overpass query would. With `lakes=True` it also keeps the
+lakes and reservoirs big enough to lie on a river (a weir's backwater such as
+the Harkortsee), for the section outlines. Data © OpenStreetMap contributors, ODbL.
 """
 
 from __future__ import annotations
@@ -21,6 +24,10 @@ from shapely.geometry import shape
 
 CELL = 0.05  # degrees, for the grid index
 BARRIERS = ("weir", "dam", "lock_gate", "waterfall")
+RIVER_AREAS = ("river", "canal", "harbour", "basin")
+LAKE_AREAS = (None, "lake", "reservoir", "oxbow", "lock", "pond", "lagoon")
+# About 0.01 km² in square degrees: smaller ponds can't be part of a river section.
+MIN_LAKE_DEG2 = 1.2e-6
 
 
 def _cells(s, w, n, e):
@@ -51,7 +58,7 @@ class _Lines(osmium.SimpleHandler):
 
 
 class Extract:
-    def __init__(self, lines_pbf: str, water_seq: str | None = None):
+    def __init__(self, lines_pbf: str, water_seq: str | None = None, lakes: bool = False):
         h = _Lines()
         h.apply_file(lines_pbf, locations=True, idx="flex_mem")
         self.ways, self.nodes = h.ways, h.nodes
@@ -67,13 +74,18 @@ class Extract:
                     self.ways_of_node[nid].append(w["id"])
         for n in self.nodes.values():
             self.node_grid[next(_cells(n["lat"], n["lon"], n["lat"], n["lon"]))].add(n["id"])
+        self.all_milestones = False  # river km signs across the whole box, not just near the point
         self.water = []  # (tags, geometry) of river/canal areas (widths) and harbours
         self.water_grid = defaultdict(list)
         if water_seq:
             for f in read_water(water_seq):
                 t = f["properties"]
-                if t.get("waterway") == "riverbank" or t.get("water") in ("river", "canal", "harbour", "basin") or t.get("landuse") == "harbour":
+                river = t.get("waterway") == "riverbank" or t.get("water") in RIVER_AREAS or t.get("landuse") == "harbour"
+                lake = lakes and (t.get("natural") == "water" or t.get("landuse") == "reservoir") and t.get("water") in LAKE_AREAS
+                if river or lake:
                     g = shape(f["geometry"])
+                    if not river and g.area < MIN_LAKE_DEG2:
+                        continue
                     k = len(self.water)
                     self.water.append((t, g))
                     w, s, e, n = g.bounds
@@ -120,14 +132,14 @@ class Extract:
                     els[("way", wid)] = w
             for nid in self.node_grid[c]:
                 n = self.nodes[nid]
-                if n["tags"].get("waterway") in BARRIERS or dist_km(n) <= 2:
+                if n["tags"].get("waterway") in BARRIERS or dist_km(n) <= 2 or (self.all_milestones and dist_km(n) <= max_km):
                     els[("node", nid)] = n
         # River areas near the point, as closed ways for the width.
         nd = 1.5 / 110.574
         for c in _cells(lat - nd, lon - nd / k, lat + nd, lon + nd / k):
             for i in self.water_grid[c]:
                 t, g = self.water[i]
-                if t.get("water") in ("harbour", "basin") or t.get("landuse") == "harbour":
+                if t.get("water") not in ("river", "canal") and t.get("waterway") != "riverbank":
                     continue
                 for j, poly in enumerate(getattr(g, "geoms", [g])):
                     ring = [{"lat": y, "lon": x} for x, y in poly.exterior.coords]
@@ -154,6 +166,35 @@ class Extract:
                     g = w["geometry"]
                     lengths[n] += sum(math.hypot((a["lat"] - b["lat"]) * 110.574, (a["lon"] - b["lon"]) * 111.32 * k) for a, b in zip(g, g[1:]))
         return {"elements": [e for e in els.values() if e["type"] != "marker"], "lengths": {n: round(v) for n, v in lengths.items()}}
+
+
+    def areas(self, south: float, west: float, north: float, east: float) -> list[tuple[dict, object]]:
+        """The kept water areas (tags, shapely geometry in lon/lat) touching the box."""
+        found = {i for c in _cells(south, west, north, east) for i in self.water_grid[c]}
+        out = []
+        for i in sorted(found):
+            t, g = self.water[i]
+            w, s, e, n = g.bounds
+            if w <= east and e >= west and s <= north and n >= south:
+                out.append((t, g))
+        return out
+
+    def lines_named(self, name: str, lat: float, lon: float, max_km: float) -> list[dict]:
+        """River and canal lines called `name` in a box max_km around the point,
+        and the lines touching them."""
+        k = math.cos(math.radians(lat))
+        dlat, dlon = max_km / 110.574, max_km / (111.32 * k)
+        found = {}
+        for c in _cells(lat - dlat, lon - dlon, lat + dlat, lon + dlon):
+            for wid in self.way_grid[c]:
+                w = self.ways[wid]
+                if w["tags"].get("name") == name and w["tags"].get("waterway") in ("river", "canal"):
+                    found[wid] = w
+        for w in list(found.values()):
+            for nid in w["nodes"]:
+                for other in self.ways_of_node.get(nid, ()):
+                    found.setdefault(other, self.ways[other])
+        return list(found.values())
 
 
 def read_water(path: str):

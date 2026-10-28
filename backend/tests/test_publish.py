@@ -274,11 +274,14 @@ def test_small_lakes_get_no_sharp_files(tmp_path, monkeypatch):
     assert "sharp" not in body and "tiles" not in body["latest"] and not publish._lacks_sharp(body, ring)
 
 
-def test_river_clubs_get_a_place_around_their_launch_point():
+def test_clubs_without_an_outline_get_a_place_around_their_launch_point():
+    import dataclasses
+
     from rowfrog import locations
 
     clubs = locations.load().clubs.values()
-    river = next(c for c in clubs if c.lake_id.startswith("river-"))
+    # A river club whose river has no section (no outline).
+    river = dataclasses.replace(next(c for c in clubs if c.lake_id.startswith("river-")), lake_id="river-without-a-section")
     lake = next(c for c in clubs if c.lake_id == "starnberger-see")
     places = publish.club_places([river, lake])
     assert list(places) == [f"club-{river.id}"]
@@ -298,3 +301,18 @@ def test_big_lakes_nobody_uses_get_no_tiles(tmp_path, monkeypatch):
     body = publish._picture_meta(None, tmp_path, ring, used, None, None, sharp_ok=False)
     assert "sharp" not in body and "tiles" not in body["latest"] and body["latest"]["date"] == "2026-10-08"
     assert not (tmp_path / "satellite-latest-tiles").exists() and (tmp_path / "satellite-latest.jpg").exists()
+
+
+def test_river_sections_get_a_picture_of_about_10_km_around_their_clubs():
+    from rowfrog import locations
+
+    box = (8.65, 50.05, 8.79, 50.14)
+    section = locations.RiverSection("river-main", "Offenbach", "river", 14.5, None, None, box)
+    lakes = {
+        "river-main-offenbach": locations.Lake("river-main-offenbach", "Main", locations.Point(50.1, 8.72), None, None, None, False, "river", section=section),
+        "starnberger-see": locations.load().lakes["starnberger-see"],
+    }
+    places = publish.river_places(lakes, ["river-main-offenbach", "starnberger-see"])
+    assert list(places) == ["river-main-offenbach"]
+    (west, south, east, north), width, height = sentinel2.frame(places["river-main-offenbach"][0])
+    assert west <= 8.65 and east >= 8.79 and width < 1300

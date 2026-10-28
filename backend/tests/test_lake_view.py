@@ -107,3 +107,24 @@ def test_lake_view_without_outline_is_404():
 def test_lakes_say_whether_the_lake_view_is_available():
     body = TestClient(api.app).get("/lakes").json()
     assert next(l for l in body if l["id"] == "starnberger-see")["hasOutline"] is True
+
+
+def test_grid_of_a_narrow_river_section():
+    # A 20 m wide, 6 km long river: the cells shrink until enough lie on the water.
+    import math
+
+    dlat = 10 / 111_195
+    east = 11.0 + 6000 / (111_195 * math.cos(math.radians(48)))
+    ring = [(11.0, 48.0 - dlat), (east, 48.0 - dlat), (east, 48.0 + dlat), (11.0, 48.0 + dlat)]
+    grid = lake_view.build_grid([ring], target_cells=200, max_samples=lake_view.river_samples(6), narrow=True)
+    assert len(grid.cells) >= 100
+    assert grid.cell_m < lake_view.MIN_CELL_M
+    assert len(grid.samples) == lake_view.river_samples(6) == 2
+    # Wind along the river has fetch, wind across it hardly any.
+    along = lake_view._interpolated_fetch(grid.fetch[len(grid.fetch) // 2], 90.0)
+    across = lake_view._interpolated_fetch(grid.fetch[len(grid.fetch) // 2], 0.0)
+    assert along > 1000 > 30 > across
+
+
+def test_wider_lake_grids_are_unchanged_by_the_river_switch():
+    assert lake_view.build_grid(LAKE, target_cells=200).cells == lake_view.build_grid(LAKE, target_cells=200, narrow=True).cells

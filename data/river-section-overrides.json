@@ -1,5 +1,5 @@
 {
-  "comment": "Hand-checked rowing stretches for river clubs, answered by the owner on 2026-10-28. Read by the river section builder (not built yet) on top of the general rule: to the next weir or lock up to 25 km each way; on open rivers to a river mouth, a big tributary or a big harbour 3-15 km away, else 12 km upstream and 8 km downstream (10 and 10 on canals). club id -> \"bounds\" (what ends the stretch, in words), \"include\" (extra waters that belong to the stretch), \"direction\" (compass side of the boathouse the club rows on, where a lock or weir sits right at it), \"note\".",
+  "comment": "Hand-checked rowing stretches for river clubs, answered by the owner on 2026-10-28. Read by scripts/build_river_sections.py on top of the general rule: to the next weir or lock up to 25 km each way; on open rivers to a river mouth, a big tributary or a big harbour 3-15 km away, else 12 km upstream and 8 km downstream (10 and 10 on canals). club id -> \"bounds\" (what ends the stretch, in words), \"include\" (extra waters that belong to the stretch), \"direction\" (compass side of the boathouse the club rows on, where a lock or weir sits right at it), \"note\".",
   "de": {
     "ruder-club-mark": {
       "include": ["Obergraben", "Harkortsee", "Ruhr"],

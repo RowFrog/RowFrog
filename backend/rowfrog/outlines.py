@@ -1,4 +1,4 @@
-"""Lake outlines used for the fetch calculation.
+"""Lake (and river section) outlines used for the fetch calculation.
 
 Outlines live in data/outlines/<lake-id>.geojson and are downloaded from
 OpenStreetMap with scripts/fetch_lake_outline.py (ODbL, credit
@@ -36,6 +36,20 @@ def rings_from_geojson(geojson: dict) -> Rings:
                 pts = pts[:-1]
             rings.append(pts)
     return rings
+
+
+def flow(lake_id: str, directory: Path = DEFAULT_DIR) -> list[list[tuple[float, float]]]:
+    """A river section's river line, pointing downstream (the outline's "flow" feature), as lines of (lon, lat)."""
+    path = directory / f"{lake_id}.geojson"
+    if not path.exists():
+        return []
+    data = json.loads(path.read_text(encoding="utf-8"))
+    for f in data.get("features", []) if data.get("type") == "FeatureCollection" else []:
+        if (f.get("properties") or {}).get("role") == "flow":
+            g = f["geometry"]
+            lines = [g["coordinates"]] if g["type"] == "LineString" else g["coordinates"] if g["type"] == "MultiLineString" else []
+            return [[(float(x), float(y)) for x, y, *_ in line] for line in lines]
+    return []
 
 
 def load(lake_id: str, directory: Path = DEFAULT_DIR) -> Rings | None:

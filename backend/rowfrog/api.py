@@ -118,6 +118,9 @@ def _lake_json(lake: locations.Lake, country: str | None = None) -> dict:
         "name": lake.name,
         "country": lake.country,
         "center": _point(lake.center),
+        # "lake" or "river" (with "section": a stretch of a river or canal, see locations.py).
+        "kind": lake.kind,
+        "section": _section_json(lake),
         # The lake view needs an outline (data/outlines).
         "hasOutline": (outlines.DEFAULT_DIR / f"{lake.id}.geojson").exists(),
         "clubs": [
@@ -193,7 +196,32 @@ def _from_now(weather: list, now: datetime) -> list:
 
 
 def lake_grid(lake_id: str, rings) -> lake_view.Grid:
+    lake = _locations.lakes.get(lake_id)
+    if lake is not None and lake.section is not None:
+        return lake_view.grid_for(lake_id, rings, lake_view.river_samples(lake.section.length_km), narrow=True)
     return lake_view.grid_for(lake_id, rings, _lake_samples.get(lake_id, lake_view.MAX_SAMPLES))
+
+
+def _end_json(end: locations.SectionEnd | None) -> dict | None:
+    if end is None:
+        return None
+    return {"km": end.km, "end": end.end, "what": end.what, "at": _point(end.at)}
+
+
+def _section_json(lake: locations.Lake, full: bool = False) -> dict | None:
+    """A river section's facts for the app: the place it is named after and,
+    for the River view (`full`), where it ends each way and the river line."""
+    s = lake.section
+    if s is None:
+        return None
+    out = {"place": s.place, "waterway": s.waterway, "lengthKm": s.length_km}
+    if full:
+        out.update(
+            up=_end_json(s.up),
+            down=_end_json(s.down),
+            flow=[[[x, y] for x, y in line] for line in outlines.flow(lake.id)],
+        )
+    return out
 
 
 def _utc(t: datetime) -> str:
@@ -752,6 +780,8 @@ async def lake_view_forecast(lake_id: str) -> dict:
     return {
         "lakeId": lake.id,
         "name": lake.name,
+        "kind": lake.kind,
+        "section": _section_json(lake, full=True),
         "generatedAt": now.replace(microsecond=0).isoformat(),
         "sample": sample,
         "attribution": ATTRIBUTION,
