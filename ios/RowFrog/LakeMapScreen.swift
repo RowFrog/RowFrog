@@ -189,7 +189,7 @@ struct LakeMapScreen: View {
                     .font(.caption.weight(.semibold))
                     .padding(.horizontal, 10)
                     .padding(.vertical, 6)
-                    .background(.regularMaterial, in: Capsule())
+                    .floatingControl(Capsule())
             }
             .buttonStyle(.plain)
             .padding(10)
@@ -285,21 +285,21 @@ struct LakeMapScreen: View {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark").font(.body.weight(.semibold)).frame(width: 36, height: 36)
                 }
-                .background(.regularMaterial, in: Circle())
+                .floatingControl(Circle())
                 .accessibilityLabel(tr("Close"))
                 Spacer()
                 Text(view.name)
                     .font(.headline)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
-                    .background(.regularMaterial, in: Capsule())
+                    .floatingControl(Capsule())
                 Spacer()
                 Button { imagery.toggle() } label: {
                     Image(systemName: imagery ? "map" : "globe.europe.africa")
                         .font(.body.weight(.semibold))
                         .frame(width: 36, height: 36)
                 }
-                .background(.regularMaterial, in: Circle())
+                .floatingControl(Circle())
                 .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
                 // Its popover would cover the editing bar and the route tips while planning.
                 if routeMode {
@@ -308,7 +308,7 @@ struct LakeMapScreen: View {
                         .accessibilityLabel(tr("End route planning"))
                 } else {
                     routeButton
-                        .background(.regularMaterial, in: Circle())
+                        .floatingControl(Circle())
                         .accessibilityLabel(tr("Plan a route"))
                         .popoverTip(RoutePlanningTip(), arrowEdge: .top)
                 }
@@ -316,7 +316,7 @@ struct LakeMapScreen: View {
                     Button { showingInfo = true } label: {
                         Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
                     }
-                    .background(.regularMaterial, in: Circle())
+                    .floatingControl(Circle())
                     .accessibilityLabel(view.water.aboutTitle)
                 }
             }
@@ -329,7 +329,7 @@ struct LakeMapScreen: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(4)
-                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+                .floatingControl(RoundedRectangle(cornerRadius: 10))
             }
         }
         .padding(.horizontal)
@@ -444,7 +444,7 @@ struct LakeMapScreen: View {
         .minimumScaleFactor(0.75)
         .padding(.horizontal, 14)
         .padding(.vertical, 9)
-        .background(.regularMaterial, in: Capsule())
+        .floatingControl(Capsule())
         if let i = selectedPoint, i > 0, i < waypoints.count {
             if tourSeen && showPointTip {
                 TipView(pointTip)

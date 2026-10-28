@@ -126,7 +126,7 @@ enum BackgroundLibrary {
 /// How cards are drawn: plain without a picture; over a picture either
 /// frosted (the picture shows through, blurred) or solid (no picture inside).
 enum Surface {
-    case plain, frosted, glass, solid
+    case plain, frosted, solid
 }
 
 private struct SurfaceKey: EnvironmentKey {
@@ -139,20 +139,26 @@ private struct SurfaceKey: EnvironmentKey {
 @MainActor
 final class PowerState {
     static let shared = PowerState()
-    private(set) var lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled
+    private(set) var lowPower = PowerState.isOn
+    /// -RWLowPower YES draws the app as in Low Power Mode, for screenshots.
+    private static var isOn: Bool { ProcessInfo.processInfo.isLowPowerModeEnabled || UserDefaults.standard.bool(forKey: "RWLowPower") }
     @ObservationIgnored private var observer: NSObjectProtocol?
 
     private init() {
         observer = NotificationCenter.default.addObserver(forName: .NSProcessInfoPowerStateDidChange, object: nil, queue: .main) { _ in
-            MainActor.assumeIsolated { PowerState.shared.lowPower = ProcessInfo.processInfo.isLowPowerModeEnabled }
+            MainActor.assumeIsolated { PowerState.shared.lowPower = PowerState.isOn }
         }
     }
 }
 
 extension AppSettings {
     /// The tiles over a picture as drawn: solid in Low Power Mode, since blurred
-    /// and Liquid Glass tiles are drawn again on every frame the page scrolls.
+    /// tiles are drawn again on every frame the page scrolls.
     @MainActor var tileSurface: Surface { PowerState.shared.lowPower ? .solid : tileStyle.surface }
+}
+
+private struct PageMarginsKey: EnvironmentKey {
+    static let defaultValue = EdgeInsets()
 }
 
 private struct CurrentPageKey: EnvironmentKey {
@@ -160,6 +166,13 @@ private struct CurrentPageKey: EnvironmentKey {
 }
 
 extension EnvironmentValues {
+    /// What a swiping club page keeps clear of at its edges (the clock, the
+    /// floating page bar), as the pages themselves reach under both.
+    var pageMargins: EdgeInsets {
+        get { self[PageMarginsKey.self] }
+        set { self[PageMarginsKey.self] = newValue }
+    }
+
     /// Whether this club page is the one in front. Pages beside it stay alive
     /// in the swiping TabView and stop their timers.
     var isCurrentPage: Bool {
@@ -179,16 +192,16 @@ extension Surface {
     /// A card's background.
     var card: AnyShapeStyle {
         switch self {
-        case .frosted, .glass: AnyShapeStyle(.regularMaterial)
+        case .frosted: AnyShapeStyle(.regularMaterial)
         case .plain, .solid: AnyShapeStyle(Color(.secondarySystemGroupedBackground))
         }
     }
 
-    /// A tile inside a card. Tiles in a glass card stay a light shade, since
-    /// glass on glass looks muddy.
+    /// A tile inside a card. Tiles in a frosted card stay a light shade, since
+    /// frost on frost looks muddy.
     var tile: AnyShapeStyle {
         switch self {
-        case .frosted, .glass: AnyShapeStyle(Color(.tertiarySystemGroupedBackground).opacity(0.55))
+        case .frosted: AnyShapeStyle(Color(.tertiarySystemGroupedBackground).opacity(0.55))
         case .plain, .solid: AnyShapeStyle(Color(.tertiarySystemGroupedBackground))
         }
     }
@@ -216,17 +229,14 @@ struct TintedCardBackground: View {
             shape.fill(Color(.systemGroupedBackground)).overlay(shape.fill(tint.opacity(0.18)))
         case .frosted:
             shape.fill(.regularMaterial).overlay(shape.fill(tint.opacity(0.22)))
-        case .glass:
-            Color.clear.glass(tint: tint.opacity(0.3), in: shape)
         }
     }
 }
 
 extension View {
-    /// A card's background: Liquid Glass when the tiles are set to it, else
-    /// the surface's usual card style.
+    /// A card's background in the surface's card style.
     func cardBackground(_ surface: Surface, cornerRadius: CGFloat = 16) -> some View {
-        modifier(CardBackground(surface: surface, cornerRadius: cornerRadius))
+        background(surface.card, in: RoundedRectangle(cornerRadius: cornerRadius))
     }
 
     /// Liquid Glass in the shape, optionally tinted; frosted glass with the
@@ -247,20 +257,6 @@ extension View {
     private func frostedGlass(tint: Color?, in shape: some Shape) -> some View {
         background {
             shape.fill(.regularMaterial).overlay(shape.fill(tint ?? .clear))
-        }
-    }
-}
-
-private struct CardBackground: ViewModifier {
-    let surface: Surface
-    let cornerRadius: CGFloat
-
-    func body(content: Content) -> some View {
-        let shape = RoundedRectangle(cornerRadius: cornerRadius)
-        if surface == .glass {
-            content.glass(in: shape)
-        } else {
-            content.background(surface.card, in: shape)
         }
     }
 }
@@ -332,5 +328,19 @@ struct BackgroundPicture: View {
             }
             .ignoresSafeArea()
             .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    /// A button floating over a picture or a map (the page bar, the lake map's
+    /// buttons): Liquid Glass (frosted before iOS 26), as Apple's guide keeps
+    /// glass for controls, and solid in Low Power Mode, which draws nothing live.
+    @ViewBuilder
+    func floatingControl(_ shape: some Shape) -> some View {
+        if PowerState.shared.lowPower {
+            background(shape.fill(Color(.secondarySystemGroupedBackground)).shadow(color: .black.opacity(0.15), radius: 6, y: 2))
+        } else {
+            glass(in: shape)
+        }
     }
 }

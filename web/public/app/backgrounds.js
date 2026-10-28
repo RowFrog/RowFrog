@@ -20,7 +20,7 @@ export const SAMPLES = [
 /** The kinds of page a picture can be set for (PageKind). */
 const PAGES = [["clubPages", key("Club pages"), "house"], ["list", key("Location list"), "list"], ["settings", key("Settings"), "settings"]];
 
-export const TILE_STYLES = [["frosted", key("Picture blurred")], ["glass", key("Liquid Glass")], ["solid", key("No picture")]];
+export const TILE_STYLES = [["frosted", key("Picture blurred")], ["solid", key("No picture")]];
 
 const object = (value) => (value && typeof value === "object" && !Array.isArray(value) ? value : {});
 
@@ -211,7 +211,7 @@ export function renderBackgrounds(root) {
         <label class="row-setting"><span>${h(t("In the tiles"))}</span>
           <select id="tiles">${TILE_STYLES.map(([k, title]) => `<option value="${k}" ${k === b.tiles ? "selected" : ""}>${h(t(title))}</option>`).join("")}</select></label>
       </section>
-      <p class="footer">${h(t("Picture blurred: the picture shows through the tiles like frosted glass. Liquid Glass: clearer glass. No picture: the tiles stay solid and keep the full rowing-light shading."))}</p>
+      <p class="footer">${h(t("Picture blurred: the picture shows through the tiles like frosted glass. No picture: the tiles stay solid and keep the full rowing-light shading."))}</p>
       <section class="card group"><button class="row-setting red" id="remove-all">${icon("trash-2")} ${h(t("Remove all background pictures"))}</button></section>
       <p class="footer">${h(t("Back to the factory setting: no picture on any page. Your own pictures stay available to pick again."))}</p>
       ${footerLinks()}

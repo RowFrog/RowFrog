@@ -732,7 +732,7 @@ struct ConditionDetailView: View {
         HStack(alignment: .center, spacing: 8) {
             Image(systemName: "chevron.compact.left").foregroundStyle(.tertiary)
             VStack(alignment: .leading, spacing: 0) {
-                Text(head.value).font(.system(size: 40, weight: .light)).minimumScaleFactor(0.6).lineLimit(1)
+                Text(head.value).valueFont(size: 40).minimumScaleFactor(0.6).lineLimit(1)
                     .contentTransition(.numericText())
                 // Two lines kept free (the hidden text), so scrubbing never makes the chart jump.
                 ZStack(alignment: .topLeading) {

@@ -463,13 +463,12 @@ enum MapStartZoom: String, CaseIterable, Identifiable {
     }
 }
 
-/// How the cards look over a background picture.
+/// How the cards look over a background picture. Apple's guide keeps Liquid
+/// Glass for bars and buttons and gives content the standard materials, so an
+/// earlier "glass" choice reads as frosted.
 enum TileStyle: String, CaseIterable, Identifiable {
     /// Frosted glass: the picture shows through, blurred, under a light rowing-light tint.
     case frosted
-    /// Liquid Glass (iOS 26): clear glass that bends the picture at its edges.
-    /// Earlier iOS versions show frosted glass instead.
-    case glass
     /// Solid: no picture in the cards, which keep their full rowing-light shading.
     case solid
     var id: String { rawValue }
@@ -477,7 +476,6 @@ enum TileStyle: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .frosted: tr("Picture blurred")
-        case .glass: tr("Liquid Glass")
         case .solid: tr("No picture")
         }
     }
@@ -485,7 +483,6 @@ enum TileStyle: String, CaseIterable, Identifiable {
     var surface: Surface {
         switch self {
         case .frosted: .frosted
-        case .glass: .glass
         case .solid: .solid
         }
     }
