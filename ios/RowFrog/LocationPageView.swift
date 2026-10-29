@@ -37,13 +37,14 @@ struct LocationPageView: View {
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
 
-    /// "Forecast from 14:51 · loaded 15:39 · Pull down to refresh", or only the
-    /// forecast's time when both are the same minute or nothing loaded yet.
+    /// "Forecast from 14:51 · loaded 15:39", or only the forecast's time when both
+    /// are the same minute or nothing loaded yet. No "pull down to refresh": as in
+    /// Apple's apps, the gesture goes without saying.
     static func updatedLine(forecast: Date, loaded: Date?) -> String {
         guard let loaded, Format.time(loaded) != Format.time(forecast) else {
-            return tr("Forecast from %@ · Pull down to refresh", Format.time(forecast))
+            return tr("Forecast from %@", Format.time(forecast))
         }
-        return tr("Forecast from %@ · loaded %@ · Pull down to refresh", Format.time(forecast), Format.time(loaded))
+        return tr("Forecast from %@ · loaded %@", Format.time(forecast), Format.time(loaded))
     }
 
     /// Whose satellite picture the page shows: the lake's or river section's, or for water
