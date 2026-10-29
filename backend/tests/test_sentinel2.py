@@ -33,3 +33,19 @@ def test_no_account_means_no_pictures(monkeypatch):
 def test_lake_list_is_also_at_lakes_index():
     client = TestClient(app)
     assert client.get("/lakes/index").json() == client.get("/lakes").json()
+
+
+def test_pictures_are_saved_at_our_own_jpeg_quality():
+    # The Process API sends JPEGs at 90 whatever it is asked for, so pictures come as PNG.
+    import io
+
+    from PIL import Image
+
+    png = io.BytesIO()
+    Image.effect_noise((200, 150), 40).convert("RGB").save(png, "PNG")
+    data = sentinel2.to_jpeg(png.getvalue())
+    with Image.open(io.BytesIO(data)) as picture:
+        assert picture.format == "JPEG"
+        assert picture.size == (200, 150)
+        assert picture.mode == "RGB"
+    assert len(data) < len(sentinel2.to_jpeg(png.getvalue(), quality=90))
