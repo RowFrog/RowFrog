@@ -1805,7 +1805,7 @@
    "clubs": [
     "rudergruppe-geesthacht-von-1912"
    ],
-   "lengthKm": 14.6,
+   "lengthKm": 14.7,
    "up": {
     "km": 9.7,
     "end": "river",
@@ -1816,16 +1816,16 @@
     ]
    },
    "down": {
-    "km": 2.68,
+    "km": 2.85,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Wehr Elbe Geesthacht",
     "at": [
-     53.42493,
-     10.33962
+     53.42486,
+     10.33893
     ]
    },
    "pictureBox": [
-    10.33996,
+    10.33832,
     53.37921,
     10.45689,
     53.43209
@@ -1887,7 +1887,7 @@
    "clubs": [
     "ruder-gesellschaft-lauenburg"
    ],
-   "lengthKm": 28.2,
+   "lengthKm": 28.3,
    "up": {
     "km": 10.41,
     "end": "river",
@@ -1898,12 +1898,12 @@
     ]
    },
    "down": {
-    "km": 15.59,
+    "km": 15.76,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Wehr Elbe Geesthacht",
     "at": [
-     53.42493,
-     10.33962
+     53.42486,
+     10.33893
     ]
    },
    "pictureBox": [
@@ -2618,7 +2618,7 @@
     "foerderverein-fuer-freizeit-und-sport-am-kopernikus-gymnasium-rheine",
     "ruder-hockey-und-tanzsport-club-von-1901"
    ],
-   "lengthKm": 12.0,
+   "lengthKm": 12.1,
    "up": {
     "km": 12.0,
     "end": "cap",
@@ -2629,19 +2629,19 @@
     ]
    },
    "down": {
-    "km": 0.02,
+    "km": 0.09,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Emswehr Rheine",
     "at": [
-     52.28044,
-     7.43973
+     52.28101,
+     7.43911
     ]
    },
    "pictureBox": [
-    7.43931,
+    7.43882,
     52.23319,
     7.51637,
-    52.2807
+    52.28111
    ]
   },
   {
@@ -3245,7 +3245,7 @@
    "clubs": [
     "rathenower-ruder-club-wiking"
    ],
-   "lengthKm": 14.6,
+   "lengthKm": 15.0,
    "up": {
     "km": 1.25,
     "end": "weir/lock",
@@ -3256,16 +3256,16 @@
     ]
    },
    "down": {
-    "km": 12.59,
+    "km": 12.96,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Nadelwehr Grütz",
     "at": [
-     52.6659,
-     12.26151
+     52.66495,
+     12.25657
     ]
    },
    "pictureBox": [
-    12.25974,
+    12.25655,
     52.6073,
     12.33454,
     52.65627
@@ -4204,7 +4204,7 @@
    "down": {
     "km": 0.36,
     "end": "weir/lock",
-    "what": "lock",
+    "what": "lock Seeschleuse Leer",
     "at": [
      53.21607,
      7.45028
@@ -4399,14 +4399,14 @@
    "clubs": [
     "ruderclub-hamm-von-1890"
    ],
-   "lengthKm": 2.5,
+   "lengthKm": 2.7,
    "up": {
-    "km": 2.09,
+    "km": 2.2,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Wehr LSH",
     "at": [
-     51.69794,
-     7.84514
+     51.69805,
+     7.84632
     ]
    },
    "down": {
@@ -4421,7 +4421,7 @@
    "pictureBox": [
     7.82195,
     51.68731,
-    7.8484,
+    7.84945,
     51.69838
    ]
   },
@@ -4523,7 +4523,7 @@
    "clubs": [
     "floersheimer-ruderverein-08"
    ],
-   "lengthKm": 13.0,
+   "lengthKm": 13.2,
    "up": {
     "km": 4.55,
     "end": "weir/lock",
@@ -4534,12 +4534,12 @@
     ]
    },
    "down": {
-    "km": 7.63,
+    "km": 7.81,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Kostheim",
     "at": [
-     49.99881,
-     8.33852
+     49.99976,
+     8.33447
     ]
    },
    "pictureBox": [
@@ -4575,20 +4575,20 @@
     "sportgemeinschaft-wiking-1903",
     "wassersportverein-1926-ev-offenbach-am-main-buergel"
    ],
-   "lengthKm": 10.5,
+   "lengthKm": 10.6,
    "up": {
-    "km": 0.7,
+    "km": 0.78,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Offenbach",
     "at": [
-     50.10792,
-     8.72429
+     50.10795,
+     8.72552
     ]
    },
    "down": {
     "km": 8.75,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Griesheim",
     "at": [
      50.08841,
      8.60167
@@ -4597,8 +4597,8 @@
    "pictureBox": [
     8.639,
     50.08799,
-    8.72449,
-    50.10924
+    8.72551,
+    50.10946
    ]
   },
   {
@@ -4618,7 +4618,7 @@
     "offenbacher-rudergesellschaft-undine-1876",
     "offenbacher-ruderverein-1874"
    ],
-   "lengthKm": 14.9,
+   "lengthKm": 15.0,
    "up": {
     "km": 11.06,
     "end": "weir/lock",
@@ -4629,16 +4629,16 @@
     ]
    },
    "down": {
-    "km": 3.1,
+    "km": 3.26,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Offenbach",
     "at": [
-     50.10873,
-     8.73015
+     50.10841,
+     8.72744
     ]
    },
    "pictureBox": [
-    8.72856,
+    8.72606,
     50.10749,
     8.83618,
     50.13806
@@ -4664,7 +4664,7 @@
    "up": {
     "km": 2.71,
     "end": "weir/lock",
-    "what": "lock",
+    "what": "lock Nordschleuse Griesheim",
     "at": [
      50.08976,
      8.59565
@@ -4701,30 +4701,30 @@
    "clubs": [
     "frankfurter-ruder-club-griesheim-1906"
    ],
-   "lengthKm": 10.5,
+   "lengthKm": 10.6,
    "up": {
-    "km": 8.73,
+    "km": 8.81,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Offenbach",
     "at": [
-     50.10792,
-     8.72429
+     50.10795,
+     8.72552
     ]
    },
    "down": {
-    "km": 0.72,
+    "km": 0.73,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Griesheim",
     "at": [
-     50.08824,
-     8.6019
+     50.08841,
+     8.60167
     ]
    },
    "pictureBox": [
     8.60093,
     50.08799,
     8.68233,
-    50.10924
+    50.10947
    ]
   },
   {
@@ -4907,28 +4907,28 @@
    "clubs": [
     "miltenberger-ruder-club-von-1900"
    ],
-   "lengthKm": 11.4,
+   "lengthKm": 11.8,
    "up": {
-    "km": 8.52,
+    "km": 8.79,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Freudenberg",
     "at": [
-     49.75099,
-     9.32179
+     49.75309,
+     9.31992
     ]
    },
    "down": {
-    "km": 2.53,
+    "km": 2.78,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Heubach",
     "at": [
-     49.7099,
-     9.23524
+     49.71252,
+     9.23275
     ]
    },
    "pictureBox": [
-    9.23373,
-    49.69999,
+    9.23216,
+    49.70001,
     9.32442,
     49.75147
    ]
@@ -4948,7 +4948,7 @@
    "clubs": [
     "muehlheimer-ruderverein-1911"
    ],
-   "lengthKm": 14.9,
+   "lengthKm": 15.0,
    "up": {
     "km": 2.19,
     "end": "weir/lock",
@@ -4959,12 +4959,12 @@
     ]
    },
    "down": {
-    "km": 11.97,
+    "km": 12.13,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Offenbach",
     "at": [
-     50.10873,
-     8.73015
+     50.10841,
+     8.72744
     ]
    },
    "pictureBox": [
@@ -4989,14 +4989,14 @@
    "clubs": [
     "schweinfurter-ruder-club-franken-von-1882"
    ],
-   "lengthKm": 13.7,
+   "lengthKm": 14.0,
    "up": {
-    "km": 11.66,
+    "km": 11.98,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "lock Bootsschleuse Ottendorf",
     "at": [
-     50.01677,
-     10.37531
+     50.01665,
+     10.3796
     ]
    },
    "down": {
@@ -5403,7 +5403,7 @@
     "koblenzer-ruderclub-rhenania-18771921",
     "post-sportverein-ev-koblenz"
    ],
-   "lengthKm": 19.8,
+   "lengthKm": 19.9,
    "up": {
     "km": 16.9,
     "end": "weir/lock",
@@ -5414,18 +5414,18 @@
     ]
    },
    "down": {
-    "km": 1.47,
+    "km": 1.49,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Koblenz",
     "at": [
-     50.36601,
-     7.58074
+     50.36649,
+     7.58227
     ]
    },
    "pictureBox": [
     7.49704,
     50.31929,
-    7.58464,
+    7.58466,
     50.36955
    ]
   },
@@ -6229,14 +6229,14 @@
    "clubs": [
     "stuttgart-cannstatter-ruderclub-von-1910"
    ],
-   "lengthKm": 6.4,
+   "lengthKm": 6.6,
    "up": {
-    "km": 3.73,
+    "km": 3.84,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Bad Cannstatt",
     "at": [
-     48.80103,
-     9.20967
+     48.80043,
+     9.21089
     ]
    },
    "down": {
@@ -6250,7 +6250,7 @@
    },
    "pictureBox": [
     9.20743,
-    48.80073,
+    48.79967,
     9.22941,
     48.83867
    ]
@@ -6270,7 +6270,7 @@
    "clubs": [
     "stuttgarter-rudergesellschaft-von-1899"
    ],
-   "lengthKm": 3.9,
+   "lengthKm": 4.0,
    "up": {
     "km": 0.17,
     "end": "weir/lock",
@@ -6281,19 +6281,19 @@
     ]
    },
    "down": {
-    "km": 3.41,
+    "km": 3.44,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Staustufe Bad Cannstatt",
     "at": [
-     48.79999,
-     9.21173
+     48.80022,
+     9.21112
     ]
    },
    "pictureBox": [
-    9.21021,
+    9.21011,
     48.77713,
     9.24768,
-    48.80023
+    48.80035
    ]
   },
   {
@@ -9137,19 +9137,19 @@
     ]
    },
    "down": {
-    "km": 0.24,
+    "km": 0.3,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir Wehr - Schleuse Böllberg",
     "at": [
-     51.46279,
-     11.94661
+     51.46266,
+     11.94765
     ]
    },
    "pictureBox": [
     11.91408,
     51.41641,
     11.95564,
-    51.46313
+    51.46398
    ]
   },
   {
