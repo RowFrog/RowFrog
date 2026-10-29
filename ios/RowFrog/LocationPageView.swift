@@ -952,16 +952,46 @@ struct TopTileGrid: Layout {
     var rowSpacing: CGFloat = 10
     var gap: CGFloat = 8
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? subviews.prefix(3).reduce(0) { $0 + $1.sizeThatFits(.unspecified).width } + 2 * gap
-        return CGSize(width: width, height: frames(width: width, subviews).map(\.maxY).max() ?? 0)
+    /// The frames last worked out, by width: measuring the tiles' text is
+    /// slow, and the page asks for the same width many times in one pass.
+    struct Cache {
+        var width: CGFloat?
+        var frames: [CGRect] = []
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        for (view, frame) in zip(subviews, frames(width: bounds.width, subviews)) {
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+
+    func updateCache(_ cache: inout Cache, subviews: Subviews) { cache = Cache() }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+        let width = proposal.width ?? subviews.prefix(3).reduce(0) { $0 + $1.sizeThatFits(.unspecified).width } + 2 * gap
+        return CGSize(width: width, height: frames(width: width, subviews, &cache).map(\.maxY).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+        for (view, frame) in zip(subviews, frames(width: bounds.width, subviews, &cache)) {
             view.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
                        proposal: ProposedViewSize(width: frame.width, height: frame.height))
         }
+    }
+
+    // The grid lines up with nothing outside it, so the stacks around it need
+    // not measure every tile again for its alignment guides.
+    func explicitAlignment(of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout Cache) -> CGFloat? {
+        nil
+    }
+
+    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout Cache) -> CGFloat? {
+        nil
+    }
+
+    private func frames(width: CGFloat, _ subviews: Subviews, _ cache: inout Cache) -> [CGRect] {
+        if cache.width != width {
+            cache = Cache(width: width, frames: frames(width: width, subviews))
+        }
+        return cache.frames
     }
 
     private func frames(width: CGFloat, _ subviews: Subviews) -> [CGRect] {
