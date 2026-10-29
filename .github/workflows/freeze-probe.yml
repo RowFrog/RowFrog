@@ -1,0 +1,60 @@
+name: Freeze probe (temporary, never merged)
+
+on:
+  push:
+    branches: [claude/project-thread-xu6j39]
+    paths: [".github/workflows/freeze-probe.yml", "ios/**"]
+
+jobs:
+  probe:
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Start the backend
+        run: |
+          (cd backend && nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
+          for club in mrc-1880 mrsv-bayern tutzinger-rv; do
+            curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/clubs/$club/forecast" || true
+          done
+      - name: Build
+        working-directory: ios
+        run: |
+          brew install xcodegen
+          xcodegen
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          found = [d for r, ds in json.load(sys.stdin)["devices"].items() if "iOS" in r for d in ds if d["name"].startswith("iPhone")]
+          best = [d for d in found if d["name"].endswith(" Pro")]
+          print((best or found)[-1]["udid"])')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcodebuild build -project RowFrog.xcodeproj -scheme RowFrog -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO | tail -5
+      - name: Swipe and turn
+        run: |
+          set -x
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowFrog.app
+          mkdir -p probe
+          SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog -RWSafetyAccepted YES -RWWhatsNewSeen 1000 \
+            -RWDemoClubs YES -RWTutorialSeen YES -RWNoTips YES -RWAllowsLandscape YES -RWStress YES
+          for i in $(seq -w 1 30); do
+            sleep 5
+            perl -e 'alarm 30; exec @ARGV' xcrun simctl io "$UDID" screenshot "probe/shot-$i.png" || echo "screenshot $i failed"
+          done
+          DATA=$(xcrun simctl get_app_container "$UDID" com.rowfrog.RowFrog data)
+          cp "$DATA/Documents/stress.log" probe/ || echo "no log"
+          cat probe/stress.log || true
+          xcrun simctl spawn "$UDID" log show --last 4m --predicate 'process == "RowFrog"' --style compact > probe/device.log 2>&1 || true
+          grep -c . probe/device.log || true
+          grep -i "RWSTRESS\|hang\|cycle\|AttributeGraph\|Bound preference\|onChange\|update multiple times" probe/device.log | tail -80 || true
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: freeze-probe
+          path: probe
