@@ -149,7 +149,7 @@ private struct FeelsLikeOptions: View {
                     Spacer()
                     MetricView(title: "Visibility", symbol: Condition.visibility.symbol, value: "12 km", size: 17)
                     Spacer()
-                    MetricView(title: "Rain, hail", symbol: Condition.precipitation.symbol, value: "None", size: 17)
+                    MetricView(title: "Precipitation", symbol: Condition.precipitation.symbol, value: "None", size: 17)
                     Spacer()
                     MetricView(title: "Ice", symbol: Condition.ice.symbol, value: "No data", size: 17)
                         .foregroundStyle(.secondary)
