@@ -378,7 +378,7 @@ export function baseLabel(condition) {
     waves: t("Waves"), fog: t("Fog"), heavy_rain: t("Heavy rain"), hail: t("Hail"), thunderstorm: t("Thunderstorm risk"),
     ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunrise / sunset"), cold_water: t("Very cold water"),
     cool_water: t("Cold-water shock possible"), shipping_stopped: t("Shipping stopped"), high_water: t("High water"),
-    current: t("Strong current"),
+    current: t("Strong current"), lake_lowered: t("Lake lowered"), lake_drained: t("Lake drained"),
   }[condition] ?? condition;
 }
 
@@ -425,6 +425,8 @@ export function reasonExplanation(condition, light) {
     case "shipping_stopped": return t("The river is above the gauge's shipping mark: even motor ships stay in.");
     case "high_water": return t("The river is at or above mean high water: strong current, flotsam and flooded banks.");
     case "current": return t("The current is strong (from the nearest gauge).");
+    case "lake_lowered": return t("The lake is let down for the winter: shallows, and a long way to the water.");
+    case "lake_drained": return t("The lake is let down for the winter: too little water at the club to row.");
     default: return condition;
   }
 }
@@ -467,7 +469,7 @@ export const CONDITION_ICONS = {
   temperature: "thermometer", feelsLike: "person-standing", humidity: "droplets", pressure: "gauge", wind: "wind", waves: "waves",
   waterTemperature: "thermometer-snowflake", precipitation: "cloud-rain", visibility: "binoculars", cloudCover: "cloud",
   thunderstorm: "cloud-lightning", uvIndex: "sun", ice: "snowflake", daylight: "sunrise", warning: "triangle-alert",
-  current: "circle-arrow-right",
+  current: "circle-arrow-right", waterLevel: "arrow-down-to-line",
 };
 
 export function conditionIcon(condition) {
