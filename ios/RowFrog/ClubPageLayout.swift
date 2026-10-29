@@ -17,6 +17,19 @@ struct BalancedColumns: Layout {
         return CGSize(width: width, height: arrange(subviews, width: width).height)
     }
 
+    // The columns line up with nothing outside them. Without these, an alignment
+    // query on them has SwiftUI place every card again to work it out, which
+    // froze the app in the top tile grid (TopTileGrid) on the iPhone.
+    func explicitAlignment(of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout ()) -> CGFloat? {
+        nil
+    }
+
+    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout ()) -> CGFloat? {
+        nil
+    }
+
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let placed = arrange(subviews, width: bounds.width)
         let column = columnWidth(bounds.width)

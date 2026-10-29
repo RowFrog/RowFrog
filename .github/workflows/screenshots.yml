@@ -284,10 +284,30 @@ jobs:
           WAIT=30 shoot 283-detail-larger-text light -RWOpenClub mrc-1880 -RWOpenCondition wind -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           shoot_pages 284-home-picture-low-power light -RWBackground sample:cloud-shell -RWLowPower YES
           shoot_n 285-list-picture-low-power 2 light -RWShowList YES -RWBackground sample:sunny-day -RWLowPower YES
-          shoot 286-lake-map-larger-text light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          WAIT=30 shoot 286-lake-map-larger-text light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           shoot 287-lake-map-low-power light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLowPower YES
           WAIT=30 shoot 288-weather-map-larger-text light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           WAIT=30 shoot 289-satellite-full-larger-text light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)' -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          # The main screens at the largest standard text size (XXXL) and at a large
+          # accessibility size, to see where the text size should stop growing
+          # (owner, 29 Oct 2026). Shoot them all with `only` = text-.
+          for size in XXXL AccessibilityL; do
+            T=(-UIPreferredContentSizeCategoryName "UICTContentSizeCategory$size")
+            s=$(echo "$size" | tr '[:upper:]' '[:lower:]')
+            shoot_pages "290-text-$s-tutzing" light -RWOpenClub tutzinger-rv "${T[@]}"
+            WAIT=30 shoot_pages "291-text-$s-river" light -RWOpenClub akademischer-ruderclub-wuerzburg "${T[@]}"
+            WAIT=30 shoot_pages "292-text-$s-forggensee" light -RWOpenClub ruderclub-forggensee "${T[@]}"
+            shoot_n "293-text-$s-settings" 3 light -RWShowSettings YES "${T[@]}"
+            WAIT=30 shoot "294-text-$s-detail-wind" light -RWOpenClub mrc-1880 -RWOpenCondition wind "${T[@]}"
+            WAIT=30 shoot_pages "295-text-$s-detail-rain" light -RWOpenClub mrc-1880 -RWOpenCondition precipitation "${T[@]}"
+            WAIT=30 shoot_pages "296-text-$s-detail-water" light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature "${T[@]}"
+            shoot "297-text-$s-search" light -RWSearch "Ammersee" "${T[@]}"
+            shoot "298-text-$s-legend" light -RWOpenClub mrc-1880 -RWLegend lights "${T[@]}"
+            WAIT=30 shoot "299-text-$s-radar-map" light -RWOpenClub mrc-1880 -RWPageLayout "conditions,radar" -RWOpenRadarMap YES -RWRadarLoop NO "${T[@]}"
+            WAIT=30 shoot "300-text-$s-lake-map" light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES "${T[@]}"
+            WAIT=30 shoot "301-text-$s-satellite" light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)' "${T[@]}"
+            GUIDE=1 shoot "302-text-$s-tour" light -RWNoTips YES -RWTutorialPage 0 "${T[@]}"
+          done
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
           shoot 24-hourly-12h-long-date light -RWScrollTo hourly -RWTimeFormat hours12 -RWDateFormat long
@@ -333,16 +353,16 @@ jobs:
           WAIT=30 shoot 202-lake-view-tile-twilight light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWLakeWide twilight
           shoot 203-lake-map-cold-water light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide cold
           shoot 92-lake-view-panel-expanded light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWPanel expanded
-          shoot 52-lake-view-waves light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer waves
+          WAIT=30 shoot 52-lake-view-waves light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer waves
           WAIT=30 shoot 53-lake-view-wind light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer wind
           WAIT=30 shoot 54-lake-view-spot light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeSpot 47.975,11.343
-          shoot 55-lake-view-german-dark dark -RWOpenClub tutzinger-rv -RWScrollTo lakeview -RWOpenLakeView YES -RWLanguage de
+          WAIT=30 shoot 55-lake-view-german-dark dark -RWOpenClub tutzinger-rv -RWScrollTo lakeview -RWOpenLakeView YES -RWLanguage de
           shoot 56-lake-view-tile-tutzing light -RWOpenClub tutzinger-rv -RWScrollTo lakeview
           route="47.99667,11.34745;47.983,11.338;47.965,11.331;47.945,11.325;47.925,11.318;47.905,11.305"
-          shoot 57-route-plan light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWPanel expanded
+          WAIT=30 shoot 57-route-plan light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWPanel expanded
           shoot 58-route-plan-later-start light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWLakeHour 3 -RWPanel expanded
           WAIT=30 shoot 59-route-plan-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWLanguage de -RWPanel expanded
-          shoot 88-route-follow-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWBoatAt 0.75 -RWPanel expanded
+          WAIT=30 shoot 88-route-follow-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWBoatAt 0.75 -RWPanel expanded
           shoot 89-route-follow-boat-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$route" -RWOutAndBack YES -RWBoatAt 0.75 -RWLanguage de -RWPanel expanded
           # Route planning tips and the "What's new" sheet after an update.
           tips=(-RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES)

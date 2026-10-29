@@ -125,6 +125,11 @@ enum RouteEdit {
         points.count >= 3 && !isLoop(points) ? points + [points[0]] : points
     }
 
+    /// Opens a loop again: the route ends at its last turning point.
+    static func open(_ points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {
+        isLoop(points) ? Array(points.dropLast()) : points
+    }
+
     /// Removes one turning point; the start stays. A loop left with one
     /// turning point opens again.
     static func remove(at index: Int, from points: [CLLocationCoordinate2D]) -> [CLLocationCoordinate2D] {

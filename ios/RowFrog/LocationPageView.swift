@@ -37,13 +37,14 @@ struct LocationPageView: View {
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
 
-    /// "Forecast from 14:51 · loaded 15:39 · Pull down to refresh", or only the
-    /// forecast's time when both are the same minute or nothing loaded yet.
+    /// "Forecast from 14:51 · loaded 15:39", or only the forecast's time when both
+    /// are the same minute or nothing loaded yet. No "pull down to refresh": as in
+    /// Apple's apps, the gesture goes without saying.
     static func updatedLine(forecast: Date, loaded: Date?) -> String {
         guard let loaded, Format.time(loaded) != Format.time(forecast) else {
-            return tr("Forecast from %@ · Pull down to refresh", Format.time(forecast))
+            return tr("Forecast from %@", Format.time(forecast))
         }
-        return tr("Forecast from %@ · loaded %@ · Pull down to refresh", Format.time(forecast), Format.time(loaded))
+        return tr("Forecast from %@ · loaded %@", Format.time(forecast), Format.time(loaded))
     }
 
     /// Whose satellite picture the page shows: the lake's or river section's, or for water
@@ -141,7 +142,13 @@ struct LocationPageView: View {
                     .padding(.horizontal)
                     .padding(.bottom, 24)
                     // Screenshot hook: `-RWScrollTo bottom` scrolls to the page's end.
-                    .overlay(alignment: .bottom) { Color.clear.frame(height: 1).id("bottom") }
+                    .overlay(alignment: .bottom) {
+                        Color.clear.frame(height: 1).id("bottom")
+                            // Cards under the floating buttons: the bottom blurs, as the top does.
+                            .onGeometryChange(for: Bool.self) { [bottom = pageMargins.bottom, end = geometry.frame(in: .global).maxY] proxy in
+                                bottom > 0 && proxy.frame(in: .global).maxY - 24 > end - bottom + 1
+                            } action: { PageScroll.shared.update(club.id, underBar: $0) }
+                    }
                     .frame(maxWidth: Self.maxContentWidth)
                     .frame(maxWidth: .infinity)
                     .onPreferenceChange(HourlyFrameKey.self) { frame in
@@ -569,6 +576,7 @@ struct LegendButton: View {
     var body: some View {
         Button { showing = true } label: {
             Image(systemName: "info.circle").font(.subheadline)
+                .tapArea(12)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.tint)
@@ -620,7 +628,8 @@ private struct NowCard: View {
                             }
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .contentShape(Rectangle())
+                            // 44 pt to tap; little upwards, where the title's info button is.
+                            .tapArea(EdgeInsets(top: 6, leading: 6, bottom: 14, trailing: 12))
                         }
                         .accessibilityLabel(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
                         .accessibilityHint(tr("Picks another boat for the rowing light."))
@@ -632,7 +641,7 @@ private struct NowCard: View {
                 }
                 Spacer(minLength: 0)
                 VStack(spacing: 2) {
-                    SkyIcon(sky: data.sky, night: hour.sunUp == false).font(.system(size: 34))
+                    SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
                     Text(data.sky.title).font(.caption).foregroundStyle(.secondary)
                 }
             }
@@ -961,16 +970,48 @@ struct TopTileGrid: Layout {
     var rowSpacing: CGFloat = 10
     var gap: CGFloat = 8
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? subviews.prefix(3).reduce(0) { $0 + $1.sizeThatFits(.unspecified).width } + 2 * gap
-        return CGSize(width: width, height: frames(width: width, subviews).map(\.maxY).max() ?? 0)
+    /// The frames last worked out, by width: measuring the tiles' text is
+    /// slow, and the page asks for the same width many times in one pass.
+    struct Cache {
+        var width: CGFloat?
+        var frames: [CGRect] = []
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        for (view, frame) in zip(subviews, frames(width: bounds.width, subviews)) {
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+
+    func updateCache(_ cache: inout Cache, subviews: Subviews) { cache = Cache() }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+        let width = proposal.width ?? subviews.prefix(3).reduce(0) { $0 + $1.sizeThatFits(.unspecified).width } + 2 * gap
+        return CGSize(width: width, height: frames(width: width, subviews, &cache).map(\.maxY).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+        for (view, frame) in zip(subviews, frames(width: bounds.width, subviews, &cache)) {
             view.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
                        proposal: ProposedViewSize(width: frame.width, height: frame.height))
         }
+    }
+
+    // The grid lines up with nothing outside it. Without these, every stack
+    // around it asking for an alignment guide had SwiftUI place all the tiles
+    // again to work it out, page after page; on the iPhone that froze the app
+    // (watchdog reports with TopTileGrid.placeSubviews under explicitAlignment).
+    func explicitAlignment(of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout Cache) -> CGFloat? {
+        nil
+    }
+
+    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout Cache) -> CGFloat? {
+        nil
+    }
+
+    private func frames(width: CGFloat, _ subviews: Subviews, _ cache: inout Cache) -> [CGRect] {
+        if cache.width != width {
+            cache = Cache(width: width, frames: frames(width: width, subviews))
+        }
+        return cache.frames
     }
 
     private func frames(width: CGFloat, _ subviews: Subviews) -> [CGRect] {

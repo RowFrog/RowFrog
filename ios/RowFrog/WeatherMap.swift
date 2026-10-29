@@ -585,7 +585,12 @@ struct WeatherMapScreen: View {
 
     private var tile: WeatherMapIndex.Tile? { store.index?.tile(for: point) }
 
-    var body: some View {
+    // The panels and buttons over the map stop growing at the largest standard
+    // text size: larger, they covered the map and their lines broke apart.
+    var body: some View { screen.dynamicTypeSize(...DynamicTypeSize.xxxLarge) }
+
+    @ViewBuilder
+    private var screen: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 WeatherMapView(point: point, clubID: clubID, overlays: overlays, start: startArea, bottomInset: bottomInset) { area = $0 }

@@ -76,7 +76,7 @@ enum WhatsNew {
         [
             Point(symbol: "arrow.left.arrow.right", text: tr("The way out and the way back lie side by side, each coloured for the time you row it.")),
             Point(symbol: "figure.rower", text: tr("Lake at the boat's time: move the boat along your route and see the lake when you get there.")),
-            Point(symbol: "arrow.triangle.capsulepath", text: tr("Row a loop: tap within 50 m of your club, or use Close loop.")),
+            Point(symbol: "arrow.triangle.capsulepath", text: tr("Row a loop: tap within 50 m of your club, or pick Loop under the way back.")),
             Point(symbol: "hand.draw", text: tr("Tap a turning point to delete just that one, or drag it to move it.")),
             Point(symbol: "map", text: tr("Open in Maps now gives directions to the club's address.")),
             Point(symbol: "rectangle.bottomhalf.inset.filled", text: tr("The panel under the lake map is smaller. Pull it up for the details.")),
@@ -757,7 +757,7 @@ struct RoutePanelTip: Tip {
 
 struct CloseLoopTip: Tip {
     var title: Text { Text(tr("Row a loop")) }
-    var message: Text? { Text(tr("Close the loop: tap within 50 m of your club, or use Close loop.")) }
+    var message: Text? { Text(tr("Close the loop: tap within 50 m of your club, or pick Loop under the way back.")) }
     var image: Image? { Image(systemName: "arrow.triangle.capsulepath") }
 }
 
@@ -781,13 +781,13 @@ struct StretchPointTip: Tip {
 
 struct OneWayTip: Tip {
     var title: Text { Text(tr("One way or out and back")) }
-    var message: Text? { Text(tr("New routes go one way. Turn on Out and back to row the same way back.")) }
+    var message: Text? { Text(tr("New routes go one way. Pick Out and back under the way back to row the same way back.")) }
     var image: Image? { Image(systemName: "arrow.uturn.backward") }
 }
 
 struct RowImportTip: Tip {
     var title: Text { Text(tr("Import a row")) }
-    var message: Text? { Text(tr("Rowed it before? Bring in a row from Apple Health or a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) in the bookmark menu, and plan with your real route and pace.")) }
+    var message: Text? { Text(tr("Rowed it before? Bring in a row from Apple Health or a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) in the Routes menu, and plan with your real route and pace.")) }
     var image: Image? { Image(systemName: "square.and.arrow.down.on.square") }
 }
 

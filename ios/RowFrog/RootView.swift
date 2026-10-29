@@ -225,6 +225,10 @@ struct RootView: View {
                 .ignoresSafeArea(edges: .top)
         }
         .overlay(alignment: .bottom) {
+            BottomEdgeFade(homeIndicator: insets.bottom, underBar: PageScroll.shared.underBar.contains(selection))
+                .ignoresSafeArea(edges: .bottom)
+        }
+        .overlay(alignment: .bottom) {
             let forecast = forecasts.forecasts[selection]
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
                     showList: showsListButton ? { showingList = true } : nil,
@@ -308,6 +312,32 @@ struct RootView: View {
 /// Behind the clock and the signal icons: the cards blur and fade out as they
 /// scroll under, as Apple's guide asks for the status bar; a plain strip in
 /// Low Power Mode, which draws nothing live.
+/// The same soft blur at the bottom, behind the floating buttons, while cards
+/// are under them, as Apple's scroll edge effect; nothing at a page's end.
+/// Low Power Mode draws the buttons solid and needs no blur behind them.
+private struct BottomEdgeFade: View {
+    let homeIndicator: CGFloat
+    let underBar: Bool
+
+    var body: some View {
+        let bar = homeIndicator + PageBar.height
+        let height = bar + TopEdgeFade.tail
+        Rectangle().fill(.thinMaterial)
+            .mask {
+                LinearGradient(stops: [.init(color: .clear, location: 0),
+                                       .init(color: .black.opacity(0.8), location: TopEdgeFade.tail / max(height, 1)),
+                                       .init(color: .black, location: 1)],
+                               startPoint: .top, endPoint: .bottom)
+            }
+            .frame(height: height)
+            .frame(maxHeight: .infinity, alignment: .bottom)
+            .opacity(underBar && !PowerState.shared.lowPower ? 1 : 0)
+            .animation(.easeInOut(duration: 0.2), value: underBar)
+            .allowsHitTesting(false)
+            .accessibilityHidden(true)
+    }
+}
+
 private struct TopEdgeFade: View {
     let statusBar: CGFloat
     /// Whether cards are under the clock; at the top of a page nothing is drawn.
@@ -317,7 +347,7 @@ private struct TopEdgeFade: View {
     let light: Light?
     let stale: Bool
     /// How far the fade reaches below the bar.
-    static let tail: CGFloat = 14
+    static let tail: CGFloat = 28
 
     var body: some View {
         let bar = statusBar + (title == nil ? 0 : InlineClubTitle.height)
@@ -327,10 +357,13 @@ private struct TopEdgeFade: View {
                     .frame(height: bar)
             } else {
                 let height = bar + Self.tail
-                Rectangle().fill(.regularMaterial)
+                // Thin, so the cards still show through blurred, as under Mail's
+                // bar, and fading out over a longer way rather than ending in a band.
+                Rectangle().fill(.thinMaterial)
                     .mask {
                         LinearGradient(stops: [.init(color: .black, location: 0),
-                                               .init(color: .black, location: (bar - statusBar * 0.4) / max(height, 1)),
+                                               .init(color: .black, location: statusBar * 0.5 / max(height, 1)),
+                                               .init(color: .black.opacity(0.8), location: bar / max(height, 1)),
                                                .init(color: .clear, location: 1)],
                                        startPoint: .top, endPoint: .bottom)
                     }
@@ -386,9 +419,17 @@ private struct PageBar: View {
     /// The selected club's hour now, for the lights in the boat menu.
     let now: ForecastHour?
     let waterC: Double?
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// White over dark glass, black over light, as the system's page dots.
+    private var dotColor: Color { colorScheme == .dark ? .white : .black }
 
     /// The buttons' height, which every piece shares.
     static let buttonHeight: CGFloat = 44
+    /// Each page dot's width, to tap; sliding along the dots needs no aim.
+    private static let dotWidth: CGFloat = 16
+    /// Clubs passed while sliding along the dots, each with a tick.
+    @State private var dragSteps = 0
     /// What the pages keep free above the home indicator: the buttons and a gap.
     static let height: CGFloat = buttonHeight + 12
     /// The cog and the boat with their piece's inner margins; the list's side
@@ -415,8 +456,9 @@ private struct PageBar: View {
             HStack(spacing: 0) {
                 ForEach(clubs) { club in
                     let current = club.id == selection
-                    // The current page differs in size and shape, not only in shade:
-                    // Liquid Glass lifts dim symbols, which hid a fainter shade alone.
+                    // Fixed colours, as Weather's dots: Liquid Glass draws the label
+                    // colours vibrant, which evened out a fainter shade of them, so the
+                    // current page did not light up.
                     Group {
                         if club.id == homeID {
                             Image(systemName: current ? "house.fill" : "house").font(.caption2)
@@ -424,16 +466,27 @@ private struct PageBar: View {
                             Circle().frame(width: current ? 8 : 6, height: current ? 8 : 6)
                         }
                     }
-                    .foregroundStyle(current ? Color.primary : Color.primary.opacity(0.3))
+                    .foregroundStyle(dotColor.opacity(current ? 1 : 0.4))
                     .accessibilityAddTraits(current ? .isSelected : [])
                     // Wider than the dot and as tall as the bar, so it is easier to hit.
-                    .frame(width: 16, height: Self.buttonHeight)
+                    .frame(width: Self.dotWidth, height: Self.buttonHeight)
                     .contentShape(Rectangle())
                     .onTapGesture { withAnimation { selection = club.id } }
                     .accessibilityLabel(club.displayName)
                 }
             }
             .padding(.horizontal, 8)
+            // A finger sliding along the dots moves through the clubs, as in Weather.
+            .contentShape(Capsule())
+            .gesture(DragGesture(minimumDistance: 6).onChanged { drag in
+                guard !clubs.isEmpty else { return }
+                let index = min(max(Int((drag.location.x - 8) / Self.dotWidth), 0), clubs.count - 1)
+                if clubs[index].id != selection {
+                    selection = clubs[index].id
+                    dragSteps += 1
+                }
+            })
+            .sensoryFeedback(.selection, trigger: dragSteps)
             .floatingControl(Capsule())
             Spacer(minLength: 8)
             Group {
