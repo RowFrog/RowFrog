@@ -237,6 +237,11 @@ def to_jpeg(png: bytes, quality: int = JPEG_QUALITY) -> bytes:
 
 
 def jpeg(client: httpx.Client, bbox, width: int, height: int, day: date) -> bytes:
+    return to_jpeg(png(client, bbox, width, height, day))
+
+
+def png(client: httpx.Client, bbox, width: int, height: int, day: date) -> bytes:
+    """The true-colour picture of the box on that day, lossless."""
     request = {
         "input": {
             "bounds": {"bbox": list(bbox), "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
@@ -258,7 +263,7 @@ def jpeg(client: httpx.Client, bbox, width: int, height: int, day: date) -> byte
         "evalscript": PICTURE_SCRIPT,
     }
     resp = _post(client, f"{SH}/api/v1/process", json=request, headers={"Accept": "image/png"}, timeout=120)
-    return to_jpeg(resp.content)
+    return resp.content
 
 
 def client() -> httpx.Client | None:
