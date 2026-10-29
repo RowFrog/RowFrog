@@ -12,8 +12,8 @@ import { h, load, save, setTitle, dot, lightTitle, conditionIcon, conditionTexts
 
 const p = (iconName, text) => ({ icon: iconName, text });
 
-/** The pages, as TourPage without the club choice. */
-export function tourPages() {
+/** The pages, as TourPage without the club choice; the river page only with a river or canal club in the list. */
+export function tourPages(river = false) {
   return [
     {
       id: "welcome", icon: "sailboat", tint: "blue", title: key("Welcome to Row Frog"), intro: key("Weather and a rowing forecast for your club's launch point."),
@@ -66,6 +66,14 @@ export function tourPages() {
         p("globe", key("Below it, the latest satellite picture of the lake, with a switch to the clearest one.")),
       ],
     },
+    river && {
+      id: "river", icon: "circle-arrow-right", tint: "teal", title: key("Rivers and canals"), intro: key("A river or canal club gets its own two tiles."),
+      points: [
+        p("map", key("The River view or Canal view shows your stretch between weirs or locks, with markers where it ends.")),
+        p("circle-arrow-right", key("The Current tile shows the nearest gauge's flow speed, water level and trend. It is amber at high water or a fast current, red when shipping is stopped or the current is too strong.")),
+        p("pointer", key("Tap it for the level chart and your pace upstream and downstream.")),
+      ],
+    },
     {
       id: "locations", icon: "list", tint: "blue", title: key("Your locations"), intro: key("Keep all the places you row in one list."),
       points: [
@@ -86,7 +94,7 @@ export function tourPages() {
         p("circle-help", key("You can watch this tour again in the settings.")),
       ],
     },
-  ];
+  ].filter(Boolean);
 }
 
 export const tourSeen = () => load("rf.tourSeen", false) === true;
@@ -105,8 +113,8 @@ function extra(page, languagePicker) {
 }
 
 /** The tour: a page at a time with dots, Skip, Next and Let's row at the end. */
-export function renderTour(root, { languagePicker, wireLanguage, done }) {
-  const pages = tourPages();
+export function renderTour(root, { languagePicker, wireLanguage, done, river }) {
+  const pages = tourPages(river);
   let index = Math.min(Math.max(0, load("rf.tourPage", 0)), pages.length - 1);
   const finish = () => {
     save("rf.tourSeen", true);
