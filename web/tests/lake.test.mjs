@@ -55,6 +55,12 @@ test("route edits keep the start and close loops", () => {
   assert.ok(RouteEdit.isLoop(points));
   assert.equal(RouteEdit.remove(0, points), points);
   assert.equal(RouteEdit.remove(1, points).length, 2);
+  // The way-back choice opens a loop again, and closes it (RouteEdit.open, app #204).
+  const open = RouteEdit.open(points);
+  assert.equal(open.length, 3);
+  assert.ok(!RouteEdit.isLoop(open));
+  assert.equal(RouteEdit.open(open), open);
+  assert.ok(RouteEdit.isLoop(RouteEdit.close(open)));
 });
 
 test("plans a route through the hours and finds a better start", () => {
