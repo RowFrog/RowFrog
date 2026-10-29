@@ -286,6 +286,7 @@ svg.filled { width: 22px; height: 22px; }
 .bottom .piece .tool { color: var(--text); min-width: 44px; height: 44px; justify-content: center; font-size: 22px; }
 .bottom .piece .tool.boat { min-width: 56px; }
 .bottom .piece.round { width: 44px; padding: 0; justify-content: center; }
+.bottom .gap { flex: 1; }
 .bottom .dots { margin: 0 auto; display: flex; justify-content: center; align-items: center; padding: 0 8px; max-width: calc(100% - 2 * 116px); overflow: hidden; }
 /* Fixed black over light, white over dark, as Weather's dots: full strength for the current page, 40 % for the others (RootView.PageBar). */
 .bottom .dots { touch-action: none; }
@@ -295,26 +296,22 @@ svg.filled { width: 22px; height: 22px; }
 .bottom .dots a.on span { width: 8px; height: 8px; }
 .bottom .dots a.on svg path:last-child { fill: currentColor; }
 
-/* Behind the clock: clear at rest; once the page scrolls under it, a thin blur, solid down to half the status bar,
-   80 % at the bar's bottom, then fading out over 28 px, so the cards still show through (RootView.TopEdgeFade). */
-:root { --safe-top: env(safe-area-inset-top, 0px); --top-bar: 0px; }
-body.title-gone { --top-bar: 44px; }
-body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 9; height: calc(var(--safe-top) + var(--top-bar) + 28px); pointer-events: none;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
-  --fade: linear-gradient(#000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) calc(var(--safe-top) + var(--top-bar)), transparent);
-  -webkit-mask-image: var(--fade); mask-image: var(--fade);
-  opacity: 0; transition: opacity .2s ease-in-out; }
-body.scrolled::before { opacity: 1; }
-/* The same blur at the bottom, behind the floating buttons, while cards are under them; nothing at the page's end (BottomEdgeFade). */
-body::after { content: ""; position: fixed; bottom: 0; left: 0; right: 0; z-index: 9; height: calc(max(8px, env(safe-area-inset-bottom)) + 44px + 28px); pointer-events: none;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
-  --fade: linear-gradient(to top, #000, rgba(0, 0, 0, .8) calc(100% - 28px), transparent);
-  -webkit-mask-image: var(--fade); mask-image: var(--fade);
-  opacity: 0; transition: opacity .2s ease-in-out; }
-body.under-bar::after { opacity: 1; }
+/* A browser has no clock to keep readable, so the website draws no blur strips (the app's TopEdgeFade and
+   BottomEdgeFade). Only on an iPhone's home screen, where the page runs under the status bar, a thin blur
+   keeps the clock readable once the page scrolls under it. */
+:root { --safe-top: env(safe-area-inset-top, 0px); --main-left: 0px; --main-width: 100%; }
+@media (display-mode: standalone) {
+  body::before { content: ""; position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 9; height: calc(var(--safe-top) + 16px); pointer-events: none;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
+    --fade: linear-gradient(#000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) var(--safe-top), transparent);
+    -webkit-mask-image: var(--fade); mask-image: var(--fade);
+    opacity: 0; transition: opacity .2s ease-in-out; }
+  body.scrolled::before { opacity: 1; }
+}
 /* The club's name and light, small, once the big title has scrolled away (InlineClubTitle). */
-.top-title { position: fixed; top: 0; left: 0; right: 0; z-index: 10; height: 44px; padding: var(--safe-top) 60px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
-  font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: content-box; }
+/* A plain bar in the page's colour, so the 48 hours' header pinned under it hides the rows that scrolled past. */
+.top-title { position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 10; height: calc(var(--safe-top) + 44px); padding: var(--safe-top) 60px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: border-box; background: var(--bg); border-bottom: .5px solid var(--line); }
 .top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.title-gone .top-title { opacity: 1; }
 body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }

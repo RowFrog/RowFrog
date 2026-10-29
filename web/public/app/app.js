@@ -174,7 +174,8 @@ function bottomBar(currentId, raw) {
       <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
       <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${icon("sailboat")}<small>${h(boatShort(selectedBoat()))}</small></button>
     </span></span>
-    <span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
+    ${sideList.matches ? `<span class="gap"></span>` // The list beside the page switches clubs already.
+    : `<span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>`}
     <span class="bar-side end"><a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a></span>
   </nav>`;
 }
@@ -644,15 +645,14 @@ function updateTopBar() {
   const title = root.querySelector(".club-head h1");
   const bar = root.querySelector(".top-title");
   const gone = Boolean(title && bar && title.getBoundingClientRect().bottom < bar.offsetHeight);
-  if (gone) {
-    // Over the club page's own column, beside the list on wide screens.
-    const page = title.closest("main").getBoundingClientRect();
-    bar.style.left = `${page.left}px`;
-    bar.style.width = `${page.width}px`;
+  // The bar and the strip behind the clock cover the page's own column only, never the list beside it.
+  const main = root.querySelector("main");
+  if (main) {
+    const page = main.getBoundingClientRect();
+    body.style.setProperty("--main-left", `${page.left}px`);
+    body.style.setProperty("--main-width", `${page.width}px`);
   }
   body.classList.toggle("title-gone", gone);
-  // Cards under the floating buttons at the bottom: the bottom blurs too (BottomEdgeFade).
-  body.classList.toggle("under-bar", Boolean(root.querySelector(".bottom")) && document.documentElement.scrollHeight - window.scrollY - window.innerHeight > 24);
 }
 window.addEventListener("scroll", updateTopBar, { passive: true });
 window.addEventListener("hashchange", () => requestAnimationFrame(updateTopBar));
