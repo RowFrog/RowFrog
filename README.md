@@ -243,6 +243,12 @@ overrides it. On larger lakes the Copernicus Lake Ice Extent satellite map
 checks it, and the ice tile shows the latest pass, e.g. "Satellite, Today:
 open water".
 
+**Lowered lakes.** The Forggensee is let down in winter. While its level
+(GKD gauge Roßhaupten) is below 779.8 m, a Water level tile takes the ice
+tile's place, with the last week's levels in its detail view; the lake counts
+as lowered (amber), and below 777.5 m as drained (red). The levels are set in
+`data/lake-levels.json`. The website shows the tile too.
+
 **Satellite pictures.** A card near the end of the page shows the latest
 Sentinel-2 picture of the lake, with a line such as "Sentinel-2 · 22 Oct ·
 25 % of the lake under cloud" and an "i" that explains why a new picture
