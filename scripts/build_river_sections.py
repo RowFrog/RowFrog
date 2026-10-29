@@ -159,12 +159,13 @@ class Frame:
 class River:
     """The walkable graph of one named river or canal near a club."""
 
-    def __init__(self, frame: Frame, ways: list[dict], name: str, els: list[dict]):
+    def __init__(self, frame: Frame, ways: list[dict], name: str, els: list[dict], continues: set[int] = frozenset()):
         self.frame, self.name = frame, name
         self.coords, self.graph, way_of = {}, {}, {}
         self.kind = Counter()
         lock_ways = {e["id"] for e in els if e["type"] == "way" and e.get("tags", {}).get("lock") == "yes"}
-        river = [w for w in ways if w["tags"].get("name", "") == name]
+        # The named lines, and the unnamed pieces of the same fairway between them (osm_extract).
+        river = [w for w in ways if w["tags"].get("name", "") == name or w["id"] in continues]
         for w in river:
             self.kind[w["tags"]["waterway"]] += len(w["nodes"])
             for nid, p in zip(w["nodes"], w["geometry"]):
@@ -431,7 +432,7 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
         river_ways = ways if i == 0 else ex.lines_named(river_name, lat, lon, REACH_KM + 2)
         if not any(w["tags"].get("name") == river_name for w in river_ways):
             continue
-        river = River(frame, river_ways, river_name, els)
+        river = River(frame, river_ways, river_name, els, data.get("continues", set()) if i == 0 else set())
         starts = [river.nearest(*p) for p in clubs_m]
         starts = [s for s in starts if s is not None and math.hypot(*river.coords[s]) <= INCLUDE_NEAR_KM * 1000]
         if not starts:

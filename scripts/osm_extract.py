@@ -106,6 +106,7 @@ class Extract:
         lines = [self.ways[w] for w in near if self.ways[w]["tags"].get("waterway") in ("river", "canal")]
         lines = [w for w in lines if min(dist_km(p) for p in w["geometry"]) <= 1.5]
         els = {("way", w["id"]): w for w in lines}
+        continues = set()
         dlat, dlon = (max_km + 2) / 110.574, (max_km + 2) / (111.32 * k)
         box = list(_cells(lat - dlat, lon - dlon, lat + dlat, lon + dlon))
         if lines:
@@ -121,6 +122,9 @@ class Extract:
                         if w["tags"].get("name") == name and w["tags"].get("waterway") in ("river", "canal"):
                             els[("way", wid)] = w
                 named = [w for w in els.values() if w["tags"].get("name") == name]
+                continues = self._unnamed_fairway(named, dist_km, max_km + 2)
+                for wid in continues:
+                    els[("way", wid)] = self.ways[wid]
                 for w in named:
                     for nid in w["nodes"]:
                         for other in self.ways_of_node.get(nid, ()):
@@ -165,7 +169,30 @@ class Extract:
                     counted.add(wid)
                     g = w["geometry"]
                     lengths[n] += sum(math.hypot((a["lat"] - b["lat"]) * 110.574, (a["lon"] - b["lon"]) * 111.32 * k) for a, b in zip(g, g[1:]))
-        return {"elements": [e for e in els.values() if e["type"] != "marker"], "lengths": {n: round(v) for n, v in lengths.items()}}
+        return {"elements": [e for e in els.values() if e["type"] != "marker"], "lengths": {n: round(v) for n, v in lengths.items()},
+                "continues": continues}
+
+    def _unnamed_fairway(self, named: list[dict], dist_km, max_km: float) -> set[int]:
+        """Pieces of a river's fairway the map left without the name (an unnamed
+        line with a CEMT class, as on the Saar in Saarbrücken or the Teltowkanal
+        below the Kleinmachnow lock): chained on from the ends of the named
+        lines, so the walk does not stop where the name is missing."""
+        found, seen = set(), set()
+        frontier = {n for w in named for n in (w["nodes"][0], w["nodes"][-1])}
+        while frontier:
+            seen |= frontier
+            nxt = set()
+            for nid in frontier:
+                for wid in self.ways_of_node.get(nid, ()):
+                    w = self.ways[wid]
+                    if wid in found or w["tags"].get("name") or "CEMT" not in w["tags"]:
+                        continue
+                    if min(dist_km(p) for p in w["geometry"]) > max_km:
+                        continue
+                    found.add(wid)
+                    nxt |= {w["nodes"][0], w["nodes"][-1]} - seen
+            frontier = nxt
+        return found
 
 
     def areas(self, south: float, west: float, north: float, east: float) -> list[tuple[dict, object]]:

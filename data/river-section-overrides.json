@@ -46,6 +46,11 @@
     "ruderclub-kleinmachnow-stahnsdorf-teltow": {"direction": "west"},
     "wassersportverein-herne-1920": {"direction": "east"},
     "ruder-club-bergedorf": {"direction": "west and south"},
+    "breisacher-ruderverein": {
+      "include": ["Vieux Rhin / Altrhein", "Le Rhin / Rhein"],
+      "direction": "north",
+      "note": "boathouse at the Breisach lock beside the Kulturwehr; rows north on the Altrhein to where it meets the Grand Canal d'Alsace and on down the Rhine (assumed, hand check 2026-10-29)"
+    },
     "karlsruher-ruder-verein-wiking-von-1879": {
       "include": ["Rheinhafen", "Rhein"],
       "note": "launch point at the boathouse in the Rheinhafen (Hansastr. 18 b), rows out onto the Rhine"
