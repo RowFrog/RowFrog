@@ -5,13 +5,13 @@
 import { t, lang, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import { fold, town, place, waterUnknown } from "./logic.js";
-import { store, getJSON, h, flag, setTitle, testing, footerLinks, loadCatalog, savedClub, lakeTitle, load, save } from "./shared.js";
+import { store, loadCountryIndex, h, flag, setTitle, testing, footerLinks, loadCatalog, savedClub, lakeTitle, load, save } from "./shared.js";
 
 let index = null;
 
 /** The countries with their club counts (countries/index). */
 export async function loadCountries() {
-  index ??= await getJSON("countries/index");
+  index ??= await loadCountryIndex();
   return index;
 }
 
