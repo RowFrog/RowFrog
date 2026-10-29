@@ -74,6 +74,10 @@ jobs:
           print(d["clubId"], len(d["hours"]), "hours, now:", d["hours"][0]["light"], "| DWD:", w["status"], "lake area:", w["lakeArea"],
                 "warnings:", [(i["kind"], i["event"], i["severity"], i["sample"]) for i in w["items"]])'
           done
+          # Lakes of single shots: warmed too, or their lake view may still be loading.
+          for lake in aussenalster regattastrecke-oberschleissheim; do
+            curl -sS -f -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/lakes/$lake/view" || echo "Lake view $lake failed"
+          done
           curl -sS -f -m 200 --retry 3 --retry-all-errors --retry-delay 5 http://localhost:8000/lakes/starnberger-see/view \
             | python3 -c '
           import json, sys
