@@ -241,7 +241,7 @@ class River:
                 return label
         return None
 
-    def walk(self, start: int, downstream: bool, ignore_barriers_m: float = 0.0) -> dict:
+    def walk(self, start: int, downstream: bool, ignore_barriers_m: float = 0.0, reach_m: float = REACH_KM * 1000) -> dict:
         """Dijkstra along the river one way, up to REACH_KM: distances, the tree
         of edges taken, where it stops (weir, lock, mouth, line end) and what it passes."""
         dist, prev, heap, stops, events, seen = {start: 0.0}, {}, [(0.0, start)], [], [], set()
@@ -262,7 +262,7 @@ class River:
                     stops.append((d + w / 2, "barrier", label))
                     continue
                 nd = d + w
-                if nd > REACH_KM * 1000:
+                if nd > reach_m:
                     continue
                 if nd < dist.get(m, math.inf):
                     dist[m] = nd
@@ -449,8 +449,10 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
         start = min(starts, key=lambda s: math.hypot(*river.coords[s]))
         canal = canal or (i == 0 and river.is_canal)
         for downstream in (True, False):
+            key = "down" if downstream else "up"
+            offset = carry_km.get(river_name, 0.0) if carry.get(river_name) == key else 0.0
             # Where a weir or lock sits right at the boathouse, the owner named the side the club rows on.
-            walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0)
+            walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=(REACH_KM - offset) * 1000)
             bearing = river.bearing(walk)
             behind = None
             if allowed and bearing is not None and not any(abs((bearing - a + 180) % 360 - 180) <= 67.5 for a in allowed):
@@ -458,15 +460,14 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
                 behind = override.get("behindKm")
                 if not behind:
                     continue
-            key = "down" if downstream else "up"
             cap = CAP_CANAL_KM if river.is_canal else (CAP_DOWN_KM if downstream else CAP_UP_KM)
+            cap = max(cap - offset, 0.5)  # counted from the club, also on a water the side ran into
             limit = side_limit(river, walk, lengths, harbours_along(river, walk, harbour_polys), cap, km_signs)
             if behind and limit[0] > behind:
                 limit = (behind, "in front", "in front of the boathouse")
             if VERBOSE:
                 print(f"  {river_name} {key}: reach {max(walk['dist'].values()) / 1000:.2f} km, stops "
                       + "; ".join(f"{d / 1000:.2f} {kind} {label}".strip() for d, kind, label in walk["stops"][:12]), flush=True)
-            offset = carry_km.get(river_name, 0.0) if carry.get(river_name) == key else 0.0
             end_xy = river.coords[min(walk["dist"], key=lambda n: abs(walk["dist"][n] - limit[0] * 1000))]
             # Ends right where it runs into another named water (an arm with its own name): walk on in that one.
             joined = limit[2] if limit[1] == "mouth" else ""
