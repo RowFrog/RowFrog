@@ -284,6 +284,7 @@ struct RainRadarCard: View {
         .accessibilityHint(tr("Opens the rain radar map"))
         .fullScreenCover(isPresented: $showingMap) {
             RadarMapScreen(point: point, clubID: clubID, reference: radar?.reference, step: RadarWindow.step)
+                .diagnosisNamed("radar map")
         }
         .onChange(of: showingMap) { if showingMap { RadarMapTip().invalidate(reason: .actionPerformed) } }
     }

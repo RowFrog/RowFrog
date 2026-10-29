@@ -1371,6 +1371,7 @@ private struct HourDetailSheet: View {
             .fullScreenCover(isPresented: $showingLakeMap) {
                 if let view = lakeViews.views[forecast.lakeId] {
                     LakeMapScreen(view: view, clubID: club.id, at: hour.time)
+                        .diagnosisNamed("lake map")
                 }
             }
         }

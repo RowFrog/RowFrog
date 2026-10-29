@@ -5,6 +5,7 @@ struct RowFrogApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
+        DiagnosisLog.start()
         Tutorial.configureTips()
     }
 
