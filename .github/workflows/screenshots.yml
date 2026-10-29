@@ -356,10 +356,10 @@ jobs:
           WAIT=30 shoot 202-lake-view-tile-twilight light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWLakeWide twilight
           shoot 203-lake-map-cold-water light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide cold
           # The regatta course lies along the usual stripes, so its stripes run the other way.
-          shoot 305-lake-map-dark-regatta light -RWOpenClub rudergesellschaft-muenchen-1972 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide dark
+          WAIT=30 shoot 305-lake-map-dark-regatta light -RWOpenClub rudergesellschaft-muenchen-1972 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide dark
           WAIT=30 shoot 306-lake-view-tile-dark-regatta light -RWOpenClub rudergesellschaft-muenchen-1972 -RWScrollTo lakeview -RWLakeWide dark
           # Three clubs share one launch point on the Außenalster: the page's club stays on top.
-          shoot 307-lake-map-shared-boathouse dark -RWOpenClub der-hamburger-und-germania-ruder-club -RWScrollTo lakeview -RWOpenLakeView YES
+          WAIT=30 shoot 307-lake-map-shared-boathouse dark -RWOpenClub der-hamburger-und-germania-ruder-club -RWScrollTo lakeview -RWOpenLakeView YES
           shoot 92-lake-view-panel-expanded light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWPanel expanded
           WAIT=30 shoot 52-lake-view-waves light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer waves
           WAIT=30 shoot 53-lake-view-wind light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer wind
