@@ -85,7 +85,8 @@ class HourConditions:
     precipitation_mm: float | None = None
     # WMO weather code; 96 and 99 are thunderstorms with hail.
     weather_code: int | None = None
-    # Rivers: the gauge's level or current ("shipping_stopped", "high_water", "current"), see river.py.
+    # Rivers: the gauge's level or current ("shipping_stopped", "high_water", "current"), see river.py;
+    # lakes lowered on purpose: "lake_lowered" or "lake_drained", see lake_level.py.
     river_name: str = "current"
     river: Light = Light.GREEN
 

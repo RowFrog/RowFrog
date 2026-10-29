@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import ice, lake_view, locations, outlines, river, water_estimate, water_stations, weather_models
+from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
 from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, meteoalarm, lake_temperature_satellite, open_meteo, pegelonline
@@ -223,6 +223,20 @@ async def _gauge_readings(client: httpx.AsyncClient, gauge: river.Gauge):
             found.append([])
     _gauge_cache[gauge.id] = (time.monotonic(), tuple(found))
     return tuple(found)
+
+
+async def _lake_levels(client: httpx.AsyncClient, lake: lake_level.LevelLake):
+    """The lake gauge's levels of the last week, cached for clubs on the same lake."""
+    cached = _gauge_cache.get("gkd:" + lake.station)
+    if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
+        return cached[1]
+    try:
+        found = await gkd.fetch_levels(client, lake.station)
+    except httpx.HTTPError as e:
+        logging.getLogger(__name__).warning("GKD level %s failed: %r", lake.name, e)
+        return None
+    _gauge_cache["gkd:" + lake.station] = (time.monotonic(), found)
+    return found
 
 
 def _section_width_m(lake: locations.Lake, rings) -> float | None:
@@ -712,6 +726,9 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         air_days = await _air_days(client, lake, now.astimezone(LOCAL).date()) if lake.kind == "lake" else None
         gauge = river.gauge_for(club.id) if lake.kind == "river" else None
         readings = await _gauge_readings(client, gauge) if gauge else None
+        # Lakes lowered on purpose (Forggensee in winter): the level from the lake's gauge.
+        level_lake = lake_level.for_lake(lake.id) if lake.kind == "lake" else None
+        levels = await _lake_levels(client, level_lake) if level_lake else None
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
     weather = _from_now(weather, now)
     if not weather:
@@ -722,6 +739,10 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         river_now = river.now_at(gauge, *readings, _section_width_m(lake, rings), lake.name, now)
     river_reason = river_now.light if river_now else None
     river_until = now + timedelta(hours=river.GAUGE_HOURS)
+    level_now = lake_level.now_at(level_lake, levels, now) if level_lake and levels else None
+    if level_now is not None and level_now.light:
+        # A lake's level changes over days, so a lowered lake counts for the whole forecast.
+        river_reason, river_until = level_now.light, now + timedelta(days=30)
     # The light follows the water as measured, else as estimated (satellite or
     # air), so two clubs with water below 15 °C get the same advice.
     water_c = water.celsius if water else estimate.celsius if estimate else water_model_c
@@ -761,12 +782,16 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         # Rivers: level, trend and current now from the gauge, for the Current tile (river.py);
         # without a gauge an empty block, so the app still shows the tile instead of the ice tile.
         "river": river.to_json(river_now, gauge) if gauge else {"gauge": None, "now": None} if lake.kind == "river" else None,
+        # Lakes lowered on purpose: the level from the lake's gauge (lake_level.py); while
+        # the lake is lowered the app shows the Water level tile instead of the ice tile.
+        "waterLevel": lake_level.to_json(level_now, level_lake) if level_lake else None,
         # A picked model gets its own weather credit; the hours past its reach stay DWD's.
         "attribution": (ATTRIBUTION if picked is None else [picked.credit, *ATTRIBUTION[1:]])
         + ([STATION_CREDIT[station.network]] if water is not None and station.network in STATION_CREDIT else [])
         + ([WARNING_CREDIT[club.country]] if club.country in WARNING_CREDIT else [])
         + ([] if estimate is None else [SATELLITE_WATER_CREDIT[estimate.reading.source]])
-        + (["River level: WSV PEGELONLINE, DL-DE Zero 2.0"] if river_now is not None else []),
+        + (["River level: WSV PEGELONLINE, DL-DE Zero 2.0"] if river_now is not None else [])
+        + (["Lake level: " + lake_level.ATTRIBUTION] if level_now is not None else []),
         "forecastSource": weather_models.source_json(chain, len(hours))
         if picked is None
         else weather_models.picked_source_json(chain, picked, len(hours)),

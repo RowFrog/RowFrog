@@ -23,6 +23,8 @@ from zoneinfo import ZoneInfo
 import httpx
 
 PAGE_URL = "https://www.gkd.bayern.de/en/{kind}/watertemperature/bayern/{station}/current-values/table"
+# A lake's water level, in m above sea level (lake_level.py).
+LEVEL_URL = "https://www.gkd.bayern.de/en/lakes/waterlevel/bayern/{station}/current-values/table"
 # Lake and river stations live under different pages.
 KINDS = {"lake": "lakes", "river": "rivers"}
 LOCAL = ZoneInfo("Europe/Berlin")
@@ -58,8 +60,8 @@ def latest(page: str, now: datetime, max_age: timedelta = MAX_AGE) -> WaterTempe
     return readings[0]
 
 
-async def _page(client: httpx.AsyncClient, station: str, kind: str = "lake") -> str:
-    resp = await client.get(PAGE_URL.format(kind=KINDS.get(kind, "lakes"), station=station), headers=HEADERS, timeout=20, follow_redirects=True)
+async def _page(client: httpx.AsyncClient, station: str, kind: str = "lake", url: str = PAGE_URL) -> str:
+    resp = await client.get(url.format(kind=KINDS.get(kind, "lakes"), station=station), headers=HEADERS, timeout=20, follow_redirects=True)
     resp.raise_for_status()
     if "Request Rejected" in resp.text:
         raise httpx.HTTPError("GKD firewall rejected the request")
@@ -85,3 +87,9 @@ async def fetch_recent(
     """The newest measurement (as fetch_latest) and the page's history, hour by hour."""
     page = await _page(client, station, kind)
     return latest(page, now), hourly(parse(page))
+
+
+async def fetch_levels(client: httpx.AsyncClient, station: str) -> list[tuple[datetime, float]]:
+    """A lake gauge's levels of the last week (the page's table), in m above sea level, oldest first.
+    `station` is the slug from the page URL, e.g. "rosshaupten-seepegel-12001301"."""
+    return [(r.time, r.celsius) for r in reversed(parse(await _page(client, station, url=LEVEL_URL)))]

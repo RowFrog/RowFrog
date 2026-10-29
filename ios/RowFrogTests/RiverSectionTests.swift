@@ -54,4 +54,20 @@ final class RiverSectionTests: XCTestCase {
         let none = try APIClient.decoder.decode(RiverConditions.self, from: Data(#"{"gauge": null, "now": null}"#.utf8))
         XCTAssertNil(none.gauge)
     }
+
+    func testLakeLevelBlockDecodesAndShowsOnlyWhileLowered() throws {
+        let json = """
+        {"gauge": "Roßhaupten Seepegel", "fullM": 780.6, "loweredBelowM": 779.8, "drainedBelowM": 777.5,
+         "attribution": "Gewässerkundlicher Dienst Bayern, CC BY 4.0",
+         "now": {"time": "2026-12-10T13:00:00+01:00", "levelM": 776.4, "belowFullM": 4.2, "state": "drained", "trend": "falling",
+                 "light": "red", "history": [{"time": "2026-12-10T12:00:00+01:00", "levelM": 776.45}, {"time": "2026-12-10T13:00:00+01:00", "levelM": 776.4}]}}
+        """
+        let level = try APIClient.decoder.decode(LakeLevel.self, from: Data(json.utf8))
+        XCTAssertTrue(level.isLowered)
+        XCTAssertEqual(level.now?.light, .red)
+        XCTAssertEqual(level.now?.stateTitle, tr("Drained"))
+        XCTAssertEqual(Reason(condition: "lake_drained", light: .red).symbol, LakeLevel.symbol)
+        let full = try APIClient.decoder.decode(LakeLevel.self, from: Data(#"{"gauge": "X", "fullM": 780.6, "loweredBelowM": 779.8, "drainedBelowM": 777.5, "now": null}"#.utf8))
+        XCTAssertFalse(full.isLowered, "without a reading the ice tile stays")
+    }
 }
