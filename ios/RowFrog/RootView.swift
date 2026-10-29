@@ -121,7 +121,6 @@ struct RootView: View {
         // The widget picks up the home base, clubs and settings when the user leaves the app.
         // Only on leaving, not on every pull-down of Control Center or the app switcher.
         .onChange(of: scenePhase) { _, phase in
-            DiagnosisLog.step("SwiftUI \(phase) on \(selection)")
             if phase == .background {
                 WidgetBridge.publish(locations)
                 wasInBackground = true
@@ -130,9 +129,7 @@ struct RootView: View {
                 Task { await refreshOnReturn() }
             }
         }
-        .onChange(of: selection) { DiagnosisLog.note("page \(selection)") }
-        .onChange(of: showingList) { DiagnosisLog.note(showingList ? "club list opened" : "club list closed") }
-        .onChange(of: showingSettings) { DiagnosisLog.note(showingSettings ? "settings opened" : "settings closed") }
+        .modifier(DiagnosisSteps(page: selection, list: showingList, settings: showingSettings))
         // A new language or units show on the widget straight away.
         .onChange(of: AppSettings.shared.language) { WidgetBridge.publish(locations) }
         .onChange(of: AppSettings.shared.temperatureUnit) { WidgetBridge.publish(locations) }

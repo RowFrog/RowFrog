@@ -110,3 +110,21 @@ extension View {
             .onDisappear { DiagnosisLog.note("\(name) closed") }
     }
 }
+
+/// The root view's steps for the diagnosis log: in and out of the app with the
+/// club shown, page switches, the club list and the settings. A modifier of its
+/// own, so the root view's long body still type-checks in time.
+struct DiagnosisSteps: ViewModifier {
+    let page: String
+    let list: Bool
+    let settings: Bool
+    @Environment(\.scenePhase) private var scenePhase
+
+    func body(content: Content) -> some View {
+        content
+            .onChange(of: scenePhase) { _, phase in DiagnosisLog.step("SwiftUI \(phase) on \(page)") }
+            .onChange(of: page) { _, page in DiagnosisLog.note("page \(page)") }
+            .onChange(of: list) { _, open in DiagnosisLog.note(open ? "club list opened" : "club list closed") }
+            .onChange(of: settings) { _, open in DiagnosisLog.note(open ? "settings opened" : "settings closed") }
+    }
+}
