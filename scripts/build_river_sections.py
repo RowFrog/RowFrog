@@ -159,12 +159,16 @@ class Frame:
 class River:
     """The walkable graph of one named river or canal near a club."""
 
-    def __init__(self, frame: Frame, ways: list[dict], name: str, els: list[dict]):
+    def __init__(self, frame: Frame, ways: list[dict], name: str, els: list[dict], continues: set[int] = frozenset()):
         self.frame, self.name = frame, name
         self.coords, self.graph, way_of = {}, {}, {}
+        self.way_of = way_of
         self.kind = Counter()
-        lock_ways = {e["id"] for e in els if e["type"] == "way" and e.get("tags", {}).get("lock") == "yes"}
-        river = [w for w in ways if w["tags"].get("name", "") == name]
+        # Lock chambers, with the lock's name where the map has one ("lock Kleinmachnow").
+        lock_ways = {e["id"]: f"lock {re.sub(r'^(Schleuse|Écluse de|Écluse du|Écluse)\s+', '', e['tags'].get('lock_name', ''))}".strip()
+                     for e in els if e["type"] == "way" and e.get("tags", {}).get("lock") == "yes"}
+        # The named lines, and the unnamed pieces of the same fairway between them (osm_extract).
+        river = [w for w in ways if w["tags"].get("name", "") == name or w["id"] in continues]
         for w in river:
             self.kind[w["tags"]["waterway"]] += len(w["nodes"])
             for nid, p in zip(w["nodes"], w["geometry"]):
@@ -172,7 +176,7 @@ class River:
                 way_of.setdefault(nid, set()).add(w["id"])
             for a, b in zip(w["nodes"], w["nodes"][1:]):
                 d = math.dist(self.coords[a], self.coords[b])
-                lock = w["id"] in lock_ways
+                lock = lock_ways.get(w["id"], "")
                 self.graph.setdefault(a, []).append((b, d, True, lock))
                 self.graph.setdefault(b, []).append((a, d, False, lock))
         # Join gaps: a line end close to another node of the same river.
@@ -226,6 +230,19 @@ class River:
     def nearest(self, x: float, y: float) -> int | None:
         return min(self.coords, key=lambda n: math.dist(self.coords[n], (x, y)), default=None)
 
+    def starts_near(self, start: int, within_m: float = 300.0) -> list[int]:
+        """The start, and the nearest node of each other line of the river within reach of it
+        (a side arm and the main arm side by side at the boathouse)."""
+        out, seen = [start], set(self.way_of.get(start, ()))
+        for n in sorted(self.coords, key=lambda n: math.dist(self.coords[n], self.coords[start])):
+            if math.dist(self.coords[n], self.coords[start]) > within_m:
+                break
+            ways = self.way_of.get(n, set())
+            if ways and not ways & seen:
+                out.append(n)
+                seen |= ways
+        return out
+
     def crosses(self, a: int, b: int) -> str | None:
         if b in self.barrier_nodes:
             return self.barrier_nodes[b]
@@ -238,7 +255,7 @@ class River:
                 return label
         return None
 
-    def walk(self, start: int, downstream: bool, ignore_barriers_m: float = 0.0) -> dict:
+    def walk(self, start: int, downstream: bool, ignore_barriers_m: float = 0.0, reach_m: float = REACH_KM * 1000) -> dict:
         """Dijkstra along the river one way, up to REACH_KM: distances, the tree
         of edges taken, where it stops (weir, lock, mouth, line end) and what it passes."""
         dist, prev, heap, stops, events, seen = {start: 0.0}, {}, [(0.0, start)], [], [], set()
@@ -254,12 +271,12 @@ class River:
             if not moves:
                 stops.append((d, "mouth" if n in self.other_nodes else "line end", self.other_nodes.get(n, "")))
             for m, w, _, lock in moves:
-                label = "lock" if lock else self.crosses(n, m)
+                label = lock or self.crosses(n, m)
                 if label and d >= ignore_barriers_m:
                     stops.append((d + w / 2, "barrier", label))
                     continue
                 nd = d + w
-                if nd > REACH_KM * 1000:
+                if nd > reach_m:
                     continue
                 if nd < dist.get(m, math.inf):
                     dist[m] = nd
@@ -299,6 +316,9 @@ def side_limit(river: River, walk: dict, lengths: dict, harbours: list, cap_km: 
     # Stops on side arms do not end the side while the main arm goes on.
     stops = [st for st in walk["stops"] if st[0] + BYPASS_M >= reach * 1000]
     barrier = next(((d, label) for d, kind, label in stops if kind == "barrier"), None)
+    if barrier and " " not in barrier[1]:
+        # A bare "lock_gate" or "weir" (e.g. on the lock canal beside a weir): the named weir or lock of the same step instead.
+        barrier = next(((d, label) for d, kind, label in stops if kind == "barrier" and " " in label and d <= barrier[0] + 500), barrier)
     if barrier and barrier[0] <= REACH_KM * 1000:
         return round(barrier[0] / 1000, 2), "weir/lock", barrier[1]
     hard = []
@@ -427,20 +447,31 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
     rivers = [name] + [n for n in include if n != name]
     lines, sides, canal = [], {}, False
     carry = {}  # joined water -> the side it carries on
+    carry_at, carry_km = {}, {}  # where the side ran into it, and how far from the club that is
     for i, river_name in enumerate(rivers):
         river_ways = ways if i == 0 else ex.lines_named(river_name, lat, lon, REACH_KM + 2)
         if not any(w["tags"].get("name") == river_name for w in river_ways):
             continue
-        river = River(frame, river_ways, river_name, els)
+        river = River(frame, river_ways, river_name, els, data.get("continues", set()) if i == 0 else set())
         starts = [river.nearest(*p) for p in clubs_m]
         starts = [s for s in starts if s is not None and math.hypot(*river.coords[s]) <= INCLUDE_NEAR_KM * 1000]
+        if river_name in carry_at:
+            # A water the side ran into: walk on from where it did.
+            starts = [river.nearest(*carry_at[river_name])]
         if not starts:
             continue
         start = min(starts, key=lambda s: math.hypot(*river.coords[s]))
         canal = canal or (i == 0 and river.is_canal)
         for downstream in (True, False):
+            key = "down" if downstream else "up"
+            offset = carry_km.get(river_name, 0.0) if carry.get(river_name) == key else 0.0
             # Where a weir or lock sits right at the boathouse, the owner named the side the club rows on.
-            walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0)
+            reach_m = (REACH_KM - offset) * 1000
+            walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=reach_m)
+            if max(walk["dist"].values()) < 1000 and not any(kind == "barrier" for _, kind, _ in walk["stops"]):
+                # Stuck on a dead-end arm (no weir): walk from the arm beside it that reaches furthest.
+                walk = max((river.walk(s, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=reach_m)
+                            for s in river.starts_near(start)), key=lambda w: max(w["dist"].values()))
             bearing = river.bearing(walk)
             behind = None
             if allowed and bearing is not None and not any(abs((bearing - a + 180) % 360 - 180) <= 67.5 for a in allowed):
@@ -448,25 +479,34 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
                 behind = override.get("behindKm")
                 if not behind:
                     continue
-            key = "down" if downstream else "up"
             cap = CAP_CANAL_KM if river.is_canal else (CAP_DOWN_KM if downstream else CAP_UP_KM)
+            cap = max(cap - offset, 0.5)  # counted from the club, also on a water the side ran into
             limit = side_limit(river, walk, lengths, harbours_along(river, walk, harbour_polys), cap, km_signs)
             if behind and limit[0] > behind:
                 limit = (behind, "in front", "in front of the boathouse")
             if VERBOSE:
                 print(f"  {river_name} {key}: reach {max(walk['dist'].values()) / 1000:.2f} km, stops "
                       + "; ".join(f"{d / 1000:.2f} {kind} {label}".strip() for d, kind, label in walk["stops"][:12]), flush=True)
+            end_xy = river.coords[min(walk["dist"], key=lambda n: abs(walk["dist"][n] - limit[0] * 1000))]
             # Ends right where it runs into another named water (an arm with its own name): walk on in that one.
             joined = limit[2] if limit[1] == "mouth" else ""
             if (limit[0] < JOIN_ON_KM and joined and joined not in rivers and joined not in WATERWAY_KINDS
                     and len(rivers) < len(include) + 3):
                 rivers.append(joined)
-                carry[joined] = key
+            elif limit[1] in ("mouth", "line end") and (i == 0 or carry.get(river_name) == key):
+                # Or into a water the overrides include for this club, however far from it.
+                joined = next((n for n in rivers[i + 1:] if n not in carry and any(
+                    math.dist(frame.m(p["lon"], p["lat"]), end_xy) < 60
+                    for w in ex.lines_named(n, lat, lon, REACH_KM + 2) for p in w["geometry"])), "")
+            else:
+                joined = ""
+            if joined in rivers[i + 1:] and joined not in carry:
+                carry[joined], carry_at[joined], carry_km[joined] = key, end_xy, offset + limit[0]
             lines += river.lines(walk, limit[0] * 1000)
             if i == 0 or carry.get(river_name) == key:
                 end = next((n for n in walk["dist"] if abs(walk["dist"][n] - limit[0] * 1000) < 1), None)
                 end = end or min(walk["dist"], key=lambda n: abs(walk["dist"][n] - limit[0] * 1000))
-                sides[key] = {"km": limit[0], "end": limit[1], "what": limit[2],
+                sides[key] = {"km": round(offset + limit[0], 2), "end": limit[1], "what": limit[2],
                               "at": [round(v, 5) for v in frame.deg(*river.coords[end])[::-1]]}
     if not lines:
         return {"error": f"no walkable line of {name} near the club"}

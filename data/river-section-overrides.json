@@ -46,6 +46,11 @@
     "ruderclub-kleinmachnow-stahnsdorf-teltow": {"direction": "west"},
     "wassersportverein-herne-1920": {"direction": "east"},
     "ruder-club-bergedorf": {"direction": "west and south"},
+    "breisacher-ruderverein": {
+      "include": ["Vieux Rhin / Altrhein", "Le Rhin / Rhein"],
+      "direction": "south",
+      "note": "boathouse on the Rheinuferstr. in Breisach; rows south from the slip (owner checked 2026-10-29)"
+    },
     "karlsruher-ruder-verein-wiking-von-1879": {
       "include": ["Rheinhafen", "Rhein"],
       "note": "launch point at the boathouse in the Rheinhafen (Hansastr. 18 b), rows out onto the Rhine"
