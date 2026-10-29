@@ -1232,7 +1232,7 @@ function credits(forecast, club) {
 /** Settings › Language and units › Units, with each value's icon. */
 const UNIT_ROWS = [
   ["temperature", "temperature", key("Air and water temperature")], ["wind", "wind", key("Wind and gusts")], ["waves", "waves", key("Waves")],
-  ["rain", "precipitation", key("Rain, hail, snow")], ["distance", "visibility", key("Visibility and distances")], ["pressure", "pressure", key("Air pressure")],
+  ["rain", "precipitation", key("Precipitation")], ["distance", "visibility", key("Visibility and distances")], ["pressure", "pressure", key("Air pressure")],
 ];
 const TIME_TITLES = { device: key("Device"), h24: key("24-hour"), h12: key("12-hour") };
 const DATE_TITLES = { device: key("Device"), long: key("Long"), short: key("Short"), dmy: key("Day.Month.Year"), mdy: key("Month/Day/Year") };

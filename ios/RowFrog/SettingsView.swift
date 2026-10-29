@@ -403,7 +403,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Air and water temperature", .language, words: ["unit", "Einheit", "Celsius", "Fahrenheit"]),
             SettingsSearch("Wind and gusts", .language, words: ["unit", "Einheit", "km/h", "knots", "Knoten", "Beaufort", "m/s"]),
             SettingsSearch("Waves", .language, words: ["unit", "Einheit", "cm"]),
-            SettingsSearch("Rain, hail, snow", .language, words: ["unit", "Einheit", "mm", "Regen"]),
+            SettingsSearch("Precipitation", .language, words: ["unit", "Einheit", "mm", "Regen", "rain", "snow", "Schnee", "hail", "Hagel"]),
             SettingsSearch("Visibility and distances", .language, words: ["unit", "Einheit", "km", "miles", "Meilen"]),
             SettingsSearch("Air pressure", .language, words: ["unit", "Einheit", "hPa", "Luftdruck"]),
             SettingsSearch("Time", .language, words: ["Uhrzeit", "12", "24", "format"]),
@@ -581,7 +581,7 @@ private struct LanguageSettingsView: View {
                     UnitRow(condition: .temperature, title: tr("Air and water temperature"), selection: $settings.temperatureUnit)
                     UnitRow(condition: .wind, title: tr("Wind and gusts"), selection: $settings.windUnit)
                     UnitRow(condition: .waves, title: tr("Waves"), selection: $settings.waveUnit)
-                    UnitRow(condition: .precipitation, title: tr("Rain, hail, snow"), selection: $settings.rainUnit)
+                    UnitRow(condition: .precipitation, title: tr("Precipitation"), selection: $settings.rainUnit)
                     UnitRow(condition: .visibility, title: tr("Visibility and distances"), selection: $settings.distanceUnit)
                     UnitRow(condition: .pressure, title: tr("Air pressure"), selection: $settings.pressureUnit)
                 } header: {
