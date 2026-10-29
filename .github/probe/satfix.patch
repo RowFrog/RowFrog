@@ -1,0 +1,57 @@
+diff --git a/ios/RowFrog/SatellitePicture.swift b/ios/RowFrog/SatellitePicture.swift
+index a8b236b..f53377d 100644
+--- a/ios/RowFrog/SatellitePicture.swift
++++ b/ios/RowFrog/SatellitePicture.swift
+@@ -461,15 +461,30 @@ struct SatellitePictureCard: View {
+     /// The page's visible height, which follows turning the device and resizing the window.
+     @Environment(\.pageHeight) private var pageHeight
+     /// The card's height without the picture: title, picker, caption and switches.
+-    @State private var cardHeight: CGFloat = 0
+-    @State private var pictureHeight: CGFloat = 0
++    /// Changed only by more than a point, as the picture's size follows it: two
++    /// heights measured a fraction apart sent it back and forth for ever, which
++    /// froze the app (most often on turning the phone or swiping between clubs).
++    @State private var chromeHeight: CGFloat = 0
++    /// The last measured heights of the card and its picture; kept out of the
++    /// view's state, as only their difference matters.
++    @State private var measured = MeasuredHeights()
+     /// Screenshot hook: `-RWOpenSatellite YES` opens the picture full screen.
+     @State private var showingFull = UserDefaults.standard.bool(forKey: "RWOpenSatellite")
+ 
+     /// The tallest the picture may be so the card fits the page with a margin above and below.
+     private var pictureLimit: CGFloat {
+-        guard let pageHeight, cardHeight > 0 else { return max(300, UIScreen.main.bounds.height - 360) }
+-        return max(240, pageHeight - (cardHeight - pictureHeight) - 32)
++        guard let pageHeight, chromeHeight > 0 else { return max(300, UIScreen.main.bounds.height - 360) }
++        return max(240, (pageHeight - chromeHeight - 32).rounded(.down))
++    }
++
++    private final class MeasuredHeights {
++        var card: CGFloat = 0
++        var picture: CGFloat = 0
++    }
++
++    private func measuredChrome() {
++        let chrome = (measured.card - measured.picture).rounded()
++        if measured.card > 0, abs(chrome - chromeHeight) > 1 { chromeHeight = chrome }
+     }
+ 
+     /// Where the page's visible height comes from (LocationPageView).
+@@ -493,7 +508,7 @@ struct SatellitePictureCard: View {
+                         // than the card. Measured again on every turn or window resize.
+                         SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID)
+                             .clipShape(RoundedRectangle(cornerRadius: 10))
+-                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { pictureHeight = $0 }
++                            .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { measured.picture = $0; measuredChrome() }
+                             .frame(maxHeight: pictureLimit)
+                             .frame(maxWidth: .infinity)
+                     }
+@@ -502,7 +517,7 @@ struct SatellitePictureCard: View {
+                     SatelliteCaption(picture: picture, shot: shot, overLake: overLake)
+                     SatelliteLayerChips(lakeID: lakeID, picture: picture, clubID: clubID)
+                 }
+-                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { cardHeight = $0 }
++                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { measured.card = $0; measuredChrome() }
+                 .fullScreenCover(isPresented: $showingFull) {
+                     SatellitePictureScreen(lakeID: lakeID, picture: picture, kind: kind, clubID: clubID, overLake: overLake)
+                 }

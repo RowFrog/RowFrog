@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         ref: ["1b667e6"]
-        cut: ["all", "fade+fonts", "fade+glass", "fonts+glass"]
+        cut: ["none", "satfix", "satfix-b"]
     runs-on: macos-15-intel
     timeout-minutes: 75
     steps:
@@ -21,6 +21,7 @@ jobs:
       - name: Check out the version under test, with the stress hook
         run: |
           cp .github/probe/StressProbe.swift /tmp/StressProbe.swift
+          cp .github/probe/satfix.patch /tmp/satfix.patch
           git checkout -q "${{ matrix.ref }}"
           git log --oneline -1
           cp /tmp/StressProbe.swift ios/RowFrog/StressProbe.swift
@@ -47,10 +48,13 @@ jobs:
               open(path, "w").write(s.replace(old, new))
           page = "ios/RowFrog/LocationPageView.swift"
           root = "ios/RowFrog/RootView.swift"
+          if cut.startswith("satfix"):
+              import subprocess
+              subprocess.run(["git", "apply", "/tmp/satfix.patch"], check=True)
           if cut in ("all", "bar-inset"):
               cut_list = ["layout-fade", "fonts", "glass"]
           else:
-              cut_list = [c.replace("fade", "layout-fade") for c in cut.split("+")]
+              cut_list = [] if cut in ("none", "satfix", "satfix-b") else [c.replace("fade", "layout-fade") for c in cut.split("+")]
           if cut in ("bar-inset", "bar-only"):
               edit(root, "        .overlay(alignment: .bottom) {\n            let forecast", "        .safeAreaInset(edge: .bottom, spacing: 0) {\n            let forecast")
           if cut == "dyn":
