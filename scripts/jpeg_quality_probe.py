@@ -5,7 +5,9 @@ Fetches each lake's clearest picture (and the middle 10 m tile for big lakes)
 as PNG, saves it as JPEG at 100 down to 70, and prints size and loss: PSNR
 and SSIM against the PNG (higher is closer; SSIM 1 = identical).
 
-Usage: CDSE_CLIENT_ID=... CDSE_CLIENT_SECRET=... python3 scripts/jpeg_quality_probe.py
+Usage: CDSE_CLIENT_ID=... CDSE_CLIENT_SECRET=... python3 scripts/jpeg_quality_probe.py [save-dir]
+
+With a directory, the lossless originals are saved there as PNG too.
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ from __future__ import annotations
 import io
 import math
 import sys
+from pathlib import Path
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -49,6 +52,9 @@ def main() -> int:
     if client is None:
         print("No Copernicus account in CDSE_CLIENT_ID / CDSE_CLIENT_SECRET, or sign-in failed.")
         return 0
+    save = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    if save:
+        save.mkdir(parents=True, exist_ok=True)
     today = datetime.now(timezone.utc).date()
     totals = {q: [0, 0.0, 0.0, 0] for q in QUALITIES}  # bytes, squared error, ssim sum, pixels
     png_total = 0
@@ -74,6 +80,8 @@ def main() -> int:
             shots.append(("10 m tile", box, w, h))
         for name, box, w, h in shots:
             png = sentinel2.png(client, box, w, h, chosen.day)
+            if save:
+                (save / f"{lake_id}-{'tile' if name != 'picture' else 'picture'}-{chosen.day}.png").write_bytes(png)
             original = Image.open(io.BytesIO(png)).convert("RGB")
             ref = np.asarray(original, dtype=np.float64)
             ref_grey = grey(original)
