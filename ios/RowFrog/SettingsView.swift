@@ -73,6 +73,7 @@ struct SettingsView: View {
     @State private var search = UserDefaults.standard.string(forKey: "RWSettingsSearch") ?? ""
     @FocusState private var searching: Bool
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     /// `path` opens a page at once, as Boats and limits from a club page's boat menu.
     init(locations: LocationStore, path: [SettingsRoute] = []) {
@@ -142,7 +143,7 @@ struct SettingsView: View {
     private var topics: some View {
         @Bindable var settings = AppSettings.shared
         Section {
-            Picker(selection: $settings.boatID) {
+            let boats = Picker(selection: $settings.boatID) {
                 ForEach(settings.boats) { boat in
                     Text(boat.title).tag(boat.id)
                 }
@@ -151,6 +152,26 @@ struct SettingsView: View {
                     SettingsIcon(symbol: "figure.rower", color: .green)
                     Text(tr("Rowing light for"))
                 }
+            }
+            if typeSize.isAccessibilitySize {
+                // The boat under the name, as in the rows below; beside it, it was cut short.
+                Menu { boats } label: {
+                    HStack(spacing: 12) {
+                        SettingsIcon(symbol: "figure.rower", color: .green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tr("Rowing light for")).foregroundStyle(.primary)
+                            Text(settings.boats.first { $0.id == settings.boatID }?.title ?? "")
+                                .foregroundStyle(Color.accentColor)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.footnote)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    .contentShape(Rectangle())
+                }
+            } else {
+                boats
             }
             topic(.boats, value: limitsSummary)
         } footer: {
@@ -314,17 +335,24 @@ struct SettingsIcon: View {
 private struct SettingsRow: View {
     let topic: SettingsTopic
     let value: String?
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // At the accessibility text sizes the value goes under the name, as in
+        // iOS Settings; side by side, both were cut short.
+        let stacked = typeSize.isAccessibilitySize
         HStack(spacing: 12) {
             SettingsIcon(symbol: topic.symbol, color: topic.color)
-            Text(topic.title)
-            Spacer(minLength: 8)
-            if let value {
-                Text(value)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+            (stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2)) : AnyLayout(HStackLayout(spacing: 8))) {
+                Text(topic.title)
+                if !stacked { Spacer(minLength: 0) }
+                if let value {
+                    Text(value)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(stacked ? nil : 1)
+                }
             }
+            if stacked { Spacer(minLength: 0) }
         }
     }
 }
@@ -945,26 +973,31 @@ struct UnitRow<Unit: Hashable & Identifiable & CaseIterable>: View where Unit.Al
     @Binding var selection: Unit
 
     var body: some View {
-        LabeledContent {
-            Menu {
-                Picker(title, selection: $selection) {
-                    ForEach(Unit.allCases) { unit in
-                        Text("\(unit.symbol) · \(unit.title)").tag(unit)
-                    }
+        // The whole row opens the menu, as a picker row in iOS Settings; only
+        // the unit at the end did before, so a tap on the row seemed to do nothing.
+        Menu {
+            Picker(title, selection: $selection) {
+                ForEach(Unit.allCases) { unit in
+                    Text("\(unit.symbol) · \(unit.title)").tag(unit)
                 }
-            } label: {
+            }
+        } label: {
+            HStack {
+                Label {
+                    Text(title).foregroundStyle(.primary)
+                } icon: {
+                    ConditionIcon(condition: condition).foregroundStyle(Color.accentColor)
+                }
+                Spacer()
                 HStack(spacing: 4) {
                     Text(selection.symbol).monospacedDigit()
                     Image(systemName: "chevron.up.chevron.down").font(.caption2)
                 }
+                .foregroundStyle(Color.accentColor)
             }
-        } label: {
-            Label {
-                Text(title)
-            } icon: {
-                ConditionIcon(condition: condition).foregroundStyle(Color.accentColor)
-            }
+            .contentShape(Rectangle())
         }
+        .accessibilityLabel(title)
         .accessibilityValue(selection.title)
     }
 }

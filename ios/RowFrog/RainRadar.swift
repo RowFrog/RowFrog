@@ -334,6 +334,7 @@ struct RadarMapScreen: View {
     /// The radar picture the nowcast starts from; now (to 5 minutes) when not known yet.
     let reference: Date?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var index: Int
     @State private var playing = false
     @State private var loader: RadarFrames
@@ -357,7 +358,12 @@ struct RadarMapScreen: View {
         _loader = State(initialValue: RadarFrames(point: point, times: frames, nowIndex: 60 / step))
     }
 
-    var body: some View {
+    // The panels and buttons over the map stop growing at the largest standard
+    // text size: larger, they covered the map and their lines broke apart.
+    var body: some View { screen.dynamicTypeSize(...DynamicTypeSize.xxxLarge) }
+
+    @ViewBuilder
+    private var screen: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 RadarMapView(point: point, clubID: clubID, region: loader.region, image: loader.images[frames[index]])
@@ -371,8 +377,11 @@ struct RadarMapScreen: View {
             }
             .sheet(isPresented: $showingLegend) { RadarLegendSheet() }
             .task { await loader.load() }
-            // Starts playing on its own once every picture is there, except in Low Power Mode.
-            .onChange(of: loader.complete) { _, complete in if complete, !PowerState.shared.lowPower { playing = true } }
+            // Starts playing on its own once every picture is there, except in Low
+            // Power Mode and with Reduce Motion on: then the play button starts it.
+            .onChange(of: loader.complete) { _, complete in
+                if complete, !PowerState.shared.lowPower, !reduceMotion { playing = true }
+            }
             .task(id: playing) {
                 guard playing else { return }
                 if index == frames.count - 1 { index = 0 }

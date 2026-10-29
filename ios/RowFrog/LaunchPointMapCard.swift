@@ -71,10 +71,14 @@ struct LaunchPointMapCard: View {
                     }
                     Button(tr("Launch point on the map"), systemImage: "mappin.and.ellipse") { openInMaps() }
                 } label: {
+                    // The bordered look drawn here, so the 44 pt tap area around it counts.
                     Label(tr("Open in Maps"), systemImage: "map")
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(Color.accentColor.opacity(0.15), in: Capsule())
+                        .tapArea(EdgeInsets(top: 8, leading: 4, bottom: 8, trailing: 4))
                 }
                 .font(.caption.weight(.semibold))
-                .buttonStyle(.bordered)
             }
         }
         .font(.subheadline)

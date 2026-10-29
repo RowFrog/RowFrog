@@ -157,6 +157,11 @@ struct CurrentDetailView: View {
             }
             .chartYAxisLabel("m")
             .frame(height: 180)
+            .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+            .accessibilityChartDescriptor(ChartDescription(
+                title: tr("Water level, last two days"), unit: "m",
+                series: [.init(name: tr("Level"), points: now.history.map { ($0.time, $0.levelCm / 100) })],
+                summary: RiverFormat.level(now.levelCm), digits: 2))
         }
     }
 
