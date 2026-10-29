@@ -428,6 +428,7 @@ async function renderClub(id) {
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
+    <div class="top-title" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></div>
     ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint) })}
@@ -447,6 +448,7 @@ async function renderClub(id) {
   wireClubPage(id, club, raw, forecast, hour);
   wireTips(root.querySelector("main"));
   balanceCards();
+  updateTopBar();
   if (root.querySelector("#launch-map")) showLaunchMap(club);
   wireRadarCard(root.querySelector("#radar"), club?.launchPoint);
   followRadar(club?.launchPoint, () => shown === clubRenders && root.querySelector("main.club") != null, () => showRadar(club, forecast, hour));
@@ -606,6 +608,28 @@ function watchCards(cards) {
   });
   cards.forEach((card) => cardWatch.observe(card));
 }
+
+/**
+ * The top of the page (RootView.TopEdgeFade): clear at rest, blurred once the
+ * page scrolls under the top edge, and with the club's name and light once its
+ * big title has scrolled away (InlineClubTitle); the 48 hours' header then sits below it.
+ */
+function updateTopBar() {
+  const body = document.body;
+  body.classList.toggle("scrolled", window.scrollY > 0);
+  const title = root.querySelector(".club-head h1");
+  const bar = root.querySelector(".top-title");
+  const gone = Boolean(title && bar && title.getBoundingClientRect().bottom < bar.offsetHeight);
+  if (gone) {
+    // Over the club page's own column, beside the list on wide screens.
+    const page = title.closest("main").getBoundingClientRect();
+    bar.style.left = `${page.left}px`;
+    bar.style.width = `${page.width}px`;
+  }
+  body.classList.toggle("title-gone", gone);
+}
+window.addEventListener("scroll", updateTopBar, { passive: true });
+window.addEventListener("hashchange", () => requestAnimationFrame(updateTopBar));
 
 let resizeTimer = null;
 window.addEventListener("resize", () => {
