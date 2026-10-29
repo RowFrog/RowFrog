@@ -11,7 +11,7 @@ import {
   beaufort, beaufortScale, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
   precipitationKind, iceOff, ICE_TITLES, sunState, localDay, COLD, key,
 } from "./logic.js";
-import { radarAhead, rainOutlook, rainingNow, forecastRain, radarGraphic, radarEnd, peak, RADAR_CREDIT } from "./radar.js";
+import { radarAhead, rainOutlook, rainingNow, forecastRain, wetHour, traceKind, traceNote, radarGraphic, radarEnd, peak, RADAR_CREDIT } from "./radar.js";
 
 const HOUR = 3600 * 1000;
 const FREEZING_WATER_C = 4;
@@ -341,7 +341,7 @@ const BUILDERS = {
     const x = d.now;
     const total = d.next24.reduce((s, y) => s + (y.precipitationMm ?? 0), 0);
     const top = extreme(d.next24, (y) => y.precipitationMm, true);
-    const kinds = [...new Set(d.next24.filter((y) => (y.precipitationMm ?? 0) >= 0.1).map((y) => precipitationKind(sky(y.weatherCode))).filter(Boolean).map((k) => t(k)))].sort();
+    const kinds = [...new Set(d.next24.filter(wetHour).map((y) => precipitationKind(sky(y.weatherCode))).filter(Boolean).map((k) => t(k)))].sort();
     const light = lightFor(x, REASONS.precipitation);
     const lightText = light === "red" ? t("red: hail") : light === "amber" ? t("amber: heavy rain") : t("green: under %@ per hour", rain(4));
     const facts = [[t("Next 24 h"), t("%@ in total", rain(total))], [t("Kind"), kinds.length ? kinds.join(", ") : t("dry")]];
@@ -350,8 +350,10 @@ const BUILDERS = {
     const wet = (x.precipitationMm ?? 0) >= 0.1;
     const first = forecastRain(d);
     const kind = precipitationKind(sky(x.weatherCode));
-    let value = wet ? rain(x.precipitationMm) : t("Dry");
-    let note = wet ? (kind ? t(kind) : "") : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h");
+    // Drizzle under 0.1 mm is named, as on the tiles, never called dry beside its symbol.
+    const trace = traceKind(x);
+    let value = wet ? rain(x.precipitationMm) : trace ? t(trace) : t("Dry");
+    let note = wet ? (kind ? t(kind) : "") : trace ? traceNote() : first ? t("Expected from %@", dayTime(first.time)) : t("Dry next 24 h");
     let big = "";
     const lines = [{ name: t("Precipitation"), colour: COLOURS.blue, kind: "bars", points: d.points((y) => inUnit("rain", y.precipitationMm)) }];
     let source = t("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.");
@@ -359,8 +361,10 @@ const BUILDERS = {
     const ahead = radarAhead(d);
     if (ahead) {
       const outlook = rainOutlook(ahead, d.timeline);
-      value = rainingNow(ahead) ? rain(ahead.steps[0].mm) : t("Dry");
-      if (outlook.now && outlook.next) {
+      value = rainingNow(ahead) ? rain(ahead.steps[0].mm) : trace ? t(trace) : t("Dry");
+      if (!outlook.now && trace) {
+        note = traceNote();
+      } else if (outlook.now && outlook.next) {
         note = outlook.next.fromRadar ? t("Radar: %@ · %@", outlook.now, outlook.next.text) : `${t("Radar: %@", outlook.now)} · ${outlook.next.text}`;
       } else {
         note = t("Radar: %@", outlook.summary);
