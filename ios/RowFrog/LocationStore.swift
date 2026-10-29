@@ -305,9 +305,9 @@ final class ForecastStore {
     private(set) var pickedModelMissing: Set<String> = []
     private let api: APIClient
     /// The own place behind an id, whose forecast the phone works out itself.
-    private let ownPlace: @MainActor (String) -> OwnPlace?
+    private let ownPlace: @MainActor @Sendable (String) -> OwnPlace?
 
-    nonisolated init(api: APIClient, ownPlace: @escaping @MainActor (String) -> OwnPlace? = { _ in nil }) {
+    nonisolated init(api: APIClient, ownPlace: @escaping @MainActor @Sendable (String) -> OwnPlace? = { _ in nil }) {
         self.api = api
         self.ownPlace = ownPlace
     }
