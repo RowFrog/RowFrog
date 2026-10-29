@@ -1433,7 +1433,7 @@ function renderSettings() {
         <div class="row-setting"><span class="segmented wide" id="maps-app" aria-label="${h(t("Open places in"))}">${Object.entries(MAPS_APPS)
           .map(([k, app]) => `<button data-maps-app="${k}" class="${store.mapsApp === k ? "on" : ""}">${h(app.name)}</button>`).join("")}</span></div>
       </section>
-      <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))}</p>
+      <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))} ${h(t("Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
       <h3 class="section">${icon("arrow-up-down")} ${h(t("Data use"))}</h3>
       <section class="card group">
         <label class="row-setting"><span>${icon("radio-tower")} ${h(t("Save mobile data"))}</span><input type="checkbox" class="switch" id="save-data" ${store.saveData ? "checked" : ""}></label>
