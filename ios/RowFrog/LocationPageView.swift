@@ -258,7 +258,8 @@ struct LocationPageView: View {
                     if tourSeen && showLakeViewTip {
                         TipView(lakeViewTip)
                     }
-                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC, water: lake?.water ?? .lake)
+                    LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC, water: lake?.water ?? .lake,
+                                 currentMs: forecast.river?.now?.speedMs)
                 }
                 .id("lakeview")
                 .layoutValue(key: ColumnFiller.self, value: true)
