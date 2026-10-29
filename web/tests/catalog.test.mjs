@@ -32,3 +32,12 @@ test("without a kept copy the error still shows", async () => {
   await assert.rejects(loadCatalog());
   await assert.rejects(loadCountryIndex());
 });
+
+test("map links follow the device until picked: Apple Maps on iPhone and iPad, Google Maps elsewhere", async () => {
+  const { deviceMapsApp } = await import("../public/app/shared.js");
+  assert.equal(deviceMapsApp("Mozilla/5.0 (iPhone; CPU iPhone OS 27_0 like Mac OS X)", 5), "apple");
+  assert.equal(deviceMapsApp("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari", 5), "apple");
+  assert.equal(deviceMapsApp("Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari", 0), "google");
+  assert.equal(deviceMapsApp("Mozilla/5.0 (Linux; Android 16; Pixel 9)", 5), "google");
+  assert.equal(deviceMapsApp("Mozilla/5.0 (Windows NT 10.0; Win64; x64)", 0), "google");
+});

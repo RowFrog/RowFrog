@@ -63,8 +63,8 @@ export const store = {
   get mapLinked() { return load("rf.mapLinked", true); },
   set mapLinked(on) { save("rf.mapLinked", on); },
   /** How much map the weather maps open with: "close", "normal" or "wide". */
-  /** Where the launch point and directions open: "google" (the website's default), "apple" or "osm". */
-  get mapsApp() { const v = load("rf.mapsApp", "google"); return MAPS_APPS[v] ? v : "google"; },
+  /** Where the launch point and directions open: "google", "apple" or "osm"; until picked, the device's own (deviceMapsApp). */
+  get mapsApp() { const v = load("rf.mapsApp", null); return MAPS_APPS[v] ? v : deviceMapsApp(); },
   set mapsApp(v) { save("rf.mapsApp", v); },
   get mapZoom() { return load("rf.mapZoom", "normal"); },
   set mapZoom(zoom) { save("rf.mapZoom", zoom); },
@@ -136,6 +136,15 @@ export const MAPS_APPS = {
     directions: (lat, lon, to) => `https://www.openstreetmap.org/directions?to=${to ? encodeURIComponent(to.address) : `${lat}%2C${lon}`}`,
   },
 };
+
+/**
+ * The map service a phone or tablet comes with: Apple Maps on iPhone and iPad
+ * (iPadOS's Safari calls itself a Mac, so its touch screen tells them apart),
+ * Google Maps on Android and on computers, the website's default.
+ */
+export function deviceMapsApp(agent = navigator.userAgent, touchPoints = navigator.maxTouchPoints ?? 0) {
+  return /iPhone|iPad|iPod/.test(agent) || (/Macintosh/.test(agent) && touchPoints > 1) ? "apple" : "google";
+}
 
 /** The boat's class for the page bar, as rowers write it ("2x", "4+"); the two groups show their seats (Boat.classTag). */
 export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.class);
