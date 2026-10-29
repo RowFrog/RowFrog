@@ -189,6 +189,7 @@ const TIPS = {
   rowImport: [key("Import a row"), key("Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace."), "upload"],
   saveData: [key("Out on mobile data?"), key("Switch on Save mobile data: satellite pictures then load only when you tap them and the radar needs fewer downloads. Forecasts and warnings always load."), "radio-tower"],
   factoryReset: [key("What a reset does"), key("Appearance, units, language and background pictures go back to how the app came, and your own pictures are deleted. Your locations and home base stay."), "rotate-ccw"],
+  waterLevel: [key("Water level in winter"), key("Forggensee is let down every winter. While it is lowered, the Water level tile below takes the place of the ice estimate. Tap it for the last week's levels."), "arrow-down-to-line"],
   waterEstimate: [key("Water temperature from space"), key("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date."), "satellite"],
   closeLoop: [key("Row a loop"), key("Close the loop: tap within 50 m of your club, or use Close loop."), "repeat"],
   turningPoint: [key("Change a turning point"), key("Drag a point to move it, or delete just this one."), "move"],
@@ -231,6 +232,12 @@ export function wireTips(box) {
     if (next) aside.insertAdjacentHTML("afterend", tip(next));
     aside.remove();
   });
+}
+
+/** Using what a tip points at closes it, as the app's invalidate(reason: .actionPerformed). */
+export function closeTip(box, id) {
+  save("rf.tipsClosed", [...new Set([...closed(), id])]);
+  box.querySelectorAll(`.tip[data-tip="${id}"]`).forEach((aside) => aside.remove());
 }
 
 /** "Show the tips again". */

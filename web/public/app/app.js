@@ -32,7 +32,7 @@ import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderC
 import { renderValuePage } from "./valuepage.js";
 import { layoutFor, visibleCards, openArrange } from "./arrange.js";
 import { showBackground, renderBackgrounds, backgroundSummary, forgetOwnPictures } from "./backgrounds.js";
-import { renderTour, tourSeen, tip, withTip, wireTips, replayTips } from "./tour.js";
+import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
 import {
@@ -418,9 +418,11 @@ async function renderClub(id) {
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
   // The cards in the order chosen under "Arrange this page".
   const cards = {
-    // One tip at a time; the water estimate's only where no station measures the water.
+    // One tip at a time; the water level's first while the lake is let down (Forggensee),
+    // the water estimate's only where no station measures the water.
     conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint), radarStatus(club?.launchPoint)),
-      tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate"),
+      isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
+        : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate"),
     // Off by default: the rain tile shows the radar; "Arrange this page" switches the card on.
     radar: () => (club?.launchPoint ? radarCard(club.launchPoint) : ""),
     lakeView: () => (forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""),
@@ -882,7 +884,10 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
 /** The Current tile opens the water level and current (CurrentDetailView). */
 function wireCurrent(box, forecast) {
   box.querySelectorAll("[data-current]").forEach((b) => b.addEventListener("click", () => openSheet(t("Current"), currentBody(forecast.river))));
-  box.querySelectorAll("[data-water-level]").forEach((b) => b.addEventListener("click", () => openSheet(t("Water level"), waterLevelBody(forecast.waterLevel))));
+  box.querySelectorAll("[data-water-level]").forEach((b) => b.addEventListener("click", () => {
+    closeTip(root, "waterLevel");
+    openSheet(t("Water level"), waterLevelBody(forecast.waterLevel));
+  }));
 }
 
 function wireTopTile(card, id, at = null) {
