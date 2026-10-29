@@ -173,7 +173,6 @@ enum German {
         "Why: all conditions within the limits": "Warum: alle Bedingungen innerhalb der Grenzwerte",
         "Why: %@": "Warum: %@",
         "Visibility": "Sicht",
-        "Rain, hail": "Regen, Hagel",
         "None": "Kein Niederschlag",
         "No data": "Keine Daten",
         "No data yet": "Noch keine Daten",

@@ -68,7 +68,7 @@ the next two hours and the forecast after that.
    after a small radar symbol (from the radar), or "Rain from 18:00" without
    it (from the forecast), and small bars: thin ones for the
    radar's quarter hours, a line, then paler ones for the next forecast hours.
-   The top tile's "Rain, hail" cell shows the same two lines: the value, and
+   The top tile's "Precipitation" cell shows the same two lines: the value, and
    the grey line under it with the same symbol. The top tile's small values
    (waves, rain, visibility) start under Air, Water and Wind (left column at the left edge, right column ending at the right edge, middle column with equal gaps; grey lines don't set the widths); their grey lines
    use shorter words than the tiles ("1.0 km open water", "Dry for 24 h").
