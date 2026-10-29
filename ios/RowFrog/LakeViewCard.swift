@@ -216,11 +216,11 @@ struct LakeMiniMap: View {
                 // The whole lake is red (dark, a warning): stripes over the greyed squares;
                 // amber (sunrise or sunset, a warning): fainter stripes wider apart.
                 if layer == .light, let light = hour.lakeWide.stripes {
-                    let red = light == .red
+                    let red = light == .red, fall = view.stripesFall
                     var lines = Path()
                     for x in stride(from: -size.height, to: size.width, by: red ? 8 : 14) {
-                        lines.move(to: CGPoint(x: x, y: size.height))
-                        lines.addLine(to: CGPoint(x: x + size.height, y: 0))
+                        lines.move(to: CGPoint(x: x, y: fall ? 0 : size.height))
+                        lines.addLine(to: CGPoint(x: x + size.height, y: fall ? size.height : 0))
                     }
                     water.opacity = 1
                     water.stroke(lines, with: .color(red ? .red.opacity(0.55) : .orange.opacity(0.75)), lineWidth: red ? 1.5 : 1.2)

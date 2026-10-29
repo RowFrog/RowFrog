@@ -822,11 +822,11 @@ struct SatelliteOverlay: View {
                 )
                 // Darkness or an official warning for the whole lake: stripes, as on the lake map.
                 if fill == .light, let stripes = view.hours[view.hourIndex()].lakeWide.stripes {
-                    let red = stripes == .red, gap: CGFloat = red ? 8 : 14
+                    let red = stripes == .red, gap: CGFloat = red ? 8 : 14, fall = view.stripesFall
                     var lines = Path()
                     for x in stride(from: -size.height, to: size.width, by: gap) {
-                        lines.move(to: CGPoint(x: x, y: size.height))
-                        lines.addLine(to: CGPoint(x: x + size.height, y: 0))
+                        lines.move(to: CGPoint(x: x, y: fall ? 0 : size.height))
+                        lines.addLine(to: CGPoint(x: x + size.height, y: fall ? size.height : 0))
                     }
                     var striped = context
                     striped.clip(to: shore, style: FillStyle(eoFill: true))

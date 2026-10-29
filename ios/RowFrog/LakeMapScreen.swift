@@ -1744,6 +1744,8 @@ final class LakeOverlay: NSObject, MKOverlay {
     /// The shore in map points, and how far from it the land's wind fades in.
     let shore: WindArrows.Shore
     let blend: CGFloat
+    /// The whole-lake stripes cross the lake's long side (see LakeView.stripesFall).
+    let stripesFall: Bool
 
     init(view: LakeView, focus: CLLocationCoordinate2D? = nil) {
         let g = view.grid
@@ -1770,6 +1772,7 @@ final class LakeOverlay: NSObject, MKOverlay {
         self.water = water
         shore = WindArrows.Shore(rings: rings.map { $0.map { CGPoint(x: $0.x, y: $0.y) } })
         blend = CGFloat(WindArrows.blendM * MKMapPointsPerMeterAtLatitude(coordinate.latitude))
+        stripesFall = view.stripesFall
     }
 }
 
@@ -1850,14 +1853,23 @@ final class LakeRenderer: MKOverlayRenderer {
             context.saveGState()
             context.addPath(shore)
             context.clip(using: .evenOdd)
-            // Lines x + y = k * gap, so the stripes run on across the map's tiles.
+            // Lines x + y = k * gap (or x - y where they fall), so the stripes run on across the map's tiles.
             let tile = self.rect(for: mapRect), gap = (red ? 14 : 24) / zoomScale
             let lines = CGMutablePath()
-            var k = ((tile.minX + tile.minY) / gap).rounded(.down)
-            while k * gap <= tile.maxX + tile.maxY {
-                lines.move(to: CGPoint(x: k * gap - tile.minY, y: tile.minY))
-                lines.addLine(to: CGPoint(x: k * gap - tile.maxY, y: tile.maxY))
-                k += 1
+            if lake.stripesFall {
+                var k = ((tile.minX - tile.maxY) / gap).rounded(.down)
+                while k * gap <= tile.maxX - tile.minY {
+                    lines.move(to: CGPoint(x: k * gap + tile.minY, y: tile.minY))
+                    lines.addLine(to: CGPoint(x: k * gap + tile.maxY, y: tile.maxY))
+                    k += 1
+                }
+            } else {
+                var k = ((tile.minX + tile.minY) / gap).rounded(.down)
+                while k * gap <= tile.maxX + tile.maxY {
+                    lines.move(to: CGPoint(x: k * gap - tile.minY, y: tile.minY))
+                    lines.addLine(to: CGPoint(x: k * gap - tile.maxY, y: tile.maxY))
+                    k += 1
+                }
             }
             context.addPath(lines)
             let color = red ? UIColor.systemRed.withAlphaComponent(0.55) : UIColor.systemOrange.withAlphaComponent(0.75)
