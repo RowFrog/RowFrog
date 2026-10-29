@@ -1033,7 +1033,12 @@ struct SatellitePictureScreen: View {
     @Environment(\.displayScale) private var displayScale
     @MainActor private var layers: SatelliteLayers { .shared }
 
-    var body: some View {
+    // The panels and buttons over the map stop growing at the largest standard
+    // text size: larger, they covered the map and their lines broke apart.
+    var body: some View { screen.dynamicTypeSize(...DynamicTypeSize.xxxLarge) }
+
+    @ViewBuilder
+    private var screen: some View {
         NavigationStack {
             VStack(spacing: 10) {
                 if picture.hasChoice {

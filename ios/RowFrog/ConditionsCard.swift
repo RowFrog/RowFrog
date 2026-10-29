@@ -1298,6 +1298,9 @@ private struct ConditionChart: View {
         .chartYAxisLabel(position: .topTrailing) { Text(detail.unit) }
         .chartPlotStyle { $0.padding(.horizontal, 16) }
         .accessibilityChartDescriptor(description)
+        // Axis labels stop growing at the largest standard text size: larger,
+        // the days ran into each other.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 
     /// The shown lines for VoiceOver: "Describe chart" and the audio graph.

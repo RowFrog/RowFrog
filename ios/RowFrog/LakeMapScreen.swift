@@ -144,7 +144,12 @@ struct LakeMapScreen: View {
         return view.hours[i]
     }
 
-    var body: some View {
+    // The panels and buttons over the map stop growing at the largest standard
+    // text size: larger, they covered the map and their lines broke apart.
+    var body: some View { screen.dynamicTypeSize(...DynamicTypeSize.xxxLarge) }
+
+    @ViewBuilder
+    private var screen: some View {
         let plan = planner?.plan(start: startTime, paceSecondsPer500: pace)
         let boat = boatStop(plan)
         let shown = shownHour(boat)

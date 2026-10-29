@@ -314,17 +314,24 @@ struct SettingsIcon: View {
 private struct SettingsRow: View {
     let topic: SettingsTopic
     let value: String?
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     var body: some View {
+        // At the accessibility text sizes the value goes under the name, as in
+        // iOS Settings; side by side, both were cut short.
+        let stacked = typeSize.isAccessibilitySize
         HStack(spacing: 12) {
             SettingsIcon(symbol: topic.symbol, color: topic.color)
-            Text(topic.title)
-            Spacer(minLength: 8)
-            if let value {
-                Text(value)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+            (stacked ? AnyLayout(VStackLayout(alignment: .leading, spacing: 2)) : AnyLayout(HStackLayout(spacing: 8))) {
+                Text(topic.title)
+                if !stacked { Spacer(minLength: 0) }
+                if let value {
+                    Text(value)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(stacked ? nil : 1)
+                }
             }
+            if stacked { Spacer(minLength: 0) }
         }
     }
 }

@@ -356,7 +356,12 @@ struct RadarMapScreen: View {
         _loader = State(initialValue: RadarFrames(point: point, times: frames, nowIndex: 60 / step))
     }
 
-    var body: some View {
+    // The panels and buttons over the map stop growing at the largest standard
+    // text size: larger, they covered the map and their lines broke apart.
+    var body: some View { screen.dynamicTypeSize(...DynamicTypeSize.xxxLarge) }
+
+    @ViewBuilder
+    private var screen: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 RadarMapView(point: point, clubID: clubID, region: loader.region, image: loader.images[frames[index]])
