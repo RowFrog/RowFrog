@@ -8,7 +8,15 @@ import TipKit
 /// hosts the backend.
 struct RadarClient {
     static let wms = URL(string: "https://maps.dwd.de/geoserver/dwd/wms")!
-    var session: URLSession = .shared
+    /// A reading that has not answered within 10 seconds counts as failed (DWD
+    /// usually answers in one or two), so the rain tile says so instead of waiting a minute.
+    static let session: URLSession = {
+        let config = URLSessionConfiguration.default
+        config.timeoutIntervalForRequest = 10
+        config.timeoutIntervalForResource = 10
+        return URLSession(configuration: config)
+    }()
+    var session: URLSession = Self.session
 
     func load(lat: Double, lon: Double) async throws -> RainRadar {
         let now = try await reading(lat: lat, lon: lon, time: nil)
@@ -90,7 +98,8 @@ final class RadarStore {
     /// Launch points whose radar could not be read and that have no reading still worth showing.
     private(set) var failed: Set<Coordinate> = []
     @ObservationIgnored private var loaded: [Coordinate: Date] = [:]
-    @ObservationIgnored private var loading: Set<Coordinate> = []
+    /// Launch points being read right now; the rain tile shows a waiting symbol meanwhile.
+    private var loading: Set<Coordinate> = []
     /// Failed reads in a row per launch point, for the quicker retries.
     @ObservationIgnored private var failures: [Coordinate: Int] = [:]
 
@@ -116,6 +125,12 @@ final class RadarStore {
             readings[point] = RainRadar(reference: now, steps: values.enumerated().map {
                 RadarStep(time: now.addingTimeInterval(Double($0.offset) * 900), mmPerHour: $0.element)
             })
+            return
+        }
+        // Screenshot hook: `-RWRadarLoading YES` keeps waiting for DWD's answer.
+        if UserDefaults.standard.bool(forKey: "RWRadarLoading") {
+            readings[point] = nil
+            loading.insert(point)
             return
         }
         // Screenshot hook: `-RWRadarFailed YES` acts as if DWD did not answer.
@@ -144,7 +159,7 @@ final class RadarStore {
     /// Pull-down on a club page: reads the radar again unless it was read
     /// less than a minute ago (DWD makes a new picture every 5 minutes).
     func reload(_ point: Coordinate) async {
-        if UserDefaults.standard.bool(forKey: "RWSampleRadar") || UserDefaults.standard.bool(forKey: "RWRadarFailed") { return }
+        if ["RWSampleRadar", "RWRadarFailed", "RWRadarLoading"].contains(where: UserDefaults.standard.bool(forKey:)) { return }
         if !failed.contains(point), let at = loaded[point], Date.now.timeIntervalSince(at) < Self.pullGap { return }
         while loading.contains(point) {
             try? await Task.sleep(for: .milliseconds(250))
@@ -175,9 +190,13 @@ final class RadarStore {
         }
     }
 
-    /// Whether the radar at `point` is missing because it could not be read,
-    /// not because it is still loading.
-    func unavailable(at point: Coordinate) -> Bool { failed.contains(point) }
+    /// Why there is no radar to show at `point`: still being read, or it could
+    /// not be read. Nil while a reading is there (or the page never asked).
+    func status(at point: Coordinate) -> RadarStatus? {
+        if readings[point]?.ahead(of: .now) != nil { return nil }
+        if loading.contains(point) { return .loading }
+        return failed.contains(point) ? .missing : nil
+    }
 }
 
 /// Follows DWD's radar at a launch point while its page is in front and the
@@ -833,24 +852,31 @@ struct RadarSparkBars: View {
     }
 }
 
+/// Why the rain tile has no radar bars.
+enum RadarStatus { case loading, missing }
+
 /// The small radar symbol in the precipitation tile's title line: the bars come
-/// from the radar, or (struck through) the radar could not be read and the bars
-/// are the forecast's only. A symbol rather than words, so the tile's lines keep their length.
+/// from the radar (status nil), the radar is still being read (faint, pulsing),
+/// or (struck through) it could not be read and the bars are the forecast's only.
+/// A symbol rather than words, so the tile's lines keep their length.
 struct RadarMark: View {
-    let missing: Bool
+    var status: RadarStatus? = nil
 
     var body: some View {
         Image(systemName: "dot.radiowaves.left.and.right")
             .font(.caption2.weight(.semibold))
             .foregroundStyle(.secondary)
+            .opacity(status == .loading ? 0.5 : 1)
+            .symbolEffect(.pulse, options: .repeating, isActive: status == .loading)
             .overlay {
-                if missing {
+                if status == .missing {
                     Capsule().frame(width: 1.5).frame(maxHeight: .infinity)
                         .rotationEffect(.degrees(-45))
                         .foregroundStyle(.secondary)
                 }
             }
-            .accessibilityLabel(missing ? tr("Radar not available right now") : tr("Radar"))
+            .accessibilityLabel(status == .missing ? tr("Radar not available right now")
+                                : status == .loading ? tr("Loading the radar") : tr("Radar"))
     }
 }
 

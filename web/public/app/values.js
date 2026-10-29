@@ -370,7 +370,8 @@ const BUILDERS = {
     }
     if (d.radar?.steps.length) {
       lines[0].name = t("Forecast");
-      lines.push({
+      // First in the legend, as it comes first on the chart.
+      lines.unshift({
         name: t("Radar"), colour: COLOURS.indigo, kind: "bars", barWidth: 2.5,
         points: d.radar.steps.map((s) => ({ x: d.x(s.time), y: inUnit("rain", s.mm) })),
         covers: [d.x(d.radar.steps[0].time) - 0.5, d.x(radarEnd(d.radar))],
