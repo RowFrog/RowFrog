@@ -251,9 +251,6 @@ struct RootView: View {
             }
             locations.catalogFailed = false
             applyLaunchArguments()
-            if UserDefaults.standard.bool(forKey: "RWStress") {
-                Task { await StressProbe.run(ids: locations.saved.map(\.id)) { selection = $0 } }
-            }
             WidgetBridge.publish(locations)
         } catch {
             locations.catalogFailed = true
