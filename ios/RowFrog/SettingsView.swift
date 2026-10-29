@@ -73,6 +73,7 @@ struct SettingsView: View {
     @State private var search = UserDefaults.standard.string(forKey: "RWSettingsSearch") ?? ""
     @FocusState private var searching: Bool
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.dynamicTypeSize) private var typeSize
 
     /// `path` opens a page at once, as Boats and limits from a club page's boat menu.
     init(locations: LocationStore, path: [SettingsRoute] = []) {
@@ -142,7 +143,7 @@ struct SettingsView: View {
     private var topics: some View {
         @Bindable var settings = AppSettings.shared
         Section {
-            Picker(selection: $settings.boatID) {
+            let boats = Picker(selection: $settings.boatID) {
                 ForEach(settings.boats) { boat in
                     Text(boat.title).tag(boat.id)
                 }
@@ -151,6 +152,26 @@ struct SettingsView: View {
                     SettingsIcon(symbol: "figure.rower", color: .green)
                     Text(tr("Rowing light for"))
                 }
+            }
+            if typeSize.isAccessibilitySize {
+                // The boat under the name, as in the rows below; beside it, it was cut short.
+                Menu { boats } label: {
+                    HStack(spacing: 12) {
+                        SettingsIcon(symbol: "figure.rower", color: .green)
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(tr("Rowing light for")).foregroundStyle(.primary)
+                            Text(settings.boats.first { $0.id == settings.boatID }?.title ?? "")
+                                .foregroundStyle(Color.accentColor)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.footnote)
+                            .foregroundStyle(Color.accentColor)
+                    }
+                    .contentShape(Rectangle())
+                }
+            } else {
+                boats
             }
             topic(.boats, value: limitsSummary)
         } footer: {
