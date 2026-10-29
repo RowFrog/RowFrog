@@ -1538,7 +1538,14 @@ function route(scroll = true) {
   // The tour once, after the safety notice, and again from Settings › Help.
   if (!tourSeen() || location.hash === "#/tour") {
     showBackground(null);
-    return renderTour(root, { languagePicker, wireLanguage, done: () => (location.hash === "#/tour" ? (location.hash = "#/settings") : route()) });
+    const done = () => (location.hash === "#/tour" ? (location.hash = "#/settings") : route());
+    // The river page only with a river or canal club in the list (TutorialView.hasRiver).
+    const lakeIds = new Set(store.clubs.map((c) => c.lakeId));
+    return loadCatalog().catch(() => []).then((lakes) => {
+      // Another page may have opened while the club list loaded.
+      if (tourSeen() && location.hash !== "#/tour") return;
+      renderTour(root, { languagePicker, wireLanguage, done, river: lakes.some((l) => l.section && lakeIds.has(l.id)) });
+    });
   }
   const hash = location.hash.replace(/^#/, "");
   pagePicture(hash);
