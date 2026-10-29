@@ -1270,10 +1270,22 @@ function launchPointCard(club) {
     <div class="map" id="launch-map" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     <p>${h(t("The forecast, waves and warnings are for this point."))}</p>
     ${club.launchPointVerified ? "" : `<p class="orange small">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
-    <div class="map-foot"><small class="sub">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
-      <a class="pill" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map")} ${h(t("Launch point on the map"))}</a>
-      <a class="pill" href="${h(maps.directions(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a></div>`);
+    <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
+      <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
+        <div class="menu" role="menu">
+          <a role="menuitem" href="${h(maps.directions(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a>
+          <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin")} ${h(t("Launch point on the map"))}</a>
+          <small class="sub">${h(maps.name)}</small>
+        </div></details></div>`);
 }
+
+// The "Open in Maps" menu closes on a tap outside it, on one of its links and with Escape, as a menu does.
+document.addEventListener("click", (e) => {
+  for (const menu of document.querySelectorAll(".maps-menu[open]")) if (!menu.contains(e.target) || e.target.closest(".menu a")) menu.open = false;
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") for (const menu of document.querySelectorAll(".maps-menu[open]")) menu.open = false;
+});
 
 async function showLaunchMap(club) {
   const L = await loadLeaflet().catch(() => null);
