@@ -336,7 +336,8 @@ field at the bottom.
 - Developer: hidden options for testing (see the handbook).
 
 On a club page, the "For *boat*" line under the rowing light and the boat
-button next to the cog open the same boat picker; it shows the light each
+button next to the cog open the same boat picker; the button shows the chosen
+boat's class (own boats in blue) or the group ("1–2", "4–8"). The picker shows the light each
 boat would get there now.
 
 **Wide screens.** Phones on their side and the unfolded iPhone Duo get wide
