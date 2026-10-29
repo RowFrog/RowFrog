@@ -92,6 +92,29 @@ final class RainRadarTests: XCTestCase {
         XCTAssertEqual(data(code: 2, mm: 0, radar: [0, 0, 0]).sky, .partlyCloudy)
     }
 
+    func testDrizzleUnderATenthOfAMillimetreIsNamedNeverCalledDry() {
+        func data(_ hours: [ForecastHour], radar values: [Double]? = nil) -> ConditionData {
+            let forecast = ClubForecast(
+                clubId: "mrc-1880", lakeId: "starnberger-see", generatedAt: hours[0].time, waterTemperature: nil,
+                attribution: [], daylight: nil, hours: hours
+            )
+            return ConditionData(forecast: forecast, now: hours[0], radar: values.map(radar))
+        }
+        let drizzle = hours(code: 51, mm: [0.04, 0, 0, 0, 0])
+        XCTAssertEqual(data(drizzle).rainLines.value, "Drizzle")
+        XCTAssertTrue(data(drizzle).rainLines.detail.hasPrefix("Under 0"), data(drizzle).rainLines.detail)
+        // The radar sees no drizzle, so its dry hides neither the tile's word nor the symbol.
+        let underRadar = data(drizzle, radar: [0, 0, 0, 0, 0, 0, 0, 0, 0])
+        XCTAssertEqual(underRadar.rainLines.value, "Drizzle")
+        XCTAssertEqual(underRadar.sky, .drizzle)
+        // Drizzle later on counts as something coming, not "Dry next 24 h".
+        var later = hours(code: 3, mm: [0, 0, 0, 0, 0])
+        later[3].weatherCode = 53
+        later[3].precipitationMm = 0.02
+        XCTAssertEqual(data(later).rainLines.value, "Dry")
+        XCTAssertTrue(data(later).rainLines.detail.hasPrefix("Drizzle from "), data(later).rainLines.detail)
+    }
+
     @MainActor
     func testAFailedRadarReadIsTriedAgainSoonThenAtTheUsualPace() {
         XCTAssertEqual(RadarStore.retryDelay(after: 1), 30)

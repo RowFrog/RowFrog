@@ -141,8 +141,17 @@ struct ConditionData {
     /// the shown hour without radar), within the next 24 hours.
     var forecastRain: ForecastHour? {
         let after = radarAhead?.end
-        return next24.first { hour in (hour.precipitationMm ?? 0) >= 0.1 && hour.time >= (after ?? .distantPast) }
+        return next24.first { hour in hour.isWet && hour.time >= (after ?? .distantPast) }
     }
+
+    /// Drizzle and the like whose amount stays under 0.1 mm: named, with how little it is.
+    private func trace(_ kind: String) -> (value: String, detail: String, fromRadar: Bool) {
+        (kind, AppSettings.shared.rainUnit == .millimeters ? tr("Under %@", Format.rain(0.1)) : tr("Barely measurable"), false)
+    }
+
+    /// What the forecast names for the shown hour when its amount stays under
+    /// 0.1 mm, which the radar cannot see either.
+    var traceNow: String? { (now.precipitationMm ?? 0) < 0.1 ? Sky(hour: now).precipitationKind : nil }
     var future: [ForecastHour] { timeline.filter { x($0.time) >= 0 } }
 
     /// The line under the waves value: where the wind comes from over the lake.
@@ -166,11 +175,16 @@ struct ConditionData {
             return tr("%@ from %@", Sky(hour: wet).precipitationKind ?? tr("Rain"), Format.time(wet.time))
         }
         if let outlook = rainOutlook {
+            // The radar's dry wins over the forecast's rain, but not over its drizzle under 0.1 mm, which it cannot see.
+            let trace = outlook.now == nil ? traceNow : nil
+            let value = outlook.now ?? trace ?? tr("Dry")
             // While it rains, what comes next.
-            if let next = outlook.next { return (outlook.now ?? tr("Dry"), next.text, next.fromRadar) }
-            return (outlook.now ?? tr("Dry"), later(), false)
+            if let next = outlook.next { return (value, next.text, next.fromRadar) }
+            if let trace { return self.trace(trace) }
+            return (value, later(), false)
         }
         if (now.precipitationMm ?? 0) >= 0.1 { return (Format.rain(now.precipitationMm), Sky(hour: now).precipitationKind ?? "", false) }
+        if let trace = traceNow { return self.trace(trace) }
         return (tr("Dry"), later(), false)
     }
 
@@ -187,7 +201,8 @@ struct ConditionData {
             if (now.temperatureC ?? 10) <= 0 { return .snow }
             return (ahead.steps.first?.mmPerHour ?? 0) >= 10 ? .heavyRain : .rain
         }
-        return wet ? Sky(code: nil, cloudCoverPct: now.cloudCoverPct, precipitationMm: 0) : model
+        // Drizzle under 0.1 mm stays: the radar cannot see it, and the rain tile names it.
+        return wet && traceNow == nil ? Sky(code: nil, cloudCoverPct: now.cloudCoverPct, precipitationMm: 0) : model
     }
     var water: WaterTemperature? { forecast.waterTemperature }
     /// Without a station: the satellite reading carried forward, else the ice
@@ -1861,7 +1876,7 @@ extension ConditionDetail {
         let r = units.rainUnit
         let total = d.next24.compactMap(\.precipitationMm).reduce(0, +)
         let top = extreme(d.next24, \.precipitationMm, highest: true)
-        let kinds = Set(d.next24.filter { ($0.precipitationMm ?? 0) >= 0.1 }.compactMap { Sky(hour: $0).precipitationKind })
+        let kinds = Set(d.next24.filter(\.isWet).compactMap { Sky(hour: $0).precipitationKind })
         let light: String = switch d.now.light(for: Condition.precipitation.reasonNames) {
         case .red: tr("red: hail")
         case .amber: tr("amber: heavy rain")
@@ -1875,13 +1890,14 @@ extension ConditionDetail {
         facts.append((d.warningsLabel, d.warningNames(rainWords)))
         facts.append((tr("Rowing light now"), light))
         let wet = (h.precipitationMm ?? 0) >= 0.1
-        var value = wet ? Format.rain(h.precipitationMm) : tr("Dry")
-        var note = wet ? (Sky(hour: h).precipitationKind ?? "") : (d.forecastRain.map { tr("Expected from %@", Format.dayTime($0.time)) } ?? tr("Dry next 24 h"))
+        var value = wet ? Format.rain(h.precipitationMm) : (d.traceNow ?? tr("Dry"))
+        var note = wet ? (Sky(hour: h).precipitationKind ?? "") : d.traceNow != nil ? d.rainLines.detail
+            : (d.forecastRain.map { tr("Expected from %@", Format.dayTime($0.time)) } ?? tr("Dry next 24 h"))
         var lines = [ChartLine(name: tr("Precipitation"), color: .blue, kind: .bars, points: d.points { $0.precipitationMm.map(r.convert) })]
         var source = tr("Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.")
         // The next two hours from DWD's radar, in quarter hours, in front of the forecast's hours.
         if let ahead = d.radarAhead, let outlook = d.rainOutlook {
-            value = ahead.rainingNow ? Format.rain(ahead.steps.first?.mmPerHour) : tr("Dry")
+            value = ahead.rainingNow ? Format.rain(ahead.steps.first?.mmPerHour) : (d.traceNow ?? tr("Dry"))
             if let now = outlook.now, let next = outlook.next {
                 note = next.fromRadar ? tr("Radar: %@ · %@", now, next.text) : tr("Radar: %@", now) + " · " + next.text
             } else {

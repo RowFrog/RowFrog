@@ -124,3 +124,10 @@ func precipitationText(_ hour: ForecastHour) -> String? {
     if mm < 0.05 && sky.precipitationKind == nil { return nil }
     return "\(sky.precipitationKind ?? tr("Rain")) \(Format.rain(mm))"
 }
+
+extension ForecastHour {
+    /// Something falls in this hour: 0.1 mm or more, or a weather code that
+    /// names it (drizzle under 0.1 mm), so the rain tile never says dry beside
+    /// a drizzle symbol.
+    var isWet: Bool { (precipitationMm ?? 0) >= 0.1 || Sky(hour: self).precipitationKind != nil }
+}

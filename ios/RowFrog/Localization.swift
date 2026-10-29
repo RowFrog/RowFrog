@@ -1147,6 +1147,8 @@ enum German {
         "Open water upwind": "Freie Wasserfläche in Windrichtung",
         "Opens a chart and more about this value": "Öffnet ein Diagramm und mehr zu diesem Wert",
         "Precipitation": "Niederschlag",
+        "Under %@": "Unter %@",
+        "Barely measurable": "Kaum messbar",
         "Precipitation per hour and weather code, DWD via Open-Meteo. Official warnings appear under the warnings.": "Niederschlag pro Stunde und Wettercode, DWD über Open-Meteo. Amtliche Warnungen stehen bei den Warnungen.",
         "Protection needed": "Schutz nötig",
         "Relative humidity and dew point, DWD via Open-Meteo.": "Relative Luftfeuchte und Taupunkt, DWD über Open-Meteo.",
