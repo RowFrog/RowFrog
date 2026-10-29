@@ -287,14 +287,27 @@ svg.filled { width: 22px; height: 22px; }
 .bottom .piece .tool.boat { min-width: 56px; }
 .bottom .piece.round { width: 44px; padding: 0; justify-content: center; }
 .bottom .dots { margin: 0 auto; display: flex; justify-content: center; align-items: center; padding: 0 8px; max-width: calc(100% - 2 * 116px); overflow: hidden; }
-.bottom .dots a { color: var(--sub); opacity: .5; display: flex; align-items: center; justify-content: center; width: 16px; height: 44px; font-size: 11px; }
-.bottom .dots a span { width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
-.bottom .dots a.on { color: var(--text); opacity: 1; }
+/* The current page differs in size and shape, not only in shade (RootView.PageBar). */
+.bottom .dots a { color: var(--text); opacity: .3; display: flex; align-items: center; justify-content: center; width: 16px; height: 44px; font-size: 11px; }
+.bottom .dots a span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.bottom .dots a.on { opacity: 1; }
+.bottom .dots a.on span { width: 8px; height: 8px; }
+.bottom .dots a.on svg path:last-child { fill: currentColor; }
 
-/* Behind the clock: the page blurs and fades out as it scrolls under (RootView.TopEdgeFade). */
-body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 9; height: calc(env(safe-area-inset-top, 0px) + 14px); pointer-events: none;
+/* Behind the clock: clear at rest; once the page scrolls under it, it blurs and fades out (RootView.TopEdgeFade). */
+:root { --safe-top: env(safe-area-inset-top, 0px); --top-bar: 0px; }
+body.title-gone { --top-bar: 44px; }
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 9; height: calc(var(--safe-top) + var(--top-bar) + 14px); pointer-events: none;
   backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: color-mix(in srgb, var(--bg) 40%, transparent);
-  -webkit-mask-image: linear-gradient(#000 calc(env(safe-area-inset-top, 0px) * .6), transparent); mask-image: linear-gradient(#000 calc(env(safe-area-inset-top, 0px) * .6), transparent); }
+  -webkit-mask-image: linear-gradient(#000 calc(var(--safe-top) * .6 + var(--top-bar)), transparent); mask-image: linear-gradient(#000 calc(var(--safe-top) * .6 + var(--top-bar)), transparent);
+  opacity: 0; transition: opacity .2s ease-in-out; }
+body.scrolled::before { opacity: 1; }
+/* The club's name and light, small, once the big title has scrolled away (InlineClubTitle). */
+.top-title { position: fixed; top: 0; left: 0; right: 0; z-index: 10; height: 44px; padding: var(--safe-top) 60px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: content-box; }
+.top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+body.title-gone .top-title { opacity: 1; }
+body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }
 
 /* The map buttons float in the same glass. */
 .leaflet-touch .leaflet-bar, .leaflet-bar { border: 0 !important; border-radius: 12px; overflow: hidden; background: color-mix(in srgb, var(--card) 62%, transparent);
