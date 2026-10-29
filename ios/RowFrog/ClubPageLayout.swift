@@ -12,29 +12,27 @@ struct BalancedColumns: Layout {
     /// The tallest a growing card may get: one screen, as the satellite picture.
     var tallestCard: CGFloat = .infinity
 
-    struct Cache {
-        var width: CGFloat?
-        var placed: (spots: [(origin: CGPoint, grown: CGFloat?)], height: CGFloat) = ([], 0)
-    }
-
-    func makeCache(subviews: Subviews) -> Cache { Cache() }
-
-    private func arranged(_ subviews: Subviews, width: CGFloat, cache: inout Cache) -> (spots: [(origin: CGPoint, grown: CGFloat?)], height: CGFloat) {
-        guard StressProbe.variant == 10 || StressProbe.variant == 11 else { return arrange(subviews, width: width) }
-        if cache.width != width {
-            cache.placed = arrange(subviews, width: width)
-            cache.width = width
-        }
-        return cache.placed
-    }
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? 700
-        return CGSize(width: width, height: arranged(subviews, width: width, cache: &cache).height)
+        return CGSize(width: width, height: arrange(subviews, width: width).height)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
-        let placed = arranged(subviews, width: bounds.width, cache: &cache)
+    // The columns line up with nothing outside them. Without these, the stack
+    // around them asked every card, all the way down, for its alignment guides,
+    // measuring the whole page again and again; turning the phone sideways and
+    // back then froze the app.
+    func explicitAlignment(of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout ()) -> CGFloat? {
+        nil
+    }
+
+    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout ()) -> CGFloat? {
+        nil
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let placed = arrange(subviews, width: bounds.width)
         let column = columnWidth(bounds.width)
         for (subview, spot) in zip(subviews, placed.spots) {
             subview.place(at: CGPoint(x: bounds.minX + spot.origin.x, y: bounds.minY + spot.origin.y),
