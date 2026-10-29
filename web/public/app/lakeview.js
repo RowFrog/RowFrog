@@ -6,8 +6,9 @@ import { icon } from "./icons.js";
 import {
   store, getJSON, h, time, dayTime, duration, wind, windRange, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
   dot, setTitle, openSheet, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, selectedBoat, boatLimits, boatInSentence, windUnit,
-  CONDITION_ICONS,
+  CONDITION_ICONS, forecasts, conditionIcon,
 } from "./shared.js";
+import { riverSpeed } from "./river.js";
 import { compass, matchesStandard, allowsMore, coldWaterKit, reasonCondition, key } from "./logic.js";
 import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
@@ -264,6 +265,8 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
     root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()), layer: "light", spot: null,
     routeMode: false, points: club ? [club.launchPoint] : [], undo: [], outAndBack: false, pace: 135,
     selected: null, followBoat: false, boatAt: 0, savedId: null, map: null, layers: {}, rowed: null, showTrack: true,
+    // On rivers: the current the club page shows (its gauge, mid-river), for the route planner (LakeView.currentMs).
+    currentMs: view.section ? forecasts.get(clubId)?.forecast?.river?.now?.speedMs ?? null : null,
   };
   root.querySelector("#route-mode").addEventListener("click", toggleRouteMode);
   root.querySelector("#legend").addEventListener("click", () => openSheet(t("Legend"), legendSheet()));
@@ -332,7 +335,7 @@ function currentPlan() {
   if (!planner) return null;
   const hour = page.view.hours[page.hour];
   const start = new Date(Math.max(new Date(hour.time).getTime(), Math.min(Date.now(), new Date(hour.time).getTime() + 3599000)));
-  return { planner, plan: planRoute(planner, start, page.pace) };
+  return { planner, plan: planRoute(planner, start, page.pace, page.currentMs) };
 }
 
 function update() {
@@ -547,13 +550,15 @@ function planningPanel(hour) {
       const place = view.zones.length > 1 && view.zones[zone] ? `, ${t(zoneTitle(view.zones[zone], waterKind(view)))}` : "";
       return `${t("Roughest at %@", time(rough.time))}${place}: ${parts.join(", ")}`;
     })() : null;
-    const better = bestStart(found.planner, page.pace);
+    const better = bestStart(found.planner, page.pace, new Date(), page.currentMs);
     const betterIndex = better && plansBetter(better, plan) ? view.hours.reduce((n, x, i) => (new Date(x.time) <= better.start ? i : n), 0) : null;
     summary = `<p class="route-line">${dot(plan.worstLight, 10)} <strong>${h(lightTitle(plan.worstLight))}</strong>
         <span class="sub">${h(t("%@ · %@ · back %@", distance(plan.distanceM), duration(plan.start, plan.end), time(plan.end)))}</span></p>
       ${routeBar(plan)}
       <p class="small sub">${h(t("Waves up to %@", waves(plan.maxWaveM)))}</p>
       ${roughText ? `<p class="small sub">${h(roughText)}</p>` : ""}
+      ${plan.currentMs >= 0.05 ? `<p class="small sub">${conditionIcon("current")} ${h(t("Times count with the current of ≈ %@: faster downstream, slower upstream.", riverSpeed(plan.currentMs)))}</p>` : ""}
+      ${plan.noHeadway ? `<p class="small orange">${icon("triangle-alert")} ${h(t("Against this current your boat hardly makes headway on part of the route."))}</p>` : ""}
       ${plan.beyondForecast ? `<p class="small orange">${icon("clock")} ${h(t("The forecast ends before you are back."))}</p>` : ""}
       ${viewStale(view) ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
       ${adviceOnly()}
