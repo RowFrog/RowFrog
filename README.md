@@ -182,7 +182,8 @@ gauge, with a level chart and the pace upstream and downstream. "Plan a
 route" counts its times with that current, faster downstream and slower
 upstream, and warns where the boat would hardly make headway. Shipping
 stopped turns the light red, high water amber; the current turns it amber
-from 1.5 m/s and red above 2.5 m/s (`backend/rowfrog/river.py`,
+from 1.5 m/s and red above 2.5 m/s, limits that can be set per boat like the
+others (`backend/rowfrog/river.py`,
 `ios/RowFrog/RiverCurrent.swift`).
 
 **Rain radar.** The rain tile (titled "Precipitation"), the top tile's rain value and the rain detail
@@ -304,8 +305,10 @@ field at the bottom.
   or solid tiles, your own photo or the satellite
   picture of the club's lake. On club pages the picture fills the screen
   behind the status and page bars and fades between clubs while swiping.
-  Pages reach under a soft blurred fade behind the clock, and the page bar
-  floats as three Liquid Glass groups; the lake map buttons look the same.
+  The top bar is clear at rest and shows a blur with the club's name once
+  the page scrolls; the page bar floats as three Liquid Glass groups, with
+  the current club's dot larger, and the lake map buttons look the same. On
+  iOS 26 the list's search sits at the bottom.
 - Widgets: the background for all widgets or per club (each widget can also
   pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
