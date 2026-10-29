@@ -785,3 +785,6 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .pace-table dt { color: var(--text); }
 .pace-table dd { margin: 0; font-weight: 600; }
 .current-notes p { margin: 2px 0; }
+/* The rain tile's title line: the bars come from the radar; struck through when it could not be read (RadarMark). */
+.radar-mark.head { position: relative; margin: 0 1px 0 0; font-size: 11px; font-weight: 600; }
+.radar-mark.missing::after { content: ""; position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1.5px; border-radius: 1px; background: currentColor; transform: translateX(-50%) rotate(-45deg); }

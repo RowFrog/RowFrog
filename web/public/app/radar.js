@@ -44,13 +44,20 @@ async function loadRadar(point) {
   return { reference: now.reference, steps: steps.map(({ time: at, mm }) => ({ time: at, mm })).sort((a, b) => a.time - b.time) };
 }
 
+const testSwitch = (name) => {
+  try {
+    return localStorage.getItem(name) === "true";
+  } catch {
+    return false;
+  }
+};
+
+/** Handbook: `localStorage["rf.radarFailed"] = "true"` acts as if DWD did not answer (-RWRadarFailed). */
+const radarDown = () => testSwitch("rf.radarFailed");
+
 /** Handbook: `localStorage["rf.sampleRadar"] = "true"` puts made-up rain on the radar from 30 minutes on (-RWSampleRadar). */
 function sampleRadar() {
-  try {
-    if (localStorage.getItem("rf.sampleRadar") !== "true") return null;
-  } catch {
-    return null;
-  }
+  if (!testSwitch("rf.sampleRadar")) return null;
   const now = Math.floor(Date.now() / (5 * MIN)) * 5 * MIN;
   return { reference: now, steps: [0, 0, 0.6, 1.8, 3.2, 1.1, 0, 0, 0].map((mm, i) => ({ time: now + i * 15 * MIN, mm })) };
 }
@@ -60,10 +67,20 @@ function sampleRadar() {
 const readings = new Map();
 const loading = new Map();
 const failed = new Set();
+/** Failed reads in a row per launch point, for the quicker retries. */
+const failures = new Map();
+/** When each launch point was last asked, so a page drawn again does not ask before the retry is due. */
+const tried = new Map();
 const keyOf = (p) => `${p.lat},${p.lon}`;
 
 /** DWD's 5 minutes; 15 when saving data. */
 export const refreshMs = () => (savingData() ? 15 : 5) * MIN;
+
+/** After a failed read: again after 30 seconds, 1 minute and 2 minutes, then at the usual pace (RadarStore.retries). */
+const RETRIES = [0.5 * MIN, MIN, 2 * MIN];
+export const retryDelay = (count) => (count >= 1 && count <= RETRIES.length ? Math.min(RETRIES[count - 1], refreshMs()) : refreshMs());
+/** Refresh skips the radar when it was read this recently (RadarStore.pullGap). */
+const PULL_GAP = MIN;
 
 /** The last reading at a launch point, however old. */
 export function radarAt(point) {
@@ -71,26 +88,36 @@ export function radarAt(point) {
   return sampleRadar() ?? readings.get(keyOf(point))?.radar ?? null;
 }
 
-/** Whether the radar could not be read and there is no older reading. */
+/** Whether the radar could not be read (not just still loading) and there is no reading still worth showing. */
 export const radarFailed = (point) => point != null && failed.has(keyOf(point));
 
-/** The reading at a point, asking DWD only when the last one is older than the refresh time. */
-export async function readRadar(point) {
+/** The reading at a point, asking DWD only when the last one is older than the refresh time (or `force`). */
+export async function readRadar(point, force = false) {
   if (!point) return null;
   const sample = sampleRadar();
   if (sample) return sample;
   const k = keyOf(point);
+  if (radarDown()) {
+    readings.delete(k);
+    failed.add(k);
+    return null;
+  }
   const kept = readings.get(k);
-  if (kept && Date.now() - kept.at < refreshMs()) return kept.radar;
+  if (!force && kept && Date.now() - kept.at < refreshMs()) return kept.radar;
+  if (!force && failures.has(k) && Date.now() - tried.get(k) < retryDelay(failures.get(k)) - 1000) return kept?.radar ?? null;
   if (!loading.has(k)) {
+    tried.set(k, Date.now());
     loading.set(k, loadRadar(point)
       .then((radar) => {
         readings.set(k, { radar, at: Date.now() });
         failed.delete(k);
+        failures.delete(k);
         return radar;
       })
       .catch(() => {
-        if (!readings.has(k)) failed.add(k);
+        failures.set(k, (failures.get(k) ?? 0) + 1);
+        // No reading, or one too old to show: the rain tile says the radar is missing.
+        if (!ahead(readings.get(k)?.radar, Date.now())) failed.add(k);
         return readings.get(k)?.radar ?? null;
       })
       .finally(() => loading.delete(k)));
@@ -107,9 +134,20 @@ export function followRadar(point, alive, changed) {
     const radar = await readRadar(point);
     if (!alive()) return;
     if (radar !== before || (!radar && radarFailed(point))) changed(radar);
-    setTimeout(tick, refreshMs());
+    setTimeout(tick, failures.has(keyOf(point)) ? retryDelay(failures.get(keyOf(point))) : refreshMs());
   };
   tick();
+}
+
+/** Refresh on a club page: reads the radar again unless it was read less than a minute ago and that read worked (RadarStore.reload). */
+export async function reloadRadar(point) {
+  if (!point || sampleRadar() || radarDown()) return;
+  const k = keyOf(point);
+  const fresh = () => !failures.has(k) && Date.now() - (readings.get(k)?.at ?? 0) < PULL_GAP;
+  if (fresh()) return;
+  await loading.get(k);
+  if (fresh()) return;
+  await readRadar(point, true);
 }
 
 // ---- What the radar says (RainRadar, RainOutlook) -------------------------------------
@@ -241,6 +279,13 @@ export function radarGraphic(d) {
 }
 
 /** The small radar symbol in front of a line read from the radar. */
+/**
+ * The small radar symbol in the rain tile's title line: the bars come from the
+ * radar, or (struck through) the radar could not be read and the bars are the
+ * forecast's only (RadarMark).
+ */
+export const radarTitleMark = (missing) => `<span class="radar-mark head${missing ? " missing" : ""}" role="img" aria-label="${h(missing ? t("Radar not available right now") : t("Radar"))}">${icon("radar")}</span>`;
+
 export const radarMark = () => `<span class="radar-mark" title="${h(t("Rain radar"))}">${icon("radar")}</span>`;
 
 // ---- The rain radar card (RainRadarCard), off by default -------------------------------

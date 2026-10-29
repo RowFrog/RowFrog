@@ -11,6 +11,8 @@ struct LakeViewCard: View {
     var waterC: Double? = nil
     /// Lake, river or canal, for the title while the view loads.
     var water: WaterKind = .lake
+    /// The river's current at the club's gauge, for the route planner.
+    var currentMs: Double? = nil
     @MainActor private var store: LakeViewStore { .shared }
     @State private var showingMap = false
 
@@ -35,6 +37,7 @@ struct LakeViewCard: View {
     /// Screenshot hook: `-RWOpenLakeView YES` opens the full lake view once it has loaded.
     @MainActor private func load() async {
         store.noteWater(waterC, lake: lakeID)
+        store.noteCurrent(currentMs, lake: lakeID)
         await store.load(lakeID)
         // Only on the page `-RWOpenClub` opens: clubs on the same lake would race it for the sheet.
         let page = UserDefaults.standard.string(forKey: "RWOpenClub")

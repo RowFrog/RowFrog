@@ -178,15 +178,18 @@ everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
 lake view becomes a River or Canal view with pins at the stretch's ends, and
 the satellite picture shows that stretch. In place of the ice tile a Current
 tile shows the flow speed and the water level from the nearest PEGELONLINE
-gauge, with a level chart and the pace upstream and downstream. Shipping
+gauge, with a level chart and the pace upstream and downstream. "Plan a
+route" counts its times with that current, faster downstream and slower
+upstream, and warns where the boat would hardly make headway. Shipping
 stopped turns the light red, high water amber; the current turns it amber
 from 1.5 m/s and red above 2.5 m/s (`backend/rowfrog/river.py`,
 `ios/RowFrog/RiverCurrent.swift`).
 
-**Rain radar.** The rain tile, the top tile's rain value and the rain detail
+**Rain radar.** The rain tile (titled "Precipitation"), the top tile's rain value and the rain detail
 view read DWD's rain radar and 2-hour nowcast for the launch point, then the
 forecast: "Light rain" now, with a line such as "Rain from 12:45" (a small
-radar symbol marks the radar, no symbol the forecast) and small bars, thin for
+radar symbol marks the radar, no symbol the forecast; the symbol is struck through while the radar can't be
+loaded; it is tried again soon and on pull to refresh) and small bars, thin for
 the radar's quarter hours and paler for the forecast hours. Snow, hail and
 drizzle are named from the forecast. The detail chart starts with two hours of
 radar bars, and its map shows the radar picture; a tap opens the radar map,
