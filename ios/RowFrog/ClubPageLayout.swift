@@ -12,13 +12,29 @@ struct BalancedColumns: Layout {
     /// The tallest a growing card may get: one screen, as the satellite picture.
     var tallestCard: CGFloat = .infinity
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let width = proposal.width ?? 700
-        return CGSize(width: width, height: arrange(subviews, width: width).height)
+    struct Cache {
+        var width: CGFloat?
+        var placed: (spots: [(origin: CGPoint, grown: CGFloat?)], height: CGFloat) = ([], 0)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let placed = arrange(subviews, width: bounds.width)
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+
+    private func arranged(_ subviews: Subviews, width: CGFloat, cache: inout Cache) -> (spots: [(origin: CGPoint, grown: CGFloat?)], height: CGFloat) {
+        guard StressProbe.variant == 10 || StressProbe.variant == 11 else { return arrange(subviews, width: width) }
+        if cache.width != width {
+            cache.placed = arrange(subviews, width: width)
+            cache.width = width
+        }
+        return cache.placed
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+        let width = proposal.width ?? 700
+        return CGSize(width: width, height: arranged(subviews, width: width, cache: &cache).height)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+        let placed = arranged(subviews, width: bounds.width, cache: &cache)
         let column = columnWidth(bounds.width)
         for (subview, spot) in zip(subviews, placed.spots) {
             subview.place(at: CGPoint(x: bounds.minX + spot.origin.x, y: bounds.minY + spot.origin.y),

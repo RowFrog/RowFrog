@@ -212,8 +212,8 @@ struct LocationPageView: View {
             }
             // On the swiping club pages the cards scroll on under the clock and the
             // floating buttons; keep clear of whichever the page is not already clear of.
-            .safeAreaPadding(.top, StressProbe.variant == 1 ? 0 : max(0, pageMargins.top - geometry.safeAreaInsets.top))
-            .safeAreaPadding(.bottom, StressProbe.variant == 1 ? 0 : max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
+            .modifier(ProbePageInsets(top: max(0, pageMargins.top - geometry.safeAreaInsets.top),
+                                      bottom: max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom)))
         }
     }
 
@@ -1585,6 +1585,25 @@ private struct LoadingCards: View {
         VStack(alignment: .leading, spacing: 2) {
             Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             Text(dash).valueFont(size: 40).foregroundStyle(.secondary)
+        }
+    }
+}
+
+/// TEMPORARY (freeze probe): the page's insets as safe-area padding, or with
+/// `-RWProbe 9`/`11` as scroll content margins.
+private struct ProbePageInsets: ViewModifier {
+    let top: CGFloat
+    let bottom: CGFloat
+
+    func body(content: Content) -> some View {
+        if StressProbe.variant == 9 || StressProbe.variant == 11 {
+            content
+                .contentMargins(.top, top, for: .scrollContent)
+                .contentMargins(.bottom, bottom, for: .scrollContent)
+        } else {
+            content
+                .safeAreaPadding(.top, top)
+                .safeAreaPadding(.bottom, bottom)
         }
     }
 }

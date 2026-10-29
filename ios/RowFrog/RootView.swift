@@ -417,14 +417,18 @@ private struct PageBar: View {
             Spacer(minLength: 8)
             HStack(spacing: 0) {
                 ForEach(clubs) { club in
+                    let current = club.id == selection
+                    // The current page differs in size and shape, not only in shade:
+                    // Liquid Glass lifts dim symbols, which hid a fainter shade alone.
                     Group {
                         if club.id == homeID {
-                            Image(systemName: "house.fill").font(.caption2)
+                            Image(systemName: current ? "house.fill" : "house").font(.caption2)
                         } else {
-                            Circle().frame(width: 7, height: 7)
+                            Circle().frame(width: current ? 8 : 6, height: current ? 8 : 6)
                         }
                     }
-                    .foregroundStyle(club.id == selection ? Color.primary : Color.secondary.opacity(0.5))
+                    .foregroundStyle(current ? Color.primary : Color.primary.opacity(0.3))
+                    .accessibilityAddTraits(current ? .isSelected : [])
                     // Wider than the dot and as tall as the bar, so it is easier to hit.
                     .frame(width: 16, height: Self.buttonHeight)
                     .contentShape(Rectangle())
