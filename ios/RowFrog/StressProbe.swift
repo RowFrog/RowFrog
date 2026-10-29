@@ -10,6 +10,8 @@ final class StressBeat: @unchecked Sendable {
 }
 
 enum StressProbe {
+    /// `-RWProbe N` switches one suspect off (0 = none).
+    static let variant = UserDefaults.standard.integer(forKey: "RWProbe")
     static var logURL: URL { FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0].appendingPathComponent("stress.log") }
 
     static func log(_ line: String) {
@@ -43,13 +45,13 @@ enum StressProbe {
         guard ids.count > 1 else { log("too few clubs \(ids.count)"); return }
         startWatchdog()
         try? await Task.sleep(for: .seconds(4))
-        for step in 0..<48 {
+        for step in 0..<30 {
             let id = ids[(step + 1) % ids.count]
             log("step \(step) select \(id)")
             withAnimation { select(id) }
             try? await Task.sleep(for: .milliseconds(1200))
-            if step % 6 == 5 {
-                let side = (step / 6) % 2 == 0
+            if step % 5 == 4 {
+                let side = (step / 5) % 2 == 0
                 log("turn \(side ? "landscape" : "portrait")")
                 for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
                     scene.requestGeometryUpdate(.iOS(interfaceOrientations: side ? .landscapeRight : .portrait))

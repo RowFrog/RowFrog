@@ -87,7 +87,7 @@ struct LocationPageView: View {
         GeometryReader { geometry in
             // Wide screens (an unfolded iPhone Duo, an iPhone on its side) put the
             // cards below the rowing light in two columns; phones upright keep one.
-            let twoColumns = geometry.size.width >= Self.twoColumnWidth
+            let twoColumns = geometry.size.width >= Self.twoColumnWidth && StressProbe.variant != 4
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
@@ -95,7 +95,7 @@ struct LocationPageView: View {
                             // Cards under the clock: the top blurs, as iOS's own bars do.
                             .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                                 top > 0 && proxy.frame(in: .global).minY < top - 1
-                            } action: { PageScroll.shared.update(club.id, scrolled: $0) }
+                            } action: { if StressProbe.variant != 3 { PageScroll.shared.update(club.id, scrolled: $0) } }
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
                             if tourSeen && showTopTileTip {
@@ -212,8 +212,8 @@ struct LocationPageView: View {
             }
             // On the swiping club pages the cards scroll on under the clock and the
             // floating buttons; keep clear of whichever the page is not already clear of.
-            .safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))
-            .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
+            .safeAreaPadding(.top, StressProbe.variant == 1 ? 0 : max(0, pageMargins.top - geometry.safeAreaInsets.top))
+            .safeAreaPadding(.bottom, StressProbe.variant == 1 ? 0 : max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
         }
     }
 
@@ -455,7 +455,7 @@ private extension LocationPageView {
                 // Once the title is under the top bar, the bar shows the name instead.
                 .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                     top > 0 && proxy.frame(in: .global).maxY < top + InlineClubTitle.height
-                } action: { PageScroll.shared.update(club.id, titleGone: $0) }
+                } action: { if StressProbe.variant != 3 { PageScroll.shared.update(club.id, titleGone: $0) } }
             Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             if !club.launchPointVerified {

@@ -201,7 +201,7 @@ struct RootView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .ignoresSafeArea(edges: [.top, .bottom])
+        .ignoresSafeArea(edges: StressProbe.variant == 2 ? [] : [.top, .bottom])
         .background {
             // Behind the pages, not on each one: a swiping TabView keeps its
             // pages out of the status bar and the page bar, which left black bars.
