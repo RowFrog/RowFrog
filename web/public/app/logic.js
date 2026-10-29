@@ -294,6 +294,7 @@ export const REASONS = {
 };
 
 const RANK = { green: 0, amber: 1, red: 2 };
+const worse = (a, b) => (RANK[b] > RANK[a] ? b : a);
 
 /** The worst light among these reasons in the hour, or null when they are all fine. */
 export function lightFor(hour, names) {
@@ -415,8 +416,14 @@ export const LIMITS = {
   gustRed: { title: key("Gusts: stay ashore above"), condition: "wind", step: 0.5, range: [4, 20] },
   waveAmber: { title: key("Waves: row with care from"), condition: "waves", step: 0.05, range: [0.05, 1.5] },
   waveRed: { title: key("Waves: stay ashore above"), condition: "waves", step: 0.05, range: [0.05, 1.5] },
+  // River current mid-river, for every boat (river.py; app #182).
+  currentAmber: { title: key("Current: row with care from"), condition: "current", step: 0.1, range: [0.5, 4] },
+  currentRed: { title: key("Current: stay ashore above"), condition: "current", step: 0.1, range: [0.5, 4] },
   lifeJacket: { title: key("Life jacket below"), condition: "waterTemperature", step: 1, range: [4, 20] },
 };
+
+/** How long the gauge's reading counts in the forecast (river.py GAUGE_HOURS). */
+export const GAUGE_HOURS = 24;
 
 const WIND_LIMITS = ["windAmber", "windRed", "gustAmber", "gustRed"];
 const BOAT_DEPENDENT = [...WIND_LIMITS, "waveAmber", "waveRed"];
@@ -435,6 +442,8 @@ const STANDARD = {
 /** The app's limit for a boat. */
 export function standardLimit(limit, boat) {
   if (limit === "lifeJacket") return 15;
+  if (limit === "currentAmber") return 1.5;
+  if (limit === "currentRed") return 2.5;
   const size = isBigClass(boat.class) ? "big" : "small";
   const row = STANDARD[`${boat.type} ${size}`] ?? STANDARD[boat.type] ?? STANDARD["racing small"];
   return row[BOAT_DEPENDENT.indexOf(limit)];
@@ -483,16 +492,17 @@ function check(value, amber, red) {
 
 /**
  * One hour checked again for a boat's limits, as ForecastHour.applying in the
- * app. Where the user's own limit is looser than the app's, a note says the
+ * app, and on rivers the gauge's current (`currentMs`, null where it does not
+ * count). Where the user's own limit is looser than the app's, a note says the
  * value is above the app's usual limit, so the advice is never lost.
  */
-export function applyLimitsToHour(hour, chosen, waterC) {
+export function applyLimitsToHour(hour, chosen, waterC, currentMs = null) {
   const limits = limitsFor(chosen.boat, chosen.custom, waterC);
   const usual = limitsFor(chosen.boat, {}, waterC);
   const reasons = [];
   const notes = [];
   for (const r of hour.reasons ?? []) {
-    if (LIMIT_REASONS.has(r.condition)) continue;
+    if (LIMIT_REASONS.has(r.condition) || (currentMs != null && r.condition === "current")) continue;
     reasons.push(r.condition === "lake_strong_wind" ? { ...r, light: limits.strongWindLight } : r);
   }
   const add = (name, value, amber, red) => {
@@ -504,6 +514,7 @@ export function applyLimitsToHour(hour, chosen, waterC) {
   add("wind", hour.windSpeedMs, "windAmber", "windRed");
   add("gusts", hour.windGustMs, "gustAmber", "gustRed");
   add("waves", hour.waveHeightM, "waveAmber", "waveRed");
+  if (currentMs != null) add("current", currentMs, "currentAmber", "currentRed");
   // Cold water shows as the life-jacket badge (coldWaterKit), not in the
   // light; only near-freezing water stays amber, as in score.py.
   if (waterC != null && waterC < COLD_WATER_C) {
@@ -525,8 +536,22 @@ export function waterForHour(forecast, hour, zone = ZONE) {
 /** The forecast with a boat's limits; unchanged with the backend's own. */
 export function applyLimits(forecast, limits, zone = ZONE) {
   if (matchesStandard(limits)) return forecast;
-  const apply = (h) => applyLimitsToHour(h, limits, waterForHour(forecast, h, zone));
-  return { ...forecast, hours: forecast.hours.map(apply), outlook: forecast.outlook?.map(apply) };
+  // The gauge's current counts for the first hours only, as on the server.
+  const current = forecast.river?.now?.speedMs ?? null;
+  const until = Date.parse(forecast.generatedAt) + GAUGE_HOURS * 3600 * 1000;
+  const apply = (h) => applyLimitsToHour(h, limits, waterForHour(forecast, h, zone), Date.parse(h.time) < until ? current : null);
+  return { ...forecast, hours: forecast.hours.map(apply), outlook: forecast.outlook?.map(apply), river: forecast.river && riverForBoat(forecast.river, limits) };
+}
+
+/** The river with the current limits of the user's boat: the Current tile's light and the limits it names (RiverConditions.applying). */
+export function riverForBoat(river, chosen) {
+  const limits = limitsFor(chosen.boat, chosen.custom);
+  const [amber, red] = [limits.value("currentAmber"), limits.value("currentRed")];
+  const now = river.now && {
+    ...river.now,
+    light: worse(river.now.state === "shipping_stopped" ? "red" : river.now.state === "high" ? "amber" : "green", check(river.now.speedMs, amber, red)),
+  };
+  return { ...river, limits: { ...river.limits, currentAmberMs: amber, currentRedMs: red }, now };
 }
 
 /** For a boat group id ("small" or "big"), as before own boats existed. */

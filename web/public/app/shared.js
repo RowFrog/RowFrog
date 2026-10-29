@@ -118,6 +118,7 @@ export function limitText(limit, value) {
   const { condition } = LIMITS[limit];
   if (condition === "waves") return waves(value);
   if (condition === "waterTemperature") return temperature(value);
+  if (condition === "current") return `${num(value, 1)} m/s`;
   if (store.wind === "bft") return `${beaufort(value)} Bft`;
   const v = inUnit("wind", value);
   return `${num(v, Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1)} ${windUnit()}`;

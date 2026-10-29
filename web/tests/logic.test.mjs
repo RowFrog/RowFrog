@@ -4,7 +4,7 @@ import { readFileSync } from "node:fs";
 import {
   isStale, shownLight, currentHour, nextHours, beaufort, windValue, compass, searchClubs, fold, town, overlayBox,
   sky, skyIcon, precipitationKind, lightFor, feelsLikeNote, pressureTrend, estimatedWater, iceOff, iceValue, sunState,
-  applyBoat, applyBoatToHour, coldWaterKit, place, twilight,
+  applyBoat, applyBoatToHour, coldWaterKit, place, twilight, applyLimitsToHour, limitsFor, riverForBoat, GROUPS,
 } from "../public/app/logic.js";
 
 const forecast = JSON.parse(readFileSync(new URL("fixtures/forecast.json", import.meta.url)));
@@ -126,4 +126,25 @@ test("place reads like the app's, and twilight says sunrise or sunset", () => {
   assert.equal(twilight(f, { time: "2026-10-26T16:00:00Z" }).kind, "sunset");
   assert.equal(twilight(f, { time: "2026-10-26T05:00:00Z" }).time.toISOString(), "2026-10-26T05:49:00.000Z");
   assert.equal(twilight(f, { time: "2026-10-26T12:00:00Z" }), null);
+});
+
+test("the river current counts with the boat's own limits (app #182)", () => {
+  const hour = { time: "2026-10-26T10:00:00Z", windSpeedMs: 2, windGustMs: 3, waveHeightM: 0.05, reasons: [{ condition: "current", light: "amber" }], light: "amber" };
+  const small = GROUPS[0];
+  // The app's limits: amber from 1.5 m/s.
+  assert.equal(applyLimitsToHour(hour, limitsFor(small), 15, 1.8).light, "amber");
+  // A crew that allows 2 m/s gets green, with a note that the app would say amber.
+  const looser = applyLimitsToHour(hour, limitsFor(small, { currentAmber: 2 }), 15, 1.8);
+  assert.equal(looser.light, "green");
+  assert.deepEqual(looser.notes.map((n) => n.condition), ["current"]);
+  // A stricter crew: red above 1.2 m/s.
+  assert.equal(applyLimitsToHour(hour, limitsFor(small, { currentAmber: 0.8, currentRed: 1.2 }), 15, 1.3).light, "red");
+  // Past the gauge's hours the backend's reason stays as it is.
+  assert.equal(applyLimitsToHour(hour, limitsFor(small, { currentAmber: 2 }), 15).light, "amber");
+  // The Current tile follows the boat's limits.
+  const river = { now: { speedMs: 1.8, state: "normal", light: "amber" }, limits: { currentAmberMs: 1.5, currentRedMs: 2.5 } };
+  const mine = riverForBoat(river, limitsFor(small, { currentAmber: 2 }));
+  assert.equal(mine.now.light, "green");
+  assert.equal(mine.limits.currentAmberMs, 2);
+  assert.equal(riverForBoat({ ...river, now: { ...river.now, state: "high" } }, limitsFor(small, { currentAmber: 2 })).now.light, "amber");
 });
