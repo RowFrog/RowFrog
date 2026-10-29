@@ -587,18 +587,18 @@ extension View {
     @ViewBuilder
     func detailCover<Item: Identifiable, Content: View>(item: Binding<Item?>, @ViewBuilder content: @escaping (Item) -> Content) -> some View {
         if Orientation.isPad {
-            fullScreenCover(item: item, content: content)
+            fullScreenCover(item: item) { content($0).diagnosisNamed("value detail") }
         } else {
-            sheet(item: item, content: content)
+            sheet(item: item) { content($0).diagnosisNamed("value detail") }
         }
     }
 
     @ViewBuilder
     func detailCover<Content: View>(isPresented: Binding<Bool>, @ViewBuilder content: @escaping () -> Content) -> some View {
         if Orientation.isPad {
-            fullScreenCover(isPresented: isPresented, content: content)
+            fullScreenCover(isPresented: isPresented) { content().diagnosisNamed("value detail") }
         } else {
-            sheet(isPresented: isPresented, content: content)
+            sheet(isPresented: isPresented) { content().diagnosisNamed("value detail") }
         }
     }
 }

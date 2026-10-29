@@ -840,6 +840,15 @@ private struct DeveloperSettingsView: View {
                 SectionFooter(tr("On wide screens, how the two columns of a club page end level. Fold the 48 hours: the table shows 24 hours until opened. Always 48 hours: the whole table, so columns may end further apart. Switching the developer options off goes back to folding."))
             }
             .surfaceRows()
+            Section {
+                ShareLink(item: DiagnosisLog.url) {
+                    Label(tr("Share diagnosis log"), systemImage: "stethoscope")
+                }
+                .disabled(!DiagnosisLog.exists)
+            } footer: {
+                SectionFooter(tr("If iOS closed Row Frog as you came back to it, share this log with the developers. It lists the last steps in and out of the app, with times, and iOS's own reports. It stays on the phone until you share it."))
+            }
+            .surfaceRows()
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)

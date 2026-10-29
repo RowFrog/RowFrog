@@ -129,6 +129,7 @@ struct RootView: View {
                 Task { await refreshOnReturn() }
             }
         }
+        .modifier(DiagnosisSteps(page: selection, list: showingList, settings: showingSettings))
         // A new language or units show on the widget straight away.
         .onChange(of: AppSettings.shared.language) { WidgetBridge.publish(locations) }
         .onChange(of: AppSettings.shared.temperatureUnit) { WidgetBridge.publish(locations) }

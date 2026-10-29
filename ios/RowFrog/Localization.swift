@@ -199,6 +199,8 @@ enum German {
         "Show 24 more hours": "24 weitere Stunden zeigen",
         "Show fewer hours": "Weniger Stunden zeigen",
         "Club page columns": "Spalten der Vereinsseite",
+        "Share diagnosis log": "Diagnoseprotokoll teilen",
+        "If iOS closed Row Frog as you came back to it, share this log with the developers. It lists the last steps in and out of the app, with times, and iOS's own reports. It stays on the phone until you share it.": "Wenn iOS Row Frog beim Zurückkehren geschlossen hat, teile dieses Protokoll mit den Entwicklern. Es listet die letzten Schritte beim Verlassen und Öffnen der App mit Uhrzeit sowie die Berichte von iOS selbst. Es bleibt auf dem iPhone, bis du es teilst.",
         "Fold the 48 hours": "48 Stunden falten",
         "Always 48 hours": "Immer 48 Stunden",
         "On wide screens, how the two columns of a club page end level. Fold the 48 hours: the table shows 24 hours until opened. Always 48 hours: the whole table, so columns may end further apart. Switching the developer options off goes back to folding.": "Auf breiten Bildschirmen: wie die zwei Spalten einer Vereinsseite gleich hoch enden. 48 Stunden falten: Die Tabelle zeigt 24 Stunden, bis sie geöffnet wird. Immer 48 Stunden: die ganze Tabelle, die Spalten enden dann eher unterschiedlich. Mit ausgeschalteten Entwickleroptionen wird wieder gefaltet.",

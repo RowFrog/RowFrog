@@ -520,6 +520,7 @@ struct SatellitePictureCard: View {
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { measured.card = $0; measuredChrome() }
                 .fullScreenCover(isPresented: $showingFull) {
                     SatellitePictureScreen(lakeID: lakeID, picture: picture, kind: kind, clubID: clubID, overLake: overLake)
+                        .diagnosisNamed("satellite picture")
                 }
             }
         }
