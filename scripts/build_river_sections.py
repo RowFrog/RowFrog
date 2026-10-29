@@ -433,6 +433,7 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
     rivers = [name] + [n for n in include if n != name]
     lines, sides, canal = [], {}, False
     carry = {}  # joined water -> the side it carries on
+    carry_at, carry_km = {}, {}  # where the side ran into it, and how far from the club that is
     for i, river_name in enumerate(rivers):
         river_ways = ways if i == 0 else ex.lines_named(river_name, lat, lon, REACH_KM + 2)
         if not any(w["tags"].get("name") == river_name for w in river_ways):
@@ -440,6 +441,9 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
         river = River(frame, river_ways, river_name, els, data.get("continues", set()) if i == 0 else set())
         starts = [river.nearest(*p) for p in clubs_m]
         starts = [s for s in starts if s is not None and math.hypot(*river.coords[s]) <= INCLUDE_NEAR_KM * 1000]
+        if river_name in carry_at:
+            # A water the side ran into: walk on from where it did.
+            starts = [river.nearest(*carry_at[river_name])]
         if not starts:
             continue
         start = min(starts, key=lambda s: math.hypot(*river.coords[s]))
@@ -462,17 +466,27 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
             if VERBOSE:
                 print(f"  {river_name} {key}: reach {max(walk['dist'].values()) / 1000:.2f} km, stops "
                       + "; ".join(f"{d / 1000:.2f} {kind} {label}".strip() for d, kind, label in walk["stops"][:12]), flush=True)
+            offset = carry_km.get(river_name, 0.0) if carry.get(river_name) == key else 0.0
+            end_xy = river.coords[min(walk["dist"], key=lambda n: abs(walk["dist"][n] - limit[0] * 1000))]
             # Ends right where it runs into another named water (an arm with its own name): walk on in that one.
             joined = limit[2] if limit[1] == "mouth" else ""
             if (limit[0] < JOIN_ON_KM and joined and joined not in rivers and joined not in WATERWAY_KINDS
                     and len(rivers) < len(include) + 3):
                 rivers.append(joined)
-                carry[joined] = key
+            elif limit[1] in ("mouth", "line end") and (i == 0 or carry.get(river_name) == key):
+                # Or into a water the overrides include for this club, however far from it.
+                joined = next((n for n in rivers[i + 1:] if n not in carry and any(
+                    math.dist(frame.m(p["lon"], p["lat"]), end_xy) < 60
+                    for w in ex.lines_named(n, lat, lon, REACH_KM + 2) for p in w["geometry"])), "")
+            else:
+                joined = ""
+            if joined in rivers[i + 1:] and joined not in carry:
+                carry[joined], carry_at[joined], carry_km[joined] = key, end_xy, offset + limit[0]
             lines += river.lines(walk, limit[0] * 1000)
             if i == 0 or carry.get(river_name) == key:
                 end = next((n for n in walk["dist"] if abs(walk["dist"][n] - limit[0] * 1000) < 1), None)
                 end = end or min(walk["dist"], key=lambda n: abs(walk["dist"][n] - limit[0] * 1000))
-                sides[key] = {"km": limit[0], "end": limit[1], "what": limit[2],
+                sides[key] = {"km": round(offset + limit[0], 2), "end": limit[1], "what": limit[2],
                               "at": [round(v, 5) for v in frame.deg(*river.coords[end])[::-1]]}
     if not lines:
         return {"error": f"no walkable line of {name} near the club"}
