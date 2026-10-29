@@ -27,7 +27,8 @@ enum BoatType: String, CaseIterable, Identifiable, Codable {
 
 /// Size and rigging: how many rowers, sculling or sweep, with or without cox.
 enum BoatClass: String, CaseIterable, Identifiable, Codable {
-    case single = "1x", double = "2x", pair = "2-", quad = "4x", four = "4-", coxedFour = "4+", octuple = "8x", eight = "8+"
+    case single = "1x", double = "2x", pair = "2-", coxedPair = "2+", quad = "4x", coxedQuad = "4x+"
+    case four = "4-", coxedFour = "4+", octuple = "8x", coxedOctuple = "8x+", eight = "8+"
     var id: String { rawValue }
 
     var title: String {
@@ -35,16 +36,19 @@ enum BoatClass: String, CaseIterable, Identifiable, Codable {
         case .single: tr("Single (1x)")
         case .double: tr("Double (2x)")
         case .pair: tr("Pair (2-)")
+        case .coxedPair: tr("Coxed pair (2+)")
         case .quad: tr("Quad (4x)")
+        case .coxedQuad: tr("Coxed quad (4x+)")
         case .four: tr("Four (4-)")
         case .coxedFour: tr("Coxed four (4+)")
         case .octuple: tr("Octuple (8x)")
+        case .coxedOctuple: tr("Coxed octuple (8x+)")
         case .eight: tr("Eight (8+)")
         }
     }
 
     /// Fours and eights: longer, heavier and steadier.
-    var isBig: Bool { ![.single, .double, .pair].contains(self) }
+    var isBig: Bool { ![.single, .double, .pair, .coxedPair].contains(self) }
 }
 
 /// A boat the rowing light can be worked out for: the two groups every user
