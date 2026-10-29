@@ -1,0 +1,12 @@
+{
+  "_about": "Lakes lowered on purpose, with their level gauge (GKD Bayern) and marks in m above sea level, see backend/rowfrog/lake_level.py. Forggensee marks from the gauge's 2025/26 season: full 780.3-780.7 m June to mid-November, lowered from mid-November (below 779.8 m on 15 Nov 2025), lowest 774.1 m in February, below 777.5 m from early December to mid-April, full again end of May. The drained mark is an estimate of when the club's landing stage runs dry; to be confirmed by the club.",
+  "lakes": {
+    "forggensee": {
+      "station": "rosshaupten-seepegel-12001301",
+      "name": "Roßhaupten Seepegel",
+      "fullM": 780.6,
+      "loweredBelowM": 779.8,
+      "drainedBelowM": 777.5
+    }
+  }
+}

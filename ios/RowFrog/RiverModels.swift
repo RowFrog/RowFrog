@@ -120,3 +120,56 @@ enum RiverFormat {
     }
 }
 
+
+/// A lake lowered on purpose (Forggensee every winter), from the forecast's
+/// "waterLevel" block (backend/rowfrog/lake_level.py): the level at the
+/// lake's gauge and its marks in m above sea level. While the lake is lowered
+/// the Water level tile takes the ice tile's place.
+struct LakeLevel: Codable, Hashable {
+    static let symbol = "water.waves.and.arrow.down"
+
+    let gauge: String
+    let fullM: Double
+    let loweredBelowM: Double
+    let drainedBelowM: Double
+    var attribution: String? = nil
+    /// Missing when the gauge's last reading is too old.
+    let now: LakeLevelReading?
+
+    /// Whether the tile shows in the ice tile's place.
+    var isLowered: Bool { now.map { $0.state != "full" } ?? false }
+}
+
+struct LakeLevelReading: Codable, Hashable {
+    let time: Date
+    let levelM: Double
+    let belowFullM: Double
+    /// "full", "lowered" or "drained".
+    let state: String
+    /// "rising", "falling", "steady" or "".
+    let trend: String
+    let light: Light
+    let history: [LakeLevelPoint]
+
+    var stateTitle: String {
+        switch state {
+        case "drained": tr("Drained")
+        case "lowered": tr("Lowered")
+        default: tr("Full")
+        }
+    }
+
+    var trendTitle: String? {
+        switch trend {
+        case "rising": tr("rising")
+        case "falling": tr("falling")
+        case "steady": tr("steady")
+        default: nil
+        }
+    }
+}
+
+struct LakeLevelPoint: Codable, Hashable {
+    let time: Date
+    let levelM: Double
+}

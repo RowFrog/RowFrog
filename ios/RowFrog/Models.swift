@@ -277,6 +277,8 @@ struct Reason: Codable, Hashable {
         case "shipping_stopped": tr("Shipping stopped")
         case "high_water": tr("High water")
         case "current": tr("Strong current")
+        case "lake_lowered": tr("Lake lowered")
+        case "lake_drained": tr("Lake drained")
         default: condition
         }
     }
@@ -303,6 +305,8 @@ struct Reason: Codable, Hashable {
         case "shipping_stopped": tr("The river is above the gauge's shipping mark: even motor ships stay in.")
         case "high_water": tr("The river is at or above mean high water: strong current, flotsam and flooded banks.")
         case "current": tr("The current is strong (from the nearest gauge).")
+        case "lake_lowered": tr("The lake is let down for the winter: shallows, and a long way to the water.")
+        case "lake_drained": tr("The lake is let down for the winter: too little water at the club to row.")
         default: condition
         }
     }
@@ -311,6 +315,7 @@ struct Reason: Codable, Hashable {
     var symbol: String {
         if condition.hasSuffix("_warning") { return "exclamationmark.triangle.fill" }
         if ["shipping_stopped", "high_water", "current"].contains(condition) { return RiverConditions.symbol }
+        if ["lake_lowered", "lake_drained"].contains(condition) { return LakeLevel.symbol }
         return (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
     }
 }
@@ -613,6 +618,9 @@ struct ClubForecast: Codable, Hashable {
     /// River clubs only: the gauge's level and the current, for the Current tile
     /// that takes the ice tile's place. Missing on lakes and from older backends.
     var river: RiverConditions? = nil
+    /// Lakes lowered on purpose (Forggensee): the level at the lake's gauge; while
+    /// lowered, the Water level tile takes the ice tile's place. Missing elsewhere.
+    var waterLevel: LakeLevel? = nil
     let attribution: [String]
     /// Missing from older backends.
     var forecastSource: ForecastSource? = nil

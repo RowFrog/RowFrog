@@ -14,6 +14,7 @@ struct ConditionsCard: View {
     var club: Club?
     @State private var open: Condition?
     @State private var showingCurrent = false
+    @State private var showingLevel = false
 
     var body: some View {
         let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) },
@@ -43,6 +44,15 @@ struct ConditionsCard: View {
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityHint(tr("Opens the water level and current"))
+                            } else if condition == .ice, let level = forecast.waterLevel, level.isLowered {
+                                // On a lake let down for the winter the Water level tile takes it.
+                                Button {
+                                    showingLevel = true
+                                } label: {
+                                    WaterLevelTile(level: level)
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityHint(tr("Opens the lake's water level"))
                             } else {
                                 Button {
                                     open = condition
@@ -59,10 +69,14 @@ struct ConditionsCard: View {
         }
         .detailCover(item: $open) { condition in
             ConditionDetailView(condition: condition, data: data,
-                                order: forecast.river == nil ? Condition.tileOrder : Condition.tileOrder.filter { $0 != .ice }, club: club)
+                                order: forecast.river == nil && forecast.waterLevel?.isLowered != true
+                                    ? Condition.tileOrder : Condition.tileOrder.filter { $0 != .ice }, club: club)
         }
         .detailCover(isPresented: $showingCurrent) {
             if let river = forecast.river { CurrentDetailView(river: river) }
+        }
+        .detailCover(isPresented: $showingLevel) {
+            if let level = forecast.waterLevel { WaterLevelDetailView(level: level) }
         }
         .task {
             // Screenshot hook: `-RWOpenCondition wind` opens that view.
