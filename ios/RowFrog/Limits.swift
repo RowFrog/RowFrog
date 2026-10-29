@@ -107,7 +107,7 @@ struct Boat: Codable, Hashable, Identifiable {
 
 /// A rowing limit the user can fine-tune. Values are metric: m/s, m and °C.
 enum RowingLimit: String, CaseIterable, Identifiable {
-    case windAmber, windRed, gustAmber, gustRed, waveAmber, waveRed, lifeJacket
+    case windAmber, windRed, gustAmber, gustRed, waveAmber, waveRed, currentAmber, currentRed, lifeJacket
     var id: String { rawValue }
 
     /// Wind, gusts and waves: the limits that differ from boat to boat.
@@ -122,6 +122,9 @@ enum RowingLimit: String, CaseIterable, Identifiable {
         // Cold-water shock starts at about 15 °C (owner decision 2026-10-25);
         // the stricter rules stay at `RowingLimits.coldWaterC`.
         case (.lifeJacket, _, _): 15
+        // River current mid-river, for every boat (owner, proposal "River sections" round 2; river.py).
+        case (.currentAmber, _, _): 1.5
+        case (.currentRed, _, _): 2.5
         // Small racing boats: ~7 cm of side.
         case (.windAmber, .racing, false): 5.5  // Beaufort 4, the first whitecaps
         case (.windRed, .racing, false): 8.0  // Beaufort 5
@@ -168,15 +171,18 @@ enum RowingLimit: String, CaseIterable, Identifiable {
         case .gustRed: tr("Gusts: stay ashore above")
         case .waveAmber: tr("Waves: row with care from")
         case .waveRed: tr("Waves: stay ashore above")
+        case .currentAmber: tr("Current: row with care from")
+        case .currentRed: tr("Current: stay ashore above")
         case .lifeJacket: tr("Life jacket below")
         }
     }
 
-    var condition: Condition {
+    var symbol: String {
         switch self {
-        case .windAmber, .windRed, .gustAmber, .gustRed: .wind
-        case .waveAmber, .waveRed: .waves
-        case .lifeJacket: .waterTemperature
+        case .windAmber, .windRed, .gustAmber, .gustRed: Condition.wind.symbol
+        case .waveAmber, .waveRed: Condition.waves.symbol
+        case .currentAmber, .currentRed: RiverConditions.symbol
+        case .lifeJacket: Condition.waterTemperature.symbol
         }
     }
 
@@ -184,6 +190,7 @@ enum RowingLimit: String, CaseIterable, Identifiable {
         switch self {
         case .windAmber, .windRed, .gustAmber, .gustRed: 0.5
         case .waveAmber, .waveRed: 0.05
+        case .currentAmber, .currentRed: 0.1
         case .lifeJacket: 1
         }
     }
@@ -193,6 +200,7 @@ enum RowingLimit: String, CaseIterable, Identifiable {
         case .windAmber, .windRed: 2...15
         case .gustAmber, .gustRed: 4...20
         case .waveAmber, .waveRed: 0.05...1.5
+        case .currentAmber, .currentRed: 0.5...4
         case .lifeJacket: 4...20
         }
     }
@@ -207,6 +215,8 @@ enum RowingLimit: String, CaseIterable, Identifiable {
             return "\(Format.number(v, digits: abs(v - v.rounded()) < 0.05 ? 0 : 1)) \(unit.symbol)"
         case .waveAmber, .waveRed:
             return Format.waves(value)
+        case .currentAmber, .currentRed:
+            return RiverFormat.speed(value)
         case .lifeJacket:
             return Format.temperature(value)
         }
@@ -323,12 +333,14 @@ extension ForecastHour {
     /// Reasons the app works out again for the user's boat and limits.
     static let limitReasons: Set<String> = ["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water"]
 
-    /// This hour with wind, gusts, waves and water checked against `limits`.
+    /// This hour with wind, gusts, waves and water checked against `limits`,
+    /// and on rivers the gauge's current (`currentMs`, nil where it does not count).
     /// Where the user's own limit is looser than the app's, a note says the
     /// value is above the app's limit, so the advice is never lost.
-    func applying(_ chosen: RowingLimits, waterC: Double?) -> ForecastHour {
+    func applying(_ chosen: RowingLimits, waterC: Double?, currentMs: Double? = nil) -> ForecastHour {
         let limits = chosen.forWater(waterC)
-        var reasons = limits.boatReasons(self.reasons.filter { !Self.limitReasons.contains($0.condition) })
+        let redone = currentMs == nil ? Self.limitReasons : Self.limitReasons.union(["current"])
+        var reasons = limits.boatReasons(self.reasons.filter { !redone.contains($0.condition) })
         var notes: [Reason] = []
         let usualLimits = RowingLimits(boat: limits.boat).forWater(waterC)
         func check(_ name: String, _ value: Double?, _ amber: RowingLimit, _ red: RowingLimit) {
@@ -344,6 +356,7 @@ extension ForecastHour {
         check("wind", windSpeedMs, .windAmber, .windRed)
         check("gusts", windGustMs, .gustAmber, .gustRed)
         check("waves", waveHeightM, .waveAmber, .waveRed)
+        if let currentMs { check("current", currentMs, .currentAmber, .currentRed) }
         // Cold water shows as the life-jacket badge (ColdWaterKit), not in the
         // light; only near-freezing water stays amber, as in score.py.
         if let water = waterC, water < RowingLimits.coldWaterC {
@@ -368,9 +381,14 @@ extension ClubForecast {
         var copy = self
         // As on the server: measured water, else the estimate.
         let water = waterTemperature?.celsius ?? estimatedWaterC
-        // Each hour with the water forecast for its day, as on the server.
-        copy.hours = hours.map { $0.applying(limits, waterC: waterForecastC(on: $0.time) ?? water) }
-        copy.outlook = outlook?.map { $0.applying(limits, waterC: waterForecastC(on: $0.time) ?? water) }
+        // Each hour with the water forecast for its day, as on the server; the
+        // gauge's current counts for the first hours only, as on the server.
+        let current = river?.now?.speedMs
+        let currentUntil = generatedAt.addingTimeInterval(RiverConditions.gaugeHours * 3600)
+        func currentAt(_ time: Date) -> Double? { time < currentUntil ? current : nil }
+        copy.hours = hours.map { $0.applying(limits, waterC: waterForecastC(on: $0.time) ?? water, currentMs: currentAt($0.time)) }
+        copy.outlook = outlook?.map { $0.applying(limits, waterC: waterForecastC(on: $0.time) ?? water, currentMs: currentAt($0.time)) }
+        copy.river = river?.applying(limits)
         return copy
     }
 

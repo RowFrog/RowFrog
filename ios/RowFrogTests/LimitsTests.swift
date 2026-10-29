@@ -20,6 +20,22 @@ final class LimitsTests: XCTestCase {
         XCTAssertNil(windy.notes)
     }
 
+    func testRiverCurrentCountsWithTheBoatsOwnLimits() {
+        let river = hour(wind: 2, gust: 3, waves: 0.05, reasons: [Reason(condition: "current", light: .amber)])
+        // The app's limits: amber from 1.5 m/s.
+        XCTAssertEqual(river.applying(.standard, waterC: 15, currentMs: 1.8).light, .amber)
+        // A crew that allows 2 m/s gets green, with a note that the app would say amber.
+        let mine = RowingLimits(custom: [.currentAmber: 2.0])
+        let looser = river.applying(mine, waterC: 15, currentMs: 1.8)
+        XCTAssertEqual(looser.light, .green)
+        XCTAssertEqual(looser.notes?.map(\.condition), ["current"])
+        // A stricter crew: red above 1.2 m/s.
+        let stricter = RowingLimits(custom: [.currentAmber: 0.8, .currentRed: 1.2])
+        XCTAssertEqual(river.applying(stricter, waterC: 15, currentMs: 1.3).light, .red)
+        // Past the gauge's hours the backend's reason stays as it is.
+        XCTAssertEqual(river.applying(mine, waterC: 15).light, .amber)
+    }
+
     func testBigBoatsAllowMore() {
         let h = hour(wind: 6, gust: 9, waves: 0.2).applying(RowingLimits(boat: .big), waterC: nil)
         XCTAssertEqual(h.light, .green)

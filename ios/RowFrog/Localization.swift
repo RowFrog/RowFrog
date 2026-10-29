@@ -586,6 +586,8 @@ enum German {
         "gusts up to %@": "Böen bis %@",
         "Whole lake: %@": "Ganzer See: %@",
         "Whole stretch: %@": "Ganze Strecke: %@",
+        "Current: row with care from": "Strömung: vorsichtig rudern ab",
+        "Current: stay ashore above": "Strömung: an Land bleiben über",
         "Times count with the current of ≈ %@: faster downstream, slower upstream.": "Die Zeiten rechnen mit der Strömung von ≈ %@: flussab schneller, flussauf langsamer.",
         "Against this current your boat hardly makes headway on part of the route.": "Gegen diese Strömung kommt dein Boot auf einem Teil der Route kaum voran.",
         "Sample wind": "Beispielwind",

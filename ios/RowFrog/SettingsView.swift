@@ -1645,7 +1645,7 @@ private struct LimitRow: View {
         Stepper {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Label(limit.title, systemImage: limit.condition.symbol)
+                    Label(limit.title, systemImage: limit.symbol)
                         .symbolRenderingMode(.hierarchical)
                     Text(mine ? tr("Your limit · the app's: %@", limit.format(usual)) : tr("The app's limit"))
                         .font(.caption)
