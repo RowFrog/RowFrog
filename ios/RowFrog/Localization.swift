@@ -332,6 +332,7 @@ enum German {
         "Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Less often saves battery and data, but a new official warning reaches the widgets later. Only after using the app: the widgets load once as you leave the app.": "Row Frog selbst arbeitet nicht im Hintergrund: iOS hält die App kurz nach dem Verlassen an, und sie verfolgt nie deinen Standort. Nur die Widgets laden von sich aus eine neue Vorhersage. Seltener schont Akku und Datenvolumen, aber eine neue amtliche Warnung erscheint dann später im Widget. Nur nach Nutzung der App: Die Widgets laden einmal, wenn du die App verlässt.",
         "Shows a map you can move": "Zeigt eine Karte zum Verschieben",
         "Loading the radar pictures": "Radarbilder werden geladen",
+        "Loading the radar": "Radar wird geladen",
         "New route": "Neue Route",
         "Rain as measured by DWD's radar (past and latest picture) and as DWD expects it to move (forecast). Snow and hail show as rain. Radar: Deutscher Wetterdienst (DWD), CC BY 4.0": "Regen, wie ihn das Radar des DWD gemessen hat (vergangene und neueste Bilder) und wie er laut DWD weiterzieht (Vorhersage). Schnee und Hagel erscheinen als Regen. Radar: Deutscher Wetterdienst (DWD), CC BY 4.0",
         "What the colours mean": "Was die Farben bedeuten",
