@@ -162,6 +162,7 @@ class River:
     def __init__(self, frame: Frame, ways: list[dict], name: str, els: list[dict], continues: set[int] = frozenset()):
         self.frame, self.name = frame, name
         self.coords, self.graph, way_of = {}, {}, {}
+        self.way_of = way_of
         self.kind = Counter()
         # Lock chambers, with the lock's name where the map has one ("lock Kleinmachnow").
         lock_ways = {e["id"]: f"lock {re.sub(r'^(Schleuse|Écluse de|Écluse du|Écluse)\s+', '', e['tags'].get('lock_name', ''))}".strip()
@@ -228,6 +229,19 @@ class River:
 
     def nearest(self, x: float, y: float) -> int | None:
         return min(self.coords, key=lambda n: math.dist(self.coords[n], (x, y)), default=None)
+
+    def starts_near(self, start: int, within_m: float = 300.0) -> list[int]:
+        """The start, and the nearest node of each other line of the river within reach of it
+        (a side arm and the main arm side by side at the boathouse)."""
+        out, seen = [start], set(self.way_of.get(start, ()))
+        for n in sorted(self.coords, key=lambda n: math.dist(self.coords[n], self.coords[start])):
+            if math.dist(self.coords[n], self.coords[start]) > within_m:
+                break
+            ways = self.way_of.get(n, set())
+            if ways and not ways & seen:
+                out.append(n)
+                seen |= ways
+        return out
 
     def crosses(self, a: int, b: int) -> str | None:
         if b in self.barrier_nodes:
@@ -452,7 +466,9 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
             key = "down" if downstream else "up"
             offset = carry_km.get(river_name, 0.0) if carry.get(river_name) == key else 0.0
             # Where a weir or lock sits right at the boathouse, the owner named the side the club rows on.
-            walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=(REACH_KM - offset) * 1000)
+            # From the arm that reaches furthest this way, where two lie side by side at the boathouse.
+            walk = max((river.walk(s, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=(REACH_KM - offset) * 1000)
+                        for s in river.starts_near(start)), key=lambda w: max(w["dist"].values()))
             bearing = river.bearing(walk)
             behind = None
             if allowed and bearing is not None and not any(abs((bearing - a + 180) % 360 - 180) <= 67.5 for a in allowed):
