@@ -125,8 +125,10 @@ struct LaunchPointMapCard: View {
     /// can't find the address.
     @MainActor private func openClubInMaps() async {
         if mapApp == .google {
-            // Google finds the club by its name and address.
-            if let url = MapApp.googleDirections(to: "\(club.displayName), \(club.address)") { openURL(url) }
+            // Google finds the club by its name and address; a place of the user's own without one is its point.
+            let address = club.address.trimmingCharacters(in: .whitespaces)
+            let destination = address.isEmpty ? "\(club.launchPoint.lat),\(club.launchPoint.lon)" : "\(club.displayName), \(address)"
+            if let url = MapApp.googleDirections(to: destination) { openURL(url) }
             return
         }
         // The club's own place in Apple Maps is the best target when there is one.
