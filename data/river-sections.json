@@ -7215,36 +7215,28 @@
    "country": "de",
    "place": "Breisach",
    "center": {
-    "lat": 48.02195,
-    "lon": 7.58432
+    "lat": 48.01977,
+    "lon": 7.58695
    },
    "clubs": [
     "breisacher-ruderverein"
    ],
-   "lengthKm": 9.7,
+   "lengthKm": 18.1,
    "up": {
-    "km": 0.0,
-    "end": "mouth",
-    "what": "canal",
-    "at": [
-     48.02195,
-     7.58432
-    ]
-   },
-   "down": {
-    "km": 9.86,
+    "km": 18.06,
     "end": "weir/lock",
     "what": "weir",
     "at": [
-     48.10372,
-     7.57961
+     47.88121,
+     7.55823
     ]
    },
+   "down": null,
    "pictureBox": [
-    7.56465,
-    48.02041,
-    7.58442,
-    48.06717
+    7.55762,
+    47.97455,
+    7.62648,
+    48.02144
    ]
   },
   {
