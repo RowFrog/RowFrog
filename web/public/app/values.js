@@ -19,7 +19,7 @@ const FREEZING_WATER_C = 4;
 /** The colours of the chart's lines and limits, as in the app. */
 export const COLOURS = {
   orange: "var(--orange)", blue: "var(--blue)", purple: "var(--purple)", red: "var(--red)", teal: "var(--teal)",
-  cyan: "#32ade6", gray: "#8e8e93", indigo: "#5856d6", yellow: "#e6b800", kit: "var(--kit)", deep: "#1c4d8c", secondary: "var(--sub)",
+  cyan: "#32ade6", gray: "#8e8e93", indigo: "#5856d6", yellow: "#e6b800", kit: "var(--kit)", deep: "var(--deep-water)", secondary: "var(--sub)",
 };
 
 /**
@@ -312,13 +312,17 @@ const BUILDERS = {
     else source = t("No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.");
     const lines = history.length ? [{ name: t("Measurement"), colour: COLOURS.cyan, points: history.map((p) => ({ x: d.x(p.time), y: degreesIn(p.celsius) })) }] : [];
     if (forecastPoints.length > 1) lines.push({ name: t("Forecast"), colour: COLOURS.cyan, points: forecastPoints, dashed: true });
-    const highest = Math.max(0, ...history.map((p) => p.celsius), ...days.map(([, v]) => v));
+    // Fitted to the readings and the forecast, with room around them, the
+    // life-jacket and very-cold lines always in view (ConditionDetail.waterTemperature).
+    const span = [...history.map((p) => p.celsius), ...days.map(([, v]) => v), ...(estimate != null ? [estimate] : []),
+      currentLimits().value("lifeJacket"), COLD.waterC];
+    const yDomain = [degreesIn(Math.floor(Math.min(...span) - 2)), degreesIn(Math.ceil(Math.max(...span) + 2))];
     const chartLimits = [
       limitLine("lifeJacket", COLOURS.kit, t("Cold-water shock: life jacket"), degreesIn),
       { value: degreesIn(COLD.waterC), colour: COLOURS.deep, label: t("Very cold") },
     ];
     const common = {
-      unit: unitSymbol("temperature"), lines, limits: chartLimits, yDomain: [degreesIn(0), degreesIn(Math.max(20, highest + 2))], history: true, facts, rowing, source,
+      unit: unitSymbol("temperature"), lines, limits: chartLimits, yDomain, history: true, facts, rowing, source,
       chartNote: forecastPoints.length > 1 ? t("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value.") : null,
     };
     if (picked != null) {

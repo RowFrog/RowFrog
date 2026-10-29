@@ -435,7 +435,7 @@ export function reasonExplanation(condition, light) {
     case "wind": return t("Mean wind is above the limit.");
     case "gusts": return t("Gusts are above the limit.");
     case "waves": return t("Waves at the launch point are too high.");
-    case "fog": return t("Visibility is poor (fog or mist).");
+    case "fog": return t("Fog: visibility is poor.");
     case "heavy_rain": return t("Heavy rain of %@ or more in the hour.", rain(4));
     case "hail": return t("Hail is forecast with a thunderstorm.");
     case "thunderstorm": return t("Thunderstorms are possible.");

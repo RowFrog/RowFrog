@@ -471,7 +471,7 @@ struct ConditionGraphic: View {
         case .waterTemperature:
             if let c = data.water?.celsius {
                 // Blues for cold water: it calls for a life jacket, not a warning colour.
-                ScaleBar(fraction: c / 25, zones: [(0, Color(red: 0.11, green: 0.3, blue: 0.55)), (0.16, ColdWaterKit.color),
+                ScaleBar(fraction: c / 25, zones: [(0, ColdWaterKit.deep), (0.16, ColdWaterKit.color),
                                                    (0.4, ColdWaterKit.color.opacity(0.45)), (0.6, .green)])
             }
         case .precipitation:
@@ -1826,7 +1826,12 @@ extension ConditionDetail {
         if forecastPoints.count > 1 {
             lines.append(ChartLine(name: tr("Forecast"), color: .cyan, points: forecastPoints, dashed: true))
         }
-        let highest = (history.map(\.celsius) + forecastDays.map { $0.1 }).max() ?? 0
+        // Fitted to the readings and the forecast, with room around them, the
+        // life-jacket and very-cold lines always in view.
+        let readings = history.map(\.celsius) + forecastDays.map { $0.1 } + [estimate].compactMap { $0 }
+        let limitValues = [userLimits.value(.lifeJacket), RowingLimits.coldWaterC]
+        let lowest = ((readings + limitValues).min() ?? 0) - 2, highest = ((readings + limitValues).max() ?? 20) + 2
+        let yDomain = t.convert(lowest.rounded(.down))...t.convert(highest.rounded(.up))
         if let picked {
             return ConditionDetail(
                 value: "≈ " + Format.degrees(picked, digits: 1),
@@ -1835,9 +1840,9 @@ extension ConditionDetail {
                 lines: lines,
                 limits: [
                     line(.lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
-                    ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: Color(red: 0.11, green: 0.3, blue: 0.55), label: tr("Very cold")),
+                    ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: ColdWaterKit.deep, label: tr("Very cold")),
                 ],
-                yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
+                yDomain: yDomain,
                 history: true,
                 chartNote: tr("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value."),
                 facts: facts,
@@ -1854,13 +1859,13 @@ extension ConditionDetail {
             lines: lines,
             limits: [
                 line(.lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
-                ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: Color(red: 0.11, green: 0.3, blue: 0.55), label: tr("Very cold")),
+                ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: ColdWaterKit.deep, label: tr("Very cold")),
             ],
             limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A life jacket keeps your head above water through it, so the app advises one from %@ down. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the advice gets stricter below %@: stay near the shore and don't row alone. Your club's own rules come first.",
                           Format.temperature(15), jacket, veryCold)
                 + " " + tr("Cold water does not change the rowing light: the blue life-jacket badge under it shows what to bring. Below %@ the app's wind and gust limits are %@ lower, and below %@ small boats get an amber warning.",
                            veryCold, Format.wind(RowingLimits.coldWindMarginMs), Format.temperature(RowingLimits.freezingWaterC)),
-            yDomain: t.convert(0)...t.convert(max(20, highest + 2)),
+            yDomain: yDomain,
             history: true,
             chartNote: forecastPoints.count > 1 ? tr("Measurements of the last days; dashed, the forecast from the air temperatures. Touch the chart to read a value.") : nil,
             facts: facts,

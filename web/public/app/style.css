@@ -14,13 +14,13 @@
   :root:not([data-theme="light"]) {
     --bg: #000000; --card: #1c1c1e; --tile: #2c2c2e; --text: #ffffff; --sub: #98989f; --line: #38383a; --fill: #3a3a3c;
     --accent: #0a84ff; --blue: #0a84ff; --green: #30d158; --amber: #ff9f0a; --orange: #ff9f0a; --red: #ff453a; --yellow: #ffd60a;
-    --purple: #bf5af2; --cloud: #8e8e93;
+    --purple: #bf5af2; --cloud: #8e8e93; --deep-water: #78a3f0;
   }
 }
 :root[data-theme="dark"] {
   --bg: #000000; --card: #1c1c1e; --tile: #2c2c2e; --text: #ffffff; --sub: #98989f; --line: #38383a; --fill: #3a3a3c;
   --accent: #0a84ff; --blue: #0a84ff; --green: #30d158; --amber: #ff9f0a; --orange: #ff9f0a; --red: #ff453a; --yellow: #ffd60a;
-  --purple: #bf5af2; --cloud: #8e8e93;
+  --purple: #bf5af2; --cloud: #8e8e93; --deep-water: #78a3f0;
 }
 :root[data-theme="light"] { color-scheme: light; }
 :root[data-theme="dark"] { color-scheme: dark; }

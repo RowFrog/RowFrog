@@ -88,7 +88,7 @@ enum German {
         "Mean wind is above the limit.": "Der mittlere Wind liegt über dem Grenzwert.",
         "Gusts are above the limit.": "Die Böen liegen über dem Grenzwert.",
         "Waves at the launch point are too high.": "Die Wellen am Steg sind zu hoch.",
-        "Visibility is poor (fog or mist).": "Die Sicht ist schlecht (Nebel oder Dunst).",
+        "Fog: visibility is poor.": "Nebel: Die Sicht ist schlecht.",
         "Thunderstorms are possible.": "Gewitter sind möglich.",
         "The sun is down. Rowing is only advised in daylight.": "Die Sonne ist untergegangen. Rudern wird nur bei Tageslicht empfohlen.",
         "Sunrise or sunset falls in this hour.": "In dieser Stunde geht die Sonne auf oder unter.",
