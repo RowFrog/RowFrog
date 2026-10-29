@@ -251,6 +251,9 @@ jobs:
           for size in default:UICTContentSizeCategoryL xxxl:UICTContentSizeCategoryXXXL accessibility-l:UICTContentSizeCategoryAccessibilityL; do
             shoot_pages "260-headline-preview-${size%%:*}" light -RWHeadlinePreview YES -UIPreferredContentSizeCategoryName "${size#*:}"
             shoot_pages "261-headline-preview-german-${size%%:*}" light -RWHeadlinePreview YES -RWLanguage de -UIPreferredContentSizeCategoryName "${size#*:}"
+            # The real club page's top tile as built now, for comparison.
+            shoot "262-club-top-${size%%:*}" light -RWOpenClub mrc-1880 -UIPreferredContentSizeCategoryName "${size#*:}"
+            shoot "262-club-top-german-${size%%:*}" light -RWOpenClub mrc-1880 -RWLanguage de -UIPreferredContentSizeCategoryName "${size#*:}"
           done
           # The Current conditions card and the larger view behind each tile.
           shoot 60-conditions-card light -RWOpenClub mrc-1880 -RWScrollTo conditions

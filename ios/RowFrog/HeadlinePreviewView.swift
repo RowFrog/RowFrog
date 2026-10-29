@@ -81,7 +81,7 @@ struct HeadlinePreviewView: View {
         .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
     }
 
-    /// As NowCard's top row.
+    /// As NowCard's top row, with the sky icon growing with the text size as in PR #203.
     fileprivate struct Headline: View {
         enum Style { case today, twoLineWord, fitted, adaptive }
 
@@ -127,7 +127,7 @@ struct HeadlinePreviewView: View {
 
         private var weather: some View {
             VStack(spacing: 2) {
-                SkyIcon(sky: sky).font(.system(size: 34))
+                SkyIcon(sky: sky).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
                 Text(sky.title).font(.caption).foregroundStyle(.secondary)
                     .multilineTextAlignment(.center)
                     .lineLimit(2)
@@ -161,7 +161,7 @@ struct HeadlinePreviewView: View {
                 .layoutPriority(style == .fitted ? 1 : 0)
                 if style != .fitted { Spacer(minLength: 0) }
                 VStack(spacing: 2) {
-                    SkyIcon(sky: sky).font(.system(size: 34))
+                    SkyIcon(sky: sky).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
                     if style == .today {
                         Text(sky.title).font(.caption).foregroundStyle(.secondary)
                     } else {
@@ -190,7 +190,7 @@ struct HeadlinePreviewView: View {
                     }
                 }
                 HStack(spacing: 8) {
-                    SkyIcon(sky: sky).font(.system(size: 34))
+                    SkyIcon(sky: sky).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
                     Text(sky.title).font(.caption).foregroundStyle(.secondary)
                 }
                 .padding(.leading, 46)
