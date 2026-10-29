@@ -160,16 +160,37 @@ export const keptForecast = (id) => forecasts.get(id)?.forecast ?? null;
 
 export let catalog = null;
 
-/** Every water with its clubs, in all countries the search covers. */
+/**
+ * Every water with its clubs, in all countries the search covers. When the
+ * server cannot be read (offline, an error status, an answer that is not
+ * JSON), the last good copy serves, however old (app #195).
+ */
 export async function loadCatalog() {
   if (catalog) return catalog;
   const kept = load("rf.catalog", null);
   if (kept && Date.now() - kept.at < 24 * 3600 * 1000) return (catalog = kept.lakes);
-  const countries = await getJSON("countries/index");
-  const lists = await Promise.all(countries.map((c) => getJSON(`countries/${c.code}/lakes`)));
-  catalog = lists.flat();
-  save("rf.catalog", { at: Date.now(), lakes: catalog });
-  return catalog;
+  try {
+    const countries = await getJSON("countries/index");
+    const lists = await Promise.all(countries.map((c) => getJSON(`countries/${c.code}/lakes`)));
+    catalog = lists.flat();
+    save("rf.catalog", { at: Date.now(), lakes: catalog, countries });
+    return catalog;
+  } catch (error) {
+    // Not kept as this visit's catalog, so the next look asks the server again.
+    if (kept?.lakes) return kept.lakes;
+    throw error;
+  }
+}
+
+/** The countries with their club counts (countries/index), else the last good copy kept with the catalog. */
+export async function loadCountryIndex() {
+  try {
+    return await getJSON("countries/index");
+  } catch (error) {
+    const kept = load("rf.catalog", null)?.countries;
+    if (kept) return kept;
+    throw error;
+  }
 }
 
 /** The club with its lake from the catalog, for clubs saved before the launch point was kept. */
