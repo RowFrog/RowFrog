@@ -288,6 +288,26 @@ jobs:
           shoot 287-lake-map-low-power light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLowPower YES
           WAIT=30 shoot 288-weather-map-larger-text light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWOpenWeatherMap wind -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           WAIT=30 shoot 289-satellite-full-larger-text light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)' -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          # The main screens at the largest standard text size (XXXL) and at a large
+          # accessibility size, to see where the text size should stop growing
+          # (owner, 29 Oct 2026). Shoot them all with `only` = text-.
+          for size in XXXL AccessibilityL; do
+            T=(-UIPreferredContentSizeCategoryName "UICTContentSizeCategory$size")
+            s=$(echo "$size" | tr '[:upper:]' '[:lower:]')
+            shoot_pages "290-text-$s-tutzing" light -RWOpenClub tutzinger-rv "${T[@]}"
+            shoot_pages "291-text-$s-river" light -RWOpenClub akademischer-ruderclub-wuerzburg "${T[@]}"
+            shoot_pages "292-text-$s-forggensee" light -RWOpenClub ruderclub-forggensee "${T[@]}"
+            shoot_n "293-text-$s-settings" 3 light -RWShowSettings YES "${T[@]}"
+            WAIT=30 shoot "294-text-$s-detail-wind" light -RWOpenClub mrc-1880 -RWOpenCondition wind "${T[@]}"
+            WAIT=30 shoot_pages "295-text-$s-detail-rain" light -RWOpenClub mrc-1880 -RWOpenCondition precipitation "${T[@]}"
+            WAIT=30 shoot_pages "296-text-$s-detail-water" light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature "${T[@]}"
+            shoot "297-text-$s-search" light -RWSearch "Ammersee" "${T[@]}"
+            shoot "298-text-$s-legend" light -RWOpenClub mrc-1880 -RWLegend lights "${T[@]}"
+            WAIT=30 shoot "299-text-$s-radar-map" light -RWOpenClub mrc-1880 -RWPageLayout "conditions,radar" -RWOpenRadarMap YES -RWRadarLoop NO "${T[@]}"
+            shoot "300-text-$s-lake-map" light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES "${T[@]}"
+            WAIT=30 shoot "301-text-$s-satellite" light -RWOpenClub mrc-1880 -RWOpenSatellite YES -RWSatelliteLayers '(clubs, shore)' "${T[@]}"
+            GUIDE=1 shoot "302-text-$s-tour" light -RWNoTips YES -RWTutorialPage 0 "${T[@]}"
+          done
           shoot_pages 22-home-german-beaufort light -RWLanguage de -RWUnitWind beaufort
           shoot_pages 23-list-imperial light -RWShowList YES -RWUnitTemperature fahrenheit -RWUnitWind milesPerHour -RWUnitWaves feet -RWUnitRain inches -RWUnitDistance miles
           shoot 24-hourly-12h-long-date light -RWScrollTo hourly -RWTimeFormat hours12 -RWDateFormat long
