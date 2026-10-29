@@ -389,12 +389,13 @@ export const BOAT_TYPES = {
 
 /** Size and rigging (BoatClass). */
 export const BOAT_CLASSES = {
-  "1x": key("Single (1x)"), "2x": key("Double (2x)"), "2-": key("Pair (2-)"), "4x": key("Quad (4x)"),
-  "4-": key("Four (4-)"), "4+": key("Coxed four (4+)"), "8x": key("Octuple (8x)"), "8+": key("Eight (8+)"),
+  "1x": key("Single (1x)"), "2x": key("Double (2x)"), "2-": key("Pair (2-)"), "2+": key("Coxed pair (2+)"), "4x": key("Quad (4x)"),
+  "4x+": key("Coxed quad (4x+)"), "4-": key("Four (4-)"), "4+": key("Coxed four (4+)"), "8x": key("Octuple (8x)"),
+  "8x+": key("Coxed octuple (8x+)"), "8+": key("Eight (8+)"),
 };
 
 /** Fours and eights: longer, heavier and steadier. */
-export const isBigClass = (boatClass) => !["1x", "2x", "2-"].includes(boatClass);
+export const isBigClass = (boatClass) => !["1x", "2x", "2-", "2+"].includes(boatClass);
 
 /** The two groups every user has (Boat.small, Boat.big). */
 export const GROUPS = [
@@ -404,8 +405,8 @@ export const GROUPS = [
 
 /** The app's two boat groups; the backend's light is for small boats. */
 export const BOATS = {
-  small: { title: key("Small boats"), inSentence: key("small boats"), short: key("Small"), detail: key("Singles, doubles and pairs (1x, 2x, 2-)") },
-  big: { title: key("Big boats"), inSentence: key("big boats"), short: key("Big"), detail: key("Fours and eights (4x, 4-, 4+, 8x, 8+)") },
+  small: { title: key("Small boats"), inSentence: key("small boats"), tag: "1–2", detail: key("Singles, doubles and pairs (1x, 2x, 2-)") },
+  big: { title: key("Big boats"), inSentence: key("big boats"), tag: "4–8", detail: key("Fours and eights (4x, 4-, 4+, 8x, 8+)") },
 };
 
 export const isGroup = (boat) => boat.id === "small" || boat.id === "big";

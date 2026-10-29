@@ -285,14 +285,19 @@ svg.filled { width: 22px; height: 22px; }
 .bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; align-items: center; gap: 8px; padding: 0 16px;
   padding-bottom: max(8px, env(safe-area-inset-bottom)); pointer-events: none; }
 .bottom .piece { pointer-events: auto; height: 44px; border-radius: 22px; display: flex; align-items: center; color: var(--text); }
-.bottom .bar-side { width: 108px; flex: none; display: flex; }
+.bottom .bar-side { width: 100px; flex: none; display: flex; }
 .bottom .bar-side.end { justify-content: flex-end; }
 .bottom .bar-side .piece { padding: 0 4px; }
 .bottom .piece .tool { color: var(--text); min-width: 44px; height: 44px; justify-content: center; font-size: 22px; }
-.bottom .piece .tool.boat { min-width: 56px; }
+.bottom .piece .tool.boat { min-width: 48px; }
+/* The boat's class in a small frame: dashed for the two groups, accent for an own boat (BoatClassTag). */
+.class-tag { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 22px; padding: 0 5px; box-sizing: border-box;
+  border: 1.6px solid currentColor; border-radius: 6px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1; color: var(--accent); }
+.class-tag.group { border-style: dashed; color: var(--text); }
+.class-tag.long { font-size: 11px; }
 .bottom .piece.round { width: 44px; padding: 0; justify-content: center; }
 .bottom .gap { flex: 1; }
-.bottom .dots { margin: 0 auto; display: flex; justify-content: center; align-items: center; padding: 0 8px; max-width: calc(100% - 2 * 116px); overflow: hidden; }
+.bottom .dots { margin: 0 auto; display: flex; justify-content: center; align-items: center; padding: 0 8px; max-width: calc(100% - 2 * 108px); overflow: hidden; }
 /* Fixed black over light, white over dark, as Weather's dots: full strength for the current page, 40 % for the others (RootView.PageBar). */
 .bottom .dots { touch-action: none; }
 .bottom .dots a { color: var(--text); opacity: .4; display: flex; align-items: center; justify-content: center; width: 16px; height: 44px; font-size: 11px; }
