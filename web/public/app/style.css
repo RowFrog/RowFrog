@@ -245,7 +245,12 @@ svg.filled { width: 22px; height: 22px; }
 .hrow.night { opacity: .6; }
 .hrow .num { text-align: right; white-space: nowrap; }
 .hrow > span:nth-child(2), .hrow > span:nth-child(3) { display: flex; justify-content: center; }
-.hhead { position: sticky; top: 0; z-index: 2; background: var(--card); color: var(--sub); border-bottom: .5px solid var(--line); padding: 6px 0; }
+/* The pinned header spans the whole tile and is rounded at the top like it; while it stays, the tile is cut
+   off above it (stickHourlyHeader), so the rows scroll away under it and nothing shows beside its corners,
+   as in the app and in Weather (StickyHourlyHeader, StickyHourlyCut). */
+.hhead { position: sticky; top: 0; z-index: 2; background: var(--card); color: var(--sub); border-bottom: .5px solid var(--line);
+  width: calc(100% + 28px); margin: 0 -14px; padding: 6px 14px; box-sizing: border-box; border-radius: 16px 16px 0 0; }
+.hhead.stuck { box-shadow: 0 2px 4px rgba(0, 0, 0, .12); }
 .hhead .num { display: flex; flex-direction: column; align-items: flex-end; }
 .hhead small { font-size: 10px; }
 .hhead .cond { color: var(--sub); }
@@ -286,6 +291,7 @@ svg.filled { width: 22px; height: 22px; }
 .bottom .piece .tool { color: var(--text); min-width: 44px; height: 44px; justify-content: center; font-size: 22px; }
 .bottom .piece .tool.boat { min-width: 56px; }
 .bottom .piece.round { width: 44px; padding: 0; justify-content: center; }
+.bottom .gap { flex: 1; }
 .bottom .dots { margin: 0 auto; display: flex; justify-content: center; align-items: center; padding: 0 8px; max-width: calc(100% - 2 * 116px); overflow: hidden; }
 /* Fixed black over light, white over dark, as Weather's dots: full strength for the current page, 40 % for the others (RootView.PageBar). */
 .bottom .dots { touch-action: none; }
@@ -295,26 +301,25 @@ svg.filled { width: 22px; height: 22px; }
 .bottom .dots a.on span { width: 8px; height: 8px; }
 .bottom .dots a.on svg path:last-child { fill: currentColor; }
 
-/* Behind the clock: clear at rest; once the page scrolls under it, a thin blur, solid down to half the status bar,
-   80 % at the bar's bottom, then fading out over 28 px, so the cards still show through (RootView.TopEdgeFade). */
-:root { --safe-top: env(safe-area-inset-top, 0px); --top-bar: 0px; }
-body.title-gone { --top-bar: 44px; }
-body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 9; height: calc(var(--safe-top) + var(--top-bar) + 28px); pointer-events: none;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
-  --fade: linear-gradient(#000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) calc(var(--safe-top) + var(--top-bar)), transparent);
-  -webkit-mask-image: var(--fade); mask-image: var(--fade);
-  opacity: 0; transition: opacity .2s ease-in-out; }
-body.scrolled::before { opacity: 1; }
-/* The same blur at the bottom, behind the floating buttons, while cards are under them; nothing at the page's end (BottomEdgeFade). */
-body::after { content: ""; position: fixed; bottom: 0; left: 0; right: 0; z-index: 9; height: calc(max(8px, env(safe-area-inset-bottom)) + 44px + 28px); pointer-events: none;
-  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
-  --fade: linear-gradient(to top, #000, rgba(0, 0, 0, .8) calc(100% - 28px), transparent);
-  -webkit-mask-image: var(--fade); mask-image: var(--fade);
-  opacity: 0; transition: opacity .2s ease-in-out; }
-body.under-bar::after { opacity: 1; }
+/* A desktop browser has no clock or home bar to keep readable, so it draws no blur strips. Phones and
+   tablets (a touch screen, or the page added to the home screen) keep the app's thin blur behind the clock
+   once the page scrolls under it (TopEdgeFade), and behind the floating buttons while cards are under them
+   (BottomEdgeFade), over the page's own column only. */
+:root { --safe-top: env(safe-area-inset-top, 0px); --main-left: 0px; --main-width: 100%; }
+@media (display-mode: standalone), (pointer: coarse) {
+  body::before, body::after { content: ""; position: fixed; left: var(--main-left); width: var(--main-width); z-index: 9; pointer-events: none;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
+    -webkit-mask-image: var(--fade); mask-image: var(--fade); opacity: 0; transition: opacity .2s ease-in-out; }
+  body::before { top: 0; height: calc(var(--safe-top) + 28px);
+    --fade: linear-gradient(#000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) var(--safe-top), transparent); }
+  body::after { bottom: 0; height: calc(max(8px, env(safe-area-inset-bottom)) + 44px + 28px);
+    --fade: linear-gradient(to top, #000, rgba(0, 0, 0, .8) calc(100% - 28px), transparent); }
+  body.scrolled::before, body.under-bar::after { opacity: 1; }
+}
 /* The club's name and light, small, once the big title has scrolled away (InlineClubTitle). */
-.top-title { position: fixed; top: 0; left: 0; right: 0; z-index: 10; height: 44px; padding: var(--safe-top) 60px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
-  font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: content-box; }
+/* A plain bar in the page's colour, so the 48 hours' header pinned under it hides the rows that scrolled past. */
+.top-title { position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 10; height: calc(var(--safe-top) + 44px); padding: var(--safe-top) 60px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+  font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: border-box; background: var(--bg); border-bottom: .5px solid var(--line); }
 .top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 body.title-gone .top-title { opacity: 1; }
 body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }
@@ -420,9 +425,11 @@ dialog.sheet .done { color: var(--accent); font-weight: 600; }
 .cards.two .hourly-card.folds:not(.open) .later { display: none; }
 .split { display: flex; align-items: flex-start; }
 .split > main { flex: 1; min-width: 0; }
-.side { width: 400px; flex: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; padding: 12px 16px 110px; border-right: .5px solid var(--line); }
+/* Room for the scroll bar kept, so the list does not narrow when results make it scroll (Windows draws the bar inside). */
+.side { width: 400px; flex: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; scrollbar-gutter: stable; padding: 12px 16px 110px; border-right: .5px solid var(--line); }
 .side-head { display: flex; justify-content: space-between; align-items: baseline; }
 .side-head h2 { font-size: 28px; margin: 4px 0; }
+.side-head { margin-bottom: 8px; }
 .side .rows { margin-top: 8px; }
 .side .row-name strong { font-size: 18px; }
 .side .big-temp { font-size: 30px; }
@@ -716,6 +723,7 @@ input.switch:checked::after { transform: translateX(20px); }
 .list-links { display: flex; flex-direction: column; gap: 12px; margin: 18px 4px 0; }
 .list-links .link[hidden] { display: none; }
 .add-own { display: flex; flex-direction: column; gap: 2px; margin: 14px 4px 0; }
+.add-own[hidden] { display: none; }
 
 /* Arrange this page (ArrangePageSheet) */
 #arrange.pill { display: flex; margin: 14px auto 0; }
