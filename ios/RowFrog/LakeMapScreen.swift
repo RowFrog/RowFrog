@@ -36,6 +36,10 @@ struct LakeMapScreen: View {
     @State private var selectedPoint: Int?
     /// The panel at the bottom shows everything, or only a summary and the hours.
     @State private var panelExpanded: Bool
+    /// The panel's height with the home indicator, so the map fits the lake or route above it.
+    @State private var panelHeight = LakeMapView.panelHeight
+    /// Counts up when the map should fit the lake or route again above the panel.
+    @State private var fitRequest = 0
     /// The layer's name, shown for a moment next to the layer buttons after a switch.
     @State private var layerNote: LakeLayer?
     /// Seconds per 500 m.
@@ -183,7 +187,9 @@ struct LakeMapScreen: View {
                 selectPoint: { selectedPoint = $0 },
                 imagery: imagery,
                 track: routeMode && showTrack ? rowed?.trackCoordinates ?? [] : [],
-                land: land
+                land: land,
+                bottomInset: panelHeight,
+                fitRequest: fitRequest
             )
             .ignoresSafeArea()
             // The wind map's wind, for the arrows on land.
@@ -220,7 +226,10 @@ struct LakeMapScreen: View {
             .padding(.trailing)
             .padding(.bottom, 10)
         }
-        .safeAreaInset(edge: .bottom, spacing: 0) { panel(plan: plan, boat: boat, shown: shown) }
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            panel(plan: plan, boat: boat, shown: shown)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height + $0.safeAreaInsets.bottom } action: { panelHeight = $0 }
+        }
         .sheet(isPresented: $showingInfo) { LakeViewInfo(water: view.water) }
         .sheet(isPresented: $showingLegend) {
             LakeMapLegend(layer: layer, stripes: layer == .light ? shown?.lakeWide.stripes : nil,
@@ -240,7 +249,12 @@ struct LakeMapScreen: View {
         .tipVisibility(oneWayTip, $showOneWayTip)
         .onChange(of: outAndBack) { oneWayTip.invalidate(reason: .actionPerformed) }
         // A tip goes once its feature was used.
-        .onChange(of: panelExpanded) { panelTip.invalidate(reason: .actionPerformed) }
+        .onChange(of: panelExpanded) {
+            panelTip.invalidate(reason: .actionPerformed)
+            refit()
+        }
+        // Opened on a route or with the panel open: fit once the panel is measured.
+        .onAppear { if panelExpanded || (routeMode && !waypoints.isEmpty) { refit() } }
         .onChange(of: followBoat) { if followBoat { boatTip.invalidate(reason: .actionPerformed) } }
         .onChange(of: RouteEdit.isLoop(waypoints)) { _, loop in if loop { loopTip.invalidate(reason: .actionPerformed) } }
         .sheet(isPresented: $showingRoutes) {
@@ -303,6 +317,13 @@ struct LakeMapScreen: View {
         routeMode = true
         spot = nil
         selectedPoint = nil
+        refit()
+    }
+
+    /// As in Apple Maps: once the panel has settled at its new height, the map
+    /// fits the route (or without one the lake) into the room above it.
+    private func refit() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { fitRequest += 1 }
     }
 
     /// Close and the lake's name at the left, map or satellite pictures alone at
@@ -1087,8 +1108,12 @@ struct LakeMapView: UIViewRepresentable {
     var track: [CLLocationCoordinate2D] = []
     /// The wind map's wind, for the arrows on land; without it only the water has arrows.
     var land: LandWind?
+    /// The panel's height at the bottom, with the home indicator.
+    var bottomInset: CGFloat = Self.panelHeight
+    /// A new value fits the route, or without one the lake, above the panel.
+    var fitRequest = 0
 
-    /// Room the pushed-down panel and the home indicator take at the bottom.
+    /// Room the pushed-down panel and the home indicator take at the bottom, before it is measured.
     static let panelHeight: CGFloat = 230
 
     func makeCoordinator() -> Coordinator { Coordinator(spot: $spot) }
@@ -1142,19 +1167,35 @@ struct LakeMapView: UIViewRepresentable {
         map.setVisibleMapRect(overlay.openRect, animated: false)
         // Fit the lake once the map has its size, clear of the buttons at the top
         // and of the panel at the bottom, so the whole lake and every club show.
-        let inRouteMode = routeMode
-        DispatchQueue.main.async { Self.fit(overlay, in: map, routeMode: inRouteMode, animated: false) }
+        let inRouteMode = routeMode, bottom = bottomInset
+        DispatchQueue.main.async { Self.fit(overlay, in: map, routeMode: inRouteMode, bottom: bottom, animated: false) }
         context.coordinator.fittedForRoute = routeMode
+        context.coordinator.fitRequest = fitRequest
         return map
     }
 
     /// Room the buttons at the top take, in route mode too (the editing bar moved into the panel).
     static let routeTop: CGFloat = 130
 
-    static func fit(_ overlay: LakeOverlay, in map: MKMapView, routeMode: Bool, animated: Bool) {
-        // More room at the right, where the layer buttons stand above the panel.
-        let padding = UIEdgeInsets(top: routeTop, left: 24, bottom: panelHeight, right: 64)
-        map.setVisibleMapRect(overlay.openRect, edgePadding: padding, animated: animated)
+    static func fit(_ overlay: LakeOverlay, in map: MKMapView, routeMode: Bool, bottom: CGFloat = panelHeight,
+                    route: [CLLocationCoordinate2D] = [], animated: Bool) {
+        // More room at the right, where the layer buttons stand above the panel, and
+        // above the panel for the legend chip; at least 150 points of map stay.
+        let below = min(bottom + 12, max(map.bounds.height - routeTop - 150, panelHeight))
+        let padding = UIEdgeInsets(top: routeTop, left: 24, bottom: below, right: 64)
+        map.setVisibleMapRect(routeRect(route) ?? overlay.openRect, edgePadding: padding, animated: animated)
+    }
+
+    /// The route's extent with a little room around it, at least 300 m wide; nil without a route.
+    static func routeRect(_ route: [CLLocationCoordinate2D]) -> MKMapRect? {
+        guard let first = route.first else { return nil }
+        let points = route.map(MKMapPoint.init)
+        let xs = points.map(\.x), ys = points.map(\.y)
+        let minX = xs.min() ?? 0, minY = ys.min() ?? 0
+        let rect = MKMapRect(x: minX, y: minY, width: (xs.max() ?? 0) - minX, height: (ys.max() ?? 0) - minY)
+        let least = 300 * MKMapPointsPerMeterAtLatitude(first.latitude)
+        let side = max(rect.width, rect.height) * 0.08
+        return rect.insetBy(dx: -max(side, (least - rect.width) / 2), dy: -max(side, (least - rect.height) / 2))
     }
 
     func updateUIView(_ map: MKMapView, context: Context) {
@@ -1189,10 +1230,15 @@ struct LakeMapView: UIViewRepresentable {
         // The editing bar shows in route mode; move the lake down when the bar
         // would hide the start of the route.
         if !routeMode { c.fittedForRoute = false }
+        if c.fitRequest != fitRequest, let overlay = c.overlay {
+            c.fitRequest = fitRequest
+            c.fittedForRoute = routeMode
+            Self.fit(overlay, in: map, routeMode: routeMode, bottom: bottomInset, route: routeMode ? waypoints + track : [], animated: true)
+        }
         if routeMode, !c.fittedForRoute, let overlay = c.overlay, let start = waypoints.first {
             c.fittedForRoute = true
             if map.convert(start, toPointTo: map).y < Self.routeTop {
-                Self.fit(overlay, in: map, routeMode: true, animated: true)
+                Self.fit(overlay, in: map, routeMode: true, bottom: bottomInset, animated: true)
             }
         }
         if let hour, c.shown != "\(hour.time.timeIntervalSince1970) \(layer.rawValue) \(land != nil)" {
@@ -1229,6 +1275,8 @@ struct LakeMapView: UIViewRepresentable {
         var darkBase = false
         /// Whether the lake was fitted below the editing bar of route mode.
         var fittedForRoute = false
+        /// The last `fitRequest` the map was fitted for.
+        var fitRequest = 0
         var addPoint: (CLLocationCoordinate2D) -> Void = { _ in }
         var movePoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
         var insertPoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
