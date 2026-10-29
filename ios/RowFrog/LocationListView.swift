@@ -139,7 +139,7 @@ struct LocationListView: View {
             .scrollContentBackground(.hidden)
             .pageBackground(.list)
             .navigationTitle(tr("Locations"))
-            .searchable(text: $search, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(tr("Search clubs, lakes or towns")))
+            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")))
             .toolbar {
                 // As a side list (iPad) the cog stays in the page bar instead.
                 if selectedID == nil {
@@ -412,6 +412,19 @@ struct SearchResultRow: View {
                 .buttonStyle(.borderless)
                 .accessibilityLabel(tr("Add %@", club.displayName))
             }
+        }
+    }
+}
+
+private extension View {
+    /// From iOS 26 the search field sits at the bottom of the screen, within
+    /// reach of the thumb, as in Mail, Notes and Weather; before, under the title.
+    @ViewBuilder
+    func clubSearch(_ text: Binding<String>, prompt: Text) -> some View {
+        if #available(iOS 26.0, *) {
+            searchable(text: text, prompt: prompt)
+        } else {
+            searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
         }
     }
 }

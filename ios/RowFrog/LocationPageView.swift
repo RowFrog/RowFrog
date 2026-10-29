@@ -92,6 +92,10 @@ struct LocationPageView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         header
+                            // Cards under the clock: the top blurs, as iOS's own bars do.
+                            .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
+                                top > 0 && proxy.frame(in: .global).minY < top - 1
+                            } action: { PageScroll.shared.update(club.id, scrolled: $0) }
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
                             if tourSeen && showTopTileTip {
@@ -146,7 +150,11 @@ struct LocationPageView: View {
                     }
                 }
                 .overlay(alignment: .top) {
-                    if let forecast { stickyHourlyHeader(forecast) }
+                    // Below the club's name when the top bar shows it.
+                    if let forecast {
+                        stickyHourlyHeader(forecast)
+                            .padding(.top, PageScroll.shared.titleGone.contains(club.id) ? InlineClubTitle.height : 0)
+                    }
                 }
                 .environment(\.pageHeight, geometry.size.height)
                 .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
@@ -447,6 +455,10 @@ private extension LocationPageView {
             }
             ClubTitle(club: club)
                 .font(.largeTitle.bold())
+                // Once the title is under the top bar, the bar shows the name instead.
+                .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
+                    top > 0 && proxy.frame(in: .global).maxY < top + InlineClubTitle.height
+                } action: { PageScroll.shared.update(club.id, titleGone: $0) }
             Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             if !club.launchPointVerified {

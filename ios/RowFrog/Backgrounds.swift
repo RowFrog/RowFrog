@@ -157,6 +157,26 @@ extension AppSettings {
     @MainActor var tileSurface: Surface { PowerState.shared.lowPower ? .solid : tileStyle.surface }
 }
 
+/// How far each swiping club page is scrolled, for the top of the screen: as
+/// in iOS's own bars, it stays clear at the top of a page, blurs once cards
+/// scroll under the clock, and shows the club's name once its title is gone.
+@MainActor @Observable
+final class PageScroll {
+    static let shared = PageScroll()
+    /// Club pages with cards under the clock.
+    private(set) var scrolled: Set<String> = []
+    /// Club pages whose big title has gone under the top.
+    private(set) var titleGone: Set<String> = []
+
+    func update(_ clubID: String, scrolled isScrolled: Bool) {
+        if scrolled.contains(clubID) != isScrolled { scrolled.formSymmetricDifference([clubID]) }
+    }
+
+    func update(_ clubID: String, titleGone gone: Bool) {
+        if titleGone.contains(clubID) != gone { titleGone.formSymmetricDifference([clubID]) }
+    }
+}
+
 private struct PageMarginsKey: EnvironmentKey {
     static let defaultValue = EdgeInsets()
 }
