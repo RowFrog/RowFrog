@@ -1276,6 +1276,8 @@ struct LakeMapView: UIViewRepresentable {
                 view.glyphImage = UIImage(systemName: pin.isOwn ? LocationStore.markSymbol(for: pin.clubID) : "figure.rower")
                 view.markerTintColor = pin.isOwn ? .systemBlue : .systemGray
                 view.displayPriority = .required
+                // Clubs sharing a boathouse share a launch point: the page's club stays on top.
+                view.zPriority = pin.isOwn ? .max : .defaultUnselected
                 return view
             }
             if let pin = annotation as? SectionEndPin {

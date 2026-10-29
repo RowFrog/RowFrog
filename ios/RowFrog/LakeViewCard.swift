@@ -237,7 +237,8 @@ struct LakeMiniMap: View {
                 let at = p.point(lon: point.lon, lat: point.lat)
                 ctx.stroke(LakeArrow.path(at: at, towardDeg: from + 180, length: 12), with: .color(.primary.opacity(0.55)), lineWidth: 1.2)
             }
-            for club in view.clubs {
+            // The page's club last, so it stays on top of clubs sharing its boathouse.
+            for club in view.clubs.sorted(by: { ($0.id == clubID ? 1 : 0) < ($1.id == clubID ? 1 : 0) }) {
                 let at = p.point(lon: club.launchPoint.lon, lat: club.launchPoint.lat)
                 let own = club.id == clubID
                 let r: CGFloat = own ? 4.5 : 3
