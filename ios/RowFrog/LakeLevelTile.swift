@@ -150,6 +150,10 @@ struct WaterLevelDetailView: View {
             .chartYScale(domain: .automatic(includesZero: false))
             .chartYAxisLabel("m")
             .frame(height: 180)
+            .accessibilityChartDescriptor(ChartDescription(
+                title: tr("Water level, last week"), unit: "m",
+                series: [.init(name: tr("Level"), points: now.history.map { ($0.time, $0.levelM) })],
+                summary: LakeLevelFormat.height(now.levelM), digits: 2))
         }
     }
 

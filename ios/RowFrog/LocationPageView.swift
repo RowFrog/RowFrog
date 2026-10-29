@@ -633,7 +633,7 @@ private struct NowCard: View {
                 }
                 Spacer(minLength: 0)
                 VStack(spacing: 2) {
-                    SkyIcon(sky: data.sky, night: hour.sunUp == false).font(.system(size: 34))
+                    SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
                     Text(data.sky.title).font(.caption).foregroundStyle(.secondary)
                 }
             }

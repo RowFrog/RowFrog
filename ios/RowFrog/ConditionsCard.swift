@@ -21,7 +21,7 @@ struct ConditionsCard: View {
                                  radarStatus: club.flatMap { RadarStore.shared.status(at: $0.launchPoint) })
         Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent", legend: .conditions) {
             HStack(spacing: 10) {
-                SkyIcon(sky: data.sky, night: hour.sunUp == false).font(.system(size: 36))
+                SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 36, relativeTo: .largeTitle, maxGrowth: 1.35)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(data.sky.title).font(.headline)
                     Text(tr("%@ · feels like %@", Format.degrees(hour.temperatureC), Format.degrees(hour.apparentTemperatureC)))
@@ -1297,6 +1297,20 @@ private struct ConditionChart: View {
         // Over the values on the right; on the left a dragged chart cut it off.
         .chartYAxisLabel(position: .topTrailing) { Text(detail.unit) }
         .chartPlotStyle { $0.padding(.horizontal, 16) }
+        .accessibilityChartDescriptor(description)
+    }
+
+    /// The shown lines for VoiceOver: "Describe chart" and the audio graph.
+    private var description: ChartDescription {
+        let shown = detail.lines.filter { !hidden.contains($0.name) && !$0.points.isEmpty }
+        return ChartDescription(
+            title: shown.map(\.name).joined(separator: ", "),
+            unit: detail.unit,
+            series: shown.map { line in
+                .init(name: line.name, points: line.points.map { (date($0.x), $0.y) }, continuous: line.kind == .line)
+            },
+            summary: [detail.value, detail.note].filter { !$0.isEmpty }.joined(separator: ". "),
+            digits: detail.unit == SpeedUnit.beaufort.symbol ? 0 : 1)
     }
 
     /// A line's points, without bars where another shown line's bars stand in for them.
