@@ -30,6 +30,9 @@ struct LakeView: Decodable, Hashable {
     var kind: String? = nil
     /// River sections only: where the stretch ends each way and the river line.
     var section: RiverSection? = nil
+    /// Set by the app on rivers: the current of the club page that showed the
+    /// stretch (gauge, m/s mid-river), for the route planner.
+    var currentMs: Double? = nil
 
     var water: WaterKind { WaterKind(kind: kind, waterway: section?.waterway) }
 
@@ -341,6 +344,8 @@ final class LakeViewStore {
     private(set) var failed: Set<String> = []
     /// The water of the club page that last showed each lake, for lakes without a station.
     private var clubWater: [String: Double] = [:]
+    /// The current of the club page that last showed each river stretch.
+    private var clubCurrent: [String: Double] = [:]
     private let api: APIClient
 
     nonisolated init(api: APIClient) { self.api = api }
@@ -380,12 +385,18 @@ final class LakeViewStore {
             applied[lakeID] = (limits, view)
         }
         view.shoreWaterC = view.waterC ?? clubWater[lakeID]
+        view.currentMs = view.section == nil ? nil : clubCurrent[lakeID]
         return view
     }
 
     /// The water a club page shows (measured or estimated), for the cold shore.
     func noteWater(_ celsius: Double?, lake lakeID: String) {
         if let celsius, clubWater[lakeID] != celsius { clubWater[lakeID] = celsius }
+    }
+
+    /// The current a river club page shows, for the route planner.
+    func noteCurrent(_ ms: Double?, lake lakeID: String) {
+        if let ms, clubCurrent[lakeID] != ms { clubCurrent[lakeID] = ms }
     }
 }
 

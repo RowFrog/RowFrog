@@ -88,6 +88,28 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(plan.stops.first?.relation, .tail)
     }
 
+    func testRoutePlanOnARiverCountsWithTheCurrent() throws {
+        var view = try decode()
+        // The river flows north along the route out.
+        view.section = RiverSection(place: "Test", waterway: "river", lengthKm: 3, flow: [[[11.30, 47.80], [11.31, 47.82]]])
+        view.currentMs = 1
+        let start = CLLocationCoordinate2D(latitude: 47.80, longitude: 11.30)
+        let turn = CLLocationCoordinate2D(latitude: 47.82, longitude: 11.31)
+        let once = try XCTUnwrap(RoutePlanner(view: view, waypoints: [start, turn], outAndBack: false))
+        let both = try XCTUnwrap(RoutePlanner(view: view, waypoints: [start, turn], outAndBack: true))
+        let speed = 500.0 / 150
+        let down = once.plan(start: view.hours[0].time, paceSecondsPer500: 150)
+        XCTAssertEqual(down.end.timeIntervalSince(down.start), once.distanceM / (speed + 1), accuracy: 1)
+        let round = both.plan(start: view.hours[0].time, paceSecondsPer500: 150)
+        XCTAssertEqual(round.end.timeIntervalSince(round.start), once.distanceM / (speed + 1) + once.distanceM / (speed - 1), accuracy: 2)
+        XCTAssertEqual(round.currentMs, 1)
+        XCTAssertFalse(round.noHeadway)
+        // Against a current faster than the boat.
+        view.currentMs = 3.5
+        let hard = try XCTUnwrap(RoutePlanner(view: view, waypoints: [start, turn], outAndBack: true)).plan(start: view.hours[0].time, paceSecondsPer500: 150)
+        XCTAssertTrue(hard.noHeadway)
+    }
+
     func testRouteNeedsTwoPoints() throws {
         let view = try decode()
         XCTAssertNil(RoutePlanner(view: view, waypoints: [CLLocationCoordinate2D(latitude: 47.8, longitude: 11.3)], outAndBack: true))

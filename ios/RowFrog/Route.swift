@@ -208,6 +208,10 @@ struct RoutePlan: Hashable {
     let segments: [Segment]
     /// The trip runs past the end of the forecast.
     let beyondForecast: Bool
+    /// On rivers: the current the times count with (mid-river, m/s), and
+    /// whether some stretch runs against a current faster than the boat.
+    var currentMs: Double? = nil
+    var noHeadway = false
 
 
     var worstLight: Light { stops.map(\.light).max() ?? .green }
@@ -224,6 +228,10 @@ struct RoutePlanner {
         let distanceM: Double
         let cell: Int
         let headingDeg: Double
+        /// The length of route this point stands for.
+        let stepM: Double
+        /// How much of the current runs along the route here: 1 downstream, -1 upstream.
+        let withCurrent: Double
     }
 
     let view: LakeView
@@ -242,6 +250,7 @@ struct RoutePlanner {
         path = outAndBack ? waypoints + waypoints.dropLast().reversed() : waypoints
         let grid = view.grid
         let byFlat = Dictionary(uniqueKeysWithValues: grid.cells.enumerated().map { ($1, $0) })
+        let flow = Self.flowPieces(view.section?.flow)
         var points: [Point] = [], pieces: [[CLLocationCoordinate2D]] = []
         var travelled = 0.0
         for (a, b) in zip(path, path.dropFirst()) {
@@ -255,7 +264,9 @@ struct RoutePlanner {
                     coordinate: mid,
                     distanceM: travelled + length * (Double(k) + 0.5) / Double(steps),
                     cell: Self.cell(at: mid, grid: grid, byFlat: byFlat),
-                    headingDeg: heading
+                    headingDeg: heading,
+                    stepM: length / Double(steps),
+                    withCurrent: Self.withCurrent(at: mid, heading: heading, flow: flow)
                 ))
                 pieces.append([Self.interpolate(a, b, Double(k) / Double(steps)), Self.interpolate(a, b, Double(k + 1) / Double(steps))])
             }
@@ -268,13 +279,23 @@ struct RoutePlanner {
     }
 
     /// Pace in seconds per 500 m, as on an ergometer.
+    /// On rivers the current at the club's gauge speeds the boat up downstream
+    /// and slows it down upstream (over ground: still-water speed ± current).
     func plan(start: Date, paceSecondsPer500: Double) -> RoutePlan {
         let speed = 500 / max(paceSecondsPer500, 60)
+        let current = view.currentMs ?? 0
         let hours = view.hours
-        var beyond = false
+        var beyond = false, noHeadway = false
         var stops: [RoutePlan.Stop] = []
+        var elapsed = 0.0
         for p in points {
-            let time = start.addingTimeInterval(p.distanceM / speed)
+            var ground = speed + current * p.withCurrent
+            if ground < Self.minGroundMs {
+                noHeadway = true
+                ground = Self.minGroundMs
+            }
+            let time = start.addingTimeInterval(elapsed + p.stepM / 2 / ground)
+            elapsed += p.stepM / ground
             var h = hours.lastIndex { $0.time <= time } ?? 0
             if let last = hours.last, time >= last.time.addingTimeInterval(3600) { beyond = true }
             h = min(h, hours.count - 1)
@@ -293,8 +314,9 @@ struct RoutePlanner {
                 relation: wind?.fromDeg.map { WindRelation(heading: p.headingDeg, windFrom: $0) }
             ))
         }
-        let end = start.addingTimeInterval(distanceM / speed)
-        return RoutePlan(start: start, end: end, distanceM: distanceM, stops: stops, segments: segments(stops), beyondForecast: beyond)
+        let end = start.addingTimeInterval(elapsed)
+        return RoutePlan(start: start, end: end, distanceM: distanceM, stops: stops, segments: segments(stops), beyondForecast: beyond,
+                         currentMs: view.currentMs, noHeadway: noHeadway)
     }
 
     /// The start time within the forecast that meets the best conditions:
@@ -323,6 +345,27 @@ struct RoutePlanner {
         }
         if let light, current.count > 1 { out.append(RoutePlan.Segment(points: current.map(Self.coordinate), light: light)) }
         return out
+    }
+
+    /// Slowest speed over ground counted where the current is about as fast as the boat.
+    static let minGroundMs = 0.2
+    /// The river line farther than this from a point of the route says nothing about its current.
+    static let flowNearM = 300.0
+
+    /// The river line (pointing downstream) as pieces from one point to the next.
+    private static func flowPieces(_ flow: [[[Double]]]?) -> [(CLLocationCoordinate2D, CLLocationCoordinate2D)] {
+        (flow ?? []).flatMap { line in
+            let points = line.compactMap { $0.count >= 2 ? CLLocationCoordinate2D(latitude: $0[1], longitude: $0[0]) : nil }
+            return Array(zip(points, points.dropFirst()))
+        }
+    }
+
+    /// The cosine between the route's heading and the river's flow at the
+    /// nearest piece of the river line; 0 away from the river line.
+    static func withCurrent(at c: CLLocationCoordinate2D, heading: Double, flow: [(CLLocationCoordinate2D, CLLocationCoordinate2D)]) -> Double {
+        let nearest = flow.map { ($0, distance(c, interpolate($0.0, $0.1, 0.5))) }.min { $0.1 < $1.1 }
+        guard let nearest, nearest.1 < flowNearM + distance(nearest.0.0, nearest.0.1) / 2 else { return 0 }
+        return cos((heading - Self.heading(nearest.0.0, nearest.0.1)) * .pi / 180)
     }
 
     private static func coordinate(_ c: CLLocationCoordinate2D) -> Coordinate {

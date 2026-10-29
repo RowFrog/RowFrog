@@ -32,6 +32,19 @@ struct RouteSummary: View {
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
+            if let current = plan.currentMs, current >= 0.05 {
+                Label(tr("Times count with the current of ≈ %@: faster downstream, slower upstream.", RiverFormat.speed(current)),
+                      systemImage: RiverConditions.symbol)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if plan.noHeadway {
+                Label(tr("Against this current your boat hardly makes headway on part of the route."), systemImage: "exclamationmark.triangle.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
             if plan.beyondForecast {
                 Label(tr("The forecast ends before you are back."), systemImage: "clock.badge.exclamationmark")
                     .font(.caption)
