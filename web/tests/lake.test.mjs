@@ -71,3 +71,25 @@ test("plans a route through the hours and finds a better start", () => {
   assert.equal(windRelation(90, 90), "head");
   assert.equal(pace(135), "2:15");
 });
+
+test("on a river the times count with the current (RoutePlanner, app #179)", () => {
+  const view = sampleView();
+  // The river runs east along the strip.
+  view.section = { waterway: "river", flow: [[[11.3, 47.905], [11.33, 47.905]]] };
+  const down = routePlanner(view, [{ lat: 47.905, lon: 11.301 }, { lat: 47.905, lon: 11.329 }], false);
+  const up = routePlanner(view, [{ lat: 47.905, lon: 11.329 }, { lat: 47.905, lon: 11.301 }], false);
+  const start = new Date("2026-10-26T10:00:00Z");
+  const still = planRoute(down, start, 150).end - start;
+  const downstream = planRoute(down, start, 150, 1).end - start;
+  const upstream = planRoute(up, start, 150, 1);
+  assert.ok(downstream < still && upstream.end - start > still);
+  assert.equal(upstream.currentMs, 1);
+  assert.equal(upstream.noHeadway, false);
+  // Faster than the boat: hardly any headway upstream.
+  assert.equal(planRoute(up, start, 150, 4).noHeadway, true);
+  // Without a section (a lake) the current is ignored.
+  delete view.section;
+  const lake = routePlanner(view, [{ lat: 47.905, lon: 11.301 }, { lat: 47.905, lon: 11.329 }], false);
+  assert.equal(planRoute(lake, start, 150, 1).end - start, still);
+  assert.equal(planRoute(lake, start, 150, 1).currentMs, null);
+});

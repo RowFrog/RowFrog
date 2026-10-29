@@ -389,6 +389,29 @@ export function routeLength(points, outAndBack) {
 }
 
 export const STEP_M = 150;
+/** Slowest speed over ground counted where the current is about as fast as the boat (RoutePlanner.minGroundMs). */
+export const MIN_GROUND_MS = 0.2;
+/** The river line farther than this from a point of the route says nothing about its current (RoutePlanner.flowNearM). */
+const FLOW_NEAR_M = 300;
+
+/** The river line (pointing downstream, [lon, lat] points) as pieces from one point to the next. */
+function flowPieces(flow) {
+  return (flow ?? []).flatMap((line) => {
+    const points = line.filter((x) => x.length >= 2).map(([lon, lat]) => ({ lat, lon }));
+    return points.slice(1).map((b, i) => [points[i], b]);
+  });
+}
+
+/** The cosine between the route's heading and the river's flow at the nearest piece of the river line; 0 away from it. */
+export function withCurrent(c, headingDeg, pieces) {
+  let nearest = null;
+  for (const piece of pieces) {
+    const d = distanceM(c, lerp(piece[0], piece[1], 0.5));
+    if (!nearest || d < nearest.d) nearest = { piece, d };
+  }
+  if (!nearest || nearest.d >= FLOW_NEAR_M + distanceM(nearest.piece[0], nearest.piece[1]) / 2) return 0;
+  return Math.cos(((headingDeg - heading(nearest.piece[0], nearest.piece[1])) * Math.PI) / 180);
+}
 
 /** The route's geometry, worked out once; plans for other start times reuse it (RoutePlanner). */
 export function routePlanner(view, waypoints, outAndBack) {
@@ -397,6 +420,7 @@ export function routePlanner(view, waypoints, outAndBack) {
   const points = [];
   const pieces = [];
   let travelled = 0;
+  const flow = flowPieces(view.section?.flow);
   for (let s = 1; s < path.length; s++) {
     const a = path[s - 1];
     const b = path[s];
@@ -406,7 +430,11 @@ export function routePlanner(view, waypoints, outAndBack) {
     const steps = Math.max(1, Math.ceil(length / STEP_M));
     for (let k = 0; k < steps; k++) {
       const mid = lerp(a, b, (k + 0.5) / steps);
-      points.push({ coordinate: mid, distanceM: travelled + (length * (k + 0.5)) / steps, cell: nearestCell(view.grid, mid), headingDeg: hd });
+      points.push({
+        coordinate: mid, distanceM: travelled + (length * (k + 0.5)) / steps, cell: nearestCell(view.grid, mid), headingDeg: hd,
+        // The length this point stands for, and how much of the current runs along it: 1 downstream, -1 upstream.
+        stepM: length / steps, withCurrent: withCurrent(mid, hd, flow),
+      });
       pieces.push([lerp(a, b, k / steps), lerp(a, b, (k + 1) / steps)]);
     }
     travelled += length;
@@ -415,15 +443,28 @@ export function routePlanner(view, waypoints, outAndBack) {
   return { view, path, points, pieces, distanceM: travelled };
 }
 
-/** What the route meets when started at `start` at a pace in seconds per 500 m (RoutePlanner.plan). */
-export function planRoute(planner, start, pace) {
+/**
+ * What the route meets when started at `start` at a pace in seconds per 500 m (RoutePlanner.plan).
+ * On rivers `currentMs` (the club's gauge, mid-river) speeds the boat up downstream and slows it
+ * down upstream: over ground, still-water speed ± current.
+ */
+export function planRoute(planner, start, pace, currentMs = null) {
   const speed = 500 / Math.max(pace, 60);
   const { view } = planner;
+  const current = view.section ? currentMs ?? 0 : 0;
   const hours = view.hours;
   const last = new Date(hours[hours.length - 1].time).getTime();
   let beyond = false;
+  let noHeadway = false;
+  let elapsed = 0;
   const stops = planner.points.map((p) => {
-    const time = new Date(start.getTime() + (p.distanceM / speed) * 1000);
+    let ground = speed + current * p.withCurrent;
+    if (ground < MIN_GROUND_MS) {
+      noHeadway = true;
+      ground = MIN_GROUND_MS;
+    }
+    const time = new Date(start.getTime() + (elapsed + p.stepM / 2 / ground) * 1000);
+    elapsed += p.stepM / ground;
     let h = 0;
     hours.forEach((x, i) => {
       if (new Date(x.time) <= time) h = i;
@@ -438,10 +479,11 @@ export function planRoute(planner, start, pace) {
       relation: wind?.fromDeg == null ? null : windRelation(p.headingDeg, wind.fromDeg),
     };
   });
-  const end = new Date(start.getTime() + (planner.distanceM / speed) * 1000);
+  const end = new Date(start.getTime() + elapsed * 1000);
   const worst = stops.reduce((w, s) => worse(w, s.light), "green");
   const maxWaveM = Math.max(0, ...stops.map((s) => s.waveM));
-  return { start, end, distanceM: planner.distanceM, stops, segments: segments(stops, planner.pieces), beyondForecast: beyond, worstLight: worst, maxWaveM };
+  return { start, end, distanceM: planner.distanceM, stops, segments: segments(stops, planner.pieces), beyondForecast: beyond, worstLight: worst, maxWaveM,
+    currentMs: view.section ? currentMs : null, noHeadway };
 }
 
 function segments(stops, pieces) {
@@ -467,12 +509,12 @@ export function roughest(plan) {
 }
 
 /** The start within the forecast that meets the best conditions: best worst light, lowest waves, earliest. */
-export function bestStart(planner, pace, from = new Date()) {
+export function bestStart(planner, pace, from = new Date(), currentMs = null) {
   let best = null;
   for (const hour of planner.view.hours) {
     const t = new Date(hour.time);
     if (t.getTime() + 3600 * 1000 <= from.getTime()) continue;
-    const plan = planRoute(planner, t < from ? from : t, pace);
+    const plan = planRoute(planner, t < from ? from : t, pace, currentMs);
     if (plan.beyondForecast) continue;
     const score = [RANK[plan.worstLight], Math.round(plan.maxWaveM * 100), plan.start.getTime()];
     if (!best || compare(score, best.score) < 0) best = { plan, score };
