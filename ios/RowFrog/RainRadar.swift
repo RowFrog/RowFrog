@@ -333,6 +333,7 @@ struct RadarMapScreen: View {
     /// The radar picture the nowcast starts from; now (to 5 minutes) when not known yet.
     let reference: Date?
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var index: Int
     @State private var playing = false
     @State private var loader: RadarFrames
@@ -370,8 +371,11 @@ struct RadarMapScreen: View {
             }
             .sheet(isPresented: $showingLegend) { RadarLegendSheet() }
             .task { await loader.load() }
-            // Starts playing on its own once every picture is there, except in Low Power Mode.
-            .onChange(of: loader.complete) { _, complete in if complete, !PowerState.shared.lowPower { playing = true } }
+            // Starts playing on its own once every picture is there, except in Low
+            // Power Mode and with Reduce Motion on: then the play button starts it.
+            .onChange(of: loader.complete) { _, complete in
+                if complete, !PowerState.shared.lowPower, !reduceMotion { playing = true }
+            }
             .task(id: playing) {
                 guard playing else { return }
                 if index == frames.count - 1 { index = 0 }

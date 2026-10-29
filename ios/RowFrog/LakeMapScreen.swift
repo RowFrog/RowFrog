@@ -187,8 +187,8 @@ struct LakeMapScreen: View {
             Button { showingLegend = true } label: {
                 Label(tr("Legend"), systemImage: "list.bullet.rectangle")
                     .font(.caption.weight(.semibold))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 6)
+                    .padding(.horizontal, 12)
+                    .frame(height: 44)
                     .floatingControl(Capsule())
             }
             .buttonStyle(.plain)
@@ -283,13 +283,15 @@ struct LakeMapScreen: View {
         VStack(spacing: 10) {
             HStack {
                 Button { dismiss() } label: {
-                    Image(systemName: "xmark").font(.body.weight(.semibold)).frame(width: 36, height: 36)
+                    Image(systemName: "xmark").font(.body.weight(.semibold)).frame(width: 44, height: 44)
                 }
                 .floatingControl(Circle())
                 .accessibilityLabel(tr("Close"))
                 Spacer()
                 Text(view.name)
                     .font(.headline)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                     .padding(.horizontal, 14)
                     .padding(.vertical, 8)
                     .floatingControl(Capsule())
@@ -297,7 +299,7 @@ struct LakeMapScreen: View {
                 Button { imagery.toggle() } label: {
                     Image(systemName: imagery ? "map" : "globe.europe.africa")
                         .font(.body.weight(.semibold))
-                        .frame(width: 36, height: 36)
+                        .frame(width: 44, height: 44)
                 }
                 .floatingControl(Circle())
                 .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
@@ -314,7 +316,7 @@ struct LakeMapScreen: View {
                 }
                 if !routeMode {
                     Button { showingInfo = true } label: {
-                        Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 36, height: 36)
+                        Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 44, height: 44)
                     }
                     .floatingControl(Circle())
                     .accessibilityLabel(view.water.aboutTitle)
@@ -341,7 +343,7 @@ struct LakeMapScreen: View {
     @ViewBuilder private var routeButton: some View {
         let icon = Image(systemName: "point.topleft.down.to.point.bottomright.curvepath")
             .font(.body.weight(.semibold))
-            .frame(width: 36, height: 36)
+            .frame(width: 44, height: 44)
             .foregroundStyle(routeMode ? Color.white : Color.accentColor)
         let saved = routes.routes(on: view.lakeId)
         if !routeMode && !saved.isEmpty {
@@ -394,10 +396,14 @@ struct LakeMapScreen: View {
                 }
             }
         } label: {
-            Image(systemName: savedRoute == nil ? "bookmark" : "bookmark.fill")
+            Image(systemName: savedRoute == nil ? "bookmark" : "bookmark.fill").tapArea(Self.barTap)
         }
         .accessibilityLabel(savedRoute?.name ?? tr("Routes"))
     }
+
+    /// Where a tap on the editing bar's buttons lands: the bar's full 44 pt,
+    /// and half the gap to the next button.
+    private static let barTap = EdgeInsets(top: 12, leading: 7, bottom: 12, trailing: 7)
 
     /// Changing the route, on the map where the points are: undo, close the
     /// loop, clear, and delete the turning point that is tapped.
@@ -407,30 +413,30 @@ struct LakeMapScreen: View {
             if let i = selectedPoint, i > 0, i < waypoints.count {
                 Text(tr("Turning point %d", i)).font(.subheadline.weight(.semibold))
                 Spacer(minLength: 0)
-                Button(tr("Delete point"), systemImage: "trash", role: .destructive) {
+                Button(role: .destructive) {
                     waypoints = RouteEdit.remove(at: i, from: waypoints)
                     selectedPoint = nil
                     pointTip.invalidate(reason: .actionPerformed)
                     savedRoute = nil
-                }
-                Button(tr("Done")) { selectedPoint = nil }
+                } label: { Label(tr("Delete point"), systemImage: "trash").tapArea(Self.barTap) }
+                Button { selectedPoint = nil } label: { Text(tr("Done")).tapArea(Self.barTap) }
                     .fontWeight(.semibold)
             } else {
-                Button(tr("Undo"), systemImage: "arrow.uturn.backward") {
+                Button {
                     if waypoints.count > 1 { waypoints.removeLast() }
-                }
+                } label: { Label(tr("Undo"), systemImage: "arrow.uturn.backward").tapArea(Self.barTap) }
                 .disabled(waypoints.count < 2)
-                Button(tr("Close loop"), systemImage: "arrow.triangle.capsulepath") {
+                Button {
                     waypoints = RouteEdit.close(waypoints)
                     outAndBack = false
-                }
+                } label: { Label(tr("Close loop"), systemImage: "arrow.triangle.capsulepath").tapArea(Self.barTap) }
                 .disabled(waypoints.count < 3 || loop)
                 Spacer(minLength: 0)
-                Button(tr("Clear", key: "Clear route"), systemImage: "trash") {
+                Button {
                     waypoints = Array(waypoints.prefix(1))
                     savedRoute = nil
                     rowed = nil
-                }
+                } label: { Label(tr("Clear", key: "Clear route"), systemImage: "trash").tapArea(Self.barTap) }
                 // The bin alone, so Undo and Close loop keep their words in German too.
                 .labelStyle(.iconOnly)
                 .disabled(waypoints.count < 2)
@@ -443,7 +449,7 @@ struct LakeMapScreen: View {
         .lineLimit(1)
         .minimumScaleFactor(0.75)
         .padding(.horizontal, 14)
-        .padding(.vertical, 9)
+        .frame(height: 44)
         .floatingControl(Capsule())
         if let i = selectedPoint, i > 0, i < waypoints.count {
             if tourSeen && showPointTip {
@@ -545,7 +551,10 @@ struct LakeMapScreen: View {
     private var planningControls: some View {
         HStack(spacing: 10) {
             HStack(spacing: 2) {
-                Button { hourIndex = max(hourIndex - 1, 0) } label: { Image(systemName: "chevron.left").frame(width: 28, height: 28) }
+                Button { hourIndex = max(hourIndex - 1, 0) } label: {
+                    Image(systemName: "chevron.left").frame(width: 28, height: 28)
+                        .tapArea(EdgeInsets(top: 8, leading: 10, bottom: 8, trailing: 2))
+                }
                     .disabled(hourIndex <= 0)
                     .accessibilityLabel(tr("An hour earlier"))
                 Menu {
@@ -563,7 +572,10 @@ struct LakeMapScreen: View {
                 }
                 .accessibilityLabel(tr("Start time"))
                 .accessibilityValue(hour.map { Format.dayTime($0.time) } ?? "")
-                Button { hourIndex = min(hourIndex + 1, view.hours.count - 1) } label: { Image(systemName: "chevron.right").frame(width: 28, height: 28) }
+                Button { hourIndex = min(hourIndex + 1, view.hours.count - 1) } label: {
+                    Image(systemName: "chevron.right").frame(width: 28, height: 28)
+                        .tapArea(EdgeInsets(top: 8, leading: 2, bottom: 8, trailing: 10))
+                }
                     .disabled(hourIndex >= view.hours.count - 1)
                     .accessibilityLabel(tr("An hour later"))
             }

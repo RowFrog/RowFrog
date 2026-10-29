@@ -142,7 +142,13 @@ struct LocationPageView: View {
                     .padding(.horizontal)
                     .padding(.bottom, 24)
                     // Screenshot hook: `-RWScrollTo bottom` scrolls to the page's end.
-                    .overlay(alignment: .bottom) { Color.clear.frame(height: 1).id("bottom") }
+                    .overlay(alignment: .bottom) {
+                        Color.clear.frame(height: 1).id("bottom")
+                            // Cards under the floating buttons: the bottom blurs, as the top does.
+                            .onGeometryChange(for: Bool.self) { [bottom = pageMargins.bottom, end = geometry.frame(in: .global).maxY] proxy in
+                                bottom > 0 && proxy.frame(in: .global).maxY - 24 > end - bottom + 1
+                            } action: { PageScroll.shared.update(club.id, underBar: $0) }
+                    }
                     .frame(maxWidth: Self.maxContentWidth)
                     .frame(maxWidth: .infinity)
                     .onPreferenceChange(HourlyFrameKey.self) { frame in
@@ -570,6 +576,7 @@ struct LegendButton: View {
     var body: some View {
         Button { showing = true } label: {
             Image(systemName: "info.circle").font(.subheadline)
+                .tapArea(12)
         }
         .buttonStyle(.plain)
         .foregroundStyle(.tint)
@@ -621,7 +628,8 @@ private struct NowCard: View {
                             }
                             .font(.caption)
                             .foregroundStyle(.secondary)
-                            .contentShape(Rectangle())
+                            // 44 pt to tap; little upwards, where the title's info button is.
+                            .tapArea(EdgeInsets(top: 6, leading: 6, bottom: 14, trailing: 12))
                         }
                         .accessibilityLabel(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
                         .accessibilityHint(tr("Picks another boat for the rowing light."))
