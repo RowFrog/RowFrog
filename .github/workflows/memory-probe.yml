@@ -1,0 +1,70 @@
+name: Memory probe (temporary, never merged)
+
+on:
+  push:
+    branches: [claude/project-thread-xu6j39-memprobe]
+
+jobs:
+  probe:
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Start the backend
+        run: |
+          (cd backend && nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
+          for club in der-hamburger-und-germania-ruder-club mrc-1880; do
+            curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/clubs/$club/forecast" || true
+          done
+      - name: Build
+        working-directory: ios
+        run: |
+          brew install xcodegen
+          xcodegen
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          found = [d for r, ds in json.load(sys.stdin)["devices"].items() if "iOS" in r for d in ds if d["name"].startswith("iPhone")]
+          best = [d for d in found if d["name"].endswith(" Pro")]
+          print((best or found)[-1]["udid"])')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcodebuild build -project RowFrog.xcodeproj -scheme RowFrog -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO | tail -5
+      - name: Watch memory on a club page
+        run: |
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowFrog.app
+          mkdir -p probe
+          for club in der-hamburger-und-germania-ruder-club mrc-1880; do
+            perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
+            sleep 2
+            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog -RWSafetyAccepted YES -RWWhatsNewSeen 1000 \
+              -RWDemoClubs YES -RWTutorialSeen YES -RWNoTips YES -RWOpenClub $club
+            sleep 3
+            PID=$(pgrep -f 'RowFrog.app/RowFrog' | head -1)
+            echo "=== $club (pid $PID) ==="
+            peak=0
+            for i in $(seq 1 30); do
+              sleep 3
+              mb=$(footprint -p "$PID" 2>/dev/null | awk '/phys_footprint:/ {print $2, $3; exit}')
+              echo "t=$((i*3))s footprint $mb"
+              if [ $i = 6 ] || [ $i = 15 ] || [ $i = 30 ]; then
+                perl -e 'alarm 30; exec @ARGV' xcrun simctl io "$UDID" screenshot "probe/$club-$i.png" || true
+                echo "--- footprint by category at t=$((i*3))s"
+                footprint -p "$PID" 2>/dev/null | sed -n '1,45p'
+              fi
+            done
+            echo "--- vmmap summary"
+            vmmap --summary "$PID" 2>/dev/null | sed -n '/REGION TYPE/,/TOTAL/p' | sort -k3 -h -r | head -30
+            echo "--- heap: biggest classes"
+            heap -s "$PID" 2>/dev/null | sed -n '/COUNT/,$p' | head -40
+          done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: memory-probe
+          path: probe
