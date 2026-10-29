@@ -34,7 +34,9 @@ import { showBackground, renderBackgrounds, backgroundSummary, forgetOwnPictures
 import { renderTour, tourSeen, tip, withTip, wireTips, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
-import { radarAt, followRadar, rainLines, skyNow, radarGraphic, radarMark, radarCard, radarCardBody, wireRadarCard } from "./radar.js";
+import {
+  radarAt, radarFailed, followRadar, reloadRadar, rainLines, skyNow, radarAhead, radarGraphic, radarMark, radarTitleMark, radarCard, radarCardBody, wireRadarCard,
+} from "./radar.js";
 
 const SAFETY_VERSION = 1;
 const root = document.getElementById("root");
@@ -416,7 +418,7 @@ async function renderClub(id) {
   // The cards in the order chosen under "Arrange this page".
   const cards = {
     // One tip at a time; the water estimate's only where no station measures the water.
-    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint)),
+    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint), radarFailed(club?.launchPoint)),
       tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate"),
     // Off by default: the rain tile shows the radar; "Arrange this page" switches the card on.
     radar: () => (club?.launchPoint ? radarCard(club.launchPoint) : ""),
@@ -468,7 +470,7 @@ function showRadar(club, forecast, hour) {
     fresh.innerHTML = html;
     el.innerHTML = fresh.firstElementChild.innerHTML;
   };
-  replace(root.querySelector('.card:not(.now) [data-tile="precipitation"]'), conditionTile("precipitation", forecast, hour, radar));
+  replace(root.querySelector('.card:not(.now) [data-tile="precipitation"]'), conditionTile("precipitation", forecast, hour, radar, radarFailed(club?.launchPoint)));
   const cell = root.querySelector(".card.now .now-rain");
   if (cell) cell.innerHTML = rainCell(conditionData(forecast, hour, radar));
   const box = root.querySelector("#radar");
@@ -641,7 +643,10 @@ async function refreshClub(id, lakeId) {
   const line = root.querySelector("#updated-line");
   if (line) line.textContent = t("Updating…");
   if (lakeId) forgetView(lakeId);
+  // The radar too, unless it was read less than a minute ago (RadarStore.reload); the page's radar follows the same read.
+  const radar = reloadRadar(store.clubs.find((c) => c.id === id)?.launchPoint);
   await renderClub(id);
+  await radar;
   reloadOthers(id, false);
 }
 
@@ -711,7 +716,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
     const lakeMap = root.querySelector("#lake-view .lake-card")
       ? `<a class="pill wide" href="#/lake/${encodeURIComponent(forecast.lakeId)}/${encodeURIComponent(id)}?at=${encodeURIComponent(at.time)}">${icon("map")} ${h(t("Lake map at %@", dayTime(at.time)))}</a>`
       : "";
-    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar }) + conditionsCard(forecast, at, radar) + lakeMap, (sheet) => {
+    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar }) + conditionsCard(forecast, at, radar, radarFailed(club?.launchPoint)) + lakeMap, (sheet) => {
       // A value from a later hour opens its page at that hour.
       sheet.querySelectorAll("[data-tile]").forEach((t2) => t2.addEventListener("click", () => {
         location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
@@ -979,21 +984,25 @@ function shoreLights(open) {
 }
 
 /** The current conditions: the sky, then two tiles a row in the app's order (ConditionsCard). */
-function conditionsCard(forecast, hour, radar = null) {
+function conditionsCard(forecast, hour, radar = null, radarMissing = false) {
   const kind = skyNow(conditionData(forecast, hour, radar));
   const head = `<div class="cc-head">${skySymbol(hour, "large", kind)}<div><strong>${h(t(SKY_TITLES[kind]))}</strong>
     <small class="sub">${h(t("%@ · feels like %@", degrees(hour.temperatureC), degrees(hour.apparentTemperatureC)))}</small></div></div>`;
-  const tiles = TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar)).join("");
+  const tiles = TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar, radarMissing)).join("");
   return card(t("Current conditions"), "gauge", `${head}<div class="tiles">${tiles}</div>`, { legend: "conditions" });
 }
 
-function conditionTile(condition, forecast, hour, radar = null) {
+function conditionTile(condition, forecast, hour, radar = null, radarMissing = false) {
   const i = forecast.hours.indexOf(hour);
   const next24 = forecast.hours.slice(Math.max(0, i), Math.max(0, i) + 24);
   const titles = conditionTexts();
   const graphic = conditionGraphic(condition, forecast, hour);
   const light = REASONS[condition] ? lightFor(hour, REASONS[condition]) : null;
-  const header = (title) => `<span class="tile-head">${conditionIcon(condition)}<span>${h(title)}</span>${light && light !== "green" ? dot(light, 8) : ""}${icon("chevron-right")}</span>`;
+  // Whether the rain tile's bars come from the radar; struck through when it could not be read.
+  // Only for now: a picked later hour is past the radar's two hours anyway (ConditionTile).
+  const rainData = condition === "precipitation" ? conditionData(forecast, hour, radar) : null;
+  const mark = !rainData ? "" : radarAhead(rainData) ? radarTitleMark(false) : radarMissing && rainData.isNow ? radarTitleMark(true) : "";
+  const header = (title) => `<span class="tile-head">${conditionIcon(condition)}<span>${h(title)}</span>${mark}${light && light !== "green" ? dot(light, 8) : ""}${icon("chevron-right")}</span>`;
   // `mark`: rain read from the radar starts its line with the radar's symbol.
   const tile = (value, detail, graphic = "", off = false, mark = "") => `<button class="tile ${off ? "off" : ""}" data-tile="${condition}">
     ${header(titles[condition][1])}
@@ -1034,9 +1043,8 @@ function conditionTile(condition, forecast, hour, radar = null) {
     }
     case "precipitation": {
       // DWD's radar for the next two hours, then the forecast.
-      const d = conditionData(forecast, hour, radar);
-      const lines = rainLines(d);
-      return tile(lines.value, lines.detail, radarGraphic(d) ?? graphic, false, lines.fromRadar ? radarMark() : "");
+      const lines = rainLines(rainData);
+      return tile(lines.value, lines.detail, radarGraphic(rainData) ?? graphic, false, lines.fromRadar ? radarMark() : "");
     }
     case "thunderstorm": {
       const level = light === "red" ? 3 : light === "amber" ? 2 : 1;
