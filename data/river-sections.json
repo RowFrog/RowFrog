@@ -2659,7 +2659,7 @@
    "clubs": [
     "oesterr-sportunion-wallsee-sektion-rudern"
    ],
-   "lengthKm": 23.3,
+   "lengthKm": 22.5,
    "up": {
     "km": 13.55,
     "end": "weir/lock",
@@ -2670,12 +2670,12 @@
     ]
    },
    "down": {
-    "km": 8.78,
+    "km": 8.0,
     "end": "cap",
     "what": "",
     "at": [
-     48.18866,
-     14.81394
+     48.1876,
+     14.806
     ]
    },
    "pictureBox": [
@@ -8709,7 +8709,7 @@
     "ooe-leistungszentrum-fuer-wassersport",
     "regattaverein-linz-ottensheim-rvlo"
    ],
-   "lengthKm": 28.0,
+   "lengthKm": 16.4,
    "up": {
     "km": 1.28,
     "end": "weir/lock",
@@ -8720,17 +8720,17 @@
     ]
    },
    "down": {
-    "km": 25.22,
-    "end": "weir/lock",
-    "what": "lock_gate",
+    "km": 13.45,
+    "end": "harbour",
+    "what": "harbour Winterhafen",
     "at": [
-     48.25285,
-     14.42589
+     48.31983,
+     14.3187
     ]
    },
    "pictureBox": [
     14.14986,
-    48.28317,
+    48.30395,
     14.23167,
     48.34063
    ]
@@ -9044,14 +9044,14 @@
    "clubs": [
     "greifswalder-ruderclub-hilda-1892"
    ],
-   "lengthKm": 17.7,
+   "lengthKm": 17.4,
    "up": {
-    "km": 12.28,
+    "km": 12.0,
     "end": "cap",
     "what": "",
     "at": [
-     54.12076,
-     13.23043
+     54.12077,
+     13.23437
     ]
    },
    "down": {
@@ -9497,7 +9497,7 @@
    "clubs": [
     "rudergesellschaft-niederkassel-von-1978"
    ],
-   "lengthKm": 35.2,
+   "lengthKm": 34.9,
    "up": {
     "km": 14.94,
     "end": "weir/lock",
@@ -9508,16 +9508,16 @@
     ]
    },
    "down": {
-    "km": 8.26,
+    "km": 8.0,
     "end": "cap",
     "what": "",
     "at": [
-     50.82304,
-     7.0159
+     50.82178,
+     7.01991
     ]
    },
    "pictureBox": [
-    7.01405,
+    7.01715,
     50.72706,
     7.14664,
     50.8175
