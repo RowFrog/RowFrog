@@ -936,26 +936,31 @@ struct UnitRow<Unit: Hashable & Identifiable & CaseIterable>: View where Unit.Al
     @Binding var selection: Unit
 
     var body: some View {
-        LabeledContent {
-            Menu {
-                Picker(title, selection: $selection) {
-                    ForEach(Unit.allCases) { unit in
-                        Text("\(unit.symbol) · \(unit.title)").tag(unit)
-                    }
+        // The whole row opens the menu, as a picker row in iOS Settings; only
+        // the unit at the end did before, so a tap on the row seemed to do nothing.
+        Menu {
+            Picker(title, selection: $selection) {
+                ForEach(Unit.allCases) { unit in
+                    Text("\(unit.symbol) · \(unit.title)").tag(unit)
                 }
-            } label: {
+            }
+        } label: {
+            HStack {
+                Label {
+                    Text(title).foregroundStyle(.primary)
+                } icon: {
+                    ConditionIcon(condition: condition).foregroundStyle(Color.accentColor)
+                }
+                Spacer()
                 HStack(spacing: 4) {
                     Text(selection.symbol).monospacedDigit()
                     Image(systemName: "chevron.up.chevron.down").font(.caption2)
                 }
+                .foregroundStyle(Color.accentColor)
             }
-        } label: {
-            Label {
-                Text(title)
-            } icon: {
-                ConditionIcon(condition: condition).foregroundStyle(Color.accentColor)
-            }
+            .contentShape(Rectangle())
         }
+        .accessibilityLabel(title)
         .accessibilityValue(selection.title)
     }
 }
