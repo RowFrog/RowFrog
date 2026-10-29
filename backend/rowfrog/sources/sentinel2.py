@@ -25,6 +25,7 @@ Data: "Contains modified Copernicus Sentinel data <year>".
 
 from __future__ import annotations
 
+import io
 import logging
 import math
 import os
@@ -218,12 +219,29 @@ def choose(passes: list[Pass]) -> tuple[Pass | None, Pass | None, Pass | None]:
     return latest, mostly_clear, clearest
 
 
-# 75 looks the same on a phone as 85 and is about 45 % smaller (owner OK 2026-10-25).
-# Pictures already published keep their quality until the lake's next pass.
-JPEG_QUALITY = 75
+# The Process API ignores a JPEG quality and always sends 90, so the picture
+# comes as a lossless PNG and is saved as JPEG here. The owner kept 90 after
+# comparing 100 down to 70 (2026-10-29, scripts/jpeg_quality_probe.py and
+# rowerweather/satellite/jpeg-quality/analysis.md); to recheck later.
+JPEG_QUALITY = 90
+
+
+def to_jpeg(png: bytes, quality: int = JPEG_QUALITY) -> bytes:
+    """A PNG from the Process API as a JPEG at our own quality."""
+    from PIL import Image
+
+    out = io.BytesIO()
+    with Image.open(io.BytesIO(png)) as picture:
+        picture.convert("RGB").save(out, "JPEG", quality=quality, optimize=True)
+    return out.getvalue()
 
 
 def jpeg(client: httpx.Client, bbox, width: int, height: int, day: date) -> bytes:
+    return to_jpeg(png(client, bbox, width, height, day))
+
+
+def png(client: httpx.Client, bbox, width: int, height: int, day: date) -> bytes:
+    """The true-colour picture of the box on that day, lossless."""
     request = {
         "input": {
             "bounds": {"bbox": list(bbox), "properties": {"crs": "http://www.opengis.net/def/crs/EPSG/0/4326"}},
@@ -240,11 +258,11 @@ def jpeg(client: httpx.Client, bbox, width: int, height: int, day: date) -> byte
         "output": {
             "width": width,
             "height": height,
-            "responses": [{"identifier": "default", "format": {"type": "image/jpeg", "quality": JPEG_QUALITY}}],
+            "responses": [{"identifier": "default", "format": {"type": "image/png"}}],
         },
         "evalscript": PICTURE_SCRIPT,
     }
-    resp = _post(client, f"{SH}/api/v1/process", json=request, headers={"Accept": "image/jpeg"}, timeout=120)
+    resp = _post(client, f"{SH}/api/v1/process", json=request, headers={"Accept": "image/png"}, timeout=120)
     return resp.content
 
 
