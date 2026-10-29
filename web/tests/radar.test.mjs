@@ -51,6 +51,22 @@ test("the tile's lines: the radar for two hours, the forecast after them", () =>
   assert.equal(rainLines(conditionData(forecast, forecast.hours[0])).value, "Dry");
 });
 
+test("drizzle under 0.1 mm is named, never called dry beside its symbol", () => {
+  const forecast = { hours: [hour(0, 0.04, 51), hour(1), hour(2), hour(3), hour(4)] };
+  const lines = rainLines(conditionData(forecast, forecast.hours[0]));
+  assert.equal(lines.value, "Drizzle");
+  assert.match(lines.detail, /^Under 0\.1 mm$/);
+  // The radar sees no drizzle, so its dry does not hide the forecast's.
+  assert.equal(rainLines(conditionData(forecast, forecast.hours[0], radar([0, 0, 0, 0, 0, 0, 0, 0, 0]))).value, "Drizzle");
+  // The headline keeps the drizzle symbol beside it; the radar's dry still hides the model's rain.
+  assert.equal(skyNow(conditionData(forecast, forecast.hours[0], radar([0, 0, 0, 0, 0, 0, 0, 0, 0]))), "drizzle");
+  const rainy = { hours: [hour(0, 0.8, 61), hour(1), hour(2), hour(3), hour(4)] };
+  assert.notEqual(skyNow(conditionData(rainy, rainy.hours[0], radar([0, 0, 0, 0, 0, 0, 0, 0, 0]))), "rain");
+  // Drizzle later on counts as something coming, not "Dry next 24 h".
+  const later = { hours: [hour(0), hour(1), hour(2), hour(3, 0.02, 53), hour(4)] };
+  assert.match(rainLines(conditionData(later, later.hours[0])).detail, /^Drizzle from /);
+});
+
 test("the radar card's line names the heaviest rain", () => {
   assert.match(radarSummary(radar([0, 0, 12, 1, 0, 0, 0, 0, 0])), /^Heavy rain from /);
   assert.equal(radarSummary(radar([0, 0, 0, 0, 0, 0, 0, 0, 0])), "No rain in the next 2 hours");
