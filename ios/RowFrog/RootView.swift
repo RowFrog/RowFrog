@@ -404,7 +404,8 @@ struct InlineClubTitle: View {
     }
 }
 
-/// The settings cog with the boat, the page dots with a house for the home base,
+/// The settings cog with the boat (its class, as "4x"), the page dots with a house for the home base
+/// (left out while the list shows beside the page),
 /// and the list button, as the Weather app has its map and list at the two ends.
 /// Each group floats on its own piece of glass, all as tall as the bar, with
 /// the symbols in one colour over the picture (Apple's guide for toolbars).
@@ -435,7 +436,7 @@ private struct PageBar: View {
     static let height: CGFloat = buttonHeight + 12
     /// The cog and the boat with their piece's inner margins; the list's side
     /// is as wide, so the dots stay in the middle.
-    private static let sideWidth: CGFloat = 44 + 56 + 8
+    private static let sideWidth: CGFloat = 44 + 48 + 8
 
     var body: some View {
         HStack(spacing: 0) {
@@ -454,41 +455,45 @@ private struct PageBar: View {
             .floatingControl(Capsule())
             .frame(width: Self.sideWidth, alignment: .leading)
             Spacer(minLength: 8)
-            HStack(spacing: 0) {
-                ForEach(clubs) { club in
-                    let current = club.id == selection
-                    // Fixed colours, as Weather's dots: Liquid Glass draws the label
-                    // colours vibrant, which evened out a fainter shade of them, so the
-                    // current page did not light up.
-                    Group {
-                        if club.id == homeID {
-                            Image(systemName: current ? "house.fill" : "house").font(.caption2)
-                        } else {
-                            Circle().frame(width: current ? 8 : 6, height: current ? 8 : 6)
+            // With the list beside the page (iPad), the list already switches
+            // clubs and marks the one shown, so the dots would repeat it.
+            if showList != nil {
+                HStack(spacing: 0) {
+                    ForEach(clubs) { club in
+                        let current = club.id == selection
+                        // Fixed colours, as Weather's dots: Liquid Glass draws the label
+                        // colours vibrant, which evened out a fainter shade of them, so the
+                        // current page did not light up.
+                        Group {
+                            if club.id == homeID {
+                                Image(systemName: current ? "house.fill" : "house").font(.caption2)
+                            } else {
+                                Circle().frame(width: current ? 8 : 6, height: current ? 8 : 6)
+                            }
                         }
+                        .foregroundStyle(dotColor.opacity(current ? 1 : 0.4))
+                        .accessibilityAddTraits(current ? .isSelected : [])
+                        // Wider than the dot and as tall as the bar, so it is easier to hit.
+                        .frame(width: Self.dotWidth, height: Self.buttonHeight)
+                        .contentShape(Rectangle())
+                        .onTapGesture { withAnimation { selection = club.id } }
+                        .accessibilityLabel(club.displayName)
                     }
-                    .foregroundStyle(dotColor.opacity(current ? 1 : 0.4))
-                    .accessibilityAddTraits(current ? .isSelected : [])
-                    // Wider than the dot and as tall as the bar, so it is easier to hit.
-                    .frame(width: Self.dotWidth, height: Self.buttonHeight)
-                    .contentShape(Rectangle())
-                    .onTapGesture { withAnimation { selection = club.id } }
-                    .accessibilityLabel(club.displayName)
                 }
+                .padding(.horizontal, 8)
+                // A finger sliding along the dots moves through the clubs, as in Weather.
+                .contentShape(Capsule())
+                .gesture(DragGesture(minimumDistance: 6).onChanged { drag in
+                    guard !clubs.isEmpty else { return }
+                    let index = min(max(Int((drag.location.x - 8) / Self.dotWidth), 0), clubs.count - 1)
+                    if clubs[index].id != selection {
+                        selection = clubs[index].id
+                        dragSteps += 1
+                    }
+                })
+                .sensoryFeedback(.selection, trigger: dragSteps)
+                .floatingControl(Capsule())
             }
-            .padding(.horizontal, 8)
-            // A finger sliding along the dots moves through the clubs, as in Weather.
-            .contentShape(Capsule())
-            .gesture(DragGesture(minimumDistance: 6).onChanged { drag in
-                guard !clubs.isEmpty else { return }
-                let index = min(max(Int((drag.location.x - 8) / Self.dotWidth), 0), clubs.count - 1)
-                if clubs[index].id != selection {
-                    selection = clubs[index].id
-                    dragSteps += 1
-                }
-            })
-            .sensoryFeedback(.selection, trigger: dragSteps)
-            .floatingControl(Capsule())
             Spacer(minLength: 8)
             Group {
                 if let showList {
@@ -517,15 +522,12 @@ private struct PageBar: View {
     private var boatButton: some View {
         let boat = AppSettings.shared.selectedBoat
         return BoatMenu(hour: now, waterC: waterC) {
-            VStack(spacing: 0) {
-                Image(systemName: "figure.rower").font(.body)
-                Text(boat.shortName)
-                    .font(.caption2.weight(.medium))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-            }
-            .frame(width: 56, height: Self.buttonHeight)
+            BoatClassTag(boat: boat)
+                .frame(width: 48, height: Self.buttonHeight)
         }
+        // A menu draws its label in the tint, which the bar sets to the label
+        // colour; an own boat keeps the accent colour.
+        .tint(boat.isGroup ? Color.primary : Color.accentColor)
         .accessibilityLabel(tr("Boat: %@", boat.title))
         .accessibilityHint(tr("Picks another boat for the rowing light."))
     }

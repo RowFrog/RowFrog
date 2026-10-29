@@ -55,15 +55,34 @@ struct BoatMenu<MenuLabel: View>: View {
 }
 
 extension Boat {
-    /// The boat's name for the page bar: "Small", "Big", its own name, or its
-    /// class, as "4x", when it has none. The bar cuts long names short.
-    var shortName: String {
+    /// The boat's class for the page bar, as rowers write it: "2x", "4+".
+    /// The two groups have none of their own, so they show their seats.
+    var classTag: String {
         switch id {
-        case Self.small.id: tr("Small")
-        case Self.big.id: tr("Big")
-        default:
-            name.trimmingCharacters(in: .whitespaces).isEmpty ? boatClass.rawValue : name.trimmingCharacters(in: .whitespaces)
+        case Self.small.id: "1–2"
+        case Self.big.id: "4–8"
+        default: boatClass.rawValue
         }
+    }
+}
+
+/// The boat button's symbol: the class in a small frame, dashed for the two
+/// groups, in the accent colour for one of the user's own boats.
+struct BoatClassTag: View {
+    let boat: Boat
+
+    var body: some View {
+        Text(boat.classTag)
+            .font(.system(size: boat.classTag.count > 2 ? 11 : 13, weight: .bold).monospacedDigit())
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 5)
+            .frame(minWidth: 30, minHeight: 22)
+            .overlay {
+                RoundedRectangle(cornerRadius: 6)
+                    .strokeBorder(style: StrokeStyle(lineWidth: 1.6, dash: boat.isGroup ? [3, 2.2] : []))
+            }
+            .foregroundStyle(boat.isGroup ? AnyShapeStyle(.primary) : AnyShapeStyle(Color.accentColor))
     }
 }
 
