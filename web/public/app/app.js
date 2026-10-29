@@ -176,7 +176,8 @@ function bottomBar(currentId, raw) {
     </span></span>
     ${sideList.matches ? `<span class="gap"></span>` // The list beside the page switches clubs already.
     : `<span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>`}
-    <span class="bar-side end"><a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a></span>
+    <span class="bar-side end">${sideList.matches ? "" // The list beside the page has its search and Edit too.
+    : `<a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a>`}</span>
   </nav>`;
 }
 
@@ -222,42 +223,53 @@ async function renderList() {
     ${testing()}
     <main class="page">
       <h1 class="large">${h(t("Locations"))}</h1>
-      <label class="search">${icon("search")}
-        <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
-      <div id="chips" hidden></div>
-      <ul id="results" class="results" hidden></ul>
-      <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Not in the list? Add a place"))}</a>
-        <small class="sub">${h(t("Put your club, boathouse or spot on the map yourself."))}</small></p>
-      <div id="saved">
-        ${clubs.length ? "" : `<p class="empty">${h(t("Pick your home club first, then any others you row at."))}</p>`}
-        <ul class="rows">${clubs.map((c, i) => `
-          <li class="${editing ? "editing" : ""}">
-            ${editing ? `<button class="round red" data-remove="${h(c.id)}" aria-label="${h(t("Remove"))}">${icon("trash-2")}</button>` : ""}
-            <a class="row" href="#/club/${encodeURIComponent(c.id)}" data-id="${h(c.id)}">${rowSkeleton(c, i === 0)}</a>
-            ${editing && i > 0 ? `<button class="round" data-home="${h(c.id)}" aria-label="${h(t("Home base"))}">${icon("house")}</button>` : ""}
-          </li>`).join("")}</ul>
-        <p class="footnote" id="updated"></p>
-        <p class="list-links"><a class="link" id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
-          <a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a></p>
-      </div>
+      ${listBody()}
       ${footerLinks()}
     </main>`;
+  await wireList(renderList);
+}
+
+/** The search, the saved clubs and the links under them: the list page's, and the list's beside a club page. */
+function listBody(currentId = null) {
+  const clubs = store.clubs;
+  return `<label class="search">${icon("search")}
+      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+    <div id="chips" hidden></div>
+    <ul id="results" class="results" hidden></ul>
+    <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Not in the list? Add a place"))}</a>
+      <small class="sub">${h(t("Put your club, boathouse or spot on the map yourself."))}</small></p>
+    <div id="saved">
+      ${clubs.length ? "" : `<p class="empty">${h(t("Pick your home club first, then any others you row at."))}</p>`}
+      <ul class="rows">${clubs.map((c, i) => `
+        <li class="${editing ? "editing" : ""}">
+          ${editing ? `<button class="round red" data-remove="${h(c.id)}" aria-label="${h(t("Remove"))}">${icon("trash-2")}</button>` : ""}
+          <a class="row ${c.id === currentId ? "current" : ""}" href="#/club/${encodeURIComponent(c.id)}" data-id="${h(c.id)}">${rowSkeleton(c, i === 0)}</a>
+          ${editing && i > 0 ? `<button class="round" data-home="${h(c.id)}" aria-label="${h(t("Home base"))}">${icon("house")}</button>` : ""}
+        </li>`).join("")}</ul>
+      <p class="footnote" id="updated"></p>
+      <p class="list-links"><a class="link" id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
+        <a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a></p>
+    </div>`;
+}
+
+/** Edit, remove, home base, search and the rows' weather; `again` draws the list anew after a change. */
+async function wireList(again) {
   root.querySelector("#edit")?.addEventListener("click", () => {
     editing = !editing;
-    renderList();
+    again();
   });
   root.querySelectorAll("[data-remove]").forEach((b) => b.addEventListener("click", () => {
     store.clubs = store.clubs.filter((c) => c.id !== b.dataset.remove);
-    renderList();
+    again();
   }));
   root.querySelectorAll("[data-home]").forEach((b) => b.addEventListener("click", () => {
     const list = store.clubs;
     store.clubs = [list.find((c) => c.id === b.dataset.home), ...list.filter((c) => c.id !== b.dataset.home)];
-    renderList();
+    again();
   }));
   wireSearch();
   const updated = [];
-  await Promise.all([...root.querySelectorAll(".row")].map(async (row) => {
+  await Promise.all([...root.querySelectorAll("#saved .row")].map(async (row) => {
     const at = await fillRow(row);
     if (at) updated.push(at);
   }));
@@ -408,13 +420,13 @@ async function renderClub(id) {
   const isHome = store.clubs[0]?.id === id;
   const side = sideList.matches;
   root.innerHTML = `${testing()}<div class="split">
-      ${side ? `<aside class="side">${sideRows(id)}</aside>` : ""}
+      ${side ? `<aside class="side">${sideListHtml(id)}</aside>` : ""}
       <main class="page club">
         ${clubHeader(club, name, isHome, null)}
         <section class="card loading"><p>${h(t("Loading the forecast…"))}</p></section>
       </main>
     </div>${bottomBar(id, null)}`;
-  if (side) root.querySelectorAll(".side .row").forEach(fillRow);
+  if (side) wireSideList(id);
   wireBottomBar(null);
   wireSwipe(id);
   let raw;
@@ -517,10 +529,25 @@ sideList.addEventListener("change", () => location.hash.startsWith("#/club/") &&
 /** From this width the page's cards go into two columns (LocationPageView.twoColumnWidth). */
 const TWO_COLUMNS = 600;
 
-/** The saved clubs as rows beside the page, the shown one marked. */
-function sideRows(currentId) {
-  return `<header class="side-head"><h2>${h(t("Locations"))}</h2><a class="link" href="#/list">${h(t("Edit"))}</a></header>
-    <ul class="rows">${store.clubs.map((c, i) => `<li><a class="row ${c.id === currentId ? "current" : ""}" href="#/club/${encodeURIComponent(c.id)}" data-id="${h(c.id)}">${rowSkeleton(c, i === 0)}</a></li>`).join("")}</ul>`;
+/**
+ * Beside the page, the whole list: search, Edit and the saved clubs, the shown
+ * one marked, so the page needs no list button (LocationListView beside the page).
+ */
+function sideListHtml(currentId) {
+  return `<header class="side-head"><h2>${h(t("Locations"))}</h2>${store.clubs.length ? `<button class="link" id="edit">${h(editing ? t("Done") : t("Edit"))}</button>` : ""}</header>
+    ${listBody(currentId)}`;
+}
+
+/** A change in the list draws the list anew, not the page beside it. */
+function wireSideList(currentId) {
+  const side = root.querySelector("aside.side");
+  if (!side) return;
+  wireList(() => {
+    side.innerHTML = sideListHtml(currentId);
+    wireSideList(currentId);
+    // The arrow keys follow the list's new order.
+    wireSwipe(currentId);
+  });
 }
 
 /**
@@ -653,6 +680,22 @@ function updateTopBar() {
     body.style.setProperty("--main-width", `${page.width}px`);
   }
   body.classList.toggle("title-gone", gone);
+  // Cards under the floating buttons: the bottom blurs too on phones and tablets (BottomEdgeFade).
+  body.classList.toggle("under-bar", Boolean(root.querySelector(".bottom")) && document.documentElement.scrollHeight - window.scrollY - window.innerHeight > 24);
+  stickHourlyHeader();
+}
+
+/** While the 48 hours' header stays at the top, the tile ends at it, rounded like the header (StickyHourlyCut). */
+function stickHourlyHeader() {
+  const head = root.querySelector(".hhead");
+  const card = head?.closest(".card");
+  if (!card) return;
+  const table = head.parentElement.getBoundingClientRect();
+  const at = head.getBoundingClientRect();
+  const top = parseFloat(getComputedStyle(head).top) || 0;
+  const stuck = table.top < top - 1 && at.bottom > table.top;
+  head.classList.toggle("stuck", stuck);
+  card.style.clipPath = stuck ? `inset(${at.top - card.getBoundingClientRect().top}px 0 0 0 round 16px)` : "";
 }
 window.addEventListener("scroll", updateTopBar, { passive: true });
 window.addEventListener("hashchange", () => requestAnimationFrame(updateTopBar));
