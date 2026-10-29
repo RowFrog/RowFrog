@@ -52,7 +52,5 @@
   "server error %@": "Serverfehler %@",
   "Forecast from %@": "Vorhersage von %@",
   "Forecast from %@ · loaded %@": "Vorhersage von %@ · geladen %@",
-  "Close loop": "Runde schließen",
-  "Close the loop: tap within 50 m of your club, or use Close loop.": "Schließ die Runde: Tippe weniger als 50 m vor deinem Verein oder nutze „Runde schließen“.",
-  "New routes go one way. Turn on Out and back to row the same way back.": "Neue Routen gehen in eine Richtung. Schalte Hin und zurück ein, um denselben Weg zurückzurudern."
+  "It starts at your club and goes one way; pick Out and back or Loop under the way back to row back to it. Tap or pull a stretch to add a point there. Tap a point to delete it, or drag it to move it. A point within 50 m of the start closes the loop.": "Sie beginnt an deinem Verein und führt in eine Richtung; wähle beim Rückweg „Hin + zurück“ oder „Runde“, um zurückzurudern. Tippe oder zieh an einer Strecke, um dort einen Punkt einzufügen. Tippe auf einen Punkt, um ihn zu löschen, oder zieh ihn, um ihn zu verschieben. Ein Punkt bis 50 m vom Start schließt die Runde."
 }

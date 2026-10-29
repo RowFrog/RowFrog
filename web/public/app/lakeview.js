@@ -1,7 +1,7 @@
 // The lake view: the tile on a club page (LakeViewCard) and the full lake map
 // with the hours, the layers, a tapped spot and route planning (LakeMapScreen).
 
-import { t } from "./i18n.js";
+import { t, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
   store, getJSON, h, time, dayTime, duration, wind, windRange, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
@@ -243,13 +243,12 @@ let page = null;
 /** The lake map page: map on top, the panel with the hours and the details below. */
 export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
   page?.map?.remove();
+  // Back and the lake's name at the top; the layers, the colour scale and the route tools sit by the map and in the panel (LakeMapScreen).
   root.innerHTML = `<div class="lake-screen"><header class="nav lake-nav"><a class="link" href="${h(back)}">${icon("chevron-left")} ${h(t("Back"))}</a>
-      <span class="spacer"></span>
-      <button class="tool" id="route-mode" aria-label="${h(t("Plan a route"))}">${icon("route")}</button>
-      <button class="tool" id="legend" aria-label="${h(t("Legend"))}">${icon("layers")}</button>
-      <button class="tool" id="about" aria-label="${h(t("About the lake view"))}">${icon("info")}</button></header>
+      <strong class="nav-title" id="lake-name"></strong><span class="spacer"></span></header>
     ${testing()}
-    <div class="lake-page"><div class="lake-map" id="lake-map"></div><section class="lake-panel" id="lake-panel"><p>${h(t("Loading the forecast…"))}</p></section></div></div>`;
+    <div class="lake-page"><div class="lake-map-box"><div class="lake-map" id="lake-map"></div><div class="lake-over" id="lake-over"></div></div>
+      <section class="lake-panel" id="lake-panel"><p>${h(t("Loading the forecast…"))}</p></section></div></div>`;
   let view;
   try {
     view = await viewForMap(lakeId);
@@ -259,7 +258,7 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
   }
   const water = WATER_TEXTS[waterKind(view)];
   setTitle(`${t(water.view)} · ${view.name}`);
-  root.querySelector("#about").setAttribute("aria-label", t(water.about));
+  root.querySelector("#lake-name").textContent = view.name;
   const club = view.clubs.find((c) => c.id === clubId) ?? view.clubs[0];
   page = {
     root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()), layer: "light", spot: null,
@@ -268,9 +267,6 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
     // On rivers: the current the club page shows (its gauge, mid-river), for the route planner (LakeView.currentMs).
     currentMs: view.section ? forecasts.get(clubId)?.forecast?.river?.now?.speedMs ?? null : null,
   };
-  root.querySelector("#route-mode").addEventListener("click", toggleRouteMode);
-  root.querySelector("#legend").addEventListener("click", () => openSheet(t("Legend"), legendSheet()));
-  root.querySelector("#about").addEventListener("click", () => openSheet(t(water.about), aboutSheet()));
   await buildMap();
   update();
 }
@@ -344,7 +340,7 @@ function update() {
   drawArrows();
   drawRoute();
   drawSpot();
-  page.root.querySelector("#route-mode").classList.toggle("on", page.routeMode);
+  page.root.querySelector("#lake-over").innerHTML = mapControls();
   page.root.querySelector("#lake-panel").innerHTML = page.routeMode ? planningPanel(hour) : viewingPanel(hour);
   wirePanel();
 }
@@ -497,10 +493,36 @@ export function layerLegend(layer) {
     <span class="labels"><small style="left:0">${h(fmt(0))}</small><small style="left:${(amber / top) * 100}%">${h(fmt(amber))}</small><small style="left:${(red / top) * 100}%">${h(fmt(red))}</small></span></div>`;
 }
 
+const LAYERS = [["light", key("Rowing light")], ["waves", key("Waves")], ["wind", key("Wind")]];
+
+/** A layer button's picture: the three lights, the waves or the wind (LakeLayerIcon). */
+const layerIcon = (layer) => (layer === "light" ? `<span class="lights">${["red", "amber", "green"].map((l) => `<i style="background:var(--${l})"></i>`).join("")}</span>` : icon(layer));
+
+/** The layer's colours in a slim strip (tap for the legend) at the lower left; one button per layer at the lower right (LakeScaleChip, layerButtons). */
+function mapControls() {
+  const limits = mapLimits();
+  let scale;
+  if (page.layer === "light") scale = ["green", "amber", "red"].map((l) => dot(l, 9)).join("");
+  else {
+    const [top, fmt] = page.layer === "waves" ? [limits.value("waveRed"), waves] : [limits.value("windRed"), wind];
+    const stops = Array.from({ length: 6 }, (_, i) => rgb(ramp((top * i) / 5, limits.value(page.layer === "waves" ? "waveAmber" : "windAmber"), top))).join(", ");
+    scale = `<small>${h(fmt(0))}</small><span class="bar" style="background:linear-gradient(90deg, ${stops})"></span><small>${h(fmt(top))}</small>`;
+  }
+  return `<button class="glass lake-scale" id="scale" aria-label="${h(t("Legend"))}">${scale}</button>
+    <div class="lake-layers-box">${page.layerNote ? `<span class="glass layer-note">${h(t(LAYERS.find(([k]) => k === page.layerNote)[1]))}</span>` : ""}
+      <div class="glass lake-layers">${LAYERS.map(([k, label]) => `<button data-layer="${k}" class="${page.layer === k ? "on" : ""}" aria-label="${h(t(label))}" aria-pressed="${page.layer === k}">${layerIcon(k)}</button>`).join("")}</div></div>`;
+}
+
+/** The route button in the panel's first row: blue while planning (panelRouteButton). */
+const routeButton = () => `<button class="tool route-button ${page.routeMode ? "on" : ""}" id="route-mode" aria-label="${h(page.routeMode ? t("End route planning") : t("Plan a route"))}">${icon("route")}</button>`;
+
+/** At the end of the panel: the legend and what the map shows (moreRows). */
+const moreRows = () => `<div class="more-rows"><button id="legend">${icon("list")} <span>${h(t("Legend"))}</span>${icon("chevron-right")}</button>
+  <button id="about">${icon("info")} <span>${h(t(WATER_TEXTS[waterKind(page.view)].about))}</span>${icon("chevron-right")}</button></div>`;
+
 function viewingPanel(hour) {
   const { view } = page;
   const stale = viewStale(view);
-  const layers = [["light", t("Rowing light")], ["waves", t("Waves")], ["wind", t("Wind")]];
   let details;
   if (page.spot != null && page.spot.cell < hour.lights.length) {
     const i = page.spot.cell;
@@ -522,15 +544,15 @@ function viewingPanel(hour) {
       ${top != null ? `<p class="small sub">${icon("waves")} ${h(t("Waves up to %@", waves(top)))}</p>` : ""}
       <p class="small sub">${h(t("Tap the water to see the conditions there."))}</p>`;
   }
-  return `<div class="segmented" id="layers">${layers.map(([k, label]) => `<button data-layer="${k}" class="${page.layer === k ? "on" : ""}">${h(label)}</button>`).join("")}</div>
-    <p class="panel-head"><strong>${h(dayTime(hour.time))}</strong>${view.sample ? `<span class="small orange strong">${icon("triangle-alert")} ${h(t("Sample wind"))}</span>` : ""}</p>
+  return `<p class="panel-head"><strong>${h(dayTime(hour.time))}</strong>${view.sample ? `<span class="small orange strong">${icon("triangle-alert")} ${h(t("Sample wind"))}</span>` : ""}${routeButton()}</p>
     ${stale ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
     ${lakeWideBanner(hour.lakeWide, view)}
     ${kitBadge(view)}
     ${details}
     ${legendLine()}
     ${mapBoatNote()}
-    ${hourStrip()}`;
+    ${hourStrip()}
+    ${moreRows()}`;
 }
 
 function planningPanel(hour) {
@@ -552,9 +574,7 @@ function planningPanel(hour) {
     })() : null;
     const better = bestStart(found.planner, page.pace, new Date(), page.currentMs);
     const betterIndex = better && plansBetter(better, plan) ? view.hours.reduce((n, x, i) => (new Date(x.time) <= better.start ? i : n), 0) : null;
-    summary = `<p class="route-line">${dot(plan.worstLight, 10)} <strong>${h(lightTitle(plan.worstLight))}</strong>
-        <span class="sub">${h(t("%@ · %@ · back %@", distance(plan.distanceM), duration(plan.start, plan.end), time(plan.end)))}</span></p>
-      ${routeBar(plan)}
+    summary = `${routeBar(plan)}
       <p class="small sub">${h(t("Waves up to %@", waves(plan.maxWaveM)))}</p>
       ${roughText ? `<p class="small sub">${h(roughText)}</p>` : ""}
       ${plan.currentMs >= 0.05 ? `<p class="small sub">${conditionIcon("current")} ${h(t("Times count with the current of ≈ %@: faster downstream, slower upstream.", riverSpeed(plan.currentMs)))}</p>` : ""}
@@ -568,21 +588,31 @@ function planningPanel(hour) {
       ${stop ? `<p class="small sub">${h(t("The boat at %@ after %@: %@, waves %@", time(stop.time), distance(stop.distanceM), lightTitle(stop.light), waves(stop.waveM) + (stop.relation ? ` ${t(RELATION_WAVES[stop.relation])}` : "")))}</p>` : ""}
       ${betterIndex != null ? `<button class="link" id="better" data-hour="${betterIndex}">${icon("clock")} ${h(t("Better start: %@ · %@", dayTime(better.start), lightTitle(better.worstLight)))}</button>` : ""}`;
   } else {
-    summary = `<p class="small">${h(t("Tap the water to add the turning points of your route. It starts at your club and goes one way; turn on Out and back to row the same way back. Tap or pull a stretch to add a point there. Tap a point to delete it, or drag it to move it. A point within 50 m of the start closes the loop."))}</p>`;
+    summary = `<p class="small">${h(t("It starts at your club and goes one way; pick Out and back or Loop under the way back to row back to it. Tap or pull a stretch to add a point there. Tap a point to delete it, or drag it to move it. A point within 50 m of the start closes the loop."))}</p>`;
   }
-  const selected = page.selected != null ? `<p class="point-bar"><strong>${h(t("Turning point %d", page.selected))}</strong>
-      <button class="link red" id="delete-point">${icon("trash-2")} ${h(t("Delete point"))}</button><button class="link" id="point-done">${h(t("Done"))}</button></p>` : "";
-  return `${selected}
-    <div class="route-tools">
+  // The route's light and times, or what to do first, with the route button (planningPanel's first row).
+  const head = plan ? `<p class="route-line">${dot(plan.worstLight, 10)} <strong>${h(lightTitle(plan.worstLight))}</strong>
+      <span class="sub">${h(t("%@ · %@ · back %@", distance(plan.distanceM), duration(plan.start, plan.end), time(plan.end)))}</span>${routeButton()}</p>`
+    : `<p class="route-line"><strong>${h(t("Tap the water to add the turning points of your route."))}</strong>${routeButton()}</p>`;
+  // One choice instead of the loop button and the out-and-back switch, which switched each other off (returnPicker).
+  const back = isLoop ? "loop" : page.outAndBack ? "outAndBack" : "oneWay";
+  const picker = `<div class="segmented way-back" role="group" aria-label="${h(t("Way back"))}">${[
+    // Short, for the three parts of the switch: the app keys them apart from the longer texts (RouteReturn.title).
+    ["oneWay", lang() === "de" ? t("Way back one way") : "One way"], ["outAndBack", lang() === "de" ? t("Way back out and back") : "Out and back"], ["loop", t("Loop")]]
+    .map(([k, label]) => `<button data-way-back="${k}" class="${back === k ? "on" : ""}" ${k === "loop" && page.points.length < 3 && !isLoop ? "disabled" : ""}>${h(label)}</button>`).join("")}</div>`;
+  // A tapped turning point swaps the tools for deleting it (planningTools).
+  const tools = page.selected != null ? `<p class="point-bar"><strong>${h(t("Turning point %d").replace("%d", page.selected))}</strong>
+      <button class="pill red" id="delete-point">${icon("trash-2")} ${h(t("Delete point"))}</button><button class="pill strong" id="point-done">${h(t("Done"))}</button></p>
+    <p class="small sub">${h(t("Drag the point to move it. The magnifier shows where it lands."))}</p>`
+    : `<div class="route-tools">
       <button class="pill" id="undo" ${page.undo.length ? "" : "disabled"}>${icon("undo-2")} ${h(t("Undo"))}</button>
-      <button class="pill" id="close-loop" ${page.points.length >= 3 && !isLoop ? "" : "disabled"}>${icon("rotate-ccw")} ${h(t("Close loop"))}</button>
-      <button class="pill" id="clear" ${page.points.length > 1 ? "" : "disabled"}>${icon("trash-2")} ${h(t("Clear route"))}</button>
+      <button class="pill" id="clear" ${page.points.length > 1 ? "" : "disabled"} aria-label="${h(t("Clear route"))}" title="${h(t("Clear route"))}">${icon("trash-2")}</button>
       <button class="pill" id="save-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("check")} ${h(t("Save route"))}</button>
       <label class="pill" id="import-row" title="${h(t("GPX, TCX or FIT files from CrewNerd, Garmin Connect, Strava and other apps."))}">${icon("upload")} ${h(t("Import a row"))}
         <input type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden></label>
       ${page.rowed?.track ? `<label class="tick inline"><input type="checkbox" id="show-track" ${page.showTrack ? "checked" : ""}> ${icon("spline")} ${h(t("Show rowed track"))}</label>` : ""}
-    </div>
-    ${routeTip(isLoop)}
+    </div>`;
+  return `${head}
     ${lakeWideBanner(hour.lakeWide, view)}
     ${kitBadge(view)}
     <div class="route-controls">
@@ -591,14 +621,17 @@ function planningPanel(hour) {
         <button class="tool" id="later" aria-label="${h(t("An hour later"))}" ${page.hour >= view.hours.length - 1 ? "disabled" : ""}>${icon("chevron-right")}</button></span>
       <span class="pace"><small class="sub">${h(t("Pace /500 m"))}</small><strong class="num">${h(paceText(page.pace))}</strong>
         <span class="stepper"><button id="pace-down" aria-label="−">−</button><button id="pace-up" aria-label="+">+</button></span></span>
-      <label class="tick inline" title="${h(t("Out and back"))}"><input type="checkbox" id="out-back" ${page.outAndBack && !isLoop ? "checked" : ""} ${isLoop ? "disabled" : ""}> ${icon("arrow-up-down")} ${h(t("Out and back"))}</label>
     </div>
+    ${picker}
+    ${tools}
+    ${routeTip(isLoop)}
     ${summary}
     ${saved.length ? `<h3 class="section">${icon("list")} ${h(t("Saved routes"))}</h3><ul class="saved-routes">${saved.map((r) => `<li class="${r.id === page.savedId ? "on" : ""}">
         <button data-route="${h(r.id)}">${icon("route")} <span>${h(r.name)}</span><small class="sub">${h(distance(routeLength(r.points, r.outAndBack)))}</small></button>
         <button class="tool" data-rename-route="${h(r.id)}" aria-label="${h(t("Rename"))}" title="${h(t("Rename"))}">${icon("signature")}</button>
         <button class="tool" data-copy-route="${h(r.id)}" aria-label="${h(t("Duplicate"))}" title="${h(t("Duplicate"))}">${icon("copy")}</button>
-        <button class="tool" data-delete-route="${h(r.id)}" aria-label="${h(t("Delete this route"))}">${icon("trash-2")}</button></li>`).join("")}</ul>` : ""}`;
+        <button class="tool" data-delete-route="${h(r.id)}" aria-label="${h(t("Delete this route"))}">${icon("trash-2")}</button></li>`).join("")}</ul>` : ""}
+    ${moreRows()}`;
 }
 
 /** The one tip that fits the route drawn so far, in the app's order (LakeMapScreen.routeHint). */
@@ -684,8 +717,33 @@ function wirePanel() {
     update();
   }));
   panel.querySelector("#hour-strip .on")?.scrollIntoView({ inline: "center", block: "nearest" });
-  panel.querySelectorAll("[data-layer]").forEach((b) => b.addEventListener("click", () => {
+  // The map's own controls: a layer's name shows for a moment beside the buttons after a switch.
+  const over = page.root.querySelector("#lake-over");
+  over.querySelectorAll("[data-layer]").forEach((b) => b.addEventListener("click", () => {
     page.layer = b.dataset.layer;
+    page.layerNote = page.layer;
+    clearTimeout(page.noteTimer);
+    page.noteTimer = setTimeout(() => {
+      page.layerNote = null;
+      if (page.root.isConnected) page.root.querySelector(".layer-note")?.remove();
+    }, 1200);
+    update();
+  }));
+  over.querySelector("#scale").addEventListener("click", () => openSheet(t("Legend"), legendSheet()));
+  on("#route-mode", "click", toggleRouteMode);
+  on("#legend", "click", () => openSheet(t("Legend"), legendSheet()));
+  on("#about", "click", () => openSheet(t(WATER_TEXTS[waterKind(page.view)].about), aboutSheet()));
+  panel.querySelectorAll("[data-way-back]").forEach((b) => b.addEventListener("click", () => {
+    const way = b.dataset.wayBack;
+    page.undo.push(page.points);
+    if (way === "loop") {
+      page.points = RouteEdit.close(page.points);
+      page.outAndBack = false;
+    } else {
+      page.points = RouteEdit.open(page.points);
+      page.outAndBack = way === "outAndBack";
+    }
+    page.savedId = null;
     update();
   }));
   on("#spot-close", "click", () => {
@@ -703,7 +761,6 @@ function wirePanel() {
     page.selected = null;
     update();
   });
-  on("#close-loop", "click", edit((p) => RouteEdit.close(p)));
   on("#clear", "click", edit((p) => {
     page.rowed = null;
     return p.slice(0, 1);
@@ -735,10 +792,6 @@ function wirePanel() {
   });
   on("#pace-up", "click", () => {
     page.pace = Math.min(240, page.pace + 5);
-    update();
-  });
-  on("#out-back", "change", (e) => {
-    page.outAndBack = e.target.checked;
     update();
   });
   on("#follow", "change", (e) => {

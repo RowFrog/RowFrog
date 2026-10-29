@@ -572,7 +572,7 @@ export async function openRadarMap(point, reference) {
   await Promise.all([worker(), worker(), worker()]);
   done = true;
   if (!panel.isConnected) return;
-  // Starts playing on its own once every picture is there.
-  if (loaded.size === frames.length) play(true);
+  // Starts playing on its own once every picture is there, except with Reduce Motion on: then the play button starts it.
+  if (loaded.size === frames.length && !matchMedia("(prefers-reduced-motion: reduce)").matches) play(true);
   else render();
 }

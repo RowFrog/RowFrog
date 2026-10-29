@@ -363,6 +363,10 @@ export const RouteEdit = {
   close(points) {
     return points.length >= 3 && !RouteEdit.isLoop(points) ? [...points, points[0]] : points;
   },
+  /** Opens a loop again: the route ends at its last turning point. */
+  open(points) {
+    return RouteEdit.isLoop(points) ? points.slice(0, -1) : points;
+  },
   /** Removes a turning point; a loop left with one turning point opens again. */
   remove(index, points) {
     if (index <= 0 || index >= points.length) return points;

@@ -181,7 +181,28 @@ function bottomBar(currentId, raw) {
 
 function wireBottomBar(raw) {
   root.querySelector("#boat-button")?.addEventListener("click", () => openBoatMenu(raw));
+  const dots = root.querySelector(".bottom .dots");
+  dots?.addEventListener("pointerdown", (e) => {
+    dotSlide = e.clientX;
+  });
+  // A mouse sliding along the dots would otherwise drag the link away.
+  dots?.addEventListener("dragstart", (e) => e.preventDefault());
 }
+
+// A finger or the mouse sliding along the dots moves through the clubs, as in Weather. On the
+// document, since each club page draws the bar anew while the finger is still down.
+let dotSlide = null;
+document.addEventListener("pointermove", (e) => {
+  const dots = root.querySelector(".bottom .dots");
+  if (dotSlide == null || !dots || Math.abs(e.clientX - dotSlide) < 6) return;
+  const links = [...dots.querySelectorAll("a")];
+  const at = links.find((a) => {
+    const r = a.getBoundingClientRect();
+    return e.clientX >= r.left && e.clientX < r.right;
+  }) ?? (e.clientX < links[0].getBoundingClientRect().left ? links[0] : links[links.length - 1]);
+  if (!at.classList.contains("on")) location.replace(at.getAttribute("href"));
+});
+for (const end of ["pointerup", "pointercancel"]) document.addEventListener(end, () => { dotSlide = null; });
 
 // ---- List and search (LocationListView) -----------------------------------------------------
 
@@ -630,6 +651,8 @@ function updateTopBar() {
     bar.style.width = `${page.width}px`;
   }
   body.classList.toggle("title-gone", gone);
+  // Cards under the floating buttons at the bottom: the bottom blurs too (BottomEdgeFade).
+  body.classList.toggle("under-bar", Boolean(root.querySelector(".bottom")) && document.documentElement.scrollHeight - window.scrollY - window.innerHeight > 24);
 }
 window.addEventListener("scroll", updateTopBar, { passive: true });
 window.addEventListener("hashchange", () => requestAnimationFrame(updateTopBar));
@@ -1361,7 +1384,19 @@ function renderSettings() {
   wireLanguage(renderSettings);
   wireSettingsSearch(root.querySelector("main"));
   wireTips(root.querySelector("main"));
-  root.querySelectorAll("[data-unit]").forEach((select) => select.addEventListener("change", () => setUnit(select.dataset.unit, select.value)));
+  root.querySelectorAll("[data-unit]").forEach((select) => {
+    select.addEventListener("change", () => setUnit(select.dataset.unit, select.value));
+    // The whole row opens the choice, as a picker row in iOS Settings; only the unit at the end did before.
+    select.closest(".row-setting").addEventListener("click", (e) => {
+      if (e.target === select) return;
+      e.preventDefault();
+      try {
+        select.showPicker();
+      } catch {
+        select.focus();
+      }
+    });
+  });
   root.querySelector("#tips-again").addEventListener("click", () => {
     replayTips();
     root.querySelector("#tips-note").textContent = t("The tips are back.");
