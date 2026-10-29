@@ -492,6 +492,8 @@ jobs:
           # Water temperature chart fitted to the readings, very-cold line in both modes.
           WAIT=30 shoot 305-water-chart-fitted light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature
           WAIT=30 shoot 306-water-chart-fitted-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWLanguage de
+          # The map app setting, found through the settings search.
+          WAIT=25 shoot 307-settings-map-app-german light -RWShowSettings YES -RWSettingsSearch Google -RWLanguage de
           WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
           WAIT=30 shoot 242-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
           shoot 209-arrange-radar-off light -RWOpenClub mrc-1880 -RWArrange YES
