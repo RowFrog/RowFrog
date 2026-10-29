@@ -201,7 +201,7 @@ struct RootView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .ignoresSafeArea(edges: StressProbe.variant == 2 ? [] : [.top, .bottom])
+        .ignoresSafeArea(edges: [.top, .bottom])
         .background {
             // Behind the pages, not on each one: a swiping TabView keeps its
             // pages out of the status bar and the page bar, which left black bars.
@@ -252,9 +252,6 @@ struct RootView: View {
             locations.catalogFailed = false
             applyLaunchArguments()
             WidgetBridge.publish(locations)
-            if UserDefaults.standard.bool(forKey: "RWStress") {
-                Task { await StressProbe.run(ids: locations.saved.map(\.id)) { selection = $0 } }
-            }
         } catch {
             locations.catalogFailed = true
         }

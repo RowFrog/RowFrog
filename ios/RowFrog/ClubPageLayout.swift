@@ -17,20 +17,6 @@ struct BalancedColumns: Layout {
         return CGSize(width: width, height: arrange(subviews, width: width).height)
     }
 
-    // The columns line up with nothing outside them. Without these, the stack
-    // around them asked every card, all the way down, for its alignment guides,
-    // measuring the whole page again and again; turning the phone sideways and
-    // back then froze the app.
-    func explicitAlignment(of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
-                           subviews: Subviews, cache: inout ()) -> CGFloat? {
-        nil
-    }
-
-    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
-                           subviews: Subviews, cache: inout ()) -> CGFloat? {
-        nil
-    }
-
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let placed = arrange(subviews, width: bounds.width)
         let column = columnWidth(bounds.width)

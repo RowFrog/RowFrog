@@ -87,7 +87,7 @@ struct LocationPageView: View {
         GeometryReader { geometry in
             // Wide screens (an unfolded iPhone Duo, an iPhone on its side) put the
             // cards below the rowing light in two columns; phones upright keep one.
-            let twoColumns = geometry.size.width >= Self.twoColumnWidth && StressProbe.variant != 4
+            let twoColumns = geometry.size.width >= Self.twoColumnWidth
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
@@ -95,7 +95,7 @@ struct LocationPageView: View {
                             // Cards under the clock: the top blurs, as iOS's own bars do.
                             .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                                 top > 0 && proxy.frame(in: .global).minY < top - 1
-                            } action: { if StressProbe.variant != 3 { PageScroll.shared.update(club.id, scrolled: $0) } }
+                            } action: { PageScroll.shared.update(club.id, scrolled: $0) }
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
                             if tourSeen && showTopTileTip {
@@ -110,9 +110,9 @@ struct LocationPageView: View {
                                 if twoColumns {
                                     // The page's end goes into the shorter column too, and the maps
                                     // there grow, so both columns end level (BalancedColumns).
-                                    BalancedColumns(tallestCard: StressProbe.variant == 5 ? 0 : geometry.size.height - 32) {
+                                    BalancedColumns(tallestCard: geometry.size.height - 32) {
                                         ForEach(cards) { pageCard($0, forecast: forecast, now: now, twoColumns: true) }
-                                        if StressProbe.variant != 6 { pageEnd(forecast) }
+                                        pageEnd(forecast)
                                     }
                                 } else {
                                     ForEach(cards) { pageCard($0, forecast: forecast, now: now, twoColumns: false) }
@@ -212,8 +212,8 @@ struct LocationPageView: View {
             }
             // On the swiping club pages the cards scroll on under the clock and the
             // floating buttons; keep clear of whichever the page is not already clear of.
-            .modifier(ProbePageInsets(top: max(0, pageMargins.top - geometry.safeAreaInsets.top),
-                                      bottom: max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom)))
+            .safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))
+            .safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))
         }
     }
 
@@ -281,14 +281,14 @@ struct LocationPageView: View {
                 let folds = twoColumns && AppSettings.shared.activeColumnFill == .fold
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale(),
                            folds: folds, open: $hourlyOpen)
-                    .modifier(StickyHourlyCut(sticky: StressProbe.variant == 8 ? StickyHourly() : sticky))
+                    .modifier(StickyHourlyCut(sticky: sticky))
             }
             .id("hourly")
             // Opened, the table still counts with its folded height, so no other card moves or grows.
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                if !hourlyOpen && StressProbe.variant != 7 { foldedHourlyHeight = height }
+                if !hourlyOpen { foldedHourlyHeight = height }
             }
-            .layoutValue(key: ColumnSortHeight.self, value: hourlyOpen && StressProbe.variant != 7 ? foldedHourlyHeight : nil)
+            .layoutValue(key: ColumnSortHeight.self, value: hourlyOpen ? foldedHourlyHeight : nil)
         case .launchPoint:
             VStack(spacing: 16) {
                 if tourSeen && showLaunchPointTip {
@@ -455,7 +455,7 @@ private extension LocationPageView {
                 // Once the title is under the top bar, the bar shows the name instead.
                 .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                     top > 0 && proxy.frame(in: .global).maxY < top + InlineClubTitle.height
-                } action: { if StressProbe.variant != 3 { PageScroll.shared.update(club.id, titleGone: $0) } }
+                } action: { PageScroll.shared.update(club.id, titleGone: $0) }
             Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             if !club.launchPointVerified {
@@ -952,46 +952,16 @@ struct TopTileGrid: Layout {
     var rowSpacing: CGFloat = 10
     var gap: CGFloat = 8
 
-    /// The frames last worked out, by width: measuring the tiles' text is
-    /// slow, and the page asks for the same width many times in one pass.
-    struct Cache {
-        var width: CGFloat?
-        var frames: [CGRect] = []
-    }
-
-    func makeCache(subviews: Subviews) -> Cache { Cache() }
-
-    func updateCache(_ cache: inout Cache, subviews: Subviews) { cache = Cache() }
-
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? subviews.prefix(3).reduce(0) { $0 + $1.sizeThatFits(.unspecified).width } + 2 * gap
-        return CGSize(width: width, height: frames(width: width, subviews, &cache).map(\.maxY).max() ?? 0)
+        return CGSize(width: width, height: frames(width: width, subviews).map(\.maxY).max() ?? 0)
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
-        for (view, frame) in zip(subviews, frames(width: bounds.width, subviews, &cache)) {
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        for (view, frame) in zip(subviews, frames(width: bounds.width, subviews)) {
             view.place(at: CGPoint(x: bounds.minX + frame.minX, y: bounds.minY + frame.minY),
                        proposal: ProposedViewSize(width: frame.width, height: frame.height))
         }
-    }
-
-    // The grid lines up with nothing outside it, so the stacks around it need
-    // not measure every tile again for its alignment guides.
-    func explicitAlignment(of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
-                           subviews: Subviews, cache: inout Cache) -> CGFloat? {
-        nil
-    }
-
-    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
-                           subviews: Subviews, cache: inout Cache) -> CGFloat? {
-        nil
-    }
-
-    private func frames(width: CGFloat, _ subviews: Subviews, _ cache: inout Cache) -> [CGRect] {
-        if cache.width != width {
-            cache = Cache(width: width, frames: frames(width: width, subviews))
-        }
-        return cache.frames
     }
 
     private func frames(width: CGFloat, _ subviews: Subviews) -> [CGRect] {
@@ -1615,25 +1585,6 @@ private struct LoadingCards: View {
         VStack(alignment: .leading, spacing: 2) {
             Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             Text(dash).valueFont(size: 40).foregroundStyle(.secondary)
-        }
-    }
-}
-
-/// TEMPORARY (freeze probe): the page's insets as safe-area padding, or with
-/// `-RWProbe 9`/`11` as scroll content margins.
-private struct ProbePageInsets: ViewModifier {
-    let top: CGFloat
-    let bottom: CGFloat
-
-    func body(content: Content) -> some View {
-        if StressProbe.variant == 9 || StressProbe.variant == 11 {
-            content
-                .contentMargins(.top, top, for: .scrollContent)
-                .contentMargins(.bottom, bottom, for: .scrollContent)
-        } else {
-            content
-                .safeAreaPadding(.top, top)
-                .safeAreaPadding(.bottom, bottom)
         }
     }
 }
