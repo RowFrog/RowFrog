@@ -48,8 +48,8 @@
     "ruder-club-bergedorf": {"direction": "west and south"},
     "breisacher-ruderverein": {
       "include": ["Vieux Rhin / Altrhein", "Le Rhin / Rhein"],
-      "direction": "north",
-      "note": "boathouse at the Breisach lock beside the Kulturwehr; rows north on the Altrhein to where it meets the Grand Canal d'Alsace and on down the Rhine (assumed, hand check 2026-10-29)"
+      "direction": "south",
+      "note": "boathouse on the Rheinuferstr. in Breisach; rows south from the slip (owner checked 2026-10-29)"
     },
     "karlsruher-ruder-verein-wiking-von-1879": {
       "include": ["Rheinhafen", "Rhein"],
