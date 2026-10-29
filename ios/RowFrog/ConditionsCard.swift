@@ -1845,8 +1845,9 @@ extension ConditionDetail {
         if let radar = d.radar, let first = radar.steps.first {
             let points = radar.steps.map { ChartPoint(x: d.x($0.time), y: r.convert($0.mmPerHour)) }
             lines[0] = ChartLine(name: tr("Forecast"), color: .blue, kind: .bars, points: lines[0].points)
-            lines.append(ChartLine(name: tr("Radar"), color: .indigo, kind: .bars, points: points, barWidth: 2.5,
-                                   covers: (d.x(first.time) - 0.5)...d.x(radar.end)))
+            // First in the legend, as it comes first on the chart.
+            lines.insert(ChartLine(name: tr("Radar"), color: .indigo, kind: .bars, points: points, barWidth: 2.5,
+                                   covers: (d.x(first.time) - 0.5)...d.x(radar.end)), at: 0)
             source += " " + tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0")
         }
         let highest = max(d.timeline.compactMap(\.precipitationMm).max() ?? 0, d.radar?.peak ?? 0)
