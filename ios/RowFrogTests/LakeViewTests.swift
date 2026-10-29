@@ -145,6 +145,12 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(points.last?.latitude, start.latitude)
         // A closed loop takes no more points.
         XCTAssertEqual(RouteEdit.add(CLLocationCoordinate2D(latitude: 47.97, longitude: 11.34), to: points).count, 4)
+        // Opened again (way back "one way" or "out and back"), it ends at the last turning point.
+        let opened = RouteEdit.open(points)
+        XCTAssertFalse(RouteEdit.isLoop(opened))
+        XCTAssertEqual(opened.count, 3)
+        XCTAssertEqual(RouteEdit.close(opened).count, 4)
+        XCTAssertEqual(RouteEdit.open(opened).count, 3)
     }
 
     func testRouteEditRemoveAndMove() {

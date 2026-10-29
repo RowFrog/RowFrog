@@ -36,6 +36,8 @@ struct LakeMapScreen: View {
     @State private var selectedPoint: Int?
     /// The panel at the bottom shows everything, or only a summary and the hours.
     @State private var panelExpanded: Bool
+    /// The layer's name, shown for a moment next to the layer buttons after a switch.
+    @State private var layerNote: LakeLayer?
     /// Seconds per 500 m.
     @AppStorage("RWRoutePace") private var pace = 150.0
     /// Apple's satellite pictures under the lake instead of the map.
@@ -183,16 +185,35 @@ struct LakeMapScreen: View {
             .task { await ModelMapStore.shared.loadLandWind(at: view.grid.centre) }
             topBar
         }
+        // Over the map, just above the panel: the colours of the layer (tap for
+        // the legend) at the left, the layer buttons at the right, near the thumb.
         .overlay(alignment: .bottomLeading) {
             Button { showingLegend = true } label: {
-                Label(tr("Legend"), systemImage: "list.bullet.rectangle")
-                    .font(.caption.weight(.semibold))
+                LakeScaleChip(layer: layer)
                     .padding(.horizontal, 12)
-                    .frame(height: 44)
+                    .frame(height: 32)
                     .floatingControl(Capsule())
+                    .tapArea(EdgeInsets(top: 6, leading: 0, bottom: 6, trailing: 0))
             }
             .buttonStyle(.plain)
-            .padding(10)
+            .accessibilityLabel(tr("Legend"))
+            .padding(.leading)
+            .padding(.bottom, 10)
+        }
+        .overlay(alignment: .bottomTrailing) {
+            HStack(alignment: .bottom, spacing: 8) {
+                if let layerNote {
+                    Text(layerNote.title)
+                        .font(.subheadline.weight(.semibold))
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .floatingControl(Capsule())
+                        .transition(.opacity)
+                }
+                layerButtons
+            }
+            .padding(.trailing)
+            .padding(.bottom, 10)
         }
         .safeAreaInset(edge: .bottom, spacing: 0) { panel(plan: plan, boat: boat, shown: shown) }
         .sheet(isPresented: $showingInfo) { LakeViewInfo(water: view.water) }
@@ -279,63 +300,75 @@ struct LakeMapScreen: View {
         selectedPoint = nil
     }
 
+    /// Close and the lake's name at the left, map or satellite pictures alone at
+    /// the right: it is the ground the layers are drawn on, not a layer or a tool.
     private var topBar: some View {
-        VStack(spacing: 10) {
-            HStack {
-                Button { dismiss() } label: {
-                    Image(systemName: "xmark").font(.body.weight(.semibold)).frame(width: 44, height: 44)
-                }
-                .floatingControl(Circle())
-                .accessibilityLabel(tr("Close"))
-                Spacer()
-                Text(view.name)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 8)
-                    .floatingControl(Capsule())
-                Spacer()
-                Button { imagery.toggle() } label: {
-                    Image(systemName: imagery ? "map" : "globe.europe.africa")
-                        .font(.body.weight(.semibold))
-                        .frame(width: 44, height: 44)
-                }
-                .floatingControl(Circle())
-                .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
-                // Its popover would cover the editing bar and the route tips while planning.
-                if routeMode {
-                    routeButton
-                        .background(Color.accentColor, in: Circle())
-                        .accessibilityLabel(tr("End route planning"))
-                } else {
-                    routeButton
-                        .floatingControl(Circle())
-                        .accessibilityLabel(tr("Plan a route"))
-                        .popoverTip(RoutePlanningTip(), arrowEdge: .top)
-                }
-                if !routeMode {
-                    Button { showingInfo = true } label: {
-                        Image(systemName: "info").font(.body.weight(.semibold)).frame(width: 44, height: 44)
-                    }
-                    .floatingControl(Circle())
-                    .accessibilityLabel(view.water.aboutTitle)
-                }
+        HStack(spacing: 10) {
+            Button { dismiss() } label: {
+                Image(systemName: "xmark").font(.body.weight(.semibold)).frame(width: 44, height: 44)
             }
-            // While planning only what the route needs: the editing bar takes the layer switch's place.
-            if routeMode {
-                editBar
-            } else {
-                Picker(tr("Show"), selection: $layer) {
-                    ForEach(LakeLayer.allCases) { Text($0.title).tag($0) }
-                }
-                .pickerStyle(.segmented)
-                .padding(4)
-                .floatingControl(RoundedRectangle(cornerRadius: 10))
+            .floatingControl(Circle())
+            .accessibilityLabel(tr("Close"))
+            Text(view.name)
+                .font(.headline)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .padding(.horizontal, 14)
+                .frame(height: 44)
+                .floatingControl(Capsule())
+            Spacer(minLength: 0)
+            Button { imagery.toggle() } label: {
+                Image(systemName: imagery ? "map" : "globe.europe.africa")
+                    .font(.body.weight(.semibold))
+                    .frame(width: 44, height: 44)
             }
+            .floatingControl(RoundedRectangle(cornerRadius: 14))
+            .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
         }
         .padding(.horizontal)
         .padding(.top, 6)
+    }
+
+    /// One button per layer, stacked: one tap to any of them. The name of the
+    /// one picked shows for a moment beside them.
+    private var layerButtons: some View {
+        VStack(spacing: 0) {
+            ForEach(LakeLayer.allCases) { item in
+                Button {
+                    layer = item
+                    withAnimation { layerNote = item }
+                    Task {
+                        try? await Task.sleep(for: .seconds(1.2))
+                        if layerNote == item { withAnimation { layerNote = nil } }
+                    }
+                } label: {
+                    LakeLayerIcon(layer: item, selected: layer == item)
+                        .frame(width: 44, height: 44)
+                        .background(layer == item ? Color.accentColor : .clear)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(item.title)
+                .accessibilityAddTraits(layer == item ? .isSelected : [])
+                if item != LakeLayer.allCases.last { Divider().frame(width: 44) }
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .floatingControl(RoundedRectangle(cornerRadius: 14))
+    }
+
+    /// The route button in the panel's first row: blue while planning.
+    @ViewBuilder private var panelRouteButton: some View {
+        if routeMode {
+            routeButton
+                .background(Color.accentColor, in: Circle())
+                .accessibilityLabel(tr("End route planning"))
+        } else {
+            routeButton
+                .background(Color.accentColor.opacity(0.15), in: Circle())
+                .accessibilityLabel(tr("Plan a route"))
+                .popoverTip(RoutePlanningTip(), arrowEdge: .bottom)
+        }
     }
 
     /// Starts or ends route planning. With saved routes on this lake it first
@@ -367,7 +400,7 @@ struct LakeMapScreen: View {
         }
     }
 
-    /// Save, open or delete routes, from the editing bar.
+    /// Save, open or delete routes, from the planning panel.
     private var routesMenu: some View {
         let saved = routes.routes(on: view.lakeId)
         return Menu {
@@ -396,20 +429,16 @@ struct LakeMapScreen: View {
                 }
             }
         } label: {
-            Image(systemName: savedRoute == nil ? "bookmark" : "bookmark.fill").tapArea(Self.barTap)
+            Label(tr("Routes"), systemImage: savedRoute == nil ? "bookmark" : "bookmark.fill")
         }
         .accessibilityLabel(savedRoute?.name ?? tr("Routes"))
     }
 
-    /// Where a tap on the editing bar's buttons lands: the bar's full 44 pt,
-    /// and half the gap to the next button.
-    private static let barTap = EdgeInsets(top: 12, leading: 7, bottom: 12, trailing: 7)
-
-    /// Changing the route, on the map where the points are: undo, close the
-    /// loop, clear, and delete the turning point that is tapped.
-    @ViewBuilder private var editBar: some View {
+    /// Changing the route, in the panel with the other planning controls: undo,
+    /// clear and the saved routes, or for a tapped turning point: delete it.
+    @ViewBuilder private var planningTools: some View {
         let loop = RouteEdit.isLoop(waypoints)
-        HStack(spacing: 14) {
+        HStack(spacing: 10) {
             if let i = selectedPoint, i > 0, i < waypoints.count {
                 Text(tr("Turning point %d", i)).font(.subheadline.weight(.semibold))
                 Spacer(minLength: 0)
@@ -418,48 +447,40 @@ struct LakeMapScreen: View {
                     selectedPoint = nil
                     pointTip.invalidate(reason: .actionPerformed)
                     savedRoute = nil
-                } label: { Label(tr("Delete point"), systemImage: "trash").tapArea(Self.barTap) }
-                Button { selectedPoint = nil } label: { Text(tr("Done")).tapArea(Self.barTap) }
+                } label: { Label(tr("Delete point"), systemImage: "trash") }
+                Button { selectedPoint = nil } label: { Text(tr("Done")) }
                     .fontWeight(.semibold)
             } else {
                 Button {
                     if waypoints.count > 1 { waypoints.removeLast() }
-                } label: { Label(tr("Undo"), systemImage: "arrow.uturn.backward").tapArea(Self.barTap) }
+                } label: { Label(tr("Undo"), systemImage: "arrow.uturn.backward") }
                 .disabled(waypoints.count < 2)
-                Button {
-                    waypoints = RouteEdit.close(waypoints)
-                    outAndBack = false
-                } label: { Label(tr("Close loop"), systemImage: "arrow.triangle.capsulepath").tapArea(Self.barTap) }
-                .disabled(waypoints.count < 3 || loop)
-                Spacer(minLength: 0)
                 Button {
                     waypoints = Array(waypoints.prefix(1))
                     savedRoute = nil
                     rowed = nil
-                } label: { Label(tr("Clear", key: "Clear route"), systemImage: "trash").tapArea(Self.barTap) }
-                // The bin alone, so Undo and Close loop keep their words in German too.
+                } label: { Label(tr("Clear", key: "Clear route"), systemImage: "trash") }
+                // The bin alone, so Undo and Routes keep their words in German too.
                 .labelStyle(.iconOnly)
                 .disabled(waypoints.count < 2)
+                Spacer(minLength: 0)
                 routesMenu
             }
         }
         .font(.subheadline)
         .labelStyle(.titleAndIcon)
+        .buttonStyle(.bordered)
+        .buttonBorderShape(.capsule)
         // Longer German labels shrink a little instead of wrapping.
         .lineLimit(1)
         .minimumScaleFactor(0.75)
-        .padding(.horizontal, 14)
-        .frame(height: 44)
-        .floatingControl(Capsule())
         if let i = selectedPoint, i > 0, i < waypoints.count {
             if tourSeen && showPointTip {
                 TipView(pointTip)
             } else {
                 Text(tr("Drag the point to move it. The magnifier shows where it lands."))
                     .font(.caption)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 4)
-                    .background(.regularMaterial, in: Capsule())
+                    .foregroundStyle(.secondary)
             }
         } else if tourSeen && showLoopTip && waypoints.count >= 3 && !loop {
             // After the second turning point.
@@ -497,28 +518,35 @@ struct LakeMapScreen: View {
     private func planningPanel(plan: RoutePlan?, boat: RoutePlan.Stop?, shown: LakeHour?) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             grabber
-            if let plan {
-                HStack(spacing: 6) {
+            HStack(spacing: 6) {
+                if let plan {
                     TrafficLightDot(light: plan.worstLight, size: 10)
                     Text(plan.worstLight.title).fontWeight(.semibold)
                     Spacer(minLength: 4)
                     Text(tr("%@ · %@ · back %@", Format.distance(plan.distanceM), Format.duration(from: plan.start, to: plan.end), Format.time(plan.end)))
                         .monospacedDigit()
                         .foregroundStyle(.secondary)
+                } else {
+                    Text(tr("Tap the water to add the turning points of your route."))
+                        .fontWeight(.semibold)
+                        .lineLimit(2)
+                    Spacer(minLength: 4)
                 }
-                .font(.subheadline)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
+                panelRouteButton
+            }
+            .font(.subheadline)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            if let plan {
                 RouteBar(plan: plan).frame(height: 6)
-            } else {
-                Text(tr("Tap the water to add the turning points of your route."))
-                    .font(.subheadline.weight(.semibold))
             }
             if let lakeWide = shown?.lakeWide, lakeWide.light > .green {
                 LakeWideBanner(lakeWide: lakeWide, water: view.water).lineLimit(panelExpanded ? nil : 1)
             }
             coldWaterBadge
             planningControls
+            returnPicker
+            planningTools
             if panelExpanded {
                 CappedScroll(enabled: true, maxHeight: UIScreen.main.bounds.height * 0.3) {
                     VStack(alignment: .leading, spacing: 10) {
@@ -528,6 +556,7 @@ struct LakeMapScreen: View {
                                 .foregroundStyle(.orange)
                         }
                         routePanel(plan: plan, boat: boat)
+                        moreRows
                     }
                 }
             }
@@ -587,13 +616,59 @@ struct LakeMapScreen: View {
                 }
             }
             .fixedSize()
-            Toggle(isOn: $outAndBack) {
-                Image(systemName: "arrow.uturn.backward")
-            }
-            .toggleStyle(.button)
-            .disabled(RouteEdit.isLoop(waypoints))
-            .accessibilityLabel(tr("Out and back"))
         }
+    }
+
+    /// How the boat gets back to the club: not at all, the same way back, or
+    /// straight from the last turning point. One choice instead of the loop
+    /// button and the out-and-back switch, which switched each other off.
+    private var returnPicker: some View {
+        let loop = RouteEdit.isLoop(waypoints)
+        let choice = Binding<RouteReturn>(
+            get: { loop ? .loop : outAndBack ? .outAndBack : .oneWay },
+            set: { new in
+                switch new {
+                case .loop:
+                    // A loop needs two turning points first.
+                    guard waypoints.count >= 3 else { return }
+                    waypoints = RouteEdit.close(waypoints)
+                    outAndBack = false
+                case .outAndBack, .oneWay:
+                    waypoints = RouteEdit.open(waypoints)
+                    outAndBack = new == .outAndBack
+                }
+                savedRoute = nil
+            })
+        return Picker(tr("Way back"), selection: choice) {
+            ForEach(RouteReturn.allCases) { Text($0.title).tag($0) }
+        }
+        .pickerStyle(.segmented)
+    }
+
+    /// At the end of the pulled-up panel: the legend and what the map shows.
+    private var moreRows: some View {
+        VStack(spacing: 0) {
+            Divider()
+            moreRow(tr("Legend"), symbol: "list.bullet.rectangle") { showingLegend = true }
+            Divider()
+            moreRow(view.water.aboutTitle, symbol: "info.circle") { showingInfo = true }
+        }
+    }
+
+    private func moreRow(_ title: String, symbol: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack {
+                Label(title, systemImage: symbol)
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.right")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
+            }
+            .font(.subheadline)
+            .frame(minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private func viewingPanel(shown: LakeHour?) -> some View {
@@ -636,7 +711,7 @@ struct LakeMapScreen: View {
         VStack(alignment: .leading, spacing: 10) {
             // While planning, the hour strip below names the start; the hour only shows for the boat.
             if !routeMode || boat != nil || view.sample {
-                HStack(alignment: .firstTextBaseline) {
+                HStack {
                     if !routeMode || boat != nil {
                         Text(boat == nil ? Format.dayTime(hour.time) : tr("%@ · at the boat", Format.dayTime(hour.time))).font(.headline)
                     }
@@ -646,6 +721,7 @@ struct LakeMapScreen: View {
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(.orange)
                     }
+                    if !routeMode { panelRouteButton }
                 }
             }
             if hour.lakeWide.light > .green {
@@ -675,6 +751,7 @@ struct LakeMapScreen: View {
             if !routeMode {
                 LakeLegend(layer: layer)
                 MapBoatNote()
+                moreRows
             }
         }
     }
@@ -695,7 +772,7 @@ struct LakeMapScreen: View {
     /// The panel when pushed down: the hour, one line on the conditions or
     /// the route, and the hour strip.
     @ViewBuilder private func collapsedSummary(_ hour: LakeHour, plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
-        HStack(alignment: .firstTextBaseline) {
+        HStack {
             Text(boat == nil ? Format.dayTime(hour.time) : tr("%@ · at the boat", Format.dayTime(hour.time))).font(.headline)
             Spacer()
             if view.sample {
@@ -703,6 +780,7 @@ struct LakeMapScreen: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.orange)
             }
+            if !routeMode { panelRouteButton }
         }
         if hour.lakeWide.light > .green {
             LakeWideBanner(lakeWide: hour.lakeWide, water: view.water).lineLimit(1)
@@ -1065,11 +1143,12 @@ struct LakeMapView: UIViewRepresentable {
         return map
     }
 
-    /// Room the buttons at the top take; in route mode the editing bar adds a row.
-    static let routeTop: CGFloat = 215
+    /// Room the buttons at the top take, in route mode too (the editing bar moved into the panel).
+    static let routeTop: CGFloat = 130
 
     static func fit(_ overlay: LakeOverlay, in map: MKMapView, routeMode: Bool, animated: Bool) {
-        let padding = UIEdgeInsets(top: routeMode ? routeTop : 130, left: 24, bottom: panelHeight, right: 24)
+        // More room at the right, where the layer buttons stand above the panel.
+        let padding = UIEdgeInsets(top: routeTop, left: 24, bottom: panelHeight, right: 64)
         map.setVisibleMapRect(overlay.openRect, edgePadding: padding, animated: animated)
     }
 
@@ -1944,5 +2023,81 @@ struct ClubMarkIcon: View {
             .foregroundStyle(.white)
             .frame(width: 22, height: 22)
             .background(color, in: Circle())
+    }
+}
+
+/// How a planned route gets back to the club.
+enum RouteReturn: CaseIterable, Identifiable {
+    case oneWay, outAndBack, loop
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        // Short, for the three parts of the switch.
+        case .oneWay: tr("One way", key: "Way back one way")
+        case .outAndBack: tr("Out and back", key: "Way back out and back")
+        case .loop: tr("Loop")
+        }
+    }
+}
+
+/// A layer button's picture: the three lights, the waves or the wind.
+struct LakeLayerIcon: View {
+    let layer: LakeLayer
+    let selected: Bool
+
+    var body: some View {
+        switch layer {
+        case .light:
+            VStack(spacing: 2) {
+                ForEach([Light.red, .amber, .green], id: \.self) { light in
+                    Circle().fill(light.color).frame(width: 6, height: 6)
+                }
+            }
+            .padding(.vertical, 3)
+            .padding(.horizontal, 4)
+            .background(selected ? Color.white.opacity(0.9) : Color.primary.opacity(0.12), in: Capsule())
+        case .waves, .wind:
+            Image(systemName: layer == .waves ? Condition.waves.symbol : Condition.wind.symbol)
+                .font(.body.weight(.semibold))
+                .foregroundStyle(selected ? Color.white : Color.primary)
+        }
+    }
+}
+
+/// The layer's colours in a slim strip above the panel, as on Apple's weather
+/// maps; a tap opens the full legend.
+struct LakeScaleChip: View {
+    let layer: LakeLayer
+    private var limits: RowingLimits { AppSettings.shared.mapLimits }
+
+    var body: some View {
+        HStack(spacing: 6) {
+            switch layer {
+            case .light:
+                ForEach([Light.green, .amber, .red], id: \.self) { TrafficLightDot(light: $0, size: 9) }
+            case .waves:
+                ramp(LakeRaster.waveColor, top: limits.value(.waveRed), from: Format.waves(0), to: Format.waves(limits.value(.waveRed)))
+            case .wind:
+                ramp(LakeRaster.windColor, top: limits.value(.windRed), from: Format.wind(0), to: Format.wind(limits.value(.windRed)))
+            }
+        }
+        .font(.caption2.weight(.semibold))
+        .monospacedDigit()
+    }
+
+    private func ramp(_ color: (Double) -> LakeRaster.RGB, top: Double, from: String, to: String) -> some View {
+        let colors = stride(from: 0.0, through: 1.0, by: 0.2).map { t -> Color in
+            let c = color(top * t)
+            return Color(red: c.r / 255, green: c.g / 255, blue: c.b / 255)
+        }
+        return HStack(spacing: 6) {
+            Text(from)
+            LinearGradient(colors: colors, startPoint: .leading, endPoint: .trailing)
+                .frame(width: 60, height: 6)
+                .clipShape(Capsule())
+            Text(to)
+        }
     }
 }
