@@ -70,6 +70,19 @@ final class KeptFilesTests: XCTestCase {
         XCTAssertEqual(StubProtocol.requests.count, 1)
     }
 
+    func testOldCatalogServesWhenTheServerAnswersWithAnError() async throws {
+        StubProtocol.answers = [(200, ["ETag": #"W/"abc-1""#], countries), (503, [:], Data("busy".utf8)), (200, [:], Data("<html>".utf8))]
+        _ = try await api.countries()
+        try FileManager.default.setAttributes([.modificationDate: Date.now.addingTimeInterval(-2 * APIClient.catalogAge)],
+                                              ofItemAtPath: folder.appending(path: "api.rowfrog.com_v1_countries_index.body").path)
+        // A server error, then an answer that isn't the file: the old copy serves both times.
+        let afterError = try await api.countries()
+        XCTAssertEqual(afterError.map(\.code), ["de"])
+        let afterGarble = try await api.countries()
+        XCTAssertEqual(afterGarble.map(\.code), ["de"])
+        XCTAssertEqual(StubProtocol.requests.count, 3)
+    }
+
     func testOldCatalogServesWhenOffline() async throws {
         StubProtocol.answers = [(200, ["ETag": #"W/"abc-1""#], countries)]
         _ = try await api.countries()

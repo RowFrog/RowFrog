@@ -78,7 +78,9 @@ struct APIClient {
     /// A published file. Forecasts are always asked for, but with the kept copy's
     /// ETag, so an unchanged file answers "304 Not Modified" (a few hundred bytes)
     /// instead of coming again. With `keepFor`, a kept copy younger than that is
-    /// used without asking, and an older one when the server can't be reached.
+    /// used without asking, and an older one when the server can't be reached,
+    /// answers with an error (as it can for a moment while files are published)
+    /// or sends something that can't be read.
     private func get<T: Decodable>(_ path: String, keepFor: TimeInterval? = nil) async throws -> T {
         let url = baseURL.appending(path: path)
         let kept = cache?.copy(of: url)
@@ -89,10 +91,15 @@ struct APIClient {
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
         if let kept { request.setValue(kept.etag, forHTTPHeaderField: "If-None-Match") }
         let data: Data, response: URLResponse
+        // The older kept copy, where `keepFor` allows it.
+        func fallback() -> T? {
+            guard keepFor != nil, let kept else { return nil }
+            return try? Self.decoder.decode(T.self, from: kept.data)
+        }
         do {
             (data, response) = try await session.data(for: request)
         } catch {
-            if keepFor != nil, let kept, let value = try? Self.decoder.decode(T.self, from: kept.data) { return value }
+            if let value = fallback() { return value }
             throw error
         }
         let http = response as? HTTPURLResponse
@@ -106,9 +113,16 @@ struct APIClient {
             return try await get(path, keepFor: keepFor)
         }
         if let http, !(200..<300).contains(http.statusCode) {
+            if let value = fallback() { return value }
             throw HTTPStatusError(code: http.statusCode)
         }
-        let value = try Self.decoder.decode(T.self, from: data)
+        let value: T
+        do {
+            value = try Self.decoder.decode(T.self, from: data)
+        } catch {
+            if let older = fallback() { return older }
+            throw error
+        }
         if let etag = http?.value(forHTTPHeaderField: "ETag") { cache?.keep(data, etag: etag, for: url) }
         return value
     }
