@@ -21,7 +21,7 @@ struct ConditionsCard: View {
                                  radarStatus: club.flatMap { RadarStore.shared.status(at: $0.launchPoint) })
         Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent", legend: .conditions) {
             HStack(spacing: 10) {
-                SkyIcon(sky: data.sky, night: hour.sunUp == false).font(.system(size: 36))
+                SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 36, relativeTo: .largeTitle, maxGrowth: 1.35)
                 VStack(alignment: .leading, spacing: 0) {
                     Text(data.sky.title).font(.headline)
                     Text(tr("%@ · feels like %@", Format.degrees(hour.temperatureC), Format.degrees(hour.apparentTemperatureC)))
@@ -1015,6 +1015,7 @@ private struct ConditionChart: View {
     var hidden: Set<String> = []
     /// Slim, without the hint underneath: the time bar of the full-screen map.
     var compact = false
+    @Environment(\.dynamicTypeSize) private var typeSize
     private static let start = DetailTime.start
     /// The hour at the left edge of the visible 24 hours.
     @State private var scrollX: Double
@@ -1306,7 +1307,7 @@ private struct ConditionChart: View {
                 AxisGridLine()
                 AxisValueLabel(anchor: .top) {
                     // Labels right at the visible edges would be cut in half.
-                    if let x = value.as(Double.self), detail.history || (x - scrollX > 1.2 && scrollX + 24 - x > 1.2) {
+                    if let x = value.as(Double.self), detail.history ? labelled(x) : (x - scrollX > 1.2 && scrollX + 24 - x > 1.2) {
                         Text(label(x))
                     }
                 }
@@ -1315,6 +1316,23 @@ private struct ConditionChart: View {
         // Over the values on the right; on the left a dragged chart cut it off.
         .chartYAxisLabel(position: .topTrailing) { Text(detail.unit) }
         .chartPlotStyle { $0.padding(.horizontal, 16) }
+        .accessibilityChartDescriptor(description)
+        // Axis labels stop growing at the largest standard text size: larger,
+        // the days ran into each other.
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+
+    /// The shown lines for VoiceOver: "Describe chart" and the audio graph.
+    private var description: ChartDescription {
+        let shown = detail.lines.filter { !hidden.contains($0.name) && !$0.points.isEmpty }
+        return ChartDescription(
+            title: shown.map(\.name).joined(separator: ", "),
+            unit: detail.unit,
+            series: shown.map { line in
+                .init(name: line.name, points: line.points.map { (date($0.x), $0.y) }, continuous: line.kind == .line)
+            },
+            summary: [detail.value, detail.note].filter { !$0.isEmpty }.joined(separator: ". "),
+            digits: detail.unit == SpeedUnit.beaufort.symbol ? 0 : 1)
     }
 
     /// A line's points, without bars where another shown line's bars stand in for them.
@@ -1488,6 +1506,16 @@ private struct ConditionChart: View {
             Calendar.current.component(.hour, from: date(x)) % step == 0
                 && Calendar.current.component(.minute, from: date(x)) == 0
         }
+    }
+
+    /// Past measurements show many days: only every second or third gets its
+    /// name, so the names don't run into each other, fewer with larger text.
+    private func labelled(_ x: Double) -> Bool {
+        let days = axisHours
+        guard let i = days.firstIndex(of: x) else { return false }
+        let most = typeSize >= .xLarge ? 5 : 7
+        let step = max(1, Int((Double(days.count) / Double(most)).rounded(.up)))
+        return (days.count - 1 - i) % step == 0
     }
 
     private func date(_ x: Double) -> Date { data.now.time.addingTimeInterval(x * 3600) }
