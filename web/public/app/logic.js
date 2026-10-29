@@ -291,6 +291,8 @@ export const REASONS = {
   daylight: ["daylight", "twilight"],
   // River clubs: the Current tile, in the ice tile's place.
   current: ["shipping_stopped", "high_water", "current"],
+  // Lakes let down for the winter (Forggensee): the Water level tile, in the ice tile's place.
+  waterLevel: ["lake_lowered", "lake_drained"],
 };
 
 const RANK = { green: 0, amber: 1, red: 2 };

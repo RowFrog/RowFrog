@@ -24,6 +24,7 @@ import {
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView } from "./lakeview.js";
 import { currentTile, currentBody } from "./river.js";
+import { isLowered, waterLevelTile, waterLevelBody } from "./lakelevel.js";
 import { satelliteCard } from "./satellite.js";
 import { renderAddPlace } from "./addplace.js";
 import { isOwn } from "./ownplace.js";
@@ -881,6 +882,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
 /** The Current tile opens the water level and current (CurrentDetailView). */
 function wireCurrent(box, forecast) {
   box.querySelectorAll("[data-current]").forEach((b) => b.addEventListener("click", () => openSheet(t("Current"), currentBody(forecast.river))));
+  box.querySelectorAll("[data-water-level]").forEach((b) => b.addEventListener("click", () => openSheet(t("Water level"), waterLevelBody(forecast.waterLevel))));
 }
 
 function wireTopTile(card, id, at = null) {
@@ -1056,6 +1058,8 @@ function conditionTile(condition, forecast, hour, radar = null, radarMissing = f
     case "ice": {
       // On a river the Current tile takes the ice tile's place (ConditionsCard).
       if (forecast.river) return currentTile(forecast.river);
+      // On a lake let down for the winter the Water level tile takes it.
+      if (isLowered(forecast.waterLevel)) return waterLevelTile(forecast.waterLevel);
       const ice = forecast.ice;
       const off = iceOff(ice);
       let value, detail;
