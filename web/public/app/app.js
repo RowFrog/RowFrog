@@ -1260,6 +1260,12 @@ function foldHourly(button) {
   if (!open) document.scrollingElement.scrollTop += button.getBoundingClientRect().top - before;
 }
 
+/** Where directions to the club go: its address, and its name with it; null without an address (own places). */
+function clubAddress(club) {
+  const address = club.address?.trim();
+  return address ? { address, named: `${club.name || club.shortName}, ${address}` } : null;
+}
+
 /** The launch point on a map, with what it stands for (LaunchPointMapCard). */
 function launchPointCard(club) {
   const { lat, lon } = club.launchPoint;
@@ -1273,7 +1279,7 @@ function launchPointCard(club) {
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
-          <a role="menuitem" href="${h(maps.directions(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a>
+          <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a>
           <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin")} ${h(t("Launch point on the map"))}</a>
           <small class="sub">${h(maps.name)}</small>
         </div></details></div>`);
