@@ -6,7 +6,7 @@
 import { t, num } from "./i18n.js";
 import { icon } from "./icons.js";
 import { key, sky, precipitationKind } from "./logic.js";
-import { store, h, time, rain, savingData, loadLeaflet, openSheet } from "./shared.js";
+import { store, h, time, rain, unitSymbol, savingData, loadLeaflet, openSheet } from "./shared.js";
 
 export const DWD_WMS = "https://maps.dwd.de/geoserver/dwd/wms";
 const LAYER = "dwd:Niederschlagsradar";
@@ -264,8 +264,17 @@ export function skyNow(d) {
 export function forecastRain(d) {
   const a = radarAhead(d);
   const after = a ? radarEnd(a) : -Infinity;
-  return d.next24.find((x) => (x.precipitationMm ?? 0) >= 0.1 && Date.parse(x.time) >= after) ?? null;
+  return d.next24.find((x) => wetHour(x) && Date.parse(x.time) >= after) ?? null;
 }
+
+/**
+ * Something falls in this hour: 0.1 mm or more, or a weather code that names
+ * it (drizzle under 0.1 mm), so the tile never says dry beside a drizzle symbol.
+ */
+export const wetHour = (x) => (x.precipitationMm ?? 0) >= 0.1 || kindOf(x) != null;
+
+/** Drizzle and the like whose amount stays under 0.1 mm: named, with how little it is. */
+const trace = (hour) => ({ value: t(kindOf(hour)), detail: unitSymbol("rain") === "mm" ? t("Under %@", rain(0.1)) : t("Barely measurable"), fromRadar: false });
 
 /** The rain tile's and the top tile's two lines: the radar for two hours, then the forecast (ConditionData.rainLines). */
 export function rainLines(d) {
@@ -276,10 +285,14 @@ export function rainLines(d) {
   const a = radarAhead(d);
   if (a) {
     const outlook = rainOutlook(a, d.timeline);
-    if (outlook.next) return { value: outlook.now ?? t("Dry"), detail: outlook.next.text, fromRadar: outlook.next.fromRadar };
-    return { value: outlook.now ?? t("Dry"), detail: later(), fromRadar: false };
+    // The radar's dry wins over the forecast's rain, but not over its drizzle under 0.1 mm, which it cannot see.
+    const traceNow = !outlook.now && (d.now.precipitationMm ?? 0) < 0.1 && kindOf(d.now);
+    const value = outlook.now ?? (traceNow ? t(traceNow) : t("Dry"));
+    if (outlook.next) return { value, detail: outlook.next.text, fromRadar: outlook.next.fromRadar };
+    return traceNow ? trace(d.now) : { value, detail: later(), fromRadar: false };
   }
   if ((d.now.precipitationMm ?? 0) >= 0.1) return { value: rain(d.now.precipitationMm), detail: kindOf(d.now) ? t(kindOf(d.now)) : "", fromRadar: false };
+  if (kindOf(d.now)) return trace(d.now);
   return { value: t("Dry"), detail: later(), fromRadar: false };
 }
 
