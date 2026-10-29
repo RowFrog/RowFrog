@@ -466,9 +466,12 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
             key = "down" if downstream else "up"
             offset = carry_km.get(river_name, 0.0) if carry.get(river_name) == key else 0.0
             # Where a weir or lock sits right at the boathouse, the owner named the side the club rows on.
-            # From the arm that reaches furthest this way, where two lie side by side at the boathouse.
-            walk = max((river.walk(s, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=(REACH_KM - offset) * 1000)
-                        for s in river.starts_near(start)), key=lambda w: max(w["dist"].values()))
+            reach_m = (REACH_KM - offset) * 1000
+            walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=reach_m)
+            if max(walk["dist"].values()) < 1000 and not any(kind == "barrier" for _, kind, _ in walk["stops"]):
+                # Stuck on a dead-end arm (no weir): walk from the arm beside it that reaches furthest.
+                walk = max((river.walk(s, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=reach_m)
+                            for s in river.starts_near(start)), key=lambda w: max(w["dist"].values()))
             bearing = river.bearing(walk)
             behind = None
             if allowed and bearing is not None and not any(abs((bearing - a + 180) % 360 - 180) <= 67.5 for a in allowed):
