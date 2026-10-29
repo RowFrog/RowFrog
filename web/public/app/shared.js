@@ -107,7 +107,8 @@ export function boatTitle(boat) {
 export const boatInSentence = (boat) => (isGroup(boat) ? t(BOATS[boat.id].inSentence) : boatTitle(boat));
 export const boatDetail = (boat) => (isGroup(boat) ? t(BOATS[boat.id].detail) : t("%@ · %@", t(BOAT_TYPES[boat.type].title), boat.class));
 /** For the bottom bar: "Small", "Big", its own name, or its class. */
-export const boatShort = (boat) => (isGroup(boat) ? t(BOATS[boat.id].short) : boat.name?.trim() || boat.class);
+/** The boat's class for the page bar, as rowers write it ("2x", "4+"); the two groups show their seats (Boat.classTag). */
+export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.class);
 
 /** The boat whose limits colour the lake view and route planning. */
 export const mapBoat = () => (store.mapBoat === "follow" ? selectedBoat() : boatById(store.mapBoat));

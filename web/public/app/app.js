@@ -9,7 +9,7 @@ import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence,
-  boatDetail, boatShort, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
+  boatDetail, boatTag, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
@@ -172,13 +172,19 @@ function bottomBar(currentId, raw) {
   return `<nav class="bottom">
     <span class="bar-side"><span class="glass piece">
       <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
-      <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${icon("sailboat")}<small>${h(boatShort(selectedBoat()))}</small></button>
+      <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>
     </span></span>
     ${sideList.matches ? `<span class="gap"></span>` // The list beside the page switches clubs already.
     : `<span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>`}
     <span class="bar-side end">${sideList.matches ? "" // The list beside the page has its search and Edit too.
     : `<a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a>`}</span>
   </nav>`;
+}
+
+/** The boat button's symbol: the class in a small frame, dashed for the two groups, in the accent colour for an own boat (BoatClassTag). */
+function boatClassTag(boat) {
+  const tag = boatTag(boat);
+  return `<span class="class-tag ${isGroup(boat) ? "group" : ""} ${tag.length > 2 ? "long" : ""}" aria-hidden="true">${h(tag)}</span>`;
 }
 
 function wireBottomBar(raw) {
