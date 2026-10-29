@@ -19,6 +19,8 @@ export const RADAR_CREDIT = key("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"
 
 const iso = (ms) => new Date(ms).toISOString().replace(".000", "");
 
+const READ_TIMEOUT = 10000;
+
 async function reading(point, at) {
   const d = 0.01;
   const query = new URLSearchParams({
@@ -28,7 +30,8 @@ async function reading(point, at) {
     INFO_FORMAT: "application/json",
   });
   if (at != null) query.set("TIME", iso(at));
-  const response = await fetch(`${DWD_WMS}?${query}`);
+  // A reading that has not answered within 10 seconds counts as failed (RadarClient.session).
+  const response = await fetch(`${DWD_WMS}?${query}`, { signal: AbortSignal.timeout(READ_TIMEOUT) });
   if (!response.ok) throw new Error(`radar ${response.status}`);
   const props = (await response.json()).features?.[0]?.properties;
   const at2 = Date.parse(props?.TIME);
@@ -54,6 +57,8 @@ const testSwitch = (name) => {
 
 /** Handbook: `localStorage["rf.radarFailed"] = "true"` acts as if DWD did not answer (-RWRadarFailed). */
 const radarDown = () => testSwitch("rf.radarFailed");
+/** Handbook: `localStorage["rf.radarLoading"] = "true"` keeps waiting for DWD's answer (-RWRadarLoading). */
+const radarWaiting = () => testSwitch("rf.radarLoading");
 
 /** Handbook: `localStorage["rf.sampleRadar"] = "true"` puts made-up rain on the radar from 30 minutes on (-RWSampleRadar). */
 function sampleRadar() {
@@ -91,6 +96,13 @@ export function radarAt(point) {
 /** Whether the radar could not be read (not just still loading) and there is no reading still worth showing. */
 export const radarFailed = (point) => point != null && failed.has(keyOf(point));
 
+/** Why there is no radar to show: "loading" while it is being read, "missing" when it could not be; null while a reading is there or the page never asked (RadarStore.status). */
+export function radarStatus(point) {
+  if (!point || sampleRadar() || ahead(readings.get(keyOf(point))?.radar, Date.now())) return null;
+  if (loading.has(keyOf(point))) return "loading";
+  return failed.has(keyOf(point)) ? "missing" : null;
+}
+
 /** The reading at a point, asking DWD only when the last one is older than the refresh time (or `force`). */
 export async function readRadar(point, force = false) {
   if (!point) return null;
@@ -101,6 +113,11 @@ export async function readRadar(point, force = false) {
     readings.delete(k);
     failed.add(k);
     return null;
+  }
+  if (radarWaiting()) {
+    readings.delete(k);
+    if (!loading.has(k)) loading.set(k, new Promise(() => {}));
+    return loading.get(k);
   }
   const kept = readings.get(k);
   if (!force && kept && Date.now() - kept.at < refreshMs()) return kept.radar;
@@ -131,9 +148,13 @@ export function followRadar(point, alive, changed) {
   const tick = async () => {
     if (!alive()) return;
     const before = radarAt(point);
-    const radar = await readRadar(point);
+    const pending = readRadar(point);
+    // A read has started: the rain tile shows the waiting symbol.
+    const waiting = radarStatus(point);
+    if (waiting === "loading") changed(before);
+    const radar = await pending;
     if (!alive()) return;
-    if (radar !== before || (!radar && radarFailed(point))) changed(radar);
+    if (radar !== before || radarStatus(point) !== waiting) changed(radar);
     setTimeout(tick, failures.has(keyOf(point)) ? retryDelay(failures.get(keyOf(point))) : refreshMs());
   };
   tick();
@@ -141,7 +162,7 @@ export function followRadar(point, alive, changed) {
 
 /** Refresh on a club page: reads the radar again unless it was read less than a minute ago and that read worked (RadarStore.reload). */
 export async function reloadRadar(point) {
-  if (!point || sampleRadar() || radarDown()) return;
+  if (!point || sampleRadar() || radarDown() || radarWaiting()) return;
   const k = keyOf(point);
   const fresh = () => !failures.has(k) && Date.now() - (readings.get(k)?.at ?? 0) < PULL_GAP;
   if (fresh()) return;
@@ -284,7 +305,8 @@ export function radarGraphic(d) {
  * radar, or (struck through) the radar could not be read and the bars are the
  * forecast's only (RadarMark).
  */
-export const radarTitleMark = (missing) => `<span class="radar-mark head${missing ? " missing" : ""}" role="img" aria-label="${h(missing ? t("Radar not available right now") : t("Radar"))}">${icon("radar")}</span>`;
+/** The radar symbol in the rain tile's title line: plain while the bars come from the radar (status null), faint and pulsing while it is read, struck through when it could not be (RadarMark). */
+export const radarTitleMark = (status = null) => `<span class="radar-mark head${status ? ` ${status}` : ""}" role="img" aria-label="${h(status === "missing" ? t("Radar not available right now") : status === "loading" ? t("Loading the radar") : t("Radar"))}">${icon("radar")}</span>`;
 
 export const radarMark = () => `<span class="radar-mark" title="${h(t("Rain radar"))}">${icon("radar")}</span>`;
 

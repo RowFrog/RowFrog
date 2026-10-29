@@ -800,4 +800,7 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .current-notes p { margin: 2px 0; }
 /* The rain tile's title line: the bars come from the radar; struck through when it could not be read (RadarMark). */
 .radar-mark.head { position: relative; margin: 0 1px 0 0; font-size: 11px; font-weight: 600; }
+.radar-mark.loading { opacity: .5; animation: radar-pulse 1.2s ease-in-out infinite; }
+@keyframes radar-pulse { 50% { opacity: .15; } }
+@media (prefers-reduced-motion: reduce) { .radar-mark.loading { animation: none; } }
 .radar-mark.missing::after { content: ""; position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1.5px; border-radius: 1px; background: currentColor; transform: translateX(-50%) rotate(-45deg); }

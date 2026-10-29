@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { ahead, rainOutlook, rainLines, skyNow, radarSummary, radarFrames, radarRegion, nearestFrame, radarCovers } from "../public/app/radar.js";
+import { ahead, rainOutlook, rainLines, skyNow, radarSummary, radarFrames, radarRegion, nearestFrame, radarCovers, radarTitleMark, radarStatus } from "../public/app/radar.js";
 import { conditionData } from "../public/app/values.js";
 
 const MIN = 60000;
@@ -86,4 +86,12 @@ test("the sky follows the radar while it covers the moment (ConditionData.sky)",
   assert.equal(at(rainy, radar([2, 2, 0, 0, 0, 0, 0, 0, 0])), "rain");
   assert.equal(at(rainy), "rain");
   assert.equal(at(dry), "partlyCloudy");
+});
+
+test("the rain tile's radar symbol: plain, faint while read, struck through when missing (RadarMark)", () => {
+  assert.match(radarTitleMark(), /class="radar-mark head"/);
+  assert.match(radarTitleMark("loading"), /class="radar-mark head loading"/);
+  assert.match(radarTitleMark("missing"), /class="radar-mark head missing"/);
+  assert.equal(radarStatus(null), null);
+  assert.equal(radarStatus({ lat: 47.95, lon: 11.35 }), null, "never asked");
 });
