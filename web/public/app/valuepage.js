@@ -135,10 +135,8 @@ function show(page) {
     ${testing()}
     <main class="page value-page">
       <div class="value-top">
-        <button class="tool" id="prev" aria-label="${h(t(titles[neighbour(page, -1)][1]))}">${icon("chevron-left")}</button>
         <div class="value-head"><span class="big-value" id="big-value"></span><small class="sub" id="big-note"></small></div>
         <span class="value-big" id="big-graphic"></span>
-        <button class="tool" id="next" aria-label="${h(t(titles[neighbour(page, 1)][1]))}">${icon("chevron-right")}</button>
       </div>
       <div class="value-body ${layer ? "with-map" : ""}">
         <div class="value-chart">
@@ -156,10 +154,10 @@ function show(page) {
       ${stationCard(condition, data)}
       <p class="rowing">${icon("sailboat")}<span>${h(detail.rowing)}</span></p>
       <p class="sub small">${h(detail.source)}</p>
-      <p class="neighbours"><button class="link sub" id="prev-name">${icon("chevron-left")} ${h(titles[neighbour(page, -1)][1])}</button>
-        <button class="link sub" id="next-name">${h(titles[neighbour(page, 1)][1])} ${icon("chevron-right")}</button></p>
       ${footerLinks()}
-    </main>`;
+    </main>
+    <nav class="neighbours"><button class="glass" id="prev-name">${icon("chevron-left")} <span>${h(titles[neighbour(page, -1)][1])}</span></button>
+      <button class="glass" id="next-name"><span>${h(titles[neighbour(page, 1)][1])}</span> ${icon("chevron-right")}</button></nav>`;
   window.scrollTo(0, 0);
   showStationMap(root.querySelector("#station-map"), data.water?.station);
   wireTips(root.querySelector("main"));
@@ -193,7 +191,7 @@ function show(page) {
     history.replaceState(null, "", pageHash(page));
     show(page);
   });
-  for (const [sel, by] of [["#prev", -1], ["#next", 1], ["#prev-name", -1], ["#next-name", 1]]) root.querySelector(sel).addEventListener("click", () => go(page, by));
+  for (const [sel, by] of [["#prev-name", -1], ["#next-name", 1]]) root.querySelector(sel).addEventListener("click", () => go(page, by));
   root.querySelector("#limit-info")?.addEventListener("click", () => {
     page.showLimits = !page.showLimits;
     store.limitInfo = page.showLimits;

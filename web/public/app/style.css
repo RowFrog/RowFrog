@@ -287,21 +287,31 @@ svg.filled { width: 22px; height: 22px; }
 .bottom .piece .tool.boat { min-width: 56px; }
 .bottom .piece.round { width: 44px; padding: 0; justify-content: center; }
 .bottom .dots { margin: 0 auto; display: flex; justify-content: center; align-items: center; padding: 0 8px; max-width: calc(100% - 2 * 116px); overflow: hidden; }
-/* The current page differs in size and shape, not only in shade (RootView.PageBar). */
-.bottom .dots a { color: var(--text); opacity: .3; display: flex; align-items: center; justify-content: center; width: 16px; height: 44px; font-size: 11px; }
+/* Fixed black over light, white over dark, as Weather's dots: full strength for the current page, 40 % for the others (RootView.PageBar). */
+.bottom .dots { touch-action: none; }
+.bottom .dots a { color: var(--text); opacity: .4; display: flex; align-items: center; justify-content: center; width: 16px; height: 44px; font-size: 11px; }
 .bottom .dots a span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 .bottom .dots a.on { opacity: 1; }
 .bottom .dots a.on span { width: 8px; height: 8px; }
 .bottom .dots a.on svg path:last-child { fill: currentColor; }
 
-/* Behind the clock: clear at rest; once the page scrolls under it, it blurs and fades out (RootView.TopEdgeFade). */
+/* Behind the clock: clear at rest; once the page scrolls under it, a thin blur, solid down to half the status bar,
+   80 % at the bar's bottom, then fading out over 28 px, so the cards still show through (RootView.TopEdgeFade). */
 :root { --safe-top: env(safe-area-inset-top, 0px); --top-bar: 0px; }
 body.title-gone { --top-bar: 44px; }
-body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 9; height: calc(var(--safe-top) + var(--top-bar) + 14px); pointer-events: none;
-  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); background: color-mix(in srgb, var(--bg) 40%, transparent);
-  -webkit-mask-image: linear-gradient(#000 calc(var(--safe-top) * .6 + var(--top-bar)), transparent); mask-image: linear-gradient(#000 calc(var(--safe-top) * .6 + var(--top-bar)), transparent);
+body::before { content: ""; position: fixed; top: 0; left: 0; right: 0; z-index: 9; height: calc(var(--safe-top) + var(--top-bar) + 28px); pointer-events: none;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
+  --fade: linear-gradient(#000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) calc(var(--safe-top) + var(--top-bar)), transparent);
+  -webkit-mask-image: var(--fade); mask-image: var(--fade);
   opacity: 0; transition: opacity .2s ease-in-out; }
 body.scrolled::before { opacity: 1; }
+/* The same blur at the bottom, behind the floating buttons, while cards are under them; nothing at the page's end (BottomEdgeFade). */
+body::after { content: ""; position: fixed; bottom: 0; left: 0; right: 0; z-index: 9; height: calc(max(8px, env(safe-area-inset-bottom)) + 44px + 28px); pointer-events: none;
+  backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
+  --fade: linear-gradient(to top, #000, rgba(0, 0, 0, .8) calc(100% - 28px), transparent);
+  -webkit-mask-image: var(--fade); mask-image: var(--fade);
+  opacity: 0; transition: opacity .2s ease-in-out; }
+body.under-bar::after { opacity: 1; }
 /* The club's name and light, small, once the big title has scrolled away (InlineClubTitle). */
 .top-title { position: fixed; top: 0; left: 0; right: 0; z-index: 10; height: 44px; padding: var(--safe-top) 60px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: content-box; }
@@ -458,13 +468,39 @@ button.red { color: var(--red); }
 .lake-screen { display: flex; flex-direction: column; height: 100dvh; }
 .lake-screen .nav { position: static; }
 .lake-page { display: flex; flex-direction: column; flex: 1; min-height: 0; }
-.lake-map { flex: 1 1 55%; min-height: 220px; background: var(--tile); isolation: isolate; }
+.lake-map-box { position: relative; flex: 1 1 55%; min-height: 220px; display: flex; }
+.lake-map { flex: 1; background: var(--tile); isolation: isolate; }
+/* Over the map, just above the panel: the layer's colours at the left (tap for the legend), the layer buttons at the right (LakeMapScreen). */
+.lake-over { position: absolute; inset: auto 0 0 0; z-index: 1000; display: flex; justify-content: space-between; align-items: flex-end; padding: 0 16px 10px; pointer-events: none; }
+.lake-over > * { pointer-events: auto; }
+.lake-scale { display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 16px; font-size: 11px; font-weight: 600; color: var(--text); margin-bottom: 0; font-variant-numeric: tabular-nums; }
+.lake-scale .bar { display: block; width: 60px; height: 6px; border-radius: 3px; }
+.lake-layers-box { display: flex; align-items: flex-end; gap: 8px; margin-bottom: 28px; }
+.lake-layers { display: flex; flex-direction: column; border-radius: 14px; overflow: hidden; }
+.lake-layers button { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; color: var(--text); font-size: 20px; }
+.lake-layers button + button { border-top: .5px solid color-mix(in srgb, var(--text) 15%, transparent); }
+.lake-layers button.on { background: var(--accent); color: #fff; }
+.lake-layers .lights { display: flex; flex-direction: column; gap: 2px; padding: 3px 4px; border-radius: 8px; background: color-mix(in srgb, var(--text) 12%, transparent); }
+.lake-layers button.on .lights { background: rgba(255, 255, 255, .9); }
+.lake-layers .lights i { display: block; width: 6px; height: 6px; border-radius: 50%; }
+.layer-note { height: 32px; display: inline-flex; align-items: center; padding: 0 12px; border-radius: 16px; font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.route-button { margin-left: auto; width: 44px; height: 44px; justify-content: center; border-radius: 50%; color: var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); font-size: 20px; flex: none; }
+.route-button.on { color: #fff; background: var(--accent); }
+.route-line .route-button { margin: -6px 0 -6px auto; }
+.panel-head .route-button { margin: -6px 0; }
+.way-back { margin: 8px 0 4px; }
+.way-back button[disabled] { opacity: .4; }
+.more-rows { margin-top: 10px; border-top: .5px solid var(--line); }
+.more-rows button { display: flex; align-items: center; gap: 8px; width: 100%; min-height: 44px; font-size: 15px; color: var(--text); border-bottom: .5px solid var(--line); }
+.more-rows button:last-child { border-bottom: 0; }
+.more-rows button span { flex: 1; text-align: left; }
+.more-rows button svg:last-child { color: var(--sub); font-size: 13px; }
 .lake-panel { flex: 0 1 auto; max-height: 48%; overflow-y: auto; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
 .lake-panel p { margin: 6px 0; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 @media (min-width: 860px) {
   .lake-page { flex-direction: row; }
-  .lake-map { flex: 1 1 auto; }
+  .lake-map-box { flex: 1 1 auto; }
   .lake-panel { flex: 0 0 380px; max-height: none; border-left: .5px solid var(--line); }
 }
 .hour-strip { display: flex; gap: 4px; overflow-x: auto; padding: 8px 0 4px; scrollbar-width: thin; }
@@ -597,8 +633,11 @@ dl.facts dd { margin: 0; font-weight: 600; }
 .facts.two > div { display: flex; flex-direction: column; }
 .facts.two small { font-size: 12px; }
 .rowing { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; }
-.neighbours { display: flex; justify-content: space-between; font-size: 13px; }
-.neighbours button { display: inline-flex; align-items: center; gap: 4px; }
+/* The values before and after: two glass buttons floating at the bottom, 44 px high, as the club page's bar (ConditionDetailView.neighbours). */
+.neighbours { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; justify-content: space-between; gap: 12px; padding: 0 16px max(8px, env(safe-area-inset-bottom)); pointer-events: none; }
+.neighbours button { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; padding: 0 16px; border-radius: 22px; font-size: 15px; font-weight: 500; color: var(--text); min-width: 0; max-width: 48%; }
+.neighbours button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.value-page { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 body.locked { overflow: hidden; }
 .wm-full { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: var(--bg); }
 .wm-full .nav { position: static; background: var(--card); gap: 12px; }
