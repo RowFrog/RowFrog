@@ -660,6 +660,8 @@ struct ConditionDetailView: View {
             .coordinateSpace(name: Self.space)
             .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
             .simultaneousGesture(swipe)
+            // The views before and after float over the page, as the club page's bar.
+            .safeAreaInset(edge: .bottom) { neighbours(of: condition) }
             // The new view's map card reports its own hours.
             .onChange(of: condition) { time.mapHours = nil }
             .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
@@ -730,6 +732,7 @@ struct ConditionDetailView: View {
                     } label: {
                         Label(tr("About the limits"), systemImage: "info.circle")
                             .font(.subheadline)
+                            .tapArea(EdgeInsets(top: 12, leading: 0, bottom: 12, trailing: 12))
                     }
                     if showLimits {
                         Text(info)
@@ -748,7 +751,6 @@ struct ConditionDetailView: View {
                 .font(.subheadline)
             Text(detail.source).font(.caption2).foregroundStyle(.secondary)
             DetailUnitRow(condition: condition)
-            neighbours(of: condition)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
@@ -758,7 +760,6 @@ struct ConditionDetailView: View {
     @ViewBuilder
     private func top(_ condition: Condition, _ detail: ConditionDetail, head: ConditionDetail, shown: ConditionData, hidden: Set<String>) -> some View {
         HStack(alignment: .center, spacing: 8) {
-            Image(systemName: "chevron.compact.left").foregroundStyle(.tertiary)
             VStack(alignment: .leading, spacing: 0) {
                 Text(head.value).valueFont(size: 40).minimumScaleFactor(0.6).lineLimit(1)
                     .contentTransition(.numericText())
@@ -782,7 +783,6 @@ struct ConditionDetailView: View {
                     .scaleEffect(1.6)
                     .frame(width: width * 1.6, height: ConditionTile.graphicHeight * 1.6)
             }
-            Image(systemName: "chevron.compact.right").foregroundStyle(.tertiary)
         }
         .accessibilityElement(children: .contain)
         if !detail.lines.isEmpty {
@@ -854,6 +854,8 @@ struct ConditionDetailView: View {
                     }
                     .foregroundStyle(line.color)
                     .opacity(off ? 0.45 : 1)
+                    // 44 pt tall to tap, and half the gap to the next entry.
+                    .tapArea(EdgeInsets(top: 14, leading: 6, bottom: 14, trailing: 6))
                 }
                 .buttonStyle(.plain)
                 .accessibilityValue(off ? tr("Hidden") : tr("Shown"))
@@ -863,19 +865,35 @@ struct ConditionDetailView: View {
         .font(.caption2)
     }
 
-    /// The names of the views before and after, which a swipe opens.
+    /// The views before and after, which a swipe opens too: two glass buttons
+    /// floating at the bottom, 44 pt tall, as the club page's bar.
     private func neighbours(of condition: Condition) -> some View {
-        HStack {
-            Button { step(-1) } label: { Label(neighbour(of: condition, by: -1).title, systemImage: "chevron.left") }
-            Spacer()
-            Button { step(1) } label: {
-                Label(neighbour(of: condition, by: 1).title, systemImage: "chevron.right").labelStyle(TrailingIconLabelStyle())
+        HStack(spacing: 12) {
+            Button { step(-1) } label: {
+                Label(neighbour(of: condition, by: -1).title, systemImage: "chevron.left")
+                    .lineLimit(1)
+                    .padding(.horizontal, 16)
+                    .frame(height: 44)
+                    .contentShape(Capsule())
             }
+            .floatingControl(Capsule())
+            Spacer(minLength: 0)
+            Button { step(1) } label: {
+                Label(neighbour(of: condition, by: 1).title, systemImage: "chevron.right")
+                    .labelStyle(TrailingIconLabelStyle())
+                    .lineLimit(1)
+                    .padding(.horizontal, 16)
+                    .frame(height: 44)
+                    .contentShape(Capsule())
+            }
+            .floatingControl(Capsule())
         }
-        .font(.caption)
-        .foregroundStyle(.secondary)
+        .font(.subheadline.weight(.medium))
+        .tint(.primary)
         .buttonStyle(.plain)
-        .padding(.top, 4)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+        .padding(.horizontal)
+        .padding(.bottom, 4)
     }
 
     private func neighbour(of condition: Condition, by offset: Int) -> Condition {

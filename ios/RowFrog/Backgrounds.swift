@@ -167,6 +167,8 @@ final class PageScroll {
     private(set) var scrolled: Set<String> = []
     /// Club pages whose big title has gone under the top.
     private(set) var titleGone: Set<String> = []
+    /// Club pages with cards under the floating buttons at the bottom.
+    private(set) var underBar: Set<String> = []
 
     func update(_ clubID: String, scrolled isScrolled: Bool) {
         if scrolled.contains(clubID) != isScrolled { scrolled.formSymmetricDifference([clubID]) }
@@ -174,6 +176,10 @@ final class PageScroll {
 
     func update(_ clubID: String, titleGone gone: Bool) {
         if titleGone.contains(clubID) != gone { titleGone.formSymmetricDifference([clubID]) }
+    }
+
+    func update(_ clubID: String, underBar under: Bool) {
+        if underBar.contains(clubID) != under { underBar.formSymmetricDifference([clubID]) }
     }
 }
 
@@ -362,5 +368,21 @@ extension View {
         } else {
             glass(in: shape)
         }
+    }
+}
+
+extension View {
+    /// Lets a tap land this far around a small control (Apple's guide asks for
+    /// 44 × 44 pt), without changing how it looks or where things sit. Put it
+    /// on a button's label, so the button takes the larger shape.
+    func tapArea(_ insets: EdgeInsets) -> some View {
+        padding(insets)
+            .contentShape(Rectangle())
+            .padding(EdgeInsets(top: -insets.top, leading: -insets.leading, bottom: -insets.bottom, trailing: -insets.trailing))
+    }
+
+    /// The same, equally on every side.
+    func tapArea(_ inset: CGFloat) -> some View {
+        tapArea(EdgeInsets(top: inset, leading: inset, bottom: inset, trailing: inset))
     }
 }
