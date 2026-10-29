@@ -1,0 +1,22 @@
+name: Probe river lines (temporary)
+on:
+  push:
+    branches: [claude/project-thread-sh7ilx]
+    paths: [scripts/probe_river_lines.py, .github/workflows/probe-river-lines.yml]
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install shapely osmium
+      - uses: actions/cache/restore@v4
+        with:
+          path: |
+            osm/lines.osm.pbf
+            osm/water.geojsonseq
+          key: river-sections-osm-2026-10-29
+          fail-on-cache-miss: true
+      - run: python3 scripts/probe_river_lines.py osm/lines.osm.pbf
