@@ -525,6 +525,9 @@ private struct PageBar: View {
             BoatClassTag(boat: boat)
                 .frame(width: 48, height: Self.buttonHeight)
         }
+        // A menu draws its label in the tint, which the bar sets to the label
+        // colour; an own boat keeps the accent colour.
+        .tint(boat.isGroup ? Color.primary : Color.accentColor)
         .accessibilityLabel(tr("Boat: %@", boat.title))
         .accessibilityHint(tr("Picks another boat for the rowing light."))
     }
