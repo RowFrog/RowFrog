@@ -10,6 +10,8 @@ struct RootView: View {
     @State private var selection = ""
     @State private var showingList = false
     @State private var showingSettings = false
+    /// Where the club pages' picture lies, for their frosted cards.
+    @State private var pagesPictureFrame = CGRect.zero
     /// The settings page to open with, as Boats and limits from a club page's boat menu.
     @State private var settingsPath: [SettingsRoute] = []
     @State private var initialSearch = ""
@@ -202,6 +204,7 @@ struct RootView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .environment(\.pictureFrame, pagesPictureFrame)
         .ignoresSafeArea(edges: [.top, .bottom])
         .background {
             // Behind the pages, not on each one: a swiping TabView keeps its
@@ -209,7 +212,7 @@ struct RootView: View {
             let settings = AppSettings.shared
             ZStack {
                 PagePicture(image: BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection),
-                            blurred: settings.blurBackground)
+                            blurred: settings.blurBackground) { pagesPictureFrame = $0 }
                     .id(selection)
                     .transition(.opacity)
             }

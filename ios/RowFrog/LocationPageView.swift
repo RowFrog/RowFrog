@@ -430,7 +430,7 @@ private extension LocationPageView {
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(surface.hasPicture ? 12 : 0)
-        .background(surface.label, in: RoundedRectangle(cornerRadius: 12))
+        .labelBackground(surface, in: RoundedRectangle(cornerRadius: 12))
     }
 
     @ViewBuilder
@@ -523,7 +523,7 @@ private extension LocationPageView {
         }
         .padding(.horizontal, surface.hasPicture ? 16 : 0)
         .padding(.vertical, surface.hasPicture ? 10 : 0)
-        .background(surface.label, in: RoundedRectangle(cornerRadius: 16))
+        .labelBackground(surface, in: RoundedRectangle(cornerRadius: 16))
         .padding(.top, 24)
         .alert(tr("Could not update"), isPresented: Binding(get: { showingFailure != nil }, set: { if !$0 { showingFailure = nil } }),
                presenting: showingFailure) { _ in
@@ -1279,7 +1279,7 @@ struct HourlyStickyHeader: View {
         .frame(height: Self.height, alignment: .top)
         // The tile's own colour. Rounded at the top like the tile, square at the
         // bottom where the rows start, so the header keeps its shape when it starts to stay.
-        .background(surface.card, in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
+        .cardBackground(surface, in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
         .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
     }
 }
