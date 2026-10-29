@@ -153,9 +153,11 @@ struct LocationPageView: View {
                 .refreshable {
                     async let pictures: Void = refreshSatellite()
                     async let lakeView: Void = refreshLakeView()
+                    async let radar: Void = RadarStore.shared.reload(club.launchPoint)
                     await forecasts.refresh(club.id, then: savedIDs)
                     await pictures
                     await lakeView
+                    await radar
                 }
                 .followsRadar(club.launchPoint)
                 // Back in the app: the page in front renews its lake view and satellite passes too.

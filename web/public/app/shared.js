@@ -703,7 +703,7 @@ export function conditionTexts() {
     wind: r("wind", t("Wind and gusts"), windUnit(), t("Mean wind – strongest gust, in %@. The arrow points where the wind blows to.", windUnit())),
     waves: r("waves", t("Waves"), unitSymbol("waves"), t("Estimated wave height at the launch point, from wind and open water upwind.")),
     waterTemperature: r("waterTemperature", t("Water temperature"), unitSymbol("temperature"), t("Latest lake measurement. Below %@, extra care; below %@, cold water.", temperature(15), temperature(10))),
-    precipitation: r("precipitation", t("Rain, hail, snow"), unitSymbol("rain"), t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unitSymbol("rain"))),
+    precipitation: r("precipitation", t("Precipitation"), unitSymbol("rain"), t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unitSymbol("rain"))),
     visibility: r("visibility", t("Visibility (fog)"), unitSymbol("distance"), t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
     cloudCover: r("cloudCover", t("Cloud cover"), "%", t("Share of the sky covered by cloud.")),
     thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. Official thunderstorm warnings for the place appear under the warnings.")),
