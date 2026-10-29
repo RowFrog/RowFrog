@@ -48,6 +48,7 @@ struct ConditionsCard: View {
                                 // On a lake let down for the winter the Water level tile takes it.
                                 Button {
                                     showingLevel = true
+                                    WaterLevelTip().invalidate(reason: .actionPerformed)
                                 } label: {
                                     WaterLevelTile(level: level)
                                 }
