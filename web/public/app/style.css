@@ -260,7 +260,17 @@ svg.filled { width: 22px; height: 22px; }
 
 /* Launch point (LaunchPointMapCard). */
 .map { height: 240px; border-radius: 12px; overflow: hidden; background: var(--tile); isolation: isolate; }
-.map-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; justify-content: space-between; }
+/* The point on the left, one "Open in Maps" button on the right with the route and the point in its menu, as in the app. */
+.map-foot { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
+.map-foot .coords { font-variant-numeric: tabular-nums; user-select: text; }
+.maps-menu { position: relative; flex: none; }
+.maps-menu summary { list-style: none; cursor: pointer; white-space: nowrap; }
+.maps-menu summary::-webkit-details-marker { display: none; }
+.maps-menu .menu { position: absolute; right: 0; bottom: calc(100% + 6px); z-index: 5; min-width: 240px; display: flex; flex-direction: column; padding: 6px; border-radius: 14px;
+  background: var(--card); box-shadow: 0 8px 28px rgba(0, 0, 0, .28); border: .5px solid var(--line); }
+.maps-menu .menu a { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 10px; color: var(--text); font-size: 15px; }
+.maps-menu .menu a:hover { background: var(--fill); }
+.maps-menu .menu small { padding: 4px 10px 2px; }
 .pill { display: inline-flex; align-items: center; gap: 6px; background: color-mix(in srgb, var(--accent) 12%, transparent); padding: 6px 12px; border-radius: 10px; font-size: 14px; font-weight: 600; }
 .pin { color: #fff; background: var(--accent); border-radius: 50%; display: flex !important; align-items: center; justify-content: center; font-size: 16px; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); }
 

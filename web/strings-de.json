@@ -54,5 +54,8 @@
   "Forecast from %@ · loaded %@": "Vorhersage von %@ · geladen %@",
   "It starts at your club and goes one way; pick Out and back or Loop under the way back to row back to it. Tap or pull a stretch to add a point there. Tap a point to delete it, or drag it to move it. A point within 50 m of the start closes the loop.": "Sie beginnt an deinem Verein und führt in eine Richtung; wähle beim Rückweg „Hin + zurück“ oder „Runde“, um zurückzurudern. Tippe oder zieh an einer Strecke, um dort einen Punkt einzufügen. Tippe auf einen Punkt, um ihn zu löschen, oder zieh ihn, um ihn zu verschieben. Ein Punkt bis 50 m vom Start schließt die Runde.",
   "Under %@": "Unter %@",
-  "Barely measurable": "Kaum messbar"
+  "Barely measurable": "Kaum messbar",
+  "Open places in": "Orte öffnen in",
+  "Map links": "Kartenlinks",
+  "The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them.": "Der Steg und die Route zum Verein öffnen sich in diesem Kartendienst, in einem neuen Tab. An ihn geht erst etwas, wenn du auf einen davon tippst."
 }

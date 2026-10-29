@@ -63,6 +63,9 @@ export const store = {
   get mapLinked() { return load("rf.mapLinked", true); },
   set mapLinked(on) { save("rf.mapLinked", on); },
   /** How much map the weather maps open with: "close", "normal" or "wide". */
+  /** Where the launch point and directions open: "google" (the website's default), "apple" or "osm". */
+  get mapsApp() { const v = load("rf.mapsApp", "google"); return MAPS_APPS[v] ? v : "google"; },
+  set mapsApp(v) { save("rf.mapsApp", v); },
   get mapZoom() { return load("rf.mapZoom", "normal"); },
   set mapZoom(zoom) { save("rf.mapZoom", zoom); },
   /** The full-screen map plays 3 times round. */
@@ -107,6 +110,28 @@ export function boatTitle(boat) {
 export const boatInSentence = (boat) => (isGroup(boat) ? t(BOATS[boat.id].inSentence) : boatTitle(boat));
 export const boatDetail = (boat) => (isGroup(boat) ? t(BOATS[boat.id].detail) : t("%@ · %@", t(BOAT_TYPES[boat.type].title), boat.class));
 /** For the bottom bar: "Small", "Big", its own name, or its class. */
+/**
+ * The map services a place opens in, as plain links: nothing goes to them
+ * until the link is tapped, and none needs a key or a cookie banner here.
+ */
+export const MAPS_APPS = {
+  google: {
+    name: "Google Maps",
+    place: (lat, lon) => `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lon}`,
+    directions: (lat, lon) => `https://www.google.com/maps/dir/?api=1&destination=${lat}%2C${lon}`,
+  },
+  apple: {
+    name: "Apple Maps",
+    place: (lat, lon) => `https://maps.apple.com/?ll=${lat},${lon}&q=${lat},${lon}&z=16`,
+    directions: (lat, lon) => `https://maps.apple.com/?daddr=${lat},${lon}`,
+  },
+  osm: {
+    name: "OpenStreetMap",
+    place: (lat, lon) => `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`,
+    directions: (lat, lon) => `https://www.openstreetmap.org/directions?to=${lat}%2C${lon}`,
+  },
+};
+
 /** The boat's class for the page bar, as rowers write it ("2x", "4+"); the two groups show their seats (Boat.classTag). */
 export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.class);
 
