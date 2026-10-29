@@ -163,7 +163,9 @@ class River:
         self.frame, self.name = frame, name
         self.coords, self.graph, way_of = {}, {}, {}
         self.kind = Counter()
-        lock_ways = {e["id"] for e in els if e["type"] == "way" and e.get("tags", {}).get("lock") == "yes"}
+        # Lock chambers, with the lock's name where the map has one ("lock Kleinmachnow").
+        lock_ways = {e["id"]: f"lock {re.sub(r'^(Schleuse|Écluse de|Écluse du|Écluse)\s+', '', e['tags'].get('lock_name', ''))}".strip()
+                     for e in els if e["type"] == "way" and e.get("tags", {}).get("lock") == "yes"}
         # The named lines, and the unnamed pieces of the same fairway between them (osm_extract).
         river = [w for w in ways if w["tags"].get("name", "") == name or w["id"] in continues]
         for w in river:
@@ -173,7 +175,7 @@ class River:
                 way_of.setdefault(nid, set()).add(w["id"])
             for a, b in zip(w["nodes"], w["nodes"][1:]):
                 d = math.dist(self.coords[a], self.coords[b])
-                lock = w["id"] in lock_ways
+                lock = lock_ways.get(w["id"], "")
                 self.graph.setdefault(a, []).append((b, d, True, lock))
                 self.graph.setdefault(b, []).append((a, d, False, lock))
         # Join gaps: a line end close to another node of the same river.
@@ -255,7 +257,7 @@ class River:
             if not moves:
                 stops.append((d, "mouth" if n in self.other_nodes else "line end", self.other_nodes.get(n, "")))
             for m, w, _, lock in moves:
-                label = "lock" if lock else self.crosses(n, m)
+                label = lock or self.crosses(n, m)
                 if label and d >= ignore_barriers_m:
                     stops.append((d + w / 2, "barrier", label))
                     continue
@@ -300,6 +302,9 @@ def side_limit(river: River, walk: dict, lengths: dict, harbours: list, cap_km: 
     # Stops on side arms do not end the side while the main arm goes on.
     stops = [st for st in walk["stops"] if st[0] + BYPASS_M >= reach * 1000]
     barrier = next(((d, label) for d, kind, label in stops if kind == "barrier"), None)
+    if barrier and " " not in barrier[1]:
+        # A bare "lock_gate" or "weir" (e.g. on the lock canal beside a weir): the named weir or lock of the same step instead.
+        barrier = next(((d, label) for d, kind, label in stops if kind == "barrier" and " " in label and d <= barrier[0] + 500), barrier)
     if barrier and barrier[0] <= REACH_KM * 1000:
         return round(barrier[0] / 1000, 2), "weir/lock", barrier[1]
     hard = []
