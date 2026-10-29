@@ -36,6 +36,7 @@ def test_lake_list_is_also_at_lakes_index():
 
 
 def test_pictures_are_saved_at_our_own_jpeg_quality():
+    assert sentinel2.JPEG_QUALITY == 90
     # The Process API sends JPEGs at 90 whatever it is asked for, so pictures come as PNG.
     import io
 
@@ -48,4 +49,4 @@ def test_pictures_are_saved_at_our_own_jpeg_quality():
         assert picture.format == "JPEG"
         assert picture.size == (200, 150)
         assert picture.mode == "RGB"
-    assert len(data) < len(sentinel2.to_jpeg(png.getvalue(), quality=90))
+    assert len(sentinel2.to_jpeg(png.getvalue(), quality=75)) < len(data)

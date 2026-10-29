@@ -219,11 +219,11 @@ def choose(passes: list[Pass]) -> tuple[Pass | None, Pass | None, Pass | None]:
     return latest, mostly_clear, clearest
 
 
-# 75 looks the same on a phone as 85 and is about 45 % smaller (owner OK 2026-10-25).
-# Pictures already published keep their quality until the lake's next pass.
 # The Process API ignores a JPEG quality and always sends 90, so the picture
-# comes as a lossless PNG and is saved as JPEG here.
-JPEG_QUALITY = 75
+# comes as a lossless PNG and is saved as JPEG here. The owner kept 90 after
+# comparing 100 down to 70 (2026-10-29, scripts/jpeg_quality_probe.py and
+# rowerweather/satellite/jpeg-quality/analysis.md); to recheck later.
+JPEG_QUALITY = 90
 
 
 def to_jpeg(png: bytes, quality: int = JPEG_QUALITY) -> bytes:
