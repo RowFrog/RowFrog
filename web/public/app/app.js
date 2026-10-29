@@ -975,7 +975,7 @@ function wireTopTile(card, id, at = null) {
 function rainCell(d) {
   const lines = rainLines(d);
   const caption = lines.detail === t("Dry next 24 h") ? t("Dry for 24 h") : lines.detail;
-  return `<small class="label">${conditionIcon("precipitation")} ${h(t("Rain, hail"))}</small><span class="v17">${h(lines.value)}</span>
+  return `<small class="label">${conditionIcon("precipitation")} ${h(t("Precipitation"))}</small><span class="v17">${h(lines.value)}</span>
     ${caption ? `<small class="sub grey">${lines.fromRadar ? radarMark() : ""}${h(caption)}</small>` : ""}`;
 }
 
