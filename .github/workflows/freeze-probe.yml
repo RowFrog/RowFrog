@@ -1,0 +1,71 @@
+name: Freeze probe (temporary, never merged)
+
+on:
+  push:
+    branches: [claude/project-thread-xu6j39]
+    paths: [".github/workflows/freeze-probe.yml", "ios/**"]
+
+jobs:
+  probe:
+    runs-on: macos-15-intel
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Start the backend
+        run: |
+          (cd backend && nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
+          for club in mrc-1880 mrsv-bayern tutzinger-rv; do
+            curl -sS -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/clubs/$club/forecast" || true
+          done
+      - name: Build
+        working-directory: ios
+        run: |
+          brew install xcodegen
+          xcodegen
+          UDID=$(xcrun simctl list devices available -j | python3 -c '
+          import json, sys
+          found = [d for r, ds in json.load(sys.stdin)["devices"].items() if "iOS" in r for d in ds if d["name"].startswith("iPhone")]
+          best = [d for d in found if d["name"].endswith(" Pro")]
+          print((best or found)[-1]["udid"])')
+          echo "UDID=$UDID" >> "$GITHUB_ENV"
+          xcrun simctl boot "$UDID"
+          xcodebuild build -project RowFrog.xcodeproj -scheme RowFrog -destination "id=$UDID" -derivedDataPath build CODE_SIGNING_ALLOWED=NO | tail -5
+      - name: Swipe and turn, one run per suspect switched off
+        run: |
+          set -x
+          xcrun simctl bootstatus "$UDID" -b
+          xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowFrog.app
+          mkdir -p probe
+          DATA=$(xcrun simctl get_app_container "$UDID" com.rowfrog.RowFrog data)
+          for v in 1 2 3 4 5 6 7 8; do
+            perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
+            sleep 2
+            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog -RWSafetyAccepted YES -RWWhatsNewSeen 1000 \
+              -RWDemoClubs YES -RWTutorialSeen YES -RWNoTips YES -RWAllowsLandscape YES -RWStress YES -RWProbe 0
+            sampled=""
+            for i in $(seq -w 1 18); do
+              sleep 5
+              perl -e 'alarm 30; exec @ARGV' xcrun simctl io "$UDID" screenshot "probe/v$v-shot-$i.png" || echo "screenshot failed"
+              if [ -z "$sampled" ] && grep -q "STALL still" "$DATA/Documents/stress.log" 2>/dev/null; then
+                PID=$(pgrep -f 'RowFrog.app/RowFrog' | head -1)
+                sample "$PID" 3 -file "probe/v$v-sample.txt" > /dev/null 2>&1 || echo "sample failed"
+                sampled=1
+              fi
+            done
+            cp "$DATA/Documents/stress.log" "probe/v$v-stress.log" || true
+            echo "=== variant $v ==="
+            grep -c STALL "probe/v$v-stress.log" || true
+            grep -E "STALL main|STALL still 1[0-9]\.|recovered|done|turn" "probe/v$v-stress.log" | head -30 || true
+          done
+          echo "=== main-thread sample during the freeze ==="
+          for f in probe/v*-sample.txt; do echo "--- $f"; sed -n '/Call graph:/,/Total number in stack/p' "$f" | sed 's/^[ +!:|]*[0-9]* //; s/ \[0x[0-9a-f]*\]//; s/ + [0-9]*$//' | cut -c1-170 | sort | uniq -c | sort -rn | head -90; echo "--- RowFrog frames in $f"; grep -o '[^!+|:]*(in RowFrog.debug.dylib)[^[]*' "$f" | sort | uniq -c | sort -rn | head -40; done
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: freeze-probe
+          path: probe

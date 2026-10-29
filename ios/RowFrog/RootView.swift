@@ -251,6 +251,9 @@ struct RootView: View {
             }
             locations.catalogFailed = false
             applyLaunchArguments()
+            if UserDefaults.standard.bool(forKey: "RWStress") {
+                Task { await StressProbe.run(ids: locations.saved.map(\.id)) { selection = $0 } }
+            }
             WidgetBridge.publish(locations)
         } catch {
             locations.catalogFailed = true
@@ -317,7 +320,7 @@ private struct TopEdgeFade: View {
     let light: Light?
     let stale: Bool
     /// How far the fade reaches below the bar.
-    static let tail: CGFloat = 14
+    static let tail: CGFloat = 28
 
     var body: some View {
         let bar = statusBar + (title == nil ? 0 : InlineClubTitle.height)
@@ -327,10 +330,13 @@ private struct TopEdgeFade: View {
                     .frame(height: bar)
             } else {
                 let height = bar + Self.tail
-                Rectangle().fill(.regularMaterial)
+                // Thin, so the cards still show through blurred, as under Mail's
+                // bar, and fading out over a longer way rather than ending in a band.
+                Rectangle().fill(.thinMaterial)
                     .mask {
                         LinearGradient(stops: [.init(color: .black, location: 0),
-                                               .init(color: .black, location: (bar - statusBar * 0.4) / max(height, 1)),
+                                               .init(color: .black, location: statusBar * 0.5 / max(height, 1)),
+                                               .init(color: .black.opacity(0.8), location: bar / max(height, 1)),
                                                .init(color: .clear, location: 1)],
                                        startPoint: .top, endPoint: .bottom)
                     }
@@ -386,6 +392,10 @@ private struct PageBar: View {
     /// The selected club's hour now, for the lights in the boat menu.
     let now: ForecastHour?
     let waterC: Double?
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// White over dark glass, black over light, as the system's page dots.
+    private var dotColor: Color { colorScheme == .dark ? .white : .black }
 
     /// The buttons' height, which every piece shares.
     static let buttonHeight: CGFloat = 44
@@ -415,8 +425,9 @@ private struct PageBar: View {
             HStack(spacing: 0) {
                 ForEach(clubs) { club in
                     let current = club.id == selection
-                    // The current page differs in size and shape, not only in shade:
-                    // Liquid Glass lifts dim symbols, which hid a fainter shade alone.
+                    // Fixed colours, as Weather's dots: Liquid Glass draws the label
+                    // colours vibrant, which evened out a fainter shade of them, so the
+                    // current page did not light up.
                     Group {
                         if club.id == homeID {
                             Image(systemName: current ? "house.fill" : "house").font(.caption2)
@@ -424,7 +435,7 @@ private struct PageBar: View {
                             Circle().frame(width: current ? 8 : 6, height: current ? 8 : 6)
                         }
                     }
-                    .foregroundStyle(current ? Color.primary : Color.primary.opacity(0.3))
+                    .foregroundStyle(dotColor.opacity(current ? 1 : 0.4))
                     .accessibilityAddTraits(current ? .isSelected : [])
                     // Wider than the dot and as tall as the bar, so it is easier to hit.
                     .frame(width: 16, height: Self.buttonHeight)
