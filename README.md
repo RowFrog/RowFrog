@@ -150,24 +150,27 @@ are none.
 
 **Lake view and route planning.** A tile opens a map of the whole lake with
 waves, wind and the light for each part of the lake, and a spot you can tap
-for its details. A legend lists what is on the map, a switch puts Apple's
-satellite pictures under the lake, and wind arrows get denser as you zoom in.
+for its details. Stacked layer buttons at the right switch between the light,
+waves and wind, a slim colour strip above the panel opens the legend, a
+button at the top puts Apple's satellite pictures under the lake, and wind arrows get denser as you zoom in.
 The arrows cover the whole map, on the satellite picture too: over land they
 come from the weather map's wind, blended into the lake's arrows over the last
 kilometre to the shore.
 "Plan a route" checks a route on the lake against the
-forecast for the time you start, rowed one way (the default) or out and
-back, and shows
+forecast for the time you start; a "Way back" choice picks one way (the
+default), out and back or a loop. It shows
 where and when it gets rough. The way out and the way back are drawn side
 by side, and "Lake at the boat's time" adds a slider that shows the lake as
 it will be where the boat is at each moment. Turning points move with a plain
 drag, sitting just above the finger with a magnifier and a dashed preview of
 the route; tapping or pulling a stretch of the route adds a point there.
-Points can be deleted, and a loop closes when it ends within 50 m of the start or with a
-button. While planning, a compact panel shows only the route's result,
-start time, pace and out and back, so the map keeps the screen. Routes are
+Points can be deleted, and a loop also closes when the route ends within 50 m
+of the start. While planning, a compact panel holds the route's result, start
+time, pace, the way back, undo and the saved routes, so the map keeps the
+screen. Routes are
 saved on the phone; "Manage routes" lists them with their length and whether
-they are a loop, to rename, duplicate, delete or reorder. "Import a row" turns a row you already did into a
+they are a loop, to rename, duplicate, delete or reorder. "Import a row" (in
+the Routes menu) turns a row you already did into a
 route: a rowing workout from Apple Health or a GPX, TCX or FIT file from
 another app, with the real pace as the starting pace and the rowed track as
 an optional line on the map. Health access is asked for only for this, and
