@@ -110,9 +110,9 @@ struct LocationPageView: View {
                                 if twoColumns {
                                     // The page's end goes into the shorter column too, and the maps
                                     // there grow, so both columns end level (BalancedColumns).
-                                    BalancedColumns(tallestCard: geometry.size.height - 32) {
+                                    BalancedColumns(tallestCard: StressProbe.variant == 5 ? 0 : geometry.size.height - 32) {
                                         ForEach(cards) { pageCard($0, forecast: forecast, now: now, twoColumns: true) }
-                                        pageEnd(forecast)
+                                        if StressProbe.variant != 6 { pageEnd(forecast) }
                                     }
                                 } else {
                                     ForEach(cards) { pageCard($0, forecast: forecast, now: now, twoColumns: false) }
@@ -281,14 +281,14 @@ struct LocationPageView: View {
                 let folds = twoColumns && AppSettings.shared.activeColumnFill == .fold
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale(),
                            folds: folds, open: $hourlyOpen)
-                    .modifier(StickyHourlyCut(sticky: sticky))
+                    .modifier(StickyHourlyCut(sticky: StressProbe.variant == 8 ? StickyHourly() : sticky))
             }
             .id("hourly")
             // Opened, the table still counts with its folded height, so no other card moves or grows.
             .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                if !hourlyOpen { foldedHourlyHeight = height }
+                if !hourlyOpen && StressProbe.variant != 7 { foldedHourlyHeight = height }
             }
-            .layoutValue(key: ColumnSortHeight.self, value: hourlyOpen ? foldedHourlyHeight : nil)
+            .layoutValue(key: ColumnSortHeight.self, value: hourlyOpen && StressProbe.variant != 7 ? foldedHourlyHeight : nil)
         case .launchPoint:
             VStack(spacing: 16) {
                 if tourSeen && showLaunchPointTip {
