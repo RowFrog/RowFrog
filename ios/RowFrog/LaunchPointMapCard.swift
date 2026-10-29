@@ -37,7 +37,8 @@ struct LaunchPointMapCard: View {
                     .accessibilityHint(tr("Shows a map you can move"))
                 }
             }
-            .frame(height: 220)
+            // Taller when the club page's columns need it filled (BalancedColumns).
+            .frame(minHeight: 220, idealHeight: 220, maxHeight: .infinity)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .onChange(of: isCurrentPage) { if !isCurrentPage { live = false } }
             .onChange(of: club.id) { live = false }
@@ -166,7 +167,7 @@ struct LaunchPointSnapshot: View {
 
     var body: some View {
         GeometryReader { geometry in
-            let key = "\(coordinate.latitude),\(coordinate.longitude),\(region.span.latitudeDelta),\(Int(geometry.size.width)),\(colorScheme == .dark)" as NSString
+            let key = "\(coordinate.latitude),\(coordinate.longitude),\(region.span.latitudeDelta),\(Int(geometry.size.width)),\(Int(geometry.size.height)),\(colorScheme == .dark)" as NSString
             ZStack {
                 if let image {
                     Image(uiImage: image).resizable()

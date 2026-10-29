@@ -8,7 +8,7 @@ import {
   dot, setTitle, openSheet, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, selectedBoat, boatLimits, boatInSentence, windUnit,
   CONDITION_ICONS,
 } from "./shared.js";
-import { compass, matchesStandard, allowsMore, coldWaterKit, reasonCondition } from "./logic.js";
+import { compass, matchesStandard, allowsMore, coldWaterKit, reasonCondition, key } from "./logic.js";
 import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
@@ -164,12 +164,12 @@ function windText(hour) {
   return `${speed}${w.fromDeg != null ? ` ${t("from %@", compass(w.fromDeg))}` : ""}, ${t("gusts up to %@", wind(w.gust))}`;
 }
 
-/** What holds for the whole lake this hour, such as a DWD storm warning or darkness (LakeWideBanner). */
-function lakeWideBanner(lakeWide) {
+/** What holds for the whole lake (or river stretch) this hour, such as a DWD storm warning or darkness (LakeWideBanner). */
+function lakeWideBanner(lakeWide, view) {
   if (lakeWide.light === "green") return "";
   const first = lakeWide.reasons[0];
   return `<p class="lake-wide ${lakeWide.light === "red" ? "red" : "orange"}">${icon(first ? CONDITION_ICONS[reasonCondition(first.condition)] : "triangle-alert")}
-    <span>${h(t("Whole lake: %@", lakeWide.reasons.map(reasonLabel).join(", ")))}</span></p>`;
+    <span>${h(t(waterKind(view) === "lake" ? key("Whole lake: %@") : key("Whole stretch: %@"), lakeWide.reasons.map(reasonLabel).join(", ")))}</span></p>`;
 }
 
 /** Which boat the lake is coloured for, with a warning when it takes more wind or waves than the ticked one (MapBoatNote). */
@@ -216,7 +216,7 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
         <small class="sub">${h(t("Now, %@", time(hour.time)))}</small>
         <strong class="headline">${h(headlineText(view, hour))}</strong>
         ${stale ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
-        ${lakeWideBanner(hour.lakeWide)}
+        ${lakeWideBanner(hour.lakeWide, view)}
         ${mapBoatNote()}
         ${zones ? `<ul class="zones">${zones}</ul>` : ""}
         ${windLine ? `<p class="small sub">${icon("wind")} ${h(windLine)}</p>` : ""}
@@ -224,7 +224,15 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
         <span class="tint">${h(t("Open lake view"))} ${icon("chevron-right")}</span>
       </div></a>`;
   box.hidden = false;
-  drawMiniMap(box.querySelector("canvas"), view, hour, clubId);
+  const canvas = box.querySelector("canvas");
+  drawMiniMap(canvas, view, hour, clubId);
+  // Drawn again when it grows to fill its column (balanceCards in app.js).
+  let size = `${canvas.clientWidth}x${canvas.clientHeight}`;
+  new ResizeObserver(() => {
+    const now = `${canvas.clientWidth}x${canvas.clientHeight}`;
+    if (now !== size && canvas.isConnected) drawMiniMap(canvas, view, hour, clubId);
+    size = now;
+  }).observe(canvas);
 }
 
 // ---- The full lake map ----------------------------------------------------------------
@@ -514,7 +522,7 @@ function viewingPanel(hour) {
   return `<div class="segmented" id="layers">${layers.map(([k, label]) => `<button data-layer="${k}" class="${page.layer === k ? "on" : ""}">${h(label)}</button>`).join("")}</div>
     <p class="panel-head"><strong>${h(dayTime(hour.time))}</strong>${view.sample ? `<span class="small orange strong">${icon("triangle-alert")} ${h(t("Sample wind"))}</span>` : ""}</p>
     ${stale ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
-    ${lakeWideBanner(hour.lakeWide)}
+    ${lakeWideBanner(hour.lakeWide, view)}
     ${kitBadge(view)}
     ${details}
     ${legendLine()}
@@ -570,7 +578,7 @@ function planningPanel(hour) {
       ${page.rowed?.track ? `<label class="tick inline"><input type="checkbox" id="show-track" ${page.showTrack ? "checked" : ""}> ${icon("spline")} ${h(t("Show rowed track"))}</label>` : ""}
     </div>
     ${routeTip(isLoop)}
-    ${lakeWideBanner(hour.lakeWide)}
+    ${lakeWideBanner(hour.lakeWide, view)}
     ${kitBadge(view)}
     <div class="route-controls">
       <span class="start"><button class="tool" id="earlier" aria-label="${h(t("An hour earlier"))}" ${page.hour <= 0 ? "disabled" : ""}>${icon("chevron-left")}</button>

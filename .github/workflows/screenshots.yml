@@ -305,6 +305,9 @@ jobs:
           for page in 0 1 2 3 4 5 6 7 8 9 10; do
             GUIDE=1 shoot "27-tour-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de
           done
+          # The river page, only there with a river or canal club in the list (page 11).
+          GUIDE=1 shoot 245-tour-river light -RWNoTips YES -RWTutorialPage 11 -RWHomeClub akademischer-ruderclub-wuerzburg -RWSavedClubs '(akademischer-ruderclub-wuerzburg)'
+          GUIDE=1 shoot 246-tour-river-german-dark dark -RWNoTips YES -RWTutorialPage 11 -RWHomeClub akademischer-ruderclub-wuerzburg -RWSavedClubs '(akademischer-ruderclub-wuerzburg)' -RWLanguage de
           GUIDE=1 shoot 28-tip-hourly light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWScrollTo hourly
           GUIDE=1 shoot 29-tip-launch-point light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWScrollTo launchpoint
           GUIDE=1 shoot_pages 30-tips-settings light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES
@@ -489,6 +492,9 @@ jobs:
           shoot 105-arrange-page light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 106-arrange-page-german-dark dark -RWOpenClub mrc-1880 -RWArrange YES -RWLanguage de
           shoot_n 107-club-page-landscape 7 light -RWOpenClub mrc-1880 -RWLandscape YES
+          # Two columns ending level: the page's end with the 48 hours folded to 24, then opened.
+          WAIT=30 shoot 245-club-page-landscape-end light -RWOpenClub mrc-1880 -RWLandscape YES -RWScrollTo bottom
+          WAIT=30 shoot 246-club-page-landscape-end-table-open light -RWOpenClub mrc-1880 -RWLandscape YES -RWScrollTo bottom -RWHourlyOpen YES
           shoot_n 108-club-page-german-dark 3 dark -RWOpenClub mrc-1880 -RWLanguage de
           # The home-screen and lock-screen widget in every size, with the home base's live forecast.
           shoot_pages 32-widgets light -RWWidgetGallery YES

@@ -325,7 +325,11 @@ button next to the cog open the same boat picker; it shows the light each
 boat would get there now.
 
 **Wide screens.** Phones on their side and the unfolded iPhone Duo get wide
-layouts (two columns from 600 pt, a side list from 860 × 560 pt).
+layouts (two columns from 600 pt, a side list from 860 × 560 pt). In two
+columns both end level: the 48 hours show 24 with "Show 24 more hours", the
+forecast source, Arrange this page and the credits go into the shorter
+column, and the lake view and launch point maps there grow (at most one
+screen tall each). The website does the same.
 
 **iPad.** The app runs natively on iPad in all four orientations, with the
 same wide layouts (side list 400 pt wide). The Landscape setting is hidden
