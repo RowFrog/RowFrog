@@ -8,13 +8,28 @@ import Foundation
 struct RiverConditions: Codable, Hashable {
     /// The symbol of the Current tile and of the river reasons.
     static let symbol = "arrow.right.circle"
+    /// How long the gauge's reading counts in the forecast (river.py GAUGE_HOURS).
+    static let gaugeHours = 24.0
 
     /// Missing where no federal gauge is on the club's river nearby.
     let gauge: RiverGauge?
     /// Missing without a gauge or when its last reading is too old.
-    let now: RiverReading?
+    var now: RiverReading?
     var limits: CurrentLimits? = nil
     var attribution: String? = nil
+
+    /// With the current limits of the user's boat: the tile's light and the limits it names.
+    func applying(_ limits: RowingLimits) -> RiverConditions {
+        var copy = self
+        let amber = limits.value(.currentAmber), red = limits.value(.currentRed)
+        copy.limits = CurrentLimits(currentAmberMs: amber, currentRedMs: red)
+        if var now {
+            let level: Light = now.state == "shipping_stopped" ? .red : now.state == "high" ? .amber : .green
+            now.light = max(level, limits.light(now.speedMs, .currentAmber, .currentRed))
+            copy.now = now
+        }
+        return copy
+    }
 }
 
 struct RiverGauge: Codable, Hashable {
@@ -48,7 +63,7 @@ struct RiverReading: Codable, Hashable {
     /// Mid-river, measured at the gauge or estimated from the discharge.
     let speedMs: Double?
     let speedMeasured: Bool
-    let light: Light
+    var light: Light
     let history: [RiverLevel]
 
     var stateTitle: String {
