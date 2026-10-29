@@ -78,6 +78,8 @@ struct LocationPageView: View {
     private let launchPointTip = LaunchPointTip()
     private let topTileTip = TopTileTip()
     private let waterEstimateTip = WaterEstimateTip()
+    private let waterLevelTip = WaterLevelTip()
+    @State private var showWaterLevelTip = false
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
@@ -186,6 +188,7 @@ struct LocationPageView: View {
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .tipVisibility(topTileTip, $showTopTileTip)
                 .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
+                .tipVisibility(waterLevelTip, $showWaterLevelTip)
                 .tipVisibility(radarMapTip, $showRadarMapTip)
                 .tipVisibility(hourViewTip, $showHourViewTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
@@ -246,8 +249,11 @@ struct LocationPageView: View {
                 .id("radar")
         case .conditions:
             VStack(spacing: 16) {
-                // One tip at a time: the radar's two follow the first.
-                if tourSeen && showConditionsTip {
+                // One tip at a time: the radar's two follow the first. The water level
+                // tip comes first, as it only shows while Forggensee is let down.
+                if tourSeen && showWaterLevelTip && forecast.waterLevel?.isLowered == true {
+                    TipView(waterLevelTip)
+                } else if tourSeen && showConditionsTip {
                     TipView(conditionsTip)
                 } else if tourSeen && showRainRadarTip {
                     TipView(rainRadarTip)

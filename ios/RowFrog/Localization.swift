@@ -553,6 +553,8 @@ enum German {
         // Lakes let down for the winter (Forggensee): Water level tile
         "Drained": "Abgelassen",
         "Lowered": "Abgesenkt",
+        "Water level in winter": "Wasserstand im Winter",
+        "Forggensee is let down every winter. While it is lowered, the Water level tile below takes the place of the ice estimate. Tap it for the last week's levels.": "Der Forggensee wird jeden Winter abgesenkt. Solange er abgesenkt ist, steht unten die Kachel „Wasserstand“ statt der Eisabschätzung. Tippe darauf für die Pegel der letzten Woche.",
         "Full": "Voll",
         "Lake lowered": "See abgesenkt",
         "Lake drained": "See abgelassen",

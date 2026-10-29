@@ -724,6 +724,13 @@ struct TopTileTip: Tip {
     var image: Image? { Image(systemName: "hand.tap") }
 }
 
+/// Only on a lake let down for the winter (Forggensee), once its Water level tile shows.
+struct WaterLevelTip: Tip {
+    var title: Text { Text(tr("Water level in winter")) }
+    var message: Text? { Text(tr("Forggensee is let down every winter. While it is lowered, the Water level tile below takes the place of the ice estimate. Tap it for the last week's levels.")) }
+    var image: Image? { Image(systemName: LakeLevel.symbol) }
+}
+
 struct WaterEstimateTip: Tip {
     var title: Text { Text(tr("Water temperature from space")) }
     var message: Text? { Text(tr("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date.")) }
