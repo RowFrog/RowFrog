@@ -178,7 +178,9 @@ everything stays on the phone (`ios/RowFrog/RowTrack.swift`).
 lake view becomes a River or Canal view with pins at the stretch's ends, and
 the satellite picture shows that stretch. In place of the ice tile a Current
 tile shows the flow speed and the water level from the nearest PEGELONLINE
-gauge, with a level chart and the pace upstream and downstream. Shipping
+gauge, with a level chart and the pace upstream and downstream. "Plan a
+route" counts its times with that current, faster downstream and slower
+upstream, and warns where the boat would hardly make headway. Shipping
 stopped turns the light red, high water amber; the current turns it amber
 from 1.5 m/s and red above 2.5 m/s (`backend/rowfrog/river.py`,
 `ios/RowFrog/RiverCurrent.swift`).
