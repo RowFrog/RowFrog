@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         ref: ["1b667e6"]
-        cut: ["none", "padding", "layout", "layout-fade", "fonts", "glass"]
+        cut: ["all", "bar-inset", "bar-only", "dyn"]
     runs-on: macos-15-intel
     timeout-minutes: 75
     steps:
@@ -47,17 +47,27 @@ jobs:
               open(path, "w").write(s.replace(old, new))
           page = "ios/RowFrog/LocationPageView.swift"
           root = "ios/RowFrog/RootView.swift"
-          if cut in ("padding", "layout", "layout-fade"):
-              edit(page, ".safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))", "")
-              edit(page, ".safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))", "")
-          if cut in ("layout", "layout-fade"):
-              edit(root, ".ignoresSafeArea(edges: [.top, .bottom])", "")
-          if cut == "layout-fade":
-              edit(root, "TopEdgeFade(statusBar: insets.top)", "Color.clear.frame(height: 0)")
-          if cut == "fonts":
-              edit("ios/RowFrog/ScaledFont.swift", "content.font(.system(size: min(scaled, size * maxGrowth), weight: weight))", "content.font(.system(size: size, weight: weight))")
-          if cut == "glass":
-              edit("ios/RowFrog/Backgrounds.swift", "            glass(in: shape)\n", "            background(shape.fill(.regularMaterial))\n")
+          if cut in ("all", "bar-inset"):
+              cut_list = ["layout-fade", "fonts", "glass"]
+          else:
+              cut_list = [cut]
+          if cut in ("bar-inset", "bar-only"):
+              edit(root, "        .overlay(alignment: .bottom) {\n            let forecast", "        .safeAreaInset(edge: .bottom, spacing: 0) {\n            let forecast")
+          if cut == "dyn":
+              edit(root, ".dynamicTypeSize(...DynamicTypeSize.large)", "")
+              edit(root, ".accessibilityShowsLargeContentViewer()", "")
+          for cut in cut_list:
+            if cut in ("padding", "layout", "layout-fade"):
+                edit(page, ".safeAreaPadding(.top, max(0, pageMargins.top - geometry.safeAreaInsets.top))", "")
+                edit(page, ".safeAreaPadding(.bottom, max(0, pageMargins.bottom - geometry.safeAreaInsets.bottom))", "")
+            if cut in ("layout", "layout-fade"):
+                edit(root, ".ignoresSafeArea(edges: [.top, .bottom])", "")
+            if cut == "layout-fade":
+                edit(root, "TopEdgeFade(statusBar: insets.top)", "Color.clear.frame(height: 0)")
+            if cut == "fonts":
+                edit("ios/RowFrog/ScaledFont.swift", "content.font(.system(size: min(scaled, size * maxGrowth), weight: weight))", "content.font(.system(size: size, weight: weight))")
+            if cut == "glass":
+                edit("ios/RowFrog/Backgrounds.swift", "            glass(in: shape)\n", "            background(shape.fill(.regularMaterial))\n")
           print("cut", cut)
           PY
           git diff --stat
@@ -95,6 +105,16 @@ jobs:
             sleep 2
             SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog -RWSafetyAccepted YES -RWWhatsNewSeen 1000 \
               -RWDemoClubs YES -RWTutorialSeen YES -RWNoTips YES -RWAllowsLandscape YES -RWStress YES > /dev/null
-            sleep 90
+            sampled=""
+            for i in $(seq 1 18); do
+              sleep 5
+              if [ -z "$sampled" ] && [ ! -f /tmp/sample.txt ] && grep -q "STALL still" "$DATA/Documents/stress.log" 2>/dev/null; then
+                PID=$(pgrep -f 'RowFrog.app/RowFrog' | head -1)
+                sample "$PID" 3 -file /tmp/sample.txt > /dev/null 2>&1 || echo "sample failed"
+                sampled=1
+              fi
+            done
             echo "RESULT cut=${{ matrix.cut }} try $n: hangs over 10 s: $(grep -c 'STALL still' "$DATA/Documents/stress.log" || true), finished: $(grep -c done "$DATA/Documents/stress.log" || true), turns: $(grep -c turn "$DATA/Documents/stress.log" || true)"
           done
+          echo "=== RowFrog frames during the first hang ==="
+          [ -f /tmp/sample.txt ] && grep -o '[^!+|:]*(in RowFrog.debug.dylib)[^[]*' /tmp/sample.txt | sed 's/^ *[0-9]* //' | sort | uniq -c | sort -rn | head -40 || echo "no hang sampled"
