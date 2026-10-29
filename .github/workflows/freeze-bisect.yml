@@ -11,7 +11,7 @@ jobs:
       fail-fast: false
       matrix:
         ref: ["1b667e6"]
-        cut: ["all", "bar-inset", "bar-only", "dyn"]
+        cut: ["all", "fade+fonts", "fade+glass", "fonts+glass"]
     runs-on: macos-15-intel
     timeout-minutes: 75
     steps:
@@ -50,7 +50,7 @@ jobs:
           if cut in ("all", "bar-inset"):
               cut_list = ["layout-fade", "fonts", "glass"]
           else:
-              cut_list = [cut]
+              cut_list = [c.replace("fade", "layout-fade") for c in cut.split("+")]
           if cut in ("bar-inset", "bar-only"):
               edit(root, "        .overlay(alignment: .bottom) {\n            let forecast", "        .safeAreaInset(edge: .bottom, spacing: 0) {\n            let forecast")
           if cut == "dyn":
@@ -100,7 +100,7 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
           xcrun simctl install "$UDID" ios/build/Build/Products/Debug-iphonesimulator/RowFrog.app
           DATA=$(xcrun simctl get_app_container "$UDID" com.rowfrog.RowFrog data)
-          for n in 1 2 3 4; do
+          for n in 1 2 3 4 5; do
             perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             sleep 2
             SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog -RWSafetyAccepted YES -RWWhatsNewSeen 1000 \
