@@ -257,7 +257,8 @@ export function skyNow(d) {
     if ((hour.temperatureC ?? 10) <= 0) return "snow";
     return (a.steps[0]?.mm ?? 0) >= 10 ? "heavyRain" : "rain";
   }
-  return wet ? sky(null, hour.cloudCoverPct, 0) : model;
+  // The radar's dry hides the model's rain, not its drizzle under 0.1 mm, which the radar cannot see.
+  return wet && !traceKind(hour) ? sky(null, hour.cloudCoverPct, 0) : model;
 }
 
 /** The first forecast hour with rain after the radar's two hours (or from the shown hour without radar). */
@@ -273,8 +274,14 @@ export function forecastRain(d) {
  */
 export const wetHour = (x) => (x.precipitationMm ?? 0) >= 0.1 || kindOf(x) != null;
 
+/** What falls in this hour while its amount stays under 0.1 mm (drizzle and the like), or null. */
+export const traceKind = (hour) => ((hour.precipitationMm ?? 0) < 0.1 ? kindOf(hour) : null);
+
+/** How little such a trace is. */
+export const traceNote = () => (unitSymbol("rain") === "mm" ? t("Under %@", rain(0.1)) : t("Barely measurable"));
+
 /** Drizzle and the like whose amount stays under 0.1 mm: named, with how little it is. */
-const trace = (hour) => ({ value: t(kindOf(hour)), detail: unitSymbol("rain") === "mm" ? t("Under %@", rain(0.1)) : t("Barely measurable"), fromRadar: false });
+const trace = (hour) => ({ value: t(kindOf(hour)), detail: traceNote(), fromRadar: false });
 
 /** The rain tile's and the top tile's two lines: the radar for two hours, then the forecast (ConditionData.rainLines). */
 export function rainLines(d) {
@@ -286,7 +293,7 @@ export function rainLines(d) {
   if (a) {
     const outlook = rainOutlook(a, d.timeline);
     // The radar's dry wins over the forecast's rain, but not over its drizzle under 0.1 mm, which it cannot see.
-    const traceNow = !outlook.now && (d.now.precipitationMm ?? 0) < 0.1 && kindOf(d.now);
+    const traceNow = !outlook.now && traceKind(d.now);
     const value = outlook.now ?? (traceNow ? t(traceNow) : t("Dry"));
     if (outlook.next) return { value, detail: outlook.next.text, fromRadar: outlook.next.fromRadar };
     return traceNow ? trace(d.now) : { value, detail: later(), fromRadar: false };
