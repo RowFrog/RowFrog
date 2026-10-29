@@ -305,6 +305,9 @@ jobs:
           for page in 0 1 2 3 4 5 6 7 8 9 10; do
             GUIDE=1 shoot "27-tour-german-dark-p$((page + 1))" dark -RWNoTips YES -RWTutorialPage $page -RWLanguage de
           done
+          # The river page, only there with a river or canal club in the list (page 11).
+          GUIDE=1 shoot 245-tour-river light -RWNoTips YES -RWTutorialPage 11 -RWHomeClub akademischer-ruderclub-wuerzburg -RWSavedClubs '(akademischer-ruderclub-wuerzburg)'
+          GUIDE=1 shoot 246-tour-river-german-dark dark -RWNoTips YES -RWTutorialPage 11 -RWHomeClub akademischer-ruderclub-wuerzburg -RWSavedClubs '(akademischer-ruderclub-wuerzburg)' -RWLanguage de
           GUIDE=1 shoot 28-tip-hourly light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWScrollTo hourly
           GUIDE=1 shoot 29-tip-launch-point light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWScrollTo launchpoint
           GUIDE=1 shoot_pages 30-tips-settings light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES

@@ -134,10 +134,14 @@ struct WhatsNewView: View {
 
 // MARK: - Tour
 
-/// The tour's pages, in order. The two choice pages only show while there is no home base.
+/// The tour's pages. The two choice pages only show while there is no home base,
+/// the river page only with a river or canal club in the list.
 enum TourPage: Int, CaseIterable, Identifiable {
-    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, boats, lake, locations, wideScreen, settings
+    case welcome, homeBase, moreClubs, rowingLight, conditions, warnings, boats, lake, locations, wideScreen, settings, river
     var id: Int { rawValue }
+
+    /// The order they come in; `river` is last in the enum so `-RWTutorialPage n` keeps its numbers.
+    static let order: [TourPage] = [.welcome, .homeBase, .moreClubs, .rowingLight, .conditions, .warnings, .boats, .lake, .river, .locations, .wideScreen, .settings]
 
     var isChoice: Bool { self == .homeBase || self == .moreClubs }
 
@@ -151,6 +155,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .warnings: "exclamationmark.triangle.fill"
         case .boats: "figure.rower"
         case .lake: "map.fill"
+        case .river: RiverConditions.symbol
         case .locations: "list.bullet"
         case .wideScreen: "rectangle.split.2x1"
         case .settings: "gearshape"
@@ -161,7 +166,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         switch self {
         case .welcome, .homeBase, .moreClubs, .locations: .blue
         case .rowingLight: .green
-        case .conditions, .lake: .teal
+        case .conditions, .lake, .river: .teal
         case .warnings: .orange
         case .boats: .mint
         case .wideScreen: .indigo
@@ -179,6 +184,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .warnings: tr("Official warnings")
         case .boats: tr("Your boats and limits")
         case .lake: tr("Lake view and routes")
+        case .river: tr("Rivers and canals")
         case .locations: tr("Your locations")
         case .wideScreen: tr("Landscape and wide screens")
         case .settings: tr("Settings")
@@ -195,6 +201,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .warnings: tr("Official warnings come right under the rowing light.")
         case .boats: tr("The rowing light is worked out for one boat. Pick it at the top of the settings.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")
+        case .river: tr("A river or canal club gets its own two tiles.")
         case .locations: tr("Keep all the places you row in one list.")
         case .wideScreen: tr("Turn your iPhone sideways, or use a wide screen, to see more at once.")
         case .settings: tr("Open the settings with the cog at the top of the location list.")
@@ -244,6 +251,11 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "point.topleft.down.to.point.bottomright.curvepath", text: tr("Plan a route: tap your turning points to see the light along the way and the best time to start.")),
             TourPoint(symbol: "bookmark", text: tr("Save the routes you row often in the Routes menu.")),
             TourPoint(symbol: "globe.europe.africa", text: tr("Below it, the latest satellite picture of the lake, with a switch to the clearest one.")),
+        ]
+        case .river: [
+            TourPoint(symbol: "map", text: tr("The River view or Canal view shows your stretch between weirs or locks, with markers where it ends.")),
+            TourPoint(symbol: RiverConditions.symbol, text: tr("The Current tile shows the nearest gauge's flow speed, water level and trend. It is amber at high water or a fast current, red when shipping is stopped or the current is too strong.")),
+            TourPoint(symbol: "hand.tap", text: tr("Tap it for the level chart and your pace upstream and downstream.")),
         ]
         case .locations: [
             TourPoint(symbol: "hand.draw", text: tr("Swipe left and right to move between your clubs. The house marks your home base.")),
@@ -300,7 +312,7 @@ struct TutorialView: View {
         }
         // A tour already running goes on where it was: on a first start the view
         // behind it changes once the home base is picked, which builds it again.
-        let pages = TourProgress.pages ?? TourPage.allCases.filter { locations.homeID == nil || !$0.isChoice }
+        let pages = TourProgress.pages ?? TourPage.order.filter { locations.homeID == nil || !$0.isChoice }
         let start = TourProgress.page ?? TourPage(rawValue: UserDefaults.standard.integer(forKey: "RWTutorialPage")) ?? .welcome
         TourProgress.pages = pages
         _pages = State(initialValue: pages)
@@ -308,6 +320,9 @@ struct TutorialView: View {
     }
 
     var body: some View {
+        // The river page comes and goes with the clubs picked on the first two pages.
+        let hasRiver = locations.saved.contains { locations.lake(of: $0)?.section != nil }
+        let pages = self.pages.filter { $0 != .river || hasRiver }
         let index = pages.firstIndex(of: page) ?? 0
         let isLast = index == pages.count - 1
         let needsHome = locations.homeID == nil
@@ -604,7 +619,7 @@ private struct TourPageView: View {
             }
             .padding()
             .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-        case .homeBase, .moreClubs, .warnings, .boats, .lake, .locations, .wideScreen, .settings:
+        case .homeBase, .moreClubs, .warnings, .boats, .lake, .river, .locations, .wideScreen, .settings:
             EmptyView()
         }
     }
