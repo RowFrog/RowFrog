@@ -312,8 +312,11 @@ private struct LocationSummaryRow: View {
                     if let forecast, let sun = forecast.sunState(at: .now) {
                         Group {
                             switch sun {
-                            case let .up(_, sunset): Label(tr("Sunset %@", Format.time(sunset)), systemImage: "sunset.fill")
-                            case let .down(sunrise, _): Label(tr("Sunrise %@", Format.time(sunrise)), systemImage: "sunrise.fill")
+                            // Symbol and time only, like the numbers beside it; VoiceOver still says the word.
+                            case let .up(_, sunset): Label(Format.time(sunset), systemImage: "sunset.fill")
+                                .accessibilityLabel(tr("Sunset %@", Format.time(sunset)))
+                            case let .down(sunrise, _): Label(Format.time(sunrise), systemImage: "sunrise.fill")
+                                .accessibilityLabel(tr("Sunrise %@", Format.time(sunrise)))
                             }
                         }
                         .font(.caption)

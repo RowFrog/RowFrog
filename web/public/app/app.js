@@ -374,7 +374,7 @@ async function fillRow(row) {
       <small class="why${hour.reasons.length ? "" : " one-line"}">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
       ${kit ? `<small class="kit-line" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")} ${h(coldWaterText(kit)[0])}</small>` : ""}
       ${warning ? `<small class="warn ${warning.severity === "minor" ? "orange" : "red"}">${icon("triangle-alert")} ${h(shortWarning(warning))}</small>` : ""}
-      ${sun ? `<small class="sub">${icon(sun.up ? "sunset" : "sunrise")} ${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}</small>` : ""}
+      ${sun ? `<small class="sub"><span role="img" aria-label="${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}">${icon(sun.up ? "sunset" : "sunrise")} ${h(time(sun.up ? sun.sunset : sun.sunrise))}</span></small>` : ""}
     </div>
     <div class="metrics">
       <span class="${water == null && estimate != null ? "sub" : ""}">${conditionIcon("waterTemperature")}${h(water == null && estimate != null ? `≈ ${degrees(estimate, 1)}` : degrees(water, 1))}</span>
