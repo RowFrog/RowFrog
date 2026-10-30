@@ -393,6 +393,7 @@ body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }
 /* "All within the limits" on one line, as in the app's list row. */
 .row-why .why.one-line { display: block; white-space: nowrap; text-overflow: ellipsis; }
 .row-why .warn { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-why .warn.sub { font-weight: 400; }
 .metrics { display: grid; grid-template-columns: auto auto; gap: 6px 12px; font-size: 12px; flex: none; }
 .metrics span { display: inline-flex; gap: 5px; align-items: center; white-space: nowrap; }
 .round { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--fill); color: var(--accent); flex: none; }
@@ -898,3 +899,5 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 @keyframes radar-pulse { 50% { opacity: .15; } }
 @media (prefers-reduced-motion: reduce) { .radar-mark.loading { animation: none; } }
 .radar-mark.missing::after { content: ""; position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1.5px; border-radius: 1px; background: currentColor; transform: translateX(-50%) rotate(-45deg); }
+/* "Now" and "Later" above the warnings they group (WarningsCard.SectionLabel). */
+.warn-group { margin: 10px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--sub); }
