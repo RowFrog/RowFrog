@@ -18,7 +18,7 @@ struct LakeViewCard: View {
 
     var body: some View {
         Group {
-            if let view = store.views[lakeID] {
+            if let view = store.views[lakeID, club: clubID] {
                 card(view)
             } else if !store.failed.contains(lakeID) {
                 Card(title: water.viewTitle, symbol: "map") {
@@ -28,7 +28,7 @@ struct LakeViewCard: View {
         }
         .task { await load() }
         .fullScreenCover(isPresented: $showingMap) {
-            if let view = store.views[lakeID] {
+            if let view = store.views[lakeID, club: clubID] {
                 LakeMapScreen(view: view, clubID: clubID)
             }
         }
@@ -41,7 +41,7 @@ struct LakeViewCard: View {
         await store.load(lakeID)
         // Only on the page `-RWOpenClub` opens: clubs on the same lake would race it for the sheet.
         let page = UserDefaults.standard.string(forKey: "RWOpenClub")
-        if UserDefaults.standard.bool(forKey: "RWOpenLakeView"), store.views[lakeID] != nil, page == nil || page == clubID {
+        if UserDefaults.standard.bool(forKey: "RWOpenLakeView"), store.views[lakeID, club: clubID] != nil, page == nil || page == clubID {
             showingMap = true
         }
     }
@@ -94,7 +94,7 @@ struct LakeViewCard: View {
             if hour.lakeWide.light > .green {
                 LakeWideBanner(lakeWide: hour.lakeWide, water: water)
             }
-            MapBoatNote()
+            MapBoatNote(clubID: clubID)
             if view.zones.count > 1 {
                 ForEach(Array(zip(view.zones.indices, view.zones)), id: \.0) { i, zone in
                     if i < hour.zones.count {

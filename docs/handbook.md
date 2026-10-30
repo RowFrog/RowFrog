@@ -118,6 +118,30 @@ real export file.
 Health access can be changed later in the Health app > Sharing > Apps >
 Row Frog. Nothing read from Health or a file leaves the phone.
 
+### Testing boats kept at clubs
+
+Own boats show only on the pages of the clubs where they are kept (owner's
+choice A, 30 Oct 2026). Small and big boats are everywhere.
+
+1. Settings > Boats and limits > **Add a boat**: the new boat is kept at the
+   home base. Its page has a **Kept at** list: **Add a club** picks one of the
+   saved clubs, **Remove** takes one off (the last club stays).
+2. On another club's page, open the boat menu (the boat button in the page bar
+   or "For small boats" in the top tile). The boat shows under **At other
+   clubs**; a tap takes it to this club and ticks it.
+3. With an own boat ticked, a club where it is not kept uses small boats, the
+   strictest limits: top tile, rowing light, charts, lake tile and map all say
+   "for small boats". The tick itself stays, so the boat's own clubs keep it.
+4. "A steadier boat helps" names only boats kept at that club.
+5. iPad held sideways (club list beside the page): the boat button sits at the
+   list's foot after the search (cog, search, boat), not in the page bar
+   (owner's choice A for the placement; the other options are in the Website
+   thread's mock-up).
+
+Boats from before this change are put at the home base on the first start
+after the update. In `-RWMyBoats` a boat's clubs are a comma-separated
+`clubs` entry; boats without one go to the home base too.
+
 ### Testing on an iPad
 
 The app runs natively on the iPad (iPhone and iPad in `TARGETED_DEVICE_FAMILY`).
@@ -182,6 +206,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage appearance|clubpages|language|data|help|about|developer|limits|boat:<id>|backgrounds|widgets|safety|impressum|privacy` open those Settings pages, with the pages on the way (backgrounds = Settings > Club pages > Background pictures, widgets = Settings > Widgets)
 - `-RWSettingsSearch <text>` open the settings with the search field filled in
+- `-RWMyBoats '({id = b-anna; name = Anna; type = gig; class = "4x"; clubs = "mrc-1880,tutzinger-rv";})'` the user's own boats; `clubs` lists where each is kept (left out: the home base), `-RWBoat <id>` ticks one
 - Backend `RW_SAMPLE_WARNING_CLUBS=<club ids>` gives those clubs a made-up warning, marked as a sample: a lake storm warning where DWD has a lake area, else a thunderstorm warning from the place's own service (GeoSphere Austria or MeteoSwiss). The screenshot workflow sets it for Tutzinger RV, Seeclub Zürich, RV Albatros Klagenfurt and Der Hamburger und Germania RC (Alster, a DWD lake area without shore lights)
 - Backend `RW_SAMPLE_FROST_CLUBS=<club ids>` gives those clubs a made-up frost warning, marked as a sample, to show that frost stays in the warnings card but leaves the rowing light and the lake map alone. The screenshot workflow sets it for RC Forggensee
 - Backend `RW_SAMPLE_LAKE_WIND=from,speed,gusts` (degrees, m/s) replaces the wind in the lake view with a made-up one, marked as a sample, so screenshots show waves building across the lake on a calm day (the screenshot workflow sets `192,5.2,7.9`, a south wind)

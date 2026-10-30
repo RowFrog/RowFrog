@@ -7,6 +7,8 @@ struct LocationListView: View {
     let forecasts: ForecastStore
     /// The page on screen when the list sits beside the pages; nil when it is a full-screen cover.
     var selectedID: String?
+    /// Beside the club page (iPad): the page's boat button, after the search at the foot.
+    var boatButton: AnyView?
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
@@ -22,10 +24,11 @@ struct LocationListView: View {
     @State private var browseHook: String?
 
     init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil,
-         select: @escaping (Club) -> Void) {
+         boatButton: AnyView? = nil, select: @escaping (Club) -> Void) {
         self.locations = locations
         self.forecasts = forecasts
         self.selectedID = selectedID
+        self.boatButton = boatButton
         self.select = select
         _search = State(initialValue: initialSearch)
     }
@@ -144,7 +147,7 @@ struct LocationListView: View {
                     }
                 }
             }
-            .settingsBesideSearch { showingSettings = true }
+            .settingsBesideSearch(boat: boatButton) { showingSettings = true }
             .navigationDestination(isPresented: $browsing) { CountryListView(locations: locations) }
             // Searching all countries, or one, loads the clubs not loaded yet.
             .task(id: "\(search.isEmpty)|\(countryFilter ?? "all")") {
@@ -292,7 +295,8 @@ private struct LocationSummaryRow: View {
                                 .font(.caption)
                                 .lineLimit(2)
                         }
-                        if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC) {
+                        if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC,
+                                                limits: AppSettings.shared.limits(at: forecast?.clubId)) {
                             Label(kit.title, systemImage: ColdWaterKit.symbol)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(ColdWaterKit.color)
@@ -436,9 +440,11 @@ private extension View {
     }
 
     /// The settings cog at the bottom left: beside the search field from iOS 26,
-    /// both on glass as in Mail; before, alone in the bottom bar.
+    /// both on glass as in Mail; before, alone in the bottom bar. Beside the
+    /// club page (iPad) the page's boat button follows the search: cog, search,
+    /// boat (owner's choice A, 30.10.2026).
     @ViewBuilder
-    func settingsBesideSearch(_ open: @escaping () -> Void) -> some View {
+    func settingsBesideSearch(boat: AnyView? = nil, _ open: @escaping () -> Void) -> some View {
         let cog = Button(action: open) { Image(systemName: "gearshape") }
             .accessibilityLabel(tr("Settings"))
 #if compiler(>=6.2)
@@ -447,12 +453,16 @@ private extension View {
                 ToolbarItem(placement: .bottomBar) { cog }
                 ToolbarSpacer(.fixed, placement: .bottomBar)
                 DefaultToolbarItem(kind: .search, placement: .bottomBar)
+                if let boat {
+                    ToolbarSpacer(.fixed, placement: .bottomBar)
+                    ToolbarItem(placement: .bottomBar) { boat }
+                }
             }
         } else {
-            toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer() } } }
+            toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer(); boat } } }
         }
 #else
-        toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer() } } }
+        toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer(); boat } } }
 #endif
     }
 

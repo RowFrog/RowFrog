@@ -74,8 +74,9 @@ final class LakeViewTests: XCTestCase {
     }
 
     func testWaveColoursRiseWithTheLimits() {
-        XCTAssertGreaterThan(LakeRaster.waveColor(0.3).r, LakeRaster.waveColor(0).r)
-        XCTAssertEqual(LakeRaster.waveColor(0.25).g, LakeRaster.red.g, accuracy: 0.5)
+        let small = RowingLimits(boat: .small)
+        XCTAssertGreaterThan(LakeRaster.waveColor(0.3, small).r, LakeRaster.waveColor(0, small).r)
+        XCTAssertEqual(LakeRaster.waveColor(0.25, small).g, LakeRaster.red.g, accuracy: 0.5)
     }
 
     func testWindRelationToTheBoat() {

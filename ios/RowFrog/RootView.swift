@@ -65,9 +65,11 @@ struct RootView: View {
                     let sideList = geometry.size.width >= Self.sideListMinWidth && geometry.size.height >= Self.sideListMinHeight
                     HStack(spacing: 0) {
                         if sideList {
-                            LocationListView(locations: locations, forecasts: forecasts, selectedID: selection) { club in
+                            LocationListView(locations: locations, forecasts: forecasts, selectedID: selection,
+                                             boatButton: AnyView(sideBoatButton)) { club in
                                 withAnimation { selection = club.id }
                             }
+                            .environment(\.openBoatSettings, openBoatSettings)
                             .frame(width: Self.sideListWidth)
                             Divider().ignoresSafeArea()
                         }
@@ -97,6 +99,9 @@ struct RootView: View {
             }
         }
         .environment(\.locale, AppSettings.shared.locale)
+        .environment(\.clubName, { locations.name(of: $0) })
+        // Boats from before clubs were kept go to the home base, once there is one.
+        .task(id: locations.homeID) { AppSettings.shared.keepUnplacedBoats(at: locations.homeID) }
         // Once after an update, when the safety notice was accepted and there are clubs to show.
         .sheet(isPresented: Binding(
             get: { showingWhatsNew && !showingSafety && !showingTour && !locations.saved.isEmpty },
@@ -180,6 +185,12 @@ struct RootView: View {
     private func openBoatSettings() {
         settingsPath = [.limits]
         showingSettings = true
+    }
+
+    /// The shown club's boat button, at the foot of the list beside the page.
+    private var sideBoatButton: some View {
+        let forecast = forecasts.forecasts[selection]
+        return PageBoatButton(clubID: selection, now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius)
     }
 
     /// As wide as an iPhone's list, so a row's numbers and text fit side by side (iPad).
@@ -414,19 +425,23 @@ private struct PageBar: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            HStack(spacing: 0) {
+            // Beside the list (iPad) the cog and the boat sit at the list's foot
+            // with the search instead: cog, search, boat (owner's choice A, 30.10.2026).
+            Group {
                 if let showSettings {
-                    Button(action: showSettings) {
-                        Image(systemName: "gearshape")
-                            .font(.title3)
-                            .frame(width: 44, height: Self.buttonHeight)
+                    HStack(spacing: 0) {
+                        Button(action: showSettings) {
+                            Image(systemName: "gearshape")
+                                .font(.title3)
+                                .frame(width: 44, height: Self.buttonHeight)
+                        }
+                        .accessibilityLabel(tr("Settings"))
+                        PageBoatButton(clubID: selection, now: now, waterC: waterC)
                     }
-                    .accessibilityLabel(tr("Settings"))
+                    .padding(.horizontal, 4)
+                    .floatingControl(Capsule())
                 }
-                boatButton
             }
-            .padding(.horizontal, 4)
-            .floatingControl(Capsule())
             .frame(width: Self.sideWidth, alignment: .leading)
             Spacer(minLength: 8)
             // With the list beside the page (iPad), the list already switches
@@ -492,12 +507,20 @@ private struct PageBar: View {
         .accessibilityShowsLargeContentViewer()
     }
 
-    /// The boat the rowing light is for, picked on the spot.
-    private var boatButton: some View {
-        let boat = AppSettings.shared.selectedBoat
-        return BoatMenu(hour: now, waterC: waterC) {
+}
+
+/// The boat the rowing light is for, picked on the spot: in the page bar, or
+/// at the side list's foot beside the search.
+struct PageBoatButton: View {
+    let clubID: String
+    let now: ForecastHour?
+    let waterC: Double?
+
+    var body: some View {
+        let boat = AppSettings.shared.boat(at: clubID)
+        BoatMenu(clubID: clubID, hour: now, waterC: waterC) {
             BoatClassTag(boat: boat)
-                .frame(width: 48, height: Self.buttonHeight)
+                .frame(width: 48, height: 44)
         }
         // A menu draws its label in the tint, which the bar sets to the label
         // colour; an own boat keeps the accent colour.

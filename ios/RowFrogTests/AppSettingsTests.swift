@@ -98,6 +98,37 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.selectedBoat, .small)
     }
 
+    func testBoatsShowOnlyAtTheClubsWhereTheyAreKept() throws {
+        let settings = AppSettings(defaults: defaults)
+        let gig = settings.addBoat(type: .gig, at: "mrc-1880")
+        settings.boatID = gig.id
+        XCTAssertEqual(settings.boat(at: "mrc-1880"), gig)
+        XCTAssertEqual(settings.boat(at: "tutzinger-rv"), .small, "elsewhere small boats, the strictest limits")
+        XCTAssertEqual(settings.limits(at: "tutzinger-rv"), .standard)
+        XCTAssertEqual(settings.boat(at: nil), gig, "the settings show the ticked boat")
+        XCTAssertEqual(settings.boats(keptAt: "tutzinger-rv"), [])
+
+        settings.keep(gig.id, at: "tutzinger-rv")
+        XCTAssertEqual(settings.boat(at: "tutzinger-rv").id, gig.id, "taken along to the regatta")
+        XCTAssertEqual(AppSettings(defaults: defaults).myBoats[0].clubs, ["mrc-1880", "tutzinger-rv"])
+
+        settings.unkeep(gig.id, at: "mrc-1880")
+        settings.unkeep(gig.id, at: "tutzinger-rv")
+        XCTAssertEqual(settings.myBoats[0].clubs, ["tutzinger-rv"], "the last club stays")
+        settings.boatID = Boat.big.id
+        XCTAssertEqual(settings.boat(at: "tutzinger-rv"), .big, "small and big boats are everywhere")
+    }
+
+    func testOlderBoatsGoToTheHomeBase() throws {
+        let old = try JSONDecoder().decode([Boat].self, from: Data(#"[{"id":"b1","name":"Anna","type":"gig","class":"4x"}]"#.utf8))
+        XCTAssertEqual(old[0].clubs, [])
+        defaults.set(try JSONEncoder().encode(old), forKey: AppSettings.Keys.myBoats)
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertTrue(settings.isKept(settings.myBoats[0], at: "anywhere"), "until there is a home base")
+        settings.keepUnplacedBoats(at: "mrc-1880")
+        XCTAssertEqual(AppSettings(defaults: defaults).myBoats[0].clubs, ["mrc-1880"])
+    }
+
     func testRemovingTheTickedBoatFallsBackToSmallBoats() {
         let settings = AppSettings(defaults: defaults)
         let gig = settings.addBoat()
