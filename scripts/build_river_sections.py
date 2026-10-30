@@ -58,6 +58,9 @@ CATALOGS = ("locations.json", "catalogs/de-drv.json", "catalogs/de-osm.json", "c
             "catalogs/at-osm.json", "catalogs/ch-swissrowing.json", "catalogs/ch-osm.json")
 
 CLUSTER_KM = 3.0
+# A club whose launch point lies further than this outside its group's section (beyond a weir or lock the
+# others don't cross) leaves the group: it joins another section of its water that reaches it, else gets its own.
+OUTSIDE_M = 500.0
 REACH_KM = 25.0
 MIN_KM, OPEN_KM = 3.0, 15.0
 BIG_KM, BIG_HARBOUR_KM2 = 40, 0.1
@@ -135,6 +138,20 @@ def groups() -> list[dict]:
     for g in out:
         g["at"] = (sum(p[0] for p in g["points"]) / len(g["points"]), sum(p[1] for p in g["points"]) / len(g["points"]))
     return out
+
+
+def subgroup(g: dict, idx: list[int]) -> dict:
+    """The clubs of a group at the given positions, as a group of their own."""
+    points = [g["points"][i] for i in idx]
+    return {**{k: v for k, v in g.items() if k != "left"}, "clubs": [g["clubs"][i] for i in idx], "points": points,
+            "towns": [g["towns"][i] for i in idx],
+            "at": (sum(p[0] for p in points) / len(points), sum(p[1] for p in points) / len(points))}
+
+
+def outside_m(shape, at: tuple[float, float]) -> float:
+    """How far a launch point (lat, lon) lies outside an outline in degrees, in metres."""
+    frame = Frame(*at)
+    return frame.to_m(shape).distance(Point(0, 0))
 
 
 class Frame:
@@ -544,12 +561,27 @@ def main() -> None:
     only = set(filter(None, args.only.split(",")))
     sections, used_ids, problems = [], set(), []
     kept = {c: s for s in old["sections"] for c in s["clubs"]}
-    for g in groups():
+    shapes = {}  # section id -> outline, for clubs that leave their group
+    queue = groups()
+    while queue:
+        g = queue.pop(0)
         if only and not (only & set(g["clubs"])):
             if g["clubs"][0] in kept and kept[g["clubs"][0]]["id"] not in used_ids:
-                sections.append(kept[g["clubs"][0]])
-                used_ids.add(kept[g["clubs"][0]]["id"])
+                k = kept[g["clubs"][0]]
+                sections.append(k)
+                used_ids.add(k["id"])
+                path = OUTLINES / f"{k['id']}.geojson"
+                if path.exists():
+                    shapes[k["id"]] = shapely.geometry.shape(json.loads(path.read_text(encoding="utf-8"))["features"][0]["geometry"])
             continue
+        if g.get("left"):
+            # Clubs that left another group: join a section of the same water that already reaches them all.
+            home = next((s for s in sections if s["water"] == g["lakeId"] and s["id"] in shapes
+                         and all(outside_m(shapes[s["id"]], p) <= OUTSIDE_M for p in g["points"])), None)
+            if home:
+                home["clubs"] += g["clubs"]
+                print(f"JOINED {home['id']}: {g['clubs']}", flush=True)
+                continue
         override = {}
         for c in g["clubs"]:
             for key, value in overrides.get(c, {}).items():
@@ -567,7 +599,15 @@ def main() -> None:
             problems.append((g["clubs"], r["error"]))
             print(f"PROBLEM {g['lakeId']} {g['clubs']}: {r['error']}", flush=True)
             continue
+        out = [i for i, p in enumerate(g["points"]) if outside_m(r["shape"], p) > OUTSIDE_M]
+        if out and len(out) < len(g["points"]):
+            # Split the group: the clubs inside build again on their own, the others come last.
+            print(f"SPLIT {g['lakeId']}: {[g['clubs'][i] for i in out]} lie outside the section", flush=True)
+            queue.insert(0, subgroup(g, [i for i in range(len(g["points"])) if i not in out]))
+            queue.append({**subgroup(g, out), "left": True})
+            continue
         used_ids.add(section_id)
+        shapes[section_id] = r["shape"]
         lat, lon = g["at"]
         dlat, dlon = PICTURE_HALF_KM / 110.574, PICTURE_HALF_KM / (111.32 * math.cos(math.radians(lat)))
         w, s, e, nb = r["shape"].bounds
