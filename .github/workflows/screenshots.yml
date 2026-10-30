@@ -448,8 +448,8 @@ jobs:
           shoot 138-launch-point-place light -RWOpenClub mrc-1880 -RWScrollTo launchpoint
           # Widget backgrounds (Settings > Widgets), the satellite picture behind a club page,
           # and Manage routes from the route menus.
-          shoot_pages 139-settings-widgets light -RWShowSettings YES -RWSettingsPage widgets
-          shoot 140-settings-widgets-german-dark dark -RWShowSettings YES -RWSettingsPage widgets -RWLanguage de
+          WAIT=30 shoot_pages 139-settings-widgets light -RWShowSettings YES -RWSettingsPage widgets
+          WAIT=30 shoot 140-settings-widgets-german-dark dark -RWShowSettings YES -RWSettingsPage widgets -RWLanguage de
           WAIT=30 shoot 141-club-page-satellite-background light -RWOpenClub mrc-1880 -RWBackground satellite
           WAIT=30 shoot 142-manage-routes light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWSavedRoutes "Possenhofen ↔=$route|Northern loop=$loop|Short out and back ↔=$short"
           WAIT=30 shoot 143-manage-routes-german-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWSavedRoutes "Possenhofen ↔=$route|Northern loop=$loop|Short out and back ↔=$short" -RWLanguage de

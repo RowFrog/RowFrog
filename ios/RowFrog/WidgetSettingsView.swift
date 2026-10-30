@@ -180,36 +180,46 @@ struct WidgetBackgroundSwatch: View {
     }
 }
 
-/// The widgets with the chosen background, one per page to swipe through
-/// with dots under them: small, medium (conditions, good times), large and
-/// the lock screen. They show the home base's forecast the app or the
-/// widgets already have, then a fresh one the preview loads itself.
-private struct WidgetPreview: View {
-    let background: WidgetBackground
-    @State private var loaded: ClubForecast?
-    /// Why the preview's own load failed, shown under the widget instead of its name.
-    @State private var failure: String?
-    @State private var page = 1
+/// The home base's forecast for the widget preview and the background
+/// swatches: what the app or the widgets already have, decoded away from the
+/// main thread, then a fresh download. Loaded once, outside any view, so a
+/// redrawn settings page doesn't call the download off.
+@MainActor @Observable
+final class WidgetPreviewForecast {
+    static let shared = WidgetPreviewForecast()
+    private(set) var forecast: ClubForecast?
+    private(set) var failed = false
+    private var loading = false
 
-    private static var homeID: String {
+    var homeID: String {
         WidgetShared.defaults.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
     }
 
-    /// The home base's forecast for the samples and the swatches, once found:
-    /// decoded away from the main thread, so drawing never reads files.
-    @MainActor private static var forecast: ClubForecast?
-
-    static var snapshot: RowingSnapshot { snapshot(loaded: forecast) }
-
-    private static func snapshot(loaded: ClubForecast?) -> RowingSnapshot {
+    var snapshot: RowingSnapshot {
         let names = WidgetShared.defaults.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
-        return RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: loaded?.applyingUserLimits())
+        return RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: forecast?.applyingUserLimits())
+    }
+
+    func load() {
+        guard !loading else { return }
+        loading = true
+        let homeID = homeID
+        Task {
+            defer { loading = false }
+            if forecast == nil { forecast = await Self.stored(homeID) }
+            do {
+                forecast = try await APIClient.fromBundle().forecast(clubID: homeID)
+                failed = false
+            } catch {
+                failed = forecast == nil
+            }
+        }
     }
 
     /// The app's own kept copy of its last download, else the one the widgets
-    /// last saved: the first with hours still to come.
-    /// Nonisolated, so it runs away from the main thread.
-    nonisolated private static func storedForecast(_ homeID: String) async -> ClubForecast? {
+    /// last saved: the first with hours still to come. Nonisolated, so it
+    /// runs away from the main thread.
+    nonisolated private static func stored(_ homeID: String) async -> ClubForecast? {
         let url = APIClient.fromBundle().baseURL.appending(path: "clubs/\(homeID)/forecast")
         let kept = KeptFiles.shared.copy(of: url)?.data
         let saved = WidgetShared.defaults.data(forKey: WidgetShared.cacheKey(homeID))
@@ -217,6 +227,17 @@ private struct WidgetPreview: View {
             .compactMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
             .first { forecast in forecast.hours.contains { $0.time > Date.now } }
     }
+}
+
+/// The widgets with the chosen background, one per page to swipe through
+/// with dots under them: small, medium (conditions, good times), large and
+/// the lock screen, with the home base's forecast.
+private struct WidgetPreview: View {
+    let background: WidgetBackground
+    @State private var page = 1
+    private let source = WidgetPreviewForecast.shared
+
+    static var snapshot: RowingSnapshot { WidgetPreviewForecast.shared.snapshot }
 
     private struct Page {
         let title: String
@@ -238,7 +259,7 @@ private struct WidgetPreview: View {
     private static let height: CGFloat = 270
 
     var body: some View {
-        let snapshot = Self.snapshot(loaded: loaded ?? Self.forecast)
+        let snapshot = source.snapshot
         VStack(spacing: 6) {
             TabView(selection: $page) {
                 ForEach(pages.indices, id: \.self) { index in
@@ -249,7 +270,7 @@ private struct WidgetPreview: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: Self.height)
-            Text(failure ?? pages[page].title)
+            Text(source.failed ? tr("The forecast could not be loaded.") : pages[page].title)
                 .font(.caption)
                 .foregroundStyle(.secondary)
             dots
@@ -265,23 +286,7 @@ private struct WidgetPreview: View {
             @unknown default: break
             }
         }
-        .task {
-            // What the app or the widgets already have shows at once; a fresh
-            // download replaces it.
-            if loaded == nil, let stored = await Self.storedForecast(Self.homeID) {
-                loaded = stored
-                Self.forecast = stored
-            }
-            do {
-                let fresh = try await APIClient.fromBundle().forecast(clubID: Self.homeID)
-                loaded = fresh
-                Self.forecast = fresh
-                failure = nil
-            } catch is CancellationError {
-            } catch {
-                    if loaded == nil { failure = tr("The forecast could not be loaded.") }
-            }
-        }
+        .onAppear { source.load() }
     }
 
     @ViewBuilder
