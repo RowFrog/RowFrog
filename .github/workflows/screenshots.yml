@@ -424,6 +424,7 @@ jobs:
           shoot 200-browse-germany-unknown-water light -RWShowList YES -RWBrowse de -RWCountryFilter Hemmoor
           shoot 73-add-place light -RWShowList YES -RWAddPlace YES
           shoot 305-list-editing light -RWShowList YES -RWEditList YES
+          WAIT=15 shoot 306-list-scrolled light -RWShowList YES -RWScrollPage 1 -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           shoot 74-add-place-german-dark dark -RWShowList YES -RWAddPlace YES -RWLanguage de
           shoot_pages 75-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401"
           shoot_pages 76-list-with-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401" -RWShowList YES

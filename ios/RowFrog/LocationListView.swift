@@ -14,6 +14,8 @@ struct LocationListView: View {
     @State private var countryFilter: String?
     @State private var addingPlace = false
     @State private var browsing = false
+    /// Cards under the top bar: the title is small and centred, as on the club pages.
+    @State private var scrolled = false
     /// Edit list from the "…" menu, as in the Weather app; Done ends it.
     @State private var editMode = EditMode.inactive
     /// Screenshot hook `-RWBrowse YES` (the country list) or `-RWBrowse <code>` (one country).
@@ -125,8 +127,7 @@ struct LocationListView: View {
             .scrollContentBackground(.hidden)
             .pageBackground(.list)
             .navigationTitle(tr("Locations"))
-            // The big title in the bar, level with "…", as in the Weather app.
-            .toolbarTitleDisplayMode(.inlineLarge)
+            .titleShrinksOnScroll($scrolled)
             .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")))
             .onChange(of: search) { if !search.isEmpty { editMode = .inactive } }
             .environment(\.editMode, $editMode)
@@ -420,6 +421,20 @@ struct SearchResultRow: View {
 }
 
 private extension View {
+    /// As in the Weather app: the big title level with "…" at the top, small
+    /// and centred in the bar once the list scrolls; iOS 17's large title before.
+    @ViewBuilder
+    func titleShrinksOnScroll(_ scrolled: Binding<Bool>) -> some View {
+        if #available(iOS 18.0, *) {
+            onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 12 } action: { _, now in
+                withAnimation(.easeInOut(duration: 0.2)) { scrolled.wrappedValue = now }
+            }
+            .toolbarTitleDisplayMode(scrolled.wrappedValue ? .inline : .inlineLarge)
+        } else {
+            toolbarTitleDisplayMode(.large)
+        }
+    }
+
     /// The settings cog at the bottom left: beside the search field from iOS 26,
     /// both on glass as in Mail; before, alone in the bottom bar.
     @ViewBuilder
