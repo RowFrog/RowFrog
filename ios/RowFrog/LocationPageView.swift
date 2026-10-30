@@ -714,7 +714,7 @@ private struct NowCard: View {
                                caption: wavesCaption)
                 }
                 opens(.precipitation) {
-                    MetricView(title: tr("Rain, hail"), symbol: Condition.precipitation.symbol, value: rain.value, size: 17,
+                    MetricView(title: tr("Precipitation"), symbol: Condition.precipitation.symbol, value: rain.value, size: 17,
                                caption: rain.detail == tr("Dry next 24 h") ? tr("Dry for 24 h") : rain.detail,
                                mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
                 }

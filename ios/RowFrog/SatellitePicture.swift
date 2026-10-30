@@ -822,11 +822,11 @@ struct SatelliteOverlay: View {
                 )
                 // Darkness or an official warning for the whole lake: stripes, as on the lake map.
                 if fill == .light, let stripes = view.hours[view.hourIndex()].lakeWide.stripes {
-                    let red = stripes == .red, gap: CGFloat = red ? 8 : 14
+                    let red = stripes == .red, gap: CGFloat = red ? 8 : 14, fall = view.stripesFall
                     var lines = Path()
                     for x in stride(from: -size.height, to: size.width, by: gap) {
-                        lines.move(to: CGPoint(x: x, y: size.height))
-                        lines.addLine(to: CGPoint(x: x + size.height, y: 0))
+                        lines.move(to: CGPoint(x: x, y: fall ? 0 : size.height))
+                        lines.addLine(to: CGPoint(x: x + size.height, y: fall ? size.height : 0))
                     }
                     var striped = context
                     striped.clip(to: shore, style: FillStyle(eoFill: true))
@@ -872,7 +872,8 @@ struct SatelliteOverlay: View {
                 var taken: [CGRect] = []
                 let marks = view.clubs.map { club in (club, point(club.launchPoint.lon, club.launchPoint.lat)) }
                 for (_, p) in marks { taken.append(CGRect(x: p.x - 9, y: p.y - 9, width: 18, height: 18)) }
-                for (club, p) in marks.sorted(by: { ($0.0.id == clubID ? 0 : 1, $0.1.y) < ($1.0.id == clubID ? 0 : 1, $1.1.y) }) {
+                // The page's club last, so it stays on top of clubs sharing its boathouse.
+                for (club, p) in marks.sorted(by: { ($0.0.id == clubID ? 1 : 0) < ($1.0.id == clubID ? 1 : 0) }) {
                     let own = club.id == clubID
                     let dot = Path(ellipseIn: CGRect(x: p.x - 9, y: p.y - 9, width: 18, height: 18))
                     context.fill(dot, with: .color(own ? .blue : Color(white: 0.45)))
@@ -881,6 +882,8 @@ struct SatelliteOverlay: View {
                         Text(Image(systemName: own ? LocationStore.markSymbol(for: club.id) : "figure.rower")).font(.system(size: 10, weight: .bold)).foregroundStyle(.white),
                         at: p, anchor: .center
                     )
+                }
+                for (club, p) in marks.sorted(by: { ($0.0.id == clubID ? 0 : 1, $0.1.y) < ($1.0.id == clubID ? 0 : 1, $1.1.y) }) {
                     let label = context.resolve(Text(club.shortName).font(.caption2.weight(.semibold)).foregroundStyle(.white))
                     let labelSize = label.measure(in: CGSize(width: 200, height: 40))
                     let spots: [(CGRect, UnitPoint)] = [

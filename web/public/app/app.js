@@ -9,7 +9,7 @@ import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence,
-  boatDetail, boatTag, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
+  boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
@@ -1260,18 +1260,38 @@ function foldHourly(button) {
   if (!open) document.scrollingElement.scrollTop += button.getBoundingClientRect().top - before;
 }
 
+/** Where directions to the club go: its address, and its name with it; null without an address (own places). */
+function clubAddress(club) {
+  const address = club.address?.trim();
+  return address ? { address, named: `${club.name || club.shortName}, ${address}` } : null;
+}
+
 /** The launch point on a map, with what it stands for (LaunchPointMapCard). */
 function launchPointCard(club) {
   const { lat, lon } = club.launchPoint;
+  // Opens in the map service chosen under Settings > Maps.
+  const maps = MAPS_APPS[store.mapsApp];
   const unconfirmed = club.source === "drv" ? t("Not yet confirmed by the club; taken from the club's address.") : t("Not yet confirmed by the club; taken from OpenStreetMap.");
   return card(t("Launch point"), "map-pin", `
     <div class="map" id="launch-map" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     <p>${h(t("The forecast, waves and warnings are for this point."))}</p>
     ${club.launchPointVerified ? "" : `<p class="orange small">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
-    <div class="map-foot"><small class="sub">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
-      <a class="pill" href="https://www.openstreetmap.org/?mlat=${lat}&amp;mlon=${lon}#map=16/${lat}/${lon}" target="_blank" rel="noopener noreferrer">${icon("map")} ${h(t("Launch point on the map"))}</a>
-      <a class="pill" href="https://www.openstreetmap.org/directions?to=${lat}%2C${lon}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a></div>`);
+    <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
+      <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
+        <div class="menu" role="menu">
+          <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a>
+          <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin")} ${h(t("Launch point on the map"))}</a>
+          <small class="sub">${h(maps.name)}</small>
+        </div></details></div>`);
 }
+
+// The "Open in Maps" menu closes on a tap outside it, on one of its links and with Escape, as a menu does.
+document.addEventListener("click", (e) => {
+  for (const menu of document.querySelectorAll(".maps-menu[open]")) if (!menu.contains(e.target) || e.target.closest(".menu a")) menu.open = false;
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") for (const menu of document.querySelectorAll(".maps-menu[open]")) menu.open = false;
+});
 
 async function showLaunchMap(club) {
   const L = await loadLeaflet().catch(() => null);
@@ -1408,6 +1428,12 @@ function renderSettings() {
       </section>
       <p class="footer">${h(t("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.",
         distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))}</p>
+      <h3 class="section">${icon("map-pinned")} ${h(t("Map links"))}</h3>
+      <section class="card group">
+        <div class="row-setting"><span class="segmented wide" id="maps-app" aria-label="${h(t("Open places in"))}">${Object.entries(MAPS_APPS)
+          .map(([k, app]) => `<button data-maps-app="${k}" class="${store.mapsApp === k ? "on" : ""}">${h(app.name)}</button>`).join("")}</span></div>
+      </section>
+      <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))} ${h(t("Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
       <h3 class="section">${icon("arrow-up-down")} ${h(t("Data use"))}</h3>
       <section class="card group">
         <label class="row-setting"><span>${icon("radio-tower")} ${h(t("Save mobile data"))}</span><input type="checkbox" class="switch" id="save-data" ${store.saveData ? "checked" : ""}></label>
@@ -1464,6 +1490,10 @@ function renderSettings() {
     renderSettings();
   }));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(null));
+  root.querySelectorAll("[data-maps-app]").forEach((b) => b.addEventListener("click", () => {
+    store.mapsApp = b.dataset.mapsApp;
+    renderSettings();
+  }));
   root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     store.mapZoom = b.dataset.zoom;
     renderSettings();

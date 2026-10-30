@@ -63,6 +63,9 @@ export const store = {
   get mapLinked() { return load("rf.mapLinked", true); },
   set mapLinked(on) { save("rf.mapLinked", on); },
   /** How much map the weather maps open with: "close", "normal" or "wide". */
+  /** Where the launch point and directions open: "google", "apple" or "osm"; until picked, the device's own (deviceMapsApp). */
+  get mapsApp() { const v = load("rf.mapsApp", null); return MAPS_APPS[v] ? v : deviceMapsApp(); },
+  set mapsApp(v) { save("rf.mapsApp", v); },
   get mapZoom() { return load("rf.mapZoom", "normal"); },
   set mapZoom(zoom) { save("rf.mapZoom", zoom); },
   /** The full-screen map plays 3 times round. */
@@ -107,6 +110,42 @@ export function boatTitle(boat) {
 export const boatInSentence = (boat) => (isGroup(boat) ? t(BOATS[boat.id].inSentence) : boatTitle(boat));
 export const boatDetail = (boat) => (isGroup(boat) ? t(BOATS[boat.id].detail) : t("%@ · %@", t(BOAT_TYPES[boat.type].title), boat.class));
 /** For the bottom bar: "Small", "Big", its own name, or its class. */
+/**
+ * The map services a place opens in, as plain links: nothing goes to them
+ * until the link is tapped, and none needs a key or a cookie banner here.
+ * Directions go to the club (`to`: its address, and its name with the
+ * address), as in the app; only a place without an address gets the launch
+ * point, since there is no road to the water's edge.
+ */
+export const MAPS_APPS = {
+  google: {
+    name: "Google Maps",
+    place: (lat, lon) => `https://www.google.com/maps/search/?api=1&query=${lat}%2C${lon}`,
+    // By name and address, so Google takes its own entry of the club when it has one, else the address.
+    directions: (lat, lon, to) => `https://www.google.com/maps/dir/?api=1&destination=${to ? encodeURIComponent(to.named) : `${lat}%2C${lon}`}`,
+  },
+  apple: {
+    name: "Apple Maps",
+    place: (lat, lon) => `https://maps.apple.com/?ll=${lat},${lon}&q=${lat},${lon}&z=16`,
+    directions: (lat, lon, to) => (to ? `https://maps.apple.com/?daddr=${encodeURIComponent(to.named)}&sll=${lat},${lon}` : `https://maps.apple.com/?daddr=${lat},${lon}`),
+  },
+  osm: {
+    name: "OpenStreetMap",
+    place: (lat, lon) => `https://www.openstreetmap.org/?mlat=${lat}&mlon=${lon}#map=16/${lat}/${lon}`,
+    // OpenStreetMap looks the address up itself; a club's name would confuse its search.
+    directions: (lat, lon, to) => `https://www.openstreetmap.org/directions?to=${to ? encodeURIComponent(to.address) : `${lat}%2C${lon}`}`,
+  },
+};
+
+/**
+ * The map service a phone or tablet comes with: Apple Maps on iPhone and iPad
+ * (iPadOS's Safari calls itself a Mac, so its touch screen tells them apart),
+ * Google Maps on Android and on computers, the website's default.
+ */
+export function deviceMapsApp(agent = navigator.userAgent, touchPoints = navigator.maxTouchPoints ?? 0) {
+  return /iPhone|iPad|iPod/.test(agent) || (/Macintosh/.test(agent) && touchPoints > 1) ? "apple" : "google";
+}
+
 /** The boat's class for the page bar, as rowers write it ("2x", "4+"); the two groups show their seats (Boat.classTag). */
 export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.class);
 

@@ -915,7 +915,7 @@ struct RainOutlook {
 
     /// The next change: what comes, when, and whether the radar says so (else the forecast).
     var next: (text: String, fromRadar: Bool)? {
-        if let now, let first = radar.steps.first {
+        if now != nil, let first = radar.steps.first {
             // Raining: it ends, or gets heavier, whichever comes first; else the forecast's end.
             let heavier = radar.steps.first { Self.level($0.mmPerHour) > Self.level(first.mmPerHour) }
             if let dry = radar.dryAgain, heavier.map({ dry.time < $0.time }) ?? true {
