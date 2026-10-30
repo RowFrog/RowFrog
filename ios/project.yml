@@ -85,6 +85,8 @@ targets:
             UTTypeTagSpecification:
               public.filename-extension: [fit]
               public.mime-type: [application/vnd.ant.fit]
+        # Whether Google Maps' app is installed, for the map app setting.
+        LSApplicationQueriesSchemes: [comgooglemaps]
         # A tap on the widget opens rowfrog://club/<id>.
         CFBundleURLTypes:
           - CFBundleURLName: com.rowfrog.RowFrog

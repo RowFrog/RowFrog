@@ -1374,7 +1374,9 @@ private struct ConditionChart: View {
     /// A limit as one dashed line; its name is drawn over the chart by `limitLabels`.
     @ChartContentBuilder
     private func limitRules(_ limit: ChartLimit) -> some ChartContent {
-        RuleMark(y: .value("Limit", limit.value))
+        // From the first hour to the last only: across the plot's side padding
+        // the dashes ran through the axis numbers on the right.
+        RuleMark(xStart: .value("Hour", range.lowerBound), xEnd: .value("Hour", range.upperBound), y: .value("Limit", limit.value))
             .foregroundStyle(limit.color)
             .lineStyle(StrokeStyle(lineWidth: 1, dash: [4, 3]))
     }

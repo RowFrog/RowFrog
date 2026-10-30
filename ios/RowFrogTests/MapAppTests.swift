@@ -7,6 +7,8 @@ final class MapAppTests: XCTestCase {
                        "https://www.google.com/maps/search/?api=1&query=47.99812,11.34567")
         XCTAssertEqual(MapApp.googleDirections(to: "MRC 1880, Seestraße 1, Starnberg")?.absoluteString,
                        "https://www.google.com/maps/dir/?api=1&destination=MRC%201880,%20Seestra%C3%9Fe%201,%20Starnberg")
+        XCTAssertEqual(MapApp.googleAppSearch("47.99812,11.34567")?.absoluteString, "comgooglemaps://?q=47.99812,11.34567")
+        XCTAssertEqual(MapApp.googleAppDirections(to: "MRC 1880, Starnberg")?.absoluteString, "comgooglemaps://?daddr=MRC%201880,%20Starnberg")
     }
 
     func testAppleMapsIsTheDefault() {

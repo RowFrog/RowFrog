@@ -128,7 +128,7 @@ struct LaunchPointMapCard: View {
             // Google finds the club by its name and address; a place of the user's own without one is its point.
             let address = club.address.trimmingCharacters(in: .whitespaces)
             let destination = address.isEmpty ? "\(club.launchPoint.lat),\(club.launchPoint.lon)" : "\(club.displayName), \(address)"
-            if let url = MapApp.googleDirections(to: destination) { openURL(url) }
+            openInGoogle(app: MapApp.googleAppDirections(to: destination), web: MapApp.googleDirections(to: destination))
             return
         }
         // The club's own place in Apple Maps is the best target when there is one.
@@ -147,6 +147,15 @@ struct LaunchPointMapCard: View {
         item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault])
     }
 
+    /// Google Maps' app when it is installed, else Google Maps in the browser.
+    private func openInGoogle(app: URL?, web: URL?) {
+        if let app, UIApplication.shared.canOpenURL(app) {
+            UIApplication.shared.open(app)
+        } else if let web {
+            openURL(web)
+        }
+    }
+
     private func reset(animated: Bool) {
         if animated {
             withAnimation { position = .region(home) }
@@ -158,7 +167,8 @@ struct LaunchPointMapCard: View {
 
     private func openInMaps() {
         if mapApp == .google {
-            if let url = MapApp.googleSearch("\(club.launchPoint.lat),\(club.launchPoint.lon)") { openURL(url) }
+            let point = "\(club.launchPoint.lat),\(club.launchPoint.lon)"
+            openInGoogle(app: MapApp.googleAppSearch(point), web: MapApp.googleSearch(point))
             return
         }
         let item = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))

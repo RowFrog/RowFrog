@@ -489,11 +489,14 @@ enum MapApp: String, CaseIterable, Identifiable {
     }
 
     /// Google Maps' links (Maps URLs, no key needed): a point, and directions to a place.
-    static func googleSearch(_ query: String) -> URL? { googleURL("search", ["api": "1", "query": query]) }
-    static func googleDirections(to destination: String) -> URL? { googleURL("dir", ["api": "1", "destination": destination]) }
+    static func googleSearch(_ query: String) -> URL? { googleURL("https://www.google.com/maps/search/", ["api": "1", "query": query]) }
+    static func googleDirections(to destination: String) -> URL? { googleURL("https://www.google.com/maps/dir/", ["api": "1", "destination": destination]) }
+    /// The same for Google Maps' app (its comgooglemaps:// scheme), used when it is installed.
+    static func googleAppSearch(_ query: String) -> URL? { googleURL("comgooglemaps://", ["q": query]) }
+    static func googleAppDirections(to destination: String) -> URL? { googleURL("comgooglemaps://", ["daddr": destination]) }
 
-    private static func googleURL(_ path: String, _ items: [String: String]) -> URL? {
-        var parts = URLComponents(string: "https://www.google.com/maps/\(path)/")
+    private static func googleURL(_ base: String, _ items: [String: String]) -> URL? {
+        var parts = URLComponents(string: base)
         parts?.queryItems = items.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
         return parts?.url
     }
