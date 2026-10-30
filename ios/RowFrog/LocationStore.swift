@@ -305,7 +305,8 @@ final class ForecastStore {
     private(set) var pickedModelMissing: Set<String> = []
     private let api: APIClient
     /// The own place behind an id, whose forecast the phone works out itself.
-    private let ownPlace: @MainActor @Sendable (String) -> OwnPlace?
+    /// Set once in the (nonisolated) init; the closure itself runs on the main actor.
+    nonisolated private let ownPlace: @MainActor @Sendable (String) -> OwnPlace?
 
     nonisolated init(api: APIClient, ownPlace: @escaping @MainActor @Sendable (String) -> OwnPlace? = { _ in nil }) {
         self.api = api
