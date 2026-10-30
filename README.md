@@ -133,11 +133,15 @@ which cover rivers and canals too. While one is issued it gets its own card
 under the top tile; otherwise the top tile's status line says there is none
 and when it was checked, or that DWD could not be reached.
 Warnings come from DWD's GeoServer (`backend/rowfrog/sources/dwd_warnings.py`)
-and also set the hourly light. In English the app shows DWD's own English
+and also set the hourly light, except frost, black ice, thaw, heat and cold
+warnings, which are shown for information but leave the light and the lake map
+alone. In English the app shows DWD's own English
 text (from its English CAP files) with the German original below; where DWD
 has no English version, only the event and headline are translated.
-At lakes with shore warning lights the card explains both lights (40 and 90
-flashes a minute) and the season they run in.
+Only at lakes that really have shore warning lights (`data/shore-lights.json`:
+the Bavarian lakes, Lake Constance and Steinhuder Meer, but not, for example,
+the Alster, Müritz or Dümmer) does the card explain both lights (40 and 90 flashes a minute) and
+the season they run in; elsewhere it says there are no storm lights.
 
 **Warnings in Austria and Switzerland.** Austrian clubs get GeoSphere
 Austria's official warnings for their municipality
@@ -505,6 +509,7 @@ More detail, including the secrets each one needs, is in the
 | **River sections** (`river-sections.yml`) | Cuts each river and canal club's stretch out of OpenStreetMap (Geofabrik extracts of Germany, Austria and Switzerland) and commits `data/river-sections.json` and the section outlines. By hand, after river clubs or `data/river-section-overrides.json` change; takes about 40 minutes. |
 | **River gauges** (`river-gauges.yml`) | Finds the PEGELONLINE gauge on each German river club's river (within 15 km) and commits `data/river-gauges.json` for the Current tile. By hand, after river clubs change. |
 | **JPEG quality probe** (`jpeg-quality.yml`) | Research only: compares JPEG qualities for the satellite pictures (today 90) against lossless originals from Copernicus and keeps the originals on `refs/probe/jpeg-quality`. By hand, or when its script changes. |
+| **Lake lights check** (`lake-lights-check.yml`) | Lists DWD's lake warning areas with their clubs and fails when one is missing from `data/shore-lights.json` or no longer at DWD. By hand each season, or when its script or that file changes. |
 | **River section survey** (`river-section-survey.yml`) | Research only: for every river club, how far the next weir or lock is up- and downstream, from the Geofabrik extracts of Germany, Austria and Switzerland (filtered with osmium, no Overpass). Nothing is stored. By hand. |
 | **River gauge check** (`river-gauge-probe.yml`) | Research only: which river gauges (PEGELONLINE, BAFU) and flow forecasts (Open-Meteo Flood API) could tell river clubs about current and high water. Nothing is stored. By hand. |
 | **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |
@@ -528,7 +533,7 @@ worked out on the phone (`ios/RowFrog/Limits.swift`).
 | Rain and hail | heavy rain, 4 mm per hour or more | hail |
 | Water temperature | no change to the light under 15 °C (a blue life-jacket badge instead); under 10 °C wind and gust limits 1 m/s lower; under 4 °C amber for small boats (never red on its own) | – |
 | Shore warning lights (DWD lake warning) | strong wind (40 flashes a minute) for all other boats | strong wind for small racing boats and training boats; storm (90 flashes a minute) for all |
-| DWD weather warning for the place | minor (yellow) | moderate (orange) or above, or any thunderstorm |
+| DWD weather warning for the place (frost, ice, thaw, heat and cold only inform) | minor (yellow) | moderate (orange) or above, or any thunderstorm |
 | Ice | shore ice possible, or drift ice on a river | ice cover likely |
 | Daylight | sunrise or sunset within the hour | sun down for the whole hour |
 
