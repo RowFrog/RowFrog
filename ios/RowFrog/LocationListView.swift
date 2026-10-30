@@ -300,17 +300,23 @@ private struct LocationSummaryRow: View {
                                 .accessibilityLabel(kit.explanation)
                         }
                     }
-                    if let warning = forecast?.warnings?.items.first {
-                        Label(warning.shortLabel, systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(warning.severity == "minor" ? Color.orange : warning.color)
+                    if let headline = forecast?.warnings?.headline() {
+                        // Amber only for a warning that changes the light now or soon; later or frost-like ones grey.
+                        let warning = headline.warning, info = headline.urgency == .info
+                        // Grey ones as short as "Frost from 23:00": the column is narrow and the sign says it is a warning.
+                        Label(info ? warning.compactLabel(at: .now) : warning.shortLabel(at: .now), systemImage: info ? "info.circle" : "exclamationmark.triangle.fill")
+                            .font(.caption.weight(info ? .regular : .semibold))
+                            .foregroundStyle(info ? Color.secondary : warning.severity == "minor" ? Color.orange : warning.color)
                             .lineLimit(1)
                     }
                     if let forecast, let sun = forecast.sunState(at: .now) {
                         Group {
                             switch sun {
-                            case let .up(_, sunset): Label(tr("Sunset %@", Format.time(sunset)), systemImage: "sunset.fill")
-                            case let .down(sunrise, _): Label(tr("Sunrise %@", Format.time(sunrise)), systemImage: "sunrise.fill")
+                            // Symbol and time only, like the numbers beside it; VoiceOver still says the word.
+                            case let .up(_, sunset): Label(Format.time(sunset), systemImage: "sunset.fill")
+                                .accessibilityLabel(tr("Sunset %@", Format.time(sunset)))
+                            case let .down(sunrise, _): Label(Format.time(sunrise), systemImage: "sunrise.fill")
+                                .accessibilityLabel(tr("Sunrise %@", Format.time(sunrise)))
                             }
                         }
                         .font(.caption)

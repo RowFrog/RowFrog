@@ -286,6 +286,8 @@ jobs:
           shoot 310-alster-no-shore-lights-german dark -RWOpenClub der-hamburger-und-germania-ruder-club -RWScrollTo warnings -RWLanguage de
           shoot 311-limits-line-german dark -RWOpenClub mrc-1880 -RWLanguage de
           shoot 311-limits-line light -RWOpenClub mrc-1880
+          shoot 312-later-warning-top-german dark -RWOpenClub ruderclub-forggensee -RWLanguage de
+          shoot 313-later-warning-list-german dark -RWShowList YES -RWLanguage de
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES

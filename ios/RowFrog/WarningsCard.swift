@@ -12,6 +12,8 @@ struct WarningsCard: View {
     let checkedAt: Date
     /// Opens the shore lights guide from the start, where the card is shown to explain them.
     var guideOpen = false
+    /// The moment "now" and "later" are told apart; the screenshots can fix it.
+    var checkedNow: Date = .now
 
     var body: some View {
         Card(title: warnings.localChecked && warnings.isDWD ? tr("DWD warnings") : tr("Official warnings"), symbol: "exclamationmark.triangle") {
@@ -39,7 +41,14 @@ struct WarningsCard: View {
                 // The shore lights explained right under the lake warning, before the weather warnings.
                 ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
                 lightsInfo
-                ForEach(warnings.items.filter { !$0.isLake }) { WarningRow(warning: $0) }
+                let local = warnings.items.filter { !$0.isLake }
+                let now = local.filter { $0.isActive(at: checkedNow) }
+                let later = local.filter { !$0.isActive(at: checkedNow) }.sorted { ($0.onset ?? .distantPast) < ($1.onset ?? .distantPast) }
+                // "Now" and "Later" so a warning for tonight is not read as one for this hour.
+                if !now.isEmpty && !later.isEmpty { SectionLabel(text: tr("Now")) }
+                ForEach(now) { WarningRow(warning: $0) }
+                if !later.isEmpty { SectionLabel(text: tr("Later")) }
+                ForEach(later) { WarningRow(warning: $0) }
                 Text(coverage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -89,6 +98,19 @@ struct WarningsCard: View {
         }
         let water = lakeName.map { tr("for %@", $0) } ?? tr("for this water")
         return tr("DWD has no lake warning service %@. Covers %@.", water, place)
+    }
+}
+
+/// "Now" or "Later" above the warnings it groups.
+private struct SectionLabel: View {
+    let text: String
+
+    var body: some View {
+        Text(text.uppercased())
+            .font(.caption2.weight(.semibold))
+            .foregroundStyle(.secondary)
+            .padding(.top, 2)
+            .accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -269,12 +291,75 @@ extension DWDWarning {
         }
     }
 
+    /// In force at `date`: begun (or no start given) and not yet expired.
+    func isActive(at date: Date) -> Bool {
+        (onset ?? .distantPast) <= date && date < (expires ?? .distantFuture)
+    }
+
+    /// Changes the rowing light: lake warnings and weather warnings about the water.
+    var counts: Bool { !isInfoOnly }
+
+    /// "23:00" today, else "Tomorrow 08:00", for "from …" in short lines.
+    var startText: String? {
+        guard let onset else { return nil }
+        return Calendar.current.isDateInToday(onset) ? Format.time(onset) : Format.dayTime(onset)
+    }
+
     /// Short label for the location list, e.g. "DWD lake warning" or "DWD warning: Wind gusts".
     var shortLabel: String {
         if isLake { return tr("DWD lake warning") }
-        let name = warningsInEnglish && english != nil
+        return isDWD ? tr("DWD warning: %@", eventName) : tr("%@ warning: %@", serviceShort, eventName)
+    }
+
+    /// The event alone, e.g. "Frost" or "Wind gusts".
+    var eventName: String {
+        if isLake { return tr("DWD lake warning") }
+        return warningsInEnglish && english != nil
             ? english!.event.prefix(1).uppercased() + english!.event.dropFirst()
             : event.capitalized(with: Locale(identifier: "de_DE"))
-        return isDWD ? tr("DWD warning: %@", name) : tr("%@ warning: %@", serviceShort, name)
+    }
+}
+
+/// How a warning shows in the short lines (club list, top tile): "now, later, info only".
+enum WarningUrgency {
+    /// Counts for the rowing light and is in force now: amber or red.
+    case now
+    /// Counts and starts within the next hours: amber, with its start time.
+    case soon
+    /// Starts later, or is about frost, heat and the like: grey, with an info sign.
+    case info
+}
+
+extension Warnings {
+    /// Counting warnings starting within this many hours already show amber in the list.
+    static let soonHours: Double = 3
+
+    /// The one warning the short lines show, and how: in force and counting first,
+    /// then counting soon, then the earliest other one.
+    func headline(at date: Date = .now) -> (warning: DWDWarning, urgency: WarningUrgency)? {
+        let current = items.filter { $0.expires.map { $0 > date } ?? true }
+        let rank = ["extreme", "severe", "moderate", "minor"]
+        func worst(_ list: [DWDWarning]) -> DWDWarning? {
+            list.min { (rank.firstIndex(of: $0.severity) ?? 4) < (rank.firstIndex(of: $1.severity) ?? 4) }
+        }
+        if let w = worst(current.filter { $0.counts && $0.isActive(at: date) }) { return (w, .now) }
+        let soonEnd = date.addingTimeInterval(Self.soonHours * 3600)
+        if let w = worst(current.filter { $0.counts && ($0.onset ?? date) < soonEnd }) { return (w, .soon) }
+        if let w = current.min(by: { ($0.onset ?? date) < ($1.onset ?? date) }) { return (w, .info) }
+        return nil
+    }
+}
+
+extension DWDWarning {
+    /// The list's line: "DWD warning: Frost" while in force, else "DWD warning: Frost from 23:00".
+    func shortLabel(at date: Date) -> String {
+        if isActive(at: date) { return shortLabel }
+        return startText.map { tr("%@ from %@", shortLabel, $0) } ?? shortLabel
+    }
+
+    /// For the list's narrow column: "Frost from 23:00", the event and its start only.
+    func compactLabel(at date: Date) -> String {
+        if isActive(at: date) { return eventName }
+        return startText.map { tr("%@ from %@", eventName, $0) } ?? eventName
     }
 }
