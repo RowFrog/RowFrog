@@ -512,6 +512,7 @@ enum German {
         // Widget
         "Now": "Jetzt",
         "Open Row Frog to load the forecast.": "Öffne Row Frog, um die Vorhersage zu laden.",
+        "The forecast could not be loaded.": "Die Vorhersage konnte nicht geladen werden.",
         "No green hours in the forecast.": "Keine grünen Stunden in der Vorhersage.",
         // Lake view
         "Lake view": "Seeansicht",

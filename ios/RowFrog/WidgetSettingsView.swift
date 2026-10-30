@@ -187,20 +187,23 @@ struct WidgetBackgroundSwatch: View {
 private struct WidgetPreview: View {
     let background: WidgetBackground
     @State private var loaded: ClubForecast?
+    /// Why the preview's own load failed, shown under the widget instead of its name.
+    @State private var failure: String?
     @State private var page = 1
 
     private static var homeID: String {
         WidgetShared.defaults.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
     }
 
-    /// The home base's forecast as the widgets last saved it, for the samples.
+    /// The home base's forecast as the widgets last saved it, for the samples;
+    /// one the preview loaded itself wins, as it is newer.
     static var snapshot: RowingSnapshot { snapshot(loaded: nil) }
 
     private static func snapshot(loaded: ClubForecast?) -> RowingSnapshot {
         let shared = WidgetShared.defaults
         let names = shared.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
         let saved = shared.data(forKey: WidgetShared.cacheKey(homeID)).flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
-        return RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: (saved ?? loaded)?.applyingUserLimits())
+        return RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: (loaded ?? saved)?.applyingUserLimits())
     }
 
     private struct Page {
@@ -234,7 +237,7 @@ private struct WidgetPreview: View {
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .frame(height: Self.height)
-            Text(pages[page].title)
+            Text(failure ?? pages[page].title)
                 .font(.caption)
                 .foregroundStyle(.secondary)
             dots
@@ -251,9 +254,20 @@ private struct WidgetPreview: View {
             }
         }
         .task {
-            // No widget has saved a forecast yet: the preview loads the home base's itself.
-            guard Self.snapshot.forecast == nil else { return }
-            loaded = try? await APIClient.fromBundle().forecast(clubID: Self.homeID)
+            // No widget has saved a forecast yet, or only one whose hours are over:
+            // the preview loads the home base's itself.
+            guard Self.snapshot.current == nil else { return }
+            do {
+                loaded = try await APIClient.fromBundle().forecast(clubID: Self.homeID)
+                failure = nil
+            } catch is CancellationError {
+            } catch {
+                #if DEBUG
+                failure = tr("The forecast could not be loaded.") + " " + String(describing: error)
+                #else
+                failure = tr("The forecast could not be loaded.")
+                #endif
+            }
         }
     }
 
