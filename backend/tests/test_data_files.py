@@ -14,13 +14,7 @@ LOCATIONS = api._locations  # every club and water the API serves, catalogs incl
 # A launch point further than this from its water's outline is on the wrong water.
 SHORE_KM = 1.5
 # Known exceptions, each with why; remove an entry once its data is fixed.
-FAR_FROM_OUTLINE = {
-    # On the Main east of Offenbach, about 4 km past the end of the river-main-frankfurt section.
-    "wassersportverein-1926-ev-offenbach-am-main-buergel",
-}
-# Outline files for no water in the catalogs (harbours and a river left over from earlier imports).
-UNUSED_OUTLINES = {"fischerhafen", "hafen-friedrichshafen", "rodl"}
-
+FAR_FROM_OUTLINE: set[str] = set()
 
 def _segment_km(p: tuple[float, float], a: tuple[float, float], b: tuple[float, float]) -> float:
     """Distance from p to the segment a-b, all (lon, lat), on a flat local map."""
@@ -60,7 +54,7 @@ def test_launch_points_lie_on_their_waters_outline():
 
 def test_outline_files_belong_to_known_waters():
     stems = {p.stem for p in (DATA / "outlines").glob("*.geojson")}
-    assert stems - set(LOCATIONS.lakes) == UNUSED_OUTLINES
+    assert stems <= set(LOCATIONS.lakes), sorted(stems - set(LOCATIONS.lakes))
     for stem in stems:
         assert outlines.load(stem), f"{stem}.geojson has no outline"
 
