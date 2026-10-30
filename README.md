@@ -90,7 +90,7 @@ pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
 a detail view with a chart you can drag from yesterday to 7 days ahead, with
 a line that shows the values at any time and dots for now ("Back to now",
 or "Back to" the hour it was opened from, returns there), a unit switch at the
-bottom (air pressure in hPa, mbar, bar, inHg or mmHg), the limit lines (named on the side away from now), wind arrows
+bottom (air pressure in hPa, mbar, bar, inHg or mmHg), the limit lines (named on the side away from now, ending before the axis numbers), wind arrows
 every 3 hours, an "About the limits" note, advice for rowing and the data
 source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views
 or jump to another from the symbol at the top; tapping an entry in a chart's
@@ -288,8 +288,10 @@ picked in the hidden developer options, the credits line names its provider
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
 point the forecast is for, with its coordinates. It is a still picture until
 tapped; then it can be panned and zoomed, and it resets on each visit. "Open
-in Maps" also offers directions, and when Apple Maps knows the club as a
-place (with photos and opening hours), it opens that.
+in Maps" also offers directions to the club, in the map app chosen in
+Settings: Apple Maps (the default; when it knows the club as a place, with
+photos and opening hours, it opens that) or Google Maps, which opens in its
+own app when installed.
 
 **Maps** all mark clubs the same way: this page's club in blue, other clubs in
 grey, with a house for the home base and a rower for any other club.
@@ -321,7 +323,7 @@ field at the bottom.
   the app icon: the coxed double "rowing light" icon in light, dark and
   tinted, plus 10 alternates.
 - Club pages: how much area the weather maps open with ("Maps start": Close,
-  Normal or Wide), the order of the cards for all clubs, and background pictures
+  Normal or Wide), the map app for directions (Apple Maps or Google Maps), the order of the cards for all clubs, and background pictures
   for all pages, single pages or single clubs: clear or blurred, frosted
   or solid tiles, your own photo or the satellite
   picture of the club's lake. On club pages the picture fills the screen
@@ -329,8 +331,9 @@ field at the bottom.
   The top bar is clear at rest and shows a blur with the club's name once
   the page scrolls; the page bar floats as three Liquid Glass groups, with
   the current club's dot larger, and the lake map buttons look the same.
-- Widgets: the background for all widgets or per club (each widget can also
-  pick its own when you edit it), and how often they update: every 30 minutes
+- Widgets: a live preview of the widgets with the forecast, one size per
+  page (swipe, with dots), the background for all widgets or per club (each
+  widget can also pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
   often saves battery and data, but a new official warning reaches the widgets
   later.
