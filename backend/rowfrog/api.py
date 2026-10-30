@@ -32,6 +32,8 @@ FORECAST_HOURS = 48
 # Club ids that get a made-up warning, marked as a sample, for screenshots: a lake storm warning
 # where DWD has a lake area, else a thunderstorm warning from the place's own service.
 SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "").split(",") if c}
+# Clubs that get a made-up frost warning, marked as a sample, to show that frost leaves the light alone.
+SAMPLE_FROST_CLUBS = {c for c in os.environ.get("RW_SAMPLE_FROST_CLUBS", "").split(",") if c}
 # "from,speed,gusts" (degrees, m/s) replaces the wind in the lake view, marked as a
 # sample, so screenshots show waves building across the lake on a calm day.
 SAMPLE_LAKE_WIND = os.environ.get("RW_SAMPLE_LAKE_WIND", "")
@@ -387,6 +389,32 @@ def _sample_local_warning(club: locations.Club, now: datetime) -> dwd_warnings.W
     )
 
 
+def _sample_frost_warning(club: locations.Club, now: datetime) -> dwd_warnings.Warning:
+    start = now.replace(minute=0, second=0, microsecond=0)
+    return dwd_warnings.Warning(
+        kind="local",
+        area=club.name,
+        event="FROST",
+        severity="Minor",
+        headline="Amtliche WARNUNG vor FROST",
+        description="Es tritt leichter Frost um -1 °C auf.",
+        instruction="Hinweis auf: mögliche Frostschäden.",
+        onset=start,
+        expires=start + timedelta(hours=6),
+        identifier=f"sample-frost-{club.id}",
+        source=LOCAL_WARNING_SERVICES[club.country][0],
+    )
+
+
+_SAMPLE_FROST_ENGLISH = dwd_warnings.EnglishText(
+    event="frost",
+    headline="Official WARNING of FROST",
+    description="Light frost around -1 °C.",
+    instruction="Possible frost damage.",
+    official=True,
+)
+
+
 _SAMPLE_LOCAL_ENGLISH = dwd_warnings.EnglishText(
     event="thunderstorms",
     headline="Thunderstorm warning",
@@ -492,6 +520,10 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         sample = _sample_local_warning(club, now)
         local.append(sample)
         items.insert(0, _warning_json(sample, _SAMPLE_LOCAL_ENGLISH, sample=True))
+    if club.id in SAMPLE_FROST_CLUBS and club.country in CHECKED_COUNTRIES:
+        sample = _sample_frost_warning(club, now)
+        local.append(sample)
+        items.append(_warning_json(sample, _SAMPLE_FROST_ENGLISH, sample=True))
     current = [w for w in lake + local if w.expires is None or w.expires > now]
     block = {"status": "ok", "lakeArea": None if area is None else area.name, "items": items, "local": _local_service(club)}
     if area is not None:

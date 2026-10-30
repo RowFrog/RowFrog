@@ -61,7 +61,7 @@ jobs:
       - run: pip install -e backend pillow
       - name: Start the backend with live data
         run: |
-          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt,der-hamburger-und-germania-ruder-club RW_SAMPLE_FROST_CLUBS=ruderclub-forggensee RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
           # Warm the forecast and warning caches; Open-Meteo sometimes times out
           # on the first call and DWD's lake areas take a while to download.
@@ -254,6 +254,12 @@ jobs:
           shoot_pages 224-thunderstorm-zurich-german-dark dark -RWOpenClub seeclub-zuerich -RWOpenCondition thunderstorm -RWLanguage de
           shoot_pages 225-widgets-zurich light -RWWidgetGallery YES -RWHomeClub seeclub-zuerich
           shoot_pages 226-widgets-zurich-german-dark dark -RWWidgetGallery YES -RWHomeClub seeclub-zuerich -RWLanguage de
+          # Frost leaves the light and the lake map alone; the Alster has no shore lights; the limits line on one line.
+          shoot 308-frost-forggensee-german dark -RWOpenClub ruderclub-forggensee -RWScrollTo warnings -RWLanguage de
+          shoot 309-frost-forggensee-lake-german dark -RWOpenClub ruderclub-forggensee -RWScrollTo lakeview -RWLanguage de
+          shoot 310-alster-no-shore-lights-german dark -RWOpenClub der-hamburger-und-germania-ruder-club -RWScrollTo warnings -RWLanguage de
+          shoot 311-limits-line-german dark -RWOpenClub mrc-1880 -RWLanguage de
+          shoot 311-limits-line light -RWOpenClub mrc-1880
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES

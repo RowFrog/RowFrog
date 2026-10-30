@@ -133,6 +133,21 @@ def test_worst_weather_warning_names_the_topic():
     assert {"condition": "weather_warning", "light": "red", "topic": "wind"} in api._hour_json(hour)["reasons"]
 
 
+def test_sample_frost_warning_shows_but_leaves_the_light_alone(monkeypatch):
+    _fake_weather(monkeypatch)
+
+    def handler(request):
+        return httpx.Response(200, json={"features": []})
+
+    monkeypatch.setattr(api.httpx, "AsyncClient", _serve(handler))
+    monkeypatch.setattr(api, "SAMPLE_FROST_CLUBS", {"mrc-1880"})
+    _reset()
+    body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
+    _reset()
+    assert [i["event"] for i in body["warnings"]["items"]] == ["FROST"]
+    assert all(r["condition"] != "weather_warning" for h in body["hours"] for r in h["reasons"])
+
+
 def test_shore_lights_list_covers_every_dwd_lake_area():
     # The 23 areas DWD's GeoServer listed on 30.10.2026 (scripts/lake_lights_check.py).
     assert dwd_warnings.has_shore_lights(209904000)  # Starnberger See
