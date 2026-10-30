@@ -35,8 +35,8 @@ jobs:
 
   changes:
     # The iOS job takes about 15 macOS minutes; a change that touches nothing
-    # under ios/ (backend, data, docs, other workflows) skips it. A skipped
-    # job counts as passed for the PR checks.
+    # under ios/ or testdata/ (backend, data, docs, other workflows) skips it.
+    # A skipped job counts as passed for the PR checks.
     runs-on: ubuntu-latest
     outputs:
       ios: ${{ steps.diff.outputs.ios }}
@@ -55,7 +55,7 @@ jobs:
           if ! files=$(gh api --paginate "repos/${{ github.repository }}/compare/$BASE...$HEAD" --jq '.files[].filename'); then
             echo "ios=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          if echo "$files" | grep -qE '^(ios/|\.github/workflows/ci\.yml$|scripts/newest_xcode_runner\.py$)'; then
+          if echo "$files" | grep -qE '^(ios/|testdata/|\.github/workflows/ci\.yml$|scripts/newest_xcode_runner\.py$)'; then
             echo "ios=true" >> "$GITHUB_OUTPUT"
           else
             echo "ios=false" >> "$GITHUB_OUTPUT"; echo "Nothing under ios/ changed, so the iOS build is skipped."

@@ -11,6 +11,7 @@ on:
   pull_request:
     paths:
       - web/**
+      - testdata/**
       - scripts/build_web.py
       - ios/RowFrog/Localization.swift
       - .github/workflows/website.yml
@@ -18,6 +19,7 @@ on:
     branches: [main]
     paths:
       - web/**
+      - testdata/**
       - scripts/build_web.py
       - ios/RowFrog/Localization.swift
       - .github/workflows/website.yml
