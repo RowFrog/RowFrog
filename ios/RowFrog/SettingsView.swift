@@ -1234,7 +1234,7 @@ private struct BackgroundPreview: View {
                 .font(.headline)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
-                .background(surface.label, in: Capsule())
+                .labelBackground(surface, in: Capsule())
             HStack(spacing: 10) {
                 sampleTile(.green)
                 sampleTile(.amber)
@@ -1727,7 +1727,7 @@ struct SectionTitle: View {
         Label(text, systemImage: symbol)
             .padding(.horizontal, surface.hasPicture ? 8 : 0)
             .padding(.vertical, surface.hasPicture ? 3 : 0)
-            .background(surface.label, in: Capsule())
+            .labelBackground(surface, in: Capsule())
     }
 }
 
@@ -1742,7 +1742,7 @@ struct SectionFooter: View {
     var body: some View {
         Text(text)
             .padding(surface.hasPicture ? 8 : 0)
-            .background(surface.label, in: RoundedRectangle(cornerRadius: 8))
+            .labelBackground(surface, in: RoundedRectangle(cornerRadius: 8))
     }
 }
 
@@ -1751,7 +1751,11 @@ private struct SurfaceRowBackground: View {
     @Environment(\.surface) private var surface
 
     var body: some View {
-        Rectangle().fill(surface == .frosted ? AnyShapeStyle(.regularMaterial) : AnyShapeStyle(Color(.secondarySystemGroupedBackground)))
+        if surface == .frosted {
+            FrostedFill(shape: Rectangle())
+        } else {
+            Rectangle().fill(Color(.secondarySystemGroupedBackground))
+        }
     }
 }
 

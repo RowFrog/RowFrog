@@ -33,7 +33,7 @@ struct ForecastSourceLine: View {
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(surface.hasPicture ? 12 : 0)
-                .background(surface.label, in: RoundedRectangle(cornerRadius: 12))
+                .labelBackground(surface, in: RoundedRectangle(cornerRadius: 12))
             }
             .buttonStyle(.plain)
             .accessibilityHint(tr("Shows which weather models the forecast comes from."))
