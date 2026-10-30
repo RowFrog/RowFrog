@@ -17,6 +17,7 @@ on:
     paths:
       - ios/**
       - .github/workflows/app-size.yml
+      - scripts/newest_xcode_runner.py
   workflow_dispatch:
 
 concurrency:
@@ -24,10 +25,24 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  newest-xcode:
+    # The runner with the newest released Xcode, as in CI (scripts/newest_xcode_runner.py).
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.pick.outputs.runner }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - id: pick
+        run: python3 scripts/newest_xcode_runner.py | tee -a "$GITHUB_OUTPUT"
+
   size:
-    # Same Xcode as the deciding CI job and the owner's Mac; from April 2027
-    # the App Store takes only apps built with the iOS 27 SDK.
-    runs-on: xcode-27
+    # Same Xcode as the deciding CI job and the owner's Mac: the newest
+    # released one. From April 2027 the App Store takes only apps built with
+    # the iOS 27 SDK.
+    needs: newest-xcode
+    runs-on: ${{ needs.newest-xcode.outputs.runner }}
     defaults:
       run:
         working-directory: ios

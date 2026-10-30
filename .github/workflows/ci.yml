@@ -55,30 +55,42 @@ jobs:
           if ! files=$(gh api --paginate "repos/${{ github.repository }}/compare/$BASE...$HEAD" --jq '.files[].filename'); then
             echo "ios=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          if echo "$files" | grep -qE '^(ios/|\.github/workflows/ci\.yml$)'; then
+          if echo "$files" | grep -qE '^(ios/|\.github/workflows/ci\.yml$|scripts/newest_xcode_runner\.py$)'; then
             echo "ios=true" >> "$GITHUB_OUTPUT"
           else
             echo "ios=false" >> "$GITHUB_OUTPUT"; echo "Nothing under ios/ changed, so the iOS build is skipped."
           fi
 
+  newest-xcode:
+    # The runner whose default Xcode is the newest released one (no beta or RC),
+    # read from GitHub's runner-images list, so Xcode 28 and later take over
+    # by themselves once GitHub has them; xcode-27 if the list can't be read.
+    runs-on: ubuntu-latest
+    outputs:
+      runner: ${{ steps.pick.outputs.runner }}
+      xcode: ${{ steps.pick.outputs.xcode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - id: pick
+        run: python3 scripts/newest_xcode_runner.py | tee -a "$GITHUB_OUTPUT"
+
   ios:
-    needs: changes
+    needs: [changes, newest-xcode]
     if: needs.changes.outputs.ios == 'true'
-    # Xcode 27 on the newest iOS Simulator decides, as the owner builds with
-    # Xcode 27 (decided 2026-10-30). Xcode 26 and Xcode 16 on iOS 18 run
-    # alongside for wider coverage; they only warn and never block a merge.
+    # The newest released Xcode on its newest iOS Simulator decides (owner,
+    # 2026-10-30: the Xcode the owner builds with). Xcode 26 and Xcode 16 on iOS 18
+    # run alongside for wider coverage; they only warn and never block a merge.
     # Both on Intel images: macos-26 (arm64) got no runner within 15 minutes
     # on 2026-10-30, which cancelled the job and turned the run red.
-    # The xcode-27 image's default Xcode and newest Simulator are used, so
-    # minor updates (27.2, 27.3, ...) arrive by themselves; Xcode 28 needs a
-    # new label here.
     name: ios (${{ matrix.name }})
     strategy:
       fail-fast: false
       matrix:
         include:
-          - name: Xcode 27
-            runner: xcode-27
+          - name: newest Xcode
+            runner: ${{ needs.newest-xcode.outputs.runner }}
             ios: ""
             decides: true
           - name: Xcode 26
