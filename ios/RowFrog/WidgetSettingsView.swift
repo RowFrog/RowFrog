@@ -195,15 +195,23 @@ private struct WidgetPreview: View {
         WidgetShared.defaults.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
     }
 
-    /// The home base's forecast as the widgets last saved it, for the samples;
-    /// one the preview loaded itself wins, as it is newer.
+    /// The home base's forecast for the samples: the one the preview loaded
+    /// itself, else the app's kept copy, else the one the widgets last saved.
     static var snapshot: RowingSnapshot { snapshot(loaded: nil) }
 
     private static func snapshot(loaded: ClubForecast?) -> RowingSnapshot {
         let shared = WidgetShared.defaults
         let names = shared.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
         let saved = shared.data(forKey: WidgetShared.cacheKey(homeID)).flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
-        return RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: (loaded ?? saved)?.applyingUserLimits())
+        // The copy the app itself keeps from its last download, there at once.
+        let url = APIClient.fromBundle().baseURL.appending(path: "clubs/\(homeID)/forecast")
+        let kept = KeptFiles.shared.copy(of: url).flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0.data) }
+        // The first one with hours still to come.
+        let snapshots = [loaded, kept, saved].compactMap { $0 }.map {
+            RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: $0.applyingUserLimits())
+        }
+        return snapshots.first { $0.current != nil }
+            ?? RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: nil)
     }
 
     private struct Page {
