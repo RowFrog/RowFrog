@@ -149,7 +149,7 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
           # The iPad is turned through the Simulator app's menu keys, so open its window
           # now; a window still opening missed the first turn.
-          if [ "$SHOTS" != docs/screenshots ]; then open -a Simulator --args -CurrentDeviceUDID "$UDID"; sleep 20; fi
+          if [ "$SHOTS" != docs/screenshots ]; then open "$(xcode-select -p)/Applications/Simulator.app" --args -CurrentDeviceUDID "$UDID"; sleep 20; fi
           # The build takes longer than the backend keeps DWD warnings; warm it again
           # so the first shots do not catch a page still loading.
           for club in mrc-1880 mrsv-bayern tutzinger-rv; do
