@@ -83,3 +83,18 @@ jobs:
             -scheme RowFrog \
             -destination "platform=iOS Simulator,name=$DEVICE" \
             CODE_SIGNING_ALLOWED=NO
+      - name: Build with Xcode 26 (Liquid Glass code)
+        # The default Xcode is older and skips everything behind
+        # `#if compiler(>=6.2)`, which is what the owner's iPhone runs; build
+        # that too, so it cannot break unseen. Skipped if the image has no Xcode 26.
+        run: |
+          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
+          if [ -z "$XCODE" ]; then echo "No Xcode 26 on this image"; ls -d /Applications/Xcode*.app; exit 0; fi
+          echo "Using $XCODE"
+          export DEVELOPER_DIR="$XCODE/Contents/Developer"
+          xcodebuild build \
+            -project RowFrog.xcodeproj \
+            -scheme RowFrog \
+            -destination "generic/platform=iOS Simulator" \
+            -derivedDataPath build26 \
+            CODE_SIGNING_ALLOWED=NO

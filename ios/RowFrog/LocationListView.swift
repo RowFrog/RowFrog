@@ -7,24 +7,23 @@ struct LocationListView: View {
     let forecasts: ForecastStore
     /// The page on screen when the list sits beside the pages; nil when it is a full-screen cover.
     var selectedID: String?
-    /// The club page the full-screen list goes back to.
-    var returnTo: Club?
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
     /// The country chip picked above the results; nil searches every country.
     @State private var countryFilter: String?
     @State private var addingPlace = false
+    @State private var browsing = false
+    /// Edit list from the "…" menu, as in the Weather app; Done ends it.
+    @State private var editMode = EditMode.inactive
     /// Screenshot hook `-RWBrowse YES` (the country list) or `-RWBrowse <code>` (one country).
     @State private var browseHook: String?
-    @Environment(\.dismiss) private var dismiss
 
     init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil,
-         returnTo: Club? = nil, select: @escaping (Club) -> Void) {
+         select: @escaping (Club) -> Void) {
         self.locations = locations
         self.forecasts = forecasts
         self.selectedID = selectedID
-        self.returnTo = returnTo
         self.select = select
         _search = State(initialValue: initialSearch)
     }
@@ -87,19 +86,6 @@ struct LocationListView: View {
                             .listRowSeparator(.hidden)
                             .listRowBackground(Color.clear)
                     }
-                    Section {
-                        if locations.countries.count > 1 {
-                            NavigationLink {
-                                CountryListView(locations: locations)
-                            } label: {
-                                Label(tr("Browse clubs by country"), systemImage: "globe.europe.africa")
-                            }
-                        }
-                        Button { addingPlace = true } label: {
-                            Label(tr("Add a place yourself"), systemImage: "mappin.and.ellipse")
-                        }
-                    }
-                    .listRowBackground(Color.clear)
                 } else {
                     if locations.countries.count > 1 {
                         CountryChips(countries: locations.countries, selection: $countryFilter)
@@ -140,36 +126,23 @@ struct LocationListView: View {
             .pageBackground(.list)
             .navigationTitle(tr("Locations"))
             .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")))
+            .onChange(of: search) { if !search.isEmpty { editMode = .inactive } }
+            .environment(\.editMode, $editMode)
+            // As in the Weather app: no way back but the clubs' cards, the
+            // list's other tasks behind "…" at the top, and the cog beside
+            // the search at the bottom, where the club pages have it too.
             .toolbar {
-                // As a side list (iPad) the cog stays in the page bar instead.
-                if selectedID == nil {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button { showingSettings = true } label: {
-                            Image(systemName: "gearshape")
-                        }
-                        .accessibilityLabel(tr("Settings"))
-                    }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    if search.isEmpty { EditButton() }
-                }
-                if selectedID == nil {
-                    // Back to the club page it came from, named, rather than a "Done" that sounds like a finished task.
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button { dismiss() } label: {
-                            if let returnTo {
-                                HStack(spacing: 4) {
-                                    Text(returnTo.displayName).lineLimit(1)
-                                    Image(systemName: "chevron.forward")
-                                }
-                            } else {
-                                Image(systemName: "xmark")
-                            }
-                        }
-                        .accessibilityLabel(returnTo.map { tr("Back to %@", $0.displayName) } ?? tr("Close"))
+                ToolbarItem(placement: .topBarTrailing) {
+                    if editMode.isEditing {
+                        Button(tr("Done")) { withAnimation { editMode = .inactive } }
+                            .fontWeight(.semibold)
+                    } else {
+                        moreMenu
                     }
                 }
             }
+            .settingsBesideSearch { showingSettings = true }
+            .navigationDestination(isPresented: $browsing) { CountryListView(locations: locations) }
             // Searching all countries, or one, loads the clubs not loaded yet.
             .task(id: "\(search.isEmpty)|\(countryFilter ?? "all")") {
                 guard !search.isEmpty else { return }
@@ -204,6 +177,12 @@ struct LocationListView: View {
             // Pull down to reload every saved location at once, as in Mail.
             .refreshable { await forecasts.refresh(locations.saved.map(\.id)) }
             .task {
+                // Screenshot hook: `-RWEditList YES` starts with the list in edit mode.
+                guard UserDefaults.standard.bool(forKey: "RWEditList") else { return }
+                try? await Task.sleep(for: .seconds(1))
+                editMode = .active
+            }
+            .task {
                 // Screenshot hook: `-RWShowSettings YES` opens the settings once the list is up.
                 guard UserDefaults.standard.bool(forKey: "RWShowSettings") else { return }
                 try? await Task.sleep(for: .seconds(1))
@@ -217,6 +196,28 @@ struct LocationListView: View {
             }
             }
         }
+    }
+
+    /// Edit list, browsing by country and adding an own place, in one menu.
+    private var moreMenu: some View {
+        Menu {
+            Button { withAnimation { editMode = .active } } label: {
+                Label(tr("Edit list"), systemImage: "pencil")
+            }
+            .disabled(!search.isEmpty || locations.saved.count < 2)
+            Divider()
+            if locations.countries.count > 1 {
+                Button { browsing = true } label: {
+                    Label(tr("Browse clubs by country"), systemImage: "globe.europe.africa")
+                }
+            }
+            Button { addingPlace = true } label: {
+                Label(tr("Add a place yourself"), systemImage: "mappin.and.ellipse")
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+        }
+        .accessibilityLabel(tr("More"))
     }
 }
 
@@ -417,6 +418,27 @@ struct SearchResultRow: View {
 }
 
 private extension View {
+    /// The settings cog at the bottom left: beside the search field from iOS 26,
+    /// both on glass as in Mail; before, alone in the bottom bar.
+    @ViewBuilder
+    func settingsBesideSearch(_ open: @escaping () -> Void) -> some View {
+        let cog = Button(action: open) { Image(systemName: "gearshape") }
+            .accessibilityLabel(tr("Settings"))
+#if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            toolbar {
+                ToolbarItem(placement: .bottomBar) { cog }
+                ToolbarSpacer(.fixed, placement: .bottomBar)
+                DefaultToolbarItem(kind: .search, placement: .bottomBar)
+            }
+        } else {
+            toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer() } } }
+        }
+#else
+        toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer() } } }
+#endif
+    }
+
     /// From iOS 26 the search field sits at the bottom of the screen, within
     /// reach of the thumb, as in Mail, Notes and Weather; before, under the title.
     @ViewBuilder

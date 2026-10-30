@@ -143,6 +143,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 - `-RWDemoClubs YES` the three confirmed clubs with MRC 1880 as home base
 - `-RWTutorialSeen YES -RWNoTips YES` skip the tour and tips
+- `-RWShowList YES` open the club list; `-RWEditList YES` with it starts in edit mode (Edit list is in the list's "…" menu)
 - `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table, `bottom` = the page's end)
 - `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order; the rain radar card is off unless named, since the rain tile shows the radar); `-RWArrange YES` opens "Arrange this page"
 - `-RWHourlyOpen YES` opens the folded 48-hour table on a page in two columns; `-RWColumnFill fill` with `-RWDeveloperOptions YES` keeps it whole (see Club page columns)
@@ -217,7 +218,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | River section survey | research only: for every river club, how far the next weir or lock is up- and downstream (`scripts/river_section_survey.py`, on the Geofabrik extracts filtered with osmium, so no Overpass). Nothing is stored |
 | River gauge check | research only: which river gauges (PEGELONLINE, BAFU) and flow forecasts (Open-Meteo Flood API) could tell river clubs about current and high water (`scripts/river_gauge_probe.py`). Nothing is stored |
 | Austrian and Swiss warnings check | to see what GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD's lake areas answer for a few Austrian and Swiss clubs (research for warnings outside Germany); it runs itself when `scripts/alpine_warnings_probe.py` changes. Nothing is stored |
-| App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run. Input `device` = `iPad` shoots on an 11-inch iPad Pro Simulator instead; those shots go to an `ipad/` folder in the same set |
+| App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run. Input `device` = `iPad` shoots on an 11-inch iPad Pro Simulator instead; those shots go to an `ipad/` folder in the same set. Input `xcode` = `26` builds with Xcode 26 and shoots on iOS 26, so Liquid Glass and the bottom search look as on a real iPhone (the default Xcode shows the older look) |
 
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
 

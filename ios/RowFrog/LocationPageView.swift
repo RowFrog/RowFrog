@@ -144,10 +144,6 @@ struct LocationPageView: View {
                     // Screenshot hook: `-RWScrollTo bottom` scrolls to the page's end.
                     .overlay(alignment: .bottom) {
                         Color.clear.frame(height: 1).id("bottom")
-                            // Cards under the floating buttons: the bottom blurs, as the top does.
-                            .onGeometryChange(for: Bool.self) { [bottom = pageMargins.bottom, end = geometry.frame(in: .global).maxY] proxy in
-                                bottom > 0 && proxy.frame(in: .global).maxY - 24 > end - bottom + 1
-                            } action: { PageScroll.shared.update(club.id, underBar: $0) }
                     }
                     .frame(maxWidth: Self.maxContentWidth)
                     .frame(maxWidth: .infinity)
