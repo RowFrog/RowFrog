@@ -651,7 +651,11 @@ private struct NowCard: View {
                         .foregroundStyle(.orange)
                 }
                 if hour.reasons.isEmpty {
-                    Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
+                    // The full sentence where it fits on one line, else the short one (owner's choice C, 30.10.2026).
+                    ViewThatFits(in: .horizontal) {
+                        Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
+                        Label(tr("All within the limits."), systemImage: "checkmark.circle")
+                    }
                 } else {
                     ForEach(hour.reasons, id: \.self) { reason in
                         // Without a station the water is estimated, and the advice says so.

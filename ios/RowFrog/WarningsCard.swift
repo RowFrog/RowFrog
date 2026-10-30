@@ -27,7 +27,7 @@ struct WarningsCard: View {
                 Text(coverage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
-                if warnings.lakeArea != nil { ShoreLightsGuide(startOpen: guideOpen) }
+                lightsInfo
             } else if warnings.items.isEmpty {
                 Label(tr("No warning right now"), systemImage: "checkmark.shield.fill")
                     .font(.headline)
@@ -38,17 +38,32 @@ struct WarningsCard: View {
             } else {
                 // The shore lights explained right under the lake warning, before the weather warnings.
                 ForEach(warnings.items.filter(\.isLake)) { WarningRow(warning: $0) }
-                if warnings.lakeArea != nil { ShoreLightsGuide(startOpen: guideOpen) }
+                lightsInfo
                 ForEach(warnings.items.filter { !$0.isLake }) { WarningRow(warning: $0) }
                 Text(coverage)
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            if warnings.checked, warnings.localChecked, warnings.items.isEmpty, warnings.lakeArea != nil {
-                ShoreLightsGuide(startOpen: guideOpen)
+            if warnings.checked, warnings.localChecked, warnings.items.isEmpty {
+                lightsInfo
             }
         }
         .font(.subheadline)
+    }
+
+    /// The shore lights explained where the lake has them; where DWD warns for the
+    /// lake without lights (e.g. the Alster), one line saying so instead.
+    @ViewBuilder private var lightsInfo: some View {
+        if warnings.lakeArea != nil {
+            if warnings.shoreLights ?? true {
+                ShoreLightsGuide(startOpen: guideOpen)
+            } else {
+                Label(tr("This lake has no storm warning lights on the shore. DWD's lake warning shows here in the app."), systemImage: "light.beacon.min")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
     }
 
     /// What was checked: the lake warning service where DWD runs one, and the place.
@@ -149,6 +164,15 @@ private struct WarningRow: View {
                             .foregroundStyle(.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
+                }
+                if warning.isInfoOnly {
+                    Label(warning.isSlippery
+                          ? tr("Not part of the rowing light. The jetty and boat area may be slippery.")
+                          : tr("Not part of the rowing light: it is not about the water."),
+                          systemImage: "info.circle")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
             }
         }

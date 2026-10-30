@@ -187,7 +187,7 @@ export function kitBadge(view) {
   const kit = coldWaterKit(view.shoreWaterC, mapLimits());
   if (!kit) return "";
   const [title, advice] = coldWaterText(kit);
-  return `<span class="kit" title="${h(advice)}">${icon("life-buoy")} ${h(title)}</span>`;
+  return `<span class="kit" title="${h(advice)}">${icon("life-buoy")} <span class="kit-text">${h(title)}</span></span>`;
 }
 
 // ---- The tile on the club page ------------------------------------------------------

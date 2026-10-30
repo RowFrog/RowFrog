@@ -709,7 +709,13 @@ body.locked { overflow: hidden; }
 .sat-retry .link { color: var(--accent); font-weight: 600; }
 .sat-sharp .overview { inset: 0; }
 .sat-sharp img { transition: opacity .2s; }
-.sat-kit { position: absolute; left: 8px; top: 8px; margin: 0; pointer-events: none; background: color-mix(in srgb, var(--card) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.sat-kit { position: absolute; margin: 0; pointer-events: none; background: color-mix(in srgb, var(--card) 85%, transparent); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); }
+.sat-kit, .sat-kit[data-corner="top-left"] { left: 8px; top: 8px; right: auto; bottom: auto; }
+.sat-kit[data-corner="top-right"] { left: auto; right: 8px; top: 8px; bottom: auto; }
+.sat-kit[data-corner="bottom-left"] { left: 8px; right: auto; top: auto; bottom: 8px; }
+.sat-kit[data-corner="bottom-right"] { left: auto; right: 8px; top: auto; bottom: 8px; }
+.sat-kit.compact { padding: 6px; gap: 0; }
+.sat-kit.compact .kit-text { display: none; }
 .sat-panel { padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); max-width: 760px; width: 100%; margin: 0 auto; }
 .sat-panel p { margin: 4px 0; }
 .legend li > .club-mark { width: 12px; height: 12px; flex: none; margin: 4px 6px 0; }
