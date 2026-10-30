@@ -362,7 +362,7 @@ async function fillRow(row) {
   row.classList.add("tinted");
   row.querySelector(".row-now").innerHTML = `<div class="now-line">${dot(hour.light, 18, stale)}${skySymbol(hour)}${conditionIcon("temperature")}<span class="big-temp">${h(degrees(hour.temperatureC))}</span></div>
     ${hour.apparentTemperatureC != null ? `<small class="sub">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}`;
-  const warning = forecast.warnings?.items?.[0];
+  const headline = warningHeadline(forecast.warnings);
   const sun = sunState(forecast);
   const ice = forecast.ice;
   const kit = coldWaterKit(water ?? estimate, currentLimits());
@@ -373,7 +373,7 @@ async function fillRow(row) {
       ${stale ? `<small class="orange">${icon("clock")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
       <small class="why${hour.reasons.length ? "" : " one-line"}">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
       ${kit ? `<small class="kit-line" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")} ${h(coldWaterText(kit)[0])}</small>` : ""}
-      ${warning ? `<small class="warn ${warning.severity === "minor" ? "orange" : "red"}">${icon("triangle-alert")} ${h(shortWarning(warning))}</small>` : ""}
+      ${headline ? warningListLine(headline) : ""}
       ${sun ? `<small class="sub"><span role="img" aria-label="${h(sun.up ? t("Sunset %@", time(sun.sunset)) : t("Sunrise %@", time(sun.sunrise)))}">${icon(sun.up ? "sunset" : "sunrise")} ${h(time(sun.up ? sun.sunset : sun.sunrise))}</span></small>` : ""}
     </div>
     <div class="metrics">
@@ -389,9 +389,62 @@ async function fillRow(row) {
 
 function shortWarning(w) {
   if (w.kind === "lake") return t("DWD lake warning");
+  return isDWD(w) ? t("DWD warning: %@", warningEvent(w)) : t("%@ warning: %@", serviceShort(w.source), warningEvent(w));
+}
+
+/** The list's warning line: amber or red when it changes the light now or soon; later or frost-like ones grey and short, "Frost from 23:00". */
+function warningListLine({ warning, urgency }) {
+  if (urgency === "info") return `<small class="warn sub">${icon("info")} ${h(warningLine(warning, new Date(), true))}</small>`;
+  return `<small class="warn strong ${warning.severity === "minor" ? "orange" : "red"}">${icon("triangle-alert")} ${h(warningLine(warning))}</small>`;
+}
+
+/** The event alone, e.g. "Frost" or "Wind gusts" (DWDWarning.eventName). */
+function warningEvent(w) {
+  if (w.kind === "lake") return t("DWD lake warning");
   const event = lang() === "en" && w.english ? w.english.event : w.event;
-  const name = event ? event[0].toUpperCase() + event.slice(1).toLowerCase() : "";
-  return isDWD(w) ? t("DWD warning: %@", name) : t("%@ warning: %@", serviceShort(w.source), name);
+  return event ? event[0].toUpperCase() + event.slice(1).toLowerCase() : "";
+}
+
+/** In force at `now`: begun (or no start given) and not yet expired (DWDWarning.isActive). */
+function warningActive(w, now = new Date()) {
+  return (!w.onset || new Date(w.onset) <= now) && (!w.expires || now < new Date(w.expires));
+}
+
+/** "23:00" today, else "Tomorrow 08:00", for "from …" in short lines. */
+function warningStart(w) {
+  if (!w.onset) return null;
+  return localDay(w.onset) === localDay(new Date()) ? time(w.onset) : dayTime(w.onset);
+}
+
+/** "DWD warning: Frost" while in force, else "DWD warning: Frost from 23:00"; compact: "Frost from 23:00". */
+function warningLine(w, now = new Date(), compact = false) {
+  const label = compact ? warningEvent(w) : shortWarning(w);
+  const start = warningActive(w, now) ? null : warningStart(w);
+  return start ? t("%@ from %@", label, start) : label;
+}
+
+/** Counting warnings starting within this many hours already show amber in the list. */
+const SOON_HOURS = 3;
+
+/**
+ * The one warning the short lines (club list, top tile) show, and how: "now" when it
+ * counts for the light and is in force, "soon" when it counts and starts within
+ * 3 hours, else "info", grey with its start (Warnings.headline).
+ */
+function warningHeadline(warnings, now = new Date()) {
+  const current = (warnings?.items ?? []).filter((w) => !w.expires || new Date(w.expires) > now);
+  const rank = ["extreme", "severe", "moderate", "minor"];
+  const at = (w) => (rank.includes(w.severity) ? rank.indexOf(w.severity) : 4);
+  const worst = (list) => list.reduce((a, w) => (a == null || at(w) < at(a) ? w : a), null);
+  const counts = current.filter((w) => !warningInfoOnly(w));
+  let w = worst(counts.filter((x) => warningActive(x, now)));
+  if (w) return { warning: w, urgency: "now" };
+  const soonEnd = now.getTime() + SOON_HOURS * 3600000;
+  w = worst(counts.filter((x) => (x.onset ? new Date(x.onset).getTime() : now.getTime()) < soonEnd));
+  if (w) return { warning: w, urgency: "soon" };
+  const start = (x) => (x.onset ? new Date(x.onset).getTime() : now.getTime());
+  w = current.reduce((a, x) => (a == null || start(x) < start(a) ? x : a), null);
+  return w ? { warning: w, urgency: "info" } : null;
 }
 
 function wireSearch() {
@@ -966,6 +1019,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
       ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${icon("shield-check")} ${h(warningsIsDWD(warnings) ? t("No DWD warning") : t("No official warning"))}</span>
         <span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></button></li>` : ""}
+      ${!at && warnings?.status === "ok" ? laterWarningLine(warningHeadline(warnings)) : ""}
     </ul>
     ${adviceOnly()}
     <hr>
@@ -1041,6 +1095,20 @@ function rainCell(d) {
 }
 
 /** The DWD warnings card, shown while a warning is out or DWD could not be checked (WarningsCard). */
+/**
+ * For a warning that starts later or does not count for the light, one line in the
+ * top tile naming it (amber when it counts and starts within hours, else grey), so
+ * the light and the warnings card tell the same story. Counting warnings in force
+ * are reasons already. Tapping it opens the warnings.
+ */
+function laterWarningLine(headline) {
+  if (!headline || headline.urgency === "now") return "";
+  const { warning, urgency } = headline;
+  const soon = urgency === "soon";
+  const text = warningInfoOnly(warning) ? t("%@ · not part of the rowing light", warningLine(warning)) : warningLine(warning);
+  return `<li><button class="no-warning ${soon ? "orange" : "sub"}" id="no-warning" aria-description="${h(t("Opens the warnings"))}">${icon(soon ? "triangle-alert" : "info")}<span>${h(text)}</span></button></li>`;
+}
+
 function warningsCard(warnings, club, checkedAt) {
   const title = localChecked(warnings) && warningsIsDWD(warnings) ? t("DWD warnings") : t("Official warnings");
   return card(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false), { cls: "warnings" });
@@ -1104,7 +1172,12 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
   }
   const lake = items.filter((w) => w.kind === "lake");
   const other = items.filter((w) => w.kind !== "lake");
-  return `${lake.map(warningRow).join("")}${guide}${other.map(warningRow).join("")}<p class="sub small">${h(coverage)}</p>`;
+  // "Now" and "Later" so a warning for tonight is not read as one for this hour.
+  const now = other.filter((w) => warningActive(w));
+  const later = other.filter((w) => !warningActive(w)).sort((a, b) => new Date(a.onset ?? 0) - new Date(b.onset ?? 0));
+  const label = (text) => `<p class="warn-group">${h(text)}</p>`;
+  return `${lake.map(warningRow).join("")}${guide}${now.length && later.length ? label(t("Now")) : ""}${now.map(warningRow).join("")}
+    ${later.length ? label(t("Later")) : ""}${later.map(warningRow).join("")}<p class="sub small">${h(coverage)}</p>`;
 }
 
 const SEVERITY = { extreme: "var(--extreme)", severe: "var(--red)", moderate: "var(--orange)" };
