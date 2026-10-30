@@ -714,9 +714,9 @@ struct SatelliteImage: View {
         .aspectRatio(picture.aspectRatio, contentMode: .fit)
         .overlay { sharpOverlay }
         .overlay { iceOverlay }
-        .overlay(alignment: .topLeading) {
+        .overlay {
             // The full view puts it on the screen, where it doesn't zoom.
-            if !marksOnScreen { SatelliteColdBadge(lakeID: lakeID) }
+            if !marksOnScreen { SatelliteColdBadge(lakeID: lakeID, picture: picture) }
         }
         .overlay {
             if !marksOnScreen {
@@ -1066,7 +1066,7 @@ struct SatellitePictureScreen: View {
                             SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID,
                                              cloudy: shot.lakeCloud >= 0.5, shot: shot, screen: (size, zoom.scale, zoom.offset))
                         }
-                        .overlay(alignment: .topLeading) { SatelliteColdBadge(lakeID: lakeID) }
+                        .overlay { SatelliteColdBadge(lakeID: lakeID, picture: picture, screen: (size, zoom.scale, zoom.offset)) }
                     }
                 }
                 if let shot = picture.shot(kind) {
@@ -1130,15 +1130,109 @@ struct SatellitePictureScreen: View {
 /// cold, as on the lake map (owner's pick 2026-10-27), with the blue shore line.
 struct SatelliteColdBadge: View {
     let lakeID: String
+    let picture: SatellitePicture
+    /// The full view: the picture's size at zoom 1, how far it is zoomed and moved.
+    var screen: (size: CGSize, zoom: CGFloat, offset: CGPoint)?
 
     var body: some View {
         // It explains the blue shore, so it shows only with the shore line.
         if SatelliteLayers.shared.on.contains(.shore), let view = LakeViewStore.shared.views[lakeID], let kit = view.coldWaterKit {
-            ColdWaterBadge(kit: kit, estimated: view.waterC == nil)
-                .background(.regularMaterial, in: Capsule())
-                .padding(8)
-                .allowsHitTesting(false)
+            GeometryReader { geo in
+                let estimated = view.waterC == nil
+                let text = estimated ? "≈ " + kit.title : kit.title
+                let full = CGSize(width: Self.textWidth(text) + 50, height: 34)
+                let place = BadgePlacement.choose(shore: shore(view, in: geo.size), size: geo.size, badge: full,
+                                                  compact: CGSize(width: 34, height: 34))
+                Group {
+                    if place.compact {
+                        ColdWaterGlyph(kit: kit)
+                            .font(.subheadline.weight(.semibold))
+                            .frame(width: 34, height: 34)
+                            .background(.regularMaterial, in: Circle())
+                    } else {
+                        ColdWaterBadge(kit: kit, estimated: estimated)
+                            .background(.regularMaterial, in: Capsule())
+                    }
+                }
+                .padding(BadgePlacement.inset)
+                .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: place.alignment)
+            }
+            .allowsHitTesting(false)
         }
+    }
+
+    /// The shore in the badge's own points, as the overlay draws it.
+    private func shore(_ view: LakeView, in size: CGSize) -> [[CGPoint]] {
+        guard let box = picture.bbox, box.count == 4 else { return [] }
+        let full = screen?.size ?? size, zoom = screen?.zoom ?? 1, offset = screen?.offset ?? .zero
+        return view.outline.map { ring in
+            ring.map { p in
+                CGPoint(x: (p[0] - box[0]) / (box[2] - box[0]) * full.width * zoom - offset.x,
+                        y: (box[3] - p[1]) / (box[3] - box[1]) * full.height * zoom - offset.y)
+            }
+        }
+    }
+
+    private static func textWidth(_ text: String) -> CGFloat {
+        let font = UIFont.systemFont(ofSize: UIFont.preferredFont(forTextStyle: .subheadline).pointSize, weight: .semibold)
+        return ceil((text as NSString).size(withAttributes: [.font: font]).width)
+    }
+}
+
+/// Where the life-jacket badge goes on a satellite picture: the first corner
+/// (top left, top right, bottom left, bottom right) where it covers neither the
+/// shore line nor the water; if none is free, just the symbol, in the corner
+/// where it covers least.
+enum BadgePlacement {
+    static let inset: CGFloat = 8
+
+    static func choose(shore: [[CGPoint]], size: CGSize, badge: CGSize, compact: CGSize) -> (alignment: Alignment, compact: Bool) {
+        let corners: [Alignment] = [.topLeading, .topTrailing, .bottomLeading, .bottomTrailing]
+        if let free = corners.first(where: { overlap(rect(for: $0, badge, in: size), shore) == 0 }) {
+            return (free, false)
+        }
+        let best = corners.min { overlap(rect(for: $0, compact, in: size), shore) < overlap(rect(for: $1, compact, in: size), shore) }
+        return (best ?? .topLeading, true)
+    }
+
+    static func rect(for corner: Alignment, _ badge: CGSize, in size: CGSize) -> CGRect {
+        let x = corner.horizontal == .leading ? inset : size.width - inset - badge.width
+        let y = corner.vertical == .top ? inset : size.height - inset - badge.height
+        // A few points around it, so the shore line's width stays clear too.
+        return CGRect(x: x, y: y, width: badge.width, height: badge.height).insetBy(dx: -3, dy: -3)
+    }
+
+    /// How much of the shore runs through the rectangle (points along it every
+    /// 3 pt), or 1 when the rectangle sits on open water inside the shore.
+    static func overlap(_ rect: CGRect, _ shore: [[CGPoint]]) -> Int {
+        var hits = 0
+        for ring in shore where ring.count > 1 {
+            for (a, b) in zip(ring, ring.dropFirst() + [ring[0]]) {
+                let steps = max(1, Int((hypot(b.x - a.x, b.y - a.y) / 3).rounded(.up)))
+                for i in 0...steps {
+                    let t = CGFloat(i) / CGFloat(steps)
+                    if rect.contains(CGPoint(x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t)) { hits += 1 }
+                }
+            }
+        }
+        if hits == 0 && inside(CGPoint(x: rect.midX, y: rect.midY), shore) { return 1 }
+        return hits
+    }
+
+    /// Even-odd test, so islands count as land.
+    static func inside(_ point: CGPoint, _ shore: [[CGPoint]]) -> Bool {
+        var inside = false
+        for ring in shore where ring.count > 2 {
+            var j = ring.count - 1
+            for i in ring.indices {
+                let a = ring[i], b = ring[j]
+                if (a.y > point.y) != (b.y > point.y), point.x < (b.x - a.x) * (point.y - a.y) / (b.y - a.y) + a.x {
+                    inside.toggle()
+                }
+                j = i
+            }
+        }
+        return inside
     }
 }
 
