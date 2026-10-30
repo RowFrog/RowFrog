@@ -1184,7 +1184,7 @@ final class WeatherMapRenderer: MKOverlayRenderer {
                 context.addLine(to: tip)
                 let head = min(length * 0.35, 8 / zoomScale)
                 for side in [-1.0, 1.0] {
-                    let a = angle + .pi + side * 0.5
+                    let a = CGFloat(angle + .pi + side * 0.5)
                     context.move(to: tip)
                     context.addLine(to: CGPoint(x: tip.x + sin(a) * head, y: tip.y - cos(a) * head))
                 }
