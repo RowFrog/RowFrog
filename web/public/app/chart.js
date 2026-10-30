@@ -196,10 +196,11 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
         parts.push(`<path d="${path(l.points, px, py)}" fill="none" stroke="${l.colour}" stroke-width="2"${l.dashed ? ' stroke-dasharray="5 4"' : ""}/>`);
       }
     }
+    // From the first hour to the last, as in the app, not into the edges.
     for (const limit of detail.limits) {
       const y = py(limit.value);
       if (y < top - 1 || y > bottom + 1) continue;
-      parts.push(`<line x1="0" x2="${width}" y1="${y}" y2="${y}" stroke="${limit.colour}" stroke-dasharray="4 3"/>`);
+      parts.push(`<line x1="${px(lo)}" x2="${px(hi)}" y1="${y}" y2="${y}" stroke="${limit.colour}" stroke-dasharray="4 3"/>`);
     }
     parts.push(`<line class="now" x1="${px(0)}" x2="${px(0)}" y1="${top}" y2="${bottom}"/>`);
     if (!detail.history) {

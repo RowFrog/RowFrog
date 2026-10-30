@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { GROUPS, limitsFor } from "../public/app/logic.js";
 import {
-  decodeView, applyLakeLimits, shares, headline, stripes, RouteEdit, routePlanner, planRoute, bestStart, plansBetter, windRelation, pace,
+  decodeView, applyLakeLimits, shares, headline, stripes, stripesFall, RouteEdit, routePlanner, planRoute, bestStart, plansBetter, windRelation, pace,
 } from "../public/app/lake.js";
 
 // A 3×1 strip of water running east, one forecast point, two zones.
@@ -98,4 +98,20 @@ test("on a river the times count with the current (RoutePlanner, app #179)", () 
   const lake = routePlanner(view, [{ lat: 47.905, lon: 11.301 }, { lat: 47.905, lon: 11.329 }], false);
   assert.equal(planRoute(lake, start, 150, 1).end - start, still);
   assert.equal(planRoute(lake, start, 150, 1).currentMs, null);
+});
+
+test("whole-lake stripes cross the lake's long side (LakeView.stripesFall)", () => {
+  // A course 3 km long and 100 m wide near Oberschleißheim, turned `degrees` from east.
+  const course = (degrees) => {
+    const lat = 48.25, squeeze = Math.cos((lat * Math.PI) / 180), c = Math.cos((degrees * Math.PI) / 180), s = Math.sin((degrees * Math.PI) / 180);
+    const corners = [[-0.0135, -0.00045], [0.0135, -0.00045], [0.0135, 0.00045], [-0.0135, 0.00045]];
+    return [corners.map(([x, y]) => [11.5 + (x * c - y * s) / squeeze, lat + x * s + y * c])];
+  };
+  assert.equal(stripesFall(course(45)), true, "lies along the usual stripes");
+  assert.equal(stripesFall(course(60)), true);
+  assert.equal(stripesFall(course(135)), false, "already crosses them");
+  assert.equal(stripesFall(course(90)), false, "north-south keeps the usual stripes");
+  assert.equal(stripesFall(course(0)), false, "east-west keeps the usual stripes");
+  assert.equal(stripesFall([[[11.49, 48.24], [11.51, 48.24], [11.51, 48.253], [11.49, 48.253]]]), false);
+  assert.equal(stripesFall([]), false);
 });
