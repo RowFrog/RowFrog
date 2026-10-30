@@ -13,14 +13,14 @@ import {
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
-  loadLeaflet, testing, adviceOnly, footerLinks, mapBoat, mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM,
+  loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM,
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, keptForecast,
 } from "./shared.js";
 import {
   isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
-  waterForHour, allowsMore, key,
+  waterForHour, key,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView } from "./lakeview.js";
 import { currentTile, currentBody } from "./river.js";
@@ -1617,19 +1617,10 @@ function renderBoats() {
       <ul class="boats">${store.boats.map(row).join("")}
         <li><button id="add-boat" class="tint">${icon("circle-plus")} <span>${h(t("Add a boat"))}</span></button></li></ul>
       <p class="footer">${h(t("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))}</p>
-      <h3 class="section">${icon("map")} ${h(t("Lake map colours"))}</h3>
-      <ul class="boats">${[["follow", t("Same as the ticked boat")], ...allBoats().map((b) => [b.id, boatTitle(b)])].map(([id, title]) => `<li class="boat-row"><button data-map-boat="${h(id)}">
-        <span><strong>${h(title)}</strong></span>${store.mapBoat === id ? icon("check") : ""}</button></li>`).join("")}</ul>
-      ${allowsMore(mapLimits(), currentLimits()) ? `<p class="footer orange">${icon("triangle-alert")} ${h(t("The map uses the limits for %@, which are higher than those for %@. The map points this out too.", boatInSentence(mapBoat()), boatInSentence(selectedBoat())))}</p>` : ""}
-      <p class="footer">${h(t("The boat whose limits colour the lake view and route planning."))}</p>
       ${footerLinks()}
     </main>`;
   root.querySelectorAll("[data-tick]").forEach((b) => b.addEventListener("click", () => {
     store.boat = b.dataset.tick;
-    renderBoats();
-  }));
-  root.querySelectorAll("[data-map-boat]").forEach((b) => b.addEventListener("click", () => {
-    store.mapBoat = b.dataset.mapBoat;
     renderBoats();
   }));
   root.querySelector("#add-boat").addEventListener("click", () => {
@@ -1715,7 +1706,6 @@ function renderBoat(id) {
     delete all[id];
     store.limits = all;
     if (store.boat === id) store.boat = "small";
-    if (store.mapBoat === id) store.mapBoat = "small";
     location.hash = "#/settings/boats";
   });
 }

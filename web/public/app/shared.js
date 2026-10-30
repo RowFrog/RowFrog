@@ -53,9 +53,6 @@ export const store = {
   /** Limits the user changed, per boat id; a missing entry means the app's limit for the boat's type. */
   get limits() { return load("rf.limits", {}); },
   set limits(value) { save("rf.limits", value); },
-  /** The boat the lake map is coloured for, or "follow" for the ticked one. */
-  get mapBoat() { return load("rf.mapBoat", "small"); },
-  set mapBoat(id) { save("rf.mapBoat", id); },
   /** Saved routes: { id, name, lakeId, points: [{ lat, lon }], outAndBack }. */
   get routes() { return load("rf.routes", []); },
   set routes(list) { save("rf.routes", list); },
@@ -149,8 +146,8 @@ export function deviceMapsApp(agent = navigator.userAgent, touchPoints = navigat
 /** The boat's class for the page bar, as rowers write it ("2x", "4+"); the two groups show their seats (Boat.classTag). */
 export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.class);
 
-/** The boat whose limits colour the lake view and route planning. */
-export const mapBoat = () => (store.mapBoat === "follow" ? selectedBoat() : boatById(store.mapBoat));
+/** The boat whose limits colour the lake view and route planning: the ticked one, as everywhere else on screen (owner, 30 Oct 2026). */
+export const mapBoat = () => selectedBoat();
 export const mapLimits = () => boatLimits(mapBoat());
 
 /** A limit's value in the user's units; wind keeps its decimal so 5.5 m/s does not read as 6. */
