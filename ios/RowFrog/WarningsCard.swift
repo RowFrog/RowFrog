@@ -308,10 +308,15 @@ extension DWDWarning {
     /// Short label for the location list, e.g. "DWD lake warning" or "DWD warning: Wind gusts".
     var shortLabel: String {
         if isLake { return tr("DWD lake warning") }
-        let name = warningsInEnglish && english != nil
+        return isDWD ? tr("DWD warning: %@", eventName) : tr("%@ warning: %@", serviceShort, eventName)
+    }
+
+    /// The event alone, e.g. "Frost" or "Wind gusts".
+    var eventName: String {
+        if isLake { return tr("DWD lake warning") }
+        return warningsInEnglish && english != nil
             ? english!.event.prefix(1).uppercased() + english!.event.dropFirst()
             : event.capitalized(with: Locale(identifier: "de_DE"))
-        return isDWD ? tr("DWD warning: %@", name) : tr("%@ warning: %@", serviceShort, name)
     }
 }
 
@@ -350,5 +355,11 @@ extension DWDWarning {
     func shortLabel(at date: Date) -> String {
         if isActive(at: date) { return shortLabel }
         return startText.map { tr("%@ from %@", shortLabel, $0) } ?? shortLabel
+    }
+
+    /// For the list's narrow column: "Frost from 23:00", the event and its start only.
+    func compactLabel(at date: Date) -> String {
+        if isActive(at: date) { return eventName }
+        return startText.map { tr("%@ from %@", eventName, $0) } ?? eventName
     }
 }

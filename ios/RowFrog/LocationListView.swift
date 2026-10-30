@@ -303,7 +303,8 @@ private struct LocationSummaryRow: View {
                     if let headline = forecast?.warnings?.headline() {
                         // Amber only for a warning that changes the light now or soon; later or frost-like ones grey.
                         let warning = headline.warning, info = headline.urgency == .info
-                        Label(warning.shortLabel(at: .now), systemImage: info ? "info.circle" : "exclamationmark.triangle.fill")
+                        // Grey ones as short as "Frost from 23:00": the column is narrow and the sign says it is a warning.
+                        Label(info ? warning.compactLabel(at: .now) : warning.shortLabel(at: .now), systemImage: info ? "info.circle" : "exclamationmark.triangle.fill")
                             .font(.caption.weight(info ? .regular : .semibold))
                             .foregroundStyle(info ? Color.secondary : warning.severity == "minor" ? Color.orange : warning.color)
                             .lineLimit(1)
