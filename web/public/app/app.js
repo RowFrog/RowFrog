@@ -169,17 +169,21 @@ function openBoatMenu(raw) {
 function bottomBar(currentId, raw) {
   const clubs = store.clubs;
   // Three floating pieces of glass, all 44 px high: cog and boat, the page dots, the list (RootView.PageBar).
+  // Beside the list the cog and the boat sit at the list's foot, beside the search (option A).
+  if (sideList.matches) return `<nav class="bottom"></nav>`;
   return `<nav class="bottom">
     <span class="bar-side"><span class="glass piece">
-      ${sideList.matches ? "" // Beside the list the cog sits at the list's bottom left, beside the search.
-      : `<a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>`}
-      <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>
+      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+      ${boatButton("tool boat")}
     </span></span>
-    ${sideList.matches ? `<span class="gap"></span>` // The list beside the page switches clubs already.
-    : `<span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>`}
-    <span class="bar-side end">${sideList.matches ? "" // The list beside the page has its search and Edit too.
-    : `<a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a>`}</span>
+    <span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
+    <span class="bar-side end"><a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a></span>
   </nav>`;
+}
+
+/** The button that opens the boat menu: in the page bar, or beside the search at the foot of the list beside the page. */
+function boatButton(cls) {
+  return `<button class="${cls}" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>`;
 }
 
 /** The boat button's symbol: the class in a small frame, dashed for the two groups, in the accent colour for an own boat (BoatClassTag). */
@@ -188,8 +192,19 @@ function boatClassTag(boat) {
   return `<span class="class-tag ${isGroup(boat) ? "group" : ""} ${tag.length > 2 ? "long" : ""}" aria-hidden="true">${h(tag)}</span>`;
 }
 
+/** The forecast the boat menu reads; the button beside the list's search is drawn before it loads. */
+let boatRaw = null;
+
+function wireBoatButton() {
+  const button = root.querySelector("#boat-button");
+  if (!button || button.dataset.wired) return;
+  button.dataset.wired = "1";
+  button.addEventListener("click", () => openBoatMenu(boatRaw));
+}
+
 function wireBottomBar(raw) {
-  root.querySelector("#boat-button")?.addEventListener("click", () => openBoatMenu(raw));
+  boatRaw = raw;
+  wireBoatButton();
   const dots = root.querySelector(".bottom .dots");
   dots?.addEventListener("pointerdown", (e) => {
     dotSlide = e.clientX;
@@ -244,12 +259,13 @@ function moreMenu() {
     </div></details>`;
 }
 
-/** The settings cog and the search field side by side at the bottom (settingsBesideSearch). */
-function searchBar(cls) {
+/** The settings cog and the search field side by side at the bottom (settingsBesideSearch); beside a club page the boat button follows the search. */
+function searchBar(cls, boat = false) {
   return `<div class="${cls} search-bar">
     <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
     <label class="search glass">${icon("search")}
       <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+    ${boat ? boatButton("glass round tool boat") : ""}
   </div>`;
 }
 
@@ -555,13 +571,14 @@ const TWO_COLUMNS = 600;
  */
 function sideListHtml(currentId) {
   return `<header class="side-head"><h2>${h(t("Locations"))}</h2>${moreMenu()}</header>
-    ${listBody(currentId)}${searchBar("side-bottom")}`;
+    ${listBody(currentId)}${searchBar("side-bottom", true)}`;
 }
 
 /** A change in the list draws the list anew, not the page beside it. */
 function wireSideList(currentId) {
   const side = root.querySelector("aside.side");
   if (!side) return;
+  wireBoatButton();
   wireList(() => {
     side.innerHTML = sideListHtml(currentId);
     wireSideList(currentId);
