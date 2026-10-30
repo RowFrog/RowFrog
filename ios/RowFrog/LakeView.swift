@@ -38,6 +38,37 @@ struct LakeView: Decodable, Hashable {
 
     /// Cold water draws the shore blue on the maps, for the map's boat.
     var coldShore: ColdShore? { ColdShore(waterC: shoreWaterC, limits: AppSettings.shared.mapLimits) }
+    /// Whether the whole-lake stripes run from top left to bottom right instead
+    /// of bottom left to top right, so they cross the lake's long side.
+    var stripesFall: Bool { Self.stripesFall(outline) }
+
+    /// A long lake lying along the usual diagonal, like a regatta course, would
+    /// get stripes along its length that hardly show; such lakes get the other
+    /// diagonal. Round lakes keep the usual one.
+    static func stripesFall(_ outline: [[[Double]]]) -> Bool {
+        guard let first = outline.first?.first, first.count > 1 else { return false }
+        let squeeze = cos(first[1] * .pi / 180)
+        // The shore's spread, each stretch weighted by its length, in degrees of latitude.
+        var sum = 0.0, sx = 0.0, sy = 0.0, sxx = 0.0, syy = 0.0, sxy = 0.0
+        for ring in outline where ring.count > 1 {
+            for (a, b) in zip(ring, ring.dropFirst() + [ring[0]]) where a.count > 1 && b.count > 1 {
+                let ax = a[0] * squeeze, ay = a[1], bx = b[0] * squeeze, by = b[1]
+                let w = hypot(bx - ax, by - ay), x = (ax + bx) / 2, y = (ay + by) / 2
+                sum += w; sx += w * x; sy += w * y
+                sxx += w * x * x; syy += w * y * y; sxy += w * x * y
+            }
+        }
+        guard sum > 0 else { return false }
+        let mx = sx / sum, my = sy / sum
+        let vxx = sxx / sum - mx * mx, vyy = syy / sum - my * my, vxy = sxy / sum - mx * my
+        let half = (vxx + vyy) / 2, spread = (((vxx - vyy) / 2) * ((vxx - vyy) / 2) + vxy * vxy).squareRoot()
+        guard half + spread > 1.5 * max(half - spread, 0) else { return false }
+        // The long side's angle, north up, and how far it lies from the usual stripes at 45°;
+        // a lake lying north-south or east-west keeps the usual ones.
+        let along = atan2(2 * vxy, vxx - vyy) / 2
+        return abs(remainder(along - .pi / 4, .pi)) < .pi / 4 - 0.05
+    }
+
     /// What to bring in cold water, for the map's boat.
     var coldWaterKit: ColdWaterKit? { ColdWaterKit(waterC: shoreWaterC, limits: AppSettings.shared.mapLimits) }
 

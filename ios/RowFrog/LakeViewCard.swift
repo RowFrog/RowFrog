@@ -216,11 +216,11 @@ struct LakeMiniMap: View {
                 // The whole lake is red (dark, a warning): stripes over the greyed squares;
                 // amber (sunrise or sunset, a warning): fainter stripes wider apart.
                 if layer == .light, let light = hour.lakeWide.stripes {
-                    let red = light == .red
+                    let red = light == .red, fall = view.stripesFall
                     var lines = Path()
                     for x in stride(from: -size.height, to: size.width, by: red ? 8 : 14) {
-                        lines.move(to: CGPoint(x: x, y: size.height))
-                        lines.addLine(to: CGPoint(x: x + size.height, y: 0))
+                        lines.move(to: CGPoint(x: x, y: fall ? 0 : size.height))
+                        lines.addLine(to: CGPoint(x: x + size.height, y: fall ? size.height : 0))
                     }
                     water.opacity = 1
                     water.stroke(lines, with: .color(red ? .red.opacity(0.55) : .orange.opacity(0.75)), lineWidth: red ? 1.5 : 1.2)
@@ -237,7 +237,8 @@ struct LakeMiniMap: View {
                 let at = p.point(lon: point.lon, lat: point.lat)
                 ctx.stroke(LakeArrow.path(at: at, towardDeg: from + 180, length: 12), with: .color(.primary.opacity(0.55)), lineWidth: 1.2)
             }
-            for club in view.clubs {
+            // The page's club last, so it stays on top of clubs sharing its boathouse.
+            for club in view.clubs.sorted(by: { ($0.id == clubID ? 1 : 0) < ($1.id == clubID ? 1 : 0) }) {
                 let at = p.point(lon: club.launchPoint.lon, lat: club.launchPoint.lat)
                 let own = club.id == clubID
                 let r: CGFloat = own ? 4.5 : 3
