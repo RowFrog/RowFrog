@@ -93,10 +93,54 @@ export function allBoats() {
 }
 
 export const boatById = (id) => allBoats().find((b) => b.id === id) ?? GROUPS[0];
-export const selectedBoat = () => boatById(store.boat);
+/** The ticked boat, wherever it is kept (AppSettings.selectedBoat). */
+export const tickedBoat = () => boatById(store.boat);
 export const boatLimits = (boat) => limitsFor(boat, store.limits[boat.id] ?? {});
-/** The limits the rowing light uses. */
-export const currentLimits = () => boatLimits(selectedBoat());
+
+/** The club whose page, value page or lake map shows; null on the other pages. */
+let pageClub = null;
+export function setPageClub(id) {
+  pageClub = id ?? null;
+}
+export const pageClubId = () => pageClub;
+
+/**
+ * Whether a boat is at a club: small and big boats are everywhere, own boats at
+ * the clubs where they are kept. Without a club (the settings), and for boats
+ * not yet put at a club, every boat counts (AppSettings.isKept).
+ */
+export function isKept(boat, clubId = pageClub) {
+  if (!clubId || isGroup(boat) || !boat.clubs?.length) return true;
+  return boat.clubs.includes(clubId);
+}
+/** The user's own boats kept at a club. */
+export const boatsKeptAt = (clubId = pageClub) => store.boats.filter((b) => isKept(b, clubId));
+/** The boat a club's page and lake maps use: the ticked one where it is kept, else small boats, whose limits are the strictest. */
+export const selectedBoat = (clubId = pageClub) => (isKept(tickedBoat(), clubId) ? tickedBoat() : GROUPS[0]);
+/** The limits the rowing light uses at a club, on its page and lake maps alike. */
+export const currentLimits = (clubId = pageClub) => boatLimits(selectedBoat(clubId));
+
+/** Keeps a boat at one more club too, e.g. for a regatta. */
+export function keepBoat(id, clubId) {
+  store.boats = store.boats.map((b) => (b.id === id && !(b.clubs ?? []).includes(clubId) ? { ...b, clubs: [...(b.clubs ?? []), clubId] } : b));
+}
+/** Takes a boat off a club's list; the last club stays, so the boat shows somewhere. */
+export function unkeepBoat(id, clubId) {
+  store.boats = store.boats.map((b) => (b.id === id && (b.clubs ?? []).length > 1 ? { ...b, clubs: b.clubs.filter((c) => c !== clubId) } : b));
+}
+/** Boats from before clubs were kept, and boats added before a home base was picked, are put at the home base. */
+export function keepUnplacedBoats() {
+  const home = store.clubs[0]?.id;
+  if (!home || !store.boats.some((b) => !b.clubs?.length)) return;
+  store.boats = store.boats.map((b) => (b.clubs?.length ? b : { ...b, clubs: [home] }));
+}
+/** Names joined as the language writes a list: "MRC 1880 and DHRC". */
+export const listJoin = (names) => new Intl.ListFormat(locale(), { type: "conjunction" }).format(names);
+/** A club's short name from its id, for "At MRC 1880" in the boat menu. */
+export function clubNameOf(id) {
+  const club = store.clubs.find((c) => c.id === id);
+  return club ? club.shortName || club.name : id;
+}
 
 export function boatTitle(boat) {
   if (isGroup(boat)) return t(BOATS[boat.id].title);
@@ -146,7 +190,7 @@ export function deviceMapsApp(agent = navigator.userAgent, touchPoints = navigat
 /** The boat's class for the page bar, as rowers write it ("2x", "4+"); the two groups show their seats (Boat.classTag). */
 export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.class);
 
-/** The boat whose limits colour the lake view and route planning: the ticked one, as everywhere else on screen (owner, 30 Oct 2026). */
+/** The boat whose limits colour the lake view and route planning: the one the club's page uses, as everywhere else on screen (owner, 30 Oct 2026). */
 export const mapBoat = () => selectedBoat();
 export const mapLimits = () => boatLimits(mapBoat());
 
@@ -161,8 +205,8 @@ export function limitText(limit, value) {
   return `${num(v, Math.abs(v - Math.round(v)) < 0.05 ? 0 : 1)} ${windUnit()}`;
 }
 
-/** The forecast for the ticked boat. */
-export const forBoat = (raw) => applyLimits(raw, currentLimits());
+/** The forecast for the boat in use at a club: the ticked one where it is kept, else small boats. */
+export const forBoat = (raw, clubId = pageClub) => applyLimits(raw, currentLimits(clubId));
 
 // ---- Loading ---------------------------------------------------------------
 

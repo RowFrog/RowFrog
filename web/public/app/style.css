@@ -901,3 +901,8 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .radar-mark.missing::after { content: ""; position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1.5px; border-radius: 1px; background: currentColor; transform: translateX(-50%) rotate(-45deg); }
 /* "Now" and "Later" above the warnings they group (WarningsCard.SectionLabel). */
 .warn-group { margin: 10px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--sub); }
+/* Where an own boat is kept (KeptAtSection): the name, "Home base", Remove; the add row is a menu of saved clubs. */
+.kept-row > span:first-child { flex: 1; }
+.kept-row .link { padding: 4px 0; }
+.add-club { justify-content: flex-start; color: var(--accent); font-size: 20px; }
+.add-club select { flex: 1; max-width: none; border: 0; background: none; color: var(--accent); font-size: 17px; -webkit-appearance: none; appearance: none; cursor: pointer; }
