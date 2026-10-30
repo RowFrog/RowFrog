@@ -180,34 +180,122 @@ struct WidgetBackgroundSwatch: View {
     }
 }
 
-/// The medium widget with the chosen background and the home base's last
-/// forecast the widgets loaded (none until a widget has run once).
+/// The widgets with the chosen background, one per page to swipe through
+/// with dots under them: small, medium (conditions, good times), large and
+/// the lock screen. They show the home base's last forecast the widgets
+/// saved, or one the preview loads itself when no widget has run yet.
 private struct WidgetPreview: View {
     let background: WidgetBackground
+    @State private var loaded: ClubForecast?
+    @State private var page = 1
 
-    /// The home base's forecast as the widgets last saved it, for the samples.
-    static var snapshot: RowingSnapshot {
-        let shared = WidgetShared.defaults
-        let home = shared.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
-        let names = shared.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
-        let forecast = shared.data(forKey: WidgetShared.cacheKey(home)).flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
-        return RowingSnapshot(date: .now, clubName: names[home] ?? "Row Frog", isHome: true, forecast: forecast?.applyingUserLimits())
+    private static var homeID: String {
+        WidgetShared.defaults.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
     }
 
+    /// The home base's forecast as the widgets last saved it, for the samples.
+    static var snapshot: RowingSnapshot { snapshot(loaded: nil) }
+
+    private static func snapshot(loaded: ClubForecast?) -> RowingSnapshot {
+        let shared = WidgetShared.defaults
+        let names = shared.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
+        let saved = shared.data(forKey: WidgetShared.cacheKey(homeID)).flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
+        return RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: (saved ?? loaded)?.applyingUserLimits())
+    }
+
+    private struct Page {
+        let title: String
+        let family: WidgetFamily
+        let size: CGSize
+        var focus: WidgetFocus = .hourly
+    }
+
+    // Sizes on a 6.3" iPhone, in points, as in the widget gallery.
+    private let pages = [
+        Page(title: tr("Small"), family: .systemSmall, size: CGSize(width: 170, height: 170)),
+        Page(title: tr("Medium"), family: .systemMedium, size: CGSize(width: 338, height: 158), focus: .conditions),
+        Page(title: tr("Medium: good rowing times"), family: .systemMedium, size: CGSize(width: 338, height: 158), focus: .windows),
+        Page(title: tr("Large"), family: .systemLarge, size: CGSize(width: 338, height: 354)),
+        Page(title: tr("Lock screen"), family: .accessoryRectangular, size: CGSize(width: 172, height: 76)),
+    ]
+
+    /// Tall enough for the large widget at three quarters of its size.
+    private static let height: CGFloat = 270
+
     var body: some View {
-        let snapshot = Self.snapshot
-        RowingWidgetView(snapshot: snapshot, family: .systemMedium, focus: .conditions, plain: background == .system)
-            .padding(16)
-            .frame(width: 338, height: 158)
-            .background {
-                WidgetBackdrop(background: background, snapshot: snapshot,
-                               picture: WidgetBackgroundSwatch.picture(for: background, clubID: BackgroundLibrary.homeClubID))
+        let snapshot = Self.snapshot(loaded: loaded)
+        VStack(spacing: 6) {
+            TabView(selection: $page) {
+                ForEach(pages.indices, id: \.self) { index in
+                    widget(pages[index], snapshot)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .tag(index)
+                }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(tr("Preview"))
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: Self.height)
+            Text(pages[page].title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            dots
+        }
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(tr("Preview"))
+        .accessibilityValue(pages[page].title)
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: page = min(page + 1, pages.count - 1)
+            case .decrement: page = max(page - 1, 0)
+            @unknown default: break
+            }
+        }
+        .task {
+            // No widget has saved a forecast yet: the preview loads the home base's itself.
+            guard Self.snapshot.forecast == nil else { return }
+            loaded = try? await APIClient.fromBundle().forecast(clubID: Self.homeID)
+        }
+    }
+
+    @ViewBuilder
+    private func widget(_ page: Page, _ snapshot: RowingSnapshot) -> some View {
+        if page.family == .accessoryRectangular {
+            HStack(spacing: 12) {
+                RowingWidgetView(snapshot: snapshot, family: .accessoryCircular)
+                    .frame(width: 76, height: 76)
+                RowingWidgetView(snapshot: snapshot, family: .accessoryRectangular)
+                    .frame(width: page.size.width, height: page.size.height)
+            }
+            .foregroundStyle(.white)
+            .environment(\.colorScheme, .dark)
+            .padding(10)
+            .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 16))
+        } else {
+            let scale = min(1, Self.height / (page.size.height + 16))
+            RowingWidgetView(snapshot: snapshot, family: page.family, focus: page.focus, plain: background == .system)
+                .padding(16)
+                .frame(width: page.size.width, height: page.size.height)
+                .background {
+                    WidgetBackdrop(background: background, snapshot: snapshot,
+                                   picture: WidgetBackgroundSwatch.picture(for: background, clubID: BackgroundLibrary.homeClubID))
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+                .scaleEffect(scale)
+                .frame(width: page.size.width * scale, height: page.size.height * scale)
+        }
+    }
+
+    /// Which widget shows and how many there are; a tap on a dot goes there.
+    private var dots: some View {
+        HStack(spacing: 8) {
+            ForEach(pages.indices, id: \.self) { index in
+                Circle()
+                    .fill(index == page ? Color.primary : Color.secondary.opacity(0.4))
+                    .frame(width: index == page ? 8 : 6, height: index == page ? 8 : 6)
+                    .onTapGesture { withAnimation { page = index } }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: page)
     }
 }
