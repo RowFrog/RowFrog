@@ -34,12 +34,14 @@ Data: Deutscher Wetterdienst, CC BY 4.0 (credit "Deutscher Wetterdienst").
 from __future__ import annotations
 
 import io
+import json
 import math
 import re
 import zipfile
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Iterable
 
 import httpx
@@ -54,6 +56,9 @@ LAKE_AREA_TOLERANCE_M = 1000.0
 EARTH_RADIUS_M = 6_371_000.0
 
 SEVERITIES = ["Minor", "Moderate", "Severe", "Extreme"]
+# DWD's lake warning areas whose lakes really have flashing storm lights on the
+# shore. DWD warns for 23 areas, but not all have lights (e.g. Alster, Müritz).
+SHORE_LIGHTS_PATH = Path(__file__).resolve().parents[3] / "data" / "shore-lights.json"
 
 
 @dataclass(frozen=True)
@@ -179,6 +184,18 @@ def lake_area_for(lon: float, lat: float, areas: list[LakeArea], tolerance_m: fl
     scored = [(distance_to_area_m(lon, lat, a.rings), a) for a in areas if a.rings]
     scored = [s for s in scored if s[0] <= tolerance_m]
     return min(scored, key=lambda s: s[0])[1] if scored else None
+
+
+_shore_lights: dict[int, bool] | None = None
+
+
+def has_shore_lights(warncell_id: int) -> bool:
+    """True where the lake warning is also shown by storm lights on the shore (data/shore-lights.json)."""
+    global _shore_lights
+    if _shore_lights is None:
+        areas = json.loads(SHORE_LIGHTS_PATH.read_text(encoding="utf-8"))["areas"]
+        _shore_lights = {int(a["warncellId"]): bool(a["lights"]) for a in areas}
+    return _shore_lights.get(warncell_id, False)
 
 
 async def fetch_lake_areas(client: httpx.AsyncClient) -> list[LakeArea]:

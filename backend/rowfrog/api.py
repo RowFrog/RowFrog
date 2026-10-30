@@ -276,12 +276,23 @@ def _utc(t: datetime) -> str:
     return t.astimezone(timezone.utc).replace(microsecond=0).isoformat()
 
 
+def _reasons_json(reasons: list[tuple[str, Light]], warning_topic: str | None) -> list[dict]:
+    """The weather warning reason also says what the warning is about ("wind", "thunderstorm", ...)."""
+    out = []
+    for name, light in reasons:
+        item = {"condition": name, "light": light.name.lower()}
+        if name == "weather_warning" and warning_topic:
+            item["topic"] = warning_topic
+        out.append(item)
+    return out
+
+
 def _hour_json(h: RowingHour) -> dict:
     w = h.weather
     return {
         "time": w.time.isoformat(),
         "light": h.assessment.light.name.lower(),
-        "reasons": [{"condition": name, "light": light.name.lower()} for name, light in h.assessment.reasons],
+        "reasons": _reasons_json(h.assessment.reasons, h.warning_topic),
         "windSpeedMs": w.wind_speed_ms,
         "windGustMs": w.wind_gust_ms,
         "windFromDeg": w.wind_from_deg,
@@ -483,6 +494,9 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         items.insert(0, _warning_json(sample, _SAMPLE_LOCAL_ENGLISH, sample=True))
     current = [w for w in lake + local if w.expires is None or w.expires > now]
     block = {"status": "ok", "lakeArea": None if area is None else area.name, "items": items, "local": _local_service(club)}
+    if area is not None:
+        # Only some of DWD's lake areas have storm lights on the shore; the app explains them only there.
+        block["shoreLights"] = dwd_warnings.has_shore_lights(area.warncell_id)
     result = (block, current)
     _warnings_cache[club.id] = (time.monotonic(), result)
     return result
@@ -883,7 +897,7 @@ async def lake_view_forecast(lake_id: str) -> dict:
                 "time": h.time.isoformat(),
                 "lakeWide": {
                     "light": h.lake_wide_light.name.lower(),
-                    "reasons": [{"condition": name, "light": light.name.lower()} for name, light in h.lake_wide],
+                    "reasons": _reasons_json(h.lake_wide, h.warning_topic),
                 },
                 # One digit per water cell: 0 green, 1 amber, 2 red.
                 "lights": "".join(str(int(light)) for light in h.lights),

@@ -23,7 +23,7 @@ from datetime import timedelta
 from functools import lru_cache
 from typing import Sequence
 
-from .forecast import _daylight, _lake_warning, _thunderstorm, _weather_warning
+from .forecast import _daylight, _lake_warning, _thunderstorm, _weather_warning, weather_warning_topic
 from .outlines import Rings
 from .score import HourConditions, Light, Thresholds, assess
 from .sources.dwd_warnings import Warning
@@ -93,6 +93,8 @@ class LakeHour:
     # Per forecast point: the light from fog and thunderstorms alone, so the app
     # can work out the cells again with a rower's own wind and wave limits.
     point_other: list[Light] = field(default_factory=list)
+    # What the weather warning behind a lake-wide "weather_warning" reason is about.
+    warning_topic: str | None = None
 
     @property
     def lake_wide_light(self) -> Light:
@@ -471,5 +473,10 @@ def lake_hours(
             z = grid.zone_of[i]
             zone_lights[z] = max(zone_lights[z], light)
             zone_waves[z] = max(zone_waves[z], wave)
-        hours.append(LakeHour(when, wide.reasons, lights, waves, at_points, zone_lights, zone_waves, point_other))
+        hours.append(
+            LakeHour(
+                when, wide.reasons, lights, waves, at_points, zone_lights, zone_waves, point_other,
+                weather_warning_topic(list(warnings), when, end),
+            )
+        )
     return hours

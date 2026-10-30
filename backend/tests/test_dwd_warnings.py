@@ -7,7 +7,7 @@ import httpx
 from fastapi.testclient import TestClient
 
 from rowfrog import api, locations
-from rowfrog.forecast import rowing_forecast
+from rowfrog.forecast import rowing_forecast, warning_topic
 from rowfrog.score import Light
 from rowfrog.sources import dwd_warnings, open_meteo
 
@@ -101,6 +101,47 @@ def test_minor_weather_warning_is_amber_and_thunderstorm_red():
     assert ("weather_warning", Light.RED) in hour.assessment.reasons
 
 
+def test_frost_and_heat_warnings_leave_the_light_alone():
+    for event in ("FROST", "STRENGER FROST", "GLÄTTE", "GLATTEIS", "TAUWETTER", "HITZE"):
+        ws = [w for _, w in dwd_warnings.parse_warnings({"features": [_warning(1, event, "Moderate")]}, "local")]
+        (hour, _) = rowing_forecast(_club(), open_meteo.parse(PAYLOAD), None, None, ws)
+        assert all(name != "weather_warning" for name, _ in hour.assessment.reasons), event
+        assert hour.warning_topic is None
+
+
+def test_warning_topic_names_what_the_warning_is_about():
+    assert warning_topic("STURMBÖEN") == "wind"
+    assert warning_topic("SCHWERES GEWITTER mit HAGEL") == "thunderstorm"
+    assert warning_topic("DAUERREGEN") == "rain"
+    assert warning_topic("SCHNEEVERWEHUNG") == "snow"
+    assert warning_topic("NEBEL") == "fog"
+    assert warning_topic("FROST") is None
+    assert warning_topic("WARNUNG") == "other"  # unknown events still count
+
+
+def test_worst_weather_warning_names_the_topic():
+    ws = [
+        w
+        for _, w in dwd_warnings.parse_warnings(
+            {"features": [_warning(1, "NEBEL", "Minor"), _warning(1, "STURMBÖEN", "Moderate"), _warning(1, "FROST", "Moderate")]},
+            "local",
+        )
+    ]
+    (hour, _) = rowing_forecast(_club(), open_meteo.parse(PAYLOAD), None, None, ws)
+    assert ("weather_warning", Light.RED) in hour.assessment.reasons
+    assert hour.warning_topic == "wind"
+    assert {"condition": "weather_warning", "light": "red", "topic": "wind"} in api._hour_json(hour)["reasons"]
+
+
+def test_shore_lights_list_covers_every_dwd_lake_area():
+    # The 23 areas DWD's GeoServer listed on 30.10.2026 (scripts/lake_lights_check.py).
+    assert dwd_warnings.has_shore_lights(209904000)  # Starnberger See
+    assert dwd_warnings.has_shore_lights(208439000)  # Bodensee - West
+    assert not dwd_warnings.has_shore_lights(202006000)  # Alster: DWD warns, no lights
+    assert not dwd_warnings.has_shore_lights(213010000)  # Müritz: lights only planned
+    assert not dwd_warnings.has_shore_lights(1)  # unknown areas: no lights claimed
+
+
 def _serve(handler):
     original = httpx.AsyncClient
 
@@ -162,6 +203,7 @@ def test_forecast_says_no_warning_after_checking(monkeypatch):
         "lakeArea": "Starnberger See",
         "items": [],
         "local": {"source": "dwd", "service": "Deutscher Wetterdienst (DWD)", "url": "https://www.wettergefahren.de/", "checked": True},
+        "shoreLights": True,
     }
     assert "dwd:Warnungen_Binnenseen" in seen and "dwd:Warnungen_Gemeinden" in seen
 
