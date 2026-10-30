@@ -49,22 +49,13 @@ final class AppSettings {
             defaults.set(plain, forKey: Keys.boatLimits)
         }
     }
-    /// The boat the lake map is coloured for, or `Self.followBoat` for the ticked one.
-    var mapBoatID: String { didSet { defaults.set(mapBoatID, forKey: Keys.mapBoat) } }
-    static let followBoat = "follow"
-
     /// Small boats, big boats, then the user's own.
     var boats: [Boat] { Boat.groups + myBoats }
     func boat(_ id: String) -> Boat? { boats.first { $0.id == id } }
     var selectedBoat: Boat { boat(boatID) ?? .small }
     func limits(for boat: Boat) -> RowingLimits { RowingLimits(boat: boat, custom: boatLimits[boat.id] ?? [:]) }
-    /// The limits the rowing light uses.
+    /// The limits the rowing light uses, on the club pages and the lake maps alike.
     var limits: RowingLimits { limits(for: selectedBoat) }
-    var mapBoat: Boat { mapBoatID == Self.followBoat ? selectedBoat : boat(mapBoatID) ?? .small }
-    var mapLimits: RowingLimits { limits(for: mapBoat) }
-    /// The map is coloured for a boat that takes more wind or waves than the
-    /// ticked one, so it can look calmer than it is for the user.
-    var mapLooksCalmer: Bool { mapLimits.allowsMore(than: limits) }
 
     /// Adds a boat and returns it.
     @discardableResult
@@ -74,12 +65,11 @@ final class AppSettings {
         return boat
     }
 
-    /// Removes one of the user's boats; the ticked boat and the map fall back to small boats.
+    /// Removes one of the user's boats; the ticked boat falls back to small boats.
     func removeBoat(_ id: String) {
         myBoats.removeAll { $0.id == id }
         boatLimits[id] = nil
         if boatID == id { boatID = Boat.small.id }
-        if mapBoatID == id { mapBoatID = Boat.small.id }
     }
 
     /// The picture behind every page, unless a page or club has its own.
@@ -160,6 +150,7 @@ final class AppSettings {
         static let boat = "RWBoat"
         static let myBoats = "RWMyBoats"
         static let boatLimits = "RWBoatLimits"
+        /// No longer used: the lake maps follow the ticked boat. Kept so it is cleared.
         static let mapBoat = "RWMapBoat"
         static let developer = "RWDeveloperOptions"
         static let pickedModels = "RWPickedModels"
@@ -221,7 +212,8 @@ final class AppSettings {
                 return (limit, number)
             })
         }
-        mapBoatID = defaults.string(forKey: Keys.mapBoat) ?? Boat.small.id
+        // The lake maps had a boat of their own until they followed the ticked one.
+        defaults.removeObject(forKey: Keys.mapBoat)
         allPagesBackground = defaults.string(forKey: Keys.background).flatMap(BackgroundChoice.init(rawValue:)) ?? .noPicture
         let pages = defaults.dictionary(forKey: Keys.pageBackgrounds) as? [String: String] ?? [:]
         pageBackgrounds = Dictionary(uniqueKeysWithValues: pages.compactMap { key, raw in
@@ -328,7 +320,6 @@ final class AppSettings {
         mapApp = .apple
         boatID = Boat.small.id
         boatLimits = [:]
-        mapBoatID = Boat.small.id
         removeAllBackgrounds()
         widgetBackground = .sky
         clubWidgetBackgrounds = [:]

@@ -418,7 +418,6 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Your boat", .boats, words: ["small", "big", "klein", "groß", "Boot"]),
             SettingsSearch("My boats", .boats, words: ["Meine Boote", "gig", "add", "hinzufügen"]),
             SettingsSearch("Fine-tune the limits", .boats, words: ["limit", "Grenze", "wind", "gusts", "Böen", "waves", "Wellen", "water temperature", "Wassertemperatur"]),
-            SettingsSearch("Lake map colours", .boats, words: ["lake view", "Seeansicht", "route", "Karte"]),
             SettingsSearch("Appearance", .appearance, words: ["light", "dark", "hell", "dunkel", "mode", "Modus"]),
             SettingsSearch("App icon", .appearance, words: ["App-Symbol", "home screen", "Home-Bildschirm"]),
             SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
@@ -1503,73 +1502,39 @@ struct RowingLimitsView: View {
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
-        ScrollViewReader { proxy in
-            Form {
-                Section {
-                    if showBoatsTip {
-                        TipView(boatsTip)
-                    }
-                    ForEach(Boat.groups) { boat in
-                        BoatRow(boat: boat) { path.append(.boat(boat.id)) }
-                    }
-                } header: {
-                    SectionTitle(tr("Your boat"), symbol: "figure.rower")
-                } footer: {
-                    SectionFooter(tr("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))
+        Form {
+            Section {
+                if showBoatsTip {
+                    TipView(boatsTip)
                 }
-                .surfaceRows()
-
-                Section {
-                    ForEach(settings.myBoats) { boat in
-                        BoatRow(boat: boat) { path.append(.boat(boat.id)) }
-                    }
-                    .onDelete { offsets in
-                        for id in offsets.map({ settings.myBoats[$0].id }) { settings.removeBoat(id) }
-                    }
-                    Button {
-                        path.append(.boat(settings.addBoat().id))
-                    } label: {
-                        Label(tr("Add a boat"), systemImage: "plus.circle")
-                    }
-                } header: {
-                    SectionTitle(tr("My boats"), symbol: "list.bullet")
-                } footer: {
-                    SectionFooter(tr("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))
+                ForEach(Boat.groups) { boat in
+                    BoatRow(boat: boat) { path.append(.boat(boat.id)) }
                 }
-                .surfaceRows()
-
-                Section {
-                    Picker(selection: $settings.mapBoatID) {
-                        Text(tr("Same as the ticked boat")).tag(AppSettings.followBoat)
-                        ForEach(settings.boats) { boat in
-                            Text(boat.title).tag(boat.id)
-                        }
-                    } label: {
-                        EmptyView()
-                    }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
-                    if settings.mapLooksCalmer {
-                        Label(tr("The map uses the limits for %@, which are higher than those for %@. The map points this out too.", settings.mapBoat.inSentence, settings.selectedBoat.inSentence),
-                              systemImage: "exclamationmark.triangle.fill")
-                            .font(.footnote)
-                            .foregroundStyle(.orange)
-                    }
-                } header: {
-                    SectionTitle(tr("Lake map colours"), symbol: "map")
-                } footer: {
-                    SectionFooter(tr("The boat whose limits colour the lake view and route planning."))
-                }
-                .surfaceRows()
-                .id("map")
+            } header: {
+                SectionTitle(tr("Your boat"), symbol: "figure.rower")
+            } footer: {
+                SectionFooter(tr("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))
             }
-            .task {
-                // Screenshot hook: `-RWLimitsScroll map` shows the lake map section.
-                if UserDefaults.standard.string(forKey: "RWLimitsScroll") == "map" {
-                    try? await Task.sleep(for: .milliseconds(600))
-                    proxy.scrollTo("map", anchor: .top)
+            .surfaceRows()
+
+            Section {
+                ForEach(settings.myBoats) { boat in
+                    BoatRow(boat: boat) { path.append(.boat(boat.id)) }
                 }
+                .onDelete { offsets in
+                    for id in offsets.map({ settings.myBoats[$0].id }) { settings.removeBoat(id) }
+                }
+                Button {
+                    path.append(.boat(settings.addBoat().id))
+                } label: {
+                    Label(tr("Add a boat"), systemImage: "plus.circle")
+                }
+            } header: {
+                SectionTitle(tr("My boats"), symbol: "list.bullet")
+            } footer: {
+                SectionFooter(tr("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))
             }
+            .surfaceRows()
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)

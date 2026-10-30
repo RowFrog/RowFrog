@@ -36,8 +36,8 @@ struct LakeView: Decodable, Hashable {
 
     var water: WaterKind { WaterKind(kind: kind, waterway: section?.waterway) }
 
-    /// Cold water draws the shore blue on the maps, for the map's boat.
-    var coldShore: ColdShore? { ColdShore(waterC: shoreWaterC, limits: AppSettings.shared.mapLimits) }
+    /// Cold water draws the shore blue on the maps, for the ticked boat.
+    var coldShore: ColdShore? { ColdShore(waterC: shoreWaterC, limits: AppSettings.shared.limits) }
     /// Whether the whole-lake stripes run from top left to bottom right instead
     /// of bottom left to top right, so they cross the lake's long side.
     var stripesFall: Bool { Self.stripesFall(outline) }
@@ -69,8 +69,8 @@ struct LakeView: Decodable, Hashable {
         return abs(remainder(along - .pi / 4, .pi)) < .pi / 4 - 0.05
     }
 
-    /// What to bring in cold water, for the map's boat.
-    var coldWaterKit: ColdWaterKit? { ColdWaterKit(waterC: shoreWaterC, limits: AppSettings.shared.mapLimits) }
+    /// What to bring in cold water, for the ticked boat.
+    var coldWaterKit: ColdWaterKit? { ColdWaterKit(waterC: shoreWaterC, limits: AppSettings.shared.limits) }
 
     /// Older than a club forecast may be: the lights then turn grey instead of green.
     var isStale: Bool {
@@ -404,10 +404,10 @@ final class LakeViewStore {
         }
     }
 
-    /// The lake for the map's boat.
+    /// The lake for the ticked boat.
     func view(_ lakeID: String) -> LakeView? {
         guard let base = raw[lakeID] else { return nil }
-        let limits = AppSettings.shared.mapLimits
+        let limits = AppSettings.shared.limits
         var view: LakeView
         if let cached = applied[lakeID], cached.limits == limits {
             view = cached.view
@@ -480,18 +480,18 @@ enum LakeRaster {
     /// The wave and wind limits of the boat the map is coloured for; for
     /// small boats amber from 0.15 m and 5.5 m/s, red above 0.30 m and 8 m/s.
     static func waveColor(_ m: Double) -> RGB {
-        let limits = AppSettings.shared.mapLimits
+        let limits = AppSettings.shared.limits
         return ramp(m, amber: limits.value(.waveAmber), red: limits.value(.waveRed))
     }
     static func windColor(_ ms: Double) -> RGB {
-        let limits = AppSettings.shared.mapLimits
+        let limits = AppSettings.shared.limits
         return ramp(ms, amber: limits.value(.windAmber), red: limits.value(.windRed))
     }
 
     /// The picture for an hour, kept once drawn: pages and maps ask for it on
     /// every redraw, and drawing it means smoothing a thousand cells.
     static func image(_ view: LakeView, hour: LakeHour, layer: LakeLayer) -> CGImage? {
-        let key = "\(view.lakeId)|\(view.generatedAt.timeIntervalSince1970)|\(hour.hashValue)|\(layer)|\(AppSettings.shared.mapLimits)" as NSString
+        let key = "\(view.lakeId)|\(view.generatedAt.timeIntervalSince1970)|\(hour.hashValue)|\(layer)|\(AppSettings.shared.limits)" as NSString
         if let cached = cache.object(forKey: key) { return (cached as! CGImage) }
         let image = render(view, hour: hour, layer: layer)
         if let image { cache.setObject(image, forKey: key) }

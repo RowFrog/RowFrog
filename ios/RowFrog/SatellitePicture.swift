@@ -1537,7 +1537,7 @@ struct SatelliteLegend: View {
                             if let cold = LakeViewStore.shared.views[lakeID]?.coldShore {
                                 row(line(cold.color),
                                     tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
-                                       Format.temperature(AppSettings.shared.mapLimits.value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
+                                       Format.temperature(AppSettings.shared.limits.value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
                             } else {
                                 row(line(.white), tr("Shore line: white on a clear picture, dark blue on a cloudy one"))
                             }
