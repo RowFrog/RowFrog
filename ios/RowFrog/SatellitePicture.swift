@@ -716,7 +716,7 @@ struct SatelliteImage: View {
         .overlay { iceOverlay }
         .overlay {
             // The full view puts it on the screen, where it doesn't zoom.
-            if !marksOnScreen { SatelliteColdBadge(lakeID: lakeID, picture: picture) }
+            if !marksOnScreen { SatelliteColdBadge(lakeID: lakeID, picture: picture, clubID: clubID) }
         }
         .overlay {
             if !marksOnScreen {
@@ -1066,7 +1066,7 @@ struct SatellitePictureScreen: View {
                             SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID,
                                              cloudy: shot.lakeCloud >= 0.5, shot: shot, screen: (size, zoom.scale, zoom.offset))
                         }
-                        .overlay { SatelliteColdBadge(lakeID: lakeID, picture: picture, screen: (size, zoom.scale, zoom.offset)) }
+                        .overlay { SatelliteColdBadge(lakeID: lakeID, picture: picture, clubID: clubID, screen: (size, zoom.scale, zoom.offset)) }
                     }
                 }
                 if let shot = picture.shot(kind) {
@@ -1131,6 +1131,8 @@ struct SatellitePictureScreen: View {
 struct SatelliteColdBadge: View {
     let lakeID: String
     let picture: SatellitePicture
+    /// The page's club, whose boat sets the life-jacket limit.
+    var clubID: String?
     /// The full view: the picture's size at zoom 1, how far it is zoomed and moved.
     var screen: (size: CGSize, zoom: CGFloat, offset: CGPoint)?
 
