@@ -275,6 +275,7 @@ function drawOver(el, lake, shot, clubId) {
   const layer = el.querySelector(".sat-over");
   if (!layer) return;
   layer.innerHTML = overlaySvg(lake, shot, clubId, el.clientWidth, el.clientHeight);
+  placeBadge(el, lake, el.clientWidth, el.clientHeight);
   const again = () => el.isConnected && drawOver(el, lake, shot, clubId);
   whenLandWind(lake, again);
   if (store.satLayers.includes("wind")) whenBrightness(fileUrl(lake, shot.image, shot.date), again);
@@ -367,6 +368,73 @@ export function stripeSvg(kind, w, hgt, clipId, fall = false) {
   const [y0, y1] = fall ? [0, hgt] : [hgt, 0];
   for (let x = -hgt; x < w; x += gap) d += `M${x.toFixed(1)} ${y0.toFixed(1)}L${(x + hgt).toFixed(1)} ${y1.toFixed(1)}`;
   return `<path d="${d}" fill="none" stroke="${red ? "rgba(255,59,48,.75)" : "rgba(255,149,0,.8)"}" stroke-width="${red ? 1.5 : 1.2}" clip-path="url(#${clipId})"/>`;
+}
+
+/**
+ * The life-jacket badge in the first corner (top left, top right, bottom left,
+ * bottom right) where it covers neither the shore line nor the water; if none
+ * is free, just the symbol, where it covers least (BadgePlacement).
+ */
+function placeBadge(container, lake, w, hgt, screen = null) {
+  const badge = container.querySelector(".sat-kit");
+  const box = lake.meta.bbox;
+  if (!badge || badge.style.display === "none" || !lake.view || box?.length !== 4 || !w) return;
+  const { size: [fw, fh] = [w, hgt], zoom = 1, x: ox = 0, y: oy = 0 } = screen ?? {};
+  const shore = lake.view.outline.map((r) => r.map(([lon, lat]) => [((lon - box[0]) / (box[2] - box[0])) * fw * zoom + ox, ((box[3] - lat) / (box[3] - box[1])) * fh * zoom + oy]));
+  badge.classList.remove("compact");
+  const full = [badge.offsetWidth, badge.offsetHeight];
+  const place = badgeCorner(shore, w, hgt, full, [full[1], full[1]]);
+  badge.classList.toggle("compact", place.compact);
+  badge.dataset.corner = place.corner;
+}
+
+const BADGE_INSET = 8;
+const CORNERS = ["top-left", "top-right", "bottom-left", "bottom-right"];
+
+/** Where the badge goes: `shore` rings in screen points, `full` and `compact` badge sizes [w, h]. */
+export function badgeCorner(shore, w, hgt, full, compact) {
+  const rect = (corner, [bw, bh]) => {
+    const x = corner.endsWith("left") ? BADGE_INSET : w - BADGE_INSET - bw;
+    const y = corner.startsWith("top") ? BADGE_INSET : hgt - BADGE_INSET - bh;
+    return [x - 3, y - 3, x + bw + 3, y + bh + 3];
+  };
+  const free = CORNERS.find((c) => overlap(rect(c, full), shore) === 0);
+  if (free) return { corner: free, compact: false };
+  let best = CORNERS[0];
+  for (const c of CORNERS) if (overlap(rect(c, compact), shore) < overlap(rect(best, compact), shore)) best = c;
+  return { corner: best, compact: true };
+}
+
+/** Points of the shore (every 3 px) inside the rectangle, or 1 when it sits on open water. */
+function overlap([x0, y0, x1, y1], shore) {
+  let hits = 0;
+  for (const ring of shore) {
+    if (ring.length < 2) continue;
+    ring.forEach((a, i) => {
+      const b = ring[(i + 1) % ring.length];
+      const steps = Math.max(1, Math.ceil(Math.hypot(b[0] - a[0], b[1] - a[1]) / 3));
+      for (let k = 0; k <= steps; k++) {
+        const x = a[0] + ((b[0] - a[0]) * k) / steps;
+        const y = a[1] + ((b[1] - a[1]) * k) / steps;
+        if (x >= x0 && x <= x1 && y >= y0 && y <= y1) hits++;
+      }
+    });
+  }
+  if (!hits && insideShore([(x0 + x1) / 2, (y0 + y1) / 2], shore)) return 1;
+  return hits;
+}
+
+/** Even-odd, so islands count as land. */
+function insideShore([px, py], shore) {
+  let inside = false;
+  for (const ring of shore) {
+    for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+      const [ax, ay] = ring[i];
+      const [bx, by] = ring[j];
+      if (ay > py !== by > py && px < ((bx - ax) * (py - ay)) / (by - ay) + ax) inside = !inside;
+    }
+  }
+  return inside;
 }
 
 /** The hour's coloured water as a picture, kept while the hour is shown, as the full view draws it on every move. */
@@ -705,7 +773,9 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     const stage = el.querySelector(".sat-stage");
     const over = el.querySelector(".sat-screen");
     if (!stage || !over) return;
-    over.innerHTML = overlaySvg(lake, meta[kind], clubId, stage.clientWidth, stage.clientHeight, { size: [zoom.fit, zoom.fit / ratio], zoom: zoom.s, x: zoom.x, y: zoom.y });
+    const screen = { size: [zoom.fit, zoom.fit / ratio], zoom: zoom.s, x: zoom.x, y: zoom.y };
+    over.innerHTML = overlaySvg(lake, meta[kind], clubId, stage.clientWidth, stage.clientHeight, screen);
+    placeBadge(stage, lake, stage.clientWidth, stage.clientHeight, screen);
     whenLandWind(lake, redrawMarks);
     if (store.satLayers.includes("wind")) whenBrightness(fileUrl(lake, meta[kind].image, meta[kind].date), redrawMarks);
     sharpTiles(stage);

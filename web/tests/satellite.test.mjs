@@ -35,3 +35,13 @@ test("a clearest picture from the latest day is not offered twice", async () => 
   assert.deepEqual(kinds({ latest: shot("2026-10-27"), mostlyClear: shot("2026-10-22"), clearest: shot("2026-10-16") }), ["latest", "mostlyClear", "clearest"]);
   assert.deepEqual(kinds({ clearest: shot("2026-10-16") }), ["clearest"]);
 });
+
+test("the life-jacket badge moves to a corner clear of the lake", async () => {
+  const { badgeCorner } = await import("../public/app/satellite.js");
+  const ring = (x0, y0, x1, y1) => [[[x0, y0], [x1, y0], [x1, y1], [x0, y1]]];
+  const place = (shore) => badgeCorner(shore, 300, 300, [150, 34], [34, 34]);
+  assert.deepEqual(place(ring(100, 100, 200, 200)), { corner: "top-left", compact: false });
+  assert.deepEqual(place(ring(10, 10, 120, 120)), { corner: "top-right", compact: false });
+  assert.equal(place(ring(30, 30, 270, 270)).compact, true);
+  assert.equal(place(ring(-10, -10, 310, 310)).compact, true);
+});
