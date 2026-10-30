@@ -182,8 +182,8 @@ struct WidgetBackgroundSwatch: View {
 
 /// The widgets with the chosen background, one per page to swipe through
 /// with dots under them: small, medium (conditions, good times), large and
-/// the lock screen. They show the home base's last forecast the widgets
-/// saved, or one the preview loads itself when no widget has run yet.
+/// the lock screen. They show the home base's forecast the app or the
+/// widgets already have, then a fresh one the preview loads itself.
 private struct WidgetPreview: View {
     let background: WidgetBackground
     @State private var loaded: ClubForecast?
@@ -195,23 +195,27 @@ private struct WidgetPreview: View {
         WidgetShared.defaults.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
     }
 
-    /// The home base's forecast for the samples: the one the preview loaded
-    /// itself, else the app's kept copy, else the one the widgets last saved.
-    static var snapshot: RowingSnapshot { snapshot(loaded: nil) }
+    /// The home base's forecast for the samples and the swatches, once found:
+    /// decoded away from the main thread, so drawing never reads files.
+    @MainActor private static var forecast: ClubForecast?
+
+    static var snapshot: RowingSnapshot { snapshot(loaded: forecast) }
 
     private static func snapshot(loaded: ClubForecast?) -> RowingSnapshot {
-        let shared = WidgetShared.defaults
-        let names = shared.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
-        let saved = shared.data(forKey: WidgetShared.cacheKey(homeID)).flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
-        // The copy the app itself keeps from its last download, there at once.
+        let names = WidgetShared.defaults.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
+        return RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: loaded?.applyingUserLimits())
+    }
+
+    /// The app's own kept copy of its last download, else the one the widgets
+    /// last saved: the first with hours still to come.
+    /// Nonisolated, so it runs away from the main thread.
+    nonisolated private static func storedForecast(_ homeID: String) async -> ClubForecast? {
         let url = APIClient.fromBundle().baseURL.appending(path: "clubs/\(homeID)/forecast")
-        let kept = KeptFiles.shared.copy(of: url).flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0.data) }
-        // The first one with hours still to come.
-        let snapshots = [loaded, kept, saved].compactMap { $0 }.map {
-            RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: $0.applyingUserLimits())
-        }
-        return snapshots.first { $0.current != nil }
-            ?? RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: nil)
+        let kept = KeptFiles.shared.copy(of: url)?.data
+        let saved = WidgetShared.defaults.data(forKey: WidgetShared.cacheKey(homeID))
+        return [kept, saved].compactMap { $0 }
+            .compactMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
+            .first { forecast in forecast.hours.contains { $0.time > Date.now } }
     }
 
     private struct Page {
@@ -234,7 +238,7 @@ private struct WidgetPreview: View {
     private static let height: CGFloat = 270
 
     var body: some View {
-        let snapshot = Self.snapshot(loaded: loaded)
+        let snapshot = Self.snapshot(loaded: loaded ?? Self.forecast)
         VStack(spacing: 6) {
             TabView(selection: $page) {
                 ForEach(pages.indices, id: \.self) { index in
@@ -262,19 +266,20 @@ private struct WidgetPreview: View {
             }
         }
         .task {
-            // No widget has saved a forecast yet, or only one whose hours are over:
-            // the preview loads the home base's itself.
-            guard Self.snapshot.current == nil else { return }
+            // What the app or the widgets already have shows at once; a fresh
+            // download replaces it.
+            if loaded == nil, let stored = await Self.storedForecast(Self.homeID) {
+                loaded = stored
+                Self.forecast = stored
+            }
             do {
-                loaded = try await APIClient.fromBundle().forecast(clubID: Self.homeID)
+                let fresh = try await APIClient.fromBundle().forecast(clubID: Self.homeID)
+                loaded = fresh
+                Self.forecast = fresh
                 failure = nil
             } catch is CancellationError {
             } catch {
-                #if DEBUG
-                failure = tr("The forecast could not be loaded.") + " " + String(describing: error)
-                #else
-                failure = tr("The forecast could not be loaded.")
-                #endif
+                    if loaded == nil { failure = tr("The forecast could not be loaded.") }
             }
         }
     }
