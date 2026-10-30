@@ -144,10 +144,6 @@ struct LocationPageView: View {
                     // Screenshot hook: `-RWScrollTo bottom` scrolls to the page's end.
                     .overlay(alignment: .bottom) {
                         Color.clear.frame(height: 1).id("bottom")
-                            // Cards under the floating buttons: the bottom blurs, as the top does.
-                            .onGeometryChange(for: Bool.self) { [bottom = pageMargins.bottom, end = geometry.frame(in: .global).maxY] proxy in
-                                bottom > 0 && proxy.frame(in: .global).maxY - 24 > end - bottom + 1
-                            } action: { PageScroll.shared.update(club.id, underBar: $0) }
                     }
                     .frame(maxWidth: Self.maxContentWidth)
                     .frame(maxWidth: .infinity)
@@ -430,7 +426,7 @@ private extension LocationPageView {
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(surface.hasPicture ? 12 : 0)
-        .background(surface.label, in: RoundedRectangle(cornerRadius: 12))
+        .labelBackground(surface, in: RoundedRectangle(cornerRadius: 12))
     }
 
     @ViewBuilder
@@ -523,7 +519,7 @@ private extension LocationPageView {
         }
         .padding(.horizontal, surface.hasPicture ? 16 : 0)
         .padding(.vertical, surface.hasPicture ? 10 : 0)
-        .background(surface.label, in: RoundedRectangle(cornerRadius: 16))
+        .labelBackground(surface, in: RoundedRectangle(cornerRadius: 16))
         .padding(.top, 24)
         .alert(tr("Could not update"), isPresented: Binding(get: { showingFailure != nil }, set: { if !$0 { showingFailure = nil } }),
                presenting: showingFailure) { _ in
@@ -655,7 +651,11 @@ private struct NowCard: View {
                         .foregroundStyle(.orange)
                 }
                 if hour.reasons.isEmpty {
-                    Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
+                    // The full sentence where it fits on one line, else the short one (owner's choice C, 30.10.2026).
+                    ViewThatFits(in: .horizontal) {
+                        Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
+                        Label(tr("All within the limits."), systemImage: "checkmark.circle")
+                    }
                 } else {
                     ForEach(hour.reasons, id: \.self) { reason in
                         // Without a station the water is estimated, and the advice says so.
@@ -1279,7 +1279,7 @@ struct HourlyStickyHeader: View {
         .frame(height: Self.height, alignment: .top)
         // The tile's own colour. Rounded at the top like the tile, square at the
         // bottom where the rows start, so the header keeps its shape when it starts to stay.
-        .background(surface.card, in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
+        .cardBackground(surface, in: UnevenRoundedRectangle(topLeadingRadius: 16, topTrailingRadius: 16))
         .shadow(color: .black.opacity(0.12), radius: 4, y: 2)
     }
 }

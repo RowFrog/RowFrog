@@ -11,7 +11,7 @@ import {
 import { riverSpeed } from "./river.js";
 import { compass, matchesStandard, allowsMore, coldWaterKit, reasonCondition, key } from "./logic.js";
 import {
-  decodeView, hourIndex, viewStale, applyLakeLimits, stripes, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
+  decodeView, hourIndex, viewStale, applyLakeLimits, stripes, stripesFall, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
   roughest, RELATION_WIND, RELATION_WAVES, pace as paceText,
@@ -62,15 +62,15 @@ export function rasterCanvas(view, hour, layer) {
   return canvas;
 }
 
-function strokeStripes(ctx, kind, w, hgt, scale = 1) {
+function strokeStripes(ctx, kind, w, hgt, scale = 1, fall = false) {
   const red = kind === "red";
   ctx.strokeStyle = red ? "rgba(255, 59, 48, .55)" : "rgba(255, 149, 0, .75)";
   ctx.lineWidth = (red ? 1.5 : 1.2) * scale;
   ctx.beginPath();
   const gap = (red ? 8 : 14) * scale;
   for (let x = -hgt; x < w; x += gap) {
-    ctx.moveTo(x, hgt);
-    ctx.lineTo(x + hgt, 0);
+    ctx.moveTo(x, fall ? 0 : hgt);
+    ctx.lineTo(x + hgt, fall ? hgt : 0);
   }
   ctx.stroke();
 }
@@ -124,7 +124,7 @@ function drawMiniMap(canvas, view, hour, clubId) {
   ctx.drawImage(rasterCanvas(view, hour, "light"), x0, y0, x1 - x0, y1 - y0);
   ctx.globalAlpha = 1;
   const kind = stripes(hour.lakeWide);
-  if (kind) strokeStripes(ctx, kind, w, hgt);
+  if (kind) strokeStripes(ctx, kind, w, hgt, 1, stripesFall(view.outline));
   ctx.restore();
   const cold = coldShore(view.shoreWaterC, mapLimits());
   ctx.strokeStyle = cold ? COLD_SHORE[cold] : "rgba(0, 122, 255, .4)";
@@ -140,7 +140,8 @@ function drawMiniMap(canvas, view, hour, clubId) {
   });
   ctx.stroke();
   ctx.globalAlpha = 1;
-  for (const club of view.clubs) {
+  // The page's club last, on top of clubs sharing its launch point.
+  for (const club of [...view.clubs].sort((a, b) => (a.id === clubId) - (b.id === clubId))) {
     const [x, y] = pt(club.launchPoint.lon, club.launchPoint.lat);
     const own = club.id === clubId;
     ctx.beginPath();
@@ -186,7 +187,7 @@ export function kitBadge(view) {
   const kit = coldWaterKit(view.shoreWaterC, mapLimits());
   if (!kit) return "";
   const [title, advice] = coldWaterText(kit);
-  return `<span class="kit" title="${h(advice)}">${icon("life-buoy")} ${h(title)}</span>`;
+  return `<span class="kit" title="${h(advice)}">${icon("life-buoy")} <span class="kit-text">${h(title)}</span></span>`;
 }
 
 // ---- The tile on the club page ------------------------------------------------------
@@ -278,8 +279,17 @@ async function buildMap() {
   const map = L.map(box, { zoomSnap: 0.25, attributionControl: true });
   page.map = map;
   page.L = L;
-  const open = openBounds(page.view, page.club);
-  map.fitBounds([[open.south, open.west], [open.north, open.east]], { padding: [12, 12] });
+  fitView();
+  // As in Apple Maps: when the panel grows or shrinks, the map refits the route (or the lake) into the room left above it.
+  let height = box.clientHeight;
+  new ResizeObserver(() => {
+    if (!box.isConnected || page?.map !== map) return;
+    map.invalidateSize();
+    if (Math.abs(box.clientHeight - height) > 24) {
+      height = box.clientHeight;
+      fitView();
+    }
+  }).observe(box);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
@@ -288,7 +298,7 @@ async function buildMap() {
   page.layers.arrows = L.layerGroup().addTo(map);
   page.layers.route = L.layerGroup().addTo(map);
   page.layers.marks = L.layerGroup().addTo(map);
-  for (const c of page.view.clubs) {
+  for (const c of [...page.view.clubs].sort((a, b) => (a.id === page.club?.id) - (b.id === page.club?.id))) {
     const own = c.id === page.club?.id;
     L.circleMarker([c.launchPoint.lat, c.launchPoint.lon], { radius: own ? 7 : 5, color: own ? "#fff" : "#007aff", weight: 2, fillColor: own ? "#007aff" : "#fff", fillOpacity: 1 })
       .bindTooltip(c.shortName).addTo(page.layers.marks);
@@ -332,6 +342,17 @@ function currentPlan() {
   const hour = page.view.hours[page.hour];
   const start = new Date(Math.max(new Date(hour.time).getTime(), Math.min(Date.now(), new Date(hour.time).getTime() + 3599000)));
   return { planner, plan: planRoute(planner, start, page.pace, page.currentMs) };
+}
+
+/** The route with its rowed track when it has more than the start, else the lake as it opens (LakeMapScreen.fit). */
+function fitView() {
+  const pts = page.points.length > 1 ? [...page.points, ...(page.rowed?.track && page.showTrack ? page.rowed.track : [])] : [];
+  if (pts.length) {
+    page.map.fitBounds(pts.map((p) => [p.lat, p.lon]), { padding: [24, 24], maxZoom: 16 });
+    return;
+  }
+  const open = openBounds(page.view, page.club);
+  page.map.fitBounds([[open.south, open.west], [open.north, open.east]], { padding: [12, 12] });
 }
 
 function update() {
@@ -378,7 +399,7 @@ function drawOverlay(hour) {
   ctx.drawImage(rasterCanvas(view, hour, page.layer), 0, 0, width, height);
   ctx.globalAlpha = 1;
   const kind = page.layer === "light" ? stripes(hour.lakeWide) : null;
-  if (kind) strokeStripes(ctx, kind, width, height, width / 500);
+  if (kind) strokeStripes(ctx, kind, width, height, width / 500, stripesFall(page.view.outline));
   ctx.restore();
   const url = canvas.toDataURL();
   if (page.layers.image) page.layers.image.setUrl(url);
@@ -822,6 +843,7 @@ function wirePanel() {
     page.savedId = r.id;
     page.rowed = r.track ? r : null;
     update();
+    if (page.map) fitView();
   }));
   // Rename and duplicate, as under Manage routes in the app (ManageRoutesView).
   panel.querySelectorAll("[data-rename-route]").forEach((b) => b.addEventListener("click", () => {

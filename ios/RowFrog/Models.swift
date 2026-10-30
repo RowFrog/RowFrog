@@ -235,6 +235,9 @@ struct Reason: Codable, Hashable {
     let light: Light
     /// Set by the app when the user's own limit decided this reason.
     var mine: Bool? = nil
+    /// For "weather_warning": what the warning is about ("wind", "thunderstorm",
+    /// "rain", "snow", "fog" or "other"); missing from older backends.
+    var topic: String? = nil
 
     /// Short label shown under the traffic light.
     var label: String {
@@ -261,7 +264,15 @@ struct Reason: Codable, Hashable {
         case "lake_strong_wind": tr("DWD strong-wind warning")
         case "single_cold": tr("Single in cold water")
         case "freezing_water": tr("Near-freezing water")
-        case "weather_warning": tr("Weather warning")
+        case "weather_warning":
+            switch topic {
+            case "wind": tr("Wind warning")
+            case "thunderstorm": tr("Thunderstorm warning")
+            case "rain": tr("Rain warning")
+            case "snow": tr("Snow warning")
+            case "fog": tr("Fog warning")
+            default: tr("Weather warning")
+            }
         case "wind": tr("Wind")
         case "gusts": tr("Gusts")
         case "waves": tr("Waves")
@@ -285,11 +296,19 @@ struct Reason: Codable, Hashable {
 
     private var baseExplanation: String {
         switch condition {
-        case "lake_warning": tr("DWD has issued a storm warning for the lake; its warning lights flash 90 times a minute.")
-        case "lake_strong_wind": tr("DWD has issued a strong-wind warning for the lake; its warning lights flash 40 times a minute.")
+        case "lake_warning": tr("DWD has issued a storm warning for the lake; where the lake has storm lights, they flash 90 times a minute.")
+        case "lake_strong_wind": tr("DWD has issued a strong-wind warning for the lake; where the lake has storm lights, they flash 40 times a minute.")
         case "single_cold": tr("In a single, row with a coach boat or a partner boat while the water is this cold.")
         case "freezing_water": tr("The water is below %@. You are strongly advised not to go out, at least not in a small boat.", Format.temperature(RowingLimits.freezingWaterC))
-        case "weather_warning": tr("An official weather warning is out for this place.")
+        case "weather_warning":
+            switch topic {
+            case "wind": tr("An official wind warning is out for this place.")
+            case "thunderstorm": tr("An official thunderstorm warning is out for this place.")
+            case "rain": tr("An official rain warning is out for this place.")
+            case "snow": tr("An official snow warning is out for this place.")
+            case "fog": tr("An official fog warning is out for this place.")
+            default: tr("An official weather warning is out for this place.")
+            }
         case "wind": tr("Mean wind is above the limit.")
         case "gusts": tr("Gusts are above the limit.")
         case "waves": tr("Waves at the launch point are too high.")
@@ -464,6 +483,15 @@ struct DWDWarning: Codable, Hashable, Identifiable {
     /// Short name of the service that issued it, for labels.
     var serviceShort: String { warningServiceShort(source) }
     var isLake: Bool { kind == "lake" }
+    /// Frost, black ice, thaw, heat or cold: shown, but left out of the rowing
+    /// light (backend/rowfrog/forecast.py, INFO_ONLY_WORDS).
+    var isInfoOnly: Bool {
+        !isLake && ["FROST", "GLÄTTE", "GLATT", "TAUWETTER", "HITZE", "KÄLTE", "UV"].contains { event.uppercased().contains($0) }
+    }
+    /// Frost or black ice: the jetty and the boat area can be slippery.
+    var isSlippery: Bool {
+        !isLake && ["FROST", "GLÄTTE", "GLATT"].contains { event.uppercased().contains($0) }
+    }
 }
 
 struct EnglishWarningText: Codable, Hashable {
@@ -483,6 +511,9 @@ struct Warnings: Codable, Hashable {
     /// Whose weather warnings count for the place and whether they were checked;
     /// missing from older backends, which checked DWD for every club.
     var local: LocalWarnings? = nil
+    /// Whether the DWD lake area has storm lights on the shore (not every one
+    /// has, e.g. the Alster); missing from older backends, which assumed so.
+    var shoreLights: Bool? = nil
 
     var checked: Bool { status == "ok" }
     /// False where the app reads no warning service for the place (Switzerland

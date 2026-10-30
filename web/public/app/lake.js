@@ -81,6 +81,41 @@ export function stripes(lakeWide) {
   return lakeWide.reasons.some((r) => r.light === "amber" && !cold.includes(r.condition)) ? "amber" : null;
 }
 
+/**
+ * Whether the whole-lake stripes run from top left to bottom right instead of
+ * bottom left to top right, so they cross the lake's long side
+ * (LakeView.stripesFall). A long lake lying along the usual diagonal, like a
+ * regatta course, gets the other one; round lakes keep the usual one.
+ */
+export function stripesFall(outline) {
+  const first = outline?.[0]?.[0];
+  if (!first || first.length < 2) return false;
+  const squeeze = Math.cos((first[1] * Math.PI) / 180);
+  // The shore's spread, each stretch weighted by its length, in degrees of latitude.
+  let sum = 0, sx = 0, sy = 0, sxx = 0, syy = 0, sxy = 0;
+  for (const ring of outline) {
+    if (ring.length < 2) continue;
+    ring.forEach((a, i) => {
+      const b = ring[(i + 1) % ring.length];
+      if (a.length < 2 || b.length < 2) return;
+      const ax = a[0] * squeeze, ay = a[1], bx = b[0] * squeeze, by = b[1];
+      const w = Math.hypot(bx - ax, by - ay), x = (ax + bx) / 2, y = (ay + by) / 2;
+      sum += w; sx += w * x; sy += w * y;
+      sxx += w * x * x; syy += w * y * y; sxy += w * x * y;
+    });
+  }
+  if (!(sum > 0)) return false;
+  const mx = sx / sum, my = sy / sum;
+  const vxx = sxx / sum - mx * mx, vyy = syy / sum - my * my, vxy = sxy / sum - mx * my;
+  const half = (vxx + vyy) / 2, spread = Math.sqrt(((vxx - vyy) / 2) ** 2 + vxy * vxy);
+  if (!(half + spread > 1.5 * Math.max(half - spread, 0))) return false;
+  // The long side's angle, north up, and how far it lies from the usual stripes at 45°;
+  // a lake lying north-south or east-west keeps the usual ones.
+  const along = Math.atan2(2 * vxy, vxx - vyy) / 2;
+  const off = along - Math.PI / 4;
+  return Math.abs(off - Math.PI * Math.round(off / Math.PI)) < Math.PI / 4 - 0.05;
+}
+
 /** The shore on the maps while the water is cold: "cool" from the life-jacket limit down, "cold" below 10 °C. */
 export function coldShore(waterC, limits) {
   const kit = coldWaterKit(waterC, limits);

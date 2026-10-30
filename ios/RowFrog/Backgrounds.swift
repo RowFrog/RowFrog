@@ -167,8 +167,6 @@ final class PageScroll {
     private(set) var scrolled: Set<String> = []
     /// Club pages whose big title has gone under the top.
     private(set) var titleGone: Set<String> = []
-    /// Club pages with cards under the floating buttons at the bottom.
-    private(set) var underBar: Set<String> = []
 
     func update(_ clubID: String, scrolled isScrolled: Bool) {
         if scrolled.contains(clubID) != isScrolled { scrolled.formSymmetricDifference([clubID]) }
@@ -176,10 +174,6 @@ final class PageScroll {
 
     func update(_ clubID: String, titleGone gone: Bool) {
         if titleGone.contains(clubID) != gone { titleGone.formSymmetricDifference([clubID]) }
-    }
-
-    func update(_ clubID: String, underBar under: Bool) {
-        if underBar.contains(clubID) != under { underBar.formSymmetricDifference([clubID]) }
     }
 }
 
@@ -215,14 +209,6 @@ extension EnvironmentValues {
 extension Surface {
     var hasPicture: Bool { self != .plain }
 
-    /// A card's background.
-    var card: AnyShapeStyle {
-        switch self {
-        case .frosted: AnyShapeStyle(.regularMaterial)
-        case .plain, .solid: AnyShapeStyle(Color(.secondarySystemGroupedBackground))
-        }
-    }
-
     /// A tile inside a card. Tiles in a frosted card stay a light shade, since
     /// frost on frost looks muddy.
     var tile: AnyShapeStyle {
@@ -232,10 +218,6 @@ extension Surface {
         }
     }
 
-    /// For text that sits on the picture itself, like a page's title.
-    var label: AnyShapeStyle {
-        hasPicture ? AnyShapeStyle(.ultraThinMaterial) : AnyShapeStyle(Color.clear)
-    }
 }
 
 /// A card shaded in a rowing-light colour, as in the location list: over a
@@ -254,7 +236,7 @@ struct TintedCardBackground: View {
             // Opaque, so the picture does not change the shading.
             shape.fill(Color(.systemGroupedBackground)).overlay(shape.fill(tint.opacity(0.18)))
         case .frosted:
-            shape.fill(.regularMaterial).overlay(shape.fill(tint.opacity(0.22)))
+            FrostedFill(shape: shape).overlay(shape.fill(tint.opacity(0.22)))
         }
     }
 }
@@ -262,7 +244,28 @@ struct TintedCardBackground: View {
 extension View {
     /// A card's background in the surface's card style.
     func cardBackground(_ surface: Surface, cornerRadius: CGFloat = 16) -> some View {
-        background(surface.card, in: RoundedRectangle(cornerRadius: cornerRadius))
+        cardBackground(surface, in: RoundedRectangle(cornerRadius: cornerRadius))
+    }
+
+    /// A card's background in any shape: frosted from the page's picture, or plain.
+    func cardBackground(_ surface: Surface, in shape: some Shape) -> some View {
+        background {
+            if surface == .frosted {
+                FrostedFill(shape: shape)
+            } else {
+                shape.fill(Color(.secondarySystemGroupedBackground))
+            }
+        }
+    }
+
+    /// Behind text that sits on the picture itself, like a page's title: a thin
+    /// frost over a picture, nothing over the plain background.
+    func labelBackground(_ surface: Surface, in shape: some Shape) -> some View {
+        background {
+            if surface.hasPicture {
+                FrostedFill(shape: shape, veil: 0.25)
+            }
+        }
     }
 
     /// Liquid Glass in the shape, optionally tinted; frosted glass with the
@@ -294,15 +297,20 @@ struct PageBackground: ViewModifier {
     var clubID: String? = nil
     /// Off where the picture is drawn further out, as behind the swiping club pages.
     var drawsPicture = true
+    /// Where the picture lies when it is drawn further out.
+    @Environment(\.pictureFrame) private var outerFrame
+    @State private var ownFrame = CGRect.zero
 
     func body(content: Content) -> some View {
         let settings = AppSettings.shared
         let image = BackgroundLibrary.image(for: settings.background(for: page, clubID: clubID), clubID: clubID)
+        let frame = drawsPicture ? ownFrame : outerFrame
         content
             .environment(\.surface, image == nil ? .plain : settings.tileSurface)
+            .environment(\.frostPicture, image.flatMap { frame.isEmpty ? nil : FrostPicture(image: BackgroundLibrary.blurred($0), frame: frame) })
             .background {
                 if drawsPicture {
-                    PagePicture(image: image, blurred: settings.blurBackground)
+                    PagePicture(image: image, blurred: settings.blurBackground) { ownFrame = $0 }
                 }
             }
     }
@@ -318,10 +326,12 @@ extension View {
 struct PagePicture: View {
     let image: UIImage?
     var blurred = false
+    /// Where the picture lies on screen, for the frosted cards over it.
+    var onFrame: ((CGRect) -> Void)? = nil
 
     var body: some View {
         if let image {
-            BackgroundPicture(image: image, blurred: blurred)
+            BackgroundPicture(image: image, blurred: blurred, onFrame: onFrame)
         } else {
             Color(.systemGroupedBackground).ignoresSafeArea()
         }
@@ -333,6 +343,7 @@ struct PagePicture: View {
 struct BackgroundPicture: View {
     let image: UIImage
     var blurred = false
+    var onFrame: ((CGRect) -> Void)? = nil
     @Environment(\.colorScheme) private var colorScheme
 
     var body: some View {
@@ -353,7 +364,79 @@ struct BackgroundPicture: View {
                     .frame(height: 180)
             }
             .ignoresSafeArea()
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { frame in
+                onFrame?(frame)
+            }
             .accessibilityHidden(true)
+    }
+}
+
+/// The picture behind a page, blurred once, and where it lies on screen.
+struct FrostPicture: Equatable {
+    let image: UIImage
+    let frame: CGRect
+
+    static func == (a: FrostPicture, b: FrostPicture) -> Bool { a.image === b.image && a.frame == b.frame }
+}
+
+private struct FrostPictureKey: EnvironmentKey {
+    static let defaultValue: FrostPicture? = nil
+}
+
+private struct PictureFrameKey: EnvironmentKey {
+    static let defaultValue = CGRect.zero
+}
+
+extension EnvironmentValues {
+    /// The page's picture for frosted cards; nil over the plain background.
+    var frostPicture: FrostPicture? {
+        get { self[FrostPictureKey.self] }
+        set { self[FrostPictureKey.self] = newValue }
+    }
+
+    /// Where a picture drawn behind several pages lies, as behind the swiping club pages.
+    var pictureFrame: CGRect {
+        get { self[PictureFrameKey.self] }
+        set { self[PictureFrameKey.self] = newValue }
+    }
+}
+
+/// Frosted glass made from the page's picture, blurred once: each card shows
+/// its own piece of it, lined up with the picture behind. A live material
+/// blurs again on every frame and has iOS rebuild every blur when the app
+/// comes back, which with a dozen cards a page held up the return to the app.
+struct FrostedFill<S: Shape>: View {
+    let shape: S
+    /// The light (or dark) wash over the picture, as a material has.
+    var veil: Double = 0.55
+    @Environment(\.frostPicture) private var picture
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        if let picture {
+            let frame = picture.frame
+            Color.clear
+                .overlay(alignment: .topLeading) {
+                    Image(uiImage: picture.image)
+                        .resizable()
+                        .scaledToFill()
+                        .frame(width: frame.width, height: frame.height)
+                        .clipped()
+                        .overlay {
+                            if colorScheme == .dark { Color.black.opacity(0.3) }
+                        }
+                        // Placed by where the card is on screen, without a new
+                        // layout pass when the page scrolls.
+                        .visualEffect { content, proxy in
+                            let origin = proxy.frame(in: .global).origin
+                            return content.offset(x: frame.minX - origin.x, y: frame.minY - origin.y)
+                        }
+                }
+                .overlay(Color(.systemBackground).opacity(colorScheme == .dark ? veil * 0.8 : veil))
+                .clipShape(shape)
+        } else {
+            shape.fill(Color(.secondarySystemGroupedBackground))
+        }
     }
 }
 

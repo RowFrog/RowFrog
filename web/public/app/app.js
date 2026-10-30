@@ -9,9 +9,9 @@ import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence,
-  boatDetail, boatTag, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
+  boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
-  precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
+  precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
   loadLeaflet, testing, adviceOnly, footerLinks, mapBoat, mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM,
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, keptForecast,
@@ -171,7 +171,8 @@ function bottomBar(currentId, raw) {
   // Three floating pieces of glass, all 44 px high: cog and boat, the page dots, the list (RootView.PageBar).
   return `<nav class="bottom">
     <span class="bar-side"><span class="glass piece">
-      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+      ${sideList.matches ? "" // Beside the list the cog sits at the list's bottom left, beside the search.
+      : `<a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>`}
       <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>
     </span></span>
     ${sideList.matches ? `<span class="gap"></span>` // The list beside the page switches clubs already.
@@ -218,29 +219,44 @@ let editing = false;
 
 async function renderList() {
   setTitle(t("Locations"));
-  const clubs = store.clubs;
+  // As in the Weather app: the big title level with "…", small and centred once the list scrolls; no way
+  // back but the clubs' cards; the cog beside the search at the bottom (LocationListView).
   root.innerHTML = `
-    <header class="nav">
-      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
-      ${clubs.length ? `<button class="link" id="edit">${h(editing ? t("Done") : t("Edit"))}</button>` : ""}
-      <span class="spacer"></span>
-      ${clubs.length ? `<a class="link strong" href="#/club/${encodeURIComponent(clubs[0].id)}">${h(t("Done"))}</a>` : ""}
-    </header>
+    <div class="top-title"><strong>${h(t("Locations"))}</strong></div>
     ${testing()}
-    <main class="page">
-      <h1 class="large">${h(t("Locations"))}</h1>
+    <main class="page list-page">
+      <header class="list-head"><h1 class="large">${h(t("Locations"))}</h1>${moreMenu()}</header>
       ${listBody()}
       ${footerLinks()}
-    </main>`;
+    </main>
+    ${searchBar("list-bottom")}`;
   await wireList(renderList);
 }
 
-/** The search, the saved clubs and the links under them: the list page's, and the list's beside a club page. */
+/** Edit list, browsing by country and adding an own place, behind "…" at the top right; Done while editing (moreMenu). */
+function moreMenu() {
+  if (editing) return `<button class="link strong" id="edit">${h(t("Done"))}</button>`;
+  return `<details class="more-menu"><summary class="glass round" aria-label="${h(t("More"))}">${icon("ellipsis")}</summary>
+    <div class="menu">
+      <button id="edit" ${store.clubs.length < 2 ? "disabled" : ""}>${icon("pencil")} ${h(t("Edit list"))}</button>
+      <a id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
+      <a href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a>
+    </div></details>`;
+}
+
+/** The settings cog and the search field side by side at the bottom (settingsBesideSearch). */
+function searchBar(cls) {
+  return `<div class="${cls} search-bar">
+    <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+    <label class="search glass">${icon("search")}
+      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+  </div>`;
+}
+
+/** The search results, the saved clubs and the line when they were updated: the list page's, and the list's beside a club page. */
 function listBody(currentId = null) {
   const clubs = store.clubs;
-  return `<label class="search">${icon("search")}
-      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
-    <div id="chips" hidden></div>
+  return `<div id="chips" hidden></div>
     <ul id="results" class="results" hidden></ul>
     <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Not in the list? Add a place"))}</a>
       <small class="sub">${h(t("Put your club, boathouse or spot on the map yourself."))}</small></p>
@@ -253,8 +269,6 @@ function listBody(currentId = null) {
           ${editing && i > 0 ? `<button class="round" data-home="${h(c.id)}" aria-label="${h(t("Home base"))}">${icon("house")}</button>` : ""}
         </li>`).join("")}</ul>
       <p class="footnote" id="updated"></p>
-      <p class="list-links"><a class="link" id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
-        <a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a></p>
     </div>`;
 }
 
@@ -540,8 +554,8 @@ const TWO_COLUMNS = 600;
  * one marked, so the page needs no list button (LocationListView beside the page).
  */
 function sideListHtml(currentId) {
-  return `<header class="side-head"><h2>${h(t("Locations"))}</h2>${store.clubs.length ? `<button class="link" id="edit">${h(editing ? t("Done") : t("Edit"))}</button>` : ""}</header>
-    ${listBody(currentId)}`;
+  return `<header class="side-head"><h2>${h(t("Locations"))}</h2>${moreMenu()}</header>
+    ${listBody(currentId)}${searchBar("side-bottom")}`;
 }
 
 /** A change in the list draws the list anew, not the page beside it. */
@@ -563,7 +577,30 @@ function wireSideList(currentId) {
  * column too, and the lake view and launch point maps there grow until both
  * columns end level, each card at most one window tall.
  */
+/**
+ * A line with a shorter wording (data-short) keeps its full text where that
+ * fits on one line, else takes the short one (ViewThatFits in the app); checked
+ * again whenever its width changes.
+ */
+const fitWatch = new ResizeObserver((entries) => entries.forEach(({ target }) => target.querySelectorAll(".fit-line").forEach(fitLine)));
+function fitLine(el) {
+  const width = el.parentElement?.clientWidth ?? 0;
+  if (!width || el.dataset.width === String(width)) return;
+  el.dataset.width = width;
+  el.dataset.full ??= el.textContent;
+  el.textContent = el.dataset.full;
+  const line = parseFloat(getComputedStyle(el).lineHeight) || 20;
+  if (el.getClientRects().length > 1 || el.offsetHeight > line * 1.5) el.textContent = el.dataset.short;
+}
+function watchFitLines() {
+  root.querySelectorAll(".fit-line").forEach((el) => {
+    fitLine(el);
+    if (el.parentElement) fitWatch.observe(el.parentElement);
+  });
+}
+
 function balanceCards() {
+  watchFitLines();
   const box = root.querySelector(".cards");
   if (!box) return;
   // Always in page order, never in the columns' order from the last sorting.
@@ -675,19 +712,20 @@ function watchCards(cards) {
 function updateTopBar() {
   const body = document.body;
   body.classList.toggle("scrolled", window.scrollY > 0);
-  const title = root.querySelector(".club-head h1");
+  const title = root.querySelector(".club-head h1, .list-head h1");
   const bar = root.querySelector(".top-title");
   const gone = Boolean(title && bar && title.getBoundingClientRect().bottom < bar.offsetHeight);
   // The bar and the strip behind the clock cover the page's own column only, never the list beside it.
   const main = root.querySelector("main");
+  // The list beside the page ends at the window's bottom also while the test banner above it shows.
+  const split = root.querySelector(".split");
+  if (split) body.style.setProperty("--side-top", `${Math.max(0, split.getBoundingClientRect().top)}px`);
   if (main) {
     const page = main.getBoundingClientRect();
     body.style.setProperty("--main-left", `${page.left}px`);
     body.style.setProperty("--main-width", `${page.width}px`);
   }
   body.classList.toggle("title-gone", gone);
-  // Cards under the floating buttons: the bottom blurs too on phones and tablets (BottomEdgeFade).
-  body.classList.toggle("under-bar", Boolean(root.querySelector(".bottom")) && document.documentElement.scrollHeight - window.scrollY - window.innerHeight > 24);
   stickHourlyHeader();
 }
 
@@ -902,9 +940,9 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
     <ul class="reasons">
       ${stale && !at ? `<li class="orange">${icon("clock")}<span>${h(t("The forecast is more than 3 hours old. Check the conditions yourself before you go out."))}</span></li>` : ""}
       ${reasons.length ? reasons.map((r) => {
-        const text = water == null && waterReasons.includes(r.condition) ? t("Estimated: %@", reasonExplanation(r.condition, r.light)) : hourExplanation(forecast, r, hour);
+        const text = water == null && waterReasons.includes(r.condition) ? t("Estimated: %@", reasonExplanation(r.condition, r.light, r.topic)) : hourExplanation(forecast, r, hour);
         return `<li class="${r.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[reasonCondition(r.condition)])}<span>${h(text)}</span></li>`;
-      }).join("") : `<li>${icon("circle-check")}<span>${h(t("All conditions are within the limits."))}</span></li>`}
+      }).join("") : `<li>${icon("circle-check")}<span class="fit-line" data-short="${h(t("All within the limits."))}">${h(t("All conditions are within the limits."))}</span></li>`}
       ${(hour.notes ?? []).map((n) => `<li class="sub">${icon("info")}<span>${h(noteText(n))}</span></li>`).join("")}
       ${steadier ? `<li class="tint">${icon("sailboat")}<span>${h(steadier.light === "green"
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
@@ -1030,7 +1068,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
     const note = warnings.lakeArea
       ? t("Covers the DWD lake warning for %@. Weather warnings for %@ are not checked yet.", warnings.lakeArea, where)
       : t("Lake and weather warnings for %@ are not checked yet.", where);
-    return `${lakeRows}${notCheckedNote(warnings.local)}<p class="sub small">${h(note)}</p>${warnings.lakeArea ? shoreLights(guideOpen) : ""}`;
+    return `${lakeRows}${notCheckedNote(warnings.local)}<p class="sub small">${h(note)}</p>${lightsInfo(warnings, guideOpen)}`;
   }
   const placeText = place ? t("weather warnings for %@", place) : t("weather warnings for this place");
   const service = warnings.local?.service ?? "";
@@ -1042,7 +1080,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
       ? t("Covers the DWD lake warning for %@ and %@.", warnings.lakeArea, placeText)
       : t("DWD has no lake warning service %@. Covers %@.", club?.lakeName ? t("for %@", lakeTitle(club.lakeName)) : t("for this water"), placeText);
   const items = warnings.items ?? [];
-  const guide = warnings.lakeArea ? shoreLights(guideOpen) : "";
+  const guide = lightsInfo(warnings, guideOpen);
   if (!items.length) {
     return `<p class="green strong">${icon("shield-check")} ${h(t("No warning right now"))}</p>
       <p class="sub small">${h(`${coverage} ${t("Checked %@.", time(checkedAt))}`)}</p>${guide}`;
@@ -1071,7 +1109,20 @@ function warningRow(w) {
         : t("The details of this warning are in German only; see the original below.")), w.english.instruction)
       + `<div class="original" lang="de"><p class="strong">${h(isDWD(w) ? t("Original from DWD (German)") : t("Original from %@ (German)", serviceShort(w.source)))}</p><p class="strong">${h(w.headline)}</p><p>${h(w.description)}</p>${w.instruction ? `<p>${h(w.instruction)}</p>` : ""}</div>`
       : text(w.headline, w.description, w.instruction)}
+    ${warningInfoOnly(w) ? `<p class="sub small info-line">${icon("info")} <span>${h(warningSlippery(w)
+      ? t("Not part of the rowing light. The jetty and boat area may be slippery.")
+      : t("Not part of the rowing light: it is not about the water."))}</span></p>` : ""}
   </div>`;
+}
+
+/**
+ * The shore lights explained where the lake has them; where DWD warns for the
+ * lake without lights (e.g. the Alster), one line saying so instead (WarningsCard.lightsInfo).
+ */
+function lightsInfo(warnings, open) {
+  if (!warnings.lakeArea) return "";
+  if (warnings.shoreLights ?? true) return shoreLights(open);
+  return `<p class="sub small info-line">${icon("siren")} <span>${h(t("This lake has no storm warning lights on the shore. DWD's lake warning shows here in the app."))}</span></p>`;
 }
 
 function shoreLights(open) {
@@ -1260,18 +1311,38 @@ function foldHourly(button) {
   if (!open) document.scrollingElement.scrollTop += button.getBoundingClientRect().top - before;
 }
 
+/** Where directions to the club go: its address, and its name with it; null without an address (own places). */
+function clubAddress(club) {
+  const address = club.address?.trim();
+  return address ? { address, named: `${club.name || club.shortName}, ${address}` } : null;
+}
+
 /** The launch point on a map, with what it stands for (LaunchPointMapCard). */
 function launchPointCard(club) {
   const { lat, lon } = club.launchPoint;
+  // Opens in the map service chosen under Settings > Maps.
+  const maps = MAPS_APPS[store.mapsApp];
   const unconfirmed = club.source === "drv" ? t("Not yet confirmed by the club; taken from the club's address.") : t("Not yet confirmed by the club; taken from OpenStreetMap.");
   return card(t("Launch point"), "map-pin", `
     <div class="map" id="launch-map" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     <p>${h(t("The forecast, waves and warnings are for this point."))}</p>
     ${club.launchPointVerified ? "" : `<p class="orange small">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
-    <div class="map-foot"><small class="sub">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
-      <a class="pill" href="https://www.openstreetmap.org/?mlat=${lat}&amp;mlon=${lon}#map=16/${lat}/${lon}" target="_blank" rel="noopener noreferrer">${icon("map")} ${h(t("Launch point on the map"))}</a>
-      <a class="pill" href="https://www.openstreetmap.org/directions?to=${lat}%2C${lon}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a></div>`);
+    <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
+      <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
+        <div class="menu" role="menu">
+          <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a>
+          <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin")} ${h(t("Launch point on the map"))}</a>
+          <small class="sub">${h(maps.name)}</small>
+        </div></details></div>`);
 }
+
+// The "Open in Maps" and "…" menus close on a tap outside it, on one of its links and with Escape, as a menu does.
+document.addEventListener("click", (e) => {
+  for (const menu of document.querySelectorAll(".maps-menu[open], .more-menu[open]")) if (!menu.contains(e.target) || e.target.closest(".menu a, .menu button")) menu.open = false;
+});
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") for (const menu of document.querySelectorAll(".maps-menu[open], .more-menu[open]")) menu.open = false;
+});
 
 async function showLaunchMap(club) {
   const L = await loadLeaflet().catch(() => null);
@@ -1408,6 +1479,12 @@ function renderSettings() {
       </section>
       <p class="footer">${h(t("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.",
         distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))}</p>
+      <h3 class="section">${icon("map-pinned")} ${h(t("Map links"))}</h3>
+      <section class="card group">
+        <div class="row-setting"><span class="segmented wide" id="maps-app" aria-label="${h(t("Open places in"))}">${Object.entries(MAPS_APPS)
+          .map(([k, app]) => `<button data-maps-app="${k}" class="${store.mapsApp === k ? "on" : ""}">${h(app.name)}</button>`).join("")}</span></div>
+      </section>
+      <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))} ${h(t("Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
       <h3 class="section">${icon("arrow-up-down")} ${h(t("Data use"))}</h3>
       <section class="card group">
         <label class="row-setting"><span>${icon("radio-tower")} ${h(t("Save mobile data"))}</span><input type="checkbox" class="switch" id="save-data" ${store.saveData ? "checked" : ""}></label>
@@ -1464,6 +1541,10 @@ function renderSettings() {
     renderSettings();
   }));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(null));
+  root.querySelectorAll("[data-maps-app]").forEach((b) => b.addEventListener("click", () => {
+    store.mapsApp = b.dataset.mapsApp;
+    renderSettings();
+  }));
   root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     store.mapZoom = b.dataset.zoom;
     renderSettings();

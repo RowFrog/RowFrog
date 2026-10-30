@@ -1,0 +1,38 @@
+name: JPEG quality probe
+
+# Compares JPEG qualities for the satellite pictures against lossless
+# originals from Copernicus (scripts/jpeg_quality_probe.py) and keeps the
+# originals on the ref refs/probe/jpeg-quality for side-by-side views. Runs
+# when the script changes, or by hand from the Actions tab.
+
+on:
+  push:
+    paths:
+      - scripts/jpeg_quality_probe.py
+      - .github/workflows/jpeg-quality.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e "backend[satellite]"
+      - run: python3 scripts/jpeg_quality_probe.py "$RUNNER_TEMP/originals"
+        env:
+          CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
+          CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
+      - name: Keep the originals on refs/probe/jpeg-quality
+        run: |
+          cd "$RUNNER_TEMP/originals"
+          ls *.png >/dev/null 2>&1 || exit 0
+          git init -q
+          git -c user.name=RowFrog -c user.email=344322998+RowFrog@users.noreply.github.com add .
+          git -c user.name=RowFrog -c user.email=344322998+RowFrog@users.noreply.github.com commit -qm "Lossless satellite originals for the JPEG quality probe"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" HEAD:refs/probe/jpeg-quality

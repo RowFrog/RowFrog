@@ -25,6 +25,23 @@ final class LakeViewTests: XCTestCase {
         try APIClient.decoder.decode(LakeView.self, from: Data(json.utf8))
     }
 
+    func testStripesCrossTheLakesLongSide() {
+        /// A course 3 km long and 100 m wide near Oberschleißheim, turned `degrees` from east.
+        func course(_ degrees: Double) -> [[[Double]]] {
+            let lat = 48.25, squeeze = cos(lat * .pi / 180), c = cos(degrees * .pi / 180), s = sin(degrees * .pi / 180)
+            let corners = [(-0.0135, -0.00045), (0.0135, -0.00045), (0.0135, 0.00045), (-0.0135, 0.00045)]
+            return [corners.map { x, y in [11.5 + (x * c - y * s) / squeeze, lat + x * s + y * c] }]
+        }
+        XCTAssertTrue(LakeView.stripesFall(course(45)), "lies along the usual stripes")
+        XCTAssertTrue(LakeView.stripesFall(course(60)))
+        XCTAssertFalse(LakeView.stripesFall(course(135)), "already crosses them")
+        XCTAssertFalse(LakeView.stripesFall(course(90)), "north-south keeps the usual stripes")
+        XCTAssertFalse(LakeView.stripesFall(course(0)), "east-west keeps the usual stripes")
+        let round = [[[11.49, 48.24], [11.51, 48.24], [11.51, 48.253], [11.49, 48.253]]]
+        XCTAssertFalse(LakeView.stripesFall(round))
+        XCTAssertFalse(LakeView.stripesFall([]))
+    }
+
     func testDecodesCellLightsAndWaves() throws {
         let view = try decode()
         let hour = try XCTUnwrap(view.hours.first)

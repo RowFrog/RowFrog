@@ -254,6 +254,28 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertTrue(map.isBright(around: CGPoint(x: -0.2, y: 1.3), radius: 0.01))
     }
 
+    func testColdBadgeMovesToAFreeCorner() {
+        let size = CGSize(width: 300, height: 300)
+        let badge = CGSize(width: 150, height: 34), compact = CGSize(width: 34, height: 34)
+        func ring(_ x0: CGFloat, _ y0: CGFloat, _ x1: CGFloat, _ y1: CGFloat) -> [[CGPoint]] {
+            [[CGPoint(x: x0, y: y0), CGPoint(x: x1, y: y0), CGPoint(x: x1, y: y1), CGPoint(x: x0, y: y1)]]
+        }
+        // A small lake in the middle leaves the top left free.
+        var place = BadgePlacement.choose(shore: ring(100, 100, 200, 200), size: size, badge: badge, compact: compact)
+        XCTAssertEqual(place.alignment, .topLeading)
+        XCTAssertFalse(place.compact)
+        // A lake in the top left: the badge goes top right.
+        place = BadgePlacement.choose(shore: ring(10, 10, 120, 120), size: size, badge: badge, compact: compact)
+        XCTAssertEqual(place.alignment, .topTrailing)
+        XCTAssertFalse(place.compact)
+        // A lake reaching every edge: only the symbol, where it covers least (not on open water).
+        place = BadgePlacement.choose(shore: ring(30, 30, 270, 270), size: size, badge: badge, compact: compact)
+        XCTAssertTrue(place.compact)
+        // A lake filling the picture: the badge is over water everywhere, so it is shrunk.
+        place = BadgePlacement.choose(shore: ring(-10, -10, 310, 310), size: size, badge: badge, compact: compact)
+        XCTAssertTrue(place.compact)
+    }
+
     func testFrameKeyChangesWithTheFrame() throws {
         func picture(_ bbox: String, _ width: Int) throws -> SatellitePicture {
             let json = """

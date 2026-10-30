@@ -1,0 +1,29 @@
+name: Lake lights check
+
+# Lists DWD's lake warning areas and checks that data/shore-lights.json knows
+# each one (scripts/lake_lights_check.py). Fails when DWD added or dropped an
+# area. Runs when the script or the list changes, or by hand from the Actions
+# tab. Nothing is stored.
+
+on:
+  push:
+    paths:
+      - scripts/lake_lights_check.py
+      - data/shore-lights.json
+      - .github/workflows/lake-lights-check.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - run: python3 scripts/lake_lights_check.py

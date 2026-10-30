@@ -10,6 +10,8 @@ struct RootView: View {
     @State private var selection = ""
     @State private var showingList = false
     @State private var showingSettings = false
+    /// Where the club pages' picture lies, for their frosted cards.
+    @State private var pagesPictureFrame = CGRect.zero
     /// The settings page to open with, as Boats and limits from a club page's boat menu.
     @State private var settingsPath: [SettingsRoute] = []
     @State private var initialSearch = ""
@@ -103,8 +105,7 @@ struct RootView: View {
             WhatsNewView().environment(\.locale, AppSettings.shared.locale)
         }
         .fullScreenCover(isPresented: $showingList) {
-            LocationListView(locations: locations, forecasts: forecasts, initialSearch: initialSearch,
-                             returnTo: locations.saved.first { $0.id == selection }) { club in
+            LocationListView(locations: locations, forecasts: forecasts, initialSearch: initialSearch) { club in
                 selection = club.id
                 showingList = false
             }
@@ -202,6 +203,7 @@ struct RootView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .environment(\.pictureFrame, pagesPictureFrame)
         .ignoresSafeArea(edges: [.top, .bottom])
         .background {
             // Behind the pages, not on each one: a swiping TabView keeps its
@@ -209,7 +211,7 @@ struct RootView: View {
             let settings = AppSettings.shared
             ZStack {
                 PagePicture(image: BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection),
-                            blurred: settings.blurBackground)
+                            blurred: settings.blurBackground) { pagesPictureFrame = $0 }
                     .id(selection)
                     .transition(.opacity)
             }
@@ -226,14 +228,11 @@ struct RootView: View {
                 .ignoresSafeArea(edges: .top)
         }
         .overlay(alignment: .bottom) {
-            BottomEdgeFade(homeIndicator: insets.bottom, underBar: PageScroll.shared.underBar.contains(selection))
-                .ignoresSafeArea(edges: .bottom)
-        }
-        .overlay(alignment: .bottom) {
             let forecast = forecasts.forecasts[selection]
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
                     showList: showsListButton ? { showingList = true } : nil,
-                    showSettings: { showingSettings = true },
+                    // Beside the list (iPad) the cog sits at the list's bottom left instead.
+                    showSettings: showsListButton ? { showingSettings = true } : nil,
                     now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius)
                 .environment(\.openBoatSettings, openBoatSettings)
         }
@@ -312,33 +311,8 @@ struct RootView: View {
 
 /// Behind the clock and the signal icons: the cards blur and fade out as they
 /// scroll under, as Apple's guide asks for the status bar; a plain strip in
-/// Low Power Mode, which draws nothing live.
-/// The same soft blur at the bottom, behind the floating buttons, while cards
-/// are under them, as Apple's scroll edge effect; nothing at a page's end.
-/// Low Power Mode draws the buttons solid and needs no blur behind them.
-private struct BottomEdgeFade: View {
-    let homeIndicator: CGFloat
-    let underBar: Bool
-
-    var body: some View {
-        let bar = homeIndicator + PageBar.height
-        let height = bar + TopEdgeFade.tail
-        Rectangle().fill(.thinMaterial)
-            .mask {
-                LinearGradient(stops: [.init(color: .clear, location: 0),
-                                       .init(color: .black.opacity(0.8), location: TopEdgeFade.tail / max(height, 1)),
-                                       .init(color: .black, location: 1)],
-                               startPoint: .top, endPoint: .bottom)
-            }
-            .frame(height: height)
-            .frame(maxHeight: .infinity, alignment: .bottom)
-            .opacity(underBar && !PowerState.shared.lowPower ? 1 : 0)
-            .animation(.easeInOut(duration: 0.2), value: underBar)
-            .allowsHitTesting(false)
-            .accessibilityHidden(true)
-    }
-}
-
+/// Low Power Mode, which draws nothing live. At the bottom only the floating
+/// buttons sit over the cards, with no blur behind them (owner, 30 Oct 2026).
 private struct TopEdgeFade: View {
     let statusBar: CGFloat
     /// Whether cards are under the clock; at the top of a page nothing is drawn.
@@ -415,8 +389,8 @@ private struct PageBar: View {
     @Binding var selection: String
     /// Nil when the list is already on screen.
     let showList: (() -> Void)?
-    /// Always set: the cog stays here, beside the boat, also while the side
-    /// list is on screen, so it does not move when the iPad turns.
+    /// Nil while the side list is on screen: the cog is then at the list's
+    /// bottom left, beside the search, still the screen's bottom left corner.
     let showSettings: (() -> Void)?
     /// The selected club's hour now, for the lights in the boat menu.
     let now: ForecastHour?

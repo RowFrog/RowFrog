@@ -1,0 +1,143 @@
+{
+ "_comment": "DWD's 23 lake warning areas (dwd:Warngebiete_Binnenseen, listed 30.10.2026 by scripts/lake_lights_check.py) and whether the lake has flashing storm lights on the shore. The app explains the lights only where lights is true. An area missing here counts as no lights. Re-check when DWD adds an area.",
+ "areas": [
+  {
+   "warncellId": 202006000,
+   "name": "Alster",
+   "lights": false,
+   "source": "No storm lights found for the Alster; DWD warns for the area, the app shows the warning."
+  },
+  {
+   "warncellId": 209901000,
+   "name": "Altmühlsee/Brombachsee/Igelsbachsee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 209905000,
+   "name": "Ammersee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 208438000,
+   "name": "Bodensee - Mitte",
+   "lights": true,
+   "source": "International storm warning service on Lake Constance (DWD, MeteoSwiss, Austria): https://www.wetterdienst.de/Deutschlandwetter/Thema_des_Tages/5755/der-sturmwarndienst-am-bodensee-blinklichter-die-leben-retten"
+  },
+  {
+   "warncellId": 208440000,
+   "name": "Bodensee - Ost",
+   "lights": true,
+   "source": "International storm warning service on Lake Constance (DWD, MeteoSwiss, Austria): https://www.wetterdienst.de/Deutschlandwetter/Thema_des_Tages/5755/der-sturmwarndienst-am-bodensee-blinklichter-die-leben-retten"
+  },
+  {
+   "warncellId": 208439000,
+   "name": "Bodensee - West",
+   "lights": true,
+   "source": "International storm warning service on Lake Constance (DWD, MeteoSwiss, Austria): https://www.wetterdienst.de/Deutschlandwetter/Thema_des_Tages/5755/der-sturmwarndienst-am-bodensee-blinklichter-die-leben-retten"
+  },
+  {
+   "warncellId": 209913000,
+   "name": "Chiemsee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 203258000,
+   "name": "Dümmer See",
+   "lights": false,
+   "source": "No storm lights found for the Dümmer."
+  },
+  {
+   "warncellId": 209903000,
+   "name": "Forggensee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true (from 1 May)"
+  },
+  {
+   "warncellId": 213010000,
+   "name": "Müritz",
+   "lights": false,
+   "source": "Storm warning masts around the Müritz were planned but not built (Nordkurier): https://www.nordkurier.de/regional/mecklenburg-vorpommern/haushaltsnot-bringt-sturmwarnsystem-zum-kentern-1260608"
+  },
+  {
+   "warncellId": 203159000,
+   "name": "Northeimer Seenplatte",
+   "lights": false,
+   "source": "No storm lights found."
+  },
+  {
+   "warncellId": 201068000,
+   "name": "Ostholsteinische Seen",
+   "lights": false,
+   "source": "No storm lights found."
+  },
+  {
+   "warncellId": 209902000,
+   "name": "Rothsee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 209911000,
+   "name": "Schliersee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 209912000,
+   "name": "Simssee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 209909000,
+   "name": "Staffel-/Riegsee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 209904000,
+   "name": "Starnberger See",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 203259000,
+   "name": "Steinhuder Meer",
+   "lights": true,
+   "source": "Flashing storm warning system on the Wilhelmstein (NLWKN boating knowledge, Steinhuder Meer): https://www.nlwkn.niedersachsen.de/download/22792/Kenntnisse_in_Streckenkunde.pdf"
+  },
+  {
+   "warncellId": 209910000,
+   "name": "Tegernsee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 209914000,
+   "name": "Waginger/Tachinger See",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 209908000,
+   "name": "Walchensee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true (from 1 March)"
+  },
+  {
+   "warncellId": 209906000,
+   "name": "Wörthsee",
+   "lights": true,
+   "source": "Bavarian notice 'Sturmwarndienst auf bayerischen Seen' (AllMBl. 2010 S. 170), section 4, read 30.10.2026: https://www.gesetze-bayern.de/Content/Document/BayVwV239433/true"
+  },
+  {
+   "warncellId": 203464000,
+   "name": "Zwischenahner Meer",
+   "lights": false,
+   "source": "No storm lights found."
+  }
+ ]
+}

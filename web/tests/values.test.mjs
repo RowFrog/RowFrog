@@ -89,3 +89,17 @@ test("the map follows the chart when linked and keeps its own time when not", ()
   time.setChart(9);
   assert.equal(time.mapOutOfRange, true);
 });
+
+test("weather warnings name their topic; frost and heat are info only (Reason.label, DWDWarning.isInfoOnly)", async () => {
+  const { reasonLabel, reasonExplanation, warningInfoOnly, warningSlippery } = await import("../public/app/shared.js");
+  assert.equal(reasonLabel({ condition: "weather_warning", topic: "wind" }), "Wind warning");
+  assert.equal(reasonLabel({ condition: "weather_warning", topic: "other" }), "Weather warning");
+  assert.equal(reasonLabel({ condition: "weather_warning" }), "Weather warning");
+  assert.equal(reasonExplanation("weather_warning", "red", "fog"), "An official fog warning is out for this place.");
+  assert.equal(warningInfoOnly({ kind: "weather", event: "FROST" }), true);
+  assert.equal(warningSlippery({ kind: "weather", event: "GLÄTTE" }), true);
+  assert.equal(warningInfoOnly({ kind: "weather", event: "STARKE HITZE" }), true);
+  assert.equal(warningSlippery({ kind: "weather", event: "STARKE HITZE" }), false);
+  assert.equal(warningInfoOnly({ kind: "weather", event: "STURMBÖEN" }), false);
+  assert.equal(warningInfoOnly({ kind: "lake", event: "FROST" }), false);
+});

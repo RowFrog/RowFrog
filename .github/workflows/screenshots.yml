@@ -30,6 +30,10 @@ on:
         description: Mac runner image (macos-latest when Apple Silicon runners are available again)
         required: false
         default: macos-15-intel
+      xcode:
+        description: Xcode to build with, e.g. 26 for iOS 26 and Liquid Glass as on the owner's iPhone (empty = the image's default)
+        required: false
+        default: ""
       device:
         description: Simulator to shoot on; iPad shots go to an ipad/ folder inside the same set
         required: false
@@ -61,7 +65,7 @@ jobs:
       - run: pip install -e backend pillow
       - name: Start the backend with live data
         run: |
-          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
+          (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt,der-hamburger-und-germania-ruder-club RW_SAMPLE_FROST_CLUBS=ruderclub-forggensee RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
           curl -sS --retry 10 --retry-connrefused --retry-delay 2 http://localhost:8000/lakes > /dev/null
           # Warm the forecast and warning caches; Open-Meteo sometimes times out
           # on the first call and DWD's lake areas take a while to download.
@@ -74,6 +78,10 @@ jobs:
           print(d["clubId"], len(d["hours"]), "hours, now:", d["hours"][0]["light"], "| DWD:", w["status"], "lake area:", w["lakeArea"],
                 "warnings:", [(i["kind"], i["event"], i["severity"], i["sample"]) for i in w["items"]])'
           done
+          # Lakes of single shots: warmed too, or their lake view may still be loading.
+          for lake in aussenalster regattastrecke-oberschleissheim; do
+            curl -sS -f -m 200 --retry 3 --retry-all-errors --retry-delay 5 -o /dev/null "http://localhost:8000/lakes/$lake/view" || echo "Lake view $lake failed"
+          done
           curl -sS -f -m 200 --retry 3 --retry-all-errors --retry-delay 5 http://localhost:8000/lakes/starnberger-see/view \
             | python3 -c '
           import json, sys
@@ -84,15 +92,24 @@ jobs:
         working-directory: ios
         env:
           DEVICE: ${{ github.event.inputs.device }}
+          XCODE_INPUT: ${{ github.event.inputs.xcode }}
         run: |
+          if [ -n "$XCODE_INPUT" ]; then
+            XCODE=$(ls -d /Applications/Xcode_"$XCODE_INPUT"*.app | sort -V | tail -1)
+            echo "DEVELOPER_DIR=$XCODE/Contents/Developer" >> "$GITHUB_ENV"
+            export DEVELOPER_DIR="$XCODE/Contents/Developer"
+            echo "Using $XCODE"
+          fi
           brew install xcodegen
           xcodegen
           # The newest iPhone Pro, or with device iPad the newest 11-inch iPad Pro (iPad Air as fallback).
           UDID=$(xcrun simctl list devices available -j | DEVICE="$DEVICE" python3 -c '
           import json, os, sys
           family = os.environ["DEVICE"] or "iPhone"
-          found = [d for runtime, devices in json.load(sys.stdin)["devices"].items() if "iOS" in runtime
-                   for d in devices if d["name"].startswith(family)]
+          # Newest iOS last, so an Xcode 26 run shoots on iOS 26.
+          runtimes = sorted((r for r in json.load(sys.stdin)["devices"].items() if "iOS" in r[0]),
+                            key=lambda r: [int(n) for n in r[0].rsplit("iOS-", 1)[-1].split("-") if n.isdigit()])
+          found = [d for runtime, devices in runtimes for d in devices if d["name"].startswith(family)]
           if family == "iPad":
               best = [d for d in found if d["name"].startswith("iPad Pro 11")] or [d for d in found if d["name"].startswith("iPad Air")]
           else:
@@ -250,6 +267,12 @@ jobs:
           shoot_pages 224-thunderstorm-zurich-german-dark dark -RWOpenClub seeclub-zuerich -RWOpenCondition thunderstorm -RWLanguage de
           shoot_pages 225-widgets-zurich light -RWWidgetGallery YES -RWHomeClub seeclub-zuerich
           shoot_pages 226-widgets-zurich-german-dark dark -RWWidgetGallery YES -RWHomeClub seeclub-zuerich -RWLanguage de
+          # Frost leaves the light and the lake map alone; the Alster has no shore lights; the limits line on one line.
+          shoot 308-frost-forggensee-german dark -RWOpenClub ruderclub-forggensee -RWScrollTo warnings -RWLanguage de
+          shoot 309-frost-forggensee-lake-german dark -RWOpenClub ruderclub-forggensee -RWScrollTo lakeview -RWLanguage de
+          shoot 310-alster-no-shore-lights-german dark -RWOpenClub der-hamburger-und-germania-ruder-club -RWScrollTo warnings -RWLanguage de
+          shoot 311-limits-line-german dark -RWOpenClub mrc-1880 -RWLanguage de
+          shoot 311-limits-line light -RWOpenClub mrc-1880
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES
@@ -355,6 +378,11 @@ jobs:
           shoot 201-lake-map-twilight light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide twilight
           WAIT=30 shoot 202-lake-view-tile-twilight light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWLakeWide twilight
           shoot 203-lake-map-cold-water light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide cold
+          # The regatta course lies along the usual stripes, so its stripes run the other way.
+          WAIT=30 shoot 305-lake-map-dark-regatta light -RWOpenClub rudergesellschaft-muenchen-1972 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeWide dark
+          WAIT=30 shoot 306-lake-view-tile-dark-regatta light -RWOpenClub rudergesellschaft-muenchen-1972 -RWScrollTo lakeview -RWLakeWide dark
+          # Three clubs share one launch point on the Außenalster: the page's club stays on top.
+          WAIT=30 shoot 307-lake-map-shared-boathouse dark -RWOpenClub der-hamburger-und-germania-ruder-club -RWScrollTo lakeview -RWOpenLakeView YES
           shoot 92-lake-view-panel-expanded light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWPanel expanded
           WAIT=30 shoot 52-lake-view-waves light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer waves
           WAIT=30 shoot 53-lake-view-wind light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer wind
@@ -401,6 +429,8 @@ jobs:
           shoot 199-browse-germany-by-town-german-dark dark -RWShowList YES -RWBrowse de -RWCountryListByTown YES -RWLanguage de
           shoot 200-browse-germany-unknown-water light -RWShowList YES -RWBrowse de -RWCountryFilter Hemmoor
           shoot 73-add-place light -RWShowList YES -RWAddPlace YES
+          shoot 305-list-editing light -RWShowList YES -RWEditList YES
+          WAIT=15 shoot 306-list-scrolled light -RWShowList YES -RWScrollPage 1 -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           shoot 74-add-place-german-dark dark -RWShowList YES -RWAddPlace YES -RWLanguage de
           shoot_pages 75-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401"
           shoot_pages 76-list-with-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401" -RWShowList YES
