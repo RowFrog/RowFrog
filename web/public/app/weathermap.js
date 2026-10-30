@@ -438,7 +438,9 @@ export async function weatherMap(el, point, layerId, { interactive = true, onAre
   async function prepare() {
     const { layer } = state;
     if (!layer.model) return;
-    const index = await loadIndex();
+    // Without the index (server or connection down) the map stays empty instead of throwing.
+    const index = await loadIndex().catch(() => null);
+    if (!index) return;
     state.index = index;
     const ids = cover(index, area()).map((x) => x.tile.id);
     const own = tileFor(index, point)?.id;
