@@ -30,6 +30,10 @@ on:
         description: Mac runner image (macos-latest when Apple Silicon runners are available again)
         required: false
         default: macos-15-intel
+      xcode:
+        description: Xcode to build with, e.g. 26 for iOS 26 and Liquid Glass as on the owner's iPhone (empty = the image's default)
+        required: false
+        default: ""
       device:
         description: Simulator to shoot on; iPad shots go to an ipad/ folder inside the same set
         required: false
@@ -88,15 +92,24 @@ jobs:
         working-directory: ios
         env:
           DEVICE: ${{ github.event.inputs.device }}
+          XCODE_INPUT: ${{ github.event.inputs.xcode }}
         run: |
+          if [ -n "$XCODE_INPUT" ]; then
+            XCODE=$(ls -d /Applications/Xcode_"$XCODE_INPUT"*.app | sort -V | tail -1)
+            echo "DEVELOPER_DIR=$XCODE/Contents/Developer" >> "$GITHUB_ENV"
+            export DEVELOPER_DIR="$XCODE/Contents/Developer"
+            echo "Using $XCODE"
+          fi
           brew install xcodegen
           xcodegen
           # The newest iPhone Pro, or with device iPad the newest 11-inch iPad Pro (iPad Air as fallback).
           UDID=$(xcrun simctl list devices available -j | DEVICE="$DEVICE" python3 -c '
           import json, os, sys
           family = os.environ["DEVICE"] or "iPhone"
-          found = [d for runtime, devices in json.load(sys.stdin)["devices"].items() if "iOS" in runtime
-                   for d in devices if d["name"].startswith(family)]
+          # Newest iOS last, so an Xcode 26 run shoots on iOS 26.
+          runtimes = sorted((r for r in json.load(sys.stdin)["devices"].items() if "iOS" in r[0]),
+                            key=lambda r: [int(n) for n in r[0].rsplit("iOS-", 1)[-1].split("-") if n.isdigit()])
+          found = [d for runtime, devices in runtimes for d in devices if d["name"].startswith(family)]
           if family == "iPad":
               best = [d for d in found if d["name"].startswith("iPad Pro 11")] or [d for d in found if d["name"].startswith("iPad Air")]
           else:
@@ -416,6 +429,8 @@ jobs:
           shoot 199-browse-germany-by-town-german-dark dark -RWShowList YES -RWBrowse de -RWCountryListByTown YES -RWLanguage de
           shoot 200-browse-germany-unknown-water light -RWShowList YES -RWBrowse de -RWCountryFilter Hemmoor
           shoot 73-add-place light -RWShowList YES -RWAddPlace YES
+          shoot 305-list-editing light -RWShowList YES -RWEditList YES
+          WAIT=15 shoot 306-list-scrolled light -RWShowList YES -RWScrollPage 1 -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
           shoot 74-add-place-german-dark dark -RWShowList YES -RWAddPlace YES -RWLanguage de
           shoot_pages 75-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401"
           shoot_pages 76-list-with-own-place light -RWOwnPlace "Steg am Nordufer;47.9986;11.3401" -RWShowList YES

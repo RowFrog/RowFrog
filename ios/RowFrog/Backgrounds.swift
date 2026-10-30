@@ -167,8 +167,6 @@ final class PageScroll {
     private(set) var scrolled: Set<String> = []
     /// Club pages whose big title has gone under the top.
     private(set) var titleGone: Set<String> = []
-    /// Club pages with cards under the floating buttons at the bottom.
-    private(set) var underBar: Set<String> = []
 
     func update(_ clubID: String, scrolled isScrolled: Bool) {
         if scrolled.contains(clubID) != isScrolled { scrolled.formSymmetricDifference([clubID]) }
@@ -176,10 +174,6 @@ final class PageScroll {
 
     func update(_ clubID: String, titleGone gone: Bool) {
         if titleGone.contains(clubID) != gone { titleGone.formSymmetricDifference([clubID]) }
-    }
-
-    func update(_ clubID: String, underBar under: Bool) {
-        if underBar.contains(clubID) != under { underBar.formSymmetricDifference([clubID]) }
     }
 }
 

@@ -296,6 +296,8 @@ enum German {
         "Remove": "Entfernen",
         "Search clubs, lakes or towns": "Vereine, Seen oder Orte suchen",
         "Done": "Fertig",
+        "Edit list": "Liste bearbeiten",
+        "More": "Mehr",
         "All within the limits": "Alle Werte im Rahmen",
         "Sunset %@": "Sonnenuntergang %@",
         "Sunrise %@": "Sonnenaufgang %@",
