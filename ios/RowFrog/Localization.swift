@@ -99,7 +99,6 @@ enum German {
         "Air temperature": "Lufttemperatur",
         "Wind and gusts": "Wind und Böen",
         "Water temperature": "Wassertemperatur",
-        "Visibility (fog)": "Sicht (Nebel)",
         "Cloud cover": "Bewölkung",
         "Ice cover": "Eisdecke",
         "Daylight": "Tageslicht",
