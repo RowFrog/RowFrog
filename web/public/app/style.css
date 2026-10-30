@@ -263,6 +263,30 @@ svg.filled { width: 22px; height: 22px; }
 /* The point on the left, one "Open in Maps" button on the right with the route and the point in its menu, as in the app. */
 .map-foot { display: flex; align-items: center; gap: 8px; justify-content: space-between; }
 .map-foot .coords { font-variant-numeric: tabular-nums; user-select: text; }
+/* The list's "…" menu at the top right, level with the big title (LocationListView.moreMenu). */
+.list-head, .side-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.list-head { padding-top: env(safe-area-inset-top); }
+.more-menu { position: relative; flex: none; }
+.more-menu summary { list-style: none; cursor: pointer; width: 36px; height: 36px; border-radius: 18px; display: flex; align-items: center; justify-content: center; color: var(--text); font-size: 20px; }
+.more-menu summary::-webkit-details-marker { display: none; }
+.more-menu .menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: 12; min-width: 250px; display: flex; flex-direction: column; padding: 6px; border-radius: 14px;
+  background: var(--card); box-shadow: 0 8px 28px rgba(0, 0, 0, .28); border: .5px solid var(--line); }
+.more-menu .menu a, .more-menu .menu button { display: flex; align-items: center; gap: 8px; padding: 10px; border-radius: 10px; color: var(--text); font-size: 15px; text-align: left; }
+.more-menu .menu a[hidden] { display: none; }
+.more-menu .menu button:disabled { opacity: .4; }
+.more-menu .menu a:hover, .more-menu .menu button:not(:disabled):hover { background: var(--fill); }
+#edit.link { font-size: 17px; }
+/* The settings cog beside the search at the bottom, on glass as in Mail and Weather (settingsBesideSearch):
+   fixed on the list page, at the foot of the list beside a club page. */
+.search-bar { display: flex; align-items: center; gap: 8px; pointer-events: none; }
+.search-bar > * { pointer-events: auto; }
+.search-bar .round { flex: none; width: 44px; height: 44px; border-radius: 22px; justify-content: center; color: var(--text); font-size: 22px; }
+.search-bar .search { flex: 1; height: 44px; box-sizing: border-box; border-radius: 22px; padding: 0 14px; background: color-mix(in srgb, var(--card) 62%, transparent); }
+.list-bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-width: 640px; margin: 0 auto; padding: 0 16px max(8px, env(safe-area-inset-bottom)); box-sizing: border-box; }
+.list-page { padding-bottom: 96px; }
+.side-bottom { position: sticky; bottom: 0; margin-top: auto; padding: 16px 0 max(8px, env(safe-area-inset-bottom)); z-index: 2; }
+/* Beside the list the page bar keeps to the page's own column. */
+.split ~ .bottom { left: var(--main-left); right: auto; width: var(--main-width); box-sizing: border-box; }
 .maps-menu { position: relative; flex: none; }
 .maps-menu summary { list-style: none; cursor: pointer; white-space: nowrap; }
 .maps-menu summary::-webkit-details-marker { display: none; }
@@ -318,18 +342,16 @@ svg.filled { width: 22px; height: 22px; }
 
 /* A desktop browser has no clock or home bar to keep readable, so it draws no blur strips. Phones and
    tablets (a touch screen, or the page added to the home screen) keep the app's thin blur behind the clock
-   once the page scrolls under it (TopEdgeFade), and behind the floating buttons while cards are under them
-   (BottomEdgeFade), over the page's own column only. */
+   once the page scrolls under it (TopEdgeFade), over the page's own column only. At the bottom only the
+   floating buttons sit over the cards, with no blur behind them (app #227). */
 :root { --safe-top: env(safe-area-inset-top, 0px); --main-left: 0px; --main-width: 100%; }
 @media (display-mode: standalone), (pointer: coarse) {
-  body::before, body::after { content: ""; position: fixed; left: var(--main-left); width: var(--main-width); z-index: 9; pointer-events: none;
+  body::before { content: ""; position: fixed; left: var(--main-left); width: var(--main-width); z-index: 9; pointer-events: none;
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
     -webkit-mask-image: var(--fade); mask-image: var(--fade); opacity: 0; transition: opacity .2s ease-in-out; }
   body::before { top: 0; height: calc(var(--safe-top) + 28px);
     --fade: linear-gradient(#000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) var(--safe-top), transparent); }
-  body::after { bottom: 0; height: calc(max(8px, env(safe-area-inset-bottom)) + 44px + 28px);
-    --fade: linear-gradient(to top, #000, rgba(0, 0, 0, .8) calc(100% - 28px), transparent); }
-  body.scrolled::before, body.under-bar::after { opacity: 1; }
+  body.scrolled::before { opacity: 1; }
 }
 /* The club's name and light, small, once the big title has scrolled away (InlineClubTitle). */
 /* A plain bar in the page's colour, so the 48 hours' header pinned under it hides the rows that scrolled past. */
@@ -441,8 +463,9 @@ dialog.sheet .done { color: var(--accent); font-weight: 600; }
 .split { display: flex; align-items: flex-start; }
 .split > main { flex: 1; min-width: 0; }
 /* Room for the scroll bar kept, so the list does not narrow when results make it scroll (Windows draws the bar inside). */
-.side { width: 400px; flex: none; position: sticky; top: 0; height: 100vh; overflow-y: auto; scrollbar-gutter: stable; padding: 12px 16px 110px; border-right: .5px solid var(--line); }
-.side-head { display: flex; justify-content: space-between; align-items: baseline; }
+.side { width: 400px; flex: none; position: sticky; top: 0; height: calc(100vh - var(--side-top, 0px)); overflow-y: auto; scrollbar-gutter: stable; padding: 12px 16px 0; box-sizing: border-box; border-right: .5px solid var(--line);
+  display: flex; flex-direction: column; }
+.side > * { flex-shrink: 0; }
 .side-head h2 { font-size: 28px; margin: 4px 0; }
 .side-head { margin-bottom: 8px; }
 .side .rows { margin-top: 8px; }
@@ -786,7 +809,7 @@ body.has-picture { background: transparent; }
 /* Frosted: the picture shows through the cards, blurred; solid: no picture in the cards. */
 body.has-picture[data-tiles="frosted"] .card, body.has-picture[data-tiles="frosted"] .side .row { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
 /* Text that sits on the picture itself gets a thin backing, as the app's labels. */
-body.has-picture main.page > h1.large, body.has-picture main.page > h3.section, body.has-picture main.page > p.footer,
+body.has-picture main.page > h1.large, body.has-picture .list-head > h1.large, body.has-picture main.page > h3.section, body.has-picture main.page > p.footer,
 body.has-picture main.page > .source, body.has-picture main.page > .credits, body.has-picture main.page > footer.links,
 body.has-picture .page-end > .source, body.has-picture .page-end > .credits, body.has-picture .page-end > footer.links,
 body.has-picture main.page > .list-links, body.has-picture main.page > .add-own, body.has-picture #updated {
