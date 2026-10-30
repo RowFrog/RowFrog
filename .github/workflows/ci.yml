@@ -74,15 +74,44 @@ jobs:
       - uses: actions/checkout@v4
       - run: brew install xcodegen
       - run: xcodegen
-      - name: Build and test on a simulator
+      - name: Build and run the unit tests on a simulator
         run: |
           DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
           echo "Using simulator: $DEVICE"
-          xcodebuild test \
+          echo "DEVICE=$DEVICE" >> "$GITHUB_ENV"
+          xcodebuild build-for-testing \
             -project RowFrog.xcodeproj \
             -scheme RowFrog \
             -destination "platform=iOS Simulator,name=$DEVICE" \
             CODE_SIGNING_ALLOWED=NO
+          xcodebuild test-without-building \
+            -project RowFrog.xcodeproj \
+            -scheme RowFrog \
+            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -only-testing:RowFrogTests
+      - name: Run the UI tests (taps in the app)
+        # The UI test runner on these Intel runners sometimes dies before any
+        # test starts ("never finished bootstrapping", main after #238). Only
+        # that case is tried once more, on a freshly booted simulator; a test
+        # that runs and fails fails the build at once.
+        run: |
+          for attempt in 1 2; do
+            xcrun simctl shutdown all || true
+            xcrun simctl boot "$DEVICE" || true
+            xcrun simctl bootstatus "$DEVICE" -b
+            set +e
+            xcodebuild test-without-building \
+              -project RowFrog.xcodeproj \
+              -scheme RowFrog \
+              -destination "platform=iOS Simulator,name=$DEVICE" \
+              -only-testing:RowFrogUITests 2>&1 | tee ui-tests.log
+            status=${PIPESTATUS[0]}
+            set -e
+            [ "$status" -eq 0 ] && exit 0
+            grep -q "never finished bootstrapping" ui-tests.log || exit "$status"
+            echo "The UI test runner did not start (attempt $attempt)."
+          done
+          exit 1
       - name: Build with Xcode 26 (Liquid Glass code)
         # The default Xcode is older and skips everything behind
         # `#if compiler(>=6.2)`, which is what the owner's iPhone runs; build
