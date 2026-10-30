@@ -32,7 +32,8 @@ FORECAST_HOURS = 48
 # Club ids that get a made-up warning, marked as a sample, for screenshots: a lake storm warning
 # where DWD has a lake area, else a thunderstorm warning from the place's own service.
 SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "").split(",") if c}
-# Clubs that get a made-up frost warning, marked as a sample, to show that frost leaves the light alone.
+# Clubs that get a made-up frost warning from six hours on, marked as a sample, to show that frost
+# leaves the light alone and how a warning for later shows.
 SAMPLE_FROST_CLUBS = {c for c in os.environ.get("RW_SAMPLE_FROST_CLUBS", "").split(",") if c}
 # "from,speed,gusts" (degrees, m/s) replaces the wind in the lake view, marked as a
 # sample, so screenshots show waves building across the lake on a calm day.
@@ -399,8 +400,8 @@ def _sample_frost_warning(club: locations.Club, now: datetime) -> dwd_warnings.W
         headline="Amtliche WARNUNG vor FROST",
         description="Es tritt leichter Frost um -1 °C auf.",
         instruction="Hinweis auf: mögliche Frostschäden.",
-        onset=start,
-        expires=start + timedelta(hours=6),
+        onset=start + timedelta(hours=6),
+        expires=start + timedelta(hours=15),
         identifier=f"sample-frost-{club.id}",
         source=LOCAL_WARNING_SERVICES[club.country][0],
     )

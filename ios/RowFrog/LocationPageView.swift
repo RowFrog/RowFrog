@@ -795,7 +795,8 @@ private struct NowCard: View {
     /// DWD's radar at the launch point, read while the page is open.
     private var radar: RainRadar? { club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) } }
 
-    /// While DWD has no warning, one line says so; the warnings card itself
+    /// While DWD has no warning, one line says so; for a warning that starts later or
+    /// does not count for the light, one line names it. The warnings card itself
     /// only shows while a warning is issued or DWD could not be checked.
     @ViewBuilder
     private var warningsLine: some View {
@@ -811,6 +812,23 @@ private struct NowCard: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint(tr("Shows what was checked and what the shore warning lights mean"))
+        } else if let warnings = forecast.warnings, let headline = warnings.headline(), headline.urgency != .now {
+            // A warning for later, or about frost or heat: said here (amber when it counts and starts
+            // within hours, else grey), so the light and the warnings card tell the same story.
+            // Counting warnings in force already are reasons above.
+            let warning = headline.warning, soon = headline.urgency == .soon
+            Button { showingWarnings = true } label: {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Image(systemName: soon ? "exclamationmark.triangle.fill" : "info.circle")
+                    Text(warning.counts
+                         ? warning.shortLabel(at: .now)
+                         : tr("%@ · not part of the rowing light", warning.shortLabel(at: .now)))
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .foregroundStyle(soon ? Color.orange : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(tr("Opens the warnings"))
         }
     }
 

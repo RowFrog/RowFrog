@@ -300,10 +300,12 @@ private struct LocationSummaryRow: View {
                                 .accessibilityLabel(kit.explanation)
                         }
                     }
-                    if let warning = forecast?.warnings?.items.first {
-                        Label(warning.shortLabel, systemImage: "exclamationmark.triangle.fill")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(warning.severity == "minor" ? Color.orange : warning.color)
+                    if let headline = forecast?.warnings?.headline() {
+                        // Amber only for a warning that changes the light now or soon; later or frost-like ones grey.
+                        let warning = headline.warning, info = headline.urgency == .info
+                        Label(warning.shortLabel(at: .now), systemImage: info ? "info.circle" : "exclamationmark.triangle.fill")
+                            .font(.caption.weight(info ? .regular : .semibold))
+                            .foregroundStyle(info ? Color.secondary : warning.severity == "minor" ? Color.orange : warning.color)
                             .lineLimit(1)
                     }
                     if let forecast, let sun = forecast.sunState(at: .now) {
