@@ -5,7 +5,7 @@
 import { t, num, locale } from "./i18n.js";
 import { icon, iconShape } from "./icons.js";
 import {
-  API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
+  key, API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
 } from "./logic.js";
 import { isOwn, loadOwnForecast } from "./ownplace.js";
 
@@ -428,11 +428,21 @@ export function lightTitle(light, stale = false) {
 
 /** A reason's short label; "(your limit)" when the user's own limit decided it. */
 export function reasonLabel(reason) {
-  const base = baseLabel(reason.condition ?? reason);
+  const base = baseLabel(reason.condition ?? reason, reason.topic);
   return reason.mine ? t("%@ (your limit)", base) : base;
 }
 
-export function baseLabel(condition) {
+/** What an official weather warning is about, from the backend ("wind", "thunderstorm", "rain", "snow", "fog" or "other"). */
+const WARNING_TOPICS = {
+  wind: [key("Wind warning"), key("An official wind warning is out for this place.")],
+  thunderstorm: [key("Thunderstorm warning"), key("An official thunderstorm warning is out for this place.")],
+  rain: [key("Rain warning"), key("An official rain warning is out for this place.")],
+  snow: [key("Snow warning"), key("An official snow warning is out for this place.")],
+  fog: [key("Fog warning"), key("An official fog warning is out for this place.")],
+};
+
+export function baseLabel(condition, topic = null) {
+  if (condition === "weather_warning" && WARNING_TOPICS[topic]) return t(WARNING_TOPICS[topic][0]);
   return {
     lake_warning: t("DWD storm warning"), lake_strong_wind: t("DWD strong-wind warning"), single_cold: t("Single in cold water"),
     freezing_water: t("Near-freezing water"), weather_warning: t("Weather warning"), wind: t("Wind"), gusts: t("Gusts"),
@@ -452,7 +462,7 @@ export function hourExplanation(forecast, reason, hour) {
     const sun = twilight(forecast, hour);
     if (sun) return sun.kind === "sunrise" ? t("Sunrise at %@ in this hour.", time(sun.time)) : t("Sunset at %@ in this hour.", time(sun.time));
   }
-  const text = reasonExplanation(reason.condition, reason.light);
+  const text = reasonExplanation(reason.condition, reason.light, reason.topic);
   return reason.mine ? `${text} ${t("You set this limit yourself.")}` : text;
 }
 
@@ -464,7 +474,8 @@ export function noteText(note) {
   return t("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel(note.condition), boatInSentence(selectedBoat()));
 }
 
-export function reasonExplanation(condition, light) {
+export function reasonExplanation(condition, light, topic = null) {
+  if (condition === "weather_warning" && WARNING_TOPICS[topic]) return t(WARNING_TOPICS[topic][1]);
   switch (condition) {
     case "lake_warning": return t("DWD has issued a storm warning for the lake; where the lake has storm lights, they flash 90 times a minute.");
     case "lake_strong_wind": return t("DWD has issued a strong-wind warning for the lake; where the lake has storm lights, they flash 40 times a minute.");
@@ -491,6 +502,17 @@ export function reasonExplanation(condition, light) {
     default: return condition;
   }
 }
+
+/**
+ * Frost, black ice, thaw, heat or cold: shown in the warnings card but left out
+ * of the rowing light (DWDWarning.isInfoOnly; backend forecast.py INFO_ONLY_WORDS).
+ */
+const INFO_ONLY_WORDS = ["FROST", "GLÄTTE", "GLATT", "TAUWETTER", "HITZE", "KÄLTE", "UV"];
+const SLIPPERY_WORDS = ["FROST", "GLÄTTE", "GLATT"];
+const eventHas = (w, words) => w.kind !== "lake" && words.some((word) => (w.event ?? "").toUpperCase().includes(word));
+export const warningInfoOnly = (w) => eventHas(w, INFO_ONLY_WORDS);
+/** Frost or black ice: the jetty and the boat area can be slippery. */
+export const warningSlippery = (w) => eventHas(w, SLIPPERY_WORDS);
 
 /** The badge's short text and full advice for what cold water calls for (ColdWaterKit). */
 export function coldWaterText(kit) {
