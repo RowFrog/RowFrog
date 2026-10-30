@@ -431,9 +431,13 @@ struct FrostedFill<S: Shape>: View {
                             let origin = proxy.frame(in: .global).origin
                             return content.offset(x: frame.minX - origin.x, y: frame.minY - origin.y)
                         }
+                        // The picture is page-sized and shifted up over the cards above;
+                        // clipping hides that but doesn't stop it taking their taps.
+                        .allowsHitTesting(false)
                 }
                 .overlay(Color(.systemBackground).opacity(colorScheme == .dark ? veil * 0.8 : veil))
                 .clipShape(shape)
+                .contentShape(shape)
         } else {
             shape.fill(Color(.secondarySystemGroupedBackground))
         }
