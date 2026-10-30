@@ -424,6 +424,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
             SettingsSearch("Background pictures", .clubPages, path: [.clubPages, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
             SettingsSearch("In the tiles", .clubPages, path: [.clubPages, .backgrounds], words: ["tiles", "Kacheln", "frosted", "blur", "unscharf", "solid"]),
+            SettingsSearch("Open places in", .clubPages, words: ["Apple Maps", "Apple Karten", "Google Maps", "map app", "Karten-App", "directions", "Route"]),
             SettingsSearch("Maps start", .clubPages, words: ["map zoom", "Kartenzoom", "weather map", "Wetterkarte", "close", "nah", "wide", "weit"]),
             SettingsSearch("Widget background", .widgets, words: ["sky", "Himmel", "picture", "Bild", "satellite", "Satellit"]),
             SettingsSearch("Widget updates", .widgets, words: ["refresh", "aktualisieren", "battery", "Akku"]),
@@ -558,6 +559,17 @@ private struct ClubPagesSettingsView: View {
                 SectionTitle(tr("Weather maps"), symbol: "map")
             } footer: {
                 SectionFooter(mapZoomFooter)
+            }
+            .surfaceRows()
+
+            Section {
+                Picker(tr("Open places in"), selection: $settings.mapApp) {
+                    ForEach(MapApp.allCases) { Text($0.title).tag($0) }
+                }
+            } header: {
+                SectionTitle(tr("Map app"), symbol: "map.circle")
+            } footer: {
+                SectionFooter(tr("Opens the club's directions and launch point from the Launch point card. Google Maps opens in its app when it is installed, else in the browser."))
             }
             .surfaceRows()
         }

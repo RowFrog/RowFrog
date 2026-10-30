@@ -482,7 +482,7 @@ export function reasonExplanation(condition, light, topic = null) {
     case "wind": return t("Mean wind is above the limit.");
     case "gusts": return t("Gusts are above the limit.");
     case "waves": return t("Waves at the launch point are too high.");
-    case "fog": return t("Visibility is poor (fog or mist).");
+    case "fog": return t("Fog: visibility is poor.");
     case "heavy_rain": return t("Heavy rain of %@ or more in the hour.", rain(4));
     case "hail": return t("Hail is forecast with a thunderstorm.");
     case "thunderstorm": return t("Thunderstorms are possible.");
@@ -787,7 +787,7 @@ export function conditionTexts() {
     waves: r("waves", t("Waves"), unitSymbol("waves"), t("Estimated wave height at the launch point, from wind and open water upwind.")),
     waterTemperature: r("waterTemperature", t("Water temperature"), unitSymbol("temperature"), t("Latest lake measurement. Below %@, extra care; below %@, cold water.", temperature(15), temperature(10))),
     precipitation: r("precipitation", t("Precipitation"), unitSymbol("rain"), t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unitSymbol("rain"))),
-    visibility: r("visibility", t("Visibility (fog)"), unitSymbol("distance"), t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
+    visibility: r("visibility", t("Visibility"), unitSymbol("distance"), t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
     cloudCover: r("cloudCover", t("Cloud cover"), "%", t("Share of the sky covered by cloud.")),
     thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. Official thunderstorm warnings for the place appear under the warnings.")),
     uvIndex: r("uvIndex", t("UV index"), "", t("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")),

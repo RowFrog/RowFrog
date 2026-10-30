@@ -49,7 +49,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .waves: tr("Waves")
         case .waterTemperature: tr("Water temperature")
         case .precipitation: tr("Precipitation")
-        case .visibility: tr("Visibility (fog)")
+        case .visibility: tr("Visibility")
         case .cloudCover: tr("Cloud cover")
         case .thunderstorm: tr("Thunderstorm risk")
         case .uvIndex: tr("UV index")
@@ -182,7 +182,11 @@ enum Format {
 
     static func number(_ value: Double?, digits: Int = 0) -> String {
         guard let value else { return "–" }
-        return value.formatted(.number.precision(.fractionLength(digits)).locale(locale))
+        // Rounded to the digits first, so -0.3 shows as 0, not -0 (as on the website).
+        let scale = pow(10, Double(digits))
+        var rounded = (value * scale).rounded() / scale
+        if rounded == 0 { rounded = 0 }
+        return rounded.formatted(.number.precision(.fractionLength(digits)).locale(locale))
     }
 
     /// Numbers and dates follow the language chosen in the settings.

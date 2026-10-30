@@ -42,6 +42,11 @@ struct TrafficLightDot: View {
 extension ColdWaterKit {
     /// The badge's blue: its own colour, so it never reads as a warning light.
     static let color = Color(red: 0.18, green: 0.5, blue: 0.82)
+    /// The deeper blue for very cold water: dark navy on light backgrounds,
+    /// a lighter blue on dark ones, where the navy would vanish.
+    static let deep = Color(UIColor { $0.userInterfaceStyle == .dark
+        ? UIColor(red: 0.47, green: 0.64, blue: 0.94, alpha: 1)
+        : UIColor(red: 0.11, green: 0.3, blue: 0.55, alpha: 1) })
 }
 
 /// The blue cold-water badge under the rowing light: what to bring, not a warning.

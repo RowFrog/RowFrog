@@ -180,34 +180,154 @@ struct WidgetBackgroundSwatch: View {
     }
 }
 
-/// The medium widget with the chosen background and the home base's last
-/// forecast the widgets loaded (none until a widget has run once).
-private struct WidgetPreview: View {
-    let background: WidgetBackground
+/// The home base's forecast for the widget preview and the background
+/// swatches: what the app or the widgets already have, decoded away from the
+/// main thread, then a fresh download. Loaded once, outside any view, so a
+/// redrawn settings page doesn't call the download off.
+@MainActor @Observable
+final class WidgetPreviewForecast {
+    static let shared = WidgetPreviewForecast()
+    private(set) var forecast: ClubForecast?
+    private(set) var failed = false
+    private var loading = false
 
-    /// The home base's forecast as the widgets last saved it, for the samples.
-    static var snapshot: RowingSnapshot {
-        let shared = WidgetShared.defaults
-        let home = shared.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
-        let names = shared.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
-        let forecast = shared.data(forKey: WidgetShared.cacheKey(home)).flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
-        return RowingSnapshot(date: .now, clubName: names[home] ?? "Row Frog", isHome: true, forecast: forecast?.applyingUserLimits())
+    var homeID: String {
+        WidgetShared.defaults.string(forKey: WidgetShared.homeKey) ?? WidgetShared.defaultHomeID
     }
 
-    var body: some View {
-        let snapshot = Self.snapshot
-        RowingWidgetView(snapshot: snapshot, family: .systemMedium, focus: .conditions, plain: background == .system)
-            .padding(16)
-            .frame(width: 338, height: 158)
-            .background {
-                WidgetBackdrop(background: background, snapshot: snapshot,
-                               picture: WidgetBackgroundSwatch.picture(for: background, clubID: BackgroundLibrary.homeClubID))
+    var snapshot: RowingSnapshot {
+        let names = WidgetShared.defaults.dictionary(forKey: WidgetShared.namesKey) as? [String: String] ?? [:]
+        return RowingSnapshot(date: .now, clubName: names[homeID] ?? "Row Frog", isHome: true, forecast: forecast?.applyingUserLimits())
+    }
+
+    func load() {
+        guard !loading else { return }
+        loading = true
+        let homeID = homeID
+        Task {
+            defer { loading = false }
+            if forecast == nil { forecast = await Self.stored(homeID) }
+            do {
+                forecast = try await APIClient.fromBundle().forecast(clubID: homeID)
+                failed = false
+            } catch {
+                failed = forecast == nil
             }
-            .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel(tr("Preview"))
+        }
+    }
+
+    /// The app's own kept copy of its last download, else the one the widgets
+    /// last saved: the first with hours still to come. Nonisolated, so it
+    /// runs away from the main thread.
+    nonisolated private static func stored(_ homeID: String) async -> ClubForecast? {
+        let url = APIClient.fromBundle().baseURL.appending(path: "clubs/\(homeID)/forecast")
+        let kept = KeptFiles.shared.copy(of: url)?.data
+        let saved = WidgetShared.defaults.data(forKey: WidgetShared.cacheKey(homeID))
+        return [kept, saved].compactMap { $0 }
+            .compactMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
+            .first { forecast in forecast.hours.contains { $0.time > Date.now } }
+    }
+}
+
+/// The widgets with the chosen background, one per page to swipe through
+/// with dots under them: small, medium (conditions, good times), large and
+/// the lock screen, with the home base's forecast.
+private struct WidgetPreview: View {
+    let background: WidgetBackground
+    @State private var page = 1
+    private let source = WidgetPreviewForecast.shared
+
+    static var snapshot: RowingSnapshot { WidgetPreviewForecast.shared.snapshot }
+
+    private struct Page {
+        let title: String
+        let family: WidgetFamily
+        let size: CGSize
+        var focus: WidgetFocus = .hourly
+    }
+
+    // Sizes on a 6.3" iPhone, in points, as in the widget gallery.
+    private let pages = [
+        Page(title: tr("Small"), family: .systemSmall, size: CGSize(width: 170, height: 170)),
+        Page(title: tr("Medium"), family: .systemMedium, size: CGSize(width: 338, height: 158), focus: .conditions),
+        Page(title: tr("Medium: good rowing times"), family: .systemMedium, size: CGSize(width: 338, height: 158), focus: .windows),
+        Page(title: tr("Large"), family: .systemLarge, size: CGSize(width: 338, height: 354)),
+        Page(title: tr("Lock screen"), family: .accessoryRectangular, size: CGSize(width: 172, height: 76)),
+    ]
+
+    /// Tall enough for the large widget at three quarters of its size.
+    private static let height: CGFloat = 270
+
+    var body: some View {
+        let snapshot = source.snapshot
+        VStack(spacing: 6) {
+            TabView(selection: $page) {
+                ForEach(pages.indices, id: \.self) { index in
+                    widget(pages[index], snapshot)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                        .tag(index)
+                }
+            }
+            .tabViewStyle(.page(indexDisplayMode: .never))
+            .frame(height: Self.height)
+            Text(source.failed ? tr("The forecast could not be loaded.") : pages[page].title)
+                .font(.caption)
+                .foregroundStyle(.secondary)
+            dots
+        }
+        .padding(.vertical, 8)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(tr("Preview"))
+        .accessibilityValue(pages[page].title)
+        .accessibilityAdjustableAction { direction in
+            switch direction {
+            case .increment: page = min(page + 1, pages.count - 1)
+            case .decrement: page = max(page - 1, 0)
+            @unknown default: break
+            }
+        }
+        .onAppear { source.load() }
+    }
+
+    @ViewBuilder
+    private func widget(_ page: Page, _ snapshot: RowingSnapshot) -> some View {
+        if page.family == .accessoryRectangular {
+            HStack(spacing: 12) {
+                RowingWidgetView(snapshot: snapshot, family: .accessoryCircular)
+                    .frame(width: 76, height: 76)
+                RowingWidgetView(snapshot: snapshot, family: .accessoryRectangular)
+                    .frame(width: page.size.width, height: page.size.height)
+            }
+            .foregroundStyle(.white)
+            .environment(\.colorScheme, .dark)
+            .padding(10)
+            .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 16))
+        } else {
+            let scale = min(1, Self.height / (page.size.height + 16))
+            RowingWidgetView(snapshot: snapshot, family: page.family, focus: page.focus, plain: background == .system)
+                .padding(16)
+                .frame(width: page.size.width, height: page.size.height)
+                .background {
+                    WidgetBackdrop(background: background, snapshot: snapshot,
+                                   picture: WidgetBackgroundSwatch.picture(for: background, clubID: BackgroundLibrary.homeClubID))
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
+                .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+                .scaleEffect(scale)
+                .frame(width: page.size.width * scale, height: page.size.height * scale)
+        }
+    }
+
+    /// Which widget shows and how many there are; a tap on a dot goes there.
+    private var dots: some View {
+        HStack(spacing: 8) {
+            ForEach(pages.indices, id: \.self) { index in
+                Circle()
+                    .fill(index == page ? Color.primary : Color.secondary.opacity(0.4))
+                    .frame(width: index == page ? 8 : 6, height: index == page ? 8 : 6)
+                    .onTapGesture { withAnimation { page = index } }
+            }
+        }
+        .animation(.easeInOut(duration: 0.2), value: page)
     }
 }

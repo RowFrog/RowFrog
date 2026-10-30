@@ -15,6 +15,8 @@ struct LaunchPointMapCard: View {
     /// The live map after a tap; a still picture again once the page is swiped away.
     @State private var live = UserDefaults.standard.bool(forKey: "RWLiveLaunchMap")
     @Environment(\.isCurrentPage) private var isCurrentPage
+    @Environment(\.openURL) private var openURL
+    private var mapApp: MapApp { AppSettings.shared.mapApp }
 
     private var home: MKCoordinateRegion {
         MKCoordinateRegion(center: coordinate, latitudinalMeters: 1500, longitudinalMeters: 1500)
@@ -45,7 +47,7 @@ struct LaunchPointMapCard: View {
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
             Text(tr("The forecast, waves and warnings are for this point."))
-            if let name = place?.name {
+            if mapApp == .apple, let name = place?.name {
                 Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -64,7 +66,7 @@ struct LaunchPointMapCard: View {
                 Menu {
                     // Apple Maps' own page of the club offers the route with one tap,
                     // so the extra row is only there when the club has no such page.
-                    if place != nil {
+                    if mapApp == .apple, place != nil {
                         Button(tr("The club in Apple Maps"), systemImage: "building.2") { place?.openInMaps() }
                     } else {
                         Button(tr("Directions to the club"), systemImage: "car") { Task { await openClubInMaps() } }
@@ -122,6 +124,13 @@ struct LaunchPointMapCard: View {
     /// has no address to drive to. Falls back to the launch point when Maps
     /// can't find the address.
     @MainActor private func openClubInMaps() async {
+        if mapApp == .google {
+            // Google finds the club by its name and address; a place of the user's own without one is its point.
+            let address = club.address.trimmingCharacters(in: .whitespaces)
+            let destination = address.isEmpty ? "\(club.launchPoint.lat),\(club.launchPoint.lon)" : "\(club.displayName), \(address)"
+            openInGoogle(app: MapApp.googleAppDirections(to: destination), web: MapApp.googleDirections(to: destination))
+            return
+        }
         // The club's own place in Apple Maps is the best target when there is one.
         if let place {
             place.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault])
@@ -138,6 +147,15 @@ struct LaunchPointMapCard: View {
         item.openInMaps(launchOptions: [MKLaunchOptionsDirectionsModeKey: MKLaunchOptionsDirectionsModeDefault])
     }
 
+    /// Google Maps' app when it is installed, else Google Maps in the browser.
+    private func openInGoogle(app: URL?, web: URL?) {
+        if let app, UIApplication.shared.canOpenURL(app) {
+            UIApplication.shared.open(app)
+        } else if let web {
+            openURL(web)
+        }
+    }
+
     private func reset(animated: Bool) {
         if animated {
             withAnimation { position = .region(home) }
@@ -148,6 +166,11 @@ struct LaunchPointMapCard: View {
     }
 
     private func openInMaps() {
+        if mapApp == .google {
+            let point = "\(club.launchPoint.lat),\(club.launchPoint.lon)"
+            openInGoogle(app: MapApp.googleAppSearch(point), web: MapApp.googleSearch(point))
+            return
+        }
         let item = MKMapItem(placemark: MKPlacemark(coordinate: coordinate))
         item.name = club.displayName
         item.openInMaps(launchOptions: [MKLaunchOptionsMapCenterKey: NSValue(mkCoordinate: coordinate)])
