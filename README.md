@@ -19,7 +19,7 @@ Android may follow later.
 > `com.rowfrog.RowFrog` and `com.rowfrog.RowFrog.Widget`, the app group
 > `group.com.rowfrog.RowFrog` and links starting with `rowfrog://`. In the
 > code the Xcode project is `RowFrog.xcodeproj` (targets `RowFrog`,
-> `RowFrogWidget`, `RowFrogTests`) and the Python package is `rowfrog`.
+> `RowFrogWidget`, `RowFrogTests`, `RowFrogUITests`) and the Python package is `rowfrog`.
 
 Hidden switches, test steps, launch arguments, workflows and the secrets they
 need are in the **[handbook](docs/handbook.md)**.
@@ -485,7 +485,8 @@ cd ios && xcodegen && open RowFrog.xcodeproj
 ```
 
 Run the backend first; the simulator reaches it at `http://localhost:8000`
-(set in `project.yml` as `RWAPIBaseURL`).
+(set in `project.yml` as `RWAPIBaseURL`; the launch argument `-RWAPIBaseURL`
+points a Debug build at another address, such as the published forecasts).
 
 A checkout from before the October 2026 rename needs `xcodegen` run again
 (the old `RowerWeather.xcodeproj` can be deleted) and the backend installed
@@ -498,7 +499,7 @@ More detail, including the secrets each one needs, is in the
 
 | Workflow | What it does |
 | --- | --- |
-| **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately), plus a build with Xcode 26 when the runner has it, so the Liquid Glass code is compiled too. |
+| **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build, unit tests and UI tests (a tap on a conditions tile over frosted cards, against the published forecasts) run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately), plus a build with Xcode 26 when the runner has it, so the Liquid Glass code is compiled too. |
 | **App size** (`app-size.yml`) | Builds the app as for the App Store (Release archive, unsigned) and reports the installed size, the expected download and the largest files in the run summary (10.4 MB installed, about 10 MB to download in October 2026). Runs when iOS code lands on `main`, or by hand. |
 | **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning, Seeclub Zürich and RV Albatros Klagenfurt a made-up thunderstorm warning, and the lake view a made-up south wind, all marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. Input `device` = `iPad` shoots on an iPad Simulator instead; input `xcode` = `26` builds with Xcode 26 and shoots on iOS 26, as on a real iPhone. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |

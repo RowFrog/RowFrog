@@ -8,12 +8,15 @@ final class TapTests: XCTestCase {
         continueAfterFailure = false
     }
 
-    /// MRC 1880's page over a background picture with frosted cards, with the
-    /// published forecasts (the Debug build otherwise asks the backend on the Mac).
+    /// MRC 1880's page, as the only club, over a background picture with
+    /// frosted cards, with the published forecasts (the Debug build otherwise asks the backend on the Mac).
     private func launchClubPage() -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
-            "-RWDemoClubs", "YES", "-RWTutorialSeen", "YES", "-RWNoTips", "YES",
+            // MRC 1880 alone: with the demo's three clubs the pages beside it
+            // made the page's accessibility tree too big to read in time on CI.
+            "-RWSavedClubs", "(mrc-1880)", "-RWHomeClub", "mrc-1880",
+            "-RWTutorialSeen", "YES", "-RWNoTips", "YES",
             "-RWSafetyAccepted", "YES", "-RWWhatsNewSeen", "1000",
             "-RWOpenClub", "mrc-1880",
             "-RWBackground", "sample:alpine-lake", "-RWTileStyle", "frosted",

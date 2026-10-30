@@ -13504,10 +13504,10 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.11983,
-        "lon": 8.77862,
-        "precision": "geocoded club address, 111 m from the Main",
-        "verified": false
+        "lat": 50.11953,
+        "lon": 8.77803,
+        "precision": "launch spot at the boathouse on the Main (checked by the owner)",
+        "verified": true
       }
     },
     {
