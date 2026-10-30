@@ -1330,7 +1330,10 @@ private struct ConditionChart: View {
         }
         // Over the values on the right; on the left a dragged chart cut it off.
         .chartYAxisLabel(position: .topTrailing) { Text(detail.unit) }
-        .chartPlotStyle { $0.padding(.horizontal, 16) }
+        // Room at the edges for the scrolling forecast; a history keeps its
+        // lines within the plot, where the padding pushed them under the
+        // axis numbers on the right.
+        .chartPlotStyle { $0.padding(.horizontal, detail.history ? 0 : 16) }
         .accessibilityChartDescriptor(description)
         // Axis labels stop growing at the largest standard text size: larger,
         // the days ran into each other.
