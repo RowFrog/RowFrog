@@ -55,18 +55,81 @@ jobs:
           if ! files=$(gh api --paginate "repos/${{ github.repository }}/compare/$BASE...$HEAD" --jq '.files[].filename'); then
             echo "ios=true" >> "$GITHUB_OUTPUT"; exit 0
           fi
-          if echo "$files" | grep -qE '^(ios/|\.github/workflows/ci\.yml$)'; then
+          if echo "$files" | grep -qE '^(ios/|\.github/workflows/ci\.yml$|scripts/newest_xcode_runner\.py$)'; then
             echo "ios=true" >> "$GITHUB_OUTPUT"
           else
             echo "ios=false" >> "$GITHUB_OUTPUT"; echo "Nothing under ios/ changed, so the iOS build is skipped."
           fi
 
+  newest-xcode:
+    # The runner whose default Xcode is the newest released one (no beta or RC),
+    # read from GitHub's runner-images list, so Xcode 28 and later take over
+    # by themselves once GitHub has them; xcode-27 if the list can't be read.
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      # The Xcode major that has its info job set up below (Xcode 26 informs,
+      # 27 decides). Raise it once the next major has been handled.
+      HANDLED_MAJOR: "27"
+    outputs:
+      runner: ${{ steps.pick.outputs.runner }}
+      xcode: ${{ steps.pick.outputs.xcode }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: scripts
+      - id: pick
+        run: python3 scripts/newest_xcode_runner.py | tee -a "$GITHUB_OUTPUT"
+      - name: Reminder when a new Xcode major takes over
+        # The owner wants a reminder (2026-10-30) to add the previous major as an
+        # info job. On main only, one open issue at a time.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          XCODE: ${{ steps.pick.outputs.xcode }}
+          RUNNER: ${{ steps.pick.outputs.runner }}
+        run: |
+          major=${XCODE%%.*}
+          [ "$major" -gt "$HANDLED_MAJOR" ] || exit 0
+          title="Xcode $major now decides CI: add Xcode $HANDLED_MAJOR as an info job"
+          if gh issue list -R "$GITHUB_REPOSITORY" --state open --search "in:title \"$title\"" --json title --jq '.[].title' | grep -qxF "$title"; then
+            echo "Reminder already open"; exit 0
+          fi
+          gh issue create -R "$GITHUB_REPOSITORY" --title "$title" --body "CI now picks \`$RUNNER\` with Xcode $XCODE as the newest released Xcode, so it decides merges by itself.
+
+          As asked on 2026-10-30: add Xcode $HANDLED_MAJOR as an information-only job in \`.github/workflows/ci.yml\` (matrix of the \`ios\` job, \`decides: false\`, on a runner that has it), then raise \`HANDLED_MAJOR\` to $major there. Also check the handbook's \"CI, iOS\" row.
+
+          Opened by the CI run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" || echo "::warning::Xcode $major now decides CI; add Xcode $HANDLED_MAJOR as an info job (issue could not be opened)"
+
   ios:
-    needs: changes
+    needs: [changes, newest-xcode]
     if: needs.changes.outputs.ios == 'true'
-    # Apple Silicon runners (macos-latest) have not been assigned since
-    # 2026-10-19; the Intel image still gets one.
-    runs-on: macos-15-intel
+    # The newest released Xcode on its newest iOS Simulator decides (owner,
+    # 2026-10-30: the Xcode the owner builds with). Xcode 26 and Xcode 16 on iOS 18
+    # run alongside for wider coverage; they only warn and never block a merge.
+    # Both on Intel images: macos-26 (arm64) got no runner within 15 minutes
+    # on 2026-10-30, which cancelled the job and turned the run red.
+    name: ios (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: newest Xcode
+            runner: ${{ needs.newest-xcode.outputs.runner }}
+            ios: ""
+            decides: true
+          - name: Xcode 26
+            runner: macos-26-intel
+            ios: "26"
+            decides: false
+          - name: iOS 18
+            runner: macos-15-intel
+            ios: "18"
+            decides: false
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ !matrix.decides }}
     defaults:
       run:
         working-directory: ios
@@ -76,21 +139,33 @@ jobs:
       - run: xcodegen
       - name: Build and run the unit tests on a simulator
         run: |
-          DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
-          echo "Using simulator: $DEVICE"
+          # The newest iPhone (not the Duo) on the newest iOS, or the newest iOS
+          # of the matrix's major version.
+          DEVICE=$(xcrun simctl list devices available -j | IOS="${{ matrix.ios }}" python3 -c '
+          import json, os, sys
+          want = os.environ["IOS"]
+          runtimes = sorted((r for r in json.load(sys.stdin)["devices"].items() if "iOS-" in r[0]),
+                            key=lambda r: [int(n) for n in r[0].rsplit("iOS-", 1)[-1].split("-") if n.isdigit()])
+          found = [d["udid"] for runtime, devices in runtimes for d in devices
+                   if runtime.rsplit("iOS-", 1)[-1].startswith(want) and d["name"].startswith("iPhone") and "Duo" not in d["name"]]
+          print(found[-1])')
+          LINE=$(xcrun simctl list devices | grep "$DEVICE")
+          OS=$(xcrun simctl list devices | awk -v id="$DEVICE" '/^-- /{os=$0} index($0,id){print os}' | tr -d '-' | xargs)
+          echo "Using $(xcodebuild -version | head -1) on $OS:$LINE"
+          echo "| ${{ matrix.name }} | $(xcodebuild -version | head -1) | $OS | $(echo "$LINE" | sed 's/ (.*//' | xargs) |" > "$RUNNER_TEMP/versions.md"
           echo "DEVICE=$DEVICE" >> "$GITHUB_ENV"
           xcodebuild build-for-testing \
             -project RowFrog.xcodeproj \
             -scheme RowFrog \
-            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -destination "id=$DEVICE" \
             CODE_SIGNING_ALLOWED=NO
           xcodebuild test-without-building \
             -project RowFrog.xcodeproj \
             -scheme RowFrog \
-            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -destination "id=$DEVICE" \
             -only-testing:RowFrogTests
       - name: Run the UI tests (taps in the app)
-        # The UI test runner on these Intel runners sometimes dies before any
+        # The UI test runner on the Intel runners sometimes dies before any
         # test starts ("never finished bootstrapping", main after #238). Only
         # that case is tried once more, on a freshly booted simulator; a test
         # that runs and fails fails the build at once.
@@ -103,7 +178,7 @@ jobs:
             xcodebuild test-without-building \
               -project RowFrog.xcodeproj \
               -scheme RowFrog \
-              -destination "platform=iOS Simulator,name=$DEVICE" \
+              -destination "id=$DEVICE" \
               -only-testing:RowFrogUITests 2>&1 | tee ui-tests.log
             status=${PIPESTATUS[0]}
             set -e
@@ -112,18 +187,9 @@ jobs:
             echo "The UI test runner did not start (attempt $attempt)."
           done
           exit 1
-      - name: Build with Xcode 26 (Liquid Glass code)
-        # The default Xcode is older and skips everything behind
-        # `#if compiler(>=6.2)`, which is what the owner's iPhone runs; build
-        # that too, so it cannot break unseen. Skipped if the image has no Xcode 26.
+      - name: Versions in the run summary
+        if: always()
         run: |
-          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
-          if [ -z "$XCODE" ]; then echo "No Xcode 26 on this image"; ls -d /Applications/Xcode*.app; exit 0; fi
-          echo "Using $XCODE"
-          export DEVELOPER_DIR="$XCODE/Contents/Developer"
-          xcodebuild build \
-            -project RowFrog.xcodeproj \
-            -scheme RowFrog \
-            -destination "generic/platform=iOS Simulator" \
-            -derivedDataPath build26 \
-            CODE_SIGNING_ALLOWED=NO
+          [ -f "$RUNNER_TEMP/versions.md" ] || exit 0
+          { echo "| Job | Xcode | Simulator | Device |"; echo "|---|---|---|---|"; cat "$RUNNER_TEMP/versions.md"
+            [ "${{ matrix.decides }}" = true ] || echo; [ "${{ matrix.decides }}" = true ] || echo "Information only: a failure here does not block a merge."; } >> "$GITHUB_STEP_SUMMARY"
