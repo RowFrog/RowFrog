@@ -58,5 +58,10 @@
   "Open places in": "Orte öffnen in",
   "Map links": "Kartenlinks",
   "The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them.": "Der Steg und die Route zum Verein öffnen sich in diesem Kartendienst, in einem neuen Tab. An ihn geht erst etwas, wenn du auf einen davon tippst.",
-  "Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps.": "Bis du einen wählst, nutzen iPhone und iPad Apple Maps, andere Geräte Google Maps."
+  "Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps.": "Bis du einen wählst, nutzen iPhone und iPad Apple Maps, andere Geräte Google Maps.",
+  "Coloured for %@, not for %@: the lake may look calmer than it is for you.": "Eingefärbt für %@, nicht für %@: Der See kann ruhiger aussehen, als er für dich ist.",
+  "Lake map colours": "Farben der Seekarte",
+  "Same as the ticked boat": "Wie das abgehakte Boot",
+  "The boat whose limits colour the lake view and route planning.": "Das Boot, nach dessen Grenzwerten die Seeansicht und die Routenplanung eingefärbt werden.",
+  "The map uses the limits for %@, which are higher than those for %@. The map points this out too.": "Die Karte nutzt die Grenzwerte für %@, die höher sind als die für %@. Die Karte weist auch darauf hin."
 }
