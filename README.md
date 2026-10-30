@@ -19,7 +19,7 @@ Android may follow later.
 > `com.rowfrog.RowFrog` and `com.rowfrog.RowFrog.Widget`, the app group
 > `group.com.rowfrog.RowFrog` and links starting with `rowfrog://`. In the
 > code the Xcode project is `RowFrog.xcodeproj` (targets `RowFrog`,
-> `RowFrogWidget`, `RowFrogTests`) and the Python package is `rowfrog`.
+> `RowFrogWidget`, `RowFrogTests`, `RowFrogUITests`) and the Python package is `rowfrog`.
 
 Hidden switches, test steps, launch arguments, workflows and the secrets they
 need are in the **[handbook](docs/handbook.md)**.
@@ -90,7 +90,7 @@ pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
 a detail view with a chart you can drag from yesterday to 7 days ahead, with
 a line that shows the values at any time and dots for now ("Back to now",
 or "Back to" the hour it was opened from, returns there), a unit switch at the
-bottom (air pressure in hPa, mbar, bar, inHg or mmHg), the limit lines (named on the side away from now), wind arrows
+bottom (air pressure in hPa, mbar, bar, inHg or mmHg), the limit lines (named on the side away from now, ending before the axis numbers), wind arrows
 every 3 hours, an "About the limits" note, advice for rowing and the data
 source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views
 or jump to another from the symbol at the top; tapping an entry in a chart's
@@ -288,8 +288,10 @@ picked in the hidden developer options, the credits line names its provider
 **Launch point map.** A map (Apple MapKit, no key needed) shows the launch
 point the forecast is for, with its coordinates. It is a still picture until
 tapped; then it can be panned and zoomed, and it resets on each visit. "Open
-in Maps" also offers directions, and when Apple Maps knows the club as a
-place (with photos and opening hours), it opens that.
+in Maps" also offers directions to the club, in the map app chosen in
+Settings: Apple Maps (the default; when it knows the club as a place, with
+photos and opening hours, it opens that) or Google Maps, which opens in its
+own app when installed.
 
 **Maps** all mark clubs the same way: this page's club in blue, other clubs in
 grey, with a house for the home base and a rower for any other club.
@@ -321,7 +323,7 @@ field at the bottom.
   the app icon: the coxed double "rowing light" icon in light, dark and
   tinted, plus 10 alternates.
 - Club pages: how much area the weather maps open with ("Maps start": Close,
-  Normal or Wide), the order of the cards for all clubs, and background pictures
+  Normal or Wide), the map app for directions (Apple Maps or Google Maps), the order of the cards for all clubs, and background pictures
   for all pages, single pages or single clubs: clear or blurred, frosted
   or solid tiles, your own photo or the satellite
   picture of the club's lake. On club pages the picture fills the screen
@@ -329,8 +331,9 @@ field at the bottom.
   The top bar is clear at rest and shows a blur with the club's name once
   the page scrolls; the page bar floats as three Liquid Glass groups, with
   the current club's dot larger, and the lake map buttons look the same.
-- Widgets: the background for all widgets or per club (each widget can also
-  pick its own when you edit it), and how often they update: every 30 minutes
+- Widgets: a live preview of the widgets with the forecast, one size per
+  page (swipe, with dots), the background for all widgets or per club (each
+  widget can also pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
   often saves battery and data, but a new official warning reaches the widgets
   later.
@@ -482,7 +485,8 @@ cd ios && xcodegen && open RowFrog.xcodeproj
 ```
 
 Run the backend first; the simulator reaches it at `http://localhost:8000`
-(set in `project.yml` as `RWAPIBaseURL`).
+(set in `project.yml` as `RWAPIBaseURL`; the launch argument `-RWAPIBaseURL`
+points a Debug build at another address, such as the published forecasts).
 
 A checkout from before the October 2026 rename needs `xcodegen` run again
 (the old `RowerWeather.xcodeproj` can be deleted) and the backend installed
@@ -495,7 +499,7 @@ More detail, including the secrets each one needs, is in the
 
 | Workflow | What it does |
 | --- | --- |
-| **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately), plus a build with Xcode 26 when the runner has it, so the Liquid Glass code is compiled too. |
+| **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build, unit tests and UI tests (a tap on a conditions tile over frosted cards, against the published forecasts) run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately), plus a build with Xcode 26 when the runner has it, so the Liquid Glass code is compiled too. |
 | **App size** (`app-size.yml`) | Builds the app as for the App Store (Release archive, unsigned) and reports the installed size, the expected download and the largest files in the run summary (10.4 MB installed, about 10 MB to download in October 2026). Runs when iOS code lands on `main`, or by hand. |
 | **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning, Seeclub Zürich and RV Albatros Klagenfurt a made-up thunderstorm warning, and the lake view a made-up south wind, all marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. Input `device` = `iPad` shoots on an iPad Simulator instead; input `xcode` = `26` builds with Xcode 26 and shoots on iOS 26, as on a real iPhone. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |

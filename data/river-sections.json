@@ -4302,6 +4302,47 @@
    ]
   },
   {
+   "id": "river-limmat-baden",
+   "water": "river-limmat",
+   "name": "Limmat",
+   "river": "Limmat",
+   "waterway": "river",
+   "country": "ch",
+   "place": "Baden",
+   "center": {
+    "lat": 47.46674,
+    "lon": 8.30878
+   },
+   "clubs": [
+    "limmat-club-baden"
+   ],
+   "lengthKm": 1.7,
+   "up": {
+    "km": 1.45,
+    "end": "weir/lock",
+    "what": "weir",
+    "at": [
+     47.45581,
+     8.31209
+    ]
+   },
+   "down": {
+    "km": 0.24,
+    "end": "weir/lock",
+    "what": "weir",
+    "at": [
+     47.46809,
+     8.30845
+    ]
+   },
+   "pictureBox": [
+    8.30773,
+    47.45572,
+    8.31508,
+    47.46814
+   ]
+  },
+  {
    "id": "river-limmat-neuenhof",
    "water": "river-limmat",
    "name": "Limmat",
@@ -4310,12 +4351,11 @@
    "country": "ch",
    "place": "Neuenhof",
    "center": {
-    "lat": 47.46164,
-    "lon": 8.31704
+    "lat": 47.45653,
+    "lon": 8.3253
    },
    "clubs": [
-    "ruderclub-baden",
-    "limmat-club-baden"
+    "ruderclub-baden"
    ],
    "lengthKm": 10.0,
    "up": {
@@ -4338,8 +4378,8 @@
    },
    "pictureBox": [
     8.3209,
-    47.41642,
-    8.38347,
+    47.41131,
+    8.39173,
     47.45818
    ]
   },
@@ -4558,8 +4598,8 @@
    "country": "de",
    "place": "Frankfurt",
    "center": {
-    "lat": 50.10636,
-    "lon": 8.70903
+    "lat": 50.10203,
+    "lon": 8.68859
    },
    "clubs": [
     "frankfurter-ruder-und-kanusportverein-sachsenhausen-1898",
@@ -4569,15 +4609,11 @@
     "frankfurter-rudergesellschaft-germania-1869",
     "frankfurter-ruderverein-von-1865",
     "frauen-ruderverein-freiweg-frankfurt-ev-1927",
-    "ruderverbindung-rheno-franconia",
-    "ruderverein-hellas-offenbach",
-    "srr-leibnizgymnasium-offenbach",
-    "sportgemeinschaft-wiking-1903",
-    "wassersportverein-1926-ev-offenbach-am-main-buergel"
+    "ruderverbindung-rheno-franconia"
    ],
    "lengthKm": 10.6,
    "up": {
-    "km": 0.78,
+    "km": 2.75,
     "end": "weir/lock",
     "what": "weir Staustufe Offenbach",
     "at": [
@@ -4586,7 +4622,7 @@
     ]
    },
    "down": {
-    "km": 8.75,
+    "km": 6.79,
     "end": "weir/lock",
     "what": "weir Staustufe Griesheim",
     "at": [
@@ -4595,10 +4631,10 @@
     ]
    },
    "pictureBox": [
-    8.639,
+    8.61856,
     50.08799,
-    8.72551,
-    50.10946
+    8.72553,
+    50.10947
    ]
   },
   {
@@ -4616,7 +4652,11 @@
    "clubs": [
     "frankfurter-ruder-club-fechenheim-1887",
     "offenbacher-rudergesellschaft-undine-1876",
-    "offenbacher-ruderverein-1874"
+    "offenbacher-ruderverein-1874",
+    "ruderverein-hellas-offenbach",
+    "srr-leibnizgymnasium-offenbach",
+    "sportgemeinschaft-wiking-1903",
+    "wassersportverein-1926-ev-offenbach-am-main-buergel"
    ],
    "lengthKm": 15.0,
    "up": {
@@ -8892,6 +8932,47 @@
    ]
   },
   {
+   "id": "river-ruhr-herdecke",
+   "water": "river-ruhr",
+   "name": "Ruhr",
+   "river": "Ruhr",
+   "waterway": "river",
+   "country": "de",
+   "place": "Herdecke",
+   "center": {
+    "lat": 51.39667,
+    "lon": 7.43061
+   },
+   "clubs": [
+    "ruderclub-westfalen-herdecke-1929"
+   ],
+   "lengthKm": 4.4,
+   "up": {
+    "km": 0.59,
+    "end": "weir/lock",
+    "what": "lock_gate",
+    "at": [
+     51.39399,
+     7.43706
+    ]
+   },
+   "down": {
+    "km": 3.91,
+    "end": "weir/lock",
+    "what": "dam",
+    "at": [
+     51.38389,
+     7.40445
+    ]
+   },
+   "pictureBox": [
+    7.3982,
+    51.38357,
+    7.43711,
+    51.40217
+   ]
+  },
+  {
    "id": "river-ruhr-mulheim",
    "water": "river-ruhr",
    "name": "Ruhr",
@@ -8945,15 +9026,14 @@
    "country": "de",
    "place": "Wetter",
    "center": {
-    "lat": 51.38592,
-    "lon": 7.40809
+    "lat": 51.38054,
+    "lon": 7.39683
    },
    "clubs": [
     "ruder-club-mark",
-    "ruderclub-westfalen-herdecke-1929",
     "sportgemeinschaft-demag-ev-wetter"
    ],
-   "lengthKm": 1.6,
+   "lengthKm": 1.9,
    "up": {
     "km": 0.07,
     "end": "weir/lock",
@@ -8974,7 +9054,7 @@
    },
    "pictureBox": [
     7.39221,
-    51.37506,
+    51.37555,
     7.42169,
     51.40217
    ]

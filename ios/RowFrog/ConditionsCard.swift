@@ -62,6 +62,7 @@ struct ConditionsCard: View {
                                 }
                                 .buttonStyle(.plain)
                                 .accessibilityHint(tr("Opens a chart and more about this value"))
+                                .accessibilityIdentifier("condition-\(condition.rawValue)")
                             }
                         }
                     }
@@ -673,6 +674,7 @@ struct ConditionDetailView: View {
                     .padding()
             }
             .coordinateSpace(name: Self.space)
+            .accessibilityIdentifier("condition-detail")
             .onGeometryChange(for: CGSize.self) { $0.size } action: { size = $0 }
             .simultaneousGesture(swipe)
             // The views before and after float over the page, as the club page's bar.
