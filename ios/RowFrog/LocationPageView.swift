@@ -845,7 +845,17 @@ private struct NowCard: View {
                     case let .up(sunrise, sunset):
                         SunPath(sunrise: sunrise, sunset: sunset, at: at ?? .now, lineWidth: 1.5).frame(width: 44, height: 20)
                         let left = Format.duration(from: at ?? .now, to: sunset)
-                        sunText(Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(Format.time(sunset)) · \(tr("%@ left", left))"))
+                        let until = Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(Format.time(sunset))")
+                        let rest = Text(tr("%@ left", left))
+                        ViewThatFits(in: .horizontal) {
+                            Text("\(until) · \(rest)").lineLimit(1)
+                            // Too long for one line (German on a standard iPhone):
+                            // break at the dot, never inside "6 h 58 min".
+                            VStack(alignment: .leading, spacing: 2) {
+                                until.fixedSize(horizontal: false, vertical: true)
+                                rest.fixedSize(horizontal: false, vertical: true)
+                            }
+                        }
                             .accessibilityLabel(tr("Rowing until sunset at %@, %@ left", Format.time(sunset), left))
                     case let .down(sunrise, _):
                         Image(systemName: "moon.stars.fill").foregroundStyle(.secondary).frame(width: 44)
