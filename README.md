@@ -45,6 +45,11 @@ row, and clubs whose water is not known are listed under their town.
 Pages swipe left and right between saved locations, like the iOS Weather
 app. The list shows each location's light and key numbers, with feels like under the temperature and an estimated water temperature in grey with ≈; swipe a row to
 remove it or make it the home base. The saved list stays on the phone.
+As in Apple Weather, the search field and the settings cog sit at the bottom
+of the list (on iPad at the bottom of the side list), a "…" menu at the top
+right holds Edit, Browse by country and Add a place, and the big "Locations"
+title shrinks into the bar once the list scrolls. Tapping a club opens its
+page.
 
 **Add a place.** A club, boathouse or spot on the water that no list has can
 be put on the map. It stays on the phone, and its forecast is worked out on
@@ -302,8 +307,9 @@ Behind them goes a sky in the weather's colours (the default), the rowing
 light's colour, the club's app picture or another picture, the satellite
 picture of the lake, or plain white or black.
 
-**Settings** (cog in the page bar of the club pages and on the location
-list; on iPad always in the page bar, next to the boat button; the list goes back to the club page with a button named after the club)
+**Settings** (cog in the page bar of the club pages and next to the search
+field at the bottom of the location list; on iPad at the bottom of the side
+list)
 works like the iOS Settings app: a "Rowing light for" boat picker at the top,
 then one page per topic, each row showing its current value, and a search
 field at the bottom.
@@ -322,8 +328,7 @@ field at the bottom.
   behind the status and page bars and fades between clubs while swiping.
   The top bar is clear at rest and shows a blur with the club's name once
   the page scrolls; the page bar floats as three Liquid Glass groups, with
-  the current club's dot larger, and the lake map buttons look the same. On
-  iOS 26 the list's search sits at the bottom.
+  the current club's dot larger, and the lake map buttons look the same.
 - Widgets: the background for all widgets or per club (each widget can also
   pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
@@ -490,9 +495,9 @@ More detail, including the secrets each one needs, is in the
 
 | Workflow | What it does |
 | --- | --- |
-| **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately). |
+| **CI** (`ci.yml`) | Backend tests on every push to `main` and every pull request; the iOS build and tests run on pull requests that change `ios/` (on `macos-15-intel`, since Apple Silicon runners have not been assigned lately), plus a build with Xcode 26 when the runner has it, so the Liquid Glass code is compiled too. |
 | **App size** (`app-size.yml`) | Builds the app as for the App Store (Release archive, unsigned) and reports the installed size, the expected download and the largest files in the run summary (10.4 MB installed, about 10 MB to download in October 2026). Runs when iOS code lands on `main`, or by hand. |
-| **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning, Seeclub Zürich and RV Albatros Klagenfurt a made-up thunderstorm warning, and the lake view a made-up south wind, all marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. Input `device` = `iPad` shoots on an iPad Simulator instead. |
+| **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning, Seeclub Zürich and RV Albatros Klagenfurt a made-up thunderstorm warning, and the lake view a made-up south wind, all marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. Input `device` = `iPad` shoots on an iPad Simulator instead; input `xcode` = `26` builds with Xcode 26 and shoots on iOS 26, as on a real iPhone. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue, with a section on whether one run a day would be enough. Changes to its scripts start it only on `main`. |
