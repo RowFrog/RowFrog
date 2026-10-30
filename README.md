@@ -167,7 +167,9 @@ the route; tapping or pulling a stretch of the route adds a point there.
 Points can be deleted, and a loop also closes when the route ends within 50 m
 of the start. While planning, a compact panel holds the route's result, start
 time, pace, the way back, undo and the saved routes, so the map keeps the
-screen. Routes are
+screen; when the panel opens or closes, or a route loads, the map fits the
+route or lake above it. Where clubs share a launch point, the page's own club
+stays on top. Routes are
 saved on the phone; "Manage routes" lists them with their length and whether
 they are a loop, to rename, duplicate, delete or reorder. "Import a row" (in
 the Routes menu) turns a row you already did into a
