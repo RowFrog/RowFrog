@@ -29,6 +29,8 @@ class RowingHour:
     wave_height_m: float | None
     assessment: Assessment
     sun_up: bool | None = None
+    # What the weather warning behind a "weather_warning" reason is about (weather_warning_topic).
+    warning_topic: str | None = None
 
 
 def _thunderstorm(h: ForecastHour) -> Light:
@@ -72,15 +74,62 @@ def _lake_warning(warnings: list[Warning], start, end) -> LakeWarning:
     return worst
 
 
-def _weather_warning(warnings: list[Warning], start, end) -> Light:
-    """A minor DWD warning (yellow) is amber; moderate (orange) and above, or any thunderstorm, is red."""
-    worst = Light.GREEN
+# What an official weather warning is about, from its German event word (DWD,
+# GeoSphere and MeteoAlarm all name events in German, see sources/). Frost,
+# black ice, thaw, heat and cold say nothing about the water, so they stay in
+# the warnings card but leave the rowing light alone. Checked first, so that
+# e.g. "SCHNEEGLÄTTE" counts as black ice, not snow.
+INFO_ONLY_WORDS = ("FROST", "GLÄTTE", "GLATT", "TAUWETTER", "HITZE", "KÄLTE", "UV")
+# (topic, words), most serious first: it picks the topic when two warnings are equally bad.
+WARNING_TOPICS = (
+    ("thunderstorm", ("GEWITTER", "HAGEL")),
+    ("wind", ("ORKAN", "STURM", "BÖEN", "WIND")),
+    ("rain", ("REGEN", "HOCHWASSER")),
+    ("snow", ("SCHNEE",)),
+    ("fog", ("NEBEL",)),
+)
+
+
+def warning_topic(event: str) -> str | None:
+    """What a weather warning is about for rowing, or None for one that leaves the light alone.
+
+    An event the lists don't know counts ("other"): better a light too strict than a warning missed.
+    """
+    word = event.upper()
+    if any(w in word for w in INFO_ONLY_WORDS):
+        return None
+    return next((topic for topic, words in WARNING_TOPICS if any(w in word for w in words)), "other")
+
+
+def _counting(warnings: list[Warning], start, end) -> list[tuple[Light, int, str]]:
+    """(light, topic rank, topic) for each weather warning in the hour that changes the advice."""
+    ranks = [t for t, _ in WARNING_TOPICS] + ["other"]
+    out = []
     for w in warnings:
         if w.kind != "local" or not w.active_during(start, end):
             continue
-        red = w.level >= 1 or "GEWITTER" in w.event.upper()
-        worst = max(worst, Light.RED if red else Light.AMBER)
-    return worst
+        topic = warning_topic(w.event)
+        if topic is None:
+            continue
+        red = w.level >= 1 or topic == "thunderstorm"
+        out.append((Light.RED if red else Light.AMBER, ranks.index(topic), topic))
+    return out
+
+
+def _weather_warning(warnings: list[Warning], start, end) -> Light:
+    """A minor warning (yellow) is amber; moderate (orange) and above, or any thunderstorm, is red.
+
+    Only warnings about the water count (warning_topic); frost or heat leave the light alone.
+    """
+    return max((light for light, _, _ in _counting(warnings, start, end)), default=Light.GREEN)
+
+
+def weather_warning_topic(warnings: list[Warning], start, end) -> str | None:
+    """What the worst counting weather warning in the hour is about, so the app can name it."""
+    found = _counting(warnings, start, end)
+    if not found:
+        return None
+    return min(found, key=lambda f: (-int(f[0]), f[1]))[2]
 
 
 def rowing_forecast(
@@ -122,5 +171,6 @@ def rowing_forecast(
             ice=(ice_by_day or {}).get(h.time.astimezone(LOCAL).date(), Light.GREEN),
             **({"river_name": river[0], "river": river[1]} if river and river_until and h.time < river_until else {}),
         )
-        hours.append(RowingHour(h, fetch, wave, assess(conditions, thresholds), sun_up))
+        topic = weather_warning_topic(list(warnings), h.time, h.time + timedelta(hours=1))
+        hours.append(RowingHour(h, fetch, wave, assess(conditions, thresholds), sun_up, topic))
     return hours
