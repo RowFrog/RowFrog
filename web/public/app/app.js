@@ -171,7 +171,8 @@ function bottomBar(currentId, raw) {
   // Three floating pieces of glass, all 44 px high: cog and boat, the page dots, the list (RootView.PageBar).
   return `<nav class="bottom">
     <span class="bar-side"><span class="glass piece">
-      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+      ${sideList.matches ? "" // Beside the list the cog sits at the list's bottom left, beside the search.
+      : `<a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>`}
       <button class="tool boat" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>
     </span></span>
     ${sideList.matches ? `<span class="gap"></span>` // The list beside the page switches clubs already.
@@ -218,29 +219,44 @@ let editing = false;
 
 async function renderList() {
   setTitle(t("Locations"));
-  const clubs = store.clubs;
+  // As in the Weather app: the big title level with "…", small and centred once the list scrolls; no way
+  // back but the clubs' cards; the cog beside the search at the bottom (LocationListView).
   root.innerHTML = `
-    <header class="nav">
-      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
-      ${clubs.length ? `<button class="link" id="edit">${h(editing ? t("Done") : t("Edit"))}</button>` : ""}
-      <span class="spacer"></span>
-      ${clubs.length ? `<a class="link strong" href="#/club/${encodeURIComponent(clubs[0].id)}">${h(t("Done"))}</a>` : ""}
-    </header>
+    <div class="top-title"><strong>${h(t("Locations"))}</strong></div>
     ${testing()}
-    <main class="page">
-      <h1 class="large">${h(t("Locations"))}</h1>
+    <main class="page list-page">
+      <header class="list-head"><h1 class="large">${h(t("Locations"))}</h1>${moreMenu()}</header>
       ${listBody()}
       ${footerLinks()}
-    </main>`;
+    </main>
+    ${searchBar("list-bottom")}`;
   await wireList(renderList);
 }
 
-/** The search, the saved clubs and the links under them: the list page's, and the list's beside a club page. */
+/** Edit list, browsing by country and adding an own place, behind "…" at the top right; Done while editing (moreMenu). */
+function moreMenu() {
+  if (editing) return `<button class="link strong" id="edit">${h(t("Done"))}</button>`;
+  return `<details class="more-menu"><summary class="glass round" aria-label="${h(t("More"))}">${icon("ellipsis")}</summary>
+    <div class="menu">
+      <button id="edit" ${store.clubs.length < 2 ? "disabled" : ""}>${icon("pencil")} ${h(t("Edit list"))}</button>
+      <a id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
+      <a href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a>
+    </div></details>`;
+}
+
+/** The settings cog and the search field side by side at the bottom (settingsBesideSearch). */
+function searchBar(cls) {
+  return `<div class="${cls} search-bar">
+    <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+    <label class="search glass">${icon("search")}
+      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+  </div>`;
+}
+
+/** The search results, the saved clubs and the line when they were updated: the list page's, and the list's beside a club page. */
 function listBody(currentId = null) {
   const clubs = store.clubs;
-  return `<label class="search">${icon("search")}
-      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
-    <div id="chips" hidden></div>
+  return `<div id="chips" hidden></div>
     <ul id="results" class="results" hidden></ul>
     <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Not in the list? Add a place"))}</a>
       <small class="sub">${h(t("Put your club, boathouse or spot on the map yourself."))}</small></p>
@@ -253,8 +269,6 @@ function listBody(currentId = null) {
           ${editing && i > 0 ? `<button class="round" data-home="${h(c.id)}" aria-label="${h(t("Home base"))}">${icon("house")}</button>` : ""}
         </li>`).join("")}</ul>
       <p class="footnote" id="updated"></p>
-      <p class="list-links"><a class="link" id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
-        <a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a></p>
     </div>`;
 }
 
@@ -540,8 +554,8 @@ const TWO_COLUMNS = 600;
  * one marked, so the page needs no list button (LocationListView beside the page).
  */
 function sideListHtml(currentId) {
-  return `<header class="side-head"><h2>${h(t("Locations"))}</h2>${store.clubs.length ? `<button class="link" id="edit">${h(editing ? t("Done") : t("Edit"))}</button>` : ""}</header>
-    ${listBody(currentId)}`;
+  return `<header class="side-head"><h2>${h(t("Locations"))}</h2>${moreMenu()}</header>
+    ${listBody(currentId)}${searchBar("side-bottom")}`;
 }
 
 /** A change in the list draws the list anew, not the page beside it. */
@@ -698,19 +712,20 @@ function watchCards(cards) {
 function updateTopBar() {
   const body = document.body;
   body.classList.toggle("scrolled", window.scrollY > 0);
-  const title = root.querySelector(".club-head h1");
+  const title = root.querySelector(".club-head h1, .list-head h1");
   const bar = root.querySelector(".top-title");
   const gone = Boolean(title && bar && title.getBoundingClientRect().bottom < bar.offsetHeight);
   // The bar and the strip behind the clock cover the page's own column only, never the list beside it.
   const main = root.querySelector("main");
+  // The list beside the page ends at the window's bottom also while the test banner above it shows.
+  const split = root.querySelector(".split");
+  if (split) body.style.setProperty("--side-top", `${Math.max(0, split.getBoundingClientRect().top)}px`);
   if (main) {
     const page = main.getBoundingClientRect();
     body.style.setProperty("--main-left", `${page.left}px`);
     body.style.setProperty("--main-width", `${page.width}px`);
   }
   body.classList.toggle("title-gone", gone);
-  // Cards under the floating buttons: the bottom blurs too on phones and tablets (BottomEdgeFade).
-  body.classList.toggle("under-bar", Boolean(root.querySelector(".bottom")) && document.documentElement.scrollHeight - window.scrollY - window.innerHeight > 24);
   stickHourlyHeader();
 }
 
@@ -1321,12 +1336,12 @@ function launchPointCard(club) {
         </div></details></div>`);
 }
 
-// The "Open in Maps" menu closes on a tap outside it, on one of its links and with Escape, as a menu does.
+// The "Open in Maps" and "…" menus close on a tap outside it, on one of its links and with Escape, as a menu does.
 document.addEventListener("click", (e) => {
-  for (const menu of document.querySelectorAll(".maps-menu[open]")) if (!menu.contains(e.target) || e.target.closest(".menu a")) menu.open = false;
+  for (const menu of document.querySelectorAll(".maps-menu[open], .more-menu[open]")) if (!menu.contains(e.target) || e.target.closest(".menu a, .menu button")) menu.open = false;
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape") for (const menu of document.querySelectorAll(".maps-menu[open]")) menu.open = false;
+  if (e.key === "Escape") for (const menu of document.querySelectorAll(".maps-menu[open], .more-menu[open]")) menu.open = false;
 });
 
 async function showLaunchMap(club) {
