@@ -6,8 +6,11 @@ import XCTest
 /// and the website's tests read too. A field the backend renames or drops
 /// would otherwise only show up as a blank tile on the rower's phone.
 final class SampleFilesTests: XCTestCase {
-    /// Keys the app does not read on purpose, as "path.key"; empty for now.
-    private static let notRead: Set<String> = []
+    /// Keys the app does not read on purpose, as "path.key".
+    private static let notRead: Set<String> = [
+        "forecast.daylight[].date",  // the day follows from sunrise and sunset
+        "forecast.waterTemperature.station.distanceKm",  // the app shows distanceM
+    ]
 
     private static let samples = URL(fileURLWithPath: #filePath)
         .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
