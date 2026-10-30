@@ -27,11 +27,11 @@ on:
         required: false
         default: ""
       runner:
-        description: Mac runner image (macos-latest when Apple Silicon runners are available again)
+        description: Mac runner image (xcode-27 = Xcode 27 and iOS 27 as on the owner's iPhone; macos-26 for Xcode 26)
         required: false
-        default: macos-15-intel
+        default: xcode-27
       xcode:
-        description: Xcode to build with, e.g. 26 for iOS 26 and Liquid Glass as on the owner's iPhone (empty = the image's default)
+        description: Xcode to build with, e.g. 27.2 (empty = the image's default, Xcode 27 on xcode-27)
         required: false
         default: ""
       device:
@@ -46,7 +46,7 @@ permissions:
 
 jobs:
   screenshots:
-    runs-on: ${{ inputs.runner || 'macos-15-intel' }}
+    runs-on: ${{ inputs.runner || 'xcode-27' }}
     steps:
       - uses: actions/checkout@v4
       - name: Get the earlier screenshots

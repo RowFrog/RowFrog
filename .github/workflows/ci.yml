@@ -64,9 +64,31 @@ jobs:
   ios:
     needs: changes
     if: needs.changes.outputs.ios == 'true'
-    # Apple Silicon runners (macos-latest) have not been assigned since
-    # 2026-10-19; the Intel image still gets one.
-    runs-on: macos-15-intel
+    # Xcode 27 on the newest iOS Simulator decides, as the owner builds with
+    # Xcode 27 (decided 2026-10-30). Xcode 26 and Xcode 16 on iOS 18 run
+    # alongside for wider coverage; they only warn and never block a merge.
+    # The xcode-27 image's default Xcode and newest Simulator are used, so
+    # minor updates (27.2, 27.3, ...) arrive by themselves; Xcode 28 needs a
+    # new label here.
+    name: ios (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Xcode 27
+            runner: xcode-27
+            ios: ""
+            decides: true
+          - name: Xcode 26
+            runner: macos-26
+            ios: "26"
+            decides: false
+          - name: iOS 18
+            runner: macos-15-intel
+            ios: "18"
+            decides: false
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ !matrix.decides }}
     defaults:
       run:
         working-directory: ios
@@ -76,21 +98,33 @@ jobs:
       - run: xcodegen
       - name: Build and run the unit tests on a simulator
         run: |
-          DEVICE=$(xcrun simctl list devices available | grep -m1 -oE 'iPhone [^(]+' | sed 's/ *$//')
-          echo "Using simulator: $DEVICE"
+          # The newest iPhone (not the Duo) on the newest iOS, or the newest iOS
+          # of the matrix's major version.
+          DEVICE=$(xcrun simctl list devices available -j | IOS="${{ matrix.ios }}" python3 -c '
+          import json, os, sys
+          want = os.environ["IOS"]
+          runtimes = sorted((r for r in json.load(sys.stdin)["devices"].items() if "iOS-" in r[0]),
+                            key=lambda r: [int(n) for n in r[0].rsplit("iOS-", 1)[-1].split("-") if n.isdigit()])
+          found = [d["udid"] for runtime, devices in runtimes for d in devices
+                   if runtime.rsplit("iOS-", 1)[-1].startswith(want) and d["name"].startswith("iPhone") and "Duo" not in d["name"]]
+          print(found[-1])')
+          LINE=$(xcrun simctl list devices | grep "$DEVICE")
+          OS=$(xcrun simctl list devices | awk -v id="$DEVICE" '/^-- /{os=$0} index($0,id){print os}' | tr -d '-' | xargs)
+          echo "Using $(xcodebuild -version | head -1) on $OS:$LINE"
+          echo "| ${{ matrix.name }} | $(xcodebuild -version | head -1) | $OS | $(echo "$LINE" | sed 's/ (.*//' | xargs) |" > "$RUNNER_TEMP/versions.md"
           echo "DEVICE=$DEVICE" >> "$GITHUB_ENV"
           xcodebuild build-for-testing \
             -project RowFrog.xcodeproj \
             -scheme RowFrog \
-            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -destination "id=$DEVICE" \
             CODE_SIGNING_ALLOWED=NO
           xcodebuild test-without-building \
             -project RowFrog.xcodeproj \
             -scheme RowFrog \
-            -destination "platform=iOS Simulator,name=$DEVICE" \
+            -destination "id=$DEVICE" \
             -only-testing:RowFrogTests
       - name: Run the UI tests (taps in the app)
-        # The UI test runner on these Intel runners sometimes dies before any
+        # The UI test runner on the Intel runners sometimes dies before any
         # test starts ("never finished bootstrapping", main after #238). Only
         # that case is tried once more, on a freshly booted simulator; a test
         # that runs and fails fails the build at once.
@@ -103,7 +137,7 @@ jobs:
             xcodebuild test-without-building \
               -project RowFrog.xcodeproj \
               -scheme RowFrog \
-              -destination "platform=iOS Simulator,name=$DEVICE" \
+              -destination "id=$DEVICE" \
               -only-testing:RowFrogUITests 2>&1 | tee ui-tests.log
             status=${PIPESTATUS[0]}
             set -e
@@ -112,18 +146,9 @@ jobs:
             echo "The UI test runner did not start (attempt $attempt)."
           done
           exit 1
-      - name: Build with Xcode 26 (Liquid Glass code)
-        # The default Xcode is older and skips everything behind
-        # `#if compiler(>=6.2)`, which is what the owner's iPhone runs; build
-        # that too, so it cannot break unseen. Skipped if the image has no Xcode 26.
+      - name: Versions in the run summary
+        if: always()
         run: |
-          XCODE=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
-          if [ -z "$XCODE" ]; then echo "No Xcode 26 on this image"; ls -d /Applications/Xcode*.app; exit 0; fi
-          echo "Using $XCODE"
-          export DEVELOPER_DIR="$XCODE/Contents/Developer"
-          xcodebuild build \
-            -project RowFrog.xcodeproj \
-            -scheme RowFrog \
-            -destination "generic/platform=iOS Simulator" \
-            -derivedDataPath build26 \
-            CODE_SIGNING_ALLOWED=NO
+          [ -f "$RUNNER_TEMP/versions.md" ] || exit 0
+          { echo "| Job | Xcode | Simulator | Device |"; echo "|---|---|---|---|"; cat "$RUNNER_TEMP/versions.md"
+            [ "${{ matrix.decides }}" = true ] || echo; [ "${{ matrix.decides }}" = true ] || echo "Information only: a failure here does not block a merge."; } >> "$GITHUB_STEP_SUMMARY"

@@ -25,8 +25,9 @@ concurrency:
 
 jobs:
   size:
-    # Same runner as CI: Apple Silicon runners have not been assigned lately.
-    runs-on: macos-15-intel
+    # Same Xcode as the deciding CI job and the owner's Mac; from April 2027
+    # the App Store takes only apps built with the iOS 27 SDK.
+    runs-on: xcode-27
     defaults:
       run:
         working-directory: ios
