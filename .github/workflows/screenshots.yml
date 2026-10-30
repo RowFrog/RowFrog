@@ -246,13 +246,13 @@ jobs:
           # the user's own, the lake map coloured for big boats (so it warns).
           BOATS=(-RWMyBoats '({id = b-anna; name = Anna; type = gig; class = "4x";}, {id = b-flash; name = Flash; type = training; class = "1x";})')
           OWN=(-RWBoatLimits '{small = {windAmber = 2; gustAmber = 16; gustRed = 18;}; b-anna = {waveAmber = 0.4;};}')
-          shoot 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
-          shoot 64-settings-limits-map light -RWShowSettings YES -RWSettingsPage limits -RWLimitsScroll map "${BOATS[@]}" "${OWN[@]}" -RWMapBoat big
+          shoot 64-settings-limits light -RWShowSettings YES -RWSettingsPage limits "${BOATS[@]}" "${OWN[@]}"
           shoot 65-own-limits light -RWOpenClub mrc-1880 "${BOATS[@]}" "${OWN[@]}"
           shoot 66-own-limits-wind light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES "${BOATS[@]}" "${OWN[@]}"
           shoot 67-boat-limits light -RWShowSettings YES -RWSettingsPage boat:b-anna "${BOATS[@]}" "${OWN[@]}"
-          shoot 68-lake-card-map-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview "${BOATS[@]}" -RWMapBoat big
-          shoot 69-lake-map-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES "${BOATS[@]}" -RWMapBoat big
+          # The lake tile and map follow the ticked boat, as the club page does.
+          WAIT=30 shoot 68-lake-card-ticked-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview "${BOATS[@]}" -RWBoat big
+          WAIT=30 shoot 69-lake-map-ticked-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES "${BOATS[@]}" -RWBoat big
           # The boat button shows an own boat's class ("4x" for Anna) in the accent colour.
           shoot 303-boat-button-own light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna
           shoot 304-boat-button-own-landscape-dark dark -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES

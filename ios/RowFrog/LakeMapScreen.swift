@@ -939,29 +939,19 @@ struct LakeMapScreen: View {
     }
 }
 
-/// Which boat the lake is coloured for, with a warning when that boat takes
-/// more wind or waves than the one the rowing light is for.
+/// Which boat the lake is coloured for: the ticked one, as on the club pages.
 struct MapBoatNote: View {
     var body: some View {
-        let settings = AppSettings.shared
-        if settings.mapLooksCalmer {
-            Label(tr("Coloured for %@, not for %@: the lake may look calmer than it is for you.", settings.mapBoat.inSentence, settings.selectedBoat.inSentence),
-                  systemImage: "exclamationmark.triangle.fill")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.orange)
-                .fixedSize(horizontal: false, vertical: true)
-        } else {
-            Label(tr("Coloured for %@", settings.mapBoat.inSentence), systemImage: "figure.rower")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
+        Label(tr("Coloured for %@", AppSettings.shared.selectedBoat.inSentence), systemImage: "figure.rower")
+            .font(.caption)
+            .foregroundStyle(.secondary)
     }
 }
 
 /// What the colours mean for the chosen layer.
 struct LakeLegend: View {
     let layer: LakeLayer
-    private var limits: RowingLimits { AppSettings.shared.mapLimits }
+    private var limits: RowingLimits { AppSettings.shared.limits }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -2036,7 +2026,7 @@ struct LakeMapLegend: View {
                     if let coldShore {
                         row(Capsule().fill(coldShore.color).frame(width: 18, height: 4),
                             tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
-                               Format.temperature(AppSettings.shared.mapLimits.value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
+                               Format.temperature(AppSettings.shared.limits.value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
                     }
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
@@ -2137,7 +2127,7 @@ struct LakeLayerIcon: View {
 /// maps; a tap opens the full legend.
 struct LakeScaleChip: View {
     let layer: LakeLayer
-    private var limits: RowingLimits { AppSettings.shared.mapLimits }
+    private var limits: RowingLimits { AppSettings.shared.limits }
 
     var body: some View {
         HStack(spacing: 6) {
