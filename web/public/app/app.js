@@ -11,7 +11,7 @@ import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
-  precipitationText, lightTitle, reasonLabel, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
+  precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
   loadLeaflet, testing, adviceOnly, footerLinks, mapBoat, mapLimits, unitSymbol, inUnit, pressureNumber, usesAMPM,
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, keptForecast,
@@ -563,7 +563,30 @@ function wireSideList(currentId) {
  * column too, and the lake view and launch point maps there grow until both
  * columns end level, each card at most one window tall.
  */
+/**
+ * A line with a shorter wording (data-short) keeps its full text where that
+ * fits on one line, else takes the short one (ViewThatFits in the app); checked
+ * again whenever its width changes.
+ */
+const fitWatch = new ResizeObserver((entries) => entries.forEach(({ target }) => target.querySelectorAll(".fit-line").forEach(fitLine)));
+function fitLine(el) {
+  const width = el.parentElement?.clientWidth ?? 0;
+  if (!width || el.dataset.width === String(width)) return;
+  el.dataset.width = width;
+  el.dataset.full ??= el.textContent;
+  el.textContent = el.dataset.full;
+  const line = parseFloat(getComputedStyle(el).lineHeight) || 20;
+  if (el.getClientRects().length > 1 || el.offsetHeight > line * 1.5) el.textContent = el.dataset.short;
+}
+function watchFitLines() {
+  root.querySelectorAll(".fit-line").forEach((el) => {
+    fitLine(el);
+    if (el.parentElement) fitWatch.observe(el.parentElement);
+  });
+}
+
 function balanceCards() {
+  watchFitLines();
   const box = root.querySelector(".cards");
   if (!box) return;
   // Always in page order, never in the columns' order from the last sorting.
@@ -902,9 +925,9 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
     <ul class="reasons">
       ${stale && !at ? `<li class="orange">${icon("clock")}<span>${h(t("The forecast is more than 3 hours old. Check the conditions yourself before you go out."))}</span></li>` : ""}
       ${reasons.length ? reasons.map((r) => {
-        const text = water == null && waterReasons.includes(r.condition) ? t("Estimated: %@", reasonExplanation(r.condition, r.light)) : hourExplanation(forecast, r, hour);
+        const text = water == null && waterReasons.includes(r.condition) ? t("Estimated: %@", reasonExplanation(r.condition, r.light, r.topic)) : hourExplanation(forecast, r, hour);
         return `<li class="${r.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[reasonCondition(r.condition)])}<span>${h(text)}</span></li>`;
-      }).join("") : `<li>${icon("circle-check")}<span>${h(t("All conditions are within the limits."))}</span></li>`}
+      }).join("") : `<li>${icon("circle-check")}<span class="fit-line" data-short="${h(t("All within the limits."))}">${h(t("All conditions are within the limits."))}</span></li>`}
       ${(hour.notes ?? []).map((n) => `<li class="sub">${icon("info")}<span>${h(noteText(n))}</span></li>`).join("")}
       ${steadier ? `<li class="tint">${icon("sailboat")}<span>${h(steadier.light === "green"
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
@@ -1030,7 +1053,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
     const note = warnings.lakeArea
       ? t("Covers the DWD lake warning for %@. Weather warnings for %@ are not checked yet.", warnings.lakeArea, where)
       : t("Lake and weather warnings for %@ are not checked yet.", where);
-    return `${lakeRows}${notCheckedNote(warnings.local)}<p class="sub small">${h(note)}</p>${warnings.lakeArea ? shoreLights(guideOpen) : ""}`;
+    return `${lakeRows}${notCheckedNote(warnings.local)}<p class="sub small">${h(note)}</p>${lightsInfo(warnings, guideOpen)}`;
   }
   const placeText = place ? t("weather warnings for %@", place) : t("weather warnings for this place");
   const service = warnings.local?.service ?? "";
@@ -1042,7 +1065,7 @@ function warningsBody(warnings, club, checkedAt, guideOpen) {
       ? t("Covers the DWD lake warning for %@ and %@.", warnings.lakeArea, placeText)
       : t("DWD has no lake warning service %@. Covers %@.", club?.lakeName ? t("for %@", lakeTitle(club.lakeName)) : t("for this water"), placeText);
   const items = warnings.items ?? [];
-  const guide = warnings.lakeArea ? shoreLights(guideOpen) : "";
+  const guide = lightsInfo(warnings, guideOpen);
   if (!items.length) {
     return `<p class="green strong">${icon("shield-check")} ${h(t("No warning right now"))}</p>
       <p class="sub small">${h(`${coverage} ${t("Checked %@.", time(checkedAt))}`)}</p>${guide}`;
@@ -1071,7 +1094,20 @@ function warningRow(w) {
         : t("The details of this warning are in German only; see the original below.")), w.english.instruction)
       + `<div class="original" lang="de"><p class="strong">${h(isDWD(w) ? t("Original from DWD (German)") : t("Original from %@ (German)", serviceShort(w.source)))}</p><p class="strong">${h(w.headline)}</p><p>${h(w.description)}</p>${w.instruction ? `<p>${h(w.instruction)}</p>` : ""}</div>`
       : text(w.headline, w.description, w.instruction)}
+    ${warningInfoOnly(w) ? `<p class="sub small info-line">${icon("info")} <span>${h(warningSlippery(w)
+      ? t("Not part of the rowing light. The jetty and boat area may be slippery.")
+      : t("Not part of the rowing light: it is not about the water."))}</span></p>` : ""}
   </div>`;
+}
+
+/**
+ * The shore lights explained where the lake has them; where DWD warns for the
+ * lake without lights (e.g. the Alster), one line saying so instead (WarningsCard.lightsInfo).
+ */
+function lightsInfo(warnings, open) {
+  if (!warnings.lakeArea) return "";
+  if (warnings.shoreLights ?? true) return shoreLights(open);
+  return `<p class="sub small info-line">${icon("siren")} <span>${h(t("This lake has no storm warning lights on the shore. DWD's lake warning shows here in the app."))}</span></p>`;
 }
 
 function shoreLights(open) {
