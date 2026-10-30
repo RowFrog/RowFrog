@@ -135,8 +135,12 @@ the lake warning (strong wind or storm, as the shore lights show it) where
 DWD runs its lake warning service (23 lakes, among them Starnberger See,
 Ammersee and Chiemsee), and DWD's weather warnings for the municipality,
 which cover rivers and canals too. While one is issued it gets its own card
-under the top tile; otherwise the top tile's status line says there is none
-and when it was checked, or that DWD could not be reached.
+under the top tile, with the warnings grouped under "Now" and "Later";
+otherwise the top tile's status line says there is none and when it was
+checked, or that DWD could not be reached. A warning that starts later or
+only informs gets one line in the top tile that opens the card, and in the
+club list it shows grey with an info sign and its start time; only warnings
+that count for the light now or within 3 hours show amber there.
 Warnings come from DWD's GeoServer (`backend/rowfrog/sources/dwd_warnings.py`)
 and also set the hourly light, except frost, black ice, thaw, heat and cold
 warnings, which are shown for information but leave the light and the lake map
