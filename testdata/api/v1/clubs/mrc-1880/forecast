@@ -4536,11 +4536,11 @@
      "official": true
     },
     "event": "FROST",
-    "expires": "2026-10-18T12:00:00+00:00",
+    "expires": "2026-10-18T21:00:00+00:00",
     "headline": "Amtliche WARNUNG vor FROST",
     "instruction": "Hinweis auf: mögliche Frostschäden.",
     "kind": "local",
-    "onset": "2026-10-18T06:00:00+00:00",
+    "onset": "2026-10-18T12:00:00+00:00",
     "sample": true,
     "severity": "minor",
     "source": "dwd"
