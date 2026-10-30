@@ -63,6 +63,7 @@ const PATHS = {
   "thermometer-snowflake": `<path d="M2 12h10" /> <path d="M9 4v16" /> <path d="m3 9 3 3-3 3" /> <path d="M12 6 9 9 6 6" /> <path d="m6 18 3-3 1.5 1.5" /> <path d="M20 4v10.54a4 4 0 1 1-4 0V4a2 2 0 0 1 4 0Z" />`,
   "life-buoy": `<circle cx="12" cy="12" r="10" /> <path d="m4.93 4.93 4.24 4.24" /> <path d="m14.83 9.17 4.24-4.24" /> <path d="m14.83 14.83 4.24 4.24" /> <path d="m9.17 14.83-4.24 4.24" /> <circle cx="12" cy="12" r="4" />`,
   "sliders-horizontal": `<line x1="21" x2="14" y1="4" y2="4" /> <line x1="10" x2="3" y1="4" y2="4" /> <line x1="21" x2="12" y1="12" y2="12" /> <line x1="8" x2="3" y1="12" y2="12" /> <line x1="21" x2="16" y1="20" y2="20" /> <line x1="12" x2="3" y1="20" y2="20" /> <line x1="14" x2="14" y1="2" y2="6" /> <line x1="8" x2="8" y1="10" y2="14" /> <line x1="16" x2="16" y1="18" y2="22" />`,
+  "circle-arrow-down": `<circle cx="12" cy="12" r="10" /> <path d="M12 8v8" /> <path d="m8 12 4 4 4-4" />`,
   "circle-plus": `<circle cx="12" cy="12" r="10" /> <path d="M8 12h8" /> <path d="M12 8v8" />`,
   "chevron-left": `<path d="m15 18-6-6 6-6" />`,
   "route": `<circle cx="6" cy="19" r="3" /> <path d="M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15" /> <circle cx="18" cy="5" r="3" />`,
