@@ -67,6 +67,8 @@ jobs:
     # Xcode 27 on the newest iOS Simulator decides, as the owner builds with
     # Xcode 27 (decided 2026-10-30). Xcode 26 and Xcode 16 on iOS 18 run
     # alongside for wider coverage; they only warn and never block a merge.
+    # Both on Intel images: macos-26 (arm64) got no runner within 15 minutes
+    # on 2026-10-30, which cancelled the job and turned the run red.
     # The xcode-27 image's default Xcode and newest Simulator are used, so
     # minor updates (27.2, 27.3, ...) arrive by themselves; Xcode 28 needs a
     # new label here.
@@ -80,7 +82,7 @@ jobs:
             ios: ""
             decides: true
           - name: Xcode 26
-            runner: macos-26
+            runner: macos-26-intel
             ios: "26"
             decides: false
           - name: iOS 18
