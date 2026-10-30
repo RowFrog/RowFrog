@@ -125,6 +125,8 @@ struct LocationListView: View {
             .scrollContentBackground(.hidden)
             .pageBackground(.list)
             .navigationTitle(tr("Locations"))
+            // The big title in the bar, level with "…", as in the Weather app.
+            .toolbarTitleDisplayMode(.inlineLarge)
             .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")))
             .onChange(of: search) { if !search.isEmpty { editMode = .inactive } }
             .environment(\.editMode, $editMode)
