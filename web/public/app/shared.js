@@ -466,8 +466,8 @@ export function noteText(note) {
 
 export function reasonExplanation(condition, light) {
   switch (condition) {
-    case "lake_warning": return t("DWD has issued a storm warning for the lake; its warning lights flash 90 times a minute.");
-    case "lake_strong_wind": return t("DWD has issued a strong-wind warning for the lake; its warning lights flash 40 times a minute.");
+    case "lake_warning": return t("DWD has issued a storm warning for the lake; where the lake has storm lights, they flash 90 times a minute.");
+    case "lake_strong_wind": return t("DWD has issued a strong-wind warning for the lake; where the lake has storm lights, they flash 40 times a minute.");
     case "single_cold": return t("In a single, row with a coach boat or a partner boat while the water is this cold.");
     case "freezing_water": return t("The water is below %@. You are strongly advised not to go out, at least not in a small boat.", temperature(4));
     case "weather_warning": return t("An official weather warning is out for this place.");
