@@ -316,7 +316,7 @@ works like the iOS Settings app: a "Rowing light for" boat picker at the top,
 then one page per topic, each row showing its current value, and a search
 field at the bottom.
 
-- Boats and limits: the boat groups, My boats, the lake map colours and the
+- Boats and limits: the boat groups, My boats and the
   fine-tuned limits (see [Rowing limits](#what-the-app-does)).
 - Appearance: light, dark or as the phone is set (dark saves battery on OLED
   iPhones), a Landscape switch (on by default; off keeps the app upright), and
@@ -352,7 +352,9 @@ field at the bottom.
 On a club page, the "For *boat*" line under the rowing light and the boat
 button next to the cog open the same boat picker; the button shows the chosen
 boat's class (own boats in blue) or the group ("1–2", "4–8"). The picker shows the light each
-boat would get there now.
+boat would get there now. The chosen boat applies to everything on screen: the
+lake tile, the lake map, route planning and the satellite picture use its
+limits too.
 
 **Wide screens.** Phones on their side and the unfolded iPhone Duo get wide
 layouts (two columns from 600 pt, a side list from 860 × 560 pt). In two
