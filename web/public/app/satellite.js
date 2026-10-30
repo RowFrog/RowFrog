@@ -7,7 +7,7 @@ import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
 import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature } from "./shared.js";
 import { tip } from "./tour.js";
-import { hourIndex, gridEdges, coldShore, stripes, waterKind } from "./lake.js";
+import { hourIndex, gridEdges, coldShore, stripes, stripesFall, waterKind } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote, kitBadge, COLD_SHORE } from "./lakeview.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows } from "./windarrows.js";
@@ -330,7 +330,7 @@ export function overlaySvg(lake, shot, clubId, w, hgt, screen = null) {
     parts.push(`<clipPath id="${id}"><path d="${ringsPath()}" clip-rule="evenodd"/></clipPath>
       <image href="${rasterUrl(view, hour, fill)}" x="${f(x0)}" y="${f(y0)}" width="${f(x1 - x0)}" height="${f(y1 - y0)}" preserveAspectRatio="none" opacity=".55" clip-path="url(#${id})"/>`);
     // Darkness or an official warning for the whole lake: stripes, as on the lake map.
-    if (fill === "light") parts.push(stripeSvg(stripes(hour.lakeWide), w, hgt, id));
+    if (fill === "light") parts.push(stripeSvg(stripes(hour.lakeWide), w, hgt, id, stripesFall(view.outline)));
   }
   // Wind under the lines and marks, so shore, routes and clubs stay on top.
   if (on.has("wind") && hour) parts.push(windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightnessOf(fileUrl(lake, shot.image, shot.date))));
@@ -359,12 +359,13 @@ export function overlaySvg(lake, shot, clubId, w, hgt, screen = null) {
  * Diagonal stripes over the screen, clipped to the shore, while the whole lake
  * is red (grey squares, red stripes) or amber, as on the lake map.
  */
-export function stripeSvg(kind, w, hgt, clipId) {
+export function stripeSvg(kind, w, hgt, clipId, fall = false) {
   if (!kind) return "";
   const red = kind === "red";
   const gap = red ? 8 : 14;
   let d = "";
-  for (let x = -hgt; x < w; x += gap) d += `M${x.toFixed(1)} ${hgt.toFixed(1)}L${(x + hgt).toFixed(1)} 0`;
+  const [y0, y1] = fall ? [0, hgt] : [hgt, 0];
+  for (let x = -hgt; x < w; x += gap) d += `M${x.toFixed(1)} ${y0.toFixed(1)}L${(x + hgt).toFixed(1)} ${y1.toFixed(1)}`;
   return `<path d="${d}" fill="none" stroke="${red ? "rgba(255,59,48,.75)" : "rgba(255,149,0,.8)"}" stroke-width="${red ? 1.5 : 1.2}" clip-path="url(#${clipId})"/>`;
 }
 
@@ -515,11 +516,13 @@ function clubMarks(view, pt, clubId, w, hgt) {
   const meets = (a, b) => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
   const home = store.clubs[0]?.id;
   const out = [];
+  // The page's club picks its name's spot first, but its mark goes on top of clubs sharing its launch point.
+  const dots = [], ownDot = [];
   marks.sort((a, b) => (a.club.id === clubId ? 0 : 1) - (b.club.id === clubId ? 0 : 1) || a.p[1] - b.p[1]);
   for (const { club, p } of marks) {
     const own = club.id === clubId;
-    out.push(`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="9" fill="${own ? "#007aff" : "#737373"}" stroke="#fff" stroke-width="1.5"/>`);
-    if (own && club.id === home) out.push(`<svg x="${(p[0] - 6).toFixed(1)}" y="${(p[1] - 6).toFixed(1)}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${icon("house").replace(/^<svg[^>]*>|<\/svg>$/g, "")}</svg>`);
+    (own ? ownDot : dots).push(`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="9" fill="${own ? "#007aff" : "#737373"}" stroke="#fff" stroke-width="1.5"/>`);
+    if (own && club.id === home) ownDot.push(`<svg x="${(p[0] - 6).toFixed(1)}" y="${(p[1] - 6).toFixed(1)}" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">${icon("house").replace(/^<svg[^>]*>|<\/svg>$/g, "")}</svg>`);
     const name = club.shortName ?? club.name ?? "";
     const lw = textWidth(name);
     const lh = 13;
@@ -536,7 +539,7 @@ function clubMarks(view, pt, clubId, w, hgt) {
     out.push(`<rect x="${(spot[0] - 4).toFixed(1)}" y="${(spot[1] - 1).toFixed(1)}" width="${(lw + 8).toFixed(1)}" height="${lh + 2}" rx="6" fill="rgba(0,0,0,.55)"/>
       <text class="sat-name" x="${spot[0].toFixed(1)}" y="${(spot[1] + lh - 3).toFixed(1)}">${h(name)}</text>`);
   }
-  return `<g>${out.join("")}</g>`;
+  return `<g>${[...dots, ...ownDot, ...out].join("")}</g>`;
 }
 
 // ---- The legend ---------------------------------------------------------------------------
