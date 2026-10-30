@@ -66,6 +66,13 @@ jobs:
     # read from GitHub's runner-images list, so Xcode 28 and later take over
     # by themselves once GitHub has them; xcode-27 if the list can't be read.
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    env:
+      # The Xcode major that has its info job set up below (Xcode 26 informs,
+      # 27 decides). Raise it once the next major has been handled.
+      HANDLED_MAJOR: "27"
     outputs:
       runner: ${{ steps.pick.outputs.runner }}
       xcode: ${{ steps.pick.outputs.xcode }}
@@ -75,6 +82,26 @@ jobs:
           sparse-checkout: scripts
       - id: pick
         run: python3 scripts/newest_xcode_runner.py | tee -a "$GITHUB_OUTPUT"
+      - name: Reminder when a new Xcode major takes over
+        # The owner wants a reminder (2026-10-30) to add the previous major as an
+        # info job. On main only, one open issue at a time.
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          XCODE: ${{ steps.pick.outputs.xcode }}
+          RUNNER: ${{ steps.pick.outputs.runner }}
+        run: |
+          major=${XCODE%%.*}
+          [ "$major" -gt "$HANDLED_MAJOR" ] || exit 0
+          title="Xcode $major now decides CI: add Xcode $HANDLED_MAJOR as an info job"
+          if gh issue list -R "$GITHUB_REPOSITORY" --state open --search "in:title \"$title\"" --json title --jq '.[].title' | grep -qxF "$title"; then
+            echo "Reminder already open"; exit 0
+          fi
+          gh issue create -R "$GITHUB_REPOSITORY" --title "$title" --body "CI now picks \`$RUNNER\` with Xcode $XCODE as the newest released Xcode, so it decides merges by itself.
+
+          As asked on 2026-10-30: add Xcode $HANDLED_MAJOR as an information-only job in \`.github/workflows/ci.yml\` (matrix of the \`ios\` job, \`decides: false\`, on a runner that has it), then raise \`HANDLED_MAJOR\` to $major there. Also check the handbook's \"CI, iOS\" row.
+
+          Opened by the CI run $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID" || echo "::warning::Xcode $major now decides CI; add Xcode $HANDLED_MAJOR as an info job (issue could not be opened)"
 
   ios:
     needs: [changes, newest-xcode]
