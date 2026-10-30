@@ -153,10 +153,18 @@ targets:
     sources: [RowFrogTests]
     dependencies:
       - target: RowFrog
+  # Starts the app in the Simulator and taps it, so a view that swallows taps
+  # (as the frosted cards did in #220) fails the build.
+  RowFrogUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [RowFrogUITests]
+    dependencies:
+      - target: RowFrog
 schemes:
   RowFrog:
     build:
       targets:
         RowFrog: all
     test:
-      targets: [RowFrogTests]
+      targets: [RowFrogTests, RowFrogUITests]

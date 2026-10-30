@@ -175,6 +175,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWLowPower YES` draws the app as in Low Power Mode (solid tiles, bar buttons and clock strip)
 - `-UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL` (or `…AccessibilityL`) opens the app at a larger text size, as Settings › Display › Text Size
 - `-RWLanguage de`, `-RWAppearance dark`, `-RWLandscape YES`
+- `-RWAPIBaseURL https://api.rowfrog.com/v1` a Debug build reads the published forecasts instead of the backend on the Mac. The UI tests (`ios/RowFrogUITests`, run by CI with the unit tests) use it to open MRC 1880's page over a picture with frosted cards and tap a conditions tile, so a view that takes other cards' taps fails the build
 - `-RWSafetyAccepted YES` skip the first-start safety notice (the screenshot workflow passes it to every shot except 77 and 78)
 - `-RWWhatsNewSeen 1000` keep the "What's new" sheet away (the screenshot workflow passes it to every shot except 114 and 115)
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)

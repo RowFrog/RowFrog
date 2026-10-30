@@ -12,7 +12,9 @@ struct APIClient {
     var cache: KeptFiles? = .shared
 
     static func fromBundle(_ bundle: Bundle = .main) -> APIClient {
-        let raw = bundle.object(forInfoDictionaryKey: "RWAPIBaseURL") as? String ?? "http://localhost:8000"
+        // `-RWAPIBaseURL <url>` at launch wins: the UI tests read the published files.
+        let raw = UserDefaults.standard.string(forKey: "RWAPIBaseURL")
+            ?? bundle.object(forInfoDictionaryKey: "RWAPIBaseURL") as? String ?? "http://localhost:8000"
         return APIClient(baseURL: URL(string: raw)!)
     }
 
