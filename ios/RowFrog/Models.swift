@@ -312,7 +312,7 @@ struct Reason: Codable, Hashable {
         case "wind": tr("Mean wind is above the limit.")
         case "gusts": tr("Gusts are above the limit.")
         case "waves": tr("Waves at the launch point are too high.")
-        case "fog": tr("Visibility is poor (fog or mist).")
+        case "fog": tr("Fog: visibility is poor.")
         case "heavy_rain": tr("Heavy rain of %@ or more in the hour.", Format.rain(4))
         case "hail": tr("Hail is forecast with a thunderstorm.")
         case "thunderstorm": tr("Thunderstorms are possible.")

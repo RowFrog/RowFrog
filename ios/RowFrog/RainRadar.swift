@@ -937,7 +937,10 @@ struct RainOutlook {
 
     /// One line for the radar's two hours, e.g. "Snow from 15:20".
     var summary: String {
-        if let now { return radar.dryAgain.map { tr("%@ now, dry from %@", now, Format.time($0.time)) } ?? tr("%@ for the next 2 hours", now) }
+        if let falling = now {
+            if let dry = radar.dryAgain { return tr("%@ now, dry from %@", falling, Format.time(dry.time)) }
+            return tr("%@ for the next 2 hours", falling)
+        }
         if let first = radar.firstRain { return tr("%@ from %@", kind(at: first.time), Format.time(first.time)) }
         return tr("No rain in the next 2 hours")
     }

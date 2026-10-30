@@ -5,11 +5,11 @@ import { t, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
   store, getJSON, h, time, dayTime, duration, wind, windRange, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
-  dot, setTitle, openSheet, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, selectedBoat, boatLimits, boatInSentence, windUnit,
+  dot, setTitle, openSheet, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit,
   CONDITION_ICONS, forecasts, conditionIcon,
 } from "./shared.js";
 import { riverSpeed } from "./river.js";
-import { compass, matchesStandard, allowsMore, coldWaterKit, reasonCondition, key } from "./logic.js";
+import { compass, matchesStandard, coldWaterKit, reasonCondition, key } from "./logic.js";
 import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, stripesFall, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
@@ -174,13 +174,9 @@ function lakeWideBanner(lakeWide, view) {
     <span>${h(t(waterKind(view) === "lake" ? key("Whole lake: %@") : key("Whole stretch: %@"), lakeWide.reasons.map(reasonLabel).join(", ")))}</span></p>`;
 }
 
-/** Which boat the lake is coloured for, with a warning when it takes more wind or waves than the ticked one (MapBoatNote). */
+/** Which boat the lake is coloured for: the ticked one (MapBoatNote). */
 export function mapBoatNote() {
-  const boat = mapBoat();
-  if (allowsMore(mapLimits(), boatLimits(selectedBoat()))) {
-    return `<p class="small orange strong">${icon("triangle-alert")} ${h(t("Coloured for %@, not for %@: the lake may look calmer than it is for you.", boatInSentence(boat), boatInSentence(selectedBoat())))}</p>`;
-  }
-  return `<p class="small sub">${icon("sailboat")} ${h(t("Coloured for %@", boatInSentence(boat)))}</p>`;
+  return `<p class="small sub">${icon("sailboat")} ${h(t("Coloured for %@", boatInSentence(mapBoat())))}</p>`;
 }
 
 export function kitBadge(view) {

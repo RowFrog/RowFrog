@@ -34,6 +34,8 @@ final class AppSettings {
     var widgetUpdates: WidgetUpdates { didSet { defaults.set(widgetUpdates.rawValue, forKey: Keys.widgetUpdates) } }
     /// How close the weather maps in the detail views open around the club.
     var mapStartZoom: MapStartZoom { didSet { defaults.set(mapStartZoom.rawValue, forKey: Keys.mapStartZoom) } }
+    /// The app that opens the club and its launch point.
+    var mapApp: MapApp { didSet { defaults.set(mapApp.rawValue, forKey: Keys.mapApp) } }
 
     /// The user's own boats, besides the small and big boat groups.
     var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
@@ -162,11 +164,12 @@ final class AppSettings {
         static let saveMobileData = "RWSaveMobileData"
         static let widgetUpdates = "RWWidgetUpdates"
         static let mapStartZoom = "RWMapStartZoom"
+        static let mapApp = "RWMapApp"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
                           developer, pickedModels, columnFill, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
-                          widgetUpdates, mapStartZoom]
+                          widgetUpdates, mapStartZoom, mapApp]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -187,6 +190,7 @@ final class AppSettings {
         dateFormat = value(Keys.dateFormat, .device)
         widgetUpdates = value(Keys.widgetUpdates, .halfHour)
         mapStartZoom = value(Keys.mapStartZoom, .normal)
+        mapApp = value(Keys.mapApp, .apple)
         // Launch arguments give the limits' numbers as text, e.g. `-RWBoatLimits '{small = {windAmber = 7;};}'`.
         if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
             myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
@@ -313,6 +317,7 @@ final class AppSettings {
         dateFormat = .device
         widgetUpdates = .halfHour
         mapStartZoom = .normal
+        mapApp = .apple
         boatID = Boat.small.id
         boatLimits = [:]
         removeAllBackgrounds()
@@ -458,6 +463,33 @@ enum MapStartZoom: String, CaseIterable, Identifiable {
         case .normal: 1
         case .wide: 2
         }
+    }
+}
+
+/// The app that opens the club and its launch point: Apple Maps, or Google
+/// Maps (its app when installed, else its website).
+enum MapApp: String, CaseIterable, Identifiable {
+    case apple, google
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .apple: tr("Apple Maps")
+        case .google: tr("Google Maps")
+        }
+    }
+
+    /// Google Maps' links (Maps URLs, no key needed): a point, and directions to a place.
+    static func googleSearch(_ query: String) -> URL? { googleURL("https://www.google.com/maps/search/", ["api": "1", "query": query]) }
+    static func googleDirections(to destination: String) -> URL? { googleURL("https://www.google.com/maps/dir/", ["api": "1", "destination": destination]) }
+    /// The same for Google Maps' app (its comgooglemaps:// scheme), used when it is installed.
+    static func googleAppSearch(_ query: String) -> URL? { googleURL("comgooglemaps://", ["q": query]) }
+    static func googleAppDirections(to destination: String) -> URL? { googleURL("comgooglemaps://", ["daddr": destination]) }
+
+    private static func googleURL(_ base: String, _ items: [String: String]) -> URL? {
+        var parts = URLComponents(string: base)
+        parts?.queryItems = items.sorted { $0.key < $1.key }.map { URLQueryItem(name: $0.key, value: $0.value) }
+        return parts?.url
     }
 }
 

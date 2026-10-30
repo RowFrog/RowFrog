@@ -151,4 +151,10 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertTrue(DateFormat.dayMonthYear.string(from: date, locale: english).hasSuffix("19.10.2026"))
         XCTAssertTrue(DateFormat.monthDayYear.string(from: date, locale: english).hasSuffix("10/19/2026"))
     }
+
+    func testSmallNegativeValuesRoundToZeroWithoutAMinus() {
+        XCTAssertFalse(Format.number(-0.3).contains("-"))
+        XCTAssertFalse(Format.number(-0.04, digits: 1).contains("-"))
+        XCTAssertTrue(Format.number(-0.6).hasPrefix("-") || Format.number(-0.6).hasPrefix("−"))
+    }
 }

@@ -53,9 +53,6 @@ export const store = {
   /** Limits the user changed, per boat id; a missing entry means the app's limit for the boat's type. */
   get limits() { return load("rf.limits", {}); },
   set limits(value) { save("rf.limits", value); },
-  /** The boat the lake map is coloured for, or "follow" for the ticked one. */
-  get mapBoat() { return load("rf.mapBoat", "small"); },
-  set mapBoat(id) { save("rf.mapBoat", id); },
   /** Saved routes: { id, name, lakeId, points: [{ lat, lon }], outAndBack }. */
   get routes() { return load("rf.routes", []); },
   set routes(list) { save("rf.routes", list); },
@@ -149,8 +146,8 @@ export function deviceMapsApp(agent = navigator.userAgent, touchPoints = navigat
 /** The boat's class for the page bar, as rowers write it ("2x", "4+"); the two groups show their seats (Boat.classTag). */
 export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.class);
 
-/** The boat whose limits colour the lake view and route planning. */
-export const mapBoat = () => (store.mapBoat === "follow" ? selectedBoat() : boatById(store.mapBoat));
+/** The boat whose limits colour the lake view and route planning: the ticked one, as everywhere else on screen (owner, 30 Oct 2026). */
+export const mapBoat = () => selectedBoat();
 export const mapLimits = () => boatLimits(mapBoat());
 
 /** A limit's value in the user's units; wind keeps its decimal so 5.5 m/s does not read as 6. */
@@ -485,7 +482,7 @@ export function reasonExplanation(condition, light, topic = null) {
     case "wind": return t("Mean wind is above the limit.");
     case "gusts": return t("Gusts are above the limit.");
     case "waves": return t("Waves at the launch point are too high.");
-    case "fog": return t("Visibility is poor (fog or mist).");
+    case "fog": return t("Fog: visibility is poor.");
     case "heavy_rain": return t("Heavy rain of %@ or more in the hour.", rain(4));
     case "hail": return t("Hail is forecast with a thunderstorm.");
     case "thunderstorm": return t("Thunderstorms are possible.");
@@ -790,7 +787,7 @@ export function conditionTexts() {
     waves: r("waves", t("Waves"), unitSymbol("waves"), t("Estimated wave height at the launch point, from wind and open water upwind.")),
     waterTemperature: r("waterTemperature", t("Water temperature"), unitSymbol("temperature"), t("Latest lake measurement. Below %@, extra care; below %@, cold water.", temperature(15), temperature(10))),
     precipitation: r("precipitation", t("Precipitation"), unitSymbol("rain"), t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unitSymbol("rain"))),
-    visibility: r("visibility", t("Visibility (fog)"), unitSymbol("distance"), t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
+    visibility: r("visibility", t("Visibility"), unitSymbol("distance"), t("How far you can see. Fog below %@ is amber, below %@ red.", distance(1000), distance(500))),
     cloudCover: r("cloudCover", t("Cloud cover"), "%", t("Share of the sky covered by cloud.")),
     thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. Official thunderstorm warnings for the place appear under the warnings.")),
     uvIndex: r("uvIndex", t("UV index"), "", t("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")),
