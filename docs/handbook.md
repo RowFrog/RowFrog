@@ -225,6 +225,21 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Lake lights check | every season, or when DWD changes its lake warning areas: lists DWD's lake warning areas (23 on 30.10.2026) with their clubs and fails when an area is missing from `data/shore-lights.json` or no longer at DWD (`scripts/lake_lights_check.py`). That file says which lakes really have storm lights on the shore (Bavarian lakes, Bodensee, Steinhuder Meer; not Alster, Müritz, Dümmer and others): the app explains the lights only there and says "no storm lights" elsewhere. It runs itself when the script or the file changes. Weather warnings about frost, black ice, thaw, heat or cold are shown but leave the rowing light alone (`INFO_ONLY_WORDS` in `backend/rowfrog/forecast.py`) |
 | App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run. Input `device` = `iPad` shoots on an 11-inch iPad Pro Simulator instead; those shots go to an `ipad/` folder in the same set. Runs on the runner with the newest released Xcode by default, as CI does (newest iPhone Pro Simulator); input `runner` = `macos-26-intel` with `xcode` = `26` shoots on iOS 26 instead |
 
+## Tests
+
+Every PR runs them (CI and Website workflows); locally:
+
+| Part | Command (from the repo root) | Where |
+|---|---|---|
+| Backend | `cd backend && pytest -q` | `backend/tests/` |
+| App | `cd ios && xcodegen && xcodebuild test -scheme RowFrog -destination "platform=iOS Simulator,name=iPhone 16"` | `ios/RowFrogTests/` (logic), `ios/RowFrogUITests/` (taps) |
+| Website | `node --test web/tests/*.test.mjs` | `web/tests/` |
+| Translations | `python3 scripts/check_translations.py` | |
+
+- Sample API files: `testdata/api/v1/` holds a club forecast (MRC 1880 with made-up weather, water reading, radar, storm and frost warnings) and a lake list in the published layout. The backend writes them through the same code as the real files (`backend/tests/test_sample_files.py`), and the app (`SampleFilesTests.swift`) and the website (`web/tests/samples.test.mjs`) read the same files, so a field renamed on one side fails a test. After a change to what the backend writes, that test fails until the files are written again: `cd backend && UPDATE_SAMPLES=1 pytest tests/test_sample_files.py`, then commit them; CI then runs the app and website tests on them too. The app test lists every value the app drops; a key the app ignores on purpose goes into its `notRead` list.
+- Data checks (`backend/tests/test_data_files.py`): every club on a known water inside Europe, launch points within 1.5 km of their water's outline, no outline files without a water, side files (depths, lake levels, river gauges, overrides, extra sites) naming only known clubs and waters, no id twice in a catalog. Known exceptions are listed in the test with the reason; the test fails once one is fixed, so the list stays short.
+- Reason names (`backend/tests/test_reason_names.py`): every reason the backend gives for a light has a label in the app (`Reason.baseLabel`) and a tile on the website (`REASONS` in `logic.js`).
+
 ## Secrets (names only; the values live in GitHub > Settings > Secrets)
 
 `CLOUDFLARE_API_TOKEN` (also needs "Cloudflare Pages: Edit" for the website), `CLOUDFLARE_ACCOUNT_ID`, `USAGE_KEY` (usage counter),

@@ -1,0 +1,64 @@
+[
+ {
+  "center": {
+   "lat": 47.9039,
+   "lon": 11.3072
+  },
+  "clubs": [
+   {
+    "abbreviation": null,
+    "address": "Dampfschiffstraße 6, 82319 Starnberg",
+    "country": "de",
+    "id": "mrc-1880",
+    "launchPoint": {
+     "lat": 47.99667,
+     "lon": 11.34745
+    },
+    "launchPointVerified": true,
+    "name": "Münchener Ruder-Club von 1880 e.V.",
+    "region": null,
+    "shortName": "MRC 1880",
+    "source": null,
+    "website": "https://www.mrc1880.de"
+   },
+   {
+    "abbreviation": null,
+    "address": "Seepromenade 2, 82319 Starnberg",
+    "country": "de",
+    "id": "mrsv-bayern",
+    "launchPoint": {
+     "lat": 47.99156,
+     "lon": 11.33901
+    },
+    "launchPointVerified": true,
+    "name": "Münchener Ruder- und Segel-Verein \"Bayern\" von 1910 e.V.",
+    "region": null,
+    "shortName": "MRSV Bayern",
+    "source": null,
+    "website": "http://www.mrsv-bayern.de"
+   },
+   {
+    "abbreviation": null,
+    "address": "Seestraße 22, 82327 Tutzing",
+    "country": "de",
+    "id": "tutzinger-rv",
+    "launchPoint": {
+     "lat": 47.89578,
+     "lon": 11.27525
+    },
+    "launchPointVerified": true,
+    "name": "Tutzinger Ruderverein 1983 e.V.",
+    "region": null,
+    "shortName": "Tutzinger RV",
+    "source": null,
+    "website": "https://www.tutzinger-ruderverein.de"
+   }
+  ],
+  "country": "de",
+  "hasOutline": true,
+  "id": "starnberger-see",
+  "kind": "lake",
+  "name": "Starnberger See",
+  "section": null
+ }
+]
