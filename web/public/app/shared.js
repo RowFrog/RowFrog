@@ -50,6 +50,9 @@ export const store = {
   /** The user's own boats, besides the small and big boat groups: { id, name, type, class }. */
   get boats() { return load("rf.boats", []); },
   set boats(list) { save("rf.boats", list); },
+  /** The boat last picked at each club, by club id (AppSettings.clubBoats). */
+  get clubBoats() { return load("rf.clubBoats", {}); },
+  set clubBoats(map) { save("rf.clubBoats", map); },
   /** Limits the user changed, per boat id; a missing entry means the app's limit for the boat's type. */
   get limits() { return load("rf.limits", {}); },
   set limits(value) { save("rf.limits", value); },
@@ -115,8 +118,24 @@ export function isKept(boat, clubId = pageClub) {
 }
 /** The user's own boats kept at a club. */
 export const boatsKeptAt = (clubId = pageClub) => store.boats.filter((b) => isKept(b, clubId));
-/** The boat a club's page and lake maps use: the ticked one where it is kept, else small boats, whose limits are the strictest. */
-export const selectedBoat = (clubId = pageClub) => (isKept(tickedBoat(), clubId) ? tickedBoat() : GROUPS[0]);
+/**
+ * The boat a club's page and lake maps use: the ticked one where it is kept, else
+ * the user's boat last picked at that club, else the first one kept there, else
+ * small boats, whose limits are the strictest (AppSettings.boat(at:)). A boat
+ * kept only at some clubs is never used for the others.
+ */
+export function selectedBoat(clubId = pageClub) {
+  const ticked = tickedBoat();
+  if (isKept(ticked, clubId)) return ticked;
+  const here = boatsKeptAt(clubId);
+  return here.find((b) => b.id === store.clubBoats[clubId]) ?? here[0] ?? GROUPS[0];
+}
+
+/** Ticks a boat, and remembers it as the one picked at the club (AppSettings.pick). */
+export function pickBoat(id, clubId = pageClub) {
+  store.boat = id;
+  if (clubId) store.clubBoats = { ...store.clubBoats, [clubId]: id };
+}
 /** The limits the rowing light uses at a club, on its page and lake maps alike. */
 export const currentLimits = (clubId = pageClub) => boatLimits(selectedBoat(clubId));
 
