@@ -142,6 +142,9 @@ button.wide { margin-top: 0; }
 .radar-mark { display: inline-flex; vertical-align: -1px; margin-right: 3px; }
 .daylight { display: flex; align-items: center; gap: 8px; margin: 12px 0 0; font-size: 15px; }
 .daylight .moon { width: 44px; text-align: center; color: var(--sub); font-size: 18px; }
+/* The sunset or sunrise symbol inside the daylight line; it grows with the text. */
+.daylight .sunsym { color: var(--sun); margin-right: .2em; }
+.daylight .nowrap { white-space: nowrap; }
 
 .kit { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 10px; border-radius: 999px; font-size: 15px; font-weight: 600;
   color: var(--kit); background: color-mix(in srgb, var(--kit) 18%, transparent); }

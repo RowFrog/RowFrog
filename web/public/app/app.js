@@ -1052,8 +1052,8 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
     ${ice ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17">${h(t(ice))}</span>
       <small class="sub">${h(iceLine === t("Bays and harbours first") ? t("Bays first") : iceLine)}</small></p>` : ""}
     ${sun ? `<p class="daylight" data-top="daylight" data-order="all" role="button" tabindex="0" aria-description="${h(t("Opens sunrise, sunset and daylight"))}">${sun.up
-      ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span>${h(t("Sunset %@ · %@ of daylight left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}</span>`
-      : `<span class="moon">${icon("moon-star")}</span><span>${h(t("Sun is down · rowing advised again from %@", time(sun.sunrise)))}</span>`}<span class="chev">${icon("chevron-right")}</span></p>` : ""}
+      ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span class="sunline" aria-label="${h(t("Rowing until sunset at %@, %@ left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}"><span class="nowrap">${h(t("Rowing until"))} <span class="sunsym">${icon("sunset")}</span>${h(time(sun.sunset))}</span> · <span class="nowrap">${h(t("%@ left", duration(at ?? new Date(), sun.sunset)))}</span></span>`
+      : `<span class="moon">${icon("moon-star")}</span><span class="sunline" aria-label="${h(t("Rowing again from sunrise at %@", time(sun.sunrise)))}">${h(t("Rowing again from"))} <span class="sunsym">${icon("sunrise")}</span>${h(time(sun.sunrise))}</span>`}<span class="chev">${icon("chevron-right")}</span></p>` : ""}
   </section>`;
 }
 

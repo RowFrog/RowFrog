@@ -539,6 +539,22 @@ jobs:
           WAIT=30 shoot 331-water-chart-fitted-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWLanguage de
           # The map app setting at the end of the club pages settings.
           WAIT=25 shoot 332-settings-map-app-german light -RWShowSettings YES -RWSettingsPage clubpages -RWLanguage de
+          # The daylight line on one row: what, then when, with the sunset or sunrise symbol
+          # (the night line while the runner's clock is after sunset; the hour view 12 hours on for the day line).
+          # 338-344: English, longest (9 h) and shortest (minutes) time left, dark, and the text sizes
+          # around the standard one (M fits, the standard may shrink to 85 %, XL and up wrap).
+          WAIT=25 shoot 333-sun-line-now-german light -RWOpenClub mrc-1880 -RWLanguage de
+          WAIT=25 shoot 334-sun-line-now-dark dark -RWOpenClub mrc-1880
+          WAIT=25 shoot 335-sun-line-later-german light -RWOpenClub mrc-1880 -RWOpenHour 12 -RWLanguage de
+          WAIT=25 shoot 336-sun-line-later-larger-text-german light -RWOpenClub mrc-1880 -RWOpenHour 12 -RWLanguage de -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          WAIT=25 shoot 337-sun-line-now-larger-text light -RWOpenClub mrc-1880 -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          WAIT=25 shoot 338-sun-line-later light -RWOpenClub mrc-1880 -RWOpenHour 12
+          WAIT=25 shoot 339-sun-line-morning-german light -RWOpenClub mrc-1880 -RWOpenHour 9 -RWLanguage de
+          WAIT=25 shoot 340-sun-line-evening-german light -RWOpenClub mrc-1880 -RWOpenHour 18 -RWLanguage de
+          WAIT=25 shoot 341-sun-line-later-german-dark dark -RWOpenClub mrc-1880 -RWOpenHour 12 -RWLanguage de
+          WAIT=25 shoot 342-sun-line-now-larger-text-german light -RWOpenClub mrc-1880 -RWLanguage de -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          WAIT=25 shoot 343-sun-line-later-smaller-text-german light -RWOpenClub mrc-1880 -RWOpenHour 12 -RWLanguage de -UIPreferredContentSizeCategoryName UICTContentSizeCategoryM
+          WAIT=25 shoot 344-sun-line-later-one-step-larger-german light -RWOpenClub mrc-1880 -RWOpenHour 12 -RWLanguage de -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXL
           WAIT=30 shoot 206-rain-detail-radar light -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES
           WAIT=30 shoot 242-rain-detail-radar-german-dark dark -RWOpenClub mrc-1880 -RWOpenCondition precipitation -RWSampleRadar YES -RWLanguage de
           shoot 209-arrange-radar-off light -RWOpenClub mrc-1880 -RWArrange YES
