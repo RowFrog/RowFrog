@@ -1,0 +1,39 @@
+name: Launch point probe
+
+# Research: names the OpenStreetMap water within 400 m of every launch point
+# that is off its own water's outline (scripts/launch_point_probe.py). Runs
+# when the script changes, or by hand. Nothing is stored; the report is in
+# the job summary and the "launch-points" download.
+
+on:
+  push:
+    paths:
+      - scripts/launch_point_probe.py
+      - .github/workflows/launch-point-probe.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - run: python3 scripts/launch_point_probe.py
+        env:
+          SHARD: ${{ matrix.shard }}/8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: launch-points-${{ matrix.shard }}
+          path: launch-points.json
