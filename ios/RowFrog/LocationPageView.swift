@@ -845,21 +845,14 @@ private struct NowCard: View {
                     case let .up(sunrise, sunset):
                         SunPath(sunrise: sunrise, sunset: sunset, at: at ?? .now, lineWidth: 1.5).frame(width: 44, height: 20)
                         let left = Format.duration(from: at ?? .now, to: sunset)
-                        let until = Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(Format.time(sunset))")
-                        let rest = Text(tr("%@ left", left))
-                        ViewThatFits(in: .horizontal) {
-                            Text("\(until) · \(rest)").lineLimit(1)
-                            // Too long for one line (German on a standard iPhone):
-                            // break at the dot, never inside "6 h 58 min".
-                            VStack(alignment: .leading, spacing: 2) {
-                                until.fixedSize(horizontal: false, vertical: true)
-                                rest.fixedSize(horizontal: false, vertical: true)
-                            }
-                        }
+                        DaylightText(
+                            line: Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(Format.time(sunset))"),
+                            rest: Text(tr("%@ left", left))
+                        )
                             .accessibilityLabel(tr("Rowing until sunset at %@, %@ left", Format.time(sunset), left))
                     case let .down(sunrise, _):
                         Image(systemName: "moon.stars.fill").foregroundStyle(.secondary).frame(width: 44)
-                        sunText(Text("\(tr("Rowing again from")) \(sunSymbol("sunrise.fill")) \(Format.time(sunrise))"))
+                        DaylightText(line: Text("\(tr("Rowing again from")) \(sunSymbol("sunrise.fill")) \(Format.time(sunrise))"))
                             .accessibilityLabel(tr("Rowing again from sunrise at %@", Format.time(sunrise)))
                     }
                     Spacer(minLength: 0)
@@ -876,14 +869,6 @@ private struct NowCard: View {
     /// A sunset or sunrise symbol to sit in the daylight line's text.
     private func sunSymbol(_ name: String) -> Text {
         Text(Image(systemName: name)).foregroundStyle(.orange)
-    }
-
-    /// The daylight line on one line where it fits, else on two.
-    private func sunText(_ text: Text) -> some View {
-        ViewThatFits(in: .horizontal) {
-            text.lineLimit(1)
-            text.fixedSize(horizontal: false, vertical: true)
-        }
     }
 }
 
@@ -1684,5 +1669,35 @@ private struct LoadingCards: View {
             Label(title, systemImage: symbol).font(.caption.weight(.semibold)).foregroundStyle(.secondary)
             Text(dash).valueFont(size: 40).foregroundStyle(.secondary)
         }
+    }
+}
+
+/// The daylight line: on one row at full size where it fits. At the standard text
+/// size and smaller it may shrink a little, to 85 % at most and only when it would
+/// not fit otherwise; at larger text sizes, or when even that is too long, it wraps,
+/// with the time left on its own row so "6 h 58 min" never breaks apart.
+private struct DaylightText: View {
+    let line: Text
+    var rest: Text? = nil
+    @Environment(\.dynamicTypeSize) private var typeSize
+    @ScaledMetric(relativeTo: .subheadline) private var size: CGFloat = 15
+
+    var body: some View {
+        ViewThatFits(in: .horizontal) {
+            oneRow.lineLimit(1)
+            if typeSize <= .large {
+                oneRow.font(.system(size: size * 0.95)).lineLimit(1)
+                oneRow.font(.system(size: size * 0.9)).lineLimit(1)
+                oneRow.font(.system(size: size * 0.85)).lineLimit(1)
+            }
+            VStack(alignment: .leading, spacing: 2) {
+                line.fixedSize(horizontal: false, vertical: true)
+                rest?.fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    private var oneRow: Text {
+        if let rest { Text("\(line) · \(rest)") } else { line }
     }
 }
