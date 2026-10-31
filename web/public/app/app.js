@@ -8,7 +8,7 @@
 import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
+  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
@@ -165,13 +165,13 @@ function openBoatMenu(raw) {
     <a class="pill" href="#/settings/boats">${icon("sliders-horizontal")} ${h(t("Boats and limits…"))}</a>`;
   openSheet(t("Boat"), body, (dialog) => {
     dialog.querySelectorAll("[data-boat]").forEach((b) => b.addEventListener("click", () => {
-      store.boat = b.dataset.boat;
+      pickBoat(b.dataset.boat, club);
       dialog.close();
       route(false);
     }));
     dialog.querySelectorAll("[data-take]").forEach((b) => b.addEventListener("click", () => {
       keepBoat(b.dataset.take, club);
-      store.boat = b.dataset.take;
+      pickBoat(b.dataset.take, club);
       dialog.close();
       route(false);
     }));
@@ -1841,6 +1841,7 @@ function renderBoat(id) {
     delete all[id];
     store.limits = all;
     if (store.boat === id) store.boat = "small";
+    store.clubBoats = Object.fromEntries(Object.entries(store.clubBoats).filter(([, boat]) => boat !== id));
     location.hash = "#/settings/boats";
   });
 }
