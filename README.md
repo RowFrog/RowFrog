@@ -396,7 +396,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `web/` | The website: start page, `app/` (the forecasts in the browser), legal pages and the password check (`functions/_middleware.js`). `scripts/build_web.py` builds it. |
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues, `timer/` starts the forecast run on time. |
-| `testdata/api/v1/` | Sample API files (MRC 1880's forecast and the lake index) that the backend, app and website tests all read, so a change to the format shows up in all three (see the handbook's Tests section). |
+| `testdata/api/v1/` | Sample API files (MRC 1880's forecast, the lake list and the country lists) that the backend, app and website tests all read, so a change to the format shows up in all three (see the handbook's Tests section). |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
 | `docs/screenshots/` | Not in git: the "App screenshots" workflow writes here on the runner and keeps each branch's set under `refs/screenshots/<branch>` (see the handbook). |
 | `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. |
@@ -532,7 +532,7 @@ More detail, including the secrets each one needs, is in the
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
-| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Runs when `web/`, `scripts/build_web.py` or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
+| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, `scripts/build_web.py` or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 
 ## Traffic light defaults
 
