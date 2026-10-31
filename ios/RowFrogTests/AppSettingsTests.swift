@@ -119,6 +119,24 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.boat(at: "tutzinger-rv"), .big, "small and big boats are everywhere")
     }
 
+    func testAClubUsesABoatKeptThereBeforeSmallBoats() {
+        let settings = AppSettings(defaults: defaults)
+        let anna = settings.addBoat(type: .gig, at: "mrc-1880")
+        let flash = settings.addBoat(type: .training, boatClass: .single, at: "tutzinger-rv")
+        let berta = settings.addBoat(type: .gig, at: "tutzinger-rv")
+        settings.pick(anna.id, at: "mrc-1880")
+        XCTAssertEqual(settings.boat(at: "tutzinger-rv"), flash, "a boat kept there, not small boats")
+        XCTAssertEqual(settings.boat(at: "seeclub-starnberg"), .small, "no boat kept there")
+
+        settings.pick(berta.id, at: "tutzinger-rv")
+        settings.pick(anna.id, at: "mrc-1880")
+        XCTAssertEqual(settings.boat(at: "tutzinger-rv"), berta, "the boat last picked there")
+        XCTAssertEqual(AppSettings(defaults: defaults).boat(at: "tutzinger-rv"), berta)
+
+        settings.removeBoat(berta.id)
+        XCTAssertEqual(settings.boat(at: "tutzinger-rv"), flash)
+    }
+
     func testOlderBoatsGoToTheHomeBase() throws {
         let old = try JSONDecoder().decode([Boat].self, from: Data(#"[{"id":"b1","name":"Anna","type":"gig","class":"4x"}]"#.utf8))
         XCTAssertEqual(old[0].clubs, [])

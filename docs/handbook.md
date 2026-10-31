@@ -129,12 +129,14 @@ choice A, 30 Oct 2026). Small and big boats are everywhere.
 2. On another club's page, open the boat menu (the boat button in the page bar
    or "For small boats" in the top tile). The boat shows under **At other
    clubs**; a tap takes it to this club and ticks it.
-3. With an own boat ticked, a club where it is not kept uses small boats, the
-   strictest limits: top tile, rowing light, charts, lake tile and map all say
-   "for small boats". The tick itself stays, so the boat's own clubs keep it.
+3. With an own boat ticked, a club where it is not kept uses one of your boats
+   kept there (the one last picked there first), else small boats, the
+   strictest limits: top tile, rowing light, charts, lake tile and map all
+   name that boat. The tick itself stays, so the boat's own clubs keep it.
 4. "A steadier boat helps" names only boats kept at that club.
-5. iPad held sideways (club list beside the page): the boat button sits at the
-   list's foot after the search (cog, search, boat), not in the page bar
+5. iPad held sideways (club list beside the page): the list's foot has the
+   cog, a search field and the boat button, not the page bar (iPadOS would put
+   the system's search at the top there, so the field is the app's own)
    (owner's choice A for the placement; the other options are in the Website
    thread's mock-up).
 

@@ -131,7 +131,7 @@ struct LocationListView: View {
             .pageBackground(.list)
             .navigationTitle(tr("Locations"))
             .titleShrinksOnScroll($scrolled)
-            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")))
+            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")), besidePage: boatButton != nil)
             .onChange(of: search) { if !search.isEmpty { editMode = .inactive } }
             .environment(\.editMode, $editMode)
             // As in the Weather app: no way back but the clubs' cards, the
@@ -147,7 +147,7 @@ struct LocationListView: View {
                     }
                 }
             }
-            .settingsBesideSearch(boat: boatButton) { showingSettings = true }
+            .listFoot(boat: boatButton, search: $search) { showingSettings = true }
             .navigationDestination(isPresented: $browsing) { CountryListView(locations: locations) }
             // Searching all countries, or one, loads the clubs not loaded yet.
             .task(id: "\(search.isEmpty)|\(countryFilter ?? "all")") {
@@ -439,12 +439,21 @@ private extension View {
         }
     }
 
-    /// The settings cog at the bottom left: beside the search field from iOS 26,
-    /// both on glass as in Mail; before, alone in the bottom bar. Beside the
-    /// club page (iPad) the page's boat button follows the search: cog, search,
-    /// boat (owner's choice A, 30.10.2026).
+    /// The list's foot: the settings cog beside the search, and beside the
+    /// club page (iPad) the page's boat button after it.
     @ViewBuilder
-    func settingsBesideSearch(boat: AnyView? = nil, _ open: @escaping () -> Void) -> some View {
+    func listFoot(boat: AnyView?, search: Binding<String>, _ open: @escaping () -> Void) -> some View {
+        if let boat {
+            safeAreaInset(edge: .bottom) { SideListFoot(search: search, boat: boat, openSettings: open) }
+        } else {
+            settingsBesideSearch(open)
+        }
+    }
+
+    /// The settings cog at the bottom left: beside the search field from iOS 26,
+    /// both on glass as in Mail; before, alone in the bottom bar.
+    @ViewBuilder
+    func settingsBesideSearch(_ open: @escaping () -> Void) -> some View {
         let cog = Button(action: open) { Image(systemName: "gearshape") }
             .accessibilityLabel(tr("Settings"))
 #if compiler(>=6.2)
@@ -453,27 +462,75 @@ private extension View {
                 ToolbarItem(placement: .bottomBar) { cog }
                 ToolbarSpacer(.fixed, placement: .bottomBar)
                 DefaultToolbarItem(kind: .search, placement: .bottomBar)
-                if let boat {
-                    ToolbarSpacer(.fixed, placement: .bottomBar)
-                    ToolbarItem(placement: .bottomBar) { boat }
-                }
             }
         } else {
-            toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer(); boat } } }
+            toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer() } } }
         }
 #else
-        toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer(); boat } } }
+        toolbar { ToolbarItem(placement: .bottomBar) { HStack { cog; Spacer() } } }
 #endif
     }
 
     /// From iOS 26 the search field sits at the bottom of the screen, within
     /// reach of the thumb, as in Mail, Notes and Weather; before, under the title.
+    /// Beside the club page (iPad) the list's foot has a field of its own, as
+    /// iPadOS moves the system's search to the top there.
     @ViewBuilder
-    func clubSearch(_ text: Binding<String>, prompt: Text) -> some View {
-        if #available(iOS 26.0, *) {
+    func clubSearch(_ text: Binding<String>, prompt: Text, besidePage: Bool = false) -> some View {
+        if besidePage {
+            self
+        } else if #available(iOS 26.0, *) {
             searchable(text: text, prompt: prompt)
         } else {
             searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
         }
+    }
+}
+
+/// The foot of the list beside the club page (iPad held sideways): cog,
+/// search field and the page's boat button, each on its own glass piece as
+/// in the page bar (owner's choice A, 30.10.2026).
+private struct SideListFoot: View {
+    @Binding var search: String
+    let boat: AnyView
+    let openSettings: () -> Void
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button(action: openSettings) {
+                Image(systemName: "gearshape")
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+            }
+            .floatingControl(Circle())
+            .accessibilityLabel(tr("Settings"))
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField(tr("Search clubs, lakes or towns"), text: $search)
+                    .focused($focused)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                if !search.isEmpty {
+                    Button {
+                        search = ""
+                        focused = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel(tr("Clear the search"))
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 44)
+            .floatingControl(Capsule())
+            boat
+                .padding(.horizontal, 4)
+                .floatingControl(Capsule())
+        }
+        .tint(.primary)
+        .padding(.horizontal)
+        .padding(.bottom, 4)
+        .dynamicTypeSize(...DynamicTypeSize.large)
     }
 }

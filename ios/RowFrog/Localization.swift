@@ -1259,6 +1259,7 @@ enum German {
         "At %@ · tap to take it here": "Liegt bei %@ · tippen, um es hierher mitzunehmen",
         "At other clubs": "Bei anderen Vereinen",
         "Kept at": "Liegt bei",
+        "Clear the search": "Suche löschen",
         "The boat shows only on the pages of these clubs. Elsewhere it waits under “At other clubs” in the boat menu, one tap to take it along, e.g. to a regatta.": "Das Boot erscheint nur auf den Seiten dieser Vereine. Anderswo steht es im Bootsmenü unter „Bei anderen Vereinen“, mit einem Tipp nimmst du es mit, etwa zu einer Regatta.",
         "Your boats here": "Deine Boote hier",
         "Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine.": "Füge die Boote hinzu, die du rudern kannst, etwa den Gig-Vierer des Vereins. Jedes hat Grenzwerte für seinen Typ. Ist es für das abgehakte Boot zu rau, sagt die App, welches deiner Boote passen würde.",

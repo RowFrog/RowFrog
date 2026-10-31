@@ -41,6 +41,8 @@ final class AppSettings {
     var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
     /// The boat the rowing light is for; kept until the user picks another.
     var boatID: String { didSet { defaults.set(boatID, forKey: Keys.boat) } }
+    /// The own boat last picked at each club, for clubs where the ticked boat isn't kept.
+    var clubBoats: [String: String] { didSet { defaults.set(clubBoats, forKey: Keys.clubBoats) } }
     /// Limits the user changed, per boat; a missing entry means the app's limit for the boat's type.
     var boatLimits: [String: [RowingLimit: Double]] {
         didSet {
@@ -67,8 +69,19 @@ final class AppSettings {
     /// The user's own boats kept at a club.
     func boats(keptAt clubID: String?) -> [Boat] { myBoats.filter { isKept($0, at: clubID) } }
     /// The boat a club's page and lake maps use: the ticked one where it is
-    /// kept, else small boats, whose limits are the strictest.
-    func boat(at clubID: String?) -> Boat { isKept(selectedBoat, at: clubID) ? selectedBoat : .small }
+    /// kept; else one of the user's boats kept there, the one last picked
+    /// there first; else small boats, whose limits are the strictest.
+    func boat(at clubID: String?) -> Boat {
+        if isKept(selectedBoat, at: clubID) { return selectedBoat }
+        let here = boats(keptAt: clubID)
+        return here.first { $0.id == clubID.flatMap { clubBoats[$0] } } ?? here.first ?? .small
+    }
+
+    /// Ticks a boat from a club's page, and remembers it for that club.
+    func pick(_ id: String, at clubID: String?) {
+        boatID = id
+        if let clubID { clubBoats[clubID] = id }
+    }
     /// The limits the rowing light uses at a club, on its page and lake maps alike.
     func limits(at clubID: String?) -> RowingLimits { limits(for: boat(at: clubID)) }
 
@@ -107,6 +120,7 @@ final class AppSettings {
     func removeBoat(_ id: String) {
         myBoats.removeAll { $0.id == id }
         boatLimits[id] = nil
+        clubBoats = clubBoats.filter { $0.value != id }
         if boatID == id { boatID = Boat.small.id }
     }
 
@@ -188,6 +202,7 @@ final class AppSettings {
         static let boat = "RWBoat"
         static let myBoats = "RWMyBoats"
         static let boatLimits = "RWBoatLimits"
+        static let clubBoats = "RWClubBoats"
         /// No longer used: the lake maps follow the ticked boat. Kept so it is cleared.
         static let mapBoat = "RWMapBoat"
         static let developer = "RWDeveloperOptions"
@@ -205,7 +220,7 @@ final class AppSettings {
         static let mapApp = "RWMapApp"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
-                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
+                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, clubBoats, mapBoat,
                           developer, pickedModels, columnFill, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
                           widgetUpdates, mapStartZoom, mapApp]
     }
@@ -242,6 +257,7 @@ final class AppSettings {
             }
         }
         boatID = defaults.string(forKey: Keys.boat) ?? Boat.small.id
+        clubBoats = defaults.dictionary(forKey: Keys.clubBoats) as? [String: String] ?? [:]
         let saved = defaults.dictionary(forKey: Keys.boatLimits) ?? [:]
         boatLimits = saved.compactMapValues { raw -> [RowingLimit: Double]? in
             guard let limits = raw as? [String: Any] else { return nil }
@@ -358,6 +374,7 @@ final class AppSettings {
         mapStartZoom = .normal
         mapApp = .apple
         boatID = Boat.small.id
+        clubBoats = [:]
         boatLimits = [:]
         removeAllBackgrounds()
         widgetBackground = .sky

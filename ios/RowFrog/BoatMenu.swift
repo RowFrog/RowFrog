@@ -34,7 +34,7 @@ struct BoatMenu<MenuLabel: View>: View {
                     ForEach(away) { boat in
                         Button {
                             settings.keep(boat.id, at: clubID)
-                            settings.boatID = boat.id
+                            settings.pick(boat.id, at: clubID)
                         } label: {
                             Label(boat.title, systemImage: "arrow.down.circle")
                             Text(tr("At %@ · tap to take it here", boat.clubs.map(clubName).formatted(.list(type: .and))))
@@ -59,7 +59,7 @@ struct BoatMenu<MenuLabel: View>: View {
         let settings = AppSettings.shared
         return Toggle(isOn: Binding(
             get: { settings.boat(at: clubID).id == boat.id },
-            set: { if $0 { settings.boatID = boat.id } }
+            set: { if $0 { settings.pick(boat.id, at: clubID) } }
         )) {
             Text(boat.title)
             Text(subtitle(boat))
