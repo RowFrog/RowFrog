@@ -41,6 +41,8 @@ final class AppSettings {
     var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
     /// The boat the rowing light is for; kept until the user picks another.
     var boatID: String { didSet { defaults.set(boatID, forKey: Keys.boat) } }
+    /// The own boat last picked at each club, for clubs where the ticked boat isn't kept.
+    var clubBoats: [String: String] { didSet { defaults.set(clubBoats, forKey: Keys.clubBoats) } }
     /// Limits the user changed, per boat; a missing entry means the app's limit for the boat's type.
     var boatLimits: [String: [RowingLimit: Double]] {
         didSet {
@@ -54,21 +56,71 @@ final class AppSettings {
     func boat(_ id: String) -> Boat? { boats.first { $0.id == id } }
     var selectedBoat: Boat { boat(boatID) ?? .small }
     func limits(for boat: Boat) -> RowingLimits { RowingLimits(boat: boat, custom: boatLimits[boat.id] ?? [:]) }
-    /// The limits the rowing light uses, on the club pages and the lake maps alike.
+    /// The limits of the ticked boat, wherever it is kept.
     var limits: RowingLimits { limits(for: selectedBoat) }
 
-    /// Adds a boat and returns it.
+    /// Whether a boat is at a club: small and big boats are everywhere, own
+    /// boats at the clubs where they are kept. Without a club (the settings),
+    /// and for boats not yet put at a club, every boat counts.
+    func isKept(_ boat: Boat, at clubID: String?) -> Bool {
+        guard let clubID, !boat.isGroup, !boat.clubs.isEmpty else { return true }
+        return boat.clubs.contains(clubID)
+    }
+    /// The user's own boats kept at a club.
+    func boats(keptAt clubID: String?) -> [Boat] { myBoats.filter { isKept($0, at: clubID) } }
+    /// The boat a club's page and lake maps use: the ticked one where it is
+    /// kept; else one of the user's boats kept there, the one last picked
+    /// there first; else small boats, whose limits are the strictest.
+    func boat(at clubID: String?) -> Boat {
+        if isKept(selectedBoat, at: clubID) { return selectedBoat }
+        let here = boats(keptAt: clubID)
+        return here.first { $0.id == clubID.flatMap { clubBoats[$0] } } ?? here.first ?? .small
+    }
+
+    /// Ticks a boat from a club's page, and remembers it for that club.
+    func pick(_ id: String, at clubID: String?) {
+        boatID = id
+        if let clubID { clubBoats[clubID] = id }
+    }
+    /// The limits the rowing light uses at a club, on its page and lake maps alike.
+    func limits(at clubID: String?) -> RowingLimits { limits(for: boat(at: clubID)) }
+
+    /// Adds a boat kept at a club (the home base when added in the settings) and returns it.
     @discardableResult
-    func addBoat(type: BoatType = .gig, boatClass: BoatClass = .quad) -> Boat {
-        let boat = Boat(id: UUID().uuidString, name: "", type: type, boatClass: boatClass)
+    func addBoat(type: BoatType = .gig, boatClass: BoatClass = .quad, at clubID: String? = nil) -> Boat {
+        let boat = Boat(id: UUID().uuidString, name: "", type: type, boatClass: boatClass, clubs: clubID.map { [$0] } ?? [])
         myBoats.append(boat)
         return boat
+    }
+
+    /// Keeps a boat at one more club too, e.g. for a regatta.
+    func keep(_ id: String, at clubID: String) {
+        guard let i = myBoats.firstIndex(where: { $0.id == id }), !myBoats[i].clubs.contains(clubID) else { return }
+        myBoats[i].clubs.append(clubID)
+    }
+
+    /// Takes a boat off a club's list; the last club stays, so the boat shows somewhere.
+    func unkeep(_ id: String, at clubID: String) {
+        guard let i = myBoats.firstIndex(where: { $0.id == id }), myBoats[i].clubs.count > 1 else { return }
+        myBoats[i].clubs.removeAll { $0 == clubID }
+    }
+
+    /// Boats from before clubs were kept, and boats added before a home base
+    /// was picked, are put at the home base.
+    func keepUnplacedBoats(at homeID: String?) {
+        guard let homeID, myBoats.contains(where: { $0.clubs.isEmpty }) else { return }
+        myBoats = myBoats.map { boat in
+            var boat = boat
+            if boat.clubs.isEmpty { boat.clubs = [homeID] }
+            return boat
+        }
     }
 
     /// Removes one of the user's boats; the ticked boat falls back to small boats.
     func removeBoat(_ id: String) {
         myBoats.removeAll { $0.id == id }
         boatLimits[id] = nil
+        clubBoats = clubBoats.filter { $0.value != id }
         if boatID == id { boatID = Boat.small.id }
     }
 
@@ -150,6 +202,7 @@ final class AppSettings {
         static let boat = "RWBoat"
         static let myBoats = "RWMyBoats"
         static let boatLimits = "RWBoatLimits"
+        static let clubBoats = "RWClubBoats"
         /// No longer used: the lake maps follow the ticked boat. Kept so it is cleared.
         static let mapBoat = "RWMapBoat"
         static let developer = "RWDeveloperOptions"
@@ -167,7 +220,7 @@ final class AppSettings {
         static let mapApp = "RWMapApp"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
-                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, mapBoat,
+                          background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, clubBoats, mapBoat,
                           developer, pickedModels, columnFill, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
                           widgetUpdates, mapStartZoom, mapApp]
     }
@@ -195,14 +248,16 @@ final class AppSettings {
         if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
             myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
         } else {
-            // As a launch argument: `-RWMyBoats '({id = b1; name = Anna; type = gig; class = "4x";})'`.
+            // As a launch argument: `-RWMyBoats '({id = b1; name = Anna; type = gig; class = "4x"; clubs = "mrc-1880,dhrc";})'`.
             myBoats = (defaults.array(forKey: Keys.myBoats) as? [[String: String]] ?? []).compactMap { raw in
                 guard let id = raw["id"], let type = raw["type"].flatMap(BoatType.init(rawValue:)),
                       let boatClass = raw["class"].flatMap(BoatClass.init(rawValue:)) else { return nil }
-                return Boat(id: id, name: raw["name"] ?? "", type: type, boatClass: boatClass)
+                return Boat(id: id, name: raw["name"] ?? "", type: type, boatClass: boatClass,
+                            clubs: raw["clubs"]?.split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) } ?? [])
             }
         }
         boatID = defaults.string(forKey: Keys.boat) ?? Boat.small.id
+        clubBoats = defaults.dictionary(forKey: Keys.clubBoats) as? [String: String] ?? [:]
         let saved = defaults.dictionary(forKey: Keys.boatLimits) ?? [:]
         boatLimits = saved.compactMapValues { raw -> [RowingLimit: Double]? in
             guard let limits = raw as? [String: Any] else { return nil }
@@ -319,6 +374,7 @@ final class AppSettings {
         mapStartZoom = .normal
         mapApp = .apple
         boatID = Boat.small.id
+        clubBoats = [:]
         boatLimits = [:]
         removeAllBackgrounds()
         widgetBackground = .sky

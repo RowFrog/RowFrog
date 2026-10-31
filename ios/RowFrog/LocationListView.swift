@@ -7,6 +7,8 @@ struct LocationListView: View {
     let forecasts: ForecastStore
     /// The page on screen when the list sits beside the pages; nil when it is a full-screen cover.
     var selectedID: String?
+    /// Beside the club page (iPad): the page's boat button, after the search at the foot.
+    var boatButton: AnyView?
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
@@ -22,10 +24,11 @@ struct LocationListView: View {
     @State private var browseHook: String?
 
     init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil,
-         select: @escaping (Club) -> Void) {
+         boatButton: AnyView? = nil, select: @escaping (Club) -> Void) {
         self.locations = locations
         self.forecasts = forecasts
         self.selectedID = selectedID
+        self.boatButton = boatButton
         self.select = select
         _search = State(initialValue: initialSearch)
     }
@@ -128,7 +131,7 @@ struct LocationListView: View {
             .pageBackground(.list)
             .navigationTitle(tr("Locations"))
             .titleShrinksOnScroll($scrolled)
-            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")))
+            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")), besidePage: boatButton != nil)
             .onChange(of: search) { if !search.isEmpty { editMode = .inactive } }
             .environment(\.editMode, $editMode)
             // As in the Weather app: no way back but the clubs' cards, the
@@ -144,7 +147,7 @@ struct LocationListView: View {
                     }
                 }
             }
-            .settingsBesideSearch { showingSettings = true }
+            .listFoot(boat: boatButton, search: $search) { showingSettings = true }
             .navigationDestination(isPresented: $browsing) { CountryListView(locations: locations) }
             // Searching all countries, or one, loads the clubs not loaded yet.
             .task(id: "\(search.isEmpty)|\(countryFilter ?? "all")") {
@@ -292,7 +295,8 @@ private struct LocationSummaryRow: View {
                                 .font(.caption)
                                 .lineLimit(2)
                         }
-                        if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC) {
+                        if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC,
+                                                limits: AppSettings.shared.limits(at: forecast?.clubId)) {
                             Label(kit.title, systemImage: ColdWaterKit.symbol)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(ColdWaterKit.color)
@@ -441,6 +445,17 @@ private extension View {
         }
     }
 
+    /// The list's foot: the settings cog beside the search, and beside the
+    /// club page (iPad) the page's boat button after it.
+    @ViewBuilder
+    func listFoot(boat: AnyView?, search: Binding<String>, _ open: @escaping () -> Void) -> some View {
+        if let boat {
+            safeAreaInset(edge: .bottom) { SideListFoot(search: search, boat: boat, openSettings: open) }
+        } else {
+            settingsBesideSearch(open)
+        }
+    }
+
     /// The settings cog at the bottom left: beside the search field from iOS 26,
     /// both on glass as in Mail; before, alone in the bottom bar.
     @ViewBuilder
@@ -464,12 +479,64 @@ private extension View {
 
     /// From iOS 26 the search field sits at the bottom of the screen, within
     /// reach of the thumb, as in Mail, Notes and Weather; before, under the title.
+    /// Beside the club page (iPad) the list's foot has a field of its own, as
+    /// iPadOS moves the system's search to the top there.
     @ViewBuilder
-    func clubSearch(_ text: Binding<String>, prompt: Text) -> some View {
-        if #available(iOS 26.0, *) {
+    func clubSearch(_ text: Binding<String>, prompt: Text, besidePage: Bool = false) -> some View {
+        if besidePage {
+            self
+        } else if #available(iOS 26.0, *) {
             searchable(text: text, prompt: prompt)
         } else {
             searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
         }
+    }
+}
+
+/// The foot of the list beside the club page (iPad held sideways): cog,
+/// search field and the page's boat button, each on its own glass piece as
+/// in the page bar (owner's choice A, 30.10.2026).
+private struct SideListFoot: View {
+    @Binding var search: String
+    let boat: AnyView
+    let openSettings: () -> Void
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Button(action: openSettings) {
+                Image(systemName: "gearshape")
+                    .font(.title3)
+                    .frame(width: 44, height: 44)
+            }
+            .floatingControl(Circle())
+            .accessibilityLabel(tr("Settings"))
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField(tr("Search clubs, lakes or towns"), text: $search)
+                    .focused($focused)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                if !search.isEmpty {
+                    Button {
+                        search = ""
+                        focused = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel(tr("Clear the search"))
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 44)
+            .floatingControl(Capsule())
+            boat
+                .padding(.horizontal, 4)
+                .floatingControl(Capsule())
+        }
+        .tint(.primary)
+        .padding(.horizontal)
+        .padding(.bottom, 4)
+        .dynamicTypeSize(...DynamicTypeSize.large)
     }
 }

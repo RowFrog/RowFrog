@@ -269,6 +269,8 @@ jobs:
           # The boat button shows an own boat's class ("4x" for Anna) in the accent colour.
           shoot 303-boat-button-own light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna
           shoot 304-boat-button-own-landscape-dark dark -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES
+          # Anna is kept at the home base (MRC 1880): at Tutzing the page uses small boats.
+          shoot 333-boat-kept-elsewhere light -RWOpenClub tutzinger-rv "${BOATS[@]}" -RWBoat b-anna
           # The shore warning lights explained, at a club with a lake warning.
           shoot 70-shore-lights light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES
           shoot 70-shore-lights-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES -RWLanguage de

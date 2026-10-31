@@ -74,6 +74,11 @@ final class LocationStore {
 
     func ownPlace(_ id: String) -> OwnPlace? { ownPlaces.first { $0.id == id } }
 
+    /// A club's or own place's short name, the id when it is not loaded.
+    func name(of id: String) -> String {
+        (catalog.first { $0.id == id } ?? ownPlace(id)?.club)?.displayName ?? id
+    }
+
     /// Saves a new own place and adds it to the list (as home base when the list is empty).
     func addOwnPlace(_ place: OwnPlace) {
         ownPlaces.append(place)
@@ -388,10 +393,10 @@ final class ForecastStore {
         await Task { await reload(clubIDs) }.value
     }
 
-    /// The forecast for a club with the user's boat and limits.
+    /// The forecast for a club with the user's boat kept there and its limits.
     func forecast(_ clubID: String) -> ClubForecast? {
         guard let base = raw[clubID] else { return nil }
-        let limits = AppSettings.shared.limits
+        let limits = AppSettings.shared.limits(at: clubID)
         if let cached = applied[clubID], cached.limits == limits { return cached.forecast }
         let forecast = base.applying(limits)
         applied[clubID] = (limits, forecast)

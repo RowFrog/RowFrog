@@ -123,9 +123,9 @@ struct SettingsView: View {
                 case .widgets:
                     WidgetSettingsView(locations: locations, path: $path)
                 case .limits:
-                    RowingLimitsView(path: $path)
+                    RowingLimitsView(path: $path, locations: locations)
                 case let .boat(id):
-                    BoatLimitsView(boatID: id)
+                    BoatLimitsView(boatID: id, locations: locations)
                 case let .picker(target):
                     BackgroundPickerView(target: target, locations: locations)
                 case .safety:
@@ -1497,6 +1497,7 @@ struct BackgroundPickerView: View {
 /// user's own. Each has its own limits, behind the slider button.
 struct RowingLimitsView: View {
     @Binding var path: [SettingsRoute]
+    let locations: LocationStore
     @State private var showBoatsTip = false
     private let boatsTip = MyBoatsTip()
 
@@ -1525,7 +1526,7 @@ struct RowingLimitsView: View {
                     for id in offsets.map({ settings.myBoats[$0].id }) { settings.removeBoat(id) }
                 }
                 Button {
-                    path.append(.boat(settings.addBoat().id))
+                    path.append(.boat(settings.addBoat(at: locations.homeID).id))
                 } label: {
                     Label(tr("Add a boat"), systemImage: "plus.circle")
                 }
@@ -1585,6 +1586,7 @@ private struct BoatRow: View {
 /// One boat's name, type and limits.
 struct BoatLimitsView: View {
     let boatID: String
+    let locations: LocationStore
     @State private var showColdTip = false
     private let coldTip = ColdWaterTip()
     @Environment(\.dismiss) private var dismiss
@@ -1612,6 +1614,8 @@ struct BoatLimitsView: View {
                     SectionFooter(boat.type.detail)
                 }
                 .surfaceRows()
+
+                KeptAtSection(boat: boat, locations: locations)
             }
 
             Section {
@@ -1648,6 +1652,48 @@ struct BoatLimitsView: View {
         .tipVisibility(coldTip, $showColdTip)
         .navigationTitle(boat.title)
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+/// The clubs where an own boat is kept, with buttons to add and remove one
+/// (owner's choice A, 30.10.2026). The last club stays.
+private struct KeptAtSection: View {
+    let boat: Boat
+    let locations: LocationStore
+
+    var body: some View {
+        let settings = AppSettings.shared
+        let others = locations.saved.filter { !boat.clubs.contains($0.id) }
+        Section {
+            ForEach(boat.clubs, id: \.self) { id in
+                HStack {
+                    Label(locations.name(of: id), systemImage: id == locations.homeID ? "house.fill" : "figure.rower")
+                    Spacer(minLength: 8)
+                    if id == locations.homeID {
+                        Text(tr("Home base")).font(.caption).foregroundStyle(.secondary)
+                    }
+                    if boat.clubs.count > 1 {
+                        Button(tr("Remove"), role: .destructive) { settings.unkeep(boat.id, at: id) }
+                            .buttonStyle(.borderless)
+                            .font(.subheadline)
+                    }
+                }
+            }
+            if !others.isEmpty {
+                Menu {
+                    ForEach(others) { club in
+                        Button(club.displayName) { settings.keep(boat.id, at: club.id) }
+                    }
+                } label: {
+                    Label(tr("Add a club"), systemImage: "plus.circle")
+                }
+            }
+        } header: {
+            SectionTitle(tr("Kept at"), symbol: "mappin.and.ellipse")
+        } footer: {
+            SectionFooter(tr("The boat shows only on the pages of these clubs. Elsewhere it waits under “At other clubs” in the boat menu, one tap to take it along, e.g. to a regatta."))
+        }
+        .surfaceRows()
     }
 }
 
