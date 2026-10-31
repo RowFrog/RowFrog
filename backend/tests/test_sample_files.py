@@ -156,10 +156,22 @@ def _sample_files() -> dict[str, object]:
     body["radar"] = _radar()
     body["refresh"] = publish_static.refresh_block(True)
     starnberg = next(l for l in client.get("/lakes").json() if l["id"] == "starnberger-see")
+    german = next(l for l in client.get("/countries/de/lakes").json() if l["id"] == "starnberger-see")
+    de = next(c for c in client.get("/countries/index").json() if c["code"] == "de")
+    # Counted over the sample's clubs only, so a catalog import does not change the file.
+    points = [c["launchPoint"] for c in german["clubs"]]
+    de |= {
+        "clubs": len(points),
+        "bounds": {"south": min(p["lat"] for p in points), "west": min(p["lon"] for p in points),
+                   "north": max(p["lat"] for p in points), "east": max(p["lon"] for p in points)},
+    }
     return {
         f"clubs/{CLUB}/forecast": body,
-        # Just the sample club's lake, so the file stays small; the app reads the same shape.
+        # Just the sample club's lake, so the files stay small; the app reads the same shape.
         "lakes/index": [starnberg],
+        # What the website's club search loads (loadCatalog in shared.js).
+        "countries/index": [de],
+        "countries/de/lakes": [german],
     }
 
 

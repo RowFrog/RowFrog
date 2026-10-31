@@ -45,6 +45,10 @@ jobs:
         run: node --test web/tests/*.test.mjs
       - name: Build (fails on a text without German)
         run: python scripts/build_web.py
+      - name: Browser test (the built site in Chromium, with the sample API files)
+        run: |
+          (cd web && npm install --no-save --no-package-lock playwright@1.63.0 && npx playwright install --with-deps chromium)
+          node --test web/tests/browser/*.test.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: website
