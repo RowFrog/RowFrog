@@ -109,6 +109,13 @@ for _lake_id in SAMPLE_SATELLITE_WATER:
     ]
 # Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
 _ice_temps: dict[str, tuple[date, list[ice.DayTemperature]]] = {}
+# After two lakes in a row get no daily temperatures, the others skip them for
+# AIR_DAYS_PAUSE seconds. On 1 Nov 2026 these calls alone timed out lake after
+# lake (about a minute each) while forecasts still loaded, so the publish run
+# overran; the ice estimate simply waits for a later run.
+AIR_DAYS_PAUSE = 600
+_air_days_failed = 0
+_air_days_paused_until = 0.0
 _lake_view_cache: dict[str, tuple[float, tuple]] = {}
 
 
@@ -608,14 +615,22 @@ def _ice_json(e: ice.IceEstimate | None) -> dict:
 
 async def _air_days(client: httpx.AsyncClient, lake: locations.Lake, today: date) -> list[ice.DayTemperature] | None:
     """The lake's daily mean air temperatures (92 days back, 7 ahead), loaded once a day; None when unavailable."""
+    global _air_days_failed, _air_days_paused_until
     cached = _ice_temps.get(lake.id)
     if cached and cached[0] == today:
         return cached[1]
+    if time.monotonic() < _air_days_paused_until:
+        return None
     try:
         daily = await open_meteo.fetch_daily_mean(client, lake.center.lat, lake.center.lon)
     except (httpx.HTTPError, ValueError, KeyError) as e:
         logging.getLogger(__name__).warning("Daily air temperatures unavailable for %s: %r", lake.id, e)
+        _air_days_failed += 1
+        if _air_days_failed >= 2:
+            _air_days_paused_until = time.monotonic() + AIR_DAYS_PAUSE
+            logging.getLogger(__name__).warning("Daily air temperatures paused for %d s", AIR_DAYS_PAUSE)
         return None
+    _air_days_failed = 0
     temps = [ice.DayTemperature(d, t) for d, t in daily]
     _ice_temps[lake.id] = (today, temps)
     return temps
