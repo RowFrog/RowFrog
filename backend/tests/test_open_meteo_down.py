@@ -41,3 +41,28 @@ def test_an_answer_resets_the_count(monkeypatch):
 
     assert asyncio.run(run()) == {}
     assert open_meteo._failed_in_row == 0
+
+
+def test_daily_air_temperatures_pause_after_two_lakes_fail(monkeypatch):
+    from datetime import date
+    from types import SimpleNamespace
+
+    from rowfrog import api
+
+    monkeypatch.setattr(api, "_ice_temps", {})
+    monkeypatch.setattr(api, "_air_days_failed", 0)
+    monkeypatch.setattr(api, "_air_days_paused_until", 0.0)
+    asked = []
+
+    async def unreachable(client, lat, lon):
+        asked.append((lat, lon))
+        raise httpx.ConnectTimeout("")
+
+    monkeypatch.setattr(open_meteo, "fetch_daily_mean", unreachable)
+    lakes = [SimpleNamespace(id=f"lake-{i}", center=SimpleNamespace(lat=48.0 + i, lon=11.0)) for i in range(5)]
+
+    async def run():
+        return [await api._air_days(None, lake, date(2026, 11, 1)) for lake in lakes]
+
+    assert asyncio.run(run()) == [None] * 5
+    assert len(asked) == 2
