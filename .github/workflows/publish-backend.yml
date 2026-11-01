@@ -70,6 +70,10 @@ jobs:
     needs: due
     if: needs.due.outputs.run == 'true'
     runs-on: ubuntu-latest
+    # A run of all clubs takes 10 to 14 minutes. On 1 Nov 2026 one hung for
+    # 45 minutes and, by the concurrency group, held every later run back;
+    # without a limit it would have held them for GitHub's 6 hours.
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -91,6 +95,8 @@ jobs:
           key: publish-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: publish-state-
       - name: Run the backend and write the files
+        # A hung backend stops here, before the job's limit; the live files stay as they are.
+        timeout-minutes: 20
         env:
           CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}
           CDSE_CLIENT_SECRET: ${{ secrets.CDSE_CLIENT_SECRET }}
