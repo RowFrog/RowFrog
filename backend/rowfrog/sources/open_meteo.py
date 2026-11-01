@@ -223,8 +223,19 @@ def parse(payload: dict) -> list[ForecastHour]:
     return [derive(h) for h in hours]
 
 
+# When this many calls in a row cannot reach Open-Meteo, it counts as down and
+# calls fail at once for DOWN_SECONDS, then one is tried again. On 1 Nov 2026
+# every call timed out and the publish run spent 45 minutes waiting 40 s for each.
+DOWN_AFTER = 4
+DOWN_SECONDS = 300
+_failed_in_row = 0
+_down_until = 0.0
+
+
 async def _get(client: httpx.AsyncClient, url: str, params: dict[str, str]) -> dict:
-    global calls_counted
+    global calls_counted, _failed_in_row, _down_until
+    if time.monotonic() < _down_until:
+        raise httpx.ConnectError("Open-Meteo did not answer the last calls; not asked again yet")
     weight = params_weight(params)
     # Live checks on GitHub saw about one connect timeout in six calls, so
     # connection failures are retried once before giving up.
@@ -236,7 +247,11 @@ async def _get(client: httpx.AsyncClient, url: str, params: dict[str, str]) -> d
             break
         except httpx.TransportError:
             if attempt == 1:
+                _failed_in_row += 1
+                if _failed_in_row >= DOWN_AFTER:
+                    _down_until = time.monotonic() + DOWN_SECONDS
                 raise
+    _failed_in_row = 0
     resp.raise_for_status()
     return resp.json()
 
