@@ -300,17 +300,18 @@
    "country": "de",
    "place": "Hamburg",
    "center": {
-    "lat": 53.60521,
-    "lon": 9.9945
+    "lat": 53.60022,
+    "lon": 9.99384
    },
    "clubs": [
     "akademische-ruderverbindung-alania-zu-hamburg",
+    "hamburger-ruderinnen-club-von-1925",
     "ruderverein-wandsbek",
     "ruderverein-an-den-teichwiesen"
    ],
-   "lengthKm": 9.2,
+   "lengthKm": 12.8,
    "up": {
-    "km": 3.05,
+    "km": 3.58,
     "end": "weir/lock",
     "what": "weir",
     "at": [
@@ -319,19 +320,19 @@
     ]
    },
    "down": {
-    "km": 6.2,
-    "end": "mouth",
-    "what": "joins Binnenalster",
+    "km": 6.38,
+    "end": "weir/lock",
+    "what": "lock_gate",
     "at": [
-     53.55722,
-     9.99759
+     53.55184,
+     9.99279
     ]
    },
    "pictureBox": [
-    9.98841,
-    53.55999,
-    10.02872,
-    53.62289
+    9.9614,
+    53.555,
+    10.02972,
+    53.62614
    ]
   },
   {
@@ -591,8 +592,8 @@
    "country": "de",
    "place": "Königs Wusterhausen",
    "center": {
-    "lat": 52.29798,
-    "lon": 13.65065
+    "lat": 52.2982,
+    "lon": 13.65094
    },
    "clubs": [
     "ruderclub-koenigs-wusterhausen",
@@ -620,8 +621,8 @@
    "pictureBox": [
     13.63249,
     52.29654,
-    13.65096,
-    52.3432
+    13.66643,
+    52.34342
    ]
   },
   {
@@ -839,11 +840,12 @@
    "country": "at",
    "place": "Korneuburg",
    "center": {
-    "lat": 48.33925,
-    "lon": 16.32158
+    "lat": 48.33377,
+    "lon": 16.32657
    },
    "clubs": [
     "korneuburger-ruderverein-alemannia",
+    "wiener-ruder-club-pirat-langenzersdorf",
     "alemannia-ruderverein"
    ],
    "lengthKm": 27.2,
@@ -857,7 +859,7 @@
     ]
    },
    "down": {
-    "km": 21.56,
+    "km": 21.57,
     "end": "weir/lock",
     "what": "lock_gate",
     "at": [
@@ -866,9 +868,9 @@
     ]
    },
    "pictureBox": [
-    16.25401,
-    48.29403,
-    16.38916,
+    16.25901,
+    48.28855,
+    16.39414,
     48.35631
    ]
   },
@@ -1082,6 +1084,48 @@
    ]
   },
   {
+   "id": "river-donau-ottensheim",
+   "water": "river-donau",
+   "name": "Donau",
+   "river": "Donau",
+   "waterway": "river",
+   "country": "at",
+   "place": "Ottensheim",
+   "center": {
+    "lat": 48.32757,
+    "lon": 14.16512
+   },
+   "clubs": [
+    "wassersportverein-ottensheim",
+    "wassersportverein-ottensheim-regattastrecke"
+   ],
+   "lengthKm": 26.2,
+   "up": {
+    "km": 1.82,
+    "end": "weir/lock",
+    "what": "lock_gate",
+    "at": [
+     48.32016,
+     14.15243
+    ]
+   },
+   "down": {
+    "km": 24.67,
+    "end": "weir/lock",
+    "what": "lock_gate",
+    "at": [
+     48.25285,
+     14.42589
+    ]
+   },
+   "pictureBox": [
+    14.14986,
+    48.28236,
+    14.23268,
+    48.3325
+   ]
+  },
+  {
    "id": "river-donau-puchenau",
    "water": "river-donau",
    "name": "Donau",
@@ -1205,6 +1249,39 @@
    ]
   },
   {
+   "id": "river-donau-wallsee",
+   "water": "river-donau",
+   "name": "Donau",
+   "river": "Donau",
+   "waterway": "river",
+   "country": "at",
+   "place": "Wallsee",
+   "center": {
+    "lat": 48.16414,
+    "lon": 14.70697
+   },
+   "clubs": [
+    "oesterr-sportunion-wallsee-sektion-rudern"
+   ],
+   "lengthKm": 8.0,
+   "up": null,
+   "down": {
+    "km": 8.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     48.18866,
+     14.81394
+    ]
+   },
+   "pictureBox": [
+    14.70817,
+    48.17093,
+    14.77431,
+    48.19085
+   ]
+  },
+  {
    "id": "river-donau-wien",
    "water": "river-donau",
    "name": "Donau",
@@ -1213,8 +1290,8 @@
    "country": "at",
    "place": "Wien",
    "center": {
-    "lat": 48.27693,
-    "lon": 16.35478
+    "lat": 48.27689,
+    "lon": 16.35518
    },
    "clubs": [
     "wiener-ruderverein-austria"
@@ -1239,10 +1316,10 @@
     ]
    },
    "pictureBox": [
-    16.28729,
-    48.23171,
-    16.42227,
-    48.32215
+    16.28769,
+    48.23167,
+    16.42267,
+    48.32211
    ]
   },
   {
@@ -1285,47 +1362,6 @@
     48.21551,
     16.43706,
     48.30595
-   ]
-  },
-  {
-   "id": "river-dortmund-ems-kanal-datteln",
-   "water": "river-dortmund-ems-kanal",
-   "name": "Dortmund-Ems-Kanal",
-   "river": "Dortmund-Ems-Kanal",
-   "waterway": "canal",
-   "country": "de",
-   "place": "Datteln",
-   "center": {
-    "lat": 51.6583,
-    "lon": 7.36157
-   },
-   "clubs": [
-    "ruderverein-datteln-von-1928"
-   ],
-   "lengthKm": 16.3,
-   "up": {
-    "km": 5.13,
-    "end": "weir/lock",
-    "what": "lock_gate",
-    "at": [
-     51.61881,
-     7.33213
-    ]
-   },
-   "down": {
-    "km": 10.0,
-    "end": "cap",
-    "what": "",
-    "at": [
-     51.7349,
-     7.43145
-    ]
-   },
-   "pictureBox": [
-    7.32505,
-    51.61871,
-    7.43186,
-    51.70352
    ]
   },
   {
@@ -1921,11 +1957,12 @@
    "country": "de",
    "place": "Magdeburg",
    "center": {
-    "lat": 52.10507,
-    "lon": 11.66072
+    "lat": 52.10796,
+    "lon": 11.65146
    },
    "clubs": [
-    "sc-magdeburg-ev-abteilung-rudern"
+    "sc-magdeburg-ev-abteilung-rudern",
+    "universitaetssportclub-otto-von-guericke-magdeburg"
    ],
    "lengthKm": 13.0,
    "up": {
@@ -1948,8 +1985,8 @@
    },
    "pictureBox": [
     11.64689,
-    52.05985,
-    11.73385,
+    52.06274,
+    11.7246,
     52.11412
    ]
   },
@@ -2274,28 +2311,28 @@
    ]
   },
   {
-   "id": "river-elbe-seitenkanal-uelzen",
+   "id": "river-elbe-seitenkanal-uelzen-gross-liedern",
    "water": "river-elbe-seitenkanal",
    "name": "Elbe-Seitenkanal",
    "river": "Elbe-Seitenkanal",
    "waterway": "canal",
    "country": "de",
-   "place": "Uelzen",
+   "place": "Uelzen-Groß Liedern",
    "center": {
-    "lat": 52.95877,
-    "lon": 10.59514
+    "lat": 52.95726,
+    "lon": 10.5936
    },
    "clubs": [
     "ruderverein-uelzen"
    ],
-   "lengthKm": 15.5,
+   "lengthKm": 15.4,
    "up": {
-    "km": 5.27,
+    "km": 5.16,
     "end": "weir/lock",
     "what": "lock_gate",
     "at": [
-     52.91262,
-     10.61428
+     52.91235,
+     10.61332
     ]
    },
    "down": {
@@ -2303,15 +2340,15 @@
     "end": "cap",
     "what": "",
     "at": [
-     53.04352,
-     10.59196
+     53.04237,
+     10.59132
     ]
    },
    "pictureBox": [
     10.56677,
-    52.91355,
+    52.91231,
     10.61449,
-    53.00399
+    53.00248
    ]
   },
   {
@@ -2520,6 +2557,47 @@
    ]
   },
   {
+   "id": "river-ems-emden-gross-faldern",
+   "water": "river-ems",
+   "name": "Ems",
+   "river": "Ems-Jade-Kanal",
+   "waterway": "canal",
+   "country": "de",
+   "place": "Emden-Groß-Faldern",
+   "center": {
+    "lat": 53.3667,
+    "lon": 7.21754
+   },
+   "clubs": [
+    "emder-ruderverein"
+   ],
+   "lengthKm": 1.2,
+   "up": {
+    "km": 0.04,
+    "end": "weir/lock",
+    "what": "lock Kesselschleuse Emden",
+    "at": [
+     53.36672,
+     7.21818
+    ]
+   },
+   "down": {
+    "km": 1.19,
+    "end": "mouth",
+    "what": "canal",
+    "at": [
+     53.36115,
+     7.20424
+    ]
+   },
+   "pictureBox": [
+    7.20405,
+    53.36108,
+    7.21819,
+    53.36713
+   ]
+  },
+  {
    "id": "river-ems-jade-kanal-aurich",
    "water": "river-ems-jade-kanal",
    "name": "Ems-Jade-Kanal",
@@ -2641,47 +2719,6 @@
     52.23319,
     7.51637,
     52.28111
-   ]
-  },
-  {
-   "id": "river-erla-wallsee",
-   "water": "river-erla",
-   "name": "Erla",
-   "river": "Erla",
-   "waterway": "river",
-   "country": "at",
-   "place": "Wallsee",
-   "center": {
-    "lat": 48.16437,
-    "lon": 14.70928
-   },
-   "clubs": [
-    "oesterr-sportunion-wallsee-sektion-rudern"
-   ],
-   "lengthKm": 22.5,
-   "up": {
-    "km": 13.55,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     48.20718,
-     14.56535
-    ]
-   },
-   "down": {
-    "km": 8.0,
-    "end": "cap",
-    "what": "",
-    "at": [
-     48.1876,
-     14.806
-    ]
-   },
-   "pictureBox": [
-    14.64194,
-    48.15555,
-    14.77662,
-    48.20726
    ]
   },
   {
@@ -2816,23 +2853,23 @@
    "river": "Fulda",
    "waterway": "river",
    "country": "de",
-   "place": "Hann Münden",
+   "place": "Hann. Münden",
    "center": {
-    "lat": 51.40845,
-    "lon": 9.64488
+    "lat": 51.40806,
+    "lon": 9.6493
    },
    "clubs": [
     "muendener-ruderverein",
     "ruderriege-grotefend-gymnasium-muenden"
    ],
-   "lengthKm": 2.5,
+   "lengthKm": 10.9,
    "up": {
-    "km": 1.96,
-    "end": "weir/lock",
-    "what": "lock_gate",
+    "km": 0.29,
+    "end": "mouth",
+    "what": "Werra",
     "at": [
-     51.40357,
-     9.63043
+     51.41944,
+     9.64997
     ]
    },
    "down": {
@@ -2845,10 +2882,10 @@
     ]
    },
    "pictureBox": [
-    9.63002,
+    9.62846,
     51.40007,
     9.65035,
-    51.41303
+    51.45328
    ]
   },
   {
@@ -2895,6 +2932,47 @@
     51.27464,
     9.50916,
     51.31763
+   ]
+  },
+  {
+   "id": "river-geeste-bremerhaven-lehe",
+   "water": "river-geeste",
+   "name": "Geeste",
+   "river": "Geeste",
+   "waterway": "river",
+   "country": "de",
+   "place": "Bremerhaven-Lehe",
+   "center": {
+    "lat": 53.55221,
+    "lon": 8.59275
+   },
+   "clubs": [
+    "bremerhavener-ruderverein-von-1889"
+   ],
+   "lengthKm": 5.5,
+   "up": {
+    "km": 0.44,
+    "end": "weir/lock",
+    "what": "lock_gate Schleuse Bremerhaven Tor Unterstrom",
+    "at": [
+     53.55263,
+     8.59943
+    ]
+   },
+   "down": {
+    "km": 5.11,
+    "end": "line end",
+    "what": "",
+    "at": [
+     53.53517,
+     8.56892
+    ]
+   },
+   "pictureBox": [
+    8.56891,
+    53.53468,
+    8.5999,
+    53.55389
    ]
   },
   {
@@ -3567,37 +3645,29 @@
    "country": "de",
    "place": "Passau",
    "center": {
-    "lat": 48.55178,
-    "lon": 13.4344
+    "lat": 48.5491,
+    "lon": 13.43681
    },
    "clubs": [
     "passauer-ruderverein-von-1874",
     "universitaet-passau-sportzentrum"
    ],
-   "lengthKm": 4.6,
+   "lengthKm": 14.0,
    "up": {
-    "km": 0.08,
+    "km": 14.03,
     "end": "weir/lock",
-    "what": "weir Kraftwerk Passau-Ingling",
+    "what": "weir",
     "at": [
-     48.55373,
-     13.43692
+     48.43622,
+     13.43978
     ]
    },
-   "down": {
-    "km": 4.52,
-    "end": "mouth",
-    "what": "joins Donau",
-    "at": [
-     48.57464,
-     13.4848
-    ]
-   },
+   "down": null,
    "pictureBox": [
-    13.43489,
-    48.55366,
-    13.48687,
-    48.57762
+    13.42443,
+    48.50389,
+    13.45974,
+    48.55009
    ]
   },
   {
@@ -4257,47 +4327,6 @@
     53.15904,
     8.64633,
     53.16939
-   ]
-  },
-  {
-   "id": "river-limmat-baden",
-   "water": "river-limmat",
-   "name": "Limmat",
-   "river": "Limmat",
-   "waterway": "river",
-   "country": "ch",
-   "place": "Baden",
-   "center": {
-    "lat": 47.46674,
-    "lon": 8.30878
-   },
-   "clubs": [
-    "limmat-club-baden"
-   ],
-   "lengthKm": 1.7,
-   "up": {
-    "km": 1.45,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     47.45581,
-     8.31209
-    ]
-   },
-   "down": {
-    "km": 0.24,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     47.46809,
-     8.30845
-    ]
-   },
-   "pictureBox": [
-    8.30773,
-    47.45572,
-    8.31508,
-    47.46814
    ]
   },
   {
@@ -5063,8 +5092,8 @@
    "country": "de",
    "place": "Würzburg",
    "center": {
-    "lat": 49.77507,
-    "lon": 9.93138
+    "lat": 49.78154,
+    "lon": 9.92654
    },
    "clubs": [
     "akademischer-ruderclub-wuerzburg",
@@ -5072,7 +5101,7 @@
    ],
    "lengthKm": 6.2,
    "up": {
-    "km": 4.83,
+    "km": 5.12,
     "end": "weir/lock",
     "what": "lock_gate",
     "at": [
@@ -5081,7 +5110,7 @@
     ]
    },
    "down": {
-    "km": 1.03,
+    "km": 0.74,
     "end": "weir/lock",
     "what": "lock_gate",
     "at": [
@@ -5091,9 +5120,9 @@
    },
    "pictureBox": [
     9.92546,
-    49.7542,
+    49.75418,
     9.98094,
-    49.78893
+    49.78892
    ]
   },
   {
@@ -5260,6 +5289,47 @@
     52.31953,
     8.69749,
     52.34604
+   ]
+  },
+  {
+   "id": "river-mittellandkanal-minden",
+   "water": "river-mittellandkanal",
+   "name": "Mittellandkanal",
+   "river": "Mittellandkanal",
+   "waterway": "canal",
+   "country": "de",
+   "place": "Minden",
+   "center": {
+    "lat": 52.30087,
+    "lon": 8.88986
+   },
+   "clubs": [
+    "rr-besselgymnasium-minden"
+   ],
+   "lengthKm": 40.2,
+   "up": {
+    "km": 10.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     52.30184,
+     9.03256
+    ]
+   },
+   "down": {
+    "km": 10.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     52.32273,
+     8.75089
+    ]
+   },
+   "pictureBox": [
+    8.81641,
+    52.25565,
+    8.96331,
+    52.34609
    ]
   },
   {
@@ -6008,23 +6078,23 @@
    ]
   },
   {
-   "id": "river-neckar-lauffen",
+   "id": "river-neckar-lauffen-am-neckar",
    "water": "river-neckar",
    "name": "Neckar",
    "river": "Neckar",
    "waterway": "river",
    "country": "de",
-   "place": "Lauffen",
+   "place": "Lauffen am Neckar",
    "center": {
-    "lat": 49.06903,
-    "lon": 9.16262
+    "lat": 49.06944,
+    "lon": 9.16465
    },
    "clubs": [
     "lauffener-ruderclub-neckar-ev-1931"
    ],
-   "lengthKm": 11.2,
+   "lengthKm": 10.8,
    "up": {
-    "km": 10.68,
+    "km": 10.53,
     "end": "weir/lock",
     "what": "lock_gate",
     "at": [
@@ -6032,20 +6102,12 @@
      9.15551
     ]
    },
-   "down": {
-    "km": 0.29,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     49.07245,
-     9.16095
-    ]
-   },
+   "down": null,
    "pictureBox": [
     9.14996,
-    49.02381,
+    49.02422,
     9.17971,
-    49.07281
+    49.07026
    ]
   },
   {
@@ -6377,49 +6439,6 @@
    ]
   },
   {
-   "id": "river-neue-donau-wien",
-   "water": "river-neue-donau",
-   "name": "Neue Donau",
-   "river": "Neue Donau",
-   "waterway": "river",
-   "country": "at",
-   "place": "Wien",
-   "center": {
-    "lat": 48.21775,
-    "lon": 16.43292
-   },
-   "clubs": [
-    "wiener-ruder-club-pirat",
-    "wiener-ruderclub-donaubund",
-    "wiener-ruderclub-pirat"
-   ],
-   "lengthKm": 11.0,
-   "up": {
-    "km": 10.86,
-    "end": "weir/lock",
-    "what": "weir Einlaufbauwerk",
-    "at": [
-     48.29514,
-     16.35088
-    ]
-   },
-   "down": {
-    "km": 1.1,
-    "end": "weir/lock",
-    "what": "weir Wehr 1",
-    "at": [
-     48.21408,
-     16.4338
-    ]
-   },
-   "pictureBox": [
-    16.36551,
-    48.21336,
-    16.43439,
-    48.26297
-   ]
-  },
-  {
    "id": "river-norder-tief-norden",
    "water": "river-norder-tief",
    "name": "Norder Tief",
@@ -6458,6 +6477,47 @@
     53.54409,
     7.28597,
     53.61624
+   ]
+  },
+  {
+   "id": "river-obereider-rendsburg",
+   "water": "river-obereider",
+   "name": "Obereider",
+   "river": "Eider",
+   "waterway": "river",
+   "country": "de",
+   "place": "Rendsburg",
+   "center": {
+    "lat": 54.30828,
+    "lon": 9.67601
+   },
+   "clubs": [
+    "rendsburger-primaner-ruderclub-von-1880"
+   ],
+   "lengthKm": 24.8,
+   "up": {
+    "km": 7.19,
+    "end": "mouth",
+    "what": "joins Nord-Ostsee-Kanal",
+    "at": [
+     54.34189,
+     9.74999
+    ]
+   },
+   "down": {
+    "km": 9.61,
+    "end": "km sign",
+    "what": "river km 53",
+    "at": [
+     54.22806,
+     9.60242
+    ]
+   },
+   "pictureBox": [
+    9.60158,
+    54.26306,
+    9.75127,
+    54.34403
    ]
   },
   {
@@ -6584,44 +6644,44 @@
    ]
   },
   {
-   "id": "river-olpe-olpe",
-   "water": "river-olpe",
-   "name": "Olpe",
-   "river": "Olpe",
+   "id": "river-oste-hemmoor",
+   "water": "river-oste",
+   "name": "Oste",
+   "river": "Oste",
    "waterway": "river",
    "country": "de",
-   "place": "Olpe",
+   "place": "Hemmoor",
    "center": {
-    "lat": 51.03322,
-    "lon": 7.84705
+    "lat": 53.69633,
+    "lon": 9.17443
    },
    "clubs": [
-    "ruderriege-am-staedt-gymnasium-olpe"
+    "wasserfreunde-hemmoor-ev-abt-rudern"
    ],
-   "lengthKm": 4.7,
+   "lengthKm": 20.0,
    "up": {
-    "km": 4.06,
-    "end": "line end",
-    "what": "",
-    "at": [
-     51.03146,
-     7.89485
-    ]
-   },
-   "down": {
-    "km": 0.66,
+    "km": 12.0,
     "end": "cap",
     "what": "",
     "at": [
-     51.02784,
-     7.84219
+     53.66874,
+     9.27936
+    ]
+   },
+   "down": {
+    "km": 8.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     53.75865,
+     9.14728
     ]
    },
    "pictureBox": [
-    7.84213,
-    51.02757,
-    7.89586,
-    51.03779
+    9.14612,
+    53.66703,
+    9.25029,
+    53.74155
    ]
   },
   {
@@ -7004,38 +7064,30 @@
    "country": "ch",
    "place": "Birsfelden",
    "center": {
-    "lat": 47.56031,
-    "lon": 7.63225
+    "lat": 47.56086,
+    "lon": 7.63304
    },
    "clubs": [
     "basler-ruder-club",
     "ruderclub-blauweiss-basel",
     "wasserfahrverein-birsfelden-wfvb"
    ],
-   "lengthKm": 7.2,
-   "up": {
-    "km": 7.2,
-    "end": "weir/lock",
-    "what": "weir Staustufe Augst/Wyhlen",
-    "at": [
-     47.53747,
-     7.70754
-    ]
-   },
+   "lengthKm": 0.6,
+   "up": null,
    "down": {
-    "km": 0.07,
+    "km": 0.65,
     "end": "weir/lock",
-    "what": "lock_gate",
+    "what": "weir",
     "at": [
-     47.55919,
-     7.63273
+     47.56113,
+     7.6256
     ]
    },
    "pictureBox": [
-    7.63269,
-    47.53151,
-    7.69881,
-    47.56231
+    7.62529,
+    47.5595,
+    7.63444,
+    47.56263
    ]
   },
   {
@@ -7364,16 +7416,16 @@
    ]
   },
   {
-   "id": "river-rhein-dusseldorf-3",
+   "id": "river-rhein-dusseldorf-stadtbezirk",
    "water": "river-rhein",
    "name": "Rhein",
    "river": "Rhein",
    "waterway": "river",
    "country": "de",
-   "place": "Düsseldorf",
+   "place": "Düsseldorf-Stadtbezirk",
    "center": {
-    "lat": 51.2502,
-    "lon": 6.75832
+    "lat": 51.25018,
+    "lon": 6.75743
    },
    "clubs": [
     "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893"
@@ -7399,9 +7451,50 @@
    },
    "pictureBox": [
     6.69966,
-    51.20498,
+    51.20496,
     6.7707,
-    51.29542
+    51.2954
+   ]
+  },
+  {
+   "id": "river-rhein-elchesheim-illingen",
+   "water": "river-rhein",
+   "name": "Rhein",
+   "river": "Le Rhin / Rhein",
+   "waterway": "river",
+   "country": "de",
+   "place": "Elchesheim-Illingen",
+   "center": {
+    "lat": 48.9185,
+    "lon": 8.18019
+   },
+   "clubs": [
+    "ruder-club-rastatt-1898"
+   ],
+   "lengthKm": 23.4,
+   "up": {
+    "km": 11.04,
+    "end": "weir/lock",
+    "what": "weir Stauwehr Iffezheim",
+    "at": [
+     48.83613,
+     8.10505
+    ]
+   },
+   "down": {
+    "km": 12.51,
+    "end": "river",
+    "what": "Altrhein branches off",
+    "at": [
+     48.99781,
+     8.28687
+    ]
+   },
+   "pictureBox": [
+    8.11184,
+    48.87328,
+    8.24854,
+    48.96372
    ]
   },
   {
@@ -7659,36 +7752,28 @@
    "country": "de",
    "place": "Herne",
    "center": {
-    "lat": 51.54751,
-    "lon": 7.18091
+    "lat": 51.54789,
+    "lon": 7.15863
    },
    "clubs": [
     "ruderverein-emscher-wanne-eickel-herten"
    ],
-   "lengthKm": 6.3,
-   "up": {
-    "km": 4.61,
-    "end": "weir/lock",
-    "what": "lock_gate",
-    "at": [
-     51.5643,
-     7.2408
-    ]
-   },
+   "lengthKm": 7.7,
+   "up": null,
    "down": {
-    "km": 0.94,
+    "km": 7.55,
     "end": "weir/lock",
     "what": "lock_gate",
     "at": [
-     51.54846,
-     7.16581
+     51.53191,
+     7.05827
     ]
    },
    "pictureBox": [
-    7.16547,
-    51.54726,
-    7.24086,
-    51.56507
+    7.0864,
+    51.52949,
+    7.15947,
+    51.54802
    ]
   },
   {
@@ -7815,8 +7900,8 @@
    "country": "de",
    "place": "Karlsruhe",
    "center": {
-    "lat": 49.01257,
-    "lon": 8.33739
+    "lat": 49.01264,
+    "lon": 8.33682
    },
    "clubs": [
     "karlsruher-rheinklub-alemannia",
@@ -7843,52 +7928,10 @@
     ]
    },
    "pictureBox": [
-    8.26891,
-    48.96735,
+    8.26834,
+    48.96742,
     8.34156,
-    49.05779
-   ]
-  },
-  {
-   "id": "river-rhein-koln",
-   "water": "river-rhein",
-   "name": "Rhein",
-   "river": "Rhein",
-   "waterway": "river",
-   "country": "de",
-   "place": "Köln",
-   "center": {
-    "lat": 50.87302,
-    "lon": 7.04861
-   },
-   "clubs": [
-    "club-fuer-wassersport-porz-ev-1926",
-    "tpsk-von-1925"
-   ],
-   "lengthKm": 20.0,
-   "up": {
-    "km": 12.0,
-    "end": "cap",
-    "what": "",
-    "at": [
-     50.80907,
-     7.02955
-    ]
-   },
-   "down": {
-    "km": 8.0,
-    "end": "cap",
-    "what": "",
-    "at": [
-     50.91414,
-     6.975
-    ]
-   },
-   "pictureBox": [
-    6.97743,
-    50.8278,
-    7.05399,
-    50.91478
+    49.05786
    ]
   },
   {
@@ -8102,6 +8145,47 @@
    ]
   },
   {
+   "id": "river-rhein-ludwigshafen-am-rhein-rheingonheim",
+   "water": "river-rhein",
+   "name": "Rhein",
+   "river": "Rhein",
+   "waterway": "river",
+   "country": "de",
+   "place": "Ludwigshafen am Rhein-Rheingönheim",
+   "center": {
+    "lat": 49.43886,
+    "lon": 8.46145
+   },
+   "clubs": [
+    "ludwigshafener-ruderverein-von-1878-rheingoenheim"
+   ],
+   "lengthKm": 12.6,
+   "up": {
+    "km": 3.35,
+    "end": "harbour",
+    "what": "harbour Rheinauhafen (Hafenbecken 21)",
+    "at": [
+     49.43909,
+     8.50641
+    ]
+   },
+   "down": {
+    "km": 9.25,
+    "end": "harbour",
+    "what": "harbour Mühlauhafen",
+    "at": [
+     49.50512,
+     8.4383
+    ]
+   },
+   "pictureBox": [
+    8.43699,
+    49.43846,
+    8.50772,
+    49.48408
+   ]
+  },
+  {
    "id": "river-rhein-mainz",
    "water": "river-rhein",
    "name": "Rhein",
@@ -8141,48 +8225,6 @@
     49.99273,
     8.29589,
     50.0394
-   ]
-  },
-  {
-   "id": "river-rhein-mainz-kostheim",
-   "water": "river-rhein",
-   "name": "Rhein",
-   "river": "Rhein",
-   "waterway": "river",
-   "country": "de",
-   "place": "Mainz-Kostheim",
-   "center": {
-    "lat": 49.99718,
-    "lon": 8.28697
-   },
-   "clubs": [
-    "kasteler-ruder-und-kanu-gesellschaft-1880",
-    "mainzer-ruder-verein-1878"
-   ],
-   "lengthKm": 27.0,
-   "up": {
-    "km": 12.0,
-    "end": "cap",
-    "what": "",
-    "at": [
-     49.90195,
-     8.34989
-    ]
-   },
-   "down": {
-    "km": 8.0,
-    "end": "cap",
-    "what": "",
-    "at": [
-     50.03464,
-     8.20352
-    ]
-   },
-   "pictureBox": [
-    8.2171,
-    49.95196,
-    8.35684,
-    50.03941
    ]
   },
   {
@@ -8311,6 +8353,47 @@
    ]
   },
   {
+   "id": "river-rhein-mannheim-waldhof",
+   "water": "river-rhein",
+   "name": "Rhein",
+   "river": "Hafenschleuse",
+   "waterway": "canal",
+   "country": "de",
+   "place": "Mannheim-Waldhof",
+   "center": {
+    "lat": 49.51978,
+    "lon": 8.4713
+   },
+   "clubs": [
+    "volkstuemlicher-wassersport-mannheim"
+   ],
+   "lengthKm": 35.5,
+   "up": {
+    "km": 0.08,
+    "end": "weir/lock",
+    "what": "lock",
+    "at": [
+     49.50729,
+     8.44824
+    ]
+   },
+   "down": {
+    "km": 0.0,
+    "end": "line end",
+    "what": "",
+    "at": [
+     49.50729,
+     8.44824
+    ]
+   },
+   "pictureBox": [
+    8.41209,
+    49.47456,
+    8.54049,
+    49.565
+   ]
+  },
+  {
    "id": "river-rhein-neuwied",
    "water": "river-rhein",
    "name": "Rhein",
@@ -8351,6 +8434,89 @@
     50.39406,
     7.531,
     50.45638
+   ]
+  },
+  {
+   "id": "river-rhein-niederkassel",
+   "water": "river-rhein",
+   "name": "Rhein",
+   "river": "Rhein",
+   "waterway": "river",
+   "country": "de",
+   "place": "Niederkassel",
+   "center": {
+    "lat": 50.77193,
+    "lon": 7.07566
+   },
+   "clubs": [
+    "rudergesellschaft-niederkassel-von-1978"
+   ],
+   "lengthKm": 20.0,
+   "up": {
+    "km": 12.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     50.68847,
+     7.1753
+    ]
+   },
+   "down": {
+    "km": 8.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     50.82304,
+     7.0159
+    ]
+   },
+   "pictureBox": [
+    7.01405,
+    50.72671,
+    7.14668,
+    50.81715
+   ]
+  },
+  {
+   "id": "river-rhein-porz",
+   "water": "river-rhein",
+   "name": "Rhein",
+   "river": "Rhein",
+   "waterway": "river",
+   "country": "de",
+   "place": "Porz",
+   "center": {
+    "lat": 50.87418,
+    "lon": 7.04789
+   },
+   "clubs": [
+    "club-fuer-wassersport-porz-ev-1926",
+    "tpsk-von-1925"
+   ],
+   "lengthKm": 20.0,
+   "up": {
+    "km": 12.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     50.80907,
+     7.02955
+    ]
+   },
+   "down": {
+    "km": 8.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     50.91414,
+     6.975
+    ]
+   },
+   "pictureBox": [
+    6.97671,
+    50.82896,
+    7.05399,
+    50.91478
    ]
   },
   {
@@ -8433,6 +8599,47 @@
     47.53728,
     7.81296,
     47.56976
+   ]
+  },
+  {
+   "id": "river-rhein-riedstadt",
+   "water": "river-rhein",
+   "name": "Rhein",
+   "river": "Altrhein",
+   "waterway": "river",
+   "country": "de",
+   "place": "Riedstadt",
+   "center": {
+    "lat": 49.83657,
+    "lon": 8.45757
+   },
+   "clubs": [
+    "darmstaedter-schwimm-und-wassersport-club-1912"
+   ],
+   "lengthKm": 30.6,
+   "up": {
+    "km": 10.56,
+    "end": "mouth",
+    "what": "joins Rhein",
+    "at": [
+     49.77562,
+     8.41422
+    ]
+   },
+   "down": {
+    "km": 8.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     49.83471,
+     8.37823
+    ]
+   },
+   "pictureBox": [
+    8.38793,
+    49.79135,
+    8.48258,
+    49.8379
    ]
   },
   {
@@ -8597,6 +8804,48 @@
     51.61418,
     6.61282,
     51.67224
+   ]
+  },
+  {
+   "id": "river-rhein-wiesbaden",
+   "water": "river-rhein",
+   "name": "Rhein",
+   "river": "Rhein",
+   "waterway": "river",
+   "country": "de",
+   "place": "Wiesbaden",
+   "center": {
+    "lat": 49.99636,
+    "lon": 8.28688
+   },
+   "clubs": [
+    "kasteler-ruder-und-kanu-gesellschaft-1880",
+    "mainzer-ruder-verein-1878"
+   ],
+   "lengthKm": 31.0,
+   "up": {
+    "km": 12.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     49.90195,
+     8.34989
+    ]
+   },
+   "down": {
+    "km": 8.0,
+    "end": "cap",
+    "what": "",
+    "at": [
+     50.03486,
+     8.19789
+    ]
+   },
+   "pictureBox": [
+    8.21701,
+    49.95115,
+    8.35675,
+    50.0394
    ]
   },
   {
@@ -8942,34 +9191,26 @@
    "country": "de",
    "place": "Wetter",
    "center": {
-    "lat": 51.38054,
-    "lon": 7.39683
+    "lat": 51.38027,
+    "lon": 7.39696
    },
    "clubs": [
     "ruder-club-mark",
     "sportgemeinschaft-demag-ev-wetter"
    ],
-   "lengthKm": 1.9,
+   "lengthKm": 1.5,
    "up": {
-    "km": 0.07,
+    "km": 0.56,
     "end": "weir/lock",
-    "what": "weir",
+    "what": "dam",
     "at": [
-     51.37964,
-     7.40069
+     51.38307,
+     7.40455
     ]
    },
-   "down": {
-    "km": 0.47,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     51.37588,
-     7.39711
-    ]
-   },
+   "down": null,
    "pictureBox": [
-    7.39221,
+    7.39397,
     51.37555,
     7.42169,
     51.40217
@@ -8984,8 +9225,8 @@
    "country": "de",
    "place": "Witten",
    "center": {
-    "lat": 51.42405,
-    "lon": 7.34961
+    "lat": 51.42419,
+    "lon": 7.34964
    },
    "clubs": [
     "ruder-club-witten",
@@ -9012,7 +9253,7 @@
    },
    "pictureBox": [
     7.29946,
-    51.37884,
+    51.37898,
     7.39607,
     51.43312
    ]
@@ -9471,44 +9712,36 @@
    ]
   },
   {
-   "id": "river-sieg-niederkassel",
-   "water": "river-sieg",
-   "name": "Sieg",
-   "river": "Sieg",
+   "id": "river-salzach-anif",
+   "water": "river-salzach",
+   "name": "Salzach",
+   "river": "Salzach",
    "waterway": "river",
-   "country": "de",
-   "place": "Niederkassel",
+   "country": "at",
+   "place": "Anif",
    "center": {
-    "lat": 50.77228,
-    "lon": 7.07562
+    "lat": 47.73151,
+    "lon": 13.08145
    },
    "clubs": [
-    "rudergesellschaft-niederkassel-von-1978"
+    "ruder-club-salzburg"
    ],
-   "lengthKm": 34.9,
+   "lengthKm": 8.4,
    "up": {
-    "km": 14.94,
+    "km": 7.63,
     "end": "weir/lock",
-    "what": "weir Siegwehr Buisdorf",
+    "what": "weir",
     "at": [
-     50.7883,
-     7.22601
+     47.67288,
+     13.10852
     ]
    },
-   "down": {
-    "km": 8.0,
-    "end": "cap",
-    "what": "",
-    "at": [
-     50.82178,
-     7.01991
-    ]
-   },
+   "down": null,
    "pictureBox": [
-    7.01715,
-    50.72706,
-    7.14664,
-    50.8175
+    13.07628,
+    47.68629,
+    13.10869,
+    47.73188
    ]
   },
   {
@@ -9676,16 +9909,16 @@
    ]
   },
   {
-   "id": "river-stichkanal-osnabrueck-osnabruck",
+   "id": "river-stichkanal-osnabrueck-osnabruck-eversburg",
    "water": "river-stichkanal-osnabrueck",
    "name": "Stichkanal Osnabrück",
    "river": "Stichkanal Osnabrück",
    "waterway": "canal",
    "country": "de",
-   "place": "Osnabrück",
+   "place": "Osnabrück-Eversburg",
    "center": {
-    "lat": 52.30966,
-    "lon": 8.00023
+    "lat": 52.30977,
+    "lon": 7.99962
    },
    "clubs": [
     "osnabruecker-ruder-verein",
@@ -10162,6 +10395,39 @@
     51.30607,
     12.35269,
     51.33517
+   ]
+  },
+  {
+   "id": "river-wesel-datteln-kanal-datteln",
+   "water": "river-wesel-datteln-kanal",
+   "name": "Wesel-Datteln-Kanal",
+   "river": "Wesel-Datteln-Kanal",
+   "waterway": "canal",
+   "country": "de",
+   "place": "Datteln",
+   "center": {
+    "lat": 51.65802,
+    "lon": 7.36218
+   },
+   "clubs": [
+    "ruderverein-datteln-von-1928"
+   ],
+   "lengthKm": 19.5,
+   "up": {
+    "km": 5.7,
+    "end": "weir/lock",
+    "what": "lock_gate",
+    "at": [
+     51.61881,
+     7.33213
+    ]
+   },
+   "down": null,
+   "pictureBox": [
+    7.32505,
+    51.6128,
+    7.43458,
+    51.66993
    ]
   },
   {
