@@ -44,6 +44,8 @@ enum Tutorial {
         }
         if defaults.bool(forKey: "RWNoTips") { Tips.hideAllTipsForTesting() }
         if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
+        // `-RWBoatTip YES` shows the boats-at-other-clubs tip, with the others hidden.
+        if defaults.bool(forKey: "RWBoatTip") { Tips.showTipsForTesting([BoatsElsewhereTip.self]) }
         if defaults.bool(forKey: "RWLaterTips") {
             Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
             Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
@@ -741,6 +743,13 @@ struct ChartScrubTip: Tip {
     var title: Text { Text(tr("Read any hour")) }
     var message: Text? { Text(tr("Hold the chart, then slide along it to read the value at each hour.")) }
     var image: Image? { Image(systemName: "hand.draw") }
+}
+
+/// On a club page where one of the user's own boats is kept at another club.
+struct BoatsElsewhereTip: Tip {
+    var title: Text { Text(tr("Your boats at other clubs")) }
+    var message: Text? { Text(tr("Your boats show at the clubs where they are kept. At a regatta, tap a boat under “At other clubs” to take it along.")) }
+    var image: Image? { Image(systemName: "arrow.down.circle") }
 }
 
 struct RoutePlanningTip: Tip {

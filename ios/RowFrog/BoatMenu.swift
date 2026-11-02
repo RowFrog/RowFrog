@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 
 /// Picks the boat the rowing light is worked out for, right on a club page:
 /// from the "For small boats" line in the top tile and the boat button in the
@@ -35,6 +36,7 @@ struct BoatMenu<MenuLabel: View>: View {
                         Button {
                             settings.keep(boat.id, at: clubID)
                             settings.pick(boat.id, at: clubID)
+                            BoatsElsewhereTip().invalidate(reason: .actionPerformed)
                         } label: {
                             Label(boat.title, systemImage: "arrow.down.circle")
                             Text(tr("At %@ · tap to take it here", boat.clubs.map(clubName).formatted(.list(type: .and))))

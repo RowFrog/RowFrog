@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 
 /// Like the iOS Weather app: one full-screen page per saved location, swiped
 /// left and right, with the home base first, and a list of all locations
@@ -617,9 +618,11 @@ struct PageBoatButton: View {
     let clubID: String
     let now: ForecastHour?
     let waterC: Double?
+    @AppStorage(Tutorial.seenKey) private var tourSeen = false
 
     var body: some View {
         let boat = AppSettings.shared.boat(at: clubID)
+        let away = AppSettings.shared.myBoats.contains { !AppSettings.shared.isKept($0, at: clubID) }
         BoatMenu(clubID: clubID, hour: now, waterC: waterC) {
             BoatClassTag(boat: boat)
                 .frame(width: 48, height: 44)
@@ -629,6 +632,21 @@ struct PageBoatButton: View {
         .tint(boat.isGroup ? Color.primary : Color.accentColor)
         .accessibilityLabel(tr("Boat: %@", boat.title))
         .accessibilityHint(tr("Picks another boat for the rowing light."))
+        // Once, on the first club where an own boat is kept elsewhere.
+        .modifier(BoatsElsewhereTipAnchor(shown: tourSeen && away))
+    }
+}
+
+/// `popoverTip` with an optional tip needs iOS 18.4, so the tip is attached only when it applies.
+private struct BoatsElsewhereTipAnchor: ViewModifier {
+    let shown: Bool
+
+    func body(content: Content) -> some View {
+        if shown {
+            content.popoverTip(BoatsElsewhereTip(), arrowEdge: .top)
+        } else {
+            content
+        }
     }
 }
 
