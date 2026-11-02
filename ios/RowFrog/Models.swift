@@ -477,6 +477,9 @@ struct DWDWarning: Codable, Hashable, Identifiable {
     var english: EnglishWarningText? = nil
     /// "dwd" or "geosphere"; missing from older backends, which had DWD only.
     var source: String? = nil
+    /// The issuing service's page for this warning's place, by language ("de", "en");
+    /// missing from older backends (backend/rowfrog/warning_links.py).
+    var links: [String: String]? = nil
 
     var id: String { [kind, area, event, onset?.description ?? "", headline].joined(separator: "|") }
     var isDWD: Bool { (source ?? "dwd") == "dwd" }

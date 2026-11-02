@@ -4520,6 +4520,10 @@
     "headline": "Sturmwarnung für Starnberger See",
     "instruction": "Boote an Land holen oder sofort das nächste Ufer anfahren.",
     "kind": "lake",
+    "links": {
+     "de": "https://www.wettergefahren.de/warnungen/binnenseewarnungen.html",
+     "en": "https://www.wettergefahren.de/warnungen/binnenseewarnungen.html"
+    },
     "onset": "2026-10-18T06:00:00+00:00",
     "sample": true,
     "severity": "severe",
@@ -4540,6 +4544,10 @@
     "headline": "Amtliche WARNUNG vor FROST",
     "instruction": "Hinweis auf: mögliche Frostschäden.",
     "kind": "local",
+    "links": {
+     "de": "https://www.dwd.de/DE/wetter/warnungen_gemeinden/warnWetter_node.html?ort=Starnberg",
+     "en": "https://www.dwd.de/EN/weather/warnings/warnings_node.html?ort=Starnberg"
+    },
     "onset": "2026-10-18T12:00:00+00:00",
     "sample": true,
     "severity": "minor",

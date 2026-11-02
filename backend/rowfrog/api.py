@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, water_stations, weather_models
+from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, warning_links, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
 from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, meteoalarm, lake_temperature_satellite, open_meteo, pegelonline
@@ -338,7 +338,9 @@ def _english_json(e: dwd_warnings.EnglishText | None) -> dict | None:
     }
 
 
-def _warning_json(w: dwd_warnings.Warning, english: dwd_warnings.EnglishText | None = None, sample: bool = False) -> dict:
+def _warning_json(
+    w: dwd_warnings.Warning, english: dwd_warnings.EnglishText | None = None, sample: bool = False, club: locations.Club | None = None
+) -> dict:
     return {
         "kind": w.kind,
         "source": w.source,
@@ -353,6 +355,8 @@ def _warning_json(w: dwd_warnings.Warning, english: dwd_warnings.EnglishText | N
         "sample": sample,
         # DWD's English text where it publishes one, else the event and headline translated.
         "english": _english_json(english),
+        # The issuing service's page for this warning's place, {"de": url, "en": url} (warning_links.py).
+        "links": None if club is None else warning_links.links(w.source, w.kind, club.address, club.launch_point.lon, club.launch_point.lat),
     }
 
 
@@ -518,20 +522,20 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         return result
     english = await _english_texts(client) if lake or any(w.source == "dwd" for w in local) else {}
     english = {**english, **own_english}
-    items = [_warning_json(w, _english_for(w, english)) for w in lake + local]
+    items = [_warning_json(w, _english_for(w, english), club=club) for w in lake + local]
     if club.id in SAMPLE_WARNING_CLUBS and area is not None:
         sample = _sample_warning(area.name, now)
         lake.append(sample)
-        items.insert(0, _warning_json(sample, _SAMPLE_ENGLISH, sample=True))
+        items.insert(0, _warning_json(sample, _SAMPLE_ENGLISH, sample=True, club=club))
     elif club.id in SAMPLE_WARNING_CLUBS and club.country in CHECKED_COUNTRIES:
         # Without a DWD lake area (Austria, Switzerland): a made-up thunderstorm warning from the place's own service.
         sample = _sample_local_warning(club, now)
         local.append(sample)
-        items.insert(0, _warning_json(sample, _SAMPLE_LOCAL_ENGLISH, sample=True))
+        items.insert(0, _warning_json(sample, _SAMPLE_LOCAL_ENGLISH, sample=True, club=club))
     if club.id in SAMPLE_FROST_CLUBS and club.country in CHECKED_COUNTRIES:
         sample = _sample_frost_warning(club, now)
         local.append(sample)
-        items.append(_warning_json(sample, _SAMPLE_FROST_ENGLISH, sample=True))
+        items.append(_warning_json(sample, _SAMPLE_FROST_ENGLISH, sample=True, club=club))
     current = [w for w in lake + local if w.expires is None or w.expires > now]
     block = {"status": "ok", "lakeArea": None if area is None else area.name, "items": items, "local": _local_service(club)}
     if area is not None:

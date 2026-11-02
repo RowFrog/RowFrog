@@ -152,6 +152,7 @@ button.wide { margin-top: 0; }
 
 /* Warnings card. */
 .warning { border-left: 4px solid var(--w); border-radius: 2px; padding: 2px 0 2px 10px; margin: 8px 0; font-size: 15px; }
+.warning .source-links { margin-top: 6px; line-height: 1.6; }
 .warning p { margin: 3px 0; }
 .warning .headline { font-weight: 600; font-size: 17px; }
 .original { background: color-mix(in srgb, var(--sub) 10%, transparent); color: var(--sub); border-radius: 8px; padding: 8px; font-size: 12px; margin-top: 6px; }

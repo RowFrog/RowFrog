@@ -1202,7 +1202,25 @@ function warningRow(w) {
     ${warningInfoOnly(w) ? `<p class="sub small info-line">${icon("info")} <span>${h(warningSlippery(w)
       ? t("Not part of the rowing light. The jetty and boat area may be slippery.")
       : t("Not part of the rowing light: it is not about the water."))}</span></p>` : ""}
+    ${sourceLinks(w)}
   </div>`;
+}
+
+// DWD's WarnWetter app (App Store id 986420993); it has no web links to open it at a place.
+const WARNWETTER_APP_STORE = "https://apps.apple.com/de/app/id986420993";
+
+/**
+ * Where the warning can be read at the service that issued it (SourceLinks in
+ * WarningsCard.swift): DWD's town or inland lake page, GeoSphere's map at the
+ * launch point, MeteoSwiss's hazards page (its app opens that page on an iPhone).
+ */
+function sourceLinks(w) {
+  const url = w.links?.[lang()] ?? w.links?.de;
+  if (!url) return "";
+  const main = w.source === "meteoswiss" ? t("Show in the MeteoSwiss app or website") : t("Show on the %@ website", serviceShort(w.source));
+  return `<p class="source-links"><a class="strong" href="${h(url)}" target="_blank" rel="noopener">${icon("link")} ${h(main)}</a>`
+    + (isDWD(w) ? `<br><a class="small" href="${WARNWETTER_APP_STORE}" target="_blank" rel="noopener">${icon("link")} ${h(t("DWD WarnWetter app in the App Store"))}</a>` : "")
+    + `</p>`;
 }
 
 /**

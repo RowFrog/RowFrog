@@ -196,6 +196,7 @@ private struct WarningRow: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                SourceLinks(warning: warning)
             }
         }
         .padding(.vertical, 2)
@@ -207,6 +208,36 @@ private struct WarningRow: View {
         case let (onset?, nil): tr("From %@", Format.dayTime(onset))
         case let (nil, expires?): tr("Until %@", Format.dayTime(expires))
         default: nil
+        }
+    }
+}
+
+/// Where the warning can be read at the service that issued it. No service has a
+/// page for a single warning, so this opens its page for the place: DWD's town page
+/// (or inland lake page), GeoSphere's map at the launch point, MeteoSwiss's hazards
+/// page, which the MeteoSwiss app opens itself where it is installed. DWD's
+/// WarnWetter app cannot be opened at a place, so it is offered via the App Store.
+struct SourceLinks: View {
+    let warning: DWDWarning
+
+    var body: some View {
+        if let url = warning.sourceURL {
+            VStack(alignment: .leading, spacing: 4) {
+                Link(destination: url) {
+                    Label(warning.source == "meteoswiss"
+                          ? tr("Show in the MeteoSwiss app or website")
+                          : tr("Show on the %@ website", warning.serviceShort),
+                          systemImage: "arrow.up.right.square")
+                }
+                if warning.isDWD {
+                    Link(destination: DWDWarning.warnWetterAppStore) {
+                        Label(tr("DWD WarnWetter app in the App Store"), systemImage: "arrow.down.app")
+                    }
+                    .font(.caption)
+                }
+            }
+            .font(.subheadline.weight(.semibold))
+            .padding(.top, 2)
         }
     }
 }
@@ -295,6 +326,15 @@ extension DWDWarning {
     func isActive(at date: Date) -> Bool {
         (onset ?? .distantPast) <= date && date < (expires ?? .distantFuture)
     }
+
+    /// The issuing service's page for the warning's place, in the app's language.
+    var sourceURL: URL? {
+        guard let links else { return nil }
+        return (links[warningsInEnglish ? "en" : "de"] ?? links["de"]).flatMap(URL.init(string:))
+    }
+
+    /// DWD's WarnWetter app (App Store id 986420993); the store shows "Open" where it is installed.
+    static let warnWetterAppStore = URL(string: "https://apps.apple.com/de/app/id986420993")!
 
     /// Changes the rowing light: lake warnings and weather warnings about the water.
     var counts: Bool { !isInfoOnly }
