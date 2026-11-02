@@ -71,3 +71,26 @@ def test_a_club_rowing_at_two_sites_gets_a_second_entry(tmp_path, monkeypatch):
     assert [w["id"] for w in waters] == ["lake-a", "lake-b"]
     assert clubs[0]["lakeId"] == "lake-a", "the club's own entry stays"
     assert club_import.apply_extra_sites("de", waters, clubs) == 0, "a second run adds nothing"
+
+
+def test_hand_checked_points_and_removals_survive_an_import(tmp_path, monkeypatch):
+    checked = tmp_path / "hand-checked.json"
+    checked.write_text('''{"remove": ["association"],
+        "de": {"club": {"address": "Ufer 1, 10000 A", "club": [5.1, 6.1], "launchPoint": [5.0, 6.0], "checked": "2026-11-02"},
+               "school": {"sameAs": "club", "checked": "2026-10-31"}}}''', encoding="utf-8")
+    monkeypatch.setattr(club_import, "HAND_CHECKED", checked)
+    waters = [{"id": "lake-a"}, {"id": "river-b"}]
+    clubs = [
+        {"id": "club", "lakeId": "lake-a", "address": "Weg 2, 10000 A", "launchPoint": {"lat": 5.2, "lon": 6.2, "precision": "geocoded"}},
+        {"id": "school", "lakeId": "lake-a", "address": "10000 A", "launchPoint": {"lat": 9, "lon": 9, "precision": "town level"}},
+        {"id": "association", "lakeId": "river-b", "address": "Amt 3", "launchPoint": {"lat": 1, "lon": 1, "precision": "geocoded"}},
+    ]
+    assert club_import.apply_hand_checked("de", waters, clubs) == 3
+    assert [c["id"] for c in clubs] == ["club", "school"]
+    assert [w["id"] for w in waters] == ["lake-a"], "a water no club is left on goes"
+    lp = clubs[0]["launchPoint"]
+    assert (lp["lat"], lp["lon"], clubs[0]["address"]) == (5.0, 6.0, "Ufer 1, 10000 A")
+    assert "satellite view" in lp["precision"], "marks the point so the shore snap leaves it alone"
+    assert clubs[1]["launchPoint"] == lp and clubs[1]["address"] == "Ufer 1, 10000 A"
+    assert club_import.apply_hand_checked("de", waters, clubs) == 2, "a second run changes the same clubs, nothing new"
+    assert [c["id"] for c in clubs] == ["club", "school"]

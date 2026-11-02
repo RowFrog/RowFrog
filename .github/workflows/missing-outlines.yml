@@ -1,0 +1,71 @@
+name: Missing lake outlines
+# By hand only: fetches the OpenStreetMap outline of every lake in the club
+# catalogs that has none yet (scripts/fetch_missing_outlines.py) and commits
+# the new data/outlines files. Existing outlines are never changed. Read the
+# report in the job summary: lines marked "CHECK BY HAND" were picked without
+# a matching name. Optional input: lake ids, space separated. Run it on main:
+# a bot commit on a pull request branch holds its checks.
+on:
+  workflow_dispatch:
+    inputs:
+      lakes:
+        description: "Lake ids (empty = all lakes without an outline)"
+        required: false
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: missing-outlines-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Overpass is often slow; ten parts each take a share of the lakes.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e backend
+      - name: Fetch the outlines
+        timeout-minutes: 30
+        env:
+          LAKES: ${{ inputs.lakes }}
+          SHARD: ${{ matrix.shard }}/10
+        run: |
+          set -o pipefail
+          cd scripts
+          python3 -u fetch_missing_outlines.py $LAKES | tee ../report.txt
+          { echo '### Missing lake outlines'; echo '```'; cat ../report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Check the outlines load
+        if: always()
+        run: |
+          python3 -c '
+          import glob
+          from rowfrog import outlines
+          for f in sorted(glob.glob("data/outlines/*.geojson")):
+              outlines.load(f.split("/")[-1][:-8])
+          print("all outlines load")'
+      - name: Commit the outlines (also the ones fetched before a time-out)
+        if: always()
+        run: |
+          git add data/outlines
+          if git diff --cached --quiet; then
+            echo "No new outlines."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Outlines for lakes that had none (OpenStreetMap, part ${{ matrix.shard }})"
+            for i in 1 2 3 4 5; do
+              git pull --rebase && git push && break
+              sleep $((i * 5))
+            done
+          fi

@@ -1,0 +1,702 @@
+{
+  "comment": "Launch points and addresses checked by hand by the owner (satellite view), and entries that are not rowing clubs. club id -> address, club (the boathouse, [lat, lon]), launchPoint ([lat, lon]), checked (date); \"sameAs\" copies another club's values (a school crew at a club's boathouse). \"remove\" lists ids to drop: associations and clubs of other sports. Applied by club_import.apply_hand_checked on every import, after water-fixes.json; the water itself stays with water-fixes.json and extra-sites.json.",
+  "remove": [
+    "landesruderverband-niederoesterreich",
+    "landesruderverband-oberoesterreich",
+    "landesruderverband-wien",
+    "landesruderverband-berlin",
+    "hamburger-schueler-ruderverband",
+    "usv-sattler-rudersdorf"
+  ],
+  "at": {
+    "korneuburger-ruderverein-alemannia": {
+      "address": "Donaustraße 70, 2100 Korneuburg",
+      "club": [
+        48.339528,
+        16.321581
+      ],
+      "launchPoint": [
+        48.338911,
+        16.321179
+      ],
+      "checked": "2026-11-02"
+    },
+    "oesterr-sportunion-wallsee-sektion-rudern": {
+      "club": [
+        48.164575,
+        14.707607
+      ],
+      "launchPoint": [
+        48.164145,
+        14.706969
+      ],
+      "checked": "2026-10-31"
+    },
+    "ruder-club-salzburg": {
+      "club": [
+        47.732257,
+        13.081642
+      ],
+      "launchPoint": [
+        47.731512,
+        13.081446
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderclub-breitenbrunn": {
+      "club": [
+        47.916116,
+        16.768862
+      ],
+      "launchPoint": [
+        47.916002,
+        16.769406
+      ],
+      "checked": "2026-11-02"
+    },
+    "wassersportverein-ottensheim": {
+      "address": "Rodlstraße 21, 4100 Ottensheim",
+      "club": [
+        48.330849,
+        14.170476
+      ],
+      "launchPoint": [
+        48.328766,
+        14.171575
+      ],
+      "checked": "2026-10-31"
+    },
+    "wiener-ruder-club-pirat": {
+      "address": "Dampfschiffhaufen 65, 1220 Wien",
+      "club": [
+        48.216975,
+        16.433478
+      ],
+      "launchPoint": [
+        48.216626,
+        16.433736
+      ],
+      "checked": "2026-11-02"
+    },
+    "wiener-ruderclub-donaubund": {
+      "address": "Dampfschiffhaufen 41, 1220 Wien",
+      "club": [
+        48.219099,
+        16.432632
+      ],
+      "launchPoint": [
+        48.219186,
+        16.433164
+      ],
+      "checked": "2026-11-02"
+    },
+    "wiener-ruderverein-austria": {
+      "address": "Kuchelauer Hafenstraße 4, 1190 Wien",
+      "club": [
+        48.277185,
+        16.354589
+      ],
+      "launchPoint": [
+        48.276893,
+        16.35518
+      ],
+      "checked": "2026-11-02"
+    }
+  },
+  "ch": {
+    "ruderclub-backbord-mittelland": {
+      "address": "Seerosenstrasse 7, 5616 Meisterschwanden",
+      "club": [
+        47.285063,
+        8.225204
+      ],
+      "launchPoint": [
+        47.284934,
+        8.224543
+      ],
+      "checked": "2026-10-31"
+    },
+    "ruderclub-blauweiss-basel": {
+      "address": "Birs Kraftwerk Insel, 4127 Birsfelden",
+      "club": [
+        47.560143,
+        7.631877
+      ],
+      "launchPoint": [
+        47.560547,
+        7.632195
+      ],
+      "checked": "2026-11-02"
+    }
+  },
+  "de": {
+    "bremerhavener-ruderverein-von-1889": {
+      "address": "Stresemannstraße 51, 27576 Bremerhaven-Lehe",
+      "club": [
+        53.55179,
+        8.592487
+      ],
+      "launchPoint": [
+        53.552214,
+        8.592751
+      ],
+      "checked": "2026-11-02"
+    },
+    "celler-ruderverein": {
+      "address": "Zur Ziegeninsel 5, 29221 Celle",
+      "club": [
+        52.624658,
+        10.090306
+      ],
+      "launchPoint": [
+        52.624895,
+        10.090843
+      ],
+      "checked": "2026-11-02"
+    },
+    "club-fuer-wassersport-porz-ev-1926": {
+      "address": "In d. Rosenau 10A, 51143 Porz",
+      "club": [
+        50.873052,
+        7.048999
+      ],
+      "launchPoint": [
+        50.874181,
+        7.047891
+      ],
+      "checked": "2026-11-02"
+    },
+    "darmstaedter-schwimm-und-wassersport-club-1912": {
+      "address": "K156, 64560 Riedstadt",
+      "club": [
+        49.837026,
+        8.458211
+      ],
+      "launchPoint": [
+        49.836573,
+        8.457567
+      ],
+      "checked": "2026-11-02"
+    },
+    "emder-ruderverein": {
+      "address": "Kesselschleuse 1, 26725 Emden-Groß-Faldern",
+      "club": [
+        53.366985,
+        7.218131
+      ],
+      "launchPoint": [
+        53.366702,
+        7.217537
+      ],
+      "checked": "2026-11-02"
+    },
+    "hamburger-ruderinnen-club-von-1925": {
+      "address": "Isekai 11a, 20249 Hamburg-Nord",
+      "club": [
+        53.585458,
+        9.992146
+      ],
+      "launchPoint": [
+        53.585226,
+        9.991863
+      ],
+      "checked": "2026-10-31"
+    },
+    "huerther-rudergesellschaft": {
+      "address": "Zur Gotteshülfe 71, 50354 Hürth",
+      "club": [
+        50.879262,
+        6.846318
+      ],
+      "launchPoint": [
+        50.879371,
+        6.844747
+      ],
+      "checked": "2026-11-02"
+    },
+    "karlsruher-rheinklub-alemannia": {
+      "address": "Werftstraße 8 b, 76189 Karlsruhe-Mühlburg",
+      "club": [
+        49.017369,
+        8.342486
+      ],
+      "launchPoint": [
+        49.017414,
+        8.341558
+      ],
+      "checked": "2026-11-02"
+    },
+    "karlsruher-ruder-verein-wiking-von-1879": {
+      "address": "Hansastraße 18, 76189 Karlsruhe",
+      "club": [
+        49.01017,
+        8.335075
+      ],
+      "launchPoint": [
+        49.010248,
+        8.334445
+      ],
+      "checked": "2026-11-02"
+    },
+    "kasteler-ruder-und-kanu-gesellschaft-1880": {
+      "address": "Maaraue 48, 55246 Wiesbaden",
+      "club": [
+        50.00111,
+        8.286575
+      ],
+      "launchPoint": [
+        50.000525,
+        8.285835
+      ],
+      "checked": "2026-11-02"
+    },
+    "koelner-rudergesellschaft-1891": {
+      "address": "Uferstraße 16, 50996 Köln-Rodenkirchen",
+      "club": [
+        50.892302,
+        7.002394
+      ],
+      "launchPoint": [
+        50.893769,
+        7.004154
+      ],
+      "checked": "2026-11-02"
+    },
+    "koelner-ruderverein-von-1877": {
+      "address": "Barbarastraße 47-49, 50996 Köln-Rodenkirchen",
+      "club": [
+        50.893897,
+        6.997677
+      ],
+      "launchPoint": [
+        50.894328,
+        6.998205
+      ],
+      "checked": "2026-11-02"
+    },
+    "lauffener-ruderclub-neckar-ev-1931": {
+      "address": "Neckaruferweg 2, 74348 Lauffen am Neckar",
+      "club": [
+        49.069164,
+        9.164902
+      ],
+      "launchPoint": [
+        49.069443,
+        9.164646
+      ],
+      "checked": "2026-11-02"
+    },
+    "ludwigshafener-ruderverein-von-1878": {
+      "address": "Rheinpromenade 10, 67061 Ludwigshafen am Rhein",
+      "club": [
+        49.476038,
+        8.458329
+      ],
+      "launchPoint": [
+        49.476246,
+        8.458649
+      ],
+      "checked": "2026-11-02"
+    },
+    "muendener-ruderverein": {
+      "address": "Fährweg 30, 34346 Hann. Münden",
+      "club": [
+        51.408284,
+        9.648812
+      ],
+      "launchPoint": [
+        51.408063,
+        9.649303
+      ],
+      "checked": "2026-11-02"
+    },
+    "offenbacher-rudergesellschaft-undine-1876": {
+      "address": "Dieburger Str. 68, 60386 Frankfurt-Ost",
+      "club": [
+        50.114777,
+        8.758671
+      ],
+      "launchPoint": [
+        50.113839,
+        8.757741
+      ],
+      "checked": "2026-11-02"
+    },
+    "osnabruecker-ruder-verein": {
+      "address": "Glückaufstraße 16, 49090 Osnabrück-Eversburg",
+      "club": [
+        52.309676,
+        8.000581
+      ],
+      "launchPoint": [
+        52.309768,
+        7.999616
+      ],
+      "checked": "2026-11-02"
+    },
+    "passauer-ruderverein-von-1874": {
+      "address": "Innstraße 123, 94036 Passau",
+      "club": [
+        48.549861,
+        13.436144
+      ],
+      "launchPoint": [
+        48.549602,
+        13.436539
+      ],
+      "checked": "2026-11-02"
+    },
+    "reinfelder-rudergemeinschaft-von-1963": {
+      "address": "Bei der Badeanstalt, 23858 Reinfeld (Holstein)",
+      "club": [
+        53.835025,
+        10.483371
+      ],
+      "launchPoint": [
+        53.834984,
+        10.48327
+      ],
+      "checked": "2026-11-02"
+    },
+    "rendsburger-primaner-ruderclub-von-1880": {
+      "address": "Wickenhagenweg 7, 24768 Rendsburg",
+      "club": [
+        54.307946,
+        9.676373
+      ],
+      "launchPoint": [
+        54.308283,
+        9.676012
+      ],
+      "checked": "2026-11-02"
+    },
+    "rr-am-kaiserin-auguste-viktoria-gymnasium-celle": {
+      "address": "Zur Ziegeninsel 5, 29221 Celle",
+      "club": [
+        52.624658,
+        10.090306
+      ],
+      "launchPoint": [
+        52.624895,
+        10.090843
+      ],
+      "checked": "2026-11-02"
+    },
+    "rr-besselgymnasium-minden": {
+      "address": "Am Schirrhof 6, 32427 Minden",
+      "club": [
+        52.300869,
+        8.891445
+      ],
+      "launchPoint": [
+        52.300865,
+        8.889858
+      ],
+      "checked": "2026-10-31"
+    },
+    "rr-gymnasium-carolinum-osnabrueck": {
+      "address": "Glückaufstraße 16, 49090 Osnabrück-Eversburg",
+      "club": [
+        52.309676,
+        8.000581
+      ],
+      "launchPoint": [
+        52.309768,
+        7.999616
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruder-club-karlstadt-1928": {
+      "address": "Baggertsweg 7, 97753 Karlstadt-Mühlbach",
+      "club": [
+        49.958121,
+        9.763497
+      ],
+      "launchPoint": [
+        49.957996,
+        9.761888
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruder-club-rastatt-1898": {
+      "address": "Am Goldkanal 3, 76477 Elchesheim-Illingen",
+      "club": [
+        48.918956,
+        8.181768
+      ],
+      "launchPoint": [
+        48.9185,
+        8.180192
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruder-club-witten": {
+      "address": "Wetterstraße 30A, 58453 Witten",
+      "club": [
+        51.426296,
+        7.346651
+      ],
+      "launchPoint": [
+        51.426441,
+        7.346881
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderclub-bad-saeckingen": {
+      "address": "Gettnau, 79713 Bad Säckingen",
+      "club": [
+        47.545256,
+        7.942437
+      ],
+      "launchPoint": [
+        47.544843,
+        7.942168
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderclub-ratsgymnasium-ev-osnabrueck": {
+      "address": "Glückaufstraße 16, 49090 Osnabrück-Eversburg",
+      "club": [
+        52.309676,
+        8.000581
+      ],
+      "launchPoint": [
+        52.309768,
+        7.999616
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderclub-zellingen": {
+      "address": "Badstraße 3, 97225 Zellingen",
+      "club": [
+        49.897661,
+        9.824921
+      ],
+      "launchPoint": [
+        49.89801,
+        9.825361
+      ],
+      "checked": "2026-11-02"
+    },
+    "rudergesellschaft-niederkassel-von-1978": {
+      "address": "Mondorf, 53859 Niederkassel",
+      "club": [
+        50.772028,
+        7.075569
+      ],
+      "launchPoint": [
+        50.771934,
+        7.075657
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderriege-am-staedt-gymnasium-olpe": {
+      "sameAs": "ruder-club-biggesee",
+      "checked": "2026-10-31"
+    },
+    "ruderriege-des-karlsruher-institut-fuer-technologie": {
+      "address": "Hansastraße 18, 76189 Karlsruhe",
+      "club": [
+        49.01017,
+        8.335075
+      ],
+      "launchPoint": [
+        49.010248,
+        8.334445
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderriege-grotefend-gymnasium-muenden": {
+      "address": "Fährweg 30, 34346 Hann. Münden",
+      "club": [
+        51.408284,
+        9.648812
+      ],
+      "launchPoint": [
+        51.408063,
+        9.649303
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderverein-datteln-von-1928": {
+      "address": "Hafenstraße 133, 45711 Datteln",
+      "club": [
+        51.658219,
+        7.361737
+      ],
+      "launchPoint": [
+        51.658019,
+        7.362183
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderverein-emscher-wanne-eickel-herten": {
+      "address": "Hertener Str. 53, 44653 Herne",
+      "club": [
+        51.548351,
+        7.160037
+      ],
+      "launchPoint": [
+        51.547893,
+        7.158634
+      ],
+      "checked": "2026-11-02"
+    },
+    "ruderverein-uelzen": {
+      "address": "Riedweg 9, 29525 Uelzen-Groß Liedern",
+      "club": [
+        52.95709,
+        10.595222
+      ],
+      "launchPoint": [
+        52.957264,
+        10.593596
+      ],
+      "checked": "2026-11-02"
+    },
+    "sportgemeinschaft-demag-ev-wetter": {
+      "address": "Am Obergraben 3, 58300 Wetter (Ruhr)",
+      "club": [
+        51.380773,
+        7.397251
+      ],
+      "launchPoint": [
+        51.38035,
+        7.397241
+      ],
+      "checked": "2026-11-02"
+    },
+    "srv-friedrich-wilhelm-gymnasium-koeln-von-1921": {
+      "address": "Barbarastraße 47-49, 50996 Köln-Rodenkirchen",
+      "club": [
+        50.893897,
+        6.997677
+      ],
+      "launchPoint": [
+        50.894328,
+        6.998205
+      ],
+      "checked": "2026-11-02"
+    },
+    "stralsunder-ruder-club": {
+      "address": "Friedrich-Naumann-Straße 5, 18435 Stralsund",
+      "club": [
+        54.322435,
+        13.086338
+      ],
+      "launchPoint": [
+        54.322522,
+        13.08816
+      ],
+      "checked": "2026-11-02"
+    },
+    "tpsk-von-1925": {
+      "address": "In d. Rosenau 10A, 51143 Porz",
+      "club": [
+        50.873052,
+        7.048999
+      ],
+      "launchPoint": [
+        50.874181,
+        7.047891
+      ],
+      "checked": "2026-11-02"
+    },
+    "universitaet-passau-sportzentrum": {
+      "address": "Innstraße 125-123, 94036 Neuburg am Inn",
+      "club": [
+        48.548294,
+        13.436983
+      ],
+      "launchPoint": [
+        48.548605,
+        13.437079
+      ],
+      "checked": "2026-11-02"
+    },
+    "universitaetssportclub-otto-von-guericke-magdeburg": {
+      "address": "Werder, 39114 Magdeburg",
+      "club": [
+        52.110679,
+        11.642973
+      ],
+      "launchPoint": [
+        52.110844,
+        11.642205
+      ],
+      "checked": "2026-11-02"
+    },
+    "volkstuemlicher-wassersport-mannheim": {
+      "address": "Sandhofer Str. 51-53, 68305 Mannheim-Waldhof",
+      "club": [
+        49.519969,
+        8.472136
+      ],
+      "launchPoint": [
+        49.51978,
+        8.471302
+      ],
+      "checked": "2026-11-02"
+    },
+    "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893": {
+      "address": "Rotterdamer Str. 40, 40474 Düsseldorf-Stadtbezirk 1",
+      "club": [
+        51.250289,
+        6.758537
+      ],
+      "launchPoint": [
+        51.250181,
+        6.757433
+      ],
+      "checked": "2026-11-02"
+    },
+    "wasserfreunde-hemmoor-ev-abt-rudern": {
+      "address": "Siethwende 1, 21745 Hemmoor",
+      "club": [
+        53.695957,
+        9.174346
+      ],
+      "launchPoint": [
+        53.69633,
+        9.17443
+      ],
+      "checked": "2026-11-02"
+    },
+    "wassersportverein-koenigs-wusterhausen": {
+      "address": "Küchenmeisterallee 14A, 15711 Königs Wusterhausen",
+      "club": [
+        52.296055,
+        13.655727
+      ],
+      "launchPoint": [
+        52.295688,
+        13.655477
+      ],
+      "checked": "2026-11-02"
+    },
+    "wuerzburger-ruderverein-bayern-von-18751905": {
+      "address": "Mergentheimer Str. 9h, 97082 Würzburg-Steinbachtal",
+      "club": [
+        49.782036,
+        9.926075
+      ],
+      "launchPoint": [
+        49.782323,
+        9.926206
+      ],
+      "checked": "2026-11-02"
+    },
+    "zschornewitzer-ruderclub-v-1954-im-sv-turbine-zschornewitz": {
+      "address": "Pöplitzer Weg 49, 06772 Gräfenhainichen",
+      "club": [
+        51.70827,
+        12.386329
+      ],
+      "launchPoint": [
+        51.707798,
+        12.384892
+      ],
+      "checked": "2026-11-02"
+    }
+  }
+}

@@ -54,16 +54,6 @@
       "kind": "river"
     },
     {
-      "id": "river-lafnitz",
-      "name": "Lafnitz",
-      "country": "at",
-      "center": {
-        "lat": 47.05093,
-        "lon": 16.11583
-      },
-      "kind": "river"
-    },
-    {
       "id": "mondsee",
       "name": "Mondsee",
       "country": "at",
@@ -165,9 +155,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.31969,
-        "lon": 14.29452,
-        "precision": "node/11043621209 in OpenStreetMap, 274 m from the Donau",
+        "lat": 48.3188,
+        "lon": 14.29596,
+        "precision": "shore of the Donau nearest the earlier point (node/11043621209 in OpenStreetMap, 274 m from the Donau), 146 m away",
         "verified": false
       }
     },
@@ -197,9 +187,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.22201,
-        "lon": 15.26993,
-        "precision": "way/396993889 in OpenStreetMap, 230 m from the Donau",
+        "lat": 48.22224,
+        "lon": 15.26989,
+        "precision": "shore of the Donau nearest the earlier point (way/396993889 in OpenStreetMap, 230 m from the Donau), 26 m away",
         "verified": false
       }
     },
@@ -245,9 +235,9 @@
       "country": "at",
       "lakeId": "river-rodl",
       "launchPoint": {
-        "lat": 48.32765,
-        "lon": 14.16222,
-        "precision": "node/276726334 in OpenStreetMap, 341 m from the Rodl",
+        "lat": 48.32736,
+        "lon": 14.16247,
+        "precision": "shore of the Rodl nearest the earlier point (node/276726334 in OpenStreetMap, 341 m from the Rodl), 37 m away",
         "verified": false
       }
     },
@@ -325,9 +315,9 @@
       "country": "at",
       "lakeId": "river-rodl",
       "launchPoint": {
-        "lat": 48.32752,
-        "lon": 14.16182,
-        "precision": "node/11999200059 in OpenStreetMap, 373 m from the Rodl",
+        "lat": 48.32722,
+        "lon": 14.16208,
+        "precision": "shore of the Rodl nearest the earlier point (node/11999200059 in OpenStreetMap, 373 m from the Rodl), 39 m away",
         "verified": false
       }
     },
@@ -373,9 +363,9 @@
       "country": "at",
       "lakeId": "river-neue-donau",
       "launchPoint": {
-        "lat": 48.19151,
-        "lon": 16.46505,
-        "precision": "way/214262471 in OpenStreetMap, 103 m from the Neue Donau",
+        "lat": 48.19163,
+        "lon": 16.46523,
+        "precision": "shore of the Neue Donau nearest the earlier point (way/214262471 in OpenStreetMap, 103 m from the Neue Donau), 19 m away",
         "verified": false
       }
     },
@@ -389,9 +379,9 @@
       "country": "at",
       "lakeId": "river-inn",
       "launchPoint": {
-        "lat": 47.58742,
-        "lon": 12.1657,
-        "precision": "node/7790457280 in OpenStreetMap, 65 m from the Inn",
+        "lat": 47.58745,
+        "lon": 12.16592,
+        "precision": "shore of the Inn nearest the earlier point (node/7790457280 in OpenStreetMap, 65 m from the Inn), 17 m away",
         "verified": false
       }
     },
@@ -533,9 +523,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.3108,
-        "lon": 14.24191,
-        "precision": "way/234875260 in OpenStreetMap, 219 m from the Donau",
+        "lat": 48.3102,
+        "lon": 14.24225,
+        "precision": "shore of the Donau nearest the earlier point (way/234875260 in OpenStreetMap, 219 m from the Donau), 71 m away",
         "verified": false
       }
     },
@@ -572,22 +562,6 @@
       }
     },
     {
-      "id": "usv-sattler-rudersdorf",
-      "name": "USV Sattler Rudersdorf",
-      "shortName": "USV Sattler Rudersdorf",
-      "address": "",
-      "website": null,
-      "source": "osm",
-      "country": "at",
-      "lakeId": "river-lafnitz",
-      "launchPoint": {
-        "lat": 47.05093,
-        "lon": 16.11583,
-        "precision": "way/205007217 in OpenStreetMap, 296 m from the Lafnitz",
-        "verified": false
-      }
-    },
-    {
       "id": "union-ruderverein-poechlarn",
       "name": "Union Ruderverein Pöchlarn",
       "shortName": "Union Ruderverein Pöchlarn",
@@ -613,9 +587,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.38805,
-        "lon": 15.5247,
-        "precision": "way/683147866 in OpenStreetMap, 219 m from the Donau",
+        "lat": 48.38778,
+        "lon": 15.52441,
+        "precision": "shore of the Donau nearest the earlier point (way/683147866 in OpenStreetMap, 219 m from the Donau), 37 m away",
         "verified": false
       }
     },
@@ -661,9 +635,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.27709,
-        "lon": 16.35463,
-        "precision": "way/1520793276 in OpenStreetMap, 262 m from the Donau",
+        "lat": 48.27689,
+        "lon": 16.35518,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     }

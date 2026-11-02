@@ -340,9 +340,9 @@
       "country": "ch",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.56221,
-        "lon": 7.63384,
-        "precision": "geocoded club address, 111 m from the Rhein",
+        "lat": 47.56216,
+        "lon": 7.63381,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 111 m from the Rhein), 6 m away",
         "verified": false
       }
     },
@@ -425,9 +425,9 @@
       "country": "ch",
       "lakeId": "river-la-sarine-saane",
       "launchPoint": {
-        "lat": 46.81159,
-        "lon": 7.16171,
-        "precision": "geocoded club address, 90 m from the La Sarine / Saane",
+        "lat": 46.8119,
+        "lon": 7.16076,
+        "precision": "shore of the La Sarine / Saane nearest the earlier point (geocoded club address, 90 m from the La Sarine / Saane), 80 m away",
         "verified": false
       }
     },
@@ -663,9 +663,9 @@
       "country": "ch",
       "lakeId": "river-aare",
       "launchPoint": {
-        "lat": 46.9657,
-        "lon": 7.38504,
-        "precision": "geocoded club address, 77 m from the Aare",
+        "lat": 46.966,
+        "lon": 7.38516,
+        "precision": "shore of the Aare nearest the earlier point (geocoded club address, 77 m from the Aare), 35 m away",
         "verified": false
       }
     },
@@ -714,9 +714,9 @@
       "country": "ch",
       "lakeId": "river-aare",
       "launchPoint": {
-        "lat": 47.31238,
-        "lon": 7.87397,
-        "precision": "geocoded club address, 65 m from the Aare",
+        "lat": 47.3123,
+        "lon": 7.87399,
+        "precision": "shore of the Aare nearest the earlier point (geocoded club address, 65 m from the Aare), 9 m away",
         "verified": false
       }
     },
@@ -724,16 +724,16 @@
       "id": "ruderclub-backbord-mittelland",
       "name": "Ruderclub Backbord Mittelland",
       "shortName": "Ruderclub Backbord Mittelland",
-      "address": "Hergenfeld 12, 5034 Suhr",
+      "address": "Seerosenstrasse 7, 5616 Meisterschwanden",
       "website": null,
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
       "lakeId": "near-suhr",
       "launchPoint": {
-        "lat": 47.37317,
-        "lon": 8.07953,
-        "precision": "geocoded club address (town level); water not identified",
+        "lat": 47.28493,
+        "lon": 8.22454,
+        "precision": "launch point checked by hand on the satellite view (2026-10-31)",
         "verified": false
       }
     },
@@ -748,9 +748,9 @@
       "country": "ch",
       "lakeId": "river-limmat",
       "launchPoint": {
-        "lat": 47.45653,
-        "lon": 8.3253,
-        "precision": "geocoded club address, 96 m from the Limmat",
+        "lat": 47.45676,
+        "lon": 8.32528,
+        "precision": "shore of the Limmat nearest the earlier point (geocoded club address, 96 m from the Limmat), 25 m away",
         "verified": false
       }
     },
@@ -758,16 +758,16 @@
       "id": "ruderclub-blauweiss-basel",
       "name": "Ruderclub Blauweiss Basel",
       "shortName": "Ruderclub Blauweiss Basel",
-      "address": "4127 Birsfelden",
+      "address": "Birs Kraftwerk Insel, 4127 Birsfelden",
       "website": "http://www.rcblauweiss.ch/",
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.55883,
-        "lon": 7.62981,
-        "precision": "shore of the Rhein nearest the town-level address, 515 m away (water checked by hand)",
+        "lat": 47.56055,
+        "lon": 7.6322,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -918,9 +918,9 @@
       "country": "ch",
       "lakeId": "river-aare",
       "launchPoint": {
-        "lat": 47.35363,
-        "lon": 7.90682,
-        "precision": "geocoded club address, 47 m from the Aare",
+        "lat": 47.35364,
+        "lon": 7.90674,
+        "precision": "shore of the Aare nearest the earlier point (geocoded club address, 47 m from the Aare), 6 m away",
         "verified": false
       }
     },
@@ -1003,9 +1003,9 @@
       "country": "ch",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.68805,
-        "lon": 8.65508,
-        "precision": "geocoded club address, 96 m from the Rhein",
+        "lat": 47.68817,
+        "lon": 8.65523,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 96 m from the Rhein), 18 m away",
         "verified": false
       }
     },
@@ -1071,9 +1071,9 @@
       "country": "ch",
       "lakeId": "river-aabach",
       "launchPoint": {
-        "lat": 47.34519,
-        "lon": 8.69752,
-        "precision": "geocoded club address, 78 m from the Aabach",
+        "lat": 47.34555,
+        "lon": 8.69825,
+        "precision": "shore of the Aabach nearest the earlier point (geocoded club address, 78 m from the Aabach), 68 m away",
         "verified": false
       }
     },
@@ -1547,9 +1547,9 @@
       "country": "ch",
       "lakeId": "river-aare",
       "launchPoint": {
-        "lat": 47.20105,
-        "lon": 7.53076,
-        "precision": "geocoded club address, 52 m from the Aare",
+        "lat": 47.20103,
+        "lon": 7.5308,
+        "precision": "shore of the Aare nearest the earlier point (geocoded club address, 52 m from the Aare), 3 m away",
         "verified": false
       }
     },
@@ -1581,9 +1581,9 @@
       "country": "ch",
       "lakeId": "river-la-thiele",
       "launchPoint": {
-        "lat": 46.7866,
-        "lon": 6.64035,
-        "precision": "geocoded club address, 63 m from the La Thièle",
+        "lat": 46.78687,
+        "lon": 6.64005,
+        "precision": "shore of the La Thièle nearest the earlier point (geocoded club address, 63 m from the La Thièle), 38 m away",
         "verified": false
       }
     }

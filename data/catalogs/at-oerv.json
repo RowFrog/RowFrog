@@ -94,16 +94,6 @@
       "osm": "way/737325534"
     },
     {
-      "id": "river-melk",
-      "name": "Melk",
-      "country": "at",
-      "center": {
-        "lat": 48.20674,
-        "lon": 15.27844
-      },
-      "kind": "river"
-    },
-    {
       "id": "millstaetter-see",
       "name": "Millstätter See",
       "country": "at",
@@ -285,9 +275,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.31983,
-        "lon": 14.29465,
-        "precision": "geocoded club address, 276 m from the Donau",
+        "lat": 48.31891,
+        "lon": 14.29613,
+        "precision": "shore of the Donau nearest the earlier point (geocoded club address, 276 m from the Donau), 149 m away",
         "verified": false
       }
     },
@@ -357,63 +347,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.33887,
-        "lon": 16.32183,
-        "precision": "geocoded club address, 275 m from the Donau",
-        "verified": false
-      }
-    },
-    {
-      "id": "landesruderverband-niederoesterreich",
-      "name": "Landesruderverband Niederösterreich",
-      "shortName": "Landesruderverband Niederösterreich",
-      "abbreviation": "NRV",
-      "address": "Melker Straße 38, 3393 Matzleinsdorf",
-      "website": "https://www.rudern-noe.at/",
-      "region": "Niederösterreich",
-      "source": "oerv",
-      "country": "at",
-      "lakeId": "river-melk",
-      "launchPoint": {
-        "lat": 48.20674,
-        "lon": 15.27844,
-        "precision": "geocoded club address, 200 m from the Melk",
-        "verified": false
-      }
-    },
-    {
-      "id": "landesruderverband-oberoesterreich",
-      "name": "Landesruderverband Oberösterreich",
-      "shortName": "Landesruderverband Oberösterreich",
-      "abbreviation": "OÖR",
-      "address": "Regattastraße 1, 4100 Ottensheim Österreich",
-      "website": "https://www.rudern-ooe.at",
-      "region": "Oberösterreich",
-      "source": "oerv",
-      "country": "at",
-      "lakeId": "river-rodl",
-      "launchPoint": {
-        "lat": 48.32754,
-        "lon": 14.16181,
-        "precision": "geocoded club address, 373 m from the Rodl",
-        "verified": false
-      }
-    },
-    {
-      "id": "landesruderverband-wien",
-      "name": "Landesruderverband Wien",
-      "shortName": "Landesruderverband Wien",
-      "abbreviation": "WRV",
-      "address": "Florian-Berndl-Gasse 3, 1220 Wien",
-      "website": "http://www.ruderverband.wien",
-      "region": "Wien",
-      "source": "oerv",
-      "country": "at",
-      "lakeId": "alte-donau",
-      "launchPoint": {
-        "lat": 48.2382,
-        "lon": 16.42945,
-        "precision": "shore of the Alte Donau nearest the town-level address, 61 m away (water checked by hand)",
+        "lat": 48.33891,
+        "lon": 16.32118,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -447,9 +383,9 @@
       "country": "at",
       "lakeId": "near-anif",
       "launchPoint": {
-        "lat": 47.73748,
-        "lon": 13.06929,
-        "precision": "geocoded club address (street level); water not identified",
+        "lat": 47.73151,
+        "lon": 13.08145,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -501,9 +437,9 @@
       "country": "at",
       "lakeId": "neusiedler-see",
       "launchPoint": {
-        "lat": 47.92063,
-        "lon": 16.7599,
-        "precision": "shore of the Neusiedler See nearest the town-level address, 3512 m away (water checked by hand)",
+        "lat": 47.916,
+        "lon": 16.76941,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -573,9 +509,9 @@
       "country": "at",
       "lakeId": "river-traun",
       "launchPoint": {
-        "lat": 48.15679,
-        "lon": 14.03594,
-        "precision": "geocoded club address, 84 m from the Traun",
+        "lat": 48.15655,
+        "lon": 14.03605,
+        "precision": "shore of the Traun nearest the earlier point (geocoded club address, 84 m from the Traun), 28 m away",
         "verified": false
       }
     },
@@ -753,9 +689,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.31081,
-        "lon": 14.24183,
-        "precision": "geocoded club address, 221 m from the Donau",
+        "lat": 48.31019,
+        "lon": 14.24219,
+        "precision": "shore of the Donau nearest the earlier point (geocoded club address, 221 m from the Donau), 74 m away",
         "verified": false
       }
     },
@@ -807,9 +743,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.3989,
-        "lon": 15.57387,
-        "precision": "geocoded club address, 173 m from the Donau",
+        "lat": 48.39884,
+        "lon": 15.57392,
+        "precision": "shore of the Donau nearest the earlier point (geocoded club address, 173 m from the Donau), 8 m away",
         "verified": false
       }
     },
@@ -897,9 +833,9 @@
       "country": "at",
       "lakeId": "river-rodl",
       "launchPoint": {
-        "lat": 48.33083,
-        "lon": 14.17062,
-        "precision": "geocoded club address, 199 m from the Rodl",
+        "lat": 48.32877,
+        "lon": 14.17158,
+        "precision": "launch point checked by hand on the satellite view (2026-10-31)",
         "verified": false
       }
     },
@@ -915,9 +851,9 @@
       "country": "at",
       "lakeId": "river-neue-donau",
       "launchPoint": {
-        "lat": 48.2169,
-        "lon": 16.43326,
-        "precision": "geocoded club address, 224 m from the Neue Donau",
+        "lat": 48.21663,
+        "lon": 16.43374,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -933,9 +869,9 @@
       "country": "at",
       "lakeId": "river-neue-donau",
       "launchPoint": {
-        "lat": 48.21935,
-        "lon": 16.43232,
-        "precision": "geocoded club address, 385 m from the Neue Donau",
+        "lat": 48.21919,
+        "lon": 16.43316,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -987,9 +923,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.27693,
-        "lon": 16.35478,
-        "precision": "geocoded club address, 260 m from the Donau",
+        "lat": 48.27689,
+        "lon": 16.35518,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -1005,9 +941,9 @@
       "country": "at",
       "lakeId": "river-donaukanal",
       "launchPoint": {
-        "lat": 48.26075,
-        "lon": 16.36958,
-        "precision": "geocoded club address, 53 m from the Donaukanal",
+        "lat": 48.26081,
+        "lon": 16.36975,
+        "precision": "shore of the Donaukanal nearest the earlier point (geocoded club address, 53 m from the Donaukanal), 14 m away",
         "verified": false
       }
     },
@@ -1041,9 +977,9 @@
       "country": "at",
       "lakeId": "river-erla",
       "launchPoint": {
-        "lat": 48.16437,
-        "lon": 14.70928,
-        "precision": "geocoded club address, 295 m from the Erla",
+        "lat": 48.16414,
+        "lon": 14.70697,
+        "precision": "launch point checked by hand on the satellite view (2026-10-31)",
         "verified": false
       }
     }

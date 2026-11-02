@@ -29,7 +29,7 @@ import urllib.error
 import urllib.parse
 import urllib.request
 
-from club_import import CATALOGS, WATER_FIXES, apply_extra_sites, apply_water_fixes
+from club_import import CATALOGS, WATER_FIXES, apply_extra_sites, apply_hand_checked, apply_water_fixes
 from fetch_lake_outline import OVERPASS_SERVERS
 from live_check import nearest_shore
 
@@ -132,6 +132,7 @@ def main() -> int:
         country = name.split("-")[0]
         apply_extra_sites(country, catalog["lakes"], catalog["clubs"])
         moved = apply_water_fixes(country, catalog["lakes"], catalog["clubs"])
+        apply_hand_checked(country, catalog["lakes"], catalog["clubs"])
         snapped = 0
         if snap:
             waters = {w["id"]: w for w in catalog["lakes"]}
@@ -139,8 +140,8 @@ def main() -> int:
                 point = club["launchPoint"]
                 if club["id"] not in fixes.get(country, {}) or "checked by hand" not in point["precision"]:
                     continue
-                if point["precision"].startswith("shore of"):
-                    continue  # snapped by an earlier run
+                if point["precision"].startswith("shore of") or "satellite view" in point["precision"]:
+                    continue  # snapped by an earlier run, or checked by hand (hand-checked.json)
                 if time.monotonic() > deadline:
                     out_of_time = True
                     break
