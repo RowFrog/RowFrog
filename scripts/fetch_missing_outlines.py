@@ -163,7 +163,7 @@ def main(only: list[str]) -> int:
         )
         feature = {
             "type": "Feature",
-            "properties": {"id": lake_id, "name": entry["name"], "osm": ids, "source": "© OpenStreetMap contributors, ODbL"},
+            "properties": {"id": lake_id, "name": entry["name"], "osm": ids, "picked": how, "source": "© OpenStreetMap contributors, ODbL"},
             "geometry": geometry,
         }
         (OUTLINES / f"{lake_id}.geojson").write_text(json.dumps(feature), encoding="utf-8")
