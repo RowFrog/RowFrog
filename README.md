@@ -147,6 +147,10 @@ warnings, which are shown for information but leave the light and the lake map
 alone. In English the app shows DWD's own English
 text (from its English CAP files) with the German original below; where DWD
 has no English version, only the event and headline are translated.
+Each warning, in the app and on the website, ends with a link to the service
+that issued it: DWD's warning page for the club's town or lake (plus its
+WarnWetter app), GeoSphere Austria's map at the launch point, or MeteoSwiss's
+hazards page (`backend/rowfrog/warning_links.py`).
 Only at lakes that really have shore warning lights (`data/shore-lights.json`:
 the Bavarian lakes, Lake Constance and Steinhuder Meer, but not, for example,
 the Alster, Müritz or Dümmer) does the card explain both lights (40 and 90 flashes a minute) and
