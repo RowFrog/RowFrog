@@ -119,6 +119,39 @@ real export file.
 Health access can be changed later in the Health app > Sharing > Apps >
 Row Frog. Nothing read from Health or a file leaves the phone.
 
+### Testing boats kept at clubs
+
+Own boats show only on the pages of the clubs where they are kept (owner's
+choice A, 30 Oct 2026). Small and big boats are everywhere.
+
+1. Settings > Boats and limits > **Add a boat**: the new boat is kept at the
+   home base. Its page has a **Kept at** list: **Add a club** picks one of the
+   saved clubs, **Remove** takes one off (the last club stays).
+2. On another club's page, open the boat menu (the boat button level with the
+   club's name, or "For small boats" in the top tile). The boat shows under **At other
+   clubs**; a tap takes it to this club and ticks it.
+3. With an own boat ticked, a club where it is not kept uses one of your boats
+   kept there (the one last picked there first), else small boats, the
+   strictest limits: top tile, rowing light, charts, lake tile and map all
+   name that boat. The tick itself stays, so the boat's own clubs keep it.
+4. "A steadier boat helps" names only boats kept at that club.
+5. Page buttons (owner's pick 2 Nov 2026, option F with Apple's guide; the
+   other options are on the try-out page
+   https://claude.ai/artifact/9PtKZFpPvkWsWQQ67kUV3d):
+   - Every device: the boat button sits level with the club's big name on the
+     right, scrolls up with it and stays in the top bar beside the small name.
+   - iPhone: bottom bar with cog left, page dots, list button right (as Weather).
+   - iPad upright: sidebar button and cog level with the name on the left; the
+     sidebar button slides the list in over the page; page dots at the bottom.
+   - iPad sideways: the list beside the page has the sidebar button, its title
+     and "…" on one line and the search at its top; the cog is on the club page
+     at the top left. The sidebar button slides the list away: it then comes
+     onto the club page at the far left and the cog moves over beside it.
+
+Boats from before this change are put at the home base on the first start
+after the update. In `-RWMyBoats` a boat's clubs are a comma-separated
+`clubs` entry; boats without one go to the home base too.
+
 ### Testing on an iPad
 
 The app runs natively on the iPad (iPhone and iPad in `TARGETED_DEVICE_FAMILY`).
@@ -145,6 +178,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 - `-RWDemoClubs YES` the three confirmed clubs with MRC 1880 as home base
 - `-RWTutorialSeen YES -RWNoTips YES` skip the tour and tips
+- `-RWSideListHidden YES` start with the list beside the page slid away (iPad sideways)
 - `-RWShowList YES` open the club list; `-RWEditList YES` with it starts in edit mode (Edit list is in the list's "…" menu)
 - `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table, `bottom` = the page's end)
 - `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order; the rain radar card is off unless named, since the rain tile shows the radar); `-RWArrange YES` opens "Arrange this page"
@@ -184,6 +218,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage appearance|clubpages|language|data|help|about|developer|limits|boat:<id>|backgrounds|widgets|safety|impressum|privacy` open those Settings pages, with the pages on the way (backgrounds = Settings > Club pages > Background pictures, widgets = Settings > Widgets)
 - `-RWSettingsSearch <text>` open the settings with the search field filled in
+- `-RWMyBoats '({id = b-anna; name = Anna; type = gig; class = "4x"; clubs = "mrc-1880,tutzinger-rv";})'` the user's own boats; `clubs` lists where each is kept (left out: the home base), `-RWBoat <id>` ticks one
 - Backend `RW_SAMPLE_WARNING_CLUBS=<club ids>` gives those clubs a made-up warning, marked as a sample: a lake storm warning where DWD has a lake area, else a thunderstorm warning from the place's own service (GeoSphere Austria or MeteoSwiss). The screenshot workflow sets it for Tutzinger RV, Seeclub Zürich, RV Albatros Klagenfurt and Der Hamburger und Germania RC (Alster, a DWD lake area without shore lights)
 - Backend `RW_SAMPLE_FROST_CLUBS=<club ids>` gives those clubs a made-up frost warning from six hours on, marked as a sample, to show that frost stays in the warnings card but leaves the rowing light and the lake map alone, and how a warning for later shows (grey line with its start time in the list and the top tile, "Later" in the card). The screenshot workflow sets it for RC Forggensee
 - Warning links: every warning in the warnings card (app and website) ends with a link to the service that issued it (`backend/rowfrog/warning_links.py`, sent as `links` {de, en} per warning). No service has a page for one warning, so: DWD = its municipal warning page for the club's town (`warnWetter_node.html?ort=<town>`, English page in English) or, for lake warnings, wettergefahren.de's inland lake page, plus "DWD WarnWetter app in the App Store" (the app has no links of its own; the store shows Open where it is installed); GeoSphere = its warning map at the launch point (`/wsapp/<lang>/alle/gesamterzeitraum/oesterreich/<lon>,<lat>`); MeteoSwiss = its hazards page, which the MeteoSwiss app claims (apple-app-site-association), so on an iPhone with the app it opens there. To test: open a club with a sample warning (`RW_SAMPLE_WARNING_CLUBS`) and tap the link; with the MeteoSwiss app installed, Seeclub Zürich's link should open the app. Checked 2.11.2026 with a probe run on GitHub Actions.

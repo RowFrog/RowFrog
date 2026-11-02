@@ -77,14 +77,24 @@ final class LimitsTests: XCTestCase {
         let settings = AppSettings(defaults: defaults)
         let rough = hour(wind: 6, gust: 9, waves: 0.28).applying(settings.limits, waterC: nil)
         XCTAssertEqual(rough.light, .red)
-        XCTAssertNil(SteadierBoat.suggestion(for: rough, water: nil, settings: settings), "no boats of your own, no suggestion")
+        XCTAssertNil(SteadierBoat.suggestion(for: rough, water: nil, at: nil, settings: settings), "no boats of your own, no suggestion")
 
         let gig = settings.addBoat(type: .gig, boatClass: .quad)
         settings.addBoat(type: .training, boatClass: .single)
-        XCTAssertEqual(SteadierBoat.suggestion(for: rough, water: nil, settings: settings), SteadierBoat(boat: gig, light: .green))
+        XCTAssertEqual(SteadierBoat.suggestion(for: rough, water: nil, at: nil, settings: settings), SteadierBoat(boat: gig, light: .green))
 
         let dark = rough.with(reasons: rough.reasons + [Reason(condition: "daylight", light: .red)], sunUp: false)
-        XCTAssertNil(SteadierBoat.suggestion(for: dark, water: nil, settings: settings), "no boat helps in the dark")
+        XCTAssertNil(SteadierBoat.suggestion(for: dark, water: nil, at: nil, settings: settings), "no boat helps in the dark")
+    }
+
+    func testSuggestsOnlyBoatsKeptAtTheClub() {
+        let defaults = UserDefaults(suiteName: "LimitsTestsClubs")!
+        defaults.removePersistentDomain(forName: "LimitsTestsClubs")
+        let settings = AppSettings(defaults: defaults)
+        let rough = hour(wind: 6, gust: 9, waves: 0.28).applying(settings.limits, waterC: nil)
+        let gig = settings.addBoat(type: .gig, boatClass: .quad, at: "mrc-1880")
+        XCTAssertEqual(SteadierBoat.suggestion(for: rough, water: nil, at: "mrc-1880", settings: settings), SteadierBoat(boat: gig, light: .green))
+        XCTAssertNil(SteadierBoat.suggestion(for: rough, water: nil, at: "tutzinger-rv", settings: settings), "the gig is not kept there")
     }
 
     func testColdWaterLowersTheAppsWindLimitsButNotTheUsers() {

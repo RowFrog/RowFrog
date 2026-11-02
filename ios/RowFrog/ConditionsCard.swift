@@ -103,6 +103,9 @@ struct ConditionData {
     /// Why there is no radar: still loading, or it could not be read; the rain tile marks it.
     let radarStatus: RadarStatus?
 
+    /// The limits of the boat in use at the club.
+    var limits: RowingLimits { AppSettings.shared.limits(at: forecast.clubId) }
+
     init(forecast: ClubForecast, now: ForecastHour, radar: RainRadar? = nil, radarStatus: RadarStatus? = nil) {
         self.forecast = forecast
         self.radar = radar
@@ -465,7 +468,7 @@ struct ConditionGraphic: View {
                     .frame(width: 44, height: 44)
             }
         case .waves:
-            let userLimits = AppSettings.shared.limits
+            let userLimits = data.limits
             let top = userLimits.value(.waveRed) * 4 / 3
             ScaleBar(fraction: (hour.waveHeightM ?? 0) / top,
                      zones: [(0, .green), (userLimits.value(.waveAmber) / top, .orange), (userLimits.value(.waveRed) / top, .red)])
@@ -1680,7 +1683,7 @@ extension ConditionDetail {
         case .amber: return amber
         default:
             if (d.now.notes ?? []).contains(where: { names.contains($0.condition) }) {
-                return tr("Within your own limit, but above the app's usual limit for %@: take extra care.", userLimits.boat.inSentence)
+                return tr("Within your own limit, but above the app's usual limit for %@: take extra care.", d.limits.boat.inSentence)
             }
             if let next = d.next24.first(where: { $0.light(for: names) != nil }) {
                 return tr(later, Format.dayTime(next.time))
@@ -1707,12 +1710,12 @@ extension ConditionDetail {
                 ChartLine(name: tr("Gusts"), color: .purple, points: d.points { $0.windGustMs.map(w.chartValue) }),
             ],
             limits: [
-                line(.windAmber, w.chartValue, .orange, tr("Wind: row with care")),
-                line(.windRed, w.chartValue, .red, tr("Wind: stay ashore")),
+                line(d.limits, .windAmber, w.chartValue, .orange, tr("Wind: row with care")),
+                line(d.limits, .windRed, w.chartValue, .red, tr("Wind: stay ashore")),
             ],
             limitInfo: tr("Amber from %@ (Beaufort 4, the first whitecaps) and red from %@ (Beaufort 5, many whitecaps): in a single or double the boat gets hard to steer and water comes over the side. Gusts have their own limits: amber from %@ and red from %@ (46 km/h), the level at which DWD issues a strong-wind warning and the lake's warning lights start flashing. These are the app's starting values for small boats.",
                           RowingLimit.windAmber.format(5.5), RowingLimit.windRed.format(8), RowingLimit.gustAmber.format(8), RowingLimit.gustRed.format(12.8))
-                + inUse([(tr("Wind"), .windAmber, .windRed), (tr("Gusts"), .gustAmber, .gustRed)]),
+                + inUse(d.limits, [(tr("Wind"), .windAmber, .windRed), (tr("Gusts"), .gustAmber, .gustRed)]),
             windArrows: true,
             chartNote: tr("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value."),
             facts: facts,
@@ -1725,17 +1728,15 @@ extension ConditionDetail {
         )
     }
 
-    private static var userLimits: RowingLimits { units.limits }
-
     /// A limit line, marked when it is the user's own.
-    private static func line(_ limit: RowingLimit, _ convert: (Double) -> Double, _ color: Color, _ label: String) -> ChartLimit {
-        ChartLimit(value: convert(userLimits.value(limit)), color: color, label: userLimits.isMine(limit) ? tr("%@ (your limit)", label) : label)
+    private static func line(_ limits: RowingLimits, _ limit: RowingLimit, _ convert: (Double) -> Double, _ color: Color, _ label: String) -> ChartLimit {
+        ChartLimit(value: convert(limits.value(limit)), color: color, label: limits.isMine(limit) ? tr("%@ (your limit)", label) : label)
     }
 
     /// The limits in use, after the explanation of the app's own.
-    private static func inUse(_ pairs: [(String, RowingLimit, RowingLimit)]) -> String {
-        let parts = pairs.map { tr("%@ amber from %@, red above %@", $0.0, $0.1.format(userLimits.value($0.1)), $0.2.format(userLimits.value($0.2))) }
-        return " " + tr("In use for %@: %@. You can change them under Settings, Boats and limits.", userLimits.boat.inSentence, parts.joined(separator: "; "))
+    private static func inUse(_ limits: RowingLimits, _ pairs: [(String, RowingLimit, RowingLimit)]) -> String {
+        let parts = pairs.map { tr("%@ amber from %@, red above %@", $0.0, $0.1.format(limits.value($0.1)), $0.2.format(limits.value($0.2))) }
+        return " " + tr("In use for %@: %@. You can change them under Settings, Boats and limits.", limits.boat.inSentence, parts.joined(separator: "; "))
     }
 
     private static func waves(_ d: ConditionData) -> ConditionDetail {
@@ -1753,13 +1754,13 @@ extension ConditionDetail {
             unit: u.symbol,
             lines: [ChartLine(name: tr("Waves"), color: .blue, points: d.points { $0.waveHeightM.map(u.convert) })],
             limits: [
-                line(.waveAmber, u.convert, .orange, tr("Row with care")),
-                line(.waveRed, u.convert, .red, tr("Stay ashore")),
+                line(d.limits, .waveAmber, u.convert, .orange, tr("Row with care")),
+                line(d.limits, .waveRed, u.convert, .red, tr("Stay ashore")),
             ],
             limitInfo: tr("Amber from %@ and red from %@ wave height. A racing single sits only about 10–15 cm above the water at its side, so from about 15 cm waves start to wash in; from about 30 cm the boat fills and capsizing becomes likely. The waves are calculated from the wind and the open water upwind, not measured.",
                           Format.waves(0.15), Format.waves(0.3))
-                + inUse([(tr("Waves"), .waveAmber, .waveRed)]),
-            yDomain: 0...max(u.convert(userLimits.value(.waveRed) * 4 / 3), u.convert(d.timeline.compactMap(\.waveHeightM).max() ?? 0) * 1.3),
+                + inUse(d.limits, [(tr("Waves"), .waveAmber, .waveRed)]),
+            yDomain: 0...max(u.convert(d.limits.value(.waveRed) * 4 / 3), u.convert(d.timeline.compactMap(\.waveHeightM).max() ?? 0) * 1.3),
             trendStep: step(u.convert, 0.015),
             facts: facts,
             rowing: advice(d, ["waves"],
@@ -1780,14 +1781,14 @@ extension ConditionDetail {
             let change = step(t.convert, last.celsius - first.celsius)
             facts.append((tr("Trend"), tr("%@° since %@", (change >= 0 ? "+" : "−") + Format.number(abs(change), digits: 1), Format.day(first.time))))
         }
-        let jacket = Format.temperature(userLimits.value(.lifeJacket))
-        facts.append((tr("Life jacket"), userLimits.isMine(.lifeJacket) ? tr("%@ (your limit)", tr("advised below %@", jacket)) : tr("advised below %@", jacket)))
+        let jacket = Format.temperature(d.limits.value(.lifeJacket))
+        facts.append((tr("Life jacket"), d.limits.isMine(.lifeJacket) ? tr("%@ (your limit)", tr("advised below %@", jacket)) : tr("advised below %@", jacket)))
         let rowing: String
         let veryCold = Format.temperature(RowingLimits.coldWaterC)
         switch now?.celsius {
         case let c? where c < RowingLimits.coldWaterC:
             rowing = tr("Below %@ wear a life jacket, stay near the shore and row with a second boat or a safety boat nearby. Wear clothes that keep you warm when wet.", veryCold)
-        case let c? where c < userLimits.value(.lifeJacket):
+        case let c? where c < d.limits.value(.lifeJacket):
             rowing = tr("Below %@ a capsize can cause cold-water shock: we advise a life jacket and clothes that keep you warm when wet.", jacket)
         case let c? where c < 15:
             rowing = tr("Below %@ wear clothes that keep you warm when wet. Below %@ we advise a life jacket.", Format.temperature(15), jacket)
@@ -1836,7 +1837,7 @@ extension ConditionDetail {
         // Fitted to the readings and the forecast, with room around them, the
         // life-jacket and very-cold lines always in view.
         let readings = history.map(\.celsius) + forecastDays.map { $0.1 } + [estimate].compactMap { $0 }
-        let limitValues = [userLimits.value(.lifeJacket), RowingLimits.coldWaterC]
+        let limitValues = [d.limits.value(.lifeJacket), RowingLimits.coldWaterC]
         let lowest = ((readings + limitValues).min() ?? 0) - 2, highest = ((readings + limitValues).max() ?? 20) + 2
         let yDomain = t.convert(lowest.rounded(.down))...t.convert(highest.rounded(.up))
         if let picked {
@@ -1846,7 +1847,7 @@ extension ConditionDetail {
                 unit: t.symbol,
                 lines: lines,
                 limits: [
-                    line(.lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
+                    line(d.limits, .lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
                     ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: ColdWaterKit.deep, label: tr("Very cold")),
                 ],
                 yDomain: yDomain,
@@ -1865,7 +1866,7 @@ extension ConditionDetail {
             unit: t.symbol,
             lines: lines,
             limits: [
-                line(.lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
+                line(d.limits, .lifeJacket, t.convert, ColdWaterKit.color, tr("Cold-water shock: life jacket")),
                 ChartLimit(value: t.convert(RowingLimits.coldWaterC), color: ColdWaterKit.deep, label: tr("Very cold")),
             ],
             limitInfo: tr("Below about %@ a fall into the water causes cold-water shock: a gasp and fast breathing in the first minute. A life jacket keeps your head above water through it, so the app advises one from %@ down. A rule of thumb says the minutes you can still help yourself in the water are about the water temperature in °C, so about 10 minutes at 10 °C. That is why the advice gets stricter below %@: stay near the shore and don't row alone. Your club's own rules come first.",
