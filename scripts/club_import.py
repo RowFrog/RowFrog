@@ -290,11 +290,50 @@ def apply_extra_sites(country: str, waters: list[dict], clubs: list[dict]) -> in
     return added
 
 
+HAND_CHECKED = ROOT / "data" / "catalogs" / "hand-checked.json"
+
+
+def apply_hand_checked(country: str, waters: list[dict], clubs: list[dict]) -> int:
+    """Puts in the addresses and launch points the owner checked by hand on
+    the satellite view (hand-checked.json) and drops the entries listed under
+    "remove" (associations, clubs of other sports), then waters no club is
+    left on. "sameAs" copies another club's checked values. The water stays
+    as water-fixes.json and extra-sites.json have it. Returns how many clubs
+    changed or went."""
+    data = json.loads(HAND_CHECKED.read_text(encoding="utf-8")) if HAND_CHECKED.exists() else {}
+    checked, remove = data.get(country, {}), set(data.get("remove", []))
+    before = len(clubs)
+    clubs[:] = [c for c in clubs if c["id"] not in remove]
+    changed = before - len(clubs)
+    by_id = {c["id"]: c for c in clubs}
+    for club_id, entry in checked.items():
+        club = by_id.get(club_id)
+        if club is None:
+            continue
+        if "sameAs" in entry:
+            other = by_id.get(entry["sameAs"])
+            if other is None:
+                continue
+            club["address"] = other["address"]
+            club["launchPoint"] = dict(other["launchPoint"])
+        else:
+            if "address" in entry:
+                club["address"] = entry["address"]
+            lat, lon = entry["launchPoint"]
+            club["launchPoint"] = {"lat": round(lat, 5), "lon": round(lon, 5),
+                                   "precision": f"launch point checked by hand on the satellite view ({entry['checked']})", "verified": False}
+        changed += 1
+    used = {c["lakeId"] for c in clubs}
+    waters[:] = [w for w in waters if w["id"] in used]
+    return changed
+
+
 def write_catalog(name: str, source: str, waters: list[dict], clubs: list[dict]) -> Path:
     """Saves data/catalogs/<name>.json, e.g. name "at-oerv"."""
     CATALOGS.mkdir(exist_ok=True)
     apply_extra_sites(name.split("-")[0], waters, clubs)
     apply_water_fixes(name.split("-")[0], waters, clubs)
+    apply_hand_checked(name.split("-")[0], waters, clubs)
     path = CATALOGS / f"{name}.json"
     catalog = {
         "version": 1,

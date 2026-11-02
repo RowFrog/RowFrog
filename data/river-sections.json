@@ -470,8 +470,7 @@
     "lon": 13.27181
    },
    "clubs": [
-    "bundesstuetzpunkt-berlin",
-    "landesruderverband-berlin"
+    "bundesstuetzpunkt-berlin"
    ],
    "lengthKm": 7.1,
    "up": {
@@ -3893,47 +3892,6 @@
    ]
   },
   {
-   "id": "river-lafnitz-",
-   "water": "river-lafnitz",
-   "name": "Lafnitz",
-   "river": "Lafnitz",
-   "waterway": "river",
-   "country": "at",
-   "place": "",
-   "center": {
-    "lat": 47.05093,
-    "lon": 16.11583
-   },
-   "clubs": [
-    "usv-sattler-rudersdorf"
-   ],
-   "lengthKm": 16.7,
-   "up": {
-    "km": 9.29,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     47.08858,
-     16.08745
-    ]
-   },
-   "down": {
-    "km": 7.5,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     47.00881,
-     16.14902
-    ]
-   },
-   "pictureBox": [
-    16.08622,
-    47.00869,
-    16.14911,
-    47.08865
-   ]
-  },
-  {
    "id": "river-lahn-bad-ems",
    "water": "river-lahn",
    "name": "Lahn",
@@ -5177,47 +5135,6 @@
     49.85727,
     9.85208,
     49.91999
-   ]
-  },
-  {
-   "id": "river-melk-matzleinsdorf",
-   "water": "river-melk",
-   "name": "Melk",
-   "river": "Melk",
-   "waterway": "river",
-   "country": "at",
-   "place": "Matzleinsdorf",
-   "center": {
-    "lat": 48.20674,
-    "lon": 15.27844
-   },
-   "clubs": [
-    "landesruderverband-niederoesterreich"
-   ],
-   "lengthKm": 12.6,
-   "up": {
-    "km": 6.85,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     48.15848,
-     15.24253
-    ]
-   },
-   "down": {
-    "km": 5.72,
-    "end": "mouth",
-    "what": "joins Donau",
-    "at": [
-     48.23732,
-     15.33281
-    ]
-   },
-   "pictureBox": [
-    15.24062,
-    48.16152,
-    15.33651,
-    48.23751
    ]
   },
   {
@@ -8736,7 +8653,6 @@
     "lon": 14.16412
    },
    "clubs": [
-    "landesruderverband-oberoesterreich",
     "wassersportverein-ottensheim",
     "ooe-leistungszentrum-fuer-wassersport",
     "regattaverein-linz-ottensheim-rvlo"

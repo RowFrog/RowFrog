@@ -1720,9 +1720,9 @@
       "country": "de",
       "lakeId": "river-havel",
       "launchPoint": {
-        "lat": 52.50993,
-        "lon": 13.20309,
-        "precision": "geocoded club address, 36 m from the Havel",
+        "lat": 52.50991,
+        "lon": 13.20319,
+        "precision": "shore of the Havel nearest the earlier point (geocoded club address, 36 m from the Havel), 7 m away",
         "verified": false
       }
     },
@@ -1765,9 +1765,9 @@
       "country": "de",
       "lakeId": "river-leine",
       "launchPoint": {
-        "lat": 52.37813,
-        "lon": 9.719,
-        "precision": "geocoded club address, 32 m from the Leine",
+        "lat": 52.37795,
+        "lon": 9.71884,
+        "precision": "shore of the Leine nearest the earlier point (geocoded club address, 32 m from the Leine), 23 m away",
         "verified": false
       }
     },
@@ -1852,9 +1852,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 49.78051,
-        "lon": 9.92648,
-        "precision": "geocoded club address, 184 m from the Main",
+        "lat": 49.78076,
+        "lon": 9.92687,
+        "precision": "shore of the Main nearest the earlier point (geocoded club address, 184 m from the Main), 39 m away",
         "verified": false
       }
     },
@@ -1879,9 +1879,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.9507,
-        "lon": 7.6509,
-        "precision": "geocoded boathouse, 64 m from the Dortmund-Ems-Kanal",
+        "lat": 51.95098,
+        "lon": 7.65049,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded boathouse, 64 m from the Dortmund-Ems-Kanal), 42 m away",
         "verified": false
       }
     },
@@ -1936,9 +1936,9 @@
       "country": "de",
       "lakeId": "river-elstermuehlgraben",
       "launchPoint": {
-        "lat": 51.33517,
-        "lon": 12.35285,
-        "precision": "geocoded boathouse, 22 m from the Elstermühlgraben",
+        "lat": 51.33513,
+        "lon": 12.35287,
+        "precision": "shore of the Elstermühlgraben nearest the earlier point (geocoded boathouse, 22 m from the Elstermühlgraben), 5 m away",
         "verified": false
       }
     },
@@ -1959,9 +1959,9 @@
       "country": "de",
       "lakeId": "river-dove-elbe",
       "launchPoint": {
-        "lat": 53.48232,
-        "lon": 10.11465,
-        "precision": "geocoded boathouse, 131 m from the Dove Elbe",
+        "lat": 53.4819,
+        "lon": 10.11406,
+        "precision": "shore of the Dove Elbe nearest the earlier point (geocoded boathouse, 131 m from the Dove Elbe), 61 m away",
         "verified": false
       }
     },
@@ -1989,9 +1989,9 @@
       "country": "de",
       "lakeId": "river-osterbekkanal",
       "launchPoint": {
-        "lat": 53.58501,
-        "lon": 10.03234,
-        "precision": "geocoded club address, 38 m from the Osterbekkanal",
+        "lat": 53.58481,
+        "lon": 10.03239,
+        "precision": "shore of the Osterbekkanal nearest the earlier point (geocoded club address, 38 m from the Osterbekkanal), 23 m away",
         "verified": false
       }
     },
@@ -2034,9 +2034,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 49.41522,
-        "lon": 8.70645,
-        "precision": "geocoded boathouse, 130 m from the Neckar",
+        "lat": 49.41481,
+        "lon": 8.70656,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded boathouse, 130 m from the Neckar), 46 m away",
         "verified": false
       }
     },
@@ -2076,9 +2076,9 @@
       "country": "de",
       "lakeId": "river-peene",
       "launchPoint": {
-        "lat": 53.8606,
-        "lon": 13.69139,
-        "precision": "geocoded boathouse, 46 m from the Peene",
+        "lat": 53.86038,
+        "lon": 13.69155,
+        "precision": "shore of the Peene nearest the earlier point (geocoded boathouse, 46 m from the Peene), 27 m away",
         "verified": false
       }
     },
@@ -2108,9 +2108,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 52.68705,
-        "lon": 7.29985,
-        "precision": "geocoded boathouse, 63 m from the Dortmund-Ems-Kanal",
+        "lat": 52.68689,
+        "lon": 7.29923,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded boathouse, 63 m from the Dortmund-Ems-Kanal), 45 m away",
         "verified": false
       }
     },
@@ -2154,9 +2154,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.0557,
-        "lon": 7.77101,
-        "precision": "geocoded boathouse, 318 m from the Rhein",
+        "lat": 50.05592,
+        "lon": 7.77177,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 318 m from the Rhein), 59 m away",
         "verified": false
       }
     },
@@ -2215,9 +2215,9 @@
       "country": "de",
       "lakeId": "river-linker-regnitzarm",
       "launchPoint": {
-        "lat": 49.88516,
-        "lon": 10.89363,
-        "precision": "geocoded boathouse, 39 m from the Linker Regnitzarm",
+        "lat": 49.88508,
+        "lon": 10.89344,
+        "precision": "shore of the Linker Regnitzarm nearest the earlier point (geocoded boathouse, 39 m from the Linker Regnitzarm), 16 m away",
         "verified": false
       }
     },
@@ -2383,9 +2383,9 @@
       "country": "de",
       "lakeId": "river-mueggelspree",
       "launchPoint": {
-        "lat": 52.44584,
-        "lon": 13.61669,
-        "precision": "geocoded club address, 128 m from the Müggelspree",
+        "lat": 52.44561,
+        "lon": 13.61646,
+        "precision": "shore of the Müggelspree nearest the earlier point (geocoded club address, 128 m from the Müggelspree), 30 m away",
         "verified": false
       }
     },
@@ -2410,9 +2410,9 @@
       "country": "de",
       "lakeId": "river-saale",
       "launchPoint": {
-        "lat": 51.7917,
-        "lon": 11.72928,
-        "precision": "geocoded boathouse, 77 m from the Saale",
+        "lat": 51.79193,
+        "lon": 11.72895,
+        "precision": "shore of the Saale nearest the earlier point (geocoded boathouse, 77 m from the Saale), 34 m away",
         "verified": false
       }
     },
@@ -2487,9 +2487,9 @@
       "country": "de",
       "lakeId": "river-bille",
       "launchPoint": {
-        "lat": 53.54411,
-        "lon": 10.05424,
-        "precision": "geocoded boathouse, 37 m from the Bille",
+        "lat": 53.54415,
+        "lon": 10.0542,
+        "precision": "shore of the Bille nearest the earlier point (geocoded boathouse, 37 m from the Bille), 5 m away",
         "verified": false
       }
     },
@@ -2516,9 +2516,9 @@
       "country": "de",
       "lakeId": "river-nahe",
       "launchPoint": {
-        "lat": 49.96973,
-        "lon": 7.89078,
-        "precision": "geocoded boathouse, 123 m from the Nahe",
+        "lat": 49.97003,
+        "lon": 7.89063,
+        "precision": "shore of the Nahe nearest the earlier point (geocoded boathouse, 123 m from the Nahe), 35 m away",
         "verified": false
       }
     },
@@ -2561,9 +2561,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.72115,
-        "lon": 7.12134,
-        "precision": "geocoded boathouse, 185 m from the Rhein",
+        "lat": 50.72156,
+        "lon": 7.12175,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 185 m from the Rhein), 54 m away",
         "verified": false
       }
     },
@@ -2648,9 +2648,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 53.06814,
-        "lon": 8.81283,
-        "precision": "geocoded boathouse, 168 m from the Weser",
+        "lat": 53.06894,
+        "lon": 8.81361,
+        "precision": "shore of the Weser nearest the earlier point (geocoded boathouse, 168 m from the Weser), 103 m away",
         "verified": false
       }
     },
@@ -2667,9 +2667,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 53.06902,
+        "lat": 53.06942,
         "lon": 8.81204,
-        "precision": "geocoded club address, 106 m from the Weser",
+        "precision": "shore of the Weser nearest the earlier point (geocoded club address, 106 m from the Weser), 44 m away",
         "verified": false
       }
     },
@@ -2698,9 +2698,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 53.06827,
-        "lon": 8.81359,
-        "precision": "geocoded club address, 134 m from the Weser",
+        "lat": 53.06885,
+        "lon": 8.81385,
+        "precision": "shore of the Weser nearest the earlier point (geocoded club address, 134 m from the Weser), 67 m away",
         "verified": false
       }
     },
@@ -2726,14 +2726,14 @@
         "Marathonrudern"
       ],
       "id": "bremerhavener-ruderverein-von-1889",
-      "address": "Stresemannstr. 51, 27576 Bremerhaven",
+      "address": "Stresemannstraße 51, 27576 Bremerhaven-Lehe",
       "source": "drv",
       "country": "de",
       "lakeId": "near-bremerhaven",
       "launchPoint": {
-        "lat": 53.55986,
-        "lon": 8.59366,
-        "precision": "geocoded club address (street level); water not identified",
+        "lat": 53.55221,
+        "lon": 8.59275,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -2750,9 +2750,9 @@
       "country": "de",
       "lakeId": "river-berlin-spandauer-schifffahrtskanal",
       "launchPoint": {
-        "lat": 52.54797,
-        "lon": 13.27181,
-        "precision": "geocoded club address, 111 m from the Berlin-Spandauer Schifffahrtskanal",
+        "lat": 52.54874,
+        "lon": 13.27185,
+        "precision": "shore of the Berlin-Spandauer Schifffahrtskanal nearest the earlier point (geocoded club address, 111 m from the Berlin-Spandauer Schifffahrtskanal), 85 m away",
         "verified": false
       }
     },
@@ -2771,9 +2771,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.5399,
-        "lon": 7.43474,
-        "precision": "geocoded club address, 47 m from the Dortmund-Ems-Kanal",
+        "lat": 51.53993,
+        "lon": 7.4344,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded club address, 47 m from the Dortmund-Ems-Kanal), 24 m away",
         "verified": false
       }
     },
@@ -2790,9 +2790,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.06271,
+        "lat": 51.06321,
         "lon": 13.68411,
-        "precision": "geocoded club address, 126 m from the Elbe",
+        "precision": "shore of the Elbe nearest the earlier point (geocoded club address, 126 m from the Elbe), 56 m away",
         "verified": false
       }
     },
@@ -2811,9 +2811,9 @@
       "country": "de",
       "lakeId": "river-stichkanal-hannover-linden",
       "launchPoint": {
-        "lat": 52.38662,
-        "lon": 9.66763,
-        "precision": "geocoded club address, 269 m from the Stichkanal Hannover-Linden",
+        "lat": 52.38659,
+        "lon": 9.66794,
+        "precision": "shore of the Stichkanal Hannover-Linden nearest the earlier point (geocoded club address, 269 m from the Stichkanal Hannover-Linden), 21 m away",
         "verified": false
       }
     },
@@ -2849,9 +2849,9 @@
       "country": "de",
       "lakeId": "river-warnow",
       "launchPoint": {
-        "lat": 54.0649,
-        "lon": 12.17263,
-        "precision": "geocoded club address, 114 m from the Warnow",
+        "lat": 54.06411,
+        "lon": 12.1724,
+        "precision": "shore of the Warnow nearest the earlier point (geocoded club address, 114 m from the Warnow), 89 m away",
         "verified": false
       }
     },
@@ -2906,9 +2906,9 @@
       "country": "de",
       "lakeId": "river-aller",
       "launchPoint": {
-        "lat": 52.62539,
+        "lat": 52.6249,
         "lon": 10.09084,
-        "precision": "shore of the Aller nearest the town-level address, 82 m away (water checked by hand)",
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -2926,14 +2926,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "club-fuer-wassersport-porz-ev-1926",
-      "address": "In der Rosenau 10 a, 51143 Köln",
+      "address": "In d. Rosenau 10A, 51143 Porz",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.87302,
-        "lon": 7.04861,
-        "precision": "geocoded boathouse, 355 m from the Rhein",
+        "lat": 50.87418,
+        "lon": 7.04789,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -2982,9 +2982,9 @@
       "country": "de",
       "lakeId": "river-nahe",
       "launchPoint": {
-        "lat": 49.84507,
-        "lon": 7.85765,
-        "precision": "geocoded boathouse, 39 m from the Nahe",
+        "lat": 49.84515,
+        "lon": 7.85748,
+        "precision": "shore of the Nahe nearest the earlier point (geocoded boathouse, 39 m from the Nahe), 15 m away",
         "verified": false
       }
     },
@@ -3002,14 +3002,14 @@
         "Freizeitrudern"
       ],
       "id": "darmstaedter-schwimm-und-wassersport-club-1912",
-      "address": "64560 Riedstadt",
+      "address": "K156, 64560 Riedstadt",
       "source": "drv",
       "country": "de",
       "lakeId": "near-riedstadt",
       "launchPoint": {
-        "lat": 49.84252,
-        "lon": 8.48294,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "lat": 49.83657,
+        "lon": 8.45757,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -3073,9 +3073,9 @@
       "country": "de",
       "lakeId": "river-ihme",
       "launchPoint": {
-        "lat": 52.3625,
-        "lon": 9.72307,
-        "precision": "geocoded club address, 75 m from the Ihme",
+        "lat": 52.36277,
+        "lon": 9.72374,
+        "precision": "shore of the Ihme nearest the earlier point (geocoded club address, 75 m from the Ihme), 54 m away",
         "verified": false
       }
     },
@@ -3152,9 +3152,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.09908,
-        "lon": 6.87637,
-        "precision": "geocoded boathouse, 209 m from the Rhein",
+        "lat": 51.09879,
+        "lon": 6.8771,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 209 m from the Rhein), 60 m away",
         "verified": false
       }
     },
@@ -3180,9 +3180,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.04587,
-        "lon": 13.81436,
-        "precision": "geocoded club address, 124 m from the Elbe",
+        "lat": 51.04621,
+        "lon": 13.81506,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded club address, 124 m from the Elbe), 62 m away",
         "verified": false
       }
     },
@@ -3241,9 +3241,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.20495,
-        "lon": 6.73412,
-        "precision": "geocoded boathouse, 171 m from the Rhein",
+        "lat": 51.20488,
+        "lon": 6.73341,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 171 m from the Rhein), 50 m away",
         "verified": false
       }
     },
@@ -3284,9 +3284,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 52.52184,
-        "lon": 7.30938,
-        "precision": "geocoded boathouse, 61 m from the Dortmund-Ems-Kanal",
+        "lat": 52.52194,
+        "lon": 7.30896,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded boathouse, 61 m from the Dortmund-Ems-Kanal), 31 m away",
         "verified": false
       }
     },
@@ -3339,9 +3339,9 @@
       "country": "de",
       "lakeId": "river-krueckau",
       "launchPoint": {
-        "lat": 53.74982,
-        "lon": 9.63599,
-        "precision": "geocoded boathouse, 31 m from the Krückau",
+        "lat": 53.74994,
+        "lon": 9.63616,
+        "precision": "shore of the Krückau nearest the earlier point (geocoded boathouse, 31 m from the Krückau), 18 m away",
         "verified": false
       }
     },
@@ -3353,14 +3353,14 @@
       "website": "https://www.emderruderverein.de",
       "sports": [],
       "id": "emder-ruderverein",
-      "address": "26725 Emden",
+      "address": "Kesselschleuse 1, 26725 Emden-Groß-Faldern",
       "source": "drv",
       "country": "de",
       "lakeId": "near-emden",
       "launchPoint": {
-        "lat": 53.36705,
-        "lon": 7.20583,
-        "precision": "geocoded club address (town level); water not identified",
+        "lat": 53.3667,
+        "lon": 7.21754,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -3507,9 +3507,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.01165,
-        "lon": 8.43101,
-        "precision": "geocoded boathouse, 107 m from the Main",
+        "lat": 50.01141,
+        "lon": 8.43122,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 107 m from the Main), 31 m away",
         "verified": false
       }
     },
@@ -3526,9 +3526,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.10516,
-        "lon": 8.71578,
-        "precision": "geocoded boathouse, 133 m from the Main",
+        "lat": 50.10574,
+        "lon": 8.71583,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 133 m from the Main), 64 m away",
         "verified": false
       }
     },
@@ -3556,9 +3556,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.10515,
-        "lon": 8.71617,
-        "precision": "geocoded club address, 135 m from the Main",
+        "lat": 50.10572,
+        "lon": 8.71622,
+        "precision": "shore of the Main nearest the earlier point (geocoded club address, 135 m from the Main), 64 m away",
         "verified": false
       }
     },
@@ -3587,9 +3587,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.12062,
-        "lon": 8.77399,
-        "precision": "geocoded boathouse, 92 m from the Main",
+        "lat": 50.12087,
+        "lon": 8.77454,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 92 m from the Main), 48 m away",
         "verified": false
       }
     },
@@ -3616,9 +3616,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.0906,
-        "lon": 8.61232,
-        "precision": "geocoded boathouse, 157 m from the Main",
+        "lat": 50.09,
+        "lon": 8.61234,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 157 m from the Main), 67 m away",
         "verified": false
       }
     },
@@ -3643,9 +3643,9 @@
       "country": "de",
       "lakeId": "river-oder",
       "launchPoint": {
-        "lat": 52.33754,
-        "lon": 14.55683,
-        "precision": "shore of the Alte Oder at the boathouse, which the club rows out from (checked by the owner)",
+        "lat": 52.33744,
+        "lon": 14.55739,
+        "precision": "shore of the Oder nearest the earlier point (shore of the Alte Oder at the boathouse, which the club rows out from (checked by the owner)), 40 m away",
         "verified": true
       }
     },
@@ -3672,9 +3672,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.1052,
-        "lon": 8.71675,
-        "precision": "geocoded boathouse, 132 m from the Main",
+        "lat": 50.1057,
+        "lon": 8.71679,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 132 m from the Main), 56 m away",
         "verified": false
       }
     },
@@ -3701,9 +3701,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.10527,
-        "lon": 8.71706,
-        "precision": "geocoded boathouse, 126 m from the Main",
+        "lat": 50.10571,
+        "lon": 8.71693,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 126 m from the Main), 50 m away",
         "verified": false
       }
     },
@@ -3734,9 +3734,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.10397,
-        "lon": 8.67416,
-        "precision": "geocoded club address, 89 m from the Main",
+        "lat": 50.10426,
+        "lon": 8.67376,
+        "precision": "shore of the Main nearest the earlier point (geocoded club address, 89 m from the Main), 43 m away",
         "verified": false
       }
     },
@@ -3761,9 +3761,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.09899,
-        "lon": 8.56254,
-        "precision": "geocoded club address, 111 m from the Main",
+        "lat": 50.09854,
+        "lon": 8.56221,
+        "precision": "shore of the Main nearest the earlier point (geocoded club address, 111 m from the Main), 55 m away",
         "verified": false
       }
     },
@@ -3849,9 +3849,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.09144,
-        "lon": 8.64084,
-        "precision": "geocoded boathouse, 114 m from the Main",
+        "lat": 50.09175,
+        "lon": 8.64051,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 114 m from the Main), 42 m away",
         "verified": false
       }
     },
@@ -3879,9 +3879,9 @@
       "country": "de",
       "lakeId": "river-mueggelspree",
       "launchPoint": {
-        "lat": 52.44645,
-        "lon": 13.61456,
-        "precision": "geocoded club address, 113 m from the Müggelspree",
+        "lat": 52.44619,
+        "lon": 13.61433,
+        "precision": "shore of the Müggelspree nearest the earlier point (geocoded club address, 113 m from the Müggelspree), 32 m away",
         "verified": false
       }
     },
@@ -3898,9 +3898,9 @@
       "country": "de",
       "lakeId": "river-treene",
       "launchPoint": {
-        "lat": 54.37587,
-        "lon": 9.0831,
-        "precision": "geocoded boathouse, 49 m from the Treene",
+        "lat": 54.37582,
+        "lon": 9.08341,
+        "precision": "shore of the Treene nearest the earlier point (geocoded boathouse, 49 m from the Treene), 21 m away",
         "verified": false
       }
     },
@@ -3936,9 +3936,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.73109,
-        "lon": 7.10985,
-        "precision": "geocoded boathouse, 195 m from the Rhein",
+        "lat": 50.73117,
+        "lon": 7.11019,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 195 m from the Rhein), 25 m away",
         "verified": false
       }
     },
@@ -3957,9 +3957,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.39352,
-        "lon": 9.57323,
-        "precision": "geocoded boathouse, 99 m from the Fulda",
+        "lat": 51.39319,
+        "lon": 9.57411,
+        "precision": "shore of the Fulda nearest the earlier point (geocoded boathouse, 99 m from the Fulda), 72 m away",
         "verified": false
       }
     },
@@ -4016,9 +4016,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.59112,
-        "lon": 8.66864,
-        "precision": "geocoded club address, 70 m from the Lahn",
+        "lat": 50.59087,
+        "lon": 8.66906,
+        "precision": "shore of the Lahn nearest the earlier point (geocoded club address, 70 m from the Lahn), 41 m away",
         "verified": false
       }
     },
@@ -4046,9 +4046,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.58984,
-        "lon": 8.66961,
-        "precision": "geocoded boathouse, 84 m from the Lahn",
+        "lat": 50.59003,
+        "lon": 8.66935,
+        "precision": "shore of the Lahn nearest the earlier point (geocoded boathouse, 84 m from the Lahn), 27 m away",
         "verified": false
       }
     },
@@ -4126,9 +4126,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 52.52184,
-        "lon": 7.30938,
-        "precision": "geocoded boathouse, 61 m from the Dortmund-Ems-Kanal",
+        "lat": 52.52194,
+        "lon": 7.30896,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded boathouse, 61 m from the Dortmund-Ems-Kanal), 31 m away",
         "verified": false
       }
     },
@@ -4157,9 +4157,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.42231,
-        "lon": 7.46136,
-        "precision": "geocoded boathouse, 120 m from the Rhein",
+        "lat": 50.42187,
+        "lon": 7.46093,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 120 m from the Rhein), 58 m away",
         "verified": false
       }
     },
@@ -4176,9 +4176,9 @@
       "country": "de",
       "lakeId": "river-saale",
       "launchPoint": {
-        "lat": 51.46149,
-        "lon": 11.94718,
-        "precision": "geocoded club address, 82 m from the Saale",
+        "lat": 51.46138,
+        "lon": 11.94625,
+        "precision": "shore of the Saale nearest the earlier point (geocoded club address, 82 m from the Saale), 66 m away",
         "verified": false
       }
     },
@@ -4205,9 +4205,9 @@
       "country": "de",
       "lakeId": "river-saale",
       "launchPoint": {
-        "lat": 51.51219,
-        "lon": 11.95619,
-        "precision": "geocoded boathouse, 103 m from the Saale",
+        "lat": 51.51268,
+        "lon": 11.95511,
+        "precision": "shore of the Saale nearest the earlier point (geocoded boathouse, 103 m from the Saale), 92 m away",
         "verified": false
       }
     },
@@ -4219,42 +4219,14 @@
       "website": "https://www.hamburger-ruderinnen.de",
       "sports": [],
       "id": "hamburger-ruderinnen-club-von-1925",
-      "address": "Isekai Ö11a, 20249 Hamburg",
+      "address": "Isekai 11a, 20249 Hamburg-Nord",
       "source": "drv",
       "country": "de",
       "lakeId": "near-hamburg",
       "launchPoint": {
-        "lat": 53.55017,
-        "lon": 10.00132,
-        "precision": "geocoded club address (town level); water not identified",
-        "verified": false
-      }
-    },
-    {
-      "drvId": "50005",
-      "name": "Hamburger Schüler-Ruderverband",
-      "shortName": "Hamburger SRV",
-      "abbreviation": "HSRVb",
-      "website": "https://schulrudern.hamburg.de/",
-      "sports": [
-        "Wanderrudern",
-        "Wettkampfrudern",
-        "Ergometerrudern",
-        "Jugendausbildung (15 bis 18 Jahre)",
-        "Jugendausbildung (14 Jahre und jünger)",
-        "Schulrudern",
-        "Sportverwaltung",
-        "Veranstaltungsorganisation"
-      ],
-      "id": "hamburger-schueler-ruderverband",
-      "address": "Fährhausstraße 3a, 22085 Hamburg",
-      "source": "drv",
-      "country": "de",
-      "lakeId": "aussenalster",
-      "launchPoint": {
-        "lat": 53.5756,
-        "lon": 10.00591,
-        "precision": "shore point of Außenalster nearest the geocoded club address, 36 m away",
+        "lat": 53.58523,
+        "lon": 9.99186,
+        "precision": "launch point checked by hand on the satellite view (2026-10-31)",
         "verified": false
       }
     },
@@ -4282,9 +4254,9 @@
       "country": "de",
       "lakeId": "river-bille",
       "launchPoint": {
-        "lat": 53.54531,
-        "lon": 10.04814,
-        "precision": "geocoded boathouse, 132 m from the Bille",
+        "lat": 53.5451,
+        "lon": 10.04801,
+        "precision": "shore of the Bille nearest the earlier point (geocoded boathouse, 132 m from the Bille), 25 m away",
         "verified": false
       }
     },
@@ -4314,9 +4286,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.12628,
-        "lon": 8.91013,
-        "precision": "geocoded club address, 135 m from the Main",
+        "lat": 50.1259,
+        "lon": 8.90937,
+        "precision": "shore of the Main nearest the earlier point (geocoded club address, 135 m from the Main), 69 m away",
         "verified": false
       }
     },
@@ -4345,9 +4317,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.12839,
-        "lon": 8.90649,
-        "precision": "geocoded club address, 81 m from the Main",
+        "lat": 50.12822,
+        "lon": 8.90628,
+        "precision": "shore of the Main nearest the earlier point (geocoded club address, 81 m from the Main), 24 m away",
         "verified": false
       }
     },
@@ -4406,9 +4378,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 49.41358,
-        "lon": 8.69465,
-        "precision": "geocoded boathouse, 120 m from the Neckar",
+        "lat": 49.41307,
+        "lon": 8.69479,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded boathouse, 120 m from the Neckar), 58 m away",
         "verified": false
       }
     },
@@ -4439,9 +4411,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 49.13178,
-        "lon": 9.20308,
-        "precision": "geocoded boathouse, 99 m from the Neckar",
+        "lat": 49.13239,
+        "lon": 9.20262,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded boathouse, 99 m from the Neckar), 75 m away",
         "verified": false
       }
     },
@@ -4528,9 +4500,9 @@
       "country": "de",
       "lakeId": "river-stichkanal-hildesheim",
       "launchPoint": {
-        "lat": 52.18096,
-        "lon": 9.92956,
-        "precision": "geocoded boathouse, 93 m from the Stichkanal Hildesheim",
+        "lat": 52.18099,
+        "lon": 9.92861,
+        "precision": "shore of the Stichkanal Hildesheim nearest the earlier point (geocoded boathouse, 93 m from the Stichkanal Hildesheim), 65 m away",
         "verified": false
       }
     },
@@ -4602,14 +4574,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "huerther-rudergesellschaft",
-      "address": "50354 Hürth",
+      "address": "Zur Gotteshülfe 71, 50354 Hürth",
       "source": "drv",
       "country": "de",
       "lakeId": "near-huerth",
       "launchPoint": {
-        "lat": 50.88074,
-        "lon": 6.87657,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "lat": 50.87937,
+        "lon": 6.84475,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -4636,9 +4608,9 @@
       "country": "de",
       "lakeId": "river-saale",
       "launchPoint": {
-        "lat": 50.91699,
-        "lon": 11.57969,
-        "precision": "geocoded club address, 74 m from the Saale",
+        "lat": 50.91725,
+        "lon": 11.58035,
+        "precision": "shore of the Saale nearest the earlier point (geocoded club address, 74 m from the Saale), 55 m away",
         "verified": false
       }
     },
@@ -4666,14 +4638,14 @@
         "Handicaprudern"
       ],
       "id": "karlsruher-rheinklub-alemannia",
-      "address": "Werftstr. 8 b, 76189 Karlsruhe",
+      "address": "Werftstraße 8 b, 76189 Karlsruhe-Mühlburg",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.01744,
-        "lon": 8.34219,
-        "precision": "shore of the Rheinhafen (Becken I) at the geocoded boathouse, as before the river move",
+        "lat": 49.01741,
+        "lon": 8.34156,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -4700,15 +4672,15 @@
         "Veranstaltungsorganisation"
       ],
       "id": "karlsruher-ruder-verein-wiking-von-1879",
-      "address": "Hansastr. 18 b, 76189 Karlsruhe",
+      "address": "Hansastraße 18, 76189 Karlsruhe",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.01013,
-        "lon": 8.33499,
-        "precision": "shore of the Rheinhafen at the boathouse, Hansastr. 18 b (checked by the owner)",
-        "verified": true
+        "lat": 49.01025,
+        "lon": 8.33445,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
+        "verified": false
       }
     },
     {
@@ -4728,14 +4700,14 @@
         "Schulrudern"
       ],
       "id": "kasteler-ruder-und-kanu-gesellschaft-1880",
-      "address": "Maaraue 48, 55246 Mainz-Kostheim",
+      "address": "Maaraue 48, 55246 Wiesbaden",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.00225,
-        "lon": 8.28572,
-        "precision": "geocoded boathouse, 311 m from the Rhein",
+        "lat": 50.00053,
+        "lon": 8.28584,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -4752,9 +4724,9 @@
       "country": "de",
       "lakeId": "river-kanal-trave",
       "launchPoint": {
-        "lat": 53.85506,
-        "lon": 10.68183,
-        "precision": "geocoded boathouse, 75 m from the Kanal-Trave",
+        "lat": 53.85553,
+        "lon": 10.68179,
+        "precision": "shore of the Kanal-Trave nearest the earlier point (geocoded boathouse, 75 m from the Kanal-Trave), 53 m away",
         "verified": false
       }
     },
@@ -4802,9 +4774,9 @@
       "country": "de",
       "lakeId": "river-mosel",
       "launchPoint": {
-        "lat": 50.36128,
-        "lon": 7.56711,
-        "precision": "geocoded club address, 116 m from the Mosel",
+        "lat": 50.36132,
+        "lon": 7.56668,
+        "precision": "shore of the Mosel nearest the earlier point (geocoded club address, 116 m from the Mosel), 31 m away",
         "verified": false
       }
     },
@@ -4827,9 +4799,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.90438,
-        "lon": 6.98007,
-        "precision": "geocoded boathouse, 161 m from the Rhein",
+        "lat": 50.90463,
+        "lon": 6.98065,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 161 m from the Rhein), 49 m away",
         "verified": false
       }
     },
@@ -4847,14 +4819,14 @@
         "Freizeitrudern"
       ],
       "id": "koelner-rudergesellschaft-1891",
-      "address": "Uferstr. 16, 50996 Köln",
+      "address": "Uferstraße 16, 50996 Köln-Rodenkirchen",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.8919,
-        "lon": 7.00168,
-        "precision": "geocoded boathouse, 373 m from the Rhein",
+        "lat": 50.89377,
+        "lon": 7.00415,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -4878,14 +4850,14 @@
         "Marathonrudern"
       ],
       "id": "koelner-ruderverein-von-1877",
-      "address": "Barbarastr. 47-49, 50996 Köln",
+      "address": "Barbarastraße 47-49, 50996 Köln-Rodenkirchen",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.89356,
-        "lon": 6.99558,
-        "precision": "geocoded club address, 368 m from the Rhein",
+        "lat": 50.89433,
+        "lon": 6.9982,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -4905,42 +4877,6 @@
         "lat": 51.02299,
         "lon": 6.92583,
         "precision": "shore point of Fühlinger See nearest the geocoded boathouse, 69 m away",
-        "verified": false
-      }
-    },
-    {
-      "drvId": "30012",
-      "name": "Landesruderverband Berlin e.V.",
-      "shortName": "LRV Berlin",
-      "abbreviation": "LRVB",
-      "website": "https://www.lrvberlin.de",
-      "sports": [
-        "Wanderrudern",
-        "Wettkampfrudern",
-        "Ergometerrudern",
-        "Küstenrudern",
-        "Jugendausbildung (15 bis 18 Jahre)",
-        "Jugendausbildung (14 Jahre und jünger)",
-        "Erwachsenenausbildung",
-        "Leistungssport",
-        "Mastersrudern",
-        "Freizeitrudern",
-        "Hochschulrudern",
-        "Schulrudern",
-        "Marathonrudern",
-        "Sportverwaltung",
-        "Veranstaltungsorganisation",
-        "Handicaprudern"
-      ],
-      "id": "landesruderverband-berlin",
-      "address": "Jungfernheideweg 80, 13629 Berlin",
-      "source": "drv",
-      "country": "de",
-      "lakeId": "river-berlin-spandauer-schifffahrtskanal",
-      "launchPoint": {
-        "lat": 52.54797,
-        "lon": 13.27181,
-        "precision": "geocoded boathouse, 111 m from the Berlin-Spandauer Schifffahrtskanal",
         "verified": false
       }
     },
@@ -4968,9 +4904,9 @@
       "country": "de",
       "lakeId": "river-grosse-isar",
       "launchPoint": {
-        "lat": 48.55418,
-        "lon": 12.18015,
-        "precision": "geocoded club address, 57 m from the Große Isar",
+        "lat": 48.55415,
+        "lon": 12.18044,
+        "precision": "shore of the Große Isar nearest the earlier point (geocoded club address, 57 m from the Große Isar), 21 m away",
         "verified": false
       }
     },
@@ -4996,9 +4932,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.02765,
-        "lon": 13.83859,
-        "precision": "geocoded boathouse, 126 m from the Elbe",
+        "lat": 51.02784,
+        "lon": 13.83912,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded boathouse, 126 m from the Elbe), 43 m away",
         "verified": false
       }
     },
@@ -5019,14 +4955,14 @@
         "Freizeitrudern"
       ],
       "id": "lauffener-ruderclub-neckar-ev-1931",
-      "address": "Neckaruferweg 2, 74348 Lauffen",
+      "address": "Neckaruferweg 2, 74348 Lauffen am Neckar",
       "source": "drv",
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 49.06903,
-        "lon": 9.16262,
-        "precision": "geocoded boathouse, 202 m from the Neckar",
+        "lat": 49.06944,
+        "lon": 9.16465,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -5043,9 +4979,9 @@
       "country": "de",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.56974,
-        "lon": 10.43395,
-        "precision": "geocoded club address, 43 m from the Donau",
+        "lat": 48.56966,
+        "lon": 10.43403,
+        "precision": "shore of the Donau nearest the earlier point (geocoded club address, 43 m from the Donau), 11 m away",
         "verified": false
       }
     },
@@ -5073,9 +5009,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.38809,
-        "lon": 8.07028,
-        "precision": "geocoded club address, 83 m from the Lahn",
+        "lat": 50.38825,
+        "lon": 8.07069,
+        "precision": "shore of the Lahn nearest the earlier point (geocoded club address, 83 m from the Lahn), 34 m away",
         "verified": false
       }
     },
@@ -5099,14 +5035,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "ludwigshafener-ruderverein-von-1878",
-      "address": "Rheinpromenade 10, 67061 Ludwigshafen",
+      "address": "Rheinpromenade 10, 67061 Ludwigshafen am Rhein",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.47587,
-        "lon": 8.45833,
-        "precision": "geocoded boathouse, 189 m from the Rhein",
+        "lat": 49.47625,
+        "lon": 8.45865,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -5183,9 +5119,9 @@
       "country": "de",
       "lakeId": "river-kanal-trave",
       "launchPoint": {
-        "lat": 53.85506,
-        "lon": 10.68183,
-        "precision": "geocoded club address, 75 m from the Kanal-Trave",
+        "lat": 53.85553,
+        "lon": 10.68179,
+        "precision": "shore of the Kanal-Trave nearest the earlier point (geocoded club address, 75 m from the Kanal-Trave), 53 m away",
         "verified": false
       }
     },
@@ -5262,9 +5198,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.03053,
-        "lon": 8.22632,
-        "precision": "geocoded boathouse, 126 m from the Rhein",
+        "lat": 50.03079,
+        "lon": 8.22635,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 126 m from the Rhein), 29 m away",
         "verified": false
       }
     },
@@ -5291,9 +5227,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.99211,
-        "lon": 8.28822,
-        "precision": "geocoded club address, 221 m from the Rhein",
+        "lat": 49.9922,
+        "lon": 8.28792,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 221 m from the Rhein), 24 m away",
         "verified": false
       }
     },
@@ -5342,9 +5278,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.47939,
-        "lon": 8.46153,
-        "precision": "geocoded club address, 201 m from the Rhein",
+        "lat": 49.47895,
+        "lon": 8.46079,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 201 m from the Rhein), 73 m away",
         "verified": false
       }
     },
@@ -5403,9 +5339,9 @@
       "country": "de",
       "lakeId": "river-neckarkanal",
       "launchPoint": {
-        "lat": 49.48935,
-        "lon": 8.49371,
-        "precision": "geocoded club address, 75 m from the Neckarkanal",
+        "lat": 49.48903,
+        "lon": 8.49388,
+        "precision": "shore of the Neckarkanal nearest the earlier point (geocoded club address, 75 m from the Neckarkanal), 37 m away",
         "verified": false
       }
     },
@@ -5466,9 +5402,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 48.94039,
-        "lon": 9.25339,
-        "precision": "geocoded boathouse, 86 m from the Neckar",
+        "lat": 48.94045,
+        "lon": 9.25278,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded boathouse, 86 m from the Neckar), 45 m away",
         "verified": false
       }
     },
@@ -5508,9 +5444,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.15271,
-        "lon": 13.48062,
-        "precision": "geocoded boathouse, 163 m from the Elbe",
+        "lat": 51.15346,
+        "lon": 13.48189,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded boathouse, 163 m from the Elbe), 122 m away",
         "verified": false
       }
     },
@@ -5537,9 +5473,9 @@
       "country": "de",
       "lakeId": "river-saale",
       "launchPoint": {
-        "lat": 51.377,
-        "lon": 11.99547,
-        "precision": "geocoded boathouse, 66 m from the Saale",
+        "lat": 51.37717,
+        "lon": 11.99598,
+        "precision": "shore of the Saale nearest the earlier point (geocoded boathouse, 66 m from the Saale), 40 m away",
         "verified": false
       }
     },
@@ -5556,9 +5492,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 49.70625,
-        "lon": 9.2566,
-        "precision": "geocoded boathouse, 97 m from the Main",
+        "lat": 49.70606,
+        "lon": 9.25719,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 97 m from the Main), 47 m away",
         "verified": false
       }
     },
@@ -5658,9 +5594,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.12905,
-        "lon": 8.83645,
-        "precision": "geocoded boathouse, 103 m from the Main",
+        "lat": 50.12946,
+        "lon": 8.83655,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 103 m from the Main), 46 m away",
         "verified": false
       }
     },
@@ -5775,14 +5711,14 @@
         "Handicaprudern"
       ],
       "id": "muendener-ruderverein",
-      "address": "Fährweg 30, 34346 Hann Münden",
+      "address": "Fährweg 30, 34346 Hann. Münden",
       "source": "drv",
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.40845,
-        "lon": 9.64488,
-        "precision": "geocoded club address, 340 m from the Fulda",
+        "lat": 51.40806,
+        "lon": 9.6493,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -5850,9 +5786,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.4248,
-        "lon": 7.45878,
-        "precision": "geocoded boathouse, 184 m from the Rhein",
+        "lat": 50.42431,
+        "lon": 7.45723,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 184 m from the Rhein), 123 m away",
         "verified": false
       }
     },
@@ -5898,9 +5834,9 @@
       "country": "de",
       "lakeId": "river-norder-tief",
       "launchPoint": {
-        "lat": 53.58931,
-        "lon": 7.2103,
-        "precision": "geocoded boathouse, 65 m from the Norder Tief",
+        "lat": 53.58917,
+        "lon": 7.21092,
+        "precision": "shore of the Norder Tief nearest the earlier point (geocoded boathouse, 65 m from the Norder Tief), 44 m away",
         "verified": false
       }
     },
@@ -5922,14 +5858,14 @@
         "Handicaprudern"
       ],
       "id": "offenbacher-rudergesellschaft-undine-1876",
-      "address": "Dieburgerstr. 68, 60386 Frankfurt",
+      "address": "Dieburger Str. 68, 60386 Frankfurt-Ost",
       "source": "drv",
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.11475,
-        "lon": 8.7585,
-        "precision": "geocoded boathouse, 165 m from the Main",
+        "lat": 50.11384,
+        "lon": 8.75774,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -5950,9 +5886,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.10977,
-        "lon": 8.76593,
-        "precision": "geocoded club address, 96 m from the Main",
+        "lat": 50.10931,
+        "lon": 8.76563,
+        "precision": "shore of the Main nearest the earlier point (geocoded club address, 96 m from the Main), 55 m away",
         "verified": false
       }
     },
@@ -5983,9 +5919,9 @@
       "country": "de",
       "lakeId": "river-hunte",
       "launchPoint": {
-        "lat": 53.11978,
-        "lon": 8.2049,
-        "precision": "geocoded club address, 42 m from the Hunte",
+        "lat": 53.11969,
+        "lon": 8.20506,
+        "precision": "shore of the Hunte nearest the earlier point (geocoded club address, 42 m from the Hunte), 15 m away",
         "verified": false
       }
     },
@@ -6011,14 +5947,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "osnabruecker-ruder-verein",
-      "address": "Glückaufstr. 16, 49090 Osnabrück",
+      "address": "Glückaufstraße 16, 49090 Osnabrück-Eversburg",
       "source": "drv",
       "country": "de",
       "lakeId": "river-stichkanal-osnabrueck",
       "launchPoint": {
-        "lat": 52.30966,
-        "lon": 8.00023,
-        "precision": "geocoded club address, 106 m from the Stichkanal Osnabrück",
+        "lat": 52.30977,
+        "lon": 7.99962,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -6044,9 +5980,9 @@
       "country": "de",
       "lakeId": "river-ems",
       "launchPoint": {
-        "lat": 53.0866,
-        "lon": 7.38469,
-        "precision": "shore of the Papenburg canals (An der Alten Werft) at the boathouse, which the club rows out from (checked by the owner)",
+        "lat": 53.08666,
+        "lon": 7.38458,
+        "precision": "shore of the Ems nearest the earlier point (shore of the Papenburg canals (An der Alten Werft) at the boathouse, which the club rows out from (checked by the owner)), 9 m away",
         "verified": true
       }
     },
@@ -6070,14 +6006,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "passauer-ruderverein-von-1874",
-      "address": "Innstr. 123, 94036 Passau",
+      "address": "Innstraße 123, 94036 Passau",
       "source": "drv",
       "country": "de",
       "lakeId": "river-inn",
       "launchPoint": {
-        "lat": 48.54957,
-        "lon": 13.43622,
-        "precision": "geocoded boathouse, 140 m from the Inn",
+        "lat": 48.5496,
+        "lon": 13.43654,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -6125,9 +6061,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 50.96417,
-        "lon": 13.93222,
-        "precision": "geocoded club address, 87 m from the Elbe",
+        "lat": 50.96454,
+        "lon": 13.93226,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded club address, 87 m from the Elbe), 41 m away",
         "verified": false
       }
     },
@@ -6170,9 +6106,9 @@
       "country": "de",
       "lakeId": "river-mosel",
       "launchPoint": {
-        "lat": 50.36773,
-        "lon": 7.5678,
-        "precision": "geocoded boathouse, 142 m from the Mosel",
+        "lat": 50.3676,
+        "lon": 7.56808,
+        "precision": "shore of the Mosel nearest the earlier point (geocoded boathouse, 142 m from the Mosel), 24 m away",
         "verified": false
       }
     },
@@ -6189,9 +6125,9 @@
       "country": "de",
       "lakeId": "river-kuestenkanal",
       "launchPoint": {
-        "lat": 53.11458,
-        "lon": 8.19814,
-        "precision": "geocoded boathouse, 155 m from the Küstenkanal",
+        "lat": 53.11557,
+        "lon": 8.19709,
+        "precision": "shore of the Küstenkanal nearest the earlier point (geocoded boathouse, 155 m from the Küstenkanal), 130 m away",
         "verified": false
       }
     },
@@ -6325,14 +6261,14 @@
       "website": "https://www.besselgymnasium.de",
       "sports": [],
       "id": "rr-besselgymnasium-minden",
-      "address": "Am Pumpwerk 2, 32425 Minden",
+      "address": "Am Schirrhof 6, 32427 Minden",
       "source": "drv",
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.30095,
-        "lon": 8.92767,
-        "precision": "on the Weser (checked by hand), first matched to Pumpwerkskanal",
+        "lat": 52.30087,
+        "lon": 8.88986,
+        "precision": "launch point checked by hand on the satellite view (2026-10-31)",
         "verified": false
       }
     },
@@ -6349,9 +6285,9 @@
       "country": "de",
       "lakeId": "river-aller",
       "launchPoint": {
-        "lat": 52.91476,
-        "lon": 9.22886,
-        "precision": "geocoded boathouse, 169 m from the Aller",
+        "lat": 52.91459,
+        "lon": 9.22665,
+        "precision": "shore of the Aller nearest the earlier point (geocoded boathouse, 169 m from the Aller), 149 m away",
         "verified": false
       }
     },
@@ -6368,9 +6304,9 @@
       "country": "de",
       "lakeId": "river-mittellandkanal",
       "launchPoint": {
-        "lat": 52.39918,
-        "lon": 7.99694,
-        "precision": "geocoded boathouse, 54 m from the Mittellandkanal",
+        "lat": 52.39898,
+        "lon": 7.99707,
+        "precision": "shore of the Mittellandkanal nearest the earlier point (geocoded boathouse, 54 m from the Mittellandkanal), 24 m away",
         "verified": false
       }
     },
@@ -6392,14 +6328,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "rr-gymnasium-carolinum-osnabrueck",
-      "address": "Glückaufstr. 16, 49090 Osnabrück",
+      "address": "Glückaufstraße 16, 49090 Osnabrück-Eversburg",
       "source": "drv",
       "country": "de",
       "lakeId": "river-stichkanal-osnabrueck",
       "launchPoint": {
-        "lat": 52.30966,
-        "lon": 8.00023,
-        "precision": "geocoded boathouse, 106 m from the Stichkanal Osnabrück",
+        "lat": 52.30977,
+        "lon": 7.99962,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -6416,9 +6352,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.95334,
-        "lon": 7.65284,
-        "precision": "geocoded boathouse, 40 m from the Dortmund-Ems-Kanal",
+        "lat": 51.95319,
+        "lon": 7.65309,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded boathouse, 40 m from the Dortmund-Ems-Kanal), 24 m away",
         "verified": false
       }
     },
@@ -6435,9 +6371,9 @@
       "country": "de",
       "lakeId": "river-eider",
       "launchPoint": {
-        "lat": 54.30813,
-        "lon": 9.67639,
-        "precision": "geocoded boathouse, 89 m from the Eider",
+        "lat": 54.30829,
+        "lon": 9.67619,
+        "precision": "shore of the Eider nearest the earlier point (geocoded boathouse, 89 m from the Eider), 22 m away",
         "verified": false
       }
     },
@@ -6451,14 +6387,14 @@
         "Schulrudern"
       ],
       "id": "rr-am-kaiserin-auguste-viktoria-gymnasium-celle",
-      "address": "Herzog-Ernst-Ring 46, 29221 Celle",
+      "address": "Zur Ziegeninsel 5, 29221 Celle",
       "source": "drv",
       "country": "de",
       "lakeId": "river-aller",
       "launchPoint": {
-        "lat": 52.62235,
-        "lon": 10.09587,
-        "precision": "geocoded boathouse, 249 m from the Aller",
+        "lat": 52.6249,
+        "lon": 10.09084,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -6484,9 +6420,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.28156,
-        "lon": 8.91964,
-        "precision": "geocoded boathouse, 104 m from the Weser",
+        "lat": 52.28189,
+        "lon": 8.92016,
+        "precision": "shore of the Weser nearest the earlier point (geocoded boathouse, 104 m from the Weser), 51 m away",
         "verified": false
       }
     },
@@ -6524,9 +6460,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.98723,
-        "lon": 6.97931,
-        "precision": "geocoded boathouse, 266 m from the Rhein",
+        "lat": 50.98637,
+        "lon": 6.9787,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 266 m from the Rhein), 105 m away",
         "verified": false
       }
     },
@@ -6739,14 +6675,14 @@
         "Handicaprudern"
       ],
       "id": "reinfelder-rudergemeinschaft-von-1963",
-      "address": "23858 Reinfeld",
+      "address": "Bei der Badeanstalt, 23858 Reinfeld (Holstein)",
       "source": "drv",
       "country": "de",
       "lakeId": "near-reinfeld",
       "launchPoint": {
-        "lat": 53.83006,
-        "lon": 10.48695,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "lat": 53.83498,
+        "lon": 10.48327,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -6769,14 +6705,14 @@
         "Küstenrudern"
       ],
       "id": "rendsburger-primaner-ruderclub-von-1880",
-      "address": "RPRC von 1880, 24768 Rendsburg",
+      "address": "Wickenhagenweg 7, 24768 Rendsburg",
       "source": "drv",
       "country": "de",
       "lakeId": "near-rendsburg",
       "launchPoint": {
-        "lat": 54.30029,
-        "lon": 9.66501,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "lat": 54.30828,
+        "lon": 9.67601,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -6804,9 +6740,9 @@
       "country": "de",
       "lakeId": "river-eider",
       "launchPoint": {
-        "lat": 54.30766,
-        "lon": 9.67569,
-        "precision": "geocoded boathouse, 114 m from the Eider",
+        "lat": 54.3078,
+        "lon": 9.67544,
+        "precision": "shore of the Eider nearest the earlier point (geocoded boathouse, 114 m from the Eider), 23 m away",
         "verified": false
       }
     },
@@ -6919,9 +6855,9 @@
       "country": "de",
       "lakeId": "river-unterwarnow",
       "launchPoint": {
-        "lat": 54.09744,
-        "lon": 12.13143,
-        "precision": "geocoded club address, 350 m from the Unterwarnow",
+        "lat": 54.09756,
+        "lon": 12.13185,
+        "precision": "shore of the Unterwarnow nearest the earlier point (geocoded club address, 350 m from the Unterwarnow), 30 m away",
         "verified": false
       }
     },
@@ -6969,9 +6905,9 @@
       "country": "de",
       "lakeId": "river-leda",
       "launchPoint": {
-        "lat": 53.2184,
-        "lon": 7.44646,
-        "precision": "geocoded boathouse, 254 m from the Leda",
+        "lat": 53.21925,
+        "lon": 7.44809,
+        "precision": "shore of the Leda nearest the earlier point (geocoded boathouse, 254 m from the Leda), 144 m away",
         "verified": false
       }
     },
@@ -6998,9 +6934,9 @@
       "country": "de",
       "lakeId": "river-lech",
       "launchPoint": {
-        "lat": 48.08879,
-        "lon": 10.87453,
-        "precision": "geocoded boathouse, 89 m from the Lech",
+        "lat": 48.08894,
+        "lon": 10.87376,
+        "precision": "shore of the Lech nearest the earlier point (geocoded boathouse, 89 m from the Lech), 60 m away",
         "verified": false
       }
     },
@@ -7097,9 +7033,9 @@
       "country": "de",
       "lakeId": "river-ems",
       "launchPoint": {
-        "lat": 52.27618,
-        "lon": 7.44639,
-        "precision": "geocoded boathouse, 69 m from the Ems",
+        "lat": 52.27599,
+        "lon": 7.44593,
+        "precision": "shore of the Ems nearest the earlier point (geocoded boathouse, 69 m from the Ems), 38 m away",
         "verified": false
       }
     },
@@ -7149,9 +7085,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.38034,
-        "lon": 7.39654,
-        "precision": "shore of the Obergraben at the boathouse, which the club rows out from (checked by the owner)",
+        "lat": 51.38019,
+        "lon": 7.39667,
+        "precision": "shore of the Ruhr nearest the earlier point (shore of the Obergraben at the boathouse, which the club rows out from (checked by the owner)), 19 m away",
         "verified": true
       }
     },
@@ -7179,9 +7115,9 @@
       "country": "de",
       "lakeId": "river-ilmenau",
       "launchPoint": {
-        "lat": 53.29964,
-        "lon": 10.39823,
-        "precision": "geocoded boathouse, 23 m from the Ilmenau",
+        "lat": 53.2996,
+        "lon": 10.39808,
+        "precision": "shore of the Ilmenau nearest the earlier point (geocoded boathouse, 23 m from the Ilmenau), 11 m away",
         "verified": false
       }
     },
@@ -7225,9 +7161,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 49.96127,
-        "lon": 9.13358,
-        "precision": "geocoded boathouse, 70 m from the Main",
+        "lat": 49.96138,
+        "lon": 9.13318,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 70 m from the Main), 31 m away",
         "verified": false
       }
     },
@@ -7255,9 +7191,9 @@
       "country": "de",
       "lakeId": "river-dove-elbe",
       "launchPoint": {
-        "lat": 53.46722,
-        "lon": 10.18936,
-        "precision": "geocoded boathouse, 56 m from the Dove Elbe",
+        "lat": 53.46739,
+        "lon": 10.18899,
+        "precision": "shore of the Dove Elbe nearest the earlier point (geocoded boathouse, 56 m from the Dove Elbe), 31 m away",
         "verified": false
       }
     },
@@ -7302,9 +7238,9 @@
       "country": "de",
       "lakeId": "river-osterbekkanal",
       "launchPoint": {
-        "lat": 53.58499,
-        "lon": 10.03136,
-        "precision": "geocoded club address, 44 m from the Osterbekkanal",
+        "lat": 53.58478,
+        "lon": 10.03137,
+        "precision": "shore of the Osterbekkanal nearest the earlier point (geocoded club address, 44 m from the Osterbekkanal), 23 m away",
         "verified": false
       }
     },
@@ -7363,9 +7299,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 51.8352,
-        "lon": 9.43998,
-        "precision": "geocoded boathouse, 152 m from the Weser",
+        "lat": 51.83449,
+        "lon": 9.43866,
+        "precision": "shore of the Weser nearest the earlier point (geocoded boathouse, 152 m from the Weser), 120 m away",
         "verified": false
       }
     },
@@ -7388,14 +7324,14 @@
         "Schulrudern"
       ],
       "id": "ruder-club-karlstadt-1928",
-      "address": "Baggertsweg 7, 97753 Karlstadt",
+      "address": "Baggertsweg 7, 97753 Karlstadt-Mühlbach",
       "source": "drv",
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 49.95783,
-        "lon": 9.76451,
-        "precision": "geocoded boathouse, 216 m from the Main",
+        "lat": 49.958,
+        "lon": 9.76189,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -7420,9 +7356,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.09774,
-        "lon": 8.56584,
-        "precision": "geocoded boathouse, 117 m from the Main",
+        "lat": 50.09726,
+        "lon": 8.56525,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 117 m from the Main), 68 m away",
         "verified": false
       }
     },
@@ -7479,14 +7415,14 @@
       "website": "https://www.ruder-club-rastatt.de",
       "sports": [],
       "id": "ruder-club-rastatt-1898",
-      "address": "76477 Elchesheim-Illingen",
+      "address": "Am Goldkanal 3, 76477 Elchesheim-Illingen",
       "source": "drv",
       "country": "de",
       "lakeId": "near-elchesheim-illingen",
       "launchPoint": {
-        "lat": 48.93069,
-        "lon": 8.21013,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "lat": 48.9185,
+        "lon": 8.18019,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -7512,9 +7448,9 @@
       "country": "de",
       "lakeId": "river-saar",
       "launchPoint": {
-        "lat": 49.22461,
-        "lon": 7.00537,
-        "precision": "geocoded club address, 143 m from the Saar",
+        "lat": 49.22523,
+        "lon": 7.00586,
+        "precision": "shore of the Saar nearest the earlier point (geocoded club address, 143 m from the Saar), 78 m away",
         "verified": false
       }
     },
@@ -7544,9 +7480,9 @@
       "country": "de",
       "lakeId": "river-suederelbe",
       "launchPoint": {
-        "lat": 53.47078,
-        "lon": 10.00168,
-        "precision": "shore of the Diamantgraben at the boathouse (checked by the owner)",
+        "lat": 53.47051,
+        "lon": 10.00157,
+        "precision": "shore of the Süderelbe nearest the earlier point (shore of the Diamantgraben at the boathouse (checked by the owner)), 30 m away",
         "verified": true
       }
     },
@@ -7629,9 +7565,9 @@
       "country": "de",
       "lakeId": "river-mosel",
       "launchPoint": {
-        "lat": 49.95155,
-        "lon": 7.12932,
-        "precision": "geocoded boathouse, 99 m from the Mosel",
+        "lat": 49.95175,
+        "lon": 7.12912,
+        "precision": "shore of the Mosel nearest the earlier point (geocoded boathouse, 99 m from the Mosel), 26 m away",
         "verified": false
       }
     },
@@ -7655,14 +7591,14 @@
         "Schulrudern"
       ],
       "id": "ruder-club-witten",
-      "address": "Wetterstr. 30 a, 58453 Witten",
+      "address": "Wetterstraße 30A, 58453 Witten",
       "source": "drv",
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.42621,
-        "lon": 7.34652,
-        "precision": "geocoded club address, 103 m from the Ruhr",
+        "lat": 51.42644,
+        "lon": 7.34688,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -7679,9 +7615,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.86352,
-        "lon": 12.6672,
-        "precision": "geocoded club address, 107 m from the Elbe",
+        "lat": 51.86316,
+        "lon": 12.66732,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded club address, 107 m from the Elbe), 41 m away",
         "verified": false
       }
     },
@@ -7805,9 +7741,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 53.37117,
-        "lon": 10.54326,
-        "precision": "geocoded boathouse, 195 m from the Elbe",
+        "lat": 53.37099,
+        "lon": 10.54319,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded boathouse, 195 m from the Elbe), 21 m away",
         "verified": false
       }
     },
@@ -7831,9 +7767,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.57777,
-        "lon": 7.23995,
-        "precision": "geocoded boathouse, 217 m from the Rhein",
+        "lat": 50.57859,
+        "lon": 7.24027,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 217 m from the Rhein), 94 m away",
         "verified": false
       }
     },
@@ -7894,9 +7830,9 @@
       "country": "de",
       "lakeId": "river-treptower-spree",
       "launchPoint": {
-        "lat": 52.45397,
-        "lon": 13.54771,
-        "precision": "geocoded boathouse, 141 m from the Treptower Spree",
+        "lat": 52.45447,
+        "lon": 13.54808,
+        "precision": "shore of the Treptower Spree nearest the earlier point (geocoded boathouse, 141 m from the Treptower Spree), 61 m away",
         "verified": false
       }
     },
@@ -7993,9 +7929,9 @@
       "country": "de",
       "lakeId": "river-bille",
       "launchPoint": {
-        "lat": 53.54347,
-        "lon": 10.04312,
-        "precision": "geocoded club address, 69 m from the Bille",
+        "lat": 53.54375,
+        "lon": 10.04296,
+        "precision": "shore of the Bille nearest the earlier point (geocoded club address, 69 m from the Bille), 32 m away",
         "verified": false
       }
     },
@@ -8100,9 +8036,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.39667,
-        "lon": 7.43061,
-        "precision": "geocoded club address, 137 m from the Ruhr",
+        "lat": 51.3959,
+        "lon": 7.43011,
+        "precision": "shore of the Ruhr nearest the earlier point (geocoded club address, 137 m from the Ruhr), 93 m away",
         "verified": false
       }
     },
@@ -8139,14 +8075,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "ruderclub-bad-saeckingen",
-      "address": "Gettnau 99, 79713 Bad Säckingen",
+      "address": "Gettnau, 79713 Bad Säckingen",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.54825,
-        "lon": 7.94031,
-        "precision": "geocoded boathouse, 361 m from the Rhein",
+        "lat": 47.54484,
+        "lon": 7.94217,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -8205,9 +8141,9 @@
       "country": "de",
       "lakeId": "river-muehlgraben",
       "launchPoint": {
-        "lat": 51.4534,
-        "lon": 12.63024,
-        "precision": "geocoded boathouse, 55 m from the Mühlgraben",
+        "lat": 51.45331,
+        "lon": 12.62971,
+        "precision": "shore of the Mühlgraben nearest the earlier point (geocoded boathouse, 55 m from the Mühlgraben), 38 m away",
         "verified": false
       }
     },
@@ -8224,9 +8160,9 @@
       "country": "de",
       "lakeId": "river-fuerstenwalder-spree",
       "launchPoint": {
-        "lat": 52.36117,
-        "lon": 14.05491,
-        "precision": "geocoded club address, 81 m from the Fürstenwalder Spree",
+        "lat": 52.36108,
+        "lon": 14.05452,
+        "precision": "shore of the Fürstenwalder Spree nearest the earlier point (geocoded club address, 81 m from the Fürstenwalder Spree), 29 m away",
         "verified": false
       }
     },
@@ -8251,9 +8187,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.23077,
-        "lon": 7.60263,
-        "precision": "geocoded club address, 264 m from the Rhein",
+        "lat": 50.23123,
+        "lon": 7.60317,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 264 m from the Rhein), 64 m away",
         "verified": false
       }
     },
@@ -8283,9 +8219,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.20611,
-        "lon": 6.73476,
-        "precision": "geocoded boathouse, 218 m from the Rhein",
+        "lat": 51.20631,
+        "lon": 6.73349,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 218 m from the Rhein), 92 m away",
         "verified": false
       }
     },
@@ -8312,9 +8248,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.54061,
-        "lon": 7.43495,
-        "precision": "geocoded club address, 51 m from the Dortmund-Ems-Kanal",
+        "lat": 51.54064,
+        "lon": 7.43455,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded club address, 51 m from the Dortmund-Ems-Kanal), 28 m away",
         "verified": false
       }
     },
@@ -8331,9 +8267,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.53885,
-        "lon": 7.66667,
-        "precision": "geocoded boathouse, 136 m from the Rhein",
+        "lat": 47.53876,
+        "lon": 7.66646,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 136 m from the Rhein), 18 m away",
         "verified": false
       }
     },
@@ -8362,9 +8298,9 @@
       "country": "de",
       "lakeId": "river-lippe",
       "launchPoint": {
-        "lat": 51.68783,
-        "lon": 7.82178,
-        "precision": "geocoded boathouse, 46 m from the Lippe",
+        "lat": 51.68762,
+        "lon": 7.82197,
+        "precision": "shore of the Lippe nearest the earlier point (geocoded boathouse, 46 m from the Lippe), 27 m away",
         "verified": false
       }
     },
@@ -8395,9 +8331,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.5399,
-        "lon": 7.43474,
-        "precision": "geocoded club address, 47 m from the Dortmund-Ems-Kanal",
+        "lat": 51.53993,
+        "lon": 7.4344,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded club address, 47 m from the Dortmund-Ems-Kanal), 24 m away",
         "verified": false
       }
     },
@@ -8414,9 +8350,9 @@
       "country": "de",
       "lakeId": "river-teltowkanal",
       "launchPoint": {
-        "lat": 52.39462,
-        "lon": 13.20744,
-        "precision": "geocoded boathouse, 122 m from the Teltowkanal",
+        "lat": 52.39526,
+        "lon": 13.20722,
+        "precision": "shore of the Teltowkanal nearest the earlier point (geocoded boathouse, 122 m from the Teltowkanal), 73 m away",
         "verified": false
       }
     },
@@ -8442,9 +8378,9 @@
       "country": "de",
       "lakeId": "river-dahme",
       "launchPoint": {
-        "lat": 52.30067,
-        "lon": 13.64585,
-        "precision": "geocoded boathouse, 49 m from the Dahme",
+        "lat": 52.30071,
+        "lon": 13.64639,
+        "precision": "shore of the Dahme nearest the earlier point (geocoded boathouse, 49 m from the Dahme), 37 m away",
         "verified": false
       }
     },
@@ -8531,9 +8467,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.10026,
-        "lon": 8.94361,
-        "precision": "geocoded boathouse, 106 m from the Main",
+        "lat": 50.10021,
+        "lon": 8.9427,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 106 m from the Main), 65 m away",
         "verified": false
       }
     },
@@ -8578,9 +8514,9 @@
       "country": "de",
       "lakeId": "river-treptower-spree",
       "launchPoint": {
-        "lat": 52.45489,
-        "lon": 13.54546,
-        "precision": "geocoded boathouse, 99 m from the Treptower Spree",
+        "lat": 52.45512,
+        "lon": 13.54559,
+        "precision": "shore of the Treptower Spree nearest the earlier point (geocoded boathouse, 99 m from the Treptower Spree), 27 m away",
         "verified": false
       }
     },
@@ -8602,9 +8538,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 49.34044,
-        "lon": 9.09998,
-        "precision": "geocoded boathouse, 97 m from the Neckar",
+        "lat": 49.34052,
+        "lon": 9.0994,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded boathouse, 97 m from the Neckar), 43 m away",
         "verified": false
       }
     },
@@ -8672,9 +8608,9 @@
       "country": "de",
       "lakeId": "river-osterbekkanal",
       "launchPoint": {
-        "lat": 53.5821,
-        "lon": 10.02151,
-        "precision": "geocoded club address, 29 m from the Osterbekkanal",
+        "lat": 53.5822,
+        "lon": 10.02146,
+        "precision": "shore of the Osterbekkanal nearest the earlier point (geocoded club address, 29 m from the Osterbekkanal), 12 m away",
         "verified": false
       }
     },
@@ -8686,14 +8622,14 @@
       "website": "https://www.rcr-online.com",
       "sports": [],
       "id": "ruderclub-ratsgymnasium-ev-osnabrueck",
-      "address": "Glückaufstr. 16, 49090 Osnabrück",
+      "address": "Glückaufstraße 16, 49090 Osnabrück-Eversburg",
       "source": "drv",
       "country": "de",
       "lakeId": "river-stichkanal-osnabrueck",
       "launchPoint": {
-        "lat": 52.30966,
-        "lon": 8.00023,
-        "precision": "geocoded boathouse, 106 m from the Stichkanal Osnabrück",
+        "lat": 52.30977,
+        "lon": 7.99962,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -8720,9 +8656,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.55246,
-        "lon": 7.76986,
-        "precision": "geocoded boathouse, 114 m from the Rhein",
+        "lat": 47.55223,
+        "lon": 7.77014,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 114 m from the Rhein), 33 m away",
         "verified": false
       }
     },
@@ -8835,9 +8771,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.51795,
-        "lon": 9.07639,
-        "precision": "geocoded boathouse, 142 m from the Weser",
+        "lat": 52.51794,
+        "lon": 9.07686,
+        "precision": "shore of the Weser nearest the earlier point (geocoded boathouse, 142 m from the Weser), 32 m away",
         "verified": false
       }
     },
@@ -8938,14 +8874,14 @@
         "Freizeitrudern"
       ],
       "id": "ruderclub-zellingen",
-      "address": "Badstraße, 97225 Zellingen",
+      "address": "Badstraße 3, 97225 Zellingen",
       "source": "drv",
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 49.89705,
-        "lon": 9.82371,
-        "precision": "geocoded boathouse, 235 m from the Main",
+        "lat": 49.89801,
+        "lon": 9.82536,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -9061,9 +8997,9 @@
       "country": "de",
       "lakeId": "river-leine",
       "launchPoint": {
-        "lat": 52.37736,
-        "lon": 9.71478,
-        "precision": "geocoded boathouse, 27 m from the Leine",
+        "lat": 52.37751,
+        "lon": 9.71468,
+        "precision": "shore of the Leine nearest the earlier point (geocoded boathouse, 27 m from the Leine), 18 m away",
         "verified": false
       }
     },
@@ -9211,9 +9147,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 49.40958,
-        "lon": 8.68118,
-        "precision": "geocoded boathouse, 145 m from the Neckar",
+        "lat": 49.40999,
+        "lon": 8.68111,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded boathouse, 145 m from the Neckar), 46 m away",
         "verified": false
       }
     },
@@ -9290,9 +9226,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.42519,
-        "lon": 7.13545,
-        "precision": "geocoded boathouse, 104 m from the Ruhr",
+        "lat": 51.42559,
+        "lon": 7.136,
+        "precision": "shore of the Ruhr nearest the earlier point (geocoded boathouse, 104 m from the Ruhr), 59 m away",
         "verified": false
       }
     },
@@ -9317,9 +9253,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 49.85232,
-        "lon": 9.59987,
-        "precision": "geocoded boathouse, 171 m from the Main",
+        "lat": 49.85245,
+        "lon": 9.59803,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 171 m from the Main), 133 m away",
         "verified": false
       }
     },
@@ -9362,14 +9298,14 @@
       "website": "http://www.rg-niederkassel.de/",
       "sports": [],
       "id": "rudergesellschaft-niederkassel-von-1978",
-      "address": "Hafenstr., 53859 Niederkassel",
+      "address": "Mondorf, 53859 Niederkassel",
       "source": "drv",
       "country": "de",
       "lakeId": "river-sieg",
       "launchPoint": {
-        "lat": 50.77228,
-        "lon": 7.07562,
-        "precision": "geocoded boathouse, 399 m from the Sieg",
+        "lat": 50.77193,
+        "lon": 7.07566,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -9442,9 +9378,9 @@
       "country": "de",
       "lakeId": "river-mosel",
       "launchPoint": {
-        "lat": 49.76751,
-        "lon": 6.63866,
-        "precision": "geocoded club address, 131 m from the Mosel",
+        "lat": 49.76778,
+        "lon": 6.63826,
+        "precision": "shore of the Mosel nearest the earlier point (geocoded club address, 131 m from the Mosel), 42 m away",
         "verified": false
       }
     },
@@ -9468,9 +9404,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 49.76354,
-        "lon": 9.53263,
-        "precision": "geocoded boathouse, 136 m from the Main",
+        "lat": 49.76397,
+        "lon": 9.53218,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 136 m from the Main), 57 m away",
         "verified": false
       }
     },
@@ -9500,9 +9436,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.56086,
-        "lon": 8.50307,
-        "precision": "geocoded club address, 45 m from the Lahn",
+        "lat": 50.56073,
+        "lon": 8.50339,
+        "precision": "shore of the Lahn nearest the earlier point (geocoded club address, 45 m from the Lahn), 27 m away",
         "verified": false
       }
     },
@@ -9529,9 +9465,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.03872,
-        "lon": 8.2256,
-        "precision": "geocoded club address, 195 m from the Rhein",
+        "lat": 50.0384,
+        "lon": 8.22551,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 195 m from the Rhein), 36 m away",
         "verified": false
       }
     },
@@ -9611,9 +9547,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 53.42443,
-        "lon": 10.38151,
-        "precision": "geocoded boathouse, 192 m from the Elbe",
+        "lat": 53.42439,
+        "lon": 10.38128,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded boathouse, 192 m from the Elbe), 16 m away",
         "verified": false
       }
     },
@@ -9726,9 +9662,9 @@
       "country": "de",
       "lakeId": "river-mittellandkanal",
       "launchPoint": {
-        "lat": 52.31108,
-        "lon": 9.0544,
-        "precision": "geocoded boathouse, 45 m from the Mittellandkanal",
+        "lat": 52.31122,
+        "lon": 9.05423,
+        "precision": "shore of the Mittellandkanal nearest the earlier point (geocoded boathouse, 45 m from the Mittellandkanal), 20 m away",
         "verified": false
       }
     },
@@ -9766,9 +9702,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.40845,
-        "lon": 9.64488,
-        "precision": "geocoded boathouse, 340 m from the Fulda",
+        "lat": 51.40806,
+        "lon": 9.6493,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -9796,9 +9732,9 @@
       "country": "de",
       "lakeId": "river-mittellandkanal",
       "launchPoint": {
-        "lat": 52.31108,
-        "lon": 9.0544,
-        "precision": "geocoded boathouse, 45 m from the Mittellandkanal",
+        "lat": 52.31122,
+        "lon": 9.05423,
+        "precision": "shore of the Mittellandkanal nearest the earlier point (geocoded boathouse, 45 m from the Mittellandkanal), 20 m away",
         "verified": false
       }
     },
@@ -9839,14 +9775,14 @@
       "website": "https://www.gymnasium-olpe.de",
       "sports": [],
       "id": "ruderriege-am-staedt-gymnasium-olpe",
-      "address": "Seminarstr. 1, 57462 Olpe",
+      "address": "Kirchesohl 1, 57462 Olpe",
       "source": "drv",
       "country": "de",
       "lakeId": "river-olpe",
       "launchPoint": {
-        "lat": 51.03322,
-        "lon": 7.84705,
-        "precision": "geocoded boathouse, 346 m from the Olpe",
+        "lat": 51.02913,
+        "lon": 7.84168,
+        "precision": "shore of the Biggesee nearest the town-level address, 135 m away (water checked by hand)",
         "verified": false
       }
     },
@@ -9891,15 +9827,15 @@
         "Handicaprudern"
       ],
       "id": "ruderriege-des-karlsruher-institut-fuer-technologie",
-      "address": "Hansastraße 18b, 76189 Karlsruhe",
+      "address": "Hansastraße 18, 76189 Karlsruhe",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.01013,
-        "lon": 8.33499,
-        "precision": "shore of the Rheinhafen at the boathouse, Hansastr. 18 b (checked by the owner)",
-        "verified": true
+        "lat": 49.01025,
+        "lon": 8.33445,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
+        "verified": false
       }
     },
     {
@@ -9915,9 +9851,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.54061,
-        "lon": 7.43492,
-        "precision": "geocoded boathouse, 49 m from the Dortmund-Ems-Kanal",
+        "lat": 51.54064,
+        "lon": 7.43455,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (geocoded boathouse, 49 m from the Dortmund-Ems-Kanal), 26 m away",
         "verified": false
       }
     },
@@ -9942,9 +9878,9 @@
       "country": "de",
       "lakeId": "river-inn",
       "launchPoint": {
-        "lat": 47.83551,
-        "lon": 12.154,
-        "precision": "geocoded boathouse, 126 m from the Inn",
+        "lat": 47.83559,
+        "lon": 12.15354,
+        "precision": "shore of the Inn nearest the earlier point (geocoded boathouse, 126 m from the Inn), 36 m away",
         "verified": false
       }
     },
@@ -9967,9 +9903,9 @@
       "country": "de",
       "lakeId": "river-hase",
       "launchPoint": {
-        "lat": 52.55147,
-        "lon": 7.95512,
-        "precision": "geocoded boathouse, 84 m from the Hase",
+        "lat": 52.55142,
+        "lon": 7.95608,
+        "precision": "shore of the Hase nearest the earlier point (geocoded boathouse, 84 m from the Hase), 65 m away",
         "verified": false
       }
     },
@@ -9986,9 +9922,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.09135,
-        "lon": 8.64061,
-        "precision": "geocoded boathouse, 113 m from the Main",
+        "lat": 50.09165,
+        "lon": 8.64029,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 113 m from the Main), 41 m away",
         "verified": false
       }
     },
@@ -10000,14 +9936,14 @@
       "website": "https://www.rvemscher.de",
       "sports": [],
       "id": "ruderverein-emscher-wanne-eickel-herten",
-      "address": "Hertener Straße 53, 44653 Herne",
+      "address": "Hertener Str. 53, 44653 Herne",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "launchPoint": {
-        "lat": 51.54751,
-        "lon": 7.18091,
-        "precision": "geocoded club address, 307 m from the Rhein-Herne-Kanal",
+        "lat": 51.54789,
+        "lon": 7.15863,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -10034,9 +9970,9 @@
       "country": "de",
       "lakeId": "river-ems-jade-kanal",
       "launchPoint": {
-        "lat": 53.46362,
-        "lon": 7.47241,
-        "precision": "geocoded boathouse, 32 m from the Ems-Jade-Kanal",
+        "lat": 53.46367,
+        "lon": 7.47217,
+        "precision": "shore of the Ems-Jade-Kanal nearest the earlier point (geocoded boathouse, 32 m from the Ems-Jade-Kanal), 17 m away",
         "verified": false
       }
     },
@@ -10078,9 +10014,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.32938,
-        "lon": 7.72868,
-        "precision": "geocoded boathouse, 46 m from the Lahn",
+        "lat": 50.32951,
+        "lon": 7.72878,
+        "precision": "shore of the Lahn nearest the earlier point (geocoded boathouse, 46 m from the Lahn), 17 m away",
         "verified": false
       }
     },
@@ -10106,9 +10042,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 49.23003,
-        "lon": 9.16881,
-        "precision": "geocoded boathouse, 75 m from the Neckar",
+        "lat": 49.23022,
+        "lon": 9.16878,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded boathouse, 75 m from the Neckar), 21 m away",
         "verified": false
       }
     },
@@ -10164,9 +10100,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.41088,
-        "lon": 7.22592,
-        "precision": "geocoded boathouse, 77 m from the Ruhr",
+        "lat": 51.41112,
+        "lon": 7.22586,
+        "precision": "shore of the Ruhr nearest the earlier point (geocoded boathouse, 77 m from the Ruhr), 27 m away",
         "verified": false
       }
     },
@@ -10194,9 +10130,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.4219,
-        "lon": 7.3527,
-        "precision": "geocoded club address, 67 m from the Ruhr",
+        "lat": 51.42195,
+        "lon": 7.3524,
+        "precision": "shore of the Ruhr nearest the earlier point (geocoded club address, 67 m from the Ruhr), 21 m away",
         "verified": false
       }
     },
@@ -10219,9 +10155,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 51.97637,
-        "lon": 9.51918,
-        "precision": "geocoded club address, 87 m from the Weser",
+        "lat": 51.97657,
+        "lon": 9.51841,
+        "precision": "shore of the Weser nearest the earlier point (geocoded club address, 87 m from the Weser), 57 m away",
         "verified": false
       }
     },
@@ -10323,14 +10259,14 @@
         "Schulrudern"
       ],
       "id": "ruderverein-datteln-von-1928",
-      "address": "Hafenstr. 133, 45711 Datteln",
+      "address": "Hafenstraße 133, 45711 Datteln",
       "source": "drv",
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.6583,
-        "lon": 7.36157,
-        "precision": "geocoded club address, 119 m from the Dortmund-Ems-Kanal",
+        "lat": 51.65802,
+        "lon": 7.36218,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -10357,9 +10293,9 @@
       "country": "de",
       "lakeId": "river-wesel-datteln-kanal",
       "launchPoint": {
-        "lat": 51.66081,
-        "lon": 6.928,
-        "precision": "geocoded boathouse, 89 m from the Wesel-Datteln-Kanal",
+        "lat": 51.66134,
+        "lon": 6.92797,
+        "precision": "shore of the Wesel-Datteln-Kanal nearest the earlier point (geocoded boathouse, 89 m from the Wesel-Datteln-Kanal), 59 m away",
         "verified": false
       }
     },
@@ -10385,9 +10321,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.02602,
-        "lon": 8.12432,
-        "precision": "geocoded boathouse, 377 m from the Rhein",
+        "lat": 50.02518,
+        "lon": 8.12504,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 377 m from the Rhein), 107 m away",
         "verified": false
       }
     },
@@ -10445,9 +10381,9 @@
       "country": "de",
       "lakeId": "river-main-donau-kanal",
       "launchPoint": {
-        "lat": 49.59506,
-        "lon": 10.97279,
-        "precision": "geocoded club address, 61 m from the Main-Donau-Kanal",
+        "lat": 49.59507,
+        "lon": 10.97223,
+        "precision": "shore of the Main-Donau-Kanal nearest the earlier point (geocoded club address, 61 m from the Main-Donau-Kanal), 40 m away",
         "verified": false
       }
     },
@@ -10501,9 +10437,9 @@
       "country": "de",
       "lakeId": "river-fulda",
       "launchPoint": {
-        "lat": 51.28968,
-        "lon": 9.48748,
-        "precision": "geocoded boathouse, 129 m from the Fulda",
+        "lat": 51.28988,
+        "lon": 9.48885,
+        "precision": "shore of the Fulda nearest the earlier point (geocoded boathouse, 129 m from the Fulda), 98 m away",
         "verified": false
       }
     },
@@ -10550,9 +10486,9 @@
       "country": "de",
       "lakeId": "river-oder-spree-kanal",
       "launchPoint": {
-        "lat": 52.14636,
-        "lon": 14.63975,
-        "precision": "geocoded club address, 152 m from the Oder-Spree-Kanal",
+        "lat": 52.14643,
+        "lon": 14.63985,
+        "precision": "shore of the Oder-Spree-Kanal nearest the earlier point (geocoded club address, 152 m from the Oder-Spree-Kanal), 11 m away",
         "verified": false
       }
     },
@@ -10579,9 +10515,9 @@
       "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "launchPoint": {
-        "lat": 51.53532,
-        "lon": 7.06944,
-        "precision": "geocoded boathouse, 85 m from the Rhein-Herne-Kanal",
+        "lat": 51.53514,
+        "lon": 7.06927,
+        "precision": "shore of the Rhein-Herne-Kanal nearest the earlier point (geocoded boathouse, 85 m from the Rhein-Herne-Kanal), 23 m away",
         "verified": false
       }
     },
@@ -10645,9 +10581,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.805,
-        "lon": 9.1469,
-        "precision": "geocoded boathouse, 74 m from the Weser",
+        "lat": 52.80486,
+        "lon": 9.14634,
+        "precision": "shore of the Weser nearest the earlier point (geocoded boathouse, 74 m from the Weser), 40 m away",
         "verified": false
       }
     },
@@ -10672,9 +10608,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 51.7688,
-        "lon": 9.38175,
-        "precision": "geocoded club address, 98 m from the Weser",
+        "lat": 51.76884,
+        "lon": 9.38088,
+        "precision": "shore of the Weser nearest the earlier point (geocoded club address, 98 m from the Weser), 60 m away",
         "verified": false
       }
     },
@@ -10700,9 +10636,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.99294,
-        "lon": 8.02147,
-        "precision": "geocoded club address, 266 m from the Rhein",
+        "lat": 49.99333,
+        "lon": 8.02107,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 266 m from the Rhein), 52 m away",
         "verified": false
       }
     },
@@ -10727,9 +10663,9 @@
       "country": "de",
       "lakeId": "river-elbe-seitenkanal",
       "launchPoint": {
-        "lat": 52.73372,
-        "lon": 10.66408,
-        "precision": "geocoded boathouse, 78 m from the Elbe-Seitenkanal",
+        "lat": 52.73367,
+        "lon": 10.66483,
+        "precision": "shore of the Elbe-Seitenkanal nearest the earlier point (geocoded boathouse, 78 m from the Elbe-Seitenkanal), 51 m away",
         "verified": false
       }
     },
@@ -10789,9 +10725,9 @@
       "country": "de",
       "lakeId": "river-leda",
       "launchPoint": {
-        "lat": 53.22957,
-        "lon": 7.45732,
-        "precision": "geocoded boathouse, 73 m from the Leda",
+        "lat": 53.22942,
+        "lon": 7.45742,
+        "precision": "shore of the Leda nearest the earlier point (geocoded boathouse, 73 m from the Leda), 18 m away",
         "verified": false
       }
     },
@@ -10818,9 +10754,9 @@
       "country": "de",
       "lakeId": "river-leine",
       "launchPoint": {
-        "lat": 52.3776,
-        "lon": 9.69618,
-        "precision": "geocoded boathouse, 72 m from the Leine",
+        "lat": 52.37792,
+        "lon": 9.69627,
+        "precision": "shore of the Leine nearest the earlier point (geocoded boathouse, 72 m from the Leine), 36 m away",
         "verified": false
       }
     },
@@ -10847,9 +10783,9 @@
       "country": "de",
       "lakeId": "river-dortmund-ems-kanal",
       "launchPoint": {
-        "lat": 51.77859,
-        "lon": 7.4095,
-        "precision": "shore of the Alte Fahrt at the boathouse, which the club rows out from (checked by the owner)",
+        "lat": 51.77843,
+        "lon": 7.40932,
+        "precision": "shore of the Dortmund-Ems-Kanal nearest the earlier point (shore of the Alte Fahrt at the boathouse, which the club rows out from (checked by the owner)), 22 m away",
         "verified": true
       }
     },
@@ -11021,9 +10957,9 @@
       "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "launchPoint": {
-        "lat": 51.4947,
-        "lon": 6.86379,
-        "precision": "geocoded club address, 65 m from the Rhein-Herne-Kanal",
+        "lat": 51.49438,
+        "lon": 6.8639,
+        "precision": "shore of the Rhein-Herne-Kanal nearest the earlier point (geocoded club address, 65 m from the Rhein-Herne-Kanal), 37 m away",
         "verified": false
       }
     },
@@ -11077,9 +11013,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.22201,
-        "lon": 8.38177,
-        "precision": "geocoded boathouse, 206 m from the Rhein",
+        "lat": 49.22199,
+        "lon": 8.3836,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 206 m from the Rhein), 133 m away",
         "verified": false
       }
     },
@@ -11099,9 +11035,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.44206,
-        "lon": 7.39454,
-        "precision": "geocoded boathouse, 234 m from the Rhein",
+        "lat": 50.44254,
+        "lon": 7.39481,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 234 m from the Rhein), 57 m away",
         "verified": false
       }
     },
@@ -11149,9 +11085,9 @@
       "country": "de",
       "lakeId": "river-saar",
       "launchPoint": {
-        "lat": 49.22522,
-        "lon": 7.01231,
-        "precision": "geocoded club address, 55 m from the Saar",
+        "lat": 49.22508,
+        "lon": 7.01187,
+        "precision": "shore of the Saar nearest the earlier point (geocoded club address, 55 m from the Saar), 36 m away",
         "verified": false
       }
     },
@@ -11207,9 +11143,9 @@
       "country": "de",
       "lakeId": "river-mosel",
       "launchPoint": {
-        "lat": 49.74461,
-        "lon": 6.62443,
-        "precision": "geocoded club address, 133 m from the Mosel",
+        "lat": 49.74465,
+        "lon": 6.62538,
+        "precision": "shore of the Mosel nearest the earlier point (geocoded club address, 133 m from the Mosel), 69 m away",
         "verified": false
       }
     },
@@ -11234,9 +11170,9 @@
       "country": "de",
       "lakeId": "river-weisse-elster",
       "launchPoint": {
-        "lat": 51.3156,
-        "lon": 12.34024,
-        "precision": "geocoded boathouse, 26 m from the Weiße Elster",
+        "lat": 51.31562,
+        "lon": 12.34047,
+        "precision": "shore of the Weiße Elster nearest the earlier point (geocoded boathouse, 26 m from the Weiße Elster), 16 m away",
         "verified": false
       }
     },
@@ -11257,14 +11193,14 @@
         "Marathonrudern"
       ],
       "id": "ruderverein-uelzen",
-      "address": "Riedweg 9, 29525 Uelzen",
+      "address": "Riedweg 9, 29525 Uelzen-Groß Liedern",
       "source": "drv",
       "country": "de",
       "lakeId": "river-elbe-seitenkanal",
       "launchPoint": {
-        "lat": 52.95877,
-        "lon": 10.59514,
-        "precision": "geocoded boathouse, 253 m from the Elbe-Seitenkanal",
+        "lat": 52.95726,
+        "lon": 10.5936,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -11319,9 +11255,9 @@
       "country": "de",
       "lakeId": "river-datteln-hamm-kanal",
       "launchPoint": {
-        "lat": 51.63513,
-        "lon": 7.40182,
-        "precision": "geocoded boathouse, 54 m from the Datteln-Hamm-Kanal",
+        "lat": 51.63491,
+        "lon": 7.40186,
+        "precision": "shore of the Datteln-Hamm-Kanal nearest the earlier point (geocoded boathouse, 54 m from the Datteln-Hamm-Kanal), 25 m away",
         "verified": false
       }
     },
@@ -11399,9 +11335,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.08553,
-        "lon": 9.3689,
-        "precision": "geocoded boathouse, 103 m from the Weser",
+        "lat": 52.08538,
+        "lon": 9.36824,
+        "precision": "shore of the Weser nearest the earlier point (geocoded boathouse, 103 m from the Weser), 48 m away",
         "verified": false
       }
     },
@@ -11570,9 +11506,9 @@
       "country": "de",
       "lakeId": "river-mittellandkanal",
       "launchPoint": {
-        "lat": 52.30645,
-        "lon": 9.96802,
-        "precision": "geocoded boathouse, 64 m from the Mittellandkanal",
+        "lat": 52.30609,
+        "lon": 9.96806,
+        "precision": "shore of the Mittellandkanal nearest the earlier point (geocoded boathouse, 64 m from the Mittellandkanal), 41 m away",
         "verified": false
       }
     },
@@ -11597,9 +11533,9 @@
       "country": "de",
       "lakeId": "river-mulde",
       "launchPoint": {
-        "lat": 51.8301,
-        "lon": 12.2486,
-        "precision": "geocoded club address, 53 m from the Mulde",
+        "lat": 51.83027,
+        "lon": 12.24827,
+        "precision": "shore of the Mulde nearest the earlier point (geocoded club address, 53 m from the Mulde), 30 m away",
         "verified": false
       }
     },
@@ -11719,9 +11655,9 @@
       "country": "de",
       "lakeId": "river-saale-leipzig-kanal",
       "launchPoint": {
-        "lat": 51.35685,
-        "lon": 12.25657,
-        "precision": "geocoded boathouse, 98 m from the Saale-Leipzig-Kanal",
+        "lat": 51.3562,
+        "lon": 12.25612,
+        "precision": "shore of the Saale-Leipzig-Kanal nearest the earlier point (geocoded boathouse, 98 m from the Saale-Leipzig-Kanal), 79 m away",
         "verified": false
       }
     },
@@ -11817,9 +11753,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.56086,
-        "lon": 8.50307,
-        "precision": "geocoded boathouse, 45 m from the Lahn",
+        "lat": 50.56073,
+        "lon": 8.50339,
+        "precision": "shore of the Lahn nearest the earlier point (geocoded boathouse, 45 m from the Lahn), 27 m away",
         "verified": false
       }
     },
@@ -11864,9 +11800,9 @@
       "country": "de",
       "lakeId": "river-weser",
       "launchPoint": {
-        "lat": 52.51795,
-        "lon": 9.07639,
-        "precision": "geocoded boathouse, 142 m from the Weser",
+        "lat": 52.51794,
+        "lon": 9.07686,
+        "precision": "shore of the Weser nearest the earlier point (geocoded boathouse, 142 m from the Weser), 32 m away",
         "verified": false
       }
     },
@@ -11942,14 +11878,14 @@
         "Schulrudern"
       ],
       "id": "srv-friedrich-wilhelm-gymnasium-koeln-von-1921",
-      "address": "Barbarastr. 47 - 49, 50996 Köln",
+      "address": "Barbarastraße 47-49, 50996 Köln-Rodenkirchen",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.89356,
-        "lon": 6.99558,
-        "precision": "geocoded boathouse, 368 m from the Rhein",
+        "lat": 50.89433,
+        "lon": 6.9982,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -11976,9 +11912,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.42231,
-        "lon": 7.46136,
-        "precision": "geocoded boathouse, 120 m from the Rhein",
+        "lat": 50.42187,
+        "lon": 7.46093,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 120 m from the Rhein), 58 m away",
         "verified": false
       }
     },
@@ -12061,9 +11997,9 @@
       "country": "de",
       "lakeId": "river-saar",
       "launchPoint": {
-        "lat": 49.22522,
-        "lon": 7.01231,
-        "precision": "geocoded club address, 55 m from the Saar",
+        "lat": 49.22508,
+        "lon": 7.01187,
+        "precision": "shore of the Saar nearest the earlier point (geocoded club address, 55 m from the Saar), 36 m away",
         "verified": false
       }
     },
@@ -12090,9 +12026,9 @@
       "country": "de",
       "lakeId": "river-saar",
       "launchPoint": {
-        "lat": 49.60861,
-        "lon": 6.55783,
-        "precision": "geocoded boathouse, 66 m from the Saar",
+        "lat": 49.60878,
+        "lon": 6.55764,
+        "precision": "shore of the Saar nearest the earlier point (geocoded boathouse, 66 m from the Saar), 23 m away",
         "verified": false
       }
     },
@@ -12174,9 +12110,9 @@
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 50.04508,
-        "lon": 10.24569,
-        "precision": "geocoded boathouse, 139 m from the Main",
+        "lat": 50.04529,
+        "lon": 10.24556,
+        "precision": "shore of the Main nearest the earlier point (geocoded boathouse, 139 m from the Main), 25 m away",
         "verified": false
       }
     },
@@ -12260,9 +12196,9 @@
       "country": "de",
       "lakeId": "river-sieg",
       "launchPoint": {
-        "lat": 50.78905,
-        "lon": 7.22651,
-        "precision": "shore of the Siegburger Mühlengraben at the boathouse (checked by the owner)",
+        "lat": 50.78897,
+        "lon": 7.22662,
+        "precision": "shore of the Sieg nearest the earlier point (shore of the Siegburger Mühlengraben at the boathouse (checked by the owner)), 12 m away",
         "verified": true
       }
     },
@@ -12319,9 +12255,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.10389,
-        "lon": 13.62426,
-        "precision": "geocoded boathouse, 158 m from the Elbe",
+        "lat": 51.10323,
+        "lon": 13.62425,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded boathouse, 158 m from the Elbe), 73 m away",
         "verified": false
       }
     },
@@ -12348,9 +12284,9 @@
       "country": "de",
       "lakeId": "river-treptower-spree",
       "launchPoint": {
-        "lat": 52.4562,
-        "lon": 13.54875,
-        "precision": "geocoded boathouse, 113 m from the Treptower Spree",
+        "lat": 52.45592,
+        "lon": 13.54849,
+        "precision": "shore of the Treptower Spree nearest the earlier point (geocoded boathouse, 113 m from the Treptower Spree), 36 m away",
         "verified": false
       }
     },
@@ -12398,15 +12334,15 @@
         "Handicaprudern"
       ],
       "id": "sportgemeinschaft-demag-ev-wetter",
-      "address": "Am Obergraben 3, 58300 Wetter",
+      "address": "Am Obergraben 3, 58300 Wetter (Ruhr)",
       "source": "drv",
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.38075,
-        "lon": 7.39712,
-        "precision": "shore of the Obergraben at the boathouse, which the club rows out from (checked by the owner)",
-        "verified": true
+        "lat": 51.38035,
+        "lon": 7.39724,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
+        "verified": false
       }
     },
     {
@@ -12431,9 +12367,9 @@
       "country": "de",
       "lakeId": "river-hunte",
       "launchPoint": {
-        "lat": 52.53829,
+        "lat": 52.53952,
         "lon": 8.33866,
-        "precision": "geocoded boathouse, 147 m from the Hunte",
+        "precision": "shore of the Hunte nearest the earlier point (geocoded boathouse, 147 m from the Hunte), 137 m away",
         "verified": false
       }
     },
@@ -12491,9 +12427,9 @@
       "country": "de",
       "lakeId": "river-dahme",
       "launchPoint": {
-        "lat": 52.44557,
-        "lon": 13.5702,
-        "precision": "geocoded club address, 108 m from the Dahme",
+        "lat": 52.44549,
+        "lon": 13.57057,
+        "precision": "shore of the Dahme nearest the earlier point (geocoded club address, 108 m from the Dahme), 26 m away",
         "verified": false
       }
     },
@@ -12519,9 +12455,9 @@
       "country": "de",
       "lakeId": "river-isebekkanal",
       "launchPoint": {
-        "lat": 53.58555,
-        "lon": 9.99095,
-        "precision": "geocoded boathouse, 56 m from the Isebekkanal",
+        "lat": 53.58526,
+        "lon": 9.99094,
+        "precision": "shore of the Isebekkanal nearest the earlier point (geocoded boathouse, 56 m from the Isebekkanal), 32 m away",
         "verified": false
       }
     },
@@ -12618,9 +12554,9 @@
       "country": "de",
       "lakeId": "river-ruhr",
       "launchPoint": {
-        "lat": 51.44355,
-        "lon": 7.07618,
-        "precision": "geocoded club address, 51 m from the Ruhr",
+        "lat": 51.44347,
+        "lon": 7.07619,
+        "precision": "shore of the Ruhr nearest the earlier point (geocoded club address, 51 m from the Ruhr), 9 m away",
         "verified": false
       }
     },
@@ -12651,14 +12587,14 @@
       "website": "https://www.stralsunder-ruderclub.de",
       "sports": [],
       "id": "stralsunder-ruder-club",
-      "address": "Friedrich-Naumann-Str. 5, 18435 Stralsund",
+      "address": "Friedrich-Naumann-Straße 5, 18435 Stralsund",
       "source": "drv",
       "country": "de",
       "lakeId": "near-stralsund",
       "launchPoint": {
-        "lat": 54.32243,
-        "lon": 13.08607,
-        "precision": "geocoded club address (street level); water not identified",
+        "lat": 54.32252,
+        "lon": 13.08816,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -12686,9 +12622,9 @@
       "country": "de",
       "lakeId": "river-alte-donau",
       "launchPoint": {
-        "lat": 48.89756,
-        "lon": 12.57314,
-        "precision": "geocoded boathouse, 111 m from the Alte Donau",
+        "lat": 48.89778,
+        "lon": 12.57317,
+        "precision": "shore of the Alte Donau nearest the earlier point (geocoded boathouse, 111 m from the Alte Donau), 25 m away",
         "verified": false
       }
     },
@@ -12716,9 +12652,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 48.8273,
-        "lon": 9.2169,
-        "precision": "geocoded boathouse, 93 m from the Neckar",
+        "lat": 48.82696,
+        "lon": 9.21679,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded boathouse, 93 m from the Neckar), 39 m away",
         "verified": false
       }
     },
@@ -12744,9 +12680,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 48.7797,
-        "lon": 9.24695,
-        "precision": "geocoded club address, 228 m from the Neckar",
+        "lat": 48.77957,
+        "lon": 9.24675,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded club address, 228 m from the Neckar), 21 m away",
         "verified": false
       }
     },
@@ -12758,14 +12694,14 @@
       "website": "https://www.tpsk-koeln.de",
       "sports": [],
       "id": "tpsk-von-1925",
-      "address": "In der Rosenau 10, 51143 Köln",
+      "address": "In d. Rosenau 10A, 51143 Porz",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.87302,
-        "lon": 7.04861,
-        "precision": "geocoded boathouse, 355 m from the Rhein",
+        "lat": 50.87418,
+        "lon": 7.04789,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -12785,9 +12721,9 @@
       "country": "de",
       "lakeId": "river-nahe",
       "launchPoint": {
-        "lat": 49.95441,
-        "lon": 7.89825,
-        "precision": "geocoded club address, 42 m from the Nahe",
+        "lat": 49.95434,
+        "lon": 7.89803,
+        "precision": "shore of the Nahe nearest the earlier point (geocoded club address, 42 m from the Nahe), 18 m away",
         "verified": false
       }
     },
@@ -12840,9 +12776,9 @@
       "country": "de",
       "lakeId": "river-hadelner-kanal",
       "launchPoint": {
-        "lat": 53.82363,
-        "lon": 8.91971,
-        "precision": "geocoded club address, 57 m from the Hadelner Kanal",
+        "lat": 53.82394,
+        "lon": 8.91955,
+        "precision": "shore of the Hadelner Kanal nearest the earlier point (geocoded club address, 57 m from the Hadelner Kanal), 37 m away",
         "verified": false
       }
     },
@@ -12911,9 +12847,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.56362,
-        "lon": 13.00792,
-        "precision": "geocoded club address, 114 m from the Elbe",
+        "lat": 51.56371,
+        "lon": 13.00886,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded club address, 114 m from the Elbe), 66 m away",
         "verified": false
       }
     },
@@ -12965,9 +12901,9 @@
       "country": "de",
       "lakeId": "river-mittellandkanal",
       "launchPoint": {
-        "lat": 52.39918,
-        "lon": 7.99694,
-        "precision": "geocoded boathouse, 54 m from the Mittellandkanal",
+        "lat": 52.39898,
+        "lon": 7.99707,
+        "precision": "shore of the Mittellandkanal nearest the earlier point (geocoded boathouse, 54 m from the Mittellandkanal), 24 m away",
         "verified": false
       }
     },
@@ -12993,9 +12929,9 @@
       "country": "de",
       "lakeId": "river-neckar",
       "launchPoint": {
-        "lat": 48.5229,
-        "lon": 9.08143,
-        "precision": "geocoded club address, 84 m from the Neckar",
+        "lat": 48.52249,
+        "lon": 9.08205,
+        "precision": "shore of the Neckar nearest the earlier point (geocoded club address, 84 m from the Neckar), 65 m away",
         "verified": false
       }
     },
@@ -13085,9 +13021,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 52.02582,
-        "lon": 11.7706,
-        "precision": "geocoded boathouse, 256 m from the Elbe",
+        "lat": 52.02663,
+        "lon": 11.76933,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded boathouse, 256 m from the Elbe), 125 m away",
         "verified": false
       }
     },
@@ -13101,14 +13037,14 @@
         "Hochschulrudern"
       ],
       "id": "universitaet-passau-sportzentrum",
-      "address": "Innstraße 145, 94036 Passau",
+      "address": "Innstraße 125-123, 94036 Neuburg am Inn",
       "source": "drv",
       "country": "de",
       "lakeId": "river-inn",
       "launchPoint": {
-        "lat": 48.55398,
-        "lon": 13.43259,
-        "precision": "geocoded boathouse, 317 m from the Inn",
+        "lat": 48.54861,
+        "lon": 13.43708,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -13124,14 +13060,14 @@
         "Hochschulrudern"
       ],
       "id": "universitaetssportclub-otto-von-guericke-magdeburg",
-      "address": "Hugo-Junkers-Allee 75, 39128 Magdeburg",
+      "address": "Werder, 39114 Magdeburg",
       "source": "drv",
       "country": "de",
       "lakeId": "near-magdeburg",
       "launchPoint": {
-        "lat": 52.1498,
-        "lon": 11.60094,
-        "precision": "geocoded club address (street level); water not identified",
+        "lat": 52.11084,
+        "lon": 11.64221,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -13148,9 +13084,9 @@
       "country": "de",
       "lakeId": "river-elbe",
       "launchPoint": {
-        "lat": 51.04721,
-        "lon": 13.81316,
-        "precision": "geocoded boathouse, 142 m from the Elbe",
+        "lat": 51.04753,
+        "lon": 13.81397,
+        "precision": "shore of the Elbe nearest the earlier point (geocoded boathouse, 142 m from the Elbe), 67 m away",
         "verified": false
       }
     },
@@ -13179,9 +13115,9 @@
       "country": "de",
       "lakeId": "river-lesum",
       "launchPoint": {
-        "lat": 53.16322,
-        "lon": 8.63447,
-        "precision": "geocoded boathouse, 87 m from the Lesum",
+        "lat": 53.16305,
+        "lon": 8.63427,
+        "precision": "shore of the Lesum nearest the earlier point (geocoded boathouse, 87 m from the Lesum), 23 m away",
         "verified": false
       }
     },
@@ -13198,9 +13134,9 @@
       "country": "de",
       "lakeId": "river-aller",
       "launchPoint": {
-        "lat": 52.91148,
-        "lon": 9.23186,
-        "precision": "geocoded boathouse, 62 m from the Aller",
+        "lat": 52.91119,
+        "lon": 9.23166,
+        "precision": "shore of the Aller nearest the earlier point (geocoded boathouse, 62 m from the Aller), 35 m away",
         "verified": false
       }
     },
@@ -13244,14 +13180,14 @@
         "Schulrudern"
       ],
       "id": "volkstuemlicher-wassersport-mannheim",
-      "address": "Sandhofer Str. 51-53, 68305 Mannheim",
+      "address": "Sandhofer Str. 51-53, 68305 Mannheim-Waldhof",
       "source": "drv",
       "country": "de",
       "lakeId": "altrheinhafen",
       "launchPoint": {
-        "lat": 49.51992,
-        "lon": 8.47152,
-        "precision": "shore of the Altrheinhafen near the boathouse at Sandhofer Str. 51-53 (the import placed it on the Waldhofbecken), 27 m away (water checked by hand)",
+        "lat": 49.51978,
+        "lon": 8.4713,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -13326,14 +13262,14 @@
         "Marathonrudern"
       ],
       "id": "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893",
-      "address": "Rotterdamer Str. 40, 40474 Düsseldorf",
+      "address": "Rotterdamer Str. 40, 40474 Düsseldorf-Stadtbezirk 1",
       "source": "drv",
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 51.2502,
-        "lon": 6.75832,
-        "precision": "geocoded club address, 213 m from the Rhein",
+        "lat": 51.25018,
+        "lon": 6.75743,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -13380,14 +13316,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "wasserfreunde-hemmoor-ev-abt-rudern",
-      "address": "21745 Hemmoor",
+      "address": "Siethwende 1, 21745 Hemmoor",
       "source": "drv",
       "country": "de",
       "lakeId": "near-hemmoor",
       "launchPoint": {
-        "lat": 53.68869,
-        "lon": 9.15951,
-        "precision": "geocoded boathouse (town level); water not identified",
+        "lat": 53.69633,
+        "lon": 9.17443,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -13445,9 +13381,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.62193,
-        "lon": 8.20307,
-        "precision": "geocoded club address, 120 m from the Rhein",
+        "lat": 47.62181,
+        "lon": 8.2031,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 120 m from the Rhein), 13 m away",
         "verified": false
       }
     },
@@ -13474,9 +13410,9 @@
       "country": "de",
       "lakeId": "river-elbe-havel-kanal",
       "launchPoint": {
-        "lat": 52.28349,
-        "lon": 11.84924,
-        "precision": "geocoded boathouse, 102 m from the Elbe-Havel-Kanal",
+        "lat": 52.28296,
+        "lon": 11.84985,
+        "precision": "shore of the Elbe-Havel-Kanal nearest the earlier point (geocoded boathouse, 102 m from the Elbe-Havel-Kanal), 72 m away",
         "verified": false
       }
     },
@@ -13635,9 +13571,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.68133,
-        "lon": 7.17783,
-        "precision": "geocoded club address, 231 m from the Rhein",
+        "lat": 50.68163,
+        "lon": 7.17857,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 231 m from the Rhein), 62 m away",
         "verified": false
       }
     },
@@ -13664,9 +13600,9 @@
       "country": "de",
       "lakeId": "river-lahn",
       "launchPoint": {
-        "lat": 50.6064,
-        "lon": 8.67422,
-        "precision": "geocoded boathouse, 66 m from the Lahn",
+        "lat": 50.60648,
+        "lon": 8.67368,
+        "precision": "shore of the Lahn nearest the earlier point (geocoded boathouse, 66 m from the Lahn), 39 m away",
         "verified": false
       }
     },
@@ -13683,9 +13619,9 @@
       "country": "de",
       "lakeId": "river-rhein-herne-kanal",
       "launchPoint": {
-        "lat": 51.56363,
-        "lon": 7.24643,
-        "precision": "geocoded club address, 79 m from the Rhein-Herne-Kanal",
+        "lat": 51.56365,
+        "lon": 7.24708,
+        "precision": "shore of the Rhein-Herne-Kanal nearest the earlier point (geocoded club address, 79 m from the Rhein-Herne-Kanal), 45 m away",
         "verified": false
       }
     },
@@ -13713,9 +13649,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 50.64449,
-        "lon": 7.21607,
-        "precision": "geocoded boathouse, 285 m from the Rhein",
+        "lat": 50.64431,
+        "lon": 7.21545,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded boathouse, 285 m from the Rhein), 48 m away",
         "verified": false
       }
     },
@@ -13741,14 +13677,14 @@
         "Veranstaltungsorganisation"
       ],
       "id": "wassersportverein-koenigs-wusterhausen",
-      "address": "Küchenmeisterallee 14 a, 15711 Königs Wusterhausen",
+      "address": "Küchenmeisterallee 14A, 15711 Königs Wusterhausen",
       "source": "drv",
       "country": "de",
       "lakeId": "river-dahme",
       "launchPoint": {
-        "lat": 52.2953,
-        "lon": 13.65544,
-        "precision": "shore of the Dahme nearest the town-level address, 262 m away (water checked by hand)",
+        "lat": 52.29569,
+        "lon": 13.65548,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -13778,9 +13714,9 @@
       "country": "de",
       "lakeId": "river-hase",
       "launchPoint": {
-        "lat": 52.69143,
-        "lon": 7.29694,
-        "precision": "geocoded boathouse, 49 m from the Hase",
+        "lat": 52.69124,
+        "lon": 7.29656,
+        "precision": "shore of the Hase nearest the earlier point (geocoded boathouse, 49 m from the Hase), 33 m away",
         "verified": false
       }
     },
@@ -13914,9 +13850,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.97281,
-        "lon": 8.3197,
-        "precision": "geocoded club address, 197 m from the Rhein",
+        "lat": 49.97293,
+        "lon": 8.31991,
+        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 197 m from the Rhein), 20 m away",
         "verified": false
       }
     },
@@ -13942,9 +13878,9 @@
       "country": "de",
       "lakeId": "river-saale",
       "launchPoint": {
-        "lat": 51.2052,
-        "lon": 11.94577,
-        "precision": "geocoded club address, 41 m from the Saale",
+        "lat": 51.20534,
+        "lon": 11.94571,
+        "precision": "shore of the Saale nearest the earlier point (geocoded club address, 41 m from the Saale), 16 m away",
         "verified": false
       }
     },
@@ -13972,9 +13908,9 @@
       "country": "de",
       "lakeId": "river-assmannkanal",
       "launchPoint": {
-        "lat": 53.51441,
-        "lon": 9.99809,
-        "precision": "geocoded club address, 49 m from the Aßmannkanal",
+        "lat": 53.51444,
+        "lon": 9.99758,
+        "precision": "shore of the Aßmannkanal nearest the earlier point (geocoded club address, 49 m from the Aßmannkanal), 34 m away",
         "verified": false
       }
     },
@@ -14081,14 +14017,14 @@
         "Handicaprudern"
       ],
       "id": "wuerzburger-ruderverein-bayern-von-18751905",
-      "address": "Mergentheimer Str. 9h+13, 97082 Würzburg",
+      "address": "Mergentheimer Str. 9h, 97082 Würzburg-Steinbachtal",
       "source": "drv",
       "country": "de",
       "lakeId": "river-main",
       "launchPoint": {
-        "lat": 49.76963,
-        "lon": 9.93629,
-        "precision": "geocoded boathouse, 302 m from the Main",
+        "lat": 49.78232,
+        "lon": 9.92621,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -14107,14 +14043,14 @@
         "Mastersrudern"
       ],
       "id": "zschornewitzer-ruderclub-v-1954-im-sv-turbine-zschornewitz",
-      "address": "Pöplitzer Weg 49, 06791 Zschornewitz",
+      "address": "Pöplitzer Weg 49, 06772 Gräfenhainichen",
       "source": "drv",
       "country": "de",
       "lakeId": "near-zschornewitz",
       "launchPoint": {
-        "lat": 51.71133,
-        "lon": 12.38894,
-        "precision": "geocoded boathouse (street level); water not identified",
+        "lat": 51.7078,
+        "lon": 12.38489,
+        "precision": "launch point checked by hand on the satellite view (2026-11-02)",
         "verified": false
       }
     },
@@ -14196,9 +14132,9 @@
       "country": "de",
       "lakeId": "river-elbe-seitenkanal",
       "launchPoint": {
-        "lat": 53.248108,
-        "lon": 10.485377,
-        "precision": "shore of the Elbe-Seitenkanal at the boathouse, Elso-Klöver-Straße (checked by the owner)",
+        "lat": 53.24811,
+        "lon": 10.48567,
+        "precision": "shore of the Elbe-Seitenkanal nearest the earlier point (shore of the Elbe-Seitenkanal at the boathouse, Elso-Klöver-Straße (checked by the owner)), 20 m away",
         "verified": false
       }
     },
@@ -14227,9 +14163,9 @@
       "country": "de",
       "lakeId": "river-ilmenau",
       "launchPoint": {
-        "lat": 53.253943,
-        "lon": 10.413725,
-        "precision": "shore of the Lösegraben at the boathouse, Am Schifferwall 6 (checked by the owner)",
+        "lat": 53.25401,
+        "lon": 10.41387,
+        "precision": "shore of the Ilmenau nearest the earlier point (shore of the Lösegraben at the boathouse, Am Schifferwall 6 (checked by the owner)), 12 m away",
         "verified": true
       }
     }
