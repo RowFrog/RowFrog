@@ -895,7 +895,7 @@ enum German {
         "To change it, open the list, swipe a club to the right and tap Home base.": "Zum Ändern die Liste öffnen, einen Verein nach rechts wischen und auf Heimatverein tippen.",
         "The \"Why\" line names what sets the light.": "Die Zeile „Warum“ nennt, was die Ampel bestimmt.",
         "Rowing is only advised while the sun is up.": "Rudern wird nur zwischen Sonnenaufgang und Sonnenuntergang empfohlen.",
-        "Each of the next 48 hours has its own light.": "Jede der nächsten 48 Stunden hat ihre eigene Ampel.",
+        "Each of the next 48 hours has its own light. Tap a night's line to see its hours.": "Jede der nächsten 48 Stunden hat ihre eigene Ampel. Tippe auf eine Nacht für ihre Stunden.",
         "Tap ⓘ on a card to see what its icons and colours mean. Settings › Help has the full legend.": "Tippe auf ⓘ an einer Karte, um zu sehen, was ihre Symbole und Farben bedeuten. Einstellungen › Hilfe zeigt die ganze Legende.",
         "Storm warnings for the lake and weather warnings for the town.": "Sturmwarnungen für den See und Wetterwarnungen für den Ort.",
         "A warning also appears in the Why line and on the location list.": "Eine Warnung erscheint auch in der Zeile „Warum“ und in der Ortsliste.",

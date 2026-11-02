@@ -23,7 +23,7 @@ export function tourPages(river = false) {
       id: "rowingLight", icon: "siren", tint: "green", title: key("The rowing light"), intro: key("Every page starts with the rowing light for the hour ahead."),
       points: [
         p("message-square-text", key("The \"Why\" line names what sets the light.")), p("sunrise", key("Rowing is only advised while the sun is up.")),
-        p("clock", key("Each of the next 48 hours has its own light.")),
+        p("clock", key("Each of the next 48 hours has its own light. Tap a night's line to see its hours.")),
         p("umbrella", key("The rain tile shows DWD's radar for the next two hours, then the forecast.")),
         p("clock-alert", key("Grey instead of green: the forecast is over 3 hours old. Tap Refresh under the club's name.")),
         p("user-round-search", key("The light is advice. You decide, and when in doubt you stay ashore.")),
