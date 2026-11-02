@@ -196,6 +196,7 @@ const TIPS = {
   boatTime: [key("Lake at the boat's time"), key("Move the boat along your route to see the lake at the time you get there."), "sailboat"],
   stretchPoint: [key("Add a point on the way"), key("Tap a stretch of your route to add a turning point there, or pull the stretch to add one and move it at once."), "spline"],
   oneWay: [key("One way or out and back"), key("New routes go one way. Pick Out and back under the way back to row the same way back."), "arrow-up-down"],
+  boatsElsewhere: [key("Your boats at other clubs"), key("Your boats show at the clubs where they are kept. At a regatta, tap a boat under “At other clubs” to take it along."), "sailboat"],
   routePlanning: [key("Plan a route"), key("Tap here, then tap your turning points on the water. You see the light along the route and the best time to start."), "route"],
 };
 
