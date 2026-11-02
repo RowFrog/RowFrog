@@ -852,6 +852,14 @@ private struct DeveloperSettingsView: View {
             }
             .surfaceRows()
             Section {
+                Picker(tr("Night in the 48 hours"), selection: $settings.nightHours) {
+                    ForEach(NightHours.allCases) { Text($0.title).tag($0) }
+                }
+            } footer: {
+                SectionFooter(tr("One line per night: the dark hours fold into one line with the night's lowest temperatures, strongest wind, highest waves, all its rain and its poorest visibility; a tap opens them. Every night hour: one row per hour, as before. Switching the developer options off goes back to one line per night."))
+            }
+            .surfaceRows()
+            Section {
                 ShareLink(item: DiagnosisLog.url) {
                     Label(tr("Share diagnosis log"), systemImage: "stethoscope")
                 }

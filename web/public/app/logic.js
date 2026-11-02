@@ -40,6 +40,49 @@ export function nextHours(hours, now = new Date(), count = 48) {
   return hours.slice(i, i + count);
 }
 
+/**
+ * The 48 hours cut into rows and nights (NightFold in the app). Rowing is only
+ * advised while the sun is up, so the dark hours of a night fold into one line.
+ * The hours the sun sets or rises in keep their rows (amber "twilight"), as does
+ * the first hour, even at night; a night of one hour stays a row.
+ * Each part is { hour } or { night: [hours] }.
+ */
+export function nightParts(hours) {
+  const parts = [];
+  let run = [];
+  const endRun = () => {
+    if (run.length > 1) parts.push({ night: run });
+    else run.forEach((hour) => parts.push({ hour }));
+    run = [];
+  };
+  hours.forEach((hour, i) => {
+    if (i > 0 && hour.sunUp === false && !hour.reasons?.some((r) => r.condition === "twilight")) run.push(hour);
+    else { endRun(); parts.push({ hour }); }
+  });
+  endRun();
+  return parts;
+}
+
+/** What a night's line shows, each for its column: the worst of the night. */
+export function nightSummary(hours) {
+  const values = (key) => hours.map((x) => x[key]).filter((v) => v != null);
+  const min = (key) => (values(key).length ? Math.min(...values(key)) : null);
+  const max = (key) => (values(key).length ? Math.max(...values(key)) : null);
+  const rain = values("precipitationMm");
+  const lowest = min("temperatureC");
+  const fogs = hours.map((x) => lightFor(x, ["fog"])).filter(Boolean);
+  return {
+    start: hours[0].time,
+    end: new Date(new Date(hours[hours.length - 1].time).getTime() + 3600e3).toISOString(),
+    lowestC: lowest, lowestFeelsLikeC: min("apparentTemperatureC"),
+    windMs: max("windSpeedMs"), gustMs: max("windGustMs"), wavesM: max("waveHeightM"),
+    rainMm: rain.length ? rain.reduce((a, b) => a + b, 0) : null,
+    visibilityM: min("visibilityM"),
+    fog: fogs.includes("red") ? "red" : fogs.includes("amber") ? "amber" : fogs[0] ?? null,
+    frost: lowest != null && Math.round(lowest) <= 0,
+  };
+}
+
 /** The local date (YYYY-MM-DD) of a time, in the lakes' time zone. */
 export function localDay(time, zone = ZONE) {
   return new Intl.DateTimeFormat("en-CA", { timeZone: zone, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(time));

@@ -247,6 +247,12 @@ svg.filled { width: 22px; height: 22px; }
 .hourly { font-variant-numeric: tabular-nums; }
 .hrow { display: grid; grid-template-columns: 46px 16px 26px repeat(6, minmax(0, 1fr)); gap: 6px; align-items: center; width: 100%; padding: 4px 0; font-size: 15px; }
 .hrow.night { opacity: .6; }
+.hrow.nightline { width: calc(100% + 12px); margin: 2px -6px; padding: 6px; border-radius: 9px; background: color-mix(in srgb, #5856d6 14%, transparent); cursor: pointer; }
+.hrow.nightline .range { font-weight: 600; white-space: nowrap; overflow: hidden; font-size: 14px; letter-spacing: -.02em; }
+.hrow.nightline > span:nth-child(2) { position: relative; z-index: 1; }
+.hrow.nightline .chev { color: var(--accent); }
+.hrow.nightline .num.blue .i { width: 10px; height: 10px; margin-right: 1px; vertical-align: -1px; }
+.dayhead.dup { display: none; }
 .hrow .num { text-align: right; white-space: nowrap; }
 .hrow > span:nth-child(2), .hrow > span:nth-child(3) { display: flex; justify-content: center; }
 /* The pinned header spans the whole tile and is rounded at the top like it; while it stays, the tile is cut
