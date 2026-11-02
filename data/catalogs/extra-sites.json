@@ -63,6 +63,71 @@
         "precision": "shore of the Lösegraben at the boathouse, Am Schifferwall 6 (checked by the owner)",
         "verified": true
       }
+    },
+    "ludwigshafener-ruderverein-von-1878-rheingoenheim": {
+      "of": "ludwigshafener-ruderverein-von-1878",
+      "site": "Rheingönheim",
+      "address": "Großwiesenstraße 5, 67065 Ludwigshafen am Rhein-Rheingönheim",
+      "water": {
+        "id": "river-rhein",
+        "name": "Rhein",
+        "country": "de",
+        "center": {
+          "lat": 49.4389,
+          "lon": 8.4614
+        },
+        "kind": "river"
+      },
+      "launchPoint": {
+        "lat": 49.43886,
+        "lon": 8.46145,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
+        "verified": false
+      }
+    }
+  },
+  "at": {
+    "wassersportverein-ottensheim-regattastrecke": {
+      "of": "wassersportverein-ottensheim",
+      "site": "Regattastrecke",
+      "address": "Regattastraße 1, 4100 Ottensheim",
+      "water": {
+        "id": "river-donau",
+        "name": "Donau",
+        "country": "at",
+        "center": {
+          "lat": 48.3263,
+          "lon": 14.1587
+        },
+        "kind": "river"
+      },
+      "launchPoint": {
+        "lat": 48.32638,
+        "lon": 14.15867,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
+        "verified": false
+      }
+    },
+    "wiener-ruder-club-pirat-langenzersdorf": {
+      "of": "wiener-ruder-club-pirat",
+      "site": "Langenzersdorf",
+      "address": "Treppelweg, Stromkilometer 1940,9, 2103 Langenzersdorf",
+      "water": {
+        "id": "river-donau",
+        "name": "Donau",
+        "country": "at",
+        "center": {
+          "lat": 48.3228,
+          "lon": 16.3372
+        },
+        "kind": "river"
+      },
+      "launchPoint": {
+        "lat": 48.32276,
+        "lon": 16.3372,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
+        "verified": false
+      }
     }
   }
 }

@@ -244,16 +244,6 @@
       "osm": "relation/1442399"
     },
     {
-      "id": "near-suhr",
-      "name": "Water near Suhr",
-      "country": "ch",
-      "center": {
-        "lat": 47.37317,
-        "lon": 8.07953
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "wohlensee",
       "name": "Wohlensee",
       "country": "ch",
@@ -729,7 +719,7 @@
       "founded": null,
       "source": "swissrowing",
       "country": "ch",
-      "lakeId": "near-suhr",
+      "lakeId": "hallwilersee",
       "launchPoint": {
         "lat": 47.28493,
         "lon": 8.22454,

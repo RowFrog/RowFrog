@@ -8,7 +8,8 @@
     },
     "sportgemeinschaft-demag-ev-wetter": {
       "include": ["Obergraben", "Harkortsee", "Ruhr"],
-      "bounds": "same three weirs as ruder-club-mark"
+      "bounds": "same three weirs as ruder-club-mark",
+      "direction": "north"
     },
     "bessel-ruder-club": {
       "include": ["Weser"],
@@ -54,6 +55,155 @@
     "karlsruher-ruder-verein-wiking-von-1879": {
       "include": ["Rheinhafen", "Rhein"],
       "note": "launch point at the boathouse in the Rheinhafen (Hansastr. 18 b), rows out onto the Rhine"
+    },
+    "passauer-ruderverein-von-1874": {
+      "direction": "south",
+      "note": "rows on the Inn south of the weir (owner 2026-11-02)"
+    },
+    "universitaet-passau-sportzentrum": {
+      "direction": "south",
+      "note": "rows on the Inn south of the weir (owner 2026-11-02)"
+    },
+    "ruderverein-emscher-wanne-eickel-herten": {
+      "direction": "west",
+      "note": "rows west of the lock (owner 2026-11-02)"
+    },
+    "rudergesellschaft-niederkassel-von-1978": {
+      "include": ["Rhein", "Mondorfer Hafen"],
+      "note": "Rhein and the Mondorfer Hafen (owner 2026-11-02)"
+    },
+    "muendener-ruderverein": {
+      "include": ["Fulda", "Werra", "Weser"],
+      "note": "Fulda, Werra and the waters joining them (owner 2026-11-02)"
+    },
+    "ruderriege-grotefend-gymnasium-muenden": {
+      "include": ["Fulda", "Werra", "Weser"],
+      "note": "Fulda, Werra and the waters joining them (owner 2026-11-02)"
+    },
+    "ruderverein-uelzen": {
+      "include": ["Elbe-Seitenkanal", "Hafen Uelzen"],
+      "note": "Elbe-Seitenkanal and the basin beside it (owner 2026-11-02)"
+    },
+    "wassersportverein-koenigs-wusterhausen": {
+      "include": ["Dahme", "Krimnicksee", "Krüpelsee", "Großer Zug", "Crossinsee", "Zeuthener See", "Seddinsee", "Langer See", "Zernsdorfer Lankensee", "Dolgensee"],
+      "note": "Dahme and the lakes around Königs Wusterhausen (owner 2026-11-02)"
+    },
+    "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893": {
+      "include": ["Rhein", "Yachthafen Düsseldorf"],
+      "note": "Rhein and the Yachthafen (owner 2026-11-02)"
+    },
+    "club-fuer-wassersport-porz-ev-1926": {
+      "include": ["Rhein", "Yachthafen Porz"],
+      "note": "Rhein and the Yachthafen Porz/Zündorf (owner 2026-11-02)"
+    },
+    "tpsk-von-1925": {
+      "include": ["Rhein", "Yachthafen Porz"],
+      "note": "Rhein and the Yachthafen Porz/Zündorf (owner 2026-11-02)"
+    },
+    "karlsruher-rheinklub-alemannia": {
+      "include": ["Rheinhafen", "Rhein"],
+      "note": "Rhein and the Rheinhäfen Karlsruhe (owner 2026-11-02)"
+    },
+    "ruderriege-des-karlsruher-institut-fuer-technologie": {
+      "include": ["Rheinhafen", "Rhein"],
+      "note": "Rhein and the Rheinhäfen Karlsruhe (owner 2026-11-02)"
+    },
+    "kasteler-ruder-und-kanu-gesellschaft-1880": {
+      "include": ["Rhein", "Main"],
+      "note": "Rhein and Main (owner 2026-11-02)"
+    },
+    "wuerzburger-ruderverein-bayern-von-18751905": {
+      "include": ["Main", "Alter Main"],
+      "note": "Main and its side arms nearby (owner 2026-11-02)"
+    },
+    "lauffener-ruderclub-neckar-ev-1931": {
+      "direction": "south",
+      "note": "rows south of the lock, probably (owner 2026-11-02)"
+    },
+    "ruderverein-datteln-von-1928": {
+      "include": ["Wesel-Datteln-Kanal", "Dortmund-Ems-Kanal", "Datteln-Hamm-Kanal", "Lippe"],
+      "direction": "south",
+      "note": "Wesel-Datteln-Kanal south of the lock, the Kanalkreuz, Datteln-Hamm-Kanal, Lippe (owner 2026-11-02)"
+    },
+    "osnabruecker-ruder-verein": {
+      "include": ["Stichkanal Osnabrück", "Mittellandkanal"],
+      "note": "Stichkanal with its side arm, and the Mittellandkanal (owner 2026-11-02)"
+    },
+    "ruderclub-ratsgymnasium-ev-osnabrueck": {
+      "include": ["Stichkanal Osnabrück", "Mittellandkanal"],
+      "note": "Stichkanal with its side arm, and the Mittellandkanal (owner 2026-11-02)"
+    },
+    "rr-gymnasium-carolinum-osnabrueck": {
+      "include": ["Stichkanal Osnabrück", "Mittellandkanal"],
+      "note": "Stichkanal with its side arm, and the Mittellandkanal (owner 2026-11-02)"
+    },
+    "ruder-club-witten": {
+      "include": ["Ruhr", "Mühlengraben"],
+      "note": "Mühlengraben and Ruhr (owner 2026-11-02)"
+    },
+    "volkstuemlicher-wassersport-mannheim": {
+      "include": ["Rhein", "Neckar", "Altrhein", "Bonadieshafen"],
+      "note": "Bonadieshafen, Rhein, Neckar and Altrhein (owner 2026-11-02)"
+    },
+    "ludwigshafener-ruderverein-von-1878-rheingoenheim": {
+      "include": ["Rhein", "Kiefweiher"],
+      "note": "Rhein and the Kiefweiher (owner 2026-11-02)"
+    },
+    "ruder-club-rastatt-1898": {
+      "include": ["Rhein", "Goldkanal"],
+      "note": "Goldkanal and Rhein (owner 2026-11-02)"
+    },
+    "darmstaedter-schwimm-und-wassersport-club-1912": {
+      "include": ["Rhein", "Altrhein"],
+      "note": "Stockstadt-Erfelder Altrhein and Rhein (owner 2026-11-02)"
+    },
+    "emder-ruderverein": {
+      "include": ["Ems", "Ems-Jade-Kanal", "Rotes Siel"],
+      "note": "Ems and Emden's harbour canals (owner 2026-11-02)"
+    },
+    "bremerhavener-ruderverein-von-1889": {
+      "include": ["Geeste", "Weser"],
+      "note": "Geeste and Weser (owner 2026-11-02)"
+    },
+    "rendsburger-primaner-ruderclub-von-1880": {
+      "include": ["Obereider", "Audorfer See", "Nord-Ostsee-Kanal"],
+      "note": "Ober-Eider, Die Enge, Audorfer See and probably the Nord-Ostsee-Kanal (owner 2026-11-02)"
+    },
+    "hamburger-ruderinnen-club-von-1925": {
+      "include": ["Alster", "Isebekkanal", "Außenalster", "Binnenalster"],
+      "note": "Isebekkanal into the Alster and the Außenalster (owner 2026-11-02; the owner wants one Alster outline for all Hamburg clubs)"
+    },
+    "universitaetssportclub-otto-von-guericke-magdeburg": {
+      "include": ["Elbe", "Stromelbe", "Taube Elbe", "Alte Elbe"],
+      "note": "boathouse on the Werder, between the Stromelbe and the Taube Elbe (owner 2026-11-02)"
+    }
+  },
+  "at": {
+    "oesterr-sportunion-wallsee-sektion-rudern": {
+      "direction": "east",
+      "note": "Donau side arm and main stream, east of the weir (owner 2026-11-02)"
+    },
+    "wassersportverein-ottensheim-regattastrecke": {
+      "include": ["Donau"],
+      "note": "regatta course, a side arm of the Donau (owner 2026-11-02)"
+    },
+    "ruder-club-salzburg": {
+      "include": ["Salzach", "Königsseeache"],
+      "direction": "south",
+      "note": "Königsseeache and the Salzach south of the power plant (owner 2026-11-02)"
+    },
+    "korneuburger-ruderverein-alemannia": {
+      "include": ["Donau"],
+      "note": "Donau and the Korneuburg harbour (owner 2026-11-02)"
+    },
+    "wiener-ruderverein-austria": {
+      "include": ["Donau"],
+      "note": "Donau and the Kuchelauer Hafen (owner 2026-11-02)"
+    }
+  },
+  "ch": {
+    "ruderclub-blauweiss-basel": {
+      "note": "owner 2026-11-02: rows west of the Birsfelden lock and power plant, through the lock; the builder still stops at the Birsfelden step, so the section stays upstream to Augst for now (with the Basler RC and WFV Birsfelden)"
     }
   }
 }

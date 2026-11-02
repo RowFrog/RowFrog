@@ -44,16 +44,6 @@
       "kind": "river"
     },
     {
-      "id": "altrheinhafen",
-      "name": "Altrheinhafen",
-      "country": "de",
-      "center": {
-        "lat": 49.51939,
-        "lon": 8.47144
-      },
-      "kind": "lake"
-    },
-    {
       "id": "altwarmbuechener-see",
       "name": "Altwarmbüchener See",
       "country": "de",
@@ -374,6 +364,16 @@
       "kind": "river"
     },
     {
+      "id": "river-geeste",
+      "name": "Geeste",
+      "country": "de",
+      "center": {
+        "lat": 53.55221,
+        "lon": 8.59275
+      },
+      "kind": "river"
+    },
+    {
       "id": "grienericksee",
       "name": "Grienericksee",
       "country": "de",
@@ -552,6 +552,16 @@
         "lon": 8.2674
       },
       "osm": "way/10309342"
+    },
+    {
+      "id": "herrenteich",
+      "name": "Herrenteich",
+      "country": "de",
+      "center": {
+        "lat": 53.83498,
+        "lon": 10.48327
+      },
+      "kind": "lake"
     },
     {
       "id": "hirschgraben",
@@ -944,6 +954,16 @@
       "kind": "river"
     },
     {
+      "id": "river-obereider",
+      "name": "Obereider",
+      "country": "de",
+      "center": {
+        "lat": 54.30828,
+        "lon": 9.67601
+      },
+      "kind": "river"
+    },
+    {
       "id": "river-oder",
       "name": "Oder",
       "country": "de",
@@ -984,12 +1004,12 @@
       "kind": "lake"
     },
     {
-      "id": "river-olpe",
-      "name": "Olpe",
+      "id": "river-oste",
+      "name": "Oste",
       "country": "de",
       "center": {
-        "lat": 51.03322,
-        "lon": 7.84705
+        "lat": 53.69633,
+        "lon": 9.17443
       },
       "kind": "river"
     },
@@ -1002,6 +1022,16 @@
         "lon": 10.03234
       },
       "kind": "river"
+    },
+    {
+      "id": "otto-maigler-see",
+      "name": "Otto-Maigler-See",
+      "country": "de",
+      "center": {
+        "lat": 50.87937,
+        "lon": 6.84475
+      },
+      "kind": "lake"
     },
     {
       "id": "river-peene",
@@ -1314,6 +1344,16 @@
       "kind": "river"
     },
     {
+      "id": "strelasund",
+      "name": "Strelasund",
+      "country": "de",
+      "center": {
+        "lat": 54.32252,
+        "lon": 13.08816
+      },
+      "kind": "lake"
+    },
+    {
       "id": "stoessensee",
       "name": "Stößensee",
       "country": "de",
@@ -1474,126 +1514,6 @@
       "kind": "river"
     },
     {
-      "id": "near-bremerhaven",
-      "name": "Water near Bremerhaven",
-      "country": "de",
-      "center": {
-        "lat": 53.55986,
-        "lon": 8.59366
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-elchesheim-illingen",
-      "name": "Water near Elchesheim-Illingen",
-      "country": "de",
-      "center": {
-        "lat": 48.93069,
-        "lon": 8.21013
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-emden",
-      "name": "Water near Emden",
-      "country": "de",
-      "center": {
-        "lat": 53.36705,
-        "lon": 7.20583
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-hamburg",
-      "name": "Water near Hamburg",
-      "country": "de",
-      "center": {
-        "lat": 53.55017,
-        "lon": 10.00132
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-hemmoor",
-      "name": "Water near Hemmoor",
-      "country": "de",
-      "center": {
-        "lat": 53.68869,
-        "lon": 9.15951
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-huerth",
-      "name": "Water near Hürth",
-      "country": "de",
-      "center": {
-        "lat": 50.88074,
-        "lon": 6.87657
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-magdeburg",
-      "name": "Water near Magdeburg",
-      "country": "de",
-      "center": {
-        "lat": 52.1498,
-        "lon": 11.60094
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-reinfeld",
-      "name": "Water near Reinfeld",
-      "country": "de",
-      "center": {
-        "lat": 53.83006,
-        "lon": 10.48695
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-rendsburg",
-      "name": "Water near Rendsburg",
-      "country": "de",
-      "center": {
-        "lat": 54.30029,
-        "lon": 9.66501
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-riedstadt",
-      "name": "Water near Riedstadt",
-      "country": "de",
-      "center": {
-        "lat": 49.84252,
-        "lon": 8.48294
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-stralsund",
-      "name": "Water near Stralsund",
-      "country": "de",
-      "center": {
-        "lat": 54.32243,
-        "lon": 13.08607
-      },
-      "kind": "unknown"
-    },
-    {
-      "id": "near-zschornewitz",
-      "name": "Water near Zschornewitz",
-      "country": "de",
-      "center": {
-        "lat": 51.71133,
-        "lon": 12.38894
-      },
-      "kind": "unknown"
-    },
-    {
       "id": "river-weisse-elster",
       "name": "Weiße Elster",
       "country": "de",
@@ -1672,6 +1592,16 @@
         "lon": 13.0366
       },
       "osm": "relation/11998622"
+    },
+    {
+      "id": "zschornewitzer-see",
+      "name": "Zschornewitzer See",
+      "country": "de",
+      "center": {
+        "lat": 51.7078,
+        "lon": 12.38489
+      },
+      "kind": "lake"
     }
   ],
   "clubs": [
@@ -2729,7 +2659,7 @@
       "address": "Stresemannstraße 51, 27576 Bremerhaven-Lehe",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-bremerhaven",
+      "lakeId": "river-geeste",
       "launchPoint": {
         "lat": 53.55221,
         "lon": 8.59275,
@@ -3005,7 +2935,7 @@
       "address": "K156, 64560 Riedstadt",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-riedstadt",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.83657,
         "lon": 8.45757,
@@ -3356,7 +3286,7 @@
       "address": "Kesselschleuse 1, 26725 Emden-Groß-Faldern",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-emden",
+      "lakeId": "river-ems",
       "launchPoint": {
         "lat": 53.3667,
         "lon": 7.21754,
@@ -4222,7 +4152,7 @@
       "address": "Isekai 11a, 20249 Hamburg-Nord",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-hamburg",
+      "lakeId": "river-alster",
       "launchPoint": {
         "lat": 53.58523,
         "lon": 9.99186,
@@ -4577,7 +4507,7 @@
       "address": "Zur Gotteshülfe 71, 50354 Hürth",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-huerth",
+      "lakeId": "otto-maigler-see",
       "launchPoint": {
         "lat": 50.87937,
         "lon": 6.84475,
@@ -5227,9 +5157,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.9922,
-        "lon": 8.28792,
-        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 221 m from the Rhein), 24 m away",
+        "lat": 49.99243,
+        "lon": 8.28827,
+        "precision": "shore of the Rhein nearest the earlier point (shore of the Rhein nearest the earlier point (geocoded club address, 221 m from the Rhein), 24 m away), 36 m away",
         "verified": false
       }
     },
@@ -6264,7 +6194,7 @@
       "address": "Am Schirrhof 6, 32427 Minden",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-weser",
+      "lakeId": "river-mittellandkanal",
       "launchPoint": {
         "lat": 52.30087,
         "lon": 8.88986,
@@ -6678,7 +6608,7 @@
       "address": "Bei der Badeanstalt, 23858 Reinfeld (Holstein)",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-reinfeld",
+      "lakeId": "herrenteich",
       "launchPoint": {
         "lat": 53.83498,
         "lon": 10.48327,
@@ -6708,7 +6638,7 @@
       "address": "Wickenhagenweg 7, 24768 Rendsburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-rendsburg",
+      "lakeId": "river-obereider",
       "launchPoint": {
         "lat": 54.30828,
         "lon": 9.67601,
@@ -7418,7 +7348,7 @@
       "address": "Am Goldkanal 3, 76477 Elchesheim-Illingen",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-elchesheim-illingen",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 48.9185,
         "lon": 8.18019,
@@ -9301,7 +9231,7 @@
       "address": "Mondorf, 53859 Niederkassel",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-sieg",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 50.77193,
         "lon": 7.07566,
@@ -9778,7 +9708,7 @@
       "address": "Kirchesohl 1, 57462 Olpe",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-olpe",
+      "lakeId": "biggesee",
       "launchPoint": {
         "lat": 51.02913,
         "lon": 7.84168,
@@ -10262,7 +10192,7 @@
       "address": "Hafenstraße 133, 45711 Datteln",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-dortmund-ems-kanal",
+      "lakeId": "river-wesel-datteln-kanal",
       "launchPoint": {
         "lat": 51.65802,
         "lon": 7.36218,
@@ -12590,7 +12520,7 @@
       "address": "Friedrich-Naumann-Straße 5, 18435 Stralsund",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-stralsund",
+      "lakeId": "strelasund",
       "launchPoint": {
         "lat": 54.32252,
         "lon": 13.08816,
@@ -13063,7 +12993,7 @@
       "address": "Werder, 39114 Magdeburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-magdeburg",
+      "lakeId": "river-elbe",
       "launchPoint": {
         "lat": 52.11084,
         "lon": 11.64221,
@@ -13183,7 +13113,7 @@
       "address": "Sandhofer Str. 51-53, 68305 Mannheim-Waldhof",
       "source": "drv",
       "country": "de",
-      "lakeId": "altrheinhafen",
+      "lakeId": "river-rhein",
       "launchPoint": {
         "lat": 49.51978,
         "lon": 8.4713,
@@ -13319,7 +13249,7 @@
       "address": "Siethwende 1, 21745 Hemmoor",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-hemmoor",
+      "lakeId": "river-oste",
       "launchPoint": {
         "lat": 53.69633,
         "lon": 9.17443,
@@ -14046,7 +13976,7 @@
       "address": "Pöplitzer Weg 49, 06772 Gräfenhainichen",
       "source": "drv",
       "country": "de",
-      "lakeId": "near-zschornewitz",
+      "lakeId": "zschornewitzer-see",
       "launchPoint": {
         "lat": 51.7078,
         "lon": 12.38489,
@@ -14167,6 +14097,37 @@
         "lon": 10.41387,
         "precision": "shore of the Ilmenau nearest the earlier point (shore of the Lösegraben at the boathouse, Am Schifferwall 6 (checked by the owner)), 12 m away",
         "verified": true
+      }
+    },
+    {
+      "drvId": "12018",
+      "name": "Ludwigshafener Ruderverein von 1878 (Rheingönheim)",
+      "shortName": "Ludwigshafener RV (Rheingönheim)",
+      "abbreviation": "LRV",
+      "website": "https://www.ludwigshafener-rv.de",
+      "sports": [
+        "Wanderrudern",
+        "Wettkampfrudern",
+        "Ergometerrudern",
+        "Jugendausbildung (15 bis 18 Jahre)",
+        "Jugendausbildung (14 Jahre und jünger)",
+        "Erwachsenenausbildung",
+        "Leistungssport",
+        "Mastersrudern",
+        "Freizeitrudern",
+        "Marathonrudern",
+        "Veranstaltungsorganisation"
+      ],
+      "id": "ludwigshafener-ruderverein-von-1878-rheingoenheim",
+      "address": "Großwiesenstraße 5, 67065 Ludwigshafen am Rhein-Rheingönheim",
+      "source": "drv",
+      "country": "de",
+      "lakeId": "river-rhein",
+      "launchPoint": {
+        "lat": 49.43886,
+        "lon": 8.46145,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
+        "verified": false
       }
     }
   ]

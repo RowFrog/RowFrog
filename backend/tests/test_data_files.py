@@ -20,23 +20,20 @@ SHORE_KM = 0.025
 # each waits for its water to change or grow (water-fixes.json, extra-sites.json
 # and the river sections, thread "Define river sections for river clubs").
 FAR_FROM_OUTLINE: dict[str, str] = {
-    "rr-besselgymnasium-minden": "rows on the Mittellandkanal, not the Weser",
-    "universitaet-passau-sportzentrum": "Inn section south of the weir",
-    "passauer-ruderverein-von-1874": "Inn section south of the weir",
-    "ruderverein-emscher-wanne-eickel-herten": "Rhein-Herne-Kanal west of the lock, plus the basins",
-    "wassersportverein-koenigs-wusterhausen": "Dahme with Krimnicksee and the lakes beyond",
-    "wiener-ruderclub-donaubund": "Alte Donau and Donau, not the Neue Donau",
-    "wiener-ruder-club-pirat": "Alte Donau and Donau, not the Neue Donau",
-    "wiener-ruderverein-austria": "Kuchelauer Hafen",
-    "rudergesellschaft-niederkassel-von-1978": "Rhein and Mondorfer Hafen, not the Sieg",
-    "ruderriege-am-staedt-gymnasium-olpe": "Biggesee, like RC Biggesee",
-    "osnabruecker-ruder-verein": "side arm of the Stichkanal and the Mittellandkanal",
-    "ruderclub-ratsgymnasium-ev-osnabrueck": "side arm of the Stichkanal and the Mittellandkanal",
-    "rr-gymnasium-carolinum-osnabrueck": "side arm of the Stichkanal and the Mittellandkanal",
-    "ruder-club-witten": "Mühlengraben and Ruhr",
-    "korneuburger-ruderverein-alemannia": "Korneuburg harbour",
+    "oesterr-sportunion-wallsee-sektion-rudern": "launches on an unnamed Donau side arm that the section's outline misses",
+    "ludwigshafener-ruderverein-von-1878-rheingoenheim": "launches on the Kiefweiher, which the outline does not take in yet",
+    "volkstuemlicher-wassersport-mannheim": "launches in the Bonadieshafen, more than 1 km from any river line",
+    "ruder-club-salzburg": "launches on the Königsseeache just above the Salzach",
+    # Harbour basins and side arms the outline does not take in yet, although the overrides include them.
+    "osnabruecker-ruder-verein": "side arm of the Stichkanal at the boathouse",
+    "ruderclub-ratsgymnasium-ev-osnabrueck": "side arm of the Stichkanal at the boathouse",
+    "rr-gymnasium-carolinum-osnabrueck": "side arm of the Stichkanal at the boathouse",
+    "ruder-club-witten": "Mühlengraben beside the Ruhr",
+    "rudergesellschaft-niederkassel-von-1978": "Mondorfer Hafen",
     "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893": "Yachthafen Düsseldorf",
-    "ruderclub-blauweiss-basel": "Rhein west of the Birsfelden lock",
+    "wassersportverein-koenigs-wusterhausen": "Krimnicksee beside the Dahme",
+    "korneuburger-ruderverein-alemannia": "Korneuburg harbour",
+    "wiener-ruderverein-austria": "Kuchelauer Hafen",
 }
 
 

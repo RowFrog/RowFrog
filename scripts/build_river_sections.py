@@ -566,8 +566,10 @@ def main() -> None:
     while queue:
         g = queue.pop(0)
         if only and not (only & set(g["clubs"])):
-            if g["clubs"][0] in kept and kept[g["clubs"][0]]["id"] not in used_ids:
-                k = kept[g["clubs"][0]]
+            # Keep every section of the group's clubs (a split group has more than one).
+            for k in (kept[c] for c in g["clubs"] if c in kept):
+                if k["id"] in used_ids:
+                    continue
                 sections.append(k)
                 used_ids.add(k["id"])
                 path = OUTLINES / f"{k['id']}.geojson"
