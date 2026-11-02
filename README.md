@@ -71,7 +71,9 @@ GitHub issue, so no GitHub account is needed.
 3. Current conditions.
 4. Lake view (River or Canal view for river and canal clubs).
 5. Next 48 hours, with a feels-like column and a day header that stays in
-   place while scrolling; tapping an hour opens that hour's view.
+   place while scrolling; tapping an hour opens that hour's view. Each night's
+   dark hours fold into one tinted line (lowest temperature, strongest wind,
+   highest waves, all its rain), which opens on a tap.
 6. Launch point map.
 7. Satellite picture.
 8. Forecast source and credits.
