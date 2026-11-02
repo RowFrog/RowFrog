@@ -45,6 +45,10 @@ MIN_DEPTH_M = 0.5
 RISING_HOURS = 6
 RISING_CM = 5
 
+# Free-flowing rivers with groynes (Buhnen), and how far above mean water they may be under water.
+GROYNE_RIVERS = ("rhein", "elbe", "oder", "weser", "donau")
+GROYNES_CM = 150.0
+
 
 @dataclass(frozen=True)
 class Gauge:
@@ -101,6 +105,7 @@ class RiverNow:
     discharge_m3s: float | None
     speed_ms: float | None
     speed_measured: bool
+    groynes_covered: bool
     history: list[Reading]  # hourly levels of the last two days, oldest first
 
     @property
@@ -119,13 +124,26 @@ class RiverNow:
         return max(found, key=lambda r: r[1], default=None)
 
 
+def groynes_covered(level_cm: float, gauge: Gauge) -> bool:
+    """On a river with groynes, they may be under water from about mean water + GROYNES_CM (Köln: 4.47 m, the clubs say
+    4.50 m)."""
+    mw = gauge.value("W", "MW")
+    return gauge.water.casefold() in GROYNE_RIVERS and mw is not None and level_cm >= mw + GROYNES_CM
+
+
+def high_cm(gauge: Gauge) -> float | None:
+    """Where high water starts: the shipping mark I (ships slow down, as in the clubs' own guides) or mean high water,
+    whichever comes first."""
+    return min((v for v in (gauge.value("W", "M_I"), gauge.value("W", "MHW")) if v is not None), default=None)
+
+
 def level_state(level_cm: float, gauge: Gauge) -> str:
-    hsw, mw, mhw = gauge.hsw_cm, gauge.value("W", "MW"), gauge.value("W", "MHW")
+    hsw, mw, high = gauge.hsw_cm, gauge.value("W", "MW"), high_cm(gauge)
     if hsw is not None and level_cm >= hsw:
         return "shipping_stopped"
-    if mhw is not None and level_cm >= mhw:
+    if high is not None and level_cm >= high:
         return "high"
-    if mw is not None and mhw is not None and level_cm > mw + (mhw - mw) / 2:
+    if mw is not None and high is not None and level_cm > mw + (high - mw) / 2:
         return "raised"
     if mw is not None:
         return "normal"
@@ -177,6 +195,7 @@ def now_at(gauge: Gauge, levels: list[Reading], discharge: list[Reading], speeds
     else:
         speed, measured = None, False
     return RiverNow(gauge, levels[-1].time, level, trend(levels), level_state(level, gauge), q, speed, measured,
+                    groynes_covered(level, gauge),
                     [r for r in levels if r.time >= now - timedelta(hours=48)])
 
 
@@ -185,7 +204,7 @@ def to_json(river_now: RiverNow | None, gauge: Gauge) -> dict:
     g = gauge
     out = {
         "gauge": {"name": g.name, "water": g.water, "riverKm": g.river_km, "lat": g.lat, "lon": g.lon, "distanceKm": g.distance_km,
-                  "meanCm": g.value("W", "MW"), "meanHighCm": g.value("W", "MHW"), "shippingStopsCm": g.hsw_cm,
+                  "meanCm": g.value("W", "MW"), "meanHighCm": g.value("W", "MHW"), "highCm": high_cm(g), "shippingStopsCm": g.hsw_cm,
                   "meanDischarge": g.value("Q", "MQ")},
         "limits": {"currentAmberMs": CURRENT_AMBER_MS, "currentRedMs": CURRENT_RED_MS},
         "attribution": "WSV PEGELONLINE, DL-DE Zero 2.0",
@@ -203,6 +222,7 @@ def to_json(river_now: RiverNow | None, gauge: Gauge) -> dict:
         "discharge": r.discharge_m3s,
         "speedMs": r.speed_ms,
         "speedMeasured": r.speed_measured,
+        "groynesCovered": r.groynes_covered,
         "light": (light[1] if light else Light.GREEN).name.lower(),
         "history": [{"time": h.time.isoformat(), "levelCm": h.value} for h in r.history],
     }

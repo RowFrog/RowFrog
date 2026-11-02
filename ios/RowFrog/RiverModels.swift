@@ -42,6 +42,8 @@ struct RiverGauge: Codable, Hashable {
     /// Mean water, mean high water and the level at which shipping stops, in cm at the gauge.
     var meanCm: Double? = nil
     var meanHighCm: Double? = nil
+    /// Where high water starts: the shipping mark I or mean high water, whichever comes first.
+    var highCm: Double? = nil
     var shippingStopsCm: Double? = nil
     /// Mean discharge in m³/s.
     var meanDischarge: Double? = nil
@@ -63,6 +65,8 @@ struct RiverReading: Codable, Hashable {
     /// Mid-river, measured at the gauge or estimated from the discharge.
     let speedMs: Double?
     let speedMeasured: Bool
+    /// On a river with groynes: the level may cover them (from about mean water + 1.5 m).
+    var groynesCovered: Bool? = nil
     var light: Light
     let history: [RiverLevel]
 
