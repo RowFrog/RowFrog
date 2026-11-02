@@ -24,6 +24,16 @@ FAR_FROM_OUTLINE: dict[str, str] = {
     "ludwigshafener-ruderverein-von-1878-rheingoenheim": "launches on the Kiefweiher, which the outline does not take in yet",
     "volkstuemlicher-wassersport-mannheim": "launches in the Bonadieshafen, more than 1 km from any river line",
     "ruder-club-salzburg": "launches on the Königsseeache just above the Salzach",
+    # Harbour basins and side arms the outline does not take in yet, although the overrides include them.
+    "osnabruecker-ruder-verein": "side arm of the Stichkanal at the boathouse",
+    "ruderclub-ratsgymnasium-ev-osnabrueck": "side arm of the Stichkanal at the boathouse",
+    "rr-gymnasium-carolinum-osnabrueck": "side arm of the Stichkanal at the boathouse",
+    "ruder-club-witten": "Mühlengraben beside the Ruhr",
+    "rudergesellschaft-niederkassel-von-1978": "Mondorfer Hafen",
+    "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893": "Yachthafen Düsseldorf",
+    "wassersportverein-koenigs-wusterhausen": "Krimnicksee beside the Dahme",
+    "korneuburger-ruderverein-alemannia": "Korneuburg harbour",
+    "wiener-ruderverein-austria": "Kuchelauer Hafen",
 }
 
 
