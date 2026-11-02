@@ -7,8 +7,6 @@ struct LocationListView: View {
     let forecasts: ForecastStore
     /// The page on screen when the list sits beside the pages; nil when it is a full-screen cover.
     var selectedID: String?
-    /// Beside the club page (iPad): slides the list away, from the sidebar button at its top left.
-    var hideList: (() -> Void)?
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
@@ -24,11 +22,10 @@ struct LocationListView: View {
     @State private var browseHook: String?
 
     init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil,
-         hideList: (() -> Void)? = nil, select: @escaping (Club) -> Void) {
+         select: @escaping (Club) -> Void) {
         self.locations = locations
         self.forecasts = forecasts
         self.selectedID = selectedID
-        self.hideList = hideList
         self.select = select
         _search = State(initialValue: initialSearch)
     }
@@ -131,21 +128,13 @@ struct LocationListView: View {
             .pageBackground(.list)
             .navigationTitle(tr("Locations"))
             .titleShrinksOnScroll($scrolled)
-            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")), besidePage: hideList != nil)
+            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")))
             .onChange(of: search) { if !search.isEmpty { editMode = .inactive } }
             .environment(\.editMode, $editMode)
             // As in the Weather app: no way back but the clubs' cards, the
             // list's other tasks behind "…" at the top, and the cog beside
             // the search at the bottom, where the club pages have it too.
-            // Beside the page (iPad) the sidebar button sits level with the title
-            // and the cog is on the club page.
             .toolbar {
-                if let hideList {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button(action: hideList) { Image(systemName: "sidebar.left") }
-                            .accessibilityLabel(tr("Hide the club list"))
-                    }
-                }
                 ToolbarItem(placement: .topBarTrailing) {
                     if editMode.isEditing {
                         Button(tr("Done")) { withAnimation { editMode = .inactive } }
@@ -155,7 +144,7 @@ struct LocationListView: View {
                     }
                 }
             }
-            .settingsBesideSearch(hideList == nil) { showingSettings = true }
+            .settingsBesideSearch { showingSettings = true }
             .navigationDestination(isPresented: $browsing) { CountryListView(locations: locations) }
             // Searching all countries, or one, loads the clubs not loaded yet.
             .task(id: "\(search.isEmpty)|\(countryFilter ?? "all")") {
@@ -303,8 +292,7 @@ private struct LocationSummaryRow: View {
                                 .font(.caption)
                                 .lineLimit(2)
                         }
-                        if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC,
-                                                limits: AppSettings.shared.limits(at: forecast?.clubId)) {
+                        if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC) {
                             Label(kit.title, systemImage: ColdWaterKit.symbol)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(ColdWaterKit.color)
@@ -454,19 +442,9 @@ private extension View {
     }
 
     /// The settings cog at the bottom left: beside the search field from iOS 26,
-    /// both on glass as in Mail; before, alone in the bottom bar. Not beside the
-    /// club page, whose cog is level with the club's name.
+    /// both on glass as in Mail; before, alone in the bottom bar.
     @ViewBuilder
-    func settingsBesideSearch(_ shown: Bool, _ open: @escaping () -> Void) -> some View {
-        if !shown {
-            self
-        } else {
-            settingsBar(open)
-        }
-    }
-
-    @ViewBuilder
-    private func settingsBar(_ open: @escaping () -> Void) -> some View {
+    func settingsBesideSearch(_ open: @escaping () -> Void) -> some View {
         let cog = Button(action: open) { Image(systemName: "gearshape") }
             .accessibilityLabel(tr("Settings"))
 #if compiler(>=6.2)
@@ -486,13 +464,9 @@ private extension View {
 
     /// From iOS 26 the search field sits at the bottom of the screen, within
     /// reach of the thumb, as in Mail, Notes and Weather; before, under the title.
-    /// Beside the club page (iPad) it sits at the top of the list, as Apple's
-    /// guide has it for a sidebar.
     @ViewBuilder
-    func clubSearch(_ text: Binding<String>, prompt: Text, besidePage: Bool = false) -> some View {
-        if besidePage {
-            searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
-        } else if #available(iOS 26.0, *) {
+    func clubSearch(_ text: Binding<String>, prompt: Text) -> some View {
+        if #available(iOS 26.0, *) {
             searchable(text: text, prompt: prompt)
         } else {
             searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)

@@ -58,25 +58,19 @@ struct Boat: Codable, Hashable, Identifiable {
     var name: String
     var type: BoatType
     var boatClass: BoatClass
-    /// Own boats only: the clubs where the boat is kept, the first where it was
-    /// added. It shows on these clubs' pages; elsewhere the user can take it
-    /// along. Empty for boats from before clubs were kept, until the app puts
-    /// them at the home base, and for small and big boats, which are everywhere.
-    var clubs: [String] = []
 
     static let small = Boat(id: "small", name: "", type: .racing, boatClass: .single)
     static let big = Boat(id: "big", name: "", type: .racing, boatClass: .eight)
     static let groups = [small, big]
 
-    init(id: String, name: String, type: BoatType, boatClass: BoatClass, clubs: [String] = []) {
+    init(id: String, name: String, type: BoatType, boatClass: BoatClass) {
         self.id = id
         self.name = name
         self.type = type
         self.boatClass = boatClass
-        self.clubs = clubs
     }
 
-    private enum CodingKeys: String, CodingKey { case id, name, type, boatClass = "class", clubs }
+    private enum CodingKeys: String, CodingKey { case id, name, type, boatClass = "class" }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -84,7 +78,6 @@ struct Boat: Codable, Hashable, Identifiable {
         name = try c.decodeIfPresent(String.self, forKey: .name) ?? ""
         type = try c.decodeIfPresent(BoatType.self, forKey: .type) ?? .racing
         boatClass = try c.decodeIfPresent(BoatClass.self, forKey: .boatClass) ?? .single
-        clubs = try c.decodeIfPresent([String].self, forKey: .clubs) ?? []
     }
 
     var isGroup: Bool { id == Self.small.id || id == Self.big.id }
@@ -313,7 +306,7 @@ enum ColdWaterKit: Equatable {
 
     static let symbol = "lifepreserver"
 
-    init?(waterC: Double?, limits: RowingLimits) {
+    init?(waterC: Double?, limits: RowingLimits = AppSettings.shared.limits) {
         guard let c = waterC, c < limits.value(.lifeJacket) || c < RowingLimits.coldWaterC else { return nil }
         if c >= RowingLimits.coldWaterC { self = .lifeJacket } else { self = limits.maybeSingle ? .partnerBoat : .nearShore }
     }
@@ -403,8 +396,8 @@ extension ClubForecast {
         return copy
     }
 
-    /// With the ticked boat and its limits, or small boats where the ticked boat isn't kept.
-    func applyingUserLimits() -> ClubForecast { applying(AppSettings.shared.limits(at: clubId)) }
+    /// With the boat and limits chosen in the settings.
+    func applyingUserLimits() -> ClubForecast { applying(AppSettings.shared.limits) }
 }
 
 /// One of the user's own boats that would get better advice than the ticked
@@ -413,10 +406,10 @@ struct SteadierBoat: Equatable {
     let boat: Boat
     let light: Light
 
-    /// The calmest of the user's boats kept at the club for `hour`, when it beats the boat in use there.
-    static func suggestion(for hour: ForecastHour, water: Double?, at clubID: String?, settings: AppSettings = .shared) -> SteadierBoat? {
+    /// The calmest of the user's boats for `hour`, when it beats the ticked boat.
+    static func suggestion(for hour: ForecastHour, water: Double?, settings: AppSettings = .shared) -> SteadierBoat? {
         guard hour.light > .green else { return nil }
-        let candidates = settings.boats(keptAt: clubID).filter { $0.id != settings.boat(at: clubID).id }
+        let candidates = settings.myBoats.filter { $0.id != settings.selectedBoat.id }
             .map { SteadierBoat(boat: $0, light: hour.applying(settings.limits(for: $0), waterC: water).light) }
             .filter { $0.light < hour.light }
         return candidates.min { $0.light < $1.light }

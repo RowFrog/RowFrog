@@ -15,8 +15,6 @@ struct RowFrogApp: App {
                 IconGalleryView()
             } else if UserDefaults.standard.bool(forKey: "RWConditionsPreview") {
                 ConditionsPreviewView()
-            } else if UserDefaults.standard.bool(forKey: "RWHeadlinePreview") {
-                HeadlinePreviewView()
             } else if UserDefaults.standard.bool(forKey: "RWWidgetGallery") {
                 WidgetGalleryView(api: APIClient.fromBundle())
             } else {

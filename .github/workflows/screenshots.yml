@@ -248,13 +248,6 @@ jobs:
           shoot_pages 07-home-dark dark
           shoot_pages 09-icons light -RWIconGallery YES
           shoot_pages 39-conditions-proposal light -RWConditionsPreview YES
-          for size in default:UICTContentSizeCategoryL xxxl:UICTContentSizeCategoryXXXL accessibility-l:UICTContentSizeCategoryAccessibilityL; do
-            shoot_pages "260-headline-preview-${size%%:*}" light -RWHeadlinePreview YES -UIPreferredContentSizeCategoryName "${size#*:}"
-            shoot_pages "261-headline-preview-german-${size%%:*}" light -RWHeadlinePreview YES -RWLanguage de -UIPreferredContentSizeCategoryName "${size#*:}"
-            # The real club page's top tile as built now, for comparison.
-            shoot "262-club-top-${size%%:*}" light -RWOpenClub mrc-1880 -UIPreferredContentSizeCategoryName "${size#*:}"
-            shoot "262-club-top-german-${size%%:*}" light -RWOpenClub mrc-1880 -RWLanguage de -UIPreferredContentSizeCategoryName "${size#*:}"
-          done
           # The Current conditions card and the larger view behind each tile.
           shoot 60-conditions-card light -RWOpenClub mrc-1880 -RWScrollTo conditions
           for c in temperature feelsLike humidity wind waves waterTemperature precipitation visibility cloudCover pressure thunderstorm uvIndex ice daylight; do
@@ -276,10 +269,6 @@ jobs:
           # The boat button shows an own boat's class ("4x" for Anna) in the accent colour.
           shoot 303-boat-button-own light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna
           shoot 304-boat-button-own-landscape-dark dark -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES
-          # Anna is kept at the home base (MRC 1880): at Tutzing the page uses small boats.
-          shoot 333-boat-kept-elsewhere light -RWOpenClub tutzinger-rv "${BOATS[@]}" -RWBoat b-anna
-          # iPad sideways with the list slid away: sidebar button and cog on the page.
-          shoot 334-list-slid-away light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES -RWSideListHidden YES
           # The shore warning lights explained, at a club with a lake warning.
           shoot 70-shore-lights light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES
           shoot 70-shore-lights-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES -RWLanguage de

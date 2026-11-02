@@ -219,7 +219,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .rowingLight: [
             TourPoint(symbol: "text.bubble", text: tr("The \"Why\" line names what sets the light.")),
             TourPoint(symbol: "sun.horizon", text: tr("Rowing is only advised while the sun is up.")),
-            TourPoint(symbol: "clock", text: tr("Each of the next 48 hours has its own light.")),
+            TourPoint(symbol: "clock", text: tr("Each of the next 48 hours has its own light. Tap a night's line to see its hours.")),
             TourPoint(symbol: "umbrella", text: tr("The rain tile shows DWD's radar for the next two hours, then the forecast.")),
             TourPoint(symbol: "clock.badge.exclamationmark", text: tr("Grey instead of green: the forecast is over 3 hours old. Pull down to refresh.")),
             TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide, and when in doubt you stay ashore.")),

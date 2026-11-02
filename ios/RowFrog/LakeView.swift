@@ -26,8 +26,6 @@ struct LakeView: Decodable, Hashable {
     var waterC: Double? = nil
     /// Set by the app: the measured water, else the estimate of the club page that showed the lake.
     var shoreWaterC: Double? = nil
-    /// Set by the app: the club page that showed the lake, whose boat colours it.
-    var clubID: String? = nil
     /// "lake" or "river"; missing from older backends.
     var kind: String? = nil
     /// River sections only: where the stretch ends each way and the river line.
@@ -38,11 +36,8 @@ struct LakeView: Decodable, Hashable {
 
     var water: WaterKind { WaterKind(kind: kind, waterway: section?.waterway) }
 
-    /// The limits of the boat in use at the club: the ticked one where it is kept, else small boats.
-    var limits: RowingLimits { AppSettings.shared.limits(at: clubID) }
-
-    /// Cold water draws the shore blue on the maps, for the boat in use.
-    var coldShore: ColdShore? { ColdShore(waterC: shoreWaterC, limits: limits) }
+    /// Cold water draws the shore blue on the maps, for the ticked boat.
+    var coldShore: ColdShore? { ColdShore(waterC: shoreWaterC, limits: AppSettings.shared.limits) }
     /// Whether the whole-lake stripes run from top left to bottom right instead
     /// of bottom left to top right, so they cross the lake's long side.
     var stripesFall: Bool { Self.stripesFall(outline) }
@@ -74,8 +69,8 @@ struct LakeView: Decodable, Hashable {
         return abs(remainder(along - .pi / 4, .pi)) < .pi / 4 - 0.05
     }
 
-    /// What to bring in cold water, for the boat in use.
-    var coldWaterKit: ColdWaterKit? { ColdWaterKit(waterC: shoreWaterC, limits: limits) }
+    /// What to bring in cold water, for the ticked boat.
+    var coldWaterKit: ColdWaterKit? { ColdWaterKit(waterC: shoreWaterC, limits: AppSettings.shared.limits) }
 
     /// Older than a club forecast may be: the lights then turn grey instead of green.
     var isStale: Bool {
@@ -374,9 +369,8 @@ final class LakeViewStore {
 
     /// As the backend sent them, coloured for small boats.
     private var raw: [String: LakeView] = [:]
-    /// Coloured for the boat in use at a club, worked out once per change.
+    /// Coloured for the boat chosen in the settings, worked out once per change.
     var views: LakeViews { LakeViews(store: self) }
-    /// By lake and boat, as two clubs on one lake can use different boats.
     @ObservationIgnored private var applied: [String: (limits: RowingLimits, view: LakeView)] = [:]
     private(set) var failed: Set<String> = []
     /// The water of the club page that last showed each lake, for lakes without a station.
@@ -402,7 +396,7 @@ final class LakeViewStore {
                     view.hours[i].lakeWide = LakeWide(light: reasons.map(\.light).max() ?? .green, reasons: reasons)
                 }
             }
-            applied = applied.filter { !$0.key.hasPrefix(lakeID + "|") }
+            applied[lakeID] = nil
             raw[lakeID] = view
             failed.remove(lakeID)
         } catch {
@@ -410,19 +404,17 @@ final class LakeViewStore {
         }
     }
 
-    /// The lake for the boat in use at a club.
-    func view(_ lakeID: String, club clubID: String?) -> LakeView? {
+    /// The lake for the ticked boat.
+    func view(_ lakeID: String) -> LakeView? {
         guard let base = raw[lakeID] else { return nil }
-        let limits = AppSettings.shared.limits(at: clubID)
-        let key = lakeID + "|" + limits.boat.id
+        let limits = AppSettings.shared.limits
         var view: LakeView
-        if let cached = applied[key], cached.limits == limits {
+        if let cached = applied[lakeID], cached.limits == limits {
             view = cached.view
         } else {
             view = base.applying(limits)
-            applied[key] = (limits, view)
+            applied[lakeID] = (limits, view)
         }
-        view.clubID = clubID
         view.shoreWaterC = view.waterC ?? clubWater[lakeID]
         view.currentMs = view.section == nil ? nil : clubCurrent[lakeID]
         return view
@@ -443,7 +435,7 @@ final class LakeViewStore {
 struct LakeViews {
     let store: LakeViewStore
 
-    subscript(lakeID: String, club clubID: String?) -> LakeView? { store.view(lakeID, club: clubID) }
+    subscript(lakeID: String) -> LakeView? { store.view(lakeID) }
 }
 
 /// The lake's cells as a small picture, one pixel per cell, north up. Drawn
@@ -487,17 +479,19 @@ enum LakeRaster {
 
     /// The wave and wind limits of the boat the map is coloured for; for
     /// small boats amber from 0.15 m and 5.5 m/s, red above 0.30 m and 8 m/s.
-    static func waveColor(_ m: Double, _ limits: RowingLimits) -> RGB {
-        ramp(m, amber: limits.value(.waveAmber), red: limits.value(.waveRed))
+    static func waveColor(_ m: Double) -> RGB {
+        let limits = AppSettings.shared.limits
+        return ramp(m, amber: limits.value(.waveAmber), red: limits.value(.waveRed))
     }
-    static func windColor(_ ms: Double, _ limits: RowingLimits) -> RGB {
-        ramp(ms, amber: limits.value(.windAmber), red: limits.value(.windRed))
+    static func windColor(_ ms: Double) -> RGB {
+        let limits = AppSettings.shared.limits
+        return ramp(ms, amber: limits.value(.windAmber), red: limits.value(.windRed))
     }
 
     /// The picture for an hour, kept once drawn: pages and maps ask for it on
     /// every redraw, and drawing it means smoothing a thousand cells.
     static func image(_ view: LakeView, hour: LakeHour, layer: LakeLayer) -> CGImage? {
-        let key = "\(view.lakeId)|\(view.generatedAt.timeIntervalSince1970)|\(hour.hashValue)|\(layer)|\(view.limits)" as NSString
+        let key = "\(view.lakeId)|\(view.generatedAt.timeIntervalSince1970)|\(hour.hashValue)|\(layer)|\(AppSettings.shared.limits)" as NSString
         if let cached = cache.object(forKey: key) { return (cached as! CGImage) }
         let image = render(view, hour: hour, layer: layer)
         if let image { cache.setObject(image, forKey: key) }
@@ -513,17 +507,16 @@ enum LakeRaster {
     private static func render(_ view: LakeView, hour: LakeHour, layer: LakeLayer) -> CGImage? {
         let grid = view.grid
         let w = grid.cols, h = grid.rows
-        let limits = view.limits
         var pixels = [UInt8](repeating: 0, count: w * h * 4)
         var water = [Bool](repeating: false, count: w * h)
         for (i, flat) in grid.cells.enumerated() where i < hour.lights.count {
             let color: RGB
             switch layer {
             case .light: color = hour.lakeWide.light == .red ? Self.greyed(Self.color(hour.lights[i])) : Self.color(hour.lights[i])
-            case .waves: color = waveColor(hour.wave(ofCell: i), limits)
+            case .waves: color = waveColor(hour.wave(ofCell: i))
             case .wind:
                 let p = grid.cellPoint[i]
-                color = windColor(p < hour.wind.count ? hour.wind[p].speedMs ?? 0 : 0, limits)
+                color = windColor(p < hour.wind.count ? hour.wind[p].speedMs ?? 0 : 0)
             }
             let pixel = (h - 1 - flat / w) * w + flat % w  // north up
             water[pixel] = true

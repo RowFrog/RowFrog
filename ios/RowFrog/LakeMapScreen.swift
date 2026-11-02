@@ -200,7 +200,7 @@ struct LakeMapScreen: View {
         // the legend) at the left, the layer buttons at the right, near the thumb.
         .overlay(alignment: .bottomLeading) {
             Button { showingLegend = true } label: {
-                LakeScaleChip(layer: layer, clubID: clubID)
+                LakeScaleChip(layer: layer)
                     .padding(.horizontal, 12)
                     .frame(height: 32)
                     .floatingControl(Capsule())
@@ -775,8 +775,8 @@ struct LakeMapScreen: View {
                     .foregroundStyle(.secondary)
             }
             if !routeMode {
-                LakeLegend(layer: layer, clubID: clubID)
-                MapBoatNote(clubID: clubID)
+                LakeLegend(layer: layer)
+                MapBoatNote()
                 moreRows
             }
         }
@@ -939,12 +939,10 @@ struct LakeMapScreen: View {
     }
 }
 
-/// Which boat the lake is coloured for: the one in use at the club, as on its page.
+/// Which boat the lake is coloured for: the ticked one, as on the club pages.
 struct MapBoatNote: View {
-    let clubID: String?
-
     var body: some View {
-        Label(tr("Coloured for %@", AppSettings.shared.boat(at: clubID).inSentence), systemImage: "figure.rower")
+        Label(tr("Coloured for %@", AppSettings.shared.selectedBoat.inSentence), systemImage: "figure.rower")
             .font(.caption)
             .foregroundStyle(.secondary)
     }
@@ -953,8 +951,7 @@ struct MapBoatNote: View {
 /// What the colours mean for the chosen layer.
 struct LakeLegend: View {
     let layer: LakeLayer
-    let clubID: String?
-    private var limits: RowingLimits { AppSettings.shared.limits(at: clubID) }
+    private var limits: RowingLimits { AppSettings.shared.limits }
 
     var body: some View {
         HStack(spacing: 12) {
@@ -965,10 +962,10 @@ struct LakeLegend: View {
                 }
             case .waves:
                 let amber = limits.value(.waveAmber), red = limits.value(.waveRed)
-                ramp({ LakeRaster.waveColor($0, limits) }, stops: [0, amber, red, red * 1.6], labels: [Format.waves(0), Format.waves(amber), Format.waves(red)])
+                ramp(LakeRaster.waveColor, stops: [0, amber, red, red * 1.6], labels: [Format.waves(0), Format.waves(amber), Format.waves(red)])
             case .wind:
                 let amber = limits.value(.windAmber), red = limits.value(.windRed)
-                ramp({ LakeRaster.windColor($0, limits) }, stops: [0, amber, red, red * 1.6], labels: [Format.wind(0), Format.wind(amber), Format.wind(red)])
+                ramp(LakeRaster.windColor, stops: [0, amber, red, red * 1.6], labels: [Format.wind(0), Format.wind(amber), Format.wind(red)])
             }
         }
         .font(.caption)
@@ -2013,8 +2010,8 @@ struct LakeMapLegend: View {
         NavigationStack {
             List {
                 Section(layer.title) {
-                    LakeLegend(layer: layer, clubID: clubID).padding(.vertical, 4)
-                    MapBoatNote(clubID: clubID)
+                    LakeLegend(layer: layer).padding(.vertical, 4)
+                    MapBoatNote()
                     if stripes == .red {
                         row(Image(systemName: "line.diagonal").foregroundStyle(.red),
                             tr("Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel."))
@@ -2029,7 +2026,7 @@ struct LakeMapLegend: View {
                     if let coldShore {
                         row(Capsule().fill(coldShore.color).frame(width: 18, height: 4),
                             tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
-                               Format.temperature(AppSettings.shared.limits(at: clubID).value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
+                               Format.temperature(AppSettings.shared.limits.value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
                     }
                     if hasWind {
                         row(Image(systemName: "arrow.up.right").fontWeight(.bold),
@@ -2130,8 +2127,7 @@ struct LakeLayerIcon: View {
 /// maps; a tap opens the full legend.
 struct LakeScaleChip: View {
     let layer: LakeLayer
-    let clubID: String?
-    private var limits: RowingLimits { AppSettings.shared.limits(at: clubID) }
+    private var limits: RowingLimits { AppSettings.shared.limits }
 
     var body: some View {
         HStack(spacing: 6) {
@@ -2139,9 +2135,9 @@ struct LakeScaleChip: View {
             case .light:
                 ForEach([Light.green, .amber, .red], id: \.self) { TrafficLightDot(light: $0, size: 9) }
             case .waves:
-                ramp({ LakeRaster.waveColor($0, limits) }, top: limits.value(.waveRed), from: Format.waves(0), to: Format.waves(limits.value(.waveRed)))
+                ramp(LakeRaster.waveColor, top: limits.value(.waveRed), from: Format.waves(0), to: Format.waves(limits.value(.waveRed)))
             case .wind:
-                ramp({ LakeRaster.windColor($0, limits) }, top: limits.value(.windRed), from: Format.wind(0), to: Format.wind(limits.value(.windRed)))
+                ramp(LakeRaster.windColor, top: limits.value(.windRed), from: Format.wind(0), to: Format.wind(limits.value(.windRed)))
             }
         }
         .font(.caption2.weight(.semibold))

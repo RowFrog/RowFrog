@@ -346,6 +346,11 @@ export function time(value, format = store.timeFormat) {
   return new Intl.DateTimeFormat(navigator.language || locale(), { timeZone: ZONE, hour: "numeric", minute: "2-digit" }).format(new Date(value));
 }
 
+/** The hour alone, "17", "8" or "5 PM", for the night line of the 48 hours (TimeFormat.hour). */
+export function hourOnly(value) {
+  return time(value).replace(":00", "");
+}
+
 /** Whether times carry AM or PM, so take more room. */
 export const usesAMPM = () => /[AP]M/i.test(time(Date.UTC(2026, 0, 1, 18)));
 

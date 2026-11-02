@@ -4,42 +4,23 @@ import SwiftUI
 /// from the "For small boats" line in the top tile and the boat button in the
 /// page bar. Each boat shows the light it would get at this club now, so the
 /// one that would be fine stands out. The choice is the one in the settings,
-/// for every club and the widgets. Own boats kept at other clubs come last,
-/// with one tap to take them to this club too (owner's choice A, 30.10.2026).
+/// for every club and the widgets.
 struct BoatMenu<MenuLabel: View>: View {
-    /// The club whose page shows the menu.
-    var clubID: String?
     /// The hour the lights are worked out for; without it each boat shows its kind.
     var hour: ForecastHour?
     var waterC: Double?
     @ViewBuilder let label: () -> MenuLabel
     @Environment(\.openBoatSettings) private var openBoatSettings
-    @Environment(\.clubName) private var clubName
 
     var body: some View {
         let settings = AppSettings.shared
-        let away = settings.myBoats.filter { !settings.isKept($0, at: clubID) }
         Menu {
             Section(tr("Rowing light for")) {
                 ForEach(Boat.groups) { row($0) }
             }
-            let here = settings.boats(keptAt: clubID)
-            if !here.isEmpty {
-                Section(away.isEmpty ? tr("My boats") : tr("Your boats here")) {
-                    ForEach(here) { row($0) }
-                }
-            }
-            if let clubID, !away.isEmpty {
-                Section(tr("At other clubs")) {
-                    ForEach(away) { boat in
-                        Button {
-                            settings.keep(boat.id, at: clubID)
-                            settings.pick(boat.id, at: clubID)
-                        } label: {
-                            Label(boat.title, systemImage: "arrow.down.circle")
-                            Text(tr("At %@ · tap to take it here", boat.clubs.map(clubName).formatted(.list(type: .and))))
-                        }
-                    }
+            if !settings.myBoats.isEmpty {
+                Section(tr("My boats")) {
+                    ForEach(settings.myBoats) { row($0) }
                 }
             }
             if let openBoatSettings {
@@ -58,8 +39,8 @@ struct BoatMenu<MenuLabel: View>: View {
     private func row(_ boat: Boat) -> some View {
         let settings = AppSettings.shared
         return Toggle(isOn: Binding(
-            get: { settings.boat(at: clubID).id == boat.id },
-            set: { if $0 { settings.pick(boat.id, at: clubID) } }
+            get: { settings.boatID == boat.id },
+            set: { if $0 { settings.boatID = boat.id } }
         )) {
             Text(boat.title)
             Text(subtitle(boat))
@@ -116,10 +97,6 @@ extension Light {
     }
 }
 
-private struct ClubNameKey: EnvironmentKey {
-    static let defaultValue: (String) -> String = { $0 }
-}
-
 private struct OpenBoatSettingsKey: EnvironmentKey {
     static let defaultValue: (() -> Void)? = nil
 }
@@ -129,11 +106,5 @@ extension EnvironmentValues {
     var openBoatSettings: (() -> Void)? {
         get { self[OpenBoatSettingsKey.self] }
         set { self[OpenBoatSettingsKey.self] = newValue }
-    }
-
-    /// A club's name from its id, for "At MRC 1880" in the boat menu.
-    var clubName: (String) -> String {
-        get { self[ClubNameKey.self] }
-        set { self[ClubNameKey.self] = newValue }
     }
 }

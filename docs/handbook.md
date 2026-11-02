@@ -21,6 +21,7 @@ secret or a manual step adds a line here.
 | Saving data | Turn on Low Data Mode in iOS Settings > Mobile Data (or Wi-Fi > the network's (i) button), or switch on Settings > Battery and data > Save mobile data and use mobile data | Satellite pictures load only after a tap on the card (or opening it full screen), the radar map and the rain map's radar pictures take half-hour steps (7 pictures instead of 13) and the radar refreshes every 15 minutes. Forecasts, warnings and the lake view always load. Launch argument `-RWSaveData YES` acts as if Low Data Mode were on. |
 | Chart and map linked | Any detail view with a map (wind, temperature, feels like, humidity, pressure, visibility, cloud, rain, UV; lightning is live and never linked): the chain button on the map card | Linked (default), the map shows the hour of the chart's blue line and playing the map moves the line. Unlinked ("Own time"), each keeps its own hour, and "Back to <hour>" moves only the chart. The choice is remembered (`RWMapTimeLinked`). A one-time tip (`MapLinkTip`) points at the chain the first time. |
 | Club page columns | Developer options on, then Settings > Developer > Club page columns | How a club page in two columns (iPad, iPhone in landscape) ends both columns level. **Fold the 48 hours** (default, also with the developer options off): the table shows 24 hours and "Show 24 more hours"; opened, it still counts with its folded height, so no card changes column or size. **Always 48 hours** (option C of the exploration): the whole table. Both put the forecast source, "Arrange this page" and the credits into the shorter column and let the lake view and launch point maps there grow, each card at most one screen tall (`RWColumnFill`: `fold`, `fill`; also a launch argument). Not built, kept for later: **D2**, a Today / Tomorrow switch in the table's header that swaps the rows instead of adding them, so the table keeps one height (no swiping, which moves between clubs). |
+| Night in the 48 hours | Developer options on, then Settings > Developer > Night in the 48 hours | **One line per night** (default, also with the developer options off): the dark hours between sunset and sunrise fold into one tinted line in the table's own columns (times, chevron and moon, then the night's lowest temperature and feels-like, strongest wind–gust, highest waves, all its rain, poorest visibility; blue snowflake at frost, amber at fog). The hours the sun sets or rises in and the first hour keep their rows; a tap opens that night, and all nights fold again when the page opens. **Every night hour**: one row per hour, as before (`RWNightHours`: `fold`, `all`; also a launch argument). The website always folds. Other line styles from the exploration (symbols on their own, text summary, 3-hour steps, a switch on the tile) are kept in the mock-up for comparison: https://claude.ai/artifact/Bjudpu9XDdRnHJgyNrwjX3 |
 | Diagnosis log | Developer options on, then Settings > Developer > **Share diagnosis log** | For the rare kills by iOS on return to the app (iPhone report "scene-update watchdog"). The app keeps `diagnosis.log` (Application Support, at most 256 KB, older half dropped): each launch with how the last run ended (its last step in or out of the app), UIKit and SwiftUI steps in and out with the club shown, page switches, club list, settings, value details, lake, satellite and radar maps opening and closing, all with time and memory; plus iOS's own MetricKit reports (hangs, crashes, exit counts) on a later start. Only leaves the phone when shared. |
 | Refresh on return | Leave the app, come back after more than 10 minutes | The club page in front (or the list, top to bottom) loads first, then every other saved club; the page in front also renews its lake view and satellite passes. Clubs loaded in the last 10 minutes are skipped (`ForecastStore.reloadAfter`). A pull on a club page refreshes that club, then the others. The header says when the server made the forecast and when the phone loaded it ("Forecast from 14:51 · loaded 15:39"). No refresh runs while the app is in the background. |
 | Water level tile (Forggensee) | Ruderclub Forggensee, only while the lake is let down (about mid-November to May) | Takes the ice tile's place: the level at the GKD gauge Roßhaupten Seepegel, how far below full, trend and the last week. Below 779.8 m "Lowered" (amber), below 777.5 m "Drained" (red), and the verdict gets the same reason for the whole forecast (`backend/rowfrog/lake_level.py`). Lakes, gauges and marks live in `data/lake-levels.json`; the drained mark is an estimate until the club confirms it. |
@@ -118,39 +119,6 @@ real export file.
 Health access can be changed later in the Health app > Sharing > Apps >
 Row Frog. Nothing read from Health or a file leaves the phone.
 
-### Testing boats kept at clubs
-
-Own boats show only on the pages of the clubs where they are kept (owner's
-choice A, 30 Oct 2026). Small and big boats are everywhere.
-
-1. Settings > Boats and limits > **Add a boat**: the new boat is kept at the
-   home base. Its page has a **Kept at** list: **Add a club** picks one of the
-   saved clubs, **Remove** takes one off (the last club stays).
-2. On another club's page, open the boat menu (the boat button level with the
-   club's name, or "For small boats" in the top tile). The boat shows under **At other
-   clubs**; a tap takes it to this club and ticks it.
-3. With an own boat ticked, a club where it is not kept uses one of your boats
-   kept there (the one last picked there first), else small boats, the
-   strictest limits: top tile, rowing light, charts, lake tile and map all
-   name that boat. The tick itself stays, so the boat's own clubs keep it.
-4. "A steadier boat helps" names only boats kept at that club.
-5. Page buttons (owner's pick 2 Nov 2026, option F with Apple's guide; the
-   other options are on the try-out page
-   https://claude.ai/artifact/9PtKZFpPvkWsWQQ67kUV3d):
-   - Every device: the boat button sits level with the club's big name on the
-     right, scrolls up with it and stays in the top bar beside the small name.
-   - iPhone: bottom bar with cog left, page dots, list button right (as Weather).
-   - iPad upright: sidebar button and cog level with the name on the left; the
-     sidebar button slides the list in over the page; page dots at the bottom.
-   - iPad sideways: the list beside the page has the sidebar button, its title
-     and "…" on one line and the search at its top; the cog is on the club page
-     at the top left. The sidebar button slides the list away: it then comes
-     onto the club page at the far left and the cog moves over beside it.
-
-Boats from before this change are put at the home base on the first start
-after the update. In `-RWMyBoats` a boat's clubs are a comma-separated
-`clubs` entry; boats without one go to the home base too.
-
 ### Testing on an iPad
 
 The app runs natively on the iPad (iPhone and iPad in `TARGETED_DEVICE_FAMILY`).
@@ -177,10 +145,10 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 - `-RWDemoClubs YES` the three confirmed clubs with MRC 1880 as home base
 - `-RWTutorialSeen YES -RWNoTips YES` skip the tour and tips
-- `-RWSideListHidden YES` start with the list beside the page slid away (iPad sideways)
 - `-RWShowList YES` open the club list; `-RWEditList YES` with it starts in edit mode (Edit list is in the list's "…" menu)
 - `-RWOpenClub <id>` open a club page; `-RWScrollTo warnings|radar|conditions|lakeview|hourly|launchpoint|satellite|source|arrange|hourly-1` (`hourly-1` = second day of the 48-hour table, `bottom` = the page's end)
 - `-RWPageLayout "hourly,radar"` card order for all clubs (cards left out follow in the standard order; the rain radar card is off unless named, since the rain tile shows the radar); `-RWArrange YES` opens "Arrange this page"
+- `-RWNightHours all` with `-RWDeveloperOptions YES` shows every night hour of the 48-hour table (see Night in the 48 hours)
 - `-RWHourlyOpen YES` opens the folded 48-hour table on a page in two columns; `-RWColumnFill fill` with `-RWDeveloperOptions YES` keeps it whole (see Club page columns)
 - `-RWOpenRadarMap YES` open the rain radar map from the radar card, so name `radar` in `-RWPageLayout` too (`-RWRadarLoop NO` plays it once, otherwise it plays 3 times); `-RWOpenSatellite YES` open the satellite picture full screen, `-RWSatelliteLayers '(clubs, shore)'` the layers drawn over it; `-RWOpenHour n` open the n-th hour of the 48-hour table
 - `-RWOpenWeatherMap <layer>` open the weather map from the detail view opened with `-RWOpenCondition` (layers: `wind`, `gust`, `temperature`, `feelsLike`, `humidity`, `pressure`, `visibility`, `rain`, `uv`, `lightning`, `fog`)
@@ -216,7 +184,6 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage appearance|clubpages|language|data|help|about|developer|limits|boat:<id>|backgrounds|widgets|safety|impressum|privacy` open those Settings pages, with the pages on the way (backgrounds = Settings > Club pages > Background pictures, widgets = Settings > Widgets)
 - `-RWSettingsSearch <text>` open the settings with the search field filled in
-- `-RWMyBoats '({id = b-anna; name = Anna; type = gig; class = "4x"; clubs = "mrc-1880,tutzinger-rv";})'` the user's own boats; `clubs` lists where each is kept (left out: the home base), `-RWBoat <id>` ticks one
 - Backend `RW_SAMPLE_WARNING_CLUBS=<club ids>` gives those clubs a made-up warning, marked as a sample: a lake storm warning where DWD has a lake area, else a thunderstorm warning from the place's own service (GeoSphere Austria or MeteoSwiss). The screenshot workflow sets it for Tutzinger RV, Seeclub Zürich, RV Albatros Klagenfurt and Der Hamburger und Germania RC (Alster, a DWD lake area without shore lights)
 - Backend `RW_SAMPLE_FROST_CLUBS=<club ids>` gives those clubs a made-up frost warning from six hours on, marked as a sample, to show that frost stays in the warnings card but leaves the rowing light and the lake map alone, and how a warning for later shows (grey line with its start time in the list and the top tile, "Later" in the card). The screenshot workflow sets it for RC Forggensee
 - Warning links: every warning in the warnings card (app and website) ends with a link to the service that issued it (`backend/rowfrog/warning_links.py`, sent as `links` {de, en} per warning). No service has a page for one warning, so: DWD = its municipal warning page for the club's town (`warnWetter_node.html?ort=<town>`, English page in English) or, for lake warnings, wettergefahren.de's inland lake page, plus "DWD WarnWetter app in the App Store" (the app has no links of its own; the store shows Open where it is installed); GeoSphere = its warning map at the launch point (`/wsapp/<lang>/alle/gesamterzeitraum/oesterreich/<lon>,<lat>`); MeteoSwiss = its hazards page, which the MeteoSwiss app claims (apple-app-site-association), so on an iPhone with the app it opens there. To test: open a club with a sample warning (`RW_SAMPLE_WARNING_CLUBS`) and tap the link; with the MeteoSwiss app installed, Seeclub Zürich's link should open the app. Checked 2.11.2026 with a probe run on GitHub Actions.
