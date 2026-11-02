@@ -71,7 +71,9 @@ GitHub issue, so no GitHub account is needed.
 3. Current conditions.
 4. Lake view (River or Canal view for river and canal clubs).
 5. Next 48 hours, with a feels-like column and a day header that stays in
-   place while scrolling; tapping an hour opens that hour's view.
+   place while scrolling; tapping an hour opens that hour's view. Each night's
+   dark hours fold into one tinted line (lowest temperature, strongest wind,
+   highest waves, all its rain), which opens on a tap.
 6. Launch point map.
 7. Satellite picture.
 8. Forecast source and credits.
@@ -203,7 +205,10 @@ tile shows the flow speed and the water level from the nearest PEGELONLINE
 gauge, with a level chart and the pace upstream and downstream. "Plan a
 route" counts its times with that current, faster downstream and slower
 upstream, and warns where the boat would hardly make headway. Shipping
-stopped turns the light red, high water amber; the current turns it amber
+stopped turns the light red, high water amber (from the gauge's shipping
+mark I where that comes first, otherwise mean high water); on rivers with
+groynes an info line warns once the level is 1.5 m above mean water, when
+groyne tips may be under water. The current turns it amber
 from 1.5 m/s and red above 2.5 m/s, limits that can be set per boat like the
 others (`backend/rowfrog/river.py`,
 `ios/RowFrog/RiverCurrent.swift`).
