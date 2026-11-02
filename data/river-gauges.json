@@ -1588,28 +1588,6 @@
     }
    }
   },
-  "landesruderverband-berlin": {
-   "network": "pegelonline",
-   "id": "ee52ce62-212c-4735-b438-26fbdc37e3e2",
-   "name": "Berlin-Plötzensee Op",
-   "water": "Berlin-Spandauer-Schifffahrtskanal",
-   "riverKm": 7.4,
-   "lat": 52.5437,
-   "lon": 13.323142,
-   "distanceKm": 3.5,
-   "series": [
-    "W"
-   ],
-   "values": {
-    "W": {
-     "NNW": 284.0,
-     "HHW": 371.0,
-     "MNW": 319.0,
-     "MW": 339.0,
-     "MHW": 356.0
-    }
-   }
-  },
   "laubegaster-ruderverein-dresden": {
    "network": "pegelonline",
    "id": "70272185-b2b3-4178-96b8-43bea330dcae",

@@ -46,10 +46,14 @@ Pages swipe left and right between saved locations, like the iOS Weather
 app. The list shows each location's light and key numbers, with feels like under the temperature and an estimated water temperature in grey with ≈; swipe a row to
 remove it or make it the home base. The saved list stays on the phone.
 As in Apple Weather, the search field and the settings cog sit at the bottom
-of the list (on iPad at the bottom of the side list), a "…" menu at the top
-right holds Edit, Browse by country and Add a place, and the big "Locations"
-title shrinks into the bar once the list scrolls. Tapping a club opens its
-page.
+of the list (on iPad on its side the search is at the top of the side list and
+the cog on the club page), a "…" menu at the top right
+holds Edit, Browse by country and Add a place, and the big "Locations" title
+shrinks into the bar once the list scrolls. Tapping a club opens its page.
+On iPhone the club pages have a bottom bar with the settings cog on the left,
+the page dots and the list button on the right, as in Weather. On iPad a
+sidebar button slides the list in over the page (upright) or away beside it
+(on its side).
 
 **Add a place.** A club, boathouse or spot on the water that no list has can
 be put on the map. It stays on the phone, and its forecast is worked out on
@@ -101,8 +105,11 @@ legend switches its line on or off.
 **Rowing limits.** Settings › Boats and limits chooses the limits the light
 uses: *Small boats* (the default) or *Big boats*, or *My boats*, where each
 boat has a name, a type (racing, training, gig or coastal) and a size and
-rigging from 1x to 8+. Limits can be fine-tuned per group and per boat. A
-separate choice sets which boat the lake map is coloured for, with a warning
+rigging from 1x to 8+. Each own boat is kept at one or more clubs (its
+"Kept at" list, the home base to start with) and counts only there; at a club
+where the ticked boat is not kept, the light uses one of your boats kept there
+(the one last picked there first), else small boats. Limits can be fine-tuned
+per group and per boat. A separate choice sets which boat the lake map is coloured for, with a warning
 when the map looks calmer than your boat. The phone works the light out
 again for the chosen boat on the club page, the lake map and the widget
 (`ios/RowFrog/Limits.swift`).
@@ -322,9 +329,8 @@ Behind them goes a sky in the weather's colours (the default), the rowing
 light's colour, the club's app picture or another picture, the satellite
 picture of the lake, or plain white or black.
 
-**Settings** (cog in the page bar of the club pages and next to the search
-field at the bottom of the location list; on iPad at the bottom of the side
-list)
+**Settings** (cog in the bottom bar of the club pages and beside the search
+of the location list on iPhone, at the top left of the club page on iPad)
 works like the iOS Settings app: a "Rowing light for" boat picker at the top,
 then one page per topic, each row showing its current value, and a search
 field at the bottom.
@@ -363,9 +369,11 @@ field at the bottom.
 - Developer: hidden options for testing (see the handbook).
 
 On a club page, the "For *boat*" line under the rowing light and the boat
-button next to the cog open the same boat picker; the button shows the chosen
-boat's class (own boats in blue) or the group ("1–2", "4–8"). The picker shows the light each
-boat would get there now. The chosen boat applies to everything on screen: the
+button level with the club's name (it stays in the top bar once the page
+scrolls) open the same boat picker; the button shows the chosen boat's class
+(own boats in blue) or the group ("1–2", "4–8"). The picker shows the light
+each boat kept there would get now, and your boats from other clubs under "At
+other clubs", where a tap keeps the boat at this club too. The chosen boat applies to everything on screen: the
 lake tile, the lake map, route planning and the satellite picture use its
 limits too.
 

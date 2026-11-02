@@ -11,10 +11,44 @@ from rowfrog import api, outlines
 DATA = Path(__file__).resolve().parents[2] / "data"
 LOCATIONS = api._locations  # every club and water the API serves, catalogs included
 
-# A launch point further than this from its water's outline is on the wrong water.
-SHORE_KM = 1.5
+# A launch point outside its water's outline by more than this is on the bank,
+# on the wrong water or in a harbour the outline lacks. Since the launch point
+# audit (November 2026) the others sit on the shore (scripts/snap_launch_points.py).
+SHORE_KM = 0.025
 # Known exceptions, each with why; remove an entry once its data is fixed.
-FAR_FROM_OUTLINE: set[str] = set()
+# All checked by hand on the satellite view (data/catalogs/hand-checked.json);
+# each waits for its water to change or grow (water-fixes.json, extra-sites.json
+# and the river sections, thread "Define river sections for river clubs").
+FAR_FROM_OUTLINE: dict[str, str] = {
+    "rr-besselgymnasium-minden": "rows on the Mittellandkanal, not the Weser",
+    "universitaet-passau-sportzentrum": "Inn section south of the weir",
+    "passauer-ruderverein-von-1874": "Inn section south of the weir",
+    "ruderverein-emscher-wanne-eickel-herten": "Rhein-Herne-Kanal west of the lock, plus the basins",
+    "wassersportverein-koenigs-wusterhausen": "Dahme with Krimnicksee and the lakes beyond",
+    "wiener-ruderclub-donaubund": "Alte Donau and Donau, not the Neue Donau",
+    "wiener-ruder-club-pirat": "Alte Donau and Donau, not the Neue Donau",
+    "wiener-ruderverein-austria": "Kuchelauer Hafen",
+    "rudergesellschaft-niederkassel-von-1978": "Rhein and Mondorfer Hafen, not the Sieg",
+    "ruderriege-am-staedt-gymnasium-olpe": "Biggesee, like RC Biggesee",
+    "osnabruecker-ruder-verein": "side arm of the Stichkanal and the Mittellandkanal",
+    "ruderclub-ratsgymnasium-ev-osnabrueck": "side arm of the Stichkanal and the Mittellandkanal",
+    "rr-gymnasium-carolinum-osnabrueck": "side arm of the Stichkanal and the Mittellandkanal",
+    "ruder-club-witten": "Mühlengraben and Ruhr",
+    "korneuburger-ruderverein-alemannia": "Korneuburg harbour",
+    "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893": "Yachthafen Düsseldorf",
+    "ruderclub-blauweiss-basel": "Rhein west of the Birsfelden lock",
+}
+
+
+def _in_water(p: tuple[float, float], rings) -> bool:
+    """Even-odd rule over all rings (lon, lat), so a point on an island counts as land."""
+    inside = False
+    for r in rings:
+        for (x1, y1), (x2, y2) in zip(r, list(r[1:]) + [r[0]]):
+            if (y1 > p[1]) != (y2 > p[1]) and p[0] < x1 + (p[1] - y1) * (x2 - x1) / (y2 - y1):
+                inside = not inside
+    return inside
+
 
 def _segment_km(p: tuple[float, float], a: tuple[float, float], b: tuple[float, float]) -> float:
     """Distance from p to the segment a-b, all (lon, lat), on a flat local map."""
@@ -43,12 +77,14 @@ def test_launch_points_lie_on_their_waters_outline():
         if not rings:
             continue
         p = (club.launch_point.lon, club.launch_point.lat)
+        if _in_water(p, rings):
+            continue
         d = min(_segment_km(p, r[i], r[(i + 1) % len(r)]) for r in rings for i in range(len(r)))
         if d > SHORE_KM:
-            far.append(f"{club.id} is {d:.1f} km from {club.lake_id}")
+            far.append(f"{club.id} is {d * 1000:.0f} m from {club.lake_id}")
     unexpected = [f for f in far if f.split(" ")[0] not in FAR_FROM_OUTLINE]
     assert not unexpected, unexpected
-    fixed = FAR_FROM_OUTLINE - {f.split(" ")[0] for f in far}
+    fixed = set(FAR_FROM_OUTLINE) - {f.split(" ")[0] for f in far}
     assert not fixed, f"now on their water, take them off FAR_FROM_OUTLINE: {fixed}"
 
 
