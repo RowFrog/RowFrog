@@ -182,26 +182,44 @@ function openBoatMenu(raw) {
 
 // ---- Bottom bar ----------------------------------------------------------------------------
 
-/** Settings and boat on the left, a dot per club page, the list on the right (RootView). */
-function bottomBar(currentId, raw) {
+/**
+ * The page bar (RootView.PageBar): on a narrow window the cog, a dot per club page and the
+ * list, as in Weather; beside the list nothing, as the list switches clubs; with the list
+ * slid away the dots only, the sidebar button and cog being level with the club's name.
+ */
+function bottomBar(currentId) {
   const clubs = store.clubs;
-  // Three floating pieces of glass, all 44 px high: cog and boat, the page dots, the list (RootView.PageBar).
-  // Beside the list the cog and the boat sit at the list's foot, beside the search (option A).
-  if (sideList.matches) return `<nav class="bottom"></nav>`;
+  if (sideShown()) return `<nav class="bottom"></nav>`;
+  const dots = `<span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>`;
+  if (sideList.matches) return `<nav class="bottom"><span class="bar-side"></span>${dots}<span class="bar-side end"></span></nav>`;
   return `<nav class="bottom">
-    <span class="bar-side"><span class="glass piece">
-      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
-      ${boatButton("tool boat")}
-    </span></span>
-    <span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
+    <span class="bar-side"><a href="#/settings" class="glass piece round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a></span>
+    ${dots}
     <span class="bar-side end"><a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a></span>
   </nav>`;
 }
 
-/** The button that opens the boat menu: in the page bar, or beside the search at the foot of the list beside the page. */
-function boatButton(cls) {
-  return `<button class="${cls}" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>`;
+/** The button that opens the boat menu, level with the club's name and in the small top bar (PageBoatButton). */
+function boatButton() {
+  return `<button class="glass round tool boat" data-boat-button aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>`;
 }
+
+/**
+ * The buttons level with the club's big name, and again in the small top bar once it has
+ * shrunk there (PageTopButtons, owner's pick F, 2 Nov 2026): on the left the sidebar button
+ * while the list beside the page is slid away and the cog (wide windows), on the right the boat.
+ */
+function pageButtons(side) {
+  if (side === "right") return `<span class="head-side end">${boatButton()}</span>`;
+  const wide = sideList.matches;
+  return `<span class="head-side">
+    ${wide && sideHidden ? `<button class="glass round tool ${slideIn ? "slide-in" : ""}" data-show-list aria-label="${h(t("Show the club list"))}">${icon("panel-left")}</button>` : ""}
+    ${wide ? `<a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>` : ""}
+  </span>`;
+}
+
+/** What each side of the big and small title keeps free for these buttons (PageTopButtons.sideRoom). */
+const sideRoom = () => (sideList.matches && sideHidden ? 104 : 56);
 
 /** The boat button's symbol: the class in a small frame, dashed for the two groups, in the accent colour for an own boat (BoatClassTag). */
 function boatClassTag(boat) {
@@ -209,14 +227,18 @@ function boatClassTag(boat) {
   return `<span class="class-tag ${isGroup(boat) ? "group" : ""} ${tag.length > 2 ? "long" : ""}" aria-hidden="true">${h(tag)}</span>`;
 }
 
-/** The forecast the boat menu reads; the button beside the list's search is drawn before it loads. */
+/** The forecast the boat menu reads; the buttons are drawn before it loads. */
 let boatRaw = null;
 
 function wireBoatButton() {
-  const button = root.querySelector("#boat-button");
-  if (!button || button.dataset.wired) return;
-  button.dataset.wired = "1";
-  button.addEventListener("click", () => openBoatMenu(boatRaw));
+  const wire = (selector, act) => root.querySelectorAll(selector).forEach((button) => {
+    if (button.dataset.wired) return;
+    button.dataset.wired = "1";
+    button.addEventListener("click", act);
+  });
+  wire("[data-boat-button]", () => openBoatMenu(boatRaw));
+  wire("[data-show-list]", () => slideList(false));
+  wire("#hide-list", () => slideList(true));
 }
 
 function wireBottomBar(raw) {
@@ -276,13 +298,12 @@ function moreMenu() {
     </div></details>`;
 }
 
-/** The settings cog and the search field side by side at the bottom (settingsBesideSearch); beside a club page the boat button follows the search. */
-function searchBar(cls, boat = false) {
+/** The settings cog and the search field side by side at the bottom (settingsBesideSearch); beside a club page the search alone, at the top of the list. */
+function searchBar(cls, cog = true) {
   return `<div class="${cls} search-bar">
-    <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+    ${cog ? `<a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>` : ""}
     <label class="search glass">${icon("search")}
       <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
-    ${boat ? boatButton("glass round tool boat") : ""}
   </div>`;
 }
 
@@ -525,14 +546,14 @@ async function renderClub(id) {
   const name = club ? club.shortName || club.name : id;
   setTitle(name);
   const isHome = store.clubs[0]?.id === id;
-  const side = sideList.matches;
+  const side = sideShown();
   root.innerHTML = `${testing()}<div class="split">
       ${side ? `<aside class="side">${sideListHtml(id)}</aside>` : ""}
       <main class="page club">
         ${clubHeader(club, name, isHome, null)}
         <section class="card loading"><p>${h(t("Loading the forecast…"))}</p></section>
       </main>
-    </div>${bottomBar(id, null)}`;
+    </div>${bottomBar(id)}`;
   if (side) wireSideList(id);
   wireBottomBar(null);
   wireSwipe(id);
@@ -572,7 +593,7 @@ async function renderClub(id) {
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
-    <div class="top-title" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></div>
+    <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right")}</div>
     ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint) })}
@@ -587,7 +608,7 @@ async function renderClub(id) {
       ${credits(forecast, club)}
       ${footerLinks()}
     </div>`;
-  root.querySelector("nav.bottom").outerHTML = bottomBar(id, raw);
+  root.querySelector("nav.bottom").outerHTML = bottomBar(id);
   wireBottomBar(raw);
   wireClubPage(id, club, raw, forecast, hour);
   wireTips(root.querySelector("main"));
@@ -631,6 +652,26 @@ function showRadar(club, forecast, hour) {
 
 /** The list beside the club page from this size on (RootView's side list). */
 const sideList = matchMedia("(min-width: 860px) and (min-height: 560px)");
+/** The list beside the page slid away with the sidebar button, as in Weather; for this visit only. */
+let sideHidden = false;
+/** The sidebar button slides in once, right after the list slid away, and the cog moves over. */
+let slideIn = false;
+const sideShown = () => sideList.matches && !sideHidden;
+
+/** Slides the list beside the page away or back (RootView.slide, 0.3 s). */
+function slideList(hide) {
+  const split = root.querySelector(".split");
+  const done = () => {
+    sideHidden = hide;
+    slideIn = hide;
+    route(false);
+    slideIn = false;
+    if (!hide) root.querySelector("aside.side")?.classList.add("slide-in");
+  };
+  if (!hide || !split || matchMedia("(prefers-reduced-motion: reduce)").matches) return done();
+  split.classList.add("hiding");
+  setTimeout(done, 300);
+}
 sideList.addEventListener("change", () => location.hash.startsWith("#/club/") && route(false));
 
 /** From this width the page's cards go into two columns (LocationPageView.twoColumnWidth). */
@@ -641,8 +682,11 @@ const TWO_COLUMNS = 600;
  * one marked, so the page needs no list button (LocationListView beside the page).
  */
 function sideListHtml(currentId) {
-  return `<header class="side-head"><h2>${h(t("Locations"))}</h2>${moreMenu()}</header>
-    ${listBody(currentId)}${searchBar("side-bottom", true)}`;
+  // The sidebar button, the title and "…" on one line, the search at the top of the list
+  // below them, as Apple's guide has it for a sidebar (SideListHeader).
+  return `<header class="side-head"><button class="glass round tool" id="hide-list" aria-label="${h(t("Hide the club list"))}">${icon("panel-left")}</button>
+      <h2>${h(t("Locations"))}</h2>${moreMenu()}</header>
+    ${searchBar("side-search", false)}${listBody(currentId)}`;
 }
 
 /** A change in the list draws the list anew, not the page beside it. */
@@ -897,7 +941,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
-    <h1>${clubNameHtml(club, name)}</h1>
+    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right")}</div>
     <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
