@@ -444,6 +444,13 @@ facts are stored, no contact people, e-mail addresses or phone numbers. The
 federations are credited in `CREDITS.md`, which also notes where permission
 is still to be asked.
 
+Addresses and launch points the owner checked on the satellite view are kept
+in `data/catalogs/hand-checked.json` (with `remove` for entries that are no
+rowing clubs); the imports and Fix unknown waters apply it on every run.
+`scripts/snap_launch_points.py` moves catalog launch points that lie up to
+150 m outside their water onto its shore, leaving hand-checked points alone,
+and a data test wants every launch point within 25 m of its lake outline.
+
 Launch points from the catalogs are unconfirmed until a club is moved into
 `data/locations.json`. When loading, `locations.json` always wins, then the
 catalogs in the order above (a federation's list before OpenStreetMap); a
@@ -469,6 +476,9 @@ Waves are only computed for lakes that have an outline. To add one:
 ```sh
 python3 scripts/fetch_lake_outline.py starnberger-see "Starnberger See"
 ```
+
+The **Missing lake outlines** workflow fetches every catalog lake that still
+has none.
 
 ## Hosting
 
@@ -548,6 +558,7 @@ More detail, including the secrets each one needs, is in the
 | **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
+| **Missing lake outlines** (`missing-outlines.yml`) | Fetches the OpenStreetMap outline of every catalog lake that has none yet (`scripts/fetch_missing_outlines.py`, in 10 parallel parts) and commits the new `data/outlines` files; existing outlines are never changed. Lines marked "CHECK BY HAND" in its report were picked without a matching name. By hand, on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
 | **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, `scripts/build_web.py` or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 
