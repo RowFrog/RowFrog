@@ -653,7 +653,10 @@ function wireSideList(currentId) {
  * fits on one line, else takes the short one (ViewThatFits in the app); checked
  * again whenever its width changes.
  */
-const fitWatch = new ResizeObserver((entries) => entries.forEach(({ target }) => target.querySelectorAll(".fit-line").forEach(fitLine)));
+const fitWatch = new ResizeObserver((entries) => entries.forEach(({ target }) => {
+  target.querySelectorAll(".fit-line").forEach(fitLine);
+  target.querySelectorAll(".now-head").forEach(fitHead);
+}));
 function fitLine(el) {
   const width = el.parentElement?.clientWidth ?? 0;
   if (!width || el.dataset.width === String(width)) return;
@@ -663,9 +666,30 @@ function fitLine(el) {
   const line = parseFloat(getComputedStyle(el).lineHeight) || 20;
   if (el.getClientRects().length > 1 || el.offsetHeight > line * 1.5) el.textContent = el.dataset.short;
 }
-function watchFitLines() {
-  root.querySelectorAll(".fit-line").forEach((el) => {
+/**
+ * The top tile's verdict stays on one line beside the weather; one size smaller
+ * where that does not fit; and only where that does not fit either, the weather
+ * moves under the verdict (ViewThatFits in NowCard, owner's choice 2 Nov 2026).
+ */
+function fitHead(head) {
+  const width = head.clientWidth;
+  if (!width || head.dataset.width === String(width)) return;
+  head.dataset.width = width;
+  const title = head.querySelector("h2");
+  const overflows = () => title.scrollWidth > title.clientWidth + 0.5;
+  head.classList.remove("step", "stacked");
+  if (!overflows()) return;
+  head.classList.add("step");
+  if (!overflows()) return;
+  head.classList.replace("step", "stacked");
+}
+function watchFitLines(scope = root) {
+  scope.querySelectorAll(".fit-line").forEach((el) => {
     fitLine(el);
+    if (el.parentElement) fitWatch.observe(el.parentElement);
+  });
+  scope.querySelectorAll(".now-head").forEach((el) => {
+    fitHead(el);
     if (el.parentElement) fitWatch.observe(el.parentElement);
   });
 }
@@ -932,6 +956,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
       }));
       wireTopTile(sheet.querySelector(".card.now"), id, at.time);
       wireCurrent(sheet, forecast);
+      watchFitLines(sheet);
     });
   }));
 }
@@ -1003,7 +1028,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
     <div class="now-head">
       ${dot(hour.light, 36, stale)}
       <div class="now-title">
-        <h2>${h(lightTitle(hour.light, stale))} ${at ? "" : `<button class="info" data-legend="lights" aria-label="${h(t("What the symbols mean"))}">${icon("info")}</button>`}</h2>
+        <h2><span class="verdict">${h(lightTitle(hour.light, stale))}</span> ${at ? "" : `<button class="info" data-legend="lights" aria-label="${h(t("What the symbols mean"))}">${icon("info")}</button>`}</h2>
         ${at ? `<small class="sub">${h(boat)}</small>` : `<button class="boat-line" id="boat-line">${h(boat)} ${icon("chevrons-up-down")}</button>`}
       </div>
       <div class="now-sky">${skySymbol(hour, "large", kind)}<small class="sub">${h(t(SKY_TITLES[kind]))}</small></div>
