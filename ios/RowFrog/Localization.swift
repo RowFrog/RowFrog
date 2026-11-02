@@ -250,7 +250,7 @@ enum German {
         "the national weather service": "den nationalen Wetterdienst",
         "Row Frog cannot check the weather warnings for this place yet. Check %@ before going out.": "Row Frog kann die Wetterwarnungen für diesen Ort noch nicht prüfen. Schau vor dem Rausfahren bei %@ nach.",
         "Open the warnings of %@": "Warnungen von %@ öffnen",
-        "Show on the %@ website": "Auf der Website von %@ ansehen",
+        "Show on the %@ website": "Auf der %@-Website ansehen",
         "Show in the MeteoSwiss app or website": "In der MeteoSwiss-App oder Website ansehen",
         "DWD WarnWetter app in the App Store": "DWD-WarnWetter-App im App Store",
         "Not checked here": "Hier nicht geprüft",
