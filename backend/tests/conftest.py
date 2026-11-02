@@ -28,3 +28,14 @@ def no_river_gauges(monkeypatch):
 
     monkeypatch.setattr(api.pegelonline, "fetch_recent", quiet)
     monkeypatch.setattr(api.bafu, "fetch_recent", quiet)
+
+
+@pytest.fixture(autouse=True)
+def no_paused_sources(monkeypatch):
+    """Calls that failed in one test must not pause Open-Meteo or the daily temperatures for the next."""
+    from rowfrog.sources import open_meteo
+
+    monkeypatch.setattr(api, "_air_days_failed", 0)
+    monkeypatch.setattr(api, "_air_days_paused_until", 0.0)
+    monkeypatch.setattr(open_meteo, "_failed_in_row", 0)
+    monkeypatch.setattr(open_meteo, "_down_until", 0.0)

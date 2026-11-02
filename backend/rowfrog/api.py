@@ -17,7 +17,7 @@ from datetime import date, datetime, timedelta, timezone
 import httpx
 from fastapi import FastAPI, HTTPException
 
-from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, water_stations, weather_models
+from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, warning_links, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
 from .score import Light
 from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, meteoalarm, lake_temperature_satellite, open_meteo, pegelonline
@@ -32,7 +32,8 @@ FORECAST_HOURS = 48
 # Club ids that get a made-up warning, marked as a sample, for screenshots: a lake storm warning
 # where DWD has a lake area, else a thunderstorm warning from the place's own service.
 SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "").split(",") if c}
-# Clubs that get a made-up frost warning, marked as a sample, to show that frost leaves the light alone.
+# Clubs that get a made-up frost warning from six hours on, marked as a sample, to show that frost
+# leaves the light alone and how a warning for later shows.
 SAMPLE_FROST_CLUBS = {c for c in os.environ.get("RW_SAMPLE_FROST_CLUBS", "").split(",") if c}
 # "from,speed,gusts" (degrees, m/s) replaces the wind in the lake view, marked as a
 # sample, so screenshots show waves building across the lake on a calm day.
@@ -108,6 +109,13 @@ for _lake_id in SAMPLE_SATELLITE_WATER:
     ]
 # Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
 _ice_temps: dict[str, tuple[date, list[ice.DayTemperature]]] = {}
+# After two lakes in a row get no daily temperatures, the others skip them for
+# AIR_DAYS_PAUSE seconds. On 1 Nov 2026 these calls alone timed out lake after
+# lake (about a minute each) while forecasts still loaded, so the publish run
+# overran; the ice estimate simply waits for a later run.
+AIR_DAYS_PAUSE = 600
+_air_days_failed = 0
+_air_days_paused_until = 0.0
 _lake_view_cache: dict[str, tuple[float, tuple]] = {}
 
 
@@ -330,7 +338,9 @@ def _english_json(e: dwd_warnings.EnglishText | None) -> dict | None:
     }
 
 
-def _warning_json(w: dwd_warnings.Warning, english: dwd_warnings.EnglishText | None = None, sample: bool = False) -> dict:
+def _warning_json(
+    w: dwd_warnings.Warning, english: dwd_warnings.EnglishText | None = None, sample: bool = False, club: locations.Club | None = None
+) -> dict:
     return {
         "kind": w.kind,
         "source": w.source,
@@ -345,6 +355,8 @@ def _warning_json(w: dwd_warnings.Warning, english: dwd_warnings.EnglishText | N
         "sample": sample,
         # DWD's English text where it publishes one, else the event and headline translated.
         "english": _english_json(english),
+        # The issuing service's page for this warning's place, {"de": url, "en": url} (warning_links.py).
+        "links": None if club is None else warning_links.links(w.source, w.kind, club.address, club.launch_point.lon, club.launch_point.lat),
     }
 
 
@@ -399,8 +411,8 @@ def _sample_frost_warning(club: locations.Club, now: datetime) -> dwd_warnings.W
         headline="Amtliche WARNUNG vor FROST",
         description="Es tritt leichter Frost um -1 °C auf.",
         instruction="Hinweis auf: mögliche Frostschäden.",
-        onset=start,
-        expires=start + timedelta(hours=6),
+        onset=start + timedelta(hours=6),
+        expires=start + timedelta(hours=15),
         identifier=f"sample-frost-{club.id}",
         source=LOCAL_WARNING_SERVICES[club.country][0],
     )
@@ -510,20 +522,20 @@ async def _warnings(client: httpx.AsyncClient, club: locations.Club, now: dateti
         return result
     english = await _english_texts(client) if lake or any(w.source == "dwd" for w in local) else {}
     english = {**english, **own_english}
-    items = [_warning_json(w, _english_for(w, english)) for w in lake + local]
+    items = [_warning_json(w, _english_for(w, english), club=club) for w in lake + local]
     if club.id in SAMPLE_WARNING_CLUBS and area is not None:
         sample = _sample_warning(area.name, now)
         lake.append(sample)
-        items.insert(0, _warning_json(sample, _SAMPLE_ENGLISH, sample=True))
+        items.insert(0, _warning_json(sample, _SAMPLE_ENGLISH, sample=True, club=club))
     elif club.id in SAMPLE_WARNING_CLUBS and club.country in CHECKED_COUNTRIES:
         # Without a DWD lake area (Austria, Switzerland): a made-up thunderstorm warning from the place's own service.
         sample = _sample_local_warning(club, now)
         local.append(sample)
-        items.insert(0, _warning_json(sample, _SAMPLE_LOCAL_ENGLISH, sample=True))
+        items.insert(0, _warning_json(sample, _SAMPLE_LOCAL_ENGLISH, sample=True, club=club))
     if club.id in SAMPLE_FROST_CLUBS and club.country in CHECKED_COUNTRIES:
         sample = _sample_frost_warning(club, now)
         local.append(sample)
-        items.append(_warning_json(sample, _SAMPLE_FROST_ENGLISH, sample=True))
+        items.append(_warning_json(sample, _SAMPLE_FROST_ENGLISH, sample=True, club=club))
     current = [w for w in lake + local if w.expires is None or w.expires > now]
     block = {"status": "ok", "lakeArea": None if area is None else area.name, "items": items, "local": _local_service(club)}
     if area is not None:
@@ -607,14 +619,22 @@ def _ice_json(e: ice.IceEstimate | None) -> dict:
 
 async def _air_days(client: httpx.AsyncClient, lake: locations.Lake, today: date) -> list[ice.DayTemperature] | None:
     """The lake's daily mean air temperatures (92 days back, 7 ahead), loaded once a day; None when unavailable."""
+    global _air_days_failed, _air_days_paused_until
     cached = _ice_temps.get(lake.id)
     if cached and cached[0] == today:
         return cached[1]
+    if time.monotonic() < _air_days_paused_until:
+        return None
     try:
         daily = await open_meteo.fetch_daily_mean(client, lake.center.lat, lake.center.lon)
     except (httpx.HTTPError, ValueError, KeyError) as e:
         logging.getLogger(__name__).warning("Daily air temperatures unavailable for %s: %r", lake.id, e)
+        _air_days_failed += 1
+        if _air_days_failed >= 2:
+            _air_days_paused_until = time.monotonic() + AIR_DAYS_PAUSE
+            logging.getLogger(__name__).warning("Daily air temperatures paused for %d s", AIR_DAYS_PAUSE)
         return None
+    _air_days_failed = 0
     temps = [ice.DayTemperature(d, t) for d, t in daily]
     _ice_temps[lake.id] = (today, temps)
     return temps

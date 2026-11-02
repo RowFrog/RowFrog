@@ -14,3 +14,4 @@ docs/screenshots/
 
 # Website build
 web/dist/
+web/node_modules

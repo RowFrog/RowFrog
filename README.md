@@ -135,14 +135,22 @@ the lake warning (strong wind or storm, as the shore lights show it) where
 DWD runs its lake warning service (23 lakes, among them Starnberger See,
 Ammersee and Chiemsee), and DWD's weather warnings for the municipality,
 which cover rivers and canals too. While one is issued it gets its own card
-under the top tile; otherwise the top tile's status line says there is none
-and when it was checked, or that DWD could not be reached.
+under the top tile, with the warnings grouped under "Now" and "Later";
+otherwise the top tile's status line says there is none and when it was
+checked, or that DWD could not be reached. A warning that starts later or
+only informs gets one line in the top tile that opens the card, and in the
+club list it shows grey with an info sign and its start time; only warnings
+that count for the light now or within 3 hours show amber there.
 Warnings come from DWD's GeoServer (`backend/rowfrog/sources/dwd_warnings.py`)
 and also set the hourly light, except frost, black ice, thaw, heat and cold
 warnings, which are shown for information but leave the light and the lake map
 alone. In English the app shows DWD's own English
 text (from its English CAP files) with the German original below; where DWD
 has no English version, only the event and headline are translated.
+Each warning, in the app and on the website, ends with a link to the service
+that issued it: DWD's warning page for the club's town or lake (plus its
+WarnWetter app), GeoSphere Austria's map at the launch point, or MeteoSwiss's
+hazards page (`backend/rowfrog/warning_links.py`).
 Only at lakes that really have shore warning lights (`data/shore-lights.json`:
 the Bavarian lakes, Lake Constance and Steinhuder Meer, but not, for example,
 the Alster, Müritz or Dümmer) does the card explain both lights (40 and 90 flashes a minute) and
@@ -316,7 +324,7 @@ works like the iOS Settings app: a "Rowing light for" boat picker at the top,
 then one page per topic, each row showing its current value, and a search
 field at the bottom.
 
-- Boats and limits: the boat groups, My boats, the lake map colours and the
+- Boats and limits: the boat groups, My boats and the
   fine-tuned limits (see [Rowing limits](#what-the-app-does)).
 - Appearance: light, dark or as the phone is set (dark saves battery on OLED
   iPhones), a Landscape switch (on by default; off keeps the app upright), and
@@ -352,7 +360,9 @@ field at the bottom.
 On a club page, the "For *boat*" line under the rowing light and the boat
 button next to the cog open the same boat picker; the button shows the chosen
 boat's class (own boats in blue) or the group ("1–2", "4–8"). The picker shows the light each
-boat would get there now.
+boat would get there now. The chosen boat applies to everything on screen: the
+lake tile, the lake map, route planning and the satellite picture use its
+limits too.
 
 **Wide screens.** Phones on their side and the unfolded iPhone Duo get wide
 layouts (two columns from 600 pt, a side list from 860 × 560 pt). In two
@@ -390,6 +400,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `web/` | The website: start page, `app/` (the forecasts in the browser), legal pages and the password check (`functions/_middleware.js`). `scripts/build_web.py` builds it. |
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues, `timer/` starts the forecast run on time. |
+| `testdata/api/v1/` | Sample API files (MRC 1880's forecast, the lake list and the country lists) that the backend, app and website tests all read, so a change to the format shows up in all three (see the handbook's Tests section). |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
 | `docs/screenshots/` | Not in git: the "App screenshots" workflow writes here on the runner and keeps each branch's set under `refs/screenshots/<branch>` (see the handbook). |
 | `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. |
@@ -525,7 +536,7 @@ More detail, including the secrets each one needs, is in the
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
-| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Runs when `web/`, `scripts/build_web.py` or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
+| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, `scripts/build_web.py` or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 
 ## Traffic light defaults
 
