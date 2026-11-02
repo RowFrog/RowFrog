@@ -1,22 +1,5 @@
 import Foundation
 
-/// How the 48-hour table shows the hours between sunset and sunrise, picked in the developer options.
-enum NightHours: String, CaseIterable, Identifiable {
-    /// Each night folds into one line that opens on a tap.
-    case fold
-    /// Every hour of the night has its own row, as before.
-    case all
-
-    var id: String { rawValue }
-
-    var title: String {
-        switch self {
-        case .fold: tr("One line per night")
-        case .all: tr("Every night hour")
-        }
-    }
-}
-
 /// The 48-hour table cut into rows and nights. Rowing is only advised while the
 /// sun is up, so the dark hours of a night fold into one line. The hours the sun
 /// sets or rises in keep their rows (amber "twilight"), as does the hour the table

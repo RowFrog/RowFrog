@@ -647,6 +647,23 @@ enum ColumnFill: String, CaseIterable, Identifiable {
     }
 }
 
+/// How the 48-hour table shows the hours between sunset and sunrise, picked in the developer options.
+enum NightHours: String, CaseIterable, Identifiable {
+    /// Each night folds into one line that opens on a tap.
+    case fold
+    /// Every hour of the night has its own row, as before.
+    case all
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .fold: tr("One line per night")
+        case .all: tr("Every night hour")
+        }
+    }
+}
+
 /// A card on a club page that the user can move or switch off. The rowing
 /// light stays first and DWD warnings, while one is issued, right under it;
 /// the forecast source and credits stay last.
