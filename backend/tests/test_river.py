@@ -121,3 +121,13 @@ def test_river_clubs_forecast_carries_the_gauge(monkeypatch):
     assert body["river"]["gauge"]["name"] == "Köln"
     first = body["hours"][0]
     assert first["light"] == "red" and any(r["condition"] == "shipping_stopped" for r in first["reasons"])
+
+
+def test_groynes_covered():
+    # Kölner RG 1891: groynes covered from 4.50 m at Köln (mean water 297 cm).
+    koeln = river.Gauge("koeln", "KÖLN", "RHEIN", 688.0, 50.94, 6.96, 1.0, ("W",), {"W": {"MW": 297, "MHW": 725}})
+    assert not river.groynes_covered(440, koeln)
+    assert river.groynes_covered(450, koeln)
+    # The Main is held by weirs and has no groynes.
+    main = river.Gauge("ffm", "FRANKFURT OSTHAFEN", "MAIN", 35.0, 50.1, 8.7, 1.0, ("W",), {"W": {"MW": 177, "MHW": 361}})
+    assert not river.groynes_covered(400, main)

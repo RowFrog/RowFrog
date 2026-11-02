@@ -545,6 +545,7 @@ enum German {
         "Raised water": "Erhöhter Wasserstand",
         "High water": "Hochwasser",
         "Shipping stopped": "Schifffahrt eingestellt",
+        "Groynes may be under water: keep well clear of the groyne fields.": "Buhnen können überspült sein: Abstand zu den Buhnenfeldern halten.",
         "Water level": "Wasserstand",
         "rising": "steigend",
         "falling": "fallend",

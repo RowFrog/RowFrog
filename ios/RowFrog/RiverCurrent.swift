@@ -130,6 +130,8 @@ struct CurrentDetailView: View {
             } else if now.state == "high" {
                 Label(tr("High water: strong current, flotsam and flooded banks. Only experienced crews, with care."), systemImage: "exclamationmark.triangle.fill")
                     .foregroundStyle(.orange)
+            } else if now.groynesCovered == true {
+                Label(tr("Groynes may be under water: keep well clear of the groyne fields."), systemImage: "info.circle").foregroundStyle(.secondary)
             }
         }
     }

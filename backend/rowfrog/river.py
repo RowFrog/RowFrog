@@ -45,6 +45,10 @@ MIN_DEPTH_M = 0.5
 RISING_HOURS = 6
 RISING_CM = 5
 
+# Free-flowing rivers with groynes (Buhnen), and how far above mean water they may be under water.
+GROYNE_RIVERS = ("rhein", "elbe", "oder", "weser", "donau")
+GROYNES_CM = 150.0
+
 
 @dataclass(frozen=True)
 class Gauge:
@@ -101,6 +105,7 @@ class RiverNow:
     discharge_m3s: float | None
     speed_ms: float | None
     speed_measured: bool
+    groynes_covered: bool
     history: list[Reading]  # hourly levels of the last two days, oldest first
 
     @property
@@ -117,6 +122,13 @@ class RiverNow:
             elif self.speed_ms >= CURRENT_AMBER_MS:
                 found.append(("current", Light.AMBER))
         return max(found, key=lambda r: r[1], default=None)
+
+
+def groynes_covered(level_cm: float, gauge: Gauge) -> bool:
+    """On a river with groynes, they may be under water from about mean water + GROYNES_CM (Köln: 4.47 m, the clubs say
+    4.50 m)."""
+    mw = gauge.value("W", "MW")
+    return gauge.water.casefold() in GROYNE_RIVERS and mw is not None and level_cm >= mw + GROYNES_CM
 
 
 def high_cm(gauge: Gauge) -> float | None:
@@ -183,6 +195,7 @@ def now_at(gauge: Gauge, levels: list[Reading], discharge: list[Reading], speeds
     else:
         speed, measured = None, False
     return RiverNow(gauge, levels[-1].time, level, trend(levels), level_state(level, gauge), q, speed, measured,
+                    groynes_covered(level, gauge),
                     [r for r in levels if r.time >= now - timedelta(hours=48)])
 
 
@@ -209,6 +222,7 @@ def to_json(river_now: RiverNow | None, gauge: Gauge) -> dict:
         "discharge": r.discharge_m3s,
         "speedMs": r.speed_ms,
         "speedMeasured": r.speed_measured,
+        "groynesCovered": r.groynes_covered,
         "light": (light[1] if light else Light.GREEN).name.lower(),
         "history": [{"time": h.time.isoformat(), "levelCm": h.value} for h in r.history],
     }
