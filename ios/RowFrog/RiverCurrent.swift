@@ -62,7 +62,7 @@ struct LevelBar: View {
         let top = gauge?.shippingStopsCm ?? gauge?.meanHighCm.map { $0 + 100 } ?? levelCm + 100
         let fraction = max(0, min(1, (levelCm - low) / max(top - low, 1)))
         let color: Color = gauge?.shippingStopsCm.map { levelCm >= $0 } == true ? .red
-            : gauge?.meanHighCm.map { levelCm >= $0 } == true ? .orange : .teal
+            : (gauge?.highCm ?? gauge?.meanHighCm).map { levelCm >= $0 } == true ? .orange : .teal
         return GeometryReader { geo in
             ZStack(alignment: .bottom) {
                 Capsule().fill(Color.secondary.opacity(0.2)).frame(width: 10)

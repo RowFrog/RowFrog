@@ -492,7 +492,7 @@ export function reasonExplanation(condition, light, topic = null) {
     case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10));
     case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
     case "shipping_stopped": return t("The river is above the gauge's shipping mark: even motor ships stay in.");
-    case "high_water": return t("The river is at or above mean high water: strong current, flotsam and flooded banks.");
+    case "high_water": return t("The river is at or above the shipping mark I or mean high water: strong current, flotsam and flooded banks.");
     case "current": return t("The current is strong (from the nearest gauge).");
     case "lake_lowered": return t("The lake is let down for the winter: shallows, and a long way to the water.");
     case "lake_drained": return t("The lake is let down for the winter: too little water at the club to row.");

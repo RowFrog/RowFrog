@@ -42,6 +42,8 @@ struct RiverGauge: Codable, Hashable {
     /// Mean water, mean high water and the level at which shipping stops, in cm at the gauge.
     var meanCm: Double? = nil
     var meanHighCm: Double? = nil
+    /// Where high water starts: the shipping mark I or mean high water, whichever comes first.
+    var highCm: Double? = nil
     var shippingStopsCm: Double? = nil
     /// Mean discharge in m³/s.
     var meanDischarge: Double? = nil

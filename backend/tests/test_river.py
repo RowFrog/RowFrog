@@ -23,6 +23,18 @@ def test_level_states():
     assert river.level_state(100, bare) == ""
 
 
+def test_high_from_shipping_mark_i():
+    # Köln: Marke I 620 cm comes before MHW 725 cm (Kölner RG 1891: restricted shipping from 6.20 m).
+    koeln = river.Gauge("koeln", "KÖLN", "RHEIN", 688.0, 50.94, 6.96, 1.0, ("W",),
+                        {"W": {"MW": 297, "M_I": 620, "MHW": 725, "HSW": 830}})
+    assert river.level_state(610, koeln) == "raised"
+    assert river.level_state(620, koeln) == "high"
+    # Duisburg-Ruhrort: MHW 835 cm comes before Marke I 930 cm.
+    ruhrort = river.Gauge("ruhrort", "DUISBURG-RUHRORT", "RHEIN", 780.8, 51.45, 6.73, 1.0, ("W",),
+                          {"W": {"MW": 394, "M_I": 930, "MHW": 835, "HSW": 1130}})
+    assert river.level_state(840, ruhrort) == "high"
+
+
 def test_trend_over_six_hours():
     assert river.trend(levels(300, 302, 303, 305, 307, 309, 312)) == "rising"
     assert river.trend(levels(312, 310, 309, 308, 306, 305, 304)) == "falling"

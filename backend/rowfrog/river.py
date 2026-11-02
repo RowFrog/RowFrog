@@ -119,13 +119,19 @@ class RiverNow:
         return max(found, key=lambda r: r[1], default=None)
 
 
+def high_cm(gauge: Gauge) -> float | None:
+    """Where high water starts: the shipping mark I (ships slow down, as in the clubs' own guides) or mean high water,
+    whichever comes first."""
+    return min((v for v in (gauge.value("W", "M_I"), gauge.value("W", "MHW")) if v is not None), default=None)
+
+
 def level_state(level_cm: float, gauge: Gauge) -> str:
-    hsw, mw, mhw = gauge.hsw_cm, gauge.value("W", "MW"), gauge.value("W", "MHW")
+    hsw, mw, high = gauge.hsw_cm, gauge.value("W", "MW"), high_cm(gauge)
     if hsw is not None and level_cm >= hsw:
         return "shipping_stopped"
-    if mhw is not None and level_cm >= mhw:
+    if high is not None and level_cm >= high:
         return "high"
-    if mw is not None and mhw is not None and level_cm > mw + (mhw - mw) / 2:
+    if mw is not None and high is not None and level_cm > mw + (high - mw) / 2:
         return "raised"
     if mw is not None:
         return "normal"
@@ -185,7 +191,7 @@ def to_json(river_now: RiverNow | None, gauge: Gauge) -> dict:
     g = gauge
     out = {
         "gauge": {"name": g.name, "water": g.water, "riverKm": g.river_km, "lat": g.lat, "lon": g.lon, "distanceKm": g.distance_km,
-                  "meanCm": g.value("W", "MW"), "meanHighCm": g.value("W", "MHW"), "shippingStopsCm": g.hsw_cm,
+                  "meanCm": g.value("W", "MW"), "meanHighCm": g.value("W", "MHW"), "highCm": high_cm(g), "shippingStopsCm": g.hsw_cm,
                   "meanDischarge": g.value("Q", "MQ")},
         "limits": {"currentAmberMs": CURRENT_AMBER_MS, "currentRedMs": CURRENT_RED_MS},
         "attribution": "WSV PEGELONLINE, DL-DE Zero 2.0",

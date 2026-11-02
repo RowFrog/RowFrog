@@ -322,7 +322,7 @@ struct Reason: Codable, Hashable {
         case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
         case "cool_water": tr("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", Format.temperature(15))
         case "shipping_stopped": tr("The river is above the gauge's shipping mark: even motor ships stay in.")
-        case "high_water": tr("The river is at or above mean high water: strong current, flotsam and flooded banks.")
+        case "high_water": tr("The river is at or above the shipping mark I or mean high water: strong current, flotsam and flooded banks.")
         case "current": tr("The current is strong (from the nearest gauge).")
         case "lake_lowered": tr("The lake is let down for the winter: shallows, and a long way to the water.")
         case "lake_drained": tr("The lake is let down for the winter: too little water at the club to row.")

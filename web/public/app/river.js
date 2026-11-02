@@ -49,7 +49,7 @@ export function levelBar(levelCm, gauge) {
   const top = gauge?.shippingStopsCm ?? (gauge?.meanHighCm != null ? gauge.meanHighCm + 100 : levelCm + 100);
   const fraction = Math.max(0, Math.min(1, (levelCm - low) / Math.max(top - low, 1)));
   const colour = gauge?.shippingStopsCm != null && levelCm >= gauge.shippingStopsCm ? "var(--red)"
-    : gauge?.meanHighCm != null && levelCm >= gauge.meanHighCm ? "var(--orange)" : "#30b0c7";
+    : (gauge?.highCm ?? gauge?.meanHighCm) != null && levelCm >= (gauge.highCm ?? gauge.meanHighCm) ? "var(--orange)" : "#30b0c7";
   return `<span class="level-bar" aria-hidden="true"><i style="height:${Math.max(10 / 44, fraction) * 100}%;background:${colour}"></i></span>`;
 }
 

@@ -593,7 +593,7 @@ enum German {
         "Amber below %@, red below %@.": "Gelb unter %@, rot unter %@.",
         "Strong current": "Starke Strömung",
         "The river is above the gauge's shipping mark: even motor ships stay in.": "Der Fluss steht über der Hochwassermarke des Pegels: Selbst Motorschiffe bleiben liegen.",
-        "The river is at or above mean high water: strong current, flotsam and flooded banks.": "Der Fluss steht auf oder über dem mittleren Hochwasser: starke Strömung, Treibgut und überflutete Ufer.",
+        "The river is at or above the shipping mark I or mean high water: strong current, flotsam and flooded banks.": "Der Fluss steht auf oder über der Hochwassermarke I oder dem mittleren Hochwasser: starke Strömung, Treibgut und überflutete Ufer.",
         "The current is strong (from the nearest gauge).": "Die Strömung ist stark (vom nächsten Pegel).",
         "River view": "Flussansicht",
         "Canal view": "Kanalansicht",
