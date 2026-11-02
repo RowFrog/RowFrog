@@ -139,13 +139,23 @@ struct LocationListView: View {
             // the search at the bottom, where the club pages have it too.
             // Beside the page (iPad) the sidebar button sits level with the title
             // and the cog is on the club page.
-            .toolbar {
-                if let hideList {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button(action: hideList) { Image(systemName: "sidebar.left") }
-                            .accessibilityLabel(tr("Hide the club list"))
+            .sideListHeader(hideList, search: $search, scrolled: scrolled) {
+                Group {
+                    if editMode.isEditing {
+                        Button(tr("Done")) { withAnimation { editMode = .inactive } }
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 14)
+                            .frame(height: 44)
+                            .floatingControl(Capsule())
+                    } else {
+                        moreMenu
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                            .floatingControl(Circle())
                     }
                 }
+            }
+            .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if editMode.isEditing {
                         Button(tr("Done")) { withAnimation { editMode = .inactive } }
@@ -484,18 +494,94 @@ private extension View {
 #endif
     }
 
+    /// Beside the club page (iPad) the list draws its own top: the sidebar
+    /// button, the title and "…" on one line, the search at the top of the
+    /// list below them, as Apple's guide has it for a sidebar. In the
+    /// navigation bar iPadOS put the sidebar button behind a second "…".
+    @ViewBuilder
+    func sideListHeader<Trailing: View>(_ hide: (() -> Void)?, search: Binding<String>, scrolled: Bool,
+                                        @ViewBuilder trailing: () -> Trailing) -> some View {
+        if let hide {
+            toolbar(.hidden, for: .navigationBar)
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    SideListHeader(search: search, scrolled: scrolled, hide: hide, trailing: trailing())
+                }
+        } else {
+            self
+        }
+    }
+
     /// From iOS 26 the search field sits at the bottom of the screen, within
     /// reach of the thumb, as in Mail, Notes and Weather; before, under the title.
-    /// Beside the club page (iPad) it sits at the top of the list, as Apple's
-    /// guide has it for a sidebar.
+    /// Beside the club page (iPad) the list's own top has the field.
     @ViewBuilder
     func clubSearch(_ text: Binding<String>, prompt: Text, besidePage: Bool = false) -> some View {
         if besidePage {
-            searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
+            self
         } else if #available(iOS 26.0, *) {
             searchable(text: text, prompt: prompt)
         } else {
             searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
         }
+    }
+}
+
+/// The top of the list beside the club page (iPad): sidebar button, title and
+/// "…" on one line, the title shrinking once the list scrolls while the
+/// buttons stay; below them the search field.
+private struct SideListHeader<Trailing: View>: View {
+    @Binding var search: String
+    let scrolled: Bool
+    let hide: () -> Void
+    let trailing: Trailing
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Button(action: hide) {
+                    Image(systemName: "sidebar.left")
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
+                }
+                .floatingControl(Circle())
+                .accessibilityLabel(tr("Hide the club list"))
+                Text(tr("Locations"))
+                    .font(scrolled ? .headline : .largeTitle.bold())
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: scrolled ? .center : .leading)
+                    .accessibilityAddTraits(.isHeader)
+                trailing
+            }
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField(tr("Search clubs, lakes or towns"), text: $search)
+                    .focused($focused)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                if !search.isEmpty {
+                    Button {
+                        search = ""
+                        focused = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel(tr("Clear the search"))
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 40)
+            .floatingControl(Capsule())
+        }
+        .tint(.primary)
+        .padding(.horizontal)
+        .padding(.top, 4)
+        .padding(.bottom, 10)
+        .background {
+            // The rows blur under the top once the list scrolls, as under a bar.
+            if scrolled { Rectangle().fill(.thinMaterial).ignoresSafeArea() }
+        }
+        .animation(.easeInOut(duration: 0.2), value: scrolled)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 }

@@ -1268,6 +1268,7 @@ enum German {
         "At %@ · tap to take it here": "Liegt bei %@ · tippen, um es hierher mitzunehmen",
         "At other clubs": "Bei anderen Vereinen",
         "Kept at": "Liegt bei",
+        "Clear the search": "Suche löschen",
         "Show the club list": "Liste einblenden",
         "Hide the club list": "Liste ausblenden",
         "The boat shows only on the pages of these clubs. Elsewhere it waits under “At other clubs” in the boat menu, one tap to take it along, e.g. to a regatta.": "Das Boot erscheint nur auf den Seiten dieser Vereine. Anderswo steht es im Bootsmenü unter „Bei anderen Vereinen“, mit einem Tipp nimmst du es mit, etwa zu einer Regatta.",
