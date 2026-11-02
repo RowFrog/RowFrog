@@ -604,6 +604,8 @@ private struct NowCard: View {
     @State private var showingDaylight = false
     /// A value of the tile tapped for its chart; swiping there stays within the tile's values.
     @State private var openCondition: Condition?
+    /// The weather word's column beside the verdict, growing with the text size like the word.
+    @ScaledMetric(relativeTo: .caption) private var skyWordWidth: CGFloat = 88
 
     private var water: WaterTemperature? { forecast.waterTemperature }
     /// The water at the shown hour: now the reading or estimate, later the water forecast.
@@ -614,38 +616,13 @@ private struct NowCard: View {
 
     var body: some View {
         Card {
-            HStack(spacing: 14) {
-                TrafficLightDot(light: hour.light, size: 36, stale: stale)
-                VStack(alignment: .leading, spacing: 0) {
-                    HStack(spacing: 6) {
-                        Text(hour.light.title(stale: stale)).font(.title2.bold())
-                        LegendButton(showing: $showingLights)
-                    }
-                    if at == nil {
-                        // Tapped: pick another boat, with the light each would get now.
-                        BoatMenu(clubID: forecast.clubId, hour: hour, waterC: water?.celsius) {
-                            HStack(spacing: 3) {
-                                Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                                Image(systemName: "chevron.up.chevron.down").imageScale(.small)
-                            }
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            // 44 pt to tap; little upwards, where the title's info button is.
-                            .tapArea(EdgeInsets(top: 6, leading: 6, bottom: 14, trailing: 12))
-                        }
-                        .accessibilityLabel(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                        .accessibilityHint(tr("Picks another boat for the rowing light."))
-                    } else {
-                        Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Spacer(minLength: 0)
-                VStack(spacing: 2) {
-                    SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
-                    Text(data.sky.title).font(.caption).foregroundStyle(.secondary)
-                }
+            // The verdict on one line beside the weather; one text style smaller where
+            // that does not fit; and only where that does not fit either, the weather
+            // moves under the verdict (owner's choice, option 6, 2 Nov 2026).
+            ViewThatFits(in: .horizontal) {
+                headlineRow(.title2.bold())
+                headlineRow(.title3.bold())
+                headlineStacked
             }
             if let kit = ColdWaterKit(waterC: hourWaterC, limits: AppSettings.shared.limits(at: forecast.clubId)) {
                 opens(.waterTemperature) { ColdWaterBadge(kit: kit, estimated: water == nil) }
@@ -760,6 +737,96 @@ private struct NowCard: View {
             ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour, radar: radar), order: tileValues, club: club)
         }
         .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }
+    }
+
+    /// The light, the verdict on one line, and the weather in a column of its own,
+    /// its word on up to two lines.
+    private func headlineRow(_ font: Font) -> some View {
+        HStack(spacing: 10) {
+            TrafficLightDot(light: hour.light, size: 36, stale: stale)
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 6) {
+                    Text(hour.light.title(stale: stale)).font(font).lineLimit(1).fixedSize()
+                    LegendButton(showing: $showingLights)
+                }
+                boatLine
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            VStack(spacing: 2) {
+                skyIcon
+                Text(data.sky.title).font(.caption).foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
+                    .frame(width: skyWordWidth)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+    }
+
+    /// Where the verdict has no room beside the weather (large text sizes):
+    /// the weather goes under it, so the verdict keeps its words whole.
+    private var headlineStacked: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack(alignment: .top, spacing: 10) {
+                TrafficLightDot(light: hour.light, size: 36, stale: stale)
+                VStack(alignment: .leading, spacing: 0) {
+                    // Under the weather too, the verdict keeps one line as long as it can:
+                    // one size smaller first; it wraps only at the very largest text sizes.
+                    ViewThatFits(in: .horizontal) {
+                        stackedTitle(.title2.bold(), oneLine: true)
+                        stackedTitle(.title3.bold(), oneLine: true)
+                        stackedTitle(.title3.bold(), oneLine: false)
+                    }
+                    boatLine
+                }
+            }
+            HStack(spacing: 8) {
+                skyIcon
+                Text(data.sky.title).font(.caption).foregroundStyle(.secondary)
+            }
+            .padding(.leading, 46)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func stackedTitle(_ font: Font, oneLine: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(hour.light.title(stale: stale)).font(font)
+                .lineLimit(oneLine ? 1 : nil)
+                .fixedSize(horizontal: oneLine, vertical: !oneLine)
+            LegendButton(showing: $showingLights)
+        }
+    }
+
+    private var skyIcon: some View {
+        SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
+    }
+
+    /// "For small boats" under the verdict. It wraps rather than pushes the
+    /// weather under the verdict, so a long boat name never decides the layout.
+    @ViewBuilder private var boatLine: some View {
+        Group {
+            if at == nil {
+                // Tapped: pick another boat, with the light each would get now.
+                BoatMenu(clubID: forecast.clubId, hour: hour, waterC: water?.celsius) {
+                    HStack(spacing: 3) {
+                        Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
+                        Image(systemName: "chevron.up.chevron.down").imageScale(.small)
+                    }
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    // 44 pt to tap; little upwards, where the title's info button is.
+                    .tapArea(EdgeInsets(top: 6, leading: 6, bottom: 14, trailing: 12))
+                }
+                .accessibilityLabel(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
+                .accessibilityHint(tr("Picks another boat for the rowing light."))
+            } else {
+                Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .frame(idealWidth: 0, maxWidth: .infinity, alignment: .leading)
     }
 
     /// The values shown in this tile, in its order, for swiping between their views.

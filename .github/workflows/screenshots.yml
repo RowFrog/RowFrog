@@ -299,6 +299,11 @@ jobs:
           shoot 345-warning-links-tutzing-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWLanguage de
           shoot 346-warning-links-klagenfurt light -RWOpenClub ruderverein-albatros-klagenfurt -RWScrollTo warnings
           shoot 347-warning-links-zurich-german dark -RWOpenClub seeclub-zuerich -RWScrollTo warnings -RWLanguage de
+          # The verdict beside the rowing light stays on one line; the weather moves under it only when needed.
+          for size in default:UICTContentSizeCategoryL xxxl:UICTContentSizeCategoryXXXL accessibility-l:UICTContentSizeCategoryAccessibilityL; do
+            shoot "348-verdict-headline-${size%%:*}" light -RWOpenClub mrc-1880 -UIPreferredContentSizeCategoryName "${size#*:}"
+            shoot "348-verdict-headline-${size%%:*}-german" light -RWOpenClub mrc-1880 -RWLanguage de -UIPreferredContentSizeCategoryName "${size#*:}"
+          done
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES
