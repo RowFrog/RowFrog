@@ -123,12 +123,17 @@ test("the list shows the saved club", async () => {
 test("each warning links to the service that issued it", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/mrc-1880`);
-  // The page draws more than once while it loads; wait for every warning.
-  await page.waitForFunction((n) => document.querySelectorAll(".warning .source-links").length >= n, forecast.warnings.items.length, { timeout: 20000 });
-  const hrefs = await page.locator(".warning .source-links a").evaluateAll((links) => links.map((a) => a.href));
-  const expected = forecast.warnings.items.flatMap((w) => [w.links.en]);
-  for (const url of expected) assert.ok(hrefs.includes(url), `${url} is linked`);
-  assert.ok(hrefs.some((h) => h.startsWith("https://apps.apple.com/")), "DWD warnings offer the WarnWetter app");
+  const expected = forecast.warnings.items.map((w) => w.links.en);
+  // The page draws more than once while it loads; wait until every warning's link is there.
+  try {
+    await page.waitForFunction((urls) => {
+      const hrefs = [...document.querySelectorAll(".warning .source-links a")].map((a) => a.href);
+      return urls.every((u) => hrefs.includes(u)) && hrefs.some((h) => h.startsWith("https://apps.apple.com/"));
+    }, expected, { timeout: 20000 });
+  } catch (e) {
+    const hrefs = await page.locator(".warning .source-links a").evaluateAll((links) => links.map((a) => a.href));
+    throw new Error(`${e.message}\nExpected ${expected.join(", ")} and the WarnWetter app; the page links ${hrefs.join(", ")}`);
+  }
   if (process.env.RF_SHOT) await page.locator(".warning").first().screenshot({ path: process.env.RF_SHOT });
   assert.deepEqual(errors, []);
   await context.close();
