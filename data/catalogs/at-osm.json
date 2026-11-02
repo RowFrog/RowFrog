@@ -601,11 +601,11 @@
       "website": null,
       "source": "osm",
       "country": "at",
-      "lakeId": "river-neue-donau",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.21701,
         "lon": 16.43319,
-        "precision": "way/230897330 in OpenStreetMap, 231 m from the Neue Donau",
+        "precision": "on the Alte Donau (checked by hand), first matched to Neue Donau",
         "verified": false
       }
     },

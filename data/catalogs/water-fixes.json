@@ -98,6 +98,37 @@
       "water": "Mur",
       "kind": "river",
       "replace": true
+    },
+    "wassersportverein-ottensheim": {
+      "water": "Donau",
+      "kind": "river",
+      "id": "river-donau",
+      "replace": true
+    },
+    "oesterr-sportunion-wallsee-sektion-rudern": {
+      "water": "Donau",
+      "kind": "river",
+      "id": "river-donau",
+      "replace": true
+    },
+    "wiener-ruder-club-pirat": {
+      "water": "Alte Donau",
+      "kind": "lake",
+      "replace": true
+    },
+    "wiener-ruderclub-pirat": {
+      "water": "Alte Donau",
+      "kind": "lake",
+      "replace": true
+    },
+    "wiener-ruderclub-donaubund": {
+      "water": "Alte Donau",
+      "kind": "lake",
+      "replace": true
+    },
+    "ruder-club-salzburg": {
+      "water": "Salzach",
+      "kind": "river"
     }
   },
   "ch": {
@@ -180,6 +211,11 @@
     "societe-nautique-neuchatel": {
       "water": "Lac de Neuchâtel",
       "kind": "lake"
+    },
+    "ruderclub-backbord-mittelland": {
+      "water": "Hallwilersee",
+      "kind": "lake",
+      "id": "hallwilersee"
     }
   },
   "de": {
@@ -707,14 +743,10 @@
       }
     },
     "volkstuemlicher-wassersport-mannheim": {
-      "water": "Altrheinhafen",
-      "kind": "lake",
-      "replace": true,
-      "near": {
-        "lat": 49.51993,
-        "lon": 8.4719,
-        "place": "the boathouse at Sandhofer Str. 51-53 (the import placed it on the Waldhofbecken)"
-      }
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
     },
     "pro-sport-berlin-24-gatow": {
       "water": "Havel",
@@ -859,9 +891,8 @@
       "replace": true
     },
     "rr-besselgymnasium-minden": {
-      "water": "Weser",
+      "water": "Mittellandkanal",
       "kind": "river",
-      "id": "river-weser",
       "replace": true
     },
     "ruder-club-mark": {
@@ -902,6 +933,74 @@
         "lon": 10.45,
         "place": "the Elbe-Seitenkanal site, Elso-Klöver-Straße, Lüneburg"
       }
+    },
+    "rudergesellschaft-niederkassel-von-1978": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein",
+      "replace": true
+    },
+    "ruderriege-am-staedt-gymnasium-olpe": {
+      "water": "Biggesee",
+      "kind": "lake",
+      "replace": true
+    },
+    "ruderverein-datteln-von-1928": {
+      "water": "Wesel-Datteln-Kanal",
+      "kind": "river",
+      "replace": true
+    },
+    "emder-ruderverein": {
+      "water": "Ems",
+      "kind": "river"
+    },
+    "bremerhavener-ruderverein-von-1889": {
+      "water": "Geeste",
+      "kind": "river"
+    },
+    "ruder-club-rastatt-1898": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein"
+    },
+    "darmstaedter-schwimm-und-wassersport-club-1912": {
+      "water": "Rhein",
+      "kind": "river",
+      "id": "river-rhein"
+    },
+    "wasserfreunde-hemmoor-ev-abt-rudern": {
+      "water": "Oste",
+      "kind": "river"
+    },
+    "rendsburger-primaner-ruderclub-von-1880": {
+      "water": "Obereider",
+      "kind": "river"
+    },
+    "universitaetssportclub-otto-von-guericke-magdeburg": {
+      "water": "Elbe",
+      "kind": "river",
+      "id": "river-elbe"
+    },
+    "stralsunder-ruder-club": {
+      "water": "Strelasund",
+      "kind": "lake"
+    },
+    "reinfelder-rudergemeinschaft-von-1963": {
+      "water": "Herrenteich",
+      "kind": "lake"
+    },
+    "zschornewitzer-ruderclub-v-1954-im-sv-turbine-zschornewitz": {
+      "water": "Zschornewitzer See",
+      "kind": "lake"
+    },
+    "huerther-rudergesellschaft": {
+      "water": "Otto-Maigler-See",
+      "kind": "lake"
+    },
+    "hamburger-ruderinnen-club-von-1925": {
+      "water": "Alster",
+      "kind": "river",
+      "id": "river-alster"
     }
   }
 }

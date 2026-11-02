@@ -54,16 +54,6 @@
       "kind": "river"
     },
     {
-      "id": "river-erla",
-      "name": "Erla",
-      "country": "at",
-      "center": {
-        "lat": 48.16437,
-        "lon": 14.70928
-      },
-      "kind": "river"
-    },
-    {
       "id": "geschirrwasser",
       "name": "Geschirrwasser",
       "country": "at",
@@ -124,16 +114,6 @@
       "kind": "river"
     },
     {
-      "id": "river-neue-donau",
-      "name": "Neue Donau",
-      "country": "at",
-      "center": {
-        "lat": 48.21935,
-        "lon": 16.43232
-      },
-      "kind": "river"
-    },
-    {
       "id": "neusiedler-see",
       "name": "Neusiedler See",
       "country": "at",
@@ -154,12 +134,12 @@
       "osm": "way/27446051"
     },
     {
-      "id": "river-rodl",
-      "name": "Rodl",
+      "id": "river-salzach",
+      "name": "Salzach",
       "country": "at",
       "center": {
-        "lat": 48.33083,
-        "lon": 14.17062
+        "lat": 47.73151,
+        "lon": 13.08145
       },
       "kind": "river"
     },
@@ -212,16 +192,6 @@
         "lon": 13.1757
       },
       "osm": "way/26602907"
-    },
-    {
-      "id": "near-anif",
-      "name": "Water near Anif",
-      "country": "at",
-      "center": {
-        "lat": 47.73748,
-        "lon": 13.06929
-      },
-      "kind": "unknown"
     },
     {
       "id": "wolfgangsee",
@@ -381,7 +351,7 @@
       "region": "Salzburg",
       "source": "oerv",
       "country": "at",
-      "lakeId": "near-anif",
+      "lakeId": "river-salzach",
       "launchPoint": {
         "lat": 47.73151,
         "lon": 13.08145,
@@ -831,7 +801,7 @@
       "region": "Oberösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "river-rodl",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.32877,
         "lon": 14.17158,
@@ -849,7 +819,7 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "river-neue-donau",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.21663,
         "lon": 16.43374,
@@ -867,7 +837,7 @@
       "region": "Wien",
       "source": "oerv",
       "country": "at",
-      "lakeId": "river-neue-donau",
+      "lakeId": "alte-donau",
       "launchPoint": {
         "lat": 48.21919,
         "lon": 16.43316,
@@ -975,11 +945,47 @@
       "region": "Niederösterreich",
       "source": "oerv",
       "country": "at",
-      "lakeId": "river-erla",
+      "lakeId": "river-donau",
       "launchPoint": {
         "lat": 48.16414,
         "lon": 14.70697,
         "precision": "launch point checked by hand on the satellite view (2026-10-31)",
+        "verified": false
+      }
+    },
+    {
+      "id": "wassersportverein-ottensheim-regattastrecke",
+      "name": "Wassersportverein Ottensheim (Regattastrecke)",
+      "shortName": "Wassersportverein Ottensheim (Regattastrecke)",
+      "abbreviation": "OTT",
+      "address": "Regattastraße 1, 4100 Ottensheim",
+      "website": "https://www.wsv-ottensheim.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.32638,
+        "lon": 14.15867,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruder-club-pirat-langenzersdorf",
+      "name": "Wiener Ruder Club Pirat (Langenzersdorf)",
+      "shortName": "Wiener Ruder Club Pirat (Langenzersdorf)",
+      "abbreviation": "PIR",
+      "address": "Treppelweg, Stromkilometer 1940,9, 2103 Langenzersdorf",
+      "website": "https://wrc-pirat.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.32276,
+        "lon": 16.3372,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
         "verified": false
       }
     }
