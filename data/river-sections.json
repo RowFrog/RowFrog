@@ -1964,7 +1964,7 @@
     "sc-magdeburg-ev-abteilung-rudern",
     "universitaetssportclub-otto-von-guericke-magdeburg"
    ],
-   "lengthKm": 13.0,
+   "lengthKm": 25.6,
    "up": {
     "km": 12.0,
     "end": "cap",
@@ -1975,19 +1975,19 @@
     ]
    },
    "down": {
-    "km": 1.07,
-    "end": "weir/lock",
-    "what": "weir Cracauer Wasserfall",
+    "km": 6.89,
+    "end": "mouth",
+    "what": "Elbe",
     "at": [
-     52.11385,
-     11.6578
+     52.15192,
+     11.66992
     ]
    },
    "pictureBox": [
-    11.64689,
+    11.63534,
     52.06274,
     11.7246,
-    52.11412
+    52.15211
    ]
   },
   {
@@ -4327,47 +4327,6 @@
     53.15904,
     8.64633,
     53.16939
-   ]
-  },
-  {
-   "id": "river-limmat-baden",
-   "water": "river-limmat",
-   "name": "Limmat",
-   "river": "Limmat",
-   "waterway": "river",
-   "country": "ch",
-   "place": "Baden",
-   "center": {
-    "lat": 47.46672,
-    "lon": 8.30846
-   },
-   "clubs": [
-    "limmat-club-baden"
-   ],
-   "lengthKm": 1.7,
-   "up": {
-    "km": 1.45,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     47.45581,
-     8.31209
-    ]
-   },
-   "down": {
-    "km": 0.24,
-    "end": "weir/lock",
-    "what": "weir",
-    "at": [
-     47.46809,
-     8.30845
-    ]
-   },
-   "pictureBox": [
-    8.30773,
-    47.45572,
-    8.31508,
-    47.46814
    ]
   },
   {
@@ -9182,47 +9141,6 @@
     51.40459,
     7.22629,
     51.41908
-   ]
-  },
-  {
-   "id": "river-ruhr-herdecke",
-   "water": "river-ruhr",
-   "name": "Ruhr",
-   "river": "Ruhr",
-   "waterway": "river",
-   "country": "de",
-   "place": "Herdecke",
-   "center": {
-    "lat": 51.3959,
-    "lon": 7.43011
-   },
-   "clubs": [
-    "ruderclub-westfalen-herdecke-1929"
-   ],
-   "lengthKm": 4.4,
-   "up": {
-    "km": 0.59,
-    "end": "weir/lock",
-    "what": "lock_gate",
-    "at": [
-     51.39399,
-     7.43706
-    ]
-   },
-   "down": {
-    "km": 3.91,
-    "end": "weir/lock",
-    "what": "dam",
-    "at": [
-     51.38389,
-     7.40445
-    ]
-   },
-   "pictureBox": [
-    7.3982,
-    51.38357,
-    7.43711,
-    51.40217
    ]
   },
   {
