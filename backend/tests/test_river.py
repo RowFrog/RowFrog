@@ -23,6 +23,18 @@ def test_level_states():
     assert river.level_state(100, bare) == ""
 
 
+def test_high_from_shipping_mark_i():
+    # Köln: Marke I 620 cm comes before MHW 725 cm (Kölner RG 1891: restricted shipping from 6.20 m).
+    koeln = river.Gauge("koeln", "KÖLN", "RHEIN", 688.0, 50.94, 6.96, 1.0, ("W",),
+                        {"W": {"MW": 297, "M_I": 620, "MHW": 725, "HSW": 830}})
+    assert river.level_state(610, koeln) == "raised"
+    assert river.level_state(620, koeln) == "high"
+    # Duisburg-Ruhrort: MHW 835 cm comes before Marke I 930 cm.
+    ruhrort = river.Gauge("ruhrort", "DUISBURG-RUHRORT", "RHEIN", 780.8, 51.45, 6.73, 1.0, ("W",),
+                          {"W": {"MW": 394, "M_I": 930, "MHW": 835, "HSW": 1130}})
+    assert river.level_state(840, ruhrort) == "high"
+
+
 def test_trend_over_six_hours():
     assert river.trend(levels(300, 302, 303, 305, 307, 309, 312)) == "rising"
     assert river.trend(levels(312, 310, 309, 308, 306, 305, 304)) == "falling"
@@ -109,3 +121,13 @@ def test_river_clubs_forecast_carries_the_gauge(monkeypatch):
     assert body["river"]["gauge"]["name"] == "Köln"
     first = body["hours"][0]
     assert first["light"] == "red" and any(r["condition"] == "shipping_stopped" for r in first["reasons"])
+
+
+def test_groynes_covered():
+    # Kölner RG 1891: groynes covered from 4.50 m at Köln (mean water 297 cm).
+    koeln = river.Gauge("koeln", "KÖLN", "RHEIN", 688.0, 50.94, 6.96, 1.0, ("W",), {"W": {"MW": 297, "MHW": 725}})
+    assert not river.groynes_covered(440, koeln)
+    assert river.groynes_covered(450, koeln)
+    # The Main is held by weirs and has no groynes.
+    main = river.Gauge("ffm", "FRANKFURT OSTHAFEN", "MAIN", 35.0, 50.1, 8.7, 1.0, ("W",), {"W": {"MW": 177, "MHW": 361}})
+    assert not river.groynes_covered(400, main)
