@@ -138,3 +138,26 @@ test("each warning links to the service that issued it", async () => {
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("each night of the 48 hours is one line that opens on a tap", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  const line = page.locator(".hourly-card .nightline").first();
+  await line.waitFor({ timeout: 20000 });
+  const rows = line.locator("xpath=following-sibling::div[1]");
+  assert.equal(await rows.isHidden(), true, "the night starts folded");
+  const days = () => page.locator(".hourly-card .dayhead:visible").evaluateAll((els) => els.map((e) => e.dataset.day));
+  const folded = await days();
+  if (process.env.RF_NIGHT_SHOT) await page.locator(".hourly-card").screenshot({ path: `${process.env.RF_NIGHT_SHOT}-folded.png` });
+  await line.click();
+  assert.equal(await line.getAttribute("aria-expanded"), "true");
+  assert.equal(await rows.isVisible(), true, "a tap shows the night's hours");
+  const opened = await days();
+  assert.equal(new Set(opened).size, opened.length, "no day header twice");
+  assert.deepEqual([...new Set(opened)], [...new Set(folded)], "the same days either way");
+  if (process.env.RF_NIGHT_SHOT) await page.locator(".hourly-card").screenshot({ path: `${process.env.RF_NIGHT_SHOT}-open.png` });
+  await line.click();
+  assert.equal(await rows.isHidden(), true, "a second tap folds it again");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
