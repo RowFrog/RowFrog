@@ -84,6 +84,7 @@ struct LocationPageView: View {
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
+    @Environment(\.titleSideRoom) private var titleSideRoom
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
@@ -468,6 +469,11 @@ private extension LocationPageView {
                 .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                     top > 0 && proxy.frame(in: .global).maxY < top + InlineClubTitle.height
                 } action: { PageScroll.shared.update(club.id, titleGone: $0) }
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).midY } action: { y in
+                    PageScroll.shared.update(club.id, titleMidY: y)
+                }
+                // The cog and the boat sit level with the name on either side.
+                .padding(.horizontal, titleSideRoom)
             Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             if !club.launchPointVerified {

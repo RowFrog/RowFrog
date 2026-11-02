@@ -167,6 +167,8 @@ final class PageScroll {
     private(set) var scrolled: Set<String> = []
     /// Club pages whose big title has gone under the top.
     private(set) var titleGone: Set<String> = []
+    /// Where each page's big name sits on screen, for the buttons kept level with it.
+    private(set) var titleMidY: [String: CGFloat] = [:]
 
     func update(_ clubID: String, scrolled isScrolled: Bool) {
         if scrolled.contains(clubID) != isScrolled { scrolled.formSymmetricDifference([clubID]) }
@@ -175,10 +177,18 @@ final class PageScroll {
     func update(_ clubID: String, titleGone gone: Bool) {
         if titleGone.contains(clubID) != gone { titleGone.formSymmetricDifference([clubID]) }
     }
+
+    func update(_ clubID: String, titleMidY y: CGFloat) {
+        if titleMidY[clubID] != y { titleMidY[clubID] = y }
+    }
 }
 
 private struct PageMarginsKey: EnvironmentKey {
     static let defaultValue = EdgeInsets()
+}
+
+private struct TitleSideRoomKey: EnvironmentKey {
+    static let defaultValue: CGFloat = 0
 }
 
 private struct CurrentPageKey: EnvironmentKey {
@@ -191,6 +201,12 @@ extension EnvironmentValues {
     var pageMargins: EdgeInsets {
         get { self[PageMarginsKey.self] }
         set { self[PageMarginsKey.self] = newValue }
+    }
+
+    /// What a club page's big name keeps free on each side for the buttons level with it.
+    var titleSideRoom: CGFloat {
+        get { self[TitleSideRoomKey.self] }
+        set { self[TitleSideRoomKey.self] = newValue }
     }
 
     /// Whether this club page is the one in front. Pages beside it stay alive
