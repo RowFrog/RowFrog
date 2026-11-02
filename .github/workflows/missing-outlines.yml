@@ -28,6 +28,11 @@ jobs:
   fetch:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    # Overpass is often slow; ten parts each take a share of the lakes.
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -35,14 +40,17 @@ jobs:
           python-version: "3.12"
       - run: pip install -e backend
       - name: Fetch the outlines
+        timeout-minutes: 30
         env:
           LAKES: ${{ inputs.lakes }}
+          SHARD: ${{ matrix.shard }}/10
         run: |
           set -o pipefail
           cd scripts
           python3 -u fetch_missing_outlines.py $LAKES | tee ../report.txt
           { echo '### Missing lake outlines'; echo '```'; cat ../report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
       - name: Check the outlines load
+        if: always()
         run: |
           python3 -c '
           import glob
@@ -50,7 +58,8 @@ jobs:
           for f in sorted(glob.glob("data/outlines/*.geojson")):
               outlines.load(f.split("/")[-1][:-8])
           print("all outlines load")'
-      - name: Commit the outlines
+      - name: Commit the outlines (also the ones fetched before a time-out)
+        if: always()
         run: |
           git add data/outlines
           if git diff --cached --quiet; then
@@ -58,7 +67,9 @@ jobs:
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
-            git commit -m "Outlines for lakes that had none (OpenStreetMap)"
-            git pull --rebase
-            git push
+            git commit -m "Outlines for lakes that had none (OpenStreetMap, part ${{ matrix.shard }})"
+            for i in 1 2 3 4 5; do
+              git pull --rebase && git push && break
+              sleep $((i * 5))
+            done
           fi

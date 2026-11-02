@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import sys
 import time
 import unicodedata
@@ -35,6 +36,13 @@ CATALOGS = ROOT / "data" / "catalogs"
 OUTLINES = ROOT / "data" / "outlines"
 SEARCH_M = 3000
 FALLBACK_M = 300
+# Launch points closer than this to one already asked about add nothing to the query.
+POINT_SPACING_M = 700
+# Busy Overpass servers answer within this or not at all; a lake that fails is
+# simply tried again on the next run.
+QUERY_TIMEOUT_S = 90
+# Lakes left out until their water is settled by hand.
+SKIP = {"altrheinhafen"}  # VW Mannheim: which basin it rows on is still open (2 Nov 2026)
 
 
 def fold(s: str) -> str:
@@ -52,7 +60,7 @@ def missing() -> dict[str, dict]:
         lakes = {l["id"]: l for l in data["lakes"] if l.get("kind", "lake") == "lake"}
         for club in data.get("clubs", []):
             lake = lakes.get(club.get("lakeId"))
-            if not lake or (OUTLINES / f"{lake['id']}.geojson").exists():
+            if not lake or lake["id"] in SKIP or (OUTLINES / f"{lake['id']}.geojson").exists():
                 continue
             entry = out.setdefault(lake["id"], {"name": lake["name"], "points": []})
             p = club.get("launchPoint") or lake["center"]
@@ -69,11 +77,19 @@ def area_km2(rings) -> float:
     return abs(sum(x1 * y2 - x2 * y1 for (x1, y1), (x2, y2) in zip(pts, pts[1:] + pts[:1]))) / 2
 
 
+def spaced(points: list[tuple[float, float]]) -> list[tuple[float, float]]:
+    out: list[tuple[float, float]] = []
+    for lat, lon in points:
+        if all(math.hypot((lat - a) * 111_000, (lon - b) * 111_000 * math.cos(math.radians(lat))) > POINT_SPACING_M for a, b in out):
+            out.append((lat, lon))
+    return out
+
+
 def candidates(points: list[tuple[float, float]]) -> list[dict]:
     near = "\n".join(f"way(around:{SEARCH_M},{lat},{lon});" for lat, lon in points)
     return overpass(
         f"""
-        [out:json][timeout:180];
+        [out:json][timeout:{QUERY_TIMEOUT_S}];
         ({near})->.near;
         (
           way.near["natural"~"^(water|bay)$"]["name"];
@@ -84,7 +100,7 @@ def candidates(points: list[tuple[float, float]]) -> list[dict]:
         );
         out geom;
         """,
-        timeout=240,
+        timeout=QUERY_TIMEOUT_S + 15,
     )["elements"]
 
 
@@ -121,10 +137,15 @@ def main(only: list[str]) -> int:
     todo = missing()
     if only:
         todo = {k: v for k, v in todo.items() if k in only}
+    # SHARD=i/n takes every n-th lake, so a workflow matrix can share the work.
+    shard = os.environ.get("SHARD", "")
+    if shard:
+        i, n = (int(x) for x in shard.split("/"))
+        todo = {k: v for j, (k, v) in enumerate(sorted(todo.items())) if j % n == i}
     print(f"{len(todo)} lakes without an outline")
     failed = 0
     for lake_id, entry in sorted(todo.items()):
-        points = list(dict.fromkeys(entry["points"]))
+        points = spaced(list(dict.fromkeys(entry["points"])))
         try:
             polygons, ids, how = pick(entry["name"], points, candidates(points))
         except OSError as e:
