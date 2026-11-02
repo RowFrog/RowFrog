@@ -205,7 +205,10 @@ tile shows the flow speed and the water level from the nearest PEGELONLINE
 gauge, with a level chart and the pace upstream and downstream. "Plan a
 route" counts its times with that current, faster downstream and slower
 upstream, and warns where the boat would hardly make headway. Shipping
-stopped turns the light red, high water amber; the current turns it amber
+stopped turns the light red, high water amber (from the gauge's shipping
+mark I where that comes first, otherwise mean high water); on rivers with
+groynes an info line warns once the level is 1.5 m above mean water, when
+groyne tips may be under water. The current turns it amber
 from 1.5 m/s and red above 2.5 m/s, limits that can be set per boat like the
 others (`backend/rowfrog/river.py`,
 `ios/RowFrog/RiverCurrent.swift`).
