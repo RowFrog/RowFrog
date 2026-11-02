@@ -172,6 +172,10 @@
     "hamburger-ruderinnen-club-von-1925": {
       "include": ["Alster", "Isebekkanal", "Außenalster", "Binnenalster"],
       "note": "Isebekkanal into the Alster and the Außenalster (owner 2026-11-02; the owner wants one Alster outline for all Hamburg clubs)"
+    },
+    "universitaetssportclub-otto-von-guericke-magdeburg": {
+      "include": ["Elbe", "Stromelbe", "Taube Elbe", "Alte Elbe"],
+      "note": "boathouse on the Werder, between the Stromelbe and the Taube Elbe (owner 2026-11-02)"
     }
   },
   "at": {

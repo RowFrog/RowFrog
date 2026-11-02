@@ -5157,9 +5157,9 @@
       "country": "de",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 49.9922,
-        "lon": 8.28792,
-        "precision": "shore of the Rhein nearest the earlier point (geocoded club address, 221 m from the Rhein), 24 m away",
+        "lat": 49.99243,
+        "lon": 8.28827,
+        "precision": "shore of the Rhein nearest the earlier point (shore of the Rhein nearest the earlier point (geocoded club address, 221 m from the Rhein), 24 m away), 36 m away",
         "verified": false
       }
     },
