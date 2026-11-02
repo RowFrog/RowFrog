@@ -8,7 +8,7 @@
 import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, boatLimits, currentLimits, boatTitle, boatInSentence,
+  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
@@ -135,28 +135,44 @@ function legendBody(part) {
 
 
 
-/** Picks the boat for the rowing light, with the light each boat gets now (BoatMenu). */
+/**
+ * Picks the boat for the rowing light, with the light each boat gets now (BoatMenu).
+ * Own boats kept at other clubs come last, with one tap to take them to this
+ * club too (owner's choice A, 30 Oct 2026).
+ */
 function openBoatMenu(raw) {
   const now = raw ? new Date() : null;
+  const club = pageClubId();
+  const inUse = selectedBoat().id;
   const row = (boat) => {
     let light = null;
     if (raw) {
       const hour = currentHour(applyLimits(raw, boatLimits(boat)).hours, now);
       light = hour.light;
     }
-    const on = store.boat === boat.id;
+    const on = inUse === boat.id;
     return `<li><button data-boat="${h(boat.id)}" class="${on ? "on" : ""}">
       ${light ? dot(light, 16, isStale(raw)) : icon("sailboat")}
       <span><strong>${h(boatTitle(boat))}</strong><small>${h(light ? lightTitle(light, isStale(raw)) : boatDetail(boat))}</small></span>
       ${on ? icon("check") : ""}</button></li>`;
   };
-  const mine = store.boats;
+  const here = boatsKeptAt();
+  const away = club ? store.boats.filter((b) => !isKept(b)) : [];
+  const awayRow = (boat) => `<li><button data-take="${h(boat.id)}">${icon("circle-arrow-down")}
+      <span><strong>${h(boatTitle(boat))}</strong><small>${h(t("At %@ · tap to take it here", listJoin(boat.clubs.map(clubNameOf))))}</small></span></button></li>`;
   const body = `<h3>${h(t("Rowing light for"))}</h3><ul class="boats">${GROUPS.map(row).join("")}</ul>
-    ${mine.length ? `<h3>${h(t("My boats"))}</h3><ul class="boats">${mine.map(row).join("")}</ul>` : ""}
+    ${here.length ? `<h3>${h(away.length ? t("Your boats here") : t("My boats"))}</h3><ul class="boats">${here.map(row).join("")}</ul>` : ""}
+    ${away.length ? `<h3>${h(t("At other clubs"))}</h3><ul class="boats">${away.map(awayRow).join("")}</ul>` : ""}
     <a class="pill" href="#/settings/boats">${icon("sliders-horizontal")} ${h(t("Boats and limits…"))}</a>`;
   openSheet(t("Boat"), body, (dialog) => {
     dialog.querySelectorAll("[data-boat]").forEach((b) => b.addEventListener("click", () => {
-      store.boat = b.dataset.boat;
+      pickBoat(b.dataset.boat, club);
+      dialog.close();
+      route(false);
+    }));
+    dialog.querySelectorAll("[data-take]").forEach((b) => b.addEventListener("click", () => {
+      keepBoat(b.dataset.take, club);
+      pickBoat(b.dataset.take, club);
       dialog.close();
       route(false);
     }));
@@ -166,26 +182,44 @@ function openBoatMenu(raw) {
 
 // ---- Bottom bar ----------------------------------------------------------------------------
 
-/** Settings and boat on the left, a dot per club page, the list on the right (RootView). */
-function bottomBar(currentId, raw) {
+/**
+ * The page bar (RootView.PageBar): on a narrow window the cog, a dot per club page and the
+ * list, as in Weather; beside the list nothing, as the list switches clubs; with the list
+ * slid away the dots only, the sidebar button and cog being level with the club's name.
+ */
+function bottomBar(currentId) {
   const clubs = store.clubs;
-  // Three floating pieces of glass, all 44 px high: cog and boat, the page dots, the list (RootView.PageBar).
-  // Beside the list the cog and the boat sit at the list's foot, beside the search (option A).
-  if (sideList.matches) return `<nav class="bottom"></nav>`;
+  if (sideShown()) return `<nav class="bottom"></nav>`;
+  const dots = `<span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>`;
+  if (sideList.matches) return `<nav class="bottom"><span class="bar-side"></span>${dots}<span class="bar-side end"></span></nav>`;
   return `<nav class="bottom">
-    <span class="bar-side"><span class="glass piece">
-      <a href="#/settings" class="tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
-      ${boatButton("tool boat")}
-    </span></span>
-    <span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>
+    <span class="bar-side"><a href="#/settings" class="glass piece round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a></span>
+    ${dots}
     <span class="bar-side end"><a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a></span>
   </nav>`;
 }
 
-/** The button that opens the boat menu: in the page bar, or beside the search at the foot of the list beside the page. */
-function boatButton(cls) {
-  return `<button class="${cls}" id="boat-button" aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>`;
+/** The button that opens the boat menu, level with the club's name and in the small top bar (PageBoatButton). */
+function boatButton() {
+  return `<button class="glass round tool boat" data-boat-button aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>`;
 }
+
+/**
+ * The buttons level with the club's big name, and again in the small top bar once it has
+ * shrunk there (PageTopButtons, owner's pick F, 2 Nov 2026): on the left the sidebar button
+ * while the list beside the page is slid away and the cog (wide windows), on the right the boat.
+ */
+function pageButtons(side) {
+  if (side === "right") return `<span class="head-side end">${boatButton()}</span>`;
+  const wide = sideList.matches;
+  return `<span class="head-side">
+    ${wide && sideHidden ? `<button class="glass round tool ${slideIn ? "slide-in" : ""}" data-show-list aria-label="${h(t("Show the club list"))}">${icon("panel-left")}</button>` : ""}
+    ${wide ? `<a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>` : ""}
+  </span>`;
+}
+
+/** What each side of the big and small title keeps free for these buttons (PageTopButtons.sideRoom). */
+const sideRoom = () => (sideList.matches && sideHidden ? 104 : 56);
 
 /** The boat button's symbol: the class in a small frame, dashed for the two groups, in the accent colour for an own boat (BoatClassTag). */
 function boatClassTag(boat) {
@@ -193,14 +227,18 @@ function boatClassTag(boat) {
   return `<span class="class-tag ${isGroup(boat) ? "group" : ""} ${tag.length > 2 ? "long" : ""}" aria-hidden="true">${h(tag)}</span>`;
 }
 
-/** The forecast the boat menu reads; the button beside the list's search is drawn before it loads. */
+/** The forecast the boat menu reads; the buttons are drawn before it loads. */
 let boatRaw = null;
 
 function wireBoatButton() {
-  const button = root.querySelector("#boat-button");
-  if (!button || button.dataset.wired) return;
-  button.dataset.wired = "1";
-  button.addEventListener("click", () => openBoatMenu(boatRaw));
+  const wire = (selector, act) => root.querySelectorAll(selector).forEach((button) => {
+    if (button.dataset.wired) return;
+    button.dataset.wired = "1";
+    button.addEventListener("click", act);
+  });
+  wire("[data-boat-button]", () => openBoatMenu(boatRaw));
+  wire("[data-show-list]", () => slideList(false));
+  wire("#hide-list", () => slideList(true));
 }
 
 function wireBottomBar(raw) {
@@ -260,13 +298,12 @@ function moreMenu() {
     </div></details>`;
 }
 
-/** The settings cog and the search field side by side at the bottom (settingsBesideSearch); beside a club page the boat button follows the search. */
-function searchBar(cls, boat = false) {
+/** The settings cog and the search field side by side at the bottom (settingsBesideSearch); beside a club page the search alone, at the top of the list. */
+function searchBar(cls, cog = true) {
   return `<div class="${cls} search-bar">
-    <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
+    ${cog ? `<a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>` : ""}
     <label class="search glass">${icon("search")}
       <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
-    ${boat ? boatButton("glass round tool boat") : ""}
   </div>`;
 }
 
@@ -354,7 +391,7 @@ async function fillRow(row) {
     row.querySelector(".row-now").innerHTML = `<span class="sub">${h(t("No forecast"))}</span>`;
     return null;
   }
-  const forecast = forBoat(raw);
+  const forecast = forBoat(raw, row.dataset.id);
   const stale = isStale(forecast);
   const hour = currentHour(forecast.hours);
   const water = forecast.waterTemperature?.celsius;
@@ -366,7 +403,7 @@ async function fillRow(row) {
   const headline = warningHeadline(forecast.warnings);
   const sun = sunState(forecast);
   const ice = forecast.ice;
-  const kit = coldWaterKit(water ?? estimate, currentLimits());
+  const kit = coldWaterKit(water ?? estimate, currentLimits(row.dataset.id));
   const iceText = iceOff(ice) ? t("Off season") : ice && ice.status !== "unavailable" ? t(ICE_TITLES[ice.status] ?? "No data") : "–";
   row.querySelector(".row-bottom").innerHTML = `
     <div class="row-why">
@@ -502,20 +539,21 @@ let clubRenders = 0;
 
 async function renderClub(id) {
   const shown = ++clubRenders;
+  setPageClub(id);
   let club = store.clubs.find((c) => c.id === id);
   if (!club?.launchPoint) club = (await findClub(id)) ?? club;
   const saved = store.clubs.some((c) => c.id === id);
   const name = club ? club.shortName || club.name : id;
   setTitle(name);
   const isHome = store.clubs[0]?.id === id;
-  const side = sideList.matches;
+  const side = sideShown();
   root.innerHTML = `${testing()}<div class="split">
       ${side ? `<aside class="side">${sideListHtml(id)}</aside>` : ""}
       <main class="page club">
         ${clubHeader(club, name, isHome, null)}
         <section class="card loading"><p>${h(t("Loading the forecast…"))}</p></section>
       </main>
-    </div>${bottomBar(id, null)}`;
+    </div>${bottomBar(id)}`;
   if (side) wireSideList(id);
   wireBottomBar(null);
   wireSwipe(id);
@@ -555,7 +593,7 @@ async function renderClub(id) {
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
-    <div class="top-title" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></div>
+    <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right")}</div>
     ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint) })}
@@ -570,7 +608,7 @@ async function renderClub(id) {
       ${credits(forecast, club)}
       ${footerLinks()}
     </div>`;
-  root.querySelector("nav.bottom").outerHTML = bottomBar(id, raw);
+  root.querySelector("nav.bottom").outerHTML = bottomBar(id);
   wireBottomBar(raw);
   wireClubPage(id, club, raw, forecast, hour);
   wireTips(root.querySelector("main"));
@@ -614,6 +652,26 @@ function showRadar(club, forecast, hour) {
 
 /** The list beside the club page from this size on (RootView's side list). */
 const sideList = matchMedia("(min-width: 860px) and (min-height: 560px)");
+/** The list beside the page slid away with the sidebar button, as in Weather; for this visit only. */
+let sideHidden = false;
+/** The sidebar button slides in once, right after the list slid away, and the cog moves over. */
+let slideIn = false;
+const sideShown = () => sideList.matches && !sideHidden;
+
+/** Slides the list beside the page away or back (RootView.slide, 0.3 s). */
+function slideList(hide) {
+  const split = root.querySelector(".split");
+  const done = () => {
+    sideHidden = hide;
+    slideIn = hide;
+    route(false);
+    slideIn = false;
+    if (!hide) root.querySelector("aside.side")?.classList.add("slide-in");
+  };
+  if (!hide || !split || matchMedia("(prefers-reduced-motion: reduce)").matches) return done();
+  split.classList.add("hiding");
+  setTimeout(done, 300);
+}
 sideList.addEventListener("change", () => location.hash.startsWith("#/club/") && route(false));
 
 /** From this width the page's cards go into two columns (LocationPageView.twoColumnWidth). */
@@ -624,8 +682,11 @@ const TWO_COLUMNS = 600;
  * one marked, so the page needs no list button (LocationListView beside the page).
  */
 function sideListHtml(currentId) {
-  return `<header class="side-head"><h2>${h(t("Locations"))}</h2>${moreMenu()}</header>
-    ${listBody(currentId)}${searchBar("side-bottom", true)}`;
+  // The sidebar button, the title and "…" on one line, the search at the top of the list
+  // below them, as Apple's guide has it for a sidebar (SideListHeader).
+  return `<header class="side-head"><button class="glass round tool" id="hide-list" aria-label="${h(t("Hide the club list"))}">${icon("panel-left")}</button>
+      <h2>${h(t("Locations"))}</h2>${moreMenu()}</header>
+    ${searchBar("side-search", false)}${listBody(currentId)}`;
 }
 
 /** A change in the list draws the list anew, not the page beside it. */
@@ -909,7 +970,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
-    <h1>${clubNameHtml(club, name)}</h1>
+    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right")}</div>
     <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
@@ -1016,7 +1077,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
   const latest = water?.celsius ?? estimate;
   const hourWater = at ? forecast.waterForecast?.find((d) => d.date === localDay(hour.time))?.celsius ?? latest : latest;
   const kit = coldWaterKit(hourWater, currentLimits());
-  const steadier = steadierBoat(hour, hourWater, store.boats, store.boat, boatLimits);
+  const steadier = steadierBoat(hour, hourWater, boatsKeptAt(), selectedBoat().id, boatLimits);
   const d = conditionData(forecast, hour, radar);
   // The sky as the rain tile sees it: the radar decides whether anything falls.
   const kind = skyNow(d);
@@ -1815,10 +1876,29 @@ function renderBoats() {
     renderBoats();
   }));
   root.querySelector("#add-boat").addEventListener("click", () => {
-    const boat = { id: crypto.randomUUID?.() ?? `b${Date.now()}`, name: "", type: "gig", class: "4x" };
+    const home = store.clubs[0]?.id;
+    const boat = { id: crypto.randomUUID?.() ?? `b${Date.now()}`, name: "", type: "gig", class: "4x", clubs: home ? [home] : [] };
     store.boats = [...store.boats, boat];
     location.hash = `#/settings/boat/${encodeURIComponent(boat.id)}`;
   });
+}
+
+/** The clubs where an own boat is kept, with buttons to add and remove one; the last club stays (KeptAtSection, owner's choice A, 30 Oct 2026). */
+function keptAtSection(boat) {
+  const clubs = boat.clubs ?? [];
+  const home = store.clubs[0]?.id;
+  const others = store.clubs.filter((c) => !clubs.includes(c.id));
+  const row = (id) => `<div class="row-setting kept-row">
+      <span>${icon(id === home ? "house" : "map-pin")} ${h(clubNameOf(id))}</span>
+      ${id === home ? `<small class="sub">${h(t("Home base"))}</small>` : ""}
+      ${clubs.length > 1 ? `<button class="link red" data-unkeep="${h(id)}">${h(t("Remove"))}</button>` : ""}
+    </div>`;
+  return `<h3 class="section">${icon("map-pin")} ${h(t("Kept at"))}</h3>
+    <section class="card group">${clubs.map(row).join("")}
+      ${others.length ? `<label class="row-setting add-club">${icon("circle-plus")}<select id="keep-at" aria-label="${h(t("Add a club"))}">
+        <option value="">${h(t("Add a club"))}</option>${others.map((c) => `<option value="${h(c.id)}">${h(c.shortName || c.name)}</option>`).join("")}</select></label>` : ""}
+    </section>
+    <p class="footer">${h(t("The boat shows only on the pages of these clubs. Elsewhere it waits under “At other clubs” in the boat menu, one tap to take it along, e.g. to a regatta."))}</p>`;
 }
 
 function renderBoat(id) {
@@ -1850,7 +1930,8 @@ function renderBoat(id) {
           <label class="row-setting"><span>${h(t("Type"))}</span><select id="boat-type">${Object.entries(BOAT_TYPES).map(([k, v]) => option(k, t(v.title), boat.type)).join("")}</select></label>
           <label class="row-setting"><span>${h(t("Size and rigging"))}</span><select id="boat-class">${Object.entries(BOAT_CLASSES).map(([k, v]) => option(k, t(v), boat.class)).join("")}</select></label>
         </section>
-        <p class="footer">${h(t(BOAT_TYPES[boat.type].detail))}</p>`}
+        <p class="footer">${h(t(BOAT_TYPES[boat.type].detail))}</p>
+        ${keptAtSection(boat)}`}
       <h3 class="section">${icon("sliders-horizontal")} ${h(t("Fine-tune the limits"))}</h3>
       <section class="card group">${Object.keys(LIMITS).map(limitRow).join("")}
         ${changed ? `<button id="reset-limits" class="link">${h(t("Use the app's limits again"))}</button>` : ""}</section>
@@ -1885,6 +1966,14 @@ function renderBoat(id) {
     store.limits = all;
     renderBoat(id);
   }));
+  root.querySelectorAll("[data-unkeep]").forEach((b) => b.addEventListener("click", () => {
+    unkeepBoat(id, b.dataset.unkeep);
+    renderBoat(id);
+  }));
+  root.querySelector("#keep-at")?.addEventListener("change", (e) => {
+    if (e.target.value) keepBoat(id, e.target.value);
+    renderBoat(id);
+  });
   root.querySelector("#reset-limits")?.addEventListener("click", () => {
     const all = store.limits;
     delete all[id];
@@ -1897,6 +1986,7 @@ function renderBoat(id) {
     delete all[id];
     store.limits = all;
     if (store.boat === id) store.boat = "small";
+    store.clubBoats = Object.fromEntries(Object.entries(store.clubBoats).filter(([, boat]) => boat !== id));
     location.hash = "#/settings/boats";
   });
 }
@@ -1936,6 +2026,10 @@ function route(scroll = true) {
   }
   const hash = location.hash.replace(/^#/, "");
   pagePicture(hash);
+  keepUnplacedBoats();
+  // The club whose boats count: the club page's, its value pages' and its lake map's.
+  const pageOf = hash.match(/^\/club\/([^/]+)/) ?? hash.match(/^\/lake\/[^/?]+\/([^?]+)/);
+  setPageClub(pageOf ? decodeURIComponent(pageOf[1]) : !hash || hash === "/" ? store.clubs[0]?.id : null);
   const value = hash.match(/^\/club\/([^/]+)\/value\/([a-zA-Z]+)(?:\/([^?]+))?(?:\?order=(\w+))?$/);
   if (value) return renderValuePage(root, decodeURIComponent(value[1]), value[2], value[3] ? decodeURIComponent(value[3]) : null, value[4] ?? null);
   const club = hash.match(/^\/club\/(.+)$/);

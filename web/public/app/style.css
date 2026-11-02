@@ -307,7 +307,8 @@ svg.filled { width: 22px; height: 22px; }
 .search-bar .search { flex: 1; min-width: 0; height: 44px; box-sizing: border-box; border-radius: 22px; padding: 0 14px; background: color-mix(in srgb, var(--card) 62%, transparent); }
 .list-bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-width: 640px; margin: 0 auto; padding: 0 16px max(8px, env(safe-area-inset-bottom)); box-sizing: border-box; }
 .list-page { padding-bottom: 96px; }
-.side-bottom { position: sticky; bottom: 0; margin-top: auto; padding: 16px 0 max(8px, env(safe-area-inset-bottom)); z-index: 2; }
+/* Beside a club page the search sits at the top of the list, under its title (SideListHeader). */
+.side-search { margin: 2px 0 6px; }
 /* Beside the list the page bar keeps to the page's own column. */
 .split ~ .bottom { left: var(--main-left); right: auto; width: var(--main-width); box-sizing: border-box; }
 .maps-menu { position: relative; flex: none; }
@@ -378,11 +379,30 @@ svg.filled { width: 22px; height: 22px; }
 }
 /* The club's name and light, small, once the big title has scrolled away (InlineClubTitle). */
 /* A plain bar in the page's colour, so the 48 hours' header pinned under it hides the rows that scrolled past. */
-.top-title { position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 10; height: calc(var(--safe-top) + 44px); padding: var(--safe-top) 60px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+.top-title { position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 10; height: calc(var(--safe-top) + 52px); padding: var(--safe-top) 16px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: border-box; background: var(--bg); border-bottom: .5px solid var(--line); }
 .top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.top-name { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
 body.title-gone .top-title { opacity: 1; }
-body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }
+body.title-gone .top-title .head-side > * { pointer-events: auto; }
+body:not(.title-gone) .top-title .head-side { visibility: hidden; }
+body.title-gone .hhead { top: calc(var(--safe-top) + 52px); }
+
+/* The page's buttons level with the club's big name, the boat on the right (PageTopButtons, pick F):
+   each side keeps the same room, so the name stays centred. */
+.title-row { display: flex; align-items: center; gap: 8px; }
+.title-row h1 { flex: 1; min-width: 0; }
+.head-side { flex: none; width: var(--side-room, 56px); display: flex; gap: 8px; align-items: center; }
+.head-side.end { justify-content: flex-end; }
+.head-side .round { width: 44px; height: 44px; border-radius: 22px; justify-content: center; color: var(--text); font-size: 22px; flex: none; }
+.head-side .boat { width: auto; min-width: 52px; padding: 0 8px; box-sizing: border-box; }
+/* The sidebar button comes in from the left and the cog moves over beside it (RootView.slide). */
+.head-side .slide-in { animation: grow-in .3s ease-in-out; }
+@keyframes grow-in { from { width: 0; margin-right: -8px; opacity: 0; } }
+.split.hiding > .side { margin-left: -400px; opacity: 0; transition: margin-left .3s ease-in-out, opacity .3s ease-in-out; }
+.side.slide-in { animation: side-in .3s ease-in-out; }
+@keyframes side-in { from { margin-left: -400px; opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .head-side .slide-in, .side.slide-in { animation: none; } }
 
 /* The map buttons float in the same glass. */
 .leaflet-touch .leaflet-bar, .leaflet-bar { border: 0 !important; border-radius: 12px; overflow: hidden; background: color-mix(in srgb, var(--card) 62%, transparent);
@@ -490,7 +510,8 @@ dialog.sheet .done { color: var(--accent); font-weight: 600; }
 .side { width: 400px; flex: none; position: sticky; top: 0; height: calc(100vh - var(--side-top, 0px)); overflow-y: auto; scrollbar-gutter: stable; padding: 12px 16px 0; box-sizing: border-box; border-right: .5px solid var(--line);
   display: flex; flex-direction: column; }
 .side > * { flex-shrink: 0; }
-.side-head h2 { font-size: 28px; margin: 4px 0; }
+.side-head h2 { font-size: 28px; margin: 4px 0; flex: 1; min-width: 0; }
+.side-head > .round { width: 44px; height: 44px; border-radius: 22px; justify-content: center; color: var(--text); font-size: 22px; flex: none; }
 .side-head { margin-bottom: 8px; }
 .side .rows { margin-top: 8px; }
 .side .row-name strong { font-size: 18px; }
@@ -923,3 +944,8 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .radar-mark.missing::after { content: ""; position: absolute; left: 50%; top: -1px; bottom: -1px; width: 1.5px; border-radius: 1px; background: currentColor; transform: translateX(-50%) rotate(-45deg); }
 /* "Now" and "Later" above the warnings they group (WarningsCard.SectionLabel). */
 .warn-group { margin: 10px 0 2px; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--sub); }
+/* Where an own boat is kept (KeptAtSection): the name, "Home base", Remove; the add row is a menu of saved clubs. */
+.kept-row > span:first-child { flex: 1; }
+.kept-row .link { padding: 4px 0; }
+.add-club { justify-content: flex-start; color: var(--accent); font-size: 20px; }
+.add-club select { flex: 1; max-width: none; border: 0; background: none; color: var(--accent); font-size: 17px; -webkit-appearance: none; appearance: none; cursor: pointer; }

@@ -249,13 +249,13 @@ struct Reason: Codable, Hashable {
         mine == true ? baseExplanation + " " + tr("You set this limit yourself.") : baseExplanation
     }
 
-    /// For a note: the value is within the user's own limit but above the app's.
-    var noteText: String {
+    /// For a note: the value is within the user's own limit for `boat` but above the app's.
+    func noteText(for boat: Boat) -> String {
         if condition == "cold_margin" {
             return tr("Cold water: the app lowers its wind and gust limits by %@ below %@. Your own limits stay as you set them, so take extra care.",
                       Format.wind(RowingLimits.coldWindMarginMs), Format.temperature(RowingLimits.coldWaterC))
         }
-        return tr("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel, AppSettings.shared.selectedBoat.inSentence)
+        return tr("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel, boat.inSentence)
     }
 
     private var baseLabel: String {

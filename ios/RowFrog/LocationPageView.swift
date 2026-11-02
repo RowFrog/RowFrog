@@ -84,6 +84,7 @@ struct LocationPageView: View {
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
+    @Environment(\.titleSideRoom) private var titleSideRoom
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
@@ -468,6 +469,11 @@ private extension LocationPageView {
                 .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                     top > 0 && proxy.frame(in: .global).maxY < top + InlineClubTitle.height
                 } action: { PageScroll.shared.update(club.id, titleGone: $0) }
+                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).midY } action: { y in
+                    PageScroll.shared.update(club.id, titleMidY: y)
+                }
+                // The cog and the boat sit level with the name on either side.
+                .padding(.horizontal, titleSideRoom)
             Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
                 .foregroundStyle(.secondary)
             if !club.launchPointVerified {
@@ -618,7 +624,7 @@ private struct NowCard: View {
                 headlineRow(.title3.bold())
                 headlineStacked
             }
-            if let kit = ColdWaterKit(waterC: hourWaterC) {
+            if let kit = ColdWaterKit(waterC: hourWaterC, limits: AppSettings.shared.limits(at: forecast.clubId)) {
                 opens(.waterTemperature) { ColdWaterBadge(kit: kit, estimated: water == nil) }
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -642,10 +648,10 @@ private struct NowCard: View {
                     }
                 }
                 ForEach(hour.notes ?? [], id: \.self) { note in
-                    Label(note.noteText, systemImage: "info.circle")
+                    Label(note.noteText(for: AppSettings.shared.boat(at: forecast.clubId)), systemImage: "info.circle")
                         .foregroundStyle(.secondary)
                 }
-                if let steadier = SteadierBoat.suggestion(for: hour, water: water?.celsius ?? forecast.estimatedWaterC) {
+                if let steadier = SteadierBoat.suggestion(for: hour, water: water?.celsius ?? forecast.estimatedWaterC, at: forecast.clubId) {
                     Label(steadier.light == .green
                           ? tr("A steadier boat helps: %@ would be green now.", steadier.boat.title)
                           : tr("A steadier boat helps: %@ would only need care now.", steadier.boat.title),
@@ -802,9 +808,9 @@ private struct NowCard: View {
         Group {
             if at == nil {
                 // Tapped: pick another boat, with the light each would get now.
-                BoatMenu(hour: hour, waterC: water?.celsius) {
+                BoatMenu(clubID: forecast.clubId, hour: hour, waterC: water?.celsius) {
                     HStack(spacing: 3) {
-                        Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
+                        Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
                         Image(systemName: "chevron.up.chevron.down").imageScale(.small)
                     }
                     .font(.caption)
@@ -812,10 +818,10 @@ private struct NowCard: View {
                     // 44 pt to tap; little upwards, where the title's info button is.
                     .tapArea(EdgeInsets(top: 6, leading: 6, bottom: 14, trailing: 12))
                 }
-                .accessibilityLabel(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
+                .accessibilityLabel(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
                 .accessibilityHint(tr("Picks another boat for the rowing light."))
             } else {
-                Text(tr("For %@", AppSettings.shared.selectedBoat.inSentence))
+                Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -1623,7 +1629,7 @@ private struct HourDetailSheet: View {
                     // Within the radar's 2 hours the rain values come from the radar, later from the forecast.
                     NowCard(hour: hour, forecast: forecast, at: hour.time, club: club)
                     ConditionsCard(forecast: forecast, hour: hour, club: club)
-                    if lake?.hasOutline != false, lakeViews.views[forecast.lakeId] != nil {
+                    if lake?.hasOutline != false, lakeViews.views[forecast.lakeId, club: forecast.clubId] != nil {
                         Button { showingLakeMap = true } label: {
                             Label(tr("Lake map at %@", Format.dayTime(hour.time)), systemImage: "map")
                                 .font(.subheadline.weight(.semibold))
@@ -1641,7 +1647,7 @@ private struct HourDetailSheet: View {
                 ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
             }
             .fullScreenCover(isPresented: $showingLakeMap) {
-                if let view = lakeViews.views[forecast.lakeId] {
+                if let view = lakeViews.views[forecast.lakeId, club: forecast.clubId] {
                     LakeMapScreen(view: view, clubID: club.id, at: hour.time)
                         .diagnosisNamed("lake map")
                 }

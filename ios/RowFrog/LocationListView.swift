@@ -7,6 +7,8 @@ struct LocationListView: View {
     let forecasts: ForecastStore
     /// The page on screen when the list sits beside the pages; nil when it is a full-screen cover.
     var selectedID: String?
+    /// Beside the club page (iPad): slides the list away, from the sidebar button at its top left.
+    var hideList: (() -> Void)?
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
@@ -22,10 +24,11 @@ struct LocationListView: View {
     @State private var browseHook: String?
 
     init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil,
-         select: @escaping (Club) -> Void) {
+         hideList: (() -> Void)? = nil, select: @escaping (Club) -> Void) {
         self.locations = locations
         self.forecasts = forecasts
         self.selectedID = selectedID
+        self.hideList = hideList
         self.select = select
         _search = State(initialValue: initialSearch)
     }
@@ -128,12 +131,30 @@ struct LocationListView: View {
             .pageBackground(.list)
             .navigationTitle(tr("Locations"))
             .titleShrinksOnScroll($scrolled)
-            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")))
+            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")), besidePage: hideList != nil)
             .onChange(of: search) { if !search.isEmpty { editMode = .inactive } }
             .environment(\.editMode, $editMode)
             // As in the Weather app: no way back but the clubs' cards, the
             // list's other tasks behind "…" at the top, and the cog beside
             // the search at the bottom, where the club pages have it too.
+            // Beside the page (iPad) the sidebar button sits level with the title
+            // and the cog is on the club page.
+            .sideListHeader(hideList, search: $search, scrolled: scrolled) {
+                Group {
+                    if editMode.isEditing {
+                        Button(tr("Done")) { withAnimation { editMode = .inactive } }
+                            .fontWeight(.semibold)
+                            .padding(.horizontal, 14)
+                            .frame(height: 44)
+                            .floatingControl(Capsule())
+                    } else {
+                        moreMenu
+                            .font(.title3)
+                            .frame(width: 44, height: 44)
+                            .floatingControl(Circle())
+                    }
+                }
+            }
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if editMode.isEditing {
@@ -144,7 +165,7 @@ struct LocationListView: View {
                     }
                 }
             }
-            .settingsBesideSearch { showingSettings = true }
+            .settingsBesideSearch(hideList == nil) { showingSettings = true }
             .navigationDestination(isPresented: $browsing) { CountryListView(locations: locations) }
             // Searching all countries, or one, loads the clubs not loaded yet.
             .task(id: "\(search.isEmpty)|\(countryFilter ?? "all")") {
@@ -292,7 +313,8 @@ private struct LocationSummaryRow: View {
                                 .font(.caption)
                                 .lineLimit(2)
                         }
-                        if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC) {
+                        if let kit = ColdWaterKit(waterC: forecast?.waterTemperature?.celsius ?? forecast?.estimatedWaterC,
+                                                limits: AppSettings.shared.limits(at: forecast?.clubId)) {
                             Label(kit.title, systemImage: ColdWaterKit.symbol)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(ColdWaterKit.color)
@@ -442,9 +464,19 @@ private extension View {
     }
 
     /// The settings cog at the bottom left: beside the search field from iOS 26,
-    /// both on glass as in Mail; before, alone in the bottom bar.
+    /// both on glass as in Mail; before, alone in the bottom bar. Not beside the
+    /// club page, whose cog is level with the club's name.
     @ViewBuilder
-    func settingsBesideSearch(_ open: @escaping () -> Void) -> some View {
+    func settingsBesideSearch(_ shown: Bool, _ open: @escaping () -> Void) -> some View {
+        if !shown {
+            self
+        } else {
+            settingsBar(open)
+        }
+    }
+
+    @ViewBuilder
+    private func settingsBar(_ open: @escaping () -> Void) -> some View {
         let cog = Button(action: open) { Image(systemName: "gearshape") }
             .accessibilityLabel(tr("Settings"))
 #if compiler(>=6.2)
@@ -462,14 +494,94 @@ private extension View {
 #endif
     }
 
+    /// Beside the club page (iPad) the list draws its own top: the sidebar
+    /// button, the title and "…" on one line, the search at the top of the
+    /// list below them, as Apple's guide has it for a sidebar. In the
+    /// navigation bar iPadOS put the sidebar button behind a second "…".
+    @ViewBuilder
+    func sideListHeader<Trailing: View>(_ hide: (() -> Void)?, search: Binding<String>, scrolled: Bool,
+                                        @ViewBuilder trailing: () -> Trailing) -> some View {
+        if let hide {
+            toolbar(.hidden, for: .navigationBar)
+                .safeAreaInset(edge: .top, spacing: 0) {
+                    SideListHeader(search: search, scrolled: scrolled, hide: hide, trailing: trailing())
+                }
+        } else {
+            self
+        }
+    }
+
     /// From iOS 26 the search field sits at the bottom of the screen, within
     /// reach of the thumb, as in Mail, Notes and Weather; before, under the title.
+    /// Beside the club page (iPad) the list's own top has the field.
     @ViewBuilder
-    func clubSearch(_ text: Binding<String>, prompt: Text) -> some View {
-        if #available(iOS 26.0, *) {
+    func clubSearch(_ text: Binding<String>, prompt: Text, besidePage: Bool = false) -> some View {
+        if besidePage {
+            self
+        } else if #available(iOS 26.0, *) {
             searchable(text: text, prompt: prompt)
         } else {
             searchable(text: text, placement: .navigationBarDrawer(displayMode: .always), prompt: prompt)
         }
+    }
+}
+
+/// The top of the list beside the club page (iPad): sidebar button, title and
+/// "…" on one line, the title shrinking once the list scrolls while the
+/// buttons stay; below them the search field.
+private struct SideListHeader<Trailing: View>: View {
+    @Binding var search: String
+    let scrolled: Bool
+    let hide: () -> Void
+    let trailing: Trailing
+    @FocusState private var focused: Bool
+
+    var body: some View {
+        VStack(spacing: 10) {
+            HStack(spacing: 8) {
+                Button(action: hide) {
+                    Image(systemName: "sidebar.left")
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
+                }
+                .floatingControl(Circle())
+                .accessibilityLabel(tr("Hide the club list"))
+                Text(tr("Locations"))
+                    .font(scrolled ? .headline : .largeTitle.bold())
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: scrolled ? .center : .leading)
+                    .accessibilityAddTraits(.isHeader)
+                trailing
+            }
+            HStack(spacing: 6) {
+                Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
+                TextField(tr("Search clubs, lakes or towns"), text: $search)
+                    .focused($focused)
+                    .submitLabel(.search)
+                    .autocorrectionDisabled()
+                if !search.isEmpty {
+                    Button {
+                        search = ""
+                        focused = false
+                    } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .accessibilityLabel(tr("Clear the search"))
+                }
+            }
+            .padding(.horizontal, 14)
+            .frame(height: 40)
+            .floatingControl(Capsule())
+        }
+        .tint(.primary)
+        .padding(.horizontal)
+        .padding(.top, 4)
+        .padding(.bottom, 10)
+        .background {
+            // The rows blur under the top once the list scrolls, as under a bar.
+            if scrolled { Rectangle().fill(.thinMaterial).ignoresSafeArea() }
+        }
+        .animation(.easeInOut(duration: 0.2), value: scrolled)
+        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
     }
 }

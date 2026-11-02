@@ -298,7 +298,8 @@ struct RowingWidgetView: View {
     /// life-jacket symbol sits beside the light, or in front of the reason on
     /// the small widget, where the light's words need the whole width.
     private func lightAndWhy(_ hour: ForecastHour) -> some View {
-        let kit = ColdWaterKit(waterC: snapshot.forecast?.waterTemperature?.celsius ?? snapshot.forecast?.estimatedWaterC)
+        let kit = ColdWaterKit(waterC: snapshot.forecast?.waterTemperature?.celsius ?? snapshot.forecast?.estimatedWaterC,
+                               limits: AppSettings.shared.limits(at: snapshot.forecast?.clubId))
         let small = family == .systemSmall
         return VStack(alignment: .leading, spacing: 3) {
             HStack(spacing: 5) {

@@ -664,7 +664,7 @@ struct SatelliteLayerChips: View {
     }
 
     private var available: [SatelliteLayer] {
-        let view = LakeViewStore.shared.views[lakeID]
+        let view = LakeViewStore.shared.views[lakeID, club: clubID]
         return SatelliteLayer.allCases.filter { layer in
             switch layer {
             case .shore: view != nil
@@ -716,7 +716,7 @@ struct SatelliteImage: View {
         .overlay { iceOverlay }
         .overlay {
             // The full view puts it on the screen, where it doesn't zoom.
-            if !marksOnScreen { SatelliteColdBadge(lakeID: lakeID, picture: picture) }
+            if !marksOnScreen { SatelliteColdBadge(lakeID: lakeID, picture: picture, clubID: clubID) }
         }
         .overlay {
             if !marksOnScreen {
@@ -780,7 +780,7 @@ struct SatelliteOverlay: View {
     /// Drawn on the screen above a zoomable picture: the picture's size at zoom 1,
     /// how far it is zoomed and moved. Lines, marks and names then keep their size.
     var screen: (size: CGSize, zoom: CGFloat, offset: CGPoint)?
-    @MainActor private var view: LakeView? { LakeViewStore.shared.views[lakeID] }
+    @MainActor private var view: LakeView? { LakeViewStore.shared.views[lakeID, club: clubID] }
     /// The wind map's wind, for the arrows on land.
     @MainActor private var land: LandWind? {
         guard let view, !view.hours.isEmpty else { return nil }
@@ -1066,7 +1066,7 @@ struct SatellitePictureScreen: View {
                             SatelliteOverlay(lakeID: lakeID, picture: picture, layers: layers.on, clubID: clubID,
                                              cloudy: shot.lakeCloud >= 0.5, shot: shot, screen: (size, zoom.scale, zoom.offset))
                         }
-                        .overlay { SatelliteColdBadge(lakeID: lakeID, picture: picture, screen: (size, zoom.scale, zoom.offset)) }
+                        .overlay { SatelliteColdBadge(lakeID: lakeID, picture: picture, clubID: clubID, screen: (size, zoom.scale, zoom.offset)) }
                     }
                 }
                 if let shot = picture.shot(kind) {
@@ -1121,7 +1121,7 @@ struct SatellitePictureScreen: View {
            let minY = points.map(\.y).min(), let maxY = points.map(\.y).max() {
             return .whole(CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY).insetBy(dx: -24, dy: -24))
         }
-        let club = LakeViewStore.shared.views[lakeID]?.clubs.first { $0.id == clubID }
+        let club = LakeViewStore.shared.views[lakeID, club: clubID]?.clubs.first { $0.id == clubID }
         return .fillWidth(around: club.map { point($0.launchPoint.lon, $0.launchPoint.lat) })
     }
 }
@@ -1131,12 +1131,14 @@ struct SatellitePictureScreen: View {
 struct SatelliteColdBadge: View {
     let lakeID: String
     let picture: SatellitePicture
+    /// The page's club, whose boat sets the life-jacket limit.
+    var clubID: String?
     /// The full view: the picture's size at zoom 1, how far it is zoomed and moved.
     var screen: (size: CGSize, zoom: CGFloat, offset: CGPoint)?
 
     var body: some View {
         // It explains the blue shore, so it shows only with the shore line.
-        if SatelliteLayers.shared.on.contains(.shore), let view = LakeViewStore.shared.views[lakeID], let kit = view.coldWaterKit {
+        if SatelliteLayers.shared.on.contains(.shore), let view = LakeViewStore.shared.views[lakeID, club: clubID], let kit = view.coldWaterKit {
             GeometryReader { geo in
                 let estimated = view.waterC == nil
                 let text = estimated ? "≈ " + kit.title : kit.title
@@ -1489,7 +1491,7 @@ struct SatelliteLegend: View {
     @Environment(\.dismiss) private var dismiss
     /// Stripes on the water now, while the whole lake is red or amber.
     @MainActor private var stripes: Light? {
-        guard let view = LakeViewStore.shared.views[lakeID], !view.hours.isEmpty else { return nil }
+        guard let view = LakeViewStore.shared.views[lakeID, club: clubID], !view.hours.isEmpty else { return nil }
         return view.hours[view.hourIndex()].lakeWide.stripes
     }
 
@@ -1504,7 +1506,7 @@ struct SatelliteLegend: View {
                 }
                 if on.contains(.light) {
                     Section(tr("Rowing light")) {
-                        LakeLegend(layer: .light).padding(.vertical, 4)
+                        LakeLegend(layer: .light, clubID: clubID).padding(.vertical, 4)
                         if stripes == .red {
                             row(Image(systemName: "line.diagonal").foregroundStyle(.red),
                                 tr("Grey with red stripes: the whole lake is red now (official warning or darkness)."))
@@ -1512,11 +1514,11 @@ struct SatelliteLegend: View {
                             row(Image(systemName: "line.diagonal").foregroundStyle(.orange),
                                 tr("Amber stripes: the whole lake is amber now (sunrise or sunset, official warning)."))
                         }
-                        MapBoatNote()
+                        MapBoatNote(clubID: clubID)
                     }
                 }
                 if on.contains(.waves) {
-                    Section(tr("Waves")) { LakeLegend(layer: .waves).padding(.vertical, 4) }
+                    Section(tr("Waves")) { LakeLegend(layer: .waves, clubID: clubID).padding(.vertical, 4) }
                 }
                 if on.contains(.wind) {
                     Section(tr("Wind")) {
@@ -1534,10 +1536,10 @@ struct SatelliteLegend: View {
                 if !on.isDisjoint(with: [.shore, .clubs, .routes]) {
                     Section(tr("Lines and marks")) {
                         if on.contains(.shore) {
-                            if let cold = LakeViewStore.shared.views[lakeID]?.coldShore {
+                            if let cold = LakeViewStore.shared.views[lakeID, club: clubID]?.coldShore {
                                 row(line(cold.color),
                                     tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
-                                       Format.temperature(AppSettings.shared.limits.value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
+                                       Format.temperature(AppSettings.shared.limits(at: clubID).value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
                             } else {
                                 row(line(.white), tr("Shore line: white on a clear picture, dark blue on a cloudy one"))
                             }
