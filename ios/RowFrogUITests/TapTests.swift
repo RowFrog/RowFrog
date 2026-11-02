@@ -32,7 +32,10 @@ final class TapTests: XCTestCase {
     func testConditionTileOpensItsDetailView() {
         let app = launchClubPage()
         let tile = app.buttons["condition-wind"]
-        XCTAssertTrue(tile.waitForExistence(timeout: 60), "No wind tile; the page shows:\n\(app.debugDescription)")
+        // The page waits for the published forecast. On the Intel runners of the
+        // information-only jobs that took more than 60 s three times (#246, #272),
+        // with the spinner still showing, so the wait is long; a fast run is no slower.
+        XCTAssertTrue(tile.waitForExistence(timeout: 180), "No wind tile; the page shows:\n\(app.debugDescription)")
         tile.tap()
         XCTAssertTrue(app.descendants(matching: .any)["condition-detail"].waitForExistence(timeout: 10),
                       "Tapping the wind tile opened nothing; the page shows:\n\(app.debugDescription)")
