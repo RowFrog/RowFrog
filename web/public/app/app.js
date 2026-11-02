@@ -13,14 +13,14 @@ import {
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
-  loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM,
+  loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, keptForecast,
 } from "./shared.js";
 import {
   isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
-  waterForHour, key,
+  waterForHour, key, nightParts, nightSummary,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView } from "./lakeview.js";
 import { currentTile, currentBody } from "./river.js";
@@ -127,6 +127,7 @@ function legendBody(part) {
       <li>${dot("green", 12)}<span>${h(t("Rowing light for your boat in that hour."))}</span></li>
       <li><span class="cond">${icon("cloud-sun")}</span><span>${h(t("Weather symbol; it also shows how cloudy it is."))}</span></li></ul>
       ${explain(["temperature", "feelsLike", "wind", "waves", "precipitation", "visibility"].map((c) => rows[c]))}
+      <ul class="legend"><li><span class="cond">${icon("moon")}</span><span>${h(t("Night line: the hours between sunset and sunrise in one line, with the night's lowest temperature and feels-like, strongest wind and gusts, highest waves, all its rain and its poorest visibility. Tap it to see each hour."))}</span></li></ul>
       <p class="sub">${h(t("Hours after sunset are dimmed. Tap an hour to see all its values."))}</p>`;
   }
   return symbols + explain(TILE_ORDER.map((c) => rows[c]));
@@ -897,6 +898,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
     <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(club ?? { id }, () => renderClub(id)));
   root.querySelector(".hourly-card .fold")?.addEventListener("click", (e) => foldHourly(e.currentTarget));
+  root.querySelectorAll(".hourly-card .nightline").forEach((b) => b.addEventListener("click", () => toggleNight(b)));
   root.querySelector("#add")?.addEventListener("click", () => {
     store.clubs = [...store.clubs, club];
     renderClub(id);
@@ -1365,18 +1367,19 @@ function hourlyCard(forecast, now, stale) {
       ["precipitation", unitSymbol("rain")], ["visibility", unitSymbol("distance")]]
       .map(([c, unit]) => `<span class="num">${icon(CONDITION_ICONS[c])}<small>${h(unit)}</small></span>`).join("")}</div>`;
   let lastDay = null;
-  const rows = list.map((x, i) => {
+  const index = new Map(list.map((x, i) => [x, i]));
+  // Past the first 24 hours: hidden while the table is folded in two columns.
+  const later = (x) => (index.get(x) >= FOLDED_HOURS ? "later" : "");
+  const row = (x) => {
     const day = localDay(x.time);
-    // Past the first 24 hours: hidden while the table is folded in two columns.
-    const later = i >= FOLDED_HOURS ? "later" : "";
     let header = "";
     if (day !== lastDay) {
       const sun = forecast.daylight?.find((d) => d.date === day);
-      header = `<div class="dayhead ${later}"><strong>${h(dayLabel(day))}</strong>${sun ? `<span>${icon("sunrise")} ${h(time(sun.sunrise))} ${icon("sunset")} ${h(time(sun.sunset))}</span>` : ""}</div>`;
+      header = `<div class="dayhead ${later(x)}" data-day="${day}"><strong>${h(dayLabel(day))}</strong>${sun ? `<span>${icon("sunrise")} ${h(time(sun.sunrise))} ${icon("sunset")} ${h(time(sun.sunset))}</span>` : ""}</div>`;
       lastDay = day;
     }
     const fog = lightFor(x, ["fog"]);
-    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later}" data-hour="${h(x.time)}">
+    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}">
       <span>${h(time(x.time))}</span><span>${dot(x.light, 12, stale)}</span><span>${skySymbol(x)}</span>
       <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
       <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>
@@ -1385,10 +1388,60 @@ function hourlyCard(forecast, now, stale) {
       <span class="num ${(x.precipitationMm ?? 0) >= 0.1 ? "blue" : ""}">${h(rainNumber(x.precipitationMm))}</span>
       <span class="num ${fog && fog !== "green" ? (fog === "red" ? "red" : "orange") : ""}">${h(distanceNumber(x.visibilityM))}</span>
     </button>`;
+  };
+  const rows = nightParts(list).map((part) => {
+    if (part.hour) return row(part.hour);
+    // The night's day header after midnight shows inside the opened night; folded,
+    // the next hour shown brings its own (hidden again while the night is open).
+    const dayBefore = lastDay;
+    const inside = part.night.map(row).join("");
+    const crossed = lastDay !== dayBefore;
+    lastDay = dayBefore;
+    const after = crossed ? "afternight" : "";
+    return nightLine(part.night, list, later(part.night[0])) + `<div class="nightrows" hidden>${inside}</div>` + `<span class="nightmark ${after}" hidden></span>`;
   }).join("");
   const fold = FOLD_HOURLY && list.length > FOLDED_HOURS ? `<button class="fold" type="button" aria-expanded="false">${foldLabel(false)}</button>` : "";
   return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}${rows}</div>${fold}`,
     { legend: "hourly", cls: `hourly-card ${fold ? "folds" : ""}` });
+}
+
+/**
+ * A folded night as one row of the 48 hours (NightRow in the app): its hours, a
+ * chevron and the moon in the first three columns, then under each column the
+ * night's worst. A tap shows or hides the night's hours (toggleNight).
+ */
+function nightLine(hours, list, later) {
+  const n = nightSummary(hours);
+  const from = hours[0] === list[1] ? "" : hourOnly(n.start);
+  const to = hours[hours.length - 1] === list[list.length - 1] ? "" : hourOnly(n.end);
+  const fog = n.fog && n.fog !== "green" ? (n.fog === "red" ? "red" : "orange") : "";
+  const rain = (n.rainMm ?? 0) >= 0.1;
+  const label = [t("Night from %@ to %@", time(n.start), time(n.end)), t("lowest %@", degrees(n.lowestC)), n.frost ? t("frost") : "",
+    n.gustMs != null ? t("gusts up to %@", wind(n.gustMs)) : "", rain ? t("%@ rain", rainNumber(n.rainMm) + " " + unitSymbol("rain")) : t("dry"),
+    fog ? t("fog, visibility down to %@", distance(n.visibilityM)) : ""].filter(Boolean).join(", ");
+  return `<button class="hrow nightline ${later}" type="button" aria-expanded="false" aria-label="${h(label)}" title="${h(t("Shows the night hours"))}">
+    <span class="range">${h(`${from}–${to}`)}</span><span class="chev">${icon("chevron-down")}</span><span class="moon">${icon("moon")}</span>
+    <span class="num ${n.frost ? "blue" : ""}">${n.frost ? icon("snowflake") : ""}${h(num(inUnit("temperature", n.lowestC)))}</span>
+    <span class="num sub">${h(num(inUnit("temperature", n.lowestFeelsLikeC)))}</span>
+    <span class="num">${h(windRange(n.windMs, n.gustMs))}</span>
+    <span class="num">${h(wavesNumber(n.wavesM))}</span>
+    <span class="num ${rain ? "blue" : ""}">${h(rainNumber(n.rainMm))}</span>
+    <span class="num ${fog}">${h(distanceNumber(n.visibilityM))}</span>
+  </button>`;
+}
+
+/** Opens or folds one night of the 48 hours. */
+function toggleNight(button) {
+  const open = button.getAttribute("aria-expanded") !== "true";
+  button.setAttribute("aria-expanded", String(open));
+  button.title = open ? t("Folds the night hours") : t("Shows the night hours");
+  button.querySelector(".chev").innerHTML = icon(open ? "chevron-up" : "chevron-down");
+  const rows = button.nextElementSibling;
+  rows.hidden = !open;
+  // The next day's header, when the night crossed midnight: shown inside while open.
+  if (rows.nextElementSibling?.classList.contains("afternight")) {
+    rows.nextElementSibling.nextElementSibling?.classList.toggle("dup", open);
+  }
 }
 
 /**

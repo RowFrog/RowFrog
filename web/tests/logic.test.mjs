@@ -148,3 +148,29 @@ test("the river current counts with the boat's own limits (app #182)", () => {
   assert.equal(mine.limits.currentAmberMs, 2);
   assert.equal(riverForBoat({ ...river, now: { ...river.now, state: "high" } }, limitsFor(small, { currentAmber: 2 })).now.light, "amber");
 });
+
+test("the night's dark hours fold into one line with the worst of each column", async () => {
+  const { nightParts, nightSummary } = await import("../public/app/logic.js");
+  const base = Date.UTC(2026, 9, 30, 15);
+  const hours = [true, true, false, false, false, true].map((up, i) => ({
+    time: new Date(base + i * 3600e3).toISOString(), sunUp: up, light: up ? "green" : "red", reasons: [],
+    temperatureC: [5, 3, 1, -0.6, 2, 4][i], apparentTemperatureC: [3, 1, -1, -3, 0, 2][i],
+    windSpeedMs: i, windGustMs: i * 2, waveHeightM: 0.1, precipitationMm: 0.2, visibilityM: 20000 - i,
+  }));
+  const parts = nightParts(hours);
+  assert.equal(parts.length, 4, "two day hours, one night, one day hour");
+  assert.equal(parts[2].night.length, 3);
+  const n = nightSummary(parts[2].night);
+  assert.equal(n.lowestC, -0.6);
+  assert.equal(n.frost, true);
+  assert.equal(n.lowestFeelsLikeC, -3);
+  assert.equal(n.gustMs, 8);
+  assert.ok(Math.abs(n.rainMm - 0.6) < 1e-9);
+  assert.equal(n.end, new Date(base + 5 * 3600e3).toISOString());
+  const startsAtNight = nightParts(hours.slice(2));
+  assert.ok(startsAtNight[0].hour, "the first hour keeps its row at night");
+  assert.equal(startsAtNight[1].night.length, 2);
+  assert.ok(nightParts([hours[0], hours[2], hours[5]]).every((p) => p.hour), "one dark hour stays a row");
+  const dusk = { ...hours[2], light: "amber", reasons: [{ condition: "twilight", light: "amber" }] };
+  assert.ok(nightParts([hours[0], dusk, hours[3], hours[4]])[1].hour, "the hour the sun sets in keeps its row");
+});

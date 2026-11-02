@@ -159,6 +159,10 @@ final class AppSettings {
     var columnFill: ColumnFill { didSet { defaults.set(columnFill.rawValue, forKey: Keys.columnFill) } }
     /// The column rule in use: the developer options' pick while they are on, else folding.
     var activeColumnFill: ColumnFill { developerOptions ? columnFill : .fold }
+    /// How the 48 hours show the night, picked in the developer options.
+    var nightHours: NightHours { didSet { defaults.set(nightHours.rawValue, forKey: Keys.nightHours) } }
+    /// The night rule in use: the developer options' pick while they are on, else one line per night.
+    var activeNightHours: NightHours { developerOptions ? nightHours : .fold }
 
     /// The order of the cards on every club page, and the cards switched off.
     var pageLayout: PageLayout { didSet { defaults.set(try? JSONEncoder().encode(pageLayout), forKey: Keys.pageLayout) } }
@@ -208,6 +212,7 @@ final class AppSettings {
         static let developer = "RWDeveloperOptions"
         static let pickedModels = "RWPickedModels"
         static let columnFill = "RWColumnFill"
+        static let nightHours = "RWNightHours"
         static let pageLayout = "RWPageLayout"
         static let pageLayoutVersion = "RWPageLayoutVersion"
         static let clubPageLayouts = "RWClubPageLayouts"
@@ -221,7 +226,7 @@ final class AppSettings {
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, clubBoats, mapBoat,
-                          developer, pickedModels, columnFill, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
+                          developer, pickedModels, columnFill, nightHours, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
                           widgetUpdates, mapStartZoom, mapApp]
     }
 
@@ -287,6 +292,7 @@ final class AppSettings {
         developerOptions = defaults.bool(forKey: Keys.developer)
         pickedModels = defaults.dictionary(forKey: Keys.pickedModels) as? [String: String] ?? [:]
         columnFill = value(Keys.columnFill, .fold)
+        nightHours = value(Keys.nightHours, .fold)
         // As a launch argument the order is a comma-separated list, e.g. `-RWPageLayout "hourly,radar"`.
         pageLayout = defaults.data(forKey: Keys.pageLayout).flatMap { try? JSONDecoder().decode(PageLayout.self, from: $0) }
             ?? defaults.string(forKey: Keys.pageLayout).map(PageLayout.init(list:))
@@ -384,6 +390,7 @@ final class AppSettings {
         developerOptions = false
         pickedModels = [:]
         columnFill = .fold
+        nightHours = .fold
         pageLayout = .standard
         clubPageLayouts = [:]
         saveMobileData = false
@@ -692,6 +699,23 @@ enum ColumnFill: String, CaseIterable, Identifiable {
         switch self {
         case .fold: tr("Fold the 48 hours")
         case .fill: tr("Always 48 hours")
+        }
+    }
+}
+
+/// How the 48-hour table shows the hours between sunset and sunrise, picked in the developer options.
+enum NightHours: String, CaseIterable, Identifiable {
+    /// Each night folds into one line that opens on a tap.
+    case fold
+    /// Every hour of the night has its own row, as before.
+    case all
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .fold: tr("One line per night")
+        case .all: tr("Every night hour")
         }
     }
 }

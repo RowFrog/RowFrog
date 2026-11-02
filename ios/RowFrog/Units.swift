@@ -240,6 +240,11 @@ enum TimeFormat: String, CaseIterable, Identifiable {
         }
         return (format, f)
     })
+
+    /// The hour alone, "17", "8" or "5 PM", as the night line of the hourly table shows it.
+    func hour(from date: Date) -> String {
+        string(from: date).replacingOccurrences(of: ":00", with: "")
+    }
 }
 
 /// How days are written, e.g. over each day of the hourly forecast.

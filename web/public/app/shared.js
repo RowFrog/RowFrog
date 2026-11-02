@@ -346,6 +346,11 @@ export function time(value, format = store.timeFormat) {
   return new Intl.DateTimeFormat(navigator.language || locale(), { timeZone: ZONE, hour: "numeric", minute: "2-digit" }).format(new Date(value));
 }
 
+/** The hour alone, "17", "8" or "5 PM", for the night line of the 48 hours (TimeFormat.hour). */
+export function hourOnly(value) {
+  return time(value).replace(":00", "");
+}
+
 /** Whether times carry AM or PM, so take more room. */
 export const usesAMPM = () => /[AP]M/i.test(time(Date.UTC(2026, 0, 1, 18)));
 
@@ -492,7 +497,7 @@ export function reasonExplanation(condition, light, topic = null) {
     case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10));
     case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
     case "shipping_stopped": return t("The river is above the gauge's shipping mark: even motor ships stay in.");
-    case "high_water": return t("The river is at or above mean high water: strong current, flotsam and flooded banks.");
+    case "high_water": return t("The river is at or above the shipping mark I or mean high water: strong current, flotsam and flooded banks.");
     case "current": return t("The current is strong (from the nearest gauge).");
     case "lake_lowered": return t("The lake is let down for the winter: shallows, and a long way to the water.");
     case "lake_drained": return t("The lake is let down for the winter: too little water at the club to row.");

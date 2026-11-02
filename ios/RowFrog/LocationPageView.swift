@@ -293,7 +293,7 @@ struct LocationPageView: View {
                 // In two columns the table shows 24 hours until opened (ColumnFill.fold).
                 let folds = twoColumns && AppSettings.shared.activeColumnFill == .fold
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale(),
-                           folds: folds, open: $hourlyOpen)
+                           folds: folds, foldsNights: AppSettings.shared.activeNightHours == .fold, open: $hourlyOpen)
                     .modifier(StickyHourlyCut(sticky: sticky))
             }
             .id("hourly")
@@ -1189,8 +1189,12 @@ private struct HourlyCard: View {
     var stale = false
     /// Two columns: the table shows the first 24 hours and a button for the rest.
     var folds = false
+    /// Each night as one line until tapped (NightFold).
+    var foldsNights = true
     @Binding var open: Bool
     @State private var openHour: ForecastHour?
+    /// The nights opened by a tap, by their first hour; all fold again when the page opens anew.
+    @State private var openNights: Set<Date> = []
 
     /// How many hours a folded table shows.
     static let foldedHours = 24
@@ -1204,21 +1208,33 @@ private struct HourlyCard: View {
     private func table(_ proxy: ScrollViewProxy) -> some View {
         Card(title: tr("Next 48 hours"), symbol: "clock", legend: .hourly) {
             HourlyLegendHeader()
-            ForEach(Array(days.enumerated()), id: \.element.id) { index, group in
-                DayHeader(day: group.day, sun: sunDay(on: group.day))
-                    // Screenshot hook: `-RWScrollTo hourly-1` scrolls to the second day.
-                    .id("hourly-\(index)")
-                    .background {
-                        GeometryReader { geo in
-                            Color.clear.preference(key: DayTopKey.self, value: [group.day: geo.frame(in: .global).minY])
+            ForEach(rows) { row in
+                switch row {
+                case let .day(day, index):
+                    DayHeader(day: day, sun: sunDay(on: day))
+                        // Screenshot hook: `-RWScrollTo hourly-1` scrolls to the second day.
+                        .id("hourly-\(index)")
+                        .background {
+                            GeometryReader { geo in
+                                Color.clear.preference(key: DayTopKey.self, value: [day: geo.frame(in: .global).minY])
+                            }
                         }
-                    }
-                ForEach(group.hours) { hour in
+                case let .hour(hour):
                     Button { openHour = hour } label: {
                         HourRow(hour: hour, stale: stale).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Opens this hour with all its values"))
+                case let .night(night):
+                    let opened = openNights.contains(night.id)
+                    Button {
+                        withAnimation(.snappy) {
+                            if opened { openNights.remove(night.id) } else { openNights.insert(night.id) }
+                        }
+                    } label: {
+                        NightRow(night: night, opened: opened, startsTable: night.start == firstHour, endsTable: night.end == tableEnd)
+                    }
+                    .buttonStyle(.plain)
                 }
             }
             if folds && hiddenHours > 0 {
@@ -1244,10 +1260,19 @@ private struct HourlyCard: View {
         }
     }
 
-    private struct DayGroup: Identifiable {
-        let day: Date
-        let hours: [ForecastHour]
-        var id: Date { day }
+    /// A line of the table: a day's header, an hour, or a folded night.
+    private enum TableRow: Identifiable {
+        case day(Date, index: Int)
+        case hour(ForecastHour)
+        case night(NightFold.Night)
+
+        var id: String {
+            switch self {
+            case let .day(day, _): "day-\(day.timeIntervalSince1970)"
+            case let .hour(hour): "hour-\(hour.time.timeIntervalSince1970)"
+            case let .night(night): "night-\(night.start.timeIntervalSince1970)"
+            }
+        }
     }
 
     /// Opens the rest of the table, or folds it back to the first 24 hours. Folding
@@ -1280,11 +1305,38 @@ private struct HourlyCard: View {
         return folds && !open ? Array(hours.prefix(Self.foldedHours)) : hours
     }
 
-    private var days: [DayGroup] {
+    /// The table's lines. A folded night sits after the evening it starts in; its day
+    /// header after midnight comes with the next hour shown, or inside the opened night.
+    private var rows: [TableRow] {
         let calendar = Calendar.current
-        let grouped = Dictionary(grouping: shownHours) { calendar.startOfDay(for: $0.time) }
-        return grouped.keys.sorted().map { DayGroup(day: $0, hours: grouped[$0]!.sorted { $0.time < $1.time }) }
+        var rows: [TableRow] = []
+        var lastDay: Date?
+        var dayIndex = 0
+        func add(_ hour: ForecastHour) {
+            let day = calendar.startOfDay(for: hour.time)
+            if day != lastDay {
+                rows.append(.day(day, index: dayIndex))
+                dayIndex += 1
+                lastDay = day
+            }
+            rows.append(.hour(hour))
+        }
+        let parts = foldsNights ? NightFold.parts(shownHours) : shownHours.map(NightFold.Part.hour)
+        for part in parts {
+            switch part {
+            case let .hour(hour):
+                add(hour)
+            case let .night(night):
+                rows.append(.night(night))
+                if openNights.contains(night.id) { night.hours.forEach(add) }
+            }
+        }
+        return rows
     }
+
+    private var firstHour: Date? { shownHours.first?.time }
+    /// When the last hour of the whole forecast ends, so a night cut off there says "from".
+    private var tableEnd: Date? { forecast.hours.map(\.time).max()?.addingTimeInterval(3600) }
 
     private func sunDay(on day: Date) -> SunDay? {
         forecast.daylight?.first { Calendar.current.isDate($0.sunrise, inSameDayAs: day) }
@@ -1404,6 +1456,86 @@ private struct HourRow: View {
         .minimumScaleFactor(0.8)
         .opacity(dark ? 0.6 : 1)
         .padding(.vertical, 2)
+    }
+
+    private func cell(_ text: String) -> some View {
+        Text(text).frame(maxWidth: .infinity, alignment: .trailing)
+    }
+}
+
+/// A folded night as one row of the table: its hours, a chevron and the moon in the
+/// first three columns, then under each column the night's worst: lowest temperatures,
+/// strongest wind and gust, highest waves, all its rain and its poorest visibility.
+private struct NightRow: View {
+    let night: NightFold.Night
+    let opened: Bool
+    /// The table starts in this night (after the current hour's row), or is cut off in it.
+    var startsTable = false
+    var endsTable = false
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(range)
+                .fontWeight(.semibold)
+                .minimumScaleFactor(0.7)
+                .frame(width: Column.time, alignment: .leading)
+            Image(systemName: opened ? "chevron.up" : "chevron.down")
+                .font(.caption.weight(.bold))
+                .foregroundStyle(.tint)
+                .frame(width: Column.light)
+            Image(systemName: "moon.stars.fill")
+                .font(.callout)
+                .frame(width: Column.sky)
+            HStack(spacing: 1) {
+                if night.frost { Image(systemName: "snowflake").font(.caption2) }
+                Text(Format.degrees(night.lowestC).replacingOccurrences(of: "°", with: ""))
+            }
+            .foregroundStyle(night.frost ? Color.blue : .primary)
+            .frame(maxWidth: .infinity, alignment: .trailing)
+            cell(Format.degrees(night.lowestFeelsLikeC).replacingOccurrences(of: "°", with: ""))
+                .foregroundStyle(.secondary)
+            cell(night.strongestWindMs.map { "\(Format.windNumber($0))–\(Format.windNumber(night.strongestGustMs))" } ?? "–")
+            cell(Format.wavesNumber(night.highestWavesM))
+            cell(Format.rainNumber(night.rainMm))
+                .foregroundStyle((night.rainMm ?? 0) >= 0.1 ? Color.blue : .primary)
+            cell(Format.distanceNumber(night.poorestVisibilityM))
+                .foregroundStyle(night.fogLight.map(\.color) ?? .primary)
+        }
+        .font(.subheadline.monospacedDigit())
+        .lineLimit(1)
+        .minimumScaleFactor(0.8)
+        .padding(.vertical, 5)
+        .padding(.horizontal, 6)
+        .background(Color.indigo.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
+        .padding(.horizontal, -6)
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityValue(opened ? tr("Opened") : tr("Folded"))
+        .accessibilityHint(opened ? tr("Folds the night hours") : tr("Shows the night hours"))
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// "17–07"; "–07" when the table starts in the night, "17–" when it ends in it.
+    private var range: String {
+        let from = startsTable ? "" : hour(night.start)
+        let to = endsTable ? "" : hour(night.end)
+        return "\(from)–\(to)"
+    }
+
+    private func hour(_ date: Date) -> String {
+        AppSettings.shared.timeFormat.hour(from: date)
+    }
+
+    private var accessibilityText: String {
+        var parts = [tr("Night from %@ to %@", Format.time(night.start), Format.time(night.end))]
+        parts.append(tr("lowest %@", Format.degrees(night.lowestC)))
+        if night.frost { parts.append(tr("frost")) }
+        if let gust = night.strongestGustMs { parts.append(tr("gusts up to %@", Format.wind(gust))) }
+        parts.append((night.rainMm ?? 0) >= 0.1 ? tr("%@ rain", Format.rain(night.rainMm)) : tr("dry"))
+        if night.fogLight != nil { parts.append(tr("fog, visibility down to %@", Format.distance(night.poorestVisibilityM))) }
+        return parts.joined(separator: ", ")
     }
 
     private func cell(_ text: String) -> some View {
@@ -1559,6 +1691,10 @@ struct LegendSheet: View {
                 Text(tr("Weather symbol; it also shows how cloudy it is.")).font(.subheadline)
             }
             conditionIcons([.temperature, .feelsLike, .wind, .waves, .precipitation, .visibility])
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "moon.stars.fill").frame(width: 24)
+                Text(tr("Night line: the hours between sunset and sunrise in one line, with the night's lowest temperature and feels-like, strongest wind and gusts, highest waves, all its rain and its poorest visibility. Tap it to see each hour.")).font(.subheadline)
+            }
             Text(tr("Hours after sunset are dimmed. Tap an hour to see all its values.")).font(.caption).foregroundStyle(.secondary)
         }
     }
