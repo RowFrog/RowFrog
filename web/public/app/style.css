@@ -937,3 +937,7 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .kept-row .link { padding: 4px 0; }
 .add-club { justify-content: flex-start; color: var(--accent); font-size: 20px; }
 .add-club select { flex: 1; max-width: none; border: 0; background: none; color: var(--accent); font-size: 17px; -webkit-appearance: none; appearance: none; cursor: pointer; }
+/* The one-time boat tip as a popover under the boat button (BoatsElsewhereTip, popoverTip arrowEdge top). */
+.head-side.end { position: relative; }
+.tip.pop { position: absolute; top: calc(100% + 10px); right: 0; z-index: 6; width: min(300px, calc(100vw - 32px)); margin: 0; text-align: left; box-shadow: 0 8px 28px rgba(0, 0, 0, .22); }
+.tip.pop::before { content: ""; position: absolute; top: -7px; right: 18px; width: 14px; height: 14px; background: inherit; transform: rotate(45deg); }

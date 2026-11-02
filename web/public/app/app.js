@@ -173,6 +173,8 @@ function openBoatMenu(raw) {
     dialog.querySelectorAll("[data-take]").forEach((b) => b.addEventListener("click", () => {
       keepBoat(b.dataset.take, club);
       pickBoat(b.dataset.take, club);
+      // Taking a boat along is what the tip asks for, so it closes for good.
+      closeTip(root, "boatsElsewhere");
       dialog.close();
       route(false);
     }));
@@ -209,8 +211,9 @@ function boatButton() {
  * shrunk there (PageTopButtons, owner's pick F, 2 Nov 2026): on the left the sidebar button
  * while the list beside the page is slid away and the cog (wide windows), on the right the boat.
  */
-function pageButtons(side) {
-  if (side === "right") return `<span class="head-side end">${boatButton()}</span>`;
+function pageButtons(side, withTip = false) {
+  // Once, on the first club page where an own boat is kept elsewhere (BoatsElsewhereTip).
+  if (side === "right") return `<span class="head-side end">${boatButton()}${withTip && store.boats.some((b) => !isKept(b)) ? tip("boatsElsewhere").replace('class="tip"', 'class="tip pop"') : ""}</span>`;
   const wide = sideList.matches;
   return `<span class="head-side">
     ${wide && sideHidden ? `<button class="glass round tool ${slideIn ? "slide-in" : ""}" data-show-list aria-label="${h(t("Show the club list"))}">${icon("panel-left")}</button>` : ""}
@@ -941,7 +944,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
-    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right")}</div>
+    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right", true)}</div>
     <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
