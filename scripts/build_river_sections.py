@@ -21,7 +21,8 @@ The outline is the river's water area (OpenStreetMap riverbanks, river and
 canal areas, and the lakes a river flows through) along the walked stretch,
 cut square at its ends; where the map has no water area, a band of the
 river's width around its line. The section's own harbour is added for clubs
-that row out of one. The second feature of each outline is the river line,
+that row out of one, and so is the water a launch point lies in (a marina,
+side arm or oxbow up to 1 km² off the river line). The second feature of each outline is the river line,
 pointing downstream, for the current in the route planner.
 
 Runs in the "River sections" workflow on the Geofabrik extracts of Germany,
@@ -80,6 +81,12 @@ BARRIERS = ("weir", "dam", "lock_gate", "waterfall")
 MAX_HALF_WIDTH_M = 800.0
 BAND_M = {"river": 20.0, "canal": 30.0}
 OWN_HARBOUR_M = 300.0  # a harbour this close to a club's launch point belongs to its section
+# The water a club launches on belongs to its section, whatever the map calls it
+# (a marina tagged as river, a side arm, an oxbow, a pond beside the river), up
+# to this size, where the river line does not run through it (that water is cut
+# to the stretch as usual); the launch point audit (November 2026) found 13 clubs in such waters.
+LAUNCH_WATER_M = 25.0
+LAUNCH_WATER_MAX_M2 = 1e6
 INCLUDE_NEAR_KM = 3.0
 SIMPLIFY_M = 3.0
 PICTURE_HALF_KM = 5.0  # satellite pictures of a river: about 10 km around the club
@@ -389,17 +396,25 @@ def harbours_along(river: River, walk: dict, harbour_polys: list) -> list[tuple[
 def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict, object]], clubs_m: list[tuple[float, float]],
             canal: bool, include_areas: list[str]):
     """The section's water: map areas along the river line, cut square at its
-    ends, plus a band where the map has none, plus the club's own harbour."""
+    ends, plus a band where the map has none, plus the club's own harbour and
+    the water its launch point lies in."""
     merged = line_merge(MultiLineString(center_lines), directed=True) if len(center_lines) > 1 else center_lines[0]
     corridor = merged.buffer(MAX_HALF_WIDTH_M, cap_style="flat", join_style="round")
     touch = merged.buffer(5)
     w, s, e, n = frame.to_deg(corridor).bounds
+    # Also the clubs, for the water they launch on when it lies off the stretch.
+    for p in clubs_m:
+        lon, lat = frame.deg(*p)
+        w, s, e, n = min(w, lon - 0.01), min(s, lat - 0.01), max(e, lon + 0.01), max(n, lat + 0.01)
     keep, own = [], []
     for tags, geom in areas:
         gw, gs, ge, gn = geom.bounds
         if gw > e or ge < w or gs > n or gn < s:
             continue
         g = frame.to_m(geom).buffer(0)
+        if g.area <= LAUNCH_WATER_MAX_M2 and not g.intersects(touch) and any(g.distance(Point(p)) <= LAUNCH_WATER_M for p in clubs_m):
+            own.append(g)
+            continue
         harbour = tags.get("water") in ("harbour", "basin") or tags.get("landuse") == "harbour"
         river_area = tags.get("water") in ("river", "canal") or tags.get("waterway") == "riverbank"
         named = tags.get("name") in include_areas and not river_area
