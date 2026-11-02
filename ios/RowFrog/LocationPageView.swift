@@ -764,9 +764,12 @@ private struct NowCard: View {
             HStack(alignment: .top, spacing: 10) {
                 TrafficLightDot(light: hour.light, size: 36, stale: stale)
                 VStack(alignment: .leading, spacing: 0) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(hour.light.title(stale: stale)).font(.title2.bold())
-                        LegendButton(showing: $showingLights)
+                    // Under the weather too, the verdict keeps one line as long as it can:
+                    // one size smaller first; it wraps only at the very largest text sizes.
+                    ViewThatFits(in: .horizontal) {
+                        stackedTitle(.title2.bold(), oneLine: true)
+                        stackedTitle(.title3.bold(), oneLine: true)
+                        stackedTitle(.title3.bold(), oneLine: false)
                     }
                     boatLine
                 }
@@ -778,6 +781,15 @@ private struct NowCard: View {
             .padding(.leading, 46)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func stackedTitle(_ font: Font, oneLine: Bool) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Text(hour.light.title(stale: stale)).font(font)
+                .lineLimit(oneLine ? 1 : nil)
+                .fixedSize(horizontal: oneLine, vertical: !oneLine)
+            LegendButton(showing: $showingLights)
+        }
     }
 
     private var skyIcon: some View {

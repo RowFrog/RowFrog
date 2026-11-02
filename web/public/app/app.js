@@ -677,11 +677,16 @@ function fitHead(head) {
   head.dataset.width = width;
   const title = head.querySelector("h2");
   const overflows = () => title.scrollWidth > title.clientWidth + 0.5;
-  head.classList.remove("step", "stacked");
+  head.classList.remove("step", "stacked", "wrap");
   if (!overflows()) return;
   head.classList.add("step");
   if (!overflows()) return;
+  // The weather moves under the verdict, which again tries one line, then one size
+  // smaller, and wraps only when neither fits.
   head.classList.replace("step", "stacked");
+  if (!overflows()) return;
+  head.classList.add("step");
+  if (overflows()) head.classList.add("wrap");
 }
 function watchFitLines(scope = root) {
   scope.querySelectorAll(".fit-line").forEach((el) => {
