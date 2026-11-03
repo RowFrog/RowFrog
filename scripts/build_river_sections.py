@@ -15,7 +15,8 @@ within CLUSTER_KM of each other share one. The rule (owner's choices of
      each way on canals), moved to a river km sign within KM_SIGN_M.
 data/river-section-overrides.json adds the owner's hand checks: extra waters
 that belong to a stretch ("include") and the side a club rows on where a weir
-or lock sits right at its boathouse ("direction").
+or lock sits right at its boathouse ("direction"), and a lake on the stretch
+whose clubs stay lake clubs but share the section's outline ("alsoLake").
 
 The outline is the river's water area (OpenStreetMap riverbanks, river and
 canal areas, and the lakes a river flows through) along the walked stretch,
@@ -635,6 +636,13 @@ def main() -> None:
         sections.append(section)
         (OUTLINES / f"{section_id}.geojson").write_text(
             json.dumps(geojson(section_id, g["water"], r["shape"], r["flow"]), ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+        if override.get("alsoLake"):
+            # A lake on this stretch whose clubs stay lake clubs gets the same outline (one Alster for all of Hamburg).
+            lake_path = OUTLINES / f"{override['alsoLake']}.geojson"
+            lake = json.loads(lake_path.read_text(encoding="utf-8"))["properties"] if lake_path.exists() else {"id": override["alsoLake"]}
+            lake_path.write_text(json.dumps({"type": "Feature", "properties": {**lake, "joined": section_id},
+                                             "geometry": geojson(section_id, "", r["shape"], r["flow"])["features"][0]["geometry"]},
+                                            ensure_ascii=False) + "\n", encoding="utf-8")
         ends = " / ".join(f"{k} {v['km']} km {v['end']} {v['what']}".strip() for k, v in (("up", r.get("up")), ("down", r.get("down"))) if v)
         print(f"SECTION {section_id} ({len(g['clubs'])} clubs, {r['lengthKm']} km): {ends}", flush=True)
     for s in old["sections"]:

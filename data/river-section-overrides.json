@@ -170,8 +170,9 @@
       "note": "Ober-Eider, Die Enge, Audorfer See and probably the Nord-Ostsee-Kanal (owner 2026-11-02)"
     },
     "hamburger-ruderinnen-club-von-1925": {
-      "include": ["Alster", "Isebekkanal", "Außenalster", "Binnenalster"],
-      "note": "Isebekkanal into the Alster and the Außenalster (owner 2026-11-02; the owner wants one Alster outline for all Hamburg clubs)"
+      "include": ["Alster", "Außenalster", "Binnenalster", "Isebekkanal", "Osterbekkanal"],
+      "alsoLake": "aussenalster",
+      "note": "one Alster outline for all Hamburg Alster clubs: Alster, Außen- and Binnenalster, Isebek- and Osterbekkanal (owner 2026-11-02, go-ahead 2026-11-03); the Außenalster clubs stay lake clubs and get the same outline"
     },
     "universitaetssportclub-otto-von-guericke-magdeburg": {
       "include": ["Elbe", "Stromelbe", "Taube Elbe", "Alte Elbe"],
