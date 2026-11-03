@@ -125,25 +125,25 @@ extension RowingSnapshot {
 
     /// The top tile's values in its order: water, wind, waves, then (with two
     /// rows) rain, visibility, ice when it matters, and daylight.
-    func conditionTiles(rows: Int) -> [ConditionTile] {
+    func conditionTiles(rows: Int) -> [WidgetConditionTile] {
         let hour = current
         let water: String = {
             if let measured = forecast?.waterTemperature?.celsius { return Format.temperature(measured, digits: 1) }
             if let estimate = forecast?.estimatedWaterC { return "≈ " + Format.temperature(estimate) }
             return "–"
         }()
-        var tiles: [ConditionTile] = [
-            ConditionTile(condition: .waterTemperature, value: water),
-            ConditionTile(condition: .wind, value: Format.windRange(hour?.windSpeedMs, hour?.windGustMs)),
-            ConditionTile(condition: .waves, value: Format.waves(hour?.waveHeightM)),
+        var tiles: [WidgetConditionTile] = [
+            WidgetConditionTile(condition: .waterTemperature, value: water),
+            WidgetConditionTile(condition: .wind, value: Format.windRange(hour?.windSpeedMs, hour?.windGustMs)),
+            WidgetConditionTile(condition: .waves, value: Format.waves(hour?.waveHeightM)),
         ]
         if rows > 1 {
             tiles += [
-                ConditionTile(condition: .precipitation, value: hour.flatMap(precipitationText) ?? tr("None")),
-                ConditionTile(condition: .visibility, value: Format.distance(hour?.visibilityM)),
+                WidgetConditionTile(condition: .precipitation, value: hour.flatMap(precipitationText) ?? tr("None")),
+                WidgetConditionTile(condition: .visibility, value: Format.distance(hour?.visibilityM)),
             ]
-            if let ice = forecast?.iceValue { tiles.append(ConditionTile(condition: .ice, value: ice)) }
-            tiles.append(ConditionTile(condition: .daylight, value: sunText))
+            if let ice = forecast?.iceValue { tiles.append(WidgetConditionTile(condition: .ice, value: ice)) }
+            tiles.append(WidgetConditionTile(condition: .daylight, value: sunText))
         }
         return tiles
     }
@@ -518,7 +518,7 @@ struct RowingWidgetView: View {
 }
 
 /// One value of the widget's conditions grid.
-struct ConditionTile: Equatable {
+struct WidgetConditionTile: Equatable {
     let condition: Condition
     let value: String
 }
