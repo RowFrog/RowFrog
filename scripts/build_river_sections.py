@@ -533,7 +533,8 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
                     for w in ex.lines_named(n, lat, lon, REACH_KM + 2) for p in w["geometry"])), "")
             else:
                 joined = ""
-            if joined in rivers[i + 1:] and joined not in carry:
+            if joined in rivers[i + 1:] and joined not in carry and (i == 0 or carry.get(river_name) == key):
+                # Only a side of the club's own water carries on (not an included arm's own mouth).
                 carry[joined], carry_at[joined], carry_km[joined] = key, end_xy, offset + limit[0]
             lines += river.lines(walk, limit[0] * 1000)
             if i == 0 or carry.get(river_name) == key:
@@ -592,14 +593,15 @@ def main() -> None:
                 if path.exists():
                     shapes[k["id"]] = shapely.geometry.shape(json.loads(path.read_text(encoding="utf-8"))["features"][0]["geometry"])
             continue
-        if g.get("left"):
-            # Clubs that left another group: join a section of the same water that already reaches them all.
-            home = next((s for s in sections if s["water"] == g["lakeId"] and s["id"] in shapes
-                         and all(outside_m(shapes[s["id"]], p) <= OUTSIDE_M for p in g["points"])), None)
-            if home:
-                home["clubs"] += g["clubs"]
-                print(f"JOINED {home['id']}: {g['clubs']}", flush=True)
-                continue
+        # Clubs that left another group join a section of the same water that already reaches them all;
+        # so does a group whose launch points all lie in one already (a chain of clubs, as on the Alster).
+        within = OUTSIDE_M if g.get("left") else LAUNCH_WATER_M
+        home = next((s for s in sections if s["water"] == g["lakeId"] and s["id"] in shapes
+                     and all(outside_m(shapes[s["id"]], p) <= within for p in g["points"])), None)
+        if home:
+            home["clubs"] += g["clubs"]
+            print(f"JOINED {home['id']}: {g['clubs']}", flush=True)
+            continue
         override = {}
         for c in g["clubs"]:
             for key, value in overrides.get(c, {}).items():
