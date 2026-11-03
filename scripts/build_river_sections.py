@@ -396,7 +396,7 @@ def harbours_along(river: River, walk: dict, harbour_polys: list) -> list[tuple[
 
 
 def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict, object]], clubs_m: list[tuple[float, float]],
-            canal: bool, include_areas: list[str]):
+            canal: bool, include_areas: list[str], river_lines: list[LineString] | None = None):
     """The section's water: map areas along the river line, cut square at its
     ends, plus a band where the map has none, plus the club's own harbour and
     the water its launch point lies in."""
@@ -404,18 +404,30 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
     corridor = merged.buffer(MAX_HALF_WIDTH_M, cap_style="flat", join_style="round")
     touch = merged.buffer(5)
     w, s, e, n = frame.to_deg(corridor).bounds
-    # Also the clubs, for the water they launch on when it lies off the stretch.
+    # The launch waters are looked for around the clubs too, as they can lie off the
+    # stretch; everything else only along the stretch, as before.
+    lw, ls, le, ln = w, s, e, n
     for p in clubs_m:
         lon, lat = frame.deg(*p)
-        w, s, e, n = min(w, lon - 0.01), min(s, lat - 0.01), max(e, lon + 0.01), max(n, lat + 0.01)
+        lw, ls, le, ln = min(lw, lon - 0.01), min(ls, lat - 0.01), max(le, lon + 0.01), max(ln, lat + 0.01)
+    # The section's own river past the stretch's ends: a piece of the river there
+    # (beyond a weir) is never a launch water, or it pulls in clubs that row elsewhere.
+    # A water the overrides include still is (the Staabe above the Königs Wusterhausen lock).
+    beyond = unary_union(river_lines).difference(corridor) if river_lines else None
+    own_river = beyond.buffer(5) if beyond is not None and not beyond.is_empty else None
     keep, own, launch = [], [], []
     for tags, geom in areas:
         gw, gs, ge, gn = geom.bounds
-        if gw > e or ge < w or gs > n or gn < s:
+        if gw > le or ge < lw or gs > ln or gn < ls:
             continue
         g = frame.to_m(geom).buffer(0)
-        if g.area <= LAUNCH_WATER_MAX_M2 and not g.intersects(touch) and any(g.distance(Point(p)) <= LAUNCH_WATER_M for p in clubs_m):
+        if (g.area <= LAUNCH_WATER_MAX_M2 and not g.intersects(touch) and not (own_river is not None and g.intersects(own_river) and tags.get("name") not in include_areas)
+                and any(g.distance(Point(p)) <= LAUNCH_WATER_M for p in clubs_m)):
+            if VERBOSE:
+                print(f"  launch water: {tags.get('name') or tags.get('water') or tags.get('natural')} {g.area / 1e4:.1f} ha", flush=True)
             launch.append(g)
+            continue
+        if gw > e or ge < w or gs > n or gn < s:
             continue
         harbour = tags.get("water") in ("harbour", "basin") or tags.get("landuse") == "harbour"
         river_area = tags.get("water") in ("river", "canal") or tags.get("waterway") == "riverbank"
@@ -423,6 +435,8 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
         if harbour or named:
             near_club = any(g.distance(Point(p)) <= OWN_HARBOUR_M for p in clubs_m)
             if near_club or (named and g.intersects(corridor)):
+                if VERBOSE:
+                    print(f"  own: {tags.get('name') or tags.get('water') or tags.get('landuse')} {g.area / 1e4:.1f} ha", flush=True)
                 own.append(g)
             continue
         if g.intersects(touch):
@@ -551,7 +565,9 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
     k = math.cos(math.radians(lat))
     reach_deg = (REACH_KM + 2) / 110.574
     areas = ex.areas(lat - reach_deg, lon - reach_deg / k, lat + reach_deg, lon + reach_deg / k)
-    shape, flow, core = outline(frame, lines, areas, clubs_m, canal, include)
+    river_lines = [LineString([frame.m(p["lon"], p["lat"]) for p in w["geometry"]]) for w in ways
+                   if w["tags"].get("name") == name and len(w["geometry"]) > 1]
+    shape, flow, core = outline(frame, lines, areas, clubs_m, canal, include, river_lines)
     return {"river": name, "kind": "canal" if canal else "river", "shape": frame.to_deg(shape), "core": frame.to_deg(core),
             "flow": frame.to_deg(flow.simplify(10)),
             "lengthKm": round(sum(l.length for l in lines) / 1000, 1), **sides}
