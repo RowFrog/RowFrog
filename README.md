@@ -414,6 +414,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `web/` | The website: start page, `app/` (the forecasts in the browser), legal pages and the password check (`functions/_middleware.js`). `scripts/build_web.py` builds it. |
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues, `timer/` starts the forecast run on time. |
 | `testdata/api/v1/` | Sample API files (MRC 1880's forecast, the lake list and the country lists) that the backend, app and website tests all read, so a change to the format shows up in all three (see the handbook's Tests section). |
+| `testdata/units.json` | The unit table (values shown in each unit, Beaufort forces at the limits, decimals) that the app and website tests both check. |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
 | `docs/screenshots/` | Not in git: the "App screenshots" workflow writes here on the runner and keeps each branch's set under `refs/screenshots/<branch>` (see the handbook). |
 | `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. |
