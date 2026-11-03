@@ -30,7 +30,7 @@ jobs:
       - run: pytest -q --cov=rowfrog --cov-report=json:coverage.json
       - name: Coverage in the run summary
         if: always()
-        run: python ../scripts/coverage_summary.py pytest coverage.json "Backend" >> "$GITHUB_STEP_SUMMARY"
+        run: python ../scripts/coverage_summary.py pytest coverage.json "Backend" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # The Cloudflare Workers (usage counter, place suggestions, forecast timer)
   # against a fake Cloudflare: D1 on Node's SQLite with the real schema, a
@@ -47,7 +47,7 @@ jobs:
           node --test --experimental-test-coverage --test-reporter=spec cloudflare/tests/*.test.mjs | tee node-test.log
       - name: Coverage in the run summary
         if: always()
-        run: python3 scripts/coverage_summary.py node node-test.log "Cloudflare Workers" >> "$GITHUB_STEP_SUMMARY"
+        run: python3 scripts/coverage_summary.py node node-test.log "Cloudflare Workers" | tee -a "$GITHUB_STEP_SUMMARY"
 
   translations:
     runs-on: ubuntu-latest
@@ -235,7 +235,7 @@ jobs:
         run: |
           [ -d "$RUNNER_TEMP/unit.xcresult" ] || exit 0
           xcrun xccov view --report --only-targets --json "$RUNNER_TEMP/unit.xcresult" > "$RUNNER_TEMP/xccov.json" || true
-          python3 ../scripts/coverage_summary.py xccov "$RUNNER_TEMP/xccov.json" "iOS app (unit tests)" >> "$GITHUB_STEP_SUMMARY"
+          python3 ../scripts/coverage_summary.py xccov "$RUNNER_TEMP/xccov.json" "iOS app (unit tests)" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Versions in the run summary
         if: always()
         run: |
