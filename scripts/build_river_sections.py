@@ -534,11 +534,11 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
                     for w in ex.lines_named(n, lat, lon, REACH_KM + 2) for p in w["geometry"])), "")
             else:
                 joined = ""
-            if joined in rivers[i + 1:] and joined not in carry and (i == 0 or carry.get(river_name) == key):
-                # Only a side of the club's own water carries on (not an included arm's own mouth).
+            if joined in rivers[i + 1:] and joined not in carry:
                 carry[joined], carry_at[joined], carry_km[joined] = key, end_xy, offset + limit[0]
             lines += river.lines(walk, limit[0] * 1000)
-            if i == 0 or carry.get(river_name) == key:
+            # A side carries on into a water it ran into; an included arm's own mouth must not cut it short.
+            if i == 0 or (carry.get(river_name) == key and offset + limit[0] >= sides.get(key, {}).get("km", 0.0)):
                 end = next((n for n in walk["dist"] if abs(walk["dist"][n] - limit[0] * 1000) < 1), None)
                 end = end or min(walk["dist"], key=lambda n: abs(walk["dist"][n] - limit[0] * 1000))
                 sides[key] = {"km": round(offset + limit[0], 2), "end": limit[1], "what": limit[2],
