@@ -337,6 +337,7 @@ struct TutorialView: View {
                 }
                 .opacity(isLast || page.isChoice ? 0 : 1)
                 .disabled(isLast || page.isChoice)
+                .accessibilityIdentifier("tour-skip")
             }
             .padding(.horizontal)
             TabView(selection: $page) {
@@ -387,6 +388,7 @@ struct TutorialView: View {
             .buttonStyle(.borderedProminent)
             .controlSize(.large)
             .disabled(page == .homeBase && needsHome)
+            .accessibilityIdentifier("tour-next")
             .padding(.horizontal)
             .padding(.bottom, 8)
         }
@@ -423,6 +425,7 @@ private struct ClubChoicePage: View {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                 TextField(tr("Search clubs, lakes or towns"), text: $search)
                     .autocorrectionDisabled()
+                    .accessibilityIdentifier("tour-search-\(page.rawValue)")
                 if !search.isEmpty {
                     Button { search = "" } label: {
                         Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
@@ -533,6 +536,7 @@ private struct ClubChoicePage: View {
                 .font(.title3)
             }
         }
+        .accessibilityIdentifier("tour-club-\(club.id)")
     }
 }
 

@@ -5,6 +5,11 @@ struct RowFrogApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
 
     init() {
+        // Test hook: `-RWFreshStart YES` forgets everything saved, as after a new
+        // install (the tap test of the first start). Launch arguments still apply.
+        if UserDefaults.standard.bool(forKey: "RWFreshStart"), let id = Bundle.main.bundleIdentifier {
+            UserDefaults.standard.removePersistentDomain(forName: id)
+        }
         DiagnosisLog.start()
         Tutorial.configureTips()
     }
