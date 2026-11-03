@@ -40,3 +40,28 @@ test("the Beaufort chart scale keeps the order of line and limits and rounds to 
   close(beaufortScale(5.5), 3.5);
   assert.ok(beaufortScale(5.9) > beaufortScale(5.5));
 });
+
+// The same table the app's UnitsTests.swift reads, so both show the same numbers.
+test("units give the shared table's values, Beaufort forces and decimals", async () => {
+  const { readFileSync } = await import("node:fs");
+  const { beaufort } = await import("../public/app/logic.js");
+  const table = JSON.parse(readFileSync(new URL("../../testdata/units.json", import.meta.url)));
+  for (const c of table.conversions) {
+    const unit = UNITS[c.kind].options[c.web];
+    assert.ok(unit, `no ${c.kind} unit ${c.web}`);
+    close(unit.from(c.metric), c.shown);
+  }
+  for (const [ms, force] of table.beaufort) assert.equal(beaufort(ms), force, `Beaufort at ${ms} m/s`);
+  for (const d of table.digits) {
+    const unit = UNITS[d.kind].options[d.web];
+    assert.equal(unit.digits, d.digits, `${d.kind} ${d.web} decimals`);
+    if (d.changeDigits !== undefined) assert.equal(unit.changeDigits, d.changeDigits, `${d.kind} ${d.web} change decimals`);
+  }
+  // Every unit of the website is in the table.
+  for (const [kind, { options }] of Object.entries(UNITS)) {
+    for (const web of Object.keys(options)) {
+      if (web === "bft") continue;
+      assert.ok(table.conversions.some((c) => c.kind === kind && c.web === web), `${kind} ${web} missing from testdata/units.json`);
+    }
+  }
+});

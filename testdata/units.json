@@ -1,0 +1,661 @@
+{
+ "comment": "Unit conversions the app (ios/RowFrog/Units.swift) and the website (web/public/app/logic.js UNITS) must both give: the metric value the backend sends, the value shown in each unit (to 4 decimals), the Beaufort force at and just below each limit, and the decimals each unit shows. Read by ios/RowFrogTests/UnitsTests.swift and web/tests/units.test.mjs.",
+ "conversions": [
+  {
+   "kind": "temperature",
+   "app": "celsius",
+   "web": "celsius",
+   "metric": -10,
+   "shown": -10
+  },
+  {
+   "kind": "temperature",
+   "app": "fahrenheit",
+   "web": "fahrenheit",
+   "metric": -10,
+   "shown": 14.0
+  },
+  {
+   "kind": "temperature",
+   "app": "celsius",
+   "web": "celsius",
+   "metric": 0,
+   "shown": 0
+  },
+  {
+   "kind": "temperature",
+   "app": "fahrenheit",
+   "web": "fahrenheit",
+   "metric": 0,
+   "shown": 32.0
+  },
+  {
+   "kind": "temperature",
+   "app": "celsius",
+   "web": "celsius",
+   "metric": 15.5,
+   "shown": 15.5
+  },
+  {
+   "kind": "temperature",
+   "app": "fahrenheit",
+   "web": "fahrenheit",
+   "metric": 15.5,
+   "shown": 59.9
+  },
+  {
+   "kind": "temperature",
+   "app": "celsius",
+   "web": "celsius",
+   "metric": 30,
+   "shown": 30
+  },
+  {
+   "kind": "temperature",
+   "app": "fahrenheit",
+   "web": "fahrenheit",
+   "metric": 30,
+   "shown": 86.0
+  },
+  {
+   "kind": "wind",
+   "app": "metersPerSecond",
+   "web": "ms",
+   "metric": 0,
+   "shown": 0
+  },
+  {
+   "kind": "wind",
+   "app": "kilometersPerHour",
+   "web": "kmh",
+   "metric": 0,
+   "shown": 0.0
+  },
+  {
+   "kind": "wind",
+   "app": "knots",
+   "web": "kn",
+   "metric": 0,
+   "shown": 0.0
+  },
+  {
+   "kind": "wind",
+   "app": "milesPerHour",
+   "web": "mph",
+   "metric": 0,
+   "shown": 0.0
+  },
+  {
+   "kind": "wind",
+   "app": "metersPerSecond",
+   "web": "ms",
+   "metric": 3.2,
+   "shown": 3.2
+  },
+  {
+   "kind": "wind",
+   "app": "kilometersPerHour",
+   "web": "kmh",
+   "metric": 3.2,
+   "shown": 11.52
+  },
+  {
+   "kind": "wind",
+   "app": "knots",
+   "web": "kn",
+   "metric": 3.2,
+   "shown": 6.2203
+  },
+  {
+   "kind": "wind",
+   "app": "milesPerHour",
+   "web": "mph",
+   "metric": 3.2,
+   "shown": 7.1582
+  },
+  {
+   "kind": "wind",
+   "app": "metersPerSecond",
+   "web": "ms",
+   "metric": 10,
+   "shown": 10
+  },
+  {
+   "kind": "wind",
+   "app": "kilometersPerHour",
+   "web": "kmh",
+   "metric": 10,
+   "shown": 36.0
+  },
+  {
+   "kind": "wind",
+   "app": "knots",
+   "web": "kn",
+   "metric": 10,
+   "shown": 19.4384
+  },
+  {
+   "kind": "wind",
+   "app": "milesPerHour",
+   "web": "mph",
+   "metric": 10,
+   "shown": 22.3694
+  },
+  {
+   "kind": "wind",
+   "app": "metersPerSecond",
+   "web": "ms",
+   "metric": 25,
+   "shown": 25
+  },
+  {
+   "kind": "wind",
+   "app": "kilometersPerHour",
+   "web": "kmh",
+   "metric": 25,
+   "shown": 90.0
+  },
+  {
+   "kind": "wind",
+   "app": "knots",
+   "web": "kn",
+   "metric": 25,
+   "shown": 48.5961
+  },
+  {
+   "kind": "wind",
+   "app": "milesPerHour",
+   "web": "mph",
+   "metric": 25,
+   "shown": 55.9234
+  },
+  {
+   "kind": "waves",
+   "app": "meters",
+   "web": "m",
+   "metric": 0,
+   "shown": 0
+  },
+  {
+   "kind": "waves",
+   "app": "centimeters",
+   "web": "cm",
+   "metric": 0,
+   "shown": 0
+  },
+  {
+   "kind": "waves",
+   "app": "feet",
+   "web": "ft",
+   "metric": 0,
+   "shown": 0.0
+  },
+  {
+   "kind": "waves",
+   "app": "meters",
+   "web": "m",
+   "metric": 0.15,
+   "shown": 0.15
+  },
+  {
+   "kind": "waves",
+   "app": "centimeters",
+   "web": "cm",
+   "metric": 0.15,
+   "shown": 15.0
+  },
+  {
+   "kind": "waves",
+   "app": "feet",
+   "web": "ft",
+   "metric": 0.15,
+   "shown": 0.4921
+  },
+  {
+   "kind": "waves",
+   "app": "meters",
+   "web": "m",
+   "metric": 0.3048,
+   "shown": 0.3048
+  },
+  {
+   "kind": "waves",
+   "app": "centimeters",
+   "web": "cm",
+   "metric": 0.3048,
+   "shown": 30.48
+  },
+  {
+   "kind": "waves",
+   "app": "feet",
+   "web": "ft",
+   "metric": 0.3048,
+   "shown": 1.0
+  },
+  {
+   "kind": "waves",
+   "app": "meters",
+   "web": "m",
+   "metric": 1.2,
+   "shown": 1.2
+  },
+  {
+   "kind": "waves",
+   "app": "centimeters",
+   "web": "cm",
+   "metric": 1.2,
+   "shown": 120.0
+  },
+  {
+   "kind": "waves",
+   "app": "feet",
+   "web": "ft",
+   "metric": 1.2,
+   "shown": 3.937
+  },
+  {
+   "kind": "rain",
+   "app": "millimeters",
+   "web": "mm",
+   "metric": 0,
+   "shown": 0
+  },
+  {
+   "kind": "rain",
+   "app": "inches",
+   "web": "in",
+   "metric": 0,
+   "shown": 0.0
+  },
+  {
+   "kind": "rain",
+   "app": "millimeters",
+   "web": "mm",
+   "metric": 0.4,
+   "shown": 0.4
+  },
+  {
+   "kind": "rain",
+   "app": "inches",
+   "web": "in",
+   "metric": 0.4,
+   "shown": 0.0157
+  },
+  {
+   "kind": "rain",
+   "app": "millimeters",
+   "web": "mm",
+   "metric": 25.4,
+   "shown": 25.4
+  },
+  {
+   "kind": "rain",
+   "app": "inches",
+   "web": "in",
+   "metric": 25.4,
+   "shown": 1.0
+  },
+  {
+   "kind": "distance",
+   "app": "kilometers",
+   "web": "km",
+   "metric": 800,
+   "shown": 0.8
+  },
+  {
+   "kind": "distance",
+   "app": "miles",
+   "web": "mi",
+   "metric": 800,
+   "shown": 0.4971
+  },
+  {
+   "kind": "distance",
+   "app": "nauticalMiles",
+   "web": "nm",
+   "metric": 800,
+   "shown": 0.432
+  },
+  {
+   "kind": "distance",
+   "app": "kilometers",
+   "web": "km",
+   "metric": 1609.344,
+   "shown": 1.6093
+  },
+  {
+   "kind": "distance",
+   "app": "miles",
+   "web": "mi",
+   "metric": 1609.344,
+   "shown": 1.0
+  },
+  {
+   "kind": "distance",
+   "app": "nauticalMiles",
+   "web": "nm",
+   "metric": 1609.344,
+   "shown": 0.869
+  },
+  {
+   "kind": "distance",
+   "app": "kilometers",
+   "web": "km",
+   "metric": 1852,
+   "shown": 1.852
+  },
+  {
+   "kind": "distance",
+   "app": "miles",
+   "web": "mi",
+   "metric": 1852,
+   "shown": 1.1508
+  },
+  {
+   "kind": "distance",
+   "app": "nauticalMiles",
+   "web": "nm",
+   "metric": 1852,
+   "shown": 1.0
+  },
+  {
+   "kind": "distance",
+   "app": "kilometers",
+   "web": "km",
+   "metric": 20000,
+   "shown": 20.0
+  },
+  {
+   "kind": "distance",
+   "app": "miles",
+   "web": "mi",
+   "metric": 20000,
+   "shown": 12.4274
+  },
+  {
+   "kind": "distance",
+   "app": "nauticalMiles",
+   "web": "nm",
+   "metric": 20000,
+   "shown": 10.7991
+  },
+  {
+   "kind": "pressure",
+   "app": "hectopascals",
+   "web": "hpa",
+   "metric": 980,
+   "shown": 980
+  },
+  {
+   "kind": "pressure",
+   "app": "millibars",
+   "web": "mbar",
+   "metric": 980,
+   "shown": 980
+  },
+  {
+   "kind": "pressure",
+   "app": "bars",
+   "web": "bar",
+   "metric": 980,
+   "shown": 0.98
+  },
+  {
+   "kind": "pressure",
+   "app": "inchesOfMercury",
+   "web": "inhg",
+   "metric": 980,
+   "shown": 28.9394
+  },
+  {
+   "kind": "pressure",
+   "app": "millimetersOfMercury",
+   "web": "mmhg",
+   "metric": 980,
+   "shown": 735.0608
+  },
+  {
+   "kind": "pressure",
+   "app": "hectopascals",
+   "web": "hpa",
+   "metric": 1013.25,
+   "shown": 1013.25
+  },
+  {
+   "kind": "pressure",
+   "app": "millibars",
+   "web": "mbar",
+   "metric": 1013.25,
+   "shown": 1013.25
+  },
+  {
+   "kind": "pressure",
+   "app": "bars",
+   "web": "bar",
+   "metric": 1013.25,
+   "shown": 1.0132
+  },
+  {
+   "kind": "pressure",
+   "app": "inchesOfMercury",
+   "web": "inhg",
+   "metric": 1013.25,
+   "shown": 29.9212
+  },
+  {
+   "kind": "pressure",
+   "app": "millimetersOfMercury",
+   "web": "mmhg",
+   "metric": 1013.25,
+   "shown": 760.0003
+  },
+  {
+   "kind": "pressure",
+   "app": "hectopascals",
+   "web": "hpa",
+   "metric": 1040,
+   "shown": 1040
+  },
+  {
+   "kind": "pressure",
+   "app": "millibars",
+   "web": "mbar",
+   "metric": 1040,
+   "shown": 1040
+  },
+  {
+   "kind": "pressure",
+   "app": "bars",
+   "web": "bar",
+   "metric": 1040,
+   "shown": 1.04
+  },
+  {
+   "kind": "pressure",
+   "app": "inchesOfMercury",
+   "web": "inhg",
+   "metric": 1040,
+   "shown": 30.7112
+  },
+  {
+   "kind": "pressure",
+   "app": "millimetersOfMercury",
+   "web": "mmhg",
+   "metric": 1040,
+   "shown": 780.0645
+  }
+ ],
+ "beaufort": [
+  [
+   0,
+   0
+  ],
+  [
+   0.29,
+   0
+  ],
+  [
+   0.3,
+   1
+  ],
+  [
+   1.59,
+   1
+  ],
+  [
+   1.6,
+   2
+  ],
+  [
+   3.39,
+   2
+  ],
+  [
+   3.4,
+   3
+  ],
+  [
+   5.49,
+   3
+  ],
+  [
+   5.5,
+   4
+  ],
+  [
+   7.99,
+   4
+  ],
+  [
+   8.0,
+   5
+  ],
+  [
+   10.79,
+   5
+  ],
+  [
+   10.8,
+   6
+  ],
+  [
+   13.89,
+   6
+  ],
+  [
+   13.9,
+   7
+  ],
+  [
+   17.19,
+   7
+  ],
+  [
+   17.2,
+   8
+  ],
+  [
+   20.79,
+   8
+  ],
+  [
+   20.8,
+   9
+  ],
+  [
+   24.49,
+   9
+  ],
+  [
+   24.5,
+   10
+  ],
+  [
+   28.49,
+   10
+  ],
+  [
+   28.5,
+   11
+  ],
+  [
+   32.69,
+   11
+  ],
+  [
+   32.7,
+   12
+  ],
+  [
+   40,
+   12
+  ]
+ ],
+ "digits": [
+  {
+   "kind": "waves",
+   "app": "meters",
+   "web": "m",
+   "digits": 2
+  },
+  {
+   "kind": "waves",
+   "app": "centimeters",
+   "web": "cm",
+   "digits": 0
+  },
+  {
+   "kind": "waves",
+   "app": "feet",
+   "web": "ft",
+   "digits": 1
+  },
+  {
+   "kind": "rain",
+   "app": "millimeters",
+   "web": "mm",
+   "digits": 1
+  },
+  {
+   "kind": "rain",
+   "app": "inches",
+   "web": "in",
+   "digits": 2
+  },
+  {
+   "kind": "pressure",
+   "app": "hectopascals",
+   "web": "hpa",
+   "digits": 0,
+   "changeDigits": 1
+  },
+  {
+   "kind": "pressure",
+   "app": "millibars",
+   "web": "mbar",
+   "digits": 0,
+   "changeDigits": 1
+  },
+  {
+   "kind": "pressure",
+   "app": "bars",
+   "web": "bar",
+   "digits": 3,
+   "changeDigits": 4
+  },
+  {
+   "kind": "pressure",
+   "app": "inchesOfMercury",
+   "web": "inhg",
+   "digits": 2,
+   "changeDigits": 2
+  },
+  {
+   "kind": "pressure",
+   "app": "millimetersOfMercury",
+   "web": "mmhg",
+   "digits": 0,
+   "changeDigits": 1
+  }
+ ]
+}
