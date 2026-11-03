@@ -844,6 +844,7 @@ enum German {
         "A river or canal club gets its own two tiles.": "Ein Verein an Fluss oder Kanal bekommt zwei eigene Kacheln.",
         "The River view or Canal view shows your stretch between weirs or locks, with markers where it ends.": "Die Fluss- oder Kanalansicht zeigt deine Strecke zwischen Wehren oder Schleusen, mit Markierungen, wo sie endet.",
         "The Current tile shows the nearest gauge's flow speed, water level and trend. It is amber at high water or a fast current, red when shipping is stopped or the current is too strong.": "Die Kachel „Strömung“ zeigt Fließgeschwindigkeit, Wasserstand und Tendenz am nächsten Pegel. Sie ist gelb bei Hochwasser oder schneller Strömung, rot bei eingestellter Schifffahrt oder zu starker Strömung.",
+        "High water starts at the gauge's shipping mark I, or at mean high water where the gauge has no mark.": "Hochwasser gilt ab Marke I des Pegels, ohne Marke ab mittlerem Hochwasser.",
         "Tap it for the level chart and your pace upstream and downstream.": "Tippe darauf für den Pegelverlauf und dein Tempo flussauf- und flussabwärts.",
         "Below the current conditions, the Lake view shows the whole lake.": "Unter den aktuellen Bedingungen zeigt die Seeansicht den ganzen See.",
         "The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.": "Die Seeansicht zeigt Ampel, Wellen und Wind auf dem ganzen See. Tippe darauf für die große Karte.",
