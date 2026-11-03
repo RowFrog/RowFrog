@@ -122,11 +122,12 @@ final class TapTests: XCTestCase {
                       "No wind tile; the page shows:\n\(app.debugDescription)")
         var issues: [String] = []
         try app.performAccessibilityAudit(for: [.sufficientElementDescription, .hitRegion, .trait, .elementDetection]) { issue in
-            let element = issue.element.map { "\($0.elementType.rawValue) id='\($0.identifier)' label='\($0.label)'" } ?? "no element"
+            let element = issue.element.map { "\($0.elementType.rawValue) id='\($0.identifier)' label='\($0.label)' at \($0.frame)" } ?? "no element"
             issues.append("\(issue.auditType): \(issue.compactDescription) [\(element)]")
             return true  // collected, reported together below
         }
-        XCTAssertTrue(issues.isEmpty, "Accessibility audit of the club page:\n" + issues.joined(separator: "\n"))
+        XCTAssertTrue(issues.isEmpty, "Accessibility audit of the club page:\n" + issues.joined(separator: "\n")
+                      + "\n\nThe page shows:\n\(app.debugDescription)")
     }
 
     /// The tour asks for the location on the home base page; the answer does
