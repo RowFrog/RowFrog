@@ -107,6 +107,67 @@ struct RowingSnapshot {
     static let placeholder = RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: nil)
 }
 
+/// The words the widget shows, worked out here so the tests can read them.
+extension RowingSnapshot {
+    /// The main reason for amber or red, else rain on DWD's radar within two
+    /// hours ("Light rain from 14:30"), else wind and gusts. An out-of-date
+    /// forecast says how old it is instead.
+    func detailLine(_ hour: ForecastHour) -> String {
+        if isStale, let forecast {
+            return tr("As of %@", Format.dayTime(forecast.generatedAt))
+        }
+        if let reason = hour.reasons.filter({ $0.light == hour.light }).first, hour.light != .green {
+            return reason.label
+        }
+        if let radar = rainAhead { return radar.summary }
+        return "\(tr("Wind")) \(Format.windRange(hour.windSpeedMs, hour.windGustMs))"
+    }
+
+    /// The top tile's values in its order: water, wind, waves, then (with two
+    /// rows) rain, visibility, ice when it matters, and daylight.
+    func conditionTiles(rows: Int) -> [WidgetConditionTile] {
+        let hour = current
+        let water: String = {
+            if let measured = forecast?.waterTemperature?.celsius { return Format.temperature(measured, digits: 1) }
+            if let estimate = forecast?.estimatedWaterC { return "≈ " + Format.temperature(estimate) }
+            return "–"
+        }()
+        var tiles: [WidgetConditionTile] = [
+            WidgetConditionTile(condition: .waterTemperature, value: water),
+            WidgetConditionTile(condition: .wind, value: Format.windRange(hour?.windSpeedMs, hour?.windGustMs)),
+            WidgetConditionTile(condition: .waves, value: Format.waves(hour?.waveHeightM)),
+        ]
+        if rows > 1 {
+            tiles += [
+                WidgetConditionTile(condition: .precipitation, value: hour.flatMap(precipitationText) ?? tr("None")),
+                WidgetConditionTile(condition: .visibility, value: Format.distance(hour?.visibilityM)),
+            ]
+            if let ice = forecast?.iceValue { tiles.append(WidgetConditionTile(condition: .ice, value: ice)) }
+            tiles.append(WidgetConditionTile(condition: .daylight, value: sunText))
+        }
+        return tiles
+    }
+
+    /// "↓ 18:42" while the sun is up, else "↑ 07:12".
+    var sunText: String {
+        guard let sun = forecast?.sunState(at: date) else { return "–" }
+        switch sun {
+        case let .up(_, sunset): return "↓ \(Format.time(sunset))"
+        case let .down(sunrise, _): return "↑ \(Format.time(sunrise))"
+        }
+    }
+
+    /// Under "Good to row" when there is no window to show.
+    var noWindowsText: String {
+        isStale ? tr("Forecast out of date. Open Row Frog to update.") : tr("No green hours in the forecast.")
+    }
+
+    /// The lock screen's line: "MRC 1880 · Good to row · 15°".
+    var inlineText: String {
+        "\(clubName) · \(current.map { $0.light.title(stale: isStale) } ?? "–") · \(Format.degrees(current?.temperatureC))"
+    }
+}
+
 extension Light {
     /// A symbol that tells the lights apart without colour, for the lock screen.
     var glyph: String {
@@ -331,18 +392,7 @@ struct RowingWidgetView: View {
             .accessibilityLabel(kit.title)
     }
 
-    /// The main reason for amber or red, else rain on DWD's radar within two
-    /// hours ("Light rain from 14:30"), else wind and gusts.
-    private func detailLine(_ hour: ForecastHour) -> String {
-        if snapshot.isStale, let forecast = snapshot.forecast {
-            return tr("As of %@", Format.dayTime(forecast.generatedAt))
-        }
-        if let reason = hour.reasons.filter({ $0.light == hour.light }).first, hour.light != .green {
-            return reason.label
-        }
-        if let radar = snapshot.rainAhead { return radar.summary }
-        return "\(tr("Wind")) \(Format.windRange(hour.windSpeedMs, hour.windGustMs))"
-    }
+    private func detailLine(_ hour: ForecastHour) -> String { snapshot.detailLine(hour) }
 
     private func skyIcon(_ hour: ForecastHour) -> some View {
         let night = hour.sunUp == false
@@ -377,26 +427,7 @@ struct RowingWidgetView: View {
     /// The top tile's values in its order: water, wind, waves, then rain,
     /// visibility and daylight (ice joins in winter, daylight then gets a line of its own).
     private func conditions(rows: Int) -> some View {
-        let hour = snapshot.current
-        let forecast = snapshot.forecast
-        let water: String = {
-            if let measured = forecast?.waterTemperature?.celsius { return Format.temperature(measured, digits: 1) }
-            if let estimate = forecast?.estimatedWaterC { return "≈ " + Format.temperature(estimate) }
-            return "–"
-        }()
-        var tiles: [ConditionTile] = [
-            ConditionTile(condition: .waterTemperature, value: water),
-            ConditionTile(condition: .wind, value: Format.windRange(hour?.windSpeedMs, hour?.windGustMs)),
-            ConditionTile(condition: .waves, value: Format.waves(hour?.waveHeightM)),
-        ]
-        if rows > 1 {
-            tiles += [
-                ConditionTile(condition: .precipitation, value: hour.flatMap(precipitationText) ?? tr("None")),
-                ConditionTile(condition: .visibility, value: Format.distance(hour?.visibilityM)),
-            ]
-            if let ice = forecast?.iceValue { tiles.append(ConditionTile(condition: .ice, value: ice)) }
-            tiles.append(ConditionTile(condition: .daylight, value: sunText))
-        }
+        let tiles = snapshot.conditionTiles(rows: rows)
         return Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 8) {
             ForEach(0..<(tiles.count + 2) / 3, id: \.self) { row in
                 GridRow {
@@ -421,22 +452,13 @@ struct RowingWidgetView: View {
         }
     }
 
-    /// "↓ 18:42" while the sun is up, else "↑ 07:12".
-    private var sunText: String {
-        guard let sun = snapshot.forecast?.sunState(at: snapshot.date) else { return "–" }
-        switch sun {
-        case let .up(_, sunset): return "↓ \(Format.time(sunset))"
-        case let .down(sunrise, _): return "↑ \(Format.time(sunrise))"
-        }
-    }
-
     private func windows(limit: Int) -> some View {
         VStack(alignment: .leading, spacing: 5) {
             Label(tr("Good to row"), systemImage: "figure.rower")
                 .font(.caption.weight(.semibold))
             let windows = snapshot.rowingWindows.prefix(limit)
             if windows.isEmpty {
-                Text(snapshot.isStale ? tr("Forecast out of date. Open Row Frog to update.") : tr("No green hours in the forecast."))
+                Text(snapshot.noWindowsText)
                     .font(.caption)
                     .opacity(0.85)
             }
@@ -459,7 +481,7 @@ struct RowingWidgetView: View {
         let light = snapshot.current?.light
         let stale = snapshot.isStale
         return Label {
-            Text("\(snapshot.clubName) · \(light?.title(stale: stale) ?? "–") · \(Format.degrees(snapshot.current?.temperatureC))")
+            Text(snapshot.inlineText)
         } icon: {
             Image(systemName: light?.glyph(stale: stale) ?? "questionmark.circle")
         }
@@ -495,7 +517,8 @@ struct RowingWidgetView: View {
     }
 }
 
-private struct ConditionTile {
+/// One value of the widget's conditions grid.
+struct WidgetConditionTile: Equatable {
     let condition: Condition
     let value: String
 }
