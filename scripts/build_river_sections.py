@@ -410,9 +410,11 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
     for p in clubs_m:
         lon, lat = frame.deg(*p)
         lw, ls, le, ln = min(lw, lon - 0.01), min(ls, lat - 0.01), max(le, lon + 0.01), max(ln, lat + 0.01)
-    # Any line of the section's own river, also past its ends: a piece of the river
-    # itself (beyond a weir) is never a launch water, or it pulls in clubs that row elsewhere.
-    own_river = unary_union(river_lines).buffer(5) if river_lines else None
+    # The section's own river past the stretch's ends: a piece of the river there
+    # (beyond a weir) is never a launch water, or it pulls in clubs that row elsewhere.
+    # A side arm of the same name beside the stretch (the Staabe at Königs Wusterhausen) still is.
+    beyond = unary_union(river_lines).difference(corridor) if river_lines else None
+    own_river = beyond.buffer(5) if beyond is not None and not beyond.is_empty else None
     keep, own, launch = [], [], []
     for tags, geom in areas:
         gw, gs, ge, gn = geom.bounds
