@@ -300,39 +300,83 @@
    "country": "de",
    "place": "Hamburg",
    "center": {
-    "lat": 53.60022,
-    "lon": 9.99384
+    "lat": 53.5933,
+    "lon": 10.00273
    },
    "clubs": [
     "akademische-ruderverbindung-alania-zu-hamburg",
     "hamburger-ruderinnen-club-von-1925",
+    "ruder-club-dresdenia",
+    "ruderclub-protesia-von-1907",
     "ruderverein-wandsbek",
-    "ruderverein-an-den-teichwiesen"
+    "ruderverein-an-den-teichwiesen",
+    "sportvereinigung-polizei-hamburg-von-1920-ev-wassersport-abteilung"
    ],
-   "lengthKm": 12.8,
+   "lengthKm": 17.6,
    "up": {
-    "km": 3.58,
-    "end": "weir/lock",
-    "what": "weir",
+    "km": 0.0,
+    "end": "mouth",
+    "what": "Langer Zug",
     "at": [
-     53.62288,
-     10.02848
+     53.57896,
+     10.01303
     ]
    },
    "down": {
-    "km": 6.38,
-    "end": "weir/lock",
-    "what": "lock_gate",
+    "km": 1.02,
+    "end": "mouth",
+    "what": "Alster",
     "at": [
-     53.55184,
-     9.99279
+     53.57557,
+     10.00375
     ]
    },
    "pictureBox": [
     9.9614,
-    53.555,
-    10.02972,
+    53.55164,
+    10.05891,
     53.62614
+   ]
+  },
+  {
+   "id": "river-alster-hamburg-2",
+   "water": "river-alster",
+   "name": "Alster",
+   "river": "Osterbekkanal",
+   "waterway": "canal",
+   "country": "de",
+   "place": "Hamburg",
+   "center": {
+    "lat": 53.58481,
+    "lon": 10.03239
+   },
+   "clubs": [
+    "alster-ruderverein-hanseat-von-1925"
+   ],
+   "lengthKm": 3.4,
+   "up": {
+    "km": 1.82,
+    "end": "line end",
+    "what": "",
+    "at": [
+     53.58563,
+     10.05876
+    ]
+   },
+   "down": {
+    "km": 1.6,
+    "end": "mouth",
+    "what": "Hofwegkanal",
+    "at": [
+     53.57896,
+     10.01303
+    ]
+   },
+   "pictureBox": [
+    10.01271,
+    53.57892,
+    10.05891,
+    53.58573
    ]
   },
   {
@@ -3712,47 +3756,6 @@
    ]
   },
   {
-   "id": "river-isebekkanal-hamburg",
-   "water": "river-isebekkanal",
-   "name": "Isebekkanal",
-   "river": "Isebekkanal",
-   "waterway": "canal",
-   "country": "de",
-   "place": "Hamburg",
-   "center": {
-    "lat": 53.58526,
-    "lon": 9.99094
-   },
-   "clubs": [
-    "sportvereinigung-polizei-hamburg-von-1920-ev-wassersport-abteilung"
-   ],
-   "lengthKm": 12.1,
-   "up": {
-    "km": 2.54,
-    "end": "line end",
-    "what": "",
-    "at": [
-     53.57113,
-     9.96154
-    ]
-   },
-   "down": {
-    "km": 3.77,
-    "end": "mouth",
-    "what": "joins Binnenalster",
-    "at": [
-     53.55722,
-     9.99759
-    ]
-   },
-   "pictureBox": [
-    9.96133,
-    53.55711,
-    10.02872,
-    53.62289
-   ]
-  },
-  {
    "id": "river-kanal-trave-lubeck",
    "water": "river-kanal-trave",
    "name": "Kanal-Trave",
@@ -6763,49 +6766,6 @@
     53.66703,
     9.25029,
     53.74155
-   ]
-  },
-  {
-   "id": "river-osterbekkanal-hamburg",
-   "water": "river-osterbekkanal",
-   "name": "Osterbekkanal",
-   "river": "Osterbekkanal",
-   "waterway": "canal",
-   "country": "de",
-   "place": "Hamburg",
-   "center": {
-    "lat": 53.58393,
-    "lon": 10.02841
-   },
-   "clubs": [
-    "alster-ruderverein-hanseat-von-1925",
-    "ruder-club-dresdenia",
-    "ruderclub-protesia-von-1907"
-   ],
-   "lengthKm": 3.4,
-   "up": {
-    "km": 2.05,
-    "end": "line end",
-    "what": "",
-    "at": [
-     53.58563,
-     10.05876
-    ]
-   },
-   "down": {
-    "km": 1.38,
-    "end": "mouth",
-    "what": "Hofwegkanal",
-    "at": [
-     53.57896,
-     10.01303
-    ]
-   },
-   "pictureBox": [
-    10.0127,
-    53.57889,
-    10.05891,
-    53.58573
    ]
   },
   {
