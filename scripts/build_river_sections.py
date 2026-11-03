@@ -16,7 +16,8 @@ within CLUSTER_KM of each other share one. The rule (owner's choices of
 data/river-section-overrides.json adds the owner's hand checks: extra waters
 that belong to a stretch ("include") and the side a club rows on where a weir
 or lock sits right at its boathouse ("direction"), and a lake on the stretch
-whose clubs stay lake clubs but share the section's outline ("alsoLake").
+whose clubs stay lake clubs but share the section's outline ("alsoLake"), and
+clubs that join the section of their water that reaches them ("join").
 
 The outline is the river's water area (OpenStreetMap riverbanks, river and
 canal areas, and the lakes a river flows through) along the walked stretch,
@@ -594,10 +595,10 @@ def main() -> None:
                     shapes[k["id"]] = shapely.geometry.shape(json.loads(path.read_text(encoding="utf-8"))["features"][0]["geometry"])
             continue
         # Clubs that left another group join a section of the same water that already reaches them all;
-        # so does a group whose launch points all lie in one already (a chain of clubs, as on the Alster).
-        within = OUTSIDE_M if g.get("left") else LAUNCH_WATER_M
+        # so does a group the overrides join to the stretch it lies on ("join", as on the Alster).
+        joins = any(overrides.get(c, {}).get("join") for c in g["clubs"])
         home = next((s for s in sections if s["water"] == g["lakeId"] and s["id"] in shapes
-                     and all(outside_m(shapes[s["id"]], p) <= within for p in g["points"])), None)
+                     and all(outside_m(shapes[s["id"]], p) <= OUTSIDE_M for p in g["points"])), None) if g.get("left") or joins else None
         if home:
             home["clubs"] += g["clubs"]
             print(f"JOINED {home['id']}: {g['clubs']}", flush=True)

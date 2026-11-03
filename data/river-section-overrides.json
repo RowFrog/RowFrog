@@ -169,6 +169,10 @@
       "include": ["Obereider", "Audorfer See", "Nord-Ostsee-Kanal"],
       "note": "Ober-Eider, Die Enge, Audorfer See and probably the Nord-Ostsee-Kanal (owner 2026-11-02)"
     },
+    "alster-ruderverein-hanseat-von-1925": {
+      "join": true,
+      "note": "on the Osterbekkanal, part of the one Alster section (owner 2026-11-03)"
+    },
     "hamburger-ruderinnen-club-von-1925": {
       "include": ["Alster", "Außenalster", "Binnenalster", "Isebekkanal", "Osterbekkanal"],
       "alsoLake": "aussenalster",
