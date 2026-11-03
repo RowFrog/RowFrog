@@ -15,7 +15,9 @@ within CLUSTER_KM of each other share one. The rule (owner's choices of
      each way on canals), moved to a river km sign within KM_SIGN_M.
 data/river-section-overrides.json adds the owner's hand checks: extra waters
 that belong to a stretch ("include") and the side a club rows on where a weir
-or lock sits right at its boathouse ("direction").
+or lock sits right at its boathouse ("direction"), and a lake on the stretch
+whose clubs stay lake clubs but share the section's outline ("alsoLake"), and
+clubs that join the section of their water that reaches them ("join").
 
 The outline is the river's water area (OpenStreetMap riverbanks, river and
 canal areas, and the lakes a river flows through) along the walked stretch,
@@ -406,14 +408,14 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
     for p in clubs_m:
         lon, lat = frame.deg(*p)
         w, s, e, n = min(w, lon - 0.01), min(s, lat - 0.01), max(e, lon + 0.01), max(n, lat + 0.01)
-    keep, own = [], []
+    keep, own, launch = [], [], []
     for tags, geom in areas:
         gw, gs, ge, gn = geom.bounds
         if gw > e or ge < w or gs > n or gn < s:
             continue
         g = frame.to_m(geom).buffer(0)
         if g.area <= LAUNCH_WATER_MAX_M2 and not g.intersects(touch) and any(g.distance(Point(p)) <= LAUNCH_WATER_M for p in clubs_m):
-            own.append(g)
+            launch.append(g)
             continue
         harbour = tags.get("water") in ("harbour", "basin") or tags.get("landuse") == "harbour"
         river_area = tags.get("water") in ("river", "canal") or tags.get("waterway") == "riverbank"
@@ -429,8 +431,11 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
     # Only the pieces the river line runs through (no side arms cut off by the corridor).
     pieces = [p for p in getattr(water, "geoms", [water]) if not p.is_empty and p.intersects(touch)]
     band = merged.buffer(BAND_M["canal" if canal else "river"] / 2, cap_style="flat")
-    shape = unary_union(pieces + [band] + own).buffer(0)
-    return shape.simplify(SIMPLIFY_M, preserve_topology=True), merged
+    core = unary_union(pieces + [band] + own).buffer(0)
+    shape = unary_union([core] + launch).buffer(0)
+    # The core (without the launch waters) decides whether a club lies on the stretch: a piece of the
+    # river beyond a weir must not pull a club in.
+    return shape.simplify(SIMPLIFY_M, preserve_topology=True), merged, core.simplify(SIMPLIFY_M, preserve_topology=True)
 
 
 def build(ex: Extract, g: dict, override: dict) -> dict:
@@ -535,7 +540,8 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
             if joined in rivers[i + 1:] and joined not in carry:
                 carry[joined], carry_at[joined], carry_km[joined] = key, end_xy, offset + limit[0]
             lines += river.lines(walk, limit[0] * 1000)
-            if i == 0 or carry.get(river_name) == key:
+            # A side carries on into a water it ran into; an included arm's own mouth must not cut it short.
+            if i == 0 or (carry.get(river_name) == key and offset + limit[0] >= sides.get(key, {}).get("km", 0.0)):
                 end = next((n for n in walk["dist"] if abs(walk["dist"][n] - limit[0] * 1000) < 1), None)
                 end = end or min(walk["dist"], key=lambda n: abs(walk["dist"][n] - limit[0] * 1000))
                 sides[key] = {"km": round(offset + limit[0], 2), "end": limit[1], "what": limit[2],
@@ -545,8 +551,9 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
     k = math.cos(math.radians(lat))
     reach_deg = (REACH_KM + 2) / 110.574
     areas = ex.areas(lat - reach_deg, lon - reach_deg / k, lat + reach_deg, lon + reach_deg / k)
-    shape, flow = outline(frame, lines, areas, clubs_m, canal, include)
-    return {"river": name, "kind": "canal" if canal else "river", "shape": frame.to_deg(shape), "flow": frame.to_deg(flow.simplify(10)),
+    shape, flow, core = outline(frame, lines, areas, clubs_m, canal, include)
+    return {"river": name, "kind": "canal" if canal else "river", "shape": frame.to_deg(shape), "core": frame.to_deg(core),
+            "flow": frame.to_deg(flow.simplify(10)),
             "lengthKm": round(sum(l.length for l in lines) / 1000, 1), **sides}
 
 
@@ -591,14 +598,15 @@ def main() -> None:
                 if path.exists():
                     shapes[k["id"]] = shapely.geometry.shape(json.loads(path.read_text(encoding="utf-8"))["features"][0]["geometry"])
             continue
-        if g.get("left"):
-            # Clubs that left another group: join a section of the same water that already reaches them all.
-            home = next((s for s in sections if s["water"] == g["lakeId"] and s["id"] in shapes
-                         and all(outside_m(shapes[s["id"]], p) <= OUTSIDE_M for p in g["points"])), None)
-            if home:
-                home["clubs"] += g["clubs"]
-                print(f"JOINED {home['id']}: {g['clubs']}", flush=True)
-                continue
+        # Clubs that left another group join a section of the same water that already reaches them all;
+        # so does a group the overrides join to the stretch it lies on ("join", as on the Alster).
+        joins = any(overrides.get(c, {}).get("join") for c in g["clubs"])
+        home = next((s for s in sections if s["water"] == g["lakeId"] and s["id"] in shapes
+                     and all(outside_m(shapes[s["id"]], p) <= OUTSIDE_M for p in g["points"])), None) if g.get("left") or joins else None
+        if home:
+            home["clubs"] += g["clubs"]
+            print(f"JOINED {home['id']}: {g['clubs']}", flush=True)
+            continue
         override = {}
         for c in g["clubs"]:
             for key, value in overrides.get(c, {}).items():
@@ -616,7 +624,7 @@ def main() -> None:
             problems.append((g["clubs"], r["error"]))
             print(f"PROBLEM {g['lakeId']} {g['clubs']}: {r['error']}", flush=True)
             continue
-        out = [i for i, p in enumerate(g["points"]) if outside_m(r["shape"], p) > OUTSIDE_M]
+        out = [i for i, p in enumerate(g["points"]) if outside_m(r["core"], p) > OUTSIDE_M]
         if out and len(out) < len(g["points"]):
             # Split the group: the clubs inside build again on their own, the others come last.
             print(f"SPLIT {g['lakeId']}: {[g['clubs'][i] for i in out]} lie outside the section", flush=True)
@@ -635,6 +643,13 @@ def main() -> None:
         sections.append(section)
         (OUTLINES / f"{section_id}.geojson").write_text(
             json.dumps(geojson(section_id, g["water"], r["shape"], r["flow"]), ensure_ascii=False, separators=(",", ":")) + "\n", encoding="utf-8")
+        if override.get("alsoLake"):
+            # A lake on this stretch whose clubs stay lake clubs gets the same outline (one Alster for all of Hamburg).
+            lake_path = OUTLINES / f"{override['alsoLake']}.geojson"
+            lake = json.loads(lake_path.read_text(encoding="utf-8"))["properties"] if lake_path.exists() else {"id": override["alsoLake"]}
+            lake_path.write_text(json.dumps({"type": "Feature", "properties": {**lake, "joined": section_id},
+                                             "geometry": geojson(section_id, "", r["shape"], r["flow"])["features"][0]["geometry"]},
+                                            ensure_ascii=False) + "\n", encoding="utf-8")
         ends = " / ".join(f"{k} {v['km']} km {v['end']} {v['what']}".strip() for k, v in (("up", r.get("up")), ("down", r.get("down"))) if v)
         print(f"SECTION {section_id} ({len(g['clubs'])} clubs, {r['lengthKm']} km): {ends}", flush=True)
     for s in old["sections"]:

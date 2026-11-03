@@ -1001,6 +1001,30 @@
       "water": "Alster",
       "kind": "river",
       "id": "river-alster"
+    },
+    "alster-ruderverein-hanseat-von-1925": {
+      "water": "Alster",
+      "kind": "river",
+      "id": "river-alster",
+      "replace": true
+    },
+    "ruder-club-dresdenia": {
+      "water": "Alster",
+      "kind": "river",
+      "id": "river-alster",
+      "replace": true
+    },
+    "ruderclub-protesia-von-1907": {
+      "water": "Alster",
+      "kind": "river",
+      "id": "river-alster",
+      "replace": true
+    },
+    "sportvereinigung-polizei-hamburg-von-1920-ev-wassersport-abteilung": {
+      "water": "Alster",
+      "kind": "river",
+      "id": "river-alster",
+      "replace": true
     }
   }
 }

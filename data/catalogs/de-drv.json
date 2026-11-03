@@ -614,16 +614,6 @@
       "kind": "river"
     },
     {
-      "id": "river-isebekkanal",
-      "name": "Isebekkanal",
-      "country": "de",
-      "center": {
-        "lat": 53.58555,
-        "lon": 9.99095
-      },
-      "kind": "river"
-    },
-    {
       "id": "kalksee",
       "name": "Kalksee",
       "country": "de",
@@ -1010,16 +1000,6 @@
       "center": {
         "lat": 53.69633,
         "lon": 9.17443
-      },
-      "kind": "river"
-    },
-    {
-      "id": "river-osterbekkanal",
-      "name": "Osterbekkanal",
-      "country": "de",
-      "center": {
-        "lat": 53.58501,
-        "lon": 10.03234
       },
       "kind": "river"
     },
@@ -1917,11 +1897,11 @@
       "address": "Kaemmererufer 30, 22303 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-osterbekkanal",
+      "lakeId": "river-alster",
       "launchPoint": {
         "lat": 53.58481,
         "lon": 10.03239,
-        "precision": "shore of the Osterbekkanal nearest the earlier point (geocoded club address, 38 m from the Osterbekkanal), 23 m away",
+        "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
     },
@@ -7166,11 +7146,11 @@
       "address": "Kaemmererufer 26, 22303 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-osterbekkanal",
+      "lakeId": "river-alster",
       "launchPoint": {
         "lat": 53.58478,
         "lon": 10.03137,
-        "precision": "shore of the Osterbekkanal nearest the earlier point (geocoded club address, 44 m from the Osterbekkanal), 23 m away",
+        "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
     },
@@ -8536,11 +8516,11 @@
       "address": "Osterbekstr. 79, 22083 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-osterbekkanal",
+      "lakeId": "river-alster",
       "launchPoint": {
         "lat": 53.5822,
         "lon": 10.02146,
-        "precision": "shore of the Osterbekkanal nearest the earlier point (geocoded club address, 29 m from the Osterbekkanal), 12 m away",
+        "precision": "on the Alster (checked by hand), first matched to Osterbekkanal",
         "verified": false
       }
     },
@@ -12383,11 +12363,11 @@
       "address": "Isekai 12ö, 20249 Hamburg",
       "source": "drv",
       "country": "de",
-      "lakeId": "river-isebekkanal",
+      "lakeId": "river-alster",
       "launchPoint": {
         "lat": 53.58526,
         "lon": 9.99094,
-        "precision": "shore of the Isebekkanal nearest the earlier point (geocoded boathouse, 56 m from the Isebekkanal), 32 m away",
+        "precision": "on the Alster (checked by hand), first matched to Isebekkanal",
         "verified": false
       }
     },
