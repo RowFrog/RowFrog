@@ -152,6 +152,7 @@ struct SafetyNoticeView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(!readToEnd)
+                .accessibilityIdentifier("safety-tick")
                 .opacity(readToEnd ? 1 : 0.5)
                 .accessibilityAddTraits(ticked ? .isSelected : [])
                 if !readToEnd {
@@ -170,6 +171,7 @@ struct SafetyNoticeView: View {
                 .buttonStyle(.borderedProminent)
                 .controlSize(.large)
                 .disabled(!(readToEnd && ticked))
+                .accessibilityIdentifier("safety-agree")
             }
             .padding()
             .frame(maxWidth: 640)

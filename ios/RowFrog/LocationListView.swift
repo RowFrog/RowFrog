@@ -48,6 +48,7 @@ struct LocationListView: View {
                             )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityIdentifier("list-club-\(club.id)")
                         .listRowSeparator(.hidden)
                         .listRowInsets(EdgeInsets(top: 5, leading: 16, bottom: 5, trailing: 16))
                         .listRowBackground(
