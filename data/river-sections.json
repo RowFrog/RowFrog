@@ -310,25 +310,26 @@
     "ruderclub-protesia-von-1907",
     "ruderverein-wandsbek",
     "ruderverein-an-den-teichwiesen",
-    "sportvereinigung-polizei-hamburg-von-1920-ev-wassersport-abteilung"
+    "sportvereinigung-polizei-hamburg-von-1920-ev-wassersport-abteilung",
+    "alster-ruderverein-hanseat-von-1925"
    ],
    "lengthKm": 17.6,
    "up": {
-    "km": 0.0,
-    "end": "mouth",
-    "what": "Langer Zug",
+    "km": 5.73,
+    "end": "weir/lock",
+    "what": "weir",
     "at": [
-     53.57896,
-     10.01303
+     53.62288,
+     10.02848
     ]
    },
    "down": {
-    "km": 1.02,
-    "end": "mouth",
-    "what": "Alster",
+    "km": 4.24,
+    "end": "weir/lock",
+    "what": "lock_gate",
     "at": [
-     53.57557,
-     10.00375
+     53.55184,
+     9.99279
     ]
    },
    "pictureBox": [
@@ -336,47 +337,6 @@
     53.55164,
     10.05891,
     53.62614
-   ]
-  },
-  {
-   "id": "river-alster-hamburg-2",
-   "water": "river-alster",
-   "name": "Alster",
-   "river": "Osterbekkanal",
-   "waterway": "canal",
-   "country": "de",
-   "place": "Hamburg",
-   "center": {
-    "lat": 53.58481,
-    "lon": 10.03239
-   },
-   "clubs": [
-    "alster-ruderverein-hanseat-von-1925"
-   ],
-   "lengthKm": 3.4,
-   "up": {
-    "km": 1.82,
-    "end": "line end",
-    "what": "",
-    "at": [
-     53.58563,
-     10.05876
-    ]
-   },
-   "down": {
-    "km": 1.6,
-    "end": "mouth",
-    "what": "Hofwegkanal",
-    "at": [
-     53.57896,
-     10.01303
-    ]
-   },
-   "pictureBox": [
-    10.01271,
-    53.57892,
-    10.05891,
-    53.58573
    ]
   },
   {
@@ -603,12 +563,12 @@
    ],
    "lengthKm": 32.6,
    "up": {
-    "km": 0.12,
-    "end": "mouth",
-    "what": "Katzengraben",
+    "km": 20.45,
+    "end": "weir/lock",
+    "what": "lock_gate",
     "at": [
-     52.44846,
-     13.57462
+     52.29721,
+     13.65057
     ]
    },
    "down": {
@@ -2585,12 +2545,12 @@
     ]
    },
    "down": {
-    "km": 0.26,
+    "km": 0.67,
     "end": "weir/lock",
-    "what": "weir Palmengartenwehr",
+    "what": "weir",
     "at": [
-     51.33501,
-     12.34979
+     51.33867,
+     12.35954
     ]
    },
    "pictureBox": [
@@ -2906,14 +2866,14 @@
     "muendener-ruderverein",
     "ruderriege-grotefend-gymnasium-muenden"
    ],
-   "lengthKm": 10.9,
+   "lengthKm": 11.0,
    "up": {
-    "km": 0.29,
-    "end": "mouth",
-    "what": "Werra",
+    "km": 1.96,
+    "end": "weir/lock",
+    "what": "lock_gate",
     "at": [
-     51.41944,
-     9.64997
+     51.40357,
+     9.63043
     ]
    },
    "down": {
@@ -4629,19 +4589,23 @@
    "country": "de",
    "place": "Frankfurt",
    "center": {
-    "lat": 50.10631,
-    "lon": 8.71062
+    "lat": 50.11015,
+    "lon": 8.72802
    },
    "clubs": [
     "frankfurter-ruder-und-kanusportverein-sachsenhausen-1898",
     "frankfurter-ruder-club-1884",
     "frankfurter-ruder-gesellschaft-oberrad-1879",
     "frankfurter-rudergesellschaft-borussia-1896",
-    "frankfurter-ruderverein-von-1865"
+    "frankfurter-ruderverein-von-1865",
+    "ruderverein-hellas-offenbach",
+    "srr-leibnizgymnasium-offenbach",
+    "sportgemeinschaft-wiking-1903",
+    "wassersportverein-1926-ev-offenbach-am-main-buergel"
    ],
    "lengthKm": 10.6,
    "up": {
-    "km": 0.78,
+    "km": 0.65,
     "end": "weir/lock",
     "what": "weir Staustufe Offenbach",
     "at": [
@@ -4650,7 +4614,7 @@
     ]
    },
    "down": {
-    "km": 8.75,
+    "km": 8.88,
     "end": "weir/lock",
     "what": "weir Staustufe Griesheim",
     "at": [
@@ -4659,10 +4623,10 @@
     ]
    },
    "pictureBox": [
-    8.64059,
+    8.65798,
     50.08799,
-    8.7297,
-    50.1129
+    8.77997,
+    50.13428
    ]
   },
   {
@@ -4680,11 +4644,7 @@
    "clubs": [
     "frankfurter-ruder-club-fechenheim-1887",
     "offenbacher-rudergesellschaft-undine-1876",
-    "offenbacher-ruderverein-1874",
-    "ruderverein-hellas-offenbach",
-    "srr-leibnizgymnasium-offenbach",
-    "sportgemeinschaft-wiking-1903",
-    "wassersportverein-1926-ev-offenbach-am-main-buergel"
+    "offenbacher-ruderverein-1874"
    ],
    "lengthKm": 15.0,
    "up": {
@@ -7968,12 +7928,12 @@
     ]
    },
    "down": {
-    "km": 0.99,
+    "km": 0.5,
     "end": "line end",
     "what": "",
     "at": [
-     49.01733,
-     8.34145
+     49.01292,
+     8.34131
     ]
    },
    "pictureBox": [
@@ -9140,49 +9100,8 @@
    "pictureBox": [
     7.16914,
     51.40459,
-    7.22629,
+    7.25341,
     51.41908
-   ]
-  },
-  {
-   "id": "river-ruhr-herdecke",
-   "water": "river-ruhr",
-   "name": "Ruhr",
-   "river": "Ruhr",
-   "waterway": "river",
-   "country": "de",
-   "place": "Herdecke",
-   "center": {
-    "lat": 51.3959,
-    "lon": 7.43011
-   },
-   "clubs": [
-    "ruderclub-westfalen-herdecke-1929"
-   ],
-   "lengthKm": 4.4,
-   "up": {
-    "km": 0.59,
-    "end": "weir/lock",
-    "what": "lock_gate",
-    "at": [
-     51.39399,
-     7.43706
-    ]
-   },
-   "down": {
-    "km": 3.91,
-    "end": "weir/lock",
-    "what": "dam",
-    "at": [
-     51.38389,
-     7.40445
-    ]
-   },
-   "pictureBox": [
-    7.3982,
-    51.38357,
-    7.43711,
-    51.40217
    ]
   },
   {
@@ -9239,14 +9158,15 @@
    "country": "de",
    "place": "Wetter",
    "center": {
-    "lat": 51.38027,
-    "lon": 7.39696
+    "lat": 51.38548,
+    "lon": 7.40801
    },
    "clubs": [
     "ruder-club-mark",
+    "ruderclub-westfalen-herdecke-1929",
     "sportgemeinschaft-demag-ev-wetter"
    ],
-   "lengthKm": 1.5,
+   "lengthKm": 0.5,
    "up": {
     "km": 0.56,
     "end": "weir/lock",
@@ -9258,9 +9178,9 @@
    },
    "down": null,
    "pictureBox": [
-    7.39397,
-    51.37555,
-    7.42169,
+    7.39221,
+    51.37847,
+    7.44039,
     51.40217
    ]
   },
@@ -10173,12 +10093,12 @@
    ],
    "lengthKm": 7.8,
    "up": {
-    "km": 2.83,
+    "km": 0.01,
     "end": "mouth",
-    "what": "Elbe-Lübeck-Kanal",
+    "what": "Stadttrave",
     "at": [
-     53.84551,
-     10.65252
+     53.85842,
+     10.68533
     ]
    },
    "down": {
