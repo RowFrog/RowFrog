@@ -327,10 +327,11 @@ def fetch(
             cache = lswt_cache if lswt_cache is not None else {}
             try:
                 products = lswt_products(client, today - timedelta(days=40))
-                new = [p for p in products if p["Name"] not in cache]
+                # Only the two newest files are used; an older one not read before is not downloaded.
+                new = [p for p in products[-2:] if p["Name"] not in cache]
                 if new:
                     token = lake_ice_satellite._token(client)
-                    for product in new[-2:]:
+                    for product in new:
                         cache[product["Name"]] = fetch_lswt(client, token, product, shores)
                 for name in sorted(cache)[-2:]:
                     for lake_id, reading in cache[name].items():

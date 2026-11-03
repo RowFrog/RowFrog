@@ -172,13 +172,13 @@ def _read(path: str, day: date, shores: dict[str, list[tuple[float, float]]]) ->
             values = []
             for r in range(rows):
                 for c in range(cols):
-                    if inside(*(t * (c + 0.5, r + 0.5)), ring):
+                    if inside(*(t @ (c + 0.5, r + 0.5)), ring):
                         values.append(int(data[r, c]))
                         classes[r * cols + c] = data[r, c]
             p = count(values, day)
             if p.pixels >= MIN_PIXELS:
-                west, north = t * (0, 0)
-                east, south = t * (cols, rows)
+                west, north = t @ (0, 0)
+                east, south = t @ (cols, rows)
                 found[lake_id] = SatellitePass(
                     day, p.pixels, p.ice, p.water, bytes(classes), cols, (west, south, east, north)
                 )
