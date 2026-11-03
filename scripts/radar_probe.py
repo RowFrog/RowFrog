@@ -16,7 +16,7 @@ import os
 import re
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
@@ -73,12 +73,22 @@ def main() -> int:
         at = caps.find("<Name>Niederschlagsradar</Name>")
         block = caps[at : caps.find("</Layer>", at)] if at >= 0 else ""
         say(f"layer in capabilities: {at >= 0}")
-        for d in re.findall(r"<Dimension[^>]*>([^<]*)</Dimension>", block):
+        dimensions = re.findall(r"<Dimension[^>]*>([^<]*)</Dimension>", block)
+        for d in dimensions:
             say(f"time dimension: {d[:200]} ... {d[-200:]}")
+        stale = layer_stale(at >= 0, dimensions)
+        if stale:
+            say(f"RADAR LAYER LOOKS STOPPED: {stale}")
         club = next(iter(locations.load(catalog_paths=()).clubs.values()))
         p = club.launch_point
         say(f"## {club.short_name}")
-        first = json.loads(client.get(WMS, params=params(p.lat, p.lon, None)).text)
+        first = reading(client, p.lat, p.lon)
+        if first is None:
+            # DWD sometimes answers with an empty page or an exception report for a
+            # while (2026-11-03); the app and the backend leave the radar out then.
+            # Only a layer that stopped turns the check red.
+            write_summary()
+            return 1 if stale else 0
         props = first["features"][0]["properties"]
         say(f"  now: {props}")
         ref = datetime.fromisoformat(props["REFERENCE_TIME"].replace("Z", "+00:00"))
@@ -87,11 +97,44 @@ def main() -> int:
             resp = client.get(WMS, params=params(p.lat, p.lon, when), timeout=30)
             say(f"  +{minutes:3d} min {when}: HTTP {resp.status_code} {resp.text[:300]!r}")
         legend_and_region(client, p.lat, p.lon, ref)
+    write_summary()
+    return 1 if stale else 0
+
+
+def layer_stale(listed: bool, dimensions: list[str]) -> str | None:
+    """Why the layer looks stopped, or None: missing from the capabilities, or
+    its newest time (radar plus 2 hours of nowcast) more than an hour ago."""
+    if not listed:
+        return "not in the capabilities"
+    ends = [m for d in dimensions for m in re.findall(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d", d)]
+    if not ends:
+        return "no time dimension"
+    newest = max(datetime.fromisoformat(e + "+00:00") for e in ends)
+    if newest < datetime.now(timezone.utc) - timedelta(hours=1):
+        return f"newest time {newest:%Y-%m-%d %H:%M} UTC"
+    return None
+
+
+def reading(client: RetryClient, lat: float, lon: float) -> dict | None:
+    """The answer for now at a point, asked up to three times; None when DWD
+    sends no JSON with a reading."""
+    for attempt in range(1, 4):
+        resp = client.get(WMS, params=params(lat, lon, None), timeout=30)
+        try:
+            body = json.loads(resp.text)
+            body["features"][0]["properties"]["REFERENCE_TIME"]
+            return body
+        except (ValueError, KeyError, IndexError, TypeError):
+            say(f"  no reading (attempt {attempt}): HTTP {resp.status_code} {resp.text[:300]!r}")
+            time.sleep(15)
+    return None
+
+
+def write_summary() -> None:
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:
         with open(summary, "a", encoding="utf-8") as f:
             f.write("### DWD rain radar\n```\n" + "\n".join(report) + "\n```\n")
-    return 0
 
 
 def legend_and_region(client: RetryClient, lat: float, lon: float, ref: datetime) -> None:
