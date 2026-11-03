@@ -2866,7 +2866,7 @@
     "muendener-ruderverein",
     "ruderriege-grotefend-gymnasium-muenden"
    ],
-   "lengthKm": 11.0,
+   "lengthKm": 10.9,
    "up": {
     "km": 1.96,
     "end": "weir/lock",
@@ -7928,12 +7928,12 @@
     ]
    },
    "down": {
-    "km": 0.5,
+    "km": 0.99,
     "end": "line end",
     "what": "",
     "at": [
-     49.01292,
-     8.34131
+     49.01733,
+     8.34145
     ]
    },
    "pictureBox": [
@@ -10093,12 +10093,12 @@
    ],
    "lengthKm": 7.8,
    "up": {
-    "km": 0.01,
+    "km": 2.83,
     "end": "mouth",
-    "what": "Stadttrave",
+    "what": "Elbe-Lübeck-Kanal",
     "at": [
-     53.85842,
-     10.68533
+     53.84551,
+     10.65252
     ]
    },
    "down": {
