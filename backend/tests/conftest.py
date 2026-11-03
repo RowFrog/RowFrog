@@ -39,3 +39,11 @@ def no_paused_sources(monkeypatch):
     monkeypatch.setattr(api, "_air_days_paused_until", 0.0)
     monkeypatch.setattr(open_meteo, "_failed_in_row", 0)
     monkeypatch.setattr(open_meteo, "_down_until", 0.0)
+
+
+@pytest.fixture(autouse=True)
+def quick_radar_retries(monkeypatch):
+    """A radar reading that fails is asked again without the real pause."""
+    from rowfrog.sources import dwd_radar
+
+    monkeypatch.setattr(dwd_radar, "RETRY_SECONDS", 0.0)

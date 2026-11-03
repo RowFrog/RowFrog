@@ -10,6 +10,10 @@ Source: WMS layer dwd:Niederschlagsradar (RV product, 1 km), read at the
 launch point with GetFeatureInfo, as the app does (RainRadar.swift). No rain
 comes back as a tiny negative value. One reading for the latest picture
 gives the reference time, then one per 15 minutes from it: 10 requests a club.
+DWD now and then answers a single reading with a ServiceExceptionReport
+instead of data, so a failed reading is asked again (up to 3 tries). If one
+still fails, the block keeps the steps up to it, so the widget shows the radar
+as far as it is known rather than none at all.
 
 Data: Deutscher Wetterdienst, CC BY 4.0 (credit "Deutscher Wetterdienst").
 """
@@ -27,6 +31,11 @@ STEP_MINUTES = 15
 AHEAD_MINUTES = 120
 # DWD's server is slow with many parallel requests.
 PARALLEL = 4
+# A reading that fails is asked again after a short pause (1 s, then 2 s).
+TRIES = 3
+RETRY_SECONDS = 1.0
+# The errors one reading can end in; a TLS drop is a raw OSError (ssl.SSLError).
+READING_ERRORS = (httpx.HTTPError, OSError, KeyError, IndexError, ValueError)
 
 requests_made = 0
 
@@ -69,21 +78,42 @@ async def _reading(client: httpx.AsyncClient, lat: float, lon: float, time: date
     requests_made += 1
     resp = await client.get(WMS_URL, params=_params(lat, lon, time), timeout=20)
     resp.raise_for_status()
+    if resp.text.lstrip().startswith("<"):
+        # DWD's ServiceExceptionReport comes as XML with status 200.
+        raise ValueError(f"DWD answered with XML instead of data: {resp.text.strip()[:120]}")
     return parse_reading(resp.json())
+
+
+async def _reading_with_retry(client: httpx.AsyncClient, lat: float, lon: float, time: datetime | None) -> tuple[datetime, float, datetime]:
+    for attempt in range(TRIES):
+        try:
+            return await _reading(client, lat, lon, time)
+        except READING_ERRORS:
+            if attempt == TRIES - 1:
+                raise
+            await asyncio.sleep(RETRY_SECONDS * (attempt + 1))
+    raise AssertionError("unreachable")
 
 
 async def nowcast(client: httpx.AsyncClient, lat: float, lon: float) -> dict:
     """The radar block of a forecast file: the reference time and a step per
     15 minutes from it, two hours ahead."""
-    _, _, reference = await _reading(client, lat, lon, None)
+    _, _, reference = await _reading_with_retry(client, lat, lon, None)
     times = [reference + timedelta(minutes=m) for m in range(0, AHEAD_MINUTES + 1, STEP_MINUTES)]
     # Every reading finishes before an error is raised, so none is left running
     # to fail later outside the caller's handler.
-    readings = await asyncio.gather(*(_reading(client, lat, lon, t) for t in times), return_exceptions=True)
+    readings = await asyncio.gather(*(_reading_with_retry(client, lat, lon, t) for t in times), return_exceptions=True)
+    # Keep the steps up to the first that still failed: a gap would make the
+    # rain seem to stop or start where nothing is known.
+    kept = []
     for reading in readings:
         if isinstance(reading, BaseException):
-            raise reading
-    steps = sorted((at, mm) for at, mm, _ in readings)
+            if not kept or not isinstance(reading, READING_ERRORS):
+                raise reading
+            print(f"  radar: kept {len(kept)} of {len(times)} steps ({type(reading).__name__}: {reading})")
+            break
+        kept.append(reading)
+    steps = sorted((at, mm) for at, mm, _ in kept)
     return {
         "reference": reference.isoformat(),
         "steps": [{"time": at.isoformat(), "mmPerHour": round(mm, 2)} for at, mm in steps],
@@ -100,9 +130,7 @@ async def nowcasts(points: dict[str, tuple[float, float]]) -> dict[str, dict]:
             async with limit:
                 try:
                     results[club_id] = await nowcast(client, lat, lon)
-                # OSError covers a connection the TLS layer drops (ssl.SSLError),
-                # which httpx doesn't always wrap in an HTTPError.
-                except (httpx.HTTPError, OSError, KeyError, IndexError, ValueError) as e:
+                except READING_ERRORS as e:
                     print(f"  radar {club_id}: {type(e).__name__}: {e}")
 
         await asyncio.gather(*(one(i, lat, lon) for i, (lat, lon) in points.items()))
