@@ -408,14 +408,14 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
     for p in clubs_m:
         lon, lat = frame.deg(*p)
         w, s, e, n = min(w, lon - 0.01), min(s, lat - 0.01), max(e, lon + 0.01), max(n, lat + 0.01)
-    keep, own = [], []
+    keep, own, launch = [], [], []
     for tags, geom in areas:
         gw, gs, ge, gn = geom.bounds
         if gw > e or ge < w or gs > n or gn < s:
             continue
         g = frame.to_m(geom).buffer(0)
         if g.area <= LAUNCH_WATER_MAX_M2 and not g.intersects(touch) and any(g.distance(Point(p)) <= LAUNCH_WATER_M for p in clubs_m):
-            own.append(g)
+            launch.append(g)
             continue
         harbour = tags.get("water") in ("harbour", "basin") or tags.get("landuse") == "harbour"
         river_area = tags.get("water") in ("river", "canal") or tags.get("waterway") == "riverbank"
@@ -431,8 +431,11 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
     # Only the pieces the river line runs through (no side arms cut off by the corridor).
     pieces = [p for p in getattr(water, "geoms", [water]) if not p.is_empty and p.intersects(touch)]
     band = merged.buffer(BAND_M["canal" if canal else "river"] / 2, cap_style="flat")
-    shape = unary_union(pieces + [band] + own).buffer(0)
-    return shape.simplify(SIMPLIFY_M, preserve_topology=True), merged
+    core = unary_union(pieces + [band] + own).buffer(0)
+    shape = unary_union([core] + launch).buffer(0)
+    # The core (without the launch waters) decides whether a club lies on the stretch: a piece of the
+    # river beyond a weir must not pull a club in.
+    return shape.simplify(SIMPLIFY_M, preserve_topology=True), merged, core.simplify(SIMPLIFY_M, preserve_topology=True)
 
 
 def build(ex: Extract, g: dict, override: dict) -> dict:
@@ -548,8 +551,9 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
     k = math.cos(math.radians(lat))
     reach_deg = (REACH_KM + 2) / 110.574
     areas = ex.areas(lat - reach_deg, lon - reach_deg / k, lat + reach_deg, lon + reach_deg / k)
-    shape, flow = outline(frame, lines, areas, clubs_m, canal, include)
-    return {"river": name, "kind": "canal" if canal else "river", "shape": frame.to_deg(shape), "flow": frame.to_deg(flow.simplify(10)),
+    shape, flow, core = outline(frame, lines, areas, clubs_m, canal, include)
+    return {"river": name, "kind": "canal" if canal else "river", "shape": frame.to_deg(shape), "core": frame.to_deg(core),
+            "flow": frame.to_deg(flow.simplify(10)),
             "lengthKm": round(sum(l.length for l in lines) / 1000, 1), **sides}
 
 
@@ -620,7 +624,7 @@ def main() -> None:
             problems.append((g["clubs"], r["error"]))
             print(f"PROBLEM {g['lakeId']} {g['clubs']}: {r['error']}", flush=True)
             continue
-        out = [i for i, p in enumerate(g["points"]) if outside_m(r["shape"], p) > OUTSIDE_M]
+        out = [i for i, p in enumerate(g["points"]) if outside_m(r["core"], p) > OUTSIDE_M]
         if out and len(out) < len(g["points"]):
             # Split the group: the clubs inside build again on their own, the others come last.
             print(f"SPLIT {g['lakeId']}: {[g['clubs'][i] for i in out]} lie outside the section", flush=True)
