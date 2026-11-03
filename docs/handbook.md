@@ -270,6 +270,8 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 Every PR runs them (CI and Website workflows); locally:
 
+Test coverage: each run's summary page (the run's "Summary" on GitHub) shows how many lines the tests run, with the files tested least: backend (pytest-cov), Cloudflare Workers and website (Node's `--experimental-test-coverage`), and the app's unit tests in the **ios (newest Xcode)** job (`-enableCodeCoverage`, per target; the tap tests are not counted). `scripts/coverage_summary.py` writes these tables. The numbers only inform; no threshold fails a run. Locally: `pytest --cov=rowfrog` in `backend/`, or `node --test --experimental-test-coverage …`.
+
 | Part | Command (from the repo root) | Where |
 |---|---|---|
 | Backend | `cd backend && pip install -e ".[dev,satellite]" && pytest -q` (without the satellite extra the raster and GRIB tests are skipped) | `backend/tests/`; `test_satellite_replies.py` and `test_icon_d2_build.py` replay saved replies of Copernicus, the Planetary Computer and DWD through a fake web |

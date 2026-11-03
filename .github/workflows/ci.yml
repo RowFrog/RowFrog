@@ -27,7 +27,10 @@ jobs:
       # With the satellite extra (rasterio, eccodes, numpy), as the publishing
       # job installs it, so the satellite and weather map readers are tested too.
       - run: pip install -e ".[dev,satellite]"
-      - run: pytest -q
+      - run: pytest -q --cov=rowfrog --cov-report=json:coverage.json
+      - name: Coverage in the run summary
+        if: always()
+        run: python ../scripts/coverage_summary.py pytest coverage.json "Backend" | tee -a "$GITHUB_STEP_SUMMARY"
 
   # The Cloudflare Workers (usage counter, place suggestions, forecast timer)
   # against a fake Cloudflare: D1 on Node's SQLite with the real schema, a
@@ -39,7 +42,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
-      - run: node --test cloudflare/tests/*.test.mjs
+      - run: |
+          set -o pipefail
+          node --test --experimental-test-coverage --test-reporter=spec cloudflare/tests/*.test.mjs | tee node-test.log
+      - name: Coverage in the run summary
+        if: always()
+        run: python3 scripts/coverage_summary.py node node-test.log "Cloudflare Workers" | tee -a "$GITHUB_STEP_SUMMARY"
 
   translations:
     runs-on: ubuntu-latest
@@ -173,15 +181,20 @@ jobs:
           echo "Using $(xcodebuild -version | head -1) on $OS:$LINE"
           echo "| ${{ matrix.name }} | $(xcodebuild -version | head -1) | $OS | $(echo "$LINE" | sed 's/ (.*//' | xargs) |" > "$RUNNER_TEMP/versions.md"
           echo "DEVICE=$DEVICE" >> "$GITHUB_ENV"
+          # Coverage only in the job that decides, so the info jobs stay as they were.
+          COVERAGE=()
+          [ "${{ matrix.decides }}" = true ] && COVERAGE=(-enableCodeCoverage YES -resultBundlePath "$RUNNER_TEMP/unit.xcresult")
           xcodebuild build-for-testing \
             -project RowFrog.xcodeproj \
             -scheme RowFrog \
             -destination "id=$DEVICE" \
+            ${COVERAGE[@]:0:2} \
             CODE_SIGNING_ALLOWED=NO
           xcodebuild test-without-building \
             -project RowFrog.xcodeproj \
             -scheme RowFrog \
             -destination "id=$DEVICE" \
+            "${COVERAGE[@]}" \
             -only-testing:RowFrogTests
       - name: Run the UI tests (taps in the app)
         # A hung UI test step once held the newest-Xcode job for 35 minutes
@@ -217,6 +230,12 @@ jobs:
             echo "The UI test runner did not start (attempt $attempt)."
           done
           exit 1
+      - name: Coverage in the run summary
+        if: always() && matrix.decides
+        run: |
+          [ -d "$RUNNER_TEMP/unit.xcresult" ] || exit 0
+          xcrun xccov view --report --only-targets --json "$RUNNER_TEMP/unit.xcresult" > "$RUNNER_TEMP/xccov.json" || true
+          python3 ../scripts/coverage_summary.py xccov "$RUNNER_TEMP/xccov.json" "iOS app (unit tests)" | tee -a "$GITHUB_STEP_SUMMARY"
       - name: Versions in the run summary
         if: always()
         run: |
