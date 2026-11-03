@@ -100,14 +100,20 @@ final class SpeedGuardTests: XCTestCase {
         let scene = try XCTUnwrap(UIApplication.shared.connectedScenes.first as? UIWindowScene)
         let window = UIWindow(windowScene: scene)
         window.frame = CGRect(x: 0, y: 0, width: 402, height: 874)
-        let took = seconds {
-            let host = UIHostingController(rootView: LocationPageView(club: club, lake: nil, isHome: true, forecasts: forecasts))
-            window.rootViewController = host
-            window.makeKeyAndVisible()
-            host.view.layoutIfNeeded()
-            CATransaction.flush()
+        func show() -> Double {
+            seconds {
+                let host = UIHostingController(rootView: LocationPageView(club: club, lake: nil, isHome: true, forecasts: forecasts))
+                window.rootViewController = host
+                window.makeKeyAndVisible()
+                host.view.layoutIfNeeded()
+                CATransaction.flush()
+            }
         }
-        print("Speed guard: showing the club page took \(took) s")
+        // The first page in the test run also pays for SwiftUI, fonts and
+        // pictures loading once; the guard holds the second, the page's own work.
+        let first = show()
+        let took = show()
+        print("Speed guard: showing the club page took \(took) s (the first time \(first) s)")
         XCTAssertLessThan(took, Self.pageLimit, "showing the club page took \(took) s")
         window.isHidden = true
     }

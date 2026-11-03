@@ -24,15 +24,24 @@ struct APIClient {
         return APIClient(baseURL: URL(string: raw)!)
     }
 
+    /// Made once: a new formatter for every date took most of the time to read
+    /// a 10-day forecast (the speed guard's tests). The formatters are thread safe.
+    private static let fractionalDates: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        return formatter
+    }()
+    private static let wholeSecondDates: ISO8601DateFormatter = {
+        let formatter = ISO8601DateFormatter()
+        formatter.formatOptions = [.withInternetDateTime]
+        return formatter
+    }()
+
     static let decoder: JSONDecoder = {
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .custom { decoder in
             let text = try decoder.singleValueContainer().decode(String.self)
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            if let date = formatter.date(from: text) { return date }
-            formatter.formatOptions = [.withInternetDateTime]
-            if let date = formatter.date(from: text) { return date }
+            if let date = wholeSecondDates.date(from: text) ?? fractionalDates.date(from: text) { return date }
             throw DecodingError.dataCorrupted(.init(codingPath: decoder.codingPath, debugDescription: "bad date \(text)"))
         }
         return decoder
