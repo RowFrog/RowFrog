@@ -76,22 +76,28 @@ def main() -> int:
         dimensions = re.findall(r"<Dimension[^>]*>([^<]*)</Dimension>", block)
         for d in dimensions:
             say(f"time dimension: {d[:200]} ... {d[-200:]}")
-        stale = layer_stale(at >= 0, dimensions)
-        if stale:
-            say(f"RADAR LAYER LOOKS STOPPED: {stale}")
+        # DWD's servers do not all list the same times: on 2026-11-03 some still
+        # listed times up to 2026-10-28 while the readings were current. So the
+        # list is only noted; the reading's own time decides.
+        listed = layer_stale(at >= 0, dimensions)
+        if listed:
+            say(f"note: capabilities look old ({listed}); the reading below decides")
         club = next(iter(locations.load(catalog_paths=()).clubs.values()))
         p = club.launch_point
         say(f"## {club.short_name}")
         first = reading(client, p.lat, p.lon)
         if first is None:
-            # DWD sometimes answers with an empty page or an exception report for a
-            # while (2026-11-03); the app and the backend leave the radar out then.
-            # Only a layer that stopped turns the check red.
+            # Three tries over about 45 s without a reading: more than DWD's
+            # occasional empty reply (2026-11-03).
+            say("RADAR GIVES NO READING")
             write_summary()
-            return 1 if stale else 0
+            return 1
         props = first["features"][0]["properties"]
         say(f"  now: {props}")
         ref = datetime.fromisoformat(props["REFERENCE_TIME"].replace("Z", "+00:00"))
+        stale = ref < datetime.now(timezone.utc) - timedelta(hours=1)
+        if stale:
+            say(f"RADAR LOOKS STOPPED: newest reading {ref:%Y-%m-%d %H:%M} UTC")
         for minutes in range(0, 135, 15):
             when = (ref + timedelta(minutes=minutes)).strftime("%Y-%m-%dT%H:%M:%SZ")
             resp = client.get(WMS, params=params(p.lat, p.lon, when), timeout=30)
@@ -102,8 +108,8 @@ def main() -> int:
 
 
 def layer_stale(listed: bool, dimensions: list[str]) -> str | None:
-    """Why the layer looks stopped, or None: missing from the capabilities, or
-    its newest time (radar plus 2 hours of nowcast) more than an hour ago."""
+    """Why the capabilities look old, or None: the layer missing, or its newest
+    time (radar plus 2 hours of nowcast) more than an hour ago."""
     if not listed:
         return "not in the capabilities"
     ends = [m for d in dimensions for m in re.findall(r"\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d", d)]
