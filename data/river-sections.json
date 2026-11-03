@@ -4589,8 +4589,8 @@
    "country": "de",
    "place": "Frankfurt",
    "center": {
-    "lat": 50.11015,
-    "lon": 8.72802
+    "lat": 50.10898,
+    "lon": 8.72176
    },
    "clubs": [
     "frankfurter-ruder-und-kanusportverein-sachsenhausen-1898",
@@ -4600,8 +4600,7 @@
     "frankfurter-ruderverein-von-1865",
     "ruderverein-hellas-offenbach",
     "srr-leibnizgymnasium-offenbach",
-    "sportgemeinschaft-wiking-1903",
-    "wassersportverein-1926-ev-offenbach-am-main-buergel"
+    "sportgemeinschaft-wiking-1903"
    ],
    "lengthKm": 10.6,
    "up": {
@@ -4623,10 +4622,10 @@
     ]
    },
    "pictureBox": [
-    8.65798,
+    8.65173,
     50.08799,
-    8.77997,
-    50.13428
+    8.75355,
+    50.12138
    ]
   },
   {
@@ -4644,7 +4643,8 @@
    "clubs": [
     "frankfurter-ruder-club-fechenheim-1887",
     "offenbacher-rudergesellschaft-undine-1876",
-    "offenbacher-ruderverein-1874"
+    "offenbacher-ruderverein-1874",
+    "wassersportverein-1926-ev-offenbach-am-main-buergel"
    ],
    "lengthKm": 15.0,
    "up": {
