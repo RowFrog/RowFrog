@@ -85,8 +85,8 @@
       "note": "Elbe-Seitenkanal and the basin beside it (owner 2026-11-02)"
     },
     "wassersportverein-koenigs-wusterhausen": {
-      "include": ["Dahme", "Krimnicksee", "Krüpelsee", "Großer Zug", "Crossinsee", "Zeuthener See", "Seddinsee", "Langer See", "Zernsdorfer Lankensee", "Dolgensee"],
-      "note": "Dahme and the lakes around Königs Wusterhausen (owner 2026-11-02)"
+      "include": ["Dahme", "Krimnicksee", "Krüpelsee", "Großer Zug", "Crossinsee", "Zeuthener See", "Seddinsee", "Langer See", "Zernsdorfer Lankensee", "Dolgensee", "Staabe"],
+      "note": "Dahme and the lakes around Königs Wusterhausen (owner 2026-11-02); the Staabe above the lock is where the club launches (launch point audit)"
     },
     "wasser-sport-verein-duesseldorf-rudergesellschaft-von-1893": {
       "include": ["Rhein", "Yachthafen Düsseldorf"],
