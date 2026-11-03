@@ -421,6 +421,12 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
         if gw > le or ge < lw or gs > ln or gn < ls:
             continue
         g = frame.to_m(geom).buffer(0)
+        if VERBOSE and g.area <= LAUNCH_WATER_MAX_M2 and any(g.distance(Point(p)) <= LAUNCH_WATER_M for p in clubs_m):
+            inb = g.intersection(beyond).length if beyond is not None and not beyond.is_empty else 0.0
+            print(f"  candidate: {tags.get('name') or tags.get('water') or tags.get('natural')} {g.area / 1e4:.1f} ha "
+                  f"touch={g.intersects(touch)} own_river={own_river is not None and g.intersects(own_river)} "
+                  f"beyond_in={inb:.0f} m in_corridor={g.intersection(corridor).area / g.area:.2f} "
+                  f"river_in={g.intersection(unary_union(river_lines)).length if river_lines else 0:.0f} m", flush=True)
         if (g.area <= LAUNCH_WATER_MAX_M2 and not g.intersects(touch) and not (own_river is not None and g.intersects(own_river))
                 and any(g.distance(Point(p)) <= LAUNCH_WATER_M for p in clubs_m)):
             if VERBOSE:
