@@ -111,6 +111,24 @@ final class TapTests: XCTestCase {
         XCTAssertTrue(app.buttons["Settings"].firstMatch.exists, "Not back on the club page")
     }
 
+    /// Apple's accessibility audit of the club page: every control has a
+    /// name VoiceOver can read, the right traits, a large enough tap area, and
+    /// nothing that should be an element is hidden from VoiceOver. Contrast,
+    /// clipped text and Dynamic Type are left out: they depend on the picture
+    /// behind the cards and are checked on the screenshots instead.
+    func testClubPagePassesTheAccessibilityAudit() throws {
+        let app = launchClubPage()
+        XCTAssertTrue(app.buttons["condition-wind"].waitForExistence(timeout: 180),
+                      "No wind tile; the page shows:\n\(app.debugDescription)")
+        var issues: [String] = []
+        try app.performAccessibilityAudit(for: [.sufficientElementDescription, .hitRegion, .trait, .elementDetection]) { issue in
+            let element = issue.element.map { "\($0.elementType.rawValue) id='\($0.identifier)' label='\($0.label)'" } ?? "no element"
+            issues.append("\(issue.auditType): \(issue.compactDescription) [\(element)]")
+            return true  // collected, reported together below
+        }
+        XCTAssertTrue(issues.isEmpty, "Accessibility audit of the club page:\n" + issues.joined(separator: "\n"))
+    }
+
     /// The tour asks for the location on the home base page; the answer does
     /// not matter to the test, so it is no.
     private func answerLocationQuestion() {
