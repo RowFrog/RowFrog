@@ -130,6 +130,10 @@ jobs:
             decides: false
     runs-on: ${{ matrix.runner }}
     continue-on-error: ${{ !matrix.decides }}
+    # A job normally takes 12 to 20 minutes. The unit test step once hung for
+    # over 2 hours on the Xcode 26 runner (2026-11-03), so every step and the
+    # job as a whole have a limit.
+    timeout-minutes: 60
     defaults:
       run:
         working-directory: ios
@@ -138,6 +142,7 @@ jobs:
       - run: brew install xcodegen
       - run: xcodegen
       - name: Build and run the unit tests on a simulator
+        timeout-minutes: 30
         run: |
           # The newest iPhone (not the Duo) on the newest iOS, or the newest iOS
           # of the matrix's major version.
