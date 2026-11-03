@@ -122,9 +122,10 @@ final class TapTests: XCTestCase {
                       "No wind tile; the page shows:\n\(app.debugDescription)")
         // Small text links inside a card, known and kept on purpose: the boat
         // line already has a 44 pt touch area (tapArea), which the audit cannot
-        // see; the warnings line and Feels like are one text line each, and
-        // a taller target would push the card apart. A new small target fails.
-        let smallOnPurpose = ["For ", "No DWD warning", "No official warning", "Feels like"]
+        // see; the warnings line, the daylight line and Feels like are one text
+        // line each, and a taller target would push the card apart. A new small
+        // target fails.
+        let smallOnPurpose = ["For ", "No DWD warning", "No official warning", "Feels like", "Rowing until", "Rowing again"]
         var issues: [String] = []
         // Without .elementDetection: it reads text off the screen picture and names
         // no element, so a finding can't be traced (it flagged text with nothing
