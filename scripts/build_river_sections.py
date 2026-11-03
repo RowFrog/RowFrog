@@ -412,7 +412,7 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
         lw, ls, le, ln = min(lw, lon - 0.01), min(ls, lat - 0.01), max(le, lon + 0.01), max(ln, lat + 0.01)
     # The section's own river past the stretch's ends: a piece of the river there
     # (beyond a weir) is never a launch water, or it pulls in clubs that row elsewhere.
-    # A side arm of the same name beside the stretch (the Staabe at Königs Wusterhausen) still is.
+    # A water the overrides include still is (the Staabe above the Königs Wusterhausen lock).
     beyond = unary_union(river_lines).difference(corridor) if river_lines else None
     own_river = beyond.buffer(5) if beyond is not None and not beyond.is_empty else None
     keep, own, launch = [], [], []
@@ -427,7 +427,7 @@ def outline(frame: Frame, center_lines: list[LineString], areas: list[tuple[dict
                   f"touch={g.intersects(touch)} own_river={own_river is not None and g.intersects(own_river)} "
                   f"beyond_in={inb:.0f} m in_corridor={g.intersection(corridor).area / g.area:.2f} "
                   f"river_in={g.intersection(unary_union(river_lines)).length if river_lines else 0:.0f} m", flush=True)
-        if (g.area <= LAUNCH_WATER_MAX_M2 and not g.intersects(touch) and not (own_river is not None and g.intersects(own_river))
+        if (g.area <= LAUNCH_WATER_MAX_M2 and not g.intersects(touch) and not (own_river is not None and g.intersects(own_river) and tags.get("name") not in include_areas)
                 and any(g.distance(Point(p)) <= LAUNCH_WATER_M for p in clubs_m)):
             if VERBOSE:
                 print(f"  launch water: {tags.get('name') or tags.get('water') or tags.get('natural')} {g.area / 1e4:.1f} ha", flush=True)
