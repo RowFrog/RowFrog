@@ -257,6 +257,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .river: [
             TourPoint(symbol: "map", text: tr("The River view or Canal view shows your stretch between weirs or locks, with markers where it ends.")),
             TourPoint(symbol: RiverConditions.symbol, text: tr("The Current tile shows the nearest gauge's flow speed, water level and trend. It is amber at high water or a fast current, red when shipping is stopped or the current is too strong.")),
+            TourPoint(symbol: "water.waves", text: tr("High water starts at the gauge's shipping mark I, or at mean high water where the gauge has no mark.")),
             TourPoint(symbol: "hand.tap", text: tr("Tap it for the level chart and your pace upstream and downstream.")),
         ]
         case .locations: [
