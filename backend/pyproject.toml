@@ -10,7 +10,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "Pillow>=10"]
+dev = ["pytest>=8", "pytest-cov>=5", "Pillow>=10"]
 # Reading the Copernicus satellite ice maps and DWD's ICON-D2 grids for the
 # weather maps, and saving the Sentinel-2 pictures as JPEG; only the
 # publishing job needs it.

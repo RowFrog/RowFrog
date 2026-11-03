@@ -42,7 +42,12 @@ jobs:
           python-version: "3.12"
       - run: pip install pillow==11.3.0
       - name: Tests
-        run: node --test web/tests/*.test.mjs
+        run: |
+          set -o pipefail
+          node --test --experimental-test-coverage --test-reporter=spec web/tests/*.test.mjs | tee node-test.log
+      - name: Coverage in the run summary
+        if: always()
+        run: python3 scripts/coverage_summary.py node node-test.log "Website" >> "$GITHUB_STEP_SUMMARY"
       - name: Build (fails on a text without German)
         run: python scripts/build_web.py
       - name: Browser test (the built site in Chromium, with the sample API files)
