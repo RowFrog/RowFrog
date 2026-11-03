@@ -368,6 +368,7 @@ struct BackgroundPicture: View {
                 Image(uiImage: blurred ? BackgroundLibrary.blurred(image) : image)
                     .resizable()
                     .scaledToFill()
+                    .accessibilityHidden(true)
             }
             .clipped()
             .overlay {
@@ -438,6 +439,7 @@ struct FrostedFill<S: Shape>: View {
                         .scaledToFill()
                         .frame(width: frame.width, height: frame.height)
                         .clipped()
+                        .accessibilityHidden(true)
                         .overlay {
                             if colorScheme == .dark { Color.black.opacity(0.3) }
                         }

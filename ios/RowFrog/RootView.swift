@@ -382,6 +382,7 @@ private struct TopEdgeFade: View {
             if PowerState.shared.lowPower {
                 Rectangle().fill(Color(.systemGroupedBackground))
                     .frame(height: bar)
+                    .accessibilityHidden(true)
             } else {
                 let height = bar + Self.tail
                 // Thin, so the cards still show through blurred, as under Mail's
@@ -395,6 +396,7 @@ private struct TopEdgeFade: View {
                                        startPoint: .top, endPoint: .bottom)
                     }
                     .frame(height: height)
+                    .accessibilityHidden(true)
             }
             if let title {
                 InlineClubTitle(club: title, light: light, stale: stale, sideRoom: sideRoom)
