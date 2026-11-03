@@ -27,6 +27,18 @@ jobs:
       - run: pip install -e ".[dev]"
       - run: pytest -q
 
+  # The Cloudflare Workers (usage counter, place suggestions, forecast timer)
+  # against a fake Cloudflare: D1 on Node's SQLite with the real schema, a
+  # recorded fetch. No account or wrangler needed.
+  workers:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: node --test cloudflare/tests/*.test.mjs
+
   translations:
     runs-on: ubuntu-latest
     steps:

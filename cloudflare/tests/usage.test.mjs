@@ -1,0 +1,118 @@
+// The usage counter (cloudflare/usage): passes every request through, counts
+// club and lake loads per day, and keeps the jobs' call totals behind a key.
+import assert from "node:assert/strict";
+import { afterEach, beforeEach, test } from "node:test";
+import { fileURLToPath } from "node:url";
+import worker from "../usage/src/index.js";
+import { FakeD1, fakeCtx, fakeFetch } from "./fakes.mjs";
+
+const SCHEMA = fileURLToPath(new URL("../usage/schema.sql", import.meta.url));
+const KEY = "test-key";
+const today = () => new Date().toISOString().slice(0, 10);
+let env, upstream;
+
+beforeEach(() => {
+  env = { DB: new FakeD1(SCHEMA), USAGE_KEY: KEY };
+  upstream = fakeFetch((request) =>
+    new URL(request.url).pathname.includes("missing") ? new Response("no", { status: 404 }) : new Response("{}")
+  );
+});
+afterEach(() => upstream.restore());
+
+async function get(path, { method = "GET", key, body } = {}) {
+  const ctx = fakeCtx();
+  const headers = key ? { authorization: `Bearer ${key}` } : {};
+  const response = await worker.fetch(new Request(`https://api.rowfrog.com${path}`, { method, headers, body }), env, ctx);
+  await ctx.done();
+  return response;
+}
+
+test("a club forecast or lake view passes through and is counted per day", async () => {
+  const response = await get("/v1/clubs/mrc-1880/forecast");
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), "{}");
+  assert.equal(upstream.length, 1);
+  await get("/v1/clubs/mrc-1880/forecast");
+  await get("/v1/lakes/starnberger-see/view");
+  assert.deepEqual(env.DB.rows("SELECT day, kind, id, n FROM hits ORDER BY kind"), [
+    { day: today(), kind: "club", id: "mrc-1880", n: 2 },
+    { day: today(), kind: "lake", id: "starnberger-see", n: 1 },
+  ]);
+});
+
+test("other requests pass through without a count", async () => {
+  for (const path of ["/v1/lakes.json", "/v1/clubs/missing/forecast", "/v1/clubs/MRC/forecast", "/v1/clubs/a/b/forecast", "/v1/clubs/mrc-1880/history"]) {
+    const response = await get(path);
+    assert.ok(response.status === 200 || response.status === 404, path);
+  }
+  await get("/v1/clubs/mrc-1880/forecast", { method: "POST", body: "x" });
+  assert.equal(upstream.length, 6);
+  assert.deepEqual(env.DB.rows("SELECT * FROM hits"), []);
+});
+
+test("a counting error never breaks the response", async () => {
+  env.DB = { prepare: () => ({ bind: () => ({ run: async () => { throw new Error("D1 down"); } }) }) };
+  const response = await get("/v1/clubs/mrc-1880/forecast");
+  assert.equal(response.status, 200);
+});
+
+test("/usage and /budget need the key and never reach the backend", async () => {
+  for (const [path, method] of [["/usage", "GET"], ["/budget", "GET"], ["/budget", "POST"]]) {
+    assert.equal((await get(path, { method })).status, 401);
+    assert.equal((await get(path, { method, key: "wrong" })).status, 401);
+  }
+  env.USAGE_KEY = "";
+  assert.equal((await get("/usage", { key: "" })).status, 401);
+  assert.equal(upstream.length, 0);
+});
+
+test("/usage sums the counts of the last days", async () => {
+  env.DB.db.exec(`INSERT INTO hits VALUES ('${today()}', 'club', 'mrc-1880', 3), ('2000-01-01', 'club', 'mrc-1880', 50),
+                  ('${today()}', 'lake', 'starnberger-see', 2)`);
+  const response = await get("/usage", { key: KEY });
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await response.json(), { days: 7, clubs: { "mrc-1880": 3 }, lakes: { "starnberger-see": 2 } });
+  assert.equal((await (await get("/usage?days=1000", { key: KEY })).json()).days, 120);
+  assert.equal((await (await get("/usage?days=0", { key: KEY })).json()).days, 1);
+  assert.equal((await (await get("/usage?days=abc", { key: KEY })).json()).days, 7);
+});
+
+test("/budget adds the jobs' calls per day, service and job", async () => {
+  const post = (body) => get("/budget", { method: "POST", key: KEY, body: JSON.stringify(body) });
+  assert.equal((await post({ service: "open-meteo", job: "publish", calls: 120 })).status, 200);
+  assert.equal((await post({ service: "open-meteo", job: "publish", calls: 30.5 })).status, 200);
+  assert.equal((await post({ service: "copernicus", job: "ice", calls: 4 })).status, 200);
+  const { days, rows } = await (await get("/budget", { key: KEY })).json();
+  assert.equal(days, 35);
+  assert.deepEqual(rows.sort((a, b) => a.service.localeCompare(b.service)), [
+    { day: today(), service: "copernicus", job: "ice", calls: 4 },
+    { day: today(), service: "open-meteo", job: "publish", calls: 150.5 },
+  ]);
+});
+
+test("/budget turns away bad reports", async () => {
+  const bad = [
+    "not json",
+    JSON.stringify({ service: "Open Meteo", job: "publish", calls: 1 }),
+    JSON.stringify({ service: "open-meteo", job: "", calls: 1 }),
+    JSON.stringify({ service: "open-meteo", job: "publish", calls: -1 }),
+    JSON.stringify({ service: "open-meteo", job: "publish", calls: "5" }),
+    JSON.stringify({ service: "open-meteo", job: "publish", calls: 1e8 }),
+    "null",
+  ];
+  for (const body of bad) {
+    assert.equal((await get("/budget", { method: "POST", key: KEY, body })).status, 400, body);
+  }
+  assert.deepEqual(env.DB.rows("SELECT * FROM budget"), []);
+  assert.equal((await get("/usage", { method: "POST", key: KEY })).status, 404);
+});
+
+test("the daily clean-up deletes counts older than 120 days", async () => {
+  const old = new Date(Date.now() - 121 * 86400000).toISOString().slice(0, 10);
+  const kept = new Date(Date.now() - 119 * 86400000).toISOString().slice(0, 10);
+  env.DB.db.exec(`INSERT INTO hits VALUES ('${old}', 'club', 'a', 1), ('${kept}', 'club', 'b', 1);
+                  INSERT INTO budget VALUES ('${old}', 'open-meteo', 'publish', 1), ('${kept}', 'open-meteo', 'publish', 2)`);
+  await worker.scheduled({}, env);
+  assert.deepEqual(env.DB.rows("SELECT id FROM hits"), [{ id: "b" }]);
+  assert.deepEqual(env.DB.rows("SELECT calls FROM budget"), [{ calls: 2 }]);
+});
