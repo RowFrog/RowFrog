@@ -1523,6 +1523,24 @@ private struct HourRow: View {
         .minimumScaleFactor(0.8)
         .opacity(dark ? 0.6 : 1)
         .padding(.vertical, 2)
+        // One element for VoiceOver, read as a sentence instead of ten loose numbers;
+        // it also keeps the page's accessibility tree small enough for the UI tests
+        // to read on the slower simulators (48 rows of ten values each).
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+    }
+
+    private var accessibilityText: String {
+        var parts = [Format.time(hour.time), hour.light.title]
+        parts.append(Sky(hour: hour).title)
+        parts.append(Format.degrees(hour.temperatureC))
+        parts.append(tr("Feels like %@", Format.degrees(hour.apparentTemperatureC)))
+        if let wind = hour.windSpeedMs { parts.append(tr("wind %@", Format.wind(wind))) }
+        if let gust = hour.windGustMs { parts.append(tr("gusts up to %@", Format.wind(gust))) }
+        if hour.waveHeightM != nil { parts.append(tr("waves %@", Format.waves(hour.waveHeightM))) }
+        parts.append((hour.precipitationMm ?? 0) >= 0.1 ? tr("%@ rain", Format.rain(hour.precipitationMm)) : tr("dry"))
+        if hour.visibilityM != nil { parts.append(tr("visibility %@", Format.distance(hour.visibilityM))) }
+        return parts.joined(separator: ", ")
     }
 
     private func cell(_ text: String) -> some View {
