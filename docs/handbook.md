@@ -275,6 +275,7 @@ Every PR runs them (CI and Website workflows); locally:
 | Backend | `cd backend && pytest -q` | `backend/tests/` |
 | App | `cd ios && xcodegen && xcodebuild test -scheme RowFrog -destination "platform=iOS Simulator,name=iPhone 16"` | `ios/RowFrogTests/` (logic), `ios/RowFrogUITests/` (taps) |
 | Website | `node --test web/tests/*.test.mjs` | `web/tests/` |
+| Cloudflare Workers | `node --test cloudflare/tests/*.test.mjs` (Node 22 or later) | `cloudflare/tests/`: the usage counter, place suggestions and forecast timer against a fake Cloudflare (`fakes.mjs`: D1 on Node's SQLite with `usage/schema.sql`, a recorded fetch); the CI job `workers` runs them on every PR |
 | Website in a browser | `python scripts/build_web.py`, then `(cd web && npm install --no-save playwright@1.63.0 && npx playwright install chromium)` and `node --test web/tests/browser/*.test.mjs` | `web/tests/browser/`: opens the built site in Chromium against the sample API files, without internet, checks the safety notice, opens every tile of the club page and the list, and fails on any JavaScript error. `RF_DEBUG=1` prints failed requests and error stacks |
 | Translations | `python3 scripts/check_translations.py` | |
 
