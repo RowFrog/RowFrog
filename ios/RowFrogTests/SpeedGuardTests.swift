@@ -29,9 +29,12 @@ private final class SampleForecastStub: URLProtocol {
 /// forecast again.
 @MainActor
 final class SpeedGuardTests: XCTestCase {
-    /// Seconds, generous on purpose: the Intel runners are slow and uneven.
-    private static let decodeLimit = 1.0
-    private static let lightsLimit = 1.0
+    /// Seconds, about 4 to 5 times the slowest runner (Intel, 2026-11-03: reading
+    /// 0.07 s, lights 0.0001 s, the page's second showing 1.8 s; Apple silicon
+    /// 0.02 s, 0.00003 s and 0.5 s). Before the date readers were made once,
+    /// reading took 0.3 to 0.7 s.
+    private static let decodeLimit = 0.35
+    private static let lightsLimit = 0.05
     private static let pageLimit = 8.0
 
     private static let sampleFile = URL(fileURLWithPath: #filePath)
