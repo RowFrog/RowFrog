@@ -272,7 +272,7 @@ Every PR runs them (CI and Website workflows); locally:
 
 | Part | Command (from the repo root) | Where |
 |---|---|---|
-| Backend | `cd backend && pytest -q` | `backend/tests/` |
+| Backend | `cd backend && pip install -e ".[dev,satellite]" && pytest -q` (without the satellite extra the raster and GRIB tests are skipped) | `backend/tests/`; `test_satellite_replies.py` and `test_icon_d2_build.py` replay saved replies of Copernicus, the Planetary Computer and DWD through a fake web |
 | App | `cd ios && xcodegen && xcodebuild test -scheme RowFrog -destination "platform=iOS Simulator,name=iPhone 16"` | `ios/RowFrogTests/` (logic), `ios/RowFrogUITests/` (taps) |
 | Website | `node --test web/tests/*.test.mjs` | `web/tests/` |
 | Cloudflare Workers | `node --test cloudflare/tests/*.test.mjs` (Node 22 or later) | `cloudflare/tests/`: the usage counter, place suggestions and forecast timer against a fake Cloudflare (`fakes.mjs`: D1 on Node's SQLite with `usage/schema.sql`, a recorded fetch); the CI job `workers` runs them on every PR |

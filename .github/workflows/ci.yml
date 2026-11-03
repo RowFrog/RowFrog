@@ -24,7 +24,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[dev]"
+      # With the satellite extra (rasterio, eccodes, numpy), as the publishing
+      # job installs it, so the satellite and weather map readers are tested too.
+      - run: pip install -e ".[dev,satellite]"
       - run: pytest -q
 
   # The Cloudflare Workers (usage counter, place suggestions, forecast timer)
