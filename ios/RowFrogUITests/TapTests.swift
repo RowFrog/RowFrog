@@ -126,7 +126,10 @@ final class TapTests: XCTestCase {
         // a taller target would push the card apart. A new small target fails.
         let smallOnPurpose = ["For ", "No DWD warning", "No official warning", "Feels like"]
         var issues: [String] = []
-        try app.performAccessibilityAudit(for: [.sufficientElementDescription, .hitRegion, .trait, .elementDetection]) { issue in
+        // Without .elementDetection: it reads text off the screen picture and names
+        // no element, so a finding can't be traced (it flagged text with nothing
+        // to point at once the background picture was hidden from VoiceOver).
+        try app.performAccessibilityAudit(for: [.sufficientElementDescription, .hitRegion, .trait]) { issue in
             if issue.auditType == .hitRegion, let label = issue.element?.label,
                smallOnPurpose.contains(where: { label.hasPrefix($0) }) {
                 return true
