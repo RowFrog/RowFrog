@@ -4589,22 +4589,19 @@
    "country": "de",
    "place": "Frankfurt",
    "center": {
-    "lat": 50.10898,
-    "lon": 8.72176
+    "lat": 50.10631,
+    "lon": 8.71062
    },
    "clubs": [
     "frankfurter-ruder-und-kanusportverein-sachsenhausen-1898",
     "frankfurter-ruder-club-1884",
     "frankfurter-ruder-gesellschaft-oberrad-1879",
     "frankfurter-rudergesellschaft-borussia-1896",
-    "frankfurter-ruderverein-von-1865",
-    "ruderverein-hellas-offenbach",
-    "srr-leibnizgymnasium-offenbach",
-    "sportgemeinschaft-wiking-1903"
+    "frankfurter-ruderverein-von-1865"
    ],
    "lengthKm": 10.6,
    "up": {
-    "km": 0.65,
+    "km": 0.78,
     "end": "weir/lock",
     "what": "weir Staustufe Offenbach",
     "at": [
@@ -4613,7 +4610,7 @@
     ]
    },
    "down": {
-    "km": 8.88,
+    "km": 8.75,
     "end": "weir/lock",
     "what": "weir Staustufe Griesheim",
     "at": [
@@ -4622,10 +4619,10 @@
     ]
    },
    "pictureBox": [
-    8.65173,
+    8.64059,
     50.08799,
-    8.75355,
-    50.12138
+    8.7297,
+    50.1129
    ]
   },
   {
@@ -4644,6 +4641,9 @@
     "frankfurter-ruder-club-fechenheim-1887",
     "offenbacher-rudergesellschaft-undine-1876",
     "offenbacher-ruderverein-1874",
+    "ruderverein-hellas-offenbach",
+    "srr-leibnizgymnasium-offenbach",
+    "sportgemeinschaft-wiking-1903",
     "wassersportverein-1926-ev-offenbach-am-main-buergel"
    ],
    "lengthKm": 15.0,
@@ -9105,6 +9105,47 @@
    ]
   },
   {
+   "id": "river-ruhr-herdecke",
+   "water": "river-ruhr",
+   "name": "Ruhr",
+   "river": "Ruhr",
+   "waterway": "river",
+   "country": "de",
+   "place": "Herdecke",
+   "center": {
+    "lat": 51.3959,
+    "lon": 7.43011
+   },
+   "clubs": [
+    "ruderclub-westfalen-herdecke-1929"
+   ],
+   "lengthKm": 4.4,
+   "up": {
+    "km": 0.59,
+    "end": "weir/lock",
+    "what": "lock_gate",
+    "at": [
+     51.39399,
+     7.43706
+    ]
+   },
+   "down": {
+    "km": 3.91,
+    "end": "weir/lock",
+    "what": "dam",
+    "at": [
+     51.38389,
+     7.40445
+    ]
+   },
+   "pictureBox": [
+    7.3982,
+    51.38357,
+    7.43711,
+    51.40217
+   ]
+  },
+  {
    "id": "river-ruhr-mulheim",
    "water": "river-ruhr",
    "name": "Ruhr",
@@ -9158,15 +9199,14 @@
    "country": "de",
    "place": "Wetter",
    "center": {
-    "lat": 51.38548,
-    "lon": 7.40801
+    "lat": 51.38027,
+    "lon": 7.39696
    },
    "clubs": [
     "ruder-club-mark",
-    "ruderclub-westfalen-herdecke-1929",
     "sportgemeinschaft-demag-ev-wetter"
    ],
-   "lengthKm": 0.5,
+   "lengthKm": 1.5,
    "up": {
     "km": 0.56,
     "end": "weir/lock",
@@ -9178,9 +9218,9 @@
    },
    "down": null,
    "pictureBox": [
-    7.39221,
-    51.37847,
-    7.44039,
+    7.39397,
+    51.37555,
+    7.42169,
     51.40217
    ]
   },
