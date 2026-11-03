@@ -10,7 +10,7 @@ import { icon } from "./icons.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
-  degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, distanceNumber, distance,
+  degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
@@ -20,7 +20,7 @@ import {
   isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
-  waterForHour, key, nightParts, nightSummary,
+  waterForHour, key, nightParts, nightSummary, sky,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView } from "./lakeview.js";
 import { currentTile, currentBody } from "./river.js";
@@ -228,6 +228,17 @@ const sideRoom = () => (sideList.matches && sideHidden ? 104 : 56);
 function boatClassTag(boat) {
   const tag = boatTag(boat);
   return `<span class="class-tag ${isGroup(boat) ? "group" : ""} ${tag.length > 2 ? "long" : ""}" aria-hidden="true">${h(tag)}</span>`;
+}
+
+/** An hour of the 48 hours read as one sentence by a screen reader, not ten loose numbers (HourRow.accessibilityText). */
+function hourSentence(x, stale) {
+  const parts = [time(x.time), lightTitle(x.light, stale), t(SKY_TITLES[sky(x.weatherCode)]), degrees(x.temperatureC), t("Feels like %@", degrees(x.apparentTemperatureC))];
+  if (x.windSpeedMs != null) parts.push(t("wind %@", wind(x.windSpeedMs)));
+  if (x.windGustMs != null) parts.push(t("gusts up to %@", wind(x.windGustMs)));
+  if (x.waveHeightM != null) parts.push(t("waves %@", waves(x.waveHeightM)));
+  parts.push((x.precipitationMm ?? 0) >= 0.1 ? t("%@ rain", rain(x.precipitationMm)) : t("dry"));
+  if (x.visibilityM != null) parts.push(t("visibility %@", distance(x.visibilityM)));
+  return parts.join(", ");
 }
 
 /** The forecast the boat menu reads; the buttons are drawn before it loads. */
@@ -1473,7 +1484,7 @@ function hourlyCard(forecast, now, stale) {
       lastDay = day;
     }
     const fog = lightFor(x, ["fog"]);
-    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}">
+    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}" aria-label="${h(hourSentence(x, stale))}">
       <span>${h(time(x.time))}</span><span>${dot(x.light, 12, stale)}</span><span>${skySymbol(x)}</span>
       <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
       <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>

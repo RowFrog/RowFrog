@@ -71,6 +71,7 @@ export function tourPages(river = false) {
       points: [
         p("map", key("The River view or Canal view shows your stretch between weirs or locks, with markers where it ends.")),
         p("circle-arrow-right", key("The Current tile shows the nearest gauge's flow speed, water level and trend. It is amber at high water or a fast current, red when shipping is stopped or the current is too strong.")),
+        p("waves", key("High water starts at the gauge's shipping mark I, or at mean high water where the gauge has no mark.")),
         p("pointer", key("Tap it for the level chart and your pace upstream and downstream.")),
       ],
     },
