@@ -629,40 +629,44 @@ private struct NowCard: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
             VStack(alignment: .leading, spacing: 6) {
-                if stale {
-                    Label(tr("The forecast is more than 3 hours old. Check the conditions yourself before you go out."), systemImage: "clock.badge.exclamationmark")
-                        .foregroundStyle(.orange)
-                }
-                if hour.reasons.isEmpty {
-                    // The full sentence where it fits on one line, else the short one (owner's choice C, 30.10.2026).
-                    ViewThatFits(in: .horizontal) {
-                        Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
-                        Label(tr("All within the limits."), systemImage: "checkmark.circle")
+                // The reasons read as one "Why: …" for VoiceOver; the warnings line below stays its own button.
+                VStack(alignment: .leading, spacing: 6) {
+                    if stale {
+                        Label(tr("The forecast is more than 3 hours old. Check the conditions yourself before you go out."), systemImage: "clock.badge.exclamationmark")
+                            .foregroundStyle(.orange)
                     }
-                } else {
-                    ForEach(hour.reasons, id: \.self) { reason in
-                        // Without a station the water is estimated, and the advice says so.
-                        Label(water == nil && Condition.waterTemperature.reasonNames.contains(reason.condition)
-                              ? tr("Estimated: %@", reason.explanation) : forecast.explanation(reason, in: hour), systemImage: reason.symbol)
-                            .foregroundStyle(reason.light == .red ? Color.red : Color.orange)
+                    if hour.reasons.isEmpty {
+                        // The full sentence where it fits on one line, else the short one (owner's choice C, 30.10.2026).
+                        ViewThatFits(in: .horizontal) {
+                            Label(tr("All conditions are within the limits."), systemImage: "checkmark.circle")
+                            Label(tr("All within the limits."), systemImage: "checkmark.circle")
+                        }
+                    } else {
+                        ForEach(hour.reasons, id: \.self) { reason in
+                            // Without a station the water is estimated, and the advice says so.
+                            Label(water == nil && Condition.waterTemperature.reasonNames.contains(reason.condition)
+                                  ? tr("Estimated: %@", reason.explanation) : forecast.explanation(reason, in: hour), systemImage: reason.symbol)
+                                .foregroundStyle(reason.light == .red ? Color.red : Color.orange)
+                        }
+                    }
+                    ForEach(hour.notes ?? [], id: \.self) { note in
+                        Label(note.noteText(for: AppSettings.shared.boat(at: forecast.clubId)), systemImage: "info.circle")
+                            .foregroundStyle(.secondary)
+                    }
+                    if let steadier = SteadierBoat.suggestion(for: hour, water: water?.celsius ?? forecast.estimatedWaterC, at: forecast.clubId) {
+                        Label(steadier.light == .green
+                              ? tr("A steadier boat helps: %@ would be green now.", steadier.boat.title)
+                              : tr("A steadier boat helps: %@ would only need care now.", steadier.boat.title),
+                              systemImage: "figure.rower")
+                            .foregroundStyle(.tint)
                     }
                 }
-                ForEach(hour.notes ?? [], id: \.self) { note in
-                    Label(note.noteText(for: AppSettings.shared.boat(at: forecast.clubId)), systemImage: "info.circle")
-                        .foregroundStyle(.secondary)
-                }
-                if let steadier = SteadierBoat.suggestion(for: hour, water: water?.celsius ?? forecast.estimatedWaterC, at: forecast.clubId) {
-                    Label(steadier.light == .green
-                          ? tr("A steadier boat helps: %@ would be green now.", steadier.boat.title)
-                          : tr("A steadier boat helps: %@ would only need care now.", steadier.boat.title),
-                          systemImage: "figure.rower")
-                        .foregroundStyle(.tint)
-                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
                 if at == nil { warningsLine }
             }
             .font(.subheadline)
             .symbolRenderingMode(.hierarchical)
-            .accessibilityLabel(hour.reasons.isEmpty ? tr("Why: all conditions within the limits") : tr("Why: %@", hour.reasons.map { forecast.explanation($0, in: hour) }.joined(separator: " ")))
             AdviceOnlyNote()
             Divider()
             // Three columns: the small values start under air, water and wind.

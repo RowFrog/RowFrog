@@ -185,8 +185,8 @@ jobs:
             -only-testing:RowFrogTests
       - name: Run the UI tests (taps in the app)
         # A hung UI test step once held the newest-Xcode job for 35 minutes
-        # (#255); two attempts with a 3-minute wait each fit well within this.
-        timeout-minutes: 20
+        # (#255). Four tap tests take up to about 18 minutes on the Intel runners.
+        timeout-minutes: 30
         # The UI test runner on the Intel runners sometimes dies before any
         # test starts ("never finished bootstrapping", main after #238). Only
         # that case is tried once more, on a freshly booted simulator; a test
@@ -196,6 +196,14 @@ jobs:
             xcrun simctl shutdown all || true
             xcrun simctl boot "$DEVICE" || true
             xcrun simctl bootstatus "$DEVICE" -b
+            # One launch of the app before the tests: on the Intel runners the
+            # first launch after a cold boot sometimes outlasts Xcode's launch
+            # limit ("Timed out while launching application", #287).
+            APP=$(ls -d "$HOME"/Library/Developer/Xcode/DerivedData/RowFrog-*/Build/Products/Debug-iphonesimulator/RowFrog.app | head -1)
+            if xcrun simctl install "$DEVICE" "$APP" && xcrun simctl launch "$DEVICE" com.rowfrog.RowFrog; then
+              sleep 15
+              xcrun simctl terminate "$DEVICE" com.rowfrog.RowFrog || true
+            fi
             set +e
             xcodebuild test-without-building \
               -project RowFrog.xcodeproj \

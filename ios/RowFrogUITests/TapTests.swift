@@ -111,6 +111,38 @@ final class TapTests: XCTestCase {
         XCTAssertTrue(app.buttons["Settings"].firstMatch.exists, "Not back on the club page")
     }
 
+    /// Apple's accessibility audit of the club page: every control has a
+    /// name VoiceOver can read, the right traits, a large enough tap area, and
+    /// nothing that should be an element is hidden from VoiceOver. Contrast,
+    /// clipped text and Dynamic Type are left out: they depend on the picture
+    /// behind the cards and are checked on the screenshots instead.
+    func testClubPagePassesTheAccessibilityAudit() throws {
+        let app = launchClubPage()
+        XCTAssertTrue(app.buttons["condition-wind"].waitForExistence(timeout: 180),
+                      "No wind tile; the page shows:\n\(app.debugDescription)")
+        // Small text links inside a card, known and kept on purpose: the boat
+        // line already has a 44 pt touch area (tapArea), which the audit cannot
+        // see; the warnings line, the daylight line and Feels like are one text
+        // line each, and a taller target would push the card apart. A new small
+        // target fails.
+        let smallOnPurpose = ["For ", "No DWD warning", "No official warning", "Feels like", "Rowing until", "Rowing again"]
+        var issues: [String] = []
+        // Without .elementDetection: it reads text off the screen picture and names
+        // no element, so a finding can't be traced (it flagged text with nothing
+        // to point at once the background picture was hidden from VoiceOver).
+        try app.performAccessibilityAudit(for: [.sufficientElementDescription, .hitRegion, .trait]) { issue in
+            if issue.auditType == .hitRegion, let label = issue.element?.label,
+               smallOnPurpose.contains(where: { label.hasPrefix($0) }) {
+                return true
+            }
+            let element = issue.element.map { "\($0.elementType.rawValue) id='\($0.identifier)' label='\($0.label)' at \($0.frame)" } ?? "no element"
+            issues.append("\(issue.auditType): \(issue.compactDescription) [\(element)]")
+            return true  // collected, reported together below
+        }
+        XCTAssertTrue(issues.isEmpty, "Accessibility audit of the club page:\n" + issues.joined(separator: "\n")
+                      + "\n\nThe page shows:\n\(app.debugDescription)")
+    }
+
     /// The tour asks for the location on the home base page; the answer does
     /// not matter to the test, so it is no.
     private func answerLocationQuestion() {

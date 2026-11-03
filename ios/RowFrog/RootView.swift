@@ -99,7 +99,9 @@ struct RootView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .accessibilityHidden(showingSafety)
+        // No accessibilityHidden(showingSafety) here: hidden(false) on the whole
+        // page undid the hiding of the picture and the top bar fade inside it, so
+        // VoiceOver read them as unnamed elements. The notice is modal instead.
         .overlay {
             // The safety notice comes first, before the tour and before any
             // question; it stays until it is accepted.
@@ -107,6 +109,9 @@ struct RootView: View {
                 SafetyNoticeView {
                     withAnimation { showingSafety = false }
                 }
+                // VoiceOver stays on the notice, as the page behind used to be hidden.
+                .accessibilityElement(children: .contain)
+                .accessibilityAddTraits(.isModal)
                 .transition(.opacity)
             } else if showingTour {
                 // The first-start tour, over everything until it is finished or skipped.
@@ -382,6 +387,7 @@ private struct TopEdgeFade: View {
             if PowerState.shared.lowPower {
                 Rectangle().fill(Color(.systemGroupedBackground))
                     .frame(height: bar)
+                    .accessibilityHidden(true)
             } else {
                 let height = bar + Self.tail
                 // Thin, so the cards still show through blurred, as under Mail's
@@ -395,6 +401,7 @@ private struct TopEdgeFade: View {
                                        startPoint: .top, endPoint: .bottom)
                     }
                     .frame(height: height)
+                    .accessibilityHidden(true)
             }
             if let title {
                 InlineClubTitle(club: title, light: light, stale: stale, sideRoom: sideRoom)
