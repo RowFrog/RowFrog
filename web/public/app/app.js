@@ -12,7 +12,7 @@ import {
   boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
-  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet,
+  coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, openMenu,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, keptForecast,
 } from "./shared.js";
@@ -140,7 +140,7 @@ function legendBody(part) {
  * Own boats kept at other clubs come last, with one tap to take them to this
  * club too (owner's choice A, 30 Oct 2026).
  */
-function openBoatMenu(raw) {
+function openBoatMenu(raw, anchor) {
   const now = raw ? new Date() : null;
   const club = pageClubId();
   const inUse = selectedBoat().id;
@@ -164,7 +164,7 @@ function openBoatMenu(raw) {
     ${here.length ? `<h3>${h(away.length ? t("Your boats here") : t("My boats"))}</h3><ul class="boats">${here.map(row).join("")}</ul>` : ""}
     ${away.length ? `<h3>${h(t("At other clubs"))}</h3><ul class="boats">${away.map(awayRow).join("")}</ul>` : ""}
     <a class="pill" href="#/settings/boats">${icon("sliders-horizontal")} ${h(t("Boats and limits…"))}</a>`;
-  openSheet(t("Boat"), body, (dialog) => {
+  openMenu(anchor, body, (dialog) => {
     dialog.querySelectorAll("[data-boat]").forEach((b) => b.addEventListener("click", () => {
       pickBoat(b.dataset.boat, club);
       dialog.close();
@@ -250,7 +250,7 @@ function wireBoatButton() {
     button.dataset.wired = "1";
     button.addEventListener("click", act);
   });
-  wire("[data-boat-button]", () => openBoatMenu(boatRaw));
+  wire("[data-boat-button]", (e) => openBoatMenu(boatRaw, e.currentTarget));
   wire("[data-show-list]", () => slideList(false));
   wire("#hide-list", () => slideList(true));
 }
@@ -1035,7 +1035,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
     const part = b.dataset.legend;
     openSheet({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part], legendBody(part));
   }));
-  root.querySelector("#boat-line")?.addEventListener("click", () => openBoatMenu(raw));
+  root.querySelector("#boat-line")?.addEventListener("click", (e) => openBoatMenu(raw, e.currentTarget));
   root.querySelector("#no-warning")?.addEventListener("click", () => {
     openSheet(warningsIsDWD(forecast.warnings) ? t("DWD warnings") : t("Official warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
   });

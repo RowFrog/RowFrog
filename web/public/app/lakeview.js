@@ -240,11 +240,12 @@ let page = null;
 /** The lake map page: map on top, the panel with the hours and the details below. */
 export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
   page?.map?.remove();
-  // Back and the lake's name at the top; the layers, the colour scale and the route tools sit by the map and in the panel (LakeMapScreen).
-  root.innerHTML = `<div class="lake-screen"><header class="nav lake-nav"><a class="link" href="${h(back)}">${icon("chevron-left")} ${h(t("Back"))}</a>
-      <strong class="nav-title" id="lake-name"></strong><span class="spacer"></span></header>
-    ${testing()}
-    <div class="lake-page"><div class="lake-map-box"><div class="lake-map" id="lake-map"></div><div class="lake-over" id="lake-over"></div></div>
+  // Over the map at the top left, a round close button and the lake's name, as the app's topBar; the layers,
+  // the colour scale and the route tools sit by the map and in the panel (LakeMapScreen).
+  root.innerHTML = `<div class="lake-screen">${testing()}
+    <div class="lake-page"><div class="lake-map-box"><div class="lake-map" id="lake-map"></div>
+      <header class="lake-top"><a class="glass round tool" href="${h(back)}" aria-label="${h(t("Close"))}">${icon("x")}</a><strong class="glass lake-name" id="lake-name"></strong></header>
+      <div class="lake-over" id="lake-over"></div></div>
       <section class="lake-panel" id="lake-panel"><p>${h(t("Loading the forecast…"))}</p></section></div></div>`;
   let view;
   try {
@@ -272,7 +273,9 @@ async function buildMap() {
   const L = await loadLeaflet().catch(() => null);
   const box = page.root.querySelector("#lake-map");
   if (!L || !box) return;
-  const map = L.map(box, { zoomSnap: 0.25, attributionControl: true });
+  // The zoom buttons at the top right, so the close button keeps the top left.
+  const map = L.map(box, { zoomSnap: 0.25, attributionControl: true, zoomControl: false });
+  L.control.zoom({ position: "topright" }).addTo(map);
   page.map = map;
   page.L = L;
   fitView();

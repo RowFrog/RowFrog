@@ -848,6 +848,41 @@ export function loadLeaflet() {
 
 // ---- Sheets ------------------------------------------------------------------------
 
+/**
+ * A menu that opens at the button that asked for it, as a SwiftUI Menu does:
+ * no title and no Done; a tap outside or Escape closes it. It opens below the
+ * button, or above it when the button sits in the lower half of the window.
+ */
+export function openMenu(anchor, body, wire) {
+  document.querySelector("dialog.sheet")?.remove();
+  const dialog = document.createElement("dialog");
+  dialog.className = "sheet menu";
+  dialog.innerHTML = `<div class="sheet-body">${body}</div>`;
+  document.body.append(dialog);
+  dialog.addEventListener("click", (e) => e.target === dialog && dialog.close());
+  dialog.addEventListener("close", () => dialog.remove());
+  wire?.(dialog);
+  dialog.showModal();
+  const place = () => {
+    const at = anchor?.isConnected ? anchor.getBoundingClientRect() : null;
+    if (!at) return;
+    const width = dialog.offsetWidth;
+    dialog.style.left = `${Math.max(12, Math.min(at.left, innerWidth - width - 12))}px`;
+    if (at.top + at.height / 2 > innerHeight / 2) {
+      dialog.style.top = "auto";
+      dialog.style.bottom = `${innerHeight - at.top + 8}px`;
+      dialog.style.maxHeight = `${at.top - 20}px`;
+    } else {
+      dialog.style.bottom = "auto";
+      dialog.style.top = `${at.bottom + 8}px`;
+      dialog.style.maxHeight = `${innerHeight - at.bottom - 20}px`;
+    }
+  };
+  place();
+  addEventListener("resize", place);
+  dialog.addEventListener("close", () => removeEventListener("resize", place));
+}
+
 export function openSheet(title, body, wire) {
   document.querySelector("dialog.sheet")?.remove();
   const dialog = document.createElement("dialog");
