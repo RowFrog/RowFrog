@@ -219,6 +219,26 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertTrue(AppSettings(defaults: defaults).allowsLandscape)
     }
 
+    func testTopTileHoldsCurrentConditionsUntilTurnedOff() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertTrue(settings.combinedTopTile)
+        XCTAssertFalse(settings.topTileOpen)
+        XCTAssertFalse(settings.pageCards(for: "mrc-1880").contains(.conditions))
+        // The saved order keeps the card, so turning the switch off brings it back in its place.
+        XCTAssertTrue(settings.pageLayout(for: "mrc-1880").order.contains(.conditions))
+
+        settings.combinedTopTile = false
+        settings.topTileOpen = true
+        let again = AppSettings(defaults: defaults)
+        XCTAssertFalse(again.combinedTopTile)
+        XCTAssertTrue(again.topTileOpen)
+        XCTAssertEqual(again.pageCards(for: "mrc-1880").first, .conditions)
+
+        again.resetToFactorySettings()
+        XCTAssertTrue(again.combinedTopTile)
+        XCTAssertFalse(again.topTileOpen)
+    }
+
     func testBackgroundChoiceRawValues() {
         for choice in [BackgroundChoice.noPicture, .sample("night-lake"), .custom("user-1.jpg")] {
             XCTAssertEqual(BackgroundChoice(rawValue: choice.rawValue), choice)

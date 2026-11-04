@@ -12,13 +12,9 @@ struct ConditionsCard: View {
     let hour: ForecastHour
     /// The club, for the weather maps in the larger views.
     var club: Club?
-    @State private var open: Condition?
-    @State private var showingCurrent = false
-    @State private var showingLevel = false
 
     var body: some View {
-        let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) },
-                                 radarStatus: club.flatMap { RadarStore.shared.status(at: $0.launchPoint) })
+        let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) })
         Card(title: tr("Current conditions"), symbol: "gauge.with.dots.needle.33percent", legend: .conditions) {
             HStack(spacing: 10) {
                 SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 36, relativeTo: .largeTitle, maxGrowth: 1.35)
@@ -30,49 +26,70 @@ struct ConditionsCard: View {
                 }
                 Spacer(minLength: 0)
             }
-            // Pairs that belong together share a row, and both tiles of a row are as tall.
-            Grid(horizontalSpacing: 8, verticalSpacing: 8) {
-                ForEach(Array(stride(from: 0, to: Condition.tileOrder.count, by: 2)), id: \.self) { i in
-                    GridRow {
-                        ForEach(Condition.tileOrder[i..<min(i + 2, Condition.tileOrder.count)]) { condition in
-                            // On a river the Current tile takes the ice tile's place.
-                            if condition == .ice, let river = forecast.river {
-                                Button {
-                                    showingCurrent = true
-                                } label: {
-                                    CurrentTile(river: river)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityHint(tr("Opens the water level and current"))
-                            } else if condition == .ice, let level = forecast.waterLevel, level.isLowered {
-                                // On a lake let down for the winter the Water level tile takes it.
-                                Button {
-                                    showingLevel = true
-                                    WaterLevelTip().invalidate(reason: .actionPerformed)
-                                } label: {
-                                    WaterLevelTile(level: level)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityHint(tr("Opens the lake's water level"))
-                            } else {
-                                Button {
-                                    open = condition
-                                } label: {
-                                    ConditionTile(condition: condition, data: data)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityHint(tr("Opens a chart and more about this value"))
-                                .accessibilityIdentifier("condition-\(condition.rawValue)")
+            ConditionTiles(forecast: forecast, hour: hour, club: club)
+        }
+    }
+}
+
+/// The tiles of Current conditions, two by two, each opening its chart: in their own
+/// card, or inside the top tile when that is opened.
+struct ConditionTiles: View {
+    let forecast: ClubForecast
+    let hour: ForecastHour
+    var club: Club?
+    @State private var open: Condition?
+    @State private var showingCurrent = false
+    @State private var showingLevel = false
+
+    /// The values in tile order, as the larger views swipe through them: on a river or a
+    /// lowered lake without ice, whose place the current or water level tile takes.
+    static func order(_ forecast: ClubForecast) -> [Condition] {
+        forecast.river == nil && forecast.waterLevel?.isLowered != true ? Condition.tileOrder : Condition.tileOrder.filter { $0 != .ice }
+    }
+
+    var body: some View {
+        let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) },
+                                 radarStatus: club.flatMap { RadarStore.shared.status(at: $0.launchPoint) })
+        // Pairs that belong together share a row, and both tiles of a row are as tall.
+        Grid(horizontalSpacing: 8, verticalSpacing: 8) {
+            ForEach(Array(stride(from: 0, to: Condition.tileOrder.count, by: 2)), id: \.self) { i in
+                GridRow {
+                    ForEach(Condition.tileOrder[i..<min(i + 2, Condition.tileOrder.count)]) { condition in
+                        // On a river the Current tile takes the ice tile's place.
+                        if condition == .ice, let river = forecast.river {
+                            Button {
+                                showingCurrent = true
+                            } label: {
+                                CurrentTile(river: river)
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityHint(tr("Opens the water level and current"))
+                        } else if condition == .ice, let level = forecast.waterLevel, level.isLowered {
+                            // On a lake let down for the winter the Water level tile takes it.
+                            Button {
+                                showingLevel = true
+                                WaterLevelTip().invalidate(reason: .actionPerformed)
+                            } label: {
+                                WaterLevelTile(level: level)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint(tr("Opens the lake's water level"))
+                        } else {
+                            Button {
+                                open = condition
+                            } label: {
+                                ConditionTile(condition: condition, data: data)
+                            }
+                            .buttonStyle(.plain)
+                            .accessibilityHint(tr("Opens a chart and more about this value"))
+                            .accessibilityIdentifier("condition-\(condition.rawValue)")
                         }
                     }
                 }
             }
         }
         .detailCover(item: $open) { condition in
-            ConditionDetailView(condition: condition, data: data,
-                                order: forecast.river == nil && forecast.waterLevel?.isLowered != true
-                                    ? Condition.tileOrder : Condition.tileOrder.filter { $0 != .ice }, club: club)
+            ConditionDetailView(condition: condition, data: data, order: Self.order(forecast), club: club)
         }
         .detailCover(isPresented: $showingCurrent) {
             if let river = forecast.river { CurrentDetailView(river: river) }
@@ -89,6 +106,33 @@ struct ConditionsCard: View {
                 open = Condition(rawValue: raw)
             }
         }
+    }
+}
+
+/// A value the closed top tile hides, as one line under its sun line while it counts for
+/// the rowing light (the "smart peek"): with its tile's own title, value and short line,
+/// so it reads the same as the tile it stands for, in either language.
+struct TilePeekLine: View {
+    let condition: Condition
+    let data: ConditionData
+
+    var body: some View {
+        let tile = ConditionTile(condition: condition, data: data)
+        HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Label(condition.title, systemImage: condition.symbol)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(.secondary)
+                .lineLimit(1)
+            Text(tile.value).valueFont(size: 17).lineLimit(1)
+            tile.detailLine.font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+            Spacer(minLength: 0)
+            if let light = data.now.light(for: condition.reasonNames) {
+                TrafficLightDot(light: light, size: 8)
+            }
+            Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+        }
+        .symbolRenderingMode(.hierarchical)
+        .accessibilityElement(children: .combine)
     }
 }
 
@@ -330,7 +374,7 @@ private struct ConditionTile: View {
         .foregroundStyle(.secondary)
     }
 
-    private var value: String {
+    var value: String {
         switch condition {
         case .temperature: Format.degrees(hour.temperatureC)
         case .feelsLike: Format.degrees(hour.apparentTemperatureC)
@@ -352,12 +396,12 @@ private struct ConditionTile: View {
     }
 
     /// The short line under the value; rain read from the radar starts with the radar's symbol.
-    private var detailLine: Text {
+    var detailLine: Text {
         guard condition == .precipitation, data.rainLines.fromRadar else { return Text(detail) }
         return Text("\(Image(systemName: "dot.radiowaves.left.and.right")) \(detail)")
     }
 
-    private var detail: String {
+    var detail: String {
         switch condition {
         case .temperature:
             let temps = data.next24.compactMap(\.temperatureC)

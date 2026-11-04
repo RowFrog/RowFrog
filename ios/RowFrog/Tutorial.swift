@@ -736,7 +736,11 @@ struct ColdWaterTip: Tip {
 
 struct TopTileTip: Tip {
     var title: Text { Text(tr("Tap a value")) }
-    var message: Text? { Text(tr("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values.")) }
+    var message: Text? {
+        Text(AppSettings.shared.combinedTopTile
+             ? tr("Tap a value in the tile above to open its chart; swiping there goes through all values. \"All values\" under the tile opens the rest.")
+             : tr("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values."))
+    }
     var image: Image? { Image(systemName: "hand.tap") }
 }
 
