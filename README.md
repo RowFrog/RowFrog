@@ -379,8 +379,8 @@ limits too.
 
 **Wide screens.** Phones on their side and the unfolded iPhone Duo get wide
 layouts (two columns from 600 pt, a side list from 860 × 560 pt). In two
-columns both end level: the 48 hours show 24 with "Show 24 more hours", the
-forecast source, Arrange this page and the credits go into the shorter
+columns both end level: the 48 hours show whole (each night folded into one
+line), the forecast source, Arrange this page and the credits go into the shorter
 column, and the lake view and launch point maps there grow (at most one
 screen tall each). The website does the same.
 
