@@ -1060,6 +1060,8 @@ enum German {
         "Current conditions is a card of its own under the top tile, as before.": "Aktuelle Bedingungen ist eine eigene Karte unter der oberen Kachel, wie bisher.",
         "in the top tile": "in der oberen Kachel",
         "All values": "Alle Werte",
+        "All values in the top tile": "Alle Werte in der oberen Kachel",
+        "Tap \"All values\" under the tile or pull it down to see every value there. Pull up or tap \"Fewer values\" to close it.": "Tippe unter der Kachel auf „Alle Werte“ oder ziehe sie nach unten, um dort jeden Wert zu sehen. Nach oben ziehen oder „Weniger Werte“ tippen schließt sie wieder.",
         "Fewer values": "Weniger Werte",
         "Shows the short top tile again": "Zeigt wieder die kurze obere Kachel",
         "Opens all values in the top tile": "Öffnet alle Werte in der oberen Kachel",

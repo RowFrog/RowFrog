@@ -76,6 +76,8 @@ struct LocationPageView: View {
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
     private let topTileTip = TopTileTip()
+    private let allValuesTip = AllValuesTip()
+    @State private var showAllValuesTip = false
     private let waterEstimateTip = WaterEstimateTip()
     private let waterLevelTip = WaterLevelTip()
     @State private var showWaterLevelTip = false
@@ -102,6 +104,8 @@ struct LocationPageView: View {
                                 .id(AppSettings.shared.combinedTopTile ? "conditions" : "top")
                             if tourSeen && showTopTileTip {
                                 TipView(topTileTip)
+                            } else if AppSettings.shared.combinedTopTile && tourSeen && showAllValuesTip {
+                                TipView(allValuesTip)
                             } else if AppSettings.shared.combinedTopTile {
                                 // Current conditions is in the top tile: its tips follow it.
                                 conditionsTips(forecast)
@@ -192,6 +196,7 @@ struct LocationPageView: View {
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .tipVisibility(topTileTip, $showTopTileTip)
+                .tipVisibility(allValuesTip, $showAllValuesTip)
                 .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(waterLevelTip, $showWaterLevelTip)
                 .tipVisibility(radarMapTip, $showRadarMapTip)
@@ -753,6 +758,7 @@ private struct NowCard: View {
     }
 
     private func toggleOpen() {
+        AllValuesTip().invalidate(reason: .actionPerformed)
         withAnimation(.smooth(duration: 0.35)) { AppSettings.shared.topTileOpen.toggle() }
     }
 
