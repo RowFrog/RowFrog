@@ -21,6 +21,7 @@ from pathlib import Path
 
 import httpx
 import pytest
+from fastapi.encoders import jsonable_encoder
 from fastapi.testclient import TestClient
 
 from rowfrog import api
@@ -148,16 +149,15 @@ def made_up_sources(monkeypatch):
 
 
 def _sample_files() -> dict[str, object]:
-    client = TestClient(api.app)
-    forecast = client.get(f"/clubs/{CLUB}/forecast")
-    assert forecast.status_code == 200, forecast.text
-    body = forecast.json()
+    # The same calls the publish run makes (publish_static.built), not the web API.
+    body, problem = publish_static.built(api.club_forecast(CLUB))
+    assert problem is None, problem
     # What the publish run adds to each file (scripts/publish_static.py).
     body["radar"] = _radar()
     body["refresh"] = publish_static.refresh_block(True)
-    starnberg = next(l for l in client.get("/lakes").json() if l["id"] == "starnberger-see")
-    german = next(l for l in client.get("/countries/de/lakes").json() if l["id"] == "starnberger-see")
-    de = next(c for c in client.get("/countries/index").json() if c["code"] == "de")
+    starnberg = next(l for l in jsonable_encoder(api.list_lakes()) if l["id"] == "starnberger-see")
+    german = next(l for l in jsonable_encoder(api.country_lakes("de")) if l["id"] == "starnberger-see")
+    de = next(c for c in jsonable_encoder(api.list_countries()) if c["code"] == "de")
     # Counted over the sample's clubs only, so a catalog import does not change the file.
     points = [c["launchPoint"] for c in german["clubs"]]
     de |= {
@@ -205,3 +205,14 @@ def test_sample_forecast_fills_every_block_the_app_shows():
     assert {"STURM", "FROST"} <= kinds
     lights = {h["light"] for h in body["hours"]}
     assert {"green", "red"} <= lights, lights
+
+
+def test_the_web_api_answers_the_same_as_the_publish_run(made_up_sources):
+    """uvicorn (and the app's local backend) serve through FastAPI; the publish
+    run calls the same functions directly. Both must give the same JSON."""
+    served = TestClient(api.app).get(f"/clubs/{CLUB}/forecast")
+    assert served.status_code == 200, served.text
+    api._cache.clear()
+    direct, problem = publish_static.built(api.club_forecast(CLUB))
+    assert problem is None, problem
+    assert served.json() == direct
