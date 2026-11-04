@@ -848,7 +848,7 @@ private struct DeveloperSettingsView: View {
                     ForEach(ColumnFill.allCases) { Text($0.title).tag($0) }
                 }
             } footer: {
-                SectionFooter(tr("On wide screens, how the two columns of a club page end level. Fold the 48 hours: the table shows 24 hours until opened. Always 48 hours: the whole table, so columns may end further apart. Switching the developer options off goes back to folding."))
+                SectionFooter(tr("On wide screens, how the two columns of a club page end level. Fold the 48 hours: the table shows 24 hours until opened. Always 48 hours: the whole table, so columns may end further apart. Switching the developer options off goes back to the whole table."))
             }
             .surfaceRows()
             Section {

@@ -1550,11 +1550,12 @@ function toggleNight(button) {
 }
 
 /**
- * In two columns the 48 hours show the first 24 until opened, so the columns
- * end level (ColumnFill.fold in the app). False keeps the whole table, the
- * app's developer choice "Always 48 hours".
+ * True: in two columns the 48 hours show the first 24 until opened, so the
+ * columns end level (ColumnFill.fold, a developer choice in the app). False,
+ * the default since each night folds into one line: the whole table
+ * (ColumnFill.fill, "Always 48 hours").
  */
-const FOLD_HOURLY = true;
+const FOLD_HOURLY = false;
 const FOLDED_HOURS = 24;
 
 function foldLabel(open) {
