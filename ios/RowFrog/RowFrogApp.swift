@@ -11,6 +11,8 @@ struct RowFrogApp: App {
             UserDefaults.standard.removePersistentDomain(forName: id)
         }
         DiagnosisLog.start()
+        // The widgets now keep their forecasts as files (WidgetForecasts).
+        WidgetForecasts.dropOldCopies()
         Tutorial.configureTips()
     }
 

@@ -223,9 +223,9 @@ final class WidgetPreviewForecast {
     nonisolated private static func stored(_ homeID: String) async -> ClubForecast? {
         let url = APIClient.fromBundle().baseURL.appending(path: "clubs/\(homeID)/forecast")
         let kept = KeptFiles.shared.copy(of: url)?.data
-        let saved = WidgetShared.defaults.data(forKey: WidgetShared.cacheKey(homeID))
-        return [kept, saved].compactMap { $0 }
-            .compactMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }
+        let saved = WidgetForecasts.lastKept(homeID)
+        return ([kept.flatMap { try? APIClient.decoder.decode(ClubForecast.self, from: $0) }] + [saved])
+            .compactMap { $0 }
             .first { forecast in forecast.hours.contains { $0.time > Date.now } }
     }
 }

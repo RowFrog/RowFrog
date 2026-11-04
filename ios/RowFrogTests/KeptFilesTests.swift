@@ -102,4 +102,67 @@ final class KeptFilesTests: XCTestCase {
         } catch {}
         XCTAssertNil(KeptFiles(folder: folder).copy(of: URL(string: "https://api.rowfrog.com/v1/clubs/nowhere/forecast")!))
     }
+
+    // The widgets (WidgetForecasts): files in their own folder, one download per 15 minutes.
+
+    private static let sampleForecast: Data = {
+        let url = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent().deletingLastPathComponent().deletingLastPathComponent()
+            .appending(path: "testdata/api/v1/clubs/mrc-1880/forecast")
+        return try! Data(contentsOf: url)
+    }()
+    private let forecastFile = "api.rowfrog.com_v1_clubs_mrc-1880_forecast.body"
+
+    func testWidgetsShareARecentForecast() async throws {
+        StubProtocol.answers = [(200, ["ETag": #"W/"f-1""#], Self.sampleForecast)]
+        let first = await WidgetForecasts.load("mrc-1880", api: api)
+        let second = await WidgetForecasts.load("mrc-1880", api: api)
+        XCTAssertEqual(first?.clubId, "mrc-1880")
+        XCTAssertEqual(second?.clubId, "mrc-1880")
+        XCTAssertEqual(StubProtocol.requests.count, 1)
+    }
+
+    func testWidgetAsksAgainWithTheETagAfterAQuarterHour() async throws {
+        StubProtocol.answers = [(200, ["ETag": #"W/"f-1""#], Self.sampleForecast), (304, [:], Data())]
+        _ = await WidgetForecasts.load("mrc-1880", api: api)
+        try FileManager.default.setAttributes([.modificationDate: Date.now.addingTimeInterval(-WidgetForecasts.reuseFor - 60)],
+                                              ofItemAtPath: folder.appending(path: forecastFile).path)
+        let again = await WidgetForecasts.load("mrc-1880", api: api)
+        XCTAssertEqual(again?.clubId, "mrc-1880")
+        XCTAssertEqual(StubProtocol.requests.count, 2)
+        XCTAssertEqual(StubProtocol.requests[1].value(forHTTPHeaderField: "If-None-Match"), #"W/"f-1""#)
+    }
+
+    func testWidgetShowsTheLastForecastOffline() async throws {
+        StubProtocol.answers = [(200, [:], Self.sampleForecast)]
+        _ = await WidgetForecasts.load("mrc-1880", api: api)
+        try FileManager.default.setAttributes([.modificationDate: Date.now.addingTimeInterval(-6 * 3600)],
+                                              ofItemAtPath: folder.appending(path: forecastFile).path)
+        // No answers left: the stub fails as if offline. Kept without an ETag too.
+        let offline = await WidgetForecasts.load("mrc-1880", api: api)
+        XCTAssertEqual(offline?.clubId, "mrc-1880")
+        XCTAssertEqual(WidgetForecasts.lastKept("mrc-1880", api: api)?.clubId, "mrc-1880")
+        XCTAssertNil(StubProtocol.requests[1].value(forHTTPHeaderField: "If-None-Match"))
+    }
+
+    func testOwnPlaceForecastIsKeptAsAFile() throws {
+        let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Self.sampleForecast)
+        let id = OwnPlace.idPrefix + "test"
+        XCTAssertNil(WidgetForecasts.lastKept(id, api: api))
+        WidgetForecasts.keep(forecast, for: id, api: api)
+        XCTAssertEqual(WidgetForecasts.lastKept(id, api: api)?.hours.count, forecast.hours.count)
+    }
+
+    func testOldCopiesInTheSharedSettingsAreDropped() throws {
+        let name = "test-\(UUID().uuidString)"
+        let defaults = try XCTUnwrap(UserDefaults(suiteName: name))
+        defer { defaults.removePersistentDomain(forName: name) }
+        defaults.set(Data("old".utf8), forKey: "RWWidgetForecast-mrc-1880")
+        defaults.set(Date.now, forKey: "RWWidgetLoaded-mrc-1880")
+        defaults.set("mrc-1880", forKey: WidgetShared.homeKey)
+        WidgetForecasts.dropOldCopies(defaults)
+        XCTAssertNil(defaults.object(forKey: "RWWidgetForecast-mrc-1880"))
+        XCTAssertNil(defaults.object(forKey: "RWWidgetLoaded-mrc-1880"))
+        XCTAssertEqual(defaults.string(forKey: WidgetShared.homeKey), "mrc-1880")
+    }
 }
