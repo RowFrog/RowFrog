@@ -158,8 +158,9 @@
       "note": "Stockstadt-Erfelder Altrhein and Rhein (owner 2026-11-02)"
     },
     "emder-ruderverein": {
-      "include": ["Ems", "Ems-Jade-Kanal", "Rotes Siel"],
-      "note": "Ems and Emden's harbour canals (owner 2026-11-02)"
+      "include": ["Ems-Jade-Kanal", "Rotes Siel", "Falderndelft", "Ratsdelft", "Emder Stadtgraben", "Ems"],
+      "direction": "north, east, south and west",
+      "note": "the boathouse sits at the Kesselschleuse, a four-way lock: all ways on through it, into the Ems-Jade-Kanal, the Stadtgraben and via the Rotes Siel and Falderndelft into Emden's harbour (owner 2026-11-02 and 2026-11-04)"
     },
     "bremerhavener-ruderverein-von-1889": {
       "include": ["Geeste", "Weser"],
