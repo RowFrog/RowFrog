@@ -405,7 +405,7 @@ body.title-gone .hhead { top: calc(var(--safe-top) + 52px); }
 .head-side { flex: none; width: var(--side-room, 56px); display: flex; gap: 8px; align-items: center; }
 .head-side.end { justify-content: flex-end; }
 .head-side .round { width: 44px; height: 44px; border-radius: 22px; justify-content: center; color: var(--text); font-size: 22px; flex: none; }
-.head-side .boat { width: auto; min-width: 56px; padding: 0 8px; box-sizing: border-box; }
+.head-side .boat { width: auto; min-width: 52px; padding: 0 8px; box-sizing: border-box; }
 /* The sidebar button comes in from the left and the cog moves over beside it (RootView.slide). */
 .head-side .slide-in { animation: grow-in .3s ease-in-out; }
 @keyframes grow-in { from { width: 0; margin-right: -8px; opacity: 0; } }
@@ -979,6 +979,7 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .head-side { position: relative; }
 .tip.pop { position: absolute; top: calc(100% + 10px); left: 0; z-index: 6; width: min(300px, calc(100vw - 32px)); margin: 0; text-align: left; box-shadow: 0 8px 28px rgba(0, 0, 0, .22); pointer-events: auto; }
 .tip.pop::before { content: ""; position: absolute; top: -7px; left: var(--arrow-x, 70px); width: 14px; height: 14px; background: inherit; transform: rotate(45deg); }
-.head-side .tip.pop { --arrow-x: calc(var(--side-room, 56px) - 35px); }
+.head-side.end .tip.pop { left: auto; right: 0; }
+.head-side.end .tip.pop::before { left: auto; right: 21px; }
 .bottom .tip.pop { top: auto; bottom: calc(100% + 10px); --arrow-x: 73px; }
 .bottom .tip.pop::before { top: auto; bottom: -7px; }

@@ -213,21 +213,20 @@ const boatsElsewhereTip = () => (store.boats.some((b) => !isKept(b)) ? tip("boat
 /**
  * The buttons level with the club's big name on wide windows, and again in the small top bar
  * once it has shrunk there (PageTopButtons): on the left the sidebar button while the list
- * beside the page is slid away, the cog and the boat beside it (owner's pick, 4 Nov 2026);
- * the right side stays empty as wide, so the name stays in the middle. Narrow windows have
- * none: their cog and boat sit in the bottom bar.
+ * beside the page is slid away and the cog, on the right the boat (owner, 4 Nov 2026: as
+ * before on wide windows). Narrow windows have none: their cog and boat sit in the bottom bar.
  */
 function pageButtons(side, withTip = false) {
   if (!sideList.matches) return "";
-  if (side === "right") return `<span class="head-side end"></span>`;
+  if (side === "right") return `<span class="head-side end">${boatButton()}${withTip ? boatsElsewhereTip() : ""}</span>`;
   return `<span class="head-side">
     ${sideHidden ? `<button class="glass round tool ${slideIn ? "slide-in" : ""}" data-show-list aria-label="${h(t("Show the club list"))}">${icon("panel-left")}</button>` : ""}
-    <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>${boatButton()}${withTip ? boatsElsewhereTip() : ""}
+    <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>
   </span>`;
 }
 
-/** What each side of the big and small title keeps free for these buttons (PageTopButtons.sideRoom): 44 px per round button, the boat's 56 and the gaps. */
-const sideRoom = () => (!sideList.matches ? 0 : sideHidden ? 44 + 8 + 44 + 8 + 56 : 44 + 8 + 56);
+/** What each side of the big and small title keeps free for these buttons (PageTopButtons.sideRoom). */
+const sideRoom = () => (!sideList.matches ? 0 : sideHidden ? 104 : 56);
 
 /** The boat button's symbol: the class in a small frame, dashed for the two groups, in the accent colour for an own boat (BoatClassTag). */
 function boatClassTag(boat) {
@@ -1019,7 +1018,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
-    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left", true)}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right")}</div>
+    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right", true)}</div>
     <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
