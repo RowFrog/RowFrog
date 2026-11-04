@@ -19,7 +19,7 @@ struct DetailMapCard: View {
     @State private var radar = false
     @State private var playing = false
     /// The same repeat switch as the full-screen maps': on, playing goes round 3 times.
-    @AppStorage("RWRadarLoop") private var loops = true
+    @AppStorage(DefaultsKey.radarLoop) private var loops = true
     private let store = ModelMapStore.shared
 
     /// The hours the card's slider goes through.

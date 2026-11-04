@@ -119,7 +119,7 @@ final class RadarStore {
     func follow(_ point: Coordinate) async {
         // Screenshot hook: `-RWSampleRadar YES` puts made-up rain on the radar from
         // 30 minutes on, to show the rain tile while DWD's radar is dry.
-        if UserDefaults.standard.bool(forKey: "RWSampleRadar") {
+        if UserDefaults.standard.bool(forKey: DefaultsKey.sampleRadar) {
             let now = RadarWindow.base(nil)
             let values = [0, 0, 0.6, 1.8, 3.2, 1.1, 0, 0, 0]
             readings[point] = RainRadar(reference: now, steps: values.enumerated().map {
@@ -128,13 +128,13 @@ final class RadarStore {
             return
         }
         // Screenshot hook: `-RWRadarLoading YES` keeps waiting for DWD's answer.
-        if UserDefaults.standard.bool(forKey: "RWRadarLoading") {
+        if UserDefaults.standard.bool(forKey: DefaultsKey.radarLoading) {
             readings[point] = nil
             loading.insert(point)
             return
         }
         // Screenshot hook: `-RWRadarFailed YES` acts as if DWD did not answer.
-        if UserDefaults.standard.bool(forKey: "RWRadarFailed") {
+        if UserDefaults.standard.bool(forKey: DefaultsKey.radarFailed) {
             readings[point] = nil
             failed.insert(point)
             return
@@ -159,7 +159,7 @@ final class RadarStore {
     /// Pull-down on a club page: reads the radar again unless it was read
     /// less than a minute ago (DWD makes a new picture every 5 minutes).
     func reload(_ point: Coordinate) async {
-        if ["RWSampleRadar", "RWRadarFailed", "RWRadarLoading"].contains(where: UserDefaults.standard.bool(forKey:)) { return }
+        if [DefaultsKey.sampleRadar, DefaultsKey.radarFailed, DefaultsKey.radarLoading].contains(where: UserDefaults.standard.bool(forKey:)) { return }
         if !failed.contains(point), let at = loaded[point], Date.now.timeIntervalSince(at) < Self.pullGap { return }
         while loading.contains(point) {
             try? await Task.sleep(for: .milliseconds(250))
@@ -339,7 +339,7 @@ struct RadarMapScreen: View {
     @State private var playing = false
     @State private var loader: RadarFrames
     @State private var showingLegend = false
-    @AppStorage("RWRadarLoop") private var loops = true
+    @AppStorage(DefaultsKey.radarLoop) private var loops = true
     private let frames: [Date]
     /// Rounds played with repeat on, about half a minute.
     private static let rounds = 3

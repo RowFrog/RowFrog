@@ -31,8 +31,8 @@ final class DetailTime {
 
     init() {
         // Screenshot hook: `-RWChartSelect 5` puts the blue line five hours on.
-        let selected = UserDefaults.standard.object(forKey: "RWChartSelect") != nil
-            ? UserDefaults.standard.double(forKey: "RWChartSelect").rounded() : 0
+        let selected = UserDefaults.standard.object(forKey: DefaultsKey.chartSelect) != nil
+            ? UserDefaults.standard.double(forKey: DefaultsKey.chartSelect).rounded() : 0
         hour = selected
         mapHour = selected
         if selected > 20 { scrollX = selected - 8 }

@@ -546,7 +546,7 @@ struct WeatherMapScreen: View {
     @State private var playing = false
     @State private var live: RadarFrames?
     /// The same repeat switch as the rain radar's: on, playing goes round 3 times.
-    @AppStorage("RWRadarLoop") private var loops = true
+    @AppStorage(DefaultsKey.radarLoop) private var loops = true
     @Environment(\.dismiss) private var dismiss
     private let store = ModelMapStore.shared
     private let start: Date?

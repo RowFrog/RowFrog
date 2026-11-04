@@ -156,7 +156,7 @@ struct WidgetGalleryView: View {
     @State private var forecast: ClubForecast?
     @State private var failed = false
 
-    private let homeID = UserDefaults.standard.string(forKey: "RWHomeClub") ?? WidgetShared.defaultHomeID
+    private let homeID = UserDefaults.standard.string(forKey: DefaultsKey.homeClub) ?? WidgetShared.defaultHomeID
 
     // Widget sizes on a 6.3" iPhone, in points; extra large is the iPad's.
     private let sizes: [(WidgetFamily, CGSize, String)] = [
@@ -207,7 +207,7 @@ struct WidgetGalleryView: View {
                            startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
         )
-        .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil || failed))
+        .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage), ready: forecast != nil || failed))
         .task {
             do { forecast = try await api.forecast(clubID: homeID).applyingUserLimits() } catch { failed = true }
             // `-RWWidgetRadar YES`: light rain on the radar from 30 minutes on, for the radar line.

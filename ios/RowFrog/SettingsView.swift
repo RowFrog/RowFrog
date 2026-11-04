@@ -1362,7 +1362,7 @@ struct BackgroundPickerView: View {
             }
             .padding()
         }
-        .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
+        .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage), ready: true))
         .pageBackground(.settings)
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
@@ -1798,7 +1798,7 @@ extension View {
     /// a series of screenshots covers the whole page.
     func screenshotSections(_ ids: [String], proxy: ScrollViewProxy) -> some View {
         task {
-            let page = UserDefaults.standard.integer(forKey: "RWScrollPage")
+            let page = UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage)
             guard page > 0 else { return }
             // Scrolled twice: on a slow simulator the first try can come before
             // the form has laid out its rows and does nothing.

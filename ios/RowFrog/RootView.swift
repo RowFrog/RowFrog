@@ -301,7 +301,7 @@ struct RootView: View {
             if let countries = try? await api.countries(), !countries.isEmpty {
                 locations.setCountries(countries)
                 // Screenshot hook `-RWOpenClub` may name a club abroad: then every country loads.
-                let all = UserDefaults.standard.string(forKey: "RWOpenClub") != nil
+                let all = UserDefaults.standard.string(forKey: DefaultsKey.openClub) != nil
                 for code in all ? countries.map(\.code) : locations.countriesToLoad(near: KnownLocation.coordinate) {
                     locations.addCountry(code, lakes: try await api.lakes(country: code))
                 }
@@ -349,7 +349,7 @@ struct RootView: View {
                 waterName: locations.nearestLake(to: point)?.name, shared: false)
             if locations.ownPlace(place.id) == nil { locations.addOwnPlace(place) }
             selection = place.id
-        } else if let id = args.string(forKey: "RWOpenClub"), let club = locations.catalog.first(where: { $0.id == id }) {
+        } else if let id = args.string(forKey: DefaultsKey.openClub), let club = locations.catalog.first(where: { $0.id == id }) {
             locations.add(club)
             selection = id
         } else {
@@ -358,7 +358,7 @@ struct RootView: View {
         if let search = args.string(forKey: "RWSearch") {
             initialSearch = search
             showingList = true
-        } else if args.bool(forKey: "RWShowList") || args.bool(forKey: "RWShowSettings") {
+        } else if args.bool(forKey: "RWShowList") || args.bool(forKey: DefaultsKey.showSettings) {
             showingList = true
         }
     }

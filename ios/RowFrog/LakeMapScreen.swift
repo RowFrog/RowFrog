@@ -43,7 +43,7 @@ struct LakeMapScreen: View {
     /// The layer's name, shown for a moment next to the layer buttons after a switch.
     @State private var layerNote: LakeLayer?
     /// Seconds per 500 m.
-    @AppStorage("RWRoutePace") private var pace = 150.0
+    @AppStorage(DefaultsKey.routePace) private var pace = 150.0
     /// Apple's satellite pictures under the lake instead of the map.
     @AppStorage("RWLakeImagery") private var imagery = false
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
@@ -92,7 +92,7 @@ struct LakeMapScreen: View {
         _outAndBack = State(initialValue: args.bool(forKey: "RWOutAndBack") && !RouteEdit.isLoop(points))
         // Screenshot hook: `-RWSavedRoutes "Name=lat,lon;lat,lon|Name=…"` saves these routes on the
         // lake when it has none (a name ending in "↔" is rowed out and back) and opens Manage routes.
-        if let saved = args.string(forKey: "RWSavedRoutes"), RouteStore.shared.routes(on: view.lakeId).isEmpty {
+        if let saved = args.string(forKey: DefaultsKey.savedRoutes), RouteStore.shared.routes(on: view.lakeId).isEmpty {
             for spec in saved.split(separator: "|") {
                 let parts = spec.split(separator: "=", maxSplits: 1)
                 guard parts.count == 2 else { continue }
@@ -103,16 +103,16 @@ struct LakeMapScreen: View {
                                              points: coords, outAndBack: name.hasSuffix("↔")))
             }
         }
-        _showingRoutes = State(initialValue: args.string(forKey: "RWSavedRoutes") != nil)
+        _showingRoutes = State(initialValue: args.string(forKey: DefaultsKey.savedRoutes) != nil)
         // Screenshot hook: `-RWRoutePoint 2` selects that turning point.
-        _selectedPoint = State(initialValue: args.object(forKey: "RWRoutePoint") != nil ? args.integer(forKey: "RWRoutePoint") : nil)
+        _selectedPoint = State(initialValue: args.object(forKey: DefaultsKey.routePoint) != nil ? args.integer(forKey: DefaultsKey.routePoint) : nil)
         // Screenshot hook: `-RWPanel expanded` opens the panel in full.
         _panelExpanded = State(initialValue: args.string(forKey: "RWPanel") == "expanded")
         // Screenshot hook: `-RWBoatAt 0.6` shows the lake when the boat is 60 % along the route.
-        _followBoat = State(initialValue: args.object(forKey: "RWBoatAt") != nil)
-        _boatAt = State(initialValue: min(max(args.double(forKey: "RWBoatAt"), 0), 1))
+        _followBoat = State(initialValue: args.object(forKey: DefaultsKey.boatAt) != nil)
+        _boatAt = State(initialValue: min(max(args.double(forKey: DefaultsKey.boatAt), 0), 1))
         // Screenshot hook: `-RWImportRows YES` opens "Import a row" with made-up Health rows.
-        _showingImport = State(initialValue: args.bool(forKey: "RWImportRows"))
+        _showingImport = State(initialValue: args.bool(forKey: DefaultsKey.importRows))
         // Screenshot hook: `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points.
         var imported: Route?
         if args.bool(forKey: "RWImportedRoute"), points.count >= 2 {
