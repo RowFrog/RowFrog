@@ -295,6 +295,14 @@ jobs:
           shoot 311-limits-line light -RWOpenClub mrc-1880
           shoot 312-later-warning-top-german dark -RWOpenClub ruderclub-forggensee -RWLanguage de
           shoot 313-later-warning-list-german dark -RWShowList YES -RWLanguage de
+          # "No official warning" for German clubs too: the line under the light, the tile and the details.
+          shoot 370-no-warning-line light -RWOpenClub mrc-1880
+          shoot 371-no-warning-line-german dark -RWOpenClub mrc-1880 -RWLanguage de
+          shoot 372-no-warning-line-german-xxxl light -RWOpenClub mrc-1880 -RWLanguage de -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          shoot 373-thunderstorm-tile-german light -RWOpenClub mrc-1880 -RWScrollTo conditions -RWLanguage de
+          WAIT=30 shoot_pages 374-thunderstorm-detail-german dark -RWOpenClub mrc-1880 -RWOpenCondition thunderstorm -RWLanguage de
+          WAIT=30 shoot_pages 375-fog-detail-german light -RWOpenClub mrc-1880 -RWOpenCondition visibility -RWLanguage de
+          WAIT=30 shoot_pages 376-rain-detail light -RWOpenClub mrc-1880 -RWOpenCondition precipitation
           # Each warning links to the service that issued it (DWD, GeoSphere, MeteoSwiss).
           shoot 345-warning-links-tutzing-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWLanguage de
           shoot 346-warning-links-klagenfurt light -RWOpenClub ruderverein-albatros-klagenfurt -RWScrollTo warnings
