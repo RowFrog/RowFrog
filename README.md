@@ -356,8 +356,10 @@ field at the bottom.
   (default), every hour, every 2 hours, or only after using the app. Less
   often saves battery and data, but a new official warning reaches the widgets
   later.
-- Language and units: English or German; units (wind in m/s, km/h, knots, mph
-  or Beaufort; °C or °F; waves in m, cm or ft); date and time formats.
+- Language and units: English or German, or "Like the iPhone" (the default);
+  units (wind in m/s, km/h, knots, mph or Beaufort; °C or °F; waves in m, cm
+  or ft); date and time formats, also following the phone by default
+  (including its 12/24-hour setting).
 - Battery and data: "Save mobile data" (see [Data use](#what-the-app-does))
   and the widget updates.
 - Help: replay the tour, the full legend of symbols, and bring the one-time
@@ -545,7 +547,7 @@ More detail, including the secrets each one needs, is in the
 | **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
 | **Usage limits** (`budget-check.yml`) | Once a day compares the calls with Open-Meteo's and Copernicus' free limits and Cloudflare's free Worker and database limits and comments on the "Usage limits" issue at 70 % (warning) and 85 % (alert), plus a monthly summary. |
 | **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). By hand, or when its scripts change on `main`. |
-| **Merge Dependabot updates** (`dependabot-merge.yml`) | Dependabot (`.github/dependabot.yml`) opens one PR a month raising the pinned backend packages, and a PR for each security fix straight away. Once CI passes on such a PR that changes only those versions, this workflow merges it; any other PR, or one whose CI fails, stays open for a person. |
+| **Merge Dependabot updates** (`dependabot-merge.yml`) | Dependabot (`.github/dependabot.yml`) opens one PR a month raising the pinned backend packages, and a PR for each security fix straight away. Once CI passes on such a PR that changes only those versions, this workflow merges it; any other PR, or one whose CI fails, stays open for a person. Monthly grouped PRs for the npm tools (`package.json`: Wrangler, Playwright) and the GitHub Actions versions also come, and always wait for a person. |
 | **Forecast timer** (`timer-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/timer/` that starts Publish forecasts at :00 and :30. By hand with `deploy` ticked, and by itself when `cloudflare/timer/` changes on `main`. Needs `PUBLISH_TIMER_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 | **Place suggestions** (`suggestions-worker.yml`) | Deploys the Cloudflare Worker that turns place suggestions into GitHub issues. Needs `SUGGESTIONS_GITHUB_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 | **API check** (`api-check.yml`) | Shows how `api.rowfrog.com` answers (Cloudflare proxy, SSL mode, usage counter). Runs by hand. |
