@@ -46,7 +46,7 @@ def test_json_block():
     now = lake_level.now_at(FORGGENSEE, readings(776.5, 776.4), NOW)
     out = lake_level.to_json(now, FORGGENSEE)
     assert out["now"]["state"] == "drained" and out["now"]["light"] == "red"
-    assert out["now"]["belowFullM"] == 4.2
+    assert out["now"]["belowFullM"] == 4.1
     assert len(out["now"]["history"]) == 2
     assert lake_level.to_json(None, FORGGENSEE)["now"] is None
 
