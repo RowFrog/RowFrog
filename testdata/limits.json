@@ -1,0 +1,122 @@
+{
+ "comment": "The app's starting rowing limits (metric: m/s, m, °C), which the backend (backend/rowfrog/score.py Thresholds for small racing boats, river.py for the current), the app (ios/RowFrog/Limits.swift RowingLimit.standard) and the website (web/public/app/logic.js standardLimit) must all give. From the research approved on 2026-10-23. Read by backend/tests/test_shared_limits.py, ios/RowFrogTests/SharedLimitsTests.swift and web/tests/sharedlimits.test.mjs; change it together with all three.",
+ "boats": [
+  {
+   "type": "racing",
+   "class": "1x",
+   "windAmber": 5.5,
+   "windRed": 8.0,
+   "gustAmber": 8.0,
+   "gustRed": 10.3,
+   "waveAmber": 0.15,
+   "waveRed": 0.25
+  },
+  {
+   "type": "racing",
+   "class": "8+",
+   "windAmber": 8.0,
+   "windRed": 10.8,
+   "gustAmber": 10.8,
+   "gustRed": 12.8,
+   "waveAmber": 0.25,
+   "waveRed": 0.4
+  },
+  {
+   "type": "training",
+   "class": "1x",
+   "windAmber": 6.5,
+   "windRed": 9.0,
+   "gustAmber": 9.0,
+   "gustRed": 11.0,
+   "waveAmber": 0.2,
+   "waveRed": 0.35
+  },
+  {
+   "type": "training",
+   "class": "8+",
+   "windAmber": 8.0,
+   "windRed": 10.8,
+   "gustAmber": 10.8,
+   "gustRed": 12.8,
+   "waveAmber": 0.25,
+   "waveRed": 0.4
+  },
+  {
+   "type": "gig",
+   "class": "1x",
+   "windAmber": 8.0,
+   "windRed": 10.8,
+   "gustAmber": 10.8,
+   "gustRed": 12.8,
+   "waveAmber": 0.3,
+   "waveRed": 0.5
+  },
+  {
+   "type": "gig",
+   "class": "8+",
+   "windAmber": 8.0,
+   "windRed": 10.8,
+   "gustAmber": 10.8,
+   "gustRed": 12.8,
+   "waveAmber": 0.3,
+   "waveRed": 0.5
+  },
+  {
+   "type": "coastal",
+   "class": "1x",
+   "windAmber": 8.0,
+   "windRed": 12.0,
+   "gustAmber": 10.8,
+   "gustRed": 12.8,
+   "waveAmber": 0.5,
+   "waveRed": 1.0
+  },
+  {
+   "type": "coastal",
+   "class": "8+",
+   "windAmber": 8.0,
+   "windRed": 12.0,
+   "gustAmber": 10.8,
+   "gustRed": 12.8,
+   "waveAmber": 0.5,
+   "waveRed": 1.0
+  }
+ ],
+ "everyBoat": {
+  "currentAmber": 1.5,
+  "currentRed": 2.5,
+  "lifeJacket": 15
+ },
+ "coldWater": {
+  "belowC": 10,
+  "windMarginMs": 1,
+  "freezingC": 4
+ },
+ "strongWindLight": [
+  {
+   "type": "racing",
+   "class": "1x",
+   "light": "red"
+  },
+  {
+   "type": "training",
+   "class": "2x",
+   "light": "red"
+  },
+  {
+   "type": "racing",
+   "class": "8+",
+   "light": "amber"
+  },
+  {
+   "type": "gig",
+   "class": "1x",
+   "light": "amber"
+  },
+  {
+   "type": "coastal",
+   "class": "2x",
+   "light": "amber"
+  }
+ ]
+}

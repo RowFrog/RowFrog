@@ -27,6 +27,9 @@ jobs:
       # With the satellite extra (rasterio, eccodes, numpy), as the publishing
       # job installs it, so the satellite and weather map readers are tested too.
       - run: pip install -e ".[dev,satellite]"
+      # Names used before they are set, unused imports, syntax errors (rules in pyproject.toml).
+      - name: Lint (ruff)
+        run: pip install ruff==0.16.9 && ruff check . ../scripts
       - run: pytest -q --cov=rowfrog --cov-report=json:coverage.json
       - name: Coverage in the run summary
         if: always()

@@ -476,6 +476,7 @@ const BOAT_DEPENDENT = [...WIND_LIMITS, "waveAmber", "waveRed"];
 
 // The app's limits by type and size (RowingLimit.standard): wind amber, wind red,
 // gust amber, gust red, wave amber, wave red. From the research approved on 2026-10-23.
+// testdata/limits.json checks these against the app and the backend.
 const STANDARD = {
   "racing small": [5.5, 8.0, 8.0, 10.3, 0.15, 0.25],
   "racing big": [8.0, 10.8, 10.8, 12.8, 0.25, 0.40],

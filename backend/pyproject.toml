@@ -25,3 +25,13 @@ include = ["rowfrog*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+# Checked in CI (backend job) over backend/ and scripts/: names used before
+# they are set, unused imports and syntax errors. Style is left alone.
+[tool.ruff]
+line-length = 140
+# The jobs run Python 3.12 (scripts use 3.12 f-strings).
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["F", "E9"]
