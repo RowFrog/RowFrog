@@ -124,7 +124,7 @@ struct ConditionsPreviewView: View {
             .padding(.bottom, 24)
         }
         .background(Color(.systemGroupedBackground))
-        .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
+        .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage), ready: true))
     }
 
     private func optionHeader(_ text: String) -> some View {

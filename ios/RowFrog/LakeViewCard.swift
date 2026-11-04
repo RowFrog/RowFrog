@@ -40,7 +40,7 @@ struct LakeViewCard: View {
         store.noteCurrent(currentMs, lake: lakeID)
         await store.load(lakeID)
         // Only on the page `-RWOpenClub` opens: clubs on the same lake would race it for the sheet.
-        let page = UserDefaults.standard.string(forKey: "RWOpenClub")
+        let page = UserDefaults.standard.string(forKey: DefaultsKey.openClub)
         if UserDefaults.standard.bool(forKey: "RWOpenLakeView"), store.views[lakeID, club: clubID] != nil, page == nil || page == clubID {
             showingMap = true
         }

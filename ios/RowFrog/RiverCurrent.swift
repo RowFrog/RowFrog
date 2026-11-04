@@ -79,7 +79,7 @@ struct LevelBar: View {
 struct CurrentDetailView: View {
     let river: RiverConditions
     @Environment(\.dismiss) private var dismiss
-    @AppStorage("RWRoutePace") private var pace = 150.0
+    @AppStorage(DefaultsKey.routePace) private var pace = 150.0
 
     var body: some View {
         NavigationStack {

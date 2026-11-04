@@ -28,7 +28,7 @@ final class HealthRows {
 
     func load() async {
         // Screenshot hook: `-RWImportRows YES` lists made-up rows without asking Health.
-        if UserDefaults.standard.bool(forKey: "RWImportRows") {
+        if UserDefaults.standard.bool(forKey: DefaultsKey.importRows) {
             let day = 86_400.0
             rows = [(2, 8_400.0, "Apple Watch"), (5, 12_100, "CrewNerd"), (9, 6_200, "Apple Watch")].map { ago, metres, source in
                 let start = Date.now.addingTimeInterval(-ago * day)

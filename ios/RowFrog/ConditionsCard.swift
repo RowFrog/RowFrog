@@ -83,7 +83,7 @@ struct ConditionsCard: View {
         .task {
             // Screenshot hook: `-RWOpenCondition wind` opens that view.
             // Only on the page `-RWOpenClub` opens: the pages beside it would race it for the sheet.
-            let page = UserDefaults.standard.string(forKey: "RWOpenClub")
+            let page = UserDefaults.standard.string(forKey: DefaultsKey.openClub)
             if let raw = UserDefaults.standard.string(forKey: "RWOpenCondition"), page == nil || page == forecast.clubId {
                 try? await Task.sleep(for: .milliseconds(500))
                 open = Condition(rawValue: raw)
@@ -684,7 +684,7 @@ struct ConditionDetailView: View {
             .safeAreaInset(edge: .bottom) { neighbours(of: condition) }
             // The new view's map card reports its own hours.
             .onChange(of: condition) { time.mapHours = nil }
-            .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: true))
+            .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage), ready: true))
             .tipVisibility(scrubTip, $showScrubTip)
             .tipVisibility(mapTip, $showMapTip)
             // The chain's link tip follows once the map tip is closed.
@@ -1041,8 +1041,8 @@ private struct ConditionChart: View {
     @State private var scrollX: Double
     /// The hour under the finger while scrubbing (hold, then slide), as in the Stocks app.
     /// Screenshot hook: `-RWChartSelect 5` shows the scrub line five hours from now.
-    @State private var selectedX: Double? = UserDefaults.standard.object(forKey: "RWChartSelect") != nil
-        ? UserDefaults.standard.double(forKey: "RWChartSelect") : nil
+    @State private var selectedX: Double? = UserDefaults.standard.object(forKey: DefaultsKey.chartSelect) != nil
+        ? UserDefaults.standard.double(forKey: DefaultsKey.chartSelect) : nil
 
     init(detail: ConditionDetail, data: ConditionData, time: DetailTime, hidden: Set<String> = [], compact: Bool = false) {
         self.detail = detail

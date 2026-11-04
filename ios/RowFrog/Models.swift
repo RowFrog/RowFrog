@@ -689,7 +689,7 @@ struct ClubForecast: Codable, Hashable {
     /// then warns and shows grey instead of green. `-RWStaleForecast YES`
     /// makes every forecast out of date, for screenshots.
     func isStale(at date: Date = .now) -> Bool {
-        UserDefaults.standard.bool(forKey: "RWStaleForecast") || date.timeIntervalSince(generatedAt) > Self.staleAfter
+        UserDefaults.standard.bool(forKey: DefaultsKey.staleForecast) || date.timeIntervalSince(generatedAt) > Self.staleAfter
     }
 
     /// True for a club nobody opened lately: its file comes every 6 hours and

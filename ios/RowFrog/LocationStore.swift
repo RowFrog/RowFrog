@@ -28,7 +28,7 @@ final class LocationStore {
 
     private let defaults: UserDefaults
     private static let savedKey = "RWSavedClubs"
-    private static let homeKey = "RWHomeClub"
+    private static let homeKey = DefaultsKey.homeClub
 
     /// The mark of the page's club on every map: a house for the home base,
     /// a rower for any other club (as in the page bar). The page's club is blue,

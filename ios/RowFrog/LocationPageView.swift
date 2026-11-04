@@ -163,7 +163,7 @@ struct LocationPageView: View {
                     }
                 }
                 .environment(\.pageHeight, geometry.size.height)
-                .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: "RWScrollPage"), ready: forecast != nil))
+                .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage), ready: forecast != nil))
                 .refreshable {
                     async let pictures: Void = refreshSatellite()
                     async let lakeView: Void = refreshLakeView()

@@ -183,10 +183,10 @@ struct LocationListView: View {
             .task {
                 // Screenshot hooks: `-RWAddPlace YES` opens "Add a place", `-RWBrowse` browses.
                 let args = UserDefaults.standard
-                guard args.bool(forKey: "RWAddPlace") || args.string(forKey: "RWBrowse") != nil else { return }
+                guard args.bool(forKey: DefaultsKey.addPlace) || args.string(forKey: DefaultsKey.browse) != nil else { return }
                 try? await Task.sleep(for: .seconds(1))
-                if args.bool(forKey: "RWAddPlace") { addingPlace = true }
-                browseHook = args.string(forKey: "RWBrowse")
+                if args.bool(forKey: DefaultsKey.addPlace) { addingPlace = true }
+                browseHook = args.string(forKey: DefaultsKey.browse)
             }
             .sheet(isPresented: $addingPlace) {
                 AddPlaceView(locations: locations, name: search) { place in
@@ -209,13 +209,13 @@ struct LocationListView: View {
             }
             .task {
                 // Screenshot hook: `-RWShowSettings YES` opens the settings once the list is up.
-                guard UserDefaults.standard.bool(forKey: "RWShowSettings") else { return }
+                guard UserDefaults.standard.bool(forKey: DefaultsKey.showSettings) else { return }
                 try? await Task.sleep(for: .seconds(1))
                 showingSettings = true
             }
             .task {
                 // Screenshot hook: `-RWScrollPage n` (n > 0) scrolls to the end of the list.
-                guard UserDefaults.standard.integer(forKey: "RWScrollPage") > 0, let last = locations.saved.last else { return }
+                guard UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage) > 0, let last = locations.saved.last else { return }
                 try? await Task.sleep(for: .seconds(3))
                 withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
             }

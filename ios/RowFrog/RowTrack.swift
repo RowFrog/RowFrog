@@ -319,7 +319,7 @@ enum RouteImport {
 
     /// Route planning goes on at the pace the crew really rowed.
     static func usePace(_ secondsPer500: Double) {
-        UserDefaults.standard.set(min(max((secondsPer500 / 5).rounded() * 5, 90), 240), forKey: "RWRoutePace")
+        UserDefaults.standard.set(min(max((secondsPer500 / 5).rounded() * 5, 90), 240), forKey: DefaultsKey.routePace)
     }
 
     /// The turning points, fewer the longer the row, never more than `maxTurningPoints`.

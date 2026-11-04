@@ -7,7 +7,7 @@ final class DetailTimeTests: XCTestCase {
     override func setUp() {
         super.setUp()
         UserDefaults.standard.removeObject(forKey: DetailTime.linkKey)
-        UserDefaults.standard.removeObject(forKey: "RWChartSelect")
+        UserDefaults.standard.removeObject(forKey: DefaultsKey.chartSelect)
     }
 
     override func tearDown() {

@@ -79,7 +79,7 @@ struct LakeView: Decodable, Hashable {
 
     /// Older than a club forecast may be: the lights then turn grey instead of green.
     var isStale: Bool {
-        UserDefaults.standard.bool(forKey: "RWStaleForecast") || Date.now.timeIntervalSince(generatedAt) > ClubForecast.staleAfter
+        UserDefaults.standard.bool(forKey: DefaultsKey.staleForecast) || Date.now.timeIntervalSince(generatedAt) > ClubForecast.staleAfter
     }
 
     /// The hour that is running at `date`, else the first one.
