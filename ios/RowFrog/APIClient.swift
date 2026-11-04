@@ -67,9 +67,11 @@ struct APIClient {
     }
 
     /// `model` is a model the user picked (developer options); nil = the automatic choice.
-    func forecast(clubID: String, model: String? = nil) async throws -> ClubForecast {
-        if let model { return try await get("clubs/\(clubID)/models/\(model)/forecast") }
-        return try await get("clubs/\(clubID)/forecast")
+    /// `keepFor`: a kept copy younger than that is used without asking, and an older one when
+    /// the server can't be reached (the widgets); nil = always asked for (with the kept ETag).
+    func forecast(clubID: String, model: String? = nil, keepFor: TimeInterval? = nil) async throws -> ClubForecast {
+        if let model { return try await get("clubs/\(clubID)/models/\(model)/forecast", keepFor: keepFor) }
+        return try await get("clubs/\(clubID)/forecast", keepFor: keepFor)
     }
 
 #if !WIDGET_EXTENSION
@@ -100,7 +102,7 @@ struct APIClient {
         }
         // The system's own cache stays out: it would hold files up to GitHub's 10 minutes.
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData)
-        if let kept { request.setValue(kept.etag, forHTTPHeaderField: "If-None-Match") }
+        if let kept, !kept.etag.isEmpty { request.setValue(kept.etag, forHTTPHeaderField: "If-None-Match") }
         let data: Data, response: URLResponse
         // The older kept copy, where `keepFor` allows it.
         func fallback() -> T? {
@@ -134,7 +136,8 @@ struct APIClient {
             if let older = fallback() { return older }
             throw error
         }
-        if let etag = http?.value(forHTTPHeaderField: "ETag") { cache?.keep(data, etag: etag, for: url) }
+        // Kept without an ETag too (the backend on the Mac sends none), so it still serves offline.
+        cache?.keep(data, etag: http?.value(forHTTPHeaderField: "ETag") ?? "", for: url)
         return value
     }
 }

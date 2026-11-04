@@ -18,9 +18,67 @@ enum WidgetShared {
 
     static var defaults: UserDefaults { UserDefaults(suiteName: group) ?? .standard }
 
-    static func cacheKey(_ clubID: String) -> String { "RWWidgetForecast-\(clubID)" }
-    /// When the widget last downloaded that forecast.
-    static func loadedKey(_ clubID: String) -> String { "RWWidgetLoaded-\(clubID)" }
+}
+
+/// The widgets' copies of the club forecasts: files in the app group folder,
+/// not the shared settings, which are read and written whole each time (one
+/// forecast is about 100 KB). Downloads go through `APIClient`, so an
+/// unchanged forecast answers "304 Not Modified" instead of coming again.
+enum WidgetForecasts {
+    /// Several widgets of one club, or a redraw soon after the last one, share one download.
+    static let reuseFor: TimeInterval = 15 * 60
+    /// A widget has little time to draw: a slow server must not hold it for the system's minute.
+    static let timeout: TimeInterval = 20
+
+    static var folder: URL {
+        (FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: WidgetShared.group) ?? URL.cachesDirectory)
+            .appending(path: "WidgetForecasts", directoryHint: .isDirectory)
+    }
+
+    static let session: URLSession = {
+        let configuration = URLSessionConfiguration.default
+        configuration.timeoutIntervalForRequest = timeout
+        configuration.timeoutIntervalForResource = timeout
+        configuration.urlCache = nil
+        return URLSession(configuration: configuration)
+    }()
+
+    /// The backend the app uses, with the widgets' folder and timeout.
+    static func client(_ base: APIClient = .fromBundle()) -> APIClient {
+        APIClient(baseURL: base.baseURL, session: session, cache: KeptFiles(folder: folder))
+    }
+
+    /// The live forecast; the copy from the last 15 minutes; or, when the backend
+    /// can't be reached or answers with an error, the last one kept.
+    static func load(_ clubID: String, api: APIClient = client()) async -> ClubForecast? {
+        try? await api.forecast(clubID: clubID, keepFor: reuseFor)
+    }
+
+    /// The last forecast kept for a club or own place, however old.
+    static func lastKept(_ clubID: String, api: APIClient = client()) -> ClubForecast? {
+        guard let data = api.cache?.copy(of: url(clubID, api: api))?.data else { return nil }
+        return try? APIClient.decoder.decode(ClubForecast.self, from: data)
+    }
+
+    /// Keeps an own place's forecast, which the widget works out itself.
+    static func keep(_ forecast: ClubForecast, for clubID: String, api: APIClient = client()) {
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        guard let data = try? encoder.encode(forecast) else { return }
+        api.cache?.keep(data, etag: "", for: url(clubID, api: api))
+    }
+
+    private static func url(_ clubID: String, api: APIClient) -> URL {
+        api.baseURL.appending(path: clubID.hasPrefix(OwnPlace.idPrefix) ? "own-places/\(clubID)" : "clubs/\(clubID)/forecast")
+    }
+
+    /// Forecasts that versions before November 2026 kept in the shared settings.
+    static func dropOldCopies(_ defaults: UserDefaults = WidgetShared.defaults) {
+        for key in defaults.dictionaryRepresentation().keys
+        where key.hasPrefix("RWWidgetForecast-") || key.hasPrefix("RWWidgetLoaded-") {
+            defaults.removeObject(forKey: key)
+        }
+    }
 }
 
 /// Pictures the app prepares for the widgets' backgrounds, at widget size, in

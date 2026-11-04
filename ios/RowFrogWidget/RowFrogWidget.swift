@@ -191,41 +191,21 @@ struct RowingProvider: AppIntentTimelineProvider {
         return nil
     }
 
-    /// The live forecast, or the last one fetched when the backend can't be reached.
+    /// The live forecast, or the last one kept when the backend can't be reached.
     private func loadForecast(_ clubID: String) async -> ClubForecast? {
-        let shared = WidgetShared.defaults
         if clubID.hasPrefix(OwnPlace.idPrefix) {
             // An own place: the widget asks Open-Meteo itself, as the app does.
-            let places = shared.dictionary(forKey: WidgetShared.ownPlacesKey) as? [String: [Double]] ?? [:]
+            let places = WidgetShared.defaults.dictionary(forKey: WidgetShared.ownPlacesKey) as? [String: [Double]] ?? [:]
             if let point = places[clubID], point.count == 2 {
                 let club = Club(id: clubID, name: "", shortName: nil, address: "", website: nil,
                                 launchPoint: Coordinate(lat: point[0], lon: point[1]), launchPointVerified: true, source: "own")
                 if let forecast = try? await PlaceForecaster.load(club) {
-                    let encoder = JSONEncoder()
-                    encoder.dateEncodingStrategy = .iso8601
-                    shared.set(try? encoder.encode(forecast), forKey: WidgetShared.cacheKey(clubID))
+                    WidgetForecasts.keep(forecast, for: clubID)
                     return forecast
                 }
             }
-            guard let cached = shared.data(forKey: WidgetShared.cacheKey(clubID)) else { return nil }
-            return try? APIClient.decoder.decode(ClubForecast.self, from: cached)
+            return WidgetForecasts.lastKept(clubID)
         }
-        // Several widgets of one club, or a redraw soon after the last one, share one download.
-        if let loaded = shared.object(forKey: WidgetShared.loadedKey(clubID)) as? Date, Date.now.timeIntervalSince(loaded) < 15 * 60,
-           let cached = shared.data(forKey: WidgetShared.cacheKey(clubID)),
-           let forecast = try? APIClient.decoder.decode(ClubForecast.self, from: cached) {
-            return forecast.applyingUserLimits()
-        }
-        let url = APIClient.fromBundle().baseURL.appending(path: "clubs/\(clubID)/forecast")
-        if let result = try? await URLSession.shared.data(from: url),
-           (result.1 as? HTTPURLResponse)?.statusCode == 200,
-           let forecast = try? APIClient.decoder.decode(ClubForecast.self, from: result.0) {
-            let data = result.0
-            shared.set(data, forKey: WidgetShared.cacheKey(clubID))
-            shared.set(Date.now, forKey: WidgetShared.loadedKey(clubID))
-            return forecast.applyingUserLimits()
-        }
-        guard let cached = shared.data(forKey: WidgetShared.cacheKey(clubID)) else { return nil }
-        return (try? APIClient.decoder.decode(ClubForecast.self, from: cached))?.applyingUserLimits()
+        return await WidgetForecasts.load(clubID)?.applyingUserLimits()
     }
 }
