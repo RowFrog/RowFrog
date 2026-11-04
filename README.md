@@ -419,7 +419,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `testdata/units.json` | The unit table (values shown in each unit, Beaufort forces at the limits, decimals) that the app and website tests both check. |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
 | `docs/screenshots/` | Not in git: the "App screenshots" workflow writes here on the runner and keeps each branch's set under `refs/screenshots/<branch>` (see the handbook). |
-| `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. |
+| `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. Finished research probes and their workflows are parked in `scripts/probes/`, with a note of where each result went. |
 | `CREDITS.md` | Data sources, licences and the credits the app must show. |
 
 ## Club catalog
@@ -557,8 +557,6 @@ More detail, including the secrets each one needs, is in the
 | **River gauges** (`river-gauges.yml`) | Finds the PEGELONLINE gauge on each German river club's river (within 15 km) and commits `data/river-gauges.json` for the Current tile. By hand, after river clubs change. |
 | **JPEG quality probe** (`jpeg-quality.yml`) | Research only: compares JPEG qualities for the satellite pictures (today 90) against lossless originals from Copernicus and keeps the originals on `refs/probe/jpeg-quality`. By hand, or when its script changes. |
 | **Lake lights check** (`lake-lights-check.yml`) | Lists DWD's lake warning areas with their clubs and fails when one is missing from `data/shore-lights.json` or no longer at DWD. By hand each season, or when its script or that file changes. |
-| **River section survey** (`river-section-survey.yml`) | Research only: for every river club, how far the next weir or lock is up- and downstream, from the Geofabrik extracts of Germany, Austria and Switzerland (filtered with osmium, no Overpass). Nothing is stored. By hand. |
-| **River gauge check** (`river-gauge-probe.yml`) | Research only: which river gauges (PEGELONLINE, BAFU) and flow forecasts (Open-Meteo Flood API) could tell river clubs about current and high water. Nothing is stored. By hand. |
 | **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
