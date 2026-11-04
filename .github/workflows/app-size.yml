@@ -31,7 +31,7 @@ jobs:
     outputs:
       runner: ${{ steps.pick.outputs.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: scripts
       - id: pick
@@ -47,7 +47,7 @@ jobs:
       run:
         working-directory: ios
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: brew install xcodegen
       - run: xcodegen
       - name: Release archive (unsigned)

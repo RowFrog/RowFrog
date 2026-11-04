@@ -51,7 +51,7 @@ jobs:
     outputs:
       runner: ${{ steps.pick.outputs.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: scripts
       - id: pick
@@ -61,7 +61,7 @@ jobs:
     needs: newest-xcode
     runs-on: ${{ inputs.runner || needs.newest-xcode.outputs.runner }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Get the earlier screenshots
         # This branch's last set, else main's, so a run with `only` keeps the other screens.
         run: |
@@ -72,10 +72,10 @@ jobs:
               echo "Started from $ref"; break
             fi
           done
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: pip install -e backend pillow
+      - run: pip install -c backend/requirements-publish.txt -e backend pillow
       - name: Start the backend with live data
         run: |
           (cd backend && RW_SAMPLE_WARNING_CLUBS=tutzinger-rv,seeclub-zuerich,ruderverein-albatros-klagenfurt,der-hamburger-und-germania-ruder-club RW_SAMPLE_FROST_CLUBS=ruderclub-forggensee RW_SAMPLE_LAKE_WIND=192,5.2,7.9 RW_SAMPLE_SATELLITE_WATER=simssee nohup uvicorn rowfrog.api:app --port 8000 > ../uvicorn.log 2>&1 &)
@@ -615,7 +615,7 @@ jobs:
           sleep 2
           shoot 08-no-connection light
           ls "$SHOTS"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: screenshots

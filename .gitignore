@@ -15,6 +15,7 @@ docs/screenshots/
 # Website build
 web/dist/
 web/node_modules
+node_modules/
 
 # Test coverage data
 .coverage

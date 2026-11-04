@@ -33,18 +33,18 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 170
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
       - run: sudo apt-get update -q && sudo apt-get install -y -q osmium-tool
-      - run: pip install shapely osmium && pip install -e backend
+      - run: pip install shapely osmium && pip install -c backend/requirements-publish.txt -e backend
       - name: Today's date
         id: day
         run: echo "day=$(date -u +%Y-%m-%d)" >> "$GITHUB_OUTPUT"
       - name: Cached extracts
         id: cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: |
             osm/lines.osm.pbf
