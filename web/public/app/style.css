@@ -378,9 +378,16 @@ svg.filled { width: 22px; height: 22px; }
   body.scrolled::before { opacity: 1; }
 }
 /* The club's name and light, small, once the big title has scrolled away (InlineClubTitle). */
-/* A plain bar in the page's colour, so the 48 hours' header pinned under it hides the rows that scrolled past. */
+/* As the app's TopEdgeFade with a title: a thin blur the cards show through, fading out over 28 px below
+   the bar rather than ending in a hard line (the 48 hours' card is clipped above its pinned header, so no
+   rows show through there). Without backdrop-filter, or with reduced transparency, the bar is solid. */
 .top-title { position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 10; height: calc(var(--safe-top) + 52px); padding: var(--safe-top) 16px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
-  font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: border-box; background: var(--bg); border-bottom: .5px solid var(--line); }
+  font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: border-box; isolation: isolate; }
+.top-title::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; height: calc(100% + 28px); pointer-events: none;
+  background: color-mix(in srgb, var(--bg) 70%, transparent); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-mask-image: linear-gradient(#000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) calc(100% - 28px), transparent); mask-image: linear-gradient(#000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) calc(100% - 28px), transparent); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .top-title::before { background: var(--bg); height: 100%; -webkit-mask-image: none; mask-image: none; } }
+@media (prefers-reduced-transparency: reduce) { .top-title::before { background: var(--bg); height: 100%; -webkit-mask-image: none; mask-image: none; backdrop-filter: none; -webkit-backdrop-filter: none; } }
 .top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .top-name { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
 body.title-gone .top-title { opacity: 1; }
