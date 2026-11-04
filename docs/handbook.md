@@ -267,6 +267,12 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 | Lake lights check | every season, or when DWD changes its lake warning areas: lists DWD's lake warning areas (23 on 30.10.2026) with their clubs and fails when an area is missing from `data/shore-lights.json` or no longer at DWD (`scripts/lake_lights_check.py`). That file says which lakes really have storm lights on the shore (Bavarian lakes, Bodensee, Steinhuder Meer; not Alster, Müritz, Dümmer and others): the app explains the lights only there and says "no storm lights" elsewhere. It runs itself when the script or the file changes. Weather warnings about frost, black ice, thaw, heat or cold are shown but leave the rowing light alone (`INFO_ONLY_WORDS` in `backend/rowfrog/forecast.py`) |
 | App screenshots | only by hand: once a PR is ready for review, with `only` for the changed screens (e.g. `^8[1-7]-`); the full set only when the owner asks. Results go to `refs/screenshots/<branch>` (not in any branch's history; the run starts from that branch's last set, else main's) and to the run's "screenshots" download. Get them: `git fetch origin refs/screenshots/<branch> && mkdir -p shots && git archive FETCH_HEAD | tar -x -C shots`. Sets of deleted branches are removed by the next run. Input `device` = `iPad` shoots on an 11-inch iPad Pro Simulator instead; those shots go to an `ipad/` folder in the same set. Runs on the runner with the newest released Xcode by default, as CI does (newest iPhone Pro Simulator); input `runner` = `macos-26-intel` with `xcode` = `26` shoots on iOS 26 instead |
 
+## Before launch
+
+| Switch | What to do |
+|---|---|
+| New used clubs per day | `NEW_USED_PER_DAY` in `scripts/publish_static.py` is 0 (off) during testing. Set it to e.g. 50 before launch: then at most that many clubs and lakes newly count as used per day (most loaded first; clubs used on earlier days always stay), so requests for hundreds of different clubs can't move them all to 3-hourly loads. The forecast job's log then prints a "usage: … first loaded today" line when the cap holds some back |
+
 ## Tests
 
 Every PR runs them (CI and Website workflows); locally:
