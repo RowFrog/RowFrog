@@ -4,7 +4,7 @@
 Usage (from the repository root, after `pip install -e backend`):
     python3 scripts/publish_static.py OUT_DIR [--clubs confirmed|all] [--state FILE]
 
-Calls the same FastAPI app the server would run (no network server needed)
+Calls the same functions the FastAPI app serves (no web server or test client)
 and writes each answer at its API path, without a file extension:
     OUT_DIR/lakes/index                 = GET /lakes/index (the lake list)
     OUT_DIR/countries/index             = GET /countries/index (countries with clubs)
@@ -53,10 +53,11 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 import httpx
-from fastapi.testclient import TestClient
+from fastapi import HTTPException
+from fastapi.encoders import jsonable_encoder
 
 from rowfrog import api, ice, lake_view, locations, outlines, water_estimate, weather_models
-from rowfrog.api import LOCAL, app
+from rowfrog.api import LOCAL
 from rowfrog.sources import dwd_radar, dwd_warnings, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
 
 try:  # the usage counter (PR #15) may not be part of this checkout yet
@@ -748,6 +749,18 @@ def weather_maps(state: State, out: Path, clubs: list[locations.Club], now: date
         print("Weather maps: no newer ICON-D2 run")
 
 
+def built(forecast) -> tuple[dict | None, str | None]:
+    """Runs one of the API's forecast functions directly (no web server or test
+    client) and gives its JSON as the API would send it, or what went wrong.
+    One broken club or lake must not stop the others."""
+    try:
+        return jsonable_encoder(asyncio.run(forecast)), None
+    except HTTPException as e:
+        return None, f"HTTP {e.status_code} {str(e.detail)[:120]}"
+    except Exception as e:
+        return None, f"{type(e).__name__}: {e}"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("out", type=Path)
@@ -759,17 +772,11 @@ def main() -> int:
     used_clubs, used_lakes, with_usage = usage_now()
     print(f"Used: {len(used_clubs)} clubs, {len(used_lakes)} lakes{'' if with_usage else ' (no usage counter)'}")
 
-    client = TestClient(app)
-    resp = client.get("/lakes/index")
-    resp.raise_for_status()
-    write(args.out / "lakes" / "index", resp.json())
-    resp = client.get("/countries/index")
-    resp.raise_for_status()
-    write(args.out / "countries" / "index", resp.json())
-    for country in resp.json():
-        lakes = client.get(f"/countries/{country['code']}/lakes")
-        lakes.raise_for_status()
-        write(args.out / "countries" / country["code"] / "lakes", lakes.json())
+    write(args.out / "lakes" / "index", jsonable_encoder(api.list_lakes()))
+    countries = jsonable_encoder(api.list_countries())
+    write(args.out / "countries" / "index", countries)
+    for country in countries:
+        write(args.out / "countries" / country["code"] / "lakes", jsonable_encoder(api.country_lakes(country["code"])))
 
     every = list(locations.load().clubs.values())
     clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
@@ -790,15 +797,10 @@ def main() -> int:
         if club.id not in api.prepared.weather:
             failed.append(f"{club.id}: no forecast loaded")
             continue
-        try:
-            resp = client.get(f"/clubs/{club.id}/forecast")
-        except Exception as e:  # one broken club must not stop the others
-            failed.append(f"{club.id}: {type(e).__name__}: {e}")
+        body, problem = built(api.club_forecast(club.id))
+        if problem:
+            failed.append(f"{club.id}: {problem}")
             continue
-        if resp.status_code != 200:
-            failed.append(f"{club.id}: HTTP {resp.status_code} {resp.text[:120]}")
-            continue
-        body = resp.json()
         if club.id in radar:
             body["radar"] = radar[club.id]
         if with_usage:
@@ -807,15 +809,11 @@ def main() -> int:
     print(f"Wrote {len(clubs) - len(failed)} of {len(clubs)} forecasts to {args.out}")
     written = 0
     for club, model in model_pairs:
-        try:
-            resp = client.get(f"/clubs/{club.id}/models/{model}/forecast")
-        except Exception as e:
-            print(f"  {club.id} with {model}: {type(e).__name__}: {e}")
+        body, problem = built(api.club_forecast_with_model(club.id, model))
+        if problem:
+            print(f"  {club.id} with {model}: {problem}")
             continue
-        if resp.status_code != 200:
-            print(f"  {club.id} with {model}: HTTP {resp.status_code} {resp.text[:120]}")
-            continue
-        write(args.out / "clubs" / club.id / "models" / model / "forecast", resp.json())
+        write(args.out / "clubs" / club.id / "models" / model / "forecast", body)
         written += 1
     print(f"Wrote {written} of {len(model_pairs)} forecasts with other weather models")
 
@@ -828,15 +826,11 @@ def main() -> int:
     ]
     views = 0
     for lake_id in lake_weather(state, lake_ids, used_lakes, now):
-        try:
-            resp = client.get(f"/lakes/{lake_id}/view")
-        except Exception as e:
-            print(f"  lake view {lake_id}: {type(e).__name__}: {e}")
+        body, problem = built(api.lake_view_forecast(lake_id))
+        if problem:
+            print(f"  lake view {lake_id}: {problem}")
             continue
-        if resp.status_code != 200:
-            print(f"  lake view {lake_id}: HTTP {resp.status_code} {resp.text[:120]}")
-            continue
-        write(args.out / "lakes" / lake_id / "view", resp.json())
+        write(args.out / "lakes" / lake_id / "view", body)
         views += 1
     print(f"Wrote {views} of {len(lake_ids)} lake views")
     state.save()
