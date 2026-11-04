@@ -38,10 +38,15 @@ test("the right user and password open the page, still marked noindex", async ()
   assert.equal(response.headers.get("Cache-Control"), "private, no-store");
 });
 
-test("robots.txt is the only file without a password", async () => {
-  const response = await call("/robots.txt");
-  assert.equal(response.status, 200);
-  assert.equal(response.headers.get("X-Robots-Tag"), NO_ROBOTS);
+test("only robots.txt and the home-screen icons open without a password", async () => {
+  for (const path of ["/robots.txt", "/icon-180.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/favicon.ico"]) {
+    const response = await call(path);
+    assert.equal(response.status, 200, path);
+    assert.equal(response.headers.get("X-Robots-Tag"), NO_ROBOTS);
+  }
+  for (const path of ["/", "/app/", "/app/manifest.webmanifest", "/app/app.js", "/app/icon-192.png", "/icon-192.png/x", "/icon-192.png.html"]) {
+    assert.equal((await call(path)).status, 401, path);
+  }
 });
 
 test("without the secrets the site stays shut", async () => {
