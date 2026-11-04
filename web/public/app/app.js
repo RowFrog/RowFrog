@@ -729,9 +729,29 @@ function wireSideList(currentId) {
  * again whenever its width changes.
  */
 const fitWatch = new ResizeObserver((entries) => entries.forEach(({ target }) => {
+  if (target.matches(".now-grid")) return fitGreyLines(target);
   target.querySelectorAll(".fit-line").forEach(fitLine);
   target.querySelectorAll(".now-head").forEach(fitHead);
 }));
+/**
+ * The top tile's grey lines (feels like, measured at, open water ...) get the
+ * whole width up to the next column, as TopTileGrid gives them in the app: the
+ * columns are only as wide as their titles and values, so the lines wrapped
+ * within that, where the app keeps them on one line at the same width.
+ */
+function fitGreyLines(grid) {
+  const cells = [...grid.children];
+  if (cells.length < 3) return;
+  const left = grid.getBoundingClientRect().left;
+  const xs = cells.slice(0, 3).map((cell) => cell.getBoundingClientRect().left - left);
+  const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
+  const widths = [xs[1] - xs[0] - gap, xs[2] - xs[1] - gap, grid.clientWidth - xs[2]];
+  // A negative end margin widens a line past its column without widening the column.
+  cells.forEach((cell, i) => {
+    const extra = Math.max(0, Math.round(widths[i % 3] - cell.clientWidth));
+    cell.querySelectorAll(".grey").forEach((line) => { line.style.marginInlineEnd = extra ? `-${extra}px` : ""; });
+  });
+}
 function fitLine(el) {
   const width = el.parentElement?.clientWidth ?? 0;
   if (!width || el.dataset.width === String(width)) return;
@@ -771,6 +791,10 @@ function watchFitLines(scope = root) {
   scope.querySelectorAll(".now-head").forEach((el) => {
     fitHead(el);
     if (el.parentElement) fitWatch.observe(el.parentElement);
+  });
+  scope.querySelectorAll(".now-grid").forEach((el) => {
+    fitGreyLines(el);
+    fitWatch.observe(el);
   });
 }
 
