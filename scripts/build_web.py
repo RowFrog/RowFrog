@@ -61,8 +61,11 @@ def main() -> int:
     from PIL import Image
 
     with Image.open(APP_ICON) as icon:
-        for size in (192, 512):
+        for size in (180, 192, 512):
             icon.convert("RGB").resize((size, size), Image.LANCZOS).save(OUT / f"icon-{size}.png", optimize=True)
+        # Safari also asks for these two by name, whatever the page links.
+        shutil.copy(OUT / "icon-180.png", OUT / "apple-touch-icon.png")
+        icon.convert("RGB").save(OUT / "favicon.ico", sizes=[(32, 32), (48, 48)])
     print(f"Built {sum(1 for p in OUT.rglob('*') if p.is_file())} files into {OUT}")
     return 0
 

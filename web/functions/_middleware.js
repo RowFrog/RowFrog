@@ -3,18 +3,24 @@
 // While the site is in testing, only the owner gets in: every request needs
 // the user name and password in the Pages secrets SITE_USER and SITE_PASSWORD
 // (HTTP Basic Auth, set by .github/workflows/website.yml). Without them the
-// site stays shut. robots.txt is the only file served without a password, so
-// well-behaved crawlers read that they are not welcome.
+// site stays shut. robots.txt is served without a password, so well-behaved
+// crawlers read that they are not welcome. So are the home-screen icons (owner
+// OK 2026-11-04): Safari fetches them without the password, and "Add to Home
+// Screen" then shows a plain letter. They are the app icon, already in the
+// public repository. Only these exact file names open; everything else asks.
 //
 // Every answer, the password prompt included, tells search engines and AI
 // crawlers not to index, follow, keep or train on anything.
 
 export const NO_ROBOTS = "noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate, noai, noimageai";
 
+/** The only files served without the password. */
+export const OPEN_FILES = new Set(["/robots.txt", "/icon-180.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/favicon.ico"]);
+
 export async function onRequest(context) {
   const { request, env } = context;
   const url = new URL(request.url);
-  if (url.pathname === "/robots.txt") {
+  if (OPEN_FILES.has(url.pathname)) {
     return guarded(await context.next());
   }
   if (!env.SITE_USER || !env.SITE_PASSWORD) {
