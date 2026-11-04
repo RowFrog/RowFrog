@@ -176,7 +176,7 @@ jobs:
             [ -n "${NEWS:-}" ] && news=()
             # The app follows the phone's clock by default now (4 Nov 2026) and the
             # Simulator is a US phone, so shots keep 24-hour times unless they set one.
-            local clock=(-RWTimeFormat hours24)
+            local clock=(-RWTimeFormat hours12)
             [[ " $* " == *" -RWTimeFormat "* ]] && clock=()
             xcrun simctl ui "$UDID" appearance "$appearance"
             # iPadOS ignores the app's own turn (-RWLandscape) for apps in windows, so the
