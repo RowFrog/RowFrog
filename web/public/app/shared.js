@@ -390,6 +390,42 @@ export function h(text) {
   return String(text ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }
 
+/** Markup that is already safe: what html`` returns, or raw() marks. */
+class SafeHTML {
+  constructor(text) {
+    this.text = text;
+  }
+  toString() {
+    return this.text;
+  }
+}
+
+/** Marks trusted markup (icon(), footerLinks()) so html`` keeps it as it is. Never for names or other data. */
+export const raw = (markup) => new SafeHTML(String(markup ?? ""));
+
+/**
+ * Builds markup and escapes every value by default (code review finding 9):
+ * html`<strong>${club.name}</strong>` is safe even when a name from
+ * OpenStreetMap holds "<". Values from html`` and raw() stay as they are,
+ * arrays are joined, and null, undefined and false give nothing. The result
+ * works wherever a string does (innerHTML, other templates). Use it for new
+ * markup instead of `...${h(x)}...` strings.
+ */
+export function html(strings, ...values) {
+  let out = strings[0];
+  values.forEach((value, i) => {
+    out += markup(value) + strings[i + 1];
+  });
+  return new SafeHTML(out);
+}
+
+function markup(value) {
+  if (value == null || value === false) return "";
+  if (value instanceof SafeHTML) return value.text;
+  if (Array.isArray(value)) return value.map(markup).join("");
+  return h(value);
+}
+
 /**
  * A club's name for a title on one line (ClubTitle in the app): the long name
  * with the short one in brackets where it fits, else the short name alone.

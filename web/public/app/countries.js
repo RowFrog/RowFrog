@@ -5,7 +5,11 @@
 import { t, lang, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import { fold, town, place, waterUnknown } from "./logic.js";
-import { store, loadCountryIndex, h, flag, setTitle, testing, footerLinks, loadCatalog, savedClub, lakeTitle, load, save } from "./shared.js";
+import { store, loadCountryIndex, html, raw, flag, setTitle, testing, footerLinks, loadCatalog, savedClub, lakeTitle, load, save } from "./shared.js";
+
+// Markup here goes through html``, which escapes every value (shared.js).
+const svg = (...args) => raw(icon(...args));
+const footer = () => raw(footerLinks());
 
 let index = null;
 
@@ -25,19 +29,19 @@ export const countryName = (c) => (lang() === "de" ? c.nameDe ?? c.name : c.name
 /** "All countries" and one chip per country above the search results (CountryChips). */
 export function countryChips(countries, selected) {
   if (countries.length < 2) return "";
-  const chip = (code, label) => `<button class="chip ${selected === code ? "on" : ""}" data-country="${code ?? ""}" aria-pressed="${selected === code}">${h(label)}</button>`;
-  return `<div class="chips country-chips">${chip(null, t("All countries"))}${countries.map((c) => chip(c.code, `${flag(c.code)} ${countryName(c)}`)).join("")}</div>`;
+  const chip = (code, label) => html`<button class="chip ${selected === code ? "on" : ""}" data-country="${code ?? ""}" aria-pressed="${String(selected === code)}">${label}</button>`;
+  return html`<div class="chips country-chips">${chip(null, t("All countries"))}${countries.map((c) => chip(c.code, `${flag(c.code)} ${countryName(c)}`))}</div>`;
 }
 
 /** One club to add, as in the search (SearchResultRow). */
 export function resultRow(club, lake, { showFlag = true } = {}) {
   const saved = store.clubs.some((c) => c.id === club.id);
-  return `<li><button class="result" data-club="${h(club.id)}" data-lake="${h(lake.id)}">
-      ${showFlag ? `<span class="flag">${flag(club.country ?? lake.country)}</span>` : ""}
-      <span class="result-text"><strong>${h(club.name)}</strong>
-      <small>${h(place(lake.name, town(club.address), lakeTitle))}</small>
-      ${club.launchPointVerified ? "" : `<small class="orange">${h(t("Launch point not yet confirmed"))}</small>`}</span>
-      <span class="add ${saved ? "in" : ""}">${icon(saved ? "circle-check" : "plus")}</span>
+  return html`<li><button class="result" data-club="${club.id}" data-lake="${lake.id}">
+      ${showFlag && html`<span class="flag">${flag(club.country ?? lake.country)}</span>`}
+      <span class="result-text"><strong>${club.name}</strong>
+      <small>${place(lake.name, town(club.address), lakeTitle)}</small>
+      ${!club.launchPointVerified && html`<small class="orange">${t("Launch point not yet confirmed")}</small>`}</span>
+      <span class="add ${saved ? "in" : ""}">${svg(saved ? "circle-check" : "plus")}</span>
     </button></li>`;
 }
 
@@ -58,27 +62,27 @@ export function wireResults(list, lakes) {
 
 function page(title, back, body) {
   setTitle(title);
-  return `<header class="nav"><a class="link" href="${back}">${icon("chevron-left")} ${h(t("Back"))}</a><strong class="nav-title">${h(title)}</strong><span class="nav-side"></span></header>
-    ${testing()}
-    <main class="page">${body}${footerLinks()}</main>`;
+  return html`<header class="nav"><a class="link" href="${back}">${svg("chevron-left")} ${t("Back")}</a><strong class="nav-title">${title}</strong><span class="nav-side"></span></header>
+    ${raw(testing())}
+    <main class="page">${body}${footer()}</main>`;
 }
 
 const compare = (a, b) => a.localeCompare(b, locale(), { sensitivity: "base", numeric: true });
 
 /** Every country the search covers (CountryListView). */
 export async function renderCountries(root) {
-  root.innerHTML = page(t("Countries"), "#/list", `<p class="spinner-line"><span class="spinner"></span></p>`);
+  root.innerHTML = page(t("Countries"), "#/list", html`<p class="spinner-line"><span class="spinner"></span></p>`);
   let countries;
   try {
     countries = await loadCountries();
   } catch {
-    root.querySelector("main").innerHTML = `<p class="empty">${h(t("Could not load the club list."))}</p>${footerLinks()}`;
+    root.querySelector("main").innerHTML = html`<p class="empty">${t("Could not load the club list.")}</p>${footer()}`;
     return;
   }
-  root.querySelector("main").innerHTML = `<h1 class="large">${h(t("Countries"))}</h1>
-    <ul class="results">${countries.map((c) => `<li><a class="result" href="#/countries/${c.code}">
-      <span class="flag">${flag(c.code)}</span><span class="result-text"><strong>${h(countryName(c))}</strong></span>
-      <span class="sub">${h(t("%@ clubs", String(c.clubs)))}</span>${icon("chevron-right")}</a></li>`).join("")}</ul>${footerLinks()}`;
+  root.querySelector("main").innerHTML = html`<h1 class="large">${t("Countries")}</h1>
+    <ul class="results">${countries.map((c) => html`<li><a class="result" href="#/countries/${c.code}">
+      <span class="flag">${flag(c.code)}</span><span class="result-text"><strong>${countryName(c)}</strong></span>
+      <span class="sub">${t("%@ clubs", String(c.clubs))}</span>${svg("chevron-right")}</a></li>`)}</ul>${footer()}`;
 }
 
 /** The list title of a club's water: the town when the catalogs don't know the water; a river section adds its place, as one river has several: "Main · Offenbach" (Lake.listTitle). */
@@ -119,24 +123,24 @@ const byTown = () => load("rf.countryByTown", false) === true;
 
 /** One country's waters, grouped by state where the list names them, otherwise by first letter (CountryWatersView). */
 export async function renderCountry(root, code, filter = "") {
-  root.innerHTML = page(t("Countries"), "#/countries", `<p class="spinner-line"><span class="spinner"></span></p>`);
+  root.innerHTML = page(t("Countries"), "#/countries", html`<p class="spinner-line"><span class="spinner"></span></p>`);
   let country;
   let lakes;
   try {
     country = (await loadCountries()).find((c) => c.code === code);
     lakes = inCountry(await loadCatalog(), code);
   } catch {
-    root.querySelector("main").innerHTML = `<p class="empty">${h(t("Could not load the club list."))}</p>${footerLinks()}`;
+    root.querySelector("main").innerHTML = html`<p class="empty">${t("Could not load the club list.")}</p>${footer()}`;
     return;
   }
   const title = country ? `${flag(code)} ${countryName(country)}` : code;
   setTitle(title);
   root.querySelector(".nav-title").textContent = title;
   const main = root.querySelector("main");
-  main.innerHTML = `<h1 class="large">${h(title)}</h1>
-    <div class="segmented" id="by">${[[false, t("By water")], [true, t("By town")]].map(([v, label]) => `<button data-town="${v}" class="${byTown() === v ? "on" : ""}">${h(label)}</button>`).join("")}</div>
-    <label class="search">${icon("search")}<input id="filter" type="search" autocomplete="off" value="${h(filter)}" placeholder="${h(t("Lake, river, club or town"))}" aria-label="${h(t("Lake, river, club or town"))}"></label>
-    <div id="waters"></div>${footerLinks()}`;
+  main.innerHTML = html`<h1 class="large">${title}</h1>
+    <div class="segmented" id="by">${[[false, t("By water")], [true, t("By town")]].map(([v, label]) => html`<button data-town="${String(v)}" class="${byTown() === v ? "on" : ""}">${label}</button>`)}</div>
+    <label class="search">${svg("search")}<input id="filter" type="search" autocomplete="off" value="${filter}" placeholder="${t("Lake, river, club or town")}" aria-label="${t("Lake, river, club or town")}"></label>
+    <div id="waters"></div>${footer()}`;
   const input = main.querySelector("#filter");
   const draw = () => {
     const rows = countryRows(lakes, byTown()).filter((r) => rowMatches(r, input.value));
@@ -148,11 +152,13 @@ export async function renderCountry(root, code, filter = "") {
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key).push(row);
     }
-    main.querySelector("#waters").innerHTML = [...groups.keys()].sort(compare).map((key) => `<h3 class="section">${h(key)}</h3>
-      <ul class="results">${groups.get(key).map((row) => `<li><a class="result" href="#/countries/${code}/${encodeURIComponent(row.id)}">
-        <span class="result-text"><strong>${h(row.title)}</strong>${row.unknown ? `<small>${h(t("Water not yet known"))}</small>` : ""}</span>
-        <span class="sub">${row.clubs.length}</span>${icon("chevron-right")}</a></li>`).join("")}</ul>`).join("")
-      || `<p class="empty">${h(t("No clubs found."))}</p>`;
+    const keys = [...groups.keys()].sort(compare);
+    main.querySelector("#waters").innerHTML = keys.length
+      ? html`${keys.map((key) => html`<h3 class="section">${key}</h3>
+      <ul class="results">${groups.get(key).map((row) => html`<li><a class="result" href="#/countries/${code}/${encodeURIComponent(row.id)}">
+        <span class="result-text"><strong>${row.title}</strong>${row.unknown && html`<small>${t("Water not yet known")}</small>`}</span>
+        <span class="sub">${row.clubs.length}</span>${svg("chevron-right")}</a></li>`)}</ul>`)}`
+      : html`<p class="empty">${t("No clubs found.")}</p>`;
   };
   main.querySelectorAll("#by button").forEach((b) => b.addEventListener("click", () => {
     save("rf.countryByTown", b.dataset.town === "true");
@@ -169,12 +175,12 @@ export async function renderCountry(root, code, filter = "") {
 
 /** The clubs on one water or in one town (WaterClubsView). */
 export async function renderWater(root, code, rowId) {
-  root.innerHTML = page("", `#/countries/${code}`, `<p class="spinner-line"><span class="spinner"></span></p>`);
+  root.innerHTML = page("", `#/countries/${code}`, html`<p class="spinner-line"><span class="spinner"></span></p>`);
   let lakes;
   try {
     lakes = inCountry(await loadCatalog(), code);
   } catch {
-    root.querySelector("main").innerHTML = `<p class="empty">${h(t("Could not load the club list."))}</p>${footerLinks()}`;
+    root.querySelector("main").innerHTML = html`<p class="empty">${t("Could not load the club list.")}</p>${footer()}`;
     return;
   }
   const row = countryRows(lakes, byTown()).find((r) => r.id === rowId) ?? countryRows(lakes, !byTown()).find((r) => r.id === rowId);
@@ -185,6 +191,6 @@ export async function renderWater(root, code, rowId) {
   setTitle(row.title);
   root.querySelector(".nav-title").textContent = row.title;
   const main = root.querySelector("main");
-  main.innerHTML = `<h1 class="large">${h(row.title)}</h1><ul class="results" id="clubs">${row.clubs.map(({ club, lake }) => resultRow(club, lake, { showFlag: false })).join("")}</ul>${footerLinks()}`;
+  main.innerHTML = html`<h1 class="large">${row.title}</h1><ul class="results" id="clubs">${row.clubs.map(({ club, lake }) => resultRow(club, lake, { showFlag: false }))}</ul>${footer()}`;
   wireResults(main.querySelector("#clubs"), lakes);
 }
