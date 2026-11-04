@@ -185,9 +185,10 @@ function openBoatMenu(raw, anchor) {
 // ---- Bottom bar ----------------------------------------------------------------------------
 
 /**
- * The page bar (RootView.PageBar): on a narrow window the cog, a dot per club page and the
- * list, as in Weather; beside the list nothing, as the list switches clubs; with the list
- * slid away the dots only, the sidebar button and cog being level with the club's name.
+ * The page bar (RootView.PageBar): on a narrow window the cog with the boat beside it, a dot
+ * per club page and the list, as in Weather (owner's pick, 4 Nov 2026: easy to reach on big
+ * phones); beside the list nothing, as the list switches clubs; with the list slid away the
+ * dots only, the sidebar button, cog and boat being level with the club's name.
  */
 function bottomBar(currentId) {
   const clubs = store.clubs;
@@ -195,34 +196,38 @@ function bottomBar(currentId) {
   const dots = `<span class="glass piece dots">${clubs.map((c, i) => `<a href="#/club/${encodeURIComponent(c.id)}" class="${c.id === currentId ? "on" : ""}" aria-label="${h(c.shortName || c.name)}">${i === 0 ? icon("house") : "<span></span>"}</a>`).join("")}</span>`;
   if (sideList.matches) return `<nav class="bottom"><span class="bar-side"></span>${dots}<span class="bar-side end"></span></nav>`;
   return `<nav class="bottom">
-    <span class="bar-side"><a href="#/settings" class="glass piece round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a></span>
+    <span class="bar-side"><a href="#/settings" class="glass piece round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>${boatButton()}${boatsElsewhereTip()}</span>
     ${dots}
     <span class="bar-side end"><a href="#/list" class="glass piece round tool" aria-label="${h(t("Locations"))}">${icon("list")}</a></span>
   </nav>`;
 }
 
-/** The button that opens the boat menu, level with the club's name and in the small top bar (PageBoatButton). */
+/** The button that opens the boat menu, right beside the cog (PageBoatButton). */
 function boatButton() {
   return `<button class="glass round tool boat" data-boat-button aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>`;
 }
 
+/** Once, on the first club page where an own boat is kept elsewhere (BoatsElsewhereTip), beside the boat button. */
+const boatsElsewhereTip = () => (store.boats.some((b) => !isKept(b)) ? tip("boatsElsewhere").replace('class="tip"', 'class="tip pop"') : "");
+
 /**
- * The buttons level with the club's big name, and again in the small top bar once it has
- * shrunk there (PageTopButtons, owner's pick F, 2 Nov 2026): on the left the sidebar button
- * while the list beside the page is slid away and the cog (wide windows), on the right the boat.
+ * The buttons level with the club's big name on wide windows, and again in the small top bar
+ * once it has shrunk there (PageTopButtons): on the left the sidebar button while the list
+ * beside the page is slid away, the cog and the boat beside it (owner's pick, 4 Nov 2026);
+ * the right side stays empty as wide, so the name stays in the middle. Narrow windows have
+ * none: their cog and boat sit in the bottom bar.
  */
 function pageButtons(side, withTip = false) {
-  // Once, on the first club page where an own boat is kept elsewhere (BoatsElsewhereTip).
-  if (side === "right") return `<span class="head-side end">${boatButton()}${withTip && store.boats.some((b) => !isKept(b)) ? tip("boatsElsewhere").replace('class="tip"', 'class="tip pop"') : ""}</span>`;
-  const wide = sideList.matches;
+  if (!sideList.matches) return "";
+  if (side === "right") return `<span class="head-side end"></span>`;
   return `<span class="head-side">
-    ${wide && sideHidden ? `<button class="glass round tool ${slideIn ? "slide-in" : ""}" data-show-list aria-label="${h(t("Show the club list"))}">${icon("panel-left")}</button>` : ""}
-    ${wide ? `<a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>` : ""}
+    ${sideHidden ? `<button class="glass round tool ${slideIn ? "slide-in" : ""}" data-show-list aria-label="${h(t("Show the club list"))}">${icon("panel-left")}</button>` : ""}
+    <a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>${boatButton()}${withTip ? boatsElsewhereTip() : ""}
   </span>`;
 }
 
-/** What each side of the big and small title keeps free for these buttons (PageTopButtons.sideRoom). */
-const sideRoom = () => (sideList.matches && sideHidden ? 104 : 56);
+/** What each side of the big and small title keeps free for these buttons (PageTopButtons.sideRoom): 44 px per round button, the boat's 56 and the gaps. */
+const sideRoom = () => (!sideList.matches ? 0 : sideHidden ? 44 + 8 + 44 + 8 + 56 : 44 + 8 + 56);
 
 /** The boat button's symbol: the class in a small frame, dashed for the two groups, in the accent colour for an own boat (BoatClassTag). */
 function boatClassTag(boat) {
@@ -258,6 +263,12 @@ function wireBoatButton() {
 function wireBottomBar(raw) {
   boatRaw = raw;
   wireBoatButton();
+  // The boats-elsewhere tip sits over the boat button in the bar on narrow windows.
+  const nav = root.querySelector("nav.bottom");
+  if (nav && !nav.dataset.tips) {
+    nav.dataset.tips = "1";
+    wireTips(nav);
+  }
   const dots = root.querySelector(".bottom .dots");
   dots?.addEventListener("pointerdown", (e) => {
     dotSlide = e.clientX;
@@ -1008,7 +1019,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
-    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right", true)}</div>
+    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left", true)}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right")}</div>
     <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
     ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
