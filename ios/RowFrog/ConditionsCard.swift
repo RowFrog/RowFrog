@@ -230,9 +230,7 @@ struct ConditionData {
 
     /// False outside Germany, where DWD's warnings do not reach (see Warnings.localChecked).
     var warningsChecked: Bool { forecast.warnings?.localChecked ?? true }
-    /// True while the place's warnings are DWD's; else labels say "official".
-    var warningsAreDWD: Bool { forecast.warnings?.isDWD ?? true }
-    var warningsLabel: String { warningsAreDWD ? tr("DWD warnings") : tr("Official warnings") }
+    var warningsLabel: String { tr("Official warnings") }
 
     func warningNames(_ words: [String]) -> String {
         guard warningsChecked else { return tr("Not checked here") }
@@ -389,8 +387,7 @@ private struct ConditionTile: View {
             return unit + " · " + PressureTrend(change: change).title.lowercased()
         case .thunderstorm:
             guard data.warningsChecked else { return tr("Warnings not checked") }
-            if !data.warningsAreDWD { return data.warnings(["GEWITTER"]).isEmpty ? tr("No warning") : tr("Official warning") }
-            return data.warnings(["GEWITTER"]).isEmpty ? tr("No DWD warning") : tr("DWD warning")
+            return data.warnings(["GEWITTER"]).isEmpty ? tr("No warning") : tr("Official warning")
         case .uvIndex:
             guard let top = data.next24.filter({ $0.uvIndex != nil }).max(by: { $0.uvIndex! < $1.uvIndex! }) else { return "" }
             return tr("Max %@ · %@", Format.number(top.uvIndex), Format.day(top.time))
@@ -1961,7 +1958,7 @@ extension ConditionDetail {
             facts.append((tr("Fog"), tr("not in the next 24 h")))
         }
         facts.append((tr("Mist"), mist.map(d.span) ?? tr("not in the next 24 h")))
-        facts.append((d.warningsAreDWD ? tr("DWD fog warning") : tr("Official fog warning"), d.warningNames(["NEBEL"])))
+        facts.append((tr("Official fog warning"), d.warningNames(["NEBEL"])))
         facts.append((tr("Lake view"), tr("fog shows as a banner over the whole lake")))
         return ConditionDetail(
             value: Format.distance(h.visibilityM),
@@ -2085,8 +2082,7 @@ extension ConditionDetail {
         return ConditionDetail(
             value: stormLevel(d.now.light(for: Condition.thunderstorm.reasonNames)),
             note: !d.warningsChecked ? tr("Warnings not checked")
-                : !d.warningsAreDWD ? (d.warnings(["GEWITTER"]).isEmpty ? tr("No official thunderstorm warning") : tr("Official thunderstorm warning"))
-                : d.warnings(["GEWITTER"]).isEmpty ? tr("No DWD thunderstorm warning") : tr("DWD thunderstorm warning"),
+                : d.warnings(["GEWITTER"]).isEmpty ? tr("No official thunderstorm warning") : tr("Official thunderstorm warning"),
             unit: "J/kg",
             lines: [ChartLine(name: tr("Energy for storms (CAPE)"), color: .yellow, kind: .bars, points: d.points(\.capeJkg))],
             limits: [

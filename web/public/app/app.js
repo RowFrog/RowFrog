@@ -1013,7 +1013,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
   }));
   root.querySelector("#boat-line")?.addEventListener("click", () => openBoatMenu(raw));
   root.querySelector("#no-warning")?.addEventListener("click", () => {
-    openSheet(warningsIsDWD(forecast.warnings) ? t("DWD warnings") : t("Official warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
+    openSheet(t("Official warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
   });
   root.querySelectorAll("[data-tile]").forEach((b) => b.addEventListener("click", () => {
     location.hash = `#/club/${encodeURIComponent(id)}/value/${b.dataset.tile}`;
@@ -1124,7 +1124,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
       ${steadier ? `<li class="tint">${icon("sailboat")}<span>${h(steadier.light === "green"
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
-      ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${icon("shield-check")} ${h(warningsIsDWD(warnings) ? t("No DWD warning") : t("No official warning"))}</span>
+      ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${icon("shield-check")} ${h(t("No official warning"))}</span>
         <span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></button></li>` : ""}
       ${!at && warnings?.status === "ok" ? laterWarningLine(warningHeadline(warnings)) : ""}
     </ul>
@@ -1217,7 +1217,7 @@ function laterWarningLine(headline) {
 }
 
 function warningsCard(warnings, club, checkedAt) {
-  const title = localChecked(warnings) && warningsIsDWD(warnings) ? t("DWD warnings") : t("Official warnings");
+  const title = t("Official warnings");
   return card(title, "triangle-alert", warningsBody(warnings, club, checkedAt, false), { cls: "warnings" });
 }
 
@@ -1421,8 +1421,7 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
       const level = light === "red" ? 3 : light === "amber" ? 2 : 1;
       const storm = (forecast.warnings?.items ?? []).some((w) => /GEWITTER/i.test(w.event ?? ""));
       const note = !localChecked(forecast.warnings) ? t("Warnings not checked")
-        : !warningsIsDWD(forecast.warnings) ? (storm ? t("Official warning") : t("No warning"))
-        : storm ? t("DWD warning") : t("No DWD warning");
+        : storm ? t("Official warning") : t("No warning");
       return tile({ 3: t("High"), 2: t("Possible"), 1: t("Low") }[level], note, graphic);
     }
     case "visibility": {
