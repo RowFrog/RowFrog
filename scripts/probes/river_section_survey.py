@@ -26,10 +26,10 @@ from shapely import STRtree
 from shapely.geometry import LineString, Point, Polygon
 from shapely.ops import unary_union
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from fetch_lake_outline import overpass  # noqa: E402
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parents[2]
 MAX_KM = 25.0
 CLUSTER_KM = 3.0
 GAP_M = 40.0  # line ends this close to another line of the same river are joined
