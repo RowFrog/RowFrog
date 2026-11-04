@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-25",
+  "updated": "2026-11-04",
   "source": "Club data: Österreichischer Ruderverband (rudern.at). Positions and waters: © OpenStreetMap contributors, ODbL",
   "lakes": [
     {
@@ -8,8 +8,8 @@
       "name": "Alte Donau",
       "country": "at",
       "center": {
-        "lat": 48.23299,
-        "lon": 16.43347
+        "lat": 48.23561,
+        "lon": 16.43203
       },
       "kind": "lake"
     },
@@ -138,8 +138,8 @@
       "name": "Salzach",
       "country": "at",
       "center": {
-        "lat": 47.73151,
-        "lon": 13.08145
+        "lat": 47.73748,
+        "lon": 13.06929
       },
       "kind": "river"
     },
@@ -194,6 +194,16 @@
       "osm": "way/26602907"
     },
     {
+      "id": "near-bregenz",
+      "name": "Water near Bregenz",
+      "country": "at",
+      "center": {
+        "lat": 47.50258,
+        "lon": 9.74729
+      },
+      "kind": "unknown"
+    },
+    {
       "id": "wolfgangsee",
       "name": "Wolfgangsee",
       "country": "at",
@@ -245,9 +255,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.31891,
-        "lon": 14.29613,
-        "precision": "shore of the Donau nearest the earlier point (geocoded club address, 276 m from the Donau), 149 m away",
+        "lat": 48.31983,
+        "lon": 14.29465,
+        "precision": "geocoded club address, 276 m from the Donau",
         "verified": false
       }
     },
@@ -263,9 +273,9 @@
       "country": "at",
       "lakeId": "grundlsee",
       "launchPoint": {
-        "lat": 47.62621,
-        "lon": 13.83854,
-        "precision": "shore of the Grundlsee nearest the town-level address, 127 m away (water checked by hand)",
+        "lat": 47.62727,
+        "lon": 13.83793,
+        "precision": "geocoded club address (town level); on the Grundlsee (checked by hand)",
         "verified": false
       }
     },
@@ -281,9 +291,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23285,
-        "lon": 16.43301,
-        "precision": "shore of the Alte Donau nearest the town-level address, 38 m away (water checked by hand)",
+        "lat": 48.23299,
+        "lon": 16.43347,
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -335,9 +345,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.32142,
-        "lon": 14.30415,
-        "precision": "shore of the Donau nearest the town-level address, 186 m away (water checked by hand)",
+        "lat": 48.31985,
+        "lon": 14.30502,
+        "precision": "on the Donau (checked by hand), first matched to Winterhafen",
         "verified": false
       }
     },
@@ -389,9 +399,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.23715,
-        "lon": 15.33242,
-        "precision": "shore of the Donau nearest the town-level address, 233 m away (water checked by hand)",
+        "lat": 48.23541,
+        "lon": 15.33419,
+        "precision": "on the Donau (checked by hand), first matched to Pionierhafen",
         "verified": false
       }
     },
@@ -425,9 +435,9 @@
       "country": "at",
       "lakeId": "river-mur",
       "launchPoint": {
-        "lat": 47.01357,
-        "lon": 15.4607,
-        "precision": "shore of the Mur nearest the town-level address, 95 m away (water checked by hand)",
+        "lat": 47.01379,
+        "lon": 15.46191,
+        "precision": "on the Mur (checked by hand), first matched to Altarm Thondorf",
         "verified": false
       }
     },
@@ -443,9 +453,9 @@
       "country": "at",
       "lakeId": "bodensee",
       "launchPoint": {
-        "lat": 47.525,
-        "lon": 9.74685,
-        "precision": "shore of the Bodensee nearest the town-level address, 695 m away (water checked by hand)",
+        "lat": 47.52942,
+        "lon": 9.75339,
+        "precision": "geocoded club address (town level); on the Bodensee (checked by hand)",
         "verified": false
       }
     },
@@ -479,9 +489,9 @@
       "country": "at",
       "lakeId": "river-traun",
       "launchPoint": {
-        "lat": 48.15655,
-        "lon": 14.03605,
-        "precision": "shore of the Traun nearest the earlier point (geocoded club address, 84 m from the Traun), 28 m away",
+        "lat": 48.15679,
+        "lon": 14.03594,
+        "precision": "geocoded club address, 84 m from the Traun",
         "verified": false
       }
     },
@@ -515,9 +525,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23309,
-        "lon": 16.43284,
-        "precision": "shore of the Alte Donau nearest the town-level address, 43 m away (water checked by hand)",
+        "lat": 48.23325,
+        "lon": 16.43337,
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -551,9 +561,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.306,
-        "lon": 16.34255,
-        "precision": "shore of the Donau nearest the town-level address, 1394 m away (water checked by hand)",
+        "lat": 48.30499,
+        "lon": 16.32376,
+        "precision": "geocoded club address (town level); on the Donau (checked by hand)",
         "verified": false
       }
     },
@@ -587,9 +597,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23005,
-        "lon": 16.42783,
-        "precision": "shore of the Alte Donau nearest the town-level address, 199 m away (water checked by hand)",
+        "lat": 48.22946,
+        "lon": 16.43038,
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -605,9 +615,9 @@
       "country": "at",
       "lakeId": "attersee",
       "launchPoint": {
-        "lat": 47.95059,
-        "lon": 13.58425,
-        "precision": "shore of the Attersee nearest the town-level address, 451 m away (water checked by hand)",
+        "lat": 47.95464,
+        "lon": 13.58395,
+        "precision": "geocoded club address (street level); on the Attersee (checked by hand)",
         "verified": false
       }
     },
@@ -639,11 +649,11 @@
       "region": "Vorarlberg",
       "source": "oerv",
       "country": "at",
-      "lakeId": "bodensee",
+      "lakeId": "near-bregenz",
       "launchPoint": {
-        "lat": 47.50719,
-        "lon": 9.72955,
-        "precision": "shore point of Bodensee nearest the boathouse in OpenStreetMap (way/115624167), 148 m away",
+        "lat": 47.50258,
+        "lon": 9.74729,
+        "precision": "geocoded club address (town level); water not identified",
         "verified": false
       }
     },
@@ -659,9 +669,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.31019,
-        "lon": 14.24219,
-        "precision": "shore of the Donau nearest the earlier point (geocoded club address, 221 m from the Donau), 74 m away",
+        "lat": 48.31081,
+        "lon": 14.24183,
+        "precision": "geocoded club address, 221 m from the Donau",
         "verified": false
       }
     },
@@ -713,9 +723,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.39884,
-        "lon": 15.57392,
-        "precision": "shore of the Donau nearest the earlier point (geocoded club address, 173 m from the Donau), 8 m away",
+        "lat": 48.3989,
+        "lon": 15.57387,
+        "precision": "geocoded club address, 173 m from the Donau",
         "verified": false
       }
     },
@@ -731,9 +741,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.33483,
-        "lon": 16.02774,
-        "precision": "shore of the Donau nearest the town-level address, 856 m away (water checked by hand)",
+        "lat": 48.32698,
+        "lon": 16.02796,
+        "precision": "on the Donau (checked by hand), first matched to Hochwiesegraben",
         "verified": false
       }
     },
@@ -785,9 +795,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.39098,
-        "lon": 15.51899,
-        "precision": "shore of the Donau nearest the town-level address, 566 m away (water checked by hand)",
+        "lat": 48.39323,
+        "lon": 15.52587,
+        "precision": "geocoded club address (street level); on the Donau (checked by hand)",
         "verified": false
       }
     },
@@ -810,6 +820,24 @@
       }
     },
     {
+      "id": "wassersportverein-ottensheim-regattastrecke",
+      "name": "Wassersportverein Ottensheim (Regattastrecke)",
+      "shortName": "Wassersportverein Ottensheim (Regattastrecke)",
+      "abbreviation": "OTT",
+      "address": "Regattastraße 1, 4100 Ottensheim",
+      "website": "https://www.wsv-ottensheim.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.32638,
+        "lon": 14.15867,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
+        "verified": false
+      }
+    },
+    {
       "id": "wiener-ruder-club-pirat",
       "name": "Wiener Ruder Club Pirat",
       "shortName": "Wiener Ruder Club Pirat",
@@ -824,6 +852,24 @@
         "lat": 48.21663,
         "lon": 16.43374,
         "precision": "launch point checked by hand on the satellite view (2026-11-02)",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruder-club-pirat-langenzersdorf",
+      "name": "Wiener Ruder Club Pirat (Langenzersdorf)",
+      "shortName": "Wiener Ruder Club Pirat (Langenzersdorf)",
+      "abbreviation": "PIR",
+      "address": "Treppelweg, Stromkilometer 1940,9, 2103 Langenzersdorf",
+      "website": "https://wrc-pirat.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.32276,
+        "lon": 16.3372,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
         "verified": false
       }
     },
@@ -857,9 +903,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23544,
-        "lon": 16.43163,
-        "precision": "shore of the Alte Donau nearest the town-level address, 35 m away (water checked by hand)",
+        "lat": 48.23561,
+        "lon": 16.43203,
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -875,9 +921,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23636,
-        "lon": 16.43084,
-        "precision": "shore of the Alte Donau nearest the town-level address, 40 m away (water checked by hand)",
+        "lat": 48.23652,
+        "lon": 16.43132,
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -911,9 +957,9 @@
       "country": "at",
       "lakeId": "river-donaukanal",
       "launchPoint": {
-        "lat": 48.26081,
-        "lon": 16.36975,
-        "precision": "shore of the Donaukanal nearest the earlier point (geocoded club address, 53 m from the Donaukanal), 14 m away",
+        "lat": 48.26075,
+        "lon": 16.36958,
+        "precision": "geocoded club address, 53 m from the Donaukanal",
         "verified": false
       }
     },
@@ -929,9 +975,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23483,
-        "lon": 16.43202,
-        "precision": "shore of the Alte Donau nearest the town-level address, 69 m away (water checked by hand)",
+        "lat": 48.23499,
+        "lon": 16.43292,
+        "precision": "geocoded club address (street level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -950,42 +996,6 @@
         "lat": 48.16414,
         "lon": 14.70697,
         "precision": "launch point checked by hand on the satellite view (2026-10-31)",
-        "verified": false
-      }
-    },
-    {
-      "id": "wassersportverein-ottensheim-regattastrecke",
-      "name": "Wassersportverein Ottensheim (Regattastrecke)",
-      "shortName": "Wassersportverein Ottensheim (Regattastrecke)",
-      "abbreviation": "OTT",
-      "address": "Regattastraße 1, 4100 Ottensheim",
-      "website": "https://www.wsv-ottensheim.at/",
-      "region": "Oberösterreich",
-      "source": "oerv",
-      "country": "at",
-      "lakeId": "river-donau",
-      "launchPoint": {
-        "lat": 48.32638,
-        "lon": 14.15867,
-        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
-        "verified": false
-      }
-    },
-    {
-      "id": "wiener-ruder-club-pirat-langenzersdorf",
-      "name": "Wiener Ruder Club Pirat (Langenzersdorf)",
-      "shortName": "Wiener Ruder Club Pirat (Langenzersdorf)",
-      "abbreviation": "PIR",
-      "address": "Treppelweg, Stromkilometer 1940,9, 2103 Langenzersdorf",
-      "website": "https://wrc-pirat.at/",
-      "region": "Wien",
-      "source": "oerv",
-      "country": "at",
-      "lakeId": "river-donau",
-      "launchPoint": {
-        "lat": 48.32276,
-        "lon": 16.3372,
-        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
         "verified": false
       }
     }

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-25",
+  "updated": "2026-11-04",
   "source": "© OpenStreetMap contributors, ODbL",
   "lakes": [
     {
@@ -8,8 +8,8 @@
       "name": "Alte Donau",
       "country": "at",
       "center": {
-        "lat": 48.23567,
-        "lon": 16.43218
+        "lat": 48.22904,
+        "lon": 16.42746
       },
       "kind": "lake"
     },
@@ -22,6 +22,16 @@
         "lon": 13.5391
       },
       "osm": "relation/1751615"
+    },
+    {
+      "id": "bodensee",
+      "name": "Bodensee",
+      "country": "at",
+      "center": {
+        "lat": 47.6478,
+        "lon": 9.3063
+      },
+      "osm": "relation/1156846"
     },
     {
       "id": "river-donau",
@@ -155,9 +165,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.3188,
-        "lon": 14.29596,
-        "precision": "shore of the Donau nearest the earlier point (node/11043621209 in OpenStreetMap, 274 m from the Donau), 146 m away",
+        "lat": 48.31969,
+        "lon": 14.29452,
+        "precision": "node/11043621209 in OpenStreetMap, 274 m from the Donau",
         "verified": false
       }
     },
@@ -187,9 +197,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.22224,
-        "lon": 15.26989,
-        "precision": "shore of the Donau nearest the earlier point (way/396993889 in OpenStreetMap, 230 m from the Donau), 26 m away",
+        "lat": 48.22201,
+        "lon": 15.26993,
+        "precision": "way/396993889 in OpenStreetMap, 230 m from the Donau",
         "verified": false
       }
     },
@@ -235,9 +245,9 @@
       "country": "at",
       "lakeId": "river-rodl",
       "launchPoint": {
-        "lat": 48.32736,
-        "lon": 14.16247,
-        "precision": "shore of the Rodl nearest the earlier point (node/276726334 in OpenStreetMap, 341 m from the Rodl), 37 m away",
+        "lat": 48.32765,
+        "lon": 14.16222,
+        "precision": "node/276726334 in OpenStreetMap, 341 m from the Rodl",
         "verified": false
       }
     },
@@ -251,9 +261,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23544,
-        "lon": 16.43163,
-        "precision": "shore of the Alte Donau nearest the town-level address, 48 m away (water checked by hand)",
+        "lat": 48.23567,
+        "lon": 16.43218,
+        "precision": "way/226565647 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -267,9 +277,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23708,
-        "lon": 16.43033,
-        "precision": "shore of the Alte Donau nearest the town-level address, 33 m away (water checked by hand)",
+        "lat": 48.23725,
+        "lon": 16.4307,
+        "precision": "way/226565646 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -283,9 +293,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23309,
-        "lon": 16.43284,
-        "precision": "shore of the Alte Donau nearest the town-level address, 55 m away (water checked by hand)",
+        "lat": 48.2333,
+        "lon": 16.43352,
+        "precision": "way/236617895 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -299,9 +309,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23281,
-        "lon": 16.43303,
-        "precision": "shore of the Alte Donau nearest the town-level address, 60 m away (water checked by hand)",
+        "lat": 48.23304,
+        "lon": 16.43377,
+        "precision": "way/226565650 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -315,9 +325,9 @@
       "country": "at",
       "lakeId": "river-rodl",
       "launchPoint": {
-        "lat": 48.32722,
-        "lon": 14.16208,
-        "precision": "shore of the Rodl nearest the earlier point (node/11999200059 in OpenStreetMap, 373 m from the Rodl), 39 m away",
+        "lat": 48.32752,
+        "lon": 14.16182,
+        "precision": "node/11999200059 in OpenStreetMap, 373 m from the Rodl",
         "verified": false
       }
     },
@@ -331,9 +341,9 @@
       "country": "at",
       "lakeId": "river-mur",
       "launchPoint": {
-        "lat": 47.01357,
-        "lon": 15.4607,
-        "precision": "shore of the Mur nearest the town-level address, 95 m away (water checked by hand)",
+        "lat": 47.01379,
+        "lon": 15.46191,
+        "precision": "on the Mur (checked by hand), first matched to Altarm Thondorf",
         "verified": false
       }
     },
@@ -347,9 +357,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.23715,
-        "lon": 15.33242,
-        "precision": "shore of the Donau nearest the town-level address, 233 m away (water checked by hand)",
+        "lat": 48.23541,
+        "lon": 15.33419,
+        "precision": "on the Donau (checked by hand), first matched to Pionierhafen",
         "verified": false
       }
     },
@@ -363,9 +373,9 @@
       "country": "at",
       "lakeId": "river-neue-donau",
       "launchPoint": {
-        "lat": 48.19163,
-        "lon": 16.46523,
-        "precision": "shore of the Neue Donau nearest the earlier point (way/214262471 in OpenStreetMap, 103 m from the Neue Donau), 19 m away",
+        "lat": 48.19151,
+        "lon": 16.46505,
+        "precision": "way/214262471 in OpenStreetMap, 103 m from the Neue Donau",
         "verified": false
       }
     },
@@ -379,9 +389,9 @@
       "country": "at",
       "lakeId": "river-inn",
       "launchPoint": {
-        "lat": 47.58745,
-        "lon": 12.16592,
-        "precision": "shore of the Inn nearest the earlier point (node/7790457280 in OpenStreetMap, 65 m from the Inn), 17 m away",
+        "lat": 47.58742,
+        "lon": 12.1657,
+        "precision": "node/7790457280 in OpenStreetMap, 65 m from the Inn",
         "verified": false
       }
     },
@@ -459,9 +469,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.32142,
-        "lon": 14.30415,
-        "precision": "shore of the Donau nearest the town-level address, 186 m away (water checked by hand)",
+        "lat": 48.31985,
+        "lon": 14.30502,
+        "precision": "on the Donau (checked by hand), first matched to Winterhafen",
         "verified": false
       }
     },
@@ -491,9 +501,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.22918,
-        "lon": 16.42741,
-        "precision": "shore of the Alte Donau nearest the town-level address, 16 m away (water checked by hand)",
+        "lat": 48.22904,
+        "lon": 16.42746,
+        "precision": "way/226565645 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
@@ -514,6 +524,22 @@
       }
     },
     {
+      "id": "ruderverein-wiking-bregenz-e-v-1900",
+      "name": "Ruderverein Wiking Bregenz e.V. 1900",
+      "shortName": "Ruderverein Wiking Bregenz e.V. 1900",
+      "address": "Strandweg 40, 6900 Bregenz",
+      "website": "https://www.rv-wiking.at/home/",
+      "source": "osm",
+      "country": "at",
+      "lakeId": "bodensee",
+      "launchPoint": {
+        "lat": 47.50722,
+        "lon": 9.72914,
+        "precision": "shore point of Bodensee nearest the way/115624167 in OpenStreetMap, 142 m away",
+        "verified": false
+      }
+    },
+    {
       "id": "ruderverein-wiking-linz",
       "name": "Ruderverein Wiking Linz",
       "shortName": "Ruderverein Wiking Linz",
@@ -523,9 +549,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.3102,
-        "lon": 14.24225,
-        "precision": "shore of the Donau nearest the earlier point (way/234875260 in OpenStreetMap, 219 m from the Donau), 71 m away",
+        "lat": 48.3108,
+        "lon": 14.24191,
+        "precision": "way/234875260 in OpenStreetMap, 219 m from the Donau",
         "verified": false
       }
     },
@@ -555,9 +581,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.33483,
-        "lon": 16.02774,
-        "precision": "shore of the Donau nearest the town-level address, 856 m away (water checked by hand)",
+        "lat": 48.32714,
+        "lon": 16.02805,
+        "precision": "on the Donau (checked by hand), first matched to Hochwiesegraben",
         "verified": false
       }
     },
@@ -587,9 +613,9 @@
       "country": "at",
       "lakeId": "river-donau",
       "launchPoint": {
-        "lat": 48.38778,
-        "lon": 15.52441,
-        "precision": "shore of the Donau nearest the earlier point (way/683147866 in OpenStreetMap, 219 m from the Donau), 37 m away",
+        "lat": 48.38805,
+        "lon": 15.5247,
+        "precision": "way/683147866 in OpenStreetMap, 219 m from the Donau",
         "verified": false
       }
     },
@@ -619,9 +645,9 @@
       "country": "at",
       "lakeId": "alte-donau",
       "launchPoint": {
-        "lat": 48.23634,
-        "lon": 16.43085,
-        "precision": "shore of the Alte Donau nearest the town-level address, 36 m away (water checked by hand)",
+        "lat": 48.23649,
+        "lon": 16.43128,
+        "precision": "way/226565648 in OpenStreetMap (osm level); on the Alte Donau (checked by hand)",
         "verified": false
       }
     },
