@@ -285,11 +285,14 @@ struct RootView: View {
                 .environment(\.openBoatSettings, openBoatSettings)
         }
         .overlay(alignment: .bottom) {
+            let forecast = forecasts.forecasts[selection]
             PageBar(clubs: saved, homeID: locations.homeID ?? "", selection: $selection,
                     showList: chrome == .phone ? { showingList = true } : nil,
                     showSettings: chrome == .phone ? { showingSettings = true } : nil,
                     // With the list beside the page, the list already switches clubs and marks the one shown.
-                    showsDots: chrome != .wide(listShown: true))
+                    showsDots: chrome != .wide(listShown: true),
+                    now: forecast?.current(), waterC: forecast?.waterTemperature?.celsius)
+                .environment(\.openBoatSettings, openBoatSettings)
         }
         .onAppear { if selection.isEmpty { selection = saved[0].id } }
     }
@@ -440,18 +443,20 @@ struct InlineClubTitle: View {
 
 /// Where the page's buttons go on this screen (owner's pick, 2 Nov 2026, after Apple's guide).
 enum PageChrome: Equatable {
-    /// Cog, page dots and list button in the bar at the bottom, as in Weather.
+    /// Cog and boat, page dots and list button in the bar at the bottom, as in Weather.
     case phone
-    /// An iPad upright: sidebar button and cog at the top left, the list slides in over the page.
+    /// An iPad upright: sidebar button and cog at the top left, the boat at the top right, the list slides in over the page.
     case pad
     /// The list beside the page (an iPad on its side); slid away, its sidebar button comes onto the page.
     case wide(listShown: Bool)
 }
 
-/// The buttons level with the club's big name: on the left the sidebar button
-/// (while the list is not on screen) and the cog (iPad), on the right the boat.
+/// The buttons level with the club's big name (iPad): on the left the sidebar
+/// button (while the list is not on screen) and the cog, on the right the boat,
+/// as Apple's guide splits a bar's leading and trailing items (owner's pick, 4 Nov 2026).
 /// They scroll up with the name and stay in the top bar once it has shrunk there.
 /// When the list slides away, the sidebar button comes in and the cog moves over.
+/// The phone has none: its cog and boat sit in the bar at the bottom.
 struct PageTopButtons: View {
     let clubID: String
     let chrome: PageChrome
@@ -462,18 +467,21 @@ struct PageTopButtons: View {
     let showSettings: () -> Void
 
     private var showsSidebarButton: Bool { chrome == .pad || chrome == .wide(listShown: false) }
-    private var showsCog: Bool { chrome != .phone }
 
     /// What the big and the small title keep free on each side for these buttons.
     static func sideRoom(_ chrome: PageChrome) -> CGFloat {
         switch chrome {
-        case .phone: 56
+        case .phone: 0
         case .pad, .wide(listShown: false): 104
         case .wide(listShown: true): 56
         }
     }
 
     var body: some View {
+        if chrome != .phone { buttons }
+    }
+
+    private var buttons: some View {
         GeometryReader { proxy in
             let origin = proxy.frame(in: .global).minY
             // Level with the big name; never higher than the small title in the top bar.
@@ -490,17 +498,15 @@ struct PageTopButtons: View {
                     .accessibilityLabel(tr("Show the club list"))
                     .transition(.move(edge: .leading).combined(with: .opacity))
                 }
-                if showsCog {
-                    Button(action: showSettings) {
-                        Image(systemName: "gearshape")
-                            .font(.title3)
-                            .frame(width: 44, height: 44)
-                    }
-                    .floatingControl(Circle())
-                    .accessibilityLabel(tr("Settings"))
+                Button(action: showSettings) {
+                    Image(systemName: "gearshape")
+                        .font(.title3)
+                        .frame(width: 44, height: 44)
                 }
+                .floatingControl(Circle())
+                .accessibilityLabel(tr("Settings"))
                 Spacer(minLength: 0)
-                PageBoatButton(clubID: clubID, now: now, waterC: waterC)
+                PageBoatButton(clubID: clubID, now: now, waterC: waterC, tipEdge: .top)
                     .padding(.horizontal, 4)
                     .floatingControl(Capsule())
             }
@@ -517,8 +523,9 @@ struct PageTopButtons: View {
     }
 }
 
-/// The settings cog, the page dots with a house for the home base and the list
-/// button, as the Weather app has its map and list at the two ends (phone).
+/// The settings cog with the boat beside it, the page dots with a house for the
+/// home base and the list button, as the Weather app has its map and list at the
+/// two ends (phone; owner's pick, 4 Nov 2026: easy to reach on big phones).
 /// On an iPad only the dots, and none while the list beside the page marks the club.
 /// Each group floats on its own piece of glass, all as tall as the bar, with
 /// the symbols in one colour over the picture (Apple's guide for toolbars).
@@ -531,6 +538,9 @@ private struct PageBar: View {
     /// Nil when the cog sits at the top beside the club's name (iPad).
     let showSettings: (() -> Void)?
     let showsDots: Bool
+    /// For the boat button beside the cog.
+    let now: ForecastHour?
+    let waterC: Double?
     @Environment(\.colorScheme) private var colorScheme
 
     /// White over dark glass, black over light, as the system's page dots.
@@ -544,19 +554,25 @@ private struct PageBar: View {
     @State private var dragSteps = 0
     /// What the pages keep free above the home indicator: the buttons and a gap.
     static let height: CGFloat = buttonHeight + 12
-    /// The cog and the list button each take as much, so the dots stay in the middle.
-    private static let sideWidth: CGFloat = 44
+    /// Cog and boat on the left, the list button on the right: each end takes as
+    /// much, so the dots stay in the middle.
+    private static let sideWidth: CGFloat = 44 + 8 + 56
 
     var body: some View {
         HStack(spacing: 0) {
             if let showSettings {
-                Button(action: showSettings) {
-                    Image(systemName: "gearshape")
-                        .font(.title3)
-                        .frame(width: Self.buttonHeight, height: Self.buttonHeight)
+                HStack(spacing: 8) {
+                    Button(action: showSettings) {
+                        Image(systemName: "gearshape")
+                            .font(.title3)
+                            .frame(width: Self.buttonHeight, height: Self.buttonHeight)
+                    }
+                    .floatingControl(Circle())
+                    .accessibilityLabel(tr("Settings"))
+                    PageBoatButton(clubID: selection, now: now, waterC: waterC, tipEdge: .bottom)
+                        .padding(.horizontal, 4)
+                        .floatingControl(Capsule())
                 }
-                .floatingControl(Circle())
-                .accessibilityLabel(tr("Settings"))
                 .frame(width: Self.sideWidth, alignment: .leading)
             }
             Spacer(minLength: 8)
@@ -620,11 +636,13 @@ private struct PageBar: View {
     }
 }
 
-/// The boat the rowing light is for, picked on the spot, level with the club's name.
+/// The boat the rowing light is for, picked on the spot: beside the cog (phone) or level with the club's name (iPad).
 struct PageBoatButton: View {
     let clubID: String
     let now: ForecastHour?
     let waterC: Double?
+    /// Where the tip's arrow sits: under the button at the top, over it in the bottom bar.
+    let tipEdge: Edge
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
 
     var body: some View {
@@ -640,17 +658,18 @@ struct PageBoatButton: View {
         .accessibilityLabel(tr("Boat: %@", boat.title))
         .accessibilityHint(tr("Picks another boat for the rowing light."))
         // Once, on the first club where an own boat is kept elsewhere.
-        .modifier(BoatsElsewhereTipAnchor(shown: tourSeen && away))
+        .modifier(BoatsElsewhereTipAnchor(shown: tourSeen && away, arrowEdge: tipEdge))
     }
 }
 
 /// `popoverTip` with an optional tip needs iOS 18.4, so the tip is attached only when it applies.
 private struct BoatsElsewhereTipAnchor: ViewModifier {
     let shown: Bool
+    let arrowEdge: Edge
 
     func body(content: Content) -> some View {
         if shown {
-            content.popoverTip(BoatsElsewhereTip(), arrowEdge: .top)
+            content.popoverTip(BoatsElsewhereTip(), arrowEdge: arrowEdge)
         } else {
             content
         }
