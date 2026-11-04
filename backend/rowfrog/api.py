@@ -11,7 +11,7 @@ import os
 import time
 import xml.etree.ElementTree as ET
 import zipfile
-from dataclasses import fields, replace
+from dataclasses import dataclass, fields, replace
 from datetime import date, datetime, timedelta, timezone
 
 import httpx
@@ -717,10 +717,42 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
     club = _locations.clubs.get(club_id)
     if club is None:
         raise HTTPException(status_code=404, detail="unknown club")
+    now = _now()
+    inputs = await _club_inputs(club, picked, now)
+    return build_club_forecast(club, _locations.lakes[club.lake_id], inputs, picked, now)
 
+
+@dataclass
+class ClubInputs:
+    """Everything a club's forecast is built from, as loaded (or prepared) for it.
+
+    _club_inputs loads it; build_club_forecast turns it into the JSON without
+    any network, so the building can be tested and reused on its own (code
+    review finding 4).
+    """
+
+    weather: list
+    outlook: list | None
+    station: water_stations.Station | None
+    water: gkd.WaterTemperature | None
+    water_history: list
+    warnings_block: dict
+    warnings: list
+    estimate: water_estimate.WaterEstimate | None
+    water_model_c: float | None
+    ice_estimate: ice.IceEstimate | None
+    air_days: list | None
+    gauge: river.Gauge | None
+    readings: tuple | None
+    level_lake: lake_level.LevelLake | None
+    levels: tuple | None
+
+
+async def _club_inputs(club: locations.Club, picked: weather_models.Choice | None, now: datetime) -> ClubInputs:
+    """Loads a club's inputs: from api.prepared or the short cache where there, else from the sources."""
+    club_id = club.id
     lake = _locations.lakes[club.lake_id]
     station = water_stations.for_club(club, lake)
-    now = _now()
     async with httpx.AsyncClient() as client:
         cached = _cache.get(club_id)
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
@@ -778,6 +810,18 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         # Lakes lowered on purpose (Forggensee in winter): the level from the lake's gauge.
         level_lake = lake_level.for_lake(lake.id) if lake.kind == "lake" else None
         levels = await _lake_levels(client, level_lake) if level_lake else None
+    return ClubInputs(weather, outlook, station, water, water_history, warnings_block, warnings, estimate, water_model_c,
+                      ice_estimate, air_days, gauge, readings, level_lake, levels)
+
+
+def build_club_forecast(
+    club: locations.Club, lake: locations.Lake, inputs: ClubInputs, picked: weather_models.Choice | None, now: datetime
+) -> dict:
+    """A club's forecast JSON from its inputs; no network."""
+    weather, outlook, station = inputs.weather, inputs.outlook, inputs.station
+    water, water_history, warnings_block, warnings = inputs.water, inputs.water_history, inputs.warnings_block, inputs.warnings
+    estimate, water_model_c, ice_estimate, air_days = inputs.estimate, inputs.water_model_c, inputs.ice_estimate, inputs.air_days
+    gauge, readings, level_lake, levels = inputs.gauge, inputs.readings, inputs.level_lake, inputs.levels
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
     weather = _from_now(weather, now)
     if not weather:
