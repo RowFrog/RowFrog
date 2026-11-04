@@ -337,10 +337,21 @@ final class AppSettings {
     /// Locale for numbers and dates in the chosen language; "Device" keeps the phone's.
     var locale: Locale {
         switch language {
-        case .device: .current
+        case .device: Self.deviceLocale(current: .current, language: Self.deviceLanguage)
         case .english: Locale(identifier: "en_GB")
         case .german: Locale(identifier: "de_DE")
         }
+    }
+
+    /// The phone's locale in the language the texts use. The widget has no German
+    /// localization of its own, so there `Locale.current` is English on a German
+    /// phone ("Friday, 6. Nov" beside "Morgen"); then the phone's region is kept
+    /// with the texts' language.
+    static func deviceLocale(current: Locale, language: AppLanguage) -> Locale {
+        let code = language == .german ? "de" : "en"
+        if current.language.languageCode?.identifier == code { return current }
+        let region = current.region?.identifier ?? (code == "de" ? "DE" : "GB")
+        return Locale(identifier: "\(code)_\(region)")
     }
 
     /// The picture for a page: the club's own, else the page kind's, else the one for all pages.

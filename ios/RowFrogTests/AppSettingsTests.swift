@@ -9,6 +9,19 @@ final class AppSettingsTests: XCTestCase {
         defaults.removePersistentDomain(forName: "AppSettingsTests")
     }
 
+    /// The widget on a German phone: its own locale is English (no German
+    /// localization), the texts are German, so the dates must be German too.
+    func testDeviceDatesFollowTheTextsLanguage() {
+        let friday = Date(timeIntervalSince1970: 1_793_959_200)  // Fri 6 Nov 2026, 12:00 Berlin
+        let widget = AppSettings.deviceLocale(current: Locale(identifier: "en_DE"), language: .german)
+        XCTAssertEqual(widget.identifier, "de_DE")
+        XCTAssertTrue(DateFormat.device.string(from: friday, locale: widget).contains("Freitag"))
+        // The app itself, already German: the phone's locale stays as it is.
+        let app = Locale(identifier: "de_AT")
+        XCTAssertEqual(AppSettings.deviceLocale(current: app, language: .german).identifier, "de_AT")
+        XCTAssertEqual(AppSettings.deviceLocale(current: Locale(identifier: "de_CH"), language: .english).identifier, "en_CH")
+    }
+
     func testFactoryDefaults() {
         let settings = AppSettings(defaults: defaults)
         XCTAssertEqual(settings.appearance, .device)
