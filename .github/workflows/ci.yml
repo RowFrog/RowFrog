@@ -24,9 +24,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      # With the satellite extra (rasterio, eccodes, numpy), as the publishing
-      # job installs it, so the satellite and weather map readers are tested too.
-      - run: pip install -e ".[dev,satellite]"
+          cache: pip
+          cache-dependency-path: backend/requirements-publish.txt
+      # With the satellite extra (rasterio, eccodes, numpy) and the pinned
+      # versions, as the publishing job installs them, so the tests see exactly
+      # what publishes (and a Dependabot bump is tested before it is merged).
+      - run: pip install -c requirements-publish.txt -e ".[dev,satellite]"
       # Names used before they are set, unused imports, syntax errors (rules in pyproject.toml).
       - name: Lint (ruff)
         run: pip install ruff==0.16.9 && ruff check . ../scripts

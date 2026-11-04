@@ -1,0 +1,19 @@
+# Version updates for the backend's pinned packages (backend/requirements-publish.txt).
+# Once a month one PR raises them all; a security fix comes as its own PR as soon
+# as GitHub knows of it (needs "Dependabot security updates" on in the repository's
+# Settings > Advanced Security). .github/workflows/dependabot-merge.yml merges
+# either when CI is green and only the pinned versions changed.
+version: 2
+updates:
+  - package-ecosystem: pip
+    directory: /backend
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 5
+    groups:
+      backend:
+        applies-to: version-updates
+        patterns: ["*"]
+      backend-security:
+        applies-to: security-updates
+        patterns: ["*"]
