@@ -10,7 +10,7 @@ enum WidgetBridge {
     static func publish(_ locations: LocationStore) {
         BackgroundLibrary.lakeByClub = locations.lakesByClub.mapValues(\.id)
         BackgroundLibrary.homeClubID = locations.homeID
-        Task { await preparePictures(locations) }
+        Task { await withBackgroundTime("widget pictures") { await preparePictures(locations) } }
         let shared = WidgetShared.defaults
         let saved = locations.saved
         var values: [String: Any] = [:]
@@ -37,6 +37,30 @@ enum WidgetBridge {
         shared.set(fingerprint, forKey: fingerprintKey)
         shared.set(Date.now, forKey: reloadedKey)
         WidgetCenter.shared.reloadAllTimelines()
+    }
+
+    /// Runs work that starts as the user leaves the app, and asks iOS for the
+    /// time to finish it: without that, iOS paused the app in the middle of
+    /// making the widget pictures (network, scaling, blur, files the widget
+    /// reads too), and coming back to the app later was killed by iOS's
+    /// watchdog (2026-10-29 and 2026-11-04, each time with a widget on the
+    /// home screen). The diagnosis log tells when it starts and ends.
+    @MainActor
+    static func withBackgroundTime(_ name: String, _ work: () async -> Void) async {
+        final class Holder { var id = UIBackgroundTaskIdentifier.invalid }
+        let task = Holder()
+        task.id = UIApplication.shared.beginBackgroundTask(withName: name) {
+            DiagnosisLog.note("\(name) cut short by iOS")
+            UIApplication.shared.endBackgroundTask(task.id)
+            task.id = .invalid
+        }
+        DiagnosisLog.note("\(name) started")
+        await work()
+        DiagnosisLog.note("\(name) done")
+        if task.id != .invalid {
+            UIApplication.shared.endBackgroundTask(task.id)
+            task.id = .invalid
+        }
     }
 
     private static let fingerprintKey = "RWWidgetPublished"
@@ -105,7 +129,9 @@ enum WidgetBridge {
     private static func write(_ image: UIImage, to file: URL?) -> Bool {
         guard let file else { return false }
         var small = BackgroundLibrary.scaled(image, maxSide: 1200)
-        if AppSettings.shared.blurWidgetPicture { small = BackgroundLibrary.blurred(small) }
+        // Blurred on the processor, not the graphics chip: this runs as the app
+        // goes into the background, where iOS does not let apps use the GPU.
+        if AppSettings.shared.blurWidgetPicture { small = BackgroundLibrary.blurred(small, onProcessor: true) }
         guard let data = small.jpegData(compressionQuality: 0.8) else { return false }
         return (try? data.write(to: file, options: .atomic)) != nil
     }

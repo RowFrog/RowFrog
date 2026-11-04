@@ -112,18 +112,21 @@ enum BackgroundLibrary {
 
     private static let blurredCache = NSCache<UIImage, UIImage>()
     private static let ciContext = CIContext()
+    private static let processorContext = CIContext(options: [.useSoftwareRenderer: true])
 
     /// The picture blurred once and kept, so the screen does not blur it again
     /// on every frame while pages swipe. Made smaller first: the blur hides
     /// the detail anyway, and a small picture blurs fast and takes little memory.
-    static func blurred(_ image: UIImage) -> UIImage {
+    /// `onProcessor` blurs without the graphics chip, for work in the background.
+    static func blurred(_ image: UIImage, onProcessor: Bool = false) -> UIImage {
         if let cached = blurredCache.object(forKey: image) { return cached }
         let small = scaled(image, maxSide: 800)
         guard let cg = small.cgImage else { return image }
         let input = CIImage(cgImage: cg)
         // About the 24 points the screen blurred with, at this size.
         let output = input.clampedToExtent().applyingGaussianBlur(sigma: 22).cropped(to: input.extent)
-        guard let result = ciContext.createCGImage(output, from: input.extent) else { return image }
+        let context = onProcessor ? processorContext : ciContext
+        guard let result = context.createCGImage(output, from: input.extent) else { return image }
         let picture = UIImage(cgImage: result, scale: small.scale, orientation: small.imageOrientation)
         blurredCache.setObject(picture, forKey: image)
         return picture
