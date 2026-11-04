@@ -2575,30 +2575,30 @@
    "clubs": [
     "emder-ruderverein"
    ],
-   "lengthKm": 1.2,
+   "lengthKm": 22.6,
    "up": {
-    "km": 0.04,
-    "end": "weir/lock",
-    "what": "lock Kesselschleuse Emden",
+    "km": 1.68,
+    "end": "mouth",
+    "what": "Hinter Tief",
     "at": [
-     53.36672,
-     7.21818
+     53.37389,
+     7.20669
     ]
    },
    "down": {
-    "km": 1.19,
-    "end": "mouth",
-    "what": "canal",
+    "km": 19.38,
+    "end": "weir/lock",
+    "what": "lock_gate",
     "at": [
-     53.36115,
-     7.20424
+     53.44999,
+     7.45119
     ]
    },
    "pictureBox": [
     7.20405,
-    53.36108,
-    7.21819,
-    53.36713
+    53.36074,
+    7.29281,
+    53.41192
    ]
   },
   {
@@ -5350,28 +5350,28 @@
    "clubs": [
     "rr-besselgymnasium-minden"
    ],
-   "lengthKm": 40.2,
+   "lengthKm": 47.5,
    "up": {
     "km": 10.0,
-    "end": "cap",
-    "what": "",
+    "end": "club's water",
+    "what": "the club's rowing rules",
     "at": [
      52.30184,
      9.03256
     ]
    },
    "down": {
-    "km": 10.0,
-    "end": "cap",
-    "what": "",
+    "km": 13.5,
+    "end": "club's water",
+    "what": "the club's rowing rules",
     "at": [
-     52.32273,
-     8.75089
+     52.33219,
+     8.70304
     ]
    },
    "pictureBox": [
     8.81641,
-    52.25565,
+    52.25727,
     8.96331,
     52.34609
    ]
@@ -10744,29 +10744,29 @@
     "mindener-ruder-verein-von-1905",
     "rr-am-ratsgymnasium-minden"
    ],
-   "lengthKm": 23.3,
+   "lengthKm": 47.5,
    "up": {
-    "km": 12.8,
-    "end": "river",
-    "what": "Werre joins",
+    "km": 6.6,
+    "end": "club's water",
+    "what": "the club's rowing rules",
     "at": [
-     52.22151,
-     8.82826
+     52.23999,
+     8.90072
     ]
    },
    "down": {
-    "km": 10.84,
-    "end": "weir/lock",
-    "what": "weir",
+    "km": 16.5,
+    "end": "club's water",
+    "what": "the club's rowing rules",
     "at": [
-     52.36199,
-     8.98205
+     52.40942,
+     8.97746
     ]
    },
    "pictureBox": [
     8.85134,
     52.24458,
-    8.98238,
+    8.9982,
     52.33502
    ]
   },

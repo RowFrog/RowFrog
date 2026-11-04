@@ -17,7 +17,9 @@ data/river-section-overrides.json adds the owner's hand checks: extra waters
 that belong to a stretch ("include") and the side a club rows on where a weir
 or lock sits right at its boathouse ("direction"), and a lake on the stretch
 whose clubs stay lake clubs but share the section's outline ("alsoLake"), and
-clubs that join the section of their water that reaches them ("join").
+clubs that join the section of their water that reaches them ("join"), and how
+far a club rows on a water by its own rowing rules, through weirs and locks
+("ends": {water: {"up"/"down" or a compass way: km}}).
 
 The outline is the river's water area (OpenStreetMap riverbanks, river and
 canal areas, and the lakes a river flows through) along the walked stretch,
@@ -518,23 +520,36 @@ def build(ex: Extract, g: dict, override: dict) -> dict:
             offset = carry_km.get(river_name, 0.0) if carry.get(river_name) == key else 0.0
             # Where a weir or lock sits right at the boathouse, the owner named the side the club rows on.
             reach_m = (REACH_KM - offset) * 1000
-            walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=reach_m)
-            if max(walk["dist"].values()) < 1000 and not any(kind == "barrier" for _, kind, _ in walk["stops"]):
-                # Stuck on a dead-end arm (no weir): walk from the arm beside it that reaches furthest.
-                walk = max((river.walk(s, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=reach_m)
-                            for s in river.starts_near(start)), key=lambda w: max(w["dist"].values()))
-            bearing = river.bearing(walk)
-            behind = None
-            if allowed and bearing is not None and not any(abs((bearing - a + 180) % 360 - 180) <= 67.5 for a in allowed):
-                # The other side counts only for the water right in front of the boathouse, where the owner asked for it.
-                behind = override.get("behindKm")
-                if not behind:
+            ends = (override.get("ends") or {}).get(river_name)
+            if ends:
+                # The club's own rowing rules say how far it rows each way, through weirs and locks.
+                walk = river.walk(start, downstream, ignore_barriers_m=math.inf, reach_m=(max(ends.values()) + 1) * 1000)
+                bearing = river.bearing(walk)
+                end_km = ends.get(key)
+                if end_km is None and bearing is not None:
+                    end_km = next((km for way, km in ends.items() if way in COMPASS
+                                   and abs((bearing - COMPASS[way] + 180) % 360 - 180) <= 67.5), None)
+                if not end_km:
                     continue
-            cap = CAP_CANAL_KM if river.is_canal else (CAP_DOWN_KM if downstream else CAP_UP_KM)
-            cap = max(cap - offset, 0.5)  # counted from the club, also on a water the side ran into
-            limit = side_limit(river, walk, lengths, harbours_along(river, walk, harbour_polys), cap, km_signs)
-            if behind and limit[0] > behind:
-                limit = (behind, "in front", "in front of the boathouse")
+                limit = (round(min(end_km, max(walk["dist"].values()) / 1000), 2), "club's water", "the club's rowing rules")
+            else:
+                walk = river.walk(start, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=reach_m)
+                if max(walk["dist"].values()) < 1000 and not any(kind == "barrier" for _, kind, _ in walk["stops"]):
+                    # Stuck on a dead-end arm (no weir): walk from the arm beside it that reaches furthest.
+                    walk = max((river.walk(s, downstream, ignore_barriers_m=500 if allowed else 0.0, reach_m=reach_m)
+                                for s in river.starts_near(start)), key=lambda w: max(w["dist"].values()))
+                bearing = river.bearing(walk)
+                behind = None
+                if allowed and bearing is not None and not any(abs((bearing - a + 180) % 360 - 180) <= 67.5 for a in allowed):
+                    # The other side counts only for the water right in front of the boathouse, where the owner asked for it.
+                    behind = override.get("behindKm")
+                    if not behind:
+                        continue
+                cap = CAP_CANAL_KM if river.is_canal else (CAP_DOWN_KM if downstream else CAP_UP_KM)
+                cap = max(cap - offset, 0.5)  # counted from the club, also on a water the side ran into
+                limit = side_limit(river, walk, lengths, harbours_along(river, walk, harbour_polys), cap, km_signs)
+                if behind and limit[0] > behind:
+                    limit = (behind, "in front", "in front of the boathouse")
             if VERBOSE:
                 print(f"  {river_name} {key}: reach {max(walk['dist'].values()) / 1000:.2f} km, stops "
                       + "; ".join(f"{d / 1000:.2f} {kind} {label}".strip() for d, kind, label in walk["stops"][:12]), flush=True)
