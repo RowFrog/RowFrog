@@ -1219,7 +1219,7 @@ struct BackgroundThumbnail: View {
     var body: some View {
         let shape = RoundedRectangle(cornerRadius: width / 6)
         Group {
-            if let choice, let image = BackgroundLibrary.image(for: choice, thumbnail: true) {
+            if let choice, let image = BackgroundPictures.shared.image(for: choice, thumbnail: true) {
                 Image(uiImage: image).resizable().scaledToFill()
             } else if choice == nil {
                 Image(systemName: "arrow.turn.left.up")
@@ -1246,7 +1246,7 @@ struct BackgroundThumbnail: View {
 private struct BackgroundPreview: View {
     var body: some View {
         let settings = AppSettings.shared
-        let image = BackgroundLibrary.image(for: settings.background(for: .clubPages))
+        let image = BackgroundPictures.shared.image(for: settings.background(for: .clubPages))
         let surface: Surface = image == nil ? .plain : settings.tileStyle.surface
         VStack(spacing: 10) {
             Text("MRC 1880")

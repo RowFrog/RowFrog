@@ -254,7 +254,7 @@ struct RootView: View {
             // pages out of the status bar and the page bar, which left black bars.
             let settings = AppSettings.shared
             ZStack {
-                PagePicture(image: BackgroundLibrary.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection),
+                PagePicture(image: BackgroundPictures.shared.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection),
                             blurred: settings.blurBackground) { pagesPictureFrame = $0 }
                     .id(selection)
                     .transition(.opacity)

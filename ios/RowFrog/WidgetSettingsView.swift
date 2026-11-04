@@ -166,15 +166,16 @@ struct WidgetBackgroundSwatch: View {
     }
 
     /// The picture a picture background shows, from the app's own pictures.
-    static func picture(for background: WidgetBackground, clubID: String?) -> UIImage? {
+    @MainActor static func picture(for background: WidgetBackground, clubID: String?) -> UIImage? {
+        let pictures = BackgroundPictures.shared
         let settings = AppSettings.shared
         switch background {
         case .appPicture:
             let choice = settings.background(for: .clubPages, clubID: clubID)
-            return BackgroundLibrary.image(for: choice, clubID: clubID, thumbnail: true)
-                ?? BackgroundLibrary.image(for: BackgroundLibrary.samples[0].choice, thumbnail: true)
-        case let .picture(choice): return BackgroundLibrary.image(for: choice, clubID: clubID, thumbnail: true)
-        case .satellite: return BackgroundLibrary.image(for: .satellite, clubID: clubID, thumbnail: true)
+            return pictures.image(for: choice, clubID: clubID, thumbnail: true)
+                ?? pictures.image(for: BackgroundLibrary.samples[0].choice, thumbnail: true)
+        case let .picture(choice): return pictures.image(for: choice, clubID: clubID, thumbnail: true)
+        case .satellite: return pictures.image(for: .satellite, clubID: clubID, thumbnail: true)
         default: return nil
         }
     }
