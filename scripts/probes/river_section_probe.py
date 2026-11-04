@@ -23,7 +23,7 @@ from pathlib import Path
 from shapely.geometry import LineString, Point, Polygon, mapping
 from shapely.ops import linemerge, polygonize, transform, unary_union
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from fetch_lake_outline import overpass  # noqa: E402
 
 MAX_KM = 10.0

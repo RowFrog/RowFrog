@@ -316,3 +316,21 @@ def test_river_sections_get_a_picture_of_about_10_km_around_their_clubs():
     assert list(places) == ["river-main-offenbach"]
     (west, south, east, north), width, height = sentinel2.frame(places["river-main-offenbach"][0])
     assert west <= 8.65 and east >= 8.79 and width < 1300
+
+
+def test_new_used_clubs_per_day_can_be_capped(monkeypatch):
+    from types import SimpleNamespace
+
+    week = {"mrc-1880": 9, "real-new": 5, "fake-1": 1, "fake-2": 1}
+    today = {"mrc-1880": 2, "real-new": 5, "fake-1": 1, "fake-2": 1}
+    assert publish.capped(week, today, 1) == {"mrc-1880", "real-new"}
+    assert publish.capped(week, today, 10) == set(week)
+
+    counts = {7: SimpleNamespace(clubs=week, lakes={}), 1: SimpleNamespace(clubs=today, lakes={})}
+    monkeypatch.setattr(publish, "usage", SimpleNamespace(used=lambda days: counts[days]))
+    assert publish.NEW_USED_PER_DAY == 0, "off until the owner switches it on before launch"
+    clubs, _, _ = publish.usage_now()
+    assert clubs == set(week)
+    monkeypatch.setattr(publish, "NEW_USED_PER_DAY", 1)
+    clubs, _, _ = publish.usage_now()
+    assert clubs == {"mrc-1880", "real-new"}

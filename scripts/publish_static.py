@@ -77,6 +77,13 @@ FETCH_HOURS = 60
 # about READY_AFTER later. Loading more often brings nothing new.
 READY_AFTER = timedelta(hours=2, minutes=30)
 WEATHER_HOURS = {"used": 3, "other": 6, "other with usage": 12}
+# Finding 10 of the code review (2026-11-04): anyone can request forecasts,
+# so someone could mark hundreds of different clubs as used, which moves them
+# all to 3-hourly loads and uses up Open-Meteo's free calls. When this is above
+# 0, at most this many clubs (and lakes) newly count as used per day, the most
+# loaded first; clubs used on earlier days are never held back.
+# OFF (0) FOR NOW. Owner decision: switch it on before launch (e.g. 50).
+NEW_USED_PER_DAY = 0
 # The 8-day outlook for the conditions charts costs about 2.4 calls per club
 # (14 variables plus a UV call), so it is loaded for used clubs only, after
 # every model run (3 hours): about 19 calls a day per used club.
@@ -697,13 +704,32 @@ def usage_now() -> tuple[set[str], set[str], bool]:
     counted = usage.used(7) if usage else None
     if counted is None:
         clubs = {c.id for c in locations.load(catalog_paths=()).clubs.values()}
+        lakes: set[str] = set()
     else:
-        clubs = set(counted.clubs)
+        clubs, lakes = set(counted.clubs), set(counted.lakes)
+        today = usage.used(1) if NEW_USED_PER_DAY else None
+        if today is not None:
+            clubs = capped(counted.clubs, today.clubs, NEW_USED_PER_DAY)
+            lakes = capped(counted.lakes, today.lakes, NEW_USED_PER_DAY)
     all_clubs = locations.load().clubs
-    lakes = {all_clubs[c].lake_id for c in clubs if c in all_clubs}
-    if counted is not None:
-        lakes |= set(counted.lakes)
+    lakes |= {all_clubs[c].lake_id for c in clubs if c in all_clubs}
     return clubs, lakes, counted is not None
+
+
+def capped(week: dict[str, int], today: dict[str, int], most: int) -> set[str]:
+    """The week's used ids, with at most `most` of those first loaded today.
+
+    An id is new today when all its loads this week came today. Ids used on
+    earlier days always stay; of the new ones, the most loaded come first, so
+    real clubs win over ids someone requested once each. Off while
+    NEW_USED_PER_DAY is 0.
+    """
+    new = [i for i, n in week.items() if today.get(i, 0) >= n]
+    kept = set(week) - set(new)
+    new.sort(key=lambda i: (-week[i], i))
+    if len(new) > most:
+        print(f"  usage: {len(new)} ids first loaded today, only the {most} most loaded count as used")
+    return kept | set(new[:most])
 
 
 def weather_maps(state: State, out: Path, clubs: list[locations.Club], now: datetime) -> None:

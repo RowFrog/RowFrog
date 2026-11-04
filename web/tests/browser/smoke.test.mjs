@@ -163,3 +163,21 @@ test("each night of the 48 hours is one line that opens on a tap", async () => {
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("browsing by country lists the countries, a country's waters and a water's clubs", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/countries`);
+  const country = page.locator('a.result[href="#/countries/de"]');
+  await country.waitFor();
+  assert.match(await country.innerText(), /Germany/);
+  await country.click();
+  const water = page.locator("#waters a.result").first();
+  await water.waitFor();
+  await water.click();
+  const clubs = page.locator("#clubs .result");
+  await clubs.first().waitFor();
+  assert.ok(await clubs.count() > 0);
+  assert.doesNotMatch(await page.locator("main").innerHTML(), /\[object Object\]|&lt;svg/, "markup is not escaped twice");
+  assert.deepEqual(errors, []);
+  await context.close();
+});

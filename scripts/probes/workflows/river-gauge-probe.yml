@@ -2,7 +2,7 @@ name: River gauge check
 
 # Research only: which river gauges (PEGELONLINE, BAFU) and flow forecasts
 # (Open-Meteo Flood API) could tell river clubs about current and high water
-# (scripts/river_gauge_probe.py). Runs by hand
+# (scripts/probes/river_gauge_probe.py). Runs by hand
 # from the Actions tab. Nothing is stored.
 
 on:
@@ -20,4 +20,4 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python3 scripts/river_gauge_probe.py
+      - run: python3 scripts/probes/river_gauge_probe.py
