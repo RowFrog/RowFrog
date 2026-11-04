@@ -135,18 +135,20 @@ choice A, 30 Oct 2026). Small and big boats are everywhere.
    strictest limits: top tile, rowing light, charts, lake tile and map all
    name that boat. The tick itself stays, so the boat's own clubs keep it.
 4. "A steadier boat helps" names only boats kept at that club.
-5. Page buttons (owner's pick 2 Nov 2026, option F with Apple's guide; the
+5. Page buttons (owner's picks 2 and 4 Nov 2026, with Apple's guide; the
    other options are on the try-out page
    https://claude.ai/artifact/9PtKZFpPvkWsWQQ67kUV3d):
-   - Every device: the boat button sits level with the club's big name on the
-     right, scrolls up with it and stays in the top bar beside the small name.
-   - iPhone: bottom bar with cog left, page dots, list button right (as Weather).
-   - iPad upright: sidebar button and cog level with the name on the left; the
-     sidebar button slides the list in over the page; page dots at the bottom.
+   - Every device: the boat button sits right beside the cog.
+   - iPhone: bottom bar with cog and boat left, page dots, list button right
+     (as Weather; easy to reach on big phones).
+   - iPad upright: sidebar button, cog and boat level with the club's big name
+     on the left; they scroll up with it and stay in the top bar beside the
+     small name. The sidebar button slides the list in over the page; page
+     dots at the bottom.
    - iPad sideways: the list beside the page has the sidebar button, its title
-     and "…" on one line and the search at its top; the cog is on the club page
-     at the top left. The sidebar button slides the list away: it then comes
-     onto the club page at the far left and the cog moves over beside it.
+     and "…" on one line and the search at its top; cog and boat are on the
+     club page at the top left. The sidebar button slides the list away: it
+     then comes onto the club page at the far left and cog and boat move over.
 
 Boats from before this change are put at the home base on the first start
 after the update. In `-RWMyBoats` a boat's clubs are a comma-separated
