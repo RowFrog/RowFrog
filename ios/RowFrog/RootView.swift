@@ -445,17 +445,17 @@ struct InlineClubTitle: View {
 enum PageChrome: Equatable {
     /// Cog and boat, page dots and list button in the bar at the bottom, as in Weather.
     case phone
-    /// An iPad upright: sidebar button, cog and boat at the top left, the list slides in over the page.
+    /// An iPad upright: sidebar button and cog at the top left, the boat at the top right, the list slides in over the page.
     case pad
     /// The list beside the page (an iPad on its side); slid away, its sidebar button comes onto the page.
     case wide(listShown: Bool)
 }
 
 /// The buttons level with the club's big name (iPad): on the left the sidebar
-/// button (while the list is not on screen), the cog and the boat beside it, so
-/// the boat sits next to the cog on every device (owner's pick, 4 Nov 2026).
+/// button (while the list is not on screen) and the cog, on the right the boat,
+/// as Apple's guide splits a bar's leading and trailing items (owner's pick, 4 Nov 2026).
 /// They scroll up with the name and stay in the top bar once it has shrunk there.
-/// When the list slides away, the sidebar button comes in and cog and boat move over.
+/// When the list slides away, the sidebar button comes in and the cog moves over.
 /// The phone has none: its cog and boat sit in the bar at the bottom.
 struct PageTopButtons: View {
     let clubID: String
@@ -468,13 +468,12 @@ struct PageTopButtons: View {
 
     private var showsSidebarButton: Bool { chrome == .pad || chrome == .wide(listShown: false) }
 
-    /// What the big and the small title keep free on each side for these buttons:
-    /// the margin, 44 pt per round button, the boat's capsule and the gaps.
+    /// What the big and the small title keep free on each side for these buttons.
     static func sideRoom(_ chrome: PageChrome) -> CGFloat {
         switch chrome {
         case .phone: 0
-        case .pad, .wide(listShown: false): 16 + 44 + 8 + 44 + 8 + 56 + 8
-        case .wide(listShown: true): 16 + 44 + 8 + 56 + 8
+        case .pad, .wide(listShown: false): 104
+        case .wide(listShown: true): 56
         }
     }
 
@@ -506,10 +505,10 @@ struct PageTopButtons: View {
                 }
                 .floatingControl(Circle())
                 .accessibilityLabel(tr("Settings"))
+                Spacer(minLength: 0)
                 PageBoatButton(clubID: clubID, now: now, waterC: waterC, tipEdge: .top)
                     .padding(.horizontal, 4)
                     .floatingControl(Capsule())
-                Spacer(minLength: 0)
             }
             .tint(.primary)
             .foregroundStyle(.primary)
@@ -637,7 +636,7 @@ private struct PageBar: View {
     }
 }
 
-/// The boat the rowing light is for, picked on the spot, beside the cog.
+/// The boat the rowing light is for, picked on the spot: beside the cog (phone) or level with the club's name (iPad).
 struct PageBoatButton: View {
     let clubID: String
     let now: ForecastHour?
