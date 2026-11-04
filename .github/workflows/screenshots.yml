@@ -174,6 +174,10 @@ jobs:
             # "What's new" stays away except in its own shots (NEWS set).
             local news=(-RWWhatsNewSeen 1000)
             [ -n "${NEWS:-}" ] && news=()
+            # The app follows the phone's clock by default now (4 Nov 2026) and the
+            # Simulator is a US phone, so shots keep 24-hour times unless they set one.
+            local clock=(-RWTimeFormat hours24)
+            [[ " $* " == *" -RWTimeFormat "* ]] && clock=()
             xcrun simctl ui "$UDID" appearance "$appearance"
             # iPadOS ignores the app's own turn (-RWLandscape) for apps in windows, so the
             # iPad Simulator itself is turned with Rotate Right / Rotate Left (Cmd+arrow).
@@ -190,7 +194,7 @@ jobs:
             # A hung simulator once blocked here until the 6-hour job limit; give up after a minute.
             perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
-            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${safety[@]}" "${news[@]}" "${guide[@]}" "$@"
+            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${safety[@]}" "${news[@]}" "${guide[@]}" "${clock[@]}" "$@"
             # The first launch after install, and the backend's first answers, are slower.
             if [ -z "${WARM:-}" ]; then sleep 30; WARM=1; else sleep "${WAIT:-12}"; fi
             xcrun simctl io "$UDID" screenshot "$SHOTS/$name.png"
@@ -323,7 +327,7 @@ jobs:
           WAIT=25 shoot 160-settings-search-german-dark dark -RWShowSettings YES -RWSettingsSearch Wind -RWLanguage de
           WAIT=25 shoot_n 161-settings-appearance 2 light -RWShowSettings YES -RWSettingsPage appearance
           WAIT=25 shoot 162-settings-club-pages light -RWShowSettings YES -RWSettingsPage clubpages
-          WAIT=25 shoot_n 163-settings-language 3 light -RWShowSettings YES -RWSettingsPage language
+          WAIT=25 shoot_n 163-settings-language 3 light -RWShowSettings YES -RWSettingsPage language -RWTimeFormat device
           # The "Like the iPhone" switches off: languages, time and date to pick.
           WAIT=25 shoot_n 362-settings-language-own 3 light -RWShowSettings YES -RWSettingsPage language -RWLanguage en -RWTimeFormat hours24 -RWDateFormat short
           WAIT=25 shoot 164-settings-battery-data light -RWShowSettings YES -RWSettingsPage data

@@ -244,7 +244,7 @@ final class AppSettings {
         rainUnit = value(Keys.rain, .millimeters)
         distanceUnit = value(Keys.distance, .kilometers)
         pressureUnit = value(Keys.pressure, .hectopascals)
-        timeFormat = value(Keys.timeFormat, .hours24)
+        timeFormat = value(Keys.timeFormat, .device)
         dateFormat = value(Keys.dateFormat, .device)
         widgetUpdates = value(Keys.widgetUpdates, .halfHour)
         mapStartZoom = value(Keys.mapStartZoom, .normal)
@@ -414,7 +414,7 @@ final class AppSettings {
         rainUnit = .millimeters
         distanceUnit = .kilometers
         pressureUnit = .hectopascals
-        timeFormat = .hours24
+        timeFormat = .device
         dateFormat = .device
         widgetUpdates = .halfHour
         mapStartZoom = .normal
