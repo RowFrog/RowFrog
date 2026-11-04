@@ -743,8 +743,8 @@ private struct NowCard: View {
                 .font(.subheadline.weight(.medium))
                 .foregroundStyle(.tint)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.top, 2)
+            // 44 pt to tap, as Apple's guide asks.
+            .frame(maxWidth: .infinity, minHeight: 44)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
