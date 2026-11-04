@@ -134,9 +134,12 @@ struct ArrangePageSheet: View {
                     }
                 }
                 Section {
+                    if settings.launchPointInHeader {
+                        fixedRow(PageCard.launchPoint.title, symbol: PageCard.launchPoint.symbol, note: tr("in the club header"))
+                    }
                     fixedRow(tr("Rowing light"), symbol: "circle.fill", note: tr("always first"))
                     fixedRow(tr("Warnings"), symbol: "exclamationmark.triangle", note: tr("right under it, while one is issued"))
-                    ForEach(layout.order) { card in
+                    ForEach(movable) { card in
                         Toggle(isOn: Binding(
                             get: { !layout.hidden.contains(card) },
                             set: { on in if on { layout.hidden.remove(card) } else { layout.hidden.insert(card) } }
@@ -145,7 +148,7 @@ struct ArrangePageSheet: View {
                                 .foregroundStyle(layout.hidden.contains(card) ? .secondary : .primary)
                         }
                     }
-                    .onMove { layout.order.move(fromOffsets: $0, toOffset: $1) }
+                    .onMove(perform: move)
                 } header: {
                     Text(tr("Drag the handles to change the order"))
                 } footer: {
@@ -173,6 +176,22 @@ struct ArrangePageSheet: View {
                 }
             }
         }
+    }
+
+    /// The cards that can be moved here: not those shown elsewhere on the page for now.
+    private var movable: [PageCard] {
+        layout.order.filter { !settings.cardsElsewhere.contains($0) }
+    }
+
+    /// Moves within the list shown; a card left out of it keeps its place in the
+    /// saved order, for when it is a card of its own again.
+    private func move(from: IndexSet, to: Int) {
+        var cards = movable
+        cards.move(fromOffsets: from, toOffset: to)
+        for (place, card) in layout.order.enumerated() where settings.cardsElsewhere.contains(card) {
+            cards.insert(card, at: min(place, cards.count))
+        }
+        layout.order = cards
     }
 
     private var otherClubsNote: String {

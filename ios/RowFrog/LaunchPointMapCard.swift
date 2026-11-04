@@ -4,8 +4,48 @@ import SwiftUI
 /// Where the forecast is for: the club's launch point on a map, with its
 /// coordinates and a button to open it in Apple Maps. The map is a still
 /// picture until tapped, since a live map on every club page costs battery.
+/// The page shows it as a card when the launch point is not in the header
+/// (Settings > Club pages); otherwise the header opens it as a sheet.
 struct LaunchPointMapCard: View {
     let club: Club
+
+    var body: some View {
+        Card(title: tr("Launch point"), symbol: "mappin.and.ellipse") {
+            // Taller when the club page's columns need it filled (BalancedColumns).
+            LaunchPointDetails(club: club, mapHeight: 220, mapMaxHeight: .infinity)
+        }
+        .font(.subheadline)
+    }
+}
+
+/// The launch point opened from the club page's header: the same map, note,
+/// coordinates and Open in Maps as the card.
+struct LaunchPointSheet: View {
+    let club: Club
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LaunchPointDetails(club: club, mapHeight: 320, mapMaxHeight: 320)
+                    .padding()
+            }
+            .navigationTitle(tr("Launch point"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(tr("Done")) { dismiss() }
+                }
+            }
+        }
+    }
+}
+
+/// The map, the note on what it is for, and the coordinates with Open in Maps.
+struct LaunchPointDetails: View {
+    let club: Club
+    let mapHeight: CGFloat
+    let mapMaxHeight: CGFloat
 
     /// Back at the preset view whenever the page shows again or the club changes.
     @State private var position: MapCameraPosition = .automatic
@@ -27,7 +67,7 @@ struct LaunchPointMapCard: View {
     }
 
     var body: some View {
-        Card(title: tr("Launch point"), symbol: "mappin.and.ellipse") {
+        VStack(alignment: .leading, spacing: 10) {
             Group {
                 if live {
                     liveMap
@@ -39,8 +79,7 @@ struct LaunchPointMapCard: View {
                     .accessibilityHint(tr("Shows a map you can move"))
                 }
             }
-            // Taller when the club page's columns need it filled (BalancedColumns).
-            .frame(minHeight: 220, idealHeight: 220, maxHeight: .infinity)
+            .frame(minHeight: mapHeight, idealHeight: mapHeight, maxHeight: mapMaxHeight)
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .onChange(of: isCurrentPage) { if !isCurrentPage { live = false } }
             .onChange(of: club.id) { live = false }
@@ -83,7 +122,6 @@ struct LaunchPointMapCard: View {
                 .font(.caption.weight(.semibold))
             }
         }
-        .font(.subheadline)
         .task(id: club.id) {
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
         }

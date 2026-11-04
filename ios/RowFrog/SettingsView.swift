@@ -421,6 +421,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Appearance", .appearance, words: ["light", "dark", "hell", "dunkel", "mode", "Modus"]),
             SettingsSearch("App icon", .appearance, words: ["App-Symbol", "home screen", "Home-Bildschirm"]),
             SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
+            SettingsSearch("Launch point in the club header", .clubPages, words: ["Steg", "launch point", "header", "Kopf", "map", "Karte", "Open in Maps", "directions", "Route"]),
             SettingsSearch("Background pictures", .clubPages, path: [.clubPages, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
             SettingsSearch("In the tiles", .clubPages, path: [.clubPages, .backgrounds], words: ["tiles", "Kacheln", "frosted", "blur", "unscharf", "solid"]),
             SettingsSearch("Open places in", .clubPages, words: ["Apple Maps", "Apple Karten", "Google Maps", "map app", "Karten-App", "directions", "Route"]),
@@ -525,6 +526,15 @@ private struct ClubPagesSettingsView: View {
                 }
             } footer: {
                 SectionFooter(tr("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))
+            }
+            .surfaceRows()
+
+            Section {
+                Toggle(tr("Launch point in the club header"), isOn: $settings.launchPointInHeader)
+            } footer: {
+                SectionFooter(settings.launchPointInHeader
+                              ? tr("Tap the lake and town under the club's name for the launch point's map, coordinates and Open in Maps. The Launch point card leaves the page.")
+                              : tr("The Launch point card is on the page, as before."))
             }
             .surfaceRows()
 
