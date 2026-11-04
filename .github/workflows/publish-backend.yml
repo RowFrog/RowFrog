@@ -79,7 +79,11 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e "backend[satellite]"
+          cache: pip
+          cache-dependency-path: backend/requirements-publish.txt
+      # The pinned versions only (backend/requirements-publish.txt), so a new
+      # release can't stop the forecasts before the tests have seen it.
+      - run: pip install -c backend/requirements-publish.txt -e "backend[satellite]"
       - name: Get the published files
         # A separate worktree, so only the published files are committed, never the repository.
         run: |

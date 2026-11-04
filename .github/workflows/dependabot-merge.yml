@@ -1,0 +1,41 @@
+name: Merge Dependabot updates
+
+# After CI passes on a Dependabot PR that only raises the backend's pinned
+# versions (backend/requirements-publish.txt, and its ranges in pyproject.toml),
+# this merges it, so monthly bumps and security fixes need no one (owner OK
+# 2026-11-04). A PR that touches anything else, or whose CI fails, stays open
+# for a person. Runs from main's copy of this file, never the PR's.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  merge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.actor.login == 'dependabot[bot]' &&
+      startsWith(github.event.workflow_run.head_branch, 'dependabot/pip/')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Merge when only the pinned versions changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          pr=$(gh pr list -R "$REPO" --head "$BRANCH" --author "app/dependabot" --state open \
+            --json number,headRefOid --jq ".[] | select(.headRefOid == \"$SHA\") | .number")
+          if [ -z "$pr" ]; then echo "No open Dependabot PR at $SHA (newer push or already closed)"; exit 0; fi
+          files=$(gh pr diff "$pr" -R "$REPO" --name-only)
+          echo "PR #$pr changes:"; echo "$files"
+          if echo "$files" | grep -qvE '^backend/(requirements-publish\.txt|pyproject\.toml)$'; then
+            echo "It changes other files too: left for a person."; exit 0
+          fi
+          gh pr merge "$pr" -R "$REPO" --squash --match-head-commit "$SHA"
