@@ -43,24 +43,19 @@ enum BackgroundLibrary {
     /// The picture for a choice, or nil for "no picture" or a missing file.
     /// The satellite picture is the club's lake's (the home base's without a
     /// club) and nil until it has loaded. Thumbnails are scaled down for the picker's grid.
+    /// Reads the file when it is not in memory yet, so screens use
+    /// `BackgroundPictures.shared`, which does that off the main thread.
     static func image(for choice: BackgroundChoice, clubID: String? = nil, thumbnail: Bool = false) -> UIImage? {
+        if case .satellite = choice { return satellite(clubID: clubID) }
+        guard let key = cacheKey(for: choice, thumbnail: thumbnail) else { return nil }
+        if let cached = cache.object(forKey: key) { return cached }
         let url: URL?
         switch choice {
-        case .noPicture: return nil
-        case .satellite:
-#if WIDGET_EXTENSION
-            return nil
-#else
-            guard let club = clubID ?? homeClubID, let lake = lakeByClub[club] else { return nil }
-            return MainActor.assumeIsolated { SatellitePictureStore.shared.backgroundImage(lake) }
-#endif
         case let .sample(id): url = Bundle.main.url(forResource: "bg-\(id)", withExtension: "jpg")
         case let .custom(name): url = userDirectory.appending(path: name)
+        default: url = nil
         }
-        guard let url else { return nil }
-        let key = "\(url.path)|\(thumbnail)" as NSString
-        if let cached = cache.object(forKey: key) { return cached }
-        guard var image = UIImage(contentsOfFile: url.path) else { return nil }
+        guard let url, var image = UIImage(contentsOfFile: url.path) else { return nil }
         if thumbnail {
             image = scaled(image, maxSide: 360)
         }
@@ -68,10 +63,32 @@ enum BackgroundLibrary {
         return image
     }
 
+    /// The picture if it is in memory already, without reading any file.
+    static func cachedImage(for choice: BackgroundChoice, clubID: String? = nil, thumbnail: Bool = false) -> UIImage? {
+        if case .satellite = choice { return satellite(clubID: clubID) }
+        return cacheKey(for: choice, thumbnail: thumbnail).flatMap { cache.object(forKey: $0) }
+    }
+
+    /// The key a file picture is kept under; nil for "no picture" and the satellite picture.
+    static func cacheKey(for choice: BackgroundChoice, thumbnail: Bool) -> NSString? {
+        switch choice {
+        case let .sample(id): "sample:\(id)|\(thumbnail)" as NSString
+        case let .custom(name): "custom:\(name)|\(thumbnail)" as NSString
+        default: nil
+        }
+    }
+
+    private static func satellite(clubID: String?) -> UIImage? {
+#if WIDGET_EXTENSION
+        return nil
+#else
+        guard let club = clubID ?? homeClubID, let lake = lakeByClub[club] else { return nil }
+        return MainActor.assumeIsolated { SatellitePictureStore.shared.backgroundImage(lake) }
+#endif
+    }
+
     static var userDirectory: URL {
-        let dir = URL.applicationSupportDirectory.appending(path: "Backgrounds", directoryHint: .isDirectory)
-        try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
-        return dir
+        URL.applicationSupportDirectory.appending(path: "Backgrounds", directoryHint: .isDirectory)
     }
 
     /// Saves a picture from Photos, scaled to the screen, and returns its file name.
@@ -80,6 +97,7 @@ enum BackgroundLibrary {
         let image = scaled(original, maxSide: 2600)
         guard let jpeg = image.jpegData(compressionQuality: 0.85) else { throw CocoaError(.fileWriteUnknown) }
         let name = "user-\(UUID().uuidString).jpg"
+        try FileManager.default.createDirectory(at: userDirectory, withIntermediateDirectories: true)
         try jpeg.write(to: userDirectory.appending(path: name), options: .atomic)
         return name
     }
@@ -87,8 +105,9 @@ enum BackgroundLibrary {
     static func deleteUserPicture(_ name: String) {
         let url = userDirectory.appending(path: name)
         try? FileManager.default.removeItem(at: url)
-        cache.removeObject(forKey: "\(url.path)|true" as NSString)
-        cache.removeObject(forKey: "\(url.path)|false" as NSString)
+        for thumbnail in [true, false] {
+            if let key = cacheKey(for: .custom(name), thumbnail: thumbnail) { cache.removeObject(forKey: key) }
+        }
     }
 
     private static let blurredCache = NSCache<UIImage, UIImage>()
@@ -120,6 +139,37 @@ enum BackgroundLibrary {
         return UIGraphicsImageRenderer(size: size, format: format).image { _ in
             image.draw(in: CGRect(origin: .zero, size: size))
         }
+    }
+}
+
+/// The background pictures for screens. A picture already in memory comes back
+/// at once; otherwise this reads its file off the main thread (Xcode warned that
+/// reading it while drawing can make the app hang) and the screen redraws when
+/// it is there. Until then the screen shows its plain background.
+@MainActor
+@Observable
+final class BackgroundPictures {
+    static let shared = BackgroundPictures()
+
+    /// Counts the pictures that arrived, so screens that asked redraw.
+    private var arrived = 0
+    @ObservationIgnored private var loading: Set<NSString> = []
+    @ObservationIgnored private var missing: Set<NSString> = []
+
+    func image(for choice: BackgroundChoice, clubID: String? = nil, thumbnail: Bool = false) -> UIImage? {
+        _ = arrived
+        if let image = BackgroundLibrary.cachedImage(for: choice, clubID: clubID, thumbnail: thumbnail) { return image }
+        guard let key = BackgroundLibrary.cacheKey(for: choice, thumbnail: thumbnail),
+              !missing.contains(key), loading.insert(key).inserted else { return nil }
+        Task {
+            let image = await Task.detached(priority: .userInitiated) {
+                BackgroundLibrary.image(for: choice, thumbnail: thumbnail)
+            }.value
+            loading.remove(key)
+            if image == nil { missing.insert(key) }
+            arrived += 1
+        }
+        return nil
     }
 }
 
@@ -319,7 +369,7 @@ struct PageBackground: ViewModifier {
 
     func body(content: Content) -> some View {
         let settings = AppSettings.shared
-        let image = BackgroundLibrary.image(for: settings.background(for: page, clubID: clubID), clubID: clubID)
+        let image = BackgroundPictures.shared.image(for: settings.background(for: page, clubID: clubID), clubID: clubID)
         let frame = drawsPicture ? ownFrame : outerFrame
         content
             .environment(\.surface, image == nil ? .plain : settings.tileSurface)

@@ -178,6 +178,23 @@ final class AppSettingsTests: XCTestCase {
         }
     }
 
+    /// Screens get the picture off the main thread: nil at first, then the
+    /// picture once it is read, and nil for good when the file is missing.
+    @MainActor
+    func testBackgroundPicturesLoadOffTheMainThread() async throws {
+        let choice = BackgroundLibrary.samples[1].choice
+        let pictures = BackgroundPictures.shared
+        if BackgroundLibrary.cachedImage(for: choice) == nil {
+            XCTAssertNil(pictures.image(for: choice))
+        }
+        for _ in 0..<50 where pictures.image(for: choice) == nil {
+            try await Task.sleep(for: .milliseconds(100))
+        }
+        XCTAssertNotNil(pictures.image(for: choice))
+        XCTAssertNil(pictures.image(for: .custom("no-such-picture.jpg")))
+        XCTAssertNil(pictures.image(for: .noPicture))
+    }
+
     func testUnitConversions() {
         XCTAssertEqual(TemperatureUnit.fahrenheit.convert(10), 50, accuracy: 0.001)
         XCTAssertEqual(SpeedUnit.kilometersPerHour.convert(10), 36, accuracy: 0.001)
