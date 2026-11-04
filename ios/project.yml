@@ -19,7 +19,7 @@ settings:
     STRING_CATALOG_GENERATE_SYMBOLS: YES
     # The last one on Xcode's list (2026-11-04): Image.iconPreviewAlpineLake and so
     # on for the asset catalogue's pictures; none of their names clash with Apple's.
-    ASSETCATALOG_COMPILER_GENERATE_ASSET_SYMBOL_EXTENSIONS: YES
+    ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
 targets:
   RowFrog:
     type: application
