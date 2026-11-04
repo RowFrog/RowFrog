@@ -1771,6 +1771,8 @@ function renderSettings() {
         <button id="factory" class="quiet">${icon("rotate-ccw")} ${h(t("Reset to factory settings"))}</button>
         <p class="small sub">${h(t("Appearance, units, language, background pictures and the order of the club page cards go back to how the website came, and your own pictures are deleted. The boat for the rowing light is Small boats again and every boat's limits go back to the standard ones. Your clubs, home base, own boats and routes stay."))}</p>
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
+      ${card(t("Website login"), "lock", `<p>${h(t("The website is still in testing. This browser stays logged in for 90 days."))}</p>
+        <button id="log-out" class="quiet">${icon("lock")} ${h(t("Log out"))}</button>`)}
       ${footerLinks()}
     </main>`;
   wireLanguage(renderSettings);
@@ -1815,6 +1817,7 @@ function renderSettings() {
     store.mapZoom = b.dataset.zoom;
     renderSettings();
   }));
+  root.querySelector("#log-out").addEventListener("click", () => location.assign("/__logout"));
   root.querySelector("#factory").addEventListener("click", async () => {
     if (!confirm(t("Reset all settings?"))) return;
     await forgetOwnPictures();

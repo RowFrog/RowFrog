@@ -113,6 +113,18 @@ jobs:
           echo "With password: $code"
           [ "$code" = 200 ] || { echo "::error::The site answered $code with the password"; exit 1; }
           curl -sI "$base/app/" | grep -i '^x-robots-tag: noindex' || { echo "::error::noindex header missing"; exit 1; }
+          # The login page: a wrong password gets no cookie, the right one a cookie that opens the site.
+          code=$(curl -s -o /dev/null -w '%{http_code}' --data-urlencode "user=$SITE_USER" --data-urlencode "password=wrong-$RANDOM" "$base/__login")
+          echo "Login with a wrong password: $code"
+          [ "$code" = 401 ] || { echo "::error::A wrong login answered $code"; exit 1; }
+          jar=$(mktemp)
+          code=$(curl -s -o /dev/null -w '%{http_code}' -c "$jar" --data-urlencode "user=$SITE_USER" --data-urlencode "password=$SITE_PASSWORD" --data-urlencode "next=/app/" "$base/__login")
+          echo "Login: $code"
+          [ "$code" = 303 ] || { echo "::error::The login answered $code"; exit 1; }
+          code=$(curl -s -o /dev/null -w '%{http_code}' -b "$jar" "$base/app/")
+          echo "With the login cookie: $code"
+          rm -f "$jar"
+          [ "$code" = 200 ] || { echo "::error::The site answered $code with the login cookie"; exit 1; }
           for site in https://rowfrog.com https://www.rowfrog.com; do
             code=$(curl -s -o /dev/null -w '%{http_code}' "$site/app/" || true)
             echo "$site without password: $code (401 once the domain is attached)"
