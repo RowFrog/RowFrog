@@ -20,7 +20,7 @@ import sys
 import time
 from pathlib import Path
 
-from shapely.geometry import LineString, MultiLineString, Point, Polygon, mapping
+from shapely.geometry import LineString, Point, Polygon, mapping
 from shapely.ops import linemerge, polygonize, transform, unary_union
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))

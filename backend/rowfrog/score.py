@@ -31,7 +31,8 @@ class Thresholds:
     """Limits for small racing boats (1x, 2x, 2-), the app's starting boat.
 
     The app works the light out again on the phone for other boats and for
-    limits the user changed (ios/RowFrog/Limits.swift); keep the two in step.
+    limits the user changed (ios/RowFrog/Limits.swift), and so does the website
+    (web/public/app/logic.js); testdata/limits.json checks that all three agree.
     """
 
     wind_amber_ms: float = 5.5  # Bft 4, the first whitecaps

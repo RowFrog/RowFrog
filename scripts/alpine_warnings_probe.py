@@ -244,6 +244,7 @@ def meteoalarm(client: httpx.Client) -> None:
             return any(datetime.fromisoformat(e) > now for e in exp)
         print(f"  {len(ws)} warnings in feed, {sum(map(live, ws))} not yet expired")
         lakeish = set()
+        events = {}
         for w in ws:
             for i in w.get("alert", {}).get("info", []):
                 for a in i.get("area", []):
@@ -253,7 +254,6 @@ def meteoalarm(client: httpx.Client) -> None:
                 for ec in i.get("eventCode", []) or []:
                     events[("code", ec.get("valueName"), ec.get("value"))] = 0
         print("  lake-like area names:", sorted(lakeish))
-        events = {}
         areas = set()
         for w in ws:
             info = (w.get("alert", {}).get("info") or [{}])
