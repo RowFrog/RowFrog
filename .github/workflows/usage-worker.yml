@@ -11,6 +11,7 @@ on:
     paths:
       - cloudflare/usage/**
       - .github/workflows/usage-worker.yml
+      - package-lock.json
   workflow_dispatch:
 
 concurrency:
@@ -23,15 +24,18 @@ jobs:
     env:
       CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      WRANGLER: npx --yes wrangler@4.20.0
+      # wrangler's exact version comes from package-lock.json (repository root).
+      WRANGLER: npx --no -- wrangler
     defaults:
       run:
         working-directory: cloudflare/usage
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
+      - run: npm ci
+        working-directory: .
       - name: Check the secrets
         env:
           USAGE_KEY: ${{ secrets.USAGE_KEY }}

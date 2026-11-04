@@ -27,11 +27,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: pip install -e "backend[satellite]"
+      - run: pip install -c backend/requirements-publish.txt -e "backend[satellite]"
       - run: python3 scripts/water_temperature_backtest.py
         env:
           CDSE_CLIENT_ID: ${{ secrets.CDSE_CLIENT_ID }}

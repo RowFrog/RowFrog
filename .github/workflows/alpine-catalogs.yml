@@ -39,11 +39,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: pip install -e backend
+      - run: pip install -c backend/requirements-publish.txt -e backend
       # A Swiss Rowing run only does Swiss Rowing: the other lists are already in.
       - name: Import ÖRV clubs
         if: ${{ !inputs.swissrowing }}

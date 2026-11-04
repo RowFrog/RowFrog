@@ -20,8 +20,8 @@ jobs:
       run:
         working-directory: backend
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
           cache: pip
@@ -32,7 +32,7 @@ jobs:
       - run: pip install -c requirements-publish.txt -e ".[dev,satellite]"
       # Names used before they are set, unused imports, syntax errors (rules in pyproject.toml).
       - name: Lint (ruff)
-        run: pip install ruff==0.16.9 && ruff check . ../scripts
+        run: pip install -r requirements-dev.txt && ruff check . ../scripts
       - run: pytest -q --cov=rowfrog --cov-report=json:coverage.json
       - name: Coverage in the run summary
         if: always()
@@ -44,8 +44,8 @@ jobs:
   workers:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
       - run: |
@@ -58,7 +58,7 @@ jobs:
   translations:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: python3 scripts/check_translations.py
 
   changes:
@@ -105,7 +105,7 @@ jobs:
       runner: ${{ steps.pick.outputs.runner }}
       xcode: ${{ steps.pick.outputs.xcode }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           sparse-checkout: scripts
       - id: pick
@@ -166,7 +166,7 @@ jobs:
       run:
         working-directory: ios
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - run: brew install xcodegen
       - run: xcodegen
       - name: Build and run the unit tests on a simulator

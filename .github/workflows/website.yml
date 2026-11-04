@@ -15,6 +15,7 @@ on:
       - scripts/build_web.py
       - ios/RowFrog/Localization.swift
       - .github/workflows/website.yml
+      - package-lock.json
   push:
     branches: [main]
     paths:
@@ -23,6 +24,7 @@ on:
       - scripts/build_web.py
       - ios/RowFrog/Localization.swift
       - .github/workflows/website.yml
+      - package-lock.json
   workflow_dispatch:
 
 concurrency:
@@ -33,14 +35,14 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: pip install pillow==11.3.0
+      - run: pip install -c backend/requirements-publish.txt pillow
       - name: Tests
         run: |
           set -o pipefail
@@ -52,9 +54,10 @@ jobs:
         run: python scripts/build_web.py
       - name: Browser test (the built site in Chromium, with the sample API files)
         run: |
-          (cd web && npm install --no-save --no-package-lock playwright@1.64.1 && npx playwright install --with-deps chromium)
+          # Playwright's exact version comes from package-lock.json (repository root).
+          npm ci && npx --no -- playwright install --with-deps chromium
           node --test web/tests/browser/*.test.mjs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: website
           path: web/dist
@@ -69,17 +72,20 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       SITE_USER: ${{ secrets.SITE_USER }}
       SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
-      WRANGLER: npx --yes wrangler@4.20.0
+      # wrangler's exact version comes from package-lock.json (repository root).
+      WRANGLER: npx --no -- wrangler
       PROJECT: rowfrog-web
     defaults:
       run:
         working-directory: web
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           node-version: "22"
-      - uses: actions/download-artifact@v4
+      - run: npm ci
+        working-directory: .
+      - uses: actions/download-artifact@v8
         with:
           name: website
           path: web/dist

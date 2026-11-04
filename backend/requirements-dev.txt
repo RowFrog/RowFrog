@@ -1,0 +1,4 @@
+# Lint tool for the CI backend job (ci.yml): pip install -r backend/requirements-dev.txt.
+# Pinned so a new ruff can't fail CI out of the blue; Dependabot raises it with
+# the backend's monthly update (.github/dependabot.yml).
+ruff==0.17.3
