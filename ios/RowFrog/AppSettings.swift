@@ -157,8 +157,8 @@ final class AppSettings {
     var pickedModels: [String: String] { didSet { defaults.set(pickedModels, forKey: Keys.pickedModels) } }
     /// How club pages in two columns even out their columns, picked in the developer options.
     var columnFill: ColumnFill { didSet { defaults.set(columnFill.rawValue, forKey: Keys.columnFill) } }
-    /// The column rule in use: the developer options' pick while they are on, else folding.
-    var activeColumnFill: ColumnFill { developerOptions ? columnFill : .fold }
+    /// The column rule in use: the developer options' pick while they are on, else the whole table.
+    var activeColumnFill: ColumnFill { developerOptions ? columnFill : .fill }
     /// How the 48 hours show the night, picked in the developer options.
     var nightHours: NightHours { didSet { defaults.set(nightHours.rawValue, forKey: Keys.nightHours) } }
     /// The night rule in use: the developer options' pick while they are on, else one line per night.
@@ -291,7 +291,7 @@ final class AppSettings {
         blurWidgetPicture = defaults.bool(forKey: Keys.widgetBlur)
         developerOptions = defaults.bool(forKey: Keys.developer)
         pickedModels = defaults.dictionary(forKey: Keys.pickedModels) as? [String: String] ?? [:]
-        columnFill = value(Keys.columnFill, .fold)
+        columnFill = value(Keys.columnFill, .fill)
         nightHours = value(Keys.nightHours, .fold)
         // As a launch argument the order is a comma-separated list, e.g. `-RWPageLayout "hourly,radar"`.
         pageLayout = defaults.data(forKey: Keys.pageLayout).flatMap { try? JSONDecoder().decode(PageLayout.self, from: $0) }
@@ -389,7 +389,7 @@ final class AppSettings {
         userPictures = []
         developerOptions = false
         pickedModels = [:]
-        columnFill = .fold
+        columnFill = .fill
         nightHours = .fold
         pageLayout = .standard
         clubPageLayouts = [:]
@@ -685,8 +685,9 @@ enum WidgetBackground: Hashable {
 
 // The club page card order lives here because the widget builds AppSettings too.
 
-/// How a club page in two columns evens out its columns. The 48 hours folded
-/// to 24 is the app's way; the other stays as a developer option.
+/// How a club page in two columns evens out its columns. The whole 48 hours is
+/// the app's way since each night folds into one line (NightFold); folding to 24
+/// stays as a developer option.
 enum ColumnFill: String, CaseIterable, Identifiable {
     /// The 48 hours show 24 until opened; the page end and the maps fill the shorter column.
     case fold
