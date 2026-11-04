@@ -147,6 +147,8 @@ test("each night of the 48 hours is one line that opens on a tap", async () => {
   const rows = line.locator("xpath=following-sibling::div[1]");
   assert.equal(await rows.isHidden(), true, "the night starts folded");
   const days = () => page.locator(".hourly-card .dayhead:visible").evaluateAll((els) => els.map((e) => e.dataset.day));
+  // The day headers come with the rows; read them only once one shows (CI read none once, #309).
+  await page.locator(".hourly-card .dayhead:visible").first().waitFor({ timeout: 20000 });
   const folded = await days();
   if (process.env.RF_NIGHT_SHOT) await page.locator(".hourly-card").screenshot({ path: `${process.env.RF_NIGHT_SHOT}-folded.png` });
   await line.click();
