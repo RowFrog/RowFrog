@@ -174,6 +174,10 @@ jobs:
             # "What's new" stays away except in its own shots (NEWS set).
             local news=(-RWWhatsNewSeen 1000)
             [ -n "${NEWS:-}" ] && news=()
+            # The app follows the phone's clock by default now (4 Nov 2026) and the
+            # Simulator is a US phone, so shots keep 24-hour times unless they set one.
+            local clock=(-RWTimeFormat hours24)
+            [[ " $* " == *" -RWTimeFormat "* ]] && clock=()
             xcrun simctl ui "$UDID" appearance "$appearance"
             # iPadOS ignores the app's own turn (-RWLandscape) for apps in windows, so the
             # iPad Simulator itself is turned with Rotate Right / Rotate Left (Cmd+arrow).
@@ -190,7 +194,7 @@ jobs:
             # A hung simulator once blocked here until the 6-hour job limit; give up after a minute.
             perl -e 'alarm 60; exec @ARGV' xcrun simctl terminate "$UDID" com.rowfrog.RowFrog || true
             # The runner's clock is UTC; show times as a phone in Bavaria would.
-            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${safety[@]}" "${news[@]}" "${guide[@]}" "$@"
+            SIMCTL_CHILD_TZ=Europe/Berlin xcrun simctl launch "$UDID" com.rowfrog.RowFrog "${safety[@]}" "${news[@]}" "${guide[@]}" "${clock[@]}" "$@"
             # The first launch after install, and the backend's first answers, are slower.
             if [ -z "${WARM:-}" ]; then sleep 30; WARM=1; else sleep "${WAIT:-12}"; fi
             xcrun simctl io "$UDID" screenshot "$SHOTS/$name.png"
@@ -263,6 +267,10 @@ jobs:
           shoot 65-own-limits light -RWOpenClub mrc-1880 "${BOATS[@]}" "${OWN[@]}"
           shoot 66-own-limits-wind light -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLimitInfo YES "${BOATS[@]}" "${OWN[@]}"
           shoot 67-boat-limits light -RWShowSettings YES -RWSettingsPage boat:b-anna "${BOATS[@]}" "${OWN[@]}"
+          # A boat on the app's limits: the switch on, the list hidden (4 Nov 2026).
+          shoot 364-boat-app-limits light -RWShowSettings YES -RWSettingsPage boat:b-flash "${BOATS[@]}" "${OWN[@]}"
+          # Adding a boat: a sheet with Cancel and Add.
+          shoot 363-new-boat light -RWShowSettings YES -RWSettingsPage limits -RWNewBoat YES "${BOATS[@]}"
           # The lake tile and map follow the ticked boat, as the club page does.
           WAIT=30 shoot 68-lake-card-ticked-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview "${BOATS[@]}" -RWBoat big
           WAIT=30 shoot 69-lake-map-ticked-boat light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES "${BOATS[@]}" -RWBoat big
@@ -319,7 +327,9 @@ jobs:
           WAIT=25 shoot 160-settings-search-german-dark dark -RWShowSettings YES -RWSettingsSearch Wind -RWLanguage de
           WAIT=25 shoot_n 161-settings-appearance 2 light -RWShowSettings YES -RWSettingsPage appearance
           WAIT=25 shoot 162-settings-club-pages light -RWShowSettings YES -RWSettingsPage clubpages
-          WAIT=25 shoot_n 163-settings-language 3 light -RWShowSettings YES -RWSettingsPage language
+          WAIT=25 shoot_n 163-settings-language 3 light -RWShowSettings YES -RWSettingsPage language -RWTimeFormat device
+          # The "Like the iPhone" switches off: languages, time and date to pick.
+          WAIT=25 shoot_n 362-settings-language-own 3 light -RWShowSettings YES -RWSettingsPage language -RWLanguage en -RWTimeFormat hours24 -RWDateFormat short
           WAIT=25 shoot 164-settings-battery-data light -RWShowSettings YES -RWSettingsPage data
           WAIT=25 shoot 165-settings-help light -RWShowSettings YES -RWSettingsPage help
           WAIT=25 shoot 166-settings-about light -RWShowSettings YES -RWSettingsPage about

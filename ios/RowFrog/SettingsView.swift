@@ -601,15 +601,29 @@ private struct LanguageSettingsView: View {
         ScrollViewReader { proxy in
             Form {
                 Section {
-                    Picker(selection: $settings.language) {
-                        ForEach(AppLanguage.allCases) { language in
-                            Text(language.title).tag(language)
+                    // As Date & Time > Set Automatically in iOS: the phone's
+                    // choice by default, the languages only when it is off.
+                    Toggle(isOn: $settings.languageLikeDevice.animation()) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(likeDevice)
+                            if settings.languageLikeDevice {
+                                Text(AppSettings.deviceLanguage.title)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
-                    } label: {
-                        EmptyView()
                     }
-                    .pickerStyle(.inline)
-                    .labelsHidden()
+                    if !settings.languageLikeDevice {
+                        Picker(selection: $settings.language) {
+                            ForEach(AppLanguage.allCases.filter { $0 != .device }) { language in
+                                Text(language.title).tag(language)
+                            }
+                        } label: {
+                            EmptyView()
+                        }
+                        .pickerStyle(.inline)
+                        .labelsHidden()
+                    }
                 } header: {
                     SectionTitle(tr("Language"), symbol: "globe")
                 }
@@ -632,16 +646,28 @@ private struct LanguageSettingsView: View {
                 .id("units")
 
                 Section {
-                    FormatRow(title: tr("Time"), symbol: "clock", selection: $settings.timeFormat) { format in
-                        format.string(from: Self.sampleTime)
+                    Toggle(isOn: $settings.dateTimeLikeDevice.animation()) {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(likeDevice)
+                            if settings.dateTimeLikeDevice {
+                                Text("\(TimeFormat.device.string(from: Self.sampleTime)) · \(DateFormat.device.string(from: .now, locale: settings.locale))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
-                    FormatRow(title: tr("Date"), symbol: "calendar", selection: $settings.dateFormat) { format in
-                        format.string(from: .now, locale: AppSettings.shared.locale)
+                    if !settings.dateTimeLikeDevice {
+                        FormatRow(title: tr("Time"), symbol: "clock", selection: $settings.timeFormat) { format in
+                            format.string(from: Self.sampleTime)
+                        }
+                        FormatRow(title: tr("Date"), symbol: "calendar", selection: $settings.dateFormat) { format in
+                            format.string(from: .now, locale: AppSettings.shared.locale)
+                        }
                     }
                 } header: {
                     SectionTitle(tr("Date and time"), symbol: "calendar.badge.clock")
                 } footer: {
-                    SectionFooter(tr("Device follows the phone's settings. Today and tomorrow are always written as words."))
+                    SectionFooter(tr("Today and tomorrow are always written as words."))
                 }
                 .surfaceRows()
                 .id("datetime")
@@ -652,6 +678,11 @@ private struct LanguageSettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .screenshotSections(["language", "units", "datetime"], proxy: proxy)
         }
+    }
+
+    /// "Like the iPhone" or "Like the iPad".
+    private var likeDevice: String {
+        Orientation.isPad ? tr("Like the iPad") : tr("Like the iPhone")
     }
 
     /// 14:30 today, to show each time format.
@@ -1033,7 +1064,8 @@ private struct FormatRow<Option: Hashable & Identifiable & CaseIterable>: View w
         LabeledContent {
             Menu {
                 Picker(title, selection: $selection) {
-                    ForEach(Option.allCases) { format in
+                    // "Device" is the switch above the rows now.
+                    ForEach(Option.allCases.filter { ($0 as? TimeFormat) != .device && ($0 as? DateFormat) != .device }) { format in
                         Text("\(name(format)) · \(example(format))").tag(format)
                     }
                 }
@@ -1507,6 +1539,8 @@ struct RowingLimitsView: View {
     @Binding var path: [SettingsRoute]
     let locations: LocationStore
     @State private var showBoatsTip = false
+    /// The boat being added in the New boat sheet; it is kept only when Add is tapped.
+    @State private var newBoat: NewBoat?
     private let boatsTip = MyBoatsTip()
 
     var body: some View {
@@ -1527,14 +1561,15 @@ struct RowingLimitsView: View {
             .surfaceRows()
 
             Section {
-                ForEach(settings.myBoats) { boat in
+                let boats = settings.myBoats.filter { $0.id != newBoat?.id }
+                ForEach(boats) { boat in
                     BoatRow(boat: boat) { path.append(.boat(boat.id)) }
                 }
                 .onDelete { offsets in
-                    for id in offsets.map({ settings.myBoats[$0].id }) { settings.removeBoat(id) }
+                    for id in offsets.map({ boats[$0].id }) { settings.removeBoat(id) }
                 }
                 Button {
-                    path.append(.boat(settings.addBoat(at: locations.homeID).id))
+                    newBoat = NewBoat(id: settings.addBoat(at: locations.homeID).id)
                 } label: {
                     Label(tr("Add a boat"), systemImage: "plus.circle")
                 }
@@ -1550,6 +1585,55 @@ struct RowingLimitsView: View {
         .tipVisibility(boatsTip, $showBoatsTip)
         .navigationTitle(tr("Rowing limits"))
         .navigationBarTitleDisplayMode(.inline)
+        .sheet(item: $newBoat) { boat in
+            NewBoatSheet(boatID: boat.id, locations: locations)
+        }
+        .onAppear {
+            // Screenshot hook: `-RWNewBoat YES` with `-RWSettingsPage limits` opens the New boat sheet.
+            if newBoat == nil, UserDefaults.standard.bool(forKey: "RWNewBoat") {
+                newBoat = NewBoat(id: AppSettings.shared.addBoat(at: locations.homeID).id)
+            }
+        }
+    }
+}
+
+private struct NewBoat: Identifiable {
+    let id: String
+}
+
+/// Adding a boat, as creating something in Apple's own apps (a contact, an
+/// event, an alarm): a sheet with Cancel and Add, where only Add keeps the boat
+/// (owner, 4.11.2026; before, the back arrow saved it). Changing a boat later
+/// saves on its own, as in iOS Settings.
+private struct NewBoatSheet: View {
+    let boatID: String
+    let locations: LocationStore
+    @Environment(\.dismiss) private var dismiss
+    @State private var added = false
+
+    var body: some View {
+        let settings = AppSettings.shared
+        let named = !(settings.boat(boatID)?.name.trimmingCharacters(in: .whitespaces).isEmpty ?? true)
+        NavigationStack {
+            BoatLimitsView(boatID: boatID, locations: locations, isNew: true)
+                .toolbar {
+                    ToolbarItem(placement: .cancellationAction) {
+                        Button(tr("Cancel")) { dismiss() }
+                    }
+                    ToolbarItem(placement: .confirmationAction) {
+                        Button(tr("Add")) {
+                            added = true
+                            dismiss()
+                        }
+                        .disabled(!named)
+                    }
+                }
+        }
+        // Only Cancel and Add close the sheet, so a boat is never kept or lost by a swipe.
+        .interactiveDismissDisabled()
+        .onDisappear {
+            if !added { settings.removeBoat(boatID) }
+        }
     }
 }
 
@@ -1595,13 +1679,27 @@ private struct BoatRow: View {
 struct BoatLimitsView: View {
     let boatID: String
     let locations: LocationStore
+    /// In the New boat sheet: no Remove button, and the sheet's Cancel and Add.
+    var isNew = false
+    /// Whether the limit list shows; off, the boat simply uses the app's limits
+    /// for its type and size (owner's idea, 4.11.2026).
+    @State private var ownLimits: Bool
+    @State private var confirmAppLimits = false
     @State private var showColdTip = false
     private let coldTip = ColdWaterTip()
     @Environment(\.dismiss) private var dismiss
 
+    init(boatID: String, locations: LocationStore, isNew: Bool = false) {
+        self.boatID = boatID
+        self.locations = locations
+        self.isNew = isNew
+        _ownLimits = State(initialValue: !(AppSettings.shared.boatLimits[boatID] ?? [:]).isEmpty)
+    }
+
     var body: some View {
         @Bindable var settings = AppSettings.shared
         let boat = settings.boat(boatID) ?? .small
+        let changed = !(settings.boatLimits[boat.id] ?? [:]).isEmpty
         Form {
             if !boat.isGroup, let index = settings.myBoats.firstIndex(where: { $0.id == boatID }) {
                 Section {
@@ -1630,22 +1728,48 @@ struct BoatLimitsView: View {
                 if showColdTip {
                     TipView(coldTip)
                 }
-                ForEach(RowingLimit.allCases) { limit in
-                    LimitRow(limit: limit, boat: boat)
+                // As Date & Time > Set Automatically in iOS: the app's limits
+                // by default, the list only when the user wants their own.
+                Toggle(isOn: Binding {
+                    !ownLimits
+                } set: { useApp in
+                    if !useApp {
+                        withAnimation { ownLimits = true }
+                    } else if changed {
+                        confirmAppLimits = true
+                    } else {
+                        withAnimation { ownLimits = false }
+                    }
+                }) {
+                    Text(tr("The app's limits for this boat"))
                 }
-                if !(settings.boatLimits[boat.id] ?? [:]).isEmpty {
-                    Button(tr("Use the app's limits again")) { settings.boatLimits[boat.id] = nil }
+                if ownLimits {
+                    ForEach(RowingLimit.allCases) { limit in
+                        LimitRow(limit: limit, boat: boat)
+                    }
                 }
             } header: {
-                SectionTitle(tr("Fine-tune the limits"), symbol: "slider.horizontal.3")
+                SectionTitle(tr("Limits"), symbol: "slider.horizontal.3")
             } footer: {
-                SectionFooter(tr("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. Official warnings, thunderstorms, fog, hail and darkness always count.")
-                              + " " + tr("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.",
-                                         Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs)))
+                SectionFooter((ownLimits
+                               ? tr("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. Official warnings, thunderstorms, fog, hail and darkness always count.")
+                                   + " " + tr("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.",
+                                              Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs))
+                               : tr("The rowing light uses the app's limits for this type and size of boat. Turn this off to set your own.")
+                                   + " " + tr("Below %@ water the app lowers its wind and gust limits by %@.",
+                                              Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs))))
             }
             .surfaceRows()
+            .confirmationDialog(tr("Use the app's limits again?"), isPresented: $confirmAppLimits, titleVisibility: .visible) {
+                Button(tr("Use the app's limits"), role: .destructive) {
+                    settings.boatLimits[boat.id] = nil
+                    withAnimation { ownLimits = false }
+                }
+            } message: {
+                Text(tr("The limits you set for this boat are dropped."))
+            }
 
-            if !boat.isGroup {
+            if !boat.isGroup && !isNew {
                 Section {
                     Button(tr("Remove this boat"), role: .destructive) {
                         dismiss()
@@ -1658,7 +1782,7 @@ struct BoatLimitsView: View {
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
         .tipVisibility(coldTip, $showColdTip)
-        .navigationTitle(boat.title)
+        .navigationTitle(isNew ? tr("New boat") : boat.title)
         .navigationBarTitleDisplayMode(.inline)
     }
 }
