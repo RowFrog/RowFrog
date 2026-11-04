@@ -120,9 +120,9 @@ def test_club_forecast_without_station_gets_the_satellite_estimate(monkeypatch):
     monkeypatch.setattr(open_meteo, "fetch_daily_mean", daily)
     monkeypatch.setattr(api.httpx, "AsyncClient", _serve(lambda request: httpx.Response(200, json={"features": []})))
     _reset()
-    api._ice_temps.clear()
+    api.prepared.ice_temps.clear()
     club = api._locations.clubs_on("simssee")[0]
-    monkeypatch.setitem(api._satellite_water, "simssee", [_landsat(date(2026, 10, 15), 15.0)])
+    monkeypatch.setitem(api.prepared.satellite_water, "simssee", [_landsat(date(2026, 10, 15), 15.0)])
     body = TestClient(api.app).get(f"/clubs/{club.id}/forecast").json()
     assert body["waterTemperature"] is None
     assert 10.0 < body["waterEstimate"]["celsius"] < 15.0

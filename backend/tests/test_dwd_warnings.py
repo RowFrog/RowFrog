@@ -175,7 +175,7 @@ def _reset():
     api._swiss_alerts = None
     api._lake_warnings = None
     api._english = None
-    api._primed_local_warnings.clear()
+    api.prepared.local_warnings.clear()
 
 
 def _fake_weather(monkeypatch):
@@ -338,7 +338,7 @@ def test_primed_local_warnings_are_used_without_asking_dwd(monkeypatch):
 
     monkeypatch.setattr(api.httpx, "AsyncClient", _serve(handler))
     _reset()
-    api._primed_local_warnings["mrc-1880"] = [w for _, w in dwd_warnings.parse_warnings({"features": [_local(809188139, "WINDBÖEN")]}, "local")]
+    api.prepared.local_warnings["mrc-1880"] = [w for _, w in dwd_warnings.parse_warnings({"features": [_local(809188139, "WINDBÖEN")]}, "local")]
     body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
     _reset()
     assert [i["event"] for i in body["warnings"]["items"]] == ["WINDBÖEN"]

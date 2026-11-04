@@ -163,8 +163,8 @@ class State:
                 self.water_satellite = saved.get("water_satellite", (None, {}, {}))
                 self.warn_cells = saved.get("warn_cells", {})
                 self.maps_run = saved.get("maps_run")
-                api._last_water.update(saved.get("water", {}))
-                api._ice_temps.update(saved["ice_temps"])
+                api.prepared.last_water.update(saved.get("water", {}))
+                api.prepared.ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
                 print(f"  state not readable, starting afresh: {e!r}")
 
@@ -176,11 +176,11 @@ class State:
             "clubs": self.clubs,
             "lakes": self.lakes,
             "ice_map": self.ice_map,
-            "ice_temps": api._ice_temps,
+            "ice_temps": api.prepared.ice_temps,
             "outlooks": self.outlooks,
             "models": self.models,
             "water_satellite": self.water_satellite,
-            "water": api._last_water,
+            "water": api.prepared.last_water,
             "warn_cells": self.warn_cells,
             "maps_run": self.maps_run,
         }
@@ -224,7 +224,7 @@ def club_weather(state: State, clubs: list[locations.Club], used: set[str], with
     print(f"  weather loaded for {len(stale)} of {len(clubs)} clubs")
     for club in clubs:
         if club.id in state.clubs:
-            api._primed_weather[club.id] = state.clubs[club.id][1]
+            api.prepared.weather[club.id] = state.clubs[club.id][1]
 
 
 def local_warnings(state: State, clubs: list[locations.Club], now: datetime) -> None:
@@ -268,7 +268,7 @@ def local_warnings(state: State, clubs: list[locations.Club], now: datetime) -> 
     for club in clubs:
         if club.id in state.warn_cells:
             cell = state.warn_cells[club.id][1]
-            api._primed_local_warnings[club.id] = [] if cell is None else by_cell.get(cell, [])
+            api.prepared.local_warnings[club.id] = [] if cell is None else by_cell.get(cell, [])
             primed += 1
     queries = -(-len(by_cell) // dwd_warnings.CELLS_PER_QUERY)
     print(f"  local warnings for {primed} of {len(clubs)} clubs in {queries} DWD queries ({looked} warn cells looked up)")
@@ -303,14 +303,14 @@ def club_outlooks(state: State, clubs: list[locations.Club], used: set[str], now
     print(f"  outlook loaded for {len(stale)} clubs")
     for club in clubs:
         saved = state.outlooks.get(club.id) if club.id in used else None
-        api._primed_outlook[club.id] = saved[1] if saved else None
+        api.prepared.outlook[club.id] = saved[1] if saved else None
 
 
 def model_weather(state: State, clubs: list[locations.Club], now: datetime) -> list[tuple[locations.Club, str]]:
     """The other weather models the confirmed clubs offer (the app's hidden model
     picker), loaded every 3 hours with one request per model. Returns the
     (club, model) pairs that have a forecast."""
-    confirmed = [c for c in clubs if api._offers_choices(c)]
+    confirmed = [c for c in clubs if api.offers_choices(c)]
     by_model: dict[str, list[locations.Club]] = {}
     for club in confirmed:
         for choice in weather_models.choices_for(club.launch_point.lat, club.launch_point.lon):
@@ -334,7 +334,7 @@ def model_weather(state: State, clubs: list[locations.Club], now: datetime) -> l
         for club in model_clubs:
             key = f"{club.id}@{model}"
             if key in state.models:
-                api._primed_weather[key] = state.models[key][1]
+                api.prepared.weather[key] = state.models[key][1]
                 pairs.append((club, model))
     return pairs
 
@@ -345,7 +345,7 @@ def lake_weather(state: State, lake_ids: list[str], used: set[str], now: datetim
     for lake_id in lake_ids:
         samples = lake_view.USED_SAMPLES if lake_id in used else lake_view.MAX_SAMPLES
         if samples != lake_view.MAX_SAMPLES:
-            api._lake_samples[lake_id] = samples
+            api.prepared.lake_samples[lake_id] = samples
         loaded, points, _ = state.lakes.get(lake_id, (None, 0, None))
         try:
             grid = api.lake_grid(lake_id, outlines.load(lake_id))
@@ -374,7 +374,7 @@ def lake_weather(state: State, lake_ids: list[str], used: set[str], now: datetim
     ready = []
     for lake_id in lake_ids:
         if lake_id in state.lakes:
-            api._primed_lake_weather[lake_id] = state.lakes[lake_id][2]
+            api.prepared.lake_weather[lake_id] = state.lakes[lake_id][2]
             ready.append(lake_id)
     return ready
 
@@ -399,8 +399,8 @@ def satellite_ice(state: State, lake_ids: list[str], now: datetime) -> None:
         for lake_id, found in sorted(passes.items()):
             last = found[-1]
             print(f"  satellite ice {lake_id}: {last.day} seen {last.seen_share:.0%} ice {last.ice_share:.0%}")
-    api._satellite_ice.clear()
-    api._satellite_ice.update(passes)
+    api.prepared.satellite_ice.clear()
+    api.prepared.satellite_ice.update(passes)
 
 
 def satellite_water(state: State, lake_ids: list[str], now: datetime) -> None:
@@ -423,8 +423,8 @@ def satellite_water(state: State, lake_ids: list[str], now: datetime) -> None:
         files = {name: files[name] for name in sorted(files)[-2:]}
         state.water_satellite = (today, files, readings)
         print(f"  satellite water temperature: {len(readings)} of {len(shores)} lakes seen")
-    api._satellite_water.clear()
-    api._satellite_water.update(readings)
+    api.prepared.satellite_water.clear()
+    api.prepared.satellite_water.update(readings)
 
 
 def _read_json(path: Path) -> dict:
@@ -441,7 +441,7 @@ def publish_ice_map(out: Path, lake_ids: list[str], today: date) -> None:
         meta = _read_json(meta_path)
         usable = [
             p
-            for p in api._satellite_ice.get(lake_id, [])
+            for p in api.prepared.satellite_ice.get(lake_id, [])
             if p.seen_share >= ice.SATELLITE_SEEN_SHARE and p.bbox and (today - p.day).days <= ice.SATELLITE_DAYS
         ]
         if not usable:
@@ -787,7 +787,7 @@ def main() -> int:
     print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests")
     failed = []
     for club in clubs:
-        if club.id not in api._primed_weather:
+        if club.id not in api.prepared.weather:
             failed.append(f"{club.id}: no forecast loaded")
             continue
         try:

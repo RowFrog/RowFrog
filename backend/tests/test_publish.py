@@ -140,9 +140,9 @@ def test_other_models_load_only_for_confirmed_clubs_once_per_run(monkeypatch):
     asked.clear()
     publish.model_weather(state, confirmed, utc(23, 15, 0))
     assert asked == [], "nothing new until the next model run"
-    for key in list(api._primed_weather):
+    for key in list(api.prepared.weather):
         if "@" in key:
-            del api._primed_weather[key]
+            del api.prepared.weather[key]
 
 
 def test_warn_cells_are_looked_up_once_and_warnings_read_in_bulk(monkeypatch):
@@ -163,15 +163,15 @@ def test_warn_cells_are_looked_up_once_and_warnings_read_in_bulk(monkeypatch):
     monkeypatch.setattr(dwd_warnings, "fetch_local_warnings_for_cells", fake_bulk)
     clubs = [c for c in locations.load().clubs.values() if c.country == "de"][:20]
     state = publish.State(None)
-    api._primed_local_warnings.clear()
+    api.prepared.local_warnings.clear()
     publish.local_warnings(state, clubs, utc(25, 12))
     assert len(looked) == 20 and len(bulk) == 1
-    assert set(api._primed_local_warnings) == {c.id for c in clubs}
+    assert set(api.prepared.local_warnings) == {c.id for c in clubs}
     publish.local_warnings(state, clubs, utc(25, 12, 30))
     assert len(looked) == 20, "cells are kept between runs"
     publish.local_warnings(state, clubs, utc(25, 12) + timedelta(days=publish.WARN_CELL_DAYS + 1))
     assert len(looked) == 40, "and looked up again after a while"
-    api._primed_local_warnings.clear()
+    api.prepared.local_warnings.clear()
 
 
 def test_failed_bulk_warnings_leave_each_club_to_ask_itself(monkeypatch):
@@ -186,9 +186,9 @@ def test_failed_bulk_warnings_leave_each_club_to_ask_itself(monkeypatch):
 
     monkeypatch.setattr(dwd_warnings, "fetch_warn_cell", fake_cell)
     monkeypatch.setattr(dwd_warnings, "fetch_local_warnings_for_cells", broken)
-    api._primed_local_warnings.clear()
+    api.prepared.local_warnings.clear()
     publish.local_warnings(publish.State(None), list(locations.load().clubs.values())[:3], utc(25, 12))
-    assert api._primed_local_warnings == {}
+    assert api.prepared.local_warnings == {}
 
 
 def test_refresh_block_tells_the_app_how_often_a_club_is_renewed():
@@ -214,11 +214,11 @@ def test_local_warnings_skip_clubs_outside_germany(monkeypatch):
     monkeypatch.setattr(dwd_warnings, "fetch_local_warnings_for_cells", fake_bulk)
     every = locations.load().clubs.values()
     clubs = [c for c in every if c.country == "de"][:2] + [c for c in every if c.country != "de"][:3]
-    api._primed_local_warnings.clear()
+    api.prepared.local_warnings.clear()
     publish.local_warnings(publish.State(None), clubs, utc(25, 12))
     assert len(looked) == 2
-    assert set(api._primed_local_warnings) == {c.id for c in clubs[:2]}
-    api._primed_local_warnings.clear()
+    assert set(api.prepared.local_warnings) == {c.id for c in clubs[:2]}
+    api.prepared.local_warnings.clear()
 
 
 def test_big_lakes_get_sharp_tiles_once_per_pass(tmp_path, monkeypatch):
@@ -334,3 +334,13 @@ def test_new_used_clubs_per_day_can_be_capped(monkeypatch):
     monkeypatch.setattr(publish, "NEW_USED_PER_DAY", 1)
     clubs, _, _ = publish.usage_now()
     assert clubs == {"mrc-1880", "real-new"}
+
+
+def test_the_publisher_uses_only_public_names_of_the_api():
+    """The publisher hands its bulk loads over through api.prepared, never by
+    filling api.py's private globals, so renaming one of those can't break
+    publishing unnoticed (code review finding 4)."""
+    import re
+
+    source = (Path(__file__).resolve().parents[2] / "scripts" / "publish_static.py").read_text()
+    assert re.findall(r"\bapi\._\w+", source) == []
