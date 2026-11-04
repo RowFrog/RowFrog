@@ -323,6 +323,35 @@ final class AppSettings {
         }
     }
 
+    /// The "Like the iPhone" switch for the language: on follows the phone; off
+    /// starts with the language the phone gives now, so nothing changes at once.
+    var languageLikeDevice: Bool {
+        get { language == .device }
+        set {
+            if newValue {
+                language = .device
+            } else if language == .device {
+                language = Self.deviceLanguage
+            }
+        }
+    }
+
+    /// The "Like the iPhone" switch for time and date (owner's idea, 4.11.2026):
+    /// on follows the phone for both; off starts with the formats closest to
+    /// what the phone shows now, so nothing jumps.
+    var dateTimeLikeDevice: Bool {
+        get { timeFormat == .device && dateFormat == .device }
+        set {
+            if newValue {
+                timeFormat = .device
+                dateFormat = .device
+            } else {
+                if timeFormat == .device { timeFormat = TimeFormat.device.usesAMPM ? .hours12 : .hours24 }
+                if dateFormat == .device { dateFormat = .long }
+            }
+        }
+    }
+
     /// German when the phone's first language the app knows is German. The
     /// whole list is looked at (not only its first entry), and the language
     /// iOS picked for the app, so a German phone also gets German on the very

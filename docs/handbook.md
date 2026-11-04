@@ -218,6 +218,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWStaleForecast YES` treat every forecast and lake view as more than 3 hours old (grey light and the out-of-date warning)
 - `-RWSlowRefresh YES` show the "updates less often" tip of clubs nobody opened lately on every club
 - `-RWSettingsPage appearance|clubpages|language|data|help|about|developer|limits|boat:<id>|backgrounds|widgets|safety|impressum|privacy` open those Settings pages, with the pages on the way (backgrounds = Settings > Club pages > Background pictures, widgets = Settings > Widgets)
+- `-RWNewBoat YES` with `-RWSettingsPage limits` opens the New boat sheet (Cancel / Add; the boat is only kept with Add)
 - `-RWSettingsSearch <text>` open the settings with the search field filled in
 - `-RWMyBoats '({id = b-anna; name = Anna; type = gig; class = "4x"; clubs = "mrc-1880,tutzinger-rv";})'` the user's own boats; `clubs` lists where each is kept (left out: the home base), `-RWBoat <id>` ticks one
 - Backend `RW_SAMPLE_WARNING_CLUBS=<club ids>` gives those clubs a made-up warning, marked as a sample: a lake storm warning where DWD has a lake area, else a thunderstorm warning from the place's own service (GeoSphere Austria or MeteoSwiss). The screenshot workflow sets it for Tutzinger RV, Seeclub Zürich, RV Albatros Klagenfurt and Der Hamburger und Germania RC (Alster, a DWD lake area without shore lights)

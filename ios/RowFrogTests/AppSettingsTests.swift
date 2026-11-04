@@ -47,6 +47,30 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(again.clubBackgrounds["tutzinger-rv"], .sample("alpine-lake"))
     }
 
+    func testLikeTheDeviceSwitches() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertTrue(settings.languageLikeDevice)
+        XCTAssertTrue(settings.dateTimeLikeDevice)
+
+        // Off starts with what the phone gives now, so nothing changes at once.
+        settings.languageLikeDevice = false
+        XCTAssertEqual(settings.language, AppSettings.deviceLanguage)
+        settings.dateTimeLikeDevice = false
+        XCTAssertNotEqual(settings.timeFormat, .device)
+        XCTAssertEqual(settings.dateFormat, .long)
+
+        // A choice made while off stays when the switch is touched again off.
+        settings.dateFormat = .iso
+        settings.dateTimeLikeDevice = false
+        XCTAssertEqual(settings.dateFormat, .iso)
+
+        settings.languageLikeDevice = true
+        settings.dateTimeLikeDevice = true
+        XCTAssertEqual(settings.language, .device)
+        XCTAssertEqual(settings.timeFormat, .device)
+        XCTAssertEqual(settings.dateFormat, .device)
+    }
+
     func testClubPictureBeatsPagePictureBeatsAllPages() {
         let settings = AppSettings(defaults: defaults)
         settings.allPagesBackground = .sample("lake-waves")
