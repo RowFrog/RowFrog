@@ -106,7 +106,7 @@ def test_api_skips_the_model_out_of_season_and_for_warm_water(monkeypatch):
 
 
 def test_api_ice_json(monkeypatch):
-    api._ice_temps.clear()
+    api.prepared.ice_temps.clear()
 
     async def daily(client, lat, lon):
         return [(t.day, t.mean_c) for t in _temps((62, 4.0), (37, -6.0))]

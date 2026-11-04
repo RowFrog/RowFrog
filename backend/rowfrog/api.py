@@ -19,6 +19,7 @@ from fastapi import FastAPI, HTTPException
 
 from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, warning_links, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, rowing_forecast
+from .prepared import Prepared
 from .score import Light
 from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, meteoalarm, lake_temperature_satellite, open_meteo, pegelonline
 from .sun import sun_days
@@ -77,38 +78,20 @@ _locations = locations.load()
 _cache: dict[str, tuple[float, tuple]] = {}
 # River gauge readings per gauge (level, discharge, speed), shared by the clubs near it.
 _gauge_cache: dict[str, tuple[float, tuple]] = {}
-# Forecasts loaded ahead in bulk (scripts/publish_static.py), used once instead of a call per club.
-_primed_weather: dict[str, list] = {}
-# The same for the lake view's sample points, per lake.
-_primed_lake_weather: dict[str, list] = {}
-# The same for the 8-day outlook behind the conditions charts; None means "none
-# this time" (the app then charts the next 48 hours), a missing club loads it.
-_primed_outlook: dict[str, list | None] = {}
-# Forecast points per lake where it differs from lake_view.MAX_SAMPLES (lakes people look at).
-_lake_samples: dict[str, int] = {}
+# What the publishing job loaded ahead in bulk (rowfrog.prepared); empty when the API runs on its own.
+prepared = Prepared()
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
-# Local warnings per club read ahead for many clubs at once (scripts/publish_static.py); a missing club asks DWD itself.
-_primed_local_warnings: dict[str, list[dwd_warnings.Warning]] = {}
 # All active lake warnings: one answer serves every lake club for a few minutes.
 _lake_warnings: tuple[float, list[tuple[int, dwd_warnings.Warning]]] | None = None
 _english: tuple[float, dict[str, dwd_warnings.EnglishText]] | None = None
 _lake_areas: tuple[float, list[dwd_warnings.LakeArea]] | None = None
 # All running Swiss warnings from MeteoAlarm: one answer serves every Swiss club for a few minutes.
 _swiss_alerts: tuple[float, list[meteoalarm.Alert]] | None = None
-# The last good reading and history per station (water_stations.Station.key), kept between runs by the
-# publishing job, so one failed fetch does not blank the water temperature.
-_last_water: dict[str, tuple[gkd.WaterTemperature, list[gkd.WaterTemperature]]] = {}
-# Satellite lake ice passes per lake, set by the publishing job (see sources.lake_ice_satellite).
-_satellite_ice: dict[str, list] = {}
-# Satellite lake temperature readings per lake, set by the publishing job (see sources.lake_temperature_satellite).
-_satellite_water: dict[str, list] = {}
 for _lake_id in SAMPLE_SATELLITE_WATER:
     _day = datetime.now(LOCAL).date() - timedelta(days=5)
-    _satellite_water[_lake_id] = [
+    prepared.satellite_water[_lake_id] = [
         lake_temperature_satellite.Reading(lake_temperature_satellite.LANDSAT, _day, 15.2, 800, platform="landsat-9")
     ]
-# Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
-_ice_temps: dict[str, tuple[date, list[ice.DayTemperature]]] = {}
 # After two lakes in a row get no daily temperatures, the others skip them for
 # AIR_DAYS_PAUSE seconds. On 1 Nov 2026 these calls alone timed out lake after
 # lake (about a minute each) while forecasts still loaded, so the publish run
@@ -211,7 +194,7 @@ def lake_grid(lake_id: str, rings) -> lake_view.Grid:
     lake = _locations.lakes.get(lake_id)
     if lake is not None and lake.section is not None:
         return lake_view.grid_for(lake_id, rings, lake_view.river_samples(lake.section.length_km), narrow=True)
-    return lake_view.grid_for(lake_id, rings, _lake_samples.get(lake_id, lake_view.MAX_SAMPLES))
+    return lake_view.grid_for(lake_id, rings, prepared.lake_samples.get(lake_id, lake_view.MAX_SAMPLES))
 
 
 async def _gauge_readings(client: httpx.AsyncClient, gauge: river.Gauge):
@@ -491,7 +474,7 @@ async def _local_warnings(
             _swiss_alerts = (time.monotonic(), await meteoalarm.fetch(client, _now()))
         found = meteoalarm.for_point(_swiss_alerts[1], p.lon, p.lat)
         return [a.warning for a in found], {a.warning.identifier: a.english for a in found if a.english}
-    local = _primed_local_warnings.get(club.id)
+    local = prepared.local_warnings.get(club.id)
     if local is None:
         local = await dwd_warnings.fetch_local_warnings(client, p.lon, p.lat)
     return local, {}
@@ -620,7 +603,7 @@ def _ice_json(e: ice.IceEstimate | None) -> dict:
 async def _air_days(client: httpx.AsyncClient, lake: locations.Lake, today: date) -> list[ice.DayTemperature] | None:
     """The lake's daily mean air temperatures (92 days back, 7 ahead), loaded once a day; None when unavailable."""
     global _air_days_failed, _air_days_paused_until
-    cached = _ice_temps.get(lake.id)
+    cached = prepared.ice_temps.get(lake.id)
     if cached and cached[0] == today:
         return cached[1]
     if time.monotonic() < _air_days_paused_until:
@@ -636,7 +619,7 @@ async def _air_days(client: httpx.AsyncClient, lake: locations.Lake, today: date
         return None
     _air_days_failed = 0
     temps = [ice.DayTemperature(d, t) for d, t in daily]
-    _ice_temps[lake.id] = (today, temps)
+    prepared.ice_temps[lake.id] = (today, temps)
     return temps
 
 
@@ -664,7 +647,7 @@ async def _ice(
         estimate = replace(estimate, basis="model")
     else:
         estimate = ice.simulate(temps, today, lake.mean_depth_m, water_c)
-    return ice.with_satellite(estimate, _satellite_ice.get(lake.id, []), today)
+    return ice.with_satellite(estimate, prepared.satellite_ice.get(lake.id, []), today)
 
 
 def _filled(picked: list[open_meteo.ForecastHour], auto: list[open_meteo.ForecastHour]) -> list[open_meteo.ForecastHour]:
@@ -681,7 +664,7 @@ def _filled(picked: list[open_meteo.ForecastHour], auto: list[open_meteo.Forecas
     return out
 
 
-def _offers_choices(club: locations.Club) -> bool:
+def offers_choices(club: locations.Club) -> bool:
     # Only the confirmed clubs, because each model costs extra Open-Meteo calls.
     return club.source is None
 
@@ -706,10 +689,10 @@ async def _water(
                 await asyncio.sleep(2)
             continue
         if water is not None:
-            _last_water[station.key] = (water, history)
+            prepared.last_water[station.key] = (water, history)
             return water, history
         break  # the station has gone quiet; an older reading would be older still
-    saved = _last_water.get(station.key)
+    saved = prepared.last_water.get(station.key)
     if saved and now - saved[0].time <= gkd.MAX_AGE:
         return saved
     return None, []
@@ -725,7 +708,7 @@ async def club_forecast_with_model(club_id: str, model_id: str) -> dict:
     """The forecast with a model the user picked (a hidden test in the app)."""
     club = _locations.clubs.get(club_id)
     picked = None if club is None else weather_models.choice(club.launch_point.lat, club.launch_point.lon, model_id)
-    if club is None or picked is None or not _offers_choices(club):
+    if club is None or picked is None or not offers_choices(club):
         raise HTTPException(status_code=404, detail="no such model for this club")
     return await _club_forecast(club_id, picked)
 
@@ -743,7 +726,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
             weather, water, water_history, outlook = cached[1]
         else:
-            weather = _primed_weather.pop(club_id, None)
+            weather = prepared.weather.pop(club_id, None)
             if weather is None:
                 try:
                     weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
@@ -754,8 +737,8 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             if station:
                 water, water_history = await _water(client, station, now)
             # Yesterday and the next 7 days for the charts; the forecast works without it.
-            if club_id in _primed_outlook:
-                outlook = _primed_outlook.pop(club_id)
+            if club_id in prepared.outlook:
+                outlook = prepared.outlook.pop(club_id)
             else:
                 try:
                     outlook = await open_meteo.fetch_outlook(client, club.launch_point.lat, club.launch_point.lon)
@@ -768,7 +751,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
             if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
                 weather = cached[1]
             else:
-                other = _primed_weather.pop(key, None)
+                other = prepared.weather.pop(key, None)
                 if other is None:
                     try:
                         other = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon, models=picked.id)
@@ -778,10 +761,10 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
                 _cache[key] = (time.monotonic(), weather)
         warnings_block, warnings = await _warnings(client, club, now)
         estimate = None
-        if water is None and _satellite_water.get(lake.id):
+        if water is None and prepared.satellite_water.get(lake.id):
             today = now.astimezone(LOCAL).date()
             temps = await _air_days(client, lake, today)
-            estimate = water_estimate.estimate(_satellite_water[lake.id], temps or [], today)
+            estimate = water_estimate.estimate(prepared.satellite_water[lake.id], temps or [], today)
         # Neither a station nor a recent satellite reading: worked out from the air alone, all year.
         water_model_c = None
         if water is None and estimate is None and lake.kind == "lake":
@@ -862,7 +845,7 @@ async def _club_forecast(club_id: str, picked: weather_models.Choice | None) -> 
         if picked is None
         else weather_models.picked_source_json(chain, picked, len(hours)),
         "modelChoices": weather_models.choices_json(club.launch_point.lat, club.launch_point.lon)
-        if _offers_choices(club)
+        if offers_choices(club)
         else [],
         "daylight": [
             {"date": d.day.isoformat(), "sunrise": _utc(d.sunrise), "sunset": _utc(d.sunset)}
@@ -892,7 +875,7 @@ async def lake_view_forecast(lake_id: str) -> dict:
         cached = _lake_view_cache.get(lake_id)
         if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
             weather, water = cached[1]
-        elif (primed := _primed_lake_weather.pop(lake_id, None)) is not None:
+        elif (primed := prepared.lake_weather.pop(lake_id, None)) is not None:
             weather, water = primed, None
             if station := water_stations.for_lake(lake, clubs):
                 water = (await _water(client, station, now))[0]

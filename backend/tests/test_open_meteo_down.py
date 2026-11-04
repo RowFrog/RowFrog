@@ -49,7 +49,7 @@ def test_daily_air_temperatures_pause_after_two_lakes_fail(monkeypatch):
 
     from rowfrog import api
 
-    monkeypatch.setattr(api, "_ice_temps", {})
+    monkeypatch.setattr(api.prepared, "ice_temps", {})
     monkeypatch.setattr(api, "_air_days_failed", 0)
     monkeypatch.setattr(api, "_air_days_paused_until", 0.0)
     asked = []

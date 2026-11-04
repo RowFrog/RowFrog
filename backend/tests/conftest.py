@@ -14,9 +14,9 @@ def fixed_clock(monkeypatch):
 @pytest.fixture(autouse=True)
 def no_saved_water():
     """A water reading kept by one test must not stand in for another's."""
-    api._last_water.clear()
+    api.prepared.last_water.clear()
     yield
-    api._last_water.clear()
+    api.prepared.last_water.clear()
 
 
 @pytest.fixture(autouse=True)

@@ -140,10 +140,10 @@ def made_up_sources(monkeypatch):
     # The made-up storm and frost warnings that screenshots use, so the files carry both kinds.
     monkeypatch.setattr(api, "SAMPLE_WARNING_CLUBS", {CLUB})
     monkeypatch.setattr(api, "SAMPLE_FROST_CLUBS", {CLUB})
-    for cache in (api._cache, api._warnings_cache, api._ice_temps):
+    for cache in (api._cache, api._warnings_cache, api.prepared.ice_temps):
         cache.clear()
     yield
-    for cache in (api._cache, api._warnings_cache, api._ice_temps):
+    for cache in (api._cache, api._warnings_cache, api.prepared.ice_temps):
         cache.clear()
 
 
