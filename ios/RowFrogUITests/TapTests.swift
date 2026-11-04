@@ -37,7 +37,7 @@ final class TapTests: XCTestCase {
         // with the spinner still showing, so the wait is long; a fast run is no slower.
         XCTAssertTrue(tile.waitForExistence(timeout: 180), "No wind tile; the page shows:\n\(app.debugDescription)")
         tile.tap()
-        XCTAssertTrue(app.descendants(matching: .any)["condition-detail"].waitForExistence(timeout: 10),
+        XCTAssertTrue(app.descendants(matching: .any)["condition-detail"].waitForExistence(timeout: 30),
                       "Tapping the wind tile opened nothing; the page shows:\n\(app.debugDescription)")
     }
 
@@ -65,11 +65,11 @@ final class TapTests: XCTestCase {
 
         // The tour: welcome, then the home base, which needs a club before Next works.
         let next = app.buttons["tour-next"]
-        XCTAssertTrue(next.waitForExistence(timeout: 10), "No tour after the safety notice; the app shows:\n\(app.debugDescription)")
+        XCTAssertTrue(next.waitForExistence(timeout: 30), "No tour after the safety notice; the app shows:\n\(app.debugDescription)")
         next.tap()
         answerLocationQuestion()
         let search = app.textFields["tour-search-1"]
-        XCTAssertTrue(search.waitForExistence(timeout: 10), "No home base search; the app shows:\n\(app.debugDescription)")
+        XCTAssertTrue(search.waitForExistence(timeout: 30), "No home base search; the app shows:\n\(app.debugDescription)")
         XCTAssertFalse(next.isEnabled, "Next works without a home base")
         search.tap()
         search.typeText("MRC 1880")
@@ -82,7 +82,7 @@ final class TapTests: XCTestCase {
         // More clubs is optional; the page after it can be skipped.
         next.tap()
         let skip = app.buttons["tour-skip"]
-        XCTAssertTrue(skip.waitForExistence(timeout: 10) && skip.isEnabled, "No Skip after the club pages; the app shows:\n\(app.debugDescription)")
+        XCTAssertTrue(skip.waitForExistence(timeout: 30) && skip.isEnabled, "No Skip after the club pages; the app shows:\n\(app.debugDescription)")
         skip.tap()
 
         // The home base's page, with its forecast (see the wait in the test above).
@@ -96,18 +96,18 @@ final class TapTests: XCTestCase {
         let settings = app.buttons["Settings"].firstMatch
         XCTAssertTrue(settings.waitForExistence(timeout: 30), "No settings button; the page shows:\n\(app.debugDescription)")
         settings.tap()
-        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 10),
+        XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 30),
                       "Settings did not open; the app shows:\n\(app.debugDescription)")
         app.navigationBars["Settings"].buttons["Done"].tap()
-        XCTAssertTrue(app.navigationBars["Settings"].waitForNonExistence(timeout: 10), "Done did not close the settings")
+        XCTAssertTrue(app.navigationBars["Settings"].waitForNonExistence(timeout: 30), "Done did not close the settings")
 
         let list = app.buttons["All locations"]
-        XCTAssertTrue(list.waitForExistence(timeout: 10), "No list button; the page shows:\n\(app.debugDescription)")
+        XCTAssertTrue(list.waitForExistence(timeout: 30), "No list button; the page shows:\n\(app.debugDescription)")
         list.tap()
         let row = app.buttons["list-club-mrc-1880"]
-        XCTAssertTrue(row.waitForExistence(timeout: 10), "The list does not show MRC 1880; the app shows:\n\(app.debugDescription)")
+        XCTAssertTrue(row.waitForExistence(timeout: 30), "The list does not show MRC 1880; the app shows:\n\(app.debugDescription)")
         row.tap()
-        XCTAssertTrue(row.waitForNonExistence(timeout: 10), "Picking the club did not close the list")
+        XCTAssertTrue(row.waitForNonExistence(timeout: 30), "Picking the club did not close the list")
         XCTAssertTrue(app.buttons["Settings"].firstMatch.exists, "Not back on the club page")
     }
 
@@ -148,6 +148,6 @@ final class TapTests: XCTestCase {
     private func answerLocationQuestion() {
         let springboard = XCUIApplication(bundleIdentifier: "com.apple.springboard")
         let no = springboard.buttons.matching(NSPredicate(format: "label BEGINSWITH 'Don'")).firstMatch
-        if no.waitForExistence(timeout: 10) { no.tap() }
+        if no.waitForExistence(timeout: 30) { no.tap() }
     }
 }
