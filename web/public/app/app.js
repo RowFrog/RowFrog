@@ -5,7 +5,7 @@
 // (api.rowfrog.com/v1). No account and no cookies: the chosen clubs, units,
 // boat, language and the accepted safety notice stay in this browser.
 
-import { t, num, locale, setLanguage, savedLanguage, lang } from "./i18n.js";
+import { t, num, locale, setLanguage, savedLanguage, resolve, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
@@ -1717,6 +1717,32 @@ const SAMPLE_TIME = Date.UTC(2026, 0, 15, 17, 30);
 /** What a factory reset keeps: the visitor's clubs, own boats and routes, and what they have already seen (AppSettings.resetToFactorySettings). */
 const FACTORY_KEEPS = ["rf.clubs", "rf.boats", "rf.routes", "rf.safety", "rf.catalog", "rf.tourSeen", "rf.tourPage", "rf.tipsClosed", "rf.countryByTown"];
 
+/** "Like the iPhone", "Like the iPad" or, elsewhere, "Like this browser": the app's "Like the iPhone" switches (owner, 4 Nov 2026). */
+function likeDeviceTitle() {
+  const ua = navigator.userAgent;
+  if (/iPhone|iPod/.test(ua)) return t("Like the iPhone");
+  if (/iPad/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1)) return t("Like the iPad");
+  return t("Like this browser");
+}
+
+/** A switch row as Date & Time > Set Automatically: on follows the device, with what it gives now under it. */
+const likeDeviceRow = (id, on, now) => `<label class="row-setting"><span class="stack"><span>${h(likeDeviceTitle())}</span>${on ? `<small class="sub">${h(now)}</small>` : ""}</span>
+  <input type="checkbox" class="switch" role="switch" id="${id}" ${on ? "checked" : ""}></label>`;
+
+/** Time and date both follow the device (AppSettings.dateTimeLikeDevice). */
+const dateTimeLikeDevice = () => store.timeFormat === "device" && store.dateFormat === "device";
+
+/** On: both follow the device. Off: the formats closest to what the device shows now, so nothing jumps. */
+function setDateTimeLikeDevice(on) {
+  if (on) {
+    store.timeFormat = "device";
+    store.dateFormat = "device";
+    return;
+  }
+  if (store.timeFormat === "device") store.timeFormat = usesAMPM() ? "h12" : "h24";
+  if (store.dateFormat === "device") store.dateFormat = "long";
+}
+
 function renderSettings() {
   setTitle(t("Settings"));
   const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
@@ -1739,20 +1765,22 @@ function renderSettings() {
       </section>
       <p class="footer">${h(t("Device follows the light or dark setting of your computer or phone."))}</p>
       <h3 class="section">${icon("languages")} ${h(t("Language"))}</h3>
-      <section class="card group">${languagePicker()}</section>
+      <section class="card group">${likeDeviceRow("language-like", savedLanguage() === "auto", resolve("auto") === "de" ? "Deutsch" : "English")}
+        ${savedLanguage() === "auto" ? "" : `<div class="row-setting"><span class="segmented wide" id="language-pick">${[["en", "English"], ["de", "Deutsch"]]
+          .map(([k, label]) => `<button data-language="${k}" class="${savedLanguage() === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>`}</section>
       <h3 class="section">${icon("ruler")} ${h(t("Units"))}</h3>
       <section class="card group">${UNIT_ROWS.map(([kind, condition, title]) => `<label class="row-setting"><span>${conditionIcon(condition)} ${h(t(title))}</span>
           <select data-unit="${kind}">${Object.entries(UNITS[kind].options).map(([id, u]) => `<option value="${id}" ${id === unitId(kind) ? "selected" : ""}>${h(`${t(u.label)} · ${t(u.title)}`)}</option>`).join("")}</select></label>`).join("")}
       </section>
       <p class="footer">${h(t("Cloud cover stays in percent."))}</p>
       <h3 class="section">${icon("calendar-clock")} ${h(t("Date and time"))}</h3>
-      <section class="card group">
-        <label class="row-setting"><span>${icon("clock")} ${h(t("Time"))}</span>
-          <select id="time-format">${TIME_FORMATS.map((f) => `<option value="${f}" ${f === store.timeFormat ? "selected" : ""}>${h(`${t(TIME_TITLES[f])} · ${time(SAMPLE_TIME, f)}`)}</option>`).join("")}</select></label>
+      <section class="card group">${likeDeviceRow("datetime-like", dateTimeLikeDevice(), `${time(SAMPLE_TIME, "device")} · ${dateText(localDay(new Date()), "device")}`)}
+        ${dateTimeLikeDevice() ? "" : `<label class="row-setting"><span>${icon("clock")} ${h(t("Time"))}</span>
+          <select id="time-format">${TIME_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.timeFormat ? "selected" : ""}>${h(`${t(TIME_TITLES[f])} · ${time(SAMPLE_TIME, f)}`)}</option>`).join("")}</select></label>
         <label class="row-setting"><span>${icon("calendar")} ${h(t("Date"))}</span>
-          <select id="date-format">${DATE_FORMATS.map((f) => `<option value="${f}" ${f === store.dateFormat ? "selected" : ""}>${h(`${f === "iso" ? "ISO 8601" : t(DATE_TITLES[f])} · ${dateText(localDay(new Date()), f)}`)}</option>`).join("")}</select></label>
+          <select id="date-format">${DATE_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.dateFormat ? "selected" : ""}>${h(`${f === "iso" ? "ISO 8601" : t(DATE_TITLES[f])} · ${dateText(localDay(new Date()), f)}`)}</option>`).join("")}</select></label>`}
       </section>
-      <p class="footer">${h(t("Device follows the browser's settings. Today and tomorrow are always written as words."))}</p>
+      <p class="footer">${h(t("Today and tomorrow are always written as words."))}</p>
       <h3 class="section">${icon("arrow-up-down")} ${h(t("Club pages"))}</h3>
       <section class="card group">
         <button class="row-setting" id="arrange"><span>${h(t("Order of the club page cards"))}</span>${icon("chevron-right")}</button>
@@ -1826,8 +1854,21 @@ function renderSettings() {
     store.saveData = e.target.checked;
     renderSettings();
   });
-  root.querySelector("#time-format").addEventListener("change", (e) => (store.timeFormat = e.target.value));
-  root.querySelector("#date-format").addEventListener("change", (e) => (store.dateFormat = e.target.value));
+  root.querySelector("#time-format")?.addEventListener("change", (e) => (store.timeFormat = e.target.value));
+  root.querySelector("#date-format")?.addEventListener("change", (e) => (store.dateFormat = e.target.value));
+  root.querySelector("#language-like").addEventListener("change", async (e) => {
+    // Off starts with the language shown now, so nothing changes at once (languageLikeDevice).
+    await setLanguage(e.target.checked ? "auto" : resolve("auto"));
+    renderSettings();
+  });
+  root.querySelectorAll("[data-language]").forEach((b) => b.addEventListener("click", async () => {
+    await setLanguage(b.dataset.language);
+    renderSettings();
+  }));
+  root.querySelector("#datetime-like").addEventListener("change", (e) => {
+    setDateTimeLikeDevice(e.target.checked);
+    renderSettings();
+  });
   root.querySelectorAll("[data-appearance]").forEach((b) => b.addEventListener("click", () => {
     store.appearance = b.dataset.appearance;
     applyAppearance();
@@ -1921,7 +1962,7 @@ function renderBoats() {
     const home = store.clubs[0]?.id;
     const boat = { id: crypto.randomUUID?.() ?? `b${Date.now()}`, name: "", type: "gig", class: "4x", clubs: home ? [home] : [] };
     store.boats = [...store.boats, boat];
-    location.hash = `#/settings/boat/${encodeURIComponent(boat.id)}`;
+    openNewBoat(boat.id);
   });
 }
 
@@ -1943,15 +1984,9 @@ function keptAtSection(boat) {
     <p class="footer">${h(t("The boat shows only on the pages of these clubs. Elsewhere it waits under “At other clubs” in the boat menu, one tap to take it along, e.g. to a regatta."))}</p>`;
 }
 
-function renderBoat(id) {
-  const boat = allBoats().find((b) => b.id === id);
-  if (!boat) {
-    location.hash = "#/settings/boats";
-    return;
-  }
-  setTitle(boatTitle(boat));
+/** The boat's form: name, type and size, where it is kept, the limits switch and the limits (BoatLimitsView). */
+function boatForm(boat, isNew, ownLimits) {
   const limits = boatLimits(boat);
-  const changed = Object.keys(store.limits[boat.id] ?? {}).length > 0;
   const option = (value, label, chosen) => `<option value="${h(value)}" ${value === chosen ? "selected" : ""}>${h(label)}</option>`;
   const limitRow = (limit) => {
     const mine = limits.isMine(limit);
@@ -1963,10 +1998,10 @@ function renderBoat(id) {
       <span class="stepper"><button data-step="${limit}" data-by="-1" aria-label="−">−</button><button data-step="${limit}" data-by="1" aria-label="+">+</button></span>
     </div>`;
   };
-  root.innerHTML = `<header class="nav"><a class="link" href="#/settings/boats">${icon("chevron-left")} ${h(t("Rowing limits"))}</a><span class="spacer"></span></header>${testing()}
-    <main class="page">
-      <h1 class="large">${h(boatTitle(boat))}</h1>
-      ${isGroup(boat) ? "" : `<h3 class="section">${icon("sailboat")} ${h(t("Boat"))}</h3>
+  const footer = ownLimits
+    ? `${t("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. Official warnings, thunderstorms, fog, hail and darkness always count.")} ${t("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.", temperature(COLD.waterC), wind(COLD.marginMs))}`
+    : `${t("The rowing light uses the app's limits for this type and size of boat. Turn this off to set your own.")} ${t("Below %@ water the app lowers its wind and gust limits by %@.", temperature(COLD.waterC), wind(COLD.marginMs))}`;
+  return `${isGroup(boat) ? "" : `<h3 class="section">${icon("sailboat")} ${h(t("Boat"))}</h3>
         <section class="card group">
           <label class="row-setting"><input id="boat-name" type="text" value="${h(boat.name)}" placeholder="${h(t("Name, e.g. the boat's name"))}"></label>
           <label class="row-setting"><span>${h(t("Type"))}</span><select id="boat-type">${Object.entries(BOAT_TYPES).map(([k, v]) => option(k, t(v.title), boat.type)).join("")}</select></label>
@@ -1974,26 +2009,34 @@ function renderBoat(id) {
         </section>
         <p class="footer">${h(t(BOAT_TYPES[boat.type].detail))}</p>
         ${keptAtSection(boat)}`}
-      <h3 class="section">${icon("sliders-horizontal")} ${h(t("Fine-tune the limits"))}</h3>
-      <section class="card group">${Object.keys(LIMITS).map(limitRow).join("")}
-        ${changed ? `<button id="reset-limits" class="link">${h(t("Use the app's limits again"))}</button>` : ""}</section>
-      <p class="footer">${h(`${t("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. Official warnings, thunderstorms, fog, hail and darkness always count.")} ${t("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.", temperature(COLD.waterC), wind(COLD.marginMs))}`)}</p>
-      ${isGroup(boat) ? "" : `<button id="remove-boat" class="quiet red">${h(t("Remove this boat"))}</button>`}
-      ${footerLinks()}
-    </main>`;
+      <h3 class="section">${icon("sliders-horizontal")} ${h(t("Limits"))}</h3>
+      <section class="card group">
+        <label class="row-setting"><span>${h(t("The app's limits for this boat"))}</span><input type="checkbox" class="switch" role="switch" id="app-limits" ${ownLimits ? "" : "checked"}></label>
+        ${ownLimits ? Object.keys(LIMITS).map(limitRow).join("") : ""}</section>
+      <p class="footer">${h(footer)}</p>
+      ${isGroup(boat) || isNew ? "" : `<button id="remove-boat" class="quiet red">${h(t("Remove this boat"))}</button>`}`;
+}
+
+/** Wires a boat form inside el; again() draws it anew. Returns nothing; state lives in store and the own-limits flag. */
+function wireBoatForm(el, id, again, own) {
+  const boat = allBoats().find((b) => b.id === id);
+  const limits = boatLimits(boat);
   const update = (change) => {
     store.boats = store.boats.map((b) => (b.id === id ? { ...b, ...change } : b));
   };
-  root.querySelector("#boat-name")?.addEventListener("input", (e) => update({ name: e.target.value }));
-  root.querySelector("#boat-type")?.addEventListener("change", (e) => {
+  el.querySelector("#boat-name")?.addEventListener("input", (e) => {
+    update({ name: e.target.value });
+    el.dispatchEvent(new Event("boatnamed"));
+  });
+  el.querySelector("#boat-type")?.addEventListener("change", (e) => {
     update({ type: e.target.value });
-    renderBoat(id);
+    again();
   });
-  root.querySelector("#boat-class")?.addEventListener("change", (e) => {
+  el.querySelector("#boat-class")?.addEventListener("change", (e) => {
     update({ class: e.target.value });
-    renderBoat(id);
+    again();
   });
-  root.querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => {
+  el.querySelectorAll("[data-step]").forEach((b) => b.addEventListener("click", () => {
     const limit = b.dataset.step;
     const { step, range } = LIMITS[limit];
     const raw = limits.value(limit) + Number(b.dataset.by) * step;
@@ -2006,31 +2049,106 @@ function renderBoat(id) {
     if (Object.keys(custom).length) all[id] = custom;
     else delete all[id];
     store.limits = all;
-    renderBoat(id);
+    again();
   }));
-  root.querySelectorAll("[data-unkeep]").forEach((b) => b.addEventListener("click", () => {
+  el.querySelectorAll("[data-unkeep]").forEach((b) => b.addEventListener("click", () => {
     unkeepBoat(id, b.dataset.unkeep);
-    renderBoat(id);
+    again();
   }));
-  root.querySelector("#keep-at")?.addEventListener("change", (e) => {
+  el.querySelector("#keep-at")?.addEventListener("change", (e) => {
     if (e.target.value) keepBoat(id, e.target.value);
-    renderBoat(id);
+    again();
   });
-  root.querySelector("#reset-limits")?.addEventListener("click", () => {
-    const all = store.limits;
-    delete all[id];
-    store.limits = all;
-    renderBoat(id);
+  // As Date & Time > Set Automatically: the app's limits by default, the list only for the user's own.
+  el.querySelector("#app-limits").addEventListener("change", (e) => {
+    const changed = Object.keys(store.limits[id] ?? {}).length > 0;
+    if (!e.target.checked) {
+      own.value = true;
+    } else if (changed && !confirm(`${t("Use the app's limits again?")}\n${t("The limits you set for this boat are dropped.")}`)) {
+      e.target.checked = false;
+      return;
+    } else {
+      const all = store.limits;
+      delete all[id];
+      store.limits = all;
+      own.value = false;
+    }
+    again();
   });
-  root.querySelector("#remove-boat")?.addEventListener("click", () => {
-    store.boats = store.boats.filter((b) => b.id !== id);
-    const all = store.limits;
-    delete all[id];
-    store.limits = all;
-    if (store.boat === id) store.boat = "small";
-    store.clubBoats = Object.fromEntries(Object.entries(store.clubBoats).filter(([, boat]) => boat !== id));
+  el.querySelector("#remove-boat")?.addEventListener("click", () => {
+    removeBoat(id);
     location.hash = "#/settings/boats";
   });
+}
+
+function removeBoat(id) {
+  store.boats = store.boats.filter((b) => b.id !== id);
+  const all = store.limits;
+  delete all[id];
+  store.limits = all;
+  if (store.boat === id) store.boat = "small";
+  store.clubBoats = Object.fromEntries(Object.entries(store.clubBoats).filter(([, boat]) => boat !== id));
+}
+
+/** Whether the boat has limits of its own, so the list shows. */
+const hasOwnLimits = (id) => Object.keys(store.limits[id] ?? {}).length > 0;
+
+/** Remembered per boat while its page is open, so switching the app's limits off shows the list before any change. */
+const ownLimitsShown = {};
+
+function renderBoat(id) {
+  const boat = allBoats().find((b) => b.id === id);
+  if (!boat) {
+    location.hash = "#/settings/boats";
+    return;
+  }
+  setTitle(boatTitle(boat));
+  const own = { get value() { return ownLimitsShown[id] ?? hasOwnLimits(id); }, set value(v) { ownLimitsShown[id] = v; } };
+  root.innerHTML = `<header class="nav"><a class="link" href="#/settings/boats">${icon("chevron-left")} ${h(t("Rowing limits"))}</a><span class="spacer"></span></header>${testing()}
+    <main class="page">
+      <h1 class="large">${h(boatTitle(boat))}</h1>
+      ${boatForm(boat, false, own.value)}
+      ${footerLinks()}
+    </main>`;
+  wireBoatForm(root, id, () => renderBoat(id), own);
+}
+
+/**
+ * Adding a boat, as creating something in Apple's own apps: a sheet with Cancel and Add, where only
+ * Add keeps the boat (NewBoatSheet, owner 4 Nov 2026). Add needs a name. Only the two buttons close
+ * it, so a boat is never kept or lost by a tap beside it; Escape counts as Cancel.
+ */
+function openNewBoat(id) {
+  document.querySelector("dialog.sheet")?.remove();
+  const dialog = document.createElement("dialog");
+  dialog.className = "sheet new-boat";
+  dialog.innerHTML = `<header><button class="link cancel">${h(t("Cancel"))}</button><strong>${h(t("New boat"))}</strong><button class="done">${h(t("Add"))}</button></header><div class="sheet-body"></div>`;
+  document.body.append(dialog);
+  let added = false;
+  const own = { value: false };
+  const body = dialog.querySelector(".sheet-body");
+  const add = dialog.querySelector(".done");
+  const named = () => Boolean(allBoats().find((b) => b.id === id)?.name.trim());
+  const draw = () => {
+    const boat = allBoats().find((b) => b.id === id);
+    body.innerHTML = boatForm(boat, true, own.value);
+    wireBoatForm(body, id, draw, own);
+    add.disabled = !named();
+  };
+  body.addEventListener("boatnamed", () => (add.disabled = !named()));
+  dialog.querySelector(".cancel").addEventListener("click", () => dialog.close());
+  add.addEventListener("click", () => {
+    added = true;
+    dialog.close();
+  });
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (!added) removeBoat(id);
+    renderBoats();
+  });
+  draw();
+  dialog.showModal();
+  body.querySelector("#boat-name")?.focus();
 }
 
 

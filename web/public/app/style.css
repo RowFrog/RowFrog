@@ -830,6 +830,8 @@ input.switch { appearance: none; -webkit-appearance: none; width: 51px; height: 
 input.switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); transition: transform .2s; }
 input.switch:checked { background: var(--green); }
 input.switch:checked::after { transform: translateX(20px); }
+.row-setting > .stack { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.row-setting > .stack small { font-size: 13px; }
 .own-note { margin: 4px 0 0; }
 .list-links { display: flex; flex-direction: column; gap: 12px; margin: 18px 4px 0; }
 .list-links .link[hidden] { display: none; }
