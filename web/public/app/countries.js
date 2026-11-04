@@ -60,9 +60,10 @@ export function wireResults(list, lakes) {
 
 // ---- The pages ------------------------------------------------------------------------
 
-function page(title, back, body) {
+/** A page with the back button named after the page it goes back to, as the app's navigation bar does. */
+function page(title, back, body, backTitle = t("Back")) {
   setTitle(title);
-  return html`<header class="nav"><a class="link" href="${back}">${svg("chevron-left")} ${t("Back")}</a><strong class="nav-title">${title}</strong><span class="nav-side"></span></header>
+  return html`<header class="nav"><a class="link" href="${back}">${svg("chevron-left")} <span class="back-title">${backTitle}</span></a><strong class="nav-title">${title}</strong><span class="nav-side"></span></header>
     ${raw(testing())}
     <main class="page">${body}${footer()}</main>`;
 }
@@ -71,7 +72,7 @@ const compare = (a, b) => a.localeCompare(b, locale(), { sensitivity: "base", nu
 
 /** Every country the search covers (CountryListView). */
 export async function renderCountries(root) {
-  root.innerHTML = page(t("Countries"), "#/list", html`<p class="spinner-line"><span class="spinner"></span></p>`);
+  root.innerHTML = page(t("Countries"), "#/list", html`<p class="spinner-line"><span class="spinner"></span></p>`, t("Locations"));
   let countries;
   try {
     countries = await loadCountries();
@@ -123,7 +124,7 @@ const byTown = () => load("rf.countryByTown", false) === true;
 
 /** One country's waters, grouped by state where the list names them, otherwise by first letter (CountryWatersView). */
 export async function renderCountry(root, code, filter = "") {
-  root.innerHTML = page(t("Countries"), "#/countries", html`<p class="spinner-line"><span class="spinner"></span></p>`);
+  root.innerHTML = page(t("Countries"), "#/countries", html`<p class="spinner-line"><span class="spinner"></span></p>`, t("Countries"));
   let country;
   let lakes;
   try {
@@ -190,6 +191,10 @@ export async function renderWater(root, code, rowId) {
   }
   setTitle(row.title);
   root.querySelector(".nav-title").textContent = row.title;
+  // Back to the country, named as the app's back button would (short names only, else "Back").
+  const country = (await loadCountries().catch(() => [])).find((c) => c.code === code);
+  const name = country ? countryName(country) : "";
+  if (name && name.length <= 14) root.querySelector(".back-title").textContent = name;
   const main = root.querySelector("main");
   main.innerHTML = html`<h1 class="large">${row.title}</h1><ul class="results" id="clubs">${row.clubs.map(({ club, lake }) => resultRow(club, lake, { showFlag: false }))}</ul>${footer()}`;
   wireResults(main.querySelector("#clubs"), lakes);
