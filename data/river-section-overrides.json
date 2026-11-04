@@ -12,12 +12,24 @@
       "direction": "north"
     },
     "bessel-ruder-club": {
-      "include": ["Weser"],
-      "note": "Weser only; the Mittellandkanal needs a lock"
+      "include": ["Weser", "Mittellandkanal", "Verbindungskanal Nord", "Verbindungskanal Süd"],
+      "ends": {"Weser": {"up": 6.6, "down": 16.5}, "Mittellandkanal": {"east": 10.0, "west": 13.5}},
+      "note": "the Bessel-Ruder-Club's rowing rules (Ruderordnung, owner 2026-11-04), for all Minden clubs: Weser from Porta Westfalica (Weser km 198) to the Windheim lock, Mittellandkanal from km 88.5 (Hiller Hafen) to km 112 (Bückeburg), and the connecting canals at the Schachtschleuse"
     },
     "rr-besselgymnasium-minden": {
-      "include": ["Weser"],
-      "note": "same as bessel-ruder-club"
+      "include": ["Weser", "Mittellandkanal", "Verbindungskanal Nord", "Verbindungskanal Süd"],
+      "ends": {"Weser": {"up": 6.6, "down": 16.5}, "Mittellandkanal": {"east": 10.0, "west": 13.5}},
+      "note": "the Bessel-Ruder-Club's rowing rules (Ruderordnung, owner 2026-11-04), for all Minden clubs: Weser from Porta Westfalica (Weser km 198) to the Windheim lock, Mittellandkanal from km 88.5 (Hiller Hafen) to km 112 (Bückeburg), and the connecting canals at the Schachtschleuse"
+    },
+    "mindener-ruder-verein-von-1905": {
+      "include": ["Weser", "Mittellandkanal", "Verbindungskanal Nord", "Verbindungskanal Süd"],
+      "ends": {"Weser": {"up": 6.6, "down": 16.5}, "Mittellandkanal": {"east": 10.0, "west": 13.5}},
+      "note": "the Bessel-Ruder-Club's rowing rules (Ruderordnung, owner 2026-11-04), for all Minden clubs: Weser from Porta Westfalica (Weser km 198) to the Windheim lock, Mittellandkanal from km 88.5 (Hiller Hafen) to km 112 (Bückeburg), and the connecting canals at the Schachtschleuse"
+    },
+    "rr-am-ratsgymnasium-minden": {
+      "include": ["Weser", "Mittellandkanal", "Verbindungskanal Nord", "Verbindungskanal Süd"],
+      "ends": {"Weser": {"up": 6.6, "down": 16.5}, "Mittellandkanal": {"east": 10.0, "west": 13.5}},
+      "note": "the Bessel-Ruder-Club's rowing rules (Ruderordnung, owner 2026-11-04), for all Minden clubs: Weser from Porta Westfalica (Weser km 198) to the Windheim lock, Mittellandkanal from km 88.5 (Hiller Hafen) to km 112 (Bückeburg), and the connecting canals at the Schachtschleuse"
     },
     "wilhelmsburger-ruder-club-von-1895": {
       "include": ["Aßmannkanal", "Elbe"],
