@@ -1177,3 +1177,5 @@ dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 /* A club's launch point once its pin has moved to the clubhouse: crossed oars in the club's colour, below its pin (ClubMarks). */
 .club-pin.oars .dot { width: 26px; height: 26px; font-size: 14px; }
 .club-pin.oars:not(.own) .dot { background: #8e8e93; }
+/* With a picture, one picture fills the window behind the list and the page; the list's frosted rows blur it and no line divides them (app #336). */
+body.has-picture .side { border-right: none; }
