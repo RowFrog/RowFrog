@@ -1687,7 +1687,9 @@ function hourlyCard(forecast, now, stale) {
  */
 function nightLine(hours, list, later) {
   const n = nightSummary(hours);
-  const from = hours[0] === list[1] ? "" : hourOnly(n.start);
+  // Open-ended only where the night really starts or ends the table (NightRow.startsTable/endsTable);
+  // a night after the current hour's row starts at a known hour, "18–07", not "–07".
+  const from = hours[0] === list[0] ? "" : hourOnly(n.start);
   const to = hours[hours.length - 1] === list[list.length - 1] ? "" : hourOnly(n.end);
   const fog = n.fog && n.fog !== "green" ? (n.fog === "red" ? "red" : "orange") : "";
   const rain = (n.rainMm ?? 0) >= 0.1;
