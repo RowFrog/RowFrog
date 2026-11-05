@@ -383,9 +383,12 @@ field at the bottom.
   home base and My boats; resets everything else, including the limits).
 - Developer: hidden options for testing (see the handbook).
 
-On a club page, the "For *boat*" line under the rowing light and the boat
-button (in the bottom bar on iPhone; on iPad level with the club's name,
-staying in the top bar once the page scrolls) open the same boat picker; the button shows the chosen boat's class
+On a club page, the "For *boat*" line under the rowing light says which boat
+the light is for. The boat button (in the bottom bar on iPhone; on iPad level
+with the club's name, staying in the top bar once the page scrolls) opens the
+boat picker; the same button sits at the top of the lake map and route
+planning, and beside the legend in the satellite picture's full view while
+Rowing light, Waves or Shore is on (the website does the same). It shows the chosen boat's class
 (own boats in blue) or the group ("1–2", "4–8"). The picker shows the light
 each boat kept there would get now, and your boats from other clubs under "At
 other clubs", where a tap keeps the boat at this club too. The chosen boat applies to everything on screen: the
