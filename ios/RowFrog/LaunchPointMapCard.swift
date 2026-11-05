@@ -33,7 +33,7 @@ struct LaunchPointSheet: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                LaunchPointDetails(club: club, mapHeight: 320, mapMaxHeight: 320)
+                LaunchPointDetails(club: club, mapHeight: 320, mapMaxHeight: 320, startsLive: true)
                     .padding()
                     .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
                         if abs(height - contentHeight) > 1 { contentHeight = height }
@@ -59,6 +59,9 @@ struct LaunchPointDetails: View {
     let club: Club
     let mapHeight: CGFloat
     let mapMaxHeight: CGFloat
+    /// Live from the start: in the sheet nothing scrolls under it, so a still
+    /// picture first would only cost a tap.
+    let startsLive: Bool
 
     /// Back at the preset view whenever the page shows again or the club changes.
     @State private var position: MapCameraPosition = .automatic
@@ -67,6 +70,14 @@ struct LaunchPointDetails: View {
     @State private var place: MKMapItem?
     /// The live map after a tap; a still picture again once the page is swiped away.
     @State private var live = UserDefaults.standard.bool(forKey: "RWLiveLaunchMap")
+
+    init(club: Club, mapHeight: CGFloat, mapMaxHeight: CGFloat, startsLive: Bool = false) {
+        self.club = club
+        self.mapHeight = mapHeight
+        self.mapMaxHeight = mapMaxHeight
+        self.startsLive = startsLive
+        _live = State(initialValue: startsLive || UserDefaults.standard.bool(forKey: "RWLiveLaunchMap"))
+    }
     @Environment(\.isCurrentPage) private var isCurrentPage
     @Environment(\.openURL) private var openURL
     private var mapApp: MapApp { AppSettings.shared.mapApp }
@@ -94,8 +105,8 @@ struct LaunchPointDetails: View {
             }
             .frame(minHeight: mapHeight, idealHeight: mapHeight, maxHeight: mapMaxHeight)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .onChange(of: isCurrentPage) { if !isCurrentPage { live = false } }
-            .onChange(of: club.id) { live = false }
+            .onChange(of: isCurrentPage) { if !isCurrentPage { live = startsLive } }
+            .onChange(of: club.id) { live = startsLive }
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
             Text(tr("The forecast, waves and warnings are for this point."))
