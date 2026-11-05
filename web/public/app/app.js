@@ -1164,7 +1164,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
   const visibilityCaption = fogNow ? t("Fog") : fog ? t("Fog from %@", time(fog.time)) : t("No fog");
   const iceLine = forecast.ice ? iceDetail(forecast.ice) : t("Check the lake yourself");
   // As wide as its longest direction ("from NW"), so the column keeps one width whatever the wind does.
-  const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg))}` : "");
+  const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
   return `<section class="card now">
     <div class="now-head">
       ${dot(hour.light, 36, stale)}
@@ -1447,7 +1447,7 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
       return tile(degrees(hour.apparentTemperatureC), feelsLikeNote(hour) ? t(feelsLikeNote(hour)) : "", graphic);
     case "wind": {
       const gust = t("Gusts %@", windNumber(hour.windGustMs));
-      return tile(wind(hour.windSpeedMs), hour.windFromDeg != null ? `${gust} · ${t("from %@", compass(hour.windFromDeg))}` : gust, graphic);
+      return tile(wind(hour.windSpeedMs), hour.windFromDeg != null ? `${gust} · ${t("from %@", compass(hour.windFromDeg, lang()))}` : gust, graphic);
     }
     case "waves": {
       const fetch = hour.fetchM;

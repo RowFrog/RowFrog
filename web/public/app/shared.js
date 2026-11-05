@@ -445,7 +445,18 @@ export function clubNameHtml(club, fallback = "") {
 export function time(value, format = store.timeFormat) {
   if (format === "h12") return new Intl.DateTimeFormat("en-US", { timeZone: ZONE, hour: "numeric", minute: "2-digit", hour12: true }).format(new Date(value));
   if (format === "h24") return new Intl.DateTimeFormat("en-GB", { timeZone: ZONE, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(value));
-  return new Intl.DateTimeFormat(navigator.language || locale(), { timeZone: ZONE, hour: "numeric", minute: "2-digit" }).format(new Date(value));
+  return deviceTime().format(new Date(value));
+}
+
+/** The browser's own 12- or 24-hour style; 24-hour times with two-digit hours ("04:00"), as iOS's "jmm" template gives (TimeFormat.device). */
+let deviceTimeFormat = null;
+function deviceTime() {
+  if (deviceTimeFormat) return deviceTimeFormat;
+  const tag = navigator.language || locale();
+  const cycle = new Intl.DateTimeFormat(tag, { hour: "numeric" }).resolvedOptions().hourCycle;
+  const hour = cycle === "h23" || cycle === "h24" ? "2-digit" : "numeric";
+  deviceTimeFormat = new Intl.DateTimeFormat(tag, { timeZone: ZONE, hour, minute: "2-digit" });
+  return deviceTimeFormat;
 }
 
 /** The hour alone, "17", "8" or "5 PM", for the night line of the 48 hours (TimeFormat.hour). */
