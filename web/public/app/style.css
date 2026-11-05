@@ -318,6 +318,9 @@ svg.filled { width: 22px; height: 22px; }
 .search-bar .round { flex: none; width: 44px; height: 44px; border-radius: 22px; justify-content: center; color: var(--text); font-size: 22px; }
 .search-bar .boat { width: auto; min-width: 52px; padding: 0 8px; box-sizing: border-box; }
 .search-bar .search { flex: 1; min-width: 0; height: 44px; box-sizing: border-box; border-radius: 22px; padding: 0 14px; background: color-mix(in srgb, var(--card) 62%, transparent); }
+/* On glass the icon and the prompt stay dark enough to read over a picture, as the app's search field on Liquid Glass. */
+.search-bar .search { color: var(--text); }
+.search-bar .search input::placeholder { color: color-mix(in srgb, var(--text) 62%, transparent); }
 .list-bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-width: 640px; margin: 0 auto; padding: 0 16px max(8px, env(safe-area-inset-bottom)); box-sizing: border-box; }
 .list-page { padding-bottom: 96px; }
 /* Beside a club page the search sits at the top of the list, under its title (SideListHeader). */
@@ -461,6 +464,8 @@ body.title-gone .hhead { top: calc(var(--safe-top) + 44px + var(--hcap, 0px)); }
 .row-name strong .i { font-size: 15px; }
 .row-name small { color: var(--sub); font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row-now { display: flex; flex-direction: column; align-items: flex-end; }
+/* The thermometer beside the big temperature is in the text's own colour, as the app's hierarchical symbol. */
+.row-now .now-line .cond { color: var(--sub); }
 .now-line { display: flex; align-items: center; gap: 6px; }
 .now-line .sky { font-size: 24px; }
 .big-temp { font-size: min(2.375rem, 51px); font-weight: 300; line-height: 1; }
@@ -913,7 +918,9 @@ body.has-picture[data-tiles="frosted"] #arrange.pill { background: color-mix(in 
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) #page-picture::after { background: rgba(0,0,0,.3); } }
 body.has-picture { background: transparent; }
 /* Frosted: the picture shows through the cards, blurred; solid: no picture in the cards. */
-body.has-picture[data-tiles="frosted"] .card, body.has-picture[data-tiles="frosted"] .side .row { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
+body.has-picture[data-tiles="frosted"] .card, body.has-picture[data-tiles="frosted"] .row { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
+/* A club row keeps its rowing-light tint over the picture, frosted like the tiles (LocationRow with cardBackground). */
+body.has-picture[data-tiles="frosted"] .row.tinted { background: color-mix(in srgb, color-mix(in srgb, var(--tint) 18%, var(--card)) 66%, transparent); }
 /* Text that sits on the picture itself gets a thin frost, as the app's labelBackground: the picture blurred
    with only a light wash (veil .25, .2 in dark). Big page titles have none, as iOS's large navigation titles. */
 body.has-picture main.page > h3.section, body.has-picture main.page > p.footer,
