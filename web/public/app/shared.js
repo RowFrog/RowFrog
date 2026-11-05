@@ -69,6 +69,12 @@ export const store = {
   /** The launch point in the club header: the lake and town line opens it in a sheet, and its card leaves the page (owner's choice B, 4 Nov 2026). */
   get launchPointInHeader() { return load("rf.launchPointInHeader", true) !== false; },
   set launchPointInHeader(on) { save("rf.launchPointInHeader", on); },
+  /** Current conditions inside the top tile, which opens into all tiles (owner's choice B, app #315); off keeps its own card. */
+  get combinedTopTile() { return load("rf.combinedTopTile", true) !== false; },
+  set combinedTopTile(on) { save("rf.combinedTopTile", on); },
+  /** Whether the combined top tile is open, the same on every club page and in the hour view. */
+  get topTileOpen() { return load("rf.topTileOpen", false) === true; },
+  set topTileOpen(on) { save("rf.topTileOpen", on); },
   get mapZoom() { return load("rf.mapZoom", "normal"); },
   set mapZoom(zoom) { save("rf.mapZoom", zoom); },
   /** The full-screen map plays 3 times round. */

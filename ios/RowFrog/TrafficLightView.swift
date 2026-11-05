@@ -76,3 +76,49 @@ struct ColdWaterGlyph: View {
             .accessibilityLabel(kit.title)
     }
 }
+
+extension Light {
+    /// The colour a value takes while it sets the light: amber or red, never green,
+    /// so a coloured value always means "this is why" (owner's pick C1/T2, 5 Nov 2026).
+    var causeTint: Color? { self == .green ? nil : color }
+}
+
+extension EnvironmentValues {
+    /// The light colour of the value shown inside, while that value sets the light.
+    @Entry var causeTint: Color? = nil
+}
+
+extension View {
+    /// Colours a value in the light it sets, if it sets one (see `Light.causeTint`).
+    func causeTinted() -> some View { modifier(CauseTinted()) }
+}
+
+private struct CauseTinted: ViewModifier {
+    @Environment(\.causeTint) private var tint
+
+    func body(content: Content) -> some View {
+        if let tint { content.foregroundStyle(tint) } else { content }
+    }
+}
+
+extension Condition {
+    /// The light this value sets in an hour, if amber or red (see `Light.causeTint`).
+    /// Screenshot hook: `-RWSampleCause wind,thunderstorm` makes those values amber.
+    func cause(in hour: ForecastHour) -> Light? {
+        if Self.sampleCauses.contains(rawValue) { return .amber }
+        return hour.light(for: reasonNames).flatMap { $0 == .green ? nil : $0 }
+    }
+
+    /// Read once: launch arguments do not change while the app runs.
+    private static let sampleCauses: Set<String> =
+        Set((UserDefaults.standard.string(forKey: "RWSampleCause") ?? "").split(separator: ",").map(String.init))
+}
+
+extension ColdWaterKit {
+    /// The water value's colour while the Life jacket badge shows: the cold-water blue on the
+    /// number, and the wash and rim on its open tile (owner's pick W2, 5 Nov 2026). Blue never
+    /// means the light. For W0 (no blue) return nil here; for W1 (number only) see `causeHighlight`.
+    static func valueTint(waterC: Double?, limits: RowingLimits) -> Color? {
+        ColdWaterKit(waterC: waterC, limits: limits) == nil ? nil : color
+    }
+}

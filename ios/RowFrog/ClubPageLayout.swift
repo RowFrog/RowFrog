@@ -139,6 +139,9 @@ struct ArrangePageSheet: View {
                     }
                     fixedRow(tr("Rowing light"), symbol: "circle.fill", note: tr("always first"))
                     fixedRow(tr("Warnings"), symbol: "exclamationmark.triangle", note: tr("right under it, while one is issued"))
+                    if settings.combinedTopTile {
+                        fixedRow(PageCard.conditions.title, symbol: PageCard.conditions.symbol, note: tr("in the top tile"))
+                    }
                     ForEach(movable) { card in
                         Toggle(isOn: Binding(
                             get: { !layout.hidden.contains(card) },

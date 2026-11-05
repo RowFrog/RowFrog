@@ -298,6 +298,17 @@ jobs:
           shoot 383-settings-launch-point light -RWShowSettings YES -RWSettingsPage clubpages
           shoot 384-arrange-launch-point light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 385-launch-point-card-separate light -RWOpenClub mrc-1880 -RWScrollTo launchpoint -RWLaunchPointInHeader NO
+          # Current conditions in the top tile (owner's choice B, 4 Nov 2026): closed, with a
+          # value it hides as one line under the sun line, opened into all tiles, the
+          # settings switch, Arrange page with the card locked, and the old separate cards.
+          shoot 370-top-tile-closed light -RWOpenClub mrc-1880 -RWSampleCause wind
+          shoot 371-top-tile-peek-german-dark dark -RWOpenClub mrc-1880 -RWSamplePeek thunderstorm -RWSampleCause thunderstorm,wind -RWLanguage de
+          shoot_pages 372-top-tile-open light -RWOpenClub mrc-1880 -RWTopTileOpen YES -RWSampleCause wind
+          shoot_pages 373-top-tile-open-german-dark dark -RWOpenClub mrc-1880 -RWTopTileOpen YES -RWSampleCause wind,thunderstorm -RWLanguage de
+          shoot 374-settings-club-pages light -RWShowSettings YES -RWSettingsPage clubpages
+          shoot 375-arrange-top-tile light -RWOpenClub mrc-1880 -RWArrange YES
+          shoot 376-separate-cards light -RWOpenClub mrc-1880 -RWCombinedTopTile NO -RWSampleCause wind
+          GUIDE=1 WAIT=30 shoot 377-tip-all-values light -RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880
           # iPad sideways with the list slid away: sidebar button and cog on the page.
           WAIT=25 shoot 334-list-slid-away light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES -RWSideListHidden YES
           # iPad sideways with a picture: one picture behind the list and the page, list beside and slid away.

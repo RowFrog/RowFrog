@@ -420,6 +420,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Fine-tune the limits", .boats, words: ["limit", "Grenze", "wind", "gusts", "Böen", "waves", "Wellen", "water temperature", "Wassertemperatur"]),
             SettingsSearch("Appearance", .appearance, words: ["light", "dark", "hell", "dunkel", "mode", "Modus"]),
             SettingsSearch("App icon", .appearance, words: ["App-Symbol", "home screen", "Home-Bildschirm"]),
+            SettingsSearch("Current conditions in the top tile", .clubPages, words: ["top tile", "obere Kachel", "combined", "zusammen", "separate", "getrennt", "all values", "alle Werte", "morph"]),
             SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
             SettingsSearch("Launch point in the club header", .clubPages, words: ["Steg", "launch point", "header", "Kopf", "map", "Karte", "Open in Maps", "directions", "Route"]),
             SettingsSearch("Background pictures", .clubPages, path: [.clubPages, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
@@ -520,6 +521,15 @@ private struct ClubPagesSettingsView: View {
     var body: some View {
         @Bindable var settings = AppSettings.shared
         Form {
+            Section {
+                Toggle(tr("Current conditions in the top tile"), isOn: $settings.combinedTopTile)
+            } footer: {
+                SectionFooter(settings.combinedTopTile
+                              ? tr("The top tile opens into all values: tap \"All values\" under it or pull it down. Values it hides show as a line while they matter for the rowing light.")
+                              : tr("Current conditions is a card of its own under the top tile, as before."))
+            }
+            .surfaceRows()
+
             Section {
                 Button { arrangingPages = true } label: {
                     Label(tr("Order of the club page cards"), systemImage: "arrow.up.arrow.down")

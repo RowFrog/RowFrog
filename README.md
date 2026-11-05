@@ -68,30 +68,36 @@ GitHub issue, so no GitHub account is needed.
 
 1. A top tile with the rowing light, which boat it is for and why it has that
    colour; air, water and wind, with waves, rain and visibility in the same
-   three columns below, each with a short grey line ("Dry for 24 h"); in
-   winter a line for ice when it matters; an official warnings status line
-   and a daylight line. Tapping a value opens its chart.
+   three columns below, each with a short grey line ("Dry for 24 h");
+   an official warnings status line and a daylight line. Tapping a value
+   opens its chart. A value that sets the light amber or red shows its number
+   in that colour, and cold water shows in blue while the life jacket badge
+   is on. "All values" under the sun line (tap, or pull down) opens Current
+   conditions inside the tile; "Fewer values" (or pull up) closes it, on every
+   club page at once. Closed, a hidden value that counts for the light
+   (thunderstorm, or ice when it matters) shows as one line under the sun line.
 2. The official warnings card, only while a warning is issued (or the check
    failed).
-3. Current conditions.
-4. Lake view (River or Canal view for river and canal clubs).
-5. Next 48 hours, with a feels-like column and a day header that stays in
+3. Lake view (River or Canal view for river and canal clubs).
+4. Next 48 hours, with a feels-like column and a day header that stays in
    place while scrolling; tapping an hour opens that hour's view. Each night's
    dark hours fold into one tinted line (lowest temperature, strongest wind,
    highest waves, all its rain), which opens on a tap.
-6. Satellite picture.
-7. Forecast source and credits.
+5. Satellite picture.
+6. Forecast source and credits.
 
 The rain radar card is off by default (see Rain radar) and can be switched
 on in Arrange this page. The launch point lives in the club header (see
-Launch point).
+Launch point). Settings › Club pages › Current conditions in the top tile
+(on by default) can be turned off to show Current conditions as its own card
+again, after the warnings. The website does the same.
 
 "Arrange this page" at the end of the page reorders or hides cards, for all
 clubs or only this one. Every card has an ⓘ button that explains its symbols;
 the full legend is in Settings › Help. When a steadier boat of your own would
 get a better light, the page suggests it.
 
-**Current conditions.** A compact card of tiles in two columns, each with a
+**Current conditions.** Inside the opened top tile (or as its own card), tiles in two columns, each with a
 small graphic: wind, gusts, waves, temperatures, rain, cloud, visibility,
 pressure, humidity, UV index, sun and ice, among others. Tapping a tile opens
 a detail view with a chart you can drag from yesterday to 7 days ahead, with
@@ -571,7 +577,7 @@ More detail, including the secrets each one needs, is in the
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 | **Missing lake outlines** (`missing-outlines.yml`) | Fetches the OpenStreetMap outline of every catalog lake that has none yet (`scripts/fetch_missing_outlines.py`, in 10 parallel parts) and commits the new `data/outlines` files; existing outlines are never changed. Lines marked "CHECK BY HAND" in its report were picked without a matching name. By hand, on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
-| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, `scripts/build_web.py` or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
+| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, the sample data in `testdata/`, `scripts/build_web.py`, the app icon (for the favicon and home-screen icons) or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
 
 ## Traffic light defaults
 

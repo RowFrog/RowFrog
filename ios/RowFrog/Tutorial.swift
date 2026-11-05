@@ -34,7 +34,7 @@ enum Tutorial {
     static var tipsComingBack: Bool { UserDefaults.standard.bool(forKey: resetTipsKey) }
 
     /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all,
-    /// `-RWLaterTips YES` shows the tips that follow a closed one (radar map, hour view, water estimate, route stretch, weather map).
+    /// `-RWLaterTips YES` shows the tips that follow a closed one (all values, radar map, hour view, water estimate, route stretch, weather map).
     static func configureTips() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: resetTipsKey) {
@@ -49,8 +49,8 @@ enum Tutorial {
         // `-RWPlaceTip YES` shows the tip at the place line under the club's name.
         if defaults.bool(forKey: "RWPlaceTip") { Tips.showTipsForTesting([PlaceLineTip.self]) }
         if defaults.bool(forKey: "RWLaterTips") {
-            Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
-            Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
+            Tips.hideTipsForTesting([TopTileTip.self, RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
+            Tips.showTipsForTesting([AllValuesTip.self, RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
         }
         try? Tips.configure([.displayFrequency(.immediate)])
     }
@@ -734,9 +734,20 @@ struct ColdWaterTip: Tip {
     var image: Image? { Image(systemName: "thermometer.snowflake") }
 }
 
+/// After "Tap a value": the grip that opens Current conditions inside the top tile.
+struct AllValuesTip: Tip {
+    var title: Text { Text(tr("All values in the top tile")) }
+    var message: Text? { Text(tr("Tap \"All values\" under the tile or pull it down to see every value there. Pull up or tap \"Fewer values\" to close it.")) }
+    var image: Image? { Image(systemName: "rectangle.expand.vertical") }
+}
+
 struct TopTileTip: Tip {
     var title: Text { Text(tr("Tap a value")) }
-    var message: Text? { Text(tr("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values.")) }
+    var message: Text? {
+        Text(AppSettings.shared.combinedTopTile
+             ? tr("Tap a value in the tile above to open its chart; swiping there goes through all values. \"All values\" under the tile opens the rest.")
+             : tr("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values."))
+    }
     var image: Image? { Image(systemName: "hand.tap") }
 }
 
