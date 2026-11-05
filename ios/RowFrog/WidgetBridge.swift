@@ -106,9 +106,12 @@ enum WidgetBridge {
                 await store.load(lake)
                 guard let picture = store.pictures[lake], let shot = picture.clearest ?? picture.mostlyClear ?? picture.latest,
                       let url = store.url(lake, file: shot.image, date: shot.date) else { continue }
-                let key = "\(url.absoluteString)|\(settings.blurWidgetPicture)"
+                // Cut around the club, so the widget shows the same part of the lake as the app's background.
+                let spot = BackgroundLibrary.place(of: club.launchPoint, in: picture.bbox)
+                let key = "\(url.absoluteString)|\(settings.blurWidgetPicture)|\(spot.map { "\($0.x),\($0.y)" } ?? "middle")"
                 if key != shared.string(forKey: WidgetPictures.sourceKey(club.id, .satellite)), let image = await store.image(url) {
-                    changed = write(image, to: WidgetPictures.file(club.id, .satellite)) || changed
+                    let shown = spot.map { BackgroundLibrary.square(of: image, around: $0) } ?? image
+                    changed = write(shown, to: WidgetPictures.file(club.id, .satellite)) || changed
                     shared.set(key, forKey: WidgetPictures.sourceKey(club.id, .satellite))
                 }
             }
