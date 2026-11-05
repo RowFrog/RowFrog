@@ -2,7 +2,7 @@
 // club page with the choice of picture, the layers drawn over it and their
 // legend, and the picture full screen with zoom and pan.
 
-import { t, num } from "./i18n.js";
+import { t, num, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
 import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature } from "./shared.js";
@@ -111,9 +111,20 @@ function chips(lake) {
     ${available(lake).map((l) => `<button class="chip ${on.includes(l.id) ? "on" : ""}" data-layer="${l.id}" aria-pressed="${on.includes(l.id)}">${icon(l.icon)} ${h(t(l.title))}</button>`).join("")}</div>`;
 }
 
+/**
+ * "Latest, 3 Nov" | "Clearest, 27 Oct"; with three pictures just "Latest", as the grey line below names
+ * the day (SatelliteKindPicker.label).
+ */
+export function kindLabel(lake, kind, label) {
+  if (lake.kinds.length > 2) return t(label);
+  const date = lake.meta[kind]?.date;
+  const day = date ? new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`)) : "";
+  return { latest: t("Latest, %@", day), mostlyClear: t("Mostly clear, %@", day), clearest: t("Clearest, %@", day) }[kind];
+}
+
 function kindPicker(lake, kind) {
   if (lake.kinds.length < 2) return "";
-  return `<div class="segmented">${lake.kinds.map(([k, label]) => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${h(t(label))}</button>`).join("")}</div>`;
+  return `<div class="segmented">${lake.kinds.map(([k, label]) => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${h(kindLabel(lake, k, label))}</button>`).join("")}</div>`;
 }
 
 function wireControls(el, lake, setKind) {

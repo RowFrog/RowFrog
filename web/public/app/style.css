@@ -1102,3 +1102,19 @@ dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 .nav:has(> .nav-title) > :first-child:not(.nav-title) { grid-column: 1; justify-self: start; }
 .nav:has(> .nav-title) > :last-child:not(.nav-title) { grid-column: 3; justify-self: end; }
 .nav .link.back { padding: 0; width: 44px; font-size: 20px; }
+/* Appearance as the app's three phone pictures with a round tick below (AppearancePicker). */
+.appearance-pick { display: flex; justify-content: space-around; padding: 18px 8px 14px; }
+.appearance-pick button { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 17px; }
+.appearance-pick .phone { display: grid; place-items: center; width: 58px; height: 92px; border-radius: 9px; font-size: 26px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent); }
+.appearance-pick .phone.light { background: #f2f2f7; color: #ff9500; }
+.appearance-pick .phone.dark { background: #000; color: #ffcc00; }
+.appearance-pick .phone.device { background: linear-gradient(150deg, #f2f2f7 50%, #1c1c1e 50%); color: #007aff; }
+.appearance-pick .phone.device .i { background: #e5e5ea; border-radius: 50%; padding: 6px; box-sizing: content-box; font-size: 20px; }
+.appearance-pick .tick { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--sub); color: #fff; font-size: 14px; }
+.appearance-pick .tick.on { background: var(--accent); border-color: var(--accent); }
+.row-setting.order-link { color: var(--accent); justify-content: flex-start; min-height: 50px; }
+.row-setting.order-link .i { font-size: 22px; }
+.bg-row > span:first-child { gap: 14px; }
+.bg-thumb { display: grid; place-items: center; flex: none; width: 36px; height: 64px; border-radius: 6px; overflow: hidden; color: var(--sub);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent); }
+.bg-thumb img { width: 100%; height: 100%; object-fit: cover; }
