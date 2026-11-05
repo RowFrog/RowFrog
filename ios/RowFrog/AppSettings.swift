@@ -40,6 +40,11 @@ final class AppSettings {
     /// sheet, and the Launch point card leaves the page (owner's choice B, 4 Nov 2026).
     /// Off keeps the header and the Launch point card apart, as before.
     var launchPointInHeader: Bool { didSet { defaults.set(launchPointInHeader, forKey: Keys.launchPointInHeader) } }
+    /// Current conditions inside the top tile, which opens into all tiles (owner's choice B,
+    /// 4 Nov 2026); off keeps Current conditions as its own card, as before.
+    var combinedTopTile: Bool { didSet { defaults.set(combinedTopTile, forKey: Keys.combinedTopTile) } }
+    /// Whether the combined top tile is open, the same on every club page and in the hour view.
+    var topTileOpen: Bool { didSet { defaults.set(topTileOpen, forKey: Keys.topTileOpen) } }
 
     /// The user's own boats, besides the small and big boat groups.
     var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
@@ -178,7 +183,11 @@ final class AppSettings {
     /// The card order for a club's page: its own, else the one for all clubs.
     func pageLayout(for clubID: String) -> PageLayout { clubPageLayouts[clubID] ?? pageLayout }
     /// Cards that live elsewhere on the page for now and so are left out of the card list.
-    var cardsElsewhere: Set<PageCard> { launchPointInHeader ? [.launchPoint] : [] }
+    var cardsElsewhere: Set<PageCard> {
+        var cards: Set<PageCard> = launchPointInHeader ? [.launchPoint] : []
+        if combinedTopTile { cards.insert(.conditions) }
+        return cards
+    }
     /// The cards a club page shows under the top tile, in order.
     func pageCards(for clubID: String) -> [PageCard] {
         pageLayout(for: clubID).visible.filter { !cardsElsewhere.contains($0) }
@@ -234,11 +243,13 @@ final class AppSettings {
         static let mapStartZoom = "RWMapStartZoom"
         static let mapApp = "RWMapApp"
         static let launchPointInHeader = "RWLaunchPointInHeader"
+        static let combinedTopTile = "RWCombinedTopTile"
+        static let topTileOpen = "RWTopTileOpen"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, clubBoats, mapBoat,
                           developer, pickedModels, columnFill, nightHours, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
-                          widgetUpdates, mapStartZoom, mapApp, launchPointInHeader]
+                          widgetUpdates, mapStartZoom, mapApp, launchPointInHeader, combinedTopTile, topTileOpen]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -261,6 +272,8 @@ final class AppSettings {
         mapStartZoom = value(Keys.mapStartZoom, .normal)
         mapApp = value(Keys.mapApp, .apple)
         launchPointInHeader = defaults.object(forKey: Keys.launchPointInHeader) == nil || defaults.bool(forKey: Keys.launchPointInHeader)
+        combinedTopTile = defaults.object(forKey: Keys.combinedTopTile) == nil || defaults.bool(forKey: Keys.combinedTopTile)
+        topTileOpen = defaults.bool(forKey: Keys.topTileOpen)
         // Launch arguments give the limits' numbers as text, e.g. `-RWBoatLimits '{small = {windAmber = 7;};}'`.
         if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
             myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
@@ -432,6 +445,8 @@ final class AppSettings {
         mapStartZoom = .normal
         mapApp = .apple
         launchPointInHeader = true
+        combinedTopTile = true
+        topTileOpen = false
         boatID = Boat.small.id
         clubBoats = [:]
         boatLimits = [:]

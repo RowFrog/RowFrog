@@ -82,7 +82,8 @@ final class AppSettingsTests: XCTestCase {
         settings.launchPointInHeader = false
         let again = AppSettings(defaults: defaults)
         XCTAssertFalse(again.launchPointInHeader)
-        XCTAssertEqual(again.pageCards(for: "mrc-1880"), PageLayout.standard.visible)
+        // Current conditions still sits in the top tile, which has its own switch.
+        XCTAssertEqual(again.pageCards(for: "mrc-1880"), PageLayout.standard.visible.filter { $0 != .conditions })
 
         again.resetToFactorySettings()
         XCTAssertTrue(again.launchPointInHeader)
@@ -217,6 +218,26 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(AppSettings(defaults: defaults).allowsLandscape)
         settings.resetToFactorySettings()
         XCTAssertTrue(AppSettings(defaults: defaults).allowsLandscape)
+    }
+
+    func testTopTileHoldsCurrentConditionsUntilTurnedOff() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertTrue(settings.combinedTopTile)
+        XCTAssertFalse(settings.topTileOpen)
+        XCTAssertFalse(settings.pageCards(for: "mrc-1880").contains(.conditions))
+        // The saved order keeps the card, so turning the switch off brings it back in its place.
+        XCTAssertTrue(settings.pageLayout(for: "mrc-1880").order.contains(.conditions))
+
+        settings.combinedTopTile = false
+        settings.topTileOpen = true
+        let again = AppSettings(defaults: defaults)
+        XCTAssertFalse(again.combinedTopTile)
+        XCTAssertTrue(again.topTileOpen)
+        XCTAssertEqual(again.pageCards(for: "mrc-1880").first, .conditions)
+
+        again.resetToFactorySettings()
+        XCTAssertTrue(again.combinedTopTile)
+        XCTAssertFalse(again.topTileOpen)
     }
 
     func testBackgroundChoiceRawValues() {
