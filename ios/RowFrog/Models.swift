@@ -25,6 +25,15 @@ struct Club: Codable, Identifiable, Hashable {
     var country: String? = nil
     /// The state or canton where the source names one, e.g. "Wien".
     var region: String? = nil
+    /// A launch point of its own: confirmed by the club or checked by hand.
+    /// Older backends send none.
+    var launchPointSet: Bool? = nil
+    /// Where the clubhouse is, when known apart from the launch point (checked by hand).
+    var clubhouse: Coordinate? = nil
+
+    /// Whether the forecast is for a launch point of the club's own, rather
+    /// than its address or OpenStreetMap place.
+    var hasLaunchPoint: Bool { launchPointVerified || launchPointSet == true }
 
     var displayName: String { shortName ?? name }
 

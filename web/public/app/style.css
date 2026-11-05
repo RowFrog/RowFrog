@@ -108,7 +108,6 @@ button.wide { margin-top: 0; }
 .now-title h2 { font-size: 22px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 6px; overflow: hidden; }
 .now-title h2 .verdict { white-space: nowrap; }
 .now-title h2 .info { flex: none; }
-.boat-line { color: var(--accent); font-size: 12px; display: inline-flex; align-items: center; gap: 3px; }
 .now-sky { display: flex; flex-direction: column; align-items: center; font-size: 12px; flex: none; }
 .now-sky small { width: 7.33em; text-align: center; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 .now-head.step .now-title h2 { font-size: 20px; }
@@ -127,7 +126,6 @@ button.wide { margin-top: 0; }
 /* The captions' symbols in the top tile are grey like their words, as the app's .secondary labels. */
 .now-grid .label .cond, .ice-line .label .cond { color: inherit; }
 /* Big numbers follow the browser's text size, growing by at most a third; light only from 20 px (ScaledFont.valueFont). */
-.v44 { font-size: min(2.875rem, 62px); font-weight: 300; line-height: 1.05; }
 .v28 { font-size: min(1.875rem, 40px); font-weight: 300; line-height: 1.1; display: inline-flex; align-items: center; gap: 4px; }
 .arrow { display: inline-flex; font-size: 18px; }
 .now-metrics small { font-size: 12px; }
@@ -1171,3 +1169,8 @@ dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 .tile.cause-amber { background: color-mix(in srgb, var(--amber) 12%, var(--tile)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--amber) 55%, transparent); }
 .tile.cause-red { background: color-mix(in srgb, var(--red) 12%, var(--tile)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--red) 55%, transparent); }
 .tile.cause-cold { background: color-mix(in srgb, var(--kit) 12%, var(--tile)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--kit) 55%, transparent); }
+/* The club page's boat button on the lake map, left of the zoom buttons, and beside the legend in the satellite picture's full view (owner's pick B, 5 Nov 2026). */
+.lake-top .lake-boat { margin-left: auto; flex: none; display: flex; }
+.lake-top .lake-boat .tool.boat { min-width: 52px; width: auto; padding: 0 8px; }
+.chips .chip-boat { display: inline-flex; flex: none; }
+.chips .chip-boat .tool.boat { height: 30px; min-width: 44px; padding: 0 8px; border-radius: 999px; background: var(--tile); box-shadow: none; backdrop-filter: none; }

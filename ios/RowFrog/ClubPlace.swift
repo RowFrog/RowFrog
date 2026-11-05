@@ -16,6 +16,13 @@ final class ClubPlaces {
 
     private var found: [String: MKMapItem] = [:]
 
+    /// Where the club's Apple Maps place is, as last found; nil when none was found.
+    nonisolated static func savedLocation(forID id: String) -> CLLocationCoordinate2D? {
+        let saved = UserDefaults.standard.dictionary(forKey: key) as? [String: [String: Any]] ?? [:]
+        guard let pair = saved[id]?["at"] as? [Double], pair.count == 2 else { return nil }
+        return CLLocationCoordinate2D(latitude: pair[0], longitude: pair[1])
+    }
+
     /// The club's place, or nil when Apple Maps has none that fits.
     func place(for club: Club) async -> MKMapItem? {
         if let item = found[club.id] { return item }
@@ -31,6 +38,8 @@ final class ClubPlaces {
         if item == nil, let short = club.shortName { item = await search(short, near: club) }
         var entry: [String: Any] = ["checked": Date.now.timeIntervalSince1970]
         if let name = item?.name { entry["name"] = name }
+        // Its position, for the club's pin on every map once zoomed in (ClubMarks).
+        if let at = item?.placemark.location?.coordinate { entry["at"] = [at.latitude, at.longitude] }
         var all = saved
         all[club.id] = entry
         UserDefaults.standard.set(all, forKey: Self.key)

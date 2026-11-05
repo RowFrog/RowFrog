@@ -326,8 +326,9 @@ struct LakeMapScreen: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { fitRequest += 1 }
     }
 
-    /// Close and the lake's name at the left, map or satellite pictures alone at
-    /// the right: it is the ground the layers are drawn on, not a layer or a tool.
+    /// Close and the lake's name at the left, the boat and map or satellite
+    /// pictures at the right. The boat button is the club page's: the colours,
+    /// the route's times and its light are for that boat (owner's pick B, 5 Nov 2026).
     private var topBar: some View {
         HStack(spacing: 10) {
             Button { dismiss() } label: {
@@ -343,6 +344,11 @@ struct LakeMapScreen: View {
                 .frame(height: 44)
                 .floatingControl(Capsule())
             Spacer(minLength: 0)
+            if let clubID {
+                PageBoatButton(clubID: clubID, now: nil, waterC: nil, tipEdge: .top)
+                    .padding(.horizontal, 4)
+                    .floatingControl(Capsule())
+            }
             Button { imagery.toggle() } label: {
                 Image(systemName: imagery ? "map" : "globe.europe.africa")
                     .font(.body.weight(.semibold))
@@ -1143,6 +1149,13 @@ struct LakeMapView: UIViewRepresentable {
             pin.isOwn = club.id == clubID
             pin.clubID = club.id
             map.addAnnotation(pin)
+            context.coordinator.splitter.track(pin, clubID: club.id, isOwn: pin.isOwn)
+        }
+        // The Apple Maps places of the lake's clubs, so their pins can split when zoomed in.
+        let ids = view.clubs.map(\.id), splitter = context.coordinator.splitter
+        Task { @MainActor [weak map] in
+            await ClubMarks.lookUpPlaces(forIDs: ids)
+            if let map { splitter.update(map) }
         }
         for end in [view.section?.up, view.section?.down].compactMap({ $0 }) {
             let pin = SectionEndPin()
@@ -1276,6 +1289,8 @@ struct LakeMapView: UIViewRepresentable {
         var selectPoint: (Int?) -> Void = { _ in }
         private let spotPin = MKPointAnnotation()
         private let boatPin = MKPointAnnotation()
+        /// Each club's pin and its launch point's oars apart when zoomed in (`ClubMarks`).
+        let splitter = ClubPinSplitter()
         private var shownRoute: ([RoutePlan.Segment], [Coordinate], Int?)?
         private var routeOverlays: [RouteLine] = []
         private var routePins: [RoutePin] = []
@@ -1311,7 +1326,12 @@ struct LakeMapView: UIViewRepresentable {
             return renderer
         }
 
+        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+            splitter.update(mapView)
+        }
+
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            if let oars = annotation as? LaunchOarsPin { return ClubPinSplitter.view(for: oars) }
             if let pin = annotation as? ClubPin {
                 let view = MKMarkerAnnotationView(annotation: pin, reuseIdentifier: nil)
                 view.glyphImage = UIImage(systemName: pin.isOwn ? LocationStore.markSymbol(for: pin.clubID) : "figure.rower")
@@ -1639,11 +1659,6 @@ struct LakeMapView: UIViewRepresentable {
             spotPin.coordinate = coordinate
         }
     }
-}
-
-final class ClubPin: MKPointAnnotation {
-    var isOwn = false
-    var clubID: String?
 }
 
 /// One end of a river section's stretch.
@@ -2026,6 +2041,7 @@ struct LakeMapLegend: View {
                 Section(tr("On the map")) {
                     row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
                     row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
+                    row(ClubMarkIcon(color: .blue, symbol: ClubMarks.launchSymbol), tr("Zoomed in: the club's pin moves to its clubhouse and oars mark the launch point the forecast is for"))
                     if let coldShore {
                         row(Capsule().fill(coldShore.color).frame(width: 18, height: 4),
                             tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
@@ -2064,25 +2080,6 @@ struct LakeMapLegend: View {
             symbol.frame(width: 28)
             Text(text).font(.subheadline)
         }
-    }
-}
-
-/// A club mark as the maps draw it, for the legends: a white rower in a coloured circle.
-struct ClubMarkIcon: View {
-    let color: Color
-    var symbol = "figure.rower"
-
-    /// The legend line for the page's club, as its mark is drawn on this map.
-    static func pageClubText(_ clubID: String?) -> String {
-        LocationStore.markSymbol(for: clubID) == "house.fill" ? tr("Your home base, the club of this page") : tr("The club of this page")
-    }
-
-    var body: some View {
-        Image(systemName: symbol)
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundStyle(.white)
-            .frame(width: 22, height: 22)
-            .background(color, in: Circle())
     }
 }
 

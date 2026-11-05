@@ -650,11 +650,12 @@ private struct NowCard: View {
     }
 
     /// Air, water and wind, with the small values in three columns under them.
+    /// Air, water and wind share one size, the second line a smaller one (owner, 5 Nov 2026).
     private var valueGrid: some View {
         TopTileGrid {
             VStack(alignment: .leading, spacing: 0) {
                 opens(.temperature) {
-                    TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
+                    TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 28)
                 }
                 if let feels = hour.apparentTemperatureC {
                     opens(.feelsLike) {
@@ -823,31 +824,15 @@ private struct NowCard: View {
         SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
     }
 
-    /// "For small boats" under the verdict. It wraps rather than pushes the
-    /// weather under the verdict, so a long boat name never decides the layout.
-    @ViewBuilder private var boatLine: some View {
-        Group {
-            if at == nil {
-                // Tapped: pick another boat, with the light each would get now.
-                BoatMenu(clubID: forecast.clubId, hour: hour, waterC: water?.celsius) {
-                    HStack(spacing: 3) {
-                        Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                        Image(systemName: "chevron.up.chevron.down").imageScale(.small)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    // 44 pt to tap; little upwards, where the title's info button is.
-                    .tapArea(EdgeInsets(top: 6, leading: 6, bottom: 14, trailing: 12))
-                }
-                .accessibilityLabel(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                .accessibilityHint(tr("Picks another boat for the rowing light."))
-            } else {
-                Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(idealWidth: 0, maxWidth: .infinity, alignment: .leading)
+    /// "For small boats" under the verdict: which boat the light is for, as
+    /// plain text. The boat button beside the cog changes it (owner, 5 Nov 2026).
+    /// It wraps rather than pushes the weather under the verdict, so a long
+    /// boat name never decides the layout.
+    private var boatLine: some View {
+        Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(idealWidth: 0, maxWidth: .infinity, alignment: .leading)
     }
 
     /// The values shown in this tile, in its order, for swiping between their views.

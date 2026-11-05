@@ -9,7 +9,7 @@ import { t, num, locale, setLanguage, savedLanguage, resolve, lang } from "./i18
 import { icon } from "./icons.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, tickedBoat, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
-  boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
+  boatDetail, boatTag, boatControl, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, openMenu,
@@ -152,7 +152,7 @@ function legendBody(part) {
  * Own boats kept at other clubs come last, with one tap to take them to this
  * club too (owner's choice A, 30 Oct 2026).
  */
-function openBoatMenu(raw, anchor) {
+function openBoatMenu(raw, anchor, picked = () => route(false)) {
   const now = raw ? new Date() : null;
   const club = pageClubId();
   const inUse = selectedBoat().id;
@@ -180,7 +180,7 @@ function openBoatMenu(raw, anchor) {
     dialog.querySelectorAll("[data-boat]").forEach((b) => b.addEventListener("click", () => {
       pickBoat(b.dataset.boat, club);
       dialog.close();
-      route(false);
+      picked();
     }));
     dialog.querySelectorAll("[data-take]").forEach((b) => b.addEventListener("click", () => {
       keepBoat(b.dataset.take, club);
@@ -188,7 +188,7 @@ function openBoatMenu(raw, anchor) {
       // Taking a boat along is what the tip asks for, so it closes for good.
       closeTip(root, "boatsElsewhere");
       dialog.close();
-      route(false);
+      picked();
     }));
     dialog.querySelector("a.pill").addEventListener("click", () => dialog.close());
   });
@@ -218,6 +218,10 @@ function bottomBar(currentId) {
 function boatButton() {
   return `<button class="glass round tool boat" data-boat-button aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>`;
 }
+
+// The lake map and the satellite picture's full view show the same button (owner's pick B, 5 Nov 2026).
+boatControl.html = () => boatButton().replace("data-boat-button", "data-map-boat");
+boatControl.open = (anchor, picked) => openBoatMenu(forecasts.get(pageClubId())?.forecast ?? null, anchor, picked);
 
 /** Once, on the first club page where an own boat is kept elsewhere (BoatsElsewhereTip), beside the boat button. */
 const boatsElsewhereTip = () => (store.boats.some((b) => !isKept(b)) ? tip("boatsElsewhere").replace('class="tip"', 'class="tip pop"') : "");
@@ -1040,14 +1044,14 @@ function refreshOnReturn() {
   Promise.resolve(route(false)).finally(() => reloadOthers(shown, true));
 }
 
-/** Whether the header opens the launch point (Settings > Club pages > Launch point in the club header). */
+/** Whether the header opens the launch point (Settings > Club pages > Location in the club header). */
 const inHeader = (club) => Boolean(club?.launchPoint) && store.launchPointInHeader;
 
 /** The lake and town; with the launch point in the header a button (pin and chevron) that opens it (ClubPageHeader.placeLine). */
 function placeLine(club) {
   const text = place(club?.lakeName, town(club?.address), lakeTitle);
   if (!inHeader(club)) return `<p class="sub">${h(text)}</p>`;
-  return `<div class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the launch point on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
+  return `<div class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the club's location on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
 }
 
 /** The header's lake and town line and the not-confirmed line open the launch point. */
@@ -1058,7 +1062,7 @@ const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open"
 
 /** The launch point opened from the header (LaunchPointSheet): the same map, note, coordinates and Open in Maps as the card. */
 function openLaunchPoint(club) {
-  openSheet(t("Launch point"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
+  openSheet(t("Location"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
     showLaunchMap(club, sheet.querySelector("#launch-sheet-map"));
   });
 }
@@ -1097,7 +1101,6 @@ function wireClubPage(id, club, raw, forecast, hour) {
     const part = b.dataset.legend;
     openSheet({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part], legendBody(part));
   }));
-  root.querySelector("#boat-line")?.addEventListener("click", (e) => openBoatMenu(raw, e.currentTarget));
   root.querySelector("#no-warning")?.addEventListener("click", () => {
     openSheet(warningsIsDWD(forecast.warnings) ? t("DWD warnings") : t("Official warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
   });
@@ -1229,7 +1232,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
       ${dot(hour.light, 36, stale)}
       <div class="now-title">
         <h2><span class="verdict">${h(lightTitle(hour.light, stale))}</span> ${at ? "" : `<button class="info" data-legend="lights" aria-label="${h(t("What the symbols mean"))}">${icon("info")}</button>`}</h2>
-        ${at ? `<small class="sub">${h(boat)}</small>` : `<button class="boat-line" id="boat-line">${h(boat)} ${icon("chevrons-up-down")}</button>`}
+        <small class="sub boat-for">${h(boat)}</small>
       </div>
       <div class="now-sky">${skySymbol(hour, "large", kind)}<small class="sub">${h(t(SKY_TITLES[kind]))}</small></div>
     </div>
@@ -1254,7 +1257,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
     <div class="now-grid">
       <div class="air" data-top="temperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("temperature")} ${h(t("Air"))}</small>
-        <span class="v44${causeClass(causeOf("temperature", hour))}">${h(degrees(hour.temperatureC))}</span>
+        <span class="v28${causeClass(causeOf("temperature", hour))}">${h(degrees(hour.temperatureC))}</span>
         ${hour.apparentTemperatureC != null ? `<small class="sub grey" data-top="feelsLike" role="button" tabindex="0">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
       </div>
       <div class="${water == null && estimate != null ? "secondary" : ""}" data-top="waterTemperature" role="button" tabindex="0">
@@ -1760,11 +1763,13 @@ function launchPointBody(club, mapId) {
   const { lat, lon } = club.launchPoint;
   // Opens in the map service chosen under Settings > Maps.
   const maps = MAPS_APPS[store.mapsApp];
-  const unconfirmed = club.source === "drv" ? t("Not yet confirmed by the club; taken from the club's address.") : t("Not yet confirmed by the club; taken from OpenStreetMap.");
+  // Which point the forecast is for, said for this club (as in the app's Location sheet).
+  const unconfirmed = club.source === "drv"
+    ? t("No launch point set yet: the forecast, waves and warnings are for the club's address.")
+    : t("No launch point set yet: the forecast, waves and warnings are for the club's place on OpenStreetMap.");
   return `
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
-    <p>${h(t("The forecast, waves and warnings are for this point."))}</p>
-    ${club.launchPointVerified ? "" : `<p class="orange small">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
+    ${club.launchPointVerified || club.launchPointSet ? `<p>${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
@@ -1917,10 +1922,10 @@ function settingsTopicBody(topic, accepted) {
       </section>
       <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
       <section class="card group">
-        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Launch point in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
+        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
       </section>
       <p class="footer">${h(store.launchPointInHeader
-        ? t("Tap the lake and town under the club's name for the launch point's map, coordinates and Open in Maps. The Launch point card leaves the page.")
+        ? t("Tap the lake and town under the club's name for the club's location: a map with the launch point, coordinates and Open in Maps. The Launch point card leaves the page.")
         : t("The Launch point card is on the page, as before."))}</p>
       <section class="card group">
         <label class="row-setting"><span>${icon("gauge")} ${h(t("Current conditions in the top tile"))}</span><input type="checkbox" class="switch" id="combined-top" ${store.combinedTopTile ? "checked" : ""}></label>
@@ -2461,6 +2466,7 @@ function route(scroll = true) {
 }
 
 window.addEventListener("hashchange", () => route());
+document.addEventListener("rf-boat-picked", () => route(false));
 // Back on the page after a while: show fresh numbers.
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") refreshOnReturn();

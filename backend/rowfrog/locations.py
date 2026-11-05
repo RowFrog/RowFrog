@@ -35,6 +35,8 @@ DEFAULT_PATH = DATA_DIR / "locations.json"
 CATALOG_DIR = DATA_DIR / "catalogs"
 CATALOGS = ("de-drv", "de-osm", "at-oerv", "at-osm", "ch-swissrowing", "ch-osm")
 DEFAULT_CATALOG_PATHS = tuple(CATALOG_DIR / f"{name}.json" for name in CATALOGS)
+# Launch points and clubhouses the owner checked by hand (see scripts/club_import.py).
+HAND_CHECKED_PATH = CATALOG_DIR / "hand-checked.json"
 # Country names for the app's country list, in English and German.
 COUNTRIES = {
     "de": ("Germany", "Deutschland"),
@@ -109,6 +111,12 @@ class Club:
     country: str = "de"
     # The state or canton, where the source names one (e.g. "Wien", "Zürich").
     region: str | None = None
+    # A launch point of its own: confirmed by the club or checked by hand. Without
+    # one the launch point is only the club's address or OpenStreetMap place.
+    launch_point_set: bool = False
+    # Where the clubhouse is, when known apart from the launch point; the maps
+    # show it once zoomed in far enough.
+    clubhouse: Point | None = None
 
 
 @dataclass(frozen=True)
@@ -172,6 +180,8 @@ def _parse(raw: dict, lakes: dict[str, Lake], clubs: dict[str, Club], source: st
             website=c.get("website"),
             launch_point=point,
             launch_point_verified=lp.get("verified", False),
+            launch_point_set=lp.get("verified", False),
+            clubhouse=Point(**c["clubhouse"]) if c.get("clubhouse") else None,
             source=c.get("source", source),
             abbreviation=c.get("abbreviation"),
             country=c.get("country", country),
@@ -180,7 +190,10 @@ def _parse(raw: dict, lakes: dict[str, Lake], clubs: dict[str, Club], source: st
 
 
 def load(
-    path: Path = DEFAULT_PATH, catalog_paths: Sequence[Path] = DEFAULT_CATALOG_PATHS, sections_path: Path | None = SECTIONS_PATH
+    path: Path = DEFAULT_PATH,
+    catalog_paths: Sequence[Path] = DEFAULT_CATALOG_PATHS,
+    sections_path: Path | None = SECTIONS_PATH,
+    hand_checked_path: Path | None = HAND_CHECKED_PATH,
 ) -> Locations:
     lakes: dict[str, Lake] = {}
     clubs: dict[str, Club] = {}
@@ -201,6 +214,8 @@ def load(
         used = {c.lake_id for c in clubs.values()}
         for lake_id in set(lakes) - before - used:
             del lakes[lake_id]
+    if hand_checked_path is not None:
+        _apply_hand_checked(clubs, hand_checked_path)
     if sections_path is not None:
         _apply_sections(lakes, clubs, sections_path)
     if DEPTHS_PATH.exists():
@@ -209,6 +224,26 @@ def load(
             if lake_id in lakes and lakes[lake_id].mean_depth_m is None:
                 lakes[lake_id] = dataclasses.replace(lakes[lake_id], mean_depth_m=depth)
     return Locations(lakes=lakes, clubs=clubs)
+
+
+def _apply_hand_checked(clubs: dict[str, Club], path: Path) -> None:
+    """Marks the launch points the owner checked by hand as set, with the
+    clubhouse ("club", the boathouse) checked next to them. The import already
+    moved the launch points there; this adds what the catalogs don't keep.
+    "sameAs" takes another club's (a school crew at a club's boathouse)."""
+    if not path.exists():
+        return
+    data = json.loads(path.read_text(encoding="utf-8"))
+    entries = {club_id: entry for country, checked in data.items() if isinstance(checked, dict) and len(country) == 2
+               for club_id, entry in checked.items()}
+    for club_id, entry in entries.items():
+        club = clubs.get(club_id)
+        if club is None:
+            continue
+        house = (entries.get(entry["sameAs"], {}) if "sameAs" in entry else entry).get("club")
+        clubs[club_id] = dataclasses.replace(
+            club, launch_point_set=True, clubhouse=Point(lat=house[0], lon=house[1]) if house else club.clubhouse
+        )
 
 
 def _end(raw: dict | None) -> SectionEnd | None:

@@ -201,7 +201,10 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .homeBase: tr("It opens first when you start the app. You can change it later.")
         case .moreClubs: tr("Add the other places you row, or skip this and add clubs later in the list.")
         case .rowingLight: tr("Every page starts with the rowing light for the hour ahead.")
-        case .conditions: tr("Below the light you find what matters on the water.")
+        // With Current conditions inside the top tile (#315), it opens into all values.
+        case .conditions: AppSettings.shared.combinedTopTile
+            ? tr("The tile with the light shows what matters on the water. Tap “All values” under it for the rest.")
+            : tr("Below the light you find what matters on the water.")
         case .warnings: tr("Official warnings come right under the rowing light.")
         case .boats: tr("The rowing light is worked out for one boat. Pick it at the top of the settings.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")

@@ -216,6 +216,7 @@ final class LocationStore {
 
     private func apply(_ lakes: [Lake]) {
         catalog = lakes.flatMap(\.clubs)
+        ClubMarks.register(catalog)
         lakesByClub = Dictionary(lakes.flatMap { lake in lake.clubs.map { ($0.id, lake) } }, uniquingKeysWith: { a, _ in a })
         let known = Set(randomPicks).intersection(catalog.map(\.id))
         if known.count < 3 { randomPicks = catalog.shuffled().prefix(3).map(\.id) }
