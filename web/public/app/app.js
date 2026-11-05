@@ -31,7 +31,7 @@ import { isOwn } from "./ownplace.js";
 import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
 import { layoutFor, visibleCards, openArrange } from "./arrange.js";
-import { showBackground, renderBackgrounds, backgroundSummary, forgetOwnPictures } from "./backgrounds.js";
+import { showBackground, renderBackgrounds, backgroundSummary, backgroundPreview, forgetOwnPictures } from "./backgrounds.js";
 import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
@@ -1824,15 +1824,15 @@ const settingsIcon = (name, colour) => `<span class="set-icon" style="--c: ${col
 function settingsTopicBody(topic, accepted) {
   switch (topic) {
     case "appearance": return `
-      <section class="card group">
-        <div class="row-setting"><span class="segmented wide" id="appearance">${[["device", t("Device")], ["light", t("Light")], ["dark", t("Dark")]]
-          .map(([k, label]) => `<button data-appearance="${k}" class="${store.appearance === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>
+      <section class="card group appearance-pick" id="appearance">${[["device", t("Device"), "smartphone"], ["light", t("Light"), "sun"], ["dark", t("Dark"), "moon"]]
+        .map(([k, label, sym]) => `<button data-appearance="${k}" aria-pressed="${store.appearance === k}"><span class="phone ${k}">${icon(sym)}</span><span>${h(label)}</span>
+          <span class="tick ${store.appearance === k ? "on" : ""}">${store.appearance === k ? icon("check") : ""}</span></button>`).join("")}
       </section>
       <p class="footer">${h(t("Device follows the light or dark setting of your computer or phone."))}</p>
 `;
     case "clubpages": return `
       <section class="card group">
-        <button class="row-setting" id="arrange"><span>${h(t("Order of the club page cards"))}</span>${icon("chevron-right")}</button>
+        <button class="row-setting order-link" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Order of the club page cards"))}</span></button>
       </section>
       <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
       <section class="card group">
@@ -1842,7 +1842,7 @@ function settingsTopicBody(topic, accepted) {
         ? t("Tap the lake and town under the club's name for the launch point's map, coordinates and Open in Maps. The Launch point card leaves the page.")
         : t("The Launch point card is on the page, as before."))}</p>
       <section class="card group">
-        <a class="row-setting" href="#/settings/backgrounds"><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span>${icon("chevron-right")}</a>
+        <a class="row-setting bg-row" href="#/settings/backgrounds"><span><span class="bg-thumb" id="bg-thumb">${icon("circle-slash")}</span><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span></span>${icon("chevron-right")}</a>
       </section>
       <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
       <h3 class="section">${icon("map")} ${h(t("Weather maps"))}</h3>
@@ -1853,10 +1853,10 @@ function settingsTopicBody(topic, accepted) {
       </section>
       <p class="footer">${h(t("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.",
         distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))}</p>
-      <h3 class="section">${icon("map-pinned")} ${h(t("Map links"))}</h3>
+      <h3 class="section">${icon("map-pinned")} ${h(t("Map app"))}</h3>
       <section class="card group">
-        <div class="row-setting"><span class="segmented wide" id="maps-app" aria-label="${h(t("Open places in"))}">${Object.entries(MAPS_APPS)
-          .map(([k, app]) => `<button data-maps-app="${k}" class="${store.mapsApp === k ? "on" : ""}">${h(app.name)}</button>`).join("")}</span></div>
+        <label class="row-setting topic"><span>${h(t("Open places in"))}</span>
+          <select id="maps-app">${Object.entries(MAPS_APPS).map(([k, app]) => `<option value="${k}" ${store.mapsApp === k ? "selected" : ""}>${h(app.name)}</option>`).join("")}</select></label>
       </section>
       <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))} ${h(t("Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
 `;
@@ -2011,10 +2011,15 @@ function renderSettings(topic = null) {
     again();
   }));
   root.querySelector("#arrange")?.addEventListener("click", () => openArrange(null));
-  root.querySelectorAll("[data-maps-app]").forEach((b) => b.addEventListener("click", () => {
-    store.mapsApp = b.dataset.mapsApp;
+  root.querySelector("#maps-app")?.addEventListener("change", (e) => {
+    store.mapsApp = e.target.value;
     again();
-  }));
+  });
+  // The picture for all pages, small, as the app's preview in the Background pictures row.
+  const thumb = root.querySelector("#bg-thumb");
+  if (thumb) backgroundPreview().then((url) => {
+    if (url && thumb.isConnected) thumb.innerHTML = `<img src="${h(url)}" alt="">`;
+  }).catch(() => {});
   root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     store.mapZoom = b.dataset.zoom;
     again();
