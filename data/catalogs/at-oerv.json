@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-25",
+  "updated": "2026-11-05",
   "source": "Club data: Österreichischer Ruderverband (rudern.at). Positions and waters: © OpenStreetMap contributors, ODbL",
   "lakes": [
     {
@@ -8,8 +8,8 @@
       "name": "Alte Donau",
       "country": "at",
       "center": {
-        "lat": 48.23299,
-        "lon": 16.43347
+        "lat": 48.23561,
+        "lon": 16.43203
       },
       "kind": "lake"
     },
@@ -138,8 +138,8 @@
       "name": "Salzach",
       "country": "at",
       "center": {
-        "lat": 47.73151,
-        "lon": 13.08145
+        "lat": 47.73748,
+        "lon": 13.06929
       },
       "kind": "river"
     },
@@ -810,6 +810,24 @@
       }
     },
     {
+      "id": "wassersportverein-ottensheim-regattastrecke",
+      "name": "Wassersportverein Ottensheim (Regattastrecke)",
+      "shortName": "Wassersportverein Ottensheim (Regattastrecke)",
+      "abbreviation": "OTT",
+      "address": "Regattastraße 1, 4100 Ottensheim",
+      "website": "https://www.wsv-ottensheim.at/",
+      "region": "Oberösterreich",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.32638,
+        "lon": 14.15867,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
+        "verified": false
+      }
+    },
+    {
       "id": "wiener-ruder-club-pirat",
       "name": "Wiener Ruder Club Pirat",
       "shortName": "Wiener Ruder Club Pirat",
@@ -824,6 +842,24 @@
         "lat": 48.21663,
         "lon": 16.43374,
         "precision": "launch point checked by hand on the satellite view (2026-11-02)",
+        "verified": false
+      }
+    },
+    {
+      "id": "wiener-ruder-club-pirat-langenzersdorf",
+      "name": "Wiener Ruder Club Pirat (Langenzersdorf)",
+      "shortName": "Wiener Ruder Club Pirat (Langenzersdorf)",
+      "abbreviation": "PIR",
+      "address": "Treppelweg, Stromkilometer 1940,9, 2103 Langenzersdorf",
+      "website": "https://wrc-pirat.at/",
+      "region": "Wien",
+      "source": "oerv",
+      "country": "at",
+      "lakeId": "river-donau",
+      "launchPoint": {
+        "lat": 48.32276,
+        "lon": 16.3372,
+        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
         "verified": false
       }
     },
@@ -950,42 +986,6 @@
         "lat": 48.16414,
         "lon": 14.70697,
         "precision": "launch point checked by hand on the satellite view (2026-10-31)",
-        "verified": false
-      }
-    },
-    {
-      "id": "wassersportverein-ottensheim-regattastrecke",
-      "name": "Wassersportverein Ottensheim (Regattastrecke)",
-      "shortName": "Wassersportverein Ottensheim (Regattastrecke)",
-      "abbreviation": "OTT",
-      "address": "Regattastraße 1, 4100 Ottensheim",
-      "website": "https://www.wsv-ottensheim.at/",
-      "region": "Oberösterreich",
-      "source": "oerv",
-      "country": "at",
-      "lakeId": "river-donau",
-      "launchPoint": {
-        "lat": 48.32638,
-        "lon": 14.15867,
-        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
-        "verified": false
-      }
-    },
-    {
-      "id": "wiener-ruder-club-pirat-langenzersdorf",
-      "name": "Wiener Ruder Club Pirat (Langenzersdorf)",
-      "shortName": "Wiener Ruder Club Pirat (Langenzersdorf)",
-      "abbreviation": "PIR",
-      "address": "Treppelweg, Stromkilometer 1940,9, 2103 Langenzersdorf",
-      "website": "https://wrc-pirat.at/",
-      "region": "Wien",
-      "source": "oerv",
-      "country": "at",
-      "lakeId": "river-donau",
-      "launchPoint": {
-        "lat": 48.32276,
-        "lon": 16.3372,
-        "precision": "launch point checked by hand on the satellite view (owner 2026-11-02)",
         "verified": false
       }
     }
