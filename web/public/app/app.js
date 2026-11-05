@@ -300,7 +300,7 @@ async function renderList() {
   // As in the Weather app: the big title level with "…", small and centred once the list scrolls; no way
   // back but the clubs' cards; the cog beside the search at the bottom (LocationListView).
   root.innerHTML = `
-    <div class="top-title"><strong>${h(t("Locations"))}</strong></div>
+    <div class="top-title"><strong>${h(t("Locations"))}</strong>${TOP_FADE}</div>
     ${testing()}
     <main class="page list-page">
       <header class="list-head"><h1 class="large">${h(t("Locations"))}</h1>${moreMenu()}</header>
@@ -618,7 +618,7 @@ async function renderClub(id) {
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
-    <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right")}</div>
+    <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right")}${TOP_FADE}</div>
     ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint) })}
@@ -919,6 +919,9 @@ function watchCards(cards) {
  * page scrolls under the top edge, and with the club's name and light once its
  * big title has scrolled away (InlineClubTitle); the 48 hours' header then sits below it.
  */
+/** The blur under the small title fading out in four 7 px steps, as the app's 28 pt fade (TopEdgeFade.tail); a blur cannot be masked in browsers. */
+const TOP_FADE = `<i class="fade" aria-hidden="true"></i><i class="fade" aria-hidden="true"></i><i class="fade" aria-hidden="true"></i><i class="fade" aria-hidden="true"></i>`;
+
 function updateTopBar() {
   const body = document.body;
   body.classList.toggle("scrolled", window.scrollY > 0);
@@ -949,6 +952,8 @@ function stickHourlyHeader() {
   const top = parseFloat(getComputedStyle(head).top) || 0;
   const stuck = table.top < top - 1 && at.bottom > table.top;
   head.classList.toggle("stuck", stuck);
+  // The pinned header sits right under the bar, so the fade below the bar must not blur it.
+  document.body.classList.toggle("hhead-stuck", stuck);
   card.style.clipPath = stuck ? `inset(${at.top - card.getBoundingClientRect().top}px 0 0 0 round 16px)` : "";
 }
 window.addEventListener("scroll", updateTopBar, { passive: true });
