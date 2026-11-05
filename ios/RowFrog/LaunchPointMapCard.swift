@@ -186,13 +186,15 @@ struct LaunchPointDetails: View {
         .mapStyle(imagery ? .imagery(elevation: .flat) : .standard(elevation: .flat, pointsOfInterest: .excludingAll))
         .mapControls { MapCompass() }
         .onMapCameraChange(frequency: .onEnd) { context in
-            moved = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
-                .distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) > 30
-                // MapKit fits the home region by one side only, so a taller or wider map
-                // (the sheet pulled up) still counts as home while either side matches.
-                || min(abs(context.region.span.latitudeDelta - home.span.latitudeDelta) / home.span.latitudeDelta,
-                       abs(context.region.span.longitudeDelta - home.span.longitudeDelta) / home.span.longitudeDelta) > 0.1
-                || context.camera.heading.magnitude > 1
+            let span = context.region.span
+            let centre = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
+            let shifted: Bool = centre.distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) > 30
+            // MapKit fits the home region by one side only, so a taller or wider map
+            // (the sheet pulled up) still counts as home while either side matches.
+            let latOff: Double = abs(span.latitudeDelta - home.span.latitudeDelta) / home.span.latitudeDelta
+            let lonOff: Double = abs(span.longitudeDelta - home.span.longitudeDelta) / home.span.longitudeDelta
+            let zoomed: Bool = min(latOff, lonOff) > 0.1
+            moved = shifted || zoomed || context.camera.heading.magnitude > 1
         }
         .overlay(alignment: .topLeading) {
             if moved {
