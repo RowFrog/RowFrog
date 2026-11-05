@@ -230,14 +230,14 @@ struct LaunchPointDetails: View {
         .mapStyle(imagery ? .imagery(elevation: .flat) : .standard(elevation: .flat, pointsOfInterest: .excludingAll))
         .mapControls { MapCompass() }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { mapSize = $0 }
-        .onMapCameraChange(frequency: .continuous) { context in
-            span = context.region.span
-            updateSplit()
-        }
         .onChange(of: clubhouse?.latitude) { updateSplit() }
         .onChange(of: mapSize) { updateSplit() }
+        // One handler only: a second onMapCameraChange on the same map replaces the first.
+        // At the end of each move, so a sheet still growing doesn't count as moved.
         .onMapCameraChange(frequency: .onEnd) { context in
             let span = context.region.span
+            self.span = span
+            updateSplit()
             let centre = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
             let shifted: Bool = centre.distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) > 30
             // MapKit fits the home region by one side only, so a taller or wider map
