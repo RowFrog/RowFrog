@@ -40,6 +40,17 @@ final class LocationPinsTests: XCTestCase {
         XCTAssertNotNil(ClubMarks.clubhouse(of: club(set: false, verified: true, house: Coordinate(lat: 47.99766, lon: 11.34745))))
     }
 
+    func testTheHandCheckedClubhouseComesBeforeTheMapsPlace() {
+        let place = CLLocationCoordinate2D(latitude: 47.99700, longitude: 11.34900)
+        let checked = Coordinate(lat: 47.99766, lon: 11.34745)
+        // No hand-checked point: the club's Apple Maps place.
+        XCTAssertEqual(ClubMarks.clubhouse(of: club(set: true, house: nil), place: place)?.longitude, place.longitude)
+        // Checked by hand: that point, wherever the map app puts the club.
+        XCTAssertEqual(ClubMarks.clubhouse(of: club(set: true, house: checked), place: place)?.latitude, checked.lat)
+        // No launch point set: one pin, whatever the map app knows.
+        XCTAssertNil(ClubMarks.clubhouse(of: club(set: false, house: nil), place: place))
+    }
+
     func testAClubWithNoLaunchPointSetKeepsOnePin() {
         // Its one point is the club itself, so there is nothing to split from.
         XCTAssertNil(ClubMarks.clubhouse(of: club(set: false, house: Coordinate(lat: 47.99766, lon: 11.34745))))

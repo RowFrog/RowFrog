@@ -95,8 +95,9 @@ struct LaunchPointDetails: View {
     @State private var refit = false
     /// The club's own place in Apple Maps, when it has one.
     @State private var place: MKMapItem?
-    /// Where the clubhouse is, when the launch point is set and the clubhouse apart from it.
-    private var clubhouse: CLLocationCoordinate2D? { ClubMarks.clubhouse(of: club) }
+    /// Where the clubhouse is, when the launch point is set and the clubhouse apart from
+    /// it: checked by hand, else the club's Apple Maps place.
+    private var clubhouse: CLLocationCoordinate2D? { ClubMarks.clubhouse(of: club, place: place?.placemark.location?.coordinate) }
     /// The map's size in points, for how far apart the two pins are on screen.
     @State private var mapSize: CGSize = .zero
     /// Zoomed in far enough that the clubhouse and launch point get a pin each.
@@ -233,6 +234,7 @@ struct LaunchPointDetails: View {
             span = context.region.span
             updateSplit()
         }
+        .onChange(of: clubhouse?.latitude) { updateSplit() }
         .onChange(of: mapSize) { updateSplit() }
         .onMapCameraChange(frequency: .onEnd) { context in
             let span = context.region.span

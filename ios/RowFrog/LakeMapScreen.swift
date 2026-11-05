@@ -1145,6 +1145,12 @@ struct LakeMapView: UIViewRepresentable {
             map.addAnnotation(pin)
             context.coordinator.splitter.track(pin, clubID: club.id, isOwn: pin.isOwn)
         }
+        // The Apple Maps places of the lake's clubs, so their pins can split when zoomed in.
+        let ids = view.clubs.map(\.id), splitter = context.coordinator.splitter
+        Task { @MainActor [weak map] in
+            await ClubMarks.lookUpPlaces(forIDs: ids)
+            if let map { splitter.update(map) }
+        }
         for end in [view.section?.up, view.section?.down].compactMap({ $0 }) {
             let pin = SectionEndPin()
             pin.coordinate = CLLocationCoordinate2D(latitude: end.at.lat, longitude: end.at.lon)

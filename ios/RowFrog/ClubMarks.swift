@@ -26,25 +26,42 @@ enum ClubMarks {
         apart >= (now ? joinAt : splitAt)
     }
 
-    /// The club's clubhouse, when its launch point is set and the clubhouse
-    /// lies apart from it.
-    static func clubhouse(of club: Club) -> CLLocationCoordinate2D? {
-        guard club.hasLaunchPoint, let house = club.clubhouse else { return nil }
+    /// Where the club's pin stands once split: the clubhouse the owner checked
+    /// by hand, else the club's place in Apple Maps (the one Open in Maps shows).
+    /// Only for a club whose launch point is set, and only when it lies apart from it.
+    static func clubhouse(of club: Club, place: CLLocationCoordinate2D? = nil) -> CLLocationCoordinate2D? {
+        guard club.hasLaunchPoint else { return nil }
+        let house = club.clubhouse.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) } ?? place
+        guard let house else { return nil }
         let launch = CLLocation(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
-        let distance = CLLocation(latitude: house.lat, longitude: house.lon).distance(from: launch)
-        return distance >= sameSpot ? CLLocationCoordinate2D(latitude: house.lat, longitude: house.lon) : nil
+        let distance = CLLocation(latitude: house.latitude, longitude: house.longitude).distance(from: launch)
+        return distance >= sameSpot ? house : nil
     }
 
-    /// Every loaded club's clubhouse by id, for maps that only know a club's id
-    /// (lake map, satellite picture, radar and weather maps). Set when the club list loads.
-    private static var houses: [String: CLLocationCoordinate2D] = [:]
+    /// The loaded clubs by id, for maps that only know a club's id (lake map,
+    /// satellite picture, radar and weather maps). Set when the club list loads.
+    private static var clubs: [String: Club] = [:]
 
-    static func register(_ clubs: [Club]) {
-        houses = Dictionary(clubs.compactMap { club in clubhouse(of: club).map { (club.id, $0) } }, uniquingKeysWith: { a, _ in a })
+    static func register(_ list: [Club]) {
+        clubs = Dictionary(list.map { ($0.id, $0) }, uniquingKeysWith: { a, _ in a })
+    }
+
+    static func club(forID id: String?) -> Club? {
+        id.flatMap { clubs[$0] }
     }
 
     static func clubhouse(forID id: String?) -> CLLocationCoordinate2D? {
-        id.flatMap { houses[$0] }
+        guard let club = club(forID: id) else { return nil }
+        return clubhouse(of: club, place: ClubPlaces.savedLocation(forID: club.id))
+    }
+
+    /// Looks up the Apple Maps places of these clubs that have a launch point set
+    /// but no clubhouse checked by hand (a lake's few clubs), so their pins can split.
+    @MainActor static func lookUpPlaces(forIDs ids: [String]) async {
+        for id in ids {
+            guard let club = club(forID: id), club.hasLaunchPoint, club.clubhouse == nil, !club.isOwnPlace else { continue }
+            _ = await ClubPlaces.shared.place(for: club)
+        }
     }
 }
 
@@ -65,19 +82,25 @@ final class ClubPinSplitter {
         var split = false
     }
     private var pairs: [Pair] = []
+    /// Pins whose clubhouse wasn't known yet; tried again on every update.
+    private var waiting: [(pin: MKPointAnnotation, clubID: String?, isOwn: Bool)] = []
 
-    /// Follows a club's pin, standing on its launch point, when its clubhouse is known.
+    /// Follows a club's pin, standing on its launch point; it splits once its clubhouse is known.
     func track(_ pin: MKPointAnnotation, clubID: String?, isOwn: Bool) {
-        guard let clubhouse = ClubMarks.clubhouse(forID: clubID) else { return }
-        let oars = LaunchOarsPin()
-        oars.coordinate = pin.coordinate
-        oars.title = isOwn ? tr("Launch point") : nil
-        oars.isOwn = isOwn
-        pairs.append(Pair(pin: pin, launch: pin.coordinate, clubhouse: clubhouse, oars: oars))
+        waiting.append((pin, clubID, isOwn))
     }
 
     @MainActor func update(_ map: MKMapView) {
         guard map.bounds.width > 0 else { return }
+        waiting.removeAll { entry in
+            guard let clubhouse = ClubMarks.clubhouse(forID: entry.clubID) else { return false }
+            let oars = LaunchOarsPin()
+            oars.coordinate = entry.pin.coordinate
+            oars.title = entry.isOwn ? tr("Launch point") : nil
+            oars.isOwn = entry.isOwn
+            pairs.append(Pair(pin: entry.pin, launch: entry.pin.coordinate, clubhouse: clubhouse, oars: oars))
+            return true
+        }
         for index in pairs.indices {
             let pair = pairs[index]
             let a = map.convert(pair.launch, toPointTo: map), b = map.convert(pair.clubhouse, toPointTo: map)

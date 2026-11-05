@@ -107,6 +107,8 @@ struct ClubPageHeader: View {
             try? await Task.sleep(for: .milliseconds(1500))
             showingLaunchPoint = true
         }
+        // The club's Apple Maps place, for its pin on every map once zoomed in.
+        .task(id: club.id) { await ClubMarks.lookUpPlaces(forIDs: [club.id]) }
     }
 
     private var place: String {
