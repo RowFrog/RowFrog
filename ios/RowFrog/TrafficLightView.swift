@@ -105,8 +105,11 @@ extension Condition {
     /// The light this value sets in an hour, if amber or red (see `Light.causeTint`).
     /// Screenshot hook: `-RWSampleCause wind,thunderstorm` makes those values amber.
     func cause(in hour: ForecastHour) -> Light? {
-        if let sample = UserDefaults.standard.string(forKey: "RWSampleCause"),
-           sample.split(separator: ",").contains(Substring(rawValue)) { return .amber }
+        if Self.sampleCauses.contains(rawValue) { return .amber }
         return hour.light(for: reasonNames).flatMap { $0 == .green ? nil : $0 }
     }
+
+    /// Read once: launch arguments do not change while the app runs.
+    private static let sampleCauses: Set<String> =
+        Set((UserDefaults.standard.string(forKey: "RWSampleCause") ?? "").split(separator: ",").map(String.init))
 }
