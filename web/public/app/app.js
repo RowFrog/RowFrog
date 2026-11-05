@@ -1022,11 +1022,14 @@ const inHeader = (club) => Boolean(club?.launchPoint) && store.launchPointInHead
 function placeLine(club) {
   const text = place(club?.lakeName, town(club?.address), lakeTitle);
   if (!inHeader(club)) return `<p class="sub">${h(text)}</p>`;
-  return `<p class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the launch point on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button></p>`;
+  return `<div class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the launch point on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
 }
 
 /** The header's lake and town line and the not-confirmed line open the launch point. */
-const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open").forEach((b) => b.addEventListener("click", () => openLaunchPoint(club)));
+const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open").forEach((b) => b.addEventListener("click", () => {
+  closeTip(root, "placeLine");
+  openLaunchPoint(club);
+}));
 
 /** The launch point opened from the header (LaunchPointSheet): the same map, note, coordinates and Open in Maps as the card. */
 function openLaunchPoint(club) {
