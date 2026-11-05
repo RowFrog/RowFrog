@@ -401,7 +401,7 @@ screen, with the map beside the chart when the iPad is on its side.
 **Website.** [rowfrog.com/app](https://rowfrog.com/app) shows the forecasts
 in a browser, for Android phones and computers. It is password-locked while
 in testing, through its own login page that keeps the browser signed in for
-90 days (Log out in Settings › Website login). It follows the app's list, club page and look, with a wide layout
+90 days (Log out in Settings › About › Website login). It follows the app's list, club page and look, with a wide layout
 for iPads and desktop browsers, and has nearly everything the app has: own
 boats and limits, the lake view with route planning and row import (GPX, TCX
 or FIT), value pages with chart and weather map, the satellite picture with its
