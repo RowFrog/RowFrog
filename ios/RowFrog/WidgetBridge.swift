@@ -10,6 +10,7 @@ enum WidgetBridge {
     static func publish(_ locations: LocationStore) {
         BackgroundLibrary.lakeByClub = locations.lakesByClub.mapValues(\.id)
         BackgroundLibrary.homeClubID = locations.homeID
+        BackgroundLibrary.pointByClub = Dictionary(locations.saved.map { ($0.id, $0.launchPoint) }, uniquingKeysWith: { a, _ in a })
         Task { await withBackgroundTime("widget pictures") { await preparePictures(locations) } }
         let shared = WidgetShared.defaults
         let saved = locations.saved
