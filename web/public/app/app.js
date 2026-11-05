@@ -1814,10 +1814,9 @@ function renderSettings() {
   const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
   const back = store.clubs[0] ? `#/club/${encodeURIComponent(store.clubs[0].id)}` : "#/list";
   root.innerHTML = `
-    <header class="nav"><span class="spacer"></span><a class="link strong" href="${back}">${h(t("Done"))}</a></header>
+    <header class="nav"><span class="nav-side"></span><strong class="nav-title">${h(t("Settings"))}</strong><a class="link strong" href="${back}">${h(t("Done"))}</a></header>
     ${testing()}
     <main class="page">
-      <h1 class="large">${h(t("Settings"))}</h1>
       <label class="search settings-search">${icon("search")}<input type="search" id="settings-search" placeholder="${h(t("Search"))}" aria-label="${h(t("Search the settings"))}"></label>
       <p class="sub" id="settings-none" hidden></p>
       <section class="card group">
@@ -2247,6 +2246,8 @@ function route(scroll = true) {
   document.querySelectorAll(".wm-full, .sat-full").forEach((x) => x.remove());
   document.body.classList.remove("locked");
   if (scroll) window.scrollTo(0, 0);
+  // The pages the app shows as sheets look like one on a phone.
+  document.body.classList.toggle("sheet-page", /^\/(club\/[^/]+\/value\/|settings|add-place|countries)/.test(location.hash.slice(1)));
   if (!store.safety || store.safety.version < SAFETY_VERSION) return renderSafetyGate();
   // The tour once, after the safety notice, and again from Settings › Help.
   if (!tourSeen() || location.hash === "#/tour") {
