@@ -39,6 +39,17 @@ enum BackgroundLibrary {
     /// kept up to date by WidgetBridge whenever the saved clubs change.
     static var lakeByClub: [String: String] = [:]
     static var homeClubID: String?
+    /// Each saved club's launch point, so its satellite picture shows the club.
+    static var pointByClub: [String: Coordinate] = [:]
+
+    /// Where in a picture its middle should be on screen, as a fraction of its
+    /// width and height; nil for the picture's own middle. Kept for the
+    /// satellite pictures (the club), held only as long as the picture is.
+    private static let focuses = NSMapTable<UIImage, NSValue>.weakToStrongObjects()
+
+    static func focus(of image: UIImage) -> UnitPoint? {
+        (focuses.object(forKey: image)?.cgPointValue).map { UnitPoint(x: $0.x, y: $0.y) }
+    }
 
     /// The picture for a choice, or nil for "no picture" or a missing file.
     /// The satellite picture is the club's lake's (the home base's without a
@@ -83,7 +94,17 @@ enum BackgroundLibrary {
         return nil
 #else
         guard let club = clubID ?? homeClubID, let lake = lakeByClub[club] else { return nil }
-        return MainActor.assumeIsolated { SatellitePictureStore.shared.backgroundImage(lake) }
+        return MainActor.assumeIsolated {
+            let store = SatellitePictureStore.shared
+            guard let image = store.backgroundImage(lake) else { return nil }
+            // The picture covers its box north up, so the club's place in it follows from its launch point.
+            if focuses.object(forKey: image) == nil, let point = pointByClub[club],
+               let box = store.pictures[lake]?.bbox, box.count == 4, box[2] > box[0], box[3] > box[1] {
+                let x = (point.lon - box[0]) / (box[2] - box[0]), y = (box[3] - point.lat) / (box[3] - box[1])
+                focuses.setObject(NSValue(cgPoint: CGPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))), forKey: image)
+            }
+            return image
+        }
 #endif
     }
 
@@ -376,7 +397,9 @@ struct PageBackground: ViewModifier {
         let frame = drawsPicture ? ownFrame : outerFrame
         content
             .environment(\.surface, image == nil ? .plain : settings.tileSurface)
-            .environment(\.frostPicture, image.flatMap { frame.isEmpty ? nil : FrostPicture(image: BackgroundLibrary.blurred($0), frame: frame) })
+            .environment(\.frostPicture, image.flatMap {
+                frame.isEmpty ? nil : FrostPicture(image: BackgroundLibrary.blurred($0), frame: frame, focus: BackgroundLibrary.focus(of: $0))
+            })
             .background {
                 if drawsPicture {
                     PagePicture(image: image, blurred: settings.blurBackground) { ownFrame = $0 }
@@ -418,10 +441,22 @@ struct BackgroundPicture: View {
     var body: some View {
         Color.clear
             .overlay {
-                Image(uiImage: blurred ? BackgroundLibrary.blurred(image) : image)
-                    .resizable()
-                    .scaledToFill()
-                    .accessibilityHidden(true)
+                let shown = blurred ? BackgroundLibrary.blurred(image) : image
+                if let focus = BackgroundLibrary.focus(of: image) {
+                    GeometryReader { geometry in
+                        let place = PicturePlace.rect(for: image.size, filling: geometry.size, focus: focus)
+                        Image(uiImage: shown)
+                            .resizable()
+                            .frame(width: place.width, height: place.height)
+                            .offset(x: place.minX, y: place.minY)
+                            .accessibilityHidden(true)
+                    }
+                } else {
+                    Image(uiImage: shown)
+                        .resizable()
+                        .scaledToFill()
+                        .accessibilityHidden(true)
+                }
             }
             .clipped()
             .overlay {
@@ -445,8 +480,25 @@ struct BackgroundPicture: View {
 struct FrostPicture: Equatable {
     let image: UIImage
     let frame: CGRect
+    /// As `BackgroundLibrary.focus(of:)` for the clear picture.
+    var focus: UnitPoint? = nil
 
-    static func == (a: FrostPicture, b: FrostPicture) -> Bool { a.image === b.image && a.frame == b.frame }
+    static func == (a: FrostPicture, b: FrostPicture) -> Bool { a.image === b.image && a.frame == b.frame && a.focus == b.focus }
+}
+
+/// Where a picture lies when it fills an area: scaled to cover it, with its
+/// focus point as near the area's middle as the picture's edges allow
+/// (centred without a focus, as scaledToFill).
+enum PicturePlace {
+    static func rect(for picture: CGSize, filling area: CGSize, focus: UnitPoint?) -> CGRect {
+        guard picture.width > 0, picture.height > 0 else { return CGRect(origin: .zero, size: area) }
+        let scale = max(area.width / picture.width, area.height / picture.height)
+        let size = CGSize(width: picture.width * scale, height: picture.height * scale)
+        let focus = focus ?? .center
+        let x = min(0, max(area.width - size.width, area.width / 2 - focus.x * size.width))
+        let y = min(0, max(area.height - size.height, area.height / 2 - focus.y * size.height))
+        return CGRect(origin: CGPoint(x: x, y: y), size: size)
+    }
 }
 
 private struct FrostPictureKey: EnvironmentKey {
@@ -487,11 +539,7 @@ struct FrostedFill<S: Shape>: View {
             let frame = picture.frame
             Color.clear
                 .overlay(alignment: .topLeading) {
-                    Image(uiImage: picture.image)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: frame.width, height: frame.height)
-                        .clipped()
+                    framed(picture)
                         .accessibilityHidden(true)
                         .overlay {
                             if colorScheme == .dark { Color.black.opacity(0.3) }
@@ -511,6 +559,29 @@ struct FrostedFill<S: Shape>: View {
                 .contentShape(shape)
         } else {
             shape.fill(Color(.secondarySystemGroupedBackground))
+        }
+    }
+}
+
+private extension FrostedFill {
+    /// The picture at its size and place on screen, cut to that size.
+    @ViewBuilder
+    func framed(_ picture: FrostPicture) -> some View {
+        let frame = picture.frame
+        if let focus = picture.focus {
+            let place = PicturePlace.rect(for: picture.image.size, filling: frame.size, focus: focus)
+            Image(uiImage: picture.image)
+                .resizable()
+                .frame(width: place.width, height: place.height)
+                .offset(x: place.minX, y: place.minY)
+                .frame(width: frame.width, height: frame.height, alignment: .topLeading)
+                .clipped()
+        } else {
+            Image(uiImage: picture.image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: frame.width, height: frame.height)
+                .clipped()
         }
     }
 }

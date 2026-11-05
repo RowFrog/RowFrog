@@ -74,12 +74,14 @@ struct RootView: View {
                     ZStack(alignment: .leading) {
                         HStack(spacing: 0) {
                             if wide && !sideListHidden {
-                                sideList { withAnimation(Self.slide) { sideListHidden = true } }
+                                // Over the same picture as the page, so only the list moves when it slides away.
+                                sideList(sharedPicture: true) { withAnimation(Self.slide) { sideListHidden = true } }
                                     .transition(.move(edge: .leading))
-                                Divider().ignoresSafeArea()
                             }
                             pages(saved, chrome: chrome, insets: geometry.safeAreaInsets)
                         }
+                        .background { clubPicture }
+                        .environment(\.pictureFrame, pagesPictureFrame)
                         if chrome == .pad && showingSideOverlay {
                             Color.black.opacity(0.15)
                                 .ignoresSafeArea()
@@ -213,13 +215,28 @@ struct RootView: View {
     }
 
     /// The list on the left of the page (iPad), with the sidebar button that slides it away.
-    private func sideList(close: @escaping () -> Void) -> some View {
-        LocationListView(locations: locations, forecasts: forecasts, selectedID: selection, hideList: close) { club in
+    private func sideList(sharedPicture: Bool = false, close: @escaping () -> Void) -> some View {
+        LocationListView(locations: locations, forecasts: forecasts, selectedID: selection, hideList: close,
+                         sharedPicture: sharedPicture) { club in
             withAnimation { selection = club.id }
             if showingSideOverlay { withAnimation(Self.slide) { showingSideOverlay = false } }
         }
         .environment(\.openBoatSettings, openBoatSettings)
         .frame(width: Self.sideListWidth)
+    }
+
+    /// The shown club's picture over the whole screen, behind the pages (and the
+    /// list beside them on a wide iPad), not on each page: a swiping TabView keeps
+    /// its pages out of the status bar and the page bar, which left black bars.
+    private var clubPicture: some View {
+        let settings = AppSettings.shared
+        return ZStack {
+            PagePicture(image: BackgroundPictures.shared.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection),
+                        blurred: settings.blurBackground) { pagesPictureFrame = $0 }
+                .id(selection)
+                .transition(.opacity)
+        }
+        .animation(.easeInOut(duration: 0.35), value: selection)
     }
 
     /// How the list slides in and out; the cog moves over with it.
@@ -247,20 +264,7 @@ struct RootView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .environment(\.pictureFrame, pagesPictureFrame)
         .ignoresSafeArea(edges: [.top, .bottom])
-        .background {
-            // Behind the pages, not on each one: a swiping TabView keeps its
-            // pages out of the status bar and the page bar, which left black bars.
-            let settings = AppSettings.shared
-            ZStack {
-                PagePicture(image: BackgroundPictures.shared.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection),
-                            blurred: settings.blurBackground) { pagesPictureFrame = $0 }
-                    .id(selection)
-                    .transition(.opacity)
-            }
-            .animation(.easeInOut(duration: 0.35), value: selection)
-        }
         .overlay(alignment: .top) {
             let scroll = PageScroll.shared
             let club = saved.first { $0.id == selection }

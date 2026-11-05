@@ -9,6 +9,9 @@ struct LocationListView: View {
     var selectedID: String?
     /// Beside the club page (iPad): slides the list away, from the sidebar button at its top left.
     var hideList: (() -> Void)?
+    /// Beside the club page on a wide iPad: the shown club's picture fills the
+    /// whole screen behind both, so the list draws none of its own.
+    var sharedPicture = false
     let select: (Club) -> Void
     @State private var search: String
     @State private var showingSettings = false
@@ -24,11 +27,12 @@ struct LocationListView: View {
     @State private var browseHook: String?
 
     init(locations: LocationStore, forecasts: ForecastStore, initialSearch: String = "", selectedID: String? = nil,
-         hideList: (() -> Void)? = nil, select: @escaping (Club) -> Void) {
+         hideList: (() -> Void)? = nil, sharedPicture: Bool = false, select: @escaping (Club) -> Void) {
         self.locations = locations
         self.forecasts = forecasts
         self.selectedID = selectedID
         self.hideList = hideList
+        self.sharedPicture = sharedPicture
         self.select = select
         _search = State(initialValue: initialSearch)
     }
@@ -129,7 +133,8 @@ struct LocationListView: View {
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
-            .pageBackground(.list)
+            .pageBackground(sharedPicture ? .clubPages : .list, clubID: sharedPicture ? selectedID : nil, drawsPicture: !sharedPicture)
+            .modifier(ClearNavigationBackground(active: sharedPicture))
             .navigationTitle(tr("Locations"))
             .titleShrinksOnScroll($scrolled)
             .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")), besidePage: hideList != nil)
@@ -584,5 +589,18 @@ private struct SideListHeader<Trailing: View>: View {
         }
         .animation(.easeInOut(duration: 0.2), value: scrolled)
         .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
+    }
+}
+
+/// Lets the picture behind the whole screen show through the list's navigation stack.
+private struct ClearNavigationBackground: ViewModifier {
+    let active: Bool
+
+    func body(content: Content) -> some View {
+        if active, #available(iOS 18, *) {
+            content.containerBackground(.clear, for: .navigation)
+        } else {
+            content
+        }
     }
 }

@@ -149,7 +149,12 @@ jobs:
           xcrun simctl bootstatus "$UDID" -b
           # The iPad is turned through the Simulator app's menu keys, so open its window
           # now; a window still opening missed the first turn.
-          if [ "$SHOTS" != docs/screenshots ]; then open -a Simulator --args -CurrentDeviceUDID "$UDID"; sleep 20; fi
+          # Newer Xcode releases moved the app, so it is looked up rather than named.
+          if [ "$SHOTS" != docs/screenshots ]; then
+            SIMAPP=$(find "$(xcode-select -p)/.." /Applications /Library/Developer -maxdepth 7 -name Simulator.app -print -quit 2>/dev/null || true)
+            if [ -n "$SIMAPP" ]; then open -a "$SIMAPP" --args -CurrentDeviceUDID "$UDID" && sleep 20 || echo "::warning::Simulator app did not open; sideways iPad shots may stay upright"
+            else open -b com.apple.iphonesimulator --args -CurrentDeviceUDID "$UDID" && sleep 20 || echo "::warning::Simulator app not found; sideways iPad shots may stay upright"; fi
+          fi
           # The build takes longer than the backend keeps DWD warnings; warm it again
           # so the first shots do not catch a page still loading.
           for club in mrc-1880 mrsv-bayern tutzinger-rv; do
@@ -313,6 +318,10 @@ jobs:
           GUIDE=1 WAIT=30 shoot 377-tip-all-values light -RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880
           # iPad sideways with the list slid away: sidebar button and cog on the page.
           WAIT=25 shoot 334-list-slid-away light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES -RWSideListHidden YES
+          # iPad sideways with a picture: one picture behind the list and the page, list beside and slid away.
+          WAIT=25 shoot 396-shared-picture-list light -RWOpenClub mrc-1880 -RWLandscape YES -RWBackground sample:alpine-lake
+          WAIT=25 shoot 397-shared-picture-list-away light -RWOpenClub mrc-1880 -RWLandscape YES -RWBackground sample:alpine-lake -RWSideListHidden YES
+          WAIT=30 shoot 398-shared-satellite-picture light -RWOpenClub mrc-1880 -RWLandscape YES -RWBackground satellite
           # The shore warning lights explained, at a club with a lake warning.
           shoot 70-shore-lights light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES
           shoot 70-shore-lights-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES -RWLanguage de
