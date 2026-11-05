@@ -18,8 +18,8 @@ struct LaunchPointMapCard: View {
     }
 }
 
-/// The launch point opened from the club page's header: the same map, note,
-/// coordinates and Open in Maps as the card. It comes up only as far as its
+/// "Location": the launch point opened from the club page's header, with the
+/// same map, note, coordinates and Open in Maps as the card. It comes up only as far as its
 /// content needs and can be pulled up to full height.
 struct LaunchPointSheet: View {
     let club: Club
@@ -51,7 +51,7 @@ struct LaunchPointSheet: View {
                 .scrollBounceBehavior(.basedOnSize)
                 .animation(.smooth, value: detent)
             }
-            .navigationTitle(tr("Launch point"))
+            .navigationTitle(tr("Location"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -95,6 +95,12 @@ struct LaunchPointDetails: View {
     @State private var refit = false
     /// The club's own place in Apple Maps, when it has one.
     @State private var place: MKMapItem?
+    /// Where the clubhouse is, when it is known and not at the launch point.
+    @State private var clubhouse: CLLocationCoordinate2D?
+    /// The map's size in points, for how far apart the two pins are on screen.
+    @State private var mapSize: CGSize = .zero
+    /// Zoomed in far enough that the clubhouse and launch point get a pin each.
+    @State private var split = false
     /// Apple's satellite pictures instead of the map, remembered for every launch point.
     @AppStorage("RWLaunchImagery") private var imagery = false
     /// The live map after a tap; a still picture again once the page is swiped away.
@@ -112,7 +118,9 @@ struct LaunchPointDetails: View {
     private var mapApp: MapApp { AppSettings.shared.mapApp }
 
     private var home: MKCoordinateRegion {
-        let metres = refit ? 1500.01 : 1500
+        // Screenshot hook: `-RWLaunchSpan 300` opens the map closer in.
+        let span = UserDefaults.standard.double(forKey: "RWLaunchSpan")
+        let metres = (span > 0 ? span : 1500) + (refit ? 0.01 : 0)
         return MKCoordinateRegion(center: coordinate, latitudinalMeters: metres, longitudinalMeters: metres)
     }
 
@@ -139,7 +147,12 @@ struct LaunchPointDetails: View {
             .onChange(of: club.id) { live = startsLive }
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
-            Text(tr("The forecast, waves and warnings are for this point."))
+            // Fixed text, so the sheet keeps its height while the pins split and join.
+            if clubhouse != nil {
+                Label(tr("The forecast, waves and warnings are for the launch point."), systemImage: Self.launchSymbol)
+            } else {
+                Text(tr("The forecast, waves and warnings are for this point."))
+            }
             if mapApp == .apple, let name = place?.name {
                 Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
                     .font(.caption)
@@ -178,17 +191,57 @@ struct LaunchPointDetails: View {
         }
         .task(id: club.id) {
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
+            clubhouse = Self.clubhouse(of: place, launch: coordinate)
+            split = false
         }
+    }
+
+    /// The launch point's own mark once the club's pin has moved to the clubhouse.
+    static let launchSymbol = "oar.2.crossed"
+    /// Closer than this, the clubhouse counts as the launch point itself.
+    static let sameSpot: CLLocationDistance = 30
+    /// Screen points between the pins before they split, and before they join again.
+    static let splitAt: CGFloat = 48
+    static let joinAt: CGFloat = 40
+
+    /// The club's Apple Maps place as the clubhouse, unless it is at the launch point.
+    static func clubhouse(of place: MKMapItem?, launch: CLLocationCoordinate2D) -> CLLocationCoordinate2D? {
+        guard let location = place?.placemark.location else { return nil }
+        let distance = location.distance(from: CLLocation(latitude: launch.latitude, longitude: launch.longitude))
+        return distance >= sameSpot ? location.coordinate : nil
+    }
+
+    /// Whether the two pins are far enough apart on screen to show both, with
+    /// some room between splitting and joining so they don't flicker.
+    static func shouldSplit(_ clubhouse: CLLocationCoordinate2D, from launch: CLLocationCoordinate2D,
+                            span: MKCoordinateSpan, size: CGSize, now: Bool) -> Bool {
+        guard size.width > 0, size.height > 0, span.latitudeDelta > 0, span.longitudeDelta > 0 else { return false }
+        let dx: Double = (clubhouse.longitude - launch.longitude) / span.longitudeDelta * Double(size.width)
+        let dy: Double = (clubhouse.latitude - launch.latitude) / span.latitudeDelta * Double(size.height)
+        let apart = CGFloat((dx * dx + dy * dy).squareRoot())
+        return apart >= (now ? joinAt : splitAt)
     }
 
     /// A drag on the map moves the map; outside it the page scrolls.
     private var liveMap: some View {
         Map(position: $position, interactionModes: [.pan, .zoom]) {
-            Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: coordinate)
+            // Zoomed out one pin, as on every map; zoomed in, the club's pin moves to
+            // the clubhouse and oars mark the launch point the forecast is for.
+            Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: split ? clubhouse ?? coordinate : coordinate)
                 .tint(.blue)
+            if split {
+                Marker(tr("Launch point"), systemImage: Self.launchSymbol, coordinate: coordinate)
+                    .tint(.blue)
+            }
         }
         .mapStyle(imagery ? .imagery(elevation: .flat) : .standard(elevation: .flat, pointsOfInterest: .excludingAll))
         .mapControls { MapCompass() }
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { mapSize = $0 }
+        .onMapCameraChange(frequency: .continuous) { context in
+            guard let clubhouse else { return }
+            let now = Self.shouldSplit(clubhouse, from: coordinate, span: context.region.span, size: mapSize, now: split)
+            if now != split { withAnimation(.smooth) { split = now } }
+        }
         .onMapCameraChange(frequency: .onEnd) { context in
             let span = context.region.span
             let centre = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)

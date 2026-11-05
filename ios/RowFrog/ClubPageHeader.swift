@@ -132,7 +132,7 @@ struct ClubPageHeader: View {
             .buttonStyle(.plain)
             .foregroundStyle(Color.accentColor)
             .accessibilityLabel(place)
-            .accessibilityHint(tr("Shows the launch point on a map, with directions"))
+            .accessibilityHint(tr("Shows the club's location on a map, with directions"))
             // Once, on the page in view, after the tour.
             .modifier(PlaceLineTipAnchor(shown: tourSeen && isCurrentPage))
             .id("launchpoint")
