@@ -115,3 +115,20 @@ test("whole-lake stripes cross the lake's long side (LakeView.stripesFall)", () 
   assert.equal(stripesFall([[[11.49, 48.24], [11.51, 48.24], [11.51, 48.253], [11.49, 48.253]]]), false);
   assert.equal(stripesFall([]), false);
 });
+
+test("club pins split off the clubhouse only for a set launch point 30 m or more away", async () => {
+  const { clubhouseOf, shouldSplit } = await import("../public/app/lake.js");
+  const launchPoint = { lat: 47.99667, lon: 11.34745 };
+  const far = { lat: 47.99767, lon: 11.34745 }; // about 111 m north
+  const near = { lat: 47.99677, lon: 11.34745 }; // about 11 m
+  assert.deepEqual(clubhouseOf({ launchPoint, launchPointSet: true, clubhouse: far }), far);
+  assert.equal(clubhouseOf({ launchPoint, launchPointSet: true, clubhouse: near }), null);
+  assert.equal(clubhouseOf({ launchPoint, launchPointSet: false, clubhouse: far }), null);
+  assert.equal(clubhouseOf({ launchPoint, launchPointSet: true, clubhouse: null }), null);
+  assert.equal(clubhouseOf(undefined), null);
+  // Apart from 48 px, together again under 40 px.
+  assert.equal(shouldSplit(47, false), false);
+  assert.equal(shouldSplit(48, false), true);
+  assert.equal(shouldSplit(41, true), true);
+  assert.equal(shouldSplit(39, true), false);
+});
