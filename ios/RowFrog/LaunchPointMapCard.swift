@@ -90,6 +90,9 @@ struct LaunchPointDetails: View {
     /// Back at the preset view whenever the page shows again or the club changes.
     @State private var position: MapCameraPosition = .automatic
     @State private var moved = false
+    /// Flipped on every refit: setting the same region again is no change to
+    /// SwiftUI, so a map that grew would otherwise keep its old scale.
+    @State private var refit = false
     /// The club's own place in Apple Maps, when it has one.
     @State private var place: MKMapItem?
     /// Apple's satellite pictures instead of the map, remembered for every launch point.
@@ -109,7 +112,8 @@ struct LaunchPointDetails: View {
     private var mapApp: MapApp { AppSettings.shared.mapApp }
 
     private var home: MKCoordinateRegion {
-        MKCoordinateRegion(center: coordinate, latitudinalMeters: 1500, longitudinalMeters: 1500)
+        let metres = refit ? 1500.01 : 1500
+        return MKCoordinateRegion(center: coordinate, latitudinalMeters: metres, longitudinalMeters: metres)
     }
 
     private var coordinate: CLLocationCoordinate2D {
@@ -266,6 +270,7 @@ struct LaunchPointDetails: View {
     }
 
     private func reset(animated: Bool) {
+        refit.toggle()
         if animated {
             withAnimation { position = .region(home) }
         } else {
