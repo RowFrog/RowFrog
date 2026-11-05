@@ -703,7 +703,7 @@ private struct NowCard: View {
                     Label(tr("Ice"), systemImage: Condition.ice.symbol)
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.secondary)
-                    Text(ice).valueFont(size: 17)
+                    Text(ice).valueFont(size: 17).causeTinted()
                     Text(iceDetail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
                     Spacer(minLength: 0)
                 }
@@ -861,8 +861,12 @@ private struct NowCard: View {
 
     /// A value of the tile as a button that opens its chart and details.
     private func opens(_ condition: Condition, @ViewBuilder _ content: () -> some View) -> some View {
-        Button { openCondition = condition } label: { content().contentShape(Rectangle()) }
+        let light = hour.light(for: condition.reasonNames)
+        return Button { openCondition = condition } label: {
+            content().contentShape(Rectangle()).environment(\.causeTint, light?.causeTint)
+        }
             .buttonStyle(.plain)
+            .accessibilityValue(light?.causeTint == nil ? "" : tr("Sets the light: %@", light?.title ?? ""))
             .accessibilityHint(tr("Opens a chart and more about this value"))
     }
 
@@ -979,6 +983,7 @@ private struct WindView: View {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(hour.windSpeedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(hour.windGustMs))" } ?? "–")
                     .valueFont(size: size)
+                    .causeTinted()
                 if let from = hour.windFromDeg {
                     Image(systemName: "arrow.up")
                         .scaledSystemFont(size: size * 0.6, weight: .semibold, relativeTo: .title2, maxGrowth: 1.35)
@@ -1056,6 +1061,7 @@ struct TemperatureView: View {
                 .foregroundStyle(.secondary)
             Text(Format.degrees(celsius, digits: digits))
                 .valueFont(size: size)
+                .causeTinted()
             if let caption {
                 Text(caption)
                     .font(.caption)
@@ -1194,6 +1200,7 @@ struct MetricView: View {
             // Two lines rather than cut off, should a value outgrow its column.
             Text(value)
                 .valueFont(size: size)
+                .causeTinted()
                 .lineLimit(2)
                 .minimumScaleFactor(0.85)
                 .alignmentGuide(.metricValue) { $0[.firstTextBaseline] }

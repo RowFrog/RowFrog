@@ -76,3 +76,27 @@ struct ColdWaterGlyph: View {
             .accessibilityLabel(kit.title)
     }
 }
+
+extension Light {
+    /// The colour a value takes while it sets the light: amber or red, never green,
+    /// so a coloured value always means "this is why" (owner's pick C1/T2, 5 Nov 2026).
+    var causeTint: Color? { self == .green ? nil : color }
+}
+
+extension EnvironmentValues {
+    /// The light colour of the value shown inside, while that value sets the light.
+    @Entry var causeTint: Color? = nil
+}
+
+extension View {
+    /// Colours a value in the light it sets, if it sets one (see `Light.causeTint`).
+    func causeTinted() -> some View { modifier(CauseTinted()) }
+}
+
+private struct CauseTinted: ViewModifier {
+    @Environment(\.causeTint) private var tint
+
+    func body(content: Content) -> some View {
+        if let tint { content.foregroundStyle(tint) } else { content }
+    }
+}

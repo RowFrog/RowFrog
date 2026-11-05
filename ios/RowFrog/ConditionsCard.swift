@@ -109,6 +109,20 @@ struct ConditionTiles: View {
     }
 }
 
+extension View {
+    /// The tile that sets the light gets a faint wash and a thin rim in the light's colour
+    /// (owner's pick T2, 5 Nov 2026). To go back to T1 (coloured value only), make this
+    /// return `self`.
+    @ViewBuilder func causeHighlight(_ tint: Color?) -> some View {
+        if let tint {
+            background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
+                .overlay(RoundedRectangle(cornerRadius: 10).strokeBorder(tint.opacity(0.55), lineWidth: 1.5))
+        } else {
+            self
+        }
+    }
+}
+
 /// A value the closed top tile hides, as one line under its sun line while it counts for
 /// the rowing light (the "smart peek"): with its tile's own title, value and short line,
 /// so it reads the same as the tile it stands for, in either language.
@@ -128,7 +142,7 @@ struct TilePeekLine: View {
                 .lineLimit(1)
             Text(tile.value)
                 .fontWeight(.semibold)
-                .foregroundStyle(light.map { $0 == .green ? Color.primary : $0.color } ?? .primary)
+                .foregroundStyle(light?.causeTint ?? .primary)
                 .lineLimit(1)
             HStack(spacing: 4) {
                 Text(verbatim: "·")
@@ -344,6 +358,8 @@ private struct ConditionTile: View {
                     HStack(alignment: .center) {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                                .foregroundStyle(cause ?? .primary)
+                                .accessibilityLabel(cause == nil ? value : value + ", " + tr("Sets the light: %@", light?.title ?? ""))
                             detailLine.font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 0)
@@ -356,11 +372,17 @@ private struct ConditionTile: View {
         }
         .padding(8)
         .frame(maxWidth: .infinity, minHeight: 78, maxHeight: .infinity, alignment: .topLeading)
+        // Before the tile's own background, so the wash sits on top of it.
+        .causeHighlight(cause)
         .background(surface.tile.opacity(offSeason ? 0.5 : 1), in: RoundedRectangle(cornerRadius: 10))
         .contentShape(Rectangle())
     }
 
     static let graphicHeight: CGFloat = 44
+
+    private var light: Light? { hour.light(for: condition.reasonNames) }
+    /// Amber or red while this value sets the light; its value then takes that colour.
+    private var cause: Color? { light?.causeTint }
 
     private func header(_ title: String) -> some View {
         HStack(spacing: 4) {
@@ -375,9 +397,6 @@ private struct ConditionTile: View {
                 } else if let status = data.radarStatus, data.isNow {
                     RadarMark(status: status)
                 }
-            }
-            if let light = hour.light(for: condition.reasonNames) {
-                TrafficLightDot(light: light, size: 8)
             }
             Image(systemName: "chevron.right").font(.caption2.weight(.semibold))
         }

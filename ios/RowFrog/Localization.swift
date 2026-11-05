@@ -1059,6 +1059,7 @@ enum German {
         "The top tile opens into all values: tap \"All values\" under it or pull it down. Values it hides show as a line while they matter for the rowing light.": "Die obere Kachel öffnet sich zu allen Werten: unten auf „Alle Werte“ tippen oder nach unten ziehen. Versteckte Werte stehen als eine Zeile darin, solange sie für die Ruderampel zählen.",
         "Current conditions is a card of its own under the top tile, as before.": "Aktuelle Bedingungen ist eine eigene Karte unter der oberen Kachel, wie bisher.",
         "in the top tile": "in der oberen Kachel",
+        "Sets the light: %@": "Stellt die Ampel: %@",
         "All values": "Alle Werte",
         "All values in the top tile": "Alle Werte in der oberen Kachel",
         "Tap \"All values\" under the tile or pull it down to see every value there. Pull up or tap \"Fewer values\" to close it.": "Tippe unter der Kachel auf „Alle Werte“ oder ziehe sie nach unten, um dort jeden Wert zu sehen. Nach oben ziehen oder „Weniger Werte“ tippen schließt sie wieder.",
