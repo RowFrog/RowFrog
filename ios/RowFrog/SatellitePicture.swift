@@ -870,8 +870,28 @@ struct SatelliteOverlay: View {
                 // blue with a house. Names go right, left, above or below the mark,
                 // wherever they don't touch another; with no room the mark stays alone.
                 var taken: [CGRect] = []
-                let marks = view.clubs.map { club in (club, point(club.launchPoint.lon, club.launchPoint.lat)) }
+                // Zoomed in far enough, a club with a launch point of its own stands at its
+                // clubhouse and oars mark the launch point (`ClubMarks`).
+                var oars: [(own: Bool, at: CGPoint)] = []
+                let marks = view.clubs.map { club -> (LakeClub, CGPoint) in
+                    let launch = point(club.launchPoint.lon, club.launchPoint.lat)
+                    guard let house = ClubPlaces.clubhouse(forID: club.id) else { return (club, launch) }
+                    let at = point(house.longitude, house.latitude)
+                    guard ClubMarks.shouldSplit(apart: hypot(at.x - launch.x, at.y - launch.y), now: false) else { return (club, launch) }
+                    oars.append((club.id == clubID, launch))
+                    return (club, at)
+                }
                 for (_, p) in marks { taken.append(CGRect(x: p.x - 9, y: p.y - 9, width: 18, height: 18)) }
+                for mark in oars {
+                    taken.append(CGRect(x: mark.at.x - 9, y: mark.at.y - 9, width: 18, height: 18))
+                    let dot = Path(ellipseIn: CGRect(x: mark.at.x - 9, y: mark.at.y - 9, width: 18, height: 18))
+                    context.fill(dot, with: .color(mark.own ? .blue : Color(white: 0.45)))
+                    context.stroke(dot, with: .color(.white), lineWidth: 1.5)
+                    context.draw(
+                        Text(Image(systemName: ClubMarks.launchSymbol)).font(.system(size: 9, weight: .bold)).foregroundStyle(.white),
+                        at: mark.at, anchor: .center
+                    )
+                }
                 // The page's club last, so it stays on top of clubs sharing its boathouse.
                 for (club, p) in marks.sorted(by: { ($0.0.id == clubID ? 1 : 0) < ($1.0.id == clubID ? 1 : 0) }) {
                     let own = club.id == clubID
@@ -1548,6 +1568,7 @@ struct SatelliteLegend: View {
                         if on.contains(.clubs) {
                             row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
                             row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
+                            row(ClubMarkIcon(color: .blue, symbol: ClubMarks.launchSymbol), tr("Zoomed in: the club's pin moves to its clubhouse and oars mark the launch point the forecast is for"))
                         }
                     }
                 }

@@ -1655,11 +1655,13 @@ function launchPointBody(club, mapId) {
   const { lat, lon } = club.launchPoint;
   // Opens in the map service chosen under Settings > Maps.
   const maps = MAPS_APPS[store.mapsApp];
-  const unconfirmed = club.source === "drv" ? t("Not yet confirmed by the club; taken from the club's address.") : t("Not yet confirmed by the club; taken from OpenStreetMap.");
+  // Which point the forecast is for, said for this club (as in the app's Location sheet).
+  const unconfirmed = club.source === "drv"
+    ? t("No launch point set yet: the forecast, waves and warnings are for the club's address.")
+    : t("No launch point set yet: the forecast, waves and warnings are for the club's place on OpenStreetMap.");
   return `
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
-    <p>${h(t("The forecast, waves and warnings are for this point."))}</p>
-    ${club.launchPointVerified ? "" : `<p class="orange small">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
+    ${club.launchPointVerified ? `<p>${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">

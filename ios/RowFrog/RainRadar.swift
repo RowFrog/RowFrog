@@ -751,6 +751,7 @@ private struct RadarMapView: UIViewRepresentable {
         let pin = MKPointAnnotation()
         pin.coordinate = center
         map.addAnnotation(pin)
+        context.coordinator.splitter.track(pin, clubID: clubID, isOwn: true)
         map.addOverlay(RadarImageOverlay(region: region), level: .aboveRoads)
         return map
     }
@@ -767,6 +768,12 @@ private struct RadarMapView: UIViewRepresentable {
         let symbol: String
         var renderer: RadarImageRenderer?
         var pending: UIImage?
+        /// The club's pin and its launch point's oars apart when zoomed in (`ClubMarks`).
+        let splitter = ClubPinSplitter()
+
+        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+            splitter.update(mapView)
+        }
 
         init(symbol: String) { self.symbol = symbol }
 
@@ -781,6 +788,7 @@ private struct RadarMapView: UIViewRepresentable {
 
         /// The club as on the other maps: blue, with a house for the home base.
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            if let oars = annotation as? LaunchOarsPin { return ClubPinSplitter.view(for: oars) }
             guard annotation is MKPointAnnotation else { return nil }
             let view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: nil)
             view.glyphImage = UIImage(systemName: symbol)

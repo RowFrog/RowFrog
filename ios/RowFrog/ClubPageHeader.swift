@@ -107,6 +107,11 @@ struct ClubPageHeader: View {
             try? await Task.sleep(for: .milliseconds(1500))
             showingLaunchPoint = true
         }
+        // The clubhouse, found once a month, for the split pins on every map of this club.
+        .task(id: club.id) {
+            guard !club.isOwnPlace, club.launchPointVerified else { return }
+            _ = await ClubPlaces.shared.place(for: club)
+        }
     }
 
     private var place: String {

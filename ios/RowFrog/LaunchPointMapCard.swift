@@ -147,21 +147,11 @@ struct LaunchPointDetails: View {
             .onChange(of: club.id) { live = startsLive }
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
-            // Fixed text, so the sheet keeps its height while the pins split and join.
-            if clubhouse != nil {
-                Label(tr("The forecast, waves and warnings are for the launch point."), systemImage: Self.launchSymbol)
-            } else {
-                Text(tr("The forecast, waves and warnings are for this point."))
-            }
+            forecastPointLine
             if mapApp == .apple, let name = place?.name {
                 Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            }
-            if !club.launchPointVerified {
-                Label(club.source == "drv" ? tr("Not yet confirmed by the club; taken from the club's address.") : tr("Not yet confirmed by the club; taken from OpenStreetMap."), systemImage: "mappin.slash")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
             }
             HStack {
                 Text(String(format: tr("%.5f° N, %.5f° E"), club.launchPoint.lat, club.launchPoint.lon))
@@ -191,35 +181,36 @@ struct LaunchPointDetails: View {
         }
         .task(id: club.id) {
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
-            clubhouse = Self.clubhouse(of: place, launch: coordinate)
+            clubhouse = ClubMarks.clubhouse(of: place, launch: coordinate, verified: club.launchPointVerified)
             split = false
         }
     }
 
-    /// The launch point's own mark once the club's pin has moved to the clubhouse.
-    static let launchSymbol = "oar.2.crossed"
-    /// Closer than this, the clubhouse counts as the launch point itself.
-    static let sameSpot: CLLocationDistance = 30
-    /// Screen points between the pins before they split, and before they join again.
-    static let splitAt: CGFloat = 48
-    static let joinAt: CGFloat = 40
-
-    /// The club's Apple Maps place as the clubhouse, unless it is at the launch point.
-    static func clubhouse(of place: MKMapItem?, launch: CLLocationCoordinate2D) -> CLLocationCoordinate2D? {
-        guard let location = place?.placemark.location else { return nil }
-        let distance = location.distance(from: CLLocation(latitude: launch.latitude, longitude: launch.longitude))
-        return distance >= sameSpot ? location.coordinate : nil
+    /// Which point this club's forecast is for, said for this club. It doesn't
+    /// change with the zoom, so the sheet keeps its height as the pins split and join.
+    @ViewBuilder private var forecastPointLine: some View {
+        if club.launchPointVerified {
+            if clubhouse != nil {
+                Label(tr("The forecast, waves and warnings are for the launch point (oars), not the clubhouse."), systemImage: ClubMarks.launchSymbol)
+            } else {
+                Label(tr("The forecast, waves and warnings are for the club's launch point."), systemImage: ClubMarks.launchSymbol)
+            }
+        } else {
+            Label(club.source == "drv"
+                  ? tr("No launch point set yet: the forecast, waves and warnings are for the club's address.")
+                  : tr("No launch point set yet: the forecast, waves and warnings are for the club's place on OpenStreetMap."),
+                  systemImage: "mappin.slash")
+                .foregroundStyle(.orange)
+        }
     }
 
-    /// Whether the two pins are far enough apart on screen to show both, with
-    /// some room between splitting and joining so they don't flicker.
+    /// Whether the two pins are far enough apart on screen to show both (`ClubMarks`).
     static func shouldSplit(_ clubhouse: CLLocationCoordinate2D, from launch: CLLocationCoordinate2D,
                             span: MKCoordinateSpan, size: CGSize, now: Bool) -> Bool {
         guard size.width > 0, size.height > 0, span.latitudeDelta > 0, span.longitudeDelta > 0 else { return false }
         let dx: Double = (clubhouse.longitude - launch.longitude) / span.longitudeDelta * Double(size.width)
         let dy: Double = (clubhouse.latitude - launch.latitude) / span.latitudeDelta * Double(size.height)
-        let apart = CGFloat((dx * dx + dy * dy).squareRoot())
-        return apart >= (now ? joinAt : splitAt)
+        return ClubMarks.shouldSplit(apart: CGFloat((dx * dx + dy * dy).squareRoot()), now: now)
     }
 
     /// A drag on the map moves the map; outside it the page scrolls.
@@ -230,7 +221,7 @@ struct LaunchPointDetails: View {
             Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: split ? clubhouse ?? coordinate : coordinate)
                 .tint(.blue)
             if split {
-                Marker(tr("Launch point"), systemImage: Self.launchSymbol, coordinate: coordinate)
+                Marker(tr("Launch point"), systemImage: ClubMarks.launchSymbol, coordinate: coordinate)
                     .tint(.blue)
             }
         }

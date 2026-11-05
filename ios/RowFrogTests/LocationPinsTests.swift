@@ -28,9 +28,22 @@ final class LocationPinsTests: XCTestCase {
     func testAClubhouseAtTheLaunchPointGetsNoPinOfItsOwn() {
         let near = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 47.99677, longitude: 11.34745)))
         let away = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 47.99766, longitude: 11.34745)))
-        XCTAssertNil(LaunchPointDetails.clubhouse(of: near, launch: launch))
-        XCTAssertNil(LaunchPointDetails.clubhouse(of: nil, launch: launch))
-        XCTAssertNotNil(LaunchPointDetails.clubhouse(of: away, launch: launch))
+        XCTAssertNil(ClubMarks.clubhouse(of: near, launch: launch, verified: true))
+        XCTAssertNil(ClubMarks.clubhouse(of: nil, launch: launch, verified: true))
+        XCTAssertNotNil(ClubMarks.clubhouse(of: away, launch: launch, verified: true))
+    }
+
+    func testAClubWithNoLaunchPointSetKeepsOnePin() {
+        // Its one point is the club itself, so there is nothing to split from.
+        let away = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 47.99766, longitude: 11.34745)))
+        XCTAssertNil(ClubMarks.clubhouse(of: away, launch: launch, verified: false))
+    }
+
+    func testEveryMapUsesTheSameThresholds() {
+        XCTAssertFalse(ClubMarks.shouldSplit(apart: 47, now: false))
+        XCTAssertTrue(ClubMarks.shouldSplit(apart: 48, now: false))
+        XCTAssertTrue(ClubMarks.shouldSplit(apart: 40, now: true))
+        XCTAssertFalse(ClubMarks.shouldSplit(apart: 39, now: true))
     }
 
     func testNoSplitBeforeTheMapHasASize() {
