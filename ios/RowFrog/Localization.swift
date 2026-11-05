@@ -828,6 +828,7 @@ enum German {
         "Weather and a rowing forecast for your club's launch point.": "Wetter und eine Ruder-Vorhersage für den Steg deines Vereins.",
         "Every page starts with the rowing light for the hour ahead.": "Jede Seite beginnt mit der Ruderampel für die kommende Stunde.",
         "Below the light you find what matters on the water.": "Unter der Ampel steht, was auf dem Wasser zählt.",
+        "The tile with the light shows what matters on the water. Tap “All values” under it for the rest.": "Die Kachel mit der Ampel zeigt, was auf dem Wasser zählt. Tippe darunter auf „Alle Werte“ für den Rest.",
         "Official warnings come right under the rowing light.": "Amtliche Warnungen stehen direkt unter der Ruderampel.",
         "Keep all the places you row in one list.": "Alle Orte, an denen du ruderst, in einer Liste.",
         "Open the settings with the cog at the top of the location list.": "Die Einstellungen öffnest du mit dem Zahnrad oben in der Ortsliste.",
