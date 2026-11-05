@@ -89,21 +89,24 @@ test("a first visit starts with the safety notice, which needs a tick", async ()
 test("the club page shows the sample forecast and every tile opens its value page", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/mrc-1880`);
+  // Current conditions sits in the top tile: "All values" opens its tiles, and stays open (app #315).
+  const sel = ".card.now .tt-open [data-tile]";
+  await page.locator(".card.now .all-values").first().click({ timeout: 20000 });
   // The page draws more than once while it loads; wait until the tiles are there.
-  const found = await page.waitForFunction(() => {
-    const tiles = [...document.querySelectorAll(".card:not(.now) [data-tile]")].map((e) => e.dataset.tile);
+  const found = await page.waitForFunction((sel) => {
+    const tiles = [...document.querySelectorAll(sel)].filter((e) => e.offsetParent).map((e) => e.dataset.tile);
     return tiles.length >= 8 && tiles;
-  }, null, { timeout: 20000 });
+  }, sel, { timeout: 20000 });
   const tiles = await found.jsonValue();
   for (const tile of new Set(tiles)) {
-    await page.locator(`.card:not(.now) [data-tile="${tile}"]`).first().click();
+    await page.locator(`${sel}[data-tile="${tile}"]`).first().click();
     await page.waitForFunction((t) => location.hash.includes(`/value/${t}`), tile);
     await page.waitForTimeout(300);
     assert.deepEqual(errors, [], `after opening ${tile}`);
     // A value page that cannot load its forecast goes back to the club page by itself.
     assert.ok(await page.evaluate((t) => location.hash.includes(`/value/${t}`), tile), `${tile} went back`);
     await page.goBack();
-    await page.waitForFunction(() => document.querySelectorAll(".card:not(.now) [data-tile]").length >= 8, null, { timeout: 20000 });
+    await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent).length >= 8, sel, { timeout: 20000 });
   }
   await context.close();
 });

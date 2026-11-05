@@ -1150,3 +1150,24 @@ dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 .route-line > .sub { min-width: 0; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .route-line + .route-bar { margin: 2px 0 8px; }
 .route-controls { justify-content: space-between; }
+/* ---- Current conditions inside the top tile (app #315, option B) ---- */
+.card.now .tt-open { display: none; }
+.card.now.all-open .tt-open { display: block; margin-top: 4px; }
+.card.now.all-open .tt-closed { display: none; }
+.all-values { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 44px; margin-bottom: -8px; color: var(--accent); font-size: 15px; font-weight: 500; touch-action: pan-x; }
+.all-values .i { font-size: 13px; transition: transform .25s ease; }
+.card.now.all-open .all-values .i { transform: rotate(180deg); }
+@media (prefers-reduced-motion: reduce) { .all-values .i { transition: none; } }
+/* A hidden value that counts for the light, as one line in one text size (TilePeekLine, P3). */
+.peek-line { display: flex; align-items: baseline; gap: 6px; margin: 8px 0 0; font-size: 15px; cursor: pointer; white-space: nowrap; }
+.peek-line .peek-title { display: inline-flex; align-items: center; gap: 4px; color: var(--sub); font-weight: 600; }
+.peek-line strong { font-weight: 600; }
+.peek-line .sub { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.peek-line .chev { margin-left: auto; color: var(--sub); font-size: 12px; opacity: .6; }
+/* The value that sets the light in its colour (C1), its tile washed and rimmed in it (T2); cold water in blue (W2). */
+.cause-amber, .tile.cause-amber strong { color: var(--amber); }
+.cause-red, .tile.cause-red strong { color: var(--red); }
+.cause-cold, .tile.cause-cold strong { color: var(--kit); }
+.tile.cause-amber { background: color-mix(in srgb, var(--amber) 12%, var(--tile)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--amber) 55%, transparent); }
+.tile.cause-red { background: color-mix(in srgb, var(--red) 12%, var(--tile)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--red) 55%, transparent); }
+.tile.cause-cold { background: color-mix(in srgb, var(--kit) 12%, var(--tile)); box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--kit) 55%, transparent); }

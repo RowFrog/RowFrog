@@ -51,7 +51,10 @@ export function layoutFor(clubId) {
 }
 
 /** Cards shown elsewhere on the page for now, left out of the card list (AppSettings.cardsElsewhere). */
-export const cardsElsewhere = () => (load("rf.launchPointInHeader", true) !== false ? ["launchPoint"] : []);
+export const cardsElsewhere = () => [
+  ...(load("rf.launchPointInHeader", true) !== false ? ["launchPoint"] : []),
+  ...(load("rf.combinedTopTile", true) !== false ? ["conditions"] : []),
+];
 
 /** The cards to draw, in order. */
 export const visibleCards = (layout, elsewhere = cardsElsewhere()) => layout.order.filter((c) => !layout.hidden.includes(c) && ON_WEBSITE.includes(c) && !elsewhere.includes(c));
@@ -120,6 +123,7 @@ export function openArrange(club, done) {
         <ul class="card group arrange-list">
           ${cardsElsewhere().includes("launchPoint") ? fixedRow(t("Launch point"), "map-pin", t("in the club header")) : ""}
           ${fixedRow(t("Rowing light"), "circle", t("always first"))}
+          ${cardsElsewhere().includes("conditions") ? fixedRow(t("Current conditions"), "gauge", t("in the top tile")) : ""}
           ${fixedRow(t("Warnings"), "triangle-alert", t("right under it, while one is issued"))}
           ${shown().map(cardRow).join("")}
         </ul>
