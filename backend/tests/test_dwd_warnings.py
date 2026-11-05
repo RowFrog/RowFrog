@@ -225,6 +225,7 @@ def test_forecast_says_no_warning_after_checking(monkeypatch):
 
 def test_forecast_reports_unavailable_warnings(monkeypatch):
     _fake_weather(monkeypatch)
+    monkeypatch.setattr(dwd_warnings, "RETRY_DELAYS_S", (0, 0))
     monkeypatch.setattr(api.httpx, "AsyncClient", _serve(lambda request: httpx.Response(503)))
     _reset()
     body = TestClient(api.app).get("/clubs/mrc-1880/forecast").json()
@@ -363,3 +364,40 @@ def test_clubs_without_a_warning_service_do_not_claim_no_warning(monkeypatch):
     assert body["warnings"]["local"]["checked"] is False and body["warnings"]["local"]["service"] == "MeteoSwiss"
     assert seen.count("dwd:Warnungen_Gemeinden") == 1, "DWD is asked for the German club only"
     assert mrc["warnings"]["local"]["checked"] is True
+
+
+def test_dwd_requests_are_retried_after_a_dropped_connection_or_server_error(monkeypatch):
+    monkeypatch.setattr(dwd_warnings, "RETRY_DELAYS_S", (0, 0))
+    answers = [httpx.ConnectError(""), httpx.Response(502), httpx.Response(200, json={"features": []})]
+
+    def handler(request):
+        answer = answers.pop(0)
+        if isinstance(answer, Exception):
+            raise answer
+        return answer
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await dwd_warnings.fetch_lake_warnings(client)
+
+    assert asyncio.run(run()) == [] and answers == []
+
+
+def test_dwd_gives_up_after_three_tries(monkeypatch):
+    monkeypatch.setattr(dwd_warnings, "RETRY_DELAYS_S", (0, 0))
+    tries = []
+
+    def handler(request):
+        tries.append(1)
+        raise httpx.ConnectError("")
+
+    async def run():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(handler)) as client:
+            return await dwd_warnings.fetch_local_warnings(client, 11.34, 47.99)
+
+    try:
+        asyncio.run(run())
+        raise AssertionError("expected ConnectError")
+    except httpx.ConnectError:
+        pass
+    assert len(tries) == 3
