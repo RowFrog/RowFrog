@@ -71,6 +71,19 @@ final class LocationPinsTests: XCTestCase {
         XCTAssertFalse(ClubMarks.shouldSplit(apart: 39, now: true))
     }
 
+    func testTheSheetKnowsItsScaleBeforeTheFirstMove() {
+        // A square region on a wider map: the height sets the scale, the width shows more.
+        let region = MKCoordinateRegion(center: launch, latitudinalMeters: 700, longitudinalMeters: 700)
+        let span = LaunchPointDetails.fittedSpan(region, size: size)
+        XCTAssertEqual(span.latitudeDelta, region.span.latitudeDelta, accuracy: 1e-9)
+        XCTAssertEqual(span.longitudeDelta, region.span.longitudeDelta * 360 / 320, accuracy: 1e-9)
+        // Kölner RG 1891's clubhouse, 204 m from its launch point, splits off at 700 m.
+        let steg = CLLocationCoordinate2D(latitude: 50.89377, longitude: 7.00415)
+        let house = CLLocationCoordinate2D(latitude: 50.892302, longitude: 7.002394)
+        let wide = MKCoordinateRegion(center: steg, latitudinalMeters: 700, longitudinalMeters: 700)
+        XCTAssertTrue(LaunchPointDetails.shouldSplit(house, from: steg, span: LaunchPointDetails.fittedSpan(wide, size: size), size: size, now: false))
+    }
+
     func testNoSplitBeforeTheMapHasASize() {
         let clubhouse = CLLocationCoordinate2D(latitude: 47.99766, longitude: 11.34745)
         let span = MKCoordinateSpan(latitudeDelta: 0.001, longitudeDelta: 0.001)

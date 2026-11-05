@@ -273,7 +273,7 @@ struct LaunchPointDetails: View {
             .padding(8)
             .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
         }
-        .onAppear { reset(animated: false) }
+        .onAppear { reset(animated: false); updateSplit() }
         .onChange(of: club.id) { reset(animated: false) }
         // A taller map (the sheet pulled up) keeps MapKit's scale; refit it to the
         // launch point unless the user had moved it.
@@ -317,12 +317,26 @@ struct LaunchPointDetails: View {
     }
 
     private func updateSplit() {
-        guard let clubhouse, let span else { return }
+        guard let clubhouse else { return }
+        // Until the map reports its camera (only after a move), the span it fitted the
+        // home region to: the whole region shows, so the scale is set by the tighter side.
+        let span = self.span ?? Self.fittedSpan(home, size: mapSize)
         let now = Self.shouldSplit(clubhouse, from: coordinate, span: span, size: mapSize, now: split)
         if now != split { withAnimation(.smooth) { split = now } }
     }
 
+    /// The span a map of this size shows when it fits the region.
+    static func fittedSpan(_ region: MKCoordinateRegion, size: CGSize) -> MKCoordinateSpan {
+        guard size.width > 0, size.height > 0 else { return region.span }
+        // Degrees per point on each side; the map uses the larger, so all of the region fits.
+        let lat = region.span.latitudeDelta / Double(size.height), lon = region.span.longitudeDelta / Double(size.width)
+        let latPerLon = region.span.latitudeDelta / region.span.longitudeDelta
+        let scale = max(lat, lon * latPerLon)
+        return MKCoordinateSpan(latitudeDelta: scale * Double(size.height), longitudeDelta: scale / latPerLon * Double(size.width))
+    }
+
     private func reset(animated: Bool) {
+        span = nil
         refit.toggle()
         if animated {
             withAnimation { position = .region(home) }
@@ -330,6 +344,7 @@ struct LaunchPointDetails: View {
             position = .region(home)
         }
         moved = false
+        updateSplit()
     }
 
     private func openInMaps() {
