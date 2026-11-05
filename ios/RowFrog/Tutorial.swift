@@ -48,6 +48,8 @@ enum Tutorial {
         if defaults.bool(forKey: "RWBoatTip") { Tips.showTipsForTesting([BoatsElsewhereTip.self]) }
         // `-RWPlaceTip YES` shows the tip at the place line under the club's name.
         if defaults.bool(forKey: "RWPlaceTip") { Tips.showTipsForTesting([PlaceLineTip.self]) }
+        // `-RWSuggestTip YES` shows the tip at "Suggest the launch point" in the Location sheet.
+        if defaults.bool(forKey: "RWSuggestTip") { Tips.showTipsForTesting([SuggestLaunchPointTip.self]) }
         if defaults.bool(forKey: "RWLaterTips") {
             Tips.hideTipsForTesting([TopTileTip.self, RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
             Tips.showTipsForTesting([AllValuesTip.self, RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
@@ -650,6 +652,14 @@ struct PlaceLineTip: Tip {
     var title: Text { Text(tr("Where the forecast is for")) }
     var message: Text? { Text(tr("Tap the place to see on a map the spot the forecast is for, with directions.")) }
     var image: Image? { Image(systemName: "mappin.and.ellipse") }
+}
+
+/// At "Suggest the launch point" in the Location sheet, for clubs whose club hasn't confirmed it.
+/// The button goes once a suggestion was sent, and the tip with it.
+struct SuggestLaunchPointTip: Tip {
+    var title: Text { Text(tr("Know the launch point?")) }
+    var message: Text? { Text(tr("Know where this club's boats go on the water? Suggest the launch point.")) }
+    var image: Image? { Image(systemName: ClubMarks.launchSymbol) }
 }
 
 struct LaunchPointTip: Tip {

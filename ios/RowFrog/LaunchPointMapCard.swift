@@ -1,5 +1,6 @@
 import MapKit
 import SwiftUI
+import TipKit
 
 /// Where the forecast is for: the club's launch point on a map, with its
 /// coordinates and a button to open it in Apple Maps. The map is a still
@@ -107,6 +108,7 @@ struct LaunchPointDetails: View {
     /// The sheet to suggest a launch point, and whether one was sent for this club.
     @State private var suggesting = false
     @State private var suggested = false
+    @AppStorage(Tutorial.seenKey) private var tourSeen = false
     /// Apple's satellite pictures instead of the map, remembered for every launch point.
     @AppStorage("RWLaunchImagery") private var imagery = false
     /// The live map after a tap; a still picture again once the page is swiped away.
@@ -210,8 +212,13 @@ struct LaunchPointDetails: View {
                     .foregroundStyle(.secondary)
             } else {
                 Button(club.hasLaunchPoint ? tr("Suggest a better launch point") : tr("Suggest the launch point"),
-                       systemImage: ClubMarks.launchSymbol) { suggesting = true }
+                       systemImage: ClubMarks.launchSymbol) {
+                    SuggestLaunchPointTip().invalidate(reason: .actionPerformed)
+                    suggesting = true
+                }
                     .font(.caption.weight(.semibold))
+                    // Only in the Location sheet (the live map), not in the page's card.
+                    .modifier(SuggestLaunchPointTipAnchor(shown: tourSeen && startsLive))
                     .sheet(isPresented: $suggesting, onDismiss: {
                         suggested = LaunchPointSuggestion.wasSent(forID: club.id)
                     }) {
@@ -442,6 +449,19 @@ struct LaunchPointSnapshot: View {
                     image = snapshot.image
                 }
             }
+        }
+    }
+}
+
+/// `popoverTip` with an optional tip needs iOS 18.4, so the tip is attached only when it applies.
+private struct SuggestLaunchPointTipAnchor: ViewModifier {
+    let shown: Bool
+
+    func body(content: Content) -> some View {
+        if shown {
+            content.popoverTip(SuggestLaunchPointTip(), arrowEdge: .top)
+        } else {
+            content
         }
     }
 }
