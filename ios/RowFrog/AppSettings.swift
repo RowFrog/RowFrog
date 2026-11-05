@@ -191,9 +191,12 @@ final class AppSettings {
     var activeDateFormat: DateFormat { developerOptions || Self.pinned(Keys.dateFormat) ? dateFormat : .device }
 
     /// Whether a setting was given as a launch argument, e.g. `-RWLanguage de`.
-    private static func pinned(_ key: String) -> Bool {
-        ProcessInfo.processInfo.arguments.contains("-" + key)
-    }
+    /// Read once: `tr` asks for the language on every text, and copying the
+    /// arguments each time kept the main thread busy (iOS 18 UI test, #355).
+    private static func pinned(_ key: String) -> Bool { pinnedKeys.contains(key) }
+    private static let pinnedKeys: Set<String> = Set(
+        ProcessInfo.processInfo.arguments.filter { $0.hasPrefix("-RW") }.map { String($0.dropFirst()) }
+    )
 
     /// The order of the cards on every club page, and the cards switched off.
     var pageLayout: PageLayout { didSet { defaults.set(try? JSONEncoder().encode(pageLayout), forKey: Keys.pageLayout) } }
