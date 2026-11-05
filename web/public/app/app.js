@@ -615,13 +615,16 @@ async function renderClub(id) {
   const hour = currentHour(forecast.hours, now);
   const warnings = forecast.warnings;
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
+  // Current conditions' tip, one at a time: the water level's first while the lake is let down (Forggensee),
+  // the water estimate's only where no station measures the water. Inside the top tile, it sits under that.
+  const conditionsTip = isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
+    : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate";
+  const topTips = tip("topTile") || (store.combinedTopTile ? tip(conditionsTip) : "");
   // The cards in the order chosen under "Arrange this page".
   const cards = {
     // One tip at a time; the water level's first while the lake is let down (Forggensee),
     // the water estimate's only where no station measures the water.
-    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint), radarStatus(club?.launchPoint)),
-      isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
-        : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate"),
+    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint), radarStatus(club?.launchPoint)), conditionsTip),
     // Off by default: the rain tile shows the radar; "Arrange this page" switches the card on.
     radar: () => (club?.launchPoint ? radarCard(club.launchPoint) : ""),
     lakeView: () => (forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""),
@@ -633,8 +636,8 @@ async function renderClub(id) {
     <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right")}</div>
     ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
-    ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint) })}
-    ${tip("topTile")}
+    ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
+    ${topTips}
     ${(waterForHour(raw, hour) ?? 99) < COLD.waterC ? tip("coldWater") : ""}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
     <div class="cards">${visibleCards(layoutFor(id)).map((c) => cards[c]?.() ?? "").join("")}</div>
@@ -1112,7 +1115,9 @@ function wireClubPage(id, club, raw, forecast, hour) {
     const lakeMap = root.querySelector("#lake-view .lake-card")
       ? `<a class="pill wide" href="#/lake/${encodeURIComponent(forecast.lakeId)}/${encodeURIComponent(id)}?at=${encodeURIComponent(at.time)}">${icon("map")} ${h(t("Lake map at %@", dayTime(at.time)))}</a>`
       : "";
-    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar }) + conditionsCard(forecast, at, radar, radarStatus(club?.launchPoint)) + lakeMap, (sheet) => {
+    // With Current conditions in the top tile, the hour's top tile opens into its tiles too.
+    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar, radarState: radarStatus(club?.launchPoint) })
+      + (store.combinedTopTile ? "" : conditionsCard(forecast, at, radar, radarStatus(club?.launchPoint))) + lakeMap, (sheet) => {
       // A value from a later hour opens its page at that hour.
       sheet.querySelectorAll("[data-tile]").forEach((t2) => t2.addEventListener("click", () => {
         location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
@@ -1161,7 +1166,39 @@ function wireSwipe(id) {
 }
 
 /** The top tile: the rowing light, why, the main values and the daylight (NowCard). */
-function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}) {
+/** The light a value sets in an hour while amber or red, never green, so a coloured value always means "this is why" (Condition.cause). */
+function causeOf(condition, hour) {
+  const light = REASONS[condition] ? lightFor(hour, REASONS[condition]) : null;
+  return light && light !== "green" ? light : null;
+}
+/** The class that colours a value in the light it sets, or the cold-water blue on the water (causeTinted, ColdWaterKit.valueTint). */
+const causeClass = (light, cold = false) => (light ? ` cause-${light}` : cold ? " cause-cold" : "");
+
+/**
+ * The values the closed combined top tile does not show, while they count for the light;
+ * ice also whenever the ice line would show (NowCard.peeks). On rivers and lowered lakes
+ * the Current or Water level tile takes the ice tile's place, so ice has no line there.
+ */
+function peeks(forecast, hour) {
+  const iceTile = !forecast.river && !isLowered(forecast.waterLevel);
+  return ["thunderstorm", "cloudCover", "humidity", "pressure", "uvIndex", "ice"].filter((c) => {
+    if (c === "ice") return iceTile && (iceValue(forecast) != null || causeOf(c, hour) != null);
+    return causeOf(c, hour) != null;
+  });
+}
+
+/** One hidden value as a line under the sun line, in its tile's own words, the value in the light's colour (TilePeekLine, P3). */
+function peekLine(condition, forecast, hour, radar) {
+  const parts = conditionTile(condition, forecast, hour, radar, null, true);
+  if (!parts) return "";
+  const light = causeOf(condition, hour);
+  return `<p class="peek-line" data-top="${condition}" role="button" tabindex="0"><span class="peek-title">${conditionIcon(condition)} ${h(conditionTexts()[condition][1])}</span>
+    <strong class="${causeClass(light).trim()}">${h(parts.value)}</strong>${parts.detail ? `<span class="sub">· ${h(parts.detail)}</span>` : ""}<span class="chev">${icon("chevron-right")}</span></p>`;
+}
+
+function nowCard(forecast, hour, { stale = false, at = null, radar = null, radarState = null } = {}) {
+  // Current conditions inside the top tile, opening into all its tiles (app #315).
+  const combined = store.combinedTopTile;
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
   const boat = t("For %@", boatInSentence(selectedBoat()));
@@ -1187,7 +1224,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
   const iceLine = forecast.ice ? iceDetail(forecast.ice) : t("Check the lake yourself");
   // As wide as its longest direction ("from NW"), so the column keeps one width whatever the wind does.
   const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
-  return `<section class="card now">
+  return `<section class="card now ${combined && store.topTileOpen ? "all-open" : ""}">
     <div class="now-head">
       ${dot(hour.light, 36, stale)}
       <div class="now-title">
@@ -1213,38 +1250,48 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
     </ul>
     ${adviceOnly()}
     <hr>
+    ${combined ? `<div class="tt-closed">` : ""}
     <div class="now-grid">
       <div class="air" data-top="temperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("temperature")} ${h(t("Air"))}</small>
-        <span class="v44">${h(degrees(hour.temperatureC))}</span>
+        <span class="v44${causeClass(causeOf("temperature", hour))}">${h(degrees(hour.temperatureC))}</span>
         ${hour.apparentTemperatureC != null ? `<small class="sub grey" data-top="feelsLike" role="button" tabindex="0">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
       </div>
       <div class="${water == null && estimate != null ? "secondary" : ""}" data-top="waterTemperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("waterTemperature")} ${h(t("Water"))}</small>
-        <span class="v28">${h(water == null && estimate != null ? degrees(estimate) : degrees(water?.celsius, 1))}</span>
+        <span class="v28${causeClass(causeOf("waterTemperature", hour), !!kit)}">${h(water == null && estimate != null ? degrees(estimate) : degrees(water?.celsius, 1))}</span>
         <small class="sub grey">${h(water ? t("Measured %@", time(water.measuredAt)) : estimate != null ? t("Estimated") : " ")}</small>
       </div>
       <div data-top="wind" role="button" tabindex="0">
         <small class="label">${conditionIcon("wind")} ${h(t("Wind"))}</small>
-        <span class="v28">${h(windRange(hour.windSpeedMs, hour.windGustMs))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
+        <span class="v28${causeClass(causeOf("wind", hour))}">${h(windRange(hour.windSpeedMs, hour.windGustMs))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
         <small class="sub stack">${[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => `<span aria-hidden="true">${h(unitLine(deg))}</span>`).join("")}<span>${h(unitLine(hour.windFromDeg))}</span></small>
       </div>
       <div data-top="waves" role="button" tabindex="0">
-        <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17">${h(waves(hour.waveHeightM))}</span>
+        <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17${causeClass(causeOf("waves", hour))}">${h(waves(hour.waveHeightM))}</span>
         ${wavesCaption ? `<small class="sub grey">${h(wavesCaption)}</small>` : ""}
       </div>
-      <div class="now-rain" data-top="precipitation" role="button" tabindex="0">${rainCell(d)}</div>
+      <div class="now-rain" data-top="precipitation" role="button" tabindex="0">${rainCell(d, causeOf("precipitation", hour))}</div>
       <div data-top="visibility" role="button" tabindex="0">
-        <small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span class="v17">${h(distance(hour.visibilityM))}</span>
+        <small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span class="v17${causeClass(causeOf("visibility", hour))}">${h(distance(hour.visibilityM))}</span>
         <small class="sub grey">${h(visibilityCaption)}</small>
       </div>
     </div>
-    ${ice ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17">${h(t(ice))}</span>
+    ${ice && !combined ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17${causeClass(causeOf("ice", hour))}">${h(t(ice))}</span>
       <small class="sub">${h(iceLine === t("Bays and harbours first") ? t("Bays first") : iceLine)}</small></p>` : ""}
     ${sun ? `<p class="daylight" data-top="daylight" data-order="all" role="button" tabindex="0" aria-description="${h(t("Opens sunrise, sunset and daylight"))}">${sun.up
       ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span class="sunline" aria-label="${h(t("Rowing until sunset at %@, %@ left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}"><span class="nowrap">${h(t("Rowing until"))} <span class="sunsym">${icon("sunset")}</span>${h(time(sun.sunset))}</span> · <span class="nowrap">${h(t("%@ left", duration(at ?? new Date(), sun.sunset)))}</span></span>`
       : `<span class="moon">${icon("moon-star")}</span><span class="sunline" aria-label="${h(t("Rowing again from sunrise at %@", time(sun.sunrise)))}">${h(t("Rowing again from"))} <span class="sunsym">${icon("sunrise")}</span>${h(time(sun.sunrise))}</span>`}<span class="chev">${icon("chevron-right")}</span></p>` : ""}
+    ${combined ? `${peeks(forecast, hour).map((c) => peekLine(c, forecast, hour, radar)).join("")}</div>
+    <div class="tt-open"><div class="tiles">${TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar, radarState)).join("")}</div></div>
+    ${allValuesButton()}` : ""}
   </section>`;
+}
+
+/** The words under the top tile that open and close it, as Apple's "Show more" rows (grip G2). */
+function allValuesButton(open = store.topTileOpen) {
+  return `<button class="all-values" aria-expanded="${open}" aria-description="${h(open ? t("Shows the short top tile again") : t("Opens all values in the top tile"))}">
+    <span>${h(open ? t("Fewer values") : t("All values"))}</span>${icon("chevron-down")}</button>`;
 }
 
 /** The top tile's rain value with the rain tile's line under it, so both always say the same. */
@@ -1262,10 +1309,41 @@ function wireCurrent(box, forecast) {
 }
 
 function wireTopTile(card, id, at = null) {
+  // Open or closed, the same on every club page and in the hour view: tap the words, or pull down or up.
+  const handle = card?.querySelector(".all-values");
+  if (handle) {
+    const toggle = () => {
+      closeTip(document, "allValues");
+      store.topTileOpen = !store.topTileOpen;
+      document.querySelectorAll(".card.now").forEach((c) => {
+        c.classList.toggle("all-open", store.topTileOpen);
+        c.querySelector(".all-values")?.replaceWith(document.createRange().createContextualFragment(allValuesButton()));
+      });
+      document.querySelectorAll(".card.now").forEach((c) => wireHandle(c));
+    };
+    const wireHandle = (c) => {
+      const b = c.querySelector(".all-values");
+      if (!b || b.dataset.wired) return;
+      b.dataset.wired = "1";
+      // A pull the wrong way (up while closed, down while open) does nothing.
+      let y = null;
+      let pull = 0;
+      b.addEventListener("pointerdown", (e) => (y = e.clientY));
+      b.addEventListener("pointerup", (e) => (pull = y == null ? 0 : e.clientY - y));
+      b.addEventListener("click", () => {
+        const wrong = (pull < -20 && !store.topTileOpen) || (pull > 20 && store.topTileOpen);
+        pull = 0;
+        if (!wrong) toggle();
+      });
+    };
+    wireHandle(card);
+  }
   for (const el of card?.querySelectorAll("[data-top]") ?? []) {
     const open = (e) => {
       e.stopPropagation();
-      location.hash = `#/club/${encodeURIComponent(id)}/value/${el.dataset.top}${at ? `/${encodeURIComponent(at)}` : ""}${el.dataset.order === "all" ? "" : "?order=top"}`;
+      // In the combined tile the value pages swipe through all values (ConditionTiles.order).
+      const all = el.dataset.order === "all" || store.combinedTopTile;
+      location.hash = `#/club/${encodeURIComponent(id)}/value/${el.dataset.top}${at ? `/${encodeURIComponent(at)}` : ""}${all ? "" : "?order=top"}`;
     };
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => {
@@ -1277,10 +1355,10 @@ function wireTopTile(card, id, at = null) {
   }
 }
 
-function rainCell(d) {
+function rainCell(d, cause = null) {
   const lines = rainLines(d);
   const caption = lines.detail === t("Dry next 24 h") ? t("Dry for 24 h") : lines.detail;
-  return `<small class="label">${conditionIcon("precipitation")} ${h(t("Precipitation"))}</small><span class="v17">${h(lines.value)}</span>
+  return `<small class="label">${conditionIcon("precipitation")} ${h(t("Precipitation"))}</small><span class="v17${causeClass(cause)}">${h(lines.value)}</span>
     ${caption ? `<small class="sub grey">${lines.fromRadar ? radarMark() : ""}${h(caption)}</small>` : ""}`;
 }
 
@@ -1444,7 +1522,7 @@ function conditionsCard(forecast, hour, radar = null, radarState = null) {
   return card(t("Current conditions"), "gauge", `${head}<div class="tiles">${tiles}</div>`, { legend: "conditions" });
 }
 
-function conditionTile(condition, forecast, hour, radar = null, radarState = null) {
+function conditionTile(condition, forecast, hour, radar = null, radarState = null, parts = false) {
   const i = forecast.hours.indexOf(hour);
   const next24 = forecast.hours.slice(Math.max(0, i), Math.max(0, i) + 24);
   const titles = conditionTexts();
@@ -1454,13 +1532,16 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
   // Only for now: a picked later hour is past the radar's two hours anyway (ConditionTile).
   const rainData = condition === "precipitation" ? conditionData(forecast, hour, radar) : null;
   const mark = !rainData ? "" : radarAhead(rainData) ? radarTitleMark() : radarState && rainData.isNow ? radarTitleMark(radarState) : "";
-  const header = (title) => `<span class="tile-head">${conditionIcon(condition)}<span>${h(title)}</span>${mark}${light && light !== "green" ? dot(light, 8) : ""}${icon("chevron-right")}</span>`;
-  // `mark`: rain read from the radar starts its line with the radar's symbol.
-  const tile = (value, detail, graphic = "", off = false, mark = "") => `<button class="tile ${off ? "off" : ""}" data-tile="${condition}">
-    ${header(titles[condition][1])}
-    <span class="tile-body"><span><strong>${h(value)}</strong><small>${mark}${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
+  // No dot: the value that sets the light takes its colour, and its tile a faint wash and rim (C1 + T2); the water blue while the life jacket shows (W2).
+  const header = (title) => `<span class="tile-head">${conditionIcon(condition)}<span>${h(title)}</span>${mark}${icon("chevron-right")}</span>`;
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
+  const cause = causeClass(causeOf(condition, hour), condition === "waterTemperature" && !!coldWaterKit(water?.celsius ?? estimate, currentLimits()));
+  const sets = causeOf(condition, hour) ? `, ${t("Sets the light: %@", lightTitle(causeOf(condition, hour)))}` : "";
+  // `mark`: rain read from the radar starts its line with the radar's symbol.
+  const tile = (value, detail, graphic = "", off = false, mark = "") => parts ? { value, detail } : `<button class="tile ${off ? "off" : ""}${cause}" data-tile="${condition}">
+    ${header(titles[condition][1])}
+    <span class="tile-body"><span><strong aria-label="${h(value + sets)}">${h(value)}</strong><small>${mark}${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
   const temps = next24.map((x) => x.temperatureC).filter((v) => v != null);
   switch (condition) {
     case "temperature":
@@ -1537,8 +1618,8 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
       if (!sun) return tile("–", "");
       const graphic = sunPath(sun.sunrise, sun.sunset, at);
       return sun.up
-        ? `<button class="tile" data-tile="daylight">${header(t("Sunset"))}<span class="tile-body"><span><strong>${h(time(sun.sunset))}</strong><small>${h(t("Sunrise %@", time(sun.sunrise)))}</small></span><span class="graphic">${graphic}</span></span></button>`
-        : `<button class="tile" data-tile="daylight">${header(t("Sunrise"))}<span class="tile-body"><span><strong>${h(time(sun.sunrise))}</strong><small>${h(t("Sunset %@", time(sun.sunset)))}</small></span><span class="graphic">${graphic}</span></span></button>`;
+        ? `<button class="tile${cause}" data-tile="daylight">${header(t("Sunset"))}<span class="tile-body"><span><strong>${h(time(sun.sunset))}</strong><small>${h(t("Sunrise %@", time(sun.sunrise)))}</small></span><span class="graphic">${graphic}</span></span></button>`
+        : `<button class="tile${cause}" data-tile="daylight">${header(t("Sunrise"))}<span class="tile-body"><span><strong>${h(time(sun.sunrise))}</strong><small>${h(t("Sunset %@", time(sun.sunset)))}</small></span><span class="graphic">${graphic}</span></span></button>`;
     }
     default:
       return "";
@@ -1842,6 +1923,12 @@ function settingsTopicBody(topic, accepted) {
         ? t("Tap the lake and town under the club's name for the launch point's map, coordinates and Open in Maps. The Launch point card leaves the page.")
         : t("The Launch point card is on the page, as before."))}</p>
       <section class="card group">
+        <label class="row-setting"><span>${icon("gauge")} ${h(t("Current conditions in the top tile"))}</span><input type="checkbox" class="switch" id="combined-top" ${store.combinedTopTile ? "checked" : ""}></label>
+      </section>
+      <p class="footer">${h(store.combinedTopTile
+        ? t("The top tile opens into all values: tap \"All values\" under it or pull it down. Values it hides show as a line while they matter for the rowing light.")
+        : t("Current conditions is a card of its own under the top tile, as before."))}</p>
+      <section class="card group">
         <a class="row-setting bg-row" href="#/settings/backgrounds"><span><span class="bg-thumb" id="bg-thumb">${icon("circle-slash")}</span><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span></span>${icon("chevron-right")}</a>
       </section>
       <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
@@ -1982,6 +2069,10 @@ function renderSettings(topic = null) {
   });
   root.querySelector("#legend")?.addEventListener("click", () => openSheet(t("Legend"),
     ["lights", "conditions", "hourly"].map((part) => `<h3 class="section">${h({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part])}</h3>${legendBody(part)}`).join("")));
+  root.querySelector("#combined-top")?.addEventListener("change", (e) => {
+    store.combinedTopTile = e.target.checked;
+    again();
+  });
   root.querySelector("#launch-in-header")?.addEventListener("change", (e) => {
     store.launchPointInHeader = e.target.checked;
     again();
