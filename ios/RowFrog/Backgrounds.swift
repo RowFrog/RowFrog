@@ -214,8 +214,18 @@ private struct SurfaceKey: EnvironmentKey {
 final class PowerState {
     static let shared = PowerState()
     private(set) var lowPower = PowerState.isOn
-    /// -RWLowPower YES draws the app as in Low Power Mode, for screenshots.
-    private static var isOn: Bool { ProcessInfo.processInfo.isLowPowerModeEnabled || UserDefaults.standard.bool(forKey: "RWLowPower") }
+    /// -RWLowPower YES draws the app as in Low Power Mode, for screenshots; the
+    /// developer switch "Draw as in Low Power Mode" sets the same key, to test
+    /// whether the watchdog kills on return come from the live blurs and glass.
+    static let forcedKey = "RWLowPower"
+    private static var isOn: Bool { ProcessInfo.processInfo.isLowPowerModeEnabled || UserDefaults.standard.bool(forKey: forcedKey) }
+    static var forced: Bool {
+        get { UserDefaults.standard.bool(forKey: forcedKey) }
+        set {
+            UserDefaults.standard.set(newValue, forKey: forcedKey)
+            shared.lowPower = isOn
+        }
+    }
     @ObservationIgnored private var observer: NSObjectProtocol?
 
     private init() {

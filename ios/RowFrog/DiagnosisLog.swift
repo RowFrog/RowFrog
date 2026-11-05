@@ -23,7 +23,8 @@ final class DiagnosisLog: NSObject, MXMetricManagerSubscriber {
     static func start() {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
         let last = UserDefaults.standard.string(forKey: lastPhaseKey) ?? "none"
-        note("launch \(version), iOS \(UIDevice.current.systemVersion); last run's last step: \(last)")
+        let solid = UserDefaults.standard.bool(forKey: "RWLowPower") ? "; drawn as in Low Power Mode" : ""
+        note("launch \(version), iOS \(UIDevice.current.systemVersion)\(solid); last run's last step: \(last)")
         let center = NotificationCenter.default
         let steps: [(Notification.Name, String)] = [
             (UIApplication.willEnterForegroundNotification, "UIKit will enter foreground"),
