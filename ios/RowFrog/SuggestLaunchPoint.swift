@@ -156,7 +156,8 @@ struct SuggestLaunchPointView: View {
                     }
                 }
             }
-            .navigationTitle(tr("Suggest the launch point"))
+            // Short, so it fits between Cancel and Send; the button that opens it says "Suggest".
+            .navigationTitle(tr("Launch point"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
