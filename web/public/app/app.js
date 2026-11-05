@@ -581,6 +581,7 @@ async function renderClub(id) {
   if (side) wireSideList(id);
   wireBottomBar(null);
   wireSwipe(id);
+  wireLaunchOpen(club);
   let raw;
   let failure = null;
   try {
@@ -1014,13 +1015,35 @@ function refreshOnReturn() {
   Promise.resolve(route(false)).finally(() => reloadOthers(shown, true));
 }
 
+/** Whether the header opens the launch point (Settings > Club pages > Launch point in the club header). */
+const inHeader = (club) => Boolean(club?.launchPoint) && store.launchPointInHeader;
+
+/** The lake and town; with the launch point in the header a button (pin and chevron) that opens it (ClubPageHeader.placeLine). */
+function placeLine(club) {
+  const text = place(club?.lakeName, town(club?.address), lakeTitle);
+  if (!inHeader(club)) return `<p class="sub">${h(text)}</p>`;
+  return `<p class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the launch point on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button></p>`;
+}
+
+/** The header's lake and town line and the not-confirmed line open the launch point. */
+const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open").forEach((b) => b.addEventListener("click", () => openLaunchPoint(club)));
+
+/** The launch point opened from the header (LaunchPointSheet): the same map, note, coordinates and Open in Maps as the card. */
+function openLaunchPoint(club) {
+  openSheet(t("Launch point"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
+    showLaunchMap(club, sheet.querySelector("#launch-sheet-map"));
+  });
+}
+
 function clubHeader(club, name, isHome, forecast, stale = false, failure = null) {
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
     <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right", true)}</div>
-    <p class="sub">${h(place(club?.lakeName, town(club?.address), lakeTitle))}</p>
-    ${club && club.launchPointVerified === false ? `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>` : ""}
+    ${placeLine(club)}
+    ${club && club.launchPointVerified === false ? (inHeader(club)
+      ? `<p class="orange small"><button class="link plain launch-open">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</button></p>`
+      : `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>`) : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
     ${forecast && failure ? `<p class="orange small"><button class="link failed" id="failed" data-why="${h(failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", failure[0], time(forecast.generatedAt)))} ${icon("info")}</button></p>`
       : forecast ? (stale
@@ -1031,6 +1054,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
 }
 
 function wireClubPage(id, club, raw, forecast, hour) {
+  wireLaunchOpen(club);
   root.querySelector("#refresh")?.addEventListener("click", () => refreshClub(id, forecast.lakeId));
   root.querySelector("#failed")?.addEventListener("click", (e) => openSheet(t("Could not update"), `<p>${h(e.currentTarget.dataset.why)}</p>
     <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
@@ -1618,14 +1642,19 @@ function clubAddress(club) {
   return address ? { address, named: `${club.name || club.shortName}, ${address}` } : null;
 }
 
-/** The launch point on a map, with what it stands for (LaunchPointMapCard). */
+/** The launch point on a map, with what it stands for (LaunchPointMapCard), when it is not in the header. */
 function launchPointCard(club) {
+  return card(t("Launch point"), "map-pin", launchPointBody(club, "launch-map"));
+}
+
+/** The map, the note on what it is for, and the coordinates with Open in Maps (LaunchPointDetails). */
+function launchPointBody(club, mapId) {
   const { lat, lon } = club.launchPoint;
   // Opens in the map service chosen under Settings > Maps.
   const maps = MAPS_APPS[store.mapsApp];
   const unconfirmed = club.source === "drv" ? t("Not yet confirmed by the club; taken from the club's address.") : t("Not yet confirmed by the club; taken from OpenStreetMap.");
-  return card(t("Launch point"), "map-pin", `
-    <div class="map" id="launch-map" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
+  return `
+    <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     <p>${h(t("The forecast, waves and warnings are for this point."))}</p>
     ${club.launchPointVerified ? "" : `<p class="orange small">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
@@ -1634,7 +1663,7 @@ function launchPointCard(club) {
           <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a>
           <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin")} ${h(t("Launch point on the map"))}</a>
           <small class="sub">${h(maps.name)}</small>
-        </div></details></div>`);
+        </div></details></div>`;
 }
 
 // The "Open in Maps" and "…" menus close on a tap outside it, on one of its links and with Escape, as a menu does.
@@ -1645,9 +1674,9 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape") for (const menu of document.querySelectorAll(".maps-menu[open], .more-menu[open]")) menu.open = false;
 });
 
-async function showLaunchMap(club) {
+async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
   const L = await loadLeaflet().catch(() => null);
-  const box = root.querySelector("#launch-map");
+  const box = place;
   if (!L || !box) return;
   const { lat, lon } = club.launchPoint;
   const map = L.map(box, { scrollWheelZoom: false, attributionControl: true }).setView([lat, lon], 14);
@@ -1797,6 +1826,12 @@ function renderSettings() {
       </section>
       <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
       <section class="card group">
+        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Launch point in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
+      </section>
+      <p class="footer">${h(store.launchPointInHeader
+        ? t("Tap the lake and town under the club's name for the launch point's map, coordinates and Open in Maps. The Launch point card leaves the page.")
+        : t("The Launch point card is on the page, as before."))}</p>
+      <section class="card group">
         <a class="row-setting" href="#/settings/backgrounds"><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span>${icon("chevron-right")}</a>
       </section>
       <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
@@ -1860,6 +1895,10 @@ function renderSettings() {
   });
   root.querySelector("#legend").addEventListener("click", () => openSheet(t("Legend"),
     ["lights", "conditions", "hourly"].map((part) => `<h3 class="section">${h({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part])}</h3>${legendBody(part)}`).join("")));
+  root.querySelector("#launch-in-header").addEventListener("change", (e) => {
+    store.launchPointInHeader = e.target.checked;
+    renderSettings();
+  });
   root.querySelector("#save-data").addEventListener("change", (e) => {
     store.saveData = e.target.checked;
     renderSettings();
