@@ -50,8 +50,9 @@ of the list (on iPad on its side the search is at the top of the side list and
 the cog on the club page), a "…" menu at the top right
 holds Edit, Browse by country and Add a place, and the big "Locations" title
 shrinks into the bar once the list scrolls. Tapping a club opens its page.
-On iPhone the club pages have a bottom bar with the settings cog on the left,
-the page dots and the list button on the right, as in Weather. On iPad a
+On iPhone the club pages have a bottom bar with the settings cog and the boat
+button on the left, the page dots and the list button on the right, as in
+Weather. On iPad a
 sidebar button slides the list in over the page (upright) or away beside it
 (on its side).
 
@@ -371,8 +372,8 @@ field at the bottom.
 - Developer: hidden options for testing (see the handbook).
 
 On a club page, the "For *boat*" line under the rowing light and the boat
-button level with the club's name (it stays in the top bar once the page
-scrolls) open the same boat picker; the button shows the chosen boat's class
+button (in the bottom bar on iPhone; on iPad level with the club's name,
+staying in the top bar once the page scrolls) open the same boat picker; the button shows the chosen boat's class
 (own boats in blue) or the group ("1–2", "4–8"). The picker shows the light
 each boat kept there would get now, and your boats from other clubs under "At
 other clubs", where a tap keeps the boat at this club too. The chosen boat applies to everything on screen: the
