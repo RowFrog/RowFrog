@@ -157,11 +157,14 @@ struct SafetyNoticeView: View {
                 .accessibilityIdentifier("safety-tick")
                 .opacity(readToEnd ? 1 : 0.5)
                 .accessibilityAddTraits(ticked ? .isSelected : [])
-                if !readToEnd {
-                    Label(tr("Scroll to the end to continue."), systemImage: "arrow.down")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                // Faded out rather than removed: removing it grew the scroll view
+                // just as its end came into view, and on iOS 18 that could keep
+                // the layout busy without end.
+                Label(tr("Scroll to the end to continue."), systemImage: "arrow.down")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .opacity(readToEnd ? 0 : 1)
+                    .accessibilityHidden(readToEnd)
                 Button {
                     SafetyNotice.accept()
                     accept()
