@@ -1302,6 +1302,7 @@ enum German {
         "Add a boat": "Boot hinzufügen",
         "At %@ · tap to take it here": "Liegt bei %@ · tippen, um es hierher mitzunehmen",
         "At other clubs": "Bei anderen Vereinen",
+        "Tap the place to see on a map the spot the forecast is for, with directions.": "Tippe auf den Ort, um auf der Karte zu sehen, für welchen Punkt die Vorhersage gilt, mit Wegbeschreibung.",
         "Your boats at other clubs": "Boote bei anderen Vereinen",
         "Your boats show at the clubs where they are kept. At a regatta, tap a boat under “At other clubs” to take it along.": "Deine Boote erscheinen dort, wo sie liegen. Auf einer Regatta nimmst du eins unter „Bei anderen Vereinen“ mit.",
         "Kept at": "Liegt bei",
