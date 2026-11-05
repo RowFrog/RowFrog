@@ -294,8 +294,8 @@ jobs:
           shoot 384-arrange-launch-point light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 385-launch-point-card-separate light -RWOpenClub mrc-1880 -RWScrollTo launchpoint -RWLaunchPointInHeader NO
           # The launch point sheet with satellite pictures, and pulled up to full screen.
-          shoot 386-launch-point-satellite light -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLaunchImagery YES
-          shoot 387-launch-point-full light -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLaunchPointFull YES
+          shoot 390-launch-point-satellite light -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLaunchImagery YES
+          shoot 391-launch-point-full light -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLaunchPointFull YES
           # Location zoomed in: the club's pin at the clubhouse, oars on the launch point.
           shoot 388-location-split light -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLaunchSpan 250
           shoot 389-location-split-german-dark dark -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLaunchSpan 250 -RWLanguage de
