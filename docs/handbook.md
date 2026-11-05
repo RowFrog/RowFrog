@@ -198,6 +198,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWRadarFailed YES` the radar cannot be read: the rain tile's bars come from the forecast and the radar symbol in its title line is struck through
 - `-RWSampleRadar YES` made-up rain on the radar from 30 minutes on (light, then rain, dry again after an hour), to show the rain tile, the top tile's rain value and the rain chart while DWD's radar is dry
 - `-RWLaunchPointInHeader NO` the Launch point card on the page instead of in the header; `-RWOpenLaunchPoint YES` opens the launch point sheet from the header of the page in front
+- `-RWSampleCause wind,thunderstorm` colours those values as if they set the light amber (closed values, peek line, open tiles), to check the colouring while the real light is green
 - `-RWSampleIce YES` the top tile shows a made-up "Shore ice possible" line, to check the winter layout outside the ice season
 - `-RWCombinedTopTile NO` Current conditions as its own card; `-RWTopTileOpen YES` the combined top tile starts open; `-RWSamplePeek thunderstorm` (or `ice`, `cloudCover`, …) shows that value's line under the sun line of the closed tile
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line

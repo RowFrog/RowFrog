@@ -132,7 +132,7 @@ struct TilePeekLine: View {
 
     var body: some View {
         let tile = ConditionTile(condition: condition, data: data)
-        let light = data.now.light(for: condition.reasonNames)
+        let light = condition.cause(in: data.now)
         // One text size, as the sun line above; the value takes the colour of the light it
         // sets, as the reason lines do, so no dot is needed (owner's pick P3, 5 Nov 2026).
         HStack(alignment: .firstTextBaseline, spacing: 6) {
@@ -380,7 +380,7 @@ private struct ConditionTile: View {
 
     static let graphicHeight: CGFloat = 44
 
-    private var light: Light? { hour.light(for: condition.reasonNames) }
+    private var light: Light? { condition.cause(in: hour) }
     /// Amber or red while this value sets the light; its value then takes that colour.
     private var cause: Color? { light?.causeTint }
 

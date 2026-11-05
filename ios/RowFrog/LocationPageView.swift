@@ -861,7 +861,7 @@ private struct NowCard: View {
 
     /// A value of the tile as a button that opens its chart and details.
     private func opens(_ condition: Condition, @ViewBuilder _ content: () -> some View) -> some View {
-        let light = hour.light(for: condition.reasonNames)
+        let light = condition.cause(in: hour)
         return Button { openCondition = condition } label: {
             content().contentShape(Rectangle()).environment(\.causeTint, light?.causeTint)
         }

@@ -100,3 +100,13 @@ private struct CauseTinted: ViewModifier {
         if let tint { content.foregroundStyle(tint) } else { content }
     }
 }
+
+extension Condition {
+    /// The light this value sets in an hour, if amber or red (see `Light.causeTint`).
+    /// Screenshot hook: `-RWSampleCause wind,thunderstorm` makes those values amber.
+    func cause(in hour: ForecastHour) -> Light? {
+        if let sample = UserDefaults.standard.string(forKey: "RWSampleCause"),
+           sample.split(separator: ",").contains(Substring(rawValue)) { return .amber }
+        return hour.light(for: reasonNames).flatMap { $0 == .green ? nil : $0 }
+    }
+}
