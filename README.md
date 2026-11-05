@@ -324,6 +324,11 @@ Maps". Settings › Club pages › Location in the club header (on by default)
 can be turned off to bring back the Launch point map card on the page
 instead, a still picture until tapped. On the website the place line opens
 the Location sheet too.
+For a club that has not confirmed its launch point, the sheet offers
+"Suggest the launch point": move the map under the fixed oars and send. Only
+the club and the point are sent; the suggestions service files it as a GitHub
+issue, and the owner's `/accept` there adds it to the hand-checked points. The website
+offers it too.
 "Open in Maps" also offers directions to the club, in the map app chosen in
 Settings: Apple Maps (the default; when it knows the club as a place, with
 photos and opening hours, it opens that) or Google Maps, which opens in its
@@ -440,7 +445,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `data/water-stations.json` | The water temperature station each club reads (nearest on its own water). |
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `web/` | The website: start page, `app/` (the forecasts in the browser), legal pages and the password check (`functions/_middleware.js`). `scripts/build_web.py` builds it. |
-| `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place suggestions into GitHub issues, `timer/` starts the forecast run on time. |
+| `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place and launch point suggestions into GitHub issues, `timer/` starts the forecast run on time. |
 | `testdata/api/v1/` | Sample API files (MRC 1880's forecast, the lake list and the country lists) that the backend, app and website tests all read, so a change to the format shows up in all three (see the handbook's Tests section). |
 | `testdata/limits.json` | The app's starting boat limits that the backend, app and website tests all check, so the three give the same light. |
 | `testdata/units.json` | The unit table (values shown in each unit, Beaufort forces at the limits, decimals) that the app and website tests both check. |
@@ -474,7 +479,8 @@ facts are stored, no contact people, e-mail addresses or phone numbers. The
 federations are credited in `CREDITS.md`, which also notes where permission
 is still to be asked.
 
-Addresses and launch points the owner checked on the satellite view are kept
+Addresses and launch points the owner checked on the satellite view (or
+accepted from a suggestion) are kept
 in `data/catalogs/hand-checked.json` (with `remove` for entries that are no
 rowing clubs); the imports and Fix unknown waters apply it on every run.
 `scripts/snap_launch_points.py` moves catalog launch points that lie up to
@@ -574,7 +580,8 @@ More detail, including the secrets each one needs, is in the
 | **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). By hand, or when its scripts change on `main`. |
 | **Merge Dependabot updates** (`dependabot-merge.yml`) | Dependabot (`.github/dependabot.yml`) opens one PR a month raising the pinned backend packages, and a PR for each security fix straight away. Once CI passes on such a PR that changes only those versions, this workflow merges it; any other PR, or one whose CI fails, stays open for a person. Monthly grouped PRs for the npm tools (`package.json`: Wrangler, Playwright) and the GitHub Actions versions also come, and always wait for a person. |
 | **Forecast timer** (`timer-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/timer/` that starts Publish forecasts at :00 and :30. By hand with `deploy` ticked, and by itself when `cloudflare/timer/` changes on `main`. Needs `PUBLISH_TIMER_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
-| **Place suggestions** (`suggestions-worker.yml`) | Deploys the Cloudflare Worker that turns place suggestions into GitHub issues. Needs `SUGGESTIONS_GITHUB_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
+| **Place suggestions** (`suggestions-worker.yml`) | Deploys the Cloudflare Worker that turns place and launch point suggestions into GitHub issues. Needs `SUGGESTIONS_GITHUB_TOKEN`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
+| **Accept launch point** (`accept-launch-point.yml`) | When the owner answers `/accept` (or `/accept lat, lon` for a nudged point) on an issue labelled "launch point suggestion", writes the point into `data/catalogs/hand-checked.json` and the club's catalog (`scripts/accept_launch_point.py`) and opens a pull request; once merged, the next forecast run brings it to the app. |
 | **API check** (`api-check.yml`) | Shows how `api.rowfrog.com` answers (Cloudflare proxy, SSL mode, usage counter). Runs by hand. |
 | **Live data check** (`live-check.yml`) | Downloads missing lake outlines from OpenStreetMap, checks club launch points against them and runs the forecast against live Open-Meteo and GKD data. Runs by hand, or when the club list or data sources change on `main`; new outlines are committed back. |
 | **Water temperature stations** (`water-stations.yml`) | Lists the GKD Bayern, PEGELONLINE and Swiss BAFU stations, shows how `data/water-stations.json` would change and reads every station in it once. Nothing is stored; a changed list is committed by hand (see the handbook). By hand, or when its files change. |
