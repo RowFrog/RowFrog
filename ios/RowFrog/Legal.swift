@@ -48,7 +48,8 @@ struct PrivacySummaryView: View {
     private var points: [(symbol: String, text: String)] {
         [
             ("person.crop.circle.badge.xmark", tr("No account, no ads, no tracking or analytics.")),
-            ("location", tr("Your location is only used on your phone, to suggest clubs near you, and is never sent anywhere.")),
+            ("location", tr("Your location is only used on your phone, to suggest clubs near you and to centre a map on you, and is never sent anywhere.")),
+            ("paperplane", tr("Only a suggestion you send yourself (a place for everyone's list, or a club's launch point) reaches us: its name and the point you chose, nothing about you. It becomes a public issue on GitHub.")),
             ("iphone", tr("Your settings, clubs, boats, photos and your acceptance of the safety notice stay on your phone.")),
             ("server.rack", tr("Forecasts come from api.rowfrog.com (Cloudflare and GitHub). We only count per day how often each club and lake is loaded, never who loaded it.")),
             ("heart.text.square", tr("Rows you import from Apple Health or a file are read on your phone only; Row Frog never writes to Health and sends nothing anywhere.")),

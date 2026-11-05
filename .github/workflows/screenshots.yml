@@ -300,6 +300,9 @@ jobs:
           # A club whose launch point and clubhouse the owner checked by hand, 200 m apart.
           GUIDE=1 shoot 388-location-split light -RWTutorialSeen YES -RWNoTips YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWLaunchSpan 700
           GUIDE=1 shoot 389-location-split-german-dark dark -RWTutorialSeen YES -RWNoTips YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWLaunchSpan 700 -RWLanguage de
+          # Suggest a launch point: the map moves under fixed oars (owner's option A).
+          GUIDE=1 shoot 392-suggest-launch-point light -RWTutorialSeen YES -RWNoTips YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWSuggestLaunchPoint YES
+          GUIDE=1 shoot 393-suggest-launch-point-german-dark dark -RWTutorialSeen YES -RWNoTips YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWSuggestLaunchPoint YES -RWLanguage de
           # Current conditions in the top tile (owner's choice B, 4 Nov 2026): closed, with a
           # value it hides as one line under the sun line, opened into all tiles, the
           # settings switch, Arrange page with the card locked, and the old separate cards.

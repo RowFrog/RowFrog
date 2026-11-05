@@ -47,6 +47,26 @@ test("text cannot break out of its code span or the line", async () => {
   assert.match(issue.body, /- Country: not known/);
 });
 
+test("a launch point becomes an issue with its own label, the club id and the point", async () => {
+  const response = await post({ name: "Ruderclub Musterstadt", kind: "launchPoint", club: "ruderclub-musterstadt", lat: 47.9123456, lon: 11.3 });
+  assert.equal(response.status, 201);
+  const issue = JSON.parse(github[0].body);
+  assert.equal(issue.title, "Launch point suggestion: Ruderclub Musterstadt");
+  assert.deepEqual(issue.labels, ["launch point suggestion"]);
+  assert.match(issue.body, /- Club id: `ruderclub-musterstadt`\n/);
+  assert.match(issue.body, /- Launch point: 47\.912346, 11\.300000 \(\[map\]/);
+  assert.match(issue.body, /\/accept/);
+  assert.doesNotMatch(github[0].body, /192\.0\.2\.1/);
+});
+
+test("a launch point needs a club id from the list", async () => {
+  const launch = { name: "Ruderclub Musterstadt", kind: "launchPoint", club: "ruderclub-musterstadt", lat: 47.9, lon: 11.3 };
+  for (const club of [undefined, "", "Club X", "../x", "x`y", "-x", "x".repeat(101)]) {
+    assert.equal((await post({ ...launch, club })).status, 400, String(club));
+  }
+  assert.equal(github.length, 0);
+});
+
 test("a place that does not check out is turned away before GitHub", async () => {
   const bad = [
     "not json",

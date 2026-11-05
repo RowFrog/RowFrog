@@ -38,15 +38,18 @@ jobs:
           code=$(api "https://api.github.com/repos/$REPO/issues?per_page=1")
           echo "reading issues: HTTP $code"
           [ "$code" = 200 ] || { cat /tmp/out; echo "::error::The token cannot read this repository's issues"; exit 1; }
-          code=$(api "https://api.github.com/repos/$REPO/labels/place%20suggestion")
-          if [ "$code" = 404 ]; then
-            code=$(api -X POST "https://api.github.com/repos/$REPO/labels" \
-              -d '{"name":"place suggestion","color":"2e8b57","description":"A club or place suggested from the app"}')
-            echo "creating the label: HTTP $code"
-            [ "$code" = 201 ] || { cat /tmp/out; echo "::error::The token cannot write issues (needs Issues: Read and write)"; exit 1; }
-          else
-            echo "label: HTTP $code"
-          fi
+          label() {
+            code=$(api "https://api.github.com/repos/$REPO/labels/$1")
+            if [ "$code" = 404 ]; then
+              code=$(api -X POST "https://api.github.com/repos/$REPO/labels" -d "$2")
+              echo "creating the label $1: HTTP $code"
+              [ "$code" = 201 ] || { cat /tmp/out; echo "::error::The token cannot write issues (needs Issues: Read and write)"; exit 1; }
+            else
+              echo "label $1: HTTP $code"
+            fi
+          }
+          label "place%20suggestion" '{"name":"place suggestion","color":"2e8b57","description":"A club or place suggested from the app"}'
+          label "launch%20point%20suggestion" '{"name":"launch point suggestion","color":"1f6feb","description":"A club launch point suggested from the app; answer /accept to take it"}'
 
   deploy:
     needs: token
