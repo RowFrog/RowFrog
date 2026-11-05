@@ -405,7 +405,10 @@ screen tall each). The website does the same.
 **iPad.** The app runs natively on iPad in all four orientations, with the
 same wide layouts (side list 400 pt wide). The Landscape setting is hidden
 there, since iPadOS turns apps anyway. A value's detail view opens full
-screen, with the map beside the chart when the iPad is on its side.
+screen, with the map beside the chart when the iPad is on its side. With a
+background picture on a sideways iPad, one club picture fills the screen
+behind the side list and the page; a satellite picture is centred on the
+club's launch point. The website's wide layout does the same.
 
 **Website.** [rowfrog.com/app](https://rowfrog.com/app) shows the forecasts
 in a browser, for Android phones and computers. It is password-locked while
