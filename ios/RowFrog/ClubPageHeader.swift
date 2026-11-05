@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 
 /// The top of a club page: home base, the club's name, the lake and town, a
 /// note while the launch point is not yet confirmed, and when the forecast is
@@ -18,6 +19,7 @@ struct ClubPageHeader: View {
     @State private var showingFailure: RefreshFailure?
     @State private var showingLaunchPoint = false
     @Environment(\.isCurrentPage) private var isCurrentPage
+    @AppStorage(Tutorial.seenKey) private var tourSeen = false
     private var inHeader: Bool { AppSettings.shared.launchPointInHeader }
 
     var body: some View {
@@ -115,7 +117,10 @@ struct ClubPageHeader: View {
     /// the launch point's map, coordinates and Open in Maps.
     @ViewBuilder private var placeLine: some View {
         if inHeader {
-            Button { showingLaunchPoint = true } label: {
+            Button {
+                showingLaunchPoint = true
+                PlaceLineTip().invalidate(reason: .actionPerformed)
+            } label: {
                 Label {
                     Text(place) + Text(" ") + Text(Image(systemName: "chevron.right")).font(.footnote.weight(.semibold))
                 } icon: {
@@ -128,6 +133,8 @@ struct ClubPageHeader: View {
             .foregroundStyle(Color.accentColor)
             .accessibilityLabel(place)
             .accessibilityHint(tr("Shows the launch point on a map, with directions"))
+            // Once, on the page in view, after the tour.
+            .modifier(PlaceLineTipAnchor(shown: tourSeen && isCurrentPage))
             .id("launchpoint")
         } else {
             Text(place)
@@ -149,6 +156,19 @@ struct ClubPageHeader: View {
             .accessibilityHint(tr("Shows the launch point on a map, with directions"))
         } else {
             label
+        }
+    }
+}
+
+/// `popoverTip` with an optional tip needs iOS 18.4, so the tip is attached only when it applies.
+private struct PlaceLineTipAnchor: ViewModifier {
+    let shown: Bool
+
+    func body(content: Content) -> some View {
+        if shown {
+            content.popoverTip(PlaceLineTip(), arrowEdge: .top)
+        } else {
+            content
         }
     }
 }

@@ -280,6 +280,9 @@ jobs:
           # Anna is kept at the home base (MRC 1880): at Tutzing the page uses small boats.
           shoot 333-boat-kept-elsewhere light -RWOpenClub tutzinger-rv "${BOATS[@]}" -RWBoat b-anna
           # The one-time tip there: an own boat waits under "At other clubs".
+          # The one-time tip at the place line under the club's name.
+          shoot 386-tip-place-line light -RWOpenClub mrc-1880 -RWPlaceTip YES
+          shoot 387-tip-place-line-german-dark dark -RWOpenClub mrc-1880 -RWPlaceTip YES -RWLanguage de
           shoot 360-tip-boats-elsewhere light -RWOpenClub tutzinger-rv "${BOATS[@]}" -RWBoat b-anna -RWBoatTip YES
           shoot 361-tip-boats-elsewhere-german-dark dark -RWOpenClub tutzinger-rv "${BOATS[@]}" -RWBoat b-anna -RWBoatTip YES -RWLanguage de
           # The launch point in the club header (owner's choice B, 4 Nov 2026): the lake and town
