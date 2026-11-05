@@ -99,11 +99,23 @@ function languagePicker() {
     <select id="language">${option("auto", t("Device"))}${option("en", "English")}${option("de", "Deutsch")}</select></label>`;
 }
 
+/** The tour's language choice: a caption over three segments, as the app's welcome page. */
+function tourLanguagePicker() {
+  const choice = savedLanguage();
+  return `<p class="label tour-language-title">${icon("globe")} ${h(t("Language"))}</p>
+    <span class="segmented wide" id="tour-language">${[["auto", t("Device language")], ["en", "English"], ["de", "Deutsch"]]
+      .map(([value, label]) => `<button data-language="${value}" class="${choice === value ? "on" : ""}">${h(label)}</button>`).join("")}</span>`;
+}
+
 function wireLanguage(again) {
   root.querySelector("#language")?.addEventListener("change", async (e) => {
     await setLanguage(e.target.value);
     again();
   });
+  root.querySelectorAll("#tour-language [data-language]").forEach((b) => b.addEventListener("click", async () => {
+    await setLanguage(b.dataset.language);
+    again();
+  }));
 }
 
 
@@ -2233,7 +2245,7 @@ function route(scroll = true) {
     return loadCatalog().catch(() => []).then((lakes) => {
       // Another page may have opened while the club list loaded.
       if (tourSeen() && location.hash !== "#/tour") return;
-      renderTour(root, { languagePicker, wireLanguage, done, river: lakes.some((l) => l.section && lakeIds.has(l.id)) });
+      renderTour(root, { languagePicker: tourLanguagePicker, wireLanguage, done, river: lakes.some((l) => l.section && lakeIds.has(l.id)) });
     });
   }
   const hash = location.hash.replace(/^#/, "");
