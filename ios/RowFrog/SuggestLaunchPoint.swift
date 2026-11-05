@@ -132,8 +132,21 @@ struct SuggestLaunchPointView: View {
                             .accessibilityHidden(true)
                     }
                     .frame(height: 340)
+                    // Map or Apple's satellite pictures with the same round button as the
+                    // Location and lake maps; starts on satellite, where a Steg is easiest to see.
+                    .overlay(alignment: .topTrailing) {
+                        Button { satellite.toggle() } label: {
+                            Image(systemName: satellite ? "map" : "globe.europe.africa")
+                                .font(.footnote.weight(.semibold))
+                                .padding(8)
+                                .background(.regularMaterial, in: Circle())
+                                .tapArea(6)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(8)
+                        .accessibilityLabel(satellite ? tr("Show the map") : tr("Show satellite pictures"))
+                    }
                     .listRowInsets(EdgeInsets())
-                    Toggle(tr("Satellite view"), isOn: $satellite)
                     Button(tr("Where I am"), systemImage: "location") {
                         wantsLocation = true
                         location.request()
