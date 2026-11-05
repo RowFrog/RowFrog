@@ -335,9 +335,23 @@ svg.filled { width: 22px; height: 22px; }
 .credits p { margin: 4px 0; }
 .links { text-align: center; font-size: 13px; color: var(--sub); margin-top: 24px; }
 
-/* Floating controls in glass, as the app's page bar and map buttons (floatingControl). */
-.glass { background: color-mix(in srgb, var(--card) 62%, transparent); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  border: .5px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 2px 12px rgba(0, 0, 0, .12); }
+/* Floating controls in glass, as the app's page bar and map buttons (floatingControl, Liquid Glass on iOS 26).
+   Owner's pick B (5 Nov 2026): clear glass, a light tint and little blur, a bright rim along the top edge and
+   a soft sheen, which looks the same in Safari and Chrome (browsers cannot bend what is behind, as iOS does).
+   Solid with reduced transparency or without backdrop-filter. */
+:root { --glass-tint: color-mix(in srgb, var(--card) 18%, transparent);
+  --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .35), transparent 55%), radial-gradient(90% 70% at 80% 110%, rgba(255, 255, 255, .14), transparent 60%);
+  --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .75), inset 0 -1px .5px rgba(255, 255, 255, .25), inset 0 0 0 .5px rgba(255, 255, 255, .35);
+  --glass-shadow: 0 6px 16px rgba(0, 0, 0, .16); }
+:root[data-theme="dark"] { --glass-tint: color-mix(in srgb, #000 16%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
+  --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .45), inset 0 -1px .5px rgba(255, 255, 255, .12), inset 0 0 0 .5px rgba(255, 255, 255, .18); --glass-shadow: 0 6px 16px rgba(0, 0, 0, .3); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass-tint: color-mix(in srgb, #000 16%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
+  --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .45), inset 0 -1px .5px rgba(255, 255, 255, .12), inset 0 0 0 .5px rgba(255, 255, 255, .18); --glass-shadow: 0 6px 16px rgba(0, 0, 0, .3); } }
+.glass, .leaflet-touch .leaflet-bar, .leaflet-bar { background: var(--glass-sheen), var(--glass-tint);
+  backdrop-filter: blur(8px) saturate(1.4) brightness(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.4) brightness(1.1);
+  border: 0; box-shadow: var(--glass-rim), var(--glass-shadow); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass, .leaflet-bar { background: var(--card); } }
+@media (prefers-reduced-transparency: reduce) { .glass, .leaflet-touch .leaflet-bar, .leaflet-bar { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 
 /* Bottom bar: three floating pieces, all 44 px high: cog and boat, page dots, list (RootView.PageBar). */
 .bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; align-items: center; gap: 8px; padding: 0 16px;
@@ -417,8 +431,7 @@ body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }
 @media (prefers-reduced-motion: reduce) { .head-side .slide-in, .side.slide-in { animation: none; } }
 
 /* The map buttons float in the same glass. */
-.leaflet-touch .leaflet-bar, .leaflet-bar { border: 0 !important; border-radius: 12px; overflow: hidden; background: color-mix(in srgb, var(--card) 62%, transparent);
-  backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: 0 2px 12px rgba(0, 0, 0, .12); }
+.leaflet-touch .leaflet-bar, .leaflet-bar { border: 0 !important; border-radius: 12px; overflow: hidden; }
 .leaflet-bar a { background: transparent !important; color: var(--text) !important; border-bottom-color: color-mix(in srgb, var(--text) 12%, transparent) !important; }
 
 /* List (LocationListView). */
