@@ -37,9 +37,7 @@ struct WidgetSettingsView: View {
                 .id("all")
 
                 Section {
-                    Toggle(isOn: $settings.blurWidgetPicture) {
-                        Label(tr("Blur the picture"), systemImage: "drop.halffull")
-                    }
+                    Toggle(tr("Blur the picture"), isOn: $settings.blurWidgetPicture)
                 } footer: {
                     SectionFooter(tr("For the club page picture, your own pictures and the satellite picture."))
                 }
@@ -64,12 +62,12 @@ struct WidgetSettingsView: View {
                     Picker(selection: $settings.widgetUpdates) {
                         ForEach(WidgetUpdates.allCases) { Text($0.title).tag($0) }
                     } label: {
-                        Label(tr("Widget updates"), systemImage: "apps.iphone")
+                        Text(tr("Widget updates"))
                     }
                 } header: {
                     SectionTitle(tr("Updates"), symbol: "arrow.triangle.2.circlepath")
                 } footer: {
-                    SectionFooter(tr("Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Less often saves battery and data, but a new official warning reaches the widgets later. Only after using the app: the widgets load once as you leave the app."))
+                    SectionFooter(tr("Less often saves battery and data, but a new warning reaches the widgets later."))
                 }
                 .surfaceRows()
                 .id("updates")

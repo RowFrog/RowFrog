@@ -5,6 +5,7 @@ import TipKit
 /// Pages pushed inside the settings.
 enum SettingsRoute: Hashable {
     case appearance
+    case appIcon
     case clubPages
     case language
     case data
@@ -20,15 +21,16 @@ enum SettingsRoute: Hashable {
     case impressum
     case privacy
 
-    /// Screenshot hook: `-RWSettingsPage appearance`, `clubpages`, `language`, `data`, `help`,
+    /// Screenshot hook: `-RWSettingsPage appearance`, `appicon`, `clubpages`, `language`, `data`, `help`,
     /// `about`, `developer`, `backgrounds`, `widgets`, `limits`, `boat:<id>`, `safety`, `impressum`,
     /// `privacy`, `picker-all`, `picker-page:list` or `picker-club:<id>` opens that page, with the
     /// pages on the way to it. `-RWSettingsSearch <text>` fills the search field.
     static func fromLaunchArguments() -> [SettingsRoute] {
         guard let page = UserDefaults.standard.string(forKey: "RWSettingsPage") else { return [] }
-        let backgrounds: [SettingsRoute] = [.clubPages, .backgrounds]
+        let backgrounds: [SettingsRoute] = [.appearance, .backgrounds]
         switch page {
         case "appearance": return [.appearance]
+        case "appicon": return [.appearance, .appIcon]
         case "clubpages": return [.clubPages]
         case "language": return [.language]
         case "data": return [.data]
@@ -37,7 +39,7 @@ enum SettingsRoute: Hashable {
         case "developer": return [.developer]
         case "backgrounds": return backgrounds
         case "widgets": return [.widgets]
-        case "safety": return [.about, .safety]
+        case "safety": return [.help, .safety]
         case "impressum": return [.about, .impressum]
         case "privacy": return [.about, .privacy]
         case "limits": return [.limits]
@@ -106,12 +108,14 @@ struct SettingsView: View {
                 switch route {
                 case .appearance:
                     AppearanceSettingsView()
+                case .appIcon:
+                    AppIconSettingsView()
                 case .clubPages:
                     ClubPagesSettingsView()
                 case .language:
                     LanguageSettingsView()
                 case .data:
-                    DataSettingsView()
+                    DataSettingsView(path: $path)
                 case .help:
                     HelpSettingsView(locations: locations)
                 case .about:
@@ -180,8 +184,10 @@ struct SettingsView: View {
         .surfaceRows()
 
         Section {
-            topic(.appearance, value: settings.appearance.title)
-            topic(.clubPages, value: settings.allPagesBackground.title)
+            topic(.appearance, value: settings.developerOptions
+                  ? "\(settings.appearance.title) · \(settings.allPagesBackground.title)"
+                  : settings.allPagesBackground.title)
+            topic(.clubPages, value: settings.pageLayout == .standard ? tr("App's order") : tr("Own order"))
             topic(.widgets, value: settings.widgetUpdates.title)
         }
         .surfaceRows()
@@ -418,15 +424,15 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Your boat", .boats, words: ["small", "big", "klein", "groß", "Boot"]),
             SettingsSearch("My boats", .boats, words: ["Meine Boote", "gig", "add", "hinzufügen"]),
             SettingsSearch("Fine-tune the limits", .boats, words: ["limit", "Grenze", "wind", "gusts", "Böen", "waves", "Wellen", "water temperature", "Wassertemperatur"]),
-            SettingsSearch("Appearance", .appearance, words: ["light", "dark", "hell", "dunkel", "mode", "Modus"]),
-            SettingsSearch("App icon", .appearance, words: ["App-Symbol", "home screen", "Home-Bildschirm"]),
+            SettingsSearch("Background pictures", .appearance, path: [.appearance, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
+            SettingsSearch("Blur the picture", .appearance, path: [.appearance, .backgrounds], words: ["blur", "unscharf", "Weichzeichnen", "frosted"]),
+            SettingsSearch("In the tiles", .appearance, path: [.appearance, .backgrounds], words: ["tiles", "Kacheln", "frosted", "solid"]),
+            SettingsSearch("App icon", .appearance, path: [.appearance, .appIcon], words: ["App-Symbol", "home screen", "Home-Bildschirm"]),
             SettingsSearch("Current conditions in the top tile", .clubPages, words: ["top tile", "obere Kachel", "combined", "zusammen", "separate", "getrennt", "all values", "alle Werte", "morph"]),
-            SettingsSearch("Order of the club page cards", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten"]),
+            SettingsSearch("Card order", .clubPages, words: ["arrange", "anordnen", "Reihenfolge", "Karten", "cards"]),
             SettingsSearch("Location in the club header", .clubPages, words: ["Steg", "launch point", "Standort", "clubhouse", "Bootshaus", "header", "Kopf", "map", "Karte", "Open in Maps", "directions", "Route"]),
-            SettingsSearch("Background pictures", .clubPages, path: [.clubPages, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
-            SettingsSearch("In the tiles", .clubPages, path: [.clubPages, .backgrounds], words: ["tiles", "Kacheln", "frosted", "blur", "unscharf", "solid"]),
             SettingsSearch("Open places in", .clubPages, words: ["Apple Maps", "Apple Karten", "Google Maps", "map app", "Karten-App", "directions", "Route"]),
-            SettingsSearch("Maps start", .clubPages, words: ["map zoom", "Kartenzoom", "weather map", "Wetterkarte", "close", "nah", "wide", "weit"]),
+            SettingsSearch("Weather maps start", .clubPages, words: ["map zoom", "Kartenzoom", "weather map", "Wetterkarte", "close", "nah", "wide", "weit"]),
             SettingsSearch("Widget background", .widgets, words: ["sky", "Himmel", "picture", "Bild", "satellite", "Satellit"]),
             SettingsSearch("Widget updates", .widgets, words: ["refresh", "aktualisieren", "battery", "Akku"]),
             SettingsSearch("Language", .language, words: ["Sprache", "English", "Deutsch", "German", "Englisch"]),
@@ -436,85 +442,133 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Precipitation", .language, words: ["unit", "Einheit", "mm", "Regen", "rain", "snow", "Schnee", "hail", "Hagel"]),
             SettingsSearch("Visibility and distances", .language, words: ["unit", "Einheit", "km", "miles", "Meilen"]),
             SettingsSearch("Air pressure", .language, words: ["unit", "Einheit", "hPa", "Luftdruck"]),
-            SettingsSearch("Time", .language, words: ["Uhrzeit", "12", "24", "format"]),
-            SettingsSearch("Date", .language, words: ["Datum", "format"]),
             SettingsSearch("Save mobile data", .data, words: ["Low Data Mode", "Datensparmodus", "satellite", "radar"]),
             SettingsSearch("Battery", .data, words: ["Akku", "Low Power Mode", "Stromsparmodus", "background", "Hintergrund"]),
             SettingsSearch("Show the tour again", .help, words: ["tutorial", "Einführung", "tips", "Tipps"]),
             SettingsSearch("Show the tips again", .help, words: ["Tipps", "hints", "Hinweise"]),
             SettingsSearch("Legend: what the symbols mean", .help, words: ["Legende", "symbols", "Symbole"]),
+            SettingsSearch("Safety notice", .help, path: [.help, .safety], words: ["Sicherheit", "disclaimer"]),
             SettingsSearch("Version", .about),
-            SettingsSearch("Safety notice", .about, path: [.about, .safety], words: ["Sicherheit", "disclaimer"]),
             SettingsSearch("Privacy", .about, path: [.about, .privacy], words: ["Datenschutz"]),
             SettingsSearch("Legal notice", .about, path: [.about, .impressum], words: ["Impressum", "imprint"]),
             SettingsSearch("Reset to factory settings", .about, words: ["reset", "zurücksetzen", "Werkseinstellungen"]),
         ]
-        // The iPad has no Landscape setting.
-        if !Orientation.isPad, let appearance = all.firstIndex(where: { $0.title == "Appearance" }) {
-            all.insert(SettingsSearch("Landscape", .appearance, words: ["Querformat", "rotate", "drehen", "columns", "Spalten"]), at: appearance + 1)
-        }
         if developer {
+            // The app's own Light/Dark, rotation and time formats; the iPad has no Landscape setting.
+            let appearance = all.firstIndex { $0.topic == .appearance } ?? all.endIndex
+            all.insert(SettingsSearch("Appearance", .appearance, words: ["light", "dark", "hell", "dunkel", "mode", "Modus"]), at: appearance)
+            if !Orientation.isPad {
+                all.insert(SettingsSearch("Landscape", .appearance, words: ["Querformat", "rotate", "drehen", "columns", "Spalten"]), at: appearance + 1)
+            }
+            let language = all.lastIndex { $0.topic == .language }.map { $0 + 1 } ?? all.endIndex
+            all.insert(contentsOf: [SettingsSearch("Time", .language, words: ["Uhrzeit", "12", "24", "format"]),
+                                    SettingsSearch("Date", .language, words: ["Datum", "format"])], at: language)
             all.append(SettingsSearch("Developer options", .developer, words: ["Entwickler", "weather model", "Wettermodell"]))
         }
         return all
     }
 }
 
-/// Settings > Appearance: light or dark, landscape and the app icon.
+/// Settings > Appearance: the background pictures and the app icon. Light/Dark and
+/// Landscape follow the iPhone, as Apple's guidelines ask; the app's own choices
+/// for them show only with the developer options (owner's pick, 5.11.2026).
 private struct AppearanceSettingsView: View {
     @State private var appIcon = AppIcons.current
-    @State private var showAppIconTip = false
-    private let appIconTip = AppIconTip()
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
         ScrollViewReader { proxy in
             Form {
-                Section {
-                    AppearancePicker(selection: $settings.appearance)
-                } footer: {
-                    SectionFooter(tr("Dark uses less battery on iPhones with an OLED screen, which most models since the iPhone X have."))
-                }
-                .surfaceRows()
-                .id("appearance")
-
-                if !Orientation.isPad {
+                if settings.developerOptions {
                     Section {
-                        Toggle(isOn: $settings.allowsLandscape) {
-                            Label(tr("Landscape"), systemImage: "rectangle.landscape.rotate")
-                        }
+                        AppearancePicker(selection: $settings.appearance)
                     } footer: {
-                        SectionFooter(tr("On: the app turns with the phone and shows the cards in two columns. Off: it stays upright."))
+                        SectionFooter(tr("Dark uses less battery on most iPhones since the X."))
                     }
                     .surfaceRows()
-                    .id("landscape")
+                    .id("appearance")
+
+                    if !Orientation.isPad {
+                        Section {
+                            Toggle(tr("Landscape"), isOn: $settings.allowsLandscape)
+                        } footer: {
+                            SectionFooter(tr("Off: the app stays upright."))
+                        }
+                        .surfaceRows()
+                        .id("landscape")
+                    }
                 }
 
                 Section {
-                    if showAppIconTip {
-                        TipView(appIconTip)
+                    NavigationLink(value: SettingsRoute.backgrounds) {
+                        HStack(spacing: 12) {
+                            BackgroundThumbnail(choice: settings.allPagesBackground, width: 36)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tr("Background pictures"))
+                                Text(backgroundSummary)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
                     }
-                    AppIconPicker(selected: $appIcon)
-                } header: {
-                    SectionTitle(tr("App icon"), symbol: "app.badge")
-                } footer: {
-                    SectionFooter(tr("The icon on your home screen. iOS asks you to confirm the change."))
+                    NavigationLink(value: SettingsRoute.appIcon) {
+                        HStack(spacing: 12) {
+                            appIcon.previewImage
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 36, height: 36)
+                                .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                                .accessibilityHidden(true)
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tr("App icon"))
+                                Text(appIcon.title)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
                 }
                 .surfaceRows()
-                .id("appicon")
+                .id("pictures")
             }
             .scrollContentBackground(.hidden)
             .pageBackground(.settings)
             .navigationTitle(tr("Appearance"))
             .navigationBarTitleDisplayMode(.inline)
-            .tipVisibility(appIconTip, $showAppIconTip)
             .onAppear { appIcon = AppIcons.current }
-            .screenshotSections(["appearance", "landscape", "appicon"], proxy: proxy)
+            .screenshotSections(settings.developerOptions ? ["appearance", "landscape", "pictures"] : ["pictures"], proxy: proxy)
         }
     }
 }
 
-/// Settings > Club pages: the order of the cards and the background pictures.
+/// Settings > Appearance > App icon: every icon in a grid.
+private struct AppIconSettingsView: View {
+    @State private var appIcon = AppIcons.current
+    @State private var showAppIconTip = false
+    private let appIconTip = AppIconTip()
+
+    var body: some View {
+        Form {
+            Section {
+                if showAppIconTip {
+                    TipView(appIconTip)
+                }
+                AppIconPicker(selected: $appIcon)
+            } footer: {
+                SectionFooter(tr("iOS asks you to confirm the change."))
+            }
+            .surfaceRows()
+        }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
+        .navigationTitle(tr("App icon"))
+        .navigationBarTitleDisplayMode(.inline)
+        .tipVisibility(appIconTip, $showAppIconTip)
+        .onAppear { appIcon = AppIcons.current }
+    }
+}
+
+/// Settings > Club pages: the order of the cards, the club header and the maps.
 private struct ClubPagesSettingsView: View {
     @State private var arrangingPages = false
 
@@ -531,11 +585,22 @@ private struct ClubPagesSettingsView: View {
             .surfaceRows()
 
             Section {
+                // A row with its value and ›, as rows that open an editor have in iOS.
                 Button { arrangingPages = true } label: {
-                    Label(tr("Order of the club page cards"), systemImage: "arrow.up.arrow.down")
+                    LabeledContent(tr("Card order")) {
+                        HStack(spacing: 6) {
+                            Text(settings.pageLayout == .standard ? tr("App's order") : tr("Own order"))
+                            Image(systemName: "chevron.right")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(Color(.tertiaryLabel))
+                        }
+                        .foregroundStyle(.secondary)
+                    }
+                    .foregroundStyle(.primary)
+                    .contentShape(Rectangle())
                 }
             } footer: {
-                SectionFooter(tr("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))
+                SectionFooter(tr("For all clubs. Each club can have its own from \"Arrange this page\"."))
             }
             .surfaceRows()
 
@@ -543,52 +608,22 @@ private struct ClubPagesSettingsView: View {
                 Toggle(tr("Location in the club header"), isOn: $settings.launchPointInHeader)
             } footer: {
                 SectionFooter(settings.launchPointInHeader
-                              ? tr("Tap the lake and town under the club's name for the club's location: a map with the launch point, coordinates and Open in Maps. The Launch point card leaves the page.")
-                              : tr("The Launch point card is on the page, as before."))
+                              ? tr("Tap the lake and town under the club's name for a map with the launch point.")
+                              : tr("The Launch point card is on the page."))
             }
             .surfaceRows()
 
             Section {
-                NavigationLink(value: SettingsRoute.backgrounds) {
-                    HStack(spacing: 12) {
-                        BackgroundThumbnail(choice: settings.allPagesBackground, width: 36)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(tr("Background pictures"))
-                            Text(backgroundSummary)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                        }
-                    }
+                Picker(tr("Weather maps start"), selection: $settings.mapStartZoom) {
+                    ForEach(MapStartZoom.allCases) { Text($0.title).tag($0) }
                 }
-            } footer: {
-                SectionFooter(tr("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))
-            }
-            .surfaceRows()
-
-            Section {
-                LabeledContent(tr("Maps start")) {
-                    Picker(tr("Maps start"), selection: $settings.mapStartZoom) {
-                        ForEach(MapStartZoom.allCases) { Text($0.title).tag($0) }
-                    }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                    .fixedSize()
-                }
-            } header: {
-                SectionTitle(tr("Weather maps"), symbol: "map")
-            } footer: {
-                SectionFooter(mapZoomFooter)
-            }
-            .surfaceRows()
-
-            Section {
                 Picker(tr("Open places in"), selection: $settings.mapApp) {
                     ForEach(MapApp.allCases) { Text($0.title).tag($0) }
                 }
             } header: {
-                SectionTitle(tr("Map app"), symbol: "map.circle")
+                SectionTitle(tr("Maps"), symbol: "map")
             } footer: {
-                SectionFooter(tr("Opens the club's directions and launch point from Open in Maps at the launch point. Google Maps opens in its app when it is installed, else in the browser."))
+                SectionFooter(mapZoomFooter)
             }
             .surfaceRows()
         }
@@ -599,28 +634,55 @@ private struct ClubPagesSettingsView: View {
         .sheet(isPresented: $arrangingPages) { ArrangePageSheet(club: nil) }
     }
 
-    /// The spans the maps open with, e.g. "50 km around the club; rain and lightning 120 km."
+    /// e.g. "Weather maps open 50 km around the club, rain 120 km."
     private var mapZoomFooter: String {
         let local = Format.distance(WeatherMapLayer.wind.startSpanKm * 1000)
         let wide = Format.distance(WeatherMapLayer.rain.startSpanKm * 1000)
-        return tr("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.", local, wide)
-    }
-
-    private var backgroundSummary: String {
-        let settings = AppSettings.shared
-        let own = settings.pageBackgrounds.count + settings.clubBackgrounds.count
-        let all = tr("All pages: %@", settings.allPagesBackground.title)
-        return own == 0 ? all : all + " · " + tr("%@ with their own", String(own))
+        return tr("Weather maps open %@ around the club, rain and lightning %@.", local, wide)
     }
 }
 
-/// Settings > Language and units: language, units, date and time.
+/// "All pages: No picture", and how many pages and clubs have their own.
+private var backgroundSummary: String {
+    let settings = AppSettings.shared
+    let own = settings.pageBackgrounds.count + settings.clubBackgrounds.count
+    let all = tr("All pages: %@", settings.allPagesBackground.title)
+    return own == 0 ? all : all + " · " + tr("%@ with their own", String(own))
+}
+
+/// Settings > Language and units: language, units, date and time. The language
+/// is set for the app in the iPhone's Settings, as Apple's guidelines ask; the
+/// app's own language and time formats show only with the developer options.
 private struct LanguageSettingsView: View {
+    @Environment(\.openURL) private var openURL
+
     var body: some View {
         @Bindable var settings = AppSettings.shared
         ScrollViewReader { proxy in
             Form {
                 Section {
+                    // iOS gives every app its own language: Settings › Row Frog › Language.
+                    Button {
+                        if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+                    } label: {
+                        LabeledContent {
+                            HStack(spacing: 6) {
+                                Text(AppSettings.deviceLanguage.title)
+                                Image(systemName: "arrow.up.forward.app")
+                                    .font(.footnote)
+                            }
+                            .foregroundStyle(.secondary)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(tr("Language")).foregroundStyle(.primary)
+                                Text(tr("In the iPhone's Settings for Row Frog"))
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .contentShape(Rectangle())
+                    }
+                    if settings.developerOptions {
                     // As Date & Time > Set Automatically in iOS: the phone's
                     // choice by default, the languages only when it is off.
                     Toggle(isOn: $settings.languageLikeDevice.animation()) {
@@ -644,6 +706,7 @@ private struct LanguageSettingsView: View {
                         .pickerStyle(.inline)
                         .labelsHidden()
                     }
+                    }
                 } header: {
                     SectionTitle(tr("Language"), symbol: "globe")
                 }
@@ -665,6 +728,7 @@ private struct LanguageSettingsView: View {
                 .surfaceRows()
                 .id("units")
 
+                if settings.developerOptions {
                 Section {
                     Toggle(isOn: $settings.dateTimeLikeDevice.animation()) {
                         VStack(alignment: .leading, spacing: 2) {
@@ -691,12 +755,13 @@ private struct LanguageSettingsView: View {
                 }
                 .surfaceRows()
                 .id("datetime")
+                }
             }
             .scrollContentBackground(.hidden)
             .pageBackground(.settings)
             .navigationTitle(tr("Language and units"))
             .navigationBarTitleDisplayMode(.inline)
-            .screenshotSections(["language", "units", "datetime"], proxy: proxy)
+            .screenshotSections(settings.developerOptions ? ["language", "units", "datetime"] : ["language", "units"], proxy: proxy)
         }
     }
 
@@ -713,6 +778,7 @@ private struct LanguageSettingsView: View {
 
 /// Settings > Battery and data: saving mobile data, and what runs in the background.
 private struct DataSettingsView: View {
+    @Binding var path: [SettingsRoute]
     @State private var showSaveDataTip = false
     private let saveDataTip = SaveDataTip()
 
@@ -723,9 +789,7 @@ private struct DataSettingsView: View {
                 if showSaveDataTip {
                     TipView(saveDataTip)
                 }
-                Toggle(isOn: $settings.saveMobileData) {
-                    Label(tr("Save mobile data"), systemImage: "antenna.radiowaves.left.and.right")
-                }
+                Toggle(tr("Save mobile data"), isOn: $settings.saveMobileData)
                 if DataSaver.shared.saving {
                     Label(DataSaver.shared.lowDataModeOn ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
                           systemImage: "leaf")
@@ -735,29 +799,27 @@ private struct DataSettingsView: View {
             } header: {
                 SectionTitle(tr("Data use"), symbol: "arrow.up.arrow.down.circle")
             } footer: {
-                SectionFooter(tr("On mobile data, satellite pictures load only when you tap them, the radar map shows half-hour steps and the rain radar updates every 15 minutes. Forecasts and warnings always load. In iOS Low Data Mode the app always saves data, also on Wi-Fi."))
+                SectionFooter(tr("On mobile data, pictures and the radar load less often. In iOS Low Data Mode the app always saves data."))
             }
             .surfaceRows()
 
             Section {
-                NavigationLink(value: SettingsRoute.widgets) {
-                    LabeledContent {
-                        Text(settings.widgetUpdates.title)
-                    } label: {
-                        Label(tr("Widget updates"), systemImage: "apps.iphone")
-                    }
-                }
             } header: {
                 SectionTitle(tr("Battery"), symbol: "battery.75percent")
             } footer: {
-                SectionFooter(tr("Row Frog itself does nothing in the background: iOS pauses it moments after you leave it, and it never follows your location. Only the widgets load a new forecast on their own. Dark appearance and club pages without a picture use less battery too; in Low Power Mode the tiles are always solid."))
+                // "Widgets" opens the Widgets page, where their updates are set.
+                SectionFooter(markdown: tr("Row Frog does nothing in the background. Only the [widgets](rowfrog-settings://widgets) load forecasts on their own."))
             }
-            .surfaceRows()
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
         .navigationTitle(tr("Battery and data"))
         .navigationBarTitleDisplayMode(.inline)
+        .environment(\.openURL, OpenURLAction { url in
+            guard url.scheme == "rowfrog-settings" else { return .systemAction }
+            path.append(.widgets)
+            return .handled
+        })
         .tipVisibility(saveDataTip, $showSaveDataTip)
         .onChange(of: settings.saveMobileData) { if settings.saveMobileData { saveDataTip.invalidate(reason: .actionPerformed) } }
     }
@@ -790,8 +852,10 @@ private struct HelpSettingsView: View {
                 Button { showingLegend = true } label: {
                     Label(tr("Legend: what the symbols mean"), systemImage: "info.circle")
                 }
-            } footer: {
-                SectionFooter(tr("The one-time tips come back the next time you open the app."))
+                // Advice for rowers rather than a legal text, so it lives here (owner, 5.11.2026).
+                NavigationLink(value: SettingsRoute.safety) {
+                    Label(tr("Safety notice"), systemImage: "exclamationmark.shield")
+                }
             }
             .surfaceRows()
         }
@@ -828,9 +892,6 @@ private struct AboutSettingsView: View {
             .surfaceRows()
 
             Section {
-                NavigationLink(value: SettingsRoute.safety) {
-                    Label(tr("Safety notice"), systemImage: "exclamationmark.shield")
-                }
                 NavigationLink(value: SettingsRoute.privacy) {
                     Label(tr("Privacy"), systemImage: "hand.raised")
                 }
@@ -852,7 +913,7 @@ private struct AboutSettingsView: View {
                     Label(tr("Reset to factory settings"), systemImage: "arrow.counterclockwise")
                 }
             } footer: {
-                SectionFooter(tr("Appearance, units, language, background pictures and the app icon go back to how the app came. Small boats are ticked again and every boat's limits go back to the app's. Your locations, home base and boats stay."))
+                SectionFooter(tr("Settings, pictures and limits go back to how the app came. Your clubs and boats stay."))
             }
             .surfaceRows()
         }
@@ -868,7 +929,7 @@ private struct AboutSettingsView: View {
             }
             Button(tr("Cancel"), role: .cancel) {}
         } message: {
-            Text(tr("Appearance, units, language, background pictures, the order of the club page cards and the app icon go back to how the app came, and your own pictures are deleted from the app. Small boats are ticked again, the lake map is coloured for small boats, and every limit you changed goes back to the app's. Your locations, home base and boats stay."))
+            Text(tr("Every setting, the card order and the app icon go back to how the app came, your own pictures are deleted and every limit goes back to the app's. Your clubs and boats stay."))
         }
     }
 }
@@ -1166,7 +1227,8 @@ struct BackgroundSettingsView: View {
                 .id("all")
 
                 Section {
-                    ForEach(PageKind.allCases) { page in
+                    // The settings keep the plain iOS background unless the developer options are on.
+                    ForEach(PageKind.allCases.filter { $0 != .settings || settings.developerOptions }) { page in
                         NavigationLink(value: SettingsRoute.picker(.page(page))) {
                             BackgroundRow(title: page.title, symbol: page.symbol, choice: settings.pageBackgrounds[page],
                                           inherited: tr("Same as all pages"))
@@ -1196,27 +1258,16 @@ struct BackgroundSettingsView: View {
                 .id("clubs")
 
                 Section {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label(tr("Picture"), systemImage: "photo")
-                        Picker(tr("Picture"), selection: $settings.blurBackground) {
-                            Text(tr("Clear")).tag(false)
-                            Text(tr("Blurred")).tag(true)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                    }
-                    VStack(alignment: .leading, spacing: 8) {
-                        Label(tr("In the tiles"), systemImage: "rectangle.grid.1x2")
-                        Picker(tr("In the tiles"), selection: $settings.tileStyle) {
-                            ForEach(TileStyle.allCases) { Text($0.title).tag($0) }
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
+                    // A switch, as "Blur the picture" on the Widgets page, and a menu,
+                    // as Apple's lists have them (no segmented controls in a list).
+                    Toggle(tr("Blur the picture"), isOn: $settings.blurBackground)
+                    Picker(tr("In the tiles"), selection: $settings.tileStyle) {
+                        ForEach(TileStyle.allCases) { Text($0.title).tag($0) }
                     }
                 } header: {
                     SectionTitle(tr("Look"), symbol: "slider.horizontal.3")
                 } footer: {
-                    SectionFooter(tr("Picture blurred: the picture shows through the tiles like frosted glass. No picture: the tiles stay solid and keep the full rowing-light shading. No picture also saves battery, as blurred tiles are drawn again while the page scrolls; in Low Power Mode the tiles are always solid."))
+                    SectionFooter(tr("Solid tiles keep the full rowing-light shading and use less battery while scrolling."))
                 }
                 .surfaceRows()
                 .id("look")
@@ -1228,7 +1279,7 @@ struct BackgroundSettingsView: View {
                         Label(tr("Remove all background pictures"), systemImage: "trash")
                     }
                 } footer: {
-                    SectionFooter(tr("Back to the factory setting: no picture on any page. Your own pictures stay available to pick again."))
+                    SectionFooter(tr("No picture on any page. Your own pictures stay available to pick again."))
                 }
                 .surfaceRows()
                 .id("remove")
@@ -1559,340 +1610,6 @@ struct BackgroundPickerView: View {
 
 // MARK: - Shared pieces
 
-/// The boats the rowing light can be for: small boats, big boats and the
-/// user's own. Each has its own limits, behind the slider button.
-struct RowingLimitsView: View {
-    @Binding var path: [SettingsRoute]
-    let locations: LocationStore
-    @State private var showBoatsTip = false
-    /// The boat being added in the New boat sheet; it is kept only when Add is tapped.
-    @State private var newBoat: NewBoat?
-    private let boatsTip = MyBoatsTip()
-
-    var body: some View {
-        @Bindable var settings = AppSettings.shared
-        Form {
-            Section {
-                if showBoatsTip {
-                    TipView(boatsTip)
-                }
-                ForEach(Boat.groups) { boat in
-                    BoatRow(boat: boat) { path.append(.boat(boat.id)) }
-                }
-            } header: {
-                SectionTitle(tr("Your boat"), symbol: "figure.rower")
-            } footer: {
-                SectionFooter(tr("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))
-            }
-            .surfaceRows()
-
-            Section {
-                let boats = settings.myBoats.filter { $0.id != newBoat?.id }
-                ForEach(boats) { boat in
-                    BoatRow(boat: boat) { path.append(.boat(boat.id)) }
-                }
-                .onDelete { offsets in
-                    for id in offsets.map({ boats[$0].id }) { settings.removeBoat(id) }
-                }
-                Button {
-                    newBoat = NewBoat(id: settings.addBoat(at: locations.homeID).id)
-                } label: {
-                    Label(tr("Add a boat"), systemImage: "plus.circle")
-                }
-            } header: {
-                SectionTitle(tr("My boats"), symbol: "list.bullet")
-            } footer: {
-                SectionFooter(tr("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))
-            }
-            .surfaceRows()
-        }
-        .scrollContentBackground(.hidden)
-        .pageBackground(.settings)
-        .tipVisibility(boatsTip, $showBoatsTip)
-        .navigationTitle(tr("Rowing limits"))
-        .navigationBarTitleDisplayMode(.inline)
-        .sheet(item: $newBoat) { boat in
-            NewBoatSheet(boatID: boat.id, locations: locations)
-        }
-        .onAppear {
-            // Screenshot hook: `-RWNewBoat YES` with `-RWSettingsPage limits` opens the New boat sheet.
-            if newBoat == nil, UserDefaults.standard.bool(forKey: "RWNewBoat") {
-                newBoat = NewBoat(id: AppSettings.shared.addBoat(at: locations.homeID).id)
-            }
-        }
-    }
-}
-
-private struct NewBoat: Identifiable {
-    let id: String
-}
-
-/// Adding a boat, as creating something in Apple's own apps (a contact, an
-/// event, an alarm): a sheet with Cancel and Add, where only Add keeps the boat
-/// (owner, 4.11.2026; before, the back arrow saved it). Changing a boat later
-/// saves on its own, as in iOS Settings.
-private struct NewBoatSheet: View {
-    let boatID: String
-    let locations: LocationStore
-    @Environment(\.dismiss) private var dismiss
-    @State private var added = false
-
-    var body: some View {
-        let settings = AppSettings.shared
-        let named = !(settings.boat(boatID)?.name.trimmingCharacters(in: .whitespaces).isEmpty ?? true)
-        NavigationStack {
-            BoatLimitsView(boatID: boatID, locations: locations, isNew: true)
-                .toolbar {
-                    ToolbarItem(placement: .cancellationAction) {
-                        Button(tr("Cancel")) { dismiss() }
-                    }
-                    ToolbarItem(placement: .confirmationAction) {
-                        Button(tr("Add")) {
-                            added = true
-                            dismiss()
-                        }
-                        .disabled(!named)
-                    }
-                }
-        }
-        // Only Cancel and Add close the sheet, so a boat is never kept or lost by a swipe.
-        .interactiveDismissDisabled()
-        .onDisappear {
-            if !added { settings.removeBoat(boatID) }
-        }
-    }
-}
-
-/// A boat to tick, with a button to its limits.
-private struct BoatRow: View {
-    let boat: Boat
-    let openLimits: () -> Void
-
-    var body: some View {
-        let settings = AppSettings.shared
-        let changed = !(settings.boatLimits[boat.id] ?? [:]).isEmpty
-        HStack(spacing: 12) {
-            Button {
-                settings.boatID = boat.id
-            } label: {
-                HStack {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(boat.title).foregroundStyle(.primary)
-                        Text(changed ? tr("%@ · your limits", boat.detail) : boat.detail)
-                            .font(.caption)
-                            .foregroundStyle(changed ? Color.orange : Color.secondary)
-                    }
-                    .multilineTextAlignment(.leading)
-                    Spacer(minLength: 4)
-                    if settings.selectedBoat.id == boat.id {
-                        Image(systemName: "checkmark").fontWeight(.semibold).foregroundStyle(.tint)
-                    }
-                }
-                .contentShape(Rectangle())
-            }
-            .buttonStyle(.plain)
-            Button(action: openLimits) {
-                Image(systemName: "slider.horizontal.3")
-                    .padding(6)
-            }
-            .buttonStyle(.borderless)
-            .accessibilityLabel(tr("Limits for %@", boat.title))
-        }
-    }
-}
-
-/// One boat's name, type and limits.
-struct BoatLimitsView: View {
-    let boatID: String
-    let locations: LocationStore
-    /// In the New boat sheet: no Remove button, and the sheet's Cancel and Add.
-    var isNew = false
-    /// Whether the limit list shows; off, the boat simply uses the app's limits
-    /// for its type and size (owner's idea, 4.11.2026).
-    @State private var ownLimits: Bool
-    @State private var confirmAppLimits = false
-    @State private var showColdTip = false
-    private let coldTip = ColdWaterTip()
-    @Environment(\.dismiss) private var dismiss
-
-    init(boatID: String, locations: LocationStore, isNew: Bool = false) {
-        self.boatID = boatID
-        self.locations = locations
-        self.isNew = isNew
-        _ownLimits = State(initialValue: !(AppSettings.shared.boatLimits[boatID] ?? [:]).isEmpty)
-    }
-
-    var body: some View {
-        @Bindable var settings = AppSettings.shared
-        let boat = settings.boat(boatID) ?? .small
-        let changed = !(settings.boatLimits[boat.id] ?? [:]).isEmpty
-        Form {
-            if !boat.isGroup, let index = settings.myBoats.firstIndex(where: { $0.id == boatID }) {
-                Section {
-                    TextField(tr("Name, e.g. the boat's name"), text: $settings.myBoats[index].name)
-                    Picker(tr("Type"), selection: $settings.myBoats[index].type) {
-                        ForEach(BoatType.allCases) { type in
-                            Text(type.title).tag(type)
-                        }
-                    }
-                    Picker(tr("Size and rigging"), selection: $settings.myBoats[index].boatClass) {
-                        ForEach(BoatClass.allCases) { boatClass in
-                            Text(boatClass.title).tag(boatClass)
-                        }
-                    }
-                } header: {
-                    SectionTitle(tr("Boat"), symbol: "figure.rower")
-                } footer: {
-                    SectionFooter(boat.type.detail)
-                }
-                .surfaceRows()
-
-                KeptAtSection(boat: boat, locations: locations)
-            }
-
-            Section {
-                if showColdTip {
-                    TipView(coldTip)
-                }
-                // As Date & Time > Set Automatically in iOS: the app's limits
-                // by default, the list only when the user wants their own.
-                Toggle(isOn: Binding {
-                    !ownLimits
-                } set: { useApp in
-                    if !useApp {
-                        withAnimation { ownLimits = true }
-                    } else if changed {
-                        confirmAppLimits = true
-                    } else {
-                        withAnimation { ownLimits = false }
-                    }
-                }) {
-                    Text(tr("The app's limits for this boat"))
-                }
-                if ownLimits {
-                    ForEach(RowingLimit.allCases) { limit in
-                        LimitRow(limit: limit, boat: boat)
-                    }
-                }
-            } header: {
-                SectionTitle(tr("Limits"), symbol: "slider.horizontal.3")
-            } footer: {
-                SectionFooter((ownLimits
-                               ? tr("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. Official warnings, thunderstorms, fog, hail and darkness always count.")
-                                   + " " + tr("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.",
-                                              Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs))
-                               : tr("The rowing light uses the app's limits for this type and size of boat. Turn this off to set your own.")
-                                   + " " + tr("Below %@ water the app lowers its wind and gust limits by %@.",
-                                              Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs))))
-            }
-            .surfaceRows()
-            .confirmationDialog(tr("Use the app's limits again?"), isPresented: $confirmAppLimits, titleVisibility: .visible) {
-                Button(tr("Use the app's limits"), role: .destructive) {
-                    settings.boatLimits[boat.id] = nil
-                    withAnimation { ownLimits = false }
-                }
-            } message: {
-                Text(tr("The limits you set for this boat are dropped."))
-            }
-
-            if !boat.isGroup && !isNew {
-                Section {
-                    Button(tr("Remove this boat"), role: .destructive) {
-                        dismiss()
-                        settings.removeBoat(boat.id)
-                    }
-                }
-                .surfaceRows()
-            }
-        }
-        .scrollContentBackground(.hidden)
-        .pageBackground(.settings)
-        .tipVisibility(coldTip, $showColdTip)
-        .navigationTitle(isNew ? tr("New boat") : boat.title)
-        .navigationBarTitleDisplayMode(.inline)
-    }
-}
-
-/// The clubs where an own boat is kept, with buttons to add and remove one
-/// (owner's choice A, 30.10.2026). The last club stays.
-private struct KeptAtSection: View {
-    let boat: Boat
-    let locations: LocationStore
-
-    var body: some View {
-        let settings = AppSettings.shared
-        let others = locations.saved.filter { !boat.clubs.contains($0.id) }
-        Section {
-            ForEach(boat.clubs, id: \.self) { id in
-                HStack {
-                    Label(locations.name(of: id), systemImage: id == locations.homeID ? "house.fill" : "figure.rower")
-                    Spacer(minLength: 8)
-                    if id == locations.homeID {
-                        Text(tr("Home base")).font(.caption).foregroundStyle(.secondary)
-                    }
-                    if boat.clubs.count > 1 {
-                        Button(tr("Remove"), role: .destructive) { settings.unkeep(boat.id, at: id) }
-                            .buttonStyle(.borderless)
-                            .font(.subheadline)
-                    }
-                }
-            }
-            if !others.isEmpty {
-                Menu {
-                    ForEach(others) { club in
-                        Button(club.displayName) { settings.keep(boat.id, at: club.id) }
-                    }
-                } label: {
-                    Label(tr("Add a club"), systemImage: "plus.circle")
-                }
-            }
-        } header: {
-            SectionTitle(tr("Kept at"), symbol: "mappin.and.ellipse")
-        } footer: {
-            SectionFooter(tr("The boat shows only on the pages of these clubs. Elsewhere it waits under “At other clubs” in the boat menu, one tap to take it along, e.g. to a regatta."))
-        }
-        .surfaceRows()
-    }
-}
-
-/// One limit with buttons to raise or lower it; the app's value is shown beside a changed one.
-private struct LimitRow: View {
-    let limit: RowingLimit
-    let boat: Boat
-
-    var body: some View {
-        let limits = AppSettings.shared.limits(for: boat)
-        let value = limits.value(limit)
-        let usual = limit.standard(for: boat)
-        let mine = limits.isMine(limit)
-        Stepper {
-            HStack {
-                VStack(alignment: .leading, spacing: 2) {
-                    Label(limit.title, systemImage: limit.symbol)
-                        .symbolRenderingMode(.hierarchical)
-                    Text(mine ? tr("Your limit · the app's: %@", limit.format(usual)) : tr("The app's limit"))
-                        .font(.caption)
-                        .foregroundStyle(mine ? Color.orange : Color.secondary)
-                }
-                Spacer(minLength: 4)
-                Text(limit.format(value)).monospacedDigit().fontWeight(.semibold)
-            }
-        } onIncrement: {
-            set(value + limit.step)
-        } onDecrement: {
-            set(value - limit.step)
-        }
-    }
-
-    private func set(_ new: Double) {
-        let settings = AppSettings.shared
-        let clamped = min(max((new / limit.step).rounded() * limit.step, limit.range.lowerBound), limit.range.upperBound)
-        var custom = settings.boatLimits[boat.id] ?? [:]
-        custom[limit] = abs(clamped - limit.standard(for: boat)) < limit.step / 2 ? nil : clamped
-        settings.boatLimits[boat.id] = custom.isEmpty ? nil : custom
-    }
-}
-
 /// A section header that stays readable over a background picture.
 struct SectionTitle: View {
     let text: String
@@ -1905,7 +1622,9 @@ struct SectionTitle: View {
     }
 
     var body: some View {
-        Label(text, systemImage: symbol)
+        // Plain text, as the headings in iOS Settings (owner's pick, 5.11.2026);
+        // `symbol` is no longer shown.
+        Text(text)
             .padding(.horizontal, surface.hasPicture ? 8 : 0)
             .padding(.vertical, surface.hasPicture ? 3 : 0)
             .labelBackground(surface, in: Capsule())
@@ -1914,14 +1633,21 @@ struct SectionTitle: View {
 
 struct SectionFooter: View {
     let text: String
+    /// Links written as [words](url) are shown as links.
+    var markdown = false
     @Environment(\.surface) private var surface
 
     init(_ text: String) {
         self.text = text
     }
 
+    init(markdown text: String) {
+        self.text = text
+        self.markdown = true
+    }
+
     var body: some View {
-        Text(text)
+        (markdown ? Text(LocalizedStringKey(text)) : Text(text))
             .padding(surface.hasPicture ? 8 : 0)
             .labelBackground(surface, in: RoundedRectangle(cornerRadius: 8))
     }

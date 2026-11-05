@@ -150,6 +150,12 @@ struct RootView: View {
         .onAppear { applyAppearance() }
         .onChange(of: AppSettings.shared.appearance) { applyAppearance() }
         .onChange(of: AppSettings.shared.allowsLandscape) { Orientation.apply() }
+        // The developer options switch the app's own Light/Dark, rotation and language on and off.
+        .onChange(of: AppSettings.shared.developerOptions) {
+            applyAppearance()
+            Orientation.apply()
+            WidgetBridge.publish(locations)
+        }
         .task { await loadCatalog() }
         // The widget picks up the home base, clubs and settings when the user leaves the app.
         // Only on leaving, not on every pull-down of Control Center or the app switcher.
@@ -325,7 +331,7 @@ struct RootView: View {
 
     /// Light, dark or the phone's setting, for every window and sheet.
     private func applyAppearance() {
-        let style: UIUserInterfaceStyle = switch AppSettings.shared.appearance {
+        let style: UIUserInterfaceStyle = switch AppSettings.shared.activeAppearance {
         case .device: .unspecified
         case .light: .light
         case .dark: .dark

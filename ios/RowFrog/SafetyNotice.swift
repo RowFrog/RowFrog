@@ -93,8 +93,9 @@ struct SafetyNoticeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // The settings can't be reached yet, so the language is chosen here:
-            // every choice the settings offer, the device's language first and preset.
+            // The app speaks the iPhone's language (Settings › Row Frog › Language).
+            // With the developer options, the app's own choice shows here too.
+            if AppSettings.shared.developerOptions {
             Picker(tr("Language"), selection: Binding(
                 get: { AppSettings.shared.language },
                 set: { AppSettings.shared.language = $0 }
@@ -107,6 +108,7 @@ struct SafetyNoticeView: View {
             .frame(maxWidth: 320)
             .padding(.top, 8)
             .padding(.horizontal)
+            }
             ScrollView {
                 // Lazy, so the end marker only appears once it is scrolled into view.
                 LazyVStack(spacing: 20) {

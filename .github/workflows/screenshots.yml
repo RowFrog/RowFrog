@@ -360,8 +360,8 @@ jobs:
           # The phone on its side: two columns of cards.
           shoot_pages 40-home-landscape light -RWLandscape YES
           shoot_pages 41-tutzing-landscape-dark dark -RWOpenClub tutzinger-rv -RWLandscape YES
-          # Landscape turned off in the settings: the app stays upright.
-          shoot 42-settings-landscape-off light -RWShowSettings YES -RWSettingsPage appearance -RWAllowsLandscape NO
+          # Landscape turned off in the settings (developer options): the app stays upright.
+          shoot 42-settings-landscape-off light -RWShowSettings YES -RWSettingsPage appearance -RWAllowsLandscape NO -RWDeveloperOptions YES
           shoot 43-home-landscape-off light -RWAllowsLandscape NO -RWLandscape YES
           # Settings, background pictures, languages and units.
           own='<dict><key>tutzinger-rv</key><string>sample:cloud-sculler</string></dict>'
@@ -370,18 +370,22 @@ jobs:
           # The settings' own pages and the search field at the bottom.
           WAIT=25 shoot 160-settings-search light -RWShowSettings YES -RWSettingsSearch wind
           WAIT=25 shoot 160-settings-search-german-dark dark -RWShowSettings YES -RWSettingsSearch Wind -RWLanguage de
-          WAIT=25 shoot_n 161-settings-appearance 2 light -RWShowSettings YES -RWSettingsPage appearance
+          WAIT=25 shoot 161-settings-appearance light -RWShowSettings YES -RWSettingsPage appearance
+          # With the developer options: the app's own Light/Dark and Landscape, and its own language and formats.
+          WAIT=25 shoot 390-settings-appearance-developer light -RWShowSettings YES -RWSettingsPage appearance -RWDeveloperOptions YES
+          WAIT=25 shoot_n 391-settings-app-icon 2 light -RWShowSettings YES -RWSettingsPage appicon
           WAIT=25 shoot 162-settings-club-pages light -RWShowSettings YES -RWSettingsPage clubpages
-          WAIT=25 shoot_n 163-settings-language 3 light -RWShowSettings YES -RWSettingsPage language -RWTimeFormat device
-          # The "Like the iPhone" switches off: languages, time and date to pick.
-          WAIT=25 shoot_n 362-settings-language-own 3 light -RWShowSettings YES -RWSettingsPage language -RWLanguage en -RWTimeFormat hours24 -RWDateFormat short
+          WAIT=25 shoot_n 163-settings-language 2 light -RWShowSettings YES -RWSettingsPage language -RWTimeFormat device
+          # The "Like the iPhone" switches off (developer options): languages, time and date to pick.
+          WAIT=25 shoot_n 362-settings-language-own 3 light -RWShowSettings YES -RWSettingsPage language -RWLanguage en -RWTimeFormat hours24 -RWDateFormat short -RWDeveloperOptions YES
           WAIT=25 shoot 164-settings-battery-data light -RWShowSettings YES -RWSettingsPage data
           WAIT=25 shoot 165-settings-help light -RWShowSettings YES -RWSettingsPage help
           WAIT=25 shoot 166-settings-about light -RWShowSettings YES -RWSettingsPage about
           shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
           shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
-          shoot 15-settings-with-picture light -RWShowSettings YES -RWBackground sample:soft-waves
+          # A picture behind the settings only shows with the developer options.
+          shoot 15-settings-with-picture light -RWShowSettings YES -RWBackground sample:soft-waves -RWDeveloperOptions YES
           shoot_pages 16-home-picture-frosted light -RWBackground sample:cloud-shell
           shoot_pages 17-home-picture-blurred-solid light -RWBackground sample:lake-waves -RWBackgroundBlur YES -RWTileStyle solid
           shoot_n 18-list-picture-frosted 2 light -RWShowList YES -RWBackground sample:sunny-day

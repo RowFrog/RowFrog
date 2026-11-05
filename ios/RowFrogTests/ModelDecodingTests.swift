@@ -24,10 +24,16 @@ final class ModelDecodingTests: XCTestCase {
         let noon = ISO8601DateFormatter().date(from: "2026-10-18T10:00:00Z")!
         let evening = ISO8601DateFormatter().date(from: "2026-10-18T19:00:00Z")!
         guard case let .up(_, sunset) = forecast.sunState(at: noon) else { return XCTFail("sun should be up") }
-        // The default follows the phone (a US Simulator shows 12-hour), so pick 24-hour here.
+        // The default follows the phone (a US Simulator shows 12-hour), so pick 24-hour here;
+        // the app's own time format counts only with the developer options.
         let format = AppSettings.shared.timeFormat
+        let developer = AppSettings.shared.developerOptions
         AppSettings.shared.timeFormat = .hours24
-        defer { AppSettings.shared.timeFormat = format }
+        AppSettings.shared.developerOptions = true
+        defer {
+            AppSettings.shared.timeFormat = format
+            AppSettings.shared.developerOptions = developer
+        }
         XCTAssertEqual(Format.time(sunset).count, 5)  // 24-hour "HH:mm"
         XCTAssertNil(forecast.sunState(at: evening))  // no next sunrise in the data
     }

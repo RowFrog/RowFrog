@@ -25,6 +25,7 @@ enum WidgetBridge {
         for key in AppSettings.Keys.all {
             values[key] = UserDefaults.standard.object(forKey: key)
         }
+        values[WidgetShared.appLanguageKey] = AppSettings.deviceLanguage.rawValue
         // Sorted keys, so the same values always give the same bytes.
         let fingerprint = try? JSONSerialization.data(withJSONObject: values.compactMapValues(jsonSafe), options: [.sortedKeys])
         // Widgets that load only after the app was used get a new forecast as the

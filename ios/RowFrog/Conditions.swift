@@ -158,13 +158,13 @@ enum PressureTrend {
 enum Format {
     /// The time in the format chosen in the settings; 24-hour by default.
     static func time(_ date: Date) -> String {
-        AppSettings.shared.timeFormat.string(from: date)
+        AppSettings.shared.activeTimeFormat.string(from: date)
     }
 
     static func day(_ date: Date, calendar: Calendar = .current) -> String {
         if calendar.isDateInToday(date) { return tr("Today") }
         if calendar.isDateInTomorrow(date) { return tr("Tomorrow") }
-        return AppSettings.shared.dateFormat.string(from: date, locale: locale)
+        return AppSettings.shared.activeDateFormat.string(from: date, locale: locale)
     }
 
     /// "Today 21:00", "Tomorrow 03:00" or "Mon 21:00".

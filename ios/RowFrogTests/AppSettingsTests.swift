@@ -240,6 +240,33 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertFalse(again.topTileOpen)
     }
 
+    /// Light/Dark, rotation, language, time and date follow the iPhone; the app's own
+    /// choices count only with the developer options, and come back with them.
+    func testOwnChoicesCountOnlyWithDeveloperOptions() {
+        let settings = AppSettings(defaults: defaults)
+        settings.appearance = .dark
+        settings.allowsLandscape = false
+        settings.language = .german
+        settings.timeFormat = .hours12
+        settings.dateFormat = .iso
+        settings.pageBackgrounds[.settings] = .sample("night-lake")
+        XCTAssertEqual(settings.activeAppearance, .device)
+        XCTAssertTrue(settings.activeAllowsLandscape)
+        XCTAssertEqual(settings.activeLanguage, .device)
+        XCTAssertEqual(settings.resolvedLanguage, AppSettings.deviceLanguage)
+        XCTAssertEqual(settings.activeTimeFormat, .device)
+        XCTAssertEqual(settings.activeDateFormat, .device)
+        XCTAssertEqual(settings.background(for: .settings), .noPicture)
+
+        settings.developerOptions = true
+        XCTAssertEqual(settings.activeAppearance, .dark)
+        XCTAssertFalse(settings.activeAllowsLandscape)
+        XCTAssertEqual(settings.resolvedLanguage, .german)
+        XCTAssertEqual(settings.activeTimeFormat, .hours12)
+        XCTAssertEqual(settings.activeDateFormat, .iso)
+        XCTAssertEqual(settings.background(for: .settings), .sample("night-lake"))
+    }
+
     func testBackgroundChoiceRawValues() {
         for choice in [BackgroundChoice.noPicture, .sample("night-lake"), .custom("user-1.jpg")] {
             XCTAssertEqual(BackgroundChoice(rawValue: choice.rawValue), choice)
