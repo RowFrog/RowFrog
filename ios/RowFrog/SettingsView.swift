@@ -578,7 +578,7 @@ private struct ClubPagesSettingsView: View {
             } header: {
                 SectionTitle(tr("Map app"), symbol: "map.circle")
             } footer: {
-                SectionFooter(tr("Opens the club's directions and launch point from the Launch point card. Google Maps opens in its app when it is installed, else in the browser."))
+                SectionFooter(tr("Opens the club's directions and launch point from Open in Maps at the launch point. Google Maps opens in its app when it is installed, else in the browser."))
             }
             .surfaceRows()
         }

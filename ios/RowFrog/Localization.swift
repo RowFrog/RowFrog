@@ -464,7 +464,7 @@ enum German {
         "Map app": "Karten-App",
         "Apple Maps": "Apple Karten",
         "Google Maps": "Google Maps",
-        "Opens the club's directions and launch point from the Launch point card. Google Maps opens in its app when it is installed, else in the browser.": "Öffnet die Route zum Verein und den Steg aus der Karte \u{201E}Steg\u{201C}. Google Maps öffnet in seiner App, wenn sie installiert ist, sonst im Browser.",
+        "Opens the club's directions and launch point from Open in Maps at the launch point. Google Maps opens in its app when it is installed, else in the browser.": "Öffnet die Route zum Verein und den Steg über \u{201E}In Karten öffnen\u{201C} beim Steg. Google Maps öffnet in seiner App, wenn sie installiert ist, sonst im Browser.",
         "Close (map zoom)": "Nah",
         "Normal": "Normal",
         "Wide": "Weit",
