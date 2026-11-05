@@ -863,11 +863,17 @@ private struct NowCard: View {
     private func opens(_ condition: Condition, @ViewBuilder _ content: () -> some View) -> some View {
         let light = condition.cause(in: hour)
         return Button { openCondition = condition } label: {
-            content().contentShape(Rectangle()).environment(\.causeTint, light?.causeTint)
+            content().contentShape(Rectangle()).environment(\.causeTint, light?.causeTint ?? coldTint(condition))
         }
             .buttonStyle(.plain)
             .accessibilityValue(light?.causeTint == nil ? "" : tr("Sets the light: %@", light?.title ?? ""))
             .accessibilityHint(tr("Opens a chart and more about this value"))
+    }
+
+    /// The cold-water blue on the water value while the Life jacket badge shows.
+    private func coldTint(_ condition: Condition) -> Color? {
+        guard condition == .waterTemperature else { return nil }
+        return ColdWaterKit.valueTint(waterC: hourWaterC, limits: AppSettings.shared.limits(at: forecast.clubId))
     }
 
     /// Screenshot hook: `-RWSampleIce YES` shows the winter ice value, to check the row's fit.

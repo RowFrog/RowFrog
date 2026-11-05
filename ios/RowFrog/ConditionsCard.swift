@@ -111,8 +111,8 @@ struct ConditionTiles: View {
 
 extension View {
     /// The tile that sets the light gets a faint wash and a thin rim in the light's colour
-    /// (owner's pick T2, 5 Nov 2026). To go back to T1 (coloured value only), make this
-    /// return `self`.
+    /// (owner's pick T2, 5 Nov 2026); the cold-water tile the same in blue (W2). To go back
+    /// to T1 (coloured value only), make this return `self`; for W1, skip it for blue.
     @ViewBuilder func causeHighlight(_ tint: Color?) -> some View {
         if let tint {
             background(tint.opacity(0.12), in: RoundedRectangle(cornerRadius: 10))
@@ -359,7 +359,7 @@ private struct ConditionTile: View {
                         VStack(alignment: .leading, spacing: 0) {
                             Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
                                 .foregroundStyle(cause ?? .primary)
-                                .accessibilityLabel(cause == nil ? value : value + ", " + tr("Sets the light: %@", light?.title ?? ""))
+                                .accessibilityLabel(light == nil ? value : value + ", " + tr("Sets the light: %@", light?.title ?? ""))
                             detailLine.font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
                         }
                         Spacer(minLength: 0)
@@ -382,7 +382,10 @@ private struct ConditionTile: View {
 
     private var light: Light? { condition.cause(in: hour) }
     /// Amber or red while this value sets the light; its value then takes that colour.
-    private var cause: Color? { light?.causeTint }
+    private var cause: Color? {
+        light?.causeTint ?? (condition == .waterTemperature
+            ? ColdWaterKit.valueTint(waterC: data.water?.celsius ?? data.estimatedWater, limits: data.limits) : nil)
+    }
 
     private func header(_ title: String) -> some View {
         HStack(spacing: 4) {

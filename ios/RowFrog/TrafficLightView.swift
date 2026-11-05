@@ -113,3 +113,12 @@ extension Condition {
     private static let sampleCauses: Set<String> =
         Set((UserDefaults.standard.string(forKey: "RWSampleCause") ?? "").split(separator: ",").map(String.init))
 }
+
+extension ColdWaterKit {
+    /// The water value's colour while the Life jacket badge shows: the cold-water blue on the
+    /// number, and the wash and rim on its open tile (owner's pick W2, 5 Nov 2026). Blue never
+    /// means the light. For W0 (no blue) return nil here; for W1 (number only) see `causeHighlight`.
+    static func valueTint(waterC: Double?, limits: RowingLimits) -> Color? {
+        ColdWaterKit(waterC: waterC, limits: limits) == nil ? nil : color
+    }
+}
