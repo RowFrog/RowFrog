@@ -754,7 +754,7 @@ private struct NowCard: View {
         }
     }
 
-    /// The grip under the tile: tapped, or pulled down or up, it opens or closes the tiles.
+    /// The grip under the tile: tapped, it opens or closes the tiles.
     private var openHandle: some View {
         Button(action: toggleOpen) {
             // Words only, like Apple's own "Show more" rows (owner's pick G2, 5 Nov 2026).
@@ -770,11 +770,9 @@ private struct NowCard: View {
             .frame(maxWidth: .infinity, minHeight: 44)
             .contentShape(Rectangle())
         }
+        // Tap only: a pull here took page swipes that start on this full-width row
+        // (owner's report, 5 Nov 2026), so swipes always scroll the page.
         .buttonStyle(.plain)
-        .highPriorityGesture(DragGesture(minimumDistance: 12).onEnded { drag in
-            let pull = drag.translation.height
-            if (pull > 20 && !open) || (pull < -20 && open) { toggleOpen() }
-        })
         .accessibilityLabel(open ? tr("Fewer values") : tr("All values"))
         .accessibilityHint(open ? tr("Shows the short top tile again") : tr("Opens all values in the top tile"))
         .accessibilityIdentifier("top-tile-handle")
