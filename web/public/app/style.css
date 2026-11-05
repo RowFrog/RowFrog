@@ -903,6 +903,11 @@ body.has-picture main.page > .list-links, body.has-picture main.page > .add-own,
   width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) var(--label-veil, 25%), transparent);
   -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5);
 }
+/* The club header too sits on a frosted plate over a picture (ClubPageHeader: labelBackground, 16 px corners,
+   16 by 10 px inside), as wide as its text. Where the page buttons sit in the title row (side list shown), the
+   row spans the column, so the plate is left out there. Raised, so the place line tip still pops over the cards. */
+body.has-picture .club-head:not(:has(.head-side)) { position: relative; z-index: 5; width: fit-content; max-width: 100%; margin-inline: auto; box-sizing: border-box; padding: 10px 16px; border-radius: 16px;
+  background: color-mix(in srgb, var(--bg) var(--label-veil, 25%), transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
 :root[data-theme="dark"] body.has-picture { --label-veil: 20%; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body.has-picture { --label-veil: 20%; } }
 .bg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 16px 12px; margin-bottom: 12px; }
