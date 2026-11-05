@@ -379,24 +379,30 @@ svg.filled { width: 22px; height: 22px; }
   body.scrolled::before { opacity: 1; }
 }
 /* The club's name and light, small, once the big title has scrolled away (InlineClubTitle). */
-/* As the app's TopEdgeFade with a title: a thin blur (light, like .thinMaterial, not the page colour) the cards show through, softened over 28 px below
-   the bar (the 48 hours' card is clipped above its pinned header, so no
-   rows show through there). Without backdrop-filter, or with reduced transparency, the bar is solid. */
-.top-title { position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 10; height: calc(var(--safe-top) + 52px); padding: var(--safe-top) 16px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+/* As the app's TopEdgeFade with a title (owner's pick 2c, 5 Nov 2026): a 44 px bar (InlineClubTitle.height) whose
+   glass starts in the page colour, so it runs on from the solid strip iOS draws behind the clock on the Home
+   Screen, and a 28 px fade below it where the blur gets weaker in four steps (a mask would switch the blur off in
+   Chrome and Safari). The 48 hours' card is clipped above its pinned header, and the fade steps aside while that
+   header is pinned under the bar. Without backdrop-filter, or with reduced transparency, the bar is solid. */
+.top-title { position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 10; height: calc(var(--safe-top) + 44px); padding: var(--safe-top) 16px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: border-box; }
-.top-title::before, .top-title::after { content: ""; position: absolute; z-index: -1; left: 0; right: 0; pointer-events: none; }
-/* No mask on these: a mask switches the blur off in Chrome and Safari, so the bar blurs fully and a
-   short strip below it, lightly blurred and fading in colour, softens the edge. */
-.top-title::before { top: 0; bottom: 0; background: color-mix(in srgb, var(--card) 45%, transparent); backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8); }
-.top-title::after { top: 100%; height: 28px; background: linear-gradient(color-mix(in srgb, var(--card) 30%, transparent), transparent); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
-@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .top-title::before { background: var(--bg); } .top-title::after { display: none; } }
-@media (prefers-reduced-transparency: reduce) { .top-title::before { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; } .top-title::after { display: none; } }
+.top-title::before, .top-title .fade { content: ""; position: absolute; z-index: -1; left: 0; right: 0; pointer-events: none; }
+.top-title::before { top: 0; bottom: 0; background: linear-gradient(var(--bg) 0%, color-mix(in srgb, var(--card) 45%, transparent) 70%);
+  backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8); }
+.top-title .fade { height: 7px; }
+.top-title .fade:nth-of-type(1) { top: 100%; background: color-mix(in srgb, var(--card) 36%, transparent); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); }
+.top-title .fade:nth-of-type(2) { top: calc(100% + 7px); background: color-mix(in srgb, var(--card) 22%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); }
+.top-title .fade:nth-of-type(3) { top: calc(100% + 14px); background: color-mix(in srgb, var(--card) 11%, transparent); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); }
+.top-title .fade:nth-of-type(4) { top: calc(100% + 21px); background: color-mix(in srgb, var(--card) 4%, transparent); backdrop-filter: blur(1.5px); -webkit-backdrop-filter: blur(1.5px); }
+body.hhead-stuck .top-title .fade { display: none; }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .top-title::before { background: var(--bg); } .top-title .fade { display: none; } }
+@media (prefers-reduced-transparency: reduce) { .top-title::before { background: var(--bg); backdrop-filter: none; -webkit-backdrop-filter: none; } .top-title .fade { display: none; } }
 .top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .top-name { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: center; gap: 8px; }
 body.title-gone .top-title { opacity: 1; }
 body.title-gone .top-title .head-side > * { pointer-events: auto; }
 body:not(.title-gone) .top-title .head-side { visibility: hidden; }
-body.title-gone .hhead { top: calc(var(--safe-top) + 52px); }
+body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }
 
 /* The page's buttons level with the club's big name, the boat on the right (PageTopButtons, pick F):
    each side keeps the same room, so the name stays centred. */
