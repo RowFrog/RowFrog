@@ -71,6 +71,23 @@ final class AppSettingsTests: XCTestCase {
         XCTAssertEqual(settings.dateFormat, .device)
     }
 
+    /// Option B (4 Nov 2026): the header opens the launch point and its card leaves the page;
+    /// switched off, the card is back in its saved place.
+    func testLaunchPointMovesIntoTheHeaderUntilTurnedOff() {
+        let settings = AppSettings(defaults: defaults)
+        XCTAssertTrue(settings.launchPointInHeader)
+        XCTAssertFalse(settings.pageCards(for: "mrc-1880").contains(.launchPoint))
+        XCTAssertTrue(settings.pageLayout(for: "mrc-1880").order.contains(.launchPoint))
+
+        settings.launchPointInHeader = false
+        let again = AppSettings(defaults: defaults)
+        XCTAssertFalse(again.launchPointInHeader)
+        XCTAssertEqual(again.pageCards(for: "mrc-1880"), PageLayout.standard.visible)
+
+        again.resetToFactorySettings()
+        XCTAssertTrue(again.launchPointInHeader)
+    }
+
     func testClubPictureBeatsPagePictureBeatsAllPages() {
         let settings = AppSettings(defaults: defaults)
         settings.allPagesBackground = .sample("lake-waves")

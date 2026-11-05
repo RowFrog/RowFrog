@@ -32,8 +32,6 @@ struct LocationPageView: View {
     @State private var hourlyOpen = false
     /// The 48 hours' height while folded, which the columns keep counting with when opened.
     @State private var foldedHourlyHeight: CGFloat?
-    /// The refresh failure explained after a tap on its line.
-    @State private var showingFailure: RefreshFailure?
     @State private var showRainRadarTip = false
     @State private var showSatelliteTip = false
 
@@ -84,7 +82,6 @@ struct LocationPageView: View {
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
-    @Environment(\.titleSideRoom) private var titleSideRoom
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
@@ -95,7 +92,7 @@ struct LocationPageView: View {
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
-                        header
+                        ClubPageHeader(club: club, lake: lake, isHome: isHome, forecasts: forecasts)
                             // Cards under the clock: the top blurs, as iOS's own bars do.
                             .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                                 top > 0 && proxy.frame(in: .global).minY < top - 1
@@ -109,7 +106,7 @@ struct LocationPageView: View {
                                 WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
                             }
-                            let cards = AppSettings.shared.pageLayout(for: club.id).visible
+                            let cards = AppSettings.shared.pageCards(for: club.id)
                             Group {
                                 if twoColumns {
                                     // The page's end goes into the shorter column too, and the maps
@@ -137,7 +134,7 @@ struct LocationPageView: View {
                                 Button(tr("Try again")) { Task { await forecasts.load(club.id, force: true) } }
                             }
                         } else {
-                            LoadingCards(cards: AppSettings.shared.pageLayout(for: club.id).visible)
+                            LoadingCards(cards: AppSettings.shared.pageCards(for: club.id))
                         }
                     }
                     .padding(.horizontal)
@@ -455,86 +452,6 @@ private extension LocationPageView {
     static let twoColumnWidth: CGFloat = 600
     /// Keeps lines readable on very wide screens.
     static let maxContentWidth: CGFloat = 1000
-
-    private var header: some View {
-        VStack(spacing: 4) {
-            if isHome {
-                Label(tr("Home base"), systemImage: "house.fill")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(.secondary)
-            }
-            ClubTitle(club: club)
-                .font(.largeTitle.bold())
-                // Once the title is under the top bar, the bar shows the name instead.
-                .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
-                    top > 0 && proxy.frame(in: .global).maxY < top + InlineClubTitle.height
-                } action: { PageScroll.shared.update(club.id, titleGone: $0) }
-                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).midY } action: { y in
-                    PageScroll.shared.update(club.id, titleMidY: y)
-                }
-                // The cog and the boat sit level with the name on either side.
-                .padding(.horizontal, titleSideRoom)
-            Text([lake?.title, club.town].compactMap { $0 }.joined(separator: " · "))
-                .foregroundStyle(.secondary)
-            if !club.launchPointVerified {
-                Label(tr("Launch point not yet confirmed"), systemImage: "mappin.slash")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
-            }
-            if let forecast = forecasts.forecasts[club.id] {
-                let updated = forecast.generatedAt
-                if forecast.isStale() {
-                    // Old data must not look current: say so plainly, with the day.
-                    Label(tr("Forecast out of date: from %@. Pull down to refresh, and check the conditions yourself.", Format.dayTime(updated)), systemImage: "clock.badge.exclamationmark")
-                        .font(.caption.weight(.semibold))
-                        .foregroundStyle(.orange)
-                        .multilineTextAlignment(.center)
-                } else if let failure = forecasts.failures[club.id] {
-                    // Tap for why, whose side it is on, and what helps.
-                    Button { showingFailure = failure } label: {
-                        Label {
-                            Text(tr("Could not update: %@. Showing data from %@.", failure.short, Format.time(updated)))
-                                + Text(" ") + Text(Image(systemName: "info.circle"))
-                        } icon: {
-                            Image(systemName: "wifi.exclamationmark")
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.orange)
-                        .multilineTextAlignment(.center)
-                    }
-                    .buttonStyle(.plain)
-                } else if forecasts.loading.contains(club.id) {
-                    Label(tr("Updating…"), systemImage: "arrow.triangle.2.circlepath")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } else {
-                    // The forecast's time is when the server worked it out; the load time is when it reached the phone.
-                    Text(Self.updatedLine(forecast: updated, loaded: forecasts.loadedAt[club.id]))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-                if forecast.isSlowRefresh {
-                    // Opening the club counts it as used; the next server run renews it every half hour.
-                    Label(tr("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."), systemImage: "hourglass")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
-            }
-        }
-        .padding(.horizontal, surface.hasPicture ? 16 : 0)
-        .padding(.vertical, surface.hasPicture ? 10 : 0)
-        .labelBackground(surface, in: RoundedRectangle(cornerRadius: 16))
-        .padding(.top, 24)
-        .alert(tr("Could not update"), isPresented: Binding(get: { showingFailure != nil }, set: { if !$0 { showingFailure = nil } }),
-               presenting: showingFailure) { _ in
-            Button(tr("Try again")) { Task { await forecasts.load(club.id, force: true) } }
-            Button(tr("OK"), role: .cancel) {}
-        } message: { failure in
-            Text(failure.explanation)
-        }
-    }
 }
 
 struct Card<Content: View>: View {

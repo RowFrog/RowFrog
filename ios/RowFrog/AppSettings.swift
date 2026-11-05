@@ -36,6 +36,10 @@ final class AppSettings {
     var mapStartZoom: MapStartZoom { didSet { defaults.set(mapStartZoom.rawValue, forKey: Keys.mapStartZoom) } }
     /// The app that opens the club and its launch point.
     var mapApp: MapApp { didSet { defaults.set(mapApp.rawValue, forKey: Keys.mapApp) } }
+    /// The launch point in the club page's header: the lake and town line opens it in a
+    /// sheet, and the Launch point card leaves the page (owner's choice B, 4 Nov 2026).
+    /// Off keeps the header and the Launch point card apart, as before.
+    var launchPointInHeader: Bool { didSet { defaults.set(launchPointInHeader, forKey: Keys.launchPointInHeader) } }
 
     /// The user's own boats, besides the small and big boat groups.
     var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
@@ -173,6 +177,12 @@ final class AppSettings {
 
     /// The card order for a club's page: its own, else the one for all clubs.
     func pageLayout(for clubID: String) -> PageLayout { clubPageLayouts[clubID] ?? pageLayout }
+    /// Cards that live elsewhere on the page for now and so are left out of the card list.
+    var cardsElsewhere: Set<PageCard> { launchPointInHeader ? [.launchPoint] : [] }
+    /// The cards a club page shows under the top tile, in order.
+    func pageCards(for clubID: String) -> [PageCard] {
+        pageLayout(for: clubID).visible.filter { !cardsElsewhere.contains($0) }
+    }
 
     /// On mobile data the app asks before loading satellite pictures and loads the
     /// radar more sparingly, as in iOS Low Data Mode (which it always follows).
@@ -223,11 +233,12 @@ final class AppSettings {
         static let widgetUpdates = "RWWidgetUpdates"
         static let mapStartZoom = "RWMapStartZoom"
         static let mapApp = "RWMapApp"
+        static let launchPointInHeader = "RWLaunchPointInHeader"
 
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, clubBoats, mapBoat,
                           developer, pickedModels, columnFill, nightHours, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
-                          widgetUpdates, mapStartZoom, mapApp]
+                          widgetUpdates, mapStartZoom, mapApp, launchPointInHeader]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -249,6 +260,7 @@ final class AppSettings {
         widgetUpdates = value(Keys.widgetUpdates, .halfHour)
         mapStartZoom = value(Keys.mapStartZoom, .normal)
         mapApp = value(Keys.mapApp, .apple)
+        launchPointInHeader = defaults.object(forKey: Keys.launchPointInHeader) == nil || defaults.bool(forKey: Keys.launchPointInHeader)
         // Launch arguments give the limits' numbers as text, e.g. `-RWBoatLimits '{small = {windAmber = 7;};}'`.
         if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
             myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
@@ -419,6 +431,7 @@ final class AppSettings {
         widgetUpdates = .halfHour
         mapStartZoom = .normal
         mapApp = .apple
+        launchPointInHeader = true
         boatID = Boat.small.id
         clubBoats = [:]
         boatLimits = [:]

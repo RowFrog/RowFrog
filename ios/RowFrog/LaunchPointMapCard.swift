@@ -4,8 +4,64 @@ import SwiftUI
 /// Where the forecast is for: the club's launch point on a map, with its
 /// coordinates and a button to open it in Apple Maps. The map is a still
 /// picture until tapped, since a live map on every club page costs battery.
+/// The page shows it as a card when the launch point is not in the header
+/// (Settings > Club pages); otherwise the header opens it as a sheet.
 struct LaunchPointMapCard: View {
     let club: Club
+
+    var body: some View {
+        Card(title: tr("Launch point"), symbol: "mappin.and.ellipse") {
+            // Taller when the club page's columns need it filled (BalancedColumns).
+            LaunchPointDetails(club: club, mapHeight: 220, mapMaxHeight: .infinity)
+        }
+        .font(.subheadline)
+    }
+}
+
+/// The launch point opened from the club page's header: the same map, note,
+/// coordinates and Open in Maps as the card. It comes up only as far as its
+/// content needs and can be pulled up to full height.
+struct LaunchPointSheet: View {
+    let club: Club
+    @Environment(\.dismiss) private var dismiss
+    /// The content's measured height; until it is known, a guess close to a phone's.
+    @State private var contentHeight: CGFloat = 470
+
+    /// Room for the title bar above the content.
+    static let barHeight: CGFloat = 64
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LaunchPointDetails(club: club, mapHeight: 320, mapMaxHeight: 320, startsLive: true)
+                    .padding()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                        if abs(height - contentHeight) > 1 { contentHeight = height }
+                    }
+            }
+            .scrollBounceBehavior(.basedOnSize)
+            .navigationTitle(tr("Launch point"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button(tr("Done")) { dismiss() }
+                }
+            }
+        }
+        // As far up as the content needs; larger text sizes reach full height and scroll.
+        .presentationDetents([.height(contentHeight + Self.barHeight), .large])
+        .presentationDragIndicator(.visible)
+    }
+}
+
+/// The map, the note on what it is for, and the coordinates with Open in Maps.
+struct LaunchPointDetails: View {
+    let club: Club
+    let mapHeight: CGFloat
+    let mapMaxHeight: CGFloat
+    /// Live from the start: in the sheet nothing scrolls under it, so a still
+    /// picture first would only cost a tap.
+    let startsLive: Bool
 
     /// Back at the preset view whenever the page shows again or the club changes.
     @State private var position: MapCameraPosition = .automatic
@@ -14,6 +70,14 @@ struct LaunchPointMapCard: View {
     @State private var place: MKMapItem?
     /// The live map after a tap; a still picture again once the page is swiped away.
     @State private var live = UserDefaults.standard.bool(forKey: "RWLiveLaunchMap")
+
+    init(club: Club, mapHeight: CGFloat, mapMaxHeight: CGFloat, startsLive: Bool = false) {
+        self.club = club
+        self.mapHeight = mapHeight
+        self.mapMaxHeight = mapMaxHeight
+        self.startsLive = startsLive
+        _live = State(initialValue: startsLive || UserDefaults.standard.bool(forKey: "RWLiveLaunchMap"))
+    }
     @Environment(\.isCurrentPage) private var isCurrentPage
     @Environment(\.openURL) private var openURL
     private var mapApp: MapApp { AppSettings.shared.mapApp }
@@ -27,7 +91,7 @@ struct LaunchPointMapCard: View {
     }
 
     var body: some View {
-        Card(title: tr("Launch point"), symbol: "mappin.and.ellipse") {
+        VStack(alignment: .leading, spacing: 10) {
             Group {
                 if live {
                     liveMap
@@ -39,11 +103,10 @@ struct LaunchPointMapCard: View {
                     .accessibilityHint(tr("Shows a map you can move"))
                 }
             }
-            // Taller when the club page's columns need it filled (BalancedColumns).
-            .frame(minHeight: 220, idealHeight: 220, maxHeight: .infinity)
+            .frame(minHeight: mapHeight, idealHeight: mapHeight, maxHeight: mapMaxHeight)
             .clipShape(RoundedRectangle(cornerRadius: 12))
-            .onChange(of: isCurrentPage) { if !isCurrentPage { live = false } }
-            .onChange(of: club.id) { live = false }
+            .onChange(of: isCurrentPage) { if !isCurrentPage { live = startsLive } }
+            .onChange(of: club.id) { live = startsLive }
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
             Text(tr("The forecast, waves and warnings are for this point."))
@@ -83,7 +146,6 @@ struct LaunchPointMapCard: View {
                 .font(.caption.weight(.semibold))
             }
         }
-        .font(.subheadline)
         .task(id: club.id) {
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
         }
