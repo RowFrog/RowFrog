@@ -224,6 +224,9 @@ struct LaunchPointDetails: View {
         }
         .onAppear { reset(animated: false) }
         .onChange(of: club.id) { reset(animated: false) }
+        // A taller map (the sheet pulled up) keeps MapKit's scale; refit it to the
+        // launch point unless the user had moved it.
+        .onChange(of: mapHeight) { if !moved { reset(animated: true) } }
     }
 
     /// Directions to the club's address, since the launch point at the water
