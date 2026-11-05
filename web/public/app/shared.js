@@ -93,7 +93,7 @@ export const store = {
 export function savedClub(club, lake) {
   return {
     id: club.id, name: club.name, shortName: club.shortName, address: club.address, lakeId: lake.id, lakeName: lake.name,
-    country: club.country ?? lake.country, launchPoint: club.launchPoint, launchPointVerified: club.launchPointVerified, source: club.source,
+    country: club.country ?? lake.country, launchPoint: club.launchPoint, launchPointVerified: club.launchPointVerified, launchPointSet: club.launchPointSet ?? false, source: club.source,
   };
 }
 
