@@ -7,7 +7,10 @@ time (CEST in summer): on 18.10.2026 at 11:31 UTC the newest row read 13:15.
 
 The site's firewall answers requests without a real User-Agent (curl's or
 httpx's default) with a 200 "Request Rejected" page, so fetches send one and
-treat that page as an error.
+treat that page as an error (Rejected). From GitHub's runners it also turns
+away some pages in about half the runs (Starnberg's water temperature and
+Roßhaupten's level, Nov 2026) while other stations pass; asking again from the
+same runner does not help, so callers do not retry a Rejected page.
 
 Data: Gewässerkundlicher Dienst Bayern (Bayerisches Landesamt für Umwelt), CC BY 4.0.
 """
@@ -34,6 +37,10 @@ MAX_AGE = timedelta(hours=6)
 
 _TAG = re.compile(r"<[^>]+>")
 _ROW = re.compile(r"(\d{2})\.(\d{2})\.(\d{4})\s+(\d{2}):(\d{2})\s+(-?\d+(?:[.,]\d+)?)")
+
+
+class Rejected(httpx.HTTPError):
+    """GKD's firewall answered with its "Request Rejected" page."""
 
 
 @dataclass(frozen=True)
@@ -64,7 +71,7 @@ async def _page(client: httpx.AsyncClient, station: str, kind: str = "lake", url
     resp = await client.get(url.format(kind=KINDS.get(kind, "lakes"), station=station), headers=HEADERS, timeout=20, follow_redirects=True)
     resp.raise_for_status()
     if "Request Rejected" in resp.text:
-        raise httpx.HTTPError("GKD firewall rejected the request")
+        raise Rejected("GKD firewall rejected the request")
     return resp.text
 
 

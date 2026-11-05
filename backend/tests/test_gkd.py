@@ -69,3 +69,69 @@ def test_failed_fetch_keeps_the_last_good_reading(monkeypatch):
     # GKD fails twice: the reading from the last run stands in, until it is too old.
     assert asyncio.run(api._water(None, api.water_stations.Station("gkd", "starnberg-16663002"), now))[0] == reading
     assert asyncio.run(api._water(None, api.water_stations.Station("gkd", "starnberg-16663002"), now + timedelta(hours=7))) == (None, [])
+
+
+def test_rejected_page_is_asked_once_and_the_last_reading_stands_in(monkeypatch):
+    import asyncio
+
+    from rowfrog import api
+
+    reading = gkd.WaterTemperature(datetime(2026, 10, 18, 5, 45, tzinfo=timezone.utc), 12.8)
+    station = api.water_stations.Station("gkd", "starnberg-16663002")
+    api.prepared.last_water[station.key] = (reading, [reading])
+    asked = []
+
+    async def rejected(client, station, now, kind="lake"):
+        asked.append(station)
+        raise gkd.Rejected("GKD firewall rejected the request")
+
+    monkeypatch.setattr(api.gkd, "fetch_recent", rejected)
+    now = datetime(2026, 10, 18, 6, tzinfo=timezone.utc)
+    # Three clubs read Starnberg: GKD is asked once, without a retry, and the kept reading stands in.
+    for _ in range(3):
+        assert asyncio.run(api._water(None, station, now))[0] == reading
+    assert asked == ["starnberg-16663002"]
+
+
+def test_clubs_on_one_station_share_its_answer(monkeypatch):
+    import asyncio
+
+    from rowfrog import api
+
+    reading = gkd.WaterTemperature(datetime(2026, 10, 18, 5, 45, tzinfo=timezone.utc), 12.8)
+    asked = []
+
+    async def answer(client, station, now, kind="lake"):
+        asked.append(station)
+        return reading, [reading]
+
+    monkeypatch.setattr(api.gkd, "fetch_recent", answer)
+    now = datetime(2026, 10, 18, 6, tzinfo=timezone.utc)
+    station = api.water_stations.Station("gkd", "starnberg-16663002")
+    assert asyncio.run(api._water(None, station, now))[0] == reading
+    assert asyncio.run(api._water(None, station, now))[0] == reading
+    assert len(asked) == 1
+
+
+def test_failed_level_fetch_keeps_the_last_good_levels(monkeypatch):
+    import asyncio
+
+    from rowfrog import api, lake_level
+
+    lake = next(iter(lake_level._load().values()))
+    levels = [(datetime(2026, 10, 18, 5, 0, tzinfo=timezone.utc), 780.1), (datetime(2026, 10, 18, 5, 45, tzinfo=timezone.utc), 780.2)]
+    answers = iter([levels])
+
+    async def flaky(client, station):
+        try:
+            return next(answers)
+        except StopIteration:
+            raise gkd.Rejected("GKD firewall rejected the request")
+
+    monkeypatch.setattr(api.gkd, "fetch_levels", flaky)
+    assert asyncio.run(api._lake_levels(None, lake)) == levels
+    api._gauge_cache.clear()  # the next run starts without the in-memory cache
+    assert asyncio.run(api._lake_levels(None, lake)) == levels
+    api._gauge_cache.clear()
+    api.prepared.last_levels[lake.station] = [(datetime(2026, 10, 16, 5, 0, tzinfo=timezone.utc), 780.0)]
+    assert asyncio.run(api._lake_levels(None, lake)) is None  # older than a day
