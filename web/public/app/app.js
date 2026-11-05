@@ -961,7 +961,17 @@ function stickHourlyHeader() {
   const top = parseFloat(getComputedStyle(head).top) || 0;
   const stuck = table.top < top - 1 && at.bottom > table.top;
   head.classList.toggle("stuck", stuck);
-  card.style.clipPath = stuck ? `inset(${at.top - card.getBoundingClientRect().top}px 0 0 0 round 16px)` : "";
+  if (stuck) {
+    // The day whose header has passed under the pinned header, else the first.
+    const days = [...head.parentElement.querySelectorAll(".dayhead")].filter((d) => d.offsetParent);
+    const under = days.filter((d) => d.getBoundingClientRect().top <= at.bottom).pop() ?? days[0];
+    const label = under?.querySelector("strong")?.textContent ?? "";
+    const slot = head.querySelector(".hhead-day");
+    if (slot.textContent !== label) slot.textContent = label;
+  }
+  // The caption strip above the pinned row stays inside the cut.
+  const cap = stuck ? parseFloat(getComputedStyle(head).getPropertyValue("--hcap")) || 0 : 0;
+  card.style.clipPath = stuck ? `inset(${at.top - cap - card.getBoundingClientRect().top}px 0 0 0 round 16px)` : "";
 }
 window.addEventListener("scroll", updateTopBar, { passive: true });
 window.addEventListener("hashchange", () => requestAnimationFrame(updateTopBar));
@@ -1539,7 +1549,9 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
 /** The next 48 hours, a row an hour under a day header with sunrise and sunset (HourlyCard). */
 function hourlyCard(forecast, now, stale) {
   const list = nextHours(forecast.hours, now, 48);
+  // While it stays at the top, the header also names the tile and the day in view (HourlyStickyHeader).
   const head = `<div class="hrow hhead">
+    <span class="hhead-title" aria-hidden="true">${icon("clock")}<span>${h(t("Next 48 hours"))}</span><span class="hhead-day"></span></span>
     <span>${icon("clock")}</span><span>${dot("grey", 8)}</span><span>${icon("cloud-sun")}</span>
     ${[["temperature", unitSymbol("temperature")], ["feelsLike", unitSymbol("temperature")], ["wind", windUnit()], ["waves", unitSymbol("waves")],
       ["precipitation", unitSymbol("rain")], ["visibility", unitSymbol("distance")]]

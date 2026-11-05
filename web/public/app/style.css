@@ -275,6 +275,17 @@ svg.filled { width: 22px; height: 22px; }
 .hhead { position: sticky; top: 0; z-index: 2; background: var(--card); color: var(--sub); border-bottom: .5px solid var(--line);
   width: calc(100% + 28px); margin: 0 -14px; padding: 6px 14px; box-sizing: border-box; border-radius: 16px 16px 0 0; }
 .hhead.stuck { box-shadow: 0 2px 4px rgba(0, 0, 0, .12); }
+/* The tile's caption and the day in view, only while the header stays (HourlyStickyHeader): a strip
+   just above the pinned row, in the room the header leaves under the top bar (--hcap), so nothing jumps. */
+.hourly { --hcap: 24px; }
+.hhead { top: var(--hcap, 0px); }
+.hhead-title { display: none; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--hcap); box-sizing: border-box;
+  align-items: center; gap: 4px; padding: 6px 14px 0; background: var(--card); border-radius: 16px 16px 0 0;
+  font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--sub); white-space: nowrap; }
+.hhead-title .i { width: 13px; height: 13px; }
+.hhead-title .hhead-day { margin-left: auto; text-transform: none; overflow: hidden; text-overflow: ellipsis; }
+.hhead.stuck .hhead-title { display: flex; }
+.hhead.stuck { border-radius: 0; }
 .hhead .num { display: flex; flex-direction: column; align-items: flex-end; }
 .hhead small { font-size: 10px; }
 .hhead .cond { color: var(--sub); }
@@ -415,7 +426,7 @@ svg.filled { width: 22px; height: 22px; }
 body.title-gone .top-title { opacity: 1; }
 body.title-gone .top-title .head-side > * { pointer-events: auto; }
 body:not(.title-gone) .top-title .head-side { visibility: hidden; }
-body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }
+body.title-gone .hhead { top: calc(var(--safe-top) + 44px + var(--hcap, 0px)); }
 
 /* The page's buttons level with the club's big name, the boat on the right (PageTopButtons, pick F):
    each side keeps the same room, so the name stays centred. */
