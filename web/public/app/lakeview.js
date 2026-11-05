@@ -6,7 +6,7 @@ import { icon } from "./icons.js";
 import {
   store, getJSON, h, time, dayTime, duration, wind, windRange, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
   dot, setTitle, openSheet, openMenu, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit,
-  CONDITION_ICONS, forecasts, conditionIcon,
+  CONDITION_ICONS, forecasts, conditionIcon, boatControl,
 } from "./shared.js";
 import { riverSpeed } from "./river.js";
 import { compass, matchesStandard, coldWaterKit, reasonCondition, key } from "./logic.js";
@@ -244,7 +244,7 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
   // the colour scale and the route tools sit by the map and in the panel (LakeMapScreen).
   root.innerHTML = `<div class="lake-screen">${testing()}
     <div class="lake-page"><div class="lake-map-box"><div class="lake-map" id="lake-map"></div>
-      <header class="lake-top"><a class="glass round tool" href="${h(back)}" aria-label="${h(t("Close"))}">${icon("x")}</a><strong class="glass lake-name" id="lake-name"></strong></header>
+      <header class="lake-top"><a class="glass round tool" href="${h(back)}" aria-label="${h(t("Close"))}">${icon("x")}</a><strong class="glass lake-name" id="lake-name"></strong>${clubId ? `<span class="lake-boat" id="lake-boat">${boatControl.html()}</span>` : ""}</header>
       <div class="lake-over" id="lake-over"></div></div>
       <section class="lake-panel" id="lake-panel"><p>${h(t("Loading the forecast…"))}</p></section></div></div>`;
   let view;
@@ -265,8 +265,24 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
     // On rivers: the current the club page shows (its gauge, mid-river), for the route planner (LakeView.currentMs).
     currentMs: view.section ? forecasts.get(clubId)?.forecast?.river?.now?.speedMs ?? null : null,
   };
+  wireLakeBoat();
   await buildMap();
   update();
+}
+
+/**
+ * The club page's boat button at the top, between the lake's name and the zoom buttons, also while
+ * planning a route: the colours, the route's times and its light are for that boat (owner's pick B,
+ * 5 Nov 2026). A boat picked here redraws the map in place, keeping the hour, the zoom and the route.
+ */
+function wireLakeBoat() {
+  const box = page.root.querySelector("#lake-boat");
+  box?.querySelector("[data-map-boat]")?.addEventListener("click", (e) => boatControl.open(e.currentTarget, () => {
+    if (!box.isConnected) return;
+    box.innerHTML = boatControl.html();
+    wireLakeBoat();
+    update();
+  }));
 }
 
 async function buildMap() {

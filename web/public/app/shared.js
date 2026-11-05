@@ -222,6 +222,13 @@ export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.clas
 export const mapBoat = () => selectedBoat();
 export const mapLimits = () => boatLimits(mapBoat());
 
+/**
+ * The club page's boat button (PageBoatButton) for the lake map and the satellite picture's full
+ * view: app.js, which owns the boat menu, fills this in. `open` calls `picked` once a boat is picked
+ * there, so those screens redraw in place (owner's pick B, 5 Nov 2026).
+ */
+export const boatControl = { html: () => "", open: (anchor, picked) => {} };
+
 /** A limit's value in the user's units; wind keeps its decimal so 5.5 m/s does not read as 6. */
 export function limitText(limit, value) {
   const { condition } = LIMITS[limit];
