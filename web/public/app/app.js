@@ -1227,6 +1227,8 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
   const visibilityCaption = fogNow ? t("Fog") : fog ? t("Fog from %@", time(fog.time)) : t("No fog");
   const iceLine = forecast.ice ? iceDetail(forecast.ice) : t("Check the lake yourself");
   // As wide as its longest direction ("from NW"), so the column keeps one width whatever the wind does.
+  // The sun line's time in the light's colour while the daylight sets it, as every other value (owner's pick S1, 5 Nov 2026).
+  const sunCause = causeClass(causeOf("daylight", hour)).trim();
   const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
   return `<section class="card now ${combined && store.topTileOpen ? "all-open" : ""}">
     <div class="now-head">
@@ -1284,8 +1286,8 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
     ${ice && !combined ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17${causeClass(causeOf("ice", hour))}">${h(t(ice))}</span>
       <small class="sub">${h(iceLine === t("Bays and harbours first") ? t("Bays first") : iceLine)}</small></p>` : ""}
     ${sun ? `<p class="daylight" data-top="daylight" data-order="all" role="button" tabindex="0" aria-description="${h(t("Opens sunrise, sunset and daylight"))}">${sun.up
-      ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span class="sunline" aria-label="${h(t("Rowing until sunset at %@, %@ left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}"><span class="nowrap">${h(t("Rowing until"))} <span class="sunsym">${icon("sunset")}</span>${h(time(sun.sunset))}</span> · <span class="nowrap">${h(t("%@ left", duration(at ?? new Date(), sun.sunset)))}</span></span>`
-      : `<span class="moon">${icon("moon-star")}</span><span class="sunline" aria-label="${h(t("Rowing again from sunrise at %@", time(sun.sunrise)))}">${h(t("Rowing again from"))} <span class="sunsym">${icon("sunrise")}</span>${h(time(sun.sunrise))}</span>`}<span class="chev">${icon("chevron-right")}</span></p>` : ""}
+      ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span class="sunline" aria-label="${h(t("Rowing until sunset at %@, %@ left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}"><span class="nowrap">${h(t("Rowing until"))} <span class="sunsym">${icon("sunset")}</span><span class="${sunCause}">${h(time(sun.sunset))}</span></span> · <span class="nowrap">${h(t("%@ left", duration(at ?? new Date(), sun.sunset)))}</span></span>`
+      : `<span class="moon">${icon("moon-star")}</span><span class="sunline" aria-label="${h(t("Rowing again from sunrise at %@", time(sun.sunrise)))}">${h(t("Rowing again from"))} <span class="sunsym">${icon("sunrise")}</span><span class="${sunCause}">${h(time(sun.sunrise))}</span></span>`}<span class="chev">${icon("chevron-right")}</span></p>` : ""}
     ${combined ? `${peeks(forecast, hour).map((c) => peekLine(c, forecast, hour, radar)).join("")}</div>
     <div class="tt-open"><div class="tiles">${TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar, radarState)).join("")}</div></div>
     ${allValuesButton()}` : ""}
