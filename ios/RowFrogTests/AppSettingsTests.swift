@@ -92,7 +92,7 @@ final class AppSettingsTests: XCTestCase {
     func testClubPictureBeatsPagePictureBeatsAllPages() {
         let settings = AppSettings(defaults: defaults)
         settings.allPagesBackground = .sample("lake-waves")
-        XCTAssertEqual(settings.background(for: .settings), .sample("lake-waves"))
+        XCTAssertEqual(settings.background(for: .list), .sample("lake-waves"))
 
         settings.pageBackgrounds[.clubPages] = .sample("sunny-day")
         XCTAssertEqual(settings.background(for: .clubPages, clubID: "mrc-1880"), .sample("sunny-day"))
