@@ -188,7 +188,10 @@ struct LaunchPointDetails: View {
         .onMapCameraChange(frequency: .onEnd) { context in
             moved = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
                 .distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) > 30
-                || abs(context.region.span.latitudeDelta - home.span.latitudeDelta) > home.span.latitudeDelta * 0.1
+                // MapKit fits the home region by one side only, so a taller or wider map
+                // (the sheet pulled up) still counts as home while either side matches.
+                || min(abs(context.region.span.latitudeDelta - home.span.latitudeDelta) / home.span.latitudeDelta,
+                       abs(context.region.span.longitudeDelta - home.span.longitudeDelta) / home.span.longitudeDelta) > 0.1
                 || context.camera.heading.magnitude > 1
         }
         .overlay(alignment: .topLeading) {
