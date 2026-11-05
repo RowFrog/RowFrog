@@ -184,7 +184,10 @@ struct LaunchPointDetails: View {
         }
         .task(id: club.id) {
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
+            // A hand-checked clubhouse is known before the lookup ends, so the pins
+            // may have split already: work it out again rather than joining them.
             split = false
+            updateSplit()
         }
     }
 
