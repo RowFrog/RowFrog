@@ -82,7 +82,8 @@ final class AppSettingsTests: XCTestCase {
         settings.launchPointInHeader = false
         let again = AppSettings(defaults: defaults)
         XCTAssertFalse(again.launchPointInHeader)
-        XCTAssertEqual(again.pageCards(for: "mrc-1880"), PageLayout.standard.visible)
+        // Current conditions still sits in the top tile, which has its own switch.
+        XCTAssertEqual(again.pageCards(for: "mrc-1880"), PageLayout.standard.visible.filter { $0 != .conditions })
 
         again.resetToFactorySettings()
         XCTAssertTrue(again.launchPointInHeader)
