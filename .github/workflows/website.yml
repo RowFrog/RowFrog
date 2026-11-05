@@ -13,6 +13,7 @@ on:
       - web/**
       - testdata/**
       - scripts/build_web.py
+      - ios/RowFrog/Assets.xcassets/AppIcon.appiconset/light.png
       - ios/RowFrog/Localization.swift
       - .github/workflows/website.yml
       - package-lock.json
@@ -22,6 +23,7 @@ on:
       - web/**
       - testdata/**
       - scripts/build_web.py
+      - ios/RowFrog/Assets.xcassets/AppIcon.appiconset/light.png
       - ios/RowFrog/Localization.swift
       - .github/workflows/website.yml
       - package-lock.json
