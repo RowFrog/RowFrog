@@ -24,6 +24,7 @@ import {
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf } from "./lake.js";
+import { suggestRow, openSuggestLaunchPoint } from "./suggest.js";
 import { currentTile, currentBody } from "./river.js";
 import { isLowered, waterLevelTile, waterLevelBody } from "./lakelevel.js";
 import { satelliteCard } from "./satellite.js";
@@ -1061,6 +1062,17 @@ const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open"
   openLaunchPoint(club);
 }));
 
+// "Suggest the launch point" in the Location sheet or the Launch point card (SuggestLaunchPointView); from the
+// sheet, the Location sheet opens again afterwards with the thanks, as the app's sheet comes back.
+document.addEventListener("click", (e) => {
+  const button = e.target.closest("[data-suggest-lp]");
+  if (!button) return;
+  const club = store.clubs.find((c) => c.id === button.dataset.suggestLp);
+  if (!club) return;
+  const fromSheet = !!button.closest("dialog.sheet");
+  openSuggestLaunchPoint(club, () => (fromSheet ? openLaunchPoint(club) : route(false)));
+});
+
 /** The launch point opened from the header (LaunchPointSheet): the same map, note, coordinates and Open in Maps as the card. */
 function openLaunchPoint(club) {
   openSheet(t("Location"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
@@ -1773,6 +1785,7 @@ function launchPointBody(club, mapId) {
   return `
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     ${club.launchPointVerified || club.launchPointSet ? `<p>${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
+    ${suggestRow(club)}
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">

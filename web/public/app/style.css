@@ -1179,3 +1179,15 @@ dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 .club-pin.oars:not(.own) .dot { background: #8e8e93; }
 /* With a picture, one picture fills the window behind the list and the page; the list's frosted rows blur it and no line divides them (app #336). */
 body.has-picture .side { border-right: none; }
+/* Suggest a launch point (SuggestLaunchPointView): the oars stay in the middle while the map moves under them. */
+.suggest-row { margin: 6px 0 0; }
+.suggest-row .suggest-lp, .suggest-done { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.suggest-sheet > header { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
+.suggest-sheet > header > :last-child { justify-self: end; }
+.suggest-sheet > header > :first-child { justify-self: start; }
+.suggest-sheet .pin-map { height: 340px; }
+.suggest-sheet #sg-map { position: absolute; inset: 0; }
+.suggest-sheet #sg-here { margin-top: 10px; }
+.center-oars { position: absolute; left: 50%; top: 50%; z-index: 500; transform: translate(-50%, -50%); display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
+  background: var(--accent); color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); pointer-events: none; }
+.center-oars .i { width: 20px; height: 20px; }
