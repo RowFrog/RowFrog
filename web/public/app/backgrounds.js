@@ -128,8 +128,12 @@ export async function forgetOwnPictures() {
 
 const sampleUrl = (id) => `backgrounds/bg-${id}.jpg`;
 
-/** The clearest satellite picture of the club's lake (the home base's without a club). */
-async function satelliteUrl(clubId) {
+/**
+ * The clearest satellite picture of the club's lake (the home base's without a club), with where
+ * the club's launch point lies in it, as shares of its width and height, so the page can show the
+ * club (BackgroundLibrary.focus(of:)).
+ */
+async function satellitePicture(clubId) {
   if (savingData()) return null;
   const club = store.clubs.find((c) => c.id === clubId) ?? store.clubs[0];
   if (!club?.lakeId) return null;
@@ -137,17 +141,47 @@ async function satelliteUrl(clubId) {
   for (const place of [club.lakeId, `club-${club.id}`]) {
     const meta = await getJSON(`lakes/${encodeURIComponent(place)}/satellite`).catch(() => null);
     const shot = meta?.clearest ?? meta?.mostlyClear ?? meta?.latest;
-    if (shot?.image) return `${API}/lakes/${encodeURIComponent(place)}/${encodeURIComponent(shot.image)}`;
+    if (!shot?.image) continue;
+    const box = meta.bbox;
+    const at = club.launchPoint;
+    const focus = at && box?.length === 4 && box[2] > box[0] && box[3] > box[1] && meta.width > 0 && meta.height > 0
+      ? { x: clamp01((at.lon - box[0]) / (box[2] - box[0])), y: clamp01((box[3] - at.lat) / (box[3] - box[1])), width: meta.width, height: meta.height }
+      : null;
+    return { url: `${API}/lakes/${encodeURIComponent(place)}/${encodeURIComponent(shot.image)}`, focus };
   }
   return null;
 }
 
-async function pictureUrl(choice, clubId) {
-  if (choice === "satellite") return satelliteUrl(clubId);
-  if (choice.startsWith("sample:")) return sampleUrl(choice.slice(7));
-  if (choice.startsWith("custom:")) return ownPictureUrl(choice.slice(7));
+const clamp01 = (v) => Math.min(Math.max(v, 0), 1);
+
+/**
+ * Where a picture lies when it fills an area: scaled to cover it, with its focus point as near the
+ * area's middle as the picture's edges allow (PicturePlace.rect). Returns the offset and size in pixels.
+ */
+export function picturePlace(picture, area, focus) {
+  if (!(picture.width > 0 && picture.height > 0)) return { x: 0, y: 0, width: area.width, height: area.height };
+  const scale = Math.max(area.width / picture.width, area.height / picture.height);
+  const width = picture.width * scale;
+  const height = picture.height * scale;
+  const f = focus ?? { x: 0.5, y: 0.5 };
+  return {
+    x: Math.min(0, Math.max(area.width - width, area.width / 2 - f.x * width)),
+    y: Math.min(0, Math.max(area.height - height, area.height / 2 - f.y * height)),
+    width, height,
+  };
+}
+
+async function picture(choice, clubId) {
+  if (choice === "satellite") return satellitePicture(clubId);
+  if (choice.startsWith("sample:")) return { url: sampleUrl(choice.slice(7)) };
+  if (choice.startsWith("custom:")) {
+    const url = await ownPictureUrl(choice.slice(7));
+    return url ? { url } : null;
+  }
   return null;
 }
+
+const pictureUrl = async (choice, clubId) => (await picture(choice, clubId))?.url ?? null;
 
 /** The picture chosen for all pages, for the preview in Settings › Club pages; null without one. */
 export function backgroundPreview() {
@@ -155,12 +189,29 @@ export function backgroundPreview() {
 }
 
 let shown = 0;
+/** The shown satellite picture's size and the club's place in it; null for a picture shown centred. */
+let focus = null;
+
+/** A satellite picture shows the club: placed so its launch point is as near the window's middle as the picture allows. */
+function placePicture() {
+  const layer = document.querySelector("#page-picture");
+  if (!layer) return;
+  if (!focus) {
+    layer.style.backgroundSize = layer.style.backgroundPosition = "";
+    return;
+  }
+  const place = picturePlace(focus, { width: layer.clientWidth || innerWidth, height: layer.clientHeight || innerHeight }, focus);
+  layer.style.backgroundSize = `${place.width}px ${place.height}px`;
+  layer.style.backgroundPosition = `${place.x}px ${place.y}px`;
+}
+if (typeof window !== "undefined") window.addEventListener("resize", placePicture);
 
 /** Puts the page's picture behind it, or none (page null: pages without pictures). */
 export async function showBackground(page, clubId = null) {
   const ticket = ++shown;
   const choice = page ? backgroundFor(page, clubId) : "none";
-  const url = choice === "none" ? null : await pictureUrl(choice, clubId).catch(() => null);
+  const shownPicture = choice === "none" ? null : await picture(choice, clubId).catch(() => null);
+  const url = shownPicture?.url;
   if (ticket !== shown) return;
   let layer = document.querySelector("#page-picture");
   if (!url) {
@@ -176,6 +227,8 @@ export async function showBackground(page, clubId = null) {
     document.body.prepend(layer);
   }
   layer.style.backgroundImage = `url("${url}")`;
+  focus = shownPicture.focus ?? null;
+  placePicture();
   layer.classList.toggle("blurred", backgrounds.blur);
   document.body.classList.add("has-picture");
   document.body.dataset.tiles = backgrounds.tiles;
