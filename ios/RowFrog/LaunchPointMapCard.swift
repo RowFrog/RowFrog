@@ -101,6 +101,8 @@ struct LaunchPointDetails: View {
     @State private var mapSize: CGSize = .zero
     /// Zoomed in far enough that the clubhouse and launch point get a pin each.
     @State private var split = false
+    /// The span the map shows, so the pins can split when the clubhouse is found after the map settled.
+    @State private var span: MKCoordinateSpan?
     /// Apple's satellite pictures instead of the map, remembered for every launch point.
     @AppStorage("RWLaunchImagery") private var imagery = false
     /// The live map after a tap; a still picture again once the page is swiped away.
@@ -229,10 +231,11 @@ struct LaunchPointDetails: View {
         .mapControls { MapCompass() }
         .onGeometryChange(for: CGSize.self) { $0.size } action: { mapSize = $0 }
         .onMapCameraChange(frequency: .continuous) { context in
-            guard let clubhouse else { return }
-            let now = Self.shouldSplit(clubhouse, from: coordinate, span: context.region.span, size: mapSize, now: split)
-            if now != split { withAnimation(.smooth) { split = now } }
+            span = context.region.span
+            updateSplit()
         }
+        .onChange(of: clubhouse?.latitude) { updateSplit() }
+        .onChange(of: mapSize) { updateSplit() }
         .onMapCameraChange(frequency: .onEnd) { context in
             let span = context.region.span
             let centre = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
@@ -311,6 +314,12 @@ struct LaunchPointDetails: View {
         } else if let web {
             openURL(web)
         }
+    }
+
+    private func updateSplit() {
+        guard let clubhouse, let span else { return }
+        let now = Self.shouldSplit(clubhouse, from: coordinate, span: span, size: mapSize, now: split)
+        if now != split { withAnimation(.smooth) { split = now } }
     }
 
     private func reset(animated: Bool) {
