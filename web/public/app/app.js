@@ -8,7 +8,7 @@
 import { t, num, locale, setLanguage, savedLanguage, resolve, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
+  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, tickedBoat, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
@@ -1809,44 +1809,28 @@ function setDateTimeLikeDevice(on) {
   if (store.dateFormat === "device") store.dateFormat = "long";
 }
 
-function renderSettings() {
-  setTitle(t("Settings"));
-  const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
-  const back = store.clubs[0] ? `#/club/${encodeURIComponent(store.clubs[0].id)}` : "#/list";
-  root.innerHTML = `
-    <header class="nav"><span class="nav-side"></span><strong class="nav-title">${h(t("Settings"))}</strong><a class="link strong" href="${back}">${h(t("Done"))}</a></header>
-    ${testing()}
-    <main class="page">
-      <label class="search settings-search">${icon("search")}<input type="search" id="settings-search" placeholder="${h(t("Search"))}" aria-label="${h(t("Search the settings"))}"></label>
-      <p class="sub" id="settings-none" hidden></p>
-      <section class="card group">
-        <a class="row-setting" href="#/settings/boats"><span>${icon("sailboat")} ${h(t("Boats and limits"))}</span>
-          <span class="sub">${h(boatTitle(selectedBoat()))} ${icon("chevron-right")}</span></a>
-      </section>
-      <h3 class="section">${icon("sun-moon")} ${h(t("Appearance"))}</h3>
+/** The topics of the first settings page, each with its own page (SettingsTopic). */
+const SETTINGS_TOPICS = [
+  ["appearance", "Appearance", "sun-moon", "#007aff"],
+  ["clubpages", "Club pages", "layout-grid", "#5856d6"],
+  ["language", "Language and units", "globe", "#8e8e93"],
+  ["data", "Battery and data", "radio-tower", "#34c759"],
+  ["help", "Help", "circle-help", "#007aff"],
+  ["about", "About", "info", "#8e8e93"],
+];
+const settingsIcon = (name, colour) => `<span class="set-icon" style="--c: ${colour}">${icon(name)}</span>`;
+
+/** Each topic page's cards, as the app's sub pages of Settings. */
+function settingsTopicBody(topic, accepted) {
+  switch (topic) {
+    case "appearance": return `
       <section class="card group">
         <div class="row-setting"><span class="segmented wide" id="appearance">${[["device", t("Device")], ["light", t("Light")], ["dark", t("Dark")]]
           .map(([k, label]) => `<button data-appearance="${k}" class="${store.appearance === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>
       </section>
       <p class="footer">${h(t("Device follows the light or dark setting of your computer or phone."))}</p>
-      <h3 class="section">${icon("languages")} ${h(t("Language"))}</h3>
-      <section class="card group">${likeDeviceRow("language-like", savedLanguage() === "auto", resolve("auto") === "de" ? "Deutsch" : "English")}
-        ${savedLanguage() === "auto" ? "" : `<div class="row-setting"><span class="segmented wide" id="language-pick">${[["en", "English"], ["de", "Deutsch"]]
-          .map(([k, label]) => `<button data-language="${k}" class="${savedLanguage() === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>`}</section>
-      <h3 class="section">${icon("ruler")} ${h(t("Units"))}</h3>
-      <section class="card group">${UNIT_ROWS.map(([kind, condition, title]) => `<label class="row-setting"><span>${conditionIcon(condition)} ${h(t(title))}</span>
-          <select data-unit="${kind}">${Object.entries(UNITS[kind].options).map(([id, u]) => `<option value="${id}" ${id === unitId(kind) ? "selected" : ""}>${h(`${t(u.label)} · ${t(u.title)}`)}</option>`).join("")}</select></label>`).join("")}
-      </section>
-      <p class="footer">${h(t("Cloud cover stays in percent."))}</p>
-      <h3 class="section">${icon("calendar-clock")} ${h(t("Date and time"))}</h3>
-      <section class="card group">${likeDeviceRow("datetime-like", dateTimeLikeDevice(), `${time(SAMPLE_TIME, "device")} · ${dateText(localDay(new Date()), "device")}`)}
-        ${dateTimeLikeDevice() ? "" : `<label class="row-setting"><span>${icon("clock")} ${h(t("Time"))}</span>
-          <select id="time-format">${TIME_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.timeFormat ? "selected" : ""}>${h(`${t(TIME_TITLES[f])} · ${time(SAMPLE_TIME, f)}`)}</option>`).join("")}</select></label>
-        <label class="row-setting"><span>${icon("calendar")} ${h(t("Date"))}</span>
-          <select id="date-format">${DATE_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.dateFormat ? "selected" : ""}>${h(`${f === "iso" ? "ISO 8601" : t(DATE_TITLES[f])} · ${dateText(localDay(new Date()), f)}`)}</option>`).join("")}</select></label>`}
-      </section>
-      <p class="footer">${h(t("Today and tomorrow are always written as words."))}</p>
-      <h3 class="section">${icon("arrow-up-down")} ${h(t("Club pages"))}</h3>
+`;
+    case "clubpages": return `
       <section class="card group">
         <button class="row-setting" id="arrange"><span>${h(t("Order of the club page cards"))}</span>${icon("chevron-right")}</button>
       </section>
@@ -1875,6 +1859,27 @@ function renderSettings() {
           .map(([k, app]) => `<button data-maps-app="${k}" class="${store.mapsApp === k ? "on" : ""}">${h(app.name)}</button>`).join("")}</span></div>
       </section>
       <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))} ${h(t("Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
+`;
+    case "language": return `
+      <h3 class="section">${icon("languages")} ${h(t("Language"))}</h3>
+      <section class="card group">${likeDeviceRow("language-like", savedLanguage() === "auto", resolve("auto") === "de" ? "Deutsch" : "English")}
+        ${savedLanguage() === "auto" ? "" : `<div class="row-setting"><span class="segmented wide" id="language-pick">${[["en", "English"], ["de", "Deutsch"]]
+          .map(([k, label]) => `<button data-language="${k}" class="${savedLanguage() === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>`}</section>
+      <h3 class="section">${icon("ruler")} ${h(t("Units"))}</h3>
+      <section class="card group">${UNIT_ROWS.map(([kind, condition, title]) => `<label class="row-setting"><span>${conditionIcon(condition)} ${h(t(title))}</span>
+          <select data-unit="${kind}">${Object.entries(UNITS[kind].options).map(([id, u]) => `<option value="${id}" ${id === unitId(kind) ? "selected" : ""}>${h(`${t(u.label)} · ${t(u.title)}`)}</option>`).join("")}</select></label>`).join("")}
+      </section>
+      <p class="footer">${h(t("Cloud cover stays in percent."))}</p>
+      <h3 class="section">${icon("calendar-clock")} ${h(t("Date and time"))}</h3>
+      <section class="card group">${likeDeviceRow("datetime-like", dateTimeLikeDevice(), `${time(SAMPLE_TIME, "device")} · ${dateText(localDay(new Date()), "device")}`)}
+        ${dateTimeLikeDevice() ? "" : `<label class="row-setting"><span>${icon("clock")} ${h(t("Time"))}</span>
+          <select id="time-format">${TIME_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.timeFormat ? "selected" : ""}>${h(`${t(TIME_TITLES[f])} · ${time(SAMPLE_TIME, f)}`)}</option>`).join("")}</select></label>
+        <label class="row-setting"><span>${icon("calendar")} ${h(t("Date"))}</span>
+          <select id="date-format">${DATE_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.dateFormat ? "selected" : ""}>${h(`${f === "iso" ? "ISO 8601" : t(DATE_TITLES[f])} · ${dateText(localDay(new Date()), f)}`)}</option>`).join("")}</select></label>`}
+      </section>
+      <p class="footer">${h(t("Today and tomorrow are always written as words."))}</p>
+`;
+    case "data": return `
       <h3 class="section">${icon("arrow-up-down")} ${h(t("Data use"))}</h3>
       <section class="card group">
         <label class="row-setting"><span>${icon("radio-tower")} ${h(t("Save mobile data"))}</span><input type="checkbox" class="switch" id="save-data" ${store.saveData ? "checked" : ""}></label>
@@ -1882,6 +1887,8 @@ function renderSettings() {
       </section>
       <p class="footer">${h(t("On mobile data, satellite pictures load only when you tap them; forecasts and warnings always load. When your browser or phone asks to save data, the website always does. Not every browser tells the website whether it is on mobile data."))}</p>
       ${tip("saveData")}
+`;
+    case "help": return `
       <h3 class="section">${icon("circle-help")} ${h(t("Help"))}</h3>
       <section class="card group">
         <a class="row-setting" href="#/tour"><span>${icon("circle-help")} ${h(t("Show the tour again"))}</span>${icon("chevron-right")}</a>
@@ -1889,6 +1896,8 @@ function renderSettings() {
         <button class="row-setting" id="legend"><span>${icon("info")} ${h(t("Legend: what the symbols mean"))}</span>${icon("chevron-right")}</button>
       </section>
       <p class="footer" id="tips-note"></p>
+`;
+    case "about": return `
       ${card(t("Safety notice"), "shield-check", `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`)}
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
         ${tip("factoryReset")}
@@ -1897,10 +1906,62 @@ function renderSettings() {
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
       ${card(t("Website login"), "lock", `<p>${h(t("The website is still in testing. This browser stays logged in for 90 days."))}</p>
         <button id="log-out" class="quiet">${icon("lock")} ${h(t("Log out"))}</button>`)}
-      ${footerLinks()}
+      ${footerLinks()}`;
+    default: return "";
+  }
+}
+
+/** The value shown at the end of a topic's row (SettingsRow). */
+function settingsTopicValue(topic) {
+  if (topic === "appearance") return t({ device: "Device", light: "Light", dark: "Dark" }[store.appearance] ?? "Device");
+  if (topic === "clubpages") return backgroundSummary();
+  if (topic === "language") return `${resolve() === "de" ? "Deutsch" : "English"} · ${unitSymbol("temperature")}`;
+  if (topic === "data") return dataSaving() ? t("Saving data") : "";
+  return "";
+}
+
+/**
+ * Settings as in the app (option C, 25 Oct 2026): the boat for the rowing light and Boats and limits first,
+ * then one row per topic with its own page, and the search at the end.
+ */
+function renderSettings(topic = null) {
+  const named = SETTINGS_TOPICS.find(([id]) => id === topic);
+  if (topic && !named) topic = null;
+  const again = () => renderSettings(topic);
+  setTitle(named ? t(named[1]) : t("Settings"));
+  const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
+  const back = store.clubs[0] ? `#/club/${encodeURIComponent(store.clubs[0].id)}` : "#/list";
+  const row = ([id, title, name, colour]) => `<a class="row-setting topic" href="#/settings/${id}"><span>${settingsIcon(name, colour)} ${h(t(title))}</span>
+          <span class="sub">${h(settingsTopicValue(id))} ${icon("chevron-right")}</span></a>`;
+  const changed = Object.values(store.limits).filter((l) => Object.keys(l ?? {}).length).length;
+  const groups = [["appearance", "clubpages"], ["language", "data"], ["help", "about"]];
+  root.innerHTML = topic
+    ? `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t(named[1]))}</strong><span class="nav-side"></span></header>
+    ${testing()}
+    <main class="page settings-topic">${settingsTopicBody(topic, accepted)}
+    </main>`
+    : `<header class="nav"><span class="nav-side"></span><strong class="nav-title">${h(t("Settings"))}</strong><a class="link strong" href="${back}">${h(t("Done"))}</a></header>
+    ${testing()}
+    <main class="page settings-main">
+      <div id="settings-topics">
+      <section class="card group">
+        <label class="row-setting topic"><span>${settingsIcon("sailboat", "#34c759")} ${h(t("Rowing light for"))}</span>
+          <select id="settings-boat">${allBoats().map((b) => `<option value="${h(b.id)}" ${b.id === tickedBoat().id ? "selected" : ""}>${h(boatTitle(b))}</option>`).join("")}</select></label>
+        <a class="row-setting topic" href="#/settings/boats"><span>${settingsIcon("sliders-horizontal", "#30b0c7")} ${h(t("Boats and limits"))}</span>
+          <span class="sub">${changed ? h(t("%@ changed", String(changed))) : ""} ${icon("chevron-right")}</span></a>
+      </section>
+      <p class="footer">${h(t("The boat the rowing light is worked out for, on every club page and in the widgets."))}</p>
+      ${groups.map((ids) => `<section class="card group">${ids.map((id) => row(SETTINGS_TOPICS.find(([x]) => x === id))).join("")}</section>`).join("\n      ")}
+      </div>
+      <div id="settings-results" hidden></div>
+      <label class="search settings-search">${icon("search")}<input type="search" id="settings-search" placeholder="${h(t("Search"))}" aria-label="${h(t("Search the settings"))}"></label>
     </main>`;
-  wireLanguage(renderSettings);
-  wireSettingsSearch(root.querySelector("main"));
+  root.querySelector("#settings-boat")?.addEventListener("change", (e) => {
+    pickBoat(e.target.value, null);
+    again();
+  });
+  wireLanguage(again);
+  if (!topic) wireSettingsSearch(root.querySelector("main"));
   wireTips(root.querySelector("main"));
   root.querySelectorAll("[data-unit]").forEach((select) => {
     select.addEventListener("change", () => setUnit(select.dataset.unit, select.value));
@@ -1915,51 +1976,51 @@ function renderSettings() {
       }
     });
   });
-  root.querySelector("#tips-again").addEventListener("click", () => {
+  root.querySelector("#tips-again")?.addEventListener("click", () => {
     replayTips();
     root.querySelector("#tips-note").textContent = t("The tips are back.");
   });
-  root.querySelector("#legend").addEventListener("click", () => openSheet(t("Legend"),
+  root.querySelector("#legend")?.addEventListener("click", () => openSheet(t("Legend"),
     ["lights", "conditions", "hourly"].map((part) => `<h3 class="section">${h({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part])}</h3>${legendBody(part)}`).join("")));
-  root.querySelector("#launch-in-header").addEventListener("change", (e) => {
+  root.querySelector("#launch-in-header")?.addEventListener("change", (e) => {
     store.launchPointInHeader = e.target.checked;
-    renderSettings();
+    again();
   });
-  root.querySelector("#save-data").addEventListener("change", (e) => {
+  root.querySelector("#save-data")?.addEventListener("change", (e) => {
     store.saveData = e.target.checked;
-    renderSettings();
+    again();
   });
   root.querySelector("#time-format")?.addEventListener("change", (e) => (store.timeFormat = e.target.value));
   root.querySelector("#date-format")?.addEventListener("change", (e) => (store.dateFormat = e.target.value));
-  root.querySelector("#language-like").addEventListener("change", async (e) => {
+  root.querySelector("#language-like")?.addEventListener("change", async (e) => {
     // Off starts with the language shown now, so nothing changes at once (languageLikeDevice).
     await setLanguage(e.target.checked ? "auto" : resolve("auto"));
-    renderSettings();
+    again();
   });
   root.querySelectorAll("[data-language]").forEach((b) => b.addEventListener("click", async () => {
     await setLanguage(b.dataset.language);
-    renderSettings();
+    again();
   }));
-  root.querySelector("#datetime-like").addEventListener("change", (e) => {
+  root.querySelector("#datetime-like")?.addEventListener("change", (e) => {
     setDateTimeLikeDevice(e.target.checked);
-    renderSettings();
+    again();
   });
   root.querySelectorAll("[data-appearance]").forEach((b) => b.addEventListener("click", () => {
     store.appearance = b.dataset.appearance;
     applyAppearance();
-    renderSettings();
+    again();
   }));
-  root.querySelector("#arrange").addEventListener("click", () => openArrange(null));
+  root.querySelector("#arrange")?.addEventListener("click", () => openArrange(null));
   root.querySelectorAll("[data-maps-app]").forEach((b) => b.addEventListener("click", () => {
     store.mapsApp = b.dataset.mapsApp;
-    renderSettings();
+    again();
   }));
   root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     store.mapZoom = b.dataset.zoom;
-    renderSettings();
+    again();
   }));
-  root.querySelector("#log-out").addEventListener("click", () => location.assign("/__logout"));
-  root.querySelector("#factory").addEventListener("click", async () => {
+  root.querySelector("#log-out")?.addEventListener("click", () => location.assign("/__logout"));
+  root.querySelector("#factory")?.addEventListener("click", async () => {
     if (!confirm(t("Reset all settings?"))) return;
     await forgetOwnPictures();
     try {
@@ -1967,7 +2028,7 @@ function renderSettings() {
     } catch {}
     location.reload();
   });
-  root.querySelector("#reset").addEventListener("click", () => {
+  root.querySelector("#reset")?.addEventListener("click", () => {
     if (!confirm(t("Delete your clubs, settings and the accepted safety notice from this browser?"))) return;
     try {
       for (const name of Object.keys(localStorage)) if (name.startsWith("rf.")) localStorage.removeItem(name);
@@ -1977,28 +2038,36 @@ function renderSettings() {
   });
 }
 
-/** Filters the settings to the cards whose title, rows or footer hold the words typed (SettingsSearch). */
+/**
+ * The search at the end of Settings: every card of every topic page whose title, rows or footer hold the
+ * words typed, with the page it is on; tapping one opens that page (SettingsSearch).
+ */
 function wireSettingsSearch(main) {
   const input = main.querySelector("#settings-search");
-  const none = main.querySelector("#settings-none");
-  const groups = [...main.querySelectorAll(":scope > section.card")].map((card) => {
-    const parts = [card];
-    const before = card.previousElementSibling;
-    if (before?.matches("h3.section")) parts.unshift(before);
-    const after = card.nextElementSibling;
-    if (after?.matches("p.footer")) parts.push(after);
-    return { parts, text: parts.map((p) => p.textContent).join(" ").toLowerCase() };
+  const list = main.querySelector("#settings-topics");
+  const results = main.querySelector("#settings-results");
+  const box = document.createElement("div");
+  const entries = SETTINGS_TOPICS.flatMap(([id, title, name, colour]) => {
+    box.innerHTML = settingsTopicBody(id, null);
+    return [...box.querySelectorAll(":scope > section.card")].map((card) => {
+      const parts = [card];
+      const before = card.previousElementSibling;
+      if (before?.matches("h3.section")) parts.unshift(before);
+      const after = card.nextElementSibling;
+      if (after?.matches("p.footer")) parts.push(after);
+      const heading = parts[0].matches("h3.section") ? parts[0] : card.querySelector(".card-title, .row-setting > span, .row-setting");
+      return { id, topic: t(title), name, colour, title: (heading?.textContent ?? "").trim().replace(/\s+/g, " ") || t(title), text: parts.map((x) => x.textContent).join(" ").toLowerCase() };
+    });
   });
   input.addEventListener("input", () => {
     const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    let found = 0;
-    for (const g of groups) {
-      const show = words.every((w) => g.text.includes(w));
-      if (show) found++;
-      g.parts.forEach((p) => (p.hidden = !show));
-    }
-    none.hidden = found > 0;
-    none.textContent = found ? "" : t("No settings found for “%@”.", input.value.trim());
+    list.hidden = words.length > 0;
+    results.hidden = !words.length;
+    if (!words.length) return;
+    const found = entries.filter((e) => words.every((w) => e.text.includes(w)) || words.every((w) => e.topic.toLowerCase().includes(w)));
+    results.innerHTML = found.length
+      ? `<section class="card group">${found.map((e) => `<a class="row-setting topic" href="#/settings/${e.id}"><span>${settingsIcon(e.name, e.colour)}<span class="stack"><span>${h(e.title)}</span><small class="sub">${h(e.topic)}</small></span></span>${icon("chevron-right")}</a>`).join("")}</section>`
+      : `<p class="sub">${h(t("No settings found for “%@”.", input.value.trim()))}</p>`;
   });
 }
 
@@ -2285,6 +2354,8 @@ function route(scroll = true) {
   const country = hash.match(/^\/countries\/([a-z]{2})(?:\?q=(.*))?$/);
   if (country) return renderCountry(root, country[1], country[2] ? decodeURIComponent(country[2]) : "");
   if (hash === "/settings") return renderSettings();
+  const topic = hash.match(/^\/settings\/(appearance|clubpages|language|data|help|about)$/);
+  if (topic) return renderSettings(topic[1]);
   if (hash === "/settings/boats") return renderBoats();
   if (hash === "/settings/backgrounds") return renderBackgrounds(root);
   const boat = hash.match(/^\/settings\/boat\/(.+)$/);
