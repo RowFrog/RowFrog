@@ -19,17 +19,27 @@ struct LaunchPointMapCard: View {
 }
 
 /// The launch point opened from the club page's header: the same map, note,
-/// coordinates and Open in Maps as the card.
+/// coordinates and Open in Maps as the card. It comes up only as far as its
+/// content needs and can be pulled up to full height.
 struct LaunchPointSheet: View {
     let club: Club
     @Environment(\.dismiss) private var dismiss
+    /// The content's measured height; until it is known, a guess close to a phone's.
+    @State private var contentHeight: CGFloat = 470
+
+    /// Room for the title bar above the content.
+    static let barHeight: CGFloat = 64
 
     var body: some View {
         NavigationStack {
             ScrollView {
                 LaunchPointDetails(club: club, mapHeight: 320, mapMaxHeight: 320)
                     .padding()
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                        if abs(height - contentHeight) > 1 { contentHeight = height }
+                    }
             }
+            .scrollBounceBehavior(.basedOnSize)
             .navigationTitle(tr("Launch point"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -38,6 +48,9 @@ struct LaunchPointSheet: View {
                 }
             }
         }
+        // As far up as the content needs; larger text sizes reach full height and scroll.
+        .presentationDetents([.height(contentHeight + Self.barHeight), .large])
+        .presentationDragIndicator(.visible)
     }
 }
 
