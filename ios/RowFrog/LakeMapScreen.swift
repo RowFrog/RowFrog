@@ -326,8 +326,9 @@ struct LakeMapScreen: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { fitRequest += 1 }
     }
 
-    /// Close and the lake's name at the left, map or satellite pictures alone at
-    /// the right: it is the ground the layers are drawn on, not a layer or a tool.
+    /// Close and the lake's name at the left, the boat and map or satellite
+    /// pictures at the right. The boat button is the club page's: the colours,
+    /// the route's times and its light are for that boat (owner's pick B, 5 Nov 2026).
     private var topBar: some View {
         HStack(spacing: 10) {
             Button { dismiss() } label: {
@@ -343,6 +344,9 @@ struct LakeMapScreen: View {
                 .frame(height: 44)
                 .floatingControl(Capsule())
             Spacer(minLength: 0)
+            PageBoatButton(clubID: clubID, now: nil, waterC: nil, tipEdge: .top)
+                .padding(.horizontal, 4)
+                .floatingControl(Capsule())
             Button { imagery.toggle() } label: {
                 Image(systemName: imagery ? "map" : "globe.europe.africa")
                     .font(.body.weight(.semibold))

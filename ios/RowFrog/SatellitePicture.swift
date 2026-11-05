@@ -630,6 +630,9 @@ struct SatelliteLayerChips: View {
     let lakeID: String
     let picture: SatellitePicture
     var clubID: String? = nil
+    /// The full view: the club page's boat button beside the legend while a
+    /// layer coloured for the boat is on (owner's pick B, 5 Nov 2026).
+    var boatButton = false
     @MainActor private var layers: SatelliteLayers { .shared }
     @State private var showingLegend = false
 
@@ -645,6 +648,10 @@ struct SatelliteLayerChips: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(tr("Legend"))
+                if boatButton, !layers.on.isDisjoint(with: [.light, .waves, .shore]) {
+                    PageBoatButton(clubID: clubID, now: nil, waterC: nil, tipEdge: .bottom)
+                        .background(Color.secondary.opacity(0.15), in: Capsule())
+                }
                 ForEach(available) { layer in
                     let on = layers.on.contains(layer)
                     Button { layers.toggle(layer) } label: {
@@ -1072,7 +1079,7 @@ struct SatellitePictureScreen: View {
                 if let shot = picture.shot(kind) {
                     VStack(alignment: .leading, spacing: 8) {
                         SatelliteCaption(picture: picture, shot: shot, overLake: overLake)
-                        SatelliteLayerChips(lakeID: lakeID, picture: picture, clubID: clubID)
+                        SatelliteLayerChips(lakeID: lakeID, picture: picture, clubID: clubID, boatButton: true)
                     }
                     .padding(.horizontal)
                     .frame(maxWidth: .infinity, alignment: .leading)

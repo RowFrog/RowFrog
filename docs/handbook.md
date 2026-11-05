@@ -149,6 +149,10 @@ choice A, 30 Oct 2026). Small and big boats are everywhere.
      and "…" on one line and the search at its top; the cog is on the club page
      at the top left. The sidebar button slides the list away: it then comes
      onto the club page at the far left and the cog moves over beside it.
+   - Lake map and route planning: the same boat button at the top, between the
+     lake's name and the map/satellite button; the satellite picture's full
+     view has it beside the legend while Rowing light, Waves or Shore is on.
+     A boat picked there applies to the club page too (owner's pick B, 5 Nov 2026).
 
 Boats from before this change are put at the home base on the first start
 after the update. In `-RWMyBoats` a boat's clubs are a comma-separated
