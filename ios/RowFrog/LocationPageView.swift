@@ -732,17 +732,15 @@ private struct NowCard: View {
     /// The grip under the tile: tapped, or pulled down or up, it opens or closes the tiles.
     private var openHandle: some View {
         Button(action: toggleOpen) {
-            VStack(spacing: 4) {
-                Capsule().fill(.tertiary).frame(width: 36, height: 5)
-                HStack(spacing: 4) {
-                    Text(open ? tr("Fewer values") : tr("All values"))
-                    Image(systemName: "chevron.down")
-                        .imageScale(.small)
-                        .rotationEffect(.degrees(open ? 180 : 0))
-                }
-                .font(.subheadline.weight(.medium))
-                .foregroundStyle(.tint)
+            // Words only, like Apple's own "Show more" rows (owner's pick G2, 5 Nov 2026).
+            HStack(spacing: 4) {
+                Text(open ? tr("Fewer values") : tr("All values"))
+                Image(systemName: "chevron.down")
+                    .imageScale(.small)
+                    .rotationEffect(.degrees(open ? 180 : 0))
             }
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.tint)
             // 44 pt to tap, as Apple's guide asks.
             .frame(maxWidth: .infinity, minHeight: 44)
             .contentShape(Rectangle())

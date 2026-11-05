@@ -118,21 +118,32 @@ struct TilePeekLine: View {
 
     var body: some View {
         let tile = ConditionTile(condition: condition, data: data)
+        let light = data.now.light(for: condition.reasonNames)
+        // One text size, as the sun line above; the value takes the colour of the light it
+        // sets, as the reason lines do, so no dot is needed (owner's pick P3, 5 Nov 2026).
         HStack(alignment: .firstTextBaseline, spacing: 6) {
             Label(condition.title, systemImage: condition.symbol)
-                .font(.caption.weight(.semibold))
+                .fontWeight(.semibold)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
-            Text(tile.value).valueFont(size: 17).lineLimit(1)
-            tile.detailLine.font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
-            Spacer(minLength: 0)
-            if let light = data.now.light(for: condition.reasonNames) {
-                TrafficLightDot(light: light, size: 8)
+            Text(tile.value)
+                .fontWeight(.semibold)
+                .foregroundStyle(light.map { $0 == .green ? Color.primary : $0.color } ?? .primary)
+                .lineLimit(1)
+            HStack(spacing: 4) {
+                Text(verbatim: "·")
+                tile.detailLine
             }
-            Image(systemName: "chevron.right").font(.caption2.weight(.semibold)).foregroundStyle(.tertiary)
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right").font(.caption.weight(.semibold)).foregroundStyle(.tertiary)
         }
+        .font(.subheadline)
         .symbolRenderingMode(.hierarchical)
         .accessibilityElement(children: .combine)
+        .accessibilityValue(light?.title ?? "")
     }
 }
 
