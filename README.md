@@ -88,7 +88,7 @@ GitHub issue, so no GitHub account is needed.
 
 The rain radar card is off by default (see Rain radar) and can be switched
 on in Arrange this page. The launch point lives in the club header (see
-Launch point). Settings › Club pages › Current conditions in the top tile
+Location). Settings › Club pages › Current conditions in the top tile
 (on by default) can be turned off to show Current conditions as its own card
 again, after the warnings. The website does the same.
 
@@ -312,22 +312,28 @@ models from the first hours to the end of the forecast. When a model is
 picked in the hidden developer options, the credits line names its provider
 (MeteoSwiss, GeoSphere Austria or ECMWF) as well as DWD.
 
-**Launch point.** The lake and town line under the club's name (and the
-orange "Launch point not yet confirmed" line) opens the launch point the
-forecast is for in a sheet sized to its content: a live map (Apple MapKit, no
-key needed) that can be panned and zoomed, the note that forecast, waves and
-warnings are for this point, its name in Apple Maps or the not-confirmed
-note, its coordinates and "Open in Maps". Settings › Club pages › Launch
-point in the club header (on by default) can be turned off to bring back the
-Launch point map card on the page instead, a still picture until tapped.
-The website does the same.
+**Location.** The lake and town line under the club's name (and the
+orange "Launch point not yet confirmed" line) opens the club's "Location"
+sheet, sized to its content: a live map (Apple MapKit, no key needed) of the
+launch point the forecast is for, which can be panned and zoomed, switched to
+satellite pictures with the globe button, and made full screen by pulling the
+sheet up or with the expand button; a note on which point the forecast is
+for (the launch point, or the club's address while no launch point is set),
+its name in Apple Maps or the not-confirmed note, its coordinates and "Open in
+Maps". Settings › Club pages › Location in the club header (on by default)
+can be turned off to bring back the Launch point map card on the page
+instead, a still picture until tapped. On the website the place line opens
+the Location sheet too.
 "Open in Maps" also offers directions to the club, in the map app chosen in
 Settings: Apple Maps (the default; when it knows the club as a place, with
 photos and opening hours, it opens that) or Google Maps, which opens in its
 own app when installed.
 
 **Maps** all mark clubs the same way: this page's club in blue, other clubs in
-grey, with a house for the home base and a rower for any other club.
+grey, with a house for the home base and a rower for any other club. Zoomed
+out a club has one pin at its launch point; where the launch point is set and
+the clubhouse is at least 30 m away, zooming in moves the club's pin to the
+clubhouse and crossed oars mark the launch point. The website does the same.
 
 **When an update fails,** the page keeps the last forecast and says why under
 the club's name (no internet, server did not answer, no forecast for this
@@ -405,7 +411,10 @@ screen tall each). The website does the same.
 **iPad.** The app runs natively on iPad in all four orientations, with the
 same wide layouts (side list 400 pt wide). The Landscape setting is hidden
 there, since iPadOS turns apps anyway. A value's detail view opens full
-screen, with the map beside the chart when the iPad is on its side.
+screen, with the map beside the chart when the iPad is on its side. With a
+background picture on a sideways iPad, one club picture fills the screen
+behind the side list and the page; a satellite picture is centred on the
+club's launch point. The website's wide layout does the same.
 
 **Website.** [rowfrog.com/app](https://rowfrog.com/app) shows the forecasts
 in a browser, for Android phones and computers. It is password-locked while
