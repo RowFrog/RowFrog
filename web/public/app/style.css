@@ -880,14 +880,17 @@ input.switch:checked::after { transform: translateX(20px); }
 body.has-picture { background: transparent; }
 /* Frosted: the picture shows through the cards, blurred; solid: no picture in the cards. */
 body.has-picture[data-tiles="frosted"] .card, body.has-picture[data-tiles="frosted"] .side .row { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
-/* Text that sits on the picture itself gets a thin backing, as the app's labels. */
-body.has-picture main.page > h1.large, body.has-picture .list-head > h1.large, body.has-picture main.page > h3.section, body.has-picture main.page > p.footer,
+/* Text that sits on the picture itself gets a thin frost, as the app's labelBackground: the picture blurred
+   with only a light wash (veil .25, .2 in dark). Big page titles have none, as iOS's large navigation titles. */
+body.has-picture main.page > h3.section, body.has-picture main.page > p.footer,
 body.has-picture main.page > .source, body.has-picture main.page > .credits, body.has-picture main.page > footer.links,
 body.has-picture .page-end > .source, body.has-picture .page-end > .credits, body.has-picture .page-end > footer.links,
 body.has-picture main.page > .list-links, body.has-picture main.page > .add-own, body.has-picture #updated {
-  width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) 55%, transparent);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) var(--label-veil, 25%), transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5);
 }
+:root[data-theme="dark"] body.has-picture { --label-veil: 20%; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body.has-picture { --label-veil: 20%; } }
 .bg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 16px 12px; margin-bottom: 12px; }
 .bg-option { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; cursor: pointer; width: 100%; }
 .bg-option .thumb { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1 / 1.34; border-radius: 14px; background: var(--tile) center / cover no-repeat; color: var(--sub); border: 2px solid transparent; }
