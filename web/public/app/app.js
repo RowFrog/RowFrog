@@ -17,7 +17,7 @@ import {
   applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, keptForecast,
 } from "./shared.js";
 import {
-  isStale, shownLight, currentHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
+  isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky,
@@ -160,7 +160,7 @@ function openBoatMenu(raw, anchor, picked = () => route(false)) {
   const row = (boat) => {
     let light = null;
     if (raw) {
-      const hour = currentHour(applyLimits(raw, boatLimits(boat)).hours, now);
+      const hour = nowHour(applyLimits(raw, boatLimits(boat)), now);
       light = hour.light;
     }
     const on = inUse === boat.id;
@@ -434,7 +434,7 @@ async function fillRow(row) {
   }
   const forecast = forBoat(raw, row.dataset.id);
   const stale = isStale(forecast);
-  const hour = currentHour(forecast.hours);
+  const hour = nowHour(forecast);
   const water = forecast.waterTemperature?.celsius;
   const estimate = estimatedWater(forecast);
   row.style.setProperty("--tint", `var(--${shownLight(hour.light, stale)})`);
@@ -617,7 +617,7 @@ async function renderClub(id) {
   const forecast = forBoat(raw);
   const now = new Date();
   const stale = isStale(forecast, now);
-  const hour = currentHour(forecast.hours, now);
+  const hour = nowHour(forecast, now);
   const warnings = forecast.warnings;
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
   // Current conditions' tip, one at a time: the water level's first while the lake is let down (Forggensee),
@@ -1687,7 +1687,9 @@ function hourlyCard(forecast, now, stale) {
  */
 function nightLine(hours, list, later) {
   const n = nightSummary(hours);
-  const from = hours[0] === list[1] ? "" : hourOnly(n.start);
+  // Open-ended only where the night really starts or ends the table (NightRow.startsTable/endsTable);
+  // a night after the current hour's row starts at a known hour, "18–07", not "–07".
+  const from = hours[0] === list[0] ? "" : hourOnly(n.start);
   const to = hours[hours.length - 1] === list[list.length - 1] ? "" : hourOnly(n.end);
   const fog = n.fog && n.fog !== "green" ? (n.fog === "red" ? "red" : "orange") : "";
   const rain = (n.rainMm ?? 0) >= 0.1;

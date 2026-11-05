@@ -4,7 +4,7 @@
 
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
-import { currentHour, iceValue, UNITS } from "./logic.js";
+import { nowHour, iceValue, UNITS } from "./logic.js";
 import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips } from "./tour.js";
@@ -29,7 +29,7 @@ export async function renderValuePage(root, clubId, condition, at, orderName = n
     return;
   }
   const forecast = forBoat(raw);
-  const hour = (at && forecast.hours.find((x) => x.time === at)) ?? currentHour(forecast.hours);
+  const hour = (at && forecast.hours.find((x) => x.time === at)) ?? nowHour(forecast);
   // DWD's radar at the launch point, as the club page read it; read now when it has not.
   const radar = radarAt(club?.launchPoint);
   const data = conditionData(forecast, hour, radar);

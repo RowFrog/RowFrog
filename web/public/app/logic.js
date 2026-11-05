@@ -33,6 +33,23 @@ export function currentHour(hours, now = new Date()) {
   }) ?? hours[0];
 }
 
+/**
+ * The forecast hour as it stands at `now` (Forecast.current(at:)). That hour began up to an hour
+ * ago, so "sunrise or sunset within the hour" (amber "twilight") is replaced by whether the sun is
+ * actually up now: green until sunset, red ("daylight") once it is down. The 48 hours and the hour
+ * view keep the hour's own twilight.
+ */
+export function nowHour(forecast, now = new Date()) {
+  const first = currentHour(forecast.hours, now);
+  if (!first || !(first.reasons ?? []).some((r) => r.condition === "twilight")) return first;
+  const sun = sunState(forecast, now);
+  if (!sun) return first;
+  const reasons = first.reasons.filter((r) => r.condition !== "twilight");
+  if (!sun.up) reasons.unshift({ condition: "daylight", light: "red" });
+  const light = reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green");
+  return { ...first, reasons, light, sunUp: sun.up };
+}
+
 /** The next `count` hours from the current one. */
 export function nextHours(hours, now = new Date(), count = 48) {
   const current = currentHour(hours, now);

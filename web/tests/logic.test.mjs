@@ -174,3 +174,23 @@ test("the night's dark hours fold into one line with the worst of each column", 
   const dusk = { ...hours[2], light: "amber", reasons: [{ condition: "twilight", light: "amber" }] };
   assert.ok(nightParts([hours[0], dusk, hours[3], hours[4]])[1].hour, "the hour the sun sets in keeps its row");
 });
+
+test("now, an hour with sunset in it is green while the sun is up and red once it is down (Forecast.current)", async () => {
+  const { nowHour } = await import("../public/app/logic.js");
+  const forecast = {
+    daylight: [{ sunrise: "2026-11-05T06:02:00Z", sunset: "2026-11-05T15:51:00Z" }, { sunrise: "2026-11-06T06:04:00Z", sunset: "2026-11-06T15:49:00Z" }],
+    hours: [{ time: "2026-11-05T15:00:00Z", light: "amber", reasons: [{ condition: "twilight", light: "amber" }], sunUp: true }],
+  };
+  const before = nowHour(forecast, new Date("2026-11-05T15:30:00Z"));
+  assert.equal(before.light, "green");
+  assert.deepEqual(before.reasons, []);
+  const after = nowHour(forecast, new Date("2026-11-05T15:55:00Z"));
+  assert.equal(after.light, "red");
+  assert.equal(after.reasons[0].condition, "daylight");
+  assert.equal(after.sunUp, false);
+  // Another amber reason stays amber.
+  forecast.hours[0].reasons.push({ condition: "wind", light: "amber" });
+  assert.equal(nowHour(forecast, new Date("2026-11-05T15:30:00Z")).light, "amber");
+  // The hour itself, as the 48 hours show it, keeps its twilight.
+  assert.equal(forecast.hours[0].light, "amber");
+});
