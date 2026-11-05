@@ -104,6 +104,9 @@ struct LaunchPointDetails: View {
     @State private var split = false
     /// The span the map shows, so the pins can split when the clubhouse is found after the map settled.
     @State private var span: MKCoordinateSpan?
+    /// The sheet to suggest a launch point, and whether one was sent for this club.
+    @State private var suggesting = false
+    @State private var suggested = false
     /// Apple's satellite pictures instead of the map, remembered for every launch point.
     @AppStorage("RWLaunchImagery") private var imagery = false
     /// The live map after a tap; a still picture again once the page is swiped away.
@@ -151,6 +154,7 @@ struct LaunchPointDetails: View {
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
             forecastPointLine
+            suggestRow
             if mapApp == .apple, let name = place?.name {
                 Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
                     .font(.caption)
@@ -183,11 +187,37 @@ struct LaunchPointDetails: View {
             }
         }
         .task(id: club.id) {
+            suggested = LaunchPointSuggestion.wasSent(forID: club.id)
+            // Screenshot hook: `-RWSuggestLaunchPoint YES` opens the suggestion sheet.
+            if UserDefaults.standard.bool(forKey: "RWSuggestLaunchPoint"), LaunchPointSuggestion.isOffered(for: club) {
+                suggesting = true
+            }
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
             // A hand-checked clubhouse is known before the lookup ends, so the pins
             // may have split already: work it out again rather than joining them.
             split = false
             updateSplit()
+        }
+    }
+
+    /// For a club that has not confirmed its launch point: "Suggest the launch
+    /// point" (or a better one, when one was checked by hand), else thanks once sent.
+    @ViewBuilder private var suggestRow: some View {
+        if LaunchPointSuggestion.isOffered(for: club) {
+            if suggested {
+                Label(tr("Thank you: your suggestion is with us."), systemImage: "checkmark.circle")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Button(club.hasLaunchPoint ? tr("Suggest a better launch point") : tr("Suggest the launch point"),
+                       systemImage: ClubMarks.launchSymbol) { suggesting = true }
+                    .font(.caption.weight(.semibold))
+                    .sheet(isPresented: $suggesting, onDismiss: {
+                        suggested = LaunchPointSuggestion.wasSent(forID: club.id)
+                    }) {
+                        SuggestLaunchPointView(club: club)
+                    }
+            }
         }
     }
 

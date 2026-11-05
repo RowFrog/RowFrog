@@ -1,0 +1,80 @@
+name: Accept launch point
+
+# A launch point suggested from the app arrives as an issue with the label
+# "launch point suggestion" (cloudflare/suggestions). When the owner answers
+# "/accept" on it (or "/accept 47.91234, 11.30012" to take a nudged point),
+# this puts the point into data/catalogs/hand-checked.json and the club's
+# catalog (scripts/accept_launch_point.py) and opens a pull request. Merging
+# it brings the point to the app with the next forecast run.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: accept-launch-point
+  cancel-in-progress: false
+
+jobs:
+  accept:
+    # Only the owner's "/accept" on a launch point suggestion (not on a pull request).
+    if: >-
+      !github.event.issue.pull_request &&
+      github.event.comment.author_association == 'OWNER' &&
+      startsWith(github.event.comment.body, '/accept') &&
+      contains(github.event.issue.labels.*.name, 'launch point suggestion')
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE: ${{ github.event.issue.number }}
+      REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+      - id: take
+        name: Put the point into the hand-checked list
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          COMMENT: ${{ github.event.comment.body }}
+        run: |
+          # The words after "/accept" on its first line, if any: another point.
+          export ACCEPT_AT="$(printf '%s\n' "$COMMENT" | head -n 1 | sed -e 's#^/accept##' | tr -d '\r')"
+          printf '%s' "$ISSUE_BODY" | python3 scripts/accept_launch_point.py "$ISSUE"
+      - name: Open the pull request
+        env:
+          CLUB: ${{ steps.take.outputs.club }}
+          NAME: ${{ steps.take.outputs.name }}
+          LAT: ${{ steps.take.outputs.lat }}
+          LON: ${{ steps.take.outputs.lon }}
+        run: |
+          branch="launch-point/issue-$ISSUE"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$branch"
+          git add data/catalogs
+          git commit -m "Launch point for $NAME from suggestion #$ISSUE" -m "Closes #$ISSUE"
+          git push -f origin "$branch"
+          body="The launch point suggested in #$ISSUE for **$NAME** (\`$CLUB\`): $LAT, $LON ([map](https://www.openstreetmap.org/?mlat=$LAT&mlon=$LON#map=18/$LAT/$LON)).
+
+          Merging puts it into the hand-checked list and the club's catalog; the next forecast run uses it.
+
+          Closes #$ISSUE"
+          if url=$(gh pr create --repo "$REPO" --base main --head "$branch" --title "Launch point for $NAME (#$ISSUE)" --body "$body" 2>pr-error.txt); then
+            gh issue comment "$ISSUE" --repo "$REPO" --body "Taken: $url"
+          else
+            cat pr-error.txt
+            # Actions may not open pull requests here (Settings > Actions > General).
+            gh issue comment "$ISSUE" --repo "$REPO" --body "The point is on the branch \`$branch\`. Open the pull request: https://github.com/$REPO/compare/main...$branch?expand=1"
+          fi
+      - name: Say why it was not taken
+        if: failure() && steps.take.outputs.error != ''
+        env:
+          ERROR: ${{ steps.take.outputs.error }}
+        run: |
+          gh issue comment "$ISSUE" --repo "$REPO" --body "Not taken: $ERROR"
