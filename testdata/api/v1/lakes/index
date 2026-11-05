@@ -8,12 +8,14 @@
    {
     "abbreviation": null,
     "address": "Dampfschiffstraße 6, 82319 Starnberg",
+    "clubhouse": null,
     "country": "de",
     "id": "mrc-1880",
     "launchPoint": {
      "lat": 47.99667,
      "lon": 11.34745
     },
+    "launchPointSet": true,
     "launchPointVerified": true,
     "name": "Münchener Ruder-Club von 1880 e.V.",
     "region": null,
@@ -24,12 +26,14 @@
    {
     "abbreviation": null,
     "address": "Seepromenade 2, 82319 Starnberg",
+    "clubhouse": null,
     "country": "de",
     "id": "mrsv-bayern",
     "launchPoint": {
      "lat": 47.99156,
      "lon": 11.33901
     },
+    "launchPointSet": true,
     "launchPointVerified": true,
     "name": "Münchener Ruder- und Segel-Verein \"Bayern\" von 1910 e.V.",
     "region": null,
@@ -40,12 +44,14 @@
    {
     "abbreviation": null,
     "address": "Seestraße 22, 82327 Tutzing",
+    "clubhouse": null,
     "country": "de",
     "id": "tutzinger-rv",
     "launchPoint": {
      "lat": 47.89578,
      "lon": 11.27525
     },
+    "launchPointSet": true,
     "launchPointVerified": true,
     "name": "Tutzinger Ruderverein 1983 e.V.",
     "region": null,

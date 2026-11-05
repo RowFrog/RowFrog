@@ -293,6 +293,13 @@ jobs:
           shoot 383-settings-launch-point light -RWShowSettings YES -RWSettingsPage clubpages
           shoot 384-arrange-launch-point light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 385-launch-point-card-separate light -RWOpenClub mrc-1880 -RWScrollTo launchpoint -RWLaunchPointInHeader NO
+          # The launch point sheet with satellite pictures, and pulled up to full screen.
+          shoot 390-launch-point-satellite light -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLaunchImagery YES
+          shoot 391-launch-point-full light -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLaunchPointFull YES
+          # Location zoomed in: the club's pin at the clubhouse, oars on the launch point.
+          # A club whose launch point and clubhouse the owner checked by hand, 200 m apart.
+          GUIDE=1 shoot 388-location-split light -RWTutorialSeen YES -RWNoTips YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWLaunchSpan 700
+          GUIDE=1 shoot 389-location-split-german-dark dark -RWTutorialSeen YES -RWNoTips YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWLaunchSpan 700 -RWLanguage de
           # Current conditions in the top tile (owner's choice B, 4 Nov 2026): closed, with a
           # value it hides as one line under the sun line, opened into all tiles, the
           # settings switch, Arrange page with the card locked, and the old separate cards.

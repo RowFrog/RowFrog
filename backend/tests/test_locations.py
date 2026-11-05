@@ -93,3 +93,34 @@ def test_river_clubs_move_onto_their_sections(tmp_path):
     # A club without a section stays on the whole river, and sections without clubs are left out.
     assert locs.clubs["rc-wuerzburg"].lake_id == "river-main"
     assert "river-main-gone" not in locs.lakes
+
+
+def test_hand_checked_launch_points_are_set_and_bring_their_clubhouse(tmp_path):
+    catalog = {
+        "lakes": [{"id": "ammersee", "name": "Ammersee", "center": {"lat": 48.0, "lon": 11.12}}],
+        "clubs": [
+            {"id": "rc-ammersee", "name": "RC Ammersee", "lakeId": "ammersee", "launchPoint": {"lat": 48.0, "lon": 11.1}},
+            {"id": "school-crew", "name": "School crew", "lakeId": "ammersee", "launchPoint": {"lat": 48.01, "lon": 11.1}},
+            {"id": "rc-other", "name": "RC Other", "lakeId": "ammersee", "launchPoint": {"lat": 48.05, "lon": 11.15}},
+        ],
+    }
+    path = tmp_path / "de-drv.json"
+    path.write_text(json.dumps(catalog))
+    checked = tmp_path / "hand-checked.json"
+    checked.write_text(json.dumps({
+        "comment": "test",
+        "remove": [],
+        "de": {
+            "rc-ammersee": {"club": [48.0012, 11.1009], "launchPoint": [48.0, 11.1], "checked": "2026-11-05"},
+            "school-crew": {"sameAs": "rc-ammersee"},
+        },
+    }))
+    locs = locations.load(catalog_paths=[path], sections_path=None, hand_checked_path=checked)
+    club = locs.clubs["rc-ammersee"]
+    assert club.launch_point_set and not club.launch_point_verified
+    assert club.clubhouse == locations.Point(lat=48.0012, lon=11.1009)
+    assert locs.clubs["school-crew"].launch_point_set
+    assert locs.clubs["school-crew"].clubhouse == club.clubhouse
+    assert not locs.clubs["rc-other"].launch_point_set and locs.clubs["rc-other"].clubhouse is None
+    # Clubs confirmed by the club count as set too.
+    assert locs.clubs["mrc-1880"].launch_point_set

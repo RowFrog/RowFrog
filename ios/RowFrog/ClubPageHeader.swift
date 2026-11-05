@@ -107,6 +107,8 @@ struct ClubPageHeader: View {
             try? await Task.sleep(for: .milliseconds(1500))
             showingLaunchPoint = true
         }
+        // The club's Apple Maps place, for its pin on every map once zoomed in.
+        .task(id: club.id) { await ClubMarks.lookUpPlaces(forIDs: [club.id]) }
     }
 
     private var place: String {
@@ -132,7 +134,7 @@ struct ClubPageHeader: View {
             .buttonStyle(.plain)
             .foregroundStyle(Color.accentColor)
             .accessibilityLabel(place)
-            .accessibilityHint(tr("Shows the launch point on a map, with directions"))
+            .accessibilityHint(tr("Shows the club's location on a map, with directions"))
             // Once, on the page in view, after the tour.
             .modifier(PlaceLineTipAnchor(shown: tourSeen && isCurrentPage))
             .id("launchpoint")

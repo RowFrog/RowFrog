@@ -127,6 +127,9 @@ def _lake_json(lake: locations.Lake, country: str | None = None) -> dict:
                 "website": c.website,
                 "launchPoint": _point(c.launch_point),
                 "launchPointVerified": c.launch_point_verified,
+                # Set by the club or checked by hand; then the maps split off the clubhouse.
+                "launchPointSet": c.launch_point_set,
+                "clubhouse": _point(c.clubhouse) if c.clubhouse else None,
                 "source": c.source,
                 "abbreviation": c.abbreviation,
                 "country": c.country,

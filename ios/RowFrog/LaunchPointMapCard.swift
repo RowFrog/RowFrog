@@ -18,39 +18,63 @@ struct LaunchPointMapCard: View {
     }
 }
 
-/// The launch point opened from the club page's header: the same map, note,
-/// coordinates and Open in Maps as the card. It comes up only as far as its
+/// "Location": the launch point opened from the club page's header, with the
+/// same map, note, coordinates and Open in Maps as the card. It comes up only as far as its
 /// content needs and can be pulled up to full height.
 struct LaunchPointSheet: View {
     let club: Club
     @Environment(\.dismiss) private var dismiss
-    /// The content's measured height; until it is known, a guess close to a phone's.
-    @State private var contentHeight: CGFloat = 470
+    /// Everything but the map, measured; until it is known, a guess close to a phone's.
+    @State private var restHeight: CGFloat = 150
+    @State private var detent: PresentationDetent = .height(LaunchPointSheet.mapHeight + 150 + LaunchPointSheet.barHeight)
 
     /// Room for the title bar above the content.
     static let barHeight: CGFloat = 64
+    /// The map's height while the sheet is only as high as it needs.
+    static let mapHeight: CGFloat = 320
+
+    private var fitted: PresentationDetent { .height(Self.mapHeight + restHeight + Self.barHeight) }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LaunchPointDetails(club: club, mapHeight: 320, mapMaxHeight: 320, startsLive: true)
-                    .padding()
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                        if abs(height - contentHeight) > 1 { contentHeight = height }
-                    }
+            GeometryReader { geometry in
+                // Pulled up to full height, the map takes all the room the rest leaves.
+                let map = detent == .large ? max(Self.mapHeight, geometry.size.height - restHeight) : Self.mapHeight
+                ScrollView {
+                    LaunchPointDetails(club: club, mapHeight: map, mapMaxHeight: map, startsLive: true)
+                        .padding()
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                            let rest = height - map
+                            if abs(rest - restHeight) > 1 { restHeight = rest }
+                        }
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .animation(.smooth, value: detent)
             }
-            .scrollBounceBehavior(.basedOnSize)
-            .navigationTitle(tr("Launch point"))
+            .navigationTitle(tr("Location"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    // The same as pulling the sheet up or down.
+                    Button {
+                        withAnimation(.smooth) { detent = detent == .large ? fitted : .large }
+                    } label: {
+                        Image(systemName: detent == .large ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                    }
+                    .accessibilityLabel(detent == .large ? tr("Smaller map") : tr("Map full screen"))
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(tr("Done")) { dismiss() }
                 }
             }
         }
-        // As far up as the content needs; larger text sizes reach full height and scroll.
-        .presentationDetents([.height(contentHeight + Self.barHeight), .large])
+        // As far up as the content needs; pulled up, the map fills the screen.
+        // Larger text sizes reach full height and scroll.
+        .presentationDetents([fitted, .large], selection: $detent)
         .presentationDragIndicator(.visible)
+        .onChange(of: restHeight) { if detent != .large { detent = fitted } }
+        // Screenshot hook: `-RWLaunchPointFull YES` opens it at full height.
+        .onAppear { if UserDefaults.standard.bool(forKey: "RWLaunchPointFull") { detent = .large } }
     }
 }
 
@@ -66,8 +90,22 @@ struct LaunchPointDetails: View {
     /// Back at the preset view whenever the page shows again or the club changes.
     @State private var position: MapCameraPosition = .automatic
     @State private var moved = false
+    /// Flipped on every refit: setting the same region again is no change to
+    /// SwiftUI, so a map that grew would otherwise keep its old scale.
+    @State private var refit = false
     /// The club's own place in Apple Maps, when it has one.
     @State private var place: MKMapItem?
+    /// Where the clubhouse is, when the launch point is set and the clubhouse apart from
+    /// it: checked by hand, else the club's Apple Maps place.
+    private var clubhouse: CLLocationCoordinate2D? { ClubMarks.clubhouse(of: club, place: place?.placemark.location?.coordinate) }
+    /// The map's size in points, for how far apart the two pins are on screen.
+    @State private var mapSize: CGSize = .zero
+    /// Zoomed in far enough that the clubhouse and launch point get a pin each.
+    @State private var split = false
+    /// The span the map shows, so the pins can split when the clubhouse is found after the map settled.
+    @State private var span: MKCoordinateSpan?
+    /// Apple's satellite pictures instead of the map, remembered for every launch point.
+    @AppStorage("RWLaunchImagery") private var imagery = false
     /// The live map after a tap; a still picture again once the page is swiped away.
     @State private var live = UserDefaults.standard.bool(forKey: "RWLiveLaunchMap")
 
@@ -83,7 +121,10 @@ struct LaunchPointDetails: View {
     private var mapApp: MapApp { AppSettings.shared.mapApp }
 
     private var home: MKCoordinateRegion {
-        MKCoordinateRegion(center: coordinate, latitudinalMeters: 1500, longitudinalMeters: 1500)
+        // Screenshot hook: `-RWLaunchSpan 300` opens the map closer in.
+        let span = UserDefaults.standard.double(forKey: "RWLaunchSpan")
+        let metres = (span > 0 ? span : 1500) + (refit ? 0.01 : 0)
+        return MKCoordinateRegion(center: coordinate, latitudinalMeters: metres, longitudinalMeters: metres)
     }
 
     private var coordinate: CLLocationCoordinate2D {
@@ -109,16 +150,11 @@ struct LaunchPointDetails: View {
             .onChange(of: club.id) { live = startsLive }
             .accessibilityLabel(tr("Map of the launch point of %@", club.displayName))
 
-            Text(tr("The forecast, waves and warnings are for this point."))
+            forecastPointLine
             if mapApp == .apple, let name = place?.name {
                 Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
                     .font(.caption)
                     .foregroundStyle(.secondary)
-            }
-            if !club.launchPointVerified {
-                Label(club.source == "drv" ? tr("Not yet confirmed by the club; taken from the club's address.") : tr("Not yet confirmed by the club; taken from OpenStreetMap."), systemImage: "mappin.slash")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
             }
             HStack {
                 Text(String(format: tr("%.5f° N, %.5f° E"), club.launchPoint.lat, club.launchPoint.lon))
@@ -148,22 +184,71 @@ struct LaunchPointDetails: View {
         }
         .task(id: club.id) {
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
+            // A hand-checked clubhouse is known before the lookup ends, so the pins
+            // may have split already: work it out again rather than joining them.
+            split = false
+            updateSplit()
         }
+    }
+
+    /// Which point this club's forecast is for, said for this club. It doesn't
+    /// change with the zoom, so the sheet keeps its height as the pins split and join.
+    @ViewBuilder private var forecastPointLine: some View {
+        if club.hasLaunchPoint {
+            if clubhouse != nil {
+                Label(tr("The forecast, waves and warnings are for the launch point (oars), not the clubhouse."), systemImage: ClubMarks.launchSymbol)
+            } else {
+                Label(tr("The forecast, waves and warnings are for the club's launch point."), systemImage: ClubMarks.launchSymbol)
+            }
+        } else {
+            Label(club.source == "drv"
+                  ? tr("No launch point set yet: the forecast, waves and warnings are for the club's address.")
+                  : tr("No launch point set yet: the forecast, waves and warnings are for the club's place on OpenStreetMap."),
+                  systemImage: "mappin.slash")
+                .foregroundStyle(.orange)
+        }
+    }
+
+    /// Whether the two pins are far enough apart on screen to show both (`ClubMarks`).
+    static func shouldSplit(_ clubhouse: CLLocationCoordinate2D, from launch: CLLocationCoordinate2D,
+                            span: MKCoordinateSpan, size: CGSize, now: Bool) -> Bool {
+        guard size.width > 0, size.height > 0, span.latitudeDelta > 0, span.longitudeDelta > 0 else { return false }
+        let dx: Double = (clubhouse.longitude - launch.longitude) / span.longitudeDelta * Double(size.width)
+        let dy: Double = (clubhouse.latitude - launch.latitude) / span.latitudeDelta * Double(size.height)
+        return ClubMarks.shouldSplit(apart: CGFloat((dx * dx + dy * dy).squareRoot()), now: now)
     }
 
     /// A drag on the map moves the map; outside it the page scrolls.
     private var liveMap: some View {
         Map(position: $position, interactionModes: [.pan, .zoom]) {
-            Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: coordinate)
+            // Zoomed out one pin, as on every map; zoomed in, the club's pin moves to
+            // the clubhouse and oars mark the launch point the forecast is for.
+            Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: split ? clubhouse ?? coordinate : coordinate)
                 .tint(.blue)
+            if split {
+                Marker(tr("Launch point"), systemImage: ClubMarks.launchSymbol, coordinate: coordinate)
+                    .tint(.blue)
+            }
         }
-        .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+        .mapStyle(imagery ? .imagery(elevation: .flat) : .standard(elevation: .flat, pointsOfInterest: .excludingAll))
         .mapControls { MapCompass() }
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { mapSize = $0 }
+        .onChange(of: clubhouse?.latitude) { updateSplit() }
+        .onChange(of: mapSize) { updateSplit() }
+        // One handler only: a second onMapCameraChange on the same map replaces the first.
+        // At the end of each move, so a sheet still growing doesn't count as moved.
         .onMapCameraChange(frequency: .onEnd) { context in
-            moved = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
-                .distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) > 30
-                || abs(context.region.span.latitudeDelta - home.span.latitudeDelta) > home.span.latitudeDelta * 0.1
-                || context.camera.heading.magnitude > 1
+            let span = context.region.span
+            self.span = span
+            updateSplit()
+            let centre = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
+            let shifted: Bool = centre.distance(from: CLLocation(latitude: coordinate.latitude, longitude: coordinate.longitude)) > 30
+            // MapKit fits the home region by one side only, so a taller or wider map
+            // (the sheet pulled up) still counts as home while either side matches.
+            let latOff: Double = abs(span.latitudeDelta - home.span.latitudeDelta) / home.span.latitudeDelta
+            let lonOff: Double = abs(span.longitudeDelta - home.span.longitudeDelta) / home.span.longitudeDelta
+            let zoomed: Bool = min(latOff, lonOff) > 0.1
+            moved = shifted || zoomed || context.camera.heading.magnitude > 1
         }
         .overlay(alignment: .topLeading) {
             if moved {
@@ -178,8 +263,24 @@ struct LaunchPointDetails: View {
                 .accessibilityLabel(tr("Back to the launch point"))
             }
         }
-        .onAppear { reset(animated: false) }
+        // Map or Apple's satellite pictures, as in the lake map; remembered.
+        .overlay(alignment: .topTrailing) {
+            Button { imagery.toggle() } label: {
+                Image(systemName: imagery ? "map" : "globe.europe.africa")
+                    .font(.footnote.weight(.semibold))
+                    .padding(8)
+                    .background(.regularMaterial, in: Circle())
+                    .tapArea(6)
+            }
+            .buttonStyle(.plain)
+            .padding(8)
+            .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
+        }
+        .onAppear { reset(animated: false); updateSplit() }
         .onChange(of: club.id) { reset(animated: false) }
+        // A taller map (the sheet pulled up) keeps MapKit's scale; refit it to the
+        // launch point unless the user had moved it.
+        .onChange(of: mapHeight) { if !moved { reset(animated: true) } }
     }
 
     /// Directions to the club's address, since the launch point at the water
@@ -218,13 +319,35 @@ struct LaunchPointDetails: View {
         }
     }
 
+    private func updateSplit() {
+        guard let clubhouse else { return }
+        // Until the map reports its camera (only after a move), the span it fitted the
+        // home region to: the whole region shows, so the scale is set by the tighter side.
+        let span = self.span ?? Self.fittedSpan(home, size: mapSize)
+        let now = Self.shouldSplit(clubhouse, from: coordinate, span: span, size: mapSize, now: split)
+        if now != split { withAnimation(.smooth) { split = now } }
+    }
+
+    /// The span a map of this size shows when it fits the region.
+    static func fittedSpan(_ region: MKCoordinateRegion, size: CGSize) -> MKCoordinateSpan {
+        guard size.width > 0, size.height > 0 else { return region.span }
+        // Degrees per point on each side; the map uses the larger, so all of the region fits.
+        let lat = region.span.latitudeDelta / Double(size.height), lon = region.span.longitudeDelta / Double(size.width)
+        let latPerLon = region.span.latitudeDelta / region.span.longitudeDelta
+        let scale = max(lat, lon * latPerLon)
+        return MKCoordinateSpan(latitudeDelta: scale * Double(size.height), longitudeDelta: scale / latPerLon * Double(size.width))
+    }
+
     private func reset(animated: Bool) {
+        span = nil
+        refit.toggle()
         if animated {
             withAnimation { position = .region(home) }
         } else {
             position = .region(home)
         }
         moved = false
+        updateSplit()
     }
 
     private func openInMaps() {

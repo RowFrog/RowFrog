@@ -1014,6 +1014,7 @@ private struct WeatherMapView: UIViewRepresentable {
         let pin = MKPointAnnotation()
         pin.coordinate = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
         map.addAnnotation(pin)
+        context.coordinator.splitter.track(pin, clubID: clubID, isOwn: true)
         return map
     }
 
@@ -1048,6 +1049,8 @@ private struct WeatherMapView: UIViewRepresentable {
         var renderers: [String: WeatherMapRenderer] = [:]
         var pending: [String: WeatherMapOverlayContent] = [:]
         var onArea: ((MapArea) -> Void)?
+        /// The club's pin and its launch point's oars apart when zoomed in (`ClubMarks`).
+        let splitter = ClubPinSplitter()
 
         init(symbol: String) { self.symbol = symbol }
 
@@ -1071,7 +1074,12 @@ private struct WeatherMapView: UIViewRepresentable {
             onArea?(MapArea(mapView.region))
         }
 
+        func mapViewDidChangeVisibleRegion(_ mapView: MKMapView) {
+            splitter.update(mapView)
+        }
+
         func mapView(_ mapView: MKMapView, viewFor annotation: MKAnnotation) -> MKAnnotationView? {
+            if let oars = annotation as? LaunchOarsPin { return ClubPinSplitter.view(for: oars) }
             guard annotation is MKPointAnnotation else { return nil }
             let view = MKMarkerAnnotationView(annotation: annotation, reuseIdentifier: nil)
             view.glyphImage = UIImage(systemName: symbol)

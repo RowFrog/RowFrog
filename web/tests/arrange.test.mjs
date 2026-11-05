@@ -14,7 +14,7 @@ test("the rain radar card starts switched off", () => {
 });
 
 test("with the launch point in the club header its card leaves the page, the order keeps its place", () => {
-  // In the header by default (Settings > Club pages > Launch point in the club header),
+  // In the header by default (Settings > Club pages > Location in the club header),
   // and Current conditions in the top tile (Current conditions in the top tile, app #315).
   assert.deepEqual(cardsElsewhere(), ["launchPoint", "conditions"]);
   const layout = normalized(STANDARD);

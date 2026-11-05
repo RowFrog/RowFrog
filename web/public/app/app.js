@@ -1044,14 +1044,14 @@ function refreshOnReturn() {
   Promise.resolve(route(false)).finally(() => reloadOthers(shown, true));
 }
 
-/** Whether the header opens the launch point (Settings > Club pages > Launch point in the club header). */
+/** Whether the header opens the launch point (Settings > Club pages > Location in the club header). */
 const inHeader = (club) => Boolean(club?.launchPoint) && store.launchPointInHeader;
 
 /** The lake and town; with the launch point in the header a button (pin and chevron) that opens it (ClubPageHeader.placeLine). */
 function placeLine(club) {
   const text = place(club?.lakeName, town(club?.address), lakeTitle);
   if (!inHeader(club)) return `<p class="sub">${h(text)}</p>`;
-  return `<div class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the launch point on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
+  return `<div class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the club's location on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
 }
 
 /** The header's lake and town line and the not-confirmed line open the launch point. */
@@ -1062,7 +1062,7 @@ const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open"
 
 /** The launch point opened from the header (LaunchPointSheet): the same map, note, coordinates and Open in Maps as the card. */
 function openLaunchPoint(club) {
-  openSheet(t("Launch point"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
+  openSheet(t("Location"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
     showLaunchMap(club, sheet.querySelector("#launch-sheet-map"));
   });
 }
@@ -1763,11 +1763,13 @@ function launchPointBody(club, mapId) {
   const { lat, lon } = club.launchPoint;
   // Opens in the map service chosen under Settings > Maps.
   const maps = MAPS_APPS[store.mapsApp];
-  const unconfirmed = club.source === "drv" ? t("Not yet confirmed by the club; taken from the club's address.") : t("Not yet confirmed by the club; taken from OpenStreetMap.");
+  // Which point the forecast is for, said for this club (as in the app's Location sheet).
+  const unconfirmed = club.source === "drv"
+    ? t("No launch point set yet: the forecast, waves and warnings are for the club's address.")
+    : t("No launch point set yet: the forecast, waves and warnings are for the club's place on OpenStreetMap.");
   return `
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
-    <p>${h(t("The forecast, waves and warnings are for this point."))}</p>
-    ${club.launchPointVerified ? "" : `<p class="orange small">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
+    ${club.launchPointVerified || club.launchPointSet ? `<p>${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
@@ -1920,10 +1922,10 @@ function settingsTopicBody(topic, accepted) {
       </section>
       <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
       <section class="card group">
-        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Launch point in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
+        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
       </section>
       <p class="footer">${h(store.launchPointInHeader
-        ? t("Tap the lake and town under the club's name for the launch point's map, coordinates and Open in Maps. The Launch point card leaves the page.")
+        ? t("Tap the lake and town under the club's name for the club's location: a map with the launch point, coordinates and Open in Maps. The Launch point card leaves the page.")
         : t("The Launch point card is on the page, as before."))}</p>
       <section class="card group">
         <label class="row-setting"><span>${icon("gauge")} ${h(t("Current conditions in the top tile"))}</span><input type="checkbox" class="switch" id="combined-top" ${store.combinedTopTile ? "checked" : ""}></label>
