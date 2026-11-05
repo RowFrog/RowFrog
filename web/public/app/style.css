@@ -1086,3 +1086,19 @@ dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 }
 @keyframes sheet-up { from { transform: translateY(40%); opacity: .4; } }
 @media (prefers-reduced-motion: reduce) { dialog.sheet[open] { animation: none !important; } }
+
+/* ---- Settings as in the app: coloured topic icons, the topic's value at the end, search at the end ---- */
+.set-icon { display: inline-grid; place-items: center; flex: none; width: 29px; height: 29px; border-radius: 7px; background: var(--c); color: #fff; font-size: 17px; }
+.row-setting.topic { min-height: 50px; padding: 6px 0; }
+.row-setting.topic > span:first-child { gap: 12px; }
+.row-setting.topic .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row-setting.topic select { max-width: 55%; border: 0; background: transparent; color: var(--sub); text-align: right; font: inherit; }
+.settings-main .settings-search { margin: 18px 0 0; }
+.settings-main > div > .card.group { margin-bottom: 18px; }
+.settings-main > div > p.footer { margin-top: -10px; }
+/* Bars with a title: the title in the middle, the buttons at both ends, as a navigation bar. */
+.nav:has(> .nav-title) { display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; }
+.nav:has(> .nav-title) > .nav-title { grid-column: 2; }
+.nav:has(> .nav-title) > :first-child:not(.nav-title) { grid-column: 1; justify-self: start; }
+.nav:has(> .nav-title) > :last-child:not(.nav-title) { grid-column: 3; justify-self: end; }
+.nav .link.back { padding: 0; width: 44px; font-size: 20px; }
