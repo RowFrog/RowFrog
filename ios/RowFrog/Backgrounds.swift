@@ -441,12 +441,20 @@ struct BackgroundPicture: View {
     var body: some View {
         Color.clear
             .overlay {
-                GeometryReader { geometry in
-                    let place = PicturePlace.rect(for: image.size, filling: geometry.size, focus: BackgroundLibrary.focus(of: image))
-                    Image(uiImage: blurred ? BackgroundLibrary.blurred(image) : image)
+                let shown = blurred ? BackgroundLibrary.blurred(image) : image
+                if let focus = BackgroundLibrary.focus(of: image) {
+                    GeometryReader { geometry in
+                        let place = PicturePlace.rect(for: image.size, filling: geometry.size, focus: focus)
+                        Image(uiImage: shown)
+                            .resizable()
+                            .frame(width: place.width, height: place.height)
+                            .offset(x: place.minX, y: place.minY)
+                            .accessibilityHidden(true)
+                    }
+                } else {
+                    Image(uiImage: shown)
                         .resizable()
-                        .frame(width: place.width, height: place.height)
-                        .offset(x: place.minX, y: place.minY)
+                        .scaledToFill()
                         .accessibilityHidden(true)
                 }
             }
@@ -529,15 +537,9 @@ struct FrostedFill<S: Shape>: View {
     var body: some View {
         if let picture {
             let frame = picture.frame
-            let place = PicturePlace.rect(for: picture.image.size, filling: frame.size, focus: picture.focus)
             Color.clear
                 .overlay(alignment: .topLeading) {
-                    Image(uiImage: picture.image)
-                        .resizable()
-                        .frame(width: place.width, height: place.height)
-                        .offset(x: place.minX, y: place.minY)
-                        .frame(width: frame.width, height: frame.height, alignment: .topLeading)
-                        .clipped()
+                    framed(picture)
                         .accessibilityHidden(true)
                         .overlay {
                             if colorScheme == .dark { Color.black.opacity(0.3) }
@@ -557,6 +559,29 @@ struct FrostedFill<S: Shape>: View {
                 .contentShape(shape)
         } else {
             shape.fill(Color(.secondarySystemGroupedBackground))
+        }
+    }
+}
+
+private extension FrostedFill {
+    /// The picture at its size and place on screen, cut to that size.
+    @ViewBuilder
+    func framed(_ picture: FrostPicture) -> some View {
+        let frame = picture.frame
+        if let focus = picture.focus {
+            let place = PicturePlace.rect(for: picture.image.size, filling: frame.size, focus: focus)
+            Image(uiImage: picture.image)
+                .resizable()
+                .frame(width: place.width, height: place.height)
+                .offset(x: place.minX, y: place.minY)
+                .frame(width: frame.width, height: frame.height, alignment: .topLeading)
+                .clipped()
+        } else {
+            Image(uiImage: picture.image)
+                .resizable()
+                .scaledToFill()
+                .frame(width: frame.width, height: frame.height)
+                .clipped()
         }
     }
 }
