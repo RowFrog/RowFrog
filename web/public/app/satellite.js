@@ -7,7 +7,7 @@ import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
 import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature, boatControl } from "./shared.js";
 import { tip } from "./tour.js";
-import { hourIndex, gridEdges, coldShore, stripes, stripesFall, waterKind } from "./lake.js";
+import { hourIndex, gridEdges, coldShore, stripes, stripesFall, waterKind, shouldSplit } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote, kitBadge, COLD_SHORE } from "./lakeview.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows } from "./windarrows.js";
@@ -594,14 +594,32 @@ function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightness
  * a house for the home base). Names go right, left, above or below the mark,
  * wherever they touch no other; with no room the mark stays alone.
  */
+/** The clubs whose marks show apart from their launch point now, so they join again only under 40 px. */
+const splitClubs = new Set();
+
 function clubMarks(view, pt, clubId, w, hgt) {
-  const marks = view.clubs.map((club) => ({ club, p: pt(club.launchPoint.lon, club.launchPoint.lat) }));
-  const taken = marks.map(({ p }) => [p[0] - 9, p[1] - 9, 18, 18]);
+  // Zoomed in until a club's clubhouse is 48 px from its launch point, its mark moves there and oars mark the launch point (ClubMarks).
+  const oars = [];
+  const marks = view.clubs.map((club) => {
+    const launch = pt(club.launchPoint.lon, club.launchPoint.lat);
+    if (!club.clubhouse) return { club, p: launch };
+    const house = pt(club.clubhouse.lon, club.clubhouse.lat);
+    const split = shouldSplit(Math.hypot(house[0] - launch[0], house[1] - launch[1]), splitClubs.has(club.id));
+    splitClubs[split ? "add" : "delete"](club.id);
+    if (!split) return { club, p: launch };
+    oars.push({ own: club.id === clubId, p: launch });
+    return { club, p: house };
+  });
+  const taken = [...marks, ...oars].map(({ p }) => [p[0] - 9, p[1] - 9, 18, 18]);
   const meets = (a, b) => a[0] < b[0] + b[2] && b[0] < a[0] + a[2] && a[1] < b[1] + b[3] && b[1] < a[1] + a[3];
   const home = store.clubs[0]?.id;
   const out = [];
   // The page's club picks its name's spot first, but its mark goes on top of clubs sharing its launch point.
   const dots = [], ownDot = [];
+  for (const { own, p } of oars) {
+    dots.unshift(`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="8" fill="${own ? "#007aff" : "#737373"}" stroke="#fff" stroke-width="1.5"/>
+      <svg x="${(p[0] - 5.5).toFixed(1)}" y="${(p[1] - 5.5).toFixed(1)}" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">${icon("oars").replace(/^<svg[^>]*>|<\/svg>$/g, "")}</svg>`);
+  }
   marks.sort((a, b) => (a.club.id === clubId ? 0 : 1) - (b.club.id === clubId ? 0 : 1) || a.p[1] - b.p[1]);
   for (const { club, p } of marks) {
     const own = club.id === clubId;

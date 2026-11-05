@@ -22,7 +22,8 @@ import {
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky,
 } from "./logic.js";
-import { fillLakeCard, renderLakeMap, forgetView } from "./lakeview.js";
+import { fillLakeCard, renderLakeMap, forgetView, splitClubPins } from "./lakeview.js";
+import { clubhouseOf } from "./lake.js";
 import { currentTile, currentBody } from "./river.js";
 import { isLowered, waterLevelTile, waterLevelBody } from "./lakelevel.js";
 import { satelliteCard } from "./satellite.js";
@@ -1797,10 +1798,16 @@ async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
-  L.marker([lat, lon], {
+  const marker = L.marker([lat, lon], {
     icon: L.divIcon({ className: "pin", html: icon(store.clubs[0]?.id === club.id ? "house" : "map-pin"), iconSize: [30, 30], iconAnchor: [15, 15] }),
     keyboard: false,
   }).addTo(map);
+  // Zoomed in, the club's pin moves to its hand-checked clubhouse and oars mark the launch point (ClubMarks).
+  loadCatalog().catch(() => []).then((lakes) => {
+    const known = lakes.flatMap((l) => l.clubs).find((c) => c.id === club.id);
+    const clubhouse = clubhouseOf({ ...known, launchPoint: club.launchPoint });
+    if (clubhouse && box.isConnected) splitClubPins(L, map, [{ marker, launch: club.launchPoint, clubhouse, own: true }]);
+  });
   // Grown or shrunk to fill its column (balanceCards).
   new ResizeObserver(() => map.invalidateSize()).observe(box);
 }
