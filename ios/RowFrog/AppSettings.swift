@@ -797,6 +797,9 @@ enum PageCard: String, CaseIterable, Codable, Identifiable {
 
     var id: String { rawValue }
 
+    /// The cards built around a map or picture, drawn only on the page in front.
+    var isMap: Bool { self == .radar || self == .lakeView || self == .launchPoint || self == .satellite }
+
     var title: String {
         switch self {
         case .radar: tr("Rain radar")
