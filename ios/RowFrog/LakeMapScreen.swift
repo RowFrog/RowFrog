@@ -344,9 +344,11 @@ struct LakeMapScreen: View {
                 .frame(height: 44)
                 .floatingControl(Capsule())
             Spacer(minLength: 0)
-            PageBoatButton(clubID: clubID, now: nil, waterC: nil, tipEdge: .top)
-                .padding(.horizontal, 4)
-                .floatingControl(Capsule())
+            if let clubID {
+                PageBoatButton(clubID: clubID, now: nil, waterC: nil, tipEdge: .top)
+                    .padding(.horizontal, 4)
+                    .floatingControl(Capsule())
+            }
             Button { imagery.toggle() } label: {
                 Image(systemName: imagery ? "map" : "globe.europe.africa")
                     .font(.body.weight(.semibold))
