@@ -24,33 +24,57 @@ struct LaunchPointMapCard: View {
 struct LaunchPointSheet: View {
     let club: Club
     @Environment(\.dismiss) private var dismiss
-    /// The content's measured height; until it is known, a guess close to a phone's.
-    @State private var contentHeight: CGFloat = 470
+    /// Everything but the map, measured; until it is known, a guess close to a phone's.
+    @State private var restHeight: CGFloat = 150
+    @State private var detent: PresentationDetent = .height(LaunchPointSheet.mapHeight + 150 + LaunchPointSheet.barHeight)
 
     /// Room for the title bar above the content.
     static let barHeight: CGFloat = 64
+    /// The map's height while the sheet is only as high as it needs.
+    static let mapHeight: CGFloat = 320
+
+    private var fitted: PresentationDetent { .height(Self.mapHeight + restHeight + Self.barHeight) }
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                LaunchPointDetails(club: club, mapHeight: 320, mapMaxHeight: 320, startsLive: true)
-                    .padding()
-                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
-                        if abs(height - contentHeight) > 1 { contentHeight = height }
-                    }
+            GeometryReader { geometry in
+                // Pulled up to full height, the map takes all the room the rest leaves.
+                let map = detent == .large ? max(Self.mapHeight, geometry.size.height - restHeight) : Self.mapHeight
+                ScrollView {
+                    LaunchPointDetails(club: club, mapHeight: map, mapMaxHeight: map, startsLive: true)
+                        .padding()
+                        .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { height in
+                            let rest = height - map
+                            if abs(rest - restHeight) > 1 { restHeight = rest }
+                        }
+                }
+                .scrollBounceBehavior(.basedOnSize)
+                .animation(.smooth, value: detent)
             }
-            .scrollBounceBehavior(.basedOnSize)
             .navigationTitle(tr("Launch point"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    // The same as pulling the sheet up or down.
+                    Button {
+                        withAnimation(.smooth) { detent = detent == .large ? fitted : .large }
+                    } label: {
+                        Image(systemName: detent == .large ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                    }
+                    .accessibilityLabel(detent == .large ? tr("Smaller map") : tr("Map full screen"))
+                }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(tr("Done")) { dismiss() }
                 }
             }
         }
-        // As far up as the content needs; larger text sizes reach full height and scroll.
-        .presentationDetents([.height(contentHeight + Self.barHeight), .large])
+        // As far up as the content needs; pulled up, the map fills the screen.
+        // Larger text sizes reach full height and scroll.
+        .presentationDetents([fitted, .large], selection: $detent)
         .presentationDragIndicator(.visible)
+        .onChange(of: restHeight) { if detent != .large { detent = fitted } }
+        // Screenshot hook: `-RWLaunchPointFull YES` opens it at full height.
+        .onAppear { if UserDefaults.standard.bool(forKey: "RWLaunchPointFull") { detent = .large } }
     }
 }
 
@@ -68,6 +92,8 @@ struct LaunchPointDetails: View {
     @State private var moved = false
     /// The club's own place in Apple Maps, when it has one.
     @State private var place: MKMapItem?
+    /// Apple's satellite pictures instead of the map, remembered for every launch point.
+    @AppStorage("RWLaunchImagery") private var imagery = false
     /// The live map after a tap; a still picture again once the page is swiped away.
     @State private var live = UserDefaults.standard.bool(forKey: "RWLiveLaunchMap")
 
@@ -157,7 +183,7 @@ struct LaunchPointDetails: View {
             Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: coordinate)
                 .tint(.blue)
         }
-        .mapStyle(.standard(elevation: .flat, pointsOfInterest: .excludingAll))
+        .mapStyle(imagery ? .imagery(elevation: .flat) : .standard(elevation: .flat, pointsOfInterest: .excludingAll))
         .mapControls { MapCompass() }
         .onMapCameraChange(frequency: .onEnd) { context in
             moved = CLLocation(latitude: context.region.center.latitude, longitude: context.region.center.longitude)
@@ -177,6 +203,19 @@ struct LaunchPointDetails: View {
                 .padding(8)
                 .accessibilityLabel(tr("Back to the launch point"))
             }
+        }
+        // Map or Apple's satellite pictures, as in the lake map; remembered.
+        .overlay(alignment: .topTrailing) {
+            Button { imagery.toggle() } label: {
+                Image(systemName: imagery ? "map" : "globe.europe.africa")
+                    .font(.footnote.weight(.semibold))
+                    .padding(8)
+                    .background(.regularMaterial, in: Circle())
+                    .tapArea(6)
+            }
+            .buttonStyle(.plain)
+            .padding(8)
+            .accessibilityLabel(imagery ? tr("Show the map") : tr("Show satellite pictures"))
         }
         .onAppear { reset(animated: false) }
         .onChange(of: club.id) { reset(animated: false) }

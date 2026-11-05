@@ -1054,6 +1054,8 @@ enum German {
         "The Launch point card is on the page, as before.": "Die Steg-Karte steht auf der Seite, wie bisher.",
         "in the club header": "im Kopf der Vereinsseite",
         "Shows the launch point on a map, with directions": "Zeigt den Steg auf einer Karte, mit Route",
+        "Smaller map": "Kleinere Karte",
+        "Map full screen": "Karte im Vollbild",
         "Pause": "Pause",
         "Play": "Abspielen",
         "Reset to the standard order": "Auf die Standard-Reihenfolge zurücksetzen",
