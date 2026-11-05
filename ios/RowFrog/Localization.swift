@@ -1077,7 +1077,7 @@ enum German {
         "Smaller map": "Kleinere Karte",
         "Map full screen": "Karte im Vollbild",
         "Current conditions in the top tile": "Aktuelle Bedingungen in der oberen Kachel",
-        "The top tile opens into all values: tap \"All values\" under it or pull it down. Values it hides show as a line while they matter for the rowing light.": "Die obere Kachel öffnet sich zu allen Werten: unten auf „Alle Werte“ tippen oder nach unten ziehen. Versteckte Werte stehen als eine Zeile darin, solange sie für die Ruderampel zählen.",
+        "The top tile opens into all values: tap \"All values\" under it. Values it hides show as a line while they matter for the rowing light.": "Die obere Kachel öffnet sich zu allen Werten: unten auf „Alle Werte“ tippen. Versteckte Werte stehen als eine Zeile darin, solange sie für die Ruderampel zählen.",
         "Current conditions is a card of its own under the top tile, as before.": "Aktuelle Bedingungen ist eine eigene Karte unter der oberen Kachel, wie bisher.",
         "in the top tile": "in der oberen Kachel",
         "Sets the light: %@": "Stellt die Ampel: %@",
