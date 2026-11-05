@@ -727,9 +727,12 @@ button.red { color: var(--red); }
   .value-body.with-map .wm { height: 300px; }
 }
 .vchart-wrap { position: relative; }
-.vchart-scroll { overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; touch-action: pan-x pan-y; cursor: crosshair; -webkit-user-select: none; user-select: none; }
+.vchart-scroll { margin-right: 28px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; touch-action: pan-x pan-y; cursor: crosshair; -webkit-user-select: none; user-select: none; }
 .vchart-scroll svg { display: block; }
-.vchart-scroll .grid { stroke: var(--line); }
+.vchart-scroll .grid { stroke: var(--line); stroke-dasharray: 2 3; }
+/* The value scale: solid lines across, numbers in the room at the right (Swift Charts' trailing y axis). */
+.vchart-scroll .ygrid { stroke: var(--line); }
+.vchart-over .ytick { position: absolute; right: 0; width: 24px; font-size: 11px; line-height: 14px; color: var(--sub); font-variant-numeric: tabular-nums; }
 .vchart-scroll .axis { fill: var(--sub); font-size: 11px; }
 .vchart-scroll .trend { fill: var(--sub); font-size: 11px; font-weight: 700; }
 .vchart-scroll .now { stroke: var(--sub); opacity: .5; }
@@ -1036,3 +1039,11 @@ dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 .head-side.end .tip.pop::before { left: auto; right: 21px; }
 .bottom .tip.pop { top: auto; bottom: calc(100% + 10px); --arrow-x: 73px; }
 .bottom .tip.pop::before { top: auto; bottom: -7px; }
+
+/* The unit at the end of a value page (DetailUnitRow): a light row with the unit in the accent colour. */
+.detail-unit { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 14px 0 0; padding: 10px 12px; border-radius: 10px;
+  background: color-mix(in srgb, var(--fill) 60%, transparent); font-size: 15px; color: var(--accent); cursor: pointer; }
+.detail-unit > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.detail-unit .pick { position: relative; display: inline-flex; align-items: center; gap: 2px; }
+.detail-unit select { appearance: none; -webkit-appearance: none; border: 0; background: none; color: inherit; font: inherit; text-align: right; padding: 0 2px; cursor: pointer; }
+.detail-unit .pick .i { width: 13px; height: 13px; }
