@@ -36,6 +36,17 @@ test("a clearest picture from the latest day is not offered twice", async () => 
   assert.deepEqual(kinds({ clearest: shot("2026-10-16") }), ["clearest"]);
 });
 
+test("two pictures name their day, three do not (SatelliteKindPicker)", async () => {
+  const { pictureKinds, kindLabel } = await import("../public/app/satellite.js");
+  const shot = (date) => ({ image: `${date}.jpg`, date });
+  const lake = (meta) => ({ meta, kinds: pictureKinds(meta) });
+  const two = lake({ latest: shot("2026-11-03"), clearest: shot("2026-10-27") });
+  assert.match(kindLabel(two, "latest", "Latest"), /^Latest, .*3/);
+  assert.match(kindLabel(two, "clearest", "Clearest"), /^Clearest, .*27/);
+  const three = lake({ latest: shot("2026-11-03"), mostlyClear: shot("2026-10-30"), clearest: shot("2026-10-27") });
+  assert.equal(kindLabel(three, "latest", "Latest"), "Latest");
+});
+
 test("the life-jacket badge moves to a corner clear of the lake", async () => {
   const { badgeCorner } = await import("../public/app/satellite.js");
   const ring = (x0, y0, x1, y1) => [[[x0, y0], [x1, y0], [x1, y1], [x0, y1]]];

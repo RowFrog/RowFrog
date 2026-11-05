@@ -14,11 +14,13 @@ test("the rain radar card starts switched off", () => {
 });
 
 test("with the launch point in the club header its card leaves the page, the order keeps its place", () => {
-  // In the header by default (Settings > Club pages > Location in the club header).
-  assert.deepEqual(cardsElsewhere(), ["launchPoint"]);
+  // In the header by default (Settings > Club pages > Location in the club header),
+  // and Current conditions in the top tile (Current conditions in the top tile, app #315).
+  assert.deepEqual(cardsElsewhere(), ["launchPoint", "conditions"]);
   const layout = normalized(STANDARD);
-  assert.deepEqual(visibleCards(layout), ["conditions", "lakeView", "hourly", "satellite"]);
-  assert.ok(layout.order.includes("launchPoint"));
+  assert.deepEqual(visibleCards(layout), ["lakeView", "hourly", "satellite"]);
+  assert.deepEqual(visibleCards(layout, ["launchPoint"]), ["conditions", "lakeView", "hourly", "satellite"]);
+  assert.ok(layout.order.includes("launchPoint") && layout.order.includes("conditions"));
 });
 
 test("switched-off cards are left out, the rest keep their order", () => {

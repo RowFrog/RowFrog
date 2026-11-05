@@ -9,6 +9,24 @@ import { icon } from "./icons.js";
 
 const START = -1;
 const LABEL_H = 15;
+/** Room on the right for the value scale, as Swift Charts' trailing y axis. */
+const AXIS_W = 28;
+
+/** Round steps for the value scale (Swift Charts' automatic marks): about three intervals. */
+export function yTicks(lo, hi, log = false) {
+  if (!(hi > lo)) return [];
+  if (log) {
+    const out = [];
+    for (let e = Math.floor(Math.log10(Math.max(lo, 1e-6))); 10 ** e <= hi; e++) if (10 ** e >= lo) out.push(10 ** e);
+    return out;
+  }
+  const raw = (hi - lo) / 3;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((f) => f * mag).find((v) => v >= raw * 0.75) ?? 10 * mag;
+  const out = [];
+  for (let i = Math.ceil(lo / step - 1e-9); i * step <= hi + 1e-9; i++) out.push(Number((i * step).toPrecision(12)) + 0);
+  return out;
+}
 const MAP_GREEN = "#3d9a4f";
 
 /**
@@ -176,6 +194,10 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     const lines = shown();
     const m = marker();
     const parts = [];
+    // The value scale's lines across the whole chart; its numbers stay at the right (drawOver).
+    for (const v of yTicks(ylo, yhi, detail.logScale)) {
+      parts.push(`<line class="ygrid" x1="0" x2="${width}" y1="${py(v)}" y2="${py(v)}"/>`);
+    }
     for (const x of axisHours()) {
       parts.push(`<line class="grid" x1="${px(x)}" x2="${px(x)}" y1="${top}" y2="${bottom}"/>`,
         `<text class="axis" x="${px(x)}" y="${bottom + 14}" text-anchor="middle">${h(label(x))}</text>`);
@@ -243,7 +265,7 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
       .sort((a, b) => a.y - b.y).map(({ l, y }) => {
         const placed = Math.max(y, next - LABEL_H / 2);
         next = placed + LABEL_H * 1.5 + 1;
-        return `<span class="limit" style="top:${placed}px;${trailing ? "right:4px" : "left:4px"};color:${l.colour}">${h(l.label)}</span>`;
+        return `<span class="limit" style="top:${placed}px;${trailing ? `right:${AXIS_W + 4}px` : "left:4px"};color:${l.colour}">${h(l.label)}</span>`;
       });
     let callout = "";
     if (selected != null) {
@@ -256,7 +278,7 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
       }).join("");
       const at = px(x) - scroller.scrollLeft;
       const before = at > scroller.clientWidth / 2;
-      callout = `<div class="callout" style="${before ? `right:${scroller.clientWidth - at + 6}px` : `left:${at + 6}px`}"><small>${h(dayTime(date(x)))}</small>${rows}</div>`;
+      callout = `<div class="callout" style="${before ? `right:${scroller.clientWidth - at + 6 + AXIS_W}px` : `left:${at + 6}px`}"><small>${h(dayTime(date(x)))}</small>${rows}</div>`;
     }
     let badge = "";
     const mapX = detail.history ? null : time.mapFrameHour;
@@ -267,7 +289,11 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
         badge = `<span class="map-badge ${joined ? "joined" : ""}" style="left:${at - 12.5}px;top:${bottom - 17}px;opacity:${time.mapOutOfRange ? 0.5 : 1}">${joined ? icon("link") : ""}${icon("map")}</span>`;
       }
     }
-    over.innerHTML = `${detail.unit ? `<span class="unit">${h(detail.unit)}</span>` : ""}${labels.join("")}${badge}${callout}`;
+    const ticks = yTicks(ylo, yhi, detail.logScale);
+    const step = ticks.length > 1 ? ticks[1] - ticks[0] : 1;
+    const digits = detail.logScale || step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
+    const scale = ticks.map((v) => `<span class="ytick" style="top:${py(v) - 7}px">${h(num(v, step % 1 && step > 1 ? 1 : digits))}</span>`).join("");
+    over.innerHTML = `${detail.unit ? `<span class="unit">${h(detail.unit)}</span>` : ""}${scale}${labels.join("")}${badge}${callout}`;
   }
 
   function drawNote() {

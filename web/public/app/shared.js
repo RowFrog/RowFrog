@@ -69,6 +69,12 @@ export const store = {
   /** The launch point in the club header: the lake and town line opens it in a sheet, and its card leaves the page (owner's choice B, 4 Nov 2026). */
   get launchPointInHeader() { return load("rf.launchPointInHeader", true) !== false; },
   set launchPointInHeader(on) { save("rf.launchPointInHeader", on); },
+  /** Current conditions inside the top tile, which opens into all tiles (owner's choice B, app #315); off keeps its own card. */
+  get combinedTopTile() { return load("rf.combinedTopTile", true) !== false; },
+  set combinedTopTile(on) { save("rf.combinedTopTile", on); },
+  /** Whether the combined top tile is open, the same on every club page and in the hour view. */
+  get topTileOpen() { return load("rf.topTileOpen", false) === true; },
+  set topTileOpen(on) { save("rf.topTileOpen", on); },
   get mapZoom() { return load("rf.mapZoom", "normal"); },
   set mapZoom(zoom) { save("rf.mapZoom", zoom); },
   /** The full-screen map plays 3 times round. */
@@ -215,6 +221,13 @@ export const boatTag = (boat) => (isGroup(boat) ? BOATS[boat.id].tag : boat.clas
 /** The boat whose limits colour the lake view and route planning: the one the club's page uses, as everywhere else on screen (owner, 30 Oct 2026). */
 export const mapBoat = () => selectedBoat();
 export const mapLimits = () => boatLimits(mapBoat());
+
+/**
+ * The club page's boat button (PageBoatButton) for the lake map and the satellite picture's full
+ * view: app.js, which owns the boat menu, fills this in. `open` calls `picked` once a boat is picked
+ * there, so those screens redraw in place (owner's pick B, 5 Nov 2026).
+ */
+export const boatControl = { html: () => "", open: (anchor, picked) => {} };
 
 /** A limit's value in the user's units; wind keeps its decimal so 5.5 m/s does not read as 6. */
 export function limitText(limit, value) {

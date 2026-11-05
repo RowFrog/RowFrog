@@ -76,6 +76,8 @@ struct LocationPageView: View {
     private let hourlyTip = HourlyTip()
     private let launchPointTip = LaunchPointTip()
     private let topTileTip = TopTileTip()
+    private let allValuesTip = AllValuesTip()
+    @State private var showAllValuesTip = false
     private let waterEstimateTip = WaterEstimateTip()
     private let waterLevelTip = WaterLevelTip()
     @State private var showWaterLevelTip = false
@@ -99,8 +101,14 @@ struct LocationPageView: View {
                             } action: { PageScroll.shared.update(club.id, scrolled: $0) }
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
+                                .id(AppSettings.shared.combinedTopTile ? "conditions" : "top")
                             if tourSeen && showTopTileTip {
                                 TipView(topTileTip)
+                            } else if AppSettings.shared.combinedTopTile && tourSeen && showAllValuesTip {
+                                TipView(allValuesTip)
+                            } else if AppSettings.shared.combinedTopTile {
+                                // Current conditions is in the top tile: its tips follow it.
+                                conditionsTips(forecast)
                             }
                             if let warnings = forecast.warnings, !warnings.checked || !warnings.localChecked || !warnings.items.isEmpty {
                                 WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town, checkedAt: forecast.generatedAt)
@@ -188,6 +196,7 @@ struct LocationPageView: View {
                 .tipVisibility(hourlyTip, $showHourlyTip)
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .tipVisibility(topTileTip, $showTopTileTip)
+                .tipVisibility(allValuesTip, $showAllValuesTip)
                 .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(waterLevelTip, $showWaterLevelTip)
                 .tipVisibility(radarMapTip, $showRadarMapTip)
@@ -250,20 +259,7 @@ struct LocationPageView: View {
                 .id("radar")
         case .conditions:
             VStack(spacing: 16) {
-                // One tip at a time: the radar's two follow the first. The water level
-                // tip comes first, as it only shows while Forggensee is let down.
-                if tourSeen && showWaterLevelTip && forecast.waterLevel?.isLowered == true {
-                    TipView(waterLevelTip)
-                } else if tourSeen && showConditionsTip {
-                    TipView(conditionsTip)
-                } else if tourSeen && showRainRadarTip {
-                    TipView(rainRadarTip)
-                } else if tourSeen && showRadarMapTip {
-                    TipView(radarMapTip)
-                } else if tourSeen && showWaterEstimateTip && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil {
-                    // Only where no station measures the water.
-                    TipView(waterEstimateTip)
-                }
+                conditionsTips(forecast)
                 ConditionsCard(forecast: forecast, hour: now, club: club)
             }
             .id("conditions")
@@ -316,6 +312,25 @@ struct LocationPageView: View {
                 SatellitePictureCard(lakeID: satelliteID(forecast), clubID: club.id, water: lake?.water ?? .lake)
             }
             .id("satellite")
+        }
+    }
+
+    /// Current conditions' tips, above its card or, inside the top tile, under that.
+    /// One tip at a time: the radar's two follow the first. The water level
+    /// tip comes first, as it only shows while Forggensee is let down.
+    @ViewBuilder
+    private func conditionsTips(_ forecast: ClubForecast) -> some View {
+        if tourSeen && showWaterLevelTip && forecast.waterLevel?.isLowered == true {
+            TipView(waterLevelTip)
+        } else if tourSeen && showConditionsTip {
+            TipView(conditionsTip)
+        } else if tourSeen && showRainRadarTip {
+            TipView(rainRadarTip)
+        } else if tourSeen && showRadarMapTip {
+            TipView(radarMapTip)
+        } else if tourSeen && showWaterEstimateTip && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil {
+            // Only where no station measures the water.
+            TipView(waterEstimateTip)
         }
     }
 
@@ -586,64 +601,29 @@ private struct NowCard: View {
             .symbolRenderingMode(.hierarchical)
             AdviceOnlyNote()
             Divider()
-            // Three columns: the small values start under air, water and wind.
-            TopTileGrid {
-                VStack(alignment: .leading, spacing: 0) {
-                    opens(.temperature) {
-                        TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 44)
+            if combined, open {
+                // Opened: the small values and the sun line become the tiles of Current conditions.
+                ConditionTiles(forecast: forecast, hour: hour, club: club)
+                    .transition(.opacity)
+            } else {
+                valueGrid
+                    .transition(.opacity)
+                if !combined {
+                    iceLine
+                }
+                daylightLine
+                    .transition(.opacity)
+                if combined {
+                    // What the closed tile hides but counts for the light, in the tile's own words.
+                    ForEach(peeks) { condition in
+                        opens(condition) { TilePeekLine(condition: condition, data: data) }
+                            .transition(.opacity)
                     }
-                    if let feels = hour.apparentTemperatureC {
-                        opens(.feelsLike) {
-                            Label(tr("Feels like %@", Format.degrees(feels)), systemImage: Condition.feelsLike.symbol)
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                                .accessibilityLabel(tr("Feels like %@", Format.temperature(feels)) + ". " + (feelsLikeNote(hour) ?? ""))
-                                .greyLine()
-                        }
-                    }
-                }
-                // With the time of the reading underneath, so it lines up with the wind's unit line.
-                opens(.waterTemperature) {
-                    if water == nil, let estimate = forecast.estimatedWaterC {
-                        TemperatureView(condition: .waterTemperature, celsius: estimate, digits: 0, size: 28, caption: tr("Estimated"))
-                            .foregroundStyle(.secondary)
-                    } else {
-                        TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28,
-                                        caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
-                    }
-                }
-                opens(.wind) { WindView(hour: hour, size: 28) }
-                opens(.waves) {
-                    MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17,
-                               caption: wavesCaption)
-                }
-                opens(.precipitation) {
-                    MetricView(title: tr("Precipitation"), symbol: Condition.precipitation.symbol, value: rain.value, size: 17,
-                               caption: rain.detail == tr("Dry next 24 h") ? tr("Dry for 24 h") : rain.detail,
-                               mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
-                }
-                opens(.visibility) {
-                    MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17,
-                               caption: data.visibilityDetail)
                 }
             }
-            .symbolRenderingMode(.hierarchical)
-            // When ice matters (mostly mid-winter), it gets its own line under the row,
-            // so the row keeps its three columns under air, water and wind.
-            if let ice = iceValue {
-                opens(.ice) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Label(tr("Ice"), systemImage: Condition.ice.symbol)
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.secondary)
-                        Text(ice).valueFont(size: 17)
-                        Text(iceDetail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
-                        Spacer(minLength: 0)
-                    }
-                }
-                .symbolRenderingMode(.hierarchical)
+            if combined {
+                openHandle
             }
-            daylightLine
         }
         .sheet(isPresented: $showingLights) { LegendSheet(part: .lights) }
         .sheet(isPresented: $showingWarnings) {
@@ -655,9 +635,130 @@ private struct NowCard: View {
             ConditionDetailView(condition: .daylight, data: ConditionData(forecast: forecast, now: hour, radar: radar), club: club)
         }
         .detailCover(item: $openCondition) { condition in
-            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour, radar: radar), order: tileValues, club: club)
+            ConditionDetailView(condition: condition, data: ConditionData(forecast: forecast, now: hour, radar: radar),
+                                order: combined ? ConditionTiles.order(forecast) : tileValues, club: club)
         }
         .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }
+        .task {
+            // Screenshot hook: `-RWOpenCondition wind` on a closed combined tile, whose tiles are not there to open it.
+            guard combined, !open, at == nil, let raw = UserDefaults.standard.string(forKey: "RWOpenCondition") else { return }
+            let page = UserDefaults.standard.string(forKey: "RWOpenClub")
+            guard page == nil || page == forecast.clubId else { return }
+            try? await Task.sleep(for: .milliseconds(500))
+            openCondition = Condition(rawValue: raw)
+        }
+    }
+
+    /// Air, water and wind, with the small values in three columns under them.
+    /// Air, water and wind share one size, the second line a smaller one (owner, 5 Nov 2026).
+    private var valueGrid: some View {
+        TopTileGrid {
+            VStack(alignment: .leading, spacing: 0) {
+                opens(.temperature) {
+                    TemperatureView(condition: .temperature, celsius: hour.temperatureC, size: 28)
+                }
+                if let feels = hour.apparentTemperatureC {
+                    opens(.feelsLike) {
+                        Label(tr("Feels like %@", Format.degrees(feels)), systemImage: Condition.feelsLike.symbol)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .accessibilityLabel(tr("Feels like %@", Format.temperature(feels)) + ". " + (feelsLikeNote(hour) ?? ""))
+                            .greyLine()
+                    }
+                }
+            }
+            // With the time of the reading underneath, so it lines up with the wind's unit line.
+            opens(.waterTemperature) {
+                if water == nil, let estimate = forecast.estimatedWaterC {
+                    TemperatureView(condition: .waterTemperature, celsius: estimate, digits: 0, size: 28, caption: tr("Estimated"))
+                        .foregroundStyle(.secondary)
+                } else {
+                    TemperatureView(condition: .waterTemperature, celsius: water?.celsius, digits: 1, size: 28,
+                                    caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
+                }
+            }
+            opens(.wind) { WindView(hour: hour, size: 28) }
+            opens(.waves) {
+                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17,
+                           caption: wavesCaption)
+            }
+            opens(.precipitation) {
+                MetricView(title: tr("Precipitation"), symbol: Condition.precipitation.symbol, value: rain.value, size: 17,
+                           caption: rain.detail == tr("Dry next 24 h") ? tr("Dry for 24 h") : rain.detail,
+                           mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
+            }
+            opens(.visibility) {
+                MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17,
+                           caption: data.visibilityDetail)
+            }
+        }
+        .symbolRenderingMode(.hierarchical)
+    }
+
+    /// When ice matters (mostly mid-winter), it gets its own line under the row,
+    /// so the row keeps its three columns under air, water and wind.
+    @ViewBuilder private var iceLine: some View {
+        if let ice = iceValue {
+            opens(.ice) {
+                HStack(alignment: .firstTextBaseline, spacing: 6) {
+                    Label(tr("Ice"), systemImage: Condition.ice.symbol)
+                        .font(.caption.weight(.semibold))
+                        .foregroundStyle(.secondary)
+                    Text(ice).valueFont(size: 17).causeTinted()
+                    Text(iceDetail).font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                    Spacer(minLength: 0)
+                }
+            }
+            .symbolRenderingMode(.hierarchical)
+        }
+    }
+
+    private var combined: Bool { AppSettings.shared.combinedTopTile }
+    private var open: Bool { AppSettings.shared.topTileOpen }
+
+    /// The values the closed tile does not show, while they count for the light; ice also
+    /// whenever the ice line would show. The Current or Water level tile on rivers and
+    /// lowered lakes takes the ice tile's place, so there it has no line either.
+    private var peeks: [Condition] {
+        let order = ConditionTiles.order(forecast)
+        return [Condition.thunderstorm, .cloudCover, .humidity, .pressure, .uvIndex, .ice].filter { condition in
+            guard order.contains(condition) else { return false }
+            if condition == .ice, iceValue != nil { return true }
+            // Screenshot hook: `-RWSamplePeek thunderstorm` shows that value's line, light or not.
+            if UserDefaults.standard.string(forKey: "RWSamplePeek") == condition.rawValue { return true }
+            return hour.light(for: condition.reasonNames).map { $0 != .green } ?? false
+        }
+    }
+
+    /// The grip under the tile: tapped, or pulled down or up, it opens or closes the tiles.
+    private var openHandle: some View {
+        Button(action: toggleOpen) {
+            // Words only, like Apple's own "Show more" rows (owner's pick G2, 5 Nov 2026).
+            HStack(spacing: 4) {
+                Text(open ? tr("Fewer values") : tr("All values"))
+                Image(systemName: "chevron.down")
+                    .imageScale(.small)
+                    .rotationEffect(.degrees(open ? 180 : 0))
+            }
+            .font(.subheadline.weight(.medium))
+            .foregroundStyle(.tint)
+            // 44 pt to tap, as Apple's guide asks.
+            .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .highPriorityGesture(DragGesture(minimumDistance: 12).onEnded { drag in
+            let pull = drag.translation.height
+            if (pull > 20 && !open) || (pull < -20 && open) { toggleOpen() }
+        })
+        .accessibilityLabel(open ? tr("Fewer values") : tr("All values"))
+        .accessibilityHint(open ? tr("Shows the short top tile again") : tr("Opens all values in the top tile"))
+        .accessibilityIdentifier("top-tile-handle")
+    }
+
+    private func toggleOpen() {
+        AllValuesTip().invalidate(reason: .actionPerformed)
+        withAnimation(.smooth(duration: 0.35)) { AppSettings.shared.topTileOpen.toggle() }
     }
 
     /// The light, the verdict on one line, and the weather in a column of its own,
@@ -723,31 +824,15 @@ private struct NowCard: View {
         SkyIcon(sky: data.sky, night: hour.sunUp == false).scaledSystemFont(size: 34, relativeTo: .largeTitle, maxGrowth: 1.35)
     }
 
-    /// "For small boats" under the verdict. It wraps rather than pushes the
-    /// weather under the verdict, so a long boat name never decides the layout.
-    @ViewBuilder private var boatLine: some View {
-        Group {
-            if at == nil {
-                // Tapped: pick another boat, with the light each would get now.
-                BoatMenu(clubID: forecast.clubId, hour: hour, waterC: water?.celsius) {
-                    HStack(spacing: 3) {
-                        Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                        Image(systemName: "chevron.up.chevron.down").imageScale(.small)
-                    }
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    // 44 pt to tap; little upwards, where the title's info button is.
-                    .tapArea(EdgeInsets(top: 6, leading: 6, bottom: 14, trailing: 12))
-                }
-                .accessibilityLabel(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                .accessibilityHint(tr("Picks another boat for the rowing light."))
-            } else {
-                Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .frame(idealWidth: 0, maxWidth: .infinity, alignment: .leading)
+    /// "For small boats" under the verdict: which boat the light is for, as
+    /// plain text. The boat button beside the cog changes it (owner, 5 Nov 2026).
+    /// It wraps rather than pushes the weather under the verdict, so a long
+    /// boat name never decides the layout.
+    private var boatLine: some View {
+        Text(tr("For %@", AppSettings.shared.boat(at: forecast.clubId).inSentence))
+            .font(.caption)
+            .foregroundStyle(.secondary)
+            .frame(idealWidth: 0, maxWidth: .infinity, alignment: .leading)
     }
 
     /// The values shown in this tile, in its order, for swiping between their views.
@@ -761,9 +846,19 @@ private struct NowCard: View {
 
     /// A value of the tile as a button that opens its chart and details.
     private func opens(_ condition: Condition, @ViewBuilder _ content: () -> some View) -> some View {
-        Button { openCondition = condition } label: { content().contentShape(Rectangle()) }
+        let light = condition.cause(in: hour)
+        return Button { openCondition = condition } label: {
+            content().contentShape(Rectangle()).environment(\.causeTint, light?.causeTint ?? coldTint(condition))
+        }
             .buttonStyle(.plain)
+            .accessibilityValue(light?.causeTint == nil ? "" : tr("Sets the light: %@", light?.title ?? ""))
             .accessibilityHint(tr("Opens a chart and more about this value"))
+    }
+
+    /// The cold-water blue on the water value while the Life jacket badge shows.
+    private func coldTint(_ condition: Condition) -> Color? {
+        guard condition == .waterTemperature else { return nil }
+        return ColdWaterKit.valueTint(waterC: hourWaterC, limits: AppSettings.shared.limits(at: forecast.clubId))
     }
 
     /// Screenshot hook: `-RWSampleIce YES` shows the winter ice value, to check the row's fit.
@@ -879,6 +974,7 @@ private struct WindView: View {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
                 Text(hour.windSpeedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(hour.windGustMs))" } ?? "–")
                     .valueFont(size: size)
+                    .causeTinted()
                 if let from = hour.windFromDeg {
                     Image(systemName: "arrow.up")
                         .scaledSystemFont(size: size * 0.6, weight: .semibold, relativeTo: .title2, maxGrowth: 1.35)
@@ -956,6 +1052,7 @@ struct TemperatureView: View {
                 .foregroundStyle(.secondary)
             Text(Format.degrees(celsius, digits: digits))
                 .valueFont(size: size)
+                .causeTinted()
             if let caption {
                 Text(caption)
                     .font(.caption)
@@ -1094,6 +1191,7 @@ struct MetricView: View {
             // Two lines rather than cut off, should a value outgrow its column.
             Text(value)
                 .valueFont(size: size)
+                .causeTinted()
                 .lineLimit(2)
                 .minimumScaleFactor(0.85)
                 .alignmentGuide(.metricValue) { $0[.firstTextBaseline] }
@@ -1567,7 +1665,9 @@ private struct HourDetailSheet: View {
                 VStack(spacing: 16) {
                     // Within the radar's 2 hours the rain values come from the radar, later from the forecast.
                     NowCard(hour: hour, forecast: forecast, at: hour.time, club: club)
-                    ConditionsCard(forecast: forecast, hour: hour, club: club)
+                    if !AppSettings.shared.combinedTopTile {
+                        ConditionsCard(forecast: forecast, hour: hour, club: club)
+                    }
                     if lake?.hasOutline != false, lakeViews.views[forecast.lakeId, club: forecast.clubId] != nil {
                         Button { showingLakeMap = true } label: {
                             Label(tr("Lake map at %@", Format.dayTime(hour.time)), systemImage: "map")

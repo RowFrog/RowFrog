@@ -8,8 +8,8 @@
 import { t, num, locale, setLanguage, savedLanguage, resolve, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
-  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
-  boatDetail, boatTag, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
+  store, TILE_ORDER, conditionTexts, iceDetail, allBoats, tickedBoat, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
+  boatDetail, boatTag, boatControl, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
   degrees, temperature, windUnit, windNumber, wind, windRange, wavesNumber, waves, rainNumber, rain, distanceNumber, distance,
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, openMenu,
@@ -31,7 +31,7 @@ import { isOwn } from "./ownplace.js";
 import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
 import { layoutFor, visibleCards, openArrange } from "./arrange.js";
-import { showBackground, renderBackgrounds, backgroundSummary, forgetOwnPictures } from "./backgrounds.js";
+import { showBackground, renderBackgrounds, backgroundSummary, backgroundPreview, forgetOwnPictures } from "./backgrounds.js";
 import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
@@ -99,11 +99,23 @@ function languagePicker() {
     <select id="language">${option("auto", t("Device"))}${option("en", "English")}${option("de", "Deutsch")}</select></label>`;
 }
 
+/** The tour's language choice: a caption over three segments, as the app's welcome page. */
+function tourLanguagePicker() {
+  const choice = savedLanguage();
+  return `<p class="label tour-language-title">${icon("globe")} ${h(t("Language"))}</p>
+    <span class="segmented wide" id="tour-language">${[["auto", t("Device language")], ["en", "English"], ["de", "Deutsch"]]
+      .map(([value, label]) => `<button data-language="${value}" class="${choice === value ? "on" : ""}">${h(label)}</button>`).join("")}</span>`;
+}
+
 function wireLanguage(again) {
   root.querySelector("#language")?.addEventListener("change", async (e) => {
     await setLanguage(e.target.value);
     again();
   });
+  root.querySelectorAll("#tour-language [data-language]").forEach((b) => b.addEventListener("click", async () => {
+    await setLanguage(b.dataset.language);
+    again();
+  }));
 }
 
 
@@ -140,7 +152,7 @@ function legendBody(part) {
  * Own boats kept at other clubs come last, with one tap to take them to this
  * club too (owner's choice A, 30 Oct 2026).
  */
-function openBoatMenu(raw, anchor) {
+function openBoatMenu(raw, anchor, picked = () => route(false)) {
   const now = raw ? new Date() : null;
   const club = pageClubId();
   const inUse = selectedBoat().id;
@@ -168,7 +180,7 @@ function openBoatMenu(raw, anchor) {
     dialog.querySelectorAll("[data-boat]").forEach((b) => b.addEventListener("click", () => {
       pickBoat(b.dataset.boat, club);
       dialog.close();
-      route(false);
+      picked();
     }));
     dialog.querySelectorAll("[data-take]").forEach((b) => b.addEventListener("click", () => {
       keepBoat(b.dataset.take, club);
@@ -176,7 +188,7 @@ function openBoatMenu(raw, anchor) {
       // Taking a boat along is what the tip asks for, so it closes for good.
       closeTip(root, "boatsElsewhere");
       dialog.close();
-      route(false);
+      picked();
     }));
     dialog.querySelector("a.pill").addEventListener("click", () => dialog.close());
   });
@@ -206,6 +218,10 @@ function bottomBar(currentId) {
 function boatButton() {
   return `<button class="glass round tool boat" data-boat-button aria-label="${h(t("For %@", boatInSentence(selectedBoat())))}">${boatClassTag(selectedBoat())}</button>`;
 }
+
+// The lake map and the satellite picture's full view show the same button (owner's pick B, 5 Nov 2026).
+boatControl.html = () => boatButton().replace("data-boat-button", "data-map-boat");
+boatControl.open = (anchor, picked) => openBoatMenu(forecasts.get(pageClubId())?.forecast ?? null, anchor, picked);
 
 /** Once, on the first club page where an own boat is kept elsewhere (BoatsElsewhereTip), beside the boat button. */
 const boatsElsewhereTip = () => (store.boats.some((b) => !isKept(b)) ? tip("boatsElsewhere").replace('class="tip"', 'class="tip pop"') : "");
@@ -603,13 +619,16 @@ async function renderClub(id) {
   const hour = currentHour(forecast.hours, now);
   const warnings = forecast.warnings;
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
+  // Current conditions' tip, one at a time: the water level's first while the lake is let down (Forggensee),
+  // the water estimate's only where no station measures the water. Inside the top tile, it sits under that.
+  const conditionsTip = isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
+    : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate";
+  const topTips = tip("topTile") || (store.combinedTopTile ? tip(conditionsTip) : "");
   // The cards in the order chosen under "Arrange this page".
   const cards = {
     // One tip at a time; the water level's first while the lake is let down (Forggensee),
     // the water estimate's only where no station measures the water.
-    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint), radarStatus(club?.launchPoint)),
-      isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
-        : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate"),
+    conditions: () => withTip(conditionsCard(forecast, hour, radarAt(club?.launchPoint), radarStatus(club?.launchPoint)), conditionsTip),
     // Off by default: the rain tile shows the radar; "Arrange this page" switches the card on.
     radar: () => (club?.launchPoint ? radarCard(club.launchPoint) : ""),
     lakeView: () => (forecast.lakeId ? `<section class="card" id="lake-view" hidden></section>` : ""),
@@ -621,8 +640,8 @@ async function renderClub(id) {
     <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right")}</div>
     ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
-    ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint) })}
-    ${tip("topTile")}
+    ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
+    ${topTips}
     ${(waterForHour(raw, hour) ?? 99) < COLD.waterC ? tip("coldWater") : ""}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
     <div class="cards">${visibleCards(layoutFor(id)).map((c) => cards[c]?.() ?? "").join("")}</div>
@@ -949,7 +968,17 @@ function stickHourlyHeader() {
   const top = parseFloat(getComputedStyle(head).top) || 0;
   const stuck = table.top < top - 1 && at.bottom > table.top;
   head.classList.toggle("stuck", stuck);
-  card.style.clipPath = stuck ? `inset(${at.top - card.getBoundingClientRect().top}px 0 0 0 round 16px)` : "";
+  if (stuck) {
+    // The day whose header has passed under the pinned header, else the first.
+    const days = [...head.parentElement.querySelectorAll(".dayhead")].filter((d) => d.offsetParent);
+    const under = days.filter((d) => d.getBoundingClientRect().top <= at.bottom).pop() ?? days[0];
+    const label = under?.querySelector("strong")?.textContent ?? "";
+    const slot = head.querySelector(".hhead-day");
+    if (slot.textContent !== label) slot.textContent = label;
+  }
+  // The caption strip above the pinned row stays inside the cut.
+  const cap = stuck ? parseFloat(getComputedStyle(head).getPropertyValue("--hcap")) || 0 : 0;
+  card.style.clipPath = stuck ? `inset(${at.top - cap - card.getBoundingClientRect().top}px 0 0 0 round 16px)` : "";
 }
 window.addEventListener("scroll", updateTopBar, { passive: true });
 window.addEventListener("hashchange", () => requestAnimationFrame(updateTopBar));
@@ -1072,7 +1101,6 @@ function wireClubPage(id, club, raw, forecast, hour) {
     const part = b.dataset.legend;
     openSheet({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part], legendBody(part));
   }));
-  root.querySelector("#boat-line")?.addEventListener("click", (e) => openBoatMenu(raw, e.currentTarget));
   root.querySelector("#no-warning")?.addEventListener("click", () => {
     openSheet(warningsIsDWD(forecast.warnings) ? t("DWD warnings") : t("Official warnings"), warningsBody(forecast.warnings, club, forecast.generatedAt, true));
   });
@@ -1090,7 +1118,9 @@ function wireClubPage(id, club, raw, forecast, hour) {
     const lakeMap = root.querySelector("#lake-view .lake-card")
       ? `<a class="pill wide" href="#/lake/${encodeURIComponent(forecast.lakeId)}/${encodeURIComponent(id)}?at=${encodeURIComponent(at.time)}">${icon("map")} ${h(t("Lake map at %@", dayTime(at.time)))}</a>`
       : "";
-    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar }) + conditionsCard(forecast, at, radar, radarStatus(club?.launchPoint)) + lakeMap, (sheet) => {
+    // With Current conditions in the top tile, the hour's top tile opens into its tiles too.
+    openSheet(dayTime(at.time), nowCard(forecast, at, { at: new Date(at.time), stale: isStale(forecast), radar, radarState: radarStatus(club?.launchPoint) })
+      + (store.combinedTopTile ? "" : conditionsCard(forecast, at, radar, radarStatus(club?.launchPoint))) + lakeMap, (sheet) => {
       // A value from a later hour opens its page at that hour.
       sheet.querySelectorAll("[data-tile]").forEach((t2) => t2.addEventListener("click", () => {
         location.hash = `#/club/${encodeURIComponent(id)}/value/${t2.dataset.tile}/${encodeURIComponent(at.time)}`;
@@ -1139,7 +1169,39 @@ function wireSwipe(id) {
 }
 
 /** The top tile: the rowing light, why, the main values and the daylight (NowCard). */
-function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}) {
+/** The light a value sets in an hour while amber or red, never green, so a coloured value always means "this is why" (Condition.cause). */
+function causeOf(condition, hour) {
+  const light = REASONS[condition] ? lightFor(hour, REASONS[condition]) : null;
+  return light && light !== "green" ? light : null;
+}
+/** The class that colours a value in the light it sets, or the cold-water blue on the water (causeTinted, ColdWaterKit.valueTint). */
+const causeClass = (light, cold = false) => (light ? ` cause-${light}` : cold ? " cause-cold" : "");
+
+/**
+ * The values the closed combined top tile does not show, while they count for the light;
+ * ice also whenever the ice line would show (NowCard.peeks). On rivers and lowered lakes
+ * the Current or Water level tile takes the ice tile's place, so ice has no line there.
+ */
+function peeks(forecast, hour) {
+  const iceTile = !forecast.river && !isLowered(forecast.waterLevel);
+  return ["thunderstorm", "cloudCover", "humidity", "pressure", "uvIndex", "ice"].filter((c) => {
+    if (c === "ice") return iceTile && (iceValue(forecast) != null || causeOf(c, hour) != null);
+    return causeOf(c, hour) != null;
+  });
+}
+
+/** One hidden value as a line under the sun line, in its tile's own words, the value in the light's colour (TilePeekLine, P3). */
+function peekLine(condition, forecast, hour, radar) {
+  const parts = conditionTile(condition, forecast, hour, radar, null, true);
+  if (!parts) return "";
+  const light = causeOf(condition, hour);
+  return `<p class="peek-line" data-top="${condition}" role="button" tabindex="0"><span class="peek-title">${conditionIcon(condition)} ${h(conditionTexts()[condition][1])}</span>
+    <strong class="${causeClass(light).trim()}">${h(parts.value)}</strong>${parts.detail ? `<span class="sub">· ${h(parts.detail)}</span>` : ""}<span class="chev">${icon("chevron-right")}</span></p>`;
+}
+
+function nowCard(forecast, hour, { stale = false, at = null, radar = null, radarState = null } = {}) {
+  // Current conditions inside the top tile, opening into all its tiles (app #315).
+  const combined = store.combinedTopTile;
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
   const boat = t("For %@", boatInSentence(selectedBoat()));
@@ -1165,12 +1227,12 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
   const iceLine = forecast.ice ? iceDetail(forecast.ice) : t("Check the lake yourself");
   // As wide as its longest direction ("from NW"), so the column keeps one width whatever the wind does.
   const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
-  return `<section class="card now">
+  return `<section class="card now ${combined && store.topTileOpen ? "all-open" : ""}">
     <div class="now-head">
       ${dot(hour.light, 36, stale)}
       <div class="now-title">
         <h2><span class="verdict">${h(lightTitle(hour.light, stale))}</span> ${at ? "" : `<button class="info" data-legend="lights" aria-label="${h(t("What the symbols mean"))}">${icon("info")}</button>`}</h2>
-        ${at ? `<small class="sub">${h(boat)}</small>` : `<button class="boat-line" id="boat-line">${h(boat)} ${icon("chevrons-up-down")}</button>`}
+        <small class="sub boat-for">${h(boat)}</small>
       </div>
       <div class="now-sky">${skySymbol(hour, "large", kind)}<small class="sub">${h(t(SKY_TITLES[kind]))}</small></div>
     </div>
@@ -1191,38 +1253,48 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
     </ul>
     ${adviceOnly()}
     <hr>
+    ${combined ? `<div class="tt-closed">` : ""}
     <div class="now-grid">
       <div class="air" data-top="temperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("temperature")} ${h(t("Air"))}</small>
-        <span class="v44">${h(degrees(hour.temperatureC))}</span>
+        <span class="v28${causeClass(causeOf("temperature", hour))}">${h(degrees(hour.temperatureC))}</span>
         ${hour.apparentTemperatureC != null ? `<small class="sub grey" data-top="feelsLike" role="button" tabindex="0">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
       </div>
       <div class="${water == null && estimate != null ? "secondary" : ""}" data-top="waterTemperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("waterTemperature")} ${h(t("Water"))}</small>
-        <span class="v28">${h(water == null && estimate != null ? degrees(estimate) : degrees(water?.celsius, 1))}</span>
+        <span class="v28${causeClass(causeOf("waterTemperature", hour), !!kit)}">${h(water == null && estimate != null ? degrees(estimate) : degrees(water?.celsius, 1))}</span>
         <small class="sub grey">${h(water ? t("Measured %@", time(water.measuredAt)) : estimate != null ? t("Estimated") : " ")}</small>
       </div>
       <div data-top="wind" role="button" tabindex="0">
         <small class="label">${conditionIcon("wind")} ${h(t("Wind"))}</small>
-        <span class="v28">${h(windRange(hour.windSpeedMs, hour.windGustMs))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
+        <span class="v28${causeClass(causeOf("wind", hour))}">${h(windRange(hour.windSpeedMs, hour.windGustMs))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
         <small class="sub stack">${[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => `<span aria-hidden="true">${h(unitLine(deg))}</span>`).join("")}<span>${h(unitLine(hour.windFromDeg))}</span></small>
       </div>
       <div data-top="waves" role="button" tabindex="0">
-        <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17">${h(waves(hour.waveHeightM))}</span>
+        <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17${causeClass(causeOf("waves", hour))}">${h(waves(hour.waveHeightM))}</span>
         ${wavesCaption ? `<small class="sub grey">${h(wavesCaption)}</small>` : ""}
       </div>
-      <div class="now-rain" data-top="precipitation" role="button" tabindex="0">${rainCell(d)}</div>
+      <div class="now-rain" data-top="precipitation" role="button" tabindex="0">${rainCell(d, causeOf("precipitation", hour))}</div>
       <div data-top="visibility" role="button" tabindex="0">
-        <small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span class="v17">${h(distance(hour.visibilityM))}</span>
+        <small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span class="v17${causeClass(causeOf("visibility", hour))}">${h(distance(hour.visibilityM))}</span>
         <small class="sub grey">${h(visibilityCaption)}</small>
       </div>
     </div>
-    ${ice ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17">${h(t(ice))}</span>
+    ${ice && !combined ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17${causeClass(causeOf("ice", hour))}">${h(t(ice))}</span>
       <small class="sub">${h(iceLine === t("Bays and harbours first") ? t("Bays first") : iceLine)}</small></p>` : ""}
     ${sun ? `<p class="daylight" data-top="daylight" data-order="all" role="button" tabindex="0" aria-description="${h(t("Opens sunrise, sunset and daylight"))}">${sun.up
       ? `${sunPath(sun.sunrise, sun.sunset, at ?? new Date(), 44, 22)}<span class="sunline" aria-label="${h(t("Rowing until sunset at %@, %@ left", time(sun.sunset), duration(at ?? new Date(), sun.sunset)))}"><span class="nowrap">${h(t("Rowing until"))} <span class="sunsym">${icon("sunset")}</span>${h(time(sun.sunset))}</span> · <span class="nowrap">${h(t("%@ left", duration(at ?? new Date(), sun.sunset)))}</span></span>`
       : `<span class="moon">${icon("moon-star")}</span><span class="sunline" aria-label="${h(t("Rowing again from sunrise at %@", time(sun.sunrise)))}">${h(t("Rowing again from"))} <span class="sunsym">${icon("sunrise")}</span>${h(time(sun.sunrise))}</span>`}<span class="chev">${icon("chevron-right")}</span></p>` : ""}
+    ${combined ? `${peeks(forecast, hour).map((c) => peekLine(c, forecast, hour, radar)).join("")}</div>
+    <div class="tt-open"><div class="tiles">${TILE_ORDER.map((c) => conditionTile(c, forecast, hour, radar, radarState)).join("")}</div></div>
+    ${allValuesButton()}` : ""}
   </section>`;
+}
+
+/** The words under the top tile that open and close it, as Apple's "Show more" rows (grip G2). */
+function allValuesButton(open = store.topTileOpen) {
+  return `<button class="all-values" aria-expanded="${open}" aria-description="${h(open ? t("Shows the short top tile again") : t("Opens all values in the top tile"))}">
+    <span>${h(open ? t("Fewer values") : t("All values"))}</span>${icon("chevron-down")}</button>`;
 }
 
 /** The top tile's rain value with the rain tile's line under it, so both always say the same. */
@@ -1240,10 +1312,41 @@ function wireCurrent(box, forecast) {
 }
 
 function wireTopTile(card, id, at = null) {
+  // Open or closed, the same on every club page and in the hour view: tap the words, or pull down or up.
+  const handle = card?.querySelector(".all-values");
+  if (handle) {
+    const toggle = () => {
+      closeTip(document, "allValues");
+      store.topTileOpen = !store.topTileOpen;
+      document.querySelectorAll(".card.now").forEach((c) => {
+        c.classList.toggle("all-open", store.topTileOpen);
+        c.querySelector(".all-values")?.replaceWith(document.createRange().createContextualFragment(allValuesButton()));
+      });
+      document.querySelectorAll(".card.now").forEach((c) => wireHandle(c));
+    };
+    const wireHandle = (c) => {
+      const b = c.querySelector(".all-values");
+      if (!b || b.dataset.wired) return;
+      b.dataset.wired = "1";
+      // A pull the wrong way (up while closed, down while open) does nothing.
+      let y = null;
+      let pull = 0;
+      b.addEventListener("pointerdown", (e) => (y = e.clientY));
+      b.addEventListener("pointerup", (e) => (pull = y == null ? 0 : e.clientY - y));
+      b.addEventListener("click", () => {
+        const wrong = (pull < -20 && !store.topTileOpen) || (pull > 20 && store.topTileOpen);
+        pull = 0;
+        if (!wrong) toggle();
+      });
+    };
+    wireHandle(card);
+  }
   for (const el of card?.querySelectorAll("[data-top]") ?? []) {
     const open = (e) => {
       e.stopPropagation();
-      location.hash = `#/club/${encodeURIComponent(id)}/value/${el.dataset.top}${at ? `/${encodeURIComponent(at)}` : ""}${el.dataset.order === "all" ? "" : "?order=top"}`;
+      // In the combined tile the value pages swipe through all values (ConditionTiles.order).
+      const all = el.dataset.order === "all" || store.combinedTopTile;
+      location.hash = `#/club/${encodeURIComponent(id)}/value/${el.dataset.top}${at ? `/${encodeURIComponent(at)}` : ""}${all ? "" : "?order=top"}`;
     };
     el.addEventListener("click", open);
     el.addEventListener("keydown", (e) => {
@@ -1255,10 +1358,10 @@ function wireTopTile(card, id, at = null) {
   }
 }
 
-function rainCell(d) {
+function rainCell(d, cause = null) {
   const lines = rainLines(d);
   const caption = lines.detail === t("Dry next 24 h") ? t("Dry for 24 h") : lines.detail;
-  return `<small class="label">${conditionIcon("precipitation")} ${h(t("Precipitation"))}</small><span class="v17">${h(lines.value)}</span>
+  return `<small class="label">${conditionIcon("precipitation")} ${h(t("Precipitation"))}</small><span class="v17${causeClass(cause)}">${h(lines.value)}</span>
     ${caption ? `<small class="sub grey">${lines.fromRadar ? radarMark() : ""}${h(caption)}</small>` : ""}`;
 }
 
@@ -1422,7 +1525,7 @@ function conditionsCard(forecast, hour, radar = null, radarState = null) {
   return card(t("Current conditions"), "gauge", `${head}<div class="tiles">${tiles}</div>`, { legend: "conditions" });
 }
 
-function conditionTile(condition, forecast, hour, radar = null, radarState = null) {
+function conditionTile(condition, forecast, hour, radar = null, radarState = null, parts = false) {
   const i = forecast.hours.indexOf(hour);
   const next24 = forecast.hours.slice(Math.max(0, i), Math.max(0, i) + 24);
   const titles = conditionTexts();
@@ -1432,13 +1535,16 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
   // Only for now: a picked later hour is past the radar's two hours anyway (ConditionTile).
   const rainData = condition === "precipitation" ? conditionData(forecast, hour, radar) : null;
   const mark = !rainData ? "" : radarAhead(rainData) ? radarTitleMark() : radarState && rainData.isNow ? radarTitleMark(radarState) : "";
-  const header = (title) => `<span class="tile-head">${conditionIcon(condition)}<span>${h(title)}</span>${mark}${light && light !== "green" ? dot(light, 8) : ""}${icon("chevron-right")}</span>`;
-  // `mark`: rain read from the radar starts its line with the radar's symbol.
-  const tile = (value, detail, graphic = "", off = false, mark = "") => `<button class="tile ${off ? "off" : ""}" data-tile="${condition}">
-    ${header(titles[condition][1])}
-    <span class="tile-body"><span><strong>${h(value)}</strong><small>${mark}${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
+  // No dot: the value that sets the light takes its colour, and its tile a faint wash and rim (C1 + T2); the water blue while the life jacket shows (W2).
+  const header = (title) => `<span class="tile-head">${conditionIcon(condition)}<span>${h(title)}</span>${mark}${icon("chevron-right")}</span>`;
   const water = forecast.waterTemperature;
   const estimate = estimatedWater(forecast);
+  const cause = causeClass(causeOf(condition, hour), condition === "waterTemperature" && !!coldWaterKit(water?.celsius ?? estimate, currentLimits()));
+  const sets = causeOf(condition, hour) ? `, ${t("Sets the light: %@", lightTitle(causeOf(condition, hour)))}` : "";
+  // `mark`: rain read from the radar starts its line with the radar's symbol.
+  const tile = (value, detail, graphic = "", off = false, mark = "") => parts ? { value, detail } : `<button class="tile ${off ? "off" : ""}${cause}" data-tile="${condition}">
+    ${header(titles[condition][1])}
+    <span class="tile-body"><span><strong aria-label="${h(value + sets)}">${h(value)}</strong><small>${mark}${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
   const temps = next24.map((x) => x.temperatureC).filter((v) => v != null);
   switch (condition) {
     case "temperature":
@@ -1515,8 +1621,8 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
       if (!sun) return tile("–", "");
       const graphic = sunPath(sun.sunrise, sun.sunset, at);
       return sun.up
-        ? `<button class="tile" data-tile="daylight">${header(t("Sunset"))}<span class="tile-body"><span><strong>${h(time(sun.sunset))}</strong><small>${h(t("Sunrise %@", time(sun.sunrise)))}</small></span><span class="graphic">${graphic}</span></span></button>`
-        : `<button class="tile" data-tile="daylight">${header(t("Sunrise"))}<span class="tile-body"><span><strong>${h(time(sun.sunrise))}</strong><small>${h(t("Sunset %@", time(sun.sunset)))}</small></span><span class="graphic">${graphic}</span></span></button>`;
+        ? `<button class="tile${cause}" data-tile="daylight">${header(t("Sunset"))}<span class="tile-body"><span><strong>${h(time(sun.sunset))}</strong><small>${h(t("Sunrise %@", time(sun.sunrise)))}</small></span><span class="graphic">${graphic}</span></span></button>`
+        : `<button class="tile${cause}" data-tile="daylight">${header(t("Sunrise"))}<span class="tile-body"><span><strong>${h(time(sun.sunrise))}</strong><small>${h(t("Sunset %@", time(sun.sunset)))}</small></span><span class="graphic">${graphic}</span></span></button>`;
     }
     default:
       return "";
@@ -1527,7 +1633,9 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
 /** The next 48 hours, a row an hour under a day header with sunrise and sunset (HourlyCard). */
 function hourlyCard(forecast, now, stale) {
   const list = nextHours(forecast.hours, now, 48);
+  // While it stays at the top, the header also names the tile and the day in view (HourlyStickyHeader).
   const head = `<div class="hrow hhead">
+    <span class="hhead-title" aria-hidden="true">${icon("clock")}<span>${h(t("Next 48 hours"))}</span><span class="hhead-day"></span></span>
     <span>${icon("clock")}</span><span>${dot("grey", 8)}</span><span>${icon("cloud-sun")}</span>
     ${[["temperature", unitSymbol("temperature")], ["feelsLike", unitSymbol("temperature")], ["wind", windUnit()], ["waves", unitSymbol("waves")],
       ["precipitation", unitSymbol("rain")], ["visibility", unitSymbol("distance")]]
@@ -1787,27 +1895,64 @@ function setDateTimeLikeDevice(on) {
   if (store.dateFormat === "device") store.dateFormat = "long";
 }
 
-function renderSettings() {
-  setTitle(t("Settings"));
-  const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
-  const back = store.clubs[0] ? `#/club/${encodeURIComponent(store.clubs[0].id)}` : "#/list";
-  root.innerHTML = `
-    <header class="nav"><span class="spacer"></span><a class="link strong" href="${back}">${h(t("Done"))}</a></header>
-    ${testing()}
-    <main class="page">
-      <h1 class="large">${h(t("Settings"))}</h1>
-      <label class="search settings-search">${icon("search")}<input type="search" id="settings-search" placeholder="${h(t("Search"))}" aria-label="${h(t("Search the settings"))}"></label>
-      <p class="sub" id="settings-none" hidden></p>
-      <section class="card group">
-        <a class="row-setting" href="#/settings/boats"><span>${icon("sailboat")} ${h(t("Boats and limits"))}</span>
-          <span class="sub">${h(boatTitle(selectedBoat()))} ${icon("chevron-right")}</span></a>
-      </section>
-      <h3 class="section">${icon("sun-moon")} ${h(t("Appearance"))}</h3>
-      <section class="card group">
-        <div class="row-setting"><span class="segmented wide" id="appearance">${[["device", t("Device")], ["light", t("Light")], ["dark", t("Dark")]]
-          .map(([k, label]) => `<button data-appearance="${k}" class="${store.appearance === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>
+/** The topics of the first settings page, each with its own page (SettingsTopic). */
+const SETTINGS_TOPICS = [
+  ["appearance", "Appearance", "sun-moon", "#007aff"],
+  ["clubpages", "Club pages", "layout-grid", "#5856d6"],
+  ["language", "Language and units", "globe", "#8e8e93"],
+  ["data", "Battery and data", "radio-tower", "#34c759"],
+  ["help", "Help", "circle-help", "#007aff"],
+  ["about", "About", "info", "#8e8e93"],
+];
+const settingsIcon = (name, colour) => `<span class="set-icon" style="--c: ${colour}">${icon(name)}</span>`;
+
+/** Each topic page's cards, as the app's sub pages of Settings. */
+function settingsTopicBody(topic, accepted) {
+  switch (topic) {
+    case "appearance": return `
+      <section class="card group appearance-pick" id="appearance">${[["device", t("Device"), "smartphone"], ["light", t("Light"), "sun"], ["dark", t("Dark"), "moon"]]
+        .map(([k, label, sym]) => `<button data-appearance="${k}" aria-pressed="${store.appearance === k}"><span class="phone ${k}">${icon(sym)}</span><span>${h(label)}</span>
+          <span class="tick ${store.appearance === k ? "on" : ""}">${store.appearance === k ? icon("check") : ""}</span></button>`).join("")}
       </section>
       <p class="footer">${h(t("Device follows the light or dark setting of your computer or phone."))}</p>
+`;
+    case "clubpages": return `
+      <section class="card group">
+        <button class="row-setting order-link" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Order of the club page cards"))}</span></button>
+      </section>
+      <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
+      <section class="card group">
+        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
+      </section>
+      <p class="footer">${h(store.launchPointInHeader
+        ? t("Tap the lake and town under the club's name for the club's location: a map with the launch point, coordinates and Open in Maps. The Launch point card leaves the page.")
+        : t("The Launch point card is on the page, as before."))}</p>
+      <section class="card group">
+        <label class="row-setting"><span>${icon("gauge")} ${h(t("Current conditions in the top tile"))}</span><input type="checkbox" class="switch" id="combined-top" ${store.combinedTopTile ? "checked" : ""}></label>
+      </section>
+      <p class="footer">${h(store.combinedTopTile
+        ? t("The top tile opens into all values: tap \"All values\" under it or pull it down. Values it hides show as a line while they matter for the rowing light.")
+        : t("Current conditions is a card of its own under the top tile, as before."))}</p>
+      <section class="card group">
+        <a class="row-setting bg-row" href="#/settings/backgrounds"><span><span class="bg-thumb" id="bg-thumb">${icon("circle-slash")}</span><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span></span>${icon("chevron-right")}</a>
+      </section>
+      <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
+      <h3 class="section">${icon("map")} ${h(t("Weather maps"))}</h3>
+      <section class="card group">
+        <div class="row-setting"><span>${h(t("Maps start"))}</span>
+          <span class="segmented small" id="map-zoom">${[["close", lang() === "de" ? t("Close (map zoom)") : "Close"], ["normal", t("Normal")], ["wide", t("Wide")]]
+            .map(([k, label]) => `<button data-zoom="${k}" class="${store.mapZoom === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>
+      </section>
+      <p class="footer">${h(t("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.",
+        distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))}</p>
+      <h3 class="section">${icon("map-pinned")} ${h(t("Map app"))}</h3>
+      <section class="card group">
+        <label class="row-setting topic"><span>${h(t("Open places in"))}</span>
+          <select id="maps-app">${Object.entries(MAPS_APPS).map(([k, app]) => `<option value="${k}" ${store.mapsApp === k ? "selected" : ""}>${h(app.name)}</option>`).join("")}</select></label>
+      </section>
+      <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))} ${h(t("Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
+`;
+    case "language": return `
       <h3 class="section">${icon("languages")} ${h(t("Language"))}</h3>
       <section class="card group">${likeDeviceRow("language-like", savedLanguage() === "auto", resolve("auto") === "de" ? "Deutsch" : "English")}
         ${savedLanguage() === "auto" ? "" : `<div class="row-setting"><span class="segmented wide" id="language-pick">${[["en", "English"], ["de", "Deutsch"]]
@@ -1825,35 +1970,8 @@ function renderSettings() {
           <select id="date-format">${DATE_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.dateFormat ? "selected" : ""}>${h(`${f === "iso" ? "ISO 8601" : t(DATE_TITLES[f])} · ${dateText(localDay(new Date()), f)}`)}</option>`).join("")}</select></label>`}
       </section>
       <p class="footer">${h(t("Today and tomorrow are always written as words."))}</p>
-      <h3 class="section">${icon("arrow-up-down")} ${h(t("Club pages"))}</h3>
-      <section class="card group">
-        <button class="row-setting" id="arrange"><span>${h(t("Order of the club page cards"))}</span>${icon("chevron-right")}</button>
-      </section>
-      <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
-      <section class="card group">
-        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
-      </section>
-      <p class="footer">${h(store.launchPointInHeader
-        ? t("Tap the lake and town under the club's name for the club's location: a map with the launch point, coordinates and Open in Maps. The Launch point card leaves the page.")
-        : t("The Launch point card is on the page, as before."))}</p>
-      <section class="card group">
-        <a class="row-setting" href="#/settings/backgrounds"><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span>${icon("chevron-right")}</a>
-      </section>
-      <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
-      <h3 class="section">${icon("map")} ${h(t("Weather maps"))}</h3>
-      <section class="card group">
-        <div class="row-setting"><span>${h(t("Maps start"))}</span>
-          <span class="segmented small" id="map-zoom">${[["close", lang() === "de" ? t("Close (map zoom)") : "Close"], ["normal", t("Normal")], ["wide", t("Wide")]]
-            .map(([k, label]) => `<button data-zoom="${k}" class="${store.mapZoom === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>
-      </section>
-      <p class="footer">${h(t("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.",
-        distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))}</p>
-      <h3 class="section">${icon("map-pinned")} ${h(t("Map links"))}</h3>
-      <section class="card group">
-        <div class="row-setting"><span class="segmented wide" id="maps-app" aria-label="${h(t("Open places in"))}">${Object.entries(MAPS_APPS)
-          .map(([k, app]) => `<button data-maps-app="${k}" class="${store.mapsApp === k ? "on" : ""}">${h(app.name)}</button>`).join("")}</span></div>
-      </section>
-      <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))} ${h(t("Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
+`;
+    case "data": return `
       <h3 class="section">${icon("arrow-up-down")} ${h(t("Data use"))}</h3>
       <section class="card group">
         <label class="row-setting"><span>${icon("radio-tower")} ${h(t("Save mobile data"))}</span><input type="checkbox" class="switch" id="save-data" ${store.saveData ? "checked" : ""}></label>
@@ -1861,6 +1979,8 @@ function renderSettings() {
       </section>
       <p class="footer">${h(t("On mobile data, satellite pictures load only when you tap them; forecasts and warnings always load. When your browser or phone asks to save data, the website always does. Not every browser tells the website whether it is on mobile data."))}</p>
       ${tip("saveData")}
+`;
+    case "help": return `
       <h3 class="section">${icon("circle-help")} ${h(t("Help"))}</h3>
       <section class="card group">
         <a class="row-setting" href="#/tour"><span>${icon("circle-help")} ${h(t("Show the tour again"))}</span>${icon("chevron-right")}</a>
@@ -1868,6 +1988,8 @@ function renderSettings() {
         <button class="row-setting" id="legend"><span>${icon("info")} ${h(t("Legend: what the symbols mean"))}</span>${icon("chevron-right")}</button>
       </section>
       <p class="footer" id="tips-note"></p>
+`;
+    case "about": return `
       ${card(t("Safety notice"), "shield-check", `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`)}
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
         ${tip("factoryReset")}
@@ -1876,10 +1998,62 @@ function renderSettings() {
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
       ${card(t("Website login"), "lock", `<p>${h(t("The website is still in testing. This browser stays logged in for 90 days."))}</p>
         <button id="log-out" class="quiet">${icon("lock")} ${h(t("Log out"))}</button>`)}
-      ${footerLinks()}
+      ${footerLinks()}`;
+    default: return "";
+  }
+}
+
+/** The value shown at the end of a topic's row (SettingsRow). */
+function settingsTopicValue(topic) {
+  if (topic === "appearance") return t({ device: "Device", light: "Light", dark: "Dark" }[store.appearance] ?? "Device");
+  if (topic === "clubpages") return backgroundSummary();
+  if (topic === "language") return `${resolve() === "de" ? "Deutsch" : "English"} · ${unitSymbol("temperature")}`;
+  if (topic === "data") return dataSaving() ? t("Saving data") : "";
+  return "";
+}
+
+/**
+ * Settings as in the app (option C, 25 Oct 2026): the boat for the rowing light and Boats and limits first,
+ * then one row per topic with its own page, and the search at the end.
+ */
+function renderSettings(topic = null) {
+  const named = SETTINGS_TOPICS.find(([id]) => id === topic);
+  if (topic && !named) topic = null;
+  const again = () => renderSettings(topic);
+  setTitle(named ? t(named[1]) : t("Settings"));
+  const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
+  const back = store.clubs[0] ? `#/club/${encodeURIComponent(store.clubs[0].id)}` : "#/list";
+  const row = ([id, title, name, colour]) => `<a class="row-setting topic" href="#/settings/${id}"><span>${settingsIcon(name, colour)} ${h(t(title))}</span>
+          <span class="sub">${h(settingsTopicValue(id))} ${icon("chevron-right")}</span></a>`;
+  const changed = Object.values(store.limits).filter((l) => Object.keys(l ?? {}).length).length;
+  const groups = [["appearance", "clubpages"], ["language", "data"], ["help", "about"]];
+  root.innerHTML = topic
+    ? `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t(named[1]))}</strong><span class="nav-side"></span></header>
+    ${testing()}
+    <main class="page settings-topic">${settingsTopicBody(topic, accepted)}
+    </main>`
+    : `<header class="nav"><span class="nav-side"></span><strong class="nav-title">${h(t("Settings"))}</strong><a class="link strong" href="${back}">${h(t("Done"))}</a></header>
+    ${testing()}
+    <main class="page settings-main">
+      <div id="settings-topics">
+      <section class="card group">
+        <label class="row-setting topic"><span>${settingsIcon("sailboat", "#34c759")} ${h(t("Rowing light for"))}</span>
+          <select id="settings-boat">${allBoats().map((b) => `<option value="${h(b.id)}" ${b.id === tickedBoat().id ? "selected" : ""}>${h(boatTitle(b))}</option>`).join("")}</select></label>
+        <a class="row-setting topic" href="#/settings/boats"><span>${settingsIcon("sliders-horizontal", "#30b0c7")} ${h(t("Boats and limits"))}</span>
+          <span class="sub">${changed ? h(t("%@ changed", String(changed))) : ""} ${icon("chevron-right")}</span></a>
+      </section>
+      <p class="footer">${h(t("The boat the rowing light is worked out for, on every club page and in the widgets."))}</p>
+      ${groups.map((ids) => `<section class="card group">${ids.map((id) => row(SETTINGS_TOPICS.find(([x]) => x === id))).join("")}</section>`).join("\n      ")}
+      </div>
+      <div id="settings-results" hidden></div>
+      <label class="search settings-search">${icon("search")}<input type="search" id="settings-search" placeholder="${h(t("Search"))}" aria-label="${h(t("Search the settings"))}"></label>
     </main>`;
-  wireLanguage(renderSettings);
-  wireSettingsSearch(root.querySelector("main"));
+  root.querySelector("#settings-boat")?.addEventListener("change", (e) => {
+    pickBoat(e.target.value, null);
+    again();
+  });
+  wireLanguage(again);
+  if (!topic) wireSettingsSearch(root.querySelector("main"));
   wireTips(root.querySelector("main"));
   root.querySelectorAll("[data-unit]").forEach((select) => {
     select.addEventListener("change", () => setUnit(select.dataset.unit, select.value));
@@ -1894,51 +2068,60 @@ function renderSettings() {
       }
     });
   });
-  root.querySelector("#tips-again").addEventListener("click", () => {
+  root.querySelector("#tips-again")?.addEventListener("click", () => {
     replayTips();
     root.querySelector("#tips-note").textContent = t("The tips are back.");
   });
-  root.querySelector("#legend").addEventListener("click", () => openSheet(t("Legend"),
+  root.querySelector("#legend")?.addEventListener("click", () => openSheet(t("Legend"),
     ["lights", "conditions", "hourly"].map((part) => `<h3 class="section">${h({ lights: t("Rowing light"), conditions: t("Weather symbols"), hourly: t("The columns") }[part])}</h3>${legendBody(part)}`).join("")));
-  root.querySelector("#launch-in-header").addEventListener("change", (e) => {
-    store.launchPointInHeader = e.target.checked;
-    renderSettings();
+  root.querySelector("#combined-top")?.addEventListener("change", (e) => {
+    store.combinedTopTile = e.target.checked;
+    again();
   });
-  root.querySelector("#save-data").addEventListener("change", (e) => {
+  root.querySelector("#launch-in-header")?.addEventListener("change", (e) => {
+    store.launchPointInHeader = e.target.checked;
+    again();
+  });
+  root.querySelector("#save-data")?.addEventListener("change", (e) => {
     store.saveData = e.target.checked;
-    renderSettings();
+    again();
   });
   root.querySelector("#time-format")?.addEventListener("change", (e) => (store.timeFormat = e.target.value));
   root.querySelector("#date-format")?.addEventListener("change", (e) => (store.dateFormat = e.target.value));
-  root.querySelector("#language-like").addEventListener("change", async (e) => {
+  root.querySelector("#language-like")?.addEventListener("change", async (e) => {
     // Off starts with the language shown now, so nothing changes at once (languageLikeDevice).
     await setLanguage(e.target.checked ? "auto" : resolve("auto"));
-    renderSettings();
+    again();
   });
   root.querySelectorAll("[data-language]").forEach((b) => b.addEventListener("click", async () => {
     await setLanguage(b.dataset.language);
-    renderSettings();
+    again();
   }));
-  root.querySelector("#datetime-like").addEventListener("change", (e) => {
+  root.querySelector("#datetime-like")?.addEventListener("change", (e) => {
     setDateTimeLikeDevice(e.target.checked);
-    renderSettings();
+    again();
   });
   root.querySelectorAll("[data-appearance]").forEach((b) => b.addEventListener("click", () => {
     store.appearance = b.dataset.appearance;
     applyAppearance();
-    renderSettings();
+    again();
   }));
-  root.querySelector("#arrange").addEventListener("click", () => openArrange(null));
-  root.querySelectorAll("[data-maps-app]").forEach((b) => b.addEventListener("click", () => {
-    store.mapsApp = b.dataset.mapsApp;
-    renderSettings();
-  }));
+  root.querySelector("#arrange")?.addEventListener("click", () => openArrange(null));
+  root.querySelector("#maps-app")?.addEventListener("change", (e) => {
+    store.mapsApp = e.target.value;
+    again();
+  });
+  // The picture for all pages, small, as the app's preview in the Background pictures row.
+  const thumb = root.querySelector("#bg-thumb");
+  if (thumb) backgroundPreview().then((url) => {
+    if (url && thumb.isConnected) thumb.innerHTML = `<img src="${h(url)}" alt="">`;
+  }).catch(() => {});
   root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
     store.mapZoom = b.dataset.zoom;
-    renderSettings();
+    again();
   }));
-  root.querySelector("#log-out").addEventListener("click", () => location.assign("/__logout"));
-  root.querySelector("#factory").addEventListener("click", async () => {
+  root.querySelector("#log-out")?.addEventListener("click", () => location.assign("/__logout"));
+  root.querySelector("#factory")?.addEventListener("click", async () => {
     if (!confirm(t("Reset all settings?"))) return;
     await forgetOwnPictures();
     try {
@@ -1946,7 +2129,7 @@ function renderSettings() {
     } catch {}
     location.reload();
   });
-  root.querySelector("#reset").addEventListener("click", () => {
+  root.querySelector("#reset")?.addEventListener("click", () => {
     if (!confirm(t("Delete your clubs, settings and the accepted safety notice from this browser?"))) return;
     try {
       for (const name of Object.keys(localStorage)) if (name.startsWith("rf.")) localStorage.removeItem(name);
@@ -1956,28 +2139,36 @@ function renderSettings() {
   });
 }
 
-/** Filters the settings to the cards whose title, rows or footer hold the words typed (SettingsSearch). */
+/**
+ * The search at the end of Settings: every card of every topic page whose title, rows or footer hold the
+ * words typed, with the page it is on; tapping one opens that page (SettingsSearch).
+ */
 function wireSettingsSearch(main) {
   const input = main.querySelector("#settings-search");
-  const none = main.querySelector("#settings-none");
-  const groups = [...main.querySelectorAll(":scope > section.card")].map((card) => {
-    const parts = [card];
-    const before = card.previousElementSibling;
-    if (before?.matches("h3.section")) parts.unshift(before);
-    const after = card.nextElementSibling;
-    if (after?.matches("p.footer")) parts.push(after);
-    return { parts, text: parts.map((p) => p.textContent).join(" ").toLowerCase() };
+  const list = main.querySelector("#settings-topics");
+  const results = main.querySelector("#settings-results");
+  const box = document.createElement("div");
+  const entries = SETTINGS_TOPICS.flatMap(([id, title, name, colour]) => {
+    box.innerHTML = settingsTopicBody(id, null);
+    return [...box.querySelectorAll(":scope > section.card")].map((card) => {
+      const parts = [card];
+      const before = card.previousElementSibling;
+      if (before?.matches("h3.section")) parts.unshift(before);
+      const after = card.nextElementSibling;
+      if (after?.matches("p.footer")) parts.push(after);
+      const heading = parts[0].matches("h3.section") ? parts[0] : card.querySelector(".card-title, .row-setting > span, .row-setting");
+      return { id, topic: t(title), name, colour, title: (heading?.textContent ?? "").trim().replace(/\s+/g, " ") || t(title), text: parts.map((x) => x.textContent).join(" ").toLowerCase() };
+    });
   });
   input.addEventListener("input", () => {
     const words = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
-    let found = 0;
-    for (const g of groups) {
-      const show = words.every((w) => g.text.includes(w));
-      if (show) found++;
-      g.parts.forEach((p) => (p.hidden = !show));
-    }
-    none.hidden = found > 0;
-    none.textContent = found ? "" : t("No settings found for “%@”.", input.value.trim());
+    list.hidden = words.length > 0;
+    results.hidden = !words.length;
+    if (!words.length) return;
+    const found = entries.filter((e) => words.every((w) => e.text.includes(w)) || words.every((w) => e.topic.toLowerCase().includes(w)));
+    results.innerHTML = found.length
+      ? `<section class="card group">${found.map((e) => `<a class="row-setting topic" href="#/settings/${e.id}"><span>${settingsIcon(e.name, e.colour)}<span class="stack"><span>${h(e.title)}</span><small class="sub">${h(e.topic)}</small></span></span>${icon("chevron-right")}</a>`).join("")}</section>`
+      : `<p class="sub">${h(t("No settings found for “%@”.", input.value.trim()))}</p>`;
   });
 }
 
@@ -2225,6 +2416,8 @@ function route(scroll = true) {
   document.querySelectorAll(".wm-full, .sat-full").forEach((x) => x.remove());
   document.body.classList.remove("locked");
   if (scroll) window.scrollTo(0, 0);
+  // The pages the app shows as sheets look like one on a phone.
+  document.body.classList.toggle("sheet-page", /^\/(club\/[^/]+\/value\/|settings|add-place|countries)/.test(location.hash.slice(1)));
   if (!store.safety || store.safety.version < SAFETY_VERSION) return renderSafetyGate();
   // The tour once, after the safety notice, and again from Settings › Help.
   if (!tourSeen() || location.hash === "#/tour") {
@@ -2235,7 +2428,7 @@ function route(scroll = true) {
     return loadCatalog().catch(() => []).then((lakes) => {
       // Another page may have opened while the club list loaded.
       if (tourSeen() && location.hash !== "#/tour") return;
-      renderTour(root, { languagePicker, wireLanguage, done, river: lakes.some((l) => l.section && lakeIds.has(l.id)) });
+      renderTour(root, { languagePicker: tourLanguagePicker, wireLanguage, done, river: lakes.some((l) => l.section && lakeIds.has(l.id)) });
     });
   }
   const hash = location.hash.replace(/^#/, "");
@@ -2262,6 +2455,8 @@ function route(scroll = true) {
   const country = hash.match(/^\/countries\/([a-z]{2})(?:\?q=(.*))?$/);
   if (country) return renderCountry(root, country[1], country[2] ? decodeURIComponent(country[2]) : "");
   if (hash === "/settings") return renderSettings();
+  const topic = hash.match(/^\/settings\/(appearance|clubpages|language|data|help|about)$/);
+  if (topic) return renderSettings(topic[1]);
   if (hash === "/settings/boats") return renderBoats();
   if (hash === "/settings/backgrounds") return renderBackgrounds(root);
   const boat = hash.match(/^\/settings\/boat\/(.+)$/);
@@ -2271,6 +2466,7 @@ function route(scroll = true) {
 }
 
 window.addEventListener("hashchange", () => route());
+document.addEventListener("rf-boat-picked", () => route(false));
 // Back on the page after a while: show fresh numbers.
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") refreshOnReturn();

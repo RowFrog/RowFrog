@@ -4,8 +4,8 @@
 
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
-import { currentHour, iceValue } from "./logic.js";
-import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance } from "./shared.js";
+import { currentHour, iceValue, UNITS } from "./logic.js";
+import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
@@ -154,6 +154,7 @@ function show(page) {
       ${stationCard(condition, data)}
       <p class="rowing">${icon("sailboat")}<span>${h(detail.rowing)}</span></p>
       <p class="sub small">${h(detail.source)}</p>
+      ${unitRow(condition)}
       ${footerLinks()}
     </main>
     <nav class="neighbours"><button class="glass" id="prev-name">${icon("chevron-left")} <span>${h(titles[neighbour(page, -1)][1])}</span></button>
@@ -186,6 +187,10 @@ function show(page) {
     b.classList.toggle("off", hidden.has(name));
     redraw?.();
   }));
+  root.querySelector("#detail-unit")?.addEventListener("change", (e) => {
+    setUnit(e.target.dataset.unit, e.target.value);
+    show(page);
+  });
   root.querySelector("#jump").addEventListener("change", (e) => {
     page.condition = e.target.value;
     history.replaceState(null, "", pageHash(page));
@@ -491,4 +496,17 @@ async function showStationMap(box, station) {
     icon: L.divIcon({ className: "pin station-pin", html: icon("thermometer"), iconSize: [30, 30], iconAnchor: [15, 15] }),
     keyboard: false,
   }).addTo(map);
+}
+
+/** The unit setting each value page has at its end, as in the Weather app (DetailUnitRow): the same as Settings > Units. */
+const UNIT_OF = { temperature: "temperature", feelsLike: "temperature", waterTemperature: "temperature", wind: "wind", waves: "waves",
+  precipitation: "rain", visibility: "distance", pressure: "pressure" };
+
+function unitRow(condition) {
+  const kind = UNIT_OF[condition];
+  if (!kind) return "";
+  const options = Object.entries(UNITS[kind].options)
+    .map(([id, u]) => `<option value="${id}" ${id === unitId(kind) ? "selected" : ""}>${h(t(u.label))}</option>`).join("");
+  return `<label class="detail-unit"><span>${conditionIcon(condition)} ${h(t("Units"))}</span>
+    <span class="pick"><select id="detail-unit" data-unit="${kind}" aria-label="${h(t("Units"))}">${options}</select>${icon("chevrons-up-down")}</span></label>`;
 }

@@ -2,10 +2,10 @@
 // club page with the choice of picture, the layers drawn over it and their
 // legend, and the picture full screen with zoom and pan.
 
-import { t, num } from "./i18n.js";
+import { t, num, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
-import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature } from "./shared.js";
+import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature, boatControl } from "./shared.js";
 import { tip } from "./tour.js";
 import { hourIndex, gridEdges, coldShore, stripes, stripesFall, waterKind } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote, kitBadge, COLD_SHORE } from "./lakeview.js";
@@ -105,15 +105,31 @@ function caption(lake, shot) {
     <p class="sub small">${h(meta.attribution)}${ice && meta.ice.attribution ? ` · ${h(meta.ice.attribution)}` : ""}</p>`;
 }
 
-function chips(lake) {
+/**
+ * The legend and the layer switches. The full view has the club page's boat button beside the
+ * legend while a layer coloured for the boat is on (owner's pick B, 5 Nov 2026).
+ */
+function chips(lake, boat = false) {
   const on = store.satLayers;
-  return `<div class="chips"><button class="chip" data-sat-legend aria-label="${h(t("Legend"))}">${icon("list")}</button>
+  const forBoat = boat && ["light", "waves", "shore"].some((l) => on.includes(l));
+  return `<div class="chips"><button class="chip" data-sat-legend aria-label="${h(t("Legend"))}">${icon("list")}</button>${forBoat ? `<span class="chip-boat">${boatControl.html()}</span>` : ""}
     ${available(lake).map((l) => `<button class="chip ${on.includes(l.id) ? "on" : ""}" data-layer="${l.id}" aria-pressed="${on.includes(l.id)}">${icon(l.icon)} ${h(t(l.title))}</button>`).join("")}</div>`;
+}
+
+/**
+ * "Latest, 3 Nov" | "Clearest, 27 Oct"; with three pictures just "Latest", as the grey line below names
+ * the day (SatelliteKindPicker.label).
+ */
+export function kindLabel(lake, kind, label) {
+  if (lake.kinds.length > 2) return t(label);
+  const date = lake.meta[kind]?.date;
+  const day = date ? new Intl.DateTimeFormat(locale(), { day: "numeric", month: "short", timeZone: "UTC" }).format(new Date(`${date}T12:00:00Z`)) : "";
+  return { latest: t("Latest, %@", day), mostlyClear: t("Mostly clear, %@", day), clearest: t("Clearest, %@", day) }[kind];
 }
 
 function kindPicker(lake, kind) {
   if (lake.kinds.length < 2) return "";
-  return `<div class="segmented">${lake.kinds.map(([k, label]) => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${h(t(label))}</button>`).join("")}</div>`;
+  return `<div class="segmented">${lake.kinds.map(([k, label]) => `<button data-kind="${k}" class="${k === kind ? "on" : ""}">${h(kindLabel(lake, k, label))}</button>`).join("")}</div>`;
 }
 
 function wireControls(el, lake, setKind) {
@@ -680,6 +696,8 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     el.remove();
     document.body.classList.remove("locked");
     if (kind !== startKind) onKind(kind);
+    // The club page under the full view follows a boat picked here once the view closes.
+    if (boatPicked) document.dispatchEvent(new CustomEvent("rf-boat-picked"));
   };
   const keys = (e) => e.key === "Escape" && close();
 
@@ -689,8 +707,12 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     el.innerHTML = `<header class="nav value-nav"><span class="spacer"></span><strong class="nav-title">${h(t("Satellite picture"))}</strong><button class="link strong" id="sat-done">${h(t("Done"))}</button></header>
       ${kindPicker(lake, kind)}
       <div class="sat-stage"><div class="sat-zoom">${pictureHtml(lake, shot)}<div class="sat-sharp"></div></div><div class="sat-over sat-screen"></div>${coldBadge(lake)}</div>
-      <div class="sat-panel">${caption(lake, shot)}${chips(lake)}</div>`;
+      <div class="sat-panel">${caption(lake, shot)}${chips(lake, !!clubId)}</div>`;
     el.querySelector("#sat-done").addEventListener("click", close);
+    el.querySelector("[data-map-boat]")?.addEventListener("click", (e) => boatControl.open(e.currentTarget, () => {
+      boatPicked = true;
+      render();
+    }));
     showPictures(el.querySelector(".sat-zoom"));
     wireControls(el, lake, (k) => { kind = k; render(); });
     wireGestures(el.querySelector(".sat-stage"));
@@ -699,6 +721,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
     opened = true;
   }
   let opened = false;
+  let boatPicked = false;
 
   /** The whole picture fits at first; `fresh` also sets where it opens. */
   function layout(fresh) {
