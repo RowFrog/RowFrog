@@ -957,13 +957,13 @@ private struct NowCard: View {
                         SunPath(sunrise: sunrise, sunset: sunset, at: at ?? .now, lineWidth: 1.5).frame(width: 44, height: 20)
                         let left = Format.duration(from: at ?? .now, to: sunset)
                         DaylightText(
-                            line: Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(Format.time(sunset))"),
+                            line: Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(sunTime(sunset))"),
                             rest: Text(tr("%@ left", left))
                         )
                             .accessibilityLabel(tr("Rowing until sunset at %@, %@ left", Format.time(sunset), left))
                     case let .down(sunrise, _):
                         Image(systemName: "moon.stars.fill").foregroundStyle(.secondary).frame(width: 44)
-                        DaylightText(line: Text("\(tr("Rowing again from")) \(sunSymbol("sunrise.fill")) \(Format.time(sunrise))"))
+                        DaylightText(line: Text("\(tr("Rowing again from")) \(sunSymbol("sunrise.fill")) \(sunTime(sunrise))"))
                             .accessibilityLabel(tr("Rowing again from sunrise at %@", Format.time(sunrise)))
                     }
                     Spacer(minLength: 0)
@@ -973,8 +973,17 @@ private struct NowCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityValue(Condition.daylight.cause(in: hour).map { tr("Sets the light: %@", $0.title) } ?? "")
             .accessibilityHint(tr("Opens sunrise, sunset and daylight"))
         }
+    }
+
+    /// The sunset or sunrise time, in amber or red while daylight is what sets the light
+    /// (owner's pick S1, 5 Nov 2026); the rest of the line stays as it is.
+    private func sunTime(_ date: Date) -> Text {
+        let time = Text(Format.time(date))
+        guard let tint = Condition.daylight.cause(in: hour)?.causeTint else { return time }
+        return time.foregroundStyle(tint)
     }
 
     /// A sunset or sunrise symbol to sit in the daylight line's text.
