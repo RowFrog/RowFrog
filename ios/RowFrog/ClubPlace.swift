@@ -15,14 +15,6 @@ final class ClubPlaces {
     static let maxDistance: CLLocationDistance = 300
 
     private var found: [String: MKMapItem] = [:]
-    /// Where the club's clubhouse is, when it was found and lies apart from a
-    /// confirmed launch point; read by every map for its split pins.
-    nonisolated static func clubhouse(forID id: String?) -> CLLocationCoordinate2D? {
-        guard let id else { return nil }
-        let saved = UserDefaults.standard.dictionary(forKey: Self.key) as? [String: [String: Any]] ?? [:]
-        guard let pair = saved[id]?["house"] as? [Double], pair.count == 2 else { return nil }
-        return CLLocationCoordinate2D(latitude: pair[0], longitude: pair[1])
-    }
 
     /// The club's place, or nil when Apple Maps has none that fits.
     func place(for club: Club) async -> MKMapItem? {
@@ -39,11 +31,6 @@ final class ClubPlaces {
         if item == nil, let short = club.shortName { item = await search(short, near: club) }
         var entry: [String: Any] = ["checked": Date.now.timeIntervalSince1970]
         if let name = item?.name { entry["name"] = name }
-        // The clubhouse for every map's split pins, only when the club has a launch point of its own.
-        let launch = CLLocationCoordinate2D(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
-        if let house = ClubMarks.clubhouse(of: item, launch: launch, verified: club.launchPointVerified) {
-            entry["house"] = [house.latitude, house.longitude]
-        }
         var all = saved
         all[club.id] = entry
         UserDefaults.standard.set(all, forKey: Self.key)

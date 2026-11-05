@@ -1661,7 +1661,7 @@ function launchPointBody(club, mapId) {
     : t("No launch point set yet: the forecast, waves and warnings are for the club's place on OpenStreetMap.");
   return `
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
-    ${club.launchPointVerified ? `<p>${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
+    ${club.launchPointVerified || club.launchPointSet ? `<p>${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">

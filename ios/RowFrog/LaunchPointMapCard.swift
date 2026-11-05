@@ -95,8 +95,8 @@ struct LaunchPointDetails: View {
     @State private var refit = false
     /// The club's own place in Apple Maps, when it has one.
     @State private var place: MKMapItem?
-    /// Where the clubhouse is, when it is known and not at the launch point.
-    @State private var clubhouse: CLLocationCoordinate2D?
+    /// Where the clubhouse is, when the launch point is set and the clubhouse apart from it.
+    private var clubhouse: CLLocationCoordinate2D? { ClubMarks.clubhouse(of: club) }
     /// The map's size in points, for how far apart the two pins are on screen.
     @State private var mapSize: CGSize = .zero
     /// Zoomed in far enough that the clubhouse and launch point get a pin each.
@@ -183,7 +183,6 @@ struct LaunchPointDetails: View {
         }
         .task(id: club.id) {
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
-            clubhouse = ClubMarks.clubhouse(of: place, launch: coordinate, verified: club.launchPointVerified)
             split = false
         }
     }
@@ -191,7 +190,7 @@ struct LaunchPointDetails: View {
     /// Which point this club's forecast is for, said for this club. It doesn't
     /// change with the zoom, so the sheet keeps its height as the pins split and join.
     @ViewBuilder private var forecastPointLine: some View {
-        if club.launchPointVerified {
+        if club.hasLaunchPoint {
             if clubhouse != nil {
                 Label(tr("The forecast, waves and warnings are for the launch point (oars), not the clubhouse."), systemImage: ClubMarks.launchSymbol)
             } else {
@@ -234,7 +233,6 @@ struct LaunchPointDetails: View {
             span = context.region.span
             updateSplit()
         }
-        .onChange(of: clubhouse?.latitude) { updateSplit() }
         .onChange(of: mapSize) { updateSplit() }
         .onMapCameraChange(frequency: .onEnd) { context in
             let span = context.region.span

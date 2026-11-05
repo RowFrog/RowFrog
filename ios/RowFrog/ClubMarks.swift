@@ -7,8 +7,8 @@ import UIKit
 /// is (house or rower: the club; oars: its launch point).
 ///
 /// Zoomed out a club has one pin, at its launch point, which is where the
-/// forecast is for. Once the club has a confirmed launch point and its
-/// clubhouse (its Apple Maps place) lies apart from it, zooming in until the
+/// forecast is for. Once the club's launch point is set (confirmed by the club
+/// or checked by hand) and its clubhouse lies apart from it, zooming in until the
 /// two are `splitAt` points apart on screen moves the club's pin to the
 /// clubhouse and puts oars on the launch point; under `joinAt` they join again.
 /// A club with no launch point set yet keeps its one pin.
@@ -26,12 +26,25 @@ enum ClubMarks {
         apart >= (now ? joinAt : splitAt)
     }
 
-    /// The club's Apple Maps place as its clubhouse: only for a confirmed launch
-    /// point, and only when it isn't at the launch point.
-    static func clubhouse(of place: MKMapItem?, launch: CLLocationCoordinate2D, verified: Bool) -> CLLocationCoordinate2D? {
-        guard verified, let location = place?.placemark.location else { return nil }
-        let distance = location.distance(from: CLLocation(latitude: launch.latitude, longitude: launch.longitude))
-        return distance >= sameSpot ? location.coordinate : nil
+    /// The club's clubhouse, when its launch point is set and the clubhouse
+    /// lies apart from it.
+    static func clubhouse(of club: Club) -> CLLocationCoordinate2D? {
+        guard club.hasLaunchPoint, let house = club.clubhouse else { return nil }
+        let launch = CLLocation(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
+        let distance = CLLocation(latitude: house.lat, longitude: house.lon).distance(from: launch)
+        return distance >= sameSpot ? CLLocationCoordinate2D(latitude: house.lat, longitude: house.lon) : nil
+    }
+
+    /// Every loaded club's clubhouse by id, for maps that only know a club's id
+    /// (lake map, satellite picture, radar and weather maps). Set when the club list loads.
+    private static var houses: [String: CLLocationCoordinate2D] = [:]
+
+    static func register(_ clubs: [Club]) {
+        houses = Dictionary(clubs.compactMap { club in clubhouse(of: club).map { (club.id, $0) } }, uniquingKeysWith: { a, _ in a })
+    }
+
+    static func clubhouse(forID id: String?) -> CLLocationCoordinate2D? {
+        id.flatMap { houses[$0] }
     }
 }
 
@@ -55,7 +68,7 @@ final class ClubPinSplitter {
 
     /// Follows a club's pin, standing on its launch point, when its clubhouse is known.
     func track(_ pin: MKPointAnnotation, clubID: String?, isOwn: Bool) {
-        guard let clubhouse = ClubPlaces.clubhouse(forID: clubID) else { return }
+        guard let clubhouse = ClubMarks.clubhouse(forID: clubID) else { return }
         let oars = LaunchOarsPin()
         oars.coordinate = pin.coordinate
         oars.title = isOwn ? tr("Launch point") : nil

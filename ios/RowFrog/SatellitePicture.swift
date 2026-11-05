@@ -875,7 +875,7 @@ struct SatelliteOverlay: View {
                 var oars: [(own: Bool, at: CGPoint)] = []
                 let marks = view.clubs.map { club -> (LakeClub, CGPoint) in
                     let launch = point(club.launchPoint.lon, club.launchPoint.lat)
-                    guard let house = ClubPlaces.clubhouse(forID: club.id) else { return (club, launch) }
+                    guard let house = ClubMarks.clubhouse(forID: club.id) else { return (club, launch) }
                     let at = point(house.longitude, house.latitude)
                     guard ClubMarks.shouldSplit(apart: hypot(at.x - launch.x, at.y - launch.y), now: false) else { return (club, launch) }
                     oars.append((club.id == clubID, launch))

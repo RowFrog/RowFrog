@@ -25,18 +25,32 @@ final class LocationPinsTests: XCTestCase {
         XCTAssertTrue(LaunchPointDetails.shouldSplit(clubhouse, from: launch, span: span, size: size, now: true))
     }
 
+    private func club(set: Bool, verified: Bool = false, house: Coordinate?) -> Club {
+        var club = Club(id: "rc", name: "RC", shortName: nil, address: "", website: nil,
+                        launchPoint: Coordinate(lat: launch.latitude, lon: launch.longitude), launchPointVerified: verified)
+        club.launchPointSet = set
+        club.clubhouse = house
+        return club
+    }
+
     func testAClubhouseAtTheLaunchPointGetsNoPinOfItsOwn() {
-        let near = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 47.99677, longitude: 11.34745)))
-        let away = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 47.99766, longitude: 11.34745)))
-        XCTAssertNil(ClubMarks.clubhouse(of: near, launch: launch, verified: true))
-        XCTAssertNil(ClubMarks.clubhouse(of: nil, launch: launch, verified: true))
-        XCTAssertNotNil(ClubMarks.clubhouse(of: away, launch: launch, verified: true))
+        XCTAssertNil(ClubMarks.clubhouse(of: club(set: true, house: Coordinate(lat: 47.99677, lon: 11.34745))))  // 11 m
+        XCTAssertNil(ClubMarks.clubhouse(of: club(set: true, house: nil)))
+        XCTAssertNotNil(ClubMarks.clubhouse(of: club(set: true, house: Coordinate(lat: 47.99766, lon: 11.34745))))  // 110 m
+        XCTAssertNotNil(ClubMarks.clubhouse(of: club(set: false, verified: true, house: Coordinate(lat: 47.99766, lon: 11.34745))))
     }
 
     func testAClubWithNoLaunchPointSetKeepsOnePin() {
         // Its one point is the club itself, so there is nothing to split from.
-        let away = MKMapItem(placemark: MKPlacemark(coordinate: CLLocationCoordinate2D(latitude: 47.99766, longitude: 11.34745)))
-        XCTAssertNil(ClubMarks.clubhouse(of: away, launch: launch, verified: false))
+        XCTAssertNil(ClubMarks.clubhouse(of: club(set: false, house: Coordinate(lat: 47.99766, lon: 11.34745))))
+    }
+
+    func testMapsFindTheClubhouseByID() {
+        let checked = club(set: true, house: Coordinate(lat: 47.99766, lon: 11.34745))
+        ClubMarks.register([checked])
+        XCTAssertNotNil(ClubMarks.clubhouse(forID: "rc"))
+        XCTAssertNil(ClubMarks.clubhouse(forID: "other"))
+        ClubMarks.register([])
     }
 
     func testEveryMapUsesTheSameThresholds() {
