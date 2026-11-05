@@ -335,9 +335,24 @@ svg.filled { width: 22px; height: 22px; }
 .credits p { margin: 4px 0; }
 .links { text-align: center; font-size: 13px; color: var(--sub); margin-top: 24px; }
 
-/* Floating controls in glass, as the app's page bar and map buttons (floatingControl). */
-.glass { background: color-mix(in srgb, var(--card) 62%, transparent); backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6);
-  border: .5px solid color-mix(in srgb, var(--text) 12%, transparent); box-shadow: 0 2px 12px rgba(0, 0, 0, .12); }
+/* Floating controls in glass, as the app's page bar and map buttons (floatingControl, Liquid Glass on iOS 26).
+   Owner's pick B (5 Nov 2026): clear glass, a light tint and little blur, a bright rim along the top edge and
+   a soft sheen, which looks the same in Safari and Chrome (browsers cannot bend what is behind, as iOS does).
+   Solid with reduced transparency or without backdrop-filter. */
+:root { --glass-tint: color-mix(in srgb, var(--card) 18%, transparent);
+  --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .35), transparent 55%), radial-gradient(90% 70% at 80% 110%, rgba(255, 255, 255, .14), transparent 60%);
+  --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .75), inset 0 -1px .5px rgba(255, 255, 255, .25), inset 0 0 0 .5px rgba(255, 255, 255, .35);
+  --glass-shadow: 0 6px 16px rgba(0, 0, 0, .16); }
+:root[data-theme="dark"] { --glass-tint: color-mix(in srgb, #000 16%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
+  --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .45), inset 0 -1px .5px rgba(255, 255, 255, .12), inset 0 0 0 .5px rgba(255, 255, 255, .18); --glass-shadow: 0 6px 16px rgba(0, 0, 0, .3); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass-tint: color-mix(in srgb, #000 16%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
+  --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .45), inset 0 -1px .5px rgba(255, 255, 255, .12), inset 0 0 0 .5px rgba(255, 255, 255, .18); --glass-shadow: 0 6px 16px rgba(0, 0, 0, .3); } }
+/* Doubled class, so the glass wins over .round, .search and the other looks these controls also carry. */
+.glass.glass, .leaflet-touch .leaflet-bar, .leaflet-bar { background: var(--glass-sheen), var(--glass-tint);
+  backdrop-filter: blur(8px) saturate(1.4) brightness(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.4) brightness(1.1);
+  border: 0; box-shadow: var(--glass-rim), var(--glass-shadow); }
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass.glass, .leaflet-bar { background: var(--card); } }
+@media (prefers-reduced-transparency: reduce) { .glass.glass, .leaflet-touch .leaflet-bar, .leaflet-bar { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 
 /* Bottom bar: three floating pieces, all 44 px high: cog and boat, page dots, list (RootView.PageBar). */
 .bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; align-items: center; gap: 8px; padding: 0 16px;
@@ -417,8 +432,7 @@ body.title-gone .hhead { top: calc(var(--safe-top) + 44px); }
 @media (prefers-reduced-motion: reduce) { .head-side .slide-in, .side.slide-in { animation: none; } }
 
 /* The map buttons float in the same glass. */
-.leaflet-touch .leaflet-bar, .leaflet-bar { border: 0 !important; border-radius: 12px; overflow: hidden; background: color-mix(in srgb, var(--card) 62%, transparent);
-  backdrop-filter: blur(20px) saturate(1.6); -webkit-backdrop-filter: blur(20px) saturate(1.6); box-shadow: 0 2px 12px rgba(0, 0, 0, .12); }
+.leaflet-touch .leaflet-bar, .leaflet-bar { border: 0 !important; border-radius: 12px; overflow: hidden; }
 .leaflet-bar a { background: transparent !important; color: var(--text) !important; border-bottom-color: color-mix(in srgb, var(--text) 12%, transparent) !important; }
 
 /* List (LocationListView). */
@@ -880,14 +894,22 @@ input.switch:checked::after { transform: translateX(20px); }
 body.has-picture { background: transparent; }
 /* Frosted: the picture shows through the cards, blurred; solid: no picture in the cards. */
 body.has-picture[data-tiles="frosted"] .card, body.has-picture[data-tiles="frosted"] .side .row { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
-/* Text that sits on the picture itself gets a thin backing, as the app's labels. */
-body.has-picture main.page > h1.large, body.has-picture .list-head > h1.large, body.has-picture main.page > h3.section, body.has-picture main.page > p.footer,
+/* Text that sits on the picture itself gets a thin frost, as the app's labelBackground: the picture blurred
+   with only a light wash (veil .25, .2 in dark). Big page titles have none, as iOS's large navigation titles. */
+body.has-picture main.page > h3.section, body.has-picture main.page > p.footer,
 body.has-picture main.page > .source, body.has-picture main.page > .credits, body.has-picture main.page > footer.links,
 body.has-picture .page-end > .source, body.has-picture .page-end > .credits, body.has-picture .page-end > footer.links,
 body.has-picture main.page > .list-links, body.has-picture main.page > .add-own, body.has-picture #updated {
-  width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) 55%, transparent);
-  -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  width: fit-content; max-width: 100%; padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) var(--label-veil, 25%), transparent);
+  -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5);
 }
+/* The club header too sits on a frosted plate over a picture (ClubPageHeader: labelBackground, 16 px corners,
+   16 by 10 px inside), as wide as its text. Where the page buttons sit in the title row (side list shown), the
+   row spans the column, so the plate is left out there. Raised, so the place line tip still pops over the cards. */
+body.has-picture .club-head:not(:has(.head-side)) { position: relative; z-index: 5; width: fit-content; max-width: 100%; margin-inline: auto; box-sizing: border-box; padding: 10px 16px; border-radius: 16px;
+  background: color-mix(in srgb, var(--bg) var(--label-veil, 25%), transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
+:root[data-theme="dark"] body.has-picture { --label-veil: 20%; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body.has-picture { --label-veil: 20%; } }
 .bg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(98px, 1fr)); gap: 16px 12px; margin-bottom: 12px; }
 .bg-option { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; cursor: pointer; width: 100%; }
 .bg-option .thumb { display: flex; align-items: center; justify-content: center; width: 100%; aspect-ratio: 1 / 1.34; border-radius: 14px; background: var(--tile) center / cover no-repeat; color: var(--sub); border: 2px solid transparent; }
@@ -942,7 +964,9 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .source-parts li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .pill.wide { display: flex; justify-content: center; margin: 14px 0 0; padding: 12px; }
 .club-head button.link.failed { color: var(--orange); font: inherit; text-align: center; }
-.club-head .place-line { font-size: 17px; }
+.club-head .place-line { font-size: 17px; position: relative; margin: 2px 0; }
+/* The one-time place line tip (PlaceLineTip) pops below the line, its arrow at the line's middle. */
+.club-head .place-line .tip.pop { left: 50%; transform: translateX(-50%); font-size: 15px; --arrow-x: calc(50% - 7px); }
 .club-head .place-line .launch-open { color: var(--accent); font: inherit; display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; margin: -6px -8px; text-align: center; }
 .club-head .place-line .launch-open svg { width: 16px; height: 16px; flex: none; }
 .club-head .place-line .launch-open svg:last-child { width: 14px; height: 14px; }

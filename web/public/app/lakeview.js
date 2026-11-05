@@ -163,7 +163,7 @@ function windText(hour) {
   const w = windSummary(hour);
   if (!w) return null;
   const speed = Math.round(w.min) === Math.round(w.max) ? wind(w.max) : `${windRange(w.min, w.max)} ${windUnit()}`;
-  return `${speed}${w.fromDeg != null ? ` ${t("from %@", compass(w.fromDeg))}` : ""}, ${t("gusts up to %@", wind(w.gust))}`;
+  return `${speed}${w.fromDeg != null ? ` ${t("from %@", compass(w.fromDeg, lang()))}` : ""}, ${t("gusts up to %@", wind(w.gust))}`;
 }
 
 /** What holds for the whole lake (or river stretch) this hour, such as a DWD storm warning or darkness (LakeWideBanner). */
@@ -555,7 +555,7 @@ function viewingPanel(hour) {
       ${view.zones.length > 1 && view.zones[zone] ? `<small class="sub">${h(t("Selected spot · %@", t(zoneTitle(view.zones[zone], waterKind(view)))))}</small>` : ""}
       <div class="now-metrics"><div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesCm[i] / 100))}</span></div>
         <div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
-        ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg))}</span></div>` : ""}</div></div>`;
+        ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg, lang()))}</span></div>` : ""}</div></div>`;
   } else {
     const windLine = windText(hour);
     const top = maxWave(hour);

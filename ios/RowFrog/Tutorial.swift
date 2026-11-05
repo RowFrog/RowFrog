@@ -46,6 +46,8 @@ enum Tutorial {
         if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
         // `-RWBoatTip YES` shows the boats-at-other-clubs tip, with the others hidden.
         if defaults.bool(forKey: "RWBoatTip") { Tips.showTipsForTesting([BoatsElsewhereTip.self]) }
+        // `-RWPlaceTip YES` shows the tip at the place line under the club's name.
+        if defaults.bool(forKey: "RWPlaceTip") { Tips.showTipsForTesting([PlaceLineTip.self]) }
         if defaults.bool(forKey: "RWLaterTips") {
             Tips.hideTipsForTesting([RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
             Tips.showTipsForTesting([RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
@@ -638,6 +640,13 @@ struct HourlyTip: Tip {
     var title: Text { Text(tr("Plan your outing")) }
     var message: Text? { Text(tr("Each hour has its own rowing light. The icons on top name the columns, and rows after dark are dimmed.")) }
     var image: Image? { Image(systemName: "clock") }
+}
+
+/// At the lake and town line under the club's name, while it opens the map (launch point in the header).
+struct PlaceLineTip: Tip {
+    var title: Text { Text(tr("Where the forecast is for")) }
+    var message: Text? { Text(tr("Tap the place to see on a map the spot the forecast is for, with directions.")) }
+    var image: Image? { Image(systemName: "mappin.and.ellipse") }
 }
 
 struct LaunchPointTip: Tip {

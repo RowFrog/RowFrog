@@ -1022,11 +1022,14 @@ const inHeader = (club) => Boolean(club?.launchPoint) && store.launchPointInHead
 function placeLine(club) {
   const text = place(club?.lakeName, town(club?.address), lakeTitle);
   if (!inHeader(club)) return `<p class="sub">${h(text)}</p>`;
-  return `<p class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the launch point on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button></p>`;
+  return `<div class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the launch point on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
 }
 
 /** The header's lake and town line and the not-confirmed line open the launch point. */
-const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open").forEach((b) => b.addEventListener("click", () => openLaunchPoint(club)));
+const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open").forEach((b) => b.addEventListener("click", () => {
+  closeTip(root, "placeLine");
+  openLaunchPoint(club);
+}));
 
 /** The launch point opened from the header (LaunchPointSheet): the same map, note, coordinates and Open in Maps as the card. */
 function openLaunchPoint(club) {
@@ -1161,7 +1164,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null } = {}
   const visibilityCaption = fogNow ? t("Fog") : fog ? t("Fog from %@", time(fog.time)) : t("No fog");
   const iceLine = forecast.ice ? iceDetail(forecast.ice) : t("Check the lake yourself");
   // As wide as its longest direction ("from NW"), so the column keeps one width whatever the wind does.
-  const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg))}` : "");
+  const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
   return `<section class="card now">
     <div class="now-head">
       ${dot(hour.light, 36, stale)}
@@ -1444,7 +1447,7 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
       return tile(degrees(hour.apparentTemperatureC), feelsLikeNote(hour) ? t(feelsLikeNote(hour)) : "", graphic);
     case "wind": {
       const gust = t("Gusts %@", windNumber(hour.windGustMs));
-      return tile(wind(hour.windSpeedMs), hour.windFromDeg != null ? `${gust} · ${t("from %@", compass(hour.windFromDeg))}` : gust, graphic);
+      return tile(wind(hour.windSpeedMs), hour.windFromDeg != null ? `${gust} · ${t("from %@", compass(hour.windFromDeg, lang()))}` : gust, graphic);
     }
     case "waves": {
       const fetch = hour.fetchM;

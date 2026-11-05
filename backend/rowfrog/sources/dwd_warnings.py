@@ -33,6 +33,7 @@ Data: Deutscher Wetterdienst, CC BY 4.0 (credit "Deutscher Wetterdienst").
 
 from __future__ import annotations
 
+import asyncio
 import io
 import json
 import math
@@ -198,31 +199,52 @@ def has_shore_lights(warncell_id: int) -> bool:
     return _shore_lights.get(warncell_id, False)
 
 
+# DWD's GeoServer now and then drops a connection or answers 502/503 for a moment;
+# one such hiccup would leave a club's warnings "unavailable" until the next run.
+RETRY_DELAYS_S = (2.0, 5.0)
+
+
+async def _get(client: httpx.AsyncClient, url: str, **kwargs) -> httpx.Response:
+    """GET with a few quick retries on dropped connections, timeouts and server errors."""
+    for delay in (*RETRY_DELAYS_S, None):
+        try:
+            resp = await client.get(url, **kwargs)
+            if resp.status_code < 500 or delay is None:
+                resp.raise_for_status()
+                return resp
+        except httpx.TransportError:
+            if delay is None:
+                raise
+        await asyncio.sleep(delay)
+    raise AssertionError("unreachable")
+
+
 async def fetch_lake_areas(client: httpx.AsyncClient) -> list[LakeArea]:
     # The polygons are detailed and DWD's server can take a minute; they rarely change and are cached.
-    resp = await client.get(
+    resp = await _get(
+        client,
         WFS_URL,
         params=_query(typeName="dwd:Warngebiete_Binnenseen", srsName="EPSG:4326", propertyName="WARNCELLID,NAME,SHAPE"),
         timeout=120,
     )
-    resp.raise_for_status()
     return parse_lake_areas(resp.json())
 
 
 async def fetch_lake_warnings(client: httpx.AsyncClient) -> list[tuple[int, Warning]]:
     """All active lake warnings in Germany; there are only ever a few."""
-    resp = await client.get(
+    resp = await _get(
+        client,
         WFS_URL,
         params=_query(typeName="dwd:Warnungen_Binnenseen", propertyName=_PROPERTIES),
         timeout=30,
     )
-    resp.raise_for_status()
     return parse_warnings(resp.json(), "lake")
 
 
 async def fetch_warn_cell(client: httpx.AsyncClient, lon: float, lat: float) -> int | None:
     """The municipality warn cell the point lies in; None outside Germany. Cells rarely change."""
-    resp = await client.get(
+    resp = await _get(
+        client,
         WFS_URL,
         params=_query(
             typeName="dwd:Warngebiete_Gemeinden",
@@ -232,7 +254,6 @@ async def fetch_warn_cell(client: httpx.AsyncClient, lon: float, lat: float) -> 
         ),
         timeout=30,
     )
-    resp.raise_for_status()
     features = resp.json().get("features") or []
     return int(features[0]["properties"]["WARNCELLID"]) if features else None
 
@@ -247,7 +268,8 @@ async def fetch_local_warnings_for_cells(client: httpx.AsyncClient, cells: Itera
     out: dict[int, list[Warning]] = {cell: [] for cell in ordered}
     for i in range(0, len(ordered), CELLS_PER_QUERY):
         chunk = ordered[i : i + CELLS_PER_QUERY]
-        resp = await client.get(
+        resp = await _get(
+            client,
             WFS_URL,
             params=_query(
                 typeName="dwd:Warnungen_Gemeinden",
@@ -256,7 +278,6 @@ async def fetch_local_warnings_for_cells(client: httpx.AsyncClient, cells: Itera
             ),
             timeout=60,
         )
-        resp.raise_for_status()
         for cell, w in parse_warnings(resp.json(), "local"):
             out.setdefault(cell, []).append(w)
     return out
@@ -265,7 +286,8 @@ async def fetch_local_warnings_for_cells(client: httpx.AsyncClient, cells: Itera
 async def fetch_local_warnings(client: httpx.AsyncClient, lon: float, lat: float) -> list[Warning]:
     """Weather warnings for the municipality the point lies in."""
     # GeoServer reads EPSG:4326 points in latitude-longitude order in WFS 2.0.
-    resp = await client.get(
+    resp = await _get(
+        client,
         WFS_URL,
         params=_query(
             typeName="dwd:Warnungen_Gemeinden",
@@ -274,7 +296,6 @@ async def fetch_local_warnings(client: httpx.AsyncClient, lon: float, lat: float
         ),
         timeout=30,
     )
-    resp.raise_for_status()
     return [w for _, w in parse_warnings(resp.json(), "local")]
 
 
@@ -324,8 +345,7 @@ def parse_english_cap(data: bytes) -> dict[str, EnglishText]:
 
 
 async def fetch_english_texts(client: httpx.AsyncClient) -> dict[str, EnglishText]:
-    resp = await client.get(ENGLISH_CAP_URL, timeout=30)
-    resp.raise_for_status()
+    resp = await _get(client, ENGLISH_CAP_URL, timeout=30)
     return parse_english_cap(resp.content)
 
 

@@ -173,10 +173,11 @@ export function windValue(ms, unit = "ms") {
   return Math.round((WIND_UNITS[unit] ?? WIND_UNITS.ms).from(ms));
 }
 
-/** Where the wind comes from, as N, NE, E … */
-export function compass(deg) {
+/** Where the wind comes from, as N, NE, E …; in German N, NO, O … (Format.compass). */
+export function compass(deg, language = "en") {
   if (deg == null) return "";
-  return ["N", "NE", "E", "SE", "S", "SW", "W", "NW"][Math.round(((deg % 360) + 360) % 360 / 45) % 8];
+  const points = language === "de" ? ["N", "NO", "O", "SO", "S", "SW", "W", "NW"] : ["N", "NE", "E", "SE", "S", "SW", "W", "NW"];
+  return points[Math.round(((deg % 360) + 360) % 360 / 45) % 8];
 }
 
 /** Lower case, without accents and ß, for the search. */

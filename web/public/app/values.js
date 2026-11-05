@@ -1,7 +1,7 @@
 // What a value's own page shows (ConditionDetail in the app): the big value,
 // the chart's lines and limits, the facts, the rowing advice and the source.
 
-import { t, num } from "./i18n.js";
+import { t, num, lang } from "./i18n.js";
 import {
   time, dayLabel, dayTime, duration, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
   pressure, pressureChangeText, inUnit, unitSymbol, unitChange, unitId,
@@ -215,12 +215,12 @@ const BUILDERS = {
     const x = d.now;
     const gust = extreme(d.next24, (y) => y.windGustMs, true);
     const facts = [[t("Beaufort"), x.windSpeedMs == null ? "–" : String(beaufort(x.windSpeedMs))]];
-    if (x.windFromDeg != null) facts.push([t("From"), `${compass(x.windFromDeg)} (${num(x.windFromDeg)}°)`]);
+    if (x.windFromDeg != null) facts.push([t("From"), `${compass(x.windFromDeg, lang())} (${num(x.windFromDeg)}°)`]);
     if (x.fetchM != null) facts.push([t("Open water upwind"), distance(x.fetchM)]);
     if (gust) facts.push([t("Strongest gust next 24 h"), t("%@ · %@", wind(gust.windGustMs), dayTime(gust.time))]);
     return base({
       value: wind(x.windSpeedMs),
-      note: t("Gusts %@", wind(x.windGustMs)) + (x.windFromDeg != null ? ` · ${t("from %@", compass(x.windFromDeg))}` : ""),
+      note: t("Gusts %@", wind(x.windGustMs)) + (x.windFromDeg != null ? ` · ${t("from %@", compass(x.windFromDeg, lang()))}` : ""),
       big: windDial(x), unit: windUnit(),
       lines: [
         { name: t("Wind"), colour: COLOURS.blue, points: d.points((y) => windIn(y.windSpeedMs)) },
