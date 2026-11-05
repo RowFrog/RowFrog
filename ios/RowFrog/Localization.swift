@@ -1049,9 +1049,6 @@ enum German {
         "Opens the rain radar map": "Öffnet die Regenradar-Karte",
         "Opens this hour with all its values": "Öffnet diese Stunde mit allen Werten",
         "Order of the club page cards": "Reihenfolge der Karten auf den Vereinsseiten",
-        // Still used by the website until it follows the rename to "Location".
-        "Launch point in the club header": "Steg im Kopf der Vereinsseite",
-        "Tap the lake and town under the club's name for the launch point's map, coordinates and Open in Maps. The Launch point card leaves the page.": "Tippe unter dem Vereinsnamen auf See und Ort, um Karte, Koordinaten und \u{201E}In Karten öffnen\u{201C} des Stegs zu sehen. Die Steg-Karte verschwindet von der Seite.",
         "Location in the club header": "Standort im Kopf der Vereinsseite",
         "Tap the lake and town under the club's name for the club's location: a map with the launch point, coordinates and Open in Maps. The Launch point card leaves the page.": "Tippe unter dem Vereinsnamen auf See und Ort, um den Standort des Vereins zu sehen: Karte mit Steg, Koordinaten und \u{201E}In Karten öffnen\u{201C}. Die Steg-Karte verschwindet von der Seite.",
         "The Launch point card is on the page, as before.": "Die Steg-Karte steht auf der Seite, wie bisher.",
