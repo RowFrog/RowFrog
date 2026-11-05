@@ -911,7 +911,10 @@ private struct DeveloperSettingsView: View {
             }
             .surfaceRows()
             Section {
-                Toggle(isOn: Binding(get: { PowerState.forced }, set: { PowerState.forced = $0 })) {
+                Toggle(isOn: Binding(get: { PowerState.forced }, set: {
+                    PowerState.forced = $0
+                    DiagnosisLog.note("draw as in Low Power Mode: \($0 ? "on" : "off")")
+                })) {
                     Label(tr("Draw as in Low Power Mode"), systemImage: "battery.25percent")
                 }
                 ShareLink(item: DiagnosisLog.url) {

@@ -203,7 +203,6 @@ final class PowerState {
         set {
             UserDefaults.standard.set(newValue, forKey: forcedKey)
             shared.lowPower = isOn
-            DiagnosisLog.note("draw as in Low Power Mode: \(newValue ? "on" : "off")")
         }
     }
     @ObservationIgnored private var observer: NSObjectProtocol?
