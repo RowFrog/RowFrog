@@ -328,13 +328,49 @@ def apply_hand_checked(country: str, waters: list[dict], clubs: list[dict]) -> i
     return changed
 
 
+def keep_earlier_fixes(path: Path, waters: list[dict], clubs: list[dict]) -> int:
+    """Keeps what later steps put into the catalog before this import: launch
+    points moved onto the shore (snap_launch_points.py, fix_unknown_waters.py
+    --snap: "shore of ..."), and a club's known water where the import now
+    finds only "Water near <town>". Without this, the 2026-11-04 import put 50
+    Austrian and Swiss clubs back at their geocoded addresses, up to 1.4 km
+    inland. Returns how many clubs kept something."""
+    if not path.exists():
+        return 0
+    earlier = json.loads(path.read_text(encoding="utf-8"))
+    old_clubs = {c["id"]: c for c in earlier.get("clubs", [])}
+    old_waters = {w["id"]: w for w in earlier.get("lakes", [])}
+    have = {w["id"] for w in waters}
+    kept = 0
+    for club in clubs:
+        old = old_clubs.get(club["id"])
+        if old is None:
+            continue
+        if club["lakeId"].startswith("near-") and not old["lakeId"].startswith("near-"):
+            club["lakeId"] = old["lakeId"]
+            club["launchPoint"] = dict(old["launchPoint"])
+            if old["lakeId"] not in have and old["lakeId"] in old_waters:
+                waters.append(dict(old_waters[old["lakeId"]]))
+                have.add(old["lakeId"])
+            kept += 1
+        elif club["lakeId"] == old["lakeId"] and old["launchPoint"].get("precision", "").startswith("shore of"):
+            club["launchPoint"] = dict(old["launchPoint"])
+            kept += 1
+    used = {c["lakeId"] for c in clubs}
+    waters[:] = [w for w in waters if not w["id"].startswith("near-") or w["id"] in used]
+    if kept:
+        print(f"kept {kept} earlier shore points or waters in {path.name}")
+    return kept
+
+
 def write_catalog(name: str, source: str, waters: list[dict], clubs: list[dict]) -> Path:
     """Saves data/catalogs/<name>.json, e.g. name "at-oerv"."""
     CATALOGS.mkdir(exist_ok=True)
     apply_extra_sites(name.split("-")[0], waters, clubs)
     apply_water_fixes(name.split("-")[0], waters, clubs)
-    apply_hand_checked(name.split("-")[0], waters, clubs)
     path = CATALOGS / f"{name}.json"
+    keep_earlier_fixes(path, waters, clubs)
+    apply_hand_checked(name.split("-")[0], waters, clubs)
     catalog = {
         "version": 1,
         "updated": date.today().isoformat(),

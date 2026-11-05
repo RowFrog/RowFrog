@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-11-04",
+  "updated": "2026-10-25",
   "source": "© OpenStreetMap contributors, ODbL",
   "lakes": [
     {
@@ -221,9 +221,9 @@
       "country": "ch",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.56231,
-        "lon": 7.63348,
-        "precision": "way/1393966328 in OpenStreetMap, 113 m from the Rhein",
+        "lat": 47.56223,
+        "lon": 7.63344,
+        "precision": "shore of the Rhein nearest the earlier point (way/1393966328 in OpenStreetMap, 113 m from the Rhein), 9 m away",
         "verified": false
       }
     },
@@ -285,9 +285,9 @@
       "country": "ch",
       "lakeId": "river-limmat",
       "launchPoint": {
-        "lat": 47.46674,
-        "lon": 8.30878,
-        "precision": "way/113139563 in OpenStreetMap, 41 m from the Limmat",
+        "lat": 47.46672,
+        "lon": 8.30846,
+        "precision": "shore of the Limmat nearest the earlier point (way/113139563 in OpenStreetMap, 41 m from the Limmat), 24 m away",
         "verified": false
       }
     },
@@ -333,9 +333,9 @@
       "country": "ch",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.56287,
-        "lon": 8.06475,
-        "precision": "way/173456536 in OpenStreetMap, 90 m from the Rhein",
+        "lat": 47.563,
+        "lon": 8.06465,
+        "precision": "shore of the Rhein nearest the earlier point (way/173456536 in OpenStreetMap, 90 m from the Rhein), 16 m away",
         "verified": false
       }
     },
@@ -349,9 +349,9 @@
       "country": "ch",
       "lakeId": "river-aare",
       "launchPoint": {
-        "lat": 46.96573,
-        "lon": 7.38503,
-        "precision": "node/12084328812 in OpenStreetMap, 74 m from the Aare",
+        "lat": 46.966,
+        "lon": 7.38516,
+        "precision": "shore of the Aare nearest the earlier point (node/12084328812 in OpenStreetMap, 74 m from the Aare), 32 m away",
         "verified": false
       }
     },
@@ -397,9 +397,9 @@
       "country": "ch",
       "lakeId": "river-limmat",
       "launchPoint": {
-        "lat": 47.45653,
-        "lon": 8.3253,
-        "precision": "way/103439856 in OpenStreetMap, 96 m from the Limmat",
+        "lat": 47.45676,
+        "lon": 8.32528,
+        "precision": "shore of the Limmat nearest the earlier point (way/103439856 in OpenStreetMap, 96 m from the Limmat), 25 m away",
         "verified": false
       }
     },
@@ -541,9 +541,9 @@
       "country": "ch",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.68805,
-        "lon": 8.65508,
-        "precision": "node/12030666737 in OpenStreetMap, 96 m from the Rhein",
+        "lat": 47.68817,
+        "lon": 8.65523,
+        "precision": "shore of the Rhein nearest the earlier point (node/12030666737 in OpenStreetMap, 96 m from the Rhein), 18 m away",
         "verified": false
       }
     },
@@ -605,9 +605,9 @@
       "country": "ch",
       "lakeId": "river-rhein",
       "launchPoint": {
-        "lat": 47.57805,
-        "lon": 8.5118,
-        "precision": "node/2465000355 in OpenStreetMap, 83 m from the Rhein",
+        "lat": 47.57775,
+        "lon": 8.51164,
+        "precision": "shore of the Rhein nearest the earlier point (node/2465000355 in OpenStreetMap, 83 m from the Rhein), 35 m away",
         "verified": false
       }
     },
@@ -765,9 +765,9 @@
       "country": "ch",
       "lakeId": "river-alter-rhein",
       "launchPoint": {
-        "lat": 47.47918,
-        "lon": 9.58388,
-        "precision": "way/161529993 in OpenStreetMap, 52 m from the Alter Rhein",
+        "lat": 47.47933,
+        "lon": 9.58439,
+        "precision": "shore of the Alter Rhein nearest the earlier point (way/161529993 in OpenStreetMap, 52 m from the Alter Rhein), 42 m away",
         "verified": false
       }
     },
@@ -877,9 +877,9 @@
       "country": "ch",
       "lakeId": "river-aare",
       "launchPoint": {
-        "lat": 47.20105,
-        "lon": 7.53076,
-        "precision": "node/4549455377 in OpenStreetMap, 52 m from the Aare",
+        "lat": 47.20103,
+        "lon": 7.5308,
+        "precision": "shore of the Aare nearest the earlier point (node/4549455377 in OpenStreetMap, 52 m from the Aare), 3 m away",
         "verified": false
       }
     },
@@ -893,9 +893,9 @@
       "country": "ch",
       "lakeId": "river-la-thiele",
       "launchPoint": {
-        "lat": 46.78659,
-        "lon": 6.64035,
-        "precision": "way/80038507 in OpenStreetMap, 64 m from the La Thièle",
+        "lat": 46.78686,
+        "lon": 6.64004,
+        "precision": "shore of the La Thièle nearest the earlier point (way/80038507 in OpenStreetMap, 64 m from the La Thièle), 39 m away",
         "verified": false
       }
     },
