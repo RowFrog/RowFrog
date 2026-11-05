@@ -648,7 +648,7 @@ struct SatelliteLayerChips: View {
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(tr("Legend"))
-                if boatButton, !layers.on.isDisjoint(with: [.light, .waves, .shore]) {
+                if boatButton, let clubID, !layers.on.isDisjoint(with: [.light, .waves, .shore]) {
                     PageBoatButton(clubID: clubID, now: nil, waterC: nil, tipEdge: .bottom)
                         .background(Color.secondary.opacity(0.15), in: Capsule())
                 }
