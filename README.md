@@ -79,12 +79,12 @@ GitHub issue, so no GitHub account is needed.
    place while scrolling; tapping an hour opens that hour's view. Each night's
    dark hours fold into one tinted line (lowest temperature, strongest wind,
    highest waves, all its rain), which opens on a tap.
-6. Launch point map.
-7. Satellite picture.
-8. Forecast source and credits.
+6. Satellite picture.
+7. Forecast source and credits.
 
 The rain radar card is off by default (see Rain radar) and can be switched
-on in Arrange this page.
+on in Arrange this page. The launch point lives in the club header (see
+Launch point).
 
 "Arrange this page" at the end of the page reorders or hides cards, for all
 clubs or only this one. Every card has an ⓘ button that explains its symbols;
@@ -250,7 +250,7 @@ area as you zoom out.
 
 **Battery.** The app keeps its battery use low: the radar only updates on the
 page in front, readings and map pictures are reused, widgets redraw only when
-something changed, and the launch point map stays a still picture until it is
+something changed, and the launch point map is live only in its open sheet, or once its card is
 tapped. A blurred background picture is blurred once, not on every frame, and
 Add a place looks up the water only once the map stops moving. In Low Power
 Mode the tiles, the page bar and the clock strip are drawn solid and the radar updates less often. The app does
@@ -306,10 +306,16 @@ models from the first hours to the end of the forecast. When a model is
 picked in the hidden developer options, the credits line names its provider
 (MeteoSwiss, GeoSphere Austria or ECMWF) as well as DWD.
 
-**Launch point map.** A map (Apple MapKit, no key needed) shows the launch
-point the forecast is for, with its coordinates. It is a still picture until
-tapped; then it can be panned and zoomed, and it resets on each visit. "Open
-in Maps" also offers directions to the club, in the map app chosen in
+**Launch point.** The lake and town line under the club's name (and the
+orange "Launch point not yet confirmed" line) opens the launch point the
+forecast is for in a sheet sized to its content: a live map (Apple MapKit, no
+key needed) that can be panned and zoomed, the note that forecast, waves and
+warnings are for this point, its name in Apple Maps or the not-confirmed
+note, its coordinates and "Open in Maps". Settings › Club pages › Launch
+point in the club header (on by default) can be turned off to bring back the
+Launch point map card on the page instead, a still picture until tapped.
+The website does the same.
+"Open in Maps" also offers directions to the club, in the map app chosen in
 Settings: Apple Maps (the default; when it knows the club as a place, with
 photos and opening hours, it opens that) or Google Maps, which opens in its
 own app when installed.
