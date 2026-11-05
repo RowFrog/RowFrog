@@ -292,6 +292,9 @@ jobs:
           shoot 385-launch-point-card-separate light -RWOpenClub mrc-1880 -RWScrollTo launchpoint -RWLaunchPointInHeader NO
           # iPad sideways with the list slid away: sidebar button and cog on the page.
           WAIT=25 shoot 334-list-slid-away light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES -RWSideListHidden YES
+          # iPad sideways with a picture: one picture behind the list and the page, list beside and slid away.
+          WAIT=25 shoot 396-shared-picture-list light -RWOpenClub mrc-1880 -RWLandscape YES -RWBackground sample:alpine-lake
+          WAIT=25 shoot 397-shared-picture-list-away light -RWOpenClub mrc-1880 -RWLandscape YES -RWBackground sample:alpine-lake -RWSideListHidden YES
           # The shore warning lights explained, at a club with a lake warning.
           shoot 70-shore-lights light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES
           shoot 70-shore-lights-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES -RWLanguage de
