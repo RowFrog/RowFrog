@@ -1174,3 +1174,6 @@ dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 .lake-top .lake-boat .tool.boat { min-width: 52px; width: auto; padding: 0 8px; }
 .chips .chip-boat { display: inline-flex; flex: none; }
 .chips .chip-boat .tool.boat { height: 30px; min-width: 44px; padding: 0 8px; border-radius: 999px; background: var(--tile); box-shadow: none; backdrop-filter: none; }
+/* A club's launch point once its pin has moved to the clubhouse: crossed oars in the club's colour, below its pin (ClubMarks). */
+.club-pin.oars .dot { width: 26px; height: 26px; font-size: 14px; }
+.club-pin.oars:not(.own) .dot { background: #8e8e93; }
