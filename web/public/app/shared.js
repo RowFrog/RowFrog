@@ -66,6 +66,9 @@ export const store = {
   /** Where the launch point and directions open: "google", "apple" or "osm"; until picked, the device's own (deviceMapsApp). */
   get mapsApp() { const v = load("rf.mapsApp", null); return MAPS_APPS[v] ? v : deviceMapsApp(); },
   set mapsApp(v) { save("rf.mapsApp", v); },
+  /** The launch point in the club header: the lake and town line opens it in a sheet, and its card leaves the page (owner's choice B, 4 Nov 2026). */
+  get launchPointInHeader() { return load("rf.launchPointInHeader", true) !== false; },
+  set launchPointInHeader(on) { save("rf.launchPointInHeader", on); },
   get mapZoom() { return load("rf.mapZoom", "normal"); },
   set mapZoom(zoom) { save("rf.mapZoom", zoom); },
   /** The full-screen map plays 3 times round. */

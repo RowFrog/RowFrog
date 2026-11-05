@@ -940,6 +940,13 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .source-parts li { display: flex; flex-direction: column; gap: 2px; padding: 8px 0; border-bottom: 1px solid var(--line); }
 .pill.wide { display: flex; justify-content: center; margin: 14px 0 0; padding: 12px; }
 .club-head button.link.failed { color: var(--orange); font: inherit; text-align: center; }
+.club-head .place-line { font-size: 17px; }
+.club-head .place-line .launch-open { color: var(--accent); font: inherit; display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; margin: -6px -8px; text-align: center; }
+.club-head .place-line .launch-open svg { width: 16px; height: 16px; flex: none; }
+.club-head .place-line .launch-open svg:last-child { width: 14px; height: 14px; }
+.club-head .orange .launch-open { color: var(--orange); font: inherit; padding: 6px 8px; margin: -6px -8px; }
+#launch-sheet-map { height: 320px; }
+dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 /* Where the water temperature is measured (WaterStationMap). */
 .station { margin: 16px 0; }
 .station .map { height: 170px; }

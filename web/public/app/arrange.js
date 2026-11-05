@@ -50,8 +50,11 @@ export function layoutFor(clubId) {
   return own ? normalized(own) : pageLayout();
 }
 
+/** Cards shown elsewhere on the page for now, left out of the card list (AppSettings.cardsElsewhere). */
+export const cardsElsewhere = () => (load("rf.launchPointInHeader", true) !== false ? ["launchPoint"] : []);
+
 /** The cards to draw, in order. */
-export const visibleCards = (layout) => layout.order.filter((c) => !layout.hidden.includes(c) && ON_WEBSITE.includes(c));
+export const visibleCards = (layout, elsewhere = cardsElsewhere()) => layout.order.filter((c) => !layout.hidden.includes(c) && ON_WEBSITE.includes(c) && !elsewhere.includes(c));
 
 /** Saves the order, for one club or for all; chosen for all on a club's page, that club follows them again. */
 export function saveLayout(layout, clubId, onlyThisClub) {
@@ -93,8 +96,9 @@ export function openArrange(club, done) {
   };
   const fixedRow = (title, iconName, note) => `<li class="fixed">${icon(iconName)}<span class="grow">${h(title)}</span>
     <small class="sub">${h(note)}</small>${icon("lock")}</li>`;
-  // Only the cards the website draws can be moved; the order keeps the others in place.
-  const shown = () => layout.order.filter((c) => ON_WEBSITE.includes(c));
+  // Only the cards the website draws can be moved; the order keeps the others in place,
+  // also a card shown elsewhere for now, for when it is a card of its own again.
+  const shown = () => layout.order.filter((c) => ON_WEBSITE.includes(c) && !cardsElsewhere().includes(c));
   const cardRow = (c, i, list) => {
     const off = layout.hidden.includes(c);
     return `<li class="${off ? "off" : ""}" data-card="${c}">
@@ -114,6 +118,7 @@ export function openArrange(club, done) {
           <p class="footer">${h(onlyThisClub ? t("Only this club's page changes. Changes for all clubs no longer reach it until you reset it.") : otherClubsNote())}</p>` : ""}
         <h3 class="section">${h(t("Drag the handles to change the order"))}</h3>
         <ul class="card group arrange-list">
+          ${cardsElsewhere().includes("launchPoint") ? fixedRow(t("Launch point"), "map-pin", t("in the club header")) : ""}
           ${fixedRow(t("Rowing light"), "circle", t("always first"))}
           ${fixedRow(t("Warnings"), "triangle-alert", t("right under it, while one is issued"))}
           ${shown().map(cardRow).join("")}

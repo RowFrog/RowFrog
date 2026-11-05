@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { normalized, moved, visibleCards, STANDARD } from "../public/app/arrange.js";
+import { normalized, moved, visibleCards, cardsElsewhere, STANDARD } from "../public/app/arrange.js";
 
 test("an order keeps every card once and drops unknown ones", () => {
   const layout = normalized({ order: ["hourly", "future", "hourly", "radar"], hidden: ["future", "satellite"] });
@@ -10,12 +10,20 @@ test("an order keeps every card once and drops unknown ones", () => {
 });
 
 test("the rain radar card starts switched off", () => {
-  assert.deepEqual(visibleCards(normalized(STANDARD)), ["conditions", "lakeView", "hourly", "launchPoint", "satellite"]);
+  assert.deepEqual(visibleCards(normalized(STANDARD), []), ["conditions", "lakeView", "hourly", "launchPoint", "satellite"]);
+});
+
+test("with the launch point in the club header its card leaves the page, the order keeps its place", () => {
+  // In the header by default (Settings > Club pages > Launch point in the club header).
+  assert.deepEqual(cardsElsewhere(), ["launchPoint"]);
+  const layout = normalized(STANDARD);
+  assert.deepEqual(visibleCards(layout), ["conditions", "lakeView", "hourly", "satellite"]);
+  assert.ok(layout.order.includes("launchPoint"));
 });
 
 test("switched-off cards are left out, the rest keep their order", () => {
   const layout = normalized({ order: ["satellite", "hourly"], hidden: ["lakeView"], radarInTile: true });
-  assert.deepEqual(visibleCards(layout), ["satellite", "hourly", "conditions", "radar", "launchPoint"]);
+  assert.deepEqual(visibleCards(layout, []), ["satellite", "hourly", "conditions", "radar", "launchPoint"]);
 });
 
 test("orders saved before the rain tile read the radar switch its card off once", () => {
