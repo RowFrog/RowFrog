@@ -43,7 +43,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: pip install -c backend/requirements-publish.txt -e backend
+      - run: pip install -c backend/requirements-publish.txt -e backend pytest
       # A Swiss Rowing run only does Swiss Rowing: the other lists are already in.
       - name: Import ÖRV clubs
         if: ${{ !inputs.swissrowing }}
@@ -76,6 +76,10 @@ jobs:
           l = locations.load()
           for c in l.countries():
               print(c, sum(1 for x in l.clubs.values() if x.country == c), "clubs")'
+      # Drops outlines no club uses and runs the data file tests: a broken
+      # catalog fails here instead of turning main red (2026-11-04).
+      - name: Check the catalogs before committing
+        run: python3 scripts/check_catalog_update.py
       - name: Commit the catalogs
         run: |
           git add data/catalogs data/geocode.json data/outlines
