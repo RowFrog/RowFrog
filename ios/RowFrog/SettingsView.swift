@@ -911,12 +911,15 @@ private struct DeveloperSettingsView: View {
             }
             .surfaceRows()
             Section {
+                Toggle(isOn: Binding(get: { PowerState.forced }, set: { PowerState.forced = $0 })) {
+                    Label(tr("Draw as in Low Power Mode"), systemImage: "battery.25percent")
+                }
                 ShareLink(item: DiagnosisLog.url) {
                     Label(tr("Share diagnosis log"), systemImage: "stethoscope")
                 }
                 .disabled(!DiagnosisLog.exists)
             } footer: {
-                SectionFooter(tr("If iOS closed Row Frog as you came back to it, share this log with the developers. It lists the last steps in and out of the app, with times, and iOS's own reports. It stays on the phone until you share it."))
+                SectionFooter(tr("Draw as in Low Power Mode: solid tiles, bar buttons and clock strip instead of blur and glass, also with Low Power Mode off; a test for the closings on return. If iOS closed Row Frog as you came back to it, share this log with the developers. It lists the last steps in and out of the app, with times, and iOS's own reports. It stays on the phone until you share it."))
             }
             .surfaceRows()
         }
