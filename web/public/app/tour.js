@@ -102,7 +102,7 @@ export const tourSeen = () => load("rf.tourSeen", false) === true;
 
 /** A small picture of the feature, as TourPageView.extra. */
 function extra(page, languagePicker) {
-  if (page.id === "welcome") return `<section class="card group tour-language">${languagePicker()}</section>`;
+  if (page.id === "welcome") return `<div class="tour-language">${languagePicker()}</div>`;
   if (page.id === "rowingLight") {
     return `<div class="tour-lights">${["green", "amber", "red"].map((l) => `<div class="${l}">${dot(l, 30)}<small>${h(lightTitle(l))}</small></div>`).join("")}</div>`;
   }
@@ -135,7 +135,7 @@ export function renderTour(root, { languagePicker, wireLanguage, done, river }) 
           ${extra(page, languagePicker)}
           <ul class="card tour-points">${page.points.map((x) => `<li>${icon(x.icon)}<span>${h(t(x.text, ...(x.args?.() ?? [])))}</span></li>`).join("")}</ul>
         </div>
-        <nav class="tour-dots" aria-label="${h(t("Tour"))}">${pages.map((_, i) => `<button data-page="${i}" class="${i === index ? "on" : ""}" aria-label="${i + 1}" ${i === index ? 'aria-current="step"' : ""}></button>`).join("")}</nav>
+        <nav class="tour-dots glass" aria-label="${h(t("Tour"))}">${pages.map((_, i) => `<button data-page="${i}" class="${i === index ? "on" : ""}" aria-label="${i + 1}" ${i === index ? 'aria-current="step"' : ""}></button>`).join("")}</nav>
         <button class="primary wide" id="next">${h(last ? t("Let's row") : t("Next"))}</button>
       </main>`;
     root.querySelector("#skip")?.addEventListener("click", finish);

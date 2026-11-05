@@ -10,7 +10,7 @@ final class TapTests: XCTestCase {
 
     /// MRC 1880's page, as the only club, over a background picture with
     /// frosted cards, with the published forecasts (the Debug build otherwise asks the backend on the Mac).
-    private func launchClubPage() -> XCUIApplication {
+    private func launchClubPage(_ extra: [String] = []) -> XCUIApplication {
         let app = XCUIApplication()
         app.launchArguments = [
             // MRC 1880 alone: with the demo's three clubs the pages beside it
@@ -22,20 +22,23 @@ final class TapTests: XCTestCase {
             "-RWBackground", "sample:alpine-lake", "-RWTileStyle", "frosted",
             "-RWAPIBaseURL", "https://api.rowfrog.com/v1",
             "-RWLanguage", "en",
-        ]
+        ] + extra
         app.launch()
         return app
     }
 
-    /// The current conditions card is the page's first card, so every card
-    /// below it could cover it.
+    /// Current conditions sits inside the top tile: its grip opens the tiles,
+    /// and a tile opens its detail view (no card below covers it).
     func testConditionTileOpensItsDetailView() {
         let app = launchClubPage()
-        let tile = app.buttons["condition-wind"]
+        let grip = app.buttons["top-tile-handle"]
         // The page waits for the published forecast. On the Intel runners of the
         // information-only jobs that took more than 60 s three times (#246, #272),
         // with the spinner still showing, so the wait is long; a fast run is no slower.
-        XCTAssertTrue(tile.waitForExistence(timeout: 180), "No wind tile; the page shows:\n\(app.debugDescription)")
+        XCTAssertTrue(grip.waitForExistence(timeout: 180), "No All values grip; the page shows:\n\(app.debugDescription)")
+        grip.tap()
+        let tile = app.buttons["condition-wind"]
+        XCTAssertTrue(tile.waitForExistence(timeout: 30), "The grip did not open the tiles; the page shows:\n\(app.debugDescription)")
         tile.tap()
         XCTAssertTrue(app.descendants(matching: .any)["condition-detail"].waitForExistence(timeout: 30),
                       "Tapping the wind tile opened nothing; the page shows:\n\(app.debugDescription)")
@@ -86,7 +89,7 @@ final class TapTests: XCTestCase {
         skip.tap()
 
         // The home base's page, with its forecast (see the wait in the test above).
-        XCTAssertTrue(app.buttons["condition-wind"].waitForExistence(timeout: 180),
+        XCTAssertTrue(app.buttons["top-tile-handle"].waitForExistence(timeout: 180),
                       "The home base's page did not show; the app shows:\n\(app.debugDescription)")
     }
 
@@ -117,7 +120,8 @@ final class TapTests: XCTestCase {
     /// clipped text and Dynamic Type are left out: they depend on the picture
     /// behind the cards and are checked on the screenshots instead.
     func testClubPagePassesTheAccessibilityAudit() throws {
-        let app = launchClubPage()
+        // Opened, so the audit sees the grip and every tile.
+        let app = launchClubPage(["-RWTopTileOpen", "YES"])
         XCTAssertTrue(app.buttons["condition-wind"].waitForExistence(timeout: 180),
                       "No wind tile; the page shows:\n\(app.debugDescription)")
         // Small text links inside a card, known and kept on purpose: the

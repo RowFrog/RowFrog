@@ -149,6 +149,11 @@ async function pictureUrl(choice, clubId) {
   return null;
 }
 
+/** The picture chosen for all pages, for the preview in Settings › Club pages; null without one. */
+export function backgroundPreview() {
+  return backgrounds.all && backgrounds.all !== "none" ? pictureUrl(backgrounds.all, null) : Promise.resolve(null);
+}
+
 let shown = 0;
 
 /** Puts the page's picture behind it, or none (page null: pages without pictures). */
@@ -178,7 +183,7 @@ export async function showBackground(page, clubId = null) {
 
 // ---- Settings › Background pictures ------------------------------------------------------
 
-const settingsNav = () => `<header class="nav"><a class="link" href="#/settings">${icon("chevron-left")} ${h(t("Settings"))}</a><span class="spacer"></span></header>`;
+const settingsNav = () => `<header class="nav"><a class="link" href="#/settings/clubpages">${icon("chevron-left")} ${h(t("Club pages"))}</a><span class="spacer"></span></header>`;
 
 /** "All pages: Lake waves · 2 with their own", for the settings row. */
 export function backgroundSummary() {

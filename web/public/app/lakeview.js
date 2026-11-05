@@ -5,7 +5,7 @@ import { t, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
   store, getJSON, h, time, dayTime, duration, wind, windRange, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
-  dot, setTitle, openSheet, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit,
+  dot, setTitle, openSheet, openMenu, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit,
   CONDITION_ICONS, forecasts, conditionIcon,
 } from "./shared.js";
 import { riverSpeed } from "./river.js";
@@ -299,8 +299,12 @@ async function buildMap() {
   page.layers.marks = L.layerGroup().addTo(map);
   for (const c of [...page.view.clubs].sort((a, b) => (a.id === page.club?.id) - (b.id === page.club?.id))) {
     const own = c.id === page.club?.id;
-    L.circleMarker([c.launchPoint.lat, c.launchPoint.lon], { radius: own ? 7 : 5, color: own ? "#fff" : "#007aff", weight: 2, fillColor: own ? "#007aff" : "#fff", fillOpacity: 1 })
-      .bindTooltip(c.shortName).addTo(page.layers.marks);
+    // As the app's club pins: the page's club a blue house, the others grey with their name below (ClubMarks).
+    L.marker([c.launchPoint.lat, c.launchPoint.lon], {
+      icon: L.divIcon({ className: `club-pin ${own ? "own" : ""}`, iconSize: [30, 30], iconAnchor: [15, 15],
+        html: `<span class="dot">${icon(own ? "house" : "sailboat")}</span>${own ? "" : `<span class="name">${h(c.shortName)}</span>`}` }),
+      title: c.shortName, keyboard: false, zIndexOffset: own ? 1000 : 0,
+    }).addTo(page.layers.marks);
   }
   // Where the club's stretch of the river ends: a weir or lock, or where rowers turn (SectionEndPin).
   for (const end of [page.view.section?.up, page.view.section?.down].filter(Boolean)) {
@@ -594,8 +598,7 @@ function planningPanel(hour) {
     })() : null;
     const better = bestStart(found.planner, page.pace, new Date(), page.currentMs);
     const betterIndex = better && plansBetter(better, plan) ? view.hours.reduce((n, x, i) => (new Date(x.time) <= better.start ? i : n), 0) : null;
-    summary = `${routeBar(plan)}
-      <p class="small sub">${h(t("Waves up to %@", waves(plan.maxWaveM)))}</p>
+    summary = `<p class="small sub">${h(t("Waves up to %@", waves(plan.maxWaveM)))}</p>
       ${roughText ? `<p class="small sub">${h(roughText)}</p>` : ""}
       ${plan.currentMs >= 0.05 ? `<p class="small sub">${conditionIcon("current")} ${h(t("Times count with the current of ≈ %@: faster downstream, slower upstream.", riverSpeed(plan.currentMs)))}</p>` : ""}
       ${plan.noHeadway ? `<p class="small orange">${icon("triangle-alert")} ${h(t("Against this current your boat hardly makes headway on part of the route."))}</p>` : ""}
@@ -627,12 +630,10 @@ function planningPanel(hour) {
     : `<div class="route-tools">
       <button class="pill" id="undo" ${page.undo.length ? "" : "disabled"}>${icon("undo-2")} ${h(t("Undo"))}</button>
       <button class="pill" id="clear" ${page.points.length > 1 ? "" : "disabled"} aria-label="${h(t("Clear route"))}" title="${h(t("Clear route"))}">${icon("trash-2")}</button>
-      <button class="pill" id="save-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("check")} ${h(t("Save route"))}</button>
-      <label class="pill" id="import-row" title="${h(t("GPX, TCX or FIT files from CrewNerd, Garmin Connect, Strava and other apps."))}">${icon("upload")} ${h(t("Import a row"))}
-        <input type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden></label>
+      <button class="pill routes-button" id="routes" aria-haspopup="dialog">${icon("bookmark")} ${h(t("Routes"))}</button>
       ${page.rowed?.track ? `<label class="tick inline"><input type="checkbox" id="show-track" ${page.showTrack ? "checked" : ""}> ${icon("spline")} ${h(t("Show rowed track"))}</label>` : ""}
     </div>`;
-  return `${head}
+  return `${head}${plan ? routeBar(plan) : ""}
     ${lakeWideBanner(hour.lakeWide, view)}
     ${kitBadge(view)}
     <div class="route-controls">
@@ -646,12 +647,23 @@ function planningPanel(hour) {
     ${tools}
     ${routeTip(isLoop)}
     ${summary}
-    ${saved.length ? `<h3 class="section">${icon("list")} ${h(t("Saved routes"))}</h3><ul class="saved-routes">${saved.map((r) => `<li class="${r.id === page.savedId ? "on" : ""}">
+    ${moreRows()}`;
+}
+
+/** The Routes menu of the route panel: save, import a row, and the lake's saved routes (LakeMapScreen's Routes menu). */
+function routesMenu() {
+  const saved = store.routes.filter((r) => r.lakeId === page.lakeId);
+  return `<div class="menu routes-menu">
+    <button id="save-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("check")} <span>${h(t("Save route"))}</span></button>
+    <label id="import-row" title="${h(t("GPX, TCX or FIT files from CrewNerd, Garmin Connect, Strava and other apps."))}">${icon("upload")} <span>${h(t("Import a row"))}</span>
+      <input type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden></label>
+  </div>
+  ${saved.length ? `<h3 class="section">${icon("list")} ${h(t("Saved routes"))}</h3><ul class="saved-routes">${saved.map((r) => `<li class="${r.id === page.savedId ? "on" : ""}">
         <button data-route="${h(r.id)}">${icon("route")} <span>${h(r.name)}</span><small class="sub">${h(distance(routeLength(r.points, r.outAndBack)))}</small></button>
         <button class="tool" data-rename-route="${h(r.id)}" aria-label="${h(t("Rename"))}" title="${h(t("Rename"))}">${icon("signature")}</button>
         <button class="tool" data-copy-route="${h(r.id)}" aria-label="${h(t("Duplicate"))}" title="${h(t("Duplicate"))}">${icon("copy")}</button>
         <button class="tool" data-delete-route="${h(r.id)}" aria-label="${h(t("Delete this route"))}">${icon("trash-2")}</button></li>`).join("")}</ul>` : ""}
-    ${moreRows()}`;
+`;
 }
 
 /** The one tip that fits the route drawn so far, in the app's order (LakeMapScreen.routeHint). */
@@ -826,14 +838,26 @@ function wirePanel() {
     drawRoute();
   });
   on("#boat-at", "change", () => update());
-  on("#save-route", "click", saveRoute);
-  on("#import-row input", "change", (e) => importRow(e.target.files?.[0]));
+  on("#routes", "click", (e) => openMenu(e.currentTarget, routesMenu(), wireRoutes));
   on("#show-track", "change", (e) => {
     page.showTrack = e.target.checked;
     drawRoute();
   });
   wireTips(panel);
-  panel.querySelectorAll("[data-route]").forEach((b) => b.addEventListener("click", () => {
+}
+
+/** The Routes menu's buttons; each closes the menu before the panel redraws. */
+function wireRoutes(menu) {
+  menu.querySelector("#save-route")?.addEventListener("click", () => {
+    menu.close();
+    saveRoute();
+  });
+  menu.querySelector("#import-row input")?.addEventListener("change", (e) => {
+    const file = e.target.files?.[0];
+    menu.close();
+    importRow(file);
+  });
+  menu.querySelectorAll("[data-route]").forEach((b) => b.addEventListener("click", () => {
     const r = store.routes.find((x) => x.id === b.dataset.route);
     if (!r) return;
     page.undo.push(page.points);
@@ -841,31 +865,35 @@ function wirePanel() {
     page.outAndBack = r.outAndBack;
     page.savedId = r.id;
     page.rowed = r.track ? r : null;
+    menu.close();
     update();
     if (page.map) fitView();
   }));
   // Rename and duplicate, as under Manage routes in the app (ManageRoutesView).
-  panel.querySelectorAll("[data-rename-route]").forEach((b) => b.addEventListener("click", () => {
+  menu.querySelectorAll("[data-rename-route]").forEach((b) => b.addEventListener("click", () => {
     const r = store.routes.find((x) => x.id === b.dataset.renameRoute);
     const name = r && prompt(t("Rename route"), r.name);
     if (!name?.trim()) return;
     store.routes = store.routes.map((x) => (x.id === r.id ? { ...x, name: name.trim() } : x));
+    menu.close();
     update();
   }));
-  panel.querySelectorAll("[data-copy-route]").forEach((b) => b.addEventListener("click", () => {
+  menu.querySelectorAll("[data-copy-route]").forEach((b) => b.addEventListener("click", () => {
     const r = store.routes.find((x) => x.id === b.dataset.copyRoute);
     if (!r) return;
     const copy = { ...r, id: crypto.randomUUID?.() ?? `r${Date.now()}`, name: t("%@ (copy)", r.name) };
     const all = [...store.routes];
     all.splice(all.indexOf(r) + 1, 0, copy);
     store.routes = all;
+    menu.close();
     update();
   }));
-  panel.querySelectorAll("[data-delete-route]").forEach((b) => b.addEventListener("click", () => {
+  menu.querySelectorAll("[data-delete-route]").forEach((b) => b.addEventListener("click", () => {
     const r = store.routes.find((x) => x.id === b.dataset.deleteRoute);
     if (!r || !confirm(t("Delete “%@”?", r.name))) return;
     store.routes = store.routes.filter((x) => x.id !== r.id);
     if (page.savedId === r.id) page.savedId = null;
+    menu.close();
     update();
   }));
 }
