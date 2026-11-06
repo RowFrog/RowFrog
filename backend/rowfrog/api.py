@@ -89,8 +89,8 @@ _failed_at: dict[str, float] = {}
 # Long enough to cover one publish run (an all-clubs run takes 15 to 22 min),
 # so each station is asked once per run, not once per club.
 WATER_CACHE_SECONDS = 30 * 60
-# A rejected GKD page is left alone this long (a publish run takes a few minutes).
-GKD_REJECTED_PAUSE = 20 * 60
+# A rejected GKD page is left alone for the rest of the run, like a failed station.
+GKD_REJECTED_PAUSE = WATER_CACHE_SECONDS
 # A lake's level moves slowly; the last good levels stand in this long.
 LEVEL_MAX_AGE = timedelta(hours=24)
 # What the publishing job loaded ahead in bulk (rowfrog.prepared); empty when the API runs on its own.
