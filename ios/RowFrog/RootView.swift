@@ -218,7 +218,7 @@ struct RootView: View {
     private func sideList(sharedPicture: Bool = false, close: @escaping () -> Void) -> some View {
         LocationListView(locations: locations, forecasts: forecasts, selectedID: selection, hideList: close,
                          sharedPicture: sharedPicture) { club in
-            withAnimation { selection = club.id }
+            PageJump.go(to: club.id, from: selection, in: locations.saved.map(\.id)) { selection = $0 }
             if showingSideOverlay { withAnimation(Self.slide) { showingSideOverlay = false } }
         }
         .environment(\.openBoatSettings, openBoatSettings)
@@ -599,7 +599,7 @@ private struct PageBar: View {
                         // Wider than the dot and as tall as the bar, so it is easier to hit.
                         .frame(width: Self.dotWidth, height: Self.buttonHeight)
                         .contentShape(Rectangle())
-                        .onTapGesture { withAnimation { selection = club.id } }
+                        .onTapGesture { PageJump.go(to: club.id, from: selection, in: clubs.map(\.id)) { selection = $0 } }
                         .accessibilityLabel(club.displayName)
                     }
                 }
@@ -680,3 +680,19 @@ private struct BoatsElsewhereTipAnchor: ViewModifier {
     }
 }
 
+
+/// Switching club pages from a dot or the list. A step to the next club slides
+/// as a swipe does; a longer jump goes straight there, since sliding past the
+/// clubs in between made iOS build and drop each of those pages on the way.
+enum PageJump {
+    static func go(to id: String, from current: String, in ids: [String], set: (String) -> Void) {
+        guard id != current else { return }
+        if let a = ids.firstIndex(of: current), let b = ids.firstIndex(of: id), abs(a - b) == 1 {
+            withAnimation { set(id) }
+        } else {
+            var instant = Transaction()
+            instant.disablesAnimations = true
+            withTransaction(instant) { set(id) }
+        }
+    }
+}
