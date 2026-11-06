@@ -154,4 +154,19 @@ final class LimitsTests: XCTestCase {
         XCTAssertEqual(h.reasons, [dark])
         XCTAssertEqual(h.light, .red)
     }
+
+    func testNearbyWaterFollowsTheBoatsLimits() {
+        // Option C (owner, 6 Nov 2026): the water within 1 km counts where it is worse than the Steg.
+        var h = hour(wind: 2, gust: 3, waves: 0.05)
+        h.nearby = NearbyWater(light: .amber, windMs: 7, gustMs: 8.5, waveM: 0.1, visM: 20_000, rainMm: 0, other: .green)
+        let small = h.applying(RowingLimits(custom: [.waveAmber: 0.2]), waterC: 18)
+        XCTAssertEqual(small.light, .amber)
+        XCTAssertEqual(small.reasons.first, Reason(condition: "nearby_water", light: .amber, topic: "wind", value: 7))
+        XCTAssertEqual(h.applying(RowingLimits(boat: .big), waterC: 18).light, .green, "a big boat is fine with that wind")
+        // Fog nearby sets the light whatever the boat, and names its visibility.
+        h.nearby = NearbyWater(light: .red, windMs: 1, gustMs: 2, waveM: 0, visM: 300, other: .red, otherCause: "fog")
+        let foggy = h.applying(RowingLimits(boat: .big), waterC: 18)
+        XCTAssertEqual(foggy.light, .red)
+        XCTAssertEqual(foggy.reasons.first, Reason(condition: "nearby_water", light: .red, topic: "fog", value: 300))
+    }
 }

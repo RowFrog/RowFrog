@@ -161,3 +161,26 @@ def test_cells_blend_the_wind_of_the_points_around_them():
     for i in range(len(grid.cells)):
         d = lake_view.cell_weather(grid, i, turned).wind_from_deg
         assert min(d, 360 - d) <= 10.0 + 1e-6
+
+
+def test_nearby_water_counts_only_the_water_near_the_launch_point():
+    # Option C (owner, 6 Nov 2026): the launch point's light also counts the water within 1 km.
+    grid = lake_view.build_grid(LAKE, target_cells=200)
+    lats = [lat for _, lat in grid.points]
+    lon_mid = sum(lon for lon, _ in grid.points) / len(grid.points)
+    south = min(lats)
+    calm = [[hour(speed=1.0, gust=2.0)] for _ in grid.samples]
+    (n,) = lake_view.nearby_water(grid, calm, south, lon_mid).values()
+    assert n.light == Light.GREEN and n.cause is None
+    near = lake_view.nearby_cells(grid, south, lon_mid)
+    assert near and all(lat < south + 0.0095 for _, lat in (grid.points[i] for i in near)), "about 1 km only"
+    # Fog at the northern end only does not reach a launch point at the southern end.
+    north_k = max(range(len(grid.samples)), key=lambda k: grid.samples[k][1])
+    foggy_north = [[hour(speed=1.0, gust=2.0, visibility=300.0 if k == north_k else 20_000.0)] for k in range(len(grid.samples))]
+    (n,) = lake_view.nearby_water(grid, foggy_north, south, lon_mid).values()
+    assert n.light == Light.GREEN
+    # A strong wind nearby is named with its worst value; fog alone sets `other`.
+    windy = [[hour(speed=9.0, gust=11.0, visibility=300.0)] for _ in grid.samples]
+    (n,) = lake_view.nearby_water(grid, windy, south, lon_mid).values()
+    assert n.light == Light.RED and n.cause == "wind" and abs(n.value - 9.0) < 1e-6
+    assert n.other == Light.RED and n.other_cause == "fog" and abs(n.vis_m - 300.0) < 1e-6

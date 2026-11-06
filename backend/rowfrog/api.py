@@ -749,6 +749,9 @@ class ClubInputs:
     readings: tuple | None
     level_lake: lake_level.LevelLake | None
     levels: tuple | None
+    # The lake view's forecast points, for the water near the launch point (option C);
+    # only when already loaded for the lake view, never fetched for the club alone.
+    lake_weather: list | None = None
 
 
 async def _club_inputs(club: locations.Club, picked: weather_models.Choice | None, now: datetime) -> ClubInputs:
@@ -814,7 +817,57 @@ async def _club_inputs(club: locations.Club, picked: weather_models.Choice | Non
         level_lake = lake_level.for_lake(lake.id) if lake.kind == "lake" else None
         levels = await _lake_levels(client, level_lake) if level_lake else None
     return ClubInputs(weather, outlook, station, water, water_history, warnings_block, warnings, estimate, water_model_c,
-                      ice_estimate, air_days, gauge, readings, level_lake, levels)
+                      ice_estimate, air_days, gauge, readings, level_lake, levels, _loaded_lake_weather(lake.id))
+
+
+def _loaded_lake_weather(lake_id: str) -> list | None:
+    """The lake view's point forecasts where the publish job or the short cache has them."""
+    if (primed := prepared.lake_weather.get(lake_id)) is not None:
+        return primed
+    cached = _lake_view_cache.get(lake_id)
+    if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
+        return cached[1][0]
+    return None
+
+
+def _nearby(club: locations.Club, lake_weather: list | None, water_c: float | None, now: datetime) -> dict:
+    """The water within 1 km of the launch point, per hour (lake_view.nearby_water); {} without a lake view."""
+    rings = outlines.load(club.lake_id)
+    if not lake_weather or not rings:
+        return {}
+    try:
+        grid = lake_grid(club.lake_id, rings)
+    except Exception:  # a broken outline must not stop the club's forecast
+        return {}
+    weather = [_from_now(w, now) for w in lake_weather]
+    if SAMPLE_LAKE_WIND:
+        weather = _sample_wind(weather)
+    if len(weather) != len(grid.samples):
+        return {}
+    return lake_view.nearby_water(grid, weather, club.launch_point.lat, club.launch_point.lon, water_c)
+
+
+def _with_nearby(hour: dict, n: lake_view.Nearby | None) -> dict:
+    """Adds the water near the launch point to an hour: its values for the app's boat limits,
+    and where it is worse than the launch point, a "nearby_water" reason that sets the light."""
+    if n is None:
+        return hour
+    hour["nearby"] = {
+        "light": n.light.name.lower(),
+        "windMs": round(n.wind_ms, 1),
+        "gustMs": round(n.gust_ms, 1),
+        "waveM": round(n.wave_m, 2),
+        "visM": None if n.vis_m is None else round(n.vis_m),
+        "rainMm": None if n.rain_mm is None else round(n.rain_mm, 1),
+        "other": n.other.name.lower(),
+        "otherCause": n.other_cause,
+    }
+    own = Light[hour["light"].upper()]
+    if n.light > own and n.cause:
+        value = None if n.value is None else round(n.value, 2 if n.cause == "waves" else 1 if n.cause != "fog" else 0)
+        hour["reasons"] = [{"condition": "nearby_water", "light": n.light.name.lower(), "topic": n.cause, "value": value}] + hour["reasons"]
+        hour["light"] = n.light.name.lower()
+    return hour
 
 
 def build_club_forecast(
@@ -855,6 +908,8 @@ def build_club_forecast(
         else None
     )
     chain = weather_models.chain_for(club.launch_point.lat, club.launch_point.lon)
+    # Option C: the light also counts the water within 1 km of the launch point.
+    nearby = _nearby(club, inputs.lake_weather, water_c, now)
     return {
         "clubId": club.id,
         "lakeId": club.lake_id,
@@ -898,7 +953,7 @@ def build_club_forecast(
             {"date": d.day.isoformat(), "sunrise": _utc(d.sunrise), "sunset": _utc(d.sunset)}
             for d in sun_days(now, now + timedelta(hours=len(hours)), club.launch_point.lat, club.launch_point.lon)
         ],
-        "hours": [_hour_json(h) for h in hours],
+        "hours": [_with_nearby(_hour_json(h), nearby.get(h.weather.time)) for h in hours],
         "outlook": None if outlook_hours is None else [_hour_json(h) for h in outlook_hours],
     }
 
