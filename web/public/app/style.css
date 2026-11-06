@@ -1174,7 +1174,11 @@ dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 .card.now .tt-open { display: none; }
 .card.now.all-open .tt-open { display: block; margin-top: 4px; }
 .card.now.all-open .tt-closed { display: none; }
-.all-values { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 44px; margin-bottom: -8px; color: var(--accent); font-size: 15px; font-weight: 500; touch-action: manipulation; }
+/* The row's room as app GripRow (A2, 34 pt): 6 px above the words, 10 px to the tile's edge.
+   For A3 set 4px and 6px. The ::after keeps 44 px to tap, into the gap below the tile. */
+.card.now { --grip-above: 6px; --grip-below: 10px; }
+.all-values { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; height: 18px; line-height: 18px; margin: var(--grip-above) 0 calc(var(--grip-below) - 14px); padding: 0; color: var(--accent); font-size: 15px; font-weight: 500; touch-action: manipulation; }
+.all-values::after { content: ""; position: absolute; left: 0; right: 0; top: calc(-1 * var(--grip-above)); height: 44px; }
 .all-values .i { font-size: 13px; transition: transform .25s ease; }
 .card.now.all-open .all-values .i { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) { .all-values .i { transition: none; } }
