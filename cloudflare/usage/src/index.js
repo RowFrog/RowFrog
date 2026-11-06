@@ -14,6 +14,12 @@
 //   POST /budget          {"service", "job", "calls"} adds calls     (key needed)
 //
 // The key is the Worker secret USAGE_KEY, sent as "Authorization: Bearer <key>".
+//
+// It also gives every file a tag made from its content (ETag). GitHub Pages
+// tags a file anew on every publish, every 30 minutes, even when its bytes did
+// not change, so the app downloaded satellite pictures, map tiles and lists
+// again each time. Now an unchanged file answers "304 Not Modified" (owner, 6
+// Nov 2026). Forecasts change on every run (warnings check time, radar).
 
 const COUNTED = /^\/v1\/(clubs|lakes)\/([a-z0-9][a-z0-9-]{0,79})\/(forecast|view)$/;
 const KEEP_DAYS = 120;
@@ -24,7 +30,7 @@ export default {
     if (url.pathname === "/usage" || url.pathname === "/budget") {
       return api(request, env, url);
     }
-    const response = await fetch(request);
+    const response = await tagged(request, url);
     const match = url.pathname.match(COUNTED);
     if (match && request.method === "GET" && response.ok) {
       const kind = match[1] === "clubs" ? "club" : "lake";
@@ -41,6 +47,38 @@ export default {
     ]);
   },
 };
+
+// Files above this size pass through with GitHub's own tag (hashing them would take too long).
+const TAG_MAX_BYTES = 2 * 1024 * 1024;
+
+async function tagged(request, url) {
+  if (request.method !== "GET" || !url.pathname.startsWith("/v1/")) {
+    return fetch(request);
+  }
+  // Ask GitHub for the whole file: its own tag changes with every publish anyway.
+  const headers = new Headers(request.headers);
+  headers.delete("if-none-match");
+  headers.delete("if-modified-since");
+  const upstream = await fetch(new Request(request, { headers }));
+  const size = Number(upstream.headers.get("content-length") || 0);
+  if (upstream.status !== 200 || size > TAG_MAX_BYTES) {
+    return upstream;
+  }
+  const body = await upstream.arrayBuffer();
+  const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", body));
+  const etag = `W/"rf-${[...digest.slice(0, 12)].map((b) => b.toString(16).padStart(2, "0")).join("")}"`;
+  const out = new Headers(upstream.headers);
+  out.set("etag", etag);
+  out.delete("last-modified");
+  out.delete("content-length");
+  const asked = (request.headers.get("if-none-match") || "").split(",").map((t) => t.trim().replace(/^W\//, ""));
+  if (asked.includes(etag.replace(/^W\//, ""))) {
+    out.delete("content-type");
+    out.delete("content-encoding");
+    return new Response(null, { status: 304, headers: out });
+  }
+  return new Response(body, { status: 200, headers: out });
+}
 
 function day(offsetDays = 0) {
   return new Date(Date.now() + offsetDays * 86400000).toISOString().slice(0, 10);

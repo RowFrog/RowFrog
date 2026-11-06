@@ -258,7 +258,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 
 | Workflow | When to run it |
 |---|---|
-| Usage counter | once after setting it up, and whenever `cloudflare/usage/` changes on main (it runs itself then) |
+| Usage counter | once after setting it up, and whenever `cloudflare/usage/` changes on main (it runs itself then). The Worker also tags every `/v1/` file up to 2 MB by its content (`W/"rf-…"`), so a file whose bytes did not change answers 304 although GitHub Pages re-tags everything on each publish |
 | API check | to see whether api.rowfrog.com, the Cloudflare proxy and the usage counter answer |
 | Model check with archive_days | once for a quick first score (60 days); otherwise leave it at 0 |
 | Interpolation check | every Monday (the thread "Run recurring background tasks" starts it), and after changing `backend/rowfrog/interpolate.py`: compares how the lake view blends between its forecast points (natural neighbour, also `LakeInterpolation.swift` in the app) with nearest point, inverse distance and triangles, on made-up fields and the latest ICON-D2 run (the model's own 2.2 km field is the true value). The summary lists bias (above 0 inflates), mean and 95 % error, bias on the windiest or foggiest tenth, values outside the points' range (must stay 0 % for natural neighbour) and squares with the wrong light. Input `lakes` (ids, space-separated) for other lakes; locally `python3 scripts/interpolation_check.py sample` (no network) or `icon-d2` (needs `pip install eccodes`) |

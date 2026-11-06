@@ -116,3 +116,47 @@ test("the daily clean-up deletes counts older than 120 days", async () => {
   assert.deepEqual(env.DB.rows("SELECT id FROM hits"), [{ id: "b" }]);
   assert.deepEqual(env.DB.rows("SELECT calls FROM budget"), [{ calls: 2 }]);
 });
+
+test("a file is tagged by its content, and an unchanged one answers 304", async () => {
+  upstream.restore();
+  let body = "same bytes";
+  const seen = [];
+  upstream = fakeFetch((request) => {
+    seen.push(request.headers.get("if-none-match"));
+    return new Response(body, { headers: { etag: `W/"${Math.random()}"`, "last-modified": "Fri, 06 Nov 2026 13:00:00 GMT" } });
+  });
+  const first = await get("/v1/lakes/starnberger-see/satellite-latest.jpg");
+  const tag = first.headers.get("etag");
+  assert.match(tag, /^W\/"rf-[0-9a-f]{24}"$/);
+  assert.equal(first.headers.get("last-modified"), null);
+  assert.equal(await first.text(), "same bytes");
+
+  const ctx = fakeCtx();
+  const again = await worker.fetch(
+    new Request("https://api.rowfrog.com/v1/lakes/starnberger-see/satellite-latest.jpg", { headers: { "if-none-match": tag } }),
+    env,
+    ctx
+  );
+  await ctx.done();
+  assert.equal(again.status, 304);
+  assert.equal(await again.text(), "");
+  assert.equal(seen[1], null, "GitHub is asked for the whole file, not with the app's tag");
+
+  body = "new bytes";
+  const ctx2 = fakeCtx();
+  const changed = await worker.fetch(
+    new Request("https://api.rowfrog.com/v1/lakes/starnberger-see/satellite-latest.jpg", { headers: { "if-none-match": tag } }),
+    env,
+    ctx2
+  );
+  await ctx2.done();
+  assert.equal(changed.status, 200);
+  assert.notEqual(changed.headers.get("etag"), tag);
+  assert.equal(await changed.text(), "new bytes");
+});
+
+test("missing files and the key-protected pages are not tagged", async () => {
+  const missing = await get("/v1/clubs/missing/forecast");
+  assert.equal(missing.status, 404);
+  assert.equal(missing.headers.get("etag"), null);
+});
