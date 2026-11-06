@@ -1246,3 +1246,16 @@ body.has-picture .side { border-right: none; }
 .probe[data-fit="one"] .probe-values { display: contents; }
 .probe[data-fit="one"] .probe-extra { flex-basis: 100%; }
 .spot-extra { font-size: 15px; }
+
+/* Map or satellite pictures (basemap.js): the app's globe button. Big on the lake map, small on the other maps. */
+.sat-switch { width: 44px; height: 44px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 20px; color: var(--text); border: 0; padding: 0; cursor: pointer; }
+.sat-switch.small { width: 32px; height: 32px; border-radius: 16px; font-size: 15px; }
+.leaflet-top.leaflet-right .leaflet-control.sat-switch { margin: 8px 8px 0 0; }
+/* The lake map: the switch lines up with the close button and the lake's name (top 10 px, 16 px from the edge),
+   and the zoom buttons sit under it at its width (owner's pick, 6 Nov 2026). Touch screens pinch instead. */
+.lake-map .leaflet-top.leaflet-right .leaflet-control { margin: 10px 16px 0 0; }
+.lake-map .leaflet-control-zoom { width: 44px; border: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 6px rgba(0, 0, 0, .18); }
+.lake-map .leaflet-control-zoom.leaflet-bar a { width: 44px; height: 40px; line-height: 40px; font-size: 22px; }
+@media (pointer: coarse) { .lake-map .leaflet-control-zoom { display: none; } }
+/* Add a place: the hint is a plain sentence above the map, as in the app. */
+.add-place .hint { color: var(--sub); font-size: 15px; margin: 0 4px 8px; }

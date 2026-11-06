@@ -325,6 +325,7 @@ Test coverage: each run's summary page (the run's "Summary" on GitHub) shows how
 `SUGGESTIONS_GITHUB_TOKEN` (fine-grained token with Issues read and write on this repo, for the place-suggestions Worker).
 `PUBLISH_TIMER_TOKEN` (fine-grained token with Actions read and write on this repo, for the forecast timer Worker).
 Landsat water temperatures come from Microsoft's Planetary Computer and need no secret.
+`MAPTILER_KEY` (optional; the website's satellite pictures with the globe button on the lake map, the Location card, Suggest a launch point and Add a place. The deploy writes it to `app/config.json`, so it is readable in the browser: in MapTiler, allow it only for rowfrog.com, www.rowfrog.com and rowfrog-web.pages.dev. Without it the website has no globe button and shows the street map).
 
 ## Website (rowfrog.com, in testing)
 

@@ -74,6 +74,8 @@ jobs:
       CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
       SITE_USER: ${{ secrets.SITE_USER }}
       SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+      # Optional: satellite pictures on the website's maps (basemap.js); public in the browser, limited to the site in MapTiler.
+      MAPTILER_KEY: ${{ secrets.MAPTILER_KEY }}
       # wrangler's exact version comes from package-lock.json (repository root).
       WRANGLER: npx --no -- wrangler
       PROJECT: rowfrog-web
@@ -107,6 +109,14 @@ jobs:
         run: |
           printf '%s' "$SITE_USER" | $WRANGLER pages secret put SITE_USER --project-name "$PROJECT"
           printf '%s' "$SITE_PASSWORD" | $WRANGLER pages secret put SITE_PASSWORD --project-name "$PROJECT"
+      - name: Map key for the satellite pictures
+        run: |
+          if [ -n "$MAPTILER_KEY" ]; then
+            python3 -c 'import json, os; print(json.dumps({"maptilerKey": os.environ["MAPTILER_KEY"]}))' > dist/app/config.json
+            echo "Satellite pictures on: config.json written"
+          else
+            echo "No MAPTILER_KEY secret: the maps show the street map only, without the globe button"
+          fi
       - name: Deploy
         # Run from web/ so wrangler finds web/functions (the password check).
         run: $WRANGLER pages deploy dist --project-name "$PROJECT" --branch main --commit-dirty=true

@@ -3,6 +3,7 @@
 // browser; a switch (off unless the user turns it on) suggests it for
 // everyone's list.
 
+import { baseMap } from "./basemap.js";
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
@@ -60,7 +61,7 @@ export async function renderAddPlace(root, startName = "") {
     <header class="nav"><a class="link" href="#/list">${h(t("Cancel"))}</a><strong class="nav-title">${h(t("Add a place"))}</strong><button class="link strong" id="save" disabled>${h(t("Save"))}</button></header>
     ${testing()}
     <main class="page add-place">
-      <h3 class="section">${h(t("Move the map until the pin sits where you launch"))}</h3>
+      <p class="hint">${h(t("Move the map until the pin sits where you launch"))}</p>
       <div class="pin-map"><div id="place-map"></div><span class="center-pin" aria-hidden="true">${icon("map-pin")}</span></div>
       <p class="footer" id="near"></p>
       <section class="card group">
@@ -94,9 +95,8 @@ export async function renderAddPlace(root, startName = "") {
   const L = await loadLeaflet();
   if (!$("#place-map")) return;
   const map = L.map("place-map", { zoomControl: true }).setView([point.lat, point.lon], 15);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
-  }).addTo(map);
+  // Opens on satellite pictures, with the globe button to switch, as the app's Add a place.
+  baseMap(L, map, { start: true, small: true });
   // Once the map stops: the nearest water is looked up among every lake.
   const moved = () => {
     const c = map.getCenter();

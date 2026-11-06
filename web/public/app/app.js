@@ -7,6 +7,7 @@
 
 import { t, num, locale, setLanguage, savedLanguage, resolve, lang } from "./i18n.js";
 import { icon, filledIcon, skyArt } from "./icons.js";
+import { baseMap } from "./basemap.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, tickedBoat, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, boatControl, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
@@ -1884,10 +1885,8 @@ async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
   if (!L || !box) return;
   const { lat, lon } = club.launchPoint;
   const map = L.map(box, { scrollWheelZoom: false, attributionControl: true }).setView([lat, lon], 14);
-  // OpenStreetMap asks for the site in the Referer; the page itself sends none.
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
-  }).addTo(map);
+  // Map or satellite pictures, remembered, as the app's Location card (RWLaunchImagery).
+  baseMap(L, map, { storeKey: "rf.launchImagery", small: true });
   const marker = L.marker([lat, lon], {
     icon: L.divIcon({ className: "pin", html: icon(store.clubs[0]?.id === club.id ? "house" : "map-pin"), iconSize: [30, 30], iconAnchor: [15, 15] }),
     keyboard: false,
