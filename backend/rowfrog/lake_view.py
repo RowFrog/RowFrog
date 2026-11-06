@@ -395,7 +395,8 @@ def _spread(points_m: list[tuple[float, float]], count: int) -> list[tuple[float
     return found
 
 
-@lru_cache(maxsize=256)
+# Room for every lake with an outline (378 in Nov 2026), so a publish run builds each grid once.
+@lru_cache(maxsize=512)
 def _grid_cached(key: str, rings: tuple, max_samples: int, narrow: bool) -> Grid:
     return build_grid([list(r) for r in rings], max_samples=max_samples, narrow=narrow)
 
@@ -568,25 +569,51 @@ def nearby_water(
     if not cells or not weather or not weather[0]:
         return {}
     t = thresholds.for_water(water_temp_c)
+    # Each cell's weights and fetch table, worked out once; per hour only sums.
+    plan = []
+    for i in cells:
+        weights = grid.weights[i] if i < len(grid.weights) and grid.weights[i] else {grid.nearest[i]: 1.0}
+        plan.append((list(weights.items()), grid.nearest[i], grid.fetch[i]))
     out = {}
     for h in range(len(weather[0])):
         at_points = [w[h] for w in weather]
+        speed_at = [p.wind_speed_ms for p in at_points]
+        gust_at = [p.wind_gust_ms for p in at_points]
+        dir_at = [p.wind_from_deg for p in at_points]
+        vis_at = [p.visibility_m for p in at_points]
+        rain_at = [p.precipitation_mm for p in at_points]
+        u_at = [(s or 0.0) * math.sin(math.radians(d)) if d is not None else None for s, d in zip(speed_at, dir_at)]
+        v_at = [(s or 0.0) * math.cos(math.radians(d)) if d is not None else None for s, d in zip(speed_at, dir_at)]
+        log_vis = [math.log(max(v, 1.0)) if v is not None else None for v in vis_at]
+        storm_at = [_thunderstorm(p) for p in at_points]
+        hail_at = [p.weather_code in HAIL_CODES for p in at_points]
+
+        def mix(values, weights, near):
+            if any(values[j] is None for j, _ in weights):
+                return values[near]
+            return sum(w * values[j] for j, w in weights)
+
         wind = gust = wave = 0.0
         vis = rain = None
         storm, hail = Light.GREEN, False
-        for i in cells:
-            w = cell_weather(grid, i, at_points)
-            speed = w.wind_speed_ms or 0.0
+        for weights, near, fetch in plan:
+            speed = mix(speed_at, weights, near) or 0.0
             wind = max(wind, speed)
-            gust = max(gust, w.wind_gust_ms or 0.0)
-            if w.wind_from_deg is not None:
-                wave = max(wave, significant_wave_height(speed, _interpolated_fetch(grid.fetch[i], w.wind_from_deg)))
-            if w.visibility_m is not None:
-                vis = w.visibility_m if vis is None else min(vis, w.visibility_m)
-            if w.precipitation_mm is not None:
-                rain = w.precipitation_mm if rain is None else max(rain, w.precipitation_mm)
-            storm = max(storm, _thunderstorm(w))
-            hail = hail or w.weather_code in HAIL_CODES
+            gust = max(gust, mix(gust_at, weights, near) or 0.0)
+            u, v = mix(u_at, weights, near), mix(v_at, weights, near)
+            if u is not None and v is not None:
+                direction = math.degrees(math.atan2(u, v)) % 360 if abs(u) > 1e-9 or abs(v) > 1e-9 else dir_at[near]
+                if direction is not None:
+                    wave = max(wave, significant_wave_height(speed, _interpolated_fetch(fetch, direction)))
+            lv = mix(log_vis, weights, near)
+            if lv is not None:
+                cell_vis = math.exp(lv)
+                vis = cell_vis if vis is None else min(vis, cell_vis)
+            r = mix(rain_at, weights, near)
+            if r is not None:
+                rain = r if rain is None else max(rain, r)
+            storm = max(storm, storm_at[near])
+            hail = hail or hail_at[near]
         code = HAIL_CODES[0] if hail else None
         full = assess(HourConditions(wind_speed_ms=wind, wind_gust_ms=gust, wave_height_m=wave, visibility_m=vis,
                                      thunderstorm=storm, precipitation_mm=rain, weather_code=code), t)
