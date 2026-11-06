@@ -33,16 +33,21 @@ export const store = {
   get wind() { return unitId("wind"); },
   set wind(unit) { save("rf.wind", unit); },
   /** "device", "h24" or "h12" (TimeFormat). */
-  get timeFormat() { return TIME_FORMATS.includes(load("rf.timeFormat")) ? load("rf.timeFormat") : "device"; },
+  // Light/Dark and the time and date formats follow the browser; the website's own choices count only
+  // with the developer options (owner's pick, 5 Nov 2026; AppSettings.activeAppearance and the others).
+  /** Settings > About > tap Version seven times: the Developer page and the website's own looks, language and formats. */
+  get developerOptions() { return load("rf.developerOptions", false) === true; },
+  set developerOptions(on) { save("rf.developerOptions", on); },
+  get timeFormat() { return this.developerOptions && TIME_FORMATS.includes(load("rf.timeFormat")) ? load("rf.timeFormat") : "device"; },
   set timeFormat(value) { save("rf.timeFormat", value); },
   /** "device", "long", "short", "dmy", "mdy" or "iso" (DateFormat). */
-  get dateFormat() { return DATE_FORMATS.includes(load("rf.dateFormat")) ? load("rf.dateFormat") : "device"; },
+  get dateFormat() { return this.developerOptions && DATE_FORMATS.includes(load("rf.dateFormat")) ? load("rf.dateFormat") : "device"; },
   set dateFormat(value) { save("rf.dateFormat", value); },
   /** On mobile data, satellite pictures load only when tapped (AppSettings.saveMobileData). */
   get saveData() { return load("rf.saveData", false) === true; },
   set saveData(on) { save("rf.saveData", on); },
   /** "device", "light" or "dark". */
-  get appearance() { return ["light", "dark"].includes(load("rf.appearance")) ? load("rf.appearance") : "device"; },
+  get appearance() { return this.developerOptions && ["light", "dark"].includes(load("rf.appearance")) ? load("rf.appearance") : "device"; },
   set appearance(value) { save("rf.appearance", value); },
   // The boat the rowing light is for: a group or one of the user's own boats.
   get boat() { const id = load("rf.boat", "small"); return allBoats().some((b) => b.id === id) ? id : "small"; },

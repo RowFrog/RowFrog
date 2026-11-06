@@ -44,6 +44,9 @@ const clubLayouts = () => {
 
 export const pageLayout = () => normalized(load("rf.pageLayout", STANDARD));
 
+/** Whether the order for all clubs is the user's own, for "App's order" or "Own order" in Settings. */
+export const ownOrder = () => JSON.stringify(pageLayout()) !== JSON.stringify(normalized(STANDARD));
+
 /** A club's own order, else the one for all clubs. */
 export function layoutFor(clubId) {
   const own = clubLayouts()[clubId];
