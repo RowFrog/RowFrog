@@ -19,8 +19,10 @@ struct NaturalNeighbours {
     init(points: [Point], west: Double, south: Double, east: Double, north: Double) {
         self.points = points
         box = [Point(west, south), Point(east, south), Point(east, north), Point(west, north)]
-        planes = points.map { p in points.filter { $0 != p }.map { Self.closer(to: p, than: $0) } }
-        cells = planes.map { Self.cut(box: [Point(west, south), Point(east, south), Point(east, north), Point(west, north)], by: $0) }
+        let corners = [Point(west, south), Point(east, south), Point(east, north), Point(west, north)]
+        let made = points.map { p in points.filter { $0 != p }.map { NaturalNeighbours.closer(to: p, than: $0) } }
+        planes = made
+        cells = made.map { NaturalNeighbours.cut(box: corners, by: $0) }
     }
 
     /// Point index and weight, only points with a share.
@@ -104,21 +106,24 @@ final class LakeInterpolation {
         let cells = grid.cells.indices.map { grid.coordinate(ofCell: $0) }
         let lats = cells.map(\.latitude) + points.map(\.lat)
         let lons = cells.map(\.longitude) + points.map(\.lon)
-        lat0 = ((lats.min() ?? 0) + (lats.max() ?? 0)) / 2
-        lon0 = ((lons.min() ?? 0) + (lons.max() ?? 0)) / 2
-        k = cos(lat0 * .pi / 180)
-        let flatLat0 = lat0, flatLon0 = lon0, flatK = k
+        let flatLat0 = ((lats.min() ?? 0) + (lats.max() ?? 0)) / 2
+        let flatLon0 = ((lons.min() ?? 0) + (lons.max() ?? 0)) / 2
+        let flatK = cos(flatLat0 * .pi / 180), r = LakeInterpolation.earthRadiusM
+        lat0 = flatLat0
+        lon0 = flatLon0
+        k = flatK
         func flat(_ lat: Double, _ lon: Double) -> NaturalNeighbours.Point {
-            NaturalNeighbours.Point((lon - flatLon0) * .pi / 180 * Self.earthRadiusM * flatK, (lat - flatLat0) * .pi / 180 * Self.earthRadiusM)
+            NaturalNeighbours.Point((lon - flatLon0) * .pi / 180 * r * flatK, (lat - flatLat0) * .pi / 180 * r)
         }
         let pts = points.map { flat($0.lat, $0.lon) }
         let sq = cells.map { flat($0.latitude, $0.longitude) }
         let all = pts + sq
-        let m = Self.boxMarginM
-        nn = NaturalNeighbours(points: pts,
+        let m = LakeInterpolation.boxMarginM
+        let interp = NaturalNeighbours(points: pts,
                                west: (all.map(\.x).min() ?? 0) - m, south: (all.map(\.y).min() ?? 0) - m,
                                east: (all.map(\.x).max() ?? 0) + m, north: (all.map(\.y).max() ?? 0) + m)
-        cellWeights = pts.count < 2 ? sq.map { _ in pts.isEmpty ? [] : [(0, 1.0)] } : sq.map { nn.weights(at: $0) }
+        nn = interp
+        cellWeights = pts.count < 2 ? sq.map { _ in pts.isEmpty ? [] : [(0, 1.0)] } : sq.map { interp.weights(at: $0) }
     }
 
     /// Weights at any spot, such as where the water was tapped.
