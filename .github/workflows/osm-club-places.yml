@@ -5,10 +5,15 @@ name: OSM club places
 # once zoomed in. Writes data/catalogs/osm-places.json. On main the file is
 # committed back; on any other branch it is kept as the run's artifact
 # "osm-places", so a pull request branch gets no bot commit (which would hold
-# its checks for approval). Runs by hand from the Actions tab and on the 12th
-# of each month, as clubs get mapped.
+# its checks for approval). Runs by hand from the Actions tab, on the 12th of
+# each month as clubs get mapped, and when the script changes (on main that
+# fills the file the first time).
 
 on:
+  push:
+    paths:
+      - scripts/osm_club_places.py
+      - .github/workflows/osm-club-places.yml
   workflow_dispatch:
   schedule:
     - cron: "17 3 12 * *"
