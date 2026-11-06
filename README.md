@@ -548,7 +548,9 @@ the run at :00 and :30; GitHub's own half-hour timer is only a backup, with its 
 can't cancel a waiting run. DWD's local warnings for all clubs come in a couple of
 bulk queries per run. Weather is only loaded again after
 a weather model has a new run, which keeps the job within Open-Meteo's free
-limit. When a station's water temperature fails to load, the last good reading
+limit; for ICON-D2 each run first asks Open-Meteo's free `meta.json` whether
+the new run has arrived, and the arrival times are kept at
+`v1/status/model-runs` (last two weeks). When a station's water temperature fails to load, the last good reading
 stands in for up to 6 hours. For clubs people use it also loads the 8-day outlook after each model
 run (every 3 hours) for the charts in the condition details. The last
 forecasts are kept between runs in the Actions cache.
@@ -594,7 +596,7 @@ More detail, including the secrets each one needs, is in the
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue, with a section on whether one run a day would be enough. Changes to its scripts start it only on `main`. |
 | **Interpolation check** (`interpolation-check.yml`) | Compares how the lake view blends between forecast points (natural neighbour, `backend/rowfrog/interpolate.py` and `LakeInterpolation.swift`) with other methods, on made-up fields and the latest ICON-D2 run, and lists bias, errors and values outside the points' range in the run summary. Nothing is stored. By hand: every Monday (started by the recurring tasks) and after changing the blending code. |
-| **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
+| **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. It also tags each `/v1/` file by its content, so a file that did not change answers 304 and is not downloaded again. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
 | **Usage limits** (`budget-check.yml`) | Once a day compares the calls with Open-Meteo's and Copernicus' free limits and Cloudflare's free Worker and database limits and comments on the "Usage limits" issue at 70 % (warning) and 85 % (alert), plus a monthly summary. |
 | **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). By hand, or when its scripts change on `main`. |
 | **Merge Dependabot updates** (`dependabot-merge.yml`) | Dependabot (`.github/dependabot.yml`) opens one PR a month raising the pinned backend packages, and a PR for each security fix straight away. Once CI passes on such a PR that changes only those versions, this workflow merges it; any other PR, or one whose CI fails, stays open for a person. Monthly grouped PRs for the npm tools (`package.json`: Wrangler, Playwright) and the GitHub Actions versions also come, and always wait for a person. |
