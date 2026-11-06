@@ -172,6 +172,8 @@ export function renderTour(root, { languagePicker, wireLanguage, done, river }) 
 
 /** The tips: title, message, icon, and the tip that follows once this one is closed. */
 const TIPS = {
+  // Under the top tile, the first time its Why line has a "… nearby" reason (NearbyWaterTip, app #401).
+  nearbyWater: [key("Water nearby"), key("The light also looks at the water within 1 km of the launch point. If it is rougher or foggier out there, the Why line says so."), "crosshair"],
   topTile: [key("Tap a value"), key("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values."), "pointer", "allValues"],
   allValues: [key("All values in the top tile"), key("Tap \"All values\" under the tile to see every value there. Tap \"Fewer values\" to close it."), "chevrons-up-down"],
   conditionsExtras: [key("More on the air"), key("Feels like now covers wind chill and heat. Humidity shows the dew point underneath, and the gauge shows the air pressure and where it is heading."), "gauge", "rainRadar"],

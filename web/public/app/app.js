@@ -666,7 +666,9 @@ async function renderClub(id) {
   // the water estimate's only where no station measures the water. Inside the top tile, it sits under that.
   const conditionsTip = isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
     : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate";
-  const topTips = tip("topTile") || (store.combinedTopTile ? tip(conditionsTip) : "");
+  // The nearby-water tip first, the first time the Why line counts the water within 1 km (NearbyWaterTip).
+  const nearbyTip = hour?.reasons?.some((r) => r.condition === "nearby_water") ? tip("nearbyWater") : "";
+  const topTips = nearbyTip || tip("topTile") || (store.combinedTopTile ? tip(conditionsTip) : "");
   // The cards in the order chosen under "Arrange this page".
   const cards = {
     // One tip at a time; the water level's first while the lake is let down (Forggensee),
