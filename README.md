@@ -298,7 +298,8 @@ open water".
 (GKD gauge Roßhaupten) is below 779.8 m, a Water level tile takes the ice
 tile's place, with the last week's levels in its detail view; the lake counts
 as lowered (amber), and below 777.5 m as drained (red). The levels are set in
-`data/lake-levels.json`. The website shows the tile too.
+`data/lake-levels.json`. When the gauge cannot be read, the last good
+level stands in for up to 24 hours. The website shows the tile too.
 
 **Satellite pictures.** A card near the end of the page shows the latest
 Sentinel-2 picture of the lake, with a line such as "Sentinel-2 · 22 Oct ·
