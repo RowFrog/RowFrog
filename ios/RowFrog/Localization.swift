@@ -974,7 +974,6 @@ enum German {
         "Other": "Andere",
         "Place on the water": "Stelle am Wasser",
         "Put your club, boathouse or spot on the map yourself.": "Setze deinen Verein, dein Bootshaus oder deine Stelle selbst auf die Karte.",
-        "Satellite view": "Satellitenansicht",
         "Suggest it for everyone's list": "Für die Liste aller vorschlagen",
         "The forecast for your own place is worked out on this iPhone: wind, gusts, rain, fog, thunderstorms and daylight. Waves, water temperature and warnings are not available for it.": "Die Vorhersage für deinen eigenen Ort wird auf diesem iPhone berechnet: Wind, Böen, Regen, Nebel, Gewitter und Tageslicht. Wellen, Wassertemperatur und Warnungen gibt es dafür nicht.",
         "The place stays on this iPhone and nobody else sees it.": "Der Ort bleibt auf diesem iPhone, niemand sonst sieht ihn.",
