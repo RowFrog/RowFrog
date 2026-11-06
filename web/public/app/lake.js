@@ -2,6 +2,7 @@
 // app (LakeView.swift, Route.swift). Kept free of the page so Node can test it.
 
 import { key, limitsFor, coldWaterKit } from "./logic.js";
+import { lakeInterpolation, blendWind } from "./interpolate.js";
 
 const RANK = { green: 0, amber: 1, red: 2 };
 const LIGHTS = ["green", "amber", "red"];
@@ -28,8 +29,8 @@ export function pointExtra(w) {
  * The values under a tapped spot (LakeView.probe, app #388): waves, wind and, when sent, visibility, each with
  * its light against the map boat's limits (lower in cold water), and the strongest other reason when amber or red.
  */
-export function spotProbe(view, hour, i, limits) {
-  const w = hour.wind[view.grid.cellPoint[i] ?? 0] ?? null;
+export function spotProbe(view, hour, i, limits, at = null) {
+  const w = at ? windAt(view, hour, at, i) : cellWind(view, hour, i);
   const cold = view.waterC != null ? view.waterC < 10 : hour.lakeWide.reasons.some((r) => r.condition === "cold_water");
   const l = limitsFor(limits.boat, limits.custom, cold ? 0 : null);
   const waveM = i < hour.wavesCm.length ? hour.wavesCm[i] / 100 : null;
@@ -40,6 +41,32 @@ export function spotProbe(view, hour, i, limits) {
     visibility: w?.visM != null ? { m: w.visM, light: fogLight(w.visM) } : null,
     extra: pointExtra(w),
   };
+}
+
+/** The blending of each lake grid, worked out once (LakeInterpolation.of). */
+const interpolations = new WeakMap();
+function interpolation(view) {
+  let found = interpolations.get(view.grid);
+  if (!found) {
+    found = lakeInterpolation(view.grid, view.points ?? [], cellCoordinate);
+    interpolations.set(view.grid, found);
+  }
+  return found;
+}
+
+/** The wind at a water cell, blended from the forecast points around it (LakeView.cellWind, app #392). */
+export function cellWind(view, hour, i) {
+  const near = hour.wind[view.grid.cellPoint[i] ?? 0] ?? null;
+  if (!view.points?.length) return near;
+  const weights = interpolation(view).cellWeights[i];
+  return weights ? blendWind(weights, hour.wind, near) : near;
+}
+
+/** The wind at any spot on the water, such as where it was tapped or a route passes (LakeView.wind(at:)). */
+export function windAt(view, hour, at, i) {
+  const near = hour.wind[view.grid.cellPoint[i] ?? 0] ?? null;
+  if (!view.points?.length || !at) return near;
+  return blendWind(interpolation(view).weightsAt(at), hour.wind, near);
 }
 
 /** The view as the backend sends it, with each hour's lights as a list (one digit per cell). */
@@ -91,7 +118,7 @@ export function applyLakeLimits(view, limits, standard) {
         .sort((a, b) => RANK[b.light] - RANK[a.light]);
       const zoneLights = hour.zones.map(() => "green");
       const lights = hour.lights.map((_, i) => {
-        const wind = hour.wind[grid.cellPoint[i] ?? 0];
+        const wind = cellWind(view, hour, i);
         let l = wind?.other ?? "green";
         l = worse(l, light(wind?.speedMs, forBoat.value("windAmber"), forBoat.value("windRed")));
         l = worse(l, light(wind?.gustMs, forBoat.value("gustAmber"), forBoat.value("gustRed")));
@@ -342,7 +369,7 @@ export function cellColours(view, hour, layer, limits) {
   const { grid } = view;
   return grid.cells.map((_, i) => {
     if (layer === "waves") return ramp(hour.wavesCm[i] / 100, limits.value("waveAmber"), limits.value("waveRed"));
-    if (layer === "wind") return ramp(hour.wind[grid.cellPoint[i]]?.speedMs ?? 0, limits.value("windAmber"), limits.value("windRed"));
+    if (layer === "wind") return ramp(cellWind(view, hour, i)?.speedMs ?? 0, limits.value("windAmber"), limits.value("windRed"));
     const c = RGB[hour.lights[i]] ?? RGB.green;
     return hour.lakeWide.light === "red" ? greyed(c) : c;
   });
@@ -546,7 +573,7 @@ export function planRoute(planner, start, pace, currentMs = null) {
     });
     if (time.getTime() >= last + 3600 * 1000) beyond = true;
     const hour = hours[h];
-    const wind = hour.wind[view.grid.cellPoint[p.cell]];
+    const wind = windAt(view, hour, p.coordinate, p.cell);
     return {
       coordinate: p.coordinate, distanceM: p.distanceM, time, cell: p.cell,
       light: worse(hour.lights[p.cell], hour.lakeWide.light), waveM: hour.wavesCm[p.cell] / 100,

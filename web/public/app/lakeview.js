@@ -14,7 +14,7 @@ import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, stripesFall, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
-  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, shouldSplit, spotProbe,
+  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, shouldSplit, spotProbe, windAt,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips } from "./tour.js";
@@ -734,7 +734,8 @@ function viewingPanel(hour) {
     const i = page.spot.cell;
     // A lake-wide red (DWD warning, darkness) holds at every spot.
     const spotLight = hour.lakeWide.light === "red" ? "red" : hour.lights[i];
-    const w = hour.wind[view.grid.cellPoint[i]];
+    // Blended at the exact spot the water was tapped (app #392).
+    const w = windAt(view, hour, page.spot.at, i);
     const zone = view.grid.cellZone[i];
     details = `<div class="spot"><p class="spot-head">${dot(spotLight, 14, stale)} <strong>${h(lightTitle(spotLight, stale))}</strong>
         <button class="tool" id="spot-close" aria-label="${h(t("Close"))}">${icon("x")}</button></p>
@@ -743,7 +744,7 @@ function viewingPanel(hour) {
         <div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
         ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg, lang()))}</span></div>` : ""}
         ${w?.visM != null ? `<div><small class="label">${icon(CONDITION_ICONS.visibility)} ${h(t("Visibility"))}</small><span>${h(distance(w.visM))}</span></div>` : ""}</div>
-      ${(() => { const x = extraItem(spotProbe(view, hour, i, mapLimits()).extra); return x ? `<p class="spot-extra">${x}</p>` : ""; })()}</div>`;
+      ${(() => { const x = extraItem(spotProbe(view, hour, i, mapLimits(), page.spot.at).extra); return x ? `<p class="spot-extra">${x}</p>` : ""; })()}</div>`;
   } else {
     const windLine = windText(hour);
     const top = maxWave(hour);
@@ -770,7 +771,7 @@ function collapsedViewing(hour, stale) {
   if (page.spot != null && page.spot.cell < hour.lights.length) {
     const i = page.spot.cell;
     const spotLight = hour.lakeWide.light === "red" ? "red" : hour.lights[i];
-    line = spotProbeHtml(spotLight, stale, spotProbe(view, hour, i, mapLimits()));
+    line = spotProbeHtml(spotLight, stale, spotProbe(view, hour, i, mapLimits(), page.spot.at));
   } else {
     line = `<p class="one-line strong">${h(headlineText(view, hour))}</p>`;
   }
@@ -950,7 +951,14 @@ function wirePanel() {
     page.hour = Number(b.dataset.hour);
     update();
   }));
-  panel.querySelector("#hour-strip .on")?.scrollIntoView({ inline: "center", block: "nearest" });
+  // Only the strip scrolls sideways to the hour; scrollIntoView would also scroll the panel down to the strip,
+  // and a panel not at its top cannot be pushed down.
+  const strip = panel.querySelector("#hour-strip");
+  const chosen = strip?.querySelector(".on");
+  if (chosen) {
+    const [a, b] = [chosen.getBoundingClientRect(), strip.getBoundingClientRect()];
+    strip.scrollLeft += a.left - b.left - (strip.clientWidth - a.width) / 2;
+  }
   // The map's own controls: a layer's name shows for a moment beside the buttons after a switch.
   const over = page.root.querySelector("#lake-over");
   over.querySelectorAll("[data-layer]").forEach((b) => b.addEventListener("click", () => {
