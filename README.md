@@ -195,7 +195,8 @@ neighbour), so values change smoothly across the lake and never go beyond
 those points; hail and thunderstorms come from the nearest point. The website
 blends the same way. Stacked layer buttons at the right switch between the light,
 waves and wind, a slim colour strip above the panel opens the legend, a
-button at the top puts Apple's satellite pictures under the lake, and wind arrows get denser as you zoom in.
+button at the top puts Apple's satellite pictures under the lake (on the website a globe button
+with MapTiler pictures, on its other maps too), and wind arrows get denser as you zoom in.
 The arrows cover the whole map, on the satellite picture too: over land they
 come from the weather map's wind, blended into the lake's arrows over the last
 kilometre to the shore.
@@ -624,7 +625,7 @@ More detail, including the secrets each one needs, is in the
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 | **Missing lake outlines** (`missing-outlines.yml`) | Fetches the OpenStreetMap outline of every catalog lake that has none yet (`scripts/fetch_missing_outlines.py`, in 10 parallel parts) and commits the new `data/outlines` files; existing outlines are never changed. Lines marked "CHECK BY HAND" in its report were picked without a matching name. By hand, on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
-| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, the sample data in `testdata/`, `scripts/build_web.py`, the app icon (for the favicon and home-screen icons) or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
+| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, the sample data in `testdata/`, `scripts/build_web.py`, the app icon (for the favicon and home-screen icons) or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; the optional `MAPTILER_KEY` turns on the satellite pictures. |
 
 ## Traffic light defaults
 
