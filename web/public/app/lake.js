@@ -7,6 +7,20 @@ const RANK = { green: 0, amber: 1, red: 2 };
 const LIGHTS = ["green", "amber", "red"];
 const worse = (a, b) => (RANK[b] > RANK[a] ? b : a);
 
+/**
+ * Why a forecast point is amber or red apart from wind and waves (LakeWind.cause, app #383): fog with the
+ * visibility, when it sets the light as score.py does (red under 500 m, amber up to 1000 m), else a
+ * thunderstorm; without visM from an older backend, either. Null while fog and thunder leave it green.
+ */
+export function pointCause(w) {
+  const other = w?.other;
+  if (!other || other === "green") return null;
+  if (w.visM == null) return { kind: "either", light: other };
+  const fog = w.visM < 500 ? "red" : w.visM <= 1000 ? "amber" : "green";
+  if (RANK[fog] >= RANK[other]) return { kind: "fog", light: fog, visM: w.visM };
+  return { kind: "thunderstorm", light: other };
+}
+
 /** The view as the backend sends it, with each hour's lights as a list (one digit per cell). */
 export function decodeView(raw) {
   return {

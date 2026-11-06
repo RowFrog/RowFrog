@@ -132,3 +132,13 @@ test("club pins split off the clubhouse only for a set launch point 30 m or more
   assert.equal(shouldSplit(41, true), true);
   assert.equal(shouldSplit(39, true), false);
 });
+
+test("a spot coloured by fog names the visibility, else a thunderstorm (app #383)", async () => {
+  const { pointCause } = await import("../public/app/lake.js");
+  assert.equal(pointCause({ other: "green", visM: 300 }), null);
+  assert.deepEqual(pointCause({ other: "red", visM: 300 }), { kind: "fog", light: "red", visM: 300 });
+  assert.deepEqual(pointCause({ other: "amber", visM: 800 }), { kind: "fog", light: "amber", visM: 800 });
+  assert.deepEqual(pointCause({ other: "red", visM: 800 }), { kind: "thunderstorm", light: "red" });
+  assert.deepEqual(pointCause({ other: "amber", visM: 20000 }), { kind: "thunderstorm", light: "amber" });
+  assert.deepEqual(pointCause({ other: "red" }), { kind: "either", light: "red" });
+});
