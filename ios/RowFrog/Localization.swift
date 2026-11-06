@@ -944,6 +944,8 @@ enum German {
         "Plan your outing": "Plane deine Ausfahrt",
         "Each hour has its own rowing light. The icons on top name the columns, and rows after dark are dimmed.": "Jede Stunde hat ihre eigene Ruderampel. Die Symbole oben benennen die Spalten, Zeilen nach Einbruch der Dunkelheit sind abgedunkelt.",
         "Where the forecast is for": "Wofür die Vorhersage gilt",
+        "Know the launch point?": "Kennst du den Steg?",
+        "Know where this club's boats go on the water? Suggest the launch point.": "Weißt du, wo die Boote dieses Vereins ins Wasser gehen? Schlag den Steg vor.",
         "Wind, waves and warnings are worked out for this launch point. Tap Open in Maps for directions.": "Wind, Wellen und Warnungen werden für diesen Steg berechnet. Tippe auf „In Karten öffnen“ für den Weg dorthin.",
         "One picture or many": "Ein Bild oder viele",
         "Pick a picture for all pages, a different one for single pages, or give a club its own. Under Look, choose whether the tiles show the picture or stay solid.": "Wähle ein Bild für alle Seiten, ein anderes für einzelne Seiten oder gib einem Verein sein eigenes. Unter „Darstellung“ legst du fest, ob die Kacheln das Bild zeigen oder deckend bleiben.",

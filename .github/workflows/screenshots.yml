@@ -310,6 +310,8 @@ jobs:
           # Suggest a launch point: the map moves under fixed oars (owner's option A).
           GUIDE=1 shoot 392-suggest-launch-point light -RWTutorialSeen YES -RWNoTips YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWSuggestLaunchPoint YES
           GUIDE=1 shoot 393-suggest-launch-point-german-dark dark -RWTutorialSeen YES -RWNoTips YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWSuggestLaunchPoint YES -RWLanguage de
+          GUIDE=1 shoot 405-tip-suggest-launch-point light -RWTutorialSeen YES -RWNoTips YES -RWSuggestTip YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES
+          GUIDE=1 shoot 406-tip-suggest-launch-point-german-dark dark -RWTutorialSeen YES -RWNoTips YES -RWSuggestTip YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWLanguage de
           # Current conditions in the top tile (owner's choice B, 4 Nov 2026): closed, with a
           # value it hides as one line under the sun line, opened into all tiles, the
           # settings switch, Arrange page with the card locked, and the old separate cards.
