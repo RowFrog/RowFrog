@@ -95,8 +95,8 @@ export async function renderAddPlace(root, startName = "") {
   const L = await loadLeaflet();
   if (!$("#place-map")) return;
   const map = L.map("place-map", { zoomControl: true }).setView([point.lat, point.lon], 15);
-  // Opens on satellite pictures, with the globe button to switch, as the app's Add a place.
-  baseMap(L, map, { start: true, small: true });
+  // Satellite pictures first, then the last choice, with the globe button to switch (RWAddPlaceImagery, app #416).
+  baseMap(L, map, { storeKey: "rf.addPlaceImagery", start: true, small: true });
   // Once the map stops: the nearest water is looked up among every lake.
   const moved = () => {
     const c = map.getCenter();
