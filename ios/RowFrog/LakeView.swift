@@ -227,8 +227,10 @@ struct LakeWind: Decodable, Hashable {
     let fromDeg: Double?
     /// The light from fog and thunderstorms at the point; missing from older backends.
     let other: Light?
+    /// The visibility at the point, in metres; missing from older backends.
+    let visM: Double?
 
-    private enum CodingKeys: String, CodingKey { case speedMs, gustMs, fromDeg, other }
+    private enum CodingKeys: String, CodingKey { case speedMs, gustMs, fromDeg, other, visM }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -237,6 +239,17 @@ struct LakeWind: Decodable, Hashable {
         fromDeg = try c.decodeIfPresent(Double.self, forKey: .fromDeg)
         // 0 green, 1 amber, 2 red.
         other = try c.decodeIfPresent(Int.self, forKey: .other).map { $0 >= 2 ? .red : $0 == 1 ? .amber : .green }
+        visM = try c.decodeIfPresent(Double.self, forKey: .visM)
+    }
+
+    /// Why the point is amber or red apart from wind and waves: fog (with the
+    /// visibility) or a thunderstorm. The fog limits are the backend's (score.py).
+    var cause: (text: String, symbol: String, light: Light)? {
+        guard let other, other > .green else { return nil }
+        guard let visM else { return (tr("Fog or thunderstorm risk"), Condition.visibility.symbol, other) }
+        let fog: Light = visM < 500 ? .red : visM <= 1000 ? .amber : .green
+        if fog >= other { return (tr("Fog: visibility %@", Format.distance(visM)), Condition.visibility.symbol, fog) }
+        return (tr("Thunderstorm risk"), Condition.thunderstorm.symbol, other)
     }
 }
 

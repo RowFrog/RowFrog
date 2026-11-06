@@ -828,10 +828,13 @@ struct LakeMapScreen: View {
             } else if routeMode {
                 Text(tr("Tap the water to add the turning points of your route."))
             } else if let spot, spot < hour.lights.count {
-                HStack(spacing: 6) {
-                    TrafficLightDot(light: hour.lights[spot], size: 10)
-                    spotLine(spot, hour)
-                        .minimumScaleFactor(0.8)
+                VStack(alignment: .leading, spacing: 2) {
+                    HStack(spacing: 6) {
+                        TrafficLightDot(light: hour.lights[spot], size: 10)
+                        spotLine(spot, hour)
+                            .minimumScaleFactor(0.8)
+                    }
+                    spotCause(spot, hour)
                 }
                 .accessibilityElement(children: .combine)
                 .accessibilityLabel(spotLabel(spot, hour))
@@ -906,7 +909,23 @@ struct LakeMapScreen: View {
     private func spotLabel(_ i: Int, _ hour: LakeHour) -> String {
         var label = hour.lights[i].title + ", " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: i)))
         if let wind = spotWind(i, hour) { label += ", " + tr("Wind") + " " + wind }
+        if let cause = pointWind(i, hour)?.cause { label += ", " + cause.text }
         return label
+    }
+
+    private func pointWind(_ i: Int, _ hour: LakeHour) -> LakeWind? {
+        let p = view.grid.cellPoint[i]
+        return p < hour.wind.count ? hour.wind[p] : nil
+    }
+
+    /// Fog or a thunderstorm at the spot's forecast point, when it colours the
+    /// spot although waves and wind are fine (owner, 6 Nov 2026).
+    @ViewBuilder private func spotCause(_ i: Int, _ hour: LakeHour) -> some View {
+        if let cause = pointWind(i, hour)?.cause {
+            Label(cause.text, systemImage: cause.symbol)
+                .font(.caption.weight(.semibold))
+                .foregroundStyle(cause.light.color)
+        }
     }
 
     private func spotWind(_ i: Int, _ hour: LakeHour) -> String? {
@@ -940,6 +959,7 @@ struct LakeMapScreen: View {
                 }
             }
             .symbolRenderingMode(.hierarchical)
+            spotCause(i, hour)
         }
         .accessibilityElement(children: .combine)
     }
