@@ -45,6 +45,8 @@ export const backgrounds = {
 
 /** A club's own picture, else its kind of page's, else the one for all pages (AppSettings.background(for:clubID:)). */
 export function backgroundFor(page, clubId = null, b = backgrounds) {
+  // The settings keep their plain background, unless the developer options are on (#355).
+  if (page === "settings" && !store.developerOptions) return "none";
   const own = clubId ? b.clubs[clubId] : null;
   if (page === "clubPages" && valid(own)) return own;
   const forPage = b.pages[page];
@@ -183,7 +185,7 @@ async function picture(choice, clubId) {
 
 const pictureUrl = async (choice, clubId) => (await picture(choice, clubId))?.url ?? null;
 
-/** The picture chosen for all pages, for the preview in Settings › Club pages; null without one. */
+/** The picture chosen for all pages, for the preview in Settings › Appearance; null without one. */
 export function backgroundPreview() {
   return backgrounds.all && backgrounds.all !== "none" ? pictureUrl(backgrounds.all, null) : Promise.resolve(null);
 }
@@ -236,7 +238,7 @@ export async function showBackground(page, clubId = null) {
 
 // ---- Settings › Background pictures ------------------------------------------------------
 
-const settingsNav = () => `<header class="nav"><a class="link" href="#/settings/clubpages">${icon("chevron-left")} ${h(t("Club pages"))}</a><span class="spacer"></span></header>`;
+const settingsNav = () => `<header class="nav"><a class="link" href="#/settings/appearance">${icon("chevron-left")} ${h(t("Appearance"))}</a><span class="spacer"></span></header>`;
 
 /** "All pages: Lake waves · 2 with their own", for the settings row. */
 export function backgroundSummary() {
@@ -257,7 +259,7 @@ export function renderBackgrounds(root) {
       <h3 class="section">${icon("layers")} ${h(t("All pages"))}</h3>
       <section class="card group">${row("all", t("All pages"), "layers", b.all)}</section>
       <h3 class="section">${icon("copy")} ${h(t("Single pages"))}</h3>
-      <section class="card group">${PAGES.map(([id, title, ic]) => row(`page:${id}`, t(title), ic, b.pages[id], t("Same as all pages"))).join("")}</section>
+      <section class="card group">${PAGES.filter(([id]) => id !== "settings" || store.developerOptions).map(([id, title, ic]) => row(`page:${id}`, t(title), ic, b.pages[id], t("Same as all pages"))).join("")}</section>
       <p class="footer">${h(t("A picture set here replaces the one for all pages on that page."))}</p>
       ${store.clubs.length ? `<h3 class="section">${icon("sailboat")} ${h(t("Single clubs"))}</h3>
       <section class="card group">${store.clubs.map((c) => row(`club:${c.id}`, c.shortName || c.name, "house", b.clubs[c.id], t("Same as club pages"))).join("")}</section>

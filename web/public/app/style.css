@@ -585,7 +585,21 @@ h3.section { display: flex; align-items: center; gap: 6px; margin: 22px 4px 6px;
 p.footer { margin: 6px 4px 0; font-size: 13px; color: var(--sub); }
 .boat-row { display: flex; align-items: center; border-bottom: .5px solid var(--line); }
 .boat-row button { border-bottom: 0 !important; }
-.boat-row .round { margin-right: 10px; color: var(--accent); display: flex; padding: 6px; }
+.boat-row .round { margin-right: 10px; color: var(--accent); display: flex; padding: 6px; font-size: 22px; }
+/* The tick on the left, as Wi-Fi in iOS Settings (BoatRow, app #355). */
+.boats .boat-row button > span.tick { flex: none; width: 18px; display: grid; place-items: center; color: var(--accent); }
+.boats li:last-child .boat-row { border-bottom: 0; }
+/* A row a swipe to the left opens on a red Remove button (swipeRow). */
+.swipe { position: relative; overflow: hidden; list-style: none; }
+.swipe-body { position: relative; z-index: 1; background: var(--card); touch-action: pan-y; transition: transform .2s ease; user-select: none; }
+.swipe.dragging .swipe-body { transition: none; }
+.swipe.open .swipe-body { transform: translateX(-88px); }
+.swipe .swipe-remove { position: absolute; top: 0; right: 0; bottom: 0; width: 88px; padding: 0; display: grid; place-items: center; background: #ff3b30; color: #fff; font-weight: 600; border: 0 !important; }
+.swipe-remove:focus-visible { outline: 2px solid #fff; outline-offset: -4px; }
+@media (prefers-reduced-motion: reduce) { .swipe-body { transition: none; } }
+ul.kept { list-style: none; padding: 0; }
+ul.kept > li > .row-setting, ul.kept .swipe-body > .row-setting { border-bottom: .5px solid var(--line); }
+ul.kept > li:last-child > .row-setting, ul.kept > li:last-child .swipe-body > .row-setting { border-bottom: 0; }
 .boats h3 { margin: 0; }
 .limit-row { display: grid; grid-template-columns: 1fr auto auto; gap: 10px; align-items: center; padding: 10px 0; border-bottom: .5px solid var(--line); }
 .limit-row:last-of-type { border-bottom: 0; }
@@ -1102,6 +1116,8 @@ dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 /* ---- Settings as in the app: coloured topic icons, the topic's value at the end, search at the end ---- */
 .set-icon { display: inline-grid; place-items: center; flex: none; width: 29px; height: 29px; border-radius: 7px; background: var(--c); color: #fff; font-size: 17px; }
 .row-setting.topic { min-height: 50px; padding: 6px 0; }
+/* Rows that are buttons (Version, Card order, the Help rows) span the card as the links do. */
+button.row-setting { width: 100%; text-align: left; font: inherit; color: var(--text); }
 .row-setting.topic > span:first-child { gap: 12px; }
 .row-setting.topic .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row-setting.topic select { max-width: 55%; border: 0; background: transparent; color: var(--sub); text-align: right; font: inherit; }
@@ -1197,3 +1213,6 @@ body.has-picture .side { border-right: none; }
 .center-oars { position: absolute; left: 50%; top: 50%; z-index: 500; transform: translate(-50%, -50%); display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%;
   background: var(--accent); color: #fff; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.4); pointer-events: none; }
 .center-oars .i { width: 20px; height: 20px; }
+/* Card order: the label wraps, the order and the chevron stay whole (Settings > Club pages). */
+#arrange > span:first-child { flex: 1; min-width: 0; }
+#arrange > .sub { flex: none; overflow: visible; }

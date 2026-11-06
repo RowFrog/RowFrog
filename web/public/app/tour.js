@@ -6,7 +6,7 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { key, COLD, standardLimit } from "./logic.js";
-import { h, load, save, setTitle, dot, lightTitle, conditionIcon, conditionTexts, TILE_ORDER, temperature, wind } from "./shared.js";
+import { h, store, load, save, setTitle, dot, lightTitle, conditionIcon, conditionTexts, TILE_ORDER, temperature, wind } from "./shared.js";
 
 // ---- The tour ---------------------------------------------------------------------------
 
@@ -52,7 +52,7 @@ export function tourPages(river = false) {
       points: [
         p("check", key("Small boats are ticked at first. Tick Big boats if you row a four or an eight.")),
         p("list", key("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
-        p("sliders-horizontal", key("The sliders next to a boat open its limits.")), p("map", key("Pick the boat that colours the lake map.")),
+        p("info", key("ⓘ next to a boat opens its limits.")), p("map", key("Pick the boat that colours the lake map.")),
         { icon: "thermometer-snowflake", text: key("Below %@ water a blue life-jacket badge shows; the light stays about the weather. Below %@ the advice is stricter."), args: () => [temperature(standardLimit("lifeJacket")), temperature(COLD.waterC)] },
       ],
     },
@@ -90,8 +90,8 @@ export function tourPages(river = false) {
     {
       id: "settings", icon: "settings", tint: "grey", title: key("Settings"), intro: key("Open the settings with the cog at the top of the list or at the bottom of a club page."),
       points: [
-        p("languages", key("Language: English or German.")), p("ruler", key("Units for temperature, wind, waves, rain, distances and air pressure.")),
-        p("sun-moon", key("Light, dark or like your device.")), p("image", key("Background pictures, including your own photos.")),
+        p("languages", key("English or German, as your browser's languages set it.")), p("ruler", key("Units for temperature, wind, waves, rain, distances and air pressure.")),
+        p("image", key("Background pictures, including your own photos.")),
         p("circle-help", key("You can watch this tour again in the settings.")),
       ],
     },
@@ -102,7 +102,8 @@ export const tourSeen = () => load("rf.tourSeen", false) === true;
 
 /** A small picture of the feature, as TourPageView.extra. */
 function extra(page, languagePicker) {
-  if (page.id === "welcome") return `<div class="tour-language">${languagePicker()}</div>`;
+  // The page speaks the browser's language; the website's own choice is for the developer options only (#355).
+  if (page.id === "welcome") return store.developerOptions ? `<div class="tour-language">${languagePicker()}</div>` : "";
   if (page.id === "rowingLight") {
     return `<div class="tour-lights">${["green", "amber", "red"].map((l) => `<div class="${l}">${dot(l, 30)}<small>${h(lightTitle(l))}</small></div>`).join("")}</div>`;
   }
@@ -183,7 +184,7 @@ const TIPS = {
   satellite: [key("Satellite picture"), key("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind, the waves, the rowing light or the ice map over it."), "globe"],
   source: [key("Where the forecast comes from"), key("The app picks the weather model that does best for this lake. Tap the line to see which one."), "cloud-sun"],
   coldWater: [key("Cold water"), key("A capsize in water below %@ gets dangerous within minutes. The app then lowers its own wind and gust limits by %@. Limits you set stay as they are, with a reminder on the rowing light."), "thermometer-snowflake"],
-  myBoats: [key("Which boat do you row?"), key("Tick the boat the rowing light is for. The sliders open its limits, and below you can add your own boats."), "sailboat"],
+  myBoats: [key("Which boat do you row?"), key("Tap the boat the rowing light is for. ⓘ opens its limits, and below you can add your own boats."), "sailboat"],
   backgrounds: [key("One picture or many"), key("Pick a picture for all pages, a different one for single pages, or give a club its own. Under Look, choose whether the tiles show the picture or stay solid."), "image"],
   chartScrub: [key("Read any hour"), key("Hold the chart, then slide along it to read the value at each hour."), "hand"],
   weatherMap: [key("Weather on the map"), key("The map shows this weather around the lake. Press play to watch it move, or open it full screen with the arrows."), "map", "mapLink"],
