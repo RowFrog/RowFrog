@@ -521,11 +521,24 @@ extension APIClient {
         try await data("maps/\(tile)/\(value)")
     }
 
+    /// With the kept copy's ETag, so a map file that didn't change since it was
+    /// last downloaded answers "304 Not Modified" and the kept copy is used.
     private func data(_ path: String) async throws -> Data {
-        let request = URLRequest(url: url(path), cachePolicy: .reloadIgnoringLocalCacheData)
+        let address = url(path)
+        let kept = cache?.copy(of: address)
+        var request = URLRequest(url: address, cachePolicy: .reloadIgnoringLocalCacheData)
+        if let kept, !kept.etag.isEmpty { request.setValue(kept.etag, forHTTPHeaderField: "If-None-Match") }
         let (data, response) = try await session.data(for: request)
-        if let http = response as? HTTPURLResponse, !(200..<300).contains(http.statusCode) {
+        let http = response as? HTTPURLResponse
+        if http?.statusCode == 304, let kept {
+            cache?.touch(address)
+            return kept.data
+        }
+        if let http, !(200..<300).contains(http.statusCode) {
             throw HTTPStatusError(code: http.statusCode)
+        }
+        if let etag = http?.value(forHTTPHeaderField: "ETag"), !etag.isEmpty {
+            cache?.keep(data, etag: etag, for: address)
         }
         return data
     }

@@ -726,9 +726,32 @@ def _sharp(client, folder: Path, kind: str, bbox, size, day, before: dict | None
     return fields
 
 
+# Left out when comparing a new file with the published one: the time it was built.
+BUILD_TIME_KEYS = ("generatedAt",)
+
+
+def unchanged(path: Path, body) -> bool:
+    """True when the published file says the same apart from when it was built.
+    Such a file is left as it is, so the gateway answers "not changed" and the
+    app doesn't download it again (forecasts are trimmed to the current hour,
+    so a kept build time is at most about an hour old)."""
+    if not isinstance(body, dict) or not path.is_file():
+        return False
+    try:
+        old = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    if not isinstance(old, dict):
+        return False
+    strip = lambda d: {k: v for k, v in d.items() if k not in BUILD_TIME_KEYS}  # noqa: E731
+    return strip(old) == strip(json.loads(json.dumps(body, ensure_ascii=False)))
+
+
 def write(path: Path, body) -> None:
     if path.parent.is_file():  # the lake list used to be a file at v1/lakes
         path.parent.unlink()
+    if unchanged(path, body):
+        return
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(body, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
