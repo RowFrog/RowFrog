@@ -1270,7 +1270,7 @@ struct PressureGauge: View {
 /// Columns of the hourly table, shared by the icon header and the rows.
 private enum Column {
     /// Wider for "10:00 PM" than for "22:00".
-    static var time: CGFloat { AppSettings.shared.timeFormat.usesAMPM ? 64 : 44 }
+    static var time: CGFloat { AppSettings.shared.activeTimeFormat.usesAMPM ? 64 : 44 }
     static let light: CGFloat = 14
     static let sky: CGFloat = 24
 }
@@ -1653,7 +1653,7 @@ private struct NightRow: View {
     }
 
     private func hour(_ date: Date) -> String {
-        AppSettings.shared.timeFormat.hour(from: date)
+        AppSettings.shared.activeTimeFormat.hour(from: date)
     }
 
     private var accessibilityText: String {

@@ -41,7 +41,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
 enum Orientation {
     static var allowed: UIInterfaceOrientationMask {
         if isPad { return .all }
-        return AppSettings.shared.allowsLandscape ? .allButUpsideDown : .portrait
+        return AppSettings.shared.activeAllowsLandscape ? .allButUpsideDown : .portrait
     }
 
     /// On the iPad the app runs in a resizable window, where iPadOS ignores an

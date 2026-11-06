@@ -250,7 +250,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .boats: [
             TourPoint(symbol: "checkmark", text: tr("Small boats are ticked at first. Tick Big boats if you row a four or an eight.")),
             TourPoint(symbol: "list.bullet", text: tr("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
-            TourPoint(symbol: "slider.horizontal.3", text: tr("The sliders next to a boat open its limits.")),
+            TourPoint(symbol: "info.circle", text: tr("ⓘ next to a boat opens its limits.")),
             TourPoint(symbol: "map", text: tr("Pick the boat that colours the lake map.")),
             TourPoint(symbol: "thermometer.snowflake", text: tr("Below %@ water a blue life-jacket badge shows; the light stays about the weather. Below %@ the advice is stricter.", Format.temperature(RowingLimit.lifeJacket.standard(for: .small)), Format.temperature(RowingLimits.coldWaterC))),
         ]
@@ -279,12 +279,11 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "sidebar.left", text: tr("The location list stays on the left, the club page on the right.")),
             TourPoint(symbol: "square.grid.2x2", text: tr("The cards on the club page sit in two columns.")),
         ] + (Orientation.isPad ? [] : [
-            TourPoint(symbol: "gearshape", text: tr("Prefer portrait only? Switch landscape off in the settings.")),
+            TourPoint(symbol: "gearshape", text: tr("Prefer portrait only? Use Rotation Lock in Control Centre.")),
         ])
         case .settings: [
-            TourPoint(symbol: "globe", text: tr("Language: English or German.")),
+            TourPoint(symbol: "globe", text: tr("English or German, as the iPhone's Settings set it for Row Frog.")),
             TourPoint(symbol: "ruler", text: tr("Units for temperature, wind, waves, rain, distances and air pressure.")),
-            TourPoint(symbol: "circle.lefthalf.filled", text: tr("Light, dark or like your phone.")),
             TourPoint(symbol: "photo", text: tr("Background pictures, including your own photos.")),
             TourPoint(symbol: "app.badge", text: tr("Your choice of app icon.")),
             TourPoint(symbol: "questionmark.circle", text: tr("You can watch this tour again in the settings.")),
@@ -595,6 +594,9 @@ private struct TourPageView: View {
     @ViewBuilder private var extra: some View {
         switch page {
         case .welcome:
+            // The app speaks the iPhone's language (Settings › Row Frog › Language);
+            // its own choice is for the developer options only.
+            if AppSettings.shared.developerOptions {
             VStack(spacing: 8) {
                 Label(tr("Language"), systemImage: "globe")
                     .font(.subheadline.weight(.semibold))
@@ -603,6 +605,7 @@ private struct TourPageView: View {
                     ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
                 }
                 .pickerStyle(.segmented)
+            }
             }
         case .rowingLight:
             HStack(alignment: .top, spacing: 8) {
@@ -737,7 +740,7 @@ struct ForecastSourceTip: Tip {
 
 struct MyBoatsTip: Tip {
     var title: Text { Text(tr("Which boat do you row?")) }
-    var message: Text? { Text(tr("Tick the boat the rowing light is for. The sliders open its limits, and below you can add your own boats.")) }
+    var message: Text? { Text(tr("Tap the boat the rowing light is for. ⓘ opens its limits, and below you can add your own boats.")) }
     var image: Image? { Image(systemName: "figure.rower") }
 }
 

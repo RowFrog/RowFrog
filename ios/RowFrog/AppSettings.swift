@@ -173,6 +173,31 @@ final class AppSettings {
     /// The night rule in use: the developer options' pick while they are on, else one line per night.
     var activeNightHours: NightHours { developerOptions ? nightHours : .fold }
 
+    // Choices iOS already makes for the whole phone (owner's pick, 5.11.2026, after
+    // Apple's guidelines): Light/Dark, rotation, the app's language and the time and
+    // date formats follow the iPhone. The app's own choices for them show, and count,
+    // only while the developer options are on. A value set as a launch argument
+    // (screenshots, UI tests) counts too.
+
+    /// Light, dark or the phone's, as the app shows it.
+    var activeAppearance: Appearance { developerOptions || Self.pinned(Keys.appearance) ? appearance : .device }
+    /// Whether the app turns with the phone (iPhone); Rotation Lock still stops it.
+    var activeAllowsLandscape: Bool { developerOptions || Self.pinned(Keys.landscape) ? allowsLandscape : true }
+    /// The language choice in use: the app's own only with the developer options.
+    var activeLanguage: AppLanguage { developerOptions || Self.pinned(Keys.language) ? language : .device }
+    /// The time format in use.
+    var activeTimeFormat: TimeFormat { developerOptions || Self.pinned(Keys.timeFormat) ? timeFormat : .device }
+    /// The date format in use.
+    var activeDateFormat: DateFormat { developerOptions || Self.pinned(Keys.dateFormat) ? dateFormat : .device }
+
+    /// Whether a setting was given as a launch argument, e.g. `-RWLanguage de`.
+    /// Read once: `tr` asks for the language on every text, and copying the
+    /// arguments each time kept the main thread busy (iOS 18 UI test, #355).
+    private static func pinned(_ key: String) -> Bool { pinnedKeys.contains(key) }
+    private static let pinnedKeys: Set<String> = Set(
+        ProcessInfo.processInfo.arguments.filter { $0.hasPrefix("-RW") }.map { String($0.dropFirst()) }
+    )
+
     /// The order of the cards on every club page, and the cards switched off.
     var pageLayout: PageLayout { didSet { defaults.set(try? JSONEncoder().encode(pageLayout), forKey: Keys.pageLayout) } }
     /// Clubs whose page has its own order; they keep it when the order for all clubs changes.
@@ -342,7 +367,7 @@ final class AppSettings {
 
     /// The language the app shows: the chosen one, or the phone's when it is German.
     var resolvedLanguage: AppLanguage {
-        switch language {
+        switch activeLanguage {
         case .device: Self.deviceLanguage
         default: language
         }
@@ -382,6 +407,14 @@ final class AppSettings {
     /// iOS picked for the app, so a German phone also gets German on the very
     /// first screen.
     static var deviceLanguage: AppLanguage {
+#if WIDGET_EXTENSION
+        // The language iOS gives the app (Settings › Row Frog › Language), which the
+        // widget's own process doesn't see; the app leaves it in the app group.
+        if let app = WidgetShared.defaults.string(forKey: WidgetShared.appLanguageKey),
+           let language = AppLanguage(rawValue: app), language != .device {
+            return language
+        }
+#endif
         let known = Locale.preferredLanguages.first { $0.hasPrefix("de") || $0.hasPrefix("en") }
             ?? Bundle.main.preferredLocalizations.first
             ?? Locale.current.language.languageCode?.identifier
@@ -390,7 +423,7 @@ final class AppSettings {
 
     /// Locale for numbers and dates in the chosen language; "Device" keeps the phone's.
     var locale: Locale {
-        switch language {
+        switch activeLanguage {
         case .device: Self.deviceLocale(current: .current, language: Self.deviceLanguage)
         case .english: Locale(identifier: "en_GB")
         case .german: Locale(identifier: "de_DE")
@@ -410,6 +443,8 @@ final class AppSettings {
 
     /// The picture for a page: the club's own, else the page kind's, else the one for all pages.
     func background(for page: PageKind, clubID: String? = nil) -> BackgroundChoice {
+        // The settings keep the plain iOS background, unless the developer options are on.
+        if page == .settings && !developerOptions { return .noPicture }
         if page == .clubPages, let clubID, let own = clubBackgrounds[clubID] { return own }
         return pageBackgrounds[page] ?? allPagesBackground
     }

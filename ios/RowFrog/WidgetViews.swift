@@ -15,6 +15,8 @@ enum WidgetShared {
     static let namesKey = "RWWidgetClubNames"
     /// Own places by id, as [lat, lon]: their forecast is worked out in the widget too.
     static let ownPlacesKey = "RWWidgetOwnPlaces"
+    /// The app's language as iOS gives it (per-app language), for the widget's texts.
+    static let appLanguageKey = "RWWidgetAppLanguage"
 
     static var defaults: UserDefaults { UserDefaults(suiteName: group) ?? .standard }
 

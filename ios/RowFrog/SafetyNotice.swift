@@ -93,8 +93,9 @@ struct SafetyNoticeView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            // The settings can't be reached yet, so the language is chosen here:
-            // every choice the settings offer, the device's language first and preset.
+            // The app speaks the iPhone's language (Settings › Row Frog › Language).
+            // With the developer options, the app's own choice shows here too.
+            if AppSettings.shared.developerOptions {
             Picker(tr("Language"), selection: Binding(
                 get: { AppSettings.shared.language },
                 set: { AppSettings.shared.language = $0 }
@@ -107,9 +108,9 @@ struct SafetyNoticeView: View {
             .frame(maxWidth: 320)
             .padding(.top, 8)
             .padding(.horizontal)
+            }
             ScrollView {
-                // Lazy, so the end marker only appears once it is scrolled into view.
-                LazyVStack(spacing: 20) {
+                ReadToEndStack(readToEnd: $readToEnd) {
                     Image(systemName: "exclamationmark.shield.fill")
                         .font(.system(size: 56))
                         .symbolRenderingMode(.hierarchical)
@@ -127,14 +128,12 @@ struct SafetyNoticeView: View {
                     SafetyPointsList()
                         .padding()
                         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-                    Color.clear
-                        .frame(height: 1)
-                        .onAppear { readToEnd = true }
                 }
                 .padding()
                 .frame(maxWidth: 640)
                 .frame(maxWidth: .infinity)
             }
+            .readToEnd($readToEnd)
             VStack(spacing: 12) {
                 Button {
                     ticked.toggle()
@@ -155,11 +154,14 @@ struct SafetyNoticeView: View {
                 .accessibilityIdentifier("safety-tick")
                 .opacity(readToEnd ? 1 : 0.5)
                 .accessibilityAddTraits(ticked ? .isSelected : [])
-                if !readToEnd {
-                    Label(tr("Scroll to the end to continue."), systemImage: "arrow.down")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
+                // Faded out rather than removed: removing it grew the scroll view
+                // just as its end came into view, and on iOS 18 that could keep
+                // the layout busy without end.
+                Label(tr("Scroll to the end to continue."), systemImage: "arrow.down")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .opacity(readToEnd ? 0 : 1)
+                    .accessibilityHidden(readToEnd)
                 Button {
                     SafetyNotice.accept()
                     accept()
@@ -180,6 +182,44 @@ struct SafetyNoticeView: View {
         .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .environment(\.locale, AppSettings.shared.locale)
         .interactiveDismissDisabled()
+    }
+}
+
+/// The notice's text. From iOS 18 a plain stack, and the scroll position tells
+/// when its end is in view; iOS 17 keeps a lazy stack whose end marker appears
+/// once it is scrolled into view. (The lazy stack with the marker kept the main
+/// thread busy on iOS 18 once the notice got taller, #355.)
+private struct ReadToEndStack<Content: View>: View {
+    @Binding var readToEnd: Bool
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        if #available(iOS 18.0, *) {
+            VStack(spacing: 20) { content }
+        } else {
+            LazyVStack(spacing: 20) {
+                content
+                Color.clear
+                    .frame(height: 1)
+                    .onAppear { readToEnd = true }
+            }
+        }
+    }
+}
+
+private extension View {
+    /// From iOS 18: sets `readToEnd` once the scroll view's end is in view (or it all fits).
+    @ViewBuilder func readToEnd(_ readToEnd: Binding<Bool>) -> some View {
+        if #available(iOS 18.0, *) {
+            onScrollGeometryChange(for: Bool.self) { geometry in
+                geometry.contentOffset.y + geometry.containerSize.height - geometry.contentInsets.bottom
+                    >= geometry.contentSize.height - 8
+            } action: { _, atEnd in
+                if atEnd && !readToEnd.wrappedValue { readToEnd.wrappedValue = true }
+            }
+        } else {
+            self
+        }
     }
 }
 
