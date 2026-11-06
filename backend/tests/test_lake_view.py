@@ -141,3 +141,23 @@ def test_grid_of_a_narrow_river_section():
 
 def test_wider_lake_grids_are_unchanged_by_the_river_switch():
     assert lake_view.build_grid(LAKE, target_cells=200).cells == lake_view.build_grid(LAKE, target_cells=200, narrow=True).cells
+
+
+def test_cells_blend_the_wind_of_the_points_around_them():
+    # Owner's natural neighbour pick, 6 Nov 2026: no hard step between a calm and a windy point.
+    grid = lake_view.build_grid(LAKE, target_cells=200)
+    assert len(grid.samples) >= 2 and len(grid.weights) == len(grid.cells)
+    for w in grid.weights:
+        assert abs(sum(w.values()) - 1) < 1e-9 and all(v >= 0 for v in w.values())
+    speeds = [2.0 + 6.0 * k / (len(grid.samples) - 1) for k in range(len(grid.samples))]
+    at_points = [hour(speed=s, gust=s + 1, visibility=300.0 if k == 0 else 15_000.0) for k, s in enumerate(speeds)]
+    blended = [lake_view.cell_weather(grid, i, at_points) for i in range(len(grid.cells))]
+    # Never beyond the points, and more than just the points' own values.
+    assert all(min(speeds) - 1e-9 <= b.wind_speed_ms <= max(speeds) + 1e-9 for b in blended)
+    assert len({round(b.wind_speed_ms, 2) for b in blended}) > len(speeds)
+    assert all(300.0 - 1e-6 <= b.visibility_m <= 15_000.0 + 1e-6 for b in blended)
+    # Direction from the arrows: 350° and 10° make north, not south.
+    turned = [hour(wind_from=350.0 if k % 2 else 10.0) for k in range(len(grid.samples))]
+    for i in range(len(grid.cells)):
+        d = lake_view.cell_weather(grid, i, turned).wind_from_deg
+        assert min(d, 360 - d) <= 10.0 + 1e-6

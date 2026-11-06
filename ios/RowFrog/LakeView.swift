@@ -236,6 +236,17 @@ struct LakeWind: Decodable, Hashable {
 
     private enum CodingKeys: String, CodingKey { case speedMs, gustMs, fromDeg, other, visM, storm, rainMm, hail }
 
+    init(speedMs: Double?, gustMs: Double?, fromDeg: Double?, other: Light?, visM: Double?, storm: Light?, rainMm: Double?, hail: Bool?) {
+        self.speedMs = speedMs
+        self.gustMs = gustMs
+        self.fromDeg = fromDeg
+        self.other = other
+        self.visM = visM
+        self.storm = storm
+        self.rainMm = rainMm
+        self.hail = hail
+    }
+
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
         speedMs = try c.decodeIfPresent(Double.self, forKey: .speedMs)
@@ -283,9 +294,9 @@ struct LakeProbeItem: Hashable {
 extension LakeView {
     /// The values under a tapped spot: waves, wind and visibility always, then
     /// the strongest other reason when it is amber or red (owner's E2 and G, 6 Nov 2026).
-    func probe(cell i: Int, hour: LakeHour, limits: RowingLimits) -> (values: [LakeProbeItem], extra: LakeProbeItem?) {
-        let p = i < grid.cellPoint.count ? grid.cellPoint[i] : 0
-        let wind = p < hour.wind.count ? hour.wind[p] : nil
+    /// `at`: where the water was tapped; wind and visibility are blended for that spot.
+    func probe(cell i: Int, at spot: CLLocationCoordinate2D? = nil, hour: LakeHour, limits: RowingLimits) -> (values: [LakeProbeItem], extra: LakeProbeItem?) {
+        let wind = spot.map { wind(at: $0, cell: i, in: hour) } ?? cellWind(i, in: hour)
         let cold = waterC.map { $0 < RowingLimits.coldWaterC }
             ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
         let l = limits.forWater(cold ? 0 : nil)
@@ -319,8 +330,7 @@ extension LakeView {
             hour.lakeWide.light = hour.lakeWide.reasons.map(\.light).max() ?? .green
             var zoneLights = [Light](repeating: .green, count: hour.zones.count)
             hour.lights = hour.lights.indices.map { i in
-                let p = i < grid.cellPoint.count ? grid.cellPoint[i] : 0
-                let wind = p < hour.wind.count ? hour.wind[p] : nil
+                let wind = cellWind(i, in: original)
                 let light = max(wind?.other ?? .green,
                                 forBoat.light(wind?.speedMs, .windAmber, .windRed),
                                 forBoat.light(wind?.gustMs, .gustAmber, .gustRed),
@@ -584,8 +594,7 @@ enum LakeRaster {
             case .light: color = hour.lakeWide.light == .red ? Self.greyed(Self.color(hour.lights[i])) : Self.color(hour.lights[i])
             case .waves: color = waveColor(hour.wave(ofCell: i), limits)
             case .wind:
-                let p = grid.cellPoint[i]
-                color = windColor(p < hour.wind.count ? hour.wind[p].speedMs ?? 0 : 0, limits)
+                color = windColor(view.cellWind(i, in: hour)?.speedMs ?? 0, limits)
             }
             let pixel = (h - 1 - flat / w) * w + flat % w  // north up
             water[pixel] = true
