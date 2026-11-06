@@ -325,6 +325,10 @@ jobs:
           shoot 375-arrange-top-tile light -RWOpenClub mrc-1880 -RWArrange YES
           shoot 376-separate-cards light -RWOpenClub mrc-1880 -RWCombinedTopTile NO -RWSampleCause wind
           GUIDE=1 WAIT=30 shoot 377-tip-all-values light -RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880
+          # Worse water within 1 km of the launch point sets the light (#395, #409): the tile
+          # shows that worst value marked "Nearby", the Why line names it.
+          shoot 417-nearby-fog light -RWOpenClub mrc-1880 -RWSampleNearby fog
+          shoot 418-nearby-waves-german-dark dark -RWOpenClub mrc-1880 -RWSampleNearby waves -RWLanguage de
           # iPad sideways with the list slid away: sidebar button and cog on the page.
           WAIT=25 shoot 334-list-slid-away light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES -RWSideListHidden YES
           # iPad sideways with a picture: one picture behind the list and the page, list beside and slid away.
