@@ -7,18 +7,39 @@ const RANK = { green: 0, amber: 1, red: 2 };
 const LIGHTS = ["green", "amber", "red"];
 const worse = (a, b) => (RANK[b] > RANK[a] ? b : a);
 
+/** The fog light from a point's visibility, with the backend's limits (score.py): red under 500 m, amber up to 1000 m. */
+export const fogLight = (visM) => (visM == null ? "green" : visM < 500 ? "red" : visM <= 1000 ? "amber" : "green");
+
 /**
- * Why a forecast point is amber or red apart from wind and waves (LakeWind.cause, app #383): fog with the
- * visibility, when it sets the light as score.py does (red under 500 m, amber up to 1000 m), else a
- * thunderstorm; without visM from an older backend, either. Null while fog and thunder leave it green.
+ * What besides waves, wind and visibility makes a forecast point amber or red, the strongest only: hail, a
+ * thunderstorm or heavy rain from 4 mm an hour (LakeWind.extra, app #388). An older backend sends only the
+ * combined light: when fog does not explain it, a thunderstorm did. Null otherwise.
  */
-export function pointCause(w) {
-  const other = w?.other;
-  if (!other || other === "green") return null;
-  if (w.visM == null) return { kind: "either", light: other };
-  const fog = w.visM < 500 ? "red" : w.visM <= 1000 ? "amber" : "green";
-  if (RANK[fog] >= RANK[other]) return { kind: "fog", light: fog, visM: w.visM };
-  return { kind: "thunderstorm", light: other };
+export function pointExtra(w) {
+  if (!w) return null;
+  if (w.hail === true) return { kind: "hail", light: "red" };
+  if (w.storm && w.storm !== "green") return { kind: "thunderstorm", light: w.storm };
+  if (w.rainMm != null && w.rainMm >= 4) return { kind: "rain", light: "amber", mm: w.rainMm };
+  if (w.storm == null && w.other && RANK[w.other] > RANK[fogLight(w.visM)]) return { kind: "thunderstorm", light: w.other };
+  return null;
+}
+
+/**
+ * The values under a tapped spot (LakeView.probe, app #388): waves, wind and, when sent, visibility, each with
+ * its light against the map boat's limits (lower in cold water), and the strongest other reason when amber or red.
+ */
+export function spotProbe(view, hour, i, limits) {
+  const w = hour.wind[view.grid.cellPoint[i] ?? 0] ?? null;
+  const cold = view.waterC != null ? view.waterC < 10 : hour.lakeWide.reasons.some((r) => r.condition === "cold_water");
+  const l = limitsFor(limits.boat, limits.custom, cold ? 0 : null);
+  const waveM = i < hour.wavesCm.length ? hour.wavesCm[i] / 100 : null;
+  return {
+    waves: { m: waveM, light: light(waveM, l.value("waveAmber"), l.value("waveRed")) },
+    wind: { speedMs: w?.speedMs ?? null, gustMs: w?.gustMs ?? null,
+      light: worse(light(w?.speedMs, l.value("windAmber"), l.value("windRed")), light(w?.gustMs, l.value("gustAmber"), l.value("gustRed"))) },
+    visibility: w?.visM != null ? { m: w.visM, light: fogLight(w.visM) } : null,
+    extra: pointExtra(w),
+  };
 }
 
 /** The view as the backend sends it, with each hour's lights as a list (one digit per cell). */
@@ -28,7 +49,8 @@ export function decodeView(raw) {
     hours: raw.hours.map((hour) => ({
       ...hour,
       lights: typeof hour.lights === "string" ? [...hour.lights].map((c) => LIGHTS[Number(c)] ?? "green") : hour.lights,
-      wind: hour.wind.map((w) => ({ ...w, other: w.other == null ? null : LIGHTS[Math.min(2, w.other)] })),
+      wind: hour.wind.map((w) => ({ ...w, other: w.other == null ? null : LIGHTS[Math.min(2, w.other)],
+        storm: w.storm == null ? null : LIGHTS[Math.min(2, w.storm)] })),
     })),
   };
 }

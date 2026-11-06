@@ -133,12 +133,24 @@ test("club pins split off the clubhouse only for a set launch point 30 m or more
   assert.equal(shouldSplit(39, true), false);
 });
 
-test("a spot coloured by fog names the visibility, else a thunderstorm (app #383)", async () => {
-  const { pointCause } = await import("../public/app/lake.js");
-  assert.equal(pointCause({ other: "green", visM: 300 }), null);
-  assert.deepEqual(pointCause({ other: "red", visM: 300 }), { kind: "fog", light: "red", visM: 300 });
-  assert.deepEqual(pointCause({ other: "amber", visM: 800 }), { kind: "fog", light: "amber", visM: 800 });
-  assert.deepEqual(pointCause({ other: "red", visM: 800 }), { kind: "thunderstorm", light: "red" });
-  assert.deepEqual(pointCause({ other: "amber", visM: 20000 }), { kind: "thunderstorm", light: "amber" });
-  assert.deepEqual(pointCause({ other: "red" }), { kind: "either", light: "red" });
+test("a tapped spot names hail, a thunderstorm or heavy rain, the strongest only (app #388)", async () => {
+  const { pointExtra, fogLight, spotProbe } = await import("../public/app/lake.js");
+  assert.equal(fogLight(300), "red");
+  assert.equal(fogLight(800), "amber");
+  assert.equal(fogLight(20000), "green");
+  assert.equal(pointExtra({ other: "green", storm: "green", rainMm: 0, hail: false, visM: 20000 }), null);
+  assert.deepEqual(pointExtra({ hail: true, storm: "red", rainMm: 9 }), { kind: "hail", light: "red" });
+  assert.deepEqual(pointExtra({ hail: false, storm: "amber", rainMm: 9 }), { kind: "thunderstorm", light: "amber" });
+  assert.deepEqual(pointExtra({ hail: false, storm: "green", rainMm: 4 }), { kind: "rain", light: "amber", mm: 4 });
+  assert.equal(pointExtra({ hail: false, storm: "green", rainMm: 3.9 }), null);
+  // Older backends: fog explains the light, or else a thunderstorm did.
+  assert.equal(pointExtra({ other: "red", visM: 300 }), null);
+  assert.deepEqual(pointExtra({ other: "red", visM: 800 }), { kind: "thunderstorm", light: "red" });
+  const view = { waterC: 15, grid: { cellPoint: [0] } };
+  const hour = { wavesCm: [40], lakeWide: { reasons: [] }, wind: [{ speedMs: 3, gustMs: 9, visM: 800, storm: "green", rainMm: 0, hail: false }] };
+  const p = spotProbe(view, hour, 0, { boat: { id: "small", name: "", type: "racing", class: "1x" }, custom: {} });
+  assert.equal(p.waves.m, 0.4);
+  assert.equal(p.visibility.light, "amber");
+  assert.equal(p.extra, null);
 });
+
