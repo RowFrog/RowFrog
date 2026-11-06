@@ -169,4 +169,16 @@ final class LimitsTests: XCTestCase {
         XCTAssertEqual(foggy.light, .red)
         XCTAssertEqual(foggy.reasons.first, Reason(condition: "nearby_water", light: .red, topic: "fog", value: 300))
     }
+
+    func testTheTileShowsTheWorstNearbyValueThatSetsTheLight() {
+        // Owner, 6 Nov 2026: no 15 km visibility at the Steg when there is fog 300 m out.
+        var h = hour(wind: 2, gust: 3, waves: 0.05)
+        h.nearby = NearbyWater(light: .red, windMs: 1, gustMs: 2, waveM: 0, visM: 300, other: .red, otherCause: "fog")
+        let foggy = h.applying(RowingLimits(boat: .big), waterC: 18)
+        XCTAssertEqual(foggy.nearbyCondition, .visibility)
+        XCTAssertEqual(foggy.shownVisibilityM, 300)
+        XCTAssertEqual(foggy.shownWind.speed, 2, "wind does not set the light, so it stays the Steg's")
+        XCTAssertEqual(Condition.visibility.cause(in: foggy), .red)
+        XCTAssertNil(h.nearbyCondition, "without the nearby reason the tile shows the Steg's own values")
+    }
 }

@@ -307,6 +307,20 @@ struct Reason: Codable, Hashable {
         }
     }
 
+    /// For the Why line: what the water within 1 km is like, with its worst value.
+    private var nearbyExplanation: String {
+        switch topic {
+        case "wind": tr("Wind within 1 km of the launch point reaches %@.", Format.wind(value))
+        case "gusts": tr("Gusts within 1 km of the launch point reach %@.", Format.wind(value))
+        case "waves": tr("Waves within 1 km of the launch point reach %@.", Format.waves(value))
+        case "fog": tr("Fog within 1 km of the launch point: visibility %@.", Format.distance(value))
+        case "heavy_rain": tr("Heavy rain within 1 km of the launch point: %@ in the hour.", Format.rain(value))
+        case "thunderstorm": tr("Thunderstorms are possible within 1 km of the launch point.")
+        case "hail": tr("Hail is forecast within 1 km of the launch point.")
+        default: tr("Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.")
+        }
+    }
+
     /// "Fog nearby: 300 m", "Wind nearby: 9 m/s".
     private var nearbyLabel: String {
         switch topic {
@@ -346,7 +360,7 @@ struct Reason: Codable, Hashable {
         case "ice": light == .red ? tr("Ice on the lake is likely (estimate).") : tr("Thin ice at the shore or drift ice is possible (estimate).")
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
         case "twilight": tr("Sunrise or sunset falls in this hour.")
-        case "nearby_water": tr("Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.")
+        case "nearby_water": nearbyExplanation
         case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
         case "cool_water": tr("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", Format.temperature(15))
         case "shipping_stopped": tr("The river is above the gauge's shipping mark: even motor ships stay in.")
@@ -441,6 +455,39 @@ struct NearbyWater: Codable, Hashable {
     /// The light from fog, thunderstorms, heavy rain and hail alone, and which of them sets it.
     let other: Light
     var otherCause: String? = nil
+}
+
+extension ForecastHour {
+    /// The value whose nearby worst sets the light this hour, if one does: the
+    /// top tile then shows that worst value, marked "Nearby" (owner, 6 Nov 2026),
+    /// since a rower at the Steg cannot see 15 km when there is fog 300 m out.
+    var nearbyCondition: Condition? {
+        guard nearby != nil else { return nil }
+        return switch reasons.first(where: { $0.condition == "nearby_water" })?.topic {
+        case "wind", "gusts": .wind
+        case "waves": .waves
+        case "fog": .visibility
+        case "heavy_rain", "hail": .precipitation
+        case "thunderstorm": .thunderstorm
+        default: nil
+        }
+    }
+
+    /// Wind and gusts as the tile shows them: the worst within 1 km while that sets the light.
+    var shownWind: (speed: Double?, gust: Double?) {
+        guard nearbyCondition == .wind, let n = nearby else { return (windSpeedMs, windGustMs) }
+        return (max(windSpeedMs ?? 0, n.windMs), max(windGustMs ?? 0, n.gustMs))
+    }
+
+    var shownWaveHeightM: Double? {
+        guard nearbyCondition == .waves, let n = nearby else { return waveHeightM }
+        return max(waveHeightM ?? 0, n.waveM)
+    }
+
+    var shownVisibilityM: Double? {
+        guard nearbyCondition == .visibility, let vis = nearby?.visM else { return visibilityM }
+        return min(visibilityM ?? vis, vis)
+    }
 }
 
 struct WaterTemperature: Codable, Hashable {

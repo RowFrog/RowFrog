@@ -723,10 +723,10 @@ private struct NowCard: View {
                                     caption: water.map { tr("Measured %@", Format.time($0.measuredAt)) } ?? " ")
                 }
             }
-            opens(.wind) { WindView(hour: hour, size: 28) }
+            opens(.wind) { WindView(hour: hour, size: 28, nearby: hour.nearbyCondition == .wind) }
             opens(.waves) {
-                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.waveHeightM), size: 17,
-                           caption: wavesCaption)
+                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.shownWaveHeightM), size: 17,
+                           caption: hour.nearbyCondition == .waves ? tr("Nearby") : wavesCaption)
             }
             opens(.precipitation) {
                 MetricView(title: tr("Precipitation"), symbol: Condition.precipitation.symbol, value: rain.value, size: 17,
@@ -734,8 +734,8 @@ private struct NowCard: View {
                            mark: rain.fromRadar ? "dot.radiowaves.left.and.right" : nil)
             }
             opens(.visibility) {
-                MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.visibilityM), size: 17,
-                           caption: data.visibilityDetail)
+                MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance(hour.shownVisibilityM), size: 17,
+                           caption: hour.nearbyCondition == .visibility ? tr("Nearby") : data.visibilityDetail)
             }
         }
         .symbolRenderingMode(.hierarchical)
@@ -1018,45 +1018,6 @@ private struct NowCard: View {
     }
 }
 
-/// Wind now as mean–gust with an arrow pointing where the wind blows.
-private struct WindView: View {
-    let hour: ForecastHour
-    var size: CGFloat
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Label(tr("Wind"), systemImage: Condition.wind.symbol)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-            HStack(alignment: .firstTextBaseline, spacing: 4) {
-                Text(hour.windSpeedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(hour.windGustMs))" } ?? "–")
-                    .valueFont(size: size)
-                    .causeTinted()
-                if let from = hour.windFromDeg {
-                    Image(systemName: "arrow.up")
-                        .scaledSystemFont(size: size * 0.6, weight: .semibold, relativeTo: .title2, maxGrowth: 1.35)
-                        .rotationEffect(.degrees(from + 180))
-                }
-            }
-            // As wide as its longest direction ("from NW"), so the column keeps one
-            // width whatever the wind does and the line never wraps.
-            ZStack(alignment: .leading) {
-                ForEach(0..<8, id: \.self) { step in
-                    Text(unitLine(from: Double(step) * 45)).hidden()
-                }
-                Text(unitLine(from: hour.windFromDeg))
-            }
-            .font(.caption)
-            .foregroundStyle(.secondary)
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private func unitLine(from degrees: Double?) -> String {
-        AppSettings.shared.windUnit.symbol + (degrees.map { " · " + tr("from %@", Format.compass($0)) } ?? "")
-    }
-}
-
 /// What the "No DWD warning" line opens: what was checked and the shore lights.
 private struct NoWarningSheet: View {
     let warnings: Warnings
@@ -1225,46 +1186,6 @@ extension VerticalAlignment {
     }
     /// The baseline of a `MetricView`'s value, so a row of them reads level.
     static let metricValue = VerticalAlignment(MetricValue.self)
-}
-
-/// A value with the icon and word that say what it is, matching TemperatureView.
-struct MetricView: View {
-    let title: String
-    let symbol: String
-    let value: String
-    var size: CGFloat
-    /// A grey line under the value, as the tiles have.
-    var caption: String? = nil
-    /// A symbol in front of the caption, such as the radar's.
-    var mark: String? = nil
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Label(title, systemImage: symbol)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(.secondary)
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-            // Two lines rather than cut off, should a value outgrow its column.
-            Text(value)
-                .valueFont(size: size)
-                .causeTinted()
-                .lineLimit(2)
-                .minimumScaleFactor(0.85)
-                .alignmentGuide(.metricValue) { $0[.firstTextBaseline] }
-            if let caption, !caption.isEmpty {
-                Group {
-                    if let mark { Text("\(Image(systemName: mark)) \(caption)") } else { Text(caption) }
-                }
-                .font(.caption2)
-                .foregroundStyle(.secondary)
-                .lineLimit(2)
-                .minimumScaleFactor(0.85)
-                .greyLine()
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
 }
 
 /// A small dial like the Weather app's pressure gauge: an arc from 960 to

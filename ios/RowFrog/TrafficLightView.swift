@@ -106,7 +106,9 @@ extension Condition {
     /// Screenshot hook: `-RWSampleCause wind,thunderstorm` makes those values amber.
     func cause(in hour: ForecastHour) -> Light? {
         if Self.sampleCauses.contains(rawValue) { return .amber }
-        return hour.light(for: reasonNames).flatMap { $0 == .green ? nil : $0 }
+        // Also when the water within 1 km sets the light through this value.
+        let nearby = hour.reasons.filter { $0.condition == "nearby_water" && reasonNames.contains($0.topic ?? "") }.map(\.light)
+        return ([hour.light(for: reasonNames)].compactMap { $0 } + nearby).max().flatMap { $0 == .green ? nil : $0 }
     }
 
     /// Read once: launch arguments do not change while the app runs.
