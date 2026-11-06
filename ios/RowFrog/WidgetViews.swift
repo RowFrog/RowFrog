@@ -439,7 +439,6 @@ struct RowingWidgetView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
-            .padding(.leading, 4)
         }
     }
 
