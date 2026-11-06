@@ -3,7 +3,7 @@
 // small pieces such as the rowing light's dot and the sheets.
 
 import { t, num, locale } from "./i18n.js";
-import { icon, iconShape } from "./icons.js";
+import { icon, iconShape, skyArt } from "./icons.js";
 import {
   key, API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
 } from "./logic.js";
@@ -694,7 +694,7 @@ export function dot(light, size = 14, stale = false) {
 /** The weather symbol for an hour, coloured like the app's multicolour symbols. */
 export function skySymbol(hour, cls = "", kind = sky(hour.weatherCode)) {
   const [name, colour] = skyIcon(kind, hour.sunUp === false);
-  return `<span class="sky ${colour} ${cls}" title="${h(t(SKY_TITLES[kind]))}">${icon(name)}</span>`;
+  return `<span class="sky ${colour} ${cls}" title="${h(t(SKY_TITLES[kind]))}">${skyArt(name)}</span>`;
 }
 
 export const CONDITION_ICONS = {
