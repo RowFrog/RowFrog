@@ -195,7 +195,8 @@ neighbour), so values change smoothly across the lake and never go beyond
 those points; hail and thunderstorms come from the nearest point. The website
 blends the same way. Stacked layer buttons at the right switch between the light,
 waves and wind, a slim colour strip above the panel opens the legend, a
-button at the top puts Apple's satellite pictures under the lake, and wind arrows get denser as you zoom in.
+button at the top puts Apple's satellite pictures under the lake (on the website a globe button
+with MapTiler pictures, on its other maps too), and wind arrows get denser as you zoom in.
 The arrows cover the whole map, on the satellite picture too: over land they
 come from the weather map's wind, blended into the lake's arrows over the last
 kilometre to the shore.
@@ -330,7 +331,8 @@ launch point the forecast is for, which can be panned and zoomed, switched to
 satellite pictures with the globe button, and made full screen by pulling the
 sheet up or with the expand button; a note on which point the forecast is
 for (the launch point, or the club's address while no launch point is set),
-its name in Apple Maps or the not-confirmed note, its coordinates and "Open in
+its name in Apple Maps (a tap opens Apple's place card) or the
+not-confirmed note, its coordinates and "Open in
 Maps". Settings › Club pages › Location in the club header (on by default)
 can be turned off to bring back the Launch point map card on the page
 instead, a still picture until tapped. On the website the place line opens
@@ -347,9 +349,12 @@ own app when installed.
 
 **Maps** all mark clubs the same way: this page's club in blue, other clubs in
 grey, with a house for the home base and a rower for any other club. Zoomed
-out a club has one pin at its launch point; where the launch point is set and
-the clubhouse is at least 30 m away, zooming in moves the club's pin to the
-clubhouse and crossed oars mark the launch point. The website does the same.
+out a club has one pin at its launch point (or its own point while none is
+set). Zooming in moves the club's pin onto the club's place in Apple Maps, so
+it covers Apple's own label and the club shows once; only when the clubhouse
+checked by hand is more than 80 m from that place does the pin go there
+instead. Where the launch point is set, crossed oars then mark it. The website
+does the same with the clubhouses checked by hand only.
 
 **When an update fails,** the page keeps the last forecast and says why under
 the club's name (no internet, server did not answer, no forecast for this
@@ -620,7 +625,7 @@ More detail, including the secrets each one needs, is in the
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
 | **Missing lake outlines** (`missing-outlines.yml`) | Fetches the OpenStreetMap outline of every catalog lake that has none yet (`scripts/fetch_missing_outlines.py`, in 10 parallel parts) and commits the new `data/outlines` files; existing outlines are never changed. Lines marked "CHECK BY HAND" in its report were picked without a matching name. By hand, on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
-| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, the sample data in `testdata/`, `scripts/build_web.py`, the app icon (for the favicon and home-screen icons) or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`. |
+| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, the sample data in `testdata/`, `scripts/build_web.py`, the app icon (for the favicon and home-screen icons) or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; the optional `MAPTILER_KEY` turns on the satellite pictures. |
 
 ## Traffic light defaults
 
