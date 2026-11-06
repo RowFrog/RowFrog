@@ -119,7 +119,9 @@ where the ticked boat is not kept, the light uses one of your boats kept there
 per group and per boat. A separate choice sets which boat the lake map is coloured for, with a warning
 when the map looks calmer than your boat. The phone works the light out
 again for the chosen boat on the club page, the lake map and the widget
-(`ios/RowFrog/Limits.swift`).
+(`ios/RowFrog/Limits.swift`). The light at the launch point also counts the water
+within 1 km of it (on rivers, 1 km up and down the stretch): when that water
+is worse for your boat, a "nearby" reason says so, e.g. "Fog nearby: 300 m". The website does the same.
 
 **Cold water.** Cold water does not change the rowing light; the light shows
 the weather. Instead a blue badge says what to bring: "Life jacket" below
