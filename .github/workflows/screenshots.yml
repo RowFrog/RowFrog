@@ -293,6 +293,8 @@ jobs:
           # The launch point in the club header (owner's choice B, 4 Nov 2026): the lake and town
           # line opens it in a sheet; the settings switch; Arrange page with it locked; the old card.
           shoot 380-header-launch-point light -RWOpenClub mrc-1880
+          # A place line too long for one line breaks where the dot sits (owner, 5 Nov 2026).
+          GUIDE=1 shoot 399-place-line-break-german dark -RWTutorialSeen YES -RWNoTips YES -RWHomeClub rudergesellschaft-muenchen-1972 -RWSavedClubs '(rudergesellschaft-muenchen-1972)' -RWLanguage de
           shoot 381-launch-point-sheet light -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES
           shoot 382-launch-point-sheet-german-dark dark -RWOpenClub mrc-1880 -RWOpenLaunchPoint YES -RWLanguage de
           shoot 383-settings-launch-point light -RWShowSettings YES -RWSettingsPage clubpages

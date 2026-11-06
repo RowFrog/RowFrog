@@ -115,6 +115,31 @@ struct ClubPageHeader: View {
         [lake?.title, club.town].compactMap { $0 }.joined(separator: " · ")
     }
 
+    /// Lake and town on one line if they fit; otherwise broken where the dot sits,
+    /// if each then fits on its own line; otherwise wrapped as the words fall (owner, 5 Nov 2026).
+    private func placeText(chevron: Bool) -> some View {
+        ViewThatFits(in: .horizontal) {
+            placeLabel(place, chevron: chevron).fixedSize(horizontal: true, vertical: false)
+            if let lake = lake?.title, let town = club.town {
+                placeLabel(lake + "\n" + town, chevron: chevron).fixedSize(horizontal: true, vertical: false)
+            }
+            placeLabel(place, chevron: chevron)
+        }
+    }
+
+    @ViewBuilder private func placeLabel(_ text: String, chevron: Bool) -> some View {
+        if chevron {
+            Label {
+                Text(text) + Text(" ") + Text(Image(systemName: "chevron.right")).font(.footnote.weight(.semibold))
+            } icon: {
+                Image(systemName: "mappin.and.ellipse")
+            }
+            .multilineTextAlignment(.center)
+        } else {
+            Text(text).multilineTextAlignment(.center)
+        }
+    }
+
     /// The lake and town. With the launch point in the header, a button that opens
     /// the launch point's map, coordinates and Open in Maps.
     @ViewBuilder private var placeLine: some View {
@@ -123,12 +148,7 @@ struct ClubPageHeader: View {
                 showingLaunchPoint = true
                 PlaceLineTip().invalidate(reason: .actionPerformed)
             } label: {
-                Label {
-                    Text(place) + Text(" ") + Text(Image(systemName: "chevron.right")).font(.footnote.weight(.semibold))
-                } icon: {
-                    Image(systemName: "mappin.and.ellipse")
-                }
-                .multilineTextAlignment(.center)
+                placeText(chevron: true)
                 .tapArea(EdgeInsets(top: 6, leading: 8, bottom: 6, trailing: 8))
             }
             .buttonStyle(.plain)
@@ -139,7 +159,7 @@ struct ClubPageHeader: View {
             .modifier(PlaceLineTipAnchor(shown: tourSeen && isCurrentPage))
             .id("launchpoint")
         } else {
-            Text(place)
+            placeText(chevron: false)
                 .foregroundStyle(.secondary)
         }
     }
