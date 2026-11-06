@@ -89,6 +89,27 @@ enum BackgroundLibrary {
         }
     }
 
+    /// Where a point lies in a satellite picture that covers `box` (west, south,
+    /// east, north) north up, as a fraction of its width and height.
+    static func place(of point: Coordinate, in box: [Double]?) -> CGPoint? {
+        guard let box, box.count == 4, box[2] > box[0], box[3] > box[1] else { return nil }
+        let x = (point.lon - box[0]) / (box[2] - box[0]), y = (box[3] - point.lat) / (box[3] - box[1])
+        return CGPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))
+    }
+
+    /// The square around `focus` (a fraction of the width and height), as large
+    /// as the picture allows and moved inwards at its edges: what a widget,
+    /// filling itself from the middle, needs to show the same part as the app's
+    /// background does with that focus.
+    static func square(of image: UIImage, around focus: CGPoint) -> UIImage {
+        guard let cg = image.cgImage else { return image }
+        let width = CGFloat(cg.width), height = CGFloat(cg.height), side = min(width, height)
+        let x = min(max(focus.x * width - side / 2, 0), width - side)
+        let y = min(max(focus.y * height - side / 2, 0), height - side)
+        guard let cut = cg.cropping(to: CGRect(x: x, y: y, width: side, height: side).integral) else { return image }
+        return UIImage(cgImage: cut, scale: image.scale, orientation: image.imageOrientation)
+    }
+
     private static func satellite(clubID: String?) -> UIImage? {
 #if WIDGET_EXTENSION
         return nil
@@ -99,9 +120,8 @@ enum BackgroundLibrary {
             guard let image = store.backgroundImage(lake) else { return nil }
             // The picture covers its box north up, so the club's place in it follows from its launch point.
             if focuses.object(forKey: image) == nil, let point = pointByClub[club],
-               let box = store.pictures[lake]?.bbox, box.count == 4, box[2] > box[0], box[3] > box[1] {
-                let x = (point.lon - box[0]) / (box[2] - box[0]), y = (box[3] - point.lat) / (box[3] - box[1])
-                focuses.setObject(NSValue(cgPoint: CGPoint(x: min(max(x, 0), 1), y: min(max(y, 0), 1))), forKey: image)
+               let spot = place(of: point, in: store.pictures[lake]?.bbox) {
+                focuses.setObject(NSValue(cgPoint: spot), forKey: image)
             }
             return image
         }
