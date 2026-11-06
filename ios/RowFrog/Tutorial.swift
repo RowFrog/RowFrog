@@ -50,6 +50,8 @@ enum Tutorial {
         if defaults.bool(forKey: "RWPlaceTip") { Tips.showTipsForTesting([PlaceLineTip.self]) }
         // `-RWSuggestTip YES` shows the tip at "Suggest the launch point" in the Location sheet.
         if defaults.bool(forKey: "RWSuggestTip") { Tips.showTipsForTesting([SuggestLaunchPointTip.self]) }
+        // `-RWNearbyTip YES` shows the nearby-water tip under the top tile, also without such a reason.
+        if defaults.bool(forKey: "RWNearbyTip") { Tips.showTipsForTesting([NearbyWaterTip.self]) }
         if defaults.bool(forKey: "RWLaterTips") {
             Tips.hideTipsForTesting([TopTileTip.self, RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
             Tips.showTipsForTesting([AllValuesTip.self, RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
@@ -747,6 +749,13 @@ struct ColdWaterTip: Tip {
     var title: Text { Text(tr("Cold water")) }
     var message: Text? { Text(tr("A capsize in water below %@ gets dangerous within minutes. The app then lowers its own wind and gust limits by %@. Limits you set stay as they are, with a reminder on the rowing light.", Format.temperature(RowingLimits.coldWaterC), Format.wind(RowingLimits.coldWindMarginMs))) }
     var image: Image? { Image(systemName: "thermometer.snowflake") }
+}
+
+/// Under the top tile, the first time its Why line has a "… nearby" reason (#395).
+struct NearbyWaterTip: Tip {
+    var title: Text { Text(tr("Water nearby")) }
+    var message: Text? { Text(tr("The light also looks at the water within 1 km of the launch point. If it is rougher or foggier out there, the Why line says so.")) }
+    var image: Image? { Image(systemName: "scope") }
 }
 
 /// After "Tap a value": the grip that opens Current conditions inside the top tile.
