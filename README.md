@@ -550,7 +550,9 @@ bulk queries per run. Weather is only loaded again after
 a weather model has a new run, which keeps the job within Open-Meteo's free
 limit; for ICON-D2 each run first asks Open-Meteo's free `meta.json` whether
 the new run has arrived, and the arrival times are kept at
-`v1/status/model-runs` (last two weeks). When a station's water temperature fails to load, the last good reading
+`v1/status/model-runs` (last two weeks). A club forecast or lake view whose
+content did not change keeps its published file (only its time stamp would
+differ), so the app's next load gets a 304 and downloads nothing. When a station's water temperature fails to load, the last good reading
 stands in for up to 6 hours. For clubs people use it also loads the 8-day outlook after each model
 run (every 3 hours) for the charts in the condition details. The last
 forecasts are kept between runs in the Actions cache.
