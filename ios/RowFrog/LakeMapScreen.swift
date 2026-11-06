@@ -1241,7 +1241,11 @@ struct LakeMapView: UIViewRepresentable {
         }
         c.coldShore = view.coldShore
         c.renderer?.setColdShore(c.coldShore)
-        c.showSpot(spot.map { view.grid.coordinate(ofCell: $0) }, on: map)
+        // The pin stays where the water was tapped; its values are the square's under it
+        // (owner, 6 Nov 2026). Spots set otherwise (launch arguments) sit at the square's centre.
+        c.showSpot(spot.map { cell in
+            c.tappedAt.flatMap { view.grid.cell(at: $0) == cell ? $0 : nil } ?? view.grid.coordinate(ofCell: cell)
+        }, on: map)
         c.showBoat(boat, on: map)
     }
 
@@ -1275,6 +1279,8 @@ struct LakeMapView: UIViewRepresentable {
         var insertPoint: (Int, CLLocationCoordinate2D) -> Void = { _, _ in }
         var selectPoint: (Int?) -> Void = { _ in }
         private let spotPin = MKPointAnnotation()
+        /// Where the water was last tapped, for the spot's pin.
+        var tappedAt: CLLocationCoordinate2D?
         private let boatPin = MKPointAnnotation()
         /// Each club's pin and its launch point's oars apart when zoomed in (`ClubMarks`).
         let splitter = ClubPinSplitter()
@@ -1562,6 +1568,7 @@ struct LakeMapView: UIViewRepresentable {
             } else if routeMode {
                 addPoint(coordinate)
             } else {
+                tappedAt = coordinate
                 spot.wrappedValue = grid.cell(at: coordinate)
             }
         }
