@@ -1345,6 +1345,8 @@ enum German {
         "Coastal boat": "Coastal-Boot",
         "Coastal boats that drain themselves": "Coastal-Boote, die sich selbst lenzen",
         "Coloured for %@": "Eingefärbt für %@",
+        "Fog: visibility %@": "Nebel: Sicht %@",
+        "Fog or thunderstorm risk": "Nebel oder Gewitterrisiko",
         "For %@": "Für %@",
         "Gig and touring boats, higher sides": "Gig- und Wanderboote mit höherer Bordwand",
         "Gig boat": "Gigboot",

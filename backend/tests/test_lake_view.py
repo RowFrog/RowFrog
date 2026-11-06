@@ -93,6 +93,7 @@ def test_lake_view_endpoint(monkeypatch):
     assert set(first["lights"]) <= {"0", "1", "2"}
     assert len(first["wind"]) == len(body["points"])
     assert {w["other"] for w in first["wind"]} <= {0, 1, 2}
+    assert all(w["visM"] is None or isinstance(w["visM"], int) for w in first["wind"])
     assert body["zones"] == ["north", "middle", "south"]
     assert len(first["zones"]) == 3
     assert body["sample"] is False
