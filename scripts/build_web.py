@@ -58,6 +58,9 @@ def main() -> int:
     # Only the texts the website uses, so the file stays small.
     used = {k: table[k] for k in sorted(web_keys())}
     (OUT / "app" / "de.json").write_text(json.dumps(used, ensure_ascii=False, indent=0), encoding="utf-8")
+    # Settings > About > Version shows the app's version (MARKETING_VERSION in ios/project.yml).
+    found = re.search(r'MARKETING_VERSION:\s*"?([^"\n]+)"?', Path("ios/project.yml").read_text(encoding="utf-8"))
+    (OUT / "app" / "version.json").write_text(json.dumps({"version": found.group(1).strip() if found else "–"}), encoding="utf-8")
     from PIL import Image
 
     with Image.open(APP_ICON) as icon:

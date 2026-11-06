@@ -9,7 +9,19 @@ test("a club's own picture, else its kind of page's, else the one for all pages"
   assert.equal(backgroundFor("clubPages", "c", b), "satellite");
   assert.equal(backgroundFor("clubPages", "b", b), "satellite");
   assert.equal(backgroundFor("list", "a", b), "none");
-  assert.equal(backgroundFor("settings", null, b), "sample:lake-waves");
+});
+
+test("the settings keep their plain background unless the developer options are on (#355)", () => {
+  const saved = globalThis.localStorage;
+  const items = new Map();
+  globalThis.localStorage = { getItem: (k) => items.get(k) ?? null, setItem: (k, v) => items.set(k, String(v)), removeItem: (k) => items.delete(k) };
+  try {
+    assert.equal(backgroundFor("settings", null, b), "none");
+    items.set("rf.developerOptions", "true");
+    assert.equal(backgroundFor("settings", null, b), "sample:lake-waves");
+  } finally {
+    globalThis.localStorage = saved;
+  }
 });
 
 test("a satellite picture fills the window with the club as near the middle as its edges allow", () => {

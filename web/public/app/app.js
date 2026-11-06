@@ -32,8 +32,8 @@ import { renderAddPlace } from "./addplace.js";
 import { isOwn } from "./ownplace.js";
 import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderCountries, renderCountry, renderWater } from "./countries.js";
 import { renderValuePage } from "./valuepage.js";
-import { layoutFor, visibleCards, openArrange } from "./arrange.js";
-import { showBackground, renderBackgrounds, backgroundSummary, backgroundPreview, forgetOwnPictures } from "./backgrounds.js";
+import { layoutFor, visibleCards, openArrange, ownOrder } from "./arrange.js";
+import { showBackground, renderBackgrounds, backgroundSummary, backgroundPreview, forgetOwnPictures, backgrounds, choiceTitle } from "./backgrounds.js";
 import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
@@ -68,7 +68,7 @@ function renderSafetyGate() {
   root.innerHTML = `
     <main class="page">
       <h1 class="large">${h(t("Before you row"))}</h1>
-      <section class="card">${languagePicker()}</section>
+      ${store.developerOptions ? `<section class="card">${languagePicker()}</section>` : ""}
       ${changed ? `<p class="banner amber">${h(t("This notice has changed. Please read it again."))}</p>` : ""}
       <section class="card">${safetyList()}</section>
       <div id="end"></div>
@@ -1949,36 +1949,51 @@ function setDateTimeLikeDevice(on) {
 
 /** The topics of the first settings page, each with its own page (SettingsTopic). */
 const SETTINGS_TOPICS = [
-  ["appearance", "Appearance", "sun-moon", "#007aff"],
-  ["clubpages", "Club pages", "layout-grid", "#5856d6"],
-  ["language", "Language and units", "globe", "#8e8e93"],
-  ["data", "Battery and data", "radio-tower", "#34c759"],
-  ["help", "Help", "circle-help", "#007aff"],
-  ["about", "About", "info", "#8e8e93"],
+  ["appearance", key("Appearance"), "sun-moon", "#007aff"],
+  ["clubpages", key("Club pages"), "layout-grid", "#5856d6"],
+  ["language", key("Language and units"), "globe", "#8e8e93"],
+  ["data", key("Battery and data"), "radio-tower", "#34c759"],
+  ["help", key("Help"), "circle-help", "#007aff"],
+  ["about", key("About"), "info", "#8e8e93"],
+  ["developer", key("Developer"), "hammer", "#8e8e93"],
 ];
 const settingsIcon = (name, colour) => `<span class="set-icon" style="--c: ${colour}">${icon(name)}</span>`;
 
-/** Each topic page's cards, as the app's sub pages of Settings. */
+/** The website's version, as Settings > About > Version in the app (the app's MARKETING_VERSION, written by the build). */
+let websiteVersion = "";
+async function loadVersion() {
+  if (websiteVersion) return websiteVersion;
+  try {
+    websiteVersion = (await (await fetch(new URL("version.json", import.meta.url))).json()).version || "–";
+  } catch {
+    websiteVersion = "–";
+  }
+  return websiteVersion;
+}
+
+/** The browser's language, as the page speaks it without the developer options. */
+const browserLanguage = () => (resolve("auto") === "de" ? "Deutsch" : "English");
+
+/**
+ * Each topic page's cards, as the app's sub pages of Settings. After Apple's guidelines (owner's picks,
+ * 5 Nov 2026, app #355): Light/Dark, the language and the time and date formats follow the browser; the
+ * website's own choices for them show only with the developer options.
+ */
 function settingsTopicBody(topic, accepted) {
+  const dev = store.developerOptions;
   switch (topic) {
     case "appearance": return `
-      <section class="card group appearance-pick" id="appearance">${[["device", t("Device"), "smartphone"], ["light", t("Light"), "sun"], ["dark", t("Dark"), "moon"]]
+      ${dev ? `<section class="card group appearance-pick" id="appearance">${[["device", t("Device"), "smartphone"], ["light", t("Light"), "sun"], ["dark", t("Dark"), "moon"]]
         .map(([k, label, sym]) => `<button data-appearance="${k}" aria-pressed="${store.appearance === k}"><span class="phone ${k}">${icon(sym)}</span><span>${h(label)}</span>
           <span class="tick ${store.appearance === k ? "on" : ""}">${store.appearance === k ? icon("check") : ""}</span></button>`).join("")}
       </section>
-      <p class="footer">${h(t("Device follows the light or dark setting of your computer or phone."))}</p>
+      <p class="footer">${h(t("Device follows the light or dark setting of your computer or phone."))}</p>` : ""}
+      <section class="card group">
+        <a class="row-setting bg-row" href="#/settings/backgrounds"><span><span class="bg-thumb" id="bg-thumb">${icon("circle-slash")}</span><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span></span>${icon("chevron-right")}</a>
+      </section>
+      <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
 `;
     case "clubpages": return `
-      <section class="card group">
-        <button class="row-setting order-link" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Order of the club page cards"))}</span></button>
-      </section>
-      <p class="footer">${h(t("The order set here is for all clubs. A club can have its own from \"Arrange this page\" at the end of its page."))}</p>
-      <section class="card group">
-        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
-      </section>
-      <p class="footer">${h(store.launchPointInHeader
-        ? t("Tap the lake and town under the club's name for the club's location: a map with the launch point, coordinates and Open in Maps. The Launch point card leaves the page.")
-        : t("The Launch point card is on the page, as before."))}</p>
       <section class="card group">
         <label class="row-setting"><span>${icon("gauge")} ${h(t("Current conditions in the top tile"))}</span><input type="checkbox" class="switch" id="combined-top" ${store.combinedTopTile ? "checked" : ""}></label>
       </section>
@@ -1986,42 +2001,46 @@ function settingsTopicBody(topic, accepted) {
         ? t("The top tile opens into all values: tap \"All values\" under it or pull it down. Values it hides show as a line while they matter for the rowing light.")
         : t("Current conditions is a card of its own under the top tile, as before."))}</p>
       <section class="card group">
-        <a class="row-setting bg-row" href="#/settings/backgrounds"><span><span class="bg-thumb" id="bg-thumb">${icon("circle-slash")}</span><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span></span>${icon("chevron-right")}</a>
+        <button class="row-setting topic" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Card order"))}</span><span class="sub">${h(ownOrder() ? t("Own order") : t("App's order"))} ${icon("chevron-right")}</span></button>
       </section>
-      <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
-      <h3 class="section">${icon("map")} ${h(t("Weather maps"))}</h3>
+      <p class="footer">${h(t("For all clubs. Each club can have its own from \"Arrange this page\"."))}</p>
       <section class="card group">
-        <div class="row-setting"><span>${h(t("Maps start"))}</span>
-          <span class="segmented small" id="map-zoom">${[["close", lang() === "de" ? t("Close (map zoom)") : "Close"], ["normal", t("Normal")], ["wide", t("Wide")]]
-            .map(([k, label]) => `<button data-zoom="${k}" class="${store.mapZoom === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>
+        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
       </section>
-      <p class="footer">${h(t("The weather maps in the detail views open %@ across around the club, rain and lightning %@. Zooming out loads more.",
-        distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))}</p>
-      <h3 class="section">${icon("map-pinned")} ${h(t("Map app"))}</h3>
+      <p class="footer">${h(store.launchPointInHeader
+        ? t("Tap the lake and town under the club's name for a map with the launch point.")
+        : t("The Launch point card is on the page."))}</p>
+      <h3 class="section">${icon("map")} ${h(t("Maps"))}</h3>
       <section class="card group">
+        <label class="row-setting topic"><span>${h(t("Weather maps start"))}</span>
+          <select id="map-zoom">${[["close", lang() === "de" ? t("Close (map zoom)") : "Close"], ["normal", t("Normal")], ["wide", t("Wide")]]
+            .map(([k, label]) => `<option value="${k}" ${store.mapZoom === k ? "selected" : ""}>${h(label)}</option>`).join("")}</select></label>
         <label class="row-setting topic"><span>${h(t("Open places in"))}</span>
           <select id="maps-app">${Object.entries(MAPS_APPS).map(([k, app]) => `<option value="${k}" ${store.mapsApp === k ? "selected" : ""}>${h(app.name)}</option>`).join("")}</select></label>
       </section>
-      <p class="footer">${h(t("The launch point and the directions to the club open in this map service, in a new tab. Nothing is sent to it until you tap one of them."))} ${h(t("Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
+      <p class="footer">${h(t("Weather maps open %@ around the club, rain and lightning %@.",
+        distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))} ${h(t("Places open in a new tab. Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
 `;
     case "language": return `
       <h3 class="section">${icon("languages")} ${h(t("Language"))}</h3>
-      <section class="card group">${likeDeviceRow("language-like", savedLanguage() === "auto", resolve("auto") === "de" ? "Deutsch" : "English")}
-        ${savedLanguage() === "auto" ? "" : `<div class="row-setting"><span class="segmented wide" id="language-pick">${[["en", "English"], ["de", "Deutsch"]]
-          .map(([k, label]) => `<button data-language="${k}" class="${savedLanguage() === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>`}</section>
+      <section class="card group">
+        <div class="row-setting"><span class="stack"><span>${h(t("Language"))}</span><small class="sub">${h(t("In your browser's language settings"))}</small></span><span class="sub">${h(browserLanguage())}</span></div>
+        ${dev ? likeDeviceRow("language-like", savedLanguage() === "auto", browserLanguage()) : ""}
+        ${dev && savedLanguage() !== "auto" ? `<div class="row-setting"><span class="segmented wide" id="language-pick">${[["en", "English"], ["de", "Deutsch"]]
+          .map(([k, label]) => `<button data-language="${k}" class="${savedLanguage() === k ? "on" : ""}">${h(label)}</button>`).join("")}</span></div>` : ""}</section>
       <h3 class="section">${icon("ruler")} ${h(t("Units"))}</h3>
       <section class="card group">${UNIT_ROWS.map(([kind, condition, title]) => `<label class="row-setting"><span>${conditionIcon(condition)} ${h(t(title))}</span>
           <select data-unit="${kind}">${Object.entries(UNITS[kind].options).map(([id, u]) => `<option value="${id}" ${id === unitId(kind) ? "selected" : ""}>${h(`${t(u.label)} · ${t(u.title)}`)}</option>`).join("")}</select></label>`).join("")}
       </section>
       <p class="footer">${h(t("Cloud cover stays in percent."))}</p>
-      <h3 class="section">${icon("calendar-clock")} ${h(t("Date and time"))}</h3>
+      ${dev ? `<h3 class="section">${icon("calendar-clock")} ${h(t("Date and time"))}</h3>
       <section class="card group">${likeDeviceRow("datetime-like", dateTimeLikeDevice(), `${time(SAMPLE_TIME, "device")} · ${dateText(localDay(new Date()), "device")}`)}
         ${dateTimeLikeDevice() ? "" : `<label class="row-setting"><span>${icon("clock")} ${h(t("Time"))}</span>
           <select id="time-format">${TIME_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.timeFormat ? "selected" : ""}>${h(`${t(TIME_TITLES[f])} · ${time(SAMPLE_TIME, f)}`)}</option>`).join("")}</select></label>
         <label class="row-setting"><span>${icon("calendar")} ${h(t("Date"))}</span>
           <select id="date-format">${DATE_FORMATS.filter((f) => f !== "device").map((f) => `<option value="${f}" ${f === store.dateFormat ? "selected" : ""}>${h(`${f === "iso" ? "ISO 8601" : t(DATE_TITLES[f])} · ${dateText(localDay(new Date()), f)}`)}</option>`).join("")}</select></label>`}
       </section>
-      <p class="footer">${h(t("Today and tomorrow are always written as words."))}</p>
+      <p class="footer">${h(t("Today and tomorrow are always written as words."))}</p>` : ""}
 `;
     case "data": return `
       <h3 class="section">${icon("arrow-up-down")} ${h(t("Data use"))}</h3>
@@ -2033,34 +2052,50 @@ function settingsTopicBody(topic, accepted) {
       ${tip("saveData")}
 `;
     case "help": return `
-      <h3 class="section">${icon("circle-help")} ${h(t("Help"))}</h3>
       <section class="card group">
         <a class="row-setting" href="#/tour"><span>${icon("circle-help")} ${h(t("Show the tour again"))}</span>${icon("chevron-right")}</a>
         <button class="row-setting" id="tips-again"><span>${icon("lightbulb")} ${h(t("Show the tips again"))}</span></button>
         <button class="row-setting" id="legend"><span>${icon("info")} ${h(t("Legend: what the symbols mean"))}</span>${icon("chevron-right")}</button>
+        <button class="row-setting" id="safety-again"><span>${icon("shield-check")} ${h(t("Safety notice"))}</span>${icon("chevron-right")}</button>
       </section>
       <p class="footer" id="tips-note"></p>
 `;
     case "about": return `
-      ${card(t("Safety notice"), "shield-check", `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`)}
+      <section class="card group">
+        <button class="row-setting topic" id="version"><span>${h(t("Version"))}</span><span class="sub" id="version-value">${h(websiteVersion)}</span></button>
+      </section>
+      <h3 class="section">${icon("file-text")} ${h(t("Legal"))}</h3>
+      <section class="card group">
+        <a class="row-setting" href="/privacy/"><span>${icon("hand")} ${h(t("Privacy"))}</span>${icon("chevron-right")}</a>
+        <a class="row-setting" href="/impressum/"><span>${icon("landmark")} ${h(t("Legal notice"))}</span>${icon("chevron-right")}</a>
+        <a class="row-setting" href="/credits/"><span>${icon("database")} ${h(t("Data sources"))}</span>${icon("chevron-right")}</a>
+      </section>
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
         ${tip("factoryReset")}
         <button id="factory" class="quiet">${icon("rotate-ccw")} ${h(t("Reset to factory settings"))}</button>
         <p class="small sub">${h(t("Appearance, units, language, background pictures and the order of the club page cards go back to how the website came, and your own pictures are deleted. The boat for the rowing light is Small boats again and every boat's limits go back to the standard ones. Your clubs, home base, own boats and routes stay."))}</p>
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}
       ${card(t("Website login"), "lock", `<p>${h(t("The website is still in testing. This browser stays logged in for 90 days."))}</p>
-        <button id="log-out" class="quiet">${icon("lock")} ${h(t("Log out"))}</button>`)}
-      ${footerLinks()}`;
+        <button id="log-out" class="quiet">${icon("lock")} ${h(t("Log out"))}</button>`)}`;
+    case "developer": return `
+      <section class="card group">
+        <label class="row-setting"><span>${icon("hammer")} ${h(t("Developer options"))}</span><input type="checkbox" class="switch" role="switch" id="developer-options" ${dev ? "checked" : ""}></label>
+      </section>
+      <p class="footer">${h(t("With the developer options, Appearance offers Device, Light and Dark, Language and units the website's own language and time and date formats, Background pictures a picture for the Settings pages, and the first-start screens the language choice. Switched off, the website follows the browser again. Tap the version seven times to show this again."))}</p>`;
     default: return "";
   }
 }
 
 /** The value shown at the end of a topic's row (SettingsRow). */
 function settingsTopicValue(topic) {
-  if (topic === "appearance") return t({ device: "Device", light: "Light", dark: "Dark" }[store.appearance] ?? "Device");
-  if (topic === "clubpages") return backgroundSummary();
+  if (topic === "appearance") {
+    const picture = choiceTitle(backgrounds.all);
+    return store.developerOptions ? `${t({ device: "Device", light: "Light", dark: "Dark" }[store.appearance] ?? "Device")} · ${picture}` : picture;
+  }
+  if (topic === "clubpages") return ownOrder() ? t("Own order") : t("App's order");
   if (topic === "language") return `${resolve() === "de" ? "Deutsch" : "English"} · ${unitSymbol("temperature")}`;
   if (topic === "data") return dataSaving() ? t("Saving data") : "";
+  if (topic === "about") return websiteVersion;
   return "";
 }
 
@@ -2069,16 +2104,16 @@ function settingsTopicValue(topic) {
  * then one row per topic with its own page, and the search at the end.
  */
 function renderSettings(topic = null) {
-  const named = SETTINGS_TOPICS.find(([id]) => id === topic);
+  const named = SETTINGS_TOPICS.find(([id]) => id === topic && (id !== "developer" || store.developerOptions));
   if (topic && !named) topic = null;
   const again = () => renderSettings(topic);
   setTitle(named ? t(named[1]) : t("Settings"));
   const accepted = store.safety?.at ? new Intl.DateTimeFormat(locale(), { dateStyle: "long" }).format(new Date(store.safety.at)) : null;
   const back = store.clubs[0] ? `#/club/${encodeURIComponent(store.clubs[0].id)}` : "#/list";
   const row = ([id, title, name, colour]) => `<a class="row-setting topic" href="#/settings/${id}"><span>${settingsIcon(name, colour)} ${h(t(title))}</span>
-          <span class="sub">${h(settingsTopicValue(id))} ${icon("chevron-right")}</span></a>`;
+          <span class="sub"><span data-value="${id}">${h(settingsTopicValue(id))}</span> ${icon("chevron-right")}</span></a>`;
   const changed = Object.values(store.limits).filter((l) => Object.keys(l ?? {}).length).length;
-  const groups = [["appearance", "clubpages"], ["language", "data"], ["help", "about"]];
+  const groups = [["appearance", "clubpages"], ["language", "data"], ["help", "about", ...(store.developerOptions ? ["developer"] : [])]];
   root.innerHTML = topic
     ? `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t(named[1]))}</strong><span class="nav-side"></span></header>
     ${testing()}
@@ -2091,7 +2126,7 @@ function renderSettings(topic = null) {
       <section class="card group">
         <label class="row-setting topic"><span>${settingsIcon("sailboat", "#34c759")} ${h(t("Rowing light for"))}</span>
           <select id="settings-boat">${allBoats().map((b) => `<option value="${h(b.id)}" ${b.id === tickedBoat().id ? "selected" : ""}>${h(boatTitle(b))}</option>`).join("")}</select></label>
-        <a class="row-setting topic" href="#/settings/boats"><span>${settingsIcon("sliders-horizontal", "#30b0c7")} ${h(t("Boats and limits"))}</span>
+        <a class="row-setting topic" href="#/settings/boats"><span>${settingsIcon("info", "#30b0c7")} ${h(t("Boats and limits"))}</span>
           <span class="sub">${changed ? h(t("%@ changed", String(changed))) : ""} ${icon("chevron-right")}</span></a>
       </section>
       <p class="footer">${h(t("The boat the rowing light is worked out for, on every club page and in the widgets."))}</p>
@@ -2100,6 +2135,10 @@ function renderSettings(topic = null) {
       <div id="settings-results" hidden></div>
       <label class="search settings-search">${icon("search")}<input type="search" id="settings-search" placeholder="${h(t("Search"))}" aria-label="${h(t("Search the settings"))}"></label>
     </main>`;
+  if (!topic && !websiteVersion) loadVersion().then((v) => {
+    const value = root.querySelector('[data-value="about"]');
+    if (value) value.textContent = v;
+  });
   root.querySelector("#settings-boat")?.addEventListener("change", (e) => {
     pickBoat(e.target.value, null);
     again();
@@ -2168,10 +2207,36 @@ function renderSettings(topic = null) {
   if (thumb) backgroundPreview().then((url) => {
     if (url && thumb.isConnected) thumb.innerHTML = `<img src="${h(url)}" alt="">`;
   }).catch(() => {});
-  root.querySelectorAll("[data-zoom]").forEach((b) => b.addEventListener("click", () => {
-    store.mapZoom = b.dataset.zoom;
+  root.querySelector("#map-zoom")?.addEventListener("change", (e) => {
+    store.mapZoom = e.target.value;
     again();
-  }));
+  });
+  root.querySelector("#safety-again")?.addEventListener("click", () => openSheet(t("Safety notice"),
+    `${safetyList()}${accepted ? `<p class="sub">${h(t("You accepted this notice on %@.", accepted))}</p>` : ""}`));
+  // Seven taps on the version show the developer options, as in the app (Settings > About > Version).
+  const version = root.querySelector("#version");
+  if (version) {
+    loadVersion().then((v) => {
+      const value = root.querySelector("#version-value");
+      if (value) value.textContent = v;
+    });
+    let taps = 0;
+    version.addEventListener("click", () => {
+      if (store.developerOptions) return;
+      taps += 1;
+      if (taps < 7) return;
+      store.developerOptions = true;
+      location.hash = "#/settings/developer";
+    });
+  }
+  root.querySelector("#developer-options")?.addEventListener("change", async (e) => {
+    store.developerOptions = e.target.checked;
+    // The website's own looks and language count only with the developer options.
+    applyAppearance();
+    await setLanguage(savedLanguage());
+    if (e.target.checked) again();
+    else location.hash = "#/settings";
+  });
   root.querySelector("#log-out")?.addEventListener("click", () => location.assign("/__logout"));
   root.querySelector("#factory")?.addEventListener("click", async () => {
     if (!confirm(t("Reset all settings?"))) return;
@@ -2200,7 +2265,7 @@ function wireSettingsSearch(main) {
   const list = main.querySelector("#settings-topics");
   const results = main.querySelector("#settings-results");
   const box = document.createElement("div");
-  const entries = SETTINGS_TOPICS.flatMap(([id, title, name, colour]) => {
+  const entries = SETTINGS_TOPICS.filter(([id]) => id !== "developer" || store.developerOptions).flatMap(([id, title, name, colour]) => {
     box.innerHTML = settingsTopicBody(id, null);
     return [...box.querySelectorAll(":scope > section.card")].map((card) => {
       const parts = [card];
@@ -2226,33 +2291,95 @@ function wireSettingsSearch(main) {
 
 // ---- Boats and limits (RowingLimitsView, BoatLimitsView) -------------------------------
 
-const settingsNav = (back) => `<header class="nav"><a class="link" href="${back}">${icon("chevron-left")} ${h(t("Settings"))}</a><span class="spacer"></span></header>`;
+/**
+ * A row that a swipe to the left (finger or mouse) opens on a red Remove button, as a list row in iOS
+ * (owner's pick for My boats and Kept at, app #355). The button is also reached with Tab.
+ */
+const swipeRow = (body, removeAttr, cls = "") => `<li class="swipe ${cls}"><div class="swipe-body">${body}</div>
+    <button class="swipe-remove" ${removeAttr}>${h(t("Remove"))}</button></li>`;
+
+const SWIPE_OPEN = 88;
+
+/** Wires the swipe rows inside el. A drag that moved swallows the click that follows, so it never ticks a boat. */
+function wireSwipeRows(el) {
+  const closeAll = (except) => el.querySelectorAll(".swipe.open").forEach((r) => r !== except && r.classList.remove("open"));
+  el.querySelectorAll(".swipe").forEach((row) => {
+    const body = row.querySelector(".swipe-body");
+    let start = null;
+    let moved = false;
+    body.addEventListener("pointerdown", (e) => {
+      start = { x: e.clientX, y: e.clientY, open: row.classList.contains("open") };
+      moved = false;
+    });
+    body.addEventListener("pointermove", (e) => {
+      if (!start) return;
+      const dx = e.clientX - start.x;
+      if (!moved && (Math.abs(dx) < 8 || Math.abs(dx) < Math.abs(e.clientY - start.y))) return;
+      if (!moved) body.setPointerCapture?.(e.pointerId);
+      moved = true;
+      const x = Math.min(0, Math.max(-SWIPE_OPEN - 24, dx + (start.open ? -SWIPE_OPEN : 0)));
+      row.classList.add("dragging");
+      body.style.transform = `translateX(${x}px)`;
+    });
+    const end = (e) => {
+      if (!start) return;
+      const dx = e.clientX - start.x + (start.open ? -SWIPE_OPEN : 0);
+      row.classList.remove("dragging");
+      body.style.transform = "";
+      if (moved) {
+        row.classList.toggle("open", dx < -SWIPE_OPEN / 2);
+        closeAll(row);
+      } else if (start.open) {
+        row.classList.remove("open");
+        moved = true;
+      }
+      start = null;
+    };
+    body.addEventListener("pointerup", end);
+    body.addEventListener("pointercancel", end);
+    body.addEventListener("click", (e) => {
+      if (!moved) return;
+      e.preventDefault();
+      e.stopPropagation();
+      moved = false;
+    }, true);
+    row.querySelector(".swipe-remove").addEventListener("focus", () => {
+      closeAll(row);
+      row.classList.add("open");
+    });
+  });
+}
 
 function renderBoats() {
-  setTitle(t("Rowing limits"));
-  const row = (boat) => {
+  setTitle(t("Boats and limits"));
+  // As Wi-Fi in iOS Settings: the tick on the left, the row picks the boat, and ⓘ opens its details (BoatRow).
+  const body = (boat) => {
     const changed = Object.keys(store.limits[boat.id] ?? {}).length > 0;
     const on = store.boat === boat.id;
-    return `<li class="boat-row"><button data-tick="${h(boat.id)}">
-        <span><strong>${h(boatTitle(boat))}</strong><small class="${changed ? "orange" : ""}">${h(changed ? t("%@ · your limits", boatDetail(boat)) : boatDetail(boat))}</small></span>
-        ${on ? icon("check") : ""}</button>
-      <a class="round" href="#/settings/boat/${encodeURIComponent(boat.id)}" aria-label="${h(t("Limits for %@", boatTitle(boat)))}">${icon("sliders-horizontal")}</a></li>`;
+    return `<div class="boat-row"><button data-tick="${h(boat.id)}" aria-pressed="${on}"><span class="tick">${on ? icon("check") : ""}</span>
+        <span><strong>${h(boatTitle(boat))}</strong><small class="${changed ? "orange" : ""}">${h(changed ? t("%@ · your limits", boatDetail(boat)) : boatDetail(boat))}</small></span></button>
+      <a class="round" href="#/settings/boat/${encodeURIComponent(boat.id)}" aria-label="${h(t("Limits for %@", boatTitle(boat)))}">${icon("info")}</a></div>`;
   };
-  root.innerHTML = `${settingsNav("#/settings")}${testing()}
+  root.innerHTML = `<header class="nav"><a class="link" href="#/settings">${icon("chevron-left")} ${h(t("Settings"))}</a><span class="spacer"></span></header>${testing()}
     <main class="page">
-      <h1 class="large">${h(t("Rowing limits"))}</h1>
+      <h1 class="large">${h(t("Boats and limits"))}</h1>
       ${tip("myBoats")}
       <h3 class="section">${icon("sailboat")} ${h(t("Your boat"))}</h3>
-      <ul class="boats">${GROUPS.map(row).join("")}</ul>
-      <p class="footer">${h(t("The rowing light is for the boat with the tick, until you pick another. Big boats sit higher and steadier, so the app allows more wind and higher waves for them. Tap the sliders to fine-tune a boat's limits."))}</p>
+      <ul class="boats">${GROUPS.map((b) => `<li>${body(b)}</li>`).join("")}</ul>
       <h3 class="section">${icon("list")} ${h(t("My boats"))}</h3>
-      <ul class="boats">${store.boats.map(row).join("")}
+      <ul class="boats">${store.boats.map((b) => swipeRow(body(b), `data-remove-boat="${h(b.id)}"`)).join("")}
         <li><button id="add-boat" class="tint">${icon("circle-plus")} <span>${h(t("Add a boat"))}</span></button></li></ul>
-      <p class="footer">${h(t("Add the boats you can row, such as the club's gig. Each has limits for its type. When it is too rough for the ticked boat, the app says which of your boats would be fine."))}</p>
+      <p class="footer">${h(t("Tap a boat to use it for the rowing light, ⓘ for its type and limits. Swipe to remove one."))}</p>
       ${footerLinks()}
     </main>`;
+  wireTips(root.querySelector("main"));
+  wireSwipeRows(root);
   root.querySelectorAll("[data-tick]").forEach((b) => b.addEventListener("click", () => {
     store.boat = b.dataset.tick;
+    renderBoats();
+  }));
+  root.querySelectorAll("[data-remove-boat]").forEach((b) => b.addEventListener("click", () => {
+    removeBoat(b.dataset.removeBoat);
     renderBoats();
   }));
   root.querySelector("#add-boat").addEventListener("click", () => {
@@ -2263,22 +2390,21 @@ function renderBoats() {
   });
 }
 
-/** The clubs where an own boat is kept, with buttons to add and remove one; the last club stays (KeptAtSection, owner's choice A, 30 Oct 2026). */
+/** The clubs where an own boat is kept: swipe one away, add one from the menu; the last club stays (KeptAtSection, owner's choice A, 30 Oct 2026). */
 function keptAtSection(boat) {
   const clubs = boat.clubs ?? [];
   const home = store.clubs[0]?.id;
   const others = store.clubs.filter((c) => !clubs.includes(c.id));
-  const row = (id) => `<div class="row-setting kept-row">
+  const body = (id) => `<div class="row-setting kept-row">
       <span>${icon(id === home ? "house" : "map-pin")} ${h(clubNameOf(id))}</span>
       ${id === home ? `<small class="sub">${h(t("Home base"))}</small>` : ""}
-      ${clubs.length > 1 ? `<button class="link red" data-unkeep="${h(id)}">${h(t("Remove"))}</button>` : ""}
     </div>`;
   return `<h3 class="section">${icon("map-pin")} ${h(t("Kept at"))}</h3>
-    <section class="card group">${clubs.map(row).join("")}
-      ${others.length ? `<label class="row-setting add-club">${icon("circle-plus")}<select id="keep-at" aria-label="${h(t("Add a club"))}">
-        <option value="">${h(t("Add a club"))}</option>${others.map((c) => `<option value="${h(c.id)}">${h(c.shortName || c.name)}</option>`).join("")}</select></label>` : ""}
-    </section>
-    <p class="footer">${h(t("The boat shows only on the pages of these clubs. Elsewhere it waits under “At other clubs” in the boat menu, one tap to take it along, e.g. to a regatta."))}</p>`;
+    <ul class="card group kept">${clubs.map((id) => (clubs.length > 1 ? swipeRow(body(id), `data-unkeep="${h(id)}"`) : `<li>${body(id)}</li>`)).join("")}
+      ${others.length ? `<li><label class="row-setting add-club">${icon("circle-plus")}<select id="keep-at" aria-label="${h(t("Add a club"))}">
+        <option value="">${h(t("Add a club"))}</option>${others.map((c) => `<option value="${h(c.id)}">${h(c.shortName || c.name)}</option>`).join("")}</select></label></li>` : ""}
+    </ul>
+    <p class="footer">${h(t("The boat shows on these clubs' pages. Elsewhere it waits in the boat menu under “At other clubs”."))}</p>`;
 }
 
 /** The boat's form: name, type and size, where it is kept, the limits switch and the limits (BoatLimitsView). */
@@ -2348,6 +2474,7 @@ function wireBoatForm(el, id, again, own) {
     store.limits = all;
     again();
   }));
+  wireSwipeRows(el);
   el.querySelectorAll("[data-unkeep]").forEach((b) => b.addEventListener("click", () => {
     unkeepBoat(id, b.dataset.unkeep);
     again();
@@ -2401,7 +2528,7 @@ function renderBoat(id) {
   }
   setTitle(boatTitle(boat));
   const own = { get value() { return ownLimitsShown[id] ?? hasOwnLimits(id); }, set value(v) { ownLimitsShown[id] = v; } };
-  root.innerHTML = `<header class="nav"><a class="link" href="#/settings/boats">${icon("chevron-left")} ${h(t("Rowing limits"))}</a><span class="spacer"></span></header>${testing()}
+  root.innerHTML = `<header class="nav"><a class="link" href="#/settings/boats">${icon("chevron-left")} ${h(t("Boats and limits"))}</a><span class="spacer"></span></header>${testing()}
     <main class="page">
       <h1 class="large">${h(boatTitle(boat))}</h1>
       ${boatForm(boat, false, own.value)}
@@ -2507,7 +2634,7 @@ function route(scroll = true) {
   const country = hash.match(/^\/countries\/([a-z]{2})(?:\?q=(.*))?$/);
   if (country) return renderCountry(root, country[1], country[2] ? decodeURIComponent(country[2]) : "");
   if (hash === "/settings") return renderSettings();
-  const topic = hash.match(/^\/settings\/(appearance|clubpages|language|data|help|about)$/);
+  const topic = hash.match(/^\/settings\/(appearance|clubpages|language|data|help|about|developer)$/);
   if (topic) return renderSettings(topic[1]);
   if (hash === "/settings/boats") return renderBoats();
   if (hash === "/settings/backgrounds") return renderBackgrounds(root);

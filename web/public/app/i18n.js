@@ -16,7 +16,20 @@ export function savedLanguage() {
   }
 }
 
-export function resolve(choice = savedLanguage()) {
+/**
+ * The language choice in use: the page speaks the browser's language, as the app the iPhone's
+ * (owner's pick, 5 Nov 2026, after Apple's guidelines); the website's own choice counts only
+ * with the developer options (AppSettings.activeLanguage).
+ */
+export function activeLanguage() {
+  let developer = false;
+  try {
+    developer = JSON.parse(localStorage.getItem("rf.developerOptions") ?? "false") === true;
+  } catch {}
+  return developer ? savedLanguage() : "auto";
+}
+
+export function resolve(choice = activeLanguage()) {
   if (choice === "en" || choice === "de") return choice;
   return (navigator.language || "en").toLowerCase().startsWith("de") ? "de" : "en";
 }
@@ -25,7 +38,7 @@ export async function setLanguage(choice) {
   try {
     localStorage.setItem(STORE, choice);
   } catch {}
-  language = resolve(choice);
+  language = resolve();
   if (language === "de" && !Object.keys(german).length) {
     try {
       german = await (await fetch(new URL("de.json", import.meta.url))).json();
