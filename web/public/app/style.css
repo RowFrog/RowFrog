@@ -1015,6 +1015,12 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .club-head .place-line .launch-open { color: var(--accent); font: inherit; display: inline-flex; align-items: center; gap: 4px; padding: 6px 8px; margin: -6px -8px; text-align: center; }
 .club-head .place-line .launch-open svg { width: 16px; height: 16px; flex: none; }
 .club-head .place-line .launch-open svg:last-child { width: 14px; height: 14px; }
+.club-head .place-line .pl-town svg { vertical-align: -1px; }
+/* The lake and town line (ClubPageHeader.placeText): one line, else broken at the dot, else wrapped; fitPlaceLines picks. */
+.club-head .place-text[data-fit="one"] .launch-open > span, .club-head p.place-text[data-fit="one"],
+.club-head .place-text[data-fit="split"] .launch-open > span, .club-head p.place-text[data-fit="split"] { white-space: nowrap; }
+.club-head .place-text[data-fit="split"] .pl-lake { display: block; }
+.club-head .place-text[data-fit="split"] .pl-dot { display: none; }
 .club-head .orange .launch-open { color: var(--orange); font: inherit; padding: 6px 8px; margin: -6px -8px; }
 #launch-sheet-map { height: 320px; }
 dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
