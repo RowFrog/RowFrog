@@ -40,20 +40,29 @@ final class LocationPinsTests: XCTestCase {
         XCTAssertNotNil(ClubMarks.clubhouse(of: club(set: false, verified: true, house: Coordinate(lat: 47.99766, lon: 11.34745))))
     }
 
-    func testTheHandCheckedClubhouseComesBeforeTheMapsPlace() {
-        let place = CLLocationCoordinate2D(latitude: 47.99700, longitude: 11.34900)
-        let checked = Coordinate(lat: 47.99766, lon: 11.34745)
+    func testThePinStandsOnTheMapAppsPlaceUnlessTheCheckedClubhouseIsFarFromIt() {
+        let checked = Coordinate(lat: 47.99766, lon: 11.34745)  // 110 m from the launch point
+        let near = CLLocationCoordinate2D(latitude: 47.99766, longitude: 11.34810)  // ~48 m from it
+        let far = CLLocationCoordinate2D(latitude: 47.99766, longitude: 11.34950)  // ~150 m from it
         // No hand-checked point: the club's Apple Maps place.
-        XCTAssertEqual(ClubMarks.clubhouse(of: club(set: true, house: nil), place: place)?.longitude, place.longitude)
-        // Checked by hand: that point, wherever the map app puts the club.
-        XCTAssertEqual(ClubMarks.clubhouse(of: club(set: true, house: checked), place: place)?.latitude, checked.lat)
-        // No launch point set: one pin, whatever the map app knows.
-        XCTAssertNil(ClubMarks.clubhouse(of: club(set: false, house: nil), place: place))
+        XCTAssertEqual(ClubMarks.clubhouse(of: club(set: true, house: nil), place: near)?.longitude, near.longitude)
+        // Close to the checked clubhouse: Apple's place, so our pin covers its label.
+        XCTAssertEqual(ClubMarks.clubhouse(of: club(set: true, house: checked), place: near)?.longitude, near.longitude)
+        // Far from it (an entrance by the road): the checked clubhouse.
+        XCTAssertEqual(ClubMarks.clubhouse(of: club(set: true, house: checked), place: far)?.longitude, checked.lon)
+        // No map-app place: the checked clubhouse.
+        XCTAssertEqual(ClubMarks.clubhouse(of: club(set: true, house: checked))?.longitude, checked.lon)
     }
 
-    func testAClubWithNoLaunchPointSetKeepsOnePin() {
-        // Its one point is the club itself, so there is nothing to split from.
-        XCTAssertNil(ClubMarks.clubhouse(of: club(set: false, house: Coordinate(lat: 47.99766, lon: 11.34745))))
+    func testAClubWithNoLaunchPointSetMovesOntoItsPlaceWithoutOars() {
+        let place = CLLocationCoordinate2D(latitude: 47.99766, longitude: 11.34810)
+        let unset = club(set: false, house: nil)
+        XCTAssertEqual(ClubMarks.clubhouse(of: unset, place: place)?.longitude, place.longitude)
+        XCTAssertFalse(ClubMarks.showsOars(for: unset))
+        XCTAssertTrue(ClubMarks.showsOars(for: club(set: true, house: nil)))
+        XCTAssertTrue(ClubMarks.showsOars(for: club(set: false, verified: true, house: nil)))
+        // Its place where its pin already stands: nothing moves.
+        XCTAssertNil(ClubMarks.clubhouse(of: unset, place: launch))
     }
 
     func testMapsFindTheClubhouseByID() {

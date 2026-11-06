@@ -6,17 +6,27 @@ import UIKit
 /// club (blue: the page's club; grey: other clubs), the symbol what the point
 /// is (house or rower: the club; oars: its launch point).
 ///
-/// Zoomed out a club has one pin, at its launch point, which is where the
-/// forecast is for. Once the club's launch point is set (confirmed by the club
-/// or checked by hand) and its clubhouse lies apart from it, zooming in until the
-/// two are `splitAt` points apart on screen moves the club's pin to the
-/// clubhouse and puts oars on the launch point; under `joinAt` they join again.
-/// A club with no launch point set yet keeps its one pin.
+/// Zoomed out a club has one pin, at its forecast point: the launch point once
+/// set (confirmed by the club or checked by hand), else the club's own point.
+/// Zoomed in until the club's place (`clubhouse`) is `splitAt` points away on
+/// screen, the club's pin moves there; under `joinAt` it goes back. A club
+/// with a launch point set then gets oars on the launch point; one without
+/// keeps its single pin, now on its place.
+///
+/// The club's place follows the map apps where it can (owner's option A,
+/// 6 Nov 2026): the club's own place in Apple Maps, so our pin covers Apple's
+/// label and the club shows once, as in the Maps app. Only when a clubhouse
+/// checked by hand lies more than `onPlaceWithin` from that place (the map
+/// app's place is then often an entrance by the road) does the pin keep to
+/// the checked clubhouse.
 enum ClubMarks {
     static let launchSymbol = "oar.2.crossed"
-    /// Closer than this, the clubhouse counts as the launch point itself.
+    /// Closer than this, the club's place counts as its forecast point itself.
     static let sameSpot: CLLocationDistance = 30
-    /// Screen points between the pins before they split, and before they join again.
+    /// Up to this far from the clubhouse checked by hand, the pin stands on
+    /// the club's place in the map app instead.
+    static let onPlaceWithin: CLLocationDistance = 80
+    /// Screen points between the two before the pin moves, and before it moves back.
     static let splitAt: CGFloat = 48
     static let joinAt: CGFloat = 40
 
@@ -26,17 +36,32 @@ enum ClubMarks {
         apart >= (now ? joinAt : splitAt)
     }
 
-    /// Where the club's pin stands once split: the clubhouse the owner checked
-    /// by hand, else the club's place in Apple Maps (the one Open in Maps shows).
-    /// Only for a club whose launch point is set, and only when it lies apart from it.
-    static func clubhouse(of club: Club, place: CLLocationCoordinate2D? = nil) -> CLLocationCoordinate2D? {
-        guard club.hasLaunchPoint else { return nil }
-        let house = club.clubhouse.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) } ?? place
-        guard let house else { return nil }
-        let launch = CLLocation(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
-        let distance = CLLocation(latitude: house.latitude, longitude: house.longitude).distance(from: launch)
-        return distance >= sameSpot ? house : nil
+    static func distance(_ a: CLLocationCoordinate2D, _ b: CLLocationCoordinate2D) -> CLLocationDistance {
+        CLLocation(latitude: a.latitude, longitude: a.longitude).distance(from: CLLocation(latitude: b.latitude, longitude: b.longitude))
     }
+
+    /// Where the club's pin stands once zoomed in, when that is apart from its
+    /// forecast point: the club's place in the map app (`place`), unless a
+    /// clubhouse checked by hand lies more than `onPlaceWithin` from it; with
+    /// no map-app place, the checked clubhouse. Nil keeps the pin where it is.
+    static func clubhouse(of club: Club, place: CLLocationCoordinate2D? = nil) -> CLLocationCoordinate2D? {
+        let checked = club.clubhouse.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) }
+        let spot: CLLocationCoordinate2D?
+        if let checked, let place {
+            spot = distance(checked, place) <= onPlaceWithin ? place : checked
+        } else {
+            spot = place ?? checked
+        }
+        guard let spot else { return nil }
+        let forecastPoint = CLLocationCoordinate2D(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
+        return distance(spot, forecastPoint) >= sameSpot ? spot : nil
+    }
+
+    /// Whether the club's launch point gets oars once its pin has moved: only
+    /// a launch point that is set; otherwise the forecast point is the club itself.
+    static func showsOars(for club: Club) -> Bool { club.hasLaunchPoint }
+
+    static func showsOars(forID id: String?) -> Bool { club(forID: id).map(showsOars) ?? false }
 
     /// The loaded clubs by id, for maps that only know a club's id (lake map,
     /// satellite picture, radar and weather maps). Set when the club list loads.
@@ -55,11 +80,11 @@ enum ClubMarks {
         return clubhouse(of: club, place: ClubPlaces.savedLocation(forID: club.id))
     }
 
-    /// Looks up the Apple Maps places of these clubs that have a launch point set
-    /// but no clubhouse checked by hand (a lake's few clubs), so their pins can split.
+    /// Looks up the Apple Maps places of these clubs (a lake's few clubs), so
+    /// their pins can move onto them when zoomed in.
     @MainActor static func lookUpPlaces(forIDs ids: [String]) async {
         for id in ids {
-            guard let club = club(forID: id), club.hasLaunchPoint, club.clubhouse == nil, !club.isOwnPlace else { continue }
+            guard let club = club(forID: id), !club.isOwnPlace, !ClubPlaces.lookedUpRecently(forID: id) else { continue }
             _ = await ClubPlaces.shared.place(for: club)
         }
     }
@@ -79,6 +104,8 @@ final class ClubPinSplitter {
         let launch: CLLocationCoordinate2D
         let clubhouse: CLLocationCoordinate2D
         let oars: LaunchOarsPin
+        /// False for a club with no launch point set: its pin only moves.
+        let withOars: Bool
         var split = false
     }
     private var pairs: [Pair] = []
@@ -98,7 +125,8 @@ final class ClubPinSplitter {
             oars.coordinate = entry.pin.coordinate
             oars.title = entry.isOwn ? tr("Launch point") : nil
             oars.isOwn = entry.isOwn
-            pairs.append(Pair(pin: entry.pin, launch: entry.pin.coordinate, clubhouse: clubhouse, oars: oars))
+            pairs.append(Pair(pin: entry.pin, launch: entry.pin.coordinate, clubhouse: clubhouse, oars: oars,
+                              withOars: ClubMarks.showsOars(forID: entry.clubID)))
             return true
         }
         for index in pairs.indices {
@@ -109,6 +137,7 @@ final class ClubPinSplitter {
             guard now != pair.split else { continue }
             pairs[index].split = now
             UIView.animate(withDuration: 0.25) { pair.pin.coordinate = now ? pair.clubhouse : pair.launch }
+            guard pair.withOars else { continue }
             if now { map.addAnnotation(pair.oars) } else { map.removeAnnotation(pair.oars) }
         }
     }

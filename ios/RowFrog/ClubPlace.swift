@@ -11,7 +11,7 @@ import MapKit
 final class ClubPlaces {
     static let shared = ClubPlaces()
     private nonisolated static let key = "RWClubPlaces"
-    private static let keepFor: TimeInterval = 30 * 24 * 3600
+    private nonisolated static let keepFor: TimeInterval = 30 * 24 * 3600
     static let maxDistance: CLLocationDistance = 300
 
     private var found: [String: MKMapItem] = [:]
@@ -21,6 +21,16 @@ final class ClubPlaces {
         let saved = UserDefaults.standard.dictionary(forKey: key) as? [String: [String: Any]] ?? [:]
         guard let pair = saved[id]?["at"] as? [Double], pair.count == 2 else { return nil }
         return CLLocationCoordinate2D(latitude: pair[0], longitude: pair[1])
+    }
+
+    /// Whether the club was looked up within the last 30 days, found or not, so
+    /// maps that only need its position don't search again.
+    nonisolated static func lookedUpRecently(forID id: String) -> Bool {
+        let saved = UserDefaults.standard.dictionary(forKey: key) as? [String: [String: Any]] ?? [:]
+        guard let entry = saved[id], let checked = entry["checked"] as? Double else { return false }
+        // A place found before its position was kept (before Nov 2026) is looked up again.
+        if entry["name"] != nil, entry["at"] == nil { return false }
+        return Date.now.timeIntervalSince1970 - checked < keepFor
     }
 
     /// The club's place, or nil when Apple Maps has none that fits.
@@ -33,9 +43,15 @@ final class ClubPlaces {
         }
         // A name found before finds the same place again quickest.
         var item: MKMapItem?
-        if let known = saved[club.id]?["name"] as? String { item = await search(known, near: club) }
-        if item == nil { item = await search(club.name, near: club) }
-        if item == nil, let short = club.shortName { item = await search(short, near: club) }
+        do {
+            if let known = saved[club.id]?["name"] as? String { item = try await search(known, near: club) }
+            if item == nil { item = try await search(club.name, near: club) }
+            if item == nil, let short = club.shortName { item = try await search(short, near: club) }
+        } catch {
+            // Offline or too many searches at once (a lake map with many clubs):
+            // nothing is remembered, so the next look tries again.
+            return nil
+        }
         var entry: [String: Any] = ["checked": Date.now.timeIntervalSince1970]
         if let name = item?.name { entry["name"] = name }
         // Its position, for the club's pin on every map once zoomed in (ClubMarks).
@@ -47,13 +63,20 @@ final class ClubPlaces {
         return item
     }
 
-    private func search(_ name: String, near club: Club) async -> MKMapItem? {
+    /// The first place with a matching name near the club; throws when the search
+    /// itself failed, as opposed to finding nothing.
+    private func search(_ name: String, near club: Club) async throws -> MKMapItem? {
         let launch = CLLocation(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)
         let request = MKLocalSearch.Request()
         request.naturalLanguageQuery = name
         request.resultTypes = .pointOfInterest
         request.region = MKCoordinateRegion(center: launch.coordinate, latitudinalMeters: 3000, longitudinalMeters: 3000)
-        guard let items = try? await MKLocalSearch(request: request).start().mapItems else { return nil }
+        let items: [MKMapItem]
+        do {
+            items = try await MKLocalSearch(request: request).start().mapItems
+        } catch let error as MKError where error.code == .placemarkNotFound {
+            return nil  // no place by that name nearby: an answer, not a failure
+        }
         return items.first { item in
             guard let placeName = item.name, let location = item.placemark.location,
                   location.distance(from: launch) <= Self.maxDistance else { return false }

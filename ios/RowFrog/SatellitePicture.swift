@@ -877,15 +877,15 @@ struct SatelliteOverlay: View {
                 // blue with a house. Names go right, left, above or below the mark,
                 // wherever they don't touch another; with no room the mark stays alone.
                 var taken: [CGRect] = []
-                // Zoomed in far enough, a club with a launch point of its own stands at its
-                // clubhouse and oars mark the launch point (`ClubMarks`).
+                // Zoomed in far enough, a club stands on its place (`ClubMarks`), and
+                // oars mark its launch point when one is set.
                 var oars: [(own: Bool, at: CGPoint)] = []
                 let marks = view.clubs.map { club -> (LakeClub, CGPoint) in
                     let launch = point(club.launchPoint.lon, club.launchPoint.lat)
                     guard let house = ClubMarks.clubhouse(forID: club.id) else { return (club, launch) }
                     let at = point(house.longitude, house.latitude)
                     guard ClubMarks.shouldSplit(apart: hypot(at.x - launch.x, at.y - launch.y), now: false) else { return (club, launch) }
-                    oars.append((club.id == clubID, launch))
+                    if ClubMarks.showsOars(forID: club.id) { oars.append((club.id == clubID, launch)) }
                     return (club, at)
                 }
                 for (_, p) in marks { taken.append(CGRect(x: p.x - 9, y: p.y - 9, width: 18, height: 18)) }
@@ -1575,7 +1575,7 @@ struct SatelliteLegend: View {
                         if on.contains(.clubs) {
                             row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
                             row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
-                            row(ClubMarkIcon(color: .blue, symbol: ClubMarks.launchSymbol), tr("Zoomed in: the club's pin moves to its clubhouse and oars mark the launch point the forecast is for"))
+                            row(ClubMarkIcon(color: .blue, symbol: ClubMarks.launchSymbol), tr("Zoomed in: the club's pin moves to the club's own place in the map app, and oars mark the launch point the forecast is for"))
                         }
                     }
                 }
