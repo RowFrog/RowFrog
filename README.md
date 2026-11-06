@@ -183,7 +183,8 @@ are none.
 
 **Lake view and route planning.** A tile opens a map of the whole lake with
 waves, wind and the light for each part of the lake, and a spot you can tap
-for its details. Stacked layer buttons at the right switch between the light,
+for its details (when fog or a thunderstorm colours it, it says so, e.g. "Fog:
+visibility 300 m"; the website too). Stacked layer buttons at the right switch between the light,
 waves and wind, a slim colour strip above the panel opens the legend, a
 button at the top puts Apple's satellite pictures under the lake, and wind arrows get denser as you zoom in.
 The arrows cover the whole map, on the satellite picture too: over land they
