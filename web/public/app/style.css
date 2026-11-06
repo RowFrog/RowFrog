@@ -1174,7 +1174,7 @@ dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 .card.now .tt-open { display: none; }
 .card.now.all-open .tt-open { display: block; margin-top: 4px; }
 .card.now.all-open .tt-closed { display: none; }
-.all-values { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 44px; margin-bottom: -8px; color: var(--accent); font-size: 15px; font-weight: 500; touch-action: pan-x; }
+.all-values { display: flex; align-items: center; justify-content: center; gap: 4px; width: 100%; min-height: 44px; margin-bottom: -8px; color: var(--accent); font-size: 15px; font-weight: 500; touch-action: manipulation; }
 .all-values .i { font-size: 13px; transition: transform .25s ease; }
 .card.now.all-open .all-values .i { transform: rotate(180deg); }
 @media (prefers-reduced-motion: reduce) { .all-values .i { transition: none; } }

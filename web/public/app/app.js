@@ -1355,7 +1355,8 @@ function wireCurrent(box, forecast) {
 }
 
 function wireTopTile(card, id, at = null) {
-  // Open or closed, the same on every club page and in the hour view: tap the words, or pull down or up.
+  // Open or closed, the same on every club page and in the hour view: a tap on the words only, so a swipe that
+  // starts on them scrolls the page (owner's pick A, app #372).
   const handle = card?.querySelector(".all-values");
   if (handle) {
     const toggle = () => {
@@ -1371,15 +1372,16 @@ function wireTopTile(card, id, at = null) {
       const b = c.querySelector(".all-values");
       if (!b || b.dataset.wired) return;
       b.dataset.wired = "1";
-      // A pull the wrong way (up while closed, down while open) does nothing.
-      let y = null;
-      let pull = 0;
-      b.addEventListener("pointerdown", (e) => (y = e.clientY));
-      b.addEventListener("pointerup", (e) => (pull = y == null ? 0 : e.clientY - y));
+      // A finger or mouse that moved more than a little was a swipe, not a tap: it does nothing.
+      let start = null;
+      let moved = 0;
+      b.addEventListener("pointerdown", (e) => (start = [e.clientX, e.clientY]));
+      b.addEventListener("pointerup", (e) => (moved = start ? Math.hypot(e.clientX - start[0], e.clientY - start[1]) : 0));
       b.addEventListener("click", () => {
-        const wrong = (pull < -20 && !store.topTileOpen) || (pull > 20 && store.topTileOpen);
-        pull = 0;
-        if (!wrong) toggle();
+        const swipe = moved > 10;
+        moved = 0;
+        start = null;
+        if (!swipe) toggle();
       });
     };
     wireHandle(card);
