@@ -541,10 +541,11 @@ https://api.rowfrog.com/v1/ (same paths as the API: `lakes/index`,
 `clubs/<id>/forecast`, `lakes/<id>/view`, and the satellite pictures).
 Every 30 minutes it refreshes the clubs people actually load (until the
 usage counter is set up, the confirmed clubs in `data/locations.json` stand
-in); every 6 hours it refreshes all clubs. A club nobody opened lately is
+in); every 6 hours, on the full hour at 04, 10, 16 and 22 UTC, it refreshes all clubs. A club nobody opened lately is
 refreshed less often and its page says so; once opened, it is back to every
 half hour from the next run. A Cloudflare Worker (`cloudflare/timer/`) starts
-the run at :00 and :30; GitHub's own half-hour timer is only a backup. DWD's local warnings for all clubs come in a couple of
+the run at :00 and :30; GitHub's own half-hour timer is only a backup, with its own queue so it
+can't cancel a waiting run. DWD's local warnings for all clubs come in a couple of
 bulk queries per run. Weather is only loaded again after
 a weather model has a new run, which keeps the job within Open-Meteo's free
 limit. When a station's water temperature fails to load, the last good reading
