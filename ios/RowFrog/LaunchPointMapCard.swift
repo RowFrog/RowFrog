@@ -96,8 +96,8 @@ struct LaunchPointDetails: View {
     @State private var refit = false
     /// The club's own place in Apple Maps, when it has one.
     @State private var place: MKMapItem?
-    /// Where the clubhouse is, when the launch point is set and the clubhouse apart from
-    /// it: checked by hand, else the club's Apple Maps place.
+    /// Where the club's pin moves when zoomed in (`ClubMarks.clubhouse`): its Apple
+    /// Maps place, or the clubhouse checked by hand when that lies far from it.
     private var clubhouse: CLLocationCoordinate2D? { ClubMarks.clubhouse(of: club, place: place?.placemark.location?.coordinate) }
     /// The map's size in points, for how far apart the two pins are on screen.
     @State private var mapSize: CGSize = .zero
@@ -107,6 +107,8 @@ struct LaunchPointDetails: View {
     @State private var span: MKCoordinateSpan?
     /// The sheet to suggest a launch point, and whether one was sent for this club.
     @State private var suggesting = false
+    /// Apple's place card for the club, shown in the app (iOS 18).
+    @State private var placeCard: MKMapItem?
     @State private var suggested = false
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
     /// Apple's satellite pictures instead of the map, remembered for every launch point.
@@ -158,9 +160,19 @@ struct LaunchPointDetails: View {
             forecastPointLine
             suggestRow
             if mapApp == .apple, let name = place?.name {
-                Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
+                if #available(iOS 18.0, *) {
+                    // Apple's own place card (photos, opening hours, website) in the app,
+                    // so the club reads the same as in the Maps app (owner's option A).
+                    Button { placeCard = place } label: {
+                        Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
+                    }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .accessibilityHint(tr("Shows the club's place card from Apple Maps"))
+                } else {
+                    Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             HStack {
                 Text(String(format: tr("%.5f° N, %.5f° E"), club.launchPoint.lat, club.launchPoint.lon))
@@ -188,6 +200,7 @@ struct LaunchPointDetails: View {
                 .font(.caption.weight(.semibold))
             }
         }
+        .modifier(PlaceCardSheet(item: $placeCard))
         .task(id: club.id) {
             suggested = LaunchPointSuggestion.wasSent(forID: club.id)
             // Screenshot hook: `-RWSuggestLaunchPoint YES` opens the suggestion sheet.
@@ -262,7 +275,7 @@ struct LaunchPointDetails: View {
             // the clubhouse and oars mark the launch point the forecast is for.
             Marker(club.displayName, systemImage: LocationStore.markSymbol(for: club.id), coordinate: split ? clubhouse ?? coordinate : coordinate)
                 .tint(.blue)
-            if split {
+            if split, ClubMarks.showsOars(for: club) {
                 Marker(tr("Launch point"), systemImage: ClubMarks.launchSymbol, coordinate: coordinate)
                     .tint(.blue)
             }
@@ -460,6 +473,19 @@ private struct SuggestLaunchPointTipAnchor: ViewModifier {
     func body(content: Content) -> some View {
         if shown {
             content.popoverTip(SuggestLaunchPointTip(), arrowEdge: .top)
+        } else {
+            content
+        }
+    }
+}
+
+/// Apple's place card for a map item, in a sheet; iOS 18 and later.
+private struct PlaceCardSheet: ViewModifier {
+    @Binding var item: MKMapItem?
+
+    func body(content: Content) -> some View {
+        if #available(iOS 18.0, *) {
+            content.mapItemDetailSheet(item: $item)
         } else {
             content
         }

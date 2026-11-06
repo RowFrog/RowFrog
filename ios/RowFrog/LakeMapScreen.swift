@@ -1922,7 +1922,7 @@ struct LakeMapLegend: View {
                 Section(tr("On the map")) {
                     row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
                     row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
-                    row(ClubMarkIcon(color: .blue, symbol: ClubMarks.launchSymbol), tr("Zoomed in: the club's pin moves to its clubhouse and oars mark the launch point the forecast is for"))
+                    row(ClubMarkIcon(color: .blue, symbol: ClubMarks.launchSymbol), tr("Zoomed in: the club's pin moves to the club's own place in the map app, and oars mark the launch point the forecast is for"))
                     if let coldShore {
                         row(Capsule().fill(coldShore.color).frame(width: 18, height: 4),
                             tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
