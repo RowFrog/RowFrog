@@ -24,6 +24,39 @@ def test_weather_is_loaded_once_per_model_run():
     assert publish.due(None, utc(23, 14, 0), 3)
 
 
+def test_weather_waits_for_the_model_run_open_meteo_really_has(monkeypatch):
+    # 12 UTC run not on Open-Meteo yet at 14:31: the 09 UTC run (there since 11:25) stays, no call.
+    monkeypatch.setattr(publish, "MODEL_RUN", open_meteo.ModelRun(utc(23, 9), utc(23, 11, 25)))
+    assert not publish.due(utc(23, 11, 35), utc(23, 14, 31), 3)
+    # It came at 14:40: the 15:00 run loads it, and the forecast from 15:00 then stays.
+    monkeypatch.setattr(publish, "MODEL_RUN", open_meteo.ModelRun(utc(23, 12), utc(23, 14, 40)))
+    assert publish.due(utc(23, 11, 35), utc(23, 15, 0), 3)
+    assert not publish.due(utc(23, 15, 0), utc(23, 15, 30), 3)
+    # Clubs on the 6-hour plan take the 12 UTC run, not the 09 UTC one.
+    assert publish.last_ready(utc(23, 15, 0), 6) == utc(23, 14, 40)
+    monkeypatch.setattr(publish, "MODEL_RUN", open_meteo.ModelRun(utc(23, 9), utc(23, 11, 25)))
+    assert publish.last_ready(utc(23, 12, 0), 6) == utc(23, 8, 25)
+
+
+def test_newest_run_reads_open_meteos_meta_file():
+    import asyncio
+
+    import httpx
+
+    def answer(request):
+        assert request.url.path == "/data/dwd_icon_d2/static/meta.json"
+        return httpx.Response(200, json={"last_run_initialisation_time": 1793268000,
+                                         "last_run_availability_time": 1793276400})
+
+    async def ask():
+        async with httpx.AsyncClient(transport=httpx.MockTransport(answer)) as client:
+            return await open_meteo.newest_run(client)
+
+    run = asyncio.run(ask())
+    assert run.started == datetime.fromtimestamp(1793268000, timezone.utc)
+    assert run.available - run.started == timedelta(hours=2, minutes=20)
+
+
 def test_lakes_nobody_uses_load_at_four_and_sixteen():
     offset = publish.LAKE_OTHER_OFFSET
     assert publish.last_ready(utc(23, 15, 0), 12, offset) == utc(23, 4, 0)

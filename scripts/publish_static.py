@@ -77,6 +77,8 @@ FETCH_HOURS = 60
 # ICON-D2 runs every 3 hours (00, 03, ... UTC) and its forecast is ready
 # about READY_AFTER later. Loading more often brings nothing new.
 READY_AFTER = timedelta(hours=2, minutes=30)
+# Model runs noted in the availability log (v1/status/model-runs): two weeks.
+MODEL_RUNS_KEPT = 112
 WEATHER_HOURS = {"used": 3, "other": 6, "other with usage": 12}
 # Finding 10 of the code review (2026-11-04): anyone can request forecasts,
 # so someone could mark hundreds of different clubs as used, which moves them
@@ -122,11 +124,45 @@ WARN_CELL_DAYS = 90
 WARN_CELL_LOOKUPS = 8
 
 
+# Open-Meteo's newest ICON-D2 run, asked at the start of each run (meta.json).
+# With it a run loads weather only once the new model run is really there,
+# however late it comes; without it (the question failed) READY_AFTER is assumed.
+MODEL_RUN: open_meteo.ModelRun | None = None
+
+
 def last_ready(now: datetime, every_hours: int, offset: timedelta = timedelta()) -> datetime:
     """When the newest forecast run (every `every_hours` from 00 UTC) became ready."""
-    base = now - READY_AFTER - offset
+    delay, latest = READY_AFTER, now
+    if MODEL_RUN and MODEL_RUN.available <= now:
+        # Nothing newer than Open-Meteo's newest run counts, and its delay stands for the older runs too.
+        delay, latest = max(MODEL_RUN.available - MODEL_RUN.started, timedelta()), MODEL_RUN.available
+    base = latest - delay - offset
     run = base.replace(hour=base.hour - base.hour % every_hours, minute=0, second=0, microsecond=0)
-    return run + READY_AFTER + offset
+    return run + delay + offset
+
+
+def check_model_run(state: "State", now: datetime) -> None:
+    """Asks Open-Meteo for its newest ICON-D2 run and notes when each run came,
+    so the timer can later be set to when the runs really arrive."""
+    global MODEL_RUN
+
+    async def ask() -> open_meteo.ModelRun:
+        async with httpx.AsyncClient() as client:
+            return await open_meteo.newest_run(client)
+
+    try:
+        MODEL_RUN = asyncio.run(ask())
+    except (httpx.HTTPError, ValueError, KeyError, TypeError) as e:
+        MODEL_RUN = None
+        print(f"  newest model run unknown ({e!r}); assuming each is ready {READY_AFTER} after it starts")
+        return
+    run = MODEL_RUN
+    print(f"  ICON-D2 run {run.started:%d %b %H:%M}Z on Open-Meteo since {run.available:%H:%M}Z "
+          f"({(run.available - run.started).total_seconds() / 3600:.2f} h after it started), asked {now:%H:%M}Z")
+    if not state.model_runs or state.model_runs[-1]["started"] != run.started.isoformat():
+        state.model_runs.append({"started": run.started.isoformat(), "available": run.available.isoformat(),
+                                 "seen": now.replace(microsecond=0).isoformat()})
+        del state.model_runs[:-MODEL_RUNS_KEPT]
 
 
 def due(loaded: datetime | None, now: datetime, every_hours: int, offset: timedelta = timedelta()) -> bool:
@@ -155,6 +191,8 @@ class State:
         self.warn_cells: dict[str, tuple[datetime, int | None]] = {}  # club -> looked up, DWD warn cell (None outside Germany)
         # The ICON-D2 run the weather maps were last made from.
         self.maps_run: datetime | None = None
+        # When each ICON-D2 run started, came to Open-Meteo and was first seen by a run.
+        self.model_runs: list[dict[str, str]] = []
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
@@ -164,6 +202,7 @@ class State:
                 self.water_satellite = saved.get("water_satellite", (None, {}, {}))
                 self.warn_cells = saved.get("warn_cells", {})
                 self.maps_run = saved.get("maps_run")
+                self.model_runs = saved.get("model_runs", [])
                 api.prepared.last_water.update(saved.get("water", {}))
                 api.prepared.ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
@@ -184,6 +223,7 @@ class State:
             "water": api.prepared.last_water,
             "warn_cells": self.warn_cells,
             "maps_run": self.maps_run,
+            "model_runs": self.model_runs,
         }
         self.path.write_bytes(pickle.dumps(body))
 
@@ -778,6 +818,8 @@ def main() -> int:
     for country in countries:
         write(args.out / "countries" / country["code"] / "lakes", jsonable_encoder(api.country_lakes(country["code"])))
 
+    check_model_run(state, now)
+    write(args.out / "status" / "model-runs", {"model": "dwd_icon_d2", "runs": state.model_runs})
     every = list(locations.load().clubs.values())
     clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
     club_weather(state, clubs, used_clubs, with_usage, now)

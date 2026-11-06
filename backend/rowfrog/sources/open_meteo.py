@@ -23,6 +23,8 @@ import httpx
 
 BASE_URL = "https://api.open-meteo.com/v1/forecast"
 ARCHIVE_URL = "https://archive-api.open-meteo.com/v1/archive"
+# When Open-Meteo last took in a run of a model; free, and not counted as a call.
+META_URL = "https://api.open-meteo.com/data/{model}/static/meta.json"
 # Dew point and feels-like temperature are worked out from these (derive()),
 # and daylight comes from the sun times, which keeps a club at 14 variables.
 HOURLY = [
@@ -342,3 +344,23 @@ async def fetch_archive_daily_mean(
         "end_date": end.isoformat(),
     }
     return parse_daily(await _get(client, ARCHIVE_URL, params))
+
+
+@dataclass(frozen=True)
+class ModelRun:
+    """The newest run of a model on Open-Meteo: when it started (its
+    initialisation time) and when Open-Meteo had it ready to answer with."""
+
+    started: datetime
+    available: datetime
+
+
+async def newest_run(client: httpx.AsyncClient, model: str = "dwd_icon_d2") -> ModelRun:
+    """Open-Meteo's own record of its newest run of `model` (meta.json)."""
+    resp = await client.get(META_URL.format(model=model), timeout=20)
+    resp.raise_for_status()
+    meta = resp.json()
+    return ModelRun(
+        started=datetime.fromtimestamp(int(meta["last_run_initialisation_time"]), timezone.utc),
+        available=datetime.fromtimestamp(int(meta["last_run_availability_time"]), timezone.utc),
+    )
