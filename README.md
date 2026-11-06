@@ -28,8 +28,7 @@ need are in the **[handbook](docs/handbook.md)**.
 
 **Safety notice.** Before anything else, a first start shows a "Before you
 row" safety notice that has to be accepted; it cannot be skipped, and a new
-version of it is asked for again. It opens in the phone's language, with a
-picker for English or German. Across the app, "Advice only, you decide"
+version of it is asked for again. It opens in the phone's language. Across the app, "Advice only, you decide"
 lines remind rowers that the app only advises and they decide. A forecast
 older than 3 hours shows a grey light instead of green.
 
@@ -360,40 +359,47 @@ works like the iOS Settings app: a "Rowing light for" boat picker at the top,
 then one page per topic, each row showing its current value, and a search
 field at the bottom.
 
-- Boats and limits: the boat groups, My boats and the
-  fine-tuned limits (see [Rowing limits](#what-the-app-does)).
-- Appearance: light, dark or as the phone is set (dark saves battery on OLED
-  iPhones), a Landscape switch (on by default; off keeps the app upright), and
-  the app icon: the coxed double "rowing light" icon in light, dark and
-  tinted, plus 10 alternates.
-- Club pages: how much area the weather maps open with ("Maps start": Close,
-  Normal or Wide), the map app for directions (Apple Maps or Google Maps), the order of the cards for all clubs, and background pictures
-  for all pages, single pages or single clubs: clear or blurred, frosted
-  or solid tiles, your own photo or the satellite
-  picture of the club's lake. On club pages the picture fills the screen
+- Boats and limits: the boat groups and My boats (tap a boat to use it for
+  the rowing light, ⓘ for its type, limits and the clubs it is kept at; swipe
+  to remove a boat or a club), and the fine-tuned limits (see
+  [Rowing limits](#what-the-app-does)).
+- Appearance: background pictures for all pages, single pages or single
+  clubs (clear or blurred, frosted or solid tiles, your own photo or the
+  satellite picture of the club's lake) and the app icon: the coxed double
+  "rowing light" icon in light, dark and tinted, plus 10 alternates. Light
+  or dark and turning the screen follow the iPhone, as Apple's guidelines
+  ask. On club pages the picture fills the screen
   behind the status and page bars and fades between clubs while swiping.
   The top bar is clear at rest and shows a blur with the club's name once
   the page scrolls; the page bar floats as three Liquid Glass groups, with
   the current club's dot larger, and the lake map buttons look the same.
+- Club pages: Current conditions in the top tile, the order of the cards for
+  all clubs, Location in the club header, and a Maps section: how much area
+  the weather maps open with ("Maps start": Close, Normal or Wide) and the
+  map app for directions (Apple Maps or Google Maps).
 - Widgets: a live preview of the widgets with the forecast, one size per
   page (swipe, with dots), the background for all widgets or per club (each
   widget can also pick its own when you edit it), and how often they update: every 30 minutes
   (default), every hour, every 2 hours, or only after using the app. Less
   often saves battery and data, but a new official warning reaches the widgets
   later.
-- Language and units: English or German, or "Like the iPhone" (the default);
-  units (wind in m/s, km/h, knots, mph or Beaufort; °C or °F; waves in m, cm
-  or ft); date and time formats, also following the phone by default
-  (including its 12/24-hour setting).
+- Language and units: the language (English or German) is set in the
+  iPhone's Settings for Row Frog, and time and date follow the iPhone
+  (including its 12/24-hour setting); units: wind in m/s, km/h, knots, mph or
+  Beaufort; °C or °F; waves in m, cm or ft, and more.
 - Battery and data: "Save mobile data" (see [Data use](#what-the-app-does))
   and the widget updates.
-- Help: replay the tour, the full legend of symbols, and bring the one-time
-  tips back. Tips point out features the first time they appear, and after an
-  update a "What's new" sheet shows once.
-- About: the version, the safety notice, a privacy summary, the legal notice
+- Help: the safety notice, replay the tour, the full legend of symbols, and
+  bring the one-time tips back. Tips point out features the first time they
+  appear, and after an update a "What's new" sheet shows once.
+- About: the version, a privacy summary, the legal notice
   (Impressum, still with placeholders) and Reset (keeps saved locations, the
   home base and My boats; resets everything else, including the limits).
-- Developer: hidden options for testing (see the handbook).
+- Developer: hidden options for testing (see the handbook), including the
+  app's own Light/Dark, Landscape, language and time and date formats.
+
+The website's Settings have the same pages and follow the browser for looks,
+language and time formats in the same way.
 
 On a club page, the "For *boat*" line under the rowing light says which boat
 the light is for. The boat button (in the bottom bar on iPhone; on iPad level
