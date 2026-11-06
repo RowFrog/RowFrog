@@ -4,6 +4,7 @@
 // "launchPoint"), which files it as a public GitHub issue for the owner to check and /accept.
 // Only the club and the point are sent, never where the visitor is.
 
+import { baseMap } from "./basemap.js";
 import { t, num } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API } from "./logic.js";
@@ -73,11 +74,9 @@ export async function openSuggestLaunchPoint(club, done = () => {}) {
   const L = await loadLeaflet().catch(() => null);
   const box = dialog.querySelector("#sg-map");
   if (L && box) {
-    // About 400 m across, as the app opens it; the website has no satellite tiles, so the map it is.
+    // About 400 m across, on satellite pictures as the app opens it (the street map without a MapTiler key).
     const map = L.map(box, { zoomControl: true, attributionControl: true }).setView([start.lat, start.lon], 17);
-    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-      maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
-    }).addTo(map);
+    baseMap(L, map, { start: true, small: true });
     L.circleMarker([start.lat, start.lon], { radius: 5, color: "#8e8e93", weight: 1, fillColor: "#fff", fillOpacity: 0.9, interactive: false }).addTo(map);
     const moved = () => {
       const c = map.getCenter();

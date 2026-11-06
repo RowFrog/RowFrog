@@ -1,6 +1,7 @@
 // The lake view: the tile on a club page (LakeViewCard) and the full lake map
 // with the hours, the layers, a tapped spot and route planning (LakeMapScreen).
 
+import { baseMap } from "./basemap.js";
 import { t, lang } from "./i18n.js";
 import { icon } from "./icons.js";
 import {
@@ -335,10 +336,15 @@ async function buildMap() {
   const L = await loadLeaflet().catch(() => null);
   const box = page.root.querySelector("#lake-map");
   if (!L || !box) return;
-  // The zoom buttons at the top right, so the close button keeps the top left.
+  // The satellite button at the top right as in the app (RWLakeImagery), the zoom buttons under it on
+  // computers; on touch screens pinching zooms, as in the app (owner's pick, 6 Nov 2026).
   const map = L.map(box, { zoomSnap: 0.25, attributionControl: true, zoomControl: false });
-  L.control.zoom({ position: "topright" }).addTo(map);
   page.map = map;
+  await baseMap(L, map, { storeKey: "rf.lakeImagery", onChange: (on) => {
+    page.satellite = on;
+    if (page.layers.arrows && page.map === map) drawArrows();
+  } });
+  L.control.zoom({ position: "topright" }).addTo(map);
   page.L = L;
   fitView();
   // As in Apple Maps: when the panel grows or shrinks, the map refits the route (or the lake) into the room left above it.
@@ -351,9 +357,6 @@ async function buildMap() {
       fitView();
     }
   }).observe(box);
-  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
-  }).addTo(map);
   const rings = page.view.outline.map((ring) => ring.map(([lon, lat]) => [lat, lon]));
   page.layers.shore = L.polygon(rings, { fill: false, weight: 1, color: "rgba(0, 122, 255, .45)", interactive: false }).addTo(map);
   page.layers.arrows = L.layerGroup().addTo(map);
@@ -579,8 +582,10 @@ function drawArrows() {
   // On land as on the water, at full strength.
   const paths = arrows.flatMap((a) => arrowLines(a.x, a.y, a.towardDeg, arrowLength(a.speedMs)).map((line) => line.map(back)));
   if (!paths.length) return;
-  L.polyline(paths, { color: "rgba(255, 255, 255, .7)", weight: 4, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
-  L.polyline(paths, { color: "rgba(26, 26, 26, .75)", weight: 2, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
+  // On satellite pictures light arrows with a dark edge, as the app draws them over Apple's pictures.
+  const [edge, core] = page.satellite ? ["rgba(0, 0, 0, .55)", "rgba(255, 255, 255, .9)"] : ["rgba(255, 255, 255, .7)", "rgba(26, 26, 26, .75)"];
+  L.polyline(paths, { color: edge, weight: 4, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
+  L.polyline(paths, { color: core, weight: 2, interactive: false, lineCap: "round" }).addTo(page.layers.arrows);
 }
 
 /** Even-odd test against the shore and islands. */
