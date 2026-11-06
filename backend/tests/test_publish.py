@@ -377,3 +377,20 @@ def test_the_publisher_uses_only_public_names_of_the_api():
 
     source = (Path(__file__).resolve().parents[2] / "scripts" / "publish_static.py").read_text()
     assert re.findall(r"\bapi\._\w+", source) == []
+
+
+def test_a_file_that_only_differs_in_build_time_is_left_as_published(tmp_path):
+    path = tmp_path / "clubs" / "x" / "forecast"
+    publish.write(path, {"clubId": "x", "generatedAt": "2026-11-06T15:00:00+00:00", "hours": [1.5, 2]})
+    first = path.read_bytes()
+    # Same content half an hour later: the published bytes stay, so the gateway answers 304.
+    publish.write(path, {"clubId": "x", "generatedAt": "2026-11-06T15:30:00+00:00", "hours": [1.5, 2]})
+    assert path.read_bytes() == first
+    # A real change is written, with its new build time.
+    publish.write(path, {"clubId": "x", "generatedAt": "2026-11-06T16:00:00+00:00", "hours": [3]})
+    assert b"16:00:00" in path.read_bytes()
+    # Lists and files without a build time are compared whole.
+    other = tmp_path / "lakes" / "index"
+    publish.write(other, [1, 2])
+    publish.write(other, [1, 2, 3])
+    assert other.read_text() == "[1,2,3]"
