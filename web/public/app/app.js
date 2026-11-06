@@ -563,7 +563,14 @@ function wireSearch() {
     results.innerHTML = searchClubs(shown, input.value).map(({ club, lake }) => resultRow(club, lake, { showFlag: !country })).join("")
       || (searching ? `<li class="hint">${h(t("No clubs found."))}</li>` : "");
   };
-  input.addEventListener("input", show);
+  // New results start at the top of the list, not where the saved clubs were scrolled to (or where Safari moved the page to show the field).
+  const scroller = input.closest(".side") ?? document.scrollingElement;
+  input.addEventListener("input", async () => {
+    await show();
+    scroller.scrollTop = 0;
+  });
+  const bar = input.closest(".list-bottom");
+  if (bar) keepAboveKeyboard(bar);
   chips.addEventListener("click", (e) => {
     const chip = e.target.closest("[data-country]");
     if (!chip) return;
@@ -571,6 +578,40 @@ function wireSearch() {
     show();
   });
   wireResults(results, { find: (f) => lakes?.find(f) });
+}
+
+/**
+ * Keeps the search at the bottom just above the on-screen keyboard. Safari on iPhone pins a fixed bar to the page's
+ * full height, under the keyboard, and moves the visible part of the page while the results scroll, so the bar follows
+ * the visible part (visualViewport) and the list gets room to scroll its last rows above the keyboard.
+ */
+function keepAboveKeyboard(bar) {
+  const vv = window.visualViewport;
+  if (!vv) return;
+  let frame = 0;
+  const place = () => {
+    frame = 0;
+    if (!bar.isConnected) {
+      vv.removeEventListener("resize", queue);
+      vv.removeEventListener("scroll", queue);
+      window.removeEventListener("scroll", queue);
+      document.documentElement.style.removeProperty("--kb");
+      return;
+    }
+    const layout = document.documentElement.clientHeight;
+    const keyboard = Math.max(0, layout - vv.height);
+    const covered = Math.max(0, layout - (vv.offsetTop + vv.height));
+    // Small gaps are the browser's own bars coming and going, not a keyboard.
+    const open = keyboard > 80;
+    bar.style.transform = open && covered > 1 ? `translateY(${-covered}px)` : "";
+    bar.classList.toggle("over-keyboard", open);
+    document.documentElement.style.setProperty("--kb", `${open ? keyboard : 0}px`);
+  };
+  const queue = () => { frame ||= requestAnimationFrame(place); };
+  vv.addEventListener("resize", queue);
+  vv.addEventListener("scroll", queue);
+  window.addEventListener("scroll", queue, { passive: true });
+  place();
 }
 
 // ---- Club page (LocationPageView) ------------------------------------------------------------
