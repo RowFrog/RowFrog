@@ -828,16 +828,9 @@ struct LakeMapScreen: View {
             } else if routeMode {
                 Text(tr("Tap the water to add the turning points of your route."))
             } else if let spot, spot < hour.lights.count {
-                VStack(alignment: .leading, spacing: 2) {
-                    HStack(spacing: 6) {
-                        TrafficLightDot(light: hour.lights[spot], size: 10)
-                        spotLine(spot, hour)
-                            .minimumScaleFactor(0.8)
-                    }
-                    spotCause(spot, hour)
-                }
-                .accessibilityElement(children: .combine)
-                .accessibilityLabel(spotLabel(spot, hour))
+                let probe = spotProbe(spot, hour)
+                LakeSpotProbe(light: hour.lights[spot], stale: view.isStale, values: probe.values, extra: probe.extra)
+                    .lineLimit(nil)
             } else {
                 Text(view.headline(for: hour))
             }
@@ -892,46 +885,10 @@ struct LakeMapScreen: View {
         return tr("The boat at %@ after %@: %@, waves %@", Format.time(stop.time), Format.distance(stop.distanceM), stop.light.title, waves)
     }
 
-    /// The wind at a tapped spot, from its forecast point as its colour is: "Wind 3–6 m/s".
-    /// The tapped spot in one line: light, then waves and wind with their
-    /// symbols, as in the hourly table, so it fits.
-    private func spotLine(_ i: Int, _ hour: LakeHour) -> Text {
-        let waves: Text = Text(Image(systemName: "water.waves")) + Text(" " + Format.waves(hour.wave(ofCell: i)))
-        var line: Text = Text(hour.lights[i].title + " · ") + waves
-        if let wind = spotWind(i, hour) {
-            let part: Text = Text(" · ") + Text(Image(systemName: "wind")) + Text(" " + wind)
-            line = line + part
-        }
-        return line
-    }
-
-    /// The same in words, for VoiceOver.
-    private func spotLabel(_ i: Int, _ hour: LakeHour) -> String {
-        var label = hour.lights[i].title + ", " + tr("Waves up to %@", Format.waves(hour.wave(ofCell: i)))
-        if let wind = spotWind(i, hour) { label += ", " + tr("Wind") + " " + wind }
-        if let cause = pointWind(i, hour)?.cause { label += ", " + cause.text }
-        return label
-    }
-
-    private func pointWind(_ i: Int, _ hour: LakeHour) -> LakeWind? {
-        let p = view.grid.cellPoint[i]
-        return p < hour.wind.count ? hour.wind[p] : nil
-    }
-
-    /// Fog or a thunderstorm at the spot's forecast point, when it colours the
-    /// spot although waves and wind are fine (owner, 6 Nov 2026).
-    @ViewBuilder private func spotCause(_ i: Int, _ hour: LakeHour) -> some View {
-        if let cause = pointWind(i, hour)?.cause {
-            Label(cause.text, systemImage: cause.symbol)
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(cause.light.color)
-        }
-    }
-
-    private func spotWind(_ i: Int, _ hour: LakeHour) -> String? {
-        let p = view.grid.cellPoint[i]
-        guard p < hour.wind.count, let speed = hour.wind[p].speedMs else { return nil }
-        return Format.windRange(speed, hour.wind[p].gustMs)
+    /// Waves, wind, visibility and the strongest other reason at a tapped spot,
+    /// against the limits of the boat the lake is coloured for (LakeSpotProbe.swift).
+    private func spotProbe(_ i: Int, _ hour: LakeHour) -> (values: [LakeProbeItem], extra: LakeProbeItem?) {
+        view.probe(cell: i, hour: hour, limits: AppSettings.shared.limits(at: clubID))
     }
 
     private func spotDetails(_ i: Int, _ hour: LakeHour) -> some View {
@@ -951,15 +908,25 @@ struct LakeMapScreen: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            HStack(spacing: 18) {
+            let metrics = HStack(spacing: 18) {
                 MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.wave(ofCell: i)), size: 20)
                 MetricView(title: tr("Wind"), symbol: Condition.wind.symbol, value: Format.windRange(wind?.speedMs, wind?.gustMs), size: 20)
                 if let from = wind?.fromDeg {
                     MetricView(title: tr("From"), symbol: "location.north.line", value: Format.compass(from), size: 20)
                 }
             }
+            let visibility = wind?.visM.map {
+                MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance($0), size: 20)
+            }
+            // Visibility beside the others where it fits, else under them.
+            ViewThatFits(in: .horizontal) {
+                HStack(spacing: 18) { metrics; visibility }.fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: 8) { metrics; visibility }
+            }
             .symbolRenderingMode(.hierarchical)
-            spotCause(i, hour)
+            if let extra = spotProbe(i, hour).extra {
+                LakeProbeItemView(item: extra).font(.subheadline)
+            }
         }
         .accessibilityElement(children: .combine)
     }

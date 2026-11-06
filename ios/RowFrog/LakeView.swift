@@ -225,12 +225,16 @@ struct LakeWind: Decodable, Hashable {
     let speedMs: Double?
     let gustMs: Double?
     let fromDeg: Double?
-    /// The light from fog and thunderstorms at the point; missing from older backends.
+    /// The light from fog, thunderstorms, heavy rain and hail at the point; missing from older backends.
     let other: Light?
     /// The visibility at the point, in metres; missing from older backends.
     let visM: Double?
+    /// The thunderstorm light, the rain in the hour and hail at the point; missing from older backends.
+    let storm: Light?
+    let rainMm: Double?
+    let hail: Bool?
 
-    private enum CodingKeys: String, CodingKey { case speedMs, gustMs, fromDeg, other, visM }
+    private enum CodingKeys: String, CodingKey { case speedMs, gustMs, fromDeg, other, visM, storm, rainMm, hail }
 
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -238,18 +242,63 @@ struct LakeWind: Decodable, Hashable {
         gustMs = try c.decodeIfPresent(Double.self, forKey: .gustMs)
         fromDeg = try c.decodeIfPresent(Double.self, forKey: .fromDeg)
         // 0 green, 1 amber, 2 red.
-        other = try c.decodeIfPresent(Int.self, forKey: .other).map { $0 >= 2 ? .red : $0 == 1 ? .amber : .green }
+        let light: (Int) -> Light = { $0 >= 2 ? .red : $0 == 1 ? .amber : .green }
+        other = try c.decodeIfPresent(Int.self, forKey: .other).map(light)
         visM = try c.decodeIfPresent(Double.self, forKey: .visM)
+        storm = try c.decodeIfPresent(Int.self, forKey: .storm).map(light)
+        rainMm = try c.decodeIfPresent(Double.self, forKey: .rainMm)
+        hail = try c.decodeIfPresent(Bool.self, forKey: .hail)
     }
 
-    /// Why the point is amber or red apart from wind and waves: fog (with the
-    /// visibility) or a thunderstorm. The fog limits are the backend's (score.py).
-    var cause: (text: String, symbol: String, light: Light)? {
-        guard let other, other > .green else { return nil }
-        guard let visM else { return (tr("Fog or thunderstorm risk"), Condition.visibility.symbol, other) }
-        let fog: Light = visM < 500 ? .red : visM <= 1000 ? .amber : .green
-        if fog >= other { return (tr("Fog: visibility %@", Format.distance(visM)), Condition.visibility.symbol, fog) }
-        return (tr("Thunderstorm risk"), Condition.thunderstorm.symbol, other)
+    /// The fog light from the visibility, with the backend's limits (score.py).
+    var fogLight: Light {
+        guard let visM else { return .green }
+        return visM < 500 ? .red : visM <= 1000 ? .amber : .green
+    }
+
+    /// What besides waves, wind and visibility makes the point amber or red, the
+    /// strongest only: hail, a thunderstorm or heavy rain (owner's G, 6 Nov 2026).
+    var extra: LakeProbeItem? {
+        if hail == true { return LakeProbeItem(symbol: "cloud.hail", name: tr("Hail"), text: tr("Hail"), light: .red) }
+        if let storm, storm > .green { return LakeProbeItem(symbol: Condition.thunderstorm.symbol, name: tr("Thunderstorm"), text: tr("Thunderstorm"), light: storm) }
+        if let rainMm, rainMm >= 4 { return LakeProbeItem(symbol: "cloud.heavyrain", name: tr("Heavy rain"), text: Format.rain(rainMm), light: .amber) }
+        // Older backends send only the combined light: fog explains it, or else a thunderstorm did.
+        if storm == nil, let other, other > fogLight {
+            return LakeProbeItem(symbol: Condition.thunderstorm.symbol, name: tr("Thunderstorm"), text: tr("Thunderstorm"), light: other)
+        }
+        return nil
+    }
+}
+
+/// One value under a tapped spot on the lake map: symbol and value, in the
+/// light's colour when it is amber or red.
+struct LakeProbeItem: Hashable {
+    let symbol: String
+    /// What VoiceOver says before the value: "Waves", "Wind" ...
+    let name: String
+    let text: String
+    let light: Light
+}
+
+extension LakeView {
+    /// The values under a tapped spot: waves, wind and visibility always, then
+    /// the strongest other reason when it is amber or red (owner's E2 and G, 6 Nov 2026).
+    func probe(cell i: Int, hour: LakeHour, limits: RowingLimits) -> (values: [LakeProbeItem], extra: LakeProbeItem?) {
+        let p = i < grid.cellPoint.count ? grid.cellPoint[i] : 0
+        let wind = p < hour.wind.count ? hour.wind[p] : nil
+        let cold = waterC.map { $0 < RowingLimits.coldWaterC }
+            ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
+        let l = limits.forWater(cold ? 0 : nil)
+        let wave = i < hour.wavesCm.count ? hour.wave(ofCell: i) : nil
+        var values = [
+            LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(wave), light: l.light(wave, .waveAmber, .waveRed)),
+            LakeProbeItem(symbol: Condition.wind.symbol, name: tr("Wind"), text: Format.windRange(wind?.speedMs, wind?.gustMs),
+                          light: max(l.light(wind?.speedMs, .windAmber, .windRed), l.light(wind?.gustMs, .gustAmber, .gustRed))),
+        ]
+        if let vis = wind?.visM {
+            values.append(LakeProbeItem(symbol: Condition.visibility.symbol, name: tr("Visibility"), text: Format.distance(vis), light: wind?.fogLight ?? .green))
+        }
+        return (values, wind?.extra)
     }
 }
 
