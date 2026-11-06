@@ -1096,6 +1096,7 @@ document.addEventListener("click", (e) => {
   const club = store.clubs.find((c) => c.id === button.dataset.suggestLp);
   if (!club) return;
   const fromSheet = !!button.closest("dialog.sheet");
+  closeTip(document, "suggestLaunchPoint");
   openSuggestLaunchPoint(club, () => (fromSheet ? openLaunchPoint(club) : route(false)));
 });
 
@@ -1103,6 +1104,7 @@ document.addEventListener("click", (e) => {
 function openLaunchPoint(club) {
   openSheet(t("Location"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
     showLaunchMap(club, sheet.querySelector("#launch-sheet-map"));
+    wireTips(sheet);
   });
 }
 
@@ -1813,7 +1815,7 @@ function launchPointBody(club, mapId) {
   return `
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     ${club.launchPointVerified || club.launchPointSet ? `<p>${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
-    ${suggestRow(club)}
+    ${suggestRow(club)}${mapId === "launch-sheet-map" && suggestRow(club).includes("data-suggest-lp") ? tip("suggestLaunchPoint") : ""}
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
