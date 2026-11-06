@@ -754,7 +754,7 @@ private struct NowCard: View {
         }
     }
 
-    /// The grip under the tile: tapped, or pulled down or up, it opens or closes the tiles.
+    /// The grip under the tile: tapped, it opens or closes the tiles.
     private var openHandle: some View {
         Button(action: toggleOpen) {
             // Words only, like Apple's own "Show more" rows (owner's pick G2, 5 Nov 2026).
@@ -770,11 +770,9 @@ private struct NowCard: View {
             .frame(maxWidth: .infinity, minHeight: 44)
             .contentShape(Rectangle())
         }
+        // Tap only: a pull here took page swipes that start on this full-width row
+        // (owner's report, 5 Nov 2026), so swipes always scroll the page.
         .buttonStyle(.plain)
-        .highPriorityGesture(DragGesture(minimumDistance: 12).onEnded { drag in
-            let pull = drag.translation.height
-            if (pull > 20 && !open) || (pull < -20 && open) { toggleOpen() }
-        })
         .accessibilityLabel(open ? tr("Fewer values") : tr("All values"))
         .accessibilityHint(open ? tr("Shows the short top tile again") : tr("Opens all values in the top tile"))
         .accessibilityIdentifier("top-tile-handle")
@@ -959,13 +957,13 @@ private struct NowCard: View {
                         SunPath(sunrise: sunrise, sunset: sunset, at: at ?? .now, lineWidth: 1.5).frame(width: 44, height: 20)
                         let left = Format.duration(from: at ?? .now, to: sunset)
                         DaylightText(
-                            line: Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(Format.time(sunset))"),
+                            line: Text("\(tr("Rowing until")) \(sunSymbol("sunset.fill")) \(sunTime(sunset))"),
                             rest: Text(tr("%@ left", left))
                         )
                             .accessibilityLabel(tr("Rowing until sunset at %@, %@ left", Format.time(sunset), left))
                     case let .down(sunrise, _):
                         Image(systemName: "moon.stars.fill").foregroundStyle(.secondary).frame(width: 44)
-                        DaylightText(line: Text("\(tr("Rowing again from")) \(sunSymbol("sunrise.fill")) \(Format.time(sunrise))"))
+                        DaylightText(line: Text("\(tr("Rowing again from")) \(sunSymbol("sunrise.fill")) \(sunTime(sunrise))"))
                             .accessibilityLabel(tr("Rowing again from sunrise at %@", Format.time(sunrise)))
                     }
                     Spacer(minLength: 0)
@@ -975,8 +973,17 @@ private struct NowCard: View {
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .accessibilityValue(Condition.daylight.cause(in: hour).map { tr("Sets the light: %@", $0.title) } ?? "")
             .accessibilityHint(tr("Opens sunrise, sunset and daylight"))
         }
+    }
+
+    /// The sunset or sunrise time, in amber or red while daylight is what sets the light
+    /// (owner's pick S1, 5 Nov 2026); the rest of the line stays as it is.
+    private func sunTime(_ date: Date) -> Text {
+        let time = Text(Format.time(date))
+        guard let tint = Condition.daylight.cause(in: hour)?.causeTint else { return time }
+        return time.foregroundStyle(tint)
     }
 
     /// A sunset or sunrise symbol to sit in the daylight line's text.

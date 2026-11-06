@@ -1998,7 +1998,7 @@ function settingsTopicBody(topic, accepted) {
         <label class="row-setting"><span>${icon("gauge")} ${h(t("Current conditions in the top tile"))}</span><input type="checkbox" class="switch" id="combined-top" ${store.combinedTopTile ? "checked" : ""}></label>
       </section>
       <p class="footer">${h(store.combinedTopTile
-        ? t("The top tile opens into all values: tap \"All values\" under it or pull it down. Values it hides show as a line while they matter for the rowing light.")
+        ? t("The top tile opens into all values: tap \"All values\" under it. Values it hides show as a line while they matter for the rowing light.")
         : t("Current conditions is a card of its own under the top tile, as before."))}</p>
       <section class="card group">
         <button class="row-setting topic" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Card order"))}</span><span class="sub">${h(ownOrder() ? t("Own order") : t("App's order"))} ${icon("chevron-right")}</span></button>

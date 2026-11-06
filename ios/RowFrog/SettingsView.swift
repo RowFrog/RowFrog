@@ -579,7 +579,7 @@ private struct ClubPagesSettingsView: View {
                 Toggle(tr("Current conditions in the top tile"), isOn: $settings.combinedTopTile)
             } footer: {
                 SectionFooter(settings.combinedTopTile
-                              ? tr("The top tile opens into all values: tap \"All values\" under it or pull it down. Values it hides show as a line while they matter for the rowing light.")
+                              ? tr("The top tile opens into all values: tap \"All values\" under it. Values it hides show as a line while they matter for the rowing light.")
                               : tr("Current conditions is a card of its own under the top tile, as before."))
             }
             .surfaceRows()

@@ -173,7 +173,7 @@ export function renderTour(root, { languagePicker, wireLanguage, done, river }) 
 /** The tips: title, message, icon, and the tip that follows once this one is closed. */
 const TIPS = {
   topTile: [key("Tap a value"), key("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values."), "pointer", "allValues"],
-  allValues: [key("All values in the top tile"), key("Tap \"All values\" under the tile or pull it down to see every value there. Pull up or tap \"Fewer values\" to close it."), "chevrons-up-down"],
+  allValues: [key("All values in the top tile"), key("Tap \"All values\" under the tile to see every value there. Tap \"Fewer values\" to close it."), "chevrons-up-down"],
   conditionsExtras: [key("More on the air"), key("Feels like now covers wind chill and heat. Humidity shows the dew point underneath, and the gauge shows the air pressure and where it is heading."), "gauge", "rainRadar"],
   rainRadar: [key("Rain on the way?"), key("For the next two hours the rain tile reads the radar of the Deutscher Wetterdienst at the launch point, in 15-minute steps, and the forecast after that. The radar updates every few minutes."), "umbrella", "radarMap"],
   radarMap: [key("Rain radar map"), key("Open the rain tile: for the next two hours its map shows the radar. Tap the map to play it, or drag the slider from an hour ago to two hours ahead."), "map"],

@@ -315,7 +315,7 @@ jobs:
           # Current conditions in the top tile (owner's choice B, 4 Nov 2026): closed, with a
           # value it hides as one line under the sun line, opened into all tiles, the
           # settings switch, Arrange page with the card locked, and the old separate cards.
-          shoot 370-top-tile-closed light -RWOpenClub mrc-1880 -RWSampleCause wind
+          shoot 370-top-tile-closed light -RWOpenClub mrc-1880 -RWSampleCause wind,daylight
           shoot 371-top-tile-peek-german-dark dark -RWOpenClub mrc-1880 -RWSamplePeek thunderstorm -RWSampleCause thunderstorm,wind -RWLanguage de
           shoot_pages 372-top-tile-open light -RWOpenClub mrc-1880 -RWTopTileOpen YES -RWSampleCause wind
           shoot_pages 373-top-tile-open-german-dark dark -RWOpenClub mrc-1880 -RWTopTileOpen YES -RWSampleCause wind,thunderstorm -RWLanguage de

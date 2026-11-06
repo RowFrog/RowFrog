@@ -752,7 +752,7 @@ struct ColdWaterTip: Tip {
 /// After "Tap a value": the grip that opens Current conditions inside the top tile.
 struct AllValuesTip: Tip {
     var title: Text { Text(tr("All values in the top tile")) }
-    var message: Text? { Text(tr("Tap \"All values\" under the tile or pull it down to see every value there. Pull up or tap \"Fewer values\" to close it.")) }
+    var message: Text? { Text(tr("Tap \"All values\" under the tile to see every value there. Tap \"Fewer values\" to close it.")) }
     var image: Image? { Image(systemName: "rectangle.expand.vertical") }
 }
 
