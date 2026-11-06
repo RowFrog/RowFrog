@@ -1225,3 +1225,15 @@ body.has-picture .side { border-right: none; }
 #arrange > span:first-child { flex: 1; min-width: 0; }
 #arrange > .sub { flex: none; overflow: visible; }
 .lake-wide.one-line span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A tapped spot on the lake map: verdict, then waves, wind and visibility (LakeSpotProbe, app #388). */
+.probe { display: flex; flex-direction: column; gap: 3px; margin: 6px 0; }
+.probe-verdict { display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; }
+.probe-values { display: flex; flex-wrap: wrap; align-items: center; column-gap: 6px; row-gap: 3px; }
+.probe-item { display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; }
+.probe-item::before { content: "·"; margin-right: 3px; color: var(--sub); font-weight: 400; }
+.probe[data-fit="two"] .probe-values > .probe-item:first-child::before, .probe[data-fit="one"] .probe-extra .probe-item::before, .spot-extra .probe-item::before { display: none; }
+.probe-extra:empty { display: none; }
+.probe[data-fit="one"] { flex-direction: row; flex-wrap: wrap; align-items: center; column-gap: 6px; }
+.probe[data-fit="one"] .probe-values { display: contents; }
+.probe[data-fit="one"] .probe-extra { flex-basis: 100%; }
+.spot-extra { font-size: 15px; }

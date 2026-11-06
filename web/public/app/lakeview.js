@@ -6,7 +6,7 @@ import { icon } from "./icons.js";
 import {
   store, getJSON, h, time, dayTime, duration, wind, windRange, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
   dot, setTitle, openSheet, openMenu, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit,
-  CONDITION_ICONS, forecasts, conditionIcon, boatControl, loadCatalog,
+  CONDITION_ICONS, forecasts, conditionIcon, boatControl, loadCatalog, rain,
 } from "./shared.js";
 import { riverSpeed } from "./river.js";
 import { compass, matchesStandard, coldWaterKit, reasonCondition, key } from "./logic.js";
@@ -14,7 +14,7 @@ import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, stripesFall, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
-  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, shouldSplit, pointCause,
+  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, shouldSplit, spotProbe,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips } from "./tour.js";
@@ -459,6 +459,7 @@ function wirePanelDrag() {
   // Once per panel, though the page may be drawn twice in a row.
   if (panel.dataset.drag) return;
   panel.dataset.drag = "on";
+  window.addEventListener("resize", () => panel.isConnected && fitProbe(panel));
   let start = null;
   panel.addEventListener("click", (e) => {
     if (e.target.closest("#panel-grip")) setExpanded(!page.expanded);
@@ -670,12 +671,58 @@ const routeButton = () => `<button class="tool route-button ${page.routeMode ? "
 const moreRows = () => `<div class="more-rows"><button id="legend">${icon("list")} <span>${h(t("Legend"))}</span>${icon("chevron-right")}</button>
   <button id="about">${icon("info")} <span>${h(t(WATER_TEXTS[waterKind(page.view)].about))}</span>${icon("chevron-right")}</button></div>`;
 
-/** Fog or a thunderstorm at the spot's forecast point, in the light's colour, when it colours the spot (spotCause, app #383). */
-function causeLine(cause) {
-  if (!cause) return "";
-  const [text, condition] = cause.kind === "fog" ? [`${t("Visibility")} ${distance(cause.visM)}`, "visibility"]
-    : cause.kind === "thunderstorm" ? [t("Thunderstorm risk"), "thunderstorm"] : [t("Thunderstorm risk"), "thunderstorm"];
-  return `<p class="small strong spot-cause ${cause.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[condition])} ${h(text)}</p>`;
+/** One value of a tapped spot: symbol and value, grey, or in the light's colour and semibold at amber or red (LakeProbeItemView). */
+function probeItem(symbol, text, light = "green") {
+  const raised = light !== "green";
+  return `<span class="probe-item ${raised ? `strong ${light === "red" ? "red" : "orange"}` : "sub"}">${symbol} <span class="num">${h(text)}</span></span>`;
+}
+
+/** The spot's extra: hail, a thunderstorm or heavy rain (LakeWind.extra). */
+function extraItem(extra) {
+  if (!extra) return "";
+  if (extra.kind === "hail") return probeItem(icon("cloud-hail"), t("Hail"), extra.light);
+  if (extra.kind === "thunderstorm") return probeItem(icon(CONDITION_ICONS.thunderstorm), t("Thunderstorm"), extra.light);
+  return probeItem(icon("cloud-rain"), rain(extra.mm), extra.light);
+}
+
+/** Waves, wind and visibility of a probe, as items. */
+function probeValues(p) {
+  return [
+    probeItem(icon("waves"), waves(p.waves.m), p.waves.light),
+    probeItem(icon("wind"), `${windRange(p.wind.speedMs, p.wind.gustMs)} ${windUnit()}`, p.wind.light),
+    ...(p.visibility ? [probeItem(icon(CONDITION_ICONS.visibility), distance(p.visibility.m), p.visibility.light)] : []),
+  ];
+}
+
+/**
+ * The tapped spot in the pushed-down panel (LakeSpotProbe, owner's E2 and G): the verdict, then waves, wind and
+ * visibility; the extra only when amber or red. On one line only where the longest verdict with wide values fits,
+ * so the panel never jumps between spots or hours; otherwise the values go under the verdict, wrapping between
+ * whole items (fitProbe).
+ */
+function spotProbeHtml(light, stale, p) {
+  const verdict = `<span class="probe-verdict strong">${dot(light, 10, stale)} ${h(lightTitle(light, stale))}</span>`;
+  const values = probeValues(p);
+  const extra = extraItem(p.extra);
+  return `<div class="probe" data-fit="two">${verdict}<span class="probe-values">${values.join("")}<span class="probe-extra">${extra}</span></span></div>`;
+}
+
+/** Whether the widest first line (longest verdict, 0.45 m, 12–18 m/s, 500 m) fits the panel: then one line. */
+function fitProbe(panel) {
+  const probe = panel.querySelector(".probe");
+  if (!probe) return;
+  const titles = ["green", "amber", "red"].map((l) => lightTitle(l)).concat(lightTitle("green", true));
+  const longest = titles.reduce((a, b) => (b.length > a.length ? b : a), "");
+  const test = document.createElement("div");
+  test.className = "probe";
+  test.dataset.fit = "one";
+  test.style.cssText = "position:absolute;visibility:hidden;left:0;top:0;width:max-content";
+  test.innerHTML = `<span class="probe-verdict strong">${dot("green", 10)} ${h(longest)}</span><span class="probe-values">${probeValues({
+    waves: { m: 0.45, light: "green" }, wind: { speedMs: 12, gustMs: 18, light: "green" }, visibility: { m: 500, light: "green" } }).join("")}</span>`;
+  probe.parentElement.append(test);
+  const fits = test.getBoundingClientRect().width <= probe.parentElement.clientWidth;
+  test.remove();
+  probe.dataset.fit = fits ? "one" : "two";
 }
 
 function viewingPanel(hour) {
@@ -694,8 +741,9 @@ function viewingPanel(hour) {
       ${view.zones.length > 1 && view.zones[zone] ? `<small class="sub">${h(t("Selected spot · %@", t(zoneTitle(view.zones[zone], waterKind(view)))))}</small>` : ""}
       <div class="now-metrics"><div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesCm[i] / 100))}</span></div>
         <div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
-        ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg, lang()))}</span></div>` : ""}</div>
-      ${causeLine(pointCause(w))}</div>`;
+        ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg, lang()))}</span></div>` : ""}
+        ${w?.visM != null ? `<div><small class="label">${icon(CONDITION_ICONS.visibility)} ${h(t("Visibility"))}</small><span>${h(distance(w.visM))}</span></div>` : ""}</div>
+      ${(() => { const x = extraItem(spotProbe(view, hour, i, mapLimits()).extra); return x ? `<p class="spot-extra">${x}</p>` : ""; })()}</div>`;
   } else {
     const windLine = windText(hour);
     const top = maxWave(hour);
@@ -722,10 +770,7 @@ function collapsedViewing(hour, stale) {
   if (page.spot != null && page.spot.cell < hour.lights.length) {
     const i = page.spot.cell;
     const spotLight = hour.lakeWide.light === "red" ? "red" : hour.lights[i];
-    const w = hour.wind[view.grid.cellPoint[i]];
-    const wind = w?.speedMs != null ? ` · ${icon("wind")} ${h(windRange(w.speedMs, w.gustMs))} ${h(windUnit())}` : "";
-    line = `<p class="one-line strong">${dot(spotLight, 10, stale)} ${h(lightTitle(spotLight, stale))} · ${icon("waves")} ${h(waves(hour.wavesCm[i] / 100))}${wind}</p>
-      ${causeLine(pointCause(w))}`;
+    line = spotProbeHtml(spotLight, stale, spotProbe(view, hour, i, mapLimits()));
   } else {
     line = `<p class="one-line strong">${h(headlineText(view, hour))}</p>`;
   }
@@ -899,6 +944,7 @@ function drawRoute() {
 
 function wirePanel() {
   const panel = page.root.querySelector("#lake-panel");
+  fitProbe(panel);
   const on = (sel, event, fn) => panel.querySelector(sel)?.addEventListener(event, fn);
   panel.querySelectorAll("#hour-strip [data-hour]").forEach((b) => b.addEventListener("click", () => {
     page.hour = Number(b.dataset.hour);
