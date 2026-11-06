@@ -78,6 +78,15 @@ _locations = locations.load()
 _cache: dict[str, tuple[float, tuple]] = {}
 # River gauge readings per gauge (level, discharge, speed), shared by the clubs near it.
 _gauge_cache: dict[str, tuple[float, tuple]] = {}
+# A water station's answer per station key, shared by the clubs and lake view that read it.
+_water_cache: dict[str, tuple[float, tuple]] = {}
+# GKD pages its firewall turned away: station key -> monotonic time until which it is not asked again.
+_gkd_rejected_until: dict[str, float] = {}
+WATER_CACHE_SECONDS = 10 * 60
+# A rejected GKD page is left alone this long (a publish run takes a few minutes).
+GKD_REJECTED_PAUSE = 20 * 60
+# A lake's level moves slowly; the last good levels stand in this long.
+LEVEL_MAX_AGE = timedelta(hours=24)
 # What the publishing job loaded ahead in bulk (rowfrog.prepared); empty when the API runs on its own.
 prepared = Prepared()
 _warnings_cache: dict[str, tuple[float, tuple]] = {}
@@ -222,17 +231,29 @@ async def _gauge_readings(client: httpx.AsyncClient, gauge: river.Gauge):
 
 
 async def _lake_levels(client: httpx.AsyncClient, lake: lake_level.LevelLake):
-    """The lake gauge's levels of the last week, cached for clubs on the same lake."""
-    cached = _gauge_cache.get("gkd:" + lake.station)
+    """The lake gauge's levels of the last week, cached for clubs on the same lake.
+    When GKD fails, the last good levels (kept between runs) stand in while
+    their newest is younger than LEVEL_MAX_AGE."""
+    key = "gkd:" + lake.station
+    cached = _gauge_cache.get(key)
     if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
         return cached[1]
-    try:
-        found = await gkd.fetch_levels(client, lake.station)
-    except httpx.HTTPError as e:
-        logging.getLogger(__name__).warning("GKD level %s failed: %r", lake.name, e)
-        return None
-    _gauge_cache["gkd:" + lake.station] = (time.monotonic(), found)
-    return found
+    if _gkd_rejected_until.get(key, 0.0) <= time.monotonic():
+        try:
+            found = await gkd.fetch_levels(client, lake.station)
+        except httpx.HTTPError as e:
+            logging.getLogger(__name__).warning("GKD level %s failed: %r", lake.name, e)
+            if isinstance(e, gkd.Rejected):
+                _gkd_rejected_until[key] = time.monotonic() + GKD_REJECTED_PAUSE
+        else:
+            _gauge_cache[key] = (time.monotonic(), found)
+            if found:
+                prepared.last_levels[lake.station] = found
+            return found
+    saved = prepared.last_levels.get(lake.station)
+    if saved and _now() - saved[-1][0] <= LEVEL_MAX_AGE:
+        return saved
+    return None
 
 
 def _section_width_m(lake: locations.Lake, rings) -> float | None:
@@ -677,8 +698,18 @@ async def _water(
 ) -> tuple[gkd.WaterTemperature | None, list[gkd.WaterTemperature]]:
     """The station's newest reading and hourly history. GKD sometimes fails a
     request, so it is tried twice, then the last good reading stands in while
-    it is younger than gkd.MAX_AGE."""
+    it is younger than gkd.MAX_AGE. Clubs and lake views that read the same
+    station share one answer, and a page GKD's firewall rejected is not asked
+    again for GKD_REJECTED_PAUSE: from the same runner it only wastes time
+    (the 5 Nov 2026 run timed out on such retries)."""
+    cached = _water_cache.get(station.key)
+    if cached and time.monotonic() - cached[0] < WATER_CACHE_SECONDS:
+        water, history = cached[1]
+        if water is not None and now - water.time <= gkd.MAX_AGE:
+            return water, history
     for attempt in (1, 2):
+        if _gkd_rejected_until.get(station.key, 0.0) > time.monotonic():
+            break
         try:
             if station.network == "pegelonline":
                 water, history = await pegelonline.fetch_recent(client, station.id, now)
@@ -688,11 +719,15 @@ async def _water(
                 water, history = await gkd.fetch_recent(client, station.id, now, station.kind)
         except (httpx.HTTPError, ValueError) as e:
             logging.getLogger(__name__).warning("%s failed for %s (try %d): %r", station.network, station.id, attempt, e)
+            if isinstance(e, gkd.Rejected):
+                _gkd_rejected_until[station.key] = time.monotonic() + GKD_REJECTED_PAUSE
+                break
             if attempt == 1:
                 await asyncio.sleep(2)
             continue
         if water is not None:
             prepared.last_water[station.key] = (water, history)
+            _water_cache[station.key] = (time.monotonic(), (water, history))
             return water, history
         break  # the station has gone quiet; an older reading would be older still
     saved = prepared.last_water.get(station.key)

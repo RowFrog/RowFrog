@@ -204,6 +204,7 @@ class State:
                 self.maps_run = saved.get("maps_run")
                 self.model_runs = saved.get("model_runs", [])
                 api.prepared.last_water.update(saved.get("water", {}))
+                api.prepared.last_levels.update(saved.get("levels", {}))
                 api.prepared.ice_temps.update(saved["ice_temps"])
             except Exception as e:  # an old or broken state only means loading everything again
                 print(f"  state not readable, starting afresh: {e!r}")
@@ -221,6 +222,7 @@ class State:
             "models": self.models,
             "water_satellite": self.water_satellite,
             "water": api.prepared.last_water,
+            "levels": api.prepared.last_levels,
             "warn_cells": self.warn_cells,
             "maps_run": self.maps_run,
             "model_runs": self.model_runs,

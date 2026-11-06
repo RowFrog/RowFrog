@@ -37,5 +37,7 @@ class Prepared:
     # The last good reading and history per water station (water_stations.Station.key),
     # kept between runs so one failed fetch does not blank the water temperature.
     last_water: dict[str, tuple] = field(default_factory=dict)
+    # The same for a lake gauge's levels (lake_level.LevelLake.station -> levels, oldest first).
+    last_levels: dict[str, list] = field(default_factory=dict)
     # Daily mean air temperatures per lake, loaded once a (German) day: (day, temperatures).
     ice_temps: dict[str, tuple[date, list]] = field(default_factory=dict)
