@@ -545,6 +545,18 @@ struct LegendButton: View {
 /// The rowing light now, why, and the values that matter most: air, water
 /// and wind big; waves, rain, visibility (and ice when it matters) small;
 /// whether DWD warns; and how much daylight is left.
+/// How the "All values" row under the top tile sits (owner's pick A2, 6 Nov 2026: 34 pt in all,
+/// half the old row). For A3 (28 pt) set above 4 and below 6; the tap area keeps 44 pt either way.
+enum GripRow {
+    /// Points between the sun line and the words.
+    static let above: CGFloat = 6
+    /// Points between the words and the tile's edge.
+    static let below: CGFloat = 10
+    /// How far the tap area reaches under the words (about 18 pt) to make 44 pt. It goes past the
+    /// tile into the 16 pt gap before the next card, where a tap does nothing else.
+    static let tapBelow: CGFloat = max(0, 44 - above - 18)
+}
+
 private struct NowCard: View {
     let hour: ForecastHour
     let forecast: ClubForecast
@@ -766,10 +778,14 @@ private struct NowCard: View {
             }
             .font(.subheadline.weight(.medium))
             .foregroundStyle(.tint)
-            // 44 pt to tap, as Apple's guide asks.
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .contentShape(Rectangle())
+            .frame(maxWidth: .infinity)
+            // Still 44 pt to tap, as Apple's guide asks: from the sun line down into the
+            // empty tile edge and the gap below the tile.
+            .tapArea(EdgeInsets(top: GripRow.above, leading: 0, bottom: GripRow.tapBelow, trailing: 0))
         }
+        // The card's 10 pt row spacing and 14 pt edge, trimmed to the row's own room.
+        .padding(.top, GripRow.above - 10)
+        .padding(.bottom, GripRow.below - 14)
         // Tap only: a pull here took page swipes that start on this full-width row
         // (owner's report, 5 Nov 2026), so swipes always scroll the page.
         .buttonStyle(.plain)
