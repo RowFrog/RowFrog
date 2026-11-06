@@ -17,22 +17,41 @@ struct LakeSpotProbe: View {
         // E2: one line only where the longest verdict with wide values fits, so
         // the panel never jumps between spots or hours; otherwise two lines.
         ViewThatFits(in: .horizontal) {
-            VStack(alignment: .leading, spacing: 3) {
-                ZStack(alignment: .leading) {
-                    oneLine(verdict: Self.longestVerdict, values: Self.template).hidden()
-                    oneLine(verdict: light.title(stale: stale), values: values)
-                }
-                .fixedSize(horizontal: true, vertical: false)
-                if let extra { LakeProbeItemView(item: extra) }
-            }
-            VStack(alignment: .leading, spacing: 3) {
-                verdict(light.title(stale: stale))
-                LakeProbeValues(items: values + (extra.map { [$0] } ?? []))
-            }
+            oneLineLayout
+            twoLineLayout
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(([light.title(stale: stale)] + (values + (extra.map { [$0] } ?? [])).map { $0.name + " " + $0.text })
-            .joined(separator: ", "))
+        .accessibilityLabel(accessibilityText)
+    }
+
+    /// Split into parts so older compilers type-check the body in time.
+    private var allItems: [LakeProbeItem] {
+        var items = values
+        if let extra { items.append(extra) }
+        return items
+    }
+
+    private var accessibilityText: String {
+        let parts: [String] = allItems.map { $0.name + " " + $0.text }
+        return ([light.title(stale: stale)] + parts).joined(separator: ", ")
+    }
+
+    private var oneLineLayout: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            ZStack(alignment: .leading) {
+                oneLine(verdict: Self.longestVerdict, values: Self.template).hidden()
+                oneLine(verdict: light.title(stale: stale), values: values)
+            }
+            .fixedSize(horizontal: true, vertical: false)
+            if let extra { LakeProbeItemView(item: extra) }
+        }
+    }
+
+    private var twoLineLayout: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            verdict(light.title(stale: stale))
+            LakeProbeValues(items: allItems)
+        }
     }
 
     private func verdict(_ title: String) -> some View {
@@ -104,13 +123,16 @@ struct LakeProbeValues: View {
 struct LakeProbeItemView: View {
     let item: LakeProbeItem
 
+    private var raised: Bool { item.light > .green }
+    private var style: AnyShapeStyle { raised ? AnyShapeStyle(item.light.color) : AnyShapeStyle(.secondary) }
+
     var body: some View {
         HStack(spacing: 3) {
             Image(systemName: item.symbol).symbolRenderingMode(.hierarchical)
             Text(item.text).monospacedDigit()
         }
-        .fontWeight(item.light > .green ? .semibold : .regular)
-        .foregroundStyle(item.light > .green ? AnyShapeStyle(item.light.color) : AnyShapeStyle(.secondary))
+        .fontWeight(raised ? .semibold : .regular)
+        .foregroundStyle(style)
         .lineLimit(1)
     }
 }
