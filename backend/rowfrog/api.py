@@ -18,9 +18,9 @@ import httpx
 from fastapi import FastAPI, HTTPException
 
 from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, warning_links, water_stations, weather_models
-from .forecast import LOCAL, RowingHour, rowing_forecast
+from .forecast import LOCAL, RowingHour, _thunderstorm, rowing_forecast
 from .prepared import Prepared
-from .score import Light
+from .score import HAIL_CODES, Light
 from .sources import bafu, dwd_warnings, geosphere_warnings, gkd, meteoalarm, lake_temperature_satellite, open_meteo, pegelonline
 from .sun import sun_days
 
@@ -984,8 +984,9 @@ async def lake_view_forecast(lake_id: str) -> dict:
                 # One digit per water cell: 0 green, 1 amber, 2 red.
                 "lights": "".join(str(int(light)) for light in h.lights),
                 "wavesCm": [round(w * 100) for w in h.waves_m],
-                # "other": the light from fog and thunderstorms at the point, 0 green to 2 red;
-                # "visM": its visibility, so the app can say when fog sets that light.
+                # "other": the light from fog, thunderstorms, heavy rain and hail at the point,
+                # 0 green to 2 red; "visM", "storm" (thunderstorm light), "rainMm" and "hail"
+                # say which of them sets it, for the tapped spot's values.
                 "wind": [
                     {
                         "speedMs": w.wind_speed_ms,
@@ -993,6 +994,9 @@ async def lake_view_forecast(lake_id: str) -> dict:
                         "fromDeg": w.wind_from_deg,
                         "other": int(other),
                         "visM": None if w.visibility_m is None else round(w.visibility_m),
+                        "storm": int(_thunderstorm(w)),
+                        "rainMm": None if w.precipitation_mm is None else round(w.precipitation_mm, 1),
+                        "hail": w.weather_code in HAIL_CODES,
                     }
                     for w, other in zip(h.wind, h.point_other or [Light.GREEN] * len(h.wind))
                 ],

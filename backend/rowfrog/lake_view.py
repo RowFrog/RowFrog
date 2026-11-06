@@ -90,7 +90,7 @@ class LakeHour:
     wind: list[ForecastHour]  # per forecast point
     zone_lights: list[Light] = field(default_factory=list)
     zone_max_wave_m: list[float] = field(default_factory=list)
-    # Per forecast point: the light from fog and thunderstorms alone, so the app
+    # Per forecast point: the light from fog, thunderstorms, heavy rain and hail alone, so the app
     # can work out the cells again with a rower's own wind and wave limits.
     point_other: list[Light] = field(default_factory=list)
     # What the weather warning behind a lake-wide "weather_warning" reason is about.
@@ -441,7 +441,14 @@ def lake_hours(
         )
         point_other = [
             assess(
-                HourConditions(wind_speed_ms=0.0, wind_gust_ms=0.0, visibility_m=w.visibility_m, thunderstorm=_thunderstorm(w)),
+                HourConditions(
+                    wind_speed_ms=0.0,
+                    wind_gust_ms=0.0,
+                    visibility_m=w.visibility_m,
+                    thunderstorm=_thunderstorm(w),
+                    precipitation_mm=w.precipitation_mm,
+                    weather_code=w.weather_code,
+                ),
                 thresholds,
             ).light
             for w in at_points
@@ -465,6 +472,8 @@ def lake_hours(
                     wave_height_m=wave,
                     visibility_m=w.visibility_m,
                     thunderstorm=_thunderstorm(w),
+                    precipitation_mm=w.precipitation_mm,
+                    weather_code=w.weather_code,
                 ),
                 cell_thresholds,
             ).light

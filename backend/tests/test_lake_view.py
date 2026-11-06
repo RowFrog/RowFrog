@@ -65,6 +65,17 @@ def test_fog_colours_the_cells():
     assert set(h.point_other) == {Light.RED}, "the app needs fog per point to colour cells for other boats"
 
 
+def test_hail_and_heavy_rain_colour_the_cells():
+    from dataclasses import replace
+
+    grid = lake_view.build_grid(LAKE, target_cells=100)
+    calm = hour(speed=1.0, gust=2.0)
+    (h,) = lake_view.lake_hours(grid, [[replace(calm, weather_code=96)] for _ in grid.samples])
+    assert set(h.lights) == {Light.RED} and set(h.point_other) == {Light.RED}
+    (h,) = lake_view.lake_hours(grid, [[replace(calm, precipitation_mm=5.0)] for _ in grid.samples])
+    assert set(h.lights) == {Light.AMBER} and set(h.point_other) == {Light.AMBER}
+
+
 def test_simplify_keeps_a_square():
     square = [(0.0, 0.0), (100.0, 0.0), (100.0, 50.0), (100.0, 100.0), (0.0, 100.0)]
     assert len(lake_view._simplify(square, 1.0)) == 4
@@ -94,6 +105,7 @@ def test_lake_view_endpoint(monkeypatch):
     assert len(first["wind"]) == len(body["points"])
     assert {w["other"] for w in first["wind"]} <= {0, 1, 2}
     assert all(w["visM"] is None or isinstance(w["visM"], int) for w in first["wind"])
+    assert all(w["storm"] in (0, 1, 2) and isinstance(w["hail"], bool) for w in first["wind"])
     assert body["zones"] == ["north", "middle", "south"]
     assert len(first["zones"]) == 3
     assert body["sample"] is False

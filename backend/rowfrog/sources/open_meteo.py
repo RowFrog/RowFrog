@@ -49,6 +49,8 @@ LAKE_HOURLY = [
     "visibility",
     "precipitation",
     "cape",
+    # Hail (codes 96 and 99) colours the lake squares red, as on the club page.
+    "weather_code",
 ]
 
 
