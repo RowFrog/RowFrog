@@ -382,7 +382,8 @@ svg.filled { width: 22px; height: 22px; }
 /* The boat's class in a small frame: dashed for the two groups, accent for an own boat (BoatClassTag). */
 .class-tag { display: inline-flex; align-items: center; justify-content: center; min-width: 30px; height: 22px; padding: 0 5px; box-sizing: border-box;
   border: 1.6px solid currentColor; border-radius: 6px; font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; line-height: 1; color: var(--accent); }
-.class-tag.group { border-style: dashed; color: var(--text); }
+/* "group" is also the settings cards' class (padding 4px 14px); keep the tag's own padding. */
+.class-tag.group { border-style: dashed; color: var(--text); padding: 0 5px; }
 .class-tag.long { font-size: 11px; }
 .bottom .piece.round { width: 44px; padding: 0; justify-content: center; }
 .bottom .gap { flex: 1; }
