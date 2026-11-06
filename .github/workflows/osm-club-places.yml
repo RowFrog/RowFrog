@@ -1,0 +1,51 @@
+name: OSM club places
+
+# Finds each club's own place in OpenStreetMap (scripts/osm_club_places.py):
+# where the map draws the club's name, so the website's pin can move onto it
+# once zoomed in. Writes data/catalogs/osm-places.json. On main the file is
+# committed back; on any other branch it is kept as the run's artifact
+# "osm-places", so a pull request branch gets no bot commit (which would hold
+# its checks for approval). Runs by hand from the Actions tab and on the 12th
+# of each month, as clubs get mapped.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 3 12 * *"
+
+permissions:
+  contents: write
+
+jobs:
+  places:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - run: pip install -c backend/requirements-publish.txt -e backend
+      - name: Find the clubs' places
+        run: |
+          set -o pipefail
+          python3 scripts/osm_club_places.py | tee places-report.txt
+          { echo '```'; cat places-report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+      - name: Check the clubs load with their places
+        run: python3 -c 'from rowfrog import locations; l = locations.load(); print(sum(1 for c in l.clubs.values() if c.map_place), "of", len(l.clubs), "clubs have a map place")'
+      - uses: actions/upload-artifact@v7
+        with:
+          name: osm-places
+          path: data/catalogs/osm-places.json
+      - name: Commit the places
+        if: github.ref == 'refs/heads/main'
+        run: |
+          git add data/catalogs/osm-places.json
+          if git diff --cached --quiet; then
+            echo "No changes."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git commit -m "Update the clubs' places from OpenStreetMap"
+            git pull --rebase
+            git push
+          fi

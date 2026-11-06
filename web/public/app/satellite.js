@@ -598,7 +598,7 @@ function windSvg(view, hour, box, [fw, fh], zoom, [ox, oy], [w, hgt], brightness
 const splitClubs = new Set();
 
 function clubMarks(view, pt, clubId, w, hgt) {
-  // Zoomed in until a club's clubhouse is 48 px from its launch point, its mark moves there and oars mark the launch point (ClubMarks).
+  // Zoomed in until a club's own place is 48 px from its launch point, its mark moves there and oars mark a set launch point (ClubMarks).
   const oars = [];
   const marks = view.clubs.map((club) => {
     const launch = pt(club.launchPoint.lon, club.launchPoint.lat);
@@ -607,7 +607,7 @@ function clubMarks(view, pt, clubId, w, hgt) {
     const split = shouldSplit(Math.hypot(house[0] - launch[0], house[1] - launch[1]), splitClubs.has(club.id));
     splitClubs[split ? "add" : "delete"](club.id);
     if (!split) return { club, p: launch };
-    oars.push({ own: club.id === clubId, p: launch });
+    if (club.oars !== false) oars.push({ own: club.id === clubId, p: launch });
     return { club, p: house };
   });
   const taken = [...marks, ...oars].map(({ p }) => [p[0] - 9, p[1] - 9, 18, 18]);
