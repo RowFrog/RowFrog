@@ -518,7 +518,7 @@ const COLD_WATER_C = 10;
 const COLD_WIND_MARGIN_MS = 1;
 const FREEZING_WATER_C = 4;
 export const COLD = { waterC: COLD_WATER_C, marginMs: COLD_WIND_MARGIN_MS };
-const LIMIT_REASONS = new Set(["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water"]);
+const LIMIT_REASONS = new Set(["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water", "nearby_water"]);
 
 /**
  * The limits for one boat (RowingLimits): the app's for its type with the
@@ -587,9 +587,32 @@ export function applyLimitsToHour(hour, chosen, waterC, currentMs = null) {
     if (WIND_LIMITS.some((l) => limits.isMine(l))) notes.push({ condition: "cold_margin", light: "amber" });
     if (waterC < FREEZING_WATER_C) reasons.push({ condition: "freezing_water", light: "amber" });
   }
+  // The water within 1 km counts where it is worse than the launch point, with this boat's limits (app #395).
+  const near = nearbyReason(hour.nearby, limits);
+  if (near && RANK[near.light] > RANK[reasons.reduce((w, r) => worse(w, r.light), "green")]) reasons.unshift(near);
   reasons.sort((a, b) => RANK[b.light] - RANK[a.light]);
   const light = reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green");
   return { ...hour, reasons, light, notes: notes.length ? notes : undefined };
+}
+
+/**
+ * The "nearby_water" reason for the water within 1 km of the launch point (on rivers, 1 km along the stretch)
+ * with a boat's limits (NearbyWater.reason(with:), app #395): the worst of wind, gusts, waves and the rest
+ * (fog, thunderstorm, heavy rain, hail), named after what sets it, wind first as in score.py; null while green.
+ */
+export function nearbyReason(nearby, limits) {
+  if (!nearby) return null;
+  const cause = nearby.otherCause ?? "fog";
+  const checks = [
+    ["wind", check(nearby.windMs, limits.value("windAmber"), limits.value("windRed")), nearby.windMs],
+    ["gusts", check(nearby.gustMs, limits.value("gustAmber"), limits.value("gustRed")), nearby.gustMs],
+    ["waves", check(nearby.waveM, limits.value("waveAmber"), limits.value("waveRed")), nearby.waveM],
+    [cause, nearby.other ?? "green", nearby.otherCause === "fog" ? nearby.visM ?? null : nearby.otherCause === "heavy_rain" ? nearby.rainMm ?? null : null],
+  ];
+  const worst = checks.reduce((w, [, l]) => worse(w, l), "green");
+  if (worst === "green") return null;
+  const [topic, , value] = checks.find(([, l]) => l === worst);
+  return { condition: "nearby_water", light: worst, topic, value: value ?? null };
 }
 
 /** The water the server judges an hour by: that day's water forecast, else the reading or estimate. */

@@ -63,3 +63,18 @@ test("a steadier own boat is suggested when it would get a better light", () => 
   assert.equal(found.light, "amber");
   assert.equal(steadierBoat({ ...hour, light: "green" }, 16, [gig], "small", (b) => limitsFor(b)), null);
 });
+
+test("the water within 1 km of the launch point follows the boat's limits (app #395)", () => {
+  // Option C (owner, 6 Nov 2026): the water within 1 km counts where it is worse than the Steg.
+  const hour = { time: "2026-11-06T12:00:00Z", light: "amber", windSpeedMs: 2, windGustMs: 3, waveHeightM: 0.05,
+    reasons: [{ condition: "nearby_water", light: "amber", topic: "wind", value: 7 }],
+    nearby: { light: "amber", windMs: 7, gustMs: 8.5, waveM: 0.1, visM: 20000, rainMm: 0, other: "green", otherCause: null } };
+  const small = applyLimitsToHour(hour, limitsFor(GROUPS[0], { waveAmber: 0.2 }), 18);
+  assert.equal(small.light, "amber");
+  assert.deepEqual(small.reasons[0], { condition: "nearby_water", light: "amber", topic: "wind", value: 7 });
+  assert.equal(applyLimitsToHour(hour, limitsFor(GROUPS[1]), 18).light, "green", "a big boat is fine with that wind");
+  // Fog nearby sets the light whatever the boat, and names its visibility.
+  const foggy = applyLimitsToHour({ ...hour, nearby: { light: "red", windMs: 1, gustMs: 2, waveM: 0, visM: 300, other: "red", otherCause: "fog" } }, limitsFor(GROUPS[1]), 18);
+  assert.equal(foggy.light, "red");
+  assert.deepEqual(foggy.reasons[0], { condition: "nearby_water", light: "red", topic: "fog", value: 300 });
+});
