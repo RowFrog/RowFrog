@@ -1213,6 +1213,8 @@ enum German {
         "Hail nearby": "Hagel in der Nähe",
         "Thunderstorm risk nearby": "Gewittergefahr in der Nähe",
         "Rougher water nearby": "Raueres Wasser in der Nähe",
+        "Water nearby": "Wasser in der Nähe",
+        "The light also looks at the water within 1 km of the launch point. If it is rougher or foggier out there, the Why line says so.": "Die Ampel schaut auch auf das Wasser bis 1 km um den Steg. Ist es dort rauer oder nebliger, steht es in der Warum-Zeile.",
         "Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.": "Im Umkreis von 1 km um den Steg ist das Wasser schlechter als am Steg selbst, deshalb zählt die Ampel es mit.",
         "Heavy rain or hail from %@: plan to be back before then.": "Starkregen oder Hagel ab %@: Plane, vorher zurück zu sein.",
         "High %@ · low %@": "Max. %@ · min. %@",

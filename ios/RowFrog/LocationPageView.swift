@@ -79,6 +79,8 @@ struct LocationPageView: View {
     private let launchPointTip = LaunchPointTip()
     private let topTileTip = TopTileTip()
     private let allValuesTip = AllValuesTip()
+    private let nearbyWaterTip = NearbyWaterTip()
+    @State private var showNearbyWaterTip = false
     @State private var showAllValuesTip = false
     private let waterEstimateTip = WaterEstimateTip()
     private let waterLevelTip = WaterLevelTip()
@@ -86,6 +88,11 @@ struct LocationPageView: View {
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
+
+    /// The Why line counts the water within 1 km (#395); `-RWNearbyTip YES` shows its tip anyway.
+    private static func hasNearbyReason(_ hour: ForecastHour) -> Bool {
+        hour.reasons.contains { $0.condition == "nearby_water" } || UserDefaults.standard.bool(forKey: "RWNearbyTip")
+    }
 
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
@@ -104,7 +111,9 @@ struct LocationPageView: View {
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
                                 .id(AppSettings.shared.combinedTopTile ? "conditions" : "top")
-                            if tourSeen && showTopTileTip {
+                            if tourSeen && showNearbyWaterTip && Self.hasNearbyReason(now) {
+                                TipView(nearbyWaterTip)
+                            } else if tourSeen && showTopTileTip {
                                 TipView(topTileTip)
                             } else if AppSettings.shared.combinedTopTile && tourSeen && showAllValuesTip {
                                 TipView(allValuesTip)
@@ -199,6 +208,7 @@ struct LocationPageView: View {
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .tipVisibility(topTileTip, $showTopTileTip)
                 .tipVisibility(allValuesTip, $showAllValuesTip)
+                .tipVisibility(nearbyWaterTip, $showNearbyWaterTip)
                 .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(waterLevelTip, $showWaterLevelTip)
                 .tipVisibility(radarMapTip, $showRadarMapTip)
