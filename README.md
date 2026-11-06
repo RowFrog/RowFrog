@@ -330,7 +330,8 @@ launch point the forecast is for, which can be panned and zoomed, switched to
 satellite pictures with the globe button, and made full screen by pulling the
 sheet up or with the expand button; a note on which point the forecast is
 for (the launch point, or the club's address while no launch point is set),
-its name in Apple Maps or the not-confirmed note, its coordinates and "Open in
+its name in Apple Maps (a tap opens Apple's place card) or the
+not-confirmed note, its coordinates and "Open in
 Maps". Settings › Club pages › Location in the club header (on by default)
 can be turned off to bring back the Launch point map card on the page
 instead, a still picture until tapped. On the website the place line opens
@@ -347,9 +348,12 @@ own app when installed.
 
 **Maps** all mark clubs the same way: this page's club in blue, other clubs in
 grey, with a house for the home base and a rower for any other club. Zoomed
-out a club has one pin at its launch point; where the launch point is set and
-the clubhouse is at least 30 m away, zooming in moves the club's pin to the
-clubhouse and crossed oars mark the launch point. The website does the same.
+out a club has one pin at its launch point (or its own point while none is
+set). Zooming in moves the club's pin onto the club's place in Apple Maps, so
+it covers Apple's own label and the club shows once; only when the clubhouse
+checked by hand is more than 80 m from that place does the pin go there
+instead. Where the launch point is set, crossed oars then mark it. The website
+does the same with the clubhouses checked by hand only.
 
 **When an update fails,** the page keeps the last forecast and says why under
 the club's name (no internet, server did not answer, no forecast for this
