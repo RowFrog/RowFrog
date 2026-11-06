@@ -609,8 +609,8 @@ const moreRows = () => `<div class="more-rows"><button id="legend">${icon("list"
 /** Fog or a thunderstorm at the spot's forecast point, in the light's colour, when it colours the spot (spotCause, app #383). */
 function causeLine(cause) {
   if (!cause) return "";
-  const [text, condition] = cause.kind === "fog" ? [t("Fog: visibility %@", distance(cause.visM)), "visibility"]
-    : cause.kind === "thunderstorm" ? [t("Thunderstorm risk"), "thunderstorm"] : [t("Fog or thunderstorm risk"), "visibility"];
+  const [text, condition] = cause.kind === "fog" ? [`${t("Visibility")} ${distance(cause.visM)}`, "visibility"]
+    : cause.kind === "thunderstorm" ? [t("Thunderstorm risk"), "thunderstorm"] : [t("Thunderstorm risk"), "thunderstorm"];
   return `<p class="small strong spot-cause ${cause.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[condition])} ${h(text)}</p>`;
 }
 

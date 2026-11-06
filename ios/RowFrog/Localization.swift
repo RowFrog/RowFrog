@@ -1345,9 +1345,6 @@ enum German {
         "Coastal boat": "Coastal-Boot",
         "Coastal boats that drain themselves": "Coastal-Boote, die sich selbst lenzen",
         "Coloured for %@": "Eingefärbt für %@",
-        // Still used by the website lake map (web/public/app/lakeview.js) until it gets the new probe.
-        "Fog: visibility %@": "Nebel: Sicht %@",
-        "Fog or thunderstorm risk": "Nebel oder Gewitterrisiko",
         "For %@": "Für %@",
         "Gig and touring boats, higher sides": "Gig- und Wanderboote mit höherer Bordwand",
         "Gig boat": "Gigboot",
