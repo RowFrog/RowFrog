@@ -192,7 +192,7 @@ struct AddPlaceView: View {
     @State private var kind: OwnPlace.Kind = .club
     @State private var website = ""
     @State private var share = false
-    @State private var satellite = true
+    @AppStorage("RWAddPlaceImagery") private var satellite = true
     @State private var camera: MapCameraPosition
     @State private var center: Coordinate
     @Environment(\.dismiss) private var dismiss
@@ -233,8 +233,21 @@ struct AddPlaceView: View {
                             .accessibilityHidden(true)
                     }
                     .frame(height: 300)
+                    // Map or Apple's satellite pictures with the same round button as the
+                    // Location, lake and launch point maps; the last choice is kept.
+                    .overlay(alignment: .topTrailing) {
+                        Button { satellite.toggle() } label: {
+                            Image(systemName: satellite ? "map" : "globe.europe.africa")
+                                .font(.footnote.weight(.semibold))
+                                .padding(8)
+                                .background(.regularMaterial, in: Circle())
+                                .tapArea(6)
+                        }
+                        .buttonStyle(.plain)
+                        .padding(8)
+                        .accessibilityLabel(satellite ? tr("Show the map") : tr("Show satellite pictures"))
+                    }
                     .listRowInsets(EdgeInsets())
-                    Toggle(tr("Satellite view"), isOn: $satellite)
                 } header: {
                     Text(tr("Move the map until the pin sits where you launch"))
                 } footer: {
