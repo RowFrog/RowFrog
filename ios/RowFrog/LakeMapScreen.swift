@@ -12,6 +12,8 @@ struct LakeMapScreen: View {
     @State private var hourIndex: Int
     @State private var layer: LakeLayer
     @State private var spot: Int?
+    /// Where the water was tapped, for values blended at that very spot.
+    @State private var spotAt: CLLocationCoordinate2D?
     @State private var showingInfo = false
     @State private var showingLegend = UserDefaults.standard.bool(forKey: "RWLakeLegend")
     @State private var routeMode: Bool
@@ -163,7 +165,7 @@ struct LakeMapScreen: View {
         let land: LandWind? = shown.flatMap { hour in ModelMapStore.shared.landWind(at: view.grid.centre, time: hour.time) }
         ZStack(alignment: .top) {
             LakeMapView(
-                view: view, hour: shown, layer: layer, clubID: clubID, spot: $spot,
+                view: view, hour: shown, layer: layer, clubID: clubID, spot: $spot, spotAt: $spotAt,
                 routeMode: routeMode, waypoints: waypoints, segments: plan?.segments ?? [],
                 boat: boat.map { CLLocationCoordinate2D(latitude: $0.coordinate.lat, longitude: $0.coordinate.lon) },
                 selectedPoint: selectedPoint,
@@ -888,12 +890,16 @@ struct LakeMapScreen: View {
     /// Waves, wind, visibility and the strongest other reason at a tapped spot,
     /// against the limits of the boat the lake is coloured for (LakeSpotProbe.swift).
     private func spotProbe(_ i: Int, _ hour: LakeHour) -> (values: [LakeProbeItem], extra: LakeProbeItem?) {
-        view.probe(cell: i, hour: hour, limits: AppSettings.shared.limits(at: clubID))
+        view.probe(cell: i, at: tappedSpot(i), hour: hour, limits: AppSettings.shared.limits(at: clubID))
+    }
+
+    /// The tapped coordinate while it still lies in the spot's cell.
+    private func tappedSpot(_ i: Int) -> CLLocationCoordinate2D? {
+        spotAt.flatMap { view.grid.cell(at: $0) == i ? $0 : nil }
     }
 
     private func spotDetails(_ i: Int, _ hour: LakeHour) -> some View {
-        let p = view.grid.cellPoint[i]
-        let wind = p < hour.wind.count ? hour.wind[p] : nil
+        let wind = tappedSpot(i).map { view.wind(at: $0, cell: i, in: hour) } ?? view.cellWind(i, in: hour)
         let zone = view.grid.cellZone[i]
         return VStack(alignment: .leading, spacing: 4) {
             HStack {
@@ -1077,6 +1083,7 @@ struct LakeMapView: UIViewRepresentable {
     let layer: LakeLayer
     let clubID: String?
     @Binding var spot: Int?
+    @Binding var spotAt: CLLocationCoordinate2D?
     var routeMode = false
     var waypoints: [CLLocationCoordinate2D] = []
     var segments: [RoutePlan.Segment] = []
@@ -1102,7 +1109,7 @@ struct LakeMapView: UIViewRepresentable {
     /// Room the pushed-down panel and the home indicator take at the bottom, before it is measured.
     static let panelHeight: CGFloat = 230
 
-    func makeCoordinator() -> Coordinator { Coordinator(spot: $spot) }
+    func makeCoordinator() -> Coordinator { Coordinator(spot: $spot, spotAt: $spotAt) }
 
     func makeUIView(context: Context) -> MKMapView {
         let map = MKMapView()
@@ -1213,6 +1220,7 @@ struct LakeMapView: UIViewRepresentable {
             c.renderer?.setDarkBase(darkBase)
         }
         c.spot = $spot
+        c.spotAt = $spotAt
         c.routeMode = routeMode
         c.addPoint = addPoint
         c.movePoint = movePoint
@@ -1259,6 +1267,7 @@ struct LakeMapView: UIViewRepresentable {
 
     final class Coordinator: NSObject, MKMapViewDelegate, UIGestureRecognizerDelegate {
         var spot: Binding<Int?>
+        var spotAt: Binding<CLLocationCoordinate2D?>
         var overlay: LakeOverlay?
         var renderer: LakeRenderer?
         var grid: LakeGrid?
@@ -1290,7 +1299,10 @@ struct LakeMapView: UIViewRepresentable {
         private var trackLine: RowedTrackLine?
         private var shownTrack: [Coordinate] = []
 
-        init(spot: Binding<Int?>) { self.spot = spot }
+        init(spot: Binding<Int?>, spotAt: Binding<CLLocationCoordinate2D?>) {
+            self.spot = spot
+            self.spotAt = spotAt
+        }
 
         func mapView(_ mapView: MKMapView, rendererFor overlay: MKOverlay) -> MKOverlayRenderer {
             if let line = overlay as? RouteLine {
@@ -1569,6 +1581,7 @@ struct LakeMapView: UIViewRepresentable {
                 addPoint(coordinate)
             } else {
                 tappedAt = coordinate
+                spotAt.wrappedValue = coordinate
                 spot.wrappedValue = grid.cell(at: coordinate)
             }
         }
@@ -1651,132 +1664,6 @@ struct LakeMapView: UIViewRepresentable {
             }
             if !map.annotations.contains(where: { $0 === spotPin }) { map.addAnnotation(spotPin) }
             spotPin.coordinate = coordinate
-        }
-    }
-}
-
-/// One end of a river section's stretch.
-final class SectionEndPin: MKPointAnnotation {
-    var isBarrier = false
-}
-
-final class RoutePin: MKPointAnnotation {
-    var isStart = false
-    var isSelected = false
-    /// Its index in the route's waypoints.
-    var index = 0
-}
-
-/// The route around a turning point while it is dragged.
-final class DragLine: MKPolyline {}
-
-/// A round magnifier above the finger that shows the map under a dragged
-/// point, with cross hairs where the point will land.
-final class Loupe: UIView {
-    static let size: CGFloat = 116
-    private let map = MKMapView()
-
-    init() {
-        super.init(frame: CGRect(x: 0, y: 0, width: Self.size, height: Self.size))
-        isUserInteractionEnabled = false
-        layer.cornerRadius = Self.size / 2
-        layer.borderWidth = 3
-        layer.borderColor = UIColor.white.cgColor
-        layer.shadowColor = UIColor.black.cgColor
-        layer.shadowOpacity = 0.3
-        layer.shadowRadius = 6
-        map.frame = bounds
-        map.layer.cornerRadius = Self.size / 2
-        map.clipsToBounds = true
-        map.isUserInteractionEnabled = false
-        map.pointOfInterestFilter = .excludingAll
-        map.showsCompass = false
-        addSubview(map)
-        let cross = CAShapeLayer()
-        let path = UIBezierPath()
-        let c = Self.size / 2
-        for (from, to) in [(CGPoint(x: c - 14, y: c), CGPoint(x: c - 5, y: c)), (CGPoint(x: c + 5, y: c), CGPoint(x: c + 14, y: c)),
-                           (CGPoint(x: c, y: c - 14), CGPoint(x: c, y: c - 5)), (CGPoint(x: c, y: c + 5), CGPoint(x: c, y: c + 14))] {
-            path.move(to: from)
-            path.addLine(to: to)
-        }
-        path.append(UIBezierPath(ovalIn: CGRect(x: c - 3, y: c - 3, width: 6, height: 6)))
-        cross.path = path.cgPath
-        cross.strokeColor = UIColor.systemOrange.cgColor
-        cross.fillColor = UIColor.systemOrange.cgColor
-        cross.lineWidth = 2.5
-        layer.addSublayer(cross)
-    }
-
-    required init?(coder: NSCoder) { fatalError("init(coder:) is not used") }
-
-    /// Shows `coordinate` magnified, above the finger, or below it near the top.
-    func show(at coordinate: CLLocationCoordinate2D, finger: CGPoint, on host: MKMapView) {
-        if superview !== host {
-            map.preferredConfiguration = host.preferredConfiguration
-            host.addSubview(self)
-        }
-        let span = MKCoordinateSpan(latitudeDelta: max(host.region.span.latitudeDelta / 8, 0.0008),
-                                    longitudeDelta: max(host.region.span.longitudeDelta / 8, 0.0008))
-        map.setRegion(MKCoordinateRegion(center: coordinate, span: span), animated: false)
-        let half = Self.size / 2, gap: CGFloat = 70
-        var y = finger.y - gap - half
-        if y - half < host.safeAreaInsets.top + 8 { y = finger.y + gap + half }
-        let x = min(max(finger.x, half + 8), host.bounds.width - half - 8)
-        center = CGPoint(x: x, y: y)
-    }
-
-    func hide() { removeFromSuperview() }
-}
-
-/// An imported row's track as it was rowed.
-final class RowedTrackLine: MKPolyline {}
-
-/// One stretch of a planned route in the colour of its conditions; the casing
-/// is a wider white line under it.
-final class RouteLine: MKPolyline {
-    var light: Light = .green
-    var casing = false
-
-    /// Room for the line drawn beside its points (about 2 km).
-    override var boundingMapRect: MKMapRect { super.boundingMapRect.insetBy(dx: -20_000, dy: -20_000) }
-}
-
-/// Draws a route stretch a few points to the right of the way the boat goes,
-/// so where a route is rowed out and back both trips show side by side, each
-/// in the colour of the time the boat is there.
-final class RouteLineRenderer: MKOverlayRenderer {
-    /// Screen points between the line's middle and the route.
-    static let offset: CGFloat = 3.5
-
-    override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
-        guard let line = overlay as? RouteLine, line.pointCount > 1 else { return }
-        let points = UnsafeBufferPointer(start: line.points(), count: line.pointCount).map { point(for: $0) }
-        let path = CGMutablePath()
-        path.addLines(between: Self.shifted(points, by: Self.offset / zoomScale))
-        context.addPath(path)
-        context.setStrokeColor((line.casing ? UIColor(white: 1, alpha: 0.9) : UIColor(line.light.color)).cgColor)
-        context.setLineWidth((line.casing ? 9 : 5) / zoomScale)
-        context.setLineCap(.round)
-        context.setLineJoin(.round)
-        context.strokePath()
-    }
-
-    /// The points moved `distance` to the right of the direction of travel, with y running down.
-    static func shifted(_ points: [CGPoint], by distance: CGFloat) -> [CGPoint] {
-        guard points.count > 1 else { return points }
-        let normals = zip(points, points.dropFirst()).map { a, b -> CGVector in
-            let dx = b.x - a.x, dy = b.y - a.y
-            let length = max(hypot(dx, dy), .ulpOfOne)
-            return CGVector(dx: -dy / length, dy: dx / length)
-        }
-        return points.indices.map { i in
-            let before = i > 0 ? normals[i - 1] : normals[0]
-            let after = i < normals.count ? normals[i] : normals[normals.count - 1]
-            var n = CGVector(dx: before.dx + after.dx, dy: before.dy + after.dy)
-            let length = hypot(n.dx, n.dy)
-            n = length > 0.01 ? CGVector(dx: n.dx / length, dy: n.dy / length) : after
-            return CGPoint(x: points[i].x + n.dx * distance, y: points[i].y + n.dy * distance)
         }
     }
 }

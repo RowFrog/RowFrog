@@ -18,11 +18,12 @@ from __future__ import annotations
 
 import math
 from bisect import bisect_right
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from functools import lru_cache
 from typing import Sequence
 
+from . import interpolate
 from .forecast import _daylight, _lake_warning, _thunderstorm, _weather_warning, weather_warning_topic
 from .outlines import Rings
 from .score import HourConditions, Light, Thresholds, assess
@@ -79,6 +80,9 @@ class Grid:
     zones: list[str]  # names of the parts of the lake, e.g. north, middle, south
     zone_of: list[int]  # zone index per water cell
     outline: Rings  # simplified, for drawing
+    # Per water cell, the natural neighbour weights of the forecast points (interpolate.py):
+    # wind, gusts, rain and visibility are blended from them (owner's pick, 6 Nov 2026).
+    weights: list[dict[int, float]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -340,7 +344,8 @@ def build_grid(rings: Rings, target_cells: int = TARGET_CELLS, max_samples: int 
         )
 
     outline = [[to_lonlat(x, y) for x, y in _simplify(r, min(cell / 10, 25.0))] for r in rings_m]
-    return Grid(south, west, d_lat, d_lon, cols, rows, cell, cells, points, fetch, samples, nearest, zones, zone_of, outline)
+    weights = interpolate.lake_weights(points, samples)
+    return Grid(south, west, d_lat, d_lon, cols, rows, cell, cells, points, fetch, samples, nearest, zones, zone_of, outline, weights)
 
 
 def _samples(
@@ -407,6 +412,35 @@ def _interpolated_fetch(table: list[float], wind_from_deg: float) -> float:
     return table[i] * (1 - t) + table[(i + 1) % DIRECTIONS] * t
 
 
+def cell_weather(grid: Grid, i: int, at_points: Sequence[ForecastHour]) -> ForecastHour:
+    """The weather at a water cell, blended from the forecast points around it:
+    wind, gusts and rain as they are, visibility on a log scale, the direction
+    from the wind arrows. Thunderstorms and hail are yes or no, so they come
+    from the nearest point."""
+    near = at_points[grid.nearest[i]]
+    weights = grid.weights[i] if i < len(grid.weights) else None
+    if not weights or len(weights) == 1:
+        return at_points[next(iter(weights))] if weights else near
+
+    def blended(get, fn=interpolate.blend):
+        values = [get(w) for w in at_points]
+        if any(values[j] is None for j in weights):
+            return get(near)
+        return fn(weights, values)
+
+    speeds = [w.wind_speed_ms or 0.0 for w in at_points]
+    dirs = [w.wind_from_deg for w in at_points]
+    direction = near.wind_from_deg if any(dirs[j] is None for j in weights) else interpolate.blend_direction(weights, speeds, dirs)
+    return replace(
+        near,
+        wind_speed_ms=blended(lambda w: w.wind_speed_ms),
+        wind_gust_ms=blended(lambda w: w.wind_gust_ms),
+        wind_from_deg=direction,
+        visibility_m=blended(lambda w: w.visibility_m, interpolate.blend_visibility),
+        precipitation_mm=blended(lambda w: w.precipitation_mm),
+    )
+
+
 def lake_hours(
     grid: Grid,
     weather: Sequence[Sequence[ForecastHour]],
@@ -460,7 +494,7 @@ def lake_hours(
         # Cold water lowers the wind limits for the cells too.
         cell_thresholds = thresholds.for_water(water_temp_c)
         for i, table in enumerate(grid.fetch):
-            w = at_points[grid.nearest[i]]
+            w = cell_weather(grid, i, at_points)
             speed = w.wind_speed_ms or 0.0
             wave = 0.0
             if w.wind_from_deg is not None:

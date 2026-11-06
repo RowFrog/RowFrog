@@ -305,8 +305,7 @@ struct RoutePlanner {
             if let last = hours.last, time >= last.time.addingTimeInterval(3600) { beyond = true }
             h = min(h, hours.count - 1)
             let hour = hours[h]
-            let point = view.grid.cellPoint[p.cell]
-            let wind = point < hour.wind.count ? hour.wind[point] : nil
+            let wind = view.wind(at: p.coordinate, cell: p.cell, in: hour)
             stops.append(RoutePlan.Stop(
                 coordinate: Coordinate(lat: p.coordinate.latitude, lon: p.coordinate.longitude),
                 distanceM: p.distanceM,
