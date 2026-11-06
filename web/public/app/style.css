@@ -86,6 +86,10 @@ button.wide { margin-top: 0; }
 .dot.amber { background: var(--amber); }
 .dot.red { background: var(--red); }
 .dot.loading { background: var(--line); }
+/* An hour in which the daylight light changes: left half the light it starts with, right half the one it ends with. */
+.dot.split { background: linear-gradient(90deg, var(--l) 50%, var(--r) 50%); }
+/* With more contrast asked for, a gap between the halves, as the app's Differentiate Without Colour. */
+@media (prefers-contrast: more) { .dot.split { background: linear-gradient(90deg, var(--l) 44%, transparent 44% 56%, var(--r) 56%); } }
 
 /* Weather symbols, coloured like the app's multicolour ones. */
 .sky { display: inline-flex; font-size: 20px; }

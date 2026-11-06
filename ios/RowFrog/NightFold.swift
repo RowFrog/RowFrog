@@ -2,7 +2,7 @@ import Foundation
 
 /// The 48-hour table cut into rows and nights. Rowing is only advised while the
 /// sun is up, so the dark hours of a night fold into one line. The hours the sun
-/// sets or rises in keep their rows (amber "twilight"), as does the hour the table
+/// sets or rises in keep their rows (their light changes inside them), as does the hour the table
 /// starts with, even at night; a night of one hour stays a row.
 enum NightFold {
     enum Part: Equatable {
@@ -11,7 +11,7 @@ enum NightFold {
     }
 
     /// The parts of the table, in time order.
-    static func parts(_ hours: [ForecastHour]) -> [Part] {
+    static func parts(_ hours: [ForecastHour], days: [SunDay] = []) -> [Part] {
         var parts: [Part] = []
         var run: [ForecastHour] = []
         func endRun() {
@@ -23,7 +23,7 @@ enum NightFold {
             run = []
         }
         for (index, hour) in hours.enumerated() {
-            if index > 0 && isDark(hour) {
+            if index > 0 && isDark(hour, days: days) {
                 run.append(hour)
             } else {
                 endRun()
@@ -35,8 +35,9 @@ enum NightFold {
     }
 
     /// Dark all hour: the sun is down and neither sets nor rises in it.
-    static func isDark(_ hour: ForecastHour) -> Bool {
-        hour.sunUp == false && !hour.reasons.contains { $0.condition == "twilight" }
+    static func isDark(_ hour: ForecastHour, days: [SunDay] = []) -> Bool {
+        guard hour.sunUp == false, !hour.reasons.contains(where: { $0.condition == "twilight" }) else { return false }
+        return days.isEmpty || DaylightRule.parts(from: hour.time, days: days).count == 1
     }
 
     /// One folded night: its hours and the values its line shows, each for the column it sits in.

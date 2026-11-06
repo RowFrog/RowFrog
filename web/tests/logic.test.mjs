@@ -175,22 +175,56 @@ test("the night's dark hours fold into one line with the worst of each column", 
   assert.ok(nightParts([hours[0], dusk, hours[3], hours[4]])[1].hour, "the hour the sun sets in keeps its row");
 });
 
-test("now, an hour with sunset in it is green while the sun is up and red once it is down (Forecast.current)", async () => {
+test("now takes the daylight light of this minute (Forecast.current)", async () => {
   const { nowHour } = await import("../public/app/logic.js");
   const forecast = {
     daylight: [{ sunrise: "2026-11-05T06:02:00Z", sunset: "2026-11-05T15:51:00Z" }, { sunrise: "2026-11-06T06:04:00Z", sunset: "2026-11-06T15:49:00Z" }],
-    hours: [{ time: "2026-11-05T15:00:00Z", light: "amber", reasons: [{ condition: "twilight", light: "amber" }], sunUp: true }],
+    hours: [{ time: "2026-11-05T14:00:00Z", light: "amber", reasons: [{ condition: "twilight", light: "amber" }], sunUp: true },
+      { time: "2026-11-05T15:00:00Z", light: "red", reasons: [{ condition: "daylight", light: "red" }], sunUp: true }],
   };
-  const before = nowHour(forecast, new Date("2026-11-05T15:30:00Z"));
-  assert.equal(before.light, "green");
-  assert.deepEqual(before.reasons, []);
+  const green = nowHour(forecast, new Date("2026-11-05T14:40:00Z"));
+  assert.equal(green.light, "green");
+  assert.deepEqual(green.reasons, []);
+  const soon = nowHour(forecast, new Date("2026-11-05T14:51:00Z"));
+  assert.equal(soon.light, "amber");
+  assert.equal(soon.reasons[0].condition, "sunset_soon");
   const after = nowHour(forecast, new Date("2026-11-05T15:55:00Z"));
   assert.equal(after.light, "red");
   assert.equal(after.reasons[0].condition, "daylight");
   assert.equal(after.sunUp, false);
   // Another amber reason stays amber.
   forecast.hours[0].reasons.push({ condition: "wind", light: "amber" });
-  assert.equal(nowHour(forecast, new Date("2026-11-05T15:30:00Z")).light, "amber");
-  // The hour itself, as the 48 hours show it, keeps its twilight.
-  assert.equal(forecast.hours[0].light, "amber");
+  assert.equal(nowHour(forecast, new Date("2026-11-05T14:30:00Z")).light, "amber");
+  // The hour itself, as the 48 hours show it, keeps its own light.
+  assert.equal(forecast.hours[1].light, "red");
+});
+
+test("an hour in which the daylight changes shows half and half (DaylightRule.halves)", async () => {
+  const { hourHalves, daylightHalves, daylightAt, nightParts, sunDaysOf } = await import("../public/app/logic.js");
+  const forecast = { daylight: [{ sunrise: "2026-11-06T06:04:00Z", sunset: "2026-11-06T15:49:00Z" }] };
+  const days = sunDaysOf(forecast);
+  assert.equal(daylightAt(Date.parse("2026-11-06T14:48:00Z"), days), "green");
+  assert.equal(daylightAt(Date.parse("2026-11-06T14:49:00Z"), days), "amber");
+  assert.equal(daylightAt(Date.parse("2026-11-06T15:49:00Z"), days), "red");
+  const hour = (time, light, condition) => ({ time, light, reasons: [{ condition, light }], sunUp: true });
+  assert.deepEqual(hourHalves(forecast, hour("2026-11-06T14:00:00Z", "amber", "twilight")), { start: "green", end: "amber" });
+  assert.deepEqual(hourHalves(forecast, hour("2026-11-06T15:00:00Z", "red", "daylight")), { start: "amber", end: "red" });
+  assert.deepEqual(hourHalves(forecast, hour("2026-11-06T06:00:00Z", "red", "daylight")), { start: "red", end: "green" });
+  assert.equal(hourHalves(forecast, hour("2026-11-06T14:00:00Z", "amber", "twilight"), true), null, "no halves on an old forecast");
+  // Another reason sets a floor: amber wind leaves green-to-amber one colour.
+  const windy = hour("2026-11-06T14:00:00Z", "amber", "twilight");
+  windy.reasons.push({ condition: "wind", light: "amber" });
+  assert.equal(hourHalves(forecast, windy), null);
+  // A relaxed part under 10 minutes is dropped; a stricter one always shows.
+  const late = [{ sunrise: Date.parse("2026-11-06T06:04:00Z"), sunset: Date.parse("2026-11-06T15:05:00Z") }];
+  assert.equal(daylightHalves(Date.parse("2026-11-06T14:00:00Z"), late), null, "5 green minutes before 14:05 are dropped");
+  const late6 = [{ sunrise: Date.parse("2026-11-06T06:55:00Z"), sunset: Date.parse("2026-11-06T15:49:00Z") }];
+  assert.equal(daylightHalves(Date.parse("2026-11-06T06:00:00Z"), late6), null, "5 green minutes after a 06:55 sunrise are dropped");
+  const tiny = [{ sunrise: Date.parse("2026-11-06T06:04:00Z"), sunset: Date.parse("2026-11-06T15:55:00Z") }];
+  assert.deepEqual(daylightHalves(Date.parse("2026-11-06T14:00:00Z"), tiny), { start: "green", end: "amber" }, "5 amber minutes are stricter, so they show");
+  // The sunset hour keeps its row even with the sun down at half past.
+  const dusk = { time: "2026-11-06T15:00:00Z", light: "red", reasons: [{ condition: "daylight", light: "red" }], sunUp: false };
+  const night = (t) => ({ time: t, light: "red", reasons: [{ condition: "daylight", light: "red" }], sunUp: false });
+  const parts = nightParts([night("2026-11-06T14:00:00Z"), dusk, night("2026-11-06T16:00:00Z"), night("2026-11-06T17:00:00Z")], days);
+  assert.ok(parts[1].hour, "the hour the sun sets in keeps its row");
 });

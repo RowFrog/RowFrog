@@ -813,7 +813,7 @@ private struct NowCard: View {
     /// its word on up to two lines.
     private func headlineRow(_ font: Font) -> some View {
         HStack(spacing: 10) {
-            TrafficLightDot(light: hour.light, size: 36, stale: stale)
+            TrafficLightDot(light: hour.light, size: 36, stale: stale, halves: at == nil ? nil : forecast.dotHalves(for: hour, stale: stale))
             VStack(alignment: .leading, spacing: 0) {
                 HStack(spacing: 6) {
                     Text(hour.light.title(stale: stale)).font(font).lineLimit(1).fixedSize()
@@ -838,7 +838,7 @@ private struct NowCard: View {
     private var headlineStacked: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .top, spacing: 10) {
-                TrafficLightDot(light: hour.light, size: 36, stale: stale)
+                TrafficLightDot(light: hour.light, size: 36, stale: stale, halves: at == nil ? nil : forecast.dotHalves(for: hour, stale: stale))
                 VStack(alignment: .leading, spacing: 0) {
                     // Under the weather too, the verdict keeps one line as long as it can:
                     // one size smaller first; it wraps only at the very largest text sizes.
@@ -1301,7 +1301,7 @@ struct PressureGauge: View {
 }
 
 /// Columns of the hourly table, shared by the icon header and the rows.
-private enum Column {
+enum HourColumn {
     /// Wider for "10:00 PM" than for "22:00".
     static var time: CGFloat { AppSettings.shared.activeTimeFormat.usesAMPM ? 64 : 44 }
     static let light: CGFloat = 14
@@ -1364,7 +1364,7 @@ private struct HourlyCard: View {
                         }
                 case let .hour(hour):
                     Button { openHour = hour } label: {
-                        HourRow(hour: hour, stale: stale).contentShape(Rectangle())
+                        HourRow(hour: hour, stale: stale, halves: forecast.dotHalves(for: hour, stale: stale)).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Opens this hour with all its values"))
@@ -1464,7 +1464,7 @@ private struct HourlyCard: View {
             }
             rows.append(.hour(hour))
         }
-        let parts = foldsNights ? NightFold.parts(shownHours) : shownHours.map(NightFold.Part.hour)
+        let parts = foldsNights ? NightFold.parts(shownHours, days: forecast.daylight ?? []) : shownHours.map(NightFold.Part.hour)
         for part in parts {
             switch part {
             case let .hour(hour):
@@ -1521,11 +1521,11 @@ struct HourlyStickyHeader: View {
 private struct HourlyLegendHeader: View {
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: "clock").frame(width: Column.time, alignment: .leading)
+            Image(systemName: "clock").frame(width: HourColumn.time, alignment: .leading)
                 .accessibilityLabel(tr("Time"))
-            Image(systemName: "circle.fill").font(.system(size: 8)).frame(width: Column.light)
+            Image(systemName: "circle.fill").font(.system(size: 8)).frame(width: HourColumn.light)
                 .accessibilityLabel(tr("Rowing light"))
-            Image(systemName: "cloud.sun").frame(width: Column.sky)
+            Image(systemName: "cloud.sun").frame(width: HourColumn.sky)
                 .accessibilityLabel(tr("Weather"))
             column(.temperature)
             column(.feelsLike)
@@ -1568,139 +1568,6 @@ private struct DayHeader: View {
         .symbolRenderingMode(.hierarchical)
         .labelStyle(SunLabelStyle())
         .padding(.top, 8)
-    }
-}
-
-private struct HourRow: View {
-    let hour: ForecastHour
-    var stale = false
-
-    var body: some View {
-        let dark = hour.sunUp == false
-        HStack(spacing: 6) {
-            Text(Format.time(hour.time))
-                .frame(width: Column.time, alignment: .leading)
-            TrafficLightDot(light: hour.light, size: 12, stale: stale).frame(width: Column.light)
-            SkyIcon(sky: Sky(hour: hour), night: dark)
-                .font(.callout)
-                .frame(width: Column.sky)
-            cell(Format.degrees(hour.temperatureC).replacingOccurrences(of: "°", with: ""))
-            cell(Format.degrees(hour.apparentTemperatureC).replacingOccurrences(of: "°", with: ""))
-                .foregroundStyle(.secondary)
-            cell(hour.windSpeedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(hour.windGustMs))" } ?? "–")
-            cell(Format.wavesNumber(hour.waveHeightM))
-            cell(Format.rainNumber(hour.precipitationMm))
-                .foregroundStyle((hour.precipitationMm ?? 0) >= 0.1 ? Color.blue : .primary)
-            cell(Format.distanceNumber(hour.visibilityM))
-                .foregroundStyle(hour.light(for: ["fog"]).map(\.color) ?? .primary)
-        }
-        .font(.subheadline.monospacedDigit())
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
-        .opacity(dark ? 0.6 : 1)
-        .padding(.vertical, 2)
-        // One element for VoiceOver, read as a sentence instead of ten loose numbers;
-        // it also keeps the page's accessibility tree small enough for the UI tests
-        // to read on the slower simulators (48 rows of ten values each).
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText)
-    }
-
-    private var accessibilityText: String {
-        var parts = [Format.time(hour.time), hour.light.title]
-        parts.append(Sky(hour: hour).title)
-        parts.append(Format.degrees(hour.temperatureC))
-        parts.append(tr("Feels like %@", Format.degrees(hour.apparentTemperatureC)))
-        if let wind = hour.windSpeedMs { parts.append(tr("wind %@", Format.wind(wind))) }
-        if let gust = hour.windGustMs { parts.append(tr("gusts up to %@", Format.wind(gust))) }
-        if hour.waveHeightM != nil { parts.append(tr("waves %@", Format.waves(hour.waveHeightM))) }
-        parts.append((hour.precipitationMm ?? 0) >= 0.1 ? tr("%@ rain", Format.rain(hour.precipitationMm)) : tr("dry"))
-        if hour.visibilityM != nil { parts.append(tr("visibility %@", Format.distance(hour.visibilityM))) }
-        return parts.joined(separator: ", ")
-    }
-
-    private func cell(_ text: String) -> some View {
-        Text(text).frame(maxWidth: .infinity, alignment: .trailing)
-    }
-}
-
-/// A folded night as one row of the table: its hours, a chevron and the moon in the
-/// first three columns, then under each column the night's worst: lowest temperatures,
-/// strongest wind and gust, highest waves, all its rain and its poorest visibility.
-private struct NightRow: View {
-    let night: NightFold.Night
-    let opened: Bool
-    /// The table starts in this night (after the current hour's row), or is cut off in it.
-    var startsTable = false
-    var endsTable = false
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text(range)
-                .fontWeight(.semibold)
-                .minimumScaleFactor(0.7)
-                .frame(width: Column.time, alignment: .leading)
-            Image(systemName: opened ? "chevron.up" : "chevron.down")
-                .font(.caption.weight(.bold))
-                .foregroundStyle(.tint)
-                .frame(width: Column.light)
-            Image(systemName: "moon.stars.fill")
-                .font(.callout)
-                .frame(width: Column.sky)
-            HStack(spacing: 1) {
-                if night.frost { Image(systemName: "snowflake").font(.caption2) }
-                Text(Format.degrees(night.lowestC).replacingOccurrences(of: "°", with: ""))
-            }
-            .foregroundStyle(night.frost ? Color.blue : .primary)
-            .frame(maxWidth: .infinity, alignment: .trailing)
-            cell(Format.degrees(night.lowestFeelsLikeC).replacingOccurrences(of: "°", with: ""))
-                .foregroundStyle(.secondary)
-            cell(night.strongestWindMs.map { "\(Format.windNumber($0))–\(Format.windNumber(night.strongestGustMs))" } ?? "–")
-            cell(Format.wavesNumber(night.highestWavesM))
-            cell(Format.rainNumber(night.rainMm))
-                .foregroundStyle((night.rainMm ?? 0) >= 0.1 ? Color.blue : .primary)
-            cell(Format.distanceNumber(night.poorestVisibilityM))
-                .foregroundStyle(night.fogLight.map(\.color) ?? .primary)
-        }
-        .font(.subheadline.monospacedDigit())
-        .lineLimit(1)
-        .minimumScaleFactor(0.8)
-        .padding(.vertical, 5)
-        .padding(.horizontal, 6)
-        .background(Color.indigo.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
-        .padding(.horizontal, -6)
-        .padding(.vertical, 2)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText)
-        .accessibilityValue(opened ? tr("Opened") : tr("Folded"))
-        .accessibilityHint(opened ? tr("Folds the night hours") : tr("Shows the night hours"))
-        .accessibilityAddTraits(.isButton)
-    }
-
-    /// "17–07"; "–07" when the table starts in the night, "17–" when it ends in it.
-    private var range: String {
-        let from = startsTable ? "" : hour(night.start)
-        let to = endsTable ? "" : hour(night.end)
-        return "\(from)–\(to)"
-    }
-
-    private func hour(_ date: Date) -> String {
-        AppSettings.shared.activeTimeFormat.hour(from: date)
-    }
-
-    private var accessibilityText: String {
-        var parts = [tr("Night from %@ to %@", Format.time(night.start), Format.time(night.end))]
-        parts.append(tr("lowest %@", Format.degrees(night.lowestC)))
-        if night.frost { parts.append(tr("frost")) }
-        if let gust = night.strongestGustMs { parts.append(tr("gusts up to %@", Format.wind(gust))) }
-        parts.append((night.rainMm ?? 0) >= 0.1 ? tr("%@ rain", Format.rain(night.rainMm)) : tr("dry"))
-        if night.fogLight != nil { parts.append(tr("fog, visibility down to %@", Format.distance(night.poorestVisibilityM))) }
-        return parts.joined(separator: ", ")
-    }
-
-    private func cell(_ text: String) -> some View {
-        Text(text).frame(maxWidth: .infinity, alignment: .trailing)
     }
 }
 

@@ -34,20 +34,80 @@ export function currentHour(hours, now = new Date()) {
 }
 
 /**
- * The forecast hour as it stands at `now` (Forecast.current(at:)). That hour began up to an hour
- * ago, so "sunrise or sunset within the hour" (amber "twilight") is replaced by whether the sun is
- * actually up now: green until sunset, red ("daylight") once it is down. The 48 hours and the hour
- * view keep the hour's own twilight.
+ * The forecast hour as it stands at `now` (Forecast.current(at:)). The hour's daylight light is
+ * the strictest of its minutes, so it is replaced by the light of this minute (daylightAt):
+ * green, amber in the last hour before sunset ("sunset_soon"), red ("daylight") with the sun down.
+ * The 48 hours and the hour view keep the hour's own light.
  */
 export function nowHour(forecast, now = new Date()) {
   const first = currentHour(forecast.hours, now);
-  if (!first || !(first.reasons ?? []).some((r) => r.condition === "twilight")) return first;
-  const sun = sunState(forecast, now);
-  if (!sun) return first;
-  const reasons = first.reasons.filter((r) => r.condition !== "twilight");
-  if (!sun.up) reasons.unshift({ condition: "daylight", light: "red" });
+  const days = sunDaysOf(forecast);
+  if (!first || !days.length || !(first.reasons ?? []).some((r) => DAYLIGHT_REASONS.includes(r.condition))) return first;
+  const reasons = first.reasons.filter((r) => !DAYLIGHT_REASONS.includes(r.condition));
+  const now_ = daylightAt(now.getTime(), days);
+  if (now_ === "red") reasons.unshift({ condition: "daylight", light: "red" });
+  if (now_ === "amber") reasons.unshift({ condition: "sunset_soon", light: "amber" });
   const light = reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green");
-  return { ...first, reasons, light, sunUp: sun.up };
+  return { ...first, reasons, light, sunUp: now_ !== "red" };
+}
+
+// ---- Daylight to the minute (DaylightRule.swift, owner's pick D, 6 Nov 2026) ----------
+
+/** As SUNSET_WINDOW in backend/rowfrog/forecast.py: the last hour before sunset is amber. */
+export const SUNSET_WINDOW_MS = 3600e3;
+/** A part of an hour shorter than this is left out of its dot, unless it is the strictest part. */
+export const SHORTEST_PART_MS = 600e3;
+/** The reasons the daylight gives; "sunset_soon" is the page's own, for "now" in the last hour. */
+export const DAYLIGHT_REASONS = ["daylight", "twilight", "sunset_soon"];
+
+/** The forecast's sun days as { sunrise, sunset } in milliseconds. */
+export const sunDaysOf = (forecast) => (forecast?.daylight ?? []).map((d) => ({ sunrise: Date.parse(d.sunrise), sunset: Date.parse(d.sunset) }));
+
+/** The daylight light at one moment `t` (ms): green, amber in the last hour before sunset, red with the sun down. */
+export function daylightAt(t, days) {
+  const day = days.find((d) => d.sunrise <= t && t < d.sunset);
+  if (!day) return "red";
+  return t >= day.sunset - SUNSET_WINDOW_MS ? "amber" : "green";
+}
+
+/** The hour from `start` (ms), cut where the daylight light changes: [{ light, from, to }]. */
+export function daylightParts(start, days) {
+  const end = start + 3600e3;
+  const inside = days.flatMap((d) => [d.sunrise, d.sunset - SUNSET_WINDOW_MS, d.sunset]).filter((t) => t > start && t < end);
+  const cuts = [start, ...inside].sort((a, b) => a - b);
+  const parts = [];
+  cuts.forEach((cut, i) => {
+    const to = i + 1 < cuts.length ? cuts[i + 1] : end;
+    const light = daylightAt(cut, days);
+    const last = parts[parts.length - 1];
+    if (last && last.light === light) last.to = to;
+    else parts.push({ light, from: cut, to });
+  });
+  return parts;
+}
+
+const stricter = (a, b) => (RANK[a] >= RANK[b] ? a : b);
+
+/**
+ * The lights an hour's dot starts and ends with ({ start, end }), or null when it does not change.
+ * `floor` is the hour's light from everything but the daylight: neither half is below it.
+ */
+export function daylightHalves(start, days, floor = "green") {
+  const all = daylightParts(start, days);
+  const top = all.reduce((w, p) => stricter(w, p.light), "green");
+  const kept = all.filter((p) => p.to - p.from >= SHORTEST_PART_MS || p.light === top);
+  if (!kept.length) return null;
+  const halves = { start: stricter(kept[0].light, floor), end: stricter(kept[kept.length - 1].light, floor) };
+  return halves.start === halves.end ? null : halves;
+}
+
+/** The half-and-half dot for an hour row or the hour view (ClubForecast.dotHalves); null for one colour. */
+export function hourHalves(forecast, hour, stale = false) {
+  const days = sunDaysOf(forecast);
+  const reasons = hour?.reasons ?? [];
+  if (stale || !days.length || !reasons.some((r) => DAYLIGHT_REASONS.includes(r.condition))) return null;
+  const floor = reasons.filter((r) => !DAYLIGHT_REASONS.includes(r.condition)).reduce((w, r) => stricter(w, r.light), "green");
+  return daylightHalves(Date.parse(hour.time), days, floor);
 }
 
 /** The next `count` hours from the current one. */
@@ -60,11 +120,11 @@ export function nextHours(hours, now = new Date(), count = 48) {
 /**
  * The 48 hours cut into rows and nights (NightFold in the app). Rowing is only
  * advised while the sun is up, so the dark hours of a night fold into one line.
- * The hours the sun sets or rises in keep their rows (amber "twilight"), as does
- * the first hour, even at night; a night of one hour stays a row.
- * Each part is { hour } or { night: [hours] }.
+ * The hours the sun sets or rises in keep their rows (their light changes inside them),
+ * as does the first hour, even at night; a night of one hour stays a row.
+ * Each part is { hour } or { night: [hours] }. `days` as sunDaysOf(forecast).
  */
-export function nightParts(hours) {
+export function nightParts(hours, days = []) {
   const parts = [];
   let run = [];
   const endRun = () => {
@@ -73,7 +133,9 @@ export function nightParts(hours) {
     run = [];
   };
   hours.forEach((hour, i) => {
-    if (i > 0 && hour.sunUp === false && !hour.reasons?.some((r) => r.condition === "twilight")) run.push(hour);
+    const dark = hour.sunUp === false && !hour.reasons?.some((r) => r.condition === "twilight")
+      && (!days.length || daylightParts(Date.parse(hour.time), days).length === 1);
+    if (i > 0 && dark) run.push(hour);
     else { endRun(); parts.push({ hour }); }
   });
   endRun();
@@ -349,7 +411,7 @@ export const REASONS = {
   precipitation: ["heavy_rain", "hail"],
   thunderstorm: ["thunderstorm"],
   ice: ["ice"],
-  daylight: ["daylight", "twilight"],
+  daylight: ["daylight", "twilight", "sunset_soon"],
   // River clubs: the Current tile, in the ice tile's place.
   current: ["shipping_stopped", "high_water", "current"],
   // Lakes let down for the winter (Forggensee): the Water level tile, in the ice tile's place.
