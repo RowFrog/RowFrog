@@ -990,6 +990,7 @@ window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     fitSatellite();
+    fitPlaceLines();
     // The columns, and how far the maps grow, follow the window's width and height.
     if (root.querySelector(".cards")) balanceCards();
   }, 150);
@@ -1052,15 +1053,40 @@ const inHeader = (club) => Boolean(club?.launchPoint) && store.launchPointInHead
 /** The lake and town; with the launch point in the header a button (pin and chevron) that opens it (ClubPageHeader.placeLine). */
 function placeLine(club) {
   const text = place(club?.lakeName, town(club?.address), lakeTitle);
-  if (!inHeader(club)) return `<p class="sub">${h(text)}</p>`;
-  return `<div class="place-line"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the club's location on a map, with directions"))}">${icon("map-pin")} <span>${h(text)}</span> ${icon("chevron-right")}</button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
+  // Lake and town as their own parts, so fitPlaceLines can break the line where the dot sits.
+  const [lake, townName] = text.includes(" · ") ? [text.slice(0, text.indexOf(" · ")), text.slice(text.indexOf(" · ") + 3)] : [null, text];
+  const parts = (chevron = "") => lake
+    ? `<span class="pl-lake">${h(lake)}</span><span class="pl-dot"> · </span><span class="pl-town">${h(townName)}${chevron}</span>`
+    : `<span class="pl-town">${h(townName)}${chevron}</span>`;
+  if (!inHeader(club)) return `<p class="sub place-text">${parts()}</p>`;
+  return `<div class="place-line place-text"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the club's location on a map, with directions"))}">${icon("map-pin")} <span>${parts(` ${icon("chevron-right")}`)}</span></button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
+}
+
+/**
+ * The lake and town on one line if they fit; otherwise broken where the dot sits (lake on the first line, town
+ * and chevron on the second), if each part then fits; otherwise wrapped as the words fall (ClubPageHeader.placeText,
+ * owner 5 Nov 2026). Runs after each header render and on resize.
+ */
+function fitPlaceLines() {
+  for (const line of root.querySelectorAll(".club-head .place-text")) {
+    const fits = (mode) => {
+      line.dataset.fit = mode;
+      return line.scrollWidth <= line.clientWidth + 1;
+    };
+    if (fits("one")) continue;
+    if (line.querySelector(".pl-lake") && fits("split")) continue;
+    line.dataset.fit = "wrap";
+  }
 }
 
 /** The header's lake and town line and the not-confirmed line open the launch point. */
-const wireLaunchOpen = (club) => root.querySelectorAll(".club-head .launch-open").forEach((b) => b.addEventListener("click", () => {
-  closeTip(root, "placeLine");
-  openLaunchPoint(club);
-}));
+const wireLaunchOpen = (club) => {
+  fitPlaceLines();
+  root.querySelectorAll(".club-head .launch-open").forEach((b) => b.addEventListener("click", () => {
+    closeTip(root, "placeLine");
+    openLaunchPoint(club);
+  }));
+};
 
 // "Suggest the launch point" in the Location sheet or the Launch point card (SuggestLaunchPointView); from the
 // sheet, the Location sheet opens again afterwards with the thanks, as the app's sheet comes back.
