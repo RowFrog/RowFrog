@@ -210,10 +210,10 @@ function windText(hour) {
 }
 
 /** What holds for the whole lake (or river stretch) this hour, such as a DWD storm warning or darkness (LakeWideBanner). */
-function lakeWideBanner(lakeWide, view) {
+function lakeWideBanner(lakeWide, view, oneLine = false) {
   if (lakeWide.light === "green") return "";
   const first = lakeWide.reasons[0];
-  return `<p class="lake-wide ${lakeWide.light === "red" ? "red" : "orange"}">${icon(first ? CONDITION_ICONS[reasonCondition(first.condition)] : "triangle-alert")}
+  return `<p class="lake-wide ${lakeWide.light === "red" ? "red" : "orange"}${oneLine ? " one-line" : ""}">${icon(first ? CONDITION_ICONS[reasonCondition(first.condition)] : "triangle-alert")}
     <span>${h(t(waterKind(view) === "lake" ? key("Whole lake: %@") : key("Whole stretch: %@"), lakeWide.reasons.map(reasonLabel).join(", ")))}</span></p>`;
 }
 
@@ -305,10 +305,13 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
     root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()), layer: "light", spot: null,
     routeMode: false, points: club ? [club.launchPoint] : [], undo: [], outAndBack: false, pace: 135,
     selected: null, followBoat: false, boatAt: 0, savedId: null, map: null, layers: {}, rowed: null, showTrack: true,
+    // On a phone the panel starts pushed down, as the app's (panelExpanded): the hour, one line and the hours.
+    expanded: false,
     // On rivers: the current the club page shows (its gauge, mid-river), for the route planner (LakeView.currentMs).
     currentMs: view.section ? forecasts.get(clubId)?.forecast?.river?.now?.speedMs ?? null : null,
   };
   wireLakeBoat();
+  wirePanelDrag();
   await buildMap();
   update();
 }
@@ -427,8 +430,69 @@ function update() {
   drawRoute();
   drawSpot();
   page.root.querySelector("#lake-over").innerHTML = mapControls();
-  page.root.querySelector("#lake-panel").innerHTML = page.routeMode ? planningPanel(hour) : viewingPanel(hour);
+  renderPanel(hour);
+}
+
+/** The panel alone, as after pulling it up or pushing it down. */
+function renderPanel(hour = shownHour()) {
+  page.root.querySelector("#lake-panel").innerHTML = panelGrip() + (page.routeMode ? planningPanel(hour) : viewingPanel(hour));
   wirePanel();
+}
+
+/** Beside the map on a wide screen the panel is a column and shows everything; on a phone it is pulled up or pushed down. */
+const panelWide = () => matchMedia("(min-width: 860px)").matches;
+const panelFull = () => page.expanded || panelWide();
+
+/** The grabber at the top of the phone's panel: tap it, or pull the panel up or push it down (LakeMapScreen's grabber). */
+const panelGrip = () => `<button class="panel-grip" id="panel-grip" aria-expanded="${page.expanded}" aria-label="${h(page.expanded ? t("Show less") : t("Show more"))}"></button>`;
+
+function setExpanded(on) {
+  if (!page || page.expanded === on || panelWide()) return;
+  page.expanded = on;
+  renderPanel();
+}
+
+/** Pull up for everything, push down for the map: a vertical swipe of more than 30 px on the panel, as the app's drag
+ * gesture. Pushing down only while the panel is scrolled to its top, so scrolling back up does not close it. */
+function wirePanelDrag() {
+  const panel = page.root.querySelector("#lake-panel");
+  // Once per panel, though the page may be drawn twice in a row.
+  if (panel.dataset.drag) return;
+  panel.dataset.drag = "on";
+  let start = null;
+  panel.addEventListener("click", (e) => {
+    if (e.target.closest("#panel-grip")) setExpanded(!page.expanded);
+  });
+  panel.addEventListener("touchstart", (e) => {
+    const p = e.touches[0];
+    start = e.touches.length === 1 && !e.target.closest("input[type=range], select") ? { x: p.clientX, y: p.clientY, top: panel.scrollTop } : null;
+  }, { passive: true });
+  panel.addEventListener("touchend", (e) => {
+    const p = e.changedTouches[0];
+    if (!start || !p) return;
+    const dx = p.clientX - start.x, dy = p.clientY - start.y;
+    const top = start.top;
+    start = null;
+    if (Math.abs(dy) <= 30 || Math.abs(dy) < Math.abs(dx)) return;
+    if (dy < 0 && !page.expanded) setExpanded(true);
+    else if (dy > 0 && page.expanded && top <= 0) setExpanded(false);
+  }, { passive: true });
+  panel.addEventListener("touchcancel", () => { start = null; }, { passive: true });
+  // With a mouse, the grabber can be dragged as well as clicked.
+  let drag = null;
+  panel.addEventListener("pointerdown", (e) => {
+    if (e.pointerType === "mouse" && e.target.closest("#panel-grip")) drag = e.clientY;
+  });
+  window.addEventListener("pointerup", (e) => {
+    if (drag == null || !panel.isConnected) return;
+    const dy = e.clientY - drag;
+    drag = null;
+    if (Math.abs(dy) > 30) {
+      // The click that follows would toggle it back.
+      panel.addEventListener("click", (c) => c.stopImmediatePropagation(), { capture: true, once: true });
+      setExpanded(dy < 0);
+    }
+  });
 }
 
 /** The cells smoothly scaled over the grid and clipped to the shore, drawn in the map's projection. */
@@ -617,6 +681,7 @@ function causeLine(cause) {
 function viewingPanel(hour) {
   const { view } = page;
   const stale = viewStale(view);
+  if (!panelFull()) return collapsedViewing(hour, stale);
   let details;
   if (page.spot != null && page.spot.cell < hour.lights.length) {
     const i = page.spot.cell;
@@ -648,6 +713,28 @@ function viewingPanel(hour) {
     ${mapBoatNote()}
     ${hourStrip()}
     ${moreRows()}`;
+}
+
+/** The panel pushed down: the hour, the whole-lake line, one line on the conditions or the tapped spot, and the hours (collapsedSummary). */
+function collapsedViewing(hour, stale) {
+  const { view } = page;
+  let line;
+  if (page.spot != null && page.spot.cell < hour.lights.length) {
+    const i = page.spot.cell;
+    const spotLight = hour.lakeWide.light === "red" ? "red" : hour.lights[i];
+    const w = hour.wind[view.grid.cellPoint[i]];
+    const wind = w?.speedMs != null ? ` · ${icon("wind")} ${h(windRange(w.speedMs, w.gustMs))} ${h(windUnit())}` : "";
+    line = `<p class="one-line strong">${dot(spotLight, 10, stale)} ${h(lightTitle(spotLight, stale))} · ${icon("waves")} ${h(waves(hour.wavesCm[i] / 100))}${wind}</p>
+      ${causeLine(pointCause(w))}`;
+  } else {
+    line = `<p class="one-line strong">${h(headlineText(view, hour))}</p>`;
+  }
+  return `<p class="panel-head"><strong>${h(dayTime(hour.time))}</strong>${view.sample ? `<span class="small orange strong">${icon("triangle-alert")} ${h(t("Sample wind"))}</span>` : ""}${routeButton()}</p>
+    ${stale ? `<p class="small orange strong one-line">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
+    ${lakeWideBanner(hour.lakeWide, view, true)}
+    ${kitBadge(view)}
+    ${line}
+    ${hourStrip()}`;
 }
 
 function planningPanel(hour) {
@@ -716,9 +803,7 @@ function planningPanel(hour) {
     </div>
     ${picker}
     ${tools}
-    ${routeTip(isLoop)}
-    ${summary}
-    ${moreRows()}`;
+    ${panelFull() ? `${routeTip(isLoop)}${summary}${moreRows()}` : ""}`;
 }
 
 /** The Routes menu of the route panel: save, import a row, and the lake's saved routes (LakeMapScreen's Routes menu). */
