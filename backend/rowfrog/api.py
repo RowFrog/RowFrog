@@ -82,7 +82,13 @@ _gauge_cache: dict[str, tuple[float, tuple]] = {}
 _water_cache: dict[str, tuple[float, tuple]] = {}
 # GKD pages its firewall turned away: station key -> monotonic time until which it is not asked again.
 _gkd_rejected_until: dict[str, float] = {}
-WATER_CACHE_SECONDS = 10 * 60
+# Stations (water temperature, lake level, river gauge) whose last ask failed:
+# key -> monotonic time of that ask. A failed station is not asked again by the
+# next club or lake view of the same run; the kept reading stands in.
+_failed_at: dict[str, float] = {}
+# Long enough to cover one publish run (an all-clubs run takes 15 to 22 min),
+# so each station is asked once per run, not once per club.
+WATER_CACHE_SECONDS = 30 * 60
 # A rejected GKD page is left alone this long (a publish run takes a few minutes).
 GKD_REJECTED_PAUSE = 20 * 60
 # A lake's level moves slowly; the last good levels stand in this long.
@@ -209,11 +215,19 @@ def lake_grid(lake_id: str, rings) -> lake_view.Grid:
     return lake_view.grid_for(lake_id, rings, prepared.lake_samples.get(lake_id, lake_view.MAX_SAMPLES))
 
 
+def _failed_recently(key: str) -> bool:
+    """Whether the station's last ask failed within WATER_CACHE_SECONDS, so it
+    is not asked again in this run."""
+    return time.monotonic() - _failed_at.get(key, float("-inf")) < WATER_CACHE_SECONDS
+
+
 async def _gauge_readings(client: httpx.AsyncClient, gauge: river.Gauge):
     """The gauge's level, discharge and speed of the last two days, cached for clubs sharing it."""
     cached = _gauge_cache.get(gauge.id)
     if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
         return cached[1]
+    if _failed_recently(gauge.id):
+        return None
     found = []
     for series in ("W", "Q", "VA"):
         if series not in gauge.series:
@@ -224,6 +238,7 @@ async def _gauge_readings(client: httpx.AsyncClient, gauge: river.Gauge):
         except (httpx.HTTPError, ValueError, KeyError) as e:
             logging.getLogger(__name__).warning("PEGELONLINE %s %s failed: %r", gauge.name, series, e)
             if series == "W":
+                _failed_at[gauge.id] = time.monotonic()
                 return None
             found.append([])
     _gauge_cache[gauge.id] = (time.monotonic(), tuple(found))
@@ -238,11 +253,12 @@ async def _lake_levels(client: httpx.AsyncClient, lake: lake_level.LevelLake):
     cached = _gauge_cache.get(key)
     if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
         return cached[1]
-    if _gkd_rejected_until.get(key, 0.0) <= time.monotonic():
+    if _gkd_rejected_until.get(key, 0.0) <= time.monotonic() and not _failed_recently(key):
         try:
             found = await gkd.fetch_levels(client, lake.station)
         except httpx.HTTPError as e:
             logging.getLogger(__name__).warning("GKD level %s failed: %r", lake.name, e)
+            _failed_at[key] = time.monotonic()
             if isinstance(e, gkd.Rejected):
                 _gkd_rejected_until[key] = time.monotonic() + GKD_REJECTED_PAUSE
         else:
@@ -708,7 +724,7 @@ async def _water(
         if water is not None and now - water.time <= gkd.MAX_AGE:
             return water, history
     for attempt in (1, 2):
-        if _gkd_rejected_until.get(station.key, 0.0) > time.monotonic():
+        if _gkd_rejected_until.get(station.key, 0.0) > time.monotonic() or _failed_recently(station.key):
             break
         try:
             if station.network == "pegelonline":
@@ -729,7 +745,10 @@ async def _water(
             prepared.last_water[station.key] = (water, history)
             _water_cache[station.key] = (time.monotonic(), (water, history))
             return water, history
+        _failed_at[station.key] = time.monotonic()
         break  # the station has gone quiet; an older reading would be older still
+    else:
+        _failed_at[station.key] = time.monotonic()  # both tries failed
     saved = prepared.last_water.get(station.key)
     if saved and now - saved[0].time <= gkd.MAX_AGE:
         return saved
