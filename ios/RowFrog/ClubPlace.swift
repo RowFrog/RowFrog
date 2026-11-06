@@ -10,7 +10,7 @@ import MapKit
 @MainActor
 final class ClubPlaces {
     static let shared = ClubPlaces()
-    private static let key = "RWClubPlaces"
+    private nonisolated static let key = "RWClubPlaces"
     private static let keepFor: TimeInterval = 30 * 24 * 3600
     static let maxDistance: CLLocationDistance = 300
 
