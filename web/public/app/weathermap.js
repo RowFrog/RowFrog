@@ -120,7 +120,9 @@ const cache = { index: null, at: 0, grids: new Map(), failed: new Set(), images:
 
 export async function loadIndex() {
   if (cache.index && Date.now() - cache.at < 30 * 60 * 1000) return cache.index;
-  const response = await fetch(`${API}/maps/index`, { cache: "no-store" });
+  // "no-cache": the browser keeps a copy and asks with its ETag; the gateway answers 304 for unchanged
+  // /v1 files (#400), so an unchanged file is not downloaded again (app #407 does the same).
+  const response = await fetch(`${API}/maps/index`, { cache: "no-cache" });
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   cache.index = await response.json();
   cache.at = Date.now();
@@ -134,7 +136,7 @@ async function loadGrid(index, tile, value) {
   const key = gridKey(index, tile, value);
   if (cache.grids.has(key) || cache.failed.has(key)) return cache.grids.get(key);
   try {
-    const response = await fetch(`${API}/maps/${tile}/${value}`, { cache: "no-store" });
+    const response = await fetch(`${API}/maps/${tile}/${value}`, { cache: "no-cache" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const stream = response.body.pipeThrough(new DecompressionStream("deflate-raw"));
     const bytes = new Uint8Array(await new Response(stream).arrayBuffer());
