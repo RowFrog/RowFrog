@@ -182,9 +182,12 @@ place, the app says it cannot check the warnings there instead of saying there
 are none.
 
 **Lake view and route planning.** A tile opens a map of the whole lake with
-waves, wind and the light for each part of the lake, and a spot you can tap
-for its details (when fog or a thunderstorm colours it, it says so, e.g. "Fog:
-visibility 300 m"; the website too). Stacked layer buttons at the right switch between the light,
+waves, wind and the light for each part of the lake (fog, thunderstorms,
+heavy rain and hail colour it too, as on the club page), and a spot you can
+tap: its pin stays where you tapped and it shows the light, then waves, wind
+and visibility, plus hail, thunderstorm or heavy rain while that makes it
+amber or red; a value at amber or red takes that colour. The website shows
+the spot the same way. Stacked layer buttons at the right switch between the light,
 waves and wind, a slim colour strip above the panel opens the legend, a
 button at the top puts Apple's satellite pictures under the lake, and wind arrows get denser as you zoom in.
 The arrows cover the whole map, on the satellite picture too: over land they
