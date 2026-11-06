@@ -561,7 +561,7 @@ export function lightTitle(light, stale = false) {
 
 /** A reason's short label; "(your limit)" when the user's own limit decided it. */
 export function reasonLabel(reason) {
-  const base = baseLabel(reason.condition ?? reason, reason.topic);
+  const base = baseLabel(reason.condition ?? reason, reason.topic, reason.value);
   return reason.mine ? t("%@ (your limit)", base) : base;
 }
 
@@ -574,8 +574,23 @@ const WARNING_TOPICS = {
   fog: [key("Fog warning"), key("An official fog warning is out for this place.")],
 };
 
-export function baseLabel(condition, topic = null) {
+/** "Fog nearby: 300 m", "Wind nearby: 9 m/s": the water within 1 km of the launch point (Reason.nearbyLabel, app #395). */
+function nearbyLabel(topic, value) {
+  switch (topic) {
+    case "wind": return t("Wind nearby: %@", wind(value));
+    case "gusts": return t("Gusts nearby: %@", wind(value));
+    case "waves": return t("Waves nearby: %@", waves(value));
+    case "fog": return t("Fog nearby: %@", distance(value));
+    case "heavy_rain": return t("Heavy rain nearby: %@", rain(value));
+    case "hail": return t("Hail nearby");
+    case "thunderstorm": return t("Thunderstorm risk nearby");
+    default: return t("Rougher water nearby");
+  }
+}
+
+export function baseLabel(condition, topic = null, value = null) {
   if (condition === "weather_warning" && WARNING_TOPICS[topic]) return t(WARNING_TOPICS[topic][0]);
+  if (condition === "nearby_water") return nearbyLabel(topic, value);
   return {
     lake_warning: t("DWD storm warning"), lake_strong_wind: t("DWD strong-wind warning"), single_cold: t("Single in cold water"),
     freezing_water: t("Near-freezing water"), weather_warning: t("Weather warning"), wind: t("Wind"), gusts: t("Gusts"),
@@ -625,6 +640,7 @@ export function reasonExplanation(condition, light, topic = null) {
     case "ice": return light === "red" ? t("Ice on the lake is likely (estimate).") : t("Thin ice at the shore or drift ice is possible (estimate).");
     case "daylight": return t("The sun is down. Rowing is only advised in daylight.");
     case "twilight": return t("Sunrise or sunset falls in this hour.");
+    case "nearby_water": return t("Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.");
     case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10));
     case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
     case "shipping_stopped": return t("The river is above the gauge's shipping mark: even motor ships stay in.");
