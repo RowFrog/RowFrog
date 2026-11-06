@@ -135,3 +135,53 @@ def test_failed_level_fetch_keeps_the_last_good_levels(monkeypatch):
     api._gauge_cache.clear()
     api.prepared.last_levels[lake.station] = [(datetime(2026, 10, 16, 5, 0, tzinfo=timezone.utc), 780.0)]
     assert asyncio.run(api._lake_levels(None, lake)) is None  # older than a day
+
+
+def test_a_station_that_fails_is_asked_once_per_run_and_the_kept_reading_stands_in(monkeypatch):
+    """Any failure (timeout, server error), not only GKD's firewall: the next
+    club or lake view of the same run takes the kept reading instead of asking
+    the station again."""
+    import asyncio
+
+    import httpx
+
+    from rowfrog import api
+
+    kept = gkd.WaterTemperature(datetime(2026, 10, 18, 4, 0, tzinfo=timezone.utc), 12.1)
+    asked = []
+
+    async def down(client, station_id, now):
+        asked.append(station_id)
+        raise httpx.ConnectTimeout("timed out")
+
+    async def no_sleep(_):
+        return None
+
+    monkeypatch.setattr(api.pegelonline, "fetch_recent", down)
+    monkeypatch.setattr(api.asyncio, "sleep", no_sleep)
+    api.prepared.last_water["pegelonline:abc"] = (kept, [kept])
+    now = datetime(2026, 10, 18, 6, tzinfo=timezone.utc)
+    station = api.water_stations.Station("pegelonline", "abc")
+    for _ in range(3):  # three clubs on the same station
+        assert asyncio.run(api._water(None, station, now))[0] == kept
+    assert len(asked) == 2  # the first club's two tries, nobody after it
+
+
+def test_a_failing_lake_level_is_asked_once_per_run(monkeypatch):
+    import asyncio
+
+    import httpx
+
+    from rowfrog import api, lake_level
+
+    lake = next(iter(lake_level._load().values()))
+    asked = []
+
+    async def down(client, station):
+        asked.append(station)
+        raise httpx.ReadTimeout("timed out")
+
+    monkeypatch.setattr(api.gkd, "fetch_levels", down)
+    for _ in range(3):
+        assert asyncio.run(api._lake_levels(None, lake)) is None
+    assert len(asked) == 1
