@@ -14,7 +14,7 @@ import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, stripesFall, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
-  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, shouldSplit,
+  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, shouldSplit, pointCause,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips } from "./tour.js";
@@ -606,6 +606,14 @@ const routeButton = () => `<button class="tool route-button ${page.routeMode ? "
 const moreRows = () => `<div class="more-rows"><button id="legend">${icon("list")} <span>${h(t("Legend"))}</span>${icon("chevron-right")}</button>
   <button id="about">${icon("info")} <span>${h(t(WATER_TEXTS[waterKind(page.view)].about))}</span>${icon("chevron-right")}</button></div>`;
 
+/** Fog or a thunderstorm at the spot's forecast point, in the light's colour, when it colours the spot (spotCause, app #383). */
+function causeLine(cause) {
+  if (!cause) return "";
+  const [text, condition] = cause.kind === "fog" ? [t("Fog: visibility %@", distance(cause.visM)), "visibility"]
+    : cause.kind === "thunderstorm" ? [t("Thunderstorm risk"), "thunderstorm"] : [t("Fog or thunderstorm risk"), "visibility"];
+  return `<p class="small strong spot-cause ${cause.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[condition])} ${h(text)}</p>`;
+}
+
 function viewingPanel(hour) {
   const { view } = page;
   const stale = viewStale(view);
@@ -621,7 +629,8 @@ function viewingPanel(hour) {
       ${view.zones.length > 1 && view.zones[zone] ? `<small class="sub">${h(t("Selected spot · %@", t(zoneTitle(view.zones[zone], waterKind(view)))))}</small>` : ""}
       <div class="now-metrics"><div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesCm[i] / 100))}</span></div>
         <div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
-        ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg, lang()))}</span></div>` : ""}</div></div>`;
+        ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg, lang()))}</span></div>` : ""}</div>
+      ${causeLine(pointCause(w))}</div>`;
   } else {
     const windLine = windText(hour);
     const top = maxWave(hour);
