@@ -50,7 +50,7 @@ export function tourPages(river = false) {
     {
       id: "boats", icon: "sailboat", tint: "mint", title: key("Your boats and limits"), intro: key("The rowing light is worked out for one boat. Pick it at the top of the settings."),
       points: [
-        p("check", key("Small boats are ticked at first. Tick Big boats if you row a four or an eight.")),
+        p("check", key("Small boats are picked at first. Tap Big boats if you row a four or an eight.")),
         p("list", key("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
         p("info", key("ⓘ next to a boat opens its limits.")), p("map", key("Pick the boat that colours the lake map.")),
         { icon: "thermometer-snowflake", text: key("Below %@ water a blue life-jacket badge shows; the light stays about the weather. Below %@ the advice is stricter."), args: () => [temperature(standardLimit("lifeJacket")), temperature(COLD.waterC)] },
@@ -92,7 +92,7 @@ export function tourPages(river = false) {
       points: [
         p("languages", key("English or German, as your browser's languages set it.")), p("ruler", key("Units for temperature, wind, waves, rain, distances and air pressure.")),
         p("image", key("Background pictures, including your own photos.")),
-        p("circle-help", key("You can watch this tour again in the settings.")),
+        p("circle-help", key("Settings › Help shows this tour again.")),
       ],
     },
   ].filter(Boolean);

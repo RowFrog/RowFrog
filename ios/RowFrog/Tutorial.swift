@@ -248,7 +248,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("The light and the warnings always stay on top. Arrange this page, at the end of each page, sorts or hides the other cards.")),
         ]
         case .boats: [
-            TourPoint(symbol: "checkmark", text: tr("Small boats are ticked at first. Tick Big boats if you row a four or an eight.")),
+            TourPoint(symbol: "checkmark", text: tr("Small boats are picked at first. Tap Big boats if you row a four or an eight.")),
             TourPoint(symbol: "list.bullet", text: tr("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
             TourPoint(symbol: "info.circle", text: tr("ⓘ next to a boat opens its limits.")),
             TourPoint(symbol: "map", text: tr("Pick the boat that colours the lake map.")),
@@ -284,9 +284,8 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .settings: [
             TourPoint(symbol: "globe", text: tr("English or German, as the iPhone's Settings set it for Row Frog.")),
             TourPoint(symbol: "ruler", text: tr("Units for temperature, wind, waves, rain, distances and air pressure.")),
-            TourPoint(symbol: "photo", text: tr("Background pictures, including your own photos.")),
-            TourPoint(symbol: "app.badge", text: tr("Your choice of app icon.")),
-            TourPoint(symbol: "questionmark.circle", text: tr("You can watch this tour again in the settings.")),
+            TourPoint(symbol: "photo", text: tr("Appearance: background pictures, also your own photos, and the app icon.")),
+            TourPoint(symbol: "questionmark.circle", text: tr("Settings › Help shows this tour again.")),
         ]
         }
     }
@@ -679,7 +678,7 @@ struct BackgroundsTip: Tip {
 
 struct FactoryResetTip: Tip {
     var title: Text { Text(tr("What a reset does")) }
-    var message: Text? { Text(tr("Appearance, units, language and background pictures go back to how the app came, and your own pictures are deleted. Your locations and home base stay.")) }
+    var message: Text? { Text(tr("Settings, units, boat limits and background pictures go back to how the app came, and your own pictures are deleted. Your clubs, boats and home base stay.")) }
     var image: Image? { Image(systemName: "arrow.counterclockwise") }
 }
 
