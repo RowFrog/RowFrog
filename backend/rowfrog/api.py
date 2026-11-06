@@ -148,6 +148,8 @@ def _lake_json(lake: locations.Lake, country: str | None = None) -> dict:
                 # Set by the club or checked by hand; then the maps split off the clubhouse.
                 "launchPointSet": c.launch_point_set,
                 "clubhouse": _point(c.clubhouse) if c.clubhouse else None,
+                # The club's own place in OpenStreetMap, where the map draws its name.
+                "mapPlace": {**_point(c.map_place), "name": c.map_place_name} if c.map_place else None,
                 "source": c.source,
                 "abbreviation": c.abbreviation,
                 "country": c.country,

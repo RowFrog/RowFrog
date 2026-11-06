@@ -116,16 +116,25 @@ test("whole-lake stripes cross the lake's long side (LakeView.stripesFall)", () 
   assert.equal(stripesFall([]), false);
 });
 
-test("club pins split off the clubhouse only for a set launch point 30 m or more away", async () => {
-  const { clubhouseOf, shouldSplit } = await import("../public/app/lake.js");
+test("club pins move onto the club's place on the map, oars only for a set launch point", async () => {
+  const { clubhouseOf, showsOars, shouldSplit } = await import("../public/app/lake.js");
   const launchPoint = { lat: 47.99667, lon: 11.34745 };
   const far = { lat: 47.99767, lon: 11.34745 }; // about 111 m north
   const near = { lat: 47.99677, lon: 11.34745 }; // about 11 m
+  const place = { lat: 47.99807, lon: 11.34745, name: "Ruderclub" }; // about 44 m north of `far`
+  const placeFar = { lat: 47.99907, lon: 11.34745, name: "Ruderclub" }; // about 155 m north of `far`
   assert.deepEqual(clubhouseOf({ launchPoint, launchPointSet: true, clubhouse: far }), far);
   assert.equal(clubhouseOf({ launchPoint, launchPointSet: true, clubhouse: near }), null);
-  assert.equal(clubhouseOf({ launchPoint, launchPointSet: false, clubhouse: far }), null);
   assert.equal(clubhouseOf({ launchPoint, launchPointSet: true, clubhouse: null }), null);
   assert.equal(clubhouseOf(undefined), null);
+  // The map's place wins near the checked clubhouse; a checked clubhouse far from it keeps the pin.
+  assert.deepEqual(clubhouseOf({ launchPoint, launchPointSet: true, clubhouse: far, mapPlace: place }), { lat: place.lat, lon: place.lon });
+  assert.deepEqual(clubhouseOf({ launchPoint, launchPointSet: true, clubhouse: far, mapPlace: placeFar }), far);
+  // Clubs with no launch point set move onto their place too, without oars.
+  assert.deepEqual(clubhouseOf({ launchPoint, launchPointSet: false, mapPlace: place }), { lat: place.lat, lon: place.lon });
+  assert.equal(clubhouseOf({ launchPoint, launchPointSet: false, mapPlace: { ...near, name: "x" } }), null);
+  assert.equal(showsOars({ launchPointSet: false }), false);
+  assert.equal(showsOars({ launchPointSet: true }), true);
   // Apart from 48 px, together again under 40 px.
   assert.equal(shouldSplit(47, false), false);
   assert.equal(shouldSplit(48, false), true);

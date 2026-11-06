@@ -37,6 +37,8 @@ CATALOGS = ("de-drv", "de-osm", "at-oerv", "at-osm", "ch-swissrowing", "ch-osm")
 DEFAULT_CATALOG_PATHS = tuple(CATALOG_DIR / f"{name}.json" for name in CATALOGS)
 # Launch points and clubhouses the owner checked by hand (see scripts/club_import.py).
 HAND_CHECKED_PATH = CATALOG_DIR / "hand-checked.json"
+# Each club's own place in OpenStreetMap, where the map draws its name (scripts/osm_club_places.py).
+MAP_PLACES_PATH = CATALOG_DIR / "osm-places.json"
 # Country names for the app's country list, in English and German.
 COUNTRIES = {
     "de": ("Germany", "Deutschland"),
@@ -117,6 +119,10 @@ class Club:
     # Where the clubhouse is, when known apart from the launch point; the maps
     # show it once zoomed in far enough.
     clubhouse: Point | None = None
+    # The club's own place in OpenStreetMap and the name the map shows there; the
+    # website's pin moves onto it once zoomed in (as the app does with Apple Maps).
+    map_place: Point | None = None
+    map_place_name: str | None = None
 
 
 @dataclass(frozen=True)
@@ -194,6 +200,7 @@ def load(
     catalog_paths: Sequence[Path] = DEFAULT_CATALOG_PATHS,
     sections_path: Path | None = SECTIONS_PATH,
     hand_checked_path: Path | None = HAND_CHECKED_PATH,
+    map_places_path: Path | None = MAP_PLACES_PATH,
 ) -> Locations:
     lakes: dict[str, Lake] = {}
     clubs: dict[str, Club] = {}
@@ -216,6 +223,8 @@ def load(
             del lakes[lake_id]
     if hand_checked_path is not None:
         _apply_hand_checked(clubs, hand_checked_path)
+    if map_places_path is not None:
+        _apply_map_places(clubs, map_places_path)
     if sections_path is not None:
         _apply_sections(lakes, clubs, sections_path)
     if DEPTHS_PATH.exists():
@@ -244,6 +253,18 @@ def _apply_hand_checked(clubs: dict[str, Club], path: Path) -> None:
         clubs[club_id] = dataclasses.replace(
             club, launch_point_set=True, clubhouse=Point(lat=house[0], lon=house[1]) if house else club.clubhouse
         )
+
+
+def _apply_map_places(clubs: dict[str, Club], path: Path) -> None:
+    """Adds each club's own place in OpenStreetMap (data/catalogs/osm-places.json)."""
+    if not path.exists():
+        return
+    for club_id, place in json.loads(path.read_text(encoding="utf-8")).get("places", {}).items():
+        club = clubs.get(club_id)
+        if club is not None:
+            clubs[club_id] = dataclasses.replace(
+                club, map_place=Point(lat=place["at"][0], lon=place["at"][1]), map_place_name=place.get("name")
+            )
 
 
 def _end(raw: dict | None) -> SectionEnd | None:

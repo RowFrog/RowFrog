@@ -124,3 +124,22 @@ def test_hand_checked_launch_points_are_set_and_bring_their_clubhouse(tmp_path):
     assert not locs.clubs["rc-other"].launch_point_set and locs.clubs["rc-other"].clubhouse is None
     # Clubs confirmed by the club count as set too.
     assert locs.clubs["mrc-1880"].launch_point_set
+
+
+def test_clubs_bring_their_own_place_in_openstreetmap(tmp_path):
+    catalog = {
+        "lakes": [{"id": "ammersee", "name": "Ammersee", "center": {"lat": 48.0, "lon": 11.12}}],
+        "clubs": [{"id": "rc-ammersee", "name": "RC Ammersee", "lakeId": "ammersee", "launchPoint": {"lat": 48.0, "lon": 11.1}}],
+    }
+    path = tmp_path / "de-drv.json"
+    path.write_text(json.dumps(catalog))
+    found = tmp_path / "osm-places.json"
+    found.write_text(json.dumps({"places": {
+        "rc-ammersee": {"at": [48.0006, 11.1003], "name": "Ruderclub Ammersee", "osm": "way/1"},
+        "not-a-club": {"at": [1, 2], "name": "x", "osm": "node/2"},
+    }}))
+    locs = locations.load(catalog_paths=[path], sections_path=None, hand_checked_path=None, map_places_path=found)
+    club = locs.clubs["rc-ammersee"]
+    assert club.map_place == locations.Point(lat=48.0006, lon=11.1003)
+    assert club.map_place_name == "Ruderclub Ammersee"
+    assert locs.clubs["mrc-1880"].map_place is None
