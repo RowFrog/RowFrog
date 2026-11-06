@@ -296,7 +296,7 @@ extension LakeView {
     /// the strongest other reason when it is amber or red (owner's E2 and G, 6 Nov 2026).
     /// `at`: where the water was tapped; wind and visibility are blended for that spot.
     func probe(cell i: Int, at spot: CLLocationCoordinate2D? = nil, hour: LakeHour, limits: RowingLimits) -> (values: [LakeProbeItem], extra: LakeProbeItem?) {
-        let wind = spot.map { wind(at: $0, cell: i, in: hour) } ?? cellWind(i, in: hour)
+        let wind = spot.map { self.wind(at: $0, cell: i, in: hour) } ?? cellWind(i, in: hour)
         let cold = waterC.map { $0 < RowingLimits.coldWaterC }
             ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
         let l = limits.forWater(cold ? 0 : nil)
