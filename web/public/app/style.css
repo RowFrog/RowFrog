@@ -96,6 +96,10 @@ button.wide { margin-top: 0; }
 .sky.rain { color: var(--rain); }
 .sky.ice { color: var(--ice); }
 .sky.storm { color: var(--amber); }
+/* Weather symbols in the app's two colours (SkyIcon): grey filled cloud, the rest in the symbol's colour. */
+.i.art .base { fill: var(--cloud); stroke: none; }
+.i.art .self { fill: currentColor; stroke: none; }
+.i.art .acc.grey { stroke: var(--cloud); }
 .cond { display: inline-flex; color: var(--accent); }
 .cond.temperature, .cond.feelsLike { color: var(--red); }
 
@@ -128,6 +132,8 @@ button.wide { margin-top: 0; }
 /* Big numbers follow the browser's text size, growing by at most a third; light only from 20 px (ScaledFont.valueFont). */
 .v28 { font-size: min(1.875rem, 40px); font-weight: 300; line-height: 1.1; display: inline-flex; align-items: center; gap: 4px; }
 .arrow { display: inline-flex; font-size: 18px; }
+/* The app's arrow is semibold: a heavier line than the other icons. */
+.arrow .i { stroke-width: 3; }
 .now-metrics small { font-size: 12px; }
 .now-metrics { display: flex; justify-content: space-between; gap: 8px; margin-top: 12px; }
 .now-metrics > div { display: flex; flex-direction: column; }

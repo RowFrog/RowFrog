@@ -6,7 +6,7 @@
 // boat, language and the accepted safety notice stay in this browser.
 
 import { t, num, locale, setLanguage, savedLanguage, resolve, lang } from "./i18n.js";
-import { icon } from "./icons.js";
+import { icon, filledIcon, skyArt } from "./icons.js";
 import {
   store, TILE_ORDER, conditionTexts, iceDetail, allBoats, tickedBoat, selectedBoat, isKept, boatsKeptAt, keepBoat, unkeepBoat, pickBoat, keepUnplacedBoats, setPageClub, pageClubId, clubNameOf, listJoin, boatLimits, currentLimits, boatTitle, boatInSentence,
   boatDetail, boatTag, boatControl, MAPS_APPS, limitText, forBoat, loadCatalog, findClub, forecasts, loadForecast, h, time, dayLabel, dayTime, duration,
@@ -131,7 +131,7 @@ function legendBody(part) {
   }
   const symbols = `<h3>${h(t("Weather symbols"))}</h3><ul class="legend grid">${Object.keys(SKY_TITLES).map((k) => {
     const [name, colour] = skyIcon(k);
-    return `<li><span class="sky ${colour}">${icon(name)}</span><span>${h(t(SKY_TITLES[k]))}</span></li>`;
+    return `<li><span class="sky ${colour}">${skyArt(name)}</span><span>${h(t(SKY_TITLES[k]))}</span></li>`;
   }).join("")}</ul><p class="sub">${h(t("At night the sun becomes a moon and the row is dimmed."))}</p>`;
   const explain = (list) => `<ul class="legend">${list.map(([c, title, unit, text]) => `<li>${conditionIcon(c)}<span><strong>${h(unit ? `${title} (${unit})` : title)}</strong><small>${h(text)}</small></span></li>`).join("")}</ul>`;
   const rows = conditionTexts();
@@ -417,7 +417,7 @@ new MutationObserver(() => {
 function rowSkeleton(club, isHome) {
   return `<div class="row-top">
       <div class="row-name">
-        <strong>${isHome ? icon("house") : ""}${clubNameHtml(club)}</strong>
+        <strong>${isHome ? filledIcon("house") : ""}${clubNameHtml(club)}</strong>
         <small>${h(place(club.lakeName, town(club.address), lakeTitle))}</small>
       </div>
       <div class="row-now"><span class="spinner"></span></div>
@@ -1102,7 +1102,7 @@ function placeLine(club) {
     ? `<span class="pl-lake">${h(lake)}</span><span class="pl-dot"> · </span><span class="pl-town">${h(townName)}${chevron}</span>`
     : `<span class="pl-town">${h(townName)}${chevron}</span>`;
   if (!inHeader(club)) return `<p class="sub place-text">${parts()}</p>`;
-  return `<div class="place-line place-text"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the club's location on a map, with directions"))}">${icon("map-pin")} <span>${parts(` ${icon("chevron-right")}`)}</span></button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
+  return `<div class="place-line place-text"><button class="link launch-open" aria-label="${h(text)}" title="${h(t("Shows the club's location on a map, with directions"))}">${icon("map-pinned")} <span>${parts(` ${icon("chevron-right")}`)}</span></button>${tip("placeLine").replace('class="tip"', 'class="tip pop"')}</div>`;
 }
 
 /**
@@ -1154,7 +1154,7 @@ function openLaunchPoint(club) {
 function clubHeader(club, name, isHome, forecast, stale = false, failure = null) {
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
-    ${isHome ? `<p class="home">${icon("house")} ${h(t("Home base"))}</p>` : ""}
+    ${isHome ? `<p class="home">${filledIcon("house")} ${h(t("Home base"))}</p>` : ""}
     <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right", true)}</div>
     ${placeLine(club)}
     ${club && club.launchPointVerified === false ? (inHeader(club)
@@ -1333,7 +1333,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
       ${steadier ? `<li class="tint">${icon("sailboat")}<span>${h(steadier.light === "green"
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
-      ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${icon("shield-check")} ${h(warningsIsDWD(warnings) ? t("No DWD warning") : t("No official warning"))}</span>
+      ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${filledIcon("shield-check")} ${h(warningsIsDWD(warnings) ? t("No DWD warning") : t("No official warning"))}</span>
         <span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></button></li>` : ""}
       ${!at && warnings?.status === "ok" ? laterWarningLine(warningHeadline(warnings)) : ""}
     </ul>

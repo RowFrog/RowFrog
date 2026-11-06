@@ -140,3 +140,47 @@ export const iconShape = (name) => PATHS[name] ?? "";
 export function icon(name, cls = "") {
   return `<svg class="i ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${PATHS[name] ?? ""}</svg>`;
 }
+
+// ---- Weather symbols drawn like the app's SkyIcon ------------------------------------------
+// The app shows filled SF Symbols in two colours (Sky.colors): a grey cloud and a coloured sun,
+// moon, rain, snow or lightning. Lucide has outlines only, so these are drawn here from its
+// shapes: `base` is the filled grey cloud, `self` a part filled in the symbol's own colour,
+// `acc` lines in that colour.
+const CLOUD = `M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z`;
+const HIGH_CLOUD = `<path class="base" transform="translate(1.2 -4.6) scale(.9)" d="${CLOUD}" />`;
+const SMALL_CLOUD = `<path class="base" d="M13 22H7a5 5 0 1 1 4.9-6H13a3 3 0 0 1 0 6Z" />`;
+const SUN_RAYS = `<path class="acc" d="M12 2v2" /> <path class="acc" d="m4.93 4.93 1.41 1.41" /> <path class="acc" d="M12 20v2" /> <path class="acc" d="m17.66 17.66 1.41 1.41" /> <path class="acc" d="M2 12h2" /> <path class="acc" d="M20 12h2" /> <path class="acc" d="m6.34 17.66-1.41 1.41" /> <path class="acc" d="m19.07 4.93-1.41 1.41" />`;
+const MOON = `M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z`;
+const SKY_ART = {
+  "sun": `<circle class="self" cx="12" cy="12" r="4.5" /> ${SUN_RAYS}`,
+  "moon": `<path class="self" d="${MOON}" />`,
+  "moon-star": `<path class="self" d="${MOON}" /> <path class="acc" d="M20 3v4" /> <path class="acc" d="M22 5h-4" />`,
+  "cloud-sun": `<circle class="self" cx="15.5" cy="8.5" r="4.2" /> <path class="acc" d="M15.5 2v1.4" /> <path class="acc" d="m20.1 3.9-1 1" /> <path class="acc" d="M22 8.5h-1.4" /> <path class="acc" d="m10.9 3.9 1 1" /> ${SMALL_CLOUD}`,
+  "cloud-moon": `<path class="self" d="M10.188 8.5A6 6 0 0 1 16 4a1 1 0 0 0 6 6 6 6 0 0 1-3 5.197Z" /> ${SMALL_CLOUD}`,
+  "cloud": `<path class="base" d="${CLOUD}" />`,
+  "cloud-fog": `${HIGH_CLOUD} <path class="acc grey" d="M16 17.5H7" /> <path class="acc grey" d="M17 21H9" />`,
+  "cloud-drizzle": `${HIGH_CLOUD} <path class="acc" d="M8.6 15.4 7.8 17" /> <path class="acc" d="M12.6 15.4 11.8 17" /> <path class="acc" d="M16.6 15.4 15.8 17" /> <path class="acc" d="M10.4 19.4 9.6 21" /> <path class="acc" d="M14.4 19.4 13.6 21" />`,
+  "cloud-rain": `${HIGH_CLOUD} <path class="acc" d="M9 15.4 7 20" /> <path class="acc" d="M13 15.4 11 20" /> <path class="acc" d="M17 15.4 15 20" /> <path class="acc" d="M11.6 21 11.2 22" />`,
+  "cloud-snow": `${HIGH_CLOUD} <path class="acc" d="M8 16h.01" /> <path class="acc" d="M8 20h.01" /> <path class="acc" d="M12 18h.01" /> <path class="acc" d="M12 22h.01" /> <path class="acc" d="M16 16h.01" /> <path class="acc" d="M16 20h.01" />`,
+  "cloud-hail": `${HIGH_CLOUD} <path class="acc" d="M16 15v2" /> <path class="acc" d="M8 15v2" /> <path class="acc" d="M16 20.5h.01" /> <path class="acc" d="M8 20.5h.01" /> <path class="acc" d="M12 17v2" /> <path class="acc" d="M12 22h.01" />`,
+  "cloud-lightning": `${HIGH_CLOUD} <path class="self" stroke-width="1.2" d="M12.5 13.5 9.5 18h3.2l-1.7 4.5 4.5-6h-3.2l1.7-3z" />`,
+};
+
+/** A weather symbol in the app's two colours; the span around it sets the coloured part. */
+export function skyArt(name, cls = "") {
+  return SKY_ART[name]
+    ? `<svg class="i art ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${SKY_ART[name]}</svg>`
+    : icon(name, cls);
+}
+
+/** Icons the app shows filled (house.fill) or in two tones (checkmark.shield.fill, hierarchical): the Lucide shape filled. */
+const FILLED = {
+  "house": `<path fill="currentColor" fill-rule="evenodd" d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8.6 21v-6.6a1 1 0 0 1 1-1h4.8a1 1 0 0 1 1 1V21z" />`,
+  "shield-check": `<path fill="currentColor" fill-opacity=".35" stroke="none" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path stroke-width="2.4" d="m8.6 12 2.4 2.4 4.4-4.4" />`,
+};
+
+export function filledIcon(name, cls = "") {
+  return FILLED[name]
+    ? `<svg class="i solid ${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${FILLED[name]}</svg>`
+    : icon(name, cls);
+}
