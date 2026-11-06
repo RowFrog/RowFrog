@@ -119,7 +119,9 @@ where the ticked boat is not kept, the light uses one of your boats kept there
 per group and per boat. A separate choice sets which boat the lake map is coloured for, with a warning
 when the map looks calmer than your boat. The phone works the light out
 again for the chosen boat on the club page, the lake map and the widget
-(`ios/RowFrog/Limits.swift`).
+(`ios/RowFrog/Limits.swift`). The light at the launch point also counts the water
+within 1 km of it (on rivers, 1 km up and down the stretch): when that water
+is worse for your boat, a "nearby" reason says so, e.g. "Fog nearby: 300 m". The website does the same.
 
 **Cold water.** Cold water does not change the rowing light; the light shows
 the weather. Instead a blue badge says what to bring: "Life jacket" below
@@ -187,7 +189,11 @@ heavy rain and hail colour it too, as on the club page), and a spot you can
 tap: its pin stays where you tapped and it shows the light, then waves, wind
 and visibility, plus hail, thunderstorm or heavy rain while that makes it
 amber or red; a value at amber or red takes that colour. The website shows
-the spot the same way. Stacked layer buttons at the right switch between the light,
+the spot the same way. Wind, gusts, rain and visibility for each part of the lake and
+for a tapped spot are blended from the forecast points around it (natural
+neighbour), so values change smoothly across the lake and never go beyond
+those points; hail and thunderstorms come from the nearest point. The website
+blends the same way. Stacked layer buttons at the right switch between the light,
 waves and wind, a slim colour strip above the panel opens the legend, a
 button at the top puts Apple's satellite pictures under the lake, and wind arrows get denser as you zoom in.
 The arrows cover the whole map, on the satellite picture too: over land they
@@ -535,10 +541,11 @@ https://api.rowfrog.com/v1/ (same paths as the API: `lakes/index`,
 `clubs/<id>/forecast`, `lakes/<id>/view`, and the satellite pictures).
 Every 30 minutes it refreshes the clubs people actually load (until the
 usage counter is set up, the confirmed clubs in `data/locations.json` stand
-in); every 6 hours it refreshes all clubs. A club nobody opened lately is
+in); every 6 hours, on the full hour at 04, 10, 16 and 22 UTC, it refreshes all clubs. A club nobody opened lately is
 refreshed less often and its page says so; once opened, it is back to every
 half hour from the next run. A Cloudflare Worker (`cloudflare/timer/`) starts
-the run at :00 and :30; GitHub's own half-hour timer is only a backup. DWD's local warnings for all clubs come in a couple of
+the run at :00 and :30; GitHub's own half-hour timer is only a backup, with its own queue so it
+can't cancel a waiting run. DWD's local warnings for all clubs come in a couple of
 bulk queries per run. Weather is only loaded again after
 a weather model has a new run, which keeps the job within Open-Meteo's free
 limit. When a station's water temperature fails to load, the last good reading
@@ -586,6 +593,7 @@ More detail, including the secrets each one needs, is in the
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Installs the exact package versions in `backend/requirements-publish.txt`. Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
 | **Satellite ice check** (`satellite-ice.yml`) | Tries the Copernicus ice maps and Sentinel-2 pictures for our lakes with the same secrets. Runs by hand or when its scripts change. |
 | **Model check** (`model-check.yml`) | Twice a day stores every candidate weather model's forecast for the test points in `data/model-check/points.json` on the `model-check` branch and compares them with DWD station measurements. On Mondays the report is posted on the "Model check" issue, with a section on whether one run a day would be enough. Changes to its scripts start it only on `main`. |
+| **Interpolation check** (`interpolation-check.yml`) | Compares how the lake view blends between forecast points (natural neighbour, `backend/rowfrog/interpolate.py` and `LakeInterpolation.swift`) with other methods, on made-up fields and the latest ICON-D2 run, and lists bias, errors and values outside the points' range in the run summary. Nothing is stored. By hand: every Monday (started by the recurring tasks) and after changing the blending code. |
 | **Usage counter** (`usage-worker.yml`) | Deploys the Cloudflare Worker in `cloudflare/usage/` that counts club and lake loads on `api.rowfrog.com` (no IP addresses) and keeps the jobs' call totals. Needs `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID` and `USAGE_KEY`. |
 | **Usage limits** (`budget-check.yml`) | Once a day compares the calls with Open-Meteo's and Copernicus' free limits and Cloudflare's free Worker and database limits and comments on the "Usage limits" issue at 70 % (warning) and 85 % (alert), plus a monthly summary. |
 | **Austria and Switzerland club catalogs** (`alpine-catalogs.yml`) | Rebuilds the `at-*` and `ch-*` catalogs (Swiss Rowing only when ticked by hand). By hand, or when its scripts change on `main`. |
