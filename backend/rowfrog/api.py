@@ -839,12 +839,24 @@ def _nearby(club: locations.Club, lake_weather: list | None, water_c: float | No
         grid = lake_grid(club.lake_id, rings)
     except Exception:  # a broken outline must not stop the club's forecast
         return {}
+    key = (club.lake_id, id(lake_weather), len(lake_weather), club.launch_point.lat, club.launch_point.lon, water_c,
+           now.replace(minute=0, second=0, microsecond=0), SAMPLE_LAKE_WIND)
+    if (entry := _nearby_cache.get(key)) is not None and entry[0] is lake_weather:
+        return entry[1]
     weather = [_from_now(w, now) for w in lake_weather]
     if SAMPLE_LAKE_WIND:
         weather = _sample_wind(weather)
     if len(weather) != len(grid.samples):
         return {}
-    return lake_view.nearby_water(grid, weather, club.launch_point.lat, club.launch_point.lon, water_c)
+    found = lake_view.nearby_water(grid, weather, club.launch_point.lat, club.launch_point.lon, water_c)
+    if len(_nearby_cache) > 64:
+        _nearby_cache.clear()
+    _nearby_cache[key] = (lake_weather, found)  # holding the list keeps its id from being reused
+    return found
+
+
+# Clubs sharing a launch point, and each club's forecasts with other weather models, reuse it.
+_nearby_cache: dict[tuple, tuple[list, dict]] = {}
 
 
 def _with_nearby(hour: dict, n: lake_view.Nearby | None) -> dict:
