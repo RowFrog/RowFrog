@@ -4,8 +4,9 @@ name: Publish forecasts
 # on a schedule and publishes its answers as static files on GitHub Pages, at
 # https://api.rowfrog.com/v1/ (see scripts/publish_static.py).
 # The confirmed and used clubs are rebuilt every 30 minutes (started by the
-# Cloudflare timer in cloudflare/timer/, GitHub's timer as backup), all catalog
-# clubs every 6 hours; weather is loaded only after a new model run (see the script),
+# Cloudflare timer in cloudflare/timer/, GitHub's timer as backup). Every 6
+# hours, on the full hour at 04, 10, 16 and 22 UTC, that run is the one for all
+# catalog clubs instead, which covers the used clubs too; weather is loaded only after a new model run (see the script),
 # and the last forecasts are kept between runs in the Actions cache.
 # The files live on the gh-pages branch, kept as a single commit so
 # its history does not grow. Pages must be set to "Deploy from a branch",
@@ -24,7 +25,6 @@ on:
       - .github/workflows/publish-backend.yml
   schedule:
     - cron: "*/30 * * * *"
-    - cron: "17 */6 * * *"
   workflow_dispatch:
     inputs:
       clubs:
@@ -36,8 +36,13 @@ on:
 permissions:
   contents: write
 
+# GitHub keeps one waiting run per group and cancels an older waiting one.
+# The backup timer has a group of its own, so it can never cancel a waiting
+# run of the Cloudflare timer (on 6 Nov 2026 it dropped the 14:30 update).
+# Its runs only publish while the files are over 40 minutes old, i.e. while
+# the Cloudflare timer is not running, so the two never write at once.
 concurrency:
-  group: publish-forecasts
+  group: publish-forecasts-${{ github.event_name == 'schedule' && 'backup' || 'timer' }}
   cancel-in-progress: false
 
 jobs:
@@ -108,7 +113,18 @@ jobs:
         run: |
           CLUBS="${{ inputs.clubs }}"
           if [ -z "$CLUBS" ]; then
-            if [ "${{ github.event.schedule }}" = "*/30 * * * *" ]; then CLUBS=confirmed; else CLUBS=all; fi
+            # Backup timer: the same plan as the Cloudflare timer (ALL_HOURS in
+            # cloudflare/timer/src/index.js), all clubs in the first half of
+            # 04, 10, 16 and 22 UTC.
+            ALL_HOURS=" 04 10 16 22 "
+            # A push of the publisher rebuilds all clubs, as before.
+            if [ "${{ github.event_name }}" != schedule ]; then
+              CLUBS=all
+            elif [[ "$ALL_HOURS" == *" $(date -u +%H) "* ]] && [ "$(date -u +%M)" -lt 30 ]; then
+              CLUBS=all
+            else
+              CLUBS=confirmed
+            fi
           fi
           python3 scripts/publish_static.py site/v1 --clubs "$CLUBS" --state state/publish.pickle
           touch site/.nojekyll
