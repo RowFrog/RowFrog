@@ -72,8 +72,9 @@ GitHub issue, so no GitHub account is needed.
    an official warnings status line and a daylight line. Tapping a value
    opens its chart. A value that sets the light amber or red shows its number
    in that colour, and cold water shows in blue while the life jacket badge
-   is on. "All values" under the sun line (tap, or pull down) opens Current
-   conditions inside the tile; "Fewer values" (or pull up) closes it, on every
+   is on; while daylight is the reason, the sunrise or sunset time takes the
+   light's colour. Tapping "All values" under the sun line opens Current
+   conditions inside the tile; tapping "Fewer values" closes it, on every
    club page at once. Closed, a hidden value that counts for the light
    (thunderstorm, or ice when it matters) shows as one line under the sun line.
 2. The official warnings card, only while a warning is issued (or the check
