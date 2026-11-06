@@ -247,6 +247,9 @@ struct Reason: Codable, Hashable {
     /// For "weather_warning": what the warning is about ("wind", "thunderstorm",
     /// "rain", "snow", "fog" or "other"); missing from older backends.
     var topic: String? = nil
+    /// For "nearby_water": the worst value of `topic` within 1 km of the launch
+    /// point (m/s, m of waves or visibility, mm of rain); none for storms and hail.
+    var value: Double? = nil
 
     /// Short label shown under the traffic light.
     var label: String {
@@ -299,7 +302,22 @@ struct Reason: Codable, Hashable {
         case "current": tr("Strong current")
         case "lake_lowered": tr("Lake lowered")
         case "lake_drained": tr("Lake drained")
+        case "nearby_water": nearbyLabel
         default: condition
+        }
+    }
+
+    /// "Fog nearby: 300 m", "Wind nearby: 9 m/s".
+    private var nearbyLabel: String {
+        switch topic {
+        case "wind": tr("Wind nearby: %@", Format.wind(value))
+        case "gusts": tr("Gusts nearby: %@", Format.wind(value))
+        case "waves": tr("Waves nearby: %@", Format.waves(value))
+        case "fog": tr("Fog nearby: %@", Format.distance(value))
+        case "heavy_rain": tr("Heavy rain nearby: %@", Format.rain(value))
+        case "hail": tr("Hail nearby")
+        case "thunderstorm": tr("Thunderstorm risk nearby")
+        default: tr("Rougher water nearby")
         }
     }
 
@@ -328,6 +346,7 @@ struct Reason: Codable, Hashable {
         case "ice": light == .red ? tr("Ice on the lake is likely (estimate).") : tr("Thin ice at the shore or drift ice is possible (estimate).")
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
         case "twilight": tr("Sunrise or sunset falls in this hour.")
+        case "nearby_water": tr("Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.")
         case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
         case "cool_water": tr("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", Format.temperature(15))
         case "shipping_stopped": tr("The river is above the gauge's shipping mark: even motor ships stay in.")
@@ -383,6 +402,8 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     var capeJkg: Double? = nil
     /// Set by the app: conditions above the app's usual limit but within the user's own.
     var notes: [Reason]? = nil
+    /// The worst of the water within 1 km of the launch point; only for places with a lake view.
+    var nearby: NearbyWater? = nil
 
     var id: Date { time }
 
@@ -396,7 +417,7 @@ struct ForecastHour: Codable, Identifiable, Hashable {
             apparentTemperatureC: apparentTemperatureC,
             humidityPct: humidityPct, dewPointC: dewPointC, pressureHpa: pressureHpa,
             cloudCoverLowPct: cloudCoverLowPct, cloudCoverMidPct: cloudCoverMidPct, cloudCoverHighPct: cloudCoverHighPct,
-            uvIndex: uvIndex, capeJkg: capeJkg, notes: notes
+            uvIndex: uvIndex, capeJkg: capeJkg, notes: notes, nearby: nearby
         )
     }
 
@@ -404,6 +425,22 @@ struct ForecastHour: Codable, Identifiable, Hashable {
     func light(for conditions: Set<String>) -> Light? {
         reasons.filter { conditions.contains($0.condition) }.map(\.light).max()
     }
+}
+
+/// The worst conditions on the water within 1 km of the launch point in one
+/// hour (on rivers, 1 km up and down the stretch), as the lake view blends them
+/// (owner's option C, 6 Nov 2026). The raw values let the app redo the light
+/// with a boat's own limits.
+struct NearbyWater: Codable, Hashable {
+    let light: Light
+    let windMs: Double
+    let gustMs: Double
+    let waveM: Double
+    var visM: Double? = nil
+    var rainMm: Double? = nil
+    /// The light from fog, thunderstorms, heavy rain and hail alone, and which of them sets it.
+    let other: Light
+    var otherCause: String? = nil
 }
 
 struct WaterTemperature: Codable, Hashable {

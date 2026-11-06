@@ -792,6 +792,15 @@ def main() -> int:
         dwd_radar.nowcasts({c.id: (c.launch_point.lat, c.launch_point.lon) for c in clubs if c.id in used_clubs})
     )
     print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests")
+    # The lakes of this run's clubs, and any other lake whose forecast is due. Loaded
+    # before the clubs, so a club's light can count the water near its launch point.
+    run_lakes = {c.lake_id for c in clubs}
+    lake_ids = [
+        i
+        for i in all_lakes
+        if i in run_lakes or i in used_lakes or due(state.lakes.get(i, (None,))[0], now, LAKE_OTHER_HOURS, LAKE_OTHER_OFFSET)
+    ]
+    ready_lakes = lake_weather(state, lake_ids, used_lakes, now)
     failed = []
     for club in clubs:
         if club.id not in api.prepared.weather:
@@ -817,15 +826,8 @@ def main() -> int:
         written += 1
     print(f"Wrote {written} of {len(model_pairs)} forecasts with other weather models")
 
-    # The lakes of this run's clubs, and any other lake whose forecast is due.
-    run_lakes = {c.lake_id for c in clubs}
-    lake_ids = [
-        i
-        for i in all_lakes
-        if i in run_lakes or i in used_lakes or due(state.lakes.get(i, (None,))[0], now, LAKE_OTHER_HOURS, LAKE_OTHER_OFFSET)
-    ]
     views = 0
-    for lake_id in lake_weather(state, lake_ids, used_lakes, now):
+    for lake_id in ready_lakes:
         body, problem = built(api.lake_view_forecast(lake_id))
         if problem:
             print(f"  lake view {lake_id}: {problem}")

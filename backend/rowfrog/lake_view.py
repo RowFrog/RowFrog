@@ -26,7 +26,7 @@ from typing import Sequence
 from . import interpolate
 from .forecast import _daylight, _lake_warning, _thunderstorm, _weather_warning, weather_warning_topic
 from .outlines import Rings
-from .score import HourConditions, Light, Thresholds, assess
+from .score import HAIL_CODES, HourConditions, Light, Thresholds, assess
 from .sources.dwd_warnings import Warning
 from .sources.open_meteo import ForecastHour
 from .sun import sun_days
@@ -523,3 +523,79 @@ def lake_hours(
             )
         )
     return hours
+
+
+# The Steg light also counts the water this close to the launch point (owner's option C, 6 Nov 2026).
+NEARBY_M = 1000.0
+# What a nearby cause's worst value is, by reason name.
+_NEARBY_VALUE = {"wind": "wind_ms", "gusts": "gust_ms", "waves": "wave_m", "fog": "vis_m", "heavy_rain": "rain_mm"}
+
+
+@dataclass(frozen=True)
+class Nearby:
+    """The worst conditions on the water within NEARBY_M of a launch point in one hour."""
+
+    light: Light  # with the app's own limits
+    cause: str | None  # the reason that sets `light`: wind, gusts, waves, fog, thunderstorm, hail or heavy_rain
+    value: float | None  # its worst value (m/s, m, metres of visibility, mm); None for thunderstorm and hail
+    wind_ms: float
+    gust_ms: float
+    wave_m: float
+    vis_m: float | None
+    rain_mm: float | None
+    # The light from fog, thunderstorms, heavy rain and hail alone, and which of them sets it,
+    # so the app can work the light out again with a boat's own wind and wave limits.
+    other: Light
+    other_cause: str | None
+
+
+def nearby_cells(grid: Grid, lat: float, lon: float, radius_m: float = NEARBY_M) -> list[int]:
+    """Water cells within `radius_m` of a point; on a river these lie up and down the stretch."""
+    return [i for i, (plon, plat) in enumerate(grid.points) if math.dist((0.0, 0.0), _local(plon, plat, lon, lat)) <= radius_m]
+
+
+def nearby_water(
+    grid: Grid,
+    weather: Sequence[Sequence[ForecastHour]],
+    lat: float,
+    lon: float,
+    water_temp_c: float | None = None,
+    thresholds: Thresholds = Thresholds(),
+    radius_m: float = NEARBY_M,
+) -> dict:
+    """Per forecast time, the worst of the water within `radius_m` (blended as on the lake map)."""
+    cells = nearby_cells(grid, lat, lon, radius_m)
+    if not cells or not weather or not weather[0]:
+        return {}
+    t = thresholds.for_water(water_temp_c)
+    out = {}
+    for h in range(len(weather[0])):
+        at_points = [w[h] for w in weather]
+        wind = gust = wave = 0.0
+        vis = rain = None
+        storm, hail = Light.GREEN, False
+        for i in cells:
+            w = cell_weather(grid, i, at_points)
+            speed = w.wind_speed_ms or 0.0
+            wind = max(wind, speed)
+            gust = max(gust, w.wind_gust_ms or 0.0)
+            if w.wind_from_deg is not None:
+                wave = max(wave, significant_wave_height(speed, _interpolated_fetch(grid.fetch[i], w.wind_from_deg)))
+            if w.visibility_m is not None:
+                vis = w.visibility_m if vis is None else min(vis, w.visibility_m)
+            if w.precipitation_mm is not None:
+                rain = w.precipitation_mm if rain is None else max(rain, w.precipitation_mm)
+            storm = max(storm, _thunderstorm(w))
+            hail = hail or w.weather_code in HAIL_CODES
+        code = HAIL_CODES[0] if hail else None
+        full = assess(HourConditions(wind_speed_ms=wind, wind_gust_ms=gust, wave_height_m=wave, visibility_m=vis,
+                                     thunderstorm=storm, precipitation_mm=rain, weather_code=code), t)
+        other = assess(HourConditions(wind_speed_ms=0.0, wind_gust_ms=0.0, visibility_m=vis, thunderstorm=storm,
+                                      precipitation_mm=rain, weather_code=code), t)
+        values = {"wind_ms": wind, "gust_ms": gust, "wave_m": wave, "vis_m": vis, "rain_mm": rain}
+        cause = full.reasons[0][0] if full.reasons else None
+        out[at_points[0].time] = Nearby(
+            full.light, cause, values.get(_NEARBY_VALUE.get(cause or "", ""), None),
+            wind, gust, wave, vis, rain, other.light, other.reasons[0][0] if other.reasons else None,
+        )
+    return out

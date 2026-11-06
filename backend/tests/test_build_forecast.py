@@ -35,3 +35,28 @@ def test_a_forecast_is_built_from_given_inputs_alone(monkeypatch):
     assert body["generatedAt"] == "2026-10-18T06:00:00+00:00"
     assert len(body["hours"]) == 48 and body["outlook"] is None
     assert body["waterModelC"] == 13.5 and body["waterTemperature"] is None
+
+
+def test_the_water_near_the_launch_point_sets_the_light(monkeypatch):
+    # Option C (owner, 6 Nov 2026): fog on the water within 1 km turns the launch point's hour red.
+    from dataclasses import replace
+
+    club = api._locations.clubs["mrc-1880"]
+    lake = api._locations.lakes[club.lake_id]
+    grid = api.lake_grid(club.lake_id, api.outlines.load(club.lake_id))
+    hours = [_hour(NOW + timedelta(hours=i)) for i in range(48)]
+    foggy = [[replace(h, visibility_m=300.0) for h in hours] for _ in grid.samples]
+    inputs = api.ClubInputs(
+        weather=hours, outlook=None, station=None, water=None, water_history=[], warnings_block={"active": []},
+        warnings=[], estimate=None, water_model_c=16.0, ice_estimate=None, air_days=None, gauge=None, readings=None,
+        level_lake=None, levels=None, lake_weather=foggy,
+    )
+    body = api.build_club_forecast(club, lake, inputs, None, NOW)
+    noon = next(h for h in body["hours"] if h["time"].startswith("2026-10-18T11"))
+    assert noon["light"] == "red"
+    assert noon["reasons"][0] == {"condition": "nearby_water", "light": "red", "topic": "fog", "value": 300.0}
+    assert noon["nearby"]["visM"] == 300 and noon["nearby"]["other"] == "red" and noon["nearby"]["otherCause"] == "fog"
+    # Without the lake view's forecast the hour is the launch point's alone.
+    plain = api.build_club_forecast(club, lake, replace(inputs, lake_weather=None), None, NOW)
+    noon = next(h for h in plain["hours"] if h["time"].startswith("2026-10-18T11"))
+    assert "nearby" not in noon and all(r["condition"] != "nearby_water" for r in noon["reasons"])

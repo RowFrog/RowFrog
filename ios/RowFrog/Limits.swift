@@ -342,7 +342,7 @@ enum ColdWaterKit: Equatable {
 
 extension ForecastHour {
     /// Reasons the app works out again for the user's boat and limits.
-    static let limitReasons: Set<String> = ["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water"]
+    static let limitReasons: Set<String> = ["wind", "gusts", "waves", "cold_water", "cool_water", "single_cold", "freezing_water", "nearby_water"]
 
     /// This hour with wind, gusts, waves and water checked against `limits`,
     /// and on rivers the gauge's current (`currentMs`, nil where it does not count).
@@ -378,6 +378,10 @@ extension ForecastHour {
             if water < RowingLimits.freezingWaterC {
                 reasons.append(Reason(condition: "freezing_water", light: .amber))
             }
+        }
+        // The water within 1 km counts where it is worse than the launch point, with this boat's limits.
+        if let near = nearby?.reason(with: limits), near.light > (reasons.map(\.light).max() ?? .green) {
+            reasons.insert(near, at: 0)
         }
         var hour = self
         hour.notes = notes.isEmpty ? nil : notes
@@ -420,5 +424,21 @@ struct SteadierBoat: Equatable {
             .map { SteadierBoat(boat: $0, light: hour.applying(settings.limits(for: $0), waterC: water).light) }
             .filter { $0.light < hour.light }
         return candidates.min { $0.light < $1.light }
+    }
+}
+
+extension NearbyWater {
+    /// The "nearby_water" reason with `limits`: the worst of wind, gusts, waves
+    /// and the rest, named after what sets it (wind first, as in score.py).
+    func reason(with limits: RowingLimits) -> Reason? {
+        let checks: [(String, Light, Double?)] = [
+            ("wind", limits.light(windMs, .windAmber, .windRed), windMs),
+            ("gusts", limits.light(gustMs, .gustAmber, .gustRed), gustMs),
+            ("waves", limits.light(waveM, .waveAmber, .waveRed), waveM),
+            (otherCause ?? "fog", other, otherCause == "fog" ? visM : otherCause == "heavy_rain" ? rainMm : nil),
+        ]
+        guard let worst = checks.map(\.1).max(), worst > .green,
+              let cause = checks.first(where: { $0.1 == worst }) else { return nil }
+        return Reason(condition: "nearby_water", light: worst, topic: cause.0, value: cause.2)
     }
 }
