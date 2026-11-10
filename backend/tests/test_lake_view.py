@@ -163,6 +163,40 @@ def test_cells_blend_the_wind_of_the_points_around_them():
         assert min(d, 360 - d) <= 10.0 + 1e-6
 
 
+def test_lake_hours_read_each_cell_as_cell_weather_does():
+    # The faster per-hour columns (Pi speed-up, Nov 2026) must give exactly cell_weather's values,
+    # also when a point lacks a value, two arrows cancel out, or thunderstorm clouds build.
+    import random
+
+    from rowfrog.forecast import _thunderstorm
+
+    rnd = random.Random(7)
+    grid = lake_view.build_grid(LAKE, target_cells=200)
+
+    def maybe(x):
+        return None if rnd.random() < 0.05 else x
+
+    for _ in range(30):
+        at_points = [
+            ForecastHour(
+                START, 12.0, maybe(rnd.choice([0.0, rnd.uniform(0, 14)])), maybe(rnd.uniform(0, 20)),
+                maybe(rnd.choice([0.0, 180.0, 350.0, 10.0, rnd.uniform(0, 360)])), 50.0, 10.0,
+                maybe(rnd.choice([80.0, 20_000.0, rnd.uniform(50, 30_000)])), maybe(rnd.choice([0.0, 1.5, 6.0])),
+                maybe(rnd.uniform(0, 1500)), True,
+                weather_code=rnd.choice([None, 3, 61, 96]),
+            )
+            for _ in grid.samples
+        ]
+        columns = lake_view._HourColumns(at_points)
+        for i in range(len(grid.cells)):
+            w = lake_view.cell_weather(grid, i, at_points)
+            speed, gust, direction, visibility, rain, cape, code = columns.cell(grid, i)
+            assert (speed, gust, direction, visibility, rain, code) == (
+                w.wind_speed_ms, w.wind_gust_ms, w.wind_from_deg, w.visibility_m, w.precipitation_mm, w.weather_code
+            )
+            assert lake_view._storm_light(cape, rain) == _thunderstorm(w)
+
+
 def test_nearby_water_counts_only_the_water_near_the_launch_point():
     # Option C (owner, 6 Nov 2026): the launch point's light also counts the water within 1 km.
     grid = lake_view.build_grid(LAKE, target_cells=200)

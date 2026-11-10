@@ -16,6 +16,7 @@ from datetime import date, datetime, timedelta, timezone
 
 import httpx
 from fastapi import FastAPI, HTTPException
+from fastapi.encoders import jsonable_encoder
 
 from . import ice, lake_level, lake_view, locations, outlines, river, water_estimate, warning_links, water_stations, weather_models
 from .forecast import LOCAL, RowingHour, _thunderstorm, rowing_forecast
@@ -86,9 +87,11 @@ _gkd_rejected_until: dict[str, float] = {}
 # key -> monotonic time of that ask. A failed station is not asked again by the
 # next club or lake view of the same run; the kept reading stands in.
 _failed_at: dict[str, float] = {}
-# Long enough to cover one publish run (an all-clubs run takes 15 to 22 min),
-# so each station is asked once per run, not once per club.
-WATER_CACHE_SECONDS = 30 * 60
+# Long enough to cover one publish run, so each station is asked once per run,
+# not once per club. An all-clubs run took 15 to 22 min on GitHub but about
+# 60 min on the Raspberry Pi (Nov 2026), so this is the Pi's 90 min run limit;
+# each run is a new process, so nothing carries over to the next run.
+WATER_CACHE_SECONDS = 90 * 60
 # A rejected GKD page is left alone for the rest of the run, like a failed station.
 GKD_REJECTED_PAUSE = WATER_CACHE_SECONDS
 # A lake's level moves slowly; the last good levels stand in this long.
@@ -251,7 +254,7 @@ async def _lake_levels(client: httpx.AsyncClient, lake: lake_level.LevelLake):
     their newest is younger than LEVEL_MAX_AGE."""
     key = "gkd:" + lake.station
     cached = _gauge_cache.get(key)
-    if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
+    if cached and time.monotonic() - cached[0] < WATER_CACHE_SECONDS:
         return cached[1]
     if _gkd_rejected_until.get(key, 0.0) <= time.monotonic() and not _failed_recently(key):
         try:
@@ -1032,6 +1035,11 @@ def _sample_wind(weather: list[list]) -> list[list]:
 @app.get("/lakes/{lake_id}/view")
 async def lake_view_forecast(lake_id: str) -> dict:
     """Conditions across the whole lake, hour by hour, for the app's lake view (see lake_view.py)."""
+    return build_lake_view(*await lake_view_inputs(lake_id))
+
+
+async def lake_view_inputs(lake_id: str) -> tuple:
+    """What a lake view is built from (build_lake_view's arguments): its grid, weather, warnings and water."""
     lake = _locations.lakes.get(lake_id)
     rings = outlines.load(lake_id) if lake else None
     if lake is None or rings is None:
@@ -1063,11 +1071,29 @@ async def lake_view_forecast(lake_id: str) -> dict:
             _lake_view_cache[lake_id] = (time.monotonic(), (weather, water))
         # DWD lake warnings are per lake area, so any club on the lake finds them.
         warnings = (await _warnings(client, clubs[0], now))[1] if clubs else []
+    return lake_id, grid, weather, warnings, water.celsius if water else None, now
+
+
+def lake_view_json(inputs: tuple) -> tuple[dict | None, str | None]:
+    """build_lake_view's JSON as the API would send it, or what went wrong; for a worker process."""
+    try:
+        return jsonable_encoder(build_lake_view(*inputs)), None
+    except Exception as e:  # one broken lake must not stop the others
+        return None, f"{type(e).__name__}: {e}"
+
+
+def build_lake_view(
+    lake_id: str, grid: lake_view.Grid, weather: list, warnings: list, water_c: float | None, now: datetime
+) -> dict:
+    """The lake view's JSON from what lake_view_forecast loaded, without any network,
+    so the publishing job can build several lake views at once on separate cores."""
+    lake = _locations.lakes[lake_id]
+    clubs = _locations.clubs_on(lake_id)
     weather = [_from_now(w, now) for w in weather]
     sample = bool(SAMPLE_LAKE_WIND)
     if sample:
         weather = _sample_wind(weather)
-    hours = lake_view.lake_hours(grid, weather, warnings, water.celsius if water else None)
+    hours = lake_view.lake_hours(grid, weather, warnings, water_c)
     return {
         "lakeId": lake.id,
         "name": lake.name,
@@ -1078,7 +1104,7 @@ async def lake_view_forecast(lake_id: str) -> dict:
         "attribution": ATTRIBUTION,
         # The measured water the lights used; the app lowers its own wind limits
         # with it and draws the shore blue in cold water.
-        "waterC": round(water.celsius, 1) if water else None,
+        "waterC": round(water_c, 1) if water_c is not None else None,
         "grid": {
             "south": round(grid.south, 6),
             "west": round(grid.west, 6),

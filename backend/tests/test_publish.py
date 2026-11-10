@@ -418,3 +418,63 @@ def test_a_failing_hand_on_does_not_stop_the_run(monkeypatch, capsys):
     monkeypatch.setenv("PUBLISH_CLUBS_DONE", f"{sys.executable} -c 'raise SystemExit(3)'")
     publish.clubs_written()
     assert "handed on early (exit 3)" in capsys.readouterr().out
+
+
+def test_lake_views_built_on_several_cores_match_the_api(tmp_path, monkeypatch):
+    # Pi speed-up, Nov 2026: the lake views are built in worker processes; the files must be the API's own answer.
+    import asyncio
+    import json
+    from concurrent.futures.process import BrokenProcessPool
+
+    from rowfrog import api
+
+    now = datetime(2026, 11, 10, 9, tzinfo=timezone.utc)
+    monkeypatch.setattr(api, "_now", lambda: now)
+
+    async def no_water(client, station, now):
+        return None, []
+
+    async def no_warnings(client, club, now):
+        return {"status": "ok", "lakeArea": None, "items": []}, []
+
+    monkeypatch.setattr(api, "_water", no_water)
+    monkeypatch.setattr(api, "_warnings", no_warnings)
+    lake_ids = ["starnberger-see", "ammersee", "bodensee"]
+    expected = {}
+    for k, lake_id in enumerate(lake_ids):
+        grid = api.lake_grid(lake_id, publish.outlines.load(lake_id))
+        api.prepared.lake_weather[lake_id] = [
+            [open_meteo.ForecastHour(now + timedelta(hours=h), 8.0, 2.0 + p + h % 7, 5.0 + h % 9, (40.0 * p + 25 * h + k) % 360,
+                                     50.0, 10.0, 300.0 if h == 3 else 20_000.0, 0.0, 0.0, True) for h in range(12)]
+            for p in range(len(grid.samples))
+        ]
+        expected[lake_id] = json.loads(json.dumps(publish.jsonable_encoder(asyncio.run(api.lake_view_forecast(lake_id)))))
+
+    class BrokenPool:  # a worker that dies after the first view (out of memory, say)
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def map(self, fn, items, chunksize=1):
+            yield fn(next(iter(items)))
+            raise BrokenProcessPool("a worker died")
+
+    try:
+        assert publish.lake_views(tmp_path, lake_ids + ["no-such-lake"], workers=2) == 3
+        for lake_id in lake_ids:
+            assert json.loads((tmp_path / "lakes" / lake_id / "view").read_text()) == expected[lake_id]
+        # When the worker processes fail, the views left are built one after another.
+        monkeypatch.setattr(publish, "ProcessPoolExecutor", BrokenPool)
+        broken = tmp_path / "broken"
+        assert publish.lake_views(broken, lake_ids, workers=2) == 3
+        for lake_id in lake_ids:
+            assert json.loads((broken / "lakes" / lake_id / "view").read_text()) == expected[lake_id]
+    finally:
+        for lake_id in lake_ids:
+            api.prepared.lake_weather.pop(lake_id, None)
+            api._lake_view_cache.pop(lake_id, None)
