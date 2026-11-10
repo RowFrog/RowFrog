@@ -24,7 +24,7 @@ from functools import lru_cache
 from typing import Sequence
 
 from . import interpolate
-from .forecast import _daylight, _lake_warning, _thunderstorm, _weather_warning, weather_warning_topic
+from .forecast import CAPE_AMBER_JKG, CAPE_RED_JKG, CONVECTIVE_RAIN_MM, _daylight, _lake_warning, _thunderstorm, _weather_warning, weather_warning_topic
 from .outlines import Rings
 from .score import HAIL_CODES, HourConditions, Light, Thresholds, assess
 from .sources.dwd_warnings import Warning
@@ -442,6 +442,72 @@ def cell_weather(grid: Grid, i: int, at_points: Sequence[ForecastHour]) -> Forec
     )
 
 
+def _storm_light(cape_jkg: float | None, precipitation_mm: float | None) -> Light:
+    """forecast._thunderstorm on the two values it reads, so a cell needs no ForecastHour of its own."""
+    cape = cape_jkg or 0.0
+    if cape >= CAPE_RED_JKG and (precipitation_mm or 0.0) >= CONVECTIVE_RAIN_MM:
+        return Light.RED
+    if cape >= CAPE_AMBER_JKG:
+        return Light.AMBER
+    return Light.GREEN
+
+
+class _HourColumns:
+    """One hour's forecast points as columns, read once per hour instead of
+    once per water cell. Lake views took about 4 s each on the Raspberry Pi
+    (Nov 2026), most of it in cell_weather; cell() gives the same numbers,
+    sum for sum, in about half the time (tests/test_lake_view.py compares them)."""
+
+    def __init__(self, at_points: Sequence[ForecastHour]):
+        self.points = at_points
+        self.speed = [w.wind_speed_ms for w in at_points]
+        self.gust = [w.wind_gust_ms for w in at_points]
+        self.dirs = [w.wind_from_deg for w in at_points]
+        self.vis = [w.visibility_m for w in at_points]
+        self.rain = [w.precipitation_mm for w in at_points]
+        self.speed0 = [s or 0.0 for s in self.speed]
+        self.sin = [math.sin(math.radians(d)) if d is not None else None for d in self.dirs]
+        self.cos = [math.cos(math.radians(d)) if d is not None else None for d in self.dirs]
+        self.log_vis = [math.log(max(v, 1.0)) if v is not None else None for v in self.vis]
+
+    def cell(self, grid: Grid, i: int):
+        """(speed, gust, direction, visibility, rain, cape, weather code) at water cell i, as cell_weather."""
+        weights = grid.weights[i] if i < len(grid.weights) else None
+        if not weights or len(weights) == 1:
+            w = self.points[next(iter(weights))] if weights else self.points[grid.nearest[i]]
+            return w.wind_speed_ms, w.wind_gust_ms, w.wind_from_deg, w.visibility_m, w.precipitation_mm, w.cape_jkg, w.weather_code
+        near = self.points[grid.nearest[i]]
+        items = weights.items()
+
+        def mix(values, near_value):
+            if any(values[j] is None for j in weights):
+                return near_value
+            return sum(w * values[j] for j, w in items)
+
+        if any(self.dirs[j] is None for j in weights):
+            direction = near.wind_from_deg
+        else:  # interpolate.blend_direction
+            u = sum(w * self.speed0[j] * self.sin[j] for j, w in items)
+            v = sum(w * self.speed0[j] * self.cos[j] for j, w in items)
+            if abs(u) < 1e-9 and abs(v) < 1e-9:
+                direction = self.dirs[max(weights, key=weights.get)]
+            else:
+                direction = math.degrees(math.atan2(u, v)) % 360
+        if any(self.vis[j] is None for j in weights):
+            visibility = near.visibility_m
+        else:  # interpolate.blend_visibility
+            visibility = math.exp(sum(w * self.log_vis[j] for j, w in items))
+        return (
+            mix(self.speed, near.wind_speed_ms),
+            mix(self.gust, near.wind_gust_ms),
+            direction,
+            visibility,
+            mix(self.rain, near.precipitation_mm),
+            near.cape_jkg,
+            near.weather_code,
+        )
+
+
 def lake_hours(
     grid: Grid,
     weather: Sequence[Sequence[ForecastHour]],
@@ -494,21 +560,22 @@ def lake_hours(
         zone_waves = [0.0] * n_zones
         # Cold water lowers the wind limits for the cells too.
         cell_thresholds = thresholds.for_water(water_temp_c)
+        columns = _HourColumns(at_points)
         for i, table in enumerate(grid.fetch):
-            w = cell_weather(grid, i, at_points)
-            speed = w.wind_speed_ms or 0.0
+            speed, gust, direction, visibility, rain, cape, code = columns.cell(grid, i)
+            speed = speed or 0.0
             wave = 0.0
-            if w.wind_from_deg is not None:
-                wave = significant_wave_height(speed, _interpolated_fetch(table, w.wind_from_deg))
+            if direction is not None:
+                wave = significant_wave_height(speed, _interpolated_fetch(table, direction))
             light = assess(
                 HourConditions(
                     wind_speed_ms=speed,
-                    wind_gust_ms=w.wind_gust_ms or 0.0,
+                    wind_gust_ms=gust or 0.0,
                     wave_height_m=wave,
-                    visibility_m=w.visibility_m,
-                    thunderstorm=_thunderstorm(w),
-                    precipitation_mm=w.precipitation_mm,
-                    weather_code=w.weather_code,
+                    visibility_m=visibility,
+                    thunderstorm=_storm_light(cape, rain),
+                    precipitation_mm=rain,
+                    weather_code=code,
                 ),
                 cell_thresholds,
             ).light
