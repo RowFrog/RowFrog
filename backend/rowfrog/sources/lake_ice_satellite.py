@@ -161,6 +161,60 @@ def _write_tif(content: bytes, path: str) -> None:
         f.write(content)
 
 
+def _lake_pixels_loop(data, t, ring: list[tuple[float, float]]) -> tuple[list[int], bytearray]:
+    """The pixels whose centre lies inside the outline, one by one: the values row by
+    row, and the map with 0 outside the lake. Slow on large lakes (half an hour and
+    more on the Raspberry Pi for all lakes); kept as the reference for _lake_pixels
+    and as a way back: ROWFROG_ICE_MASK=loop."""
+    rows, cols = data.shape
+    classes = bytearray(rows * cols)
+    values = []
+    for r in range(rows):
+        for c in range(cols):
+            if inside(*(t @ (c + 0.5, r + 0.5)), ring):
+                values.append(int(data[r, c]))
+                classes[r * cols + c] = data[r, c]
+    return values, classes
+
+
+def _lake_pixels(data, t, ring: list[tuple[float, float]]) -> tuple[list[int], bytearray]:
+    """The same as _lake_pixels_loop, with numpy: the same even-odd test as inside(),
+    with the same arithmetic in the same order for every pixel centre, so the
+    result is identical to the bit (tests/test_lake_ice_mask.py), only much faster."""
+    import numpy as np
+
+    rows, cols = data.shape
+    vx = np.arange(cols, dtype=np.float64)[np.newaxis, :] + 0.5
+    vy = np.arange(rows, dtype=np.float64)[:, np.newaxis] + 0.5
+    sa, sb, sc, sd, se, sf = t[:6]
+    # As Affine.__matmul__ does it: x = vx * sa + vy * sb + sc, y = vx * sd + vy * se + sf.
+    x = np.broadcast_to(vx * sa + vy * sb + sc, (rows, cols))
+    y = np.broadcast_to(vx * sd + vy * se + sf, (rows, cols))
+    hit = np.zeros((rows, cols), dtype=bool)
+    j = len(ring) - 1
+    for i, (xi, yi) in enumerate(ring):
+        xj, yj = ring[j]
+        j = i
+        crosses = (yi > y) != (yj > y)
+        if not crosses.any():
+            continue
+        ys, xs = y[crosses], x[crosses]
+        # Only where the edge crosses the row, so yj - yi is never 0 here.
+        hit[crosses] ^= xs < (xj - xi) * (ys - yi) / (yj - yi) + xi
+    inner = data[hit]
+    values = [int(v) for v in inner]
+    classes = bytearray(rows * cols)
+    flat = hit.ravel()
+    if flat.any():
+        # bytearray refuses values outside 0..255 with ValueError, like the loop.
+        if inner.min() < 0 or inner.max() > 255:
+            raise ValueError("byte must be in range(0, 256)")
+        classes_np = np.zeros(rows * cols, dtype=np.uint8)
+        classes_np[flat] = inner.astype(np.uint8)
+        classes = bytearray(classes_np.tobytes())
+    return values, classes
+
+
 def _read(path: str, day: date, shores: dict[str, list[tuple[float, float]]]) -> dict[str, SatellitePass]:
     import rasterio
     from rasterio.windows import from_bounds
@@ -173,13 +227,10 @@ def _read(path: str, day: date, shores: dict[str, list[tuple[float, float]]]) ->
             data = ds.read(1, window=window, boundless=True, fill_value=0)
             t = ds.window_transform(window)
             rows, cols = data.shape
-            classes = bytearray(rows * cols)
-            values = []
-            for r in range(rows):
-                for c in range(cols):
-                    if inside(*(t @ (c + 0.5, r + 0.5)), ring):
-                        values.append(int(data[r, c]))
-                        classes[r * cols + c] = data[r, c]
+            if os.environ.get("ROWFROG_ICE_MASK") == "loop":
+                values, classes = _lake_pixels_loop(data, t, ring)
+            else:
+                values, classes = _lake_pixels(data, t, ring)
             p = count(values, day)
             if p.pixels >= MIN_PIXELS:
                 west, north = t @ (0, 0)
