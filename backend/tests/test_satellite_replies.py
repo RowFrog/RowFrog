@@ -114,6 +114,23 @@ def test_ice_passes_from_the_catalogue_downloads(web):
     assert [r.headers["authorization"] for r in downloads] == ["Bearer tok", "Bearer tok"]
 
 
+def test_ice_download_token_comes_from_the_login_when_set(web, monkeypatch):
+    """The download server refuses Sentinel Hub client tokens (Nov 2026); the account's login works."""
+    monkeypatch.setenv("CDSE_USERNAME", "rower@example.org")
+    monkeypatch.setenv("CDSE_PASSWORD", "p&ss word")
+    catalogue = {"value": [{"Id": "p1", "Name": "c_gls_LIE250_202601180000_CEURO_VIIRS_V1.0.0_cog", "ContentDate": {"Start": "2026-01-18T00:00:00.000Z"}}]}
+    fake = web({
+        **TOKEN,
+        ice.CATALOGUE: httpx.Response(200, json=catalogue),
+        "https://download.dataspace.copernicus.eu/odata/v1/Products(p1)": httpx.Response(200, content=tif(ice_map(10), 11.0, 48.1, 0.1 / 48)),
+    })
+    assert set(ice.fetch({"lake": LAKE}, TODAY)) == {"lake"}
+    sign_in = [r for r in fake.requests if "identity" in r.url.host]
+    assert len(sign_in) == 1
+    form = dict(httpx.QueryParams(sign_in[0].content.decode()))
+    assert form == {"grant_type": "password", "client_id": "cdse-public", "username": "rower@example.org", "password": "p&ss word"}
+
+
 def test_ice_is_quietly_missing_when_copernicus_fails(web, caplog):
     web({**TOKEN, ice.CATALOGUE: httpx.Response(503)})
     assert ice.fetch({"lake": LAKE}, TODAY) == {}

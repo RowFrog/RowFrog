@@ -321,7 +321,7 @@ Test coverage: each run's summary page (the run's "Summary" on GitHub) shows how
 
 `CLOUDFLARE_API_TOKEN` (also needs "Cloudflare Pages: Edit" for the website), `CLOUDFLARE_ACCOUNT_ID`, `USAGE_KEY` (usage counter),
 `SITE_USER`, `SITE_PASSWORD` (the website's password while it is in testing; change them and re-run the Website workflow to change the password),
-`CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET` (Copernicus satellite pictures, ice map and lake water temperature).
+`CDSE_CLIENT_ID`, `CDSE_CLIENT_SECRET` (Copernicus satellite pictures, ice map and lake water temperature), `CDSE_USERNAME`, `CDSE_PASSWORD` (the Copernicus account login; since Nov 2026 the ice map download needs it, the client key alone gets 401).
 `SUGGESTIONS_GITHUB_TOKEN` (fine-grained token with Issues read and write on this repo, for the place-suggestions Worker).
 `PUBLISH_TIMER_TOKEN` (fine-grained token with Actions read and write on this repo, for the forecast timer Worker).
 Landsat water temperatures come from Microsoft's Planetary Computer and need no secret.

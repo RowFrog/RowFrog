@@ -6,6 +6,9 @@ a lake is (1) snow-covered ice, (2) clear or partly snow-covered ice or
 (3) open water; under clouds it has no value. The files are in the Copernicus
 Data Space Ecosystem (CDSE) catalogue and are downloaded with the project's
 free CDSE account (CDSE_CLIENT_ID / CDSE_CLIENT_SECRET); app users need none.
+Since November 2026 the download server refuses tokens of that Sentinel Hub
+client (401), so with CDSE_USERNAME / CDSE_PASSWORD set (the account's own
+login) the download token comes from that login instead.
 
 The backend reads the last few days for every lake with an outline and keeps,
 per lake and day, how much of the lake was seen and how much of that was ice.
@@ -124,15 +127,17 @@ def configured() -> bool:
 
 
 def _token(client: httpx.Client) -> str:
-    resp = client.post(
-        TOKEN_URL,
-        data={
+    """A token for the download server: from the account's login when it is set, else from the Sentinel Hub client."""
+    user, password = os.environ.get("CDSE_USERNAME"), os.environ.get("CDSE_PASSWORD")
+    if user and password:
+        data = {"grant_type": "password", "client_id": "cdse-public", "username": user, "password": password}
+    else:
+        data = {
             "grant_type": "client_credentials",
             "client_id": os.environ["CDSE_CLIENT_ID"],
             "client_secret": os.environ["CDSE_CLIENT_SECRET"],
-        },
-        timeout=30,
-    )
+        }
+    resp = client.post(TOKEN_URL, data=data, timeout=30)
     resp.raise_for_status()
     return resp.json()["access_token"]
 
