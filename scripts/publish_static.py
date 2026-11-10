@@ -46,8 +46,11 @@ import argparse
 import asyncio
 import json
 import math
+import os
 import pickle
+import shlex
 import shutil
+import subprocess
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -826,6 +829,21 @@ def built(forecast) -> tuple[dict | None, str | None]:
         return None, f"{type(e).__name__}: {e}"
 
 
+def clubs_written() -> None:
+    """Runs PUBLISH_CLUBS_DONE (a command, if set) once the club forecasts are written,
+    so they can go online before the slow lake views (the Raspberry Pi uploads them
+    there; pi/run-publish.sh). Its failure is only logged; the run goes on."""
+    command = os.environ.get("PUBLISH_CLUBS_DONE")
+    if not command:
+        return
+    sys.stdout.flush()
+    try:
+        result = subprocess.run(shlex.split(command), timeout=600)
+        print(f"Club forecasts handed on early (exit {result.returncode})", flush=True)
+    except (OSError, ValueError, subprocess.SubprocessError) as e:
+        print(f"Club forecasts not handed on early: {e!r}", flush=True)
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("out", type=Path)
@@ -892,6 +910,7 @@ def main() -> int:
         write(args.out / "clubs" / club.id / "models" / model / "forecast", body)
         written += 1
     print(f"Wrote {written} of {len(model_pairs)} forecasts with other weather models")
+    clubs_written()
 
     views = 0
     for lake_id in ready_lakes:

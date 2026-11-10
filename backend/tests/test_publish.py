@@ -1,6 +1,7 @@
 """The publishing job's schedule and satellite picture choices (scripts/publish_static.py)."""
 
 import importlib.util
+import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -394,3 +395,26 @@ def test_a_file_that_only_differs_in_build_time_is_left_as_published(tmp_path):
     publish.write(other, [1, 2])
     publish.write(other, [1, 2, 3])
     assert other.read_text() == "[1,2,3]"
+
+
+def test_nothing_is_handed_on_without_the_setting(monkeypatch, capsys):
+    monkeypatch.delenv("PUBLISH_CLUBS_DONE", raising=False)
+    publish.clubs_written()
+    assert capsys.readouterr().out == ""
+
+
+def test_the_club_forecasts_are_handed_on_once_written(monkeypatch, tmp_path, capsys):
+    marker = tmp_path / "done"
+    monkeypatch.setenv("PUBLISH_CLUBS_DONE", f"{sys.executable} -c 'open(\"{marker}\", \"w\").write(\"x\")'")
+    publish.clubs_written()
+    assert marker.read_text() == "x"
+    assert "handed on early (exit 0)" in capsys.readouterr().out
+
+
+def test_a_failing_hand_on_does_not_stop_the_run(monkeypatch, capsys):
+    monkeypatch.setenv("PUBLISH_CLUBS_DONE", "/nonexistent/rclone copy a b")
+    publish.clubs_written()
+    assert "not handed on early" in capsys.readouterr().out
+    monkeypatch.setenv("PUBLISH_CLUBS_DONE", f"{sys.executable} -c 'raise SystemExit(3)'")
+    publish.clubs_written()
+    assert "handed on early (exit 3)" in capsys.readouterr().out
