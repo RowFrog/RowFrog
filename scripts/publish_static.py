@@ -46,9 +46,12 @@ import argparse
 import asyncio
 import json
 import math
+import multiprocessing
+import os
 import pickle
 import shutil
 import sys
+from concurrent.futures import ProcessPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -814,6 +817,44 @@ def weather_maps(state: State, out: Path, clubs: list[locations.Club], now: date
         print("Weather maps: no newer ICON-D2 run")
 
 
+def lake_view_workers() -> int:
+    """Processes for the lake views: they are pure calculation (about 4 s each on
+    the Raspberry Pi 4, Nov 2026), so they run on all cores. LAKE_VIEW_WORKERS=1
+    builds them one after another in this process, as before."""
+    try:
+        return max(1, int(os.environ["LAKE_VIEW_WORKERS"]))
+    except (KeyError, ValueError):
+        return min(4, os.cpu_count() or 1)
+
+
+def lake_views(out: Path, lake_ids: list[str], workers: int | None = None) -> int:
+    """Writes the lake views and returns how many. Their weather, water and warnings
+    are loaded here first (network, shared caches); the building runs in `workers` processes."""
+    inputs = []
+    for lake_id in lake_ids:
+        try:
+            inputs.append(asyncio.run(api.lake_view_inputs(lake_id)))
+        except HTTPException as e:
+            print(f"  lake view {lake_id}: HTTP {e.status_code} {str(e.detail)[:120]}")
+        except Exception as e:
+            print(f"  lake view {lake_id}: {type(e).__name__}: {e}")
+    workers = workers or lake_view_workers()
+    if workers > 1 and len(inputs) > 1:
+        # "spawn": fresh processes that import rowfrog themselves, not copies of this one.
+        with ProcessPoolExecutor(workers, mp_context=multiprocessing.get_context("spawn")) as pool:
+            results = list(pool.map(api.lake_view_json, inputs, chunksize=4))
+    else:
+        results = [api.lake_view_json(i) for i in inputs]
+    views = 0
+    for (lake_id, *_), (body, problem) in zip(inputs, results):
+        if problem:
+            print(f"  lake view {lake_id}: {problem}")
+            continue
+        write(out / "lakes" / lake_id / "view", body)
+        views += 1
+    return views
+
+
 def built(forecast) -> tuple[dict | None, str | None]:
     """Runs one of the API's forecast functions directly (no web server or test
     client) and gives its JSON as the API would send it, or what went wrong.
@@ -893,14 +934,7 @@ def main() -> int:
         written += 1
     print(f"Wrote {written} of {len(model_pairs)} forecasts with other weather models")
 
-    views = 0
-    for lake_id in ready_lakes:
-        body, problem = built(api.lake_view_forecast(lake_id))
-        if problem:
-            print(f"  lake view {lake_id}: {problem}")
-            continue
-        write(args.out / "lakes" / lake_id / "view", body)
-        views += 1
+    views = lake_views(args.out, ready_lakes)
     print(f"Wrote {views} of {len(lake_ids)} lake views")
     state.save()
 
