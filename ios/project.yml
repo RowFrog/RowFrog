@@ -163,6 +163,10 @@ targets:
     type: bundle.unit-test
     platform: iOS
     sources: [RowFrogTests]
+    settings:
+      base:
+        # Xcode 27 no longer signs a test bundle without an Info.plist.
+        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: RowFrog
   # Starts the app in the Simulator and taps it, so a view that swallows taps
@@ -171,6 +175,10 @@ targets:
     type: bundle.ui-testing
     platform: iOS
     sources: [RowFrogUITests]
+    settings:
+      base:
+        # Xcode 27 no longer signs a test bundle without an Info.plist.
+        GENERATE_INFOPLIST_FILE: YES
     dependencies:
       - target: RowFrog
 schemes:
