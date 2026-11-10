@@ -86,9 +86,11 @@ _gkd_rejected_until: dict[str, float] = {}
 # key -> monotonic time of that ask. A failed station is not asked again by the
 # next club or lake view of the same run; the kept reading stands in.
 _failed_at: dict[str, float] = {}
-# Long enough to cover one publish run (an all-clubs run takes 15 to 22 min),
-# so each station is asked once per run, not once per club.
-WATER_CACHE_SECONDS = 30 * 60
+# Long enough to cover one publish run, so each station is asked once per run,
+# not once per club. An all-clubs run took 15 to 22 min on GitHub but about
+# 60 min on the Raspberry Pi (Nov 2026), so this is the Pi's 90 min run limit;
+# each run is a new process, so nothing carries over to the next run.
+WATER_CACHE_SECONDS = 90 * 60
 # A rejected GKD page is left alone for the rest of the run, like a failed station.
 GKD_REJECTED_PAUSE = WATER_CACHE_SECONDS
 # A lake's level moves slowly; the last good levels stand in this long.
@@ -251,7 +253,7 @@ async def _lake_levels(client: httpx.AsyncClient, lake: lake_level.LevelLake):
     their newest is younger than LEVEL_MAX_AGE."""
     key = "gkd:" + lake.station
     cached = _gauge_cache.get(key)
-    if cached and time.monotonic() - cached[0] < CACHE_SECONDS:
+    if cached and time.monotonic() - cached[0] < WATER_CACHE_SECONDS:
         return cached[1]
     if _gkd_rejected_until.get(key, 0.0) <= time.monotonic() and not _failed_recently(key):
         try:
