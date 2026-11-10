@@ -400,6 +400,7 @@ def test_lake_views_built_on_several_cores_match_the_api(tmp_path, monkeypatch):
     # Pi speed-up, Nov 2026: the lake views are built in worker processes; the files must be the API's own answer.
     import asyncio
     import json
+    from concurrent.futures.process import BrokenProcessPool
 
     from rowfrog import api
 
@@ -424,11 +425,32 @@ def test_lake_views_built_on_several_cores_match_the_api(tmp_path, monkeypatch):
             for p in range(len(grid.samples))
         ]
         expected[lake_id] = json.loads(json.dumps(publish.jsonable_encoder(asyncio.run(api.lake_view_forecast(lake_id)))))
+
+    class BrokenPool:  # a worker that dies after the first view (out of memory, say)
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+        def map(self, fn, items, chunksize=1):
+            yield fn(next(iter(items)))
+            raise BrokenProcessPool("a worker died")
+
     try:
         assert publish.lake_views(tmp_path, lake_ids + ["no-such-lake"], workers=2) == 3
+        for lake_id in lake_ids:
+            assert json.loads((tmp_path / "lakes" / lake_id / "view").read_text()) == expected[lake_id]
+        # When the worker processes fail, the views left are built one after another.
+        monkeypatch.setattr(publish, "ProcessPoolExecutor", BrokenPool)
+        broken = tmp_path / "broken"
+        assert publish.lake_views(broken, lake_ids, workers=2) == 3
+        for lake_id in lake_ids:
+            assert json.loads((broken / "lakes" / lake_id / "view").read_text()) == expected[lake_id]
     finally:
         for lake_id in lake_ids:
             api.prepared.lake_weather.pop(lake_id, None)
             api._lake_view_cache.pop(lake_id, None)
-    for lake_id in lake_ids:
-        assert json.loads((tmp_path / "lakes" / lake_id / "view").read_text()) == expected[lake_id]

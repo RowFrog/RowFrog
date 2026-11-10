@@ -839,19 +839,27 @@ def lake_views(out: Path, lake_ids: list[str], workers: int | None = None) -> in
         except Exception as e:
             print(f"  lake view {lake_id}: {type(e).__name__}: {e}")
     workers = workers or lake_view_workers()
-    if workers > 1 and len(inputs) > 1:
-        # "spawn": fresh processes that import rowfrog themselves, not copies of this one.
-        with ProcessPoolExecutor(workers, mp_context=multiprocessing.get_context("spawn")) as pool:
-            results = list(pool.map(api.lake_view_json, inputs, chunksize=4))
-    else:
-        results = [api.lake_view_json(i) for i in inputs]
-    views = 0
-    for (lake_id, *_), (body, problem) in zip(inputs, results):
+    views = done = 0
+
+    def keep(lake_id: str, body: dict | None, problem: str | None) -> None:
+        nonlocal views, done
+        done += 1
         if problem:
             print(f"  lake view {lake_id}: {problem}")
-            continue
-        write(out / "lakes" / lake_id / "view", body)
+            return
+        write(out / "lakes" / lake_id / "view", body)  # one at a time: a view is about 3 MB in memory
         views += 1
+
+    if workers > 1 and len(inputs) > 1:
+        try:
+            # "spawn": fresh processes that import rowfrog themselves, not copies of this one.
+            with ProcessPoolExecutor(workers, mp_context=multiprocessing.get_context("spawn")) as pool:
+                for (lake_id, *_), (body, problem) in zip(inputs, pool.map(api.lake_view_json, inputs, chunksize=4)):
+                    keep(lake_id, body, problem)
+        except Exception as e:  # a worker died (memory?) or could not start: the rest one after another
+            print(f"  lake views on {workers} cores stopped after {done} of {len(inputs)}: {type(e).__name__}: {e}")
+    for lake_id, *rest in inputs[done:]:
+        keep(lake_id, *api.lake_view_json((lake_id, *rest)))
     return views
 
 
