@@ -206,3 +206,21 @@ test("the header's forecast time is the model run's arrival, and the update cycl
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("fog within 1 km shows on the top tile and in the Why line (app #409)", async () => {
+  const { page, errors, context } = await open(visitor());
+  const near = { light: "red", windMs: 1, gustMs: 2, waveM: 0, visM: 300, rainMm: 0, other: "red", otherCause: "fog" };
+  const hours = forecast.hours.map((x, i) => i < 48 ? { ...x, nearby: near, light: "red",
+    reasons: [{ condition: "nearby_water", light: "red", topic: "fog", value: 300 }, ...(x.reasons ?? [])] } : x);
+  await context.route((url) => url.pathname.endsWith("/v1/clubs/mrc-1880/forecast"),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ...forecast, hours }) }));
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  const tile = page.locator('.card.now .now-grid [data-top="visibility"]');
+  await page.waitForFunction(() => document.querySelector('.card.now .now-grid [data-top="visibility"]')?.innerText.includes("Nearby"), null, { timeout: 20000 });
+  assert.match(await tile.innerText(), /0\.3 km/);
+  assert.ok(await tile.locator(".cause-red").count(), "the value takes the light's colour");
+  assert.match(await page.locator(".card.now ul.reasons").innerText(), /Fog within 1 km of the launch point: visibility 0\.3 km\./);
+  if (process.env.RF_SHOT_NEAR) await page.locator(".card.now").screenshot({ path: process.env.RF_SHOT_NEAR });
+  assert.deepEqual(errors, []);
+  await context.close();
+});

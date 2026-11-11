@@ -228,3 +228,24 @@ test("an hour in which the daylight changes shows half and half (DaylightRule.ha
   const parts = nightParts([night("2026-11-06T14:00:00Z"), dusk, night("2026-11-06T16:00:00Z"), night("2026-11-06T17:00:00Z")], days);
   assert.ok(parts[1].hour, "the hour the sun sets in keeps its row");
 });
+
+test("the top tile shows the worst nearby value that sets the light (app #409)", async () => {
+  const { nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM, reasonCondition } = await import("../public/app/logic.js");
+  // Owner, 6 Nov 2026: no 15 km visibility at the launch point when there is fog 300 m out.
+  const foggy = {
+    windSpeedMs: 2, windGustMs: 3, waveHeightM: 0.05, visibilityM: 15000,
+    nearby: { light: "red", windMs: 1, gustMs: 2, waveM: 0, visM: 300, other: "red", otherCause: "fog" },
+    reasons: [{ condition: "nearby_water", light: "red", topic: "fog", value: 300 }],
+  };
+  assert.equal(nearbyCondition(foggy), "visibility");
+  assert.equal(shownVisibilityM(foggy), 300);
+  assert.deepEqual(shownWind(foggy), { speed: 2, gust: 3 }, "wind does not set the light, so it stays the launch point's");
+  assert.equal(shownWaveHeightM(foggy), 0.05);
+  assert.equal(reasonCondition("nearby_water", "fog"), "visibility", "the reason takes the icon of its cause");
+  const windy = { ...foggy, nearby: { ...foggy.nearby, windMs: 9, gustMs: 12 }, reasons: [{ condition: "nearby_water", light: "red", topic: "gusts", value: 12 }] };
+  assert.deepEqual(shownWind(windy), { speed: 9, gust: 12 });
+  assert.equal(shownVisibilityM(windy), 15000);
+  const plain = { ...foggy, reasons: [] };
+  assert.equal(nearbyCondition(plain), null, "without the nearby reason the tile shows the launch point's own values");
+  assert.equal(shownVisibilityM(plain), 15000);
+});

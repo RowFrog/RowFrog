@@ -218,7 +218,7 @@ function windText(hour) {
 function lakeWideBanner(lakeWide, view, oneLine = false) {
   if (lakeWide.light === "green") return "";
   const first = lakeWide.reasons[0];
-  return `<p class="lake-wide ${lakeWide.light === "red" ? "red" : "orange"}${oneLine ? " one-line" : ""}">${icon(first ? CONDITION_ICONS[reasonCondition(first.condition)] : "triangle-alert")}
+  return `<p class="lake-wide ${lakeWide.light === "red" ? "red" : "orange"}${oneLine ? " one-line" : ""}">${icon(first ? CONDITION_ICONS[reasonCondition(first.condition, first.topic)] : "triangle-alert")}
     <span>${h(t(waterKind(view) === "lake" ? key("Whole lake: %@") : key("Whole stretch: %@"), lakeWide.reasons.map(reasonLabel).join(", ")))}</span></p>`;
 }
 
