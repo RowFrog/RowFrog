@@ -1,0 +1,11 @@
+# The GitHub workflow's schedule, in UTC like GitHub's cron.
+[Unit]
+Description=Row Frog budget-check on the GitHub workflow's schedule
+
+[Timer]
+OnCalendar=*-*-* 06:10:00 UTC
+AccuracySec=1min
+Persistent=true
+
+[Install]
+WantedBy=timers.target
