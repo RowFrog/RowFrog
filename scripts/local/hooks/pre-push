@@ -90,7 +90,7 @@ for line in "${refs[@]}"; do
     git merge-base --is-ancestor "$keep" "$lsha" 2>/dev/null || refuse "86e1980 must stay in main's history"
   fi
   [ "$lsha" = "$zero" ] && continue                       # deleting a branch: nothing to test
-  case "$rref" in refs/heads/*) ;; *) continue ;; esac    # screenshots refs etc.
+  case "$rref" in refs/heads/model-check) continue ;; refs/heads/*) ;; *) continue ;; esac  # data branch, screenshots refs
   base=$rsha
   [ "$base" = "$zero" ] && base=$(git merge-base "$lsha" refs/remotes/pi/main 2>/dev/null || echo "$zero")
   checks "$lsha" "$base" || status=1

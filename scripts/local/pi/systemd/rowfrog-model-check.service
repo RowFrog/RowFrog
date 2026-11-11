@@ -1,0 +1,16 @@
+# Model check (model-check.yml): forecasts vs DWD stations, twice a day. Started by rowfrog-model-check.timer; by hand: sudo systemctl start rowfrog-model-check
+# Logs: journalctl -u rowfrog-model-check -e; reports in ~/reports/.
+[Unit]
+Description=Row Frog Model check (model-check.yml): forecasts vs DWD stations, twice a day
+Wants=network-online.target
+After=network-online.target time-sync.target
+
+[Service]
+Type=oneshot
+User=rowfrog
+Group=rowfrog
+EnvironmentFile=/home/rowfrog/.config/rowfrog.env
+ExecStart=/home/rowfrog/rowfrog-pi/run.sh model-check
+TimeoutStartSec=60min
+Nice=10
+IOSchedulingClass=idle
