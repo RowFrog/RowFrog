@@ -277,7 +277,6 @@ enum German {
         "Water temperature: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0": "Wassertemperatur: Gewässerkundlicher Dienst Bayern (LfU), CC BY 4.0",
 
         // Warnings
-        "DWD warnings": "DWD-Warnungen",
         "Warnings could not be loaded. Check dwd.de or the shore lights before going out.": "Warnungen konnten nicht geladen werden. Vor dem Ablegen dwd.de oder die Sturmwarnleuchten prüfen.",
         "No warning right now": "Derzeit keine Warnung",
         "Checked %@.": "Geprüft %@.",
@@ -1198,9 +1197,6 @@ enum German {
         "Clear now; fog from %@.": "Jetzt klar; Nebel ab %@.",
         "Cloud cover, DWD via Open-Meteo.": "Bewölkung, DWD über Open-Meteo.",
         "Compared with the air": "Verglichen mit der Luft",
-        "DWD fog warning": "DWD-Nebelwarnung",
-        "DWD thunderstorm warning": "DWD-Gewitterwarnung",
-        "DWD warning": "DWD-Warnung",
         "Deutscher Wetterdienst (DWD) via Open-Meteo, 2 m above ground.": "Deutscher Wetterdienst (DWD) über Open-Meteo, 2 m über dem Boden.",
         "Dew point": "Taupunkt",
         "Dress in layers you can take off.": "Zieh dich im Zwiebellook an, damit du Schichten ablegen kannst.",
@@ -1284,8 +1280,6 @@ enum German {
         "Most energy next 24 h": "Meiste Energie nächste 24 h",
         "Never go onto the ice because of this app. Never row between ice floes; thin ice cuts hulls.": "Betritt das Eis nie wegen dieser App. Rudere nie zwischen Eisschollen; dünnes Eis schneidet Bootsrümpfe auf.",
         "Next 24 h": "Nächste 24 h",
-        "No DWD thunderstorm warning": "Keine DWD-Gewitterwarnung",
-        "No DWD warning": "Keine DWD-Warnung",
         "No UV forecast": "Keine UV-Vorhersage",
         "No effect on the rowing light; low cloud often comes with poor visibility.": "Kein Einfluss auf die Ruderampel; tiefe Wolken gehen oft mit schlechter Sicht einher.",
         "No fog in the next 24 h": "Kein Nebel in den nächsten 24 h",

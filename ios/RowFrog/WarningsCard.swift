@@ -16,7 +16,7 @@ struct WarningsCard: View {
     var checkedNow: Date = .now
 
     var body: some View {
-        Card(title: warnings.localChecked && warnings.isDWD ? tr("DWD warnings") : tr("Official warnings"), symbol: "exclamationmark.triangle") {
+        Card(title: tr("Official warnings"), symbol: "exclamationmark.triangle") {
             if !warnings.checked {
                 Label(warnings.isDWD
                       ? tr("Warnings could not be loaded. Check dwd.de or the shore lights before going out.")
