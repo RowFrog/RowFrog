@@ -123,6 +123,81 @@ function strokeStripes(ctx, kind, w, hgt, scale = 1, fall = false) {
   ctx.stroke();
 }
 
+/** On-screen size of the whole-lake stripes on the lake map, in CSS pixels (the mini map draws them at 1). */
+const MAP_STRIPE_SCALE = 1.6;
+
+/**
+ * Stripes over a tile, continuing from tile to tile: lines placed in the map's global pixels
+ * (`ox`, `oy` = the tile's top left), `gap` apart along x, rising or falling at 45°.
+ */
+function strokeTileStripes(ctx, kind, size, ox, oy, fall) {
+  const red = kind === "red";
+  ctx.strokeStyle = red ? "rgba(255, 59, 48, .55)" : "rgba(255, 149, 0, .75)";
+  ctx.lineWidth = (red ? 1.5 : 1.2) * MAP_STRIPE_SCALE;
+  const gap = (red ? 8 : 14) * MAP_STRIPE_SCALE;
+  ctx.beginPath();
+  // Rising lines: x + y = k·gap (global); falling: x − y = k·gap.
+  const base = fall ? ox - oy : ox + oy;
+  const first = Math.floor((base - (fall ? size.y : 0) - gap) / gap);
+  const last = Math.ceil((base + size.x + (fall ? 0 : size.y) + gap) / gap);
+  for (let k = first; k <= last; k++) {
+    const c = k * gap - base;
+    if (fall) {
+      ctx.moveTo(c, 0);
+      ctx.lineTo(c + size.y, size.y);
+    } else {
+      ctx.moveTo(c, 0);
+      ctx.lineTo(c - size.y, size.y);
+    }
+  }
+  ctx.stroke();
+}
+
+/** The lake's colours as map tiles drawn at the screen's resolution from `page.colours` (see drawOverlay). */
+function lakeColourLayer(L) {
+  const Layer = L.GridLayer.extend({
+    createTile(coords) {
+      const size = this.getTileSize();
+      const ratio = window.devicePixelRatio || 1;
+      const canvas = document.createElement("canvas");
+      canvas.width = size.x * ratio;
+      canvas.height = size.y * ratio;
+      const map = this._map;
+      const colours = page?.colours;
+      if (!map || !colours) return canvas;
+      const e = gridEdges(page.view.grid);
+      const ox = coords.x * size.x;
+      const oy = coords.y * size.y;
+      const at = (lat, lon) => map.project([lat, lon], coords.z);
+      const nw = at(e.north, e.west);
+      const se = at(e.south, e.east);
+      // Tiles outside the lake's box stay empty.
+      if (se.x < ox || nw.x > ox + size.x || se.y < oy || nw.y > oy + size.y) return canvas;
+      const ctx = canvas.getContext("2d");
+      ctx.scale(ratio, ratio);
+      const shore = new Path2D();
+      for (const ring of page.view.outline) {
+        if (ring.length < 3) continue;
+        ring.forEach(([lon, lat], i) => {
+          const p = at(lat, lon);
+          if (i) shore.lineTo(p.x - ox, p.y - oy);
+          else shore.moveTo(p.x - ox, p.y - oy);
+        });
+        shore.closePath();
+      }
+      ctx.clip(shore, "evenodd");
+      ctx.globalAlpha = 0.72;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(colours.raster, nw.x - ox, nw.y - oy, se.x - nw.x, se.y - nw.y);
+      ctx.globalAlpha = 1;
+      if (colours.stripes) strokeTileStripes(ctx, colours.stripes, size, ox, oy, colours.fall);
+      return canvas;
+    },
+  });
+  return new Layer({ pane: "lakeColours", interactive: false, updateWhenZooming: false, keepBuffer: 4 });
+}
+
 function arrowPath(ctx, x, y, towardDeg, length) {
   const r = (towardDeg * Math.PI) / 180;
   const dx = Math.sin(r);
@@ -361,6 +436,8 @@ async function buildMap() {
       fitView();
     }
   }).observe(box);
+  // The lake's colours sit over the base map and under the shore line, arrows and pins.
+  map.createPane("lakeColours").style.zIndex = 390;
   const rings = page.view.outline.map((ring) => ring.map(([lon, lat]) => [lat, lon]));
   page.layers.shore = L.polygon(rings, { fill: false, weight: 1, color: "rgba(0, 122, 255, .45)", interactive: false }).addTo(map);
   page.layers.arrows = L.layerGroup().addTo(map);
@@ -503,44 +580,22 @@ function wirePanelDrag() {
   });
 }
 
-/** The cells smoothly scaled over the grid and clipped to the shore, drawn in the map's projection. */
+/**
+ * The cells smoothly scaled over the grid and clipped to the shore, with the whole-lake stripes.
+ * Drawn tile by tile at the screen's own resolution (LakeColourLayer), so the shore edge and the
+ * stripes stay sharp at every zoom, as the app's vector drawing; the stripes keep their on-screen
+ * width and spacing instead of growing with the map (owner, 12 Nov 2026).
+ */
 function drawOverlay(hour) {
   const { L, map, view } = page;
   if (!map) return;
-  const e = gridEdges(view.grid);
-  const merc = (lat) => Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
-  const k = Math.cos((((e.north + e.south) / 2) * Math.PI) / 180);
-  const longest = 1800;
-  const wDeg = (e.east - e.west) * k;
-  const hDeg = e.north - e.south;
-  const width = Math.round(wDeg >= hDeg ? longest : (longest * wDeg) / hDeg);
-  const height = Math.round(wDeg >= hDeg ? (longest * hDeg) / wDeg : longest);
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  const x = (lon) => ((lon - e.west) / (e.east - e.west)) * width;
-  const y = (lat) => ((merc(e.north) - merc(lat)) / (merc(e.north) - merc(e.south))) * height;
-  const shore = new Path2D();
-  for (const ring of view.outline) {
-    if (ring.length < 3) continue;
-    shore.moveTo(x(ring[0][0]), y(ring[0][1]));
-    for (const p of ring.slice(1)) shore.lineTo(x(p[0]), y(p[1]));
-    shore.closePath();
-  }
-  ctx.save();
-  ctx.clip(shore, "evenodd");
-  ctx.globalAlpha = 0.72;
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.drawImage(rasterCanvas(view, hour, page.layer), 0, 0, width, height);
-  ctx.globalAlpha = 1;
-  const kind = page.layer === "light" ? stripes(hour.lakeWide) : null;
-  if (kind) strokeStripes(ctx, kind, width, height, width / 500, stripesFall(page.view.outline));
-  ctx.restore();
-  const url = canvas.toDataURL();
-  if (page.layers.image) page.layers.image.setUrl(url);
-  else page.layers.image = L.imageOverlay(url, [[e.south, e.west], [e.north, e.east]], { interactive: false }).addTo(map);
+  page.colours = {
+    raster: rasterCanvas(view, hour, page.layer),
+    stripes: page.layer === "light" ? stripes(hour.lakeWide) : null,
+    fall: stripesFall(view.outline),
+  };
+  if (page.layers.image) page.layers.image.redraw();
+  else page.layers.image = lakeColourLayer(L).addTo(map);
   const cold = coldShore(view.shoreWaterC, mapLimits());
   page.layers.shore.setStyle(cold ? { color: COLD_SHORE[cold], weight: cold === "cool" ? 2.5 : 3.5 } : { color: "rgba(0, 122, 255, .45)", weight: 1 });
   page.layers.shore.bringToFront();
