@@ -15,7 +15,7 @@ import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, stripesFall, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
-  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, shouldSplit, spotProbe, windAt,
+  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, showsOars, shouldSplit, spotProbe, windAt,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips } from "./tour.js";
@@ -51,24 +51,28 @@ export async function viewForMap(lakeId) {
 }
 
 /**
- * The lake view's clubs with the clubhouse their pin moves to once zoomed in (`clubhouse`, only
- * for clubs whose launch point is set and whose clubhouse lies apart from it), from the club list,
- * which has the hand-checked clubhouses (ClubMarks.clubhouse).
+ * The lake view's clubs with the spot their pin moves to once zoomed in (`clubhouse`: the club's
+ * place in OpenStreetMap or its hand-checked clubhouse, when apart from the launch point) and
+ * whether oars then mark the launch point (`oars`), from the club list (ClubMarks.clubhouse).
  */
 async function withClubhouses(lakeId, clubs) {
   const lakes = await loadCatalog().catch(() => []);
   const known = new Map(lakes.filter((l) => l.id === lakeId).flatMap((l) => l.clubs).map((c) => [c.id, c]));
-  return clubs.map((c) => ({ ...c, clubhouse: clubhouseOf({ ...known.get(c.id), launchPoint: c.launchPoint }) }));
+  return clubs.map((c) => {
+    const listed = { ...known.get(c.id), launchPoint: c.launchPoint };
+    return { ...c, clubhouse: clubhouseOf(listed), oars: showsOars(listed) };
+  });
 }
 
 /**
  * Splits and joins the clubs' pins on a Leaflet map as it zooms (ClubPinSplitter): each entry's
  * marker stands on the launch point until the clubhouse is `CLUB_SPLIT_AT` pixels away, then moves
- * there while oars in the club's colour mark the launch point, below the club's pin.
+ * there while oars in the club's colour mark the launch point, below the club's pin (only for a set
+ * launch point: entries with `oars: false` move without them).
  */
 export function splitClubPins(L, map, entries) {
   const pairs = entries.filter((e) => e.clubhouse).map((e) => ({
-    ...e, split: false,
+    ...e, split: false, withOars: e.oars,
     oars: L.marker([e.launch.lat, e.launch.lon], {
       icon: L.divIcon({ className: `club-pin oars ${e.own ? "own" : ""}`, iconSize: [26, 26], iconAnchor: [13, 13], html: `<span class="dot">${icon("oars")}</span>` }),
       title: e.own ? t("Launch point") : "", keyboard: false, zIndexOffset: -1000, interactive: false,
@@ -83,7 +87,7 @@ export function splitClubPins(L, map, entries) {
       pair.split = now;
       const at = now ? pair.clubhouse : pair.launch;
       pair.marker.setLatLng([at.lat, at.lon]);
-      if (now) pair.oars.addTo(pair.layer ?? map);
+      if (now && pair.withOars !== false) pair.oars.addTo(pair.layer ?? map);
       else pair.oars.remove();
     }
   };
@@ -371,7 +375,7 @@ async function buildMap() {
         html: `<span class="dot">${icon(own ? "house" : "sailboat")}</span>${own ? "" : `<span class="name">${h(c.shortName)}</span>`}` }),
       title: c.shortName, keyboard: false, zIndexOffset: own ? 1000 : 0,
     }).addTo(page.layers.marks);
-    pins.push({ marker, launch: c.launchPoint, clubhouse: c.clubhouse, own, layer: page.layers.marks });
+    pins.push({ marker, launch: c.launchPoint, clubhouse: c.clubhouse, oars: c.oars, own, layer: page.layers.marks });
   }
   splitClubPins(L, map, pins);
   // Where the club's stretch of the river ends: a weir or lock, or where rowers turn (SectionEndPin).

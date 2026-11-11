@@ -24,7 +24,7 @@ import {
   waterForHour, key, nightParts, nightSummary, sky,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView, splitClubPins } from "./lakeview.js";
-import { clubhouseOf } from "./lake.js";
+import { clubhouseOf, showsOars } from "./lake.js";
 import { suggestRow, openSuggestLaunchPoint } from "./suggest.js";
 import { currentTile, currentBody } from "./river.js";
 import { isLowered, waterLevelTile, waterLevelBody } from "./lakelevel.js";
@@ -1926,11 +1926,11 @@ async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
     icon: L.divIcon({ className: "pin", html: icon(store.clubs[0]?.id === club.id ? "house" : "map-pin"), iconSize: [30, 30], iconAnchor: [15, 15] }),
     keyboard: false,
   }).addTo(map);
-  // Zoomed in, the club's pin moves to its hand-checked clubhouse and oars mark the launch point (ClubMarks).
+  // Zoomed in, the club's pin moves onto its own place on the map, and oars mark a set launch point (ClubMarks).
   loadCatalog().catch(() => []).then((lakes) => {
-    const known = lakes.flatMap((l) => l.clubs).find((c) => c.id === club.id);
-    const clubhouse = clubhouseOf({ ...known, launchPoint: club.launchPoint });
-    if (clubhouse && box.isConnected) splitClubPins(L, map, [{ marker, launch: club.launchPoint, clubhouse, own: true }]);
+    const known = { ...lakes.flatMap((l) => l.clubs).find((c) => c.id === club.id), launchPoint: club.launchPoint };
+    const clubhouse = clubhouseOf(known);
+    if (clubhouse && box.isConnected) splitClubPins(L, map, [{ marker, launch: club.launchPoint, clubhouse, oars: showsOars(known), own: true }]);
   });
   // Grown or shrunk to fill its column (balanceCards).
   new ResizeObserver(() => map.invalidateSize()).observe(box);

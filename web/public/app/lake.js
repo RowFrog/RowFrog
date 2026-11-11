@@ -641,21 +641,32 @@ export function pace(seconds) {
 // ---- Club and launch point pins (ClubMarks.swift) ----------------------------------------------
 
 /**
- * Zoomed out a club has one pin, at its launch point, where the forecast is for. Once the club's
- * launch point is set (by the club, or checked by hand) and its clubhouse lies apart from it,
- * zooming in until the two are `CLUB_SPLIT_AT` pixels apart moves the club's pin to the clubhouse
- * and puts oars on the launch point; under `CLUB_JOIN_AT` they join again. On the website the
- * clubhouse is the one checked by hand (the API's `clubhouse`); Apple Maps places don't exist here.
+ * Zoomed out a club has one pin, at its launch point, where the forecast is for. Zoomed in until
+ * the club's own place is `CLUB_SPLIT_AT` pixels from the launch point, the club's pin moves there;
+ * under `CLUB_JOIN_AT` they join again. The place is the club's place in OpenStreetMap (the API's
+ * `mapPlace`, where the map draws the club's name), so the pin covers that name and the club shows
+ * once, as the app does with Apple Maps places (the owner's option A). A clubhouse checked by hand
+ * (the API's `clubhouse`) more than `CLUB_ON_PLACE_M` from that place (often an entrance by a road)
+ * keeps the pin instead. Oars mark the launch point only once it is set (by the club, or checked by
+ * hand); clubs without one move to their place with no oars.
  */
 export const CLUB_SAME_SPOT_M = 30;
+export const CLUB_ON_PLACE_M = 80;
 export const CLUB_SPLIT_AT = 48;
 export const CLUB_JOIN_AT = 40;
 
 /** Where the club's pin stands once split, or null when it never splits (ClubMarks.clubhouse). */
 export function clubhouseOf(club) {
-  if (!club?.launchPointSet || !club.clubhouse || !club.launchPoint) return null;
-  return distanceM(club.clubhouse, club.launchPoint) >= CLUB_SAME_SPOT_M ? club.clubhouse : null;
+  if (!club?.launchPoint) return null;
+  const checked = club.clubhouse ?? null;
+  const place = club.mapPlace ? { lat: club.mapPlace.lat, lon: club.mapPlace.lon } : null;
+  const spot = checked && place ? (distanceM(checked, place) <= CLUB_ON_PLACE_M ? place : checked) : place ?? checked;
+  if (!spot) return null;
+  return distanceM(spot, club.launchPoint) >= CLUB_SAME_SPOT_M ? spot : null;
 }
+
+/** Whether oars mark the club's launch point once its pin has moved off it: only a set launch point (ClubMarks.showsOars). */
+export const showsOars = (club) => !!club?.launchPointSet;
 
 /** Whether two pins this far apart on screen show apart, with room between splitting and joining so they don't flicker. */
 export const shouldSplit = (apart, now) => apart >= (now ? CLUB_JOIN_AT : CLUB_SPLIT_AT);
