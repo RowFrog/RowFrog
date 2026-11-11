@@ -75,3 +75,13 @@ final class ForecastLoadTests: XCTestCase {
         XCTAssertEqual(off?.isLoading, false)
     }
 }
+
+/// `-RWForecastFailure` names every reason, so screenshots can show each one.
+final class ForecastFailureNameTests: XCTestCase {
+    func testEveryReasonHasAName() {
+        let names = ["offline", "timeout", "notFound", "server", "refused", "unreachable", "unreadable", "placeService", "other"]
+        XCTAssertEqual(names.compactMap(RefreshFailure.init(name:)).count, names.count)
+        XCTAssertEqual(RefreshFailure(name: "refused"), .refused(403))
+        XCTAssertNil(RefreshFailure(name: "nonsense"))
+    }
+}

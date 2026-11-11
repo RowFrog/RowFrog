@@ -322,6 +322,7 @@ final class ForecastStore {
 
     func load(_ clubID: String, force: Bool = false) async {
         if !force, states[clubID]?.forecast != nil { return }
+        defer { applyTestOutcome(clubID) }
         states[clubID] = ForecastLoad.started(from: states[clubID])
         if let model = AppSettings.shared.pickedModel(for: clubID) {
             if let forecast = try? await api.forecast(clubID: clubID, model: model) {
@@ -354,6 +355,20 @@ final class ForecastStore {
             let failure = RefreshFailure(error, ownPlace: clubID.hasPrefix(OwnPlace.idPrefix))
             states[clubID] = ForecastLoad.started(from: states[clubID]).failing(with: failure)
         }
+    }
+
+    /// Screenshots and UI tests: `-RWForecastFailure refused` (any RefreshFailure
+    /// name) ends every load as if its update failed for that reason, keeping
+    /// the forecast; add `-RWNoForecast YES` for nothing to show, and
+    /// `-RWStaleForecast YES` for out of date as well. Every ForecastStatus can
+    /// so be shown without a broken server.
+    private func applyTestOutcome(_ clubID: String) {
+        let defaults = UserDefaults.standard
+        guard let name = defaults.string(forKey: DefaultsKey.forecastFailure),
+              let failure = RefreshFailure(name: name) else { return }
+        states[clubID] = defaults.bool(forKey: DefaultsKey.noForecast)
+            ? .failed(failure)
+            : ForecastLoad.started(from: states[clubID]).failing(with: failure)
     }
 
     /// Counts the returns to the app, so the page in front renews its lake view and pictures too.
@@ -425,6 +440,22 @@ enum RefreshFailure: Equatable {
     case unreachable
     /// An own place's forecast comes from Open-Meteo, not from our server.
     case placeService
+
+    /// A failure by name, for the `-RWForecastFailure` launch argument.
+    init?(name: String) {
+        switch name {
+        case "offline": self = .offline
+        case "timeout": self = .timeout
+        case "notFound": self = .notFound
+        case "server": self = .server(500)
+        case "refused": self = .refused(403)
+        case "unreachable": self = .unreachable
+        case "unreadable": self = .unreadable
+        case "placeService": self = .placeService
+        case "other": self = .other("test")
+        default: return nil
+        }
+    }
 
     init(_ error: Error, ownPlace: Bool = false) {
         if let url = error as? URLError {
