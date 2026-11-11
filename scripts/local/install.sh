@@ -7,7 +7,7 @@
 set -euo pipefail
 top=$(git rev-parse --show-toplevel)
 hooks=$(git rev-parse --git-path hooks)
-for h in pre-push write-main-bundle post-commit post-merge; do
+for h in pre-push write-main-bundle post-commit post-merge post-checkout; do
   install -m 755 "$top/scripts/local/hooks/$h" "$hooks/$h"
 done
 mkdir -p "$top/inbox/done" "$top/log" "$top/prs" "$top/backups"
