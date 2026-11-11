@@ -94,21 +94,23 @@ final class RadarStore {
     /// DWD's 5 minutes; 15 in Low Power Mode and when saving data.
     static var refresh: TimeInterval { PowerState.shared.lowPower || DataSaver.shared.saving ? 900 : 300 }
 
-    private(set) var readings: [Coordinate: RainRadar] = [:]
-    /// Launch points whose radar could not be read and that have no reading still worth showing.
-    private(set) var failed: Set<Coordinate> = []
-    @ObservationIgnored private var loaded: [Coordinate: Date] = [:]
-    /// Launch points being read right now; the rain tile shows a waiting symbol meanwhile.
-    private var loading: Set<Coordinate> = []
-    /// Failed reads in a row per launch point, for the quicker retries.
-    @ObservationIgnored private var failures: [Coordinate: Int] = [:]
+    /// Each launch point's radar: the last reading and when it came, whether a
+    /// read is running (the rain tile shows a waiting symbol meanwhile) and the
+    /// failed reads in a row, one state at a time (Loadable).
+    private(set) var states: [Coordinate: Loadable<RainRadar, RadarFailure>] = [:]
 
     /// After a failed read: again after 30 seconds, 1 minute and 2 minutes, then at the usual pace.
     static let retries: [TimeInterval] = [30, 60, 120]
     /// A pull-down skips the radar when it was read this recently.
     static let pullGap: TimeInterval = 60
 
-    func radar(at point: Coordinate) -> RainRadar? { readings[point] }
+    func radar(at point: Coordinate) -> RainRadar? { states[point]?.value }
+
+    /// The radar at `point` could not be read and there is no reading still worth showing.
+    func failed(_ point: Coordinate) -> Bool {
+        guard let failure = states[point]?.failure else { return false }
+        return states[point]?.value?.ahead(of: failure.at) == nil
+    }
 
     /// The wait before the next try after `count` failed reads in a row.
     static func retryDelay(after count: Int) -> TimeInterval {
@@ -122,37 +124,35 @@ final class RadarStore {
         if UserDefaults.standard.bool(forKey: DefaultsKey.sampleRadar) {
             let now = RadarWindow.base(nil)
             let values = [0, 0, 0.6, 1.8, 3.2, 1.1, 0, 0, 0]
-            readings[point] = RainRadar(reference: now, steps: values.enumerated().map {
+            states[point] = .loaded(RainRadar(reference: now, steps: values.enumerated().map {
                 RadarStep(time: now.addingTimeInterval(Double($0.offset) * 900), mmPerHour: $0.element)
-            })
+            }))
             return
         }
         // Screenshot hook: `-RWRadarLoading YES` keeps waiting for DWD's answer.
         if UserDefaults.standard.bool(forKey: DefaultsKey.radarLoading) {
-            readings[point] = nil
-            loading.insert(point)
+            states[point] = .loading(lastFailure: nil)
             return
         }
         // Screenshot hook: `-RWRadarFailed YES` acts as if DWD did not answer.
         if UserDefaults.standard.bool(forKey: DefaultsKey.radarFailed) {
-            readings[point] = nil
-            failed.insert(point)
+            states[point] = .failed(RadarFailure(inRow: 1, at: .now))
             return
         }
         while !Task.isCancelled {
             // Back within 5 minutes: no new requests until the 5 minutes are up.
-            if let at = loaded[point], Date.now.timeIntervalSince(at) < Self.refresh {
+            if let at = states[point]?.loadedAt, Date.now.timeIntervalSince(at) < Self.refresh {
                 try? await Task.sleep(for: .seconds(Self.refresh - Date.now.timeIntervalSince(at)))
                 continue
             }
             // Another view of the same page (or a pull-down) is reading it already.
-            if loading.contains(point) {
+            if isLoading(point) {
                 try? await Task.sleep(for: .seconds(2))
                 continue
             }
             if await read(point) { continue }
             if Task.isCancelled { return }
-            try? await Task.sleep(for: .seconds(Self.retryDelay(after: failures[point] ?? 1)))
+            try? await Task.sleep(for: .seconds(Self.retryDelay(after: states[point]?.failure?.inRow ?? 1)))
         }
     }
 
@@ -160,43 +160,51 @@ final class RadarStore {
     /// less than a minute ago (DWD makes a new picture every 5 minutes).
     func reload(_ point: Coordinate) async {
         if [DefaultsKey.sampleRadar, DefaultsKey.radarFailed, DefaultsKey.radarLoading].contains(where: UserDefaults.standard.bool(forKey:)) { return }
-        if !failed.contains(point), let at = loaded[point], Date.now.timeIntervalSince(at) < Self.pullGap { return }
-        while loading.contains(point) {
+        if !failed(point), let at = states[point]?.loadedAt, Date.now.timeIntervalSince(at) < Self.pullGap { return }
+        while isLoading(point) {
             try? await Task.sleep(for: .milliseconds(250))
             if Task.isCancelled { return }
         }
-        if let at = loaded[point], Date.now.timeIntervalSince(at) < Self.pullGap { return }
+        if let at = states[point]?.loadedAt, Date.now.timeIntervalSince(at) < Self.pullGap { return }
         await read(point)
     }
 
     /// One read of DWD's radar at `point`; true when it worked.
     @discardableResult
     private func read(_ point: Coordinate) async -> Bool {
-        loading.insert(point)
-        defer { loading.remove(point) }
+        states[point] = .started(from: states[point])
         do {
             let radar = try await RadarClient().load(lat: point.lat, lon: point.lon)
-            readings[point] = radar
-            loaded[point] = .now
-            failed.remove(point)
-            failures[point] = nil
+            states[point] = .loaded(radar)
             return true
         } catch {
-            if Task.isCancelled { return false }
-            failures[point, default: 0] += 1
-            // No reading, or one too old to show: the rain tile says the radar is missing.
-            if readings[point]?.ahead(of: .now) == nil { failed.insert(point) }
+            if Task.isCancelled {
+                states[point] = states[point]?.calledOff()
+                return false
+            }
+            // No reading, or one too old to show: the rain tile says the radar is missing (failed(_:)).
+            let inRow = (states[point]?.failure?.inRow ?? 0) + 1
+            states[point] = .started(from: states[point]).failing(with: RadarFailure(inRow: inRow, at: .now))
             return false
         }
     }
 
+    private func isLoading(_ point: Coordinate) -> Bool { states[point]?.isLoading ?? false }
+
     /// Why there is no radar to show at `point`: still being read, or it could
     /// not be read. Nil while a reading is there (or the page never asked).
     func status(at point: Coordinate) -> RadarStatus? {
-        if readings[point]?.ahead(of: .now) != nil { return nil }
-        if loading.contains(point) { return .loading }
-        return failed.contains(point) ? .missing : nil
+        if states[point]?.value?.ahead(of: .now) != nil { return nil }
+        if isLoading(point) { return .loading }
+        return failed(point) ? .missing : nil
     }
+}
+
+/// Why the radar at a launch point is not fresh: how many reads failed in a
+/// row (for the quicker retries) and when the last one did.
+struct RadarFailure: Equatable {
+    var inRow: Int
+    var at: Date
 }
 
 /// Follows DWD's radar at a launch point while its page is in front and the
@@ -273,7 +281,7 @@ struct RainRadarCard: View {
                     Text(tr("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
-                } else if store.failed.contains(point) {
+                } else if store.failed(point) {
                     Text(tr("Radar not available right now")).foregroundStyle(.secondary)
                 } else {
                     ProgressView()
