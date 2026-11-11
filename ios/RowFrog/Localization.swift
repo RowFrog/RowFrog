@@ -1128,6 +1128,7 @@ enum German {
         "Better from %@": "Besser ab %@",
         "Good until %@": "Gut bis %@",
         "Not good": "Nicht gut",
+        "Stay ashore (short)": "An Land",
         "Shows the short top tile again": "Zeigt wieder die kurze obere Kachel",
         "Opens all values in the top tile": "Öffnet alle Werte in der oberen Kachel",
         "Pause": "Pause",

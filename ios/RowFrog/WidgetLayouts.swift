@@ -48,7 +48,7 @@ extension RowingSnapshot {
         switch light {
         case .green: return tr("Good")
         case .amber: return tr("Caution")
-        case .red: return tr("Stay ashore")
+        case .red: return tr("Stay ashore", key: "Stay ashore (short)")
         }
     }
 
@@ -198,7 +198,10 @@ extension RowingSnapshot {
             let hours = daylight.filter { calendar.isDate($0.time, inSameDayAs: day) }
             let past = hours.map { $0.time.addingTimeInterval(3600) <= date }
             if !hours.isEmpty, past.contains(false) {
-                result.append(WidgetDay(label: Format.day(day, calendar: calendar), lights: hours.map(\.light), past: past,
+                let label = calendar.isDateInToday(day) || calendar.isDateInTomorrow(day)
+                    ? Format.day(day, calendar: calendar)
+                    : day.formatted(.dateTime.weekday(.abbreviated).day().locale(Format.locale))
+                result.append(WidgetDay(label: label, lights: hours.map(\.light), past: past,
                                         good: isStale ? nil : goodStretch(hours)))
             }
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
@@ -458,7 +461,7 @@ extension RowingWidgetView {
                 GridRow {
                     ForEach(values[(row * 3)..<(row * 3 + 3)], id: \.condition) { value in
                         VStack(alignment: .leading, spacing: 1) {
-                            Label(value.condition == .temperature ? tr("Air") : value.condition.title,
+                            Label(shortName(value.condition),
                                   systemImage: value.condition == .temperature ? Condition.temperature.symbol : value.symbol)
                                 .font(.caption2.weight(.semibold))
                                 .opacity(0.8)
@@ -483,16 +486,33 @@ extension RowingWidgetView {
         }
     }
 
+    /// One word per value, so the names fit the extra large widget's columns.
+    private func shortName(_ condition: Condition) -> String {
+        switch condition {
+        case .temperature: tr("Air")
+        case .waterTemperature: tr("Water")
+        case .wind: tr("Wind")
+        case .waves: tr("Waves")
+        case .visibility: tr("Visibility")
+        case .thunderstorm: tr("Thunderstorm")
+        default: tr("Rain")
+        }
+    }
+
     /// The next hours: time, sky, light, temperature, and the wind in the larger sizes.
     func hourRow(count: Int, wind: Bool, big: Bool = false) -> some View {
         HStack(spacing: 0) {
             ForEach(Array(snapshot.hours.prefix(count).enumerated()), id: \.element.time) { index, hour in
                 VStack(spacing: big ? 5 : 4) {
+                    // Fixed heights, so a taller rain symbol never squeezes the time above it.
                     Text(index == 0 ? tr("Now") : Format.time(hour.time))
                         .font(.caption2.weight(.medium))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
-                    skyIcon(hour).font(big ? .title3 : .subheadline)
+                        .fixedSize(horizontal: false, vertical: true)
+                    skyIcon(hour)
+                        .font(big ? .title3 : .subheadline)
+                        .frame(height: big ? 26 : 20)
                     lightDot(hour.light, size: big ? 16 : 13)
                     Text(Format.degrees(hour.temperatureC))
                         .font((big ? Font.subheadline : .caption).weight(.semibold))

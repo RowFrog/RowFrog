@@ -70,7 +70,7 @@ final class WidgetContentTests: XCTestCase {
         XCTAssertEqual(gusty.shortWhy, tr("Better from %@", Format.time(start.addingTimeInterval(2 * 3600))))
 
         let stormy = snapshot([hour(0, .red, reasons: [Reason(condition: "wind", light: .red)])])
-        XCTAssertEqual(stormy.shortTitle, tr("Stay ashore"))
+        XCTAssertEqual(stormy.shortTitle, tr("Stay ashore", key: "Stay ashore (short)"))
         XCTAssertEqual(stormy.shortWhy, Reason(condition: "wind", light: .red).label)
     }
 
@@ -151,7 +151,7 @@ final class WidgetContentTests: XCTestCase {
 
     func testLockScreenLineNamesLightAndTemperatureWithoutTheClub() {
         let red = hour(0, .red, reasons: [Reason(condition: "wind", light: .red)])
-        XCTAssertEqual(snapshot([red]).inlineText, "\(tr("Stay ashore")) · \(Format.degrees(15))")
+        XCTAssertEqual(snapshot([red]).inlineText, "\(tr("Stay ashore", key: "Stay ashore (short)")) · \(Format.degrees(15))")
         let none = RowingSnapshot(date: start, clubName: "MRC 1880", isHome: true, forecast: nil)
         XCTAssertEqual(none.inlineText, "– · \(Format.degrees(nil))")
     }
