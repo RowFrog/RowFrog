@@ -42,25 +42,41 @@ def _thunderstorm(h: ForecastHour) -> Light:
     return Light.GREEN
 
 
-def _daylight(h: ForecastHour, days: list[SunDay]) -> tuple[str, Light, bool | None]:
-    """Rowing is advised only while the sun is up.
+# The last stretch before sunset turns amber: about one outing, so whoever sets off
+# then is back around sunset (owner's pick, 6 Nov 2026). The app and the website
+# use the same window (DaylightRule.swift, logic.js).
+SUNSET_WINDOW = timedelta(minutes=60)
 
-    Each forecast row covers the hour from its time. A row with the sun up for
-    the whole hour is green, a row with sunrise or sunset inside it is amber
-    ("twilight") and a row entirely in the dark is red. Also returns whether
-    the sun is up at the middle of the hour. Without sun times the model's
-    is_day flag decides.
+
+def daylight_light_at(t: datetime, days: list[SunDay]) -> Light:
+    """The daylight light at one moment: red with the sun down, amber in the
+    window before sunset, green otherwise."""
+    for d in days:
+        if d.sunrise <= t < d.sunset:
+            return Light.AMBER if t >= d.sunset - SUNSET_WINDOW else Light.GREEN
+    return Light.RED
+
+
+def _daylight(h: ForecastHour, days: list[SunDay]) -> tuple[str, Light, bool | None]:
+    """Rowing is advised only while the sun is up, decided to the minute.
+
+    Each forecast row covers the hour from its time and takes the strictest
+    daylight light of any minute in it: red if the sun is down for any part of
+    it, amber if any part falls in the window before sunset, green otherwise.
+    So a row is never more relaxed than "now" in that hour; the app draws the
+    change inside the hour. Also returns whether the sun is up at the middle of
+    the hour. Without sun times the model's is_day flag decides.
     """
     if not days:
         return "daylight", (Light.GREEN if h.is_day in (True, None) else Light.RED), h.is_day
     start, end = h.time, h.time + timedelta(hours=1)
     middle = start + timedelta(minutes=30)
     sun_up = any(d.sunrise <= middle < d.sunset for d in days)
-    if any(d.sunrise <= start and end <= d.sunset for d in days):
-        return "daylight", Light.GREEN, sun_up
-    if any(start < t < end for d in days for t in (d.sunrise, d.sunset)):
+    cuts = [start] + [t for d in days for t in (d.sunrise, d.sunset - SUNSET_WINDOW, d.sunset) if start < t < end]
+    worst = max(daylight_light_at(t, days) for t in cuts)
+    if worst == Light.AMBER:
         return "twilight", Light.AMBER, sun_up
-    return "daylight", Light.RED, sun_up
+    return "daylight", worst, sun_up
 
 
 def _lake_warning(warnings: list[Warning], start, end) -> LakeWarning:

@@ -5,7 +5,7 @@
 import { t, num, locale } from "./i18n.js";
 import { icon, iconShape, skyArt } from "./icons.js";
 import {
-  key, API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, twilight, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
+  key, API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, sunDaysOf, daylightParts, DAYLIGHT_REASONS, SUNSET_WINDOW_MS, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
 } from "./logic.js";
 import { isOwn, loadOwnForecast } from "./ownplace.js";
 
@@ -595,7 +595,7 @@ export function baseLabel(condition, topic = null, value = null) {
     lake_warning: t("DWD storm warning"), lake_strong_wind: t("DWD strong-wind warning"), single_cold: t("Single in cold water"),
     freezing_water: t("Near-freezing water"), weather_warning: t("Weather warning"), wind: t("Wind"), gusts: t("Gusts"),
     waves: t("Waves"), fog: t("Fog"), heavy_rain: t("Heavy rain"), hail: t("Hail"), thunderstorm: t("Thunderstorm risk"),
-    ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunrise / sunset"), cold_water: t("Very cold water"),
+    ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunset soon"), sunset_soon: t("Sunset soon"), cold_water: t("Very cold water"),
     cool_water: t("Cold-water shock possible"), shipping_stopped: t("Shipping stopped"), high_water: t("High water"),
     current: t("Strong current"), lake_lowered: t("Lake lowered"), lake_drained: t("Lake drained"),
   }[condition] ?? condition;
@@ -605,10 +605,25 @@ export function baseLabel(condition, topic = null, value = null) {
 export const lakeTitle = (name) => (name?.startsWith("Water near ") ? t("Water near %@", name.slice("Water near ".length)) : name);
 
 /** A reason's sentence for an hour; "sunrise or sunset in this hour" says which, and when. */
-export function hourExplanation(forecast, reason, hour) {
-  if (reason.condition === "twilight") {
-    const sun = twilight(forecast, hour);
-    if (sun) return sun.kind === "sunrise" ? t("Sunrise at %@ in this hour.", time(sun.time)) : t("Sunset at %@ in this hour.", time(sun.time));
+export function hourExplanation(forecast, reason, hour, now = new Date()) {
+  const days = sunDaysOf(forecast);
+  if (DAYLIGHT_REASONS.includes(reason.condition) && days.length) {
+    if (reason.condition === "sunset_soon") {
+      const set = days.map((d) => d.sunset).sort((a, b) => a - b).find((x) => x > now.getTime());
+      if (set != null) return t("Sunset at %@: %@ min of daylight left.", time(new Date(set)), String(Math.max(1, Math.ceil((set - now.getTime()) / 60e3))));
+    } else {
+      const start = Date.parse(hour.time);
+      const parts = daylightParts(start, days);
+      if (parts.length > 1) {
+        return parts.slice(1).map((p) => {
+          if (p.light === "green") return t("Sunrise at %@: good to row from then.", time(new Date(p.from)));
+          if (p.light === "red") return t("Sunset at %@: stay ashore from then.", time(new Date(p.from)));
+          return t("Sunset at %@: row with care from %@.", time(new Date(p.from + SUNSET_WINDOW_MS)), time(new Date(p.from)));
+        }).join(" ");
+      }
+      const set = days.map((d) => d.sunset).sort((a, b) => a - b).find((x) => x > start);
+      if (parts[0]?.light === "amber" && set != null) return t("Sunset at %@: back ashore by then.", time(new Date(set)));
+    }
   }
   const text = reasonExplanation(reason.condition, reason.light, reason.topic);
   return reason.mine ? `${text} ${t("You set this limit yourself.")}` : text;
@@ -639,7 +654,8 @@ export function reasonExplanation(condition, light, topic = null) {
     case "thunderstorm": return t("Thunderstorms are possible.");
     case "ice": return light === "red" ? t("Ice on the lake is likely (estimate).") : t("Thin ice at the shore or drift ice is possible (estimate).");
     case "daylight": return t("The sun is down. Rowing is only advised in daylight.");
-    case "twilight": return t("Sunrise or sunset falls in this hour.");
+    case "twilight":
+    case "sunset_soon": return t("The last hour before sunset: back ashore by sunset.");
     case "nearby_water": return t("Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.");
     case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10));
     case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
@@ -686,8 +702,14 @@ export function setTitle(text) {
 
 // ---- Small pieces, as in the app ---------------------------------------------------
 
-/** The rowing light as a dot; green turns grey on an old forecast. */
-export function dot(light, size = 14, stale = false) {
+/**
+ * The rowing light as a dot; green turns grey on an old forecast. With `halves` ({ start, end },
+ * hourHalves) an hour in which the daylight light changes shows half and half (TrafficLightDot).
+ */
+export function dot(light, size = 14, stale = false, halves = null) {
+  if (halves && !stale) {
+    return `<span class="dot split ${h(halves.start)}-${h(halves.end)}" style="--s:${size}px;--l:var(--${h(halves.start)});--r:var(--${h(halves.end)})" aria-hidden="true"></span>`;
+  }
   return `<span class="dot ${h(shownLight(light, stale))}" style="--s:${size}px" aria-hidden="true"></span>`;
 }
 
@@ -979,7 +1001,7 @@ export function conditionTexts() {
     thunderstorm: r("thunderstorm", t("Thunderstorm risk"), "", t("Estimated from the forecast. Official thunderstorm warnings for the place appear under the warnings.")),
     uvIndex: r("uvIndex", t("UV index"), "", t("How strong the sun's UV light is (WHO scale). From 3, protect your skin and eyes; the water reflects extra UV.")),
     ice: r("ice", t("Ice cover"), "", t("Estimated from the last weeks' frost and the water temperature, and on larger lakes checked against the Copernicus satellite ice map when clouds allow. Likely ice turns the light red, possible ice at the shore or drift ice amber. Never go onto the ice because of this app.")),
-    daylight: r("daylight", t("Daylight"), "", t("Rowing is only advised while the sun is up. Hours with sunrise or sunset are amber, dark hours red.")),
+    daylight: r("daylight", t("Daylight"), "", t("Rowing is only advised while the sun is up. The last hour before sunset is amber, the dark red; an hour in which the light changes shows its dot half and half.")),
   };
 }
 

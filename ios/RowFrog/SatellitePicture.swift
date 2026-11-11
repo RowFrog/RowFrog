@@ -1539,7 +1539,7 @@ struct SatelliteLegend: View {
                                 tr("Grey with red stripes: the whole lake is red now (official warning or darkness)."))
                         } else if stripes == .amber {
                             row(Image(systemName: "line.diagonal").foregroundStyle(.orange),
-                                tr("Amber stripes: the whole lake is amber now (sunrise or sunset, official warning)."))
+                                tr("Amber stripes: the whole lake is amber now (the last hour before sunset, official warning)."))
                         }
                         MapBoatNote(clubID: clubID)
                     }

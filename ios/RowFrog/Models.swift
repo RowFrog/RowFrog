@@ -294,7 +294,8 @@ struct Reason: Codable, Hashable {
         case "thunderstorm": tr("Thunderstorm risk")
         case "ice": tr("Ice")
         case "daylight": tr("Sun down")
-        case "twilight": tr("Sunrise / sunset")
+        case "twilight": tr("Sunset soon")
+        case "sunset_soon": tr("Sunset soon")
         case "cold_water": tr("Very cold water")
         case "cool_water": tr("Cold-water shock possible")
         case "shipping_stopped": tr("Shipping stopped")
@@ -345,7 +346,7 @@ struct Reason: Codable, Hashable {
         case "thunderstorm": tr("Thunderstorms are possible.")
         case "ice": light == .red ? tr("Ice on the lake is likely (estimate).") : tr("Thin ice at the shore or drift ice is possible (estimate).")
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
-        case "twilight": tr("Sunrise or sunset falls in this hour.")
+        case "twilight", "sunset_soon": tr("The last hour before sunset: back ashore by sunset.")
         case "nearby_water": tr("Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.")
         case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
         case "cool_water": tr("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", Format.temperature(15))
@@ -767,32 +768,47 @@ struct ClubForecast: Codable, Hashable {
         return later - now
     }
 
-    /// The forecast hour as it stands at `date`. That hour began up to
-    /// an hour ago, so "sunrise or sunset within the hour" is replaced by
-    /// whether the sun is actually up now.
+    /// The forecast hour as it stands at `date`. The hour's daylight light is the strictest
+    /// of its minutes, so it is replaced by the light of this minute (DaylightRule): green,
+    /// amber in the last hour before sunset ("sunset_soon"), red with the sun down.
     func current(at date: Date = .now) -> ForecastHour? {
         // An older forecast still starts hours ago: take the hour `date` falls in.
         guard let first = hours.last(where: { $0.time <= date }) ?? hours.first else { return nil }
-        guard let sun = sunState(at: date), first.reasons.contains(where: { $0.condition == "twilight" }) else { return first }
-        var reasons = first.reasons.filter { $0.condition != "twilight" }
-        var sunUp = true
-        if case .down = sun {
-            sunUp = false
-            reasons.insert(Reason(condition: "daylight", light: .red), at: 0)
+        guard let days = daylight, !days.isEmpty,
+              first.reasons.contains(where: { DaylightRule.reasonNames.contains($0.condition) }) else { return first }
+        var reasons = first.reasons.filter { !DaylightRule.reasonNames.contains($0.condition) }
+        let light = DaylightRule.light(at: date, days: days)
+        switch light {
+        case .red: reasons.insert(Reason(condition: "daylight", light: .red), at: 0)
+        case .amber: reasons.insert(Reason(condition: "sunset_soon", light: .amber), at: 0)
+        case .green: break
         }
-        return first.with(reasons: reasons, sunUp: sunUp)
+        return first.with(reasons: reasons, sunUp: light != .red)
     }
 
-    /// A reason's sentence for `hour`; "sunrise or sunset in this hour" says
-    /// which, and when.
-    func explanation(_ reason: Reason, in hour: ForecastHour) -> String {
-        guard reason.condition == "twilight", let days = daylight else { return reason.explanation }
-        let end = hour.time.addingTimeInterval(3600)
-        if let rise = days.map(\.sunrise).first(where: { $0 >= hour.time && $0 < end }) {
-            return tr("Sunrise at %@ in this hour.", Format.time(rise))
+    /// A reason's sentence for `hour`. The daylight's say when inside the hour the light
+    /// changes, and "now" in the last hour counts down to sunset.
+    func explanation(_ reason: Reason, in hour: ForecastHour, now: Date = .now) -> String {
+        guard DaylightRule.reasonNames.contains(reason.condition), let days = daylight, !days.isEmpty else { return reason.explanation }
+        if reason.condition == "sunset_soon" {
+            guard let set = days.map(\.sunset).sorted().first(where: { $0 > now }) else { return reason.explanation }
+            let minutes = max(1, Int((set.timeIntervalSince(now) / 60).rounded(.up)))
+            return tr("Sunset at %@: %@ min of daylight left.", Format.time(set), String(minutes))
         }
-        if let set = days.map(\.sunset).first(where: { $0 >= hour.time && $0 < end }) {
-            return tr("Sunset at %@ in this hour.", Format.time(set))
+        let parts = DaylightRule.parts(from: hour.time, days: days)
+        if parts.count > 1 {
+            return parts.dropFirst().map { part -> String in
+                switch part.light {
+                case .green: return tr("Sunrise at %@: good to row from then.", Format.time(part.from))
+                case .red: return tr("Sunset at %@: stay ashore from then.", Format.time(part.from))
+                case .amber:
+                    let set = part.from.addingTimeInterval(DaylightRule.sunsetWindow)
+                    return tr("Sunset at %@: row with care from %@.", Format.time(set), Format.time(part.from))
+                }
+            }.joined(separator: " ")
+        }
+        if parts.first?.light == .amber, let set = days.map(\.sunset).sorted().first(where: { $0 > hour.time }) {
+            return tr("Sunset at %@: back ashore by then.", Format.time(set))
         }
         return reason.explanation
     }

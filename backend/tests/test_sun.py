@@ -62,7 +62,45 @@ def test_rowing_only_advised_while_the_sun_is_up():
     night, dawn, day, dusk, evening = rowing_forecast(club, [_hour(4), _hour(5), _hour(12), _hour(16), _hour(18)], None)
     assert night.assessment.light == Light.RED and ("daylight", Light.RED) in night.assessment.reasons
     assert night.sun_up is False
-    assert dawn.assessment.reasons == [("twilight", Light.AMBER)]
+    # The sunrise and sunset hours are partly dark, so red (the app splits their dot).
+    assert dawn.assessment.reasons == [("daylight", Light.RED)]
     assert day.assessment.light == Light.GREEN and day.sun_up is True
-    assert dusk.assessment.reasons == [("twilight", Light.AMBER)]
+    assert dusk.assessment.reasons == [("daylight", Light.RED)]
     assert evening.assessment.light == Light.RED
+
+
+def _days(sunrise: tuple[int, int], sunset: tuple[int, int]) -> list:
+    from rowfrog.sun import SunDay
+
+    on = lambda hm: datetime(2026, 10, 18, *hm, tzinfo=timezone.utc)  # noqa: E731
+    return [SunDay(day=on(sunrise).date(), sunrise=on(sunrise), sunset=on(sunset))]
+
+
+def test_the_hour_before_sunset_turns_amber_to_the_minute():
+    from rowfrog.forecast import _daylight
+
+    days = _days((6, 0), (16, 49))
+    light = lambda hour: _daylight(_hour(hour), days)[:2]  # noqa: E731
+    assert light(14) == ("daylight", Light.GREEN)
+    assert light(15) == ("twilight", Light.AMBER)  # amber from 15:49
+    assert light(16) == ("daylight", Light.RED)  # dark from 16:49
+    assert light(17) == ("daylight", Light.RED)
+
+
+def test_sunset_on_the_hour_leaves_one_whole_amber_hour():
+    from rowfrog.forecast import _daylight
+
+    days = _days((6, 0), (17, 0))
+    assert _daylight(_hour(15), days)[:2] == ("daylight", Light.GREEN)
+    assert _daylight(_hour(16), days)[:2] == ("twilight", Light.AMBER)
+    assert _daylight(_hour(17), days)[:2] == ("daylight", Light.RED)
+
+
+def test_daylight_light_at_a_moment():
+    from rowfrog.forecast import daylight_light_at
+
+    days = _days((6, 0), (17, 1))
+    at = lambda h, m: daylight_light_at(datetime(2026, 10, 18, h, m, tzinfo=timezone.utc), days)  # noqa: E731
+    assert at(5, 59) == Light.RED and at(6, 0) == Light.GREEN
+    assert at(16, 0) == Light.GREEN and at(16, 1) == Light.AMBER
+    assert at(17, 0) == Light.AMBER and at(17, 1) == Light.RED
