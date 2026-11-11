@@ -70,8 +70,9 @@ struct APIClient {
     /// `keepFor`: a kept copy younger than that is used without asking, and an older one when
     /// the server can't be reached (the widgets); nil = always asked for (with the kept ETag).
     func forecast(clubID: String, model: String? = nil, keepFor: TimeInterval? = nil) async throws -> ClubForecast {
-        if let model { return try await get("clubs/\(clubID)/models/\(model)/forecast", keepFor: keepFor) }
-        return try await get("clubs/\(clubID)/forecast", keepFor: keepFor)
+        let found: ClubForecast = if let model { try await get("clubs/\(clubID)/models/\(model)/forecast", keepFor: keepFor) }
+            else { try await get("clubs/\(clubID)/forecast", keepFor: keepFor) }
+        return found.withSampleNearby()
     }
 
 #if !WIDGET_EXTENSION

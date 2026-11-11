@@ -209,6 +209,7 @@ workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
 - `-RWOpenUpdates YES` opens the update cycles sheet ("How often data is updated" at the end of the club page) of the page in front
 - `-RWSuggestLaunchPoint YES` with `-RWOpenLaunchPoint YES` also opens "Suggest the launch point" for a club whose launch point is not confirmed
 - `-RWSampleCause wind,thunderstorm` colours those values as if they set the light amber (closed values, peek line, open tiles), to check the colouring while the real light is green
+- `-RWSampleNearby fog` (or `wind`, `waves`) puts worse water within 1 km of the launch point into the first six hours: red light, the "… nearby" reason, and the top tile shows that worst value marked "Nearby"
 - `-RWSampleIce YES` the top tile shows a made-up "Shore ice possible" line, to check the winter layout outside the ice season
 - `-RWCombinedTopTile NO` Current conditions as its own card; `-RWTopTileOpen YES` the combined top tile starts open; `-RWSamplePeek thunderstorm` (or `ice`, `cloudCover`, …) shows that value's line under the sun line of the closed tile
 - `-RWWidgetRadar YES` (with `-RWWidgetGallery YES`) light rain on the radar from 30 minutes on, to show the widget's radar line
