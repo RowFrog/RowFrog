@@ -258,17 +258,22 @@ export async function getJSON(path) {
 
 /** Why a forecast could not be loaded: a few words and what happened, on whose side, what helps (RefreshFailure). */
 export function refreshFailure(error, ownPlace = false) {
+  // A TypeError is any failed fetch: no connection, but also an answer the browser
+  // blocks (no CORS headers), so it only counts as offline when the browser says so.
   const kind = error?.name === "TimeoutError" ? "timeout"
     : error instanceof SyntaxError ? "unreadable"
       : ownPlace ? "placeService"
         : error?.status === 404 ? "notFound"
-          : error?.status ? "server"
-            : error instanceof TypeError ? "offline" : "other";
+          : error?.status === 401 || error?.status === 403 ? "refused"
+            : error?.status ? "server"
+              : error instanceof TypeError ? (globalThis.navigator?.onLine === false ? "offline" : "unreachable") : "other";
   const code = String(error?.status ?? "");
   return {
     offline: [t("no internet connection"), t("Your browser could not reach the internet, or the connection dropped during the download. Check your connection, then try again.")],
     timeout: [t("the server did not answer in time"), t("The forecast server (api.rowfrog.com) did not answer in time. That is usually a slow connection or a short hiccup at the server. Try again in a minute.")],
-    notFound: [t("no forecast for this club on the server"), t("The server has no forecast file for this club. A newly added club gets one with the next forecast run, every 30 minutes. Nothing to fix on your side.")],
+    unreachable: [t("the server could not be reached"), t("The forecast server (api.rowfrog.com) could not be reached. Either your connection dropped, or the server did not answer properly, which is on our side. Try again in a minute.")],
+    notFound: [t("no forecast for this club on the server"), t("The server has no forecast file for this club yet. Every club gets one with the server's run for all clubs, which comes every 6 hours. Nothing to fix on your side.")],
+    refused: [t("server refused the download (error %@)", code), t("The forecast server (api.rowfrog.com) refused to hand out the forecast (error %@). That is on our side, not yours. Trying again will not help until we have fixed it; until then, check the conditions yourself.", code)],
     server: [t("server error %@", code), t("The forecast server (api.rowfrog.com) answered with error %@. That is on our side, not yours, and usually fixes itself. Try again later.", code)],
     unreadable: [t("the forecast could not be read"), t("The forecast arrived, but this version of the website could not read it. Reload the page; if that doesn't help, tell us.")],
     placeService: [t("the weather service did not answer"), t("Your own places get their forecast straight from Open-Meteo, which did not answer properly. That is on their side and usually passes quickly. Try again later.")],

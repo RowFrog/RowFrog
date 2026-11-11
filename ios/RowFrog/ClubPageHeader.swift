@@ -46,17 +46,20 @@ struct ClubPageHeader: View {
             }
             if let forecast = forecasts.forecasts[club.id] {
                 let updated = forecast.generatedAt
-                if forecast.isStale() {
+                let stale = forecast.isStale()
+                if stale {
                     // Old data must not look current: say so plainly, with the day.
                     Label(tr("Forecast out of date: from %@. Pull down to refresh, and check the conditions yourself.", Format.dayTime(updated)), systemImage: "clock.badge.exclamationmark")
                         .font(.caption.weight(.semibold))
                         .foregroundStyle(.orange)
                         .multilineTextAlignment(.center)
-                } else if let failure = forecasts.failures[club.id] {
-                    // Tap for why, whose side it is on, and what helps.
+                }
+                if let failure = forecasts.failures[club.id] {
+                    // Also under an out-of-date line, so the reason never hides
+                    // behind it (owner, 11 Nov 2026). Tap for why, whose side it is on, and what helps.
                     Button { showingFailure = failure } label: {
                         Label {
-                            Text(tr("Could not update: %@. Showing data from %@.", failure.short, Format.time(updated)))
+                            Text(tr("Could not update: %@. Showing data from %@.", failure.short, stale ? Format.dayTime(updated) : Format.time(updated)))
                                 + Text(" ") + Text(Image(systemName: "info.circle"))
                         } icon: {
                             Image(systemName: "wifi.exclamationmark")
@@ -66,6 +69,8 @@ struct ClubPageHeader: View {
                         .multilineTextAlignment(.center)
                     }
                     .buttonStyle(.plain)
+                } else if stale {
+                    // The out-of-date line above says it all.
                 } else if forecasts.loading.contains(club.id) {
                     Label(tr("Updating…"), systemImage: "arrow.triangle.2.circlepath")
                         .font(.caption)
