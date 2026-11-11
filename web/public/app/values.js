@@ -85,17 +85,12 @@ function warnings(d, words) {
     && words.some((word) => (w.event ?? "").toUpperCase().includes(word)));
 }
 
-/** The place's warnings come from DWD (Germany, older files); else labels say "official" (ConditionsCard warningsAreDWD). */
-function warningsAreDWD(d) {
-  return (d.forecast.warnings?.local?.source ?? "dwd") === "dwd";
-}
-
 /** False where no warning service was read: then "no warning" must not be said. */
 function warningsChecked(d) {
   return d.forecast.warnings?.local?.checked !== false;
 }
 
-const warningsLabel = (d) => (warningsAreDWD(d) ? t("DWD warnings") : t("Official warnings"));
+const warningsLabel = () => t("Official warnings");
 
 function warningNames(d, words) {
   const found = warnings(d, words);
@@ -413,7 +408,7 @@ const BUILDERS = {
       const clear = d.future.find((y) => new Date(y.time) >= fog.end && (y.visibilityM ?? Infinity) >= 1000 && y.sunUp !== false);
       facts.push([t("Rowing possible"), clear ? t("from about %@ by visibility", dayTime(clear.time)) : t("not in the forecast")]);
     } else facts.push([t("Fog"), t("not in the next 24 h")]);
-    facts.push([t("Mist"), mist ? span(mist) : t("not in the next 24 h")], [warningsAreDWD(d) ? t("DWD fog warning") : t("Official fog warning"), warningNames(d, ["NEBEL"])],
+    facts.push([t("Mist"), mist ? span(mist) : t("not in the next 24 h")], [t("Official fog warning"), warningNames(d, ["NEBEL"])],
       [t("Lake view"), t("fog shows as a banner over the whole lake")]);
     return base({
       value: distance(x.visibilityM), note: fogHour(x) ? t("Fog now") : fog ? t("Fog expected %@", span(fog)) : t("No fog in the next 24 h"), unit: unitSymbol("distance"),
@@ -497,8 +492,7 @@ const BUILDERS = {
     return base({
       value: light === "red" ? t("High") : light === "amber" ? t("Possible") : t("Low"),
       note: !warningsChecked(d) ? t("Warnings not checked")
-        : !warningsAreDWD(d) ? (warnings(d, ["GEWITTER"]).length ? t("Official thunderstorm warning") : t("No official thunderstorm warning"))
-        : warnings(d, ["GEWITTER"]).length ? t("DWD thunderstorm warning") : t("No DWD thunderstorm warning"),
+        : warnings(d, ["GEWITTER"]).length ? t("Official thunderstorm warning") : t("No official thunderstorm warning"),
       unit: "J/kg",
       lines: [{ name: t("Energy for storms (CAPE)"), colour: COLOURS.yellow, kind: "bars", points: d.points((y) => y.capeJkg) }],
       limits: [{ value: 500, colour: COLOURS.orange, label: t("Possible") }, { value: 1000, colour: COLOURS.red, label: t("Likely") }],

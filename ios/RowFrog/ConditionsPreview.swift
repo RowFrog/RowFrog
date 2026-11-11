@@ -214,7 +214,7 @@ private struct CompactConditionsMock: View {
                 compactTile(.pressure, "1023", "hPa · steady") {
                     PressureGauge(hpa: 1023, trend: .steady).frame(width: 44, height: 44)
                 }
-                compactTile(.thunderstorm, "Low", "No DWD warning") {
+                compactTile(.thunderstorm, "Low", "No warning") {
                     LevelSegments(level: 1, colors: [.green, .orange, .red])
                 }
                 compactTile(DetailMock.uvSymbol, "UV index", "0", "Max 2 tomorrow") {
@@ -784,7 +784,7 @@ extension DetailMock {
             limits: [(4, .orange, "Heavy rain")],
             limitInfo: "4 mm per hour is a common line for heavy rain (the UK Met Office uses it; DWD only warns from 15 mm per hour). From there you are soaked within minutes, visibility drops and a long outing takes on water. Hail always counts as red. Official DWD warnings for heavy rain or hail always win over this estimate.",
             yDomain: 0...6,
-            facts: [("Next 24 h", "2.6 mm in total"), ("Kind", "rain, no hail or snow"), ("Heaviest", "0.9 mm at 01:00"), ("DWD warnings", "none (heavy rain and hail show here)"), ("Rowing light", "green: under 4 mm per hour")],
+            facts: [("Next 24 h", "2.6 mm in total"), ("Kind", "rain, no hail or snow"), ("Heaviest", "0.9 mm at 01:00"), ("Official warnings", "none (heavy rain and hail show here)"), ("Rowing light", "green: under 4 mm per hour")],
             rowing: "Light rain only; hail would come with a thunderstorm warning.",
             source: "Precipitation per hour and weather code, DWD via Open-Meteo."
         ),
@@ -794,7 +794,7 @@ extension DetailMock {
             limits: [(5, .secondary, "Mist"), (1, .orange, "Fog: row with care"), (0.5, .red, "Stay ashore")],
             limitInfo: "Fog means visibility under 1 km (the WMO definition): amber. Under 500 m you see another boat or a passenger ship only about 2 minutes ahead at rowing speed, and you lose sight of the shore: red. Mist (1–5 km) has no limit, but the app mentions it because it often thickens into fog. The scale is stretched at the bottom so short distances are easy to read.",
             yDomain: 0.1...80, logScale: true, trendStep: 1,
-            facts: [("Fog", "04:00–07:00, thickest 0.3 km at 06:00"), ("Mist", "08:00–09:00, 1.6–4 km"), ("Rowing possible", "from about 08:00 by visibility (sunrise 07:40)"), ("DWD fog warning", "none"), ("Lake view", "fog shows as a banner over the whole lake")],
+            facts: [("Fog", "04:00–07:00, thickest 0.3 km at 06:00"), ("Mist", "08:00–09:00, 1.6–4 km"), ("Rowing possible", "from about 08:00 by visibility (sunrise 07:40)"), ("Official fog warning", "none"), ("Lake view", "fog shows as a banner over the whole lake")],
             rowing: "Fog tomorrow morning: wait until about 08:00, when it has lifted to mist.",
             source: "Visibility, DWD via Open-Meteo."
         ),
@@ -826,12 +826,12 @@ extension DetailMock {
             source: "Air pressure at sea level, DWD via Open-Meteo."
         ),
         DetailMock(
-            symbol: d(.thunderstorm).0, title: d(.thunderstorm).1, value: "Low", note: "No DWD thunderstorm warning", unit: "J/kg",
+            symbol: d(.thunderstorm).0, title: d(.thunderstorm).1, value: "Low", note: "No official thunderstorm warning", unit: "J/kg",
             series: [Series(name: "Energy for storms (CAPE)", values: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 40, 80, 120, 150, 120, 60, 20, 0, 0, 0, 0, 0, 0], color: .yellow, kind: .bars)],
             limits: [(500, .orange, "Possible"), (1000, .red, "Likely")],
             limitInfo: "CAPE is the energy the air has for rising, in J/kg. From 500 J/kg thunderstorms are possible if something sets them off (amber); from 1000 J/kg together with rain they are likely (red). This is the app's own estimate; an official DWD thunderstorm warning always makes the light red.",
             yDomain: 0...1300,
-            facts: [("Highest risk", "low, tomorrow 15:00"), ("DWD warnings", "none for Starnberg")],
+            facts: [("Highest risk", "low, tomorrow 15:00"), ("Official warnings", "none for Starnberg")],
             rowing: "If you hear thunder, head for the shore at once: lightning can strike 10 km ahead of a storm.",
             source: "Estimated from DWD forecast (CAPE); official DWD warnings appear under DWD warnings."
         ),
