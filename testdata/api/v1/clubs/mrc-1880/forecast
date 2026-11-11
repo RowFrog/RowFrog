@@ -345,10 +345,15 @@
    "dewPointC": 5.5,
    "fetchM": 15,
    "humidityPct": 70,
-   "light": "green",
+   "light": "amber",
    "precipitationMm": 0.0,
    "pressureHpa": 1014.2,
-   "reasons": [],
+   "reasons": [
+    {
+     "condition": "twilight",
+     "light": "amber"
+    }
+   ],
    "sunUp": true,
    "temperatureC": 13.2,
    "time": "2026-10-18T15:00:00+00:00",
@@ -370,13 +375,13 @@
    "dewPointC": 5.5,
    "fetchM": 14,
    "humidityPct": 70,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1014.0,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     }
    ],
    "sunUp": false,
@@ -760,13 +765,13 @@
    "dewPointC": 5.5,
    "fetchM": 35,
    "humidityPct": 92,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1011.4,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     },
     {
      "condition": "fog",
@@ -1068,10 +1073,15 @@
    "dewPointC": 5.5,
    "fetchM": 869,
    "humidityPct": 70,
-   "light": "green",
+   "light": "amber",
    "precipitationMm": 0.0,
    "pressureHpa": 1009.4,
-   "reasons": [],
+   "reasons": [
+    {
+     "condition": "twilight",
+     "light": "amber"
+    }
+   ],
    "sunUp": true,
    "temperatureC": 13.2,
    "time": "2026-10-19T15:00:00+00:00",
@@ -1093,13 +1103,13 @@
    "dewPointC": 5.5,
    "fetchM": 950,
    "humidityPct": 70,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1009.2,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     }
    ],
    "sunUp": false,
@@ -1483,13 +1493,13 @@
    "dewPointC": 5.5,
    "fetchM": 2806,
    "humidityPct": 92,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1006.6,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     },
     {
      "condition": "fog",
@@ -1833,10 +1843,15 @@
    "dewPointC": 5.5,
    "fetchM": 15,
    "humidityPct": 70,
-   "light": "green",
+   "light": "amber",
    "precipitationMm": 0.0,
    "pressureHpa": 1014.2,
-   "reasons": [],
+   "reasons": [
+    {
+     "condition": "twilight",
+     "light": "amber"
+    }
+   ],
    "sunUp": true,
    "temperatureC": 13.2,
    "time": "2026-10-17T15:00:00+00:00",
@@ -1858,13 +1873,13 @@
    "dewPointC": 5.5,
    "fetchM": 14,
    "humidityPct": 70,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1014.0,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     }
    ],
    "sunUp": false,
@@ -2248,13 +2263,13 @@
    "dewPointC": 5.5,
    "fetchM": 35,
    "humidityPct": 92,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1011.4,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     },
     {
      "condition": "fog",
@@ -2570,10 +2585,15 @@
    "dewPointC": 5.5,
    "fetchM": 869,
    "humidityPct": 70,
-   "light": "green",
+   "light": "amber",
    "precipitationMm": 0.0,
    "pressureHpa": 1009.4,
-   "reasons": [],
+   "reasons": [
+    {
+     "condition": "twilight",
+     "light": "amber"
+    }
+   ],
    "sunUp": true,
    "temperatureC": 13.2,
    "time": "2026-10-18T15:00:00+00:00",
@@ -2595,13 +2615,13 @@
    "dewPointC": 5.5,
    "fetchM": 950,
    "humidityPct": 70,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1009.2,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     }
    ],
    "sunUp": false,
@@ -2985,13 +3005,13 @@
    "dewPointC": 5.5,
    "fetchM": 2806,
    "humidityPct": 92,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1006.6,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     },
     {
      "condition": "fog",
@@ -3293,10 +3313,15 @@
    "dewPointC": 5.5,
    "fetchM": 23,
    "humidityPct": 70,
-   "light": "green",
+   "light": "amber",
    "precipitationMm": 0.0,
    "pressureHpa": 1004.6,
-   "reasons": [],
+   "reasons": [
+    {
+     "condition": "twilight",
+     "light": "amber"
+    }
+   ],
    "sunUp": true,
    "temperatureC": 13.2,
    "time": "2026-10-19T15:00:00+00:00",
@@ -3318,13 +3343,13 @@
    "dewPointC": 5.5,
    "fetchM": 19,
    "humidityPct": 70,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1004.4,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     }
    ],
    "sunUp": false,
@@ -3708,13 +3733,13 @@
    "dewPointC": 5.5,
    "fetchM": 15,
    "humidityPct": 92,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 1001.8,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     },
     {
      "condition": "fog",
@@ -4016,10 +4041,15 @@
    "dewPointC": 5.5,
    "fetchM": 83,
    "humidityPct": 70,
-   "light": "green",
+   "light": "amber",
    "precipitationMm": 0.0,
    "pressureHpa": 999.8,
-   "reasons": [],
+   "reasons": [
+    {
+     "condition": "twilight",
+     "light": "amber"
+    }
+   ],
    "sunUp": true,
    "temperatureC": 13.2,
    "time": "2026-10-20T15:00:00+00:00",
@@ -4041,13 +4071,13 @@
    "dewPointC": 5.5,
    "fetchM": 727,
    "humidityPct": 70,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 999.6,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     }
    ],
    "sunUp": false,
@@ -4431,13 +4461,13 @@
    "dewPointC": 5.5,
    "fetchM": 5470,
    "humidityPct": 92,
-   "light": "amber",
+   "light": "red",
    "precipitationMm": 0.0,
    "pressureHpa": 997.0,
    "reasons": [
     {
-     "condition": "twilight",
-     "light": "amber"
+     "condition": "daylight",
+     "light": "red"
     },
     {
      "condition": "fog",

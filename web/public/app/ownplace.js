@@ -6,6 +6,8 @@
 // Without a lake outline there are no waves, and there are no water
 // temperature, ice or DWD warnings.
 
+import { daylightParts } from "./logic.js";
+
 export const OWN_PREFIX = "own-";
 export const isOwn = (id) => String(id ?? "").startsWith(OWN_PREFIX);
 
@@ -46,15 +48,17 @@ function thunderstorm(cape, rain) {
   return (cape ?? 0) >= T.capeAmber ? "amber" : "green";
 }
 
-/** As forecast._daylight: green with the sun up all hour, amber ("twilight") with sunrise or sunset inside it, red in the dark. */
+/**
+ * As forecast._daylight: the strictest daylight light of any minute in the hour (daylightParts):
+ * red with the sun down for any part, amber in the last hour before sunset.
+ */
 export function daylight(start, days, isDay) {
   if (!days.length) return ["daylight", isDay === false ? "red" : "green", isDay];
-  const end = start + 3600e3;
   const middle = start + 1800e3;
   const sunUp = days.some((d) => d.rise <= middle && middle < d.set);
-  if (days.some((d) => d.rise <= start && end <= d.set)) return ["daylight", "green", sunUp];
-  if (days.some((d) => [d.rise, d.set].some((x) => start < x && x < end))) return ["twilight", "amber", sunUp];
-  return ["daylight", "red", sunUp];
+  const parts = daylightParts(start, days.map((d) => ({ sunrise: d.rise, sunset: d.set })));
+  const worst = parts.reduce((w, p) => (RANK[p.light] > RANK[w] ? p.light : w), "green");
+  return [worst === "amber" ? "twilight" : "daylight", worst, sunUp];
 }
 
 /** The hours in the backend's forecast format, so the club page shows them like any club's. */

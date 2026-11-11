@@ -225,18 +225,14 @@ enum PlaceForecaster {
         return cape >= capeAmber ? .amber : .green
     }
 
-    /// As forecast._daylight: green with the sun up all hour, amber ("twilight")
-    /// with sunrise or sunset inside it, red in the dark.
+    /// As forecast._daylight: the strictest daylight light of any minute in the hour
+    /// (DaylightRule): red with the sun down for any part, amber in the last hour before sunset.
     static func daylight(start: Date, days: [SunDay], isDay: Bool?) -> (String, Light, Bool?) {
         guard !days.isEmpty else { return ("daylight", isDay == false ? .red : .green, isDay) }
-        let end = start.addingTimeInterval(3600)
         let middle = start.addingTimeInterval(1800)
         let sunUp = days.contains { $0.sunrise <= middle && middle < $0.sunset }
-        if days.contains(where: { $0.sunrise <= start && end <= $0.sunset }) { return ("daylight", .green, sunUp) }
-        if days.contains(where: { day in [day.sunrise, day.sunset].contains { start < $0 && $0 < end } }) {
-            return ("twilight", .amber, sunUp)
-        }
-        return ("daylight", .red, sunUp)
+        let worst = DaylightRule.parts(from: start, days: days).map(\.light).max() ?? .green
+        return (worst == .amber ? "twilight" : "daylight", worst, sunUp)
     }
 }
 

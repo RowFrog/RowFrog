@@ -11,10 +11,15 @@ test("sunrise and sunset as the backend works them out", () => {
   assert.equal(sunDay(Date.UTC(2026, 5, 21), 80, 0), null);
 });
 
-test("daylight: green all hour, amber with sunrise inside, red in the dark", () => {
+test("daylight: the strictest minute of the hour, amber in the last hour before sunset", () => {
   const day = [{ rise: Date.UTC(2026, 9, 26, 5, 50), set: Date.UTC(2026, 9, 26, 16, 7) }];
   assert.deepEqual(daylight(Date.UTC(2026, 9, 26, 10), day, true).slice(0, 2), ["daylight", "green"]);
-  assert.deepEqual(daylight(Date.UTC(2026, 9, 26, 5), day, true).slice(0, 2), ["twilight", "amber"]);
+  // Sunrise inside the hour: dark before it.
+  assert.deepEqual(daylight(Date.UTC(2026, 9, 26, 5), day, true).slice(0, 2), ["daylight", "red"]);
+  // 15:07 starts the last hour: 14:00 is green until then, then amber.
+  assert.deepEqual(daylight(Date.UTC(2026, 9, 26, 14), day, true).slice(0, 2), ["daylight", "green"]);
+  assert.deepEqual(daylight(Date.UTC(2026, 9, 26, 15), day, true).slice(0, 2), ["twilight", "amber"]);
+  assert.deepEqual(daylight(Date.UTC(2026, 9, 26, 16), day, true).slice(0, 2), ["daylight", "red"]);
   assert.deepEqual(daylight(Date.UTC(2026, 9, 26, 20), day, false).slice(0, 2), ["daylight", "red"]);
 });
 

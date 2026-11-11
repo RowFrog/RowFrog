@@ -30,12 +30,51 @@ struct TrafficLightDot: View {
     let light: Light
     var size: CGFloat = 14
     var stale = false
+    /// An hour in which the light changes: left half the light it starts with, right half
+    /// the one it ends with (owner's pick D, 6 Nov 2026).
+    var halves: DotHalves? = nil
+    @Environment(\.accessibilityDifferentiateWithoutColor) private var withoutColor
 
     var body: some View {
-        Circle()
-            .fill(light.color(stale: stale))
-            .frame(width: size, height: size)
-            .accessibilityLabel(light.title(stale: stale))
+        Group {
+            if let halves, !stale {
+                ZStack {
+                    Circle().fill(halves.start.color(stale: false))
+                    Circle().fill(halves.end.color(stale: false))
+                        .mask(HStack(spacing: 0) { Color.clear; Color.black })
+                    if withoutColor {
+                        // Settings › Accessibility › Display & Text Size › Differentiate Without Colour:
+                        // a gap between the halves, so the change shows without its colours.
+                        Rectangle().fill(.background).frame(width: max(1, size / 10))
+                    }
+                }
+                .clipShape(Circle())
+            } else {
+                Circle().fill(light.color(stale: stale))
+            }
+        }
+        .overlay {
+            // The same setting: a mark in the dot for amber and red, where it is big enough to read.
+            if withoutColor, !stale, size >= 12, let mark = (halves.map { max($0.start, $0.end) } ?? light).mark {
+                Image(systemName: mark)
+                    .font(.system(size: size * 0.5, weight: .black))
+                    .foregroundStyle(.white)
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityElement()
+        .accessibilityLabel(halves.map { tr("%@, then %@", $0.start.title, $0.end.title) } ?? light.title(stale: stale))
+    }
+}
+
+extension Light {
+    /// The mark in the dot when colours are not to be relied on: none for green.
+    var mark: String? {
+        switch self {
+        case .green: nil
+        case .amber: "exclamationmark"
+        case .red: "xmark"
+        }
     }
 }
 

@@ -667,7 +667,7 @@ function legend(lake) {
     const kind = hour ? stripes(hour.lakeWide) : null;
     const stripeRow = kind === "red"
       ? row(`<span class="stripes red"></span>`, t("Grey with red stripes: the whole lake is red now (official warning or darkness)."))
-      : kind === "amber" ? row(`<span class="stripes amber"></span>`, t("Amber stripes: the whole lake is amber now (sunrise or sunset, official warning).")) : "";
+      : kind === "amber" ? row(`<span class="stripes amber"></span>`, t("Amber stripes: the whole lake is amber now (the last hour before sunset, official warning).")) : "";
     body += `<h3>${h(t("Rowing light"))}</h3>${layerLegend("light")}${stripeRow ? `<ul class="legend">${stripeRow}</ul>` : ""}${mapBoatNote()}`;
   }
   if (on.has("waves")) body += `<h3>${h(t("Waves"))}</h3>${layerLegend("waves")}`;

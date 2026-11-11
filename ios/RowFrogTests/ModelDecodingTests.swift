@@ -43,13 +43,15 @@ final class ModelDecodingTests: XCTestCase {
         {"clubId": "x", "lakeId": "y", "generatedAt": "2026-10-18T16:00:00+00:00", "attribution": [],
          "daylight": [{"date": "2026-10-18", "sunrise": "2026-10-18T05:35:00+00:00", "sunset": "2026-10-18T16:21:00+00:00"},
                       {"date": "2026-10-19", "sunrise": "2026-10-19T05:37:00+00:00", "sunset": "2026-10-19T16:19:00+00:00"}],
-         "hours": [{"time": "2026-10-18T16:00:00+00:00", "light": "amber",
-                    "reasons": [{"condition": "twilight", "light": "amber"}]}]}
+         "hours": [{"time": "2026-10-18T16:00:00+00:00", "light": "red",
+                    "reasons": [{"condition": "daylight", "light": "red"}]}]}
         """
         let forecast = try APIClient.decoder.decode(ClubForecast.self, from: Data(json.utf8))
         let before = ISO8601DateFormatter().date(from: "2026-10-18T16:10:00Z")!
         let after = ISO8601DateFormatter().date(from: "2026-10-18T16:40:00Z")!
-        XCTAssertEqual(forecast.current(at: before)?.light, .green)
+        // The last hour before sunset is amber; the hour's red is for its dark minutes.
+        XCTAssertEqual(forecast.current(at: before)?.light, .amber)
+        XCTAssertEqual(forecast.current(at: before)?.reasons.first?.condition, "sunset_soon")
         XCTAssertEqual(forecast.current(at: after)?.light, .red)
         XCTAssertEqual(forecast.current(at: after)?.reasons.first?.label, "Sun down")
     }

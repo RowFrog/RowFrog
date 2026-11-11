@@ -21,7 +21,7 @@ import {
   isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
-  waterForHour, key, nightParts, nightSummary, sky,
+  waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf } from "./lake.js";
@@ -254,8 +254,9 @@ function boatClassTag(boat) {
 }
 
 /** An hour of the 48 hours read as one sentence by a screen reader, not ten loose numbers (HourRow.accessibilityText). */
-function hourSentence(x, stale) {
-  const parts = [time(x.time), lightTitle(x.light, stale), t(SKY_TITLES[sky(x.weatherCode)]), degrees(x.temperatureC), t("Feels like %@", degrees(x.apparentTemperatureC))];
+function hourSentence(x, stale, halves = null) {
+  const light = halves ? t("%@, then %@", lightTitle(halves.start), lightTitle(halves.end)) : lightTitle(x.light, stale);
+  const parts = [time(x.time), light, t(SKY_TITLES[sky(x.weatherCode)]), degrees(x.temperatureC), t("Feels like %@", degrees(x.apparentTemperatureC))];
   if (x.windSpeedMs != null) parts.push(t("wind %@", wind(x.windSpeedMs)));
   if (x.windGustMs != null) parts.push(t("gusts up to %@", wind(x.windGustMs)));
   if (x.waveHeightM != null) parts.push(t("waves %@", waves(x.waveHeightM)));
@@ -1351,7 +1352,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
   const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
   return `<section class="card now ${combined && store.topTileOpen ? "all-open" : ""}">
     <div class="now-head">
-      ${dot(hour.light, 36, stale)}
+      ${dot(hour.light, 36, stale, at ? hourHalves(forecast, hour, stale) : null)}
       <div class="now-title">
         <h2><span class="verdict">${h(lightTitle(hour.light, stale))}</span> ${at ? "" : `<button class="info" data-legend="lights" aria-label="${h(t("What the symbols mean"))}">${icon("info")}</button>`}</h2>
         <small class="sub boat-for">${h(boat)}</small>
@@ -1777,8 +1778,9 @@ function hourlyCard(forecast, now, stale) {
       lastDay = day;
     }
     const fog = lightFor(x, ["fog"]);
-    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}" aria-label="${h(hourSentence(x, stale))}">
-      <span>${h(time(x.time))}</span><span>${dot(x.light, 12, stale)}</span><span>${skySymbol(x)}</span>
+    const halves = hourHalves(forecast, x, stale);
+    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}" aria-label="${h(hourSentence(x, stale, halves))}">
+      <span>${h(time(x.time))}</span><span>${dot(x.light, 12, stale, halves)}</span><span>${skySymbol(x)}</span>
       <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
       <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>
       <span class="num">${h(windRange(x.windSpeedMs, x.windGustMs))}</span>
@@ -1787,7 +1789,7 @@ function hourlyCard(forecast, now, stale) {
       <span class="num ${fog && fog !== "green" ? (fog === "red" ? "red" : "orange") : ""}">${h(distanceNumber(x.visibilityM))}</span>
     </button>`;
   };
-  const rows = nightParts(list).map((part) => {
+  const rows = nightParts(list, sunDaysOf(forecast)).map((part) => {
     if (part.hour) return row(part.hour);
     // The night's day header after midnight shows inside the opened night; folded,
     // the next hour shown brings its own (hidden again while the night is open).

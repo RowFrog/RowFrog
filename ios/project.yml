@@ -130,6 +130,7 @@ targets:
       - path: RowFrog/Limits.swift
       - path: RowFrog/Sky.swift
       - path: RowFrog/TrafficLightView.swift
+      - path: RowFrog/DaylightRule.swift
       - path: RowFrog/Backgrounds.swift
       - path: RowFrog/WidgetViews.swift
       - path: RowFrog/OwnPlaces.swift
