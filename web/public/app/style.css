@@ -924,8 +924,8 @@ input.switch:checked::after { transform: translateX(20px); }
 
 /* Arrange this page (ArrangePageSheet) */
 /* On the card's own surface, as the app's Arrange this page button (cardBackground, 18 pt corners). */
-#arrange.pill { display: flex; margin: 14px auto 0; background: var(--card); color: var(--accent); border-radius: 18px; padding: 8px 14px; font-size: 15px; }
-body.has-picture[data-tiles="frosted"] #arrange.pill { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
+#arrange.pill, #updates.pill { display: flex; margin: 14px auto 0; background: var(--card); color: var(--accent); border-radius: 18px; padding: 8px 14px; font-size: 15px; }
+body.has-picture[data-tiles="frosted"] #arrange.pill, body.has-picture[data-tiles="frosted"] #updates.pill { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
 .arrange .sheet-body { padding: 0 16px 20px; }
 .arrange .segmented { margin: 4px 0 6px; }
 .arrange .footer { margin: 6px 4px 14px; }
@@ -1259,3 +1259,8 @@ body.has-picture .side { border-right: none; }
 @media (pointer: coarse) { .lake-map .leaflet-control-zoom { display: none; } }
 /* Add a place: the hint is a plain sentence above the map, as in the app. */
 .add-place .hint { color: var(--sub); font-size: 15px; margin: 0 4px 8px; }
+
+/* "How often data is updated" (UpdateCyclesButton): under Arrange this page, and its sheet's rows. */
+#updates.pill { margin-top: 10px; min-height: 44px; }
+.legend.cycles small { font-size: 13px; margin-top: 2px; color: var(--text); }
+.legend.cycles small.sub { color: var(--sub); }
