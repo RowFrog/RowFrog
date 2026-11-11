@@ -50,42 +50,10 @@ struct ConditionTiles: View {
     var body: some View {
         let data = ConditionData(forecast: forecast, now: hour, radar: club.flatMap { RadarStore.shared.radar(at: $0.launchPoint) },
                                  radarStatus: club.flatMap { RadarStore.shared.status(at: $0.launchPoint) })
-        // Pairs that belong together share a row, and both tiles of a row are as tall.
-        Grid(horizontalSpacing: 8, verticalSpacing: 8) {
-            ForEach(Array(stride(from: 0, to: Condition.tileOrder.count, by: 2)), id: \.self) { i in
-                GridRow {
-                    ForEach(Condition.tileOrder[i..<min(i + 2, Condition.tileOrder.count)]) { condition in
-                        // On a river the Current tile takes the ice tile's place.
-                        if condition == .ice, let river = forecast.river {
-                            Button {
-                                showingCurrent = true
-                            } label: {
-                                CurrentTile(river: river)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityHint(tr("Opens the water level and current"))
-                        } else if condition == .ice, let level = forecast.waterLevel, level.isLowered {
-                            // On a lake let down for the winter the Water level tile takes it.
-                            Button {
-                                showingLevel = true
-                                WaterLevelTip().invalidate(reason: .actionPerformed)
-                            } label: {
-                                WaterLevelTile(level: level)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityHint(tr("Opens the lake's water level"))
-                        } else {
-                            Button {
-                                open = condition
-                            } label: {
-                                ConditionTile(condition: condition, data: data)
-                            }
-                            .buttonStyle(.plain)
-                            .accessibilityHint(tr("Opens a chart and more about this value"))
-                            .accessibilityIdentifier("condition-\(condition.rawValue)")
-                        }
-                    }
-                }
+        // Pairs that belong together share a row, and all tiles are as tall as the tallest.
+        ConditionTileGrid(spacing: 8) {
+            ForEach(Condition.tileOrder) { condition in
+                tile(condition, data: data)
             }
         }
         .detailCover(item: $open) { condition in
@@ -105,6 +73,38 @@ struct ConditionTiles: View {
                 try? await Task.sleep(for: .milliseconds(500))
                 open = Condition(rawValue: raw)
             }
+        }
+    }
+
+    /// One tile: on a river the Current tile takes the ice tile's place, on a lake let
+    /// down for the winter the Water level tile.
+    @ViewBuilder private func tile(_ condition: Condition, data: ConditionData) -> some View {
+        if condition == .ice, let river = forecast.river {
+            Button {
+                showingCurrent = true
+            } label: {
+                CurrentTile(river: river)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(tr("Opens the water level and current"))
+        } else if condition == .ice, let level = forecast.waterLevel, level.isLowered {
+            Button {
+                showingLevel = true
+                WaterLevelTip().invalidate(reason: .actionPerformed)
+            } label: {
+                WaterLevelTile(level: level)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(tr("Opens the lake's water level"))
+        } else {
+            Button {
+                open = condition
+            } label: {
+                ConditionTile(condition: condition, data: data)
+            }
+            .buttonStyle(.plain)
+            .accessibilityHint(tr("Opens a chart and more about this value"))
+            .accessibilityIdentifier("condition-\(condition.rawValue)")
         }
     }
 }

@@ -7,6 +7,8 @@ struct ConditionTile: View {
     let condition: Condition
     let data: ConditionData
     @Environment(\.surface) private var surface
+    /// The caption's text size (caption2), following the reader's text size.
+    @ScaledMetric(relativeTo: .caption2) private var captionSize: CGFloat = 11
 
     private var hour: ForecastHour { data.now }
     /// The ice tile outside November to April: greyed out, still opens its detail.
@@ -24,7 +26,7 @@ struct ConditionTile: View {
                             Text(value).font(.title3.weight(.semibold)).lineLimit(1).minimumScaleFactor(0.7)
                                 .foregroundStyle(cause ?? .primary)
                                 .accessibilityLabel(light == nil ? value : value + ", " + tr("Sets the light: %@", light?.title ?? ""))
-                            detailLine.font(.caption2).foregroundStyle(.secondary).lineLimit(1).minimumScaleFactor(0.8)
+                            caption.foregroundStyle(.secondary)
                         }
                         Spacer(minLength: 0)
                         // Every graphic gets the same height, so all tiles are as tall.
@@ -89,6 +91,27 @@ struct ConditionTile: View {
         case .uvIndex: Format.number(hour.uvIndex)
         case .ice: iceGuess.value
         case .daylight: ""
+        }
+    }
+
+    /// The short line under the value, on one line and shrunk to 80 % at most, as before.
+    /// Only the rain tile's line may take a second line, and only when it would not fit
+    /// even shrunk: with 12-hour times "Rain from 12:40 AM" lost its "AM" (owner's pick A,
+    /// 11 Nov 2026). The other tiles then grow with it (ConditionTileGrid).
+    @ViewBuilder private var caption: some View {
+        let oneLine = detailLine.font(.caption2).lineLimit(1).minimumScaleFactor(0.8)
+        if condition == .precipitation {
+            // A shrinking text counts at its full size here, so the smaller sizes are
+            // tried one by one before the second line.
+            ViewThatFits(in: .horizontal) {
+                detailLine.font(.caption2).lineLimit(1)
+                detailLine.font(.system(size: captionSize * 0.9)).lineLimit(1)
+                detailLine.font(.system(size: captionSize * 0.8)).lineLimit(1)
+                detailLine.font(.caption2).lineLimit(2).minimumScaleFactor(0.8)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        } else {
+            oneLine
         }
     }
 
@@ -283,5 +306,62 @@ struct SunPath: View {
     private func clock(_ date: Date) -> Double {
         let c = Calendar.current.dateComponents([.hour, .minute], from: date)
         return Double(c.hour ?? 0) + Double(c.minute ?? 0) / 60
+    }
+}
+
+/// The tiles of Current conditions in two columns, every tile as tall as the tallest:
+/// when one grows, say the rain tile's line takes two lines with 12-hour times, all
+/// grow with it, and with all on one line they keep today's height (owner, 11 Nov 2026).
+struct ConditionTileGrid: Layout {
+    var spacing: CGFloat = 8
+
+    /// The tile height last worked out, by width: the page asks for the same width many
+    /// times in one pass, and measuring the tiles' text is slow.
+    struct Cache {
+        var width: CGFloat?
+        var height: CGFloat = 0
+    }
+
+    func makeCache(subviews: Subviews) -> Cache { Cache() }
+
+    func updateCache(_ cache: inout Cache, subviews: Subviews) { cache = Cache() }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) -> CGSize {
+        let width = proposal.width ?? 2 * (subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0) + spacing
+        let rows = CGFloat((subviews.count + 1) / 2)
+        let height = tileHeight(width: width, subviews, &cache)
+        return CGSize(width: width, height: rows == 0 ? 0 : rows * height + (rows - 1) * spacing)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout Cache) {
+        let column = columnWidth(bounds.width)
+        let height = tileHeight(width: bounds.width, subviews, &cache)
+        for (i, view) in subviews.enumerated() {
+            let x = bounds.minX + CGFloat(i % 2) * (column + spacing)
+            let y = bounds.minY + CGFloat(i / 2) * (height + spacing)
+            view.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(width: column, height: height))
+        }
+    }
+
+    // The grid lines up with nothing outside it, so the stacks around it don't make
+    // SwiftUI place every tile again to find an alignment guide (as TopTileGrid).
+    func explicitAlignment(of guide: HorizontalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout Cache) -> CGFloat? {
+        nil
+    }
+
+    func explicitAlignment(of guide: VerticalAlignment, in bounds: CGRect, proposal: ProposedViewSize,
+                           subviews: Subviews, cache: inout Cache) -> CGFloat? {
+        nil
+    }
+
+    private func columnWidth(_ width: CGFloat) -> CGFloat { max(0, (width - spacing) / 2) }
+
+    private func tileHeight(width: CGFloat, _ subviews: Subviews, _ cache: inout Cache) -> CGFloat {
+        if cache.width != width {
+            let column = ProposedViewSize(width: columnWidth(width), height: nil)
+            cache = Cache(width: width, height: subviews.map { $0.sizeThatFits(column).height }.max() ?? 0)
+        }
+        return cache.height
     }
 }
