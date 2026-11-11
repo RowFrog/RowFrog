@@ -5,7 +5,7 @@
 import { t, num, locale } from "./i18n.js";
 import { icon, iconShape, skyArt } from "./icons.js";
 import {
-  key, API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, sunDaysOf, daylightParts, DAYLIGHT_REASONS, SUNSET_WINDOW_MS, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend,
+  key, API, ZONE, shownLight, UNITS, unitStep, localDay, sky, SKY_TITLES, skyIcon, precipitationKind, BOATS, sunDaysOf, daylightParts, DAYLIGHT_REASONS, SUNSET_WINDOW_MS, GROUPS, BOAT_TYPES, LIMITS, isGroup, limitsFor, applyLimits, beaufort, COLD, REASONS, lightFor, pressureChange, pressureTrend, loadable,
 } from "./logic.js";
 import { isOwn, loadOwnForecast } from "./ownplace.js";
 
@@ -281,8 +281,6 @@ export function refreshFailure(error, ownPlace = false) {
   }[kind];
 }
 
-/** The forecast loaded earlier in this visit, if any. */
-export const keptForecast = (id) => forecasts.get(id)?.forecast ?? null;
 
 export let catalog = null;
 
@@ -350,15 +348,23 @@ export async function refreshSavedClubs() {
   return changed;
 }
 
+/** Each club's forecast load in this visit, one state at a time (loadable in logic.js). */
 export const forecasts = new Map();
 
 export async function loadForecast(id, fresh = false) {
   const kept = forecasts.get(id);
-  if (kept && !fresh && Date.now() - kept.at < 5 * 60 * 1000) return kept.forecast;
+  if (kept?.value && !fresh && Date.now() - kept.loadedAt < 5 * 60 * 1000) return kept.value;
   const own = isOwn(id) ? store.clubs.find((c) => c.id === id) : null;
-  const forecast = own ? await loadOwnForecast(own) : await getJSON(`clubs/${encodeURIComponent(id)}/forecast`);
-  forecasts.set(id, { at: Date.now(), forecast });
-  return forecast;
+  forecasts.set(id, loadable.started(kept));
+  try {
+    const forecast = own ? await loadOwnForecast(own) : await getJSON(`clubs/${encodeURIComponent(id)}/forecast`);
+    forecasts.set(id, loadable.loaded(forecast));
+    return forecast;
+  } catch (error) {
+    // The error itself; refreshFailure() turns it into words when shown.
+    forecasts.set(id, loadable.failing(forecasts.get(id), error));
+    throw error;
+  }
 }
 
 // ---- Units, as AppSettings in the app ----------------------------------------------

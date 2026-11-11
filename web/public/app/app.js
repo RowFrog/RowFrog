@@ -15,7 +15,7 @@ import {
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, openMenu,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
-  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, keptForecast,
+  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure,
 } from "./shared.js";
 import {
   isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
@@ -225,7 +225,7 @@ function boatButton() {
 
 // The lake map and the satellite picture's full view show the same button (owner's pick B, 5 Nov 2026).
 boatControl.html = () => boatButton().replace("data-boat-button", "data-map-boat");
-boatControl.open = (anchor, picked) => openBoatMenu(forecasts.get(pageClubId())?.forecast ?? null, anchor, picked);
+boatControl.open = (anchor, picked) => openBoatMenu(forecasts.get(pageClubId())?.value ?? null, anchor, picked);
 
 /** Once, on the first club page where an own boat is kept elsewhere (BoatsElsewhereTip), beside the boat button. */
 const boatsElsewhereTip = () => (store.boats.some((b) => !isKept(b)) ? tip("boatsElsewhere").replace('class="tip"', 'class="tip pop"') : "");
@@ -393,7 +393,7 @@ async function wireList(again) {
     if (at) updated.push(at);
   }));
   if (updated.length) {
-    const loaded = store.clubs.map((c) => forecasts.get(c.id)?.at);
+    const loaded = store.clubs.map((c) => forecasts.get(c.id)?.loadedAt ?? undefined);
     root.querySelector("#updated").textContent = updatedLine(Math.min(...updated.map((d) => new Date(d))),
       loaded.includes(undefined) ? null : Math.min(...loaded));
   }
@@ -644,20 +644,17 @@ async function renderClub(id) {
   wireBottomBar(null);
   wireSwipe(id);
   wireLaunchOpen(club);
-  let raw;
-  let failure = null;
-  try {
-    raw = await loadForecast(id, true);
-  } catch (error) {
-    // The forecast loaded before stays, with why the update failed (LocationPageView.failure).
-    failure = refreshFailure(error, isOwn(id));
-    raw = keptForecast(id);
-    if (!raw) {
-      root.querySelector(".loading").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
-        <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button>`;
-      root.querySelector("#retry").addEventListener("click", () => renderClub(id));
-      return;
-    }
+  // The club's load state (loadable): a forecast loaded before stays, with why
+  // the update failed (as ForecastStore and LocationPageView in the app).
+  await loadForecast(id, true).catch(() => {});
+  const state = forecasts.get(id);
+  const raw = state?.value ?? null;
+  const failure = state?.failure ? refreshFailure(state.failure, isOwn(id)) : null;
+  if (!raw) {
+    root.querySelector(".loading").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
+      <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button>`;
+    root.querySelector("#retry").addEventListener("click", () => renderClub(id));
+    return;
   }
   const forecast = forBoat(raw);
   const now = new Date();
@@ -1087,7 +1084,7 @@ function updatedLine(made, loaded) {
 const RELOAD_AFTER = 10 * 60 * 1000;
 const due = (id) => {
   const kept = forecasts.get(id);
-  return !kept || Date.now() - kept.at > RELOAD_AFTER;
+  return !kept?.loadedAt || Date.now() - kept.loadedAt > RELOAD_AFTER;
 };
 
 /** The other saved clubs after the one in front, so a swipe already has new data; all of them, or only those due. */
@@ -1121,7 +1118,7 @@ function refreshOnReturn() {
   const shown = club ? decodeURIComponent(club[1]) : !onList ? null : hash === "/list" || !store.clubs.length ? null : store.clubs[0].id;
   const inFront = shown ? [shown] : onList ? store.clubs.map((c) => c.id) : [];
   const first = inFront.filter(due);
-  const lakeId = shown ? forecasts.get(shown)?.forecast?.lakeId : null;
+  const lakeId = shown ? forecasts.get(shown)?.value?.lakeId : null;
   if (!first.length) return reloadOthers(shown, true);
   if (lakeId) forgetView(lakeId);
   Promise.resolve(route(false)).finally(() => reloadOthers(shown, true));
@@ -1214,7 +1211,7 @@ function forecastLines(club, forecast, status) {
       return `${old}<p class="orange small"><button class="link failed" id="failed" data-why="${h(status.failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", status.failure[0], outOfDate ? dayTime(forecast.generatedAt) : time(forecast.generatedAt)))} ${icon("info")}</button></p>`;
     case "current":
     case "updating":
-      return `<p class="sub small" id="updated-line">${h(updatedLine(forecastTime(forecast), forecasts.get(club?.id)?.at))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`;
+      return `<p class="sub small" id="updated-line">${h(updatedLine(forecastTime(forecast), forecasts.get(club?.id)?.loadedAt))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`;
     default:
       return old;
   }
