@@ -123,7 +123,10 @@ when the map looks calmer than your boat. The phone works the light out
 again for the chosen boat on the club page, the lake map and the widget
 (`ios/RowFrog/Limits.swift`). The light at the launch point also counts the water
 within 1 km of it (on rivers, 1 km up and down the stretch): when that water
-is worse for your boat, a "nearby" reason says so, e.g. "Fog nearby: 300 m". The website does the same.
+is worse for your boat, a "nearby" reason says so, e.g. "Fog nearby: 300 m",
+and the top tile shows that worst wind, wave or visibility value, in its
+colour and marked "Nearby", in place of the launch point's own. The website
+does the same.
 
 **Cold water.** Cold water does not change the rowing light; the light shows
 the weather. Instead a blue badge says what to bring: "Life jacket" below
@@ -360,8 +363,10 @@ instead. Where the launch point is set, crossed oars then mark it. The website
 does the same with the club's place in OpenStreetMap.
 
 **When an update fails,** the page keeps the last forecast and says why under
-the club's name (no internet, server did not answer, no forecast for this
-club); a tap explains whose side it is on and offers "Try again".
+the club's name (no internet, server could not be reached, server refused
+the download, no forecast for this club yet); when the forecast is also out of
+date, both lines show. A tap explains whose side it is on and offers "Try
+again". The website does the same.
 
 **Widgets.** Home-screen and lock-screen widgets show the rowing light first,
 then the values in the top tile's order, each with its symbol: temperature
