@@ -290,8 +290,9 @@ final class LocationStore {
 @MainActor
 @Observable
 final class ForecastStore {
-    /// As the backend sent them, with the app's standard limits.
-    private var raw: [String: ClubForecast] = [:]
+    /// Where each club's forecast is (ForecastLoad, in ForecastStatus.swift):
+    /// one state per club instead of separate lists that could disagree.
+    private(set) var states: [String: ForecastLoad] = [:]
     /// With the boat and limits chosen in the settings, worked out when read,
     /// so a change of limits shows at once.
     var forecasts: Forecasts { Forecasts(store: self) }
@@ -301,11 +302,11 @@ final class ForecastStore {
     /// When the phone last got an answer for a club, new or unchanged. The
     /// forecast's own time is when the server worked it out, which can be
     /// half an hour or more earlier.
-    private(set) var loadedAt: [String: Date] = [:]
+    var loadedAt: [String: Date] { states.compactMapValues(\.loadedAt) }
     /// Clubs being loaded right now, so the page can say it is updating.
-    private(set) var loading: Set<String> = []
+    var loading: Set<String> { Set(states.filter { $0.value.isLoading }.keys) }
     /// Why the last refresh of a club failed; gone once one works.
-    private(set) var failures: [String: RefreshFailure] = [:]
+    var failures: [String: RefreshFailure] { states.compactMapValues(\.failure) }
     var failed: Set<String> { Set(failures.keys) }
     /// Clubs whose picked model has no forecast yet, so the automatic one is shown.
     private(set) var pickedModelMissing: Set<String> = []
@@ -320,15 +321,12 @@ final class ForecastStore {
     }
 
     func load(_ clubID: String, force: Bool = false) async {
-        if !force, raw[clubID] != nil { return }
-        loading.insert(clubID)
-        defer { loading.remove(clubID) }
+        if !force, states[clubID]?.forecast != nil { return }
+        states[clubID] = ForecastLoad.started(from: states[clubID])
         if let model = AppSettings.shared.pickedModel(for: clubID) {
             if let forecast = try? await api.forecast(clubID: clubID, model: model) {
                 applied[clubID] = nil
-                raw[clubID] = forecast
-                loadedAt[clubID] = .now
-                failures[clubID] = nil
+                states[clubID] = .shown(forecast, loadedAt: .now, updating: false, failure: nil)
                 pickedModelMissing.remove(clubID)
                 return
             }
@@ -345,14 +343,16 @@ final class ForecastStore {
                 forecast = try await api.forecast(clubID: clubID)
             }
             applied[clubID] = nil
-            raw[clubID] = forecast
-            loadedAt[clubID] = .now
-            failures[clubID] = nil
+            states[clubID] = .shown(forecast, loadedAt: .now, updating: false, failure: nil)
         } catch {
             // Called off (the view that asked went away): not a failure, the
             // forecast already shown stays and the next load fetches it.
-            if error is CancellationError || (error as? URLError)?.code == .cancelled { return }
-            failures[clubID] = RefreshFailure(error, ownPlace: clubID.hasPrefix(OwnPlace.idPrefix))
+            if error is CancellationError || (error as? URLError)?.code == .cancelled {
+                states[clubID] = states[clubID]?.calledOff()
+                return
+            }
+            let failure = RefreshFailure(error, ownPlace: clubID.hasPrefix(OwnPlace.idPrefix))
+            states[clubID] = ForecastLoad.started(from: states[clubID]).failing(with: failure)
         }
     }
 
@@ -396,7 +396,7 @@ final class ForecastStore {
 
     /// The forecast for a club with the user's boat kept there and its limits.
     func forecast(_ clubID: String) -> ClubForecast? {
-        guard let base = raw[clubID] else { return nil }
+        guard let base = states[clubID]?.forecast else { return nil }
         let limits = AppSettings.shared.limits(at: clubID)
         if let cached = applied[clubID], cached.limits == limits { return cached.forecast }
         let forecast = base.applying(limits)
