@@ -296,11 +296,14 @@ extension RowingWidgetView {
     }
 
     /// The light as a dot; with marks, the dot carries a check, "!" or "×".
-    func lightDot(_ light: Light, size: CGFloat) -> some View {
+    /// `hour`: a dot in the hours row. With an out-of-date forecast every hour's dot is plain
+    /// grey, amber and red too, so none looks like fresh data (owner's pick, 11 Nov 2026).
+    func lightDot(_ light: Light, size: CGFloat, hour: Bool = false) -> some View {
         let stale = snapshot.isStale
-        let color = light.color(stale: stale)
+        let grey = hour && stale
+        let color = grey ? Color.gray : light.color(stale: stale)
         return Group {
-            if showMarks {
+            if showMarks && !grey {
                 ZStack {
                     Circle().fill(color)
                     Image(systemName: light.plainMark(stale: stale))
@@ -314,7 +317,7 @@ extension RowingWidgetView {
         }
         .frame(width: size, height: size)
         .accessibilityElement()
-        .accessibilityLabel(light.title(stale: stale))
+        .accessibilityLabel(grey ? tr("Forecast out of date") : light.title(stale: stale))
     }
 
     /// The big ring of the small widget, always with its mark.
@@ -514,7 +517,7 @@ extension RowingWidgetView {
                     skyIcon(hour)
                         .font(big ? .title3 : .subheadline)
                         .frame(height: big ? 26 : 20)
-                    lightDot(hour.light, size: big ? 16 : 13)
+                    lightDot(hour.light, size: big ? 16 : 13, hour: true)
                     Text(Format.degrees(hour.temperatureC))
                         .font((big ? Font.subheadline : .caption).weight(.semibold))
                     if wind {
@@ -574,6 +577,9 @@ extension RowingWidgetView {
         let faint = plain ? Color.secondary.opacity(0.25) : Color.white.opacity(0.22)
         if past {
             shape.fill(faint)
+        } else if snapshot.isStale {
+            // Out of date: grey, not even amber or red, as the hours row.
+            shape.fill(Color.gray)
         } else if showMarks && light == .red {
             shape.strokeBorder(Light.red.color, lineWidth: 1.5)
         } else if showMarks && light == .amber {
