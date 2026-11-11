@@ -59,7 +59,8 @@ def test_rentals_and_unnamed_features_are_not_clubs():
         {"type": "node", "id": 2, "lat": 48.0, "lon": 11.0, "tags": {"sport": "rowing"}},
         {"type": "way", "id": 3, "center": {"lat": 48.1, "lon": 11.1}, "tags": {"name": "Ruderclub Tutzing", "sport": "rowing"}},
     ]
-    assert places.features_from(elements) == [{"name": "Ruderclub Tutzing", "lat": 48.1, "lon": 11.1, "osm": "way/3"}]
+    assert places.features_from(elements) == [
+        {"name": "Ruderclub Tutzing", "lat": 48.1, "lon": 11.1, "osm": "way/3", "kind": "sport=rowing"}]
 
 
 def test_queries_look_only_around_the_clubs(monkeypatch):
@@ -101,3 +102,27 @@ def test_clubs_whose_query_failed_keep_the_last_runs_place(monkeypatch, tmp_path
     found = json.loads(out.read_text())["places"]
     assert found["a"]["osm"] == "way/1"
     assert found["b"]["osm"] == "way/9"
+
+
+def test_the_report_lists_what_could_be_the_place_and_why_it_was_left_out():
+    clubs = [club("mrc", "Münchener Ruder-Club von 1880 e.V."), club("lonely", "Ruderverein Irgendwo")]
+    clubs[1]["points"] = [(50.0, 8.0)]
+    found = [
+        dict(feature("Bootshaus am See", 50, "way/5"), kind="leisure=sports_centre"),
+        dict(feature("Münchener Ruder-Club 1880", 900, "way/6"), kind="club=sport"),
+    ]
+    rows = places.report_rows(clubs, found)
+    mrc = [r for r in rows if r["club"] == "mrc"]
+    assert [r["osm"] for r in mrc] == ["https://www.openstreetmap.org/way/5", "https://www.openstreetmap.org/way/6"]
+    assert mrc[0]["why not"] == "name shares no telling word" and mrc[0]["metres"] == 50
+    assert mrc[1]["why not"] == "further than 700 m" and mrc[1]["likeness"] == 1.0
+    lonely = [r for r in rows if r["club"] == "lonely"]
+    assert len(lonely) == 1 and lonely[0]["why not"].startswith("nothing")
+
+
+def test_the_report_query_also_asks_for_any_named_sports_place_close_by(monkeypatch):
+    sent = []
+    monkeypatch.setattr(places, "overpass", lambda q, timeout: sent.append(q) or {"elements": []})
+    places.query([club("a", "Ruderverein Tutzing")], report=True)
+    assert "(around:1500,48.13000,11.55000)" in sent[0]
+    assert 'nwr["club"]["name"](around:300,48.13000,11.55000)' in sent[0]

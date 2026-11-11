@@ -21,11 +21,19 @@ each query stays small. A query that fails is tried again after a pause;
 clubs whose query still fails keep the place from the last run, so one bad
 batch doesn't lose the rest.
 
+With --report PATH it writes nothing to the places file: for every club
+without a place it lists, as CSV, the OpenStreetMap features near it that
+could be its place (rowing club names within REPORT_M, any named club or
+sports place within REPORT_ANY_M), nearest first, so the matching rule can be
+checked or loosened by hand:
+    python3 scripts/osm_club_places.py --report osm-places-missing.csv
+
 Data © OpenStreetMap contributors, ODbL.
 """
 
 from __future__ import annotations
 
+import csv
 import json
 import math
 import re
@@ -43,6 +51,10 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "catalogs" / "osm-places.json"
 # How far a club's map place may lie from its launch point or checked clubhouse.
 MAX_M = 700.0
+# How far the report looks around clubs without a place: rowing club names,
+# and any named club or sports place.
+REPORT_M = 1500.0
+REPORT_ANY_M = 300.0
 # How many clubs one Overpass query looks around.
 CLUBS_PER_QUERY = 20
 # Tries per query, and the pause before the next try (seconds).
@@ -128,6 +140,11 @@ def match(clubs: list[dict], features: list[dict]) -> dict[str, dict]:
     return places
 
 
+def kind(tags: dict) -> str:
+    """The tags that say what a feature is, e.g. "sport=rowing leisure=sports_centre"."""
+    return " ".join(f"{k}={tags[k]}" for k in ("sport", "club", "leisure", "building", "amenity") if k in tags)
+
+
 def features_from(elements: list[dict]) -> list[dict]:
     out = []
     for e in elements:
@@ -138,22 +155,31 @@ def features_from(elements: list[dict]) -> list[dict]:
         c = e.get("center") or e
         if "lat" not in c:
             continue
-        out.append({"name": name, "lat": round(c["lat"], 6), "lon": round(c["lon"], 6), "osm": f"{e['type']}/{e['id']}"})
+        out.append({"name": name, "lat": round(c["lat"], 6), "lon": round(c["lon"], 6), "osm": f"{e['type']}/{e['id']}",
+                    "kind": kind(tags)})
     return out
 
 
-def query(clubs: list[dict]) -> list[dict]:
-    """The rowing club features within MAX_M of these clubs' points."""
+def query(clubs: list[dict], report: bool = False) -> list[dict]:
+    """The rowing club features within MAX_M of these clubs' points; for the
+    report, within REPORT_M, plus any named club or sports place within REPORT_ANY_M."""
     parts = []
     for club in clubs:
         for lat, lon in club["points"]:
-            near = f"(around:{MAX_M:.0f},{lat:.5f},{lon:.5f})"
+            near = f"(around:{REPORT_M if report else MAX_M:.0f},{lat:.5f},{lon:.5f})"
             parts += [
                 f'nwr["sport"="rowing"]["name"]{near};',
                 f'nwr["club"]["name"~"{CLUB_NAME}"]{near};',
                 f'nwr["leisure"]["name"~"{CLUB_NAME}"]{near};',
                 f'nwr["building"]["name"~"{CLUB_NAME}"]{near};',
             ]
+            if report:
+                close = f"(around:{REPORT_ANY_M:.0f},{lat:.5f},{lon:.5f})"
+                parts += [
+                    f'nwr["club"]["name"]{close};',
+                    f'nwr["leisure"~"sports_centre|sports_hall|pitch|marina|slipway"]["name"]{close};',
+                    f'nwr["sport"]["name"]{close};',
+                ]
     q = "[out:json][timeout:90];\n(\n" + "\n".join(parts) + "\n);\nout center tags;"
     result = overpass(q, timeout=120)
     if "remark" in result:  # timeouts and memory limits, with a partial result
@@ -161,11 +187,12 @@ def query(clubs: list[dict]) -> list[dict]:
     return result["elements"]
 
 
-def query_with_retries(clubs: list[dict], tries: int = TRIES, pause: float = RETRY_AFTER) -> list[dict] | None:
+def query_with_retries(clubs: list[dict], tries: int = TRIES, pause: float = RETRY_AFTER,
+                       report: bool = False) -> list[dict] | None:
     """`query`, tried again after a pause; None when every try failed."""
     for attempt in range(1, tries + 1):
         try:
-            return query(clubs)
+            return query(clubs, report) if report else query(clubs)
         except OSError as error:
             print(f"    try {attempt} of {tries} failed: {error}")
             if attempt < tries:
@@ -191,7 +218,55 @@ def old_places() -> dict[str, dict]:
     return json.loads(OUT.read_text(encoding="utf-8")).get("places", {})
 
 
+def report_rows(clubs: list[dict], features: list[dict]) -> list[dict]:
+    """Per club, up to three features nearest first (or one empty row): what
+    could be its place, and why the matching left it out."""
+    rows = []
+    for club in clubs:
+        near = sorted(((min(distance_m((f["lat"], f["lon"]), p) for p in club["points"]), f) for f in features),
+                      key=lambda x: x[0])
+        near = [(d, f) for d, f in near if d <= REPORT_M][:3]
+        base = {"club": club["id"], "club name": club["name"], "lat": club["points"][0][0], "lon": club["points"][0][1]}
+        if not near:
+            rows.append({**base, "rank": "", "osm name": "", "osm": "", "what": "", "metres": "", "likeness": "",
+                         "why not": "nothing named like a rowing club within 1.5 km"})
+        for rank, (d, f) in enumerate(near, 1):
+            like = max(likeness(club["name"], f["name"]), likeness(club.get("shortName") or "", f["name"]))
+            why = ("further than 700 m" if d > MAX_M else "name shares no telling word" if like == 0
+                   else "name too different" if like < 0.5 else "taken by another club that matches it better")
+            rows.append({**base, "rank": rank, "osm name": f["name"], "osm": f"https://www.openstreetmap.org/{f['osm']}",
+                         "what": f.get("kind", ""), "metres": round(d), "likeness": round(like, 2), "why not": why})
+    return rows
+
+
+def report(path: Path) -> int:
+    have = old_places()
+    clubs = sorted((c for c in clubs_to_place() if c["id"] not in have), key=lambda c: c["points"][0])
+    batches = [clubs[i:i + CLUBS_PER_QUERY // 2] for i in range(0, len(clubs), CLUBS_PER_QUERY // 2)]
+    print(f"{len(clubs)} clubs without a place, {len(batches)} queries")
+    features: dict[str, dict] = {}
+    missed = 0
+    for n, batch in enumerate(batches, 1):
+        elements = query_with_retries(batch, report=True)
+        if elements is None:
+            missed += len(batch)
+        else:
+            for f in features_from(elements):
+                features[f["osm"]] = f
+        print(f"  query {n} of {len(batches)}: {len(features)} features so far")
+        time.sleep(3)
+    rows = report_rows(clubs, list(features.values()))
+    with path.open("w", newline="", encoding="utf-8") as out:
+        writer = csv.DictWriter(out, fieldnames=list(rows[0]) if rows else ["club"])
+        writer.writeheader()
+        writer.writerows(rows)
+    print(f"wrote {len(rows)} rows for {len(clubs)} clubs to {path}" + (f" ({missed} clubs not looked up)" if missed else ""))
+    return 1 if missed else 0
+
+
 def main() -> int:
+    if len(sys.argv) == 3 and sys.argv[1] == "--report":
+        return report(Path(sys.argv[2]))
     clubs = sorted(clubs_to_place(), key=lambda c: c["points"][0])  # neighbours share a query
     batches = [clubs[i:i + CLUBS_PER_QUERY] for i in range(0, len(clubs), CLUBS_PER_QUERY)]
     print(f"{len(clubs)} clubs in {len(batches)} queries")
