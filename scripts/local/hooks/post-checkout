@@ -1,0 +1,25 @@
+#!/bin/bash
+# Warns when the shared RowFrog folder leaves main (set up 11 Nov 2026, after a
+# session switched it to its own branch and a merge landed there). Only in the main
+# checkout, not in worktrees, and only for a branch switch ($3 = 1). It cannot block
+# the switch; it makes it loud and logs it in RowFrog/log/branch-switch.log.
+[ "${3:-0}" = 1 ] || exit 0
+[ "$(git rev-parse --absolute-git-dir)" = "$(git rev-parse --path-format=absolute --git-common-dir)" ] || exit 0
+branch=$(git symbolic-ref -q --short HEAD || echo "detached at $(git rev-parse --short HEAD)")
+[ "$branch" = main ] && exit 0
+top=$(git rev-parse --show-toplevel)
+mkdir -p "$top/log"
+echo "$(date '+%F %T') shared folder left main: now on $branch (from ${1:0:9}), pid $$ ppid $PPID" >> "$top/log/branch-switch.log"
+cat >&2 <<MSG
+
+  ************************************************************************
+  *  This folder ($top) belongs to the merge queue and stays on main.
+  *  It is now on: $branch
+  *  Please switch back (git switch main) and work in your own copy:
+  *    git worktree add ../rowfrog-<topic> -b <branch> main
+  *  Hand changes in through RowFrog/inbox/ (docs/handbook.md, "While GitHub is down").
+  *  Logged in log/branch-switch.log.
+  ************************************************************************
+
+MSG
+exit 0
