@@ -5,7 +5,7 @@ import { t, num, lang } from "./i18n.js";
 import {
   time, dayLabel, dayTime, duration, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
   pressure, pressureChangeText, inUnit, unitSymbol, unitChange, unitId,
-  currentLimits, boatInSentence, selectedBoat, iceDetail, windDial, pressureGauge, sunPath,
+  currentLimits, boatInSentence, selectedBoat, iceDetail, iceSatelliteSummary, windDial, pressureGauge, sunPath,
 } from "./shared.js";
 import {
   beaufort, beaufortScale, compass, REASONS, lightFor, feelsLikeNote, pressureChange, pressureTrend, sky, SKY_TITLES,
@@ -17,6 +17,24 @@ const HOUR = 3600 * 1000;
 const FREEZING_WATER_C = 4;
 
 /** The colours of the chart's lines and limits, as in the app. */
+
+/** "Landsat 9" or "Copernicus (Sentinel-3)" (WaterSatellite.satelliteName in the app; the API sends source and platform). */
+export function satelliteName(satellite) {
+  if (satellite.source === "landsat") return satellite.platform ? satellite.platform.replace("landsat-", "Landsat ") : "Landsat";
+  return t("Copernicus (Sentinel-3)");
+}
+
+/** "Wed 9 Oct", or for Copernicus "1 Oct – 10 Oct" (WaterSatellite.when). */
+export const satelliteWhen = (satellite) => (satellite.from && satellite.to ? `${dayLabel(satellite.from)} – ${dayLabel(satellite.to)}` : dayLabel(satellite.date));
+
+/** Who runs a water station, by its network, for the source line (WaterStation.operatorName in the app). */
+export function stationOperator(station) {
+  switch (station?.network) {
+    case "pegelonline": return t("PEGELONLINE, the federal waterways and shipping administration (WSV)");
+    case "bafu": return t("Swiss Federal Office for the Environment (BAFU)");
+    default: return t("Gewässerkundlicher Dienst Bayern (LfU)");
+  }
+}
 export const COLOURS = {
   orange: "var(--orange)", blue: "var(--blue)", purple: "var(--purple)", red: "var(--red)", teal: "var(--teal)",
   cyan: "#32ade6", gray: "#8e8e93", indigo: "#5856d6", yellow: "#e6b800", kit: "var(--kit)", deep: "var(--deep-water)", secondary: "var(--sub)",
@@ -81,7 +99,7 @@ function firstRun(hours, test) {
 const span = (run) => `${dayTime(run.start)}–${time(run.end)}`;
 
 function warnings(d, words) {
-  return (d.forecast.warnings?.items ?? []).filter((w) => !w.isLake && (w.expires == null || new Date(w.expires) > new Date(d.now.time))
+  return (d.forecast.warnings?.items ?? []).filter((w) => w.kind !== "lake" && (w.expires == null || new Date(w.expires) > new Date(d.now.time))
     && words.some((word) => (w.event ?? "").toUpperCase().includes(word)));
 }
 
@@ -93,6 +111,8 @@ function warningsChecked(d) {
 const warningsLabel = () => t("Official warnings");
 
 function warningNames(d, words) {
+  // Outside Germany DWD's warnings do not reach: say so instead of "None" (warningNames in the app).
+  if (!warningsChecked(d)) return t("Not checked here");
   const found = warnings(d, words);
   if (!found.length) return t("None");
   const english = document.documentElement.lang !== "de";
@@ -296,14 +316,14 @@ const BUILDERS = {
     const pickedDay = localDay(d.now.time);
     const picked = !d.isNow && pickedDay !== today ? (d.forecast.waterForecast ?? []).find((day) => day.date === pickedDay)?.celsius ?? null : null;
     if (picked != null) facts.unshift([t("Forecast %@", dayLabel(d.now.time)), temperature(picked, 1)]);
-    if (satellite) facts.push([t("Satellite"), t("%@, %@: %@", satellite.satelliteName ?? "", satellite.when ?? "", temperature(satellite.celsius, 1))]);
+    if (satellite) facts.push([t("Satellite"), t("%@, %@: %@", satelliteName(satellite), satelliteWhen(satellite), temperature(satellite.celsius, 1))]);
     let source;
     if (satellite) {
       source = satellite.source === "landsat"
         ? t("Landsat surface temperature (U.S. Geological Survey, via Microsoft Planetary Computer), carried forward to today with the air temperatures.")
         : t("Copernicus Land Monitoring Service, Lake Surface Water Temperature (Sentinel-3), carried forward to today with the air temperatures.");
     } else if (!now && estimate != null) source = t("Calculated by the app from the air temperatures of the last weeks, not measured.");
-    else if (now) source = t("%@, the nearest station on this water.", now.station?.operatorName ?? now.station?.operator ?? "");
+    else if (now) source = t("%@, the nearest station on this water.", stationOperator(now.station));
     else source = t("No station measures the water of this lake, and no satellite has seen it clearly in the last 30 days.");
     const lines = history.length ? [{ name: t("Measurement"), colour: COLOURS.cyan, points: history.map((p) => ({ x: d.x(p.time), y: degreesIn(p.celsius) })) }] : [];
     if (forecastPoints.length > 1) lines.push({ name: t("Forecast"), colour: COLOURS.cyan, points: forecastPoints, dashed: true });
@@ -325,7 +345,7 @@ const BUILDERS = {
     }
     let note;
     if (now) note = t("Measured %@", dayTime(now.measuredAt));
-    else if (satellite) note = t("Estimated from %@ (%@) and the air temperatures since, not measured", satellite.satelliteName ?? "", satellite.when ?? "");
+    else if (satellite) note = t("Estimated from %@ (%@) and the air temperatures since, not measured", satelliteName(satellite), satelliteWhen(satellite));
     else note = estimate != null ? t("Estimated from the air temperatures of the last weeks, not measured") : t("No lake station");
     return base({
       ...common, value: estimate != null ? `≈ ${degrees(estimate)}` : degrees(c, 1), note,
@@ -545,7 +565,7 @@ const BUILDERS = {
     if (ice && ice.status !== "unavailable") {
       const facts = [[t("Water"), water]];
       if (ice.thicknessCm > 0) facts.push([t("Ice"), t("About %@ cm, estimated", num(ice.thicknessCm))]);
-      if (ice.satellite?.summary) facts.push([t("Satellite"), ice.satellite.summary]);
+      if (ice.satellite) facts.push([t("Satellite"), iceSatelliteSummary(ice.satellite)]);
       return base({ value: t(ICE_TITLES[ice.status] ?? "No data"), note: iceDetail(ice), facts, rowing, source: explanation });
     }
     const warm = (d.water?.celsius ?? 0) >= 8;

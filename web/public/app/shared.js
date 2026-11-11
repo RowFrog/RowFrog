@@ -38,6 +38,11 @@ export const store = {
   /** Settings > About > tap Version seven times: the Developer page and the website's own looks, language and formats. */
   get developerOptions() { return load("rf.developerOptions", false) === true; },
   set developerOptions(on) { save("rf.developerOptions", on); },
+  // Developer choices for the 48 hours (ColumnFill, NightHours); switched off, the app's defaults.
+  get columnFill() { return this.developerOptions && load("rf.columnFill") === "fold" ? "fold" : "fill"; },
+  set columnFill(value) { save("rf.columnFill", value); },
+  get nightHours() { return this.developerOptions && load("rf.nightHours") === "all" ? "all" : "fold"; },
+  set nightHours(value) { save("rf.nightHours", value); },
   get timeFormat() { return this.developerOptions && TIME_FORMATS.includes(load("rf.timeFormat")) ? load("rf.timeFormat") : "device"; },
   set timeFormat(value) { save("rf.timeFormat", value); },
   /** "device", "long", "short", "dmy", "mdy" or "iso" (DateFormat). */
@@ -1031,8 +1036,16 @@ export function conditionTexts() {
 }
 
 /** The ice tile's second line. */
+/** "Satellite, Today: open water" or "Satellite, Mon 20 Jan: 60 % ice" (IceSatellite.summary). */
+export function iceSatelliteSummary(satellite) {
+  if (!satellite?.date) return null;
+  const day = dayLabel(satellite.date);
+  return satellite.iceShare < 0.1 ? t("Satellite, %@: open water", day) : t("Satellite, %@: %@ %% ice", day, num(satellite.iceShare * 100));
+}
+
 export function iceDetail(ice) {
   if (ice.thicknessCm > 0) return t("About %@ cm, estimated", num(ice.thicknessCm));
+  if (ice.satellite && (ice.basis === "satellite" || ice.basis === "model")) return iceSatelliteSummary(ice.satellite);
   if (ice.basis === "season") return t("No ice this time of year");
   if (ice.basis === "measured") return t("Water %@, too warm for ice", temperature(ice.waterTemperatureC, 1));
   if (ice.basis === "model") return ice.status === "edges" ? t("Bays and harbours first") : t("Estimated from frost");

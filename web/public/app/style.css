@@ -902,6 +902,9 @@ body.locked { overflow: hidden; }
 .sat-panel { padding: 8px 16px calc(10px + env(safe-area-inset-bottom)); max-width: 760px; width: 100%; margin: 0 auto; }
 .sat-panel p { margin: 4px 0; }
 .legend li > .club-mark { width: 12px; height: 12px; flex: none; margin: 4px 6px 0; }
+.legend li > .club-mark.oars { width: 20px; height: 20px; margin: 0 2px; display: inline-flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; }
+.legend li > .track-mark { flex: none; width: 24px; height: 0; margin: 9px 0 0; border-top: 1.5px dashed var(--text); opacity: .8; }
+.legend li.ramp-row { display: block; }
 
 /* ---- Browse clubs by country (CountryListView, CountryWatersView) ---- */
 .nav-side { min-width: 60px; }
@@ -999,6 +1002,7 @@ body.has-picture .club-head:not(:has(.head-side)) { position: relative; z-index:
 .row-setting .stack { flex-direction: column; align-items: flex-start; gap: 2px; }
 .row-setting.red { color: var(--red); }
 .tap-to-load { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; width: 100%; border-radius: 12px; background: var(--tile); color: var(--accent); }
+.tap-to-load small { color: var(--sub); font-size: 12px; padding: 0 16px; text-align: center; }
 body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) 55%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 
 /* One-time tips (TipKit) */
@@ -1057,7 +1061,12 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .club-head .place-text[data-fit="split"] .pl-lake { display: block; }
 .club-head .place-text[data-fit="split"] .pl-dot { display: none; }
 .club-head .orange .launch-open { color: var(--orange); font: inherit; padding: 6px 8px; margin: -6px -8px; }
-#launch-sheet-map { height: 320px; }
+#launch-sheet-map { height: 320px; transition: height .3s; }
+/* Map full screen in the Location sheet: the map takes the room the rest leaves (LaunchPointSheet, pulled up). */
+dialog.sheet.full-map { height: 85vh; }
+dialog.sheet.full-map #launch-sheet-map { height: max(320px, calc(85dvh - 250px)); }
+.leaflet-top.leaflet-left .leaflet-control.back-home { margin: 8px 0 0 8px; }
+.back-home[hidden] { display: none; }
 dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 /* Where the water temperature is measured (WaterStationMap). */
 .station { margin: 16px 0; }
@@ -1272,3 +1281,21 @@ body.has-picture .side { border-right: none; }
 #updates.pill { margin-top: 10px; min-height: 44px; }
 .legend.cycles small { font-size: 13px; margin-top: 2px; color: var(--text); }
 .legend.cycles small.sub { color: var(--sub); }
+
+/* Settings › Background pictures: a club page in small with the picture (BackgroundPreview). */
+.bg-preview { position: relative; display: flex; flex-direction: column; align-items: center; gap: 10px; height: 230px; padding: 16px; border-radius: 12px; overflow: hidden; background: var(--bg); box-sizing: border-box; }
+.bg-preview .bg-layer { position: absolute; inset: 0; background: center / cover no-repeat; }
+.bg-preview.blurred .bg-layer { filter: blur(18px); inset: -24px; }
+.bg-preview > :not(.bg-layer) { position: relative; }
+.bg-preview .bg-name { font-weight: 600; padding: 4px 12px; border-radius: 999px; }
+.bg-preview .bg-tiles { display: flex; gap: 10px; width: 100%; }
+.bg-preview .bg-sample { display: flex; align-items: center; gap: 6px; padding: 10px; border-radius: 12px; background: var(--card); box-sizing: border-box; }
+.bg-preview .bg-tiles .bg-sample { flex: 1; min-width: 0; font-size: 12px; }
+.bg-preview .bg-sample.tinted { background: color-mix(in srgb, var(--tint) 18%, var(--card)); }
+.bg-preview .bg-sample .deg { margin-left: auto; font-size: 20px; font-weight: 300; }
+.bg-preview .bg-sample.now { flex-direction: column; align-items: stretch; width: 100%; gap: 4px; }
+.bg-preview .bg-sample.now small { font-size: 11px; font-weight: 600; color: var(--sub); }
+.bg-preview .bg-sample.now .vals { display: flex; justify-content: space-between; font-size: 12px; }
+.bg-preview.with-picture .bg-name { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
+.bg-preview[data-tiles="frosted"] .bg-sample { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
+.bg-preview[data-tiles="frosted"] .bg-sample.tinted { background: color-mix(in srgb, color-mix(in srgb, var(--tint) 18%, var(--card)) 66%, transparent); }

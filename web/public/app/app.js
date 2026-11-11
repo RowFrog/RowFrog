@@ -360,7 +360,9 @@ function listBody(currentId = null) {
     <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Not in the list? Add a place"))}</a>
       <small class="sub">${h(t("Put your club, boathouse or spot on the map yourself."))}</small></p>
     <div id="saved">
-      ${clubs.length ? "" : `<p class="empty">${h(t("Pick your home club first, then any others you row at."))}</p>`}
+      ${clubs.length ? "" : `<p class="empty">${h(t("Pick your home club first, then any others you row at."))}</p>
+      <p class="footnote">${h(t("Search by club, lake or town to find any club in Germany, Austria or Switzerland."))}
+        ${h(t("Clubs nobody has opened for a while update less often at first. After you add one, it is up to date within about 30 minutes."))}</p>`}
       <ul class="rows">${clubs.map((c, i) => `
         <li class="${editing ? "editing" : ""}">
           ${editing ? `<button class="round red" data-remove="${h(c.id)}" aria-label="${h(t("Remove"))}">${icon("trash-2")}</button>` : ""}
@@ -1182,6 +1184,19 @@ function openLaunchPoint(club) {
   openSheet(t("Location"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
     showLaunchMap(club, sheet.querySelector("#launch-sheet-map"));
     wireTips(sheet);
+    // Map full screen and back, at the left of the title bar (LaunchPointSheet's toolbar button).
+    const header = sheet.querySelector("header");
+    header.insertAdjacentHTML("afterbegin", `<button class="map-full" type="button"></button>`);
+    const button = header.querySelector(".map-full");
+    const show = (full) => {
+      sheet.classList.toggle("full-map", full);
+      button.innerHTML = icon(full ? "minimize-2" : "maximize-2");
+      const label = full ? t("Smaller map") : t("Map full screen");
+      button.setAttribute("aria-label", label);
+      button.title = label;
+    };
+    show(false);
+    button.addEventListener("click", () => show(!sheet.classList.contains("full-map")));
   });
 }
 
@@ -1808,7 +1823,9 @@ function hourlyCard(forecast, now, stale) {
       <span class="num ${fog && fog !== "green" ? (fog === "red" ? "red" : "orange") : ""}">${h(distanceNumber(x.visibilityM))}</span>
     </button>`;
   };
-  const rows = nightParts(list, sunDaysOf(forecast)).map((part) => {
+  // Every night hour on its own row: a developer choice (NightHours.all).
+  const parts = store.nightHours === "all" ? list.map((hour) => ({ hour })) : nightParts(list, sunDaysOf(forecast));
+  const rows = parts.map((part) => {
     if (part.hour) return row(part.hour);
     // The night's day header after midnight shows inside the opened night; folded,
     // the next hour shown brings its own (hidden again while the night is open).
@@ -1819,7 +1836,7 @@ function hourlyCard(forecast, now, stale) {
     const after = crossed ? "afternight" : "";
     return nightLine(part.night, list, later(part.night[0])) + `<div class="nightrows" hidden>${inside}</div>` + `<span class="nightmark ${after}" hidden></span>`;
   }).join("");
-  const fold = FOLD_HOURLY && list.length > FOLDED_HOURS ? `<button class="fold" type="button" aria-expanded="false">${foldLabel(false)}</button>` : "";
+  const fold = foldsHourly() && list.length > FOLDED_HOURS ? `<button class="fold" type="button" aria-expanded="false">${foldLabel(false)}</button>` : "";
   return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}${rows}</div>${fold}`,
     { legend: "hourly", cls: `hourly-card ${fold ? "folds" : ""}` });
 }
@@ -1871,7 +1888,7 @@ function toggleNight(button) {
  * the default since each night folds into one line: the whole table
  * (ColumnFill.fill, "Always 48 hours").
  */
-const FOLD_HOURLY = false;
+const foldsHourly = () => store.columnFill === "fold";
 const FOLDED_HOURS = 24;
 
 function foldLabel(open) {
@@ -1916,7 +1933,7 @@ function launchPointBody(club, mapId) {
     : t("No launch point set yet: the forecast, waves and warnings are for the club's place on OpenStreetMap.");
   return `
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
-    ${club.launchPointVerified || club.launchPointSet ? `<p>${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
+    ${club.launchPointVerified || club.launchPointSet ? `<p class="forecast-point">${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
     ${suggestRow(club)}${mapId === "launch-sheet-map" && suggestRow(club).includes("data-suggest-lp") ? tip("suggestLaunchPoint") : ""}
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
@@ -1952,6 +1969,28 @@ async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
     const known = { ...lakes.flatMap((l) => l.clubs).find((c) => c.id === club.id), launchPoint: club.launchPoint };
     const clubhouse = clubhouseOf(known);
     if (clubhouse && box.isConnected) splitClubPins(L, map, [{ marker, launch: club.launchPoint, clubhouse, oars: showsOars(known), own: true }]);
+    // With a clubhouse of its own, say which of the two the forecast is for (forecastPointLine).
+    const line = box.parentElement?.querySelector(".forecast-point");
+    if (clubhouse && line) line.textContent = t("The forecast, waves and warnings are for the launch point (oars), not the clubhouse.");
+  });
+  // Moved or zoomed away: a button back to the launch point, at the top left (LaunchPointDetails' scope button).
+  const home = () => map.setView([lat, lon], 14);
+  const back = L.control({ position: "topleft" });
+  back.onAdd = () => {
+    const button = L.DomUtil.create("button", "glass sat-switch small back-home");
+    button.type = "button";
+    button.innerHTML = icon("locate-fixed");
+    button.setAttribute("aria-label", t("Back to the launch point"));
+    button.title = t("Back to the launch point");
+    button.hidden = true;
+    L.DomEvent.disableClickPropagation(button);
+    button.addEventListener("click", home);
+    return button;
+  };
+  back.addTo(map);
+  map.on("moveend zoomend", () => {
+    const moved = map.distance(map.getCenter(), [lat, lon]) > 30 || map.getZoom() !== 14;
+    back.getContainer().hidden = !moved;
   });
   // Grown or shrunk to fill its column (balanceCards).
   new ResizeObserver(() => map.invalidateSize()).observe(box);
@@ -2181,7 +2220,17 @@ function settingsTopicBody(topic, accepted) {
       <section class="card group">
         <label class="row-setting"><span>${icon("hammer")} ${h(t("Developer options"))}</span><input type="checkbox" class="switch" role="switch" id="developer-options" ${dev ? "checked" : ""}></label>
       </section>
-      <p class="footer">${h(t("With the developer options, Appearance offers Device, Light and Dark, Language and units the website's own language and time and date formats, Background pictures a picture for the Settings pages, and the first-start screens the language choice. Switched off, the website follows the browser again. Tap the version seven times to show this again."))}</p>`;
+      <p class="footer">${h(t("With the developer options, Appearance offers Device, Light and Dark, Language and units the website's own language and time and date formats, Background pictures a picture for the Settings pages, and the first-start screens the language choice. Switched off, the website follows the browser again. Tap the version seven times to show this again."))}</p>
+      ${dev ? `<section class="card group">
+        <label class="row-setting topic"><span>${h(t("Club page columns"))}</span>
+          <select id="column-fill">${[["fold", key("Fold the 48 hours")], ["fill", key("Always 48 hours")]].map(([k, label]) => `<option value="${k}" ${store.columnFill === k ? "selected" : ""}>${h(t(label))}</option>`).join("")}</select></label>
+      </section>
+      <p class="footer">${h(t("On wide screens, how the two columns of a club page end level. Fold the 48 hours: the table shows 24 hours until opened. Always 48 hours: the whole table, so columns may end further apart. Switching the developer options off goes back to the whole table."))}</p>
+      <section class="card group">
+        <label class="row-setting topic"><span>${h(t("Night in the 48 hours"))}</span>
+          <select id="night-hours">${[["fold", key("One line per night")], ["all", key("Every night hour")]].map(([k, label]) => `<option value="${k}" ${store.nightHours === k ? "selected" : ""}>${h(t(label))}</option>`).join("")}</select></label>
+      </section>
+      <p class="footer">${h(t("One line per night: the dark hours fold into one line with the night's lowest temperatures, strongest wind, highest waves, all its rain and its poorest visibility; a tap opens them. Every night hour: one row per hour, as before. Switching the developer options off goes back to one line per night."))}</p>` : ""}`;
     default: return "";
   }
 }
@@ -2337,6 +2386,8 @@ function renderSettings(topic = null) {
     if (e.target.checked) again();
     else location.hash = "#/settings";
   });
+  root.querySelector("#column-fill")?.addEventListener("change", (e) => { store.columnFill = e.target.value; });
+  root.querySelector("#night-hours")?.addEventListener("change", (e) => { store.nightHours = e.target.value; });
   root.querySelector("#log-out")?.addEventListener("click", () => location.assign("/__logout"));
   root.querySelector("#factory")?.addEventListener("click", async () => {
     if (!confirm(t("Reset all settings?"))) return;
@@ -2521,9 +2572,10 @@ function boatForm(boat, isNew, ownLimits) {
       <span class="stepper"><button data-step="${limit}" data-by="-1" aria-label="−">−</button><button data-step="${limit}" data-by="1" aria-label="+">+</button></span>
     </div>`;
   };
+  // The app's footer under the limits (SettingsBoats): what always counts, or how to set your own.
   const footer = ownLimits
-    ? `${t("A limit you change shows as “your limit” on the rowing light. When a value is above the app's usual limit but within yours, the app still says so. Official warnings, thunderstorms, fog, hail and darkness always count.")} ${t("Below %@ water the app lowers its own wind and gust limits by %@. Limits you set yourself stay as they are, and the rowing light then reminds you to take extra care.", temperature(COLD.waterC), wind(COLD.marginMs))}`
-    : `${t("The rowing light uses the app's limits for this type and size of boat. Turn this off to set your own.")} ${t("Below %@ water the app lowers its wind and gust limits by %@.", temperature(COLD.waterC), wind(COLD.marginMs))}`;
+    ? t("Warnings, thunderstorms, fog, hail and darkness always count. Below %@ water the light reminds you to take extra care.", temperature(COLD.waterC))
+    : t("Turn off to set your own. Below %@ water the app lowers its wind and gust limits by %@.", temperature(COLD.waterC), wind(COLD.marginMs));
   return `${isGroup(boat) ? "" : `<h3 class="section">${icon("sailboat")} ${h(t("Boat"))}</h3>
         <section class="card group">
           <label class="row-setting"><input id="boat-name" type="text" value="${h(boat.name)}" placeholder="${h(t("Name, e.g. the boat's name"))}"></label>

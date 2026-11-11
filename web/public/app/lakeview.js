@@ -18,7 +18,7 @@ import {
   roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, showsOars, shouldSplit, spotProbe, windAt,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
-import { tip, wireTips } from "./tour.js";
+import { tip, wireTips, closeTip } from "./tour.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows, inside } from "./windarrows.js";
 
@@ -519,7 +519,9 @@ function update() {
 
 /** The panel alone, as after pulling it up or pushing it down. */
 function renderPanel(hour = shownHour()) {
-  page.root.querySelector("#lake-panel").innerHTML = panelGrip() + (page.routeMode ? planningPanel(hour) : viewingPanel(hour));
+  // On a phone, under the grabber: the panel pulls up and pushes down (RoutePanelTip).
+  const panelTip = panelWide() || page.routeMode ? "" : tip("routePanel");
+  page.root.querySelector("#lake-panel").innerHTML = panelGrip() + panelTip + (page.routeMode ? planningPanel(hour) : viewingPanel(hour));
   wirePanel();
 }
 
@@ -533,6 +535,8 @@ const panelGrip = () => `<button class="panel-grip" id="panel-grip" aria-expande
 function setExpanded(on) {
   if (!page || page.expanded === on || panelWide()) return;
   page.expanded = on;
+  // Used what the tip points at.
+  closeTip(page.root, "routePanel");
   renderPanel();
 }
 
@@ -971,8 +975,10 @@ function drawRoute() {
   }
   // The imported row as it was rowed, thin over the route (RowedTrackLine).
   if (page.rowed?.track && page.showTrack) {
-    L.polyline(page.rowed.track.map((p) => [p.lat, p.lon]), { color: "#fff", weight: 3.5, opacity: 0.8, interactive: false }).addTo(group);
-    L.polyline(page.rowed.track.map((p) => [p.lat, p.lon]), { color: "#5856d6", weight: 2, interactive: false }).addTo(group);
+    // Thin and dashed in the text colour, as the app's (label colour at 80 %, 1.5 pt, 3-3 dashes).
+    const theme = document.documentElement.dataset.theme;
+    const dark = theme ? theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+    L.polyline(page.rowed.track.map((p) => [p.lat, p.lon]), { color: dark ? "#fff" : "#000", weight: 1.5, opacity: 0.8, dashArray: "3 3", interactive: false }).addTo(group);
   }
   // A thin line to tap: a tap on a stretch adds a turning point there.
   page.points.forEach((p, i) => {
@@ -1235,20 +1241,32 @@ function toggleRouteMode() {
 function legendSheet() {
   const row = (sym, text) => `<li>${sym}<span>${h(text)}</span></li>`;
   const cold = coldShore(page.view.shoreWaterC, mapLimits());
-  return `<h3>${h(t("Rowing light"))}</h3><ul class="legend">
-      ${["green", "amber", "red"].map((l) => row(dot(l, 14), lightTitle(l))).join("")}
-      ${row(`<span class="stripes red"></span>`, t("Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel."))}
-      ${row(`<span class="stripes amber"></span>`, t("Amber stripes: the whole lake is amber (the last hour before sunset, official warning), see the panel. The squares keep their own colours."))}</ul>
+  // Only what the map shows now, as the app's LakeMapLegend: the layer's colours, the stripes of this
+  // hour, the wind and the tapped spot when there are any, the route rows while planning.
+  const hour = shownHour();
+  const kind = page.layer === "light" && hour ? stripes(hour.lakeWide) : null;
+  const found = currentPlan();
+  const layerTitle = t(LAYERS.find(([k]) => k === page.layer)[1]);
+  const colours = page.layer === "light"
+    ? ["green", "amber", "red"].map((l) => row(dot(l, 14), lightTitle(l))).join("")
+    : `<li class="ramp-row">${layerLegend(page.layer)}</li>`;
+  return `<h3>${h(layerTitle)}</h3><ul class="legend">
+      ${colours}
+      ${kind === "red" ? row(`<span class="stripes red"></span>`, t("Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel.")) : ""}
+      ${kind === "amber" ? row(`<span class="stripes amber"></span>`, t("Amber stripes: the whole lake is amber (the last hour before sunset, official warning), see the panel. The squares keep their own colours.")) : ""}</ul>
     <h3>${h(t("On the map"))}</h3><ul class="legend">
       ${row(`<span class="club-mark own"></span>`, t("The club of this page"))}
       ${row(`<span class="club-mark"></span>`, t("Other clubs on the lake"))}
+      ${row(`<span class="club-mark own oars">${icon("oars")}</span>`, t("Zoomed in: the club's pin moves to the club's own place in the map app, and oars mark the launch point the forecast is for"))}
       ${cold ? row(`<span class="shore-mark" style="background:${COLD_SHORE[cold]}"></span>`, t("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.", temperature(mapLimits().value("lifeJacket")), temperature(10))) : ""}
-      ${row(icon("arrow-up"), t("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. On land the arrows show the weather map's wind forecast for each place."))}</ul>
-    <h3>${h(t("Route"))}</h3><ul class="legend">
+      ${hour?.wind?.length ? row(icon("arrow-up-right"), t("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. On land the arrows show the weather map's wind forecast for each place.")) : ""}
+      ${page.spot != null && !page.routeMode ? row(icon("crosshair"), t("The spot you tapped")) : ""}</ul>
+    ${page.routeMode ? `<h3>${h(t("Route"))}</h3><ul class="legend">
       ${row(`<span class="club-mark own"></span>`, t("Start at your club"))}
       ${row(`<span class="turn-mark">1</span>`, t("Turning point: tap to select, hold and drag to move"))}
-      ${row(`<span class="route-bar small"><span style="width:50%;background:var(--green)"></span><span style="width:50%;background:var(--amber)"></span></span>`, t("The route in the light the boat meets there; out and back run side by side"))}
-      ${row(`<span class="club-mark boat"></span>`, t("Where the boat is at the time shown"))}</ul>`;
+      ${found?.plan.segments.length ? row(`<span class="route-bar small"><span style="width:34%;background:var(--green)"></span><span style="width:33%;background:var(--amber)"></span><span style="width:33%;background:var(--red)"></span></span>`, t("The route in the light the boat meets there; out and back run side by side")) : ""}
+      ${boatStop(found?.plan) ? row(`<span class="club-mark boat"></span>`, t("Where the boat is at the time shown")) : ""}
+      ${page.rowed?.track && page.showTrack ? row(`<span class="track-mark"></span>`, t("Dashed: the track as you rowed it (imported row)")) : ""}</ul>` : ""}`;
 }
 
 function aboutSheet() {
