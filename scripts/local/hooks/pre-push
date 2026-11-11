@@ -1,0 +1,99 @@
+#!/bin/bash
+# RowFrog pre-push check for the Pi remote (set up 11 Nov 2026 while GitHub is down).
+# Runs what .github/workflows/ci.yml runs, on exactly the commit being pushed, in a
+# separate checkout: ruff, backend pytest with coverage, the Worker tests (Node),
+# check_translations, and, when ios/ or testdata/ changed, xcodegen + xcodebuild test
+# in English. Also guards main: no deletes, no non-fast-forward, 86e1980 stays in it.
+# A failure refuses the push. Logs: RowFrog/log/pre-push-<sha>.log.
+remote="$1"
+[ "$remote" = pi ] || exit 0
+
+export PATH="/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
+top=$(git rev-parse --show-toplevel) || exit 1
+logdir="$top/log"; mkdir -p "$logdir"
+passed="$logdir/checks-passed.txt"; touch "$passed"
+zero=0000000000000000000000000000000000000000
+keep=86e198013   # "Screenshots leave git history" (#66): must stay in main's history
+venv="$top/backend/.venv"
+wt="${TMPDIR:-/tmp}/rowfrog-prepush"
+dd="$HOME/Library/Developer/Xcode/DerivedData/RowFrog-prepush"
+
+refuse() { echo "pre-push: $*" >&2; exit 1; }
+
+checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
+  local sha=$1 base=$2 log="$logdir/pre-push-${1:0:9}.log" ok=0
+  if grep -qx "$sha" "$passed"; then echo "pre-push: ${sha:0:9} already passed the checks"; return 0; fi
+  echo "pre-push: checking ${sha:0:9} (log: $log)"
+  git worktree remove --force "$wt" >/dev/null 2>&1; rm -rf "$wt"
+  git worktree add --detach --force "$wt" "$sha" >/dev/null 2>&1 || { echo "pre-push: no checkout of $sha" >&2; return 1; }
+  {
+    echo "== $(date '+%F %T') checks for $sha"
+    echo "== ruff"
+    (cd "$wt/backend" && "$venv/bin/python" -m ruff check . ../scripts) || ok=1
+    echo "== backend pytest with coverage"
+    (cd "$wt/backend" && PYTHONPATH="$wt/backend" "$venv/bin/python" -m pytest -q -p no:cacheprovider \
+       --cov=rowfrog --cov-report=json:"$logdir/coverage-${sha:0:9}.json" 2>&1 | tail -15; exit "${PIPESTATUS[0]}") || ok=1
+    echo "== translations"
+    (cd "$wt" && "$venv/bin/python" scripts/check_translations.py) || ok=1
+    echo "== Cloudflare Workers"
+    if command -v node >/dev/null; then
+      (cd "$wt" && node --test cloudflare/tests/*.test.mjs 2>&1 | tail -15; exit "${PIPESTATUS[0]}") || ok=1
+    else
+      echo "WARNING: Node.js is not installed (sudo port install nodejs22), so the Worker tests were skipped"
+    fi
+    if [ "$base" = "$zero" ] || git diff --name-only "$base" "$sha" | grep -qE '^(web/|scripts/build_web\.py$|\.github/workflows/website\.yml$)'; then
+      echo "== website (as website.yml): node tests + build"
+      (cd "$wt" && node --test web/tests/*.test.mjs 2>&1 | tail -8; exit "${PIPESTATUS[0]}") || ok=1
+      (cd "$wt" && "$venv/bin/python" scripts/build_web.py) || ok=1
+      if [ -d "$top/node_modules/playwright" ]; then
+        (cd "$wt" && ln -s "$top/node_modules" node_modules && node --test web/tests/browser/*.test.mjs 2>&1 | tail -8; exit "${PIPESTATUS[0]}") || ok=1
+      else
+        echo "WARNING: no npm packages (npm ci), so the website's browser tests were skipped"
+      fi
+    else
+      echo "== website: nothing under web/ changed, skipped"
+    fi
+    if [ "$base" = "$zero" ] || git diff --name-only "$base" "$sha" | grep -qE '^(ios/|testdata/|\.github/workflows/ci\.yml$|scripts/newest_xcode_runner\.py$)'; then
+      echo "== iOS: xcodegen + xcodebuild test (English)"
+      device=$(xcrun simctl list devices available -j | python3 -c '
+import json, sys
+runtimes = sorted((r for r in json.load(sys.stdin)["devices"].items() if "iOS-" in r[0]),
+                  key=lambda r: [int(n) for n in r[0].rsplit("iOS-", 1)[-1].split("-") if n.isdigit()])
+found = [d["udid"] for runtime, devices in runtimes for d in devices
+         if d["name"].startswith("iPhone") and "Duo" not in d["name"]]
+print(found[-1] if found else "")')
+      echo "Xcode: $(xcodebuild -version | head -1), device $device"
+      (cd "$wt/ios" && xcodegen >/dev/null && xcodebuild test -project RowFrog.xcodeproj -scheme RowFrog \
+         -destination "id=$device" -derivedDataPath "$dd" -testLanguage en -testRegion US 2>&1 \
+         | grep -E "Executed|error:|failed \(|TEST (SUCCEEDED|FAILED)" | tail -15; exit "${PIPESTATUS[0]}") || ok=1
+    else
+      echo "== iOS: nothing under ios/ or testdata/ changed, skipped (as CI does)"
+    fi
+    echo "== result: $([ $ok = 0 ] && echo passed || echo FAILED)"
+  } </dev/null > "$log" 2>&1
+  git worktree remove --force "$wt" >/dev/null 2>&1
+  grep -E "^== (ruff|backend|translations|Cloudflare|iOS|result)|passed in|failed|Executed .* tests|WARNING|error:" "$log" | tail -20
+  [ $ok = 0 ] && echo "$sha" >> "$passed"
+  return $ok
+}
+
+refs=()
+while read -r lref lsha rref rsha; do refs+=("$lref $lsha $rref $rsha"); done
+status=0
+for line in "${refs[@]}"; do
+  read -r lref lsha rref rsha <<<"$line"
+  if [ "$rref" = refs/heads/main ]; then
+    [ "$lsha" = "$zero" ] && refuse "main is never deleted"
+    if [ "$rsha" != "$zero" ] && ! git merge-base --is-ancestor "$rsha" "$lsha" 2>/dev/null; then
+      refuse "main only grows: ${lsha:0:9} does not contain the Pi's main ${rsha:0:9} (no force push, no rebase)"
+    fi
+    git merge-base --is-ancestor "$keep" "$lsha" 2>/dev/null || refuse "86e1980 must stay in main's history"
+  fi
+  [ "$lsha" = "$zero" ] && continue                       # deleting a branch: nothing to test
+  case "$rref" in refs/heads/*) ;; *) continue ;; esac    # screenshots refs etc.
+  base=$rsha
+  [ "$base" = "$zero" ] && base=$(git merge-base "$lsha" refs/remotes/pi/main 2>/dev/null || echo "$zero")
+  checks "$lsha" "$base" || status=1
+done
+[ $status = 0 ] || echo "pre-push: checks failed, nothing was pushed (see RowFrog/log/)" >&2
+exit $status

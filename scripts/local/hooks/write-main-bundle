@@ -1,0 +1,22 @@
+#!/bin/bash
+# Writes inbox/main.bundle (all of main's history) whenever main changes, so
+# cloud threads can start from the current code. Called by post-commit and
+# post-merge; set up 11 Nov 2026 while GitHub is down. Never fails the git command.
+top=$(git rev-parse --show-toplevel) || exit 0
+[ "$(git symbolic-ref -q --short HEAD)" = main ] || exit 0
+mkdir -p "$top/inbox" "$top/log"
+tmp="$top/inbox/.main.bundle.tmp"
+if git bundle create -q "$tmp" main 2>>"$top/log/main-bundle.log"; then
+  mv -f "$tmp" "$top/inbox/main.bundle"
+  echo "$(date '+%F %T') main.bundle at $(git rev-parse --short main)" >> "$top/log/main-bundle.log"
+else
+  rm -f "$tmp"
+fi
+# Weekly backup, option (a) (owner's backup choice pending, 11 Nov 2026): on a change to
+# main, if the newest snapshot in RowFrog/backups/ is 7 days old or more, make one in the
+# background. No launchd needed, so no extra macOS permission.
+newest=$(ls -1t "$top"/backups/rowfrog-*.bundle 2>/dev/null | head -1)
+if [ -x "$top/backups/make-backup.sh" ] && { [ -z "$newest" ] || [ -n "$(find "$newest" -mtime +6 2>/dev/null)" ]; }; then
+  nohup bash "$top/backups/make-backup.sh" >/dev/null 2>&1 &
+fi
+exit 0
