@@ -184,3 +184,25 @@ test("browsing by country lists the countries, a country's waters and a water's 
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("the header's forecast time is the model run's arrival, and the update cycles open from the page's end", async () => {
+  const { page, errors, context } = await open(visitor());
+  // The run came out 40 minutes before the server built the file (weatherRun, app #403).
+  const made = new Date(forecast.generatedAt);
+  const run = { model: "ICON-D2", started: new Date(made - 3 * 3600e3).toISOString(), available: new Date(made - 40 * 60e3).toISOString() };
+  await context.route((url) => url.pathname.endsWith("/v1/clubs/mrc-1880/forecast"),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ...forecast, weatherRun: run }) }));
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  const clock = (d) => new Date(d).toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Berlin" });
+  await page.waitForFunction((at) => document.querySelector("#updated-line")?.innerText.includes(`Forecast from ${at}`), clock(run.available), { timeout: 20000 });
+  await page.locator("#updates").click();
+  const sheet = page.locator("dialog.sheet");
+  await sheet.waitFor();
+  const text = await sheet.innerText();
+  assert.ok(text.includes(`model run of ${clock(run.started)}, ready at ${clock(run.available)}`), text.slice(0, 300));
+  assert.equal(await sheet.locator(".legend.cycles li").count(), 11);
+  if (process.env.RF_SHOT) await sheet.screenshot({ path: process.env.RF_SHOT });
+  if (process.env.RF_SHOT_END) { await page.keyboard.press("Escape"); await page.locator(".page-end").screenshot({ path: process.env.RF_SHOT_END }); }
+  assert.deepEqual(errors, []);
+  await context.close();
+});

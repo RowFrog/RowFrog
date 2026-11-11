@@ -695,6 +695,7 @@ async function renderClub(id) {
       ${tip("source")}
       ${sourceLine(forecast)}
       <button class="pill" id="arrange">${icon("arrow-up-down")} ${h(t("Arrange this page"))}</button>
+      <button class="pill" id="updates">${icon("info")} ${h(t("How often data is updated"))}</button>
       ${credits(forecast, club)}
       ${footerLinks()}
     </div>`;
@@ -1040,6 +1041,39 @@ window.addEventListener("resize", () => {
   }, 150);
 });
 
+/**
+ * When the weather in this forecast came out: the model run's arrival, or without it when the server
+ * built the file (ClubForecast.forecastTime).
+ */
+export const forecastTime = (forecast) => forecast.weatherRun?.available ?? forecast.generatedAt;
+
+/** How often each value is renewed at its source and fetched by Row Frog, with its symbol on the club page (UpdateCyclesSheet). */
+const UPDATE_CYCLES = [
+  ["wind", key("Weather forecast"), key("Wind, gusts, temperature, rain, clouds and visibility: DWD's ICON-D2 model, a new run every 3 hours, ready about 1½ to 3 hours after it starts."), key("Fetched once the new run is ready, checked every 30 minutes. Clubs nobody opened lately: every 6 hours.")],
+  ["waves", key("Waves"), key("Worked out from the forecast wind and the open water in front of the club."), key("With every new forecast.")],
+  ["triangle-alert", key("Official warnings"), key("DWD, GeoSphere Austria or MeteoSwiss, whenever they issue or change one."), key("Every 30 minutes.")],
+  ["thermometer", key("Water temperature"), key("Measuring stations, every 15 to 60 minutes; without a station, satellites once a day or an estimate from the air temperatures."), key("Every 30 minutes.")],
+  ["gauge", key("River current and lake level"), key("Gauges, every 15 minutes."), key("Every 30 minutes.")],
+  ["cloud-rain", key("Rain radar"), key("DWD, every 5 minutes."), key("The radar map loads live when you open it; the widget's rain line every 30 minutes.")],
+  ["map", key("Lake view"), key("The same model runs as the forecast, for points across the water."), key("Every 3 hours; lakes nobody opened lately twice a day.")],
+  ["spline", key("8-day outlook"), key("The same model runs, longer models after 2 days."), key("Every 3 hours.")],
+  ["globe", key("Satellite picture"), key("Sentinel-2 passes every few days; clouds can hide the water."), key("Looked for once a day.")],
+  ["snowflake", key("Ice"), key("A satellite ice map once a day in winter, and an estimate from the water and air temperatures."), key("Twice a day.")],
+  ["sunrise", key("Daylight"), key("Worked out from the date and the place."), key("Always current.")],
+];
+
+export function updateCyclesBody(forecast) {
+  const run = forecast.weatherRun;
+  const rows = UPDATE_CYCLES.map(([symbol, title, source, fetched]) => `<li><span class="tint">${icon(symbol)}</span><span>
+    <strong>${h(t(title))}</strong><small>${h(t(source))}</small><small class="sub">${h(t(fetched))}</small></span></li>`).join("");
+  return `<p>${h(run ? t("This forecast: model run of %@, ready at %@.", time(run.started), time(run.available))
+      : t("This forecast was built at %@.", time(forecast.generatedAt)))}</p>
+    <p>${h(t("Warnings, water and gauges checked at %@.", time(forecast.generatedAt)))}</p>
+    <p class="small sub">${h(t("The server renews the clubs you use every 30 minutes; your browser loads them when you open or come back to this page, or tap Refresh."))}</p>
+    <h3>${h(t("How often values are renewed"))}</h3>
+    <ul class="legend cycles">${rows}</ul>`;
+}
+
 /** When the forecast was made and, if another minute, when this browser loaded it (LocationPageView.updatedLine). */
 function updatedLine(made, loaded) {
   return loaded == null || time(loaded) === time(made)
@@ -1165,7 +1199,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
     ${forecast && failure ? `<p class="orange small"><button class="link failed" id="failed" data-why="${h(failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", failure[0], time(forecast.generatedAt)))} ${icon("info")}</button></p>`
       : forecast ? (stale
       ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>`
-      : `<p class="sub small" id="updated-line">${h(updatedLine(forecast.generatedAt, forecasts.get(club?.id)?.at))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`) : ""}
+      : `<p class="sub small" id="updated-line">${h(updatedLine(forecastTime(forecast), forecasts.get(club?.id)?.at))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`) : ""}
     ${slow ? `<p class="sub small">${icon("hourglass")} ${h(t("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."))}</p>` : ""}
   </header>`;
 }
@@ -1176,6 +1210,7 @@ function wireClubPage(id, club, raw, forecast, hour) {
   root.querySelector("#failed")?.addEventListener("click", (e) => openSheet(t("Could not update"), `<p>${h(e.currentTarget.dataset.why)}</p>
     <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(club ?? { id }, () => renderClub(id)));
+  root.querySelector("#updates")?.addEventListener("click", () => openSheet(t("Updates"), updateCyclesBody(forecast)));
   root.querySelector(".hourly-card .fold")?.addEventListener("click", (e) => foldHourly(e.currentTarget));
   root.querySelectorAll(".hourly-card .nightline").forEach((b) => b.addEventListener("click", () => toggleNight(b)));
   root.querySelector("#add")?.addEventListener("click", () => {
