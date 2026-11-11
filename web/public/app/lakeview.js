@@ -313,7 +313,7 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
     // On a phone the panel starts pushed down, as the app's (panelExpanded): the hour, one line and the hours.
     expanded: false,
     // On rivers: the current the club page shows (its gauge, mid-river), for the route planner (LakeView.currentMs).
-    currentMs: view.section ? forecasts.get(clubId)?.forecast?.river?.now?.speedMs ?? null : null,
+    currentMs: view.section ? forecasts.get(clubId)?.value?.river?.now?.speedMs ?? null : null,
   };
   wireLakeBoat();
   wirePanelDrag();

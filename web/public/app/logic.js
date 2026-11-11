@@ -32,6 +32,23 @@ export function forecastStatus({ hasForecast, outOfDate, loading = false, failur
   return { name: loading ? "updating" : "current" };
 }
 
+/**
+ * One download's state, as Loadable in the app (ios/RowFrog/Loadable.swift):
+ * `{ value, loadedAt, loading, failure }`, one object instead of separate lists.
+ * Something to show when `value` is set; `failure` is why the last try failed
+ * and stays until a load works. No entry means nothing was asked for yet.
+ * The moves are plain functions, checked by web/tests/loadable.test.mjs. (The app's
+ * calledOff has no use here: a page load is never called off half way.)
+ */
+export const loadable = {
+  /** A load begins: what is shown stays, with its failure until one works. */
+  started: (state) => ({ value: null, loadedAt: null, failure: null, ...state, loading: true }),
+  /** The load worked. */
+  loaded: (value, at = Date.now()) => ({ value, loadedAt: at, loading: false, failure: null }),
+  /** The load failed: what is shown stays, with the reason. */
+  failing: (state, failure) => ({ value: null, loadedAt: null, ...state, loading: false, failure }),
+};
+
 /** Green turns grey on an old forecast; amber and red still show. */
 export function shownLight(light, stale) {
   return stale && light === "green" ? "grey" : light;

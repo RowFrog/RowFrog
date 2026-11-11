@@ -23,11 +23,14 @@ const forecast = JSON.parse(await readFile(join(API, "clubs/mrc-1880/forecast"),
 const club = lakes.flatMap((l) => l.clubs.map((c) => ({ ...c, lakeId: l.id }))).find((c) => c.id === "mrc-1880");
 
 let server, base, browser;
+/** Forecast paths the server answers with 403 (the test for a refused forecast). */
+const refused = new Set();
 
 before(async () => {
   server = createServer(async (req, res) => {
     const path = normalize(decodeURIComponent(new URL(req.url, "http://x").pathname));
     const api = path.startsWith("/v1/");
+    if (refused.has(path)) return res.writeHead(403).end();
     let file = api ? join(API, path.slice(4)) : join(DIST, path);
     if (!api && path.endsWith("/")) file = join(file, "index.html");
     try {
@@ -221,6 +224,31 @@ test("fog within 1 km shows on the top tile and in the Why line (app #409)", asy
   assert.ok(await tile.locator(".cause-red").count(), "the value takes the light's colour");
   assert.match(await page.locator(".card.now ul.reasons").innerText(), /Fog within 1 km of the launch point: visibility 0\.3 km\./);
   if (process.env.RF_SHOT_NEAR) await page.locator(".card.now").screenshot({ path: process.env.RF_SHOT_NEAR });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("a refused forecast shows No forecast, and a failed update keeps the forecast with the reason", async () => {
+  const { page, errors, context } = await open(visitor());
+  const path = "/v1/clubs/mrc-1880/forecast";
+  refused.add(path);
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  // The page may draw more than once while it loads; wait for the text rather than the first element.
+  const shows = (sel, text) => page.waitForFunction(([sel, text]) => document.querySelector(sel)?.innerText.includes(text), [sel, text], { timeout: 20000 });
+  // The page draws twice on opening (both tries are refused); wait until it has settled.
+  await page.waitForLoadState("networkidle");
+  await shows(".loading", "No forecast: server refused the download (error 403)");
+  // Try again works once the server answers, then a failed update keeps what is shown (loadable in logic.js).
+  refused.delete(path);
+  await page.locator(".loading #retry").click();
+  await page.locator(".card.now").first().waitFor({ timeout: 20000 });
+  await page.locator("#refresh").waitFor({ state: "attached", timeout: 20000 });
+  refused.add(path);
+  // The header line can sit under the top bar on a phone-size page; the tap itself is what counts.
+  await page.locator("#refresh").dispatchEvent("click");
+  await shows("#failed", "Could not update: server refused the download (error 403)");
+  assert.ok(await page.locator(".card.now").first().isVisible(), "the forecast stays");
+  refused.clear();
   assert.deepEqual(errors, []);
   await context.close();
 });
