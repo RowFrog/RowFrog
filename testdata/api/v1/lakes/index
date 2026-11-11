@@ -17,7 +17,11 @@
     },
     "launchPointSet": true,
     "launchPointVerified": true,
-    "mapPlace": null,
+    "mapPlace": {
+     "lat": 47.997397,
+     "lon": 11.347563,
+     "name": "Münchener Ruder-Club v. 1880 e.V."
+    },
     "name": "Münchener Ruder-Club von 1880 e.V.",
     "region": null,
     "shortName": "MRC 1880",
@@ -36,7 +40,11 @@
     },
     "launchPointSet": true,
     "launchPointVerified": true,
-    "mapPlace": null,
+    "mapPlace": {
+     "lat": 47.991447,
+     "lon": 11.338367,
+     "name": "Münchener Ruder- und Segelverein \"Bayern\" von 1910 e.V."
+    },
     "name": "Münchener Ruder- und Segel-Verein \"Bayern\" von 1910 e.V.",
     "region": null,
     "shortName": "MRSV Bayern",
@@ -55,7 +63,11 @@
     },
     "launchPointSet": true,
     "launchPointVerified": true,
-    "mapPlace": null,
+    "mapPlace": {
+     "lat": 47.896533,
+     "lon": 11.274522,
+     "name": "Tutzinger Ruderverein 1983 e.V."
+    },
     "name": "Tutzinger Ruderverein 1983 e.V.",
     "region": null,
     "shortName": "Tutzinger RV",
