@@ -119,14 +119,21 @@ struct SatellitePicture: Decodable, Hashable {
 final class SatellitePictureStore {
     static let shared = SatellitePictureStore(api: .published())
 
-    private(set) var pictures: [String: SatellitePicture] = [:]
-    private(set) var missing: Set<String> = []
+    /// Each lake's load: its list of passes, whether a load is running and
+    /// whether the last one failed, one state at a time (Loadable).
+    private(set) var states: [String: Loadable<SatellitePicture, RefreshFailure>] = [:]
+    /// The lakes' lists of passes, as loaded.
+    var pictures: [String: SatellitePicture] { states.compactMapValues(\.value) }
+
+    /// The lake has no pictures (or they could not be read): not asked again
+    /// until a pull to refresh.
+    func missing(_ lakeID: String) -> Bool { states[lakeID].map { $0.value == nil && $0.hasFailed } ?? false }
     let api: APIClient
 
     nonisolated init(api: APIClient) { self.api = api }
 
     func load(_ lakeID: String) async {
-        guard pictures[lakeID] == nil, !missing.contains(lakeID) else { return }
+        guard states[lakeID]?.value == nil, !missing(lakeID) else { return }
         await fetch(lakeID)
     }
 
@@ -134,15 +141,16 @@ final class SatellitePictureStore {
     /// of a new pass download; one already here keeps its address (its day) and so
     /// comes from memory or the cache folder.
     func refresh(_ lakeID: String) async {
-        missing.remove(lakeID)
+        if missing(lakeID) { states[lakeID] = nil }
         await fetch(lakeID)
     }
 
     private func fetch(_ lakeID: String) async {
+        states[lakeID] = .started(from: states[lakeID])
         do {
             let picture = try await api.satellitePicture(lakeID: lakeID)
             if picture.latest != nil || picture.clearest != nil {
-                pictures[lakeID] = picture
+                states[lakeID] = .loaded(picture)
                 // Fetch all of them now, so switching between them never waits;
                 // when saving data, only the one asked for (see `mayDownload`).
                 for kind in picture.kinds where !DataSaver.shared.saving {
@@ -150,15 +158,19 @@ final class SatellitePictureStore {
                         Task { await image(url) }
                     }
                 }
-            } else if pictures[lakeID] == nil {
-                missing.insert(lakeID)
+            } else if states[lakeID]?.value == nil {
+                states[lakeID] = .failed(.notFound)
+            } else {
+                // No passes in the new list: the pictures already shown stay.
+                states[lakeID] = states[lakeID]?.calledOff()
             }
         } catch let error as URLError where error.code != .badServerResponse {
             // Offline or a timeout: try again the next time the page opens. A lake
             // without pictures answers 404 (badServerResponse) and stays missing.
+            states[lakeID] = states[lakeID]?.calledOff()
         } catch {
             // A refresh that fails keeps the pictures already shown.
-            if pictures[lakeID] == nil { missing.insert(lakeID) }
+            states[lakeID] = .started(from: states[lakeID]).failing(with: RefreshFailure(error))
         }
     }
 
@@ -275,7 +287,7 @@ final class SatellitePictureStore {
             Task { await image(url) }
             return nil
         }
-        if !missing.contains(lakeID) { Task { await load(lakeID) } }
+        if !missing(lakeID) { Task { await load(lakeID) } }
         return Self.keptImage(lakeID)
     }
 
