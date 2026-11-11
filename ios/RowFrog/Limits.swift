@@ -459,8 +459,8 @@ extension ClubForecast {
             guard i < 6 else { return hour }
             var h = hour
             h.nearby = near
-            let reasons = reason.light > h.light ? [reason] + h.reasons : h.reasons
-            return h.with(reasons: reasons, sunUp: h.sunUp)
+            // Always first, so the shots show it also after sunset, when the light is red anyway.
+            return h.with(reasons: [reason] + h.reasons, sunUp: h.sunUp)
         }
         return copy
     }
