@@ -29,12 +29,12 @@ import re
 import sys
 import time
 import unicodedata
-from datetime import date
+from datetime import UTC, datetime
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
-from fetch_lake_outline import overpass  # noqa: E402
+from fetch_lake_outline import overpass
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "catalogs" / "osm-places.json"
@@ -186,7 +186,7 @@ def main() -> int:
                    "club's name. The website puts the club's pin there once zoomed in, unless a clubhouse checked "
                    "by hand lies more than 80 m away.",
         "source": "© OpenStreetMap contributors, ODbL",
-        "updated": date.today().isoformat(),
+        "updated": datetime.now(UTC).date().isoformat(),
         "places": places,
     }, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     return 0
