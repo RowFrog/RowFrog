@@ -84,7 +84,9 @@ GitHub issue, so no GitHub account is needed.
    dark hours fold into one tinted line (lowest temperature, strongest wind,
    highest waves, all its rain), which opens on a tap.
 5. Satellite picture.
-6. Forecast source and credits.
+6. Forecast source, "How often data is updated" (a sheet with each value's
+   source, how often that source updates and how often Row Frog fetches it)
+   and credits.
 
 The rain radar card is off by default (see Rain radar) and can be switched
 on in Arrange this page. The launch point lives in the club header (see
@@ -275,8 +277,8 @@ nothing in the background; only the widgets load forecasts on their own.
 
 **Refresh on return.** Coming back to the app after more than 10 minutes
 loads the club page in front first, then every other saved club; a pull on a
-club page does the same. The header says when the server made the forecast
-and when the phone loaded it.
+club page does the same. The header says when the weather model's run came
+out (the forecast time) and when the phone loaded it.
 
 **Data use.** Forecasts that have not changed are not downloaded again, and
 the club list is kept on the phone for a day. With "Save mobile data" on
