@@ -1,0 +1,43 @@
+#!/bin/bash
+# RowFrog push gate on the Pi (set up 11 Nov 2026 while GitHub is down).
+# For a push to main: refuses deleting it, non-fast-forward updates and a main
+# without 86e1980, then runs the backend tests on exactly the pushed commit in a
+# temporary copy, with the test environment ~/venv-check (Python 3.12, the
+# publishing job's pinned packages plus the dev tools). A failure refuses the
+# push, so the forecast runs never take untested code. Other branches pass as they are.
+# Log: ~/gate.log. Undo: delete this file (~/git/rowfrog.git/hooks/pre-receive).
+zero=0000000000000000000000000000000000000000
+keep=86e198013
+venv=$HOME/venv-check
+uv=$HOME/.local/bin/uv
+log=$HOME/gate.log
+status=0
+while read -r old new ref; do
+  [ "$ref" = refs/heads/main ] || continue
+  if [ "$new" = "$zero" ]; then echo "gate: main is never deleted"; status=1; continue; fi
+  if [ "$old" != "$zero" ] && ! git merge-base --is-ancestor "$old" "$new"; then
+    echo "gate: main only grows (no force push, no rebase)"; status=1; continue
+  fi
+  if ! git merge-base --is-ancestor "$keep" "$new"; then echo "gate: 86e1980 must stay in main"; status=1; continue; fi
+  tmp=$(mktemp -d /tmp/rowfrog-gate.XXXXXX)
+  git archive "$new" | tar -x -C "$tmp"
+  deps=$(cat "$tmp/backend/requirements-publish.txt" "$tmp/backend/pyproject.toml" | sha256sum | cut -c1-16)
+  if [ "$deps" != "$(cat "$venv/deps.hash" 2>/dev/null)" ]; then
+    echo "gate: the pinned packages changed, updating the test environment"
+    "$uv" pip install -q --python "$venv/bin/python" -c "$tmp/backend/requirements-publish.txt" "$tmp/backend[dev,satellite]" \
+      && echo "$deps" > "$venv/deps.hash"
+  fi
+  echo "gate: backend tests on ${new:0:9} ..."
+  start=$(date +%s)
+  if (cd "$tmp/backend" && PYTHONPATH="$tmp/backend" nice -n 5 "$venv/bin/python" -m pytest -q -p no:cacheprovider 2>&1 \
+        | tail -5; exit "${PIPESTATUS[0]}"); then
+    echo "gate: passed in $(( $(date +%s) - start )) s"
+    echo "$(date '+%F %T') ${new:0:9} passed" >> "$log"
+  else
+    echo "gate: backend tests FAILED, main stays at ${old:0:9}"
+    echo "$(date '+%F %T') ${new:0:9} FAILED" >> "$log"
+    status=1
+  fi
+  rm -rf "$tmp"
+done
+exit $status
