@@ -139,6 +139,8 @@ final class WidgetContentTests: XCTestCase {
         XCTAssertEqual(day?.past, [false, false, false, false, false, false, false])
         XCTAssertEqual(day?.good, "\(Format.time(start.addingTimeInterval(3600)))–\(Format.time(start.addingTimeInterval(3 * 3600)))")
         XCTAssertEqual(snapshot(hours, at: start.addingTimeInterval(3600 + 600)).days(1).first?.past.first, true)
+        let already = snapshot([hour(0), hour(1), hour(2, .red)], at: start.addingTimeInterval(60)).days(1).first
+        XCTAssertEqual(already?.good, "\(tr("Now"))–\(Format.time(start.addingTimeInterval(2 * 3600)))")
         XCTAssertNil(snapshot([hour(0, .red), hour(1, .amber)]).days(1).first?.good)
     }
 

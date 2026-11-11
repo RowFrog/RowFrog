@@ -35,7 +35,7 @@ struct WidgetDay: Equatable {
     let lights: [Light]
     /// Hours already gone, drawn faint.
     let past: [Bool]
-    /// "10:54–15:00", nil when the day has no good hour left.
+    /// "Now–15:00" or "11:00–15:00", nil when the day has no good hour left.
     let good: String?
 }
 
@@ -210,7 +210,7 @@ extension RowingSnapshot {
         return result
     }
 
-    /// The first stretch of at least an hour of green from now on, "10:54–15:00".
+    /// The first stretch of at least an hour of green from now on, "Now–15:00" or "11:00–15:00".
     private func goodStretch(_ hours: [ForecastHour]) -> String? {
         var start: Date?
         var end: Date?
@@ -225,7 +225,8 @@ extension RowingSnapshot {
             }
         }
         guard let s = start, let e = end, e.timeIntervalSince(s) >= 3600 else { return nil }
-        return "\(Format.time(s))–\(Format.time(e))"
+        // Already good: "Now–16:00", not the minute the widget last drew (owner, 11 Nov 2026).
+        return "\(s <= date ? tr("Now") : Format.time(s))–\(Format.time(e))"
     }
 
     // MARK: Lock screen ring
