@@ -249,3 +249,8 @@ test("the top tile shows the worst nearby value that sets the light (app #409)",
   assert.equal(nearbyCondition(plain), null, "without the nearby reason the tile shows the launch point's own values");
   assert.equal(shownVisibilityM(plain), 15000);
 });
+
+test("satellite tiles ask for the double-size version on sharp screens", async () => {
+  const { satelliteUrl } = await import("../public/app/basemap.js");
+  assert.match(satelliteUrl("k"), /\{y\}\{r\}\.jpg\?key=k$/);
+});
