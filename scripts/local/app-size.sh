@@ -9,13 +9,12 @@ here=$(cd "$(dirname "$0")" && pwd)
 export PATH="$top/backend/.venv/bin:/opt/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
 ref=${1:-main}
 sha=$(git -C "$top" rev-parse --verify "$ref^{commit}")
-wt="${TMPDIR:-/tmp}/rowfrog-app-size"
-export RUNNER_TEMP; RUNNER_TEMP=$(mktemp -d "${TMPDIR:-/tmp}/rowfrog-app-size-tmp.XXXXXX")
+export RUNNER_TEMP; RUNNER_TEMP=$(mktemp -d "${TMPDIR:-/tmp}/rowfrog-app-size.XXXXXX")
+wt="$RUNNER_TEMP/checkout"
 export GITHUB_STEP_SUMMARY="$top/log/app-size-${sha:0:9}.md"
 mkdir -p "$top/log"; : > "$GITHUB_STEP_SUMMARY"
 cleanup() { git -C "$top" worktree remove --force "$wt" >/dev/null 2>&1 || true; rm -rf "$RUNNER_TEMP"; }
 trap cleanup EXIT
-git -C "$top" worktree remove --force "$wt" >/dev/null 2>&1 || true; rm -rf "$wt"
 git -C "$top" worktree add -q --detach "$wt" "$sha"
 flow="$wt/.github/workflows/app-size.yml"
 step() { python3 "$here/workflow_step.py" "$flow" size "$@"; }

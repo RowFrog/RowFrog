@@ -1,2 +1,2 @@
 #!/bin/bash
-"$(git rev-parse --git-dir)/hooks/write-main-bundle"
+"$(git rev-parse --path-format=absolute --git-common-dir)/hooks/write-main-bundle"

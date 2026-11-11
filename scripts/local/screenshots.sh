@@ -29,10 +29,10 @@ export PORT=8765
 if lsof -nP -iTCP:$PORT -sTCP:LISTEN >/dev/null 2>&1; then echo "Port $PORT is in use"; exit 1; fi
 sha=$(git -C "$top" rev-parse --verify "$branch^{commit}")
 safe=${branch//\//-}
-wt="${TMPDIR:-/tmp}/rowfrog-shots"
 log="$top/log/screenshots-$safe.log"
 out="$top/log/screenshots/$safe"
-tmp=$(mktemp -d "${TMPDIR:-/tmp}/rowfrog-shots-tmp.XXXXXX")
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/rowfrog-shots.XXXXXX")
+wt="$tmp/checkout"   # its own per run, so two sessions never remove each other's
 mkdir -p "$top/log"
 cleanup() {
   pkill -f "uvicorn rowfrog.api:app --port $PORT" 2>/dev/null || true
@@ -40,13 +40,13 @@ cleanup() {
   rm -rf "$tmp"
 }
 trap cleanup EXIT
-git -C "$top" worktree remove --force "$wt" >/dev/null 2>&1 || true; rm -rf "$wt"
 git -C "$top" worktree add -q --detach "$wt" "$sha"
 flow="$wt/.github/workflows/screenshots.yml"
 step() { python3 "$here/workflow_step.py" "$flow" screenshots "$@"; }
 run() { bash --noprofile --norc -eo pipefail "$1"; }
 echo "Screenshots of $branch (${sha:0:9}) on $device, only: ${only:-all}; log $log"
-{
+shots() {
+  set -e
   # The earlier set of this branch, else main's, so a run with -o keeps the other screens.
   mkdir -p "$wt/docs/screenshots"
   for ref in "refs/screenshots/$branch" refs/screenshots/main; do
@@ -63,7 +63,7 @@ echo "Screenshots of $branch (${sha:0:9}) on $device, only: ${only:-all}; log $l
     'localhost:8000=>localhost:$PORT' > "$tmp/backend.sh"
   run "$tmp/backend.sh"
   echo "== Build the app"
-  step "Build the app" 'brew install xcodegen=>:' > "$tmp/build.sh"
+  step "Build the app" 'brew install xcodegen=>:' 'xcrun simctl boot "$UDID"=>xcrun simctl boot "$UDID" || true' > "$tmp/build.sh"
   (cd ios && DEVICE="$device" XCODE_INPUT="" run "$tmp/build.sh" 2>&1 | grep -E "error|BUILD (SUCCEEDED|FAILED)|Using" ; exit "${PIPESTATUS[0]}")
   set -a; . "$GITHUB_ENV"; set +a
   echo "== Take screenshots on $UDID into $SHOTS"
@@ -74,7 +74,12 @@ echo "Screenshots of $branch (${sha:0:9}) on $device, only: ${only:-all}; log $l
     > "$tmp/shoot.sh"
   ONLY_INPUT="$only" run "$tmp/shoot.sh"
   xcrun simctl shutdown "$UDID" || true
-} > "$log" 2>&1 || { echo "Failed, see $log"; tail -20 "$log"; exit 1; }
+}
+set +e
+( shots ) > "$log" 2>&1
+rc=$?
+set -e
+[ "$rc" = 0 ] || { echo "Failed, see $log"; tail -20 "$log"; exit 1; }
 
 # The set as one commit, outside every branch's history (as the workflow's last step).
 mkdir -p "$out"; rsync -a --delete "$wt/docs/screenshots/" "$out/"
