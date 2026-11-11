@@ -10,6 +10,7 @@ final class SampleFilesTests: XCTestCase {
     private static let notRead: Set<String> = [
         "forecast.daylight[].date",  // the day follows from sunrise and sunset
         "forecast.waterTemperature.station.distanceKm",  // the app shows distanceM
+        "lakes[].clubs[].mapPlace",  // website only: the app uses the Apple Maps place
     ]
 
     private static let samples = URL(fileURLWithPath: #filePath)
