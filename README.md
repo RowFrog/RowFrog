@@ -544,6 +544,12 @@ has none.
 
 ## Hosting
 
+While GitHub is down (November 2026), a Raspberry Pi runs the forecasts, the
+Model check and the Usage limits check from its own copy of `main`. Changes
+are merged and checked on the owner's Mac before they reach it, and the Mac
+deploys the website. The handbook section "While GitHub is down" has the
+steps and the checks. The rest of this section describes the GitHub setup.
+
 There is no server yet. The "Publish forecasts" workflow runs the backend on
 GitHub and publishes its answers as files on GitHub Pages, at
 https://api.rowfrog.com/v1/ (same paths as the API: `lakes/index`,
