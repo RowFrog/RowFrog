@@ -2,12 +2,18 @@
 """Store weather model forecasts and score them against DWD measurements.
 
 Usage (from the repository root, after `pip install -e backend`):
-    python3 scripts/model_check.py DATA_DIR [--stage 1] [--archive-days 0] [--no-forecast]
+    python3 scripts/model_check.py DATA_DIR [--stage 1] [--archive-days 0] [--no-forecast] [--app-dir DIR]
 
 DATA_DIR keeps the stored forecasts (forecasts/YYYY/MM/DD-HH.csv.gz) and gets
 report.md and stations.json; the workflow keeps it on the model-check branch.
 --archive-days N also loads N days of Open-Meteo's archived forecasts once,
 so a first score exists without waiting weeks. See backend/rowfrog/model_check.py.
+
+--app-dir (or RW_APP_DIR) is the publisher's output folder (the Pi's ~/site/v1):
+the forecasts the app shows there are stored as model "app"
+(forecasts/YYYY/MM/DD-HH-app.csv.gz). Every run also adds the GKD readings the
+points name (Ammersee buoy, lake water) to DATA_DIR/measured/gkd/, because GKD
+shows only the last days. See backend/rowfrog/app_check.py.
 """
 
 from __future__ import annotations
@@ -20,6 +26,7 @@ from pathlib import Path
 
 import httpx
 
+from rowfrog import app_check
 from rowfrog import model_check as mc
 from rowfrog import usage
 
@@ -32,6 +39,7 @@ def main() -> None:
     parser.add_argument("--stage", type=int, default=1)
     parser.add_argument("--archive-days", type=int, default=0)
     parser.add_argument("--no-forecast", action="store_true")
+    parser.add_argument("--app-dir", type=Path, default=os.environ.get("RW_APP_DIR") or None)
     args = parser.parse_args()
 
     now = datetime.now(timezone.utc)
@@ -55,14 +63,34 @@ def main() -> None:
                 mc.write_rows(args.data_dir / "forecasts" / "archive" / f"{now:%Y-%m-%d}.csv.gz", rows)
 
         usage.report_calls("open-meteo", calls, "model-check", client)
+        if args.app_dir:
+            rows, log = app_check.app_rows(args.app_dir, points)
+            print("\n".join("  " + l for l in log))
+            if rows:
+                mc.write_rows(args.data_dir / "forecasts" / f"{now:%Y/%m/%d-%H}-app.csv.gz", rows)
+        print("\n".join("  " + l for l in app_check.log_gkd(client, args.data_dir, points)))
         stored = mc.read_rows(args.data_dir)
         print(f"{len(stored)} stored forecast hours")
         since = now.date() - timedelta(days=3)
         obs, used, log = mc.observations(client, points, since)
         print("\n".join("  " + l for l in log))
 
+    # GKD's measurements replace the land station's where a point has them; the land
+    # station's wind is kept for the "On the lake vs on land" section.
+    land = {}
+    for pid, kinds in app_check.gkd_observations(args.data_dir, points).items():
+        land[pid] = dict(obs.get(pid, {}))
+        obs.setdefault(pid, {}).update(kinds)
+    for p in points:
+        if p.on_lake and "wind" in used.get(p.id, {}):
+            used[p.id]["land wind"] = used[p.id]["wind"]
+        for kind, station in (p.gkd or {}).items():
+            used.setdefault(p.id, {})[kind] = {"station": station, "name": f"GKD {station}", "km": 0.0}
+        if p.on_lake:  # the buoy measures no gusts; land gusts next to lake wind would make up a light
+            obs.get(p.id, {}).pop("gust", None)
+            used.get(p.id, {}).pop("gust", None)
     (args.data_dir / "stations.json").write_text(json.dumps(used, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    text = mc.report(points, stored, obs, used, now)
+    text = mc.report(points, stored, obs, used, now, land)
     (args.data_dir / "report.md").write_text(text + "\n", encoding="utf-8")
     summary = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary:

@@ -26,7 +26,10 @@ case "$job" in
     store=$HOME_DIR/model-check-store
     [ -d "$store/.git" ] || git clone -q -b model-check "$BARE" "$store"
     git -C "$store" pull -q --ff-only origin model-check
-    "$VENV/bin/python" scripts/model_check.py "$store" "$@"
+    # The forecasts the publisher wrote (~/site/v1) are scored too, as model "app".
+    app=()
+    [ -d "$HOME_DIR/site/v1" ] && app=(--app-dir "$HOME_DIR/site/v1")
+    "$VENV/bin/python" scripts/model_check.py "$store" "${app[@]}" "$@"
     cd "$store"
     git add -A
     if git diff --cached --quiet; then

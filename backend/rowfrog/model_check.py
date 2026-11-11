@@ -9,6 +9,12 @@ Forecasts: Open-Meteo, one request per model with all points at once (a model
 that does not cover a point answers with empty values, which are skipped).
 Measurements: DWD Climate Data Center, 10-minute wind, gusts and air
 temperature ("recent" files, updated daily, times in UTC). CC BY 4.0.
+
+Since Nov 2026 it also scores what the app showed ("app" rows, read from the
+publisher's output) and uses GKD measurements where a point names them: the
+Ammersee buoy's wind and air temperature on the lake, and lake water
+temperatures (app_check.py). Points on a lake are kept out of the "All points"
+tables, so those stay comparable with the reports before.
 """
 
 from __future__ import annotations
@@ -53,7 +59,9 @@ CURRENT = "icon_d2"
 REFERENCE = "best_match"
 
 VARIABLES = ["wind_speed_10m", "wind_gusts_10m", "wind_direction_10m", "temperature_2m", "precipitation"]
-FIELDS = ["issued", "model", "point", "valid", "lead_h", "wind", "gust", "dir", "temp", "precip"]
+FIELDS = ["issued", "model", "point", "valid", "lead_h", "wind", "gust", "dir", "temp", "precip", "water"]
+# The rows read from the publisher's files (app_check.py).
+APP = "app"
 
 # A model and best_match "disagree" for an hour when one of these differences is exceeded.
 DISAGREE = {"wind": 2.0, "gust": 3.0, "temp": 2.0}
@@ -68,6 +76,16 @@ class Point:
     lat: float
     lon: float
     stage: int
+    # What the app showed here: a club's forecast or the nearest point of a lake view.
+    club: str | None = None
+    lake: str | None = None
+    # GKD stations measuring here, by kind ("wind", "temp", "water"); they replace
+    # the DWD land station for that kind.
+    gkd: dict | None = None
+
+    @property
+    def on_lake(self) -> bool:
+        return bool(self.gkd and "wind" in self.gkd)
 
 
 def load_points(path: Path, stage: int) -> list[Point]:
@@ -335,6 +353,10 @@ def _f(v) -> float | None:
     return None if v in ("", None) else float(v)
 
 
+def _name(model: str) -> str:
+    return f"**{model}** (app today)" if model == CURRENT else "**app** (what Row Frog showed)" if model == APP else model
+
+
 def bucket(row: dict) -> str:
     if row["issued"] == "archive":
         return "archive"
@@ -348,26 +370,31 @@ class Score:
     wind_err: list = None
     gust_err: list = None
     temp_err: list = None
+    water_err: list = None
     light_wrong: int = 0
     light_n: int = 0
 
     def __post_init__(self):
-        self.wind_err, self.gust_err, self.temp_err = [], [], []
+        self.wind_err, self.gust_err, self.temp_err, self.water_err = [], [], [], []
 
 
-def score(rows: list[dict], obs: dict) -> dict[tuple[str, str, str], Score]:
-    """Scores keyed by (point, model, bucket); 'all' as point is every point together."""
+def score(rows: list[dict], obs: dict, apart: set[str] = frozenset()) -> dict[tuple[str, str, str], Score]:
+    """Scores keyed by (point, model, bucket); 'all' as point is every point together,
+    without the points in `apart` (on a lake) and without the app's rows (only some points have them)."""
     scores: dict[tuple[str, str, str], Score] = {}
     for r in rows:
         point_obs = obs.get(r["point"])
         if not point_obs:
             continue
         valid = datetime.strptime(r["valid"], "%Y-%m-%dT%H:%MZ").replace(tzinfo=timezone.utc)
-        ow, og, ot = (point_obs.get(k, {}).get(valid) for k in ("wind", "gust", "temp"))
-        if ow is None and og is None and ot is None:
+        ow, og, ot, oa = (point_obs.get(k, {}).get(valid) for k in ("wind", "gust", "temp", "water"))
+        if ow is None and og is None and ot is None and oa is None:
             continue
-        fw, fg, ft = _f(r["wind"]), _f(r["gust"]), _f(r["temp"])
-        for key in ((r["point"], r["model"], bucket(r)), ("all", r["model"], bucket(r))):
+        fw, fg, ft, fa = _f(r.get("wind")), _f(r.get("gust")), _f(r.get("temp")), _f(r.get("water"))
+        keys = [(r["point"], r["model"], bucket(r))]
+        if r["model"] != APP and r["point"] not in apart:
+            keys.append(("all", r["model"], bucket(r)))
+        for key in keys:
             s = scores.setdefault(key, Score())
             s.n += 1
             if ow is not None and fw is not None:
@@ -376,6 +403,8 @@ def score(rows: list[dict], obs: dict) -> dict[tuple[str, str, str], Score]:
                 s.gust_err.append(fg - og)
             if ot is not None and ft is not None:
                 s.temp_err.append(ft - ot)
+            if oa is not None and fa is not None:
+                s.water_err.append(fa - oa)
             lo, lf = light(ow, og), light(fw, fg)
             if lo is not None and lf is not None:
                 s.light_n += 1
@@ -412,7 +441,7 @@ def run_slot(issued: str) -> str | None:
     return "morning" if 3 <= hour <= 9 else "evening" if 15 <= hour <= 21 else None
 
 
-def schedule_effect(rows: list[dict], obs: dict) -> dict[str, tuple[Score | None, Score | None]]:
+def schedule_effect(rows: list[dict], obs: dict, apart: set[str] = frozenset()) -> dict[str, tuple[Score | None, Score | None]]:
     """Day-1 scores per model over all points: (both scheduled runs, morning runs only).
 
     Shows what the check would lose if it ran once a day: fewer hours to
@@ -421,7 +450,7 @@ def schedule_effect(rows: list[dict], obs: dict) -> dict[str, tuple[Score | None
     """
     twice = [r for r in rows if run_slot(r["issued"])]
     once = [r for r in twice if run_slot(r["issued"]) == "morning"]
-    a, b = score(twice, obs), score(once, obs)
+    a, b = score(twice, obs, apart), score(once, obs, apart)
     models = sorted({m for (p, m, bk) in list(a) + list(b) if p == "all" and bk == "day 1"})
     return {m: (a.get(("all", m, "day 1")), b.get(("all", m, "day 1"))) for m in models}
 
@@ -483,13 +512,74 @@ def _table(scores: dict, point: str, buck: str) -> list[str]:
     ]
     for m, s in rows:
         wrong = f"{100 * s.light_wrong / s.light_n:.0f} %" if s.light_n else "–"
-        name = f"**{m}** (app today)" if m == CURRENT else m
+        name = _name(m)
         out.append(f"| {name} | {s.n} | {_mae(s.wind_err)} | {_bias(s.wind_err)} | {_mae(s.gust_err)} | {_mae(s.temp_err)} | {wrong} |")
     return out
 
 
-def report(points: list[Point], rows: list[dict], obs: dict, used: dict, now: datetime) -> str:
-    scores = score(rows, obs)
+def _app_lines(points: list[Point], scores: dict) -> list[str]:
+    """The app's own numbers against the measurements, next to the raw model the app starts from."""
+    table = []
+    for p in points:
+        for buck in ("day 1", "day 2"):
+            a, m = scores.get((p.id, APP, buck)), scores.get((p.id, CURRENT, buck))
+            if not a or not a.n:
+                continue
+            wrong = f"{100 * a.light_wrong / a.light_n:.0f} %" if a.light_n else "–"
+            raw = f"{100 * m.light_wrong / m.light_n:.0f} %" if m and m.light_n else "–"
+            table.append(
+                f"| {p.name} | {buck} | {a.n} | {_mae(a.wind_err)} | {_mae(m.wind_err) if m else '–'} | {_bias(a.wind_err)} "
+                f"| {_mae(a.gust_err)} | {_mae(a.temp_err)} | {_mae(a.water_err)} | {_bias(a.water_err)} | {wrong} | {raw} |"
+            )
+    if not table:
+        return []
+    return [
+        "## App vs measured",
+        "",
+        "What Row Frog showed (the published club forecast, or the lake view's nearest weather point), "
+        f"read at each check run, against the measurements; {CURRENT} is the raw model at the same point for comparison. "
+        "The water forecast is scored against GKD's lake temperature where the point has a station.",
+        "",
+        f"| Point | Lead | Hours | Wind error app | Wind error {CURRENT} | Wind bias app | Gust error app | Air temp error app °C "
+        "| Water error app °C | Water bias app | Light wrong app | Light wrong " + CURRENT + " |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |",
+        *table,
+        "",
+    ]
+
+
+def _lake_land_lines(points: list[Point], obs: dict, land: dict) -> list[str]:
+    """Measured wind on the lake (GKD buoy, lifted to 10 m) against the nearest DWD land station, same hours."""
+    out = []
+    for p in (p for p in points if p.on_lake):
+        lake, shore = obs.get(p.id, {}).get("wind", {}), land.get(p.id, {}).get("wind", {})
+        both = sorted(set(lake) & set(shore))
+        if not both:
+            continue
+        mean_lake, mean_land = mean(lake[t] for t in both), mean(shore[t] for t in both)
+        windy = [t for t in both if lake[t] >= 4.0]
+        ratio = f"{mean_lake / mean_land:.2f}" if mean_land > 0.1 else "–"
+        ratio_windy = f"{mean(lake[t] for t in windy) / max(0.1, mean(shore[t] for t in windy)):.2f}" if windy else "–"
+        out.append(f"| {p.name} | {len(both)} | {mean_lake:.1f} | {mean_land:.1f} | {ratio} | {len(windy)} | {ratio_windy} |")
+    if not out:
+        return []
+    return [
+        "## On the lake vs on land",
+        "",
+        "Measured wind on the lake against the land station the other points use, in the same hours. "
+        "A ratio above 1 means the land station understates the wind on the water, and the land scores above are too kind to models that forecast too little wind.",
+        "",
+        "| Point | Hours | Lake wind m/s | Land wind m/s | Lake / land | Hours with lake ≥ 4 m/s | Lake / land then |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
+        *out,
+        "",
+    ]
+
+
+def report(points: list[Point], rows: list[dict], obs: dict, used: dict, now: datetime, land: dict | None = None) -> str:
+    """`land`: the DWD measurements for the points whose own ones come from GKD (for the lake vs land section)."""
+    apart = {p.id for p in points if p.on_lake}
+    scores = score(rows, obs, apart)
     runs = sorted({r["issued"] for r in rows if r["issued"] != "archive"})
     lines = [
         f"# Model check, {now:%Y-%m-%d %H:%M} UTC",
@@ -498,13 +588,16 @@ def report(points: list[Point], rows: list[dict], obs: dict, used: dict, now: da
         "Errors are mean absolute differences to the nearest DWD station; bias > 0 means the model is too high.",
         "\"Light wrong\" = how often wind and gusts alone would have given a different rowing light than measured.",
         "Stations are on land, where wind is usually weaker than on the lake, so the ranking matters more than the numbers.",
+        "Points with a GKD lake measurement (the Ammersee buoy) are scored on their own, below, not in \"All points\".",
         "",
     ]
     for buck in ("day 1", "day 2", "archive"):
         table = _table(scores, "all", buck)
         if table:
             lines += [f"## All points, {buck}", ""] + table + [""]
-    lines += _schedule_lines(schedule_effect(rows, obs))
+    lines += _app_lines(points, scores)
+    lines += _lake_land_lines(points, obs, land or {})
+    lines += _schedule_lines(schedule_effect(rows, obs, apart))
     dis = disagreements(rows)
     if dis:
         per_point: dict[str, int] = {}
@@ -532,5 +625,5 @@ def report(points: list[Point], rows: list[dict], obs: dict, used: dict, now: da
         lines += [f"### {p.name}", "", f"Stations: {where}", ""]
         table = _table(scores, p.id, "day 1")
         lines += (table or ["No matched hours yet."]) + [""]
-    lines += ["Data: Open-Meteo; measurements Deutscher Wetterdienst (CC BY 4.0)."]
+    lines += ["Data: Open-Meteo; measurements Deutscher Wetterdienst and Gewässerkundlicher Dienst Bayern (both CC BY 4.0)."]
     return "\n".join(lines)
