@@ -686,6 +686,14 @@ struct SatelliteWaterReading: Codable, Hashable {
     }
 }
 
+/// A run of the weather model: when it started computing and when its
+/// forecast was ready on Open-Meteo, which the server then loads.
+struct WeatherRun: Codable, Hashable {
+    let model: String
+    let started: Date
+    let available: Date
+}
+
 struct ClubForecast: Codable, Hashable {
     let clubId: String
     let lakeId: String
@@ -714,6 +722,13 @@ struct ClubForecast: Codable, Hashable {
     var radar: RainRadar? = nil
     /// How often the backend renews this club; missing without the usage counter.
     var refresh: Refresh? = nil
+    /// The weather model run the forecast comes from; missing from older backends
+    /// and when the server could not ask Open-Meteo.
+    var weatherRun: WeatherRun? = nil
+
+    /// When the weather in this forecast came out: the model run's arrival, or
+    /// without it when the server built the file.
+    var forecastTime: Date { weatherRun?.available ?? generatedAt }
     /// Without a station, for lakes the satellites see; missing from older backends.
     var waterEstimate: WaterEstimate? = nil
     /// Without a station or a recent satellite reading: worked out from the air

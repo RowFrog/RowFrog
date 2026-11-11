@@ -198,6 +198,8 @@ class State:
         self.maps_run: datetime | None = None
         # When each ICON-D2 run started, came to Open-Meteo and was first seen by a run.
         self.model_runs: list[dict[str, str]] = []
+        # Per club, the model run its saved forecast came from ({"started", "available"}).
+        self.club_runs: dict[str, dict[str, str]] = {}
         if path and path.exists():
             try:
                 saved = pickle.loads(path.read_bytes())
@@ -208,6 +210,7 @@ class State:
                 self.warn_cells = saved.get("warn_cells", {})
                 self.maps_run = saved.get("maps_run")
                 self.model_runs = saved.get("model_runs", [])
+                self.club_runs = saved.get("club_runs", {})
                 api.prepared.last_water.update(saved.get("water", {}))
                 api.prepared.last_levels.update(saved.get("levels", {}))
                 api.prepared.ice_temps.update(saved["ice_temps"])
@@ -231,6 +234,7 @@ class State:
             "warn_cells": self.warn_cells,
             "maps_run": self.maps_run,
             "model_runs": self.model_runs,
+            "club_runs": self.club_runs,
         }
         self.path.write_bytes(pickle.dumps(body))
 
@@ -269,6 +273,12 @@ def club_weather(state: State, clubs: list[locations.Club], used: set[str], with
         for club, weather in zip(stale, forecasts):
             if weather is not None:
                 state.clubs[club.id] = (now, weather)
+                # Which model run this is, for the app's "Forecast from" line (unknown when Open-Meteo was not asked).
+                if MODEL_RUN and MODEL_RUN.available <= now:
+                    state.club_runs[club.id] = {"started": MODEL_RUN.started.isoformat(),
+                                                "available": MODEL_RUN.available.isoformat()}
+                else:
+                    state.club_runs.pop(club.id, None)
     print(f"  weather loaded for {len(stale)} of {len(clubs)} clubs")
     for club in clubs:
         if club.id in state.clubs:
@@ -945,6 +955,8 @@ def main() -> int:
             continue
         if club.id in radar:
             body["radar"] = radar[club.id]
+        if club.id in state.club_runs:
+            body["weatherRun"] = {"model": "ICON-D2", **state.club_runs[club.id]}
         if with_usage:
             body["refresh"] = refresh_block(club.id in used_clubs)
         write(args.out / "clubs" / club.id / "forecast", body)

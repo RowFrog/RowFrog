@@ -71,8 +71,9 @@ struct ClubPageHeader: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
-                    // The forecast's time is when the server worked it out; the load time is when it reached the phone.
-                    Text(LocationPageView.updatedLine(forecast: updated, loaded: forecasts.loadedAt[club.id]))
+                    // The forecast's time is when the weather model run came out; the load time is when it
+                    // reached the phone. How often each value is renewed sits at the page's end (owner, 6 Nov 2026).
+                    Text(LocationPageView.updatedLine(forecast: forecast.forecastTime, loaded: forecasts.loadedAt[club.id]))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)

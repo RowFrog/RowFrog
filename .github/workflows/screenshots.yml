@@ -334,6 +334,11 @@ jobs:
           WAIT=25 shoot 396-shared-picture-list light -RWOpenClub mrc-1880 -RWLandscape YES -RWBackground sample:alpine-lake
           WAIT=25 shoot 397-shared-picture-list-away light -RWOpenClub mrc-1880 -RWLandscape YES -RWBackground sample:alpine-lake -RWSideListHidden YES
           WAIT=30 shoot 398-shared-satellite-picture light -RWOpenClub mrc-1880 -RWLandscape YES -RWBackground satellite
+          # Club header: forecast time; "How often data is updated" at the page's end and its sheet.
+          shoot 407-header-forecast-time light -RWOpenClub mrc-1880
+          shoot 410-updates-at-page-end light -RWOpenClub mrc-1880 -RWScrollTo bottom
+          shoot 408-update-cycles light -RWOpenClub mrc-1880 -RWOpenUpdates YES
+          shoot 409-update-cycles-german-dark dark -RWOpenClub mrc-1880 -RWOpenUpdates YES -RWLanguage de
           # The shore warning lights explained, at a club with a lake warning.
           shoot 70-shore-lights light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES
           shoot 70-shore-lights-german light -RWOpenClub tutzinger-rv -RWScrollTo warnings -RWShoreLights YES -RWLanguage de
