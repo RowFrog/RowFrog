@@ -314,7 +314,7 @@ one; every picture shows the same area. Chips draw the shore, clubs, saved
 routes, wind and, in winter, the satellite ice map over it. Two more layers
 colour the water with the lake view's wave heights or rowing light for the
 chosen hour, one at a time; a legend explains them. While the whole lake is
-red (official warning or darkness) or amber (sunrise, sunset, warning), the
+red (official warning or darkness) or amber (the hour before sunset, warning), the
 rowing light layer turns grey with red stripes, or shows amber stripes. Tap for full screen with
 zoom, opening around the club or all saved routes; zoomed in, it loads
 sharper 10 m tiles for that part of the lake. Pictures are kept on the
@@ -357,7 +357,7 @@ set). Zooming in moves the club's pin onto the club's place in Apple Maps, so
 it covers Apple's own label and the club shows once; only when the clubhouse
 checked by hand is more than 80 m from that place does the pin go there
 instead. Where the launch point is set, crossed oars then mark it. The website
-does the same with the clubhouses checked by hand only.
+does the same with the club's place in OpenStreetMap.
 
 **When an update fails,** the page keeps the last forecast and says why under
 the club's name (no internet, server did not answer, no forecast for this
@@ -632,6 +632,7 @@ More detail, including the secrets each one needs, is in the
 | **Austrian and Swiss warnings check** (`alpine-warnings-probe.yml`) | Research only: asks GeoSphere Austria, MeteoSwiss, MeteoAlarm and DWD what they publish for a few Austrian and Swiss clubs. Nothing is stored. By hand, or when its script changes. |
 | **DRV club catalog** (`drv-catalog.yml`) | Rebuilds `data/catalogs/de-drv.json`. By hand, or when its script changes on `main`. |
 | **Club catalog** (`club-catalog.yml`) | Rebuilds `data/catalogs/de-osm.json` from OpenStreetMap. By hand, or when its script changes on `main`. |
+| **OSM club places** (`osm-club-places.yml`) | Finds each club's own place in OpenStreetMap (`scripts/osm_club_places.py`, into `data/catalogs/osm-places.json`), where the website's club pin moves once zoomed in. On the 12th of each month, by hand, and when its script changes. |
 | **Missing lake outlines** (`missing-outlines.yml`) | Fetches the OpenStreetMap outline of every catalog lake that has none yet (`scripts/fetch_missing_outlines.py`, in 10 parallel parts) and commits the new `data/outlines` files; existing outlines are never changed. Lines marked "CHECK BY HAND" in its report were picked without a matching name. By hand, on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
 | **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, the sample data in `testdata/`, `scripts/build_web.py`, the app icon (for the favicon and home-screen icons) or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; the optional `MAPTILER_KEY` turns on the satellite pictures. |
@@ -653,7 +654,7 @@ worked out on the phone (`ios/RowFrog/Limits.swift`).
 | Shore warning lights (DWD lake warning) | strong wind (40 flashes a minute) for all other boats | strong wind for small racing boats and training boats; storm (90 flashes a minute) for all |
 | DWD weather warning for the place (frost, ice, thaw, heat and cold only inform) | minor (yellow) | moderate (orange) or above, or any thunderstorm |
 | Ice | shore ice possible, or drift ice on a river | ice cover likely |
-| Daylight | sunrise or sunset within the hour | sun down for the whole hour |
+| Daylight | the last hour before sunset (decided to the minute; "now" counts down to sunset) | sun down, so the sunrise and sunset hours count as red; an hour in which the light changes shows a half-and-half dot |
 
 ## In progress
 
