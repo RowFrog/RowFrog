@@ -66,71 +66,8 @@ extension ForecastStore {
 /// ForecastStore kept four separate lists (forecasts, load times, clubs
 /// loading, failures) that every change had to keep in step by hand.
 /// No entry in the store means nothing was asked for yet.
-enum ForecastLoad {
-    /// Nothing to show yet; `lastFailure` is why the try before failed, if one
-    /// did, so "No forecast" stays up while it tries again.
-    case loading(lastFailure: RefreshFailure?)
-    /// Nothing to show: the last try failed.
-    case failed(RefreshFailure)
-    /// A forecast to show, as the backend sent it, with when it reached the
-    /// phone, whether a newer one is on its way, and why the last update failed.
-    case shown(ClubForecast, loadedAt: Date, updating: Bool, failure: RefreshFailure?)
+typealias ForecastLoad = Loadable<ClubForecast, RefreshFailure>
 
-    var forecast: ClubForecast? {
-        switch self {
-        case let .shown(forecast, _, _, _): forecast
-        case .loading, .failed: nil
-        }
-    }
-
-    var loadedAt: Date? {
-        switch self {
-        case let .shown(_, loadedAt, _, _): loadedAt
-        case .loading, .failed: nil
-        }
-    }
-
-    var isLoading: Bool {
-        switch self {
-        case .loading: true
-        case .failed: false
-        case let .shown(_, _, updating, _): updating
-        }
-    }
-
-    var failure: RefreshFailure? {
-        switch self {
-        case let .loading(lastFailure): lastFailure
-        case let .failed(failure): failure
-        case let .shown(_, _, _, failure): failure
-        }
-    }
-
-    /// A load begins: what is shown stays, with its failure until one works.
-    static func started(from state: ForecastLoad?) -> ForecastLoad {
-        switch state {
-        case nil: .loading(lastFailure: nil)
-        case let .loading(lastFailure): .loading(lastFailure: lastFailure)
-        case let .failed(failure): .loading(lastFailure: failure)
-        case let .shown(forecast, loadedAt, _, failure): .shown(forecast, loadedAt: loadedAt, updating: true, failure: failure)
-        }
-    }
-
-    /// The load failed: what is shown stays, with the reason.
-    func failing(with failure: RefreshFailure) -> ForecastLoad {
-        if case let .shown(forecast, loadedAt, _, _) = self {
-            return .shown(forecast, loadedAt: loadedAt, updating: false, failure: failure)
-        }
-        return .failed(failure)
-    }
-
-    /// The load was called off (the view that asked went away): back to where
-    /// it was, or nil when nothing was there before.
-    func calledOff() -> ForecastLoad? {
-        switch self {
-        case let .loading(lastFailure): lastFailure.map(ForecastLoad.failed)
-        case .failed: self
-        case let .shown(forecast, loadedAt, _, failure): .shown(forecast, loadedAt: loadedAt, updating: false, failure: failure)
-        }
-    }
+extension Loadable where Value == ClubForecast {
+    var forecast: ClubForecast? { value }
 }

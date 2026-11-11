@@ -20,7 +20,7 @@ struct LakeViewCard: View {
         Group {
             if let view = store.views[lakeID, club: clubID] {
                 card(view)
-            } else if !store.failed.contains(lakeID) {
+            } else if !store.failed(lakeID) {
                 Card(title: water.viewTitle, symbol: "map") {
                     ProgressView().frame(maxWidth: .infinity, minHeight: 80)
                 }

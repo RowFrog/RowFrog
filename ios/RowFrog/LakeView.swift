@@ -444,13 +444,13 @@ extension LakeView {
 final class LakeViewStore {
     static let shared = LakeViewStore(api: .fromBundle())
 
-    /// As the backend sent them, coloured for small boats.
-    private var raw: [String: LakeView] = [:]
+    /// Each lake's load, its view as the backend sent it (coloured for small
+    /// boats) and whether the last try failed, one state at a time (Loadable).
+    private(set) var states: [String: Loadable<LakeView, RefreshFailure>] = [:]
     /// Coloured for the boat in use at a club, worked out once per change.
     var views: LakeViews { LakeViews(store: self) }
     /// By lake and boat, as two clubs on one lake can use different boats.
     @ObservationIgnored private var applied: [String: (limits: RowingLimits, view: LakeView)] = [:]
-    private(set) var failed: Set<String> = []
     /// The water of the club page that last showed each lake, for lakes without a station.
     private var clubWater: [String: Double] = [:]
     /// The current of the club page that last showed each river stretch.
@@ -460,7 +460,8 @@ final class LakeViewStore {
     nonisolated init(api: APIClient) { self.api = api }
 
     func load(_ lakeID: String, force: Bool = false) async {
-        if !force, let view = raw[lakeID], view.generatedAt > .now.addingTimeInterval(-30 * 60) { return }
+        if !force, let view = states[lakeID]?.value, view.generatedAt > .now.addingTimeInterval(-30 * 60) { return }
+        states[lakeID] = .started(from: states[lakeID])
         do {
             var view = try await api.lakeView(lakeID: lakeID)
             // Screenshots: -RWLakeWide twilight|cold|dark sets the whole-lake light of every hour.
@@ -475,16 +476,19 @@ final class LakeViewStore {
                 }
             }
             applied = applied.filter { !$0.key.hasPrefix(lakeID + "|") }
-            raw[lakeID] = view
-            failed.remove(lakeID)
+            states[lakeID] = .loaded(view)
         } catch {
-            failed.insert(lakeID)
+            // Also when called off: the tile then waits for the next try, as before.
+            states[lakeID] = .started(from: states[lakeID]).failing(with: RefreshFailure(error))
         }
     }
 
+    /// The last load of a lake failed; with no view to show, the tile stays away.
+    func failed(_ lakeID: String) -> Bool { states[lakeID]?.hasFailed ?? false }
+
     /// The lake for the boat in use at a club.
     func view(_ lakeID: String, club clubID: String?) -> LakeView? {
-        guard let base = raw[lakeID] else { return nil }
+        guard let base = states[lakeID]?.value else { return nil }
         let limits = AppSettings.shared.limits(at: clubID)
         let key = lakeID + "|" + limits.boat.id
         var view: LakeView
