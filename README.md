@@ -278,7 +278,8 @@ nothing in the background; only the widgets load forecasts on their own.
 **Refresh on return.** Coming back to the app after more than 10 minutes
 loads the club page in front first, then every other saved club; a pull on a
 club page does the same. The header says when the weather model's run came
-out (the forecast time) and when the phone loaded it.
+out (the forecast time) and when the phone loaded it. The website shows the same forecast time
+and "How often data is updated".
 
 **Data use.** Forecasts that have not changed are not downloaded again, and
 the club list is kept on the phone for a day. With "Save mobile data" on
@@ -542,6 +543,12 @@ The **Missing lake outlines** workflow fetches every catalog lake that still
 has none.
 
 ## Hosting
+
+While GitHub is down (November 2026), a Raspberry Pi runs the forecasts, the
+Model check and the Usage limits check from its own copy of `main`. Changes
+are merged and checked on the owner's Mac before they reach it, and the Mac
+deploys the website. The handbook section "While GitHub is down" has the
+steps and the checks. The rest of this section describes the GitHub setup.
 
 There is no server yet. The "Publish forecasts" workflow runs the backend on
 GitHub and publishes its answers as files on GitHub Pages, at
