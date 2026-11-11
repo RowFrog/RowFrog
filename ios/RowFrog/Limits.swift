@@ -442,3 +442,26 @@ extension NearbyWater {
         return Reason(condition: "nearby_water", light: worst, topic: cause.0, value: cause.2)
     }
 }
+
+extension ClubForecast {
+    /// Screenshot hook: `-RWSampleNearby fog` (or `wind`, `waves`) puts that much worse
+    /// water within 1 km of the launch point into the first six hours.
+    func withSampleNearby() -> ClubForecast {
+        guard let topic = UserDefaults.standard.string(forKey: "RWSampleNearby") else { return self }
+        let near = switch topic {
+        case "wind": NearbyWater(light: .red, windMs: 9, gustMs: 12, waveM: 0.3, visM: 20_000, rainMm: 0, other: .green)
+        case "waves": NearbyWater(light: .red, windMs: 4, gustMs: 6, waveM: 0.45, visM: 20_000, rainMm: 0, other: .green)
+        default: NearbyWater(light: .red, windMs: 1, gustMs: 2, waveM: 0, visM: 300, rainMm: 0, other: .red, otherCause: "fog")
+        }
+        guard let reason = near.reason(with: .standard) else { return self }
+        var copy = self
+        copy.hours = hours.enumerated().map { i, hour in
+            guard i < 6 else { return hour }
+            var h = hour
+            h.nearby = near
+            // Always first, so the shots show it also after sunset, when the light is red anyway.
+            return h.with(reasons: [reason] + h.reasons, sunUp: h.sunUp)
+        }
+        return copy
+    }
+}
