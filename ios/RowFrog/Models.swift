@@ -377,7 +377,9 @@ struct Reason: Codable, Hashable {
         if condition.hasSuffix("_warning") { return "exclamationmark.triangle.fill" }
         if ["shipping_stopped", "high_water", "current"].contains(condition) { return RiverConditions.symbol }
         if ["lake_lowered", "lake_drained"].contains(condition) { return LakeLevel.symbol }
-        return (Condition.allCases.first { $0.reasonNames.contains(condition) } ?? .wind).symbol
+        // Water nearby takes the icon of what makes it worse (fog: binoculars).
+        let name = condition == "nearby_water" ? topic ?? "waves" : condition
+        return (Condition.allCases.first { $0.reasonNames.contains(name) } ?? .wind).symbol
     }
 }
 
