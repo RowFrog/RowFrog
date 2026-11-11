@@ -418,6 +418,9 @@ final class ForecastStore {
 /// side, and what helps.
 enum RefreshFailure: Equatable {
     case offline, timeout, notFound, server(Int), unreadable, other(String)
+    /// The server turned the download away (401 or 403): retrying does not help
+    /// until it is fixed on our side, as during the GitHub suspension in November 2026.
+    case refused(Int)
     /// An own place's forecast comes from Open-Meteo, not from our server.
     case placeService
 
@@ -432,7 +435,15 @@ enum RefreshFailure: Equatable {
                 self = ownPlace ? .placeService : .other(url.localizedDescription)
             }
         } else if let http = error as? HTTPStatusError {
-            self = ownPlace ? .placeService : (http.code == 404 ? .notFound : .server(http.code))
+            if ownPlace {
+                self = .placeService
+            } else if http.code == 404 {
+                self = .notFound
+            } else if http.code == 401 || http.code == 403 {
+                self = .refused(http.code)
+            } else {
+                self = .server(http.code)
+            }
         } else if error is DecodingError {
             self = .unreadable
         } else {
@@ -447,6 +458,7 @@ enum RefreshFailure: Equatable {
         case .timeout: tr("the server did not answer in time")
         case .notFound: tr("no forecast for this club on the server")
         case let .server(code): tr("server error %d", code)
+        case let .refused(code): tr("server refused the download (error %d)", code)
         case .unreadable: tr("the forecast could not be read")
         case .placeService: tr("the weather service did not answer")
         case .other: tr("unexpected error")
@@ -461,9 +473,11 @@ enum RefreshFailure: Equatable {
         case .timeout:
             tr("The forecast server (api.rowfrog.com) did not answer in time. That is usually a slow connection or a short hiccup at the server. Pull down to try again in a minute.")
         case .notFound:
-            tr("The server has no forecast file for this club. A newly added club gets one with the next forecast run, every 30 minutes. Nothing to fix on your phone.")
+            tr("The server has no forecast file for this club yet. Every club gets one with the server's run for all clubs, which comes every 6 hours. Nothing to fix on your phone.")
         case let .server(code):
             tr("The forecast server (api.rowfrog.com) answered with error %d. That is on our side, not your phone's, and usually fixes itself. Try again later.", code)
+        case let .refused(code):
+            tr("The forecast server (api.rowfrog.com) refused to hand out the forecast (error %d). That is on our side, not your phone's. Trying again will not help until we have fixed it; until then, check the conditions yourself.", code)
         case .unreadable:
             tr("The forecast arrived, but this version of the app could not read it. The server probably sends something newer than the app knows. Update the app; if that doesn't help, tell us.")
         case .placeService:
