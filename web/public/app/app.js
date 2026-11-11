@@ -22,6 +22,7 @@ import {
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
+  forecastStatus,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -1197,11 +1198,26 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
       ? `<p class="orange small"><button class="link plain launch-open">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</button></p>`
       : `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>`) : ""}
     ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
-    ${forecast && stale ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>` : ""}
-    ${forecast && failure ? `<p class="orange small"><button class="link failed" id="failed" data-why="${h(failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", failure[0], stale ? dayTime(forecast.generatedAt) : time(forecast.generatedAt)))} ${icon("info")}</button></p>`
-      : forecast && !stale ? `<p class="sub small" id="updated-line">${h(updatedLine(forecastTime(forecast), forecasts.get(club?.id)?.at))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>` : ""}
+    ${forecastLines(club, forecast, forecastStatus({ hasForecast: !!forecast, outOfDate: stale, failure }))}
     ${slow ? `<p class="sub small">${icon("hourglass")} ${h(t("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."))}</p>` : ""}
   </header>`;
+}
+
+/** The header's forecast lines, one state at a time (forecastStatus, as ClubPageHeader in the app). */
+function forecastLines(club, forecast, status) {
+  if (!forecast) return "";
+  const outOfDate = status.name === "outOfDate" || status.name === "outOfDateAndUpdateFailed";
+  const old = outOfDate ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>` : "";
+  switch (status.name) {
+    case "updateFailed":
+    case "outOfDateAndUpdateFailed":
+      return `${old}<p class="orange small"><button class="link failed" id="failed" data-why="${h(status.failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", status.failure[0], outOfDate ? dayTime(forecast.generatedAt) : time(forecast.generatedAt)))} ${icon("info")}</button></p>`;
+    case "current":
+    case "updating":
+      return `<p class="sub small" id="updated-line">${h(updatedLine(forecastTime(forecast), forecasts.get(club?.id)?.at))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`;
+    default:
+      return old;
+  }
 }
 
 function wireClubPage(id, club, raw, forecast, hour) {

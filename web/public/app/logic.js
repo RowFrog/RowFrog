@@ -19,6 +19,19 @@ export function isStale(forecast, now = new Date()) {
   return now - new Date(forecast.generatedAt) > STALE_AFTER_MS;
 }
 
+/**
+ * What a club page says about its forecast, one state at a time (ForecastStatus.of in the app).
+ * The list is testdata/states/forecast-status.json, which the app's tests read too; change both
+ * with it. `failure` is refreshFailure()'s [short, why] or null. The website has no "updating":
+ * it reloads the whole page, so it passes loading: false.
+ */
+export function forecastStatus({ hasForecast, outOfDate, loading = false, failure = null }) {
+  if (!hasForecast) return failure ? { name: "noForecast", failure } : { name: "loading" };
+  if (failure) return { name: outOfDate ? "outOfDateAndUpdateFailed" : "updateFailed", failure, outOfDate };
+  if (outOfDate) return { name: "outOfDate", outOfDate };
+  return { name: loading ? "updating" : "current" };
+}
+
 /** Green turns grey on an old forecast; amber and red still show. */
 export function shownLight(light, stale) {
   return stale && light === "green" ? "grey" : light;
