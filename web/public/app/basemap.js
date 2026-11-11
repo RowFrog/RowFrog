@@ -21,8 +21,12 @@ const OSM = "https://tile.openstreetmap.org/{z}/{x}/{y}.png";
 const OSM_CREDIT = '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>';
 const MAPTILER_CREDIT = '<a href="https://www.maptiler.com/copyright/" target="_blank" rel="noopener">© MapTiler</a> ' + OSM_CREDIT;
 
-/** Satellite tiles with roads and names; 512 px tiles drawn one zoom step lower, so the names stay readable. */
-export const satelliteUrl = (key) => `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}.jpg?key=${encodeURIComponent(key)}`;
+/**
+ * Satellite tiles with roads and names; 512 px tiles drawn one zoom step lower, so the names stay readable.
+ * `{r}` asks for MapTiler's double-size tiles on sharp (retina) screens, so names and roads stay crisp
+ * on a phone (owner, 12 Nov 2026); the number of tiles, and so the free plan's count, stays the same.
+ */
+export const satelliteUrl = (key) => `https://api.maptiler.com/maps/hybrid/{z}/{x}/{y}{r}.jpg?key=${encodeURIComponent(key)}`;
 
 function remembered(storeKey, fallback) {
   if (!storeKey) return fallback;
