@@ -20,11 +20,9 @@ final class WidgetSnapshotTests: XCTestCase {
         return RowingSnapshot(date: date, clubName: "MRC 1880", isHome: true, forecast: forecast)
     }
 
-    func testRowingWindowsJoinGreenDaylightHours() {
-        let hours = [hour(0, .green), hour(1, .green), hour(2, .amber), hour(3, .green), hour(4, .green, sunUp: false), hour(5, .green), hour(6, .green)]
-        let windows = snapshot(hours, at: start).rowingWindows
-        XCTAssertEqual(windows.map(\.lowerBound), [start, start.addingTimeInterval(3 * 3600), start.addingTimeInterval(5 * 3600)])
-        XCTAssertEqual(windows.map(\.upperBound), [start.addingTimeInterval(2 * 3600), start.addingTimeInterval(4 * 3600), start.addingTimeInterval(7 * 3600)])
+    func testDaysLeaveOutNightHours() {
+        let hours = [hour(0, .green), hour(1, .green), hour(2, .amber), hour(3, .green, sunUp: false), hour(4, .green, sunUp: false)]
+        XCTAssertEqual(snapshot(hours, at: start).days(1).first?.lights, [.green, .green, .amber])
     }
 
     func testCurrentMovesOnWithTheEntryDate() {
@@ -34,11 +32,11 @@ final class WidgetSnapshotTests: XCTestCase {
         XCTAssertEqual(later.hours.count, 2)
     }
 
-    func testOutOfDateForecastShowsNoRowingWindows() {
+    func testOutOfDateForecastShowsNoGoodStretch() {
         let hours = (0..<8).map { hour($0, .green) }
         XCTAssertFalse(snapshot(hours, at: start.addingTimeInterval(2 * 3600)).isStale)
         let late = snapshot(hours, at: start.addingTimeInterval(3 * 3600 + 60))
         XCTAssertTrue(late.isStale)
-        XCTAssertEqual(late.rowingWindows, [])
+        XCTAssertNil(late.days(1).first?.good)
     }
 }

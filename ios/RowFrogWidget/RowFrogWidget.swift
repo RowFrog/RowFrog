@@ -28,7 +28,8 @@ struct RowingWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        RowingWidgetView(snapshot: entry.snapshot, family: family, focus: entry.focus, plain: entry.background == .system)
+        RowingWidgetView(snapshot: entry.snapshot, family: family, focus: entry.focus, plain: entry.background == .system,
+                         layout: entry.layout, marks: entry.marks)
             .containerBackground(for: .widget) {
                 WidgetBackdrop(background: entry.background, snapshot: entry.snapshot, picture: entry.picture)
             }
@@ -50,6 +51,26 @@ struct RowingWidgetIntent: WidgetConfigurationIntent {
 
     @Parameter(title: "Background", default: .app)
     var background: BackgroundOption
+
+    @Parameter(title: "Layout", default: .fewer)
+    var layout: LayoutOption
+
+    @Parameter(title: "Marks", description: "A check, ! or × in the light's dots, so the light reads without its colour.", default: true)
+    var marks: Bool
+}
+
+/// Fewer values, or all six of the top tile beside or under the light (owner, 11 Nov 2026).
+enum LayoutOption: String, AppEnum {
+    case fewer, beside, below
+
+    static var typeDisplayRepresentation: TypeDisplayRepresentation = "Layout"
+    static var caseDisplayRepresentations: [LayoutOption: DisplayRepresentation] = [
+        .fewer: "Fewer values",
+        .beside: "All values beside the light",
+        .below: "All values in a row (large widget)",
+    ]
+
+    var layout: WidgetLayout { WidgetLayout(rawValue: rawValue) ?? .fewer }
 }
 
 /// A widget's own background, or the one set in the app.
@@ -130,6 +151,8 @@ struct RowingEntry: TimelineEntry {
     var background: WidgetBackground = .sky
     /// The picture the app prepared for a picture background, at widget size.
     var picture: UIImage?
+    var layout: WidgetLayout = .fewer
+    var marks = true
 }
 
 struct RowingProvider: AppIntentTimelineProvider {
@@ -172,7 +195,8 @@ struct RowingProvider: AppIntentTimelineProvider {
             RowingEntry(
                 date: date, clubID: clubID,
                 snapshot: RowingSnapshot(date: date, clubName: names[clubID] ?? clubID, isHome: clubID == homeID, forecast: forecast),
-                focus: configuration.focus.focus, background: background, picture: picture
+                focus: configuration.focus.focus, background: background, picture: picture,
+                layout: configuration.layout.layout, marks: configuration.marks
             )
         }
     }

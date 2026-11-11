@@ -44,8 +44,7 @@ final class WidgetContentTests: XCTestCase {
             RadarStep(time: start.addingTimeInterval(Double($0) * 60), mmPerHour: $0 >= 30 && $0 <= 90 ? 1.2 : 0)
         })
         let wet = snapshot([green], radar: radar)
-        let summary = try? XCTUnwrap(wet.rainAhead?.summary)
-        XCTAssertEqual(wet.detailLine(green), summary)
+        XCTAssertEqual(wet.detailLine(green), tr("%@ from %@", tr("Light rain"), Format.time(start.addingTimeInterval(30 * 60))))
     }
 
     func testOutOfDateForecastSaysHowOld() {
@@ -57,52 +56,104 @@ final class WidgetContentTests: XCTestCase {
         XCTAssertEqual(snapshot(hours).noWindowsText, tr("No green hours in the forecast."))
     }
 
-    // MARK: Conditions grid
+    // MARK: Short words
 
-    func testConditionsInTheTopTilesOrder() {
-        let sun = [SunDay(sunrise: start.addingTimeInterval(-2 * 3600), sunset: start.addingTimeInterval(5 * 3600))]
-        let s = snapshot([hour(0)], water: WaterTemperature(celsius: 16.24, measuredAt: start), daylight: sun)
-        XCTAssertEqual(s.conditionTiles(rows: 1).map(\.condition), [.waterTemperature, .wind, .waves])
-        let two = s.conditionTiles(rows: 2)
-        XCTAssertEqual(two.map(\.condition), [.waterTemperature, .wind, .waves, .precipitation, .visibility, .daylight])
-        XCTAssertEqual(two[0].value, Format.temperature(16.24, digits: 1))
-        XCTAssertEqual(two[1].value, Format.windRange(3, 6))
-        XCTAssertEqual(two[2].value, Format.waves(0.1))
-        XCTAssertEqual(two[3].value, tr("None"))
-        XCTAssertEqual(two[4].value, Format.distance(20_000))
-        XCTAssertEqual(two[5].value, "↓ \(Format.time(sun[0].sunset))")
+    func testShortWordsSayUntilWhenOrBetterFromWhen() {
+        let wind = Reason(condition: "wind", light: .amber)
+        let calm = snapshot([hour(0), hour(1), hour(2, .amber, reasons: [wind])])
+        XCTAssertEqual(calm.shortTitle, tr("Good"))
+        XCTAssertEqual(calm.shortWhy, tr("Until %@", Format.time(start.addingTimeInterval(2 * 3600))))
+        XCTAssertEqual(calm.lockTitle, tr("Good until %@", Format.time(start.addingTimeInterval(2 * 3600))))
+
+        let gusty = snapshot([hour(0, .amber, reasons: [wind]), hour(1, .amber, reasons: [wind]), hour(2)])
+        XCTAssertEqual(gusty.shortTitle, tr("Caution"))
+        XCTAssertEqual(gusty.shortWhy, tr("Better from %@", Format.time(start.addingTimeInterval(2 * 3600))))
+
+        let stormy = snapshot([hour(0, .red, reasons: [Reason(condition: "wind", light: .red)])])
+        XCTAssertEqual(stormy.shortTitle, tr("Stay ashore"))
+        XCTAssertEqual(stormy.shortWhy, Reason(condition: "wind", light: .red).label)
     }
 
-    func testEstimatedWaterIsMarkedAndMissingWaterIsADash() {
-        XCTAssertEqual(snapshot([hour(0)], waterModelC: 9).conditionTiles(rows: 1)[0].value, "≈ " + Format.temperature(9))
-        XCTAssertEqual(snapshot([hour(0)]).conditionTiles(rows: 1)[0].value, "–")
+    func testOutOfDateShortWords() {
+        let late = snapshot((0..<8).map { hour($0) }, at: start.addingTimeInterval(4 * 3600))
+        XCTAssertEqual(late.shortTitle, tr("Out of date"))
+        XCTAssertEqual(late.shortWhy, tr("As of %@", Format.dayTime(start)))
+        XCTAssertNil(late.goodUntil)
     }
 
-    func testIceJoinsBeforeDaylightInColdWater() {
-        let cold = snapshot([hour(0)], water: WaterTemperature(celsius: 3, measuredAt: start))
-        let tiles = cold.conditionTiles(rows: 2)
-        XCTAssertEqual(tiles.map(\.condition).suffix(2), [.ice, .daylight])
-        XCTAssertEqual(tiles.first { $0.condition == .ice }?.value, tr("No data yet"))
-        XCTAssertFalse(snapshot([hour(0)], water: WaterTemperature(celsius: 12, measuredAt: start))
-            .conditionTiles(rows: 2).contains { $0.condition == .ice })
+    // MARK: Values
+
+    func testValuesAreSymbolAndValueWithTheCauseMarked() {
+        let s = snapshot([hour(0, .amber, reasons: [Reason(condition: "gusts", light: .amber)])],
+                         water: WaterTemperature(celsius: 16.24, measuredAt: start))
+        XCTAssertEqual(s.value(.wind).text, Format.windRange(3, 6))
+        XCTAssertEqual(s.value(.wind).light, .amber)
+        XCTAssertNil(s.value(.waves).light)
+        XCTAssertEqual(s.value(.waves).text, Format.waves(0.1))
+        XCTAssertEqual(s.value(.visibility).text, Format.distance(20_000))
+        XCTAssertEqual(s.value(.waterTemperature).text, Format.degrees(16.24, digits: 1))
+        XCTAssertEqual(snapshot([hour(0)], waterModelC: 9).value(.waterTemperature).text, "≈ " + Format.degrees(9))
+        XCTAssertEqual(snapshot([hour(0)]).value(.waterTemperature).text, "–")
     }
 
-    func testSunsetWhileUpAndSunriseAtNight() {
-        let sun = [SunDay(sunrise: start.addingTimeInterval(-10 * 3600), sunset: start.addingTimeInterval(-3600)),
-                   SunDay(sunrise: start.addingTimeInterval(14 * 3600), sunset: start.addingTimeInterval(23 * 3600))]
-        XCTAssertEqual(snapshot([hour(0, sunUp: false)], daylight: sun).sunText, "↑ \(Format.time(sun[1].sunrise))")
-        XCTAssertEqual(snapshot([hour(0)], at: start.addingTimeInterval(15 * 3600), daylight: sun).sunText,
-                       "↓ \(Format.time(sun[1].sunset))")
-        XCTAssertEqual(snapshot([hour(0)]).sunText, "–")
+    func testTheWorstNearbyValueShowsWhileItSetsTheLight() {
+        var h = hour(0, .red, reasons: [Reason(condition: "nearby_water", light: .red, topic: "wind", value: 9)])
+        h.nearby = NearbyWater(light: .red, windMs: 9, gustMs: 12, waveM: 0.3, other: .green)
+        let s = snapshot([h])
+        XCTAssertEqual(s.value(.wind).text, Format.windRange(9, 12))
+        XCTAssertEqual(s.value(.wind).light, .red)
+        XCTAssertEqual(s.value(.wind).note, tr("Nearby"))
+    }
+
+    func testRainComesFromTheRadarElseTheForecast() {
+        XCTAssertEqual(snapshot([hour(0)]).rainValue.text, tr("Dry"))
+        var wet = hour(0)
+        wet.precipitationMm = 1.2
+        XCTAssertEqual(snapshot([wet]).rainValue.text, Format.rain(1.2))
+
+        let coming = RainRadar(reference: start, steps: stride(from: 0, through: 120, by: 15).map {
+            RadarStep(time: start.addingTimeInterval(Double($0) * 60), mmPerHour: $0 >= 30 ? 1.2 : 0)
+        })
+        XCTAssertEqual(snapshot([hour(0)], radar: coming).rainValue.text, tr("From %@", Format.time(start.addingTimeInterval(30 * 60))))
+        let stopping = RainRadar(reference: start, steps: stride(from: 0, through: 120, by: 15).map {
+            RadarStep(time: start.addingTimeInterval(Double($0) * 60), mmPerHour: $0 < 45 ? 1.2 : 0)
+        })
+        XCTAssertEqual(snapshot([hour(0)], radar: stopping).rainValue.text, tr("Until %@", Format.time(start.addingTimeInterval(45 * 60))))
+    }
+
+    func testAThunderstormThatSetsTheLightTakesTheRainsPlace() {
+        let storm = Reason(condition: "thunderstorm", light: .red)
+        let s = snapshot([hour(0), hour(1), hour(2, .red, reasons: [storm])])
+        XCTAssertEqual(s.rainValue.condition, .thunderstorm)
+        XCTAssertEqual(s.rainValue.text, tr("From %@", Format.time(start.addingTimeInterval(2 * 3600))))
+        XCTAssertEqual(s.rainValue.light, .red)
+        XCTAssertEqual(s.lockDetail, tr("%@ from %@", tr("Thunderstorm"), Format.time(start.addingTimeInterval(2 * 3600))))
+    }
+
+    // MARK: Good rowing times
+
+    func testDaysShowTheirLightsAndTheFirstGoodStretch() {
+        let hours = [hour(0, .amber), hour(1), hour(2), hour(3, .red), hour(4), hour(5), hour(6)]
+        let day = snapshot(hours, at: start.addingTimeInterval(1800)).days(1).first
+        XCTAssertEqual(day?.lights, hours.map(\.light))
+        XCTAssertEqual(day?.past, [false, false, false, false, false, false, false])
+        XCTAssertEqual(day?.good, "\(Format.time(start.addingTimeInterval(3600)))–\(Format.time(start.addingTimeInterval(3 * 3600)))")
+        XCTAssertEqual(snapshot(hours, at: start.addingTimeInterval(3600 + 600)).days(1).first?.past.first, true)
+        XCTAssertNil(snapshot([hour(0, .red), hour(1, .amber)]).days(1).first?.good)
+    }
+
+    func testAnOutOfDateForecastHasNoGoodStretch() {
+        let late = snapshot((0..<8).map { hour($0) }, at: start.addingTimeInterval(4 * 3600))
+        XCTAssertNil(late.days(1).first?.good)
     }
 
     // MARK: Lock screen
 
-    func testLockScreenLineNamesClubLightAndTemperature() {
+    func testLockScreenLineNamesLightAndTemperatureWithoutTheClub() {
         let red = hour(0, .red, reasons: [Reason(condition: "wind", light: .red)])
-        XCTAssertEqual(snapshot([red]).inlineText, "MRC 1880 · \(Light.red.title) · \(Format.degrees(15))")
+        XCTAssertEqual(snapshot([red]).inlineText, "\(tr("Stay ashore")) · \(Format.degrees(15))")
         let none = RowingSnapshot(date: start, clubName: "MRC 1880", isHome: true, forecast: nil)
-        XCTAssertEqual(none.inlineText, "MRC 1880 · – · \(Format.degrees(nil))")
+        XCTAssertEqual(none.inlineText, "– · \(Format.degrees(nil))")
     }
 
     // MARK: Every size draws
@@ -122,11 +173,13 @@ final class WidgetContentTests: XCTestCase {
         for (family, size) in sizes {
             for snap in [full, empty] {
                 for focus in WidgetFocus.allCases {
-                    for plain in [false, true] {
-                        let renderer = ImageRenderer(content: RowingWidgetView(snapshot: snap, family: family, focus: focus, plain: plain)
-                            .frame(width: size.width, height: size.height))
-                        renderer.scale = 1
-                        XCTAssertNotNil(renderer.uiImage, "\(family) \(focus) plain=\(plain) data=\(snap.forecast != nil)")
+                    for layout in WidgetLayout.allCases {
+                        for (plain, marks) in [(false, true), (true, false)] {
+                            let view = RowingWidgetView(snapshot: snap, family: family, focus: focus, plain: plain, layout: layout, marks: marks)
+                            let renderer = ImageRenderer(content: view.frame(width: size.width, height: size.height))
+                            renderer.scale = 1
+                            XCTAssertNotNil(renderer.uiImage, "\(family) \(focus) \(layout) plain=\(plain) data=\(snap.forecast != nil)")
+                        }
                     }
                 }
             }
