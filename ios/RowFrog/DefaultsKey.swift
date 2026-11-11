@@ -17,6 +17,8 @@ enum DefaultsKey {
     static let openClub = "RWOpenClub"
     static let chartSelect = "RWChartSelect"
     static let staleForecast = "RWStaleForecast"
+    static let forecastFailure = "RWForecastFailure"
+    static let noForecast = "RWNoForecast"
     static let showSettings = "RWShowSettings"
     static let sampleRadar = "RWSampleRadar"
     static let radarLoading = "RWRadarLoading"
