@@ -421,6 +421,8 @@ enum RefreshFailure: Equatable {
     /// The server turned the download away (401 or 403): retrying does not help
     /// until it is fixed on our side, as during the GitHub suspension in November 2026.
     case refused(Int)
+    /// The phone is online but could not get through to the forecast server.
+    case unreachable
     /// An own place's forecast comes from Open-Meteo, not from our server.
     case placeService
 
@@ -431,6 +433,10 @@ enum RefreshFailure: Equatable {
                 self = .offline
             case .timedOut:
                 self = .timeout
+            // The phone is online, but our server did not take the call (as on 11 Nov 2026,
+            // when the stopgap server was down): a known cause, not an unexpected one.
+            case .cannotConnectToHost, .secureConnectionFailed, .badServerResponse:
+                self = ownPlace ? .placeService : .unreachable
             default:
                 self = ownPlace ? .placeService : .other(url.localizedDescription)
             }
@@ -456,6 +462,7 @@ enum RefreshFailure: Equatable {
         switch self {
         case .offline: tr("no internet connection")
         case .timeout: tr("the server did not answer in time")
+        case .unreachable: tr("the server could not be reached")
         case .notFound: tr("no forecast for this club on the server")
         case let .server(code): tr("server error %d", code)
         case let .refused(code): tr("server refused the download (error %d)", code)
@@ -470,6 +477,8 @@ enum RefreshFailure: Equatable {
         switch self {
         case .offline:
             tr("Your phone could not reach the internet, or the connection dropped during the download. Check Wi-Fi or mobile data, and in the iPhone settings whether Row Frog may use mobile data. Then pull down to refresh.")
+        case .unreachable:
+            tr("The forecast server (api.rowfrog.com) could not be reached. Either your connection dropped, or the server did not answer properly, which is on our side. Pull down to try again in a minute.")
         case .timeout:
             tr("The forecast server (api.rowfrog.com) did not answer in time. That is usually a slow connection or a short hiccup at the server. Pull down to try again in a minute.")
         case .notFound:
@@ -483,7 +492,7 @@ enum RefreshFailure: Equatable {
         case .placeService:
             tr("Your own places get their forecast straight from Open-Meteo, which did not answer properly. That is on their side and usually passes quickly. Try again later.")
         case let .other(detail):
-            tr("Loading the forecast failed on your phone for an unexpected reason (%@). The forecast shown stays. Pull down to try again; if it keeps failing, please tell us.", detail)
+            tr("Loading the forecast failed on your phone for an unexpected reason (%@). Pull down to try again; if it keeps failing, please tell us.", detail)
         }
     }
 }

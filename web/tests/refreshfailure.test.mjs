@@ -37,3 +37,7 @@ test("a failed fetch is only 'no internet connection' when the browser is offlin
 test("own places still blame the weather service", () => {
   assert.equal(refreshFailure(status(403), true)[0], "the weather service did not answer");
 });
+
+test("no text promises a forecast that may not be shown", () => {
+  for (const error of [new Error("odd"), status(500), status(404)]) assert.doesNotMatch(refreshFailure(error)[1], /forecast shown stays/);
+});

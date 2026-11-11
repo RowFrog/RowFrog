@@ -277,7 +277,7 @@ export function refreshFailure(error, ownPlace = false) {
     server: [t("server error %@", code), t("The forecast server (api.rowfrog.com) answered with error %@. That is on our side, not yours, and usually fixes itself. Try again later.", code)],
     unreadable: [t("the forecast could not be read"), t("The forecast arrived, but this version of the website could not read it. Reload the page; if that doesn't help, tell us.")],
     placeService: [t("the weather service did not answer"), t("Your own places get their forecast straight from Open-Meteo, which did not answer properly. That is on their side and usually passes quickly. Try again later.")],
-    other: [t("unexpected error"), t("Loading the forecast failed in your browser for an unexpected reason (%@). The forecast shown stays. Try again; if it keeps failing, please tell us.", error?.message ?? "")],
+    other: [t("unexpected error"), t("Loading the forecast failed in your browser for an unexpected reason (%@). Try again; if it keeps failing, please tell us.", error?.message ?? "")],
   }[kind];
 }
 
