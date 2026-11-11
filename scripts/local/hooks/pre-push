@@ -9,7 +9,7 @@ remote="$1"
 [ "$remote" = pi ] || exit 0
 
 export PATH="/opt/local/bin:/opt/local/sbin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:$PATH"
-top=$(git rev-parse --show-toplevel) || exit 1
+top=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)") || exit 1  # the main checkout, also from a worktree
 logdir="$top/log"; mkdir -p "$logdir"
 passed="$logdir/checks-passed.txt"; touch "$passed"
 zero=0000000000000000000000000000000000000000
