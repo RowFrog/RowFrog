@@ -34,3 +34,44 @@ final class ForecastStatusTests: XCTestCase {
         XCTAssertFalse(ForecastStatus.of(hasForecast: true, outOfDate: false, loading: false, failure: .offline).isOutOfDate)
     }
 }
+
+/// The steps of one club's load (ForecastLoad), as ForecastStore.load takes them.
+final class ForecastLoadTests: XCTestCase {
+    private let forecast = try! APIClient.decoder.decode(ClubForecast.self, from: Data("""
+    {"clubId": "a", "lakeId": "starnberger-see", "generatedAt": "2026-10-28T13:51:00+00:00",
+     "attribution": [], "hours": [], "daylight": []}
+    """.utf8))
+    private let at = Date(timeIntervalSince1970: 1_800_000_000)
+
+    func testAFirstLoadWaitsThenShowsOrFails() {
+        let start = ForecastLoad.started(from: nil)
+        XCTAssertTrue(start.isLoading)
+        XCTAssertNil(start.forecast)
+        XCTAssertEqual(start.failing(with: .offline).failure, .offline)
+        XCTAssertNil(start.failing(with: .offline).forecast)
+        XCTAssertNil(start.calledOff(), "called off before anything came: as if never asked")
+    }
+
+    func testARetryKeepsNoForecastUpWithItsReason() {
+        let retry = ForecastLoad.started(from: .failed(.timeout))
+        XCTAssertTrue(retry.isLoading)
+        XCTAssertEqual(retry.failure, .timeout)
+        XCTAssertEqual(retry.calledOff()?.failure, .timeout)
+    }
+
+    func testAnUpdateKeepsTheForecastAndItsTime() {
+        let shown = ForecastLoad.shown(forecast, loadedAt: at, updating: false, failure: nil)
+        let updating = ForecastLoad.started(from: shown)
+        XCTAssertTrue(updating.isLoading)
+        XCTAssertNotNil(updating.forecast)
+        XCTAssertEqual(updating.loadedAt, at)
+        let failed = updating.failing(with: .refused(403))
+        XCTAssertFalse(failed.isLoading)
+        XCTAssertNotNil(failed.forecast, "a failed update keeps the forecast")
+        XCTAssertEqual(failed.failure, .refused(403))
+        XCTAssertEqual(failed.loadedAt, at)
+        let off = ForecastLoad.started(from: failed).calledOff()
+        XCTAssertEqual(off?.failure, .refused(403))
+        XCTAssertEqual(off?.isLoading, false)
+    }
+}
