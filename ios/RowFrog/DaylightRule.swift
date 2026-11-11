@@ -50,13 +50,26 @@ enum DaylightRule {
 
     /// The lights an hour's dot starts and ends with, or nil when it does not change.
     /// `floor` is the hour's light from everything but the daylight: neither half is below it.
-    static func halves(from start: Date, days: [SunDay], floor: Light) -> DotHalves? {
+    /// `before` and `after` are the same for the hours either side (owner's pick B, 6 Nov 2026):
+    /// the better half can never be better than the weather of the hour it touches (nor stricter
+    /// than the other half), so a red day
+    /// never shows an amber half at sunset, nor a red morning a green half at sunrise.
+    /// The stricter half is never changed.
+    static func halves(from start: Date, days: [SunDay], floor: Light, before: Light = .green, after: Light = .green) -> DotHalves? {
         let all = parts(from: start, days: days)
         let top = all.map(\.light).max() ?? .green
         let kept = all.filter { $0.to.timeIntervalSince($0.from) >= shortestPart || $0.light == top }
         guard let first = kept.first, let last = kept.last else { return nil }
-        let halves = DotHalves(start: max(first.light, floor), end: max(last.light, floor))
-        return halves.start == halves.end ? nil : halves
+        var left = max(first.light, floor)
+        var right = max(last.light, floor)
+        // Held to its neighbour, the better half never gets stricter than the other half.
+        if left < right { left = min(max(left, before), right) } else if right < left { right = min(max(right, after), left) }
+        return left == right ? nil : DotHalves(start: left, end: right)
+    }
+
+    /// The light of an hour from everything but the daylight.
+    static func weather(_ hour: ForecastHour?) -> Light {
+        hour?.reasons.filter { !reasonNames.contains($0.condition) }.map(\.light).max() ?? .green
     }
 }
 
@@ -71,7 +84,8 @@ extension ClubForecast {
     func dotHalves(for hour: ForecastHour, stale: Bool = false) -> DotHalves? {
         guard !stale, let days = daylight, !days.isEmpty,
               hour.reasons.contains(where: { DaylightRule.reasonNames.contains($0.condition) }) else { return nil }
-        let floor = hour.reasons.filter { !DaylightRule.reasonNames.contains($0.condition) }.map(\.light).max() ?? .green
-        return DaylightRule.halves(from: hour.time, days: days, floor: floor)
+        let near = { (offset: TimeInterval) in self.hours.first { $0.time == hour.time.addingTimeInterval(offset) } }
+        return DaylightRule.halves(from: hour.time, days: days, floor: DaylightRule.weather(hour),
+                                   before: DaylightRule.weather(near(-3600)), after: DaylightRule.weather(near(3600)))
     }
 }

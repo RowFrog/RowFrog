@@ -91,23 +91,35 @@ const stricter = (a, b) => (RANK[a] >= RANK[b] ? a : b);
 /**
  * The lights an hour's dot starts and ends with ({ start, end }), or null when it does not change.
  * `floor` is the hour's light from everything but the daylight: neither half is below it.
+ * `before` and `after` are the same for the hours either side (owner's pick B, 6 Nov 2026): the
+ * better half can never be better than the weather of the hour it touches, nor stricter than the
+ * other half. The stricter half stays.
  */
-export function daylightHalves(start, days, floor = "green") {
+export function daylightHalves(start, days, floor = "green", before = "green", after = "green") {
   const all = daylightParts(start, days);
   const top = all.reduce((w, p) => stricter(w, p.light), "green");
   const kept = all.filter((p) => p.to - p.from >= SHORTEST_PART_MS || p.light === top);
   if (!kept.length) return null;
-  const halves = { start: stricter(kept[0].light, floor), end: stricter(kept[kept.length - 1].light, floor) };
-  return halves.start === halves.end ? null : halves;
+  let left = stricter(kept[0].light, floor);
+  let right = stricter(kept[kept.length - 1].light, floor);
+  // Held to its neighbour, the better half never gets stricter than the other half.
+  const milder = (a, b) => (RANK[a] <= RANK[b] ? a : b);
+  if (RANK[left] < RANK[right]) left = milder(stricter(left, before), right);
+  else if (RANK[right] < RANK[left]) right = milder(stricter(right, after), left);
+  return left === right ? null : { start: left, end: right };
 }
+
+/** The light of an hour from everything but the daylight. */
+export const weatherLight = (hour) => (hour?.reasons ?? []).filter((r) => !DAYLIGHT_REASONS.includes(r.condition)).reduce((w, r) => stricter(w, r.light), "green");
 
 /** The half-and-half dot for an hour row or the hour view (ClubForecast.dotHalves); null for one colour. */
 export function hourHalves(forecast, hour, stale = false) {
   const days = sunDaysOf(forecast);
   const reasons = hour?.reasons ?? [];
   if (stale || !days.length || !reasons.some((r) => DAYLIGHT_REASONS.includes(r.condition))) return null;
-  const floor = reasons.filter((r) => !DAYLIGHT_REASONS.includes(r.condition)).reduce((w, r) => stricter(w, r.light), "green");
-  return daylightHalves(Date.parse(hour.time), days, floor);
+  const t = Date.parse(hour.time);
+  const near = (offset) => (forecast.hours ?? []).find((x) => Date.parse(x.time) === t + offset);
+  return daylightHalves(t, days, weatherLight(hour), weatherLight(near(-3600e3)), weatherLight(near(3600e3)));
 }
 
 /** The next `count` hours from the current one. */
