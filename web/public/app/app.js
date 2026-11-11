@@ -1692,7 +1692,7 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
   // `mark`: rain read from the radar starts its line with the radar's symbol.
   const tile = (value, detail, graphic = "", off = false, mark = "") => parts ? { value, detail } : `<button class="tile ${off ? "off" : ""}${cause}" data-tile="${condition}">
     ${header(titles[condition][1])}
-    <span class="tile-body"><span><strong aria-label="${h(value + sets)}">${h(value)}</strong><small>${mark}${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
+    <span class="tile-body"><span><strong aria-label="${h(value + sets)}">${h(value)}</strong><small${condition === "precipitation" ? ' class="may-wrap"' : ""}>${mark}${h(detail)}</small></span><span class="graphic">${graphic}</span></span></button>`;
   const temps = next24.map((x) => x.temperatureC).filter((v) => v != null);
   switch (condition) {
     case "temperature":
