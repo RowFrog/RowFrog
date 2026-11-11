@@ -15,8 +15,11 @@ such feature has no place; the website then keeps the clubhouse checked by
 hand, as before. Writes data/catalogs/osm-places.json; the server sends it
 as each club's `mapPlace`.
 
-The clubs are looked up one 1 x 1 degree square at a time, a few squares
-per Overpass query, so no query covers a whole country.
+Overpass is asked only around the clubs themselves (MAX_M around each
+launch point and checked clubhouse), CLUBS_PER_QUERY clubs per query, so
+each query stays small. A query that fails is tried again after a pause;
+clubs whose query still fails keep the place from the last run, so one bad
+batch doesn't lose the rest.
 
 Data © OpenStreetMap contributors, ODbL.
 """
@@ -40,8 +43,13 @@ ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "data" / "catalogs" / "osm-places.json"
 # How far a club's map place may lie from its launch point or checked clubhouse.
 MAX_M = 700.0
-# How many 1 x 1 degree squares one Overpass query covers.
-SQUARES_PER_QUERY = 6
+# How many clubs one Overpass query looks around.
+CLUBS_PER_QUERY = 20
+# Tries per query, and the pause before the next try (seconds).
+TRIES = 3
+RETRY_AFTER = 60
+# Queries failing in a row after which the rest are skipped (kept from the last run).
+STOP_AFTER = 3
 # As import_osm_clubs.CLUB_NAME, plus the Dutch, Danish and Polish words.
 CLUB_NAME = "[Rr]uder|[Rr]owing|[Aa]viron|[Cc]anott|[Rr]oei|[Rr]o[ -]?klub|[Ww]io[sś]l"
 NOT_CLUBS = re.compile(
@@ -134,21 +142,35 @@ def features_from(elements: list[dict]) -> list[dict]:
     return out
 
 
-def query(squares: list[tuple[int, int]]) -> list[dict]:
+def query(clubs: list[dict]) -> list[dict]:
+    """The rowing club features within MAX_M of these clubs' points."""
     parts = []
-    for lat, lon in squares:
-        box = f"({lat},{lon},{lat + 1},{lon + 1})"
-        parts += [
-            f'nwr["sport"="rowing"]["name"]{box};',
-            f'nwr["name"~"{CLUB_NAME}"]["club"]{box};',
-            f'nwr["name"~"{CLUB_NAME}"]["leisure"]{box};',
-            f'nwr["name"~"{CLUB_NAME}"]["building"]{box};',
-        ]
-    q = "[out:json][timeout:180];\n(\n" + "\n".join(parts) + "\n);\nout center tags;"
-    result = overpass(q, timeout=200)
+    for club in clubs:
+        for lat, lon in club["points"]:
+            near = f"(around:{MAX_M:.0f},{lat:.5f},{lon:.5f})"
+            parts += [
+                f'nwr["sport"="rowing"]["name"]{near};',
+                f'nwr["club"]["name"~"{CLUB_NAME}"]{near};',
+                f'nwr["leisure"]["name"~"{CLUB_NAME}"]{near};',
+                f'nwr["building"]["name"~"{CLUB_NAME}"]{near};',
+            ]
+    q = "[out:json][timeout:90];\n(\n" + "\n".join(parts) + "\n);\nout center tags;"
+    result = overpass(q, timeout=120)
     if "remark" in result:  # timeouts and memory limits, with a partial result
         raise OSError(f"Overpass: {result['remark']}")
     return result["elements"]
+
+
+def query_with_retries(clubs: list[dict], tries: int = TRIES, pause: float = RETRY_AFTER) -> list[dict] | None:
+    """`query`, tried again after a pause; None when every try failed."""
+    for attempt in range(1, tries + 1):
+        try:
+            return query(clubs)
+        except OSError as error:
+            print(f"    try {attempt} of {tries} failed: {error}")
+            if attempt < tries:
+                time.sleep(pause)
+    return None
 
 
 def clubs_to_place() -> list[dict]:
@@ -163,23 +185,42 @@ def clubs_to_place() -> list[dict]:
     return out
 
 
-def main() -> int:
-    clubs = clubs_to_place()
-    squares = sorted({(math.floor(p[0]), math.floor(p[1])) for c in clubs for p in c["points"]})
-    print(f"{len(clubs)} clubs in {len(squares)} squares")
-    features: dict[str, dict] = {}
-    for i in range(0, len(squares), SQUARES_PER_QUERY):
-        batch = squares[i:i + SQUARES_PER_QUERY]
-        for f in features_from(query(batch)):
-            features[f["osm"]] = f
-        print(f"  squares {i + 1}-{i + len(batch)}: {len(features)} features so far")
-        time.sleep(5)  # be gentle with the public Overpass servers
-    found = list(features.values())
+def old_places() -> dict[str, dict]:
+    if not OUT.exists():
+        return {}
+    return json.loads(OUT.read_text(encoding="utf-8")).get("places", {})
 
+
+def main() -> int:
+    clubs = sorted(clubs_to_place(), key=lambda c: c["points"][0])  # neighbours share a query
+    batches = [clubs[i:i + CLUBS_PER_QUERY] for i in range(0, len(clubs), CLUBS_PER_QUERY)]
+    print(f"{len(clubs)} clubs in {len(batches)} queries")
+    features: dict[str, dict] = {}
+    failed: set[str] = set()
+    in_a_row = 0
+    for n, batch in enumerate(batches, 1):
+        # Overpass down altogether: stop instead of waiting through every batch.
+        elements = query_with_retries(batch) if in_a_row < STOP_AFTER else None
+        in_a_row = in_a_row + 1 if elements is None else 0
+        if elements is None:
+            failed |= {c["id"] for c in batch}
+        else:
+            for f in features_from(elements):
+                features[f["osm"]] = f
+        print(f"  query {n} of {len(batches)}: {len(features)} features so far, {len(failed)} clubs not looked up")
+        time.sleep(3)  # be gentle with the public Overpass servers
+    if len(failed) == len(clubs):
+        sys.exit("every query failed; keeping the old file")
+
+    looked_up = [c for c in clubs if c["id"] not in failed]
     places = {club_id: {"at": [f["lat"], f["lon"]], "name": f["name"], "osm": f["osm"]}
-              for club_id, f in sorted(match(clubs, found).items())}
-    print(f"{len(places)} of {len(clubs)} clubs have a place in OpenStreetMap")
-    if len(places) < len(clubs) // 4:
+              for club_id, f in match(looked_up, list(features.values())).items()}
+    # Clubs whose query failed keep what the last run found.
+    kept = {k: v for k, v in old_places().items() if k in failed}
+    places = dict(sorted({**kept, **places}.items()))
+    print(f"{len(places)} of {len(clubs)} clubs have a place in OpenStreetMap"
+          + (f" ({len(kept)} kept from the last run, {len(failed)} clubs not looked up)" if failed else ""))
+    if len(places) < len(looked_up) // 4:
         sys.exit("too few places found; keeping the old file")
     OUT.write_text(json.dumps({
         "comment": "Each club's own place in OpenStreetMap (scripts/osm_club_places.py): where the map draws the "
@@ -189,7 +230,7 @@ def main() -> int:
         "updated": datetime.now(UTC).date().isoformat(),
         "places": places,
     }, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
-    return 0
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

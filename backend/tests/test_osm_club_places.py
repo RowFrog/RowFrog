@@ -60,3 +60,44 @@ def test_rentals_and_unnamed_features_are_not_clubs():
         {"type": "way", "id": 3, "center": {"lat": 48.1, "lon": 11.1}, "tags": {"name": "Ruderclub Tutzing", "sport": "rowing"}},
     ]
     assert places.features_from(elements) == [{"name": "Ruderclub Tutzing", "lat": 48.1, "lon": 11.1, "osm": "way/3"}]
+
+
+def test_queries_look_only_around_the_clubs(monkeypatch):
+    sent = []
+    monkeypatch.setattr(places, "overpass", lambda q, timeout: sent.append(q) or {"elements": []})
+    places.query([club("a", "Ruderverein Tutzing")])
+    assert "(around:700,48.13000,11.55000)" in sent[0]
+    assert "[timeout:90]" in sent[0]
+
+
+def test_a_failed_query_is_tried_again_and_then_given_up(monkeypatch):
+    calls = []
+
+    def flaky(clubs):
+        calls.append(1)
+        if len(calls) < 3:
+            raise OSError("all Overpass servers failed")
+        return [{"type": "node", "id": 1}]
+
+    monkeypatch.setattr(places, "query", flaky)
+    assert places.query_with_retries([], tries=3, pause=0) == [{"type": "node", "id": 1}]
+    calls.clear()
+    assert places.query_with_retries([], tries=2, pause=0) is None
+
+
+def test_clubs_whose_query_failed_keep_the_last_runs_place(monkeypatch, tmp_path):
+    clubs = [club("a", "Ruderverein Tutzing"), club("b", "Ruderclub Starnberg")]
+    clubs[1]["points"] = [(47.99, 11.34)]
+    out = tmp_path / "osm-places.json"
+    out.write_text('{"places": {"b": {"at": [47.99, 11.34], "name": "Ruderclub Starnberg", "osm": "way/9"}}}')
+    monkeypatch.setattr(places, "OUT", out)
+    monkeypatch.setattr(places, "CLUBS_PER_QUERY", 1)
+    monkeypatch.setattr(places, "clubs_to_place", lambda: clubs)
+    monkeypatch.setattr(places.time, "sleep", lambda s: None)
+    tutzing = {"type": "way", "id": 1, "center": {"lat": 48.1301, "lon": 11.55}, "tags": {"name": "Ruderverein Tutzing"}}
+    monkeypatch.setattr(places, "query_with_retries", lambda batch: [tutzing] if batch[0]["id"] == "a" else None)
+    assert places.main() == 1  # written, but says not every club was looked up
+    import json
+    found = json.loads(out.read_text())["places"]
+    assert found["a"]["osm"] == "way/1"
+    assert found["b"]["osm"] == "way/9"
