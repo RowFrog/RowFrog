@@ -27,7 +27,15 @@ struct LaunchPointSheet: View {
     @Environment(\.dismiss) private var dismiss
     /// Everything but the map, measured; until it is known, a guess close to a phone's.
     @State private var restHeight: CGFloat = 150
-    @State private var detent: PresentationDetent = .height(LaunchPointSheet.mapHeight + 150 + LaunchPointSheet.barHeight)
+    /// Pulled up to full height (or tapped there). The fitted height is worked
+    /// out from restHeight on every draw, so the selected detent is always one
+    /// of the two offered (a stored fitted height went stale for a moment when
+    /// restHeight changed, which SwiftUI reports as "Cannot set selected sheet
+    /// detent if it is not included in supported sheet detents").
+    @State private var full = false
+    private var detent: Binding<PresentationDetent> {
+        Binding(get: { full ? .large : fitted }, set: { full = $0 == .large })
+    }
 
     /// Room for the title bar above the content.
     static let barHeight: CGFloat = 64
@@ -40,7 +48,7 @@ struct LaunchPointSheet: View {
         NavigationStack {
             GeometryReader { geometry in
                 // Pulled up to full height, the map takes all the room the rest leaves.
-                let map = detent == .large ? max(Self.mapHeight, geometry.size.height - restHeight) : Self.mapHeight
+                let map = full ? max(Self.mapHeight, geometry.size.height - restHeight) : Self.mapHeight
                 ScrollView {
                     LaunchPointDetails(club: club, mapHeight: map, mapMaxHeight: map, startsLive: true)
                         .padding()
@@ -50,7 +58,7 @@ struct LaunchPointSheet: View {
                         }
                 }
                 .scrollBounceBehavior(.basedOnSize)
-                .animation(.smooth, value: detent)
+                .animation(.smooth, value: full)
             }
             .navigationTitle(tr("Location"))
             .navigationBarTitleDisplayMode(.inline)
@@ -58,11 +66,11 @@ struct LaunchPointSheet: View {
                 ToolbarItem(placement: .topBarLeading) {
                     // The same as pulling the sheet up or down.
                     Button {
-                        withAnimation(.smooth) { detent = detent == .large ? fitted : .large }
+                        withAnimation(.smooth) { full.toggle() }
                     } label: {
-                        Image(systemName: detent == .large ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
+                        Image(systemName: full ? "arrow.down.right.and.arrow.up.left" : "arrow.up.left.and.arrow.down.right")
                     }
-                    .accessibilityLabel(detent == .large ? tr("Smaller map") : tr("Map full screen"))
+                    .accessibilityLabel(full ? tr("Smaller map") : tr("Map full screen"))
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(tr("Done")) { dismiss() }
@@ -71,11 +79,10 @@ struct LaunchPointSheet: View {
         }
         // As far up as the content needs; pulled up, the map fills the screen.
         // Larger text sizes reach full height and scroll.
-        .presentationDetents([fitted, .large], selection: $detent)
+        .presentationDetents([fitted, .large], selection: detent)
         .presentationDragIndicator(.visible)
-        .onChange(of: restHeight) { if detent != .large { detent = fitted } }
         // Screenshot hook: `-RWLaunchPointFull YES` opens it at full height.
-        .onAppear { if UserDefaults.standard.bool(forKey: "RWLaunchPointFull") { detent = .large } }
+        .onAppear { if UserDefaults.standard.bool(forKey: "RWLaunchPointFull") { full = true } }
     }
 }
 

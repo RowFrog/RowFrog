@@ -8,12 +8,14 @@ import TipKit
 /// hosts the backend.
 struct RadarClient {
     static let wms = URL(string: "https://maps.dwd.de/geoserver/dwd/wms")!
-    /// A reading that has not answered within 10 seconds counts as failed (DWD
-    /// usually answers in one or two), so the rain tile says so instead of waiting a minute.
+    /// A reading that has not answered within 20 seconds counts as failed, so the
+    /// rain tile says so instead of waiting a minute. DWD usually answers in one or
+    /// two, but on some evenings its server takes over 10 (11 Nov 2026: the first
+    /// reading timed out at 10 s on both the owner's iPhone and iPad).
     static let session: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 10
-        config.timeoutIntervalForResource = 10
+        config.timeoutIntervalForRequest = 20
+        config.timeoutIntervalForResource = 20
         return URLSession(configuration: config)
     }()
     var session: URLSession = Self.session

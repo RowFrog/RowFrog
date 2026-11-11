@@ -19,7 +19,7 @@ export const RADAR_CREDIT = key("Radar: Deutscher Wetterdienst (DWD), CC BY 4.0"
 
 const iso = (ms) => new Date(ms).toISOString().replace(".000", "");
 
-const READ_TIMEOUT = 10000;
+const READ_TIMEOUT = 20000;
 
 async function reading(point, at) {
   const d = 0.01;
