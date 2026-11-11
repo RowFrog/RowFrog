@@ -218,3 +218,51 @@ def test_nearby_water_counts_only_the_water_near_the_launch_point():
     (n,) = lake_view.nearby_water(grid, windy, south, lon_mid).values()
     assert n.light == Light.RED and n.cause == "wind" and abs(n.value - 9.0) < 1e-6
     assert n.other == Light.RED and n.other_cause == "fog" and abs(n.vis_m - 300.0) < 1e-6
+
+
+def test_grids_are_kept_between_runs_until_the_outline_or_code_changes(tmp_path, monkeypatch):
+    # Owner's pick, 11 Nov 2026: keep the grids, but build them again with the newest outline or grid code.
+    monkeypatch.setattr(lake_view, "GRID_CACHE_DIR", tmp_path)
+    built = []
+    real_build = lake_view.build_grid
+
+    def counting_build(rings, *args, **kwargs):
+        built.append(rings)
+        return real_build(rings, *args, **kwargs)
+
+    monkeypatch.setattr(lake_view, "build_grid", counting_build)
+
+    def new_run():  # each publish run is a new process: nothing in memory
+        lake_view._grid_cached.cache_clear()
+
+    new_run()
+    first = lake_view.grid_for("test-lake", LAKE)
+    assert len(built) == 1 and (tmp_path / "test-lake.pickle").exists()
+    new_run()
+    assert lake_view.grid_for("test-lake", LAKE) == first and len(built) == 1  # kept, not built
+    # A changed outline: built again from it, and kept in place of the old one.
+    moved = [[(x + 0.001, y) for x, y in ring] for ring in LAKE]
+    new_run()
+    assert lake_view.grid_for("test-lake", moved) != first and len(built) == 2
+    new_run()
+    lake_view.grid_for("test-lake", moved)
+    assert len(built) == 2
+    # Other settings (fewer forecast points for a lake people use) are a different grid.
+    new_run()
+    lake_view.grid_for("test-lake", moved, max_samples=3)
+    assert len(built) == 3
+    # Changed grid code: every kept grid is built again.
+    new_run()
+    monkeypatch.setattr(lake_view, "_code_fingerprint", lambda: "other code")
+    lake_view.grid_for("test-lake", moved, max_samples=3)
+    assert len(built) == 4
+    # A broken file is built again too, and no keeping at all without a folder.
+    (tmp_path / "test-lake.pickle").write_bytes(b"not a pickle")
+    new_run()
+    assert lake_view.grid_for("test-lake", moved, max_samples=3).cells and len(built) == 5
+    monkeypatch.setattr(lake_view, "GRID_CACHE_DIR", None)
+    new_run()
+    lake_view.grid_for("other-lake", LAKE)
+    assert len(built) == 6 and not (tmp_path / "other-lake.pickle").exists()
+    new_run()
+

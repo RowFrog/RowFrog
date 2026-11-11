@@ -883,6 +883,9 @@ def main() -> int:
     args = parser.parse_args()
     now = datetime.now(timezone.utc)
     state = State(args.state)
+    if args.state:
+        # Lake grids are kept next to the state and built again only when an outline or the grid code changed.
+        lake_view.GRID_CACHE_DIR = args.state.parent / "lake-grids"
     used_clubs, used_lakes, with_usage = usage_now()
     print(f"Used: {len(used_clubs)} clubs, {len(used_lakes)} lakes{'' if with_usage else ' (no usage counter)'}")
 

@@ -16,11 +16,17 @@ a few seconds once per lake and then cached.
 
 from __future__ import annotations
 
+import hashlib
+import json
+import logging
 import math
+import pickle
+import sys
 from bisect import bisect_right
 from dataclasses import dataclass, field, replace
 from datetime import timedelta
 from functools import lru_cache
+from pathlib import Path
 from typing import Sequence
 
 from . import interpolate
@@ -395,10 +401,69 @@ def _spread(points_m: list[tuple[float, float]], count: int) -> list[tuple[float
     return found
 
 
+# Where grids are kept between publish runs (the publisher sets it next to its
+# state file); None keeps them in memory only, for this process.
+GRID_CACHE_DIR: Path | None = None
+# The code a grid is built by: when any of these files changes, every kept grid is built again.
+_GRID_CODE = ("lake_view.py", "interpolate.py", "waves.py")
+
+
+@lru_cache(maxsize=1)
+def _code_fingerprint() -> str:
+    """The grid code's own fingerprint: its source files and the Python version (pickle format)."""
+    h = hashlib.sha256(f"{sys.version_info.major}.{sys.version_info.minor}".encode())
+    for name in _GRID_CODE:
+        h.update(name.encode())
+        h.update((Path(__file__).parent / name).read_bytes())
+    return h.hexdigest()
+
+
+def grid_fingerprint(rings: tuple, max_samples: int, narrow: bool) -> str:
+    """Changes when the lake's outline, the grid's settings or the grid code change."""
+    h = hashlib.sha256(_code_fingerprint().encode())
+    h.update(json.dumps([rings, max_samples, narrow, TARGET_CELLS]).encode())
+    return h.hexdigest()
+
+
+def _kept_grid(lake_id: str, fingerprint: str) -> Grid | None:
+    """The grid kept from an earlier run, if it was built from the same outline and code."""
+    path = GRID_CACHE_DIR / f"{lake_id}.pickle"
+    try:
+        with path.open("rb") as f:
+            kept = pickle.load(f)
+    except FileNotFoundError:
+        return None
+    except Exception as e:  # a broken or old file: build the grid again
+        logging.getLogger(__name__).warning("kept lake grid %s unreadable: %r", lake_id, e)
+        return None
+    return kept.get("grid") if isinstance(kept, dict) and kept.get("fingerprint") == fingerprint else None
+
+
+def _keep_grid(lake_id: str, fingerprint: str, grid: Grid) -> None:
+    try:
+        GRID_CACHE_DIR.mkdir(parents=True, exist_ok=True)
+        path = GRID_CACHE_DIR / f"{lake_id}.pickle"
+        tmp = path.with_suffix(".tmp")
+        with tmp.open("wb") as f:
+            pickle.dump({"fingerprint": fingerprint, "grid": grid}, f, protocol=pickle.HIGHEST_PROTOCOL)
+        tmp.replace(path)
+    except OSError as e:  # a full disk must not stop the lake view
+        logging.getLogger(__name__).warning("could not keep lake grid %s: %r", lake_id, e)
+
+
 # Room for every lake with an outline (378 in Nov 2026), so a publish run builds each grid once.
 @lru_cache(maxsize=512)
 def _grid_cached(key: str, rings: tuple, max_samples: int, narrow: bool) -> Grid:
-    return build_grid([list(r) for r in rings], max_samples=max_samples, narrow=narrow)
+    """The lake's grid: from GRID_CACHE_DIR when it was built from this very outline, settings and
+    code (about 3 min for all lakes on the Raspberry Pi, Nov 2026), else built and kept there."""
+    if GRID_CACHE_DIR is None:
+        return build_grid([list(r) for r in rings], max_samples=max_samples, narrow=narrow)
+    fingerprint = grid_fingerprint(rings, max_samples, narrow)
+    grid = _kept_grid(key, fingerprint)
+    if grid is None:
+        grid = build_grid([list(r) for r in rings], max_samples=max_samples, narrow=narrow)
+        _keep_grid(key, fingerprint, grid)
+    return grid
 
 
 def grid_for(lake_id: str, rings: Rings, max_samples: int = MAX_SAMPLES, narrow: bool = False) -> Grid:
