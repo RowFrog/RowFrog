@@ -2,7 +2,7 @@
 # RowFrog pre-push check for the Pi remote (set up 11 Nov 2026 while GitHub is down).
 # Runs what .github/workflows/ci.yml runs, on exactly the commit being pushed, in a
 # separate checkout: ruff, backend pytest with coverage, the Worker tests (Node),
-# check_translations, and, when ios/ or testdata/ changed, xcodegen + xcodebuild test
+# check_translations, check_web_parity, and, when ios/ or testdata/ changed, xcodegen + xcodebuild test
 # in English. Also guards main: no deletes, no non-fast-forward, 86e1980 stays in it.
 # A failure refuses the push. Logs: RowFrog/log/pre-push-<sha>.log.
 remote="$1"
@@ -35,6 +35,8 @@ checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
        --cov=rowfrog --cov-report=json:"$logdir/coverage-${sha:0:9}.json" 2>&1 | tail -15; exit "${PIPESTATUS[0]}") || ok=1
     echo "== translations"
     (cd "$wt" && "$venv/bin/python" scripts/check_translations.py) || ok=1
+    echo "== app texts on the website"
+    (cd "$wt" && "$venv/bin/python" scripts/check_web_parity.py) || ok=1
     echo "== Cloudflare Workers"
     if command -v node >/dev/null; then
       (cd "$wt" && node --test cloudflare/tests/*.test.mjs 2>&1 | tail -15; exit "${PIPESTATUS[0]}") || ok=1
