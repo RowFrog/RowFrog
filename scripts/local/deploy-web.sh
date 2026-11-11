@@ -16,6 +16,8 @@ set -euo pipefail
 top=$(git rev-parse --show-toplevel)
 commit=$(git rev-parse --verify "${1:-main}^{commit}")
 env_file="${ROWFROG_CLOUDFLARE_ENV:-$HOME/.config/rowfrog/cloudflare.env}"
+# The backend venv's Python (with Pillow) when there is one, so a python3 without it on PATH does not stop the build.
+py=python3; [ -x "$top/backend/.venv/bin/python" ] && py="$top/backend/.venv/bin/python"
 project=rowfrog-web
 mkdir -p "$top/log"
 exec > >(tee -a "$top/log/deploy-web.log") 2>&1
@@ -43,7 +45,7 @@ if ! cmp -s "$work/package-lock.json" "$tools/package-lock.json" || [ ! -x "$too
 fi
 wrangler="$tools/node_modules/.bin/wrangler"
 
-(cd "$work" && python3 scripts/build_web.py)
+(cd "$work" && "$py" scripts/build_web.py)
 cd "$work/web"
 
 if ! "$wrangler" pages project list | grep -q "\b$project\b"; then
@@ -56,7 +58,7 @@ else
   echo "No SITE_USER/SITE_PASSWORD in $env_file: the password stored in the Pages project stays"
 fi
 if [ -n "${MAPTILER_KEY:-}" ]; then
-  python3 -c 'import json, os; print(json.dumps({"maptilerKey": os.environ["MAPTILER_KEY"]}))' > dist/app/config.json
+  "$py" -c 'import json, os; print(json.dumps({"maptilerKey": os.environ["MAPTILER_KEY"]}))' > dist/app/config.json
   echo "Satellite pictures on: config.json written"
 fi
 # From web/, so wrangler finds web/functions (the password check).
