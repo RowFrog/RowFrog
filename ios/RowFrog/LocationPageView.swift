@@ -144,7 +144,7 @@ struct LocationPageView: View {
                             if !twoColumns {
                                 pageEnd(forecast)
                             }
-                        } else if let failure = forecasts.failures[club.id] {
+                        } else if case let .noForecast(failure) = forecasts.status(club.id) {
                             ContentUnavailableView {
                                 Label(tr("No forecast"), systemImage: "icloud.slash")
                             } description: {

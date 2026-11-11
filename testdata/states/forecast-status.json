@@ -1,0 +1,126 @@
+{
+ "comment": "What a club page says about its forecast, for every combination of: a forecast to show, older than 3 hours (out of date), an update running, the last load failed. Written down once for the app (ios/RowFrog/ForecastStatus.swift, read by ios/RowFrogTests/ForecastStatusTests.swift) and the website (web/public/app/logic.js forecastStatus, read by web/tests/forecaststatus.test.mjs); change all three together. Owner decision 11 Nov 2026: out of date and a failed update show together. outOfDate without a forecast to show means nothing.",
+ "states": {
+  "loading": "Nothing to show yet: stand-in cards.",
+  "noForecast": "Nothing to show: the reason and Try again.",
+  "current": "Forecast from … · loaded …",
+  "updating": "Updating… (app only; the website reloads the whole page).",
+  "outOfDate": "Forecast out of date: from <day, time>.",
+  "updateFailed": "Could not update: <reason>. Showing data from <time>.",
+  "outOfDateAndUpdateFailed": "Both lines: out of date, then Could not update with <day, time>."
+ },
+ "rows": [
+  {
+   "hasForecast": false,
+   "outOfDate": false,
+   "loading": false,
+   "failed": false,
+   "status": "loading"
+  },
+  {
+   "hasForecast": false,
+   "outOfDate": false,
+   "loading": false,
+   "failed": true,
+   "status": "noForecast"
+  },
+  {
+   "hasForecast": false,
+   "outOfDate": false,
+   "loading": true,
+   "failed": false,
+   "status": "loading"
+  },
+  {
+   "hasForecast": false,
+   "outOfDate": false,
+   "loading": true,
+   "failed": true,
+   "status": "noForecast"
+  },
+  {
+   "hasForecast": false,
+   "outOfDate": true,
+   "loading": false,
+   "failed": false,
+   "status": "loading"
+  },
+  {
+   "hasForecast": false,
+   "outOfDate": true,
+   "loading": false,
+   "failed": true,
+   "status": "noForecast"
+  },
+  {
+   "hasForecast": false,
+   "outOfDate": true,
+   "loading": true,
+   "failed": false,
+   "status": "loading"
+  },
+  {
+   "hasForecast": false,
+   "outOfDate": true,
+   "loading": true,
+   "failed": true,
+   "status": "noForecast"
+  },
+  {
+   "hasForecast": true,
+   "outOfDate": false,
+   "loading": false,
+   "failed": false,
+   "status": "current"
+  },
+  {
+   "hasForecast": true,
+   "outOfDate": false,
+   "loading": false,
+   "failed": true,
+   "status": "updateFailed"
+  },
+  {
+   "hasForecast": true,
+   "outOfDate": false,
+   "loading": true,
+   "failed": false,
+   "status": "updating"
+  },
+  {
+   "hasForecast": true,
+   "outOfDate": false,
+   "loading": true,
+   "failed": true,
+   "status": "updateFailed"
+  },
+  {
+   "hasForecast": true,
+   "outOfDate": true,
+   "loading": false,
+   "failed": false,
+   "status": "outOfDate"
+  },
+  {
+   "hasForecast": true,
+   "outOfDate": true,
+   "loading": false,
+   "failed": true,
+   "status": "outOfDateAndUpdateFailed"
+  },
+  {
+   "hasForecast": true,
+   "outOfDate": true,
+   "loading": true,
+   "failed": false,
+   "status": "outOfDate"
+  },
+  {
+   "hasForecast": true,
+   "outOfDate": true,
+   "loading": true,
+   "failed": true,
+   "status": "outOfDateAndUpdateFailed"
+  }
+ ]
+}
