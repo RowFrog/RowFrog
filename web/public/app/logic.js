@@ -443,9 +443,40 @@ export function lightFor(hour, names) {
 }
 
 /** Which condition's icon stands for a reason. */
-export function reasonCondition(name) {
+export function reasonCondition(name, topic = null) {
   if (name.endsWith("_warning")) return "warning";
+  // Water nearby takes the icon of what makes it worse (fog: binoculars), as Reason.symbol.
+  if (name === "nearby_water") name = topic ?? "waves";
   return Object.keys(REASONS).find((c) => REASONS[c].includes(name)) ?? "wind";
+}
+
+/**
+ * The value whose worst within 1 km sets the light this hour, if one does: the top tile then shows
+ * that worst value, marked "Nearby" (ForecastHour.nearbyCondition, owner 6 Nov 2026), since a rower
+ * at the launch point cannot see 15 km when there is fog 300 m out.
+ */
+export function nearbyCondition(hour) {
+  if (!hour?.nearby) return null;
+  const topic = hour.reasons?.find((r) => r.condition === "nearby_water")?.topic;
+  return { wind: "wind", gusts: "wind", waves: "waves", fog: "visibility", heavy_rain: "precipitation", hail: "precipitation", thunderstorm: "thunderstorm" }[topic] ?? null;
+}
+
+/** Wind and gusts as the top tile shows them: the worst within 1 km while that sets the light (shownWind). */
+export function shownWind(hour) {
+  const n = hour.nearby;
+  if (nearbyCondition(hour) !== "wind") return { speed: hour.windSpeedMs, gust: hour.windGustMs };
+  return { speed: Math.max(hour.windSpeedMs ?? 0, n.windMs ?? 0), gust: Math.max(hour.windGustMs ?? 0, n.gustMs ?? 0) };
+}
+
+export function shownWaveHeightM(hour) {
+  if (nearbyCondition(hour) !== "waves") return hour.waveHeightM;
+  return Math.max(hour.waveHeightM ?? 0, hour.nearby.waveM ?? 0);
+}
+
+export function shownVisibilityM(hour) {
+  const vis = hour.nearby?.visM;
+  if (nearbyCondition(hour) !== "visibility" || vis == null) return hour.visibilityM;
+  return Math.min(hour.visibilityM ?? vis, vis);
 }
 
 /** Why it feels warmer or colder than the air, in English. */

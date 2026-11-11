@@ -21,7 +21,7 @@ import {
   isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
-  waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf,
+  waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -1291,9 +1291,14 @@ function wireSwipe(id) {
 /** The top tile: the rowing light, why, the main values and the daylight (NowCard). */
 /** The light a value sets in an hour while amber or red, never green, so a coloured value always means "this is why" (Condition.cause). */
 function causeOf(condition, hour) {
-  const light = REASONS[condition] ? lightFor(hour, REASONS[condition]) : null;
+  let light = REASONS[condition] ? lightFor(hour, REASONS[condition]) : null;
+  // Also when the water within 1 km sets the light through this value (Condition.cause).
+  for (const r of hour?.reasons ?? []) {
+    if (r.condition === "nearby_water" && REASONS[condition]?.includes(r.topic) && (light == null || RANK_OF[r.light] > RANK_OF[light])) light = r.light;
+  }
   return light && light !== "green" ? light : null;
 }
+const RANK_OF = { green: 0, amber: 1, red: 2 };
 /** The class that colours a value in the light it sets, or the cold-water blue on the water (causeTinted, ColdWaterKit.valueTint). */
 const causeClass = (light, cold = false) => (light ? ` cause-${light}` : cold ? " cause-cold" : "");
 
@@ -1348,7 +1353,10 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
   // As wide as its longest direction ("from NW"), so the column keeps one width whatever the wind does.
   // The sun line's time in the light's colour while the daylight sets it, as every other value (owner's pick S1, 5 Nov 2026).
   const sunCause = causeClass(causeOf("daylight", hour)).trim();
-  const unitLine = (deg) => windUnit() + (deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
+  // Where the worst value within 1 km sets the light, the tile shows it, marked "Nearby" (app #409).
+  const near = nearbyCondition(hour);
+  const shown = shownWind(hour);
+  const unitLine = (deg) => windUnit() + (near === "wind" ? ` · ${t("Nearby")}` : deg != null ? ` · ${t("from %@", compass(deg, lang()))}` : "");
   return `<section class="card now ${combined && store.topTileOpen ? "all-open" : ""}">
     <div class="now-head">
       ${dot(hour.light, 36, stale, at ? hourHalves(forecast, hour, stale) : null)}
@@ -1363,7 +1371,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
       ${stale && !at ? `<li class="orange">${icon("clock")}<span>${h(t("The forecast is more than 3 hours old. Check the conditions yourself before you go out."))}</span></li>` : ""}
       ${reasons.length ? reasons.map((r) => {
         const text = water == null && waterReasons.includes(r.condition) ? t("Estimated: %@", reasonExplanation(r.condition, r.light, r.topic)) : hourExplanation(forecast, r, hour);
-        return `<li class="${r.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[reasonCondition(r.condition)])}<span>${h(text)}</span></li>`;
+        return `<li class="${r.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[reasonCondition(r.condition, r.topic)])}<span>${h(text)}</span></li>`;
       }).join("") : `<li>${icon("circle-check")}<span class="fit-line" data-short="${h(t("All within the limits."))}">${h(t("All conditions are within the limits."))}</span></li>`}
       ${(hour.notes ?? []).map((n) => `<li class="sub">${icon("info")}<span>${h(noteText(n))}</span></li>`).join("")}
       ${steadier ? `<li class="tint">${icon("sailboat")}<span>${h(steadier.light === "green"
@@ -1389,17 +1397,17 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
       </div>
       <div data-top="wind" role="button" tabindex="0">
         <small class="label">${conditionIcon("wind")} ${h(t("Wind"))}</small>
-        <span class="v28${causeClass(causeOf("wind", hour))}">${h(windRange(hour.windSpeedMs, hour.windGustMs))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
+        <span class="v28${causeClass(causeOf("wind", hour))}">${h(windRange(shown.speed, shown.gust))}${hour.windFromDeg != null ? `<span class="arrow" style="transform:rotate(${hour.windFromDeg + 180}deg)">${icon("arrow-up")}</span>` : ""}</span>
         <small class="sub stack">${[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => `<span aria-hidden="true">${h(unitLine(deg))}</span>`).join("")}<span>${h(unitLine(hour.windFromDeg))}</span></small>
       </div>
       <div data-top="waves" role="button" tabindex="0">
-        <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17${causeClass(causeOf("waves", hour))}">${h(waves(hour.waveHeightM))}</span>
-        ${wavesCaption ? `<small class="sub grey">${h(wavesCaption)}</small>` : ""}
+        <small class="label">${conditionIcon("waves")} ${h(t("Waves"))}</small><span class="v17${causeClass(causeOf("waves", hour))}">${h(waves(shownWaveHeightM(hour)))}</span>
+        ${near === "waves" ? `<small class="sub grey">${h(t("Nearby"))}</small>` : wavesCaption ? `<small class="sub grey">${h(wavesCaption)}</small>` : ""}
       </div>
       <div class="now-rain" data-top="precipitation" role="button" tabindex="0">${rainCell(d, causeOf("precipitation", hour))}</div>
       <div data-top="visibility" role="button" tabindex="0">
-        <small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span class="v17${causeClass(causeOf("visibility", hour))}">${h(distance(hour.visibilityM))}</span>
-        <small class="sub grey">${h(visibilityCaption)}</small>
+        <small class="label">${conditionIcon("visibility")} ${h(t("Visibility"))}</small><span class="v17${causeClass(causeOf("visibility", hour))}">${h(distance(shownVisibilityM(hour)))}</span>
+        <small class="sub grey">${h(near === "visibility" ? t("Nearby") : visibilityCaption)}</small>
       </div>
     </div>
     ${ice && !combined ? `<p class="ice-line" data-top="ice" role="button" tabindex="0"><small class="label">${conditionIcon("ice")} ${h(t("Ice"))}</small><span class="v17${causeClass(causeOf("ice", hour))}">${h(t(ice))}</span>

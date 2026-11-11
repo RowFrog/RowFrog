@@ -630,7 +630,7 @@ export function hourExplanation(forecast, reason, hour, now = new Date()) {
       if (parts[0]?.light === "amber" && set != null) return t("Sunset at %@: back ashore by then.", time(new Date(set)));
     }
   }
-  const text = reasonExplanation(reason.condition, reason.light, reason.topic);
+  const text = reasonExplanation(reason.condition, reason.light, reason.topic, reason.value);
   return reason.mine ? `${text} ${t("You set this limit yourself.")}` : text;
 }
 
@@ -642,7 +642,21 @@ export function noteText(note) {
   return t("%@: above the app's usual limit for %@, within yours. Take extra care.", baseLabel(note.condition), boatInSentence(selectedBoat()));
 }
 
-export function reasonExplanation(condition, light, topic = null) {
+/** For the Why line: what the water within 1 km is like, with its worst value (Reason.nearbyExplanation). */
+function nearbyExplanation(topic, value) {
+  switch (topic) {
+    case "wind": return t("Wind within 1 km of the launch point reaches %@.", wind(value));
+    case "gusts": return t("Gusts within 1 km of the launch point reach %@.", wind(value));
+    case "waves": return t("Waves within 1 km of the launch point reach %@.", waves(value));
+    case "fog": return t("Fog within 1 km of the launch point: visibility %@.", distance(value));
+    case "heavy_rain": return t("Heavy rain within 1 km of the launch point: %@ in the hour.", rain(value));
+    case "thunderstorm": return t("Thunderstorms are possible within 1 km of the launch point.");
+    case "hail": return t("Hail is forecast within 1 km of the launch point.");
+    default: return t("Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.");
+  }
+}
+
+export function reasonExplanation(condition, light, topic = null, value = null) {
   if (condition === "weather_warning" && WARNING_TOPICS[topic]) return t(WARNING_TOPICS[topic][1]);
   switch (condition) {
     case "lake_warning": return t("DWD has issued a storm warning for the lake; where the lake has storm lights, they flash 90 times a minute.");
@@ -661,7 +675,7 @@ export function reasonExplanation(condition, light, topic = null) {
     case "daylight": return t("The sun is down. Rowing is only advised in daylight.");
     case "twilight":
     case "sunset_soon": return t("The last hour before sunset: back ashore by sunset.");
-    case "nearby_water": return t("Within 1 km of the launch point the water is worse than at the launch point itself, so the light counts it too.");
+    case "nearby_water": return nearbyExplanation(topic, value);
     case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10));
     case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
     case "shipping_stopped": return t("The river is above the gauge's shipping mark: even motor ships stay in.");
