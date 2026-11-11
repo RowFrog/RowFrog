@@ -411,11 +411,15 @@ struct ModelMapGrid {
 final class ModelMapStore {
     static let shared = ModelMapStore(api: .published())
 
-    private(set) var index: WeatherMapIndex?
-    private(set) var grids: [String: ModelMapGrid] = [:]
-    private(set) var failed: Set<String> = []
-    private(set) var indexFailed = false
-    @ObservationIgnored private var indexLoaded: Date?
+    /// The index's load and each value file's (by `key`), one state at a
+    /// time (Loadable), instead of separate lists for what came, when and
+    /// what failed.
+    private(set) var indexState: Loadable<WeatherMapIndex, RefreshFailure>?
+    private(set) var states: [String: Loadable<ModelMapGrid, RefreshFailure>] = [:]
+
+    var index: WeatherMapIndex? { indexState?.value }
+    /// The index could not be loaded and there is none to show (also while it tries again).
+    var indexFailed: Bool { indexState.map { $0.value == nil && $0.hasFailed } ?? false }
     let api: APIClient
 
     nonisolated init(api: APIClient) { self.api = api }
@@ -425,13 +429,12 @@ final class ModelMapStore {
     }
 
     func loadIndex() async {
-        if let indexLoaded, indexLoaded > .now.addingTimeInterval(-30 * 60), index != nil { return }
+        if let loadedAt = indexState?.loadedAt, loadedAt > .now.addingTimeInterval(-30 * 60) { return }
+        indexState = .started(from: indexState)
         do {
-            index = try await api.weatherMapIndex()
-            indexLoaded = .now
-            indexFailed = false
+            indexState = .loaded(try await api.weatherMapIndex())
         } catch {
-            indexFailed = index == nil
+            indexState = .started(from: indexState).failing(with: RefreshFailure(error))
         }
     }
 
@@ -446,7 +449,13 @@ final class ModelMapStore {
 
     func grid(tile: String, value: String) -> ModelMapGrid? {
         guard let index else { return nil }
-        return grids[Self.key(index, tile, value)]
+        return states[Self.key(index, tile, value)]?.value
+    }
+
+    /// The value's file for a tile could not be loaded (also while it tries again).
+    func failed(tile: String, value: String) -> Bool {
+        guard let index, let state = states[Self.key(index, tile, value)] else { return false }
+        return state.value == nil && state.hasFailed
     }
 
     /// Loads what a model layer needs for the area on screen: the index, the
@@ -492,21 +501,24 @@ final class ModelMapStore {
     func load(tile: String, value: String) async {
         guard let index else { return }
         let key = Self.key(index, tile, value)
-        guard grids[key] == nil else { return }
+        guard states[key]?.value == nil else { return }
+        states[key] = .started(from: states[key])
         do {
             let packed = try await api.weatherMapData(tile: tile, value: value)
             let raw = try (packed as NSData).decompressed(using: .zlib) as Data
-            guard let encoding = index.values[value] else { return }
+            guard let encoding = index.values[value] else {
+                states[key] = states[key]?.calledOff()
+                return
+            }
             let arrows = value == "windDirection"
             let columns = arrows ? index.columns / index.arrowStep : index.columns
             let rows = arrows ? index.rows / index.arrowStep : index.rows
-            grids[key] = ModelMapGrid(columns: columns, rows: rows, encoding: encoding, bytes: [UInt8](raw))
-            failed.remove(key)
+            states[key] = .loaded(ModelMapGrid(columns: columns, rows: rows, encoding: encoding, bytes: [UInt8](raw)))
             // Older runs' files are not needed any more.
             let run = "\(index.run.timeIntervalSince1970)|"
-            for old in grids.keys where !old.hasPrefix(run) { grids[old] = nil }
+            for old in states.keys where !old.hasPrefix(run) { states[old] = nil }
         } catch {
-            failed.insert(key)
+            states[key] = .started(from: states[key]).failing(with: RefreshFailure(error))
         }
     }
 }
@@ -718,7 +730,7 @@ struct WeatherMapScreen: View {
     private var loading: Bool {
         if layer.modelValue != nil {
             guard let tile, let value = layer.modelValue, store.index != nil else { return !store.indexFailed }
-            return store.grid(tile: tile.id, value: value) == nil && !(store.index.map { store.failed.contains(ModelMapStore.key($0, tile.id, value)) } ?? false)
+            return store.grid(tile: tile.id, value: value) == nil && !store.failed(tile: tile.id, value: value)
         }
         return !(live?.done ?? true)
     }
@@ -727,8 +739,7 @@ struct WeatherMapScreen: View {
         if layer.modelValue != nil {
             if store.indexFailed { return tr("The map could not be loaded.") }
             if store.index != nil, tile == nil { return tr("No map for this place yet.") }
-            if let tile, let value = layer.modelValue, let index = store.index,
-               store.failed.contains(ModelMapStore.key(index, tile.id, value)) { return tr("The map could not be loaded.") }
+            if let tile, let value = layer.modelValue, store.failed(tile: tile.id, value: value) { return tr("The map could not be loaded.") }
             return nil
         }
         if let live, live.done, live.images.isEmpty { return tr("The map could not be loaded.") }
