@@ -1,0 +1,52 @@
+{
+ "comment": "The route editor on the lake map, as a statechart (owner decision 12 Nov 2026, D-lite: docs/decisions/0021). The app (ios/RowFrog/Statechart.swift + RouteDraft.swift) and the website (web/public/app/statechart.js + routedraft.js) both read this file when the map opens; the guards and actions named here are written in each, and testdata/states/route-editor.json checks that both behave alike. Format: as SCXML and XState: 'initial', nested 'states', 'entry' actions, and 'on' an event, a transition (or a list tried in order) with an optional 'target' (a sibling state, or '.child' for a child), 'guard' and 'actions'. No target: the state stays. A state without the event passes it to its parent. Owner decisions 12 Nov 2026: every edit counts as changed and undoing back to the saved route makes it Saved again (compared, not a flag); Save updates the open route, Save as new route keeps it; Undo is a real history and includes the way back.",
+ "id": "routeEditor",
+ "initial": "looking",
+ "states": {
+  "looking": {
+   "comment": "The lake map without route planning: tapping the water shows that spot.",
+   "entry": ["deselect"],
+   "on": {
+    "TOGGLE_PLANNING": { "target": "planning", "actions": ["startAtClub"] },
+    "NEW_ROUTE": { "target": "planning", "actions": ["newRoute", "startAtClub"] },
+    "OPEN_ROUTE": { "target": "planning", "actions": ["openRoute"] },
+    "ROUTE_CHANGED": { "actions": ["routeChanged"] }
+   }
+  },
+  "planning": {
+   "comment": "Planning a route: tapping the water adds a turning point.",
+   "initial": "drawing",
+   "on": {
+    "TOGGLE_PLANNING": { "target": "looking" },
+    "NEW_ROUTE": { "target": ".drawing", "actions": ["newRoute", "startAtClub"] },
+    "OPEN_ROUTE": { "target": ".drawing", "actions": ["openRoute"] },
+    "ADD": { "target": ".drawing", "guard": "canAdd", "actions": ["record", "add"] },
+    "INSERT": { "target": ".pointSelected", "guard": "isStretch", "actions": ["record", "insert"] },
+    "MOVE": { "guard": "isTurningPoint", "actions": ["record", "move"] },
+    "WAY_BACK": { "guard": "wayBackAllowed", "actions": ["record", "wayBack"] },
+    "CLEAR": { "target": ".drawing", "guard": "hasRoute", "actions": ["record", "clear"] },
+    "UNDO": { "target": ".drawing", "guard": "canUndo", "actions": ["undo"] },
+    "SAVE": { "guard": "hasRoute", "actions": ["save"] },
+    "SAVE_AS_NEW": { "guard": "canSaveAsNew", "actions": ["saveAsNew"] },
+    "DELETE_ROUTE": { "guard": "hasSaved", "actions": ["forgetSaved"] },
+    "ROUTE_CHANGED": { "actions": ["routeChanged"] }
+   },
+   "states": {
+    "drawing": {
+     "entry": ["deselect"],
+     "on": {
+      "SELECT": { "target": "pointSelected", "guard": "isTurningPoint", "actions": ["select"] }
+     }
+    },
+    "pointSelected": {
+     "comment": "A tapped turning point: the panel offers Delete point and Done.",
+     "on": {
+      "SELECT": { "target": "pointSelected", "guard": "isTurningPoint", "actions": ["select"] },
+      "DONE": { "target": "drawing" },
+      "DELETE_POINT": { "target": "drawing", "actions": ["record", "removeSelected"] }
+     }
+    }
+   }
+  }
+ }
+}

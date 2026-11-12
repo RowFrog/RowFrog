@@ -1,0 +1,134 @@
+{
+ "comment": "What the route editor on the lake map does, step by step: the app (ios/RowFrog/RouteDraft.swift, read by ios/RowFrogTests/RouteDraftTests.swift) and the website (web/public/app/routedraft.js, read by web/tests/routedraft.test.mjs) both run each case through the chart ios/RowFrog/Charts/route-editor.json; change them together. Points are named below; a route's points and the expected points are lists of those names. Each step sends one event; 'expect' lists only what it checks: taken (false when nothing takes the event), state, status (new, saved or changed), points, outAndBack, canUndo, selected, saved (the table's route id, 'other' for a route saved during the case, or null) and savedName. Owner decisions 12 Nov 2026: every edit counts as changed and undoing back to the saved route makes it Saved again; Save updates the open route, Save as new route keeps it; Undo includes the way back.",
+ "points": {
+  "club": [47.99, 11.34],
+  "a": [47.995, 11.345],
+  "b": [48.0, 11.34],
+  "c": [47.9975, 11.335],
+  "nearClub": [47.9902, 11.3402]
+ },
+ "routes": {
+  "lap": { "name": "Lap", "points": ["club", "a", "b"], "outAndBack": false }
+ },
+ "cases": [
+  {
+   "name": "a new route: points and the way back, undone step by step",
+   "steps": [
+    { "send": { "type": "TOGGLE_PLANNING" }, "expect": { "state": "planning.drawing", "status": "new", "points": ["club"], "canUndo": false } },
+    { "send": { "type": "ADD", "point": "a" }, "expect": { "points": ["club", "a"], "canUndo": true } },
+    { "send": { "type": "ADD", "point": "b" }, "expect": { "points": ["club", "a", "b"] } },
+    { "send": { "type": "WAY_BACK", "way": "outAndBack" }, "expect": { "outAndBack": true } },
+    { "send": { "type": "UNDO" }, "expect": { "outAndBack": false, "points": ["club", "a", "b"] } },
+    { "send": { "type": "UNDO" }, "expect": { "points": ["club", "a"] } },
+    { "send": { "type": "UNDO" }, "expect": { "points": ["club"], "canUndo": false } },
+    { "send": { "type": "UNDO" }, "expect": { "taken": false, "points": ["club"] } }
+   ]
+  },
+  {
+   "name": "a loop: a point near the start closes it and it takes no more",
+   "steps": [
+    { "send": { "type": "TOGGLE_PLANNING" } },
+    { "send": { "type": "WAY_BACK", "way": "outAndBack" }, "expect": { "outAndBack": true } },
+    { "send": { "type": "ADD", "point": "a" } },
+    { "send": { "type": "WAY_BACK", "way": "loop" }, "expect": { "taken": false, "outAndBack": true } },
+    { "send": { "type": "ADD", "point": "b" } },
+    { "send": { "type": "ADD", "point": "nearClub" }, "expect": { "points": ["club", "a", "b", "club"], "outAndBack": false } },
+    { "send": { "type": "ADD", "point": "c" }, "expect": { "taken": false, "points": ["club", "a", "b", "club"] } },
+    { "send": { "type": "WAY_BACK", "way": "oneWay" }, "expect": { "points": ["club", "a", "b"], "outAndBack": false } },
+    { "send": { "type": "WAY_BACK", "way": "loop" }, "expect": { "points": ["club", "a", "b", "club"] } },
+    { "send": { "type": "UNDO" }, "expect": { "points": ["club", "a", "b"] } },
+    { "send": { "type": "UNDO" }, "expect": { "points": ["club", "a", "b", "club"] } },
+    { "send": { "type": "UNDO" }, "expect": { "points": ["club", "a", "b"], "outAndBack": true } }
+   ]
+  },
+  {
+   "name": "a way back already picked leaves nothing to undo",
+   "steps": [
+    { "send": { "type": "TOGGLE_PLANNING" } },
+    { "send": { "type": "ADD", "point": "a" } },
+    { "send": { "type": "UNDO" }, "expect": { "canUndo": false } },
+    { "send": { "type": "ADD", "point": "a" } },
+    { "send": { "type": "WAY_BACK", "way": "oneWay" }, "expect": { "canUndo": true } },
+    { "send": { "type": "UNDO" }, "expect": { "points": ["club"], "canUndo": false } }
+   ]
+  },
+  {
+   "name": "a saved route: every edit is changed, undoing back to it is saved again",
+   "steps": [
+    { "send": { "type": "OPEN_ROUTE", "route": "lap" }, "expect": { "state": "planning.drawing", "status": "saved", "saved": "lap", "canUndo": false } },
+    { "send": { "type": "MOVE", "index": 2, "point": "c" }, "expect": { "status": "changed", "points": ["club", "a", "c"] } },
+    { "send": { "type": "UNDO" }, "expect": { "status": "saved" } },
+    { "send": { "type": "WAY_BACK", "way": "outAndBack" }, "expect": { "status": "changed" } },
+    { "send": { "type": "WAY_BACK", "way": "oneWay" }, "expect": { "status": "saved", "canUndo": true } },
+    { "send": { "type": "INSERT", "index": 1, "point": "c" }, "expect": { "status": "changed", "state": "planning.pointSelected", "selected": 1 } },
+    { "send": { "type": "DELETE_POINT" }, "expect": { "status": "saved", "state": "planning.drawing", "selected": null } },
+    { "send": { "type": "ADD", "point": "c" }, "expect": { "status": "changed" } },
+    { "send": { "type": "SAVE", "name": "Lap 2" }, "expect": { "status": "saved", "saved": "lap", "savedName": "Lap 2", "canUndo": true } },
+    { "send": { "type": "UNDO" }, "expect": { "status": "changed", "points": ["club", "a", "b"] } }
+   ]
+  },
+  {
+   "name": "Save as new route keeps the open route and opens the new one",
+   "steps": [
+    { "send": { "type": "TOGGLE_PLANNING" } },
+    { "send": { "type": "ADD", "point": "a" } },
+    { "send": { "type": "SAVE_AS_NEW", "name": "Out" }, "expect": { "taken": false, "status": "new" } },
+    { "send": { "type": "SAVE", "name": "Out" }, "expect": { "status": "saved", "saved": "other", "savedName": "Out" } },
+    { "send": { "type": "OPEN_ROUTE", "route": "lap" }, "expect": { "saved": "lap", "points": ["club", "a", "b"], "canUndo": false } },
+    { "send": { "type": "ADD", "point": "c" }, "expect": { "status": "changed" } },
+    { "send": { "type": "SAVE_AS_NEW", "name": "Lap long" }, "expect": { "status": "saved", "saved": "other", "savedName": "Lap long" } }
+   ]
+  },
+  {
+   "name": "a turning point tapped: delete it or Done; not the start",
+   "steps": [
+    { "send": { "type": "TOGGLE_PLANNING" } },
+    { "send": { "type": "ADD", "point": "a" } },
+    { "send": { "type": "ADD", "point": "b" } },
+    { "send": { "type": "SELECT", "index": 0 }, "expect": { "taken": false, "state": "planning.drawing" } },
+    { "send": { "type": "SELECT", "index": 1 }, "expect": { "state": "planning.pointSelected", "selected": 1 } },
+    { "send": { "type": "SELECT", "index": 2 }, "expect": { "state": "planning.pointSelected", "selected": 2 } },
+    { "send": { "type": "DONE" }, "expect": { "state": "planning.drawing", "selected": null } },
+    { "send": { "type": "SELECT", "index": 1 } },
+    { "send": { "type": "DELETE_POINT" }, "expect": { "state": "planning.drawing", "points": ["club", "b"], "selected": null } },
+    { "send": { "type": "UNDO" }, "expect": { "points": ["club", "a", "b"] } },
+    { "send": { "type": "INSERT", "index": 0, "point": "c" }, "expect": { "taken": false } },
+    { "send": { "type": "SELECT", "index": 2 } },
+    { "send": { "type": "ADD", "point": "c" }, "expect": { "state": "planning.drawing", "selected": null, "points": ["club", "a", "b", "c"] } },
+    { "send": { "type": "ADD", "point": "nearClub" } },
+    { "send": { "type": "SELECT", "index": 4 }, "expect": { "taken": false } },
+    { "send": { "type": "SELECT", "index": 3 } },
+    { "send": { "type": "TOGGLE_PLANNING" }, "expect": { "state": "looking", "selected": null, "points": ["club", "a", "b", "c", "club"] } }
+   ]
+  },
+  {
+   "name": "Clear, leaving planning and coming back",
+   "steps": [
+    { "send": { "type": "TOGGLE_PLANNING" } },
+    { "send": { "type": "CLEAR" }, "expect": { "taken": false } },
+    { "send": { "type": "ADD", "point": "a" } },
+    { "send": { "type": "ADD", "point": "b" } },
+    { "send": { "type": "CLEAR" }, "expect": { "points": ["club"] } },
+    { "send": { "type": "UNDO" }, "expect": { "points": ["club", "a", "b"] } },
+    { "send": { "type": "TOGGLE_PLANNING" }, "expect": { "state": "looking" } },
+    { "send": { "type": "ADD", "point": "c" }, "expect": { "taken": false } },
+    { "send": { "type": "TOGGLE_PLANNING" }, "expect": { "state": "planning.drawing", "points": ["club", "a", "b"], "canUndo": true } }
+   ]
+  },
+  {
+   "name": "the open route deleted, here or in Manage routes, and a new route",
+   "steps": [
+    { "send": { "type": "OPEN_ROUTE", "route": "lap" } },
+    { "send": { "type": "DELETE_ROUTE" }, "expect": { "status": "new", "saved": null, "points": ["club", "a", "b"] } },
+    { "send": { "type": "DELETE_ROUTE" }, "expect": { "taken": false } },
+    { "send": { "type": "OPEN_ROUTE", "route": "lap" } },
+    { "send": { "type": "ROUTE_CHANGED", "id": "lap", "route": null }, "expect": { "status": "new", "saved": null } },
+    { "send": { "type": "OPEN_ROUTE", "route": "lap" } },
+    { "send": { "type": "ADD", "point": "c" } },
+    { "send": { "type": "NEW_ROUTE" }, "expect": { "state": "planning.drawing", "status": "new", "points": ["club"], "canUndo": false, "saved": null } },
+    { "send": { "type": "TOGGLE_PLANNING" } },
+    { "send": { "type": "NEW_ROUTE" }, "expect": { "state": "planning.drawing", "points": ["club"] } }
+   ]
+  }
+ ]
+}
