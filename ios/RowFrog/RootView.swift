@@ -27,7 +27,7 @@ struct RootView: View {
     @State private var rowNote: String?
     /// The list beside the page slid away with the sidebar button, as in Weather;
     /// screenshot hook `-RWSideListHidden YES` starts with it away.
-    @State private var sideListHidden = UserDefaults.standard.bool(forKey: "RWSideListHidden")
+    @State private var sideListHidden = UserDefaults.standard.bool(forKey: DefaultsKey.sideListHidden)
     /// An iPad held upright: the list slid in over the page from the sidebar button.
     @State private var showingSideOverlay = false
 
@@ -348,13 +348,13 @@ struct RootView: View {
     /// and `-RWBrowse YES|<country>` open "Add a place" and browsing by country.
     private func applyLaunchArguments() {
         let args = UserDefaults.standard
-        if args.bool(forKey: "RWLandscape") {
+        if args.bool(forKey: DefaultsKey.landscape) {
             for case let scene as UIWindowScene in UIApplication.shared.connectedScenes {
                 scene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight))
             }
         }
         // `-RWOwnPlace "Name;lat;lon"` adds that own place (once) and opens it.
-        if let spec = args.string(forKey: "RWOwnPlace")?.split(separator: ";"), spec.count == 3,
+        if let spec = args.string(forKey: DefaultsKey.ownPlace)?.split(separator: ";"), spec.count == 3,
            let lat = Double(spec[1]), let lon = Double(spec[2]) {
             let point = Coordinate(lat: lat, lon: lon)
             let place = locations.ownPlaces.first { $0.name == String(spec[0]) } ?? OwnPlace(
@@ -368,10 +368,10 @@ struct RootView: View {
         } else {
             selection = locations.homeID ?? ""
         }
-        if let search = args.string(forKey: "RWSearch") {
+        if let search = args.string(forKey: DefaultsKey.search) {
             initialSearch = search
             showingList = true
-        } else if args.bool(forKey: "RWShowList") || args.bool(forKey: DefaultsKey.showSettings) {
+        } else if args.bool(forKey: DefaultsKey.showList) || args.bool(forKey: DefaultsKey.showSettings) {
             showingList = true
         }
     }

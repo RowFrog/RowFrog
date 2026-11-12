@@ -465,7 +465,7 @@ final class LakeViewStore {
         do {
             var view = try await api.lakeView(lakeID: lakeID)
             // Screenshots: -RWLakeWide twilight|cold|dark sets the whole-lake light of every hour.
-            if let wide = UserDefaults.standard.string(forKey: "RWLakeWide") {
+            if let wide = UserDefaults.standard.string(forKey: DefaultsKey.lakeWide) {
                 let reasons: [Reason] = switch wide {
                 case "dark": [Reason(condition: "daylight", light: .red)]
                 case "cold": [Reason(condition: "cold_water", light: .amber)]

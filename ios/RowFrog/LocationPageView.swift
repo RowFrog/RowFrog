@@ -20,7 +20,7 @@ struct LocationPageView: View {
     @State private var showLaunchPointTip = false
     @State private var showConditionsTip = false
     @State private var showLakeViewTip = false
-    @State private var arranging = UserDefaults.standard.bool(forKey: "RWArrange")
+    @State private var arranging = UserDefaults.standard.bool(forKey: DefaultsKey.arrange)
     /// Where the hourly table and its day headers are on screen, for the header that stays at the top.
     /// Screen coordinates: in landscape the scroll view's own space leaves out the side inset,
     /// which put the header beside the table.
@@ -91,7 +91,7 @@ struct LocationPageView: View {
 
     /// The Why line counts the water within 1 km (#395); `-RWNearbyTip YES` shows its tip anyway.
     private static func hasNearbyReason(_ hour: ForecastHour) -> Bool {
-        hour.reasons.contains { $0.condition == "nearby_water" } || UserDefaults.standard.bool(forKey: "RWNearbyTip")
+        hour.reasons.contains { $0.condition == "nearby_water" } || UserDefaults.standard.bool(forKey: DefaultsKey.nearbyTip)
     }
 
     var body: some View {
@@ -218,7 +218,7 @@ struct LocationPageView: View {
                     await forecasts.load(club.id)
                     // Screenshot hook: `-RWHourlyOpen YES` opens the folded 48 hours, once
                     // their folded height is known, as a tap would.
-                    if UserDefaults.standard.bool(forKey: "RWHourlyOpen") {
+                    if UserDefaults.standard.bool(forKey: DefaultsKey.hourlyOpen) {
                         try? await Task.sleep(for: .milliseconds(1500))
                         hourlyOpen = true
                     }
@@ -226,7 +226,7 @@ struct LocationPageView: View {
                     // `launchpoint`, `satellite`, `source`, `arrange`, `hourly-1` for the table's second day,
                     // or `bottom` for the page's end)
                     // scrolls to that card.
-                    if let target = UserDefaults.standard.string(forKey: "RWScrollTo") {
+                    if let target = UserDefaults.standard.string(forKey: DefaultsKey.scrollTo) {
                         // The lake view loads after the forecast and pushes the cards below it down,
                         // so for cards that may be below it scroll again once it has settled.
                         let early = ["warnings", "conditions"].contains(target)
@@ -529,7 +529,7 @@ private struct NowCard: View {
     var at: Date?
     /// The club, for the weather maps in the larger views.
     var club: Club?
-    @State private var showingLights = UserDefaults.standard.string(forKey: "RWLegend") == "lights"
+    @State private var showingLights = UserDefaults.standard.string(forKey: DefaultsKey.legend) == "lights"
     @State private var showingWarnings = false
     @State private var showingDaylight = false
     /// A value of the tile tapped for its chart; swiping there stays within the tile's values.
@@ -639,8 +639,8 @@ private struct NowCard: View {
         .onChange(of: openCondition != nil) { _, open in if open { TopTileTip().invalidate(reason: .actionPerformed) } }
         .task {
             // Screenshot hook: `-RWOpenCondition wind` on a closed combined tile, whose tiles are not there to open it.
-            guard combined, !open, at == nil, let raw = UserDefaults.standard.string(forKey: "RWOpenCondition") else { return }
-            let page = UserDefaults.standard.string(forKey: "RWOpenClub")
+            guard combined, !open, at == nil, let raw = UserDefaults.standard.string(forKey: DefaultsKey.openCondition) else { return }
+            let page = UserDefaults.standard.string(forKey: DefaultsKey.openClub)
             guard page == nil || page == forecast.clubId else { return }
             try? await Task.sleep(for: .milliseconds(500))
             openCondition = Condition(rawValue: raw)
@@ -723,7 +723,7 @@ private struct NowCard: View {
             guard order.contains(condition) else { return false }
             if condition == .ice, iceValue != nil { return true }
             // Screenshot hook: `-RWSamplePeek thunderstorm` shows that value's line, light or not.
-            if UserDefaults.standard.string(forKey: "RWSamplePeek") == condition.rawValue { return true }
+            if UserDefaults.standard.string(forKey: DefaultsKey.samplePeek) == condition.rawValue { return true }
             return hour.light(for: condition.reasonNames).map { $0 != .green } ?? false
         }
     }
@@ -862,7 +862,7 @@ private struct NowCard: View {
     }
 
     /// Screenshot hook: `-RWSampleIce YES` shows the winter ice value, to check the row's fit.
-    private var sampleIce: Bool { UserDefaults.standard.bool(forKey: "RWSampleIce") }
+    private var sampleIce: Bool { UserDefaults.standard.bool(forKey: DefaultsKey.sampleIce) }
     private var iceValue: String? { sampleIce ? tr("Shore ice possible") : forecast.iceValue }
     /// The ice line's reason, shortened where the tile's words are long.
     private var iceDetail: String {
@@ -1268,7 +1268,7 @@ private struct HourlyCard: View {
         .onChange(of: openHour != nil) { _, open in if open { HourViewTip().invalidate(reason: .actionPerformed) } }
         .task {
             // Screenshot hook: `-RWOpenHour n` opens the n-th hour of the table.
-            let n = UserDefaults.standard.integer(forKey: "RWOpenHour")
+            let n = UserDefaults.standard.integer(forKey: DefaultsKey.openHour)
             if n > 0, forecast.hours.indices.contains(n) {
                 try? await Task.sleep(for: .milliseconds(800))
                 openHour = forecast.hours.sorted { $0.time < $1.time }[n]

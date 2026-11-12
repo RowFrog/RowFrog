@@ -481,7 +481,7 @@ struct SatellitePictureCard: View {
     /// view's state, as only their difference matters.
     @State private var measured = MeasuredHeights()
     /// Screenshot hook: `-RWOpenSatellite YES` opens the picture full screen.
-    @State private var showingFull = UserDefaults.standard.bool(forKey: "RWOpenSatellite")
+    @State private var showingFull = UserDefaults.standard.bool(forKey: DefaultsKey.openSatellite)
 
     /// The tallest the picture may be so the card fits the page with a margin above and below.
     private var pictureLimit: CGFloat {
@@ -1466,7 +1466,7 @@ struct ZoomableView<Content: View>: UIViewRepresentable {
                 middle = point ?? CGPoint(x: size.width / 2, y: size.height / 2)
             }
             // Screenshots: -RWSatelliteZoom n opens n times closer.
-            let extra = max(UserDefaults.standard.double(forKey: "RWSatelliteZoom"), 1)
+            let extra = max(UserDefaults.standard.double(forKey: DefaultsKey.satelliteZoom), 1)
             scroll.zoomScale = min(max(scale * extra, scroll.minimumZoomScale), scroll.maximumZoomScale)
             centre(scroll)
             let z = scroll.zoomScale

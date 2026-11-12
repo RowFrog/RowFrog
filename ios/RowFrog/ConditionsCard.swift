@@ -69,7 +69,7 @@ struct ConditionTiles: View {
             // Screenshot hook: `-RWOpenCondition wind` opens that view.
             // Only on the page `-RWOpenClub` opens: the pages beside it would race it for the sheet.
             let page = UserDefaults.standard.string(forKey: DefaultsKey.openClub)
-            if let raw = UserDefaults.standard.string(forKey: "RWOpenCondition"), page == nil || page == forecast.clubId {
+            if let raw = UserDefaults.standard.string(forKey: DefaultsKey.openCondition), page == nil || page == forecast.clubId {
                 try? await Task.sleep(for: .milliseconds(500))
                 open = Condition(rawValue: raw)
             }
@@ -417,7 +417,7 @@ struct ConditionDetailView: View {
     @State private var condition: Condition
     /// Which way the last change went, for the slide.
     @State private var forward = true
-    @State private var showLimits = UserDefaults.standard.bool(forKey: "RWLimitInfo")
+    @State private var showLimits = UserDefaults.standard.bool(forKey: DefaultsKey.limitInfo)
     /// Chart lines switched off from the legend, per view. Kept while swiping
     /// between views; a new sheet starts with every line on.
     @State private var hiddenLines: [Condition: Set<String>] = [:]

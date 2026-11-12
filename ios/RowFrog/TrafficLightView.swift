@@ -152,7 +152,7 @@ extension Condition {
 
     /// Read once: launch arguments do not change while the app runs.
     private static let sampleCauses: Set<String> =
-        Set((UserDefaults.standard.string(forKey: "RWSampleCause") ?? "").split(separator: ",").map(String.init))
+        Set((UserDefaults.standard.string(forKey: DefaultsKey.sampleCause) ?? "").split(separator: ",").map(String.init))
 }
 
 extension ColdWaterKit {

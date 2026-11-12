@@ -22,7 +22,7 @@ struct UpdateCyclesButton: View {
         }
         // Screenshot hook: `-RWOpenUpdates YES` opens the sheet on the page in front.
         .task {
-            guard UserDefaults.standard.bool(forKey: "RWOpenUpdates"), isCurrentPage else { return }
+            guard UserDefaults.standard.bool(forKey: DefaultsKey.openUpdates), isCurrentPage else { return }
             try? await Task.sleep(for: .milliseconds(1500))
             showing = true
         }

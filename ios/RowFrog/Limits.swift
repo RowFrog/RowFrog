@@ -447,7 +447,7 @@ extension ClubForecast {
     /// Screenshot hook: `-RWSampleNearby fog` (or `wind`, `waves`) puts that much worse
     /// water within 1 km of the launch point into the first six hours.
     func withSampleNearby() -> ClubForecast {
-        guard let topic = UserDefaults.standard.string(forKey: "RWSampleNearby") else { return self }
+        guard let topic = UserDefaults.standard.string(forKey: DefaultsKey.sampleNearby) else { return self }
         let near = switch topic {
         case "wind": NearbyWater(light: .red, windMs: 9, gustMs: 12, waveM: 0.3, visM: 20_000, rainMm: 0, other: .green)
         case "waves": NearbyWater(light: .red, windMs: 4, gustMs: 6, waveM: 0.45, visM: 20_000, rainMm: 0, other: .green)

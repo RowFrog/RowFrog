@@ -54,7 +54,7 @@ final class LocationStore {
     /// For screenshots (`-RWDemoClubs YES`): MRC 1880 as home base and the other
     /// confirmed clubs, kept apart from the user's own list.
     static func forLaunch() -> LocationStore {
-        guard UserDefaults.standard.bool(forKey: "RWDemoClubs") else { return LocationStore() }
+        guard UserDefaults.standard.bool(forKey: DefaultsKey.demoClubs) else { return LocationStore() }
         let suite = "RWDemoClubs"
         let defaults = UserDefaults(suiteName: suite) ?? .standard
         defaults.removePersistentDomain(forName: suite)

@@ -23,7 +23,7 @@ final class DiagnosisLog: NSObject, MXMetricManagerSubscriber {
     static func start() {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
         let last = UserDefaults.standard.string(forKey: lastPhaseKey) ?? "none"
-        let solid = UserDefaults.standard.bool(forKey: "RWLowPower") ? "; drawn as in Low Power Mode" : ""
+        let solid = UserDefaults.standard.bool(forKey: PowerState.forcedKey) ? "; drawn as in Low Power Mode" : ""
         note("launch \(version), iOS \(UIDevice.current.systemVersion)\(solid); last run's last step: \(last)")
         let center = NotificationCenter.default
         let steps: [(Notification.Name, String)] = [

@@ -807,7 +807,7 @@ struct ClubForecast: Codable, Hashable {
     /// its weather every 12 until the next half-hourly run takes it up.
     /// `-RWSlowRefresh YES` shows it on every club, for screenshots.
     var isSlowRefresh: Bool {
-        UserDefaults.standard.bool(forKey: "RWSlowRefresh") || refresh?.used == false
+        UserDefaults.standard.bool(forKey: DefaultsKey.slowRefresh) || refresh?.used == false
     }
 
     /// How much the pressure changes from this hour to `hours` later, in hPa.

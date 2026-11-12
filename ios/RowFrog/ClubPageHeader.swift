@@ -112,7 +112,7 @@ struct ClubPageHeader: View {
         // Screenshot hook: `-RWOpenLaunchPoint YES` opens the launch point from the header
         // of the page in front.
         .task {
-            guard UserDefaults.standard.bool(forKey: "RWOpenLaunchPoint"), inHeader, isCurrentPage else { return }
+            guard UserDefaults.standard.bool(forKey: DefaultsKey.openLaunchPoint), inHeader, isCurrentPage else { return }
             try? await Task.sleep(for: .milliseconds(1500))
             showingLaunchPoint = true
         }

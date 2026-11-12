@@ -229,6 +229,6 @@ struct DetailMapCard: View {
 
     /// Screenshot hook: `-RWOpenWeatherMap <layer>` opens the map with that layer.
     private static var hookLayer: WeatherMapLayer? {
-        UserDefaults.standard.string(forKey: "RWOpenWeatherMap").flatMap(WeatherMapLayer.init(rawValue:))
+        UserDefaults.standard.string(forKey: DefaultsKey.openWeatherMap).flatMap(WeatherMapLayer.init(rawValue:))
     }
 }

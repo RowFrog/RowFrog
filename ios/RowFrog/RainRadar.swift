@@ -263,7 +263,7 @@ enum RadarWindow {
 struct RainRadarCard: View {
     let point: Coordinate
     var clubID: String?
-    @State private var showingMap = UserDefaults.standard.bool(forKey: "RWOpenRadarMap")
+    @State private var showingMap = UserDefaults.standard.bool(forKey: DefaultsKey.openRadarMap)
     private var store: RadarStore { .shared }
 
     var body: some View {
