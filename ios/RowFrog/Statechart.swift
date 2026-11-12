@@ -27,7 +27,7 @@ struct Statechart: Decodable {
         let list: [Transition]
         init(from decoder: Decoder) throws {
             let c = try decoder.singleValueContainer()
-            list = (try? c.decode([Transition].self)) ?? [try c.decode(Transition.self)]
+            list = try (try? c.decode([Transition].self)) ?? [c.decode(Transition.self)]
         }
     }
 
