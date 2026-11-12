@@ -115,17 +115,25 @@ final class LakeRenderer: MKOverlayRenderer {
         let into = CGRect(x: rect.minX + CGFloat(x0) * sx, y: rect.minY + CGFloat(y0) * sy,
                           width: CGFloat(x1 - x0) * sx, height: CGFloat(y1 - y0) * sy)
         guard let cropped = image.cropping(to: cells) else { return (nil, .zero) }
-        // Zoomed out a cell is a few screen points and the one step looks fine.
-        return (sx * zoomScale > 24 ? smoothed(cropped) : cropped, into)
+        // The map draws a picture into its tiles without smoothing, so every
+        // pixel wider than `smoothPoints` on screen showed as a hard step, also
+        // with the finer rowing light (owner's iPhone, 12 Nov 2026): smooth it
+        // first, so each pixel drawn is at most about that wide.
+        let onScreen = sx * zoomScale
+        guard onScreen > smoothPoints else { return (cropped, into) }
+        return (smoothed(cropped, by: Int((onScreen / smoothPoints).rounded(.up))), into)
     }
 
-    /// The cells scaled up `upscale` times with smooth interpolation, so drawing
-    /// it into the map is only a small further step up: one large step from one
-    /// pixel per cell came out as hard squares when zoomed far in.
+    /// Screen points a picture pixel may cover before it is smoothed.
+    static let smoothPoints: CGFloat = 1.5
+
+    /// At most this many times larger, and at most 2048 pixels a side.
     static let upscale = 16
 
-    private static func smoothed(_ cells: CGImage) -> CGImage {
-        let k = max(1, min(upscale, 2048 / max(cells.width, cells.height)))
+    /// The picture scaled up `factor` times with smooth interpolation, so drawing
+    /// it into the map is only a small further step up.
+    static func smoothed(_ cells: CGImage, by factor: Int) -> CGImage {
+        let k = max(1, min(factor, upscale, 2048 / max(cells.width, cells.height)))
         guard k > 1, let ctx = CGContext(data: nil, width: cells.width * k, height: cells.height * k, bitsPerComponent: 8, bytesPerRow: 0,
                                          space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
         else { return cells }
