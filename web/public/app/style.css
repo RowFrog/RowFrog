@@ -386,6 +386,7 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
 .credits { color: var(--sub); font-size: 13px; }
 .credits p { margin: 4px 0; }
 .links { text-align: center; font-size: 13px; color: var(--sub); margin-top: 24px; }
+.links .build { white-space: nowrap; }
 
 /* Floating controls in glass, as the app's page bar and map buttons (floatingControl, Liquid Glass on iOS 26).
    Owner's pick B (5 Nov 2026): clear glass, a light tint and little blur, a bright rim along the top edge and

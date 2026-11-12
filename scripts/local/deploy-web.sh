@@ -45,7 +45,8 @@ if ! cmp -s "$work/package-lock.json" "$tools/package-lock.json" || [ ! -x "$too
 fi
 wrangler="$tools/node_modules/.bin/wrangler"
 
-(cd "$work" && "$py" scripts/build_web.py)
+# git archive has no history: the build number and commit for the footer and About come from here.
+(cd "$work" && ROWFROG_BUILD=$(git -C "$top" rev-list --count "$commit") ROWFROG_COMMIT=${commit:0:7} "$py" scripts/build_web.py)
 cd "$work/web"
 
 if ! "$wrangler" pages project list | grep -q "\b$project\b"; then

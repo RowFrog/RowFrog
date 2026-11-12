@@ -115,6 +115,8 @@ jobs:
           fi
           brew install xcodegen
           xcodegen
+          # Settings > About shows the real build number and commit (decision NNNN-build-numbers).
+          bash ../scripts/build_number.sh || echo "No build number stamped"
           # The newest iPhone Pro, or with device iPad the newest 11-inch iPad Pro (iPad Air as fallback).
           UDID=$(xcrun simctl list devices available -j | DEVICE="$DEVICE" python3 -c '
           import json, os, sys
@@ -410,6 +412,7 @@ jobs:
           WAIT=25 shoot 164-settings-battery-data light -RWShowSettings YES -RWSettingsPage data
           WAIT=25 shoot 165-settings-help light -RWShowSettings YES -RWSettingsPage help
           WAIT=25 shoot 166-settings-about light -RWShowSettings YES -RWSettingsPage about
+          WAIT=25 shoot 166-settings-about-german-dark dark -RWShowSettings YES -RWSettingsPage about -RWLanguage de
           shoot_n 12-background-settings 5 light -RWShowSettings YES -RWSettingsPage backgrounds -RWBackground sample:cloud-shell -RWBackgroundClubs "$own"
           shoot_n 13-background-picker 2 light -RWShowSettings YES -RWSettingsPage picker-all -RWBackground sample:alpine-lake
           shoot 14-background-picker-club light -RWShowSettings YES -RWSettingsPage picker-club:tutzinger-rv -RWBackground sample:alpine-lake -RWBackgroundClubs "$own"
