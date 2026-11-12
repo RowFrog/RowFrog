@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { GROUPS, limitsFor } from "../public/app/logic.js";
 import {
   decodeView, applyLakeLimits, shares, headline, stripes, stripesFall, RouteEdit, routePlanner, planRoute, bestStart, plansBetter, windRelation, pace,
+  lakeWideAt, withDaylightNow, fineLight,
 } from "../public/app/lake.js";
 
 // A 3×1 strip of water running east, one forecast point, two zones.
@@ -163,3 +164,52 @@ test("a tapped spot names hail, a thunderstorm or heavy rain, the strongest only
   assert.equal(p.extra, null);
 });
 
+
+// The lake view's "now" goes by this minute too (owner, 12 Nov 2026: "sun down" at 07:45 with
+// sunrise at 07:15), and other whole-lake reasons stay (LakeWide.at, DaylightRuleTests).
+test("the lake view's now goes by this minute's daylight", () => {
+  const at = (hm) => Date.parse(`2026-11-12T${hm}:00+01:00`);
+  const days = [{ sunrise: at("07:15"), sunset: at("16:41") }];
+  const dark = { light: "red", reasons: [{ condition: "daylight", light: "red" }] };
+  assert.deepEqual(lakeWideAt(dark, at("07:45"), days), { light: "green", reasons: [] });
+  assert.equal(lakeWideAt(dark, at("07:10"), days).light, "red");
+  const foggy = { light: "red", reasons: [{ condition: "daylight", light: "red" }, { condition: "weather_warning", light: "red" }] };
+  assert.deepEqual(lakeWideAt(foggy, at("07:45"), days).reasons.map((r) => r.condition), ["weather_warning"]);
+  assert.equal(lakeWideAt(foggy, at("07:45"), days).light, "red");
+  assert.deepEqual(lakeWideAt(dark, at("16:10"), days), { light: "amber", reasons: [{ condition: "sunset_soon", light: "amber" }] });
+  const calm = { light: "green", reasons: [] };
+  assert.equal(lakeWideAt(calm, at("07:45"), days), calm);
+  // Only the hour already begun changes, and only with the club's sun days.
+  const view = { hours: [{ time: "2026-11-12T07:00:00+01:00", lakeWide: dark }, { time: "2026-11-12T08:00:00+01:00", lakeWide: dark }] };
+  const now = new Date(at("07:45"));
+  assert.deepEqual(withDaylightNow(view, days, now).hours.map((h) => h.lakeWide.light), ["green", "red"]);
+  assert.equal(withDaylightNow(view, [], now), view);
+});
+
+// The rowing light drawn finer than the cells (LakeRaster.fineLight, owner's pick B, 12 Nov 2026): the edge
+// between green and amber follows the waves blended between the cell centres, not the squares.
+test("the fine rowing light follows the blended values", () => {
+  const view = sampleView();
+  view.hours[0].wavesCm = [5, 10, 30];
+  const limits = limitsFor(GROUPS[0], { waveAmber: 0.15 });
+  const fine = fineLight(view, view.hours[0], limits);
+  assert.equal(fine.scale, 8);
+  assert.equal(fine.width, 24);
+  assert.equal(fine.height, 8);
+  const at = (x, y = 4) => fine.data.slice((y * fine.width + x) * 4, (y * fine.width + x) * 4 + 3).join(",");
+  const green = "52,199,89";
+  const amber = "255,149,0";
+  // The middle cell (pixels 8 to 15): green up to the blended 15 cm, amber after it.
+  assert.equal(at(4), green);
+  assert.equal(at(13), green);
+  assert.equal(at(14), amber);
+  assert.equal(at(20), "255,59,48"); // 30 cm is over the red limit of 25 cm
+  // A thunderstorm stays with its cell.
+  view.hours[0].wind[0] = { ...view.hours[0].wind[0], storm: "red", visM: 20000, rainMm: 0, hail: false };
+  assert.equal(at(4), green);
+  const stormy = fineLight(view, view.hours[0], limits);
+  assert.equal(stormy.data.slice(16, 19).join(","), "255,59,48");
+  // Older backends without the light per point: none.
+  view.hours[0].wind[0] = { ...view.hours[0].wind[0], other: null };
+  assert.equal(fineLight(view, view.hours[0], limits), null);
+});
