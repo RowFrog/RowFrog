@@ -1,7 +1,7 @@
 # 23. Screen controls: round X at the top left, cards close at their top right, tinted tips
 
 - Date: 2026-11-12
-- Status: decided (owner), parts still open (see below)
+- Status: decided (owner); step 2 still to build
 - Where: `ios/RowFrog/CloseButton.swift`, `ios/RowFrog/TintedTipView.swift`, `closeX` in `web/public/app/shared.js`, `.card-x` and `.tip` in `web/public/app/style.css`
 - Audit and mock-ups: https://claude.ai/artifact/Ti3UG3YJxEN49Xy5zuYwhW, https://claude.ai/artifact/L5UeYpMwSonxmjmBcef35i
 
@@ -13,10 +13,11 @@
 4. Tips are a box tinted with the tip blue (14 % light, 22 % dark) instead of a solid box, in the app (`TintedTipView`) and on the website (`.tip`). "For now", owner's words.
 5. The same on the website, in every layout.
 
-## Still open (owner to pick)
+6. Value page, going to the next value (board 12, owner 12 Nov 2026 14:16): V2. Two fixed-width glass buttons at the bottom, each with the arrow and the neighbour value's own symbol, so they keep their size while swiping; VoiceOver and the website's tooltip give the name.
+7. Rule (owner's words): "screens close top left, cards inside a screen close top right" (board 13).
 
-- How the value page goes to the next value (board 12: chevrons only, symbol + chevron, one bar with dots, or no buttons as Weather).
-- Whether cards keep the X at the top right (recommended, as Apple Maps) or move it to the top left (board 13).
+## Still open
+
 - Step 2 of option A: satellite picture and rain radar take the lake map's layout (X and name chip, layer buttons on the right, colour scale in the panel), the weather map's layer picker becomes a button above the panel, and the lake map's panel becomes a side card on wide screens (iPad landscape, iPhone on its side).
 
 ## Why

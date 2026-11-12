@@ -876,8 +876,10 @@ dl.facts dd { margin: 0; font-weight: 600; }
 .rowing { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; }
 /* The values before and after: two glass buttons floating at the bottom, 44 px high, as the club page's bar (ConditionDetailView.neighbours). */
 .neighbours { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; justify-content: space-between; gap: 12px; padding: 0 16px max(8px, env(safe-area-inset-bottom)); pointer-events: none; }
-.neighbours button { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; padding: 0 16px; border-radius: 22px; font-size: 15px; font-weight: 500; color: var(--text); min-width: 0; max-width: 48%; }
-.neighbours button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Arrow and the neighbour's own symbol at a fixed width, so they keep their size while swiping; the name is the
+   button's label (owner's pick V2, 12 Nov 2026, ConditionDetailView.neighbourWidth). */
+.neighbours button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 76px; height: 44px; padding: 0; border-radius: 22px; font-size: 20px; color: var(--text); }
+.neighbours button > .chev { width: 16px; height: 16px; stroke-width: 2.5; }
 .value-page { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 body.locked { overflow: hidden; }
 .wm-full { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: var(--bg); }

@@ -157,8 +157,8 @@ function show(page) {
       ${unitRow(condition)}
       ${footerLinks()}
     </main>
-    <nav class="neighbours"><button class="glass" id="prev-name">${icon("chevron-left")} <span>${h(titles[neighbour(page, -1)][1])}</span></button>
-      <button class="glass" id="next-name"><span>${h(titles[neighbour(page, 1)][1])}</span> ${icon("chevron-right")}</button></nav>`;
+    <nav class="neighbours"><button class="glass" id="prev-name" aria-label="${h(titles[neighbour(page, -1)][1])}" title="${h(titles[neighbour(page, -1)][1])}">${icon("chevron-left", "chev")}${conditionIcon(titles[neighbour(page, -1)][0])}</button>
+      <button class="glass" id="next-name" aria-label="${h(titles[neighbour(page, 1)][1])}" title="${h(titles[neighbour(page, 1)][1])}">${conditionIcon(titles[neighbour(page, 1)][0])}${icon("chevron-right", "chev")}</button></nav>`;
   window.scrollTo(0, 0);
   showStationMap(root.querySelector("#station-map"), data.water?.station);
   wireTips(root.querySelector("main"));

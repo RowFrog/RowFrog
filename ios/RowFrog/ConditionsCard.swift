@@ -674,34 +674,40 @@ struct ConditionDetailView: View {
     }
 
     /// The views before and after, which a swipe opens too: two glass buttons
-    /// floating at the bottom, 44 pt tall, as the club page's bar.
+    /// floating at the bottom, 44 pt tall, as the club page's bar. Each shows the
+    /// arrow and the neighbour's own symbol at a fixed width, so the buttons keep
+    /// their size while swiping; VoiceOver reads the neighbour's name (owner's pick
+    /// V2, 12 Nov 2026, decision 0023).
     private func neighbours(of condition: Condition) -> some View {
         HStack(spacing: 12) {
-            Button { step(-1) } label: {
-                Label(neighbour(of: condition, by: -1).title, systemImage: "chevron.left")
-                    .lineLimit(1)
-                    .padding(.horizontal, 16)
-                    .frame(height: 44)
-                    .contentShape(Capsule())
-            }
-            .floatingControl(Capsule())
+            neighbourButton(condition, by: -1)
             Spacer(minLength: 0)
-            Button { step(1) } label: {
-                Label(neighbour(of: condition, by: 1).title, systemImage: "chevron.right")
-                    .labelStyle(TrailingIconLabelStyle())
-                    .lineLimit(1)
-                    .padding(.horizontal, 16)
-                    .frame(height: 44)
-                    .contentShape(Capsule())
-            }
-            .floatingControl(Capsule())
+            neighbourButton(condition, by: 1)
         }
-        .font(.subheadline.weight(.medium))
         .tint(.primary)
         .buttonStyle(.plain)
-        .dynamicTypeSize(...DynamicTypeSize.xxxLarge)
         .padding(.horizontal)
         .padding(.bottom, 4)
+    }
+
+    /// Width of a neighbour button: arrow and symbol side by side.
+    static let neighbourWidth: CGFloat = 76
+
+    private func neighbourButton(_ condition: Condition, by offset: Int) -> some View {
+        let next = neighbour(of: condition, by: offset)
+        let arrow = Image(systemName: offset < 0 ? "chevron.left" : "chevron.right").font(.subheadline.weight(.semibold))
+        let symbol = ConditionIcon(condition: next).font(.title3)
+        return Button { step(offset) } label: {
+            HStack(spacing: 8) {
+                if offset < 0 { arrow; symbol } else { symbol; arrow }
+            }
+            .frame(width: Self.neighbourWidth, height: 44)
+            .contentShape(Capsule())
+        }
+        .floatingControl(Capsule())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(next.title)
+        .accessibilityAddTraits(.isButton)
     }
 
     private func neighbour(of condition: Condition, by offset: Int) -> Condition {
@@ -783,16 +789,6 @@ private struct ChartFrameKey: PreferenceKey {
     static func reduce(value: inout CGRect, nextValue: () -> CGRect) {
         let next = nextValue()
         if next != .zero { value = next }
-    }
-}
-
-/// Title first, icon after it: for the "next" button.
-private struct TrailingIconLabelStyle: LabelStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        HStack(spacing: 4) {
-            configuration.title
-            configuration.icon
-        }
     }
 }
 
