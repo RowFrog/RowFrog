@@ -559,7 +559,14 @@ function fitView() {
     return;
   }
   const open = openBounds(page.view, page.club);
-  page.map.fitBounds([[open.south, open.west], [open.north, open.east]], { padding: [12, 12] });
+  page.map.fitBounds([[open.south, open.west], [open.north, open.east]], { padding: [12, 12], ...cardRoom() });
+}
+
+/** Room the card leaves on the map: the lake opens beside it, its 376 plus 24 (LakePanelLayout.fitInsets). */
+function cardRoom() {
+  const card = panelCard() ? page.root.querySelector("#lake-panel")?.getBoundingClientRect() : null;
+  if (!card?.width) return {};
+  return { paddingTopLeft: [card.right - page.map.getContainer().getBoundingClientRect().left + 24, 12] };
 }
 
 function update() {
@@ -580,8 +587,14 @@ function renderPanel(hour = shownHour()) {
   wirePanel();
 }
 
-/** Beside the map on a wide screen the panel is a column and shows everything; on a phone it is pulled up or pushed down. */
-const panelWide = () => matchMedia("(min-width: 860px)").matches;
+/**
+ * The panel is pulled up or pushed down at every size: a sheet along the bottom on a phone held upright, a card
+ * at the bottom left from 600 px wide (owner's pick B, 12 Nov 2026, docs/decisions/0026; LakePanelLayout in LakePanelCard.swift).
+ * No size shows it as a column beside the map any more.
+ */
+const panelWide = () => false;
+/** From this width the panel is a card at the bottom left over the map (style.css, the same number). */
+const panelCard = () => matchMedia("(min-width: 600px)").matches;
 const panelFull = () => page.expanded || panelWide();
 
 /** The grabber at the top of the phone's panel: tap it, or pull the panel up or push it down (LakeMapScreen's grabber). */

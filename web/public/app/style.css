@@ -352,7 +352,8 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck::before {
 .search-bar .search { color: var(--text); }
 .search-bar .search input::placeholder { color: color-mix(in srgb, var(--text) 62%, transparent); }
 .list-bottom { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; max-width: 640px; margin: 0 auto; padding: 0 16px max(8px, env(safe-area-inset-bottom)); box-sizing: border-box; }
-.list-page { padding-bottom: calc(96px + var(--kb, 0px)); }
+/* The cards span the window, as in the app's list (LocationListView) on iPad and a phone turned sideways. */
+.page.list-page { max-width: none; padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); padding-bottom: calc(96px + var(--kb, 0px)); }
 .list-bottom.over-keyboard { padding-bottom: 8px; }
 /* Beside a club page the search sits at the top of the list, under its title (SideListHeader). */
 .side-search { margin: 2px 0 6px; }
@@ -729,23 +730,26 @@ button.red { color: var(--red); }
 .more-rows button span { flex: 1; text-align: left; }
 .more-rows button svg:last-child { color: var(--sub); font-size: 13px; }
 .lake-panel { flex: 0 1 auto; max-height: 48%; overflow-y: auto; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
-/* On a phone the panel is the app's sheet over the map: rounded at the top, with a grabber, the map running on under it. */
-@media (max-width: 859px) {
-  .lake-map-box { margin-bottom: -18px; }
-  .lake-over { padding-bottom: 28px; }
-  .lake-panel { position: relative; z-index: 1001; padding-top: 18px; border-radius: 16px 16px 0 0; box-shadow: 0 -4px 18px rgba(0, 0, 0, .12);
+/* The panel is the app's sheet over the map: rounded at the top, with a grabber, the map running on under it.
+   From 600 px wide it is a card at the bottom left instead (owner's pick B, docs/decisions/0026). */
+@media (max-width: 599px) { .lake-map-box { margin-bottom: -18px; } .lake-over { padding-bottom: 28px; } }
+@media all {
+  .lake-panel { position: relative; z-index: 1001; padding-top: 18px; border-radius: 22px 22px 0 0; box-shadow: 0 -4px 18px rgba(0, 0, 0, .12);
     background: color-mix(in srgb, var(--card) 92%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); }
   .panel-grip { position: sticky; top: -18px; z-index: 1; display: block; width: 100%; height: 22px; margin: -18px 0 0; padding: 0; background: none; border: 0; cursor: grab; touch-action: none; }
   .panel-grip::before { content: ""; display: block; width: 38px; height: 5px; margin: 8px auto; border-radius: 3px; background: color-mix(in srgb, var(--text) 30%, transparent); }
   .lake-panel .one-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
-@media (min-width: 860px) { .panel-grip { display: none; } }
 .lake-panel p { margin: 6px 0; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-@media (min-width: 860px) {
-  .lake-page { flex-direction: row; }
+@media (min-width: 600px) {
+  .lake-page { position: relative; }
   .lake-map-box { flex: 1 1 auto; }
-  .lake-panel { flex: 0 0 380px; max-height: none; border-left: .5px solid var(--line); }
+  .lake-panel { position: absolute; left: calc(16px + env(safe-area-inset-left)); bottom: calc(16px + env(safe-area-inset-bottom)); width: 360px;
+    max-height: calc(100% - 92px - env(safe-area-inset-bottom)); padding-bottom: 12px; border-radius: 22px; box-shadow: 0 6px 24px rgba(0, 0, 0, .18); }
+  .panel-grip { top: -18px; }
+  /* The layer's colours and buttons stay clear of the card. */
+  .lake-over { left: calc(392px + env(safe-area-inset-left)); padding-bottom: 16px; }
 }
 .hour-strip { display: flex; gap: 4px; overflow-x: auto; padding: 8px 0 4px; scrollbar-width: thin; }
 .hour-strip button { flex: none; width: 46px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 2px; border-radius: 8px; }
@@ -888,7 +892,8 @@ body.locked { overflow: hidden; }
 .wm-full { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: var(--bg); }
 .wm-full .nav { position: static; background: var(--card); gap: 12px; }
 .wm-full .wm { flex: 1; height: auto; }
-.wm-panel { position: absolute; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 1000; max-width: 560px; margin: 0 auto; padding: 12px 14px;
+/* As the app's panel (WeatherMapScreen.controls): the map's full width, 16 px in, at every size. */
+.wm-panel { position: absolute; left: calc(16px + env(safe-area-inset-left)); right: calc(16px + env(safe-area-inset-right)); bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 1000; margin: 0 auto; padding: 12px 14px;
   border-radius: 16px; background: color-mix(in srgb, var(--card) 88%, transparent); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 2px 12px rgba(0,0,0,.15); }
 .wm-panel p { margin: 4px 0; }
 .wm-panel .map-controls { padding: 4px 0; }
@@ -1389,3 +1394,16 @@ nav.bottom { view-transition-name: page-bar; }
 @keyframes slide-from-right { from { transform: translateX(100%); } }
 @keyframes slide-to-right { to { transform: translateX(100%); } }
 @keyframes slide-from-left { from { transform: translateX(-100%); } }
+
+/* ---- Settings over the page on iPad sizes, as the app's sheet: a centred card, the page dimmed behind (settingsOverPage) ---- */
+#under { display: none; }
+@media (min-width: 701px) and (min-height: 600px) {
+  body.settings-over { background: var(--bg); }
+  body.settings-over::before { display: none; }
+  body.settings-over #under { display: block; position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+  body.settings-over #under::after { content: ""; position: fixed; inset: 0; background: rgb(0 0 0 / .35); z-index: 30; }
+  body.settings-over #root { position: fixed; z-index: 31; top: 50%; left: 50%; transform: translate(-50%, -50%); width: min(580px, 100% - 64px);
+    height: min(760px, 100% - 64px); overflow: auto; overscroll-behavior: contain; background: var(--bg); border-radius: 16px; box-shadow: 0 12px 48px rgb(0 0 0 / .3); }
+  body.settings-over #root > .nav { top: 0; padding-top: 10px; }
+  body.settings-over .settings-main .settings-search { position: sticky; left: auto; transform: none; bottom: 14px; margin: 0 auto 14px; }
+}
