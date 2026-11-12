@@ -296,7 +296,7 @@ struct RainRadarCard: View {
             RadarMapScreen(point: point, clubID: clubID, reference: radar?.reference, step: RadarWindow.step)
                 .diagnosisNamed("radar map")
         }
-        .onChange(of: showingMap) { if showingMap { RadarMapTip().invalidate(reason: .actionPerformed) } }
+        .onChange(of: showingMap) { if showingMap { RainRadarTip().invalidate(reason: .actionPerformed) } }
     }
 
     private func bars(_ radar: RainRadar) -> some View {

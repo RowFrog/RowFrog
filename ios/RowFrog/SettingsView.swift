@@ -558,15 +558,10 @@ private struct AppearanceSettingsView: View {
 /// Settings > Appearance > App icon: every icon in a grid.
 private struct AppIconSettingsView: View {
     @State private var appIcon = AppIcons.current
-    @State private var showAppIconTip = false
-    private let appIconTip = AppIconTip()
 
     var body: some View {
         Form {
             Section {
-                if showAppIconTip {
-                    TintedTipView(appIconTip)
-                }
                 AppIconPicker(selected: $appIcon)
             } footer: {
                 SectionFooter(tr("iOS asks you to confirm the change."))
@@ -577,7 +572,6 @@ private struct AppIconSettingsView: View {
         .pageBackground(.settings)
         .navigationTitle(tr("App icon"))
         .navigationBarTitleDisplayMode(.inline)
-        .tipVisibility(appIconTip, $showAppIconTip)
         .onAppear { appIcon = AppIcons.current }
     }
 }
@@ -793,16 +787,11 @@ private struct LanguageSettingsView: View {
 /// Settings > Battery and data: saving mobile data, and what runs in the background.
 private struct DataSettingsView: View {
     @Binding var path: [SettingsRoute]
-    @State private var showSaveDataTip = false
-    private let saveDataTip = SaveDataTip()
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
         Form {
             Section {
-                if showSaveDataTip {
-                    TintedTipView(saveDataTip)
-                }
                 Toggle(tr("Save mobile data"), isOn: $settings.saveMobileData)
                 if DataSaver.shared.saving {
                     Label(DataSaver.shared.lowDataModeOn ? tr("Low Data Mode is on: the app is saving data now.") : tr("On mobile data: the app is saving data now."),
@@ -834,8 +823,6 @@ private struct DataSettingsView: View {
             path.append(.widgets)
             return .handled
         })
-        .tipVisibility(saveDataTip, $showSaveDataTip)
-        .onChange(of: settings.saveMobileData) { if settings.saveMobileData { saveDataTip.invalidate(reason: .actionPerformed) } }
     }
 }
 
@@ -891,8 +878,6 @@ private struct HelpSettingsView: View {
 /// the legal texts and the factory reset.
 private struct AboutSettingsView: View {
     @State private var confirmingReset = false
-    @State private var showResetTip = false
-    private let resetTip = FactoryResetTip()
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
@@ -918,9 +903,6 @@ private struct AboutSettingsView: View {
             .surfaceRows()
 
             Section {
-                if showResetTip {
-                    TintedTipView(resetTip)
-                }
                 Button(role: .destructive) {
                     confirmingReset = true
                 } label: {
@@ -935,7 +917,6 @@ private struct AboutSettingsView: View {
         .pageBackground(.settings)
         .navigationTitle(tr("About"))
         .navigationBarTitleDisplayMode(.inline)
-        .tipVisibility(resetTip, $showResetTip)
         .confirmationDialog(tr("Reset all settings?"), isPresented: $confirmingReset, titleVisibility: .visible) {
             Button(tr("Reset"), role: .destructive) {
                 AppSettings.shared.resetToFactorySettings()

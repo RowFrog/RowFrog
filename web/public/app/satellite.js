@@ -6,7 +6,7 @@ import { t, num, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
 import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature, boatControl, closeX } from "./shared.js";
-import { tip } from "./tour.js";
+import { tip, paceTips } from "./tour.js";
 import { hourIndex, gridEdges, coldShore, stripes, stripesFall, waterKind, shouldSplit } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote, kitBadge, COLD_SHORE } from "./lakeview.js";
 import { loadLandWind, landWind } from "./weathermap.js";
@@ -255,6 +255,8 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
       <div class="picture" role="button" tabindex="0" aria-label="${h(t("Satellite picture"))}" data-ratio="${meta.width / meta.height}" style="aspect-ratio:${meta.width}/${meta.height}">${pictureHtml(lake, shot)}${coldBadge(lake)}</div>
       ${caption(lake, shot)}
       ${chips(lake)}`;
+    // Drawn after the page: its tip still waits its turn (paceTips).
+    paceTips(box.closest("main"));
     const picture = box.querySelector(".picture");
     showPictures(picture);
     const open = () => openSatelliteScreen(lake, clubId, kind, (k) => { kind = k; show(); });

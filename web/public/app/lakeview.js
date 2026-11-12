@@ -1249,9 +1249,9 @@ function deleteRoute(r) {
 function routeTip(isLoop) {
   const n = page.points.length;
   if (page.selected != null) return tip("turningPoint");
-  if (n >= 3 && !isLoop && tip("closeLoop")) return tip("closeLoop");
+  // After the first turning point: one way, out and back, or a loop (WayBackTip).
+  if (n >= 2 && !page.outAndBack && !isLoop && tip("wayBack")) return tip("wayBack");
   if (n >= 3) return tip("stretchPoint");
-  if (n === 2 && !page.outAndBack) return tip("oneWay");
   return n < 2 ? tip("rowImport") : "";
 }
 
@@ -1353,6 +1353,7 @@ function wirePanel() {
   on("#legend", "click", () => openSheet(t("Legend"), legendSheet()));
   on("#about", "click", () => openSheet(t(WATER_TEXTS[waterKind(page.view)].about), aboutSheet()));
   panel.querySelectorAll("[data-way-back]").forEach((b) => b.addEventListener("click", () => {
+    closeTip(panel, "wayBack");
     page.route.send({ type: "WAY_BACK", way: b.dataset.wayBack });
     update();
   }));

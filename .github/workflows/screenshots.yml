@@ -319,6 +319,8 @@ jobs:
           GUIDE=1 shoot 406-tip-suggest-launch-point-german-dark dark -RWTutorialSeen YES -RWNoTips YES -RWSuggestTip YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWLanguage de
           shoot 415-tip-nearby-water light -RWOpenClub mrc-1880 -RWNearbyTip YES
           shoot 416-tip-nearby-water-german-dark dark -RWOpenClub mrc-1880 -RWNearbyTip YES -RWLanguage de
+          shoot 472-tip-widget-layout light -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage widgets
+          shoot 473-tip-widget-layout-german-dark dark -RWTutorialSeen YES -RWShowTips YES -RWShowSettings YES -RWSettingsPage widgets -RWLanguage de
           shoot 470-tip-river-current light -RWOpenClub akademischer-ruderclub-wuerzburg -RWNoTips YES -RWRiverTip YES
           shoot 471-tip-river-current-german-dark dark -RWOpenClub akademischer-ruderclub-wuerzburg -RWNoTips YES -RWRiverTip YES -RWLanguage de
           # Current conditions in the top tile (owner's choice B, 4 Nov 2026): closed, with a
@@ -518,7 +520,7 @@ jobs:
           tips=(-RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES)
           short="47.99667,11.34745;47.983,11.338;47.965,11.331"
           GUIDE=1 shoot 109-tip-route-panel light "${tips[@]}"
-          GUIDE=1 WAIT=30 shoot 110-tip-close-loop light "${tips[@]}" -RWRoute "$short"
+          GUIDE=1 WAIT=30 shoot 110-tip-way-back light "${tips[@]}" -RWRoute "$short"
           GUIDE=1 WAIT=30 shoot 111-tip-turning-point light "${tips[@]}" -RWRoute "$short" -RWRoutePoint 1
           GUIDE=1 WAIT=30 shoot 112-tip-boat-time light "${tips[@]}" -RWRoute "$route" -RWOutAndBack YES -RWPanel expanded
           GUIDE=1 WAIT=30 shoot 113-tip-route-german-dark dark "${tips[@]}" -RWRoute "$short" -RWLanguage de
@@ -526,7 +528,7 @@ jobs:
           NEWS=1 shoot 115-whats-new-german-dark dark -RWLanguage de
           # The tips that follow the rain radar and hourly tips.
           later=(-RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880)
-          GUIDE=1 shoot 116-tip-radar-map light "${later[@]}" -RWScrollTo conditions
+          GUIDE=1 shoot 116-tip-rain-radar-merged light "${later[@]}" -RWScrollTo conditions
           GUIDE=1 shoot 117-tip-hour-view light "${later[@]}" -RWScrollTo hourly
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
           shoot 90-route-loop light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop"
@@ -581,9 +583,8 @@ jobs:
           GUIDE=1 WAIT=30 shoot 171-tip-chart-scrub light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind
           GUIDE=1 WAIT=30 shoot 172-tip-chart-scrub-german-dark dark -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLanguage de
           GUIDE=1 WAIT=30 shoot 173-tip-water-estimate light -RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub segler-und-ruderclub-simssee -RWScrollTo conditions
-          # Route tips for one-way routes and points on a stretch.
+          # Route tip for points on a stretch (the way back tip is shot 110).
           laterRoute=(-RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES)
-          GUIDE=1 WAIT=30 shoot 185-tip-one-way light -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "47.99667,11.34745;47.983,11.338"
           GUIDE=1 WAIT=30 shoot 186-tip-stretch-point light "${laterRoute[@]}" -RWRoute "47.99667,11.34745;47.983,11.338;47.965,11.331"
           GUIDE=1 WAIT=30 shoot 187-tip-stretch-point-german-dark dark "${laterRoute[@]}" -RWRoute "47.99667,11.34745;47.983,11.338;47.965,11.331" -RWLanguage de
           # The weather map tip above the detail view's map card.

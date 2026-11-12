@@ -36,7 +36,7 @@ import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderC
 import { renderValuePage } from "./valuepage.js";
 import { layoutFor, visibleCards, openArrange, ownOrder } from "./arrange.js";
 import { showBackground, renderBackgrounds, backgroundSummary, backgroundPreview, forgetOwnPictures, backgrounds, choiceTitle } from "./backgrounds.js";
-import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips } from "./tour.js";
+import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips, paceTips } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
 import {
@@ -734,6 +734,8 @@ async function renderClub(id) {
   if (lakeBox) {
     fillLakeCard(lakeBox, forecast.lakeId, id, waterForHour(raw, hour)).then(() => {
       if (!lakeBox.hidden) lakeBox.querySelector(".card-title")?.insertAdjacentHTML("afterend", tip("lakeView"));
+      // A tip that comes after the page was drawn still waits its turn (paceTips).
+      paceTips(root.querySelector("main"));
       balanceCards();
     });
   }
@@ -2218,7 +2220,7 @@ const DATE_TITLES = { device: key("Device"), long: key("Long"), short: key("Shor
 const SAMPLE_TIME = Date.UTC(2026, 0, 15, 17, 30);
 
 /** What a factory reset keeps: the visitor's clubs, own boats and routes, and what they have already seen (AppSettings.resetToFactorySettings). */
-const FACTORY_KEEPS = ["rf.clubs", "rf.boats", "rf.routes", "rf.safety", "rf.catalog", "rf.tourSeen", "rf.tourPage", "rf.tipsClosed", "rf.countryByTown"];
+const FACTORY_KEEPS = ["rf.clubs", "rf.boats", "rf.routes", "rf.safety", "rf.catalog", "rf.tourSeen", "rf.tourPage", "rf.tourDay", "rf.tipsClosed", "rf.tipsOff", "rf.tipDay", "rf.countryByTown"];
 
 /** "Like the iPhone", "Like the iPad" or, elsewhere, "Like this browser": the app's "Like the iPhone" switches (owner, 4 Nov 2026). */
 function likeDeviceTitle() {
@@ -2348,7 +2350,6 @@ function settingsTopicBody(topic, accepted) {
         ${dataSaving() ? `<p class="row-setting green small">${icon("circle-check")} ${h(dataSaving() === "browser" ? t("Your browser asks to save data: the website is saving data now.") : t("On mobile data: the website is saving data now."))}</p>` : ""}
       </section>
       <p class="footer">${h(t("On mobile data, satellite pictures load only when you tap them; forecasts and warnings always load. When your browser or phone asks to save data, the website always does. Not every browser tells the website whether it is on mobile data."))}</p>
-      ${tip("saveData")}
 `;
     case "help": return `
       <section class="card group">
@@ -2370,7 +2371,6 @@ function settingsTopicBody(topic, accepted) {
         <a class="row-setting" href="/credits/"><span>${icon("database")} ${h(t("Data sources"))}</span>${icon("chevron-right")}</a>
       </section>
       ${card(t("Stored in this browser"), "info", `<p>${h(t("Your clubs, settings and your acceptance of the safety notice stay in this browser. Nothing is sent anywhere."))}</p>
-        ${tip("factoryReset")}
         <button id="factory" class="quiet">${icon("rotate-ccw")} ${h(t("Reset to factory settings"))}</button>
         <p class="small sub">${h(t("Appearance, units, language, background pictures and the order of the club page cards go back to how the website came, and your own pictures are deleted. The boat for the rowing light is Small boats again and every boat's limits go back to the standard ones. Your clubs, home base, own boats and routes stay."))}</p>
         <button id="reset" class="quiet">${h(t("Delete everything stored here"))}</button>`)}

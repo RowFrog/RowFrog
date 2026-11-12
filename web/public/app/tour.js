@@ -41,8 +41,6 @@ export function tourPages(river = false, choice = false) {
         ? key("The tile with the light shows what matters on the water. Tap “All values” under it for the rest.")
         : key("Below the light you find what matters on the water."),
       points: [
-        p("person-standing", key("Feels like: colder with wind chill, warmer with humidity and heat.")), p("droplet", key("Humidity, with the dew point underneath.")),
-        p("gauge", key("Air pressure on a gauge, with its trend for the hours ahead.")),
         p("snowflake", key("In winter, the app estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.")),
         p("cloud-sun", key("The forecast comes from the weather model that does best for your lake. The line near the end of each page names it.")),
         p("info", key("Tap ⓘ on a card to see what its icons and colours mean. Settings › Help has the full legend.")),
@@ -57,7 +55,7 @@ export function tourPages(river = false, choice = false) {
       ],
     },
     {
-      id: "boats", icon: "rower", tint: "mint", title: key("Your boats and limits"), intro: key("The rowing light is worked out for one boat. Pick it at the top of the settings."),
+      id: "boats", icon: "rower", tint: "mint", title: key("Your boats and limits"), intro: key("The rowing light is worked out for one boat. Switch it with the boat button on the club page."),
       points: [
         p("check", key("Small boats are picked at first. Tap Big boats if you row a four or an eight.")),
         p("list", key("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
@@ -88,7 +86,7 @@ export function tourPages(river = false, choice = false) {
       id: "locations", icon: "list", tint: "blue", title: key("Your locations"), intro: key("Keep all the places you row in one list."),
       points: [
         p("move", key("Swipe left and right, or use the arrow keys, to move between your clubs. The house marks your home base.")),
-        p("search", key("Search the list for any club in Germany, Austria or Switzerland and tap + to add it.")),
+        p("search", key("Search the list for a club and tap + to add it, or open ⋯ to browse by country or add a place of your own.")),
         p("trash-2", key("Tap Edit in the list to remove a club or make it your home base.")),
       ],
     },
@@ -204,6 +202,8 @@ export function renderTour(root, { languagePicker, wireLanguage, done, lakes, re
   const finish = () => {
     save("rf.tourSeen", true);
     save("rf.tourPage", 0);
+    // No tips on the day of the tour: it has just explained the page (TipPacing.tourEnded).
+    save("rf.tourDay", dayKey());
     done();
   };
   const go = (i) => {
@@ -320,8 +320,8 @@ const TIPS = {
   topTile: [key("Tap a value"), key("Tap a value in the tile above to open its chart. Swiping there goes through only this tile's values."), "pointer", "allValues"],
   allValues: [key("All values in the top tile"), key("Tap \"All values\" under the tile to see every value there. Tap \"Fewer values\" to close it."), "chevrons-up-down"],
   conditionsExtras: [key("More on the air"), key("Feels like now covers wind chill and heat. Humidity shows the dew point underneath, and the gauge shows the air pressure and where it is heading."), "gauge", "rainRadar"],
-  rainRadar: [key("Rain on the way?"), key("For the next two hours the rain tile reads the radar of the Deutscher Wetterdienst at the launch point, in 15-minute steps, and the forecast after that. The radar updates every few minutes."), "umbrella", "radarMap"],
-  radarMap: [key("Rain radar map"), key("Open the rain tile: for the next two hours its map shows the radar. Tap the map to play it, or drag the slider from an hour ago to two hours ahead."), "map"],
+  // One tip for the rain tile and its radar map (owner, 12 Nov 2026: the two merged).
+  rainRadar: [key("Rain on the way?"), key("For the next two hours the rain tile reads the radar of the Deutscher Wetterdienst at the launch point, then the forecast. Open it for the radar map: tap the map to play it, or drag the slider from an hour ago to two hours ahead."), "umbrella"],
   hourly: [key("Plan your outing"), key("Each hour has its own rowing light. The icons on top name the columns, and rows after dark are dimmed."), "clock", "hourView"],
   hourView: [key("One hour in full"), key("Tap an hour to see all its conditions and the lake map at that time."), "pointer"],
   launchPoint: [key("Where the forecast is for"), key("Wind, waves and warnings are worked out for this launch point. Tap Directions to the club for the way there."), "map-pin"],
@@ -335,19 +335,17 @@ const TIPS = {
   weatherMap: [key("Weather on the map"), key("The map shows this weather around the lake. Press play to watch it move, or open it full screen with the arrows."), "map", "mapLink"],
   mapLink: [key("Chart and map together"), key("The map shows the hour of the chart's blue line. Tap the chain to give the map its own time, and again to link them."), "link"],
   rowImport: [key("Import a row"), key("Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace."), "upload"],
-  saveData: [key("Out on mobile data?"), key("Switch on Save mobile data: satellite pictures then load only when you tap them and the radar needs fewer downloads. Forecasts and warnings always load."), "radio-tower"],
-  factoryReset: [key("What a reset does"), key("Settings, units, boat limits and background pictures go back to how the app came, and your own pictures are deleted. Your clubs, boats and home base stay."), "rotate-ccw"],
   // On a river or canal club's page, for a club added after the tour; the tour's river page closes it (RiverCurrentTip).
   riverCurrent: [key("Current on the river"), key("The Current tile shows the nearest gauge's flow speed, water level and trend. Tap it for the level chart and your pace upstream and downstream."), "circle-arrow-right"],
   waterLevel: [key("Water level in winter"), key("Forggensee is let down every winter. While it is lowered, the Water level tile below takes the place of the ice estimate. Tap it for the last week's levels."), "arrow-down-to-line"],
   waterEstimate: [key("Water temperature from space"), key("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date."), "satellite"],
   // On a phone's lake map, under the grabber (RoutePanelTip).
   routePanel: [key("More or less panel"), key("Pull up for details, push down for more map."), "chevrons-up-down"],
-  closeLoop: [key("Row a loop"), key("Close the loop: tap within 50 m of your club, or pick Loop under the way back."), "repeat"],
   turningPoint: [key("Change a turning point"), key("Drag a point to move it, or delete just this one."), "move"],
   boatTime: [key("Lake at the boat's time"), key("Move the boat along your route to see the lake at the time you get there."), "rower"],
   stretchPoint: [key("Add a point on the way"), key("Tap a stretch of your route to add a turning point there, or pull the stretch to add one and move it at once."), "spline"],
-  oneWay: [key("One way or out and back"), key("New routes go one way. Pick Out and back under the way back to row the same way back."), "arrow-up-down"],
+  // One way, out and back, or a loop (owner, 12 Nov 2026: Row a loop and One way merged; WayBackTip).
+  wayBack: [key("The way back"), key("New routes go one way. Under the way back, pick Out and back to row the same way back, or Loop. Tapping within 50 m of your club also closes a loop."), "arrow-up-down"],
   boatsElsewhere: [key("Your boats at other clubs"), key("Your boats show at the clubs where they are kept. At a regatta, tap a boat under “At other clubs” to take it along."), "rower"],
   placeLine: [key("Where the forecast is for"), key("Tap the place to see on a map the spot the forecast is for, with directions."), "map-pin"],
   // At "Suggest the launch point" in the Location sheet, not in the page's card (SuggestLaunchPointTip).
@@ -363,7 +361,50 @@ const closed = () => {
 
 const waitsFor = (id) => Object.keys(TIPS).find((k) => TIPS[k][3] === id);
 
-/** A tip's box, or once it was closed the tip that follows it; nothing while the tip before it is still open. */
+// ---- Pacing (owner, 12 Nov 2026; the app's TipPacing and ClubPageTip) ----------------------
+// One tip on a screen, at most one new tip a day, none on the day of the tour, closing one never
+// brings the next at once, and "No more tips" stops them. The tips below are for a rare case or
+// the moment of use: they skip the daily limit and the quiet first day (the app's MomentTip).
+const MOMENT = new Set(["nearbyWater", "waterLevel", "riverCurrent", "coldWater", "boatsElsewhere", "turningPoint", "boatTime", "stretchPoint", "wayBack"]);
+
+/** The order in which the paced tips take their day, where several are on a screen. */
+const ORDER = ["topTile", "allValues", "placeLine", "hourly", "lakeView", "launchPoint", "conditionsExtras", "hourView", "satellite", "rainRadar", "source", "waterEstimate"];
+
+/** Today as "2026-11-12", in this browser's time. */
+export function dayKey(now = new Date()) {
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}
+
+/**
+ * Which of the tips on a screen may show, as ids: the first tip for a rare case if there is one,
+ * else today's paced tip. `state` is { day, id }, the paced tip that took the day; `pick` says
+ * which tip takes a new day. Pure, for the tests.
+ */
+export function pacedChoice(ids, { today, tourDay, off, state }) {
+  if (off) return { show: [], state };
+  const moment = ids.find((id) => MOMENT.has(id));
+  if (moment) return { show: [moment], state };
+  if (tourDay === today) return { show: [], state };
+  if (state?.day === today) return { show: ids.includes(state.id) ? [state.id] : [], state };
+  const rank = (id) => (ORDER.includes(id) ? ORDER.indexOf(id) : ORDER.length);
+  const pick = [...ids].sort((a, b) => rank(a) - rank(b))[0];
+  return pick ? { show: [pick], state: { day: today, id: pick } } : { show: [], state };
+}
+
+/** Shows the one tip of this screen that the pacing allows and leaves the others hidden. */
+export function paceTips(box) {
+  if (!box) return;
+  const asides = [...box.querySelectorAll(".tip[data-tip]")];
+  const before = load("rf.tipDay", null);
+  const { show, state } = pacedChoice(asides.map((a) => a.dataset.tip), {
+    today: dayKey(), tourDay: load("rf.tourDay", null), off: load("rf.tipsOff", false) === true, state: before,
+  });
+  if (state !== before) save("rf.tipDay", state);
+  for (const aside of asides) aside.hidden = !show.includes(aside.dataset.tip);
+}
+
+/** A tip's box, hidden until paceTips shows it, or nothing once it was closed or while the tip before it is still open. */
 export function tip(id) {
   const spec = TIPS[id];
   const shut = closed();
@@ -376,21 +417,28 @@ export function tip(id) {
   const [title, plain, iconName] = spec;
   const message = id === "topTile" && combined ? key("Tap a value in the tile above to open its chart; swiping there goes through all values. \"All values\" under the tile opens the rest.") : plain;
   const args = id === "coldWater" ? [temperature(COLD.waterC), wind(COLD.marginMs)] : [];
-  return `<aside class="tip" data-tip="${id}">${icon(iconName)}<div><strong>${h(t(title))}</strong><p>${h(t(message, ...args))}</p></div>
+  return `<aside class="tip" data-tip="${id}" hidden>${icon(iconName)}<div><strong>${h(t(title))}</strong><p>${h(t(message, ...args))}</p>
+    <p class="tip-actions"><button class="link tip-got">${h(t("Got it"))}</button><button class="link tip-off">${h(t("No more tips"))}</button></p></div>
     <button class="tip-close" aria-label="${h(t("Close"))}">${icon("x")}</button></aside>`;
 }
 
-/** Closing a tip keeps it closed; the tip that follows it (if any) takes its place. */
+/** Shows the screen's one tip; closing it ("Got it" or ×) keeps it closed, and the next waits for another day. */
 export function wireTips(box) {
+  if (!box) return;
+  paceTips(box);
+  if (box.dataset.tipsWired) return;
+  box.dataset.tipsWired = "1";
   box.addEventListener("click", (e) => {
-    const button = e.target.closest(".tip-close");
+    const button = e.target.closest(".tip-close, .tip-got, .tip-off");
     if (!button) return;
     const aside = button.closest(".tip");
-    const id = aside.dataset.tip;
-    save("rf.tipsClosed", [...new Set([...closed(), id])]);
-    const next = TIPS[id][3];
-    if (next) aside.insertAdjacentHTML("afterend", tip(next));
+    save("rf.tipsClosed", [...new Set([...closed(), aside.dataset.tip])]);
     aside.remove();
+    // "No more tips": every tip goes, until "Show the tips again".
+    if (button.classList.contains("tip-off")) {
+      save("rf.tipsOff", true);
+      document.querySelectorAll(".tip[data-tip]").forEach((other) => { other.hidden = true; });
+    }
   });
 }
 
@@ -400,8 +448,12 @@ export function closeTip(box, id) {
   box.querySelectorAll(`.tip[data-tip="${id}"]`).forEach((aside) => aside.remove());
 }
 
-/** "Show the tips again". */
-export const replayTips = () => save("rf.tipsClosed", []);
+/** "Show the tips again", also after "No more tips". */
+export const replayTips = () => {
+  save("rf.tipsClosed", []);
+  save("rf.tipsOff", false);
+  save("rf.tipDay", null);
+};
 
 /** Puts a tip just under a card's title. */
 export function withTip(cardHtml, id) {
@@ -410,4 +462,3 @@ export function withTip(cardHtml, id) {
   const at = cardHtml.indexOf("</header>");
   return at < 0 ? cardHtml : `${cardHtml.slice(0, at + 9)}${html}${cardHtml.slice(at + 9)}`;
 }
-

@@ -7,6 +7,7 @@ import { t, num } from "./i18n.js";
 import { icon } from "./icons.js";
 import { key, sky, precipitationKind } from "./logic.js";
 import { store, h, time, rain, unitSymbol, savingData, loadLeaflet, openSheet, clubPin, closeX } from "./shared.js";
+import { closeTip } from "./tour.js";
 
 export const DWD_WMS = "https://maps.dwd.de/geoserver/dwd/wms";
 const LAYER = "dwd:Niederschlagsradar";
@@ -477,6 +478,8 @@ function legendBody() {
  */
 export async function openRadarMap(point, reference, mark = "house") {
   if (!point) return;
+  // Opening the radar map is what the rain tip points at (RainRadarTip).
+  closeTip(document, "rainRadar");
   const step = radarStep();
   const frames = radarFrames(reference, step);
   const nowIndex = 60 / step;
