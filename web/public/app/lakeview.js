@@ -7,7 +7,7 @@ import { icon } from "./icons.js";
 import {
   store, getJSON, h, time, dayTime, duration, wind, windRange, waves, distance, temperature, lightTitle, reasonLabel, coldWaterText,
   dot, setTitle, openSheet, openMenu, loadLeaflet, testing, adviceOnly, mapBoat, mapLimits, boatInSentence, windUnit, dayLabel,
-  CONDITION_ICONS, forecasts, conditionIcon, boatControl, loadCatalog, rain,
+  CONDITION_ICONS, forecasts, conditionIcon, boatControl, loadCatalog, rain, wavesNumber, distanceNumber, unitSymbol,
 } from "./shared.js";
 import { riverSpeed } from "./river.js";
 import { compass, matchesStandard, coldWaterKit, reasonCondition, key, sunDaysOf } from "./logic.js";
@@ -16,7 +16,7 @@ import {
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, fineLight, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
   roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, showsOars, shouldSplit, spotProbe, windAt, withDaylightNow,
-  zoneNotes, zoneNoteText, zoneValues,
+  zoneNotes, zoneNoteText, zoneValues, arrowGlyph,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips, closeTip } from "./tour.js";
@@ -356,17 +356,9 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
   const e = gridEdges(view.grid);
   const aspect = (e.north - e.south) / ((e.east - e.west) * Math.cos((((e.north + e.south) / 2) * Math.PI) / 180));
   const stale = viewStale(view);
-  // Each part: waves, wind and visibility, the cause in its colour, and where the trouble lies (owner, 12 Nov 2026).
-  const notes = view.zones.length > 1 ? zoneNotes(view, hour, mapLimits()) : [];
-  const zoneLine = (i) => {
-    const values = zoneValues(view, hour, i, mapLimits());
-    const note = notes[i]?.light === hour.zones[i].light ? zoneNoteText(notes[i]) : null;
-    return `${values ? `<small class="zone-values">${probeValues(values).join("")}${extraItem(values.extra)}</small>` : ""}
-      ${note ? `<small class="sub zone-note">${h(t(note[0], t(note[1])))}</small>` : ""}`;
-  };
-  const zones = view.zones.length > 1 ? view.zones.map((z, i) => hour.zones[i] ? `<li>${dot(hour.zones[i].light, 10, stale)}<span><strong>${h(t(zoneTitle(z, waterKind(view))))}</strong>
-    ${zoneLine(i)}</span></li>` : "").join("") : "";
-  const windLine = windText(hour);
+  // A small table like the 48-hour one, wind with its direction, also for a lake or stretch in one part;
+  // the old wind line under it went (owner's H1, 12 Nov 2026).
+  const zones = view.zones.length ? zoneTable(view, hour, stale) : "";
   const water = WATER_TEXTS[waterKind(view)];
   box.innerHTML = `<header class="card-title">${icon("map")}<span>${h(`${t(water.view)} · ${view.name}`)}</span></header>
     <a class="lake-card ${aspect >= 1.3 ? "tall" : ""}" href="#/lake/${encodeURIComponent(lakeId)}/${encodeURIComponent(clubId)}" aria-label="${h(t(water.opens))}">
@@ -377,14 +369,18 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
         ${stale ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
         ${lakeWideBanner(hour.lakeWide, view)}
         ${mapBoatNote()}
-        ${zones ? `<ul class="zones">${zones}</ul>` : ""}
-        ${windLine ? `<p class="small sub">${icon("wind")} ${h(windLine)}</p>` : ""}
+        ${zones}
         ${view.sample ? `<p class="small orange strong">${icon("triangle-alert")} ${h(t("Sample wind"))}</p>` : ""}
         <span class="tint">${h(t("Open lake view"))} ${icon("chevron-right")}</span>
       </div></a>`;
   box.hidden = false;
   const canvas = box.querySelector("canvas");
   drawMiniMap(canvas, view, hour, clubId);
+  const zoneBox = box.querySelector(".zone-box");
+  if (zoneBox) {
+    fitZoneTable(zoneBox);
+    new ResizeObserver(() => zoneBox.isConnected && fitZoneTable(zoneBox)).observe(zoneBox);
+  }
   // Drawn again when it grows to fill its column (balanceCards in app.js).
   let size = `${canvas.clientWidth}x${canvas.clientHeight}`;
   new ResizeObserver(() => {
@@ -392,6 +388,82 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
     if (now !== size && canvas.isConnected) drawMiniMap(canvas, view, hour, clubId);
     size = now;
   }).observe(canvas);
+}
+
+/**
+ * The parts of the lake as a small table styled like the 48-hour table (LakeZoneTable, owner's H1): a map symbol
+ * over the parts, waves, wind with its direction under one wind symbol (arrow under a compass, speed under the
+ * unit) and visibility, one line under the header. Values that set amber or red show in that colour. Another
+ * reason and the "near the shore" note follow a part on their own line. When the table is too wide each part
+ * falls back to its name over its values (fitZoneTable).
+ */
+function zoneTable(view, hour, stale) {
+  const limits = mapLimits();
+  const notes = zoneNotes(view, hour, limits);
+  const rows = view.zones.map((z, i) => {
+    if (!hour.zones[i]) return null;
+    const values = zoneValues(view, hour, i, limits);
+    if (!values) return null;
+    const light = hour.zones[i].light;
+    const noteKey = notes[i]?.light === light ? zoneNoteText(notes[i]) : null;
+    const note = noteKey ? t(noteKey[0], t(noteKey[1])) : null;
+    return { name: t(zoneTitle(z, waterKind(view))), light, values, note };
+  }).filter(Boolean);
+  if (!rows.length) return "";
+  const raised = (light) => (light !== "green" ? ` strong ${light === "red" ? "red" : "orange"}` : "");
+  const numCell = (text, light) => `<td class="num${raised(light)}">${h(text)}</td>`;
+  const arrowCell = (v) => v.wind.speedMs != null && v.fromDeg != null
+    ? `<td class="zt-arrow${v.wind.light !== "green" ? raised(v.wind.light) : " sub"}"><span class="arrow" style="transform:rotate(${Math.round(v.fromDeg + 180) % 360}deg)">${icon("arrow-up")}</span></td>`
+    : "<td></td>";
+  const extras = (r) => r.values.extra || r.note
+    ? `<tr class="zt-extra"><td colspan="5">${r.values.extra ? `<small class="zone-values">${extraItem(r.values.extra)}</small>` : ""}${r.note ? `<small class="sub zone-note">${h(r.note)}</small>` : ""}</td></tr>`
+    : "";
+  const table = `<table class="zone-table" aria-hidden="true">
+    <thead><tr class="zt-icons"><th rowspan="2" class="zt-map">${icon("map")}</th><th>${icon(CONDITION_ICONS.waves)}</th><th colspan="2" class="zt-wind">${icon(CONDITION_ICONS.wind)}</th><th>${icon(CONDITION_ICONS.visibility)}</th></tr>
+    <tr class="zt-units"><th>${h(unitSymbol("waves"))}</th><th class="zt-arrow">${icon("compass")}</th><th>${h(windUnit())}</th><th>${h(unitSymbol("distance"))}</th></tr></thead>
+    <tbody>${rows.map((r) => `<tr><td class="zt-name">${dot(r.light, 10, stale)}<strong>${h(r.name)}</strong></td>
+      ${numCell(wavesNumber(r.values.waves.m), r.values.waves.light)}${arrowCell(r.values)}
+      ${numCell(r.values.wind.speedMs != null ? windRange(r.values.wind.speedMs, r.values.wind.gustMs) : "–", r.values.wind.light)}
+      ${numCell(distanceNumber(r.values.visibility?.m), r.values.visibility?.light ?? "green")}</tr>${extras(r)}`).join("")}</tbody></table>`;
+  // The lines show the table's arrow as a character, short enough not to be cut at large text sizes.
+  const lineValues = (v) => {
+    const toward = v.fromDeg != null && v.wind.speedMs != null ? ` ${arrowGlyph(v.fromDeg + 180)}` : "";
+    return [
+      probeItem(icon("waves"), waves(v.waves.m), v.waves.light),
+      probeItem(icon("wind"), `${windRange(v.wind.speedMs, v.wind.gustMs)} ${windUnit()}${toward}`, v.wind.light),
+      ...(v.visibility ? [probeItem(icon(CONDITION_ICONS.visibility), distance(v.visibility.m), v.visibility.light)] : []),
+    ].join("") + extraItem(v.extra);
+  };
+  const stacked = `<ul class="zones" aria-hidden="true">${rows.map((r) => `<li>${dot(r.light, 10, stale)}<span><strong>${h(r.name)}</strong>
+    <small class="zone-values">${lineValues(r.values)}</small>${r.note ? `<small class="sub zone-note">${h(r.note)}</small>` : ""}</span></li>`).join("")}</ul>`;
+  const spoken = rows.map((r) => {
+    const v = r.values;
+    const parts = [`${r.name}: ${lightTitle(r.light, stale)}`, `${t("Waves")} ${waves(v.waves.m)}`,
+      `${t("Wind")} ${windRange(v.wind.speedMs, v.wind.gustMs)} ${windUnit()}${v.fromDeg != null && v.wind.speedMs != null ? ` ${t("from %@", compass(v.fromDeg))}` : ""}`];
+    if (v.visibility) parts.push(`${t("Visibility")} ${distance(v.visibility.m)}`);
+    if (r.note) parts.push(r.note);
+    return `<li>${h(parts.join(", "))}</li>`;
+  }).join("");
+  return `<div class="zone-box" data-fit="table">${table}${stacked}<ul class="visually-hidden">${spoken}</ul></div>`;
+}
+
+/** The table when it fits the tile's width, otherwise each part's name over its values (ViewThatFits). */
+function fitZoneTable(box) {
+  const table = box.querySelector(".zone-table");
+  if (!table) return;
+  box.dataset.fit = "table";
+  const fits = table.getBoundingClientRect().width <= box.getBoundingClientRect().width + 0.5;
+  box.dataset.fit = fits ? "table" : "lines";
+}
+
+/**
+ * A few stripes in a small square, running like the lake's stripes on the map: bottom left to top right, or top
+ * left to bottom right where they fall (StripeSwatch).
+ */
+export function stripeSwatch(kind, fall = false) {
+  const lines = [];
+  for (let k = -18; k < 18; k += 6) lines.push(`M${k} ${fall ? 0 : 18}L${k + 18} ${fall ? 18 : 0}`);
+  return `<svg class="stripes ${kind}${fall ? " fall" : ""}" width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><clipPath id="sw-${kind}-${fall ? "f" : "r"}"><rect width="18" height="18" rx="3"/></clipPath><path clip-path="url(#sw-${kind}-${fall ? "f" : "r"})" d="${lines.join("")}" fill="none" stroke-width="1.6"/></svg>`;
 }
 
 // ---- The full lake map ----------------------------------------------------------------
@@ -1441,6 +1513,7 @@ function legendSheet() {
   // hour, the wind and the tapped spot when there are any, the route rows while planning.
   const hour = shownHour();
   const kind = page.layer === "light" && hour ? stripes(hour.lakeWide) : null;
+  const fall = stripesFall(page.view.outline);
   const found = currentPlan();
   const layerTitle = t(LAYERS.find(([k]) => k === page.layer)[1]);
   const colours = page.layer === "light"
@@ -1448,8 +1521,8 @@ function legendSheet() {
     : `<li class="ramp-row">${layerLegend(page.layer)}</li>`;
   return `<h3>${h(layerTitle)}</h3><ul class="legend">
       ${colours}
-      ${kind === "red" ? row(`<span class="stripes red"></span>`, t("Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel.")) : ""}
-      ${kind === "amber" ? row(`<span class="stripes amber"></span>`, t("Amber stripes: the whole lake is amber (the last hour before sunset, official warning), see the panel. The squares keep their own colours.")) : ""}</ul>
+      ${kind === "red" ? row(stripeSwatch("red", fall), t("Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel.")) : ""}
+      ${kind === "amber" ? row(stripeSwatch("amber", fall), t("Amber stripes: the whole lake is amber (the last hour before sunset, official warning), see the panel. The squares keep their own colours.")) : ""}</ul>
     <h3>${h(t("On the map"))}</h3><ul class="legend">
       ${row(`<span class="club-mark own"></span>`, t("The club of this page"))}
       ${row(`<span class="club-mark"></span>`, t("Other clubs on the lake"))}

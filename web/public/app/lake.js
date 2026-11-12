@@ -941,5 +941,25 @@ export function zoneValues(view, hour, zone, limits) {
     wind: { speedMs, gustMs, light: worse(light(speedMs, l.value("windAmber"), l.value("windRed")), light(gustMs, l.value("gustAmber"), l.value("gustRed"))) },
     visibility: vis.length ? { m: Math.min(...vis), light: fogLight(Math.min(...vis)) } : null,
     extra: extra && extra.light !== "green" ? extra : null,
+    fromDeg: meanFrom(winds),
   };
+}
+
+/** Where the wind comes from over a part, averaged as vectors weighted by speed (LakeZoneReading.meanFrom). */
+export function meanFrom(winds) {
+  let x = 0, y = 0, n = 0;
+  for (const w of winds) {
+    if (w?.fromDeg == null || !(w.speedMs > 0)) continue;
+    x += Math.sin((w.fromDeg * Math.PI) / 180) * w.speedMs;
+    y += Math.cos((w.fromDeg * Math.PI) / 180) * w.speedMs;
+    n += 1;
+  }
+  if (!n || Math.hypot(x, y) === 0) return null;
+  return ((Math.atan2(x, y) * 180) / Math.PI + 360) % 360;
+}
+
+/** The arrow nearest to where the wind blows: ↑ ↗ → ↘ ↓ ↙ ← ↖ (LakeZoneTable.arrowGlyph). */
+export function arrowGlyph(towardDeg) {
+  const arrows = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"];
+  return arrows[Math.floor(((towardDeg % 360) + 360 + 22.5) / 45) % 8];
 }

@@ -394,6 +394,27 @@ function squareLake() {
   };
 }
 
+test("the lake tile shows its parts as a small table with the wind's arrow, and lines where it does not fit (LakeZoneTable)", async () => {
+  const { page, errors, context } = await open(visitor());
+  const lake = squareLake();
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  await page.goto(`${base}/app/#/club/${club.id}`);
+  const box = page.locator(".zone-box");
+  await box.waitFor({ timeout: 20000 });
+  assert.equal(await box.getAttribute("data-fit"), "table");
+  const row = page.locator(".zone-table tbody tr").first();
+  assert.equal(await row.locator(".zt-name strong").innerText(), "West");
+  // From the west: the arrow points east, where the wind blows to.
+  assert.match(await row.locator(".zt-arrow .arrow").getAttribute("style"), /rotate\(90deg\)/);
+  // A narrow window falls back to the parts' names over their values, the arrow as a character.
+  await page.setViewportSize({ width: 250, height: 800 });
+  await page.waitForFunction(() => document.querySelector(".zone-box")?.dataset.fit === "lines");
+  assert.match(await page.locator(".zone-box .zones .zone-values").first().innerText(), /→/);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("the route editor: undo takes back the way back, Save marks the route saved, an edit changed and undo saved again", async () => {
   const { page, errors, context } = await open(visitor());
   const lake = squareLake();
