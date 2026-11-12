@@ -5,9 +5,10 @@
 # Python environment (~/venv). Reports go to ~/reports/ instead of a GitHub issue.
 #   run.sh model-check [model_check.py options]   (model-check.yml; timer 04:40 and 16:40 UTC)
 #   run.sh budget-check                            (budget-check.yml; timer 06:10 UTC)
+#   run.sh gkd-log                                 (GKD readings for the Model check; timer 01:05 UTC)
 # Installed on the Pi as ~/rowfrog-pi/run.sh; timers in scripts/local/pi/systemd/.
 set -euo pipefail
-job=${1:?usage: run.sh model-check|budget-check}; shift
+job=${1:?usage: run.sh model-check|budget-check|gkd-log}; shift
 HOME_DIR=${HOME_DIR:-/home/rowfrog}
 BARE=$HOME_DIR/git/rowfrog.git
 VENV=$HOME_DIR/venv
@@ -20,29 +21,43 @@ git -C "$BARE" archive main | tar -x -C "$src"
 echo "Code: $(git -C "$BARE" log --oneline -1 main)"
 export PYTHONPATH="$src/backend"
 cd "$src"
+store=$HOME_DIR/model-check-store
+store_pull() {
+  [ -d "$store/.git" ] || git clone -q -b model-check "$BARE" "$store"
+  git -C "$store" pull -q --ff-only origin model-check
+}
+store_push() {
+  git -C "$store" add -A
+  if git -C "$store" diff --cached --quiet; then
+    echo "Nothing new"
+  else
+    git -C "$store" -c user.name=RowFrog -c user.email=344322998+RowFrog@users.noreply.github.com \
+      commit -q -m "$1 $(date -u +%Y-%m-%dT%H:%MZ)"
+    git -C "$store" push -q origin HEAD:model-check
+  fi
+}
 case "$job" in
   model-check)
     # The stored forecasts live on the model-check branch, as on GitHub.
-    store=$HOME_DIR/model-check-store
-    [ -d "$store/.git" ] || git clone -q -b model-check "$BARE" "$store"
-    git -C "$store" pull -q --ff-only origin model-check
+    store_pull
     # The forecasts the publisher wrote (~/site/v1) are scored too, as model "app".
+    # GKD is read by the gkd-log night job instead (--gkd skip).
     app=()
     [ -d "$HOME_DIR/site/v1" ] && app=(--app-dir "$HOME_DIR/site/v1")
-    "$VENV/bin/python" scripts/model_check.py "$store" "${app[@]}" "$@"
+    "$VENV/bin/python" scripts/model_check.py "$store" --gkd skip "${app[@]}" "$@"
+    store_push "Model check"
     cd "$store"
-    git add -A
-    if git diff --cached --quiet; then
-      echo "Nothing new"
-    else
-      git -c user.name=RowFrog -c user.email=344322998+RowFrog@users.noreply.github.com \
-        commit -q -m "Model check $(date -u +%Y-%m-%dT%H:%MZ)"
-      git push -q origin HEAD:model-check
-    fi
     cp report.md "$REPORTS/model-check-latest.md"
     # On GitHub the Monday 04:40 run posted the report on the "Model check" issue; here it is kept, dated.
     if [ "$(date -u +%u)" = 1 ] && [ "$(date -u +%H)" -lt 12 ]; then cp report.md "$REPORTS/model-check-$(date -u +%F).md"; fi
     echo "Report: $REPORTS/model-check-latest.md"
+    ;;
+  gkd-log)
+    # Once a night: the GKD readings the Model check needs (Ammersee buoy, lake water),
+    # added to measured/gkd/ on the model-check branch.
+    store_pull
+    "$VENV/bin/python" scripts/model_check.py "$store" --gkd only
+    store_push "GKD log"
     ;;
   budget-check)
     out="$REPORTS/budget-$(date -u +%F).md"
@@ -55,5 +70,5 @@ case "$job" in
     [ "$status" = 0 ] || echo "ATTENTION: a usage limit needs a look: $out"
     ;;
   *)
-    echo "unknown job: $job (model-check, budget-check)"; exit 2 ;;
+    echo "unknown job: $job (model-check, budget-check, gkd-log)"; exit 2 ;;
 esac

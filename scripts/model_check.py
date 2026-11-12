@@ -2,7 +2,7 @@
 """Store weather model forecasts and score them against DWD measurements.
 
 Usage (from the repository root, after `pip install -e backend`):
-    python3 scripts/model_check.py DATA_DIR [--stage 1] [--archive-days 0] [--no-forecast] [--app-dir DIR]
+    python3 scripts/model_check.py DATA_DIR [--stage 1] [--archive-days 0] [--no-forecast] [--app-dir DIR] [--gkd run|skip|only]
 
 DATA_DIR keeps the stored forecasts (forecasts/YYYY/MM/DD-HH.csv.gz) and gets
 report.md and stations.json; the workflow keeps it on the model-check branch.
@@ -13,7 +13,10 @@ so a first score exists without waiting weeks. See backend/rowfrog/model_check.p
 the forecasts the app shows there are stored as model "app"
 (forecasts/YYYY/MM/DD-HH-app.csv.gz). Every run also adds the GKD readings the
 points name (Ammersee buoy, lake water) to DATA_DIR/measured/gkd/, because GKD
-shows only the last days. See backend/rowfrog/app_check.py.
+shows only the last days. See backend/rowfrog/app_check.py. --gkd skip leaves
+that out, --gkd only does nothing else (no forecasts, no report): on the Pi a
+night job reads GKD once a day instead (GKD turned the Pi away in busy hours,
+Nov 2026; its tables keep about a week, so once a day loses nothing).
 """
 
 from __future__ import annotations
@@ -40,10 +43,15 @@ def main() -> None:
     parser.add_argument("--archive-days", type=int, default=0)
     parser.add_argument("--no-forecast", action="store_true")
     parser.add_argument("--app-dir", type=Path, default=os.environ.get("RW_APP_DIR") or None)
+    parser.add_argument("--gkd", choices=["run", "skip", "only"], default="run")
     args = parser.parse_args()
 
     now = datetime.now(timezone.utc)
     points = mc.load_points(ROOT / "data" / "model-check" / "points.json", args.stage)
+    if args.gkd == "only":
+        with httpx.Client(follow_redirects=True) as client:
+            print("\n".join("  " + l for l in app_check.log_gkd(client, args.data_dir, points)))
+        return
     models = mc.models_for(args.stage)
     print(f"{len(points)} points, {len(models)} models")
 
@@ -68,7 +76,8 @@ def main() -> None:
             print("\n".join("  " + l for l in log))
             if rows:
                 mc.write_rows(args.data_dir / "forecasts" / f"{now:%Y/%m/%d-%H}-app.csv.gz", rows)
-        print("\n".join("  " + l for l in app_check.log_gkd(client, args.data_dir, points)))
+        if args.gkd == "run":
+            print("\n".join("  " + l for l in app_check.log_gkd(client, args.data_dir, points)))
         stored = mc.read_rows(args.data_dir)
         print(f"{len(stored)} stored forecast hours")
         since = now.date() - timedelta(days=3)
