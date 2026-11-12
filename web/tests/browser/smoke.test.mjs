@@ -311,6 +311,34 @@ test("a night that ends the table up to sunrise reads as a whole night, a night 
   }
 });
 
+test("real data past hour 48 reaches the table: the last night ends at sunrise and names the coarser model", async () => {
+  // The 12 Nov real-data shot still read "17–" with no "≈" line: the table cut the server's
+  // night tail at 48 hours. Here the clock stands at 22:00, so hour 48 falls in the night.
+  const { page, errors, context } = await open(visitor());
+  const now = "2026-10-18T20:00:00+00:00";
+  const shifted = forecast.hours.filter((x) => Date.parse(x.time) >= Date.parse("2026-10-19T06:00:00+00:00"))
+    .map((x) => ({ ...x, time: new Date(Date.parse(x.time) + 24 * 3600e3).toISOString().replace(".000Z", "+00:00") }));
+  const hours = [...forecast.hours, ...shifted].filter((x) => Date.parse(x.time) >= Date.parse(now));
+  const parts = [
+    { model: "ICON-D2", provider: "Deutscher Wetterdienst (DWD)", resolutionKm: 2.2, fromHour: 0, toHour: 48 },
+    { model: "ICON-EU", provider: "Deutscher Wetterdienst (DWD)", resolutionKm: 7, fromHour: 48, toHour: 58 },
+  ];
+  assert.equal(hours.length, 58);
+  await page.clock.setSystemTime(new Date(now));
+  await context.route(/\/v1\/clubs\/mrc-1880\/forecast/, (route) => route.fulfill({
+    contentType: "application/json", body: JSON.stringify({ ...forecast, generatedAt: now, hours, forecastSource: { region: "germany", parts } }),
+  }));
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  const line = page.locator(".hourly-card .nightline").last();
+  await line.waitFor({ timeout: 20000 });
+  assert.equal(await line.locator(".range").innerText(), "19–07");
+  assert.equal(await line.locator(".coarser").innerText(), "≈ from 22:00 coarser model: ICON-EU, 7 km grid");
+  assert.equal(await page.locator(".hourly-card .nightline .coarser").count(), 1, "only the last night has the hint");
+  if (process.env.RF_NIGHT_SHOT) await page.locator(".hourly-card").screenshot({ path: `${process.env.RF_NIGHT_SHOT}-tail.png` });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("browsing by country lists the countries, a country's waters and a water's clubs", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/countries`);

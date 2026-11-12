@@ -1907,9 +1907,10 @@ function conditionTile(condition, forecast, hour, radar = null, radarState = nul
 }
 
 
-/** The next 48 hours, a row an hour under a day header with sunrise and sunset (HourlyCard). */
+/** The next 48 hours and the rest of their last night, a row an hour under a day header
+ * with sunrise and sunset (HourlyCard). */
 function hourlyCard(forecast, now, stale) {
-  const list = nextHours(forecast.hours, now, 48);
+  const list = nextHours(forecast.hours, now);
   // While it stays at the top, the header also names the tile and the day in view (HourlyStickyHeader).
   const head = `<div class="hrow hhead">
     <span class="hhead-title" aria-hidden="true">${icon("clock")}<span>${h(t("Next 48 hours"))}</span><span class="hhead-day"></span></span>
