@@ -4,6 +4,10 @@
 # post-merge; set up 11 Nov 2026 while GitHub is down. Never fails the git command.
 top=$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)") || exit 1  # the main checkout, also from a worktree
 [ "$(git symbolic-ref -q --short HEAD)" = main ] || exit 0   # main checked out here (main checkout or a worktree)
+# Only what passed both gates (owner/coordinator, 12 Nov 2026): main must equal the Pi's main,
+# so threads never start from an unpushed local merge. reference-transaction calls this
+# again once a push has moved refs/remotes/pi/main.
+[ "$(git rev-parse -q --verify main)" = "$(git rev-parse -q --verify refs/remotes/pi/main)" ] || exit 0
 mkdir -p "$top/inbox" "$top/log"
 tmp="$top/inbox/.main.bundle.tmp"
 if git bundle create -q "$tmp" main 2>>"$top/log/main-bundle.log"; then
