@@ -478,3 +478,72 @@ def test_lake_views_built_on_several_cores_match_the_api(tmp_path, monkeypatch):
         for lake_id in lake_ids:
             api.prepared.lake_weather.pop(lake_id, None)
             api._lake_view_cache.pop(lake_id, None)
+
+
+def _recorder(tmp_path):
+    """A PUBLISH_UPLOAD command that appends each list of files it gets to a log."""
+    log = tmp_path / "uploads.log"
+    script = tmp_path / "upload.py"
+    script.write_text(
+        "import sys\n"
+        f"open({str(log)!r}, 'a').write(open(sys.argv[1]).read() + '--\\n')\n"
+    )
+    return f"{sys.executable} {script} {{files}}", log
+
+
+def test_written_files_go_online_while_the_run_goes_on(tmp_path, monkeypatch, capsys):
+    # Per-club publishing, Nov 2026: a changed file is handed to PUBLISH_UPLOAD seconds after it's written.
+    command, log = _recorder(tmp_path)
+    out = tmp_path / "v1"
+    monkeypatch.setattr(publish, "UPLOADER", publish.Uploader(out, command, every=0.05))
+    publish.write(out / "clubs" / "a" / "forecast", {"x": 1})
+    import time
+
+    deadline = time.monotonic() + 5
+    while not (log.is_file() and "clubs/a/forecast" in log.read_text()) and time.monotonic() < deadline:
+        time.sleep(0.05)
+    assert log.read_text() == "clubs/a/forecast\n--\n"
+    # Unchanged files are not sent again; a second change goes in the next batch.
+    publish.write(out / "clubs" / "a" / "forecast", {"x": 1})
+    publish.write(out / "lakes" / "b" / "view", {"y": 2})
+    publish.write(out / "lakes" / "b" / "view", {"y": 3})
+    publish.UPLOADER.close()
+    assert log.read_text() == "clubs/a/forecast\n--\nlakes/b/view\n--\n"
+    assert "Uploaded 2 files while the run went on, in 2 batches" in capsys.readouterr().out
+
+
+def test_a_failed_upload_is_left_to_the_copy_after_the_run(tmp_path, capsys):
+    up = publish.Uploader(tmp_path, f"{sys.executable} -c 'raise SystemExit(2)' {{files}}", every=60)
+    up.add(tmp_path / "clubs" / "a" / "forecast")
+    up.close()
+    assert "upload of 1 files failed (exit 2)" in capsys.readouterr().out
+    assert up.sent == 0
+
+
+def test_no_upload_without_the_setting_or_without_a_place_for_the_list(monkeypatch, tmp_path, capsys):
+    monkeypatch.delenv("PUBLISH_UPLOAD", raising=False)
+    assert publish.start_uploader(tmp_path) is None
+    monkeypatch.setenv("PUBLISH_UPLOAD", "rclone copy a b")
+    assert publish.start_uploader(tmp_path) is None
+    assert "needs {files}" in capsys.readouterr().out
+
+
+def _club(club_id, lake_id):
+    from rowfrog import locations
+
+    return locations.Club(club_id, club_id, club_id, lake_id, "", None, locations.Point(48.0, 11.3), True)
+
+
+def test_clubs_and_lakes_people_use_are_built_first_in_an_all_clubs_run():
+    clubs = [_club("a", "see1"), _club("b", "see2"), _club("c", "see1"), _club("d", "see3")]
+    lakes = ["see1", "see2", "see3", "see4"]
+    state = publish.State(None)
+    now = utc(23, 15)
+    parts = publish.parts(clubs, lakes, {"c"}, {"see4"}, state, now)
+    assert [([c.id for c in p], ls) for p, ls in parts] == [
+        (["c"], ["see1", "see4"]),
+        (["a", "b", "d"], ["see1", "see2", "see3", "see4"]),
+    ]
+    # A run of only the used clubs, or one while nobody uses anything, stays one part.
+    assert len(publish.parts(clubs[2:3], lakes, {"c"}, set(), state, now)) == 1
+    assert [len(p) for p, _ in publish.parts(clubs, lakes, set(), set(), state, now)] == [4]

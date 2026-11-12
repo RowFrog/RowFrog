@@ -53,6 +53,8 @@ import shlex
 import shutil
 import subprocess
 import sys
+import tempfile
+import threading
 from concurrent.futures import ProcessPoolExecutor
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -773,6 +775,87 @@ def write(path: Path, body) -> None:
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(body, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     tmp.replace(path)
+    if UPLOADER is not None:
+        UPLOADER.add(path)
+
+
+class Uploader:
+    """Puts each changed file online while the run goes on, instead of all at the end.
+
+    PUBLISH_UPLOAD is a command with `{files}` in it, for example on the Raspberry Pi
+        rclone copy ~/site/v1 r2:rowfrog-api/v1 --files-from-raw {files} --no-check-dest
+    Every few seconds the files written since the last time are listed (one path per
+    line, relative to the output folder) in a temporary file, and the command is run
+    with that file's path for `{files}`. One file is one upload either way, so this
+    costs no more uploads than one copy at the end; it only puts each club and lake
+    view online seconds after it is built. A failed upload is only logged: the full
+    copy after the run (pi/run-publish.sh) still sends every changed file and
+    removes the ones that are gone.
+    """
+
+    def __init__(self, out: Path, command: str, every: float = 5.0):
+        self.out, self.every = out, every
+        self.args = shlex.split(command)
+        if "{files}" not in self.args:
+            raise ValueError("PUBLISH_UPLOAD needs {files} where the list of files goes")
+        self.waiting: list[str] = []
+        self.sent = self.batches = 0
+        self.lock = threading.Lock()
+        self.stop = threading.Event()
+        self.thread = threading.Thread(target=self._loop, name="upload", daemon=True)
+        self.thread.start()
+
+    def add(self, path: Path) -> None:
+        try:
+            name = path.relative_to(self.out).as_posix()
+        except ValueError:
+            return
+        with self.lock:
+            self.waiting.append(name)
+
+    def _loop(self) -> None:
+        while not self.stop.wait(self.every):
+            self.send()
+
+    def send(self) -> None:
+        with self.lock:
+            names, self.waiting = list(dict.fromkeys(self.waiting)), []
+        if not names:
+            return
+        with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as f:
+            f.write("\n".join(names) + "\n")
+        try:
+            result = subprocess.run([f.name if a == "{files}" else a for a in self.args], timeout=600)
+            if result.returncode == 0:
+                self.sent += len(names)
+                self.batches += 1
+            else:
+                print(f"  upload of {len(names)} files failed (exit {result.returncode}); the copy after the run sends them", flush=True)
+        except (OSError, subprocess.SubprocessError) as e:
+            print(f"  upload of {len(names)} files failed: {e!r}; the copy after the run sends them", flush=True)
+        finally:
+            os.unlink(f.name)
+
+    def close(self) -> None:
+        self.stop.set()
+        self.thread.join()
+        self.send()
+        print(f"Uploaded {self.sent} files while the run went on, in {self.batches} batches", flush=True)
+
+
+UPLOADER: Uploader | None = None
+
+
+def start_uploader(out: Path) -> Uploader | None:
+    """The Uploader for PUBLISH_UPLOAD, or None when it is not set (GitHub Pages, tests)."""
+    command = os.environ.get("PUBLISH_UPLOAD")
+    if not command:
+        return None
+    try:
+        return Uploader(out, command, float(os.environ.get("PUBLISH_UPLOAD_EVERY", "5")))
+    except ValueError as e:
+        print(f"PUBLISH_UPLOAD not used: {e}")
+        return None
 
 
 def usage_now() -> tuple[set[str], set[str], bool]:
@@ -887,9 +970,32 @@ def built(forecast) -> tuple[dict | None, str | None]:
         return None, f"{type(e).__name__}: {e}"
 
 
+def parts(clubs, all_lakes, used_clubs, used_lakes, state, now):
+    """The run's clubs and lakes in the order they are built: (clubs, lake ids) per part.
+
+    In an all-clubs run the clubs and lakes people use come first, so with
+    PUBLISH_UPLOAD they are online a minute or two after the run starts instead
+    of after every other club; the rest follows. A run of only the used clubs,
+    or a run while nobody uses anything, is one part, as before. Each part's lakes
+    are the lakes of its clubs, and in the first part also the used lakes; the
+    lakes nobody uses whose forecast is due go with the last part.
+    """
+    due_lakes = {i for i in all_lakes if due(state.lakes.get(i, (None,))[0], now, LAKE_OTHER_HOURS, LAKE_OTHER_OFFSET)}
+
+    def lakes_of(part, extra):
+        ids = {c.lake_id for c in part} | extra
+        return [i for i in all_lakes if i in ids]
+
+    first = [c for c in clubs if c.id in used_clubs]
+    rest = [c for c in clubs if c.id not in used_clubs]
+    if not first or not rest:
+        return [(clubs, lakes_of(clubs, set(used_lakes) | due_lakes))]
+    return [(first, lakes_of(first, set(used_lakes))), (rest, lakes_of(rest, due_lakes))]
+
+
 def clubs_written() -> None:
-    """Runs PUBLISH_CLUBS_DONE (a command, if set) once the club forecasts are written,
-    so they can go online before the slow lake views (the Raspberry Pi uploads them
+    """Runs PUBLISH_CLUBS_DONE (a command, if set) once a part's club forecasts are
+    written (see parts()), so they can go online before the slow lake views (the Raspberry Pi uploads them
     there; pi/run-publish.sh). Its failure is only logged; the run goes on."""
     command = os.environ.get("PUBLISH_CLUBS_DONE")
     if not command:
@@ -913,6 +1019,17 @@ def main() -> int:
     if args.state:
         # Lake grids are kept next to the state and built again only when an outline or the grid code changed.
         lake_view.GRID_CACHE_DIR = args.state.parent / "lake-grids"
+    global UPLOADER
+    UPLOADER = start_uploader(args.out)
+    try:
+        return publish(args, now, state)
+    finally:
+        if UPLOADER is not None:
+            UPLOADER.close()
+            UPLOADER = None
+
+
+def publish(args, now: datetime, state: "State") -> int:
     used_clubs, used_lakes, with_usage = usage_now()
     print(f"Used: {len(used_clubs)} clubs, {len(used_lakes)} lakes{'' if with_usage else ' (no usage counter)'}")
 
@@ -926,57 +1043,59 @@ def main() -> int:
     write(args.out / "status" / "model-runs", {"model": "dwd_icon_d2", "runs": state.model_runs})
     every = list(locations.load().clubs.values())
     clubs = every if args.clubs == "all" else [c for c in every if c.id in used_clubs]
-    club_weather(state, clubs, used_clubs, with_usage, now)
-    club_outlooks(state, clubs, used_clubs, now)
-    model_pairs = model_weather(state, clubs, now)
-    local_warnings(state, clubs, now)
     all_lakes = sorted({c.lake_id for c in every if outlines.load(c.lake_id)})
     satellite_ice(state, all_lakes, now)
     satellite_water(state, all_lakes, now)
-    # The radar line on the widget, for the clubs people use: 10 DWD requests a club.
-    radar = asyncio.run(
-        dwd_radar.nowcasts({c.id: (c.launch_point.lat, c.launch_point.lon) for c in clubs if c.id in used_clubs})
-    )
-    print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests")
-    # The lakes of this run's clubs, and any other lake whose forecast is due. Loaded
-    # before the clubs, so a club's light can count the water near its launch point.
-    run_lakes = {c.lake_id for c in clubs}
-    lake_ids = [
-        i
-        for i in all_lakes
-        if i in run_lakes or i in used_lakes or due(state.lakes.get(i, (None,))[0], now, LAKE_OTHER_HOURS, LAKE_OTHER_OFFSET)
-    ]
-    ready_lakes = lake_weather(state, lake_ids, used_lakes, now)
-    failed = []
-    for club in clubs:
-        if club.id not in api.prepared.weather:
-            failed.append(f"{club.id}: no forecast loaded")
-            continue
-        body, problem = built(api.club_forecast(club.id))
-        if problem:
-            failed.append(f"{club.id}: {problem}")
-            continue
-        if club.id in radar:
-            body["radar"] = radar[club.id]
-        if club.id in state.club_runs:
-            body["weatherRun"] = {"model": "ICON-D2", **state.club_runs[club.id]}
-        if with_usage:
-            body["refresh"] = refresh_block(club.id in used_clubs)
-        write(args.out / "clubs" / club.id / "forecast", body)
-    print(f"Wrote {len(clubs) - len(failed)} of {len(clubs)} forecasts to {args.out}")
-    written = 0
-    for club, model in model_pairs:
-        body, problem = built(api.club_forecast_with_model(club.id, model))
-        if problem:
-            print(f"  {club.id} with {model}: {problem}")
-            continue
-        write(args.out / "clubs" / club.id / "models" / model / "forecast", body)
-        written += 1
-    print(f"Wrote {written} of {len(model_pairs)} forecasts with other weather models")
-    clubs_written()
-
-    views = lake_views(args.out, ready_lakes)
-    print(f"Wrote {views} of {len(lake_ids)} lake views")
+    failed: list[str] = []
+    model_count = models_written = views = 0
+    lake_count = 0
+    viewed: set[str] = set()
+    for part, part_lakes in parts(clubs, all_lakes, used_clubs, used_lakes, state, now):
+        # A part is loaded, built and (with PUBLISH_UPLOAD) put online before the next one starts.
+        club_weather(state, part, used_clubs, with_usage, now)
+        club_outlooks(state, part, used_clubs, now)
+        model_pairs = model_weather(state, part, now)
+        local_warnings(state, part, now)
+        # The radar line on the widget, for the clubs people use: 10 DWD requests a club.
+        radar_points = {c.id: (c.launch_point.lat, c.launch_point.lon) for c in part if c.id in used_clubs}
+        radar = asyncio.run(dwd_radar.nowcasts(radar_points)) if radar_points else {}
+        if radar_points:
+            print(f"Radar for {len(radar)} clubs, {dwd_radar.requests_made} DWD requests so far")
+        # Lake weather before the clubs, so a club's light can count the water near its launch point.
+        ready_lakes = lake_weather(state, part_lakes, used_lakes, now)
+        lake_count += len([i for i in part_lakes if i not in viewed])
+        part_failed = []
+        for club in part:
+            if club.id not in api.prepared.weather:
+                part_failed.append(f"{club.id}: no forecast loaded")
+                continue
+            body, problem = built(api.club_forecast(club.id))
+            if problem:
+                part_failed.append(f"{club.id}: {problem}")
+                continue
+            if club.id in radar:
+                body["radar"] = radar[club.id]
+            if club.id in state.club_runs:
+                body["weatherRun"] = {"model": "ICON-D2", **state.club_runs[club.id]}
+            if with_usage:
+                body["refresh"] = refresh_block(club.id in used_clubs)
+            write(args.out / "clubs" / club.id / "forecast", body)
+        print(f"Wrote {len(part) - len(part_failed)} of {len(part)} forecasts to {args.out}")
+        failed += part_failed
+        model_count += len(model_pairs)
+        for club, model in model_pairs:
+            body, problem = built(api.club_forecast_with_model(club.id, model))
+            if problem:
+                print(f"  {club.id} with {model}: {problem}")
+                continue
+            write(args.out / "clubs" / club.id / "models" / model / "forecast", body)
+            models_written += 1
+        clubs_written()
+        new_views = [i for i in ready_lakes if i not in viewed]
+        views += lake_views(args.out, new_views)
+        viewed.update(new_views)
+    print(f"Wrote {models_written} of {model_count} forecasts with other weather models")
+    print(f"Wrote {views} of {lake_count} lake views")
     state.save()
 
     weather_maps(state, args.out, every, now)
