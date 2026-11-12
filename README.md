@@ -139,9 +139,12 @@ colour and marked "Nearby", in place of the launch point's own. The website
 does the same.
 
 **Cold water.** Cold water does not change the rowing light; the light shows
-the weather. Instead a blue badge says what to bring: "Life jacket" below
-15 °C water, against cold-water shock, and below 10 °C also "partner boat"
-(singles) or "near the shore". Below 10 °C the app's own wind and gust limits
+the weather. Instead a blue badge says in words what to do: "Life jacket on" below
+15 °C water, against cold-water shock, and below 10 °C also "with partner
+boat" (singles) or "stay near shore" (German "Weste tragen · ufernah
+rudern"). The temperature stays on the water value below it, and the badge
+wraps to a second line rather than shortening (`docs/decisions/0029`). The website
+shows the same words. Below 10 °C the app's own wind and gust limits
 are 1 m/s lower (your own limits stay as set, with a note), and below 4 °C
 small boats get amber for near-freezing water. Lake maps and the satellite
 picture draw the shore light blue below the life-jacket limit and deeper blue
