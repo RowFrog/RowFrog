@@ -1,0 +1,467 @@
+{
+ "comment": "Route rules that the app (ios/RowFrog/Route.swift: RouteEdit, RoutePlanner.distance/heading/withCurrent, WindRelation, Format.pace) and the website (web/public/app/lake.js: RouteEdit, distanceM, heading, withCurrent, windRelation, pace) must both give. Points are named in `points` ([lat, lon]); a flow piece runs downstream from its first point to its second. Distances in metres (compare within 0.5 %: the app measures on the ellipsoid, the website on a sphere), headings in degrees from north (within 0.01), the current as the cosine between the heading and the river's flow (within 0.001; 0 once the point is 300 m plus half a piece away from the nearest piece's middle). Expected values come from a separate implementation of the rules, not from either side's code. Read by ios/RowFrogTests/RouteRulesTableTests.swift and web/tests/routerules.test.mjs; change it together with both.",
+ "points": {
+  "S": [
+   47.99667,
+   11.34745
+  ],
+  "A": [
+   47.98,
+   11.36
+  ],
+  "B": [
+   47.96,
+   11.34
+  ],
+  "C": [
+   47.975,
+   11.32
+  ],
+  "D": [
+   47.985,
+   11.335
+  ],
+  "nearS": [
+   47.9968,
+   11.348
+  ],
+  "F0": [
+   47.9,
+   11.3
+  ],
+  "F1": [
+   47.91,
+   11.3
+  ],
+  "onRiver": [
+   47.905,
+   11.3001
+  ],
+  "farAway": [
+   47.905,
+   11.33
+  ]
+ },
+ "distance": [
+  {
+   "from": "S",
+   "to": "A",
+   "m": 2075.6
+  },
+  {
+   "from": "A",
+   "to": "B",
+   "m": 2676.3
+  },
+  {
+   "from": "S",
+   "to": "C",
+   "m": 3159.1
+  },
+  {
+   "from": "B",
+   "to": "S",
+   "m": 4115.1
+  },
+  {
+   "from": "S",
+   "to": "nearS",
+   "m": 43.4
+  }
+ ],
+ "heading": [
+  {
+   "from": "S",
+   "to": "A",
+   "deg": 153.262
+  },
+  {
+   "from": "A",
+   "to": "B",
+   "deg": 213.798
+  },
+  {
+   "from": "S",
+   "to": "C",
+   "deg": 220.287
+  },
+  {
+   "from": "B",
+   "to": "S",
+   "deg": 7.747
+  }
+ ],
+ "windRelation": [
+  {
+   "heading": 0,
+   "windFrom": 0,
+   "relation": "head"
+  },
+  {
+   "heading": 0,
+   "windFrom": 44,
+   "relation": "head"
+  },
+  {
+   "heading": 0,
+   "windFrom": 45,
+   "relation": "cross"
+  },
+  {
+   "heading": 0,
+   "windFrom": 135,
+   "relation": "cross"
+  },
+  {
+   "heading": 0,
+   "windFrom": 136,
+   "relation": "tail"
+  },
+  {
+   "heading": 90,
+   "windFrom": 270,
+   "relation": "tail"
+  },
+  {
+   "heading": 350,
+   "windFrom": 10,
+   "relation": "head"
+  },
+  {
+   "heading": 10,
+   "windFrom": 350,
+   "relation": "head"
+  },
+  {
+   "heading": 180,
+   "windFrom": 0,
+   "relation": "tail"
+  },
+  {
+   "heading": 270,
+   "windFrom": 200,
+   "relation": "cross"
+  }
+ ],
+ "pace": [
+  {
+   "seconds": 120,
+   "text": "2:00"
+  },
+  {
+   "seconds": 135,
+   "text": "2:15"
+  },
+  {
+   "seconds": 134.4,
+   "text": "2:14"
+  },
+  {
+   "seconds": 134.5,
+   "text": "2:15"
+  },
+  {
+   "seconds": 59.6,
+   "text": "1:00"
+  },
+  {
+   "seconds": 600,
+   "text": "10:00"
+  }
+ ],
+ "edits": [
+  {
+   "case": "a point near the start closes a loop after two turning points",
+   "start": [
+    "S",
+    "A",
+    "B"
+   ],
+   "ops": [
+    {
+     "op": "add",
+     "point": "nearS"
+    }
+   ],
+   "points": [
+    "S",
+    "A",
+    "B",
+    "S"
+   ],
+   "loop": true
+  },
+  {
+   "case": "near the start with one turning point is just a point",
+   "start": [
+    "S",
+    "A"
+   ],
+   "ops": [
+    {
+     "op": "add",
+     "point": "nearS"
+    }
+   ],
+   "points": [
+    "S",
+    "A",
+    "nearS"
+   ],
+   "loop": false
+  },
+  {
+   "case": "a closed loop takes no more points",
+   "start": [
+    "S",
+    "A",
+    "B",
+    "S"
+   ],
+   "ops": [
+    {
+     "op": "add",
+     "point": "C"
+    }
+   ],
+   "points": [
+    "S",
+    "A",
+    "B",
+    "S"
+   ],
+   "loop": true
+  },
+  {
+   "case": "close and open again",
+   "start": [
+    "S",
+    "A",
+    "B"
+   ],
+   "ops": [
+    {
+     "op": "close"
+    },
+    {
+     "op": "open"
+    }
+   ],
+   "points": [
+    "S",
+    "A",
+    "B"
+   ],
+   "loop": false
+  },
+  {
+   "case": "close needs two turning points",
+   "start": [
+    "S",
+    "A"
+   ],
+   "ops": [
+    {
+     "op": "close"
+    }
+   ],
+   "points": [
+    "S",
+    "A"
+   ],
+   "loop": false
+  },
+  {
+   "case": "the start can't be removed",
+   "start": [
+    "S",
+    "A",
+    "B"
+   ],
+   "ops": [
+    {
+     "op": "remove",
+     "index": 0
+    }
+   ],
+   "points": [
+    "S",
+    "A",
+    "B"
+   ],
+   "loop": false
+  },
+  {
+   "case": "a loop left with one turning point opens",
+   "start": [
+    "S",
+    "A",
+    "B",
+    "S"
+   ],
+   "ops": [
+    {
+     "op": "remove",
+     "index": 1
+    }
+   ],
+   "points": [
+    "S",
+    "B"
+   ],
+   "loop": false
+  },
+  {
+   "case": "a loop with three turning points stays a loop",
+   "start": [
+    "S",
+    "A",
+    "B",
+    "C",
+    "S"
+   ],
+   "ops": [
+    {
+     "op": "remove",
+     "index": 2
+    }
+   ],
+   "points": [
+    "S",
+    "A",
+    "C",
+    "S"
+   ],
+   "loop": true
+  },
+  {
+   "case": "insert before a point, not before the start",
+   "start": [
+    "S",
+    "A",
+    "B"
+   ],
+   "ops": [
+    {
+     "op": "insert",
+     "point": "D",
+     "index": 1
+    },
+    {
+     "op": "insert",
+     "point": "C",
+     "index": 0
+    }
+   ],
+   "points": [
+    "S",
+    "D",
+    "A",
+    "B"
+   ],
+   "loop": false
+  },
+  {
+   "case": "insert at the end is refused",
+   "start": [
+    "S",
+    "A"
+   ],
+   "ops": [
+    {
+     "op": "insert",
+     "point": "D",
+     "index": 2
+    }
+   ],
+   "points": [
+    "S",
+    "A"
+   ],
+   "loop": false
+  },
+  {
+   "case": "move a turning point, not the start",
+   "start": [
+    "S",
+    "A",
+    "B"
+   ],
+   "ops": [
+    {
+     "op": "move",
+     "index": 2,
+     "point": "C"
+    },
+    {
+     "op": "move",
+     "index": 0,
+     "point": "D"
+    }
+   ],
+   "points": [
+    "S",
+    "A",
+    "C"
+   ],
+   "loop": false
+  }
+ ],
+ "withCurrent": [
+  {
+   "at": "onRiver",
+   "heading": 0,
+   "flow": [
+    [
+     "F0",
+     "F1"
+    ]
+   ],
+   "cosine": 1.0
+  },
+  {
+   "at": "onRiver",
+   "heading": 180,
+   "flow": [
+    [
+     "F0",
+     "F1"
+    ]
+   ],
+   "cosine": -1.0
+  },
+  {
+   "at": "onRiver",
+   "heading": 90,
+   "flow": [
+    [
+     "F0",
+     "F1"
+    ]
+   ],
+   "cosine": 0.0
+  },
+  {
+   "at": "onRiver",
+   "heading": 60,
+   "flow": [
+    [
+     "F0",
+     "F1"
+    ]
+   ],
+   "cosine": 0.5
+  },
+  {
+   "at": "farAway",
+   "heading": 0,
+   "flow": [
+    [
+     "F0",
+     "F1"
+    ]
+   ],
+   "cosine": 0.0
+  }
+ ]
+}
