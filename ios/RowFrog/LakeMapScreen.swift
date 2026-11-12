@@ -36,6 +36,8 @@ struct LakeMapScreen: View {
     @State private var panelExpanded: Bool
     /// The panel's height with the home indicator, so the map fits the lake or route above it.
     @State private var panelHeight = LakeMapView.panelHeight
+    /// The screen's size inside the safe area: wide screens get the panel as a card (LakePanelLayout).
+    @State private var screenSize: CGSize = .zero
     /// Counts up when the map should fit the lake or route again above the panel.
     @State private var fitRequest = 0
     /// The layer's name, shown for a moment next to the layer buttons after a switch.
@@ -186,7 +188,8 @@ struct LakeMapScreen: View {
                 imagery: imagery,
                 track: routeMode && showTrack ? rowed?.trackCoordinates ?? [] : [],
                 land: land,
-                bottomInset: panelHeight,
+                bottomInset: usesCard ? LakePanelLayout.inset : panelHeight,
+                leadingInset: usesCard ? LakePanelLayout.cardWidth + LakePanelLayout.inset : 0,
                 fitRequest: fitRequest
             )
             .ignoresSafeArea()
@@ -206,8 +209,9 @@ struct LakeMapScreen: View {
             }
             .buttonStyle(.plain)
             .accessibilityLabel(tr("Legend"))
-            .padding(.leading)
-            .padding(.bottom, 10)
+            // Beside the card on wide screens, above the full-width panel otherwise.
+            .padding(.leading, usesCard ? LakePanelLayout.cardWidth + 2 * LakePanelLayout.inset : 16)
+            .padding(.bottom, usesCard ? LakePanelLayout.inset : 10)
         }
         .overlay(alignment: .bottomTrailing) {
             HStack(alignment: .bottom, spacing: 8) {
@@ -222,12 +226,26 @@ struct LakeMapScreen: View {
                 layerButtons
             }
             .padding(.trailing)
-            .padding(.bottom, 10)
+            .padding(.bottom, usesCard ? LakePanelLayout.inset : 10)
         }
+        // Upright iPhone: the panel across the bottom. Wider: a card at the bottom left, as in
+        // Apple Maps, so the map keeps its whole width (owner's option B, 12 Nov 2026).
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            panel(plan: plan, boat: boat, shown: shown)
-                .onGeometryChange(for: CGFloat.self) { $0.size.height + $0.safeAreaInsets.bottom } action: { panelHeight = $0 }
+            if !usesCard {
+                panel(plan: plan, boat: boat, shown: shown)
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height + $0.safeAreaInsets.bottom } action: { panelHeight = $0 }
+            }
         }
+        .overlay(alignment: .bottomLeading) {
+            if usesCard {
+                panel(plan: plan, boat: boat, shown: shown)
+                    .frame(width: LakePanelLayout.cardWidth)
+                    .padding(.leading, LakePanelLayout.inset)
+                    .padding(.bottom, LakePanelLayout.inset)
+            }
+        }
+        .onGeometryChange(for: CGSize.self) { $0.size } action: { screenSize = $0 }
+        .onChange(of: usesCard) { refit() }
         .sheet(isPresented: $showingInfo) { LakeViewInfo(water: view.water) }
         .sheet(isPresented: $showingLegend) {
             LakeMapLegend(layer: layer, stripes: layer == .light ? shown?.lakeWide.stripes : nil,
@@ -304,6 +322,15 @@ struct LakeMapScreen: View {
         draft.send(.openRoute(route))
         spot = nil
         refit()
+    }
+
+    /// The panel as a card at the bottom left: on every screen at least LakePanelLayout.cardFromWidth wide.
+    private var usesCard: Bool { LakePanelLayout.usesCard(width: screenSize.width) }
+
+    /// How tall the scrolling part of the opened panel may get: a third of an upright
+    /// phone; in a card whatever the screen leaves below the buttons at the top.
+    private var scrollHeight: CGFloat {
+        usesCard ? LakePanelLayout.scrollHeight(screenHeight: screenSize.height) : UIScreen.main.bounds.height * 0.3
     }
 
     /// As in Apple Maps: once the panel has settled at its new height, the map
@@ -563,7 +590,7 @@ struct LakeMapScreen: View {
             returnPicker
             planningTools
             if panelExpanded {
-                CappedScroll(enabled: true, maxHeight: UIScreen.main.bounds.height * 0.3) {
+                CappedScroll(enabled: true, maxHeight: scrollHeight) {
                     VStack(alignment: .leading, spacing: 10) {
                         if view.sample {
                             Label(tr("Sample wind"), systemImage: "exclamationmark.triangle")
@@ -576,19 +603,7 @@ struct LakeMapScreen: View {
                 }
             }
         }
-        .padding(.horizontal)
-        .padding(.top, 6)
-        .padding(.bottom, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22)
-                .fill(.regularMaterial)
-                .ignoresSafeArea(edges: .bottom)
-        }
-        .gesture(DragGesture(minimumDistance: 20).onEnded { drag in
-            if drag.translation.height < -30 { withAnimation(.snappy) { panelExpanded = true } }
-            if drag.translation.height > 30 { withAnimation(.snappy) { panelExpanded = false } }
-        })
+        .lakePanelChrome(card: usesCard, expanded: $panelExpanded)
     }
 
     /// Start time (back and forward an hour, or a pick from the list), pace and out and back.
@@ -686,7 +701,7 @@ struct LakeMapScreen: View {
                 collapsedSummary(hour, plan: plan, boat: boat)
             } else if let hour = shown {
                 // While planning the content scrolls in a part of the screen, so the map keeps its room.
-                CappedScroll(enabled: routeMode, maxHeight: UIScreen.main.bounds.height * 0.3) {
+                CappedScroll(enabled: routeMode || usesCard, maxHeight: scrollHeight) {
                     expandedContent(hour, plan: plan, boat: boat)
                 }
             }
@@ -695,20 +710,7 @@ struct LakeMapScreen: View {
             }
             LakeHourStrip(hours: view.hours, selection: $hourIndex)
         }
-        .padding(.horizontal)
-        .padding(.top, 6)
-        .padding(.bottom, 8)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background {
-            UnevenRoundedRectangle(topLeadingRadius: 22, topTrailingRadius: 22)
-                .fill(.regularMaterial)
-                .ignoresSafeArea(edges: .bottom)
-        }
-        // Pull up for everything, push down for the map.
-        .gesture(DragGesture(minimumDistance: 20).onEnded { drag in
-            if drag.translation.height < -30 { withAnimation(.snappy) { panelExpanded = true } }
-            if drag.translation.height > 30 { withAnimation(.snappy) { panelExpanded = false } }
-        })
+        .lakePanelChrome(card: usesCard, expanded: $panelExpanded)
     }
 
     @ViewBuilder private func expandedContent(_ hour: LakeHour, plan: RoutePlan?, boat: RoutePlan.Stop?) -> some View {
@@ -1072,6 +1074,8 @@ struct LakeMapView: UIViewRepresentable {
     var land: LandWind?
     /// The panel's height at the bottom, with the home indicator.
     var bottomInset: CGFloat = Self.panelHeight
+    /// The card's room at the left on wide screens (LakePanelLayout), so the lake fits beside it.
+    var leadingInset: CGFloat = 0
     /// A new value fits the route, or without one the lake, above the panel.
     var fitRequest = 0
 
@@ -1136,8 +1140,8 @@ struct LakeMapView: UIViewRepresentable {
         map.setVisibleMapRect(overlay.openRect, animated: false)
         // Fit the lake once the map has its size, clear of the buttons at the top
         // and of the panel at the bottom, so the whole lake and every club show.
-        let inRouteMode = routeMode, bottom = bottomInset
-        DispatchQueue.main.async { Self.fit(overlay, in: map, routeMode: inRouteMode, bottom: bottom, animated: false) }
+        let inRouteMode = routeMode, bottom = bottomInset, leading = leadingInset
+        DispatchQueue.main.async { Self.fit(overlay, in: map, routeMode: inRouteMode, bottom: bottom, leading: leading, animated: false) }
         context.coordinator.fittedForRoute = routeMode
         context.coordinator.fitRequest = fitRequest
         return map
@@ -1147,11 +1151,14 @@ struct LakeMapView: UIViewRepresentable {
     static let routeTop: CGFloat = 130
 
     static func fit(_ overlay: LakeOverlay, in map: MKMapView, routeMode: Bool, bottom: CGFloat = panelHeight,
-                    route: [CLLocationCoordinate2D] = [], animated: Bool) {
+                    leading: CGFloat = 0, route: [CLLocationCoordinate2D] = [], animated: Bool) {
         // More room at the right, where the layer buttons stand above the panel, and
         // above the panel for the legend chip; at least 150 points of map stay.
-        let below = min(bottom + 12, max(map.bounds.height - routeTop - 150, panelHeight))
-        let padding = UIEdgeInsets(top: routeTop, left: 24, bottom: below, right: 64)
+        // The card (wide screens) sits inside the safe area; the full-width panel's measured
+        // height already counts the home indicator.
+        let safe = leading > 0 ? map.safeAreaInsets : .zero
+        let below = min(bottom + safe.bottom + 12, max(map.bounds.height - routeTop - 150, panelHeight))
+        let padding = UIEdgeInsets(top: routeTop, left: 24 + leading + safe.left, bottom: below, right: 64 + safe.right)
         map.setVisibleMapRect(routeRect(route) ?? overlay.openRect, edgePadding: padding, animated: animated)
     }
 
@@ -1203,12 +1210,13 @@ struct LakeMapView: UIViewRepresentable {
         if c.fitRequest != fitRequest, let overlay = c.overlay {
             c.fitRequest = fitRequest
             c.fittedForRoute = routeMode
-            Self.fit(overlay, in: map, routeMode: routeMode, bottom: bottomInset, route: routeMode ? waypoints + track : [], animated: true)
+            Self.fit(overlay, in: map, routeMode: routeMode, bottom: bottomInset, leading: leadingInset,
+                     route: routeMode ? waypoints + track : [], animated: true)
         }
         if routeMode, !c.fittedForRoute, let overlay = c.overlay, let start = waypoints.first {
             c.fittedForRoute = true
             if map.convert(start, toPointTo: map).y < Self.routeTop {
-                Self.fit(overlay, in: map, routeMode: true, bottom: bottomInset, animated: true)
+                Self.fit(overlay, in: map, routeMode: true, bottom: bottomInset, leading: leadingInset, animated: true)
             }
         }
         if let hour, c.shown != "\(hour.time.timeIntervalSince1970) \(layer.rawValue) \(land != nil)" {
@@ -1633,33 +1641,6 @@ struct LakeMapView: UIViewRepresentable {
             }
             if !map.annotations.contains(where: { $0 === spotPin }) { map.addAnnotation(spotPin) }
             spotPin.coordinate = coordinate
-        }
-    }
-}
-
-/// Its content as is, or (when enabled) in a scroll view no taller than
-/// `maxHeight`, and only as tall as the content when that is shorter.
-private struct CappedScroll<Content: View>: View {
-    let enabled: Bool
-    let maxHeight: CGFloat
-    @ViewBuilder let content: Content
-    @State private var height: CGFloat = 0
-
-    var body: some View {
-        if enabled {
-            ScrollView {
-                content.background {
-                    GeometryReader { geo in
-                        Color.clear
-                            .onAppear { height = geo.size.height }
-                            .onChange(of: geo.size.height) { _, new in height = new }
-                    }
-                }
-            }
-            .frame(height: min(max(height, 1), maxHeight))
-            .scrollBounceBehavior(.basedOnSize)
-        } else {
-            content
         }
     }
 }
