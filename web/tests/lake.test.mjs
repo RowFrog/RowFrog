@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { GROUPS, limitsFor } from "../public/app/logic.js";
 import {
   decodeView, applyLakeLimits, shares, headline, stripes, stripesFall, RouteEdit, routePlanner, planRoute, bestStart, plansBetter, windRelation, pace,
-  lakeWideAt, withDaylightNow, fineLight,
+  lakeWideAt, withDaylightNow, fineLight, shoreDistance, zoneNotes, zoneNoteText, zoneValues,
 } from "../public/app/lake.js";
 
 // A 3×1 strip of water running east, one forecast point, two zones.
@@ -212,4 +212,32 @@ test("the fine rowing light follows the blended values", () => {
   // Older backends without the light per point: none.
   view.hours[0].wind[0] = { ...view.hours[0].wind[0], other: null };
   assert.equal(fineLight(view, view.hours[0], limits), null);
+});
+
+test("fog along both shores: each part says why and where, and the headline names the shore (app lake-notes)", () => {
+  // 5 x 4 squares, all water: the outer ring red from fog, the six inner ones green (LakeViewTests).
+  const lights = Array.from({ length: 20 }, (_, i) => ([6, 7, 8, 11, 12, 13].includes(i) ? "0" : "2")).join("");
+  const view = decodeView({
+    generatedAt: "2026-11-12T09:00:00Z", name: "Fog See",
+    grid: { south: 47.8, west: 11.3, dLat: 0.01, dLon: 0.01, cols: 5, rows: 4, cells: [...Array(20).keys()], cellPoint: Array(20).fill(0),
+      cellZone: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+    zones: ["north", "south"], outline: [[[11.295, 47.795], [11.345, 47.795], [11.345, 47.835], [11.295, 47.835]]], clubs: [],
+    points: [{ lat: 47.815, lon: 11.32 }],
+    hours: [{ time: "2026-11-12T09:00:00Z", lakeWide: { light: "green", reasons: [] }, lights, wavesCm: Array(20).fill(1),
+      wind: [{ speedMs: 1, gustMs: 2, fromDeg: 315, other: 2, visM: 300, storm: 0 }],
+      zones: [{ light: "red", maxWaveM: 0.01 }, { light: "red", maxWaveM: 0.01 }] }],
+  });
+  const hour = view.hours[0];
+  const limits = { boat: GROUPS[0], custom: {} };
+  assert.deepEqual(shoreDistance(view.grid), [1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1]);
+  const notes = zoneNotes(view, hour, limits);
+  assert.equal(notes.length, 3, "two parts and the whole lake");
+  assert.deepEqual(notes[0], { light: "red", cause: "Fog", place: "shore", rest: "green" });
+  assert.deepEqual(zoneNoteText(notes[0]), ["%@ near the shore, open water clear", "Fog"]);
+  const values = zoneValues(view, hour, 0, limits);
+  assert.deepEqual([values.waves.light, values.wind.light, values.visibility.light], ["green", "green", "red"]);
+  assert.equal(values.waves.m, 0.01);
+  assert.deepEqual(headline(view, hour, limits), ["%@ near the shore: stay ashore", "Fog"]);
+  // Without the limits (older callers) the headline stays the whole-lake one.
+  assert.deepEqual(headline(view, hour), ["Stay ashore on the whole lake"]);
 });

@@ -661,8 +661,12 @@ button.red { color: var(--red); }
 .lake-summary p { margin: 0; }
 .lake-summary .tint { margin-top: auto; padding-top: 6px; font-size: 15px; display: inline-flex; align-items: center; gap: 4px; }
 .zones { list-style: none; padding: 0; margin: 2px 0; display: flex; flex-direction: column; gap: 4px; }
-.zones li { display: flex; gap: 8px; align-items: center; }
-.zones li > span { display: flex; flex-direction: column; }
+.zones li { display: flex; gap: 8px; align-items: flex-start; }
+.zones li > .dot { margin-top: 5px; }
+.zones li > span { display: flex; flex-direction: column; min-width: 0; }
+/* Each part's waves, wind and visibility under its name, the cause in its colour (LakeProbeValues, caption). */
+.zones .zone-values { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; }
+.zones .zone-note { font-size: 12px; }
 .zones small { font-size: 12px; }
 .lake-wide { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 10px; margin: 4px 0; }
 .lake-wide.red { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }

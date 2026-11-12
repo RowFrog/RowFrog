@@ -271,7 +271,7 @@ export const zonePhrase = (name) => ZONE_PHRASES[name] ?? key("on the whole lake
  * One line for the hour (LakeView.headline): [English text, ...arguments], such
  * as ["Calmest %@, roughest %@", "in the south", "in the north"].
  */
-export function headline(view, hour) {
+export function headline(view, hour, limits = null) {
   const lake = waterKind(view) === "lake";
   const all = {
     green: lake ? key("Good to row on the whole lake") : key("Good to row on the whole stretch"),
@@ -285,6 +285,14 @@ export function headline(view, hour) {
   const best = ranked[0];
   const worst = ranked[ranked.length - 1];
   if (best[1].light === worst[1].light || view.zones.length < 2) {
+    // Every part as bad, but only near the shore or only out on open water: say so, as the map shows the rest
+    // better (owner, 12 Nov 2026).
+    const whole = limits && worst[1].light !== "green" ? zoneNotes(view, hour, limits).at(-1) : null;
+    if (whole && whole.light === worst[1].light && whole.cause && whole.place && whole.place !== "parts") {
+      const red = worst[1].light === "red";
+      if (whole.place === "shore") return [red ? key("%@ near the shore: stay ashore") : key("%@ near the shore: row with care"), whole.cause];
+      return [red ? key("%@ on open water: stay ashore") : key("%@ on open water: row with care"), whole.cause];
+    }
     return [all[worst[1].light]];
   }
   return [key("Calmest %@, roughest %@"), zonePhrase(best[0]), zonePhrase(worst[0])];
@@ -820,3 +828,118 @@ export const showsOars = (club) => !!club?.launchPointSet;
 
 /** Whether two pins this far apart on screen show apart, with room between splitting and joining so they don't flicker. */
 export const shouldSplit = (apart, now) => apart >= (now ? CLUB_JOIN_AT : CLUB_SPLIT_AT);
+
+// ---- Why each part of the lake is amber or red, and where (LakeZoneNotes.swift, app lake-notes) ----------
+
+/** Below this share of better squares, a part counts as alike all over (LakeZoneNote.minBetterShare). */
+export const MIN_BETTER_SHARE = 0.1;
+
+const shoreDistances = new WeakMap();
+/** How many squares each water cell lies from land: 1 along the shore, rising inwards; the grid's edge counts as land (LakeView.shoreDistance). */
+export function shoreDistance(grid) {
+  let found = shoreDistances.get(grid);
+  if (found) return found;
+  const index = byFlat(grid);
+  const neighbours = (flat) => {
+    const row = Math.floor(flat / grid.cols), col = flat % grid.cols;
+    return [[row - 1, col], [row + 1, col], [row, col - 1], [row, col + 1]].map(([r, c]) =>
+      r >= 0 && r < grid.rows && c >= 0 && c < grid.cols ? index.get(r * grid.cols + c) ?? null : null);
+  };
+  found = new Array(grid.cells.length).fill(0);
+  const queue = [];
+  grid.cells.forEach((flat, i) => {
+    if (neighbours(flat).includes(null)) {
+      found[i] = 1;
+      queue.push(i);
+    }
+  });
+  for (let head = 0; head < queue.length; head++) {
+    const i = queue[head];
+    for (const n of neighbours(grid.cells[i])) {
+      if (n != null && found[n] === 0) {
+        found[n] = found[i] + 1;
+        queue.push(n);
+      }
+    }
+  }
+  shoreDistances.set(grid, found);
+  return found;
+}
+
+const EXTRA_NAMES = { hail: key("Hail"), thunderstorm: key("Thunderstorm"), rain: key("Heavy rain") };
+
+/** What makes a square its light: the strongest other reason, then fog, wind and waves, as on a tapped spot (LakeView.cause). */
+export function cellCause(view, hour, i, limits) {
+  const lit = hour.lights[i];
+  if (!lit || lit === "green") return null;
+  const p = spotProbe(view, hour, i, limits);
+  if (p.extra && p.extra.light === lit) return EXTRA_NAMES[p.extra.kind];
+  if (p.visibility?.light === lit) return key("Fog");
+  if (p.wind.light === lit) return key("Wind");
+  if (p.waves.light === lit) return key("Waves");
+  return null;
+}
+
+/**
+ * One note per part of the lake (same order as view.zones), plus one for the whole lake as the last entry
+ * (LakeView.zoneNotes): { light, cause, place: "shore" | "openWater" | "parts" | null, rest }.
+ */
+export function zoneNotes(view, hour, limits) {
+  const n = hour.lights.length;
+  const zoneOf = view.grid.cellZone ?? [];
+  if (!n || zoneOf.length !== n) return [];
+  const distance = shoreDistance(view.grid);
+  const note = (cells) => {
+    const lit = cells.reduce((w, c) => worse(w, hour.lights[c]), "green");
+    if (lit === "green") return { light: lit, cause: null, place: null, rest: "green" };
+    const worseCells = cells.filter((c) => hour.lights[c] === lit);
+    const better = cells.filter((c) => RANK[hour.lights[c]] < RANK[lit]);
+    const counts = new Map();
+    for (const c of worseCells) {
+      const cause = cellCause(view, hour, c, limits);
+      if (cause) counts.set(cause, (counts.get(cause) ?? 0) + 1);
+    }
+    const cause = [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0]?.[0] ?? null;
+    if (!cells.length || better.length / cells.length < MIN_BETTER_SHARE) return { light: lit, cause, place: null, rest: lit };
+    const mean = (list) => list.reduce((sum, c) => sum + distance[c], 0) / list.length;
+    const gap = mean(worseCells) - mean(better);
+    const place = gap <= -0.5 ? "shore" : gap >= 0.5 ? "openWater" : "parts";
+    return { light: lit, cause, place, rest: better.reduce((w, c) => worse(w, hour.lights[c]), "green") };
+  };
+  const all = [...Array(n).keys()];
+  return [...view.zones.map((_, z) => note(all.filter((c) => zoneOf[c] === z))), note(all)];
+}
+
+/** "Fog near the shore, open water clear" while the worse squares lie only near the shore or only on open water; null otherwise (LakeZoneNote.text). */
+export function zoneNoteText(note) {
+  if (!note || note.light === "green" || !note.cause) return null;
+  if (note.place === "shore") return [note.rest === "green" ? key("%@ near the shore, open water clear") : key("%@ near the shore, open water: row with care"), note.cause];
+  if (note.place === "openWater") return [note.rest === "green" ? key("%@ on open water, near the shore clear") : key("%@ on open water, near the shore: row with care"), note.cause];
+  return null;
+}
+
+/**
+ * The values of one part of the lake, as under a tapped spot (LakeView.zoneValues): the highest waves, the
+ * strongest wind and gusts and the lowest visibility, each with its light, and the strongest other reason when
+ * amber or red. Same shape as spotProbe.
+ */
+export function zoneValues(view, hour, zone, limits) {
+  const zoneOf = view.grid.cellZone ?? [];
+  const cells = hour.lights.map((_, i) => i).filter((i) => zoneOf[i] === zone && i < hour.wavesCm.length);
+  if (!cells.length) return null;
+  const cold = view.waterC != null ? view.waterC < COLD.waterC : hour.lakeWide.reasons.some((r) => r.condition === "cold_water");
+  const l = limitsFor(limits.boat, limits.custom, cold ? 0 : null);
+  const winds = cells.map((i) => cellWind(view, hour, i)).filter(Boolean);
+  const top = (list) => (list.length ? Math.max(...list) : null);
+  const waveM = top(cells.map((i) => hour.wavesCm[i] / 100));
+  const speedMs = top(winds.map((w) => w.speedMs).filter((v) => v != null));
+  const gustMs = top(winds.map((w) => w.gustMs).filter((v) => v != null));
+  const vis = winds.map((w) => w.visM).filter((v) => v != null);
+  const extra = winds.map(pointExtra).filter(Boolean).reduce((a, b) => (!a || RANK[b.light] > RANK[a.light] ? b : a), null);
+  return {
+    waves: { m: waveM, light: light(waveM, l.value("waveAmber"), l.value("waveRed")) },
+    wind: { speedMs, gustMs, light: worse(light(speedMs, l.value("windAmber"), l.value("windRed")), light(gustMs, l.value("gustAmber"), l.value("gustRed"))) },
+    visibility: vis.length ? { m: Math.min(...vis), light: fogLight(Math.min(...vis)) } : null,
+    extra: extra && extra.light !== "green" ? extra : null,
+  };
+}

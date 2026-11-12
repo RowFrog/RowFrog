@@ -16,6 +16,7 @@ import {
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, fineLight, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
   roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, showsOars, shouldSplit, spotProbe, windAt, withDaylightNow,
+  zoneNotes, zoneNoteText, zoneValues,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips, closeTip } from "./tour.js";
@@ -302,7 +303,7 @@ function drawMiniMap(canvas, view, hour, clubId) {
 }
 
 function headlineText(view, hour) {
-  const [text, ...args] = headline(view, hour);
+  const [text, ...args] = headline(view, hour, mapLimits());
   return t(text, ...args.map((a) => t(a)));
 }
 
@@ -351,8 +352,16 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
   const e = gridEdges(view.grid);
   const aspect = (e.north - e.south) / ((e.east - e.west) * Math.cos((((e.north + e.south) / 2) * Math.PI) / 180));
   const stale = viewStale(view);
+  // Each part: waves, wind and visibility, the cause in its colour, and where the trouble lies (owner, 12 Nov 2026).
+  const notes = view.zones.length > 1 ? zoneNotes(view, hour, mapLimits()) : [];
+  const zoneLine = (i) => {
+    const values = zoneValues(view, hour, i, mapLimits());
+    const note = notes[i]?.light === hour.zones[i].light ? zoneNoteText(notes[i]) : null;
+    return `${values ? `<small class="zone-values">${probeValues(values).join("")}${extraItem(values.extra)}</small>` : ""}
+      ${note ? `<small class="sub zone-note">${h(t(note[0], t(note[1])))}</small>` : ""}`;
+  };
   const zones = view.zones.length > 1 ? view.zones.map((z, i) => hour.zones[i] ? `<li>${dot(hour.zones[i].light, 10, stale)}<span><strong>${h(t(zoneTitle(z, waterKind(view))))}</strong>
-    <small class="sub">${h(t("Waves up to %@", waves(hour.zones[i].maxWaveM)))}</small></span></li>` : "").join("") : "";
+    ${zoneLine(i)}</span></li>` : "").join("") : "";
   const windLine = windText(hour);
   const water = WATER_TEXTS[waterKind(view)];
   box.innerHTML = `<header class="card-title">${icon("map")}<span>${h(`${t(water.view)} · ${view.name}`)}</span></header>
