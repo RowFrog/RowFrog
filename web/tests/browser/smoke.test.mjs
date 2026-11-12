@@ -495,6 +495,28 @@ function squareLake() {
   };
 }
 
+test("wide windows: the page starts 10 px below the line of top buttons, level with the list's search field, the big name full width (PageTopButtons.gapBelow)", async () => {
+  const { page, errors, context } = await open(visitor(), { width: 1194, height: 834 });
+  await page.goto(`${base}/app/#/club/${club.id}`);
+  await page.locator(".club-head h1").waitFor({ timeout: 20000 });
+  await page.waitForTimeout(500);
+  const at = () => page.evaluate(() => {
+    const r = (s) => document.querySelector(s)?.getBoundingClientRect();
+    const btn = [...document.querySelectorAll(".top-title .head-side .round")].find((b) => b.getBoundingClientRect().width).getBoundingClientRect();
+    return { search: r("aside.side .search")?.top, head: r(".club-head").top, h1: r(".club-head h1").width, row: r(".club-head .title-row").width, btnBottom: btn.bottom };
+  });
+  let m = await at();
+  assert.ok(Math.abs(m.head - m.search) <= 1, `header top ${m.head} level with the search field ${m.search}`);
+  assert.ok(Math.abs(m.head - m.btnBottom - 10) <= 1, "10 px below the buttons");
+  assert.ok(Math.abs(m.h1 - m.row) <= 1, "no room kept beside the big name");
+  await page.locator("#hide-list").click();
+  await page.waitForTimeout(800);
+  m = await at();
+  assert.ok(Math.abs(m.head - m.btnBottom - 10) <= 1, "also with the list slid away");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("the lake tile shows its parts as a small table with the wind's arrow, and lines where it does not fit (LakeZoneTable)", async () => {
   const { page, errors, context } = await open(visitor());
   const lake = squareLake();
