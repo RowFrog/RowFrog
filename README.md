@@ -194,7 +194,11 @@ heavy rain and hail colour it too, as on the club page), and a spot you can
 tap: its pin stays where you tapped and it shows the light, then waves, wind
 and visibility, plus hail, thunderstorm or heavy rain while that makes it
 amber or red; a value at amber or red takes that colour. The website shows
-the spot the same way. Wind, gusts, rain and visibility for each part of the lake and
+the spot the same way. In the lake tile each part of the lake lists the same
+values (highest waves, strongest wind and gusts, lowest visibility), with the
+one that sets amber or red in that colour, and when the worse squares lie
+only near the shore or only on open water it says so ("Fog near the shore,
+open water clear"); these notes are in the app only for now. Wind, gusts, rain and visibility for each part of the lake and
 for a tapped spot are blended from the forecast points around it (natural
 neighbour), so values change smoothly across the lake and never go beyond
 those points; hail and thunderstorms come from the nearest point. The website
