@@ -186,3 +186,10 @@ Sample warning for the preview, not an official warning
 # panel shows instead, and RouteSummary's headline is always off. The website's planning panel matches what the app shows.
 %@ · %@ · finished at %@
 %@ · at the boat
+
+# Widgets: the website has no widgets (short widget words, owner-approved widget redesign 2026-11-12)
+Better from %@
+Caution
+Good until %@
+Not good
+Out of date

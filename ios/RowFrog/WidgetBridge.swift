@@ -177,16 +177,28 @@ struct WidgetGalleryView: View {
                     Text("The forecast could not be loaded.").foregroundStyle(.secondary)
                 }
                 let snapshot = RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: forecast)
-                ForEach(sizes.indices, id: \.self) { index in
-                    caption(sizes[index].2)
-                    widget(snapshot, sizes[index].0, sizes[index].1)
-                }
-                caption("Medium: conditions")
-                widget(snapshot, .systemMedium, sizes[1].1, focus: .conditions)
-                caption("Medium: good rowing times")
+                // Each size in its layouts (Edit Widget > Layout): fewer values first, the default.
+                caption("Small: fewer values")
+                widget(snapshot, .systemSmall, sizes[0].1)
+                caption("Small: all values")
+                widget(snapshot, .systemSmall, sizes[0].1, layout: .beside)
+                caption("Medium: fewer values")
+                widget(snapshot, .systemMedium, sizes[1].1)
+                caption("Medium: all values")
+                widget(snapshot, .systemMedium, sizes[1].1, layout: .beside)
+                caption("Medium, good rowing times: fewer values")
                 widget(snapshot, .systemMedium, sizes[1].1, focus: .windows)
-                caption("Large: good rowing times first")
-                widget(snapshot, .systemLarge, sizes[2].1, focus: .windows)
+                caption("Medium, good rowing times: all values")
+                widget(snapshot, .systemMedium, sizes[1].1, focus: .windows, layout: .beside)
+                caption("Large: fewer values")
+                widget(snapshot, .systemLarge, sizes[2].1)
+                caption("Large: all values in a row")
+                widget(snapshot, .systemLarge, sizes[2].1, layout: .below)
+                caption("Large: all values beside the light")
+                widget(snapshot, .systemLarge, sizes[2].1, layout: .beside)
+                caption("Small and medium without marks")
+                widget(snapshot, .systemSmall, sizes[0].1, marks: false)
+                widget(snapshot, .systemMedium, sizes[1].1, focus: .windows, marks: false)
                 caption("Extra large (iPad only)")
                 widget(snapshot, .systemExtraLarge, CGSize(width: 715, height: 354))
                     .scaleEffect(364 / 715, anchor: .topLeading)
@@ -235,8 +247,8 @@ struct WidgetGalleryView: View {
     }
 
     private func widget(_ snapshot: RowingSnapshot, _ family: WidgetFamily, _ size: CGSize, focus: WidgetFocus = .hourly,
-                        background: WidgetBackground = .sky) -> some View {
-        RowingWidgetView(snapshot: snapshot, family: family, focus: focus, plain: background == .system)
+                        background: WidgetBackground = .sky, layout: WidgetLayout = .fewer, marks: Bool = true) -> some View {
+        RowingWidgetView(snapshot: snapshot, family: family, focus: focus, plain: background == .system, layout: layout, marks: marks)
             .padding(16)
             .frame(width: size.width, height: size.height)
             .background(WidgetBackdrop(background: background, snapshot: snapshot,

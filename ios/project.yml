@@ -133,6 +133,7 @@ targets:
       - path: RowFrog/DaylightRule.swift
       - path: RowFrog/Backgrounds.swift
       - path: RowFrog/WidgetViews.swift
+      - path: RowFrog/WidgetLayouts.swift
       - path: RowFrog/OwnPlaces.swift
       - path: RowFrog/RiverModels.swift
     entitlements:

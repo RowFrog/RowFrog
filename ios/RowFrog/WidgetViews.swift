@@ -144,33 +144,13 @@ struct RowingSnapshot {
     /// The forecast is too old at `date` to show green.
     var isStale: Bool { forecast?.isStale(at: date) ?? false }
 
-    /// Stretches of green, daylight hours from now on: the times to go rowing.
-    /// None from an out-of-date forecast.
-    var rowingWindows: [ClosedRange<Date>] {
-        guard !isStale else { return [] }
-        var windows: [ClosedRange<Date>] = []
-        var start: Date?
-        var end: Date?
-        for hour in hours {
-            if hour.light == .green && hour.sunUp != false {
-                if start == nil { start = max(hour.time, date) }
-                end = hour.time.addingTimeInterval(3600)
-            } else if let s = start, let e = end {
-                windows.append(s...e)
-                start = nil
-            }
-        }
-        if let s = start, let e = end { windows.append(s...e) }
-        return windows.filter { $0.upperBound.timeIntervalSince($0.lowerBound) >= 3600 }
-    }
-
     static let placeholder = RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: nil)
 }
 
 /// The words the widget shows, worked out here so the tests can read them.
 extension RowingSnapshot {
     /// The main reason for amber or red, else rain on DWD's radar within two
-    /// hours ("Light rain from 14:30"), else wind and gusts. An out-of-date
+    /// hours ("Light rain from 14:30", "Dry from 15:10"), else wind and gusts. An out-of-date
     /// forecast says how old it is instead.
     func detailLine(_ hour: ForecastHour) -> String {
         if isStale, let forecast {
@@ -179,42 +159,8 @@ extension RowingSnapshot {
         if let reason = hour.reasons.filter({ $0.light == hour.light }).first, hour.light != .green {
             return reason.label
         }
-        if let radar = rainAhead { return radar.summary }
+        if let radar = rainAhead { return radarLine(radar) }
         return "\(tr("Wind")) \(Format.windRange(hour.windSpeedMs, hour.windGustMs))"
-    }
-
-    /// The top tile's values in its order: water, wind, waves, then (with two
-    /// rows) rain, visibility, ice when it matters, and daylight.
-    func conditionTiles(rows: Int) -> [WidgetConditionTile] {
-        let hour = current
-        let water: String = {
-            if let measured = forecast?.waterTemperature?.celsius { return Format.temperature(measured, digits: 1) }
-            if let estimate = forecast?.estimatedWaterC { return "≈ " + Format.temperature(estimate) }
-            return "–"
-        }()
-        var tiles: [WidgetConditionTile] = [
-            WidgetConditionTile(condition: .waterTemperature, value: water),
-            WidgetConditionTile(condition: .wind, value: Format.windRange(hour?.windSpeedMs, hour?.windGustMs)),
-            WidgetConditionTile(condition: .waves, value: Format.waves(hour?.waveHeightM)),
-        ]
-        if rows > 1 {
-            tiles += [
-                WidgetConditionTile(condition: .precipitation, value: hour.flatMap(precipitationText) ?? tr("None")),
-                WidgetConditionTile(condition: .visibility, value: Format.distance(hour?.visibilityM)),
-            ]
-            if let ice = forecast?.iceValue { tiles.append(WidgetConditionTile(condition: .ice, value: ice)) }
-            tiles.append(WidgetConditionTile(condition: .daylight, value: sunText))
-        }
-        return tiles
-    }
-
-    /// "↓ 18:42" while the sun is up, else "↑ 07:12".
-    var sunText: String {
-        guard let sun = forecast?.sunState(at: date) else { return "–" }
-        switch sun {
-        case let .up(_, sunset): return "↓ \(Format.time(sunset))"
-        case let .down(sunrise, _): return "↑ \(Format.time(sunrise))"
-        }
     }
 
     /// Under "Good to row" when there is no window to show.
@@ -222,9 +168,9 @@ extension RowingSnapshot {
         isStale ? tr("Forecast out of date. Open Row Frog to update.") : tr("No green hours in the forecast.")
     }
 
-    /// The lock screen's line: "MRC 1880 · Good to row · 15°".
+    /// The lock screen's line: "Good until 16:00 · 15°"; the club's name stays off the lock screen.
     var inlineText: String {
-        "\(clubName) · \(current.map { $0.light.title(stale: isStale) } ?? "–") · \(Format.degrees(current?.temperatureC))"
+        "\(current == nil ? "–" : lockTitle) · \(Format.degrees(current?.temperatureC))"
     }
 }
 
@@ -242,13 +188,20 @@ extension Light {
 }
 
 /// The widget for every size, in the style of the iOS Weather widgets: a sky
-/// background, the temperature large, and the rowing light as a coloured pill.
+/// background, the club and the forecast's time on top, the rowing light with
+/// its reason, and the values as symbol and value. The layouts themselves are in
+/// WidgetLayouts.swift.
 struct RowingWidgetView: View {
     let snapshot: RowingSnapshot
     let family: WidgetFamily
     var focus: WidgetFocus = .hourly
     /// On the plain light or dark background the text follows the system's colours instead of white.
     var plain = false
+    /// Fewer values, or all six of the top tile (the widget's "Layout" option).
+    var layout: WidgetLayout = .fewer
+    /// A check, "!" or "×" in the light's dots and stripes in the day bars (the widget's "Marks" option).
+    var marks = true
+    @Environment(\.accessibilityDifferentiateWithoutColor) var withoutColor
 
     var body: some View {
         Group {
@@ -257,15 +210,15 @@ struct RowingWidgetView: View {
             case .accessoryCircular: circular
             case .accessoryRectangular: rectangular
             default:
-                if snapshot.current == nil {
-                    noData
-                } else {
+                if let hour = snapshot.current {
                     switch family {
-                    case .systemSmall: small
-                    case .systemMedium: medium
-                    case .systemExtraLarge: extraLarge
-                    default: large
+                    case .systemSmall: smallLayout(hour)
+                    case .systemMedium: mediumLayout(hour)
+                    case .systemExtraLarge: extraLargeLayout(hour)
+                    default: largeLayout(hour)
                     }
+                } else {
+                    noData
                 }
             }
         }
@@ -273,65 +226,9 @@ struct RowingWidgetView: View {
         .environment(\.locale, AppSettings.shared.locale)
     }
 
-    // MARK: Home screen
-
-    /// The light and why on top, temperature, feels like and sky below, the club at the bottom.
-    private var small: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            if let hour = snapshot.current {
-                lightAndWhy(hour)
-                Spacer(minLength: 0)
-                HStack(alignment: .center, spacing: 6) {
-                    temperature(hour, size: 34)
-                    skyIcon(hour).font(.title2)
-                }
-                feelsLike(hour)
-            }
-            title
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-    }
-
-    private var medium: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            header
-            Spacer(minLength: 0)
-            focusSection(focus, rows: 1)
-        }
-    }
-
-    private var large: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            header
-            Divider().overlay(rule)
-            ForEach(Array(orderedFocus.enumerated()), id: \.element) { index, section in
-                if index > 0 { Divider().overlay(rule) }
-                focusSection(section, rows: section == .conditions ? 2 : 3)
-            }
-            Spacer(minLength: 0)
-        }
-    }
-
-    private var extraLarge: some View {
-        HStack(alignment: .top, spacing: 20) {
-            VStack(alignment: .leading, spacing: 10) {
-                header
-                Divider().overlay(rule)
-                focusSection(.conditions, rows: 2)
-                Spacer(minLength: 0)
-            }
-            VStack(alignment: .leading, spacing: 10) {
-                hourly(count: 8)
-                Divider().overlay(rule)
-                windows(limit: 4)
-                Spacer(minLength: 0)
-            }
-        }
-    }
-
     private var noData: some View {
         VStack(alignment: .leading, spacing: 6) {
-            title
+            topLine
             Spacer(minLength: 0)
             Image(systemName: "wifi.slash").font(.title3)
             Text(tr("Open Row Frog to load the forecast."))
@@ -341,119 +238,7 @@ struct RowingWidgetView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
     }
 
-    private var rule: Color { plain ? Color.secondary.opacity(0.4) : .white.opacity(0.35) }
-
-    private var orderedFocus: [WidgetFocus] {
-        [focus] + WidgetFocus.allCases.filter { $0 != focus }
-    }
-
-    @ViewBuilder
-    private func focusSection(_ section: WidgetFocus, rows: Int) -> some View {
-        switch section {
-        case .hourly: hourly(count: 6)
-        case .conditions: conditions(rows: rows)
-        case .windows: windows(limit: rows)
-        }
-    }
-
-    // MARK: Parts
-
-    private var title: some View {
-        HStack(spacing: 4) {
-            Text(snapshot.clubName)
-                .font(.caption.weight(.semibold))
-                .lineLimit(1)
-            if snapshot.isHome {
-                Image(systemName: "location.fill").font(.caption2)
-            }
-        }
-    }
-
-    /// The air temperature large with its thermometer, as in the club page's top tile.
-    private func temperature(_ hour: ForecastHour, size: CGFloat) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 2) {
-            Image(systemName: Condition.temperature.symbol)
-                .symbolRenderingMode(.hierarchical)
-                .font(.system(size: size * 0.42))
-            Text(Format.degrees(hour.temperatureC))
-                .font(.system(size: size, weight: .light))
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(tr("Air temperature %@", Format.temperature(hour.temperatureC)))
-    }
-
-    /// "Feels like 9°" with its symbol, right under the temperature.
-    @ViewBuilder
-    private func feelsLike(_ hour: ForecastHour) -> some View {
-        if let feels = hour.apparentTemperatureC {
-            Label(tr("Feels like %@", Format.degrees(feels)), systemImage: Condition.feelsLike.symbol)
-                .font(.caption.weight(.medium))
-                .symbolRenderingMode(.hierarchical)
-                .opacity(0.9)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-        }
-    }
-
-    /// The light, why and club on the left; sky, temperature and feels like on the right.
-    private var header: some View {
-        HStack(alignment: .top) {
-            if let hour = snapshot.current {
-                VStack(alignment: .leading, spacing: 4) {
-                    lightAndWhy(hour)
-                    title
-                }
-                Spacer(minLength: 8)
-                VStack(alignment: .trailing, spacing: 0) {
-                    HStack(alignment: .center, spacing: 6) {
-                        skyIcon(hour).font(.title)
-                        temperature(hour, size: 38)
-                    }
-                    feelsLike(hour)
-                }
-            }
-        }
-    }
-
-    /// The rowing light large, with the reason under it. In cold water the
-    /// life-jacket symbol sits beside the light, or in front of the reason on
-    /// the small widget, where the light's words need the whole width.
-    private func lightAndWhy(_ hour: ForecastHour) -> some View {
-        let kit = ColdWaterKit(waterC: snapshot.forecast?.waterTemperature?.celsius ?? snapshot.forecast?.estimatedWaterC,
-                               limits: AppSettings.shared.limits(at: snapshot.forecast?.clubId))
-        let small = family == .systemSmall
-        return VStack(alignment: .leading, spacing: 3) {
-            HStack(spacing: 5) {
-                LightPill(light: hour.light, compact: false, stale: snapshot.isStale, plain: plain)
-                if let kit, !small { coldWaterSymbol(kit) }
-            }
-            HStack(spacing: 4) {
-                if let kit, small {
-                    Image(systemName: ColdWaterKit.symbol)
-                        .font(.caption.weight(.bold))
-                        .accessibilityLabel(kit.title)
-                }
-                Text(detailLine(hour))
-                    .font(.caption.weight(.medium))
-                    .opacity(0.9)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
-            }
-        }
-    }
-
-    private func coldWaterSymbol(_ kit: ColdWaterKit) -> some View {
-        Image(systemName: ColdWaterKit.symbol)
-            .font(.caption.weight(.bold))
-            .foregroundStyle(plain ? AnyShapeStyle(ColdWaterKit.color) : AnyShapeStyle(Color.white))
-            .padding(5)
-            .background(plain ? ColdWaterKit.color.opacity(0.15) : ColdWaterKit.color.opacity(0.75), in: Circle())
-            .accessibilityLabel(kit.title)
-    }
-
-    private func detailLine(_ hour: ForecastHour) -> String { snapshot.detailLine(hour) }
-
-    private func skyIcon(_ hour: ForecastHour) -> some View {
+    func skyIcon(_ hour: ForecastHour) -> some View {
         let night = hour.sunUp == false
         let sky = Sky(hour: hour)
         return Image(systemName: sky.symbol(night: night))
@@ -461,154 +246,61 @@ struct RowingWidgetView: View {
             .accessibilityLabel(sky.title)
     }
 
-    private func hourly(count: Int) -> some View {
-        HStack(spacing: 0) {
-            ForEach(Array(snapshot.hours.prefix(count).enumerated()), id: \.element.time) { index, hour in
-                VStack(spacing: 5) {
-                    Text(index == 0 ? tr("Now") : Format.time(hour.time))
-                        .font(.caption2.weight(.medium))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.7)
-                    skyIcon(hour).font(.subheadline)
-                    Circle()
-                        .fill(hour.light.color(stale: snapshot.isStale))
-                        .frame(width: 9, height: 9)
-                        .overlay(Circle().stroke(.white.opacity(0.8), lineWidth: 1))
-                        .accessibilityLabel(hour.light.title(stale: snapshot.isStale))
-                    Text(Format.degrees(hour.temperatureC))
-                        .font(.caption.weight(.medium))
-                }
-                .frame(maxWidth: .infinity)
-            }
-        }
-    }
-
-    /// The top tile's values in its order: water, wind, waves, then rain,
-    /// visibility and daylight (ice joins in winter, daylight then gets a line of its own).
-    private func conditions(rows: Int) -> some View {
-        let tiles = snapshot.conditionTiles(rows: rows)
-        return Grid(alignment: .leading, horizontalSpacing: 10, verticalSpacing: 8) {
-            ForEach(0..<(tiles.count + 2) / 3, id: \.self) { row in
-                GridRow {
-                    ForEach(tiles[(row * 3)..<min(row * 3 + 3, tiles.count)], id: \.condition) { tile in
-                        let (condition, value) = (tile.condition, tile.value)
-                        HStack(spacing: 5) {
-                            Image(systemName: condition.symbol)
-                                .symbolRenderingMode(.hierarchical)
-                                .font(.caption)
-                                .frame(width: 16)
-                            Text(value)
-                                .font(.caption.weight(.medium))
-                                .lineLimit(1)
-                                .minimumScaleFactor(0.7)
-                        }
-                        .accessibilityElement(children: .combine)
-                        .accessibilityLabel("\(condition.title) \(value)")
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                }
-            }
-        }
-    }
-
-    private func windows(limit: Int) -> some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Label(tr("Good to row"), systemImage: "figure.rower")
-                .font(.caption.weight(.semibold))
-            let windows = snapshot.rowingWindows.prefix(limit)
-            if windows.isEmpty {
-                Text(snapshot.noWindowsText)
-                    .font(.caption)
-                    .opacity(0.85)
-            }
-            ForEach(Array(windows), id: \.lowerBound) { window in
-                HStack(spacing: 6) {
-                    Circle().fill(Light.green.color).frame(width: 8, height: 8)
-                    Text(Format.day(window.lowerBound))
-                        .font(.caption.weight(.medium))
-                    Spacer(minLength: 4)
-                    Text("\(Format.time(window.lowerBound))–\(Format.time(window.upperBound))")
-                        .font(.caption.monospacedDigit())
-                }
-            }
-        }
-    }
-
     // MARK: Lock screen
 
+    /// The mark of the light now, or a question mark without a forecast.
+    private var lockMark: String {
+        snapshot.current?.light.plainMark(stale: snapshot.isStale) ?? "questionmark"
+    }
+
+    /// "Good until 16:00 · 15°" with the light's mark; no club name.
     private var inline: some View {
-        let light = snapshot.current?.light
-        let stale = snapshot.isStale
-        return Label {
+        Label {
             Text(snapshot.inlineText)
         } icon: {
-            Image(systemName: light?.glyph(stale: stale) ?? "questionmark.circle")
+            Image(systemName: snapshot.current?.light.glyph(stale: snapshot.isStale) ?? "questionmark.circle")
         }
     }
 
+    /// The daylight ring (owner's pick D): today's hours from sunrise to sunset, bright where good.
     private var circular: some View {
-        ZStack {
-            AccessoryWidgetBackground()
-            VStack(spacing: 1) {
-                Image(systemName: snapshot.current?.light.glyph(stale: snapshot.isStale) ?? "questionmark.circle")
-                    .font(.title3)
-                Text(Format.degrees(snapshot.current?.temperatureC))
-                    .font(.caption.weight(.semibold))
-            }
-        }
-        .accessibilityElement(children: .combine)
+        DaylightRing(day: snapshot.current == nil ? nil : snapshot.ringDay, now: snapshot.ringNow, mark: lockMark)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(snapshot.current == nil ? tr("Open Row Frog to load the forecast.") : snapshot.lockTitle)
     }
 
+    /// The light in short words with its mark, why or what comes, and wind, waves and visibility.
     private var rectangular: some View {
         VStack(alignment: .leading, spacing: 1) {
-            Text(snapshot.clubName).font(.headline).lineLimit(1)
-            if let hour = snapshot.current {
-                Label(hour.light.title(stale: snapshot.isStale), systemImage: hour.light.glyph(stale: snapshot.isStale))
-                    .font(.subheadline.weight(.medium))
-                Text("\(Format.degrees(hour.temperatureC)) · \(detailLine(hour))")
+            if snapshot.current != nil {
+                Label(snapshot.lockTitle, systemImage: snapshot.current?.light.glyph(stale: snapshot.isStale) ?? "questionmark.circle")
+                    .font(.headline)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                Text(snapshot.lockDetail)
                     .font(.caption)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+                HStack(spacing: 6) {
+                    ForEach([Condition.wind, .waves, .visibility], id: \.self) { condition in
+                        let value = snapshot.value(condition)
+                        HStack(spacing: 2) {
+                            Image(systemName: value.symbol)
+                            Text(value.text)
+                        }
+                        .accessibilityElement(children: .ignore)
+                        .accessibilityLabel("\(condition.title) \(value.text)")
+                    }
+                }
+                .font(.caption2.weight(.semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
             } else {
+                Text(snapshot.clubName).font(.headline).lineLimit(1)
                 Text(tr("Open Row Frog to load the forecast.")).font(.caption)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
-
-/// One value of the widget's conditions grid.
-struct WidgetConditionTile: Equatable {
-    let condition: Condition
-    let value: String
-}
-
-private extension WidgetFamily {
-    var isAccessory: Bool {
-        [.accessoryInline, .accessoryCircular, .accessoryRectangular].contains(self)
-    }
-}
-
-/// The rowing light as a pill: coloured dot and words, on a light glass.
-struct LightPill: View {
-    let light: Light
-    let compact: Bool
-    var stale = false
-    var plain = false
-
-    var body: some View {
-        HStack(spacing: 5) {
-            Circle()
-                .fill(light.color(stale: stale))
-                .frame(width: compact ? 10 : 16, height: compact ? 10 : 16)
-                .overlay(Circle().stroke(.white, lineWidth: 1.5))
-            Text(light.title(stale: stale))
-                .font((compact ? Font.caption : Font.headline).weight(.semibold))
-                .lineLimit(1)
-                .minimumScaleFactor(0.7)
-        }
-        .padding(.horizontal, compact ? 8 : 10)
-        .padding(.vertical, compact ? 3 : 5)
-        .background(plain ? Color.secondary.opacity(0.15) : .white.opacity(0.22), in: Capsule())
     }
 }
 
