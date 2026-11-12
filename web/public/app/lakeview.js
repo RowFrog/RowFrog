@@ -10,12 +10,12 @@ import {
   CONDITION_ICONS, forecasts, conditionIcon, boatControl, loadCatalog, rain,
 } from "./shared.js";
 import { riverSpeed } from "./river.js";
-import { compass, matchesStandard, coldWaterKit, reasonCondition, key } from "./logic.js";
+import { compass, matchesStandard, coldWaterKit, reasonCondition, key, sunDaysOf } from "./logic.js";
 import {
   decodeView, hourIndex, viewStale, applyLakeLimits, stripes, stripesFall, coldShore, shares, zoneTitle, headline, windSummary, maxWave,
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
-  gridEdges, cellAt, cellColours, rasterPixels, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
-  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, showsOars, shouldSplit, spotProbe, windAt,
+  gridEdges, cellAt, cellColours, rasterPixels, fineLight, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
+  roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, showsOars, shouldSplit, spotProbe, windAt, withDaylightNow,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips, closeTip } from "./tour.js";
@@ -42,9 +42,16 @@ export const forgetView = (lakeId) => views.delete(lakeId);
 const clubWater = new Map();
 export const noteWater = (lakeId, celsius) => celsius != null && clubWater.set(lakeId, celsius);
 
-/** The lake coloured for the map's boat, with the water the shore is drawn by. */
+/** The sunrise and sunset of the club page that last showed each lake, for "now" on the lake (LakeViewStore.noteDaylight). */
+const clubDays = new Map();
+const noteDaylight = (lakeId, clubId) => {
+  const days = sunDaysOf(forecasts.get(clubId)?.value);
+  if (days.length) clubDays.set(lakeId, days);
+};
+
+/** The lake coloured for the map's boat, with the water the shore is drawn by; "now" by this minute's daylight. */
 export async function viewForMap(lakeId) {
-  const raw = await loadView(lakeId);
+  const raw = withDaylightNow(await loadView(lakeId), clubDays.get(lakeId));
   const limits = mapLimits();
   const view = applyLakeLimits(raw, limits, matchesStandard(limits));
   return { ...view, clubs: await withClubhouses(lakeId, view.clubs), shoreWaterC: raw.waterC ?? clubWater.get(lakeId) ?? null };
@@ -100,9 +107,13 @@ export function splitClubPins(L, map, entries) {
 const rgb = (c, a = 1) => `rgba(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])}, ${a})`;
 export const COLD_SHORE = { cool: "rgb(92, 168, 242)", cold: "rgb(20, 84, 194)" };
 
-/** The hour's lights (or waves, wind) as a small picture, one pixel per cell, for smooth scaling. */
+/**
+ * The hour's lights (or waves, wind) as a small picture for smooth scaling: one pixel per cell, and for the
+ * rowing light finer, judged per pixel from the blended values (LakeRaster.image, fineLight).
+ */
 export function rasterCanvas(view, hour, layer) {
-  const { width, height, data } = rasterPixels(view, cellColours(view, hour, layer, mapLimits()));
+  const limits = mapLimits();
+  const { width, height, data } = (layer === "light" && fineLight(view, hour, limits)) || rasterPixels(view, cellColours(view, hour, layer, limits));
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
@@ -132,7 +143,8 @@ const MAP_STRIPE_SCALE = 1.6;
  */
 function strokeTileStripes(ctx, kind, size, ox, oy, fall) {
   const red = kind === "red";
-  ctx.strokeStyle = red ? "rgba(255, 59, 48, .55)" : "rgba(255, 149, 0, .75)";
+  // The pane is drawn at COLOUR_OPACITY as a whole, so the stripes are stronger here to look as before.
+  ctx.strokeStyle = red ? `rgba(255, 59, 48, ${0.55 / COLOUR_OPACITY})` : "rgb(255, 149, 0)";
   ctx.lineWidth = (red ? 1.5 : 1.2) * MAP_STRIPE_SCALE;
   const gap = (red ? 8 : 14) * MAP_STRIPE_SCALE;
   ctx.beginPath();
@@ -154,10 +166,24 @@ function strokeTileStripes(ctx, kind, size, ox, oy, fall) {
 }
 
 /** The lake's colours as map tiles drawn at the screen's resolution from `page.colours` (see drawOverlay). */
+/**
+ * How strongly the colours cover the map. The pane is faded as a whole, not each tile: tiles overlap by a
+ * pixel so no light seam shows between them at in-between zoom levels, and the overlap must not show darker.
+ */
+const COLOUR_OPACITY = 0.72;
+
 function lakeColourLayer(L) {
   const Layer = L.GridLayer.extend({
-    createTile(coords) {
+    _initTile(tile) {
+      L.GridLayer.prototype._initTile.call(this, tile);
       const size = this.getTileSize();
+      tile.style.width = `${size.x + 1}px`;
+      tile.style.height = `${size.y + 1}px`;
+    },
+    createTile(coords) {
+      const tile = this.getTileSize();
+      // One pixel more each way than the tile, over its neighbour (see COLOUR_OPACITY).
+      const size = { x: tile.x + 1, y: tile.y + 1 };
       const ratio = window.devicePixelRatio || 1;
       const canvas = document.createElement("canvas");
       canvas.width = size.x * ratio;
@@ -166,8 +192,8 @@ function lakeColourLayer(L) {
       const colours = page?.colours;
       if (!map || !colours) return canvas;
       const e = gridEdges(page.view.grid);
-      const ox = coords.x * size.x;
-      const oy = coords.y * size.y;
+      const ox = coords.x * tile.x;
+      const oy = coords.y * tile.y;
       const at = (lat, lon) => map.project([lat, lon], coords.z);
       const nw = at(e.north, e.west);
       const se = at(e.south, e.east);
@@ -186,11 +212,9 @@ function lakeColourLayer(L) {
         shore.closePath();
       }
       ctx.clip(shore, "evenodd");
-      ctx.globalAlpha = 0.72;
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(colours.raster, nw.x - ox, nw.y - oy, se.x - nw.x, se.y - nw.y);
-      ctx.globalAlpha = 1;
       if (colours.stripes) strokeTileStripes(ctx, colours.stripes, size, ox, oy, colours.fall);
       return canvas;
     },
@@ -314,6 +338,7 @@ export function kitBadge(view) {
 /** Fills the club page's lake view tile, or hides it when the lake has no view. */
 export async function fillLakeCard(box, lakeId, clubId, waterC) {
   noteWater(lakeId, waterC);
+  noteDaylight(lakeId, clubId);
   let view;
   try {
     view = await viewForMap(lakeId);
@@ -363,6 +388,7 @@ let page = null;
 /** The lake map page: map on top, the panel with the hours and the details below. */
 export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
   page?.map?.remove();
+  if (clubId) noteDaylight(lakeId, clubId);
   // Over the map at the top left, a round close button and the lake's name, as the app's topBar; the layers,
   // the colour scale and the route tools sit by the map and in the panel (LakeMapScreen).
   root.innerHTML = `<div class="lake-screen">${testing()}
@@ -437,7 +463,9 @@ async function buildMap() {
     }
   }).observe(box);
   // The lake's colours sit over the base map and under the shore line, arrows and pins.
-  map.createPane("lakeColours").style.zIndex = 390;
+  const colourPane = map.createPane("lakeColours");
+  colourPane.style.zIndex = 390;
+  colourPane.style.opacity = String(COLOUR_OPACITY);
   const rings = page.view.outline.map((ring) => ring.map(([lon, lat]) => [lat, lon]));
   page.layers.shore = L.polygon(rings, { fill: false, weight: 1, color: "rgba(0, 122, 255, .45)", interactive: false }).addTo(map);
   page.layers.arrows = L.layerGroup().addTo(map);

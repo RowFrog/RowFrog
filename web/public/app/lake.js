@@ -1,7 +1,7 @@
 // The lake view and route planning, worked out from /lakes/{id}/view as in the
 // app (LakeView.swift, Route.swift). Kept free of the page so Node can test it.
 
-import { key, limitsFor, coldWaterKit } from "./logic.js";
+import { key, limitsFor, coldWaterKit, daylightAt, DAYLIGHT_REASONS, COLD } from "./logic.js";
 import { lakeInterpolation, blendWind } from "./interpolate.js";
 
 const RANK = { green: 0, amber: 1, red: 2 };
@@ -89,6 +89,31 @@ export function hourIndex(view, at = new Date()) {
     if (new Date(h.time) <= at) found = i;
   });
   return found;
+}
+
+/**
+ * The whole-lake light as it stands at `t` (ms), inside its hour (LakeWide.at). The backend gives each hour
+ * the strictest daylight of its minutes, so the hour of sunrise said "sun down" until it was over; "now" goes
+ * by this minute, as on the club page: green, "sunset_soon" in the last hour before sunset, red with the sun
+ * down. Other whole-lake reasons (warnings, cold water) stay.
+ */
+export function lakeWideAt(lakeWide, t, days) {
+  if (!lakeWide || !days?.length || !(lakeWide.reasons ?? []).some((r) => DAYLIGHT_REASONS.includes(r.condition))) return lakeWide;
+  const reasons = lakeWide.reasons.filter((r) => !DAYLIGHT_REASONS.includes(r.condition));
+  const now = daylightAt(t, days);
+  if (now === "red") reasons.unshift({ condition: "daylight", light: "red" });
+  if (now === "amber") reasons.unshift({ condition: "sunset_soon", light: "amber" });
+  return { ...lakeWide, reasons, light: reasons.reduce((worst, r) => (RANK[r.light] > RANK[worst] ? r.light : worst), "green") };
+}
+
+/** The view with its current hour's whole-lake light for this minute (LakeViewStore.view): only an hour already begun. */
+export function withDaylightNow(view, days, now = new Date()) {
+  if (!days?.length || !view.hours?.length) return view;
+  const i = hourIndex(view, now);
+  if (new Date(view.hours[i].time) > now) return view;
+  const hours = [...view.hours];
+  hours[i] = { ...hours[i], lakeWide: lakeWideAt(hours[i].lakeWide, now.getTime(), days) };
+  return { ...view, hours };
 }
 
 /** Older than a club forecast may be: green turns grey. */
@@ -374,6 +399,131 @@ export function cellColours(view, hour, layer, limits) {
     return hour.lakeWide.light === "red" ? greyed(c) : c;
   });
 }
+
+/** Pixels per cell side for the fine rowing light, and the most pixels along the longer side (LakeRaster.maxFine). */
+export const MAX_FINE = 8;
+export const MAX_FINE_SIDE = 1600;
+
+/**
+ * The rowing light finer than the cells (LakeRaster.fineLight, owner's pick B, 12 Nov 2026): wind, gusts,
+ * waves, visibility (in log space) and rain are blended between the cell centres and judged per pixel against
+ * the boat's limits (lower in cold water), fog red under 500 m and amber to 1 km, heavy rain amber from 4 mm,
+ * so the colour edges follow the blended values. Thunderstorms and hail stay per cell, and a cell the backend
+ * made stricter for another reason keeps that. Null when the backend sends no light per point (older backends).
+ * Returns RGBA pixels north up, `scale` pixels per cell side.
+ */
+export function fineLight(view, hour, limits) {
+  const { cols: w, rows: h, cells } = view.grid;
+  if (!(w > 0 && h > 0) || !cells.length || !hour.wind.every((x) => x.other != null)) return null;
+  const k = Math.max(2, Math.min(MAX_FINE, Math.floor(MAX_FINE_SIDE / Math.max(w, h))));
+  const cold = view.waterC != null ? view.waterC < COLD.waterC : hour.lakeWide.reasons.some((r) => r.condition === "cold_water");
+  const forBoat = limitsFor(limits.boat, limits.custom, cold ? 0 : null);
+  const lim = ["windAmber", "windRed", "gustAmber", "gustRed", "waveAmber", "waveRed"].map((name) => forBoat.value(name));
+  const F = 5;
+  const judged = (f) => {
+    let l = worse(worse(light(nanNull(f[0]), lim[0], lim[1]), light(nanNull(f[1]), lim[2], lim[3])), light(nanNull(f[2]), lim[4], lim[5]));
+    if (!Number.isNaN(f[3])) l = worse(l, fogLight(Math.exp(f[3])));
+    if (!Number.isNaN(f[4]) && f[4] >= 4) l = worse(l, "amber");
+    return l;
+  };
+  const n = w * h;
+  const values = Array.from({ length: n }, () => new Float64Array(F).fill(NaN));
+  const least = new Array(n).fill("green");
+  const known = new Uint8Array(n);
+  cells.forEach((flat, i) => {
+    if (i >= hour.lights.length) return;
+    const p = (h - 1 - Math.floor(flat / w)) * w + (flat % w);
+    const wind = cellWind(view, hour, i);
+    const f = values[p];
+    f[0] = wind?.speedMs ?? NaN;
+    f[1] = wind?.gustMs ?? NaN;
+    f[2] = i < hour.wavesCm.length && hour.wavesCm[i] != null ? hour.wavesCm[i] / 100 : NaN;
+    let stays = "green";
+    if (wind && wind.storm != null) {
+      // Newer backends say what the combined light is made of.
+      f[3] = wind.visM != null ? Math.log(Math.max(wind.visM, 1)) : NaN;
+      f[4] = wind.rainMm ?? NaN;
+      stays = worse(wind.storm ?? "green", wind.hail === true ? "red" : "green");
+    } else {
+      stays = wind?.other ?? "green"; // only the combined light: it stays per cell
+    }
+    const own = worse(judged(f), stays);
+    // The backend's light is stricter than these explain: keep it for the cell.
+    least[p] = worse(stays, RANK[hour.lights[i]] > RANK[own] ? hour.lights[i] : "green");
+    known[p] = 1;
+  });
+  // Spread two cells onto the land, so the blending does not fade at the shore; the shore line clips it again.
+  for (let pass = 0; pass < 2; pass++) {
+    const filled = known.slice();
+    for (let y = 0; y < h; y++) {
+      for (let x = 0; x < w; x++) {
+        if (filled[y * w + x]) continue;
+        const sum = new Float64Array(F);
+        const count = new Float64Array(F);
+        let stays = "green";
+        let any = false;
+        for (const [dx, dy] of [[-1, 0], [1, 0], [0, -1], [0, 1]]) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h || !filled[ny * w + nx]) continue;
+          const j = ny * w + nx;
+          any = true;
+          stays = worse(stays, least[j]);
+          for (let f = 0; f < F; f++) if (!Number.isNaN(values[j][f])) { sum[f] += values[j][f]; count[f]++; }
+        }
+        if (!any) continue;
+        const j = y * w + x;
+        for (let f = 0; f < F; f++) values[j][f] = count[f] > 0 ? sum[f] / count[f] : NaN;
+        least[j] = stays;
+        known[j] = 1;
+      }
+    }
+  }
+  const fw = w * k;
+  const fh = h * k;
+  const data = new Uint8ClampedArray(fw * fh * 4);
+  const wholeRed = hour.lakeWide.light === "red";
+  const colour = Object.fromEntries(LIGHTS.map((l) => [l, wholeRed ? greyed(RGB[l]) : RGB[l]]));
+  const sum = new Float64Array(F);
+  const weights = new Float64Array(F);
+  const blended = new Float64Array(F);
+  for (let fy = 0; fy < fh; fy++) {
+    const v = (fy + 0.5) / k - 0.5;
+    const y0 = Math.floor(v);
+    const ty = v - y0;
+    const cy = Math.floor(fy / k);
+    for (let fx = 0; fx < fw; fx++) {
+      const cx = Math.floor(fx / k);
+      if (!known[cy * w + cx]) continue;
+      const u = (fx + 0.5) / k - 0.5;
+      const x0 = Math.floor(u);
+      const tx = u - x0;
+      // Bilinear between the four cell centres around the pixel, over the known ones.
+      sum.fill(0);
+      weights.fill(0);
+      for (let corner = 0; corner < 4; corner++) {
+        const dx = corner & 1;
+        const dy = corner >> 1;
+        const weight = (dx === 0 ? 1 - tx : tx) * (dy === 0 ? 1 - ty : ty);
+        const x = x0 + dx;
+        const y = y0 + dy;
+        if (!(weight > 0) || x < 0 || x >= w || y < 0 || y >= h || !known[y * w + x]) continue;
+        const cell = values[y * w + x];
+        for (let f = 0; f < F; f++) if (!Number.isNaN(cell[f])) { sum[f] += cell[f] * weight; weights[f] += weight; }
+      }
+      for (let f = 0; f < F; f++) blended[f] = weights[f] > 0 ? sum[f] / weights[f] : NaN;
+      const c = colour[worse(least[cy * w + cx], judged(blended))];
+      const j = (fy * fw + fx) * 4;
+      data[j] = c[0];
+      data[j + 1] = c[1];
+      data[j + 2] = c[2];
+      data[j + 3] = 255;
+    }
+  }
+  return { width: fw, height: fh, data, scale: k };
+}
+
+const nanNull = (v) => (Number.isNaN(v) ? null : v);
 
 /**
  * The cells as RGBA pixels, one per cell, north up, with the colours spread
