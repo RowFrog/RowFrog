@@ -98,7 +98,7 @@ struct LakeZoneTable: View {
             Image(systemName: "map")
                 .font(.subheadline)
                 .gridColumnAlignment(.leading)
-                .alignmentGuide(VerticalAlignment.center) { $0[VerticalAlignment.bottom] }
+                .alignmentGuide(VerticalAlignment.center) { $0[VerticalAlignment.bottom] + $0.height * 0.2 }
             unit(Condition.waves.unit)
             Image(systemName: "safari").imageScale(.small).gridCellAnchor(.center)
             unit(Condition.wind.unit)
@@ -180,8 +180,11 @@ struct LakeZoneTable: View {
         }
     }
 
-    private func items(_ r: LakeZoneReading) -> [LakeProbeItem] {
-        let from = r.fromDeg.map { " " + tr("from %@", Format.compass($0)) } ?? ""
+    /// The part's values for the lines; `spoken` names the wind's direction
+    /// ("from NE") for VoiceOver, the lines show the table's arrow as a
+    /// character, short enough not to be cut at the largest text sizes.
+    private func items(_ r: LakeZoneReading, spoken: Bool = false) -> [LakeProbeItem] {
+        let from = r.fromDeg.map { " " + (spoken ? tr("from %@", Format.compass($0)) : Self.arrowGlyph(towardDeg: $0 + 180)) } ?? ""
         var items = [
             LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(r.waveM), light: r.waveLight),
             LakeProbeItem(symbol: Condition.wind.symbol, name: tr("Wind"), text: Format.windRange(r.speedMs, r.gustMs) + from, light: r.windLight),
@@ -193,11 +196,18 @@ struct LakeZoneTable: View {
         return items
     }
 
+    /// The arrow nearest to where the wind blows: ↑ ↗ → ↘ ↓ ↙ ← ↖.
+    static func arrowGlyph(towardDeg: Double) -> String {
+        let arrows = ["↑", "↗", "→", "↘", "↓", "↙", "←", "↖"]
+        let i = Int((towardDeg.truncatingRemainder(dividingBy: 360) + 360 + 22.5) / 45) % 8
+        return arrows[i]
+    }
+
     /// "North: waves 0.06 m, wind 2–4 m/s from NE, visibility 17 km", then the light's word,
     /// another reason and the note, for VoiceOver.
     private func label(_ row: Row) -> String {
         var parts = [row.name + ": " + row.light.title(stale: view.isStale)]
-        parts += items(row.reading).map { "\($0.name) \($0.text)" }
+        parts += items(row.reading, spoken: true).map { "\($0.name) \($0.text)" }
         if let note = row.note { parts.append(note) }
         return parts.joined(separator: ", ")
     }

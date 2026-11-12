@@ -185,6 +185,10 @@ final class LakeViewTests: XCTestCase {
         let deg = try XCTUnwrap(from)
         XCTAssertTrue(deg < 0.5 || deg > 359.5, "\(deg)")
         XCTAssertNil(LakeZoneReading.meanFrom([]))
+        // The lines' arrow points where the wind blows: from NE (45°) is ↙, from S is ↑.
+        XCTAssertEqual(LakeZoneTable.arrowGlyph(towardDeg: 45 + 180), "↙")
+        XCTAssertEqual(LakeZoneTable.arrowGlyph(towardDeg: 180 + 180), "↑")
+        XCTAssertEqual(LakeZoneTable.arrowGlyph(towardDeg: 359), "↑")
     }
 
     /// The map draws pictures into its tiles without smoothing: once a pixel

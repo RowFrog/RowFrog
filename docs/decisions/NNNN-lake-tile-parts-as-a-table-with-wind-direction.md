@@ -7,7 +7,7 @@
 
 ## Decision
 
-Option H1. The parts of the lake (Norden, Mitte, Süden …) are a small table styled like the 48-hour table: each column's icon over its unit, one line under the header. A map symbol stands over the parts' names, on the left like the clock over the times. One wind symbol stands over two columns: an arrow for where the wind blows (under a compass) and the speed, wind to gusts (under the unit). Values that set amber or red keep their colour. When the table does not fit (narrow phones, larger text), each part falls back to its name over its values with "from NE". The wind line under the parts is gone.
+Option H1. The parts of the lake (Norden, Mitte, Süden …) are a small table styled like the 48-hour table: each column's icon over its unit, one line under the header. A map symbol stands over the parts' names, on the left like the clock over the times. One wind symbol stands over two columns: an arrow for where the wind blows (under a compass) and the speed, wind to gusts (under the unit). Values that set amber or red keep their colour. When the table does not fit (narrow phones, larger text), each part falls back to its name over its values, the direction as an arrow after the speed ("2–4 m/s ↙"). The wind line under the parts is gone.
 
 ## Why
 
