@@ -78,6 +78,13 @@ struct LakeViewCard: View {
         }
     }
 
+    /// "Fog near the shore, open water clear · Waves up to 0.02 m", or the waves alone while green.
+    static func zoneLine(_ note: LakeZoneNote?, maxWaveM: Double) -> String {
+        let waves = tr("Waves up to %@", Format.waves(maxWaveM))
+        guard let text = note?.text else { return waves }
+        return text + " · " + waves
+    }
+
     private func summary(_ view: LakeView, _ hour: LakeHour) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(tr("Now, %@", Format.time(hour.time)))
@@ -96,6 +103,7 @@ struct LakeViewCard: View {
             }
             MapBoatNote(clubID: clubID)
             if view.zones.count > 1 {
+                let notes = view.zoneNotes(for: hour)
                 ForEach(Array(zip(view.zones.indices, view.zones)), id: \.0) { i, zone in
                     if i < hour.zones.count {
                         VStack(alignment: .leading, spacing: 1) {
@@ -103,7 +111,7 @@ struct LakeViewCard: View {
                                 TrafficLightDot(light: hour.zones[i].light, size: 10, stale: view.isStale)
                                 Text(LakeZoneName.title(zone)).font(.subheadline.weight(.semibold))
                             }
-                            Text(tr("Waves up to %@", Format.waves(hour.zones[i].maxWaveM)))
+                            Text(Self.zoneLine(i < notes.count && notes[i].light == hour.zones[i].light ? notes[i] : nil, maxWaveM: hour.zones[i].maxWaveM))
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                                 .padding(.leading, 16)

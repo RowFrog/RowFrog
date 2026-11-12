@@ -413,6 +413,16 @@ extension LakeView {
         let ranked = zip(zones, hour.zones).sorted { ($0.1.light, $0.1.maxWaveM) < ($1.1.light, $1.1.maxWaveM) }
         guard let best = ranked.first, let worst = ranked.last else { return "" }
         if best.1.light == worst.1.light || zones.count < 2 {
+            // Every part as bad, but only near the shore or only out on open
+            // water: say so, as the map shows the rest better (owner, 12 Nov 2026).
+            if worst.1.light > .green, let whole = zoneNotes(for: hour).last, whole.light == worst.1.light,
+               let cause = whole.cause, let place = whole.place, place != .parts {
+                let red = worst.1.light == .red
+                switch place {
+                case .shore: return red ? tr("%@ near the shore: stay ashore", cause) : tr("%@ near the shore: row with care", cause)
+                default: return red ? tr("%@ on open water: stay ashore", cause) : tr("%@ on open water: row with care", cause)
+                }
+            }
             switch worst.1.light {
             case .green: return lake ? tr("Good to row on the whole lake") : tr("Good to row on the whole stretch")
             case .amber: return lake ? tr("Row with care on the whole lake") : tr("Row with care on the whole stretch")
