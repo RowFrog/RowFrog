@@ -1126,6 +1126,11 @@ function stickHourlyHeader() {
   // The caption strip above the pinned row stays inside the cut.
   const cap = stuck ? parseFloat(getComputedStyle(head).getPropertyValue("--hcap")) || 0 : 0;
   card.style.clipPath = stuck ? `inset(${at.top - cap - card.getBoundingClientRect().top}px 0 0 0 round 16px)` : "";
+  // The rows end at the pinned header's bottom, so none shows through it. Safari does not blur
+  // behind the header inside a frosted tile (a blur within a blur), and the rows read through
+  // its layer (owner's iPhone shot, 12 Nov 2026); the app's header hides them.
+  const rows = head.nextElementSibling;
+  if (rows) rows.style.clipPath = stuck ? `inset(${Math.max(0, at.bottom - rows.getBoundingClientRect().top)}px 0 0 0)` : "";
 }
 window.addEventListener("scroll", updateTopBar, { passive: true });
 window.addEventListener("hashchange", () => requestAnimationFrame(updateTopBar));
@@ -1958,7 +1963,7 @@ function hourlyCard(forecast, now, stale) {
     return nightLine(part.night, list, later(part.night[0]), forecast) + `<div class="nightrows" hidden>${inside}</div>` + `<span class="nightmark ${after}" hidden></span>`;
   }).join("");
   const fold = foldsHourly() && list.length > FOLDED_HOURS ? `<button class="fold" type="button" aria-expanded="false">${foldLabel(false)}</button>` : "";
-  return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}${rows}</div>${fold}`,
+  return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}<div class="hrows">${rows}</div></div>${fold}`,
     { legend: "hourly", cls: `hourly-card ${fold ? "folds" : ""}` });
 }
 
