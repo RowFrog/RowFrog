@@ -193,3 +193,13 @@ Caution
 Good until %@
 Not good
 Out of date
+
+# Lake zone notes: website port pending, remove when ported
+%@ near the shore, open water clear
+%@ near the shore, open water: row with care
+%@ near the shore: row with care
+%@ near the shore: stay ashore
+%@ on open water, near the shore clear
+%@ on open water, near the shore: row with care
+%@ on open water: row with care
+%@ on open water: stay ashore

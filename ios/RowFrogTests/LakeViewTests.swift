@@ -107,6 +107,43 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(Array(bytes[j..<j + 3]), [255, 59, 48])
     }
 
+    /// Fog along both shores turns every part red while the open water is
+    /// clear: the lines say why and where (owner, 12 Nov 2026).
+    func testZoneNotesSayFogNearTheShoreWhileOpenWaterIsClear() throws {
+        // 5 x 4 squares, all water: the outer ring (distance 1) red from fog, the six inner ones green.
+        let lights = (0..<20).map { i in [6, 7, 8, 11, 12, 13].contains(i) ? "0" : "2" }.joined()
+        let foggy = """
+        {"lakeId": "fog-see", "name": "Fog See", "generatedAt": "2026-11-12T09:00:00+00:00", "sample": false,
+         "attribution": [],
+         "grid": {"south": 47.80, "west": 11.30, "dLat": 0.01, "dLon": 0.01, "cols": 5, "rows": 4, "cellM": 1000,
+                  "cells": [\((0..<20).map(String.init).joined(separator: ", "))],
+                  "cellPoint": [\(Array(repeating: "0", count: 20).joined(separator: ", "))],
+                  "cellZone": [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]},
+         "zones": ["north", "south"],
+         "outline": [[[11.295, 47.795], [11.345, 47.795], [11.345, 47.835], [11.295, 47.835]]],
+         "points": [{"lat": 47.815, "lon": 11.32}],
+         "clubs": [],
+         "hours": [{"time": "2026-11-12T09:00:00+00:00",
+                    "lakeWide": {"light": "green", "reasons": []},
+                    "lights": "\(lights)", "wavesCm": [\(Array(repeating: "1", count: 20).joined(separator: ", "))],
+                    "wind": [{"speedMs": 1.0, "gustMs": 2.0, "fromDeg": 315, "other": 2, "visM": 300, "storm": 0}],
+                    "zones": [{"light": "red", "maxWaveM": 0.01}, {"light": "red", "maxWaveM": 0.01}]}]}
+        """
+        let view = try APIClient.decoder.decode(LakeView.self, from: Data(foggy.utf8))
+        let hour = view.hours[0]
+        XCTAssertEqual(view.shoreDistance(), [1, 1, 1, 1, 1, 1, 2, 2, 2, 1, 1, 2, 2, 2, 1, 1, 1, 1, 1, 1])
+        let notes = view.zoneNotes(for: hour)
+        XCTAssertEqual(notes.count, 3, "two parts and the whole lake")
+        XCTAssertEqual(notes[0], LakeZoneNote(light: .red, cause: "Fog", place: .shore, rest: .green))
+        XCTAssertEqual(notes[0].text, "Fog near the shore, open water clear")
+        // The part's values: waves, wind, and the lowest visibility in red.
+        let values = view.zoneValues(0, hour: hour)
+        XCTAssertEqual(values.map(\.name), ["Waves", "Wind", "Visibility"])
+        XCTAssertEqual(values.map(\.light), [.green, .green, .red])
+        XCTAssertEqual(values[0].text, Format.waves(0.01))
+        XCTAssertEqual(view.headline(for: hour), "Fog near the shore: stay ashore")
+    }
+
     func testWaveColoursRiseWithTheLimits() {
         let small = RowingLimits(boat: .small)
         XCTAssertGreaterThan(LakeRaster.waveColor(0.3, small).r, LakeRaster.waveColor(0, small).r)
