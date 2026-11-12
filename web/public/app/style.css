@@ -729,23 +729,26 @@ button.red { color: var(--red); }
 .more-rows button span { flex: 1; text-align: left; }
 .more-rows button svg:last-child { color: var(--sub); font-size: 13px; }
 .lake-panel { flex: 0 1 auto; max-height: 48%; overflow-y: auto; padding: 12px 16px calc(12px + env(safe-area-inset-bottom)); background: var(--card); }
-/* On a phone the panel is the app's sheet over the map: rounded at the top, with a grabber, the map running on under it. */
-@media (max-width: 859px) {
-  .lake-map-box { margin-bottom: -18px; }
-  .lake-over { padding-bottom: 28px; }
-  .lake-panel { position: relative; z-index: 1001; padding-top: 18px; border-radius: 16px 16px 0 0; box-shadow: 0 -4px 18px rgba(0, 0, 0, .12);
+/* The panel is the app's sheet over the map: rounded at the top, with a grabber, the map running on under it.
+   From 600 px wide it is a card at the bottom left instead (owner's pick B, docs/decisions/0026). */
+@media (max-width: 599px) { .lake-map-box { margin-bottom: -18px; } .lake-over { padding-bottom: 28px; } }
+@media all {
+  .lake-panel { position: relative; z-index: 1001; padding-top: 18px; border-radius: 22px 22px 0 0; box-shadow: 0 -4px 18px rgba(0, 0, 0, .12);
     background: color-mix(in srgb, var(--card) 92%, transparent); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); }
   .panel-grip { position: sticky; top: -18px; z-index: 1; display: block; width: 100%; height: 22px; margin: -18px 0 0; padding: 0; background: none; border: 0; cursor: grab; touch-action: none; }
   .panel-grip::before { content: ""; display: block; width: 38px; height: 5px; margin: 8px auto; border-radius: 3px; background: color-mix(in srgb, var(--text) 30%, transparent); }
   .lake-panel .one-line { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 }
-@media (min-width: 860px) { .panel-grip { display: none; } }
 .lake-panel p { margin: 6px 0; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-@media (min-width: 860px) {
-  .lake-page { flex-direction: row; }
+@media (min-width: 600px) {
+  .lake-page { position: relative; }
   .lake-map-box { flex: 1 1 auto; }
-  .lake-panel { flex: 0 0 380px; max-height: none; border-left: .5px solid var(--line); }
+  .lake-panel { position: absolute; left: calc(16px + env(safe-area-inset-left)); bottom: calc(16px + env(safe-area-inset-bottom)); width: 360px;
+    max-height: calc(100% - 92px - env(safe-area-inset-bottom)); padding-bottom: 12px; border-radius: 22px; box-shadow: 0 6px 24px rgba(0, 0, 0, .18); }
+  .panel-grip { top: -18px; }
+  /* The layer's colours and buttons stay clear of the card. */
+  .lake-over { left: calc(392px + env(safe-area-inset-left)); padding-bottom: 16px; }
 }
 .hour-strip { display: flex; gap: 4px; overflow-x: auto; padding: 8px 0 4px; scrollbar-width: thin; }
 .hour-strip button { flex: none; width: 46px; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 2px; border-radius: 8px; }
