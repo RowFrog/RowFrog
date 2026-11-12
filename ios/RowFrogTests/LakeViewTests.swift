@@ -144,6 +144,23 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(view.headline(for: hour), "Fog near the shore: stay ashore")
     }
 
+    /// The map draws pictures into its tiles without smoothing: once a pixel
+    /// covers more than about 1.5 screen points it is smoothed first, so the
+    /// finer rowing light shows no steps when zoomed in (owner, 12 Nov 2026).
+    func testLakePictureIsSmoothedOnceAPixelIsWiderThanAPointAndAHalf() throws {
+        let ctx = try XCTUnwrap(CGContext(data: nil, width: 4, height: 4, bitsPerComponent: 8, bytesPerRow: 0,
+                                          space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue))
+        let image = try XCTUnwrap(ctx.makeImage())
+        let rect = CGRect(x: 0, y: 0, width: 400, height: 400)  // 100 map points a pixel
+        // Zoomed out: a pixel is 1 screen point, drawn as it is.
+        let (far, _) = LakeRenderer.part(of: image, in: rect, for: rect, zoomScale: 0.01)
+        XCTAssertEqual(far?.width, 4)
+        // Zoomed in: a pixel is 10 screen points, scaled up 7 times first.
+        let (near, into) = LakeRenderer.part(of: image, in: rect, for: rect, zoomScale: 0.1)
+        XCTAssertEqual(near?.width, 28)
+        XCTAssertEqual(into, rect)
+    }
+
     func testWaveColoursRiseWithTheLimits() {
         let small = RowingLimits(boat: .small)
         XCTAssertGreaterThan(LakeRaster.waveColor(0.3, small).r, LakeRaster.waveColor(0, small).r)
