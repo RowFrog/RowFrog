@@ -1244,7 +1244,7 @@ private struct HourlyCard: View {
                             if opened { openNights.remove(night.id) } else { openNights.insert(night.id) }
                         }
                     } label: {
-                        NightRow(night: night, opened: opened, startsTable: night.start == firstHour, endsTable: night.end == tableEnd,
+                        NightRow(night: night, opened: opened, startsTable: night.start == firstHour, endsTable: night.end == tableEnd && !NightFold.endsAtSunrise(night.end, days: forecast.daylight ?? []),
                                  coarser: coarser(in: night))
                     }
                     .buttonStyle(.plain)
