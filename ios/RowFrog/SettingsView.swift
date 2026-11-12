@@ -26,7 +26,7 @@ enum SettingsRoute: Hashable {
     /// `privacy`, `picker-all`, `picker-page:list` or `picker-club:<id>` opens that page, with the
     /// pages on the way to it. `-RWSettingsSearch <text>` fills the search field.
     static func fromLaunchArguments() -> [SettingsRoute] {
-        guard let page = UserDefaults.standard.string(forKey: "RWSettingsPage") else { return [] }
+        guard let page = UserDefaults.standard.string(forKey: DefaultsKey.settingsPage) else { return [] }
         let backgrounds: [SettingsRoute] = [.appearance, .backgrounds]
         switch page {
         case "appearance": return [.appearance]
@@ -72,7 +72,7 @@ enum BackgroundTarget: Hashable {
 struct SettingsView: View {
     let locations: LocationStore
     @State private var path: [SettingsRoute]
-    @State private var search = UserDefaults.standard.string(forKey: "RWSettingsSearch") ?? ""
+    @State private var search = UserDefaults.standard.string(forKey: DefaultsKey.settingsSearch) ?? ""
     @FocusState private var searching: Bool
     @Environment(\.dismiss) private var dismiss
     @Environment(\.dynamicTypeSize) private var typeSize

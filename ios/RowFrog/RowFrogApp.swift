@@ -7,7 +7,7 @@ struct RowFrogApp: App {
     init() {
         // Test hook: `-RWFreshStart YES` forgets everything saved, as after a new
         // install (the tap test of the first start). Launch arguments still apply.
-        if UserDefaults.standard.bool(forKey: "RWFreshStart"), let id = Bundle.main.bundleIdentifier {
+        if UserDefaults.standard.bool(forKey: DefaultsKey.freshStart), let id = Bundle.main.bundleIdentifier {
             UserDefaults.standard.removePersistentDomain(forName: id)
         }
         DiagnosisLog.start()
@@ -18,11 +18,11 @@ struct RowFrogApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if UserDefaults.standard.bool(forKey: "RWIconGallery") {
+            if UserDefaults.standard.bool(forKey: DefaultsKey.iconGallery) {
                 IconGalleryView()
-            } else if UserDefaults.standard.bool(forKey: "RWConditionsPreview") {
+            } else if UserDefaults.standard.bool(forKey: DefaultsKey.conditionsPreview) {
                 ConditionsPreviewView()
-            } else if UserDefaults.standard.bool(forKey: "RWWidgetGallery") {
+            } else if UserDefaults.standard.bool(forKey: DefaultsKey.widgetGallery) {
                 WidgetGalleryView(api: APIClient.fromBundle())
             } else {
                 RootView(api: APIClient.fromBundle())

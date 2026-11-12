@@ -16,7 +16,7 @@ enum SafetyNotice {
 
     /// `-RWSafetyAccepted YES` skips the notice for screenshots.
     static var needsAcceptance: Bool {
-        !UserDefaults.standard.bool(forKey: "RWSafetyAccepted") && acceptedVersion < version
+        !UserDefaults.standard.bool(forKey: DefaultsKey.safetyAccepted) && acceptedVersion < version
     }
 
     /// Accepted before, but an older text.

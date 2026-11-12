@@ -208,7 +208,7 @@ struct LocationListView: View {
             .refreshable { await forecasts.refresh(locations.saved.map(\.id)) }
             .task {
                 // Screenshot hook: `-RWEditList YES` starts with the list in edit mode.
-                guard UserDefaults.standard.bool(forKey: "RWEditList") else { return }
+                guard UserDefaults.standard.bool(forKey: DefaultsKey.editList) else { return }
                 try? await Task.sleep(for: .seconds(1))
                 editMode = .active
             }

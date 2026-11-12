@@ -77,10 +77,10 @@ struct CountryWatersView: View {
     let locations: LocationStore
     let country: Country
     /// Screenshot hook: `-RWCountryFilter Havel` starts with that search.
-    @State private var filter = UserDefaults.standard.string(forKey: "RWCountryFilter") ?? ""
+    @State private var filter = UserDefaults.standard.string(forKey: DefaultsKey.countryFilter) ?? ""
     /// By water (the lake or river a club rows on) or by town, which helps in a
     /// city with many waters, such as Berlin or Hamburg.
-    @AppStorage("RWCountryListByTown") private var byTown = false
+    @AppStorage(DefaultsKey.countryListByTown) private var byTown = false
 
     /// One row: a water or a town with its clubs. Pieces of one river or lake
     /// that the map data keeps apart (the Havel in Spandau, Tegel and Potsdam)
@@ -192,7 +192,7 @@ struct AddPlaceView: View {
     @State private var kind: OwnPlace.Kind = .club
     @State private var website = ""
     @State private var share = false
-    @AppStorage("RWAddPlaceImagery") private var satellite = true
+    @AppStorage(DefaultsKey.addPlaceImagery) private var satellite = true
     @State private var camera: MapCameraPosition
     @State private var center: Coordinate
     @Environment(\.dismiss) private var dismiss

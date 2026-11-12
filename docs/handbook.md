@@ -189,7 +189,9 @@ Management.
 ## Launch arguments (Simulator and screenshots)
 
 Every setting can be set at launch, e.g. `-RWLanguage de`. The screenshot
-workflow (`.github/workflows/screenshots.yml`) uses these; the most useful:
+workflow (`.github/workflows/screenshots.yml`) uses these. Every switch the app
+reads, with a one-line note, is listed in `ios/RowFrog/DefaultsKey.swift`; a new
+switch gets its name there (settings go in `AppSettings.Keys`). The most useful:
 
 - `-RWDemoClubs YES` the three confirmed clubs with MRC 1880 as home base
 - `-RWTutorialSeen YES -RWNoTips YES` skip the tour and tips

@@ -248,7 +248,7 @@ struct ShoreLightsGuide: View {
     @State private var open: Bool
 
     init(startOpen: Bool = false) {
-        _open = State(initialValue: startOpen || UserDefaults.standard.bool(forKey: "RWShoreLights"))
+        _open = State(initialValue: startOpen || UserDefaults.standard.bool(forKey: DefaultsKey.shoreLights))
     }
 
     var body: some View {

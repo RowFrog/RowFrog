@@ -228,7 +228,7 @@ struct WidgetGalleryView: View {
         .task {
             do { forecast = try await api.forecast(clubID: homeID).applyingUserLimits() } catch { failed = true }
             // `-RWWidgetRadar YES`: light rain on the radar from 30 minutes on, for the radar line.
-            if UserDefaults.standard.bool(forKey: "RWWidgetRadar"), forecast != nil {
+            if UserDefaults.standard.bool(forKey: DefaultsKey.widgetRadar), forecast != nil {
                 let now = Date.now
                 forecast?.radar = RainRadar(reference: now, steps: stride(from: 0, through: 120, by: 15).map {
                     RadarStep(time: now.addingTimeInterval(Double($0) * 60), mmPerHour: $0 >= 30 && $0 <= 90 ? 1.2 : 0)

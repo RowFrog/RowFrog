@@ -14,7 +14,7 @@ struct ForecastSourceLine: View {
     var pick: @MainActor (String?) async -> Void = { _ in }
     @Environment(\.surface) private var surface
     /// Screenshot hook: `-RWOpenForecastSource YES` opens the details.
-    @State private var showDetails = UserDefaults.standard.bool(forKey: "RWOpenForecastSource")
+    @State private var showDetails = UserDefaults.standard.bool(forKey: DefaultsKey.openForecastSource)
 
     var body: some View {
         if let first = source.parts.first {

@@ -15,7 +15,7 @@ struct LakeMapScreen: View {
     /// Where the water was tapped, for values blended at that very spot.
     @State private var spotAt: CLLocationCoordinate2D?
     @State private var showingInfo = false
-    @State private var showingLegend = UserDefaults.standard.bool(forKey: "RWLakeLegend")
+    @State private var showingLegend = UserDefaults.standard.bool(forKey: DefaultsKey.lakeLegend)
     @State private var routeMode: Bool
     @State private var waypoints: [CLLocationCoordinate2D]
     @State private var outAndBack: Bool
@@ -28,7 +28,7 @@ struct LakeMapScreen: View {
     /// "Import a row": from Apple Health or a GPX, TCX or FIT file.
     @State private var showingImport: Bool
     /// An imported route also shows the track as it was rowed.
-    @AppStorage("RWShowTrack") private var showTrack = false
+    @AppStorage(DefaultsKey.showTrack) private var showTrack = false
     @State private var routeName = ""
     /// Shows the lake at the time the boat reaches a point of the route, not at the start.
     @State private var followBoat: Bool
@@ -47,7 +47,7 @@ struct LakeMapScreen: View {
     /// Seconds per 500 m.
     @AppStorage(DefaultsKey.routePace) private var pace = 150.0
     /// Apple's satellite pictures under the lake instead of the map.
-    @AppStorage("RWLakeImagery") private var imagery = false
+    @AppStorage(DefaultsKey.lakeImagery) private var imagery = false
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
     private let panelTip = RoutePanelTip()
     private let loopTip = CloseLoopTip()
@@ -71,17 +71,17 @@ struct LakeMapScreen: View {
         self.view = view
         self.clubID = clubID
         let args = UserDefaults.standard
-        let start = view.hourIndex(at: date) + args.integer(forKey: "RWLakeHour")
+        let start = view.hourIndex(at: date) + args.integer(forKey: DefaultsKey.lakeHour)
         _hourIndex = State(initialValue: min(max(start, 0), max(view.hours.count - 1, 0)))
-        _layer = State(initialValue: LakeLayer(rawValue: args.string(forKey: "RWLakeLayer") ?? "") ?? .light)
+        _layer = State(initialValue: LakeLayer(rawValue: args.string(forKey: DefaultsKey.lakeLayer) ?? "") ?? .light)
         var spot: Int?
-        if let text = args.string(forKey: "RWLakeSpot") {
+        if let text = args.string(forKey: DefaultsKey.lakeSpot) {
             let parts = text.split(separator: ",").compactMap { Double($0) }
             if parts.count == 2 { spot = view.grid.cell(at: CLLocationCoordinate2D(latitude: parts[0], longitude: parts[1])) }
         }
         _spot = State(initialValue: spot)
         // Screenshot hook: `-RWRoute "lat,lon;lat,lon;..."` opens route mode with these points.
-        let route = (args.string(forKey: "RWRoute") ?? "").split(separator: ";").compactMap { pair -> CLLocationCoordinate2D? in
+        let route = (args.string(forKey: DefaultsKey.route) ?? "").split(separator: ";").compactMap { pair -> CLLocationCoordinate2D? in
             let parts = pair.split(separator: ",").compactMap { Double($0) }
             return parts.count == 2 ? CLLocationCoordinate2D(latitude: parts[0], longitude: parts[1]) : nil
         }
@@ -91,7 +91,7 @@ struct LakeMapScreen: View {
         _waypoints = State(initialValue: points)
         _routeMode = State(initialValue: !route.isEmpty)
         // A new route goes one way; `-RWOutAndBack YES` rows the screenshot routes back too.
-        _outAndBack = State(initialValue: args.bool(forKey: "RWOutAndBack") && !RouteEdit.isLoop(points))
+        _outAndBack = State(initialValue: args.bool(forKey: DefaultsKey.outAndBack) && !RouteEdit.isLoop(points))
         // Screenshot hook: `-RWSavedRoutes "Name=lat,lon;lat,lon|Name=…"` saves these routes on the
         // lake when it has none (a name ending in "↔" is rowed out and back) and opens Manage routes.
         if let saved = args.string(forKey: DefaultsKey.savedRoutes), RouteStore.shared.routes(on: view.lakeId).isEmpty {
@@ -109,7 +109,7 @@ struct LakeMapScreen: View {
         // Screenshot hook: `-RWRoutePoint 2` selects that turning point.
         _selectedPoint = State(initialValue: args.object(forKey: DefaultsKey.routePoint) != nil ? args.integer(forKey: DefaultsKey.routePoint) : nil)
         // Screenshot hook: `-RWPanel expanded` opens the panel in full.
-        _panelExpanded = State(initialValue: args.string(forKey: "RWPanel") == "expanded")
+        _panelExpanded = State(initialValue: args.string(forKey: DefaultsKey.panel) == "expanded")
         // Screenshot hook: `-RWBoatAt 0.6` shows the lake when the boat is 60 % along the route.
         _followBoat = State(initialValue: args.object(forKey: DefaultsKey.boatAt) != nil)
         _boatAt = State(initialValue: min(max(args.double(forKey: DefaultsKey.boatAt), 0), 1))
@@ -117,7 +117,7 @@ struct LakeMapScreen: View {
         _showingImport = State(initialValue: args.bool(forKey: DefaultsKey.importRows))
         // Screenshot hook: `-RWImportedRoute YES` with `-RWRoute` imports a made-up row along those points.
         var imported: Route?
-        if args.bool(forKey: "RWImportedRoute"), points.count >= 2 {
+        if args.bool(forKey: DefaultsKey.importedRoute), points.count >= 2 {
             let track = RouteImport.sampleTrack(along: points, outAndBack: !RouteEdit.isLoop(points))
             imported = RouteImport.route(from: track, lakeId: view.lakeId, launchPoints: view.clubs.map(\.launchPoint))
         }

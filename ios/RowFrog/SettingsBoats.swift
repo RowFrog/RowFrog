@@ -60,7 +60,7 @@ struct RowingLimitsView: View {
         }
         .onAppear {
             // Screenshot hook: `-RWNewBoat YES` with `-RWSettingsPage limits` opens the New boat sheet.
-            if newBoat == nil, UserDefaults.standard.bool(forKey: "RWNewBoat") {
+            if newBoat == nil, UserDefaults.standard.bool(forKey: DefaultsKey.newBoat) {
                 newBoat = NewBoat(id: AppSettings.shared.addBoat(at: locations.homeID).id)
             }
         }

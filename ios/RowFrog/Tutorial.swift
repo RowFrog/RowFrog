@@ -42,17 +42,17 @@ enum Tutorial {
             try? Tips.resetDatastore()
             defaults.removeObject(forKey: resetTipsKey)
         }
-        if defaults.bool(forKey: "RWNoTips") { Tips.hideAllTipsForTesting() }
-        if defaults.bool(forKey: "RWShowTips") { Tips.showAllTipsForTesting() }
+        if defaults.bool(forKey: DefaultsKey.noTips) { Tips.hideAllTipsForTesting() }
+        if defaults.bool(forKey: DefaultsKey.showTips) { Tips.showAllTipsForTesting() }
         // `-RWBoatTip YES` shows the boats-at-other-clubs tip, with the others hidden.
-        if defaults.bool(forKey: "RWBoatTip") { Tips.showTipsForTesting([BoatsElsewhereTip.self]) }
+        if defaults.bool(forKey: DefaultsKey.boatTip) { Tips.showTipsForTesting([BoatsElsewhereTip.self]) }
         // `-RWPlaceTip YES` shows the tip at the place line under the club's name.
-        if defaults.bool(forKey: "RWPlaceTip") { Tips.showTipsForTesting([PlaceLineTip.self]) }
+        if defaults.bool(forKey: DefaultsKey.placeTip) { Tips.showTipsForTesting([PlaceLineTip.self]) }
         // `-RWSuggestTip YES` shows the tip at "Suggest the launch point" in the Location sheet.
-        if defaults.bool(forKey: "RWSuggestTip") { Tips.showTipsForTesting([SuggestLaunchPointTip.self]) }
+        if defaults.bool(forKey: DefaultsKey.suggestTip) { Tips.showTipsForTesting([SuggestLaunchPointTip.self]) }
         // `-RWNearbyTip YES` shows the nearby-water tip under the top tile, also without such a reason.
-        if defaults.bool(forKey: "RWNearbyTip") { Tips.showTipsForTesting([NearbyWaterTip.self]) }
-        if defaults.bool(forKey: "RWLaterTips") {
+        if defaults.bool(forKey: DefaultsKey.nearbyTip) { Tips.showTipsForTesting([NearbyWaterTip.self]) }
+        if defaults.bool(forKey: DefaultsKey.laterTips) {
             Tips.hideTipsForTesting([TopTileTip.self, RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
             Tips.showTipsForTesting([AllValuesTip.self, RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
         }
@@ -323,7 +323,7 @@ struct TutorialView: View {
         // A tour already running goes on where it was: on a first start the view
         // behind it changes once the home base is picked, which builds it again.
         let pages = TourProgress.pages ?? TourPage.order.filter { locations.homeID == nil || !$0.isChoice }
-        let start = TourProgress.page ?? TourPage(rawValue: UserDefaults.standard.integer(forKey: "RWTutorialPage")) ?? .welcome
+        let start = TourProgress.page ?? TourPage(rawValue: UserDefaults.standard.integer(forKey: DefaultsKey.tutorialPage)) ?? .welcome
         TourProgress.pages = pages
         _pages = State(initialValue: pages)
         _page = State(initialValue: pages.contains(start) ? start : pages[0])
@@ -496,7 +496,7 @@ private struct ClubChoicePage: View {
     /// Screenshot hook: `-RWTourAutoHome YES` picks the first suggestion as home
     /// base once the clubs are in, as a tap on it would.
     private func autoPickHome() async {
-        guard page == .homeBase, UserDefaults.standard.bool(forKey: "RWTourAutoHome") else { return }
+        guard page == .homeBase, UserDefaults.standard.bool(forKey: DefaultsKey.tourAutoHome) else { return }
         for _ in 0..<60 {
             if let first = locations.suggestions(near: near).first {
                 try? await Task.sleep(for: .seconds(2))

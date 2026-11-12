@@ -82,7 +82,7 @@ struct LaunchPointSheet: View {
         .presentationDetents([fitted, .large], selection: detent)
         .presentationDragIndicator(.visible)
         // Screenshot hook: `-RWLaunchPointFull YES` opens it at full height.
-        .onAppear { if UserDefaults.standard.bool(forKey: "RWLaunchPointFull") { full = true } }
+        .onAppear { if UserDefaults.standard.bool(forKey: DefaultsKey.launchPointFull) { full = true } }
     }
 }
 
@@ -119,16 +119,16 @@ struct LaunchPointDetails: View {
     @State private var suggested = false
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
     /// Apple's satellite pictures instead of the map, remembered for every launch point.
-    @AppStorage("RWLaunchImagery") private var imagery = false
+    @AppStorage(DefaultsKey.launchImagery) private var imagery = false
     /// The live map after a tap; a still picture again once the page is swiped away.
-    @State private var live = UserDefaults.standard.bool(forKey: "RWLiveLaunchMap")
+    @State private var live = UserDefaults.standard.bool(forKey: DefaultsKey.liveLaunchMap)
 
     init(club: Club, mapHeight: CGFloat, mapMaxHeight: CGFloat, startsLive: Bool = false) {
         self.club = club
         self.mapHeight = mapHeight
         self.mapMaxHeight = mapMaxHeight
         self.startsLive = startsLive
-        _live = State(initialValue: startsLive || UserDefaults.standard.bool(forKey: "RWLiveLaunchMap"))
+        _live = State(initialValue: startsLive || UserDefaults.standard.bool(forKey: DefaultsKey.liveLaunchMap))
     }
     @Environment(\.isCurrentPage) private var isCurrentPage
     @Environment(\.openURL) private var openURL
@@ -136,7 +136,7 @@ struct LaunchPointDetails: View {
 
     private var home: MKCoordinateRegion {
         // Screenshot hook: `-RWLaunchSpan 300` opens the map closer in.
-        let span = UserDefaults.standard.double(forKey: "RWLaunchSpan")
+        let span = UserDefaults.standard.double(forKey: DefaultsKey.launchSpan)
         let metres = (span > 0 ? span : 1500) + (refit ? 0.01 : 0)
         return MKCoordinateRegion(center: coordinate, latitudinalMeters: metres, longitudinalMeters: metres)
     }
@@ -211,7 +211,7 @@ struct LaunchPointDetails: View {
         .task(id: club.id) {
             suggested = LaunchPointSuggestion.wasSent(forID: club.id)
             // Screenshot hook: `-RWSuggestLaunchPoint YES` opens the suggestion sheet.
-            if UserDefaults.standard.bool(forKey: "RWSuggestLaunchPoint"), LaunchPointSuggestion.isOffered(for: club) {
+            if UserDefaults.standard.bool(forKey: DefaultsKey.suggestLaunchPoint), LaunchPointSuggestion.isOffered(for: club) {
                 suggesting = true
             }
             place = club.isOwnPlace ? nil : await ClubPlaces.shared.place(for: club)
