@@ -5,7 +5,7 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { nowHour, iceValue, UNITS } from "./logic.js";
-import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit } from "./shared.js";
+import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit, markIcon } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
@@ -152,7 +152,7 @@ function show(page) {
         <p class="small boxed" id="limit-text" ${page.showLimits ? "" : "hidden"}>${h(detail.limitInfo)}</p></div>` : ""}
       ${facts(detail)}
       ${stationCard(condition, data)}
-      <p class="rowing">${icon("sailboat")}<span>${h(detail.rowing)}</span></p>
+      <p class="rowing">${icon("rower")}<span>${h(detail.rowing)}</span></p>
       <p class="sub small">${h(detail.source)}</p>
       ${unitRow(condition)}
       ${footerLinks()}
@@ -252,11 +252,11 @@ async function mapCard(page, layerId, detail, hidden) {
     ${list.length > 1 && layer.links !== "none" ? `<div class="map-controls"><button class="tool" id="play" aria-label="${h(t("Play"))}">${icon("play")}</button>
       <input type="range" id="slider" min="0" max="${list.length - 1}" step="1" aria-label="${h(t("Time"))}">
       <button class="tool ${store.mapLoop ? "on" : ""}" id="loop" aria-label="${h(t("Play 3 times"))}">${icon("repeat")}</button></div>` : ""}`;
-  const wm = await weatherMap(box.querySelector("#wm"), point, layerId, { interactive: false });
+  const wm = await weatherMap(box.querySelector("#wm"), point, layerId, { interactive: false, mark: markIcon(page.clubId) });
   page.map = wm;
   const radar = layerId === "rain" ? radarOverlay(await loadLeaflet(), wm.map, point) : null;
   // Full screen: the radar map while the card shows the radar, else the weather map.
-  const open = () => (showsRadar() ? openRadarMap(point, radarAt(point)?.reference) : openFull(page, layerId, detail, hidden));
+  const open = () => (showsRadar() ? openRadarMap(point, radarAt(point)?.reference, markIcon(page.clubId)) : openFull(page, layerId, detail, hidden));
   box.querySelector(".map-frame").addEventListener("click", open);
   box.querySelector("#map-full").addEventListener("click", open);
   const update = () => {
@@ -359,7 +359,7 @@ async function openFull(page, layerId, detail, hidden) {
     <div class="wm" id="wm-full-map"></div>
     <section class="wm-panel" id="wm-panel"></section>`;
   let wm = null;
-  wm = await weatherMap(panel.querySelector("#wm-full-map"), club.launchPoint, layerId, { onArea: () => wm && render() });
+  wm = await weatherMap(panel.querySelector("#wm-full-map"), club.launchPoint, layerId, { onArea: () => wm && render(), mark: markIcon(page.clubId) });
   const close = () => {
     clearInterval(playing);
     wm.remove();

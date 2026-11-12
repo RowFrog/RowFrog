@@ -6,7 +6,7 @@
 import { t, num } from "./i18n.js";
 import { icon } from "./icons.js";
 import { key, sky, precipitationKind } from "./logic.js";
-import { store, h, time, rain, unitSymbol, savingData, loadLeaflet, openSheet } from "./shared.js";
+import { store, h, time, rain, unitSymbol, savingData, loadLeaflet, openSheet, clubPin } from "./shared.js";
 
 export const DWD_WMS = "https://maps.dwd.de/geoserver/dwd/wms";
 const LAYER = "dwd:Niederschlagsradar";
@@ -350,8 +350,8 @@ export function radarCardBody(point) {
 }
 
 /** Opens the radar map from the card. */
-export function wireRadarCard(box, point) {
-  box?.querySelector(".radar-open")?.addEventListener("click", () => openRadarMap(point, radarAt(point)?.reference));
+export function wireRadarCard(box, point, mark = "house") {
+  box?.querySelector(".radar-open")?.addEventListener("click", () => openRadarMap(point, radarAt(point)?.reference, mark));
 }
 
 // ---- The radar map (RadarMapScreen, RadarRegion, RadarFrames) -------------------------------
@@ -475,7 +475,7 @@ function legendBody() {
  * to two hours ahead is loaded first (the latest first, then outwards), then
  * it plays, with a slider and the repeat switch the weather maps share.
  */
-export async function openRadarMap(point, reference) {
+export async function openRadarMap(point, reference, mark = "house") {
   if (!point) return;
   const step = radarStep();
   const frames = radarFrames(reference, step);
@@ -494,7 +494,7 @@ export async function openRadarMap(point, reference) {
     maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
   map.fitBounds([[point.lat - 0.6, point.lon - 0.8], [point.lat + 0.6, point.lon + 0.8]], { animate: false });
-  L.circleMarker([point.lat, point.lon], { radius: 6, color: "#fff", weight: 2, fillColor: "#007aff", fillOpacity: 1, interactive: false }).addTo(map);
+  L.marker([point.lat, point.lon], { icon: clubPin(L, mark), interactive: false, keyboard: false }).addTo(map);
   const overlay = L.imageOverlay(radarUrl(region, frames[nowIndex]), region.bounds, { opacity: 0.75, interactive: false }).addTo(map);
   let index = nowIndex;
   let playing = false;

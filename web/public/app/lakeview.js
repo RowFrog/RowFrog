@@ -299,7 +299,7 @@ function lakeWideBanner(lakeWide, view, oneLine = false) {
 
 /** Which boat the lake is coloured for: the ticked one (MapBoatNote). */
 export function mapBoatNote() {
-  return `<p class="small sub">${icon("sailboat")} ${h(t("Coloured for %@", boatInSentence(mapBoat())))}</p>`;
+  return `<p class="small sub">${icon("rower")} ${h(t("Coloured for %@", boatInSentence(mapBoat())))}</p>`;
 }
 
 export function kitBadge(view) {
@@ -449,7 +449,7 @@ async function buildMap() {
     // As the app's club pins: the page's club a blue house, the others grey with their name below (ClubMarks).
     const marker = L.marker([c.launchPoint.lat, c.launchPoint.lon], {
       icon: L.divIcon({ className: `club-pin ${own ? "own" : ""}`, iconSize: [30, 30], iconAnchor: [15, 15],
-        html: `<span class="dot">${icon(own ? "house" : "sailboat")}</span>${own ? "" : `<span class="name">${h(c.shortName)}</span>`}` }),
+        html: `<span class="dot">${icon(own ? "house" : "rower")}</span>${own ? "" : `<span class="name">${h(c.shortName)}</span>`}` }),
       title: c.shortName, keyboard: false, zIndexOffset: own ? 1000 : 0,
     }).addTo(page.layers.marks);
     pins.push({ marker, launch: c.launchPoint, clubhouse: c.clubhouse, oars: c.oars, own, layer: page.layers.marks });
@@ -878,7 +878,7 @@ function planningPanel(hour) {
       ${viewStale(view) ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
       ${adviceOnly()}
       ${page.followBoat ? "" : tip("boatTime")}
-      <p class="boat-follow"><label class="tick inline"><input type="checkbox" id="follow" ${page.followBoat ? "checked" : ""}> ${icon("sailboat")} ${h(t("Lake at the boat's time"))}</label>
+      <p class="boat-follow"><label class="tick inline"><input type="checkbox" id="follow" ${page.followBoat ? "checked" : ""}> ${icon("rower")} ${h(t("Lake at the boat's time"))}</label>
         ${page.followBoat ? `<input type="range" id="boat-at" min="0" max="1" step="0.01" value="${page.boatAt}" aria-label="${h(t("Where the boat is"))}">` : ""}</p>
       ${stop ? `<p class="small sub">${h(t("The boat at %@ after %@: %@, waves %@", time(stop.time), distance(stop.distanceM), lightTitle(stop.light), waves(stop.waveM) + (stop.relation ? ` ${t(RELATION_WAVES[stop.relation])}` : "")))}</p>` : ""}
       ${betterIndex != null ? `<button class="link" id="better" data-hour="${betterIndex}">${icon("clock")} ${h(t("Better start: %@ · %@", dayTime(better.start), lightTitle(better.worstLight)))}</button>` : ""}`;

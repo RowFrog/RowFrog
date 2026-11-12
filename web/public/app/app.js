@@ -15,8 +15,7 @@ import {
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, openMenu,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
-  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure,
-} from "./shared.js";
+  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, markIcon } from "./shared.js";
 import {
   isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
@@ -168,7 +167,7 @@ function openBoatMenu(raw, anchor, picked = () => route(false)) {
     }
     const on = inUse === boat.id;
     return `<li><button data-boat="${h(boat.id)}" class="${on ? "on" : ""}">
-      ${light ? dot(light, 16, isStale(raw)) : icon("sailboat")}
+      ${light ? dot(light, 16, isStale(raw)) : icon("rower")}
       <span><strong>${h(boatTitle(boat))}</strong><small>${h(light ? lightTitle(light, isStale(raw)) : boatDetail(boat))}</small></span>
       ${on ? icon("check") : ""}</button></li>`;
   };
@@ -707,7 +706,7 @@ async function renderClub(id) {
   balanceCards();
   updateTopBar();
   if (root.querySelector("#launch-map")) showLaunchMap(club);
-  wireRadarCard(root.querySelector("#radar"), club?.launchPoint);
+  wireRadarCard(root.querySelector("#radar"), club?.launchPoint, markIcon(club?.id));
   followRadar(club?.launchPoint, () => shown === clubRenders && root.querySelector("main.club") != null, () => showRadar(club, forecast, hour));
   const satelliteBox = root.querySelector("#satellite");
   if (forecast.lakeId && satelliteBox) satelliteCard(satelliteBox, forecast.lakeId, id, balanceCards);
@@ -735,7 +734,7 @@ function showRadar(club, forecast, hour) {
   const box = root.querySelector("#radar");
   if (box && club?.launchPoint) {
     box.innerHTML = radarCardBody(club.launchPoint);
-    wireRadarCard(box, club.launchPoint);
+    wireRadarCard(box, club.launchPoint, markIcon(club.id));
   }
   balanceCards();
 }
@@ -1402,7 +1401,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
         return `<li class="${r.light === "red" ? "red" : "orange"}">${icon(CONDITION_ICONS[reasonCondition(r.condition, r.topic)])}<span>${h(text)}</span></li>`;
       }).join("") : `<li>${icon("circle-check")}<span class="fit-line" data-short="${h(t("All within the limits."))}">${h(t("All conditions are within the limits."))}</span></li>`}
       ${(hour.notes ?? []).map((n) => `<li class="sub">${icon("info")}<span>${h(noteText(n))}</span></li>`).join("")}
-      ${steadier ? `<li class="tint">${icon("sailboat")}<span>${h(steadier.light === "green"
+      ${steadier ? `<li class="tint">${icon("rower")}<span>${h(steadier.light === "green"
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
       ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${filledIcon("shield-check")} ${h(t("No official warning"))}</span>
@@ -1961,7 +1960,7 @@ async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
   // Map or satellite pictures, remembered, as the app's Location card (RWLaunchImagery).
   baseMap(L, map, { storeKey: "rf.launchImagery", small: true });
   const marker = L.marker([lat, lon], {
-    icon: L.divIcon({ className: "pin", html: icon(store.clubs[0]?.id === club.id ? "house" : "map-pin"), iconSize: [30, 30], iconAnchor: [15, 15] }),
+    icon: L.divIcon({ className: "pin", html: icon(markIcon(club.id)), iconSize: [30, 30], iconAnchor: [15, 15] }),
     keyboard: false,
   }).addTo(map);
   // Zoomed in, the club's pin moves onto its own place on the map, and oars mark a set launch point (ClubMarks).
@@ -2088,12 +2087,13 @@ function setDateTimeLikeDevice(on) {
 
 /** The topics of the first settings page, each with its own page (SettingsTopic). */
 const SETTINGS_TOPICS = [
-  ["appearance", key("Appearance"), "sun-moon", "#007aff"],
-  ["clubpages", key("Club pages"), "layout-grid", "#5856d6"],
+  // The app's symbols (SettingsTopic.symbol) and colours.
+  ["appearance", key("Appearance"), "circle-half", "#007aff"],
+  ["clubpages", key("Club pages"), "rectangle-stack", "#5856d6"],
   ["language", key("Language and units"), "globe", "#8e8e93"],
-  ["data", key("Battery and data"), "radio-tower", "#34c759"],
-  ["help", key("Help"), "circle-help", "#007aff"],
-  ["about", key("About"), "info", "#8e8e93"],
+  ["data", key("Battery and data"), "battery-75", "#34c759"],
+  ["help", key("Help"), "question", "#007aff"],
+  ["about", key("About"), "info-plain", "#8e8e93"],
   ["developer", key("Developer"), "hammer", "#8e8e93"],
 ];
 const settingsIcon = (name, colour) => `<span class="set-icon" style="--c: ${colour}">${icon(name)}</span>`;
@@ -2130,7 +2130,6 @@ function settingsTopicBody(topic, accepted) {
       <section class="card group">
         <a class="row-setting bg-row" href="#/settings/backgrounds"><span><span class="bg-thumb" id="bg-thumb">${icon("circle-slash")}</span><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span></span>${icon("chevron-right")}</a>
       </section>
-      <p class="footer">${h(t("Pictures for all pages, single pages or single clubs, and how the tiles look over them."))}</p>
 `;
     case "clubpages": return `
       <section class="card group">
@@ -2273,9 +2272,9 @@ function renderSettings(topic = null) {
     <main class="page settings-main">
       <div id="settings-topics">
       <section class="card group">
-        <label class="row-setting topic"><span>${settingsIcon("sailboat", "#34c759")} ${h(t("Rowing light for"))}</span>
+        <label class="row-setting topic"><span>${settingsIcon("rower", "#34c759")} ${h(t("Rowing light for"))}</span>
           <select id="settings-boat">${allBoats().map((b) => `<option value="${h(b.id)}" ${b.id === tickedBoat().id ? "selected" : ""}>${h(boatTitle(b))}</option>`).join("")}</select></label>
-        <a class="row-setting topic" href="#/settings/boats"><span>${settingsIcon("info", "#30b0c7")} ${h(t("Boats and limits"))}</span>
+        <a class="row-setting topic" href="#/settings/boats"><span>${settingsIcon("sliders-horizontal", "#30b0c7")} ${h(t("Boats and limits"))}</span>
           <span class="sub">${changed ? h(t("%@ changed", String(changed))) : ""} ${icon("chevron-right")}</span></a>
       </section>
       <p class="footer">${h(t("The boat the rowing light is worked out for, on every club page and in the widgets."))}</p>
@@ -2515,7 +2514,7 @@ function renderBoats() {
     <main class="page">
       <h1 class="large">${h(t("Boats and limits"))}</h1>
       ${tip("myBoats")}
-      <h3 class="section">${icon("sailboat")} ${h(t("Your boat"))}</h3>
+      <h3 class="section">${icon("rower")} ${h(t("Your boat"))}</h3>
       <ul class="boats">${GROUPS.map((b) => `<li>${body(b)}</li>`).join("")}</ul>
       <h3 class="section">${icon("list")} ${h(t("My boats"))}</h3>
       <ul class="boats">${store.boats.map((b) => swipeRow(body(b), `data-remove-boat="${h(b.id)}"`)).join("")}
@@ -2547,7 +2546,7 @@ function keptAtSection(boat) {
   const home = store.clubs[0]?.id;
   const others = store.clubs.filter((c) => !clubs.includes(c.id));
   const body = (id) => `<div class="row-setting kept-row">
-      <span>${icon(id === home ? "house" : "map-pin")} ${h(clubNameOf(id))}</span>
+      <span>${icon(markIcon(id))} ${h(clubNameOf(id))}</span>
       ${id === home ? `<small class="sub">${h(t("Home base"))}</small>` : ""}
     </div>`;
   return `<h3 class="section">${icon("map-pin")} ${h(t("Kept at"))}</h3>
@@ -2576,7 +2575,7 @@ function boatForm(boat, isNew, ownLimits) {
   const footer = ownLimits
     ? t("Warnings, thunderstorms, fog, hail and darkness always count. Below %@ water the light reminds you to take extra care.", temperature(COLD.waterC))
     : t("Turn off to set your own. Below %@ water the app lowers its wind and gust limits by %@.", temperature(COLD.waterC), wind(COLD.marginMs));
-  return `${isGroup(boat) ? "" : `<h3 class="section">${icon("sailboat")} ${h(t("Boat"))}</h3>
+  return `${isGroup(boat) ? "" : `<h3 class="section">${icon("rower")} ${h(t("Boat"))}</h3>
         <section class="card group">
           <label class="row-setting"><input id="boat-name" type="text" value="${h(boat.name)}" placeholder="${h(t("Name, e.g. the boat's name"))}"></label>
           <label class="row-setting"><span>${h(t("Type"))}</span><select id="boat-type">${Object.entries(BOAT_TYPES).map(([k, v]) => option(k, t(v.title), boat.type)).join("")}</select></label>

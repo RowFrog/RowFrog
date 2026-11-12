@@ -263,7 +263,7 @@ export function renderBackgrounds(root) {
       <h3 class="section">${icon("copy")} ${h(t("Single pages"))}</h3>
       <section class="card group">${PAGES.filter(([id]) => id !== "settings" || store.developerOptions).map(([id, title, ic]) => row(`page:${id}`, t(title), ic, b.pages[id], t("Same as all pages"))).join("")}</section>
       <p class="footer">${h(t("A picture set here replaces the one for all pages on that page."))}</p>
-      ${store.clubs.length ? `<h3 class="section">${icon("sailboat")} ${h(t("Single clubs"))}</h3>
+      ${store.clubs.length ? `<h3 class="section">${icon("rower")} ${h(t("Single clubs"))}</h3>
       <section class="card group">${store.clubs.map((c) => row(`club:${c.id}`, c.shortName || c.name, "house", b.clubs[c.id], t("Same as club pages"))).join("")}</section>
       <p class="footer">${h(t("A club's own picture shows only on that club's page."))}</p>` : ""}
       <h3 class="section">${icon("sliders-horizontal")} ${h(t("Look"))}</h3>

@@ -783,11 +783,37 @@ export function zoneBar(fraction, zones) {
   return scaleBar(fraction, stops);
 }
 
+/** The symbol marking a club on a map: a house for the home base, else a rower (LocationStore.markSymbol). */
+export const markIcon = (clubId) => (clubId != null && store.clubs[0]?.id === clubId ? "house" : "rower");
+
+/** The blue round pin with the club's symbol, as on the launch point map. */
+export const clubPin = (L, mark) => L.divIcon({ className: "pin", html: icon(mark), iconSize: [30, 30], iconAnchor: [15, 15] });
+
 export const C = { blue: "var(--blue)", teal: "var(--teal)", green: "var(--green)", orange: "var(--orange)", red: "var(--red)", yellow: "var(--yellow)", purple: "var(--purple)" };
 
-export function windDial(hour) {
+/**
+ * The wind's compass dial as the app's WindDial: ticks round the edge (longer every 90°), on the large one
+ * N E S W and the unit, an arrow right across the dial pointing where the wind blows to, the speed inside.
+ */
+export function windDial(hour, big = false) {
   if (hour.windFromDeg == null) return "";
-  return `<span class="dial"><span class="needle" style="transform:rotate(${hour.windFromDeg + 180}deg)"></span><span class="hub">${h(windNumber(hour.windSpeedMs))}</span></span>`;
+  const n = big ? 72 : 36;
+  const long = big ? 18 : 9;
+  const ticks = Array.from({ length: n }, (_, i) => {
+    const a = (i / n) * 2 * Math.PI;
+    const inner = 50 - (i % long === 0 ? 8 : 4.5);
+    const p = (r) => `${(50 + r * Math.sin(a)).toFixed(2)} ${(50 - r * Math.cos(a)).toFixed(2)}`;
+    return `<path d="M${p(inner)}L${p(50)}" class="${i % long === 0 ? "long" : ""}" />`;
+  }).join("");
+  const letters = big ? [["N", 50, 15], ["E", 85, 50], ["S", 50, 85], ["W", 15, 50]]
+    .map(([l, x, y]) => `<text x="${x}" y="${y}" class="letter">${l}</text>`).join("") : "";
+  const w = big ? 3 : 2.5;
+  const hub = big
+    ? `<text x="50" y="49" class="speed">${h(windNumber(hour.windSpeedMs))}</text><text x="50" y="62" class="unit">${h(windUnit())}</text>`
+    : `<text x="50" y="51" class="speed">${h(windNumber(hour.windSpeedMs))}</text>`;
+  return `<svg class="dial ${big ? "big" : ""}" viewBox="-2 -2 104 104" aria-hidden="true"><g class="ticks">${ticks}</g>${letters}
+    <g transform="rotate(${hour.windFromDeg + 180} 50 50)"><rect x="${50 - w / 2}" y="7" width="${w}" height="86" rx="${w / 2}" class="needle" /><path d="M50 ${big ? -1 : 0}l${big ? 6 : 7} ${big ? 11 : 12}h-${big ? 12 : 14}z" class="needle" /></g>
+    <circle cx="50" cy="50" r="22" class="hub" />${hub}</svg>`;
 }
 
 export function sparkBars(values) {

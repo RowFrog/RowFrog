@@ -4,7 +4,7 @@
 
 import { t, num } from "./i18n.js";
 import { API, key } from "./logic.js";
-import { store, h, dayTime, dayLabel, wind, windNumber, temperature, degrees, distance, distanceNumber, rain, rainNumber, pressure, pressureNumber, unitSymbol, loadLeaflet } from "./shared.js";
+import { store, h, dayTime, dayLabel, wind, windNumber, temperature, degrees, distance, distanceNumber, rain, rainNumber, pressure, pressureNumber, unitSymbol, loadLeaflet, clubPin } from "./shared.js";
 
 const HOUR = 3600 * 1000;
 const DWD_WMS = "https://maps.dwd.de/geoserver/dwd/wms";
@@ -341,7 +341,7 @@ export function frameIndex(layer, list, at) {
  * are drawn onto a canvas over the map (tiles clipped to their patches, then
  * the wind arrows); live layers come from the map server as WMS tiles.
  */
-export async function weatherMap(el, point, layerId, { interactive = true, onArea } = {}) {
+export async function weatherMap(el, point, layerId, { interactive = true, onArea, mark = "house" } = {}) {
   const L = await loadLeaflet();
   const map = L.map(el, {
     zoomControl: interactive, dragging: interactive, scrollWheelZoom: interactive, doubleClickZoom: interactive, touchZoom: interactive,
@@ -351,7 +351,8 @@ export async function weatherMap(el, point, layerId, { interactive = true, onAre
     maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
   const canvas = L.DomUtil.create("canvas", "wm-canvas", map.getContainer());
-  L.circleMarker([point.lat, point.lon], { radius: 6, color: "#fff", weight: 2, fillColor: "#007aff", fillOpacity: 1, interactive: false }).addTo(map);
+  // The club's pin, as the app's map (LocationStore.markSymbol): a house for the home base, else a rower.
+  L.marker([point.lat, point.lon], { icon: clubPin(L, mark), interactive: false, keyboard: false }).addTo(map);
   const state = { layer: LAYERS[layerId], at: null, live: null, index: null };
 
   const area = () => {
@@ -541,4 +542,3 @@ export const frameLabel = (layer, at) => (layer.links === "day" ? dayLabel(at) :
 
 /** The layer menu's rows. */
 export const layerOptions = (current) => Object.values(LAYERS).map((l) => `<option value="${l.id}" ${l.id === current ? "selected" : ""}>${h(t(l.title))}</option>`).join("");
-
