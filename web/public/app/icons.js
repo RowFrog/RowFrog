@@ -4,6 +4,9 @@
 const PATHS = {
   // Own drawings in Lucide's style for SF Symbols Lucide has no match for.
   "rower": `<circle cx="5.5" cy="5" r="2" /> <path d="M6.5 8.5 9 14l4.5-3.5 3 3.5" /> <path d="M7.5 11 13 12" /> <path d="m10 9 11 10" /> <path d="M2 17h14.5l1.5-1.5" />`,
+  "arrow-left-right": `<path d="M8 3 4 7l4 4" /> <path d="M4 7h16" /> <path d="m16 21 4-4-4-4" /> <path d="M20 17H4" />`,
+  "arrow-down": `<path d="M12 5v14" /> <path d="m19 12-7 7-7-7" />`,
+  "bookmark-fill": `<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" fill="currentColor" />`,
   "circle-half": `<circle cx="12" cy="12" r="10" /> <path d="M12 2a10 10 0 0 0 0 20Z" fill="currentColor" />`,
   "rectangle-stack": `<path d="M7 3h10" /> <path d="M5 7h14" /> <rect width="18" height="12" x="3" y="10" rx="2" />`,
   "battery-75": `<rect width="16" height="10" x="2" y="7" rx="2" ry="2" /> <line x1="22" x2="22" y1="11" y2="13" /> <line x1="6" x2="6" y1="10" y2="14" /> <line x1="10" x2="10" y1="10" y2="14" /> <line x1="14" x2="14" y1="10" y2="14" />`,

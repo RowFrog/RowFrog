@@ -743,13 +743,6 @@ button.red { color: var(--red); }
 .boat-follow input[type=range] { flex: 1; min-width: 140px; }
 .point-bar { display: flex; gap: 14px; align-items: center; background: var(--tile); border-radius: 10px; padding: 6px 10px; }
 .point-bar strong { flex: 1; }
-.saved-routes { list-style: none; padding: 0; margin: 0; }
-.saved-routes li { display: flex; align-items: center; gap: 8px; border-bottom: .5px solid var(--line); }
-.saved-routes li > button:first-child { flex: 1; display: flex; gap: 8px; align-items: center; padding: 8px 0; text-align: left; }
-.saved-routes li > button:first-child span { flex: 1; }
-.saved-routes li.on > button:first-child { color: var(--accent); font-weight: 600; }
-.saved-routes .tool { font-size: 18px; color: var(--sub); }
-.saved-routes .tool[data-delete-route] { color: var(--red); }
 .leaflet-marker-icon.turn span { display: flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: 50%;
   background: #fff; color: #007aff; border: 2px solid #007aff; font: 600 12px/1 -apple-system, system-ui, sans-serif; box-sizing: border-box; }
 .leaflet-marker-icon.turn.on span { background: #007aff; color: #fff; }
@@ -1207,7 +1200,23 @@ button.row-setting { width: 100%; text-align: left; font: inherit; color: var(--
 .routes-menu { display: flex; flex-direction: column; }
 .routes-menu > button, .routes-menu > label { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 17px; color: var(--text); border-bottom: .5px solid var(--line); cursor: pointer; }
 .routes-menu > button:disabled { opacity: .4; cursor: default; }
-dialog.sheet.menu .saved-routes { margin-top: 4px; }
+.routes-menu > button > span { flex: 1; text-align: left; }
+.routes-menu > button.on { color: var(--accent); font-weight: 600; }
+.routes-menu > button.red { color: var(--red); }
+.routes-menu > :last-child { border-bottom: 0; }
+/* Manage routes (ManageRoutesView): one row per route, open by tap, the tools at the end. */
+.manage-routes .row-setting { gap: 6px; }
+.manage-routes .route-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 6px 0; text-align: left; color: var(--text); font: inherit; }
+.manage-routes .route-open > .i { color: var(--accent); flex: none; width: 22px; height: 22px; }
+.manage-routes .route-open .stack { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.manage-routes .route-open .stack small { font-size: 13px; }
+.manage-routes .route-actions { display: flex; gap: 0; flex: none; }
+.manage-routes .route-actions .tool { width: 34px; height: 34px; font-size: 17px; color: var(--sub); }
+.manage-routes .route-actions .tool.red { color: var(--red); }
+.manage-routes .route-actions .tool:disabled { opacity: .3; }
+.empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 40px 24px; }
+.empty-state > .i { width: 44px; height: 44px; color: var(--sub); }
+.empty-state > strong { font-size: 20px; }
 dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 .route-line { flex-wrap: nowrap; }
 .route-line > strong { flex: 0 1 auto; }
