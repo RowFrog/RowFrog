@@ -183,7 +183,7 @@ struct SettingsView: View {
             topic(.boats, value: limitsSummary)
             topic(.routes, value: routesSummary)
         } footer: {
-            SectionFooter(tr("The boat the rowing light is worked out for, on every club page and in the widgets."))
+            SectionFooter(tr("The boat the rowing light is worked out for, on every club page and in the widgets. Routes holds the routes you saved on the lake maps."))
         }
         .surfaceRows()
 
@@ -304,7 +304,7 @@ enum SettingsTopic: CaseIterable {
     var color: Color {
         switch self {
         case .boats: .teal
-        case .routes: .orange
+        case .routes: .purple
         case .appearance: .blue
         case .clubPages: .indigo
         case .widgets: .orange

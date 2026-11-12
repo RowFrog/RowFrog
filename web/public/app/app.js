@@ -2384,10 +2384,10 @@ function renderSettings(topic = null) {
           <select id="settings-boat">${allBoats().map((b) => `<option value="${h(b.id)}" ${b.id === tickedBoat().id ? "selected" : ""}>${h(boatTitle(b))}</option>`).join("")}</select></label>
         <a class="row-setting topic" href="#/settings/boats"><span>${settingsIcon("sliders-horizontal", "#30b0c7")} ${h(t("Boats and limits"))}</span>
           <span class="sub">${changed ? h(t("%@ changed", String(changed))) : ""} ${icon("chevron-right")}</span></a>
-        <a class="row-setting topic" href="#/settings/routes"><span>${settingsIcon("route", "#ff9500")} ${h(t("Routes"))}</span>
+        <a class="row-setting topic" href="#/settings/routes"><span>${settingsIcon("route", "#af52de")} ${h(t("Routes"))}</span>
           <span class="sub">${store.routes.length ? h(store.routes.length === 1 ? t("1 route") : t("%@ routes", String(store.routes.length))) : ""} ${icon("chevron-right")}</span></a>
       </section>
-      <p class="footer">${h(t("The boat the rowing light is worked out for, on every club page and in the widgets."))}</p>
+      <p class="footer">${h(t("The boat the rowing light is worked out for, on every club page and in the widgets. Routes holds the routes you saved on the lake maps."))}</p>
       ${groups.map((ids) => `<section class="card group">${ids.map((id) => row(SETTINGS_TOPICS.find(([x]) => x === id))).join("")}</section>`).join("\n      ")}
       </div>
       <div id="settings-results" hidden></div>
