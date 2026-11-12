@@ -423,9 +423,9 @@ svg.filled { width: 22px; height: 22px; }
    tablets (a touch screen, or the page added to the home screen) keep the app's thin blur behind the clock
    once the page scrolls under it (TopEdgeFade), over the page's own column only. At the bottom only the
    floating buttons sit over the cards, with no blur behind them (app #227). */
-:root { --safe-top: env(safe-area-inset-top, 0px); --main-left: 0px; --main-width: 100%; }
+:root { --safe-top: env(safe-area-inset-top, 0px); --main-left: 0px; --main-width: 100%; --area-left: 0px; --area-width: 100%; --column-pad-left: 0px; --column-pad-right: 0px; }
 @media (display-mode: standalone), (pointer: coarse) {
-  body::before { content: ""; position: fixed; left: var(--main-left); width: var(--main-width); z-index: 9; pointer-events: none;
+  body::before { content: ""; position: fixed; left: var(--area-left); width: var(--area-width); z-index: 9; pointer-events: none;
     backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: color-mix(in srgb, var(--bg) 25%, transparent);
     -webkit-mask-image: var(--fade); mask-image: var(--fade); opacity: 0; transition: opacity .2s ease-in-out; }
   body::before { top: 0; height: calc(var(--safe-top) + 28px);
@@ -438,7 +438,8 @@ svg.filled { width: 22px; height: 22px; }
    Screen, and fades out smoothly over 28 px below it. One blurred layer under a mask, as the app's material with
    its mask: full to half the clock strip, 80 % at the bar's foot, clear at the tail's end. The pinned 48 hours'
    header sits under it as in the app. Without backdrop-filter, or with reduced transparency, the bar is solid. */
-.top-title { position: fixed; top: 0; left: var(--main-left); width: var(--main-width); z-index: 10; height: calc(var(--safe-top) + 44px); padding: var(--safe-top) 16px 0; display: flex; align-items: center; justify-content: center; gap: 8px;
+.top-title { position: fixed; top: 0; left: var(--area-left); width: var(--area-width); z-index: 10; height: calc(var(--safe-top) + 44px);
+  padding: var(--safe-top) calc(var(--column-pad-right) + 16px) 0 calc(var(--column-pad-left) + 16px); display: flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: border-box; }
 .top-title::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; bottom: -28px; pointer-events: none;
   background: linear-gradient(var(--bg) 0, color-mix(in srgb, var(--card) 45%, transparent) calc((var(--safe-top) + 44px) * .7));
@@ -590,7 +591,7 @@ dialog.sheet.menu .sheet-body { padding-top: 6px; }
 
 /* Wide screens (iPad, Mac, PC), as the app on iPad: the page grows to 1000 px,
    its cards go into two columns from 600 px, and the list sits beside it. */
-.page.club { max-width: 1000px; }
+.page.club { max-width: 1000px; } /* one column; with 2 or 3 columns balanceCards sets the page's width (pick B) */
 .cards.two { display: flex; gap: 16px; align-items: flex-start; }
 .cards.two .col { flex: 1; min-width: 0; }
 .cards.two .card:first-child { margin-top: 0; }
@@ -667,6 +668,7 @@ button.red { color: var(--red); }
 /* Each part's waves, wind and visibility under its name, the cause in its colour (LakeProbeValues, caption). */
 .zones .zone-values { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 12px; }
 .zones .zone-note { font-size: 12px; }
+.zones .zone-values > .probe-item:first-child::before { display: none; }
 .zones small { font-size: 12px; }
 .lake-wide { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 10px; margin: 4px 0; }
 .lake-wide.red { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }

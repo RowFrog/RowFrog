@@ -769,6 +769,27 @@ sideList.addEventListener("change", () => location.hash.startsWith("#/club/") &&
 const TWO_COLUMNS = 600;
 
 /**
+ * Club page columns on wide windows (owner's pick B, 12 Nov 2026, docs/decisions/0023), the app's rule
+ * (ClubPageColumns in ios/RowFrog/ClubPageLayout.swift leads, the website follows): up to three, each card 380
+ * to 560 px wide. The window sets the count, worked out as if the list beside the page were shown, so sliding the
+ * list away or back only widens or narrows the same columns and no card moves to another one. Three columns when
+ * the room (the page without its 16 px padding) reaches 1,200 px, back to two only under 1,172 px (3 × 380 + 2
+ * gaps), so a window right at the edge does not flip. Counted again 300 ms after a resize rests.
+ */
+const COLUMNS = { cardMax: 560, gap: 16, pad: 32, threeFrom: 1200, threeUntil: 1172, side: 400 };
+let columnCount = 0;
+
+/** How many columns the cards get: 1 under TWO_COLUMNS, else 2 or 3 by the window (pick B). */
+function columnsFor(boxWidth) {
+  if (boxWidth < TWO_COLUMNS) return 1;
+  const room = document.documentElement.clientWidth - (sideList.matches ? COLUMNS.side : 0) - COLUMNS.pad;
+  return room >= (columnCount === 3 ? COLUMNS.threeUntil : COLUMNS.threeFrom) ? 3 : 2;
+}
+
+/** The page's widest size for a column count: cards no wider than COLUMNS.cardMax, then the page sits in the middle. */
+const pageMaxFor = (n) => `${n * COLUMNS.cardMax + (n - 1) * COLUMNS.gap + COLUMNS.pad}px`;
+
+/**
  * Beside the page, the whole list: search, Edit and the saved clubs, the shown
  * one marked, so the page needs no list button (LocationListView beside the page).
  */
@@ -887,29 +908,49 @@ function balanceCards() {
   // Keep the page's height while the cards move: emptied, it would be shorter
   // than the window and Safari, which has no scroll anchoring, jumps to the top.
   const scroller = document.scrollingElement;
-  const y = scroller.scrollTop;
+  let y = scroller.scrollTop;
   box.style.minHeight = `${box.offsetHeight + (end?.offsetHeight ?? 0)}px`;
   requestAnimationFrame(() => {
     box.style.minHeight = "";
     if (scroller.scrollTop !== y) scroller.scrollTop = y;
   });
+  // When the count changes, the card at the top of the window stays at the top (pick B).
+  const barHeight = root.querySelector(".top-title")?.offsetHeight ?? 0;
+  const anchor = y > 0 ? cards.find((card) => card.getBoundingClientRect().bottom > barHeight) : null;
+  const anchorTop = anchor?.getBoundingClientRect().top;
   unfill(cards);
   box.replaceChildren();
-  box.classList.toggle("two", box.clientWidth >= TWO_COLUMNS);
-  if (!box.classList.contains("two")) {
+  const page = box.closest(".page");
+  // Never more columns than cards, so none stays empty; data-columns keeps what the window allows.
+  const allowed = columnsFor(box.clientWidth);
+  box.dataset.columns = allowed;
+  let n = Math.min(allowed, Math.max(1, cards.length));
+  if (page) page.style.maxWidth = n > 1 ? pageMaxFor(n) : "";
+  if (n > 1 && box.clientWidth < TWO_COLUMNS) n = 1;
+  const changed = columnCount !== 0 && allowed !== columnCount;
+  columnCount = allowed;
+  box.classList.toggle("two", n > 1);
+  box.classList.toggle("three", n === 3);
+  const keepAnchor = () => {
+    if (!changed || !anchor) return;
+    y = scroller.scrollTop + anchor.getBoundingClientRect().top - anchorTop;
+    scroller.scrollTop = y;
+  };
+  if (n === 1) {
     cardWatch?.disconnect();
     box.append(...cards);
     if (end) box.after(end);
+    keepAnchor();
     return fitSatellite();
   }
-  const columns = [document.createElement("div"), document.createElement("div")];
+  const columns = Array.from({ length: n }, () => document.createElement("div"));
   columns.forEach((c) => (c.className = "col"));
   box.append(...columns);
   // An opened 48 hours count with their folded height, so opening them moves
   // and grows nothing else.
-  const extra = [0, 0];
+  const extra = columns.map(() => 0);
   const counted = (i) => columns[i].offsetHeight - extra[i];
-  const shorter = () => (counted(1) < counted(0) ? 1 : 0);
+  const shorter = () => columns.reduce((best, _, i) => (counted(i) < counted(best) ? i : best), 0);
   for (const item of end ? [...cards, end] : cards) {
     const i = shorter();
     columns[i].append(item);
@@ -918,7 +959,10 @@ function balanceCards() {
   }
   // The columns set the card's width, and with it the caption's lines.
   fitSatellite();
-  fill(columns[shorter()], Math.abs(counted(0) - counted(1)));
+  // Every shorter column's maps share out what it lacks against the tallest.
+  const tallest = Math.max(...columns.map((_, i) => counted(i)));
+  columns.forEach((column, i) => fill(column, tallest - counted(i)));
+  keepAnchor();
   watchCards(cards);
 }
 
@@ -999,6 +1043,15 @@ function updateTopBar() {
     const page = main.getBoundingClientRect();
     body.style.setProperty("--main-left", `${page.left}px`);
     body.style.setProperty("--main-width", `${page.width}px`);
+    // The bar's glass spans the whole area beside the list, edge to edge, as the app's top fade does in its
+    // pane; its buttons and name stay on the page's column (owner, 12 Nov 2026: no cut-off over the margins).
+    const side = sideShown() ? root.querySelector("aside.side")?.getBoundingClientRect() : null;
+    const areaLeft = Math.max(0, side ? side.right : 0);
+    const areaRight = document.documentElement.clientWidth;
+    body.style.setProperty("--area-left", `${areaLeft}px`);
+    body.style.setProperty("--area-width", `${areaRight - areaLeft}px`);
+    body.style.setProperty("--column-pad-left", `${Math.max(0, page.left - areaLeft)}px`);
+    body.style.setProperty("--column-pad-right", `${Math.max(0, areaRight - page.right)}px`);
   }
   // Wide windows: the page's buttons stay level with the buttons at the top of the list beside it, at rest and
   // while scrolling (owner, 12 Nov 2026); the small bar is centred on the same line.
@@ -1063,7 +1116,7 @@ window.addEventListener("resize", () => {
     fitPlaceLines();
     // The columns, and how far the maps grow, follow the window's width and height.
     if (root.querySelector(".cards")) balanceCards();
-  }, 150);
+  }, 300);
 });
 
 /**

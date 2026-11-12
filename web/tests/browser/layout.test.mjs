@@ -137,6 +137,9 @@ const measure = (page) => page.evaluate(() => {
     listButtons: all(".side-head > .round"),
     title: shown(title) ? rect(title.querySelector(".club-name, span") ?? title) : null,
     main: rect(document.querySelector("main")),
+    bar: document.querySelector(".top-title") ? rect(document.querySelector(".top-title")) : null,
+    sideRight: (() => { const side = document.querySelector("aside.side"); return side && side.getBoundingClientRect().width > 0 ? side.getBoundingClientRect().right : 0; })(),
+    clientWidth: document.documentElement.clientWidth,
     dialogs: all("dialog[open]"),
   };
 });
@@ -151,6 +154,11 @@ function check(at, layout, state) {
     assert.ok(b.top >= -0.5 && b.bottom <= at.height + 0.5 && b.left >= -0.5 && b.right <= at.width + 0.5,
       `${where}: "${b.label}" leaves the window (${Math.round(b.left)},${Math.round(b.top)} to ${Math.round(b.right)},${Math.round(b.bottom)})`);
   }
+  // The bar's glass spans the whole area beside the list, edge to edge, never just the page's column (owner, 12 Nov 2026).
+  if (at.bar) {
+    assert.ok(Math.abs(at.bar.left - at.sideRight) <= 1, `${where}: the top bar starts at ${Math.round(at.bar.left)}, not at the list's edge ${Math.round(at.sideRight)}`);
+    assert.ok(Math.abs(at.bar.right - at.clientWidth) <= 1, `${where}: the top bar ends at ${Math.round(at.bar.right)}, not at the window's edge ${at.clientWidth}`);
+  }
   if (at.title) for (const b of at.pageButtons) assert.ok(!overlaps(b, at.title), `${where}: "${b.label}" covers the club's name`);
   if (layout.wide) {
     assert.ok(at.pageButtons.length >= 2, `${where}: the page's cog and boat show`);
@@ -161,40 +169,107 @@ function check(at, layout, state) {
   }
 }
 
+/**
+ * Checks once the page has settled: measures again every 100 ms until the rules hold, for up to 5 s, so a busy
+ * machine (screenshot runs on the Mac) cannot fail a check that only needed one more frame. A real fault still
+ * fails, with the last measurement's message.
+ */
+async function checkSettled(page, layout, state) {
+  const until = Date.now() + 5000;
+  for (;;) {
+    try {
+      return check(await measure(page), layout, state);
+    } catch (error) {
+      if (Date.now() > until) throw error;
+      await page.waitForTimeout(100);
+    }
+  }
+}
+
+/** Waits until fn() returns the expected value, for up to 5 s; then compares once more so a failure says what it got. */
+async function eventually(fn, expected, message) {
+  const until = Date.now() + 5000;
+  let got = await fn();
+  while (got !== expected && Date.now() < until) {
+    await new Promise((done) => setTimeout(done, 100));
+    got = await fn();
+  }
+  assert.equal(got, expected, message);
+}
+
 for (const layout of LAYOUTS) {
   test(`layout: ${layout.name} keeps its buttons in line through load, scroll, list, resize and a sheet`, async () => {
     const { page, errors, context } = await openIn(layout);
     await page.goto(`${base}/app/#/club/mrc-1880`);
     await page.locator(".title-row h1").waitFor();
     await page.waitForTimeout(300);
-    check(await measure(page), layout, "loaded");
+    await checkSettled(page, layout, "loaded");
     for (const y of [40, 400]) {
       await page.evaluate((y) => scrollTo(0, y), y);
       await page.waitForTimeout(150);
-      check(await measure(page), layout, `scrolled ${y} px`);
+      await checkSettled(page, layout, `scrolled ${y} px`);
     }
     await page.evaluate(() => scrollTo(0, document.documentElement.scrollHeight));
     await page.waitForTimeout(150);
-    check(await measure(page), layout, "scrolled to the end");
+    await checkSettled(page, layout, "scrolled to the end");
     await page.evaluate(() => scrollTo(0, 0));
     if (layout.wide) {
       await page.click("#hide-list");
       await page.locator(".top-title [data-show-list]").waitFor();
       await page.waitForTimeout(150);
-      check(await measure(page), layout, "list slid away");
+      await checkSettled(page, layout, "list slid away");
       await page.locator(".top-title [data-show-list]").click();
       await page.locator("#hide-list").waitFor();
       await page.waitForTimeout(600);
-      check(await measure(page), layout, "list back");
+      await checkSettled(page, layout, "list back");
       await page.setViewportSize({ width: layout.viewport.width - 200, height: layout.viewport.height });
       await page.waitForTimeout(300);
-      check(await measure(page), { ...layout, name: `${layout.name} resized` }, "after resize");
+      await checkSettled(page, { ...layout, name: `${layout.name} resized` }, "after resize");
     }
     await page.locator(".launch-open").first().click();
     await page.locator("dialog[open]").first().waitFor();
     await page.waitForTimeout(400);
-    check(await measure(page), layout, "Location sheet open");
+    await checkSettled(page, layout, "Location sheet open");
     assert.deepEqual(errors, []);
     await context.close();
   });
 }
+
+test("columns (owner's pick B): the window sets 2 or 3, kept when the list slides away, with a buffer on resize", async () => {
+  const layout = { name: "computer", viewport: { width: 1512, height: 945 } };
+  const { page, errors, context } = await openIn(layout);
+  // What the window allows; the sample page may have fewer cards than columns.
+  const count = () => page.evaluate(() => Number(document.querySelector(".cards").dataset.columns));
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  await page.locator(".title-row h1").waitFor();
+  await page.waitForTimeout(300);
+  await eventually(count, 2, "1512 px with the list: 2");
+  await page.click("#hide-list");
+  await page.locator(".top-title [data-show-list]").waitFor();
+  await page.waitForTimeout(300);
+  await eventually(count, 2, "and still 2 with the list slid away");
+  await page.locator(".top-title [data-show-list]").click();
+  await page.locator("#hide-list").waitFor();
+  await page.setViewportSize({ width: 1728, height: 945 });
+  await page.waitForTimeout(500);
+  await eventually(count, 3, "1728 px: 3");
+  const widths = await page.evaluate(() => [...document.querySelectorAll(".cards .col")].map((c) => c.getBoundingClientRect().width));
+  assert.ok(widths.every((w) => w >= 380 && w <= 560.5), `card widths ${widths}`);
+  await page.setViewportSize({ width: 1610, height: 945 });
+  await page.waitForTimeout(500);
+  await eventually(count, 3, "1610 px after 3: kept by the buffer (room 1178)");
+  await page.setViewportSize({ width: 1590, height: 945 });
+  await page.waitForTimeout(500);
+  await eventually(count, 2, "1590 px: back to 2 (room 1158)");
+  await checkSettled(page, { name: "computer 1590", wide: true }, "after the columns changed");
+  await page.setViewportSize({ width: 2000, height: 1125 });
+  await page.waitForTimeout(500);
+  await page.click("#hide-list");
+  await page.locator(".top-title [data-show-list]").waitFor();
+  await page.waitForTimeout(300);
+  await eventually(count, 3, "2000 px without the list: 3, cards no wider than 560");
+  const wide = await page.evaluate(() => [...document.querySelectorAll(".cards .col")].map((c) => c.getBoundingClientRect().width));
+  assert.ok(wide.every((w) => w <= 560.5), `card widths ${wide}`);
+  assert.deepEqual(errors, []);
+  await context.close();
+});

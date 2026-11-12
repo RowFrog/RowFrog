@@ -43,3 +43,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 20 | 2026-11-12 | [HSTS for one year right away](0020-hsts-for-one-year-right-away.md) |
 | 21 | 2026-11-12 | [Statecharts as shared chart files (D-lite)](0021-statecharts-as-shared-chart-files-d-lite.md) |
 | 22 | 2026-11-12 | [Route editor: every edit counts, Save as new, a real Undo](0022-route-editor-every-edit-changes-save-as-new-real-undo.md) |
+| 23 | 2026-11-12 | [Club page columns: set by the window, kept when the list moves](0023-club-page-columns-set-by-the-window.md) |
