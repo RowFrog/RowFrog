@@ -335,7 +335,7 @@ Finished one-off probes (river section survey, river gauge check) are in `script
 
 ## Screenshot matrix (owner, 12 Nov 2026)
 
-Full comparisons and changes that reach several screens are shot in every combination (decision "Screenshots cover every device…"); narrow tasks may shoot a part and say which.
+Geometry checks run on every merge in every combination; the whole set of pictures weekly, before each release and for full comparisons; a single change shoots the screens it touches in every combination (decision "Screenshots cover every device…"). Chrome on iPhone/iPad is Safari's engine: Safari stands in, only its smaller visible height is checked.
 
 - iPhone app: portrait, landscape.
 - iPad app: portrait, landscape; list shown and hidden.

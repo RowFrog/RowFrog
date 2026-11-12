@@ -18,9 +18,12 @@ Screenshots are taken for this matrix:
 
 Each at several scroll positions (top, middle, near the end), so app and website are compared at the same places. Light and dark, with a background picture (frosted and solid tiles) and without, and with the keyboard open where there is a text field, as before.
 
-- The whole matrix: for every full comparison of app and website, and for changes that reach several or all screens.
-- A part of it: for narrow tasks; the report says which part and why.
-- A full app-and-website comparison also runs regularly, as a recurring task.
+- Automatic geometry checks (alignment, overlap, inside the window) run on every merge, in every combination.
+- The whole set of pictures: weekly (recurring task) and before each release, and for every full comparison of app and website.
+- A single change: the screens it touches, in every combination; narrowed by screen, never by device or browser.
+- Chrome on iPhone and iPad is not shot on its own: it draws with Apple's WebKit like Safari, so Safari stands in, and only its smaller visible height is checked (Chromium at that size). On a computer Chrome and Safari both stay.
+
+(Owner, 23:19 CET; the four lines above as agreed at 23:22 CET.)
 
 ## Why
 
