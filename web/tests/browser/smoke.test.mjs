@@ -11,6 +11,7 @@ import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { CSP } from "../../functions/_middleware.js";
 
 const ROOT = fileURLToPath(new URL("../../../", import.meta.url));
 const DIST = join(ROOT, "web/dist");
@@ -35,7 +36,10 @@ before(async () => {
     if (!api && path.endsWith("/")) file = join(file, "index.html");
     try {
       const body = await readFile(file);
-      res.writeHead(200, { "Content-Type": api ? "application/json" : TYPES[extname(file)] ?? "application/octet-stream" });
+      // The site's Content Security Policy, enforced here (the live site only reports it
+      // for now), so a page that needs a source it doesn't list fails this test.
+      res.writeHead(200, { "Content-Type": api ? "application/json" : TYPES[extname(file)] ?? "application/octet-stream",
+        ...(api ? {} : { "Content-Security-Policy": CSP }) });
       res.end(body);
     } catch {
       res.writeHead(404).end();
@@ -58,6 +62,7 @@ async function open(storage = {}) {
   const page = await context.newPage();
   const errors = [];
   page.on("pageerror", (e) => errors.push(e.message));
+  page.on("console", (m) => /Content Security Policy/i.test(m.text()) && errors.push(m.text()));
   if (process.env.RF_DEBUG) page.on("pageerror", (e) => console.log("DEBUG", e.stack));
   if (process.env.RF_DEBUG) page.on("response", (r) => r.status() >= 400 && console.log("DEBUG", r.status(), r.url()));
   await page.clock.install({ time: new Date(forecast.generatedAt) });

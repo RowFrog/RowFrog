@@ -316,6 +316,7 @@ The Mac is the code home and the Raspberry Pi (`pi` remote, `rowfrog:git/rowfrog
 | Switch | What to do |
 |---|---|
 | New used clubs per day | `NEW_USED_PER_DAY` in `scripts/publish_static.py` is 0 (off) during testing. Set it to e.g. 50 before launch: then at most that many clubs and lakes newly count as used per day (most loaded first; clubs used on earlier days always stay), so requests for hundreds of different clubs can't move them all to 3-hourly loads. The forecast job's log then prints a "usage: … first loaded today" line when the cap holds some back |
+| Website Content Security Policy | `web/functions/_middleware.js` sends the policy (`CSP_SOURCES`) as `Content-Security-Policy-Report-Only` since 2026-11-12: browsers only log what they would block (Safari/Chrome console, "Content Security Policy"). After a few days of use with nothing logged, set `CSP_ENFORCED = true`. The browser test already enforces it, so a page that needs an unlisted source fails there first. A new outside service (map tiles, data) must be added to `CSP_SOURCES`. The same reply also carries Permissions-Policy (location only), Cross-Origin-Opener-Policy, HSTS (one year, without subdomains), nosniff, no-referrer and X-Frame-Options DENY. |
 
 ## Moved aside
 
