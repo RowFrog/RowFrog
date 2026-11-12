@@ -368,7 +368,8 @@ not-confirmed note, its coordinates and "Open in
 Maps". Settings › Club pages › Location in the club header (on by default)
 can be turned off to bring back the Launch point map card on the page
 instead, a still picture until tapped. On the website the place line opens
-the Location sheet too.
+the Location sheet too, where "In OpenStreetMap as “…”" opens a small card
+with the place's name, directions and its OpenStreetMap page.
 For a club that has not confirmed its launch point, the sheet offers
 "Suggest the launch point": move the map under the fixed oars and send. Only
 the club and the point are sent; the suggestions service files it as a GitHub
@@ -453,7 +454,8 @@ field at the bottom.
   and the widget updates.
 - Help: the safety notice, replay the tour, the full legend of symbols, and
   bring the one-time tips back. Tips point out features the first time they
-  appear, and after an update a "What's new" sheet shows once.
+  appear (a river or canal club added after the tour gets a one-time tip on
+  its Current tile), and after an update a "What's new" sheet shows once.
 - About: the version, a privacy summary, the legal notice
   (Impressum, still with placeholders) and Reset (keeps saved locations, the
   home base and My boats; resets everything else, including the limits).
@@ -503,7 +505,8 @@ for iPads and desktop browsers, and has nearly everything the app has: own
 boats and limits, the lake view with route planning and row import (GPX, TCX
 or FIT), value pages with chart and weather map, the satellite picture with its
 layers, browsing by country and adding a place, Arrange this page, units,
-appearance, background pictures, the tour and the tips, the River and Canal view with the Current tile, and the rain radar in
+appearance, background pictures, the tour (on a first visit with the
+home base and more clubs to pick, as in the app) and the tips, the River and Canal view with the Current tile, and the rain radar in
 the rain tile (the radar card is off by default, as in the app). What a visitor picks stays in their browser.
 
 ## Layout
