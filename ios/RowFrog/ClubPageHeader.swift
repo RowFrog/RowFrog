@@ -13,8 +13,7 @@ struct ClubPageHeader: View {
     let isHome: Bool
     let forecasts: ForecastStore
     @Environment(\.surface) private var surface
-    @Environment(\.pageMargins) private var pageMargins
-    @Environment(\.titleSideRoom) private var titleSideRoom
+    @Environment(\.pageBarBottom) private var pageBarBottom
     /// The refresh failure explained after a tap on its line.
     @State private var showingFailure: RefreshFailure?
     @State private var showingLaunchPoint = false
@@ -32,14 +31,9 @@ struct ClubPageHeader: View {
             ClubTitle(club: club)
                 .font(.largeTitle.bold())
                 // Once the title is under the top bar, the bar shows the name instead.
-                .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
-                    top > 0 && proxy.frame(in: .global).maxY < top + InlineClubTitle.height
+                .onGeometryChange(for: Bool.self) { [bar = pageBarBottom] proxy in
+                    bar > 0 && proxy.frame(in: .global).maxY < bar
                 } action: { PageScroll.shared.update(club.id, titleGone: $0) }
-                .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).midY } action: { y in
-                    PageScroll.shared.update(club.id, titleMidY: y)
-                }
-                // The cog and the boat sit level with the name on either side.
-                .padding(.horizontal, titleSideRoom)
             placeLine
             if !club.launchPointVerified {
                 notConfirmedLine
@@ -98,7 +92,8 @@ struct ClubPageHeader: View {
         .padding(.horizontal, surface.hasPicture ? 16 : 0)
         .padding(.vertical, surface.hasPicture ? 10 : 0)
         .labelBackground(surface, in: RoundedRectangle(cornerRadius: 16))
-        .padding(.top, 24)
+        // On an iPad the page already starts below the line of top buttons.
+        .padding(.top, PageScroll.shared.topButtons ? 0 : 24)
         .alert(tr("Could not update"), isPresented: Binding(get: { showingFailure != nil }, set: { if !$0 { showingFailure = nil } }),
                presenting: showingFailure) { _ in
             Button(tr("Try again")) { Task { await forecasts.load(club.id, force: true) } }

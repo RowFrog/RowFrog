@@ -258,8 +258,6 @@ final class PageScroll {
     private(set) var scrolled: Set<String> = []
     /// Club pages whose big title has gone under the top.
     private(set) var titleGone: Set<String> = []
-    /// Where each page's big name sits on screen, for the buttons kept level with it (iPad upright).
-    private(set) var titleMidY: [String: CGFloat] = [:]
     /// Where the middle of the list's top buttons (sidebar, "…") sits on screen (iPad):
     /// the page's own top buttons stay level with them (owner, 12 Nov 2026, as on the website).
     private(set) var listButtonsMidY: CGFloat?
@@ -272,16 +270,12 @@ final class PageScroll {
         if titleGone.contains(clubID) != gone { titleGone.formSymmetricDifference([clubID]) }
     }
 
-    func update(_ clubID: String, titleMidY y: CGFloat) {
-        if titleMidY[clubID] != y { titleMidY[clubID] = y }
-    }
+    /// Whether the page has its buttons at the top (iPad): then they and the small name
+    /// sit on the list's button line, and the page starts below it.
+    private(set) var topButtons = false
 
-    /// Whether the list sits beside the pages (iPad on its side, also while slid away):
-    /// then the page's top buttons and small name line up with the list's buttons.
-    private(set) var besideList = false
-
-    func update(besideList beside: Bool) {
-        if besideList != beside { besideList = beside }
+    func update(topButtons top: Bool) {
+        if topButtons != top { topButtons = top }
     }
 
     func update(listButtonsMidY y: CGFloat) {
@@ -302,7 +296,7 @@ private struct PageMarginsKey: EnvironmentKey {
     static let defaultValue = EdgeInsets()
 }
 
-private struct TitleSideRoomKey: EnvironmentKey {
+private struct PageBarBottomKey: EnvironmentKey {
     static let defaultValue: CGFloat = 0
 }
 
@@ -319,9 +313,11 @@ extension EnvironmentValues {
     }
 
     /// What a club page's big name keeps free on each side for the buttons level with it.
-    var titleSideRoom: CGFloat {
-        get { self[TitleSideRoomKey.self] }
-        set { self[TitleSideRoomKey.self] = newValue }
+    /// Where the top bar with the small club name ends on screen (swiping club pages):
+    /// the big name counts as gone once it is above this.
+    var pageBarBottom: CGFloat {
+        get { self[PageBarBottomKey.self] }
+        set { self[PageBarBottomKey.self] = newValue }
     }
 
     /// Whether this club page is the one in front. Pages beside it stay alive
