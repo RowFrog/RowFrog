@@ -448,8 +448,8 @@ struct InlineClubTitle: View {
     /// How far the top bar with the small name reaches below the clock. With the list
     /// beside the page the name sits on the line of the top buttons (PageTopButtons),
     /// a little lower; elsewhere the bar is just the name's height.
-    @MainActor static func barHeight(statusBar: CGFloat, besideList: Bool = PageScroll.shared.besideList) -> CGFloat {
-        guard besideList else { return height }
+    @MainActor static func barHeight(statusBar: CGFloat, besideList: Bool? = nil) -> CGFloat {
+        guard besideList ?? PageScroll.shared.besideList else { return height }
         let mid = PageTopButtons.midY(statusBar: statusBar, listButtonsMidY: PageScroll.shared.listButtonsMidY)
         return max(height, mid - statusBar + height / 2)
     }
