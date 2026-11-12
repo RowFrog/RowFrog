@@ -23,7 +23,7 @@ import {
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
   forecastStatus, coarserModel,
 } from "./logic.js";
-import { fillLakeCard, renderLakeMap, forgetView, splitClubPins } from "./lakeview.js";
+import { fillLakeCard, renderLakeMap, renderAllRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
 import { suggestRow, openSuggestLaunchPoint } from "./suggest.js";
 import { currentTile, currentBody } from "./river.js";
@@ -2384,8 +2384,10 @@ function renderSettings(topic = null) {
           <select id="settings-boat">${allBoats().map((b) => `<option value="${h(b.id)}" ${b.id === tickedBoat().id ? "selected" : ""}>${h(boatTitle(b))}</option>`).join("")}</select></label>
         <a class="row-setting topic" href="#/settings/boats"><span>${settingsIcon("sliders-horizontal", "#30b0c7")} ${h(t("Boats and limits"))}</span>
           <span class="sub">${changed ? h(t("%@ changed", String(changed))) : ""} ${icon("chevron-right")}</span></a>
+        <a class="row-setting topic" href="#/settings/routes"><span>${settingsIcon("route", "#af52de")} ${h(t("Routes"))}</span>
+          <span class="sub">${store.routes.length ? h(store.routes.length === 1 ? t("1 route") : t("%@ routes", String(store.routes.length))) : ""} ${icon("chevron-right")}</span></a>
       </section>
-      <p class="footer">${h(t("The boat the rowing light is worked out for, on every club page and in the widgets."))}</p>
+      <p class="footer">${h(t("The boat the rowing light is worked out for, on every club page and in the widgets. Routes holds the routes you saved on the lake maps."))}</p>
       ${groups.map((ids) => `<section class="card group">${ids.map((id) => row(SETTINGS_TOPICS.find(([x]) => x === id))).join("")}</section>`).join("\n      ")}
       </div>
       <div id="settings-results" hidden></div>
@@ -2896,11 +2898,15 @@ function route(scroll = true) {
   if (value) return renderValuePage(root, decodeURIComponent(value[1]), value[2], value[3] ? decodeURIComponent(value[3]) : null, value[4] ?? null);
   const club = hash.match(/^\/club\/(.+)$/);
   if (club) return renderClub(decodeURIComponent(club[1]));
-  const lake = hash.match(/^\/lake\/([^/?]+)(?:\/([^?]+))?(?:\?at=(.+))?$/);
+  const lake = hash.match(/^\/lake\/([^/?]+)(?:\/([^?]+))?(?:\?(.+))?$/);
   if (lake) {
     const clubId = lake[2] ? decodeURIComponent(lake[2]) : null;
-    const at = lake[3] ? new Date(decodeURIComponent(lake[3])) : null;
-    return renderLakeMap(root, decodeURIComponent(lake[1]), clubId, clubId ? `#/club/${encodeURIComponent(clubId)}` : "#/", at);
+    // ?at=<time> opens an hour; ?route=<id> a saved route, from Settings › Routes (and goes back there).
+    const query = new URLSearchParams(lake[3] ?? "");
+    const at = query.get("at") ? new Date(query.get("at")) : null;
+    const routeId = query.get("route");
+    const back = routeId ? "#/settings/routes" : clubId ? `#/club/${encodeURIComponent(clubId)}` : "#/";
+    return renderLakeMap(root, decodeURIComponent(lake[1]), clubId, back, at, routeId);
   }
   const add = hash.match(/^\/add-place(?:\?name=(.*))?$/);
   if (add) return renderAddPlace(root, add[1] ? decodeURIComponent(add[1]) : "");
@@ -2913,6 +2919,7 @@ function route(scroll = true) {
   const topic = hash.match(/^\/settings\/(appearance|clubpages|language|data|help|about|developer)$/);
   if (topic) return renderSettings(topic[1]);
   if (hash === "/settings/boats") return renderBoats();
+  if (hash === "/settings/routes") return renderAllRoutes(root);
   if (hash === "/settings/backgrounds") return renderBackgrounds(root);
   const boat = hash.match(/^\/settings\/boat\/(.+)$/);
   if (boat) return renderBoat(decodeURIComponent(boat[1]));

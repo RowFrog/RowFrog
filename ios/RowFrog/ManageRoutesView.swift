@@ -77,7 +77,7 @@ struct ManageRoutesView: View {
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 2) {
                 Text(route.name)
-                Text(details(route))
+                Text(Self.details(route))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
@@ -92,7 +92,8 @@ struct ManageRoutesView: View {
         .accessibilityElement(children: .combine)
     }
 
-    private func details(_ route: Route) -> String {
+    /// "6.2 km · Loop · rowed 3 Nov", also in Settings › Routes.
+    static func details(_ route: Route) -> String {
         let shape = route.isLoop ? tr("Loop") : route.outAndBack ? tr("Out and back") : tr("One way")
         var text = "\(Format.distance(route.lengthM)) · \(shape)"
         // A row brought in from Apple Health or a file.

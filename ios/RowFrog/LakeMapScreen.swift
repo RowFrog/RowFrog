@@ -64,8 +64,9 @@ struct LakeMapScreen: View {
     @Environment(\.dismiss) private var dismiss
     private let routes = RouteStore.shared
 
-    /// `at` opens the map at a later hour, e.g. from an hour in the club page's table.
-    init(view: LakeView, clubID: String?, at date: Date = .now) {
+    /// `at` opens the map at a later hour, e.g. from an hour in the club page's table;
+    /// `route` opens a saved route, from Settings › Routes.
+    init(view: LakeView, clubID: String?, at date: Date = .now, route opening: Route? = nil) {
         self.view = view
         self.clubID = clubID
         let args = UserDefaults.standard
@@ -125,8 +126,10 @@ struct LakeMapScreen: View {
         }
         let launch = view.clubs.first { $0.id == clubID }.map { CLLocationCoordinate2D(latitude: $0.launchPoint.lat, longitude: $0.launchPoint.lon) }
         let state: [String]? = route.isEmpty ? nil : ["planning", selected == nil ? "drawing" : "pointSelected"]
-        _draft = State(initialValue: RouteDraft(lakeId: view.lakeId, launch: launch, points: waypoints, outAndBack: outAndBack,
-                                                saved: imported, rowed: imported, state: state, selected: selected))
+        var draft = RouteDraft(lakeId: view.lakeId, launch: launch, points: waypoints, outAndBack: outAndBack,
+                               saved: imported, rowed: imported, state: state, selected: selected)
+        if let opening { draft.send(.openRoute(opening)) }
+        _draft = State(initialValue: draft)
     }
 
     private var routeMode: Bool { draft.planning }
