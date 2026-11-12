@@ -51,9 +51,15 @@ holds Edit, Browse by country and Add a place, and the big "Locations" title
 shrinks into the bar once the list scrolls. Tapping a club opens its page.
 On iPhone the club pages have a bottom bar with the settings cog and the boat
 button on the left, the page dots and the list button on the right, as in
-Weather. On iPad a
+Weather: a tap on a page dot moves one club towards it with a slide, and a
+finger along the dots jumps. The website slides its club pages the same way,
+and a club picked in its list zooms open from its row. On iPad a
 sidebar button slides the list in over the page (upright) or away beside it
-(on its side).
+(on its side). Screens that only show something (settings, value pages, maps,
+legends, sources and the like) close with a round X at the top left; editing
+sheets keep Cancel and Done, and cards inside a screen (a tapped spot, a
+turning point) close with a small grey X at their top right. App and website
+match.
 
 **Add a place.** A club, boathouse or spot on the water that no list has can
 be put on the map. It stays on the phone, and its forecast is worked out on
@@ -107,8 +113,9 @@ a line that shows the values at any time and dots for now ("Back to now",
 or "Back to" the hour it was opened from, returns there), a unit switch at the
 bottom (air pressure in hPa, mbar, bar, inHg or mmHg), the limit lines (named on the side away from now, ending before the axis numbers), wind arrows
 every 3 hours, an "About the limits" note, advice for rowing and the data
-source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views
-or jump to another from the symbol at the top; tapping an entry in a chart's
+source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views,
+use the arrow buttons (each shows the next value's symbol), or jump to another
+from the menu in the title; tapping an entry in a chart's
 legend switches its line on or off.
 
 **Rowing limits.** Settings › Boats and limits chooses the limits the light
@@ -319,7 +326,9 @@ Sentinel-2 picture of the lake, with a line such as "Sentinel-2 · 22 Oct ·
 25 % of the lake under cloud" and an "i" that explains why a new picture
 comes only every 2 to 5 days. A switch chooses between the latest pass
 (clouds or not), the clearest one and, in cloudy weeks, a newer mostly clear
-one; every picture shows the same area. Chips draw the shore, clubs, saved
+one; every picture shows the same area. When the latest pass has 90 % or
+more cloud over the 2 × 2 km around the club, the card opens on the clearest
+picture instead, with the latest one tap away; the website does the same. Chips draw the shore, clubs, saved
 routes, wind and, in winter, the satellite ice map over it. Two more layers
 colour the water with the lake view's wave heights or rowing light for the
 chosen hour, one at a time; a legend explains them. While the whole lake is
@@ -388,7 +397,8 @@ and a thunderstorm within 6 hours takes its place. When the forecast is out of
 date, every hour dot and day bar turns grey. The round lock-screen widget is
 a daylight ring. Behind the values goes a sky in the weather's colours (the
 default), the rowing light's colour, the club's app picture or another
-picture, the satellite picture of the lake, or plain white or black. Widgets
+picture, the satellite picture of the lake (the whole Sentinel picture, with
+the club as near the middle as its edges allow), or plain white or black. Widgets
 are app-only; the website has none.
 
 **Settings** (cog in the bottom bar of the club pages and beside the search
@@ -456,7 +466,10 @@ layouts (two columns from 600 pt, a side list from 860 × 560 pt). In two
 columns both end level: the 48 hours show whole (each night folded into one
 line), the forecast source, Arrange this page and the credits go into the shorter
 column, and the lake view and launch point maps there grow (at most one
-screen tall each). The website does the same.
+screen tall each). From 1,200 pt of room a third column opens (no iPad gets
+there; a Mac or a wide browser window does). The window sets the count, as if
+the side list were shown, so sliding the list away or back never moves a card
+to another column (`docs/decisions/0023`). The website does the same.
 
 **iPad.** The app runs natively on iPad in all four orientations, with the
 same wide layouts (side list 400 pt wide). The Landscape setting is hidden
@@ -660,7 +673,7 @@ More detail, including the secrets each one needs, is in the
 | **OSM club places** (`osm-club-places.yml`) | Finds each club's own place in OpenStreetMap (`scripts/osm_club_places.py`, into `data/catalogs/osm-places.json`), where the website's club pin moves once zoomed in. On the 12th of each month, by hand, and when its script changes. |
 | **Missing lake outlines** (`missing-outlines.yml`) | Fetches the OpenStreetMap outline of every catalog lake that has none yet (`scripts/fetch_missing_outlines.py`, in 10 parallel parts) and commits the new `data/outlines` files; existing outlines are never changed. Lines marked "CHECK BY HAND" in its report were picked without a matching name. By hand, on `main`. |
 | **Fix unknown waters** (`fix-unknown-waters.yml`) | Puts clubs the imports left under "Water near *town*" on the water checked by hand for them (`data/catalogs/water-fixes.json`) and moves their launch points to that water's shore. Runs when that file changes on `main`. |
-| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list). Runs when `web/`, the sample data in `testdata/`, `scripts/build_web.py`, the app icon (for the favicon and home-screen icons) or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; the optional `MAPTILER_KEY` turns on the satellite pictures. |
+| **Website** (`website.yml`) | Builds and deploys the website to Cloudflare Pages (project `rowfrog-web`) and checks that it refuses visitors without the password. Before deploying, a browser test opens the built site in Chromium, offline, with the sample API files and fails on any JavaScript error (safety notice, club page, every tile's value page, the list); `web/tests/browser/looks.test.mjs` also opens pages with a background picture and with the keyboard open. Runs when `web/`, the sample data in `testdata/`, `scripts/build_web.py`, the app icon (for the favicon and home-screen icons) or the app's German texts change on `main`; tests only on pull requests. Needs `SITE_USER`, `SITE_PASSWORD`, `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`; the optional `MAPTILER_KEY` turns on the satellite pictures. |
 
 ## Traffic light defaults
 
