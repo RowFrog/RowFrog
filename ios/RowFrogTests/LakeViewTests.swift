@@ -73,6 +73,40 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(image.height, 3)
     }
 
+    /// With fog and storms per point, the rowing light is drawn finer than the
+    /// cells (owner's pick B, 12 Nov 2026): 8 pixels per cell side here, and a
+    /// cell's centre keeps the cell's own light.
+    func testRowingLightIsDrawnFinerThanTheCells() throws {
+        let fine = json.replacingOccurrences(of: "\"fromDeg\": 180}", with: "\"fromDeg\": 180, \"other\": 0}")
+            .replacingOccurrences(of: "\"fromDeg\": 190}", with: "\"fromDeg\": 190, \"other\": 0}")
+        let view = try APIClient.decoder.decode(LakeView.self, from: Data(fine.utf8))
+        let image = try XCTUnwrap(LakeRaster.image(view, hour: view.hours[0], layer: .light))
+        XCTAssertEqual(image.width, 16)
+        XCTAssertEqual(image.height, 24)
+        let bytes = try XCTUnwrap(image.dataProvider?.data as Data?)
+        func pixel(_ x: Int, _ y: Int) -> [UInt8] { let j = (y * image.width + x) * 4; return Array(bytes[j..<j + 3]) }
+        // Cell 5 (top right, waves 0.34 m) is red at its centre; cell 0 (bottom left, 0.03 m) green.
+        XCTAssertEqual(pixel(12, 4), [255, 59, 48])
+        XCTAssertEqual(pixel(4, 20), [52, 199, 89])
+        XCTAssertEqual(bytes[(12 * image.width + 12) * 4 + 3], 255, "cell 3 (middle right) is water and drawn")
+        // The waves and wind layers stay one pixel per cell.
+        XCTAssertEqual(LakeRaster.image(view, hour: view.hours[0], layer: .waves)?.width, 2)
+    }
+
+    /// Fog is judged per pixel from the blended visibility too, when the backend
+    /// says what its combined light is made of (owner, 12 Nov 2026).
+    func testFogIsDrawnFineFromTheVisibility() throws {
+        let foggy = json.replacingOccurrences(of: "\"fromDeg\": 180}", with: "\"fromDeg\": 180, \"other\": 2, \"visM\": 300, \"storm\": 0}")
+            .replacingOccurrences(of: "\"fromDeg\": 190}", with: "\"fromDeg\": 190, \"other\": 2, \"visM\": 300, \"storm\": 0}")
+        let view = try APIClient.decoder.decode(LakeView.self, from: Data(foggy.utf8))
+        let image = try XCTUnwrap(LakeRaster.image(view, hour: view.hours[0], layer: .light))
+        XCTAssertEqual(image.width, 16)
+        let bytes = try XCTUnwrap(image.dataProvider?.data as Data?)
+        // Cell 0 (bottom left) has calm water but 300 m visibility: red.
+        let j = (20 * image.width + 4) * 4
+        XCTAssertEqual(Array(bytes[j..<j + 3]), [255, 59, 48])
+    }
+
     func testWaveColoursRiseWithTheLimits() {
         let small = RowingLimits(boat: .small)
         XCTAssertGreaterThan(LakeRaster.waveColor(0.3, small).r, LakeRaster.waveColor(0, small).r)

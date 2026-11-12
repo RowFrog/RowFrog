@@ -551,7 +551,8 @@ struct LakeViews {
     subscript(lakeID: String, club clubID: String?) -> LakeView? { store.view(lakeID, club: clubID) }
 }
 
-/// The lake's cells as a small picture, one pixel per cell, north up. Drawn
+/// The lake's cells as a small picture, north up: one pixel per cell, or finer for
+/// the rowing light (fineLight). Drawn
 /// scaled up with smooth interpolation and clipped to the shore, it gives a
 /// soft map of the conditions.
 enum LakeRaster {
@@ -616,6 +617,7 @@ enum LakeRaster {
     }()
 
     private static func render(_ view: LakeView, hour: LakeHour, layer: LakeLayer) -> CGImage? {
+        if layer == .light, let fine = fineLight(view, hour: hour) { return fine }
         let grid = view.grid
         let w = grid.cols, h = grid.rows
         let limits = view.limits
@@ -661,6 +663,132 @@ enum LakeRaster {
         guard let provider = CGDataProvider(data: Data(pixels) as CFData) else { return nil }
         return CGImage(
             width: w, height: h, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: w * 4,
+            space: CGColorSpace(name: CGColorSpace.sRGB)!,
+            bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
+            provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent
+        )
+    }
+}
+
+extension LakeRaster {
+    /// Pixels per cell side for the rowing light: more on small grids, at most
+    /// `maxFineSide` pixels along the longer side.
+    static let maxFine = 8
+    static let maxFineSide = 1600
+
+    /// The rowing light finer than the cells (owner's pick B, 12 Nov 2026): one
+    /// colour per cell stepped along the squares (about 250 m on Starnberger See).
+    /// Wind, gusts, waves, visibility and rain are blended between the cell
+    /// centres and judged per pixel, against the boat's limits and the fog and
+    /// heavy-rain thresholds, so the colour edges follow the blended values (fog
+    /// too, owner 12 Nov). Thunderstorms and hail stay per cell, and a cell the
+    /// backend made stricter for another reason keeps that. Nil when the backend
+    /// does not send these per point (older backends): one pixel per cell, as before.
+    static func fineLight(_ view: LakeView, hour: LakeHour) -> CGImage? {
+        let grid = view.grid
+        let w = grid.cols, h = grid.rows
+        guard w > 0, h > 0, !grid.cells.isEmpty, hour.wind.allSatisfy({ $0.other != nil }) else { return nil }
+        let k = max(2, min(maxFine, maxFineSide / max(w, h)))
+        let cold = view.waterC.map { $0 < RowingLimits.coldWaterC }
+            ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
+        let limits = view.limits.forWater(cold ? 0 : nil)
+        // The values blended between cells: wind, gusts, waves (m), visibility (log of m,
+        // blended as LakeWind.blended does), rain (mm).
+        let fields = 5
+        func value(_ v: Double) -> Double? { v.isNaN ? nil : v }
+        func judged(_ f: [Double]) -> Light {
+            var light = max(limits.light(value(f[0]), .windAmber, .windRed),
+                            limits.light(value(f[1]), .gustAmber, .gustRed),
+                            limits.light(value(f[2]), .waveAmber, .waveRed))
+            // As LakeWind.fogLight and .extra: fog red under 500 m, amber to 1 km; heavy rain amber from 4 mm.
+            if !f[3].isNaN { let vis = exp(f[3]); light = max(light, vis < 500 ? .red : vis <= 1000 ? .amber : .green) }
+            if !f[4].isNaN, f[4] >= 4 { light = max(light, .amber) }
+            return light
+        }
+
+        // Per cell, north up: the values, the light that stays per cell
+        // (thunderstorm, hail, anything else the backend added), and whether it is water.
+        let n = w * h
+        var values = [[Double]](repeating: [Double](repeating: .nan, count: fields), count: n)
+        var least = [Light](repeating: .green, count: n)
+        var known = [Bool](repeating: false, count: n)
+        for (i, flat) in grid.cells.enumerated() where i < hour.lights.count {
+            let p = (h - 1 - flat / w) * w + flat % w
+            let wind = view.cellWind(i, in: hour)
+            var f = [wind?.speedMs ?? .nan, wind?.gustMs ?? .nan, i < hour.wavesCm.count ? hour.wave(ofCell: i) : .nan, .nan, .nan]
+            var stays = Light.green
+            if let wind, wind.storm != nil {
+                // Newer backends say what the combined light is made of.
+                f[3] = wind.visM.map { log(max($0, 1)) } ?? .nan
+                f[4] = wind.rainMm ?? .nan
+                stays = max(wind.storm ?? .green, wind.hail == true ? .red : .green)
+            } else {
+                stays = wind?.other ?? .green  // only the combined light: it stays per cell
+            }
+            values[p] = f
+            let own = max(judged(f), stays)
+            // The backend's light is stricter than these explain: keep it for the cell.
+            least[p] = max(stays, hour.lights[i] > own ? hour.lights[i] : .green)
+            known[p] = true
+        }
+        // Spread two cells onto the land, so the blending does not fade at the
+        // shore; the shore line clips it again.
+        for _ in 0..<2 {
+            let filled = known
+            for y in 0..<h {
+                for x in 0..<w where !filled[y * w + x] {
+                    var sum = [Double](repeating: 0, count: fields), count = sum
+                    var stays = Light.green, any = false
+                    for (dx, dy) in [(-1, 0), (1, 0), (0, -1), (0, 1)] {
+                        let nx = x + dx, ny = y + dy
+                        guard (0..<w).contains(nx), (0..<h).contains(ny), filled[ny * w + nx] else { continue }
+                        let j = ny * w + nx
+                        any = true
+                        stays = max(stays, least[j])
+                        for f in 0..<fields where !values[j][f].isNaN { sum[f] += values[j][f]; count[f] += 1 }
+                    }
+                    guard any else { continue }
+                    let j = y * w + x
+                    values[j] = (0..<fields).map { count[$0] > 0 ? sum[$0] / count[$0] : .nan }
+                    least[j] = stays
+                    known[j] = true
+                }
+            }
+        }
+
+        let fw = w * k, fh = h * k
+        var pixels = [UInt8](repeating: 0, count: fw * fh * 4)
+        let wholeRed = hour.lakeWide.light == .red
+        var sum = [Double](repeating: 0, count: fields), weights = sum, blended = sum
+        for fy in 0..<fh {
+            let v = (Double(fy) + 0.5) / Double(k) - 0.5
+            let y0 = Int(v.rounded(.down)), ty = v - Double(y0)
+            let cy = fy / k
+            for fx in 0..<fw {
+                let cx = fx / k
+                guard known[cy * w + cx] else { continue }
+                let u = (Double(fx) + 0.5) / Double(k) - 0.5
+                let x0 = Int(u.rounded(.down)), tx = u - Double(x0)
+                // Bilinear between the four cell centres around the pixel, over the known ones.
+                for f in 0..<fields { sum[f] = 0; weights[f] = 0 }
+                for corner in 0..<4 {
+                    let dx = corner & 1, dy = corner >> 1
+                    let weight = (dx == 0 ? 1 - tx : tx) * (dy == 0 ? 1 - ty : ty)
+                    let x = x0 + dx, y = y0 + dy
+                    guard weight > 0, x >= 0, x < w, y >= 0, y < h, known[y * w + x] else { continue }
+                    let cell = values[y * w + x]
+                    for f in 0..<fields where !cell[f].isNaN { sum[f] += cell[f] * weight; weights[f] += weight }
+                }
+                for f in 0..<fields { blended[f] = weights[f] > 0 ? sum[f] / weights[f] : .nan }
+                let light = max(least[cy * w + cx], judged(blended))
+                let c = wholeRed ? greyed(color(light)) : color(light)
+                let j = (fy * fw + fx) * 4
+                pixels[j] = UInt8(c.r); pixels[j + 1] = UInt8(c.g); pixels[j + 2] = UInt8(c.b); pixels[j + 3] = 255
+            }
+        }
+        guard let provider = CGDataProvider(data: Data(pixels) as CFData) else { return nil }
+        return CGImage(
+            width: fw, height: fh, bitsPerComponent: 8, bitsPerPixel: 32, bytesPerRow: fw * 4,
             space: CGColorSpace(name: CGColorSpace.sRGB)!,
             bitmapInfo: CGBitmapInfo(rawValue: CGImageAlphaInfo.premultipliedLast.rawValue),
             provider: provider, decode: nil, shouldInterpolate: true, intent: .defaultIntent
