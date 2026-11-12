@@ -1136,6 +1136,7 @@ export async function renderAllRoutes(root) {
     ${testing()}
     <main class="page settings-topic all-routes">${groups.length ? groups.map(([lakeId, list]) => `<h3 class="section">${h(lakeOf(lakeId)?.name ?? lakeId)}</h3>
       <section class="card group manage-routes" data-lake="${h(lakeId)}">${list.map((r, i) => routeRow(r, i, list.length, null)).join("")}</section>`).join("")
+      + `<p class="footer">${h(t("Every saved route, by water. Tap one to open it on its lake map."))}</p>`
     : `<div class="empty-state">${icon("route")}<strong>${h(t("No saved routes"))}</strong><p class="sub">${h(t("Plan a route on the map and save it from the bookmark menu."))}</p></div>`}
     </main>`;
     wireRouteRows(root, {
