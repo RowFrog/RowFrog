@@ -1,4 +1,4 @@
-# NNNN. Cold-water badge: what to do, in words, no temperature
+# 29. Cold-water badge: what to do, in words, no temperature
 
 - Date: 2026-11-12
 - Status: decided (owner)
