@@ -401,3 +401,32 @@ test("the route editor: undo takes back the way back, Save marks the route saved
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("Settings › Routes lists every saved route by water and opens one on its lake map", async () => {
+  const lake = squareLake();
+  const lp = club.launchPoint;
+  const routes = [
+    { id: "r1", name: "Square loop", lakeId: club.lakeId, outAndBack: false, points: [lp, { lat: lp.lat + 0.006, lon: lp.lon }, { lat: lp.lat + 0.006, lon: lp.lon + 0.009 }] },
+    { id: "r2", name: "Elsewhere", lakeId: "nowhere-lake", outAndBack: true, points: [{ lat: 48, lon: 11 }, { lat: 48.01, lon: 11 }] },
+  ];
+  const { page, errors, context } = await open({ ...visitor(), "rf.routes": routes });
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  await page.goto(`${base}/app/#/settings`);
+  const row = page.locator('a[href="#/settings/routes"]');
+  await row.waitFor({ timeout: 20000 });
+  assert.match(await row.innerText(), /2 routes/);
+  await row.click();
+  await page.locator(".all-routes .manage-routes").first().waitFor();
+  const headings = await page.locator(".all-routes h3.section").allInnerTexts();
+  assert.equal(headings.length, 2, "one group per water");
+  assert.ok(headings.some((x) => /nowhere-lake/i.test(x)), `a water missing from the catalogue keeps its id: ${headings}`);
+  await page.locator('.all-routes [data-open="r1"]').click();
+  await page.waitForFunction(() => location.hash.includes("route=r1"));
+  await page.locator("#routes").waitFor({ timeout: 20000 });
+  assert.ok(await page.locator("#undo").isDisabled(), "a freshly opened route has nothing to undo");
+  assert.match(await page.locator(".route-line").innerText(), /km/);
+  assert.equal(await page.locator(".lake-top a.round").getAttribute("href"), "#/settings/routes", "Close goes back to the list");
+  assert.deepEqual(errors, []);
+  await context.close();
+});

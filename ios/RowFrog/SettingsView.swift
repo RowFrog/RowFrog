@@ -20,6 +20,8 @@ enum SettingsRoute: Hashable {
     case safety
     case impressum
     case privacy
+    /// Every saved route, by water (owner's pick, 12 Nov 2026).
+    case routes
 
     /// Screenshot hook: `-RWSettingsPage appearance`, `appicon`, `clubpages`, `language`, `data`, `help`,
     /// `about`, `developer`, `backgrounds`, `widgets`, `limits`, `boat:<id>`, `safety`, `impressum`,
@@ -43,6 +45,7 @@ enum SettingsRoute: Hashable {
         case "impressum": return [.about, .impressum]
         case "privacy": return [.about, .privacy]
         case "limits": return [.limits]
+        case "routes": return [.routes]
         case "picker-all": return backgrounds + [.picker(.all)]
         default: break
         }
@@ -136,6 +139,8 @@ struct SettingsView: View {
                     ImpressumView()
                 case .privacy:
                     PrivacySummaryView()
+                case .routes:
+                    AllRoutesView(locations: locations)
                 }
             }
         }
@@ -176,6 +181,7 @@ struct SettingsView: View {
                 boats
             }
             topic(.boats, value: limitsSummary)
+            topic(.routes, value: routesSummary)
         } footer: {
             SectionFooter(tr("The boat the rowing light is worked out for, on every club page and in the widgets."))
         }
@@ -210,6 +216,11 @@ struct SettingsView: View {
         NavigationLink(value: topic.route) {
             SettingsRow(topic: topic, value: value)
         }
+    }
+
+    private var routesSummary: String? {
+        let count = RouteStore.shared.routes.count
+        return count == 0 ? nil : count == 1 ? tr("1 route") : tr("%@ routes", "\(count)")
     }
 
     private var limitsSummary: String? {
@@ -258,11 +269,12 @@ struct SettingsView: View {
 
 /// The topics on the first settings page, each with its own page.
 enum SettingsTopic: CaseIterable {
-    case boats, appearance, clubPages, widgets, language, data, help, about, developer
+    case boats, routes, appearance, clubPages, widgets, language, data, help, about, developer
 
     var title: String {
         switch self {
         case .boats: tr("Boats and limits")
+        case .routes: tr("Routes")
         case .appearance: tr("Appearance")
         case .clubPages: tr("Club pages")
         case .widgets: tr("Widgets")
@@ -277,6 +289,7 @@ enum SettingsTopic: CaseIterable {
     var symbol: String {
         switch self {
         case .boats: "slider.horizontal.3"
+        case .routes: "point.topleft.down.to.point.bottomright.curvepath"
         case .appearance: "circle.lefthalf.filled"
         case .clubPages: "rectangle.stack"
         case .widgets: "rectangle.3.group"
@@ -291,6 +304,7 @@ enum SettingsTopic: CaseIterable {
     var color: Color {
         switch self {
         case .boats: .teal
+        case .routes: .orange
         case .appearance: .blue
         case .clubPages: .indigo
         case .widgets: .orange
@@ -305,6 +319,7 @@ enum SettingsTopic: CaseIterable {
     var route: SettingsRoute {
         switch self {
         case .boats: .limits
+        case .routes: .routes
         case .appearance: .appearance
         case .clubPages: .clubPages
         case .widgets: .widgets
@@ -422,6 +437,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Your boat", .boats, words: ["small", "big", "klein", "groß", "Boot"]),
             SettingsSearch("My boats", .boats, words: ["Meine Boote", "gig", "add", "hinzufügen"]),
             SettingsSearch("Fine-tune the limits", .boats, words: ["limit", "Grenze", "wind", "gusts", "Böen", "waves", "Wellen", "water temperature", "Wassertemperatur"]),
+            SettingsSearch("Routes", .routes, words: ["Routen", "saved routes", "gesicherte Routen", "Manage routes", "Routen verwalten"]),
             SettingsSearch("Background pictures", .appearance, path: [.appearance, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
             SettingsSearch("Blur the picture", .appearance, path: [.appearance, .backgrounds], words: ["blur", "unscharf", "Weichzeichnen", "frosted"]),
             SettingsSearch("In the tiles", .appearance, path: [.appearance, .backgrounds], words: ["tiles", "Kacheln", "frosted", "solid"]),

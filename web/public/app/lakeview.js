@@ -402,7 +402,8 @@ let page = null;
 /** Counts the lake maps opened; a page that draws twice while loading builds only the newer one. */
 let opened = 0;
 
-export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
+/** `routeId`: a saved route to open, from Settings › Routes. */
+export async function renderLakeMap(root, lakeId, clubId, back, at = null, routeId = null) {
   const mine = ++opened;
   page?.map?.remove();
   if (clubId) noteDaylight(lakeId, clubId);
@@ -443,10 +444,13 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
     // On rivers: the current the club page shows (its gauge, mid-river), for the route planner (LakeView.currentMs).
     currentMs: view.section ? forecasts.get(clubId)?.value?.river?.now?.speedMs ?? null : null,
   };
+  const asked = routeId && store.routes.find((r) => r.id === routeId && r.lakeId === lakeId);
+  if (asked) page.route.send({ type: "OPEN_ROUTE", route: asked });
   wireLakeBoat();
   wirePanelDrag();
   await buildMap();
   update();
+  if (asked && page.map) fitView();
 }
 
 /**
@@ -1022,76 +1026,129 @@ function routesMenu() {
 `;
 }
 
+/** One saved route's row with its tools, in Manage routes and in Settings › Routes (ManageRoutesView.row). */
+function routeRow(r, i, count, current) {
+  return `<div class="row-setting">
+        <button class="route-open" data-open="${h(r.id)}">${icon(routeSymbol(r))}<span class="stack"><span>${h(r.name)}</span><small class="sub">${h(routeDetails(r))}</small></span>
+          ${r.id === current ? `<small class="sub strong">${h(t("Open"))}</small>` : ""}</button>
+        <span class="route-actions">
+          <button class="tool" data-up="${h(r.id)}" aria-label="${h(t("Move up"))}" ${i === 0 ? "disabled" : ""}>${icon("arrow-up")}</button>
+          <button class="tool" data-down="${h(r.id)}" aria-label="${h(t("Move down"))}" ${i === count - 1 ? "disabled" : ""}>${icon("arrow-down")}</button>
+          <button class="tool" data-rename="${h(r.id)}" aria-label="${h(t("Rename"))}" title="${h(t("Rename"))}">${icon("pencil")}</button>
+          <button class="tool" data-copy="${h(r.id)}" aria-label="${h(t("Duplicate"))}" title="${h(t("Duplicate"))}">${icon("copy")}</button>
+          <button class="tool red" data-delete="${h(r.id)}" aria-label="${h(t("Delete"))}" title="${h(t("Delete"))}">${icon("trash-2")}</button></span></div>`;
+}
+
+/**
+ * The rows' tools: open, move within the route's own water, rename, duplicate, delete. `redraw` draws the
+ * list again; `renamed` and `deleted` tell an open lake map.
+ */
+function wireRouteRows(box, { open, redraw, renamed = () => {}, deleted = () => {} }) {
+  const find = (id) => store.routes.find((x) => x.id === id);
+  const move = (id, by) => {
+    const all = [...store.routes];
+    const lakeId = find(id)?.lakeId;
+    const mine = all.filter((r) => r.lakeId === lakeId);
+    const i = mine.findIndex((r) => r.id === id);
+    const other = mine[i + by];
+    if (!other) return;
+    const a = all.findIndex((r) => r.id === id);
+    const b = all.findIndex((r) => r.id === other.id);
+    [all[a], all[b]] = [all[b], all[a]];
+    store.routes = all;
+    redraw();
+  };
+  box.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => {
+    const r = find(b.dataset.open);
+    if (r) open(r);
+  }));
+  box.querySelectorAll("[data-up]").forEach((b) => b.addEventListener("click", () => move(b.dataset.up, -1)));
+  box.querySelectorAll("[data-down]").forEach((b) => b.addEventListener("click", () => move(b.dataset.down, 1)));
+  box.querySelectorAll("[data-rename]").forEach((b) => b.addEventListener("click", () => {
+    const r = find(b.dataset.rename);
+    const name = r && prompt(t("Rename route"), r.name);
+    if (!name?.trim()) return;
+    store.routes = store.routes.map((x) => (x.id === r.id ? { ...x, name: name.trim() } : x));
+    renamed(find(r.id));
+    redraw();
+  }));
+  box.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => {
+    const r = find(b.dataset.copy);
+    if (!r) return;
+    const copy = { ...r, id: crypto.randomUUID?.() ?? `r${Date.now()}`, name: t("%@ (copy)", r.name) };
+    const all = [...store.routes];
+    all.splice(all.indexOf(r) + 1, 0, copy);
+    store.routes = all;
+    redraw();
+  }));
+  box.querySelectorAll("[data-delete]").forEach((b) => b.addEventListener("click", () => {
+    const r = find(b.dataset.delete);
+    if (!r || !confirm(t("Delete “%@”?", r.name))) return;
+    store.routes = store.routes.filter((x) => x.id !== r.id);
+    deleted(r);
+    redraw();
+  }));
+}
+
 /** Manage routes: the lake's saved routes with their length and shape; open, rename, duplicate, delete, move (ManageRoutesView). */
 function openManageRoutes() {
   const body = () => {
     const saved = lakeRoutes();
-    if (!saved.length) return `<div class="empty-state">${icon("route")}<strong>${h(t("No saved routes"))}</strong><p class="sub">${h(t("Plan a route on the map and save it from the bookmark menu."))}</p></div>`;
-    return `<section class="card group manage-routes">${saved.map((r, i) => `<div class="row-setting">
-        <button class="route-open" data-open="${h(r.id)}">${icon(routeSymbol(r))}<span class="stack"><span>${h(r.name)}</span><small class="sub">${h(routeDetails(r))}</small></span>
-          ${r.id === page.savedId ? `<small class="sub strong">${h(t("Open"))}</small>` : ""}</button>
-        <span class="route-actions">
-          <button class="tool" data-up="${h(r.id)}" aria-label="${h(t("Move up"))}" ${i === 0 ? "disabled" : ""}>${icon("arrow-up")}</button>
-          <button class="tool" data-down="${h(r.id)}" aria-label="${h(t("Move down"))}" ${i === saved.length - 1 ? "disabled" : ""}>${icon("arrow-down")}</button>
-          <button class="tool" data-rename="${h(r.id)}" aria-label="${h(t("Rename"))}" title="${h(t("Rename"))}">${icon("pencil")}</button>
-          <button class="tool" data-copy="${h(r.id)}" aria-label="${h(t("Duplicate"))}" title="${h(t("Duplicate"))}">${icon("copy")}</button>
-          <button class="tool red" data-delete="${h(r.id)}" aria-label="${h(t("Delete"))}" title="${h(t("Delete"))}">${icon("trash-2")}</button></span></div>`).join("")}</section>`;
+    return saved.length
+      ? `<section class="card group manage-routes">${saved.map((r, i) => routeRow(r, i, saved.length, page.savedId)).join("")}</section>`
+      : `<div class="empty-state">${icon("route")}<strong>${h(t("No saved routes"))}</strong><p class="sub">${h(t("Plan a route on the map and save it from the bookmark menu."))}</p></div>`;
   };
   openSheet(t("Manage routes"), body(), (sheet) => {
     const box = sheet.querySelector(".sheet-body");
-    const find = (id) => store.routes.find((x) => x.id === id);
-    const redraw = () => {
-      box.innerHTML = body();
-      wire();
-      update();
-    };
-    const move = (id, by) => {
-      const all = [...store.routes];
-      const mine = all.filter((r) => r.lakeId === page.lakeId);
-      const i = mine.findIndex((r) => r.id === id);
-      const other = mine[i + by];
-      if (!other) return;
-      const a = all.findIndex((r) => r.id === id);
-      const b = all.findIndex((r) => r.id === other.id);
-      [all[a], all[b]] = [all[b], all[a]];
-      store.routes = all;
-      redraw();
-    };
-    const wire = () => {
-      box.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => {
-        const r = find(b.dataset.open);
+    const wire = () => wireRouteRows(box, {
+      open: (r) => {
         sheet.close();
-        if (r) openRoute(r);
-      }));
-      box.querySelectorAll("[data-up]").forEach((b) => b.addEventListener("click", () => move(b.dataset.up, -1)));
-      box.querySelectorAll("[data-down]").forEach((b) => b.addEventListener("click", () => move(b.dataset.down, 1)));
-      box.querySelectorAll("[data-rename]").forEach((b) => b.addEventListener("click", () => {
-        const r = find(b.dataset.rename);
-        const name = r && prompt(t("Rename route"), r.name);
-        if (!name?.trim()) return;
-        store.routes = store.routes.map((x) => (x.id === r.id ? { ...x, name: name.trim() } : x));
-        // The open route keeps its new name for the next Save.
-        page.route.send({ type: "ROUTE_CHANGED", id: r.id, route: find(r.id) });
-        redraw();
-      }));
-      box.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => {
-        const r = find(b.dataset.copy);
-        if (!r) return;
-        const copy = { ...r, id: crypto.randomUUID?.() ?? `r${Date.now()}`, name: t("%@ (copy)", r.name) };
-        const all = [...store.routes];
-        all.splice(all.indexOf(r) + 1, 0, copy);
-        store.routes = all;
-        redraw();
-      }));
-      box.querySelectorAll("[data-delete]").forEach((b) => b.addEventListener("click", () => {
-        const r = find(b.dataset.delete);
-        if (!r || !confirm(t("Delete “%@”?", r.name))) return;
-        deleteRoute(r);
-        redraw();
-      }));
-    };
+        openRoute(r);
+      },
+      redraw: () => {
+        box.innerHTML = body();
+        wire();
+        update();
+      },
+      // The open route keeps its new name for the next Save.
+      renamed: (r) => page.route.send({ type: "ROUTE_CHANGED", id: r.id, route: r }),
+      deleted: (r) => {
+        if (page.savedId === r.id) page.route.send({ type: "DELETE_ROUTE" });
+      },
+    });
     wire();
   });
+}
+
+/**
+ * Settings › Routes: every saved route, grouped by its water, with the same tools as Manage routes; a route
+ * opens on its lake map (owner's pick, 12 Nov 2026; the app's AllRoutesView).
+ */
+export async function renderAllRoutes(root) {
+  setTitle(t("Routes"));
+  const lakes = await loadCatalog().catch(() => []);
+  const draw = () => {
+    const byLake = new Map();
+    for (const r of store.routes) byLake.set(r.lakeId, [...(byLake.get(r.lakeId) ?? []), r]);
+    const lakeOf = (id) => lakes.find((l) => l.id === id);
+    const groups = [...byLake.entries()].sort(([a], [b]) => (lakeOf(a)?.name ?? a).localeCompare(lakeOf(b)?.name ?? b));
+    root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Routes"))}</strong><span class="nav-side"></span></header>
+    ${testing()}
+    <main class="page settings-topic all-routes">${groups.length ? groups.map(([lakeId, list]) => `<h3 class="section">${h(lakeOf(lakeId)?.name ?? lakeId)}</h3>
+      <section class="card group manage-routes" data-lake="${h(lakeId)}">${list.map((r, i) => routeRow(r, i, list.length, null)).join("")}</section>`).join("")
+    : `<div class="empty-state">${icon("route")}<strong>${h(t("No saved routes"))}</strong><p class="sub">${h(t("Plan a route on the map and save it from the bookmark menu."))}</p></div>`}
+    </main>`;
+    wireRouteRows(root, {
+      // On the lake map from the page of a saved club on that lake, else its first club.
+      open: (r) => {
+        const lake = lakeOf(r.lakeId);
+        const club = store.clubs.find((c) => lake?.clubs.some((x) => x.id === c.id)) ?? lake?.clubs[0];
+        location.hash = `#/lake/${encodeURIComponent(r.lakeId)}${club ? `/${encodeURIComponent(club.id)}` : ""}?route=${encodeURIComponent(r.id)}`;
+      },
+      redraw: draw,
+    });
+  };
+  draw();
 }
 
 /** "6.2 km · Loop · rowed 3 Nov" (ManageRoutesView.details). */
