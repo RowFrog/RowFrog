@@ -26,6 +26,7 @@ import {
 import { fillLakeCard, renderLakeMap, renderAllRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
 import { suggestRow, openSuggestLaunchPoint } from "./suggest.js";
+import { osmPlaceCard } from "./osmplace.js";
 import { currentTile, currentBody } from "./river.js";
 import { isLowered, waterLevelTile, waterLevelBody } from "./lakelevel.js";
 import { satelliteCard } from "./satellite.js";
@@ -2047,6 +2048,7 @@ function launchPointBody(club, mapId) {
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     ${club.launchPointVerified || club.launchPointSet ? `<p class="forecast-point">${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
     ${suggestRow(club)}${mapId === "launch-sheet-map" && suggestRow(club).includes("data-suggest-lp") ? tip("suggestLaunchPoint") : ""}
+    <div class="osm-slot"></div>
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
@@ -2065,6 +2067,12 @@ document.addEventListener("keydown", (e) => {
 });
 
 async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
+  // The club's OpenStreetMap place, as the app's "In Apple Maps as …" line (osmplace.js); also without the map.
+  loadCatalog().catch(() => []).then((lakes) => {
+    const slot = place?.parentElement?.querySelector(".osm-slot");
+    const known = lakes.flatMap((l) => l.clubs).find((c) => c.id === club.id);
+    if (slot) slot.innerHTML = osmPlaceCard(known?.mapPlace, MAPS_APPS[store.mapsApp]);
+  });
   const L = await loadLeaflet().catch(() => null);
   const box = place;
   if (!L || !box) return;

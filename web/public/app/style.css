@@ -1419,3 +1419,12 @@ nav.bottom { view-transition-name: page-bar; }
   body.settings-over #root > .nav { top: 0; padding-top: 10px; }
   body.settings-over .settings-main .settings-search { position: sticky; left: auto; transform: none; bottom: 14px; margin: 0 auto 14px; }
 }
+
+/* The club's OpenStreetMap place under the Location map (osmplace.js), the app's "In Apple Maps as …" line. */
+.osm-place { margin: 6px 0 0; font-size: 13px; }
+.osm-place > summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); list-style: none; min-height: 32px; }
+.osm-place > summary::-webkit-details-marker { display: none; }
+.osm-place > summary svg { width: 16px; height: 16px; }
+.osm-place .place-card { display: grid; gap: 4px; margin-top: 4px; padding: 10px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.osm-place .place-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+.osm-place .place-actions .pill { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }

@@ -95,6 +95,12 @@
                 },
                 "name": {
                   "type": "string"
+                },
+                "osm": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
                 }
               },
               "required": [

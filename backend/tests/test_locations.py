@@ -142,4 +142,5 @@ def test_clubs_bring_their_own_place_in_openstreetmap(tmp_path):
     club = locs.clubs["rc-ammersee"]
     assert club.map_place == locations.Point(lat=48.0006, lon=11.1003)
     assert club.map_place_name == "Ruderclub Ammersee"
+    assert club.map_place_osm == "way/1"
     assert locs.clubs["mrc-1880"].map_place is None

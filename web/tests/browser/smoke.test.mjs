@@ -161,6 +161,20 @@ test("the club page shows the sample forecast and every tile opens its value pag
   await context.close();
 });
 
+test("the Location sheet names the club's OpenStreetMap place and opens its card", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  await page.locator(".club-head .launch-open").first().click({ timeout: 20000 });
+  const line = page.locator("dialog.sheet .osm-place > summary");
+  await line.waitFor({ timeout: 20000 });
+  assert.match(await line.textContent(), /In OpenStreetMap as “Münchener Ruder-Club v\. 1880 e\.V\.”/);
+  await line.click();
+  const link = page.locator("dialog.sheet .osm-place .place-card a[href$='/way/42123014']");
+  assert.ok(await link.isVisible());
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("the list shows the saved club", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/list`);

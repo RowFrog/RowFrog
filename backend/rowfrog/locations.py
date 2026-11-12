@@ -123,6 +123,7 @@ class Club:
     # website's pin moves onto it once zoomed in (as the app does with Apple Maps).
     map_place: Point | None = None
     map_place_name: str | None = None
+    map_place_osm: str | None = None
 
 
 @dataclass(frozen=True)
@@ -263,7 +264,10 @@ def _apply_map_places(clubs: dict[str, Club], path: Path) -> None:
         club = clubs.get(club_id)
         if club is not None:
             clubs[club_id] = dataclasses.replace(
-                club, map_place=Point(lat=place["at"][0], lon=place["at"][1]), map_place_name=place.get("name")
+                club,
+                map_place=Point(lat=place["at"][0], lon=place["at"][1]),
+                map_place_name=place.get("name"),
+                map_place_osm=place.get("osm"),
             )
 
 
