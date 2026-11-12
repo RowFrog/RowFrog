@@ -2206,7 +2206,7 @@ function settingsTopicBody(topic, accepted) {
       </section>
       <p class="footer">${h(t("Device follows the light or dark setting of your computer or phone."))}</p>` : ""}
       <section class="card group">
-        <a class="row-setting bg-row" href="#/settings/backgrounds"><span><span class="bg-thumb" id="bg-thumb">${icon("circle-slash")}</span><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span></span>${icon("chevron-right")}</a>
+        <a class="row-setting bg-row" href="#/settings/backgrounds"><span><span class="bg-thumb" id="bg-thumb">${icon("nosign")}</span><span class="stack"><span>${h(t("Background pictures"))}</span><small class="sub">${h(backgroundSummary())}</small></span></span>${icon("chevron-right")}</a>
       </section>
 `;
     case "clubpages": return `

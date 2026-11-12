@@ -208,6 +208,30 @@ function placePicture() {
 }
 if (typeof window !== "undefined") window.addEventListener("resize", placePicture);
 
+/**
+ * How far the picture moves down to stay on the screen while the on-screen keyboard is open. Safari on iPhone
+ * slides the visible part of the page down to show a field near the bottom, and a fixed layer stays with the
+ * page, so without this the picture rides up and leaves a black band above the keyboard. Only when the keyboard
+ * takes more than 80 points (smaller gaps are the browser's own bars) and the page is not zoomed.
+ */
+export function keyboardShift({ layoutHeight, height, offsetTop, scale }) {
+  const keyboard = layoutHeight - height;
+  return keyboard > 80 && Math.abs(scale - 1) < 0.01 ? Math.max(0, Math.round(offsetTop)) : 0;
+}
+
+if (typeof window !== "undefined" && window.visualViewport) {
+  const vv = window.visualViewport;
+  let frame = 0;
+  const follow = () => {
+    frame = 0;
+    const shift = keyboardShift({ layoutHeight: document.documentElement.clientHeight, height: vv.height, offsetTop: vv.offsetTop, scale: vv.scale });
+    document.documentElement.style.setProperty("--picture-shift", `${shift}px`);
+  };
+  const queue = () => { frame ||= requestAnimationFrame(follow); };
+  vv.addEventListener("resize", queue);
+  vv.addEventListener("scroll", queue);
+}
+
 /** Puts the page's picture behind it, or none (page null: pages without pictures). */
 export async function showBackground(page, clubId = null) {
   const ticket = ++shown;
@@ -340,7 +364,7 @@ function openPicker(target, done) {
     }
   };
   const option = (choice, label, thumb) => `<button class="bg-option ${choice === current ? "on" : ""}" data-choice="${h(choice ?? "")}">
-      <span class="thumb" ${thumb ? `style="background-image:url('${h(thumb)}')"` : ""}>${thumb ? "" : icon(choice == null ? "copy" : choice === "satellite" ? "satellite" : "circle-slash")}</span>
+      <span class="thumb" ${thumb ? `style="background-image:url('${h(thumb)}')"` : ""}>${thumb ? "" : icon(choice == null ? "copy" : choice === "satellite" ? "satellite" : "nosign")}</span>
       <small>${h(label)}</small></button>`;
   const body = () => `<div class="bg-grid">
       ${inherited ? option(null, inherited) : ""}
