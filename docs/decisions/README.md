@@ -45,3 +45,6 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 22 | 2026-11-12 | [Route editor: every edit counts, Save as new, a real Undo](0022-route-editor-every-edit-changes-save-as-new-real-undo.md) |
 | 23 | 2026-11-12 | [Club page columns: set by the window, kept when the list moves](0023-club-page-columns-set-by-the-window.md) |
 | 24 | 2026-11-12 | [Satellite card opens on the clearest picture when the club is covered](0024-satellite-card-opens-on-clearest-when-club-is-covered.md) |
+| 25 | 2026-11-12 | [The table finishes its last night with the coarser model](0025-night-after-48-hours-from-coarser-model.md) |
+| 26 | 2026-11-12 | [The lake map's panel is a card at the bottom left on wide screens](0026-lake-map-panel-card-on-wide-screens.md) |
+| 27 | 2026-11-12 | [Screen controls: round X at the top left, cards close at their top right, tinted tips](0027-screen-controls-close-x-top-left-tinted-tips.md) |

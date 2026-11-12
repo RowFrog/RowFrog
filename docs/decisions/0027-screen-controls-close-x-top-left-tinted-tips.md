@@ -1,4 +1,4 @@
-# 23. Screen controls: round X at the top left, cards close at their top right, tinted tips
+# 27. Screen controls: round X at the top left, cards close at their top right, tinted tips
 
 - Date: 2026-11-12
 - Status: decided (owner); step 2 still to build

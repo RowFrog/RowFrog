@@ -677,7 +677,7 @@ struct ConditionDetailView: View {
     /// floating at the bottom, 44 pt tall, as the club page's bar. Each shows the
     /// arrow and the neighbour's own symbol at a fixed width, so the buttons keep
     /// their size while swiping; VoiceOver reads the neighbour's name (owner's pick
-    /// V2, 12 Nov 2026, decision 0023).
+    /// V2, 12 Nov 2026, decision 0027).
     private func neighbours(of condition: Condition) -> some View {
         HStack(spacing: 12) {
             neighbourButton(condition, by: -1)
