@@ -1039,11 +1039,26 @@ function stickHourlyHeader() {
 }
 window.addEventListener("scroll", updateTopBar, { passive: true });
 window.addEventListener("hashchange", () => requestAnimationFrame(updateTopBar));
+// The bar and its buttons follow the page's column whenever it moves without a scroll: the list beside it sliding
+// back in (its 0.3 s animation), the window being resized, or the list's own cards loading late.
+const columnWatch = new ResizeObserver(() => updateTopBar());
+let watchedMain = null;
+new MutationObserver(() => {
+  const main = root.querySelector("main");
+  if (main === watchedMain) return;
+  if (watchedMain) columnWatch.unobserve(watchedMain);
+  watchedMain = main;
+  if (main) columnWatch.observe(main);
+}).observe(root, { childList: true, subtree: true });
+document.addEventListener("animationend", (event) => event.target.closest?.("aside.side") && updateTopBar());
+document.addEventListener("transitionend", (event) => event.target.closest?.(".split, aside.side") && updateTopBar());
 
 let resizeTimer = null;
 window.addEventListener("resize", () => {
   clearTimeout(resizeTimer);
+  updateTopBar();
   resizeTimer = setTimeout(() => {
+    updateTopBar();
     fitSatellite();
     fitPlaceLines();
     // The columns, and how far the maps grow, follow the window's width and height.

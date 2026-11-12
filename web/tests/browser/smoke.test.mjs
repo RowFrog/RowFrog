@@ -56,8 +56,8 @@ after(async () => {
 });
 
 /** A page with the sample API, the clock at the sample's time and JavaScript errors collected. */
-async function open(storage = {}) {
-  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, locale: "en-GB", timezoneId: "Europe/Berlin" });
+async function open(storage = {}, viewport = { width: 390, height: 844 }) {
+  const context = await browser.newContext({ viewport, locale: "en-GB", timezoneId: "Europe/Berlin" });
   await context.route((url) => !url.href.startsWith(base), (route) => route.abort());
   const page = await context.newPage();
   const errors = [];
@@ -256,4 +256,42 @@ test("a refused forecast shows No forecast, and a failed update keeps the foreca
   refused.clear();
   assert.deepEqual(errors, []);
   await context.close();
+});
+
+test("on wide windows the page's buttons stay level with the list's buttons and follow its column", async () => {
+  // Owner, 12 Nov 2026: compare every layout, the wide one with the list beside the page included.
+  const { page, errors } = await open(visitor(), { width: 1400, height: 1000 });
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  await page.locator(".title-row h1").waitFor();
+  const at = () => page.evaluate(() => {
+    const box = (q) => document.querySelector(q)?.getBoundingClientRect();
+    const mid = (b) => Math.round(b.top + b.height / 2);
+    const main = box("main"), cog = box(".top-title .head-side a"), boat = box(".top-title .head-side.end > *"), list = box("#hide-list");
+    return { list: list ? mid(list) : null, cog: mid(cog), boat: mid(boat), cogLeft: Math.round(cog.left - main.left), boatRight: Math.round(main.right - boat.right) };
+  });
+  for (const y of [0, 40, 400]) {
+    await page.evaluate((y) => scrollTo(0, y), y);
+    await page.waitForTimeout(100);
+    const now = await at();
+    assert.ok(now.cog > 0, `in the window at ${y}`);
+    assert.equal(now.cog, now.list, `cog level with the list at ${y}`);
+    assert.equal(now.boat, now.list, `boat level with the list at ${y}`);
+  }
+  // The list slid away and back: the bar's buttons follow the page's column again.
+  await page.evaluate(() => scrollTo(0, 0));
+  await page.click("#hide-list");
+  await page.locator("[data-show-list]").first().waitFor();
+  await page.locator(".top-title [data-show-list]").click();
+  await page.locator("#hide-list").waitFor();
+  await page.waitForTimeout(600);
+  let now = await at();
+  assert.equal(now.cog, now.list);
+  assert.equal(now.cogLeft, now.boatRight, "the buttons sit at the page's column edges");
+  assert.ok(now.cogLeft >= 0 && now.cogLeft < 24);
+  await page.setViewportSize({ width: 1100, height: 900 });
+  await page.waitForTimeout(300);
+  now = await at();
+  assert.equal(now.cogLeft, now.boatRight, "and again after the window was resized");
+  assert.ok(now.cogLeft >= 0 && now.cogLeft < 24);
+  assert.deepEqual(errors, []);
 });
