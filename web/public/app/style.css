@@ -293,15 +293,23 @@ svg.filled { width: 22px; height: 22px; }
 /* The pinned header spans the whole tile and is rounded at the top like it; while it stays, the tile is cut
    off above it (stickHourlyHeader), so the rows scroll away under it and nothing shows beside its corners,
    as in the app and in Weather (StickyHourlyHeader, StickyHourlyCut). */
-.hhead { position: sticky; top: 0; z-index: 2; background: var(--card); color: var(--sub); border-bottom: .5px solid var(--line);
-  width: calc(100% + 28px); margin: 0 -14px; padding: 6px 14px; box-sizing: border-box; border-radius: 16px 16px 0 0; }
+/* In place it is only the icon row with its line, on the tile itself (HourlyLegendHeader); the tile's colour,
+   rounded top and shadow come only while it stays (HourlyStickyHeader), as the tile's own surface: frosted over a picture. */
+.hhead { position: sticky; top: 0; z-index: 2; background: transparent; color: var(--sub); border-bottom: .5px solid var(--line);
+  width: calc(100% + 28px); margin: 0 -14px; padding: 6px 14px; box-sizing: border-box; }
+/* One layer behind the pinned row and its caption strip, so a frosted one blurs the rows under both alike. */
 .hhead.stuck { box-shadow: 0 2px 4px rgba(0, 0, 0, .12); }
+.hhead.stuck::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hcap, 0px)); background: var(--card); }
+/* Over a picture the tile is frosted glass; the rows scrolling under the pinned row must not show through it, so its
+   layer is nearly the tile's colour, with the glass's blur for what still shows. */
+body.has-picture[data-tiles="frosted"] .hhead.stuck::before {
+  background: color-mix(in srgb, var(--card) 90%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
 /* The tile's caption and the day in view, only while the header stays (HourlyStickyHeader): a strip
    just above the pinned row, in the room the header leaves under the top bar (--hcap), so nothing jumps. */
 .hourly { --hcap: 24px; }
 .hhead { top: var(--hcap, 0px); }
 .hhead-title { display: none; position: absolute; left: 0; right: 0; bottom: 100%; height: var(--hcap); box-sizing: border-box;
-  align-items: center; gap: 4px; padding: 6px 14px 0; background: var(--card); border-radius: 16px 16px 0 0;
+  align-items: center; gap: 4px; padding: 6px 14px 0;
   font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--sub); white-space: nowrap; }
 .hhead-title .i { width: 13px; height: 13px; }
 .hhead-title .hhead-day { margin-left: auto; text-transform: none; overflow: hidden; text-overflow: ellipsis; }
