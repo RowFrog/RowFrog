@@ -304,7 +304,8 @@ struct Reason: Codable, Hashable {
         case "lake_lowered": tr("Lake lowered")
         case "lake_drained": tr("Lake drained")
         case "nearby_water": nearbyLabel
-        default: condition
+        // A reason newer than this build (testdata/reasons.json): never its raw name.
+        default: tr("Other condition")
         }
     }
 
@@ -369,7 +370,7 @@ struct Reason: Codable, Hashable {
         case "current": tr("The current is strong (from the nearest gauge).")
         case "lake_lowered": tr("The lake is let down for the winter: shallows, and a long way to the water.")
         case "lake_drained": tr("The lake is let down for the winter: too little water at the club to row.")
-        default: condition
+        default: tr("A condition this version of the app does not know yet. Updating the app shows what it is.")
         }
     }
 

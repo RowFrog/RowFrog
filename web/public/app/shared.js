@@ -614,7 +614,8 @@ export function baseLabel(condition, topic = null, value = null) {
     ice: t("Ice"), daylight: t("Sun down"), twilight: t("Sunset soon"), sunset_soon: t("Sunset soon"), cold_water: t("Very cold water"),
     cool_water: t("Cold-water shock possible"), shipping_stopped: t("Shipping stopped"), high_water: t("High water"),
     current: t("Strong current"), lake_lowered: t("Lake lowered"), lake_drained: t("Lake drained"),
-  }[condition] ?? condition;
+  // A reason newer than this page (testdata/reasons.json): never its raw name.
+  }[condition] ?? t("Other condition");
 }
 
 /** "Water near Aken" in the page's language (Lake.title). */
@@ -694,7 +695,7 @@ export function reasonExplanation(condition, light, topic = null, value = null) 
     case "current": return t("The current is strong (from the nearest gauge).");
     case "lake_lowered": return t("The lake is let down for the winter: shallows, and a long way to the water.");
     case "lake_drained": return t("The lake is let down for the winter: too little water at the club to row.");
-    default: return condition;
+    default: return t("A condition this version of the app does not know yet. Updating the app shows what it is.");
   }
 }
 

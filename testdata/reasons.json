@@ -1,0 +1,16 @@
+{
+  "about": "Every reason name the backend may send in an hour's \"reasons\" (condition), and the topics that come with two of them. The backend's tests check it sends nothing else; the app's and the website's tests check each has a label and a sentence of its own. A new reason: add it here first, then to the backend, Models.swift (Reason.baseLabel, baseExplanation) and shared.js (baseLabel, reasonExplanation), and a tile in logic.js REASONS. Older app builds show an unknown name as \"Other condition\".",
+  "reasons": [
+    "wind", "gusts", "waves", "fog", "heavy_rain", "hail", "thunderstorm", "ice",
+    "daylight", "twilight",
+    "freezing_water",
+    "lake_warning", "lake_strong_wind", "weather_warning",
+    "shipping_stopped", "high_water", "current",
+    "lake_lowered", "lake_drained",
+    "nearby_water"
+  ],
+  "topics": {
+    "weather_warning": ["wind", "thunderstorm", "rain", "snow", "fog", "other"],
+    "nearby_water": ["wind", "gusts", "waves", "fog", "heavy_rain", "hail", "thunderstorm"]
+  }
+}
