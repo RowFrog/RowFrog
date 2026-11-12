@@ -20,6 +20,37 @@
 // Every answer, the password prompt included, tells search engines and AI
 // crawlers not to index, follow, keep or train on anything.
 
+/**
+ * What the pages may load, and from where (Content Security Policy). Scripts only
+ * from the site itself; styles from the site plus inline style attributes (the
+ * pages build their HTML with them); pictures and data from the forecast server
+ * and the map, radar and satellite services the pages use. Sent as
+ * "Report-Only" for now: the browser only reports what it would block (in the
+ * console), so nothing on the site can break. Once a few days show no reports,
+ * CSP_ENFORCED turns it on. The browser test enforces it already
+ * (web/tests/browser/smoke.test.mjs). A new outside service goes here too.
+ */
+export const CSP_SOURCES = {
+  "default-src": ["'self'"],
+  "script-src": ["'self'"],
+  "style-src": ["'self'", "'unsafe-inline'"],
+  "img-src": ["'self'", "data:", "blob:", "https://api.rowfrog.com", "https://tile.openstreetmap.org", "https://api.maptiler.com",
+    "https://maps.dwd.de", "https://view.eumetsat.int"],
+  "connect-src": ["'self'", "https://api.rowfrog.com", "https://maps.dwd.de", "https://view.eumetsat.int", "https://api.open-meteo.com",
+    "https://api.maptiler.com"],
+  "font-src": ["'self'"],
+  "manifest-src": ["'self'"],
+  "worker-src": ["'self'"],
+  "object-src": ["'none'"],
+  "base-uri": ["'self'"],
+  "form-action": ["'self'"],
+  "frame-ancestors": ["'none'"],
+};
+export const CSP = Object.entries(CSP_SOURCES).map(([k, v]) => `${k} ${v.join(" ")}`).join("; ");
+export const CSP_ENFORCED = false;
+/** Browser features the pages may use: location for "Suggest the launch point", nothing else. */
+export const PERMISSIONS = "geolocation=(self), camera=(), microphone=(), payment=(), usb=(), interest-cohort=()";
+
 export const NO_ROBOTS = "noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate, noai, noimageai";
 
 /** The only files served without the password. */
@@ -182,6 +213,10 @@ function guarded(response) {
   out.headers.set("Referrer-Policy", "no-referrer");
   out.headers.set("X-Content-Type-Options", "nosniff");
   out.headers.set("X-Frame-Options", "DENY");
+  out.headers.set(CSP_ENFORCED ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only", CSP);
+  out.headers.set("Permissions-Policy", PERMISSIONS);
+  out.headers.set("Cross-Origin-Opener-Policy", "same-origin");
+  out.headers.set("Strict-Transport-Security", "max-age=31536000");
   // Every reply depends on the login cookie or header, so no cache shares it.
   out.headers.append("Vary", "Cookie, Authorization");
   return out;

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { onRequest, NO_ROBOTS, makeCookie, validCookie, safeNext, readCookie, LOGIN_DAYS } from "../functions/_middleware.js";
+import { onRequest, NO_ROBOTS, makeCookie, validCookie, safeNext, readCookie, LOGIN_DAYS, CSP, CSP_ENFORCED, PERMISSIONS } from "../functions/_middleware.js";
 
 const env = { SITE_USER: "alex", SITE_PASSWORD: "s3cret pass" };
 
@@ -115,4 +115,18 @@ test("only robots.txt and the home-screen icons open without a password", async 
 test("without the secrets the site stays shut", async () => {
   assert.equal((await call("/", basic("alex", "s3cret pass"), {})).status, 503);
   assert.equal((await call("/", basic("", ""), { SITE_USER: "", SITE_PASSWORD: "" })).status, 503);
+});
+
+test("every answer carries the security headers, the login page and open files too", async () => {
+  for (const response of [await call("/app/", basic("alex", "s3cret pass")), await call("/app/"), await call("/robots.txt")]) {
+    const csp = response.headers.get(CSP_ENFORCED ? "Content-Security-Policy" : "Content-Security-Policy-Report-Only");
+    assert.equal(csp, CSP);
+    assert.match(csp, /script-src 'self';/, "scripts only from the site");
+    assert.match(csp, /frame-ancestors 'none'/);
+    assert.equal(response.headers.get("Permissions-Policy"), PERMISSIONS);
+    assert.equal(response.headers.get("X-Content-Type-Options"), "nosniff");
+    assert.equal(response.headers.get("Referrer-Policy"), "no-referrer");
+    assert.equal(response.headers.get("Cross-Origin-Opener-Policy"), "same-origin");
+    assert.match(response.headers.get("Strict-Transport-Security"), /^max-age=\d+$/);
+  }
 });
