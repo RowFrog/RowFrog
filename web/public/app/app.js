@@ -1065,6 +1065,10 @@ function watchCards(cards) {
  * page scrolls under the top edge, and with the club's name and light once its
  * big title has scrolled away (InlineClubTitle); the 48 hours' header then sits below it.
  */
+/** Between the line of top buttons and the page's first card (PageTopButtons.gapBelow in the app). */
+const PAGE_GAP_BELOW = 10;
+let headRoom = null;
+
 function updateTopBar() {
   const body = document.body;
   body.classList.toggle("scrolled", window.scrollY > 0);
@@ -1099,6 +1103,19 @@ function updateTopBar() {
     const rect = tool?.getBoundingClientRect();
     const mid = rect?.height ? rect.top + rect.height / 2 : Math.max(0, split?.getBoundingClientRect().top ?? 0) + 34;
     body.style.setProperty("--head-mid", `${Math.max(22, mid)}px`);
+    // The page starts 10 px below the line of buttons, so the header's top is level with the list's search field
+    // and nothing sits under the buttons at rest, however long the name (PageTopButtons.gapBelow, owner's iPad
+    // shot, 12 Nov 2026). Measured at the top of the page; while scrolled the last room stays.
+    const head = root.querySelector(".club-head");
+    if (head && window.scrollY === 0) {
+      const now = parseFloat(head.style.marginTop) || 0;
+      const base = head.getBoundingClientRect().top - (now || parseFloat(getComputedStyle(head).marginTop) || 0);
+      headRoom = Math.max(0, Math.round(Math.max(22, mid) + 22 + PAGE_GAP_BELOW - base));
+    }
+    if (head && headRoom != null && head.style.marginTop !== `${headRoom}px`) head.style.marginTop = `${headRoom}px`;
+  } else {
+    const head = root.querySelector(".club-head");
+    if (head?.style.marginTop) head.style.marginTop = "";
   }
   const gone = Boolean(title && bar && title.getBoundingClientRect().bottom < bar.offsetHeight);
   body.classList.toggle("title-gone", gone);

@@ -480,7 +480,8 @@ body.wide-bar .top-title::before, body.wide-bar .top-title > .top-name { opacity
 body.wide-bar.title-gone .top-title::before, body.wide-bar.title-gone .top-title > .top-name { opacity: 1; }
 body.wide-bar .top-title .head-side { visibility: visible; }
 body.wide-bar .top-title .head-side > * { pointer-events: auto; }
-body.wide-bar .title-row .head-side { visibility: hidden; }
+/* The big name below the line of buttons uses the column's full width (PageTopButtons: no side room). */
+body.wide-bar .title-row .head-side { display: none; }
 body.wide-bar.title-gone .hhead { top: calc(var(--head-mid, 22px) + 22px + var(--hcap, 0px)); }
 
 /* The page's buttons level with the club's big name, the boat on the right (PageTopButtons, pick F):
@@ -1061,9 +1062,8 @@ body.has-picture main.page > .list-links, body.has-picture main.page > .add-own,
   -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5);
 }
 /* The club header too sits on a frosted plate over a picture (ClubPageHeader: labelBackground, 16 px corners,
-   16 by 10 px inside), as wide as its text. Where the page buttons sit in the title row (side list shown), the
-   row spans the column, so the plate is left out there. Raised, so the place line tip still pops over the cards. */
-body.has-picture .club-head:not(:has(.head-side)) { position: relative; z-index: 5; width: fit-content; max-width: 100%; margin-inline: auto; box-sizing: border-box; padding: 10px 16px; border-radius: 16px;
+   16 by 10 px inside), as wide as its text, also with the page buttons in the bar above it (wide windows). Raised, so the place line tip still pops over the cards. */
+body.has-picture .club-head:not(:has(.head-side)), body.has-picture.wide-bar .club-head { position: relative; z-index: 5; width: fit-content; max-width: 100%; margin-inline: auto; box-sizing: border-box; padding: 10px 16px; border-radius: 16px;
   background: color-mix(in srgb, var(--bg) var(--label-veil, 25%), transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
 :root[data-theme="dark"] body.has-picture { --label-veil: 20%; }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body.has-picture { --label-veil: 20%; } }
