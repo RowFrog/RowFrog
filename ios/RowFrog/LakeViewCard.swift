@@ -13,6 +13,8 @@ struct LakeViewCard: View {
     var water: WaterKind = .lake
     /// The river's current at the club's gauge, for the route planner.
     var currentMs: Double? = nil
+    /// The club's sunrise and sunset, so "now" on the lake goes by this minute's daylight.
+    var daylight: [SunDay]? = nil
     @MainActor private var store: LakeViewStore { .shared }
     @State private var showingMap = false
 
@@ -38,6 +40,7 @@ struct LakeViewCard: View {
     @MainActor private func load() async {
         store.noteWater(waterC, lake: lakeID)
         store.noteCurrent(currentMs, lake: lakeID)
+        store.noteDaylight(daylight, lake: lakeID)
         await store.load(lakeID)
         // Only on the page `-RWOpenClub` opens: clubs on the same lake would race it for the sheet.
         let page = UserDefaults.standard.string(forKey: DefaultsKey.openClub)

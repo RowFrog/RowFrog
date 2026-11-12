@@ -305,7 +305,7 @@ struct LocationPageView: View {
                         TipView(lakeViewTip)
                     }
                     LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC, water: lake?.water ?? .lake,
-                                 currentMs: forecast.river?.now?.speedMs)
+                                 currentMs: forecast.river?.now?.speedMs, daylight: forecast.daylight)
                 }
                 .id("lakeview")
                 .layoutValue(key: ColumnFiller.self, value: true)

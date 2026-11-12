@@ -219,6 +219,23 @@ struct LakeWide: Decodable, Hashable {
         let cold = Condition.waterTemperature.reasonNames
         return reasons.contains { $0.light == .amber && !cold.contains($0.condition) } ? .amber : nil
     }
+
+    /// The whole-lake light as it stands at `date`, inside its hour. The backend
+    /// gives each hour the strictest daylight of its minutes, so the hour of
+    /// sunrise says "sun down" until it is over; "now" goes by this minute, as on
+    /// the club page (ClubForecast.current): green, "sunset_soon" in the last hour
+    /// before sunset, red with the sun down (owner, 12 Nov 2026: the lake view
+    /// said "sun down" at 07:45 with sunrise at 07:15).
+    func at(_ date: Date, days: [SunDay]) -> LakeWide {
+        guard !days.isEmpty, reasons.contains(where: { DaylightRule.reasonNames.contains($0.condition) }) else { return self }
+        var rest = reasons.filter { !DaylightRule.reasonNames.contains($0.condition) }
+        switch DaylightRule.light(at: date, days: days) {
+        case .red: rest.insert(Reason(condition: "daylight", light: .red), at: 0)
+        case .amber: rest.insert(Reason(condition: "sunset_soon", light: .amber), at: 0)
+        case .green: break
+        }
+        return LakeWide(light: rest.map(\.light).max() ?? .green, reasons: rest)
+    }
 }
 
 struct LakeWind: Decodable, Hashable {
@@ -455,6 +472,8 @@ final class LakeViewStore {
     private var clubWater: [String: Double] = [:]
     /// The current of the club page that last showed each river stretch.
     private var clubCurrent: [String: Double] = [:]
+    /// The sunrise and sunset of the club page that last showed each lake.
+    private var clubDays: [String: [SunDay]] = [:]
     private let api: APIClient
 
     nonisolated init(api: APIClient) { self.api = api }
@@ -501,7 +520,17 @@ final class LakeViewStore {
         view.clubID = clubID
         view.shoreWaterC = view.waterC ?? clubWater[lakeID]
         view.currentMs = view.section == nil ? nil : clubCurrent[lakeID]
+        if let days = clubDays[lakeID], !view.hours.isEmpty {
+            let now = Date.now
+            let i = view.hourIndex(at: now)
+            if view.hours[i].time <= now { view.hours[i].lakeWide = view.hours[i].lakeWide.at(now, days: days) }
+        }
         return view
+    }
+
+    /// The sunrise and sunset a club page on the lake shows, for "now" on the lake.
+    func noteDaylight(_ days: [SunDay]?, lake lakeID: String) {
+        if let days, !days.isEmpty, clubDays[lakeID] != days { clubDays[lakeID] = days }
     }
 
     /// The water a club page shows (measured or estimated), for the cold shore.
