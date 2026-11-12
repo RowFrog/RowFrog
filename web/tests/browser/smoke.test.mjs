@@ -56,8 +56,8 @@ after(async () => {
 });
 
 /** A page with the sample API, the clock at the sample's time and JavaScript errors collected. */
-async function open(storage = {}, viewport = { width: 390, height: 844 }) {
-  const context = await browser.newContext({ viewport, locale: "en-GB", timezoneId: "Europe/Berlin" });
+async function open(storage = {}, viewport = { width: 390, height: 844 }, locale = "en-GB") {
+  const context = await browser.newContext({ viewport, locale, timezoneId: "Europe/Berlin" });
   await context.route((url) => !url.href.startsWith(base), (route) => route.abort());
   const page = await context.newPage();
   const errors = [];
@@ -200,6 +200,42 @@ test("a night from the coarser model says so inside its line, and its hours carr
   assert.ok(times.includes("21:00") && times.includes("≈22:00"), times.join(" "));
   assert.deepEqual(errors, []);
   await context.close();
+});
+
+test("the top tile's values never break a word or get cut, at any width or text size", async () => {
+  // Owner's rule: every size. German has the longest words ("Niederschlag", "Gefühlt"); the
+  // large-text case scales the tile's type up as iOS's largest sizes do (12 Nov 2026).
+  for (const width of [320, 390, 844, 1024]) {
+    for (const big of [false, true]) {
+      // The website speaks the browser's language.
+      const { page, errors, context } = await open(visitor(), { width, height: 900 }, "de-DE");
+      await page.goto(`${base}/app/#/club/mrc-1880`);
+      const grid = page.locator(".now-grid").first();
+      await grid.waitFor({ timeout: 20000 });
+      if (big) await page.addStyleTag({ content: ".now-grid small { font-size: 22px !important } .now-grid .v28 { font-size: 46px !important } .now-grid .v17 { font-size: 30px !important }" });
+      await settles(async () => {
+        const bad = await grid.evaluate((g) => {
+          const out = [];
+          // Three columns: the tracks (titles and values) fit side by side.
+          const style = getComputedStyle(g);
+          const tracks = style.gridTemplateColumns.split(" ").map(parseFloat);
+          if (tracks.reduce((a, b) => a + b, 0) + (tracks.length - 1) * parseFloat(style.columnGap) > g.clientWidth + 1) out.push(`tracks ${style.gridTemplateColumns}`);
+          // Titles and values (the wind's arrow pokes out a few pixels at every size); the grey
+          // lines reach past their column on purpose (fitGreyLines).
+          for (const e of g.querySelectorAll(".label, .v28, .v17")) {
+            if (e.scrollWidth > e.clientWidth + 6) out.push(`${e.closest("[data-top]")?.dataset.top} ${e.textContent.trim()} ${e.scrollWidth}/${e.clientWidth} ${g.className}`);
+          }
+          const right = g.getBoundingClientRect().right;
+          for (const e of g.querySelectorAll(".grey")) if (e.getBoundingClientRect().right > right + 1) out.push(`grey ${e.textContent.trim()}`);
+          return out;
+        });
+        assert.deepEqual(bad, [], `${width}${big ? " big" : ""}`);
+      });
+      if (process.env.RF_TILE_SHOT) await page.locator(".card.now").first().screenshot({ path: `${process.env.RF_TILE_SHOT}-${width}${big ? "-big" : ""}.png` });
+      assert.deepEqual(errors, []);
+      await context.close();
+    }
+  }
 });
 
 test("browsing by country lists the countries, a country's waters and a water's clubs", async () => {

@@ -150,6 +150,8 @@ button.wide { margin-top: 0; }
 .now-grid { display: grid; grid-template-columns: repeat(3, max-content); justify-content: space-between; gap: 10px 8px; align-items: end; }
 .now-grid > div { display: flex; flex-direction: column; min-width: 0; }
 .now-grid > div:nth-child(n+4) { align-self: start; }
+.now-grid.cols2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.now-grid.cols1 { grid-template-columns: minmax(0, 1fr); align-items: start; }
 .now-grid .secondary { color: var(--sub); }
 /* The top tile's values open their pages (NowCard.opens). */
 .card.now [data-top] { cursor: pointer; border-radius: 8px; }

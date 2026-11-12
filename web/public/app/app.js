@@ -858,6 +858,22 @@ const fitWatch = new ResizeObserver((entries) => entries.forEach(({ target }) =>
 function fitGreyLines(grid) {
   const cells = [...grid.children];
   if (cells.length < 3) return;
+  // Three columns while their titles and values fit side by side; else two, else one, so
+  // no word breaks or gets cut (TopTileGrid.columnCount in the app, 12 Nov 2026).
+  cells.forEach((cell) => cell.querySelectorAll(".grey").forEach((line) => { line.style.marginInlineEnd = ""; }));
+  grid.classList.remove("cols2", "cols1");
+  // Three columns: their tracks (as wide as titles and values) must fit side by side. Two or
+  // one: no title or value wider than its cell.
+  const colGap = () => parseFloat(getComputedStyle(grid).columnGap) || 0;
+  const tracks = () => getComputedStyle(grid).gridTemplateColumns.split(" ").map(parseFloat);
+  const tooWide = () => tracks().reduce((a, b) => a + b, 0) + 2 * colGap() > grid.clientWidth + 1;
+  // The wind's arrow reaches a few pixels past its value at every size; words cut are wider.
+  const cut = () => [...grid.querySelectorAll(".label, .v28, .v17")].some((e) => e.scrollWidth > e.clientWidth + 6);
+  if (tooWide()) {
+    grid.classList.add("cols2");
+    if (cut()) grid.classList.replace("cols2", "cols1");
+  }
+  if (grid.classList.contains("cols2") || grid.classList.contains("cols1")) return;
   const left = grid.getBoundingClientRect().left;
   const xs = cells.slice(0, 3).map((cell) => cell.getBoundingClientRect().left - left);
   const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;

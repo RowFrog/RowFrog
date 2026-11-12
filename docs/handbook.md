@@ -234,7 +234,7 @@ switch gets its name there (settings go in `AppSettings.Keys`). The most useful:
 - `-RWShowSettings YES -RWScrollPage n` open the settings; on a long Settings page, scroll to its section n
 - `-RWSaveData YES` saving data as in Low Data Mode (satellite pictures wait for a tap, half-hour radar steps)
 - `-RWLowPower YES` draws the app as in Low Power Mode (solid tiles, bar buttons and clock strip)
-- `-UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL` (or `…AccessibilityL`) opens the app at a larger text size, as Settings › Display › Text Size
+- `-UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL` (or `…AccessibilityL`) opens the app at a larger text size, as Settings › Display › Text Size. The top tile's values keep three columns while their titles and values fit side by side, else two, else one (`TopTileGrid.columnCount`; website `fitGreyLines`, classes `cols2`/`cols1`), so at XXXL in German no word breaks or gets cut
 - `-RWLanguage de`, `-RWAppearance dark`, `-RWLandscape YES`
 - `-RWAPIBaseURL https://api.rowfrog.com/v1` a Debug build reads the published forecasts instead of the backend on the Mac. The UI tests (`ios/RowFrogUITests`, run by CI with the unit tests) use it to open MRC 1880's page over a picture with frosted cards and tap a conditions tile, so a view that takes other cards' taps fails the build
 - `-RWSafetyAccepted YES` skip the first-start safety notice (the screenshot workflow passes it to every shot except 77 and 78)
