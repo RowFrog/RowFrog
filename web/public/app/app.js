@@ -683,7 +683,7 @@ async function renderClub(id) {
     satellite: () => `<section class="card" id="satellite" hidden></section>`,
   };
   root.querySelector("main").innerHTML = `
-    <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right")}</div>
+    <div class="top-title" style="--side-room:${sideRoom()}px">${pageButtons("left")}<span class="top-name" aria-hidden="true">${dot(hour.light, 12, stale)}<strong>${h(name)}</strong></span>${pageButtons("right", true)}</div>
     ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
@@ -990,7 +990,6 @@ function updateTopBar() {
   body.classList.toggle("scrolled", window.scrollY > 0);
   const title = root.querySelector(".club-head h1, .list-head h1");
   const bar = root.querySelector(".top-title");
-  const gone = Boolean(title && bar && title.getBoundingClientRect().bottom < bar.offsetHeight);
   // The bar and the strip behind the clock cover the page's own column only, never the list beside it.
   const main = root.querySelector("main");
   // The list beside the page ends at the window's bottom also while the test banner above it shows.
@@ -1001,6 +1000,17 @@ function updateTopBar() {
     body.style.setProperty("--main-left", `${page.left}px`);
     body.style.setProperty("--main-width", `${page.width}px`);
   }
+  // Wide windows: the page's buttons stay level with the buttons at the top of the list beside it, at rest and
+  // while scrolling (owner, 12 Nov 2026); the small bar is centred on the same line.
+  const wide = sideList.matches && Boolean(bar);
+  body.classList.toggle("wide-bar", wide);
+  if (wide) {
+    const tool = root.querySelector(".side-head > .round");
+    const rect = tool?.getBoundingClientRect();
+    const mid = rect?.height ? rect.top + rect.height / 2 : Math.max(0, split?.getBoundingClientRect().top ?? 0) + 34;
+    body.style.setProperty("--head-mid", `${Math.max(22, mid)}px`);
+  }
+  const gone = Boolean(title && bar && title.getBoundingClientRect().bottom < bar.offsetHeight);
   body.classList.toggle("title-gone", gone);
   stickHourlyHeader();
 }
@@ -1203,7 +1213,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
   const slow = forecast?.refresh && forecast.refresh.used === false;
   return `<header class="club-head">
     ${isHome ? `<p class="home">${filledIcon("house")} ${h(t("Home base"))}</p>` : ""}
-    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right", true)}</div>
+    <div class="title-row" style="--side-room:${sideRoom()}px">${pageButtons("left")}<h1>${clubNameHtml(club, name)}</h1>${pageButtons("right")}</div>
     ${placeLine(club)}
     ${club && club.launchPointVerified === false ? (inHeader(club)
       ? `<p class="orange small"><button class="link plain launch-open">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</button></p>`

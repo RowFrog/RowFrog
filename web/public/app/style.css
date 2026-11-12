@@ -453,6 +453,16 @@ body.title-gone .top-title { opacity: 1; }
 body.title-gone .top-title .head-side > * { pointer-events: auto; }
 body:not(.title-gone) .top-title .head-side { visibility: hidden; }
 body.title-gone .hhead { top: calc(var(--safe-top) + 44px + var(--hcap, 0px)); }
+/* Wide windows (owner, 12 Nov 2026): the page's buttons sit in the bar at all times, level with the buttons at the
+   top of the list beside it (--head-mid, from updateTopBar), at rest and while scrolling; only the bar's glass and
+   name fade in once the big name has gone. The copies beside the big name keep their room, so it stays centred. */
+body.wide-bar .top-title { opacity: 1; height: calc(var(--head-mid, 22px) + 22px); padding-top: calc(var(--head-mid, 22px) - 22px); }
+body.wide-bar .top-title::before, body.wide-bar .top-title > .top-name { opacity: 0; transition: opacity .2s ease-in-out; }
+body.wide-bar.title-gone .top-title::before, body.wide-bar.title-gone .top-title > .top-name { opacity: 1; }
+body.wide-bar .top-title .head-side { visibility: visible; }
+body.wide-bar .top-title .head-side > * { pointer-events: auto; }
+body.wide-bar .title-row .head-side { visibility: hidden; }
+body.wide-bar.title-gone .hhead { top: calc(var(--head-mid, 22px) + 22px + var(--hcap, 0px)); }
 
 /* The page's buttons level with the club's big name, the boat on the right (PageTopButtons, pick F):
    each side keeps the same room, so the name stays centred. */
