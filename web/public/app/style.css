@@ -304,10 +304,11 @@ svg.filled { width: 22px; height: 22px; }
 /* One layer behind the pinned row and its caption strip, so a frosted one blurs the rows under both alike. */
 .hhead.stuck { box-shadow: 0 2px 4px rgba(0, 0, 0, .12); }
 .hhead.stuck::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; bottom: 0; top: calc(-1 * var(--hcap, 0px)); background: var(--card); }
-/* Over a picture the tile is frosted glass; the rows scrolling under the pinned row must not show through it, so its
-   layer is nearly the tile's colour, with the glass's blur for what still shows. */
-body.has-picture[data-tiles="frosted"] .hhead.stuck::before {
-  background: color-mix(in srgb, var(--card) 90%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
+/* Over a picture the tile is frosted glass, and the pinned header is the same glass, as in the app: the rows are cut
+   at its bottom (stickHourlyHeader), so only the tile's own glass is behind it and it needs no layer of its own.
+   A layer of the tile's colour made it a dark grey bar on the blue glass (owner's iPhone shots, 12 Nov 2026). */
+body.has-picture[data-tiles="frosted"] .hhead.stuck::before { background: transparent; }
+body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
 /* The tile's caption and the day in view, only while the header stays (HourlyStickyHeader): a strip
    just above the pinned row, in the room the header leaves under the top bar (--hcap), so nothing jumps. */
 .hourly { --hcap: 24px; }
@@ -459,6 +460,10 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck::before {
   backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8);
   --mask: linear-gradient(#000 0, #000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) calc(100% - 28px), transparent 100%);
   -webkit-mask-image: var(--mask); mask-image: var(--mask); }
+/* Over a picture the bar is glass all the way up, as the app's (TopEdgeFade: thin material): starting from the page's
+   solid colour made a black band under the clock on the picture (owner's iPhone shots, 12 Nov 2026). */
+body.has-picture .top-title::before {
+  background: linear-gradient(color-mix(in srgb, var(--bg) 45%, transparent) 0, color-mix(in srgb, var(--card) 45%, transparent) calc((var(--safe-top) + 44px) * .7)); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .top-title::before { background: var(--bg); bottom: 0; -webkit-mask-image: none; mask-image: none; } }
 @media (prefers-reduced-transparency: reduce) { .top-title::before { background: var(--bg); bottom: 0; backdrop-filter: none; -webkit-backdrop-filter: none; -webkit-mask-image: none; mask-image: none; } }
 .top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
