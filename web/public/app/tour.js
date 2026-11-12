@@ -1,24 +1,30 @@
 // The tour (TutorialView, TourPage) and the one-time tips (the app's TipKit
-// tips). The website keeps choosing the clubs in the list, so its tour has no
-// home base pages; the texts name the website's own controls where the app's
-// differ (no swiping a row, no pulling down, no widgets or app icon).
+// tips). On a first visit, with no clubs yet, the tour asks for the home base
+// and more clubs as the app's does (ClubChoicePage); the texts name the
+// website's own controls where the app's differ (no swiping a row, no pulling
+// down, no widgets or app icon).
 
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
-import { key, COLD, standardLimit } from "./logic.js";
-import { h, store, load, save, setTitle, dot, lightTitle, conditionIcon, conditionTexts, TILE_ORDER, temperature, wind } from "./shared.js";
+import { key, COLD, standardLimit, searchClubs, town } from "./logic.js";
+import { h, store, load, save, setTitle, dot, lightTitle, conditionIcon, conditionTexts, TILE_ORDER, temperature, wind, savedClub } from "./shared.js";
 
 // ---- The tour ---------------------------------------------------------------------------
 
 const p = (iconName, text) => ({ icon: iconName, text });
 
-/** The pages, as TourPage without the club choice; the river page only with a river or canal club in the list. */
-export function tourPages(river = false) {
+/**
+ * The pages, as TourPage: the club choice only while the list was empty when the tour began
+ * (TutorialView drops it once there is a home base), the river page only with a river or canal club in the list.
+ */
+export function tourPages(river = false, choice = false) {
   return [
     {
       id: "welcome", icon: "rower", tint: "blue", title: key("Welcome to Row Frog"), intro: key("Weather and a rowing forecast for your club's launch point."),
       points: [p("house", key("Your home base opens first when you start the app.")), p("hand", key("To change it, open the list, tap Edit and then the house next to a club."))],
     },
+    choice && { id: "homeBase", choice: true, icon: "house", tint: "blue", title: key("Choose your home base"), intro: key("It opens first when you start the app. You can change it later.") },
+    choice && { id: "moreClubs", choice: true, icon: "circle-plus", tint: "blue", title: key("Add more clubs"), intro: key("Add the other places you row, or skip this and add clubs later in the list.") },
     {
       id: "rowingLight", icon: "siren", tint: "green", title: key("The rowing light"), intro: key("Every page starts with the rowing light for the hour ahead."),
       points: [
@@ -117,53 +123,185 @@ function extra(page, languagePicker) {
   return "";
 }
 
-/** The tour: a page at a time with dots, Skip, Next and Let's row at the end. */
-export function renderTour(root, { languagePicker, wireLanguage, done, river }) {
-  const pages = tourPages(river);
-  let index = Math.min(Math.max(0, load("rf.tourPage", 0)), pages.length - 1);
+/** Rough distance in km, good enough to sort clubs by (LocationStore.distance). */
+function distanceKm(a, b) {
+  const x = (b.lon - a.lon) * Math.cos(((a.lat + b.lat) / 2) * Math.PI / 180);
+  return Math.hypot(x, b.lat - a.lat) * 111.2;
+}
+
+/** Clubs offered before a search: the five nearest, or three at random without the location (LocationStore.suggestions). */
+function suggestions(all, near, random) {
+  if (near) return [...all].sort((a, b) => distanceKm(a.club.launchPoint, near) - distanceKm(b.club.launchPoint, near)).slice(0, 5);
+  return random;
+}
+
+/** One club on a choice page, with the house, an empty circle, a tick or + at its end (ClubChoicePage.row). */
+function choiceRow({ club, lake }, page) {
+  const clubs = store.clubs;
+  const isHome = clubs[0]?.id === club.id;
+  const saved = clubs.some((c) => c.id === club.id);
+  const mark = isHome ? `<span class="add home" aria-label="${h(t("Home base"))}">${icon("house")}</span>`
+    : page === "homeBase" ? `<span class="add off">${icon("circle")}</span>`
+    : saved ? `<span class="add in" aria-label="${h(t("In your list"))}">${icon("circle-check")}</span>`
+    : `<span class="add" aria-label="${h(t("Add %@", club.shortName || club.name))}">${icon("circle-plus")}</span>`;
+  const where = [lake.name, town(club.address)].filter(Boolean).join(" · ");
+  return `<li><button class="result" data-club="${h(club.id)}" data-lake="${h(lake.id)}"><span class="result-text"><strong>${h(club.name)}</strong><small>${h(where)}</small></span>${mark}</button></li>`;
+}
+
+/** The search, the clubs in the list (more clubs) and the suggestions or results (ClubChoicePage). */
+function choiceList(page, state) {
+  if (state.failed) {
+    return `<div class="card tour-empty">${icon("wifi-off")}<strong>${h(t("No connection"))}</strong><p class="sub">${h(t("Could not load the rowing locations."))}</p><button class="pill" id="tour-retry">${h(t("Try again"))}</button></div>`;
+  }
+  if (!state.lakes) return `<div class="tour-empty">${icon("loader-circle")}</div>`;
+  const query = state.query.trim();
+  if (query) {
+    const found = searchClubs(state.lakes, query, 50);
+    return found.length ? `<ul class="results">${found.map((x) => choiceRow(x, page)).join("")}</ul>` : `<p class="sub tour-empty">${h(t("No clubs found."))}</p>`;
+  }
+  const all = state.lakes.flatMap((lake) => lake.clubs.map((club) => ({ club, lake })));
+  const saved = store.clubs.map((c) => all.find((x) => x.club.id === c.id)).filter(Boolean);
+  const offered = suggestions(all, state.near, state.random).filter((x) => page === "homeBase" || !store.clubs.some((c) => c.id === x.club.id));
+  return `${page === "moreClubs" && saved.length ? `<h3 class="section">${h(t("In your list"))}</h3><ul class="results">${saved.map((x) => choiceRow(x, page)).join("")}</ul>` : ""}
+    ${offered.length ? `<h3 class="section">${h(state.near ? t("Near you") : t("Suggestions"))}</h3><ul class="results">${offered.map((x) => choiceRow(x, page)).join("")}</ul>` : ""}
+    <p class="sub tour-foot">${h(t("Search by club, lake or town to find any club in Germany, Austria or Switzerland."))}</p>
+    <p class="sub tour-foot">${h(t("Clubs nobody has opened for a while update less often at first. After you add one, it is up to date within about 30 minutes."))}</p>`;
+}
+
+/** A tap on a club: the home base replaces the old one, more clubs come and go, the home base stays (ClubChoicePage.row). */
+function pickClub(page, club, lake) {
+  const clubs = store.clubs;
+  const saved = savedClub(club, lake);
+  if (page === "homeBase") {
+    store.clubs = [saved, ...clubs.slice(1).filter((c) => c.id !== club.id)];
+  } else if (!clubs.some((c) => c.id === club.id)) {
+    store.clubs = [...clubs, saved];
+  } else if (clubs[0]?.id !== club.id) {
+    store.clubs = clubs.filter((c) => c.id !== club.id);
+  }
+}
+
+/**
+ * The tour: a page at a time with dots, Skip, Next and Let's row at the end. `lakes` is the club catalog
+ * (null when it could not load), for the club choice and to know whether a river or canal club is in the list.
+ */
+export function renderTour(root, { languagePicker, wireLanguage, done, lakes, reload }) {
+  // The club choice only when the tour starts with an empty list, as the app's (TourProgress.pages).
+  const choice = store.clubs.length === 0;
+  const state = { lakes: lakes ?? null, failed: lakes == null, query: "", near: null, random: [], asked: false };
+  const pickRandom = () => {
+    const all = (state.lakes ?? []).flatMap((lake) => lake.clubs.map((club) => ({ club, lake })));
+    state.random = [...all].sort(() => Math.random() - 0.5).slice(0, 3);
+  };
+  pickRandom();
+  const hasRiver = () => (state.lakes ?? []).some((l) => l.section && store.clubs.some((c) => c.lakeId === l.id));
+  const pages = () => tourPages(hasRiver(), choice);
+  // The page is kept by its name, so the river page coming or going doesn't move it (an older visit kept a number).
+  const kept = load("rf.tourPage", 0);
+  let id = typeof kept === "string" ? kept : pages()[Math.max(0, kept)]?.id ?? "welcome";
+  if (!pages().some((x) => x.id === id)) id = "welcome";
+  const needsHome = () => choice && store.clubs.length === 0;
   const finish = () => {
     save("rf.tourSeen", true);
     save("rf.tourPage", 0);
     done();
   };
-  const draw = () => {
-    const page = pages[index];
-    const last = index === pages.length - 1;
-    setTitle(t(page.title));
-    root.innerHTML = `<main class="page tour">
-        <header class="nav"><span class="spacer"></span>${last ? "" : `<button class="link" id="skip">${h(t("Skip"))}</button>`}</header>
-        <div class="tour-page" style="--tint: var(--${page.tint === "mint" ? "teal" : page.tint})">
-          <span class="tour-icon">${icon(page.icon)}</span>
-          <h1>${h(t(page.title))}</h1>
-          <p class="sub">${h(t(page.intro))}</p>
-          ${extra(page, languagePicker)}
-          <ul class="card tour-points">${page.points.map((x) => `<li>${icon(x.icon)}<span>${h(t(x.text, ...(x.args?.() ?? [])))}</span></li>`).join("")}</ul>
-        </div>
-        <nav class="tour-dots glass" aria-label="${h(t("Tour"))}">${pages.map((_, i) => `<button data-page="${i}" class="${i === index ? "on" : ""}" aria-label="${i + 1}" ${i === index ? 'aria-current="step"' : ""}></button>`).join("")}</nav>
-        <button class="primary wide" id="next">${h(last ? t("Let's row") : t("Next"))}</button>
-      </main>`;
-    root.querySelector("#skip")?.addEventListener("click", finish);
-    root.querySelector("#next").addEventListener("click", () => (last ? finish() : go(index + 1)));
-    root.querySelectorAll("[data-page]").forEach((b) => b.addEventListener("click", () => go(+b.dataset.page)));
-    wireLanguage?.(draw);
-  };
   const go = (i) => {
-    index = Math.min(Math.max(0, i), pages.length - 1);
-    save("rf.tourPage", index);
+    const list = pages();
+    let next = list[Math.min(Math.max(0, i), list.length - 1)].id;
+    // No going past the home base choice without one (TutorialView's onChange(of: page)).
+    const homeAt = list.findIndex((x) => x.id === "homeBase");
+    if (needsHome() && homeAt >= 0 && list.findIndex((x) => x.id === next) > homeAt) next = "homeBase";
+    id = next;
+    save("rf.tourPage", id);
     draw();
     window.scrollTo(0, 0);
   };
-  // Swipes and arrow keys page through, as the app's paged view.
+  const askLocation = () => {
+    // Asked on the home base page, for the clubs nearby (TutorialView asks there too).
+    if (state.asked || !navigator.geolocation) return;
+    state.asked = true;
+    navigator.geolocation.getCurrentPosition((pos) => {
+      state.near = { lat: pos.coords.latitude, lon: pos.coords.longitude };
+      drawList();
+    }, () => {}, { timeout: 10000, maximumAge: 600000 });
+  };
+  const drawList = () => {
+    const box = root.querySelector("#tour-clubs");
+    if (!box) return;
+    box.innerHTML = choiceList(id, state);
+    root.querySelector("#next").disabled = id === "homeBase" && needsHome();
+  };
+  const draw = () => {
+    const list = pages();
+    const index = Math.max(0, list.findIndex((x) => x.id === id));
+    const page = list[index];
+    id = page.id;
+    const last = index === list.length - 1;
+    setTitle(t(page.title));
+    const body = page.choice
+      ? `<label class="search tour-search">${icon("search")}<input id="tour-search" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+          <div id="tour-clubs" class="tour-clubs"></div>`
+      : `${extra(page, languagePicker)}
+          <ul class="card tour-points">${page.points.map((x) => `<li>${icon(x.icon)}<span>${h(t(x.text, ...(x.args?.() ?? [])))}</span></li>`).join("")}</ul>`;
+    root.innerHTML = `<main class="page tour">
+        <header class="nav"><span class="spacer"></span>${last || page.choice ? "" : `<button class="link" id="skip">${h(t("Skip"))}</button>`}</header>
+        <div class="tour-page${page.choice ? " tour-choice" : ""}" style="--tint: var(--${page.tint === "mint" ? "teal" : page.tint})">
+          <span class="tour-icon">${icon(page.icon)}</span>
+          <h1>${h(t(page.title))}</h1>
+          <p class="sub">${h(t(page.intro))}</p>
+          ${body}
+        </div>
+        <nav class="tour-dots glass" aria-label="${h(t("Tour"))}">${list.map((x, i) => `<button data-page="${i}" class="${i === index ? "on" : ""}" aria-label="${i + 1}" ${i === index ? 'aria-current="step"' : ""}></button>`).join("")}</nav>
+        <button class="primary wide" id="next">${h(last ? t("Let's row") : t("Next"))}</button>
+      </main>`;
+    // Skipping still asks for a home base first.
+    root.querySelector("#skip")?.addEventListener("click", () => (needsHome() ? go(list.findIndex((x) => x.id === "homeBase")) : finish()));
+    root.querySelector("#next").addEventListener("click", () => (last ? finish() : go(index + 1)));
+    root.querySelectorAll("[data-page]").forEach((b) => b.addEventListener("click", () => go(+b.dataset.page)));
+    if (page.choice) {
+      const input = root.querySelector("#tour-search");
+      input.value = state.query;
+      input.addEventListener("input", () => {
+        state.query = input.value;
+        drawList();
+      });
+      const box = root.querySelector("#tour-clubs");
+      box.addEventListener("click", async (e) => {
+        if (e.target.closest("#tour-retry")) {
+          const fresh = await reload?.().catch(() => null);
+          state.lakes = fresh ?? null;
+          state.failed = fresh == null;
+          pickRandom();
+          return drawList();
+        }
+        const button = e.target.closest(".result");
+        const lake = state.lakes?.find((l) => l.id === button?.dataset.lake);
+        const club = lake?.clubs.find((c) => c.id === button.dataset.club);
+        if (!club) return;
+        pickClub(id, club, lake);
+        // The river page and the dots follow the clubs picked; the search stays as it was.
+        draw();
+      });
+      drawList();
+      if (id === "homeBase") askLocation();
+    }
+    wireLanguage?.(draw);
+  };
+  // Swipes and arrow keys page through, as the app's paged view; not while typing in the search.
   let startX = null;
-  root.ontouchstart = (e) => (startX = e.touches[0].clientX);
+  root.ontouchstart = (e) => (startX = e.target.closest?.(".tour-clubs") ? null : e.touches[0].clientX);
   root.ontouchend = (e) => {
     if (startX == null || !root.querySelector(".tour")) return;
     const dx = e.changedTouches[0].clientX - startX;
     startX = null;
+    const index = pages().findIndex((x) => x.id === id);
     if (Math.abs(dx) > 60) go(index + (dx < 0 ? 1 : -1));
   };
   const keys = (e) => {
     if (!root.querySelector(".tour")) return document.removeEventListener("keydown", keys);
+    if (e.target.closest?.("input")) return;
+    const index = pages().findIndex((x) => x.id === id);
     if (e.key === "ArrowRight") go(index + 1);
     if (e.key === "ArrowLeft") go(index - 1);
   };

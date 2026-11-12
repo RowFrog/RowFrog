@@ -2880,12 +2880,11 @@ function route(scroll = true) {
   if (!tourSeen() || location.hash === "#/tour") {
     showBackground(null);
     const done = () => (location.hash === "#/tour" ? (location.hash = "#/settings") : route());
-    // The river page only with a river or canal club in the list (TutorialView.hasRiver).
-    const lakeIds = new Set(store.clubs.map((c) => c.lakeId));
-    return loadCatalog().catch(() => []).then((lakes) => {
+    // The club list, for the club choice on a first visit and the river page (TutorialView.hasRiver); null when it failed.
+    return loadCatalog().catch(() => null).then((lakes) => {
       // Another page may have opened while the club list loaded.
       if (tourSeen() && location.hash !== "#/tour") return;
-      renderTour(root, { languagePicker: tourLanguagePicker, wireLanguage, done, river: lakes.some((l) => l.section && lakeIds.has(l.id)) });
+      renderTour(root, { languagePicker: tourLanguagePicker, wireLanguage, done, lakes, reload: loadCatalog });
     });
   }
   const hash = location.hash.replace(/^#/, "");

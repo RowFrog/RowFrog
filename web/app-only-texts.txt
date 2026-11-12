@@ -111,26 +111,19 @@ Weather model (test)
 
 # Said in the website's own words for a browser (this browser, Refresh button, mouse, its own first visit)
 A Row Frog widget on your home or lock screen shows the rowing light and rain on the radar in the next two hours.
-Add more clubs
-Add the other places you row, or skip this and add clubs later in the list.
 All locations
 Appearance: background pictures, also your own photos, and the app icon.
 Choose the icon Row Frog shows on your home screen.
-Choose your home base
 Choose your home base and the other places you row.
 Continue
-Could not load the rowing locations.
 English or German, as the iPhone's Settings set it for Row Frog.
 Every setting, the card order and the app icon go back to how the app came, your own pictures are deleted and every limit goes back to the app's. Your clubs and boats stay.
 Fine-tune the limits
 Forecast out of date: from %@. Pull down to refresh, and check the conditions yourself.
 Grey instead of green: the forecast is over 3 hours old. Pull down to refresh.
-It opens first when you start the app. You can change it later.
 Lake at the boat's time: move the boat along your route and see the lake when you get there.
 List by
-Near you
 No clubs yet
-No connection
 Open in Maps now gives directions to the club's address.
 Open the settings with the cog at the top of the location list.
 Pick your app icon
@@ -141,7 +134,6 @@ Row a loop: tap within 50 m of your club, or pick Loop under the way back.
 Rowed it before? Bring in a row from Apple Health or a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) in the Routes menu, and plan with your real route and pace.
 Saved “%@” on %@. Open the lake view and pick it under Saved routes.
 Settings, pictures and limits go back to how the app came. Your clubs and boats stay.
-Suggestions
 Swipe a club in the list to the left to remove it.
 Swipe left and right to move between your clubs. The house marks your home base.
 Tap a turning point to delete just that one, or drag it to move it.
