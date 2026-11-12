@@ -3,7 +3,7 @@ name: RowFrog
 options:
   bundleIdPrefix: com.rowfrog
   deploymentTarget:
-    iOS: "17.0"
+    iOS: "18.0"
   # Tells Xcode which version last checked the project's settings, so the
   # "Update to recommended settings" warning stays away after the ones below.
   xcodeVersion: "27.0"

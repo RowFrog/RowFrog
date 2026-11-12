@@ -11,7 +11,7 @@ It started with the lakes south of Munich (Starnberger See first) and can
 show rowing clubs across Germany, Austria and Switzerland, or a place of your
 own.
 
-The app is free. It is an iPhone and iPad app (iOS 17 or later) written in SwiftUI;
+The app is free. It is an iPhone and iPad app (iOS 18 or later) written in SwiftUI;
 Android may follow later.
 
 > **Name.** The app is called **Row Frog**, formerly "RowerWeather" (renamed

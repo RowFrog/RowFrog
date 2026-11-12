@@ -1476,7 +1476,7 @@ struct ScreenshotScroll: ViewModifier {
     let ready: Bool
 
     func body(content: Content) -> some View {
-        if #available(iOS 18.0, *), page > 0 {
+        if page > 0 {
             content.modifier(PagedScroll(page: page, ready: ready))
         } else {
             content
@@ -1484,7 +1484,6 @@ struct ScreenshotScroll: ViewModifier {
     }
 }
 
-@available(iOS 18.0, *)
 private struct PagedScroll: ViewModifier {
     let page: Int
     let ready: Bool
