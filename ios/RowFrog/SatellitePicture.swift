@@ -1200,7 +1200,7 @@ struct SatelliteColdBadge: View {
         if SatelliteLayers.shared.on.contains(.shore), let view = LakeViewStore.shared.views[lakeID, club: clubID], let kit = view.coldWaterKit {
             GeometryReader { geo in
                 let estimated = view.waterC == nil
-                let text = estimated ? "≈ " + kit.title : kit.title
+                let text = kit.title
                 let full = CGSize(width: Self.textWidth(text) + 50, height: 34)
                 let place = BadgePlacement.choose(shore: shore(view, in: geo.size), size: geo.size, badge: full,
                                                   compact: CGSize(width: 34, height: 34))

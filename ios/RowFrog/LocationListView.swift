@@ -324,7 +324,7 @@ private struct LocationSummaryRow: View {
                             Label(kit.title, systemImage: ColdWaterKit.symbol)
                                 .font(.caption.weight(.semibold))
                                 .foregroundStyle(ColdWaterKit.color)
-                                .lineLimit(1)
+                                .lineLimit(2)
                                 .accessibilityLabel(kit.explanation)
                         }
                     }

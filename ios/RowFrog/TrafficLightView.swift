@@ -91,15 +91,18 @@ extension ColdWaterKit {
 /// The blue cold-water badge under the rowing light: what to bring, not a warning.
 struct ColdWaterBadge: View {
     let kit: ColdWaterKit
-    /// Estimated water, not measured: the badge says so.
+    /// Estimated water, not measured: VoiceOver says so; on screen the ≈ sits on the water value.
     var estimated = false
 
     var body: some View {
-        Label(estimated ? "≈ " + kit.title : kit.title, systemImage: ColdWaterKit.symbol)
+        // The full words, wrapping onto a second line rather than shortening (owner's pick A4, 12 Nov 2026).
+        Label(kit.title, systemImage: ColdWaterKit.symbol)
             .font(.subheadline.weight(.semibold))
+            .multilineTextAlignment(.leading)
+            .fixedSize(horizontal: false, vertical: true)
             .padding(.vertical, 4)
             .padding(.horizontal, 10)
-            .background(ColdWaterKit.color.opacity(0.18), in: Capsule())
+            .background(ColdWaterKit.color.opacity(0.18), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
             .foregroundStyle(ColdWaterKit.color)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(estimated ? tr("Estimated: %@", kit.explanation) : kit.explanation)

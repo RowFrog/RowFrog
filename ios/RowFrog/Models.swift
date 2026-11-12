@@ -363,7 +363,7 @@ struct Reason: Codable, Hashable {
         case "daylight": tr("The sun is down. Rowing is only advised in daylight.")
         case "twilight", "sunset_soon": tr("The last hour before sunset: back ashore by sunset.")
         case "nearby_water": nearbyExplanation
-        case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
+        case "cold_water": tr("Very cold water, below %@: wear a life jacket, stay near the shore and row with a second boat nearby.", Format.temperature(RowingLimits.coldWaterC))
         case "cool_water": tr("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", Format.temperature(15))
         case "shipping_stopped": tr("The river is above the gauge's shipping mark: even motor ships stay in.")
         case "high_water": tr("The river is at or above the shipping mark I or mean high water: strong current, flotsam and flooded banks.")
