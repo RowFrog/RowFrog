@@ -128,7 +128,8 @@ for (const layout of LAYOUTS) for (const tiles of ["frosted", "solid"]) for (con
         const h = document.querySelector(".hhead");
         return h.classList.contains("stuck") ? getComputedStyle(h, "::before").backgroundColor : null;
       });
-      if (pinned) assert.ok(!/rgba\(0, 0, 0, 0\)|transparent/.test(pinned), `the pinned header has a layer behind it (${pinned})`);
+      // It is the tile's own glass, as in the app: no layer of its own (a grey bar on the glass, 12 Nov 2026).
+      if (pinned) assert.ok(/rgba\(0, 0, 0, 0\)|transparent/.test(pinned), `the pinned header has no layer of its own (${pinned})`);
       // The rows end at its bottom, so none reads through it where the browser does not blur
       // behind it (Safari inside a frosted tile; owner's iPhone shot, 12 Nov 2026).
       const hidden = await page.evaluate(() => {
