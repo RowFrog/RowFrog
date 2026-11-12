@@ -209,7 +209,9 @@ jobs:
             if [[ " $* " == *" -RWLandscape YES "* && " $* " != *" -RWAllowsLandscape NO "* ]]; then
               local angle=90
               [ "$SHOTS" != docs/screenshots ] && angle=-90
-              python3 -c 'import sys; from PIL import Image; p = sys.argv[1]; Image.open(p).rotate(int(sys.argv[2]), expand=True).save(p)' "$SHOTS/$name.png" "$angle"
+              # Only a shot that is still upright-shaped lies sideways: Xcode 27's simctl already saves
+              # landscape shots the right way round, and turning those again laid them on their side.
+              python3 -c 'import sys; from PIL import Image; p = sys.argv[1]; im = Image.open(p); im.width < im.height and im.rotate(int(sys.argv[2]), expand=True).save(p)' "$SHOTS/$name.png" "$angle"
             fi
           }
           # Compares two screenshots below the navigation bar, whose glass
