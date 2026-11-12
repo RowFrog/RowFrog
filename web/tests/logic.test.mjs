@@ -254,3 +254,15 @@ test("satellite tiles ask for the double-size version on sharp screens", async (
   const { satelliteUrl } = await import("../public/app/basemap.js");
   assert.match(satelliteUrl("k"), /\{y\}\{r\}\.jpg\?key=k$/);
 });
+
+test("the night after the 48 hours is marked as coming from the coarser model", async () => {
+  const { coarserModel } = await import("../public/app/logic.js");
+  const part = (model, resolutionKm, fromHour, toHour) => ({ model, provider: "DWD", resolutionKm, fromHour, toHour });
+  const f = { generatedAt: "2026-10-18T17:20:00+00:00", forecastSource: { parts: [part("ICON-D2", 2.2, 0, 48), part("ICON-EU", 7, 48, 60)] } };
+  const at = (i) => ({ time: new Date(Date.parse("2026-10-18T17:00:00Z") + i * 3600e3).toISOString() });
+  assert.equal(coarserModel(f, at(0)), null);
+  assert.equal(coarserModel(f, at(47)), null);
+  assert.equal(coarserModel(f, at(48)).model, "ICON-EU");
+  assert.equal(coarserModel({ ...f, forecastSource: { parts: [part("ICON-D2", 2.2, 0, 48)] } }, at(50)), null);
+  assert.equal(coarserModel({}, at(50)), null);
+});

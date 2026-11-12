@@ -9,11 +9,13 @@ struct HourRow: View {
     var stale = false
     /// Half and half when the light changes in this hour (sunset to the minute, DaylightRule).
     var halves: DotHalves?
+    /// From a coarser model than the first hours (the night after the 48 hours): "≈" before the time.
+    var coarser = false
 
     var body: some View {
         let dark = hour.sunUp == false
         HStack(spacing: 6) {
-            Text(Format.time(hour.time))
+            Text((coarser ? "≈" : "") + Format.time(hour.time))
                 .frame(width: HourColumn.time, alignment: .leading)
             TrafficLightDot(light: hour.light, size: 12, stale: stale, halves: halves).frame(width: HourColumn.light)
             SkyIcon(sky: Sky(hour: hour), night: dark)
@@ -51,6 +53,7 @@ struct HourRow: View {
         if hour.waveHeightM != nil { parts.append(tr("waves %@", Format.waves(hour.waveHeightM))) }
         parts.append((hour.precipitationMm ?? 0) >= 0.1 ? tr("%@ rain", Format.rain(hour.precipitationMm)) : tr("dry"))
         if hour.visibilityM != nil { parts.append(tr("visibility %@", Format.distance(hour.visibilityM))) }
+        if coarser { parts.append(tr("coarser model")) }
         return parts.joined(separator: ", ")
     }
 
@@ -68,8 +71,40 @@ struct NightRow: View {
     /// The table starts in this night (after the current hour's row), or is cut off in it.
     var startsTable = false
     var endsTable = false
+    /// Where the night's later hours come from a coarser model (after the 48 hours): from
+    /// when and which, said in a second line inside the night line (owner, 12 Nov 2026).
+    var coarser: (from: Date, part: ForecastSource.Part)?
 
     var body: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            values
+            if let coarser {
+                Text(Self.coarserText(from: coarser.from, part: coarser.part))
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(.vertical, 5)
+        .padding(.horizontal, 6)
+        .background(Color.indigo.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
+        .padding(.horizontal, -6)
+        .padding(.vertical, 2)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(accessibilityText)
+        .accessibilityValue(opened ? tr("Opened") : tr("Folded"))
+        .accessibilityHint(opened ? tr("Folds the night hours") : tr("Shows the night hours"))
+        .accessibilityAddTraits(.isButton)
+    }
+
+    /// "≈ from 00:00 coarser model: ICON-EU, 7 km grid"
+    static func coarserText(from: Date, part: ForecastSource.Part) -> String {
+        "≈ " + tr("from %@ coarser model: %@", Format.time(from), "\(part.model), \(ForecastSourceLine.grid(part.resolutionKm))")
+    }
+
+    private var values: some View {
         HStack(spacing: 6) {
             Text(range)
                 .fontWeight(.semibold)
@@ -100,17 +135,6 @@ struct NightRow: View {
         .font(.subheadline.monospacedDigit())
         .lineLimit(1)
         .minimumScaleFactor(0.8)
-        .padding(.vertical, 5)
-        .padding(.horizontal, 6)
-        .background(Color.indigo.opacity(0.14), in: RoundedRectangle(cornerRadius: 9))
-        .padding(.horizontal, -6)
-        .padding(.vertical, 2)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(accessibilityText)
-        .accessibilityValue(opened ? tr("Opened") : tr("Folded"))
-        .accessibilityHint(opened ? tr("Folds the night hours") : tr("Shows the night hours"))
-        .accessibilityAddTraits(.isButton)
     }
 
     /// "17–07"; "–07" when the table starts in the night, "17–" when it ends in it.
@@ -131,6 +155,7 @@ struct NightRow: View {
         if let gust = night.strongestGustMs { parts.append(tr("gusts up to %@", Format.wind(gust))) }
         parts.append((night.rainMm ?? 0) >= 0.1 ? tr("%@ rain", Format.rain(night.rainMm)) : tr("dry"))
         if night.fogLight != nil { parts.append(tr("fog, visibility down to %@", Format.distance(night.poorestVisibilityM))) }
+        if let coarser { parts.append(String(Self.coarserText(from: coarser.from, part: coarser.part).dropFirst(2))) }
         return parts.joined(separator: ", ")
     }
 

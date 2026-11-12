@@ -1198,7 +1198,8 @@ private struct HourlyCard: View {
                         }
                 case let .hour(hour):
                     Button { openHour = hour } label: {
-                        HourRow(hour: hour, stale: stale, halves: forecast.dotHalves(for: hour, stale: stale)).contentShape(Rectangle())
+                        HourRow(hour: hour, stale: stale, halves: forecast.dotHalves(for: hour, stale: stale),
+                                coarser: forecast.coarserModel(for: hour) != nil).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint(tr("Opens this hour with all its values"))
@@ -1209,7 +1210,8 @@ private struct HourlyCard: View {
                             if opened { openNights.remove(night.id) } else { openNights.insert(night.id) }
                         }
                     } label: {
-                        NightRow(night: night, opened: opened, startsTable: night.start == firstHour, endsTable: night.end == tableEnd)
+                        NightRow(night: night, opened: opened, startsTable: night.start == firstHour, endsTable: night.end == tableEnd,
+                                 coarser: coarser(in: night))
                     }
                     .buttonStyle(.plain)
                 }
@@ -1314,6 +1316,14 @@ private struct HourlyCard: View {
     private var firstHour: Date? { shownHours.first?.time }
     /// When the last hour of the whole forecast ends, so a night cut off there says "from".
     private var tableEnd: Date? { forecast.hours.map(\.time).max()?.addingTimeInterval(3600) }
+
+    /// The night's first hour from a coarser model and that model, for the hint in its line.
+    private func coarser(in night: NightFold.Night) -> (from: Date, part: ForecastSource.Part)? {
+        for hour in night.hours {
+            if let part = forecast.coarserModel(for: hour) { return (hour.time, part) }
+        }
+        return nil
+    }
 
     private func sunDay(on day: Date) -> SunDay? {
         forecast.daylight?.first { Calendar.current.isDate($0.sunrise, inSameDayAs: day) }

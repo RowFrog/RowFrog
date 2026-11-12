@@ -184,6 +184,22 @@ export function nightParts(hours, days = []) {
   return parts;
 }
 
+/**
+ * The model behind an hour when it is coarser than the one the forecast starts with:
+ * ICON-EU for the rest of the night after the 48 hours (owner's option B, 12 Nov 2026).
+ * Null for the first model's hours and without a source line (ClubForecast.coarserModel).
+ */
+export function coarserModel(forecast, hour) {
+  const parts = forecast?.forecastSource?.parts;
+  if (!parts?.length || !forecast.generatedAt) return null;
+  // The backend counts the source line's hours from the hour it built the forecast in.
+  const start = new Date(forecast.generatedAt);
+  start.setUTCMinutes(0, 0, 0);
+  const index = Math.floor((new Date(hour.time) - start) / 3600e3);
+  const part = parts.slice(1).find((p) => p.fromHour <= index && index < p.toHour);
+  return part && part.resolutionKm > parts[0].resolutionKm ? part : null;
+}
+
 /** What a night's line shows, each for its column: the worst of the night. */
 export function nightSummary(hours) {
   const values = (key) => hours.map((x) => x[key]).filter((v) => v != null);

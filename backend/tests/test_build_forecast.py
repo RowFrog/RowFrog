@@ -60,3 +60,41 @@ def test_the_water_near_the_launch_point_sets_the_light(monkeypatch):
     plain = api.build_club_forecast(club, lake, replace(inputs, lake_weather=None), None, NOW)
     noon = next(h for h in plain["hours"] if h["time"].startswith("2026-10-18T11"))
     assert "nearby" not in noon and all(r["condition"] != "nearby_water" for r in noon["reasons"])
+
+
+def _inputs(hours):
+    return api.ClubInputs(
+        weather=hours, outlook=None, station=None, water=None, water_history=[], warnings_block={"active": []},
+        warnings=[], estimate=None, water_model_c=13.5, ice_estimate=None, air_days=None, gauge=None, readings=None,
+        level_lake=None, levels=None,
+    )
+
+
+def test_the_table_finishes_the_night_it_ends_in():
+    # Owner's option B (12 Nov 2026): 48 hours from 19:00 end at 19:00 two days later, in the
+    # dark; the table then goes on to the hour the sun rises in, from the coarser model's hours.
+    club = api._locations.clubs["mrc-1880"]
+    lake = api._locations.lakes[club.lake_id]
+    now = datetime(2026, 10, 18, 17, tzinfo=timezone.utc)
+    weather = [_hour(now + timedelta(hours=i)) for i in range(api.FETCH_HOURS)]
+    body = api.build_club_forecast(club, lake, _inputs(weather), None, now)
+    times = [datetime.fromisoformat(h["time"]) for h in body["hours"]]
+    assert len(times) > 48
+    sunrise = next(
+        d.sunrise for d in api.sun_days(now, now + timedelta(days=3), club.launch_point.lat, club.launch_point.lon)
+        if d.sunrise > times[47]
+    )
+    # The last hour ends before sunrise, and the next one would hold it.
+    assert times[-1] + timedelta(hours=1) <= sunrise < times[-1] + timedelta(hours=2)
+    # The source line names the coarser model for those hours.
+    assert [p["model"] for p in body["forecastSource"]["parts"]] == ["ICON-D2", "ICON-EU"]
+    assert body["forecastSource"]["parts"][1]["fromHour"] == 48
+
+
+def test_a_table_ending_by_day_stays_48_hours():
+    club = api._locations.clubs["mrc-1880"]
+    lake = api._locations.lakes[club.lake_id]
+    weather = [_hour(NOW + timedelta(hours=i)) for i in range(api.FETCH_HOURS)]
+    body = api.build_club_forecast(club, lake, _inputs(weather), None, NOW + timedelta(hours=4))
+    assert len(body["hours"]) == 48
+    assert [p["model"] for p in body["forecastSource"]["parts"]] == ["ICON-D2"]

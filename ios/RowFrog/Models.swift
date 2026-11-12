@@ -793,6 +793,18 @@ struct ClubForecast: Codable, Hashable {
         waterForecast?.first { $0.day.map { Calendar.current.isDate($0, inSameDayAs: date) } ?? false }?.celsius
     }
 
+    /// The model behind an hour when it is coarser than the one the forecast starts with:
+    /// ICON-EU for the rest of the night after the 48 hours (owner's option B, 12 Nov 2026).
+    /// nil for the hours of the first model, and without a source line.
+    func coarserModel(for hour: ForecastHour) -> ForecastSource.Part? {
+        guard let parts = forecastSource?.parts, let first = parts.first else { return nil }
+        // The backend counts the source line's hours from the hour it built the forecast in.
+        let start = Calendar(identifier: .gregorian).dateInterval(of: .hour, for: generatedAt)?.start ?? generatedAt
+        let index = Int((hour.time.timeIntervalSince(start) / 3600).rounded(.down))
+        guard let part = parts.dropFirst().first(where: { $0.fromHour <= index && index < $0.toHour }) else { return nil }
+        return part.resolutionKm > first.resolutionKm ? part : nil
+    }
+
     /// The backend publishes every half hour; after this the forecast counts as out of date.
     static let staleAfter: TimeInterval = 3 * 3600
 
