@@ -96,6 +96,7 @@ struct LocationPageView: View {
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
     @Environment(\.pageMargins) private var pageMargins
+    @Environment(\.pageBarBottom) private var pageBarBottom
 
     /// The Why line counts the water within 1 km (#395); `-RWNearbyTip YES` shows its tip anyway.
     private static func hasNearbyReason(_ hour: ForecastHour) -> Bool {
@@ -189,7 +190,7 @@ struct LocationPageView: View {
                     if let forecast {
                         stickyHourlyHeader(forecast)
                             .padding(.top, PageScroll.shared.titleGone.contains(club.id)
-                                     ? InlineClubTitle.barHeight(statusBar: pageMargins.top) : 0)
+                                     ? max(0, pageBarBottom - pageMargins.top) : 0)
                     }
                 }
                 .environment(\.pageHeight, geometry.size.height)
