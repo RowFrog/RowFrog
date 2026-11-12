@@ -45,3 +45,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 22 | 2026-11-12 | [Route editor: every edit counts, Save as new, a real Undo](0022-route-editor-every-edit-changes-save-as-new-real-undo.md) |
 | 23 | 2026-11-12 | [Club page columns: set by the window, kept when the list moves](0023-club-page-columns-set-by-the-window.md) |
 | 24 | 2026-11-12 | [Satellite card opens on the clearest picture when the club is covered](0024-satellite-card-opens-on-clearest-when-club-is-covered.md) |
+| NNNN | 2026-11-12 | [The lake tile shows its parts as a small table, wind with its direction](NNNN-lake-tile-parts-as-a-table-with-wind-direction.md) |
