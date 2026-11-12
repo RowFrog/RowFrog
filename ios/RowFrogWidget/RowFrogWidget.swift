@@ -31,7 +31,8 @@ struct RowingWidgetEntryView: View {
         RowingWidgetView(snapshot: entry.snapshot, family: family, focus: entry.focus, plain: entry.background == .system,
                          layout: entry.layout, marks: entry.marks)
             .containerBackground(for: .widget) {
-                WidgetBackdrop(background: entry.background, snapshot: entry.snapshot, picture: entry.picture)
+                WidgetBackdrop(background: entry.background, snapshot: entry.snapshot, picture: entry.picture,
+                               focus: entry.pictureFocus)
             }
             .widgetURL(URL(string: "rowfrog://club/\(entry.clubID)"))
     }
@@ -153,6 +154,8 @@ struct RowingEntry: TimelineEntry {
     var picture: UIImage?
     var layout: WidgetLayout = .fewer
     var marks = true
+    /// Where the club lies in the satellite picture; nil for other pictures.
+    var pictureFocus: UnitPoint?
 }
 
 struct RowingProvider: AppIntentTimelineProvider {
@@ -196,7 +199,8 @@ struct RowingProvider: AppIntentTimelineProvider {
                 date: date, clubID: clubID,
                 snapshot: RowingSnapshot(date: date, clubName: names[clubID] ?? clubID, isHome: clubID == homeID, forecast: forecast),
                 focus: configuration.focus.focus, background: background, picture: picture,
-                layout: configuration.layout.layout, marks: configuration.marks
+                layout: configuration.layout.layout, marks: configuration.marks,
+                pictureFocus: background == .satellite ? WidgetPictures.focus(clubID) : nil
             )
         }
     }

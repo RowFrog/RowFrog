@@ -34,13 +34,18 @@ final class PicturePlaceTests: XCTestCase {
         XCTAssertNil(BackgroundLibrary.place(of: Coordinate(lat: 47.95, lon: 11.30), in: nil))
     }
 
-    func testTheWidgetSquareIsCutAroundTheClub() {
-        let tall = UIGraphicsImageRenderer(size: picture, format: { let f = UIGraphicsImageRendererFormat(); f.scale = 1; return f }())
-            .image { context in UIColor.blue.setFill(); context.fill(CGRect(origin: .zero, size: picture)) }
-        let part = BackgroundLibrary.square(of: tall, around: CGPoint(x: 0.5, y: 0.3))
-        XCTAssertEqual(part.cgImage?.width, 400)
-        XCTAssertEqual(part.cgImage?.height, 400)
-        let top = BackgroundLibrary.square(of: tall, around: CGPoint(x: 0.5, y: 0.01))
-        XCTAssertEqual(top.cgImage?.height, 400, "moved inwards at the picture's edge, not made smaller")
+    func testAClubAtALakesEndSitsAtTheTopOfTheMediumWidget() {
+        // Starnberger See's picture (435 × 1280) with MRC 1880's Steg near its top right,
+        // in the medium widget (364 × 170): the full width, the picture's top at the widget's top.
+        let lake = CGSize(width: 435, height: 1280), medium = CGSize(width: 364, height: 170)
+        let steg = UnitPoint(x: 0.82, y: 0.075)
+        let place = PicturePlace.rect(for: lake, filling: medium, focus: steg)
+        XCTAssertEqual(place.width, medium.width, accuracy: 0.001, "fills the whole width")
+        XCTAssertEqual(place.minY, 0, "the picture's top edge, as near the club as it allows")
+        let clubY = place.minY + steg.y * place.height
+        XCTAssertTrue((0...medium.height).contains(clubY), "the club is in the widget")
+        // Without the club's place, the widget showed the picture's middle and missed the club.
+        let middle = PicturePlace.rect(for: lake, filling: medium, focus: nil)
+        XCTAssertFalse((0...medium.height).contains(middle.minY + steg.y * middle.height))
     }
 }
