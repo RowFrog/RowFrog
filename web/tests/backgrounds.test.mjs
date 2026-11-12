@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { backgroundFor, picturePlace } from "../public/app/backgrounds.js";
+import { backgroundFor, keyboardShift, picturePlace } from "../public/app/backgrounds.js";
 
 const b = { all: "sample:lake-waves", pages: { list: "none", clubPages: "satellite" }, clubs: { a: "custom:user-1.jpg", b: "bad" } };
 
@@ -41,4 +41,15 @@ test("a satellite picture fills the window with the club as near the middle as i
   assert.ok(Math.abs(south.y - (800 - south.height)) < 1e-9);
   // Never sideways off the window when it covers exactly.
   assert.ok(Math.abs(picturePlace(picture, area, { x: 1, y: 0.5 }).x) < 1e-9);
+});
+
+test("the picture stays on the screen while the keyboard is open, not while zoomed or for the browser's own bars", () => {
+  // iPhone, keyboard open, Safari slid the visible part 270 points down to show the search at the bottom.
+  assert.equal(keyboardShift({ layoutHeight: 852, height: 470, offsetTop: 270.4, scale: 1 }), 270);
+  // Keyboard open but nothing slid: the list is long enough and the page scrolled instead.
+  assert.equal(keyboardShift({ layoutHeight: 852, height: 470, offsetTop: 0, scale: 1 }), 0);
+  // The address bar coming and going.
+  assert.equal(keyboardShift({ layoutHeight: 852, height: 800, offsetTop: 40, scale: 1 }), 0);
+  // Pinch zoom moves the visible part too; the picture zooms with the page then.
+  assert.equal(keyboardShift({ layoutHeight: 852, height: 400, offsetTop: 200, scale: 2 }), 0);
 });

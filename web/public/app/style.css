@@ -977,8 +977,9 @@ body.has-picture[data-tiles="frosted"] #arrange.pill, body.has-picture[data-tile
 
 /* Background pictures (PageBackground): the picture fills the window behind the page,
    a little darker in dark mode and lighter under the top bar so its text stays readable. */
-#page-picture { position: fixed; inset: 0; z-index: -1; background: center / cover no-repeat; pointer-events: none; }
-#page-picture.blurred { filter: blur(24px); transform: scale(1.12); }
+/* --picture-shift keeps the picture on the screen while the iPhone's keyboard is open (keyboardShift in backgrounds.js). */
+#page-picture { position: fixed; inset: 0; z-index: -1; background: center / cover no-repeat; pointer-events: none; transform: translateY(var(--picture-shift, 0px)); }
+#page-picture.blurred { filter: blur(24px); transform: translateY(var(--picture-shift, 0px)) scale(1.12); }
 #page-picture::before { content: ""; position: absolute; inset: 0 0 auto; height: 180px; background: linear-gradient(color-mix(in srgb, var(--bg) 60%, transparent), transparent); }
 #page-picture::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,0); }
 :root[data-theme="dark"] #page-picture::after { background: rgba(0,0,0,.3); }
@@ -1195,9 +1196,12 @@ button.row-setting { width: 100%; text-align: left; font: inherit; color: var(--
 .row-setting.order-link { color: var(--accent); justify-content: flex-start; min-height: 50px; }
 .row-setting.order-link .i { font-size: 22px; }
 .bg-row > span:first-child { gap: 14px; }
-.bg-thumb { display: grid; place-items: center; flex: none; width: 36px; height: 64px; border-radius: 6px; overflow: hidden; color: var(--sub);
+/* As the app's BackgroundThumbnail: 36 by 78 points (a phone's shape), the "no picture" sign in the middle at 40 % of the width
+   on the grouped background. ".bg-row" so ".row-setting span" (flex, to the left) does not win. */
+.bg-row .bg-thumb { display: grid; place-items: center; flex: none; width: 36px; height: 78px; border-radius: 6px; overflow: hidden; color: var(--sub); background: var(--bg);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--text) 18%, transparent); }
-.bg-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.bg-row .bg-thumb > svg.i { width: 15px; height: 15px; }
+.bg-row .bg-thumb img { width: 100%; height: 100%; object-fit: cover; }
 /* Club pins on the lake map (ClubMarks): grey circle with the name below; the page's club a blue house. */
 .club-pin { overflow: visible; }
 .club-pin .dot { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; background: #8e8e93; color: #fff; font-size: 16px; box-shadow: 0 0 0 2px #fff, 0 1px 4px rgba(0, 0, 0, .3); }
