@@ -76,7 +76,8 @@ checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
 import json, sys
 runtimes = sorted((r for r in json.load(sys.stdin)["devices"].items() if "iOS-" in r[0]),
                   key=lambda r: [int(n) for n in r[0].rsplit("iOS-", 1)[-1].split("-") if n.isdigit()])
-newest = [d for d in runtimes[-1][1] if d["name"].startswith("iPhone") and "Duo" not in d["name"]] if runtimes else []
+phones = [(r, d) for r, ds in runtimes for d in ds if d["name"].startswith("iPhone") and "Duo" not in d["name"]]
+newest = [d for r, d in phones if r == phones[-1][0]] if phones else []
 # Slot 0: the iPhone Pro of the newest runtime (as before); slot 1: its Pro Max, then the others.
 rank = lambda d: (0 if d["name"].endswith(" Pro") else 1 if d["name"].endswith(" Pro Max") else 2, d["name"])
 found = [d["udid"] for d in sorted(newest, key=rank)]
