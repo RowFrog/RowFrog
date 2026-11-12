@@ -15,6 +15,7 @@ on:
       - scripts/build_web.py
       - ios/RowFrog/Assets.xcassets/AppIcon.appiconset/light.png
       - ios/RowFrog/Localization.swift
+      - ios/RowFrog/Charts/**
       - .github/workflows/website.yml
       - package-lock.json
   push:
@@ -25,6 +26,7 @@ on:
       - scripts/build_web.py
       - ios/RowFrog/Assets.xcassets/AppIcon.appiconset/light.png
       - ios/RowFrog/Localization.swift
+      - ios/RowFrog/Charts/**
       - .github/workflows/website.yml
       - package-lock.json
   workflow_dispatch:

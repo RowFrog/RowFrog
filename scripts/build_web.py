@@ -54,6 +54,8 @@ def main() -> int:
     shutil.copytree(WEB / "public", OUT)
     # The app's sample background pictures, so they are kept in one place.
     shutil.copytree(Path("ios/RowFrog/Backgrounds"), OUT / "app" / "backgrounds")
+    # The app's statecharts (the route editor), read by both (owner decision 12 Nov 2026, D-lite).
+    shutil.copytree(Path("ios/RowFrog/Charts"), OUT / "app" / "charts")
     table = german_table()
     # Only the texts the website uses, so the file stays small.
     used = {k: table[k] for k in sorted(web_keys())}

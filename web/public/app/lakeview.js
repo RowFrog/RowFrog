@@ -19,10 +19,14 @@ import {
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips, closeTip } from "./tour.js";
+import { routeDraft } from "./routedraft.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows, inside } from "./windarrows.js";
 
 const views = new Map();
+/** The route editor's statechart, the app's own file (ios/RowFrog/Charts, copied by scripts/build_web.py). */
+let routeChart;
+const loadRouteChart = () => (routeChart ??= fetch(new URL("charts/route-editor.json", import.meta.url)).then((r) => r.json()));
 
 /** The lake as the backend sent it, kept for half an hour. */
 async function loadView(lakeId) {
@@ -361,7 +365,11 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
 let page = null;
 
 /** The lake map page: map on top, the panel with the hours and the details below. */
+/** Counts the lake maps opened; a page that draws twice while loading builds only the newer one. */
+let opened = 0;
+
 export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
+  const mine = ++opened;
   page?.map?.remove();
   // Over the map at the top left, a round close button and the lake's name, as the app's topBar; the layers,
   // the colour scale and the route tools sit by the map and in the panel (LakeMapScreen).
@@ -370,21 +378,31 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null) {
       <header class="lake-top"><a class="glass round tool" href="${h(back)}" aria-label="${h(t("Close"))}">${icon("x")}</a><strong class="glass lake-name" id="lake-name"></strong>${clubId ? `<span class="lake-boat" id="lake-boat">${boatControl.html()}</span>` : ""}</header>
       <div class="lake-over" id="lake-over"></div></div>
       <section class="lake-panel" id="lake-panel"><p>${h(t("Loading the forecast…"))}</p></section></div></div>`;
-  let view;
+  let view, chart;
   try {
-    view = await viewForMap(lakeId);
+    [view, chart] = await Promise.all([viewForMap(lakeId), loadRouteChart()]);
   } catch {
+    routeChart = null;
     root.querySelector("#lake-panel").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong></p>`;
     return;
   }
+  // Opened again while this one loaded: that one builds the map (Leaflet takes one map per box).
+  if (mine !== opened) return;
   const water = WATER_TEXTS[waterKind(view)];
   setTitle(`${t(water.view)} · ${view.name}`);
   root.querySelector("#lake-name").textContent = view.name;
   const club = view.clubs.find((c) => c.id === clubId) ?? view.clubs[0];
   page = {
     root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()), layer: "light", spot: null,
-    routeMode: false, points: club ? [club.launchPoint] : [], undo: [], outAndBack: false, pace: 135,
-    selected: null, followBoat: false, boatAt: 0, savedId: null, map: null, layers: {}, rowed: null, showTrack: true,
+    pace: 135, followBoat: false, boatAt: 0, map: null, layers: {}, showTrack: true,
+    // The route being planned, its saved route and its undo history, driven by the route editor's chart (RouteDraft).
+    route: routeDraft(chart, { lakeId, launch: club?.launchPoint ?? null, points: club ? [club.launchPoint] : [] }),
+    get routeMode() { return this.route.planning; },
+    get points() { return this.route.points; },
+    get outAndBack() { return this.route.outAndBack; },
+    get selected() { return this.route.selected; },
+    get savedId() { return this.route.saved?.id ?? null; },
+    get rowed() { return this.route.rowed; },
     // On a phone the panel starts pushed down, as the app's (panelExpanded): the hour, one line and the hours.
     expanded: false,
     // On rivers: the current the club page shows (its gauge, mid-river), for the route planner (LakeView.currentMs).
@@ -673,9 +691,7 @@ function tapped(at) {
   const cell = cellAt(page.view.grid, at);
   if (page.routeMode) {
     if (cell == null && !onWater(at.lat, at.lon)) return;
-    page.undo.push(page.points);
-    page.points = RouteEdit.add(at, page.points);
-    page.selected = null;
+    page.route.send({ type: "ADD", point: at });
   } else {
     page.spot = cell == null ? null : { cell, at };
   }
@@ -924,9 +940,9 @@ function planningPanel(hour) {
       <button class="pill red" id="delete-point">${icon("trash-2")} ${h(t("Delete point"))}</button><button class="pill strong" id="point-done">${h(t("Done"))}</button></p>
     <p class="small sub">${h(t("Drag the point to move it. The magnifier shows where it lands."))}</p>`
     : `<div class="route-tools">
-      <button class="pill" id="undo" ${page.undo.length ? "" : "disabled"}>${icon("undo-2")} ${h(t("Undo"))}</button>
+      <button class="pill" id="undo" ${page.route.canUndo ? "" : "disabled"}>${icon("undo-2")} ${h(t("Undo"))}</button>
       <button class="pill" id="clear" ${page.points.length > 1 ? "" : "disabled"} aria-label="${h(t("Clear route"))}" title="${h(t("Clear route"))}">${icon("trash-2")}</button>
-      <button class="pill routes-button" id="routes" aria-haspopup="dialog">${icon(page.savedId ? "bookmark-fill" : "bookmark")} ${h(t("Routes"))}</button>
+      <button class="pill routes-button" id="routes" aria-haspopup="dialog">${icon(page.route.status === "saved" ? "bookmark-fill" : "bookmark")} ${h(t("Routes"))}</button>
     </div>`;
   return `${head}${plan ? routeBar(plan) : ""}
     ${lakeWideBanner(hour.lakeWide, view)}
@@ -947,6 +963,7 @@ function planningPanel(hour) {
 function routesMenu() {
   return `<div class="menu routes-menu">
     <button id="save-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("check")} <span>${h(t("Save route"))}</span></button>
+    ${page.route.saved ? `<button id="save-new-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("copy")} <span>${h(t("Save as new route"))}</span></button>` : ""}
     ${importRowItem()}
     ${page.rowed?.track ? `<button id="show-track" aria-pressed="${page.showTrack}">${icon("spline")} <span>${h(t("Show rowed track"))}</span>${page.showTrack ? icon("check", "end") : ""}</button>` : ""}
   </div>
@@ -1003,6 +1020,8 @@ function openManageRoutes() {
         const name = r && prompt(t("Rename route"), r.name);
         if (!name?.trim()) return;
         store.routes = store.routes.map((x) => (x.id === r.id ? { ...x, name: name.trim() } : x));
+        // The open route keeps its new name for the next Save.
+        page.route.send({ type: "ROUTE_CHANGED", id: r.id, route: find(r.id) });
         redraw();
       }));
       box.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => {
@@ -1035,24 +1054,15 @@ function routeDetails(r) {
 
 /** A saved route on the map, for planning (RouteStore.load). */
 function openRoute(r) {
-  page.undo.push(page.points);
-  page.points = r.points;
-  page.outAndBack = r.outAndBack;
-  page.savedId = r.id;
-  page.rowed = r.track ? r : null;
-  page.routeMode = true;
+  page.route.send({ type: "OPEN_ROUTE", route: r });
   page.spot = null;
-  page.selected = null;
   update();
   if (page.map) fitView();
 }
 
 function deleteRoute(r) {
   store.routes = store.routes.filter((x) => x.id !== r.id);
-  if (page.savedId === r.id) {
-    page.savedId = null;
-    page.rowed = null;
-  }
+  if (page.savedId === r.id) page.route.send({ type: "DELETE_ROUTE" });
 }
 
 /** The one tip that fits the route drawn so far, in the app's order (LakeMapScreen.routeHint). */
@@ -1106,8 +1116,7 @@ function drawRoute() {
     L.polyline([[a.lat, a.lon], [p.lat, p.lon]], { color: "transparent", weight: 18 })
       .on("click", (ev) => {
         L.DomEvent.stop(ev);
-        page.undo.push(page.points);
-        page.points = RouteEdit.insert({ lat: ev.latlng.lat, lon: ev.latlng.lng }, i, page.points);
+        page.route.send({ type: "INSERT", index: i, point: { lat: ev.latlng.lat, lon: ev.latlng.lng } });
         update();
       }).addTo(group);
   });
@@ -1120,13 +1129,12 @@ function drawRoute() {
     }).addTo(group);
     marker.on("click", (ev) => {
       L.DomEvent.stop(ev);
-      page.selected = i;
+      page.route.send({ type: "SELECT", index: i });
       update();
     });
     marker.on("dragend", () => {
       const ll = marker.getLatLng();
-      page.undo.push(page.points);
-      page.points = RouteEdit.move(i, { lat: ll.lat, lon: ll.lng }, page.points);
+      page.route.send({ type: "MOVE", index: i, point: { lat: ll.lat, lon: ll.lng } });
       update();
     });
   });
@@ -1165,42 +1173,22 @@ function wirePanel() {
   on("#legend", "click", () => openSheet(t("Legend"), legendSheet()));
   on("#about", "click", () => openSheet(t(WATER_TEXTS[waterKind(page.view)].about), aboutSheet()));
   panel.querySelectorAll("[data-way-back]").forEach((b) => b.addEventListener("click", () => {
-    const way = b.dataset.wayBack;
-    page.undo.push(page.points);
-    if (way === "loop") {
-      page.points = RouteEdit.close(page.points);
-      page.outAndBack = false;
-    } else {
-      page.points = RouteEdit.open(page.points);
-      page.outAndBack = way === "outAndBack";
-    }
-    page.savedId = null;
+    page.route.send({ type: "WAY_BACK", way: b.dataset.wayBack });
     update();
   }));
   on("#spot-close", "click", () => {
     page.spot = null;
     update();
   });
-  const edit = (fn) => () => {
-    page.undo.push(page.points);
-    page.points = fn(page.points);
-    page.selected = null;
+  // The route tools: each sends its event to the route editor (routedraft.js), then the panel redraws.
+  const send = (type) => () => {
+    page.route.send({ type });
     update();
   };
-  on("#undo", "click", () => {
-    page.points = page.undo.pop() ?? page.points;
-    page.selected = null;
-    update();
-  });
-  on("#clear", "click", edit((p) => {
-    page.rowed = null;
-    return p.slice(0, 1);
-  }));
-  on("#delete-point", "click", edit((p) => RouteEdit.remove(page.selected, p)));
-  on("#point-done", "click", () => {
-    page.selected = null;
-    update();
-  });
+  on("#undo", "click", send("UNDO"));
+  on("#clear", "click", send("CLEAR"));
+  on("#delete-point", "click", send("DELETE_POINT"));
+  on("#point-done", "click", send("DONE"));
   on("#earlier", "click", () => {
     page.hour = Math.max(0, page.hour - 1);
     update();
@@ -1247,6 +1235,10 @@ function wireRoutes(menu) {
     menu.close();
     saveRoute();
   });
+  menu.querySelector("#save-new-route")?.addEventListener("click", () => {
+    menu.close();
+    saveRoute(true);
+  });
   menu.querySelector("#import-row input")?.addEventListener("change", (e) => {
     const file = e.target.files?.[0];
     menu.close();
@@ -1254,13 +1246,9 @@ function wireRoutes(menu) {
   });
   menu.querySelector("#new-route")?.addEventListener("click", () => {
     menu.close();
-    const club = page.club;
-    page.points = club ? [club.launchPoint] : [];
-    page.undo = [];
-    page.outAndBack = false;
-    page.savedId = null;
-    page.rowed = null;
-    toggleRouteMode();
+    page.route.send({ type: "NEW_ROUTE" });
+    page.spot = null;
+    update();
   });
   menu.querySelector("#show-track")?.addEventListener("click", () => {
     page.showTrack = !page.showTrack;
@@ -1285,20 +1273,18 @@ function wireRoutes(menu) {
   });
 }
 
-function saveRoute() {
-  const existing = store.routes.find((r) => r.id === page.savedId);
+/** Save updates the open saved route; Save as new route keeps it and saves a copy (owner decision 12 Nov 2026). */
+function saveRoute(asNew = false) {
+  const { saved } = page.route;
   const fallback = t("Route %@", distance(routeLength(page.points, page.outAndBack)));
-  const name = prompt(t("Save route"), existing?.name ?? fallback);
-  if (name == null) return;
-  const route = { id: existing?.id ?? crypto.randomUUID?.() ?? `r${Date.now()}`, name: name.trim() || fallback, lakeId: page.lakeId, points: page.points, outAndBack: page.outAndBack };
-  // A changed imported route keeps the row's track.
-  if (page.rowed) Object.assign(route, { track: page.rowed.track, rowedAt: page.rowed.rowedAt, importedFrom: page.rowed.importedFrom });
+  const name = prompt(t(asNew ? "Save as new route" : "Save route"), asNew ? t("%@ (copy)", saved.name) : saved?.name ?? fallback);
+  if (name == null || !page.route.send({ type: asNew ? "SAVE_AS_NEW" : "SAVE", name: name.trim() || fallback })) return;
+  const route = page.route.saved;
   const list = store.routes;
   const i = list.findIndex((r) => r.id === route.id);
   if (i >= 0) list[i] = route;
   else list.push(route);
   store.routes = list;
-  page.savedId = route.id;
   update();
 }
 
@@ -1329,20 +1315,14 @@ async function importRow(file) {
   };
   store.routes = [...store.routes, route];
   if (row.pace) page.pace = plannedPace(row.pace);
-  page.undo.push(page.points);
-  page.points = route.points;
-  page.outAndBack = route.outAndBack;
-  page.savedId = route.id;
-  page.rowed = route;
+  page.route.send({ type: "OPEN_ROUTE", route });
   page.showTrack = true;
-  page.routeMode = true;
   update();
 }
 
 function toggleRouteMode() {
-  page.routeMode = !page.routeMode;
+  page.route.send({ type: "TOGGLE_PLANNING" });
   page.spot = null;
-  page.selected = null;
   update();
 }
 

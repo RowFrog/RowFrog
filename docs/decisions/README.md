@@ -39,3 +39,7 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 16 | 2026-11-11 | [One load state for everything the app loads](0016-one-load-state-for-everything-the-app-loads.md) |
 | 17 | 2026-11-11 | ["No official warning" instead of naming the service](0017-no-official-warning-instead-of-naming-the-service.md) |
 | 18 | 2026-11-12 | [Launch switches: one list, still on in Release](0018-launch-switches-one-list-still-on-in-release.md) |
+| 19 | 2026-11-12 | [German texts in a String Catalog](0019-german-texts-in-a-string-catalog.md) |
+| 20 | 2026-11-12 | [HSTS for one year right away](0020-hsts-for-one-year-right-away.md) |
+| 21 | 2026-11-12 | [Statecharts as shared chart files (D-lite)](0021-statecharts-as-shared-chart-files-d-lite.md) |
+| 22 | 2026-11-12 | [Route editor: every edit counts, Save as new, a real Undo](0022-route-editor-every-edit-changes-save-as-new-real-undo.md) |

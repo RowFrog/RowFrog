@@ -16,14 +16,12 @@ struct LakeMapScreen: View {
     @State private var spotAt: CLLocationCoordinate2D?
     @State private var showingInfo = false
     @State private var showingLegend = UserDefaults.standard.bool(forKey: "RWLakeLegend")
-    @State private var routeMode: Bool
-    @State private var waypoints: [CLLocationCoordinate2D]
-    @State private var outAndBack: Bool
-    /// The saved route being shown, if any.
-    @State private var savedRoute: Route?
-    /// The imported row the route came from, kept while its route is changed.
-    @State private var rowed: Route?
+    /// The route being planned, its saved route and its undo history, driven by the
+    /// route editor's chart (RouteDraft, Charts/route-editor.json).
+    @State private var draft: RouteDraft
     @State private var showingSave = false
+    /// The Save alert is for "Save as new route".
+    @State private var savingAsNew = false
     @State private var showingRoutes = false
     /// "Import a row": from Apple Health or a GPX, TCX or FIT file.
     @State private var showingImport: Bool
@@ -34,8 +32,6 @@ struct LakeMapScreen: View {
     @State private var followBoat: Bool
     /// Where the boat is, as a share of the route from start (0) to finish (1).
     @State private var boatAt: Double
-    /// The turning point tapped for changing, by its index in `waypoints`.
-    @State private var selectedPoint: Int?
     /// The panel at the bottom shows everything, or only a summary and the hours.
     @State private var panelExpanded: Bool
     /// The panel's height with the home indicator, so the map fits the lake or route above it.
@@ -88,10 +84,9 @@ struct LakeMapScreen: View {
         let points = route.reduce(into: [CLLocationCoordinate2D]()) { built, p in
             built = built.isEmpty ? [p] : RouteEdit.add(p, to: built)
         }
-        _waypoints = State(initialValue: points)
-        _routeMode = State(initialValue: !route.isEmpty)
         // A new route goes one way; `-RWOutAndBack YES` rows the screenshot routes back too.
-        _outAndBack = State(initialValue: args.bool(forKey: "RWOutAndBack") && !RouteEdit.isLoop(points))
+        var outAndBack = args.bool(forKey: "RWOutAndBack") && !RouteEdit.isLoop(points)
+        var waypoints = points
         // Screenshot hook: `-RWSavedRoutes "Name=lat,lon;lat,lon|Name=…"` saves these routes on the
         // lake when it has none (a name ending in "↔" is rowed out and back) and opens Manage routes.
         if let saved = args.string(forKey: DefaultsKey.savedRoutes), RouteStore.shared.routes(on: view.lakeId).isEmpty {
@@ -107,7 +102,7 @@ struct LakeMapScreen: View {
         }
         _showingRoutes = State(initialValue: args.string(forKey: DefaultsKey.savedRoutes) != nil)
         // Screenshot hook: `-RWRoutePoint 2` selects that turning point.
-        _selectedPoint = State(initialValue: args.object(forKey: DefaultsKey.routePoint) != nil ? args.integer(forKey: DefaultsKey.routePoint) : nil)
+        let selected = args.object(forKey: DefaultsKey.routePoint) != nil ? args.integer(forKey: DefaultsKey.routePoint) : nil
         // Screenshot hook: `-RWPanel expanded` opens the panel in full.
         _panelExpanded = State(initialValue: args.string(forKey: "RWPanel") == "expanded")
         // Screenshot hook: `-RWBoatAt 0.6` shows the lake when the boat is 60 % along the route.
@@ -123,12 +118,21 @@ struct LakeMapScreen: View {
         }
         if let imported {
             RouteStore.shared.save(imported)
-            _waypoints = State(initialValue: imported.coordinates)
-            _outAndBack = State(initialValue: imported.outAndBack)
+            waypoints = imported.coordinates
+            outAndBack = imported.outAndBack
         }
-        _savedRoute = State(initialValue: imported)
-        _rowed = State(initialValue: imported)
+        let launch = view.clubs.first { $0.id == clubID }.map { CLLocationCoordinate2D(latitude: $0.launchPoint.lat, longitude: $0.launchPoint.lon) }
+        let state: [String]? = route.isEmpty ? nil : ["planning", selected == nil ? "drawing" : "pointSelected"]
+        _draft = State(initialValue: RouteDraft(lakeId: view.lakeId, launch: launch, points: waypoints, outAndBack: outAndBack,
+                                                saved: imported, rowed: imported, state: state, selected: selected))
     }
+
+    private var routeMode: Bool { draft.planning }
+    private var waypoints: [CLLocationCoordinate2D] { draft.points }
+    private var outAndBack: Bool { draft.outAndBack }
+    private var savedRoute: Route? { draft.saved }
+    private var rowed: Route? { draft.rowed }
+    private var selectedPoint: Int? { draft.selected }
 
     private var planner: RoutePlanner? {
         routeMode ? RoutePlanner(view: view, waypoints: waypoints, outAndBack: outAndBack) : nil
@@ -169,24 +173,16 @@ struct LakeMapScreen: View {
                 routeMode: routeMode, waypoints: waypoints, segments: plan?.segments ?? [],
                 boat: boat.map { CLLocationCoordinate2D(latitude: $0.coordinate.lat, longitude: $0.coordinate.lon) },
                 selectedPoint: selectedPoint,
-                addPoint: { point in
-                    selectedPoint = nil
-                    let new = RouteEdit.add(point, to: waypoints)
-                    if RouteEdit.isLoop(new) { outAndBack = false }
-                    waypoints = new
-                    savedRoute = nil
-                },
+                addPoint: { draft.send(.add($0)) },
                 movePoint: { i, point in
-                    waypoints = RouteEdit.move(at: i, to: point, in: waypoints)
+                    draft.send(.move(i, point))
                     pointTip.invalidate(reason: .actionPerformed)
                 },
                 insertPoint: { i, point in
-                    waypoints = RouteEdit.insert(point, at: i, in: waypoints)
-                    selectedPoint = i
+                    draft.send(.insert(i, point))
                     stretchTip.invalidate(reason: .actionPerformed)
-                    savedRoute = nil
                 },
-                selectPoint: { selectedPoint = $0 },
+                selectPoint: { draft.send($0.map(RouteEditorEvent.select) ?? .done) },
                 imagery: imagery,
                 track: routeMode && showTrack ? rowed?.trackCoordinates ?? [] : [],
                 land: land,
@@ -262,39 +258,32 @@ struct LakeMapScreen: View {
         .sheet(isPresented: $showingRoutes) {
             ManageRoutesView(lakeID: view.lakeId, current: savedRoute?.id, open: load) { id in
                 // The open route was renamed or deleted: show it as it is now.
-                guard id == savedRoute?.id else { return }
-                savedRoute = routes.routes.first { $0.id == id }
+                draft.send(.routeChanged(id: id, routes.routes.first { $0.id == id }))
             }
         }
-        .alert(tr("Save route"), isPresented: $showingSave) {
+        .alert(savingAsNew ? tr("Save as new route") : tr("Save route"), isPresented: $showingSave) {
             TextField(tr("Name"), text: $routeName)
             Button(tr("Save")) { saveRoute() }
             Button(tr("Cancel"), role: .cancel) {}
         }
     }
 
-    private func toggleRouteMode() {
-        routeMode.toggle()
+    /// Starts or ends planning; `event` is .newRoute for the menu's New route. A new
+    /// route starts at this page's launch point (RouteDraft).
+    private func toggleRouteMode(_ event: RouteEditorEvent = .togglePlanning) {
+        draft.send(event)
         // Its popover would cover the edit bar and the route tips.
         RoutePlanningTip().invalidate(reason: .actionPerformed)
         spot = nil
-        selectedPoint = nil
-        // A new route starts at this page's launch point.
-        if routeMode, waypoints.isEmpty, let club = view.clubs.first(where: { $0.id == clubID }) {
-            waypoints = [CLLocationCoordinate2D(latitude: club.launchPoint.lat, longitude: club.launchPoint.lon)]
-        }
     }
 
+    /// Save updates the open saved route; Save as new route keeps it and saves a
+    /// copy (owner decision 12 Nov 2026). A changed imported route keeps the row's track.
     private func saveRoute() {
-        let name = routeName.trimmingCharacters(in: .whitespaces)
-        // A changed imported route saved as a new one keeps the row's track.
-        var route = savedRoute ?? Route(name: name, lakeId: view.lakeId, points: [], outAndBack: outAndBack,
-                                        track: rowed?.track, rowedAt: rowed?.rowedAt, importedFrom: rowed?.importedFrom)
-        route.name = name.isEmpty ? tr("Route %@", Format.distance(planner?.distanceM)) : name
-        route.points = waypoints.map { Coordinate(lat: $0.latitude, lon: $0.longitude) }
-        route.outAndBack = outAndBack
+        let typed = routeName.trimmingCharacters(in: .whitespaces)
+        let name = typed.isEmpty ? tr("Route %@", Format.distance(planner?.distanceM)) : typed
+        guard draft.send(savingAsNew ? .saveAsNew(name: name) : .save(name: name)), let route = draft.saved else { return }
         routes.save(route)
-        savedRoute = route
     }
 
     /// Makes the picked row a saved route on this lake and opens it; an error
@@ -312,13 +301,8 @@ struct LakeMapScreen: View {
     }
 
     private func load(_ route: Route) {
-        waypoints = route.coordinates
-        outAndBack = route.outAndBack
-        savedRoute = route
-        rowed = route.track == nil ? nil : route
-        routeMode = true
+        draft.send(.openRoute(route))
         spot = nil
-        selectedPoint = nil
         refit()
     }
 
@@ -415,12 +399,7 @@ struct LakeMapScreen: View {
         let saved = routes.routes(on: view.lakeId)
         if !routeMode && !saved.isEmpty {
             Menu {
-                Button(tr("New route"), systemImage: "plus") {
-                    waypoints = []
-                    savedRoute = nil
-                    rowed = nil
-                    toggleRouteMode()
-                }
+                Button(tr("New route"), systemImage: "plus") { toggleRouteMode(.newRoute) }
                 Button(tr("Import a row"), systemImage: "square.and.arrow.down.on.square") { showingImport = true }
                 Section(tr("Saved routes")) {
                     ForEach(saved) { route in
@@ -440,9 +419,18 @@ struct LakeMapScreen: View {
         return Menu {
             Button(tr("Save route"), systemImage: "square.and.arrow.down") {
                 routeName = savedRoute?.name ?? ""
+                savingAsNew = false
                 showingSave = true
             }
             .disabled(waypoints.count < 2)
+            if let savedRoute {
+                Button(tr("Save as new route"), systemImage: "plus.square.on.square") {
+                    routeName = tr("%@ (copy)", savedRoute.name)
+                    savingAsNew = true
+                    showingSave = true
+                }
+                .disabled(waypoints.count < 2)
+            }
             Button(tr("Import a row"), systemImage: "square.and.arrow.down.on.square") { showingImport = true }
             if rowed?.track != nil {
                 Toggle(tr("Show rowed track"), systemImage: "scribble.variable", isOn: $showTrack)
@@ -458,12 +446,12 @@ struct LakeMapScreen: View {
             if let savedRoute {
                 Button(tr("Delete this route"), systemImage: "trash", role: .destructive) {
                     routes.delete(savedRoute)
-                    self.savedRoute = nil
-                    rowed = nil
+                    draft.send(.deleteRoute)
                 }
             }
         } label: {
-            Label(tr("Routes"), systemImage: savedRoute == nil ? "bookmark" : "bookmark.fill")
+            // Filled while the route is as saved; an edit empties it, undoing back fills it again.
+            Label(tr("Routes"), systemImage: draft.status == .saved ? "bookmark.fill" : "bookmark")
         }
         .accessibilityLabel(savedRoute?.name ?? tr("Routes"))
     }
@@ -477,23 +465,16 @@ struct LakeMapScreen: View {
                 Text(tr("Turning point %d", i)).font(.subheadline.weight(.semibold))
                 Spacer(minLength: 0)
                 Button(role: .destructive) {
-                    waypoints = RouteEdit.remove(at: i, from: waypoints)
-                    selectedPoint = nil
+                    draft.send(.deletePoint)
                     pointTip.invalidate(reason: .actionPerformed)
-                    savedRoute = nil
                 } label: { Label(tr("Delete point"), systemImage: "trash") }
-                Button { selectedPoint = nil } label: { Text(tr("Done")) }
+                Button { draft.send(.done) } label: { Text(tr("Done")) }
                     .fontWeight(.semibold)
             } else {
-                Button {
-                    if waypoints.count > 1 { waypoints.removeLast() }
-                } label: { Label(tr("Undo"), systemImage: "arrow.uturn.backward") }
-                .disabled(waypoints.count < 2)
-                Button {
-                    waypoints = Array(waypoints.prefix(1))
-                    savedRoute = nil
-                    rowed = nil
-                } label: { Label(tr("Clear", key: "Clear route"), systemImage: "trash") }
+                // A real history: points, drags, deletes and the way back (owner decision 12 Nov 2026).
+                Button { draft.send(.undo) } label: { Label(tr("Undo"), systemImage: "arrow.uturn.backward") }
+                    .disabled(!draft.canUndo)
+                Button { draft.send(.clear) } label: { Label(tr("Clear", key: "Clear route"), systemImage: "trash") }
                 // The bin alone, so Undo and Routes keep their words in German too.
                 .labelStyle(.iconOnly)
                 .disabled(waypoints.count < 2)
@@ -660,19 +641,8 @@ struct LakeMapScreen: View {
         let loop = RouteEdit.isLoop(waypoints)
         let choice = Binding<RouteReturn>(
             get: { loop ? .loop : outAndBack ? .outAndBack : .oneWay },
-            set: { new in
-                switch new {
-                case .loop:
-                    // A loop needs two turning points first.
-                    guard waypoints.count >= 3 else { return }
-                    waypoints = RouteEdit.close(waypoints)
-                    outAndBack = false
-                case .outAndBack, .oneWay:
-                    waypoints = RouteEdit.open(waypoints)
-                    outAndBack = new == .outAndBack
-                }
-                savedRoute = nil
-            })
+            // A loop needs two turning points first (RouteDraft's wayBackAllowed).
+            set: { draft.send(.wayBack($0)) })
         return Picker(tr("Way back"), selection: choice) {
             ForEach(RouteReturn.allCases) { Text($0.title).tag($0) }
         }
@@ -1960,22 +1930,6 @@ struct LakeMapLegend: View {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             symbol.frame(width: 28)
             Text(text).font(.subheadline)
-        }
-    }
-}
-
-/// How a planned route gets back to the club.
-enum RouteReturn: CaseIterable, Identifiable {
-    case oneWay, outAndBack, loop
-
-    var id: Self { self }
-
-    var title: String {
-        switch self {
-        // Short, for the three parts of the switch.
-        case .oneWay: tr("One way", key: "Way back one way")
-        case .outAndBack: tr("Out and back", key: "Way back out and back")
-        case .loop: tr("Loop")
         }
     }
 }

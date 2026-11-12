@@ -257,3 +257,63 @@ test("a refused forecast shows No forecast, and a failed update keeps the foreca
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+/** A made-up lake view: a square of water round the club's launch point, six calm hours (there is no sample file of one). */
+function squareLake() {
+  const cols = 12, rows = 12, n = cols * rows;
+  const start = new Date(forecast.generatedAt);
+  return {
+    id: club.lakeId, name: "Square lake", generatedAt: forecast.generatedAt, waterC: 14,
+    grid: { south: 47.985, west: 11.33, dLat: 0.002, dLon: 0.003, cols, rows, cells: [...Array(n).keys()], cellPoint: Array(n).fill(0), cellZone: Array(n).fill(0) },
+    zones: ["west"], outline: [], clubs: [{ id: club.id, name: club.name, shortName: club.shortName, launchPoint: club.launchPoint }],
+    points: [{ lat: 47.997, lon: 11.348 }],
+    hours: [...Array(6).keys()].map((i) => ({
+      time: new Date(start.getTime() + i * 3600e3).toISOString(), lakeWide: { light: "green", reasons: [] }, lights: "0".repeat(n), wavesCm: Array(n).fill(5),
+      wind: [{ speedMs: 2, gustMs: 4, fromDeg: 270, other: 0 }], zones: [{ light: "green", maxWaveM: 0.05 }],
+    })),
+  };
+}
+
+test("the route editor: undo takes back the way back, Save marks the route saved, an edit changed and undo saved again", async () => {
+  const { page, errors, context } = await open(visitor());
+  const lake = squareLake();
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  await page.goto(`${base}/app/#/lake/${club.lakeId}/${club.id}`);
+  await page.locator("#route-mode").click({ timeout: 20000 });
+  const map = page.locator("#lake-map");
+  const box = await map.boundingBox();
+  // Taps on the water above the panel add turning points.
+  for (const [x, y] of [[0.3, 0.2], [0.7, 0.25]]) await map.click({ position: { x: box.width * x, y: box.height * y } });
+  await page.locator(".route-line .sub").waitFor();
+  const undo = page.locator("#undo");
+
+  await page.locator('[data-way-back="outAndBack"]').click();
+  assert.ok(await page.locator('[data-way-back="outAndBack"].on').count());
+  await undo.click();
+  assert.ok(await page.locator('[data-way-back="oneWay"].on').count(), "Undo takes back the way back");
+  // Save, named in the browser's prompt.
+  page.once("dialog", (d) => d.accept("Test route"));
+  await page.locator("#routes").click();
+  await page.locator("#save-route").click();
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("rf.routes")));
+  assert.equal(saved.length, 1);
+  assert.equal(saved[0].name, "Test route");
+  const savedIcon = await page.locator("#routes").innerHTML();
+  // An edit makes it changed (an empty bookmark), undoing it makes it saved again.
+  await map.click({ position: { x: box.width * 0.5, y: box.height * 0.35 } });
+  const changedIcon = await page.locator("#routes").innerHTML();
+  assert.notEqual(changedIcon, savedIcon, "changed after an edit");
+  await undo.click();
+  assert.equal(await page.locator("#routes").innerHTML(), savedIcon, "saved again after Undo");
+  // Save as new route keeps the first one.
+  await map.click({ position: { x: box.width * 0.5, y: box.height * 0.35 } });
+  page.once("dialog", (d) => d.accept("Longer route"));
+  await page.locator("#routes").click();
+  await page.locator("#save-new-route").click();
+  const both = await page.evaluate(() => JSON.parse(localStorage.getItem("rf.routes")));
+  assert.deepEqual(both.map((r) => [r.name, r.points.length]), [["Test route", 3], ["Longer route", 4]]);
+
+  assert.deepEqual(errors, []);
+  await context.close();
+});
