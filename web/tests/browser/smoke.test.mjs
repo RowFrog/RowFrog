@@ -94,6 +94,48 @@ test("a first visit starts with the safety notice, which needs a tick", async ()
   await context.close();
 });
 
+test("a first visit's tour asks for the home base and more clubs, as the app's", async () => {
+  const { page, errors, context } = await open({ "rf.language": "en", "rf.safety": { version: 1, at: forecast.generatedAt } });
+  await page.goto(`${base}/app/`);
+  await page.locator(".tour #next").click();
+  await page.locator(".tour-choice").waitFor();
+  assert.equal(await page.locator(".tour #skip").count(), 0, "no skipping the home base choice");
+  assert.equal(await page.locator(".tour #next").isDisabled(), true, "Next waits for a home base");
+  await page.locator("#tour-search").fill(club.shortName ?? club.name);
+  await page.locator(`.tour-clubs .result[data-club="${club.id}"]`).click();
+  assert.equal(await page.locator(".tour #next").isDisabled(), false, "a home base lets the tour go on");
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("rf.clubs"))[0].id), club.id);
+  await page.locator(".tour #next").click();
+  await page.waitForFunction(() => document.querySelector(".tour h1")?.textContent === "Add more clubs");
+  // The home base is in the list and stays when tapped there.
+  await page.locator(`.tour-clubs .result[data-club="${club.id}"]`).click();
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("rf.clubs")).length), 1);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("the tour's pages: the club choice on a first visit, the river page with a river club (TourPage.order)", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/list`);
+  const ids = await page.evaluate(async () => {
+    const { tourPages } = await import("./tour.js");
+    return [tourPages(false, false), tourPages(true, true)].map((list) => list.map((p) => p.id));
+  });
+  assert.deepEqual(ids[0], ["welcome", "rowingLight", "conditions", "warnings", "boats", "lake", "locations", "wideScreen", "settings"]);
+  assert.deepEqual(ids[1], ["welcome", "homeBase", "moreClubs", "rowingLight", "conditions", "warnings", "boats", "lake", "river", "locations", "wideScreen", "settings"]);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("the tour from Help skips the club choice once there is a home base", async () => {
+  const { page, errors, context } = await open({ ...visitor(), "rf.tourSeen": false });
+  await page.goto(`${base}/app/`);
+  await page.locator(".tour #next").click();
+  await page.waitForFunction(() => document.querySelector(".tour h1")?.textContent === "The rowing light");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("the club page shows the sample forecast and every tile opens its value page", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/club/mrc-1880`);
@@ -116,6 +158,20 @@ test("the club page shows the sample forecast and every tile opens its value pag
     await page.goBack();
     await page.waitForFunction((sel) => [...document.querySelectorAll(sel)].filter((e) => e.offsetParent).length >= 8, sel, { timeout: 20000 });
   }
+  await context.close();
+});
+
+test("the Location sheet names the club's OpenStreetMap place and opens its card", async () => {
+  const { page, errors, context } = await open(visitor());
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  await page.locator(".club-head .launch-open").first().click({ timeout: 20000 });
+  const line = page.locator("dialog.sheet .osm-place > summary");
+  await line.waitFor({ timeout: 20000 });
+  assert.match(await line.textContent(), /In OpenStreetMap as “Münchener Ruder-Club v\. 1880 e\.V\.”/);
+  await line.click();
+  const link = page.locator("dialog.sheet .osm-place .place-card a[href$='/way/42123014']");
+  assert.ok(await link.isVisible());
+  assert.deepEqual(errors, []);
   await context.close();
 });
 

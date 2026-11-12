@@ -26,6 +26,7 @@ import {
 import { fillLakeCard, renderLakeMap, renderAllRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
 import { suggestRow, openSuggestLaunchPoint } from "./suggest.js";
+import { osmPlaceCard } from "./osmplace.js";
 import { currentTile, currentBody } from "./river.js";
 import { isLowered, waterLevelTile, waterLevelBody } from "./lakelevel.js";
 import { satelliteCard } from "./satellite.js";
@@ -684,6 +685,7 @@ async function renderClub(id) {
   // Current conditions' tip, one at a time: the water level's first while the lake is let down (Forggensee),
   // the water estimate's only where no station measures the water. Inside the top tile, it sits under that.
   const conditionsTip = isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
+    : forecast.river && tip("riverCurrent") ? "riverCurrent"
     : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate";
   // The nearby-water tip first, the first time the Why line counts the water within 1 km (NearbyWaterTip).
   const nearbyTip = hour?.reasons?.some((r) => r.condition === "nearby_water") ? tip("nearbyWater") : "";
@@ -1574,7 +1576,11 @@ function allValuesButton(open = store.topTileOpen) {
  */
 /** The Current tile opens the water level and current (CurrentDetailView). */
 function wireCurrent(box, forecast) {
-  box.querySelectorAll("[data-current]").forEach((b) => b.addEventListener("click", () => openSheet(t("Current"), currentBody(forecast.river))));
+  box.querySelectorAll("[data-current]").forEach((b) => b.addEventListener("click", () => {
+    // Using the tile closes its tip, as the app's invalidate(reason: .actionPerformed).
+    closeTip(root, "riverCurrent");
+    openSheet(t("Current"), currentBody(forecast.river));
+  }));
   box.querySelectorAll("[data-water-level]").forEach((b) => b.addEventListener("click", () => {
     closeTip(root, "waterLevel");
     openSheet(t("Water level"), waterLevelBody(forecast.waterLevel));
@@ -2059,6 +2065,7 @@ function launchPointBody(club, mapId) {
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     ${club.launchPointVerified || club.launchPointSet ? `<p class="forecast-point">${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
     ${suggestRow(club)}${mapId === "launch-sheet-map" && suggestRow(club).includes("data-suggest-lp") ? tip("suggestLaunchPoint") : ""}
+    <div class="osm-slot"></div>
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
@@ -2077,6 +2084,12 @@ document.addEventListener("keydown", (e) => {
 });
 
 async function showLaunchMap(club, place = root.querySelector("#launch-map")) {
+  // The club's OpenStreetMap place, as the app's "In Apple Maps as …" line (osmplace.js); also without the map.
+  loadCatalog().catch(() => []).then((lakes) => {
+    const slot = place?.parentElement?.querySelector(".osm-slot");
+    const known = lakes.flatMap((l) => l.clubs).find((c) => c.id === club.id);
+    if (slot) slot.innerHTML = osmPlaceCard(known?.mapPlace, MAPS_APPS[store.mapsApp]);
+  });
   const L = await loadLeaflet().catch(() => null);
   const box = place;
   if (!L || !box) return;
@@ -2897,12 +2910,11 @@ function route(scroll = true) {
   if (!tourSeen() || location.hash === "#/tour") {
     showBackground(null);
     const done = () => (location.hash === "#/tour" ? (location.hash = "#/settings") : route());
-    // The river page only with a river or canal club in the list (TutorialView.hasRiver).
-    const lakeIds = new Set(store.clubs.map((c) => c.lakeId));
-    return loadCatalog().catch(() => []).then((lakes) => {
+    // The club list, for the club choice on a first visit and the river page (TutorialView.hasRiver); null when it failed.
+    return loadCatalog().catch(() => null).then((lakes) => {
       // Another page may have opened while the club list loaded.
       if (tourSeen() && location.hash !== "#/tour") return;
-      renderTour(root, { languagePicker: tourLanguagePicker, wireLanguage, done, river: lakes.some((l) => l.section && lakeIds.has(l.id)) });
+      renderTour(root, { languagePicker: tourLanguagePicker, wireLanguage, done, lakes, reload: loadCatalog });
     });
   }
   const hash = location.hash.replace(/^#/, "");

@@ -1115,6 +1115,18 @@ body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; borde
 .tour-dots button { width: 8px; height: 8px; padding: 0; border-radius: 50%; background: var(--fill); }
 .tour-dots button.on { background: var(--text); }
 .tour #next { margin-bottom: 16px; }
+/* The club choice on a first visit (ClubChoicePage): search, then the clubs; Next waits for a home base. */
+.tour .tour-choice { align-items: stretch; text-align: left; }
+.tour .tour-choice > .tour-icon, .tour .tour-choice > h1, .tour .tour-choice > .sub { align-self: center; text-align: center; }
+.tour .tour-choice .tour-icon svg { width: 40px; height: 40px; }
+.tour .tour-choice h1 { font-size: 24px; }
+.tour-clubs .results { margin-top: 0; }
+.tour-clubs h3.section { margin: 14px 4px 6px; }
+.tour-clubs .add.home { color: var(--accent); }
+.tour-clubs .add.off { color: var(--sub); }
+.tour-foot { margin: 10px 4px 0; font-size: 13px; }
+.tour-empty { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 24px 16px; text-align: center; }
+.tour #next:disabled { opacity: .45; }
 
 /* The top tile's daylight line opens the daylight page (LocationPageView.daylightLine). */
 .daylight[data-top] .chev { margin-left: auto; color: var(--sub); }
@@ -1432,3 +1444,12 @@ nav.bottom { view-transition-name: page-bar; }
   body.settings-over #root > .nav { top: 0; padding-top: 10px; }
   body.settings-over .settings-main .settings-search { position: sticky; left: auto; transform: none; bottom: 14px; margin: 0 auto 14px; }
 }
+
+/* The club's OpenStreetMap place under the Location map (osmplace.js), the app's "In Apple Maps as …" line. */
+.osm-place { margin: 6px 0 0; font-size: 13px; }
+.osm-place > summary { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; color: var(--accent); list-style: none; min-height: 32px; }
+.osm-place > summary::-webkit-details-marker { display: none; }
+.osm-place > summary svg { width: 16px; height: 16px; }
+.osm-place .place-card { display: grid; gap: 4px; margin-top: 4px; padding: 10px 12px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); }
+.osm-place .place-actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0; }
+.osm-place .place-actions .pill { display: inline-flex; align-items: center; gap: 6px; text-decoration: none; }

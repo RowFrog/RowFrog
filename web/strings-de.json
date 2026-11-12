@@ -96,5 +96,9 @@
   "Appearance, units, language and background pictures go back to how the app came, and your own pictures are deleted. Your locations and home base stay.": "Erscheinungsbild, Einheiten, Sprache und Hintergrundbilder werden wie bei der Installation, und deine eigenen Bilder werden gelöscht. Deine Orte und dein Heimatverein bleiben.",
   "Background pictures, including your own photos.": "Hintergrundbilder, auch deine eigenen Fotos.",
   "The server renews the clubs you use every 30 minutes; your browser loads them when you open or come back to this page, or tap Refresh.": "Der Server erneuert deine Vereine alle 30 Minuten; dein Browser lädt sie, wenn du diese Seite öffnest, zu ihr zurückkehrst oder auf Aktualisieren tippst.",
-  "Go to another value": "Zu einem anderen Wert"
+  "Go to another value": "Zu einem anderen Wert",
+  "In OpenStreetMap as “%@”": "In OpenStreetMap als „%@“",
+  "The club's place on OpenStreetMap": "Der Ort des Vereins in OpenStreetMap",
+  "Directions": "Route",
+  "On OpenStreetMap": "In OpenStreetMap"
 }

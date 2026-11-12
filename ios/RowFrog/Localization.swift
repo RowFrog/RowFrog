@@ -909,6 +909,8 @@ enum German {
         "Pick your app icon": "Wähle dein App-Symbol",
         "Lake view and routes": "Seeansicht und Routen",
         "Rivers and canals": "Flüsse und Kanäle",
+        "Current on the river": "Strömung am Fluss",
+        "The Current tile shows the nearest gauge's flow speed, water level and trend. Tap it for the level chart and your pace upstream and downstream.": "Die Kachel „Strömung“ zeigt Fließgeschwindigkeit, Wasserstand und Tendenz am nächsten Pegel. Tippe darauf für den Pegelverlauf und dein Tempo flussauf- und flussabwärts.",
         "A river or canal club gets its own two tiles.": "Ein Verein an Fluss oder Kanal bekommt zwei eigene Kacheln.",
         "The River view or Canal view shows your stretch between weirs or locks, with markers where it ends.": "Die Fluss- oder Kanalansicht zeigt deine Strecke zwischen Wehren oder Schleusen, mit Markierungen, wo sie endet.",
         "The Current tile shows the nearest gauge's flow speed, water level and trend. It is amber at high water or a fast current, red when shipping is stopped or the current is too strong.": "Die Kachel „Strömung“ zeigt Fließgeschwindigkeit, Wasserstand und Tendenz am nächsten Pegel. Sie ist gelb bei Hochwasser oder schneller Strömung, rot bei eingestellter Schifffahrt oder zu starker Strömung.",

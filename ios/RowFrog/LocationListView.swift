@@ -456,17 +456,12 @@ struct SearchResultRow: View {
 
 private extension View {
     /// As in the Weather app: the big title level with "…" at the top, small
-    /// and centred in the bar once the list scrolls; iOS 17's large title before.
-    @ViewBuilder
+    /// and centred in the bar once the list scrolls.
     func titleShrinksOnScroll(_ scrolled: Binding<Bool>) -> some View {
-        if #available(iOS 18.0, *) {
-            onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 12 } action: { _, now in
-                withAnimation(.easeInOut(duration: 0.2)) { scrolled.wrappedValue = now }
-            }
-            .toolbarTitleDisplayMode(scrolled.wrappedValue ? .inline : .inlineLarge)
-        } else {
-            toolbarTitleDisplayMode(.large)
+        onScrollGeometryChange(for: Bool.self) { $0.contentOffset.y + $0.contentInsets.top > 12 } action: { _, now in
+            withAnimation(.easeInOut(duration: 0.2)) { scrolled.wrappedValue = now }
         }
+        .toolbarTitleDisplayMode(scrolled.wrappedValue ? .inline : .inlineLarge)
     }
 
     /// The settings cog at the bottom left: beside the search field from iOS 26,
@@ -597,7 +592,7 @@ private struct ClearNavigationBackground: ViewModifier {
     let active: Bool
 
     func body(content: Content) -> some View {
-        if active, #available(iOS 18, *) {
+        if active {
             content.containerBackground(.clear, for: .navigation)
         } else {
             content

@@ -83,6 +83,8 @@ enum DefaultsKey {
     static let suggestTip = "RWSuggestTip"
     /// Show the nearby-water tip (and its reason line).
     static let nearbyTip = "RWNearbyTip"
+    /// Show the river current tip (on a river or canal club's page).
+    static let riverTip = "RWRiverTip"
     /// Show the tips that come later (all values, radar map, hour view, …).
     static let laterTips = "RWLaterTips"
 

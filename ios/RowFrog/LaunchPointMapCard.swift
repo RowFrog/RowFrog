@@ -166,19 +166,13 @@ struct LaunchPointDetails: View {
             forecastPointLine
             suggestRow
             if mapApp == .apple, let name = place?.name {
-                if #available(iOS 18.0, *) {
-                    // Apple's own place card (photos, opening hours, website) in the app,
-                    // so the club reads the same as in the Maps app (owner's option A).
-                    Button { placeCard = place } label: {
-                        Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
-                    }
-                    .font(.caption)
-                    .accessibilityHint(tr("Shows the club's place card from Apple Maps"))
-                } else {
+                // Apple's own place card (photos, opening hours, website) in the app,
+                // so the club reads the same as in the Maps app (owner's option A).
+                Button { placeCard = place } label: {
                     Label(tr("In Apple Maps as \u{201C}%@\u{201D}", name), systemImage: "checkmark.seal")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
                 }
+                .font(.caption)
+                .accessibilityHint(tr("Shows the club's place card from Apple Maps"))
             }
             HStack {
                 Text(String(format: tr("%.5f° N, %.5f° E"), club.launchPoint.lat, club.launchPoint.lon))
@@ -206,7 +200,7 @@ struct LaunchPointDetails: View {
                 .font(.caption.weight(.semibold))
             }
         }
-        .modifier(PlaceCardSheet(item: $placeCard))
+        .mapItemDetailSheet(item: $placeCard)
         .task(id: club.id) {
             suggested = LaunchPointSuggestion.wasSent(forID: club.id)
             // Screenshot hook: `-RWSuggestLaunchPoint YES` opens the suggestion sheet.
@@ -479,19 +473,6 @@ private struct SuggestLaunchPointTipAnchor: ViewModifier {
     func body(content: Content) -> some View {
         if shown {
             content.popoverTip(SuggestLaunchPointTip(), arrowEdge: .top)
-        } else {
-            content
-        }
-    }
-}
-
-/// Apple's place card for a map item, in a sheet; iOS 18 and later.
-private struct PlaceCardSheet: ViewModifier {
-    @Binding var item: MKMapItem?
-
-    func body(content: Content) -> some View {
-        if #available(iOS 18.0, *) {
-            content.mapItemDetailSheet(item: $item)
         } else {
             content
         }

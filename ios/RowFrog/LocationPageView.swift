@@ -90,6 +90,8 @@ struct LocationPageView: View {
     @State private var showAllValuesTip = false
     private let waterEstimateTip = WaterEstimateTip()
     private let waterLevelTip = WaterLevelTip()
+    private let riverTip = RiverCurrentTip()
+    @State private var showRiverTip = false
     @State private var showWaterLevelTip = false
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
@@ -222,6 +224,7 @@ struct LocationPageView: View {
                 .tipVisibility(nearbyWaterTip, $showNearbyWaterTip)
                 .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(waterLevelTip, $showWaterLevelTip)
+                .tipVisibility(riverTip, $showRiverTip)
                 .tipVisibility(radarMapTip, $showRadarMapTip)
                 .tipVisibility(hourViewTip, $showHourViewTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
@@ -396,11 +399,13 @@ struct LocationPageView: View {
 
     /// Current conditions' tips, above its card or, inside the top tile, under that.
     /// One tip at a time: the radar's two follow the first. The water level
-    /// tip comes first, as it only shows while Forggensee is let down.
+    /// and river current tips come first, as they only show at such waters.
     @ViewBuilder
     private func conditionsTips(_ forecast: ClubForecast) -> some View {
         if tourSeen && showWaterLevelTip && forecast.waterLevel?.isLowered == true {
             TintedTipView(waterLevelTip)
+        } else if tourSeen && showRiverTip && forecast.river != nil {
+            TintedTipView(riverTip)
         } else if tourSeen && showConditionsTip {
             TintedTipView(conditionsTip)
         } else if tourSeen && showRainRadarTip {
@@ -1494,58 +1499,6 @@ private struct HourDetailSheet: View {
                 }
             }
         }
-    }
-}
-
-/// Screenshot hook: `-RWScrollPage n` scrolls the page down by n screens
-/// (less a little overlap), stopping at the bottom, so a series of screenshots
-/// covers the whole page.
-struct ScreenshotScroll: ViewModifier {
-    let page: Int
-    let ready: Bool
-
-    func body(content: Content) -> some View {
-        if #available(iOS 18.0, *), page > 0 {
-            content.modifier(PagedScroll(page: page, ready: ready))
-        } else {
-            content
-        }
-    }
-}
-
-@available(iOS 18.0, *)
-private struct PagedScroll: ViewModifier {
-    let page: Int
-    let ready: Bool
-    @State private var position = ScrollPosition(edge: .top)
-    @State private var size: (content: CGFloat, container: CGFloat) = (0, 0)
-
-    func body(content: Content) -> some View {
-        content
-            .scrollPosition($position)
-            .onScrollGeometryChange(for: [CGFloat].self) { [$0.contentSize.height, $0.containerSize.height] } action: { _, new in
-                size = (new[0], new[1])
-            }
-            .task(id: ready) {
-                guard ready else { return }
-                // Wait for the page to be laid out, then scroll twice in case the
-                // first request lands before the scroll view is ready.
-                for _ in 0..<50 where size.content <= size.container {
-                    try? await Task.sleep(for: .milliseconds(100))
-                }
-                try? await Task.sleep(for: .seconds(1))
-                for _ in 0..<2 {
-                    // Bars cover about 150 points of the screen; overlap pages by a few rows.
-                    // On a phone on its side that would leave little, so move at least 70 %.
-                    let target = CGFloat(page) * max(size.container - 260, size.container * 0.7)
-                    if target < size.content - size.container {
-                        position.scrollTo(y: target)
-                    } else {
-                        position.scrollTo(edge: .bottom)
-                    }
-                    try? await Task.sleep(for: .seconds(1))
-                }
-            }
     }
 }
 

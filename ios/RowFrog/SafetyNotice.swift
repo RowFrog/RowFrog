@@ -185,40 +185,26 @@ struct SafetyNoticeView: View {
     }
 }
 
-/// The notice's text. From iOS 18 a plain stack, and the scroll position tells
-/// when its end is in view; iOS 17 keeps a lazy stack whose end marker appears
-/// once it is scrolled into view. (The lazy stack with the marker kept the main
-/// thread busy on iOS 18 once the notice got taller, #355.)
+/// The notice's text: a plain stack, and the scroll position tells when its end
+/// is in view. (A lazy stack with an end marker kept the main thread busy once
+/// the notice got taller, #355.)
 private struct ReadToEndStack<Content: View>: View {
     @Binding var readToEnd: Bool
     @ViewBuilder let content: Content
 
     var body: some View {
-        if #available(iOS 18.0, *) {
-            VStack(spacing: 20) { content }
-        } else {
-            LazyVStack(spacing: 20) {
-                content
-                Color.clear
-                    .frame(height: 1)
-                    .onAppear { readToEnd = true }
-            }
-        }
+        VStack(spacing: 20) { content }
     }
 }
 
 private extension View {
-    /// From iOS 18: sets `readToEnd` once the scroll view's end is in view (or it all fits).
-    @ViewBuilder func readToEnd(_ readToEnd: Binding<Bool>) -> some View {
-        if #available(iOS 18.0, *) {
-            onScrollGeometryChange(for: Bool.self) { geometry in
-                geometry.contentOffset.y + geometry.containerSize.height - geometry.contentInsets.bottom
-                    >= geometry.contentSize.height - 8
-            } action: { _, atEnd in
-                if atEnd && !readToEnd.wrappedValue { readToEnd.wrappedValue = true }
-            }
-        } else {
-            self
+    /// Sets `readToEnd` once the scroll view's end is in view (or it all fits).
+    func readToEnd(_ readToEnd: Binding<Bool>) -> some View {
+        onScrollGeometryChange(for: Bool.self) { geometry in
+            geometry.contentOffset.y + geometry.containerSize.height - geometry.contentInsets.bottom
+                >= geometry.contentSize.height - 8
+        } action: { _, atEnd in
+            if atEnd && !readToEnd.wrappedValue { readToEnd.wrappedValue = true }
         }
     }
 }
