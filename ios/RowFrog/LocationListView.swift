@@ -554,6 +554,10 @@ private struct SideListHeader<Trailing: View>: View {
                     .accessibilityAddTraits(.isHeader)
                 trailing
             }
+            // The club page's top buttons stay level with these (PageTopButtons).
+            .onGeometryChange(for: CGFloat.self) { $0.frame(in: .global).midY } action: { y in
+                PageScroll.shared.update(listButtonsMidY: y)
+            }
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
                 TextField(tr("Search clubs, lakes or towns"), text: $search)
@@ -576,7 +580,7 @@ private struct SideListHeader<Trailing: View>: View {
         }
         .tint(.primary)
         .padding(.horizontal)
-        .padding(.top, 4)
+        .padding(.top, PageTopButtons.listHeaderTop)
         .padding(.bottom, 10)
         .background {
             // The rows blur under the top once the list scrolls, as under a bar.

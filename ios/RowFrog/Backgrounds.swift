@@ -258,8 +258,11 @@ final class PageScroll {
     private(set) var scrolled: Set<String> = []
     /// Club pages whose big title has gone under the top.
     private(set) var titleGone: Set<String> = []
-    /// Where each page's big name sits on screen, for the buttons kept level with it.
+    /// Where each page's big name sits on screen, for the buttons kept level with it (iPad upright).
     private(set) var titleMidY: [String: CGFloat] = [:]
+    /// Where the middle of the list's top buttons (sidebar, "…") sits on screen (iPad):
+    /// the page's own top buttons stay level with them (owner, 12 Nov 2026, as on the website).
+    private(set) var listButtonsMidY: CGFloat?
 
     func update(_ clubID: String, scrolled isScrolled: Bool) {
         if scrolled.contains(clubID) != isScrolled { scrolled.formSymmetricDifference([clubID]) }
@@ -271,6 +274,18 @@ final class PageScroll {
 
     func update(_ clubID: String, titleMidY y: CGFloat) {
         if titleMidY[clubID] != y { titleMidY[clubID] = y }
+    }
+
+    /// Whether the list sits beside the pages (iPad on its side, also while slid away):
+    /// then the page's top buttons and small name line up with the list's buttons.
+    private(set) var besideList = false
+
+    func update(besideList beside: Bool) {
+        if besideList != beside { besideList = beside }
+    }
+
+    func update(listButtonsMidY y: CGFloat) {
+        if listButtonsMidY != y { listButtonsMidY = y }
     }
 
     /// How wide each page's column of cards may get (ClubPageColumns), so the top
