@@ -455,6 +455,13 @@ export const replayTips = () => {
   save("rf.tipDay", null);
 };
 
+/** A tip as a bubble on the control before it (placement rule R2; the app's popoverTip). */
+export const bubbleTip = (id) => {
+  // Only the tip itself: a bubble points at one control, so it never hands over to the next tip in a chain.
+  const html = tip(id);
+  return html.includes(`data-tip="${id}"`) ? html.replace('class="tip"', 'class="tip pop"') : "";
+};
+
 /** Puts a tip just under a card's title. */
 export function withTip(cardHtml, id) {
   const html = tip(id);

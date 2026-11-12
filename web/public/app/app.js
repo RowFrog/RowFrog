@@ -36,7 +36,7 @@ import { loadCountries, inCountry, countryChips, resultRow, wireResults, renderC
 import { renderValuePage } from "./valuepage.js";
 import { layoutFor, visibleCards, openArrange, ownOrder } from "./arrange.js";
 import { showBackground, renderBackgrounds, backgroundSummary, backgroundPreview, forgetOwnPictures, backgrounds, choiceTitle } from "./backgrounds.js";
-import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips, paceTips } from "./tour.js";
+import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips, paceTips, bubbleTip } from "./tour.js";
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
 import {
@@ -682,14 +682,18 @@ async function renderClub(id) {
   const hour = nowHour(forecast, now);
   const warnings = forecast.warnings;
   const showWarnings = warnings && (warnings.status !== "ok" || !localChecked(warnings) || warnings.items?.length);
-  // Current conditions' tip, one at a time: the water level's first while the lake is let down (Forggensee),
-  // the water estimate's only where no station measures the water. Inside the top tile, it sits under that.
+  // Where the tips sit (owner's placement rules, 12 Nov 2026; TipPlacement.swift): a tip about a card
+  // inside it under its title or first line, a tip about one control as a bubble on it. paceTips then
+  // shows one of them. Current conditions' card tip: the water level's first while the lake is let
+  // down (Forggensee), the water estimate's only where no station measures the water.
   const conditionsTip = isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
-    : forecast.river && tip("riverCurrent") ? "riverCurrent"
     : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate";
   // The nearby-water tip first, the first time the Why line counts the water within 1 km (NearbyWaterTip).
   const nearbyTip = hour?.reasons?.some((r) => r.condition === "nearby_water") ? tip("nearbyWater") : "";
-  const topTips = nearbyTip || tip("topTile") || (store.combinedTopTile ? tip(conditionsTip) : "");
+  const topCardTip = nearbyTip || (store.combinedTopTile ? tip(conditionsTip) : "");
+  // Bubbles on the top tile's values, or on All values under it (topTileBubble).
+  const valuesBubble = ["topTile", forecast.river ? "riverCurrent" : null, "rainRadar"].find((x) => x && tip(x));
+  const gripBubble = store.combinedTopTile ? bubbleTip("allValues") : "";
   // The cards in the order chosen under "Arrange this page".
   const cards = {
     // One tip at a time; the water level's first while the lake is let down (Forggensee),
@@ -707,12 +711,9 @@ async function renderClub(id) {
     ${clubHeader(club, name, isHome, forecast, stale, failure)}
     ${saved ? "" : `<button class="primary wide" id="add">${icon("plus")} ${h(t("Add to my clubs"))}</button>`}
     ${nowCard(forecast, hour, { stale, radar: radarAt(club?.launchPoint), radarState: radarStatus(club?.launchPoint) })}
-    ${topTips}
-    ${(waterForHour(raw, hour) ?? 99) < COLD.waterC ? tip("coldWater") : ""}
     ${showWarnings ? warningsCard(warnings, club, forecast.generatedAt) : ""}
     <div class="cards">${visibleCards(layoutFor(id)).map((c) => cards[c]?.() ?? "").join("")}</div>
     <div class="page-end">
-      ${tip("source")}
       ${sourceLine(forecast)}
       <button class="pill" id="arrange">${icon("arrow-up-down")} ${h(t("Arrange this page"))}</button>
       <button class="pill" id="updates">${icon("info")} ${h(t("How often data is updated"))}</button>
@@ -722,6 +723,7 @@ async function renderClub(id) {
   root.querySelector("nav.bottom").outerHTML = bottomBar(id);
   wireBottomBar(raw);
   wireClubPage(id, club, raw, forecast, hour);
+  placeClubTips(root.querySelector("main"), { topCardTip, valuesBubble, gripBubble });
   wireTips(root.querySelector("main"));
   balanceCards();
   updateTopBar();
@@ -1587,6 +1589,33 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
   </section>`;
 }
 
+/**
+ * Puts the club page's tips in their places (owner's placement rules, 12 Nov 2026): the top tile's
+ * card tip under its first line; bubbles on its values, on All values, on the first hour and on the
+ * forecast line. paceTips (in wireTips) then shows at most one of the page's tips.
+ */
+function placeClubTips(main, { topCardTip, valuesBubble, gripBubble }) {
+  const now = main?.querySelector(".card.now");
+  if (!now) return;
+  now.querySelector(".now-head")?.insertAdjacentHTML("afterend", topCardTip);
+  const values = now.querySelector(store.combinedTopTile && store.topTileOpen ? ".tt-open .tiles" : ".now-grid");
+  if (valuesBubble) values?.insertAdjacentHTML("beforeend", bubbleTip(valuesBubble).replace('class="tip pop"', 'class="tip pop up"'));
+  if (gripBubble) now.querySelector(".all-values")?.insertAdjacentHTML("afterend", gripBubble);
+  main.querySelector("p.source")?.insertAdjacentHTML("beforeend", bubbleTip("source"));
+  // One hour in full points at the table's first hour: the bubble sits just under that row.
+  const row = main.querySelector(".hrow[data-hour]");
+  const hours = bubbleTip("hourView");
+  if (row && hours) {
+    row.insertAdjacentHTML("afterend", hours);
+    const bubble = row.nextElementSibling;
+    bubble.style.top = `${row.offsetTop + row.offsetHeight + 10}px`;
+  }
+  // A closed tip hands over to the next in its chain, so a bubble's tip can also turn up as a card tip: the bubble wins.
+  for (const pop of main.querySelectorAll(".tip.pop[data-tip]")) {
+    main.querySelectorAll(`.tip:not(.pop)[data-tip="${pop.dataset.tip}"]`).forEach((other) => other.remove());
+  }
+}
+
 /** The words under the top tile that open and close it, as Apple's "Show more" rows (grip G2). */
 function allValuesButton(open = store.topTileOpen) {
   return `<button class="all-values" aria-expanded="${open}" aria-description="${h(open ? t("Shows the short top tile again") : t("Opens all values in the top tile"))}">
@@ -2089,7 +2118,7 @@ function launchPointBody(club, mapId) {
   return `
     <div class="map" id="${mapId}" role="img" aria-label="${h(t("Map of the launch point of %@", club.shortName || club.name))}"></div>
     ${club.launchPointVerified || club.launchPointSet ? `<p class="forecast-point">${h(t("The forecast, waves and warnings are for the club's launch point."))}</p>` : `<p class="orange">${icon("map-pin-off")} ${h(unconfirmed)}</p>`}
-    ${suggestRow(club)}${mapId === "launch-sheet-map" && suggestRow(club).includes("data-suggest-lp") ? tip("suggestLaunchPoint") : ""}
+    ${mapId === "launch-sheet-map" && suggestRow(club).includes("data-suggest-lp") ? suggestRow(club).replace(/<\/p>$/, `${bubbleTip("suggestLaunchPoint")}</p>`) : suggestRow(club)}
     <div class="osm-slot"></div>
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
@@ -2747,6 +2776,7 @@ function boatForm(boat, isNew, ownLimits) {
         <p class="footer">${h(t(BOAT_TYPES[boat.type].detail))}</p>
         ${keptAtSection(boat)}`}
       <h3 class="section">${icon("sliders-horizontal")} ${h(t("Limits"))}</h3>
+      ${isNew ? "" : tip("coldWater")}
       <section class="card group">
         <label class="row-setting"><span>${h(t("The app's limits for this boat"))}</span><input type="checkbox" class="switch" role="switch" id="app-limits" ${ownLimits ? "" : "checked"}></label>
         ${ownLimits ? Object.keys(LIMITS).map(limitRow).join("") : ""}</section>
@@ -2849,6 +2879,8 @@ function renderBoat(id) {
       ${footerLinks()}
     </main>`;
   wireBoatForm(root, id, () => renderBoat(id), own);
+  // The cold-water tip at the limits, as the app's Settings › Boats (ColdWaterTip).
+  wireTips(root.querySelector("main"));
 }
 
 /**

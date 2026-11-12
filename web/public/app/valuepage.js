@@ -7,11 +7,14 @@ import { icon } from "./icons.js";
 import { nowHour, iceValue, UNITS } from "./logic.js";
 import { store, h, closeX, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit, markIcon } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
-import { tip, wireTips } from "./tour.js";
+import { tip, wireTips, paceTips, bubbleTip, closeTip } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
 import { LAYERS, layerFor, weatherMap, frames, frameIndex, frameLabel, colourBar, layerOptions, loadIndex } from "./weathermap.js";
 import { radarAt, readRadar, radarOverlay, radarFrames, radarCovers, nearestFrame, openRadarMap } from "./radar.js";
 import { isLowered } from "./lakelevel.js";
+
+/** The map link tip, once the weather map tip before it was closed. */
+const chainBubble = () => (tip("weatherMap").includes('data-tip="mapLink"') ? bubbleTip("mapLink") : "");
 
 let current = null;
 
@@ -128,6 +131,7 @@ function show(page) {
     const value = conditionDetail(c, data).value;
     return `<option value="${c}" ${c === condition ? "selected" : ""}>${h(value ? `${titles[c][1]} · ${value}` : titles[c][1])}</option>`;
   }).join("");
+  const mapTip = layer ? tip("weatherMap") : "";
   root.innerHTML = `<header class="nav value-nav">
       ${closeX(`class="link close-x"`, `#/club/${encodeURIComponent(page.clubId)}`)}
       <label class="nav-title title-menu"><strong>${h(title)}</strong>${icon("chevron-down")}<select id="jump" aria-label="${h(t("Go to another value"))}">${menu}</select></label>
@@ -144,7 +148,7 @@ function show(page) {
           ${detail.lines.length > 1 ? `<div class="chart-legend">${detail.lines.map((l) => `<button data-line="${h(l.name)}" class="${hidden.has(l.name) ? "off" : ""}" style="color:${l.colour}">
             <i class="${l.dashed ? "dashed" : ""}"></i><span>${h(l.name)}</span></button>`).join("")}</div>` : ""}
           ${detail.lines.length ? tip("chartScrub") : ""}
-          ${layer ? tip("weatherMap") : ""}
+          ${layer && !mapTip.includes('data-tip="mapLink"') ? mapTip : ""}
         </div>
         ${layer ? `<section class="map-card" id="map-card"></section>` : ""}
       </div>
@@ -246,7 +250,7 @@ async function mapCard(page, layerId, detail, hidden) {
   const panelDate = () => (layerId === "rain" && data.isNow && time.shownMapHour === 0 ? Date.now() : mapDate().getTime());
   const showsRadar = () => layerId === "rain" && radarCovers(panelDate());
   box.innerHTML = `<header class="map-head">${icon(layer.icon)}<strong id="map-time"></strong><span class="spacer"></span>
-      ${layer.links !== "none" ? `<button class="chain" id="chain"></button>` : ""}
+      ${layer.links !== "none" ? `<span class="pop-anchor end"><button class="chain" id="chain"></button>${chainBubble()}</span>` : ""}
       <button class="tool" id="map-full" aria-label="${h(t("Opens the map full screen"))}">${icon("maximize-2")}</button></header>
     <div class="map-frame"><div class="wm" id="wm"></div><p class="map-note" id="map-note" hidden></p></div>
     ${list.length > 1 && layer.links !== "none" ? `<div class="map-controls"><button class="tool" id="play" aria-label="${h(t("Play"))}">${icon("play")}</button>
@@ -294,8 +298,11 @@ async function mapCard(page, layerId, detail, hidden) {
   time.listeners.add(update);
   time.changed();
   wm.setLayer(layerId).then(update);
+  // MapLinkTip as a bubble on the chain (rule R2); the box is drawn after the page's tips were paced.
+  paceTips(box.closest("main"));
   box.querySelector("#chain")?.addEventListener("click", (e) => {
     e.stopPropagation();
+    closeTip(box, "mapLink");
     stop(page);
     time.setLinked(!time.linked);
   });

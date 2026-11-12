@@ -11,7 +11,8 @@
 3. **Merged tips:** Rain on the way? + Rain radar map → one rain tip; Row a loop + One way or out and back → one "The way back" tip.
 4. **Tour:** the boats page names the boat button on the club page; the locations page names ⋯ (browse by country, add a place); three lines off the full Conditions page (feels like, humidity, pressure: the More on the air tip covers them); iPad: hiding the list with the sidebar button.
 5. **Added:** a tip in Settings › Widgets for the widgets' Layout and Marks options; What's new version 2 for people who finished the tour before.
-6. The lake map's "More or less panel" tip shows only with the full-width panel, not with the panel card on wide screens.
+6. **Placement (tip map section 6, rules R1-R7, owner 23:29 CET "we can go with the proposed rule set for now"):** a tip about a whole card sits under the card's title (app: `cardTip` environment in `TipPlacement.swift`; web: under the card's header); a tip about one control is a bubble on it (app: `popoverTip` via `bubbleAnchor`; web: `bubbleTip`, class `tip pop`). Club page: values, All values, the first hour row and the forecast line get bubbles; website also: Suggest the launch point, the map's chain button, Plan a route. A bubble never hands over to the next tip in its chain. Value page chart and map tips stay above the chart and map for now.
+7. The lake map's "More or less panel" tip shows only with the full-width panel, not with the panel card on wide screens.
 
 ## Why
 
