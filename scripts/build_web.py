@@ -33,7 +33,11 @@ def web_keys() -> set[str]:
     """Every English text the web app passes to t(), plus the backend credits it shows through t()."""
     keys: set[str] = set()
     for path in (WEB / "public" / "app").glob("*.js"):
-        keys |= {unescape(k) for k in re.findall(r"\b(?:t|key)\(" + STRING, path.read_text(encoding="utf-8"))}
+        source = path.read_text(encoding="utf-8")
+        keys |= {unescape(k) for k in re.findall(r"\b(?:t|key)\(" + STRING, source)}
+        # A choice inside t(), e.g. t(mm < 2.5 ? "Light rain" : "Rain"): every text in it.
+        for choice in re.findall(r"\bt\(([^()`\"]*\?[^()`]*)\)", source):
+            keys |= {unescape(k) for k in re.findall(STRING, choice)}
     api = Path("backend/rowfrog/api.py").read_text(encoding="utf-8")
     credits = re.search(r"ATTRIBUTION = \[(.*?)\]", api, re.S).group(1)
     return keys | set(re.findall(r'"([^"]+)"', credits))
