@@ -917,7 +917,7 @@ enum German {
         "The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.": "Die Seeansicht zeigt Ampel, Wellen und Wind auf dem ganzen See. Tippe darauf für die große Karte.",
         "On the map, move through the hours in the strip at the bottom and tap the water for one spot.": "Auf der Karte gehst du mit der Leiste unten durch die Stunden und tippst aufs Wasser für eine Stelle.",
         "Plan a route: tap your turning points to see the light along the way and the best time to start.": "Route planen: Tippe deine Wendepunkte an, um die Ampel entlang der Strecke und die beste Startzeit zu sehen.",
-        "Save the routes you row often in the Routes menu.": "Sichere Routen, die du oft ruderst, im Menü „Routen“.",
+        "Save the routes you row often in the Routes menu. Settings › Routes shows them all.": "Sichere Routen, die du oft ruderst, im Menü „Routen“. Unter Einstellungen › Routen findest du alle.",
         "Look across the lake": "Blick über den See",
         "The rain tile shows DWD's radar for the next two hours, then the forecast.": "Die Regen-Kachel zeigt für die nächsten zwei Stunden das Radar des DWD, danach die Vorhersage.",
         "In winter, the app estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.": "Im Winter schätzt die App das Eis auf dem Wasser aus Frost und Wassertemperatur, auf größeren Seen mit Satellitenbildern abgeglichen. Schau dir das Wasser immer selbst an.",
