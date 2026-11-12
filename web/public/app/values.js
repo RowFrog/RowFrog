@@ -236,7 +236,7 @@ const BUILDERS = {
     return base({
       value: wind(x.windSpeedMs),
       note: t("Gusts %@", wind(x.windGustMs)) + (x.windFromDeg != null ? ` · ${t("from %@", compass(x.windFromDeg, lang()))}` : ""),
-      big: windDial(x), unit: windUnit(),
+      big: windDial(x, true), unit: windUnit(),
       lines: [
         { name: t("Wind"), colour: COLOURS.blue, points: d.points((y) => windIn(y.windSpeedMs)) },
         { name: t("Gusts"), colour: COLOURS.purple, points: d.points((y) => windIn(y.windGustMs)) },

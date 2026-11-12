@@ -182,9 +182,7 @@ Share diagnosis log
 # Sample warning of the app's screenshot previews
 Sample warning for the preview, not an official warning
 
-# TO PORT: route planner panel layout (collapsed panel line, boat time in the header, Manage routes screen); comes with the screenshot comparison
+# Never shown in the app: LakeMapScreen's viewing panel only reaches them while planning, when the planning
+# panel shows instead, and RouteSummary's headline is always off. The website's planning panel matches what the app shows.
 %@ · %@ · finished at %@
 %@ · at the boat
-Manage routes…
-No saved routes
-Plan a route on the map and save it from the bookmark menu.

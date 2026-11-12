@@ -206,11 +206,18 @@ button.wide { margin-top: 0; }
 .graphic { flex: none; height: 44px; display: flex; align-items: center; }
 .scale { position: relative; display: block; width: 46px; height: 8px; border-radius: 4px; background: var(--bar); }
 .scale .knob { position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; background: #000; border: 2px solid #fff; box-shadow: 0 0 0 .5px rgba(0,0,0,.2); }
-.dial { position: relative; width: 44px; height: 44px; border-radius: 50%; border: 2px dotted var(--sub); display: flex; align-items: center; justify-content: center; }
-.dial .needle { position: absolute; inset: 2px; }
-.dial .needle::before { content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: var(--text); border-radius: 1px; }
-.dial .needle::after { content: ""; position: absolute; left: 50%; top: -3px; margin-left: -4px; border: 4px solid transparent; border-bottom: 7px solid var(--text); }
-.dial .hub { position: relative; background: var(--tile); border-radius: 50%; width: 20px; height: 20px; font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.dial { display: block; width: 44px; height: 44px; flex: none; overflow: visible; }
+.dial .ticks path { stroke: var(--sub); stroke-opacity: .4; stroke-width: 2; }
+.dial .ticks path.long { stroke-opacity: .9; stroke-width: 4; }
+.dial.big .ticks path { stroke-width: 1; }
+.dial.big .ticks path.long { stroke-width: 2; }
+.dial .needle { fill: var(--text); }
+.dial .hub { fill: var(--tile); }
+.dial text { text-anchor: middle; dominant-baseline: middle; fill: var(--text); font-weight: 600; }
+.dial .speed { font-size: 27px; }
+.dial.big .speed { font-size: 22px; }
+.dial .unit { font-size: 11px; font-weight: 400; fill: var(--sub); }
+.dial .letter { font-size: 11px; font-weight: 700; fill: var(--sub); }
 .spark { display: flex; align-items: flex-end; gap: 2px; height: 30px; }
 .spark span { width: 4px; border-radius: 1px; background: var(--fill); }
 .spark span.wet { background: var(--blue); }
@@ -736,13 +743,6 @@ button.red { color: var(--red); }
 .boat-follow input[type=range] { flex: 1; min-width: 140px; }
 .point-bar { display: flex; gap: 14px; align-items: center; background: var(--tile); border-radius: 10px; padding: 6px 10px; }
 .point-bar strong { flex: 1; }
-.saved-routes { list-style: none; padding: 0; margin: 0; }
-.saved-routes li { display: flex; align-items: center; gap: 8px; border-bottom: .5px solid var(--line); }
-.saved-routes li > button:first-child { flex: 1; display: flex; gap: 8px; align-items: center; padding: 8px 0; text-align: left; }
-.saved-routes li > button:first-child span { flex: 1; }
-.saved-routes li.on > button:first-child { color: var(--accent); font-weight: 600; }
-.saved-routes .tool { font-size: 18px; color: var(--sub); }
-.saved-routes .tool[data-delete-route] { color: var(--red); }
 .leaflet-marker-icon.turn span { display: flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: 50%;
   background: #fff; color: #007aff; border: 2px solid #007aff; font: 600 12px/1 -apple-system, system-ui, sans-serif; box-sizing: border-box; }
 .leaflet-marker-icon.turn.on span { background: #007aff; color: #fff; }
@@ -769,7 +769,7 @@ button.red { color: var(--red); }
 @media (max-width: 599px) { #big-note { min-height: 2.7em; } }
 .big-value { font-size: min(2.5rem, 54px); font-weight: 300; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .value-big { display: flex; align-items: center; }
-.value-big .dial { transform: scale(1.9); margin: 22px 26px; }
+.value-big .dial { width: 100px; height: 100px; }
 .value-big .gauge { transform: scale(1.8); margin: 20px 22px; }
 .value-big .layers { transform: scale(1.6); margin: 10px 22px; }
 /* The tile's graphics at 1.6 times, as in the app. */
@@ -1136,7 +1136,8 @@ dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
   body.sheet-page #root > .nav::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 14px; background: var(--sheet-dim); pointer-events: none;
     -webkit-mask: radial-gradient(circle at 14px 14px, transparent 13.5px, #000 14px) left top / 14px 14px no-repeat, radial-gradient(circle at 0 14px, transparent 13.5px, #000 14px) right top / 14px 14px no-repeat;
     mask: radial-gradient(circle at 14px 14px, transparent 13.5px, #000 14px) left top / 14px 14px no-repeat, radial-gradient(circle at 0 14px, transparent 13.5px, #000 14px) right top / 14px 14px no-repeat; }
-  dialog.sheet:not(.menu) { width: 100%; max-width: 100%; margin: auto 0 0; max-height: calc(100% - var(--safe-top) - 10px); height: auto;
+  /* fit-content: a modal dialog is fixed at inset 0, where height auto stretched every sheet to the full screen. */
+  dialog.sheet:not(.menu) { width: 100%; max-width: 100%; margin: auto 0 0; max-height: calc(100% - var(--safe-top) - 10px); height: fit-content;
     border-radius: 14px 14px 0 0; padding-bottom: env(safe-area-inset-bottom); }
   dialog.sheet:not(.menu)[open] { animation: sheet-up .3s cubic-bezier(.2, .8, .2, 1); }
 }
@@ -1145,15 +1146,22 @@ dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 
 /* ---- Settings as in the app: coloured topic icons, the topic's value at the end, search at the end ---- */
 .set-icon { display: inline-grid; place-items: center; flex: none; width: 29px; height: 29px; border-radius: 7px; background: var(--c); color: #fff; font-size: 17px; }
-.row-setting.topic { min-height: 50px; padding: 6px 0; }
+/* The app's rows (iOS 26 inset grouped): about 58 points high. */
+.row-setting.topic { min-height: 58px; padding: 6px 0; box-sizing: border-box; }
 /* Rows that are buttons (Version, Card order, the Help rows) span the card as the links do. */
 button.row-setting { width: 100%; text-align: left; font: inherit; color: var(--text); }
 .row-setting.topic > span:first-child { gap: 12px; }
 .row-setting.topic .sub { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row-setting.topic select { max-width: 55%; border: 0; background: transparent; color: var(--sub); text-align: right; font: inherit; }
-.settings-main .settings-search { margin: 18px 0 0; }
-.settings-main > div > .card.group { margin-bottom: 18px; }
-.settings-main > div > p.footer { margin-top: -10px; }
+/* As in the app, the search floats at the bottom of the screen, a glass capsule over the list. */
+.settings-main { padding-bottom: calc(88px + env(safe-area-inset-bottom)); }
+.settings-main .settings-search { position: fixed; z-index: 5; left: 50%; transform: translateX(-50%); bottom: calc(14px + env(safe-area-inset-bottom));
+  width: min(608px, calc(100% - 32px)); box-sizing: border-box; height: 48px; margin: 0; padding: 0 16px; border-radius: 24px;
+  background: color-mix(in srgb, var(--card) 72%, transparent); -webkit-backdrop-filter: blur(16px) saturate(1.6); backdrop-filter: blur(16px) saturate(1.6);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, .14); }
+/* The app's spacing: about 36 points between sections, a footer close under its section. */
+.settings-main > div > .card.group { margin-bottom: 34px; }
+.settings-main > div > p.footer { margin-top: -26px; margin-bottom: 26px; }
 /* Bars with a title: the title in the middle, the buttons at both ends, as a navigation bar. */
 .nav:has(> .nav-title) { display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; }
 .nav:has(> .nav-title) > .nav-title { grid-column: 2; }
@@ -1192,7 +1200,23 @@ button.row-setting { width: 100%; text-align: left; font: inherit; color: var(--
 .routes-menu { display: flex; flex-direction: column; }
 .routes-menu > button, .routes-menu > label { display: flex; align-items: center; gap: 10px; min-height: 44px; font-size: 17px; color: var(--text); border-bottom: .5px solid var(--line); cursor: pointer; }
 .routes-menu > button:disabled { opacity: .4; cursor: default; }
-dialog.sheet.menu .saved-routes { margin-top: 4px; }
+.routes-menu > button > span { flex: 1; text-align: left; }
+.routes-menu > button.on { color: var(--accent); font-weight: 600; }
+.routes-menu > button.red { color: var(--red); }
+.routes-menu > :last-child { border-bottom: 0; }
+/* Manage routes (ManageRoutesView): one row per route, open by tap, the tools at the end. */
+.manage-routes .row-setting { gap: 6px; }
+.manage-routes .route-open { flex: 1; min-width: 0; display: flex; align-items: center; gap: 12px; padding: 6px 0; text-align: left; color: var(--text); font: inherit; }
+.manage-routes .route-open > .i { color: var(--accent); flex: none; width: 22px; height: 22px; }
+.manage-routes .route-open .stack { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.manage-routes .route-open .stack small { font-size: 13px; }
+.manage-routes .route-actions { display: flex; gap: 0; flex: none; }
+.manage-routes .route-actions .tool { width: 34px; height: 34px; font-size: 17px; color: var(--sub); }
+.manage-routes .route-actions .tool.red { color: var(--red); }
+.manage-routes .route-actions .tool:disabled { opacity: .3; }
+.empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 40px 24px; }
+.empty-state > .i { width: 44px; height: 44px; color: var(--sub); }
+.empty-state > strong { font-size: 20px; }
 dialog.sheet.menu h3.section { margin: 10px 0 2px; }
 .route-line { flex-wrap: nowrap; }
 .route-line > strong { flex: 0 1 auto; }
@@ -1273,7 +1297,8 @@ body.has-picture .side { border-right: none; }
 .lake-map .leaflet-top.leaflet-right .leaflet-control { margin: 10px 16px 0 0; }
 .lake-map .leaflet-control-zoom { width: 44px; border: 0; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 6px rgba(0, 0, 0, .18); }
 .lake-map .leaflet-control-zoom.leaflet-bar a { width: 44px; height: 40px; line-height: 40px; font-size: 22px; }
-@media (pointer: coarse) { .lake-map .leaflet-control-zoom { display: none; } }
+/* Touch screens pinch to zoom on every map, as in the app, which has no zoom buttons. */
+@media (pointer: coarse) { .leaflet-control-zoom { display: none; } }
 /* Add a place: the hint is a plain sentence above the map, as in the app. */
 .add-place .hint { color: var(--sub); font-size: 15px; margin: 0 4px 8px; }
 

@@ -16,7 +16,7 @@ const p = (iconName, text) => ({ icon: iconName, text });
 export function tourPages(river = false) {
   return [
     {
-      id: "welcome", icon: "sailboat", tint: "blue", title: key("Welcome to Row Frog"), intro: key("Weather and a rowing forecast for your club's launch point."),
+      id: "welcome", icon: "rower", tint: "blue", title: key("Welcome to Row Frog"), intro: key("Weather and a rowing forecast for your club's launch point."),
       points: [p("house", key("Your home base opens first when you start the app.")), p("hand", key("To change it, open the list, tap Edit and then the house next to a club."))],
     },
     {
@@ -51,7 +51,7 @@ export function tourPages(river = false) {
       ],
     },
     {
-      id: "boats", icon: "sailboat", tint: "mint", title: key("Your boats and limits"), intro: key("The rowing light is worked out for one boat. Pick it at the top of the settings."),
+      id: "boats", icon: "rower", tint: "mint", title: key("Your boats and limits"), intro: key("The rowing light is worked out for one boat. Pick it at the top of the settings."),
       points: [
         p("check", key("Small boats are picked at first. Tap Big boats if you row a four or an eight.")),
         p("list", key("Add your own boats under My boats. When it is too rough for yours, the app names one that would be fine.")),
@@ -189,7 +189,7 @@ const TIPS = {
   satellite: [key("Satellite picture"), key("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind, the waves, the rowing light or the ice map over it."), "globe"],
   source: [key("Where the forecast comes from"), key("The app picks the weather model that does best for this lake. Tap the line to see which one."), "cloud-sun"],
   coldWater: [key("Cold water"), key("A capsize in water below %@ gets dangerous within minutes. The app then lowers its own wind and gust limits by %@. Limits you set stay as they are, with a reminder on the rowing light."), "thermometer-snowflake"],
-  myBoats: [key("Which boat do you row?"), key("Tap the boat the rowing light is for. ⓘ opens its limits, and below you can add your own boats."), "sailboat"],
+  myBoats: [key("Which boat do you row?"), key("Tap the boat the rowing light is for. ⓘ opens its limits, and below you can add your own boats."), "rower"],
   backgrounds: [key("One picture or many"), key("Pick a picture for all pages, a different one for single pages, or give a club its own. Under Look, choose whether the tiles show the picture or stay solid."), "image"],
   chartScrub: [key("Read any hour"), key("Hold the chart, then slide along it to read the value at each hour."), "hand"],
   weatherMap: [key("Weather on the map"), key("The map shows this weather around the lake. Press play to watch it move, or open it full screen with the arrows."), "map", "mapLink"],
@@ -203,10 +203,10 @@ const TIPS = {
   routePanel: [key("More or less panel"), key("Pull up for details, push down for more map."), "chevrons-up-down"],
   closeLoop: [key("Row a loop"), key("Close the loop: tap within 50 m of your club, or pick Loop under the way back."), "repeat"],
   turningPoint: [key("Change a turning point"), key("Drag a point to move it, or delete just this one."), "move"],
-  boatTime: [key("Lake at the boat's time"), key("Move the boat along your route to see the lake at the time you get there."), "sailboat"],
+  boatTime: [key("Lake at the boat's time"), key("Move the boat along your route to see the lake at the time you get there."), "rower"],
   stretchPoint: [key("Add a point on the way"), key("Tap a stretch of your route to add a turning point there, or pull the stretch to add one and move it at once."), "spline"],
   oneWay: [key("One way or out and back"), key("New routes go one way. Pick Out and back under the way back to row the same way back."), "arrow-up-down"],
-  boatsElsewhere: [key("Your boats at other clubs"), key("Your boats show at the clubs where they are kept. At a regatta, tap a boat under “At other clubs” to take it along."), "sailboat"],
+  boatsElsewhere: [key("Your boats at other clubs"), key("Your boats show at the clubs where they are kept. At a regatta, tap a boat under “At other clubs” to take it along."), "rower"],
   placeLine: [key("Where the forecast is for"), key("Tap the place to see on a map the spot the forecast is for, with directions."), "map-pin"],
   // At "Suggest the launch point" in the Location sheet, not in the page's card (SuggestLaunchPointTip).
   suggestLaunchPoint: [key("Know the launch point?"), key("Know where this club's boats go on the water? Suggest the launch point."), "oars"],
