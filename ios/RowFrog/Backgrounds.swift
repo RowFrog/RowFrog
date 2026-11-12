@@ -272,6 +272,15 @@ final class PageScroll {
     func update(_ clubID: String, titleMidY y: CGFloat) {
         if titleMidY[clubID] != y { titleMidY[clubID] = y }
     }
+
+    /// How wide each page's column of cards may get (ClubPageColumns), so the top
+    /// buttons line up with the cards (owner, 12 Nov 2026, as on the website).
+    /// Written only when the column count changes.
+    private(set) var pageWidth: [String: CGFloat] = [:]
+
+    func update(_ clubID: String, pageWidth width: CGFloat) {
+        if pageWidth[clubID] != width { pageWidth[clubID] = width }
+    }
 }
 
 private struct PageMarginsKey: EnvironmentKey {

@@ -525,6 +525,8 @@ struct PageTopButtons: View {
             .tint(.primary)
             .foregroundStyle(.primary)
             .padding(.horizontal)
+            // Over the page's column of cards, not at the window's edges (owner, 12 Nov 2026).
+            .frame(maxWidth: PageScroll.shared.pageWidth[clubID] ?? .infinity)
             .frame(height: 44)
             .position(x: proxy.size.width / 2, y: max(pinned, titleY))
         }
