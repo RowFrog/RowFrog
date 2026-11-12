@@ -73,7 +73,7 @@ GitHub issue, so no GitHub account is needed.
 
 1. A top tile with the rowing light, which boat it is for and why it has that
    colour; air, water and wind, with waves, rain and visibility in the same
-   three columns below, each with a short grey line ("Dry for 24 h");
+   three columns below (two or one when the text is too large for three), each with a short grey line ("Dry for 24 h");
    an official warnings status line and a daylight line. Tapping a value
    opens its chart. A value that sets the light amber or red shows its number
    in that colour, and cold water shows in blue while the life jacket badge
@@ -139,9 +139,12 @@ colour and marked "Nearby", in place of the launch point's own. The website
 does the same.
 
 **Cold water.** Cold water does not change the rowing light; the light shows
-the weather. Instead a blue badge says what to bring: "Life jacket" below
-15 °C water, against cold-water shock, and below 10 °C also "partner boat"
-(singles) or "near the shore". Below 10 °C the app's own wind and gust limits
+the weather. Instead a blue badge says in words what to do: "Life jacket on" below
+15 °C water, against cold-water shock, and below 10 °C also "with partner
+boat" (singles) or "stay near shore" (German "Weste tragen · ufernah
+rudern"). The temperature stays on the water value below it, and the badge
+wraps to a second line rather than shortening (`docs/decisions/0029`). The website
+shows the same words. Below 10 °C the app's own wind and gust limits
 are 1 m/s lower (your own limits stay as set, with a note), and below 4 °C
 small boats get amber for near-freezing water. Lake maps and the satellite
 picture draw the shore light blue below the life-jacket limit and deeper blue
@@ -204,11 +207,13 @@ heavy rain and hail colour it too, as on the club page), and a spot you can
 tap: its pin stays where you tapped and it shows the light, then waves, wind
 and visibility, plus hail, thunderstorm or heavy rain while that makes it
 amber or red; a value at amber or red takes that colour. The website shows
-the spot the same way. In the lake tile each part of the lake lists the same
-values (highest waves, strongest wind and gusts, lowest visibility), with the
-one that sets amber or red in that colour, and when the worse squares lie
-only near the shore or only on open water it says so ("Fog near the shore,
-open water clear"). The website shows the same notes. Wind, gusts, rain and visibility for each part of the lake and
+the spot the same way. In the lake tile the parts of the lake form a small table in the 48-hour
+table's style: waves, wind (an arrow for its direction, then its speed) and
+visibility, with the value that sets amber or red in that colour; another
+reason, or a note such as "Fog near the shore, open water clear", follows a
+part on its own line. Where the table does not fit (narrow phones, large
+text) each part falls back to one line (`docs/decisions/0030`). The website
+lists each part on a line with the same values and notes. Wind, gusts, rain and visibility for each part of the lake and
 for a tapped spot are blended from the forecast points around it (natural
 neighbour), so values change smoothly across the lake and never go beyond
 those points; hail and thunderstorms come from the nearest point. The website
