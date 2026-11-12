@@ -56,3 +56,19 @@ test("the life-jacket badge moves to a corner clear of the lake", async () => {
   assert.equal(place(ring(30, 30, 270, 270)).compact, true);
   assert.equal(place(ring(-10, -10, 310, 310)).compact, true);
 });
+
+test("a card opens on the clearest picture when the latest is covered over the club (decision 0024)", async () => {
+  const { pictureKinds, startKind } = await import("../public/app/satellite.js");
+  const shot = (date, lakeCloud, more = {}) => ({ date, lakeCloud, image: `${date}.jpg`, ...more });
+  const open = (meta, club = "mrc") => startKind(meta, pictureKinds(meta), club);
+  // Covered over the club, though not over the whole lake: the clearest.
+  assert.equal(open({ latest: shot("2026-11-08", 0.6, { clubCloud: { mrc: 0.95 } }), clearest: shot("2026-10-27", 0) }), "clearest");
+  // Clear over the club, though the lake is mostly covered: the latest.
+  assert.equal(open({ latest: shot("2026-11-08", 0.95, { clubCloud: { mrc: 0.3 } }), clearest: shot("2026-10-27", 0) }), "latest");
+  // No measure for this club: the whole lake decides, from 90 %.
+  assert.equal(open({ latest: shot("2026-11-08", 0.9), clearest: shot("2026-10-27", 0) }), "clearest");
+  assert.equal(open({ latest: shot("2026-11-08", 0.89), clearest: shot("2026-10-27", 0) }), "latest");
+  // The clearest is the same pass, or there is none: the latest.
+  assert.equal(open({ latest: shot("2026-11-08", 1), clearest: shot("2026-11-08", 1) }), "latest");
+  assert.equal(open({ latest: shot("2026-11-08", 1) }), "latest");
+});

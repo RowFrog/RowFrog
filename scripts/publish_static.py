@@ -528,10 +528,13 @@ def publish_ice_map(out: Path, lake_ids: list[str], today: date) -> None:
         write(meta_path, meta)
 
 
-def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: datetime, places: dict | None = None) -> None:
+def publish_pictures(
+    out: Path, lake_ids: list[str], used: set[str], now: datetime, places: dict | None = None, areas: dict | None = None
+) -> None:
     """Looks for newer Sentinel-2 pictures of the lakes whose last look is old enough.
 
     `places` are pictures without a lake outline (see club_places), by id with their ring.
+    `areas` are the used clubs' squares by lake (see club_areas), for the cloud around each club.
 
     Two per lake: the latest pass, whatever the cloud, and the latest clear
     one. Looks come at most 5 days apart and cover 30 days, so the clear one
@@ -564,6 +567,8 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
                     sentinel2.cloud_by_day(client, rings[0], today - timedelta(days=days), today)
                 )
                 body = _picture_meta(client, out / "lakes" / lake_id, rings[0], old, latest, clearest, mostly_clear, sharp_ok)
+                if body.get("latest"):
+                    _club_cloud(client, body["latest"], (areas or {}).get(lake_id, {}), old.get("latest"))
             except httpx.HTTPStatusError as e:
                 if e.response.status_code == 401:  # the sign-in lasts minutes; renew it once
                     client.close()
@@ -586,6 +591,16 @@ def publish_pictures(out: Path, lake_ids: list[str], used: set[str], now: dateti
 
 # Half the side of the square around a club's launch point whose cloud counts.
 CLUB_PLACE_M = 500
+# Half the side of the square around a club on a lake whose cloud decides whether its
+# satellite card opens on the clearest picture (owner 2026-11-12, docs/decisions/0024).
+CLUB_AREA_M = 1000
+
+
+def square(lat: float, lon: float, half_m: float) -> list[tuple[float, float]]:
+    """The ring of the square of `2 * half_m` around a point."""
+    dlat = half_m / 110_540
+    dlon = half_m / (111_320 * math.cos(math.radians(lat)))
+    return [(lon - dlon, lat - dlat), (lon + dlon, lat - dlat), (lon + dlon, lat + dlat), (lon - dlon, lat + dlat)]
 
 
 def club_places(clubs) -> dict[str, list[list[tuple[float, float]]]]:
@@ -599,12 +614,37 @@ def club_places(clubs) -> dict[str, list[list[tuple[float, float]]]]:
     for club in clubs:
         if outlines.load(club.lake_id):
             continue
-        lat, lon = club.launch_point.lat, club.launch_point.lon
-        dlat = CLUB_PLACE_M / 110_540
-        dlon = CLUB_PLACE_M / (111_320 * math.cos(math.radians(lat)))
-        ring = [(lon - dlon, lat - dlat), (lon + dlon, lat - dlat), (lon + dlon, lat + dlat), (lon - dlon, lat + dlat)]
-        places[f"club-{club.id}"] = [ring]
+        places[f"club-{club.id}"] = [square(club.launch_point.lat, club.launch_point.lon, CLUB_PLACE_M)]
     return places
+
+
+def club_areas(clubs) -> dict[str, dict[str, list[tuple[float, float]]]]:
+    """By lake, the square of about 2 x 2 km around each used club's launch point, by club id."""
+    areas: dict[str, dict[str, list[tuple[float, float]]]] = {}
+    for club in clubs:
+        point = club.launch_point
+        areas.setdefault(club.lake_id, {})[club.id] = square(point.lat, point.lon, CLUB_AREA_M)
+    return areas
+
+
+def _club_cloud(client, entry: dict, areas: dict, old_entry: dict | None) -> None:
+    """Adds to a latest picture the share under cloud around each club on the lake ("clubCloud").
+
+    Kept from `old_entry` for the same pass; only clubs not measured yet cost a request.
+    The apps open the clearest picture when it reaches 0.9 there (docs/decisions/0024).
+    """
+    if not areas:
+        return
+    kept = (old_entry or {}).get("clubCloud", {}) if (old_entry or {}).get("date") == entry["date"] else {}
+    found = {k: v for k, v in kept.items() if k in areas}
+    for club_id, ring in sorted(areas.items()):
+        if club_id in found:
+            continue
+        share = sentinel2.cloud_on(client, ring, date.fromisoformat(entry["date"]))
+        if share is not None:
+            found[club_id] = round(share, 2)
+    if found:
+        entry["clubCloud"] = found
 
 
 def river_places(lakes: dict, lake_ids: list[str]) -> dict[str, list[list[tuple[float, float]]]]:
@@ -1108,7 +1148,8 @@ def publish(args, now: datetime, state: "State") -> int:
     sections = river_places(locations.load().lakes, all_lakes)
     places.update({i: ring for i, ring in sections.items() if i in used_lakes})
     lakes_only = [i for i in all_lakes if i not in sections]
-    publish_pictures(args.out, lakes_only + sorted(places), used_lakes | set(places), now, places)
+    areas = club_areas(c for c in every if c.id in used_clubs and c.lake_id in lakes_only)
+    publish_pictures(args.out, lakes_only + sorted(places), used_lakes | set(places), now, places, areas)
     calls = round(open_meteo.calls_counted, 1)
     copernicus = sentinel2.requests_made + lake_ice_satellite.requests_made
     print(f"Open-Meteo calls: {calls}, Copernicus requests: {copernicus}")

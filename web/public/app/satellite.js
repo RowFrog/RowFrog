@@ -59,6 +59,22 @@ export function pictureKinds(meta) {
   });
 }
 
+/** From this share of cloud over the club and around it, the card opens on the clearest picture (SatellitePicture.coveredFrom). */
+export const COVERED_FROM = 0.9;
+
+/**
+ * The picture a card opens on (SatellitePicture.startKind): the clearest when the latest is covered
+ * over the club's 2 x 2 km (else over the whole lake) and the clearest is another pass, otherwise the first
+ * to pick. The latest stays one tap away (owner 12 Nov 2026, docs/decisions/0024).
+ */
+export function startKind(meta, kinds, clubId) {
+  const first = kinds[0]?.[0];
+  const { latest, clearest } = meta;
+  if (!latest || !clearest?.image || clearest.date === latest.date) return first;
+  const cloud = latest.clubCloud?.[clubId] ?? latest.lakeCloud ?? 0;
+  return cloud >= COVERED_FROM && kinds.some(([k]) => k === "clearest") ? "clearest" : first;
+}
+
 /** The layers with something to show on this lake. */
 function available(lake) {
   const { view, meta } = lake;
@@ -218,7 +234,7 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
   }
   if (!lake.kinds.length || !box.isConnected) return;
   const { meta } = lake;
-  let kind = lake.kinds[0][0];
+  let kind = startKind(meta, lake.kinds, clubId);
   const show = () => {
     const shot = meta[kind];
     // Saving data: the picture loads only when tapped (SatellitePictureStore.mayDownload).

@@ -163,14 +163,17 @@ test("each night of the 48 hours is one line that opens on a tap", async () => {
   const folded = await days();
   if (process.env.RF_NIGHT_SHOT) await page.locator(".hourly-card").screenshot({ path: `${process.env.RF_NIGHT_SHOT}-folded.png` });
   await line.click();
-  assert.equal(await line.getAttribute("aria-expanded"), "true");
-  assert.equal(await rows.isVisible(), true, "a tap shows the night's hours");
-  const opened = await days();
-  assert.equal(new Set(opened).size, opened.length, "no day header twice");
-  assert.deepEqual([...new Set(opened)], [...new Set(folded)], "the same days either way");
+  // Read the state once it has settled (a busy machine can be a frame behind).
+  await settles(async () => {
+    assert.equal(await line.getAttribute("aria-expanded"), "true");
+    assert.equal(await rows.isVisible(), true, "a tap shows the night's hours");
+    const opened = await days();
+    assert.equal(new Set(opened).size, opened.length, "no day header twice");
+    assert.deepEqual([...new Set(opened)], [...new Set(folded)], "the same days either way");
+  });
   if (process.env.RF_NIGHT_SHOT) await page.locator(".hourly-card").screenshot({ path: `${process.env.RF_NIGHT_SHOT}-open.png` });
   await line.click();
-  assert.equal(await rows.isHidden(), true, "a second tap folds it again");
+  await settles(async () => assert.equal(await rows.isHidden(), true, "a second tap folds it again"));
   assert.deepEqual(errors, []);
   await context.close();
 });
@@ -225,9 +228,12 @@ test("fog within 1 km shows on the top tile and in the Why line (app #409)", asy
   await page.goto(`${base}/app/#/club/mrc-1880`);
   const tile = page.locator('.card.now .now-grid [data-top="visibility"]');
   await page.waitForFunction(() => document.querySelector('.card.now .now-grid [data-top="visibility"]')?.innerText.includes("Nearby"), null, { timeout: 20000 });
-  assert.match(await tile.innerText(), /0\.3 km/);
-  assert.ok(await tile.locator(".cause-red").count(), "the value takes the light's colour");
-  assert.match(await page.locator(".card.now ul.reasons").innerText(), /Fog within 1 km of the launch point: visibility 0\.3 km\./);
+  // The page may draw once more with the stored forecast; wait for the state rather than reading it once.
+  await settles(async () => {
+    assert.match(await tile.innerText(), /0\.3 km/);
+    assert.ok(await tile.locator(".cause-red").count(), "the value takes the light's colour");
+    assert.match(await page.locator(".card.now ul.reasons").innerText(), /Fog within 1 km of the launch point: visibility 0\.3 km\./);
+  });
   if (process.env.RF_SHOT_NEAR) await page.locator(".card.now").screenshot({ path: process.env.RF_SHOT_NEAR });
   assert.deepEqual(errors, []);
   await context.close();
@@ -258,6 +264,19 @@ test("a refused forecast shows No forecast, and a failed update keeps the foreca
   await context.close();
 });
 
+/** Runs the assertions again every 100 ms until they hold, for up to 5 s, so a busy machine needs no fixed waits. */
+async function settles(assertions) {
+  const until = Date.now() + 5000;
+  for (;;) {
+    try {
+      return await assertions();
+    } catch (error) {
+      if (Date.now() > until) throw error;
+      await new Promise((done) => setTimeout(done, 100));
+    }
+  }
+}
+
 test("on wide windows the page's buttons stay level with the list's buttons and follow its column", async () => {
   // Owner, 12 Nov 2026: compare every layout, the wide one with the list beside the page included.
   const { page, errors } = await open(visitor(), { width: 1400, height: 1000 });
@@ -271,11 +290,12 @@ test("on wide windows the page's buttons stay level with the list's buttons and 
   });
   for (const y of [0, 40, 400]) {
     await page.evaluate((y) => scrollTo(0, y), y);
-    await page.waitForTimeout(100);
-    const now = await at();
-    assert.ok(now.cog > 0, `in the window at ${y}`);
-    assert.equal(now.cog, now.list, `cog level with the list at ${y}`);
-    assert.equal(now.boat, now.list, `boat level with the list at ${y}`);
+    await settles(async () => {
+      const now = await at();
+      assert.ok(now.cog > 0, `in the window at ${y}`);
+      assert.equal(now.cog, now.list, `cog level with the list at ${y}`);
+      assert.equal(now.boat, now.list, `boat level with the list at ${y}`);
+    });
   }
   // The list slid away and back: the bar's buttons follow the page's column again.
   await page.evaluate(() => scrollTo(0, 0));
@@ -283,16 +303,18 @@ test("on wide windows the page's buttons stay level with the list's buttons and 
   await page.locator("[data-show-list]").first().waitFor();
   await page.locator(".top-title [data-show-list]").click();
   await page.locator("#hide-list").waitFor();
-  await page.waitForTimeout(600);
-  let now = await at();
-  assert.equal(now.cog, now.list);
-  assert.equal(now.cogLeft, now.boatRight, "the buttons sit at the page's column edges");
-  assert.ok(now.cogLeft >= 0 && now.cogLeft < 24);
+  await settles(async () => {
+    const now = await at();
+    assert.equal(now.cog, now.list);
+    assert.equal(now.cogLeft, now.boatRight, "the buttons sit at the page's column edges");
+    assert.ok(now.cogLeft >= 0 && now.cogLeft < 24);
+  });
   await page.setViewportSize({ width: 1100, height: 900 });
-  await page.waitForTimeout(300);
-  now = await at();
-  assert.equal(now.cogLeft, now.boatRight, "and again after the window was resized");
-  assert.ok(now.cogLeft >= 0 && now.cogLeft < 24);
+  await settles(async () => {
+    const now = await at();
+    assert.equal(now.cogLeft, now.boatRight, "and again after the window was resized");
+    assert.ok(now.cogLeft >= 0 && now.cogLeft < 24);
+  });
   assert.deepEqual(errors, []);
 });
 
