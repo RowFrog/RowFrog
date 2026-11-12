@@ -1165,7 +1165,11 @@ dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 .station .map { height: 170px; }
 .station-line { display: flex; justify-content: space-between; gap: 12px; margin-top: 6px; }
 .station-pin { background: #32ade6; }
-.sat-why { color: var(--sub); padding: 0 2px; vertical-align: -2px; }
+/* Aligned to the line's top and no taller than it, so a wrapped caption is exactly two lines high. */
+.sat-why { color: var(--sub); padding: 0 2px; vertical-align: top; height: 1lh; }
+/* Two lines high on the club page's card, wrapped or not, so the picture fitted above it (fitSatellite) keeps
+   its size when switching pictures (SatelliteCaption's reservesSpace in the app). */
+#satellite .sat-line { min-height: 2lh; }
 .settings-search { margin: 0 0 14px; }
 /* Where a river section ends: orange for a weir or lock, teal where rowers turn (SectionEndPin). */
 .end-pin { background: #30b0c7; font-size: 13px; }
