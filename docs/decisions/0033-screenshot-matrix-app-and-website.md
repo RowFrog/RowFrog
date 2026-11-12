@@ -1,4 +1,4 @@
-# NNNN. Screenshots cover every device, orientation, browser and scroll position
+# 33. Screenshots cover every device, orientation, browser and scroll position
 
 - Date: 2026-11-12
 - Status: decided (owner, 23:19 CET, thread "Bug Fixes")

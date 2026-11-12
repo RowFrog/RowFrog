@@ -53,3 +53,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 30 | 2026-11-12 | [The lake tile shows its parts as a small table, wind with its direction](0030-lake-tile-parts-as-a-table-with-wind-direction.md) |
 | 31 | 2026-11-12 | [iOS 18 or later](0031-ios-18-or-later.md) |
 | 32 | 2026-11-12 | [Website tour like the app's, river tip, OpenStreetMap place card](0032-website-tour-river-place-card.md) |
+| 33 | 2026-11-12 | [Screenshots cover every device, orientation, browser and scroll position](0033-screenshot-matrix-app-and-website.md) |
