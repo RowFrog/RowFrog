@@ -170,9 +170,10 @@ button.wide { margin-top: 0; }
 .daylight .sunsym { color: var(--sun); margin-right: .2em; }
 .daylight .nowrap { white-space: nowrap; }
 
-.kit { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 10px; border-radius: 999px; font-size: 15px; font-weight: 600;
+.kit { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 10px; border-radius: 14px; max-width: 100%; text-align: start; font-size: 15px; font-weight: 600;
   color: var(--kit); background: color-mix(in srgb, var(--kit) 18%, transparent); }
-.kit-line { color: var(--kit); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit svg { flex: none; }
+.kit-line { color: var(--kit); font-weight: 600; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 
 /* Warnings card. */
 .warning { border-left: 4px solid var(--w); border-radius: 2px; padding: 2px 0 2px 10px; margin: 8px 0; font-size: 15px; }
