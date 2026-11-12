@@ -1,0 +1,10 @@
+{
+  "about": "How each change of screen moves, written once for the app and checked on the website (web/tests/browser/motion.test.mjs). Owner, 12 Nov 2026: exactly as Apple's Weather app. Add a row for every new way between screens; 'web' is the motion the website test expects (null: changes straight away).",
+  "changes": [
+    { "id": "swipe", "what": "Swipe sideways on a club page (website: also the arrow keys)", "app": "TabView paging: slides one club", "web": "next/prev" },
+    { "id": "dotTap", "what": "Tap a page dot", "app": "PageJump.step: one club towards the tapped dot, sliding", "web": "next/prev" },
+    { "id": "dotDrag", "what": "Run a finger along the page dots", "app": "jumps to the club under the finger, no slide", "web": null },
+    { "id": "listPick", "what": "Pick a club in the list (phone)", "app": "the list closes, the club shows straight away (zoom from the row: to do)", "web": "zoom" },
+    { "id": "sidePick", "what": "Pick a club in the list beside the page (iPad, wide window)", "app": "PageJump.go: the next club slides, further ones change straight away", "web": null }
+  ]
+}
