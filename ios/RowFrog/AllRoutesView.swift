@@ -31,7 +31,7 @@ struct AllRoutesView: View {
             ForEach(lakes, id: \.key) { entry in
                 let lakeID = entry.key
                 let routes = entry.value
-                Section(lakeName(lakeID)) {
+                Section {
                     ForEach(routes) { route in
                         Button { open(route) } label: { row(route) }
                             .buttonStyle(.plain)
@@ -56,9 +56,19 @@ struct AllRoutesView: View {
                         version += 1
                     }
                     .onDelete { offsets in offsets.map { routes[$0] }.forEach(delete) }
+                } header: {
+                    Text(lakeName(lakeID))
+                } footer: {
+                    // The page's one footer, under the last water (as on the other Settings pages).
+                    if lakeID == lakes.last?.key {
+                        SectionFooter(tr("Every saved route, by water. Tap one to open it on its lake map."))
+                    }
                 }
+                .surfaceRows()
             }
         }
+        .scrollContentBackground(.hidden)
+        .pageBackground(.settings)
         .overlay {
             if store.routes.isEmpty {
                 ContentUnavailableView(tr("No saved routes"), systemImage: "point.topleft.down.to.point.bottomright.curvepath",
@@ -66,15 +76,9 @@ struct AllRoutesView: View {
             }
         }
         .navigationTitle(tr("Routes"))
+        // Inline like every other Settings page: a large title overlapped the first water's name.
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar { EditButton().disabled(store.routes.isEmpty) }
-        .safeAreaInset(edge: .bottom) {
-            if !store.routes.isEmpty {
-                Text(tr("Every saved route, by water. Tap one to open it on its lake map."))
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                    .padding()
-            }
-        }
         .fullScreenCover(item: $opened, onDismiss: { version += 1 }) { opened in
             LakeMapScreen(view: opened.view, clubID: opened.clubID, route: opened.route)
         }
