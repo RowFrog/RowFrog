@@ -369,13 +369,21 @@ date, both lines show. A tap explains whose side it is on and offers "Try
 again". The website does the same.
 
 **Widgets.** Home-screen and lock-screen widgets show the rowing light first,
-then the values in the top tile's order, each with its symbol: temperature
-and feels like beside the weather symbol, water, wind, waves, rain,
-visibility and daylight. When the light is green but the rain radar sees rain
-coming within 2 hours, the widget adds a line such as "Light rain from 14:30".
-Behind them goes a sky in the weather's colours (the default), the rowing
-light's colour, the club's app picture or another picture, the satellite
-picture of the lake, or plain white or black.
+then the values in the top tile's order, each with its symbol. Each home-screen
+widget picks its **Layout** (long-press › Edit Widget): **Fewer values** (the
+default: the small one shows the light as a ring with short words, medium and
+large add temperature, wind, waves and visibility), **All values beside the
+light** (all six values in two columns) or, on the large one, **All values in a
+row** under the full sentence. **Marks** (on by default) put a check, ! or ×
+in the light's dots and stripes or outlines on amber and red day bars, so the
+light reads without colour. Values that set the light are coloured; the rain
+value uses the rain radar for the next 2 hours ("From 11:20", "Until 11:40"),
+and a thunderstorm within 6 hours takes its place. When the forecast is out of
+date, every hour dot and day bar turns grey. The round lock-screen widget is
+a daylight ring. Behind the values goes a sky in the weather's colours (the
+default), the rowing light's colour, the club's app picture or another
+picture, the satellite picture of the lake, or plain white or black. Widgets
+are app-only; the website has none.
 
 **Settings** (cog in the bottom bar of the club pages and beside the search
 of the location list on iPhone, at the top left of the club page on iPad)
@@ -481,6 +489,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `testdata/limits.json` | The app's starting boat limits that the backend, app and website tests all check, so the three give the same light. |
 | `testdata/units.json` | The unit table (values shown in each unit, Beaufort forces at the limits, decimals) that the app and website tests both check. |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
+| `docs/decisions/` | One short record per owner decision (date, decision, why, what was turned down, where in the code), with an index that says how to add one. |
 | `docs/screenshots/` | Not in git: the "App screenshots" workflow writes here on the runner and keeps each branch's set under `refs/screenshots/<branch>` (see the handbook). |
 | `scripts/` | Catalog imports, lake outlines, publishing, checks and background drawing. Finished research probes and their workflows are parked in `scripts/probes/`, with a note of where each result went. |
 | `CREDITS.md` | Data sources, licences and the credits the app must show. |
@@ -611,7 +620,7 @@ More detail, including the secrets each one needs, is in the
 
 | Workflow | What it does |
 | --- | --- |
-| **CI** (`ci.yml`) | Backend tests and the ruff lint, the Cloudflare Worker tests (`cloudflare/tests/`) and the translation check on every push to `main` and every pull request; the iOS build, unit tests and UI tests (taps through the first start, the settings and club list, and a conditions tile over frosted cards, against the published forecasts, and Apple's accessibility audit of the club page) run on pull requests that change `ios/`, in three jobs side by side. The one on the newest released Xcode (picked automatically from GitHub's runner images by `scripts/newest_xcode_runner.py`, 27.1 in October 2026) decides a merge; Xcode 26 and iOS 18 (Xcode 16.4) run for information only. When a new Xcode major version takes over, a reminder issue opens. Each run's summary page shows the test coverage. |
+| **CI** (`ci.yml`) | Backend tests and the ruff lint, the Cloudflare Worker tests (`cloudflare/tests/`) the translation check and the website check (`scripts/check_web_parity.py`: every app text is on the website or listed as app-only in `web/app-only-texts.txt`) on every push to `main` and every pull request; the iOS build, unit tests and UI tests (taps through the first start, the settings and club list, and a conditions tile over frosted cards, against the published forecasts, and Apple's accessibility audit of the club page) run on pull requests that change `ios/`, in three jobs side by side. The one on the newest released Xcode (picked automatically from GitHub's runner images by `scripts/newest_xcode_runner.py`, 27.1 in October 2026) decides a merge; Xcode 26 and iOS 18 (Xcode 16.4) run for information only. When a new Xcode major version takes over, a reminder issue opens. Each run's summary page shows the test coverage. |
 | **App size** (`app-size.yml`) | Builds the app as for the App Store (Release archive with the newest released Xcode, unsigned) and reports the installed size, the expected download and the largest files in the run summary (10.4 MB installed, about 10 MB to download in October 2026). Runs when iOS code lands on `main`, or by hand. |
 | **App screenshots** (`screenshots.yml`) | Runs the backend with live data, starts the app in the iOS Simulator and keeps the screenshots outside the branch history, under `refs/screenshots/<branch>` (one commit per branch, replaced on each run), and as the run's "screenshots" download. Long pages are shot screen by screen (`-p1`, `-p2`, …). Tutzinger RV gets a made-up lake storm warning, Seeclub Zürich and RV Albatros Klagenfurt a made-up thunderstorm warning, and the lake view a made-up south wind, all marked as samples in the app. Runs only by hand from the Actions tab, since it holds a Mac runner for a long time: once per pull request when it is ready for review, for the screens that changed (the `only` input), and a full set only when asked. It uses the same newest released Xcode as CI; the inputs `runner` and `xcode` pick another (e.g. `macos-26-intel` for Xcode 26), and `device` = `iPad` shoots on an iPad Simulator instead. |
 | **Publish forecasts** (`publish-backend.yml`) | Publishes the backend's answers to GitHub Pages, see [Hosting](#hosting). Installs the exact package versions in `backend/requirements-publish.txt`. Needs the secrets `CDSE_CLIENT_ID` and `CDSE_CLIENT_SECRET` for satellite pictures and ice. |
