@@ -694,7 +694,6 @@ enum German {
         "%@ near the shore, open water: row with care": "%@ am Ufer, offenes Wasser: mit Vorsicht",
         "%@ on open water, near the shore clear": "%@ auf offenem Wasser, am Ufer frei",
         "%@ on open water, near the shore: row with care": "%@ auf offenem Wasser, am Ufer: mit Vorsicht",
-        "%@ on part of the water": "%@ auf einem Teil des Wassers",
         "%@ near the shore: stay ashore": "%@ am Ufer: an Land bleiben",
         "%@ near the shore: row with care": "%@ am Ufer: mit Vorsicht rudern",
         "%@ on open water: stay ashore": "%@ auf offenem Wasser: an Land bleiben",

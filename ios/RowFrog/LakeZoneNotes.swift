@@ -26,17 +26,17 @@ struct LakeZoneNote: Equatable {
     /// Below this share of better squares, the part counts as alike all over.
     static let minBetterShare = 0.1
 
-    /// "Fog near the shore, open water clear", or just "Fog"; nil while green.
+    /// "Fog near the shore, open water clear" while the worse squares lie only
+    /// near the shore or only on open water; nil otherwise, as the part's values
+    /// already show the cause in its colour.
     var text: String? {
-        guard light > .green else { return nil }
-        guard let cause else { return nil }
+        guard light > .green, let cause else { return nil }
         switch (place, rest) {
         case (.shore?, .green): return tr("%@ near the shore, open water clear", cause)
         case (.shore?, _): return tr("%@ near the shore, open water: row with care", cause)
         case (.openWater?, .green): return tr("%@ on open water, near the shore clear", cause)
         case (.openWater?, _): return tr("%@ on open water, near the shore: row with care", cause)
-        case (.parts?, _): return tr("%@ on part of the water", cause)
-        case (nil, _): return cause
+        default: return nil
         }
     }
 }
@@ -108,5 +108,35 @@ extension LakeView {
         var notes = zones.indices.map { z in note((0..<n).filter { grid.cellZone[$0] == z }) }
         notes.append(note(Array(0..<n)))
         return notes
+    }
+}
+
+extension LakeView {
+    /// The values of one part of the lake, as under a tapped spot: the highest
+    /// waves, the strongest wind and gusts and the lowest visibility, each in its
+    /// light's colour, then the strongest other reason when amber or red (owner,
+    /// 12 Nov 2026: waves, wind and visibility for every part).
+    func zoneValues(_ zone: Int, hour: LakeHour) -> [LakeProbeItem] {
+        let cells = hour.lights.indices.filter { $0 < grid.cellZone.count && grid.cellZone[$0] == zone && $0 < hour.wavesCm.count }
+        guard !cells.isEmpty else { return [] }
+        let cold = waterC.map { $0 < RowingLimits.coldWaterC }
+            ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
+        let l = limits.forWater(cold ? 0 : nil)
+        let winds = cells.compactMap { cellWind($0, in: hour) }
+        let wave = cells.map { hour.wave(ofCell: $0) }.max()
+        let speed = winds.compactMap(\.speedMs).max(), gust = winds.compactMap(\.gustMs).max()
+        var items = [
+            LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(wave), light: l.light(wave, .waveAmber, .waveRed)),
+            LakeProbeItem(symbol: Condition.wind.symbol, name: tr("Wind"), text: Format.windRange(speed, gust),
+                          light: max(l.light(speed, .windAmber, .windRed), l.light(gust, .gustAmber, .gustRed))),
+        ]
+        if let vis = winds.compactMap(\.visM).min() {
+            let fog: Light = vis < 500 ? .red : vis <= 1000 ? .amber : .green
+            items.append(LakeProbeItem(symbol: Condition.visibility.symbol, name: tr("Visibility"), text: Format.distance(vis), light: fog))
+        }
+        if let extra = winds.compactMap(\.extra).max(by: { $0.light < $1.light }), extra.light > .green {
+            items.append(extra)
+        }
+        return items
     }
 }

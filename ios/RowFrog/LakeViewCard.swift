@@ -78,13 +78,6 @@ struct LakeViewCard: View {
         }
     }
 
-    /// "Fog near the shore, open water clear · Waves up to 0.02 m", or the waves alone while green.
-    static func zoneLine(_ note: LakeZoneNote?, maxWaveM: Double) -> String {
-        let waves = tr("Waves up to %@", Format.waves(maxWaveM))
-        guard let text = note?.text else { return waves }
-        return text + " · " + waves
-    }
-
     private func summary(_ view: LakeView, _ hour: LakeHour) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(tr("Now, %@", Format.time(hour.time)))
@@ -111,10 +104,17 @@ struct LakeViewCard: View {
                                 TrafficLightDot(light: hour.zones[i].light, size: 10, stale: view.isStale)
                                 Text(LakeZoneName.title(zone)).font(.subheadline.weight(.semibold))
                             }
-                            Text(Self.zoneLine(i < notes.count && notes[i].light == hour.zones[i].light ? notes[i] : nil, maxWaveM: hour.zones[i].maxWaveM))
+                            // Waves, wind and visibility of the part, the cause in its colour (owner, 12 Nov 2026).
+                            LakeProbeValues(items: view.zoneValues(i, hour: hour))
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
                                 .padding(.leading, 16)
+                            if i < notes.count, notes[i].light == hour.zones[i].light, let place = notes[i].text {
+                                Text(place)
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
+                                    .padding(.leading, 16)
+                            }
                         }
                         .accessibilityElement(children: .combine)
                     }

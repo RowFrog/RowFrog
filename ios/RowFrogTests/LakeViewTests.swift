@@ -136,7 +136,11 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(notes.count, 3, "two parts and the whole lake")
         XCTAssertEqual(notes[0], LakeZoneNote(light: .red, cause: "Fog", place: .shore, rest: .green))
         XCTAssertEqual(notes[0].text, "Fog near the shore, open water clear")
-        XCTAssertEqual(LakeViewCard.zoneLine(notes[0], maxWaveM: 0.01), "Fog near the shore, open water clear · Waves up to " + Format.waves(0.01))
+        // The part's values: waves, wind, and the lowest visibility in red.
+        let values = view.zoneValues(0, hour: hour)
+        XCTAssertEqual(values.map(\.name), ["Waves", "Wind", "Visibility"])
+        XCTAssertEqual(values.map(\.light), [.green, .green, .red])
+        XCTAssertEqual(values[0].text, Format.waves(0.01))
         XCTAssertEqual(view.headline(for: hour), "Fog near the shore: stay ashore")
     }
 
