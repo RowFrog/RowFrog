@@ -1,0 +1,16 @@
+# GKD readings for the Model check (Ammersee buoy, lake water), once a night. Started by rowfrog-gkd-log.timer; by hand: sudo systemctl start rowfrog-gkd-log
+# Logs: journalctl -u rowfrog-gkd-log -e; readings in ~/model-check-store/measured/gkd/.
+[Unit]
+Description=Row Frog GKD readings for the Model check, once a night
+Wants=network-online.target
+After=network-online.target time-sync.target
+
+[Service]
+Type=oneshot
+User=rowfrog
+Group=rowfrog
+EnvironmentFile=/home/rowfrog/.config/rowfrog.env
+ExecStart=/home/rowfrog/rowfrog-pi/run.sh gkd-log
+TimeoutStartSec=10min
+Nice=10
+IOSchedulingClass=idle
