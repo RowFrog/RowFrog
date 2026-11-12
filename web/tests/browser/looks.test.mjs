@@ -129,6 +129,16 @@ for (const layout of LAYOUTS) for (const tiles of ["frosted", "solid"]) for (con
         return h.classList.contains("stuck") ? getComputedStyle(h, "::before").backgroundColor : null;
       });
       if (pinned) assert.ok(!/rgba\(0, 0, 0, 0\)|transparent/.test(pinned), `the pinned header has a layer behind it (${pinned})`);
+      // The rows end at its bottom, so none reads through it where the browser does not blur
+      // behind it (Safari inside a frosted tile; owner's iPhone shot, 12 Nov 2026).
+      const hidden = await page.evaluate(() => {
+        const h = document.querySelector(".hhead");
+        if (!h.classList.contains("stuck")) return null;
+        const rows = h.nextElementSibling;
+        const shown = rows.getBoundingClientRect().top + (parseFloat((getComputedStyle(rows).clipPath.match(/inset\(([\d.]+)px/) ?? [0, 0])[1]));
+        return shown - h.getBoundingClientRect().bottom;
+      });
+      if (hidden !== null) assert.ok(Math.abs(hidden) <= 1, `the rows start at the pinned header's bottom (off by ${hidden} px)`);
       assert.deepEqual(await solidInFrosted(page), [], "nothing in a frosted tile paints a solid block (scrolled)");
     }
     // Settings: the background pictures row's sign sits in the middle of its frame.
