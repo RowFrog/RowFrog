@@ -21,7 +21,7 @@ import {
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
-  forecastStatus,
+  forecastStatus, coarserModel,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -1908,8 +1908,10 @@ function hourlyCard(forecast, now, stale) {
     }
     const fog = lightFor(x, ["fog"]);
     const halves = hourHalves(forecast, x, stale);
-    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}" aria-label="${h(hourSentence(x, stale, halves))}">
-      <span>${h(time(x.time))}</span><span>${dot(x.light, 12, stale, halves)}</span><span>${skySymbol(x)}</span>
+    const coarser = coarserModel(forecast, x) ? "≈" : "";
+    const sentence = hourSentence(x, stale, halves) + (coarser ? `, ${t("coarser model")}` : "");
+    return `${header}<button class="hrow ${x.sunUp === false ? "night" : ""} ${later(x)}" data-hour="${h(x.time)}" aria-label="${h(sentence)}">
+      <span>${h(coarser + time(x.time))}</span><span>${dot(x.light, 12, stale, halves)}</span><span>${skySymbol(x)}</span>
       <span class="num">${h(num(inUnit("temperature", x.temperatureC)))}</span>
       <span class="num sub">${h(num(inUnit("temperature", x.apparentTemperatureC)))}</span>
       <span class="num">${h(windRange(x.windSpeedMs, x.windGustMs))}</span>
@@ -1929,7 +1931,7 @@ function hourlyCard(forecast, now, stale) {
     const crossed = lastDay !== dayBefore;
     lastDay = dayBefore;
     const after = crossed ? "afternight" : "";
-    return nightLine(part.night, list, later(part.night[0])) + `<div class="nightrows" hidden>${inside}</div>` + `<span class="nightmark ${after}" hidden></span>`;
+    return nightLine(part.night, list, later(part.night[0]), forecast) + `<div class="nightrows" hidden>${inside}</div>` + `<span class="nightmark ${after}" hidden></span>`;
   }).join("");
   const fold = foldsHourly() && list.length > FOLDED_HOURS ? `<button class="fold" type="button" aria-expanded="false">${foldLabel(false)}</button>` : "";
   return card(t("Next 48 hours"), "clock", `<div class="hourly ${usesAMPM() ? "ampm" : ""}">${head}${rows}</div>${fold}`,
@@ -1941,26 +1943,35 @@ function hourlyCard(forecast, now, stale) {
  * chevron and the moon in the first three columns, then under each column the
  * night's worst. A tap shows or hides the night's hours (toggleNight).
  */
-function nightLine(hours, list, later) {
+function nightLine(hours, list, later, forecast) {
   const n = nightSummary(hours);
+  // The night's later hours from a coarser model (after the 48 hours): said inside the line (owner, 12 Nov 2026).
+  const from = hours.find((x) => coarserModel(forecast, x));
+  const coarser = from ? coarserText(from.time, coarserModel(forecast, from)) : "";
   // Open-ended only where the night really starts or ends the table (NightRow.startsTable/endsTable);
   // a night after the current hour's row starts at a known hour, "18–07", not "–07".
-  const from = hours[0] === list[0] ? "" : hourOnly(n.start);
+  const start = hours[0] === list[0] ? "" : hourOnly(n.start);
   const to = hours[hours.length - 1] === list[list.length - 1] ? "" : hourOnly(n.end);
   const fog = n.fog && n.fog !== "green" ? (n.fog === "red" ? "red" : "orange") : "";
   const rain = (n.rainMm ?? 0) >= 0.1;
   const label = [t("Night from %@ to %@", time(n.start), time(n.end)), t("lowest %@", degrees(n.lowestC)), n.frost ? t("frost") : "",
     n.gustMs != null ? t("gusts up to %@", wind(n.gustMs)) : "", rain ? t("%@ rain", rainNumber(n.rainMm) + " " + unitSymbol("rain")) : t("dry"),
-    fog ? t("fog, visibility down to %@", distance(n.visibilityM)) : ""].filter(Boolean).join(", ");
+    fog ? t("fog, visibility down to %@", distance(n.visibilityM)) : "", coarser.slice(2)].filter(Boolean).join(", ");
   return `<button class="hrow nightline ${later}" type="button" aria-expanded="false" aria-label="${h(label)}" title="${h(t("Shows the night hours"))}">
-    <span class="range">${h(`${from}–${to}`)}</span><span class="chev">${icon("chevron-down")}</span><span class="moon">${icon("moon")}</span>
+    <span class="range">${h(`${start}–${to}`)}</span><span class="chev">${icon("chevron-down")}</span><span class="moon">${icon("moon")}</span>
     <span class="num ${n.frost ? "blue" : ""}">${n.frost ? icon("snowflake") : ""}${h(num(inUnit("temperature", n.lowestC)))}</span>
     <span class="num sub">${h(num(inUnit("temperature", n.lowestFeelsLikeC)))}</span>
     <span class="num">${h(windRange(n.windMs, n.gustMs))}</span>
     <span class="num">${h(wavesNumber(n.wavesM))}</span>
     <span class="num ${rain ? "blue" : ""}">${h(rainNumber(n.rainMm))}</span>
     <span class="num ${fog}">${h(distanceNumber(n.visibilityM))}</span>
+    ${coarser ? `<span class="coarser">${h(coarser)}</span>` : ""}
   </button>`;
+}
+
+/** "≈ from 00:00 coarser model: ICON-EU, 7 km grid" (NightRow.coarserText in the app). */
+function coarserText(from, part) {
+  return `≈ ${t("from %@ coarser model: %@", time(from), `${part.model}, ${gridText(part.resolutionKm)}`)}`;
 }
 
 /** Opens or folds one night of the 48 hours. */

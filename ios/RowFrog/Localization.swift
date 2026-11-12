@@ -251,6 +251,8 @@ enum German {
         "Folds the night hours": "Faltet die Nachtstunden",
         "Shows the night hours": "Zeigt die Nachtstunden",
         "Night from %@ to %@": "Nacht von %@ bis %@",
+        "from %@ coarser model: %@": "ab %@ gröberes Modell: %@",
+        "coarser model": "gröberes Modell",
         "lowest %@": "Tiefstwert %@",
         "frost": "Frost",
         "%@ rain": "%@ Regen",

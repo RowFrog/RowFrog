@@ -31,6 +31,13 @@ WARNINGS_CACHE_SECONDS = 5 * 60
 LAKE_AREAS_CACHE_SECONDS = 24 * 3600
 # Hours of forecast the app gets, from the current hour.
 FORECAST_HOURS = 48
+# When the 48 hours end in the night, the table finishes that night (owner's option B,
+# 12 Nov 2026): up to this many more hours, from the chain's next, coarser model (ICON-EU).
+NIGHT_TAIL_HOURS = 18
+# Hours loaded per forecast: the 48 hours, the longest wait for the next load (12 hours for
+# clubs nobody uses) and the night after them. Open-Meteo counts a call by its values and
+# places, not its length (under two weeks), so the night costs no extra calls.
+FETCH_HOURS = FORECAST_HOURS + 12 + NIGHT_TAIL_HOURS
 # Club ids that get a made-up warning, marked as a sample, for screenshots: a lake storm warning
 # where DWD has a lake area, else a thunderstorm warning from the place's own service.
 SAMPLE_WARNING_CLUBS = {c for c in os.environ.get("RW_SAMPLE_WARNING_CLUBS", "").split(",") if c}
@@ -207,10 +214,27 @@ def _now() -> datetime:
     return datetime.now(timezone.utc)
 
 
-def _from_now(weather: list, now: datetime) -> list:
+def _from_now(weather: list, now: datetime, hours: int = FORECAST_HOURS) -> list:
     """The forecast from the current hour on; stored forecasts can be a few hours old."""
     hour = now.replace(minute=0, second=0, microsecond=0)
-    return [h for h in weather if h.time >= hour][:FORECAST_HOURS]
+    return [h for h in weather if h.time >= hour][:hours]
+
+
+def finish_night(hours: list[RowingHour], lat: float, lon: float, table_hours: int = FORECAST_HOURS) -> list[RowingHour]:
+    """The first `table_hours` hours and, when they end in the night, the rest of that night:
+    the hours after them that are dark all through, up to the one the sun rises in. So the
+    table's last night line reads "17–07" instead of stopping at the 48th hour."""
+    table = hours[:table_hours]
+    rest = hours[table_hours:]
+    if not table or not rest:
+        return table
+    days = sun_days(rest[0].weather.time, rest[-1].weather.time + timedelta(hours=1), lat, lon)
+    for h in rest:
+        start, end = h.weather.time, h.weather.time + timedelta(hours=1)
+        if any(d.sunrise < end and d.sunset > start for d in days):
+            break
+        table.append(h)
+    return table
 
 
 def lake_grid(lake_id: str, rings) -> lake_view.Grid:
@@ -826,7 +850,7 @@ async def _club_inputs(club: locations.Club, picked: weather_models.Choice | Non
             weather = prepared.weather.pop(club_id, None)
             if weather is None:
                 try:
-                    weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon)
+                    weather = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon, hours=FETCH_HOURS)
                 except httpx.HTTPError as e:
                     logging.getLogger(__name__).warning("Open-Meteo unavailable for %s: %r", club_id, e)
                     raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
@@ -851,7 +875,9 @@ async def _club_inputs(club: locations.Club, picked: weather_models.Choice | Non
                 other = prepared.weather.pop(key, None)
                 if other is None:
                     try:
-                        other = await open_meteo.fetch(client, club.launch_point.lat, club.launch_point.lon, models=picked.id)
+                        other = await open_meteo.fetch(
+                            client, club.launch_point.lat, club.launch_point.lon, hours=FETCH_HOURS, models=picked.id
+                        )
                     except httpx.HTTPError:
                         raise HTTPException(status_code=503, detail="weather service unavailable, try again shortly")
                 weather = _filled(other, weather)
@@ -950,7 +976,7 @@ def build_club_forecast(
     estimate, water_model_c, ice_estimate, air_days = inputs.estimate, inputs.water_model_c, inputs.ice_estimate, inputs.air_days
     gauge, readings, level_lake, levels = inputs.gauge, inputs.readings, inputs.level_lake, inputs.levels
     ice_by_day = {} if ice_estimate is None else {d.day: Light(ice.STATUS_LIGHT[d.status]) for d in ice_estimate.days}
-    weather = _from_now(weather, now)
+    weather = _from_now(weather, now, FORECAST_HOURS + NIGHT_TAIL_HOURS)
     if not weather:
         raise HTTPException(status_code=503, detail="forecast too old, try again shortly")
     rings = outlines.load(club.lake_id)
@@ -972,6 +998,7 @@ def build_club_forecast(
         water_by_day = dict(water_forecast)
     hours = rowing_forecast(club, weather, rings, water_c, warnings, ice_by_day=ice_by_day, water_by_day=water_by_day,
                             river=river_reason, river_until=river_until)
+    hours = finish_night(hours, club.launch_point.lat, club.launch_point.lon)
     outlook_hours = (
         rowing_forecast(club, outlook, rings, water_c, warnings, ice_by_day=ice_by_day, water_by_day=water_by_day,
                         river=river_reason, river_until=river_until)

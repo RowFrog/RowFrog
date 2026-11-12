@@ -178,6 +178,30 @@ test("each night of the 48 hours is one line that opens on a tap", async () => {
   await context.close();
 });
 
+test("a night from the coarser model says so inside its line, and its hours carry ≈", async () => {
+  // Owner's option B (12 Nov 2026): after the 48 hours the night goes on with ICON-EU. The sample
+  // ends by day, so here its first night turns coarser from its fourth hour (22:00).
+  const { page, errors, context } = await open(visitor());
+  const parts = [
+    { model: "ICON-D2", provider: "Deutscher Wetterdienst (DWD)", resolutionKm: 2.2, fromHour: 0, toHour: 14 },
+    { model: "ICON-EU", provider: "Deutscher Wetterdienst (DWD)", resolutionKm: 7, fromHour: 14, toHour: 48 },
+  ];
+  await context.route(/\/v1\/clubs\/mrc-1880\/forecast/, (route) => route.fulfill({
+    contentType: "application/json", body: JSON.stringify({ ...forecast, forecastSource: { region: "germany", parts } }),
+  }));
+  await page.goto(`${base}/app/#/club/mrc-1880`);
+  const line = page.locator(".hourly-card .nightline").first();
+  await line.waitFor({ timeout: 20000 });
+  assert.equal(await line.locator(".coarser").innerText(), "≈ from 22:00 coarser model: ICON-EU, 7 km grid");
+  assert.match(await line.getAttribute("aria-label"), /from 22:00 coarser model: ICON-EU/);
+  if (process.env.RF_NIGHT_SHOT) await page.locator(".hourly-card").screenshot({ path: `${process.env.RF_NIGHT_SHOT}-coarser.png` });
+  await line.click();
+  const times = await line.locator("xpath=following-sibling::div[1]").locator(".hrow > span:first-child").allInnerTexts();
+  assert.ok(times.includes("21:00") && times.includes("≈22:00"), times.join(" "));
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("browsing by country lists the countries, a country's waters and a water's clubs", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/countries`);

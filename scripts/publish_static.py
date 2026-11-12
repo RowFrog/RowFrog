@@ -78,8 +78,9 @@ except ImportError:
 BATCH = 50
 # Waits before retrying a failed batch, in seconds; Open-Meteo's limit is per minute.
 RETRY_WAITS = (65, 120)
-# Hours loaded per forecast: two days from now plus the longest wait for the next load.
-FETCH_HOURS = 60
+# Hours loaded per forecast: two days from now, the longest wait for the next load and the
+# night after the two days (api.FETCH_HOURS).
+FETCH_HOURS = api.FETCH_HOURS
 
 # ICON-D2 runs every 3 hours (00, 03, ... UTC) and its forecast is ready
 # about READY_AFTER later. Loading more often brings nothing new.
