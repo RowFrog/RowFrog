@@ -93,4 +93,21 @@ final class DaylightRuleTests: XCTestCase {
         }
         XCTAssertGreaterThan(splits, 0)
     }
+
+    /// The lake view's "now" goes by this minute too (owner, 12 Nov 2026: "sun down"
+    /// at 07:45 with sunrise at 07:15), and other whole-lake reasons stay.
+    func testTheLakeViewNowGoesByThisMinute() {
+        let days = [SunDay(sunrise: at("07:15"), sunset: at("16:41"))]
+        let dark = LakeWide(light: .red, reasons: [Reason(condition: "daylight", light: .red)])
+        XCTAssertEqual(dark.at(at("07:45"), days: days), LakeWide(light: .green, reasons: []))
+        XCTAssertEqual(dark.at(at("07:10"), days: days).light, .red)
+        let foggy = LakeWide(light: .red, reasons: [Reason(condition: "daylight", light: .red), Reason(condition: "weather_warning", light: .red)])
+        XCTAssertEqual(foggy.at(at("07:45"), days: days).reasons.map(\.condition), ["weather_warning"])
+        XCTAssertEqual(foggy.at(at("07:45"), days: days).light, .red)
+        let evening = LakeWide(light: .red, reasons: [Reason(condition: "daylight", light: .red)])
+        XCTAssertEqual(evening.at(at("16:10"), days: days), LakeWide(light: .amber, reasons: [Reason(condition: "sunset_soon", light: .amber)]))
+        // An hour without a daylight reason is left alone.
+        let calm = LakeWide(light: .green, reasons: [])
+        XCTAssertEqual(calm.at(at("07:45"), days: days), calm)
+    }
 }
