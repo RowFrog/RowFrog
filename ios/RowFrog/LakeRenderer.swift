@@ -94,6 +94,46 @@ final class LakeRenderer: MKOverlayRenderer {
         setNeedsDisplay()
     }
 
+    /// Cells around a tile reach this far past its edge, in cells: enough for the
+    /// widest smoothing CGContext uses at `.high`, so neighbouring tiles agree.
+    static let partMargin = 4
+
+    /// The part of `image` (drawn over `rect`) that the tile `tile` shows, with
+    /// `partMargin` cells around it, and the rect it covers. Image rows run top
+    /// down, as the overlay's points do.
+    static func part(of image: CGImage, in rect: CGRect, for tile: CGRect, zoomScale: CGFloat) -> (CGImage?, CGRect) {
+        let w = image.width, h = image.height
+        guard w > 0, h > 0, rect.width > 0, rect.height > 0 else { return (nil, .zero) }
+        let sx = rect.width / CGFloat(w), sy = rect.height / CGFloat(h)
+        let m = partMargin
+        let x0 = max(0, Int(((tile.minX - rect.minX) / sx).rounded(.down)) - m)
+        let x1 = min(w, Int(((tile.maxX - rect.minX) / sx).rounded(.up)) + m)
+        let y0 = max(0, Int(((tile.minY - rect.minY) / sy).rounded(.down)) - m)
+        let y1 = min(h, Int(((tile.maxY - rect.minY) / sy).rounded(.up)) + m)
+        guard x1 > x0, y1 > y0 else { return (nil, .zero) }
+        let cells = CGRect(x: x0, y: y0, width: x1 - x0, height: y1 - y0)
+        let into = CGRect(x: rect.minX + CGFloat(x0) * sx, y: rect.minY + CGFloat(y0) * sy,
+                          width: CGFloat(x1 - x0) * sx, height: CGFloat(y1 - y0) * sy)
+        guard let cropped = image.cropping(to: cells) else { return (nil, .zero) }
+        // Zoomed out a cell is a few screen points and the one step looks fine.
+        return (sx * zoomScale > 24 ? smoothed(cropped) : cropped, into)
+    }
+
+    /// The cells scaled up `upscale` times with smooth interpolation, so drawing
+    /// it into the map is only a small further step up: one large step from one
+    /// pixel per cell came out as hard squares when zoomed far in.
+    static let upscale = 16
+
+    private static func smoothed(_ cells: CGImage) -> CGImage {
+        let k = max(1, min(upscale, 2048 / max(cells.width, cells.height)))
+        guard k > 1, let ctx = CGContext(data: nil, width: cells.width * k, height: cells.height * k, bitsPerComponent: 8, bytesPerRow: 0,
+                                         space: CGColorSpace(name: CGColorSpace.sRGB)!, bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        else { return cells }
+        ctx.interpolationQuality = .high
+        ctx.draw(cells, in: CGRect(x: 0, y: 0, width: ctx.width, height: ctx.height))
+        return ctx.makeImage() ?? cells
+    }
+
     override func draw(_ mapRect: MKMapRect, zoomScale: MKZoomScale, in context: CGContext) {
         guard let lake = overlay as? LakeOverlay else { return }
         lock.lock()
@@ -113,10 +153,17 @@ final class LakeRenderer: MKOverlayRenderer {
             context.clip(using: .evenOdd)
             context.interpolationQuality = .high
             context.setAlpha(0.72)
-            // CGContext draws images bottom up; the overlay's points run top down.
-            context.translateBy(x: rect.minX, y: rect.maxY)
-            context.scaleBy(x: 1, y: -1)
-            context.draw(image, in: CGRect(origin: .zero, size: rect.size))
+            // Only the cells this map tile shows (and a few around them, so the
+            // smoothing runs on across tile edges). Zoomed far in, drawing the
+            // whole lake picture scaled up thousands of times into every tile
+            // came out as hard squares (owner, 12 Nov 2026).
+            let (part, into) = Self.part(of: image, in: rect, for: self.rect(for: mapRect), zoomScale: zoomScale)
+            if let part {
+                // CGContext draws images bottom up; the overlay's points run top down.
+                context.translateBy(x: into.minX, y: into.maxY)
+                context.scaleBy(x: 1, y: -1)
+                context.draw(part, in: CGRect(origin: .zero, size: into.size))
+            }
             context.restoreGState()
         }
         if let stripes {
@@ -195,3 +242,4 @@ final class LakeRenderer: MKOverlayRenderer {
         }
     }
 }
+
