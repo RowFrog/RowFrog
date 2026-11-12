@@ -238,6 +238,23 @@ test("the top tile's values never break a word or get cut, at any width or text 
   }
 });
 
+test("a night that ends the table up to sunrise reads as a whole night, a night cut off in the dark as open", async () => {
+  // The 12 Nov evening shot read "17–" though the backend had finished the night to sunrise.
+  for (const [last, range] of [["2026-10-19T04:00:00+00:00", "19–07"], ["2026-10-19T01:00:00+00:00", "19–"]]) {
+    const { page, errors, context } = await open(visitor());
+    const hours = forecast.hours.filter((x) => Date.parse(x.time) <= Date.parse(last));
+    await context.route(/\/v1\/clubs\/mrc-1880\/forecast/, (route) => route.fulfill({
+      contentType: "application/json", body: JSON.stringify({ ...forecast, hours }),
+    }));
+    await page.goto(`${base}/app/#/club/mrc-1880`);
+    const line = page.locator(".hourly-card .nightline").last();
+    await line.waitFor({ timeout: 20000 });
+    assert.equal(await line.locator(".range").innerText(), range);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
 test("browsing by country lists the countries, a country's waters and a water's clubs", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/countries`);

@@ -21,7 +21,7 @@ import {
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
-  forecastStatus, coarserModel,
+  forecastStatus, coarserModel, endsAtSunrise,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, renderAllRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -1968,7 +1968,8 @@ function nightLine(hours, list, later, forecast) {
   // Open-ended only where the night really starts or ends the table (NightRow.startsTable/endsTable);
   // a night after the current hour's row starts at a known hour, "18–07", not "–07".
   const start = hours[0] === list[0] ? "" : hourOnly(n.start);
-  const to = hours[hours.length - 1] === list[list.length - 1] ? "" : hourOnly(n.end);
+  const cut = hours[hours.length - 1] === list[list.length - 1] && !endsAtSunrise(Date.parse(n.end), sunDaysOf(forecast));
+  const to = cut ? "" : hourOnly(n.end);
   const fog = n.fog && n.fog !== "green" ? (n.fog === "red" ? "red" : "orange") : "";
   const rain = (n.rainMm ?? 0) >= 0.1;
   const label = [t("Night from %@ to %@", time(n.start), time(n.end)), t("lowest %@", degrees(n.lowestC)), n.frost ? t("frost") : "",

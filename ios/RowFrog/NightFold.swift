@@ -34,6 +34,13 @@ enum NightFold {
         return parts
     }
 
+    /// Whether a night ending at `end` is whole: the sun rises in the hour after it. The backend
+    /// finishes the table's last night up to that hour (finish_night, owner's option B), so such a
+    /// night reads "17–07" even where it ends the table; only a night cut off earlier reads "17–".
+    static func endsAtSunrise(_ end: Date, days: [SunDay]) -> Bool {
+        days.contains { $0.sunrise >= end && $0.sunrise < end.addingTimeInterval(3600) }
+    }
+
     /// Dark all hour: the sun is down and neither sets nor rises in it.
     static func isDark(_ hour: ForecastHour, days: [SunDay] = []) -> Bool {
         guard hour.sunUp == false, !hour.reasons.contains(where: { $0.condition == "twilight" }) else { return false }

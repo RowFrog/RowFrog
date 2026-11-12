@@ -266,3 +266,11 @@ test("the night after the 48 hours is marked as coming from the coarser model", 
   assert.equal(coarserModel({ ...f, forecastSource: { parts: [part("ICON-D2", 2.2, 0, 48)] } }, at(50)), null);
   assert.equal(coarserModel({}, at(50)), null);
 });
+
+test("a night that ends the table is whole when the sun rises in the next hour", async () => {
+  const { endsAtSunrise } = await import("../public/app/logic.js");
+  const days = [{ sunrise: Date.parse("2026-11-15T06:21:00Z"), sunset: Date.parse("2026-11-15T15:35:00Z") }];
+  assert.equal(endsAtSunrise(Date.parse("2026-11-15T06:00:00Z"), days), true, "17–07: finished up to sunrise");
+  assert.equal(endsAtSunrise(Date.parse("2026-11-15T03:00:00Z"), days), false, "cut off in the dark: 17–");
+  assert.equal(endsAtSunrise(Date.parse("2026-11-15T06:00:00Z"), []), false);
+});
