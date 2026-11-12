@@ -1073,7 +1073,8 @@ function updateTopBar() {
   }
   // Wide windows: the page's buttons stay level with the buttons at the top of the list beside it, at rest and
   // while scrolling (owner, 12 Nov 2026); the small bar is centred on the same line.
-  const wide = sideList.matches && Boolean(bar);
+  // Only beside the list: the list page itself keeps its big title and the small one only once scrolled.
+  const wide = sideList.matches && Boolean(bar) && !root.querySelector(".list-page");
   body.classList.toggle("wide-bar", wide);
   if (wide) {
     const tool = root.querySelector(".side-head > .round");
@@ -2836,6 +2837,22 @@ function pagePicture(hash) {
   return showBackground(null);
 }
 
+/**
+ * Settings open as a sheet over the page, as in the app (RootView's .sheet): on iPad sizes a centred card
+ * with the page dimmed behind it (style.css, body.settings-over), on phones the full-height sheet. The page
+ * behind is a still copy of the one that was shown, kept while moving between the settings' topics.
+ */
+function settingsOverPage(on) {
+  const under = document.getElementById("under") ?? document.body.insertBefore(Object.assign(document.createElement("div"), { id: "under", inert: true }), root);
+  under.setAttribute("aria-hidden", "true");
+  if (on && !document.body.classList.contains("settings-over")) {
+    under.innerHTML = root.querySelector("main") ? root.innerHTML : "";
+    under.querySelectorAll("[id]").forEach((el) => el.removeAttribute("id"));
+  }
+  if (!on) under.innerHTML = "";
+  document.body.classList.toggle("settings-over", on);
+}
+
 function route(scroll = true) {
   swipeOff?.();
   document.querySelector("dialog.sheet")?.remove();
@@ -2844,6 +2861,7 @@ function route(scroll = true) {
   if (scroll) window.scrollTo(0, 0);
   // The pages the app shows as sheets look like one on a phone.
   document.body.classList.toggle("sheet-page", /^\/(club\/[^/]+\/value\/|settings|add-place|countries)/.test(location.hash.slice(1)));
+  settingsOverPage(location.hash.startsWith("#/settings"));
   if (!store.safety || store.safety.version < SAFETY_VERSION) return renderSafetyGate();
   // The tour once, after the safety notice, and again from Settings › Help.
   if (!tourSeen() || location.hash === "#/tour") {
