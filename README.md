@@ -417,6 +417,9 @@ field at the bottom.
   the rowing light, ⓘ for its type, limits and the clubs it is kept at; swipe
   to remove a boat or a club), and the fine-tuned limits (see
   [Rowing limits](#what-the-app-does)).
+- Routes: every saved route, grouped by water, with the tools of Manage
+  routes (rename, duplicate, delete, order within a water); a tap opens the
+  route on its lake map. The website has the same page.
 - Appearance: background pictures for all pages, single pages or single
   clubs (clear or blurred, frosted or solid tiles, your own photo or the
   satellite picture of the club's lake) and the app icon: the coxed double
@@ -483,7 +486,9 @@ there, since iPadOS turns apps anyway. A value's detail view opens full
 screen, with the map beside the chart when the iPad is on its side. With a
 background picture on a sideways iPad, one club picture fills the screen
 behind the side list and the page; a satellite picture is centred on the
-club's launch point. The website's wide layout does the same.
+club's launch point. The list, cog and boat buttons at the top sit over the
+column of cards, not at the window edges. The website's wide layout does the
+same.
 
 **Website.** [rowfrog.com/app](https://rowfrog.com/app) shows the forecasts
 in a browser, for Android phones and computers. It is password-locked while
@@ -512,6 +517,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place and launch point suggestions into GitHub issues, `timer/` starts the forecast run on time. |
 | `testdata/api/v1/` | Sample API files (MRC 1880's forecast, the lake list and the country lists) that the backend, app and website tests all read, so a change to the format shows up in all three (see the handbook's Tests section). |
 | `testdata/limits.json` | The app's starting boat limits that the backend, app and website tests all check, so the three give the same light. |
+| `testdata/reasons.json` | Every reason the backend may send for an amber or red light; the backend test checks its modules and the sample files against it, and the app and website tests check each has a label and sentence (an unknown one shows "Other condition"). |
 | `testdata/rules/` | Shared rule tables (lake view colours, route rules, the cold-water badge and shore) with expected values from a separate implementation, which the app and website tests both check. |
 | `testdata/schema/v1/` | One JSON Schema per published `/v1` file; `frozen.json` lists the fields installed apps rely on, and a test fails when one goes or changes type. |
 | `testdata/states/` | Cases that run each statechart (now the route editor, `ios/RowFrog/Charts/`) through the Swift and JavaScript readers alike. |
