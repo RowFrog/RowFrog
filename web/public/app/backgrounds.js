@@ -6,7 +6,7 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
-import { store, h, load, save, getJSON, setTitle, testing, footerLinks, openSheet, savingData } from "./shared.js";
+import { store, h, load, save, getJSON, setTitle, testing, footerLinks, openSheet, savingData, dot, lightTitle, degrees, wind, waves, conditionIcon } from "./shared.js";
 import { tip, wireTips } from "./tour.js";
 
 /** The pictures that come with the app, in its order (BackgroundLibrary.samples). */
@@ -256,6 +256,8 @@ export function renderBackgrounds(root) {
     <main class="page">
       <h1 class="large">${h(t("Background pictures"))}</h1>
       ${tip("backgrounds")}
+      ${previewHtml()}
+      <p class="footer">${h(t("Preview of the club pages with the picture for all pages."))}</p>
       <h3 class="section">${icon("layers")} ${h(t("All pages"))}</h3>
       <section class="card group">${row("all", t("All pages"), "layers", b.all)}</section>
       <h3 class="section">${icon("copy")} ${h(t("Single pages"))}</h3>
@@ -266,14 +268,13 @@ export function renderBackgrounds(root) {
       <p class="footer">${h(t("A club's own picture shows only on that club's page."))}</p>` : ""}
       <h3 class="section">${icon("sliders-horizontal")} ${h(t("Look"))}</h3>
       <section class="card group">
-        <div class="row-setting"><span>${h(t("Picture"))}</span><span class="segmented small" id="blur">
-          <button data-blur="false" class="${b.blur ? "" : "on"}">${h(t("Clear"))}</button><button data-blur="true" class="${b.blur ? "on" : ""}">${h(t("Blurred"))}</button></span></div>
+        <label class="row-setting"><span>${h(t("Blur the picture"))}</span><input type="checkbox" class="switch" role="switch" id="blur" ${b.blur ? "checked" : ""}></label>
         <label class="row-setting"><span>${h(t("In the tiles"))}</span>
           <select id="tiles">${TILE_STYLES.map(([k, title]) => `<option value="${k}" ${k === b.tiles ? "selected" : ""}>${h(t(title))}</option>`).join("")}</select></label>
       </section>
-      <p class="footer">${h(t("Picture blurred: the picture shows through the tiles like frosted glass. No picture: the tiles stay solid and keep the full rowing-light shading."))}</p>
+      <p class="footer">${h(t("Solid tiles keep the full rowing-light shading and use less battery while scrolling."))}</p>
       <section class="card group"><button class="row-setting red" id="remove-all">${icon("trash-2")} ${h(t("Remove all background pictures"))}</button></section>
-      <p class="footer">${h(t("Back to the factory setting: no picture on any page. Your own pictures stay available to pick again."))}</p>
+      <p class="footer">${h(t("No picture on any page. Your own pictures stay available to pick again."))}</p>
       ${footerLinks()}
     </main>`;
   wireTips(root.querySelector("main"));
@@ -282,10 +283,11 @@ export function renderBackgrounds(root) {
     showBackground("settings");
   };
   root.querySelectorAll("[data-target]").forEach((el) => el.addEventListener("click", () => openPicker(el.dataset.target, again)));
-  root.querySelectorAll("[data-blur]").forEach((el) => el.addEventListener("click", () => {
-    b.blur = el.dataset.blur === "true";
+  root.querySelector("#blur").addEventListener("change", (e) => {
+    b.blur = e.target.checked;
     again();
-  }));
+  });
+  fillPreview(root.querySelector("#bg-preview"));
   root.querySelector("#tiles").addEventListener("change", (e) => {
     b.tiles = e.target.value;
     again();
@@ -297,6 +299,27 @@ export function renderBackgrounds(root) {
     b.clubs = {};
     again();
   });
+}
+
+/** A club page in small with the picture for the club pages, as it will look (BackgroundPreview in the app). */
+function previewHtml() {
+  const tile = (light) => `<span class="bg-sample tinted" style="--tint: var(--${light})">${dot(light, 12)}<strong>${h(lightTitle(light))}</strong><span class="deg">${h(degrees(14))}</span></span>`;
+  return `<div class="bg-preview" id="bg-preview" role="img" aria-label="${h(t("Preview"))}"><span class="bg-layer"></span>
+      <span class="bg-name">MRC 1880</span>
+      <span class="bg-tiles">${tile("green")}${tile("amber")}</span>
+      <span class="bg-sample now"><small>${icon("gauge")} ${h(t("Current conditions").toUpperCase())}</small>
+        <span class="vals"><span>${conditionIcon("wind")} ${h(wind(4))}</span><span>${conditionIcon("waves")} ${h(waves(0.12))}</span></span></span></div>`;
+}
+
+async function fillPreview(box) {
+  if (!box) return;
+  const b = backgrounds;
+  const url = await pictureUrl(b.pages.clubPages ?? b.all, null).catch(() => null);
+  if (!box.isConnected) return;
+  box.classList.toggle("with-picture", !!url);
+  box.classList.toggle("blurred", !!url && b.blur);
+  box.dataset.tiles = url ? b.tiles : "solid";
+  if (url) box.querySelector(".bg-layer").style.backgroundImage = `url("${url.replace(/"/g, "%22")}")`;
 }
 
 /** The choices for one target: inherited, none, satellite, the visitor's own, then the samples (BackgroundPickerView). */

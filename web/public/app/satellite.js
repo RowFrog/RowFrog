@@ -224,7 +224,7 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
     // Saving data: the picture loads only when tapped (SatellitePictureStore.mayDownload).
     if (savingData() && !tapped.has(lakeId)) {
       box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
-        <button class="picture tap-to-load" style="aspect-ratio:${meta.width}/${meta.height}">${icon("satellite")}<span>${h(t("Tap to load the picture"))}</span></button>
+        <button class="picture tap-to-load" style="aspect-ratio:${meta.width}/${meta.height}">${icon("satellite")}<span>${h(t("Tap to load the picture"))}</span><small>${h(t("Saving data: satellite pictures load only when asked for."))}</small></button>
         <p class="sub small">${h(meta.attribution)}</p>`;
       box.querySelector(".tap-to-load").addEventListener("click", () => {
         tapped.add(lakeId);

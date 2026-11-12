@@ -60,6 +60,8 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - run: python3 scripts/check_translations.py
+      - name: Every app text is on the website or listed as app-only
+        run: python3 scripts/check_web_parity.py
 
   changes:
     # The iOS job takes about 15 macOS minutes; a change that touches nothing
