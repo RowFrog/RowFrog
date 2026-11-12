@@ -765,7 +765,7 @@ function slideList(hide) {
 }
 sideList.addEventListener("change", () => location.hash.startsWith("#/club/") && route(false));
 
-/** From this width the page's cards go into two columns (LocationPageView.twoColumnWidth). */
+/** From this page width, padding included and counted as if the list were shown, the cards go into two columns (LocationPageView.twoColumnWidth). */
 const TWO_COLUMNS = 600;
 
 /**
@@ -779,11 +779,11 @@ const TWO_COLUMNS = 600;
 const COLUMNS = { cardMax: 560, gap: 16, pad: 32, threeFrom: 1200, threeUntil: 1172, side: 400 };
 let columnCount = 0;
 
-/** How many columns the cards get: 1 under TWO_COLUMNS, else 2 or 3 by the window (pick B). */
-function columnsFor(boxWidth) {
-  if (boxWidth < TWO_COLUMNS) return 1;
-  const room = document.documentElement.clientWidth - (sideList.matches ? COLUMNS.side : 0) - COLUMNS.pad;
-  return room >= (columnCount === 3 ? COLUMNS.threeUntil : COLUMNS.threeFrom) ? 3 : 2;
+/** How many columns the cards get, by the window as if the list were shown (pick B): 1 under TWO_COLUMNS, else 2 or 3. */
+function columnsFor() {
+  const pageWidth = document.documentElement.clientWidth - (sideList.matches ? COLUMNS.side : 0);
+  if (pageWidth < TWO_COLUMNS) return 1;
+  return pageWidth - COLUMNS.pad >= (columnCount === 3 ? COLUMNS.threeUntil : COLUMNS.threeFrom) ? 3 : 2;
 }
 
 /** The page's widest size for a column count: cards no wider than COLUMNS.cardMax, then the page sits in the middle. */
@@ -921,12 +921,12 @@ function balanceCards() {
   unfill(cards);
   box.replaceChildren();
   const page = box.closest(".page");
-  // Never more columns than cards, so none stays empty; data-columns keeps what the window allows.
-  const allowed = columnsFor(box.clientWidth);
+  // Never more columns than page cards (the page end does not count), so none stays empty, but never under two
+  // once two apply (the app's rule); data-columns keeps what the window allows.
+  const allowed = columnsFor();
   box.dataset.columns = allowed;
-  let n = Math.min(allowed, Math.max(1, cards.length));
+  const n = allowed === 1 ? 1 : Math.max(2, Math.min(allowed, cards.length));
   if (page) page.style.maxWidth = n > 1 ? pageMaxFor(n) : "";
-  if (n > 1 && box.clientWidth < TWO_COLUMNS) n = 1;
   const changed = columnCount !== 0 && allowed !== columnCount;
   columnCount = allowed;
   box.classList.toggle("two", n > 1);
