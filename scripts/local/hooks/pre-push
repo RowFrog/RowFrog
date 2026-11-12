@@ -4,7 +4,10 @@
 # separate checkout: ruff, backend pytest with coverage, the Worker tests (Node),
 # check_translations, check_web_parity, and, when ios/ or testdata/ changed, xcodegen + xcodebuild test
 # in English. Also guards main: no deletes, no non-fast-forward, 86e1980 stays in it.
-# A failure refuses the push. Logs: RowFrog/log/pre-push-<sha>.log.
+# A failure refuses the push. Logs: RowFrog/log/pre-push-<sha>.log (browser tests in full: log/browser-<sha>.txt).
+# Load mode (scripts/local/loadmode.sh, 12 Nov 2026): in busy mode the commits are checked two at a time,
+# each with its own checkout, DerivedData and iPhone Simulator; in quiet mode one at a time, at low
+# priority (taskpolicy -b) and with xcodebuild -jobs at half the cores.
 remote="$1"
 [ "$remote" = pi ] || exit 0
 
@@ -15,17 +18,24 @@ passed="$logdir/checks-passed.txt"; touch "$passed"
 zero=0000000000000000000000000000000000000000
 keep=86e198013   # "Screenshots leave git history" (#66): must stay in main's history
 venv="$top/backend/.venv"
-wt="${TMPDIR:-/tmp}/rowfrog-prepush"
-dd="$HOME/Library/Developer/Xcode/DerivedData/RowFrog-prepush"
+lm="$top/scripts/local/loadmode.sh"; [ -x "$lm" ] || lm=""
+prefix=""; jobs=""
+if [ -n "$lm" ]; then prefix=$("$lm" prefix 2>/dev/null); jobs="-jobs $("$lm" jobs 2>/dev/null)"; fi
 
 refuse() { echo "pre-push: $*" >&2; exit 1; }
 
-checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
-  local sha=$1 base=$2 log="$logdir/pre-push-${1:0:9}.log" ok=0
+checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change", $3 = slot (0, 1, …)
+  local sha=$1 base=$2 slot=${3:-0} log="$logdir/pre-push-${1:0:9}.log" ok=0
+  local wt="${TMPDIR:-/tmp}/rowfrog-prepush" dd="$HOME/Library/Developer/Xcode/DerivedData/RowFrog-prepush"
+  [ "$slot" != 0 ] && { wt="$wt-$slot"; dd="$dd-$slot"; }
   if grep -qx "$sha" "$passed"; then echo "pre-push: ${sha:0:9} already passed the checks"; return 0; fi
   echo "pre-push: checking ${sha:0:9} (log: $log)"
   git worktree remove --force "$wt" >/dev/null 2>&1; rm -rf "$wt"
-  git worktree add --detach --force "$wt" "$sha" >/dev/null 2>&1 || { echo "pre-push: no checkout of $sha" >&2; return 1; }
+  local try
+  for try in 1 2 3; do  # two slots may add their checkouts at the same moment
+    git worktree add --detach --force "$wt" "$sha" >/dev/null 2>&1 && break
+    [ "$try" = 3 ] && { echo "pre-push: no checkout of $sha" >&2; return 1; }; sleep $((slot + 2))
+  done
   {
     echo "== $(date '+%F %T') checks for $sha"
     echo "== ruff"
@@ -52,7 +62,8 @@ checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
       (cd "$wt" && node --test web/tests/*.test.mjs 2>&1 | tail -8; exit "${PIPESTATUS[0]}") || ok=1
       (cd "$wt" && "$venv/bin/python" scripts/build_web.py) || ok=1
       if [ -d "$top/node_modules/playwright" ]; then
-        (cd "$wt" && ln -s "$top/node_modules" node_modules && node --test web/tests/browser/*.test.mjs 2>&1 | tail -8; exit "${PIPESTATUS[0]}") || ok=1
+        (cd "$wt" && ln -s "$top/node_modules" node_modules && node --test web/tests/browser/*.test.mjs > "$logdir/browser-${sha:0:9}.txt" 2>&1; rc=$?
+         grep -E "^not ok|^ +not ok" "$logdir/browser-${sha:0:9}.txt"; tail -8 "$logdir/browser-${sha:0:9}.txt"; exit $rc) || ok=1
       else
         echo "WARNING: no npm packages (npm ci), so the website's browser tests were skipped"
       fi
@@ -65,11 +76,13 @@ checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
 import json, sys
 runtimes = sorted((r for r in json.load(sys.stdin)["devices"].items() if "iOS-" in r[0]),
                   key=lambda r: [int(n) for n in r[0].rsplit("iOS-", 1)[-1].split("-") if n.isdigit()])
-found = [d["udid"] for runtime, devices in runtimes for d in devices
-         if d["name"].startswith("iPhone") and "Duo" not in d["name"]]
-print(found[-1] if found else "")')
-      echo "Xcode: $(xcodebuild -version | head -1), device $device"
-      (cd "$wt/ios" && xcodegen >/dev/null && xcodebuild test -project RowFrog.xcodeproj -scheme RowFrog \
+newest = [d for d in runtimes[-1][1] if d["name"].startswith("iPhone") and "Duo" not in d["name"]] if runtimes else []
+# Slot 0: the iPhone Pro of the newest runtime (as before); slot 1: its Pro Max, then the others.
+rank = lambda d: (0 if d["name"].endswith(" Pro") else 1 if d["name"].endswith(" Pro Max") else 2, d["name"])
+found = [d["udid"] for d in sorted(newest, key=rank)]
+slot = int(sys.argv[1]); print(found[slot] if len(found) > slot else (found[0] if found else ""))' "$slot")
+      echo "Xcode: $(xcodebuild -version | head -1), device $device, slot $slot${prefix:+, low priority}"
+      (cd "$wt/ios" && xcodegen >/dev/null && $prefix xcodebuild test $jobs -project RowFrog.xcodeproj -scheme RowFrog \
          -destination "id=$device" -derivedDataPath "$dd" -testLanguage en -testRegion US 2>&1 \
          | grep -E "Executed|error:|failed \(|TEST (SUCCEEDED|FAILED)" | tail -15; exit "${PIPESTATUS[0]}") || ok=1
     else
@@ -86,6 +99,7 @@ print(found[-1] if found else "")')
 refs=()
 while read -r lref lsha rref rsha; do refs+=("$lref $lsha $rref $rsha"); done
 status=0
+todo=()
 for line in "${refs[@]}"; do
   read -r lref lsha rref rsha <<<"$line"
   if [ "$rref" = refs/heads/main ]; then
@@ -99,7 +113,22 @@ for line in "${refs[@]}"; do
   case "$rref" in refs/heads/model-check) continue ;; refs/heads/*) ;; *) continue ;; esac  # data branch, screenshots refs
   base=$rsha
   [ "$base" = "$zero" ] && base=$(git merge-base "$lsha" refs/remotes/pi/main 2>/dev/null || echo "$zero")
-  checks "$lsha" "$base" || status=1
+  todo+=("$lsha $base")
+done
+n=1; [ -n "$lm" ] && n=$("$lm" sims checks 2>/dev/null || echo 1)
+[ -n "$lm" ] && echo "pre-push: load mode $("$lm" mode 2>&1 | tr '\n' ' ')- $n at a time"
+i=0
+while [ $i -lt ${#todo[@]} ]; do
+  pids=(); outs=()
+  for slot in $(seq 0 $((n - 1))); do
+    [ $((i + slot)) -lt ${#todo[@]} ] || break
+    read -r sha base <<<"${todo[$((i + slot))]}"
+    out=$(mktemp); outs+=("$out")
+    if [ "$n" = 1 ]; then checks "$sha" "$base" 0 > "$out" 2>&1; echo $? >> "$out.rc"; else (checks "$sha" "$base" "$slot"; echo $? > "$out.rc") > "$out" 2>&1 & pids+=($!); fi
+  done
+  [ ${#pids[@]} -gt 0 ] && wait "${pids[@]}"
+  for out in "${outs[@]}"; do cat "$out"; [ "$(tail -1 "$out.rc" 2>/dev/null)" = 0 ] || status=1; rm -f "$out" "$out.rc"; done
+  i=$((i + n))
 done
 [ $status = 0 ] || echo "pre-push: checks failed, nothing was pushed (see RowFrog/log/)" >&2
 exit $status
