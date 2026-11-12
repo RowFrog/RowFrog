@@ -713,9 +713,9 @@ export const warningSlippery = (w) => eventHas(w, SLIPPERY_WORDS);
 /** The badge's short text and full advice for what cold water calls for (ColdWaterKit). */
 export function coldWaterText(kit) {
   return {
-    lifeJacket: [t("Wear a life jacket"), t("Cold water: a capsize can cause cold-water shock. Wear a life jacket and clothes that keep you warm when wet.")],
-    partnerBoat: [t("Wear a life jacket · with a partner boat"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row a single only with a coach boat or a partner boat.", temperature(10))],
-    nearShore: [t("Wear a life jacket · stay near shore"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row with a second boat nearby.", temperature(10))],
+    lifeJacket: [t("Life jacket on"), t("Cold water: a capsize can cause cold-water shock. Wear a life jacket and clothes that keep you warm when wet.")],
+    partnerBoat: [t("Life jacket on · with partner boat"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row a single only with a coach boat or a partner boat.", temperature(10))],
+    nearShore: [t("Life jacket on · stay near shore"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row with a second boat nearby.", temperature(10))],
   }[kit];
 }
 

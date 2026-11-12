@@ -322,9 +322,9 @@ enum ColdWaterKit: Equatable {
     /// just below, blue when cold and marked ≈ when estimated (owner's pick A4, 12 Nov 2026).
     var title: String {
         switch self {
-        case .lifeJacket: tr("Wear a life jacket")
-        case .partnerBoat: tr("Wear a life jacket · with a partner boat")
-        case .nearShore: tr("Wear a life jacket · stay near shore")
+        case .lifeJacket: tr("Life jacket on")
+        case .partnerBoat: tr("Life jacket on · with partner boat")
+        case .nearShore: tr("Life jacket on · stay near shore")
         }
     }
 

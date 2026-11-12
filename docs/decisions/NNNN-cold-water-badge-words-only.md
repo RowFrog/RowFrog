@@ -6,7 +6,7 @@
 
 ## Decision
 
-The blue badge under the rowing light says what to do in full words, with no temperature and no ≈: "Weste tragen", "Weste tragen · nur mit Begleitboot" (boats that may be singles, below 10 °C) or "Weste tragen · ufernah rudern" (bigger boats, below 10 °C). Where it does not fit on one line (English with a partner boat on narrow screens, larger text sizes) it wraps onto a second line instead of shortening. The list row shows the same words on up to two lines.
+The blue badge under the rowing light says what to do in full words, with no temperature and no ≈: "Weste tragen", "Weste tragen · nur mit Begleitboot" (boats that may be singles, below 10 °C) or "Weste tragen · ufernah rudern" (bigger boats, below 10 °C). In English: "Life jacket on", "Life jacket on · with partner boat", "Life jacket on · stay near shore" (owner's pick E5), which fit on one line on every screen at the default text size. Where it does not fit on one line (larger text sizes) it wraps onto a second line instead of shortening. The list row shows the same words on up to two lines.
 
 The full advice for bigger boats below 10 °C now says "row with a second boat nearby" instead of "don't row alone".
 
