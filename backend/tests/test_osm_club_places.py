@@ -14,13 +14,13 @@ def feature(name, north_m=0.0, osm="way/1"):
     return {"name": name, "lat": LAUNCH[0] + north_m / 111_195, "lon": LAUNCH[1], "osm": osm}
 
 
-def club(id, name, short=None):
-    return {"id": id, "name": name, "shortName": short or name, "points": [LAUNCH]}
+def club(id, name, short=None, town=()):
+    return {"id": id, "name": name, "shortName": short or name, "points": [LAUNCH], "town": set(town)}
 
 
 def test_names_keep_only_their_telling_words():
-    assert places.words("Münchener Ruder-Club von 1880 e.V.") == {"muenchener", "1880"}
-    assert places.words("Der Hamburger und Germania Ruder Club") == {"hamburger", "germania"}
+    assert places.words("Münchener Ruder-Club von 1880 e.V.") == {"muenchen", "1880"}
+    assert places.words("Der Hamburger und Germania Ruder Club") == {"hamburg", "germania"}
     assert places.words("RuderClub Bayern") == {"bayern"}
     assert places.likeness("Münchener Ruder-Club von 1880 e.V.", "Münchener Ruderclub 1880") == 1.0
     assert places.likeness("Ruderclub", "Ruderverein") == 0.0
@@ -60,7 +60,7 @@ def test_rentals_and_unnamed_features_are_not_clubs():
         {"type": "way", "id": 3, "center": {"lat": 48.1, "lon": 11.1}, "tags": {"name": "Ruderclub Tutzing", "sport": "rowing"}},
     ]
     assert places.features_from(elements) == [
-        {"name": "Ruderclub Tutzing", "lat": 48.1, "lon": 11.1, "osm": "way/3", "kind": "sport=rowing"}]
+        {"name": "Ruderclub Tutzing", "lat": 48.1, "lon": 11.1, "osm": "way/3", "rowing": True, "kind": "sport=rowing"}]
 
 
 def test_queries_look_only_around_the_clubs(monkeypatch):
@@ -126,3 +126,56 @@ def test_the_report_query_also_asks_for_any_named_sports_place_close_by(monkeypa
     places.query([club("a", "Ruderverein Tutzing")], report=True)
     assert "(around:1500,48.13000,11.55000)" in sent[0]
     assert 'nwr["club"]["name"](around:300,48.13000,11.55000)' in sent[0]
+
+
+def test_names_sharing_only_the_town_are_other_clubs():
+    bremen = club("bsc", "Bremer Sport-Club e.V. - Ruderabteilung", town=["bremen"])
+    assert places.shares_only_the_town(bremen, 'Bremer Ruder Club "Hansa"')
+    zurich = club("gc", "Grasshopper Club Zürich", town=["zuerich"])
+    assert places.shares_only_the_town(zurich, "Seeclub Zürich")
+    assert places.shares_only_the_town(club("rcz", "Ruderclub Zürich", town=["zuerich"]), "Seeclub Zürich")
+    bonn = club("brg", "Bonner Ruder-Gesellschaft e.V.", town=["bonn"])
+    assert places.shares_only_the_town(bonn, "Bonner Ruder-Verein 1882 e.V.")
+    havel = club("rch", "Ruder-Club-Havel Brandenburg", town=["brandenburg"])
+    assert places.shares_only_the_town(havel, "Brandenburger Sport- und Ruder-Klub (BSRK) 1883 e.V.")
+
+
+def test_the_same_club_written_another_way_is_not_another_club():
+    def same(name, feature, town):
+        return not places.shares_only_the_town(club("x", name, town=[town]), feature)
+
+    assert same("Verdener Ruderverein", "Anleger Verdener Ruderverein", "verden")
+    assert same("Neusser Ruderverein e.V.", "Clubhaus Neusser Ruderverein", "neuss")
+    assert same("Torgauer Ruderverein e.V.", "Ruderverein Torgau e.V.", "torgau")
+    assert same("Seeclub Thun", "See Club Thun", "thun")
+    assert same("Ruder-Club Wittenberg e.V.", "Ruder-Club Wittenberg e.V. E. Tilch", "wittenberg")
+    assert same("Ruder Club am Lech Kaufering", "Ruderclub Kaufering RCLK e.V.", "kaufering")
+    assert same("Volkstümlicher Wassersport Mannheim", "VWM Mannheim e.V. Bootshaus", "mannheim")
+
+
+def test_abbreviations_spell_the_name():
+    assert places.spells("rve", "Ruderverein Erlangen")
+    assert places.spells("rclk", "Ruder Club am Lech Kaufering")
+    assert places.spells("usc", "Universitätssportclub Magdeburg")
+    assert not places.spells("bsrk", "Ruder-Club-Havel Brandenburg")
+
+
+def test_other_sports_and_other_clubs_nearby_are_left_out():
+    rc = [club("rca", "Ruderclub Ägeri")]
+    assert places.match(rc, [feature("Segelclub Ägeri", 20)]) == {}
+    # A club found by its "club" tag alone must carry the club's whole name and be close.
+    biel = [club("scb", "Seeclub Biel")]
+    plain = {"rowing": False}
+    assert places.match(biel, [{**feature("Seeclub Biel", 100), **plain}])["scb"]["name"] == "Seeclub Biel"
+    assert places.match(biel, [{**feature("Seeclub Biel", 400), **plain}]) == {}
+    assert places.match(biel, [{**feature("Seeclub Biel Junioren", 100), **plain}]) == {}
+
+
+def test_a_school_crew_shares_the_club_whose_name_it_holds():
+    clubs = [club("dsc", "Domschulruderclub Schleswig e.V."), club("srr", "SRR Domschulruderclub Schleswig")]
+    found = places.match(clubs, [feature("Domschulruderclub Schleswig", 30)])
+    assert found["dsc"]["osm"] == found["srr"]["osm"] == "way/1"
+    # Not a club that only matches as well: the club the feature names keeps it.
+    clubs = [club("a", "Ruderverein Tutzing"), club("b", "Ruderriege Bayern Tutzing")]
+    found = places.match(clubs, [feature("Ruderverein Tutzing", 30)])
+    assert "b" not in found
