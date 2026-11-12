@@ -1,0 +1,329 @@
+{
+ "comment": "What to bring in cold water (the blue badge beside the rowing light) and how the lake maps draw the shore, which the app (ios/RowFrog/Limits.swift ColdWaterKit, LakeView.swift ColdShore) and the website (web/public/app/logic.js coldWaterKit, lake.js coldShore) must both give. Below the life-jacket limit (15 °C, or the user's own `ownLifeJacket`) or below 10 °C: a life jacket; below 10 °C also a partner boat for a boat that may be a single (the starting boat `small`, any 1x), else near the shore. The shore is `cool` with the life jacket alone and `cold` below 10 °C. `kit` and `shore` null: nothing. Expected values come from a separate implementation of the rule. Read by ios/RowFrogTests/ColdWaterTableTests.swift and web/tests/coldwater.test.mjs; change it together with both.",
+ "cases": [
+  {
+   "boat": {
+    "id": "small",
+    "type": "racing",
+    "class": "1x"
+   },
+   "waterC": null,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "small",
+    "type": "racing",
+    "class": "1x"
+   },
+   "waterC": 20,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "small",
+    "type": "racing",
+    "class": "1x"
+   },
+   "waterC": 15,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "small",
+    "type": "racing",
+    "class": "1x"
+   },
+   "waterC": 14.9,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "small",
+    "type": "racing",
+    "class": "1x"
+   },
+   "waterC": 10,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "small",
+    "type": "racing",
+    "class": "1x"
+   },
+   "waterC": 9.9,
+   "kit": "partnerBoat",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "small",
+    "type": "racing",
+    "class": "1x"
+   },
+   "waterC": 3,
+   "kit": "partnerBoat",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "racing",
+    "class": "8+"
+   },
+   "waterC": null,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "racing",
+    "class": "8+"
+   },
+   "waterC": 20,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "racing",
+    "class": "8+"
+   },
+   "waterC": 15,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "racing",
+    "class": "8+"
+   },
+   "waterC": 14.9,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "racing",
+    "class": "8+"
+   },
+   "waterC": 10,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "racing",
+    "class": "8+"
+   },
+   "waterC": 9.9,
+   "kit": "nearShore",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "racing",
+    "class": "8+"
+   },
+   "waterC": 3,
+   "kit": "nearShore",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "gig",
+    "class": "1x"
+   },
+   "waterC": null,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "gig",
+    "class": "1x"
+   },
+   "waterC": 20,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "gig",
+    "class": "1x"
+   },
+   "waterC": 15,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "gig",
+    "class": "1x"
+   },
+   "waterC": 14.9,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "gig",
+    "class": "1x"
+   },
+   "waterC": 10,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "gig",
+    "class": "1x"
+   },
+   "waterC": 9.9,
+   "kit": "partnerBoat",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "gig",
+    "class": "1x"
+   },
+   "waterC": 3,
+   "kit": "partnerBoat",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "waterC": null,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "waterC": 20,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "waterC": 15,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "waterC": 14.9,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "waterC": 10,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "waterC": 9.9,
+   "kit": "nearShore",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "waterC": 3,
+   "kit": "nearShore",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "ownLifeJacket": 18,
+   "waterC": 16,
+   "kit": "lifeJacket",
+   "shore": "cool"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "coastal",
+    "class": "8+"
+   },
+   "ownLifeJacket": 11,
+   "waterC": 12,
+   "kit": null,
+   "shore": null
+  },
+  {
+   "boat": {
+    "id": "small",
+    "type": "racing",
+    "class": "1x"
+   },
+   "ownLifeJacket": 8,
+   "waterC": 9,
+   "kit": "partnerBoat",
+   "shore": "cold"
+  },
+  {
+   "boat": {
+    "id": "own",
+    "type": "racing",
+    "class": "8+"
+   },
+   "ownLifeJacket": 8,
+   "waterC": 9.5,
+   "kit": "nearShore",
+   "shore": "cold"
+  }
+ ]
+}
