@@ -1,0 +1,302 @@
+{
+ "comment": "How the lake view colours its squares, which the app (ios/RowFrog/LakeView.swift LakeRaster) and the website (web/public/app/lake.js ramp, greyed, RGB) must both give. Waves and wind: calm blue at 0, yellow at the boat's amber limit, red at its red limit, purple at 1.6 times the red limit and beyond, straight lines in between. The light layer: the hour's light colour, faded to grey when the whole lake is red (dark, a warning). Expected colours are RGB 0-255, rounded to 2 decimals; compare within 0.01. Read by ios/RowFrogTests/LakeColourTableTests.swift and web/tests/lakecolours.test.mjs; change it together with both.",
+ "stops": {
+  "calm": [
+   120,
+   205,
+   255
+  ],
+  "yellow": [
+   255,
+   204,
+   0
+  ],
+  "red": [
+   255,
+   59,
+   48
+  ],
+  "purple": [
+   175,
+   82,
+   222
+  ],
+  "purpleAtRedTimes": 1.6
+ },
+ "lights": {
+  "green": [
+   52,
+   199,
+   89
+  ],
+  "amber": [
+   255,
+   149,
+   0
+  ],
+  "red": [
+   255,
+   59,
+   48
+  ]
+ },
+ "ramp": [
+  {
+   "layer": "waves",
+   "value": 0,
+   "amber": 0.15,
+   "red": 0.25,
+   "rgb": [
+    120,
+    205,
+    255
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.05,
+   "amber": 0.15,
+   "red": 0.25,
+   "rgb": [
+    165.0,
+    204.67,
+    170.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.15,
+   "amber": 0.15,
+   "red": 0.25,
+   "rgb": [
+    255.0,
+    204.0,
+    0.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.2,
+   "amber": 0.15,
+   "red": 0.25,
+   "rgb": [
+    255.0,
+    131.5,
+    24.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.25,
+   "amber": 0.15,
+   "red": 0.25,
+   "rgb": [
+    255.0,
+    59.0,
+    48.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.3,
+   "amber": 0.15,
+   "red": 0.25,
+   "rgb": [
+    228.33,
+    66.67,
+    106.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.4,
+   "amber": 0.15,
+   "red": 0.25,
+   "rgb": [
+    175.0,
+    82.0,
+    222.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.5,
+   "amber": 0.15,
+   "red": 0.25,
+   "rgb": [
+    175,
+    82,
+    222
+   ]
+  },
+  {
+   "layer": "wind",
+   "value": 0,
+   "amber": 5.5,
+   "red": 8.0,
+   "rgb": [
+    120,
+    205,
+    255
+   ]
+  },
+  {
+   "layer": "wind",
+   "value": 3,
+   "amber": 5.5,
+   "red": 8.0,
+   "rgb": [
+    193.64,
+    204.45,
+    115.91
+   ]
+  },
+  {
+   "layer": "wind",
+   "value": 5.5,
+   "amber": 5.5,
+   "red": 8.0,
+   "rgb": [
+    255.0,
+    204.0,
+    0.0
+   ]
+  },
+  {
+   "layer": "wind",
+   "value": 7,
+   "amber": 5.5,
+   "red": 8.0,
+   "rgb": [
+    255.0,
+    117.0,
+    28.8
+   ]
+  },
+  {
+   "layer": "wind",
+   "value": 8,
+   "amber": 5.5,
+   "red": 8.0,
+   "rgb": [
+    255.0,
+    59.0,
+    48.0
+   ]
+  },
+  {
+   "layer": "wind",
+   "value": 10,
+   "amber": 5.5,
+   "red": 8.0,
+   "rgb": [
+    221.67,
+    68.58,
+    120.5
+   ]
+  },
+  {
+   "layer": "wind",
+   "value": 12.8,
+   "amber": 5.5,
+   "red": 8.0,
+   "rgb": [
+    175.0,
+    82.0,
+    222.0
+   ]
+  },
+  {
+   "layer": "wind",
+   "value": 15,
+   "amber": 5.5,
+   "red": 8.0,
+   "rgb": [
+    175,
+    82,
+    222
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.1,
+   "amber": 0.25,
+   "red": 0.4,
+   "rgb": [
+    174.0,
+    204.6,
+    153.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.25,
+   "amber": 0.25,
+   "red": 0.4,
+   "rgb": [
+    255.0,
+    204.0,
+    0.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.5,
+   "amber": 0.25,
+   "red": 0.4,
+   "rgb": [
+    221.67,
+    68.58,
+    120.5
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.64,
+   "amber": 0.25,
+   "red": 0.4,
+   "rgb": [
+    175.0,
+    82.0,
+    222.0
+   ]
+  },
+  {
+   "layer": "waves",
+   "value": 0.8,
+   "amber": 0.25,
+   "red": 0.4,
+   "rgb": [
+    175,
+    82,
+    222
+   ]
+  }
+ ],
+ "greyed": [
+  {
+   "light": "green",
+   "rgb": [
+    120.1,
+    156.85,
+    129.35
+   ]
+  },
+  {
+   "light": "amber",
+   "rgb": [
+    187.06,
+    160.56,
+    123.31
+   ]
+  },
+  {
+   "light": "red",
+   "rgb": [
+    151.19,
+    102.19,
+    99.44
+   ]
+  }
+ ]
+}
