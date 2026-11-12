@@ -233,7 +233,8 @@ struct LakeMapScreen: View {
             LakeMapLegend(layer: layer, stripes: layer == .light ? shown?.lakeWide.stripes : nil,
                           routeMode: routeMode, hasRoute: (plan?.segments.isEmpty == false), boat: boat != nil,
                           spot: spot != nil, hasWind: !(shown?.wind.isEmpty ?? true),
-                          track: routeMode && showTrack && rowed?.track != nil, clubID: clubID, coldShore: view.coldShore)
+                          track: routeMode && showTrack && rowed?.track != nil, clubID: clubID, coldShore: view.coldShore,
+                          stripesFall: view.stripesFall)
         }
         .sheet(isPresented: $showingImport) {
             RowImportSheet(lakeName: view.name) { importRow($0) }
@@ -1660,80 +1661,6 @@ private struct CappedScroll<Content: View>: View {
             .scrollBounceBehavior(.basedOnSize)
         } else {
             content
-        }
-    }
-}
-
-/// What each symbol and colour on the lake map means, listing only what is on
-/// the map right now (layer, whole-lake stripes, route, boat, spot).
-struct LakeMapLegend: View {
-    let layer: LakeLayer
-    let stripes: Light?
-    let routeMode: Bool
-    let hasRoute: Bool
-    let boat: Bool
-    let spot: Bool
-    let hasWind: Bool
-    var track = false
-    var clubID: String? = nil
-    var coldShore: ColdShore? = nil
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            List {
-                Section(layer.title) {
-                    LakeLegend(layer: layer, clubID: clubID).padding(.vertical, 4)
-                    MapBoatNote(clubID: clubID)
-                    if stripes == .red {
-                        row(Image(systemName: "line.diagonal").foregroundStyle(.red),
-                            tr("Grey squares with red stripes: the whole lake is red (official warning or darkness), see the panel."))
-                    } else if stripes == .amber {
-                        row(Image(systemName: "line.diagonal").foregroundStyle(.orange),
-                            tr("Amber stripes: the whole lake is amber (the last hour before sunset, official warning), see the panel. The squares keep their own colours."))
-                    }
-                }
-                Section(tr("On the map")) {
-                    row(ClubMarkIcon(color: .blue, symbol: LocationStore.markSymbol(for: clubID)), ClubMarkIcon.pageClubText(clubID))
-                    row(ClubMarkIcon(color: .gray), tr("Other clubs on the lake"))
-                    row(ClubMarkIcon(color: .blue, symbol: ClubMarks.launchSymbol), tr("Zoomed in: the club's pin moves to the club's own place in the map app, and oars mark the launch point the forecast is for"))
-                    if let coldShore {
-                        row(Capsule().fill(coldShore.color).frame(width: 18, height: 4),
-                            tr("Blue shore: the water is cold. Bring a life jacket; light blue below %@, deeper blue below %@.",
-                               Format.temperature(AppSettings.shared.limits(at: clubID).value(.lifeJacket)), Format.temperature(RowingLimits.coldWaterC)))
-                    }
-                    if hasWind {
-                        row(Image(systemName: "arrow.up.right").fontWeight(.bold),
-                            tr("Wind: points where the wind blows to; longer arrows mean stronger wind. Between the forecast points the wind is estimated from the nearest ones. On land the arrows show the weather map's wind forecast for each place."))
-                    }
-                    if spot { row(Image(systemName: "scope"), tr("The spot you tapped")) }
-                }
-                if routeMode {
-                    Section(tr("Route")) {
-                        row(Image(systemName: "circle.fill").foregroundStyle(.blue), tr("Start at your club"))
-                        row(Image(systemName: "circle").fontWeight(.bold), tr("Turning point: tap to select, hold and drag to move"))
-                        if hasRoute {
-                            row(HStack(spacing: 2) { ForEach([Light.green, .amber, .red], id: \.self) { Capsule().fill($0.color).frame(width: 8, height: 4) } },
-                                tr("The route in the light the boat meets there; out and back run side by side"))
-                        }
-                        if boat { row(ClubMarkIcon(color: .indigo), tr("Where the boat is at the time shown")) }
-                        if track { row(Image(systemName: "scribble.variable").foregroundStyle(.secondary), tr("Dashed: the track as you rowed it (imported row)")) }
-                    }
-                }
-            }
-            .navigationTitle(tr("Legend"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                CloseToolbarItem { dismiss() }
-            }
-        }
-        .presentationDetents([.medium, .large])
-    }
-
-    private func row(_ symbol: some View, _ text: String) -> some View {
-        HStack(alignment: .firstTextBaseline, spacing: 12) {
-            symbol.frame(width: 28)
-            Text(text).font(.subheadline)
         }
     }
 }

@@ -576,6 +576,10 @@ jobs:
           GUIDE=1 WAIT=30 shoot 192-tip-weather-map-german-dark dark -RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880 -RWOpenCondition wind -RWLanguage de
           WAIT=30 shoot 134-chart-now-dots light -RWOpenClub mrc-1880 -RWOpenCondition temperature
           WAIT=30 shoot 135-lake-legend light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLegend YES
+          # The legend's stripes run the way the lake's own do (owner, 12 Nov 2026): 14 hours on is
+          # dark at any time of day the shots run, so the lake is striped.
+          WAIT=30 shoot 439-lake-legend-stripes-german dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeHour 14 -RWLakeLegend YES -RWLanguage de
+          WAIT=30 shoot 440-lake-legend-stripes-forggensee light -RWOpenClub ruderclub-forggensee -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeHour 14 -RWLakeLegend YES
           WAIT=30 shoot 136-lake-satellite light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeImagery YES -RWLakeLayer wind
           WAIT=30 shoot 244-lake-view-wind-dark dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWLakeLayer wind
           WAIT=30 shoot 137-water-station light -RWOpenClub mrc-1880 -RWOpenCondition waterTemperature -RWScrollPage 1
