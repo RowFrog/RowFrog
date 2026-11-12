@@ -96,9 +96,9 @@ const solidInFrosted = (page) => page.evaluate(() => {
     const p = m[1].split(/[\s,/]+/).filter(Boolean);
     return p.length > 3 ? Number(p[3]) : 1;
   };
-  // Meant to be solid: the pinned table header (its layer), tips (the app's TipView has its own box), coloured dots,
-  // chips and pills with their own fill.
-  const meant = ".hhead.stuck, .tip, .dot, .light, .pill, .chip, button, a, input, select, .switch, svg, img, canvas, .leaflet-container, .map, [class*='map'], .nightline, .bar, .fill, .swatch, .badge, mark";
+  // Meant to be solid: the pinned table header (its layer), coloured dots, chips and pills with their own fill.
+  // Tips are tinted glass since the owner's pick C (12 Nov 2026), so they are checked too.
+  const meant = ".hhead.stuck, .dot, .light, .pill, .chip, button, a, input, select, .switch, svg, img, canvas, .leaflet-container, .map, [class*='map'], .nightline, .bar, .fill, .swatch, .badge, mark";
   const out = [];
   for (const card of document.querySelectorAll(".card")) {
     for (const el of card.querySelectorAll("*")) {

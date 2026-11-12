@@ -100,9 +100,7 @@ struct SettingsView: View {
             .navigationTitle(tr("Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(tr("Done")) { dismiss() }
-                }
+                CloseToolbarItem { dismiss() }
             }
             .navigationDestination(for: SettingsRoute.self) { route in
                 switch route {
@@ -551,7 +549,7 @@ private struct AppIconSettingsView: View {
         Form {
             Section {
                 if showAppIconTip {
-                    TipView(appIconTip)
+                    TintedTipView(appIconTip)
                 }
                 AppIconPicker(selected: $appIcon)
             } footer: {
@@ -787,7 +785,7 @@ private struct DataSettingsView: View {
         Form {
             Section {
                 if showSaveDataTip {
-                    TipView(saveDataTip)
+                    TintedTipView(saveDataTip)
                 }
                 Toggle(tr("Save mobile data"), isOn: $settings.saveMobileData)
                 if DataSaver.shared.saving {
@@ -905,7 +903,7 @@ private struct AboutSettingsView: View {
 
             Section {
                 if showResetTip {
-                    TipView(resetTip)
+                    TintedTipView(resetTip)
                 }
                 Button(role: .destructive) {
                     confirmingReset = true
@@ -1204,7 +1202,7 @@ struct BackgroundSettingsView: View {
             Form {
                 if showTip {
                     Section {
-                        TipView(tip)
+                        TintedTipView(tip)
                     }
                 }
 

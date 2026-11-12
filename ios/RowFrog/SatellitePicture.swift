@@ -1121,9 +1121,7 @@ struct SatellitePictureScreen: View {
             .navigationTitle(tr("Satellite picture"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(tr("Done")) { dismiss() }
-                }
+                CloseToolbarItem { dismiss() }
             }
         }
         // Opening the full view asks for the pictures, also when saving data.
@@ -1600,7 +1598,7 @@ struct SatelliteLegend: View {
             .navigationTitle(tr("Legend"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
         }
         .presentationDetents([.medium, .large])

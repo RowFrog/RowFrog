@@ -468,8 +468,8 @@ struct LakeMapScreen: View {
                     draft.send(.deletePoint)
                     pointTip.invalidate(reason: .actionPerformed)
                 } label: { Label(tr("Delete point"), systemImage: "trash") }
-                Button { draft.send(.done) } label: { Text(tr("Done")) }
-                    .fontWeight(.semibold)
+                // The card's grey X at its right, as the tapped spot's (owner's pick A, 12 Nov 2026).
+                CardCloseButton { draft.send(.done) }
             } else {
                 // A real history: points, drags, deletes and the way back (owner decision 12 Nov 2026).
                 Button { draft.send(.undo) } label: { Label(tr("Undo"), systemImage: "arrow.uturn.backward") }
@@ -491,7 +491,7 @@ struct LakeMapScreen: View {
         .minimumScaleFactor(0.75)
         if let i = selectedPoint, i > 0, i < waypoints.count {
             if tourSeen && showPointTip {
-                TipView(pointTip)
+                TintedTipView(pointTip)
             } else {
                 Text(tr("Drag the point to move it. The magnifier shows where it lands."))
                     .font(.caption)
@@ -499,16 +499,16 @@ struct LakeMapScreen: View {
             }
         } else if tourSeen && showLoopTip && waypoints.count >= 3 && !loop {
             // After the second turning point.
-            TipView(loopTip)
+            TintedTipView(loopTip)
         } else if tourSeen && showStretchTip && waypoints.count >= 3 {
             // Once there are stretches between turning points.
-            TipView(stretchTip)
+            TintedTipView(stretchTip)
         } else if tourSeen && showOneWayTip && waypoints.count == 2 && !outAndBack {
             // After the first turning point.
-            TipView(oneWayTip)
+            TintedTipView(oneWayTip)
         } else if tourSeen && showImportTip && waypoints.count < 2 {
             // Before the first turning point: draw the route, or bring in one already rowed.
-            TipView(importTip)
+            TintedTipView(importTip)
         }
     }
 
@@ -680,7 +680,7 @@ struct LakeMapScreen: View {
         return VStack(alignment: .leading, spacing: 10) {
             grabber
             if tourSeen && showPanelTip {
-                TipView(panelTip)
+                TintedTipView(panelTip)
             }
             if !panelExpanded, let hour = shown {
                 collapsedSummary(hour, plan: plan, boat: boat)
@@ -815,7 +815,7 @@ struct LakeMapScreen: View {
         if let planner, let plan {
             RouteSummary(view: view, plan: plan, headline: false)
             if tourSeen && showBoatTip && !followBoat {
-                TipView(boatTip)
+                TintedTipView(boatTip)
             }
             HStack(spacing: 12) {
                 Toggle(isOn: $followBoat) {
@@ -876,8 +876,7 @@ struct LakeMapScreen: View {
                 TrafficLightDot(light: hour.lights[i], size: 14, stale: view.isStale)
                 Text(hour.lights[i].title(stale: view.isStale)).font(.headline)
                 Spacer()
-                Button { spot = nil } label: { Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary) }
-                    .accessibilityLabel(tr("Close"))
+                CardCloseButton { spot = nil }
             }
             if view.zones.count > 1, zone < view.zones.count {
                 Text(tr("Selected spot · %@", LakeZoneName.title(view.zones[zone], water: view.water)))
@@ -1038,7 +1037,7 @@ private struct LakeViewInfo: View {
             }
             .navigationTitle(water.aboutTitle)
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { Button(tr("Done")) { dismiss() } }
+            .toolbar { CloseToolbarItem { dismiss() } }
         }
         .presentationDetents([.medium, .large])
     }
@@ -1725,7 +1724,7 @@ struct LakeMapLegend: View {
             .navigationTitle(tr("Legend"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
         }
         .presentationDetents([.medium, .large])

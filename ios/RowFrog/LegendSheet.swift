@@ -28,7 +28,7 @@ struct LegendSheet: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
         }
         .presentationDetents(part == .all ? [.large] : [.medium, .large])

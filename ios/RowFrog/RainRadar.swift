@@ -383,7 +383,7 @@ struct RadarMapScreen: View {
             .navigationTitle(tr("Rain radar"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
             .sheet(isPresented: $showingLegend) { RadarLegendSheet() }
             .task { await loader.load() }
@@ -580,7 +580,7 @@ private struct RadarLegendSheet: View {
             .navigationTitle(tr("What the colours mean"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
         }
         .presentationDetents([.medium, .large])

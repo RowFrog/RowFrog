@@ -15,7 +15,7 @@ import {
   precipitationText, lightTitle, reasonLabel, warningInfoOnly, warningSlippery, lakeTitle, hourExplanation, noteText, reasonExplanation, coldWaterText,
   coldWaterBadge, setTitle, dot, skySymbol, CONDITION_ICONS, conditionIcon, conditionGraphic, card, sunPath, openSheet, openMenu,
   loadLeaflet, testing, adviceOnly, footerLinks, unitSymbol, inUnit, pressureNumber, usesAMPM, hourOnly,
-  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, markIcon } from "./shared.js";
+  applyAppearance, unitId, setUnit, TIME_FORMATS, DATE_FORMATS, dateText, dataSaving, clubNameHtml, refreshSavedClubs, refreshFailure, markIcon, closeX } from "./shared.js";
 import {
   isStale, shownLight, nowHour, nextHours, UNITS, compass, searchClubs, town, localDay, SKY_TITLES, skyIcon, REASONS,
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
@@ -1208,9 +1208,9 @@ function openLaunchPoint(club) {
   openSheet(t("Location"), launchPointBody(club, "launch-sheet-map"), (sheet) => {
     showLaunchMap(club, sheet.querySelector("#launch-sheet-map"));
     wireTips(sheet);
-    // Map full screen and back, at the left of the title bar (LaunchPointSheet's toolbar button).
+    // Map full screen and back, at the right of the title bar; the X has the left (LaunchPointSheet, owner's pick A).
     const header = sheet.querySelector("header");
-    header.insertAdjacentHTML("afterbegin", `<button class="map-full" type="button"></button>`);
+    header.insertAdjacentHTML("beforeend", `<button class="map-full" type="button"></button>`);
     const button = header.querySelector(".map-full");
     const show = (full) => {
       sheet.classList.toggle("full-map", full);
@@ -2292,7 +2292,7 @@ function renderSettings(topic = null) {
     ${testing()}
     <main class="page settings-topic">${settingsTopicBody(topic, accepted)}
     </main>`
-    : `<header class="nav"><span class="nav-side"></span><strong class="nav-title">${h(t("Settings"))}</strong><a class="link strong" href="${back}">${h(t("Done"))}</a></header>
+    : `<header class="nav">${closeX(`class="link close-x"`, back)}<strong class="nav-title">${h(t("Settings"))}</strong><span class="nav-side"></span></header>
     ${testing()}
     <main class="page settings-main">
       <div id="settings-topics">

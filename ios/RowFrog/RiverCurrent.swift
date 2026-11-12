@@ -102,7 +102,7 @@ struct CurrentDetailView: View {
             .navigationTitle(tr("Current"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
         }
     }

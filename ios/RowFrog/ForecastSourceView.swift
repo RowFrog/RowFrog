@@ -99,9 +99,7 @@ private struct ForecastSourceSheet: View {
             .navigationTitle(tr("Where the forecast comes from"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(tr("Done")) { dismiss() }
-                }
+                CloseToolbarItem { dismiss() }
             }
         }
     }

@@ -101,7 +101,7 @@ final class TapTests: XCTestCase {
         settings.tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForExistence(timeout: 30),
                       "Settings did not open; the app shows:\n\(app.debugDescription)")
-        app.navigationBars["Settings"].buttons["Done"].tap()
+        app.navigationBars["Settings"].buttons["close"].tap()
         XCTAssertTrue(app.navigationBars["Settings"].waitForNonExistence(timeout: 30), "Done did not close the settings")
 
         let list = app.buttons["All locations"]

@@ -106,7 +106,7 @@ struct WaterLevelDetailView: View {
             .navigationTitle(tr("Water level"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
         }
     }

@@ -5,7 +5,7 @@
 import { t } from "./i18n.js";
 import { icon } from "./icons.js";
 import { nowHour, iceValue, UNITS } from "./logic.js";
-import { store, h, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit, markIcon } from "./shared.js";
+import { store, h, closeX, time as clock, dayTime, setTitle, testing, conditionIcon, conditionTexts, TILE_ORDER, findClub, loadForecast, forBoat, footerLinks, conditionGraphic, loadLeaflet, distance, unitId, setUnit, markIcon } from "./shared.js";
 import { conditionData, dataAt, conditionDetail } from "./values.js";
 import { tip, wireTips } from "./tour.js";
 import { detailTime, mountChart } from "./chart.js";
@@ -129,9 +129,9 @@ function show(page) {
     return `<option value="${c}" ${c === condition ? "selected" : ""}>${h(value ? `${titles[c][1]} · ${value}` : titles[c][1])}</option>`;
   }).join("");
   root.innerHTML = `<header class="nav value-nav">
-      <label class="jump">${conditionIcon(titles[condition][0])}<select id="jump" aria-label="${h(t("Go to another value"))}">${menu}</select>${icon("chevron-down")}</label>
-      <strong class="nav-title">${h(title)}</strong>
-      <a class="link strong" href="#/club/${encodeURIComponent(page.clubId)}">${h(t("Done"))}</a></header>
+      ${closeX(`class="link close-x"`, `#/club/${encodeURIComponent(page.clubId)}`)}
+      <label class="nav-title title-menu"><strong>${h(title)}</strong>${icon("chevron-down")}<select id="jump" aria-label="${h(t("Go to another value"))}">${menu}</select></label>
+      <span></span></header>
     ${testing()}
     <main class="page value-page">
       <div class="value-top">
@@ -354,8 +354,8 @@ async function openFull(page, layerId, detail, hidden) {
   let playing = null;
   let own = new Date(start + time.shownMapHour * 3600000);
   const follows = () => layer.links !== "none" && layer.id === layerId;
-  panel.innerHTML = `<header class="nav"><label class="jump">${icon("layers")}<select id="wm-layer" aria-label="${h(t("Choose what the map shows"))}">${layerOptions(layerId)}</select>${icon("chevron-down")}</label>
-      <strong class="nav-title" id="wm-title"></strong><button class="link strong" id="wm-done">${h(t("Done"))}</button></header>
+  panel.innerHTML = `<header class="nav">${closeX(`class="link close-x" id="wm-done"`)}
+      <strong class="nav-title" id="wm-title"></strong><label class="jump">${icon("layers")}<select id="wm-layer" aria-label="${h(t("Choose what the map shows"))}">${layerOptions(layerId)}</select>${icon("chevron-down")}</label></header>
     <div class="wm" id="wm-full-map"></div>
     <section class="wm-panel" id="wm-panel"></section>`;
   let wm = null;
