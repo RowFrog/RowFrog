@@ -27,6 +27,9 @@ test("the current hour is the one the time falls in", () => {
   assert.equal(currentHour(forecast.hours, new Date("2000-01-01")), forecast.hours[0], "too early: the first hour");
   assert.equal(nextHours(forecast.hours, second, 48)[0], forecast.hours[1]);
   assert.ok(nextHours(forecast.hours, second, 48).length <= 48);
+  // Without a count it keeps every later hour: the night tail past hour 48 (12 Nov 2026).
+  const long = Array.from({ length: 58 }, (_, i) => ({ time: new Date(Date.parse(forecast.hours[0].time) + i * 3600e3).toISOString() }));
+  assert.equal(nextHours(long, new Date(long[0].time)).length, 58);
 });
 
 test("wind units", () => {

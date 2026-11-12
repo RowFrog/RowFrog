@@ -152,8 +152,9 @@ export function hourHalves(forecast, hour, stale = false) {
   return daylightHalves(t, days, weatherLight(hour), weatherLight(near(-3600e3)), weatherLight(near(3600e3)));
 }
 
-/** The next `count` hours from the current one. */
-export function nextHours(hours, now = new Date(), count = 48) {
+/** The hours from the current one on: all of them, or the next `count`. The table shows all,
+ * as the app does: past hour 48 the server only sends the rest of the last night (night tail). */
+export function nextHours(hours, now = new Date(), count = Infinity) {
   const current = currentHour(hours, now);
   const i = Math.max(0, hours.indexOf(current));
   return hours.slice(i, i + count);
