@@ -71,7 +71,7 @@ export function tourPages(river = false, choice = false) {
         p("map", key("The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.")),
         p("clock", key("On the map, move through the hours in the strip at the bottom and tap the water for one spot.")),
         p("route", key("Plan a route: tap your turning points to see the light along the way and the best time to start.")),
-        p("bookmark", key("Save the routes you row often in the Routes menu.")),
+        p("bookmark", key("Save the routes you row often in the Routes menu. Settings › Routes shows them all.")),
         p("globe", key("Below it, the latest satellite picture of the lake, with a switch to the clearest one.")),
       ],
     },

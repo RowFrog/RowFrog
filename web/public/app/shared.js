@@ -688,7 +688,7 @@ export function reasonExplanation(condition, light, topic = null, value = null) 
     case "twilight":
     case "sunset_soon": return t("The last hour before sunset: back ashore by sunset.");
     case "nearby_water": return nearbyExplanation(topic, value);
-    case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10));
+    case "cold_water": return t("Very cold water, below %@: wear a life jacket, stay near the shore and row with a second boat nearby.", temperature(10));
     case "cool_water": return t("Water is below %@: a capsize can cause cold-water shock. We advise a life jacket.", temperature(15));
     case "shipping_stopped": return t("The river is above the gauge's shipping mark: even motor ships stay in.");
     case "high_water": return t("The river is at or above the shipping mark I or mean high water: strong current, flotsam and flooded banks.");
@@ -713,16 +713,17 @@ export const warningSlippery = (w) => eventHas(w, SLIPPERY_WORDS);
 /** The badge's short text and full advice for what cold water calls for (ColdWaterKit). */
 export function coldWaterText(kit) {
   return {
-    lifeJacket: [t("Life jacket"), t("Cold water: a capsize can cause cold-water shock. Wear a life jacket and clothes that keep you warm when wet.")],
-    partnerBoat: [t("Life jacket · partner boat"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row a single only with a coach boat or a partner boat.", temperature(10))],
-    nearShore: [t("Life jacket · near the shore"), t("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", temperature(10))],
+    lifeJacket: [t("Life jacket on"), t("Cold water: a capsize can cause cold-water shock. Wear a life jacket and clothes that keep you warm when wet.")],
+    partnerBoat: [t("Life jacket on · with partner boat"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row a single only with a coach boat or a partner boat.", temperature(10))],
+    nearShore: [t("Life jacket on · stay near shore"), t("Very cold water, below %@: wear a life jacket, stay near the shore and row with a second boat nearby.", temperature(10))],
   }[kit];
 }
 
-/** The blue badge under the rowing light: what to bring, not a warning (ColdWaterBadge). */
+/** The blue badge under the rowing light: what to bring, not a warning (ColdWaterBadge).
+ * Words only, wrapping rather than shortening; the ≈ sits on the water value (owner's pick A4, 12 Nov 2026). */
 export function coldWaterBadge(kit, estimated) {
   const [title, advice] = coldWaterText(kit);
-  return `<button class="kit" data-tile="waterTemperature" title="${h(estimated ? t("Estimated: %@", advice) : advice)}">${icon("life-buoy")} ${h(estimated ? `≈ ${title}` : title)}</button>`;
+  return `<button class="kit" data-tile="waterTemperature" title="${h(estimated ? t("Estimated: %@", advice) : advice)}">${icon("life-buoy")}<span>${h(title)}</span></button>`;
 }
 
 export const flag = (code) => String.fromCodePoint(...[...(code ?? "de").toUpperCase()].map((c) => 0x1f1a5 + c.charCodeAt(0)));

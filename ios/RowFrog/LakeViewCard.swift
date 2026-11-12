@@ -98,36 +98,10 @@ struct LakeViewCard: View {
                 LakeWideBanner(lakeWide: hour.lakeWide, water: water)
             }
             MapBoatNote(clubID: clubID)
-            if view.zones.count > 1 {
-                let notes = view.zoneNotes(for: hour)
-                ForEach(Array(zip(view.zones.indices, view.zones)), id: \.0) { i, zone in
-                    if i < hour.zones.count {
-                        VStack(alignment: .leading, spacing: 1) {
-                            HStack(spacing: 6) {
-                                TrafficLightDot(light: hour.zones[i].light, size: 10, stale: view.isStale)
-                                Text(LakeZoneName.title(zone)).font(.subheadline.weight(.semibold))
-                            }
-                            // Waves, wind and visibility of the part, the cause in its colour (owner, 12 Nov 2026).
-                            LakeProbeValues(items: view.zoneValues(i, hour: hour))
-                                .font(.caption)
-                                .padding(.leading, 16)
-                            if i < notes.count, notes[i].light == hour.zones[i].light, let place = notes[i].text {
-                                Text(place)
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                                    .fixedSize(horizontal: false, vertical: true)
-                                    .padding(.leading, 16)
-                            }
-                        }
-                        .accessibilityElement(children: .combine)
-                    }
-                }
-            }
-            if let wind = view.windSummary(for: hour) {
-                Label(wind, systemImage: Condition.wind.symbol)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .fixedSize(horizontal: false, vertical: true)
+            // A small table like the 48-hour one, wind with its direction, also for a
+            // lake or stretch in one part; the old wind line under it went (owner's H1, 12 Nov 2026).
+            if !view.zones.isEmpty {
+                LakeZoneTable(view: view, hour: hour)
             }
             if view.sample {
                 Label(tr("Sample wind"), systemImage: "exclamationmark.triangle")

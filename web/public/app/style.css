@@ -150,6 +150,8 @@ button.wide { margin-top: 0; }
 .now-grid { display: grid; grid-template-columns: repeat(3, max-content); justify-content: space-between; gap: 10px 8px; align-items: end; }
 .now-grid > div { display: flex; flex-direction: column; min-width: 0; }
 .now-grid > div:nth-child(n+4) { align-self: start; }
+.now-grid.cols2 { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+.now-grid.cols1 { grid-template-columns: minmax(0, 1fr); align-items: start; }
 .now-grid .secondary { color: var(--sub); }
 /* The top tile's values open their pages (NowCard.opens). */
 .card.now [data-top] { cursor: pointer; border-radius: 8px; }
@@ -170,9 +172,10 @@ button.wide { margin-top: 0; }
 .daylight .sunsym { color: var(--sun); margin-right: .2em; }
 .daylight .nowrap { white-space: nowrap; }
 
-.kit { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 10px; border-radius: 999px; font-size: 15px; font-weight: 600;
+.kit { display: inline-flex; align-items: center; gap: 6px; margin-top: 10px; padding: 4px 10px; border-radius: 14px; max-width: 100%; text-align: start; font-size: 15px; font-weight: 600;
   color: var(--kit); background: color-mix(in srgb, var(--kit) 18%, transparent); }
-.kit-line { color: var(--kit); font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.kit svg { flex: none; }
+.kit-line { color: var(--kit); font-weight: 600; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; }
 
 /* Warnings card. */
 .warning { border-left: 4px solid var(--w); border-radius: 2px; padding: 2px 0 2px 10px; margin: 8px 0; font-size: 15px; }
@@ -690,6 +693,28 @@ button.red { color: var(--red); }
 .zones .zone-note { font-size: 12px; }
 .zones .zone-values > .probe-item:first-child::before { display: none; }
 .zones small { font-size: 12px; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+/* The parts of the lake as a small table like the 48-hour one (LakeZoneTable, owner's H1). */
+.zone-box { margin: 2px 0; min-width: 0; }
+.zone-box[data-fit="table"] > .zones, .zone-box[data-fit="lines"] > .zone-table { display: none; }
+.zone-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+.zone-table th { color: var(--sub); font-weight: 400; text-align: right; padding: 0; line-height: 1.1; }
+.zone-table th + th, .zone-table td + td, .zone-table .zt-units th { padding-left: 9px; }
+.zone-table th .i { width: 17px; height: 17px; }
+.zone-table .zt-icons th { padding-top: 2px; }
+.zone-table .zt-units th { font-size: 11px; padding-bottom: 4px; border-bottom: .5px solid var(--line); white-space: nowrap; }
+.zone-table .zt-units th.zt-arrow .i { width: 12px; height: 12px; }
+.zone-table th.zt-map { text-align: left; vertical-align: bottom; padding-bottom: 4px; border-bottom: .5px solid var(--line); }
+.zone-table th.zt-wind, .zone-table .zt-arrow { text-align: center; }
+.zone-table td { padding: 5px 0 0; white-space: nowrap; }
+.zone-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.zone-table td.zt-name { width: 100%; }
+.zone-table td.zt-name > .dot { margin-right: 6px; vertical-align: -1px; }
+.zone-table td.zt-name strong { font-size: 14px; }
+.zone-table td.zt-arrow .arrow { font-size: 13px; }
+.zone-table .zt-extra td { white-space: normal; padding: 1px 0 0 16px; font-size: 12px; }
+.zone-table .zt-extra small { display: block; font-size: 12px; }
+.zone-table .zt-extra .zone-values > .probe-item::before { display: none; }
 .lake-wide { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 10px; margin: 4px 0; }
 .lake-wide.red { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
 .lake-wide.orange { color: var(--orange); background: color-mix(in srgb, var(--orange) 12%, transparent); }
@@ -789,9 +814,9 @@ button.red { color: var(--red); }
 .leaflet-marker-icon.turn span { display: flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: 50%;
   background: #fff; color: #007aff; border: 2px solid #007aff; font: 600 12px/1 -apple-system, system-ui, sans-serif; box-sizing: border-box; }
 .leaflet-marker-icon.turn.on span { background: #007aff; color: #fff; }
-.stripes { display: inline-block; width: 18px; height: 14px; border-radius: 3px; }
-.stripes.red { background: repeating-linear-gradient(-45deg, #8e8e93 0 3px, rgba(255, 59, 48, .8) 3px 5px); }
-.stripes.amber { background: repeating-linear-gradient(-45deg, var(--green) 0 4px, rgba(255, 149, 0, .9) 4px 5.5px); }
+.stripes { display: inline-block; flex: none; width: 18px; height: 18px; }
+.stripes.red path { stroke: var(--red); }
+.stripes.amber path { stroke: var(--orange); }
 .club-mark { display: inline-block; width: 12px; height: 12px; border-radius: 50%; background: #8e8e93; border: 2px solid #fff; box-shadow: 0 0 0 1px #8e8e93; }
 .club-mark.own { background: #007aff; border-color: #fff; box-shadow: 0 0 0 1px #007aff; }
 .club-mark.boat { background: #5856d6; border-color: #fff; box-shadow: 0 0 0 1px #5856d6; }

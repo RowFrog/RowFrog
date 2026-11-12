@@ -318,12 +318,13 @@ enum ColdWaterKit: Equatable {
         if c >= RowingLimits.coldWaterC { self = .lifeJacket } else { self = limits.maybeSingle ? .partnerBoat : .nearShore }
     }
 
-    /// Short text on the badge.
+    /// The badge's words: what to do, no temperature, since the water value sits
+    /// just below, blue when cold and marked ≈ when estimated (owner's pick A4, 12 Nov 2026).
     var title: String {
         switch self {
-        case .lifeJacket: tr("Life jacket")
-        case .partnerBoat: tr("Life jacket · partner boat")
-        case .nearShore: tr("Life jacket · near the shore")
+        case .lifeJacket: tr("Life jacket on")
+        case .partnerBoat: tr("Life jacket on · with partner boat")
+        case .nearShore: tr("Life jacket on · stay near shore")
         }
     }
 
@@ -335,7 +336,7 @@ enum ColdWaterKit: Equatable {
         case .partnerBoat:
             tr("Very cold water, below %@: wear a life jacket, stay near the shore and row a single only with a coach boat or a partner boat.", Format.temperature(RowingLimits.coldWaterC))
         case .nearShore:
-            tr("Very cold water, below %@: wear a life jacket, stay near the shore and don't row alone.", Format.temperature(RowingLimits.coldWaterC))
+            tr("Very cold water, below %@: wear a life jacket, stay near the shore and row with a second boat nearby.", Format.temperature(RowingLimits.coldWaterC))
         }
     }
 }

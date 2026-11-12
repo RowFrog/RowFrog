@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { GROUPS, limitsFor } from "../public/app/logic.js";
 import {
   decodeView, applyLakeLimits, shares, headline, stripes, stripesFall, RouteEdit, routePlanner, planRoute, bestStart, plansBetter, windRelation, pace,
-  lakeWideAt, withDaylightNow, fineLight, shoreDistance, zoneNotes, zoneNoteText, zoneValues,
+  lakeWideAt, withDaylightNow, fineLight, shoreDistance, zoneNotes, zoneNoteText, zoneValues, meanFrom, arrowGlyph,
 } from "../public/app/lake.js";
 
 // A 3×1 strip of water running east, one forecast point, two zones.
@@ -240,4 +240,12 @@ test("fog along both shores: each part says why and where, and the headline name
   assert.deepEqual(headline(view, hour, limits), ["%@ near the shore: stay ashore", "Fog"]);
   // Without the limits (older callers) the headline stays the whole-lake one.
   assert.deepEqual(headline(view, hour), ["Stay ashore on the whole lake"]);
+});
+
+test("a part's wind direction is the speed-weighted vector mean, and its arrow glyph (LakeZoneReading.meanFrom, arrowGlyph)", () => {
+  assert.equal(meanFrom([]), null);
+  assert.equal(meanFrom([{ fromDeg: 90, speedMs: 0 }, { fromDeg: null, speedMs: 3 }]), null, "calm or no direction counts for nothing");
+  assert.ok(Math.abs(meanFrom([{ fromDeg: 350, speedMs: 2 }, { fromDeg: 10, speedMs: 2 }])) < 1e-9 || Math.abs(meanFrom([{ fromDeg: 350, speedMs: 2 }, { fromDeg: 10, speedMs: 2 }]) - 360) < 1e-9, "across north");
+  assert.ok(Math.abs(meanFrom([{ fromDeg: 0, speedMs: 1 }, { fromDeg: 90, speedMs: 3 }]) - 71.565) < 0.01, "the stronger wind weighs more");
+  assert.deepEqual([0, 45, 90, 180, 270, 337, 338, -45, 720].map(arrowGlyph), ["↑", "↗", "→", "↓", "←", "↖", "↑", "↖", "↑"]);
 });

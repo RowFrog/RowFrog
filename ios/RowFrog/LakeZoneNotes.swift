@@ -117,26 +117,63 @@ extension LakeView {
     /// light's colour, then the strongest other reason when amber or red (owner,
     /// 12 Nov 2026: waves, wind and visibility for every part).
     func zoneValues(_ zone: Int, hour: LakeHour) -> [LakeProbeItem] {
+        guard let r = zoneReading(zone, hour: hour) else { return [] }
+        var items = [
+            LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(r.waveM), light: r.waveLight),
+            LakeProbeItem(symbol: Condition.wind.symbol, name: tr("Wind"), text: Format.windRange(r.speedMs, r.gustMs), light: r.windLight),
+        ]
+        if let vis = r.visM {
+            items.append(LakeProbeItem(symbol: Condition.visibility.symbol, name: tr("Visibility"), text: Format.distance(vis), light: r.visLight))
+        }
+        if let extra = r.extra { items.append(extra) }
+        return items
+    }
+
+    /// The numbers behind `zoneValues`, with where the wind comes from, for the
+    /// lake tile's table (owner's H1, 12 Nov 2026).
+    func zoneReading(_ zone: Int, hour: LakeHour) -> LakeZoneReading? {
         let cells = hour.lights.indices.filter { $0 < grid.cellZone.count && grid.cellZone[$0] == zone && $0 < hour.wavesCm.count }
-        guard !cells.isEmpty else { return [] }
+        guard !cells.isEmpty else { return nil }
         let cold = waterC.map { $0 < RowingLimits.coldWaterC }
             ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
         let l = limits.forWater(cold ? 0 : nil)
         let winds = cells.compactMap { cellWind($0, in: hour) }
         let wave = cells.map { hour.wave(ofCell: $0) }.max()
         let speed = winds.compactMap(\.speedMs).max(), gust = winds.compactMap(\.gustMs).max()
-        var items = [
-            LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(wave), light: l.light(wave, .waveAmber, .waveRed)),
-            LakeProbeItem(symbol: Condition.wind.symbol, name: tr("Wind"), text: Format.windRange(speed, gust),
-                          light: max(l.light(speed, .windAmber, .windRed), l.light(gust, .gustAmber, .gustRed))),
-        ]
-        if let vis = winds.compactMap(\.visM).min() {
-            let fog: Light = vis < 500 ? .red : vis <= 1000 ? .amber : .green
-            items.append(LakeProbeItem(symbol: Condition.visibility.symbol, name: tr("Visibility"), text: Format.distance(vis), light: fog))
+        let vis = winds.compactMap(\.visM).min()
+        let extra = winds.compactMap(\.extra).max(by: { $0.light < $1.light })
+        return LakeZoneReading(
+            waveM: wave, waveLight: l.light(wave, .waveAmber, .waveRed),
+            speedMs: speed, gustMs: gust, fromDeg: LakeZoneReading.meanFrom(winds),
+            windLight: max(l.light(speed, .windAmber, .windRed), l.light(gust, .gustAmber, .gustRed)),
+            visM: vis, visLight: vis.map { (v: Double) -> Light in v < 500 ? .red : v <= 1000 ? .amber : .green } ?? .green,
+            extra: extra.flatMap { $0.light > .green ? $0 : nil }
+        )
+    }
+}
+
+/// One part of the lake this hour: the highest waves, the strongest wind and
+/// gusts, where the wind comes from, the lowest visibility and the strongest
+/// other reason when amber or red, each with its light.
+struct LakeZoneReading: Equatable {
+    let waveM: Double?
+    let waveLight: Light
+    let speedMs: Double?
+    let gustMs: Double?
+    /// Where the wind comes from, averaged over the part as vectors (0 = north).
+    let fromDeg: Double?
+    let windLight: Light
+    let visM: Double?
+    let visLight: Light
+    let extra: LakeProbeItem?
+
+    static func meanFrom(_ winds: [LakeWind]) -> Double? {
+        let v = winds.compactMap { w -> (Double, Double)? in
+            guard let d = w.fromDeg, let s = w.speedMs, s > 0 else { return nil }
+            return (sin(d * .pi / 180) * s, cos(d * .pi / 180) * s)
         }
-        if let extra = winds.compactMap(\.extra).max(by: { $0.light < $1.light }), extra.light > .green {
-            items.append(extra)
-        }
-        return items
+        let x = v.map(\.0).reduce(0, +), y = v.map(\.1).reduce(0, +)
+        guard !v.isEmpty, hypot(x, y) > 0 else { return nil }
+        return (atan2(x, y) * 180 / .pi + 360).truncatingRemainder(dividingBy: 360)
     }
 }

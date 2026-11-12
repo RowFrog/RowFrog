@@ -21,7 +21,7 @@ import {
   lightFor, reasonCondition, feelsLikeNote, pressureChange, pressureTrend, estimatedWater, iceOff, ICE_TITLES, iceValue, sunState,
   coldWaterKit, place, GROUPS, BOAT_TYPES, BOAT_CLASSES, LIMITS, isGroup, standardLimit, applyLimits, steadierBoat, COLD,
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
-  forecastStatus, coarserModel,
+  forecastStatus, coarserModel, endsAtSunrise,
 } from "./logic.js";
 import { fillLakeCard, renderLakeMap, renderAllRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
@@ -860,6 +860,22 @@ const fitWatch = new ResizeObserver((entries) => entries.forEach(({ target }) =>
 function fitGreyLines(grid) {
   const cells = [...grid.children];
   if (cells.length < 3) return;
+  // Three columns while their titles and values fit side by side; else two, else one, so
+  // no word breaks or gets cut (TopTileGrid.columnCount in the app, 12 Nov 2026).
+  cells.forEach((cell) => cell.querySelectorAll(".grey").forEach((line) => { line.style.marginInlineEnd = ""; }));
+  grid.classList.remove("cols2", "cols1");
+  // Three columns: their tracks (as wide as titles and values) must fit side by side. Two or
+  // one: no title or value wider than its cell.
+  const colGap = () => parseFloat(getComputedStyle(grid).columnGap) || 0;
+  const tracks = () => getComputedStyle(grid).gridTemplateColumns.split(" ").map(parseFloat);
+  const tooWide = () => tracks().reduce((a, b) => a + b, 0) + 2 * colGap() > grid.clientWidth + 1;
+  // The wind's arrow reaches a few pixels past its value at every size; words cut are wider.
+  const cut = () => [...grid.querySelectorAll(".label, .v28, .v17")].some((e) => e.scrollWidth > e.clientWidth + 6);
+  if (tooWide()) {
+    grid.classList.add("cols2");
+    if (cut()) grid.classList.replace("cols2", "cols1");
+  }
+  if (grid.classList.contains("cols2") || grid.classList.contains("cols1")) return;
   const left = grid.getBoundingClientRect().left;
   const xs = cells.slice(0, 3).map((cell) => cell.getBoundingClientRect().left - left);
   const gap = parseFloat(getComputedStyle(grid).columnGap) || 0;
@@ -1958,7 +1974,8 @@ function nightLine(hours, list, later, forecast) {
   // Open-ended only where the night really starts or ends the table (NightRow.startsTable/endsTable);
   // a night after the current hour's row starts at a known hour, "18–07", not "–07".
   const start = hours[0] === list[0] ? "" : hourOnly(n.start);
-  const to = hours[hours.length - 1] === list[list.length - 1] ? "" : hourOnly(n.end);
+  const cut = hours[hours.length - 1] === list[list.length - 1] && !endsAtSunrise(Date.parse(n.end), sunDaysOf(forecast));
+  const to = cut ? "" : hourOnly(n.end);
   const fog = n.fog && n.fog !== "green" ? (n.fog === "red" ? "red" : "orange") : "";
   const rain = (n.rainMm ?? 0) >= 0.1;
   const label = [t("Night from %@ to %@", time(n.start), time(n.end)), t("lowest %@", degrees(n.lowestC)), n.frost ? t("frost") : "",

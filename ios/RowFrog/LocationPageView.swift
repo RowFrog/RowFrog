@@ -1085,6 +1085,10 @@ struct TopTileGrid: Layout {
         let core = (0..<3).map { i in
             [top[i], i < bottom.count ? bottom[i] : nil].compactMap { $0 }.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0
         }
+        // Too wide for three columns (large text sizes, long German words): two, else one,
+        // so no word breaks in the middle or gets cut ("Gefüh|lt", "Ni…lag", 12 Nov 2026).
+        let columnCount = Self.columnCount(width: width, core: core, widest: subviews.map { $0.sizeThatFits(.unspecified).width }.max() ?? 0, gap: gap)
+        if columnCount < 3 { return flowFrames(width: width, columns: columnCount, subviews) }
         // The middle column with equal gaps to its neighbours.
         let right = width - core[2]
         let xs = [0, core[0] + (right - core[0] - core[1]) / 2, right]
@@ -1098,6 +1102,31 @@ struct TopTileGrid: Layout {
         let valueLine = dims.map { $0[VerticalAlignment.metricValue] }.max() ?? 0
         for (column, d) in zip(columns, dims) {
             result.append(CGRect(x: column.x, y: below + valueLine - d[VerticalAlignment.metricValue], width: column.width, height: d.height))
+        }
+        return result
+    }
+
+    /// Three columns when the three columns' titles and values fit side by side, two when
+    /// any two of the values do, else one.
+    static func columnCount(width: CGFloat, core: [CGFloat], widest: CGFloat, gap: CGFloat) -> Int {
+        if core.reduce(0, +) + 2 * gap <= width { return 3 }
+        if 2 * widest + gap <= width { return 2 }
+        return 1
+    }
+
+    /// The values in reading order (air, water, wind, waves, precipitation, visibility) in
+    /// `columns` equal columns, each row as tall as its tallest value.
+    private func flowFrames(width: CGFloat, columns: Int, _ subviews: Subviews) -> [CGRect] {
+        let columnWidth = (width - CGFloat(columns - 1) * gap) / CGFloat(columns)
+        var result: [CGRect] = []
+        var y: CGFloat = 0
+        for start in stride(from: 0, to: subviews.count, by: columns) {
+            let row = subviews[start..<min(start + columns, subviews.count)]
+            let heights = row.map { $0.dimensions(in: ProposedViewSize(width: columnWidth, height: nil)).height }
+            for (i, height) in heights.enumerated() {
+                result.append(CGRect(x: CGFloat(i) * (columnWidth + gap), y: y, width: columnWidth, height: height))
+            }
+            y += (heights.max() ?? 0) + rowSpacing
         }
         return result
     }
@@ -1220,7 +1249,7 @@ private struct HourlyCard: View {
                             if opened { openNights.remove(night.id) } else { openNights.insert(night.id) }
                         }
                     } label: {
-                        NightRow(night: night, opened: opened, startsTable: night.start == firstHour, endsTable: night.end == tableEnd,
+                        NightRow(night: night, opened: opened, startsTable: night.start == firstHour, endsTable: night.end == tableEnd && !NightFold.endsAtSunrise(night.end, days: forecast.daylight ?? []),
                                  coarser: coarser(in: night))
                     }
                     .buttonStyle(.plain)

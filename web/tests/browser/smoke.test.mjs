@@ -56,8 +56,8 @@ after(async () => {
 });
 
 /** A page with the sample API, the clock at the sample's time and JavaScript errors collected. */
-async function open(storage = {}, viewport = { width: 390, height: 844 }) {
-  const context = await browser.newContext({ viewport, locale: "en-GB", timezoneId: "Europe/Berlin" });
+async function open(storage = {}, viewport = { width: 390, height: 844 }, locale = "en-GB") {
+  const context = await browser.newContext({ viewport, locale, timezoneId: "Europe/Berlin" });
   await context.route((url) => !url.href.startsWith(base), (route) => route.abort());
   const page = await context.newPage();
   const errors = [];
@@ -258,6 +258,59 @@ test("a night from the coarser model says so inside its line, and its hours carr
   await context.close();
 });
 
+test("the top tile's values never break a word or get cut, at any width or text size", async () => {
+  // Owner's rule: every size. German has the longest words ("Niederschlag", "Gefühlt"); the
+  // large-text case scales the tile's type up as iOS's largest sizes do (12 Nov 2026).
+  for (const width of [320, 390, 844, 1024]) {
+    for (const big of [false, true]) {
+      // The website speaks the browser's language.
+      const { page, errors, context } = await open(visitor(), { width, height: 900 }, "de-DE");
+      await page.goto(`${base}/app/#/club/mrc-1880`);
+      const grid = page.locator(".now-grid").first();
+      await grid.waitFor({ timeout: 20000 });
+      if (big) await page.addStyleTag({ content: ".now-grid small { font-size: 22px !important } .now-grid .v28 { font-size: 46px !important } .now-grid .v17 { font-size: 30px !important }" });
+      await settles(async () => {
+        const bad = await grid.evaluate((g) => {
+          const out = [];
+          // Three columns: the tracks (titles and values) fit side by side.
+          const style = getComputedStyle(g);
+          const tracks = style.gridTemplateColumns.split(" ").map(parseFloat);
+          if (tracks.reduce((a, b) => a + b, 0) + (tracks.length - 1) * parseFloat(style.columnGap) > g.clientWidth + 1) out.push(`tracks ${style.gridTemplateColumns}`);
+          // Titles and values (the wind's arrow pokes out a few pixels at every size); the grey
+          // lines reach past their column on purpose (fitGreyLines).
+          for (const e of g.querySelectorAll(".label, .v28, .v17")) {
+            if (e.scrollWidth > e.clientWidth + 6) out.push(`${e.closest("[data-top]")?.dataset.top} ${e.textContent.trim()} ${e.scrollWidth}/${e.clientWidth} ${g.className}`);
+          }
+          const right = g.getBoundingClientRect().right;
+          for (const e of g.querySelectorAll(".grey")) if (e.getBoundingClientRect().right > right + 1) out.push(`grey ${e.textContent.trim()}`);
+          return out;
+        });
+        assert.deepEqual(bad, [], `${width}${big ? " big" : ""}`);
+      });
+      if (process.env.RF_TILE_SHOT) await page.locator(".card.now").first().screenshot({ path: `${process.env.RF_TILE_SHOT}-${width}${big ? "-big" : ""}.png` });
+      assert.deepEqual(errors, []);
+      await context.close();
+    }
+  }
+});
+
+test("a night that ends the table up to sunrise reads as a whole night, a night cut off in the dark as open", async () => {
+  // The 12 Nov evening shot read "17–" though the backend had finished the night to sunrise.
+  for (const [last, range] of [["2026-10-19T04:00:00+00:00", "19–07"], ["2026-10-19T01:00:00+00:00", "19–"]]) {
+    const { page, errors, context } = await open(visitor());
+    const hours = forecast.hours.filter((x) => Date.parse(x.time) <= Date.parse(last));
+    await context.route(/\/v1\/clubs\/mrc-1880\/forecast/, (route) => route.fulfill({
+      contentType: "application/json", body: JSON.stringify({ ...forecast, hours }),
+    }));
+    await page.goto(`${base}/app/#/club/mrc-1880`);
+    const line = page.locator(".hourly-card .nightline").last();
+    await line.waitFor({ timeout: 20000 });
+    assert.equal(await line.locator(".range").innerText(), range);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
+
 test("browsing by country lists the countries, a country's waters and a water's clubs", async () => {
   const { page, errors, context } = await open(visitor());
   await page.goto(`${base}/app/#/countries`);
@@ -413,6 +466,27 @@ function squareLake() {
     })),
   };
 }
+
+test("the lake tile shows its parts as a small table with the wind's arrow, and lines where it does not fit (LakeZoneTable)", async () => {
+  const { page, errors, context } = await open(visitor());
+  const lake = squareLake();
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  await page.goto(`${base}/app/#/club/${club.id}`);
+  const box = page.locator(".zone-box");
+  await box.waitFor({ timeout: 20000 });
+  assert.equal(await box.getAttribute("data-fit"), "table");
+  const row = page.locator(".zone-table tbody tr").first();
+  assert.equal(await row.locator(".zt-name strong").innerText(), "West");
+  // From the west: the arrow points east, where the wind blows to.
+  assert.match(await row.locator(".zt-arrow .arrow").getAttribute("style"), /rotate\(90deg\)/);
+  // A narrow window falls back to the parts' names over their values, the arrow as a character.
+  await page.setViewportSize({ width: 250, height: 800 });
+  await page.waitForFunction(() => document.querySelector(".zone-box")?.dataset.fit === "lines");
+  assert.match(await page.locator(".zone-box .zones .zone-values").first().innerText(), /→/);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
 
 test("the route editor: undo takes back the way back, Save marks the route saved, an edit changed and undo saved again", async () => {
   const { page, errors, context } = await open(visitor());

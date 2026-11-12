@@ -200,6 +200,13 @@ export function coarserModel(forecast, hour) {
   return part && part.resolutionKm > parts[0].resolutionKm ? part : null;
 }
 
+/**
+ * Whether a night ending at `end` (ms) is whole: the sun rises in the hour after it. The backend
+ * finishes the table's last night up to that hour (owner's option B), so it reads "17–07" even
+ * where it ends the table (NightFold.endsAtSunrise in the app).
+ */
+export const endsAtSunrise = (end, days) => days.some((d) => d.sunrise >= end && d.sunrise < end + 3600e3);
+
 /** What a night's line shows, each for its column: the worst of the night. */
 export function nightSummary(hours) {
   const values = (key) => hours.map((x) => x[key]).filter((v) => v != null);
