@@ -214,6 +214,23 @@ test("the fine rowing light follows the blended values", () => {
   assert.equal(fineLight(view, view.hours[0], limits), null);
 });
 
+// Starnberger See, 12 Nov 2026, 23:00: 19 cells at "25 cm" were red from the server (25.4 cm over the 0.25 m limit)
+// but amber by the rounded waves, so each stayed red as a hard square on the zoomed-in map (owner's shot).
+test("a cell red only by the waves' rounding is not kept as a square", () => {
+  const view = sampleView();
+  const hour = view.hours[0];
+  hour.wavesCm = [20, 25, 20];
+  hour.lights = ["amber", "red", "amber"];
+  const limits = limitsFor(GROUPS[0], { waveAmber: 0.15 });
+  const fine = fineLight(view, hour, limits);
+  const at = (x) => fine.data.slice((4 * fine.width + x) * 4, (4 * fine.width + x) * 4 + 3).join(",");
+  for (const x of [8, 11, 12, 15]) assert.equal(at(x), "255,149,0", `pixel ${x} of the middle cell is amber, not a red square`);
+  // A cell the server makes red for more than rounding still stays red.
+  hour.wavesCm = [20, 24, 20];
+  const kept = fineLight(view, hour, limits);
+  assert.equal(kept.data.slice((4 * kept.width + 12) * 4, (4 * kept.width + 12) * 4 + 3).join(","), "255,59,48");
+});
+
 test("fog along both shores: each part says why and where, and the headline names the shore (app lake-notes)", () => {
   // 5 x 4 squares, all water: the outer ring red from fog, the six inner ones green (LakeViewTests).
   const lights = Array.from({ length: 20 }, (_, i) => ([6, 7, 8, 11, 12, 13].includes(i) ? "0" : "2")).join("");

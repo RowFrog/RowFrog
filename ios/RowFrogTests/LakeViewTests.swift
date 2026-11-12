@@ -93,6 +93,21 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(LakeRaster.image(view, hour: view.hours[0], layer: .waves)?.width, 2)
     }
 
+    /// Starnberger See, 12 Nov 2026, 23:00: cells at "25 cm" were red from the server
+    /// (over the 0.25 m limit before rounding) but amber by the rounded waves, so each
+    /// stayed red as a hard square on the zoomed-in map (owner's shot).
+    func testACellRedOnlyByTheWavesRoundingIsNotKeptAsASquare() throws {
+        let rounded = json.replacingOccurrences(of: "\"fromDeg\": 180}", with: "\"fromDeg\": 180, \"other\": 0}")
+            .replacingOccurrences(of: "\"fromDeg\": 190}", with: "\"fromDeg\": 190, \"other\": 0}")
+            .replacingOccurrences(of: "\"lights\": \"0012\", \"wavesCm\": [3, 5, 20, 34]", with: "\"lights\": \"0022\", \"wavesCm\": [3, 5, 25, 34]")
+        let view = try APIClient.decoder.decode(LakeView.self, from: Data(rounded.utf8))
+        let image = try XCTUnwrap(LakeRaster.image(view, hour: view.hours[0], layer: .light))
+        let bytes = try XCTUnwrap(image.dataProvider?.data as Data?)
+        // Cell 3 (middle right) is amber at its centre, as its 25 cm say, not a red square.
+        let j = (12 * image.width + 12) * 4
+        XCTAssertEqual(Array(bytes[j..<j + 3]), [255, 149, 0])
+    }
+
     /// Fog is judged per pixel from the blended visibility too, when the backend
     /// says what its combined light is made of (owner, 12 Nov 2026).
     func testFogIsDrawnFineFromTheVisibility() throws {

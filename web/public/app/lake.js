@@ -455,7 +455,12 @@ export function fineLight(view, hour, limits) {
     } else {
       stays = wind?.other ?? "green"; // only the combined light: it stays per cell
     }
-    const own = worse(judged(f), stays);
+    // Waves come in whole centimetres: a cell at "25 cm" may be 25.4 cm and red over a 0.25 m limit.
+    // Judged with the waves up to half a centimetre higher, so such a cell isn't kept as one hard
+    // square (owner's zoomed-in lake map, 12 Nov 2026; LakeRaster.fineLight).
+    const upper = Float64Array.from(f);
+    if (!Number.isNaN(upper[2])) upper[2] += 0.005;
+    const own = worse(worse(judged(f), judged(upper)), stays);
     // The backend's light is stricter than these explain: keep it for the cell.
     least[p] = worse(stays, RANK[hour.lights[i]] > RANK[own] ? hour.lights[i] : "green");
     known[p] = 1;
