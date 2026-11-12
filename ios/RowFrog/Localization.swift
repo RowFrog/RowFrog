@@ -253,6 +253,8 @@ enum German {
         "Night from %@ to %@": "Nacht von %@ bis %@",
         "from %@ coarser model: %@": "ab %@ gröberes Modell: %@",
         "coarser model": "gröberes Modell",
+        "Other condition": "Andere Bedingung",
+        "A condition this version of the app does not know yet. Updating the app shows what it is.": "Eine Bedingung, die diese Version der App noch nicht kennt. Nach einem Update der App steht hier, was es ist.",
         "lowest %@": "Tiefstwert %@",
         "frost": "Frost",
         "%@ rain": "%@ Regen",
