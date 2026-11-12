@@ -79,6 +79,8 @@ struct RootView: View {
                                     .transition(.move(edge: .leading))
                             }
                             pages(saved, chrome: chrome, insets: geometry.safeAreaInsets)
+                                // The column count is worked out as if the list were shown (rule B).
+                                .environment(\.widthBesideList, wide ? geometry.size.width - Self.sideListWidth : nil)
                         }
                         .background { clubPicture }
                         .environment(\.pictureFrame, pagesPictureFrame)

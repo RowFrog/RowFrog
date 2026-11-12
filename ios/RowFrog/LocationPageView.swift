@@ -28,6 +28,12 @@ struct LocationPageView: View {
     /// that only the sticky header reads, so scrolling redraws the header and
     /// not the whole page on every frame (which drained the battery).
     @State private var sticky = StickyHourly()
+    /// The column count shown; worked out again once a resize rests (ClubPageColumns).
+    @State private var columnCount: Int?
+    /// Where the cards are in the scroll view, to keep the top one in place when the count changes.
+    @State private var cardSpots = CardSpots()
+    /// The page's width as if the side list were shown (nil: there is no side list).
+    @Environment(\.widthBesideList) private var widthBesideList
     /// The 48 hours opened past the first 24 (only folded in two columns).
     @State private var hourlyOpen = false
     /// The 48 hours' height while folded, which the columns keep counting with when opened.
@@ -97,9 +103,13 @@ struct LocationPageView: View {
     var body: some View {
         let forecast = forecasts.forecasts[club.id]
         GeometryReader { geometry in
-            // Wide screens (an unfolded iPhone Duo, an iPhone on its side) put the
-            // cards below the rowing light in two columns; phones upright keep one.
-            let twoColumns = geometry.size.width >= Self.twoColumnWidth
+            // Wide screens (an iPad, an iPhone on its side) put the cards below the
+            // rowing light in two or three columns; phones upright keep one. The count
+            // follows the width as if the side list were shown, so sliding it away only
+            // widens the columns (owner's rule B, as on the website).
+            let countWidth = widthBesideList ?? geometry.size.width
+            let columns = columnCount ?? ClubPageColumns.count(width: countWidth)
+            let twoColumns = columns > 1
             ScrollViewReader { proxy in
                 ScrollView {
                     VStack(spacing: 16) {
@@ -130,7 +140,8 @@ struct LocationPageView: View {
                                 if twoColumns {
                                     // The page's end goes into the shorter column too, and the maps
                                     // there grow, so both columns end level (BalancedColumns).
-                                    BalancedColumns(tallestCard: geometry.size.height - 32) {
+                                    // Never more columns than cards.
+                                    BalancedColumns(columns: min(columns, max(2, cards.count)), tallestCard: geometry.size.height - 32) {
                                         ForEach(cards) { pageCard($0, forecast: forecast, now: now, twoColumns: true) }
                                         pageEnd(forecast)
                                     }
@@ -162,7 +173,7 @@ struct LocationPageView: View {
                     .overlay(alignment: .bottom) {
                         Color.clear.frame(height: 1).id("bottom")
                     }
-                    .frame(maxWidth: Self.maxContentWidth)
+                    .frame(maxWidth: ClubPageColumns.pageWidth(columns: columns))
                     .frame(maxWidth: .infinity)
                     .onPreferenceChange(HourlyFrameKey.self) { frame in
                         if sticky.hourlyFrame != frame { sticky.hourlyFrame = frame }
@@ -214,6 +225,23 @@ struct LocationPageView: View {
                 .tipVisibility(radarMapTip, $showRadarMapTip)
                 .tipVisibility(hourViewTip, $showHourViewTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
+                .coordinateSpace(.named(CardSpots.space))
+                // A resize changes the count once it rests, keeping the top card where it was.
+                .task(id: countWidth) {
+                    guard let shown = columnCount else { columnCount = columns; return }
+                    // iPhones turn but are never resized by dragging: at once there.
+                    if Orientation.isPad || ProcessInfo.processInfo.isiOSAppOnMac {
+                        do { try await Task.sleep(for: ClubPageColumns.resizePause) } catch { return }
+                    }
+                    let count = ClubPageColumns.count(width: countWidth, current: shown)
+                    guard count != shown else { return }
+                    let top = isCurrentPage ? cardSpots.topCard(below: pageMargins.top) : nil
+                    columnCount = count
+                    if let top {
+                        try? await Task.sleep(for: .milliseconds(50))
+                        proxy.scrollTo(top.scrollID, anchor: .top)
+                    }
+                }
                 .task {
                     await forecasts.load(club.id)
                     // Screenshot hook: `-RWHourlyOpen YES` opens the folded 48 hours, once
@@ -268,8 +296,19 @@ struct LocationPageView: View {
     /// part of a page. The swipe paging keeps the neighbouring pages ready, so
     /// they draw these only on the page in front; elsewhere an empty stand-in of
     /// the same height keeps the page's length and scroll place.
-    @ViewBuilder
     private func pageCard(_ card: PageCard, forecast: ClubForecast, now: ForecastHour, twoColumns: Bool) -> some View {
+        drawnCard(card, forecast: forecast, now: now, twoColumns: twoColumns)
+            // Into a plain store, not the view's state: scrolling redraws nothing.
+            .onGeometryChange(for: CGRect.self) { $0.frame(in: .named(CardSpots.space)) } action: { [cardSpots] in
+                cardSpots.frames[card] = $0
+            }
+            // Set again outside that modifier, so the columns surely read them (BalancedColumns).
+            .layoutValue(key: ColumnFiller.self, value: card == .lakeView || card == .launchPoint)
+            .layoutValue(key: ColumnSortHeight.self, value: card == .hourly && hourlyOpen ? foldedHourlyHeight : nil)
+    }
+
+    @ViewBuilder
+    private func drawnCard(_ card: PageCard, forecast: ClubForecast, now: ForecastHour, twoColumns: Bool) -> some View {
         if card.isMap && !isCurrentPage {
             // Before a card was first shown: about a map card's height; the
             // satellite card and a lake view without an outline may stay empty.
@@ -376,80 +415,6 @@ struct LocationPageView: View {
     }
 }
 
-/// Where the hourly table and its days are on the screen.
-@Observable
-private final class StickyHourly {
-    var hourlyFrame: CGRect = .zero
-    var dayTops: [Date: CGFloat] = [:]
-    /// Where the header stays on the screen, in global coordinates.
-    var top: CGFloat = 0
-
-    /// Whether the header is staying at the top.
-    func isShowing(at top: CGFloat) -> Bool {
-        hourlyFrame.height > 0 && hourlyFrame.minY + 40 < top && hourlyFrame.maxY > top
-    }
-
-    /// How far up the last rows have pushed the header (0 or less).
-    func push(at top: CGFloat) -> CGFloat {
-        min(0, hourlyFrame.maxY - top - HourlyStickyHeader.height)
-    }
-}
-
-/// While the header stays, the tile ends at it: the rows scroll away under the
-/// header instead of showing beside its rounded corners, as in the Weather app.
-private struct StickyHourlyCut: ViewModifier {
-    let sticky: StickyHourly
-
-    func body(content: Content) -> some View {
-        let showing = sticky.isShowing(at: sticky.top)
-        let cut = showing ? max(0, sticky.top + sticky.push(at: sticky.top) - sticky.hourlyFrame.minY) : 0
-        // Rounded at the cut like the header's top, so nothing of the tile shows
-        // beside the header's corners.
-        let radius: CGFloat = showing ? 16 : 0
-        content.mask(alignment: .top) {
-            UnevenRoundedRectangle(topLeadingRadius: radius, topTrailingRadius: radius).padding(.top, cut)
-        }
-    }
-}
-
-/// The hourly table's header while the table is under the top of the screen.
-private struct StickyHourlyHeader: View {
-    let sticky: StickyHourly
-
-    var body: some View {
-        let hourlyFrame = sticky.hourlyFrame, dayTops = sticky.dayTops
-        GeometryReader { geo in
-            let top = geo.frame(in: .global).minY
-            let height = HourlyStickyHeader.height
-            Color.clear
-                .onAppear { sticky.top = top }
-                .onChange(of: top) { _, new in sticky.top = new }
-            if sticky.isShowing(at: top) {
-                let day = dayTops.filter { $0.value <= top + height }.max { $0.value < $1.value }?.key
-                    ?? dayTops.keys.min()
-                // At the end of the table the last rows push the header up and away,
-                // instead of it vanishing while rows are still under it.
-                let push = sticky.push(at: top)
-                HourlyStickyHeader(day: day)
-                    .frame(width: hourlyFrame.width)
-                    // Cut to the tile's shape, so its square bottom corners round off
-                    // with the tile's own corners as it leaves.
-                    .mask(alignment: .top) {
-                        RoundedRectangle(cornerRadius: 16)
-                            .frame(height: hourlyFrame.height)
-                            .offset(y: hourlyFrame.minY - top - push)
-                    }
-                    .offset(x: hourlyFrame.minX - geo.frame(in: .global).minX, y: push)
-                    .transition(.opacity)
-            }
-        }
-        // Not clipped: when the last rows push the header up, it slides on under
-        // the status bar together with the tile's cut edge.
-        .frame(height: HourlyStickyHeader.height)
-        .allowsHitTesting(false)
-    }
-}
-
 private extension LocationPageView {
 
     private func credits(_ forecast: ClubForecast) -> some View {
@@ -498,10 +463,6 @@ private extension LocationPageView {
         }
     }
 
-    /// From this width (in points) the page shows two columns of cards.
-    static let twoColumnWidth: CGFloat = 600
-    /// Keeps lines readable on very wide screens.
-    static let maxContentWidth: CGFloat = 1000
 }
 
 /// The rowing light now, why, and the values that matter most: air, water

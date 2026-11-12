@@ -1,16 +1,106 @@
 import SwiftUI
 
-/// Two columns for wide screens: each card goes, in order, into the column
-/// that is shorter at that point, so neither ends far below the other. Then
-/// the cards marked `ColumnFiller` (the lake view and launch point maps) in the
-/// shorter column grow, so both columns end level, each card at most one
+/// How many columns the club page's cards go into (owner's rule B, 12 Nov 2026,
+/// the same on the website): the count follows the page's width as if the side
+/// list were shown, so sliding the list away or back only makes the same columns
+/// wider or narrower (each at most `widestCard`) and no card changes column. A
+/// third column needs room for three cards of at least `narrowestCard`; the
+/// buffer between `threeFrom` and `threeUntil` keeps a window resized right at
+/// the edge from switching back and forth. The top tile stays full width.
+enum ClubPageColumns {
+    static let spacing: CGFloat = 16
+    /// The page's padding on each side.
+    static let padding: CGFloat = 16
+    /// From this page width (padding included) the cards go into two columns.
+    static let twoFrom: CGFloat = 600
+    /// Three columns from this width of the cards' room (the page without its padding)…
+    static let threeFrom: CGFloat = 1200
+    /// …and back to two below this one: three cards of `narrowestCard` and their gaps.
+    static let threeUntil: CGFloat = 1172
+    static let narrowestCard: CGFloat = 380
+    static let widestCard: CGFloat = 560
+    /// One column keeps lines readable on wide screens (as the page did before rule B).
+    static let oneColumnWidth: CGFloat = 1000
+    /// How long a resize must rest before the count is worked out again.
+    static let resizePause: Duration = .milliseconds(300)
+
+    /// The count for a page `width` points wide (padding included) as if the list
+    /// were shown; `current` is the count shown now, for the buffer.
+    static func count(width: CGFloat, current: Int? = nil) -> Int {
+        guard width >= twoFrom else { return 1 }
+        let room = width - 2 * padding
+        let three = current == 3 ? room >= threeUntil : room >= threeFrom
+        return three ? 3 : 2
+    }
+
+    /// The widest the page gets (padding included) with this many columns.
+    static func pageWidth(columns: Int) -> CGFloat {
+        guard columns > 1 else { return oneColumnWidth }
+        return CGFloat(columns) * widestCard + CGFloat(columns - 1) * spacing + 2 * padding
+    }
+}
+
+/// Where a page's cards were last seen in its scroll view. A plain class, not
+/// observed: it is written while scrolling and read only when the column count
+/// changes, so that the card at the top stays at the top.
+final class CardSpots {
+    static let space = "clubPageScroll"
+    var frames: [PageCard: CGRect] = [:]
+
+    /// The card at the top edge of the screen (the leftmost one there), or the
+    /// first one below it; nil while the page is not scrolled past its first card.
+    func topCard(below edge: CGFloat) -> PageCard? {
+        let shown = frames.filter { $0.value.height > 0 && $0.value.maxY > edge }
+        guard frames.values.contains(where: { $0.height > 0 && $0.minY < edge }) else { return nil }
+        return shown.min { a, b in
+            let aCut = a.value.minY <= edge, bCut = b.value.minY <= edge
+            if aCut != bCut { return aCut }
+            if aCut { return a.value.minX < b.value.minX }
+            return (a.value.minY, a.value.minX) < (b.value.minY, b.value.minX)
+        }?.key
+    }
+}
+
+extension PageCard {
+    /// The id the club page gives this card, for scrolling to it.
+    var scrollID: String {
+        switch self {
+        case .radar: "radar"
+        case .conditions: "conditions"
+        case .lakeView: "lakeview"
+        case .hourly: "hourly"
+        case .launchPoint: "launchpoint"
+        case .satellite: "satellite"
+        }
+    }
+}
+
+private struct WidthBesideListKey: EnvironmentKey {
+    static let defaultValue: CGFloat? = nil
+}
+
+extension EnvironmentValues {
+    /// A club page's width as if the side list were shown, where the list can
+    /// show (a wide iPad window); nil elsewhere. The column count follows it.
+    var widthBesideList: CGFloat? {
+        get { self[WidthBesideListKey.self] }
+        set { self[WidthBesideListKey.self] = newValue }
+    }
+}
+
+/// Columns for wide screens (ClubPageColumns): each card goes, in order, into
+/// the column that is shortest at that point, so none ends far below another.
+/// Then the cards marked `ColumnFiller` (the lake view and launch point maps) in
+/// the shorter columns grow, so the columns end level, each card at most one
 /// screen tall. A card's `ColumnSortHeight` stands in for its height in both
 /// steps: the 48 hours report their folded height while opened, so opening
 /// them moves no other card and changes no other card's size.
 struct BalancedColumns: Layout {
-    var spacing: CGFloat = 16
+    var columns: Int = 2
+    var spacing: CGFloat = ClubPageColumns.spacing
     /// The tallest a growing card may get: one screen, as the satellite picture.
     var tallestCard: CGFloat = .infinity
+    var widestCard: CGFloat = ClubPageColumns.widestCard
 
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? 700
@@ -33,46 +123,30 @@ struct BalancedColumns: Layout {
     func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
         let placed = arrange(subviews, width: bounds.width)
         let column = columnWidth(bounds.width)
+        // Columns at their widest are centred.
+        let used = CGFloat(count) * column + CGFloat(count - 1) * spacing
+        let left = bounds.minX + max(0, (bounds.width - used) / 2)
         for (subview, spot) in zip(subviews, placed.spots) {
-            subview.place(at: CGPoint(x: bounds.minX + spot.origin.x, y: bounds.minY + spot.origin.y),
+            subview.place(at: CGPoint(x: left + spot.origin.x, y: bounds.minY + spot.origin.y),
                           proposal: ProposedViewSize(width: column, height: spot.grown))
         }
     }
 
-    private func columnWidth(_ width: CGFloat) -> CGFloat { max(0, (width - spacing) / 2) }
+    private var count: Int { max(1, columns) }
+
+    func columnWidth(_ width: CGFloat) -> CGFloat {
+        min(widestCard, max(0, (width - CGFloat(count - 1) * spacing) / CGFloat(count)))
+    }
 
     private func arrange(_ subviews: Subviews, width: CGFloat) -> (spots: [(origin: CGPoint, grown: CGFloat?)], height: CGFloat) {
         let column = columnWidth(width)
         let heights = subviews.map { $0.sizeThatFits(ProposedViewSize(width: column, height: nil)).height }
         let sorted = zip(subviews, heights).map { $0[ColumnSortHeight.self] ?? $1 }
-
-        // Each card into the column that is shorter at that point.
-        var ends: [CGFloat] = [0, 0]
-        var columns: [Int] = []
-        for height in sorted {
-            let i = ends[1] < ends[0] ? 1 : 0
-            // An empty card (a satellite picture still loading) takes no room and no gap.
-            ends[i] += (ends[i] > 0 && height > 0 ? spacing : 0) + height
-            columns.append(i)
-        }
-
-        // The maps in the shorter column share out the difference, each up to one screen.
-        var grow = [CGFloat](repeating: 0, count: subviews.count)
-        let shorter = ends[0] <= ends[1] ? 0 : 1
-        var missing = abs(ends[0] - ends[1])
-        var open = subviews.indices.filter { columns[$0] == shorter && subviews[$0][ColumnFiller.self] && sorted[$0] > 0 && sorted[$0] < tallestCard }
-        while missing > 0.5, !open.isEmpty {
-            let share = missing / CGFloat(open.count)
-            for i in open {
-                let more = min(share, tallestCard - sorted[i] - grow[i])
-                grow[i] += more
-                missing -= more
-            }
-            open.removeAll { sorted[$0] + grow[$0] >= tallestCard - 0.5 }
-        }
+        let (columns, grow) = Self.balance(sorted: sorted, fillers: subviews.map { $0[ColumnFiller.self] },
+                                           columns: count, spacing: spacing, tallestCard: tallestCard)
 
         // Placed by their real heights, so an opened table runs on below.
-        var tops: [CGFloat] = [0, 0]
+        var tops = [CGFloat](repeating: 0, count: count)
         var spots: [(origin: CGPoint, grown: CGFloat?)] = []
         for i in subviews.indices {
             let c = columns[i]
@@ -82,6 +156,39 @@ struct BalancedColumns: Layout {
             tops[c] += gap + height
         }
         return (spots, tops.max() ?? 0)
+    }
+
+    /// Which column each card goes into, and how much each filler grows, from
+    /// the heights the cards count with (kept apart from SwiftUI for the tests).
+    static func balance(sorted: [CGFloat], fillers: [Bool], columns count: Int, spacing: CGFloat,
+                        tallestCard: CGFloat) -> (columns: [Int], grow: [CGFloat]) {
+        // Each card into the column that is shortest at that point (the leftmost on a tie).
+        var ends = [CGFloat](repeating: 0, count: count)
+        var columns: [Int] = []
+        for height in sorted {
+            let i = ends.indices.min { ends[$0] < ends[$1] } ?? 0
+            // An empty card (a satellite picture still loading) takes no room and no gap.
+            ends[i] += (ends[i] > 0 && height > 0 ? spacing : 0) + height
+            columns.append(i)
+        }
+
+        // The maps in each shorter column share out its difference, each up to one screen.
+        var grow = [CGFloat](repeating: 0, count: sorted.count)
+        let longest = ends.max() ?? 0
+        for c in ends.indices where ends[c] < longest {
+            var missing = longest - ends[c]
+            var open = sorted.indices.filter { columns[$0] == c && fillers[$0] && sorted[$0] > 0 && sorted[$0] < tallestCard }
+            while missing > 0.5, !open.isEmpty {
+                let share = missing / CGFloat(open.count)
+                for i in open {
+                    let more = min(share, tallestCard - sorted[i] - grow[i])
+                    grow[i] += more
+                    missing -= more
+                }
+                open.removeAll { sorted[$0] + grow[$0] >= tallestCard - 0.5 }
+            }
+        }
+        return (columns, grow)
     }
 }
 
