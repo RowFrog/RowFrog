@@ -684,6 +684,7 @@ async function renderClub(id) {
   // Current conditions' tip, one at a time: the water level's first while the lake is let down (Forggensee),
   // the water estimate's only where no station measures the water. Inside the top tile, it sits under that.
   const conditionsTip = isLowered(forecast.waterLevel) && tip("waterLevel") ? "waterLevel"
+    : forecast.river && tip("riverCurrent") ? "riverCurrent"
     : tip("conditionsExtras") || forecast.waterTemperature != null || forecast.waterEstimate?.reading == null ? "conditionsExtras" : "waterEstimate";
   // The nearby-water tip first, the first time the Why line counts the water within 1 km (NearbyWaterTip).
   const nearbyTip = hour?.reasons?.some((r) => r.condition === "nearby_water") ? tip("nearbyWater") : "";
@@ -1558,7 +1559,11 @@ function allValuesButton(open = store.topTileOpen) {
  */
 /** The Current tile opens the water level and current (CurrentDetailView). */
 function wireCurrent(box, forecast) {
-  box.querySelectorAll("[data-current]").forEach((b) => b.addEventListener("click", () => openSheet(t("Current"), currentBody(forecast.river))));
+  box.querySelectorAll("[data-current]").forEach((b) => b.addEventListener("click", () => {
+    // Using the tile closes its tip, as the app's invalidate(reason: .actionPerformed).
+    closeTip(root, "riverCurrent");
+    openSheet(t("Current"), currentBody(forecast.river));
+  }));
   box.querySelectorAll("[data-water-level]").forEach((b) => b.addEventListener("click", () => {
     closeTip(root, "waterLevel");
     openSheet(t("Water level"), waterLevelBody(forecast.waterLevel));

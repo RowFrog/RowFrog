@@ -239,6 +239,8 @@ export function renderTour(root, { languagePicker, wireLanguage, done, lakes, re
     id = page.id;
     const last = index === list.length - 1;
     setTitle(t(page.title));
+    // The river page says what the river current tip would (RiverCurrentTip), so that tip stays away.
+    if (page.id === "river") save("rf.tipsClosed", [...new Set([...closed(), "riverCurrent"])]);
     const body = page.choice
       ? `<label class="search tour-search">${icon("search")}<input id="tour-search" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
           <div id="tour-clubs" class="tour-clubs"></div>`
@@ -335,6 +337,8 @@ const TIPS = {
   rowImport: [key("Import a row"), key("Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace."), "upload"],
   saveData: [key("Out on mobile data?"), key("Switch on Save mobile data: satellite pictures then load only when you tap them and the radar needs fewer downloads. Forecasts and warnings always load."), "radio-tower"],
   factoryReset: [key("What a reset does"), key("Settings, units, boat limits and background pictures go back to how the app came, and your own pictures are deleted. Your clubs, boats and home base stay."), "rotate-ccw"],
+  // On a river or canal club's page, for a club added after the tour; the tour's river page closes it (RiverCurrentTip).
+  riverCurrent: [key("Current on the river"), key("The Current tile shows the nearest gauge's flow speed, water level and trend. Tap it for the level chart and your pace upstream and downstream."), "circle-arrow-right"],
   waterLevel: [key("Water level in winter"), key("Forggensee is let down every winter. While it is lowered, the Water level tile below takes the place of the ice estimate. Tap it for the last week's levels."), "arrow-down-to-line"],
   waterEstimate: [key("Water temperature from space"), key("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date."), "satellite"],
   // On a phone's lake map, under the grabber (RoutePanelTip).

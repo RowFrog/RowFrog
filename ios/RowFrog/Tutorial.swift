@@ -52,6 +52,8 @@ enum Tutorial {
         if defaults.bool(forKey: DefaultsKey.suggestTip) { Tips.showTipsForTesting([SuggestLaunchPointTip.self]) }
         // `-RWNearbyTip YES` shows the nearby-water tip under the top tile, also without such a reason.
         if defaults.bool(forKey: DefaultsKey.nearbyTip) { Tips.showTipsForTesting([NearbyWaterTip.self]) }
+        // `-RWRiverTip YES` shows the river current tip on a river or canal club's page.
+        if defaults.bool(forKey: DefaultsKey.riverTip) { Tips.showTipsForTesting([RiverCurrentTip.self]) }
         if defaults.bool(forKey: DefaultsKey.laterTips) {
             Tips.hideTipsForTesting([TopTileTip.self, RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
             Tips.showTipsForTesting([AllValuesTip.self, RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
@@ -377,6 +379,8 @@ struct TutorialView: View {
             }
             .onChange(of: page) {
                 TourProgress.page = page
+                // The river page says what the tip would: no tip later for a river club picked now.
+                if page == .river { RiverCurrentTip().invalidate(reason: .actionPerformed) }
                 // No swiping past the home base choice without one.
                 if locations.homeID == nil, page.rawValue > TourPage.homeBase.rawValue {
                     withAnimation { page = .homeBase }
@@ -780,6 +784,13 @@ struct WaterLevelTip: Tip {
     var title: Text { Text(tr("Water level in winter")) }
     var message: Text? { Text(tr("Forggensee is let down every winter. While it is lowered, the Water level tile below takes the place of the ice estimate. Tap it for the last week's levels.")) }
     var image: Image? { Image(systemName: LakeLevel.symbol) }
+}
+
+/// On a river or canal club's page, for a club added after the tour (the tour's river page closes it).
+struct RiverCurrentTip: Tip {
+    var title: Text { Text(tr("Current on the river")) }
+    var message: Text? { Text(tr("The Current tile shows the nearest gauge's flow speed, water level and trend. Tap it for the level chart and your pace upstream and downstream.")) }
+    var image: Image? { Image(systemName: RiverConditions.symbol) }
 }
 
 struct WaterEstimateTip: Tip {

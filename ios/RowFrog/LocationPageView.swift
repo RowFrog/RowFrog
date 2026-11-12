@@ -90,6 +90,8 @@ struct LocationPageView: View {
     @State private var showAllValuesTip = false
     private let waterEstimateTip = WaterEstimateTip()
     private let waterLevelTip = WaterLevelTip()
+    private let riverTip = RiverCurrentTip()
+    @State private var showRiverTip = false
     @State private var showWaterLevelTip = false
     @State private var showWaterEstimateTip = false
     @State private var showTopTileTip = false
@@ -222,6 +224,7 @@ struct LocationPageView: View {
                 .tipVisibility(nearbyWaterTip, $showNearbyWaterTip)
                 .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(waterLevelTip, $showWaterLevelTip)
+                .tipVisibility(riverTip, $showRiverTip)
                 .tipVisibility(radarMapTip, $showRadarMapTip)
                 .tipVisibility(hourViewTip, $showHourViewTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
@@ -396,11 +399,13 @@ struct LocationPageView: View {
 
     /// Current conditions' tips, above its card or, inside the top tile, under that.
     /// One tip at a time: the radar's two follow the first. The water level
-    /// tip comes first, as it only shows while Forggensee is let down.
+    /// and river current tips come first, as they only show at such waters.
     @ViewBuilder
     private func conditionsTips(_ forecast: ClubForecast) -> some View {
         if tourSeen && showWaterLevelTip && forecast.waterLevel?.isLowered == true {
             TintedTipView(waterLevelTip)
+        } else if tourSeen && showRiverTip && forecast.river != nil {
+            TintedTipView(riverTip)
         } else if tourSeen && showConditionsTip {
             TintedTipView(conditionsTip)
         } else if tourSeen && showRainRadarTip {

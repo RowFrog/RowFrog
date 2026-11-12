@@ -82,6 +82,7 @@ struct ConditionTiles: View {
         if condition == .ice, let river = forecast.river {
             Button {
                 showingCurrent = true
+                RiverCurrentTip().invalidate(reason: .actionPerformed)
             } label: {
                 CurrentTile(river: river)
             }

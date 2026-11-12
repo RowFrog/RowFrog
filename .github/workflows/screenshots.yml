@@ -317,6 +317,8 @@ jobs:
           GUIDE=1 shoot 406-tip-suggest-launch-point-german-dark dark -RWTutorialSeen YES -RWNoTips YES -RWSuggestTip YES -RWHomeClub koelner-rudergesellschaft-1891 -RWSavedClubs '(koelner-rudergesellschaft-1891)' -RWOpenLaunchPoint YES -RWLanguage de
           shoot 415-tip-nearby-water light -RWOpenClub mrc-1880 -RWNearbyTip YES
           shoot 416-tip-nearby-water-german-dark dark -RWOpenClub mrc-1880 -RWNearbyTip YES -RWLanguage de
+          shoot 470-tip-river-current light -RWOpenClub akademischer-ruderclub-wuerzburg -RWNoTips YES -RWRiverTip YES
+          shoot 471-tip-river-current-german-dark dark -RWOpenClub akademischer-ruderclub-wuerzburg -RWNoTips YES -RWRiverTip YES -RWLanguage de
           # Current conditions in the top tile (owner's choice B, 4 Nov 2026): closed, with a
           # value it hides as one line under the sun line, opened into all tiles, the
           # settings switch, Arrange page with the card locked, and the old separate cards.
