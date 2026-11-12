@@ -13,6 +13,8 @@ struct SatellitePicture: Decodable, Hashable {
         let lakeCloud: Double
         /// File name beside the description, e.g. "satellite-latest.jpg".
         let image: String
+        /// The latest picture: share under cloud over about 2 x 2 km around each club in use, by club id.
+        var clubCloud: [String: Double]?
         /// Big lakes in use: the folder of this pass's 10 m tiles ("<row>-<col>.jpg").
         var tiles: String?
         /// The three biggest lakes: a 2500 px picture for the full view, before the tiles.
@@ -89,6 +91,20 @@ struct SatellitePicture: Decodable, Hashable {
     }
 
     var hasChoice: Bool { kinds.count > 1 }
+
+    /// From this share of cloud over the club and around it, the card opens on the clearest picture.
+    static let coveredFrom = 0.9
+
+    /// The picture a card opens on: the clearest when the latest is covered over the club's
+    /// 2 x 2 km (else over the whole lake) and the clearest is another pass, otherwise the
+    /// first to pick. The latest stays one tap away (owner 12 Nov 2026, docs/decisions/0024;
+    /// the website's startKind in web/public/app/satellite.js does the same).
+    func startKind(clubID: String?) -> Kind {
+        let first = kinds.first ?? .latest
+        guard let latest, let clearest, clearest.date != latest.date, kinds.contains(.clearest) else { return first }
+        let cloud = clubID.flatMap { latest.clubCloud?[$0] } ?? latest.lakeCloud
+        return cloud >= Self.coveredFrom ? .clearest : first
+    }
 
     func shot(_ kind: Kind, fallback: Bool = true) -> Shot? {
         let own: Shot? = switch kind {
@@ -469,7 +485,8 @@ struct SatellitePictureCard: View {
     /// A lake's picture covers the lake; a river section's or a club place's ("club-<id>") the area around the club.
     private var overLake: Bool { water == .lake && !lakeID.hasPrefix("club-") }
     @MainActor private var store: SatellitePictureStore { .shared }
-    @State private var kind: SatellitePicture.Kind = .latest
+    /// The picture picked on the card; until then the one it opens on (SatellitePicture.startKind).
+    @State private var pickedKind: SatellitePicture.Kind?
     /// The page's visible height, which follows turning the device and resizing the window.
     @Environment(\.pageHeight) private var pageHeight
     /// The card's height without the picture: title, picker, caption and switches.
@@ -506,10 +523,10 @@ struct SatellitePictureCard: View {
 
     var body: some View {
         Group {
-            if let picture = store.pictures[lakeID], let shot = picture.shot(kind) {
+            if let picture = store.pictures[lakeID], let shot = picture.shot(kind(of: picture)) {
                 Card(title: tr("Satellite picture"), symbol: "globe.europe.africa") {
                     if picture.hasChoice {
-                        SatelliteKindPicker(picture: picture, kind: $kind)
+                        SatelliteKindPicker(picture: picture, kind: Binding(get: { kind(of: picture) }, set: { pickedKind = $0 }))
                     }
                     Button {
                         // Saving data: the first tap loads the pictures, the next opens them.
@@ -531,7 +548,7 @@ struct SatellitePictureCard: View {
                 }
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { measured.card = $0; measuredChrome() }
                 .fullScreenCover(isPresented: $showingFull) {
-                    SatellitePictureScreen(lakeID: lakeID, picture: picture, kind: kind, clubID: clubID, overLake: overLake)
+                    SatellitePictureScreen(lakeID: lakeID, picture: picture, kind: kind(of: picture), clubID: clubID, overLake: overLake)
                         .diagnosisNamed("satellite picture")
                 }
             }
@@ -539,6 +556,11 @@ struct SatellitePictureCard: View {
         // Runs once the picture shows (LocationPageView loads the picture itself):
         // the overlays need the lake view.
         .task { await LakeViewStore.shared.load(lakeID) }
+    }
+
+    /// The picture shown: the one picked, else the one the card opens on.
+    private func kind(of picture: SatellitePicture) -> SatellitePicture.Kind {
+        pickedKind ?? picture.startKind(clubID: clubID)
     }
 
     private func waitsForTap(_ picture: SatellitePicture, _ shot: SatellitePicture.Shot) -> Bool {

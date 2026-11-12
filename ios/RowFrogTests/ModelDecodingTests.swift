@@ -251,6 +251,22 @@ final class ModelDecodingTests: XCTestCase {
         XCTAssertFalse(try APIClient.decoder.decode(SatellitePicture.self, from: Data(one.utf8)).hasChoice)
     }
 
+    func testCardOpensOnClearestWhenClubIsCovered() throws {
+        // Decision 0024, the same cases as web/tests/satellite.test.mjs.
+        func picture(_ latest: String, _ clearest: String? = #"{"date": "2026-10-27", "lakeCloud": 0, "image": "c.jpg"}"#) throws -> SatellitePicture {
+            let json = #"{"latest": \#(latest)"# + (clearest.map { #", "clearest": \#($0)"# } ?? "") + "}"
+            return try APIClient.decoder.decode(SatellitePicture.self, from: Data(json.utf8))
+        }
+        let clubCovered = try picture(#"{"date": "2026-11-08", "lakeCloud": 0.6, "image": "l.jpg", "clubCloud": {"mrc": 0.95}}"#)
+        XCTAssertEqual(clubCovered.startKind(clubID: "mrc"), .clearest)
+        let clubClear = try picture(#"{"date": "2026-11-08", "lakeCloud": 0.95, "image": "l.jpg", "clubCloud": {"mrc": 0.3}}"#)
+        XCTAssertEqual(clubClear.startKind(clubID: "mrc"), .latest)
+        XCTAssertEqual(try picture(#"{"date": "2026-11-08", "lakeCloud": 0.9, "image": "l.jpg"}"#).startKind(clubID: "mrc"), .clearest)
+        XCTAssertEqual(try picture(#"{"date": "2026-11-08", "lakeCloud": 0.89, "image": "l.jpg"}"#).startKind(clubID: "mrc"), .latest)
+        XCTAssertEqual(try picture(#"{"date": "2026-11-08", "lakeCloud": 1, "image": "l.jpg"}"#, #"{"date": "2026-11-08", "lakeCloud": 1, "image": "c.jpg"}"#).startKind(clubID: "mrc"), .latest)
+        XCTAssertEqual(try picture(#"{"date": "2026-11-08", "lakeCloud": 1, "image": "l.jpg"}"#, nil).startKind(clubID: "mrc"), .latest)
+    }
+
     func testPictureBrightnessTellsCloudFromWater() throws {
         // Left half white (cloud), right half black (water).
         let image = UIGraphicsImageRenderer(size: CGSize(width: 200, height: 100)).image { context in

@@ -211,6 +211,12 @@ def cloud_by_day(client: httpx.Client, ring, start: date, end: date) -> list[Pas
     return [Pass(d, cloud) for d, (valid, cloud) in sorted(seen.items()) if valid >= MIN_SEEN * full]
 
 
+def cloud_on(client: httpx.Client, ring, day: date) -> float | None:
+    """The share of `ring` under cloud in the pass of `day`, or None when that pass did not see it."""
+    seen = cloud_by_day(client, ring, day, day)
+    return seen[0].lake_cloud if seen else None
+
+
 def choose(passes: list[Pass]) -> tuple[Pass | None, Pass | None, Pass | None]:
     """The latest pass, the latest mostly clear one and the latest clear one."""
     latest = passes[-1] if passes else None

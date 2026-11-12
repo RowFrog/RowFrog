@@ -115,6 +115,28 @@ def test_mostly_clear_picture_only_when_it_adds_something(tmp_path, monkeypatch)
     assert "mostlyClear" not in body
 
 
+def test_club_cloud_measured_once_per_pass(monkeypatch):
+    asked = []
+    monkeypatch.setattr(sentinel2, "cloud_on", lambda client, ring, day: asked.append((ring[0], day)) or 0.95)
+    areas = {"a": publish.square(48.0, 11.3, publish.CLUB_AREA_M), "b": publish.square(47.9, 11.3, publish.CLUB_AREA_M)}
+    entry = {"date": "2026-11-08", "lakeCloud": 1.0, "image": "satellite-latest.jpg"}
+    publish._club_cloud(None, entry, areas, None)
+    assert entry["clubCloud"] == {"a": 0.95, "b": 0.95} and len(asked) == 2
+    # The same pass again, with one more club: only the new club costs a request.
+    areas["c"] = publish.square(47.8, 11.3, publish.CLUB_AREA_M)
+    again = {"date": "2026-11-08", "lakeCloud": 1.0, "image": "satellite-latest.jpg"}
+    publish._club_cloud(None, again, areas, entry)
+    assert set(again["clubCloud"]) == {"a", "b", "c"} and len(asked) == 3
+    # A new pass measures every club again; a pass that missed a club leaves it out.
+    monkeypatch.setattr(sentinel2, "cloud_on", lambda client, ring, day: None)
+    newer = {"date": "2026-11-13", "lakeCloud": 0.2, "image": "satellite-latest.jpg"}
+    publish._club_cloud(None, newer, areas, again)
+    assert "clubCloud" not in newer
+    # The square is about 2 x 2 km.
+    ring = publish.square(48.0, 11.3, publish.CLUB_AREA_M)
+    assert abs((ring[2][1] - ring[0][1]) * 110_540 - 2000) < 1
+
+
 def test_club_requests_stay_small():
     # 14 variables count as 1.4 calls per club, a lake point as one.
     assert open_meteo.params_weight(open_meteo.request_params(48, 11, 60)) == 1.4
