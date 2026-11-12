@@ -48,4 +48,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 25 | 2026-11-12 | [The table finishes its last night with the coarser model](0025-night-after-48-hours-from-coarser-model.md) |
 | 26 | 2026-11-12 | [The lake map's panel is a card at the bottom left on wide screens](0026-lake-map-panel-card-on-wide-screens.md) |
 | 27 | 2026-11-12 | [Screen controls: round X at the top left, cards close at their top right, tinted tips](0027-screen-controls-close-x-top-left-tinted-tips.md) |
-| NNNN | 2026-11-12 | [All saved routes in Settings](NNNN-all-saved-routes-in-settings.md) |
+| 28 | 2026-11-12 | [All saved routes in Settings](0028-all-saved-routes-in-settings.md) |
