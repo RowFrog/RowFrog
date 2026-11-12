@@ -100,6 +100,12 @@ enum WidgetPictures {
 
     /// What the file was made from, so the app makes it again only after a change.
     static func sourceKey(_ clubID: String, _ kind: Kind) -> String { "RWWidgetPictureSource-\(clubID)-\(kind.rawValue)" }
+    /// Where the club lies in the satellite file, as [x, y] fractions of its width and height.
+    static func focusKey(_ clubID: String) -> String { "RWWidgetPictureFocus-\(clubID)" }
+    static func focus(_ clubID: String) -> UnitPoint? {
+        guard let spot = WidgetShared.defaults.array(forKey: focusKey(clubID)) as? [Double], spot.count == 2 else { return nil }
+        return UnitPoint(x: spot[0], y: spot[1])
+    }
     /// Set by the widget when a widget of its own asks for a picture the app has not made yet.
     static func wantedKey(_ clubID: String, _ kind: Kind) -> String { "RWWidgetPictureWanted-\(clubID)-\(kind.rawValue)" }
 }
@@ -353,6 +359,12 @@ struct WidgetBackdrop: View {
     let background: WidgetBackground
     let snapshot: RowingSnapshot
     var picture: UIImage?
+    /// Where the picture's middle should be (the club in a satellite picture), as a
+    /// fraction of its width and height; nil for the picture's own middle. The
+    /// picture fills the widget with that point as near the middle as its edges
+    /// allow: a club at the end of a lake sits at the top, the picture still fills
+    /// the whole width (owner 2026-11-12).
+    var focus: UnitPoint?
 
     var body: some View {
         switch background {
@@ -367,13 +379,18 @@ struct WidgetBackdrop: View {
                 }
         case .appPicture, .picture, .satellite:
             if let picture {
-                Color.clear
-                    .overlay { Image(uiImage: picture).resizable().scaledToFill() }
-                    .clipped()
-                    .overlay {
-                        // Darker towards the bottom, so the white text stays readable.
-                        LinearGradient(colors: [.black.opacity(0.3), .black.opacity(0.6)], startPoint: .top, endPoint: .bottom)
-                    }
+                let middle = focus ?? BackgroundLibrary.focus(of: picture)
+                GeometryReader { area in
+                    let place = PicturePlace.rect(for: picture.size, filling: area.size, focus: middle)
+                    Image(uiImage: picture).resizable()
+                        .frame(width: place.width, height: place.height)
+                        .offset(x: place.minX, y: place.minY)
+                }
+                .clipped()
+                .overlay {
+                    // Darker towards the bottom, so the white text stays readable.
+                    LinearGradient(colors: [.black.opacity(0.3), .black.opacity(0.6)], startPoint: .top, endPoint: .bottom)
+                }
             } else {
                 WidgetSky(snapshot: snapshot)
             }

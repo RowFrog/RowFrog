@@ -107,12 +107,15 @@ enum WidgetBridge {
                 await store.load(lake)
                 guard let picture = store.pictures[lake], let shot = picture.clearest ?? picture.mostlyClear ?? picture.latest,
                       let url = store.url(lake, file: shot.image, date: shot.date) else { continue }
-                // Cut around the club, so the widget shows the same part of the lake as the app's background.
+                // The whole picture and the club's place in it: each widget fills its width and shows
+                // the club as near its middle as the picture allows, so a club at the end of a lake
+                // sits at the top (owner 2026-11-12); a square cut lost it on the medium widget.
                 let spot = BackgroundLibrary.place(of: club.launchPoint, in: picture.bbox)
-                let key = "\(url.absoluteString)|\(settings.blurWidgetPicture)|\(spot.map { "\($0.x),\($0.y)" } ?? "middle")"
+                let key = "whole|\(url.absoluteString)|\(settings.blurWidgetPicture)|\(spot.map { "\($0.x),\($0.y)" } ?? "middle")"
                 if key != shared.string(forKey: WidgetPictures.sourceKey(club.id, .satellite)), let image = await store.image(url) {
-                    let shown = spot.map { BackgroundLibrary.square(of: image, around: $0) } ?? image
-                    changed = write(shown, to: WidgetPictures.file(club.id, .satellite)) || changed
+                    changed = write(image, to: WidgetPictures.file(club.id, .satellite)) || changed
+                    if let spot { shared.set([Double(spot.x), Double(spot.y)], forKey: WidgetPictures.focusKey(club.id)) }
+                    else { shared.removeObject(forKey: WidgetPictures.focusKey(club.id)) }
                     shared.set(key, forKey: WidgetPictures.sourceKey(club.id, .satellite))
                 }
             }
@@ -160,6 +163,10 @@ struct WidgetGalleryView: View {
     let api: APIClient
     @State private var forecast: ClubForecast?
     @State private var failed = false
+    /// The home base's lake picture and the club's place in it, as the widget's satellite background shows it.
+    @State private var satellite: UIImage?
+    @State private var satelliteFocus: UnitPoint?
+    @State private var satelliteTried = false
 
     private let homeID = UserDefaults.standard.string(forKey: DefaultsKey.homeClub) ?? WidgetShared.defaultHomeID
 
@@ -224,7 +231,11 @@ struct WidgetGalleryView: View {
                            startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
         )
-        .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage), ready: forecast != nil || failed))
+        .modifier(ScreenshotScroll(page: UserDefaults.standard.integer(forKey: DefaultsKey.scrollPage), ready: (forecast != nil || failed) && satelliteTried))
+        .task {
+            await loadSatellite()
+            satelliteTried = true
+        }
         .task {
             do { forecast = try await api.forecast(clubID: homeID).applyingUserLimits() } catch { failed = true }
             // `-RWWidgetRadar YES`: light rain on the radar from 30 minutes on, for the radar line.
@@ -235,6 +246,18 @@ struct WidgetGalleryView: View {
                 })
             }
         }
+    }
+
+    /// The picture WidgetBridge.preparePictures writes for the satellite background, with the club's place.
+    private func loadSatellite() async {
+        guard let lake = (try? await api.lakes())?.first(where: { $0.clubs.contains { $0.id == homeID } }),
+              let club = lake.clubs.first(where: { $0.id == homeID }) else { return }
+        let store = SatellitePictureStore.shared
+        await store.load(lake.id)
+        guard let picture = store.pictures[lake.id], let shot = picture.clearest ?? picture.mostlyClear ?? picture.latest,
+              let url = store.url(lake.id, file: shot.image, date: shot.date) else { return }
+        satellite = await store.image(url)
+        satelliteFocus = BackgroundLibrary.place(of: club.launchPoint, in: picture.bbox).map { UnitPoint(x: $0.x, y: $0.y) }
     }
 
     private func caption(_ text: String) -> some View {
@@ -252,7 +275,8 @@ struct WidgetGalleryView: View {
             .padding(16)
             .frame(width: size.width, height: size.height)
             .background(WidgetBackdrop(background: background, snapshot: snapshot,
-                                       picture: WidgetBackgroundSwatch.picture(for: background, clubID: homeID)))
+                                       picture: background == .satellite ? satellite : WidgetBackgroundSwatch.picture(for: background, clubID: homeID),
+                                       focus: background == .satellite ? satelliteFocus : nil))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
     }
