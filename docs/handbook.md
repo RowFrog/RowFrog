@@ -333,6 +333,19 @@ The Mac is the code home and the Raspberry Pi (`pi` remote, `rowfrog:git/rowfrog
 
 Finished one-off probes (river section survey, river gauge check) are in `scripts/probes/`, their workflows in `scripts/probes/workflows/`. `scripts/probes/README.md` says what each answered and how to run one again.
 
+## Screenshot matrix (owner, 12 Nov 2026)
+
+Full comparisons and changes that reach several screens are shot in every combination (decision "Screenshots cover every device…"); narrow tasks may shoot a part and say which.
+
+- iPhone app: portrait, landscape.
+- iPad app: portrait, landscape; list shown and hidden.
+- Website, computer: Chrome and Safari; wide (list beside), medium, narrow window.
+- Website, iPhone: Chrome and Safari; portrait, landscape.
+- Website, iPad: Chrome and Safari; portrait, landscape; list shown and hidden.
+- Each at the top, in the middle and near the end of the page; light and dark; with a picture (frosted, solid) and without; keyboard open where there is a text field. Positions are measured, not judged by eye.
+
+How on the Mac: app shots with XCUITest or `simctl` (never the Claude app's Simulator tool); Mobile Safari with `xcrun simctl openurl booted <url>` and `simctl io booted screenshot`; desktop Safari with `safaridriver`; Chrome with Playwright's Chromium. Chrome on iPhone and iPad uses Apple's WebKit, so Simulator Safari stands in for its drawing.
+
 ## Tests
 
 Every PR runs them (CI and Website workflows); locally:
