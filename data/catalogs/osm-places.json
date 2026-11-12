@@ -1,7 +1,7 @@
 {
  "comment": "Each club's own place in OpenStreetMap (scripts/osm_club_places.py): where the map draws the club's name. The website puts the club's pin there once zoomed in, unless a clubhouse checked by hand lies more than 80 m away.",
  "source": "© OpenStreetMap contributors, ODbL",
- "updated": "2026-11-11",
+ "updated": "2026-11-12",
  "places": {
   "1-frauen-ruder-club-hannover-1928": {
    "at": [
@@ -205,11 +205,11 @@
   },
   "bonner-ruder-gesellschaft": {
    "at": [
-    50.721126,
-    7.121345
+    50.726553,
+    7.123913
    ],
-   "name": "Bonner Ruder-Verein 1882 e.V.",
-   "osm": "way/51973032"
+   "name": "Bonner Ruder-Gesellschaft e.V.",
+   "osm": "way/77045545"
   },
   "bonner-ruder-verein-1882": {
    "at": [
@@ -219,6 +219,14 @@
    "name": "Bonner Ruder-Verein 1882 e.V.",
    "osm": "way/51973032"
   },
+  "bootsclub-nordhorn": {
+   "at": [
+    52.434335,
+    7.081769
+   ],
+   "name": "Bootsclub Nordhorn e.V.",
+   "osm": "node/330403671"
+  },
   "bootshaus-ruder-union-melk": {
    "at": [
     48.222015,
@@ -226,6 +234,14 @@
    ],
    "name": "Bootshaus Ruder Union Melk",
    "osm": "way/396993889"
+  },
+  "breisacher-ruderverein": {
+   "at": [
+    48.020107,
+    7.587888
+   ],
+   "name": "Ruderverein Breisach",
+   "osm": "way/91325254"
   },
   "bremer-ruder-club-hansa-187983": {
    "at": [
@@ -245,11 +261,11 @@
   },
   "bremer-sport-club-ev-ruderabteilung": {
    "at": [
-    53.068323,
-    8.81287
+    53.068028,
+    8.814296
    ],
-   "name": "Bremer Ruder Club \"Hansa\"",
-   "osm": "way/197293238"
+   "name": "Ruder-, Drachenboot- und Tennis-Abteilung Bremer Sport-Club (BSC)",
+   "osm": "way/26277630"
   },
   "bremerhavener-ruderverein-von-1889": {
    "at": [
@@ -307,13 +323,13 @@
    "name": "Club de l'Aviron Nyon",
    "osm": "way/219393913"
   },
-  "club-nautique-francais-zuerich": {
+  "club-fuer-wassersport-porz-ev-1926": {
    "at": [
-    47.357088,
-    8.53624
+    50.873042,
+    7.048819
    ],
-   "name": "Seeclub Zürich",
-   "osm": "node/11248381044"
+   "name": "Club für Wassersport Porz",
+   "osm": "way/254058930"
   },
   "der-hamburger-und-germania-ruder-club": {
    "at": [
@@ -370,14 +386,6 @@
    ],
    "name": "Duisburger Ruderverein",
    "osm": "node/7592803572"
-  },
-  "eisenbahn-sportverein-lingen": {
-   "at": [
-    52.521746,
-    7.309405
-   ],
-   "name": "GTRV Lingen",
-   "osm": "way/1071268628"
   },
   "eisenbahnsportverein-schmoeckwitz-ev-abt-rudern": {
    "at": [
@@ -571,14 +579,6 @@
    "name": "Gmundner Ruderverein",
    "osm": "way/247575490"
   },
-  "grasshopper-club-zuerich": {
-   "at": [
-    47.357088,
-    8.53624
-   ],
-   "name": "Seeclub Zürich",
-   "osm": "node/11248381044"
-  },
   "greifswalder-ruderclub-hilda-1892": {
    "at": [
     54.099916,
@@ -602,6 +602,14 @@
    ],
    "name": "HRV Böllberg/Nelson e.V.",
    "osm": "node/8285124517"
+  },
+  "hallescher-ruderclub-ev-im-universitaetssportverein-halle": {
+   "at": [
+    51.512418,
+    11.955758
+   ],
+   "name": "Hallescher Ruderclub",
+   "osm": "node/347455815"
   },
   "hamburger-ruderinnen-club-von-1925": {
    "at": [
@@ -827,14 +835,6 @@
    "name": "Ludwigshafener Ruderverein von 1878 e.V.",
    "osm": "way/166908675"
   },
-  "ludwigshafener-ruderverein-von-1878-rheingoenheim": {
-   "at": [
-    49.438433,
-    8.462041
-   ],
-   "name": "Ludwigshafener Ruderverein - Hugo-Rothstein-Gelände",
-   "osm": "way/49214620"
-  },
   "luebecker-ruder-gesellschaft-von-1885": {
    "at": [
     53.862553,
@@ -850,6 +850,22 @@
    ],
    "name": "Lübecker Ruderklub",
    "osm": "node/515979906"
+  },
+  "lueneburger-ruder-club-wiking-v1875": {
+   "at": [
+    53.254038,
+    10.413804
+   ],
+   "name": "Lüneburger Ruder-Club e.V. 1875",
+   "osm": "node/983474630"
+  },
+  "lueneburger-ruder-club-wiking-v1875-loesegraben": {
+   "at": [
+    53.254038,
+    10.413804
+   ],
+   "name": "Lüneburger Ruder-Club e.V. 1875",
+   "osm": "node/983474630"
   },
   "mainzer-ruder-gesellschaft-1898": {
    "at": [
@@ -933,11 +949,19 @@
   },
   "mrsv-bayern": {
    "at": [
-    47.991447,
-    11.338367
+    47.991572,
+    11.338384
    ],
-   "name": "Münchener Ruder- und Segelverein \"Bayern\" von 1910 e.V.",
-   "osm": "way/609681098"
+   "name": "MRSV",
+   "osm": "node/1341258459"
+  },
+  "muehlheimer-ruderverein-1911": {
+   "at": [
+    50.129231,
+    8.836121
+   ],
+   "name": "Ruderverein Mühlheim",
+   "osm": "way/200829126"
   },
   "muelheimer-ruder-gesellschaft": {
    "at": [
@@ -1053,11 +1077,11 @@
   },
   "polytechniker-ruderclub-zuerich": {
    "at": [
-    47.357088,
-    8.53624
+    47.357606,
+    8.535871
    ],
-   "name": "Seeclub Zürich",
-   "osm": "node/11248381044"
+   "name": "Polytechniker Ruderclub (PRC)",
+   "osm": "node/11248381045"
   },
   "pontoniersportverein-laufenburg": {
    "at": [
@@ -1098,6 +1122,14 @@
    ],
    "name": "Preetzer Ruderclub e. V.",
    "osm": "node/1770092431"
+  },
+  "pro-sport-berlin-24": {
+   "at": [
+    52.419367,
+    13.587831
+   ],
+   "name": "Sportanlage Pro Sport Berlin 24 e,V,",
+   "osm": "way/307434439"
   },
   "pro-sport-berlin-24-gatow": {
    "at": [
@@ -1146,14 +1178,6 @@
    ],
    "name": "Rendsburger Ruderverein e.V.",
    "osm": "way/405171678"
-  },
-  "renn-ruder-gemeinschaft-muelheim": {
-   "at": [
-    51.408349,
-    6.894088
-   ],
-   "name": "Wassersportverein Mülheim e.V.",
-   "osm": "node/1185367733"
   },
   "richtershorner-ruderverein": {
    "at": [
@@ -1405,11 +1429,11 @@
   },
   "ruder-hockey-und-tanzsport-club-von-1901": {
    "at": [
-    52.276075,
-    7.446034
+    52.276187,
+    7.446384
    ],
-   "name": "RHTC Rudern",
-   "osm": "node/598717198"
+   "name": "RHTC Rheine von 1901 e.V.",
+   "osm": "way/46882400"
   },
   "ruder-klub-normannia": {
    "at": [
@@ -1715,14 +1739,6 @@
    "name": "Ruderclub Mondsee",
    "osm": "way/147616150"
   },
-  "ruderclub-muelheim-a-d-ruhr-von-1977": {
-   "at": [
-    51.408349,
-    6.894088
-   ],
-   "name": "Wassersportverein Mülheim e.V.",
-   "osm": "node/1185367733"
-  },
   "ruderclub-narva-oberspree": {
    "at": [
     52.454987,
@@ -1762,14 +1778,6 @@
    ],
    "name": "Ruderclub Rapperswil-Jona",
    "osm": "node/6431512545"
-  },
-  "ruderclub-ratsgymnasium-ev-osnabrueck": {
-   "at": [
-    52.309265,
-    8.000009
-   ],
-   "name": "Schulrudern Stadt Osnabrück",
-   "osm": "way/36599108"
   },
   "ruderclub-reuss-luzern": {
    "at": [
@@ -1891,14 +1899,6 @@
    "name": "Ruderclub Zellingen v. 1946 e.V.",
    "osm": "way/1039141170"
   },
-  "ruderclub-zuerich": {
-   "at": [
-    47.356716,
-    8.536242
-   ],
-   "name": "Nordiska Roddföreningen i Zürich",
-   "osm": "node/11248381043"
-  },
   "rudergemeinschaft-angaria": {
    "at": [
     52.377358,
@@ -1941,11 +1941,11 @@
   },
   "rudergesellschaft-kassel-1927": {
    "at": [
-    51.297012,
-    9.49727
+    51.296827,
+    9.496916
    ],
-   "name": "Ruderverein der Heinrich-Schütz-Schule Kassel e.V.",
-   "osm": "way/214807058"
+   "name": "Rudergesellschaft Kassel 1927 e.V.",
+   "osm": "way/181747226"
   },
   "rudergesellschaft-lahnstein-1922": {
    "at": [
@@ -1965,11 +1965,11 @@
   },
   "rudergesellschaft-marktheidenfeld": {
    "at": [
-    49.852292,
-    9.599864
+    49.852333,
+    9.599346
    ],
    "name": "Rudergesellschaft Marktheidenfeld e.V.",
-   "osm": "node/12728282038"
+   "osm": "node/769391466"
   },
   "rudergesellschaft-speyer-1883": {
    "at": [
@@ -2026,14 +2026,6 @@
    ],
    "name": "Ruderklub Flensburg",
    "osm": "node/408217682"
-  },
-  "ruderriege-etuf-essen": {
-   "at": [
-    51.399884,
-    7.009192
-   ],
-   "name": "Segler im Essen Werdener Ruder-Club von 1896",
-   "osm": "way/125201733"
   },
   "ruderriege-tv-waidmannslust": {
    "at": [
@@ -2133,11 +2125,11 @@
   },
   "ruderverein-cassel-2010": {
    "at": [
-    51.294674,
-    9.490059
+    51.294816,
+    9.490274
    ],
-   "name": "Bootshaus Ruderverein Cassel 2010 / TRV Albert-Schweitzer-Schule Kassel",
-   "osm": "way/186332897"
+   "name": "Ruderverein Cassel 2010",
+   "osm": "node/3306090351"
   },
   "ruderverein-collegia-1895": {
    "at": [
@@ -2197,19 +2189,19 @@
   },
   "ruderverein-erlangen-ev-1911": {
    "at": [
-    49.595041,
-    10.972654
+    49.595227,
+    10.972778
    ],
-   "name": "Ruderverein Erlangen (RVE)",
-   "osm": "node/799574979"
+   "name": "Ruderverein Erlangen",
+   "osm": "node/2997636625"
   },
   "ruderverein-esslingen": {
    "at": [
-    48.724429,
-    9.333211
+    48.724599,
+    9.332391
    ],
-   "name": "Ruderverein Esslingen e.V. von 1906",
-   "osm": "way/515361243"
+   "name": "Ruderverein Esslingen",
+   "osm": "way/38507291"
   },
   "ruderverein-friedrichsgymnasium-kassel": {
    "at": [
@@ -2282,14 +2274,6 @@
    ],
    "name": "Ruderverein Hoya",
    "osm": "node/1801676686"
-  },
-  "ruderverein-industrieschule-zuerich": {
-   "at": [
-    47.357088,
-    8.53624
-   ],
-   "name": "Seeclub Zürich",
-   "osm": "node/11248381044"
   },
   "ruderverein-ingelheim-1920": {
    "at": [
@@ -2531,30 +2515,6 @@
    "name": "Rüdersdorfer Ruderverhein Kalkberge e.V.",
    "osm": "way/283050074"
   },
-  "rv-bismarckschule-hannover": {
-   "at": [
-    52.354234,
-    9.739724
-   ],
-   "name": "Schülerbootshaus Hannover",
-   "osm": "way/1071032826"
-  },
-  "rv-helene-lange-schule-hannover": {
-   "at": [
-    52.354234,
-    9.739724
-   ],
-   "name": "Schülerbootshaus Hannover",
-   "osm": "way/1071032826"
-  },
-  "rv-humboldtschule-hannover": {
-   "at": [
-    52.354234,
-    9.739724
-   ],
-   "name": "Schülerbootshaus Hannover",
-   "osm": "way/1071032826"
-  },
   "saarbruecker-rudergesellschaft-undine": {
    "at": [
     49.225182,
@@ -2586,14 +2546,6 @@
    ],
    "name": "SC DHfK Leipzig e. V., Abteilung Rudern",
    "osm": "way/22893230"
-  },
-  "schulruderzentrum-kassel": {
-   "at": [
-    51.289444,
-    9.487822
-   ],
-   "name": "Wassersportverein Engelsburg-Gymnasium Kassel",
-   "osm": "way/223390834"
   },
   "schweinfurter-ruder-club-franken-von-1882": {
    "at": [
@@ -2635,6 +2587,14 @@
    "name": "See Club Zug",
    "osm": "way/174994032"
   },
+  "seeclub-biel": {
+   "at": [
+    47.134358,
+    7.232004
+   ],
+   "name": "Seeclub Biel",
+   "osm": "node/13878189760"
+  },
   "seeclub-luzern": {
    "at": [
     47.044862,
@@ -2667,6 +2627,14 @@
    "name": "Seeclub Rorschach + Arbon",
    "osm": "way/161529993"
   },
+  "seeclub-sempach": {
+   "at": [
+    47.136551,
+    8.18823
+   ],
+   "name": "Seeclub Sempach",
+   "osm": "way/664451457"
+  },
   "seeclub-staefa": {
    "at": [
     47.244293,
@@ -2682,14 +2650,6 @@
    ],
    "name": "Seeclub Stansstad",
    "osm": "way/376574335"
-  },
-  "seeclub-thun": {
-   "at": [
-    46.753503,
-    7.63325
-   ],
-   "name": "See Club Thun",
-   "osm": "way/211460719"
   },
   "seeclub-zuerich": {
    "at": [
@@ -2731,6 +2691,14 @@
    "name": "SAF Société d'Aviron Fribourg",
    "osm": "node/4798267622"
   },
+  "societe-nautique-etoile-bienne": {
+   "at": [
+    47.134284,
+    7.230491
+   ],
+   "name": "Société Nautique Etoile Bienne",
+   "osm": "node/13878189761"
+  },
   "solothurner-ruderclub": {
    "at": [
     47.201051,
@@ -2749,11 +2717,11 @@
   },
   "sportclub-berlin-gruenau-ev-abt-rudern": {
    "at": [
-    52.41124,
-    13.594289
+    52.4094,
+    13.602999
    ],
-   "name": "Rudergemeinschaft Grünau",
-   "osm": "way/90452105"
+   "name": "Wasserfahrsportzentrum Grünau",
+   "osm": "way/23988596"
   },
   "sportclub-berlin-koepenick": {
    "at": [
@@ -2762,6 +2730,14 @@
    ],
    "name": "Sportclub Berlin-Köpenick",
    "osm": "way/180315069"
+  },
+  "sportgemeinschaft-demag-ev-wetter": {
+   "at": [
+    51.380751,
+    7.397148
+   ],
+   "name": "SG Demag e.V.",
+   "osm": "way/30490290"
   },
   "sportgemeinschaft-wiking-1903": {
    "at": [
@@ -2779,14 +2755,6 @@
    "name": "SV Energie Berlin (Abteilung Rudern)",
    "osm": "way/159946412"
   },
-  "sportzentrum-der-christian-albrechts-universitaet-zu-kiel": {
-   "at": [
-    54.328837,
-    10.147361
-   ],
-   "name": "Ruder- und Kanuzentrum CAU Kiel",
-   "osm": "node/7932665402"
-  },
   "spree-ruder-club-koepenick": {
    "at": [
     52.420882,
@@ -2795,14 +2763,6 @@
    "name": "Spree-Ruder-Club Köpenick",
    "osm": "way/307434475"
   },
-  "srr-albert-schweitzer-schule-nienburg": {
-   "at": [
-    52.635538,
-    9.205206
-   ],
-   "name": "Ruderverein Nienburg",
-   "osm": "way/160379299"
-  },
   "srr-domschulruderclub-schleswig": {
    "at": [
     54.511182,
@@ -2810,14 +2770,6 @@
    ],
    "name": "Domschulruderclub Schleswig",
    "osm": "way/87513558"
-  },
-  "srr-gymnasium-stolzenau": {
-   "at": [
-    52.517942,
-    9.076392
-   ],
-   "name": "Ruderclub Stolzenau",
-   "osm": "way/235828333"
   },
   "steeler-ruder-verein-ev-1904": {
    "at": [
@@ -2867,6 +2819,22 @@
    "name": "Stuttgarter Rudergesellschaft 1899 e.V.",
    "osm": "way/48246720"
   },
+  "theodor-heuss-gymnasium-essen-kettwig": {
+   "at": [
+    51.359055,
+    6.947281
+   ],
+   "name": "Kettwiger Rudergesellschaft",
+   "osm": "way/277161566"
+  },
+  "torgauer-ruderverein": {
+   "at": [
+    51.563618,
+    13.007918
+   ],
+   "name": "Ruderverein Torgau e.V.",
+   "osm": "way/29339911"
+  },
   "tpsk-von-1925": {
    "at": [
     50.873025,
@@ -2874,6 +2842,14 @@
    ],
    "name": "TPSK Köln 1925 e.V.",
    "osm": "way/1459571533"
+  },
+  "trv-rhenania-bingen-1897": {
+   "at": [
+    49.954453,
+    7.898219
+   ],
+   "name": "TRV \"Rhenania\" Bingen 1897 e.V.",
+   "osm": "node/12280258651"
   },
   "tsv-otterndorf-von-1862-ev-ruderabteilung": {
    "at": [
@@ -2989,11 +2965,11 @@
   },
   "verdener-ruderverein": {
    "at": [
-    52.911082,
-    9.232049
+    52.911445,
+    9.231959
    ],
-   "name": "Anleger Verdener Ruderverein",
-   "osm": "node/2132555488"
+   "name": "Verdener Ruderverein",
+   "osm": "node/4397016517"
   },
   "volkstuemlicher-wassersport-mannheim": {
    "at": [
@@ -3011,13 +2987,21 @@
    "name": "Wasser Sportunion Wachau",
    "osm": "way/683147866"
   },
+  "wassersportfreunde-burg-ev-1924": {
+   "at": [
+    52.28349,
+    11.849405
+   ],
+   "name": "WSF Burg e. V. 1924",
+   "osm": "way/323918036"
+  },
   "wassersportverein-altwarmbuechen": {
    "at": [
-    52.427295,
-    9.859574
+    52.42678,
+    9.859664
    ],
-   "name": "Wassersportverein Altwarmbüchen",
-   "osm": "node/5649543247"
+   "name": "WSV Altwarmbüchen",
+   "osm": "node/2125328911"
   },
   "wassersportverein-belau": {
    "at": [
@@ -3026,6 +3010,22 @@
    ],
    "name": "Wassersportverein Belau e.V.",
    "osm": "way/204903947"
+  },
+  "wassersportverein-einheit-neustrelitz": {
+   "at": [
+    53.367896,
+    13.053037
+   ],
+   "name": "Wassersportverein \"Einheit\" Neustrelitz",
+   "osm": "way/674900616"
+  },
+  "wassersportverein-geisenheim-1912": {
+   "at": [
+    49.979803,
+    7.966028
+   ],
+   "name": "Wassersportverein Geisenheim 1912 e. V.",
+   "osm": "node/8511818462"
   },
   "wassersportverein-godesberg-190911": {
    "at": [
@@ -3043,6 +3043,22 @@
    "name": "Wassersportverein Hellas 1920 e.V.",
    "osm": "way/66135105"
   },
+  "wassersportverein-herne-1920": {
+   "at": [
+    51.563641,
+    7.248051
+   ],
+   "name": "WSV Herne",
+   "osm": "node/431077863"
+  },
+  "wassersportverein-honnef": {
+   "at": [
+    50.644069,
+    7.215632
+   ],
+   "name": "Wassersportverein Honnef",
+   "osm": "node/560090784"
+  },
   "wassersportverein-koenigs-wusterhausen": {
    "at": [
     52.296077,
@@ -3059,13 +3075,13 @@
    "name": "Wassersportverein Mülheim e.V.",
    "osm": "node/1185367733"
   },
-  "wassersportverein-ottensheim-regattastrecke": {
+  "wassersportverein-ottensheim": {
    "at": [
-    48.327523,
-    14.161817
+    48.330818,
+    14.170632
    ],
-   "name": "Regattaverein Linz-Ottensheim (RVLO)",
-   "osm": "node/11999200059"
+   "name": "Wassersportverein Ottensheim",
+   "osm": "way/153838999"
   },
   "weilburger-ruderverein-1905": {
    "at": [
