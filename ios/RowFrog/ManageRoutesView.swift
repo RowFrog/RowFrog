@@ -52,8 +52,8 @@ struct ManageRoutesView: View {
             .navigationTitle(tr("Manage routes"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { EditButton().disabled(routes.isEmpty) }
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                ToolbarItem(placement: .topBarTrailing) { EditButton().disabled(routes.isEmpty) }
+                CloseToolbarItem { dismiss() }
             }
             .alert(tr("Rename route"), isPresented: Binding(get: { renaming != nil }, set: { if !$0 { renaming = nil } })) {
                 TextField(tr("Name"), text: $newName)

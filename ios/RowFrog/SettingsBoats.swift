@@ -20,7 +20,7 @@ struct RowingLimitsView: View {
         Form {
             Section {
                 if showBoatsTip {
-                    TipView(boatsTip)
+                    TintedTipView(boatsTip)
                 }
                 ForEach(Boat.groups) { boat in
                     BoatRow(boat: boat) { path.append(.boat(boat.id)) }
@@ -201,7 +201,7 @@ struct BoatLimitsView: View {
 
             Section {
                 if showColdTip {
-                    TipView(coldTip)
+                    TintedTipView(coldTip)
                 }
                 // As Date & Time > Set Automatically in iOS: the app's limits
                 // by default, the list only when the user wants their own.

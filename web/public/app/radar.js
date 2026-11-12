@@ -6,7 +6,7 @@
 import { t, num } from "./i18n.js";
 import { icon } from "./icons.js";
 import { key, sky, precipitationKind } from "./logic.js";
-import { store, h, time, rain, unitSymbol, savingData, loadLeaflet, openSheet, clubPin } from "./shared.js";
+import { store, h, time, rain, unitSymbol, savingData, loadLeaflet, openSheet, clubPin, closeX } from "./shared.js";
 
 export const DWD_WMS = "https://maps.dwd.de/geoserver/dwd/wms";
 const LAYER = "dwd:Niederschlagsradar";
@@ -483,7 +483,7 @@ export async function openRadarMap(point, reference, mark = "house") {
   const region = radarRegion(point);
   const panel = document.createElement("div");
   panel.className = "wm-full radar-full";
-  panel.innerHTML = `<header class="nav"><span></span><strong class="nav-title">${h(t("Rain radar"))}</strong><button class="link strong" id="rm-done">${h(t("Done"))}</button></header>
+  panel.innerHTML = `<header class="nav">${closeX(`class="link close-x" id="rm-done"`)}<strong class="nav-title">${h(t("Rain radar"))}</strong><span></span></header>
     <div class="wm" id="rm-map"></div><section class="wm-panel" id="rm-panel"></section>`;
   document.body.append(panel);
   document.body.classList.add("locked");

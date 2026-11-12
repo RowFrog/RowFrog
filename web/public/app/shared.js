@@ -1009,11 +1009,21 @@ export function openMenu(anchor, body, wire) {
   dialog.addEventListener("close", () => removeEventListener("resize", place));
 }
 
+/**
+ * Closes a screen or sheet that is only looked at: the round X at the top left, as iOS 26's close role in the app
+ * (CloseButton.swift; owner's pick A, 12 Nov 2026). attrs adds the button's own id or class; href makes it a link.
+ */
+export function closeX(attrs = `class="link close-x"`, href = null) {
+  const inner = `aria-label="${h(t("Close"))}">${icon("x")}`;
+  return href ? `<a ${attrs} href="${h(href)}" ${inner}</a>` : `<button ${attrs} ${inner}</button>`;
+}
+
 export function openSheet(title, body, wire) {
   document.querySelector("dialog.sheet")?.remove();
   const dialog = document.createElement("dialog");
   dialog.className = "sheet";
-  dialog.innerHTML = `<header><strong>${h(title)}</strong><button class="done">${h(t("Done"))}</button></header><div class="sheet-body">${body}</div>`;
+  // The round X at the top left, as the app's sheets (owner's pick A, 12 Nov 2026, docs/decisions/0023).
+  dialog.innerHTML = `<header>${closeX('class="done close-x"')}<strong>${h(title)}</strong></header><div class="sheet-body">${body}</div>`;
   document.body.append(dialog);
   dialog.querySelector(".done").addEventListener("click", () => dialog.close());
   dialog.addEventListener("click", (e) => e.target === dialog && dialog.close());

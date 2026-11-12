@@ -122,11 +122,11 @@ struct LocationPageView: View {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
                                 .id(AppSettings.shared.combinedTopTile ? "conditions" : "top")
                             if tourSeen && showNearbyWaterTip && Self.hasNearbyReason(now) {
-                                TipView(nearbyWaterTip)
+                                TintedTipView(nearbyWaterTip)
                             } else if tourSeen && showTopTileTip {
-                                TipView(topTileTip)
+                                TintedTipView(topTileTip)
                             } else if AppSettings.shared.combinedTopTile && tourSeen && showAllValuesTip {
-                                TipView(allValuesTip)
+                                TintedTipView(allValuesTip)
                             } else if AppSettings.shared.combinedTopTile {
                                 // Current conditions is in the top tile: its tips follow it.
                                 conditionsTips(forecast)
@@ -341,7 +341,7 @@ struct LocationPageView: View {
             if lake?.hasOutline != false {
                 VStack(spacing: 16) {
                     if tourSeen && showLakeViewTip {
-                        TipView(lakeViewTip)
+                        TintedTipView(lakeViewTip)
                     }
                     LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC, water: lake?.water ?? .lake,
                                  currentMs: forecast.river?.now?.speedMs, daylight: forecast.daylight)
@@ -353,9 +353,9 @@ struct LocationPageView: View {
             // Each tip sits above its card and scrolls with it.
             VStack(spacing: 16) {
                 if tourSeen && showHourlyTip {
-                    TipView(hourlyTip)
+                    TintedTipView(hourlyTip)
                 } else if tourSeen && showHourViewTip {
-                    TipView(hourViewTip)
+                    TintedTipView(hourViewTip)
                 }
                 // In two columns the table shows 24 hours until opened (ColumnFill.fold).
                 let folds = twoColumns && AppSettings.shared.activeColumnFill == .fold
@@ -372,7 +372,7 @@ struct LocationPageView: View {
         case .launchPoint:
             VStack(spacing: 16) {
                 if tourSeen && showLaunchPointTip {
-                    TipView(launchPointTip)
+                    TintedTipView(launchPointTip)
                 }
                 LaunchPointMapCard(club: club)
             }
@@ -381,7 +381,7 @@ struct LocationPageView: View {
         case .satellite:
             VStack(spacing: 16) {
                 if tourSeen && showSatelliteTip {
-                    TipView(satelliteTip)
+                    TintedTipView(satelliteTip)
                 }
                 SatellitePictureCard(lakeID: satelliteID(forecast), clubID: club.id, water: lake?.water ?? .lake)
             }
@@ -395,16 +395,16 @@ struct LocationPageView: View {
     @ViewBuilder
     private func conditionsTips(_ forecast: ClubForecast) -> some View {
         if tourSeen && showWaterLevelTip && forecast.waterLevel?.isLowered == true {
-            TipView(waterLevelTip)
+            TintedTipView(waterLevelTip)
         } else if tourSeen && showConditionsTip {
-            TipView(conditionsTip)
+            TintedTipView(conditionsTip)
         } else if tourSeen && showRainRadarTip {
-            TipView(rainRadarTip)
+            TintedTipView(rainRadarTip)
         } else if tourSeen && showRadarMapTip {
-            TipView(radarMapTip)
+            TintedTipView(radarMapTip)
         } else if tourSeen && showWaterEstimateTip && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil {
             // Only where no station measures the water.
-            TipView(waterEstimateTip)
+            TintedTipView(waterEstimateTip)
         }
     }
 
@@ -447,7 +447,7 @@ private extension LocationPageView {
         if let source = forecast.forecastSource {
             VStack(spacing: 16) {
                 if tourSeen && showSourceTip {
-                    TipView(sourceTip)
+                    TintedTipView(sourceTip)
                 }
                 ForecastSourceLine(
                     source: source,
@@ -948,7 +948,7 @@ private struct NoWarningSheet: View {
             .navigationTitle(tr("Official warnings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
         }
         .presentationDetents([.medium, .large])
@@ -1441,7 +1441,7 @@ private struct HourDetailSheet: View {
             .navigationTitle(Format.dayTime(hour.time))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
             .fullScreenCover(isPresented: $showingLakeMap) {
                 if let view = lakeViews.views[forecast.lakeId, club: forecast.clubId] {

@@ -63,7 +63,8 @@ struct LaunchPointSheet: View {
             .navigationTitle(tr("Location"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
+                // At the right, as the value pages' map card; the X takes the left (owner's pick A, 12 Nov 2026).
+                ToolbarItem(placement: .topBarTrailing) {
                     // The same as pulling the sheet up or down.
                     Button {
                         withAnimation(.smooth) { full.toggle() }
@@ -72,9 +73,7 @@ struct LaunchPointSheet: View {
                     }
                     .accessibilityLabel(full ? tr("Smaller map") : tr("Map full screen"))
                 }
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(tr("Done")) { dismiss() }
-                }
+                CloseToolbarItem { dismiss() }
             }
         }
         // As far up as the content needs; pulled up, the map fills the screen.

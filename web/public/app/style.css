@@ -566,6 +566,16 @@ dialog.sheet > header { display: grid; grid-template-columns: 1fr minmax(0, auto
 dialog.sheet > header > strong { grid-column: 2; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 dialog.sheet > header > :first-child:not(strong) { grid-column: 1; justify-self: start; }
 dialog.sheet > header > .done { grid-column: 3; justify-self: end; }
+/* Screens and sheets that are only looked at close with the round X at the top left (closeX; owner's pick A, 12 Nov 2026). */
+dialog.sheet > header > .close-x { grid-column: 1; justify-self: start; }
+dialog.sheet > header > .map-full { grid-column: 3; justify-self: end; }
+.nav .close-x, dialog.sheet > header > .close-x { padding: 0; width: 44px; }
+.nav .close-x .i, dialog.sheet > header > .close-x .i { width: 20px; height: 20px; }
+/* The value page's title is the menu to jump to another value, as the app's title menu. */
+.nav .title-menu { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 4px; min-height: 44px; cursor: pointer; }
+.nav .title-menu strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nav .title-menu .i { width: 14px; height: 14px; color: var(--sub); flex: none; }
+.nav .title-menu select { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
 dialog.sheet .done { font-weight: 500; }
 
 /* The sheets' buttons as the app's glass capsules (iOS 26 toolbar buttons): Done, Cancel, Save, back,
@@ -749,7 +759,11 @@ button.red { color: var(--red); }
 .ramp .labels small { position: absolute; top: 2px; transform: translateX(-10%); font-size: 11px; color: var(--sub); white-space: nowrap; }
 .spot { background: var(--tile); border-radius: 12px; padding: 8px 12px; margin: 6px 0; }
 .spot-head { display: flex; align-items: center; gap: 8px; }
-.spot-head .tool { margin-left: auto; font-size: 18px; }
+/* Cards inside a screen (a tapped spot, a turning point) close with a grey round X at their top right, as Maps'
+   place cards (CardCloseButton; owner's pick A, 12 Nov 2026). */
+.card-x { flex: none; display: grid; place-items: center; width: 30px; height: 30px; border-radius: 15px; background: var(--fill); color: var(--sub); }
+.card-x .i { width: 15px; height: 15px; stroke-width: 2.5; }
+.spot-head .card-x { margin-left: auto; }
 .spot .now-metrics { margin-top: 4px; }
 .route-tools, .route-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 6px 0; }
 .route-tools .pill[disabled] { opacity: .4; }
@@ -1031,8 +1045,11 @@ body.has-picture .club-head:not(:has(.head-side)) { position: relative; z-index:
 body.has-picture .list-links .link { width: fit-content; padding: 2px 8px; border-radius: 8px; background: color-mix(in srgb, var(--bg) 55%, transparent); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); }
 
 /* One-time tips (TipKit) */
-.tip { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0 12px; padding: 12px; border-radius: 14px; background: var(--card); box-shadow: 0 1px 6px rgba(0,0,0,.08); position: relative; }
-.card .tip { background: var(--tile); box-shadow: none; }
+/* Tips tinted with the tip blue, a touch more in dark mode, so they read as tips and show no solid block over a frosted
+   tile (TintedTipView; owner's pick C, 12 Nov 2026). A popover tip keeps a solid back under the tint, as it floats over the page. */
+.tip { --tip-tint: color-mix(in srgb, #0a84ff 14%, transparent); display: flex; gap: 10px; align-items: flex-start; margin: 8px 0 12px; padding: 12px; border-radius: 14px; background: var(--tip-tint); position: relative; }
+:root[data-theme="dark"] .tip { --tip-tint: color-mix(in srgb, #0a84ff 22%, transparent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tip { --tip-tint: color-mix(in srgb, #0a84ff 22%, transparent); } }
 .tip > svg { flex: none; width: 28px; height: 28px; color: var(--accent); }
 .tip strong { display: block; margin-bottom: 2px; }
 .tip p { margin: 0; color: var(--sub); font-size: 14px; }
@@ -1130,7 +1147,7 @@ dialog.sheet .sheet-body > .map + p { margin-top: 12px; }
 /* The one-time boat tip as a popover under the boat button (BoatsElsewhereTip, popoverTip arrowEdge top). */
 /* The boats-elsewhere tip points at the boat button: under it at the top (wide), over it in the bottom bar (narrow). */
 .head-side { position: relative; }
-.tip.pop { position: absolute; top: calc(100% + 10px); left: 0; z-index: 6; width: min(300px, calc(100vw - 32px)); margin: 0; text-align: left; box-shadow: 0 8px 28px rgba(0, 0, 0, .22); pointer-events: auto; }
+.tip.pop { background: linear-gradient(var(--tip-tint), var(--tip-tint)), var(--card); position: absolute; top: calc(100% + 10px); left: 0; z-index: 6; width: min(300px, calc(100vw - 32px)); margin: 0; text-align: left; box-shadow: 0 8px 28px rgba(0, 0, 0, .22); pointer-events: auto; }
 .tip.pop::before { content: ""; position: absolute; top: -7px; left: var(--arrow-x, 70px); width: 14px; height: 14px; background: inherit; transform: rotate(45deg); }
 .head-side.end .tip.pop { left: auto; right: 0; }
 .head-side.end .tip.pop::before { left: auto; right: 21px; }

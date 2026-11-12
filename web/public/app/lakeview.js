@@ -883,7 +883,7 @@ function viewingPanel(hour) {
     const w = windAt(view, hour, page.spot.at, i);
     const zone = view.grid.cellZone[i];
     details = `<div class="spot"><p class="spot-head">${dot(spotLight, 14, stale)} <strong>${h(lightTitle(spotLight, stale))}</strong>
-        <button class="tool" id="spot-close" aria-label="${h(t("Close"))}">${icon("x")}</button></p>
+        <button class="card-x" id="spot-close" aria-label="${h(t("Close"))}">${icon("x")}</button></p>
       ${view.zones.length > 1 && view.zones[zone] ? `<small class="sub">${h(t("Selected spot · %@", t(zoneTitle(view.zones[zone], waterKind(view)))))}</small>` : ""}
       <div class="now-metrics"><div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesCm[i] / 100))}</span></div>
         <div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
@@ -974,7 +974,7 @@ function planningPanel(hour) {
     .map(([k, label]) => `<button data-way-back="${k}" class="${back === k ? "on" : ""}" ${k === "loop" && page.points.length < 3 && !isLoop ? "disabled" : ""}>${h(label)}</button>`).join("")}</div>`;
   // A tapped turning point swaps the tools for deleting it (planningTools).
   const tools = page.selected != null ? `<p class="point-bar"><strong>${h(t("Turning point %d").replace("%d", page.selected))}</strong>
-      <button class="pill red" id="delete-point">${icon("trash-2")} ${h(t("Delete point"))}</button><button class="pill strong" id="point-done">${h(t("Done"))}</button></p>
+      <button class="pill red" id="delete-point">${icon("trash-2")} ${h(t("Delete point"))}</button><button class="card-x" id="point-done" aria-label="${h(t("Close"))}">${icon("x")}</button></p>
     <p class="small sub">${h(t("Drag the point to move it. The magnifier shows where it lands."))}</p>`
     : `<div class="route-tools">
       <button class="pill" id="undo" ${page.route.canUndo ? "" : "disabled"}>${icon("undo-2")} ${h(t("Undo"))}</button>

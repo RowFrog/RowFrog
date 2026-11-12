@@ -481,13 +481,12 @@ struct ConditionDetailView: View {
             .navigationTitle(condition.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) {
-                    Button(tr("Done")) { dismiss() }
-                }
-                ToolbarItem(placement: .topBarLeading) {
-                    jumpMenu
-                }
+                CloseToolbarItem { dismiss() }
             }
+            // The title is the menu to jump to another value, as Apple's title menus
+            // (owner's pick A, 12 Nov 2026); the X takes the top left.
+            .toolbarTitleMenu { jumpPicker }
+            .task { if menuTitles.isEmpty { menuTitles = Dictionary(uniqueKeysWithValues: order.map { ($0, menuTitle($0)) }) } }
         }
     }
 
@@ -529,7 +528,7 @@ struct ConditionDetailView: View {
                 if let club, let layer {
                     // After the chart's tip, so one tip shows at a time.
                     if mapTipShown {
-                        TipView(mapTip)
+                        TintedTipView(mapTip)
                     }
                     mapCard(detail, layer: layer, club: club, hidden: hidden, height: 220)
                 }
@@ -596,7 +595,7 @@ struct ConditionDetailView: View {
         .accessibilityElement(children: .contain)
         if !detail.lines.isEmpty {
             if tourSeen && showScrubTip {
-                TipView(scrubTip)
+                TintedTipView(scrubTip)
             }
             ConditionChart(detail: detail, data: data, time: time, hidden: hidden)
                 .background {
@@ -727,27 +726,17 @@ struct ConditionDetailView: View {
             }
     }
 
-    /// The symbol in the corner: a tap lists every view with its value.
-    private var jumpMenu: some View {
-        Menu {
-            Picker(tr("Go to"), selection: Binding(get: { condition }, set: { new in
-                forward = (order.firstIndex(of: new) ?? 0) > (order.firstIndex(of: condition) ?? 0)
-                withAnimation(.easeInOut(duration: 0.25)) { condition = new }
-            })) {
-                ForEach(order) { c in
-                    Label(menuTitles[c] ?? c.title, systemImage: c.symbol).tag(c)
-                }
+    /// The title's menu: every view with its value.
+    private var jumpPicker: some View {
+        Picker(tr("Go to"), selection: Binding(get: { condition }, set: { new in
+            forward = (order.firstIndex(of: new) ?? 0) > (order.firstIndex(of: condition) ?? 0)
+            withAnimation(.easeInOut(duration: 0.25)) { condition = new }
+        })) {
+            ForEach(order) { c in
+                Label(menuTitles[c] ?? c.title, systemImage: c.symbol).tag(c)
             }
-            .pickerStyle(.inline)
-        } label: {
-            HStack(spacing: 2) {
-                ConditionIcon(condition: condition)
-                Image(systemName: "chevron.down").font(.caption2.weight(.bold))
-            }
-            .foregroundStyle(.blue)
-            .accessibilityLabel(tr("Go to another value"))
         }
-        .task { if menuTitles.isEmpty { menuTitles = Dictionary(uniqueKeysWithValues: order.map { ($0, menuTitle($0)) }) } }
+        .pickerStyle(.inline)
     }
 
     private func menuTitle(_ c: Condition) -> String {

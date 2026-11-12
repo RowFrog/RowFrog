@@ -5,7 +5,7 @@
 import { t, num, locale } from "./i18n.js";
 import { icon } from "./icons.js";
 import { API, key } from "./logic.js";
-import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature, boatControl } from "./shared.js";
+import { store, getJSON, h, dayLabel, windNumber, openSheet, savingData, mapLimits, temperature, boatControl, closeX } from "./shared.js";
 import { tip } from "./tour.js";
 import { hourIndex, gridEdges, coldShore, stripes, stripesFall, waterKind, shouldSplit } from "./lake.js";
 import { viewForMap, rasterCanvas, layerLegend, mapBoatNote, kitBadge, COLD_SHORE } from "./lakeview.js";
@@ -738,7 +738,7 @@ function openSatelliteScreen(lake, clubId, startKind, onKind) {
   function render() {
     if (!el.isConnected) return redraws.delete(render);
     const shot = meta[kind];
-    el.innerHTML = `<header class="nav value-nav"><span class="spacer"></span><strong class="nav-title">${h(t("Satellite picture"))}</strong><button class="link strong" id="sat-done">${h(t("Done"))}</button></header>
+    el.innerHTML = `<header class="nav value-nav">${closeX(`class="link close-x" id="sat-done"`)}<strong class="nav-title">${h(t("Satellite picture"))}</strong><span class="spacer"></span></header>
       ${kindPicker(lake, kind)}
       <div class="sat-stage"><div class="sat-zoom">${pictureHtml(lake, shot)}<div class="sat-sharp"></div></div><div class="sat-over sat-screen"></div>${coldBadge(lake)}</div>
       <div class="sat-panel">${caption(lake, shot)}${chips(lake, !!clubId)}</div>`;

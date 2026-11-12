@@ -629,8 +629,8 @@ struct WeatherMapScreen: View {
             .navigationTitle(layer.title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarLeading) { layerMenu }
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                ToolbarItem(placement: .topBarTrailing) { layerMenu }
+                CloseToolbarItem { dismiss() }
             }
             .task(id: layer) { await load() }
             // Zoomed out or moved: the tiles or the wider picture it needs now.

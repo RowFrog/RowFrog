@@ -1188,7 +1188,6 @@ enum German {
         "Shown": "Eingeblendet",
         "Shows or hides this line in the chart": "Blendet diese Linie im Diagramm ein oder aus",
         "Go to": "Gehe zu",
-        "Go to another value": "Zu einem anderen Wert",
         "%@ in total": "%@ insgesamt",
         "%@ min longer": "%@ min länger",
         "%@ min shorter": "%@ min kürzer",

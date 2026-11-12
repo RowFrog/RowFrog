@@ -118,7 +118,7 @@ struct UpdateCyclesSheet: View {
             .navigationTitle(tr("Updates"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .confirmationAction) { Button(tr("Done")) { dismiss() } }
+                CloseToolbarItem { dismiss() }
             }
         }
         .presentationDetents([.medium, .large])
