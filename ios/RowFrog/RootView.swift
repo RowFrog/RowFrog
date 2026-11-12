@@ -307,6 +307,9 @@ struct RootView: View {
                 .environment(\.openBoatSettings, openBoatSettings)
         }
         .onAppear { if selection.isEmpty { selection = saved[0].id } }
+        .onChange(of: chrome, initial: true) {
+            if case .wide = chrome { PageScroll.shared.update(besideList: true) } else { PageScroll.shared.update(besideList: false) }
+        }
     }
 
     /// The countries of the saved clubs, the phone's and any near the user;
@@ -397,7 +400,7 @@ private struct TopEdgeFade: View {
     static let tail: CGFloat = 28
 
     var body: some View {
-        let bar = statusBar + (title == nil ? 0 : InlineClubTitle.height)
+        let bar = statusBar + (title == nil ? 0 : InlineClubTitle.barHeight(statusBar: statusBar))
         ZStack(alignment: .bottom) {
             if PowerState.shared.lowPower {
                 Rectangle().fill(Color(.systemGroupedBackground))
@@ -442,6 +445,15 @@ struct InlineClubTitle: View {
     var sideRoom: CGFloat = 60
     static let height: CGFloat = 44
 
+    /// How far the top bar with the small name reaches below the clock. With the list
+    /// beside the page the name sits on the line of the top buttons (PageTopButtons),
+    /// a little lower; elsewhere the bar is just the name's height.
+    @MainActor static func barHeight(statusBar: CGFloat, besideList: Bool? = nil) -> CGFloat {
+        guard besideList ?? PageScroll.shared.besideList else { return height }
+        let mid = PageTopButtons.midY(statusBar: statusBar, listButtonsMidY: PageScroll.shared.listButtonsMidY)
+        return max(height, mid - statusBar + height / 2)
+    }
+
     var body: some View {
         HStack(spacing: 8) {
             if let light { TrafficLightDot(light: light, size: 12, stale: stale) }
@@ -463,10 +475,14 @@ enum PageChrome: Equatable {
     case wide(listShown: Bool)
 }
 
-/// The buttons level with the club's big name (iPad): on the left the sidebar
-/// button (while the list is not on screen) and the cog, on the right the boat,
-/// as Apple's guide splits a bar's leading and trailing items (owner's pick, 4 Nov 2026).
-/// They scroll up with the name and stay in the top bar once it has shrunk there.
+/// The page's top buttons (iPad): on the left the sidebar button (while the list
+/// is not on screen) and the cog, on the right the boat, as Apple's guide splits
+/// a bar's leading and trailing items (owner's pick, 4 Nov 2026).
+/// With the list beside the page (iPad on its side) they stay level with the list's
+/// own top buttons, at the top of the page and while it scrolls, also with the list
+/// slid away, and the small name in the top bar sits on the same line (owner,
+/// 12 Nov 2026, as on the website). Upright, with no list beside, they sit level
+/// with the big name, scroll up with it and stay in the top bar once it has shrunk there.
 /// When the list slides away, the sidebar button comes in and the cog moves over.
 /// The phone has none: its cog and boat sit in the bar at the bottom.
 struct PageTopButtons: View {
@@ -493,12 +509,26 @@ struct PageTopButtons: View {
         if chrome != .phone { buttons }
     }
 
+    /// The list header's gap above its button row (SideListHeader's top padding).
+    static let listHeaderTop: CGFloat = 4
+
+    /// The middle of the top button line on screen: the list's buttons where measured,
+    /// else where the list puts them (its row of 44 pt buttons under its top gap).
+    static func midY(statusBar: CGFloat, listButtonsMidY: CGFloat?) -> CGFloat {
+        listButtonsMidY ?? statusBar + listHeaderTop + 22
+    }
+
     private var buttons: some View {
         GeometryReader { proxy in
             let origin = proxy.frame(in: .global).minY
-            // Level with the big name; never higher than the small title in the top bar.
-            let pinned = statusBar + InlineClubTitle.height / 2
-            let titleY = PageScroll.shared.titleMidY[clubID].map { $0 - origin } ?? pinned
+            let y: CGFloat = {
+                if case .wide = chrome {
+                    return Self.midY(statusBar: statusBar, listButtonsMidY: PageScroll.shared.listButtonsMidY) - origin
+                }
+                // Level with the big name; never higher than the small title in the top bar.
+                let pinned = statusBar + InlineClubTitle.height / 2
+                return max(pinned, PageScroll.shared.titleMidY[clubID].map { $0 - origin } ?? pinned)
+            }()
             HStack(spacing: 8) {
                 if showsSidebarButton {
                     Button(action: showList) {
@@ -528,7 +558,7 @@ struct PageTopButtons: View {
             // Over the page's column of cards, not at the window's edges (owner, 12 Nov 2026).
             .frame(maxWidth: PageScroll.shared.pageWidth[clubID] ?? .infinity)
             .frame(height: 44)
-            .position(x: proxy.size.width / 2, y: max(pinned, titleY))
+            .position(x: proxy.size.width / 2, y: y)
         }
         .frame(maxHeight: .infinity)
         .ignoresSafeArea(edges: .top)

@@ -188,7 +188,8 @@ struct LocationPageView: View {
                     // Below the club's name when the top bar shows it.
                     if let forecast {
                         stickyHourlyHeader(forecast)
-                            .padding(.top, PageScroll.shared.titleGone.contains(club.id) ? InlineClubTitle.height : 0)
+                            .padding(.top, PageScroll.shared.titleGone.contains(club.id)
+                                     ? InlineClubTitle.barHeight(statusBar: pageMargins.top) : 0)
                     }
                 }
                 .environment(\.pageHeight, geometry.size.height)
