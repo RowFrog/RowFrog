@@ -291,6 +291,19 @@ function wireBottomBar(raw) {
   const dots = root.querySelector(".bottom .dots");
   dots?.addEventListener("pointerdown", (e) => {
     dotSlide = e.clientX;
+    dotSlid = false;
+  });
+  // As Weather's page dots (PageJump.step): a tap moves one club towards the tapped dot, with the slide.
+  dots?.addEventListener("click", (e) => {
+    const link = e.target.closest("a");
+    if (!link) return;
+    e.preventDefault();
+    if (dotSlid) return;
+    const links = [...dots.querySelectorAll("a")];
+    const at = links.findIndex((a) => a.classList.contains("on"));
+    const to = links.indexOf(link);
+    if (at < 0 || to === at) return;
+    moveTo(links[at + (to > at ? 1 : -1)].getAttribute("href"), to > at ? "next" : "prev");
   });
   // A mouse sliding along the dots would otherwise drag the link away.
   dots?.addEventListener("dragstart", (e) => e.preventDefault());
@@ -299,6 +312,8 @@ function wireBottomBar(raw) {
 // A finger or the mouse sliding along the dots moves through the clubs, as in Weather. On the
 // document, since each club page draws the bar anew while the finger is still down.
 let dotSlide = null;
+/** Whether the finger moved along the dots, so the click at its end does not step on as well. */
+let dotSlid = false;
 document.addEventListener("pointermove", (e) => {
   const dots = root.querySelector(".bottom .dots");
   if (dotSlide == null || !dots || Math.abs(e.clientX - dotSlide) < 6) return;
@@ -307,7 +322,10 @@ document.addEventListener("pointermove", (e) => {
     const r = a.getBoundingClientRect();
     return e.clientX >= r.left && e.clientX < r.right;
   }) ?? (e.clientX < links[0].getBoundingClientRect().left ? links[0] : links[links.length - 1]);
-  if (!at.classList.contains("on")) location.replace(at.getAttribute("href"));
+  if (!at.classList.contains("on")) {
+    dotSlid = true;
+    location.replace(at.getAttribute("href"));
+  }
 });
 for (const end of ["pointerup", "pointercancel"]) document.addEventListener(end, () => { dotSlide = null; });
 
@@ -1366,7 +1384,7 @@ function wireSwipe(id) {
   if (i < 0 || ids.length < 2) return;
   const go = (step) => {
     const next = ids[i + step];
-    if (next) location.hash = `#/club/${encodeURIComponent(next)}`;
+    if (next) moveTo(`#/club/${encodeURIComponent(next)}`, step > 0 ? "next" : "prev");
   };
   let start = null;
   const down = (e) => (start = e.touches?.[0] ? [e.touches[0].clientX, e.touches[0].clientY] : null);
@@ -2873,7 +2891,35 @@ function route(scroll = true) {
   return renderClub(store.clubs[0].id);
 }
 
-window.addEventListener("hashchange", () => route());
+// ---- How pages change, as the app (and Weather): a swipe, an arrow key or a tap on the dots slides one club;
+// a finger along the dots jumps straight there; a club picked in the list zooms open from its row. Same-document
+// view transitions (Safari 18, Chrome 111); without them, or with Reduce Motion, the page just changes.
+/** The motion for the next page change: "next", "prev" or "zoom"; null changes it straight away. */
+let pageMotion = null;
+function moveTo(hash, motion) {
+  pageMotion = motion;
+  location.hash = hash;
+}
+window.addEventListener("hashchange", () => {
+  const motion = pageMotion;
+  pageMotion = null;
+  if (!motion || !document.startViewTransition || matchMedia("(prefers-reduced-motion: reduce)").matches) return route();
+  document.documentElement.dataset.motion = motion;
+  const change = document.startViewTransition(() => route());
+  change.finished.finally(() => {
+    delete document.documentElement.dataset.motion;
+    document.querySelectorAll("[data-zoom-from]").forEach((el) => { el.style.viewTransitionName = ""; delete el.dataset.zoomFrom; });
+  });
+});
+// A club picked in the list (not the list beside a page) zooms open from its row, as in Weather.
+document.addEventListener("click", (e) => {
+  const row = e.target.closest?.("main.list-page a.row[data-id]");
+  if (!row || editing || e.defaultPrevented || e.metaKey || e.ctrlKey || e.shiftKey || row.closest(".swipe.open")) return;
+  e.preventDefault();
+  row.style.viewTransitionName = "club-zoom";
+  row.dataset.zoomFrom = "1";
+  moveTo(row.getAttribute("href"), "zoom");
+});
 document.addEventListener("rf-boat-picked", () => route(false));
 // Back on the page after a while: show fresh numbers.
 document.addEventListener("visibilitychange", () => {

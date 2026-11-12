@@ -607,7 +607,13 @@ private struct PageBar: View {
                         // Wider than the dot and as tall as the bar, so it is easier to hit.
                         .frame(width: Self.dotWidth, height: Self.buttonHeight)
                         .contentShape(Rectangle())
-                        .onTapGesture { PageJump.go(to: club.id, from: selection, in: clubs.map(\.id)) { selection = $0 } }
+                        // As Weather's page dots: a tap moves one club towards it, with the slide;
+                        // a finger running along the dots jumps (owner, 12 Nov 2026).
+                        .onTapGesture {
+                            let ids = clubs.map(\.id)
+                            guard let next = PageJump.step(towards: club.id, from: selection, in: ids) else { return }
+                            PageJump.go(to: next, from: selection, in: ids) { selection = $0 }
+                        }
                         .accessibilityLabel(club.displayName)
                     }
                 }
@@ -693,6 +699,13 @@ private struct BoatsElsewhereTipAnchor: ViewModifier {
 /// as a swipe does; a longer jump goes straight there, since sliding past the
 /// clubs in between made iOS build and drop each of those pages on the way.
 enum PageJump {
+    /// The club one step from the current one towards a tapped dot, as a page
+    /// control's tap; nil for the current dot.
+    static func step(towards id: String, from current: String, in ids: [String]) -> String? {
+        guard let a = ids.firstIndex(of: current), let b = ids.firstIndex(of: id), a != b else { return nil }
+        return ids[a + (b > a ? 1 : -1)]
+    }
+
     static func go(to id: String, from current: String, in ids: [String], set: (String) -> Void) {
         guard id != current else { return }
         if let a = ids.firstIndex(of: current), let b = ids.firstIndex(of: id), abs(a - b) == 1 {

@@ -878,8 +878,10 @@ dl.facts dd { margin: 0; font-weight: 600; }
 .rowing { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; }
 /* The values before and after: two glass buttons floating at the bottom, 44 px high, as the club page's bar (ConditionDetailView.neighbours). */
 .neighbours { position: fixed; left: 0; right: 0; bottom: 0; z-index: 10; display: flex; justify-content: space-between; gap: 12px; padding: 0 16px max(8px, env(safe-area-inset-bottom)); pointer-events: none; }
-.neighbours button { pointer-events: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; padding: 0 16px; border-radius: 22px; font-size: 15px; font-weight: 500; color: var(--text); min-width: 0; max-width: 48%; }
-.neighbours button span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* Arrow and the neighbour's own symbol at a fixed width, so they keep their size while swiping; the name is the
+   button's label (owner's pick V2, 12 Nov 2026, ConditionDetailView.neighbourWidth). */
+.neighbours button { pointer-events: auto; display: inline-flex; align-items: center; justify-content: center; gap: 8px; width: 76px; height: 44px; padding: 0; border-radius: 22px; font-size: 20px; color: var(--text); }
+.neighbours button > .chev { width: 16px; height: 16px; stroke-width: 2.5; }
 .value-page { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 body.locked { overflow: hidden; }
 .wm-full { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: var(--bg); }
@@ -1369,3 +1371,20 @@ body.has-picture .side { border-right: none; }
 .bg-preview.with-picture .bg-name { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(20px); backdrop-filter: blur(20px); }
 .bg-preview[data-tiles="frosted"] .bg-sample { background: color-mix(in srgb, var(--card) 66%, transparent); -webkit-backdrop-filter: blur(24px) saturate(1.5); backdrop-filter: blur(24px) saturate(1.5); }
 .bg-preview[data-tiles="frosted"] .bg-sample.tinted { background: color-mix(in srgb, color-mix(in srgb, var(--tint) 18%, var(--card)) 66%, transparent); }
+/* How pages change (moveTo in app.js), as the app's paging and Weather: the club page slides in from the side it
+   comes from, 0.3 s, inside its column; the page bar stays, the rest (picture, top bar) fades, as the app's
+   clubPicture; a club picked in the list grows out of its row. */
+nav.bottom { view-transition-name: page-bar; }
+:root[data-motion="next"] main.page.club, :root[data-motion="prev"] main.page.club { view-transition-name: club-page; }
+::view-transition-group(club-page) { overflow: clip; animation-duration: .3s; }
+:root[data-motion="next"]::view-transition-old(club-page) { animation: .3s ease-in-out both slide-to-left; }
+:root[data-motion="next"]::view-transition-new(club-page) { animation: .3s ease-in-out both slide-from-right; }
+:root[data-motion="prev"]::view-transition-old(club-page) { animation: .3s ease-in-out both slide-to-right; }
+:root[data-motion="prev"]::view-transition-new(club-page) { animation: .3s ease-in-out both slide-from-left; }
+:root[data-motion="zoom"] main.page.club { view-transition-name: club-zoom; }
+::view-transition-group(club-zoom) { animation-duration: .35s; animation-timing-function: ease-in-out; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: .3s; }
+@keyframes slide-to-left { to { transform: translateX(-100%); } }
+@keyframes slide-from-right { from { transform: translateX(100%); } }
+@keyframes slide-to-right { to { transform: translateX(100%); } }
+@keyframes slide-from-left { from { transform: translateX(-100%); } }
