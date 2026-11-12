@@ -1,0 +1,844 @@
+{
+ "description": "Fields installed apps may rely on in /v1, frozen on 2026-11-12. backend/tests/test_schema.py and web/tests/schema.test.mjs fail when one leaves a schema or changes type. Don't edit this to make a test pass: a removed or changed field needs a /v2 path. Adding a new field to the list later is fine.",
+ "files": {
+  "club-forecast.schema.json": {
+   "$.attribution": [
+    "array"
+   ],
+   "$.clubId": [
+    "string"
+   ],
+   "$.daylight": [
+    "array"
+   ],
+   "$.daylight[].date": [
+    "string"
+   ],
+   "$.daylight[].sunrise": [
+    "string"
+   ],
+   "$.daylight[].sunset": [
+    "string"
+   ],
+   "$.forecastSource": [
+    "object"
+   ],
+   "$.forecastSource.parts": [
+    "array"
+   ],
+   "$.forecastSource.parts[].fromHour": [
+    "integer"
+   ],
+   "$.forecastSource.parts[].model": [
+    "string"
+   ],
+   "$.forecastSource.parts[].provider": [
+    "string"
+   ],
+   "$.forecastSource.parts[].resolutionKm": [
+    "number"
+   ],
+   "$.forecastSource.parts[].toHour": [
+    "integer"
+   ],
+   "$.forecastSource.region": [
+    "string"
+   ],
+   "$.generatedAt": [
+    "string"
+   ],
+   "$.hours": [
+    "array"
+   ],
+   "$.hours[].apparentTemperatureC": [
+    "number"
+   ],
+   "$.hours[].capeJkg": [
+    "number"
+   ],
+   "$.hours[].cloudCoverHighPct": [
+    "number"
+   ],
+   "$.hours[].cloudCoverLowPct": [
+    "number"
+   ],
+   "$.hours[].cloudCoverMidPct": [
+    "number"
+   ],
+   "$.hours[].cloudCoverPct": [
+    "number"
+   ],
+   "$.hours[].dewPointC": [
+    "number"
+   ],
+   "$.hours[].fetchM": [
+    "null",
+    "number"
+   ],
+   "$.hours[].humidityPct": [
+    "number"
+   ],
+   "$.hours[].light": [
+    "string"
+   ],
+   "$.hours[].precipitationMm": [
+    "number"
+   ],
+   "$.hours[].pressureHpa": [
+    "number"
+   ],
+   "$.hours[].reasons": [
+    "array"
+   ],
+   "$.hours[].reasons[].condition": [
+    "string"
+   ],
+   "$.hours[].reasons[].light": [
+    "string"
+   ],
+   "$.hours[].sunUp": [
+    "boolean"
+   ],
+   "$.hours[].temperatureC": [
+    "number"
+   ],
+   "$.hours[].time": [
+    "string"
+   ],
+   "$.hours[].uvIndex": [
+    "null",
+    "number"
+   ],
+   "$.hours[].visibilityM": [
+    "number"
+   ],
+   "$.hours[].waveHeightM": [
+    "null",
+    "number"
+   ],
+   "$.hours[].weatherCode": [
+    "integer"
+   ],
+   "$.hours[].windFromDeg": [
+    "number"
+   ],
+   "$.hours[].windGustMs": [
+    "number"
+   ],
+   "$.hours[].windSpeedMs": [
+    "number"
+   ],
+   "$.ice": [
+    "object"
+   ],
+   "$.ice.days": [
+    "array"
+   ],
+   "$.ice.days[].date": [
+    "string"
+   ],
+   "$.ice.days[].status": [
+    "string"
+   ],
+   "$.ice.days[].thicknessCm": [
+    "number"
+   ],
+   "$.ice.light": [
+    "null",
+    "string"
+   ],
+   "$.ice.status": [
+    "string"
+   ],
+   "$.lakeId": [
+    "string"
+   ],
+   "$.modelChoices": [
+    "array"
+   ],
+   "$.modelChoices[].advice": [
+    "string"
+   ],
+   "$.modelChoices[].hours": [
+    "integer"
+   ],
+   "$.modelChoices[].id": [
+    "string"
+   ],
+   "$.modelChoices[].model": [
+    "string"
+   ],
+   "$.modelChoices[].note": [
+    "string"
+   ],
+   "$.modelChoices[].provider": [
+    "string"
+   ],
+   "$.modelChoices[].resolutionKm": [
+    "number"
+   ],
+   "$.outlook": [
+    "array",
+    "null"
+   ],
+   "$.outlook[].apparentTemperatureC": [
+    "number"
+   ],
+   "$.outlook[].capeJkg": [
+    "number"
+   ],
+   "$.outlook[].cloudCoverHighPct": [
+    "number"
+   ],
+   "$.outlook[].cloudCoverLowPct": [
+    "number"
+   ],
+   "$.outlook[].cloudCoverMidPct": [
+    "number"
+   ],
+   "$.outlook[].cloudCoverPct": [
+    "number"
+   ],
+   "$.outlook[].dewPointC": [
+    "number"
+   ],
+   "$.outlook[].fetchM": [
+    "number"
+   ],
+   "$.outlook[].humidityPct": [
+    "number"
+   ],
+   "$.outlook[].light": [
+    "string"
+   ],
+   "$.outlook[].precipitationMm": [
+    "number"
+   ],
+   "$.outlook[].pressureHpa": [
+    "number"
+   ],
+   "$.outlook[].reasons": [
+    "array"
+   ],
+   "$.outlook[].reasons[].condition": [
+    "string"
+   ],
+   "$.outlook[].reasons[].light": [
+    "string"
+   ],
+   "$.outlook[].sunUp": [
+    "boolean"
+   ],
+   "$.outlook[].temperatureC": [
+    "number"
+   ],
+   "$.outlook[].time": [
+    "string"
+   ],
+   "$.outlook[].uvIndex": [
+    "number"
+   ],
+   "$.outlook[].visibilityM": [
+    "null",
+    "number"
+   ],
+   "$.outlook[].waveHeightM": [
+    "number"
+   ],
+   "$.outlook[].weatherCode": [
+    "integer"
+   ],
+   "$.outlook[].windFromDeg": [
+    "number"
+   ],
+   "$.outlook[].windGustMs": [
+    "number"
+   ],
+   "$.outlook[].windSpeedMs": [
+    "number"
+   ],
+   "$.refresh": [
+    "object"
+   ],
+   "$.refresh.fileEveryHours": [
+    "number"
+   ],
+   "$.refresh.used": [
+    "boolean"
+   ],
+   "$.refresh.weatherEveryHours": [
+    "number"
+   ],
+   "$.river": [
+    "null",
+    "object"
+   ],
+   "$.river.gauge": [
+    "null",
+    "object"
+   ],
+   "$.river.gauge.distanceKm": [
+    "number"
+   ],
+   "$.river.gauge.highCm": [
+    "null",
+    "number"
+   ],
+   "$.river.gauge.lat": [
+    "number"
+   ],
+   "$.river.gauge.lon": [
+    "number"
+   ],
+   "$.river.gauge.meanCm": [
+    "null",
+    "number"
+   ],
+   "$.river.gauge.meanDischarge": [
+    "null",
+    "number"
+   ],
+   "$.river.gauge.meanHighCm": [
+    "null",
+    "number"
+   ],
+   "$.river.gauge.name": [
+    "string"
+   ],
+   "$.river.gauge.riverKm": [
+    "number"
+   ],
+   "$.river.gauge.shippingStopsCm": [
+    "null",
+    "number"
+   ],
+   "$.river.gauge.water": [
+    "string"
+   ],
+   "$.river.now": [
+    "null",
+    "object"
+   ],
+   "$.river.now.discharge": [
+    "null",
+    "number"
+   ],
+   "$.river.now.groynesCovered": [
+    "boolean"
+   ],
+   "$.river.now.history": [
+    "array"
+   ],
+   "$.river.now.history[].levelCm": [
+    "number"
+   ],
+   "$.river.now.history[].time": [
+    "string"
+   ],
+   "$.river.now.levelCm": [
+    "number"
+   ],
+   "$.river.now.light": [
+    "string"
+   ],
+   "$.river.now.speedMeasured": [
+    "boolean"
+   ],
+   "$.river.now.speedMs": [
+    "null",
+    "number"
+   ],
+   "$.river.now.state": [
+    "string"
+   ],
+   "$.river.now.time": [
+    "string"
+   ],
+   "$.river.now.trend": [
+    "string"
+   ],
+   "$.warnings": [
+    "object"
+   ],
+   "$.warnings.items": [
+    "array"
+   ],
+   "$.warnings.items[].area": [
+    "string"
+   ],
+   "$.warnings.items[].description": [
+    "string"
+   ],
+   "$.warnings.items[].english": [
+    "object"
+   ],
+   "$.warnings.items[].english.description": [
+    "null",
+    "string"
+   ],
+   "$.warnings.items[].english.event": [
+    "string"
+   ],
+   "$.warnings.items[].english.headline": [
+    "string"
+   ],
+   "$.warnings.items[].english.instruction": [
+    "null",
+    "string"
+   ],
+   "$.warnings.items[].english.official": [
+    "boolean"
+   ],
+   "$.warnings.items[].event": [
+    "string"
+   ],
+   "$.warnings.items[].expires": [
+    "string"
+   ],
+   "$.warnings.items[].headline": [
+    "string"
+   ],
+   "$.warnings.items[].instruction": [
+    "string"
+   ],
+   "$.warnings.items[].kind": [
+    "string"
+   ],
+   "$.warnings.items[].links": [
+    "object"
+   ],
+   "$.warnings.items[].links.de": [
+    "string"
+   ],
+   "$.warnings.items[].links.en": [
+    "string"
+   ],
+   "$.warnings.items[].onset": [
+    "string"
+   ],
+   "$.warnings.items[].sample": [
+    "boolean"
+   ],
+   "$.warnings.items[].severity": [
+    "string"
+   ],
+   "$.warnings.items[].source": [
+    "string"
+   ],
+   "$.warnings.lakeArea": [
+    "null",
+    "string"
+   ],
+   "$.warnings.local": [
+    "object"
+   ],
+   "$.warnings.local.checked": [
+    "boolean"
+   ],
+   "$.warnings.local.service": [
+    "string"
+   ],
+   "$.warnings.local.source": [
+    "string"
+   ],
+   "$.warnings.local.url": [
+    "string"
+   ],
+   "$.warnings.status": [
+    "string"
+   ],
+   "$.waterEstimate": [
+    "null",
+    "object"
+   ],
+   "$.waterEstimate.basis": [
+    "string"
+   ],
+   "$.waterEstimate.celsius": [
+    "number"
+   ],
+   "$.waterEstimate.reading": [
+    "object"
+   ],
+   "$.waterEstimate.reading.celsius": [
+    "number"
+   ],
+   "$.waterEstimate.reading.date": [
+    "string"
+   ],
+   "$.waterEstimate.reading.from": [
+    "null",
+    "string"
+   ],
+   "$.waterEstimate.reading.platform": [
+    "null",
+    "string"
+   ],
+   "$.waterEstimate.reading.source": [
+    "string"
+   ],
+   "$.waterEstimate.reading.to": [
+    "null",
+    "string"
+   ],
+   "$.waterForecast": [
+    "array",
+    "null"
+   ],
+   "$.waterForecast[].celsius": [
+    "number"
+   ],
+   "$.waterForecast[].date": [
+    "string"
+   ],
+   "$.waterLevel": [
+    "null",
+    "object"
+   ],
+   "$.waterLevel.attribution": [
+    "string"
+   ],
+   "$.waterLevel.drainedBelowM": [
+    "number"
+   ],
+   "$.waterLevel.fullM": [
+    "number"
+   ],
+   "$.waterLevel.gauge": [
+    "string"
+   ],
+   "$.waterLevel.loweredBelowM": [
+    "number"
+   ],
+   "$.waterLevel.now": [
+    "object"
+   ],
+   "$.waterLevel.now.belowFullM": [
+    "number"
+   ],
+   "$.waterLevel.now.history": [
+    "array"
+   ],
+   "$.waterLevel.now.history[].levelM": [
+    "number"
+   ],
+   "$.waterLevel.now.history[].time": [
+    "string"
+   ],
+   "$.waterLevel.now.levelM": [
+    "number"
+   ],
+   "$.waterLevel.now.light": [
+    "string"
+   ],
+   "$.waterLevel.now.state": [
+    "string"
+   ],
+   "$.waterLevel.now.time": [
+    "string"
+   ],
+   "$.waterLevel.now.trend": [
+    "string"
+   ],
+   "$.waterModelC": [
+    "null",
+    "number"
+   ],
+   "$.waterTemperature": [
+    "null",
+    "object"
+   ],
+   "$.waterTemperature.celsius": [
+    "number"
+   ],
+   "$.waterTemperature.history": [
+    "array"
+   ],
+   "$.waterTemperature.history[].celsius": [
+    "number"
+   ],
+   "$.waterTemperature.history[].time": [
+    "string"
+   ],
+   "$.waterTemperature.measuredAt": [
+    "string"
+   ],
+   "$.waterTemperature.station": [
+    "object"
+   ],
+   "$.waterTemperature.station.distanceKm": [
+    "number"
+   ],
+   "$.waterTemperature.station.distanceM": [
+    "number"
+   ],
+   "$.waterTemperature.station.lat": [
+    "number"
+   ],
+   "$.waterTemperature.station.lon": [
+    "number"
+   ],
+   "$.waterTemperature.station.name": [
+    "string"
+   ],
+   "$.waterTemperature.station.network": [
+    "string"
+   ],
+   "$.waterTemperature.station.url": [
+    "null",
+    "string"
+   ]
+  },
+  "countries-index.schema.json": {
+   "$[].bounds": [
+    "object"
+   ],
+   "$[].bounds.east": [
+    "number"
+   ],
+   "$[].bounds.north": [
+    "number"
+   ],
+   "$[].bounds.south": [
+    "number"
+   ],
+   "$[].bounds.west": [
+    "number"
+   ],
+   "$[].clubs": [
+    "integer"
+   ],
+   "$[].code": [
+    "string"
+   ],
+   "$[].name": [
+    "string"
+   ],
+   "$[].nameDe": [
+    "string"
+   ]
+  },
+  "country-lakes.schema.json": {
+   "$[].center": [
+    "object"
+   ],
+   "$[].center.lat": [
+    "number"
+   ],
+   "$[].center.lon": [
+    "number"
+   ],
+   "$[].clubs": [
+    "array"
+   ],
+   "$[].clubs[].abbreviation": [
+    "null",
+    "string"
+   ],
+   "$[].clubs[].address": [
+    "string"
+   ],
+   "$[].clubs[].clubhouse": [
+    "null",
+    "object"
+   ],
+   "$[].clubs[].clubhouse.lat": [
+    "number"
+   ],
+   "$[].clubs[].clubhouse.lon": [
+    "number"
+   ],
+   "$[].clubs[].country": [
+    "string"
+   ],
+   "$[].clubs[].id": [
+    "string"
+   ],
+   "$[].clubs[].launchPoint": [
+    "object"
+   ],
+   "$[].clubs[].launchPoint.lat": [
+    "number"
+   ],
+   "$[].clubs[].launchPoint.lon": [
+    "number"
+   ],
+   "$[].clubs[].launchPointSet": [
+    "boolean"
+   ],
+   "$[].clubs[].launchPointVerified": [
+    "boolean"
+   ],
+   "$[].clubs[].mapPlace": [
+    "null",
+    "object"
+   ],
+   "$[].clubs[].mapPlace.lat": [
+    "number"
+   ],
+   "$[].clubs[].mapPlace.lon": [
+    "number"
+   ],
+   "$[].clubs[].mapPlace.name": [
+    "string"
+   ],
+   "$[].clubs[].name": [
+    "string"
+   ],
+   "$[].clubs[].region": [
+    "null",
+    "string"
+   ],
+   "$[].clubs[].shortName": [
+    "string"
+   ],
+   "$[].clubs[].source": [
+    "null",
+    "string"
+   ],
+   "$[].clubs[].website": [
+    "null",
+    "string"
+   ],
+   "$[].country": [
+    "string"
+   ],
+   "$[].hasOutline": [
+    "boolean"
+   ],
+   "$[].id": [
+    "string"
+   ],
+   "$[].kind": [
+    "string"
+   ],
+   "$[].name": [
+    "string"
+   ],
+   "$[].section": [
+    "null",
+    "object"
+   ],
+   "$[].section.lengthKm": [
+    "number"
+   ],
+   "$[].section.place": [
+    "string"
+   ],
+   "$[].section.waterway": [
+    "string"
+   ]
+  },
+  "lakes-index.schema.json": {
+   "$[].center": [
+    "object"
+   ],
+   "$[].center.lat": [
+    "number"
+   ],
+   "$[].center.lon": [
+    "number"
+   ],
+   "$[].clubs": [
+    "array"
+   ],
+   "$[].clubs[].abbreviation": [
+    "null",
+    "string"
+   ],
+   "$[].clubs[].address": [
+    "string"
+   ],
+   "$[].clubs[].clubhouse": [
+    "null",
+    "object"
+   ],
+   "$[].clubs[].clubhouse.lat": [
+    "number"
+   ],
+   "$[].clubs[].clubhouse.lon": [
+    "number"
+   ],
+   "$[].clubs[].country": [
+    "string"
+   ],
+   "$[].clubs[].id": [
+    "string"
+   ],
+   "$[].clubs[].launchPoint": [
+    "object"
+   ],
+   "$[].clubs[].launchPoint.lat": [
+    "number"
+   ],
+   "$[].clubs[].launchPoint.lon": [
+    "number"
+   ],
+   "$[].clubs[].launchPointSet": [
+    "boolean"
+   ],
+   "$[].clubs[].launchPointVerified": [
+    "boolean"
+   ],
+   "$[].clubs[].mapPlace": [
+    "null",
+    "object"
+   ],
+   "$[].clubs[].mapPlace.lat": [
+    "number"
+   ],
+   "$[].clubs[].mapPlace.lon": [
+    "number"
+   ],
+   "$[].clubs[].mapPlace.name": [
+    "string"
+   ],
+   "$[].clubs[].name": [
+    "string"
+   ],
+   "$[].clubs[].region": [
+    "null",
+    "string"
+   ],
+   "$[].clubs[].shortName": [
+    "string"
+   ],
+   "$[].clubs[].source": [
+    "null",
+    "string"
+   ],
+   "$[].clubs[].website": [
+    "null",
+    "string"
+   ],
+   "$[].country": [
+    "string"
+   ],
+   "$[].hasOutline": [
+    "boolean"
+   ],
+   "$[].id": [
+    "string"
+   ],
+   "$[].kind": [
+    "string"
+   ],
+   "$[].name": [
+    "string"
+   ],
+   "$[].section": [
+    "null",
+    "object"
+   ],
+   "$[].section.lengthKm": [
+    "number"
+   ],
+   "$[].section.place": [
+    "string"
+   ],
+   "$[].section.waterway": [
+    "string"
+   ]
+  }
+ }
+}

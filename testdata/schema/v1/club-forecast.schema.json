@@ -1,0 +1,1158 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "/v1/clubs/{id}/forecast",
+  "description": "One club's forecast: 48 hours, the outlook, ice, water and warnings.",
+  "x-sample": "clubs/mrc-1880/forecast",
+  "type": "object",
+  "properties": {
+    "attribution": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "clubId": {
+      "type": "string"
+    },
+    "daylight": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string"
+          },
+          "sunrise": {
+            "type": "string"
+          },
+          "sunset": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "date",
+          "sunrise",
+          "sunset"
+        ]
+      }
+    },
+    "forecastSource": {
+      "type": "object",
+      "properties": {
+        "parts": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "fromHour": {
+                "type": "integer"
+              },
+              "model": {
+                "type": "string"
+              },
+              "provider": {
+                "type": "string"
+              },
+              "resolutionKm": {
+                "type": "number"
+              },
+              "toHour": {
+                "type": "integer"
+              }
+            },
+            "required": [
+              "fromHour",
+              "model",
+              "provider",
+              "resolutionKm",
+              "toHour"
+            ]
+          }
+        },
+        "region": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "parts",
+        "region"
+      ]
+    },
+    "generatedAt": {
+      "type": "string"
+    },
+    "hours": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "apparentTemperatureC": {
+            "type": "number"
+          },
+          "capeJkg": {
+            "type": "number"
+          },
+          "cloudCoverHighPct": {
+            "type": "number"
+          },
+          "cloudCoverLowPct": {
+            "type": "number"
+          },
+          "cloudCoverMidPct": {
+            "type": "number"
+          },
+          "cloudCoverPct": {
+            "type": "number"
+          },
+          "dewPointC": {
+            "type": "number"
+          },
+          "fetchM": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "humidityPct": {
+            "type": "number"
+          },
+          "light": {
+            "type": "string"
+          },
+          "nearby": {
+            "type": "object",
+            "properties": {
+              "gustMs": {
+                "type": "number"
+              },
+              "light": {
+                "type": "string"
+              },
+              "other": {
+                "type": "string"
+              },
+              "otherCause": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "rainMm": {
+                "type": "number"
+              },
+              "visM": {
+                "type": "number"
+              },
+              "waveM": {
+                "type": "number"
+              },
+              "windMs": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "gustMs",
+              "light",
+              "other",
+              "otherCause",
+              "rainMm",
+              "visM",
+              "waveM",
+              "windMs"
+            ]
+          },
+          "precipitationMm": {
+            "type": "number"
+          },
+          "pressureHpa": {
+            "type": "number"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "condition": {
+                  "type": "string"
+                },
+                "light": {
+                  "type": "string"
+                },
+                "topic": {
+                  "type": "string"
+                },
+                "value": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "condition",
+                "light"
+              ]
+            }
+          },
+          "sunUp": {
+            "type": "boolean"
+          },
+          "temperatureC": {
+            "type": "number"
+          },
+          "time": {
+            "type": "string"
+          },
+          "uvIndex": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "visibilityM": {
+            "type": "number"
+          },
+          "waveHeightM": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "weatherCode": {
+            "type": "integer"
+          },
+          "windFromDeg": {
+            "type": "number"
+          },
+          "windGustMs": {
+            "type": "number"
+          },
+          "windSpeedMs": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "apparentTemperatureC",
+          "capeJkg",
+          "cloudCoverHighPct",
+          "cloudCoverLowPct",
+          "cloudCoverMidPct",
+          "cloudCoverPct",
+          "dewPointC",
+          "fetchM",
+          "humidityPct",
+          "light",
+          "precipitationMm",
+          "pressureHpa",
+          "reasons",
+          "sunUp",
+          "temperatureC",
+          "time",
+          "uvIndex",
+          "visibilityM",
+          "waveHeightM",
+          "weatherCode",
+          "windFromDeg",
+          "windGustMs",
+          "windSpeedMs"
+        ]
+      }
+    },
+    "ice": {
+      "type": "object",
+      "properties": {
+        "basis": {
+          "type": "string"
+        },
+        "days": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "date": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string"
+              },
+              "thicknessCm": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "date",
+              "status",
+              "thicknessCm"
+            ]
+          }
+        },
+        "frostDegreeDays7": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "light": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "satellite": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "date": {
+              "type": "string"
+            },
+            "iceShare": {
+              "type": "number"
+            },
+            "seenShare": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "date",
+            "iceShare",
+            "seenShare"
+          ]
+        },
+        "status": {
+          "type": "string"
+        },
+        "thicknessCm": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "waterTemperatureC": {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "days",
+        "light",
+        "status"
+      ]
+    },
+    "lakeId": {
+      "type": "string"
+    },
+    "modelChoices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "advice": {
+            "type": "string"
+          },
+          "hours": {
+            "type": "integer"
+          },
+          "id": {
+            "type": "string"
+          },
+          "model": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "resolutionKm": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "advice",
+          "hours",
+          "id",
+          "model",
+          "note",
+          "provider",
+          "resolutionKm"
+        ]
+      }
+    },
+    "outlook": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "apparentTemperatureC": {
+            "type": "number"
+          },
+          "capeJkg": {
+            "type": "number"
+          },
+          "cloudCoverHighPct": {
+            "type": "number"
+          },
+          "cloudCoverLowPct": {
+            "type": "number"
+          },
+          "cloudCoverMidPct": {
+            "type": "number"
+          },
+          "cloudCoverPct": {
+            "type": "number"
+          },
+          "dewPointC": {
+            "type": "number"
+          },
+          "fetchM": {
+            "type": "number"
+          },
+          "humidityPct": {
+            "type": "number"
+          },
+          "light": {
+            "type": "string"
+          },
+          "precipitationMm": {
+            "type": "number"
+          },
+          "pressureHpa": {
+            "type": "number"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "condition": {
+                  "type": "string"
+                },
+                "light": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "condition",
+                "light"
+              ]
+            }
+          },
+          "sunUp": {
+            "type": "boolean"
+          },
+          "temperatureC": {
+            "type": "number"
+          },
+          "time": {
+            "type": "string"
+          },
+          "uvIndex": {
+            "type": "number"
+          },
+          "visibilityM": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "waveHeightM": {
+            "type": "number"
+          },
+          "weatherCode": {
+            "type": "integer"
+          },
+          "windFromDeg": {
+            "type": "number"
+          },
+          "windGustMs": {
+            "type": "number"
+          },
+          "windSpeedMs": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "apparentTemperatureC",
+          "capeJkg",
+          "cloudCoverHighPct",
+          "cloudCoverLowPct",
+          "cloudCoverMidPct",
+          "cloudCoverPct",
+          "dewPointC",
+          "fetchM",
+          "humidityPct",
+          "light",
+          "precipitationMm",
+          "pressureHpa",
+          "reasons",
+          "sunUp",
+          "temperatureC",
+          "time",
+          "uvIndex",
+          "visibilityM",
+          "waveHeightM",
+          "weatherCode",
+          "windFromDeg",
+          "windGustMs",
+          "windSpeedMs"
+        ]
+      }
+    },
+    "radar": {
+      "type": "object",
+      "properties": {
+        "reference": {
+          "type": "string"
+        },
+        "steps": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "mmPerHour": {
+                "type": "number"
+              },
+              "time": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "mmPerHour",
+              "time"
+            ]
+          }
+        }
+      },
+      "required": [
+        "reference",
+        "steps"
+      ]
+    },
+    "refresh": {
+      "type": "object",
+      "properties": {
+        "fileEveryHours": {
+          "type": "number"
+        },
+        "used": {
+          "type": "boolean"
+        },
+        "weatherEveryHours": {
+          "type": "number"
+        }
+      },
+      "required": [
+        "fileEveryHours",
+        "used",
+        "weatherEveryHours"
+      ]
+    },
+    "river": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "attribution": {
+          "type": "string"
+        },
+        "gauge": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "distanceKm": {
+              "type": "number"
+            },
+            "highCm": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "lat": {
+              "type": "number"
+            },
+            "lon": {
+              "type": "number"
+            },
+            "meanCm": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "meanDischarge": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "meanHighCm": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "riverKm": {
+              "type": "number"
+            },
+            "shippingStopsCm": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "water": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "distanceKm",
+            "highCm",
+            "lat",
+            "lon",
+            "meanCm",
+            "meanDischarge",
+            "meanHighCm",
+            "name",
+            "riverKm",
+            "shippingStopsCm",
+            "water"
+          ]
+        },
+        "limits": {
+          "type": "object",
+          "properties": {
+            "currentAmberMs": {
+              "type": "number"
+            },
+            "currentRedMs": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "currentAmberMs",
+            "currentRedMs"
+          ]
+        },
+        "now": {
+          "type": [
+            "object",
+            "null"
+          ],
+          "properties": {
+            "discharge": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "groynesCovered": {
+              "type": "boolean"
+            },
+            "history": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "levelCm": {
+                    "type": "number"
+                  },
+                  "time": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "levelCm",
+                  "time"
+                ]
+              }
+            },
+            "levelCm": {
+              "type": "number"
+            },
+            "light": {
+              "type": "string"
+            },
+            "speedMeasured": {
+              "type": "boolean"
+            },
+            "speedMs": {
+              "type": [
+                "number",
+                "null"
+              ]
+            },
+            "state": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string"
+            },
+            "trend": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "discharge",
+            "groynesCovered",
+            "history",
+            "levelCm",
+            "light",
+            "speedMeasured",
+            "speedMs",
+            "state",
+            "time",
+            "trend"
+          ]
+        }
+      },
+      "required": [
+        "gauge",
+        "now"
+      ]
+    },
+    "warnings": {
+      "type": "object",
+      "properties": {
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "area": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "english": {
+                "type": "object",
+                "properties": {
+                  "description": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "event": {
+                    "type": "string"
+                  },
+                  "headline": {
+                    "type": "string"
+                  },
+                  "instruction": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "official": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "description",
+                  "event",
+                  "headline",
+                  "instruction",
+                  "official"
+                ]
+              },
+              "event": {
+                "type": "string"
+              },
+              "expires": {
+                "type": "string"
+              },
+              "headline": {
+                "type": "string"
+              },
+              "instruction": {
+                "type": "string"
+              },
+              "kind": {
+                "type": "string"
+              },
+              "links": {
+                "type": "object",
+                "properties": {
+                  "de": {
+                    "type": "string"
+                  },
+                  "en": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "de",
+                  "en"
+                ]
+              },
+              "onset": {
+                "type": "string"
+              },
+              "sample": {
+                "type": "boolean"
+              },
+              "severity": {
+                "type": "string"
+              },
+              "source": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "area",
+              "description",
+              "english",
+              "event",
+              "expires",
+              "headline",
+              "instruction",
+              "kind",
+              "links",
+              "onset",
+              "sample",
+              "severity",
+              "source"
+            ]
+          }
+        },
+        "lakeArea": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "local": {
+          "type": "object",
+          "properties": {
+            "checked": {
+              "type": "boolean"
+            },
+            "service": {
+              "type": "string"
+            },
+            "source": {
+              "type": "string"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "checked",
+            "service",
+            "source",
+            "url"
+          ]
+        },
+        "shoreLights": {
+          "type": "boolean"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "items",
+        "lakeArea",
+        "local",
+        "status"
+      ]
+    },
+    "waterEstimate": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "basis": {
+          "type": "string"
+        },
+        "celsius": {
+          "type": "number"
+        },
+        "reading": {
+          "type": "object",
+          "properties": {
+            "celsius": {
+              "type": "number"
+            },
+            "date": {
+              "type": "string"
+            },
+            "from": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "platform": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source": {
+              "type": "string"
+            },
+            "to": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "celsius",
+            "date",
+            "from",
+            "platform",
+            "source",
+            "to"
+          ]
+        }
+      },
+      "required": [
+        "basis",
+        "celsius",
+        "reading"
+      ]
+    },
+    "waterForecast": {
+      "type": [
+        "array",
+        "null"
+      ],
+      "items": {
+        "type": "object",
+        "properties": {
+          "celsius": {
+            "type": "number"
+          },
+          "date": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "celsius",
+          "date"
+        ]
+      }
+    },
+    "waterLevel": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "attribution": {
+          "type": "string"
+        },
+        "drainedBelowM": {
+          "type": "number"
+        },
+        "fullM": {
+          "type": "number"
+        },
+        "gauge": {
+          "type": "string"
+        },
+        "loweredBelowM": {
+          "type": "number"
+        },
+        "now": {
+          "type": "object",
+          "properties": {
+            "belowFullM": {
+              "type": "number"
+            },
+            "history": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "levelM": {
+                    "type": "number"
+                  },
+                  "time": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "levelM",
+                  "time"
+                ]
+              }
+            },
+            "levelM": {
+              "type": "number"
+            },
+            "light": {
+              "type": "string"
+            },
+            "state": {
+              "type": "string"
+            },
+            "time": {
+              "type": "string"
+            },
+            "trend": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "belowFullM",
+            "history",
+            "levelM",
+            "light",
+            "state",
+            "time",
+            "trend"
+          ]
+        }
+      },
+      "required": [
+        "attribution",
+        "drainedBelowM",
+        "fullM",
+        "gauge",
+        "loweredBelowM",
+        "now"
+      ]
+    },
+    "waterModelC": {
+      "type": [
+        "number",
+        "null"
+      ]
+    },
+    "waterTemperature": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "celsius": {
+          "type": "number"
+        },
+        "history": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "celsius": {
+                "type": "number"
+              },
+              "time": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "celsius",
+              "time"
+            ]
+          }
+        },
+        "measuredAt": {
+          "type": "string"
+        },
+        "station": {
+          "type": "object",
+          "properties": {
+            "distanceKm": {
+              "type": "number"
+            },
+            "distanceM": {
+              "type": "number"
+            },
+            "lat": {
+              "type": "number"
+            },
+            "lon": {
+              "type": "number"
+            },
+            "name": {
+              "type": "string"
+            },
+            "network": {
+              "type": "string"
+            },
+            "url": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "distanceKm",
+            "distanceM",
+            "lat",
+            "lon",
+            "name",
+            "network",
+            "url"
+          ]
+        }
+      },
+      "required": [
+        "celsius",
+        "history",
+        "measuredAt",
+        "station"
+      ]
+    },
+    "weatherRun": {
+      "type": "object",
+      "properties": {
+        "available": {
+          "type": "string"
+        },
+        "model": {
+          "type": "string"
+        },
+        "started": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "available",
+        "model",
+        "started"
+      ]
+    }
+  },
+  "required": [
+    "attribution",
+    "clubId",
+    "daylight",
+    "forecastSource",
+    "generatedAt",
+    "hours",
+    "ice",
+    "lakeId",
+    "modelChoices",
+    "outlook",
+    "refresh",
+    "river",
+    "warnings",
+    "waterEstimate",
+    "waterForecast",
+    "waterLevel",
+    "waterModelC",
+    "waterTemperature"
+  ]
+}

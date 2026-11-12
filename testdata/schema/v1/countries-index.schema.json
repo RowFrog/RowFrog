@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "/v1/countries/index",
+  "description": "The countries with clubs, for browsing by country.",
+  "x-sample": "countries/index",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "bounds": {
+        "type": "object",
+        "properties": {
+          "east": {
+            "type": "number"
+          },
+          "north": {
+            "type": "number"
+          },
+          "south": {
+            "type": "number"
+          },
+          "west": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "east",
+          "north",
+          "south",
+          "west"
+        ]
+      },
+      "clubs": {
+        "type": "integer"
+      },
+      "code": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "nameDe": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "bounds",
+      "clubs",
+      "code",
+      "name",
+      "nameDe"
+    ]
+  }
+}

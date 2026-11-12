@@ -1,0 +1,198 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "/v1/lakes/index",
+  "description": "The lakes and rivers with their clubs (the app's club list).",
+  "x-sample": "lakes/index",
+  "type": "array",
+  "items": {
+    "type": "object",
+    "properties": {
+      "center": {
+        "type": "object",
+        "properties": {
+          "lat": {
+            "type": "number"
+          },
+          "lon": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "lat",
+          "lon"
+        ]
+      },
+      "clubs": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "properties": {
+            "abbreviation": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "address": {
+              "type": "string"
+            },
+            "clubhouse": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "lat": {
+                  "type": "number"
+                },
+                "lon": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lat",
+                "lon"
+              ]
+            },
+            "country": {
+              "type": "string"
+            },
+            "id": {
+              "type": "string"
+            },
+            "launchPoint": {
+              "type": "object",
+              "properties": {
+                "lat": {
+                  "type": "number"
+                },
+                "lon": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "lat",
+                "lon"
+              ]
+            },
+            "launchPointSet": {
+              "type": "boolean"
+            },
+            "launchPointVerified": {
+              "type": "boolean"
+            },
+            "mapPlace": {
+              "type": [
+                "object",
+                "null"
+              ],
+              "properties": {
+                "lat": {
+                  "type": "number"
+                },
+                "lon": {
+                  "type": "number"
+                },
+                "name": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "lat",
+                "lon",
+                "name"
+              ]
+            },
+            "name": {
+              "type": "string"
+            },
+            "region": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "shortName": {
+              "type": "string"
+            },
+            "source": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "website": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          },
+          "required": [
+            "abbreviation",
+            "address",
+            "clubhouse",
+            "country",
+            "id",
+            "launchPoint",
+            "launchPointSet",
+            "launchPointVerified",
+            "mapPlace",
+            "name",
+            "region",
+            "shortName",
+            "source",
+            "website"
+          ]
+        }
+      },
+      "country": {
+        "type": "string"
+      },
+      "hasOutline": {
+        "type": "boolean"
+      },
+      "id": {
+        "type": "string"
+      },
+      "kind": {
+        "type": "string"
+      },
+      "name": {
+        "type": "string"
+      },
+      "section": {
+        "type": [
+          "object",
+          "null"
+        ],
+        "properties": {
+          "lengthKm": {
+            "type": "number"
+          },
+          "place": {
+            "type": "string"
+          },
+          "waterway": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "lengthKm",
+          "place",
+          "waterway"
+        ]
+      }
+    },
+    "required": [
+      "center",
+      "clubs",
+      "country",
+      "hasOutline",
+      "id",
+      "kind",
+      "name",
+      "section"
+    ]
+  }
+}
