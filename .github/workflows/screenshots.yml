@@ -332,6 +332,17 @@ jobs:
           # shows that worst value marked "Nearby", the Why line names it.
           shoot 419-nearby-fog light -RWOpenClub mrc-1880 -RWSampleNearby fog
           shoot 420-nearby-waves-german-dark dark -RWOpenClub mrc-1880 -RWSampleNearby waves -RWLanguage de
+          # The lake tile's parts as a small table like the 48-hour one, wind with its direction
+          # (owner's H1, 12 Nov 2026): both languages and looks, larger text (the table, then the
+          # lines it falls back to), pictures frosted and solid, sideways, and a lake in one part.
+          WAIT=30 shoot 431-lake-zone-table-german light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWLanguage de
+          WAIT=30 shoot 432-lake-zone-table dark -RWOpenClub mrc-1880 -RWScrollTo lakeview
+          WAIT=30 shoot 433-lake-zone-table-xxxl-german light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWLanguage de -UIPreferredContentSizeCategoryName UICTContentSizeCategoryXXXL
+          WAIT=30 shoot 434-lake-zone-table-accessibility-l light -RWOpenClub mrc-1880 -RWScrollTo lakeview -UIPreferredContentSizeCategoryName UICTContentSizeCategoryAccessibilityL
+          WAIT=30 shoot 435-lake-zone-table-picture-frosted light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWBackground sample:cloud-shell
+          WAIT=30 shoot 436-lake-zone-table-picture-solid-german dark -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWBackground sample:lake-waves -RWTileStyle solid -RWLanguage de
+          WAIT=30 shoot 437-lake-zone-table-sideways-german light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWLandscape YES -RWLanguage de
+          WAIT=30 shoot 438-lake-zone-table-forggensee-german dark -RWOpenClub ruderclub-forggensee -RWScrollTo lakeview -RWLanguage de
           # iPad sideways with the list slid away: sidebar button and cog on the page.
           WAIT=25 shoot 334-list-slid-away light -RWOpenClub mrc-1880 "${BOATS[@]}" -RWBoat b-anna -RWLandscape YES -RWSideListHidden YES
           # iPad sideways with a picture: one picture behind the list and the page, list beside and slid away.

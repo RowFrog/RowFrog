@@ -50,3 +50,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 27 | 2026-11-12 | [Screen controls: round X at the top left, cards close at their top right, tinted tips](0027-screen-controls-close-x-top-left-tinted-tips.md) |
 | 28 | 2026-11-12 | [All saved routes in Settings](0028-all-saved-routes-in-settings.md) |
 | 29 | 2026-11-12 | [Cold-water badge: what to do, in words, no temperature](0029-cold-water-badge-words-only.md) |
+| 30 | 2026-11-12 | [The lake tile shows its parts as a small table, wind with its direction](0030-lake-tile-parts-as-a-table-with-wind-direction.md) |

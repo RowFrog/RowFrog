@@ -144,6 +144,53 @@ final class LakeViewTests: XCTestCase {
         XCTAssertEqual(view.headline(for: hour), "Fog near the shore: stay ashore")
     }
 
+    /// The lake tile's table shows each part's numbers and where its wind comes
+    /// from (owner's H1, 12 Nov 2026); the values match the line layout's.
+    func testZoneReadingGivesTheNumbersAndTheWindDirection() throws {
+        let fogLights = String(repeating: "2", count: 20)
+        let source = """
+        {"lakeId": "dir-see", "name": "Dir See", "generatedAt": "2026-11-12T09:00:00+00:00", "sample": false,
+         "attribution": [],
+         "grid": {"south": 47.80, "west": 11.30, "dLat": 0.01, "dLon": 0.01, "cols": 5, "rows": 4, "cellM": 1000,
+                  "cells": [\((0..<20).map(String.init).joined(separator: ", "))],
+                  "cellPoint": [\(Array(repeating: "0", count: 20).joined(separator: ", "))],
+                  "cellZone": [\(Array(repeating: "0", count: 20).joined(separator: ", "))]},
+         "zones": ["whole"],
+         "outline": [[[11.295, 47.795], [11.345, 47.795], [11.345, 47.835], [11.295, 47.835]]],
+         "points": [{"lat": 47.815, "lon": 11.32}],
+         "clubs": [],
+         "hours": [{"time": "2026-11-12T09:00:00+00:00",
+                    "lakeWide": {"light": "green", "reasons": []},
+                    "lights": "\(fogLights)", "wavesCm": [\(Array(repeating: "6", count: 20).joined(separator: ", "))],
+                    "wind": [{"speedMs": 3.0, "gustMs": 4.0, "fromDeg": 45, "other": 2, "visM": 300, "storm": 0}],
+                    "zones": [{"light": "red", "maxWaveM": 0.06}]}]}
+        """
+        let view = try APIClient.decoder.decode(LakeView.self, from: Data(source.utf8))
+        let r = try XCTUnwrap(view.zoneReading(0, hour: view.hours[0]))
+        XCTAssertEqual(try XCTUnwrap(r.fromDeg), 45, accuracy: 0.5)
+        XCTAssertEqual(r.speedMs, 3.0)
+        XCTAssertEqual(r.gustMs, 4.0)
+        XCTAssertEqual(r.visM, 300)
+        XCTAssertEqual(r.visLight, .red)
+        XCTAssertEqual(view.zoneValues(0, hour: view.hours[0]).map(\.text),
+                       [Format.waves(r.waveM), Format.windRange(3, 4), Format.distance(300)])
+    }
+
+    /// The direction averages as vectors, so north-west and north-east give north, not south.
+    func testZoneWindDirectionAveragesAsVectors() throws {
+        let from = LakeZoneReading.meanFrom([
+            LakeWind(speedMs: 3, gustMs: 4, fromDeg: 315, other: nil, visM: nil, storm: nil, rainMm: nil, hail: nil),
+            LakeWind(speedMs: 3, gustMs: 4, fromDeg: 45, other: nil, visM: nil, storm: nil, rainMm: nil, hail: nil),
+        ])
+        let deg = try XCTUnwrap(from)
+        XCTAssertTrue(deg < 0.5 || deg > 359.5, "\(deg)")
+        XCTAssertNil(LakeZoneReading.meanFrom([]))
+        // The lines' arrow points where the wind blows: from NE (45°) is ↙, from S is ↑.
+        XCTAssertEqual(LakeZoneTable.arrowGlyph(towardDeg: 45 + 180), "↙")
+        XCTAssertEqual(LakeZoneTable.arrowGlyph(towardDeg: 180 + 180), "↑")
+        XCTAssertEqual(LakeZoneTable.arrowGlyph(towardDeg: 359), "↑")
+    }
+
     /// The map draws pictures into its tiles without smoothing: once a pixel
     /// covers more than about 1.5 screen points it is smoothed first, so the
     /// finer rowing light shows no steps when zoomed in (owner, 12 Nov 2026).
