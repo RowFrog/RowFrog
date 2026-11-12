@@ -1,0 +1,195 @@
+# App texts with no counterpart on the website, each under the reason it stays so.
+# scripts/check_web_parity.py fails on any app text that is neither on the website nor listed here,
+# and on a listed text the app no longer has. Before adding a text: is it really app-only?
+# Otherwise carry the change over to web/ (owner's rule: every app change also goes to the website).
+
+# iPhone only: app icons, widgets and their settings
+A club's own background shows on all its widgets. To give one widget its own, touch and hold it on the home screen and choose Edit Widget.
+All widgets
+App icon
+Blade and wind
+Blade rowing light
+Cloud and crossed oars
+Club page picture
+Coxed double
+Every 2 hours
+Every hour
+For the club page picture, your own pictures and the satellite picture.
+Forecast out of date. Open Row Frog to update.
+Frog and rowing light
+Large
+Less often saves battery and data, but a new warning reaches the widgets later.
+Lock screen
+Medium
+Medium: good rowing times
+No green hours in the forecast.
+Only after using the app
+Open Row Frog to load the forecast.
+Plain, light or dark
+Row Frog does nothing in the background. Only the [widgets](rowfrog-settings://widgets) load forecasts on their own.
+Rowing light colour
+Rowing-light gauge
+Same as all widgets
+Single from above
+The forecast could not be loaded.
+The icon could not be changed.
+The weather sky changes with the weather and the time of day. Pictures are darkened at the bottom so the text stays readable.
+Weather sky
+Widget background
+Widget updates
+Widgets
+iOS asks you to confirm the change.
+
+# iPhone only: Apple Health and opening a row shared from another app
+Apple Health could not be read.
+Apple Health has no GPS points for this row.
+Apple Health is not available on this device.
+Choose a file
+File
+GPX, TCX or FIT files from CrewNerd, Garmin Connect, Strava and other apps. You can also share a file to Row Frog straight from those apps.
+Looking in Apple Health …
+No rowing workouts with a route in Apple Health. If you said no to reading them, allow it in the Health app under Sharing › Apps › Row Frog.
+Row Frog knows no lake with rowing clubs where this row went.
+Rowing workouts with a GPS route, e.g. from Apple Watch or a rowing app that saves its rows to Health. Row Frog only reads them, on this iPhone.
+
+# The website has its own privacy page (web/public/privacy/) in words for a browser
+Contact
+Forecasts come from api.rowfrog.com (Cloudflare and GitHub). We only count per day how often each club and lake is loaded, never who loaded it.
+Full privacy policy
+No account, no ads, no tracking or analytics.
+Only a suggestion you send yourself (a place for everyone's list, or a club's launch point) reaches us: its name and the point you chose, nothing about you. It becomes a public issue on GitHub.
+Rows you import from Apple Health or a file are read on your phone only; Row Frog never writes to Health and sends nothing anywhere.
+The rain radar loads map pictures directly from the Deutscher Wetterdienst; maps come from Apple.
+Your location is only used on your phone, to suggest clubs near you and to centre a map on you, and is never sent anywhere.
+Your settings, clubs, boats, photos and your acceptance of the safety notice stay on your phone.
+
+# Forecast errors: the website names the same causes in words for a browser (no pulling down, no iPhone settings)
+Loading the forecast failed on your phone for an unexpected reason (%@). Pull down to try again; if it keeps failing, please tell us.
+The forecast arrived, but this version of the app could not read it. The server probably sends something newer than the app knows. Update the app; if that doesn't help, tell us.
+The forecast server (api.rowfrog.com) answered with error %d. That is on our side, not your phone's, and usually fixes itself. Try again later.
+The forecast server (api.rowfrog.com) could not be reached. Either your connection dropped, or the server did not answer properly, which is on our side. Pull down to try again in a minute.
+The forecast server (api.rowfrog.com) did not answer in time. That is usually a slow connection or a short hiccup at the server. Pull down to try again in a minute.
+The forecast server (api.rowfrog.com) refused to hand out the forecast (error %d). That is on our side, not your phone's. Trying again will not help until we have fixed it; until then, check the conditions yourself.
+The server has no forecast file for this club yet. Every club gets one with the server's run for all clubs, which comes every 6 hours. Nothing to fix on your phone.
+Your phone could not reach the internet, or the connection dropped during the download. Check Wi-Fi or mobile data, and in the iPhone settings whether Row Frog may use mobile data. Then pull down to refresh.
+
+# Screen-reader labels of iOS controls: the website labels its own controls with aria-label
+At the club: %@
+Clear the search
+Folded
+Ice: no data yet
+Ice: off season
+In your list
+Loading the map
+Map follows the chart
+OK
+Opens a chart and more about this value
+Opens this hour with all its values
+Picks another boat for the rowing light.
+Precipitation: %@
+Pressure %@ hectopascal, %@
+Shows a map you can move
+Shows or hides this line in the chart
+Shows the club's place card from Apple Maps
+Shows the launch point on a map, with directions
+Shows what was checked and what the shore warning lights mean
+Start time
+Visibility: %@
+Why: all conditions within the limits
+no data
+
+# Developer test of other weather models: app only (owner, 28 Oct)
+(your choice)
+A test in the developer options. Other models can be better or worse here; the automatic one is checked against measurements.
+All clubs back to the automatic model
+Not advised for rowing
+Recommended. The model that does best here, checked against measurements.
+Shows which weather models the forecast comes from.
+Test: on a confirmed club's page, tap the forecast line at the bottom to pick another weather model. Switched off, every club uses the automatic model again. Tap the version seven times to show this again.
+This model's forecast is not published yet, so the automatic one is shown.
+Weather model (test)
+
+# Said in the website's own words for a browser (this browser, Refresh button, mouse, its own first visit)
+A Row Frog widget on your home or lock screen shows the rowing light and rain on the radar in the next two hours.
+Add more clubs
+Add the other places you row, or skip this and add clubs later in the list.
+All locations
+Appearance: background pictures, also your own photos, and the app icon.
+Choose the icon Row Frog shows on your home screen.
+Choose your home base
+Choose your home base and the other places you row.
+Continue
+Could not load the rowing locations.
+English or German, as the iPhone's Settings set it for Row Frog.
+Every setting, the card order and the app icon go back to how the app came, your own pictures are deleted and every limit goes back to the app's. Your clubs and boats stay.
+Fine-tune the limits
+Forecast out of date: from %@. Pull down to refresh, and check the conditions yourself.
+Grey instead of green: the forecast is over 3 hours old. Pull down to refresh.
+It opens first when you start the app. You can change it later.
+Lake at the boat's time: move the boat along your route and see the lake when you get there.
+List by
+Near you
+No clubs yet
+No connection
+Open in Maps now gives directions to the club's address.
+Open the settings with the cog at the top of the location list.
+Pick your app icon
+Prefer portrait only? Use Rotation Lock in Control Centre.
+Pull a page or the list down to refresh.
+Route planning on the lake map got better.
+Row a loop: tap within 50 m of your club, or pick Loop under the way back.
+Rowed it before? Bring in a row from Apple Health or a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) in the Routes menu, and plan with your real route and pace.
+Saved “%@” on %@. Open the lake view and pick it under Saved routes.
+Settings, pictures and limits go back to how the app came. Your clubs and boats stay.
+Suggestions
+Swipe a club in the list to the left to remove it.
+Swipe left and right to move between your clubs. The house marks your home base.
+Tap a turning point to delete just that one, or drag it to move it.
+Tap the water to add the turning points of your route. It starts at your club and goes one way; turn on Out and back to row the same way back. Tap or pull a stretch to add a point there. Tap a point to delete it, or drag it to move it. A point within 50 m of the start closes the loop.
+The forecast for your own place is worked out on this iPhone: wind, gusts, rain, fog, thunderstorms and daylight. Waves, water temperature and warnings are not available for it.
+The panel under the lake map is smaller. Pull it up for the details.
+The photo could not be loaded. Try another one.
+The place stays on this iPhone and nobody else sees it.
+The server renews the clubs you use every 30 minutes; your phone loads them when you open or come back to the app, or pull down.
+The way out and the way back lie side by side, each coloured for the time you row it.
+Tips come back next time you open the app
+To change it, open the list, swipe a club to the right and tap Home base.
+Touch and hold a club, then drag to reorder.
+Touch and hold one of your pictures to delete it.
+Turn your iPhone sideways, or use a wide screen, to see more at once.
+What's new
+Wind, waves and warnings are worked out for this launch point. Tap Open in Maps for directions.
+Your own place, kept on this iPhone. No waves, water temperature or warnings here.
+
+# Sent by the server: the website shows the credits the API sends (view.attribution)
+Lake outlines: © OpenStreetMap contributors, ODbL
+
+# iPhone only: Apple Maps place card
+In Apple Maps as “%@”
+The club in Apple Maps
+
+# iPhone only: battery, Low Power and Low Data Mode, rotation, iPhone Settings, diagnosis log
+Dark uses less battery on most iPhones since the X.
+Draw as in Low Power Mode
+Draw as in Low Power Mode: solid tiles, bar buttons and clock strip instead of blur and glass, also with Low Power Mode off; a test for the closings on return. If iOS closed Row Frog as you came back to it, share this log with the developers. It lists the last steps in and out of the app, with times, and iOS's own reports. It stays on the phone until you share it.
+In the iPhone's Settings for Row Frog
+Low Data Mode is on: the app is saving data now.
+Off: the app stays upright.
+On mobile data, pictures and the radar load less often. In iOS Low Data Mode the app always saves data.
+On mobile data: the app is saving data now.
+Share diagnosis log
+
+# Sample warning of the app's screenshot previews
+Sample warning for the preview, not an official warning
+
+# Never shown in the app: LakeMapScreen's viewing panel only reaches them while planning, when the planning
+# panel shows instead, and RouteSummary's headline is always off. The website's planning panel matches what the app shows.
+%@ · %@ · finished at %@
+%@ · at the boat
+
+# Widgets: the website has no widgets (short widget words, owner-approved widget redesign 2026-11-12)
+Better from %@
+Caution
+Good until %@
+Not good
+Out of date
