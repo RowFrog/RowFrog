@@ -1,5 +1,7 @@
 # Row Frog handbook
 
+Why things are as they are (the owner's decisions, with what was turned down): `docs/decisions/`.
+
 Everything that is not visible in the app or easy to find in the code:
 hidden switches, how to test things, what runs on its own and what needs
 you. Keep it current: every PR that adds a hidden feature, a workflow, a
