@@ -198,7 +198,7 @@ the spot the same way. In the lake tile each part of the lake lists the same
 values (highest waves, strongest wind and gusts, lowest visibility), with the
 one that sets amber or red in that colour, and when the worse squares lie
 only near the shore or only on open water it says so ("Fog near the shore,
-open water clear"); these notes are in the app only for now. Wind, gusts, rain and visibility for each part of the lake and
+open water clear"). The website shows the same notes. Wind, gusts, rain and visibility for each part of the lake and
 for a tapped spot are blended from the forecast points around it (natural
 neighbour), so values change smoothly across the lake and never go beyond
 those points; hail and thunderstorms come from the nearest point. The website
@@ -223,7 +223,9 @@ time, pace, the way back, undo and the saved routes, so the map keeps the
 screen; when the panel opens or closes, or a route loads, the map fits the
 route or lake above it. Where clubs share a launch point, the page's own club
 stays on top. Routes are
-saved on the phone; "Manage routes" lists them with their length and whether
+saved on the phone. Every edit marks a saved route as changed, and undo goes
+back step by step, to "saved" again; Save updates the open route and "Save as
+new route" keeps it as it was (the website works the same way); "Manage routes" lists them with their length and whether
 they are a loop, to rename, duplicate, delete or reorder. "Import a row" (in
 the Routes menu) turns a row you already did into a
 route: a rowing workout from Apple Health or a GPX, TCX or FIT file from
@@ -491,6 +493,9 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place and launch point suggestions into GitHub issues, `timer/` starts the forecast run on time. |
 | `testdata/api/v1/` | Sample API files (MRC 1880's forecast, the lake list and the country lists) that the backend, app and website tests all read, so a change to the format shows up in all three (see the handbook's Tests section). |
 | `testdata/limits.json` | The app's starting boat limits that the backend, app and website tests all check, so the three give the same light. |
+| `testdata/rules/` | Shared rule tables (lake view colours, route rules, the cold-water badge and shore) with expected values from a separate implementation, which the app and website tests both check. |
+| `testdata/schema/v1/` | One JSON Schema per published `/v1` file; `frozen.json` lists the fields installed apps rely on, and a test fails when one goes or changes type. |
+| `testdata/states/` | Cases that run each statechart (now the route editor, `ios/RowFrog/Charts/`) through the Swift and JavaScript readers alike. |
 | `testdata/units.json` | The unit table (values shown in each unit, Beaufort forces at the limits, decimals) that the app and website tests both check. |
 | `docs/handbook.md` | The handbook: hidden features, how to test them, launch arguments, workflows and secrets. |
 | `docs/decisions/` | One short record per owner decision (date, decision, why, what was turned down, where in the code), with an index that says how to add one. |
