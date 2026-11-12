@@ -88,7 +88,10 @@ GitHub issue, so no GitHub account is needed.
 4. Next 48 hours, with a feels-like column and a day header that stays in
    place while scrolling; tapping an hour opens that hour's view. Each night's
    dark hours fold into one tinted line (lowest temperature, strongest wind,
-   highest waves, all its rain), which opens on a tap.
+   highest waves, all its rain), which opens on a tap. When the 48 hours end
+   in the night, the table runs on to the sunrise hour with the coarser
+   ICON-EU model; the night line says from when, and those hours carry ≈ in
+   the opened night. The website does the same.
 5. Satellite picture.
 6. Forecast source, "How often data is updated" (a sheet with each value's
    source, how often that source updates and how often Row Frog fetches it)
@@ -228,7 +231,10 @@ Points can be deleted, and a loop also closes when the route ends within 50 m
 of the start. While planning, a compact panel holds the route's result, start
 time, pace, the way back, undo and the saved routes, so the map keeps the
 screen; when the panel opens or closes, or a route loads, the map fits the
-route or lake above it. Where clubs share a launch point, the page's own club
+route or lake above it. From 600 pt wide (iPad, iPhone on its side, Mac) the
+panel is a card at the bottom left with the legend chip beside it and the lake
+fitted next to it; upright iPhones keep the full-width panel. The website does
+the same from 600 px. Where clubs share a launch point, the page's own club
 stays on top. Routes are
 saved on the phone. Every edit marks a saved route as changed, and undo goes
 back step by step, to "saved" again; Save updates the open route and "Save as
