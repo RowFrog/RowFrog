@@ -228,7 +228,11 @@ struct LocationPageView: View {
                 .coordinateSpace(.named(CardSpots.space))
                 // A resize changes the count once it rests, keeping the top card where it was.
                 .task(id: countWidth) {
-                    guard let shown = columnCount else { columnCount = columns; return }
+                    guard let shown = columnCount else {
+                        columnCount = columns
+                        PageScroll.shared.update(club.id, pageWidth: ClubPageColumns.pageWidth(columns: columns))
+                        return
+                    }
                     // iPhones turn but are never resized by dragging: at once there.
                     if Orientation.isPad || ProcessInfo.processInfo.isiOSAppOnMac {
                         do { try await Task.sleep(for: ClubPageColumns.resizePause) } catch { return }
@@ -237,6 +241,7 @@ struct LocationPageView: View {
                     guard count != shown else { return }
                     let top = isCurrentPage ? cardSpots.topCard(below: pageMargins.top) : nil
                     columnCount = count
+                    PageScroll.shared.update(club.id, pageWidth: ClubPageColumns.pageWidth(columns: count))
                     if let top {
                         try? await Task.sleep(for: .milliseconds(50))
                         proxy.scrollTo(top.scrollID, anchor: .top)
