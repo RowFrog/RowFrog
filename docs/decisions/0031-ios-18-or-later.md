@@ -1,4 +1,4 @@
-# NNNN. iOS 18 or later
+# 31. iOS 18 or later
 
 - Date: 2026-11-12
 - Status: decided (owner)

@@ -1,4 +1,4 @@
-# NNNN. Website tour like the app's, river tip, OpenStreetMap place card
+# 32. Website tour like the app's, river tip, OpenStreetMap place card
 
 - Date: 2026-11-12
 - Status: decided (owner, thread "First-Start Tutorial and One-Time-Tips")
