@@ -559,7 +559,9 @@ has none.
 ## Hosting
 
 While GitHub is down (November 2026), a Raspberry Pi runs the forecasts, the
-Model check and the Usage limits check from its own copy of `main`. Changes
+Model check and the Usage limits check from its own copy of `main`, and puts
+each club's forecast online on Cloudflare R2 as soon as that club is built,
+the clubs people use first. Changes
 are merged and checked on the owner's Mac before they reach it, and the Mac
 deploys the website. The handbook section "While GitHub is down" has the
 steps and the checks. The rest of this section describes the GitHub setup.
