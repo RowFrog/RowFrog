@@ -43,33 +43,76 @@ struct WaterLevelTile: View {
     }
 }
 
-/// A basin with the water in it, from the drained mark (empty) to full.
+/// A basin with the water in it, from 2 m under the drained mark (empty) to full,
+/// with the marks drawn in: the full mark as a dashed line across, the lowered
+/// (amber) and drained (red) marks as short lines on its right side. The water
+/// follows the basin's sloping sides. Before, it was a box standing out over them,
+/// and without the marks 1.1 m below full read as nearly full (owner, 12 Nov 2026).
 struct BasinGauge: View {
     let levelM: Double
     let level: LakeLevel
 
     var body: some View {
-        let low = level.drainedBelowM - 2
-        let fraction = max(0, min(1, (levelM - low) / max(level.fullM - low, 0.1)))
+        let shape = BasinShape(level: level)
+        let fraction = shape.fraction(levelM)
         let color: Color = levelM < level.drainedBelowM ? .red : levelM < level.loweredBelowM ? .orange : .teal
         return GeometryReader { geo in
-            let w = geo.size.width, h = geo.size.height
-            ZStack(alignment: .bottom) {
-                Path { p in
-                    p.move(to: CGPoint(x: 2, y: 4))
-                    p.addLine(to: CGPoint(x: w * 0.3, y: h - 4))
-                    p.addLine(to: CGPoint(x: w * 0.7, y: h - 4))
-                    p.addLine(to: CGPoint(x: w - 2, y: 4))
-                }
-                .stroke(Color.secondary.opacity(0.5), lineWidth: 2)
-                Rectangle()
+            let k = min(geo.size.width, geo.size.height) / BasinShape.size
+            let point = { (p: CGPoint) in CGPoint(x: p.x * k, y: p.y * k) }
+            ZStack {
+                Path { p in p.addLines(BasinShape.water(fraction).map(point)); p.closeSubpath() }
                     .fill(color)
-                    .frame(width: w * (0.4 + 0.5 * fraction), height: max(3, (h - 10) * fraction))
-                    .padding(.bottom, 5)
+                Path { p in p.addLines(BasinShape.walls.map(point)) }
+                    .stroke(Color.secondary.opacity(0.5), lineWidth: 2)
+                Path { p in p.addLines(BasinShape.mark(1, wholeWidth: true).map(point)) }
+                    .stroke(Color.secondary, style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
+                Path { p in p.addLines(BasinShape.mark(shape.fraction(level.loweredBelowM)).map(point)) }
+                    .stroke(Color.orange, lineWidth: 1.5)
+                Path { p in p.addLines(BasinShape.mark(shape.fraction(level.drainedBelowM)).map(point)) }
+                    .stroke(Color.red, lineWidth: 1.5)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
         }
         .accessibilityHidden(true)
+    }
+}
+
+/// The basin's drawing in a 44 x 44 box (the website's lakelevel.js `basinShape` copies it).
+struct BasinShape {
+    let level: LakeLevel
+    static let size: CGFloat = 44
+    /// The rim and the floor of the basin's sides.
+    static let rimY: CGFloat = 4, floorY: CGFloat = 40
+    /// Where the sides meet the rim and the floor on the left; the right mirrors them.
+    static let rimX: CGFloat = 2, floorX: CGFloat = 13.2
+    /// The water's height when full, and its bottom, inside the sides.
+    static let fullY: CGFloat = 9, emptyY: CGFloat = 38.5
+
+    static let walls = [CGPoint(x: rimX, y: rimY), CGPoint(x: floorX, y: floorY),
+                        CGPoint(x: size - floorX, y: floorY), CGPoint(x: size - rimX, y: rimY)]
+
+    /// How full, 0 at 2 m under the drained mark, 1 at the full mark.
+    func fraction(_ levelM: Double) -> Double {
+        let low = level.drainedBelowM - 2
+        return max(0, min(1, (levelM - low) / max(level.fullM - low, 0.1)))
+    }
+
+    static func y(_ fraction: Double) -> CGFloat { emptyY - (emptyY - fullY) * fraction }
+
+    /// The inside of the left side at height y (1.5 in from its line).
+    static func leftX(_ y: CGFloat) -> CGFloat { rimX + (floorX - rimX) * (y - rimY) / (floorY - rimY) + 1.5 }
+
+    /// The water: from the floor up to its height, between the sides.
+    static func water(_ fraction: Double) -> [CGPoint] {
+        let top = min(y(fraction), emptyY - 2)
+        return [CGPoint(x: leftX(emptyY), y: emptyY), CGPoint(x: size - leftX(emptyY), y: emptyY),
+                CGPoint(x: size - leftX(top), y: top), CGPoint(x: leftX(top), y: top)]
+    }
+
+    /// A mark at a level: right across, or a short line on the right side.
+    static func mark(_ fraction: Double, wholeWidth: Bool = false) -> [CGPoint] {
+        let at = y(fraction)
+        let right = size - leftX(at) + 1
+        return [CGPoint(x: wholeWidth ? leftX(at) - 1 : right - 7, y: at), CGPoint(x: right, y: at)]
     }
 }
 

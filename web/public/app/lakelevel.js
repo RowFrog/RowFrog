@@ -18,17 +18,43 @@ const height = (m) => `${num(m, 2)} m`;
 export const stateTitle = (state) => ({ drained: t("Drained"), lowered: t("Lowered") }[state] ?? t("Full"));
 const trendTitle = (trend) => ({ rising: t("rising"), falling: t("falling"), steady: t("steady") }[trend] ?? null);
 
-/** A basin with the water in it, from the drained mark (empty) to full (BasinGauge). */
-function basin(levelM, level) {
+/** The basin's drawing in a 44 x 44 box (BasinShape in LakeLevelTile.swift): the sides from the rim (y 4) to the
+ * floor (y 40), the water between them from its bottom (38.5) up to full (9), 0 at 2 m under the drained mark. */
+const B = { size: 44, rimY: 4, floorY: 40, rimX: 2, floorX: 13.2, fullY: 9, emptyY: 38.5 };
+const leftX = (y) => B.rimX + (B.floorX - B.rimX) * (y - B.rimY) / (B.floorY - B.rimY) + 1.5;
+const levelY = (fraction) => B.emptyY - (B.emptyY - B.fullY) * fraction;
+
+/** The basin's parts for a level, in the 44 x 44 box (exported for the tests). */
+export function basinShape(levelM, level) {
   const low = level.drainedBelowM - 2;
-  const fraction = Math.max(0, Math.min(1, (levelM - low) / Math.max(level.fullM - low, 0.1)));
-  const colour = levelM < level.drainedBelowM ? "var(--red)" : levelM < level.loweredBelowM ? "var(--orange)" : "#30b0c7";
-  const w = 44 * (0.4 + 0.5 * fraction);
-  const hgt = Math.max(3, 34 * fraction);
-  return `<svg class="basin" viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
-    <rect x="${(44 - w) / 2}" y="${39 - hgt}" width="${w}" height="${hgt}" fill="${colour}" />
-    <path d="M2 4 L13.2 40 L30.8 40 L42 4" fill="none" stroke="var(--sub)" stroke-opacity=".5" stroke-width="2" /></svg>`;
+  const fraction = (m) => Math.max(0, Math.min(1, (m - low) / Math.max(level.fullM - low, 0.1)));
+  const top = Math.min(levelY(fraction(levelM)), B.emptyY - 2);
+  const mark = (m, whole = false) => {
+    const y = levelY(fraction(m));
+    const right = B.size - leftX(y) + 1;
+    return [[whole ? leftX(y) - 1 : right - 7, y], [right, y]];
+  };
+  return {
+    water: [[leftX(B.emptyY), B.emptyY], [B.size - leftX(B.emptyY), B.emptyY], [B.size - leftX(top), top], [leftX(top), top]],
+    full: mark(level.fullM, true), lowered: mark(level.loweredBelowM), drained: mark(level.drainedBelowM),
+  };
 }
+
+/** A basin with the water in it and its marks: full dashed across, lowered (amber) and drained (red) on the right
+ * side; the water follows the sloping sides (BasinGauge; owner, 12 Nov 2026: a box over the sides, and no marks,
+ * made 1.1 m below full look nearly full). */
+function basin(levelM, level) {
+  const shape = basinShape(levelM, level);
+  const colour = levelM < level.drainedBelowM ? "var(--red)" : levelM < level.loweredBelowM ? "var(--orange)" : "#30b0c7";
+  const pts = (list) => list.map(([x, y]) => `${num2(x)},${num2(y)}`).join(" ");
+  return `<svg class="basin" viewBox="0 0 44 44" width="44" height="44" aria-hidden="true">
+    <polygon points="${pts(shape.water)}" fill="${colour}" />
+    <path d="M2 4 L13.2 40 L30.8 40 L42 4" fill="none" stroke="var(--sub)" stroke-opacity=".5" stroke-width="2" />
+    <polyline points="${pts(shape.full)}" fill="none" stroke="var(--sub)" stroke-width="1" stroke-dasharray="2 2" />
+    <polyline points="${pts(shape.lowered)}" fill="none" stroke="var(--orange)" stroke-width="1.5" />
+    <polyline points="${pts(shape.drained)}" fill="none" stroke="var(--red)" stroke-width="1.5" /></svg>`;
+}
+const num2 = (v) => Math.round(v * 100) / 100;
 
 /** The tile in Current conditions, in the ice tile's place (WaterLevelTile). */
 export function waterLevelTile(level) {
