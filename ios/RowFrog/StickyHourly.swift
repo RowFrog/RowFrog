@@ -9,15 +9,30 @@ final class StickyHourly {
     var dayTops: [Date: CGFloat] = [:]
     /// Where the header stays on the screen, in global coordinates.
     var top: CGFloat = 0
+    /// The height of the tip under the card's title (0 without one): the header stays only once
+    /// the tip has gone up, so it never covers the tip.
+    var leadIn: CGFloat = 0
 
     /// Whether the header is staying at the top.
     func isShowing(at top: CGFloat) -> Bool {
-        hourlyFrame.height > 0 && hourlyFrame.minY + 40 < top && hourlyFrame.maxY > top
+        hourlyFrame.height > 0 && hourlyFrame.minY + 40 + leadIn < top && hourlyFrame.maxY > top
     }
 
     /// How far up the last rows have pushed the header (0 or less).
     func push(at top: CGFloat) -> CGFloat {
         min(0, hourlyFrame.maxY - top - HourlyStickyHeader.height)
+    }
+}
+
+/// Tells StickyHourly how tall the hourly card's tip is, while it shows.
+struct StickyLeadIn: ViewModifier {
+    let sticky: StickyHourly
+
+    func body(content: Content) -> some View {
+        content
+            // The tip and the space under it, before the table's own header.
+            .onGeometryChange(for: CGFloat.self) { $0.size.height + 8 } action: { sticky.leadIn = $0 }
+            .onDisappear { sticky.leadIn = 0 }
     }
 }
 

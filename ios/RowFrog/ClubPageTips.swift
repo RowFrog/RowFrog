@@ -6,7 +6,7 @@ import Foundation
 /// LocationPageView.swift, which keeps the tips' state and draws them.
 enum ClubPageTip: CaseIterable {
     case nearbyWater, waterLevel, riverCurrent
-    case topTile, allValues, hourly, lakeView, launchPoint, conditions, hourView, satellite, rainRadar, source, waterEstimate
+    case topTile, allValues, placeLine, hourly, lakeView, launchPoint, conditions, hourView, satellite, rainRadar, source, waterEstimate
 
     /// What the page knows about each tip: would TipKit show it, and is its place on the page.
     struct Spot {
@@ -23,6 +23,12 @@ enum ClubPageTip: CaseIterable {
             .filter { $0.shows && $0.placed }
             .min { order.firstIndex(of: $0.tip)! < order.firstIndex(of: $1.tip)! }?
             .tip
+    }
+
+    /// The one tip a screenshot asks for (`-RWClubTip topTile`): the page shows only it, as in use.
+    static var only: ClubPageTip? {
+        guard let name = UserDefaults.standard.string(forKey: DefaultsKey.clubTip) else { return nil }
+        return allCases.first { "\($0)" == name }
     }
 
     /// The screenshot hooks that show tips regardless of the pacing.

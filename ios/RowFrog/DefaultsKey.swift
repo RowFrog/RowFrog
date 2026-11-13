@@ -87,6 +87,8 @@ enum DefaultsKey {
     static let riverTip = "RWRiverTip"
     /// Show the tips that come later (all values, radar map, hour view, …).
     static let laterTips = "RWLaterTips"
+    /// With -RWShowTips or -RWLaterTips: the one club page tip to show (a ClubPageTip name, e.g. topTile).
+    static let clubTip = "RWClubTip"
 
     // Screenshot and test switches: Club list and layout
     /// Turn the phone on its side.
