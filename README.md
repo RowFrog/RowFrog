@@ -330,7 +330,9 @@ open water".
 tile's place, with the last week's levels in its detail view; the lake counts
 as lowered (amber), and below 777.5 m as drained (red). The levels are set in
 `data/lake-levels.json`. When the gauge cannot be read, the last good
-level stands in for up to 24 hours. The website shows the tile too.
+level stands in for up to 24 hours. The tile draws the water in the shape of
+the basin, with a dashed line for full and short marks for lowered and
+drained. The website shows the tile too.
 
 **Satellite pictures.** A card near the end of the page shows the latest
 Sentinel-2 picture of the lake, with a line such as "Sentinel-2 · 22 Oct ·
@@ -455,7 +457,10 @@ field at the bottom.
 - Help: the safety notice, replay the tour, the full legend of symbols, and
   bring the one-time tips back. Tips point out features the first time they
   appear (a river or canal club added after the tour gets a one-time tip on
-  its Current tile), and after an update a "What's new" sheet shows once.
+  its Current tile): one at a time, at most one new tip a day and none on the
+  day of the tour, each with "Got it" and "No more tips"; a card's tip sits
+  under its title, a control's tip in a bubble on it (`docs/decisions/0035`,
+  app and website). After an update a "What's new" sheet shows once.
 - About: the version with build number and commit ("0.1.0 (723) · 22a69ce",
   stamped by `scripts/build_number.sh`; the website's footer shows the same build),
   a privacy summary, the legal notice
