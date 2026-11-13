@@ -516,35 +516,112 @@ extension RowingWidgetView {
         }
     }
 
-    /// The next hours: time, sky, light, temperature, and the wind in the larger sizes.
-    func hourRow(count: Int, wind: Bool, big: Bool = false) -> some View {
-        HStack(spacing: 0) {
-            ForEach(Array(snapshot.hours.prefix(count).enumerated()), id: \.element.time) { index, hour in
-                VStack(spacing: big ? 5 : 4) {
-                    // Fixed heights, so a taller rain symbol never squeezes the time above it.
+    /// The lines under the hours' temperatures in the larger sizes.
+    enum HourLine: CaseIterable {
+        case wind, waves, visibility
+
+        var condition: Condition {
+            switch self {
+            case .wind: .wind
+            case .waves: .waves
+            case .visibility: .visibility
+            }
+        }
+
+        /// The unit the legend names, in the user's units.
+        var unit: String {
+            let settings = AppSettings.shared
+            return switch self {
+            case .wind: settings.windUnit.symbol
+            case .waves: settings.waveUnit.symbol
+            case .visibility: settings.distanceUnit.symbol
+            }
+        }
+
+        /// The number alone; the legend names the unit. Wind as mean–gust.
+        func text(_ hour: ForecastHour) -> String {
+            switch self {
+            case .wind:
+                let wind = hour.shownWind
+                return "\(Format.windNumber(wind.speed))–\(Format.windNumber(wind.gust))"
+            case .waves: return Format.wavesNumber(hour.shownWaveHeightM)
+            case .visibility: return Format.distanceNumber(hour.shownVisibilityM)
+            }
+        }
+    }
+
+    /// The next hours: time, sky, light, temperature, and in the larger sizes
+    /// the given lines. With `legend` a first column names each line's unit, and
+    /// the temperatures go without "°", as in the 48 h table (owner, 13 Nov 2026).
+    func hourRow(count: Int, lines: [HourLine], legend: Bool = false, big: Bool = false) -> some View {
+        let hours = Array(snapshot.hours.prefix(count))
+        return Grid(horizontalSpacing: 0, verticalSpacing: big ? 5 : 4) {
+            GridRow {
+                if legend { Color.clear.frame(width: 0, height: 0) }
+                ForEach(Array(hours.enumerated()), id: \.element.time) { index, hour in
                     Text(index == 0 ? tr("Now") : Format.time(hour.time))
                         .font(.caption2.weight(.medium))
                         .lineLimit(1)
                         .minimumScaleFactor(0.7)
                         .fixedSize(horizontal: false, vertical: true)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            GridRow {
+                if legend { Color.clear.frame(width: 0, height: 0) }
+                ForEach(hours, id: \.time) { hour in
+                    // Fixed heights, so a taller rain symbol never squeezes the time above it.
                     skyIcon(hour)
                         .font(big ? .title3 : .subheadline)
                         .frame(height: big ? 26 : 20)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            GridRow {
+                if legend { Color.clear.frame(width: 0, height: 0) }
+                ForEach(hours, id: \.time) { hour in
                     lightDot(hour.light, size: big ? 16 : 13, hour: true)
-                    Text(Format.degrees(hour.temperatureC))
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            GridRow {
+                if legend { legendLabel(Condition.temperature.symbol, AppSettings.shared.temperatureUnit.symbol) }
+                ForEach(hours, id: \.time) { hour in
+                    Text(legend ? Format.temperatureNumber(hour.temperatureC) : Format.degrees(hour.temperatureC))
                         .font((big ? Font.subheadline : .caption).weight(.semibold))
-                    if wind {
-                        Text("\(Format.windNumber(hour.windSpeedMs))–\(Format.windNumber(hour.windGustMs))")
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            ForEach(lines, id: \.self) { line in
+                GridRow {
+                    if legend { legendLabel(line.condition.symbol, line.unit) }
+                    ForEach(hours, id: \.time) { hour in
+                        Text(line.text(hour))
                             .font(.caption2)
                             .opacity(0.85)
                             .lineLimit(1)
                             .minimumScaleFactor(0.7)
-                            .modifier(TintedIf(color: tint(Condition.wind.cause(in: hour))))
+                            .modifier(TintedIf(color: tint(line.condition.cause(in: hour))))
+                            .frame(maxWidth: .infinity)
                     }
                 }
-                .frame(maxWidth: .infinity)
             }
         }
+    }
+
+    /// The legend's symbol and unit at the start of an hour line.
+    private func legendLabel(_ symbol: String, _ unit: String) -> some View {
+        HStack(spacing: 2) {
+            Image(systemName: symbol).imageScale(.small)
+            Text(unit)
+        }
+        .font(.caption2)
+        .opacity(0.75)
+        .lineLimit(1)
+        .fixedSize()
+        .gridColumnAlignment(.leading)
+        .padding(.trailing, 4)
+        .accessibilityHidden(true)
     }
 
     /// The good rowing times as one bar per day: green, amber (striped with marks)
@@ -667,15 +744,24 @@ extension RowingWidgetView {
             head(hour)
             Spacer(minLength: 0)
             switch focus {
-            case .hourly: hourRow(count: 6, wind: false)
+            case .hourly: hourRow(count: 6, lines: [])
             case .windows: dayBars(2, header: false, big: false)
             case .conditions: tileRow(font: .caption)
             }
         }
     }
 
-    /// R, T or 6 on top, then the hours with their wind and the next three days.
+    /// R, T or 6 on top, then the hours and the next three days. The hours show
+    /// wind, waves and visibility with a legend where they fit, else the wind alone,
+    /// so the widget never runs over (owner's pick B with legend, 13 Nov 2026).
     func largeLayout(_ hour: ForecastHour) -> some View {
+        ViewThatFits(in: .vertical) {
+            largeStack(hour, lines: HourLine.allCases, legend: true)
+            largeStack(hour, lines: [.wind], legend: false)
+        }
+    }
+
+    private func largeStack(_ hour: ForecastHour, lines: [HourLine], legend: Bool) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             if layout == .below {
                 VStack(alignment: .leading, spacing: 6) {
@@ -687,7 +773,7 @@ extension RowingWidgetView {
                 head(hour)
             }
             rule
-            hourRow(count: 6, wind: true, big: true)
+            hourRow(count: 6, lines: lines, legend: legend, big: true)
             rule
             Spacer(minLength: 0)
             dayBars(3, header: true, big: true)
@@ -705,13 +791,23 @@ extension RowingWidgetView {
                 bigGrid
                 Spacer(minLength: 0)
             }
-            VStack(alignment: .leading, spacing: 10) {
-                hourRow(count: 8, wind: true, big: true)
-                rule
-                Spacer(minLength: 0)
-                dayBars(3, header: true, big: true)
-                Spacer(minLength: 0)
+            ViewThatFits(in: .vertical) {
+                extraLargeHours(lines: HourLine.allCases, legend: true)
+                extraLargeHours(lines: [.wind], legend: false)
             }
+        }
+    }
+}
+
+extension RowingWidgetView {
+    /// The extra large widget's right side: eight hours, then three days.
+    fileprivate func extraLargeHours(lines: [HourLine], legend: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+            hourRow(count: 8, lines: lines, legend: legend, big: true)
+            rule
+            Spacer(minLength: 0)
+            dayBars(3, header: true, big: true)
+            Spacer(minLength: 0)
         }
     }
 }
