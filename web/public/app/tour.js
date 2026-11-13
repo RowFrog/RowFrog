@@ -331,7 +331,7 @@ const TIPS = {
   coldWater: [key("Cold water"), key("A capsize in water below %@ gets dangerous within minutes. The app then lowers its own wind and gust limits by %@. Limits you set stay as they are, with a reminder on the rowing light."), "thermometer-snowflake"],
   myBoats: [key("Which boat do you row?"), key("Tap the boat the rowing light is for. ⓘ opens its limits, and below you can add your own boats."), "rower"],
   backgrounds: [key("One picture or many"), key("Pick a picture for all pages, a different one for single pages, or give a club its own. Under Look, choose whether the tiles show the picture or stay solid."), "image"],
-  chartScrub: [key("Read any hour"), key("Hold the chart, then slide along it to read the value at each hour."), "hand"],
+  chartScrub: [key("Read any hour"), key("Drag the chart back to yesterday or up to 7 days ahead. Hold it, then slide along to read the value at each hour."), "hand"],
   weatherMap: [key("Weather on the map"), key("The map shows this weather around the lake. Press play to watch it move, or open it full screen with the arrows."), "map", "mapLink"],
   mapLink: [key("Chart and map together"), key("The map shows the hour of the chart's blue line. Tap the chain to give the map its own time, and again to link them."), "link"],
   rowImport: [key("Import a row"), key("Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace."), "upload"],

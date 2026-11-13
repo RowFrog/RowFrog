@@ -133,7 +133,7 @@ struct WaterEstimateTip: PacedTip {
 
 struct ChartScrubTip: PacedTip {
     var title: Text { Text(tr("Read any hour")) }
-    var message: Text? { Text(tr("Hold the chart, then slide along it to read the value at each hour.")) }
+    var message: Text? { Text(tr("Drag the chart back to yesterday or up to 7 days ahead. Hold it, then slide along to read the value at each hour.")) }
     var image: Image? { Image(systemName: "hand.draw") }
 }
 

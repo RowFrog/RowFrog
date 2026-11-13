@@ -53,7 +53,7 @@ struct LakeViewCard: View {
         let index = view.hourIndex()
         let hour = view.hours.isEmpty ? nil : view.hours[index]
         let aspect = LakeProjection.aspect(of: view.grid)
-        return Card(title: view.water.viewTitle + " · " + view.name, symbol: "map") {
+        return Card(title: view.water.viewTitle + " · " + view.name, symbol: "map", opens: { showingMap = true }) {
             Button { showingMap = true } label: {
                 if let hour {
                     if aspect >= 1.3 {
@@ -108,12 +108,8 @@ struct LakeViewCard: View {
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.orange)
             }
-            HStack(spacing: 2) {
-                Text(tr("Open lake view"))
-                Image(systemName: "chevron.right")
-            }
-            .font(.subheadline)
-            .foregroundStyle(.tint)
+            // No "Open lake view" link: the whole tile opens it, and the › in its
+            // title row says so, as on the value tiles (owner, 13 Nov 2026).
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

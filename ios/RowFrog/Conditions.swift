@@ -79,7 +79,7 @@ enum Condition: String, CaseIterable, Identifiable {
         case .feelsLike: tr("How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index).")
         case .humidity: tr("Relative humidity. The dew point is the temperature at which the air turns to mist or dew.")
         case .pressure: tr("Air pressure at sea level and where it goes in the next 3 hours. Falling fast often means wind and rain ahead.")
-        case .wind: tr("Mean wind – strongest gust, in %@. The arrow points where the wind blows to.", unit)
+        case .wind: tr("Mean wind – strongest gust, in %@. The arrow points where the wind blows to, as do the arrows above the wind chart.", unit)
         case .waves: tr("Estimated wave height at the launch point, from wind and open water upwind.")
         case .waterTemperature: tr("Latest lake measurement. Below %@, extra care; below %@, cold water.", Format.temperature(15), Format.temperature(10))
         case .precipitation: tr("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unit)

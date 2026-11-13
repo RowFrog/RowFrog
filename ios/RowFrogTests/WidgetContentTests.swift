@@ -144,6 +144,18 @@ final class WidgetContentTests: XCTestCase {
         XCTAssertNil(snapshot([hour(0, .red), hour(1, .amber)]).days(1).first?.good)
     }
 
+    /// The forecast ends in the morning of its last day (owner, 13 Nov 2026: the
+    /// widget called the whole Sunday "Not good" from its 07:00 hour alone).
+    func testADayPastTheForecastsEndKeepsItsMissingHoursOpen() {
+        let sun = [SunDay(sunrise: start.addingTimeInterval(-1200), sunset: start.addingTimeInterval(9.5 * 3600))]
+        let cut = snapshot([hour(0, .red)], daylight: sun).days(1).first
+        XCTAssertEqual(cut?.lights, [.red])
+        XCTAssertEqual(cut?.missing, 9)
+        XCTAssertNil(cut?.good)
+        let whole = snapshot((0..<10).map { hour($0) }, daylight: sun).days(1).first
+        XCTAssertEqual(whole?.missing, 0)
+    }
+
     func testAnOutOfDateForecastHasNoGoodStretch() {
         let late = snapshot((0..<8).map { hour($0) }, at: start.addingTimeInterval(4 * 3600))
         XCTAssertNil(late.days(1).first?.good)

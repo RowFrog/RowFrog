@@ -2990,8 +2990,11 @@ function route(scroll = true) {
     const query = new URLSearchParams(lake[3] ?? "");
     const at = query.get("at") ? new Date(query.get("at")) : null;
     const routeId = query.get("route");
-    const back = routeId ? "#/settings/routes" : clubId ? `#/club/${encodeURIComponent(clubId)}` : "#/";
-    return renderLakeMap(root, decodeURIComponent(lake[1]), clubId, back, at, routeId);
+    // From the waves page's map (?layer=waves), back to that page, as the app's full-screen cover.
+    const back = routeId ? "#/settings/routes" : !clubId ? "#/"
+      : query.get("layer") === "waves" ? `#/club/${encodeURIComponent(clubId)}/value/waves` : `#/club/${encodeURIComponent(clubId)}`;
+    // ?layer=waves from the waves page's map.
+    return renderLakeMap(root, decodeURIComponent(lake[1]), clubId, back, at, routeId, query.get("layer"));
   }
   const add = hash.match(/^\/add-place(?:\?name=(.*))?$/);
   if (add) return renderAddPlace(root, add[1] ? decodeURIComponent(add[1]) : "");

@@ -584,6 +584,9 @@ struct WeatherMapScreen: View {
     /// opens in the middle of the map they leave free.
     @State private var mapHeight: CGFloat?
     @State private var controlsTop: CGFloat?
+    /// The safe area the map reaches under, and where the floating top bar ends.
+    @State private var safeArea = EdgeInsets()
+    @State private var barBottom: CGFloat = 0
 
     init(point: Coordinate, clubID: String? = nil, layer: WeatherMapLayer, start: Date? = nil, time: Binding<Date?>? = nil,
          chart: AnyView? = nil) {
@@ -600,8 +603,11 @@ struct WeatherMapScreen: View {
     /// How much of the map's bottom the controls cover; nil until both are measured.
     private var bottomInset: CGFloat? {
         guard let mapHeight, let controlsTop else { return nil }
-        return max(0, mapHeight - controlsTop)
+        return max(0, mapHeight - safeArea.top - controlsTop)
     }
+
+    /// How much of the map's top the status bar and the floating top bar cover.
+    private var topInset: CGFloat { safeArea.top + barBottom }
 
     /// The hours or pictures the slider goes through.
     private var frames: [Date] {
@@ -618,20 +624,22 @@ struct WeatherMapScreen: View {
     private var screen: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                WeatherMapView(point: point, clubID: clubID, overlays: overlays, start: startArea, bottomInset: bottomInset) { area = $0 }
-                    .ignoresSafeArea(edges: .bottom)
+                WeatherMapView(point: point, clubID: clubID, overlays: overlays, start: startArea, bottomInset: bottomInset,
+                               topInset: topInset) { area = $0 }
+                    // To every edge, as the lake view: a navigation bar left a dark band at the top (owner, 13 Nov 2026).
+                    .ignoresSafeArea()
                 controls
                     .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named("weatherMap")).minY } action: { controlsTop = $0 }
             }
-            .coordinateSpace(.named("weatherMap"))
-            // The map reaches under the home indicator; the stack stops above it.
-            .onGeometryChange(for: CGFloat.self) { $0.size.height + $0.safeAreaInsets.bottom } action: { mapHeight = $0 }
-            .navigationTitle(layer.title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) { layerMenu }
-                CloseToolbarItem { dismiss() }
+            .overlay(alignment: .top) {
+                MapTopBar(title: layer.title, close: { dismiss() }) { layerMenu }
+                    .onGeometryChange(for: CGFloat.self) { $0.frame(in: .named("weatherMap")).maxY } action: { barBottom = $0 }
             }
+            .coordinateSpace(.named("weatherMap"))
+            // The map reaches under the status bar and the home indicator; the stack stops inside them.
+            .onGeometryChange(for: EdgeInsets.self) { $0.safeAreaInsets } action: { safeArea = $0 }
+            .onGeometryChange(for: CGFloat.self) { $0.size.height + $0.safeAreaInsets.top + $0.safeAreaInsets.bottom } action: { mapHeight = $0 }
+            .toolbar(.hidden, for: .navigationBar)
             .task(id: layer) { await load() }
             // Zoomed out or moved: the tiles or the wider picture it needs now.
             .task(id: "\(layer.rawValue)|\(store.tileIDs(for: area))") {
@@ -712,8 +720,11 @@ struct WeatherMapScreen: View {
                 }
             }
         } label: {
-            Label(tr("Show"), systemImage: "square.3.layers.3d")
+            Image(systemName: "square.3.layers.3d")
+                .font(.body.weight(.semibold))
+                .frame(width: 44, height: 44)
         }
+        .floatingControl(RoundedRectangle(cornerRadius: 14))
         .accessibilityLabel(tr("Choose what the map shows"))
     }
 
@@ -1025,6 +1036,8 @@ private struct WeatherMapView: UIViewRepresentable {
     /// How much of the map's bottom is covered (the full-screen map's controls);
     /// the start area is centred in the part above. Nil waits until it is known.
     var bottomInset: CGFloat?
+    /// How much of the map's top the status bar and the floating top bar cover.
+    var topInset: CGFloat = 0
     /// The area on screen after each zoom or move, to load what it needs.
     var onArea: ((MapArea) -> Void)?
 
@@ -1034,6 +1047,7 @@ private struct WeatherMapView: UIViewRepresentable {
         map.pointOfInterestFilter = .excludingAll
         map.setRegion(start.region, animated: false)
         map.start = start.mapRect
+        map.topInset = topInset
         map.bottomInset = bottomInset
         let pin = MKPointAnnotation()
         pin.coordinate = CLLocationCoordinate2D(latitude: point.lat, longitude: point.lon)
@@ -1043,6 +1057,7 @@ private struct WeatherMapView: UIViewRepresentable {
     }
 
     func updateUIView(_ map: StartingMapView, context: Context) {
+        map.topInset = topInset
         map.bottomInset = bottomInset
         let coordinator = context.coordinator
         coordinator.onArea = onArea
@@ -1122,17 +1137,21 @@ final class StartingMapView: MKMapView {
     var bottomInset: CGFloat? {
         didSet { if bottomInset != oldValue { applied = false; setNeedsLayout() } }
     }
+    /// The part of the map's top under the status bar and the floating top bar.
+    var topInset: CGFloat = 0 {
+        didSet { if topInset != oldValue { applied = false; setNeedsLayout() } }
+    }
     private(set) var applied = false
 
     override func layoutSubviews() {
         super.layoutSubviews()
-        guard !applied, let start, let bottomInset, bounds.height > bottomInset + 80 else { return }
+        guard !applied, let start, let bottomInset, bounds.height > bottomInset + topInset + 80 else { return }
         applied = true
         // Fit the start area into the free part, its middle on the free part's middle,
         // and give the map the whole view at that scale.
-        let free = CGSize(width: bounds.width, height: bounds.height - bottomInset)
+        let free = CGSize(width: bounds.width, height: bounds.height - bottomInset - topInset)
         let scale = max(start.width / free.width, start.height / free.height)
-        let shown = MKMapRect(x: start.midX - free.width / 2 * scale, y: start.midY - free.height / 2 * scale,
+        let shown = MKMapRect(x: start.midX - free.width / 2 * scale, y: start.midY - (topInset + free.height / 2) * scale,
                               width: bounds.width * scale, height: bounds.height * scale)
         setVisibleMapRect(shown, animated: false)
     }

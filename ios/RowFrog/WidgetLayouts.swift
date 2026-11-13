@@ -37,6 +37,10 @@ struct WidgetDay: Equatable {
     let past: [Bool]
     /// "Now–15:00" or "11:00–15:00", nil when the day has no good hour left.
     let good: String?
+    /// Daylight hours past the forecast's end: the last day often has only its
+    /// first hour or two. They keep their place in the bar, empty, and the day
+    /// without a good stretch reads "Not known yet" instead of "Not good".
+    var missing = 0
 }
 
 /// The words of the new layouts, worked out here so the tests can read them.
@@ -202,12 +206,21 @@ extension RowingSnapshot {
                     ? Format.day(day, calendar: calendar)
                     : day.formatted(.dateTime.weekday(.abbreviated).day().locale(Format.locale))
                 result.append(WidgetDay(label: label, lights: hours.map(\.light), past: past,
-                                        good: isStale ? nil : goodStretch(hours)))
+                                        good: isStale ? nil : goodStretch(hours),
+                                        missing: missingHours(after: forecast.hours.last?.time, on: day, calendar: calendar)))
             }
             guard let next = calendar.date(byAdding: .day, value: 1, to: day) else { break }
             day = next
         }
         return result
+    }
+
+    /// The daylight hours of `day` after the forecast's last hour (`end`), from the day's sunrise and sunset.
+    private func missingHours(after end: Date?, on day: Date, calendar: Calendar) -> Int {
+        guard let end, let sun = forecast?.daylight?.first(where: { calendar.isDate($0.sunrise, inSameDayAs: day) }) else { return 0 }
+        let from = max(end.addingTimeInterval(3600), sun.sunrise)
+        guard sun.sunset > from else { return 0 }
+        return Int((sun.sunset.timeIntervalSince(from) / 3600).rounded(.up))
     }
 
     /// The first stretch of at least an hour of green from now on, "Now–15:00" or "11:00–15:00".
@@ -557,10 +570,16 @@ extension RowingWidgetView {
                         ForEach(Array(day.lights.enumerated()), id: \.offset) { index, light in
                             segment(light, past: day.past[index])
                         }
+                        // Not forecast yet: room kept, a faint dashed outline.
+                        ForEach(0..<day.missing, id: \.self) { _ in
+                            RoundedRectangle(cornerRadius: 2, style: .continuous)
+                                .strokeBorder(style: StrokeStyle(lineWidth: 1, dash: [2, 2]))
+                                .opacity(0.35)
+                        }
                     }
                     .frame(height: big ? 10 : 8)
                     .accessibilityHidden(true)
-                    Text(day.good ?? (snapshot.isStale ? "–" : tr("Not good")))
+                    Text(day.good ?? (snapshot.isStale ? "–" : day.missing > 0 ? tr("Not known yet") : tr("Not good")))
                         .font(.caption.monospacedDigit())
                         .opacity(day.good == nil ? 0.75 : 1)
                         .lineLimit(1)

@@ -1,9 +1,9 @@
 import SwiftUI
 
 /// The parts of the lake in the lake tile as a small table, styled like the
-/// 48-hour table: a map symbol over the parts, waves, wind with its direction
-/// under one wind symbol (arrow under a compass, speed under the unit) and
-/// visibility, one line under the header (owner's H1, 12 Nov 2026). Values
+/// 48-hour table: a map symbol over the parts, wind with its direction under
+/// one wind symbol (arrow under a compass, speed under the unit), waves and
+/// visibility (that order everywhere, owner 13 Nov 2026), one line under the header (owner's H1, 12 Nov 2026). Values
 /// that set amber or red show in that colour. A thunderstorm, hail or heavy
 /// rain and the "near the shore" note follow a part on their own line. When
 /// the table is too wide (narrow phones, larger text) each part falls back to
@@ -61,10 +61,11 @@ struct LakeZoneTable: View {
                     .gridColumnAlignment(.leading)
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(label(row))
-                    number(Format.wavesNumber(row.reading.waveM), row.reading.waveLight)
+                    // Wind, waves, visibility, as everywhere in the app (owner, 13 Nov 2026).
                     arrow(row.reading)
                     number(row.reading.speedMs.map { "\(Format.windNumber($0))–\(Format.windNumber(row.reading.gustMs))" } ?? "–",
                            row.reading.windLight)
+                    number(Format.wavesNumber(row.reading.waveM), row.reading.waveLight)
                     number(Format.distanceNumber(row.reading.visM), row.reading.visLight)
                 }
                 if row.reading.extra != nil || row.note != nil {
@@ -85,8 +86,8 @@ struct LakeZoneTable: View {
     @ViewBuilder private var header: some View {
         GridRow {
             Color.clear.gridCellUnsizedAxes([.horizontal, .vertical])
-            ConditionIcon(condition: .waves).frame(width: iconWidth)
             ConditionIcon(condition: .wind).gridCellColumns(2).gridCellAnchor(.center)
+            ConditionIcon(condition: .waves).frame(width: iconWidth)
             ConditionIcon(condition: .visibility).frame(width: iconWidth)
         }
         .font(.subheadline)
@@ -99,9 +100,14 @@ struct LakeZoneTable: View {
                 .font(.subheadline)
                 .gridColumnAlignment(.leading)
                 .alignmentGuide(VerticalAlignment.center) { $0[VerticalAlignment.bottom] + $0.height * 0.2 }
-            unit(Condition.waves.unit)
-            Image(systemName: "safari").imageScale(.small).gridCellAnchor(.center)
+            // Centred over the arrows by its frame, and level with the units by the row's
+            // centre line: a cell anchor put it at the middle of the whole row, which
+            // the map symbol makes taller, so it sat higher than the units (owner, 13 Nov 2026).
+            Image(systemName: "safari").imageScale(.small)
+                .frame(maxWidth: .infinity)
+                .gridCellUnsizedAxes(.horizontal)
             unit(Condition.wind.unit)
+            unit(Condition.waves.unit)
             unit(Condition.visibility.unit)
         }
         .font(.caption2)
@@ -186,8 +192,8 @@ struct LakeZoneTable: View {
     private func items(_ r: LakeZoneReading, spoken: Bool = false) -> [LakeProbeItem] {
         let from = r.fromDeg.map { " " + (spoken ? tr("from %@", Format.compass($0)) : Self.arrowGlyph(towardDeg: $0 + 180)) } ?? ""
         var items = [
-            LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(r.waveM), light: r.waveLight),
             LakeProbeItem(symbol: Condition.wind.symbol, name: tr("Wind"), text: Format.windRange(r.speedMs, r.gustMs) + from, light: r.windLight),
+            LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(r.waveM), light: r.waveLight),
         ]
         if r.visM != nil {
             items.append(LakeProbeItem(symbol: Condition.visibility.symbol, name: tr("Visibility"), text: Format.distance(r.visM), light: r.visLight))
@@ -203,7 +209,7 @@ struct LakeZoneTable: View {
         return arrows[i]
     }
 
-    /// "North: waves 0.06 m, wind 2–4 m/s from NE, visibility 17 km", then the light's word,
+    /// "North: wind 2–4 m/s from NE, waves 0.06 m, visibility 17 km", then the light's word,
     /// another reason and the note, for VoiceOver.
     private func label(_ row: Row) -> String {
         var parts = [row.name + ": " + row.light.title(stale: view.isStale)]

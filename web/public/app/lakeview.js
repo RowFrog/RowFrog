@@ -16,7 +16,7 @@ import {
   waterKind, WATER_TEXTS, sectionEndTitle, openBounds,
   gridEdges, cellAt, cellColours, rasterPixels, fineLight, RGB, ramp, RouteEdit, routeLength, routePlanner, planRoute, bestStart, plansBetter,
   roughest, RELATION_WIND, RELATION_WAVES, pace as paceText, clubhouseOf, showsOars, shouldSplit, spotProbe, windAt, withDaylightNow,
-  zoneNotes, zoneNoteText, zoneValues, arrowGlyph,
+  zoneNotes, zoneNoteText, zoneValues, arrowGlyph, fogginess, visibilityColour, hasVisibility,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips, closeTip, bubbleTip } from "./tour.js";
@@ -111,6 +111,41 @@ export function splitClubPins(L, map, entries) {
 
 const rgb = (c, a = 1) => `rgba(${Math.round(c[0])}, ${Math.round(c[1])}, ${Math.round(c[2])}, ${a})`;
 export const COLD_SHORE = { cool: "rgb(92, 168, 242)", cold: "rgb(20, 84, 194)" };
+
+/**
+ * The waves page's map (DetailLakeCard, owner 13 Nov 2026): the lake view's waves at an hour, in the place the
+ * other value pages have their weather map; the link opens the lake view on its waves at that hour.
+ * Returns a function that draws another hour, or null when the club has no lake view.
+ */
+export async function fillWavesMap(box, lakeId, clubId, at) {
+  let view;
+  try {
+    view = await viewForMap(lakeId);
+  } catch {
+    return null;
+  }
+  if (!view.hours.length || !box.isConnected) return null;
+  box.innerHTML = `<a class="wm-head lake-head" href="#"><span class="i-wrap">${icon("waves")}</span><strong class="when"></strong>
+      <span class="wm-open">${icon("maximize-2")}</span></a><canvas class="mini wm-lake" role="img"></canvas>`;
+  const link = box.querySelector("a"), canvas = box.querySelector("canvas");
+  let shown = at;
+  const draw = (date) => {
+    shown = date;
+    const hour = view.hours[hourIndex(view, date)];
+    const first = view.hours[0].time, last = view.hours[view.hours.length - 1].time;
+    const outside = date < new Date(first) || date >= new Date(new Date(last).getTime() + 3600e3);
+    box.querySelector(".when").textContent = `${view.name} · ${dayTime(hour.time)}`;
+    link.href = `#/lake/${encodeURIComponent(lakeId)}/${encodeURIComponent(clubId)}?at=${encodeURIComponent(hour.time)}&layer=waves`;
+    canvas.setAttribute("aria-label", t("Opens the lake view"));
+    canvas.classList.toggle("outside", outside);
+    drawMiniMap(canvas, view, hour, clubId, "waves");
+  };
+  draw(at);
+  draw.hours = view.hours.map((x) => x.time);
+  canvas.addEventListener("click", () => link.click());
+  new ResizeObserver(() => canvas.isConnected && draw(shown)).observe(canvas);
+  return draw;
+}
 
 /**
  * The hour's lights (or waves, wind) as a small picture for smooth scaling: one pixel per cell, and for the
@@ -242,7 +277,7 @@ function arrowPath(ctx, x, y, towardDeg, length) {
 }
 
 /** The lake by itself, north up, coloured by the light of each part, with wind arrows and the clubs (LakeMiniMap). */
-function drawMiniMap(canvas, view, hour, clubId) {
+function drawMiniMap(canvas, view, hour, clubId, layer = "light") {
   const ratio = window.devicePixelRatio || 1;
   const w = canvas.clientWidth;
   const hgt = canvas.clientHeight;
@@ -273,9 +308,9 @@ function drawMiniMap(canvas, view, hour, clubId) {
   ctx.imageSmoothingQuality = "high";
   const [x0, y0] = pt(e.west, e.north);
   const [x1, y1] = pt(e.east, e.south);
-  ctx.drawImage(rasterCanvas(view, hour, "light"), x0, y0, x1 - x0, y1 - y0);
+  ctx.drawImage(rasterCanvas(view, hour, layer), x0, y0, x1 - x0, y1 - y0);
   ctx.globalAlpha = 1;
-  const kind = stripes(hour.lakeWide);
+  const kind = layer === "light" && stripes(hour.lakeWide);
   if (kind) strokeStripes(ctx, kind, w, hgt, 1, stripesFall(view.outline));
   ctx.restore();
   const cold = coldShore(view.shoreWaterC, mapLimits());
@@ -360,8 +395,11 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
   // the old wind line under it went (owner's H1, 12 Nov 2026).
   const zones = view.zones.length ? zoneTable(view, hour, stale) : "";
   const water = WATER_TEXTS[waterKind(view)];
-  box.innerHTML = `<header class="card-title">${icon("map")}<span>${h(`${t(water.view)} · ${view.name}`)}</span></header>
-    <a class="lake-card ${aspect >= 1.3 ? "tall" : ""}" href="#/lake/${encodeURIComponent(lakeId)}/${encodeURIComponent(clubId)}" aria-label="${h(t(water.opens))}">
+  // The whole tile opens the lake view: a › in the title row says so, as on the value tiles, instead of
+  // an "Open lake view" link (owner, 13 Nov 2026; Card.opens in the app).
+  const href = `#/lake/${encodeURIComponent(lakeId)}/${encodeURIComponent(clubId)}`;
+  box.innerHTML = `<a class="card-title opens" href="${href}" tabindex="-1" aria-hidden="true">${icon("map")}<span>${h(`${t(water.view)} · ${view.name}`)}</span>${icon("chevron-right")}</a>
+    <a class="lake-card ${aspect >= 1.3 ? "tall" : ""}" href="${href}" aria-label="${h(t(water.opens))}">
       <canvas class="mini" style="${aspect >= 1.3 ? `height:${Math.min(320, Math.max(170, 120 * aspect))}px` : ""}" role="img" aria-label="${h(t("Map of %@ coloured by the rowing light", view.name))}"></canvas>
       <div class="lake-summary">
         <small class="sub">${h(t("Now, %@", time(hour.time)))}</small>
@@ -371,7 +409,6 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
         ${mapBoatNote()}
         ${zones}
         ${view.sample ? `<p class="small orange strong">${icon("triangle-alert")} ${h(t("Sample wind"))}</p>` : ""}
-        <span class="tint">${h(t("Open lake view"))} ${icon("chevron-right")}</span>
       </div></a>`;
   box.hidden = false;
   const canvas = box.querySelector("canvas");
@@ -419,18 +456,18 @@ function zoneTable(view, hour, stale) {
     ? `<tr class="zt-extra"><td colspan="5">${r.values.extra ? `<small class="zone-values">${extraItem(r.values.extra)}</small>` : ""}${r.note ? `<small class="sub zone-note">${h(r.note)}</small>` : ""}</td></tr>`
     : "";
   const table = `<table class="zone-table" aria-hidden="true">
-    <thead><tr class="zt-icons"><th rowspan="2" class="zt-map">${icon("map")}</th><th>${icon(CONDITION_ICONS.waves)}</th><th colspan="2" class="zt-wind">${icon(CONDITION_ICONS.wind)}</th><th>${icon(CONDITION_ICONS.visibility)}</th></tr>
-    <tr class="zt-units"><th>${h(unitSymbol("waves"))}</th><th class="zt-arrow">${icon("compass")}</th><th>${h(windUnit())}</th><th>${h(unitSymbol("distance"))}</th></tr></thead>
+    <thead><tr class="zt-icons"><th rowspan="2" class="zt-map">${icon("map")}</th><th colspan="2" class="zt-wind">${icon(CONDITION_ICONS.wind)}</th><th>${icon(CONDITION_ICONS.waves)}</th><th>${icon(CONDITION_ICONS.visibility)}</th></tr>
+    <tr class="zt-units"><th class="zt-arrow">${icon("compass")}</th><th>${h(windUnit())}</th><th>${h(unitSymbol("waves"))}</th><th>${h(unitSymbol("distance"))}</th></tr></thead>
     <tbody>${rows.map((r) => `<tr><td class="zt-name">${dot(r.light, 10, stale)}<strong>${h(r.name)}</strong></td>
-      ${numCell(wavesNumber(r.values.waves.m), r.values.waves.light)}${arrowCell(r.values)}
-      ${numCell(r.values.wind.speedMs != null ? windRange(r.values.wind.speedMs, r.values.wind.gustMs) : "–", r.values.wind.light)}
+      ${arrowCell(r.values)}${numCell(r.values.wind.speedMs != null ? windRange(r.values.wind.speedMs, r.values.wind.gustMs) : "–", r.values.wind.light)}
+      ${numCell(wavesNumber(r.values.waves.m), r.values.waves.light)}
       ${numCell(distanceNumber(r.values.visibility?.m), r.values.visibility?.light ?? "green")}</tr>${extras(r)}`).join("")}</tbody></table>`;
   // The lines show the table's arrow as a character, short enough not to be cut at large text sizes.
   const lineValues = (v) => {
     const toward = v.fromDeg != null && v.wind.speedMs != null ? ` ${arrowGlyph(v.fromDeg + 180)}` : "";
     return [
-      probeItem(icon("waves"), waves(v.waves.m), v.waves.light),
       probeItem(icon("wind"), `${windRange(v.wind.speedMs, v.wind.gustMs)} ${windUnit()}${toward}`, v.wind.light),
+      probeItem(icon("waves"), waves(v.waves.m), v.waves.light),
       ...(v.visibility ? [probeItem(icon(CONDITION_ICONS.visibility), distance(v.visibility.m), v.visibility.light)] : []),
     ].join("") + extraItem(v.extra);
   };
@@ -438,8 +475,9 @@ function zoneTable(view, hour, stale) {
     <small class="zone-values">${lineValues(r.values)}</small>${r.note ? `<small class="sub zone-note">${h(r.note)}</small>` : ""}</span></li>`).join("")}</ul>`;
   const spoken = rows.map((r) => {
     const v = r.values;
-    const parts = [`${r.name}: ${lightTitle(r.light, stale)}`, `${t("Waves")} ${waves(v.waves.m)}`,
-      `${t("Wind")} ${windRange(v.wind.speedMs, v.wind.gustMs)} ${windUnit()}${v.fromDeg != null && v.wind.speedMs != null ? ` ${t("from %@", compass(v.fromDeg))}` : ""}`];
+    const parts = [`${r.name}: ${lightTitle(r.light, stale)}`,
+      `${t("Wind")} ${windRange(v.wind.speedMs, v.wind.gustMs)} ${windUnit()}${v.fromDeg != null && v.wind.speedMs != null ? ` ${t("from %@", compass(v.fromDeg))}` : ""}`,
+      `${t("Waves")} ${waves(v.waves.m)}`];
     if (v.visibility) parts.push(`${t("Visibility")} ${distance(v.visibility.m)}`);
     if (r.note) parts.push(r.note);
     return `<li>${h(parts.join(", "))}</li>`;
@@ -475,7 +513,7 @@ let page = null;
 let opened = 0;
 
 /** `routeId`: a saved route to open, from Settings › Routes. */
-export async function renderLakeMap(root, lakeId, clubId, back, at = null, routeId = null) {
+export async function renderLakeMap(root, lakeId, clubId, back, at = null, routeId = null, layer = null) {
   const mine = ++opened;
   page?.map?.remove();
   if (clubId) noteDaylight(lakeId, clubId);
@@ -501,7 +539,8 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null, route
   root.querySelector("#lake-name").textContent = view.name;
   const club = view.clubs.find((c) => c.id === clubId) ?? view.clubs[0];
   page = {
-    root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()), layer: "light", spot: null,
+    root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()),
+    layer: LAYERS.some(([k]) => k === layer) && (layer !== "visibility" || hasVisibility(view)) ? layer : "light", spot: null,
     pace: 135, followBoat: false, boatAt: 0, map: null, layers: {}, showTrack: true,
     // The route being planned, its saved route and its undo history, driven by the route editor's chart (RouteDraft).
     route: routeDraft(chart, { lakeId, launch: club?.launchPoint ?? null, points: club ? [club.launchPoint] : [] }),
@@ -845,6 +884,13 @@ export function layerLegend(layer) {
   if (layer === "light") {
     return `<p class="legend-line">${["green", "amber", "red"].map((l) => `<span>${dot(l, 9)} ${h(lightTitle(l))}</span>`).join("")}</p>`;
   }
+  if (layer === "visibility") {
+    // By fogginess: 20 km, 1 km and 500 m at their places (LakeLegend).
+    const amber = fogginess(1000), red = fogginess(500), top = red * 1.6;
+    const stops = Array.from({ length: 11 }, (_, i) => rgb(visibilityColour(20000 / 10 ** ((top * i) / 10)))).join(", ");
+    return `<div class="ramp"><span class="bar" style="background:linear-gradient(90deg, ${stops})"></span>
+    <span class="labels"><small style="left:0">${h(distance(20000))}</small><small style="left:${(amber / top) * 100}%">${h(distance(1000))}</small><small style="left:${(red / top) * 100}%">${h(distance(500))}</small></span></div>`;
+  }
   const [amber, red, fmt] = layer === "waves"
     ? [limits.value("waveAmber"), limits.value("waveRed"), waves]
     : [limits.value("windAmber"), limits.value("windRed"), wind];
@@ -854,24 +900,32 @@ export function layerLegend(layer) {
     <span class="labels"><small style="left:0">${h(fmt(0))}</small><small style="left:${(amber / top) * 100}%">${h(fmt(amber))}</small><small style="left:${(red / top) * 100}%">${h(fmt(red))}</small></span></div>`;
 }
 
-const LAYERS = [["light", key("Rowing light")], ["waves", key("Waves")], ["wind", key("Wind")]];
+/** The rowing light first, then wind, waves and visibility, the order they have everywhere (owner, 13 Nov 2026). */
+const LAYERS = [["light", key("Rowing light")], ["wind", key("Wind")], ["waves", key("Waves")], ["visibility", key("Visibility")]];
+/** The layers this lake view can show: visibility only when the backend sends it per point. */
+const shownLayers = () => LAYERS.filter(([k]) => k !== "visibility" || hasVisibility(page.view));
 
-/** A layer button's picture: the three lights, the waves or the wind (LakeLayerIcon). */
-const layerIcon = (layer) => (layer === "light" ? `<span class="lights">${["red", "amber", "green"].map((l) => `<i style="background:var(--${l})"></i>`).join("")}</span>` : icon(layer));
+/** A layer button's picture: the three lights, the wind, the waves or visibility (LakeLayerIcon). */
+const layerIcon = (layer) => (layer === "light" ? `<span class="lights">${["red", "amber", "green"].map((l) => `<i style="background:var(--${l})"></i>`).join("")}</span>`
+  : icon(layer === "visibility" ? CONDITION_ICONS.visibility : layer));
 
 /** The layer's colours in a slim strip (tap for the legend) at the lower left; one button per layer at the lower right (LakeScaleChip, layerButtons). */
 function mapControls() {
   const limits = mapLimits();
   let scale;
   if (page.layer === "light") scale = ["green", "amber", "red"].map((l) => dot(l, 9)).join("");
-  else {
+  else if (page.layer === "visibility") {
+    const top = fogginess(500);
+    const stops = Array.from({ length: 6 }, (_, i) => rgb(visibilityColour(20000 / 10 ** ((top * i) / 5)))).join(", ");
+    scale = `<small>${h(distance(20000))}</small><span class="bar" style="background:linear-gradient(90deg, ${stops})"></span><small>${h(distance(500))}</small>`;
+  } else {
     const [top, fmt] = page.layer === "waves" ? [limits.value("waveRed"), waves] : [limits.value("windRed"), wind];
     const stops = Array.from({ length: 6 }, (_, i) => rgb(ramp((top * i) / 5, limits.value(page.layer === "waves" ? "waveAmber" : "windAmber"), top))).join(", ");
     scale = `<small>${h(fmt(0))}</small><span class="bar" style="background:linear-gradient(90deg, ${stops})"></span><small>${h(fmt(top))}</small>`;
   }
   return `<button class="glass lake-scale" id="scale" aria-label="${h(t("Legend"))}">${scale}</button>
     <div class="lake-layers-box">${page.layerNote ? `<span class="glass layer-note">${h(t(LAYERS.find(([k]) => k === page.layerNote)[1]))}</span>` : ""}
-      <div class="glass lake-layers">${LAYERS.map(([k, label]) => `<button data-layer="${k}" class="${page.layer === k ? "on" : ""}" aria-label="${h(t(label))}" aria-pressed="${page.layer === k}">${layerIcon(k)}</button>`).join("")}</div></div>`;
+      <div class="glass lake-layers">${shownLayers().map(([k, label]) => `<button data-layer="${k}" class="${page.layer === k ? "on" : ""}" aria-label="${h(t(label))}" aria-pressed="${page.layer === k}">${layerIcon(k)}</button>`).join("")}</div></div>`;
 }
 
 /** The route button in the panel's first row: blue while planning (panelRouteButton). */
@@ -924,11 +978,11 @@ function extraItem(extra) {
   return probeItem(icon("cloud-rain"), rain(extra.mm), extra.light);
 }
 
-/** Waves, wind and visibility of a probe, as items. */
+/** Wind, waves and visibility of a probe, as items. */
 function probeValues(p) {
   return [
-    probeItem(icon("waves"), waves(p.waves.m), p.waves.light),
     probeItem(icon("wind"), `${windRange(p.wind.speedMs, p.wind.gustMs)} ${windUnit()}`, p.wind.light),
+    probeItem(icon("waves"), waves(p.waves.m), p.waves.light),
     ...(p.visibility ? [probeItem(icon(CONDITION_ICONS.visibility), distance(p.visibility.m), p.visibility.light)] : []),
   ];
 }
@@ -979,9 +1033,9 @@ function viewingPanel(hour) {
     details = `<div class="spot"><p class="spot-head">${dot(spotLight, 14, stale)} <strong>${h(lightTitle(spotLight, stale))}</strong>
         <button class="card-x" id="spot-close" aria-label="${h(t("Close"))}">${icon("x")}</button></p>
       ${view.zones.length > 1 && view.zones[zone] ? `<small class="sub">${h(t("Selected spot · %@", t(zoneTitle(view.zones[zone], waterKind(view)))))}</small>` : ""}
-      <div class="now-metrics"><div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesCm[i] / 100))}</span></div>
-        <div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
+      <div class="now-metrics"><div><small class="label">${icon("wind")} ${h(t("Wind"))}</small><span>${h(windRange(w?.speedMs, w?.gustMs))} ${h(windUnit())}</span></div>
         ${w?.fromDeg != null ? `<div><small class="label">${icon("navigation")} ${h(t("From"))}</small><span>${h(compass(w.fromDeg, lang()))}</span></div>` : ""}
+        <div><small class="label">${icon("waves")} ${h(t("Waves"))}</small><span>${h(waves(hour.wavesCm[i] / 100))}</span></div>
         ${w?.visM != null ? `<div><small class="label">${icon(CONDITION_ICONS.visibility)} ${h(t("Visibility"))}</small><span>${h(distance(w.visM))}</span></div>` : ""}</div>
       ${(() => { const x = extraItem(spotProbe(view, hour, i, mapLimits(), page.spot.at).extra); return x ? `<p class="spot-extra">${x}</p>` : ""; })()}</div>`;
   } else {

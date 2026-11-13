@@ -37,6 +37,8 @@ def web_keys() -> set[str]:
     for path in (WEB / "public" / "app").glob("*.js"):
         source = path.read_text(encoding="utf-8")
         keys |= {unescape(k) for k in re.findall(r"\b(?:t|key)\(" + STRING, source)}
+        # tk("All", "Cloud line: All"): German comes from the key.
+        keys |= {unescape(m[1]) for m in re.findall(r"\btk\(" + STRING + r",\s*" + STRING, source)}
         # A choice inside t(), e.g. t(mm < 2.5 ? "Light rain" : "Rain"): every text in it.
         for choice in re.findall(r"\bt\(([^()`\"]*\?[^()`]*)\)", source):
             keys |= {unescape(k) for k in re.findall(STRING, choice)}
