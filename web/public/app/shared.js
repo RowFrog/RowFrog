@@ -770,10 +770,14 @@ export function card(title, iconName, body, { legend = null, id = "", cls = "" }
     ${body}</section>`;
 }
 
-/** A coloured bar with a dot where the value sits (ScaleBar). */
+/**
+ * A coloured bar with a dot where the value sits (ScaleBar). The dot stays inside the bar, as in the app
+ * (offset fraction x (width - dot)): centred on the bar's end it stuck out half a dot, so a bar with its
+ * dot at either end looked longer than the others (owner, 13 Nov 2026).
+ */
 export function scaleBar(fraction, colours) {
   const f = Math.min(1, Math.max(0, fraction ?? 0));
-  return `<span class="scale" style="--bar:linear-gradient(90deg, ${colours.join(", ")})"><span class="knob" style="left:${f * 100}%"></span></span>`;
+  return `<span class="scale" style="--bar:linear-gradient(90deg, ${colours.join(", ")})"><span class="knob" style="left:calc((100% - 11px) * ${+f.toFixed(4)})"></span></span>`;
 }
 
 /** Colour zones from a list of [start, colour] (ScaleBar with zones). */
