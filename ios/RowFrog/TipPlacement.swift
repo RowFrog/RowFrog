@@ -66,7 +66,9 @@ struct BubbleAnchor: ViewModifier {
                 CGRect(origin: .zero, size: proxy.size).intersects(proxy.bounds(of: .scrollView) ?? .infinite)
             } action: { inSight = $0 }
             .onChange(of: tip != nil && inSight, initial: true) { _, show in presented = show }
-            .popover(isPresented: $presented, arrowEdge: .top) {
+            // No fixed arrow edge: iOS puts the bubble above or below, where the whole tip fits
+            // (below only, the German rain tip was cut on an iPhone, 13 Nov).
+            .popover(isPresented: $presented) {
                 // Always a popover, also while the tip changes (else iPhone falls back to an empty sheet).
                 Group {
                     if let tip { BubbleTipView(tip: tip) }
