@@ -9,6 +9,8 @@ struct Card<Content: View>: View {
     var legend: LegendPart? = nil
     @ViewBuilder var content: Content
     @Environment(\.surface) private var surface
+    /// A one-time tip about this card, under its title (TipPlacement.swift, rule R1).
+    @Environment(\.cardTip) private var cardTip
     @State private var showingLegend = false
 
     var body: some View {
@@ -24,8 +26,11 @@ struct Card<Content: View>: View {
                         LegendButton(showing: $showingLegend)
                     }
                 }
+                if let cardTip { cardTip }
             }
+            // A card inside this one gets no tip of its own from here.
             content
+                .environment(\.cardTip, nil)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)

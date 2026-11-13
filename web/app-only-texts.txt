@@ -17,7 +17,9 @@ Every hour
 For the club page picture, your own pictures and the satellite picture.
 Forecast out of date. Open Row Frog to update.
 Frog and rowing light
+iOS asks you to confirm the change.
 Large
+Layout and marks
 Less often saves battery and data, but a new warning reaches the widgets later.
 Lock screen
 Medium
@@ -34,11 +36,11 @@ Single from above
 The forecast could not be loaded.
 The icon could not be changed.
 The weather sky changes with the weather and the time of day. Pictures are darkened at the bottom so the text stays readable.
+Touch and hold a widget on the home screen and choose Edit Widget: Layout picks fewer values or all six, Marks puts a check, ! or × in the light's dots.
 Weather sky
 Widget background
 Widget updates
 Widgets
-iOS asks you to confirm the change.
 
 # iPhone only: Apple Health and opening a row shared from another app
 Apple Health could not be read.
@@ -113,7 +115,6 @@ Weather model (test)
 A Row Frog widget on your home or lock screen shows the rowing light and rain on the radar in the next two hours.
 All locations
 Appearance: background pictures, also your own photos, and the app icon.
-Choose the icon Row Frog shows on your home screen.
 Choose your home base and the other places you row.
 Continue
 English or German, as the iPhone's Settings set it for Row Frog.
@@ -121,29 +122,21 @@ Every setting, the card order and the app icon go back to how the app came, your
 Fine-tune the limits
 Forecast out of date: from %@. Pull down to refresh, and check the conditions yourself.
 Grey instead of green: the forecast is over 3 hours old. Pull down to refresh.
-Lake at the boat's time: move the boat along your route and see the lake when you get there.
 List by
 No clubs yet
-Open in Maps now gives directions to the club's address.
 Open the settings with the cog at the top of the location list.
-Pick your app icon
 Prefer portrait only? Use Rotation Lock in Control Centre.
 Pull a page or the list down to refresh.
-Route planning on the lake map got better.
-Row a loop: tap within 50 m of your club, or pick Loop under the way back.
 Rowed it before? Bring in a row from Apple Health or a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) in the Routes menu, and plan with your real route and pace.
 Saved “%@” on %@. Open the lake view and pick it under Saved routes.
 Settings, pictures and limits go back to how the app came. Your clubs and boats stay.
 Swipe a club in the list to the left to remove it.
 Swipe left and right to move between your clubs. The house marks your home base.
-Tap a turning point to delete just that one, or drag it to move it.
 Tap the water to add the turning points of your route. It starts at your club and goes one way; turn on Out and back to row the same way back. Tap or pull a stretch to add a point there. Tap a point to delete it, or drag it to move it. A point within 50 m of the start closes the loop.
 The forecast for your own place is worked out on this iPhone: wind, gusts, rain, fog, thunderstorms and daylight. Waves, water temperature and warnings are not available for it.
-The panel under the lake map is smaller. Pull it up for the details.
 The photo could not be loaded. Try another one.
 The place stays on this iPhone and nobody else sees it.
 The server renews the clubs you use every 30 minutes; your phone loads them when you open or come back to the app, or pull down.
-The way out and the way back lie side by side, each coloured for the time you row it.
 Tips come back next time you open the app
 To change it, open the list, swipe a club to the right and tap Home base.
 Touch and hold a club, then drag to reorder.
@@ -185,3 +178,17 @@ Caution
 Good until %@
 Not good
 Out of date
+
+# iPad only: the sidebar button hides the location list (the website's list stays)
+Hide the list with the sidebar button for a wider page.
+
+# What's new: the app's sheet after an update, for those who saw the tour; the website changes without one
+In the Location sheet, the club's place card from Apple Maps, with photos and opening hours.
+New since you last looked:
+No club near you? Add a place yourself with ⋯ in the list.
+On a value's page, tap its title to jump to another value.
+Settings › Routes shows all your saved routes.
+The boat button on the club page switches the boat for the rowing light right there.
+The light also looks at the water within 1 km of the launch point; the Why line says when it is rougher out there.
+Undo in the route editor takes back the last step.
+Widgets: pick a layout with fewer values or all six, and marks in the light's dots, under Edit Widget.

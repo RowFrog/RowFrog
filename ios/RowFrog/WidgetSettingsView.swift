@@ -1,4 +1,5 @@
 import SwiftUI
+import TipKit
 import WidgetKit
 
 /// Settings > Widgets: what the widgets show behind their content, for all
@@ -6,11 +7,17 @@ import WidgetKit
 struct WidgetSettingsView: View {
     let locations: LocationStore
     @Binding var path: [SettingsRoute]
+    @State private var showLayoutTip = false
+    private let layoutTip = WidgetLayoutTip()
 
     var body: some View {
         @Bindable var settings = AppSettings.shared
         ScrollViewReader { proxy in
             Form {
+                // The widget's own Layout and Marks options are in its Edit Widget menu.
+                if showLayoutTip {
+                    Section { TintedTipView(layoutTip) }
+                }
                 Section {
                     WidgetPreview(background: settings.widgetBackground)
                         .listRowInsets(EdgeInsets())
@@ -78,6 +85,7 @@ struct WidgetSettingsView: View {
             .navigationBarTitleDisplayMode(.inline)
             .screenshotSections(["preview", "all", "blur", "clubs", "updates"], proxy: proxy)
         }
+        .tipVisibility(layoutTip, $showLayoutTip)
         // The widgets show the change when the user is back on the home screen.
         .onChange(of: settings.widgetBackground) { WidgetBridge.publish(locations) }
         .onChange(of: settings.clubWidgetBackgrounds) { WidgetBridge.publish(locations) }

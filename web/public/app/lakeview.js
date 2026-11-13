@@ -19,7 +19,7 @@ import {
   zoneNotes, zoneNoteText, zoneValues, arrowGlyph,
 } from "./lake.js";
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
-import { tip, wireTips, closeTip } from "./tour.js";
+import { tip, wireTips, closeTip, bubbleTip } from "./tour.js";
 import { routeDraft } from "./routedraft.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows, inside } from "./windarrows.js";
@@ -875,7 +875,12 @@ function mapControls() {
 }
 
 /** The route button in the panel's first row: blue while planning (panelRouteButton). */
-const routeButton = () => `<button class="tool route-button ${page.routeMode ? "on" : ""}" id="route-mode" aria-label="${h(page.routeMode ? t("End route planning") : t("Plan a route"))}"${!page.routeMode && lakeRoutes().length ? ' aria-haspopup="dialog"' : ""}>${icon("route")}</button>`;
+const routeButton = () => {
+  const button = `<button class="tool route-button ${page.routeMode ? "on" : ""}" id="route-mode" aria-label="${h(page.routeMode ? t("End route planning") : t("Plan a route"))}"${!page.routeMode && lakeRoutes().length ? ' aria-haspopup="dialog"' : ""}>${icon("route")}</button>`;
+  // RoutePlanningTip: a bubble on the button (placement rule R2), as the app's popoverTip.
+  const bubble = page.routeMode ? "" : bubbleTip("routePlanning");
+  return bubble ? `<span class="pop-anchor end">${button}${bubble}</span>` : button;
+};
 /** The saved routes on this lake, in their own order. */
 const lakeRoutes = () => store.routes.filter((r) => r.lakeId === page.lakeId);
 
@@ -1249,9 +1254,9 @@ function deleteRoute(r) {
 function routeTip(isLoop) {
   const n = page.points.length;
   if (page.selected != null) return tip("turningPoint");
-  if (n >= 3 && !isLoop && tip("closeLoop")) return tip("closeLoop");
+  // After the first turning point: one way, out and back, or a loop (WayBackTip).
+  if (n >= 2 && !page.outAndBack && !isLoop && tip("wayBack")) return tip("wayBack");
   if (n >= 3) return tip("stretchPoint");
-  if (n === 2 && !page.outAndBack) return tip("oneWay");
   return n < 2 ? tip("rowImport") : "";
 }
 
@@ -1349,10 +1354,11 @@ function wirePanel() {
     update();
   }));
   over.querySelector("#scale").addEventListener("click", () => openSheet(t("Legend"), legendSheet()));
-  on("#route-mode", "click", (e) => (!page.routeMode && lakeRoutes().length ? openMenu(e.currentTarget, routeStartMenu(), wireRoutes) : toggleRouteMode()));
+  on("#route-mode", "click", (e) => (closeTip(panel, "routePlanning"), !page.routeMode && lakeRoutes().length ? openMenu(e.currentTarget, routeStartMenu(), wireRoutes) : toggleRouteMode()));
   on("#legend", "click", () => openSheet(t("Legend"), legendSheet()));
   on("#about", "click", () => openSheet(t(WATER_TEXTS[waterKind(page.view)].about), aboutSheet()));
   panel.querySelectorAll("[data-way-back]").forEach((b) => b.addEventListener("click", () => {
+    closeTip(panel, "wayBack");
     page.route.send({ type: "WAY_BACK", way: b.dataset.wayBack });
     update();
   }));

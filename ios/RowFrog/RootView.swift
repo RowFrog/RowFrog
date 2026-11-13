@@ -167,6 +167,8 @@ struct RootView: View {
                 wasInBackground = true
             } else if phase == .active, wasInBackground {
                 wasInBackground = false
+                // A new day may wake the tips after the tour's quiet day (TipPacing).
+                TipPacing.update()
                 Task { await refreshOnReturn() }
             }
         }

@@ -17,6 +17,8 @@ enum Tutorial {
     static func markSeen() {
         UserDefaults.standard.set(true, forKey: seenKey)
         WhatsNew.markSeen()
+        // No tips on the day of the tour: it has just explained the page (TipPacing).
+        TipPacing.tourEnded()
     }
 
     /// For "Show the tour again": the tour starts over and the tips return.
@@ -29,12 +31,13 @@ enum Tutorial {
     /// start, since TipKit forgets them only before it is configured.
     static func replayTips() {
         UserDefaults.standard.set(true, forKey: resetTipsKey)
+        TipPacing.resume()
     }
 
     static var tipsComingBack: Bool { UserDefaults.standard.bool(forKey: resetTipsKey) }
 
     /// Screenshot hooks: `-RWNoTips YES` hides every tip, `-RWShowTips YES` shows them all,
-    /// `-RWLaterTips YES` shows the tips that follow a closed one (all values, radar map, hour view, water estimate, route stretch, weather map).
+    /// `-RWLaterTips YES` shows the tips that follow a closed one (all values, hour view, water estimate, route stretch, weather map).
     static func configureTips() {
         let defaults = UserDefaults.standard
         if defaults.bool(forKey: resetTipsKey) {
@@ -55,10 +58,12 @@ enum Tutorial {
         // `-RWRiverTip YES` shows the river current tip on a river or canal club's page.
         if defaults.bool(forKey: DefaultsKey.riverTip) { Tips.showTipsForTesting([RiverCurrentTip.self]) }
         if defaults.bool(forKey: DefaultsKey.laterTips) {
-            Tips.hideTipsForTesting([TopTileTip.self, RainRadarTip.self, HourlyTip.self, ConditionsExtrasTip.self, CloseLoopTip.self, ChartScrubTip.self])
-            Tips.showTipsForTesting([AllValuesTip.self, RadarMapTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
+            Tips.hideTipsForTesting([TopTileTip.self, HourlyTip.self, ConditionsExtrasTip.self, WayBackTip.self, ChartScrubTip.self])
+            Tips.showTipsForTesting([AllValuesTip.self, HourViewTip.self, WaterEstimateTip.self, StretchPointTip.self, WeatherMapTip.self])
         }
-        try? Tips.configure([.displayFrequency(.immediate)])
+        // One new tip a day at most (owner's pacing, 12 Nov 2026); tips for a rare case skip it (MomentTip).
+        try? Tips.configure([.displayFrequency(.daily)])
+        TipPacing.update()
     }
 }
 
@@ -67,7 +72,7 @@ enum Tutorial {
 /// A sheet shown once after an update, to users who saw the tour before.
 enum WhatsNew {
     /// Raise with every new list of points.
-    static let version = 1
+    static let version = 2
     /// `-RWWhatsNewSeen 1000` keeps the sheet away in screenshots.
     static let seenKey = "RWWhatsNewSeen"
 
@@ -82,14 +87,20 @@ enum WhatsNew {
         let text: String
     }
 
+    /// The line under the title.
+    static var headline: String { tr("New since you last looked:") }
+
+    /// Version 2 (owner, 12 Nov 2026): what people who finished the tour before would miss.
     static var points: [Point] {
         [
-            Point(symbol: "arrow.left.arrow.right", text: tr("The way out and the way back lie side by side, each coloured for the time you row it.")),
-            Point(symbol: "figure.rower", text: tr("Lake at the boat's time: move the boat along your route and see the lake when you get there.")),
-            Point(symbol: "arrow.triangle.capsulepath", text: tr("Row a loop: tap within 50 m of your club, or pick Loop under the way back.")),
-            Point(symbol: "hand.draw", text: tr("Tap a turning point to delete just that one, or drag it to move it.")),
-            Point(symbol: "map", text: tr("Open in Maps now gives directions to the club's address.")),
-            Point(symbol: "rectangle.bottomhalf.inset.filled", text: tr("The panel under the lake map is smaller. Pull it up for the details.")),
+            Point(symbol: "figure.rower", text: tr("The boat button on the club page switches the boat for the rowing light right there.")),
+            Point(symbol: "scope", text: tr("The light also looks at the water within 1 km of the launch point; the Why line says when it is rougher out there.")),
+            Point(symbol: "checkmark.seal", text: tr("In the Location sheet, the club's place card from Apple Maps, with photos and opening hours.")),
+            Point(symbol: "mappin.and.ellipse", text: tr("No club near you? Add a place yourself with ⋯ in the list.")),
+            Point(symbol: "bookmark", text: tr("Settings › Routes shows all your saved routes.")),
+            Point(symbol: "arrow.uturn.backward", text: tr("Undo in the route editor takes back the last step.")),
+            Point(symbol: "chevron.down", text: tr("On a value's page, tap its title to jump to another value.")),
+            Point(symbol: "square.grid.2x2", text: tr("Widgets: pick a layout with fewer values or all six, and marks in the light's dots, under Edit Widget.")),
         ]
     }
 }
@@ -109,7 +120,7 @@ struct WhatsNewView: View {
                     Text(tr("What's new"))
                         .font(.largeTitle.bold())
                         .frame(maxWidth: .infinity)
-                    Text(tr("Route planning on the lake map got better."))
+                    Text(WhatsNew.headline)
                         .font(.headline)
                         .foregroundStyle(.secondary)
                         .multilineTextAlignment(.center)
@@ -212,7 +223,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             ? tr("The tile with the light shows what matters on the water. Tap “All values” under it for the rest.")
             : tr("Below the light you find what matters on the water.")
         case .warnings: tr("Official warnings come right under the rowing light.")
-        case .boats: tr("The rowing light is worked out for one boat. Pick it at the top of the settings.")
+        case .boats: tr("The rowing light is worked out for one boat. Switch it with the boat button on the club page.")
         case .lake: tr("Below the current conditions, the Lake view shows the whole lake.")
         case .river: tr("A river or canal club gets its own two tiles.")
         case .locations: tr("Keep all the places you row in one list.")
@@ -238,9 +249,6 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "person.fill.questionmark", text: tr("The light is advice. You decide, and when in doubt you stay ashore.")),
         ]
         case .conditions: [
-            TourPoint(symbol: "thermometer.variable.and.figure", text: tr("Feels like: colder with wind chill, warmer with humidity and heat.")),
-            TourPoint(symbol: "humidity", text: tr("Humidity, with the dew point underneath.")),
-            TourPoint(symbol: "gauge.with.dots.needle.33percent", text: tr("Air pressure on a gauge, with its trend for the hours ahead.")),
             TourPoint(symbol: "snowflake", text: tr("In winter, the app estimates ice on the water from frost and water temperature, checked against satellite pictures on larger lakes. Always look at the water yourself.")),
             TourPoint(symbol: "cloud.sun", text: tr("The forecast comes from the weather model that does best for your lake. The line near the end of each page names it.")),
             TourPoint(symbol: "info.circle", text: tr("Tap ⓘ on a card to see what its icons and colours mean. Settings › Help has the full legend.")),
@@ -273,7 +281,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
         ]
         case .locations: [
             TourPoint(symbol: "hand.draw", text: tr("Swipe left and right to move between your clubs. The house marks your home base.")),
-            TourPoint(symbol: "magnifyingglass", text: tr("Search the list for any club in Germany, Austria or Switzerland and tap + to add it.")),
+            TourPoint(symbol: "magnifyingglass", text: tr("Search the list for a club and tap + to add it, or open ⋯ to browse by country or add a place of your own.")),
             TourPoint(symbol: "arrow.up.arrow.down", text: tr("Touch and hold a club, then drag to reorder.")),
             TourPoint(symbol: "trash", text: tr("Swipe a club in the list to the left to remove it.")),
             TourPoint(symbol: "arrow.clockwise", text: tr("Pull a page or the list down to refresh.")),
@@ -282,7 +290,9 @@ enum TourPage: Int, CaseIterable, Identifiable {
         case .wideScreen: [
             TourPoint(symbol: "sidebar.left", text: tr("The location list stays on the left, the club page on the right.")),
             TourPoint(symbol: "square.grid.2x2", text: tr("The cards on the club page sit in two columns.")),
-        ] + (Orientation.isPad ? [] : [
+        ] + (Orientation.isPad ? [
+            TourPoint(symbol: "sidebar.left", text: tr("Hide the list with the sidebar button for a wider page.")),
+        ] : [
             TourPoint(symbol: "gearshape", text: tr("Prefer portrait only? Use Rotation Lock in Control Centre.")),
         ])
         case .settings: [

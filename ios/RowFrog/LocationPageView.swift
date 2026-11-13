@@ -72,9 +72,7 @@ struct LocationPageView: View {
         await LakeViewStore.shared.load(forecast.lakeId, force: true)
     }
     @State private var showSourceTip = false
-    @State private var showRadarMapTip = false
     @State private var showHourViewTip = false
-    private let radarMapTip = RadarMapTip()
     private let hourViewTip = HourViewTip()
     private let conditionsTip = ConditionsExtrasTip()
     private let lakeViewTip = LakeViewTip()
@@ -98,9 +96,41 @@ struct LocationPageView: View {
     @Environment(\.pageMargins) private var pageMargins
     @Environment(\.pageBarBottom) private var pageBarBottom
 
-    /// The Why line counts the water within 1 km (#395); `-RWNearbyTip YES` shows its tip anyway.
-    private static func hasNearbyReason(_ hour: ForecastHour) -> Bool {
-        hour.reasons.contains { $0.condition == "nearby_water" } || UserDefaults.standard.bool(forKey: DefaultsKey.nearbyTip)
+    /// Whether this tip shows now: one tip on the page at a time (ClubPageTip).
+    private func tipShows(_ tip: ClubPageTip, _ forecast: ClubForecast) -> Bool {
+        guard tourSeen else { return false }
+        let spots = tipSpots(forecast)
+        if ClubPageTip.showsAll { return spots.contains { $0.tip == tip && $0.shows && $0.placed } }
+        return ClubPageTip.pick(spots) == tip
+    }
+
+    /// Each tip of the page: would TipKit show it, and is its place on the page.
+    private func tipSpots(_ forecast: ClubForecast) -> [ClubPageTip.Spot] {
+        let cards = AppSettings.shared.pageCards(for: club.id)
+        let combined = AppSettings.shared.combinedTopTile
+        // Current conditions' tips sit in the top tile or above the separate card.
+        let conditions = combined || cards.contains(.conditions)
+        let now = forecast.current()
+        return [
+            .init(tip: .nearbyWater, shows: showNearbyWaterTip, placed: now.map(ClubPageTip.hasNearbyReason) ?? false),
+            .init(tip: .waterLevel, shows: showWaterLevelTip, placed: conditions && forecast.waterLevel?.isLowered == true),
+            // A bubble on the top tile's values.
+            .init(tip: .riverCurrent, shows: showRiverTip, placed: now != nil && forecast.river != nil),
+            .init(tip: .topTile, shows: showTopTileTip, placed: now != nil),
+            .init(tip: .allValues, shows: showAllValuesTip, placed: combined && now != nil),
+            .init(tip: .hourly, shows: showHourlyTip, placed: cards.contains(.hourly)),
+            .init(tip: .lakeView, shows: showLakeViewTip, placed: cards.contains(.lakeView) && lake?.hasOutline != false),
+            .init(tip: .launchPoint, shows: showLaunchPointTip, placed: cards.contains(.launchPoint)),
+            .init(tip: .conditions, shows: showConditionsTip, placed: conditions),
+            .init(tip: .hourView, shows: showHourViewTip, placed: cards.contains(.hourly)),
+            // The card stays empty until its picture is there, and the tip sits inside it.
+            .init(tip: .satellite, shows: showSatelliteTip,
+                  placed: cards.contains(.satellite) && SatellitePictureStore.shared.pictures[satelliteID(forecast)] != nil),
+            .init(tip: .rainRadar, shows: showRainRadarTip, placed: now != nil),
+            .init(tip: .source, shows: showSourceTip, placed: forecast.forecastSource != nil),
+            .init(tip: .waterEstimate, shows: showWaterEstimateTip,
+                  placed: conditions && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil),
+        ]
     }
 
     var body: some View {
@@ -124,16 +154,9 @@ struct LocationPageView: View {
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
                                 .id(AppSettings.shared.combinedTopTile ? "conditions" : "top")
-                            if tourSeen && showNearbyWaterTip && Self.hasNearbyReason(now) {
-                                TintedTipView(nearbyWaterTip)
-                            } else if tourSeen && showTopTileTip {
-                                TintedTipView(topTileTip)
-                            } else if AppSettings.shared.combinedTopTile && tourSeen && showAllValuesTip {
-                                TintedTipView(allValuesTip)
-                            } else if AppSettings.shared.combinedTopTile {
-                                // Current conditions is in the top tile: its tips follow it.
-                                conditionsTips(forecast)
-                            }
+                                // Its tips: inside the tile under its first line, or a bubble on its values.
+                                .environment(\.cardTip, topTileCardTip(forecast))
+                                .environment(\.bubbleTip, isCurrentPage ? topTileBubble(forecast) : nil)
                             if let warnings = forecast.warnings, !warnings.checked || !warnings.localChecked || !warnings.items.isEmpty {
                                 WarningsCard(warnings: warnings, lakeName: lake?.title, town: club.town, checkedAt: forecast.generatedAt)
                                     .id("warnings")
@@ -227,7 +250,6 @@ struct LocationPageView: View {
                 .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(waterLevelTip, $showWaterLevelTip)
                 .tipVisibility(riverTip, $showRiverTip)
-                .tipVisibility(radarMapTip, $showRadarMapTip)
                 .tipVisibility(hourViewTip, $showHourViewTip)
                 .sheet(isPresented: $arranging) { ArrangePageSheet(club: club) }
                 .coordinateSpace(.named(CardSpots.space))
@@ -342,35 +364,28 @@ struct LocationPageView: View {
             RainRadarCard(point: club.launchPoint, clubID: club.id)
                 .id("radar")
         case .conditions:
-            VStack(spacing: 16) {
-                conditionsTips(forecast)
-                ConditionsCard(forecast: forecast, hour: now, club: club)
-            }
-            .id("conditions")
+            ConditionsCard(forecast: forecast, hour: now, club: club)
+                .environment(\.cardTip, conditionsCardTip(forecast))
+                .id("conditions")
         case .lakeView:
             if lake?.hasOutline != false {
                 VStack(spacing: 16) {
-                    if tourSeen && showLakeViewTip {
-                        TintedTipView(lakeViewTip)
-                    }
                     LakeViewCard(lakeID: forecast.lakeId, clubID: club.id, waterC: forecast.waterTemperature?.celsius ?? forecast.estimatedWaterC, water: lake?.water ?? .lake,
                                  currentMs: forecast.river?.now?.speedMs, daylight: forecast.daylight)
+                        .environment(\.cardTip, tipShows(.lakeView, forecast) ? AnyView(TintedTipView(lakeViewTip)) : nil)
                 }
                 .id("lakeview")
                 .layoutValue(key: ColumnFiller.self, value: true)
             }
         case .hourly:
-            // Each tip sits above its card and scrolls with it.
+            // Plan your outing sits inside the card; One hour in full is a bubble on its first hour.
             VStack(spacing: 16) {
-                if tourSeen && showHourlyTip {
-                    TintedTipView(hourlyTip)
-                } else if tourSeen && showHourViewTip {
-                    TintedTipView(hourViewTip)
-                }
                 // In two columns the table shows 24 hours until opened (ColumnFill.fold).
                 let folds = twoColumns && AppSettings.shared.activeColumnFill == .fold
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale(),
                            folds: folds, foldsNights: AppSettings.shared.activeNightHours == .fold, open: $hourlyOpen)
+                    .environment(\.cardTip, tipShows(.hourly, forecast) ? AnyView(TintedTipView(hourlyTip)) : nil)
+                    .environment(\.bubbleTip, isCurrentPage && tipShows(.hourView, forecast) ? BubbleTip(target: .hours, tip: hourViewTip) : nil)
                     .modifier(StickyHourlyCut(sticky: sticky))
             }
             .id("hourly")
@@ -381,43 +396,44 @@ struct LocationPageView: View {
             .layoutValue(key: ColumnSortHeight.self, value: hourlyOpen ? foldedHourlyHeight : nil)
         case .launchPoint:
             VStack(spacing: 16) {
-                if tourSeen && showLaunchPointTip {
-                    TintedTipView(launchPointTip)
-                }
                 LaunchPointMapCard(club: club)
+                    .environment(\.cardTip, tipShows(.launchPoint, forecast) ? AnyView(TintedTipView(launchPointTip)) : nil)
             }
             .id("launchpoint")
             .layoutValue(key: ColumnFiller.self, value: true)
         case .satellite:
             VStack(spacing: 16) {
-                if tourSeen && showSatelliteTip {
-                    TintedTipView(satelliteTip)
-                }
                 SatellitePictureCard(lakeID: satelliteID(forecast), clubID: club.id, water: lake?.water ?? .lake)
+                    .environment(\.cardTip, tipShows(.satellite, forecast) ? AnyView(TintedTipView(satelliteTip)) : nil)
             }
             .id("satellite")
         }
     }
 
-    /// Current conditions' tips, above its card or, inside the top tile, under that.
-    /// One tip at a time: the radar's two follow the first. The water level
-    /// and river current tips come first, as they only show at such waters.
-    @ViewBuilder
-    private func conditionsTips(_ forecast: ClubForecast) -> some View {
-        if tourSeen && showWaterLevelTip && forecast.waterLevel?.isLowered == true {
-            TintedTipView(waterLevelTip)
-        } else if tourSeen && showRiverTip && forecast.river != nil {
-            TintedTipView(riverTip)
-        } else if tourSeen && showConditionsTip {
-            TintedTipView(conditionsTip)
-        } else if tourSeen && showRainRadarTip {
-            TintedTipView(rainRadarTip)
-        } else if tourSeen && showRadarMapTip {
-            TintedTipView(radarMapTip)
-        } else if tourSeen && showWaterEstimateTip && forecast.waterTemperature == nil && forecast.waterEstimate?.reading != nil {
-            // Only where no station measures the water.
-            TintedTipView(waterEstimateTip)
-        }
+    /// The top tile's own tip, under its first line: water nearby, and with Current conditions
+    /// inside the tile, that card's tips (rule R1). Which one shows is ClubPageTip's choice.
+    private func topTileCardTip(_ forecast: ClubForecast) -> AnyView? {
+        if tipShows(.nearbyWater, forecast) { return AnyView(TintedTipView(nearbyWaterTip)) }
+        return AppSettings.shared.combinedTopTile ? conditionsCardTip(forecast) : nil
+    }
+
+    /// Current conditions' tips, inside the top tile or the separate card. The water level
+    /// tip comes first, as it only shows at such a lake.
+    private func conditionsCardTip(_ forecast: ClubForecast) -> AnyView? {
+        if tipShows(.waterLevel, forecast) { return AnyView(TintedTipView(waterLevelTip)) }
+        if tipShows(.conditions, forecast) { return AnyView(TintedTipView(conditionsTip)) }
+        // Only where no station measures the water.
+        if tipShows(.waterEstimate, forecast) { return AnyView(TintedTipView(waterEstimateTip)) }
+        return nil
+    }
+
+    /// The top tile's bubbles (rule R2): on its values, or on "All values" under it.
+    private func topTileBubble(_ forecast: ClubForecast) -> BubbleTip? {
+        if tipShows(.topTile, forecast) { return BubbleTip(target: .values, tip: topTileTip) }
+        if tipShows(.allValues, forecast) { return BubbleTip(target: .allValues, tip: allValuesTip) }
+        if tipShows(.riverCurrent, forecast) { return BubbleTip(target: .values, tip: riverTip) }
+        if tipShows(.rainRadar, forecast) { return BubbleTip(target: .values, tip: rainRadarTip) }
+        return nil
     }
 
     /// The hourly table's header, kept at the top of the screen while the
@@ -457,20 +473,18 @@ private extension LocationPageView {
     @ViewBuilder
     private func sourceLine(_ forecast: ClubForecast) -> some View {
         if let source = forecast.forecastSource {
-            VStack(spacing: 16) {
-                if tourSeen && showSourceTip {
-                    TintedTipView(sourceTip)
-                }
-                ForecastSourceLine(
-                    source: source,
-                    choices: forecast.modelChoices ?? [],
-                    selected: AppSettings.shared.pickedModel(for: club.id),
-                    pickedModelMissing: forecasts.pickedModelMissing.contains(club.id)
-                ) { model in
-                    AppSettings.shared.pickedModels[club.id] = model
-                    await forecasts.load(club.id, force: true)
-                }
+            ForecastSourceLine(
+                source: source,
+                choices: forecast.modelChoices ?? [],
+                selected: AppSettings.shared.pickedModel(for: club.id),
+                pickedModelMissing: forecasts.pickedModelMissing.contains(club.id)
+            ) { model in
+                AppSettings.shared.pickedModels[club.id] = model
+                await forecasts.load(club.id, force: true)
             }
+            // Its tip is a bubble on the line (rule R2).
+            .bubbleAnchor(.source)
+            .environment(\.bubbleTip, isCurrentPage && tipShows(.source, forecast) ? BubbleTip(target: .source, tip: sourceTip) : nil)
             .id("source")
         }
     }
@@ -509,6 +523,8 @@ private struct NowCard: View {
     @State private var openCondition: Condition?
     /// The weather word's column beside the verdict, growing with the text size like the word.
     @ScaledMetric(relativeTo: .caption) private var skyWordWidth: CGFloat = 88
+    /// A one-time tip about the tile, under its first line (TipPlacement.swift, rule R1).
+    @Environment(\.cardTip) private var cardTip
 
     private var water: WaterTemperature? { forecast.waterTemperature }
     /// The water at the shown hour: now the reading or estimate, later the water forecast.
@@ -527,6 +543,7 @@ private struct NowCard: View {
                 headlineRow(.title3.bold())
                 headlineStacked
             }
+            if let cardTip { cardTip }
             if let kit = ColdWaterKit(waterC: hourWaterC, limits: AppSettings.shared.limits(at: forecast.clubId)) {
                 opens(.waterTemperature) { ColdWaterBadge(kit: kit, estimated: water == nil) }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -575,9 +592,11 @@ private struct NowCard: View {
             if combined, open {
                 // Opened: the small values and the sun line become the tiles of Current conditions.
                 ConditionTiles(forecast: forecast, hour: hour, club: club)
+                    .bubbleAnchor(.values)
                     .transition(.opacity)
             } else {
                 valueGrid
+                    .bubbleAnchor(.values)
                     .transition(.opacity)
                 if !combined {
                     iceLine
@@ -594,6 +613,7 @@ private struct NowCard: View {
             }
             if combined {
                 openHandle
+                    .bubbleAnchor(.allValues)
             }
         }
         .sheet(isPresented: $showingLights) { LegendSheet(part: .lights) }
@@ -1223,8 +1243,17 @@ private struct HourlyCard: View {
         }
     }
 
+    /// The first hour with a row of its own, for the One hour in full bubble.
+    private var firstHourRow: Date? {
+        rows.lazy.compactMap { row -> Date? in
+            if case let .hour(hour) = row { return hour.time }
+            return nil
+        }.first
+    }
+
     private func table(_ proxy: ScrollViewProxy) -> some View {
-        Card(title: tr("Next 48 hours"), symbol: "clock", legend: .hourly) {
+        let firstRow = firstHourRow
+        return Card(title: tr("Next 48 hours"), symbol: "clock", legend: .hourly) {
             HourlyLegendHeader()
             ForEach(rows) { row in
                 switch row {
@@ -1243,6 +1272,8 @@ private struct HourlyCard: View {
                                 coarser: forecast.coarserModel(for: hour) != nil).contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
+                    // One hour in full points at the table's first hour (rule R2).
+                    .bubbleAnchor(.hours, active: hour.time == firstRow)
                     .accessibilityHint(tr("Opens this hour with all its values"))
                 case let .night(night):
                     let opened = openNights.contains(night.id)

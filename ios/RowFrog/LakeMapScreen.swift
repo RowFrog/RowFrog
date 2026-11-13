@@ -48,17 +48,15 @@ struct LakeMapScreen: View {
     @AppStorage(DefaultsKey.lakeImagery) private var imagery = false
     @AppStorage(Tutorial.seenKey) private var tourSeen = false
     private let panelTip = RoutePanelTip()
-    private let loopTip = CloseLoopTip()
+    private let wayBackTip = WayBackTip()
     private let pointTip = TurningPointTip()
     private let boatTip = BoatTimeTip()
     private let importTip = RowImportTip()
     private let stretchTip = StretchPointTip()
-    private let oneWayTip = OneWayTip()
     @State private var showStretchTip = false
-    @State private var showOneWayTip = false
     @State private var showImportTip = false
     @State private var showPanelTip = false
-    @State private var showLoopTip = false
+    @State private var showWayBackTip = false
     @State private var showPointTip = false
     @State private var showBoatTip = false
     @Environment(\.dismiss) private var dismiss
@@ -261,13 +259,12 @@ struct LakeMapScreen: View {
             RowImportSheet(lakeName: view.name) { importRow($0) }
         }
         .tipVisibility(panelTip, $showPanelTip)
-        .tipVisibility(loopTip, $showLoopTip)
+        .tipVisibility(wayBackTip, $showWayBackTip)
         .tipVisibility(pointTip, $showPointTip)
         .tipVisibility(boatTip, $showBoatTip)
         .tipVisibility(importTip, $showImportTip)
         .tipVisibility(stretchTip, $showStretchTip)
-        .tipVisibility(oneWayTip, $showOneWayTip)
-        .onChange(of: outAndBack) { oneWayTip.invalidate(reason: .actionPerformed) }
+        .onChange(of: outAndBack) { wayBackTip.invalidate(reason: .actionPerformed) }
         // A tip goes once its feature was used.
         .onChange(of: panelExpanded) {
             panelTip.invalidate(reason: .actionPerformed)
@@ -276,7 +273,7 @@ struct LakeMapScreen: View {
         // Opened on a route or with the panel open: fit once the panel is measured.
         .onAppear { if panelExpanded || (routeMode && !waypoints.isEmpty) { refit() } }
         .onChange(of: followBoat) { if followBoat { boatTip.invalidate(reason: .actionPerformed) } }
-        .onChange(of: RouteEdit.isLoop(waypoints)) { _, loop in if loop { loopTip.invalidate(reason: .actionPerformed) } }
+        .onChange(of: RouteEdit.isLoop(waypoints)) { _, loop in if loop { wayBackTip.invalidate(reason: .actionPerformed) } }
         .sheet(isPresented: $showingRoutes) {
             ManageRoutesView(lakeID: view.lakeId, current: savedRoute?.id, open: load) { id in
                 // The open route was renamed or deleted: show it as it is now.
@@ -528,15 +525,12 @@ struct LakeMapScreen: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-        } else if tourSeen && showLoopTip && waypoints.count >= 3 && !loop {
-            // After the second turning point.
-            TintedTipView(loopTip)
+        } else if tourSeen && showWayBackTip && waypoints.count >= 2 && !outAndBack && !loop {
+            // After the first turning point: one way, out and back, or a loop.
+            TintedTipView(wayBackTip)
         } else if tourSeen && showStretchTip && waypoints.count >= 3 {
             // Once there are stretches between turning points.
             TintedTipView(stretchTip)
-        } else if tourSeen && showOneWayTip && waypoints.count == 2 && !outAndBack {
-            // After the first turning point.
-            TintedTipView(oneWayTip)
         } else if tourSeen && showImportTip && waypoints.count < 2 {
             // Before the first turning point: draw the route, or bring in one already rowed.
             TintedTipView(importTip)
@@ -698,7 +692,8 @@ struct LakeMapScreen: View {
         let plan: RoutePlan? = nil, boat: RoutePlan.Stop? = nil
         return VStack(alignment: .leading, spacing: 10) {
             grabber
-            if tourSeen && showPanelTip {
+            // Pulling up and pushing down is for the full-width panel, not the card on wide screens (as the website).
+            if tourSeen && showPanelTip && !usesCard {
                 TintedTipView(panelTip)
             }
             if !panelExpanded, let hour = shown {

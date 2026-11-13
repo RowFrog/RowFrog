@@ -124,7 +124,7 @@ struct DetailMapCard: View {
     private func open() {
         if showsRadar {
             radar = true
-            RadarMapTip().invalidate(reason: .actionPerformed)
+            RainRadarTip().invalidate(reason: .actionPerformed)
         } else {
             full = true
         }
