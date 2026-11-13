@@ -224,8 +224,8 @@ struct DiagnosisSteps: ViewModifier {
     }
 }
 
-/// Counts the layers under a window: live blurs (backdrop layers) and glass
-/// pieces, by their class names. Stops after 20 000 layers so leaving the app
+/// Counts the layers under a window: live blurs (backdrop layers) and Liquid
+/// Glass pieces, by their class names. Stops after 20 000 layers so leaving the app
 /// stays quick.
 private struct LayerCounts {
     var all = 0
@@ -248,7 +248,9 @@ private struct LayerCounts {
         let name = String(describing: type(of: layer))
         if name != "CALayer" { byClass[name, default: 0] += 1 }
         if name.contains("Backdrop") { backdrop += 1 }
-        if name.contains("Glass") { glass += 1 }
+        // Liquid Glass draws each piece through one SDF portal layer (checked
+        // 13 Nov: the SDF layers vanish when drawn as in Low Power Mode).
+        if name == "SDFPortalLayer" { glass += 1 }
         for sublayer in layer.sublayers ?? [] { walk(sublayer) }
     }
 }
