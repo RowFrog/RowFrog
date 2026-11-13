@@ -101,14 +101,27 @@ for (const layout of LAYOUTS) {
       await page.goto(`${base}/app/#/club/${club.id}`);
       const picture = page.locator("#satellite .picture");
       await picture.waitFor();
+      // Read once the picture has settled: the same place in three readings 100 ms apart (up to 3 s),
+      // so a slow machine (many tests at once) reads the end state, not a frame in between.
       const box = async () => {
-        await page.waitForTimeout(150);
-        return page.evaluate(() => {
+        const read = () => page.evaluate(() => {
           const r = document.querySelector("#satellite .picture").getBoundingClientRect();
           return [r.x, r.width, r.height].map((v) => Math.round(v));
         });
+        let last = await read(), same = 0;
+        for (let i = 0; i < 30 && same < 2; i++) {
+          await page.waitForTimeout(100);
+          const now = await read();
+          same = String(now) === String(last) ? same + 1 : 0;
+          last = now;
+        }
+        return last;
       };
-      const kinds = await page.locator("#satellite [data-kind]").count();
+      // The picks come with the picture's details, which can arrive after the picture's box.
+      const kinds = await page.waitForFunction(() => {
+        const n = document.querySelectorAll("#satellite [data-kind]").length;
+        return n === 2 ? n : false;
+      }, null, { timeout: 10000 }).then((h) => h.jsonValue()).catch(() => page.locator("#satellite [data-kind]").count());
       assert.equal(kinds, 2, "two pictures to pick");
       await page.locator('#satellite [data-kind="latest"]').click();
       const latest = await box();
