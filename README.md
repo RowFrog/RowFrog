@@ -456,7 +456,9 @@ field at the bottom.
   bring the one-time tips back. Tips point out features the first time they
   appear (a river or canal club added after the tour gets a one-time tip on
   its Current tile), and after an update a "What's new" sheet shows once.
-- About: the version, a privacy summary, the legal notice
+- About: the version with build number and commit ("0.1.0 (723) · 22a69ce",
+  stamped by `scripts/build_number.sh`; the website's footer shows the same build),
+  a privacy summary, the legal notice
   (Impressum, still with placeholders) and Reset (keeps saved locations, the
   home base and My boats; resets everything else, including the limits).
 - Developer: hidden options for testing (see the handbook), including the

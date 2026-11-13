@@ -2259,12 +2259,13 @@ const SETTINGS_TOPICS = [
 ];
 const settingsIcon = (name, colour) => `<span class="set-icon" style="--c: ${colour}">${icon(name)}</span>`;
 
-/** The website's version, as Settings > About > Version in the app (the app's MARKETING_VERSION, written by the build). */
+/** The website's version, as Settings > About > Version in the app: "0.1.0 (723) · 22a69ce" (BuildInfo.swift, written by the build). */
 let websiteVersion = "";
 async function loadVersion() {
   if (websiteVersion) return websiteVersion;
   try {
-    websiteVersion = (await (await fetch(new URL("version.json", import.meta.url))).json()).version || "–";
+    const found = await (await fetch(new URL("version.json", import.meta.url))).json();
+    websiteVersion = found.summary || found.version || "–";
   } catch {
     websiteVersion = "–";
   }

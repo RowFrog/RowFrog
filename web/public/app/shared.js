@@ -1040,9 +1040,14 @@ export const testing = () => `<p class="testing">${h(t("Test version: only for y
 
 export const adviceOnly = () => `<p class="advice">${icon("user-round-search")}<span>${h(t("Advice only. You decide whether to go out. When in doubt, ask experienced rowers or stay ashore."))}</span></p>`;
 
+/** Build number and commit of this website, as the app's Settings > About (BuildInfo.swift);
+ * scripts/build_web.py stamps the real ones into this line, so keep it exactly as it is. */
+export const BUILD = { build: "1", commit: "dev" };
+
 export function footerLinks() {
   return `<footer class="links">
     <a href="/impressum/">${h(t("Legal notice"))}</a> · <a href="/privacy/">${h(t("Privacy"))}</a> · <a href="/credits/">${h(t("Data sources"))}</a>
+    · <span class="build">Build ${h(BUILD.build)} · ${h(BUILD.commit)}</span>
   </footer>`;
 }
 

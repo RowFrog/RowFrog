@@ -331,9 +331,7 @@ enum SettingsTopic: CaseIterable {
         }
     }
 
-    static var version: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
-    }
+    static var version: String { BuildInfo.version }
 }
 
 /// A white symbol on a coloured square, as in the iOS Settings app.
@@ -887,7 +885,7 @@ private struct HelpSettingsView: View {
     }
 }
 
-/// Settings > About: the version (seven taps show the developer options),
+/// Settings > About: version, build number and commit (seven taps show the developer options),
 /// the legal texts and the factory reset.
 private struct AboutSettingsView: View {
     @State private var confirmingReset = false
@@ -898,7 +896,8 @@ private struct AboutSettingsView: View {
         @Bindable var settings = AppSettings.shared
         Form {
             Section {
-                LabeledContent(tr("Version"), value: SettingsTopic.version)
+                // "0.1.0 (723) · 22a69ce": version, build number, commit (BuildInfo).
+                LabeledContent(tr("Version"), value: BuildInfo.summary)
                     .contentShape(Rectangle())
                     // Hidden: seven taps show the developer options.
                     .onTapGesture(count: 7) { settings.developerOptions = true }

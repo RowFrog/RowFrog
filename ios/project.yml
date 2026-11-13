@@ -10,8 +10,10 @@ options:
 settings:
   base:
     SWIFT_VERSION: "5.9"
+    # The version stays 0.1.0 until a real release. The build number (CURRENT_PROJECT_VERSION)
+    # and the commit (RW_COMMIT) come from BuildNumber.xcconfig below, which
+    # scripts/build_number.sh stamps (decision NNNN-build-numbers).
     MARKETING_VERSION: "0.1.0"
-    CURRENT_PROJECT_VERSION: "1"
     # Xcode's recommended settings (owner clicked through the list on 2026-11-02);
     # here, because a click in Xcode is lost on the next xcodegen.
     CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED: YES
@@ -20,6 +22,10 @@ settings:
     # The last one on Xcode's list (2026-11-04): Image.iconPreviewAlpineLake and so
     # on for the asset catalogue's pictures; none of their names clash with Apple's.
     ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS: YES
+# Build number and commit for every target (the app and the widget must share the build number).
+configFiles:
+  Debug: BuildNumber.xcconfig
+  Release: BuildNumber.xcconfig
 targets:
   RowFrog:
     type: application
@@ -27,6 +33,17 @@ targets:
     sources: [RowFrog]
     dependencies:
       - target: RowFrogWidget
+    # Device builds from Xcode (⌘R on the iPhone or iPad) leave a line in log/device-builds.log:
+    # when, build number, commit, configuration. Simulator builds and archives are left out.
+    postBuildScripts:
+      - name: Log device builds
+        basedOnDependencyAnalysis: false
+        outputFiles:
+          - $(SRCROOT)/../log/device-builds.log
+        script: |
+          if [ "$PLATFORM_NAME" = iphoneos ] && [ "$ACTION" = build ] && [ "${CODE_SIGNING_ALLOWED:-YES}" != NO ]; then
+            echo "$(date '+%Y-%m-%d %H:%M %Z') build $CURRENT_PROJECT_VERSION commit $RW_COMMIT $CONFIGURATION ${TARGET_DEVICE_MODEL:-device}" >> "$SRCROOT/../log/device-builds.log" || true
+          fi
     entitlements:
       path: RowFrog/RowFrog.entitlements
       properties:
@@ -64,6 +81,8 @@ targets:
         # The published files, in every build: only the publishing job makes the
         # satellite pictures, so the backend on the Mac has none.
         RWPublishedBaseURL: https://api.rowfrog.com/v1
+        # The commit the app was built from (sha7, "dev" when not stamped), in Settings > About.
+        RWCommit: $(RW_COMMIT)
         # Shown when the first-start tour asks for the location (German in de.lproj/InfoPlist.strings).
         NSLocationWhenInUseUsageDescription: Row Frog uses your location only to suggest rowing clubs near you.
         # Shown when "Import a row" first reads Apple Health (German in de.lproj/InfoPlist.strings).

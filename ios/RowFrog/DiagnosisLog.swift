@@ -21,7 +21,7 @@ final class DiagnosisLog: NSObject, MXMetricManagerSubscriber {
     /// At launch: notes how the last run ended, follows the app's comings and
     /// goings as UIKit sees them, and asks iOS for its reports.
     static func start() {
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–"
+        let version = BuildInfo.summary
         let last = UserDefaults.standard.string(forKey: lastPhaseKey) ?? "none"
         let solid = UserDefaults.standard.bool(forKey: PowerState.forcedKey) ? "; drawn as in Low Power Mode" : ""
         note("launch \(version), iOS \(UIDevice.current.systemVersion)\(solid); last run's last step: \(last)")

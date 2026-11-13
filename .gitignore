@@ -21,3 +21,6 @@ node_modules/
 .coverage
 coverage.json
 node-test.log
+
+# Build number and commit, written by scripts/build_number.sh
+ios/BuildNumber.local.xcconfig
