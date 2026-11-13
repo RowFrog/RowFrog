@@ -1530,3 +1530,13 @@ main.page.club .page-end > *, main.page.club .page-end > #arrange, main.page.clu
 main.page.club .page-end > .source, main.page.club .page-end > .credits { align-self: stretch; text-align: left; }
 body.has-picture main.page.club .page-end > .source, body.has-picture main.page.club .page-end > .credits { width: auto; padding: 12px; border-radius: 12px; }
 main.page.club .page-end > .source button.link { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; }
+
+/* The satellite card's caption as the app's (SatelliteCaption): line and info button on one row with the button at
+   the end, the lines 2 px apart, the credit in caption size; the picture's corners 10 px. Owner, 13 Nov 2026. */
+#satellite .sat-caption { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; }
+#satellite .sat-caption p { margin: 0; }
+#satellite .sat-line { display: flex; align-items: baseline; gap: 4px; }
+#satellite .sat-line > span { flex: 1; min-width: 0; }
+#satellite .sat-line .sat-why { flex: none; color: var(--sub); }
+#satellite .sat-credit { font-size: 11px; }
+#satellite .picture { border-radius: 10px; }

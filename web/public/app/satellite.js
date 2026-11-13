@@ -17,7 +17,7 @@ const LAYERS = [
   { id: "shore", title: key("Shore"), icon: "signature" },
   { id: "clubs", title: key("Clubs"), icon: "map-pin" },
   { id: "routes", title: key("Routes"), icon: "route" },
-  { id: "light", title: key("Rowing light"), icon: "circle-dot", water: true },
+  { id: "light", title: key("Rowing light"), icon: "siren", water: true },
   { id: "wind", title: key("Wind"), icon: "wind" },
   { id: "waves", title: key("Waves"), icon: "waves", water: true },
   { id: "ice", title: key("Ice map"), icon: "snowflake" },
@@ -118,9 +118,11 @@ function caption(lake, shot) {
   const ice = store.satLayers.includes("ice") && available(lake).some((l) => l.id === "ice");
   // The first line is always two lines high, so the picture above keeps its size when switching between
   // pictures whose line wraps and whose doesn't (SatelliteCaption, reservesSpace; owner 12 Nov 2026).
-  return `<p class="sub small sat-line">${h(overLake(lake) ? (cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(shot.date), num(cloud))) : (cloud < 1 ? t("Sentinel-2 · %@ · no cloud", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% under cloud", dayLabel(shot.date), num(cloud))))} <button class="link sub sat-why" data-sat-why aria-label="${h(t("Why only every few days?"))}">${icon("info")}</button></p>
+  // As the app's caption: the line and the info button on one row, the button at its end; the credit
+  // under it in caption size, 2 px below (SatelliteCaption: VStack spacing 2, footnote and caption2).
+  return `<div class="sat-caption"><p class="sub small sat-line"><span>${h(overLake(lake) ? (cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(shot.date), num(cloud))) : (cloud < 1 ? t("Sentinel-2 · %@ · no cloud", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% under cloud", dayLabel(shot.date), num(cloud))))}</span><button class="link sub sat-why" data-sat-why aria-label="${h(t("Why only every few days?"))}">${icon("info")}</button></p>
     ${ice ? `<p class="sub small">${h(t("Satellite ice map, %@", dayLabel(meta.ice.date)))}</p>` : ""}
-    <p class="sub small">${h(meta.attribution)}${ice && meta.ice.attribution ? ` · ${h(meta.ice.attribution)}` : ""}</p>`;
+    <p class="sub sat-credit">${h(meta.attribution)}${ice && meta.ice.attribution ? ` · ${h(meta.ice.attribution)}` : ""}</p></div>`;
 }
 
 /**
