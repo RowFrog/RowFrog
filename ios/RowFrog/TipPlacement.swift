@@ -67,11 +67,12 @@ struct BubbleAnchor: ViewModifier {
             } action: { inSight = $0 }
             .onChange(of: tip != nil && inSight, initial: true) { _, show in presented = show }
             .popover(isPresented: $presented, arrowEdge: .top) {
-                if let tip {
-                    BubbleTipView(tip: tip)
-                        .frame(width: 320)
-                        .presentationCompactAdaptation(.popover)
+                // Always a popover, also while the tip changes (else iPhone falls back to an empty sheet).
+                Group {
+                    if let tip { BubbleTipView(tip: tip) }
                 }
+                .frame(width: 320)
+                .presentationCompactAdaptation(.popover)
             }
             .tipDebug(tip == nil ? nil : target)
     }
@@ -98,15 +99,14 @@ private struct BubbleTipView: View {
 extension View {
     /// `-RWTipDebug YES`: a red frame round a control that has its bubble attached, to tell
     /// in a screenshot whether the page picked it or TipKit didn't present it.
-    @ViewBuilder func tipDebug(_ target: BubbleTarget?) -> some View {
-        if let target, UserDefaults.standard.bool(forKey: DefaultsKey.tipDebug) {
-            overlay(alignment: .topLeading) {
-                Text(verbatim: "bubble \(target)").font(.caption2.bold()).foregroundStyle(.white).background(.red)
-            }
-            .border(.red, width: 2)
-        } else {
-            self
+    /// Same view structure either way, so the frame never replaces the control under its bubble.
+    func tipDebug(_ target: BubbleTarget?) -> some View {
+        let shown = target != nil && UserDefaults.standard.bool(forKey: DefaultsKey.tipDebug)
+        return overlay(alignment: .topLeading) {
+            Text(verbatim: "bubble \(target.map { "\($0)" } ?? "")").font(.caption2.bold()).foregroundStyle(.white).background(.red)
+                .opacity(shown ? 1 : 0)
         }
+        .border(shown ? Color.red : Color.clear, width: 2)
     }
 
     /// The control a bubble tip can point at (rule R2).

@@ -531,7 +531,8 @@ jobs:
           NEWS=1 shoot 115-whats-new-german-dark dark -RWLanguage de
           # The tips that follow the rain radar and hourly tips.
           later=(-RWDemoClubs YES -RWTutorialSeen YES -RWLaterTips YES -RWOpenClub mrc-1880)
-          GUIDE=1 shoot 116-tip-rain-radar-merged light "${later[@]}" -RWClubTip rainRadar
+          # The merged rain tip in German (it must fit the bubble); the later-tips hook leaves it hidden.
+          GUIDE=1 shoot 116-tip-rain-radar-merged-german-dark dark -RWDemoClubs YES -RWTutorialSeen YES -RWShowTips YES -RWClubTip rainRadar -RWOpenClub mrc-1880 -RWLanguage de
           GUIDE=1 shoot 117-tip-hour-view light "${later[@]}" -RWClubTip hourView -RWScrollTo hourly
           loop="47.99667,11.34745;47.985,11.340;47.970,11.336;47.965,11.355;47.985,11.352;47.9968,11.3476"
           shoot 90-route-loop light -RWOpenClub mrc-1880 -RWScrollTo lakeview -RWOpenLakeView YES -RWRoute "$loop"
