@@ -52,7 +52,7 @@ def missing_german() -> list[str]:
 
 def build_and_commit() -> tuple[str, str]:
     """The build number and sha7, as the app's Settings > About shows them (BuildInfo.swift,
-    decision NNNN-build-numbers): ROWFROG_BUILD/ROWFROG_COMMIT (deploy-web.sh sets them for
+    decision 0034): ROWFROG_BUILD/ROWFROG_COMMIT (deploy-web.sh sets them for
     the deployed commit), else git here, else "1" and "dev"."""
     build, commit = os.environ.get("ROWFROG_BUILD", ""), os.environ.get("ROWFROG_COMMIT", "")
     if not (build and commit):

@@ -1,4 +1,4 @@
-// The build number and commit the app shows in Settings > About (decision NNNN-build-numbers).
+// The build number and commit the app shows in Settings > About (decision 0034).
 // Fallbacks for a build that was never stamped; scripts/build_number.sh writes the real
 // ones into BuildNumber.local.xcconfig (not in git), which overrides them.
 // Build number = the commit count of main's history up to the built commit, so it only goes up.

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Stamps the build number and commit for the app (decision NNNN-build-numbers):
+# Stamps the build number and commit for the app (decision 0034):
 # writes ios/BuildNumber.local.xcconfig (not in git) for the commit given (default HEAD),
 # which ios/BuildNumber.xcconfig includes, so Xcode (⌘R) and xcodebuild both pick it up.
 #

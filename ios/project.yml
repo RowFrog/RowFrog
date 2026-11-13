@@ -12,7 +12,7 @@ settings:
     SWIFT_VERSION: "5.9"
     # The version stays 0.1.0 until a real release. The build number (CURRENT_PROJECT_VERSION)
     # and the commit (RW_COMMIT) come from BuildNumber.xcconfig below, which
-    # scripts/build_number.sh stamps (decision NNNN-build-numbers).
+    # scripts/build_number.sh stamps (decision 0034).
     MARKETING_VERSION: "0.1.0"
     # Xcode's recommended settings (owner clicked through the list on 2026-11-02);
     # here, because a click in Xcode is lost on the next xcodegen.

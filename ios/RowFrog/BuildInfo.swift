@@ -1,7 +1,7 @@
 import Foundation
 
 /// The app's version, build number and commit, as Settings > About shows them:
-/// "0.1.0 (723) · 22a69ce" (decision NNNN-build-numbers).
+/// "0.1.0 (723) · 22a69ce" (decision 0034).
 /// The build number is the commit count of main up to the built commit and the commit
 /// its sha7; scripts/build_number.sh stamps both (ios/BuildNumber.xcconfig), a build
 /// that was never stamped says "(1) · dev". The website copies this line (version.json).

@@ -1,7 +1,7 @@
 import XCTest
 @testable import RowFrog
 
-/// Settings > About's "0.1.0 (723) · 22a69ce" (decision NNNN-build-numbers).
+/// Settings > About's "0.1.0 (723) · 22a69ce" (decision 0034).
 final class BuildInfoTests: XCTestCase {
     func testTheAppCarriesTheCommitKey() throws {
         // The test host is the app, so Bundle.main is its Info.plist.
