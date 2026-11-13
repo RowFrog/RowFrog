@@ -208,7 +208,7 @@ button.wide { margin-top: 0; }
 .tile-body small.may-wrap { white-space: normal; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; }
 .graphic { flex: none; height: 44px; display: flex; align-items: center; }
 .scale { position: relative; display: block; width: 46px; height: 8px; border-radius: 4px; background: var(--bar); }
-.scale .knob { position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 -5.5px; border-radius: 50%; background: #000; border: 2px solid #fff; box-shadow: 0 0 0 .5px rgba(0,0,0,.2); }
+.scale .knob { position: absolute; top: 50%; width: 11px; height: 11px; margin: -5.5px 0 0 0; border-radius: 50%; background: #000; border: 2px solid #fff; box-shadow: 0 0 0 .5px rgba(0,0,0,.2); }
 .dial { display: block; width: 44px; height: 44px; flex: none; overflow: visible; }
 .dial .ticks path { stroke: var(--sub); stroke-opacity: .4; stroke-width: 2; }
 .dial .ticks path.long { stroke-opacity: .9; stroke-width: 4; }
