@@ -111,6 +111,7 @@ final class DiagnosisLog: NSObject, MXMetricManagerSubscriber {
             var counts = LayerCounts()
             for window in scene.windows where !window.isHidden { counts.walk(window.layer) }
             parts.append("\(counts.all) layers, \(counts.backdrop) blur, \(counts.glass) glass\(counts.capped ? " (count stopped)" : "")")
+            parts.append("layer kinds: " + counts.kinds)
         }
         parts.append("Low Power Mode \(ProcessInfo.processInfo.isLowPowerModeEnabled ? "on" : "off")")
         parts.append("drawn solid \(PowerState.shared.lowPower ? "yes" : "no")")
@@ -231,11 +232,21 @@ private struct LayerCounts {
     var backdrop = 0
     var glass = 0
     var capped = false
+    /// How many layers of each class other than plain CALayer, to find the
+    /// class names Liquid Glass uses.
+    var byClass: [String: Int] = [:]
+
+    /// The 12 most common special layer classes, e.g. "CABackdropLayer 7".
+    var kinds: String {
+        byClass.sorted { $0.value != $1.value ? $0.value > $1.value : $0.key < $1.key }
+            .prefix(12).map { "\($0.key) \($0.value)" }.joined(separator: ", ")
+    }
 
     mutating func walk(_ layer: CALayer) {
         guard all < 20_000 else { capped = true; return }
         all += 1
         let name = String(describing: type(of: layer))
+        if name != "CALayer" { byClass[name, default: 0] += 1 }
         if name.contains("Backdrop") { backdrop += 1 }
         if name.contains("Glass") { glass += 1 }
         for sublayer in layer.sublayers ?? [] { walk(sublayer) }
