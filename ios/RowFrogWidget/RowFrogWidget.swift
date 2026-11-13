@@ -200,13 +200,26 @@ struct RowingProvider: AppIntentTimelineProvider {
                 snapshot: RowingSnapshot(date: date, clubName: names[clubID] ?? clubID, isHome: clubID == homeID, forecast: forecast),
                 focus: configuration.focus.focus, background: background, picture: picture,
                 layout: configuration.layout.layout, marks: configuration.marks,
-                pictureFocus: background == .satellite ? WidgetPictures.focus(clubID) : nil
+                pictureFocus: pictureFocus(for: background, clubID: clubID)
             )
         }
     }
 
-    /// The small file the app made for this club; when it is missing, the app is
-    /// asked to make it the next time it runs, and the sky shows until then.
+    /// Where the club lies in the picture: the satellite file's place, and the picture
+    /// file's when the club page shows the satellite picture; nil for other pictures.
+    private func pictureFocus(for background: WidgetBackground, clubID: String) -> UnitPoint? {
+        switch background {
+        case .satellite: WidgetPictures.focus(clubID)
+        case .appPicture, .picture: WidgetPictures.focus(clubID, .picture)
+        default: nil
+        }
+    }
+
+    /// The small file the app made for this club; the sky shows while it is missing.
+    /// The app is always told the widget uses it, not only while it is missing: a
+    /// widget's own choice (Satellite while the app's setting is another) otherwise
+    /// kept a file from an older version, which the app never made again (13 Nov 2026,
+    /// the satellite picture still centred on the lake after the 12 Nov fix).
     private func picture(for background: WidgetBackground, clubID: String) -> UIImage? {
         let kind: WidgetPictures.Kind
         switch background {
@@ -214,9 +227,10 @@ struct RowingProvider: AppIntentTimelineProvider {
         case .satellite: kind = .satellite
         default: return nil
         }
-        if let url = WidgetPictures.file(clubID, kind), let image = UIImage(contentsOfFile: url.path) { return image }
-        WidgetShared.defaults.set(true, forKey: WidgetPictures.wantedKey(clubID, kind))
-        return nil
+        let wanted = WidgetPictures.wantedKey(clubID, kind)
+        if !WidgetShared.defaults.bool(forKey: wanted) { WidgetShared.defaults.set(true, forKey: wanted) }
+        guard let url = WidgetPictures.file(clubID, kind) else { return nil }
+        return UIImage(contentsOfFile: url.path)
     }
 
     /// The live forecast, or the last one kept when the backend can't be reached.

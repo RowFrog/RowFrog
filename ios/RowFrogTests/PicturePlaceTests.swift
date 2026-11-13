@@ -48,4 +48,10 @@ final class PicturePlaceTests: XCTestCase {
         let middle = PicturePlace.rect(for: lake, filling: medium, focus: nil)
         XCTAssertFalse((0...medium.height).contains(middle.minY + steg.y * middle.height))
     }
+
+    func testThePictureFileKeepsItsOwnClubPlace() {
+        // The satellite key stays as it was; the club page picture's place has its own.
+        XCTAssertEqual(WidgetPictures.focusKey("mrc-1880"), "RWWidgetPictureFocus-mrc-1880")
+        XCTAssertNotEqual(WidgetPictures.focusKey("mrc-1880", .picture), WidgetPictures.focusKey("mrc-1880"))
+    }
 }

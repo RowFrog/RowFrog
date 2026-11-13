@@ -100,10 +100,13 @@ enum WidgetPictures {
 
     /// What the file was made from, so the app makes it again only after a change.
     static func sourceKey(_ clubID: String, _ kind: Kind) -> String { "RWWidgetPictureSource-\(clubID)-\(kind.rawValue)" }
-    /// Where the club lies in the satellite file, as [x, y] fractions of its width and height.
-    static func focusKey(_ clubID: String) -> String { "RWWidgetPictureFocus-\(clubID)" }
-    static func focus(_ clubID: String) -> UnitPoint? {
-        guard let spot = WidgetShared.defaults.array(forKey: focusKey(clubID)) as? [Double], spot.count == 2 else { return nil }
+    /// Where the club lies in the file, as [x, y] fractions of its width and height: in the
+    /// satellite file, and in the picture file when the club page shows the satellite picture.
+    static func focusKey(_ clubID: String, _ kind: Kind = .satellite) -> String {
+        kind == .satellite ? "RWWidgetPictureFocus-\(clubID)" : "RWWidgetPictureFocus-\(clubID)-\(kind.rawValue)"
+    }
+    static func focus(_ clubID: String, _ kind: Kind = .satellite) -> UnitPoint? {
+        guard let spot = WidgetShared.defaults.array(forKey: focusKey(clubID, kind)) as? [Double], spot.count == 2 else { return nil }
         return UnitPoint(x: spot[0], y: spot[1])
     }
     /// Set by the widget when a widget of its own asks for a picture the app has not made yet.
