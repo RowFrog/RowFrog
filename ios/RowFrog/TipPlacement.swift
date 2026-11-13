@@ -72,6 +72,8 @@ struct BubbleAnchor: ViewModifier {
                     if let tip { BubbleTipView(tip: tip) }
                 }
                 .frame(width: 320)
+                // Its whole height, so a long tip (German rain tip) is not cut at the top.
+                .fixedSize(horizontal: false, vertical: true)
                 .presentationCompactAdaptation(.popover)
             }
             .tipDebug(tip == nil ? nil : target)
