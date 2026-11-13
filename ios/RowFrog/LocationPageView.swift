@@ -102,7 +102,7 @@ struct LocationPageView: View {
     private func tipShows(_ tip: ClubPageTip, _ forecast: ClubForecast) -> Bool {
         guard tourSeen else { return false }
         let spots = tipSpots(forecast)
-        if let only = ClubPageTip.only { return tip == only && spots.contains { $0.tip == tip && $0.placed } }
+        if let only = ClubPageTip.only { return tip == only && spots.contains { $0.tip == tip && $0.shows && $0.placed } }
         if ClubPageTip.showsAll { return spots.contains { $0.tip == tip && $0.shows && $0.placed } }
         return ClubPageTip.pick(spots) == tip
     }
