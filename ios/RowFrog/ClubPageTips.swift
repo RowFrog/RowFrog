@@ -27,7 +27,12 @@ enum ClubPageTip: CaseIterable {
 
     /// The one tip a screenshot asks for (`-RWClubTip topTile`): the page shows only it, as in use.
     static var only: ClubPageTip? {
-        guard let name = UserDefaults.standard.string(forKey: DefaultsKey.clubTip) else { return nil }
+        let defaults = UserDefaults.standard
+        // The one-tip hooks name their tip too, so another tip can't take the page's turn.
+        if defaults.bool(forKey: DefaultsKey.placeTip) { return .placeLine }
+        if defaults.bool(forKey: DefaultsKey.riverTip) { return .riverCurrent }
+        if defaults.bool(forKey: DefaultsKey.nearbyTip) { return .nearbyWater }
+        guard let name = defaults.string(forKey: DefaultsKey.clubTip) else { return nil }
         return allCases.first { "\($0)" == name }
     }
 

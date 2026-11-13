@@ -89,6 +89,8 @@ enum DefaultsKey {
     static let laterTips = "RWLaterTips"
     /// With -RWShowTips or -RWLaterTips: the one club page tip to show (a ClubPageTip name, e.g. topTile).
     static let clubTip = "RWClubTip"
+    /// Show on the club page which tip the page picked and why, and frame a control with its bubble attached.
+    static let tipDebug = "RWTipDebug"
 
     // Screenshot and test switches: Club list and layout
     /// Turn the phone on its side.

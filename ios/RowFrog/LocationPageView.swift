@@ -108,6 +108,14 @@ struct LocationPageView: View {
     }
 
     /// Each tip of the page: would TipKit show it, and is its place on the page.
+    /// `-RWTipDebug YES`: what the page knows when it picks its one tip.
+    private func tipDebugText(_ forecast: ClubForecast) -> String {
+        let spots = tipSpots(forecast)
+        let list = spots.map { "\($0.tip)\($0.shows ? "+" : "-")\($0.placed ? "P" : "_")" }.joined(separator: " ")
+        let shown = ClubPageTip.allCases.filter { tipShows($0, forecast) }.map { "\($0)" }.joined(separator: ",")
+        return "page \(isCurrentPage) tour \(tourSeen) pick \(ClubPageTip.pick(spots).map { "\($0)" } ?? "none") shows [\(shown)]\n\(list)"
+    }
+
     private func tipSpots(_ forecast: ClubForecast) -> [ClubPageTip.Spot] {
         let cards = AppSettings.shared.pageCards(for: club.id)
         let combined = AppSettings.shared.combinedTopTile
@@ -153,11 +161,15 @@ struct LocationPageView: View {
                     VStack(spacing: 16) {
                         ClubPageHeader(club: club, lake: lake, isHome: isHome, forecasts: forecasts)
                             .environment(\.bubbleTip, isCurrentPage && forecast.map { tipShows(.placeLine, $0) } == true
-                                ? BubbleTip(target: .place, tip: placeLineTip) : nil)
+                                ? BubbleTip(target: .place, tip: .placeLine) : nil)
                             // Cards under the clock: the top blurs, as iOS's own bars do.
                             .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                                 top > 0 && proxy.frame(in: .global).minY < top - 1
                             } action: { PageScroll.shared.update(club.id, scrolled: $0) }
+                        if let forecast, UserDefaults.standard.bool(forKey: DefaultsKey.tipDebug) {
+                            Text(verbatim: tipDebugText(forecast)).font(.caption2.monospaced()).foregroundStyle(.white)
+                                .padding(4).background(.red)
+                        }
                         if let forecast, let now = forecast.current() {
                             NowCard(hour: now, forecast: forecast, stale: forecast.isStale(), lakeName: lake?.title, town: club.town, club: club)
                                 .id(AppSettings.shared.combinedTopTile ? "conditions" : "top")
@@ -393,7 +405,7 @@ struct LocationPageView: View {
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale(),
                            folds: folds, foldsNights: AppSettings.shared.activeNightHours == .fold, open: $hourlyOpen)
                     .environment(\.cardTip, tipShows(.hourly, forecast) ? AnyView(TintedTipView(hourlyTip).modifier(StickyLeadIn(sticky: sticky))) : nil)
-                    .environment(\.bubbleTip, isCurrentPage && tipShows(.hourView, forecast) ? BubbleTip(target: .hours, tip: hourViewTip) : nil)
+                    .environment(\.bubbleTip, isCurrentPage && tipShows(.hourView, forecast) ? BubbleTip(target: .hours, tip: .hourView) : nil)
                     .modifier(StickyHourlyCut(sticky: sticky))
             }
             .id("hourly")
@@ -437,10 +449,10 @@ struct LocationPageView: View {
 
     /// The top tile's bubbles (rule R2): on its values, or on "All values" under it.
     private func topTileBubble(_ forecast: ClubForecast) -> BubbleTip? {
-        if tipShows(.topTile, forecast) { return BubbleTip(target: .values, tip: topTileTip) }
-        if tipShows(.allValues, forecast) { return BubbleTip(target: .allValues, tip: allValuesTip) }
-        if tipShows(.riverCurrent, forecast) { return BubbleTip(target: .values, tip: riverTip) }
-        if tipShows(.rainRadar, forecast) { return BubbleTip(target: .values, tip: rainRadarTip) }
+        if tipShows(.topTile, forecast) { return BubbleTip(target: .values, tip: .topTile) }
+        if tipShows(.allValues, forecast) { return BubbleTip(target: .allValues, tip: .allValues) }
+        if tipShows(.riverCurrent, forecast) { return BubbleTip(target: .values, tip: .riverCurrent) }
+        if tipShows(.rainRadar, forecast) { return BubbleTip(target: .values, tip: .rainRadar) }
         return nil
     }
 
@@ -492,7 +504,7 @@ private extension LocationPageView {
             }
             // Its tip is a bubble on the line (rule R2).
             .bubbleAnchor(.source)
-            .environment(\.bubbleTip, isCurrentPage && tipShows(.source, forecast) ? BubbleTip(target: .source, tip: sourceTip) : nil)
+            .environment(\.bubbleTip, isCurrentPage && tipShows(.source, forecast) ? BubbleTip(target: .source, tip: .source) : nil)
             .id("source")
         }
     }
