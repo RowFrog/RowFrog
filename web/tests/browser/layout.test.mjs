@@ -273,3 +273,24 @@ test("columns (owner's pick B): the window sets 2 or 3, kept when the list slide
   assert.deepEqual(errors, []);
   await context.close();
 });
+
+test("club page: one 16 px gap between the cards and each item at the page's end, as the app (VStack spacing 16)", async () => {
+  for (const layout of [LAYOUTS[0], LAYOUTS[5]]) {
+    const { page, errors, context } = await openIn(layout);
+    await page.goto(`${base}/app/#/club/mrc-1880`);
+    await page.locator(".title-row h1").waitFor();
+    await page.waitForTimeout(300);
+    const gaps = await page.evaluate(() => {
+      const shown = (e) => e.getBoundingClientRect().height > 0;
+      // The column the page's end sits in (in two or three columns), its cards, then the page's end.
+      const col = document.querySelector(".page-end").closest(".col") ?? document.querySelector(".cards");
+      const items = [...col.querySelectorAll(":scope > .card"), ...document.querySelectorAll(".page-end > *")].filter(shown);
+      const boxes = items.map((e) => ({ label: e.id || e.className, box: e.getBoundingClientRect() }));
+      return boxes.slice(1).map((b, i) => ({ label: b.label, gap: Math.round(b.box.top - boxes[i].box.bottom) }));
+    });
+    assert.ok(gaps.length >= 4, `${layout.name}: too few items measured (${gaps.length})`);
+    for (const g of gaps) assert.equal(g.gap, 16, `${layout.name}: ${g.gap} px above "${g.label}", not 16`);
+    assert.deepEqual(errors, []);
+    await context.close();
+  }
+});
