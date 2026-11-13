@@ -116,7 +116,10 @@ a line that shows the values at any time and dots for now ("Back to now",
 or "Back to" the hour it was opened from, returns there), a unit switch at the
 bottom (air pressure in hPa, mbar, bar, inHg or mmHg), the limit lines (named on the side away from now, ending before the axis numbers), wind arrows
 every 3 hours, an "About the limits" note, advice for rowing and the data
-source (`ios/RowFrog/ConditionsCard.swift`). Swipe between detail views,
+source (`ios/RowFrog/ConditionsCard.swift`). The map sits in the same place
+on every detail view; on the waves page it is the lake view's waves at the
+chosen time, and a tap opens the lake view on that layer. Maps opened full
+screen run to the top with floating buttons. Swipe between detail views,
 use the arrow buttons (each shows the next value's symbol), or jump to another
 from the menu in the title; tapping an entry in a chart's
 legend switches its line on or off.
@@ -213,12 +216,14 @@ visibility, with the value that sets amber or red in that colour; another
 reason, or a note such as "Fog near the shore, open water clear", follows a
 part on its own line. Where the table does not fit (narrow phones, large
 text) each part falls back to one line (`docs/decisions/0030`). The website
-lists each part on a line with the same values and notes. Wind, gusts, rain and visibility for each part of the lake and
+shows the same table. Wind, gusts, rain and visibility for each part of the lake and
 for a tapped spot are blended from the forecast points around it (natural
 neighbour), so values change smoothly across the lake and never go beyond
 those points; hail and thunderstorms come from the nearest point. The website
 blends the same way. Stacked layer buttons at the right switch between the light,
-waves and wind, a slim colour strip above the panel opens the legend, a
+wind, waves and visibility (coloured by how foggy it is, shown when the
+forecast has visibility for each point; wind, waves, visibility is the order
+everywhere in the lake view), a slim colour strip above the panel opens the legend, a
 button at the top puts Apple's satellite pictures under the lake (on the website a globe button
 with MapTiler pictures, on its other maps too), and wind arrows get denser as you zoom in.
 The arrows cover the whole map, on the satellite picture too: over land they
