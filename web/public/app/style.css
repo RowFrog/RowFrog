@@ -1518,3 +1518,15 @@ nav.bottom { view-transition-name: page-bar; }
 .page-end p.source:has(> .tip.pop:not([hidden])) { z-index: 7; }
 .card.now { position: relative; }
 .card.now > .tip.pop { top: calc(100% + 10px); left: 50%; transform: translateX(-50%); --arrow-x: calc(50% - 7px); }
+
+/* The club page's spacing and end, as the app (LocationPageView: body and pageEnd, VStack(spacing: 16)): one 16 px
+   gap between the cards and between each item at the page's end; the forecast line and the credits as wide as the
+   page, text from the left, over a picture on a frosted plate with 12 px inside and 12 px corners (labelBackground,
+   ForecastSourceLine). Owner, 13 Nov 2026: the gaps differed (10 to 24 px) and the forecast line was hard to read. */
+main.page.club .card { margin: 16px 0; }
+main.page.club .cards.two .card:first-child { margin-top: 0; }
+main.page.club .page-end, main.page.club .cards.two .col > .page-end { display: flex; flex-direction: column; align-items: center; gap: 16px; margin-top: 16px; }
+main.page.club .page-end > *, main.page.club .page-end > #arrange, main.page.club .page-end > #updates { margin: 0; }
+main.page.club .page-end > .source, main.page.club .page-end > .credits { align-self: stretch; text-align: left; }
+body.has-picture main.page.club .page-end > .source, body.has-picture main.page.club .page-end > .credits { width: auto; padding: 12px; border-radius: 12px; }
+main.page.club .page-end > .source button.link { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; }

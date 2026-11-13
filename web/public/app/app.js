@@ -2206,7 +2206,8 @@ function sourceLine(forecast) {
   const part = forecast.forecastSource?.parts?.[0];
   if (!part) return "";
   const short = part.provider.match(/\(([^)]+)\)\s*$/)?.[1] ?? part.provider;
-  return `<p class="source"><button class="link" id="source-line">${icon("info")} ${h(t("Forecast: %@", `${short} ${part.model}, ${gridText(part.resolutionKm)}`))}</button></p>`;
+  // As the app's line: the weather symbol first, the info symbol after the text.
+  return `<p class="source"><button class="link" id="source-line">${icon("cloud-sun")}<span>${h(t("Forecast: %@", `${short} ${part.model}, ${gridText(part.resolutionKm)}`))}</span>${icon("info")}</button></p>`;
 }
 
 const gridText = (km) => t("%@ km grid", num(km, km % 1 ? 1 : 0));
