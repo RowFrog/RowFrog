@@ -1,4 +1,4 @@
-# NNNN. Build numbers from the commit count, commit in About
+# 34. Build numbers from the commit count, commit in About
 
 - Date: 2026-11-12
 - Status: decided (owner)

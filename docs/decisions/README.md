@@ -54,3 +54,4 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 31 | 2026-11-12 | [iOS 18 or later](0031-ios-18-or-later.md) |
 | 32 | 2026-11-12 | [Website tour like the app's, river tip, OpenStreetMap place card](0032-website-tour-river-place-card.md) |
 | 33 | 2026-11-12 | [Screenshots cover every device, orientation, browser and scroll position](0033-screenshot-matrix-app-and-website.md) |
+| 34 | 2026-11-12 | [Build numbers from the commit count, commit in About](0034-build-numbers.md) |
