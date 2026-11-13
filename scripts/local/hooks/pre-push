@@ -64,7 +64,7 @@ checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
       if [ -d "$top/node_modules/playwright" ]; then
         # One browser test run at a time, also when two commits are checked side by side: under the
         # load of two runs, timing tests flaked (12-13 Nov 2026). The lock is a directory (mkdir is atomic).
-        lock="${TMPDIR:-/tmp}/rowfrog-browser-tests.lock"; until mkdir "$lock" 2>/dev/null; do find "$lock" -maxdepth 0 -mmin +20 -exec rmdir {} ; 2>/dev/null; sleep 3; done  # a lock older than 20 min is stale
+        lock="${TMPDIR:-/tmp}/rowfrog-browser-tests.lock"; until mkdir "$lock" 2>/dev/null; do find "$lock" -maxdepth 0 -mmin +20 -exec rmdir {} + 2>/dev/null; sleep 3; done  # a lock older than 20 min is stale
         (cd "$wt" && ln -s "$top/node_modules" node_modules && node --test web/tests/browser/*.test.mjs > "$logdir/browser-${sha:0:9}.txt" 2>&1; rc=$?
          grep -E "^not ok|^ +not ok" "$logdir/browser-${sha:0:9}.txt"; tail -8 "$logdir/browser-${sha:0:9}.txt"; exit $rc) || ok=1
         rmdir "$lock" 2>/dev/null
