@@ -1,4 +1,4 @@
-# NNNN. Tip pacing and the tips audit
+# 35. Tip pacing and the tips audit
 
 - Date: 2026-11-12
 - Status: decided (owner, thread "First-Start Tutorial and One-Time-Tips", 23:29 CET: "let's go with the proposal for now, and let's see how it comes out")
