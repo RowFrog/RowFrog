@@ -116,7 +116,9 @@ function caption(lake, shot) {
   const { meta } = lake;
   const cloud = (shot.lakeCloud ?? 0) * 100;
   const ice = store.satLayers.includes("ice") && available(lake).some((l) => l.id === "ice");
-  return `<p class="sub small">${h(overLake(lake) ? (cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(shot.date), num(cloud))) : (cloud < 1 ? t("Sentinel-2 · %@ · no cloud", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% under cloud", dayLabel(shot.date), num(cloud))))} <button class="link sub sat-why" data-sat-why aria-label="${h(t("Why only every few days?"))}">${icon("info")}</button></p>
+  // The first line is always two lines high, so the picture above keeps its size when switching between
+  // pictures whose line wraps and whose doesn't (SatelliteCaption, reservesSpace; owner 12 Nov 2026).
+  return `<p class="sub small sat-line">${h(overLake(lake) ? (cloud < 1 ? t("Sentinel-2 · %@ · no cloud over the lake", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% of the lake under cloud", dayLabel(shot.date), num(cloud))) : (cloud < 1 ? t("Sentinel-2 · %@ · no cloud", dayLabel(shot.date)) : t("Sentinel-2 · %@ · %@ %% under cloud", dayLabel(shot.date), num(cloud))))} <button class="link sub sat-why" data-sat-why aria-label="${h(t("Why only every few days?"))}">${icon("info")}</button></p>
     ${ice ? `<p class="sub small">${h(t("Satellite ice map, %@", dayLabel(meta.ice.date)))}</p>` : ""}
     <p class="sub small">${h(meta.attribution)}${ice && meta.ice.attribution ? ` · ${h(meta.ice.attribution)}` : ""}</p>`;
 }
