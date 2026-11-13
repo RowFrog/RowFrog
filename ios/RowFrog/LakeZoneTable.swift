@@ -100,12 +100,13 @@ struct LakeZoneTable: View {
                 .font(.subheadline)
                 .gridColumnAlignment(.leading)
                 .alignmentGuide(VerticalAlignment.center) { $0[VerticalAlignment.bottom] + $0.height * 0.2 }
-            // Centred over the arrows by its frame, and level with the units by the row's
-            // centre line: a cell anchor put it at the middle of the whole row, which
-            // the map symbol makes taller, so it sat higher than the units (owner, 13 Nov 2026).
+            // Level with the units by the row's centre line, and centred over the arrows by
+            // the column's alignment. A cell anchor put it at the middle of the whole row,
+            // which the map symbol makes taller, so it sat higher than the units (owner,
+            // 13 Nov 2026). Not a flexible frame: that made the table ask for any width,
+            // so the page grew wider than the screen (4ee242a05).
             Image(systemName: "safari").imageScale(.small)
-                .frame(maxWidth: .infinity)
-                .gridCellUnsizedAxes(.horizontal)
+                .gridColumnAlignment(.center)
             unit(Condition.wind.unit)
             unit(Condition.waves.unit)
             unit(Condition.visibility.unit)

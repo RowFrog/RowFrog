@@ -333,7 +333,12 @@ test("real data past hour 48 reaches the table: the last night ends at sunrise a
   await line.waitFor({ timeout: 20000 });
   assert.equal(await line.locator(".range").innerText(), "19–07");
   assert.equal(await line.locator(".coarser").innerText(), "≈ from 22:00 coarser model: ICON-EU, 7 km grid");
-  assert.equal(await page.locator(".hourly-card .nightline .coarser").count(), 1, "only the last night has the hint");
+  // Counted once the page has settled: it can draw the table again (refresh) between the reads above and here.
+  const hints = await page.waitForFunction(() => {
+    const n = document.querySelectorAll(".hourly-card .nightline .coarser").length;
+    return n === 1 ? n : false;
+  }, null, { timeout: 5000 }).then((h) => h.jsonValue()).catch(() => page.locator(".hourly-card .nightline .coarser").count());
+  assert.equal(hints, 1, "only the last night has the hint");
   if (process.env.RF_NIGHT_SHOT) await page.locator(".hourly-card").screenshot({ path: `${process.env.RF_NIGHT_SHOT}-tail.png` });
   assert.deepEqual(errors, []);
   await context.close();
@@ -526,6 +531,8 @@ test("the lake tile shows its parts as a small table with the wind's arrow, and 
   const box = page.locator(".zone-box");
   await box.waitFor({ timeout: 20000 });
   assert.equal(await box.getAttribute("data-fit"), "table");
+  // The table never makes the page wider than the phone (the app's did, 4ee242a05).
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), "no sideways overflow");
   const row = page.locator(".zone-table tbody tr").first();
   assert.equal(await row.locator(".zt-name strong").innerText(), "West");
   // From the west: the arrow points east, where the wind blows to.
