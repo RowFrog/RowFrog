@@ -89,10 +89,18 @@ enum WidgetBridge {
             var choice = settings.background(for: .clubPages, clubID: club.id)
             if case let .picture(own) = background { choice = own }
             if background.usesPicture && background != .satellite || wanted(.picture) {
-                let key = "\(choice.rawValue)|\(settings.blurWidgetPicture)"
+                // "focus|": made once again after the update, so the club's place gets saved too.
+                let key = "focus|\(choice.rawValue)|\(settings.blurWidgetPicture)"
                 if key != shared.string(forKey: WidgetPictures.sourceKey(club.id, .picture)),
                    let image = BackgroundLibrary.image(for: choice, clubID: club.id) {
                     changed = write(image, to: WidgetPictures.file(club.id, .picture)) || changed
+                    // The club page's satellite picture is the whole lake: the widget then needs the
+                    // club's place as the satellite background has it, or it shows the lake's middle.
+                    if let spot = BackgroundLibrary.focus(of: image) {
+                        shared.set([Double(spot.x), Double(spot.y)], forKey: WidgetPictures.focusKey(club.id, .picture))
+                    } else {
+                        shared.removeObject(forKey: WidgetPictures.focusKey(club.id, .picture))
+                    }
                     shared.set(key, forKey: WidgetPictures.sourceKey(club.id, .picture))
                 } else if choice == .noPicture, let file = WidgetPictures.file(club.id, .picture),
                           FileManager.default.fileExists(atPath: file.path) {

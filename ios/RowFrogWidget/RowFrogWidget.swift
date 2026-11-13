@@ -200,8 +200,18 @@ struct RowingProvider: AppIntentTimelineProvider {
                 snapshot: RowingSnapshot(date: date, clubName: names[clubID] ?? clubID, isHome: clubID == homeID, forecast: forecast),
                 focus: configuration.focus.focus, background: background, picture: picture,
                 layout: configuration.layout.layout, marks: configuration.marks,
-                pictureFocus: background == .satellite ? WidgetPictures.focus(clubID) : nil
+                pictureFocus: pictureFocus(for: background, clubID: clubID)
             )
+        }
+    }
+
+    /// Where the club lies in the picture: the satellite file's place, and the picture
+    /// file's when the club page shows the satellite picture; nil for other pictures.
+    private func pictureFocus(for background: WidgetBackground, clubID: String) -> UnitPoint? {
+        switch background {
+        case .satellite: WidgetPictures.focus(clubID)
+        case .appPicture, .picture: WidgetPictures.focus(clubID, .picture)
+        default: nil
         }
     }
 
