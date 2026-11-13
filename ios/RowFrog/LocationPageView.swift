@@ -72,6 +72,8 @@ struct LocationPageView: View {
         await LakeViewStore.shared.load(forecast.lakeId, force: true)
     }
     @State private var showSourceTip = false
+    @State private var showPlaceLineTip = false
+    private let placeLineTip = PlaceLineTip()
     @State private var showHourViewTip = false
     private let hourViewTip = HourViewTip()
     private let conditionsTip = ConditionsExtrasTip()
@@ -100,6 +102,7 @@ struct LocationPageView: View {
     private func tipShows(_ tip: ClubPageTip, _ forecast: ClubForecast) -> Bool {
         guard tourSeen else { return false }
         let spots = tipSpots(forecast)
+        if let only = ClubPageTip.only { return tip == only && spots.contains { $0.tip == tip && $0.placed } }
         if ClubPageTip.showsAll { return spots.contains { $0.tip == tip && $0.shows && $0.placed } }
         return ClubPageTip.pick(spots) == tip
     }
@@ -118,6 +121,8 @@ struct LocationPageView: View {
             .init(tip: .riverCurrent, shows: showRiverTip, placed: now != nil && forecast.river != nil),
             .init(tip: .topTile, shows: showTopTileTip, placed: now != nil),
             .init(tip: .allValues, shows: showAllValuesTip, placed: combined && now != nil),
+            // A bubble on the header's place line, which opens the launch point there.
+            .init(tip: .placeLine, shows: showPlaceLineTip, placed: AppSettings.shared.launchPointInHeader),
             .init(tip: .hourly, shows: showHourlyTip, placed: cards.contains(.hourly)),
             .init(tip: .lakeView, shows: showLakeViewTip, placed: cards.contains(.lakeView) && lake?.hasOutline != false),
             .init(tip: .launchPoint, shows: showLaunchPointTip, placed: cards.contains(.launchPoint)),
@@ -147,6 +152,8 @@ struct LocationPageView: View {
                 ScrollView {
                     VStack(spacing: 16) {
                         ClubPageHeader(club: club, lake: lake, isHome: isHome, forecasts: forecasts)
+                            .environment(\.bubbleTip, isCurrentPage && forecast.map { tipShows(.placeLine, $0) } == true
+                                ? BubbleTip(target: .place, tip: placeLineTip) : nil)
                             // Cards under the clock: the top blurs, as iOS's own bars do.
                             .onGeometryChange(for: Bool.self) { [top = pageMargins.top] proxy in
                                 top > 0 && proxy.frame(in: .global).minY < top - 1
@@ -246,6 +253,7 @@ struct LocationPageView: View {
                 .tipVisibility(launchPointTip, $showLaunchPointTip)
                 .tipVisibility(topTileTip, $showTopTileTip)
                 .tipVisibility(allValuesTip, $showAllValuesTip)
+                .tipVisibility(placeLineTip, $showPlaceLineTip)
                 .tipVisibility(nearbyWaterTip, $showNearbyWaterTip)
                 .tipVisibility(waterEstimateTip, $showWaterEstimateTip)
                 .tipVisibility(waterLevelTip, $showWaterLevelTip)
@@ -384,7 +392,7 @@ struct LocationPageView: View {
                 let folds = twoColumns && AppSettings.shared.activeColumnFill == .fold
                 HourlyCard(forecast: forecast, club: club, lake: lake, stale: forecast.isStale(),
                            folds: folds, foldsNights: AppSettings.shared.activeNightHours == .fold, open: $hourlyOpen)
-                    .environment(\.cardTip, tipShows(.hourly, forecast) ? AnyView(TintedTipView(hourlyTip)) : nil)
+                    .environment(\.cardTip, tipShows(.hourly, forecast) ? AnyView(TintedTipView(hourlyTip).modifier(StickyLeadIn(sticky: sticky))) : nil)
                     .environment(\.bubbleTip, isCurrentPage && tipShows(.hourView, forecast) ? BubbleTip(target: .hours, tip: hourViewTip) : nil)
                     .modifier(StickyHourlyCut(sticky: sticky))
             }

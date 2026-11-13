@@ -18,7 +18,6 @@ struct ClubPageHeader: View {
     @State private var showingFailure: RefreshFailure?
     @State private var showingLaunchPoint = false
     @Environment(\.isCurrentPage) private var isCurrentPage
-    @AppStorage(Tutorial.seenKey) private var tourSeen = false
     private var inHeader: Bool { AppSettings.shared.launchPointInHeader }
 
     var body: some View {
@@ -159,8 +158,8 @@ struct ClubPageHeader: View {
             .foregroundStyle(Color.accentColor)
             .accessibilityLabel(place)
             .accessibilityHint(tr("Shows the club's location on a map, with directions"))
-            // Once, on the page in view, after the tour.
-            .modifier(PlaceLineTipAnchor(shown: tourSeen && isCurrentPage))
+            // Once, when the page picks it (ClubPageTip: one tip on the page at a time).
+            .bubbleAnchor(.place)
             .id("launchpoint")
         } else {
             placeText(chevron: false)
@@ -182,19 +181,6 @@ struct ClubPageHeader: View {
             .accessibilityHint(tr("Shows the launch point on a map, with directions"))
         } else {
             label
-        }
-    }
-}
-
-/// `popoverTip` with an optional tip needs iOS 18.4, so the tip is attached only when it applies.
-private struct PlaceLineTipAnchor: ViewModifier {
-    let shown: Bool
-
-    func body(content: Content) -> some View {
-        if shown {
-            content.popoverTip(PlaceLineTip(), arrowEdge: .top)
-        } else {
-            content
         }
     }
 }

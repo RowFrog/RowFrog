@@ -27,6 +27,8 @@ enum BubbleTarget {
     case allValues
     /// The first hour of the 48 hours (One hour in full).
     case hours
+    /// The header's place line (lake and town), which opens the launch point.
+    case place
     /// The forecast source line at the page's end.
     case source
 }
