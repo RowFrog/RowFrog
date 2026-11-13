@@ -142,9 +142,13 @@ function path(points, px, py) {
  * Draws the chart into `box` and keeps it in step with `time`. Returns a
  * function that draws it again (after a line is hidden in the legend).
  */
-export function mountChart(box, detail, data, time, { hidden = new Set(), compact = false } = {}) {
+export function mountChart(box, detail, data, time, { hidden = new Set(), compact = false, legend = "" } = {}) {
   box.classList.add("vchart");
-  box.innerHTML = `<div class="vchart-wrap"><div class="vchart-scroll"></div><div class="vchart-over"></div></div>${compact ? "" : `<div class="vchart-note"></div>`}`;
+  // Under the chart one line of the same height on every page, so the map below never moves: the legend at the
+  // left, "Back to now" at the right once dragged away (owner, 13 Nov 2026). How to drag and read the chart is
+  // the one-time chartScrub tip. Past measurements (no map below) keep their note under the line.
+  box.innerHTML = `<div class="vchart-wrap"><div class="vchart-scroll"></div><div class="vchart-over"></div></div>${compact ? ""
+    : `<div class="vchart-row">${legend}<span class="vchart-note"></span></div>${detail.history ? `<p class="vchart-history"><small class="sub">${h(detail.chartNote ?? t("Measurements of the last days. Touch the chart to read a value."))}</small></p>` : ""}`}`;
   const scroller = box.querySelector(".vchart-scroll");
   const over = box.querySelector(".vchart-over");
   const height = compact ? 100 : 200;
@@ -302,13 +306,14 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     const away = !detail.history && (Math.abs(time.scrollX - START) > 0.5 || time.hour !== 0);
     if (away) {
       const label = data.isNow ? t("Back to now") : t("Back to %@", dayTime(data.now.time));
-      note.innerHTML = `<button class="link strong" id="chart-back">${h(label)}</button>`;
+      if (note.querySelector("#chart-back")?.title === label) return;
+      note.innerHTML = `<button class="link strong" id="chart-back" title="${h(label)}" aria-label="${h(label)}">${icon("undo-2")}<span>${h(label)}</span></button>`;
       note.querySelector("#chart-back").addEventListener("click", () => {
         time.back();
         scroller.scrollLeft = px(START) - 16;
       });
     } else {
-      note.innerHTML = `<small class="sub">${h(detail.chartNote ?? (detail.history ? t("Measurements of the last days. Touch the chart to read a value.") : t("Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value.")))}</small>`;
+      note.innerHTML = "";
     }
   }
 

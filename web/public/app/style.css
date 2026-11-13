@@ -66,6 +66,8 @@ h1.large { font-size: 34px; font-weight: 700; margin: 4px 0 12px; }
 .card { background: var(--card); border-radius: 16px; padding: 14px; margin: 12px 0; }
 .card-title { display: flex; align-items: center; gap: 6px; color: var(--sub); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .02em; margin-bottom: 10px; }
 .card-title span { flex: 1; }
+.card-title.opens { color: var(--sub); text-decoration: none; }
+.card-title.opens .i:last-child { width: 12px; height: 12px; stroke-width: 3; }
 .info { color: var(--accent); font-size: 18px; line-height: 1; }
 .card.loading { text-align: center; padding: 40px 14px; font-size: 20px; font-weight: 600; }
 
@@ -837,14 +839,16 @@ button.red { color: var(--red); }
 .jump select { position: absolute; inset: 0; opacity: 0; cursor: pointer; font-size: 16px; }
 .jump .cond { font-size: 18px; }
 .value-page { padding-top: 8px; }
-.value-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+/* At least as tall as the largest graphic (wind dial, pressure gauge: 90 pt), so the chart and the map below
+   sit at the same height on every page (owner, 13 Nov 2026). */
+.value-top { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; min-height: 90px; }
 .value-top .tool { color: var(--sub); font-size: 22px; }
 .value-head { flex: 1; display: flex; flex-direction: column; min-width: 0; }
 /* Two lines kept for the note on a phone, so the chart does not jump while the note's length changes during scrubbing. */
 @media (max-width: 599px) { #big-note { min-height: 2.7em; } }
 .big-value { font-size: min(2.5rem, 54px); font-weight: 300; line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .value-big { display: flex; align-items: center; }
-.value-big .dial { width: 100px; height: 100px; }
+.value-big .dial { width: 90px; height: 90px; }
 .value-big .gauge { transform: scale(1.8); margin: 20px 22px; }
 .value-big .layers { transform: scale(1.6); margin: 10px 22px; }
 /* The tile's graphics at 1.6 times, as in the app. */
@@ -879,9 +883,20 @@ button.red { color: var(--red); }
 .vchart-over .map-badge { position: absolute; width: 25px; height: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 1px;
   font-size: 8px; color: #3d9a4f; background: var(--card); box-shadow: inset 0 0 0 1.5px #3d9a4f; }
 .vchart-over .map-badge.joined { color: #fff; background: #3d9a4f; box-shadow: none; }
-.vchart-note { min-height: 20px; margin-top: 4px; }
-.vchart-note small { font-size: 12px; }
-.chart-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 12px; margin-top: 6px; }
+/* One line under the chart, 20 px growing with the text (1.25rem): the legend left, "Back to now" right.
+   Chart bottom to map top: 6 + 20 + 14 (.value-body gap) = 40 on every page. */
+.vchart-row { display: flex; align-items: center; gap: 8px; height: 1.25rem; margin-top: 6px; min-width: 0; }
+.vchart-note { margin-left: auto; display: flex; min-width: 0; }
+.vchart-note #chart-back { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; white-space: nowrap; min-width: 0; padding: 12px 0 12px 8px; margin: -12px 0; }
+.vchart-note #chart-back .i { width: 14px; height: 14px; flex: none; }
+.vchart-note #chart-back span { overflow: hidden; text-overflow: ellipsis; }
+/* Beside the cloud page's four lines on a phone, only the arrow. */
+.vchart-row .chart-legend ~ .vchart-note #chart-back span { display: none; }
+@media (min-width: 430px) { .vchart-row .chart-legend ~ .vchart-note #chart-back span { display: inline; } }
+.vchart-history { margin: 4px 0 0; }
+.vchart-history small { font-size: 12px; }
+.chart-legend { display: flex; flex-wrap: nowrap; gap: 12px; font-size: 12px; min-width: 0; }
+.chart-legend button { white-space: nowrap; }
 .chart-legend button { display: inline-flex; align-items: center; gap: 4px; }
 .chart-legend i { width: 9px; height: 9px; border-radius: 50%; background: currentColor; }
 .chart-legend i.dashed { background: none; border: 1.5px dashed currentColor; box-sizing: border-box; }
@@ -898,7 +913,14 @@ button.red { color: var(--red); }
 .map-frame { position: relative; cursor: zoom-in; }
 .map-frame.out .wm { filter: saturate(.2); opacity: .6; }
 .map-note { position: absolute; left: 8px; right: 8px; bottom: 8px; margin: 0; padding: 6px 9px; border-radius: 9px; font-size: 12px; color: #fff; background: rgba(0,0,0,.75); z-index: 900; text-align: center; }
-.wm { height: 220px; background: var(--tile); isolation: isolate; }
+.wm { height: 200px; background: var(--tile); isolation: isolate; }
+/* The waves page's lake map in the weather map's place (DetailLakeCard). */
+.map-card .lake-head { display: flex; align-items: center; gap: 8px; padding: 7px 10px; color: inherit; text-decoration: none; font-size: 13px; }
+.map-card .lake-head .when { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-card .lake-head .wm-open { color: var(--accent); }
+.map-card canvas.wm-lake { display: block; width: calc(100% - 16px); height: 192px; margin: 0 8px 8px; border-radius: 12px; background: color-mix(in srgb, var(--sub) 10%, transparent); cursor: zoom-in; }
+.map-card canvas.wm-lake.outside { filter: saturate(.2); opacity: .6; }
+@media (min-width: 900px) { .value-body.with-map canvas.wm-lake { height: 292px; } }
 .wm-canvas { position: absolute; left: 0; top: 0; z-index: 450; pointer-events: none; }
 .map-controls { display: flex; align-items: center; gap: 10px; padding: 8px 10px; }
 .map-controls input[type=range] { flex: 1; }
@@ -922,7 +944,17 @@ dl.facts dd { margin: 0; font-weight: 600; }
 .value-page { padding-bottom: calc(68px + env(safe-area-inset-bottom)); }
 body.locked { overflow: hidden; }
 .wm-full { position: fixed; inset: 0; z-index: 2000; display: flex; flex-direction: column; background: var(--bg); }
-.wm-full .nav { position: static; background: var(--card); gap: 12px; }
+/* The map to every edge, close, title and layer choice floating on it as glass, as the lake view (.lake-top) and the
+   app's MapTopBar: a solid bar left a band over the map (owner, 13 Nov 2026). */
+.wm-full .nav.map-top { position: absolute; top: calc(10px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left)); right: calc(16px + env(safe-area-inset-right));
+  z-index: 1000; display: flex; gap: 10px; align-items: center; justify-content: flex-start; padding: 0; min-height: 44px; background: none; border: 0; box-shadow: none;
+  backdrop-filter: none; -webkit-backdrop-filter: none; pointer-events: none; }
+.wm-full .map-top > * { pointer-events: auto; }
+.wm-full .map-top .close-x { width: 44px; height: 44px; border-radius: 22px; color: var(--text); flex: none; }
+.wm-full .map-top .nav-title { height: 44px; line-height: 44px; padding: 0 14px; border-radius: 22px; font-size: 17px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto; position: static; transform: none; }
+.wm-full .map-top .jump { margin-left: auto; height: 44px; border-radius: 22px; flex: none; }
+/* Leaflet's zoom buttons under the floating bar. */
+.wm-full .leaflet-top { top: calc(60px + env(safe-area-inset-top)); }
 .wm-full .wm { flex: 1; height: auto; }
 /* As the app's panel (WeatherMapScreen.controls): the map's full width, 16 px in, at every size. */
 .wm-panel { position: absolute; left: calc(16px + env(safe-area-inset-left)); right: calc(16px + env(safe-area-inset-right)); bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 1000; margin: 0 auto; padding: 12px 14px;

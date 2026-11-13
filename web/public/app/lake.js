@@ -398,11 +398,24 @@ export function ramp(value, amber, red) {
 }
 
 /** Each cell's colour for a layer ("light", "waves" or "wind"). */
+/**
+ * Visibility on the waves' and wind's ramp, by how foggy it is (LakeRaster.visibilityColor): calm blue from
+ * 20 km, yellow at 1 km (fog: row with care), red at 500 m (fog: stay ashore), purple below about 50 m.
+ */
+export const fogginess = (m) => Math.max(0, Math.log10(20000 / Math.max(m, 1)));
+export function visibilityColour(m) {
+  return ramp(m == null ? 0 : fogginess(m), fogginess(1000), fogginess(500));
+}
+
+/** Whether a lake view has visibility per point, for its visibility layer (LakeLayer.available). */
+export const hasVisibility = (view) => view.hours.some((hr) => hr.wind?.some((w) => w.visM != null));
+
 export function cellColours(view, hour, layer, limits) {
   const { grid } = view;
   return grid.cells.map((_, i) => {
     if (layer === "waves") return ramp(hour.wavesCm[i] / 100, limits.value("waveAmber"), limits.value("waveRed"));
     if (layer === "wind") return ramp(cellWind(view, hour, i)?.speedMs ?? 0, limits.value("windAmber"), limits.value("windRed"));
+    if (layer === "visibility") return visibilityColour(cellWind(view, hour, i)?.visM);
     const c = RGB[hour.lights[i]] ?? RGB.green;
     return hour.lakeWide.light === "red" ? greyed(c) : c;
   });

@@ -413,8 +413,8 @@ struct CachedSatelliteImage<Content: View>: View {
 
 /// What can be drawn over the picture.
 enum SatelliteLayer: String, CaseIterable, Identifiable {
-    // Shore, clubs and routes first, then as on the lake view: rowing light, waves, wind; ice last.
-    case shore, clubs, routes, light, waves, wind, ice
+    // Shore, clubs and routes first, then as on the lake view: rowing light, wind, waves; ice last.
+    case shore, clubs, routes, light, wind, waves, ice
     var id: String { rawValue }
 
     /// Waves and rowing light both colour the water, so only one is on at a time.

@@ -486,7 +486,7 @@ export async function openRadarMap(point, reference, mark = "house") {
   const region = radarRegion(point);
   const panel = document.createElement("div");
   panel.className = "wm-full radar-full";
-  panel.innerHTML = `<header class="nav">${closeX(`class="link close-x" id="rm-done"`)}<strong class="nav-title">${h(t("Rain radar"))}</strong><span></span></header>
+  panel.innerHTML = `<header class="nav map-top">${closeX(`class="link close-x glass" id="rm-done"`)}<strong class="nav-title glass">${h(t("Rain radar"))}</strong></header>
     <div class="wm" id="rm-map"></div><section class="wm-panel" id="rm-panel"></section>`;
   document.body.append(panel);
   document.body.classList.add("locked");

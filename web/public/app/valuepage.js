@@ -12,6 +12,7 @@ import { detailTime, mountChart } from "./chart.js";
 import { LAYERS, layerFor, weatherMap, frames, frameIndex, frameLabel, colourBar, layerOptions, loadIndex } from "./weathermap.js";
 import { radarAt, readRadar, radarOverlay, radarFrames, radarCovers, nearestFrame, openRadarMap } from "./radar.js";
 import { isLowered } from "./lakelevel.js";
+import { fillWavesMap } from "./lakeview.js";
 
 /** The map link tip, once the weather map tip before it was closed. */
 const chainBubble = () => (tip("weatherMap").includes('data-tip="mapLink"') ? bubbleTip("mapLink") : "");
@@ -127,6 +128,8 @@ function show(page) {
   const detail = conditionDetail(condition, data);
   const hidden = page.hidden.get(condition) ?? new Set();
   const layer = detail.history || !detail.lines.length ? null : layerFor(condition);
+  // Waves have no weather map: the lake view's waves take its place (owner, 13 Nov 2026; DetailLakeCard).
+  const lakeMap = condition === "waves" && !detail.history && detail.lines.length > 0 && !!page.data.forecast?.lakeId;
   const menu = page.order.map((c) => {
     const value = conditionDetail(c, data).value;
     return `<option value="${c}" ${c === condition ? "selected" : ""}>${h(value ? `${titles[c][1]} · ${value}` : titles[c][1])}</option>`;
@@ -142,15 +145,13 @@ function show(page) {
         <div class="value-head"><span class="big-value" id="big-value"></span><small class="sub" id="big-note"></small></div>
         <span class="value-big" id="big-graphic"></span>
       </div>
-      <div class="value-body ${layer ? "with-map" : ""}">
+      <div class="value-body ${layer || lakeMap ? "with-map" : ""}">
         <div class="value-chart">
-          ${detail.lines.length ? `<div id="chart"></div>` : ""}
-          ${detail.lines.length > 1 ? `<div class="chart-legend">${detail.lines.map((l) => `<button data-line="${h(l.name)}" class="${hidden.has(l.name) ? "off" : ""}" style="color:${l.colour}">
-            <i class="${l.dashed ? "dashed" : ""}"></i><span>${h(l.name)}</span></button>`).join("")}</div>` : ""}
           ${detail.lines.length ? tip("chartScrub") : ""}
+          ${detail.lines.length ? `<div id="chart"></div>` : ""}
           ${layer && !mapTip.includes('data-tip="mapLink"') ? mapTip : ""}
         </div>
-        ${layer ? `<section class="map-card" id="map-card"></section>` : ""}
+        ${layer || lakeMap ? `<section class="map-card" id="map-card"></section>` : ""}
       </div>
       ${detail.limitInfo ? `<div class="limit-info"><button class="link" id="limit-info">${icon("info")} ${h(t("About the limits"))}</button>
         <p class="small boxed" id="limit-text" ${page.showLimits ? "" : "hidden"}>${h(detail.limitInfo)}</p></div>` : ""}
@@ -182,7 +183,10 @@ function show(page) {
   time.listeners.add(headListener);
   const chartBox = root.querySelector("#chart");
   let redraw = null;
-  if (chartBox) redraw = mountChart(chartBox, detail, data, time, { hidden });
+  // The legend goes into the line under the chart, left of "Back to now".
+  const legend = detail.lines.length > 1 ? `<span class="chart-legend">${detail.lines.map((l) => `<button data-line="${h(l.name)}" class="${hidden.has(l.name) ? "off" : ""}" style="color:${l.colour}">
+            <i class="${l.dashed ? "dashed" : ""}"></i><span>${h(l.name)}</span></button>`).join("")}</span>` : "";
+  if (chartBox) redraw = mountChart(chartBox, detail, data, time, { hidden, legend });
   root.querySelectorAll("[data-line]").forEach((b) => b.addEventListener("click", () => {
     const name = b.dataset.line;
     if (hidden.has(name)) hidden.delete(name);
@@ -207,6 +211,23 @@ function show(page) {
     root.querySelector("#limit-text").hidden = !page.showLimits;
   });
   if (layer) mapCard(page, layer, detail, hidden);
+  else if (lakeMap) wavesMap(page);
+}
+
+/** The waves page's map: the lake view's waves at the hour of the chart's blue line. */
+async function wavesMap(page) {
+  const { data, time, clubId } = page;
+  const box = page.root.querySelector("#map-card");
+  const start = new Date(data.now.time).getTime();
+  const at = () => new Date(start + time.hour * 3600000);
+  const draw = await fillWavesMap(box, data.forecast.lakeId, clubId, at());
+  if (!draw) return box.isConnected && box.remove();
+  // The chart's green band: the hours the lake view has.
+  time.mapHours = draw.hours.map((x) => (new Date(x).getTime() - start) / 3600000);
+  time.changed();
+  const update = () => box.isConnected && draw(at());
+  update.page = true;
+  time.listeners.add(update);
 }
 
 function facts(detail) {
@@ -361,8 +382,8 @@ async function openFull(page, layerId, detail, hidden) {
   let playing = null;
   let own = new Date(start + time.shownMapHour * 3600000);
   const follows = () => layer.links !== "none" && layer.id === layerId;
-  panel.innerHTML = `<header class="nav">${closeX(`class="link close-x" id="wm-done"`)}
-      <strong class="nav-title" id="wm-title"></strong><label class="jump">${icon("layers")}<select id="wm-layer" aria-label="${h(t("Choose what the map shows"))}">${layerOptions(layerId)}</select>${icon("chevron-down")}</label></header>
+  panel.innerHTML = `<header class="nav map-top">${closeX(`class="link close-x glass" id="wm-done"`)}
+      <strong class="nav-title glass" id="wm-title"></strong><label class="jump glass">${icon("layers")}<select id="wm-layer" aria-label="${h(t("Choose what the map shows"))}">${layerOptions(layerId)}</select>${icon("chevron-down")}</label></header>
     <div class="wm" id="wm-full-map"></div>
     <section class="wm-panel" id="wm-panel"></section>`;
   let wm = null;

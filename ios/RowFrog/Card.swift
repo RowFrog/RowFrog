@@ -7,6 +7,10 @@ struct Card<Content: View>: View {
     var symbol: String?
     /// Shows an ⓘ in the title row that opens this part of the legend.
     var legend: LegendPart? = nil
+    /// The whole card opens something (the lake view): a › at the end of the title
+    /// row, as on the value tiles, instead of a text link (owner, 13 Nov 2026).
+    /// The title row opens it too.
+    var opens: (() -> Void)? = nil
     @ViewBuilder var content: Content
     @Environment(\.surface) private var surface
     /// A one-time tip about this card, under its title (TipPlacement.swift, rule R1).
@@ -24,8 +28,16 @@ struct Card<Content: View>: View {
                     if legend != nil {
                         Spacer(minLength: 0)
                         LegendButton(showing: $showingLegend)
+                    } else if opens != nil {
+                        Spacer(minLength: 0)
+                        Image(systemName: "chevron.right")
+                            .font(.caption2.weight(.semibold))
+                            .foregroundStyle(.secondary)
+                            .accessibilityHidden(true)
                     }
                 }
+                .contentShape(Rectangle())
+                .onTapGesture { opens?() }
                 if let cardTip { cardTip }
             }
             // A card inside this one gets no tip of its own from here.

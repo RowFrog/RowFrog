@@ -64,6 +64,11 @@ export function t(english, ...args) {
   return text.replace(/%@|%%/g, (m) => (m === "%%" ? "%" : String(args[i++] ?? "")));
 }
 
+/** As t, for a short English word whose German differs by place: German comes from `key` (the app's tr(_:key:)). */
+export function tk(english, key) {
+  return language === "de" ? german[key] ?? english : english;
+}
+
 /** A number in the page's language: 12.7 or 12,7. */
 export function num(value, digits = 0) {
   if (value == null || Number.isNaN(value)) return "–";

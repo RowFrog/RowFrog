@@ -745,7 +745,7 @@ extension DetailMock {
         ),
         DetailMock(
             symbol: d(.wind).0, title: d(.wind).1, value: "2 m/s", note: "Gusts 4 m/s · from the east (90°)",
-            big: AnyView(WindDial(speed: "2", fromDeg: 90).frame(width: 100, height: 100)), unit: "m/s",
+            big: AnyView(WindDial(speed: "2", fromDeg: 90).frame(width: 90, height: 90)), unit: "m/s",
             series: [
                 Series(name: "Wind", values: [2, 2, 2, 1, 1, 1, 1, 2, 2, 2, 3, 3, 4, 4, 5, 5, 5, 4, 4, 3, 3, 2, 2, 2], color: .blue),
                 Series(name: "Gusts", values: [4, 4, 3, 3, 3, 2, 3, 3, 4, 4, 5, 6, 7, 8, 9, 9, 8, 8, 7, 6, 5, 4, 4, 4], color: .purple),

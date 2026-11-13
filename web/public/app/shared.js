@@ -1069,7 +1069,7 @@ export function conditionTexts() {
     feelsLike: r("feelsLike", t("Feels like"), unitSymbol("temperature"), t("How warm or cold it feels on the water. Wind makes it feel colder (wind chill); humid air and sun make it feel warmer (heat index).")),
     humidity: r("humidity", t("Humidity"), "%", t("Relative humidity. The dew point is the temperature at which the air turns to mist or dew.")),
     pressure: r("pressure", t("Air pressure"), unitSymbol("pressure"), t("Air pressure at sea level and where it goes in the next 3 hours. Falling fast often means wind and rain ahead.")),
-    wind: r("wind", t("Wind and gusts"), windUnit(), t("Mean wind – strongest gust, in %@. The arrow points where the wind blows to.", windUnit())),
+    wind: r("wind", t("Wind and gusts"), windUnit(), t("Mean wind – strongest gust, in %@. The arrow points where the wind blows to, as do the arrows above the wind chart.", windUnit())),
     waves: r("waves", t("Waves"), unitSymbol("waves"), t("Estimated wave height at the launch point, from wind and open water upwind.")),
     waterTemperature: r("waterTemperature", t("Water temperature"), unitSymbol("temperature"), t("Latest lake measurement. Below %@, extra care; below %@, cold water.", temperature(15), temperature(10))),
     precipitation: r("precipitation", t("Precipitation"), unitSymbol("rain"), t("What falls in the hour (rain, drizzle, snow, hail) and how much, in %@. Hail comes with thunderstorms.", unitSymbol("rain"))),

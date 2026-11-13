@@ -64,13 +64,13 @@ struct LakeMapScreen: View {
 
     /// `at` opens the map at a later hour, e.g. from an hour in the club page's table;
     /// `route` opens a saved route, from Settings › Routes.
-    init(view: LakeView, clubID: String?, at date: Date = .now, route opening: Route? = nil) {
+    init(view: LakeView, clubID: String?, at date: Date = .now, route opening: Route? = nil, layer firstLayer: LakeLayer? = nil) {
         self.view = view
         self.clubID = clubID
         let args = UserDefaults.standard
         let start = view.hourIndex(at: date) + args.integer(forKey: DefaultsKey.lakeHour)
         _hourIndex = State(initialValue: min(max(start, 0), max(view.hours.count - 1, 0)))
-        _layer = State(initialValue: LakeLayer(rawValue: args.string(forKey: DefaultsKey.lakeLayer) ?? "") ?? .light)
+        _layer = State(initialValue: LakeLayer(rawValue: args.string(forKey: DefaultsKey.lakeLayer) ?? "") ?? firstLayer ?? .light)
         var spot: Int?
         if let text = args.string(forKey: DefaultsKey.lakeSpot) {
             let parts = text.split(separator: ",").compactMap { Double($0) }
@@ -379,7 +379,7 @@ struct LakeMapScreen: View {
     /// one picked shows for a moment beside them.
     private var layerButtons: some View {
         VStack(spacing: 0) {
-            ForEach(LakeLayer.allCases) { item in
+            ForEach(LakeLayer.available(in: view)) { item in
                 Button {
                     layer = item
                     withAnimation { layerNote = item }
@@ -396,7 +396,7 @@ struct LakeMapScreen: View {
                 .buttonStyle(.plain)
                 .accessibilityLabel(item.title)
                 .accessibilityAddTraits(layer == item ? .isSelected : [])
-                if item != LakeLayer.allCases.last { Divider().frame(width: 44) }
+                if item != LakeLayer.available(in: view).last { Divider().frame(width: 44) }
             }
         }
         .clipShape(RoundedRectangle(cornerRadius: 14))
@@ -884,12 +884,13 @@ struct LakeMapScreen: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+            // Wind with its direction, waves, then visibility, as everywhere (owner, 13 Nov 2026).
             let metrics = HStack(spacing: 18) {
-                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.wave(ofCell: i)), size: 20)
                 MetricView(title: tr("Wind"), symbol: Condition.wind.symbol, value: Format.windRange(wind?.speedMs, wind?.gustMs), size: 20)
                 if let from = wind?.fromDeg {
                     MetricView(title: tr("From"), symbol: "location.north.line", value: Format.compass(from), size: 20)
                 }
+                MetricView(title: tr("Waves"), symbol: Condition.waves.symbol, value: Format.waves(hour.wave(ofCell: i)), size: 20)
             }
             let visibility = wind?.visM.map {
                 MetricView(title: tr("Visibility"), symbol: Condition.visibility.symbol, value: Format.distance($0), size: 20)
@@ -938,6 +939,11 @@ struct LakeLegend: View {
             case .wind:
                 let amber = limits.value(.windAmber), red = limits.value(.windRed)
                 ramp({ LakeRaster.windColor($0, limits) }, stops: [0, amber, red, red * 1.6], labels: [Format.wind(0), Format.wind(amber), Format.wind(red)])
+            case .visibility:
+                // By fogginess (LakeRaster.visibilityColor): 20 km, 1 km and 500 m at their places.
+                let amber = LakeRaster.fogginess(1000), red = LakeRaster.fogginess(500)
+                ramp({ f in LakeRaster.visibilityColor(20_000 / pow(10, f)) }, stops: [0, amber, red, red * 1.6],
+                     labels: [Format.distance(20_000), Format.distance(1000), Format.distance(500)])
             }
         }
         .font(.caption)
@@ -1660,8 +1666,8 @@ struct LakeLayerIcon: View {
             .padding(.vertical, 3)
             .padding(.horizontal, 4)
             .background(selected ? Color.white.opacity(0.9) : Color.primary.opacity(0.12), in: Capsule())
-        case .waves, .wind:
-            Image(systemName: layer == .waves ? Condition.waves.symbol : Condition.wind.symbol)
+        case .wind, .waves, .visibility:
+            Image(systemName: layer == .waves ? Condition.waves.symbol : layer == .wind ? Condition.wind.symbol : Condition.visibility.symbol)
                 .font(.body.weight(.semibold))
                 .foregroundStyle(selected ? Color.white : Color.primary)
         }
@@ -1684,6 +1690,9 @@ struct LakeScaleChip: View {
                 ramp({ LakeRaster.waveColor($0, limits) }, top: limits.value(.waveRed), from: Format.waves(0), to: Format.waves(limits.value(.waveRed)))
             case .wind:
                 ramp({ LakeRaster.windColor($0, limits) }, top: limits.value(.windRed), from: Format.wind(0), to: Format.wind(limits.value(.windRed)))
+            case .visibility:
+                let red = LakeRaster.fogginess(500)
+                ramp({ f in LakeRaster.visibilityColor(20_000 / pow(10, f)) }, top: red, from: Format.distance(20_000), to: Format.distance(500))
             }
         }
         .font(.caption2.weight(.semibold))

@@ -18,8 +18,8 @@ const LAYERS = [
   { id: "clubs", title: key("Clubs"), icon: "map-pin" },
   { id: "routes", title: key("Routes"), icon: "route" },
   { id: "light", title: key("Rowing light"), icon: "circle-dot", water: true },
-  { id: "waves", title: key("Waves"), icon: "waves", water: true },
   { id: "wind", title: key("Wind"), icon: "wind" },
+  { id: "waves", title: key("Waves"), icon: "waves", water: true },
   { id: "ice", title: key("Ice map"), icon: "snowflake" },
 ];
 

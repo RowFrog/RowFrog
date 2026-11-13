@@ -309,7 +309,7 @@ struct LakeProbeItem: Hashable {
 }
 
 extension LakeView {
-    /// The values under a tapped spot: waves, wind and visibility always, then
+    /// The values under a tapped spot: wind, waves and visibility always, then
     /// the strongest other reason when it is amber or red (owner's E2 and G, 6 Nov 2026).
     /// `at`: where the water was tapped; wind and visibility are blended for that spot.
     func probe(cell i: Int, at spot: CLLocationCoordinate2D? = nil, hour: LakeHour, limits: RowingLimits) -> (values: [LakeProbeItem], extra: LakeProbeItem?) {
@@ -318,10 +318,11 @@ extension LakeView {
             ?? hour.lakeWide.reasons.contains { $0.condition == "cold_water" }
         let l = limits.forWater(cold ? 0 : nil)
         let wave = i < hour.wavesCm.count ? hour.wave(ofCell: i) : nil
+        // Wind, waves, visibility, as everywhere in the app (owner, 13 Nov 2026).
         var values = [
-            LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(wave), light: l.light(wave, .waveAmber, .waveRed)),
             LakeProbeItem(symbol: Condition.wind.symbol, name: tr("Wind"), text: Format.windRange(wind?.speedMs, wind?.gustMs),
                           light: max(l.light(wind?.speedMs, .windAmber, .windRed), l.light(wind?.gustMs, .gustAmber, .gustRed))),
+            LakeProbeItem(symbol: Condition.waves.symbol, name: tr("Waves"), text: Format.waves(wave), light: l.light(wave, .waveAmber, .waveRed)),
         ]
         if let vis = wind?.visM {
             values.append(LakeProbeItem(symbol: Condition.visibility.symbol, name: tr("Visibility"), text: Format.distance(vis), light: wind?.fogLight ?? .green))
@@ -369,17 +370,26 @@ struct LakeZone: Decodable, Hashable {
 }
 
 /// What the lake map colours the water by.
+/// The rowing light first, then wind, waves and visibility, the order they
+/// have everywhere in the app (owner, 13 Nov 2026).
 enum LakeLayer: String, CaseIterable, Identifiable {
-    case light, waves, wind
+    case light, wind, waves, visibility
 
     var id: String { rawValue }
 
     var title: String {
         switch self {
         case .light: tr("Rowing light")
-        case .waves: tr("Waves")
         case .wind: tr("Wind")
+        case .waves: tr("Waves")
+        case .visibility: tr("Visibility")
         }
+    }
+
+    /// The layers a lake view can show: visibility only when the backend sends it per point.
+    static func available(in view: LakeView) -> [LakeLayer] {
+        let hasVisibility = view.hours.contains { $0.wind.contains { $0.visM != nil } }
+        return allCases.filter { $0 != .visibility || hasVisibility }
     }
 }
 
@@ -610,6 +620,17 @@ enum LakeRaster {
         ramp(ms, amber: limits.value(.windAmber), red: limits.value(.windRed))
     }
 
+    /// Visibility on the same ramp, by how foggy it is: calm blue from 20 km,
+    /// yellow at 1 km (fog: row with care), red at 500 m (fog: stay ashore),
+    /// purple below about 50 m (LakeWind.fogLight's limits).
+    static func visibilityColor(_ m: Double?) -> RGB {
+        guard let m else { return calm }
+        return ramp(fogginess(m), amber: fogginess(1000), red: fogginess(500))
+    }
+
+    /// 0 at 20 km and clearer, growing as the visibility falls (on a log scale, as visibility is read).
+    static func fogginess(_ m: Double) -> Double { max(0, log10(20_000 / max(m, 1))) }
+
     /// The picture for an hour, kept once drawn: pages and maps ask for it on
     /// every redraw, and drawing it means smoothing a thousand cells.
     static func image(_ view: LakeView, hour: LakeHour, layer: LakeLayer) -> CGImage? {
@@ -640,6 +661,8 @@ enum LakeRaster {
             case .waves: color = waveColor(hour.wave(ofCell: i), limits)
             case .wind:
                 color = windColor(view.cellWind(i, in: hour)?.speedMs ?? 0, limits)
+            case .visibility:
+                color = visibilityColor(view.cellWind(i, in: hour)?.visM)
             }
             let pixel = (h - 1 - flat / w) * w + flat % w  // north up
             water[pixel] = true

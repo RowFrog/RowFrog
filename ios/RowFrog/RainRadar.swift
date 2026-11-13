@@ -377,14 +377,15 @@ struct RadarMapScreen: View {
         NavigationStack {
             ZStack(alignment: .bottom) {
                 RadarMapView(point: point, clubID: clubID, region: loader.region, image: loader.images[frames[index]])
-                    .ignoresSafeArea(edges: .bottom)
+                    // To every edge with floating buttons, as the lake view and the weather maps
+                    // (MapTopBar): a navigation bar left a dark band at the top (owner, 13 Nov 2026).
+                    .ignoresSafeArea()
                 controls
             }
-            .navigationTitle(tr("Rain radar"))
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                CloseToolbarItem { dismiss() }
+            .overlay(alignment: .top) {
+                MapTopBar(title: tr("Rain radar"), close: { dismiss() })
             }
+            .toolbar(.hidden, for: .navigationBar)
             .sheet(isPresented: $showingLegend) { RadarLegendSheet() }
             .task { await loader.load() }
             // Starts playing on its own once every picture is there, except in Low

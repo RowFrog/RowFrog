@@ -492,6 +492,13 @@ struct ConditionDetailView: View {
     }
 
     private static let space = "conditionDetail"
+    /// The map card under the chart in portrait. Every page puts it at the same
+    /// height: a header of at least `headerHeight`, the chart, then one line for
+    /// the legend and "Back to now" (owner, 13 Nov 2026): chart bottom to map top
+    /// 6 + 20 + 14 = 40 pt, more only at larger text, equally on every page.
+    static let mapHeight: CGFloat = 200
+    /// As tall as the largest graphic (the wind dial and the pressure gauge, 90 pt).
+    static let headerHeight: CGFloat = 90
 
     final class ChartFrame {
         var rect: CGRect = .zero
@@ -513,25 +520,27 @@ struct ConditionDetailView: View {
         let head = shown.now.time == data.now.time ? detail : ConditionDetail(condition, shown)
         let hidden = hiddenLines[condition] ?? []
         let layer = detail.history || detail.lines.isEmpty ? nil : mapLayer(condition)
+        // Waves have no weather map: the lake view's waves take its place (owner, 13 Nov 2026).
+        let lakeMap = condition == .waves && !detail.history && !detail.lines.isEmpty
         VStack(alignment: .leading, spacing: 14) {
-            if let club, let layer, sideBySide {
+            if let club, layer != nil || lakeMap, sideBySide {
                 HStack(alignment: .top, spacing: 16) {
                     VStack(alignment: .leading, spacing: 14) {
                         top(condition, detail, head: head, shown: shown, hidden: hidden)
                     }
                     .frame(maxWidth: .infinity)
                     // As tall as the chart beside it on the iPad.
-                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: verticalSize == .compact ? 230 : 300)
+                    mapSlot(detail, layer: layer, club: club, hidden: hidden, height: verticalSize == .compact ? 230 : 300)
                         .frame(maxWidth: .infinity)
                 }
             } else {
                 top(condition, detail, head: head, shown: shown, hidden: hidden)
-                if let club, let layer {
+                if let club, layer != nil || lakeMap {
                     // After the chart's tip, so one tip shows at a time.
-                    if mapTipShown {
+                    if mapTipShown && layer != nil {
                         TintedTipView(mapTip)
                     }
-                    mapCard(detail, layer: layer, club: club, hidden: hidden, height: 220)
+                    mapSlot(detail, layer: layer, club: club, hidden: hidden, height: Self.mapHeight)
                 }
             }
             if let info = detail.limitInfo {
@@ -593,21 +602,20 @@ struct ConditionDetailView: View {
                     .frame(width: width * 1.6, height: ConditionTile.graphicHeight * 1.6)
             }
         }
+        .frame(minHeight: Self.headerHeight)
         .accessibilityElement(children: .contain)
         if !detail.lines.isEmpty {
             if tourSeen && showScrubTip {
                 TintedTipView(scrubTip)
             }
-            ConditionChart(detail: detail, data: data, time: time, hidden: hidden)
+            ConditionChart(detail: detail, data: data, time: time, hidden: hidden,
+                           legend: detail.lines.count > 1 ? AnyView(legend(detail, condition: condition, hidden: hidden)) : nil)
                 .background {
                     GeometryReader { geo in
                         Color.clear.preference(key: ChartFrameKey.self, value: geo.frame(in: .named(Self.space)))
                     }
                 }
                 .onPreferenceChange(ChartFrameKey.self) { chartFrame.rect = $0 }
-            if detail.lines.count > 1 {
-                legend(detail, condition: condition, hidden: hidden)
-            }
         }
     }
 
@@ -623,6 +631,16 @@ struct ConditionDetailView: View {
     /// The weather map tip, above the map card in portrait once the chart's tip is closed.
     private var mapTipShown: Bool {
         tourSeen && showMapTip && !showScrubTip && !sideBySide
+    }
+
+    /// The weather map, or for waves the lake view's waves.
+    @ViewBuilder
+    private func mapSlot(_ detail: ConditionDetail, layer: WeatherMapLayer?, club: Club, hidden: Set<String>, height: CGFloat) -> some View {
+        if let layer {
+            mapCard(detail, layer: layer, club: club, hidden: hidden, height: height)
+        } else {
+            DetailLakeCard(lakeID: data.forecast.lakeId, clubID: club.id, data: data, time: time, height: height)
+        }
     }
 
     /// The weather map under (or beside) the chart, with the slim chart for its full-screen view.
@@ -653,7 +671,7 @@ struct ConditionDetailView: View {
                     withAnimation(.easeInOut(duration: 0.2)) { hiddenLines[condition] = set }
                 } label: {
                     // A hidden line keeps its colour (a grey entry would look like the
-                    // grey "All cloud" line): an empty ring and struck-through name.
+                    // grey "All" cloud line): an empty ring and struck-through name.
                     Label {
                         Text(line.name).strikethrough(off)
                     } icon: {
@@ -808,8 +826,12 @@ private struct ConditionChart: View {
     let time: DetailTime
     /// Lines switched off in the legend.
     var hidden: Set<String> = []
-    /// Slim, without the hint underneath: the time bar of the full-screen map.
+    /// Slim, without the line underneath: the time bar of the full-screen map.
     var compact = false
+    /// The chart's lines to switch off and on, left in the line under the chart.
+    var legend: AnyView? = nil
+    /// The line under the chart: 20 pt, growing with the text size.
+    @ScaledMetric(relativeTo: .caption) private var rowHeight: CGFloat = 20
     @Environment(\.dynamicTypeSize) private var typeSize
     private static let start = DetailTime.start
     /// The hour at the left edge of the visible 24 hours.
@@ -819,12 +841,13 @@ private struct ConditionChart: View {
     @State private var selectedX: Double? = UserDefaults.standard.object(forKey: DefaultsKey.chartSelect) != nil
         ? UserDefaults.standard.double(forKey: DefaultsKey.chartSelect) : nil
 
-    init(detail: ConditionDetail, data: ConditionData, time: DetailTime, hidden: Set<String> = [], compact: Bool = false) {
+    init(detail: ConditionDetail, data: ConditionData, time: DetailTime, hidden: Set<String> = [], compact: Bool = false, legend: AnyView? = nil) {
         self.detail = detail
         self.data = data
         self.time = time
         self.hidden = hidden
         self.compact = compact
+        self.legend = legend
         _scrollX = State(initialValue: detail.history ? Self.start : time.scrollX)
     }
 
@@ -969,32 +992,43 @@ private struct ConditionChart: View {
                     // stretching past the chart's edge and shrinking back.
                     scrollX = min(max(x - 8, range.lowerBound), range.upperBound - 24)
                 }
-            // Under the chart, where it covers nothing: the hint, or once dragged
-            // or scrubbed away from the opened hour, one tap back.
-            // Both take the same place, the hint kept hidden under the button,
-            // so the map card below never moves up or down.
+            // One line under the chart, the same height on every page so the map
+            // card below never moves: the legend at the left, and once dragged or
+            // scrubbed away from the opened hour, one tap back at the right. How to
+            // drag and read the chart is a one-time tip (ChartScrubTip, owner 13 Nov 2026).
             if !compact {
                 let away = !detail.history && (abs(scrollX - Self.start) > 0.5 || time.hour != 0)
-                ZStack(alignment: .topLeading) {
-                    Text(detail.chartNote ?? (detail.history ? tr("Measurements of the last days. Touch the chart to read a value.") : tr("Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value.")))
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .opacity(away ? 0 : 1)
-                        .accessibilityHidden(away)
+                HStack(spacing: 8) {
+                    legend
+                    Spacer(minLength: 0)
                     if away {
                         Button {
                             withAnimation { time.back() }
                             scrollX = Self.start
                         } label: {
-                            Label(data.isNow ? tr("Back to now") : tr("Back to %@", Format.dayTime(data.now.time)), systemImage: (time.hour != 0 ? time.hour : scrollX - Self.start) > 0 ? "arrow.uturn.backward" : "arrow.uturn.forward")
-                                .font(.caption.weight(.semibold))
+                            let label = data.isNow ? tr("Back to now") : tr("Back to %@", Format.dayTime(data.now.time))
+                            let symbol = (time.hour != 0 ? time.hour : scrollX - Self.start) > 0 ? "arrow.uturn.backward" : "arrow.uturn.forward"
+                            // Beside a long legend (cloud), only the arrow.
+                            ViewThatFits(in: .horizontal) {
+                                Label(label, systemImage: symbol)
+                                Image(systemName: symbol).accessibilityLabel(label)
+                            }
+                            .font(.caption.weight(.semibold))
+                            .tapArea(EdgeInsets(top: 12, leading: 8, bottom: 12, trailing: 0))
                         }
                         .buttonStyle(.plain)
                         .foregroundStyle(.blue)
                         .transition(.opacity)
                     }
                 }
+                .frame(height: rowHeight)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                // Past measurements have no map below: their note (what the dashed line is) stays.
+                if detail.history {
+                    Text(detail.chartNote ?? tr("Measurements of the last days. Touch the chart to read a value."))
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -1478,7 +1512,7 @@ extension ConditionDetail {
         return ConditionDetail(
             value: Format.wind(h.windSpeedMs),
             note: tr("Gusts %@", Format.wind(h.windGustMs)) + (h.windFromDeg.map { " · " + tr("from %@", Format.compass($0)) } ?? ""),
-            big: h.windFromDeg.map { AnyView(WindDial(speed: Format.windNumber(h.windSpeedMs), fromDeg: $0, unit: w.symbol).frame(width: 100, height: 100)) },
+            big: h.windFromDeg.map { AnyView(WindDial(speed: Format.windNumber(h.windSpeedMs), fromDeg: $0, unit: w.symbol).frame(width: 90, height: 90)) },
             unit: w.symbol,
             lines: [
                 ChartLine(name: tr("Wind"), color: .blue, points: d.points { $0.windSpeedMs.map(w.chartValue) }),
@@ -1492,7 +1526,6 @@ extension ConditionDetail {
                           RowingLimit.windAmber.format(5.5), RowingLimit.windRed.format(8), RowingLimit.gustAmber.format(8), RowingLimit.gustRed.format(12.8))
                 + inUse(d.limits, [(tr("Wind"), .windAmber, .windRed), (tr("Gusts"), .gustAmber, .gustRed)]),
             windArrows: true,
-            chartNote: tr("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value."),
             facts: facts,
             rowing: advice(d, Condition.wind.reasonNames,
                            red: tr("Too windy now: stay ashore."),
@@ -1772,10 +1805,10 @@ extension ConditionDetail {
             note: tr("Low cloud %@ %%", Format.number(h.cloudCoverLowPct)),
             unit: "%",
             lines: [
-                ChartLine(name: tr("All cloud"), color: .gray, points: d.points(\.cloudCoverPct)),
-                ChartLine(name: tr("High cloud"), color: .cyan, points: d.points(\.cloudCoverHighPct)),
-                ChartLine(name: tr("Middle cloud"), color: .teal, points: d.points(\.cloudCoverMidPct)),
-                ChartLine(name: tr("Low cloud"), color: .indigo, points: d.points(\.cloudCoverLowPct)),
+                ChartLine(name: tr("All", key: "Cloud line: All"), color: .gray, points: d.points(\.cloudCoverPct)),
+                ChartLine(name: tr("High", key: "Cloud line: High"), color: .cyan, points: d.points(\.cloudCoverHighPct)),
+                ChartLine(name: tr("Mid", key: "Cloud line: Mid"), color: .teal, points: d.points(\.cloudCoverMidPct)),
+                ChartLine(name: tr("Low", key: "Cloud line: Low"), color: .indigo, points: d.points(\.cloudCoverLowPct)),
             ].filter { !$0.points.isEmpty },
             yDomain: 0...130,
             trendStep: 5,

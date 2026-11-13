@@ -79,8 +79,8 @@ struct LakeSpotProbe: View {
 
     private static var template: [LakeProbeItem] {
         [
-            LakeProbeItem(symbol: Condition.waves.symbol, name: "", text: Format.waves(0.45), light: .green),
             LakeProbeItem(symbol: Condition.wind.symbol, name: "", text: Format.windRange(12, 18), light: .green),
+            LakeProbeItem(symbol: Condition.waves.symbol, name: "", text: Format.waves(0.45), light: .green),
             LakeProbeItem(symbol: Condition.visibility.symbol, name: "", text: Format.distance(500), light: .green),
         ]
     }

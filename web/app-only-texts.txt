@@ -25,6 +25,7 @@ Lock screen
 Medium
 Medium: good rowing times
 No green hours in the forecast.
+Not known yet
 Only after using the app
 Open Row Frog to load the forecast.
 Plain, light or dark

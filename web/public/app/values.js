@@ -1,7 +1,7 @@
 // What a value's own page shows (ConditionDetail in the app): the big value,
 // the chart's lines and limits, the facts, the rowing advice and the source.
 
-import { t, num, lang } from "./i18n.js";
+import { t, tk, num, lang } from "./i18n.js";
 import {
   time, dayLabel, dayTime, duration, degrees, temperature, wind, windUnit, windRange, waves, rain, distance, limitText,
   pressure, pressureChangeText, inUnit, unitSymbol, unitChange, unitId,
@@ -158,7 +158,6 @@ function clothingAdvice(feels) {
   return t("Dress in layers you can take off.");
 }
 
-const DRAG_NOTE = () => t("Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value.");
 
 function base(overrides) {
   return {
@@ -248,7 +247,6 @@ const BUILDERS = {
       windArrows: true,
       // The scrub label names whole forces, as the big value does.
       valueText: unitId("wind") === "bft" ? (y) => `${Math.round(y)} Bft` : null,
-      chartNote: t("The arrows above the chart show where the wind blows to. Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value."),
       facts,
       rowing: advice(d, REASONS.wind, {
         red: t("Too windy now: stay ashore."), amber: t("Windy now: row with care and stay near the shore."),
@@ -455,10 +453,10 @@ const BUILDERS = {
     return base({
       value: pct(x.cloudCoverPct), note: t("Low cloud %@ %%", num(x.cloudCoverLowPct)), unit: "%",
       lines: [
-        { name: t("All cloud"), colour: COLOURS.gray, points: d.points((y) => y.cloudCoverPct) },
-        { name: t("High cloud"), colour: COLOURS.cyan, points: d.points((y) => y.cloudCoverHighPct) },
-        { name: t("Middle cloud"), colour: COLOURS.teal, points: d.points((y) => y.cloudCoverMidPct) },
-        { name: t("Low cloud"), colour: COLOURS.indigo, points: d.points((y) => y.cloudCoverLowPct) },
+        { name: tk("All", "Cloud line: All"), colour: COLOURS.gray, points: d.points((y) => y.cloudCoverPct) },
+        { name: tk("High", "Cloud line: High"), colour: COLOURS.cyan, points: d.points((y) => y.cloudCoverHighPct) },
+        { name: tk("Mid", "Cloud line: Mid"), colour: COLOURS.teal, points: d.points((y) => y.cloudCoverMidPct) },
+        { name: tk("Low", "Cloud line: Low"), colour: COLOURS.indigo, points: d.points((y) => y.cloudCoverLowPct) },
       ].filter((l) => l.points.length),
       yDomain: [0, 130], trendStep: 5,
       facts: [
@@ -640,4 +638,3 @@ export function conditionDetail(condition, d) {
   return BUILDERS[condition](d);
 }
 
-export const dragNote = DRAG_NOTE;

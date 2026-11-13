@@ -538,6 +538,56 @@ test("the lake tile shows its parts as a small table with the wind's arrow, and 
   await context.close();
 });
 
+test("value pages keep the chart and the map at the same height: 40 px between them, the waves page with the lake's waves (owner, 13 Nov 2026)", async () => {
+  const { page, errors, context } = await open(visitor());
+  const lake = squareLake();
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  const seen = [];
+  for (const value of ["visibility", "temperature", "wind", "waves", "cloudCover", "pressure"]) {
+    await page.goto(`${base}/app/#/club/${club.id}/value/${value}`);
+    const m = await page.waitForFunction(() => {
+      const chart = document.querySelector(".vchart-wrap")?.getBoundingClientRect();
+      const map = document.querySelector("#map-card")?.getBoundingClientRect();
+      return chart && map?.height > 100 ? { chart: chart.top, gap: map.top - chart.bottom } : null;
+    }, null, { timeout: 20000 }).then((h) => h.jsonValue());
+    seen.push(m.chart);
+    assert.ok(Math.abs(m.gap - 40) <= 1, `${value}: ${m.gap} px from the chart to the map`);
+  }
+  assert.ok(Math.max(...seen) - Math.min(...seen) <= 1, `the chart starts at the same height on every page: ${seen}`);
+  // The waves page's map is the lake's, and opens the lake view on its waves.
+  await page.goto(`${base}/app/#/club/${club.id}/value/waves`);
+  await page.locator("#map-card canvas.wm-lake").waitFor({ timeout: 20000 });
+  assert.match(await page.locator("#map-card a").getAttribute("href"), /layer=waves/);
+  await page.locator("#map-card canvas").click();
+  await page.waitForFunction(() => document.querySelector('.lake-layers [data-layer="waves"]')?.classList.contains("on"), null, { timeout: 20000 });
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("the lake view's layers read rowing light, wind, waves and visibility; visibility only when the view has it (LakeLayer.available)", async () => {
+  const { page, errors, context } = await open(visitor());
+  const lake = squareLake();
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  const layers = () => page.locator(".lake-layers [data-layer]").evaluateAll((bs) => bs.map((b) => b.dataset.layer));
+  await page.goto(`${base}/app/#/lake/${club.lakeId}/${club.id}`);
+  await page.locator(".lake-layers").waitFor({ timeout: 20000 });
+  assert.deepEqual(await layers(), ["light", "wind", "waves"]);
+  await context.close();
+  // With visibility per point (wind[].visM), the fourth layer, coloured by fogginess.
+  const second = await open(visitor());
+  await second.context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify({ ...lake, hours: lake.hours.map((x) => ({ ...x, wind: x.wind.map((w) => ({ ...w, visM: 800 })) })) }) }));
+  await second.page.goto(`${base}/app/#/lake/${club.lakeId}/${club.id}`);
+  await second.page.locator(".lake-layers").waitFor({ timeout: 20000 });
+  assert.deepEqual(await second.page.locator(".lake-layers [data-layer]").evaluateAll((bs) => bs.map((b) => b.dataset.layer)), ["light", "wind", "waves", "visibility"]);
+  await second.page.locator('[data-layer="visibility"]').click();
+  await second.page.locator(".lake-scale .bar").waitFor();
+  assert.deepEqual([...errors, ...second.errors], []);
+  await second.context.close();
+});
+
 test("the route editor: undo takes back the way back, Save marks the route saved, an edit changed and undo saved again", async () => {
   const { page, errors, context } = await open(visitor());
   const lake = squareLake();
