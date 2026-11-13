@@ -34,27 +34,63 @@ enum BubbleTarget {
     case source
 }
 
-/// Puts the bubble on this control when the bubble is for it.
+/// Puts the bubble on this control when the bubble is for it. A SwiftUI popover with the tip's
+/// TipView inside, shown while the page picks the tip and the control is in sight: TipKit's own
+/// popoverTip stayed away when it was attached after the page appeared (shots of 13 Nov, with
+/// -RWTipDebug: tip picked, anchor attached, no popover).
 struct BubbleAnchor: ViewModifier {
     let target: BubbleTarget
     var active = true
     @Environment(\.bubbleTip) private var bubble
+    @State private var inSight = false
+    @State private var presented = false
+
+    private var tip: ClubPageTip? {
+        guard active, let bubble, bubble.target == target else { return nil }
+        return bubble.tip
+    }
 
     func body(content: Content) -> some View {
-        if active, let bubble, bubble.target == target {
-            // Each with its own tip type, as every popover tip that works in the app.
-            switch bubble.tip {
-            case .topTile: content.popoverTip(TopTileTip(), arrowEdge: .top).tipDebug(target)
-            case .allValues: content.popoverTip(AllValuesTip(), arrowEdge: .top).tipDebug(target)
-            case .riverCurrent: content.popoverTip(RiverCurrentTip(), arrowEdge: .top).tipDebug(target)
-            case .rainRadar: content.popoverTip(RainRadarTip(), arrowEdge: .top).tipDebug(target)
-            case .hourView: content.popoverTip(HourViewTip(), arrowEdge: .top).tipDebug(target)
-            case .source: content.popoverTip(ForecastSourceTip(), arrowEdge: .top).tipDebug(target)
-            case .placeLine: content.popoverTip(PlaceLineTip(), arrowEdge: .top).tipDebug(target)
-            default: content
-            }
+        if active {
+            anchored(content)
         } else {
+            // The hour rows but the first: nothing to watch.
             content
+        }
+    }
+
+    private func anchored(_ content: Content) -> some View {
+        content
+            // In sight: inside what its scroll view shows (a control scrolled away gets no bubble).
+            .onGeometryChange(for: Bool.self) { proxy in
+                CGRect(origin: .zero, size: proxy.size).intersects(proxy.bounds(of: .scrollView) ?? .infinite)
+            } action: { inSight = $0 }
+            .onChange(of: tip != nil && inSight, initial: true) { _, show in presented = show }
+            .popover(isPresented: $presented, arrowEdge: .top) {
+                if let tip {
+                    BubbleTipView(tip: tip)
+                        .frame(width: 320)
+                        .presentationCompactAdaptation(.popover)
+                }
+            }
+            .tipDebug(tip == nil ? nil : target)
+    }
+}
+
+/// The tip inside a bubble: TipKit's view of each tip, with its own type.
+private struct BubbleTipView: View {
+    let tip: ClubPageTip
+
+    var body: some View {
+        switch tip {
+        case .topTile: TipView(TopTileTip())
+        case .allValues: TipView(AllValuesTip())
+        case .riverCurrent: TipView(RiverCurrentTip())
+        case .rainRadar: TipView(RainRadarTip())
+        case .hourView: TipView(HourViewTip())
+        case .source: TipView(ForecastSourceTip())
+        case .placeLine: TipView(PlaceLineTip())
+        default: EmptyView()
         }
     }
 }
@@ -62,8 +98,8 @@ struct BubbleAnchor: ViewModifier {
 extension View {
     /// `-RWTipDebug YES`: a red frame round a control that has its bubble attached, to tell
     /// in a screenshot whether the page picked it or TipKit didn't present it.
-    @ViewBuilder func tipDebug(_ target: BubbleTarget) -> some View {
-        if UserDefaults.standard.bool(forKey: DefaultsKey.tipDebug) {
+    @ViewBuilder func tipDebug(_ target: BubbleTarget?) -> some View {
+        if let target, UserDefaults.standard.bool(forKey: DefaultsKey.tipDebug) {
             overlay(alignment: .topLeading) {
                 Text(verbatim: "bubble \(target)").font(.caption2.bold()).foregroundStyle(.white).background(.red)
             }
