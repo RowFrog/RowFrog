@@ -158,7 +158,6 @@ function clothingAdvice(feels) {
   return t("Dress in layers you can take off.");
 }
 
-const DRAG_NOTE = () => t("Drag the chart: back to yesterday, forward up to 7 days. Hold, then slide to read a value.");
 
 function base(overrides) {
   return {
@@ -639,4 +638,3 @@ export function conditionDetail(condition, d) {
   return BUILDERS[condition](d);
 }
 
-export const dragNote = DRAG_NOTE;
