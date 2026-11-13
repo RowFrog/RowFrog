@@ -1518,3 +1518,12 @@ nav.bottom { view-transition-name: page-bar; }
 .page-end p.source:has(> .tip.pop:not([hidden])) { z-index: 7; }
 .card.now { position: relative; }
 .card.now > .tip.pop { top: calc(100% + 10px); left: 50%; transform: translateX(-50%); --arrow-x: calc(50% - 7px); }
+/* The satellite card's caption as the app's (SatelliteCaption): line and info button on one row with the button at
+   the end, the lines 2 px apart, the credit in caption size; the picture's corners 10 px. Owner, 13 Nov 2026. */
+#satellite .sat-caption { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; }
+#satellite .sat-caption p { margin: 0; }
+#satellite .sat-line { display: flex; align-items: baseline; gap: 4px; }
+#satellite .sat-line > span { flex: 1; min-width: 0; }
+#satellite .sat-line .sat-why { flex: none; color: var(--sub); }
+#satellite .sat-credit { font-size: 11px; }
+#satellite .picture { border-radius: 10px; }
