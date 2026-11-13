@@ -339,12 +339,12 @@ Geometry checks run on every merge in every combination; the whole set of pictur
 
 - iPhone app: portrait, landscape.
 - iPad app: portrait, landscape; list shown and hidden.
-- Website, computer: Chrome and Safari; wide (list beside), medium, narrow window.
+- Website, computer: Chrome (Playwright Chromium); wide (list beside), medium, narrow window. No desktop Safari: `safaridriver` brings Safari.app to the front and switches screens (owner, 12 Nov 2026); Mobile Safari in the headless Simulator covers the engine.
 - Website, iPhone: Chrome and Safari; portrait, landscape.
 - Website, iPad: Chrome and Safari; portrait, landscape; list shown and hidden.
 - Each at the top, in the middle and near the end of the page; light and dark; with a picture (frosted, solid) and without; keyboard open where there is a text field. Positions are measured, not judged by eye.
 
-How on the Mac: app shots with XCUITest or `simctl` (never the Claude app's Simulator tool); Mobile Safari with `xcrun simctl openurl booted <url>` and `simctl io booted screenshot`; desktop Safari with `safaridriver`; Chrome with Playwright's Chromium. Chrome on iPhone and iPad uses Apple's WebKit, so Simulator Safari stands in for its drawing.
+How on the Mac: app shots with XCUITest or `simctl` (never the Claude app's Simulator tool); Mobile Safari with `xcrun simctl openurl booted <url>` and `simctl io booted screenshot`, headless (no Simulator.app window); Chrome with Playwright's Chromium. Chrome on iPhone and iPad uses Apple's WebKit, so Simulator Safari stands in for its drawing.
 
 ## Weekly Mac cleanup (owner, 12 Nov 2026)
 
