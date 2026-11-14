@@ -199,4 +199,14 @@ final class WidgetContentTests: XCTestCase {
             }
         }
     }
+
+    /// The widget gallery draws each phone's own sizes (owner's C1, 14 Nov 2026), so the small iPhones' shots show the fit.
+    func testGallerySizesFollowTheScreen() throws {
+        try XCTSkipIf(UIDevice.current.userInterfaceIdiom == .pad, "iPhone table")
+        XCTAssertEqual(WidgetSizes.forScreen(CGSize(width: 375, height: 667)).large, CGSize(width: 321, height: 324))
+        XCTAssertEqual(WidgetSizes.forScreen(CGSize(width: 375, height: 812)).large, CGSize(width: 329, height: 345))
+        XCTAssertEqual(WidgetSizes.forScreen(CGSize(width: 390, height: 844)).medium, CGSize(width: 338, height: 158))
+        XCTAssertEqual(WidgetSizes.forScreen(CGSize(width: 402, height: 874)).large, CGSize(width: 364, height: 382))
+        XCTAssertEqual(WidgetSizes.forScreen(CGSize(width: 440, height: 956)).small, CGSize(width: 170, height: 170))
+    }
 }

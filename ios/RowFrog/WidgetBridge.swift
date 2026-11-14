@@ -178,12 +178,11 @@ struct WidgetGalleryView: View {
 
     private let homeID = UserDefaults.standard.string(forKey: DefaultsKey.homeClub) ?? WidgetShared.defaultHomeID
 
-    // Widget sizes on a 6.3" iPhone, in points; extra large is the iPad's.
-    private let sizes: [(WidgetFamily, CGSize, String)] = [
-        (.systemSmall, CGSize(width: 170, height: 170), "Small"),
-        (.systemMedium, CGSize(width: 364, height: 170), "Medium"),
-        (.systemLarge, CGSize(width: 364, height: 382), "Large"),
-    ]
+    @Environment(\.colorScheme) private var colorScheme
+
+    /// The widget sizes of the device it runs on (owner's C1, 14 Nov 2026), so the small iPhones'
+    /// shots show whether a layout fits: small, medium, large and extra large (iPad only).
+    private let sizes = WidgetSizes.forScreen(UIScreen.main.bounds.size)
 
     var body: some View {
         ScrollView {
@@ -192,32 +191,36 @@ struct WidgetGalleryView: View {
                     Text("The forecast could not be loaded.").foregroundStyle(.secondary)
                 }
                 let snapshot = RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: forecast)
+                caption(sizes.name)
                 // Each size in its layouts (Edit Widget > Layout): fewer values first, the default.
                 caption("Small: fewer values")
-                widget(snapshot, .systemSmall, sizes[0].1)
+                widget(snapshot, .systemSmall, sizes.small)
                 caption("Small: all values")
-                widget(snapshot, .systemSmall, sizes[0].1, layout: .beside)
+                widget(snapshot, .systemSmall, sizes.small, layout: .beside)
                 caption("Medium: fewer values")
-                widget(snapshot, .systemMedium, sizes[1].1)
+                widget(snapshot, .systemMedium, sizes.medium)
                 caption("Medium: all values")
-                widget(snapshot, .systemMedium, sizes[1].1, layout: .beside)
+                widget(snapshot, .systemMedium, sizes.medium, layout: .beside)
                 caption("Medium, good rowing times: fewer values")
-                widget(snapshot, .systemMedium, sizes[1].1, focus: .windows)
+                widget(snapshot, .systemMedium, sizes.medium, focus: .windows)
                 caption("Medium, good rowing times: all values")
-                widget(snapshot, .systemMedium, sizes[1].1, focus: .windows, layout: .beside)
+                widget(snapshot, .systemMedium, sizes.medium, focus: .windows, layout: .beside)
                 caption("Large: fewer values")
-                widget(snapshot, .systemLarge, sizes[2].1)
+                widget(snapshot, .systemLarge, sizes.large)
                 caption("Large: all values in a row")
-                widget(snapshot, .systemLarge, sizes[2].1, layout: .below)
+                widget(snapshot, .systemLarge, sizes.large, layout: .below)
                 caption("Large: all values beside the light")
-                widget(snapshot, .systemLarge, sizes[2].1, layout: .beside)
+                widget(snapshot, .systemLarge, sizes.large, layout: .beside)
                 caption("Small and medium without marks")
-                widget(snapshot, .systemSmall, sizes[0].1, marks: false)
-                widget(snapshot, .systemMedium, sizes[1].1, focus: .windows, marks: false)
+                widget(snapshot, .systemSmall, sizes.small, marks: false)
+                widget(snapshot, .systemMedium, sizes.medium, focus: .windows, marks: false)
                 caption("Extra large (iPad only)")
-                widget(snapshot, .systemExtraLarge, CGSize(width: 715, height: 354))
-                    .scaleEffect(364 / 715, anchor: .topLeading)
-                    .frame(width: 364, height: 354 * 364 / 715, alignment: .topLeading)
+                let xl = sizes.extraLarge
+                // Real size on the iPad; shrunk to the screen on an iPhone.
+                let fit = UIDevice.current.userInterfaceIdiom == .pad ? 1 : min(1, sizes.medium.width / xl.width)
+                widget(snapshot, .systemExtraLarge, xl)
+                    .scaleEffect(fit, anchor: .topLeading)
+                    .frame(width: xl.width * fit, height: xl.height * fit, alignment: .topLeading)
                 caption("Lock screen")
                 HStack(spacing: 12) {
                     accessory(snapshot, .accessoryCircular, CGSize(width: 76, height: 76))
@@ -225,17 +228,20 @@ struct WidgetGalleryView: View {
                 }
                 accessory(snapshot, .accessoryInline, CGSize(width: 300, height: 26))
                 caption("Without a connection")
-                widget(RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: nil), .systemSmall, sizes[0].1)
+                widget(RowingSnapshot(date: .now, clubName: "MRC 1880", isHome: true, forecast: nil), .systemSmall, sizes.small)
                 // Settings > Widgets > Background: each choice on the medium widget.
                 ForEach(backgrounds, id: \.0) { item in
                     caption("Background: " + item.1)
-                    widget(snapshot, .systemMedium, sizes[1].1, focus: .conditions, background: item.0)
+                    widget(snapshot, .systemMedium, sizes.medium, focus: .conditions, background: item.0)
                 }
             }
             .padding()
         }
+        // A light or a dark home screen, as the device's mode (the widgets follow it too).
         .background(
-            LinearGradient(colors: [Color(red: 0.62, green: 0.79, blue: 0.96), Color(red: 0.91, green: 0.85, blue: 0.95)],
+            LinearGradient(colors: colorScheme == .dark
+                               ? [Color(red: 0.09, green: 0.13, blue: 0.22), Color(red: 0.2, green: 0.12, blue: 0.24)]
+                               : [Color(red: 0.62, green: 0.79, blue: 0.96), Color(red: 0.91, green: 0.85, blue: 0.95)],
                            startPoint: .topLeading, endPoint: .bottomTrailing)
                 .ignoresSafeArea()
         )
@@ -269,7 +275,7 @@ struct WidgetGalleryView: View {
     }
 
     private func caption(_ text: String) -> some View {
-        Text(text).font(.subheadline.weight(.semibold)).foregroundStyle(.black.opacity(0.7))
+        Text(text).font(.subheadline.weight(.semibold)).foregroundStyle(.primary.opacity(0.7))
     }
 
     private var backgrounds: [(WidgetBackground, String)] {
@@ -296,5 +302,42 @@ struct WidgetGalleryView: View {
             .environment(\.colorScheme, .dark)
             .padding(6)
             .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 14))
+    }
+}
+
+/// Home Screen widget sizes in points by screen size, from Apple's Human Interface Guidelines
+/// (Widgets > Specifications). Screens not in the table use the nearest smaller one.
+struct WidgetSizes {
+    let name: String
+    let small: CGSize
+    let medium: CGSize
+    let large: CGSize
+    /// iPad only; on an iPhone the iPad Pro 11" size, for the gallery's last row.
+    let extraLarge: CGSize
+
+    private static func phone(_ name: String, _ small: CGFloat, _ wide: CGFloat, _ tall: CGFloat) -> WidgetSizes {
+        WidgetSizes(name: name, small: CGSize(width: small, height: small), medium: CGSize(width: wide, height: small),
+                    large: CGSize(width: wide, height: tall), extraLarge: CGSize(width: 715, height: 342))
+    }
+
+    private static func pad(_ name: String, _ small: CGFloat, _ wide: CGFloat, _ extra: CGFloat) -> WidgetSizes {
+        WidgetSizes(name: name, small: CGSize(width: small, height: small), medium: CGSize(width: wide, height: small),
+                    large: CGSize(width: wide, height: wide), extraLarge: CGSize(width: extra, height: wide))
+    }
+
+    static func forScreen(_ screen: CGSize) -> WidgetSizes {
+        let width = min(screen.width, screen.height), height = max(screen.width, screen.height)
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            if width >= 1024 { return pad("Widget sizes: iPad 13\"", 170, 378.5, 795) }
+            if width >= 820 { return pad("Widget sizes: iPad 11\"", 155, 342, 715) }
+            return pad("Widget sizes: iPad mini", 141, 305.5, 634.5)
+        }
+        if width >= 428 { return phone("Widget sizes: iPhone Pro Max / Plus (\(Int(width)) pt)", 170, 364, 382) }
+        if width >= 414 { return phone("Widget sizes: iPhone (414 pt)", 169, 360, 379) }
+        // The 6.3" Pro (402 pt): the sizes the gallery used before (364 × 382 large).
+        if width >= 402 { return phone("Widget sizes: iPhone Pro (\(Int(width)) pt)", 170, 364, 382) }
+        if width >= 390 { return phone("Widget sizes: iPhone (\(Int(width)) pt)", 158, 338, 354) }
+        if height >= 812 { return phone("Widget sizes: iPhone 13 mini (375 × 812 pt)", 155, 329, 345) }
+        return phone("Widget sizes: iPhone SE (375 × 667 pt)", 148, 321, 324)
     }
 }

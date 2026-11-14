@@ -553,7 +553,9 @@ extension RowingWidgetView {
     /// The next hours: time, sky, light, temperature, and in the larger sizes
     /// the given lines. With `legend` a first column names each line's unit, and
     /// the temperatures go without "°", as in the 48 h table (owner, 13 Nov 2026).
-    func hourRow(count: Int, lines: [HourLine], legend: Bool = false, big: Bool = false) -> some View {
+    /// With lines, the temperatures are one of them, in the same small style (owner, 14 Nov 2026);
+    /// without `temperature` (medium) only time, symbol and light show.
+    func hourRow(count: Int, lines: [HourLine], legend: Bool = false, big: Bool = false, temperature: Bool = true) -> some View {
         let hours = Array(snapshot.hours.prefix(count))
         return Grid(horizontalSpacing: 0, verticalSpacing: big ? 5 : 4) {
             GridRow {
@@ -584,12 +586,25 @@ extension RowingWidgetView {
                         .frame(maxWidth: .infinity)
                 }
             }
-            GridRow {
-                if legend { legendLabel(Condition.temperature.symbol, AppSettings.shared.temperatureUnit.symbol) }
-                ForEach(hours, id: \.time) { hour in
-                    Text(legend ? Format.temperatureNumber(hour.temperatureC) : Format.degrees(hour.temperatureC))
-                        .font((big ? Font.subheadline : .caption).weight(.semibold))
-                        .frame(maxWidth: .infinity)
+            if temperature {
+                GridRow {
+                    if legend { legendLabel(Condition.temperature.symbol, AppSettings.shared.temperatureUnit.symbol) }
+                    ForEach(hours, id: \.time) { hour in
+                        let text = Text(legend ? Format.temperatureNumber(hour.temperatureC) : Format.degrees(hour.temperatureC))
+                        if lines.isEmpty {
+                            text
+                                .font((big ? Font.subheadline : .caption).weight(.semibold))
+                                .frame(maxWidth: .infinity)
+                        } else {
+                            text
+                                .font(.caption2)
+                                .opacity(0.85)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
+                                .modifier(TintedIf(color: tint(Condition.temperature.cause(in: hour))))
+                                .frame(maxWidth: .infinity)
+                        }
+                    }
                 }
             }
             ForEach(lines, id: \.self) { line in
@@ -744,7 +759,8 @@ extension RowingWidgetView {
             head(hour)
             Spacer(minLength: 0)
             switch focus {
-            case .hourly: hourRow(count: 6, lines: [])
+            // Time, symbol and light only: the values under the dots are left out (owner, 14 Nov 2026).
+            case .hourly: hourRow(count: 6, lines: [], temperature: false)
             case .windows: dayBars(2, header: false, big: false)
             case .conditions: tileRow(font: .caption)
             }

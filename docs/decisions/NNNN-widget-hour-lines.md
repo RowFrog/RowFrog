@@ -1,8 +1,8 @@
 # NNNN. Wind, waves and visibility under the hours in the large widgets
 
 - Date: 2026-11-13
-- Status: decided (owner, thread "Bug Fixes", 13 Nov 2026 09:56 and 10:40 CET: large "option B with legend", XL agreed, no "°" next to a °C legend)
-- Where: `ios/RowFrog/WidgetLayouts.swift` (`hourRow`, `HourLine`, `largeLayout`, `extraLargeHours`), `Units.swift` (`Format.temperatureNumber`)
+- Status: decided (owner, thread "Bug Fixes", 13 Nov 2026 09:56 and 10:40 CET: large "option B with legend", XL agreed, no "°" next to a °C legend; 14 Nov 2026 via the Mac thread: temperature row in the same style, medium without values, gallery per phone)
+- Where: `ios/RowFrog/WidgetLayouts.swift` (`hourRow`, `HourLine`, `largeLayout`, `extraLargeHours`), `Units.swift` (`Format.temperatureNumber`), `WidgetBridge.swift` (`WidgetGalleryView`, `WidgetSizes`)
 
 ## Decision
 
@@ -15,6 +15,13 @@ bigger text sizes), the widget falls back by itself to the temperature and
 wind lines without a legend, so it never runs over. Medium and small stay as
 they were. Mock-ups: artifact "Widgets: every size" (owner's pick B with
 legend for large and extra large, 13 Nov 2026).
+
+Added 14 Nov 2026: with the lines, the temperature row has the same small
+style as wind, waves and visibility (no bigger or bolder font; the legend
+keeps °C). The medium widget drops the values under the dots altogether:
+time, symbol and light only. The widget gallery (`-RWWidgetGallery YES`)
+draws each phone's own widget sizes from Apple's table and a dark home
+screen in dark mode, so the iPhone 13 mini and SE shots show the fit.
 
 ## Why
 
