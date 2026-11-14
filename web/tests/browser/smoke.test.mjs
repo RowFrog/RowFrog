@@ -595,6 +595,27 @@ test("the lake view's layers read rowing light, wind, waves and visibility; visi
   await second.context.close();
 });
 
+test("the lake view opened twice while the map library loads builds one map (no \"Map container is already initialized\")", async () => {
+  // A second route() while Leaflet still loads, as refreshSavedClubs() or a hash change can cause on a slow start.
+  const { page, errors, context } = await open(visitor());
+  const lake = squareLake();
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  await context.route((url) => url.pathname.endsWith("/vendor/leaflet/leaflet.js"), async (route) => {
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    await route.continue();
+  });
+  await page.goto(`${base}/app/#/lake/${club.lakeId}/${club.id}`);
+  await page.locator("#lake-map").waitFor();
+  await page.waitForTimeout(300);
+  await page.evaluate(() => window.dispatchEvent(new HashChangeEvent("hashchange")));
+  await page.locator(".lake-layers").waitFor({ timeout: 20000 });
+  await page.waitForTimeout(500);
+  assert.equal(await page.locator(".leaflet-container").count(), 1);
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("the route editor: undo takes back the way back, Save marks the route saved, an edit changed and undo saved again", async () => {
   const { page, errors, context } = await open(visitor());
   const lake = squareLake();

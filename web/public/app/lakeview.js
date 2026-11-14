@@ -560,6 +560,7 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null, route
   wireLakeBoat();
   wirePanelDrag();
   await buildMap();
+  if (mine !== opened) return;
   update();
   if (asked && page.map) fitView();
 }
@@ -580,7 +581,10 @@ function wireLakeBoat() {
 }
 
 async function buildMap() {
+  const mine = page;
   const L = await loadLeaflet().catch(() => null);
+  // Opened again while Leaflet loaded: that one builds the map in its own box (Leaflet takes one map per box).
+  if (page !== mine) return;
   const box = page.root.querySelector("#lake-map");
   if (!L || !box) return;
   // The satellite button at the top right as in the app (RWLakeImagery), the zoom buttons under it on
@@ -591,6 +595,7 @@ async function buildMap() {
     page.satellite = on;
     if (page.layers.arrows && page.map === map) drawArrows();
   } });
+  if (page !== mine) return;
   L.control.zoom({ position: "topright" }).addTo(map);
   page.L = L;
   fitView();
