@@ -67,6 +67,8 @@ export async function openSuggestLaunchPoint(club, done = () => {}) {
   dialog.addEventListener("close", () => { dialog.remove(); done(sent); });
   dialog.addEventListener("click", (e) => e.target === dialog && dialog.close());
   dialog.querySelector("#sg-cancel").addEventListener("click", () => dialog.close());
+  // Focus on the sheet itself, not its first button: no focus ring on ✕ or "Cancel" as it opens (keyboard Tab still goes on from here).
+  dialog.autofocus = true;
   dialog.showModal();
 
   const start = club.launchPoint;

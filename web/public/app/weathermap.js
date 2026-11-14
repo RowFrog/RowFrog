@@ -25,9 +25,9 @@ export const LAYERS = {
     palette: ramp([[-20, 0x5B2A86, 0.75], [-10, 0x2F5DD8, 0.7], [0, 0x8EC5F2, 0.6], [5, 0x7FD3B8, 0.55], [10, 0x9BD565, 0.55], [15, 0xE8E05A, 0.6], [20, 0xF5B341, 0.62], [25, 0xF07C2E, 0.66], [30, 0xE0442B, 0.7], [38, 0x9E1B3B, 0.75]]),
     legend: [-10, 0, 10, 20, 30],
   },
-  feelsLike: { title: key("Feels like"), icon: "person-standing", model: "feelsLike", span: 50, links: "hour" },
+  feelsLike: { title: key("Feels like"), icon: "thermometer-figure", model: "feelsLike", span: 50, links: "hour" },
   humidity: {
-    title: key("Humidity"), icon: "droplets", model: "humidity", span: 50, links: "hour",
+    title: key("Humidity"), icon: "humidity", model: "humidity", span: 50, links: "hour",
     palette: ramp([[20, 0xD9A55B, 0.6], [40, 0xEBD9A0, 0.45], [60, 0xBFE0D8, 0.4], [80, 0x6FB7E0, 0.55], [100, 0x2F6FC9, 0.65]]),
     legend: [20, 40, 60, 80, 100],
   },
@@ -48,7 +48,7 @@ export const LAYERS = {
     legend: [0, 5, 10, 15, 25], note: key("Rain an hour from the weather model; after the first day, the average of every 3 hours."),
   },
   uv: {
-    title: key("UV index"), icon: "sun", span: 50, links: "day", live: [DWD_WMS, "dwd:UVIndex"],
+    title: key("UV index"), icon: "sun-alert", span: 50, links: "day", live: [DWD_WMS, "dwd:UVIndex"],
     note: key("The day's highest UV index under the expected clouds."), credit: key("Deutscher Wetterdienst (DWD), CC BY 4.0"),
   },
   lightning: {
@@ -348,7 +348,7 @@ export async function weatherMap(el, point, layerId, { interactive = true, onAre
     boxZoom: false, keyboard: interactive, zoomAnimation: false, attributionControl: interactive, zoomSnap: 0.25,
   });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    maxZoom: 19, referrerPolicy: "strict-origin", className: "street-tiles", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
   const canvas = L.DomUtil.create("canvas", "wm-canvas", map.getContainer());
   // The club's pin, as the app's map (LocationStore.markSymbol): a house for the home base, else a rower.
@@ -464,7 +464,8 @@ export async function weatherMap(el, point, layerId, { interactive = true, onAre
     }
     const params = {
       layers: layer.live[1], format: layer.live[0] === DWD_WMS ? "image/png" : "image/png", transparent: true, version: "1.3.0",
-      opacity: 0.75, time: at?.toISOString().replace(".000", ""), attribution: t(layer.credit),
+      // UV at 0.4 as in the app (RadarFrames.alpha): DWD's bright green hid the map at 0.75.
+      opacity: layer === LAYERS.uv ? 0.4 : 0.75, time: at?.toISOString().replace(".000", ""), attribution: t(layer.credit),
     };
     if (state.live && state.live.wmsParams.layers === layer.live[1]) state.live.setParams({ time: params.time });
     else {

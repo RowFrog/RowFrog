@@ -57,4 +57,5 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 34 | 2026-11-12 | [Build numbers from the commit count, commit in About](0034-build-numbers.md) |
 | 35 | 2026-11-12 | [Tip pacing and the tips audit](0035-tip-pacing-and-audit.md) |
 | 36 | 2026-11-14 | [Wind, waves and visibility under the hours in the large widgets](0036-widget-hour-lines.md) |
+| 37 | 2026-11-14 | [App and website detail check: the owner's picks](0037-app-web-detail-check-picks.md) |
 | 38 | 2026-11-14 | [Routes reach the browser by link first, GPX export second](0038-route-links-and-gpx-export.md) |

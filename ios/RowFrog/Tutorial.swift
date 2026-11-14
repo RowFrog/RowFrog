@@ -445,7 +445,7 @@ private struct ClubChoicePage: View {
             .padding(.horizontal)
             HStack {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField(tr("Search clubs, lakes or towns"), text: $search)
+                TextField(tr("Club, lake or town"), text: $search)
                     .autocorrectionDisabled()
                     .accessibilityIdentifier("tour-search-\(page.rawValue)")
                 if !search.isEmpty {

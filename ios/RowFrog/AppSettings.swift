@@ -43,8 +43,26 @@ final class AppSettings {
     /// Current conditions inside the top tile, which opens into all tiles (owner's choice B,
     /// 4 Nov 2026); off keeps Current conditions as its own card, as before.
     var combinedTopTile: Bool { didSet { defaults.set(combinedTopTile, forKey: Keys.combinedTopTile) } }
-    /// Whether the combined top tile is open, the same on every club page and in the hour view.
-    var topTileOpen: Bool { didSet { defaults.set(topTileOpen, forKey: Keys.topTileOpen) } }
+    /// The clubs whose combined top tile is open ("All values"). Closed on every club
+    /// at first; each club remembers its own until the app is quit and started again,
+    /// so it is not saved (owner, 14 Nov 2026).
+    var openTopTiles: Set<String> = []
+    /// Screenshot hook: `-RWTopTileOpen YES` opens the top tile on every club.
+    private(set) var allTopTilesOpen = false
+
+    func isTopTileOpen(_ clubID: String) -> Bool { allTopTilesOpen || openTopTiles.contains(clubID) }
+
+    func toggleTopTile(_ clubID: String) {
+        if isTopTileOpen(clubID) {
+            if allTopTilesOpen {
+                allTopTilesOpen = false
+                openTopTiles = []
+            }
+            openTopTiles.remove(clubID)
+        } else {
+            openTopTiles.insert(clubID)
+        }
+    }
 
     /// The user's own boats, besides the small and big boat groups.
     var myBoats: [Boat] { didSet { defaults.set(try? JSONEncoder().encode(myBoats), forKey: Keys.myBoats) } }
@@ -274,7 +292,7 @@ final class AppSettings {
         static let all = [appearance, language, landscape, temperature, wind, waves, rain, distance, pressure, timeFormat, dateFormat,
                           background, pageBackgrounds, clubBackgrounds, blur, tileStyle, userPictures, boat, myBoats, boatLimits, clubBoats, mapBoat,
                           developer, pickedModels, columnFill, nightHours, pageLayout, clubPageLayouts, widgetBackground, clubWidgetBackgrounds, widgetBlur, saveMobileData,
-                          widgetUpdates, mapStartZoom, mapApp, launchPointInHeader, combinedTopTile, topTileOpen]
+                          widgetUpdates, mapStartZoom, mapApp, launchPointInHeader, combinedTopTile]
     }
 
     init(defaults: UserDefaults = .standard) {
@@ -298,7 +316,11 @@ final class AppSettings {
         mapApp = value(Keys.mapApp, .apple)
         launchPointInHeader = defaults.object(forKey: Keys.launchPointInHeader) == nil || defaults.bool(forKey: Keys.launchPointInHeader)
         combinedTopTile = defaults.object(forKey: Keys.combinedTopTile) == nil || defaults.bool(forKey: Keys.combinedTopTile)
-        topTileOpen = defaults.bool(forKey: Keys.topTileOpen)
+        // Only a launch argument opens it; the state saved by earlier versions goes.
+        allTopTilesOpen = defaults.volatileDomain(forName: UserDefaults.argumentDomain)[Keys.topTileOpen] as? Bool
+            ?? (defaults.volatileDomain(forName: UserDefaults.argumentDomain)[Keys.topTileOpen] as? String).map { $0 == "YES" || $0 == "1" || $0 == "true" }
+            ?? false
+        defaults.removeObject(forKey: Keys.topTileOpen)
         // Launch arguments give the limits' numbers as text, e.g. `-RWBoatLimits '{small = {windAmber = 7;};}'`.
         if let data = defaults.data(forKey: Keys.myBoats) ?? defaults.string(forKey: Keys.myBoats)?.data(using: .utf8) {
             myBoats = (try? JSONDecoder().decode([Boat].self, from: data)) ?? []
@@ -481,7 +503,8 @@ final class AppSettings {
         mapApp = .apple
         launchPointInHeader = true
         combinedTopTile = true
-        topTileOpen = false
+        openTopTiles = []
+        allTopTilesOpen = false
         boatID = Boat.small.id
         clubBoats = [:]
         boatLimits = [:]

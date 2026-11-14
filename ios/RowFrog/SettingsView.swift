@@ -97,9 +97,7 @@ struct SettingsView: View {
             }
             .scrollContentBackground(.hidden)
             .pageBackground(.settings)
-            .safeAreaInset(edge: .bottom, spacing: 0) {
-                SettingsSearchField(text: $search, focused: $searching)
-            }
+            .bottomBar { SettingsSearchField(text: $search, focused: $searching) }
             .navigationTitle(tr("Settings"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
@@ -144,6 +142,9 @@ struct SettingsView: View {
                 }
             }
         }
+        // Taller on the iPad, as the iOS Settings sheet: the short form sheet
+        // left rows half under the search field (detail check 14 Nov 2026, B1.3).
+        .presentationSizing(.page)
     }
 
     @ViewBuilder
@@ -191,7 +192,7 @@ struct SettingsView: View {
             topic(.appearance, value: settings.developerOptions
                   ? "\(settings.appearance.title) · \(settings.allPagesBackground.title)"
                   : settings.allPagesBackground.title)
-            topic(.clubPages, value: settings.pageLayout == .standard ? tr("App's order") : tr("Own order"))
+            topic(.clubPages, value: settings.pageLayout == .standard ? tr("Standard") : tr("Custom"))
             topic(.widgets, value: settings.widgetUpdates.title)
         }
         .surfaceRows()
@@ -374,6 +375,21 @@ private struct SettingsRow: View {
     }
 }
 
+extension View {
+    /// A bar at the bottom edge that the list scrolls under. On iOS 26 it is a
+    /// safe-area bar, so rows passing under it fade out behind a scroll-edge
+    /// effect instead of showing sharp under the search field (detail check
+    /// 14 Nov 2026, B2.4); earlier systems keep the plain inset.
+    @ViewBuilder func bottomBar<Bar: View>(@ViewBuilder _ bar: () -> Bar) -> some View {
+        if #available(iOS 26.0, *) {
+            safeAreaBar(edge: .bottom, spacing: 0, content: bar)
+                .scrollEdgeEffectStyle(.soft, for: .bottom)
+        } else {
+            safeAreaInset(edge: .bottom, spacing: 0, content: bar)
+        }
+    }
+}
+
 /// The search field at the bottom of the first settings page, where iOS has it.
 private struct SettingsSearchField: View {
     @Binding var text: String
@@ -435,7 +451,7 @@ struct SettingsSearch: Identifiable {
             SettingsSearch("Your boat", .boats, words: ["small", "big", "klein", "groß", "Boot"]),
             SettingsSearch("My boats", .boats, words: ["Meine Boote", "gig", "add", "hinzufügen"]),
             SettingsSearch("Fine-tune the limits", .boats, words: ["limit", "Grenze", "wind", "gusts", "Böen", "waves", "Wellen", "water temperature", "Wassertemperatur"]),
-            SettingsSearch("Routes", .routes, words: ["Routen", "saved routes", "gesicherte Routen", "Manage routes", "Routen verwalten"]),
+            SettingsSearch("Routes", .routes, words: ["Routen", "saved routes", "gesicherte Routen", "Manage routes", "Routen verwalten", "pace", "Tempo", "Standard-Tempo"]),
             SettingsSearch("Background pictures", .appearance, path: [.appearance, .backgrounds], words: ["photo", "Foto", "Bild", "Hintergrund"]),
             SettingsSearch("Blur the picture", .appearance, path: [.appearance, .backgrounds], words: ["blur", "unscharf", "Weichzeichnen", "frosted"]),
             SettingsSearch("In the tiles", .appearance, path: [.appearance, .backgrounds], words: ["tiles", "Kacheln", "frosted", "solid"]),
@@ -595,7 +611,7 @@ private struct ClubPagesSettingsView: View {
                 Button { arrangingPages = true } label: {
                     LabeledContent(tr("Card order")) {
                         HStack(spacing: 6) {
-                            Text(settings.pageLayout == .standard ? tr("App's order") : tr("Own order"))
+                            Text(settings.pageLayout == .standard ? tr("Standard") : tr("Custom"))
                             Image(systemName: "chevron.right")
                                 .font(.footnote.weight(.semibold))
                                 .foregroundStyle(Color(.tertiaryLabel))

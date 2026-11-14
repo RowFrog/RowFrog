@@ -22,12 +22,32 @@ struct AllRoutesView: View {
     /// RouteStore is not observed; this redraws the list after a change.
     @State private var version = 0
     private let store = RouteStore.shared
+    /// The pace route times are planned with, 2:30 /500 m unless the crew sets its own
+    /// (owner, 14 Nov 2026). The lake map's stepper and an imported row change it too.
+    @AppStorage(DefaultsKey.routePace) private var pace = 150.0
 
     var body: some View {
         let _ = version
         let lakes = Dictionary(grouping: store.routes, by: \.lakeId)
             .sorted { lakeName($0.key).localizedStandardCompare(lakeName($1.key)) == .orderedAscending }
         List {
+            Section {
+                Stepper(value: $pace, in: 90...240, step: 5) {
+                    LabeledContent(tr("Standard pace /500 m")) {
+                        Text(Format.pace(pace)).monospacedDigit()
+                    }
+                }
+            } footer: {
+                SectionFooter(tr("Route times on the lake maps start from this pace; the map's own stepper changes it too."))
+            }
+            .surfaceRows()
+            if store.routes.isEmpty {
+                Section {
+                    ContentUnavailableView(tr("No saved routes"), systemImage: "point.topleft.down.to.point.bottomright.curvepath",
+                                           description: Text(tr("Plan a route on the map and save it from the bookmark menu.")))
+                }
+                .listRowBackground(Color.clear)
+            }
             ForEach(lakes, id: \.key) { entry in
                 let lakeID = entry.key
                 let routes = entry.value
@@ -77,12 +97,6 @@ struct AllRoutesView: View {
         }
         .scrollContentBackground(.hidden)
         .pageBackground(.settings)
-        .overlay {
-            if store.routes.isEmpty {
-                ContentUnavailableView(tr("No saved routes"), systemImage: "point.topleft.down.to.point.bottomright.curvepath",
-                                       description: Text(tr("Plan a route on the map and save it from the bookmark menu.")))
-            }
-        }
         .navigationTitle(tr("Routes"))
         // Inline like every other Settings page: a large title overlapped the first water's name.
         .navigationBarTitleDisplayMode(.inline)

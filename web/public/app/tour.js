@@ -5,7 +5,7 @@
 // down, no widgets or app icon).
 
 import { t } from "./i18n.js";
-import { icon } from "./icons.js";
+import { icon, filledIcon } from "./icons.js";
 import { key, COLD, standardLimit, searchClubs, town } from "./logic.js";
 import { h, store, load, save, setTitle, dot, lightTitle, conditionIcon, conditionTexts, TILE_ORDER, temperature, wind, savedClub } from "./shared.js";
 
@@ -70,7 +70,7 @@ export function tourPages(river = false, choice = false) {
         p("clock", key("On the map, move through the hours in the strip at the bottom and tap the water for one spot.")),
         p("route", key("Plan a route: tap your turning points to see the light along the way and the best time to start.")),
         p("bookmark", key("Save the routes you row often in the Routes menu. Settings › Routes shows them all. Share routes as a link for a browser or as a GPX file for other apps.")),
-        p("globe", key("Below it, the latest satellite picture of the lake, with a switch to the clearest one.")),
+        p("earth", key("Below it, the latest satellite picture of the lake, with a switch to the clearest one.")),
       ],
     },
     river && {
@@ -85,7 +85,7 @@ export function tourPages(river = false, choice = false) {
     {
       id: "locations", icon: "list", tint: "blue", title: key("Your locations"), intro: key("Keep all the places you row in one list."),
       points: [
-        p("move", key("Swipe left and right, or use the arrow keys, to move between your clubs. The house marks your home base.")),
+        p("hand", key("Swipe left and right, or use the arrow keys, to move between your clubs. The house marks your home base.")),
         p("search", key("Search the list for a club and tap + to add it, or open ⋯ to browse by country or add a place of your own.")),
         p("trash-2", key("Tap Edit in the list to remove a club or make it your home base.")),
       ],
@@ -97,7 +97,7 @@ export function tourPages(river = false, choice = false) {
     {
       id: "settings", icon: "settings", tint: "grey", title: key("Settings"), intro: key("Open the settings with the cog at the top of the list or at the bottom of a club page."),
       points: [
-        p("languages", key("English or German, as your browser's languages set it.")), p("ruler", key("Units for temperature, wind, waves, rain, distances and air pressure.")),
+        p("globe", key("English or German, as your browser's languages set it.")), p("ruler", key("Units for temperature, wind, waves, rain, distances and air pressure.")),
         p("image", key("Background pictures, including your own photos.")),
         p("circle-help", key("Settings › Help shows this tour again.")),
       ],
@@ -140,7 +140,7 @@ function choiceRow({ club, lake }, page) {
   const saved = clubs.some((c) => c.id === club.id);
   const mark = isHome ? `<span class="add home" aria-label="${h(t("Home base"))}">${icon("house")}</span>`
     : page === "homeBase" ? `<span class="add off">${icon("circle")}</span>`
-    : saved ? `<span class="add in" aria-label="${h(t("In your list"))}">${icon("circle-check")}</span>`
+    : saved ? `<span class="add in" aria-label="${h(t("In your list"))}">${filledIcon("circle-check")}</span>`
     : `<span class="add" aria-label="${h(t("Add %@", club.shortName || club.name))}">${icon("circle-plus")}</span>`;
   const where = [lake.name, town(club.address)].filter(Boolean).join(" · ");
   return `<li><button class="result" data-club="${h(club.id)}" data-lake="${h(lake.id)}"><span class="result-text"><strong>${h(club.name)}</strong><small>${h(where)}</small></span>${mark}</button></li>`;
@@ -242,7 +242,7 @@ export function renderTour(root, { languagePicker, wireLanguage, done, lakes, re
     // The river page says what the river current tip would (RiverCurrentTip), so that tip stays away.
     if (page.id === "river") save("rf.tipsClosed", [...new Set([...closed(), "riverCurrent"])]);
     const body = page.choice
-      ? `<label class="search tour-search">${icon("search")}<input id="tour-search" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+      ? `<label class="search tour-search">${icon("search")}<input id="tour-search" type="search" autocomplete="off" placeholder="${h(t("Club, lake or town"))}" aria-label="${h(t("Club, lake or town"))}"></label>
           <div id="tour-clubs" class="tour-clubs"></div>`
       : `${extra(page, languagePicker)}
           <ul class="card tour-points">${page.points.map((x) => `<li>${icon(x.icon)}<span>${h(t(x.text, ...(x.args?.() ?? [])))}</span></li>`).join("")}</ul>`;
@@ -324,9 +324,9 @@ const TIPS = {
   rainRadar: [key("Rain on the way?"), key("For the next two hours the rain tile reads the radar of the Deutscher Wetterdienst at the launch point, then the forecast. Open it for the radar map: tap the map to play it, or drag the slider from an hour ago to two hours ahead."), "umbrella"],
   hourly: [key("Plan your outing"), key("Each hour has its own rowing light. The icons on top name the columns, and rows after dark are dimmed."), "clock", "hourView"],
   hourView: [key("One hour in full"), key("Tap an hour to see all its conditions and the lake map at that time."), "pointer"],
-  launchPoint: [key("Where the forecast is for"), key("Wind, waves and warnings are worked out for this launch point. Tap Directions to the club for the way there."), "map-pin"],
+  launchPoint: [key("Where the forecast is for"), key("Wind, waves and warnings are worked out for this launch point. Tap Directions to the club for the way there."), "map-pin-ellipse"],
   lakeView: [key("Look across the lake"), key("Tap the map to see the rowing light, waves and wind for the whole lake, hour by hour. Tap the water for the details of one spot."), "map"],
-  satellite: [key("Satellite picture"), key("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind, the waves, the rowing light or the ice map over it."), "globe"],
+  satellite: [key("Satellite picture"), key("The latest picture from the Sentinel-2 satellites, which pass over every 2 to 5 days, so it can be a few days old and show clouds. Clearest shows the most recent picture with a clear view of the lake. Draw the shore, clubs, your routes, the wind, the waves, the rowing light or the ice map over it."), "earth"],
   source: [key("Where the forecast comes from"), key("The app picks the weather model that does best for this lake. Tap the line to see which one."), "cloud-sun"],
   coldWater: [key("Cold water"), key("A capsize in water below %@ gets dangerous within minutes. The app then lowers its own wind and gust limits by %@. Limits you set stay as they are, with a reminder on the rowing light."), "thermometer-snowflake"],
   myBoats: [key("Which boat do you row?"), key("Tap the boat the rowing light is for. ⓘ opens its limits, and below you can add your own boats."), "rower"],
@@ -334,20 +334,20 @@ const TIPS = {
   chartScrub: [key("Read any hour"), key("Drag the chart back to yesterday or up to 7 days ahead. Hold it, then slide along to read the value at each hour."), "hand"],
   weatherMap: [key("Weather on the map"), key("The map shows this weather around the lake. Press play to watch it move, or open it full screen with the arrows."), "map", "mapLink"],
   mapLink: [key("Chart and map together"), key("The map shows the hour of the chart's blue line. Tap the chain to give the map its own time, and again to link them."), "link"],
-  rowImport: [key("Import a row"), key("Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace."), "upload"],
+  rowImport: [key("Import a row"), key("Rowed it before? Bring in a GPX, TCX or FIT file (CrewNerd, Garmin, Strava) with Import a row, and plan with your real route and pace."), "import"],
   // On a river or canal club's page, for a club added after the tour; the tour's river page closes it (RiverCurrentTip).
   riverCurrent: [key("Current on the river"), key("The Current tile shows the nearest gauge's flow speed, water level and trend. Tap it for the level chart and your pace upstream and downstream."), "circle-arrow-right"],
   waterLevel: [key("Water level in winter"), key("Forggensee is let down every winter. While it is lowered, the Water level tile below takes the place of the ice estimate. Tap it for the last week's levels."), "arrow-down-to-line"],
-  waterEstimate: [key("Water temperature from space"), key("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date."), "satellite"],
+  waterEstimate: [key("Water temperature from space"), key("No station measures the water here, so the app takes the last satellite reading of the lake and carries it forward with the air temperatures since. Tap the water tile for the satellite and its date."), "thermometer-waves"],
   // On a phone's lake map, under the grabber (RoutePanelTip).
-  routePanel: [key("More or less panel"), key("Pull up for details, push down for more map."), "chevrons-up-down"],
-  turningPoint: [key("Change a turning point"), key("Drag a point to move it, or delete just this one."), "move"],
+  routePanel: [key("More or less panel"), key("Pull up for details, push down for more map."), "panel-bottom"],
+  turningPoint: [key("Change a turning point"), key("Drag a point to move it, or delete just this one."), "hand"],
   boatTime: [key("Lake at the boat's time"), key("Move the boat along your route to see the lake at the time you get there."), "rower"],
   stretchPoint: [key("Add a point on the way"), key("Tap a stretch of your route to add a turning point there, or pull the stretch to add one and move it at once."), "spline"],
   // One way, out and back, or a loop (owner, 12 Nov 2026: Row a loop and One way merged; WayBackTip).
-  wayBack: [key("The way back"), key("New routes go one way. Under the way back, pick Out and back to row the same way back, or Loop. Tapping within 50 m of your club also closes a loop."), "arrow-up-down"],
-  boatsElsewhere: [key("Your boats at other clubs"), key("Your boats show at the clubs where they are kept. At a regatta, tap a boat under “At other clubs” to take it along."), "rower"],
-  placeLine: [key("Where the forecast is for"), key("Tap the place to see on a map the spot the forecast is for, with directions."), "map-pin"],
+  wayBack: [key("The way back"), key("New routes go one way. Under the way back, pick Out and back to row the same way back, or Loop. Tapping within 50 m of your club also closes a loop."), "undo-2"],
+  boatsElsewhere: [key("Your boats at other clubs"), key("Your boats show at the clubs where they are kept. At a regatta, tap a boat under “At other clubs” to take it along."), "circle-arrow-down"],
+  placeLine: [key("Where the forecast is for"), key("Tap the place to see on a map the spot the forecast is for, with directions."), "map-pin-ellipse"],
   // At "Suggest the launch point" in the Location sheet, not in the page's card (SuggestLaunchPointTip).
   suggestLaunchPoint: [key("Know the launch point?"), key("Know where this club's boats go on the water? Suggest the launch point."), "oars"],
   routePlanning: [key("Plan a route"), key("Tap here, then tap your turning points on the water. You see the light along the route and the best time to start."), "route"],

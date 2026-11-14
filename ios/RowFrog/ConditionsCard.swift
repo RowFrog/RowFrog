@@ -300,12 +300,12 @@ struct ConditionData {
 
     /// False outside Germany, where DWD's warnings do not reach (see Warnings.localChecked).
     var warningsChecked: Bool { forecast.warnings?.localChecked ?? true }
-    var warningsLabel: String { tr("Official warnings") }
 
     func warningNames(_ words: [String]) -> String {
         guard warningsChecked else { return tr("Not checked here") }
         let found = warnings(words)
-        guard !found.isEmpty else { return tr("None") }
+        // "None" alone is the rain value ("Kein Niederschlag"): the warnings say "Keine".
+        guard !found.isEmpty else { return tr("None", key: "Warning: none") }
         let german = AppSettings.shared.resolvedLanguage == .german
         return found.map { german ? $0.event : ($0.english?.event ?? $0.event) }.joined(separator: ", ")
     }
@@ -345,7 +345,8 @@ struct ChartPoint: Identifiable {
 }
 
 struct ChartLine: Identifiable {
-    enum Kind { case line, bars }
+    /// `area`: a soft filled area behind the lines (the cloud chart's "All", owner's pick A, 14 Nov 2026).
+    enum Kind { case line, bars, area }
     let name: String
     let color: Color
     var kind: Kind = .line
@@ -357,6 +358,21 @@ struct ChartLine: Identifiable {
     var barWidth: CGFloat = 5
     var covers: ClosedRange<Double>? = nil
     var id: String { name }
+}
+
+/// The cloud chart's colours, light and dark mode (mock-up option A, same numbers on the website).
+enum CloudColours {
+    static let all = adaptive(0xC7C7CC, 0x636366)
+    static let high = adaptive(0x8EC9FF, 0xA8D8FF)
+    static let mid = adaptive(0x2F80ED, 0x4C9BFF)
+    static let low = adaptive(0x1B2F8A, 0x7D8CFF)
+
+    private static func adaptive(_ light: UInt32, _ dark: UInt32) -> Color {
+        func ui(_ hex: UInt32) -> UIColor {
+            UIColor(red: CGFloat(hex >> 16 & 0xFF) / 255, green: CGFloat(hex >> 8 & 0xFF) / 255, blue: CGFloat(hex & 0xFF) / 255, alpha: 1)
+        }
+        return Color(UIColor { $0.userInterfaceStyle == .dark ? ui(dark) : ui(light) })
+    }
 }
 
 struct ChartLimit {
@@ -561,7 +577,7 @@ struct ConditionDetailView: View {
                     }
                 }
             }
-            facts(detail)
+            ConditionFacts(facts: detail.facts, twoColumns: detail.twoColumnFacts)
             if condition == .waterTemperature, let water = data.water, let station = water.station, let place = station.coordinate {
                 WaterStationMap(station: station, place: place)
             }
@@ -647,7 +663,7 @@ struct ConditionDetailView: View {
     private func mapCard(_ detail: ConditionDetail, layer: WeatherMapLayer, club: Club, hidden: Set<String>, height: CGFloat) -> some View {
         DetailMapCard(layer: layer, club: club, data: data, time: time,
                       slimChart: AnyView(ConditionChart(detail: detail, data: data, time: time, hidden: hidden, compact: true)),
-                      height: height)
+                      height: height, symbol: condition.symbol)
             .background {
                 GeometryReader { geo in
                     Color.clear.preference(key: MapCardFrameKey.self, value: geo.frame(in: .named(Self.space)))
@@ -768,31 +784,6 @@ struct ConditionDetailView: View {
         let value = ConditionDetail(c, data).value
         return value.isEmpty ? c.title : "\(c.title) · \(value)"
     }
-
-    @ViewBuilder
-    private func facts(_ detail: ConditionDetail) -> some View {
-        if detail.twoColumnFacts {
-            LazyVGrid(columns: [GridItem(.flexible(), alignment: .topLeading), GridItem(.flexible(), alignment: .topLeading)],
-                      alignment: .leading, spacing: 8) {
-                ForEach(Array(detail.facts.enumerated()), id: \.offset) { _, fact in
-                    VStack(alignment: .leading, spacing: 0) {
-                        Text(fact.0).font(.caption).foregroundStyle(.secondary)
-                        Text(fact.1).font(.subheadline.weight(.semibold))
-                    }
-                }
-            }
-        } else {
-            Grid(alignment: .leading, horizontalSpacing: 12, verticalSpacing: 4) {
-                ForEach(Array(detail.facts.enumerated()), id: \.offset) { _, fact in
-                    GridRow {
-                        Text(fact.0).foregroundStyle(.secondary)
-                        Text(fact.1).fontWeight(.semibold)
-                    }
-                }
-            }
-            .font(.subheadline)
-        }
-    }
 }
 
 private struct MapCardFrameKey: PreferenceKey {
@@ -851,8 +842,9 @@ private struct ConditionChart: View {
         _scrollX = State(initialValue: detail.history ? Self.start : time.scrollX)
     }
 
-    /// The map's green, as on the map card.
-    static let mapGreen = Color(red: 0.24, green: 0.6, blue: 0.31)
+    /// The map's colour on the chart (strip of map hours, marker line, badge): teal, owner's pick
+    /// 14 Nov 2026. Green read as the rowing light, grey as "no forecast".
+    static let mapGreen = Color(.systemTeal)
 
     /// The blue line and the map's marker. The map's badge sits at the bottom and
     /// shows the link: linked, a filled pill with a chain that the blue line ends
@@ -1135,11 +1127,16 @@ private struct ConditionChart: View {
             AxisMarks(values: axisHours) { value in
                 AxisGridLine()
                 AxisValueLabel(anchor: .top) {
-                    // Labels right at the visible edges would be cut in half.
-                    if let x = value.as(Double.self), detail.history ? labelled(x) : (x - scrollX > 1.2 && scrollX + 24 - x > 1.2) {
+                    // Labels right at the visible edges would be cut in half; one next to "Now" gives way to it.
+                    if let x = value.as(Double.self), detail.history ? labelled(x) : (x - scrollX > 1.2 && scrollX + 24 - x > 1.2 && !(showsNow && abs(x) < 2.5)) {
                         Text(label(x))
                     }
                 }
+            }
+            // "Now" under the start of a forecast, on the app and the website (owner, 14 Nov 2026).
+            // At the left edge it starts at the line instead of centring on it, so it is never cut.
+            AxisMarks(values: showsNow ? [0.0] : []) { _ in
+                AxisValueLabel(anchor: -scrollX < 1.2 ? .topLeading : .top) { Text(tr("Now")) }
             }
         }
         // Over the values on the right; on the left a dragged chart cut it off.
@@ -1161,7 +1158,7 @@ private struct ConditionChart: View {
             title: shown.map(\.name).joined(separator: ", "),
             unit: detail.unit,
             series: shown.map { line in
-                .init(name: line.name, points: line.points.map { (date($0.x), $0.y) }, continuous: line.kind == .line)
+                .init(name: line.name, points: line.points.map { (date($0.x), $0.y) }, continuous: line.kind != .bars)
             },
             summary: [detail.value, detail.note].filter { !$0.isEmpty }.joined(separator: ". "),
             digits: detail.unit == SpeedUnit.beaufort.symbol ? 0 : 1)
@@ -1185,6 +1182,10 @@ private struct ConditionChart: View {
         case .bars:
             BarMark(x: .value("Hour", p.x), y: .value("Value", p.y), width: .fixed(line.barWidth))
                 .foregroundStyle(line.color.opacity(0.7))
+        case .area:
+            AreaMark(x: .value("Hour", p.x), y: .value("Value", p.y), series: .value("Series", line.name))
+                .foregroundStyle(line.color.opacity(0.55))
+                .interpolationMethod(.monotone)
         }
     }
 
@@ -1334,6 +1335,11 @@ private struct ConditionChart: View {
     }
 
     /// Every 6 hours on the clock (00, 06, 12, 18); daily for past measurements.
+    /// The forecast's "Now" label: while the hour now is in view.
+    private var showsNow: Bool {
+        !detail.history && data.isNow && range.contains(0) && scrollX <= 0.3 && scrollX + 24 >= 1.2
+    }
+
     private var axisHours: [Double] {
         let step = detail.history ? 24 : 6
         return stride(from: range.lowerBound.rounded(.down), through: range.upperBound, by: 1).filter { x in
@@ -1708,7 +1714,8 @@ extension ConditionDetail {
         if let top, (top.precipitationMm ?? 0) >= 0.1 {
             facts.append((tr("Heaviest"), tr("%@ · %@", Format.rain(top.precipitationMm), Format.dayTime(top.time))))
         }
-        facts.append((d.warningsLabel, d.warningNames(rainWords)))
+        // The label names the warning, the value says "Keine" (owner's pick C, 14 Nov 2026).
+        facts.append((tr("Official rain warning"), d.warningNames(rainWords)))
         facts.append((tr("Rowing light now"), light))
         let wet = (h.precipitationMm ?? 0) >= 0.1
         var value = wet ? Format.rain(h.precipitationMm) : (d.traceNow ?? tr("Dry"))
@@ -1805,10 +1812,12 @@ extension ConditionDetail {
             note: tr("Low cloud %@ %%", Format.number(h.cloudCoverLowPct)),
             unit: "%",
             lines: [
-                ChartLine(name: tr("All", key: "Cloud line: All"), color: .gray, points: d.points(\.cloudCoverPct)),
-                ChartLine(name: tr("High", key: "Cloud line: High"), color: .cyan, points: d.points(\.cloudCoverHighPct)),
-                ChartLine(name: tr("Mid", key: "Cloud line: Mid"), color: .teal, points: d.points(\.cloudCoverMidPct)),
-                ChartLine(name: tr("Low", key: "Cloud line: Low"), color: .indigo, points: d.points(\.cloudCoverLowPct)),
+                // Owner's pick A (14 Nov 2026, "for now"; the colour thread may change the palette):
+                // all cloud a grey area behind, the layers one blue from light (high) to dark (low), like the sky.
+                ChartLine(name: tr("All", key: "Cloud line: All"), color: CloudColours.all, kind: .area, points: d.points(\.cloudCoverPct)),
+                ChartLine(name: tr("High", key: "Cloud line: High"), color: CloudColours.high, points: d.points(\.cloudCoverHighPct)),
+                ChartLine(name: tr("Mid", key: "Cloud line: Mid"), color: CloudColours.mid, points: d.points(\.cloudCoverMidPct)),
+                ChartLine(name: tr("Low", key: "Cloud line: Low"), color: CloudColours.low, points: d.points(\.cloudCoverLowPct)),
             ].filter { !$0.points.isEmpty },
             yDomain: 0...130,
             trendStep: 5,
@@ -1889,7 +1898,7 @@ extension ConditionDetail {
         if let top, (top.capeJkg ?? 0) > 0 {
             facts.append((tr("Most energy next 24 h"), tr("%@ J/kg · %@", Format.number(top.capeJkg), Format.dayTime(top.time))))
         }
-        facts.append((d.warningsLabel, d.warningNames(["GEWITTER"])))
+        facts.append((tr("Official thunderstorm warning"), d.warningNames(["GEWITTER"])))
         return ConditionDetail(
             value: stormLevel(d.now.light(for: Condition.thunderstorm.reasonNames)),
             note: !d.warningsChecked ? tr("Warnings not checked")

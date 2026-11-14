@@ -108,6 +108,8 @@ button.wide { margin-top: 0; }
 .i.art .acc.grey { stroke: var(--cloud); }
 .cond { display: inline-flex; color: var(--accent); }
 .cond.temperature, .cond.feelsLike { color: var(--red); }
+/* The value pages' neighbour buttons show the symbol in the text colour, as the app's (ConditionsCard.neighbourButton). */
+.neighbours .cond { color: inherit; }
 
 /* Top tile (NowCard). */
 /* The verdict on one line beside the weather, whose word takes up to two lines in its
@@ -130,6 +132,8 @@ button.wide { margin-top: 0; }
 .reasons li { display: flex; gap: 8px; margin: 4px 0; align-items: flex-start; }
 .reasons li > .i { margin-top: 2px; }
 .no-warning { display: inline-flex; gap: 4px; align-items: center; flex-wrap: wrap; font-size: 15px; }
+/* "· checked 13:00 ⓘ" wraps as one piece: the ⓘ never sits alone on a line. */
+.no-warning .checked { white-space: nowrap; }
 .advice { display: flex; gap: 6px; align-items: flex-start; color: var(--sub); font-size: 12px; margin: 10px 0 0; }
 .advice .i { margin-top: 1px; }
 .label { color: var(--sub); font-size: 12px; font-weight: 600; display: inline-flex; gap: 4px; align-items: center; }
@@ -398,15 +402,18 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
   --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .35), transparent 55%), radial-gradient(90% 70% at 80% 110%, rgba(255, 255, 255, .14), transparent 60%);
   --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .75), inset 0 -1px .5px rgba(255, 255, 255, .25), inset 0 0 0 .5px rgba(255, 255, 255, .35);
   --glass-shadow: 0 6px 16px rgba(0, 0, 0, .16); }
-:root[data-theme="dark"] { --glass-tint: color-mix(in srgb, #000 16%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
+:root[data-theme="dark"] { --glass-tint: color-mix(in srgb, #1c1c1e 55%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
   --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .45), inset 0 -1px .5px rgba(255, 255, 255, .12), inset 0 0 0 .5px rgba(255, 255, 255, .18); --glass-shadow: 0 6px 16px rgba(0, 0, 0, .3); }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass-tint: color-mix(in srgb, #000 16%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --glass-tint: color-mix(in srgb, #1c1c1e 55%, transparent); --glass-sheen: radial-gradient(120% 90% at 30% 0%, rgba(255, 255, 255, .16), transparent 55%);
   --glass-rim: inset 0 1px .5px rgba(255, 255, 255, .45), inset 0 -1px .5px rgba(255, 255, 255, .12), inset 0 0 0 .5px rgba(255, 255, 255, .18); --glass-shadow: 0 6px 16px rgba(0, 0, 0, .3); } }
 /* Doubled class, so the glass wins over .round, .search and the other looks these controls also carry. */
 .glass.glass, .leaflet-touch .leaflet-bar, .leaflet-bar { background: var(--glass-sheen), var(--glass-tint);
   backdrop-filter: blur(8px) saturate(1.4) brightness(1.1); -webkit-backdrop-filter: blur(8px) saturate(1.4) brightness(1.1);
   border: 0; box-shadow: var(--glass-rim), var(--glass-shadow); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .glass.glass, .leaflet-bar { background: var(--card); } }
+/* Dark glass stays dark over a light map (the title pill was pale text on a pale pill), as iOS's dark material. */
+:root[data-theme="dark"] .glass.glass, :root[data-theme="dark"] .leaflet-bar { backdrop-filter: blur(8px) saturate(1.4) brightness(.8); -webkit-backdrop-filter: blur(8px) saturate(1.4) brightness(.8); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .glass.glass, :root:not([data-theme="light"]) .leaflet-bar { backdrop-filter: blur(8px) saturate(1.4) brightness(.8); -webkit-backdrop-filter: blur(8px) saturate(1.4) brightness(.8); } }
 @media (prefers-reduced-transparency: reduce) { .glass.glass, .leaflet-touch .leaflet-bar, .leaflet-bar { background: var(--card); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 
 /* Bottom bar: three floating pieces, all 44 px high: cog and boat, page dots, list (RootView.PageBar). */
@@ -458,15 +465,16 @@ body.has-picture[data-tiles="frosted"] .hhead.stuck { box-shadow: none; }
 .top-title { position: fixed; top: 0; left: var(--area-left); width: var(--area-width); z-index: 10; height: calc(var(--safe-top) + 44px);
   padding: var(--safe-top) calc(var(--column-pad-right) + 16px) 0 calc(var(--column-pad-left) + 16px); display: flex; align-items: center; justify-content: center; gap: 8px;
   font-size: 17px; pointer-events: none; opacity: 0; transition: opacity .2s ease-in-out; box-sizing: border-box; }
-.top-title::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; bottom: -28px; pointer-events: none;
-  background: linear-gradient(var(--bg) 0, color-mix(in srgb, var(--card) 45%, transparent) calc((var(--safe-top) + 44px) * .7));
-  backdrop-filter: blur(20px) saturate(1.8); -webkit-backdrop-filter: blur(20px) saturate(1.8);
-  --mask: linear-gradient(#000 0, #000 calc(var(--safe-top) * .5), rgba(0, 0, 0, .8) calc(100% - 28px), transparent 100%);
+/* Owner's pick A (14 Nov 2026), as the app's TopEdgeFade: solid page colour down to just below the name, then an
+   8 px fade. Nothing shows through the name any more (a card heading slid faded behind "MRC 1880"). */
+.top-title::before { content: ""; position: absolute; z-index: -1; left: 0; right: 0; top: 0; bottom: -8px; pointer-events: none;
+  background: var(--bg);
+  --mask: linear-gradient(#000 0, #000 calc(100% - 8px), transparent 100%);
   -webkit-mask-image: var(--mask); mask-image: var(--mask); }
 /* Over a picture the bar is glass all the way up, as the app's (TopEdgeFade: thin material): starting from the page's
    solid colour made a black band under the clock on the picture (owner's iPhone shots, 12 Nov 2026). */
-body.has-picture .top-title::before {
-  background: linear-gradient(color-mix(in srgb, var(--bg) 45%, transparent) 0, color-mix(in srgb, var(--card) 45%, transparent) calc((var(--safe-top) + 44px) * .7)); }
+body.has-picture .top-title::before { background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(30px) saturate(1.8); -webkit-backdrop-filter: blur(30px) saturate(1.8); }
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) { .top-title::before { background: var(--bg); bottom: 0; -webkit-mask-image: none; mask-image: none; } }
 @media (prefers-reduced-transparency: reduce) { .top-title::before { background: var(--bg); bottom: 0; backdrop-filter: none; -webkit-backdrop-filter: none; -webkit-mask-image: none; mask-image: none; } }
 .top-title strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -576,7 +584,8 @@ dialog.sheet { border: 0; padding: 0; border-radius: 16px; width: min(560px, cal
 dialog.sheet::backdrop { background: rgba(0,0,0,.35); }
 /* As the app's sheets: the title in the middle (inline), Cancel at the left, Done at the right. */
 dialog.sheet > header { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg); z-index: 2; }
-dialog.sheet > header { display: grid; grid-template-columns: 1fr minmax(0, auto) 1fr; gap: 8px; }
+/* The buttons keep their whole words; a long title gives way (ellipsis) instead of running under "Abbrechen". */
+dialog.sheet > header { display: grid; grid-template-columns: minmax(max-content, 1fr) minmax(0, auto) minmax(max-content, 1fr); gap: 8px; }
 dialog.sheet > header > strong { grid-column: 2; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 dialog.sheet > header > :first-child:not(strong) { grid-column: 1; justify-self: start; }
 dialog.sheet > header > .done { grid-column: 3; justify-self: end; }
@@ -610,6 +619,8 @@ dialog.sheet.menu .sheet-body { padding-top: 6px; }
 .legend { list-style: none; padding: 0; margin: 0 0 10px; }
 .legend li { display: flex; gap: 10px; align-items: flex-start; margin: 8px 0; font-size: 15px; }
 .legend li > :first-child { width: 24px; display: flex; justify-content: center; flex: none; font-size: 18px; }
+/* A light dot keeps its own size (it was stretched to 24 px wide, an oval); the margin keeps the text in line. */
+.legend li > .dot:first-child { width: var(--s); display: inline-block; margin: 2px calc((24px - var(--s)) / 2) 0; }
 .legend li > span:last-child { display: flex; flex-direction: column; }
 .legend small { color: var(--sub); font-size: 13px; }
 .legend.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
@@ -649,11 +660,15 @@ dialog.sheet.menu .sheet-body { padding-top: 6px; }
 
 /* Boats and limits (RowingLimitsView, BoatLimitsView). */
 a.row-setting { color: var(--text); }
-h3.section { display: flex; align-items: center; gap: 6px; margin: 22px 4px 6px; font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--sub); }
+/* Section headings as the app's grouped lists (iOS 26): grey sentence case, no symbol. */
+h3.section { display: flex; align-items: center; gap: 6px; margin: 22px 4px 6px; font-size: 15px; font-weight: 600; color: var(--sub); }
+h3.section > .i { display: none; }
 p.footer { margin: 6px 4px 0; font-size: 13px; color: var(--sub); }
 .boat-row { display: flex; align-items: center; border-bottom: .5px solid var(--line); }
 .boat-row button { border-bottom: 0 !important; }
-.boat-row .round { margin-right: 10px; color: var(--accent); display: flex; padding: 6px; font-size: 22px; }
+.boat-row .round { margin-right: 10px; color: var(--accent); display: flex; padding: 6px; font-size: 22px; background: none; box-shadow: none; }
+/* Boat names in regular weight and ⓘ as an outline without a disc, as the app's boat rows. */
+.boat-row button strong { font-weight: 400; }
 /* The tick on the left, as Wi-Fi in iOS Settings (BoatRow, app #355). */
 .boats .boat-row button > span.tick { flex: none; width: 18px; display: grid; place-items: center; color: var(--accent); }
 .boats li:last-child .boat-row { border-bottom: 0; }
@@ -724,9 +739,10 @@ button.red { color: var(--red); }
 .zone-table .zt-extra td { white-space: normal; padding: 1px 0 0 16px; font-size: 12px; }
 .zone-table .zt-extra small { display: block; font-size: 12px; }
 .zone-table .zt-extra .zone-values > .probe-item::before { display: none; }
-.lake-wide { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 10px; margin: 4px 0; }
-.lake-wide.red { color: var(--red); background: color-mix(in srgb, var(--red) 12%, transparent); }
-.lake-wide.orange { color: var(--orange); background: color-mix(in srgb, var(--orange) 12%, transparent); }
+/* Plain coloured text without a box, as the app's LakeWideBanner. */
+.lake-wide { display: flex; gap: 6px; align-items: flex-start; font-size: 13px; font-weight: 600; padding: 0; margin: 4px 0; }
+.lake-wide.red { color: var(--red); }
+.lake-wide.orange { color: var(--orange); }
 /* Close and the lake's name over the map's top left (LakeMapScreen.topBar). */
 .lake-top { position: absolute; top: 10px; left: 16px; right: 72px; z-index: 1000; display: flex; gap: 10px; align-items: center; pointer-events: none; }
 .lake-top > * { pointer-events: auto; }
@@ -823,6 +839,14 @@ button.red { color: var(--red); }
 .leaflet-marker-icon.turn span { display: flex; width: 24px; height: 24px; align-items: center; justify-content: center; border-radius: 50%;
   background: #fff; color: #007aff; border: 2px solid #007aff; font: 600 12px/1 -apple-system, system-ui, sans-serif; box-sizing: border-box; }
 .leaflet-marker-icon.turn.on span { background: #007aff; color: #fff; }
+/* Turning points follow the mode, as the app (owner, 14 Nov 2026): dark-grey disc and the lighter blue in dark mode;
+   white on satellite pictures, where a dark disc gets lost. */
+:root[data-theme="dark"] .lake-map:not(.imagery) .leaflet-marker-icon.turn span { background: #2b2b2b; color: #0a84ff; border-color: #0a84ff; }
+:root[data-theme="dark"] .lake-map:not(.imagery) .leaflet-marker-icon.turn.on span { background: #0a84ff; color: #2b2b2b; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .lake-map:not(.imagery) .leaflet-marker-icon.turn span { background: #2b2b2b; color: #0a84ff; border-color: #0a84ff; }
+  :root:not([data-theme="light"]) .lake-map:not(.imagery) .leaflet-marker-icon.turn.on span { background: #0a84ff; color: #2b2b2b; }
+}
 .stripes { display: inline-block; flex: none; width: 18px; height: 18px; }
 .stripes.red path { stroke: var(--red); }
 .stripes.amber path { stroke: var(--orange); }
@@ -856,6 +880,11 @@ button.red { color: var(--red); }
 .value-big .cloud-big .layers, .value-big .humid .layers { transform: none; margin: 0; }
 .value-big svg.sunpath { width: 120px; height: 60px; }
 .value-body { display: flex; flex-direction: column; gap: 14px; }
+/* iPad and wider windows: the value page uses the window's width as the app's detail view does (B4, owner 14 Nov 2026:
+   website follows the app), not a 640 px column with empty sides; chosen by the window's width, not the device. */
+@media (min-width: 700px) {
+  .page.value-page { max-width: 1200px; padding-left: max(24px, env(safe-area-inset-left)); padding-right: max(24px, env(safe-area-inset-right)); }
+}
 @media (min-width: 900px) {
   .value-body.with-map { flex-direction: row; align-items: flex-start; }
   .value-body.with-map > * { flex: 1 1 0; min-width: 0; }
@@ -864,7 +893,8 @@ button.red { color: var(--red); }
 .vchart-wrap { position: relative; }
 .vchart-scroll { margin-right: 28px; overflow-x: auto; overflow-y: hidden; scrollbar-width: thin; touch-action: pan-x pan-y; cursor: crosshair; -webkit-user-select: none; user-select: none; }
 .vchart-scroll svg { display: block; }
-.vchart-scroll .grid { stroke: var(--line); stroke-dasharray: 2 3; }
+/* Day and 6-hour lines as strong as the app's (Swift Charts AxisGridLine): grey dashes, not the faint line colour. */
+.vchart-scroll .grid { stroke: color-mix(in srgb, var(--sub) 55%, transparent); stroke-width: .75; stroke-dasharray: 2 2; }
 /* The value scale: solid lines across, numbers in the room at the right (Swift Charts' trailing y axis). */
 .vchart-scroll .ygrid { stroke: var(--line); }
 .vchart-over .ytick { position: absolute; right: 0; width: 24px; font-size: 11px; line-height: 14px; color: var(--sub); font-variant-numeric: tabular-nums; }
@@ -881,8 +911,8 @@ button.red { color: var(--red); }
 .vchart-over .callout span { display: inline-flex; align-items: center; gap: 4px; font-variant-numeric: tabular-nums; }
 .vchart-over .callout i { width: 6px; height: 6px; border-radius: 50%; box-sizing: border-box; }
 .vchart-over .map-badge { position: absolute; width: 25px; height: 15px; border-radius: 8px; display: flex; align-items: center; justify-content: center; gap: 1px;
-  font-size: 8px; color: #3d9a4f; background: var(--card); box-shadow: inset 0 0 0 1.5px #3d9a4f; }
-.vchart-over .map-badge.joined { color: #fff; background: #3d9a4f; box-shadow: none; }
+  font-size: 8px; color: var(--map-teal); background: var(--card); box-shadow: inset 0 0 0 1.5px var(--map-teal); }
+.vchart-over .map-badge.joined { color: #fff; background: var(--map-teal); box-shadow: none; }
 /* One line under the chart, 20 px growing with the text (1.25rem): the legend left, "Back to now" right.
    Chart bottom to map top: 6 + 20 + 14 (.value-body gap) = 40 on every page. */
 .vchart-row { display: flex; align-items: center; gap: 8px; height: 1.25rem; margin-top: 6px; min-width: 0; }
@@ -981,7 +1011,11 @@ body.locked { overflow: hidden; }
 /* With a mouse or trackpad the row can't be swiped, so the buttons wrap onto more lines instead,
    reflowing as the window is resized; touch screens keep the one swipeable row, as in the app. */
 @media (pointer: fine) { .chips { flex-wrap: wrap; overflow-x: visible; } }
-.chip { display: inline-flex; align-items: center; gap: 5px; flex: none; padding: 6px 10px; border-radius: 999px; background: var(--tile); font-size: 13px; font-weight: 500; }
+.chip { display: inline-flex; align-items: center; gap: 5px; flex: none; padding: 6px 10px; border-radius: 999px; background: var(--chip, var(--tile)); font-size: 13px; font-weight: 500; }
+/* Light mode: the iOS fill grey, so a chip is a pill on the page grey too (it was plain text there); dark keeps --tile. */
+:root { --chip: rgba(118, 118, 128, .12); }
+:root[data-theme="dark"] { --chip: var(--tile); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --chip: var(--tile); } }
 .chip .i { width: 15px; height: 15px; }
 .chip.on { background: var(--accent); color: #fff; }
 .swatch { display: inline-block; width: 22px; height: 14px; border-radius: 3px; border: .5px solid var(--sub); margin-top: 3px; }
@@ -1063,6 +1097,16 @@ body.has-picture[data-tiles="frosted"] #arrange.pill, body.has-picture[data-tile
 .arrange-list li:not(.dragging) { transition: transform .15s; }
 .arrange-list .step { padding: 4px; color: var(--accent); }
 .arrange-list .step:disabled { opacity: .25; }
+/* As the app (owner, 14 Nov 2026): a drag handle at the right end on touch screens, ↑/↓ buttons with a mouse or keyboard. */
+@media (pointer: coarse) { .arrange-list .step { display: none; } }
+@media not (pointer: coarse) { .arrange-list .handle { display: none; } }
+.arrange-list li > .i.tinted { color: var(--accent); }
+.arrange-list .i.filled { transform: scale(.8); }
+.arrange-list .i.filled circle { fill: currentColor; }
+.arrange-list .i.lock { width: 13px; height: 13px; color: var(--sub); }
+.arrange-list .i.lock rect { fill: currentColor; }
+.arrange .apply-card { padding: 8px; margin: 4px 0 6px; border-radius: 12px; }
+.arrange .apply-card .segmented { margin: 0; }
 .arrange #arrange-reset, .arrange #arrange-follow { display: block; margin: 0 auto; }
 .arrange #arrange-reset { color: var(--red); }
 .hourly.ampm .hrow { grid-template-columns: 64px 16px 26px repeat(6, minmax(0, 1fr)); }
@@ -1541,12 +1585,43 @@ main.page.club .page-end > .source button.link { display: flex; align-items: cen
    the end, the lines 2 px apart, the credit in caption size; the picture's corners 10 px. Owner, 13 Nov 2026. */
 #satellite .sat-caption { display: flex; flex-direction: column; gap: 2px; margin: 8px 0; }
 #satellite .sat-caption p { margin: 0; }
-#satellite .sat-line { display: flex; align-items: baseline; gap: 4px; }
-#satellite .sat-line > span { flex: 1; min-width: 0; }
-#satellite .sat-line .sat-why { flex: none; color: var(--sub); }
-#satellite .sat-credit { font-size: 11px; }
+/* The caption's ⓘ stays on the caption's line, in the card and full screen alike. */
+.sat-line { display: flex; align-items: baseline; gap: 4px; }
+.sat-line > span { flex: 1; min-width: 0; }
+.sat-line .sat-why { flex: none; color: var(--sub); }
+.sat-credit { font-size: 11px; }
 #satellite .picture { border-radius: 10px; }
 /* One saved club: the house alone in a round button as big as the others, as Weather with one place
    (PageBar.single, owner 14 Nov 2026). */
 .bottom .dots:has(> a:only-child) { padding: 0; }
 .bottom .dots > a:only-child { width: 44px; font-size: 17px; }
+
+/* Settings › Routes: the standard pace, a stepper as in the app's Stepper row (AllRoutesView). */
+.pace-setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.pace-setting .pace { display: inline-flex; align-items: center; gap: 10px; }
+.pace-setting .stepper button { display: flex; align-items: center; justify-content: center; }
+
+/* Dark mode: the street map turns dark like the app's Apple map, instead of staying bright
+   (detail check 14 Nov 2026). OpenStreetMap has no dark tiles, so its colours are turned round:
+   land dark grey, water dark blue, names light. Only the street tiles; data layers, radar and
+   satellite pictures keep their colours. */
+:root[data-theme="dark"] .street-tiles { filter: invert(1) hue-rotate(180deg) brightness(.95) contrast(.85) saturate(.55); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .street-tiles { filter: invert(1) hue-rotate(180deg) brightness(.95) contrast(.85) saturate(.55); }
+}
+
+/* A focus ring only for keyboard focus, as iOS: none on a tap or when a sheet opens. */
+:focus:not(:focus-visible) { outline: none; }
+dialog:focus { outline: none; }
+/* Half-pixel tile positions leave a thin seam between street tiles (Wasser station map): the tiles overlap by half a pixel. */
+.street-tiles img.leaflet-tile { width: 256.5px !important; height: 256.5px !important; }
+.vchart-over .map-strip { position: absolute; height: 3px; border-radius: 1.5px; opacity: .8; pointer-events: none; }
+
+/* The cloud chart's colours (app: CloudColours), light and dark. */
+:root { --cloud-all: #c7c7cc; --cloud-high: #8ec9ff; --cloud-mid: #2f80ed; --cloud-low: #1b2f8a; }
+:root[data-theme="dark"] { --cloud-all: #636366; --cloud-high: #a8d8ff; --cloud-mid: #4c9bff; --cloud-low: #7d8cff; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --cloud-all: #636366; --cloud-high: #a8d8ff; --cloud-mid: #4c9bff; --cloud-low: #7d8cff; } }
+/* The map's colour on the chart (strip, marker line, badge): iOS systemTeal, light and dark. */
+:root { --map-teal: #30b0c7; }
+:root[data-theme="dark"] { --map-teal: #40c8e0; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --map-teal: #40c8e0; } }

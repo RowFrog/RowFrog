@@ -1116,7 +1116,7 @@ struct SatellitePictureScreen: View {
                     let fit = min(geo.size.width, geo.size.height * picture.aspectRatio)
                     if let shot = picture.shot(kind) {
                         let size = CGSize(width: fit, height: fit / picture.aspectRatio)
-                        ZoomableView(size: size, focus: focus(in: size), tracker: zoom, maxZoom: maxZoom(fit: fit)) {
+                        ZoomableView(size: size, focus: focus(in: size, view: geo.size), tracker: zoom, maxZoom: maxZoom(fit: fit)) {
                             SatelliteImage(lakeID: lakeID, picture: picture, shot: shot, clubID: clubID, marksOnScreen: true, zoom: zoom)
                                 .frame(width: fit, height: fit / picture.aspectRatio)
                         }
@@ -1163,6 +1163,9 @@ struct SatellitePictureScreen: View {
         }
     }
 
+    /// The most the picture zooms in when it opens filling the width.
+    static let maxOpeningZoom: CGFloat = 1.5
+
     /// Big lakes with 10 m tiles zoom until a tile pixel is two screen pixels.
     private func maxZoom(fit: CGFloat) -> CGFloat {
         guard let sharp = picture.sharp, picture.shot(kind)?.tiles != nil, fit > 0 else { return 6 }
@@ -1171,7 +1174,10 @@ struct SatellitePictureScreen: View {
 
     /// Where the picture opens: the saved routes on this lake, all of them in
     /// view; without routes the page's club, with the picture filling the width.
-    private func focus(in size: CGSize) -> ZoomFocus? {
+    /// Filling the width is skipped when it would zoom in more than 1.5 times
+    /// (a long lake on a wide iPad screen showed only its north tip): then the
+    /// whole picture opens.
+    private func focus(in size: CGSize, view: CGSize) -> ZoomFocus? {
         guard let box = picture.bbox, box.count == 4 else { return nil }
         func point(_ lon: Double, _ lat: Double) -> CGPoint {
             CGPoint(x: (lon - box[0]) / (box[2] - box[0]) * size.width, y: (box[3] - lat) / (box[3] - box[1]) * size.height)
@@ -1181,6 +1187,7 @@ struct SatellitePictureScreen: View {
            let minY = points.map(\.y).min(), let maxY = points.map(\.y).max() {
             return .whole(CGRect(x: minX, y: minY, width: maxX - minX, height: maxY - minY).insetBy(dx: -24, dy: -24))
         }
+        guard size.width > 0, view.width / size.width <= Self.maxOpeningZoom else { return nil }
         let club = LakeViewStore.shared.views[lakeID, club: clubID]?.clubs.first { $0.id == clubID }
         return .fillWidth(around: club.map { point($0.launchPoint.lon, $0.launchPoint.lat) })
     }

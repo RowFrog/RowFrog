@@ -99,7 +99,7 @@ function renderSafetyGate() {
 function languagePicker() {
   const choice = savedLanguage();
   const option = (value, label) => `<option value="${value}" ${choice === value ? "selected" : ""}>${h(label)}</option>`;
-  return `<label class="row-setting"><span>${icon("languages")} ${h(t("Language"))}</span>
+  return `<label class="row-setting"><span>${icon("globe")} ${h(t("Language"))}</span>
     <select id="language">${option("auto", t("Device"))}${option("en", "English")}${option("de", "Deutsch")}</select></label>`;
 }
 
@@ -143,7 +143,7 @@ function legendBody(part) {
       <li>${dot("green", 12)}<span>${h(t("Rowing light for your boat in that hour."))}</span></li>
       <li><span class="cond">${icon("cloud-sun")}</span><span>${h(t("Weather symbol; it also shows how cloudy it is."))}</span></li></ul>
       ${explain(["temperature", "feelsLike", "wind", "waves", "precipitation", "visibility"].map((c) => rows[c]))}
-      <ul class="legend"><li><span class="cond">${icon("moon")}</span><span>${h(t("Night line: the hours between sunset and sunrise in one line, with the night's lowest temperature and feels-like, strongest wind and gusts, highest waves, all its rain and its poorest visibility. Tap it to see each hour."))}</span></li></ul>
+      <ul class="legend"><li><span class="cond">${icon("moon-star")}</span><span>${h(t("Night line: the hours between sunset and sunrise in one line, with the night's lowest temperature and feels-like, strongest wind and gusts, highest waves, all its rain and its poorest visibility. Tap it to see each hour."))}</span></li></ul>
       <p class="sub">${h(t("Hours after sunset are dimmed. Tap an hour to see all its values."))}</p>`;
   }
   return symbols + explain(TILE_ORDER.map((c) => rows[c]));
@@ -356,8 +356,8 @@ function moreMenu() {
   return `<details class="more-menu"><summary class="glass round" aria-label="${h(t("More"))}">${icon("ellipsis")}</summary>
     <div class="menu">
       <button id="edit" ${store.clubs.length < 2 ? "disabled" : ""}>${icon("pencil")} ${h(t("Edit list"))}</button>
-      <a id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
-      <a href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a>
+      <a id="browse" href="#/countries" hidden>${icon("earth")} ${h(t("Browse clubs by country"))}</a>
+      <a href="#/add-place">${icon("map-pin-ellipse")} ${h(t("Add a place yourself"))}</a>
     </div></details>`;
 }
 
@@ -366,7 +366,7 @@ function searchBar(cls, cog = true) {
   return `<div class="${cls} search-bar">
     ${cog ? `<a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>` : ""}
     <label class="search glass">${icon("search")}
-      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Club, lake or town"))}" aria-label="${h(t("Club, lake or town"))}"></label>
   </div>`;
 }
 
@@ -375,7 +375,7 @@ function listBody(currentId = null) {
   const clubs = store.clubs;
   return `<div id="chips" hidden></div>
     <ul id="results" class="results" hidden></ul>
-    <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Not in the list? Add a place"))}</a>
+    <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin-ellipse")} ${h(t("Not in the list? Add a place"))}</a>
       <small class="sub">${h(t("Put your club, boathouse or spot on the map yourself."))}</small></p>
     <div id="saved">
       ${clubs.length ? "" : `<p class="empty">${h(t("Pick your home club first, then any others you row at."))}</p>
@@ -464,7 +464,7 @@ async function fillRow(row) {
   row.style.setProperty("--tint", `var(--${shownLight(hour.light, stale)})`);
   row.classList.add("tinted");
   row.querySelector(".row-now").innerHTML = `<div class="now-line">${dot(hour.light, 18, stale)}${skySymbol(hour)}${conditionIcon("temperature")}<span class="big-temp">${h(degrees(hour.temperatureC))}</span></div>
-    ${hour.apparentTemperatureC != null ? `<small class="sub">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}`;
+    ${hour.apparentTemperatureC != null ? `<small class="sub">${icon("thermometer-figure")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}`;
   const headline = warningHeadline(forecast.warnings);
   const sun = sunState(forecast);
   const ice = forecast.ice;
@@ -473,7 +473,7 @@ async function fillRow(row) {
   row.querySelector(".row-bottom").innerHTML = `
     <div class="row-why">
       <strong>${h(lightTitle(hour.light, stale))}</strong>
-      ${stale ? `<small class="orange">${icon("clock")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
+      ${stale ? `<small class="orange">${icon("clock-alert")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
       <small class="why${hour.reasons.length ? "" : " one-line"}">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
       ${kit ? `<small class="kit-line" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")} ${h(coldWaterText(kit)[0])}</small>` : ""}
       ${headline ? warningListLine(headline) : ""}
@@ -671,7 +671,7 @@ async function renderClub(id) {
   const raw = state?.value ?? null;
   const failure = state?.failure ? refreshFailure(state.failure, isOwn(id)) : null;
   if (!raw) {
-    root.querySelector(".loading").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
+    root.querySelector(".loading").innerHTML = `<p><strong>${icon("cloud-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
       <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button>`;
     root.querySelector("#retry").addEventListener("click", () => renderClub(id));
     return;
@@ -1137,10 +1137,14 @@ function stickHourlyHeader() {
   const stuck = table.top < top - 1 && at.bottom > table.top;
   head.classList.toggle("stuck", stuck);
   if (stuck) {
-    // The day whose header has passed under the pinned header, else the first.
+    // The day whose header has passed under the pinned header. Before the first one the rows
+    // are the day before it (today), not that day: the header said "Morgen" over today's rows
+    // (detail check 14 Nov 2026; StickyHourlyHeader in the app).
     const days = [...head.parentElement.querySelectorAll(".dayhead")].filter((d) => d.offsetParent);
-    const under = days.filter((d) => d.getBoundingClientRect().top <= at.bottom).pop() ?? days[0];
-    const label = under?.querySelector("strong")?.textContent ?? "";
+    const under = days.filter((d) => d.getBoundingClientRect().top <= at.bottom).pop();
+    const before = days[0]?.dataset.day
+      ? new Date(Date.parse(`${days[0].dataset.day}T12:00:00Z`) - 86400000).toISOString().slice(0, 10) : null;
+    const label = under ? under.querySelector("strong")?.textContent ?? "" : before ? dayLabel(before) : "";
     const slot = head.querySelector(".hhead-day");
     if (slot.textContent !== label) slot.textContent = label;
   }
@@ -1193,14 +1197,14 @@ const UPDATE_CYCLES = [
   ["wind", key("Weather forecast"), key("Wind, gusts, temperature, rain, clouds and visibility: DWD's ICON-D2 model, a new run every 3 hours, ready about 1½ to 3 hours after it starts."), key("Fetched once the new run is ready, checked every 30 minutes. Clubs nobody opened lately: every 6 hours.")],
   ["waves", key("Waves"), key("Worked out from the forecast wind and the open water in front of the club."), key("With every new forecast.")],
   ["triangle-alert", key("Official warnings"), key("DWD, GeoSphere Austria or MeteoSwiss, whenever they issue or change one."), key("Every 30 minutes.")],
-  ["thermometer", key("Water temperature"), key("Measuring stations, every 15 to 60 minutes; without a station, satellites once a day or an estimate from the air temperatures."), key("Every 30 minutes.")],
+  ["thermometer-waves", key("Water temperature"), key("Measuring stations, every 15 to 60 minutes; without a station, satellites once a day or an estimate from the air temperatures."), key("Every 30 minutes.")],
   ["gauge", key("River current and lake level"), key("Gauges, every 15 minutes."), key("Every 30 minutes.")],
   ["cloud-rain", key("Rain radar"), key("DWD, every 5 minutes."), key("The radar map loads live when you open it; the widget's rain line every 30 minutes.")],
   ["map", key("Lake view"), key("The same model runs as the forecast, for points across the water."), key("Every 3 hours; lakes nobody opened lately twice a day.")],
-  ["spline", key("8-day outlook"), key("The same model runs, longer models after 2 days."), key("Every 3 hours.")],
-  ["globe", key("Satellite picture"), key("Sentinel-2 passes every few days; clouds can hide the water."), key("Looked for once a day.")],
+  ["chart-spline", key("8-day outlook"), key("The same model runs, longer models after 2 days."), key("Every 3 hours.")],
+  ["image", key("Satellite picture"), key("Sentinel-2 passes every few days; clouds can hide the water."), key("Looked for once a day.")],
   ["snowflake", key("Ice"), key("A satellite ice map once a day in winter, and an estimate from the water and air temperatures."), key("Twice a day.")],
-  ["sunrise", key("Daylight"), key("Worked out from the date and the place."), key("Always current.")],
+  ["sun-horizon", key("Daylight"), key("Worked out from the date and the place."), key("Always current.")],
 ];
 
 export function updateCyclesBody(forecast) {
@@ -1349,7 +1353,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
     ${club && club.launchPointVerified === false ? (inHeader(club)
       ? `<p class="orange small"><button class="link plain launch-open">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</button></p>`
       : `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>`) : ""}
-    ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
+    ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin-ellipse")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
     ${forecastLines(club, forecast, forecastStatus({ hasForecast: !!forecast, outOfDate: stale, failure }))}
     ${slow ? `<p class="sub small">${icon("hourglass")} ${h(t("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."))}</p>` : ""}
   </header>`;
@@ -1359,7 +1363,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
 function forecastLines(club, forecast, status) {
   if (!forecast) return "";
   const outOfDate = status.name === "outOfDate" || status.name === "outOfDateAndUpdateFailed";
-  const old = outOfDate ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>` : "";
+  const old = outOfDate ? `<p class="orange small">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>` : "";
   switch (status.name) {
     case "updateFailed":
     case "outOfDateAndUpdateFailed":
@@ -1546,7 +1550,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
       ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${filledIcon("shield-check")} ${h(t("No official warning"))}</span>
-        <span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></button></li>` : ""}
+        <span class="checked"><span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></span></button></li>` : ""}
       ${!at && warnings?.status === "ok" ? laterWarningLine(warningHeadline(warnings)) : ""}
     </ul>
     ${adviceOnly()}
@@ -1556,7 +1560,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
       <div class="air" data-top="temperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("temperature")} ${h(t("Air"))}</small>
         <span class="v28${causeClass(causeOf("temperature", hour))}">${h(degrees(hour.temperatureC))}</span>
-        ${hour.apparentTemperatureC != null ? `<small class="sub grey" data-top="feelsLike" role="button" tabindex="0">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
+        ${hour.apparentTemperatureC != null ? `<small class="sub grey" data-top="feelsLike" role="button" tabindex="0">${icon("thermometer-figure")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
       </div>
       <div class="${water == null && estimate != null ? "secondary" : ""}" data-top="waterTemperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("waterTemperature")} ${h(t("Water"))}</small>
@@ -1738,8 +1742,8 @@ function serviceShort(source) {
 /** Outside Germany: the place's own weather service warns, and Row Frog does not read it yet. */
 function notCheckedNote(local) {
   const service = local?.service ?? t("the national weather service");
-  return `<p class="orange">${icon("circle-alert")} ${h(t("Row Frog cannot check the weather warnings for this place yet. Check %@ before going out.", service))}</p>
-    ${local?.url ? `<p><a class="strong" href="${h(local.url)}" target="_blank" rel="noopener">${icon("globe")} ${h(t("Open the warnings of %@", service))}</a></p>` : ""}`;
+  return `<p class="orange">${icon("shield-alert")} ${h(t("Row Frog cannot check the weather warnings for this place yet. Check %@ before going out.", service))}</p>
+    ${local?.url ? `<p><a class="strong" href="${h(local.url)}" target="_blank" rel="noopener">${icon("square-arrow-out-up-right")} ${h(t("Open the warnings of %@", service))}</a></p>` : ""}`;
 }
 
 function warningsBody(warnings, club, checkedAt, guideOpen) {
@@ -2103,7 +2107,7 @@ function clubAddress(club) {
 
 /** The launch point on a map, with what it stands for (LaunchPointMapCard), when it is not in the header. */
 function launchPointCard(club) {
-  return card(t("Launch point"), "map-pin", launchPointBody(club, "launch-map"));
+  return card(t("Launch point"), "map-pin-ellipse", launchPointBody(club, "launch-map"));
 }
 
 /** The map, the note on what it is for, and the coordinates with Open in Maps (LaunchPointDetails). */
@@ -2123,8 +2127,8 @@ function launchPointBody(club, mapId) {
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
-          <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a>
-          <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin")} ${h(t("Launch point on the map"))}</a>
+          <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("car")} ${h(t("Directions to the club"))}</a>
+          <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin-ellipse")} ${h(t("Launch point on the map"))}</a>
           <small class="sub">${h(maps.name)}</small>
         </div></details></div>`;
 }
@@ -2220,8 +2224,8 @@ function sourceBody(source) {
     <p class="small sub">${h(t("Weather models are computer forecasts from national weather services. A finer grid shows more of the lake and the hills around it."))}</p>
     <ul class="legend">
       ${source.picked == null ? `<li>${icon("badge-check")}<span>${h(t("The app picks the weather model that does best for this region."))}</span></li>` : ""}
-      <li>${icon("gauge")}<span>${h(t("The choice is checked regularly against measured wind and temperature."))}</span></li>
-      <li>${icon("radio-tower")}<span>${h(t("Data via Open-Meteo."))}</span></li>
+      <li>${icon("chart-line")}<span>${h(t("The choice is checked regularly against measured wind and temperature."))}</span></li>
+      <li>${icon("server")}<span>${h(t("Data via Open-Meteo."))}</span></li>
     </ul>`;
 }
 
@@ -2333,11 +2337,11 @@ function settingsTopicBody(topic, accepted) {
         ? t("The top tile opens into all values: tap \"All values\" under it. Values it hides show as a line while they matter for the rowing light.")
         : t("Current conditions is a card of its own under the top tile, as before."))}</p>
       <section class="card group">
-        <button class="row-setting topic" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Card order"))}</span><span class="sub">${h(ownOrder() ? t("Own order") : t("App's order"))} ${icon("chevron-right")}</span></button>
+        <button class="row-setting topic" id="arrange"><span>${h(t("Card order"))}</span><span class="sub">${h(ownOrder() ? t("Custom") : t("Standard"))} ${icon("chevron-right")}</span></button>
       </section>
       <p class="footer">${h(t("For all clubs. Each club can have its own from \"Arrange this page\"."))}</p>
       <section class="card group">
-        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
+        <label class="row-setting"><span>${icon("map-pin-ellipse")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
       </section>
       <p class="footer">${h(store.launchPointInHeader
         ? t("Tap the lake and town under the club's name for a map with the launch point.")
@@ -2354,7 +2358,7 @@ function settingsTopicBody(topic, accepted) {
         distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))} ${h(t("Places open in a new tab. Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
 `;
     case "language": return `
-      <h3 class="section">${icon("languages")} ${h(t("Language"))}</h3>
+      <h3 class="section">${icon("globe")} ${h(t("Language"))}</h3>
       <section class="card group">
         <div class="row-setting"><span class="stack"><span>${h(t("Language"))}</span><small class="sub">${h(t("In your browser's language settings"))}</small></span><span class="sub">${h(browserLanguage())}</span></div>
         ${dev ? likeDeviceRow("language-like", savedLanguage() === "auto", browserLanguage()) : ""}
@@ -2387,7 +2391,7 @@ function settingsTopicBody(topic, accepted) {
         <a class="row-setting" href="#/tour"><span>${icon("circle-help")} ${h(t("Show the tour again"))}</span>${icon("chevron-right")}</a>
         <button class="row-setting" id="tips-again"><span>${icon("lightbulb")} ${h(t("Show the tips again"))}</span></button>
         <button class="row-setting" id="legend"><span>${icon("info")} ${h(t("Legend: what the symbols mean"))}</span>${icon("chevron-right")}</button>
-        <button class="row-setting" id="safety-again"><span>${icon("shield-check")} ${h(t("Safety notice"))}</span>${icon("chevron-right")}</button>
+        <button class="row-setting" id="safety-again"><span>${icon("shield-alert")} ${h(t("Safety notice"))}</span>${icon("chevron-right")}</button>
       </section>
       <p class="footer" id="tips-note"></p>
 `;
@@ -2432,7 +2436,7 @@ function settingsTopicValue(topic) {
     const picture = choiceTitle(backgrounds.all);
     return store.developerOptions ? `${t({ device: "Device", light: "Light", dark: "Dark" }[store.appearance] ?? "Device")} · ${picture}` : picture;
   }
-  if (topic === "clubpages") return ownOrder() ? t("Own order") : t("App's order");
+  if (topic === "clubpages") return ownOrder() ? t("Custom") : t("Standard");
   if (topic === "language") return `${resolve() === "de" ? "Deutsch" : "English"} · ${unitSymbol("temperature")}`;
   if (topic === "data") return dataSaving() ? t("Saving data") : "";
   if (topic === "about") return websiteVersion;
@@ -2704,9 +2708,9 @@ function renderBoats() {
         <span><strong>${h(boatTitle(boat))}</strong><small class="${changed ? "orange" : ""}">${h(changed ? t("%@ · your limits", boatDetail(boat)) : boatDetail(boat))}</small></span></button>
       <a class="round" href="#/settings/boat/${encodeURIComponent(boat.id)}" aria-label="${h(t("Limits for %@", boatTitle(boat)))}">${icon("info")}</a></div>`;
   };
-  root.innerHTML = `<header class="nav"><a class="link" href="#/settings">${icon("chevron-left")} ${h(t("Settings"))}</a><span class="spacer"></span></header>${testing()}
+  // A round back button and a small centred title, as the app and the other settings pages (Routen).
+  root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Boats and limits"))}</strong><span class="nav-side"></span></header>${testing()}
     <main class="page">
-      <h1 class="large">${h(t("Boats and limits"))}</h1>
       ${tip("myBoats")}
       <h3 class="section">${icon("rower")} ${h(t("Your boat"))}</h3>
       <ul class="boats">${GROUPS.map((b) => `<li>${body(b)}</li>`).join("")}</ul>
@@ -2743,7 +2747,7 @@ function keptAtSection(boat) {
       <span>${icon(markIcon(id))} ${h(clubNameOf(id))}</span>
       ${id === home ? `<small class="sub">${h(t("Home base"))}</small>` : ""}
     </div>`;
-  return `<h3 class="section">${icon("map-pin")} ${h(t("Kept at"))}</h3>
+  return `<h3 class="section">${icon("map-pin-ellipse")} ${h(t("Kept at"))}</h3>
     <ul class="card group kept">${clubs.map((id) => (clubs.length > 1 ? swipeRow(body(id), `data-unkeep="${h(id)}"`) : `<li>${body(id)}</li>`)).join("")}
       ${others.length ? `<li><label class="row-setting add-club">${icon("circle-plus")}<select id="keep-at" aria-label="${h(t("Add a club"))}">
         <option value="">${h(t("Add a club"))}</option>${others.map((c) => `<option value="${h(c.id)}">${h(c.shortName || c.name)}</option>`).join("")}</select></label></li>` : ""}
@@ -2874,9 +2878,8 @@ function renderBoat(id) {
   }
   setTitle(boatTitle(boat));
   const own = { get value() { return ownLimitsShown[id] ?? hasOwnLimits(id); }, set value(v) { ownLimitsShown[id] = v; } };
-  root.innerHTML = `<header class="nav"><a class="link" href="#/settings/boats">${icon("chevron-left")} ${h(t("Boats and limits"))}</a><span class="spacer"></span></header>${testing()}
+  root.innerHTML = `<header class="nav"><a class="link back" href="#/settings/boats" aria-label="${h(t("Boats and limits"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(boatTitle(boat))}</strong><span class="nav-side"></span></header>${testing()}
     <main class="page">
-      <h1 class="large">${h(boatTitle(boat))}</h1>
       ${boatForm(boat, false, own.value)}
       ${footerLinks()}
     </main>`;
@@ -2919,6 +2922,8 @@ function openNewBoat(id) {
     renderBoats();
   });
   draw();
+  // Focus on the sheet itself, not its first button: no focus ring on ✕ or "Cancel" as it opens (keyboard Tab still goes on from here).
+  dialog.autofocus = true;
   dialog.showModal();
   body.querySelector("#boat-name")?.focus();
 }

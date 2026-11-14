@@ -288,7 +288,8 @@ struct RootView: View {
             TopEdgeFade(statusBar: insets.top, scrolled: scroll.scrolled.contains(selection),
                         title: scroll.titleGone.contains(selection) ? club : nil,
                         light: forecast?.current()?.light, stale: forecast?.isStale() ?? false,
-                        sideRoom: PageTopButtons.sideRoom(chrome))
+                        sideRoom: PageTopButtons.sideRoom(chrome),
+                        picture: BackgroundPictures.shared.image(for: AppSettings.shared.background(for: .clubPages, clubID: selection), clubID: selection) != nil)
                 .frame(maxHeight: .infinity, alignment: .top)
                 .ignoresSafeArea(edges: .top)
         }
@@ -404,8 +405,11 @@ private struct TopEdgeFade: View {
     let stale: Bool
     /// Kept free on each side of the small title for the buttons beside it.
     let sideRoom: CGFloat
-    /// How far the fade reaches below the bar.
-    static let tail: CGFloat = 28
+    /// Over a background picture the bar is thick glass rather than the page grey, so no
+    /// grey band sits on the picture (owner's iPhone shots, 12 Nov 2026).
+    var picture = false
+    /// How far the fade reaches below the bar: 8 pt (owner's pick A, 14 Nov 2026).
+    static let tail: CGFloat = 8
 
     var body: some View {
         let bar = statusBar + (title == nil ? 0 : InlineClubTitle.barHeight(statusBar: statusBar))
@@ -416,13 +420,13 @@ private struct TopEdgeFade: View {
                     .accessibilityHidden(true)
             } else {
                 let height = bar + Self.tail
-                // Thin, so the cards still show through blurred, as under Mail's
-                // bar, and fading out over a longer way rather than ending in a band.
-                Rectangle().fill(.thinMaterial)
+                // Solid down to just below the name, then a short fade (owner's pick A,
+                // 14 Nov 2026): headings and the top tile scrolled under the name no
+                // longer show through it; the content below the bar stays visible.
+                Rectangle().fill(picture ? AnyShapeStyle(Material.thickMaterial) : AnyShapeStyle(Color(.systemGroupedBackground)))
                     .mask {
                         LinearGradient(stops: [.init(color: .black, location: 0),
-                                               .init(color: .black, location: statusBar * 0.5 / max(height, 1)),
-                                               .init(color: .black.opacity(0.8), location: bar / max(height, 1)),
+                                               .init(color: .black, location: bar / max(height, 1)),
                                                .init(color: .clear, location: 1)],
                                        startPoint: .top, endPoint: .bottom)
                     }

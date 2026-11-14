@@ -54,7 +54,7 @@ function remember(storeKey, on) {
  * `onChange(satellite)` runs after every switch, and once at the start.
  */
 export async function baseMap(L, map, { storeKey = null, start = false, small = false, onChange = () => {} } = {}) {
-  const street = L.tileLayer(OSM, { maxZoom: 19, referrerPolicy: "strict-origin", attribution: OSM_CREDIT });
+  const street = L.tileLayer(OSM, { maxZoom: 19, referrerPolicy: "strict-origin", className: "street-tiles", attribution: OSM_CREDIT });
   const { maptilerKey } = await siteConfig();
   if (!maptilerKey) {
     street.addTo(map);
@@ -80,7 +80,7 @@ export async function baseMap(L, map, { storeKey = null, start = false, small = 
   function show() {
     map.removeLayer(on ? street : imagery);
     (on ? imagery : street).addTo(map);
-    control.button.innerHTML = icon(on ? "map" : "globe");
+    control.button.innerHTML = icon(on ? "map" : "earth");
     const label = on ? t("Show the map") : t("Show satellite pictures");
     control.button.setAttribute("aria-label", label);
     control.button.title = label;

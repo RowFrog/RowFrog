@@ -727,7 +727,7 @@ private struct NowCard: View {
     }
 
     private var combined: Bool { AppSettings.shared.combinedTopTile }
-    private var open: Bool { AppSettings.shared.topTileOpen }
+    private var open: Bool { club.map { AppSettings.shared.isTopTileOpen($0.id) } ?? false }
 
     /// The values the closed tile does not show, while they count for the light; ice also
     /// whenever the ice line would show. The Current or Water level tile on rivers and
@@ -773,7 +773,8 @@ private struct NowCard: View {
 
     private func toggleOpen() {
         AllValuesTip().invalidate(reason: .actionPerformed)
-        withAnimation(.smooth(duration: 0.35)) { AppSettings.shared.topTileOpen.toggle() }
+        guard let id = club?.id else { return }
+        withAnimation(.smooth(duration: 0.35)) { AppSettings.shared.toggleTopTile(id) }
     }
 
     /// The light, the verdict on one line, and the weather in a column of its own,

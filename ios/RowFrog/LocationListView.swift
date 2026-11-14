@@ -137,7 +137,7 @@ struct LocationListView: View {
             .modifier(ClearNavigationBackground(active: sharedPicture))
             .navigationTitle(tr("Locations"))
             .titleShrinksOnScroll($scrolled)
-            .clubSearch($search, prompt: Text(tr("Search clubs, lakes or towns")), besidePage: hideList != nil)
+            .clubSearch($search, prompt: Text(tr("Club, lake or town")), besidePage: hideList != nil)
             .onChange(of: search) { if !search.isEmpty { editMode = .inactive } }
             .environment(\.editMode, $editMode)
             // As in the Weather app: no way back but the clubs' cards, the
@@ -560,7 +560,7 @@ private struct SideListHeader<Trailing: View>: View {
             }
             HStack(spacing: 6) {
                 Image(systemName: "magnifyingglass").foregroundStyle(.secondary)
-                TextField(tr("Search clubs, lakes or towns"), text: $search)
+                TextField(tr("Club, lake or town"), text: $search)
                     .focused($focused)
                     .submitLabel(.search)
                     .autocorrectionDisabled()

@@ -86,7 +86,7 @@ async function openIn(layout, storage, scheme = "light", init = null) {
 
 for (const layout of LAYOUTS) {
   test(`${layout.name}: every value bar's dot stays inside its bar`, async () => {
-    const { page, errors, context } = await openIn(layout, visitor({ "rf.topTileOpen": true }));
+    const { page, errors, context } = await openIn(layout, visitor({ "rf.topTileOpenAll": true }));
     await page.goto(`${base}/app/#/club/${club.id}`);
     // The page draws again when the forecast is in, so the bars are read once at least three are there.
     const bars = await (await page.waitForFunction(() => {

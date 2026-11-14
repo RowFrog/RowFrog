@@ -184,8 +184,8 @@ function show(page) {
   const chartBox = root.querySelector("#chart");
   let redraw = null;
   // The legend goes into the line under the chart, left of "Back to now".
-  const legend = detail.lines.length > 1 ? `<span class="chart-legend">${detail.lines.map((l) => `<button data-line="${h(l.name)}" class="${hidden.has(l.name) ? "off" : ""}" style="color:${l.colour}">
-            <i class="${l.dashed ? "dashed" : ""}"></i><span>${h(l.name)}</span></button>`).join("")}</span>` : "";
+  const legend = detail.lines.length > 1 ? `<span class="chart-legend">${detail.lines.map((l) => `<button data-line="${h(l.name)}" class="${hidden.has(l.name) ? "off" : ""}" style="color:${l.kind === "area" ? "var(--sub)" : l.colour}">
+            <i class="${l.dashed ? "dashed" : ""}"${l.kind === "area" ? ` style="background:${l.colour}"` : ""}></i><span>${h(l.name)}</span></button>`).join("")}</span>` : "";
   if (chartBox) redraw = mountChart(chartBox, detail, data, time, { hidden, legend });
   root.querySelectorAll("[data-line]").forEach((b) => b.addEventListener("click", () => {
     const name = b.dataset.line;
@@ -270,7 +270,8 @@ async function mapCard(page, layerId, detail, hidden) {
   // The rain map shows DWD's radar while it covers the time (an hour back to two ahead), at the first hour the latest picture.
   const panelDate = () => (layerId === "rain" && data.isNow && time.shownMapHour === 0 ? Date.now() : mapDate().getTime());
   const showsRadar = () => layerId === "rain" && radarCovers(panelDate());
-  box.innerHTML = `<header class="map-head">${icon(layer.icon)}<strong id="map-time"></strong><span class="spacer"></span>
+  // The value page's own symbol, as the app: the cloud page shows the visibility map under a cloud.
+  box.innerHTML = `<header class="map-head">${conditionIcon(page.condition)}<strong id="map-time"></strong><span class="spacer"></span>
       ${layer.links !== "none" ? `<span class="pop-anchor end"><button class="chain" id="chain"></button>${chainBubble()}</span>` : ""}
       <button class="tool" id="map-full" aria-label="${h(t("Opens the map full screen"))}">${icon("maximize-2")}</button></header>
     <div class="map-frame"><div class="wm" id="wm"></div><p class="map-note" id="map-note" hidden></p></div>
@@ -296,16 +297,26 @@ async function mapCard(page, layerId, detail, hidden) {
       radar?.remove();
     }
     const i = current();
-    if (i == null) return;
-    if (!radar || !showsRadar()) {
-      wm.show(list[i]);
-      // Past the radar's two hours the rain map is the forecast, and says so.
-      label.textContent = layer.links === "none" ? t("Live") : layerId === "rain" ? t("Forecast %@", dayTime(list[i])) : frameLabel(layer, list[i]);
-    }
     const chain = box.querySelector("#chain");
     if (chain) {
       chain.className = `chain ${time.linked ? "on" : ""}`;
       chain.innerHTML = `${icon("link")} ${h(time.linked ? t("Linked") : t("Own time"))}`;
+    }
+    // No map hours (the maps could not be loaded, or are all past): the header still shows the hour and the link, as the app.
+    if (i == null) {
+      if (!radar || !showsRadar()) {
+        label.textContent = dayTime(mapDate());
+        const note = box.querySelector("#map-note");
+        note.hidden = false;
+        note.textContent = t("The map could not be loaded.");
+        box.querySelector(".map-frame").classList.add("out");
+      }
+      return;
+    }
+    if (!radar || !showsRadar()) {
+      wm.show(list[i]);
+      // Past the radar's two hours the rain map is the forecast, and says so.
+      label.textContent = layer.links === "none" ? t("Live") : layerId === "rain" ? t("Forecast %@", dayTime(list[i])) : frameLabel(layer, list[i]);
     }
     const slider = box.querySelector("#slider");
     if (slider) slider.value = i;
@@ -413,7 +424,7 @@ async function openFull(page, layerId, detail, hidden) {
     const p = panel.querySelector("#wm-panel");
     const keepChart = p.querySelector("#wm-chart");
     p.innerHTML = `${follows() && detail.lines.length ? `<div id="wm-chart-slot"></div>` : ""}
-      <p class="wm-line"><strong>${at ? h(frameLabel(layer, at)) : ""}</strong>${value ? `<span class="sub">${icon("map-pin")} ${h(value)}</span>` : ""}</p>
+      <p class="wm-line"><strong>${at ? h(frameLabel(layer, at)) : ""}</strong>${value ? `<span class="sub">${icon("map-pin-ellipse")} ${h(value)}</span>` : ""}</p>
       ${problem ? `<p class="small orange">${h(problem)}</p>` : ""}
       ${colourBar(layer)}
       ${layer.note ? `<p class="small sub">${h(t(layer.note))}</p>` : ""}
@@ -504,7 +515,7 @@ function stationCard(condition, data) {
   if (condition !== "waterTemperature" || station?.lat == null || station?.lon == null) return "";
   const name = station.name ?? t("Lake station");
   return `<section class="station">
-    <h3 class="section">${icon("map-pin")} ${h(t("Where it is measured"))}</h3>
+    <h3 class="section">${icon("map-pin-ellipse")} ${h(t("Where it is measured"))}</h3>
     <div class="map" id="station-map" role="img" aria-label="${h(name)}"></div>
     <p class="small sub station-line"><span>${h(station.distanceM != null ? t("%@, %@ from the launch point", name, distance(station.distanceM)) : name)}</span>
       ${/^https:\/\//.test(station.url ?? "") ? `<a class="link" href="${h(station.url)}" target="_blank" rel="noopener noreferrer">${h(t("Station page"))}</a>` : ""}</p>
@@ -518,7 +529,7 @@ async function showStationMap(box, station) {
   const map = L.map(box, { scrollWheelZoom: false, attributionControl: true }).setView([station.lat, station.lon], 14);
   // OpenStreetMap asks for the site in the Referer; the page itself sends none.
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    maxZoom: 19, referrerPolicy: "strict-origin", className: "street-tiles", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
   L.marker([station.lat, station.lon], {
     icon: L.divIcon({ className: "pin station-pin", html: icon("thermometer"), iconSize: [30, 30], iconAnchor: [15, 15] }),

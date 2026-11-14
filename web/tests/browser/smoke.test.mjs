@@ -626,8 +626,8 @@ test("the route editor: undo takes back the way back, Save marks the route saved
   await page.locator("#route-mode").click({ timeout: 20000 });
   const map = page.locator("#lake-map");
   const box = await map.boundingBox();
-  // Taps on the water above the panel add turning points.
-  for (const [x, y] of [[0.3, 0.2], [0.7, 0.25]]) await map.click({ position: { x: box.width * x, y: box.height * y } });
+  // Taps on the water above the panel add turning points (the lake sits below the top buttons, as the app fits it).
+  for (const [x, y] of [[0.3, 0.35], [0.7, 0.4]]) await map.click({ position: { x: box.width * x, y: box.height * y } });
   await page.locator(".route-line .sub").waitFor();
   const undo = page.locator("#undo");
 
@@ -644,13 +644,13 @@ test("the route editor: undo takes back the way back, Save marks the route saved
   assert.equal(saved[0].name, "Test route");
   const savedIcon = await page.locator("#routes").innerHTML();
   // An edit makes it changed (an empty bookmark), undoing it makes it saved again.
-  await map.click({ position: { x: box.width * 0.5, y: box.height * 0.35 } });
+  await map.click({ position: { x: box.width * 0.55, y: box.height * 0.6 } });
   const changedIcon = await page.locator("#routes").innerHTML();
   assert.notEqual(changedIcon, savedIcon, "changed after an edit");
   await undo.click();
   assert.equal(await page.locator("#routes").innerHTML(), savedIcon, "saved again after Undo");
   // Save as new route keeps the first one.
-  await map.click({ position: { x: box.width * 0.5, y: box.height * 0.35 } });
+  await map.click({ position: { x: box.width * 0.55, y: box.height * 0.6 } });
   page.once("dialog", (d) => d.accept("Longer route"));
   await page.locator("#routes").click();
   await page.locator("#save-new-route").click();

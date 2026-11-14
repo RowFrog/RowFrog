@@ -223,21 +223,33 @@ final class AppSettingsTests: XCTestCase {
     func testTopTileHoldsCurrentConditionsUntilTurnedOff() {
         let settings = AppSettings(defaults: defaults)
         XCTAssertTrue(settings.combinedTopTile)
-        XCTAssertFalse(settings.topTileOpen)
+        XCTAssertFalse(settings.isTopTileOpen("mrc-1880"))
         XCTAssertFalse(settings.pageCards(for: "mrc-1880").contains(.conditions))
         // The saved order keeps the card, so turning the switch off brings it back in its place.
         XCTAssertTrue(settings.pageLayout(for: "mrc-1880").order.contains(.conditions))
 
         settings.combinedTopTile = false
-        settings.topTileOpen = true
         let again = AppSettings(defaults: defaults)
         XCTAssertFalse(again.combinedTopTile)
-        XCTAssertTrue(again.topTileOpen)
         XCTAssertEqual(again.pageCards(for: "mrc-1880").first, .conditions)
 
         again.resetToFactorySettings()
         XCTAssertTrue(again.combinedTopTile)
-        XCTAssertFalse(again.topTileOpen)
+    }
+
+    /// "All values" opens per club, closed at first, and is forgotten when the
+    /// app starts again (owner, 14 Nov 2026).
+    func testAllValuesOpenPerClubUntilRestart() {
+        let settings = AppSettings(defaults: defaults)
+        settings.toggleTopTile("mrc-1880")
+        XCTAssertTrue(settings.isTopTileOpen("mrc-1880"))
+        XCTAssertFalse(settings.isTopTileOpen("mrsv-bayern"))
+        settings.toggleTopTile("mrc-1880")
+        XCTAssertFalse(settings.isTopTileOpen("mrc-1880"))
+        settings.toggleTopTile("mrc-1880")
+        XCTAssertFalse(AppSettings(defaults: defaults).isTopTileOpen("mrc-1880"))
+        settings.resetToFactorySettings()
+        XCTAssertFalse(settings.isTopTileOpen("mrc-1880"))
     }
 
     /// Light/Dark, rotation, language, time and date follow the iPhone; the app's own
