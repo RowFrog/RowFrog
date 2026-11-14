@@ -14,7 +14,7 @@ export const CARDS = {
   conditions: { title: key("Current conditions"), icon: "gauge" },
   lakeView: { title: key("Lake view"), icon: "map" },
   hourly: { title: key("Next 48 hours"), icon: "clock" },
-  launchPoint: { title: key("Launch point"), icon: "map-pin" },
+  launchPoint: { title: key("Launch point"), icon: "map-pin-ellipse" },
   satellite: { title: key("Satellite picture"), icon: "earth" },
 };
 
@@ -125,7 +125,7 @@ export function openArrange(club, done) {
           <p class="footer">${h(onlyThisClub ? t("Only this club's page changes. Changes for all clubs no longer reach it until you reset it.") : otherClubsNote())}</p>` : ""}
         <h3 class="section">${h(matchMedia("(pointer: coarse)").matches ? t("Drag the handles to change the order") : t("Use the arrows to change the order"))}</h3>
         <ul class="card group arrange-list">
-          ${cardsElsewhere().includes("launchPoint") ? fixedRow(t("Launch point"), "map-pin", t("in the club header")) : ""}
+          ${cardsElsewhere().includes("launchPoint") ? fixedRow(t("Launch point"), "map-pin-ellipse", t("in the club header")) : ""}
           ${fixedRow(t("Rowing light"), "circle", t("always first"))}
           ${cardsElsewhere().includes("conditions") ? fixedRow(t("Current conditions"), "gauge", t("in the top tile")) : ""}
           ${fixedRow(t("Warnings"), "triangle-alert", t("right under it, while one is issued"))}

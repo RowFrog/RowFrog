@@ -27,7 +27,7 @@ export const LAYERS = {
   },
   feelsLike: { title: key("Feels like"), icon: "thermometer-figure", model: "feelsLike", span: 50, links: "hour" },
   humidity: {
-    title: key("Humidity"), icon: "droplets", model: "humidity", span: 50, links: "hour",
+    title: key("Humidity"), icon: "humidity", model: "humidity", span: 50, links: "hour",
     palette: ramp([[20, 0xD9A55B, 0.6], [40, 0xEBD9A0, 0.45], [60, 0xBFE0D8, 0.4], [80, 0x6FB7E0, 0.55], [100, 0x2F6FC9, 0.65]]),
     legend: [20, 40, 60, 80, 100],
   },

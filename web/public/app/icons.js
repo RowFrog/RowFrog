@@ -3,7 +3,7 @@
 
 const PATHS = {
   // Own drawings in Lucide's style for SF Symbols Lucide has no match for.
-  "rower": `<circle cx="5.5" cy="5" r="2" /> <path d="M6.5 8.5 9 14l4.5-3.5 3 3.5" /> <path d="M7.5 11 13 12" /> <path d="m10 9 11 10" /> <path d="M2 17h14.5l1.5-1.5" />`,
+  "rower": `<circle cx="7" cy="5" r="2" /> <path d="M7.5 8.5 6 14" /> <path d="M8 10h9" /> <path d="M6 14 12.5 11l5 4" /> <path d="M2 18.5h20" />`,
   "arrow-left-right": `<path d="M8 3 4 7l4 4" /> <path d="M4 7h16" /> <path d="m16 21 4-4-4-4" /> <path d="M20 17H4" />`,
   "arrow-down": `<path d="M12 5v14" /> <path d="m19 12-7 7-7-7" />`,
   "bookmark-fill": `<path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z" fill="currentColor" />`,
@@ -146,6 +146,12 @@ const PATHS = {
   "database": `<ellipse cx="12" cy="5" rx="9" ry="3" /> <path d="M3 5V19A9 3 0 0 0 21 19V5" /> <path d="M3 12A9 3 0 0 0 21 12" />`,
   "octagon-alert": `<path d="M12 16h.01" /> <path d="M12 8v4" /> <path d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z" />`,
   // Symbol check 14 Nov 2026: closer matches for the app's SF Symbols (Lucide shapes, or own drawings where Lucide has none).
+  // SF humidity: air lines with a drop.
+  "humidity": `<path d="M2 8c2-1.3 4-1.3 6 0s4 1.3 6 0" /> <path d="M2 12.5c2-1.3 4-1.3 6 0s3 1.2 4.5.5" /> <path d="M2 17c2-1.3 4-1.3 6 0s2.5 1 4 .6" /> <path d="M18.5 9.5c-.4 1.8-3 3.8-3 6.2a3 3 0 0 0 6 0c0-2.4-2.6-4.4-3-6.2z" />`,
+  // SF list.bullet.rectangle (legend): a list in a frame.
+  "list-rect": `<rect width="18" height="16" x="3" y="4" rx="2" /> <path d="M7 9h.01" /> <path d="M10 9h7" /> <path d="M7 12h.01" /> <path d="M10 12h7" /> <path d="M7 15h.01" /> <path d="M10 15h7" />`,
+  // SF mappin.and.ellipse (launch point, places): a pin standing on the ground.
+  "map-pin-ellipse": `<circle cx="12" cy="6.5" r="3" /> <path d="M12 9.5V17" /> <path d="M8 15.4c-3 .5-5 1.4-5 2.6 0 1.7 4 3 9 3s9-1.3 9-3c0-1.2-2-2.1-5-2.6" />`,
   // SF thermometer.and.liquid.waves (water temperature): a thermometer over water.
   "thermometer-waves": `<path d="M14 4v7.5a3 3 0 1 1-4 0V4a2 2 0 0 1 4 0Z" /> <path d="M2 14c.6.5 1.2 1 2.5 1 1.3 0 1.9-.5 2.5-1" /> <path d="M17 14c.6.5 1.2 1 2.5 1 1.3 0 1.9-.5 2.5-1" /> <path d="M2 20c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />`,
   // SF thermometer.variable.and.figure (feels like): a thermometer beside a standing person.
@@ -212,6 +218,7 @@ export function skyArt(name, cls = "") {
 
 /** Icons the app shows filled (house.fill) or in two tones (checkmark.shield.fill, hierarchical): the Lucide shape filled. */
 const FILLED = {
+  "circle-check": `<circle cx="12" cy="12" r="10" fill="currentColor" /> <path d="m8.5 12 2.5 2.5 4.5-5" stroke="#fff" />`,
   "house": `<path fill="currentColor" fill-rule="evenodd" d="M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2zM8.6 21v-6.6a1 1 0 0 1 1-1h4.8a1 1 0 0 1 1 1V21z" />`,
   "shield-check": `<path fill="currentColor" fill-opacity=".35" stroke="none" d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path stroke-width="2.4" d="m8.6 12 2.4 2.4 4.4-4.4" />`,
 };

@@ -981,7 +981,7 @@ const savedRoutesList = () => {
 const routeSymbol = (r) => (r.importedFrom ? "rower" : RouteEdit.isLoop(r.points) ? "repeat" : r.outAndBack ? "arrow-left-right" : "arrow-right");
 
 /** At the end of the panel: the legend and what the map shows (moreRows). */
-const moreRows = () => `<div class="more-rows"><button id="legend">${icon("list")} <span>${h(t("Legend"))}</span>${icon("chevron-right")}</button>
+const moreRows = () => `<div class="more-rows"><button id="legend">${icon("list-rect")} <span>${h(t("Legend"))}</span>${icon("chevron-right")}</button>
   <button id="about">${icon("info")} <span>${h(t(WATER_TEXTS[waterKind(page.view)].about))}</span>${icon("chevron-right")}</button></div>`;
 
 /** One value of a tapped spot: symbol and value, grey, or in the light's colour and semibold at amber or red (LakeProbeItemView). */

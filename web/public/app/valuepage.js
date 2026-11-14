@@ -424,7 +424,7 @@ async function openFull(page, layerId, detail, hidden) {
     const p = panel.querySelector("#wm-panel");
     const keepChart = p.querySelector("#wm-chart");
     p.innerHTML = `${follows() && detail.lines.length ? `<div id="wm-chart-slot"></div>` : ""}
-      <p class="wm-line"><strong>${at ? h(frameLabel(layer, at)) : ""}</strong>${value ? `<span class="sub">${icon("map-pin")} ${h(value)}</span>` : ""}</p>
+      <p class="wm-line"><strong>${at ? h(frameLabel(layer, at)) : ""}</strong>${value ? `<span class="sub">${icon("map-pin-ellipse")} ${h(value)}</span>` : ""}</p>
       ${problem ? `<p class="small orange">${h(problem)}</p>` : ""}
       ${colourBar(layer)}
       ${layer.note ? `<p class="small sub">${h(t(layer.note))}</p>` : ""}
@@ -515,7 +515,7 @@ function stationCard(condition, data) {
   if (condition !== "waterTemperature" || station?.lat == null || station?.lon == null) return "";
   const name = station.name ?? t("Lake station");
   return `<section class="station">
-    <h3 class="section">${icon("map-pin")} ${h(t("Where it is measured"))}</h3>
+    <h3 class="section">${icon("map-pin-ellipse")} ${h(t("Where it is measured"))}</h3>
     <div class="map" id="station-map" role="img" aria-label="${h(name)}"></div>
     <p class="small sub station-line"><span>${h(station.distanceM != null ? t("%@, %@ from the launch point", name, distance(station.distanceM)) : name)}</span>
       ${/^https:\/\//.test(station.url ?? "") ? `<a class="link" href="${h(station.url)}" target="_blank" rel="noopener noreferrer">${h(t("Station page"))}</a>` : ""}</p>

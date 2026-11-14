@@ -99,7 +99,7 @@ function renderSafetyGate() {
 function languagePicker() {
   const choice = savedLanguage();
   const option = (value, label) => `<option value="${value}" ${choice === value ? "selected" : ""}>${h(label)}</option>`;
-  return `<label class="row-setting"><span>${icon("languages")} ${h(t("Language"))}</span>
+  return `<label class="row-setting"><span>${icon("globe")} ${h(t("Language"))}</span>
     <select id="language">${option("auto", t("Device"))}${option("en", "English")}${option("de", "Deutsch")}</select></label>`;
 }
 
@@ -357,7 +357,7 @@ function moreMenu() {
     <div class="menu">
       <button id="edit" ${store.clubs.length < 2 ? "disabled" : ""}>${icon("pencil")} ${h(t("Edit list"))}</button>
       <a id="browse" href="#/countries" hidden>${icon("earth")} ${h(t("Browse clubs by country"))}</a>
-      <a href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a>
+      <a href="#/add-place">${icon("map-pin-ellipse")} ${h(t("Add a place yourself"))}</a>
     </div></details>`;
 }
 
@@ -375,7 +375,7 @@ function listBody(currentId = null) {
   const clubs = store.clubs;
   return `<div id="chips" hidden></div>
     <ul id="results" class="results" hidden></ul>
-    <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin")} ${h(t("Not in the list? Add a place"))}</a>
+    <p class="add-own" id="add-own" hidden><a class="link" href="#/add-place">${icon("map-pin-ellipse")} ${h(t("Not in the list? Add a place"))}</a>
       <small class="sub">${h(t("Put your club, boathouse or spot on the map yourself."))}</small></p>
     <div id="saved">
       ${clubs.length ? "" : `<p class="empty">${h(t("Pick your home club first, then any others you row at."))}</p>
@@ -1353,7 +1353,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
     ${club && club.launchPointVerified === false ? (inHeader(club)
       ? `<p class="orange small"><button class="link plain launch-open">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</button></p>`
       : `<p class="orange small">${icon("map-pin-off")} ${h(t("Launch point not yet confirmed"))}</p>`) : ""}
-    ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
+    ${isOwn(club?.id) ? `<p class="sub small own-note">${icon("map-pin-ellipse")} ${h(t("Your own place, kept in this browser. No waves, water temperature or warnings here."))}</p>` : ""}
     ${forecastLines(club, forecast, forecastStatus({ hasForecast: !!forecast, outOfDate: stale, failure }))}
     ${slow ? `<p class="sub small">${icon("hourglass")} ${h(t("Nobody opened this club lately, so it updates less often. From the next server update, within about 30 minutes, it updates every half hour."))}</p>` : ""}
   </header>`;
@@ -2107,7 +2107,7 @@ function clubAddress(club) {
 
 /** The launch point on a map, with what it stands for (LaunchPointMapCard), when it is not in the header. */
 function launchPointCard(club) {
-  return card(t("Launch point"), "map-pin", launchPointBody(club, "launch-map"));
+  return card(t("Launch point"), "map-pin-ellipse", launchPointBody(club, "launch-map"));
 }
 
 /** The map, the note on what it is for, and the coordinates with Open in Maps (LaunchPointDetails). */
@@ -2128,7 +2128,7 @@ function launchPointBody(club, mapId) {
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
           <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("car")} ${h(t("Directions to the club"))}</a>
-          <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin")} ${h(t("Launch point on the map"))}</a>
+          <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin-ellipse")} ${h(t("Launch point on the map"))}</a>
           <small class="sub">${h(maps.name)}</small>
         </div></details></div>`;
 }
@@ -2337,11 +2337,11 @@ function settingsTopicBody(topic, accepted) {
         ? t("The top tile opens into all values: tap \"All values\" under it. Values it hides show as a line while they matter for the rowing light.")
         : t("Current conditions is a card of its own under the top tile, as before."))}</p>
       <section class="card group">
-        <button class="row-setting topic" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Card order"))}</span><span class="sub">${h(ownOrder() ? t("Custom") : t("Standard"))} ${icon("chevron-right")}</span></button>
+        <button class="row-setting topic" id="arrange"><span>${h(t("Card order"))}</span><span class="sub">${h(ownOrder() ? t("Custom") : t("Standard"))} ${icon("chevron-right")}</span></button>
       </section>
       <p class="footer">${h(t("For all clubs. Each club can have its own from \"Arrange this page\"."))}</p>
       <section class="card group">
-        <label class="row-setting"><span>${icon("map-pin")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
+        <label class="row-setting"><span>${icon("map-pin-ellipse")} ${h(t("Location in the club header"))}</span><input type="checkbox" class="switch" id="launch-in-header" ${store.launchPointInHeader ? "checked" : ""}></label>
       </section>
       <p class="footer">${h(store.launchPointInHeader
         ? t("Tap the lake and town under the club's name for a map with the launch point.")
@@ -2358,7 +2358,7 @@ function settingsTopicBody(topic, accepted) {
         distance(50000 * (MAP_ZOOMS[store.mapZoom] ?? 1)), distance(120000 * (MAP_ZOOMS[store.mapZoom] ?? 1))))} ${h(t("Places open in a new tab. Until you pick one, iPhone and iPad use Apple Maps, other devices Google Maps."))}</p>
 `;
     case "language": return `
-      <h3 class="section">${icon("languages")} ${h(t("Language"))}</h3>
+      <h3 class="section">${icon("globe")} ${h(t("Language"))}</h3>
       <section class="card group">
         <div class="row-setting"><span class="stack"><span>${h(t("Language"))}</span><small class="sub">${h(t("In your browser's language settings"))}</small></span><span class="sub">${h(browserLanguage())}</span></div>
         ${dev ? likeDeviceRow("language-like", savedLanguage() === "auto", browserLanguage()) : ""}
@@ -2747,7 +2747,7 @@ function keptAtSection(boat) {
       <span>${icon(markIcon(id))} ${h(clubNameOf(id))}</span>
       ${id === home ? `<small class="sub">${h(t("Home base"))}</small>` : ""}
     </div>`;
-  return `<h3 class="section">${icon("map-pin")} ${h(t("Kept at"))}</h3>
+  return `<h3 class="section">${icon("map-pin-ellipse")} ${h(t("Kept at"))}</h3>
     <ul class="card group kept">${clubs.map((id) => (clubs.length > 1 ? swipeRow(body(id), `data-unkeep="${h(id)}"`) : `<li>${body(id)}</li>`)).join("")}
       ${others.length ? `<li><label class="row-setting add-club">${icon("circle-plus")}<select id="keep-at" aria-label="${h(t("Add a club"))}">
         <option value="">${h(t("Add a club"))}</option>${others.map((c) => `<option value="${h(c.id)}">${h(c.shortName || c.name)}</option>`).join("")}</select></label></li>` : ""}
