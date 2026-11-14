@@ -1,0 +1,12 @@
+# Every 30 minutes on the full and half hour, in UTC like the Cloudflare timer.
+# A start is skipped while the previous run is still going.
+[Unit]
+Description=Row Frog forecast run every 30 minutes
+
+[Timer]
+OnCalendar=*-*-* *:00,30:00 UTC
+AccuracySec=15s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

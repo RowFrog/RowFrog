@@ -1,0 +1,18 @@
+# One forecast run (scripts/local/pi/run-publish.sh, installed as ~/rowfrog-pi/run-publish.sh). Started by rowfrog-publish.timer.
+# Logs: journalctl -u rowfrog-publish -e
+[Unit]
+Description=Row Frog forecast run
+Wants=network-online.target
+After=network-online.target time-sync.target
+
+[Service]
+Type=oneshot
+User=rowfrog
+Group=rowfrog
+EnvironmentFile=/home/rowfrog/.config/rowfrog.env
+ExecStart=/home/rowfrog/rowfrog-pi/run-publish.sh
+# An all-clubs run took 15 to 22 minutes on GitHub; a hung run stops here
+# (the files online stay as they are) and the next timer start runs normally.
+TimeoutStartSec=90min
+Nice=5
+IOSchedulingClass=idle
