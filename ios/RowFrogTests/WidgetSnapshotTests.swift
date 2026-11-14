@@ -39,4 +39,16 @@ final class WidgetSnapshotTests: XCTestCase {
         XCTAssertTrue(late.isStale)
         XCTAssertNil(late.days(1).first?.good)
     }
+
+    func testHourLinesShowTheNumbersAloneForTheLegend() {
+        let shown = hour(0, .green)
+        XCTAssertEqual(RowingWidgetView.HourLine.allCases, [.wind, .waves, .visibility])
+        for line in RowingWidgetView.HourLine.allCases {
+            let text = line.text(shown)
+            XCTAssertFalse(text.contains(line.unit), "\(line) shows its unit: \(text)")
+            XCTAssertNotEqual(text, "–")
+        }
+        XCTAssertFalse(Format.temperatureNumber(15).contains("°"))
+        XCTAssertEqual(Format.temperatureNumber(nil), "–")
+    }
 }

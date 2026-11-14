@@ -153,6 +153,7 @@ targets:
       - path: RowFrog/Backgrounds.swift
       - path: RowFrog/WidgetViews.swift
       - path: RowFrog/WidgetLayouts.swift
+      - path: RowFrog/WidgetDayBars.swift
       - path: RowFrog/OwnPlaces.swift
       - path: RowFrog/RiverModels.swift
     entitlements:

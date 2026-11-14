@@ -305,6 +305,12 @@ extension Format {
         return "\(number(settings.temperatureUnit.convert(celsius), digits: digits))°"
     }
 
+    /// "12", for a row whose legend names the unit.
+    static func temperatureNumber(_ celsius: Double?, digits: Int = 0) -> String {
+        guard let celsius else { return "–" }
+        return number(settings.temperatureUnit.convert(celsius), digits: digits)
+    }
+
     /// "12 °C" or "54 °F".
     static func temperature(_ celsius: Double?, digits: Int = 0) -> String {
         guard let celsius else { return "–" }

@@ -56,4 +56,5 @@ Day-to-day details (test steps, switches, workflows) belong in
 | 33 | 2026-11-12 | [Screenshots cover every device, orientation, browser and scroll position](0033-screenshot-matrix-app-and-website.md) |
 | 34 | 2026-11-12 | [Build numbers from the commit count, commit in About](0034-build-numbers.md) |
 | 35 | 2026-11-12 | [Tip pacing and the tips audit](0035-tip-pacing-and-audit.md) |
+| 36 | 2026-11-14 | [Wind, waves and visibility under the hours in the large widgets](0036-widget-hour-lines.md) |
 | 38 | 2026-11-14 | [Routes reach the browser by link first, GPX export second](0038-route-links-and-gpx-export.md) |
