@@ -24,3 +24,6 @@ node-test.log
 
 # Build number and commit, written by scripts/build_number.sh
 ios/BuildNumber.local.xcconfig
+
+# Screenshot sets from scripts/local/screenshots.sh, kept on the Mac only (never in git).
+/screenshots/

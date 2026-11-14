@@ -1,8 +1,9 @@
 #!/bin/bash
 # App screenshots on the Mac while GitHub is down (Nov 2026): runs screenshots.yml's own
 # steps ("Start the backend with live data", "Build the app", "Take screenshots") on a
-# branch, in a separate checkout, then keeps the set in a local folder outside git
-# (ROWFROG_SHOTS, default ~/RowFrog-screenshots/<branch>/). Nothing is committed or pushed:
+# branch, in a separate checkout, then keeps the set in the project folder, ignored by git
+# (screenshots/<branch>/ next to backend/ and ios/; another folder with ROWFROG_SHOTS).
+# Nothing is committed or pushed:
 # no refs/screenshots to the Pi or to GitHub (1.5 GB of screenshots left GitHub's history in
 # Oct 2026). Show the pictures that matter in the PR instead.
 # Changes to the workflow's text, each checked: its backend runs on port 8765 (your own
@@ -12,8 +13,8 @@
 #   scripts/local/screenshots.sh [-o REGEX] [-b BRANCH] [--ipad | --device NAME]
 #   --device: "iPhone 13 mini" or "iPhone SE" (the workflow's device choices; their own folder in the set)
 #   -o: only the screens whose name matches (the workflow's `only`); owner rule: changed screens only
-# The pictures: ~/RowFrog-screenshots/<branch>/ (outside the checkout, so a fresh clone keeps
-# them); log: RowFrog/log/screenshots-<branch>.log
+# The pictures: RowFrog/screenshots/<branch>/ (in .gitignore; a fresh clone does not have
+# them, so move the folder out first, like backups/ and prs/); log: RowFrog/log/screenshots-<branch>.log
 set -euo pipefail
 top=$(git rev-parse --show-toplevel)
 here=$(cd "$(dirname "$0")" && pwd)
@@ -35,7 +36,7 @@ if lsof -nP -iTCP:$PORT -sTCP:LISTEN >/dev/null 2>&1; then echo "Port $PORT is i
 sha=$(git -C "$top" rev-parse --verify "$branch^{commit}")
 safe=${branch//\//-}
 log="$top/log/screenshots-$safe.log"
-shots_dir=${ROWFROG_SHOTS:-$HOME/RowFrog-screenshots}
+shots_dir=${ROWFROG_SHOTS:-$top/screenshots}
 out="$shots_dir/$safe"
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/rowfrog-shots.XXXXXX")
 wt="$tmp/checkout"   # its own per run, so two sessions never remove each other's
