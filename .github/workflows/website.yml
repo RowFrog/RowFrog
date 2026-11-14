@@ -62,7 +62,7 @@ jobs:
       - name: Browser test (the built site in Chromium, with the sample API files)
         run: |
           # Playwright's exact version comes from package-lock.json (repository root).
-          npm ci && npx --no -- playwright install --with-deps chromium
+          npm ci && npm rebuild --ignore-scripts=false esbuild workerd && npx --no -- playwright install --with-deps chromium
           node --test web/tests/browser/*.test.mjs
       - uses: actions/upload-artifact@v7
         with:
@@ -92,7 +92,7 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: "22"
-      - run: npm ci
+      - run: npm ci && npm rebuild --ignore-scripts=false esbuild workerd
         working-directory: .
       - uses: actions/download-artifact@v8
         with:

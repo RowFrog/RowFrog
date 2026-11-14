@@ -69,7 +69,7 @@ checks() {  # $1 = commit, $2 = commit it is compared with for "did ios/ change"
          grep -E "^not ok|^ +not ok" "$logdir/browser-${sha:0:9}.txt"; tail -8 "$logdir/browser-${sha:0:9}.txt"; exit $rc) || ok=1
         rmdir "$lock" 2>/dev/null
       else
-        echo "WARNING: no npm packages (npm ci), so the website's browser tests were skipped"
+        echo "WARNING: no npm packages (npm ci && npm rebuild --ignore-scripts=false esbuild workerd), so the website's browser tests were skipped"
       fi
     else
       echo "== website: nothing under web/ changed, skipped"
