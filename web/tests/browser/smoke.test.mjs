@@ -680,6 +680,15 @@ test("Settings › Routes lists every saved route by water and opens one on its 
   const headings = await page.locator(".all-routes h3.section").allInnerTexts();
   assert.equal(headings.length, 2, "one group per water");
   assert.ok(headings.some((x) => /nowhere-lake/i.test(x)), `a water missing from the catalogue keeps its id: ${headings}`);
+  // Per route: Share link and Export GPX in place of the row's tools (AllRoutesView), Close brings them back.
+  await page.locator('.all-routes [data-share-one="r2"]').click();
+  assert.ok(await page.locator('.all-routes [data-gpx="r2"]').isVisible());
+  const [one] = await Promise.all([page.waitForEvent("download"), page.locator('.all-routes [data-gpx="r2"]').click()]);
+  assert.equal(one.suggestedFilename(), "Elsewhere.gpx");
+  assert.ok(await page.locator('.all-routes [data-share-one="r2"]').isVisible(), "the tools are back");
+  await page.locator('.all-routes [data-share-one="r2"]').click();
+  await page.locator('.all-routes [data-share-done]').locator("visible=true").click();
+  assert.ok(await page.locator('.all-routes [data-delete="r2"]').isVisible());
   await page.locator('.all-routes [data-open="r1"]').click();
   await page.waitForFunction(() => location.hash.includes("route=r1"));
   await page.locator("#routes").waitFor({ timeout: 20000 });

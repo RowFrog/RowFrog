@@ -1357,6 +1357,12 @@ button.row-setting { width: 100%; text-align: left; font: inherit; color: var(--
 .manage-routes .route-actions .tool { width: 34px; height: 34px; font-size: 17px; color: var(--sub); }
 .manage-routes .route-actions .tool.red { color: var(--red); }
 .manage-routes .route-actions .tool:disabled { opacity: .3; }
+/* A route's Share link and Export GPX, on a line under the route in place of its tools while chosen. */
+.manage-routes .row-setting:has(> .route-share:not([hidden])) { flex-wrap: wrap; }
+.manage-routes .route-share { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 6px; flex: 1 0 100%; padding-bottom: 6px; }
+.manage-routes .route-share[hidden], .manage-routes .route-actions[hidden] { display: none; }
+.manage-routes .route-share .pill { margin: 0; font-size: 14px; padding: 6px 10px; white-space: nowrap; }
+.manage-routes .route-share .tool { width: 34px; height: 34px; color: var(--sub); }
 .empty-state { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 8px; padding: 40px 24px; }
 .empty-state > .i { width: 44px; height: 44px; color: var(--sub); }
 .empty-state > strong { font-size: 20px; }
