@@ -270,7 +270,7 @@ enum TourPage: Int, CaseIterable, Identifiable {
             TourPoint(symbol: "map", text: tr("The Lake view shows the light, waves and wind across the whole lake. Tap it for the full map.")),
             TourPoint(symbol: "clock", text: tr("On the map, move through the hours in the strip at the bottom and tap the water for one spot.")),
             TourPoint(symbol: "point.topleft.down.to.point.bottomright.curvepath", text: tr("Plan a route: tap your turning points to see the light along the way and the best time to start.")),
-            TourPoint(symbol: "bookmark", text: tr("Save the routes you row often in the Routes menu. Settings › Routes shows them all.")),
+            TourPoint(symbol: "bookmark", text: tr("Save the routes you row often in the Routes menu. Settings › Routes shows them all. Share routes as a link for a browser or as a GPX file for other apps.")),
             TourPoint(symbol: "globe.europe.africa", text: tr("Below it, the latest satellite picture of the lake, with a switch to the clearest one.")),
         ]
         case .river: [
