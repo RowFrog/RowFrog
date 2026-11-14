@@ -1174,7 +1174,11 @@ function routeRow(r, i, count, current) {
           <button class="tool" data-down="${h(r.id)}" aria-label="${h(t("Move down"))}" ${i === count - 1 ? "disabled" : ""}>${icon("arrow-down")}</button>
           <button class="tool" data-rename="${h(r.id)}" aria-label="${h(t("Rename"))}" title="${h(t("Rename"))}">${icon("pencil")}</button>
           <button class="tool" data-copy="${h(r.id)}" aria-label="${h(t("Duplicate"))}" title="${h(t("Duplicate"))}">${icon("copy")}</button>
-          <button class="tool red" data-delete="${h(r.id)}" aria-label="${h(t("Delete"))}" title="${h(t("Delete"))}">${icon("trash-2")}</button></span></div>`;
+          <button class="tool" data-share-one="${h(r.id)}" aria-label="${h(t("Share"))}" title="${h(t("Share"))}" aria-expanded="false">${icon("share")}</button>
+          <button class="tool red" data-delete="${h(r.id)}" aria-label="${h(t("Delete"))}" title="${h(t("Delete"))}">${icon("trash-2")}</button></span>
+        <span class="route-share" hidden><button class="pill" data-link="${h(r.id)}">${icon("share")} ${h(t("Share link"))}</button>
+          <button class="pill" data-gpx="${h(r.id)}">${icon("file-up")} ${h(t("Export GPX"))}</button>
+          <button class="tool" data-share-done aria-label="${h(t("Close"))}">${icon("x")}</button></span></div>`;
 }
 
 /**
@@ -1196,6 +1200,26 @@ function wireRouteRows(box, { open, redraw, renamed = () => {}, deleted = () => 
     store.routes = all;
     redraw();
   };
+  // Share link or GPX file per route (ManageRoutesView / AllRoutesView: Share link, Export GPX); the row's tools
+  // make way for the two choices, so a sheet that lists the routes stays open.
+  const sharing = (row, on) => {
+    row.querySelector(".route-actions").hidden = on;
+    row.querySelector(".route-share").hidden = !on;
+    row.querySelector("[data-share-one]").setAttribute("aria-expanded", String(on));
+    (on ? row.querySelector("[data-link]") : row.querySelector("[data-share-one]"))?.focus();
+  };
+  box.querySelectorAll("[data-share-one]").forEach((b) => b.addEventListener("click", () => sharing(b.closest(".row-setting"), true)));
+  box.querySelectorAll("[data-share-done]").forEach((b) => b.addEventListener("click", () => sharing(b.closest(".row-setting"), false)));
+  box.querySelectorAll("[data-link]").forEach((b) => b.addEventListener("click", () => {
+    const r = find(b.dataset.link);
+    if (r) shareRoutes([r]);
+    sharing(b.closest(".row-setting"), false);
+  }));
+  box.querySelectorAll("[data-gpx]").forEach((b) => b.addEventListener("click", () => {
+    const r = find(b.dataset.gpx);
+    if (r) downloadGpx(r);
+    sharing(b.closest(".row-setting"), false);
+  }));
   box.querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => {
     const r = find(b.dataset.open);
     if (r) open(r);
