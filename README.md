@@ -50,7 +50,8 @@ the cog on the club page), a "…" menu at the top right
 holds Edit, Browse by country and Add a place, and the big "Locations" title
 shrinks into the bar once the list scrolls. Tapping a club opens its page.
 On iPhone the club pages have a bottom bar with the settings cog and the boat
-button on the left, the page dots and the list button on the right, as in
+button on the left, the page dots (with one saved club, a round house button
+instead) and the list button on the right, as in
 Weather: a tap on a page dot moves one club towards it with a slide, and a
 finger along the dots jumps. The website slides its club pages the same way,
 and a club picked in its list zooms open from its row. On iPad a
