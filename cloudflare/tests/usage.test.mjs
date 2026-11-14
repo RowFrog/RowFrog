@@ -160,3 +160,42 @@ test("missing files and the key-protected pages are not tagged", async () => {
   assert.equal(missing.status, 404);
   assert.equal(missing.headers.get("etag"), null);
 });
+
+// Forecasts from the Pi (scripts/local/pi/run-publish.sh): with an R2 bucket bound as FILES the files come from the bucket.
+class FakeBucket {
+  constructor(files) {
+    this.files = files;
+  }
+  async get(key) {
+    const text = this.files[key];
+    return text === undefined ? null : { arrayBuffer: async () => new TextEncoder().encode(text).buffer };
+  }
+}
+
+test("with a FILES bucket the files come from it, open to the website, and are still counted", async () => {
+  env.FILES = new FakeBucket({ "v1/clubs/mrc-1880/forecast": '{"club":"mrc-1880"}', "v1/lakes/starnberger-see/ice.png": "png" });
+  const response = await get("/v1/clubs/mrc-1880/forecast");
+  assert.equal(response.status, 200);
+  assert.equal(await response.text(), '{"club":"mrc-1880"}');
+  assert.equal(response.headers.get("access-control-allow-origin"), "*");
+  assert.match(response.headers.get("content-type"), /^application\/json/);
+  assert.match(response.headers.get("etag"), /^W\/"rf-[0-9a-f]{24}"$/);
+  assert.equal(upstream.length, 0, "GitHub is never asked");
+  assert.deepEqual(env.DB.rows("SELECT kind, id, n FROM hits"), [{ kind: "club", id: "mrc-1880", n: 1 }]);
+
+  const ctx = fakeCtx();
+  const again = await worker.fetch(
+    new Request("https://api.rowfrog.com/v1/clubs/mrc-1880/forecast", { headers: { "if-none-match": response.headers.get("etag") } }),
+    env,
+    ctx
+  );
+  await ctx.done();
+  assert.equal(again.status, 304);
+
+  assert.equal((await get("/v1/lakes/starnberger-see/ice.png")).headers.get("content-type"), "image/png");
+  const missing = await get("/v1/clubs/missing/forecast");
+  assert.equal(missing.status, 404);
+  assert.equal(missing.headers.get("access-control-allow-origin"), "*");
+  assert.equal(env.DB.rows("SELECT n FROM hits WHERE id = 'missing'").length, 0);
+  assert.equal((await get("/v1/clubs/")).status, 404);
+});
