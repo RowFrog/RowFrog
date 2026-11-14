@@ -108,6 +108,8 @@ button.wide { margin-top: 0; }
 .i.art .acc.grey { stroke: var(--cloud); }
 .cond { display: inline-flex; color: var(--accent); }
 .cond.temperature, .cond.feelsLike { color: var(--red); }
+/* The value pages' neighbour buttons show the symbol in the text colour, as the app's (ConditionsCard.neighbourButton). */
+.neighbours .cond { color: inherit; }
 
 /* Top tile (NowCard). */
 /* The verdict on one line beside the weather, whose word takes up to two lines in its
