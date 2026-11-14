@@ -1173,7 +1173,13 @@ struct LakeMapView: UIViewRepresentable {
         // height already counts the home indicator.
         let safe = leading > 0 ? map.safeAreaInsets : .zero
         let below = min(bottom + safe.bottom + 12, max(map.bounds.height - routeTop - 150, panelHeight))
-        let padding = UIEdgeInsets(top: routeTop, left: 24 + leading + safe.left, bottom: below, right: 64 + safe.right)
+        var padding = UIEdgeInsets(top: routeTop, left: 24 + leading + safe.left, bottom: below, right: 64 + safe.right)
+        // MapKit adds the map's layout margins to this padding. keepLegalClear raises them above the panel
+        // or beside the card for Apple's legal label, so take that part off again; counted twice, the lake
+        // shrank to a third of the screen (detail-fixes shots, 14 Nov 2026). 8 is UIKit's own margin.
+        let margins = map.layoutMargins
+        padding.bottom = max(12, padding.bottom - max(0, margins.bottom - 8))
+        padding.left = max(12, padding.left - max(0, margins.left - 8))
         map.setVisibleMapRect(routeRect(route) ?? overlay.openRect, edgePadding: padding, animated: animated)
     }
 
