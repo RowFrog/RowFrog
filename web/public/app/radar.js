@@ -494,7 +494,7 @@ export async function openRadarMap(point, reference, mark = "house") {
   if (!panel.isConnected) return;
   const map = L.map(panel.querySelector("#rm-map"), { zoomControl: true, zoomSnap: 0.25 });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    maxZoom: 19, referrerPolicy: "strict-origin", className: "street-tiles", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
   map.fitBounds([[point.lat - 0.6, point.lon - 0.8], [point.lat + 0.6, point.lon + 0.8]], { animate: false });
   L.marker([point.lat, point.lon], { icon: clubPin(L, mark), interactive: false, keyboard: false }).addTo(map);

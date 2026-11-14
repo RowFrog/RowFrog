@@ -4,15 +4,41 @@ import Foundation
 /// key; German comes from the table below. A key without a German entry stays
 /// English (scripts/check_translations.py finds them).
 func tr(_ english: String) -> String {
-    guard AppSettings.shared.resolvedLanguage == .german else { return english }
-    return German.table[english] ?? english
+    guard AppSettings.shared.resolvedLanguage == .german else { return Device.words(english) }
+    return Device.words(German.table[english] ?? english)
 }
 
 /// As `tr`, for a short English word whose German differs by place (the
 /// route's "Clear" is "Löschen", the sky's is "Klar"): German comes from `key`.
 func tr(_ english: String, key: String) -> String {
-    guard AppSettings.shared.resolvedLanguage == .german else { return english }
-    return German.table[key] ?? english
+    guard AppSettings.shared.resolvedLanguage == .german else { return Device.words(english) }
+    return Device.words(German.table[key] ?? english)
+}
+
+/// The device the app runs on, for texts that name it. The texts are written
+/// for the iPhone; on an iPad "iPhone" and "your phone" become "iPad" (the iPad's
+/// update sheet said "dein iPhone lädt sie", detail check 14 Nov 2026).
+enum Device {
+    /// From the model name ("iPad14,3"), which the Simulator passes in its
+    /// environment; read once, without the main actor UIDevice needs.
+    static let isPad: Bool = {
+        if let simulated = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] {
+            return simulated.hasPrefix("iPad")
+        }
+        var size = 0
+        sysctlbyname("hw.machine", nil, &size, nil, 0)
+        var machine = [CChar](repeating: 0, count: max(size, 1))
+        sysctlbyname("hw.machine", &machine, &size, nil, 0)
+        return String(cString: machine).hasPrefix("iPad")
+    }()
+
+    /// "iPhone" (not the plural, as in "most iPhones since the X") and the
+    /// English "phone" become "iPad" on an iPad.
+    static func words(_ text: String) -> String {
+        guard isPad, text.contains("hone") else { return text }
+        return text.replacingOccurrences(of: #"\biPhone\b(?!s)"#, with: "iPad", options: .regularExpression)
+            .replacingOccurrences(of: #"\b([Yy]our|[Tt]his|the) phone\b"#, with: "$1 iPad", options: .regularExpression)
+    }
 }
 
 /// As `tr`, with `%@` placeholders filled from already formatted values.
@@ -212,6 +238,8 @@ enum German {
         "Why: %@": "Warum: %@",
         "Visibility": "Sicht",
         "None": "Kein Niederschlag",
+        "Warning: none": "Keine",
+        "Official rain warning": "Amtliche Regenwarnung",
         "No data": "Keine Daten",
         "No data yet": "Noch keine Daten",
         "Air": "Luft",
@@ -338,7 +366,7 @@ enum German {
         "All locations": "Alle Orte",
         "Locations": "Orte",
         "Remove": "Entfernen",
-        "Search clubs, lakes or towns": "Vereine, Seen oder Orte suchen",
+        "Club, lake or town": "Verein, See oder Ort",
         "Done": "Fertig",
         "Edit list": "Liste bearbeiten",
         "More": "Mehr",
@@ -520,8 +548,8 @@ enum German {
         "Cancel": "Abbrechen",
         // Settings switches and New boat sheet (4.11.2026)
         "Like the iPhone": "Wie das iPhone",
-        "App's order": "Reihenfolge der App",
-        "Own order": "Eigene Reihenfolge",
+        "Standard": "Standard",
+        "Custom": "Angepasst",
         "Card order": "Reihenfolge der Karten",
         "Dark uses less battery on most iPhones since the X.": "Dunkel braucht auf den meisten iPhones seit dem X weniger Akku.",
         "Every setting, the card order and the app icon go back to how the app came, your own pictures are deleted and every limit goes back to the app's. Your clubs and boats stay.": "Alle Einstellungen, die Reihenfolge der Karten und das App-Symbol werden wie bei der Installation, deine eigenen Bilder werden gelöscht und jeder Grenzwert geht auf den der App zurück. Deine Vereine und Boote bleiben.",
@@ -774,6 +802,8 @@ enum German {
         "Where the boat is": "Wo das Boot ist",
         "The boat at %@ after %@: %@, waves %@": "Das Boot um %@ nach %@: %@, Wellen %@",
         "Pace /500 m": "Tempo /500 m",
+        "Standard pace /500 m": "Standard-Tempo /500 m",
+        "Route times on the lake maps start from this pace; the map's own stepper changes it too.": "Die Zeiten der Routen auf den Seekarten gehen von diesem Tempo aus; der Regler auf der Karte ändert es ebenfalls.",
         "The club of this page": "Der Verein dieser Seite",
         "Your home base, the club of this page": "Dein Heimatverein, der Verein dieser Seite",
         "Back to %@": "Zurück zu %@",

@@ -543,7 +543,8 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null, route
   page = {
     root, view, club, lakeId, hour: hourIndex(view, at && !isNaN(at) ? at : new Date()),
     layer: LAYERS.some(([k]) => k === layer) && (layer !== "visibility" || hasVisibility(view)) ? layer : "light", spot: null,
-    pace: 135, followBoat: false, boatAt: 0, map: null, layers: {}, showTrack: true,
+    // The crew's own pace, remembered as in the app (2:30 at first, owner 14 Nov 2026).
+    pace: store.routePace, followBoat: false, boatAt: 0, map: null, layers: {}, showTrack: true,
     // The route being planned, its saved route and its undo history, driven by the route editor's chart (RouteDraft).
     route: routeDraft(chart, { lakeId, launch: club?.launchPoint ?? null, points: club ? [club.launchPoint] : [] }),
     get routeMode() { return this.route.planning; },
@@ -595,6 +596,7 @@ async function buildMap() {
   page.map = map;
   await baseMap(L, map, { storeKey: "rf.lakeImagery", onChange: (on) => {
     page.satellite = on;
+    box.classList.toggle("imagery", on);
     if (page.layers.arrows && page.map === map) drawArrows();
   } });
   if (page !== mine) return;
@@ -677,18 +679,29 @@ function currentPlan() {
 function fitView() {
   const pts = page.points.length > 1 ? [...page.points, ...(page.rowed?.track && page.showTrack ? page.rowed.track : [])] : [];
   if (pts.length) {
-    page.map.fitBounds(pts.map((p) => [p.lat, p.lon]), { padding: [24, 24], maxZoom: 16 });
+    page.map.fitBounds(pts.map((p) => [p.lat, p.lon]), { ...mapRoom(), maxZoom: 16 });
     return;
   }
   const open = openBounds(page.view, page.club);
-  page.map.fitBounds([[open.south, open.west], [open.north, open.east]], { padding: [12, 12], ...cardRoom() });
+  page.map.fitBounds([[open.south, open.west], [open.north, open.east]], mapRoom());
 }
 
-/** Room the card leaves on the map: the lake opens beside it, its 376 plus 24 (LakePanelLayout.fitInsets). */
-function cardRoom() {
+/**
+ * Room around the lake or route as the app's LakeMapScreen.fit: below the top buttons (the
+ * north tip sat under them), 64 at the right for the layer buttons, 24 at the left, or
+ * beside the card on wide screens (its right edge plus 24, LakePanelLayout.fitInsets).
+ */
+function mapRoom() {
+  const mapBox = page.map.getContainer().getBoundingClientRect();
+  const topBar = page.root.querySelector(".lake-top")?.getBoundingClientRect();
+  const top = Math.max(24, (topBar?.bottom ?? mapBox.top) - mapBox.top + 16);
   const card = panelCard() ? page.root.querySelector("#lake-panel")?.getBoundingClientRect() : null;
-  if (!card?.width) return {};
-  return { paddingTopLeft: [card.right - page.map.getContainer().getBoundingClientRect().left + 24, 12] };
+  const left = card?.width ? card.right - mapBox.left + 24 : 24;
+  // Never less than 150 px of map, as the app keeps.
+  const fit = (a, b, room) => (a + b + 150 > room ? [Math.max(8, (room - 150) * (a / (a + b))), Math.max(8, (room - 150) * (b / (a + b)))] : [a, b]);
+  const [l, r] = fit(left, 64, mapBox.width);
+  const [t2, b] = fit(top, 40, mapBox.height);
+  return { paddingTopLeft: [l, t2], paddingBottomRight: [r, b] };
 }
 
 function update() {
@@ -1296,7 +1309,12 @@ export async function renderAllRoutes(root) {
     const groups = [...byLake.entries()].sort(([a], [b]) => (lakeOf(a)?.name ?? a).localeCompare(lakeOf(b)?.name ?? b));
     root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Routes"))}</strong><span class="nav-side">${store.routes.length ? `<button class="link" data-share-routes aria-label="${h(t("Share all routes"))}" title="${h(t("Share all routes"))}">${icon("share")}</button>` : ""}</span></header>
     ${testing()}
-    <main class="page settings-topic all-routes">${groups.length ? groups.map(([lakeId, list]) => `<h3 class="section">${h(lakeOf(lakeId)?.name ?? lakeId)}</h3>
+    <main class="page settings-topic all-routes">
+      <section class="card group"><div class="row-setting pace-setting"><span>${h(t("Standard pace /500 m"))}</span>
+        <span class="pace"><strong class="num" id="std-pace">${h(paceText(store.routePace))}</strong>
+        <span class="stepper"><button id="std-pace-down" aria-label="−">−</button><button id="std-pace-up" aria-label="+">+</button></span></span></div></section>
+      <p class="footer">${h(t("Route times on the lake maps start from this pace; the map's own stepper changes it too."))}</p>
+      ${groups.length ? groups.map(([lakeId, list]) => `<h3 class="section">${h(lakeOf(lakeId)?.name ?? lakeId)}</h3>
       <section class="card group manage-routes" data-lake="${h(lakeId)}">${list.map((r, i) => routeRow(r, i, list.length, null)).join("")}</section>`).join("")
       + `<p class="footer">${h(t("Every saved route, by water. Tap one to open it on its lake map."))}</p>`
     : `<div class="empty-state">${icon("route")}<strong>${h(t("No saved routes"))}</strong><p class="sub">${h(t("Plan a route on the map and save it from the bookmark menu."))}</p></div>`}
@@ -1311,6 +1329,10 @@ export async function renderAllRoutes(root) {
       redraw: draw,
     });
     root.querySelector("[data-share-routes]")?.addEventListener("click", () => shareRoutes(store.routes));
+    for (const [sel, by] of [["#std-pace-down", -5], ["#std-pace-up", 5]]) root.querySelector(sel).addEventListener("click", () => {
+      store.routePace = Math.min(240, Math.max(90, store.routePace + by));
+      root.querySelector("#std-pace").textContent = paceText(store.routePace);
+    });
   };
   draw();
 }
@@ -1431,6 +1453,7 @@ function drawRoute() {
       }).addTo(group);
   });
   const isLoop = RouteEdit.isLoop(page.points);
+  const turns = [];
   page.points.forEach((p, i) => {
     if (i === 0 || (isLoop && i === page.points.length - 1)) return;
     const marker = L.marker([p.lat, p.lon], {
@@ -1447,7 +1470,30 @@ function drawRoute() {
       page.route.send({ type: "MOVE", index: i, point: { lat: ll.lat, lon: ll.lng } });
       update();
     });
+    turns.push({ marker, i });
   });
+  hideOverlappingTurns(turns);
+}
+
+/**
+ * As the app (MapKit's collision rule, owner 14 Nov 2026): a turning point that would overlap an earlier one at
+ * this zoom is hidden, so they never pile up into a chain; the selected one always shows. Again after each zoom.
+ */
+function hideOverlappingTurns(turns) {
+  const map = page.map;
+  const place = () => {
+    const shown = [];
+    for (const { marker, i } of turns) {
+      const at = map.latLngToContainerPoint(marker.getLatLng());
+      const hide = page.selected !== i && shown.some((q) => q.distanceTo(at) < 22);
+      marker.getElement()?.style.setProperty("visibility", hide ? "hidden" : "");
+      if (!hide) shown.push(at);
+    }
+  };
+  place();
+  if (page.placeTurns) map.off("zoomend", page.placeTurns);
+  page.placeTurns = place;
+  map.on("zoomend", place);
 }
 
 function wirePanel() {
@@ -1517,11 +1563,11 @@ function wirePanel() {
     update();
   });
   on("#pace-down", "click", () => {
-    page.pace = Math.max(90, page.pace - 5);
+    page.pace = store.routePace = Math.max(90, page.pace - 5);
     update();
   });
   on("#pace-up", "click", () => {
-    page.pace = Math.min(240, page.pace + 5);
+    page.pace = store.routePace = Math.min(240, page.pace + 5);
     update();
   });
   on("#follow", "change", (e) => {
@@ -1631,7 +1677,7 @@ async function importRow(file) {
     points: row.points, outAndBack: row.outAndBack, track: row.track, rowedAt: row.rowedAt, importedFrom: "file",
   };
   store.routes = [...store.routes, route];
-  if (row.pace) page.pace = plannedPace(row.pace);
+  if (row.pace) page.pace = store.routePace = plannedPace(row.pace);
   page.route.send({ type: "OPEN_ROUTE", route });
   page.showTrack = true;
   update();

@@ -357,6 +357,9 @@ struct RadarMapScreen: View {
     private let nowIndex: Int
 
     /// `step`: minutes between pictures; 30 when saving data (7 pictures instead of 13).
+    /// The controls' height, so the map's legal link stays above them.
+    @State private var controlsHeight: CGFloat = 0
+
     init(point: Coordinate, clubID: String? = nil, reference: Date?, step: Int = 15) {
         self.point = point
         self.clubID = clubID
@@ -376,11 +379,13 @@ struct RadarMapScreen: View {
     private var screen: some View {
         NavigationStack {
             ZStack(alignment: .bottom) {
-                RadarMapView(point: point, clubID: clubID, region: loader.region, image: loader.images[frames[index]])
+                RadarMapView(point: point, clubID: clubID, region: loader.region, image: loader.images[frames[index]],
+                             bottomInset: controlsHeight)
                     // To every edge with floating buttons, as the lake view and the weather maps
                     // (MapTopBar): a navigation bar left a dark band at the top (owner, 13 Nov 2026).
                     .ignoresSafeArea()
                 controls
+                    .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { controlsHeight = $0 }
             }
             .overlay(alignment: .top) {
                 MapTopBar(title: tr("Rain radar"), close: { dismiss() })
@@ -752,6 +757,8 @@ private struct RadarMapView: UIViewRepresentable {
     var clubID: String?
     let region: RadarRegion
     let image: UIImage?
+    /// The controls' height at the bottom, which Apple's legal link stays above.
+    var bottomInset: CGFloat = 0
 
     func makeUIView(context: Context) -> MKMapView {
         let map = MKMapView()
@@ -771,6 +778,7 @@ private struct RadarMapView: UIViewRepresentable {
         // One overlay for all frames; only its picture changes, so nothing flashes.
         context.coordinator.pending = image
         context.coordinator.renderer?.show(image)
+        map.keepLegalClear(bottom: bottomInset, leading: 0)
     }
 
     func makeCoordinator() -> Coordinator { Coordinator(symbol: LocationStore.markSymbol(for: clubID)) }
@@ -967,5 +975,18 @@ struct RainOutlook {
     /// Light, moderate, heavy: as `RainRadar.intensity`.
     private static func level(_ mmPerHour: Double) -> Int {
         mmPerHour < RainRadar.rainFrom ? -1 : mmPerHour < 2.5 ? 0 : mmPerHour < 10 ? 1 : 2
+    }
+}
+
+extension MKMapView {
+    /// Moves Apple's "Maps" mark and its legal link out from under a panel or
+    /// card over the map: Apple asks for both to stay visible, and the panels
+    /// hid them (detail check 14 Nov 2026). MapKit places them inside the
+    /// layout margins, on top of the safe area.
+    func keepLegalClear(bottom: CGFloat, leading: CGFloat) {
+        let margins = UIEdgeInsets(top: 0, left: leading + 8, bottom: bottom + 4, right: 8)
+        guard layoutMargins != margins else { return }
+        insetsLayoutMarginsFromSafeArea = true
+        layoutMargins = margins
     }
 }

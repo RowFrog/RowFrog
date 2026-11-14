@@ -366,7 +366,7 @@ function searchBar(cls, cog = true) {
   return `<div class="${cls} search-bar">
     ${cog ? `<a href="#/settings" class="glass round tool" aria-label="${h(t("Settings"))}">${icon("settings")}</a>` : ""}
     <label class="search glass">${icon("search")}
-      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+      <input id="query" type="search" autocomplete="off" placeholder="${h(t("Club, lake or town"))}" aria-label="${h(t("Club, lake or town"))}"></label>
   </div>`;
 }
 
@@ -1137,10 +1137,14 @@ function stickHourlyHeader() {
   const stuck = table.top < top - 1 && at.bottom > table.top;
   head.classList.toggle("stuck", stuck);
   if (stuck) {
-    // The day whose header has passed under the pinned header, else the first.
+    // The day whose header has passed under the pinned header. Before the first one the rows
+    // are the day before it (today), not that day: the header said "Morgen" over today's rows
+    // (detail check 14 Nov 2026; StickyHourlyHeader in the app).
     const days = [...head.parentElement.querySelectorAll(".dayhead")].filter((d) => d.offsetParent);
-    const under = days.filter((d) => d.getBoundingClientRect().top <= at.bottom).pop() ?? days[0];
-    const label = under?.querySelector("strong")?.textContent ?? "";
+    const under = days.filter((d) => d.getBoundingClientRect().top <= at.bottom).pop();
+    const before = days[0]?.dataset.day
+      ? new Date(Date.parse(`${days[0].dataset.day}T12:00:00Z`) - 86400000).toISOString().slice(0, 10) : null;
+    const label = under ? under.querySelector("strong")?.textContent ?? "" : before ? dayLabel(before) : "";
     const slot = head.querySelector(".hhead-day");
     if (slot.textContent !== label) slot.textContent = label;
   }
@@ -1546,7 +1550,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
         ? t("A steadier boat helps: %@ would be green now.", boatTitle(steadier.boat))
         : t("A steadier boat helps: %@ would only need care now.", boatTitle(steadier.boat)))}</span></li>` : ""}
       ${!at && warnings?.status === "ok" && localChecked(warnings) && !warnings.items?.length ? `<li><button class="no-warning" id="no-warning"><span class="green">${filledIcon("shield-check")} ${h(t("No official warning"))}</span>
-        <span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></button></li>` : ""}
+        <span class="checked"><span class="sub">· ${h(t("checked %@", time(forecast.generatedAt)))}</span> <span class="tint">${icon("info")}</span></span></button></li>` : ""}
       ${!at && warnings?.status === "ok" ? laterWarningLine(warningHeadline(warnings)) : ""}
     </ul>
     ${adviceOnly()}
@@ -2333,7 +2337,7 @@ function settingsTopicBody(topic, accepted) {
         ? t("The top tile opens into all values: tap \"All values\" under it. Values it hides show as a line while they matter for the rowing light.")
         : t("Current conditions is a card of its own under the top tile, as before."))}</p>
       <section class="card group">
-        <button class="row-setting topic" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Card order"))}</span><span class="sub">${h(ownOrder() ? t("Own order") : t("App's order"))} ${icon("chevron-right")}</span></button>
+        <button class="row-setting topic" id="arrange"><span>${icon("arrow-up-down")} ${h(t("Card order"))}</span><span class="sub">${h(ownOrder() ? t("Custom") : t("Standard"))} ${icon("chevron-right")}</span></button>
       </section>
       <p class="footer">${h(t("For all clubs. Each club can have its own from \"Arrange this page\"."))}</p>
       <section class="card group">
@@ -2432,7 +2436,7 @@ function settingsTopicValue(topic) {
     const picture = choiceTitle(backgrounds.all);
     return store.developerOptions ? `${t({ device: "Device", light: "Light", dark: "Dark" }[store.appearance] ?? "Device")} · ${picture}` : picture;
   }
-  if (topic === "clubpages") return ownOrder() ? t("Own order") : t("App's order");
+  if (topic === "clubpages") return ownOrder() ? t("Custom") : t("Standard");
   if (topic === "language") return `${resolve() === "de" ? "Deutsch" : "English"} · ${unitSymbol("temperature")}`;
   if (topic === "data") return dataSaving() ? t("Saving data") : "";
   if (topic === "about") return websiteVersion;
@@ -2704,9 +2708,9 @@ function renderBoats() {
         <span><strong>${h(boatTitle(boat))}</strong><small class="${changed ? "orange" : ""}">${h(changed ? t("%@ · your limits", boatDetail(boat)) : boatDetail(boat))}</small></span></button>
       <a class="round" href="#/settings/boat/${encodeURIComponent(boat.id)}" aria-label="${h(t("Limits for %@", boatTitle(boat)))}">${icon("info")}</a></div>`;
   };
-  root.innerHTML = `<header class="nav"><a class="link" href="#/settings">${icon("chevron-left")} ${h(t("Settings"))}</a><span class="spacer"></span></header>${testing()}
+  // A round back button and a small centred title, as the app and the other settings pages (Routen).
+  root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Boats and limits"))}</strong><span class="nav-side"></span></header>${testing()}
     <main class="page">
-      <h1 class="large">${h(t("Boats and limits"))}</h1>
       ${tip("myBoats")}
       <h3 class="section">${icon("rower")} ${h(t("Your boat"))}</h3>
       <ul class="boats">${GROUPS.map((b) => `<li>${body(b)}</li>`).join("")}</ul>
@@ -2874,9 +2878,8 @@ function renderBoat(id) {
   }
   setTitle(boatTitle(boat));
   const own = { get value() { return ownLimitsShown[id] ?? hasOwnLimits(id); }, set value(v) { ownLimitsShown[id] = v; } };
-  root.innerHTML = `<header class="nav"><a class="link" href="#/settings/boats">${icon("chevron-left")} ${h(t("Boats and limits"))}</a><span class="spacer"></span></header>${testing()}
+  root.innerHTML = `<header class="nav"><a class="link back" href="#/settings/boats" aria-label="${h(t("Boats and limits"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(boatTitle(boat))}</strong><span class="nav-side"></span></header>${testing()}
     <main class="page">
-      <h1 class="large">${h(boatTitle(boat))}</h1>
       ${boatForm(boat, false, own.value)}
       ${footerLinks()}
     </main>`;
@@ -2919,6 +2922,8 @@ function openNewBoat(id) {
     renderBoats();
   });
   draw();
+  // Focus on the sheet itself, not its first button: no focus ring on ✕ or "Cancel" as it opens (keyboard Tab still goes on from here).
+  dialog.autofocus = true;
   dialog.showModal();
   body.querySelector("#boat-name")?.focus();
 }

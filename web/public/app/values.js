@@ -108,13 +108,12 @@ function warningsChecked(d) {
   return d.forecast.warnings?.local?.checked !== false;
 }
 
-const warningsLabel = () => t("Official warnings");
-
 function warningNames(d, words) {
   // Outside Germany DWD's warnings do not reach: say so instead of "None" (warningNames in the app).
   if (!warningsChecked(d)) return t("Not checked here");
   const found = warnings(d, words);
-  if (!found.length) return t("None");
+  // "None" alone is the rain value ("Kein Niederschlag"): the warnings say "Keine" (tr(_:key:) in the app).
+  if (!found.length) return tk("None", "Warning: none");
   const english = document.documentElement.lang !== "de";
   return found.map((w) => (english && w.english?.event) || w.event).join(", ");
 }
@@ -197,7 +196,7 @@ const BUILDERS = {
       const diff = x.apparentTemperatureC - x.temperatureC;
       facts.push([t("Compared with the air"), t("%@° %@", num(Math.abs(unitChange("temperature", diff))), diff < 0 ? t("colder") : t("warmer"))]);
     }
-    facts.push([t("Wind"), windRange(x.windSpeedMs, x.windGustMs)], [t("Humidity"), pct(x.humidityPct)],
+    facts.push([t("Wind"), x.windSpeedMs != null ? `${windRange(x.windSpeedMs, x.windGustMs)} ${windUnit()}` : "–"], [t("Humidity"), pct(x.humidityPct)],
       [t("Sun"), x.sunUp === false ? t("down") : t("up")], [t("On the water"), t("the boat's speed adds wind chill")]);
     const note = feelsLikeNote(x);
     return base({
@@ -363,7 +362,7 @@ const BUILDERS = {
     const lightText = light === "red" ? t("red: hail") : light === "amber" ? t("amber: heavy rain") : t("green: under %@ per hour", rain(4));
     const facts = [[t("Next 24 h"), t("%@ in total", rain(total))], [t("Kind"), kinds.length ? kinds.join(", ") : t("dry")]];
     if (top && (top.precipitationMm ?? 0) >= 0.1) facts.push([t("Heaviest"), t("%@ · %@", rain(top.precipitationMm), dayTime(top.time))]);
-    facts.push([warningsLabel(d), warningNames(d, ["REGEN", "HAGEL", "GEWITTER", "SCHNEE"])], [t("Rowing light now"), lightText]);
+    facts.push([t("Official rain warning"), warningNames(d, ["REGEN", "HAGEL", "GEWITTER", "SCHNEE"])], [t("Rowing light now"), lightText]);
     const wet = (x.precipitationMm ?? 0) >= 0.1;
     const first = forecastRain(d);
     const kind = precipitationKind(sky(x.weatherCode));
@@ -453,10 +452,11 @@ const BUILDERS = {
     return base({
       value: pct(x.cloudCoverPct), note: t("Low cloud %@ %%", num(x.cloudCoverLowPct)), unit: "%",
       lines: [
-        { name: tk("All", "Cloud line: All"), colour: COLOURS.gray, points: d.points((y) => y.cloudCoverPct) },
-        { name: tk("High", "Cloud line: High"), colour: COLOURS.cyan, points: d.points((y) => y.cloudCoverHighPct) },
-        { name: tk("Mid", "Cloud line: Mid"), colour: COLOURS.teal, points: d.points((y) => y.cloudCoverMidPct) },
-        { name: tk("Low", "Cloud line: Low"), colour: COLOURS.indigo, points: d.points((y) => y.cloudCoverLowPct) },
+        // Owner's pick A (14 Nov 2026, "for now"): all cloud a grey area behind, the layers one blue from light (high) to dark (low), as the app's CloudColours.
+        { name: tk("All", "Cloud line: All"), colour: "var(--cloud-all)", kind: "area", points: d.points((y) => y.cloudCoverPct) },
+        { name: tk("High", "Cloud line: High"), colour: "var(--cloud-high)", points: d.points((y) => y.cloudCoverHighPct) },
+        { name: tk("Mid", "Cloud line: Mid"), colour: "var(--cloud-mid)", points: d.points((y) => y.cloudCoverMidPct) },
+        { name: tk("Low", "Cloud line: Low"), colour: "var(--cloud-low)", points: d.points((y) => y.cloudCoverLowPct) },
       ].filter((l) => l.points.length),
       yDomain: [0, 130], trendStep: 5,
       facts: [
@@ -505,7 +505,7 @@ const BUILDERS = {
     const top = extreme(d.next24, (y) => y.capeJkg, true);
     const facts = [];
     if (top && (top.capeJkg ?? 0) > 0) facts.push([t("Most energy next 24 h"), t("%@ J/kg · %@", num(top.capeJkg), dayTime(top.time))]);
-    facts.push([warningsLabel(d), warningNames(d, ["GEWITTER"])]);
+    facts.push([t("Official thunderstorm warning"), warningNames(d, ["GEWITTER"])]);
     const light = lightFor(d.now, REASONS.thunderstorm);
     return base({
       value: light === "red" ? t("High") : light === "amber" ? t("Possible") : t("Low"),

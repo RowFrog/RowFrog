@@ -242,7 +242,7 @@ export function renderTour(root, { languagePicker, wireLanguage, done, lakes, re
     // The river page says what the river current tip would (RiverCurrentTip), so that tip stays away.
     if (page.id === "river") save("rf.tipsClosed", [...new Set([...closed(), "riverCurrent"])]);
     const body = page.choice
-      ? `<label class="search tour-search">${icon("search")}<input id="tour-search" type="search" autocomplete="off" placeholder="${h(t("Search clubs, lakes or towns"))}" aria-label="${h(t("Search clubs, lakes or towns"))}"></label>
+      ? `<label class="search tour-search">${icon("search")}<input id="tour-search" type="search" autocomplete="off" placeholder="${h(t("Club, lake or town"))}" aria-label="${h(t("Club, lake or town"))}"></label>
           <div id="tour-clubs" class="tour-clubs"></div>`
       : `${extra(page, languagePicker)}
           <ul class="card tour-points">${page.points.map((x) => `<li>${icon(x.icon)}<span>${h(t(x.text, ...(x.args?.() ?? [])))}</span></li>`).join("")}</ul>`;

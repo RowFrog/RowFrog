@@ -44,7 +44,7 @@ const clubLayouts = () => {
 
 export const pageLayout = () => normalized(load("rf.pageLayout", STANDARD));
 
-/** Whether the order for all clubs is the user's own, for "App's order" or "Own order" in Settings. */
+/** Whether the order for all clubs is the user's own, for "Standard" or "Custom" in Settings. */
 export const ownOrder = () => JSON.stringify(pageLayout()) !== JSON.stringify(normalized(STANDARD));
 
 /** A club's own order, else the one for all clubs. */
@@ -100,29 +100,30 @@ export function openArrange(club, done) {
     const others = Object.keys(clubLayouts()).filter((id) => id !== clubId).length;
     return others ? t("Every club page uses this order, except %@ with their own.", String(others)) : t("Every club page uses this order.");
   };
-  const fixedRow = (title, iconName, note) => `<li class="fixed">${icon(iconName)}<span class="grow">${h(title)}</span>
-    <small class="sub">${h(note)}</small>${icon("lock")}</li>`;
+  // Symbols in the accent colour and a small filled lock, as the app's sheet (owner, 14 Nov 2026: icons coloured on the web too).
+  const fixedRow = (title, iconName, note) => `<li class="fixed">${icon(iconName, `tinted${iconName === "circle" ? " filled" : ""}`)}<span class="grow">${h(title)}</span>
+    <small class="sub">${h(note)}</small>${icon("lock", "lock")}</li>`;
   // Only the cards the website draws can be moved; the order keeps the others in place,
   // also a card shown elsewhere for now, for when it is a card of its own again.
   const shown = () => layout.order.filter((c) => ON_WEBSITE.includes(c) && !cardsElsewhere().includes(c));
   const cardRow = (c, i, list) => {
     const off = layout.hidden.includes(c);
     return `<li class="${off ? "off" : ""}" data-card="${c}">
-      <span class="handle" aria-hidden="true">${icon("grip-vertical")}</span>
-      ${icon(CARDS[c].icon)}<span class="grow">${h(t(CARDS[c].title))}</span>
+      ${icon(CARDS[c].icon, "tinted")}<span class="grow">${h(t(CARDS[c].title))}</span>
       <button class="step" data-step="-1" ${i === 0 ? "disabled" : ""} aria-label="${h(t("Move up"))}">${icon("chevron-up")}</button>
       <button class="step" data-step="1" ${i === list.length - 1 ? "disabled" : ""} aria-label="${h(t("Move down"))}">${icon("chevron-down")}</button>
-      <input type="checkbox" class="switch" ${off ? "" : "checked"} aria-label="${h(t(CARDS[c].title))}"></li>`;
+      <input type="checkbox" class="switch" ${off ? "" : "checked"} aria-label="${h(t(CARDS[c].title))}">
+      <span class="handle" aria-hidden="true">${icon("grip-vertical")}</span></li>`;
   };
 
   const draw = () => {
     dialog.innerHTML = `<header><button class="link" id="arrange-cancel">${h(t("Cancel"))}</button><strong>${h(t("Arrange page"))}</strong><button class="done" id="arrange-save">${h(t("Done"))}</button></header>
       <div class="sheet-body">
-        ${club ? `<div class="segmented" id="apply" role="group" aria-label="${h(t("Apply to"))}">
+        ${club ? `<div class="card apply-card"><div class="segmented" id="apply" role="group" aria-label="${h(t("Apply to"))}">
             <button data-only="false" class="${onlyThisClub ? "" : "on"}">${h(t("All clubs"))}</button>
-            <button data-only="true" class="${onlyThisClub ? "on" : ""}">${h(t("Only %@", name))}</button></div>
+            <button data-only="true" class="${onlyThisClub ? "on" : ""}">${h(t("Only %@", name))}</button></div></div>
           <p class="footer">${h(onlyThisClub ? t("Only this club's page changes. Changes for all clubs no longer reach it until you reset it.") : otherClubsNote())}</p>` : ""}
-        <h3 class="section">${h(t("Drag the handles to change the order"))}</h3>
+        <h3 class="section">${h(matchMedia("(pointer: coarse)").matches ? t("Drag the handles to change the order") : t("Use the arrows to change the order"))}</h3>
         <ul class="card group arrange-list">
           ${cardsElsewhere().includes("launchPoint") ? fixedRow(t("Launch point"), "map-pin", t("in the club header")) : ""}
           ${fixedRow(t("Rowing light"), "circle", t("always first"))}
@@ -190,6 +191,8 @@ export function openArrange(club, done) {
   dialog.addEventListener("click", (e) => e.target === dialog && dialog.close());
   dialog.addEventListener("close", () => dialog.remove());
   draw();
+  // Focus on the sheet itself, not its first button: no focus ring on ✕ or "Cancel" as it opens (keyboard Tab still goes on from here).
+  dialog.autofocus = true;
   dialog.showModal();
 }
 

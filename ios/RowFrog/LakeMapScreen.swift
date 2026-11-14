@@ -270,6 +270,11 @@ struct LakeMapScreen: View {
             panelTip.invalidate(reason: .actionPerformed)
             refit()
         }
+        // Route planning on the iPhone (owner's pick B, 14 Nov 2026): the panel starts at half height with the
+        // planning controls (details come up when pulled), and the map zooms the route into the room above it.
+        .onChange(of: routeMode) { _, planning in
+            if planning && !usesCard && panelExpanded { panelExpanded = false } else { refit() }
+        }
         // Opened on a route or with the panel open: fit once the panel is measured.
         .onAppear { if panelExpanded || (routeMode && !waypoints.isEmpty) { refit() } }
         .onChange(of: followBoat) { if followBoat { boatTip.invalidate(reason: .actionPerformed) } }
@@ -806,7 +811,8 @@ struct LakeMapScreen: View {
                 Text(tr("Tap the water to add the turning points of your route."))
             } else if let spot, spot < hour.lights.count {
                 let probe = spotProbe(spot, hour)
-                LakeSpotProbe(light: hour.lights[spot], stale: view.isStale, values: probe.values, extra: probe.extra)
+                // Darkness, official warnings and cold water hold for every square (lakeWide), so the spot shows them too, as the web does.
+                LakeSpotProbe(light: max(hour.lights[spot], hour.lakeWide.light), stale: view.isStale, values: probe.values, extra: probe.extra)
                     .lineLimit(nil)
             } else {
                 Text(view.headline(for: hour))
@@ -1185,8 +1191,15 @@ struct LakeMapView: UIViewRepresentable {
 
     func updateUIView(_ map: MKMapView, context: Context) {
         let c = context.coordinator
+        // Apple's "Maps" mark and legal link stay readable beside the card or above the panel.
+        // bottomInset counts the home indicator, which the safe area adds again.
+        map.keepLegalClear(bottom: leadingInset > 0 ? 0 : max(0, bottomInset - map.safeAreaInsets.bottom), leading: leadingInset)
         if c.imagery != imagery {
             c.imagery = imagery
+            // The turning points' disc follows the base: white on satellite pictures.
+            for pin in map.annotations.compactMap({ $0 as? RoutePin }) {
+                map.view(for: pin)?.image = RoutePinImage.make(pin, dark: c.darkPins(on: map))
+            }
             let config: MKMapConfiguration
             if imagery {
                 let hybrid = MKHybridMapConfiguration(elevationStyle: .flat)
@@ -1342,10 +1355,18 @@ struct LakeMapView: UIViewRepresentable {
             }
             if let pin = annotation as? RoutePin {
                 let view = MKAnnotationView(annotation: pin, reuseIdentifier: nil)
-                view.image = Self.image(for: pin)
+                view.image = RoutePinImage.make(pin, dark: darkPins(on: mapView))
                 // The start is the club's launch point; the turning points move
                 // with the drag gesture below, not MapKit's own hold-and-drag.
-                view.displayPriority = .required
+                // Where numbered points would overlap (zoomed out), the later ones
+                // give way, so they never pile up into a chain (owner's pick, 14 Nov 2026).
+                if pin.isStart || pin.isSelected {
+                    view.displayPriority = .required
+                } else {
+                    view.displayPriority = MKFeatureDisplayPriority(rawValue: max(500, 999 - Float(pin.index)))
+                    view.collisionMode = .circle
+                }
+                if !pin.isStart { view.accessibilityLabel = tr("Turning point %d", pin.index) }
                 return view
             }
             if annotation === boatPin {
@@ -1384,20 +1405,15 @@ struct LakeMapView: UIViewRepresentable {
             return nil
         }
 
-        /// A dot for a turning point: blue start, orange when tapped, white otherwise.
-        static func image(for pin: RoutePin) -> UIImage {
-            // A touch bigger than it looks, so it is easier to hold and drag.
-            let size: CGFloat = pin.isStart || pin.isSelected ? 22 : 18
-            return UIGraphicsImageRenderer(size: CGSize(width: size, height: size)).image { _ in
-                let rect = CGRect(x: 1.5, y: 1.5, width: size - 3, height: size - 3)
-                let circle = UIBezierPath(ovalIn: rect)
-                (pin.isStart ? UIColor.systemBlue : pin.isSelected ? UIColor.systemOrange : UIColor.white).setFill()
-                circle.fill()
-                UIColor(white: 0.15, alpha: 1).setStroke()
-                circle.lineWidth = 2
-                circle.stroke()
-            }
+        /// A turning point: a white disc with a blue ring and its number, blue
+        /// with a white number while tapped, as on the website (owner's pick,
+        /// 14 Nov 2026); the start a plain blue dot at the club.
+        /// Turning points follow the mode as the app's other map controls (owner, 14 Nov 2026): a dark-grey
+        /// disc in dark mode, white in light mode and always on satellite pictures, where a dark disc gets lost.
+        func darkPins(on map: MKMapView) -> Bool {
+            !imagery && map.traitCollection.userInterfaceStyle == .dark
         }
+
 
         /// While a point is dragged, the route's pins stay as they are:
         /// replacing them would drop the point from under the finger.
@@ -1506,7 +1522,7 @@ struct LakeMapView: UIViewRepresentable {
                 dragOrigin = pin.coordinate
                 UIImpactFeedbackGenerator(style: .medium).impactOccurred()
                 pin.isSelected = true
-                map.view(for: pin)?.image = Self.image(for: pin)
+                map.view(for: pin)?.image = RoutePinImage.make(pin, dark: darkPins(on: map))
                 showDragLine(for: pin, on: map)
                 loupe.show(at: pin.coordinate, finger: finger, on: map)
             case .changed:
@@ -1585,7 +1601,8 @@ struct LakeMapView: UIViewRepresentable {
                 self.shownRoute = (lines, points, selected)
                 for pin in routePins {
                     pin.isSelected = pin.index == selected
-                    map.view(for: pin)?.image = Self.image(for: pin)
+                    map.view(for: pin)?.image = RoutePinImage.make(pin, dark: darkPins(on: map))
+                    if pin.isSelected { map.view(for: pin)?.displayPriority = .required }
                     // So the same point can be tapped again after "Done".
                     if !pin.isSelected { map.deselectAnnotation(pin, animated: false) }
                 }

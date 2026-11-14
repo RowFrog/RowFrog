@@ -66,8 +66,11 @@ struct StickyHourlyHeader: View {
                 .onAppear { sticky.top = top }
                 .onChange(of: top) { _, new in sticky.top = new }
             if sticky.isShowing(at: top) {
+                // The day whose header has passed under this one. Before the first, the
+                // rows are the day before it (today), not that day: the header said
+                // "Morgen" over today's rows (detail check 14 Nov 2026).
                 let day = dayTops.filter { $0.value <= top + height }.max { $0.value < $1.value }?.key
-                    ?? dayTops.keys.min()
+                    ?? dayTops.keys.min().flatMap { Calendar.current.date(byAdding: .day, value: -1, to: $0) }
                 // At the end of the table the last rows push the header up and away,
                 // instead of it vanishing while rows are still under it.
                 let push = sticky.push(at: top)

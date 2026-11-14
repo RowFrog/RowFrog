@@ -25,7 +25,8 @@ enum Condition: String, CaseIterable, Identifiable {
         case .temperature: "thermometer.medium"
         case .feelsLike: "thermometer.variable.and.figure"
         case .humidity: "humidity"
-        case .pressure: "gauge.with.dots.needle.bottom.50percent"
+        // Needle tilted: pointing straight up the gauge read as an "i" in a circle at small sizes (detail check 14 Nov 2026).
+        case .pressure: "gauge.with.dots.needle.33percent"
         case .wind: "wind"
         case .waves: "water.waves"
         case .waterTemperature: "thermometer.and.liquid.waves"

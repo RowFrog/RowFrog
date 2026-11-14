@@ -245,10 +245,12 @@ struct ArrangePageSheet: View {
                         fixedRow(PageCard.launchPoint.title, symbol: PageCard.launchPoint.symbol, note: tr("in the club header"))
                     }
                     fixedRow(tr("Rowing light"), symbol: "circle.fill", note: tr("always first"))
-                    fixedRow(tr("Warnings"), symbol: "exclamationmark.triangle", note: tr("right under it, while one is issued"))
+                    // In the order the page shows them: the top tile holds the
+                    // current conditions, the warnings come under it (owner 14 Nov 2026).
                     if settings.combinedTopTile {
                         fixedRow(PageCard.conditions.title, symbol: PageCard.conditions.symbol, note: tr("in the top tile"))
                     }
+                    fixedRow(tr("Warnings"), symbol: "exclamationmark.triangle", note: tr("right under it, while one is issued"))
                     ForEach(movable) { card in
                         Toggle(isOn: Binding(
                             get: { !layout.hidden.contains(card) },
@@ -286,6 +288,9 @@ struct ArrangePageSheet: View {
                 }
             }
         }
+        // The iPad's form sheet was too short: the note and the reset button sat
+        // below its edge (detail check 14 Nov 2026, B1.3).
+        .presentationSizing(.page)
     }
 
     /// The cards that can be moved here: not those shown elsewhere on the page for now.

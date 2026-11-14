@@ -12,7 +12,7 @@ const LABEL_H = 15;
 /** Room on the right for the value scale, as Swift Charts' trailing y axis. */
 const AXIS_W = 28;
 
-/** Round steps for the value scale (Swift Charts' automatic marks): about three intervals. */
+/** Round steps for the value scale, as Swift Charts' automatic marks: about four intervals of 1, 2 or 5 (no 2,5 steps, owner 14 Nov 2026: web showed 7,5 / 10,0 / 12,5 where the app shows 8 / 10 / 12). */
 export function yTicks(lo, hi, log = false) {
   if (!(hi > lo)) return [];
   if (log) {
@@ -20,14 +20,19 @@ export function yTicks(lo, hi, log = false) {
     for (let e = Math.floor(Math.log10(Math.max(lo, 1e-6))); 10 ** e <= hi; e++) if (10 ** e >= lo) out.push(10 ** e);
     return out;
   }
-  const raw = (hi - lo) / 3;
+  const raw = (hi - lo) / 4;
   const mag = 10 ** Math.floor(Math.log10(raw));
-  const step = [1, 2, 2.5, 5, 10].map((f) => f * mag).find((v) => v >= raw * 0.75) ?? 10 * mag;
-  const out = [];
-  for (let i = Math.ceil(lo / step - 1e-9); i * step <= hi + 1e-9; i++) out.push(Number((i * step).toPrecision(12)) + 0);
-  return out;
+  const steps = [1, 2, 5, 10, 20].map((f) => f * mag).filter((v) => v >= raw * 0.75);
+  // At most five marks: the next bigger step when a smaller one gives more.
+  for (const step of steps) {
+    const out = [];
+    for (let i = Math.ceil(lo / step - 1e-9); i * step <= hi + 1e-9; i++) out.push(Number((i * step).toPrecision(12)) + 0);
+    if (out.length <= 5 || step === steps[steps.length - 1]) return out;
+  }
+  return [];
 }
-const MAP_GREEN = "#3d9a4f";
+// Teal, as the app (Color(.systemTeal)), owner's pick 14 Nov 2026: green read as the rowing light, grey as "no forecast".
+const MAP_GREEN = "var(--map-teal)";
 
 /**
  * The hour shared by the chart and the map (DetailTime): `hour` is the blue
@@ -125,15 +130,42 @@ function arrows(detail, data) {
   return out;
 }
 
-/** A smooth path through the points (monotone enough for weather values). */
-function path(points, px, py) {
+/**
+ * A smooth path through the points: monotone cubic interpolation (Fritsch–Carlson), as Swift
+ * Charts' .interpolationMethod(.monotone) in the app. The old curve was flat at every hour, so
+ * lines looked stepped (owner, 14 Nov 2026: website follows the app).
+ */
+export function path(points, px, py) {
   if (!points.length) return "";
-  let d = `M${px(points[0].x).toFixed(1)},${py(points[0].y).toFixed(1)}`;
-  for (let i = 1; i < points.length; i++) {
-    const a = points[i - 1];
-    const b = points[i];
-    const mx = (px(a.x) + px(b.x)) / 2;
-    d += ` C${mx.toFixed(1)},${py(a.y).toFixed(1)} ${mx.toFixed(1)},${py(b.y).toFixed(1)} ${px(b.x).toFixed(1)},${py(b.y).toFixed(1)}`;
+  const xs = points.map((p) => px(p.x));
+  const ys = points.map((p) => py(p.y));
+  const n = points.length;
+  const f = (v) => v.toFixed(1);
+  if (n < 3) return `M${f(xs[0])},${f(ys[0])}${n === 2 ? ` L${f(xs[1])},${f(ys[1])}` : ""}`;
+  const slopes = [];
+  for (let i = 0; i < n - 1; i++) slopes.push(xs[i + 1] === xs[i] ? 0 : (ys[i + 1] - ys[i]) / (xs[i + 1] - xs[i]));
+  const tangents = [slopes[0]];
+  for (let i = 1; i < n - 1; i++) tangents.push(slopes[i - 1] * slopes[i] <= 0 ? 0 : (slopes[i - 1] + slopes[i]) / 2);
+  tangents.push(slopes[n - 2]);
+  for (let i = 0; i < n - 1; i++) {
+    if (slopes[i] === 0) {
+      tangents[i] = 0;
+      tangents[i + 1] = 0;
+      continue;
+    }
+    const a = tangents[i] / slopes[i];
+    const b = tangents[i + 1] / slopes[i];
+    const r = a * a + b * b;
+    if (r > 9) {
+      const k = 3 / Math.sqrt(r);
+      tangents[i] = k * a * slopes[i];
+      tangents[i + 1] = k * b * slopes[i];
+    }
+  }
+  let d = `M${f(xs[0])},${f(ys[0])}`;
+  for (let i = 0; i < n - 1; i++) {
+    const h3 = (xs[i + 1] - xs[i]) / 3;
+    d += ` C${f(xs[i] + h3)},${f(ys[i] + tangents[i] * h3)} ${f(xs[i + 1] - h3)},${f(ys[i + 1] - tangents[i + 1] * h3)} ${f(xs[i + 1])},${f(ys[i + 1])}`;
   }
   return d;
 }
@@ -183,6 +215,36 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     return out;
   }
 
+  /** Past measurements show many days: only every second or third gets its name, as the app (most 7, 5 with larger text). */
+  function labelled(days, i) {
+    const most = parseFloat(getComputedStyle(document.documentElement).fontSize) > 17 ? 5 : 7;
+    const step = Math.max(1, Math.ceil(days.length / most));
+    return (days.length - 1 - i) % step === 0;
+  }
+
+  /**
+   * No label is ever cut at the visible edges (owner, 14 Nov 2026): one that would stick out is
+   * moved in to sit flush with the edge, and one scrolled out of view is hidden. "Now" wins
+   * over an hour label it would touch.
+   */
+  function edgeLabels() {
+    if (detail.history) return;
+    const left = scroller.scrollLeft + 2;
+    const right = scroller.scrollLeft + scroller.clientWidth - AXIS_W - 4;
+    const placed = [];
+    const els = [...scroller.querySelectorAll("text.axis")].sort((a, b) => (b.dataset.now ? 1 : 0) - (a.dataset.now ? 1 : 0));
+    for (const el of els) {
+      const at = px(Number(el.dataset.x));
+      const half = (el.getComputedTextLength?.() || 30) / 2;
+      const centre = Math.min(Math.max(at, left + half), right - half);
+      const off = at < left - half || at > right + half;
+      const clash = placed.some((c) => Math.abs(c - centre) < half * 2 + 6);
+      el.setAttribute("x", centre);
+      el.style.visibility = off || clash ? "hidden" : "";
+      if (!off && !clash) placed.push(centre);
+    }
+  }
+
   function label(x) {
     const d = date(x);
     const hour = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: "Europe/Berlin" }).format(d));
@@ -202,10 +264,13 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     for (const v of yTicks(ylo, yhi, detail.logScale)) {
       parts.push(`<line class="ygrid" x1="0" x2="${width}" y1="${py(v)}" y2="${py(v)}"/>`);
     }
-    for (const x of axisHours()) {
-      parts.push(`<line class="grid" x1="${px(x)}" x2="${px(x)}" y1="${top}" y2="${bottom}"/>`,
-        `<text class="axis" x="${px(x)}" y="${bottom + 14}" text-anchor="middle">${h(label(x))}</text>`);
-    }
+    const axisMarks = axisHours();
+    axisMarks.forEach((x, i) => {
+      parts.push(`<line class="grid" x1="${px(x)}" x2="${px(x)}" y1="${top}" y2="${bottom}"/>`);
+      if (!detail.history || labelled(axisMarks, i)) parts.push(`<text class="axis" data-x="${x}" x="${px(x)}" y="${bottom + 14}" text-anchor="middle">${h(label(x))}</text>`);
+    });
+    // "Now" under the start of a forecast, on the app and the website (owner, 14 Nov 2026).
+    if (!detail.history && data.isNow && lo <= 0 && hi >= 0) parts.push(`<text class="axis now" data-x="0" data-now="1" x="${px(0)}" y="${bottom + 14}" text-anchor="middle">${h(t("Now"))}</text>`);
     for (const a of marks) {
       parts.push(`<text class="trend" x="${px(a.x)}" y="${py(ylo) - (bottom - top) * 0.92 + 4}" text-anchor="middle"${a.rotate ? ` transform="rotate(${a.rotate} ${px(a.x)} ${py(ylo) - (bottom - top) * 0.92})"` : ""}>${a.symbol}</text>`);
     }
@@ -218,6 +283,10 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
           if (p.y <= 0 || covered.some(([a, b]) => p.x >= a && p.x <= b)) continue;
           parts.push(`<rect x="${px(p.x) - w / 2}" y="${py(p.y)}" width="${w}" height="${Math.max(0, bottom - py(p.y))}" fill="${l.colour}" opacity=".7"/>`);
         }
+      } else if (l.kind === "area" && l.points.length) {
+        // A soft area down to the axis (the cloud chart's "All"), as the app's AreaMark.
+        const d = path(l.points, px, py);
+        parts.push(`<path d="${d} L${px(l.points[l.points.length - 1].x).toFixed(1)},${py(ylo).toFixed(1)} L${px(l.points[0].x).toFixed(1)},${py(ylo).toFixed(1)} Z" fill="${l.colour}" opacity=".55"/>`);
       } else {
         parts.push(`<path d="${path(l.points, px, py)}" fill="none" stroke="${l.colour}" stroke-width="2"${l.dashed ? ' stroke-dasharray="5 4"' : ""}/>`);
       }
@@ -230,7 +299,7 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     }
     parts.push(`<line class="now" x1="${px(0)}" x2="${px(0)}" y1="${top}" y2="${bottom}"/>`);
     if (!detail.history) {
-      for (const l of lines.filter((x) => x.kind !== "bars")) {
+      for (const l of lines.filter((x) => (x.kind ?? "line") === "line")) {
         const p = l.points.reduce((a, b) => (Math.abs(b.x) < Math.abs(a.x) ? b : a), l.points[0]);
         if (p && Math.abs(p.x) < 0.75) parts.push(`<circle cx="${px(p.x)}" cy="${py(p.y)}" r="4.5" fill="${l.colour}"/><circle cx="${px(p.x)}" cy="${py(p.y)}" r="2" fill="var(--card)"/>`);
       }
@@ -238,14 +307,9 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     // The hours that have maps, and the map's marker.
     const mapX = detail.history ? null : time.mapFrameHour;
     const joined = time.linked && mapX != null;
-    if (!detail.history && time.mapHours?.length) {
-      const a = px(time.mapHours[0]);
-      const b = px(time.mapHours[time.mapHours.length - 1]);
-      parts.push(`<rect x="${a}" y="${bottom - 3}" width="${Math.max(0, b - a)}" height="3" rx="1.5" fill="${MAP_GREEN}" opacity=".8"/>`);
-    }
     if (m != null) {
       parts.push(`<line x1="${px(m)}" x2="${px(m)}" y1="${top}" y2="${joined ? bottom - 17 : bottom}" stroke="var(--blue)" stroke-width="1.5"/>`);
-      for (const l of lines.filter((x) => x.kind !== "bars")) {
+      for (const l of lines.filter((x) => (x.kind ?? "line") === "line")) {
         const p = valueAt(l, m);
         if (p) parts.push(`<circle cx="${px(p.x)}" cy="${py(p.y)}" r="4" fill="${l.colour}"/>`);
       }
@@ -257,6 +321,7 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     const scroll = scroller.scrollLeft;
     scroller.innerHTML = `<svg width="${width}" height="${height}" role="img" aria-label="${h(t("Chart"))}">${parts.join("")}</svg>`;
     scroller.scrollLeft = scroll;
+    edgeLabels();
     drawOver();
     drawNote();
   }
@@ -271,6 +336,14 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
         next = placed + LABEL_H * 1.5 + 1;
         return `<span class="limit" style="top:${placed}px;${trailing ? `right:${AXIS_W + 4}px` : "left:4px"};color:${l.colour}">${h(l.label)}</span>`;
       });
+    // The hours that have maps: a strip along the bottom that ends where the plot ends, never under the
+    // value scale on the right (owner, 14 Nov 2026); drawn here, so it follows the scroll.
+    let strip = "";
+    if (!detail.history && time.mapHours?.length) {
+      const a = Math.max(0, px(time.mapHours[0]) - scroller.scrollLeft);
+      const b = Math.min(scroller.clientWidth - AXIS_W - 4, px(time.mapHours[time.mapHours.length - 1]) - scroller.scrollLeft);
+      if (b > a) strip = `<span class="map-strip" style="left:${a}px;width:${b - a}px;top:${bottom - 3}px;background:${MAP_GREEN}"></span>`;
+    }
     let callout = "";
     if (selected != null) {
       const x = Math.round(selected);
@@ -295,9 +368,10 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
     }
     const ticks = yTicks(ylo, yhi, detail.logScale);
     const step = ticks.length > 1 ? ticks[1] - ticks[0] : 1;
-    const digits = detail.logScale || step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
+    // A log scale shows every mark with the decimals its smallest needs, as Swift Charts does: 10,0 / 1,0 / 0,1.
+    const digits = detail.logScale ? Math.max(0, -Math.floor(Math.log10(ticks[0] ?? 1) + 1e-9)) : step >= 1 ? 0 : step >= 0.1 ? 1 : 2;
     const scale = ticks.map((v) => `<span class="ytick" style="top:${py(v) - 7}px">${h(num(v, step % 1 && step > 1 ? 1 : digits))}</span>`).join("");
-    over.innerHTML = `${detail.unit ? `<span class="unit">${h(detail.unit)}</span>` : ""}${scale}${labels.join("")}${badge}${callout}`;
+    over.innerHTML = `${detail.unit ? `<span class="unit">${h(detail.unit)}</span>` : ""}${strip}${scale}${labels.join("")}${badge}${callout}`;
   }
 
   function drawNote() {
@@ -352,6 +426,7 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
   });
   scroller.addEventListener("scroll", () => {
     if (!detail.history) time.scrollX = lo + (scroller.scrollLeft) / pxPerHour;
+    edgeLabels();
     drawOver();
   });
 
@@ -367,5 +442,6 @@ export function mountChart(box, detail, data, time, { hidden = new Set(), compac
   time.listeners.add(listener);
   draw();
   scroller.scrollLeft = detail.history ? 0 : (Math.max(time.scrollX, lo) - lo) * pxPerHour;
+  edgeLabels();
   return draw;
 }

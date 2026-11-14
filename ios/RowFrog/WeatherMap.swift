@@ -813,11 +813,18 @@ struct WeatherMapScreen: View {
 }
 
 extension RadarFrames {
+    /// DWD paints the whole of Germany bright green for a low UV index: at 0.75
+    /// it hid the map (detail check 14 Nov 2026), so UV shows at the strength
+    /// of the model maps' tint.
+    static func alpha(_ layer: String) -> CGFloat? {
+        layer == WeatherMapLayer.uv.live?.layer ? 0.4 : nil
+    }
+
     /// A live layer's picture at one of its times, for the weather map.
     func overlay(at time: Date) -> WeatherMapOverlayContent {
         // A wider picture is a new overlay.
         WeatherMapOverlayContent(id: "\(layer)|\(region.minX)|\(region.maxX)", northWest: region.northWest, southEast: region.southEast,
-                                 image: images[time]?.cgImage, smooth: false)
+                                 image: images[time]?.cgImage, smooth: false, alpha: Self.alpha(layer))
     }
 }
 
@@ -945,6 +952,8 @@ struct WeatherMapOverlayContent {
     /// Smoothed between grid points (model maps), or sharp (pictures from a map server).
     let smooth: Bool
     var wind: WindField? = nil
+    /// How strongly the picture covers the map; nil: fully for model maps, 0.75 for map-server pictures.
+    var alpha: CGFloat? = nil
     /// The patches drawn (where tiles overlap); empty draws the whole picture.
     var clip: [MapArea] = []
 }
@@ -1175,6 +1184,7 @@ final class WeatherMapArea: NSObject, MKOverlay {
 final class WeatherMapRenderer: MKOverlayRenderer {
     private var image: CGImage?
     private var smooth = false
+    private var alpha: CGFloat?
     private var wind: WindField?
     private var clip: [MapArea] = []
 
@@ -1184,6 +1194,7 @@ final class WeatherMapRenderer: MKOverlayRenderer {
         if content.image == nil, image != nil { setNeedsDisplay(); return }
         image = content.image
         smooth = content.smooth
+        alpha = content.alpha
         wind = content.wind
         setNeedsDisplay()
     }
@@ -1203,7 +1214,7 @@ final class WeatherMapRenderer: MKOverlayRenderer {
             context.translateBy(x: rect.minX, y: rect.maxY)
             context.scaleBy(x: 1, y: -1)
             context.interpolationQuality = smooth ? .high : .none
-            context.setAlpha(smooth ? 1 : 0.75)
+            context.setAlpha(alpha ?? (smooth ? 1 : 0.75))
             context.draw(image, in: CGRect(origin: .zero, size: rect.size))
             context.restoreGState()
         }

@@ -348,7 +348,7 @@ export async function weatherMap(el, point, layerId, { interactive = true, onAre
     boxZoom: false, keyboard: interactive, zoomAnimation: false, attributionControl: interactive, zoomSnap: 0.25,
   });
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-    maxZoom: 19, referrerPolicy: "strict-origin", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
+    maxZoom: 19, referrerPolicy: "strict-origin", className: "street-tiles", attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
   }).addTo(map);
   const canvas = L.DomUtil.create("canvas", "wm-canvas", map.getContainer());
   // The club's pin, as the app's map (LocationStore.markSymbol): a house for the home base, else a rower.
@@ -464,7 +464,8 @@ export async function weatherMap(el, point, layerId, { interactive = true, onAre
     }
     const params = {
       layers: layer.live[1], format: layer.live[0] === DWD_WMS ? "image/png" : "image/png", transparent: true, version: "1.3.0",
-      opacity: 0.75, time: at?.toISOString().replace(".000", ""), attribution: t(layer.credit),
+      // UV at 0.4 as in the app (RadarFrames.alpha): DWD's bright green hid the map at 0.75.
+      opacity: layer === LAYERS.uv ? 0.4 : 0.75, time: at?.toISOString().replace(".000", ""), attribution: t(layer.credit),
     };
     if (state.live && state.live.wmsParams.layers === layer.live[1]) state.live.setParams({ time: params.time });
     else {

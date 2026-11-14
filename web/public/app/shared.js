@@ -82,11 +82,21 @@ export const store = {
   /** Current conditions inside the top tile, which opens into all tiles (owner's choice B, app #315); off keeps its own card. */
   get combinedTopTile() { return load("rf.combinedTopTile", true) !== false; },
   set combinedTopTile(on) { save("rf.combinedTopTile", on); },
-  /** Whether the combined top tile is open, the same on every club page and in the hour view. */
-  get topTileOpen() { return load("rf.topTileOpen", false) === true; },
-  set topTileOpen(on) { save("rf.topTileOpen", on); },
+  /**
+   * Whether the page's club has its combined top tile open ("All values"), there and in its hour view.
+   * Closed at first; each club remembers its own until the page loads again, so it is not saved
+   * (owner, 14 Nov 2026; AppSettings.openTopTiles). `rf.topTileOpenAll` opens it everywhere, for tests.
+   */
+  get topTileOpen() { return openTopTiles.has(pageClub) || load("rf.topTileOpenAll", false) === true; },
+  set topTileOpen(on) {
+    if (on) openTopTiles.add(pageClub);
+    else openTopTiles.delete(pageClub);
+  },
   get mapZoom() { return load("rf.mapZoom", "normal"); },
   set mapZoom(zoom) { save("rf.mapZoom", zoom); },
+  /** The pace route times are planned with, seconds per 500 m: 2:30 unless the crew sets its own (DefaultsKey.routePace). */
+  get routePace() { const v = Number(load("rf.routePace", 150)); return v >= 90 && v <= 240 ? v : 150; },
+  set routePace(seconds) { save("rf.routePace", seconds); },
   /** The full-screen map plays 3 times round. */
   get mapLoop() { return load("rf.mapLoop", true); },
   set mapLoop(on) { save("rf.mapLoop", on); },
@@ -121,6 +131,12 @@ export const boatLimits = (boat) => limitsFor(boat, store.limits[boat.id] ?? {})
 
 /** The club whose page, value page or lake map shows; null on the other pages. */
 let pageClub = null;
+/** The clubs whose top tile is open in this visit (store.topTileOpen). */
+const openTopTiles = new Set();
+// Earlier versions saved one state for every club; it is no longer read.
+try {
+  localStorage.removeItem("rf.topTileOpen");
+} catch {}
 export function setPageClub(id) {
   pageClub = id ?? null;
 }
@@ -994,6 +1010,8 @@ export function openMenu(anchor, body, wire) {
   dialog.addEventListener("click", (e) => e.target === dialog && dialog.close());
   dialog.addEventListener("close", () => dialog.remove());
   wire?.(dialog);
+  // Focus on the sheet itself, not its first button: no focus ring on ✕ or "Cancel" as it opens (keyboard Tab still goes on from here).
+  dialog.autofocus = true;
   dialog.showModal();
   const place = () => {
     const at = anchor?.isConnected ? anchor.getBoundingClientRect() : null;
@@ -1035,6 +1053,8 @@ export function openSheet(title, body, wire) {
   dialog.addEventListener("click", (e) => e.target === dialog && dialog.close());
   dialog.addEventListener("close", () => dialog.remove());
   wire?.(dialog);
+  // Focus on the sheet itself, not its first button: no focus ring on ✕ or "Cancel" as it opens (keyboard Tab still goes on from here).
+  dialog.autofocus = true;
   dialog.showModal();
 }
 

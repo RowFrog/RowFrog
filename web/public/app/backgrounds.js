@@ -262,7 +262,8 @@ export async function showBackground(page, clubId = null) {
 
 // ---- Settings › Background pictures ------------------------------------------------------
 
-const settingsNav = () => `<header class="nav"><a class="link" href="#/settings/appearance">${icon("chevron-left")} ${h(t("Appearance"))}</a><span class="spacer"></span></header>`;
+// A round back button and a small centred title, as the app's settings pages.
+const settingsNav = () => `<header class="nav"><a class="link back" href="#/settings/appearance" aria-label="${h(t("Appearance"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Background pictures"))}</strong><span class="nav-side"></span></header>`;
 
 /** "All pages: Lake waves · 2 with their own", for the settings row. */
 export function backgroundSummary() {
@@ -278,7 +279,6 @@ export function renderBackgrounds(root) {
       <span>${icon(iconName)} ${h(title)}</span><span class="sub">${h(choice ? choiceTitle(choice) : inherited)} ${icon("chevron-right")}</span></button>`;
   root.innerHTML = `${settingsNav()}${testing()}
     <main class="page">
-      <h1 class="large">${h(t("Background pictures"))}</h1>
       ${tip("backgrounds")}
       ${previewHtml()}
       <p class="footer">${h(t("Preview of the club pages with the picture for all pages."))}</p>

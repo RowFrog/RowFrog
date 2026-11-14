@@ -14,6 +14,9 @@ struct DetailMapCard: View {
     /// The chart, slim, for the full-screen map.
     let slimChart: AnyView
     var height: CGFloat = 220
+    /// The value view's own symbol for the header: the cloud view shows the
+    /// visibility map, but under a cloud, not binoculars (detail check 14 Nov 2026).
+    var symbol: String? = nil
 
     @State private var full = Self.hookLayer != nil
     @State private var radar = false
@@ -88,7 +91,7 @@ struct DetailMapCard: View {
 
     private var header: some View {
         HStack(spacing: 8) {
-            Image(systemName: layer.symbol).foregroundStyle(.secondary)
+            Image(systemName: symbol ?? layer.symbol).foregroundStyle(.secondary)
             Group {
                 if layer.links == .none {
                     Text(tr("Live"))
