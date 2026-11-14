@@ -80,8 +80,8 @@ GitHub issue, so no GitHub account is needed.
    in that colour, and cold water shows in blue while the life jacket badge
    is on; while daylight is the reason, the sunrise or sunset time takes the
    light's colour. Tapping "All values" under the sun line opens Current
-   conditions inside the tile; tapping "Fewer values" closes it, on every
-   club page at once. Closed, a hidden value that counts for the light
+   conditions inside the tile; tapping "Fewer values" closes it. Each club
+   page starts closed and keeps its choice until the app restarts. Closed, a hidden value that counts for the light
    (thunderstorm, or ice when it matters) shows as one line under the sun line.
 2. The official warnings card, only while a warning is issued (or the check
    failed).
@@ -235,7 +235,8 @@ forecast for the time you start; a "Way back" choice picks one way (the
 default), out and back or a loop. It shows
 where and when it gets rough. The way out and the way back are drawn side
 by side, and "Lake at the boat's time" adds a slider that shows the lake as
-it will be where the boat is at each moment. Turning points move with a plain
+it will be where the boat is at each moment. Turning points are numbered
+(overlapping ones hidden) and move with a plain
 drag, sitting just above the finger with a magnifier and a dashed preview of
 the route; tapping or pulling a stretch of the route adds a point there.
 Points can be deleted, and a loop also closes when the route ends within 50 m
@@ -409,7 +410,10 @@ widget picks its **Layout** (long-press › Edit Widget): **Fewer values** (the
 default: the small one shows the light as a ring with short words, medium and
 large add temperature, wind, waves and visibility), **All values beside the
 light** (all six values in two columns) or, on the large one, **All values in a
-row** under the full sentence. **Marks** (on by default) put a check, ! or ×
+row** under the full sentence. Under each hour the large and extra large
+widgets show wind, waves and visibility with a small legend (only temperature
+and wind where even a tighter layout doesn't fit, e.g. at very large text);
+the medium one shows just the time, sky and light per hour. **Marks** (on by default) put a check, ! or ×
 in the light's dots and stripes or outlines on amber and red day bars, so the
 light reads without colour. Values that set the light are coloured; the rain
 value uses the rain radar for the next 2 hours ("From 11:20", "Until 11:40"),
@@ -440,7 +444,8 @@ field at the bottom.
   way back and turning points, not a rowed track. "Export GPX" (in a
   route's menu, and in the lake map's Routes menu for the open route) saves
   the route as a GPX track for CrewNerd, Garmin or Strava, with the way back
-  when rowed out and back; the website downloads the same file.
+  when rowed out and back; the website downloads the same file. "Standard
+  pace /500 m" (2:30 unless changed) is the pace a new route starts with.
 - Appearance: background pictures for all pages, single pages or single
   clubs (clear or blurred, frosted or solid tiles, your own photo or the
   satellite picture of the club's lake) and the app icon: the coxed double
