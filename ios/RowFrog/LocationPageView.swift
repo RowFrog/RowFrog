@@ -539,6 +539,8 @@ private struct NowCard: View {
     @State private var showingLights = UserDefaults.standard.string(forKey: DefaultsKey.legend) == "lights"
     @State private var showingWarnings = false
     @State private var showingDaylight = false
+    /// The warning line's own height, so its tap area can grow to 44 pt without moving the card (warningsLine).
+    @State private var warningLineHeight: CGFloat = 44
     /// A value of the tile tapped for its chart; swiping there stays within the tile's values.
     @State private var openCondition: Condition?
     /// The weather word's column beside the verdict, growing with the text size like the word.
@@ -928,11 +930,21 @@ private struct NowCard: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .foregroundStyle(soon ? Color.orange : Color.secondary)
+                .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { warningLineHeight = $0 }
+                // At least 44 pt to tap, also when the warning fits on one line (18 Pro Max, 14 Nov 2026):
+                // the button's label grows by the missing height, and the same negative padding outside
+                // the button keeps the card's layout as it was.
+                .padding(.vertical, warningTapPad)
+                .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
+            .padding(.vertical, -warningTapPad)
             .accessibilityHint(tr("Opens the warnings"))
         }
     }
+
+    /// Half the height the warning line lacks for a 44 pt tap area.
+    private var warningTapPad: CGFloat { max(0, (44 - warningLineHeight) / 2) }
 
     /// One line with a small sun path: daylight left, or when it comes back.
     @ViewBuilder
