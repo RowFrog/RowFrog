@@ -617,6 +617,23 @@ test("the lake view opened twice while the map library loads builds one map (no 
   await context.close();
 });
 
+test("on a phone, planning a route brings the pulled-up sheet back to its smaller height (owner's pick B)", async () => {
+  const { page, errors, context } = await open(visitor());
+  const lake = squareLake();
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  await page.goto(`${base}/app/#/lake/${club.lakeId}/${club.id}`);
+  await page.locator("#panel-grip").click({ timeout: 20000 });
+  assert.equal(await page.locator("#panel-grip").getAttribute("aria-expanded"), "true");
+  await page.locator("#route-mode").click();
+  await page.waitForFunction(() => document.querySelector("#panel-grip")?.getAttribute("aria-expanded") === "false");
+  // Pulled up again while planning, it stays up.
+  await page.locator("#panel-grip").click();
+  assert.equal(await page.locator("#panel-grip").getAttribute("aria-expanded"), "true");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
 test("the route editor: undo takes back the way back, Save marks the route saved, an edit changed and undo saved again", async () => {
   const { page, errors, context } = await open(visitor());
   const lake = squareLake();

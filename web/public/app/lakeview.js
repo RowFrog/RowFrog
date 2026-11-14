@@ -1686,7 +1686,17 @@ async function importRow(file) {
 function toggleRouteMode() {
   page.route.send({ type: "TOGGLE_PLANNING" });
   page.spot = null;
+  // Planning on a phone (owner's pick B, 14 Nov 2026; LakeMapScreen): the pulled-up sheet goes back to its
+  // smaller height with the planning controls, details come up when pulled, and the route is fitted into the
+  // larger map above it. The card on wider screens stays as it is.
+  const shrink = page.routeMode && page.expanded && !panelCard();
+  if (shrink) page.expanded = false;
   update();
+  if (shrink) requestAnimationFrame(() => {
+    if (!page?.map) return;
+    page.map.invalidateSize();
+    fitView();
+  });
 }
 
 function legendSheet() {
