@@ -94,6 +94,49 @@ _gkd_rejected_until: dict[str, float] = {}
 # key -> monotonic time of that ask. A failed station is not asked again by the
 # next club or lake view of the same run; the kept reading stands in.
 _failed_at: dict[str, float] = {}
+
+
+class WaterCounts:
+    """What one network's water temperature stations did in a run, for the
+    publishing job's log line (water_lines). _water fills it; it starts empty
+    with every run (each run is a new process) and reset_water_counts() empties it."""
+
+    def __init__(self) -> None:
+        self.asked: set[str] = set()  # stations _water was called for
+        self.requests: dict[str, int] = {}  # station -> requests sent to the network
+        self.readings: dict[str, datetime] = {}  # station -> time of the reading it gave this run
+        self.kept: set[str] = set()  # the last good reading stood in
+        self.failed: set[str] = set()  # asked and no new reading (error, firewall or quiet)
+        self.paused: set[str] = set()  # not asked: GKD's firewall turned it away earlier
+        self.after_failure: set[str] = set()  # not asked: it failed earlier in the run
+
+    def line(self, network: str) -> str:
+        requests = sum(self.requests.values())
+        most = max(self.requests.values(), default=0)
+        times = sorted(self.readings.values())
+        span = f" (newest {_utc_short(times[-1])}, oldest {_utc_short(times[0])})" if times else ""
+        return (
+            f"{WATER_NETWORK_NAMES.get(network, network)}: {len(self.asked)} stations asked, {requests} requests"
+            f" (at most {most} per station), {len(self.readings)} with a value{span},"
+            f" {len(self.kept)} of them the last good reading, {len(self.failed)} failed,"
+            f" {len(self.paused)} skipped (firewall pause), {len(self.after_failure)} skipped (recent failure)"
+        )
+
+
+WATER_NETWORK_NAMES = {"gkd": "GKD", "pegelonline": "PEGELONLINE", "bafu": "BAFU"}
+water_counts: dict[str, WaterCounts] = {}
+
+
+def reset_water_counts() -> None:
+    water_counts.clear()
+    water_counts.update({n: WaterCounts() for n in WATER_NETWORK_NAMES})
+
+
+reset_water_counts()
+
+
+def _utc_short(t: datetime) -> str:
+    return t.astimezone(timezone.utc).strftime("%d %b %H:%M UTC")
 # Long enough to cover one publish run, so each station is asked once per run,
 # not once per club. An all-clubs run took 15 to 22 min on GitHub but about
 # 60 min on the Raspberry Pi (Nov 2026), so this is the Pi's 90 min run limit;
@@ -748,14 +791,23 @@ async def _water(
     station share one answer, and a page GKD's firewall rejected is not asked
     again for GKD_REJECTED_PAUSE: from the same runner it only wastes time
     (the 5 Nov 2026 run timed out on such retries)."""
+    counts = water_counts.setdefault(station.network, WaterCounts())
+    counts.asked.add(station.key)
     cached = _water_cache.get(station.key)
     if cached and time.monotonic() - cached[0] < WATER_CACHE_SECONDS:
         water, history = cached[1]
         if water is not None and now - water.time <= gkd.MAX_AGE:
             return water, history
     for attempt in (1, 2):
-        if _gkd_rejected_until.get(station.key, 0.0) > time.monotonic() or _failed_recently(station.key):
+        if _gkd_rejected_until.get(station.key, 0.0) > time.monotonic():
+            if attempt == 1:
+                counts.paused.add(station.key)
             break
+        if _failed_recently(station.key):
+            if attempt == 1:
+                counts.after_failure.add(station.key)
+            break
+        counts.requests[station.key] = counts.requests.get(station.key, 0) + 1
         try:
             if station.network == "pegelonline":
                 water, history = await pegelonline.fetch_recent(client, station.id, now)
@@ -767,6 +819,7 @@ async def _water(
             logging.getLogger(__name__).warning("%s failed for %s (try %d): %r", station.network, station.id, attempt, e)
             if isinstance(e, gkd.Rejected):
                 _gkd_rejected_until[station.key] = time.monotonic() + GKD_REJECTED_PAUSE
+                counts.failed.add(station.key)
                 break
             if attempt == 1:
                 await asyncio.sleep(2)
@@ -774,13 +827,19 @@ async def _water(
         if water is not None:
             prepared.last_water[station.key] = (water, history)
             _water_cache[station.key] = (time.monotonic(), (water, history))
+            counts.readings[station.key] = water.time
+            counts.failed.discard(station.key)
             return water, history
         _failed_at[station.key] = time.monotonic()
+        counts.failed.add(station.key)
         break  # the station has gone quiet; an older reading would be older still
     else:
         _failed_at[station.key] = time.monotonic()  # both tries failed
+        counts.failed.add(station.key)
     saved = prepared.last_water.get(station.key)
     if saved and now - saved[0].time <= gkd.MAX_AGE:
+        counts.readings[station.key] = saved[0].time
+        counts.kept.add(station.key)
         return saved
     return None, []
 

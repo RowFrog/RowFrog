@@ -45,6 +45,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import logging
 import math
 import multiprocessing
 import os
@@ -63,9 +64,9 @@ import httpx
 from fastapi import HTTPException
 from fastapi.encoders import jsonable_encoder
 
-from rowfrog import api, ice, lake_view, locations, outlines, water_estimate, weather_models
+from rowfrog import api, ice, lake_view, locations, outlines, water_estimate, water_stations, weather_models
 from rowfrog.api import LOCAL
-from rowfrog.sources import dwd_radar, dwd_warnings, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
+from rowfrog.sources import dwd_radar, dwd_warnings, gkd, lake_ice_satellite, lake_temperature_satellite, open_meteo, sentinel2
 
 try:  # the usage counter (PR #15) may not be part of this checkout yet
     from rowfrog import usage
@@ -136,6 +137,94 @@ WARN_CELL_LOOKUPS = 8
 # With it a run loads weather only once the new model run is really there,
 # however late it comes; without it (the question failed) READY_AFTER is assumed.
 MODEL_RUN: open_meteo.ModelRun | None = None
+
+# A lake view whose weather was loaded longer ago than this counts as old in
+# the run's log line: the 12-hour schedule for lakes nobody uses plus an hour.
+VIEW_WEATHER_OLD = timedelta(hours=13)
+
+
+class RunCounts:
+    """What one run did, for the log lines after each step and the run summary
+    at the end (run_summary). Club and lake ids map to the last state they had
+    in the run, so a lake built in both parts of an all-clubs run counts once."""
+
+    def __init__(self) -> None:
+        self.clubs: dict[str, str] = {}  # club -> "fresh", "kept" or "none" (its weather)
+        self.lakes: dict[str, str] = {}  # lake -> the same
+        self.views: list[str] = []  # lake views written
+        self.empty_views: list[str] = []  # written with no wind or no waves in any hour
+        self.old_views: list[str] = []  # written from weather older than VIEW_WEATHER_OLD
+        self.forecasts = 0  # club forecasts written
+        self.no_water: dict[str, int] = {"no station": 0, "station without reading": 0}
+        self.old_water = 0  # club forecasts with a water reading older than gkd.MAX_AGE
+
+
+RUN = RunCounts()
+
+
+def _utc(t: datetime) -> str:
+    return t.astimezone(timezone.utc).strftime("%d %b %H:%M UTC")
+
+
+def weather_line(what: str, due_ids: list[str], fresh: set[str], points: int, saved: dict, ids: list[str]) -> str:
+    """One line on a weather load: how many were due, came fresh, failed, kept
+    their earlier forecast (and how old the oldest is) or have none at all.
+    `saved` is the state's id -> (loaded, ...) after the load."""
+    kept = [i for i in ids if i not in fresh and i in saved]
+    oldest = min((saved[i][0] for i in kept), default=None)
+    none = [i for i in ids if i not in saved]
+    return (
+        f"  {what} weather: {len(due_ids)} due, {len(fresh)} loaded fresh ({points} points),"
+        f" {len(due_ids) - len(fresh)} failed, {len(kept)} kept from earlier"
+        f"{f' (oldest {_utc(oldest)})' if oldest else ''}, {len(none)} with none"
+    )
+
+
+def view_is_empty(body: dict) -> bool:
+    """A lake view with no wind speed or no wave height in any hour: the map would show nothing."""
+    hours = body.get("hours") or []
+    wind = any(w.get("speedMs") is not None for h in hours for w in h.get("wind") or [])
+    waves = any(h.get("wavesCm") for h in hours)
+    return not (wind and waves)
+
+
+def count_club_water(club: locations.Club, body: dict, now: datetime) -> None:
+    """Counts the club forecasts without a measured water temperature (with or
+    without a station) and those whose reading is older than gkd.MAX_AGE."""
+    RUN.forecasts += 1
+    water = body.get("waterTemperature")
+    if water is None:
+        lake = locations.load().lakes.get(club.lake_id)
+        station = water_stations.for_club(club, lake) if lake else None
+        RUN.no_water["station without reading" if station else "no station"] += 1
+    elif now - datetime.fromisoformat(water["measuredAt"]) > gkd.MAX_AGE:
+        RUN.old_water += 1
+
+
+def water_lines() -> list[str]:
+    """One line per water network (GKD, PEGELONLINE, BAFU): what its stations did this run."""
+    return [api.water_counts[n].line(n) for n in api.WATER_NETWORK_NAMES]
+
+
+def run_summary(started: datetime, finished: datetime) -> str:
+    """The run in one line, last in the log, so `journalctl -u rowfrog-publish | grep "run summary"` lists every run."""
+
+    def states(d: dict[str, str]) -> str:
+        values = list(d.values())
+        return f"{values.count('fresh')} fresh/{values.count('kept')} kept/{values.count('none')} none"
+
+    water = ", ".join(
+        f"{name} {len(api.water_counts[n].readings)}/{len(api.water_counts[n].asked)}"
+        for n, name in api.WATER_NETWORK_NAMES.items()
+    )
+    minutes = (finished - started).total_seconds() / 60
+    return (
+        f"run summary ({_utc(started)}, {minutes:.1f} min): clubs {states(RUN.clubs)} · lakes {states(RUN.lakes)}"
+        f" · water with a value/asked {water}"
+        f" · forecasts {RUN.forecasts}, {sum(RUN.no_water.values())} without water"
+        f" · lake views {len(RUN.views)}, {len(RUN.empty_views)} empty, {len(RUN.old_views)} older than"
+        f" {VIEW_WEATHER_OLD.total_seconds() / 3600:.0f} h"
+    )
 
 
 def last_ready(now: datetime, every_hours: int, offset: timedelta = timedelta()) -> datetime:
@@ -282,7 +371,11 @@ def club_weather(state: State, clubs: list[locations.Club], used: set[str], with
                                                 "available": MODEL_RUN.available.isoformat()}
                 else:
                     state.club_runs.pop(club.id, None)
-    print(f"  weather loaded for {len(stale)} of {len(clubs)} clubs")
+    fresh = {c.id for c in stale if state.clubs.get(c.id, (None,))[0] == now}
+    ids = [c.id for c in clubs]
+    print(weather_line("club", [c.id for c in stale], fresh, len(stale), state.clubs, ids))
+    for i in ids:
+        RUN.clubs[i] = "fresh" if i in fresh else "kept" if i in state.clubs else "none"
     for club in clubs:
         if club.id in state.clubs:
             api.prepared.weather[club.id] = state.clubs[club.id][1]
@@ -421,6 +514,7 @@ def lake_weather(state: State, lake_ids: list[str], used: set[str], now: datetim
         for lon, lat in grid.samples:
             owners.append(lake_id)
             points.append((lat, lon))
+    fresh: set[str] = set()
     if points:
         forecasts, problems = asyncio.run(_batched(points, open_meteo.LAKE_HOURLY))
         for line in problems:
@@ -431,7 +525,10 @@ def lake_weather(state: State, lake_ids: list[str], used: set[str], now: datetim
         for lake_id, weathers in per_lake.items():
             if all(w is not None for w in weathers):
                 state.lakes[lake_id] = (now, len(weathers), weathers)
-    print(f"  weather loaded for {len(stale)} of {len(lake_ids)} lakes ({len(points)} points)")
+                fresh.add(lake_id)
+    print(weather_line("lake", [i for i, _ in stale], fresh, len(points), state.lakes, lake_ids))
+    for i in lake_ids:
+        RUN.lakes[i] = "fresh" if i in fresh else "kept" if i in state.lakes else "none"
     ready = []
     for lake_id in lake_ids:
         if lake_id in state.lakes:
@@ -985,6 +1082,9 @@ def lake_views(out: Path, lake_ids: list[str], workers: int | None = None) -> in
             return
         write(out / "lakes" / lake_id / "view", body)  # one at a time: a view is about 3 MB in memory
         views += 1
+        RUN.views.append(lake_id)
+        if view_is_empty(body):
+            RUN.empty_views.append(lake_id)
 
     if workers > 1 and len(inputs) > 1:
         try:
@@ -1050,6 +1150,14 @@ def clubs_written() -> None:
 
 
 def main() -> int:
+    # The API's own lines (a station that failed, Open-Meteo unavailable) go to the
+    # same stream as the publisher's, line by line, so the journal keeps them in order
+    # and with the right time; without this only warnings showed, on stderr.
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(line_buffering=True)
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout, format="  %(levelname)s %(name)s: %(message)s")
+    for noisy in ("httpx", "httpcore"):  # one line per request otherwise
+        logging.getLogger(noisy).setLevel(logging.WARNING)
     parser = argparse.ArgumentParser()
     parser.add_argument("out", type=Path)
     parser.add_argument("--clubs", choices=["confirmed", "all"], default="confirmed")
@@ -1065,12 +1173,16 @@ def main() -> int:
     try:
         return publish(args, now, state)
     finally:
+        print(run_summary(now, datetime.now(timezone.utc)))
         if UPLOADER is not None:
             UPLOADER.close()
             UPLOADER = None
 
 
 def publish(args, now: datetime, state: "State") -> int:
+    global RUN
+    RUN = RunCounts()
+    api.reset_water_counts()
     used_clubs, used_lakes, with_usage = usage_now()
     print(f"Used: {len(used_clubs)} clubs, {len(used_lakes)} lakes{'' if with_usage else ' (no usage counter)'}")
 
@@ -1121,6 +1233,7 @@ def publish(args, now: datetime, state: "State") -> int:
             if with_usage:
                 body["refresh"] = refresh_block(club.id in used_clubs)
             write(args.out / "clubs" / club.id / "forecast", body)
+            count_club_water(club, body, now)
         print(f"Wrote {len(part) - len(part_failed)} of {len(part)} forecasts to {args.out}")
         failed += part_failed
         model_count += len(model_pairs)
@@ -1137,6 +1250,19 @@ def publish(args, now: datetime, state: "State") -> int:
         viewed.update(new_views)
     print(f"Wrote {models_written} of {model_count} forecasts with other weather models")
     print(f"Wrote {views} of {lake_count} lake views")
+    RUN.old_views = [i for i in RUN.views if i in state.lakes and now - state.lakes[i][0] > VIEW_WEATHER_OLD]
+    print(
+        f"  lake views: {len(RUN.views)} written, {len(RUN.empty_views)} with empty wind or waves"
+        f"{' (' + ', '.join(RUN.empty_views[:5]) + (' …' if len(RUN.empty_views) > 5 else '') + ')' if RUN.empty_views else ''},"
+        f" {len(RUN.old_views)} with weather older than {VIEW_WEATHER_OLD.total_seconds() / 3600:.0f} h"
+    )
+    print(
+        f"  club forecasts: {RUN.forecasts} written, {sum(RUN.no_water.values())} without water temperature"
+        f" ({RUN.no_water['no station']} have no station, {RUN.no_water['station without reading']} a station without"
+        f" a reading), {RUN.old_water} with a water reading older than {gkd.MAX_AGE.total_seconds() / 3600:.0f} h"
+    )
+    for line in water_lines():
+        print(" ", line)
     state.save()
 
     weather_maps(state, args.out, every, now)

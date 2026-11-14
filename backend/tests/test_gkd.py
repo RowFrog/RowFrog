@@ -185,3 +185,53 @@ def test_a_failing_lake_level_is_asked_once_per_run(monkeypatch):
     for _ in range(3):
         assert asyncio.run(api._lake_levels(None, lake)) is None
     assert len(asked) == 1
+
+
+def test_each_network_counts_what_its_stations_did_in_the_run(monkeypatch):
+    """The publisher's water lines (one per network): stations asked, requests
+    sent, readings got and what was skipped, so a log shows whether each
+    station was asked at most once a run (#414)."""
+    import asyncio
+
+    import httpx
+
+    from rowfrog import api
+
+    api.reset_water_counts()
+    now = datetime(2026, 10, 18, 6, tzinfo=timezone.utc)
+    reading = gkd.WaterTemperature(datetime(2026, 10, 18, 5, 45, tzinfo=timezone.utc), 12.8)
+    kept = gkd.WaterTemperature(datetime(2026, 10, 18, 4, 0, tzinfo=timezone.utc), 12.1)
+
+    async def gkd_page(client, station_id, now, kind="lake"):
+        if station_id == "walled":
+            raise gkd.Rejected("GKD firewall rejected the request")
+        return reading, [reading]
+
+    async def down(client, station_id, now):
+        raise httpx.ConnectTimeout("timed out")
+
+    async def no_sleep(_):
+        return None
+
+    monkeypatch.setattr(api.gkd, "fetch_recent", gkd_page)
+    monkeypatch.setattr(api.pegelonline, "fetch_recent", down)
+    monkeypatch.setattr(api.asyncio, "sleep", no_sleep)
+    api.prepared.last_water["gkd:walled"] = (kept, [kept])
+    for _ in range(3):  # three clubs on each station
+        for station in (api.water_stations.Station("gkd", "good"), api.water_stations.Station("gkd", "walled"),
+                        api.water_stations.Station("pegelonline", "abc")):
+            asyncio.run(api._water(None, station, now))
+
+    g, p, b = (api.water_counts[n] for n in ("gkd", "pegelonline", "bafu"))
+    assert (len(g.asked), sum(g.requests.values()), len(g.readings), len(g.kept)) == (2, 2, 2, 1)
+    assert g.failed == {"gkd:walled"} and g.paused == {"gkd:walled"} and not g.after_failure
+    assert (len(p.asked), sum(p.requests.values()), len(p.readings)) == (1, 2, 0)
+    assert p.failed == p.after_failure == {"pegelonline:abc"}
+    assert g.line("gkd") == (
+        "GKD: 2 stations asked, 2 requests (at most 1 per station), 2 with a value"
+        " (newest 18 Oct 05:45 UTC, oldest 18 Oct 04:00 UTC), 1 of them the last good reading, 1 failed,"
+        " 1 skipped (firewall pause), 0 skipped (recent failure)"
+    )
+    assert p.line("pegelonline").startswith("PEGELONLINE: 1 stations asked, 2 requests (at most 2 per station), 0 with a value,")
+    assert b.line("bafu").startswith("BAFU: 0 stations asked, 0 requests")
+    api.reset_water_counts()

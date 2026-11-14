@@ -569,3 +569,68 @@ def test_clubs_and_lakes_people_use_are_built_first_in_an_all_clubs_run():
     # A run of only the used clubs, or one while nobody uses anything, stays one part.
     assert len(publish.parts(clubs[2:3], lakes, {"c"}, set(), state, now)) == 1
     assert [len(p) for p, _ in publish.parts(clubs, lakes, set(), set(), state, now)] == [4]
+
+
+def test_weather_lines_say_what_was_due_fresh_failed_kept_and_missing(monkeypatch, capsys):
+    from types import SimpleNamespace
+
+    from rowfrog import api
+
+    clubs = [SimpleNamespace(id=i, launch_point=SimpleNamespace(lat=47.9, lon=11.3)) for i in ("a", "b", "c", "d")]
+    state = publish.State(None)
+    now = utc(23, 14, 0)  # the 09 UTC run has been there since 11:30
+    state.clubs = {"b": (utc(23, 2), []), "c": (utc(22, 23), []), "d": (utc(23, 13), [])}
+
+    async def half(points, hourly):  # only the first point comes
+        return [[]] + [None] * (len(points) - 1), ["batch 1 attempt 1: timeout"]
+
+    monkeypatch.setattr(publish, "_batched", half)
+    monkeypatch.setattr(publish, "RUN", publish.RunCounts())
+    # a (never loaded), b and c (before 11:30) are due; a comes, b and c fail and keep theirs, d is not due.
+    publish.club_weather(state, clubs, used={"a", "b", "c", "d"}, with_usage=True, now=now)
+    out = capsys.readouterr().out
+    assert "club weather: 3 due, 1 loaded fresh (3 points), 2 failed, 3 kept from earlier (oldest 22 Oct 23:00 UTC), 0 with none" in out
+    for i in "abcd":
+        api.prepared.weather.pop(i, None)
+
+
+def test_a_view_without_wind_or_waves_counts_as_empty():
+    full = {"hours": [{"wavesCm": [3, 4], "wind": [{"speedMs": 2.1}]}]}
+    assert not publish.view_is_empty(full)
+    assert publish.view_is_empty({"hours": []})
+    assert publish.view_is_empty({"hours": [{"wavesCm": [], "wind": [{"speedMs": 2.1}]}]})
+    assert publish.view_is_empty({"hours": [{"wavesCm": [3], "wind": [{"speedMs": None}]}]})
+
+
+def test_club_forecasts_count_missing_and_old_water(monkeypatch):
+    from rowfrog import locations
+
+    monkeypatch.setattr(publish, "RUN", publish.RunCounts())
+    now = utc(23, 14, 0)
+    club = locations.load().clubs["mrc-1880"]
+    publish.count_club_water(club, {"waterTemperature": {"measuredAt": "2026-10-23T13:30:00+00:00"}}, now)
+    publish.count_club_water(club, {"waterTemperature": {"measuredAt": "2026-10-23T06:00:00+00:00"}}, now)
+    publish.count_club_water(club, {"waterTemperature": None}, now)
+    assert publish.RUN.forecasts == 3 and publish.RUN.old_water == 1
+    assert publish.RUN.no_water == {"no station": 0, "station without reading": 1}, "MRC 1880 reads the Starnberg station"
+
+
+def test_the_run_ends_with_one_summary_line(monkeypatch):
+    from rowfrog import api
+
+    run = publish.RunCounts()
+    run.clubs = {"a": "fresh", "b": "kept", "c": "none"}
+    run.lakes = {"x": "kept"}
+    run.views, run.empty_views, run.old_views = ["x"], [], ["x"]
+    run.forecasts, run.no_water = 2, {"no station": 1, "station without reading": 0}
+    monkeypatch.setattr(publish, "RUN", run)
+    api.reset_water_counts()
+    api.water_counts["gkd"].asked = {"gkd:1", "gkd:2"}
+    api.water_counts["gkd"].readings = {"gkd:1": utc(23, 13)}
+    line = publish.run_summary(utc(23, 14, 0), utc(23, 14, 16))
+    assert line == (
+        "run summary (23 Oct 14:00 UTC, 16.0 min): clubs 1 fresh/1 kept/1 none · lakes 0 fresh/1 kept/0 none"
+        " · water with a value/asked GKD 1/2, PEGELONLINE 0/0, BAFU 0/0 · forecasts 2, 1 without water"
+        " · lake views 1, 0 empty, 1 older than 13 h"
+    )
+    api.reset_water_counts()
