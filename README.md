@@ -547,7 +547,7 @@ the rain tile (the radar card is off by default, as in the app). What a visitor 
 | `data/water-stations.json` | The water temperature station each club reads (nearest on its own water). |
 | `data/lake-depths.json` | Mean lake depths for the ice estimate. |
 | `web/` | The website: start page, `app/` (the forecasts in the browser), legal pages and the password check (`functions/_middleware.js`). `scripts/build_web.py` builds it. |
-| `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com`, `suggestions/` turns place and launch point suggestions into GitHub issues, `timer/` starts the forecast run on time. |
+| `cloudflare/` | Cloudflare Workers: `usage/` counts loads on `api.rowfrog.com` and serves the `/v1/` files from R2 while the Pi publishes, `suggestions/` turns place and launch point suggestions into GitHub issues, `timer/` starts the forecast run on time. |
 | `testdata/api/v1/` | Sample API files (MRC 1880's forecast, the lake list and the country lists) that the backend, app and website tests all read, so a change to the format shows up in all three (see the handbook's Tests section). |
 | `testdata/limits.json` | The app's starting boat limits that the backend, app and website tests all check, so the three give the same light. |
 | `testdata/reasons.json` | Every reason the backend may send for an amber or red light; the backend test checks its modules and the sample files against it, and the app and website tests check each has a label and sentence (an unknown one shows "Other condition"). |
@@ -628,9 +628,10 @@ has none.
 While GitHub is down (November 2026), a Raspberry Pi runs the forecasts, the
 Model check and the Usage limits check from its own copy of `main`, and puts
 each club's forecast online on Cloudflare R2 as soon as that club is built,
-the clubs people use first. Changes
-are merged and checked on the owner's Mac before they reach it, and the Mac
-deploys the website. The handbook section "While GitHub is down" has the
+the clubs people use first. Since 14 Nov 2026 changes are merged on GitHub
+again and the Pi's `main` follows GitHub's; the Pi's job files are in
+`scripts/local/pi/`. The usage counter Worker serves the `/v1/` files from
+that R2 bucket. The Mac deploys the website. The handbook section "While GitHub is down" has the
 steps and the checks. The rest of this section describes the GitHub setup.
 
 There is no server yet. The "Publish forecasts" workflow runs the backend on
