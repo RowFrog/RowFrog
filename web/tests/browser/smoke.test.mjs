@@ -686,6 +686,12 @@ test("Settings › Routes lists every saved route by water and opens one on its 
   assert.ok(await page.locator("#undo").isDisabled(), "a freshly opened route has nothing to undo");
   assert.match(await page.locator(".route-line").innerText(), /km/);
   assert.equal(await page.locator(".lake-top a.round").getAttribute("href"), "#/settings/routes", "Close goes back to the list");
+  // Routes › Export GPX downloads the open route as a GPX track (RouteGPX).
+  await page.locator("#routes").click();
+  const [download] = await Promise.all([page.waitForEvent("download"), page.locator("#export-gpx").click()]);
+  assert.equal(download.suggestedFilename(), "Square loop.gpx");
+  const gpx = await readFile(await download.path(), "utf8");
+  assert.equal((gpx.match(/<trkpt /g) ?? []).length, 3);
   assert.deepEqual(errors, []);
   await context.close();
 });

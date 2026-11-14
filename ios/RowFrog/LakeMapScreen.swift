@@ -472,6 +472,10 @@ struct LakeMapScreen: View {
                 Button(tr("Manage routes…"), systemImage: "list.bullet") { showingRoutes = true }
             }
             if let savedRoute {
+                // The saved route as a GPX file, for other apps and devices (RouteGPX).
+                ShareLink(item: RouteGPXFile(route: savedRoute), preview: SharePreview(savedRoute.name)) {
+                    Label(tr("Export GPX"), systemImage: "doc.badge.arrow.up")
+                }
                 Button(tr("Delete this route"), systemImage: "trash", role: .destructive) {
                     routes.delete(savedRoute)
                     draft.send(.deleteRoute)

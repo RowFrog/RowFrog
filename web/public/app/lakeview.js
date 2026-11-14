@@ -22,6 +22,7 @@ import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimpor
 import { tip, wireTips, closeTip, bubbleTip } from "./tour.js";
 import { routeDraft } from "./routedraft.js";
 import { routeLink, readRouteLink, addSharedRoutes } from "./routelink.js";
+import { downloadGpx } from "./routegpx.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows, inside } from "./windarrows.js";
 
@@ -1159,7 +1160,7 @@ function routesMenu() {
     ${page.rowed?.track ? `<button id="show-track" aria-pressed="${page.showTrack}">${icon("spline")} <span>${h(t("Show rowed track"))}</span>${page.showTrack ? icon("check", "end") : ""}</button>` : ""}
   </div>
   ${savedRoutesList()}
-  ${page.savedId && lakeRoutes().some((r) => r.id === page.savedId) ? `<div class="menu routes-menu"><button id="delete-open-route" class="red">${icon("trash-2")} <span>${h(t("Delete this route"))}</span></button></div>` : ""}
+  ${page.savedId && lakeRoutes().some((r) => r.id === page.savedId) ? `<div class="menu routes-menu"><button id="export-gpx">${icon("file-up")} <span>${h(t("Export GPX"))}</span></button><button id="delete-open-route" class="red">${icon("trash-2")} <span>${h(t("Delete this route"))}</span></button></div>` : ""}
 `;
 }
 
@@ -1549,6 +1550,12 @@ function wireRoutes(menu) {
   menu.querySelector("#manage-routes")?.addEventListener("click", () => {
     menu.close();
     openManageRoutes();
+  });
+  // The open saved route as a GPX file (RouteGPX in the app).
+  menu.querySelector("#export-gpx")?.addEventListener("click", () => {
+    const r = store.routes.find((x) => x.id === page.savedId);
+    menu.close();
+    if (r) downloadGpx(r);
   });
   menu.querySelector("#delete-open-route")?.addEventListener("click", () => {
     const r = store.routes.find((x) => x.id === page.savedId);
