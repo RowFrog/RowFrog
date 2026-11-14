@@ -42,6 +42,9 @@ struct ManageRoutesView: View {
                                 Label(tr("Share link"), systemImage: "square.and.arrow.up")
                             }
                         }
+                        ShareLink(item: RouteGPXFile(route: route), preview: SharePreview(route.name)) {
+                            Label(tr("Export GPX"), systemImage: "doc.badge.arrow.up")
+                        }
                         Button(tr("Delete"), systemImage: "trash", role: .destructive) { delete(route) }
                     }
                 }

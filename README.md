@@ -436,7 +436,10 @@ field at the bottom.
   route's menu) and the share button at the top (every route) make a
   rowfrog.com link; opened in a browser, it saves the routes there, once,
   and opens a single route on its lake map. The link carries name, water,
-  way back and turning points, not a rowed track.
+  way back and turning points, not a rowed track. "Export GPX" (in a
+  route's menu, and in the lake map's Routes menu for the open route) saves
+  the route as a GPX track for CrewNerd, Garmin or Strava, with the way back
+  when rowed out and back; the website downloads the same file.
 - Appearance: background pictures for all pages, single pages or single
   clubs (clear or blurred, frosted or solid tiles, your own photo or the
   satellite picture of the club's lake) and the app icon: the coxed double

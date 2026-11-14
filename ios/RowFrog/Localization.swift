@@ -1474,6 +1474,7 @@ enum German {
         "Duplicate": "Duplizieren",
         "Share link": "Link teilen",
         "Share all routes": "Alle Routen teilen",
+        "Export GPX": "Als GPX exportieren",
         "Delete": "Löschen",
         "%@ (copy)": "%@ (Kopie)",
         "Loop": "Runde",
