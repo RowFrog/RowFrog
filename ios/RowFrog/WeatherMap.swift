@@ -1184,7 +1184,7 @@ final class WeatherMapArea: NSObject, MKOverlay {
 final class WeatherMapRenderer: MKOverlayRenderer {
     private var image: CGImage?
     private var smooth = false
-    private var alpha: CGFloat?
+    private var pictureAlpha: CGFloat?
     private var wind: WindField?
     private var clip: [MapArea] = []
 
@@ -1194,7 +1194,7 @@ final class WeatherMapRenderer: MKOverlayRenderer {
         if content.image == nil, image != nil { setNeedsDisplay(); return }
         image = content.image
         smooth = content.smooth
-        alpha = content.alpha
+        pictureAlpha = content.alpha
         wind = content.wind
         setNeedsDisplay()
     }
@@ -1214,7 +1214,7 @@ final class WeatherMapRenderer: MKOverlayRenderer {
             context.translateBy(x: rect.minX, y: rect.maxY)
             context.scaleBy(x: 1, y: -1)
             context.interpolationQuality = smooth ? .high : .none
-            context.setAlpha(alpha ?? (smooth ? 1 : 0.75))
+            context.setAlpha(pictureAlpha ?? (smooth ? 1 : 0.75))
             context.draw(image, in: CGRect(origin: .zero, size: rect.size))
             context.restoreGState()
         }

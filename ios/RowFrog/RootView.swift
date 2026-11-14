@@ -289,7 +289,7 @@ struct RootView: View {
                         title: scroll.titleGone.contains(selection) ? club : nil,
                         light: forecast?.current()?.light, stale: forecast?.isStale() ?? false,
                         sideRoom: PageTopButtons.sideRoom(chrome),
-                        picture: BackgroundPictures.shared.image(for: settings.background(for: .clubPages, clubID: selection), clubID: selection) != nil)
+                        picture: BackgroundPictures.shared.image(for: AppSettings.shared.background(for: .clubPages, clubID: selection), clubID: selection) != nil)
                 .frame(maxHeight: .infinity, alignment: .top)
                 .ignoresSafeArea(edges: .top)
         }
@@ -423,7 +423,7 @@ private struct TopEdgeFade: View {
                 // Solid down to just below the name, then a short fade (owner's pick A,
                 // 14 Nov 2026): headings and the top tile scrolled under the name no
                 // longer show through it; the content below the bar stays visible.
-                Rectangle().fill(picture ? AnyShapeStyle(.thickMaterial) : AnyShapeStyle(Color(.systemGroupedBackground)))
+                Rectangle().fill(picture ? AnyShapeStyle(Material.thickMaterial) : AnyShapeStyle(Color(.systemGroupedBackground)))
                     .mask {
                         LinearGradient(stops: [.init(color: .black, location: 0),
                                                .init(color: .black, location: bar / max(height, 1)),

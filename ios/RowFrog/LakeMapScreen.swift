@@ -1405,15 +1405,11 @@ struct LakeMapView: UIViewRepresentable {
             return nil
         }
 
-        /// A turning point: a white disc with a blue ring and its number, blue
-        /// with a white number while tapped, as on the website (owner's pick,
-        /// 14 Nov 2026); the start a plain blue dot at the club.
         /// Turning points follow the mode as the app's other map controls (owner, 14 Nov 2026): a dark-grey
         /// disc in dark mode, white in light mode and always on satellite pictures, where a dark disc gets lost.
         func darkPins(on map: MKMapView) -> Bool {
             !imagery && map.traitCollection.userInterfaceStyle == .dark
         }
-
 
         /// While a point is dragged, the route's pins stay as they are:
         /// replacing them would drop the point from under the finger.
