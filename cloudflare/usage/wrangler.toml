@@ -14,3 +14,10 @@ database_id = "DATABASE_ID"
 # Old daily counts are deleted once a day.
 [triggers]
 crons = ["17 3 * * *"]
+
+# The /v1/ files come from this R2 bucket, which the Raspberry Pi fills after
+# every forecast run (scripts/local/pi/run-publish.sh), instead of GitHub Pages.
+# The live Worker has this binding; remove it only when GitHub publishes again.
+[[r2_buckets]]
+binding = "FILES"
+bucket_name = "rowfrog-api"
