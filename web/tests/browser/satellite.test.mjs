@@ -1,7 +1,8 @@
 // The satellite picture keeps its size and place when switching between its pictures (owner, 12 Nov 2026:
 // "the sat view, outlines and the safety vest hint seem to move when switched"). The caption under the picture
 // wrapped to two lines for one picture ("100 % of the lake under cloud") and not for the other, and the picture
-// is sized to leave room for the caption, so it shrank. The caption now always takes two lines.
+// is sized to leave room for the caption, so it shrank. The caption then took two lines; since 14 Nov 2026 its
+// wording fits one line for every picture.
 // Run: python scripts/build_web.py && node --test web/tests/browser/
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
