@@ -80,7 +80,7 @@ export async function baseMap(L, map, { storeKey = null, start = false, small = 
   function show() {
     map.removeLayer(on ? street : imagery);
     (on ? imagery : street).addTo(map);
-    control.button.innerHTML = icon(on ? "map" : "globe");
+    control.button.innerHTML = icon(on ? "map" : "earth");
     const label = on ? t("Show the map") : t("Show satellite pictures");
     control.button.setAttribute("aria-label", label);
     control.button.title = label;

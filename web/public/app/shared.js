@@ -768,9 +768,9 @@ export function skySymbol(hour, cls = "", kind = sky(hour.weatherCode)) {
 }
 
 export const CONDITION_ICONS = {
-  temperature: "thermometer", feelsLike: "person-standing", humidity: "droplets", pressure: "gauge", wind: "wind", waves: "waves",
-  waterTemperature: "thermometer-snowflake", precipitation: "cloud-rain", visibility: "binoculars", cloudCover: "cloud",
-  thunderstorm: "cloud-lightning", uvIndex: "sun", ice: "snowflake", daylight: "sunrise", warning: "triangle-alert",
+  temperature: "thermometer", feelsLike: "thermometer-figure", humidity: "droplets", pressure: "gauge", wind: "wind", waves: "waves",
+  waterTemperature: "thermometer-waves", precipitation: "cloud-rain", visibility: "binoculars", cloudCover: "cloud",
+  thunderstorm: "cloud-lightning", uvIndex: "sun-alert", ice: "snowflake", daylight: "sun-horizon", warning: "triangle-alert",
   current: "circle-arrow-right", waterLevel: "arrow-down-to-line",
 };
 

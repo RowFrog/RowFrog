@@ -406,7 +406,7 @@ export async function fillLakeCard(box, lakeId, clubId, waterC) {
       <div class="lake-summary">
         <small class="sub">${h(t("Now, %@", time(hour.time)))}</small>
         <strong class="headline">${h(headlineText(view, hour))}</strong>
-        ${stale ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
+        ${stale ? `<p class="small orange strong">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
         ${lakeWideBanner(hour.lakeWide, view)}
         ${mapBoatNote()}
         ${zones}
@@ -531,7 +531,7 @@ export async function renderLakeMap(root, lakeId, clubId, back, at = null, route
     [view, chart] = await Promise.all([viewForMap(lakeId), loadRouteChart()]);
   } catch {
     routeChart = null;
-    root.querySelector("#lake-panel").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong></p>`;
+    root.querySelector("#lake-panel").innerHTML = `<p><strong>${icon("cloud-off")} ${h(t("No forecast"))}</strong></p>`;
     return;
   }
   // Opened again while this one loaded: that one builds the map (Leaflet takes one map per box).
@@ -967,7 +967,7 @@ function routeStartMenu() {
   ${savedRoutesList()}`;
 }
 
-const importRowItem = () => `<label id="import-row" title="${h(t("GPX, TCX or FIT files from CrewNerd, Garmin Connect, Strava and other apps."))}">${icon("upload")} <span>${h(t("Import a row"))}</span>
+const importRowItem = () => `<label id="import-row" title="${h(t("GPX, TCX or FIT files from CrewNerd, Garmin Connect, Strava and other apps."))}">${icon("import")} <span>${h(t("Import a row"))}</span>
       <input type="file" accept=".gpx,.tcx,.fit,application/gpx+xml,application/vnd.garmin.tcx+xml" hidden></label>`;
 
 /** The menus' Saved routes section, each route opens on tap, then Manage routes… as in the app's menus. */
@@ -1067,7 +1067,7 @@ function viewingPanel(hour) {
       <p class="small sub">${h(t("Tap the water to see the conditions there."))}</p>`;
   }
   return `<p class="panel-head"><strong>${h(dayTime(hour.time))}</strong>${view.sample ? `<span class="small orange strong">${icon("triangle-alert")} ${h(t("Sample wind"))}</span>` : ""}${routeButton()}</p>
-    ${stale ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
+    ${stale ? `<p class="small orange strong">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
     ${lakeWideBanner(hour.lakeWide, view)}
     ${kitBadge(view)}
     ${details}
@@ -1089,7 +1089,7 @@ function collapsedViewing(hour, stale) {
     line = `<p class="one-line strong">${h(headlineText(view, hour))}</p>`;
   }
   return `<p class="panel-head"><strong>${h(dayTime(hour.time))}</strong>${view.sample ? `<span class="small orange strong">${icon("triangle-alert")} ${h(t("Sample wind"))}</span>` : ""}${routeButton()}</p>
-    ${stale ? `<p class="small orange strong one-line">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
+    ${stale ? `<p class="small orange strong one-line">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
     ${lakeWideBanner(hour.lakeWide, view, true)}
     ${kitBadge(view)}
     ${line}
@@ -1119,14 +1119,14 @@ function planningPanel(hour) {
       ${roughText ? `<p class="small sub">${h(roughText)}</p>` : ""}
       ${plan.currentMs >= 0.05 ? `<p class="small sub">${conditionIcon("current")} ${h(t("Times count with the current of ≈ %@: faster downstream, slower upstream.", riverSpeed(plan.currentMs)))}</p>` : ""}
       ${plan.noHeadway ? `<p class="small orange">${icon("triangle-alert")} ${h(t("Against this current your boat hardly makes headway on part of the route."))}</p>` : ""}
-      ${plan.beyondForecast ? `<p class="small orange">${icon("clock")} ${h(t("The forecast ends before you are back."))}</p>` : ""}
-      ${viewStale(view) ? `<p class="small orange strong">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
+      ${plan.beyondForecast ? `<p class="small orange">${icon("clock-alert")} ${h(t("The forecast ends before you are back."))}</p>` : ""}
+      ${viewStale(view) ? `<p class="small orange strong">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(view.generatedAt)))}</p>` : ""}
       ${adviceOnly()}
       ${page.followBoat ? "" : tip("boatTime")}
       <p class="boat-follow"><label class="tick inline"><input type="checkbox" id="follow" ${page.followBoat ? "checked" : ""}> ${icon("rower")} ${h(t("Lake at the boat's time"))}</label>
         ${page.followBoat ? `<input type="range" id="boat-at" min="0" max="1" step="0.01" value="${page.boatAt}" aria-label="${h(t("Where the boat is"))}">` : ""}</p>
       ${stop ? `<p class="small sub">${h(t("The boat at %@ after %@: %@, waves %@", time(stop.time), distance(stop.distanceM), lightTitle(stop.light), waves(stop.waveM) + (stop.relation ? ` ${t(RELATION_WAVES[stop.relation])}` : "")))}</p>` : ""}
-      ${betterIndex != null ? `<button class="link" id="better" data-hour="${betterIndex}">${icon("clock")} ${h(t("Better start: %@ · %@", dayTime(better.start), lightTitle(better.worstLight)))}</button>` : ""}`;
+      ${betterIndex != null ? `<button class="link" id="better" data-hour="${betterIndex}">${icon("history")} ${h(t("Better start: %@ · %@", dayTime(better.start), lightTitle(better.worstLight)))}</button>` : ""}`;
   } else {
     summary = `<p class="small">${h(t("It starts at your club and goes one way; pick Out and back or Loop under the way back to row back to it. Tap or pull a stretch to add a point there. Tap a point to delete it, or drag it to move it. A point within 50 m of the start closes the loop."))}</p>`;
   }
@@ -1167,8 +1167,8 @@ function planningPanel(hour) {
 /** The Routes menu of the route panel: save, import a row, the rowed track, the lake's saved routes and Manage routes… (LakeMapScreen.routesMenu). */
 function routesMenu() {
   return `<div class="menu routes-menu">
-    <button id="save-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("check")} <span>${h(t("Save route"))}</span></button>
-    ${page.route.saved ? `<button id="save-new-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("copy")} <span>${h(t("Save as new route"))}</span></button>` : ""}
+    <button id="save-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("download")} <span>${h(t("Save route"))}</span></button>
+    ${page.route.saved ? `<button id="save-new-route" ${page.points.length > 1 ? "" : "disabled"}>${icon("copy-plus")} <span>${h(t("Save as new route"))}</span></button>` : ""}
     ${importRowItem()}
     ${page.rowed?.track ? `<button id="show-track" aria-pressed="${page.showTrack}">${icon("spline")} <span>${h(t("Show rowed track"))}</span>${page.showTrack ? icon("check", "end") : ""}</button>` : ""}
   </div>
@@ -1186,7 +1186,7 @@ function routeRow(r, i, count, current) {
           <button class="tool" data-up="${h(r.id)}" aria-label="${h(t("Move up"))}" ${i === 0 ? "disabled" : ""}>${icon("arrow-up")}</button>
           <button class="tool" data-down="${h(r.id)}" aria-label="${h(t("Move down"))}" ${i === count - 1 ? "disabled" : ""}>${icon("arrow-down")}</button>
           <button class="tool" data-rename="${h(r.id)}" aria-label="${h(t("Rename"))}" title="${h(t("Rename"))}">${icon("pencil")}</button>
-          <button class="tool" data-copy="${h(r.id)}" aria-label="${h(t("Duplicate"))}" title="${h(t("Duplicate"))}">${icon("copy")}</button>
+          <button class="tool" data-copy="${h(r.id)}" aria-label="${h(t("Duplicate"))}" title="${h(t("Duplicate"))}">${icon("copy-plus")}</button>
           <button class="tool" data-share-one="${h(r.id)}" aria-label="${h(t("Share"))}" title="${h(t("Share"))}" aria-expanded="false">${icon("share")}</button>
           <button class="tool red" data-delete="${h(r.id)}" aria-label="${h(t("Delete"))}" title="${h(t("Delete"))}">${icon("trash-2")}</button></span>
         <span class="route-share" hidden><button class="pill" data-link="${h(r.id)}">${icon("share")} ${h(t("Share link"))}</button>

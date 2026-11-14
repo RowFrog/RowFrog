@@ -96,7 +96,7 @@ export function currentBody(river) {
   let main;
   if (now) {
     const warning = now.state === "shipping_stopped"
-      ? `<p class="red strong">${icon("circle-alert")} ${h(t("Above the shipping mark: even motor ships stay in. Do not row."))}</p>`
+      ? `<p class="red strong">${icon("octagon-alert")} ${h(t("Above the shipping mark: even motor ships stay in. Do not row."))}</p>`
       : now.state === "high" ? `<p class="orange strong">${icon("triangle-alert")} ${h(t("High water: strong current, flotsam and flooded banks. Only experienced crews, with care."))}</p>`
       : now.groynesCovered ? `<p class="sub">${icon("info")} ${h(t("Groynes may be under water: keep well clear of the groyne fields."))}</p>` : "";
     const up = now.speedMs != null ? paceOnCurrent(PACE, now.speedMs, false) : null;

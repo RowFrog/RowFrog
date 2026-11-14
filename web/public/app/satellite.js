@@ -243,8 +243,8 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
     const shot = meta[kind];
     // Saving data: the picture loads only when tapped (SatellitePictureStore.mayDownload).
     if (savingData() && !tapped.has(lakeId)) {
-      box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
-        <button class="picture tap-to-load" style="aspect-ratio:${meta.width}/${meta.height}">${icon("satellite")}<span>${h(t("Tap to load the picture"))}</span><small>${h(t("Saving data: satellite pictures load only when asked for."))}</small></button>
+      box.innerHTML = `<header class="card-title">${icon("earth")}<span>${h(t("Satellite picture"))}</span></header>
+        <button class="picture tap-to-load" style="aspect-ratio:${meta.width}/${meta.height}">${icon("circle-arrow-down")}<span>${h(t("Tap to load the picture"))}</span><small>${h(t("Saving data: satellite pictures load only when asked for."))}</small></button>
         <p class="sub small">${h(meta.attribution)}</p>`;
       box.querySelector(".tap-to-load").addEventListener("click", () => {
         tapped.add(lakeId);
@@ -253,7 +253,7 @@ export async function satelliteCard(box, lakeId, clubId, changed) {
       changed?.();
       return;
     }
-    box.innerHTML = `<header class="card-title">${icon("globe")}<span>${h(t("Satellite picture"))}</span></header>
+    box.innerHTML = `<header class="card-title">${icon("earth")}<span>${h(t("Satellite picture"))}</span></header>
       ${tip("satellite")}
       ${kindPicker(lake, kind)}
       <div class="picture" role="button" tabindex="0" aria-label="${h(t("Satellite picture"))}" data-ratio="${meta.width / meta.height}" style="aspect-ratio:${meta.width}/${meta.height}">${pictureHtml(lake, shot)}${coldBadge(lake)}</div>
@@ -681,7 +681,7 @@ function legend(lake) {
   const line = (colour) => `<span class="line-mark" style="background:${colour}"></span>`;
   const own = lake.view?.clubs?.some((c) => c.id === store.clubs[0]?.id) && store.clubs[0]?.id;
   let body = `<h3>${h(t("The picture"))}</h3><ul class="legend">
-      ${row(icon("satellite"), t("A true-colour photo from the Sentinel-2 satellites, as a camera would see it from space."))}
+      ${row(icon("image"), t("A true-colour photo from the Sentinel-2 satellites, as a camera would see it from space."))}
       ${row(icon("cloud"), t("White and grey: clouds, haze, or snow and ice on the ground."))}
       ${row(`<span style="color:rgb(26,51,77)">${icon("droplet")}</span>`, t("Dark blue to black: open water."))}</ul>`;
   if (on.has("light")) {
@@ -694,7 +694,7 @@ function legend(lake) {
   }
   if (on.has("waves")) body += `<h3>${h(t("Waves"))}</h3>${layerLegend("waves")}`;
   if (on.has("wind")) {
-    body += `<h3>${h(t("Wind"))}</h3><ul class="legend">${row(icon("arrow-up"), t("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. On land the arrows show the weather map's wind forecast for each place."))}</ul>`;
+    body += `<h3>${h(t("Wind"))}</h3><ul class="legend">${row(icon("arrow-up-right"), t("Points where the wind blows to in the current hour, estimated between the forecast points, with more arrows as you zoom in; longer arrows mean stronger wind. The number is the wind speed at a forecast point. On land the arrows show the weather map's wind forecast for each place."))}</ul>`;
   }
   if (on.has("ice")) {
     body += `<h3>${h(t("Ice map"))}</h3><ul class="legend">

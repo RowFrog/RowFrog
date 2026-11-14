@@ -145,6 +145,29 @@ const PATHS = {
   "landmark": `<line x1="3" x2="21" y1="22" y2="22" /> <line x1="6" x2="6" y1="18" y2="11" /> <line x1="10" x2="10" y1="18" y2="11" /> <line x1="14" x2="14" y1="18" y2="11" /> <line x1="18" x2="18" y1="18" y2="11" /> <polygon points="12 2 20 7 4 7" />`,
   "database": `<ellipse cx="12" cy="5" rx="9" ry="3" /> <path d="M3 5V19A9 3 0 0 0 21 19V5" /> <path d="M3 12A9 3 0 0 0 21 12" />`,
   "octagon-alert": `<path d="M12 16h.01" /> <path d="M12 8v4" /> <path d="M15.312 2a2 2 0 0 1 1.414.586l4.688 4.688A2 2 0 0 1 22 8.688v6.624a2 2 0 0 1-.586 1.414l-4.688 4.688a2 2 0 0 1-1.414.586H8.688a2 2 0 0 1-1.414-.586l-4.688-4.688A2 2 0 0 1 2 15.312V8.688a2 2 0 0 1 .586-1.414l4.688-4.688A2 2 0 0 1 8.688 2z" />`,
+  // Symbol check 14 Nov 2026: closer matches for the app's SF Symbols (Lucide shapes, or own drawings where Lucide has none).
+  // SF thermometer.and.liquid.waves (water temperature): a thermometer over water.
+  "thermometer-waves": `<path d="M14 4v7.5a3 3 0 1 1-4 0V4a2 2 0 0 1 4 0Z" /> <path d="M2 14c.6.5 1.2 1 2.5 1 1.3 0 1.9-.5 2.5-1" /> <path d="M17 14c.6.5 1.2 1 2.5 1 1.3 0 1.9-.5 2.5-1" /> <path d="M2 20c.6.5 1.2 1 2.5 1 2.5 0 2.5-2 5-2 2.6 0 2.4 2 5 2 2.5 0 2.5-2 5-2 1.3 0 1.9.5 2.5 1" />`,
+  // SF thermometer.variable.and.figure (feels like): a thermometer beside a standing person.
+  "thermometer-figure": `<path d="M8 4v8.5a3 3 0 1 1-4 0V4a2 2 0 0 1 4 0Z" /> <circle cx="17" cy="4.5" r="1.5" /> <path d="M17 9v6" /> <path d="m14 21 3-6 3 6" /> <path d="m13 11 4-1.5 4 1.5" />`,
+  // SF sun.max.trianglebadge.exclamationmark (UV index): a sun with a warning triangle.
+  "sun-alert": `<circle cx="9" cy="9" r="3.2" /> <path d="M9 2v1.5" /> <path d="M9 14.5V16" /> <path d="m4.05 4.05 1.06 1.06" /> <path d="m13.95 4.05-1.06 1.06" /> <path d="M2 9h1.5" /> <path d="M14.5 9H16" /> <path d="m4.05 13.95 1.06-1.06" /> <path d="M17 13l-4.5 8h9z" /> <path d="M17 16.5v1.5" /> <path d="M17 20.2h.01" />`,
+  // SF sun.horizon (daylight): half a sun on the horizon.
+  "sun-horizon": `<path d="M2 18h20" /> <path d="M7 18a5 5 0 0 1 10 0" /> <path d="M12 8v2" /> <path d="m5.64 11.64 1.41 1.41" /> <path d="m18.36 11.64-1.41 1.41" /> <path d="M8 22h8" />`,
+  "earth": `<path d="M21.54 15H17a2 2 0 0 0-2 2v4.54" /> <path d="M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17" /> <path d="M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05" /> <circle cx="12" cy="12" r="10" />`,
+  "server": `<rect width="20" height="8" x="2" y="2" rx="2" ry="2" /> <rect width="20" height="8" x="2" y="14" rx="2" ry="2" /> <line x1="6" x2="6.01" y1="6" y2="6" /> <line x1="6" x2="6.01" y1="18" y2="18" />`,
+  "car": `<path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H5c-.6 0-1.1.4-1.4.9l-1.4 2.9A3.7 3.7 0 0 0 2 12v4c0 .6.4 1 1 1h2" /> <circle cx="7" cy="17" r="2" /> <path d="M9 17h6" /> <circle cx="17" cy="17" r="2" />`,
+  "copy-plus": `<line x1="15" x2="15" y1="12" y2="18" /> <line x1="12" x2="18" y1="15" y2="15" /> <rect width="14" height="14" x="8" y="8" rx="2" ry="2" /> <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />`,
+  "import": `<path d="M12 3v12" /> <path d="m8 11 4 4 4-4" /> <path d="M8 5H4a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-4" />`,
+  "cloud-off": `<path d="m2 2 20 20" /> <path d="M5.782 5.782A7 7 0 0 0 9 19h8.5a4.5 4.5 0 0 0 1.307-.193" /> <path d="M21.532 16.5A4.5 4.5 0 0 0 17.5 10h-1.79A7.008 7.008 0 0 0 10 5.07" />`,
+  "square-arrow-out-up-right": `<path d="M21 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h6" /> <path d="m21 3-9 9" /> <path d="M15 3h6v6" />`,
+  "shield-alert": `<path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z" /> <path d="M12 8v4" /> <path d="M12 16h.01" />`,
+  "download": `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /> <polyline points="7 10 12 15 17 10" /> <line x1="12" x2="12" y1="15" y2="3" />`,
+  "history": `<path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" /> <path d="M3 3v5h5" /> <path d="M12 7v5l4 2" />`,
+  "chart-spline": `<path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="M7 16c.5-2 1.5-7 4-7 2 0 2 3 4 3 2.5 0 4.5-5 5-7" />`,
+  "chart-line": `<path d="M3 3v16a2 2 0 0 0 2 2h16" /> <path d="m19 9-5 5-4-4-3 3" />`,
+  "radio": `<path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9" /> <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5" /> <circle cx="12" cy="12" r="2" /> <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5" /> <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19" />`,
+  "panel-bottom": `<rect width="18" height="18" x="3" y="3" rx="2" /> <path d="M3 15h18" />`,
 };
 
 /** An icon's bare shapes, for drawing it filled. */

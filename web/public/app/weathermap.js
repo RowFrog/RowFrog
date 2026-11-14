@@ -25,7 +25,7 @@ export const LAYERS = {
     palette: ramp([[-20, 0x5B2A86, 0.75], [-10, 0x2F5DD8, 0.7], [0, 0x8EC5F2, 0.6], [5, 0x7FD3B8, 0.55], [10, 0x9BD565, 0.55], [15, 0xE8E05A, 0.6], [20, 0xF5B341, 0.62], [25, 0xF07C2E, 0.66], [30, 0xE0442B, 0.7], [38, 0x9E1B3B, 0.75]]),
     legend: [-10, 0, 10, 20, 30],
   },
-  feelsLike: { title: key("Feels like"), icon: "person-standing", model: "feelsLike", span: 50, links: "hour" },
+  feelsLike: { title: key("Feels like"), icon: "thermometer-figure", model: "feelsLike", span: 50, links: "hour" },
   humidity: {
     title: key("Humidity"), icon: "droplets", model: "humidity", span: 50, links: "hour",
     palette: ramp([[20, 0xD9A55B, 0.6], [40, 0xEBD9A0, 0.45], [60, 0xBFE0D8, 0.4], [80, 0x6FB7E0, 0.55], [100, 0x2F6FC9, 0.65]]),
@@ -48,7 +48,7 @@ export const LAYERS = {
     legend: [0, 5, 10, 15, 25], note: key("Rain an hour from the weather model; after the first day, the average of every 3 hours."),
   },
   uv: {
-    title: key("UV index"), icon: "sun", span: 50, links: "day", live: [DWD_WMS, "dwd:UVIndex"],
+    title: key("UV index"), icon: "sun-alert", span: 50, links: "day", live: [DWD_WMS, "dwd:UVIndex"],
     note: key("The day's highest UV index under the expected clouds."), credit: key("Deutscher Wetterdienst (DWD), CC BY 4.0"),
   },
   lightning: {

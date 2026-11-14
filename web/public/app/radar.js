@@ -329,7 +329,7 @@ export function radarGraphic(d) {
 /** The radar symbol in the rain tile's title line: plain while the bars come from the radar (status null), faint and pulsing while it is read, struck through when it could not be (RadarMark). */
 export const radarTitleMark = (status = null) => `<span class="radar-mark head${status ? ` ${status}` : ""}" role="img" aria-label="${h(status === "missing" ? t("Radar not available right now") : status === "loading" ? t("Loading the radar") : t("Radar"))}">${icon("radar")}</span>`;
 
-export const radarMark = () => `<span class="radar-mark" title="${h(t("Rain radar"))}">${icon("radar")}</span>`;
+export const radarMark = () => `<span class="radar-mark" title="${h(t("Rain radar"))}">${icon("radio")}</span>`;
 
 // ---- The rain radar card (RainRadarCard), off by default -------------------------------
 

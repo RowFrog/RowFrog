@@ -282,8 +282,8 @@ export function renderBackgrounds(root) {
       ${tip("backgrounds")}
       ${previewHtml()}
       <p class="footer">${h(t("Preview of the club pages with the picture for all pages."))}</p>
-      <h3 class="section">${icon("layers")} ${h(t("All pages"))}</h3>
-      <section class="card group">${row("all", t("All pages"), "layers", b.all)}</section>
+      <h3 class="section">${icon("rectangle-stack")} ${h(t("All pages"))}</h3>
+      <section class="card group">${row("all", t("All pages"), "rectangle-stack", b.all)}</section>
       <h3 class="section">${icon("copy")} ${h(t("Single pages"))}</h3>
       <section class="card group">${PAGES.filter(([id]) => id !== "settings" || store.developerOptions).map(([id, title, ic]) => row(`page:${id}`, t(title), ic, b.pages[id], t("Same as all pages"))).join("")}</section>
       <p class="footer">${h(t("A picture set here replaces the one for all pages on that page."))}</p>
@@ -373,7 +373,7 @@ function openPicker(target, done) {
       <label class="bg-option add"><span class="thumb">${icon("image-plus")}</span><small>${h(t("Your own photo"))}</small>
         <input type="file" accept="image/*" id="own-photo" hidden></label>
       ${b.mine.map((name) => `<div class="bg-mine">${option(`custom:${name}`, t("Your picture"), "")}
-        <button class="bg-delete" data-delete="${h(name)}" aria-label="${h(t("Delete picture"))}">${icon("x")}</button></div>`).join("")}
+        <button class="bg-delete" data-delete="${h(name)}" aria-label="${h(t("Delete picture"))}">${icon("trash-2")}</button></div>`).join("")}
     </div>
     <h3 class="section">${h(t("Samples"))}</h3>
     <div class="bg-grid">${SAMPLES.map(([sid, label]) => option(`sample:${sid}`, t(label), sampleUrl(sid))).join("")}</div>

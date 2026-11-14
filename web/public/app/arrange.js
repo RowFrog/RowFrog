@@ -15,7 +15,7 @@ export const CARDS = {
   lakeView: { title: key("Lake view"), icon: "map" },
   hourly: { title: key("Next 48 hours"), icon: "clock" },
   launchPoint: { title: key("Launch point"), icon: "map-pin" },
-  satellite: { title: key("Satellite picture"), icon: "globe" },
+  satellite: { title: key("Satellite picture"), icon: "earth" },
 };
 
 /** The cards this website draws (all of the app's). */

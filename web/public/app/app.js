@@ -143,7 +143,7 @@ function legendBody(part) {
       <li>${dot("green", 12)}<span>${h(t("Rowing light for your boat in that hour."))}</span></li>
       <li><span class="cond">${icon("cloud-sun")}</span><span>${h(t("Weather symbol; it also shows how cloudy it is."))}</span></li></ul>
       ${explain(["temperature", "feelsLike", "wind", "waves", "precipitation", "visibility"].map((c) => rows[c]))}
-      <ul class="legend"><li><span class="cond">${icon("moon")}</span><span>${h(t("Night line: the hours between sunset and sunrise in one line, with the night's lowest temperature and feels-like, strongest wind and gusts, highest waves, all its rain and its poorest visibility. Tap it to see each hour."))}</span></li></ul>
+      <ul class="legend"><li><span class="cond">${icon("moon-star")}</span><span>${h(t("Night line: the hours between sunset and sunrise in one line, with the night's lowest temperature and feels-like, strongest wind and gusts, highest waves, all its rain and its poorest visibility. Tap it to see each hour."))}</span></li></ul>
       <p class="sub">${h(t("Hours after sunset are dimmed. Tap an hour to see all its values."))}</p>`;
   }
   return symbols + explain(TILE_ORDER.map((c) => rows[c]));
@@ -356,7 +356,7 @@ function moreMenu() {
   return `<details class="more-menu"><summary class="glass round" aria-label="${h(t("More"))}">${icon("ellipsis")}</summary>
     <div class="menu">
       <button id="edit" ${store.clubs.length < 2 ? "disabled" : ""}>${icon("pencil")} ${h(t("Edit list"))}</button>
-      <a id="browse" href="#/countries" hidden>${icon("globe")} ${h(t("Browse clubs by country"))}</a>
+      <a id="browse" href="#/countries" hidden>${icon("earth")} ${h(t("Browse clubs by country"))}</a>
       <a href="#/add-place">${icon("map-pin")} ${h(t("Add a place yourself"))}</a>
     </div></details>`;
 }
@@ -464,7 +464,7 @@ async function fillRow(row) {
   row.style.setProperty("--tint", `var(--${shownLight(hour.light, stale)})`);
   row.classList.add("tinted");
   row.querySelector(".row-now").innerHTML = `<div class="now-line">${dot(hour.light, 18, stale)}${skySymbol(hour)}${conditionIcon("temperature")}<span class="big-temp">${h(degrees(hour.temperatureC))}</span></div>
-    ${hour.apparentTemperatureC != null ? `<small class="sub">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}`;
+    ${hour.apparentTemperatureC != null ? `<small class="sub">${icon("thermometer-figure")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}`;
   const headline = warningHeadline(forecast.warnings);
   const sun = sunState(forecast);
   const ice = forecast.ice;
@@ -473,7 +473,7 @@ async function fillRow(row) {
   row.querySelector(".row-bottom").innerHTML = `
     <div class="row-why">
       <strong>${h(lightTitle(hour.light, stale))}</strong>
-      ${stale ? `<small class="orange">${icon("clock")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
+      ${stale ? `<small class="orange">${icon("clock-alert")} ${h(t("As of %@", dayTime(forecast.generatedAt)))}</small>` : ""}
       <small class="why${hour.reasons.length ? "" : " one-line"}">${h(hour.reasons.length ? t("Why: %@", hour.reasons.map(reasonLabel).join(", ")) : t("All within the limits"))}</small>
       ${kit ? `<small class="kit-line" title="${h(coldWaterText(kit)[1])}">${icon("life-buoy")} ${h(coldWaterText(kit)[0])}</small>` : ""}
       ${headline ? warningListLine(headline) : ""}
@@ -671,7 +671,7 @@ async function renderClub(id) {
   const raw = state?.value ?? null;
   const failure = state?.failure ? refreshFailure(state.failure, isOwn(id)) : null;
   if (!raw) {
-    root.querySelector(".loading").innerHTML = `<p><strong>${icon("wifi-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
+    root.querySelector(".loading").innerHTML = `<p><strong>${icon("cloud-off")} ${h(t("No forecast"))}</strong>: ${h(failure[0])}</p>
       <p class="small sub">${h(failure[1])}</p><button class="primary" id="retry">${h(t("Try again"))}</button>`;
     root.querySelector("#retry").addEventListener("click", () => renderClub(id));
     return;
@@ -1197,14 +1197,14 @@ const UPDATE_CYCLES = [
   ["wind", key("Weather forecast"), key("Wind, gusts, temperature, rain, clouds and visibility: DWD's ICON-D2 model, a new run every 3 hours, ready about 1½ to 3 hours after it starts."), key("Fetched once the new run is ready, checked every 30 minutes. Clubs nobody opened lately: every 6 hours.")],
   ["waves", key("Waves"), key("Worked out from the forecast wind and the open water in front of the club."), key("With every new forecast.")],
   ["triangle-alert", key("Official warnings"), key("DWD, GeoSphere Austria or MeteoSwiss, whenever they issue or change one."), key("Every 30 minutes.")],
-  ["thermometer", key("Water temperature"), key("Measuring stations, every 15 to 60 minutes; without a station, satellites once a day or an estimate from the air temperatures."), key("Every 30 minutes.")],
+  ["thermometer-waves", key("Water temperature"), key("Measuring stations, every 15 to 60 minutes; without a station, satellites once a day or an estimate from the air temperatures."), key("Every 30 minutes.")],
   ["gauge", key("River current and lake level"), key("Gauges, every 15 minutes."), key("Every 30 minutes.")],
   ["cloud-rain", key("Rain radar"), key("DWD, every 5 minutes."), key("The radar map loads live when you open it; the widget's rain line every 30 minutes.")],
   ["map", key("Lake view"), key("The same model runs as the forecast, for points across the water."), key("Every 3 hours; lakes nobody opened lately twice a day.")],
-  ["spline", key("8-day outlook"), key("The same model runs, longer models after 2 days."), key("Every 3 hours.")],
-  ["globe", key("Satellite picture"), key("Sentinel-2 passes every few days; clouds can hide the water."), key("Looked for once a day.")],
+  ["chart-spline", key("8-day outlook"), key("The same model runs, longer models after 2 days."), key("Every 3 hours.")],
+  ["image", key("Satellite picture"), key("Sentinel-2 passes every few days; clouds can hide the water."), key("Looked for once a day.")],
   ["snowflake", key("Ice"), key("A satellite ice map once a day in winter, and an estimate from the water and air temperatures."), key("Twice a day.")],
-  ["sunrise", key("Daylight"), key("Worked out from the date and the place."), key("Always current.")],
+  ["sun-horizon", key("Daylight"), key("Worked out from the date and the place."), key("Always current.")],
 ];
 
 export function updateCyclesBody(forecast) {
@@ -1363,7 +1363,7 @@ function clubHeader(club, name, isHome, forecast, stale = false, failure = null)
 function forecastLines(club, forecast, status) {
   if (!forecast) return "";
   const outOfDate = status.name === "outOfDate" || status.name === "outOfDateAndUpdateFailed";
-  const old = outOfDate ? `<p class="orange small">${icon("clock")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>` : "";
+  const old = outOfDate ? `<p class="orange small">${icon("clock-alert")} ${h(t("Forecast out of date: from %@. Check the conditions yourself.", dayTime(forecast.generatedAt)))}</p>` : "";
   switch (status.name) {
     case "updateFailed":
     case "outOfDateAndUpdateFailed":
@@ -1560,7 +1560,7 @@ function nowCard(forecast, hour, { stale = false, at = null, radar = null, radar
       <div class="air" data-top="temperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("temperature")} ${h(t("Air"))}</small>
         <span class="v28${causeClass(causeOf("temperature", hour))}">${h(degrees(hour.temperatureC))}</span>
-        ${hour.apparentTemperatureC != null ? `<small class="sub grey" data-top="feelsLike" role="button" tabindex="0">${icon("person-standing")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
+        ${hour.apparentTemperatureC != null ? `<small class="sub grey" data-top="feelsLike" role="button" tabindex="0">${icon("thermometer-figure")} ${h(t("Feels like %@", degrees(hour.apparentTemperatureC)))}</small>` : ""}
       </div>
       <div class="${water == null && estimate != null ? "secondary" : ""}" data-top="waterTemperature" role="button" tabindex="0">
         <small class="label">${conditionIcon("waterTemperature")} ${h(t("Water"))}</small>
@@ -1742,8 +1742,8 @@ function serviceShort(source) {
 /** Outside Germany: the place's own weather service warns, and Row Frog does not read it yet. */
 function notCheckedNote(local) {
   const service = local?.service ?? t("the national weather service");
-  return `<p class="orange">${icon("circle-alert")} ${h(t("Row Frog cannot check the weather warnings for this place yet. Check %@ before going out.", service))}</p>
-    ${local?.url ? `<p><a class="strong" href="${h(local.url)}" target="_blank" rel="noopener">${icon("globe")} ${h(t("Open the warnings of %@", service))}</a></p>` : ""}`;
+  return `<p class="orange">${icon("shield-alert")} ${h(t("Row Frog cannot check the weather warnings for this place yet. Check %@ before going out.", service))}</p>
+    ${local?.url ? `<p><a class="strong" href="${h(local.url)}" target="_blank" rel="noopener">${icon("square-arrow-out-up-right")} ${h(t("Open the warnings of %@", service))}</a></p>` : ""}`;
 }
 
 function warningsBody(warnings, club, checkedAt, guideOpen) {
@@ -2127,7 +2127,7 @@ function launchPointBody(club, mapId) {
     <div class="map-foot"><small class="sub coords">${h(`${lat.toFixed(5)}° N, ${lon.toFixed(5)}° E`)}</small>
       <details class="maps-menu"><summary class="pill">${icon("map")} ${h(t("Open in Maps"))}</summary>
         <div class="menu" role="menu">
-          <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("map-pinned")} ${h(t("Directions to the club"))}</a>
+          <a role="menuitem" href="${h(maps.directions(lat, lon, clubAddress(club)))}" target="_blank" rel="noopener noreferrer">${icon("car")} ${h(t("Directions to the club"))}</a>
           <a role="menuitem" href="${h(maps.place(lat, lon))}" target="_blank" rel="noopener noreferrer">${icon("map-pin")} ${h(t("Launch point on the map"))}</a>
           <small class="sub">${h(maps.name)}</small>
         </div></details></div>`;
@@ -2224,8 +2224,8 @@ function sourceBody(source) {
     <p class="small sub">${h(t("Weather models are computer forecasts from national weather services. A finer grid shows more of the lake and the hills around it."))}</p>
     <ul class="legend">
       ${source.picked == null ? `<li>${icon("badge-check")}<span>${h(t("The app picks the weather model that does best for this region."))}</span></li>` : ""}
-      <li>${icon("gauge")}<span>${h(t("The choice is checked regularly against measured wind and temperature."))}</span></li>
-      <li>${icon("radio-tower")}<span>${h(t("Data via Open-Meteo."))}</span></li>
+      <li>${icon("chart-line")}<span>${h(t("The choice is checked regularly against measured wind and temperature."))}</span></li>
+      <li>${icon("server")}<span>${h(t("Data via Open-Meteo."))}</span></li>
     </ul>`;
 }
 
@@ -2391,7 +2391,7 @@ function settingsTopicBody(topic, accepted) {
         <a class="row-setting" href="#/tour"><span>${icon("circle-help")} ${h(t("Show the tour again"))}</span>${icon("chevron-right")}</a>
         <button class="row-setting" id="tips-again"><span>${icon("lightbulb")} ${h(t("Show the tips again"))}</span></button>
         <button class="row-setting" id="legend"><span>${icon("info")} ${h(t("Legend: what the symbols mean"))}</span>${icon("chevron-right")}</button>
-        <button class="row-setting" id="safety-again"><span>${icon("shield-check")} ${h(t("Safety notice"))}</span>${icon("chevron-right")}</button>
+        <button class="row-setting" id="safety-again"><span>${icon("shield-alert")} ${h(t("Safety notice"))}</span>${icon("chevron-right")}</button>
       </section>
       <p class="footer" id="tips-note"></p>
 `;
