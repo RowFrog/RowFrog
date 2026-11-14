@@ -54,7 +54,7 @@ export const PERMISSIONS = "geolocation=(self), camera=(), microphone=(), paymen
 export const NO_ROBOTS = "noindex, nofollow, noarchive, nosnippet, noimageindex, notranslate, noai, noimageai";
 
 /** The only files served without the password. */
-export const OPEN_FILES = new Set(["/robots.txt", "/icon-180.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/favicon.ico"]);
+export const OPEN_FILES = new Set(["/robots.txt", "/icon-180.png", "/icon-192.png", "/icon-512.png", "/apple-touch-icon.png", "/favicon.ico", "/login.js"]);
 
 export const COOKIE = "rf_login";
 export const LOGIN_DAYS = 90;
@@ -176,7 +176,7 @@ ${wrong ? `<p class="wrong" role="alert">${x.wrong}</p>` : ""}
 <label>${x.password}<input name="password" type="password" autocomplete="current-password" required></label>
 <input type="hidden" name="next" value="${escape(safeNext(next))}">
 <button type="submit">${x.button}</button>
-</form></body></html>`;
+</form><script src="/login.js"></script></body></html>`;
   return new Response(html, { status: 401, headers: { "Content-Type": "text/html; charset=utf-8" } });
 }
 

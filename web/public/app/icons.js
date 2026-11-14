@@ -110,6 +110,7 @@ const PATHS = {
   "circle-arrow-right": `<circle cx="12" cy="12" r="10" /> <path d="M8 12h8" /> <path d="m12 16 4-4-4-4" />`,
   "arrow-up-right": `<path d="M7 7h10v10" /> <path d="M7 17 17 7" />`,
   "arrow-down-right": `<path d="m7 7 10 10" /> <path d="M17 7v10H7" />`,
+  "share": `<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" /> <polyline points="16 6 12 2 8 6" /> <line x1="12" x2="12" y1="2" y2="15" />`,
   "link": `<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /> <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />`,
   "chevron-down": `<path d="m6 9 6 6 6-6" />`,
   "repeat": `<path d="m17 2 4 4-4 4" /> <path d="M3 11v-1a4 4 0 0 1 4-4h14" /> <path d="m7 22-4-4 4-4" /> <path d="M21 13v1a4 4 0 0 1-4 4H3" />`,

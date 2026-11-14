@@ -81,6 +81,8 @@ test("logging out forgets the cookie", async () => {
 
 test("the login only goes back to pages on this site", () => {
   assert.equal(safeNext("/app/?x=1"), "/app/?x=1");
+  // A route link's "#…" part, added by login.js, survives the login.
+  assert.equal(safeNext("/app/#/routes/add?r=eyJ2IjoxfQ"), "/app/#/routes/add?r=eyJ2IjoxfQ");
   for (const bad of ["https://evil.example/", "//evil.example/", "/\\evil.example", "/__login", "javascript:alert(1)", ""]) assert.equal(safeNext(bad), "/", bad);
   assert.equal(readCookie("a=1; rf_login=xyz", "rf_login"), "xyz");
   assert.equal(readCookie("xrf_login=1", "rf_login"), null);

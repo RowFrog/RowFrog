@@ -21,6 +21,7 @@ import {
 import { readTrack, shareOnWater, routeFromTrack, plannedPace } from "./rowimport.js";
 import { tip, wireTips, closeTip, bubbleTip } from "./tour.js";
 import { routeDraft } from "./routedraft.js";
+import { routeLink, readRouteLink, addSharedRoutes } from "./routelink.js";
 import { loadLandWind, landWind } from "./weathermap.js";
 import { SPACING, BLEND_M, arrowLength, arrowLines, windArrows, inside } from "./windarrows.js";
 
@@ -1263,7 +1264,7 @@ export async function renderAllRoutes(root) {
     for (const r of store.routes) byLake.set(r.lakeId, [...(byLake.get(r.lakeId) ?? []), r]);
     const lakeOf = (id) => lakes.find((l) => l.id === id);
     const groups = [...byLake.entries()].sort(([a], [b]) => (lakeOf(a)?.name ?? a).localeCompare(lakeOf(b)?.name ?? b));
-    root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Routes"))}</strong><span class="nav-side"></span></header>
+    root.innerHTML = `<header class="nav"><a class="link back" href="#/settings" aria-label="${h(t("Settings"))}">${icon("chevron-left")}</a><strong class="nav-title">${h(t("Routes"))}</strong><span class="nav-side">${store.routes.length ? `<button class="link" data-share-routes aria-label="${h(t("Share all routes"))}" title="${h(t("Share all routes"))}">${icon("share")}</button>` : ""}</span></header>
     ${testing()}
     <main class="page settings-topic all-routes">${groups.length ? groups.map(([lakeId, list]) => `<h3 class="section">${h(lakeOf(lakeId)?.name ?? lakeId)}</h3>
       <section class="card group manage-routes" data-lake="${h(lakeId)}">${list.map((r, i) => routeRow(r, i, list.length, null)).join("")}</section>`).join("")
@@ -1279,8 +1280,48 @@ export async function renderAllRoutes(root) {
       },
       redraw: draw,
     });
+    root.querySelector("[data-share-routes]")?.addEventListener("click", () => shareRoutes(store.routes));
   };
   draw();
+}
+
+/** Shares a link with the routes (the share sheet where the browser has one, else the link is copied). */
+async function shareRoutes(routes) {
+  const url = routeLink(routes);
+  const title = routes.length === 1 ? routes[0].name : t("%@ routes", String(routes.length));
+  if (navigator.share) {
+    try {
+      await navigator.share({ title, url });
+    } catch { /* closed */ }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(url);
+    alert(t("Link copied. Open it in another browser to save the routes there."));
+  } catch {
+    prompt(t("Copy this link"), url);
+  }
+}
+
+/**
+ * A route link (#/routes/add?r=…, from the app's Share link or another browser): saves its routes in this
+ * browser, skipping any already saved, then opens a single route on its lake map, several in Settings › Routes.
+ */
+export async function openSharedRoutes(value) {
+  const shared = readRouteLink(value);
+  if (!shared?.length) {
+    alert(t("This link has no route Row Frog can read."));
+    return location.replace("#/settings/routes");
+  }
+  const named = shared.map((r) => (r.name === "Route" ? { ...r, name: t("Route %@", distance(routeLength(r.points, r.outAndBack))) } : r));
+  const { list, routes } = addSharedRoutes(store.routes, named);
+  store.routes = list;
+  if (routes.length > 1) return location.replace("#/settings/routes");
+  const [r] = routes;
+  const lake = (await loadCatalog().catch(() => [])).find((l) => l.id === r.lakeId);
+  if (!lake) return location.replace("#/settings/routes");
+  const club = store.clubs.find((c) => lake.clubs.some((x) => x.id === c.id)) ?? lake.clubs[0];
+  location.replace(`#/lake/${encodeURIComponent(r.lakeId)}${club ? `/${encodeURIComponent(club.id)}` : ""}?route=${encodeURIComponent(r.id)}`);
 }
 
 /** "6.2 km · Loop · rowed 3 Nov" (ManageRoutesView.details). */

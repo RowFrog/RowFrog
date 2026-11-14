@@ -37,6 +37,11 @@ struct ManageRoutesView: View {
                     .contextMenu {
                         Button(tr("Rename"), systemImage: "pencil") { startRenaming(route) }
                         Button(tr("Duplicate"), systemImage: "plus.square.on.square") { store.duplicate(route) }
+                        if let url = RouteLink.url(for: [route]) {
+                            ShareLink(item: url, subject: Text(route.name)) {
+                                Label(tr("Share link"), systemImage: "square.and.arrow.up")
+                            }
+                        }
                         Button(tr("Delete"), systemImage: "trash", role: .destructive) { delete(route) }
                     }
                 }

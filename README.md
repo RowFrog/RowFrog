@@ -432,7 +432,11 @@ field at the bottom.
   [Rowing limits](#what-the-app-does)).
 - Routes: every saved route, grouped by water, with the tools of Manage
   routes (rename, duplicate, delete, order within a water); a tap opens the
-  route on its lake map. The website has the same page.
+  route on its lake map. The website has the same page. "Share link" (in a
+  route's menu) and the share button at the top (every route) make a
+  rowfrog.com link; opened in a browser, it saves the routes there, once,
+  and opens a single route on its lake map. The link carries name, water,
+  way back and turning points, not a rowed track.
 - Appearance: background pictures for all pages, single pages or single
   clubs (clear or blurred, frosted or solid tiles, your own photo or the
   satellite picture of the club's lake) and the app icon: the coxed double

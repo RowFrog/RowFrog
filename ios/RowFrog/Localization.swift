@@ -1472,6 +1472,8 @@ enum German {
         "Rename route": "Route umbenennen",
         "Rename": "Umbenennen",
         "Duplicate": "Duplizieren",
+        "Share link": "Link teilen",
+        "Share all routes": "Alle Routen teilen",
         "Delete": "Löschen",
         "%@ (copy)": "%@ (Kopie)",
         "Loop": "Runde",

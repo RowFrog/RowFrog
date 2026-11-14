@@ -10,6 +10,7 @@ import { createServer } from "node:http";
 import { readFile } from "node:fs/promises";
 import { extname, join, normalize } from "node:path";
 import { fileURLToPath } from "node:url";
+import { routeLink } from "../../public/app/routelink.js";
 import { chromium } from "playwright";
 import { CSP } from "../../functions/_middleware.js";
 
@@ -664,6 +665,29 @@ test("Settings › Routes lists every saved route by water and opens one on its 
   assert.ok(await page.locator("#undo").isDisabled(), "a freshly opened route has nothing to undo");
   assert.match(await page.locator(".route-line").innerText(), /km/);
   assert.equal(await page.locator(".lake-top a.round").getAttribute("href"), "#/settings/routes", "Close goes back to the list");
+  assert.deepEqual(errors, []);
+  await context.close();
+});
+
+test("a route link from the app saves its route in this browser once and opens it on its lake map", async () => {
+  const lake = squareLake();
+  const lp = club.launchPoint;
+  const shared = { name: "Shared loop", lakeId: club.lakeId, outAndBack: false, points: [lp, { lat: lp.lat + 0.006, lon: lp.lon }, { lat: lp.lat + 0.006, lon: lp.lon + 0.009 }] };
+  const link = routeLink([shared], "#/routes/add?r=");
+  const { page, errors, context } = await open(visitor());
+  await context.route((url) => url.pathname.endsWith(`/v1/lakes/${club.lakeId}/view`),
+    (route) => route.fulfill({ contentType: "application/json", body: JSON.stringify(lake) }));
+  await page.goto(`${base}/app/${link}`);
+  await page.waitForFunction(() => location.hash.startsWith("#/lake/") && location.hash.includes("route="), null, { timeout: 20000 });
+  await page.locator("#routes").waitFor({ timeout: 20000 });
+  const saved = await page.evaluate(() => JSON.parse(localStorage.getItem("rf.routes")));
+  assert.deepEqual(saved.map((r) => [r.name, r.lakeId, r.points.length]), [["Shared loop", club.lakeId, 3]]);
+  // The same link again does not save it twice; Settings › Routes offers a link with every route.
+  await page.goto(`${base}/app/${link}`);
+  await page.waitForFunction(() => location.hash.startsWith("#/lake/"), null, { timeout: 20000 });
+  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem("rf.routes")).length), 1);
+  await page.goto(`${base}/app/#/settings/routes`);
+  await page.locator("[data-share-routes]").waitFor();
   assert.deepEqual(errors, []);
   await context.close();
 });
