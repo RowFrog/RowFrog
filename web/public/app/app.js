@@ -23,7 +23,7 @@ import {
   waterForHour, key, nightParts, nightSummary, sky, hourHalves, sunDaysOf, nearbyCondition, shownWind, shownWaveHeightM, shownVisibilityM,
   forecastStatus, coarserModel, endsAtSunrise,
 } from "./logic.js";
-import { fillLakeCard, renderLakeMap, renderAllRoutes, forgetView, splitClubPins } from "./lakeview.js";
+import { fillLakeCard, renderLakeMap, renderAllRoutes, openSharedRoutes, forgetView, splitClubPins } from "./lakeview.js";
 import { clubhouseOf, showsOars } from "./lake.js";
 import { suggestRow, openSuggestLaunchPoint } from "./suggest.js";
 import { osmPlaceCard } from "./osmplace.js";
@@ -3009,6 +3009,9 @@ function route(scroll = true) {
   if (topic) return renderSettings(topic[1]);
   if (hash === "/settings/boats") return renderBoats();
   if (hash === "/settings/routes") return renderAllRoutes(root);
+  // A route link from the app's Share link or another browser (routelink.js).
+  const shared = hash.match(/^\/routes\/add\?r=([A-Za-z0-9_-]+)$/);
+  if (shared) return openSharedRoutes(shared[1]);
   if (hash === "/settings/backgrounds") return renderBackgrounds(root);
   const boat = hash.match(/^\/settings\/boat\/(.+)$/);
   if (boat) return renderBoat(decodeURIComponent(boat[1]));

@@ -1,8 +1,8 @@
 import SwiftUI
 
 /// Settings › Routes: every saved route, grouped by its water, with the same
-/// tools as Manage routes (rename, duplicate, delete, drag into order within a
-/// water). A tap opens the route on its lake map (owner's pick, 12 Nov 2026;
+/// tools as Manage routes (rename, duplicate, share link, delete, drag into
+/// order within a water), and a link with every route for a browser. A tap opens the route on its lake map (owner's pick, 12 Nov 2026;
 /// the website's renderAllRoutes).
 struct AllRoutesView: View {
     let locations: LocationStore
@@ -48,6 +48,11 @@ struct AllRoutesView: View {
                                     store.duplicate(route)
                                     version += 1
                                 }
+                                if let url = RouteLink.url(for: [route]) {
+                                    ShareLink(item: url, subject: Text(route.name)) {
+                                        Label(tr("Share link"), systemImage: "square.and.arrow.up")
+                                    }
+                                }
                                 Button(tr("Delete"), systemImage: "trash", role: .destructive) { delete(route) }
                             }
                     }
@@ -78,7 +83,15 @@ struct AllRoutesView: View {
         .navigationTitle(tr("Routes"))
         // Inline like every other Settings page: a large title overlapped the first water's name.
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar { EditButton().disabled(store.routes.isEmpty) }
+        .toolbar {
+            // Every saved route in one link, to save them in a browser (RouteLink).
+            if let url = RouteLink.url(for: store.routes) {
+                ShareLink(item: url, subject: Text(tr("Routes"))) {
+                    Label(tr("Share all routes"), systemImage: "square.and.arrow.up")
+                }
+            }
+            EditButton().disabled(store.routes.isEmpty)
+        }
         .fullScreenCover(item: $opened, onDismiss: { version += 1 }) { opened in
             LakeMapScreen(view: opened.view, clubID: opened.clubID, route: opened.route)
         }

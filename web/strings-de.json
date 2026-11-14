@@ -100,5 +100,8 @@
   "In OpenStreetMap as “%@”": "In OpenStreetMap als „%@“",
   "The club's place on OpenStreetMap": "Der Ort des Vereins in OpenStreetMap",
   "Directions": "Route",
-  "On OpenStreetMap": "In OpenStreetMap"
+  "On OpenStreetMap": "In OpenStreetMap",
+  "Link copied. Open it in another browser to save the routes there.": "Link kopiert. Öffne ihn in einem anderen Browser, um die Routen dort zu speichern.",
+  "Copy this link": "Diesen Link kopieren",
+  "This link has no route Row Frog can read.": "Dieser Link enthält keine Route, die Row Frog lesen kann."
 }
