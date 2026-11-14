@@ -1,0 +1,11 @@
+# Every 15 minutes, off the forecast runs at :00 and :30 (UTC). Enable only once GitHub is the code home again.
+[Unit]
+Description=Row Frog: follow GitHub main every 15 minutes
+
+[Timer]
+OnCalendar=*-*-* *:07,22,37,52:00 UTC
+AccuracySec=15s
+Persistent=false
+
+[Install]
+WantedBy=timers.target

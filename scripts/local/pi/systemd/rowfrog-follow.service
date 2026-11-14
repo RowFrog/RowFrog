@@ -1,0 +1,16 @@
+# Follows GitHub's main (scripts/local/pi/follow.sh as ~/rowfrog-pi/follow.sh). Started by rowfrog-follow.timer.
+# Logs: journalctl -u rowfrog-follow -e
+[Unit]
+Description=Row Frog: follow GitHub main (fast-forward after the push gate)
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=rowfrog
+Group=rowfrog
+ExecStart=/home/rowfrog/rowfrog-pi/follow.sh
+# The gate's backend tests take about 100 s; a package update about 5 min more.
+TimeoutStartSec=20min
+Nice=5
+IOSchedulingClass=idle
