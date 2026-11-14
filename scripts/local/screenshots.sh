@@ -2,7 +2,8 @@
 # App screenshots on the Mac while GitHub is down (Nov 2026): runs screenshots.yml's own
 # steps ("Start the backend with live data", "Build the app", "Take screenshots") on a
 # branch, in a separate checkout, then keeps the set in the project folder, ignored by git
-# (screenshots/<branch>/ next to backend/ and ios/; another folder with ROWFROG_SHOTS).
+# (screenshots.nosync/<branch>/ next to backend/ and ios/; ".nosync" keeps iCloud Drive from
+# syncing it, since ~/Documents is synced on this Mac; another folder with ROWFROG_SHOTS).
 # Nothing is committed or pushed:
 # no refs/screenshots to the Pi or to GitHub (1.5 GB of screenshots left GitHub's history in
 # Oct 2026). Show the pictures that matter in the PR instead.
@@ -13,7 +14,7 @@
 #   scripts/local/screenshots.sh [-o REGEX] [-b BRANCH] [--ipad | --device NAME]
 #   --device: "iPhone 13 mini" or "iPhone SE" (the workflow's device choices; their own folder in the set)
 #   -o: only the screens whose name matches (the workflow's `only`); owner rule: changed screens only
-# The pictures: RowFrog/screenshots/<branch>/ (in .gitignore; a fresh clone does not have
+# The pictures: RowFrog/screenshots.nosync/<branch>/ (in .gitignore; a fresh clone does not have
 # them, so move the folder out first, like backups/ and prs/); log: RowFrog/log/screenshots-<branch>.log
 set -euo pipefail
 top=$(git rev-parse --show-toplevel)
@@ -36,7 +37,7 @@ if lsof -nP -iTCP:$PORT -sTCP:LISTEN >/dev/null 2>&1; then echo "Port $PORT is i
 sha=$(git -C "$top" rev-parse --verify "$branch^{commit}")
 safe=${branch//\//-}
 log="$top/log/screenshots-$safe.log"
-shots_dir=${ROWFROG_SHOTS:-$top/screenshots}
+shots_dir=${ROWFROG_SHOTS:-$top/screenshots.nosync}
 out="$shots_dir/$safe"
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/rowfrog-shots.XXXXXX")
 wt="$tmp/checkout"   # its own per run, so two sessions never remove each other's

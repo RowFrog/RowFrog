@@ -11,6 +11,7 @@ ios/RowFrogWidget/Info.plist
 ios/RowFrog/RowFrog.entitlements
 ios/RowFrogWidget/RowFrogWidget.entitlements
 docs/screenshots/
+/screenshots.nosync/
 
 # Website build
 web/dist/
