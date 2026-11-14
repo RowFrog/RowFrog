@@ -37,11 +37,12 @@ trap 'rm -rf "$work"' EXIT
 git -C "$top" archive "$commit" | tar -x -C "$work"
 
 # wrangler from package-lock.json, kept between runs and installed again only when the lock changes.
+# No install scripts (the folder has no .npmrc, hence the flag); only esbuild and workerd run theirs.
 tools="$HOME/.cache/rowfrog-tools"
 mkdir -p "$tools"
 if ! cmp -s "$work/package-lock.json" "$tools/package-lock.json" || [ ! -x "$tools/node_modules/.bin/wrangler" ]; then
   cp "$work/package.json" "$work/package-lock.json" "$tools/"
-  (cd "$tools" && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund)
+  (cd "$tools" && PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --no-audit --no-fund --ignore-scripts && npm rebuild --ignore-scripts=false esbuild workerd)
 fi
 wrangler="$tools/node_modules/.bin/wrangler"
 
