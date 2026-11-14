@@ -603,7 +603,9 @@ struct SatelliteKindPicker: View {
     }
 }
 
-/// "Sentinel-2 · 21 Oct · 35 % of the lake under cloud", the ice map's day when it is shown, and the credit.
+/// "Wednesday, 21 Oct · lake 35% cloudy", the ice map's day when it is shown, and the credit.
+/// The line names no satellite: the "i" explains Sentinel-2 and the credit names Copernicus Sentinel
+/// (owner, 14 Nov 2026: the wording fits one line on the smallest iPhone).
 struct SatelliteCaption: View {
     let picture: SatellitePicture
     let shot: SatellitePicture.Shot
@@ -615,12 +617,11 @@ struct SatelliteCaption: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 2) {
             HStack(alignment: .firstTextBaseline, spacing: 4) {
-                // Always two lines high, so the picture above keeps its size when
-                // switching between pictures whose line wraps and whose doesn't.
+                // One line at the standard text size for every picture, so the picture above keeps
+                // its size when switching; larger text sizes may wrap (wrap, never shrink).
                 Text(line)
                     .font(.footnote)
                     .foregroundStyle(.secondary)
-                    .lineLimit(2, reservesSpace: true)
                 Button { explaining = true } label: {
                     Image(systemName: "info.circle")
                         .font(.footnote)
@@ -651,11 +652,11 @@ struct SatelliteCaption: View {
         let day = shot.day.map { Format.day($0) } ?? shot.date
         let cloud = (shot.lakeCloud * 100).rounded()
         if !overLake {
-            if cloud < 1 { return tr("Sentinel-2 · %@ · no cloud", day) }
-            return tr("Sentinel-2 · %@ · %@ %% under cloud", day, Format.number(cloud))
+            if cloud < 1 { return tr("%@ · no cloud", day) }
+            return tr("%@ · %@%% cloudy", day, Format.number(cloud))
         }
-        if cloud < 1 { return tr("Sentinel-2 · %@ · no cloud over the lake", day) }
-        return tr("Sentinel-2 · %@ · %@ %% of the lake under cloud", day, Format.number(cloud))
+        if cloud < 1 { return tr("%@ · lake free of cloud", day) }
+        return tr("%@ · lake %@%% cloudy", day, Format.number(cloud))
     }
 }
 

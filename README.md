@@ -340,8 +340,8 @@ the basin, with a dashed line for full and short marks for lowered and
 drained. The website shows the tile too.
 
 **Satellite pictures.** A card near the end of the page shows the latest
-Sentinel-2 picture of the lake, with a line such as "Sentinel-2 · 22 Oct ·
-25 % of the lake under cloud" and an "i" that explains why a new picture
+Sentinel-2 picture of the lake, with a line such as "Wednesday, 22 Oct ·
+lake 25% cloudy" and an "i" that explains why a new picture
 comes only every 2 to 5 days. A switch chooses between the latest pass
 (clouds or not), the clearest one and, in cloudy weeks, a newer mostly clear
 one; every picture shows the same area. When the latest pass has 90 % or
