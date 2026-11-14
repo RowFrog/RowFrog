@@ -4,7 +4,8 @@
   "description": "Command-line tools the workflows use: wrangler deploys the Cloudflare Workers and the website, Playwright runs the website's browser test. Exact versions, installed with `npm run setup` (npm ci from package-lock.json without package install scripts, then the two that are needed); Dependabot (.github/dependabot.yml) raises them once a month.",
   "license": "UNLICENSED",
   "scripts": {
-    "setup": "npm ci && npm rebuild --ignore-scripts=false esbuild workerd"
+    "setup": "npm ci && npm run after-install",
+    "after-install": "npm rebuild --ignore-scripts=false esbuild workerd"
   },
   "devDependencies": {
     "eslint": "9.39.5",
