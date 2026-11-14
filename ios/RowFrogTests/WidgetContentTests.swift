@@ -201,6 +201,23 @@ final class WidgetContentTests: XCTestCase {
     }
 
     /// The widget gallery draws each phone's own sizes (owner's C1, 14 Nov 2026), so the small iPhones' shots show the fit.
+    /// The large widget makes room in steps before it leaves values out (owner, 14 Nov 2026):
+    /// each step is at most as tall as the one before, and step 3 drops a day.
+    func testFitStepsOnlyEverTighten() {
+        let steps = [WidgetFit.regular, .tight, .tightTwoDays]
+        XCTAssertEqual(steps.map(\.step), [1, 2, 3])
+        for (a, b) in zip(steps, steps.dropFirst()) {
+            XCTAssertLessThanOrEqual(b.gap, a.gap)
+            XCTAssertLessThanOrEqual(b.rowGap, a.rowGap)
+            XCTAssertLessThanOrEqual(b.skyHeight, a.skyHeight)
+            XCTAssertLessThanOrEqual(b.dayGap, a.dayGap)
+            XCTAssertLessThanOrEqual(b.days, a.days)
+        }
+        XCTAssertEqual(WidgetFit.tight.gap, 6)
+        XCTAssertEqual(WidgetFit.tight.rowGap, 3)
+        XCTAssertEqual(WidgetFit.tightTwoDays.days, 2)
+    }
+
     func testGallerySizesFollowTheScreen() throws {
         try XCTSkipIf(UIDevice.current.userInterfaceIdiom == .pad, "iPhone table")
         XCTAssertEqual(WidgetSizes.forScreen(CGSize(width: 375, height: 667)).large, CGSize(width: 321, height: 324))

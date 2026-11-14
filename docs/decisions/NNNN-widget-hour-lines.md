@@ -28,6 +28,19 @@ screen in dark mode, so the iPhone 13 mini and SE shots show the fit.
 Wind, waves and visibility decide the light; showing them per hour explains
 the dots. The legend saves repeating units in every column.
 
+## Small phones keep all values (owner, 14 Nov 2026, 14:34 CET)
+
+"Wouldn't it be better that the fallback also features all the values below the dots and the legend to its side?"
+On the iPhone SE and 13 mini the large widget fell back to temperature and wind. It now makes room in steps first, in one
+ViewThatFits for the large and the extra large widget:
+
+1. As designed: gaps 10 pt, 5 pt between the value lines, three days.
+2. Tighter: gaps 6 pt, 3 pt between the value lines, symbol row 22 pt instead of 26, 6 pt between the day bars.
+3. Tighter and two days instead of three.
+4. Last, for very large text sizes only: temperature and wind without the legend.
+
+The widget gallery (`-RWWidgetGallery YES`) marks each large widget with the step it landed on.
+
 ## Turned down
 
 - The trio in the medium widget: about 55 pt too tall.

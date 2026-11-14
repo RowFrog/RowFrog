@@ -293,6 +293,8 @@ struct WidgetGalleryView: View {
                                        focus: background == .satellite ? satelliteFocus : nil))
             .clipShape(RoundedRectangle(cornerRadius: 22, style: .continuous))
             .shadow(color: .black.opacity(0.15), radius: 6, y: 2)
+            // Which fit step the large and extra large widgets landed on (owner, 14 Nov 2026).
+            .environment(\.showsWidgetFitStep, true)
     }
 
     private func accessory(_ snapshot: RowingSnapshot, _ family: WidgetFamily, _ size: CGSize) -> some View {
