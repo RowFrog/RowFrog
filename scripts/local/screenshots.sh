@@ -7,7 +7,8 @@
 # backend on 8000 is left alone, the app is pointed at 8765 with -RWAPIBaseURL), and
 # its final "pkill -f uvicorn" stops only that backend; the app starts in English (en_US), as on
 # GitHub's runners, so a German Mac does not turn the English shots German.
-#   scripts/local/screenshots.sh [-o REGEX] [-b BRANCH] [--ipad] [--no-push]
+#   scripts/local/screenshots.sh [-o REGEX] [-b BRANCH] [--ipad | --device NAME] [--no-push]
+#   --device: "iPhone 13 mini" or "iPhone SE" (the workflow's device choices; their own folder in the set)
 #   -o: only the screens whose name matches (the workflow's `only`); owner rule: changed screens only
 # The pictures: RowFrog/log/screenshots/<branch>/ ; log: RowFrog/log/screenshots-<branch>.log
 set -euo pipefail
@@ -19,8 +20,9 @@ while [ $# -gt 0 ]; do
     -o|--only) only=$2; shift 2 ;;
     -b|--branch) branch=$2; shift 2 ;;
     --ipad) device=iPad; shift ;;
+    --device) device=$2; shift 2 ;;
     --no-push) push=0; shift ;;
-    *) echo "usage: $0 [-o REGEX] [-b BRANCH] [--ipad] [--no-push]"; exit 2 ;;
+    *) echo "usage: $0 [-o REGEX] [-b BRANCH] [--ipad | --device NAME] [--no-push]"; exit 2 ;;
   esac
 done
 export VENV="$top/backend/.venv"

@@ -35,10 +35,10 @@ on:
         required: false
         default: ""
       device:
-        description: Simulator to shoot on; iPad shots go to an ipad/ folder inside the same set
+        description: Simulator to shoot on; iPad and the small iPhones (13 mini, SE) go to their own folder inside the same set
         required: false
         type: choice
-        options: [iPhone, iPad]
+        options: [iPhone, iPad, iPhone 13 mini, iPhone SE]
         default: iPhone
 
 permissions:
@@ -117,7 +117,8 @@ jobs:
           xcodegen
           # Settings > About shows the real build number and commit (decision 0034).
           bash ../scripts/build_number.sh || echo "No build number stamped"
-          # The newest iPhone Pro, or with device iPad the newest 11-inch iPad Pro (iPad Air as fallback).
+          # The newest iPhone Pro, or with device iPad the newest 11-inch iPad Pro (iPad Air as fallback);
+          # "iPhone 13 mini" and "iPhone SE" pick that model (its name starts so, and none ends in Pro).
           UDID=$(xcrun simctl list devices available -j | DEVICE="$DEVICE" python3 -c '
           import json, os, sys
           family = os.environ["DEVICE"] or "iPhone"
@@ -131,8 +132,14 @@ jobs:
               best = [d for d in found if d["name"].endswith(" Pro")]
           print((best or found)[-1]["udid"])')
           echo "UDID=$UDID" >> "$GITHUB_ENV"
-          # iPad shots live in an ipad/ folder of the same set, so the iPhone shots stay.
-          if [ "$DEVICE" = iPad ]; then echo "SHOTS=docs/screenshots/ipad" >> "$GITHUB_ENV"; else echo "SHOTS=docs/screenshots" >> "$GITHUB_ENV"; fi
+          # iPad and small-iPhone shots live in their own folder of the same set, so the iPhone shots stay
+          # (the iPhone 13 mini and SE, owner 14 Nov 2026: the smallest screens the app supports).
+          case "$DEVICE" in
+            iPad) echo "SHOTS=docs/screenshots/ipad" >> "$GITHUB_ENV" ;;
+            "iPhone 13 mini") echo "SHOTS=docs/screenshots/iphone-13-mini" >> "$GITHUB_ENV" ;;
+            "iPhone SE") echo "SHOTS=docs/screenshots/iphone-se" >> "$GITHUB_ENV" ;;
+            *) echo "SHOTS=docs/screenshots" >> "$GITHUB_ENV" ;;
+          esac
           xcrun simctl boot "$UDID"
           xcodebuild build \
             -project RowFrog.xcodeproj \
@@ -152,7 +159,7 @@ jobs:
           # The iPad is turned through the Simulator app's menu keys, so open its window
           # now; a window still opening missed the first turn.
           # Newer Xcode releases moved the app, so it is looked up rather than named.
-          if [ "$SHOTS" != docs/screenshots ]; then
+          if [ "$SHOTS" = docs/screenshots/ipad ]; then
             SIMAPP=$(find "$(xcode-select -p)/.." /Applications /Library/Developer -maxdepth 7 -name Simulator.app -print -quit 2>/dev/null || true)
             if [ -n "$SIMAPP" ]; then open -a "$SIMAPP" --args -CurrentDeviceUDID "$UDID" && sleep 20 || echo "::warning::Simulator app did not open; sideways iPad shots may stay upright"
             else open -b com.apple.iphonesimulator --args -CurrentDeviceUDID "$UDID" && sleep 20 || echo "::warning::Simulator app not found; sideways iPad shots may stay upright"; fi
@@ -188,7 +195,7 @@ jobs:
             xcrun simctl ui "$UDID" appearance "$appearance"
             # iPadOS ignores the app's own turn (-RWLandscape) for apps in windows, so the
             # iPad Simulator itself is turned with Rotate Right / Rotate Left (Cmd+arrow).
-            if [ "$SHOTS" != docs/screenshots ]; then
+            if [ "$SHOTS" = docs/screenshots/ipad ]; then
               local turn=""
               if [[ " $* " == *" -RWLandscape YES "* && -z "${SIDEWAYS:-}" ]]; then turn=124; SIDEWAYS=1
               elif [[ " $* " != *" -RWLandscape YES "* && -n "${SIDEWAYS:-}" ]]; then turn=123; SIDEWAYS=""; fi
@@ -210,7 +217,7 @@ jobs:
             # The iPad, turned with Rotate Right, lies the other way round.
             if [[ " $* " == *" -RWLandscape YES "* && " $* " != *" -RWAllowsLandscape NO "* ]]; then
               local angle=90
-              [ "$SHOTS" != docs/screenshots ] && angle=-90
+              [ "$SHOTS" = docs/screenshots/ipad ] && angle=-90
               # Only a shot that is still upright-shaped lies sideways: Xcode 27's simctl already saves
               # landscape shots the right way round, and turning those again laid them on their side.
               python3 -c 'import sys; from PIL import Image; p = sys.argv[1]; im = Image.open(p); im.width < im.height and im.rotate(int(sys.argv[2]), expand=True).save(p)' "$SHOTS/$name.png" "$angle"
