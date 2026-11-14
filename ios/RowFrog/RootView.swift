@@ -605,6 +605,8 @@ private struct PageBar: View {
     /// Cog and boat on the left, the list button on the right: each end takes as
     /// much, so the dots stay in the middle.
     private static let sideWidth: CGFloat = 44 + 8 + 56
+    /// Only one club saved: the house alone, in a round button.
+    private var single: Bool { clubs.count == 1 }
 
     var body: some View {
         HStack(spacing: 0) {
@@ -633,7 +635,7 @@ private struct PageBar: View {
                         // current page did not light up.
                         Group {
                             if club.id == homeID {
-                                Image(systemName: current ? "house.fill" : "house").font(.caption2)
+                                Image(systemName: current ? "house.fill" : "house").font(single ? .body : .caption2)
                             } else {
                                 Circle().frame(width: current ? 8 : 6, height: current ? 8 : 6)
                             }
@@ -641,7 +643,7 @@ private struct PageBar: View {
                         .foregroundStyle(dotColor.opacity(current ? 1 : 0.4))
                         .accessibilityAddTraits(current ? .isSelected : [])
                         // Wider than the dot and as tall as the bar, so it is easier to hit.
-                        .frame(width: Self.dotWidth, height: Self.buttonHeight)
+                        .frame(width: single ? Self.buttonHeight : Self.dotWidth, height: Self.buttonHeight)
                         .contentShape(Rectangle())
                         // As Weather's page dots: a tap moves one club towards it, with the slide;
                         // a finger running along the dots jumps (owner, 12 Nov 2026).
@@ -653,7 +655,8 @@ private struct PageBar: View {
                         .accessibilityLabel(club.displayName)
                     }
                 }
-                .padding(.horizontal, 8)
+                // One club: a round button as big as the others, as Weather with one place (owner, 14 Nov 2026).
+                .padding(.horizontal, single ? 0 : 8)
                 // A finger sliding along the dots moves through the clubs, as in Weather.
                 .contentShape(Capsule())
                 .gesture(DragGesture(minimumDistance: 6).onChanged { drag in

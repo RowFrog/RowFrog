@@ -1540,3 +1540,7 @@ main.page.club .page-end > .source button.link { display: flex; align-items: cen
 #satellite .sat-line .sat-why { flex: none; color: var(--sub); }
 #satellite .sat-credit { font-size: 11px; }
 #satellite .picture { border-radius: 10px; }
+/* One saved club: the house alone in a round button as big as the others, as Weather with one place
+   (PageBar.single, owner 14 Nov 2026). */
+.bottom .dots:has(> a:only-child) { padding: 0; }
+.bottom .dots > a:only-child { width: 44px; font-size: 17px; }
