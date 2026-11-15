@@ -311,9 +311,11 @@ nothing in the background; only the widgets load forecasts on their own.
 
 **Refresh on return.** Coming back to the app after more than 10 minutes
 loads the club page in front first, then every other saved club; a pull on a
-club page does the same. The header says when the weather model's run came
-out (the forecast time) and when the phone loaded it. The website shows the same forecast time
-and "How often data is updated", and loads the club page again when you come back to
+club page does the same. The header names the weather model's run and when
+the club's forecast was last updated ("Model run 06 UTC · updated 10:01",
+`docs/decisions/0039`); the club list and the widgets show the same update
+time, and when the run was ready and when the phone loaded it are in "How
+often data is updated". The website shows the same header and sheet, and loads the club page again when you come back to
 its tab after more than 10 minutes (it has no Refresh button).
 
 **Data use.** Forecasts that have not changed are not downloaded again, and
