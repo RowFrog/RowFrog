@@ -40,7 +40,7 @@ import { renderTour, tourSeen, tip, withTip, wireTips, closeTip, replayTips, pac
 import { MAP_ZOOMS } from "./weathermap.js";
 import { conditionData } from "./values.js";
 import {
-  radarAt, radarStatus, followRadar, reloadRadar, rainLines, skyNow, radarAhead, radarGraphic, radarMark, radarTitleMark, radarCard, radarCardBody, wireRadarCard,
+  radarAt, radarStatus, followRadar, rainLines, skyNow, radarAhead, radarGraphic, radarMark, radarTitleMark, radarCard, radarCardBody, wireRadarCard,
 } from "./radar.js";
 
 const SAFETY_VERSION = 1;
@@ -1240,18 +1240,6 @@ function reloadOthers(except, onlyDue) {
   }
 }
 
-/** The "Refresh" button: this club with its lake view first, then all other clubs (ForecastStore.refresh). */
-async function refreshClub(id, lakeId) {
-  const line = root.querySelector("#updated-line");
-  if (line) line.textContent = t("Updating…");
-  if (lakeId) forgetView(lakeId);
-  // The radar too, unless it was read less than a minute ago (RadarStore.reload); the page's radar follows the same read.
-  const radar = reloadRadar(store.clubs.find((c) => c.id === id)?.launchPoint);
-  await renderClub(id);
-  await radar;
-  reloadOthers(id, false);
-}
-
 /**
  * Back in the tab: the club page or the list in front loads again first, its
  * lake view too, then the other saved clubs; clubs loaded in the last ten
@@ -1370,7 +1358,7 @@ function forecastLines(club, forecast, status) {
       return `${old}<p class="orange small"><button class="link failed" id="failed" data-why="${h(status.failure[1])}">${icon("wifi-off")} ${h(t("Could not update: %@. Showing data from %@.", status.failure[0], outOfDate ? dayTime(forecast.generatedAt) : time(forecast.generatedAt)))} ${icon("info")}</button></p>`;
     case "current":
     case "updating":
-      return `<p class="sub small" id="updated-line">${h(updatedLine(forecastTime(forecast), forecasts.get(club?.id)?.loadedAt))} · <button class="link" id="refresh">${h(t("Refresh"))}</button></p>`;
+      return `<p class="sub small" id="updated-line">${h(updatedLine(forecastTime(forecast), forecasts.get(club?.id)?.loadedAt))}</p>`;
     default:
       return old;
   }
@@ -1378,7 +1366,6 @@ function forecastLines(club, forecast, status) {
 
 function wireClubPage(id, club, raw, forecast, hour) {
   wireLaunchOpen(club);
-  root.querySelector("#refresh")?.addEventListener("click", () => refreshClub(id, forecast.lakeId));
   root.querySelector("#failed")?.addEventListener("click", (e) => openSheet(t("Could not update"), `<p>${h(e.currentTarget.dataset.why)}</p>
     <button class="primary wide" id="retry">${h(t("Try again"))}</button>`, (sheet) => sheet.querySelector("#retry").addEventListener("click", () => { sheet.close(); renderClub(id); })));
   root.querySelector("#arrange").addEventListener("click", () => openArrange(club ?? { id }, () => renderClub(id)));
