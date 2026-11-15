@@ -283,7 +283,7 @@ radar symbol marks the radar, no symbol the forecast; the symbol is struck throu
 loaded; it is tried again soon and on pull to refresh) and small bars, thin for
 the radar's quarter hours and paler for the forecast hours. Snow, hail,
 drizzle and Schneeregen (rain and snow in the same hour, worked out on the Pi from
-Open-Meteo's rain and snowfall near freezing, decision 0041) are named from the forecast. The detail chart starts with two hours of
+Open-Meteo's rain and snowfall near freezing, decision 0042) are named from the forecast. The detail chart starts with two hours of
 radar bars, and its map shows the radar picture; a tap opens the radar map,
 with DWD's colour legend and a switch to play the radar as a loop. Hours in the
 48 hours less than two hours ahead use the radar too. The old rain radar card

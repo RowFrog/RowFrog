@@ -1316,7 +1316,7 @@ def publish(args, now: datetime, state: "State") -> int:
     lakes_only = [i for i in all_lakes if i not in sections]
     areas = club_areas(c for c in every if c.id in used_clubs and c.lake_id in lakes_only)
     publish_pictures(args.out, lakes_only + sorted(places), used_lakes | set(places), now, places, areas)
-    # The Schneeregen values are reported as their own job, so their cost can be read apart (decision 0041).
+    # The Schneeregen values are reported as their own job, so their cost can be read apart (decision 0042).
     sleet_calls = round(RUN.sleet_calls, 1)
     calls = round(open_meteo.calls_counted - RUN.sleet_calls, 1)
     copernicus = sentinel2.requests_made + lake_ice_satellite.requests_made

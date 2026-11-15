@@ -10,7 +10,7 @@ The two values cost Open-Meteo calls (one call per 10 variables and point), so
 they are asked only for clubs whose last forecast has rain or snow at air
 temperatures around freezing (the cold band), or, without a forecast yet, in the
 cold months. Summer costs nothing. Settings on the Pi (owner's pick, 15 Nov 2026,
-decision 0041):
+decision 0042):
 
 - RW_SLEET=off switches it off; the app then shows rain or snow as before.
 - RW_SLEET_MIN_C and RW_SLEET_MAX_C set the cold band (default -2 to +4 °C).
